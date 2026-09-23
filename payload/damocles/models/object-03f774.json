@@ -1,0 +1,174 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-03f774",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "COFFIN",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      290
+    ],
+    "sourceAddress": 259956,
+    "status": "decoded",
+    "supportTop": 20,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                6,
+                7,
+                8,
+                9,
+                10,
+                11
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                6,
+                11,
+                5,
+                0
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                8,
+                7,
+                1,
+                2
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                11,
+                10,
+                4,
+                5
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                9,
+                8,
+                2,
+                3
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                10,
+                9,
+                3,
+                4
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                7,
+                6,
+                0,
+                1
+              ]
+            }
+          ],
+          "geometryStart": 259956,
+          "lines": [],
+          "sourceEnd": 260085,
+          "sourceStart": 259956,
+          "vertices": [
+            [
+              -60,
+              0,
+              -10
+            ],
+            [
+              -60,
+              0,
+              20
+            ],
+            [
+              -30,
+              0,
+              30
+            ],
+            [
+              60,
+              0,
+              20
+            ],
+            [
+              60,
+              0,
+              -10
+            ],
+            [
+              -30,
+              0,
+              -20
+            ],
+            [
+              -60,
+              20,
+              -10
+            ],
+            [
+              -60,
+              20,
+              20
+            ],
+            [
+              -30,
+              20,
+              30
+            ],
+            [
+              60,
+              20,
+              20
+            ],
+            [
+              60,
+              20,
+              -10
+            ],
+            [
+              -30,
+              20,
+              -20
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

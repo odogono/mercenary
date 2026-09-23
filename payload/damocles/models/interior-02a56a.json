@@ -1,0 +1,330 @@
+{
+  "model": {
+    "detailSelection": [
+      {
+        "boxes": [],
+        "default": [
+          7,
+          8,
+          4,
+          5,
+          6,
+          0,
+          1,
+          2,
+          3
+        ]
+      },
+      {
+        "boxes": [
+          {
+            "bounds": [
+              [
+                -75,
+                75
+              ],
+              [
+                -32768,
+                32767
+              ],
+              [
+                -95,
+                65
+              ]
+            ],
+            "records": []
+          },
+          {
+            "bounds": [
+              [
+                -75,
+                75
+              ],
+              [
+                -32768,
+                32767
+              ],
+              [
+                65,
+                100
+              ]
+            ],
+            "records": [
+              2,
+              9,
+              10,
+              11
+            ]
+          },
+          {
+            "bounds": [
+              [
+                -1000,
+                1000
+              ],
+              [
+                -32768,
+                32767
+              ],
+              [
+                70,
+                1200
+              ]
+            ],
+            "records": [
+              0,
+              1,
+              2,
+              9,
+              10,
+              11,
+              5,
+              6
+            ]
+          }
+        ],
+        "default": [
+          7,
+          8,
+          4,
+          5,
+          6,
+          0,
+          1,
+          2,
+          3
+        ]
+      }
+    ],
+    "evidence": [],
+    "id": "interior-02a56a",
+    "kind": "interior",
+    "linkedInstances": [],
+    "name": "Building detail 40",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      40
+    ],
+    "sourceAddress": 173418,
+    "status": "partial",
+    "variants": [
+      {
+        "id": "palette-74",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#aa88aa",
+              "sourceColour": 32904,
+              "sourceIndex": 0,
+              "vertices": [
+                12,
+                1,
+                9
+              ]
+            },
+            {
+              "colour": "#aa88aa",
+              "sourceColour": 32904,
+              "sourceIndex": 1,
+              "vertices": [
+                12,
+                10,
+                2
+              ]
+            },
+            {
+              "colour": "#ccaacc",
+              "sourceColour": 32906,
+              "sourceIndex": 2,
+              "vertices": [
+                12,
+                2,
+                1
+              ]
+            },
+            {
+              "colour": "#ccaacc",
+              "sourceColour": 32906,
+              "sourceIndex": 3,
+              "vertices": [
+                12,
+                9,
+                10
+              ]
+            },
+            {
+              "colour": "#662222",
+              "sourceColour": 32898,
+              "sourceIndex": 4,
+              "vertices": [
+                8,
+                11,
+                10,
+                9
+              ]
+            },
+            {
+              "colour": "#886688",
+              "sourceColour": 32908,
+              "sourceIndex": 5,
+              "vertices": [
+                0,
+                8,
+                9,
+                1
+              ]
+            },
+            {
+              "colour": "#886688",
+              "sourceColour": 32908,
+              "sourceIndex": 6,
+              "vertices": [
+                11,
+                3,
+                2,
+                10
+              ]
+            },
+            {
+              "colour": "#662222",
+              "sourceColour": 32898,
+              "sourceIndex": 7,
+              "vertices": [
+                3,
+                0,
+                1,
+                2
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32896,
+              "sourceIndex": 8,
+              "vertices": [
+                7,
+                4,
+                5,
+                6
+              ]
+            },
+            {
+              "colour": "#662222",
+              "sourceColour": 32898,
+              "sourceIndex": 9,
+              "vertices": [
+                4,
+                0,
+                1,
+                5
+              ]
+            },
+            {
+              "colour": "#662222",
+              "sourceColour": 32898,
+              "sourceIndex": 10,
+              "vertices": [
+                5,
+                1,
+                2,
+                6
+              ]
+            },
+            {
+              "colour": "#662222",
+              "sourceColour": 32898,
+              "sourceIndex": 11,
+              "vertices": [
+                7,
+                6,
+                2,
+                3
+              ]
+            }
+          ],
+          "geometryStart": 173418,
+          "lines": [],
+          "recordCount": 12,
+          "sourceEnd": 173580,
+          "sourceStart": 173418,
+          "vertices": [
+            [
+              80,
+              0,
+              70
+            ],
+            [
+              80,
+              110,
+              70
+            ],
+            [
+              -80,
+              110,
+              70
+            ],
+            [
+              -80,
+              0,
+              70
+            ],
+            [
+              36,
+              0,
+              70
+            ],
+            [
+              36,
+              90,
+              70
+            ],
+            [
+              -36,
+              90,
+              70
+            ],
+            [
+              -36,
+              0,
+              70
+            ],
+            [
+              80,
+              0,
+              -100
+            ],
+            [
+              80,
+              110,
+              -100
+            ],
+            [
+              -80,
+              110,
+              -100
+            ],
+            [
+              -80,
+              0,
+              -100
+            ],
+            [
+              0,
+              220,
+              -15
+            ]
+          ]
+        },
+        "name": "Structure-bound palette 74"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

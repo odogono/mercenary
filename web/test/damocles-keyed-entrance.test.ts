@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
 
-import { parseCatalogue, type Catalogue } from '../src/catalogue/data.ts';
+import { type Catalogue } from '../src/catalogue/data.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import {
   DamoclesSession,
@@ -9,6 +9,7 @@ import {
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { arrivalPoses } from './damocles-pose.ts';
+import { loadCatalogue } from './fixtures/catalogue.ts';
 
 /// A door key's own object slot is the cell's `$7AFB` base plus the entrance's key index, and
 /// its printed letter is that slot's distance from slot 30 ($059FA0). Authors House stands on
@@ -20,9 +21,7 @@ let catalogue: Catalogue;
 let content: DamoclesContent;
 
 beforeAll(async () => {
-  catalogue = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  catalogue = await loadCatalogue();
   const doc = readErisPresentation(await Bun.file('damocles/eris.json').json());
   content = {
     catalogue,

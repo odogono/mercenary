@@ -1,0 +1,672 @@
+{
+  "model": {
+    "conditions": [
+      "state $7A60"
+    ],
+    "evidence": [],
+    "id": "object-039ea8",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "NOVAGEN SAFE",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      102
+    ],
+    "sourceAddress": 237224,
+    "status": "decoded",
+    "supportTop": 60,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "alternates": {
+            "open": "$7A60"
+          },
+          "faces": [
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                5,
+                6,
+                7,
+                8
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                9,
+                10,
+                11,
+                12
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                13,
+                14,
+                16,
+                15
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                17,
+                18,
+                19,
+                0
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                29,
+                25,
+                27,
+                31
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                25,
+                21,
+                23,
+                27
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                20,
+                24,
+                26,
+                22
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                24,
+                28,
+                30,
+                26
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                20,
+                21,
+                25,
+                24
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                24,
+                25,
+                29,
+                28
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                23,
+                22,
+                26,
+                27
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                26,
+                30,
+                31,
+                27
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                28,
+                29,
+                31,
+                30
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                6,
+                2,
+                3,
+                7
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                2,
+                1,
+                4,
+                3
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                1,
+                5,
+                8,
+                4
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                6,
+                5,
+                1,
+                2
+              ]
+            }
+          ],
+          "geometryStart": 237228,
+          "lines": [],
+          "sourceEnd": 237545,
+          "sourceStart": 237224,
+          "vertices": [
+            [
+              -23,
+              23,
+              -20
+            ],
+            [
+              -30,
+              60,
+              20
+            ],
+            [
+              20,
+              60,
+              20
+            ],
+            [
+              20,
+              0,
+              20
+            ],
+            [
+              -30,
+              0,
+              20
+            ],
+            [
+              -30,
+              60,
+              -20
+            ],
+            [
+              20,
+              60,
+              -20
+            ],
+            [
+              20,
+              0,
+              -20
+            ],
+            [
+              -30,
+              0,
+              -20
+            ],
+            [
+              -26,
+              56,
+              -20
+            ],
+            [
+              16,
+              56,
+              -20
+            ],
+            [
+              16,
+              4,
+              -20
+            ],
+            [
+              -26,
+              4,
+              -20
+            ],
+            [
+              -24,
+              30,
+              -20
+            ],
+            [
+              -19,
+              30,
+              -20
+            ],
+            [
+              -24,
+              22,
+              -20
+            ],
+            [
+              -19,
+              22,
+              -20
+            ],
+            [
+              -23,
+              29,
+              -20
+            ],
+            [
+              -20,
+              29,
+              -20
+            ],
+            [
+              -20,
+              23,
+              -20
+            ],
+            [
+              -14,
+              30,
+              -20
+            ],
+            [
+              -10,
+              30,
+              -20
+            ],
+            [
+              -14,
+              28,
+              -20
+            ],
+            [
+              -10,
+              28,
+              -20
+            ],
+            [
+              -14,
+              30,
+              -26
+            ],
+            [
+              -10,
+              30,
+              -24
+            ],
+            [
+              -14,
+              28,
+              -26
+            ],
+            [
+              -10,
+              28,
+              -24
+            ],
+            [
+              -4,
+              30,
+              -26
+            ],
+            [
+              -4,
+              30,
+              -24
+            ],
+            [
+              -4,
+              28,
+              -26
+            ],
+            [
+              -4,
+              28,
+              -24
+            ]
+          ]
+        },
+        "name": "Recovered form ($7A60 clear)"
+      },
+      {
+        "id": "open",
+        "mesh": {
+          "alternates": {
+            "open": "$7A60",
+            "viewGroup": 1
+          },
+          "faces": [
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                17,
+                19,
+                20
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                17,
+                20,
+                18
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                17,
+                18,
+                22
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                17,
+                22,
+                21
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                22,
+                18,
+                20
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                22,
+                20,
+                24
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                17,
+                21,
+                23
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                17,
+                23,
+                19
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                2,
+                1,
+                4,
+                3
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                1,
+                5,
+                8,
+                4
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                6,
+                5,
+                1,
+                2
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                6,
+                2,
+                3,
+                7
+              ]
+            }
+          ],
+          "geometryStart": 237546,
+          "lines": [],
+          "sourceEnd": 238016,
+          "sourceStart": 237224,
+          "vertices": [
+            [
+              -23,
+              23,
+              -20
+            ],
+            [
+              -30,
+              60,
+              20
+            ],
+            [
+              20,
+              60,
+              20
+            ],
+            [
+              20,
+              0,
+              20
+            ],
+            [
+              -30,
+              0,
+              20
+            ],
+            [
+              -30,
+              60,
+              -20
+            ],
+            [
+              20,
+              60,
+              -20
+            ],
+            [
+              20,
+              0,
+              -20
+            ],
+            [
+              -30,
+              0,
+              -20
+            ],
+            [
+              -24,
+              54,
+              14
+            ],
+            [
+              14,
+              54,
+              14
+            ],
+            [
+              14,
+              6,
+              14
+            ],
+            [
+              -24,
+              6,
+              14
+            ],
+            [
+              -24,
+              54,
+              -20
+            ],
+            [
+              14,
+              54,
+              -20
+            ],
+            [
+              14,
+              6,
+              -20
+            ],
+            [
+              -24,
+              6,
+              -20
+            ],
+            [
+              17,
+              56,
+              -20
+            ],
+            [
+              62,
+              52,
+              -24
+            ],
+            [
+              13,
+              4,
+              -20
+            ],
+            [
+              52,
+              1,
+              -24
+            ],
+            [
+              17,
+              56,
+              -22
+            ],
+            [
+              62,
+              52,
+              -26
+            ],
+            [
+              13,
+              4,
+              -22
+            ],
+            [
+              52,
+              1,
+              -26
+            ],
+            [
+              20,
+              52,
+              -22
+            ],
+            [
+              60,
+              49,
+              -26
+            ],
+            [
+              17,
+              8,
+              -22
+            ],
+            [
+              49,
+              4,
+              -26
+            ]
+          ],
+          "viewGroups": [
+            {
+              "bounds": [
+                [
+                  -8388607,
+                  8388608
+                ],
+                [
+                  -8388607,
+                  8388608
+                ],
+                [
+                  20,
+                  8388608
+                ]
+              ],
+              "faces": 29,
+              "lines": 0
+            }
+          ]
+        },
+        "name": "Alternate form ($7A60 set)"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

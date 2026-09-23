@@ -1,0 +1,1661 @@
+{
+  "model": {
+    "detailSelection": [
+      {
+        "boxes": [],
+        "default": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ]
+      },
+      {
+        "boxes": [],
+        "default": []
+      }
+    ],
+    "evidence": [],
+    "id": "interior-02d3a8",
+    "kind": "interior",
+    "linkedInstances": [],
+    "name": "Building detail 0",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      0,
+      3,
+      4,
+      5,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      22,
+      25,
+      26,
+      27,
+      48,
+      52,
+      57,
+      60,
+      61,
+      62,
+      63,
+      71,
+      72,
+      73,
+      74,
+      75,
+      76,
+      78,
+      79,
+      80,
+      81,
+      85,
+      93,
+      97,
+      98,
+      99,
+      101,
+      102,
+      103,
+      104,
+      105,
+      106,
+      107,
+      108,
+      109,
+      110,
+      111,
+      112,
+      113,
+      114,
+      115,
+      116,
+      117,
+      118,
+      119,
+      120,
+      121,
+      122,
+      123,
+      124,
+      125,
+      126,
+      127,
+      128,
+      129
+    ],
+    "sourceAddress": 185256,
+    "status": "partial",
+    "variants": [
+      {
+        "id": "palette-1",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32918,
+              "sourceIndex": 0,
+              "vertices": [
+                1,
+                5,
+                4,
+                0
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32910,
+              "sourceIndex": 1,
+              "vertices": [
+                2,
+                6,
+                5,
+                1
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32918,
+              "sourceIndex": 2,
+              "vertices": [
+                3,
+                7,
+                6,
+                2
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32910,
+              "sourceIndex": 3,
+              "vertices": [
+                3,
+                0,
+                4,
+                7
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32906,
+              "sourceIndex": 4,
+              "vertices": [
+                5,
+                6,
+                7,
+                4
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32918,
+              "sourceIndex": 5,
+              "vertices": [
+                11,
+                10,
+                9,
+                8
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32916,
+              "sourceIndex": 6,
+              "vertices": [
+                12,
+                13,
+                14,
+                15
+              ]
+            }
+          ],
+          "geometryStart": 185256,
+          "lines": [],
+          "recordCount": 7,
+          "sourceEnd": 185405,
+          "sourceStart": 185256,
+          "vertices": [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              200
+            ],
+            [
+              300,
+              0,
+              200
+            ],
+            [
+              300,
+              0,
+              0
+            ],
+            [
+              0,
+              160,
+              0
+            ],
+            [
+              0,
+              160,
+              200
+            ],
+            [
+              300,
+              160,
+              200
+            ],
+            [
+              300,
+              160,
+              0
+            ],
+            [
+              50,
+              0,
+              200
+            ],
+            [
+              50,
+              128,
+              200
+            ],
+            [
+              90,
+              128,
+              200
+            ],
+            [
+              90,
+              0,
+              200
+            ],
+            [
+              300,
+              48,
+              50
+            ],
+            [
+              300,
+              128,
+              50
+            ],
+            [
+              300,
+              128,
+              150
+            ],
+            [
+              300,
+              48,
+              150
+            ]
+          ]
+        },
+        "name": "Structure-bound palette 1"
+      },
+      {
+        "id": "palette-3",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#aa4400",
+              "sourceColour": 32918,
+              "sourceIndex": 0,
+              "vertices": [
+                1,
+                5,
+                4,
+                0
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32910,
+              "sourceIndex": 1,
+              "vertices": [
+                2,
+                6,
+                5,
+                1
+              ]
+            },
+            {
+              "colour": "#aa4400",
+              "sourceColour": 32918,
+              "sourceIndex": 2,
+              "vertices": [
+                3,
+                7,
+                6,
+                2
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32910,
+              "sourceIndex": 3,
+              "vertices": [
+                3,
+                0,
+                4,
+                7
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32906,
+              "sourceIndex": 4,
+              "vertices": [
+                5,
+                6,
+                7,
+                4
+              ]
+            },
+            {
+              "colour": "#aa4400",
+              "sourceColour": 32918,
+              "sourceIndex": 5,
+              "vertices": [
+                11,
+                10,
+                9,
+                8
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32916,
+              "sourceIndex": 6,
+              "vertices": [
+                12,
+                13,
+                14,
+                15
+              ]
+            }
+          ],
+          "geometryStart": 185256,
+          "lines": [],
+          "recordCount": 7,
+          "sourceEnd": 185405,
+          "sourceStart": 185256,
+          "vertices": [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              200
+            ],
+            [
+              300,
+              0,
+              200
+            ],
+            [
+              300,
+              0,
+              0
+            ],
+            [
+              0,
+              160,
+              0
+            ],
+            [
+              0,
+              160,
+              200
+            ],
+            [
+              300,
+              160,
+              200
+            ],
+            [
+              300,
+              160,
+              0
+            ],
+            [
+              50,
+              0,
+              200
+            ],
+            [
+              50,
+              128,
+              200
+            ],
+            [
+              90,
+              128,
+              200
+            ],
+            [
+              90,
+              0,
+              200
+            ],
+            [
+              300,
+              48,
+              50
+            ],
+            [
+              300,
+              128,
+              50
+            ],
+            [
+              300,
+              128,
+              150
+            ],
+            [
+              300,
+              48,
+              150
+            ]
+          ]
+        },
+        "name": "Structure-bound palette 3"
+      },
+      {
+        "id": "palette-7",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#886600",
+              "sourceColour": 32918,
+              "sourceIndex": 0,
+              "vertices": [
+                1,
+                5,
+                4,
+                0
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32910,
+              "sourceIndex": 1,
+              "vertices": [
+                2,
+                6,
+                5,
+                1
+              ]
+            },
+            {
+              "colour": "#886600",
+              "sourceColour": 32918,
+              "sourceIndex": 2,
+              "vertices": [
+                3,
+                7,
+                6,
+                2
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32910,
+              "sourceIndex": 3,
+              "vertices": [
+                3,
+                0,
+                4,
+                7
+              ]
+            },
+            {
+              "colour": "#002244",
+              "sourceColour": 32906,
+              "sourceIndex": 4,
+              "vertices": [
+                5,
+                6,
+                7,
+                4
+              ]
+            },
+            {
+              "colour": "#886600",
+              "sourceColour": 32918,
+              "sourceIndex": 5,
+              "vertices": [
+                11,
+                10,
+                9,
+                8
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32916,
+              "sourceIndex": 6,
+              "vertices": [
+                12,
+                13,
+                14,
+                15
+              ]
+            }
+          ],
+          "geometryStart": 185256,
+          "lines": [],
+          "recordCount": 7,
+          "sourceEnd": 185405,
+          "sourceStart": 185256,
+          "vertices": [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              200
+            ],
+            [
+              300,
+              0,
+              200
+            ],
+            [
+              300,
+              0,
+              0
+            ],
+            [
+              0,
+              160,
+              0
+            ],
+            [
+              0,
+              160,
+              200
+            ],
+            [
+              300,
+              160,
+              200
+            ],
+            [
+              300,
+              160,
+              0
+            ],
+            [
+              50,
+              0,
+              200
+            ],
+            [
+              50,
+              128,
+              200
+            ],
+            [
+              90,
+              128,
+              200
+            ],
+            [
+              90,
+              0,
+              200
+            ],
+            [
+              300,
+              48,
+              50
+            ],
+            [
+              300,
+              128,
+              50
+            ],
+            [
+              300,
+              128,
+              150
+            ],
+            [
+              300,
+              48,
+              150
+            ]
+          ]
+        },
+        "name": "Structure-bound palette 7"
+      },
+      {
+        "id": "palette-11",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#aa88aa",
+              "sourceColour": 32918,
+              "sourceIndex": 0,
+              "vertices": [
+                1,
+                5,
+                4,
+                0
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32910,
+              "sourceIndex": 1,
+              "vertices": [
+                2,
+                6,
+                5,
+                1
+              ]
+            },
+            {
+              "colour": "#aa88aa",
+              "sourceColour": 32918,
+              "sourceIndex": 2,
+              "vertices": [
+                3,
+                7,
+                6,
+                2
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32910,
+              "sourceIndex": 3,
+              "vertices": [
+                3,
+                0,
+                4,
+                7
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32906,
+              "sourceIndex": 4,
+              "vertices": [
+                5,
+                6,
+                7,
+                4
+              ]
+            },
+            {
+              "colour": "#aa88aa",
+              "sourceColour": 32918,
+              "sourceIndex": 5,
+              "vertices": [
+                11,
+                10,
+                9,
+                8
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32916,
+              "sourceIndex": 6,
+              "vertices": [
+                12,
+                13,
+                14,
+                15
+              ]
+            }
+          ],
+          "geometryStart": 185256,
+          "lines": [],
+          "recordCount": 7,
+          "sourceEnd": 185405,
+          "sourceStart": 185256,
+          "vertices": [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              200
+            ],
+            [
+              300,
+              0,
+              200
+            ],
+            [
+              300,
+              0,
+              0
+            ],
+            [
+              0,
+              160,
+              0
+            ],
+            [
+              0,
+              160,
+              200
+            ],
+            [
+              300,
+              160,
+              200
+            ],
+            [
+              300,
+              160,
+              0
+            ],
+            [
+              50,
+              0,
+              200
+            ],
+            [
+              50,
+              128,
+              200
+            ],
+            [
+              90,
+              128,
+              200
+            ],
+            [
+              90,
+              0,
+              200
+            ],
+            [
+              300,
+              48,
+              50
+            ],
+            [
+              300,
+              128,
+              50
+            ],
+            [
+              300,
+              128,
+              150
+            ],
+            [
+              300,
+              48,
+              150
+            ]
+          ]
+        },
+        "name": "Structure-bound palette 11"
+      },
+      {
+        "id": "palette-12",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#888888",
+              "sourceColour": 32918,
+              "sourceIndex": 0,
+              "vertices": [
+                1,
+                5,
+                4,
+                0
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32910,
+              "sourceIndex": 1,
+              "vertices": [
+                2,
+                6,
+                5,
+                1
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32918,
+              "sourceIndex": 2,
+              "vertices": [
+                3,
+                7,
+                6,
+                2
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32910,
+              "sourceIndex": 3,
+              "vertices": [
+                3,
+                0,
+                4,
+                7
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32906,
+              "sourceIndex": 4,
+              "vertices": [
+                5,
+                6,
+                7,
+                4
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32918,
+              "sourceIndex": 5,
+              "vertices": [
+                11,
+                10,
+                9,
+                8
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 32916,
+              "sourceIndex": 6,
+              "vertices": [
+                12,
+                13,
+                14,
+                15
+              ]
+            }
+          ],
+          "geometryStart": 185256,
+          "lines": [],
+          "recordCount": 7,
+          "sourceEnd": 185405,
+          "sourceStart": 185256,
+          "vertices": [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              200
+            ],
+            [
+              300,
+              0,
+              200
+            ],
+            [
+              300,
+              0,
+              0
+            ],
+            [
+              0,
+              160,
+              0
+            ],
+            [
+              0,
+              160,
+              200
+            ],
+            [
+              300,
+              160,
+              200
+            ],
+            [
+              300,
+              160,
+              0
+            ],
+            [
+              50,
+              0,
+              200
+            ],
+            [
+              50,
+              128,
+              200
+            ],
+            [
+              90,
+              128,
+              200
+            ],
+            [
+              90,
+              0,
+              200
+            ],
+            [
+              300,
+              48,
+              50
+            ],
+            [
+              300,
+              128,
+              50
+            ],
+            [
+              300,
+              128,
+              150
+            ],
+            [
+              300,
+              48,
+              150
+            ]
+          ]
+        },
+        "name": "Structure-bound palette 12"
+      },
+      {
+        "id": "palette-13",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#666666",
+              "sourceColour": 32918,
+              "sourceIndex": 0,
+              "vertices": [
+                1,
+                5,
+                4,
+                0
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32910,
+              "sourceIndex": 1,
+              "vertices": [
+                2,
+                6,
+                5,
+                1
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32918,
+              "sourceIndex": 2,
+              "vertices": [
+                3,
+                7,
+                6,
+                2
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32910,
+              "sourceIndex": 3,
+              "vertices": [
+                3,
+                0,
+                4,
+                7
+              ]
+            },
+            {
+              "colour": "#aa6600",
+              "sourceColour": 32906,
+              "sourceIndex": 4,
+              "vertices": [
+                5,
+                6,
+                7,
+                4
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32918,
+              "sourceIndex": 5,
+              "vertices": [
+                11,
+                10,
+                9,
+                8
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32916,
+              "sourceIndex": 6,
+              "vertices": [
+                12,
+                13,
+                14,
+                15
+              ]
+            }
+          ],
+          "geometryStart": 185256,
+          "lines": [],
+          "recordCount": 7,
+          "sourceEnd": 185405,
+          "sourceStart": 185256,
+          "vertices": [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              200
+            ],
+            [
+              300,
+              0,
+              200
+            ],
+            [
+              300,
+              0,
+              0
+            ],
+            [
+              0,
+              160,
+              0
+            ],
+            [
+              0,
+              160,
+              200
+            ],
+            [
+              300,
+              160,
+              200
+            ],
+            [
+              300,
+              160,
+              0
+            ],
+            [
+              50,
+              0,
+              200
+            ],
+            [
+              50,
+              128,
+              200
+            ],
+            [
+              90,
+              128,
+              200
+            ],
+            [
+              90,
+              0,
+              200
+            ],
+            [
+              300,
+              48,
+              50
+            ],
+            [
+              300,
+              128,
+              50
+            ],
+            [
+              300,
+              128,
+              150
+            ],
+            [
+              300,
+              48,
+              150
+            ]
+          ]
+        },
+        "name": "Structure-bound palette 13"
+      },
+      {
+        "id": "palette-19",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#666666",
+              "sourceColour": 32918,
+              "sourceIndex": 0,
+              "vertices": [
+                1,
+                5,
+                4,
+                0
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32910,
+              "sourceIndex": 1,
+              "vertices": [
+                2,
+                6,
+                5,
+                1
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32918,
+              "sourceIndex": 2,
+              "vertices": [
+                3,
+                7,
+                6,
+                2
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32910,
+              "sourceIndex": 3,
+              "vertices": [
+                3,
+                0,
+                4,
+                7
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32906,
+              "sourceIndex": 4,
+              "vertices": [
+                5,
+                6,
+                7,
+                4
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32918,
+              "sourceIndex": 5,
+              "vertices": [
+                11,
+                10,
+                9,
+                8
+              ]
+            },
+            {
+              "colour": "#aaaa66",
+              "sourceColour": 32916,
+              "sourceIndex": 6,
+              "vertices": [
+                12,
+                13,
+                14,
+                15
+              ]
+            }
+          ],
+          "geometryStart": 185256,
+          "lines": [],
+          "recordCount": 7,
+          "sourceEnd": 185405,
+          "sourceStart": 185256,
+          "vertices": [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              200
+            ],
+            [
+              300,
+              0,
+              200
+            ],
+            [
+              300,
+              0,
+              0
+            ],
+            [
+              0,
+              160,
+              0
+            ],
+            [
+              0,
+              160,
+              200
+            ],
+            [
+              300,
+              160,
+              200
+            ],
+            [
+              300,
+              160,
+              0
+            ],
+            [
+              50,
+              0,
+              200
+            ],
+            [
+              50,
+              128,
+              200
+            ],
+            [
+              90,
+              128,
+              200
+            ],
+            [
+              90,
+              0,
+              200
+            ],
+            [
+              300,
+              48,
+              50
+            ],
+            [
+              300,
+              128,
+              50
+            ],
+            [
+              300,
+              128,
+              150
+            ],
+            [
+              300,
+              48,
+              150
+            ]
+          ]
+        },
+        "name": "Structure-bound palette 19"
+      },
+      {
+        "id": "palette-21",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#00cccc",
+              "sourceColour": 32918,
+              "sourceIndex": 0,
+              "vertices": [
+                1,
+                5,
+                4,
+                0
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32910,
+              "sourceIndex": 1,
+              "vertices": [
+                2,
+                6,
+                5,
+                1
+              ]
+            },
+            {
+              "colour": "#00cccc",
+              "sourceColour": 32918,
+              "sourceIndex": 2,
+              "vertices": [
+                3,
+                7,
+                6,
+                2
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32910,
+              "sourceIndex": 3,
+              "vertices": [
+                3,
+                0,
+                4,
+                7
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32906,
+              "sourceIndex": 4,
+              "vertices": [
+                5,
+                6,
+                7,
+                4
+              ]
+            },
+            {
+              "colour": "#00cccc",
+              "sourceColour": 32918,
+              "sourceIndex": 5,
+              "vertices": [
+                11,
+                10,
+                9,
+                8
+              ]
+            },
+            {
+              "colour": "#00cccc",
+              "sourceColour": 32916,
+              "sourceIndex": 6,
+              "vertices": [
+                12,
+                13,
+                14,
+                15
+              ]
+            }
+          ],
+          "geometryStart": 185256,
+          "lines": [],
+          "recordCount": 7,
+          "sourceEnd": 185405,
+          "sourceStart": 185256,
+          "vertices": [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              200
+            ],
+            [
+              300,
+              0,
+              200
+            ],
+            [
+              300,
+              0,
+              0
+            ],
+            [
+              0,
+              160,
+              0
+            ],
+            [
+              0,
+              160,
+              200
+            ],
+            [
+              300,
+              160,
+              200
+            ],
+            [
+              300,
+              160,
+              0
+            ],
+            [
+              50,
+              0,
+              200
+            ],
+            [
+              50,
+              128,
+              200
+            ],
+            [
+              90,
+              128,
+              200
+            ],
+            [
+              90,
+              0,
+              200
+            ],
+            [
+              300,
+              48,
+              50
+            ],
+            [
+              300,
+              128,
+              50
+            ],
+            [
+              300,
+              128,
+              150
+            ],
+            [
+              300,
+              48,
+              150
+            ]
+          ]
+        },
+        "name": "Structure-bound palette 21"
+      },
+      {
+        "id": "palette-93",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#cc6600",
+              "sourceColour": 32918,
+              "sourceIndex": 0,
+              "vertices": [
+                1,
+                5,
+                4,
+                0
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32910,
+              "sourceIndex": 1,
+              "vertices": [
+                2,
+                6,
+                5,
+                1
+              ]
+            },
+            {
+              "colour": "#cc6600",
+              "sourceColour": 32918,
+              "sourceIndex": 2,
+              "vertices": [
+                3,
+                7,
+                6,
+                2
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32910,
+              "sourceIndex": 3,
+              "vertices": [
+                3,
+                0,
+                4,
+                7
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32906,
+              "sourceIndex": 4,
+              "vertices": [
+                5,
+                6,
+                7,
+                4
+              ]
+            },
+            {
+              "colour": "#cc6600",
+              "sourceColour": 32918,
+              "sourceIndex": 5,
+              "vertices": [
+                11,
+                10,
+                9,
+                8
+              ]
+            },
+            {
+              "colour": "#aa4400",
+              "sourceColour": 32916,
+              "sourceIndex": 6,
+              "vertices": [
+                12,
+                13,
+                14,
+                15
+              ]
+            }
+          ],
+          "geometryStart": 185256,
+          "lines": [],
+          "recordCount": 7,
+          "sourceEnd": 185405,
+          "sourceStart": 185256,
+          "vertices": [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              200
+            ],
+            [
+              300,
+              0,
+              200
+            ],
+            [
+              300,
+              0,
+              0
+            ],
+            [
+              0,
+              160,
+              0
+            ],
+            [
+              0,
+              160,
+              200
+            ],
+            [
+              300,
+              160,
+              200
+            ],
+            [
+              300,
+              160,
+              0
+            ],
+            [
+              50,
+              0,
+              200
+            ],
+            [
+              50,
+              128,
+              200
+            ],
+            [
+              90,
+              128,
+              200
+            ],
+            [
+              90,
+              0,
+              200
+            ],
+            [
+              300,
+              48,
+              50
+            ],
+            [
+              300,
+              128,
+              50
+            ],
+            [
+              300,
+              128,
+              150
+            ],
+            [
+              300,
+              48,
+              150
+            ]
+          ]
+        },
+        "name": "Structure-bound palette 93"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

@@ -1,0 +1,167 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-03edba",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "PHOTON EMITTER",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      274
+    ],
+    "sourceAddress": 257466,
+    "status": "decoded",
+    "supportTop": 70,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                0,
+                2,
+                1
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                6,
+                5,
+                8,
+                9
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                4,
+                6,
+                9,
+                7
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                5,
+                4,
+                7,
+                8
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                3,
+                1,
+                2
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                3,
+                0,
+                1
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                3,
+                2,
+                0
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                7,
+                9,
+                8
+              ]
+            }
+          ],
+          "geometryStart": 257466,
+          "lines": [],
+          "sourceEnd": 257583,
+          "sourceStart": 257466,
+          "vertices": [
+            [
+              -20,
+              35,
+              20
+            ],
+            [
+              20,
+              35,
+              20
+            ],
+            [
+              0,
+              35,
+              -20
+            ],
+            [
+              0,
+              70,
+              0
+            ],
+            [
+              -5,
+              35,
+              5
+            ],
+            [
+              5,
+              35,
+              5
+            ],
+            [
+              0,
+              35,
+              -5
+            ],
+            [
+              -10,
+              0,
+              10
+            ],
+            [
+              10,
+              0,
+              10
+            ],
+            [
+              0,
+              0,
+              -10
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

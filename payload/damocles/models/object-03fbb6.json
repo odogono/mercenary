@@ -1,0 +1,355 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-03fbb6",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "SETTEE",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      27,
+      185,
+      186,
+      187,
+      217,
+      297
+    ],
+    "sourceAddress": 261046,
+    "status": "decoded",
+    "supportTop": 60,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                23,
+                20,
+                8,
+                18
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                18,
+                19,
+                24,
+                23
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                19,
+                16,
+                25
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                9,
+                8,
+                20,
+                21
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                9,
+                22,
+                6
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                24,
+                21,
+                20,
+                23
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                14,
+                4,
+                3,
+                13
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                15,
+                19,
+                18,
+                14
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                9,
+                5,
+                4,
+                8
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                25,
+                22,
+                21,
+                24
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                19,
+                15,
+                10,
+                16
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                5,
+                9,
+                6,
+                0
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                13,
+                12,
+                11,
+                14
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                14,
+                11,
+                10,
+                15
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                2,
+                3,
+                4,
+                1
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                1,
+                4,
+                5,
+                0
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                1,
+                11,
+                12,
+                2
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                13,
+                3,
+                2,
+                12
+              ]
+            }
+          ],
+          "geometryStart": 261046,
+          "lines": [],
+          "sourceEnd": 261332,
+          "sourceStart": 261046,
+          "vertices": [
+            [
+              30,
+              0,
+              -100
+            ],
+            [
+              -30,
+              0,
+              -100
+            ],
+            [
+              -40,
+              60,
+              -100
+            ],
+            [
+              -30,
+              60,
+              -100
+            ],
+            [
+              -20,
+              30,
+              -100
+            ],
+            [
+              20,
+              30,
+              -100
+            ],
+            [
+              30,
+              0,
+              -80
+            ],
+            [
+              -20,
+              0,
+              -80
+            ],
+            [
+              -20,
+              30,
+              -80
+            ],
+            [
+              20,
+              30,
+              -80
+            ],
+            [
+              30,
+              0,
+              100
+            ],
+            [
+              -30,
+              0,
+              100
+            ],
+            [
+              -40,
+              60,
+              100
+            ],
+            [
+              -30,
+              60,
+              100
+            ],
+            [
+              -20,
+              30,
+              100
+            ],
+            [
+              20,
+              30,
+              100
+            ],
+            [
+              30,
+              0,
+              80
+            ],
+            [
+              -20,
+              0,
+              80
+            ],
+            [
+              -20,
+              30,
+              80
+            ],
+            [
+              20,
+              30,
+              80
+            ],
+            [
+              -20,
+              20,
+              -80
+            ],
+            [
+              20,
+              20,
+              -80
+            ],
+            [
+              20,
+              0,
+              -80
+            ],
+            [
+              -20,
+              20,
+              80
+            ],
+            [
+              20,
+              20,
+              80
+            ],
+            [
+              20,
+              0,
+              80
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

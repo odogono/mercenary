@@ -44,7 +44,13 @@ export const payloadResponse = async (
   }
 
   const name = pathname.slice('/payload/'.length);
-  if (!/^(?:[a-z]+(?:-[a-z]+)*\/)?[a-z]+(?:-[a-z]+)*\.json$/.test(name)) {
+  // Lowercase hyphenated names, digits allowed, at most two directories deep: enough for
+  // `damocles/models/structure-01484e.json` (ADR 0048), and nothing a dot could escape from.
+  if (
+    !/^(?:[\da-z]+(?:-[\da-z]+)*\/){0,2}[\da-z]+(?:-[\da-z]+)*\.json$/.test(
+      name
+    )
+  ) {
     return new Response('not found', { status: 404 });
   }
   const file = Bun.file(join(payload, name));

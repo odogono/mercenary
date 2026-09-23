@@ -1,0 +1,154 @@
+{
+  "model": {
+    "evidence": [
+      {
+        "claim": "Per-cell ground/pad/road record at $1E000, selected by the $1E400 word table and $83DC orientation byte ($054E40).",
+        "confidence": "verified",
+        "source": "docs/research/damocles-eris-ground.md"
+      },
+      {
+        "claim": "Scene joins come from the authored seed longword at $1E000+$3B8 ($05493E), so cells sharing this source record draw different geometry and each keeps its own identity.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-eris-ground.md"
+      }
+    ],
+    "id": "ground-01e7f6-03-ee",
+    "kind": "ground",
+    "linkedInstances": [
+      "eris-ground-ee"
+    ],
+    "name": "Ground 238",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      238
+    ],
+    "sourceAddress": 124918,
+    "status": "decoded",
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#aaaaaa",
+              "doubleSided": true,
+              "sourceColour": 1365,
+              "sourceIndex": 0,
+              "vertices": [
+                0,
+                1,
+                2,
+                3,
+                4
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sceneSlots": [
+                240
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 1,
+              "vertices": [
+                5,
+                6,
+                7,
+                8,
+                9
+              ]
+            }
+          ],
+          "lines": [
+            {
+              "colour": "#cccccc",
+              "sceneSlots": [
+                240
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 2,
+              "vertices": [
+                10,
+                11
+              ]
+            }
+          ],
+          "sourceEnd": 124976,
+          "sourceStart": 124918,
+          "vertices": [
+            [
+              100,
+              0,
+              -100
+            ],
+            [
+              100,
+              0,
+              -2000
+            ],
+            [
+              -1570,
+              0,
+              -2000
+            ],
+            [
+              -1570,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              -32767,
+              0,
+              100
+            ],
+            [
+              100,
+              0,
+              100
+            ],
+            [
+              100,
+              0,
+              -100
+            ],
+            [
+              -32767,
+              0,
+              -100
+            ],
+            [
+              -131072,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              -131072,
+              0,
+              0
+            ]
+          ]
+        },
+        "name": "Recovered cell fill \u00b7 transform $03"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

@@ -1,0 +1,153 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-041e7c",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "Object 248",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "Resident slots 248, 249, 250 differ between captured worlds, so this binding is the pinned first-world capture's rather than a resident fact; ACHERON holds it as object-0418ce; BACCHUS holds it as object-041edc; BACCHUS holds it as object-041f9c; CRONUS holds it as object-041a16; CYCLOPES holds it as object-041a16; GAEA holds it as object-04190e; GAEA holds it as object-041edc; GAEA holds it as object-041f9c; LOGOS holds it as object-041edc; LOGOS holds it as object-041f9c; MENTOR holds it as object-041edc; MENTOR holds it as object-041f9c; METIS holds it as object-041edc; METIS holds it as object-041f9c; VESTA holds it as object-041cbe.",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      248,
+      249,
+      250,
+      343
+    ],
+    "sourceAddress": 269948,
+    "status": "decoded",
+    "supportTop": 280,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#22aa44",
+              "sourceColour": 338,
+              "vertices": [
+                4,
+                6,
+                5
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                0,
+                1,
+                3
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                1,
+                2,
+                3
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                2,
+                0,
+                3
+              ]
+            },
+            {
+              "colour": "#22aa44",
+              "sourceColour": 338,
+              "vertices": [
+                4,
+                5,
+                7
+              ]
+            },
+            {
+              "colour": "#22aa44",
+              "sourceColour": 338,
+              "vertices": [
+                5,
+                6,
+                7
+              ]
+            },
+            {
+              "colour": "#22aa44",
+              "sourceColour": 338,
+              "vertices": [
+                6,
+                4,
+                7
+              ]
+            }
+          ],
+          "geometryStart": 269948,
+          "lines": [],
+          "sourceEnd": 270044,
+          "sourceStart": 269948,
+          "vertices": [
+            [
+              0,
+              0,
+              9
+            ],
+            [
+              8,
+              0,
+              -5
+            ],
+            [
+              -8,
+              0,
+              -5
+            ],
+            [
+              0,
+              150,
+              0
+            ],
+            [
+              30,
+              70,
+              48
+            ],
+            [
+              30,
+              70,
+              -48
+            ],
+            [
+              -54,
+              70,
+              0
+            ],
+            [
+              0,
+              280,
+              0
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ],
+    "worldConditionedSlots": [
+      248,
+      249,
+      250
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

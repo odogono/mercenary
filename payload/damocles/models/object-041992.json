@@ -1,0 +1,194 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [
+      {
+        "claim": "29 authored $7000 ground placements bind this template to scene palette 1: VESTA cell $54, GAEA cell $13, GAEA cell $23, GAEA cell $33, GAEA cell $17, GAEA cell $27, and more.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-catalogue.md"
+      }
+    ],
+    "id": "object-041992",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "Object 334",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "Shape decoded; its scene colours resolve through the palette each placing cell selects, evidenced here as palette 1.",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      334
+    ],
+    "sourceAddress": 268690,
+    "status": "decoded",
+    "supportTop": 290,
+    "variants": [
+      {
+        "id": "palette-1",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#888888",
+              "sourceColour": 1092,
+              "vertices": [
+                5,
+                3,
+                0,
+                2
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 1092,
+              "vertices": [
+                3,
+                4,
+                1,
+                0
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32896,
+              "vertices": [
+                3,
+                6,
+                7,
+                4
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32896,
+              "vertices": [
+                6,
+                3,
+                5,
+                8
+              ]
+            },
+            {
+              "colour": "#eeee22",
+              "sourceColour": 32898,
+              "vertices": [
+                6,
+                9,
+                7
+              ]
+            },
+            {
+              "colour": "#eeee22",
+              "sourceColour": 32898,
+              "vertices": [
+                8,
+                9,
+                6
+              ]
+            },
+            {
+              "colour": "#eeee22",
+              "sourceColour": 32898,
+              "vertices": [
+                6,
+                7,
+                8
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 1092,
+              "vertices": [
+                4,
+                5,
+                2,
+                1
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                8,
+                5,
+                4,
+                7
+              ]
+            },
+            {
+              "colour": "#664444",
+              "sourceColour": 802,
+              "vertices": [
+                7,
+                6,
+                8
+              ]
+            }
+          ],
+          "geometryStart": 268690,
+          "lines": [],
+          "sourceEnd": 268822,
+          "sourceStart": 268690,
+          "vertices": [
+            [
+              9,
+              0,
+              0
+            ],
+            [
+              -5,
+              0,
+              8
+            ],
+            [
+              -5,
+              0,
+              -8
+            ],
+            [
+              9,
+              260,
+              0
+            ],
+            [
+              -5,
+              270,
+              8
+            ],
+            [
+              -5,
+              270,
+              -8
+            ],
+            [
+              129,
+              280,
+              0
+            ],
+            [
+              115,
+              290,
+              8
+            ],
+            [
+              115,
+              290,
+              -8
+            ],
+            [
+              0,
+              270,
+              0
+            ]
+          ]
+        },
+        "name": "Recovered form \u00b7 palette 1"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

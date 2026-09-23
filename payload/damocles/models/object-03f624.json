@@ -1,0 +1,186 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-03f624",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "ANTENAE",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      288
+    ],
+    "sourceAddress": 259620,
+    "status": "decoded",
+    "supportTop": 80,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [],
+          "geometryStart": 259620,
+          "lines": [
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                0,
+                1
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                8,
+                9
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                2,
+                3
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                4,
+                5
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                6,
+                7
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                10,
+                11
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                12,
+                13
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                14,
+                15
+              ]
+            }
+          ],
+          "sourceEnd": 259754,
+          "sourceStart": 259620,
+          "vertices": [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              70,
+              0
+            ],
+            [
+              -20,
+              60,
+              -20
+            ],
+            [
+              -20,
+              60,
+              20
+            ],
+            [
+              -20,
+              80,
+              -20
+            ],
+            [
+              -20,
+              80,
+              20
+            ],
+            [
+              -20,
+              60,
+              0
+            ],
+            [
+              -20,
+              80,
+              0
+            ],
+            [
+              -20,
+              70,
+              0
+            ],
+            [
+              80,
+              70,
+              0
+            ],
+            [
+              10,
+              70,
+              -20
+            ],
+            [
+              10,
+              70,
+              20
+            ],
+            [
+              40,
+              70,
+              -20
+            ],
+            [
+              40,
+              70,
+              20
+            ],
+            [
+              70,
+              70,
+              -20
+            ],
+            [
+              70,
+              70,
+              20
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

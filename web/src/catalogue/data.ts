@@ -411,6 +411,16 @@ export interface CoverageTable {
   readonly unique: number;
   readonly unresolved: number;
 }
+/// What the shared Catalogue document says about a Model without carrying it: enough to list,
+/// filter and account for every Model before any Model file is read (ADR 0048).
+export interface ModelSummary {
+  readonly id: string;
+  readonly kind: Kind;
+  readonly name: string;
+  readonly recordClass: RecordClass;
+  readonly slots: readonly number[];
+  readonly status: Model['status'];
+}
 export interface Catalogue {
   readonly bodies: readonly {
     /**
@@ -426,6 +436,8 @@ export interface Catalogue {
       readonly wrapsZ: boolean;
     } | null;
     readonly id: string;
+    /** Every Model the Body can draw: its Instances', its roads' and their interiors'. */
+    readonly models: readonly string[];
     readonly name: string;
   }[];
   readonly coverage: {
@@ -447,10 +459,11 @@ export interface Catalogue {
   };
   readonly instances: readonly Instance[];
   readonly islands: readonly Island[];
+  readonly modelIndex: readonly ModelSummary[];
   readonly models: readonly Model[];
   readonly places: readonly Place[];
   readonly roadNetworks: readonly RoadNetwork[];
-  readonly schemaVersion: 15;
+  readonly schemaVersion: 16;
   readonly source: {
     readonly authority: string;
     readonly evidence: string;
@@ -961,9 +974,118 @@ const structureSelection = (value: unknown): StructureSelection => {
   };
 };
 
-export const parseCatalogue = (value: unknown): Catalogue => {
+const modelRecord = (item: unknown): Model => {
+  const m = object(item);
+  const variants = list(m['variants']).map(value => {
+    const v = object(value);
+    const door =
+      v['doorState'] === undefined
+        ? {}
+        : {
+            doorState: choice(v['doorState'], DOOR_STATES),
+            view: choice(v['view'], STRUCTURE_VIEWS)
+          };
+    return {
+      ...door,
+      id: string(v['id']),
+      ...(v['inspectionAngle'] === undefined
+        ? {}
+        : { inspectionAngle: angle(v['inspectionAngle']) }),
+      mesh: mesh(v['mesh']),
+      ...(v['walkMesh'] === undefined ? {} : { walkMesh: mesh(v['walkMesh']) }),
+      name: string(v['name'])
+    };
+  });
+  unique(variants);
+  const status = choice(m['status'], ['decoded', 'partial', 'unresolved']);
+  const reason = string(m['reason']);
+  const recordClass =
+    m['recordClass'] === undefined
+      ? 'geometry'
+      : choice(m['recordClass'], RECORD_CLASSES);
+  // A decoded model may show nothing only when its class says the record
+  // holds nothing by construction: an authored empty, the NULL record, or a
+  // record the game draws with a native routine.
+  if (
+    status === 'decoded' &&
+    variants.length === 0 &&
+    recordClass !== 'empty' &&
+    recordClass !== 'null' &&
+    recordClass !== 'procedural'
+  ) {
+    fail('decoded model has no geometry');
+  }
+  if (status !== 'decoded' && !reason.trim()) {
+    fail('unresolved model needs an explanation');
+  }
+  return {
+    conditions: m['conditions'] === undefined ? [] : strings(m['conditions']),
+    ...(m['sceneColours'] === undefined
+      ? {}
+      : {
+          sceneColours: list(m['sceneColours']).map(value => {
+            const entry = object(value);
+            return {
+              ...(entry['colour'] === undefined
+                ? {}
+                : { colour: string(entry['colour']) }),
+              sourceColour: integer(entry['sourceColour'])
+            };
+          })
+        }),
+    evidence: evidenceList(m['evidence']),
+    id: string(m['id']),
+    kind: choice(m['kind'], ['object', 'structure', 'interior', 'ground']),
+    linkedInstances: strings(m['linkedInstances']),
+    name: string(m['name']),
+    nameStatus: choice(m['nameStatus'], ['verified', 'candidate', 'unknown']),
+    omissions: m['omissions'] === undefined ? [] : strings(m['omissions']),
+    reason,
+    recordClass,
+    relatedModels: strings(m['relatedModels']),
+    slots: list(m['slots']).map(integer),
+    sourceAddress: integer(m['sourceAddress']),
+    ...(m['worldConditionedSlots'] === undefined
+      ? {}
+      : {
+          worldConditionedSlots: list(m['worldConditionedSlots']).map(integer)
+        }),
+    status,
+    ...(m['instanceOrientation'] === undefined
+      ? {}
+      : {
+          instanceOrientation: instanceOrientation(m['instanceOrientation'])
+        }),
+    ...(m['levelBinding'] === undefined
+      ? {}
+      : { levelBinding: levelBinding(m['levelBinding']) }),
+    ...(m['storeyHeight'] === undefined
+      ? {}
+      : { storeyHeight: nonnegativeSignedWord(m['storeyHeight']) }),
+    ...(m['supportTop'] === undefined
+      ? {}
+      : {
+          supportTop:
+            m['supportTop'] === null
+              ? null
+              : nonnegativeSignedWord(m['supportTop'])
+        }),
+    variants,
+    ...(m['structureSelection'] === undefined
+      ? {}
+      : { structureSelection: structureSelection(m['structureSelection']) }),
+    ...(m['detailSelection'] === undefined
+      ? {}
+      : { detailSelection: detailSelection(m['detailSelection']) })
+  };
+};
+
+/// The shared Catalogue document: everything but the Models, which it names through its
+/// model index (ADR 0048). Every check that needs only a Model's kind, status or slots runs
+/// here against the index; a Model's own record is checked when its file arrives.
+export const parseCatalogueDocument = (value: unknown): CatalogueDocument => {
   const r = object(value);
-  if (r['schemaVersion'] !== 15) {
+  if (r['schemaVersion'] !== 16) {
     fail('unsupported schema version');
   }
   const src = object(r['source']);
@@ -981,152 +1103,19 @@ export const parseCatalogue = (value: unknown): Catalogue => {
   ) {
     fail('invalid source hash');
   }
-  const models = list(r['models']).map((item): Model => {
+  const modelIndex = list(r['modelIndex']).map((item): ModelSummary => {
     const m = object(item);
-    const variants = list(m['variants']).map(value => {
-      const v = object(value);
-      const door =
-        v['doorState'] === undefined
-          ? {}
-          : {
-              doorState: choice(v['doorState'], DOOR_STATES),
-              view: choice(v['view'], STRUCTURE_VIEWS)
-            };
-      return {
-        ...door,
-        id: string(v['id']),
-        ...(v['inspectionAngle'] === undefined
-          ? {}
-          : { inspectionAngle: angle(v['inspectionAngle']) }),
-        mesh: mesh(v['mesh']),
-        ...(v['walkMesh'] === undefined
-          ? {}
-          : { walkMesh: mesh(v['walkMesh']) }),
-        name: string(v['name'])
-      };
-    });
-    unique(variants);
-    const status = choice(m['status'], ['decoded', 'partial', 'unresolved']);
-    const reason = string(m['reason']);
-    const recordClass =
-      m['recordClass'] === undefined
-        ? 'geometry'
-        : choice(m['recordClass'], RECORD_CLASSES);
-    // A decoded model may show nothing only when its class says the record
-    // holds nothing by construction: an authored empty, the NULL record, or a
-    // record the game draws with a native routine.
-    if (
-      status === 'decoded' &&
-      variants.length === 0 &&
-      recordClass !== 'empty' &&
-      recordClass !== 'null' &&
-      recordClass !== 'procedural'
-    ) {
-      fail('decoded model has no geometry');
-    }
-    if (status !== 'decoded' && !reason.trim()) {
-      fail('unresolved model needs an explanation');
-    }
     return {
-      conditions: m['conditions'] === undefined ? [] : strings(m['conditions']),
-      ...(m['sceneColours'] === undefined
-        ? {}
-        : {
-            sceneColours: list(m['sceneColours']).map(value => {
-              const entry = object(value);
-              return {
-                ...(entry['colour'] === undefined
-                  ? {}
-                  : { colour: string(entry['colour']) }),
-                sourceColour: integer(entry['sourceColour'])
-              };
-            })
-          }),
-      evidence: evidenceList(m['evidence']),
       id: string(m['id']),
-      kind: choice(m['kind'], ['object', 'structure', 'interior', 'ground']),
-      linkedInstances: strings(m['linkedInstances']),
+      kind: choice(m['kind'], KINDS),
       name: string(m['name']),
-      nameStatus: choice(m['nameStatus'], ['verified', 'candidate', 'unknown']),
-      omissions: m['omissions'] === undefined ? [] : strings(m['omissions']),
-      reason,
-      recordClass,
-      relatedModels: strings(m['relatedModels']),
+      recordClass: choice(m['recordClass'], RECORD_CLASSES),
       slots: list(m['slots']).map(integer),
-      sourceAddress: integer(m['sourceAddress']),
-      ...(m['worldConditionedSlots'] === undefined
-        ? {}
-        : {
-            worldConditionedSlots: list(m['worldConditionedSlots']).map(integer)
-          }),
-      status,
-      ...(m['instanceOrientation'] === undefined
-        ? {}
-        : {
-            instanceOrientation: instanceOrientation(m['instanceOrientation'])
-          }),
-      ...(m['levelBinding'] === undefined
-        ? {}
-        : { levelBinding: levelBinding(m['levelBinding']) }),
-      ...(m['storeyHeight'] === undefined
-        ? {}
-        : { storeyHeight: nonnegativeSignedWord(m['storeyHeight']) }),
-      ...(m['supportTop'] === undefined
-        ? {}
-        : {
-            supportTop:
-              m['supportTop'] === null
-                ? null
-                : nonnegativeSignedWord(m['supportTop'])
-          }),
-      variants,
-      ...(m['structureSelection'] === undefined
-        ? {}
-        : { structureSelection: structureSelection(m['structureSelection']) }),
-      ...(m['detailSelection'] === undefined
-        ? {}
-        : { detailSelection: detailSelection(m['detailSelection']) })
+      status: choice(m['status'], ['decoded', 'partial', 'unresolved'])
     };
   });
-  const modelIds = unique(models);
-  for (const model of models) {
-    if (model.detailSelection !== undefined) {
-      if (model.kind !== 'interior') {
-        fail('detail selector requires a detail model');
-      }
-      for (const group of model.detailSelection) {
-        for (const records of [
-          group.default,
-          ...group.boxes.map(box => box.records)
-        ]) {
-          if (
-            model.variants.length === 0 ||
-            model.variants.some(v =>
-              records.some(i => i < 0 || i >= (v.mesh.recordCount ?? 0))
-            )
-          ) {
-            fail('invalid detail record reference');
-          }
-        }
-      }
-    }
-    const selection = model.structureSelection;
-    if (selection !== undefined) {
-      if (model.kind !== 'structure') {
-        fail('structure selector requires a structure model');
-      }
-      const detail = models.find(m => m.id === selection.detailModel);
-      if (
-        detail?.detailSelection === undefined ||
-        !detail.variants.some(v => v.id === selection.detailVariant)
-      ) {
-        fail('invalid selector detail binding');
-      }
-    }
-    for (const id of model.relatedModels) {
-      reference(modelIds, id, 'related model');
-    }
-  }
+  const modelIds = unique(modelIndex);
+  const summaries = new Map(modelIndex.map(entry => [entry.id, entry]));
   const bodies = list(r['bodies']).map(item => {
     const b = object(item);
     let bodySurface: Catalogue['bodies'][number]['bodySurface'] = null;
@@ -1144,7 +1133,16 @@ export const parseCatalogue = (value: unknown): Catalogue => {
         wrapsZ: boolean(surface['wrapsZ'])
       };
     }
-    return { bodySurface, id: string(b['id']), name: string(b['name']) };
+    const models = strings(b['models']);
+    for (const id of models) {
+      reference(modelIds, id, 'body model');
+    }
+    return {
+      bodySurface,
+      id: string(b['id']),
+      models,
+      name: string(b['name'])
+    };
   });
   const bodyIds = unique(bodies);
   const islands = list(r['islands'] ?? []).map((item): Island => {
@@ -1366,11 +1364,6 @@ export const parseCatalogue = (value: unknown): Catalogue => {
     };
   });
   const instanceIds = unique(instances);
-  for (const model of models) {
-    for (const id of model.linkedInstances) {
-      reference(instanceIds, id, 'linked instance');
-    }
-  }
   for (const instance of instances) {
     if (instance.placement !== null) {
       reference(instanceIds, instance.placement.parent, 'parent instance');
@@ -1488,7 +1481,7 @@ export const parseCatalogue = (value: unknown): Catalogue => {
     const kind = choice(t['kind'], KINDS);
     for (const id of entries) {
       reference(modelIds, id, 'table model');
-      if (models.find(model => model.id === id)!.kind !== kind) {
+      if (summaries.get(id)!.kind !== kind) {
         fail('table kind mismatch');
       }
     }
@@ -1504,7 +1497,7 @@ export const parseCatalogue = (value: unknown): Catalogue => {
   if (new Set(tables.map(table => table.kind)).size !== tables.length) {
     fail('duplicate table kind');
   }
-  for (const model of models) {
+  for (const model of modelIndex) {
     const table = tables.find(table => table.kind === model.kind);
     const slots =
       table?.entries.flatMap((id, index) => (id === model.id ? [index] : [])) ??
@@ -1517,7 +1510,7 @@ export const parseCatalogue = (value: unknown): Catalogue => {
     }
   }
   const covered = new Set(tables.flatMap(table => table.entries));
-  for (const model of models) {
+  for (const model of modelIndex) {
     if (!covered.has(model.id)) {
       fail('model missing from census');
     }
@@ -1527,10 +1520,10 @@ export const parseCatalogue = (value: unknown): Catalogue => {
     fail('invalid coverage status');
   }
   const counted = {
-    decoded: models.filter(model => model.status === 'decoded').length,
-    partial: models.filter(model => model.status === 'partial').length,
-    unique: models.length,
-    unresolved: models.filter(model => model.status === 'unresolved').length
+    decoded: modelIndex.filter(model => model.status === 'decoded').length,
+    partial: modelIndex.filter(model => model.status === 'partial').length,
+    unique: modelIndex.length,
+    unresolved: modelIndex.filter(model => model.status === 'unresolved').length
   };
   const census =
     coverage['census'] === undefined
@@ -1599,13 +1592,229 @@ export const parseCatalogue = (value: unknown): Catalogue => {
     },
     instances,
     islands,
-    models,
+    modelIndex,
     places,
     roadNetworks,
-    schemaVersion: 15,
+    schemaVersion: 16,
     source,
     tables
   };
+};
+
+/// The Catalogue as the shared document stores it, before any Model file is read.
+export type CatalogueDocument = Omit<Catalogue, 'models'>;
+
+const documentIds = new WeakMap<
+  CatalogueDocument,
+  {
+    readonly instances: ReadonlySet<string>;
+    readonly models: ReadonlyMap<string, ModelSummary>;
+  }
+>();
+const idsOf = (document: CatalogueDocument) => {
+  let ids = documentIds.get(document);
+  if (ids === undefined) {
+    ids = {
+      instances: new Set(document.instances.map(instance => instance.id)),
+      models: new Map(document.modelIndex.map(entry => [entry.id, entry]))
+    };
+    documentIds.set(document, ids);
+  }
+  return ids;
+};
+
+/// One Model record checked against the shared document: its own shape, that the index lists
+/// it with the same summary, and that every Model and Instance it names exists. The one check
+/// that needs a second Model's record, a structure's detail binding, waits for assembly.
+export const parseModel = (
+  value: unknown,
+  document: CatalogueDocument
+): Model => {
+  const model = modelRecord(value);
+  const ids = idsOf(document);
+  const summary = ids.models.get(model.id);
+  if (summary === undefined) {
+    return fail(`model ${model.id} is not in the model index`);
+  }
+  for (const field of ['kind', 'name', 'recordClass', 'status'] as const) {
+    if (summary[field] !== model[field]) {
+      fail(`model ${model.id} ${field} disagrees with the model index`);
+    }
+  }
+  if (
+    summary.slots.length !== model.slots.length ||
+    summary.slots.some((slot, index) => slot !== model.slots[index])
+  ) {
+    fail(`model ${model.id} slots disagree with the model index`);
+  }
+  if (model.detailSelection !== undefined) {
+    if (model.kind !== 'interior') {
+      fail('detail selector requires a detail model');
+    }
+    for (const group of model.detailSelection) {
+      for (const records of [
+        group.default,
+        ...group.boxes.map(box => box.records)
+      ]) {
+        if (
+          model.variants.length === 0 ||
+          model.variants.some(v =>
+            records.some(i => i < 0 || i >= (v.mesh.recordCount ?? 0))
+          )
+        ) {
+          fail('invalid detail record reference');
+        }
+      }
+    }
+  }
+  const selection = model.structureSelection;
+  if (selection !== undefined) {
+    if (model.kind !== 'structure') {
+      fail('structure selector requires a structure model');
+    }
+    if (ids.models.get(selection.detailModel)?.kind !== 'interior') {
+      fail('invalid selector detail binding');
+    }
+  }
+  for (const id of model.relatedModels) {
+    if (!ids.models.has(id)) {
+      fail(`missing related model ${id}`);
+    }
+  }
+  for (const id of model.linkedInstances) {
+    reference(ids.instances, id, 'linked instance');
+  }
+  return model;
+};
+
+/// One stored Model file: the record, and the run it was extracted from, which must be the
+/// Catalogue's own so a file left behind by another run is refused rather than drawn.
+export const parseModelFile = (
+  value: unknown,
+  document: CatalogueDocument
+): Model => {
+  const r = object(value);
+  if (r['schemaVersion'] !== 16) {
+    fail('unsupported model file schema version');
+  }
+  const src = object(r['source']);
+  if (
+    string(src['programSha256']) !== document.source.programSha256 ||
+    string(src['run']) !== document.source.run
+  ) {
+    fail('model file comes from another run than the Catalogue');
+  }
+  return parseModel(r['model'], document);
+};
+
+/// The whole Catalogue from its document and exactly the Models its index names, in index
+/// order, with the structure-to-interior bindings that need two Model records checked.
+export const assembleCatalogue = (
+  document: CatalogueDocument,
+  models: readonly Model[]
+): Catalogue => {
+  unique(models);
+  const byId = new Map(models.map(model => [model.id, model]));
+  if (
+    models.length !== document.modelIndex.length ||
+    document.modelIndex.some(entry => !byId.has(entry.id))
+  ) {
+    fail('models do not match the model index');
+  }
+  for (const model of models) {
+    const selection = model.structureSelection;
+    if (selection === undefined) {
+      continue;
+    }
+    const detail = byId.get(selection.detailModel);
+    if (
+      detail?.detailSelection === undefined ||
+      !detail.variants.some(v => v.id === selection.detailVariant)
+    ) {
+      fail('invalid selector detail binding');
+    }
+  }
+  return {
+    ...document,
+    models: document.modelIndex.map(entry => byId.get(entry.id)!)
+  };
+};
+
+/// A Catalogue held as one value with its Models inline, as tests build one.
+export const parseCatalogue = (value: unknown): Catalogue => {
+  const { models, ...rest } = object(value);
+  const document = parseCatalogueDocument(rest);
+  return assembleCatalogue(
+    document,
+    list(models).map(model => parseModel(model, document))
+  );
+};
+
+export const CATALOGUE_PATH = '/payload/damocles/catalogue.json';
+export const modelPath = (id: string): string =>
+  `/payload/damocles/models/${id}.json`;
+
+const at = async <T>(path: string, read: () => Promise<T>): Promise<T> => {
+  try {
+    return await read();
+  } catch (error) {
+    throw new Error(
+      `${path}: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+};
+
+/// One payload path fetched and parsed as JSON, refusing any answer but success.
+export const payloadJson = async (path: string): Promise<unknown> => {
+  const response = await fetch(path);
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+  return response.json();
+};
+
+/// How many Model files are in flight at once. Chrome refuses fetches outright once too many
+/// are outstanding, and 1,241 at once is past that; measured on localhost, 16 to 64 read every
+/// file in about 0.4 s and 6 takes twice as long.
+const MODEL_READS_IN_FLIGHT = 32;
+
+/// `each` over `items`, at most `MODEL_READS_IN_FLIGHT` at a time, results in item order.
+const inPool = async <T, R>(
+  items: readonly T[],
+  each: (item: T) => Promise<R>
+): Promise<R[]> => {
+  const results: R[] = Array.from({ length: items.length });
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      const index = next++;
+      results[index] = await each(items[index]!);
+    }
+  };
+  await Promise.all(
+    Array.from(
+      { length: Math.min(MODEL_READS_IN_FLIGHT, items.length) },
+      worker
+    )
+  );
+  return results;
+};
+
+/// Reads the stored Catalogue: the shared document, then every Model file its index names.
+/// `read` answers one payload path with its parsed JSON, so the browser and the tests share
+/// one reader and differ only in how a path is fetched.
+export const readCatalogue = async (
+  read: (path: string) => Promise<unknown>
+): Promise<Catalogue> => {
+  const document = await at(CATALOGUE_PATH, async () =>
+    parseCatalogueDocument(await read(CATALOGUE_PATH))
+  );
+  const models = await inPool(document.modelIndex, ({ id }) =>
+    at(modelPath(id), async () =>
+      parseModelFile(await read(modelPath(id)), document)
+    )
+  );
+  return assembleCatalogue(document, models);
 };
 
 /// Id lookup for a Catalogue, memoised per Catalogue object.

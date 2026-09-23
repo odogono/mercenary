@@ -37,6 +37,13 @@ cd web
 bun run dev
 ```
 
+`--output` names the shared document. The extractor writes each Model beside it
+as `payload/damocles/models/<id>.json` and removes any Model file this run no
+longer produces, so a regenerated Model reads as its own file in the diff
+([ADR 0048](../adr/0048-store-each-damocles-model-as-its-own-catalogue-file.md)).
+The shared document keeps everything else, plus a model index and each Body's
+list of the Models it can draw.
+
 The twenty-one `--workspace` inputs are the arrival-pose memstates
 (#326). Each contributes one live `$00ABDC` window; twenty bodies are covered,
 Gaea by two. The decoder carries no body identity, so adding a body is an input

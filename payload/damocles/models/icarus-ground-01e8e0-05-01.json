@@ -1,0 +1,167 @@
+{
+  "model": {
+    "evidence": [
+      {
+        "claim": "Live ICARUS per-cell ground/pad/road record at $1E000; this workspace overwrites the Eris first-world index.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-non-eris-workspaces.md"
+      }
+    ],
+    "id": "icarus-ground-01e8e0-05-01",
+    "kind": "ground",
+    "linkedInstances": [
+      "icarus-ground-01"
+    ],
+    "name": "ICARUS ground 1",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      457
+    ],
+    "sourceAddress": 125152,
+    "status": "decoded",
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sceneSlots": [
+                240
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 0,
+              "vertices": [
+                0,
+                1,
+                2,
+                3,
+                4
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sourceColour": 32782,
+              "sourceIndex": 2,
+              "vertices": [
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14
+              ]
+            }
+          ],
+          "lines": [
+            {
+              "colour": "#cccccc",
+              "sceneSlots": [
+                240
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 1,
+              "vertices": [
+                5,
+                6
+              ]
+            }
+          ],
+          "sourceEnd": 125233,
+          "sourceStart": 125152,
+          "vertices": [
+            [
+              100,
+              0,
+              32767
+            ],
+            [
+              100,
+              0,
+              -100
+            ],
+            [
+              -100,
+              0,
+              -100
+            ],
+            [
+              -100,
+              0,
+              32767
+            ],
+            [
+              0,
+              0,
+              131072
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              131072
+            ],
+            [
+              -600,
+              0,
+              -400
+            ],
+            [
+              -200,
+              0,
+              0
+            ],
+            [
+              200,
+              0,
+              0
+            ],
+            [
+              600,
+              0,
+              -400
+            ],
+            [
+              600,
+              0,
+              -800
+            ],
+            [
+              200,
+              0,
+              -1200
+            ],
+            [
+              -200,
+              0,
+              -1200
+            ],
+            [
+              -600,
+              0,
+              -800
+            ]
+          ]
+        },
+        "name": "Recovered cell fill \u00b7 transform $05"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

@@ -1,0 +1,338 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [
+      {
+        "claim": "Resident vehicle slot 12 pairs with key slot 190 by the recovered +178 table relation and matching source names.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-vip-limo.md"
+      }
+    ],
+    "id": "object-03672c",
+    "instanceOrientation": {
+      "angleBiasByte": 128,
+      "modeByte": 64,
+      "rotation": "yaw"
+    },
+    "kind": "object",
+    "linkedInstances": [
+      "object-slot-190"
+    ],
+    "name": "BULLET",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      12
+    ],
+    "sourceAddress": 223020,
+    "status": "decoded",
+    "supportTop": null,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                12,
+                5,
+                2,
+                1
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                11,
+                12,
+                1
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                5,
+                6,
+                2
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                11,
+                1,
+                4,
+                10
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                2,
+                6,
+                7,
+                3
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                9,
+                10,
+                4
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                7,
+                8,
+                3
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                4,
+                3,
+                8,
+                9
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                1,
+                2,
+                0
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                1,
+                0,
+                4
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                0,
+                2,
+                3
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                3,
+                4,
+                0
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                5,
+                12,
+                13,
+                14
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                6,
+                5,
+                14
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                12,
+                11,
+                13
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                14,
+                15,
+                7,
+                6
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                16,
+                13,
+                11,
+                10
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                8,
+                7,
+                15
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                10,
+                9,
+                16
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                15,
+                16,
+                9,
+                8
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                14,
+                13,
+                16,
+                15
+              ]
+            }
+          ],
+          "geometryStart": 223024,
+          "lines": [],
+          "sourceEnd": 223267,
+          "sourceStart": 223020,
+          "vertices": [
+            [
+              0,
+              30,
+              480
+            ],
+            [
+              30,
+              45,
+              420
+            ],
+            [
+              -30,
+              45,
+              420
+            ],
+            [
+              -30,
+              15,
+              420
+            ],
+            [
+              30,
+              15,
+              420
+            ],
+            [
+              -30,
+              60,
+              360
+            ],
+            [
+              -60,
+              45,
+              360
+            ],
+            [
+              -60,
+              15,
+              360
+            ],
+            [
+              -30,
+              0,
+              360
+            ],
+            [
+              30,
+              0,
+              360
+            ],
+            [
+              60,
+              15,
+              360
+            ],
+            [
+              60,
+              45,
+              360
+            ],
+            [
+              30,
+              60,
+              360
+            ],
+            [
+              150,
+              30,
+              0
+            ],
+            [
+              -150,
+              30,
+              0
+            ],
+            [
+              -150,
+              15,
+              0
+            ],
+            [
+              150,
+              15,
+              0
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

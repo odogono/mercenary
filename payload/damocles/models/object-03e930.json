@@ -1,0 +1,197 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-03e930",
+    "instanceOrientation": {
+      "angleBiasByte": 0,
+      "modeByte": 64,
+      "rotation": "yaw"
+    },
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "CUPAND SAUCER",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      262,
+      273,
+      362
+    ],
+    "sourceAddress": 256304,
+    "status": "decoded",
+    "supportTop": null,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                2,
+                7,
+                1
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                2,
+                3,
+                7
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                3,
+                4,
+                7
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                7,
+                4,
+                5
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                7,
+                5,
+                6
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                1,
+                7,
+                6
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                2,
+                1,
+                0
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                2,
+                0,
+                3
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                3,
+                0,
+                4
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                0,
+                5,
+                4
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                0,
+                6,
+                5
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                1,
+                6,
+                0
+              ]
+            }
+          ],
+          "geometryStart": 256308,
+          "lines": [],
+          "sourceEnd": 256434,
+          "sourceStart": 256304,
+          "vertices": [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              -200,
+              30,
+              0
+            ],
+            [
+              -100,
+              30,
+              170
+            ],
+            [
+              100,
+              30,
+              170
+            ],
+            [
+              200,
+              30,
+              0
+            ],
+            [
+              100,
+              30,
+              -170
+            ],
+            [
+              -100,
+              30,
+              -170
+            ],
+            [
+              0,
+              70,
+              0
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

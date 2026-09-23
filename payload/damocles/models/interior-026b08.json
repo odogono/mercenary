@@ -1,0 +1,1729 @@
+{
+  "model": {
+    "detailSelection": [
+      {
+        "boxes": [],
+        "default": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          5,
+          6,
+          7,
+          8,
+          9
+        ]
+      },
+      {
+        "boxes": [
+          {
+            "bounds": [
+              [
+                -100,
+                100
+              ],
+              [
+                0,
+                200
+              ],
+              [
+                400,
+                500
+              ]
+            ],
+            "records": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "bounds": [
+              [
+                -500,
+                500
+              ],
+              [
+                0,
+                200
+              ],
+              [
+                -500,
+                500
+              ]
+            ],
+            "records": [
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          {
+            "bounds": [
+              [
+                -500,
+                500
+              ],
+              [
+                0,
+                200
+              ],
+              [
+                500,
+                2500
+              ]
+            ],
+            "records": [
+              1,
+              2,
+              3,
+              4,
+              10,
+              12,
+              13,
+              14,
+              16,
+              17,
+              5,
+              6,
+              8,
+              9
+            ]
+          }
+        ],
+        "default": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          5,
+          6,
+          7,
+          8,
+          9
+        ]
+      }
+    ],
+    "evidence": [
+      {
+        "claim": "Live GAEA Structure Workspace supplies dynamic vector-text tokens for this captured detail variant.",
+        "confidence": "observed",
+        "source": "docs/research/damocles-building-vector-text.md"
+      }
+    ],
+    "id": "interior-026b08",
+    "kind": "interior",
+    "linkedInstances": [],
+    "name": "Building detail 20",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      20
+    ],
+    "sourceAddress": 158472,
+    "status": "partial",
+    "variants": [
+      {
+        "id": "palette-76",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#882222",
+              "sourceColour": 32896,
+              "sourceIndex": 0,
+              "vertices": [
+                10,
+                6,
+                5,
+                9
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 32930,
+              "sourceIndex": 1,
+              "vertices": [
+                6,
+                12,
+                11,
+                5
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32902,
+              "sourceIndex": 2,
+              "vertices": [
+                5,
+                11,
+                7,
+                9
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32902,
+              "sourceIndex": 3,
+              "vertices": [
+                10,
+                8,
+                12,
+                6
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32910,
+              "sourceIndex": 4,
+              "vertices": [
+                8,
+                10,
+                9,
+                7
+              ]
+            },
+            {
+              "colour": "#8888aa",
+              "sourceColour": 32928,
+              "sourceIndex": 5,
+              "vertices": [
+                0,
+                13,
+                12,
+                8
+              ]
+            },
+            {
+              "colour": "#8888aa",
+              "sourceColour": 32928,
+              "sourceIndex": 6,
+              "vertices": [
+                3,
+                7,
+                11,
+                16
+              ]
+            },
+            {
+              "colour": "#8888aa",
+              "sourceColour": 32928,
+              "sourceIndex": 7,
+              "vertices": [
+                1,
+                2,
+                15,
+                14
+              ]
+            },
+            {
+              "colour": "#aaaacc",
+              "sourceColour": 32918,
+              "sourceIndex": 8,
+              "vertices": [
+                3,
+                16,
+                15,
+                2
+              ]
+            },
+            {
+              "colour": "#aaaacc",
+              "sourceColour": 32918,
+              "sourceIndex": 9,
+              "vertices": [
+                1,
+                14,
+                13,
+                0
+              ]
+            },
+            {
+              "colour": "#aaaacc",
+              "sourceColour": 32918,
+              "sourceIndex": 10,
+              "vertices": [
+                4,
+                20,
+                17
+              ]
+            },
+            {
+              "colour": "#aaaacc",
+              "sourceColour": 32918,
+              "sourceIndex": 11,
+              "vertices": [
+                4,
+                18,
+                19
+              ]
+            },
+            {
+              "colour": "#8888aa",
+              "sourceColour": 32928,
+              "sourceIndex": 12,
+              "vertices": [
+                4,
+                19,
+                20
+              ]
+            },
+            {
+              "colour": "#8888aa",
+              "sourceColour": 32928,
+              "sourceIndex": 13,
+              "vertices": [
+                4,
+                17,
+                18
+              ]
+            },
+            {
+              "colour": "#664444",
+              "sourceColour": 32898,
+              "sourceIndex": 14,
+              "vertices": [
+                17,
+                20,
+                16,
+                13
+              ]
+            },
+            {
+              "colour": "#664444",
+              "sourceColour": 32898,
+              "sourceIndex": 15,
+              "vertices": [
+                15,
+                19,
+                18,
+                14
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32902,
+              "sourceIndex": 16,
+              "vertices": [
+                16,
+                20,
+                19,
+                15
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32902,
+              "sourceIndex": 17,
+              "vertices": [
+                14,
+                18,
+                17,
+                13
+              ]
+            }
+          ],
+          "geometryStart": 158472,
+          "lines": [],
+          "recordCount": 18,
+          "sourceEnd": 158724,
+          "sourceStart": 158472,
+          "vertices": [
+            [
+              500,
+              0,
+              500
+            ],
+            [
+              500,
+              0,
+              -500
+            ],
+            [
+              -500,
+              0,
+              -500
+            ],
+            [
+              -500,
+              0,
+              500
+            ],
+            [
+              0,
+              380,
+              0
+            ],
+            [
+              -100,
+              122,
+              400
+            ],
+            [
+              100,
+              122,
+              400
+            ],
+            [
+              -100,
+              0,
+              500
+            ],
+            [
+              100,
+              0,
+              500
+            ],
+            [
+              -100,
+              0,
+              400
+            ],
+            [
+              100,
+              0,
+              400
+            ],
+            [
+              -100,
+              122,
+              450
+            ],
+            [
+              100,
+              122,
+              450
+            ],
+            [
+              450,
+              122,
+              450
+            ],
+            [
+              450,
+              122,
+              -450
+            ],
+            [
+              -450,
+              122,
+              -450
+            ],
+            [
+              -450,
+              122,
+              450
+            ],
+            [
+              450,
+              180,
+              450
+            ],
+            [
+              450,
+              180,
+              -450
+            ],
+            [
+              -450,
+              180,
+              -450
+            ],
+            [
+              -450,
+              180,
+              450
+            ]
+          ]
+        },
+        "name": "Structure-bound palette 76"
+      },
+      {
+        "id": "palette-97",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#000000",
+              "sourceColour": 32896,
+              "sourceIndex": 0,
+              "vertices": [
+                10,
+                6,
+                5,
+                9
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32930,
+              "sourceIndex": 1,
+              "vertices": [
+                6,
+                12,
+                11,
+                5
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32902,
+              "sourceIndex": 2,
+              "vertices": [
+                5,
+                11,
+                7,
+                9
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32902,
+              "sourceIndex": 3,
+              "vertices": [
+                10,
+                8,
+                12,
+                6
+              ]
+            },
+            {
+              "colour": "#444444",
+              "sourceColour": 32910,
+              "sourceIndex": 4,
+              "vertices": [
+                8,
+                10,
+                9,
+                7
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32928,
+              "sourceIndex": 5,
+              "vertices": [
+                0,
+                13,
+                12,
+                8
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32928,
+              "sourceIndex": 6,
+              "vertices": [
+                3,
+                7,
+                11,
+                16
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32928,
+              "sourceIndex": 7,
+              "vertices": [
+                1,
+                2,
+                15,
+                14
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32918,
+              "sourceIndex": 8,
+              "vertices": [
+                3,
+                16,
+                15,
+                2
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32918,
+              "sourceIndex": 9,
+              "vertices": [
+                1,
+                14,
+                13,
+                0
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32918,
+              "sourceIndex": 10,
+              "vertices": [
+                4,
+                20,
+                17
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32918,
+              "sourceIndex": 11,
+              "vertices": [
+                4,
+                18,
+                19
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32928,
+              "sourceIndex": 12,
+              "vertices": [
+                4,
+                19,
+                20
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32928,
+              "sourceIndex": 13,
+              "vertices": [
+                4,
+                17,
+                18
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32898,
+              "sourceIndex": 14,
+              "vertices": [
+                17,
+                20,
+                16,
+                13
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32898,
+              "sourceIndex": 15,
+              "vertices": [
+                15,
+                19,
+                18,
+                14
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32902,
+              "sourceIndex": 16,
+              "vertices": [
+                16,
+                20,
+                19,
+                15
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32902,
+              "sourceIndex": 17,
+              "vertices": [
+                14,
+                18,
+                17,
+                13
+              ]
+            }
+          ],
+          "geometryStart": 158472,
+          "lines": [],
+          "recordCount": 18,
+          "sourceEnd": 158724,
+          "sourceStart": 158472,
+          "vertices": [
+            [
+              500,
+              0,
+              500
+            ],
+            [
+              500,
+              0,
+              -500
+            ],
+            [
+              -500,
+              0,
+              -500
+            ],
+            [
+              -500,
+              0,
+              500
+            ],
+            [
+              0,
+              380,
+              0
+            ],
+            [
+              -100,
+              122,
+              400
+            ],
+            [
+              100,
+              122,
+              400
+            ],
+            [
+              -100,
+              0,
+              500
+            ],
+            [
+              100,
+              0,
+              500
+            ],
+            [
+              -100,
+              0,
+              400
+            ],
+            [
+              100,
+              0,
+              400
+            ],
+            [
+              -100,
+              122,
+              450
+            ],
+            [
+              100,
+              122,
+              450
+            ],
+            [
+              450,
+              122,
+              450
+            ],
+            [
+              450,
+              122,
+              -450
+            ],
+            [
+              -450,
+              122,
+              -450
+            ],
+            [
+              -450,
+              122,
+              450
+            ],
+            [
+              450,
+              180,
+              450
+            ],
+            [
+              450,
+              180,
+              -450
+            ],
+            [
+              -450,
+              180,
+              -450
+            ],
+            [
+              -450,
+              180,
+              450
+            ]
+          ]
+        },
+        "name": "Structure-bound palette 97"
+      },
+      {
+        "id": "palette-107",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#882222",
+              "sourceColour": 32896,
+              "sourceIndex": 0,
+              "vertices": [
+                10,
+                6,
+                5,
+                9
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 32930,
+              "sourceIndex": 1,
+              "vertices": [
+                6,
+                12,
+                11,
+                5
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32902,
+              "sourceIndex": 2,
+              "vertices": [
+                5,
+                11,
+                7,
+                9
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32902,
+              "sourceIndex": 3,
+              "vertices": [
+                10,
+                8,
+                12,
+                6
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32910,
+              "sourceIndex": 4,
+              "vertices": [
+                8,
+                10,
+                9,
+                7
+              ]
+            },
+            {
+              "colour": "#eeaa22",
+              "sourceColour": 32928,
+              "sourceIndex": 5,
+              "vertices": [
+                0,
+                13,
+                12,
+                8
+              ]
+            },
+            {
+              "colour": "#eeaa22",
+              "sourceColour": 32928,
+              "sourceIndex": 6,
+              "vertices": [
+                3,
+                7,
+                11,
+                16
+              ]
+            },
+            {
+              "colour": "#eeaa22",
+              "sourceColour": 32928,
+              "sourceIndex": 7,
+              "vertices": [
+                1,
+                2,
+                15,
+                14
+              ]
+            },
+            {
+              "colour": "#eecc22",
+              "sourceColour": 32918,
+              "sourceIndex": 8,
+              "vertices": [
+                3,
+                16,
+                15,
+                2
+              ]
+            },
+            {
+              "colour": "#eecc22",
+              "sourceColour": 32918,
+              "sourceIndex": 9,
+              "vertices": [
+                1,
+                14,
+                13,
+                0
+              ]
+            },
+            {
+              "colour": "#eecc22",
+              "sourceColour": 32918,
+              "sourceIndex": 10,
+              "vertices": [
+                4,
+                20,
+                17
+              ]
+            },
+            {
+              "colour": "#eecc22",
+              "sourceColour": 32918,
+              "sourceIndex": 11,
+              "vertices": [
+                4,
+                18,
+                19
+              ]
+            },
+            {
+              "colour": "#eeaa22",
+              "sourceColour": 32928,
+              "sourceIndex": 12,
+              "vertices": [
+                4,
+                19,
+                20
+              ]
+            },
+            {
+              "colour": "#eeaa22",
+              "sourceColour": 32928,
+              "sourceIndex": 13,
+              "vertices": [
+                4,
+                17,
+                18
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32898,
+              "sourceIndex": 14,
+              "vertices": [
+                17,
+                20,
+                16,
+                13
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32898,
+              "sourceIndex": 15,
+              "vertices": [
+                15,
+                19,
+                18,
+                14
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32902,
+              "sourceIndex": 16,
+              "vertices": [
+                16,
+                20,
+                19,
+                15
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32902,
+              "sourceIndex": 17,
+              "vertices": [
+                14,
+                18,
+                17,
+                13
+              ]
+            }
+          ],
+          "geometryStart": 158472,
+          "lines": [],
+          "recordCount": 18,
+          "sourceEnd": 158724,
+          "sourceStart": 158472,
+          "vertices": [
+            [
+              500,
+              0,
+              500
+            ],
+            [
+              500,
+              0,
+              -500
+            ],
+            [
+              -500,
+              0,
+              -500
+            ],
+            [
+              -500,
+              0,
+              500
+            ],
+            [
+              0,
+              380,
+              0
+            ],
+            [
+              -100,
+              122,
+              400
+            ],
+            [
+              100,
+              122,
+              400
+            ],
+            [
+              -100,
+              0,
+              500
+            ],
+            [
+              100,
+              0,
+              500
+            ],
+            [
+              -100,
+              0,
+              400
+            ],
+            [
+              100,
+              0,
+              400
+            ],
+            [
+              -100,
+              122,
+              450
+            ],
+            [
+              100,
+              122,
+              450
+            ],
+            [
+              450,
+              122,
+              450
+            ],
+            [
+              450,
+              122,
+              -450
+            ],
+            [
+              -450,
+              122,
+              -450
+            ],
+            [
+              -450,
+              122,
+              450
+            ],
+            [
+              450,
+              180,
+              450
+            ],
+            [
+              450,
+              180,
+              -450
+            ],
+            [
+              -450,
+              180,
+              -450
+            ],
+            [
+              -450,
+              180,
+              450
+            ]
+          ]
+        },
+        "name": "Structure-bound palette 107"
+      },
+      {
+        "id": "palette-123",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#882222",
+              "sourceColour": 32896,
+              "sourceIndex": 0,
+              "vertices": [
+                10,
+                6,
+                5,
+                9
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 32930,
+              "sourceIndex": 1,
+              "vertices": [
+                6,
+                12,
+                11,
+                5
+              ]
+            },
+            {
+              "colour": "#444444",
+              "sourceColour": 32902,
+              "sourceIndex": 2,
+              "vertices": [
+                5,
+                11,
+                7,
+                9
+              ]
+            },
+            {
+              "colour": "#444444",
+              "sourceColour": 32902,
+              "sourceIndex": 3,
+              "vertices": [
+                10,
+                8,
+                12,
+                6
+              ]
+            },
+            {
+              "colour": "#442288",
+              "sourceColour": 32910,
+              "sourceIndex": 4,
+              "vertices": [
+                8,
+                10,
+                9,
+                7
+              ]
+            },
+            {
+              "colour": "#8888aa",
+              "sourceColour": 32928,
+              "sourceIndex": 5,
+              "vertices": [
+                0,
+                13,
+                12,
+                8
+              ]
+            },
+            {
+              "colour": "#8888aa",
+              "sourceColour": 32928,
+              "sourceIndex": 6,
+              "vertices": [
+                3,
+                7,
+                11,
+                16
+              ]
+            },
+            {
+              "colour": "#8888aa",
+              "sourceColour": 32928,
+              "sourceIndex": 7,
+              "vertices": [
+                1,
+                2,
+                15,
+                14
+              ]
+            },
+            {
+              "colour": "#aaaacc",
+              "sourceColour": 32918,
+              "sourceIndex": 8,
+              "vertices": [
+                3,
+                16,
+                15,
+                2
+              ]
+            },
+            {
+              "colour": "#aaaacc",
+              "sourceColour": 32918,
+              "sourceIndex": 9,
+              "vertices": [
+                1,
+                14,
+                13,
+                0
+              ]
+            },
+            {
+              "colour": "#aaaacc",
+              "sourceColour": 32918,
+              "sourceIndex": 10,
+              "vertices": [
+                4,
+                20,
+                17
+              ]
+            },
+            {
+              "colour": "#aaaacc",
+              "sourceColour": 32918,
+              "sourceIndex": 11,
+              "vertices": [
+                4,
+                18,
+                19
+              ]
+            },
+            {
+              "colour": "#8888aa",
+              "sourceColour": 32928,
+              "sourceIndex": 12,
+              "vertices": [
+                4,
+                19,
+                20
+              ]
+            },
+            {
+              "colour": "#8888aa",
+              "sourceColour": 32928,
+              "sourceIndex": 13,
+              "vertices": [
+                4,
+                17,
+                18
+              ]
+            },
+            {
+              "colour": "#664444",
+              "sourceColour": 32898,
+              "sourceIndex": 14,
+              "vertices": [
+                17,
+                20,
+                16,
+                13
+              ]
+            },
+            {
+              "colour": "#664444",
+              "sourceColour": 32898,
+              "sourceIndex": 15,
+              "vertices": [
+                15,
+                19,
+                18,
+                14
+              ]
+            },
+            {
+              "colour": "#444444",
+              "sourceColour": 32902,
+              "sourceIndex": 16,
+              "vertices": [
+                16,
+                20,
+                19,
+                15
+              ]
+            },
+            {
+              "colour": "#444444",
+              "sourceColour": 32902,
+              "sourceIndex": 17,
+              "vertices": [
+                14,
+                18,
+                17,
+                13
+              ]
+            }
+          ],
+          "geometryStart": 158472,
+          "lines": [],
+          "recordCount": 18,
+          "sourceEnd": 158724,
+          "sourceStart": 158472,
+          "vertices": [
+            [
+              500,
+              0,
+              500
+            ],
+            [
+              500,
+              0,
+              -500
+            ],
+            [
+              -500,
+              0,
+              -500
+            ],
+            [
+              -500,
+              0,
+              500
+            ],
+            [
+              0,
+              380,
+              0
+            ],
+            [
+              -100,
+              122,
+              400
+            ],
+            [
+              100,
+              122,
+              400
+            ],
+            [
+              -100,
+              0,
+              500
+            ],
+            [
+              100,
+              0,
+              500
+            ],
+            [
+              -100,
+              0,
+              400
+            ],
+            [
+              100,
+              0,
+              400
+            ],
+            [
+              -100,
+              122,
+              450
+            ],
+            [
+              100,
+              122,
+              450
+            ],
+            [
+              450,
+              122,
+              450
+            ],
+            [
+              450,
+              122,
+              -450
+            ],
+            [
+              -450,
+              122,
+              -450
+            ],
+            [
+              -450,
+              122,
+              450
+            ],
+            [
+              450,
+              180,
+              450
+            ],
+            [
+              450,
+              180,
+              -450
+            ],
+            [
+              -450,
+              180,
+              -450
+            ],
+            [
+              -450,
+              180,
+              450
+            ]
+          ]
+        },
+        "name": "Structure-bound palette 123"
+      },
+      {
+        "id": "palette-76-live-gaea",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#882222",
+              "sourceColour": 32896,
+              "sourceIndex": 0,
+              "vertices": [
+                10,
+                6,
+                5,
+                9
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 32930,
+              "sourceIndex": 1,
+              "vertices": [
+                6,
+                12,
+                11,
+                5
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32902,
+              "sourceIndex": 2,
+              "vertices": [
+                5,
+                11,
+                7,
+                9
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32902,
+              "sourceIndex": 3,
+              "vertices": [
+                10,
+                8,
+                12,
+                6
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32910,
+              "sourceIndex": 4,
+              "vertices": [
+                8,
+                10,
+                9,
+                7
+              ]
+            },
+            {
+              "colour": "#8888aa",
+              "sourceColour": 32928,
+              "sourceIndex": 5,
+              "vertices": [
+                0,
+                13,
+                12,
+                8
+              ]
+            },
+            {
+              "colour": "#8888aa",
+              "sourceColour": 32928,
+              "sourceIndex": 6,
+              "vertices": [
+                3,
+                7,
+                11,
+                16
+              ]
+            },
+            {
+              "colour": "#8888aa",
+              "sourceColour": 32928,
+              "sourceIndex": 7,
+              "vertices": [
+                1,
+                2,
+                15,
+                14
+              ]
+            },
+            {
+              "colour": "#aaaacc",
+              "sourceColour": 32918,
+              "sourceIndex": 8,
+              "vertices": [
+                3,
+                16,
+                15,
+                2
+              ]
+            },
+            {
+              "colour": "#aaaacc",
+              "sourceColour": 32918,
+              "sourceIndex": 9,
+              "vertices": [
+                1,
+                14,
+                13,
+                0
+              ]
+            },
+            {
+              "colour": "#aaaacc",
+              "sourceColour": 32918,
+              "sourceIndex": 10,
+              "vertices": [
+                4,
+                20,
+                17
+              ]
+            },
+            {
+              "colour": "#aaaacc",
+              "sourceColour": 32918,
+              "sourceIndex": 11,
+              "vertices": [
+                4,
+                18,
+                19
+              ]
+            },
+            {
+              "colour": "#8888aa",
+              "sourceColour": 32928,
+              "sourceIndex": 12,
+              "vertices": [
+                4,
+                19,
+                20
+              ]
+            },
+            {
+              "colour": "#8888aa",
+              "sourceColour": 32928,
+              "sourceIndex": 13,
+              "vertices": [
+                4,
+                17,
+                18
+              ]
+            },
+            {
+              "colour": "#664444",
+              "sourceColour": 32898,
+              "sourceIndex": 14,
+              "vertices": [
+                17,
+                20,
+                16,
+                13
+              ]
+            },
+            {
+              "colour": "#664444",
+              "sourceColour": 32898,
+              "sourceIndex": 15,
+              "vertices": [
+                15,
+                19,
+                18,
+                14
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32902,
+              "sourceIndex": 16,
+              "vertices": [
+                16,
+                20,
+                19,
+                15
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32902,
+              "sourceIndex": 17,
+              "vertices": [
+                14,
+                18,
+                17,
+                13
+              ]
+            }
+          ],
+          "geometryStart": 158472,
+          "lines": [],
+          "recordCount": 18,
+          "sourceEnd": 158724,
+          "sourceStart": 158472,
+          "vertices": [
+            [
+              500,
+              0,
+              500
+            ],
+            [
+              500,
+              0,
+              -500
+            ],
+            [
+              -500,
+              0,
+              -500
+            ],
+            [
+              -500,
+              0,
+              500
+            ],
+            [
+              0,
+              380,
+              0
+            ],
+            [
+              -100,
+              122,
+              400
+            ],
+            [
+              100,
+              122,
+              400
+            ],
+            [
+              -100,
+              0,
+              500
+            ],
+            [
+              100,
+              0,
+              500
+            ],
+            [
+              -100,
+              0,
+              400
+            ],
+            [
+              100,
+              0,
+              400
+            ],
+            [
+              -100,
+              122,
+              450
+            ],
+            [
+              100,
+              122,
+              450
+            ],
+            [
+              450,
+              122,
+              450
+            ],
+            [
+              450,
+              122,
+              -450
+            ],
+            [
+              -450,
+              122,
+              -450
+            ],
+            [
+              -450,
+              122,
+              450
+            ],
+            [
+              450,
+              180,
+              450
+            ],
+            [
+              450,
+              180,
+              -450
+            ],
+            [
+              -450,
+              180,
+              -450
+            ],
+            [
+              -450,
+              180,
+              450
+            ]
+          ]
+        },
+        "name": "Live GAEA text \u00b7 palette 76"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'bun:test';
 
-import { parseCatalogue } from '../src/catalogue/data.ts';
 import { executeDamoclesConsoleCommand } from '../src/damocles/console.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import { catalogueResidence } from '../src/damocles/residence.ts';
@@ -14,6 +13,7 @@ import { parseConsoleCommand } from '../src/shell/console.ts';
 import type { PreferencesStore } from '../src/shell/preferences.ts';
 import type { SavePersistence } from '../src/shell/saves.ts';
 import { arrivalPoses } from './damocles-pose.ts';
+import { loadCatalogue } from './fixtures/catalogue.ts';
 
 let content: DamoclesContent | undefined;
 
@@ -22,11 +22,11 @@ const contentOf = async (): Promise<DamoclesContent> => {
     return content;
   }
   const [raw, presentation, strings] = await Promise.all([
-    Bun.file('../payload/damocles/catalogue.json').json(),
+    loadCatalogue(),
     Bun.file(new URL('../damocles/eris.json', import.meta.url)).json(),
     Bun.file('../payload/damocles/strings.json').json()
   ]);
-  const catalogue = parseCatalogue(raw);
+  const catalogue = raw;
   const doc = readErisPresentation(presentation);
   content = {
     catalogue,
@@ -222,9 +222,7 @@ describe('get names what it took', () => {
   test('the unreachable five have no recovered residence or no level 0', async () => {
     // Stated against the Catalogue as well as the session, so a payload change moves this test
     // rather than leaving the reachability test to fail for a reason it cannot name.
-    const catalogue = parseCatalogue(
-      await Bun.file('../payload/damocles/catalogue.json').json()
-    );
+    const catalogue = await loadCatalogue();
     for (const id of ['object-slot-95', 'object-slot-151', 'object-slot-181']) {
       expect(catalogueResidence(catalogue, id)).toBeUndefined();
     }

@@ -1,0 +1,151 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-038956",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "EXPLOSIVE",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      75,
+      76,
+      77,
+      78,
+      79,
+      80,
+      81,
+      82,
+      83,
+      256
+    ],
+    "sourceAddress": 231766,
+    "status": "decoded",
+    "supportTop": 40,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                5,
+                6,
+                2,
+                1
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                0,
+                1,
+                2,
+                3
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                4,
+                5,
+                1,
+                0
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                6,
+                7,
+                3,
+                2
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                7,
+                4,
+                0,
+                3
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                7,
+                6,
+                5,
+                4
+              ]
+            }
+          ],
+          "geometryStart": 231766,
+          "lines": [],
+          "sourceEnd": 231862,
+          "sourceStart": 231766,
+          "vertices": [
+            [
+              -40,
+              0,
+              20
+            ],
+            [
+              -40,
+              0,
+              -20
+            ],
+            [
+              40,
+              0,
+              -20
+            ],
+            [
+              40,
+              0,
+              20
+            ],
+            [
+              -40,
+              40,
+              20
+            ],
+            [
+              -40,
+              40,
+              -20
+            ],
+            [
+              40,
+              40,
+              -20
+            ],
+            [
+              40,
+              40,
+              20
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

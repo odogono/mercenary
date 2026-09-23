@@ -1,0 +1,209 @@
+{
+  "model": {
+    "evidence": [],
+    "id": "structure-01a636",
+    "kind": "structure",
+    "levelBinding": {
+      "floors": [
+        {
+          "level": 0,
+          "structureId": "structure-00feea",
+          "structureSlot": 20
+        }
+      ],
+      "levelsAuthored": 12,
+      "tableAddress": 108092
+    },
+    "linkedInstances": [],
+    "name": "Structure 101",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "structure alias must be resolved before geometry Includes linked exterior/interior detail in its neutral pose.",
+    "recordClass": "alias",
+    "relatedModels": [
+      "structure-00feea",
+      "interior-02d3a8"
+    ],
+    "slots": [
+      101
+    ],
+    "sourceAddress": 108086,
+    "status": "partial",
+    "storeyHeight": 110,
+    "variants": [
+      {
+        "id": "assembly",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#aa88aa",
+              "sourceColour": 32918,
+              "sourceIndex": 0,
+              "vertices": [
+                1,
+                5,
+                4,
+                0
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32910,
+              "sourceIndex": 1,
+              "vertices": [
+                2,
+                6,
+                5,
+                1
+              ]
+            },
+            {
+              "colour": "#aa88aa",
+              "sourceColour": 32918,
+              "sourceIndex": 2,
+              "vertices": [
+                3,
+                7,
+                6,
+                2
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32910,
+              "sourceIndex": 3,
+              "vertices": [
+                3,
+                0,
+                4,
+                7
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32906,
+              "sourceIndex": 4,
+              "vertices": [
+                5,
+                6,
+                7,
+                4
+              ]
+            },
+            {
+              "colour": "#aa88aa",
+              "sourceColour": 32918,
+              "sourceIndex": 5,
+              "vertices": [
+                11,
+                10,
+                9,
+                8
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32916,
+              "sourceIndex": 6,
+              "vertices": [
+                12,
+                13,
+                14,
+                15
+              ]
+            }
+          ],
+          "lines": [],
+          "vertices": [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              -800
+            ],
+            [
+              1200,
+              0,
+              -800
+            ],
+            [
+              1200,
+              0,
+              0
+            ],
+            [
+              0,
+              160,
+              0
+            ],
+            [
+              0,
+              160,
+              -800
+            ],
+            [
+              1200,
+              160,
+              -800
+            ],
+            [
+              1200,
+              160,
+              0
+            ],
+            [
+              200,
+              0,
+              -800
+            ],
+            [
+              200,
+              128,
+              -800
+            ],
+            [
+              360,
+              128,
+              -800
+            ],
+            [
+              360,
+              0,
+              -800
+            ],
+            [
+              1200,
+              48,
+              -200
+            ],
+            [
+              1200,
+              128,
+              -200
+            ],
+            [
+              1200,
+              128,
+              -600
+            ],
+            [
+              1200,
+              48,
+              -600
+            ]
+          ]
+        },
+        "name": "Structure and detail \u00b7 palette 11"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

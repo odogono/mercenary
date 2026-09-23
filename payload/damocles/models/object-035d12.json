@@ -1,0 +1,169 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-035d12",
+    "instanceOrientation": {
+      "angleBiasByte": 0,
+      "modeByte": 64,
+      "rotation": "yaw"
+    },
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "DART II",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      1
+    ],
+    "sourceAddress": 220434,
+    "status": "decoded",
+    "supportTop": null,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                1,
+                7,
+                0
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                7,
+                2,
+                0
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                0,
+                3,
+                7
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                0,
+                7,
+                4
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                6,
+                5,
+                4
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                3,
+                5,
+                6
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                2,
+                4,
+                3,
+                1
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                4,
+                5,
+                3
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                2,
+                1,
+                0
+              ]
+            }
+          ],
+          "geometryStart": 220438,
+          "lines": [],
+          "sourceEnd": 220547,
+          "sourceStart": 220434,
+          "vertices": [
+            [
+              0,
+              0,
+              -250
+            ],
+            [
+              -150,
+              0,
+              200
+            ],
+            [
+              150,
+              0,
+              200
+            ],
+            [
+              -30,
+              50,
+              200
+            ],
+            [
+              30,
+              50,
+              200
+            ],
+            [
+              0,
+              90,
+              200
+            ],
+            [
+              0,
+              42,
+              50
+            ],
+            [
+              0,
+              63,
+              200
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

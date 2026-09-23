@@ -20,9 +20,9 @@ import {
   systemWindow,
   unitsPerCell
 } from '../src/atlas/system.ts';
-import { parseCatalogue } from '../src/catalogue/data.ts';
 import { SURFACE_CELLS } from '../src/damocles/world.ts';
 import { bodyRadius, readGammaSystem } from '../src/flyover/documents.ts';
+import { loadCatalogue } from './fixtures/catalogue.ts';
 
 const FRAME = { height: 773.5, width: 961.5 };
 /// Any anchor serves for the conversion tests: they check the maths, not the choice of centre.
@@ -35,9 +35,7 @@ const gammaSystem = async () =>
 describe('the authored surface scale', () => {
   test('inscribes the surface in the disc, so no island falls outside it', async () => {
     const system = await gammaSystem();
-    const data = parseCatalogue(
-      await Bun.file('../payload/damocles/catalogue.json').json()
-    );
+    const data = await loadCatalogue();
     const fit = fitSystem(system.bodies, FRAME);
     const { markers } = projectSystem(system.bodies, fit, FRAME);
     // The authored rule is the square inscribed in the disc rather than one spanning its
@@ -238,9 +236,7 @@ describe('the hand-over between the Ranges', () => {
 
   test('survives the Body camera wrapping its own centre', async () => {
     const system = await gammaSystem();
-    const data = parseCatalogue(
-      await Bun.file('../payload/damocles/catalogue.json').json()
-    );
+    const data = await loadCatalogue();
     const eris = system.bodies.find(body => body.id === 'eris')!;
     const anchor = surfaceAnchor(readBodySurface(data, ERIS_SLOT));
     // The reported bug. A Body camera takes its centre modulo the surface, so a reader who pans

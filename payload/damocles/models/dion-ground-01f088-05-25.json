@@ -1,0 +1,212 @@
+{
+  "model": {
+    "evidence": [
+      {
+        "claim": "Live DION per-cell ground/pad/road record at $1E000; this workspace overwrites the Eris first-world index.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-dion-workspace.md"
+      }
+    ],
+    "id": "dion-ground-01f088-05-25",
+    "kind": "ground",
+    "linkedInstances": [
+      "dion-ground-25"
+    ],
+    "name": "DION ground 37",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      331
+    ],
+    "sourceAddress": 127112,
+    "status": "decoded",
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#000000",
+              "doubleSided": true,
+              "sourceColour": 32768,
+              "sourceIndex": 0,
+              "vertices": [
+                0,
+                1,
+                2,
+                3,
+                4
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sceneSlots": [
+                240
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 1,
+              "vertices": [
+                5,
+                6,
+                7,
+                8,
+                9
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sceneSlots": [
+                252
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 2,
+              "vertices": [
+                10,
+                11,
+                12,
+                13,
+                14
+              ]
+            }
+          ],
+          "lines": [
+            {
+              "colour": "#cccccc",
+              "sceneSlots": [
+                240
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 3,
+              "vertices": [
+                15,
+                16
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sceneSlots": [
+                252
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 4,
+              "vertices": [
+                17,
+                18
+              ]
+            }
+          ],
+          "sourceEnd": 127202,
+          "sourceStart": 127112,
+          "vertices": [
+            [
+              1600,
+              0,
+              0
+            ],
+            [
+              800,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              800
+            ],
+            [
+              0,
+              0,
+              1600
+            ],
+            [
+              1600,
+              0,
+              1600
+            ],
+            [
+              100,
+              0,
+              32767
+            ],
+            [
+              100,
+              0,
+              100
+            ],
+            [
+              -100,
+              0,
+              -100
+            ],
+            [
+              -100,
+              0,
+              32767
+            ],
+            [
+              0,
+              0,
+              196608
+            ],
+            [
+              32767,
+              0,
+              -100
+            ],
+            [
+              -100,
+              0,
+              -100
+            ],
+            [
+              -100,
+              0,
+              100
+            ],
+            [
+              32767,
+              0,
+              100
+            ],
+            [
+              524288,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              196608
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              524288,
+              0,
+              0
+            ]
+          ]
+        },
+        "name": "Recovered cell fill \u00b7 transform $05"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

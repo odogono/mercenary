@@ -1,0 +1,132 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-03f024",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "KEY",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      279
+    ],
+    "sourceAddress": 258084,
+    "status": "decoded",
+    "supportTop": 60,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                6,
+                2,
+                3,
+                7
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                7,
+                3,
+                0,
+                4
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                2,
+                6,
+                5,
+                1
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                3,
+                2,
+                1,
+                0
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                6,
+                7,
+                4,
+                5
+              ]
+            }
+          ],
+          "geometryStart": 258084,
+          "lines": [],
+          "sourceEnd": 258173,
+          "sourceStart": 258084,
+          "vertices": [
+            [
+              -10,
+              0,
+              -5
+            ],
+            [
+              10,
+              0,
+              -5
+            ],
+            [
+              20,
+              60,
+              -5
+            ],
+            [
+              -20,
+              60,
+              -5
+            ],
+            [
+              -10,
+              0,
+              5
+            ],
+            [
+              10,
+              0,
+              5
+            ],
+            [
+              20,
+              60,
+              5
+            ],
+            [
+              -20,
+              60,
+              5
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

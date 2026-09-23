@@ -1,0 +1,2088 @@
+{
+  "model": {
+    "conditions": [
+      "viewerPosition"
+    ],
+    "evidence": [],
+    "id": "object-0416ae",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "Object 328",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      328
+    ],
+    "sourceAddress": 267950,
+    "status": "decoded",
+    "supportTop": 250,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "alternates": {
+            "viewGroup": 2
+          },
+          "faces": [
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                12,
+                15,
+                14,
+                17
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                3,
+                6,
+                5,
+                8
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 582,
+              "vertices": [
+                10,
+                1,
+                8,
+                15
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                20,
+                22,
+                21
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                27,
+                28,
+                26
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                2,
+                18,
+                4,
+                7
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                11,
+                16,
+                13,
+                19
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 582,
+              "vertices": [
+                0,
+                9,
+                19,
+                18
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                25,
+                24,
+                23
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                1,
+                0,
+                2,
+                3
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                9,
+                10,
+                12,
+                11
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                0,
+                1,
+                10,
+                9
+              ]
+            }
+          ],
+          "geometryStart": 267950,
+          "lines": [],
+          "sourceEnd": 268493,
+          "sourceStart": 267950,
+          "texts": [
+            {
+              "anchor": [
+                0,
+                210,
+                540
+              ],
+              "font": 0,
+              "plane": 128,
+              "text": "N         S"
+            },
+            {
+              "anchor": [
+                0,
+                210,
+                440
+              ],
+              "font": 0,
+              "plane": 128,
+              "text": "ORBITAL"
+            },
+            {
+              "anchor": [
+                12,
+                210,
+                40
+              ],
+              "font": 0,
+              "plane": 128,
+              "text": "CITY CENTRE"
+            }
+          ],
+          "vertices": [
+            [
+              12,
+              250,
+              0
+            ],
+            [
+              0,
+              250,
+              0
+            ],
+            [
+              12,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              12,
+              200,
+              30
+            ],
+            [
+              0,
+              200,
+              30
+            ],
+            [
+              0,
+              0,
+              30
+            ],
+            [
+              12,
+              0,
+              30
+            ],
+            [
+              0,
+              200,
+              0
+            ],
+            [
+              12,
+              250,
+              600
+            ],
+            [
+              0,
+              250,
+              600
+            ],
+            [
+              12,
+              0,
+              600
+            ],
+            [
+              0,
+              0,
+              600
+            ],
+            [
+              12,
+              200,
+              570
+            ],
+            [
+              0,
+              200,
+              570
+            ],
+            [
+              0,
+              200,
+              600
+            ],
+            [
+              12,
+              0,
+              570
+            ],
+            [
+              0,
+              0,
+              570
+            ],
+            [
+              12,
+              200,
+              0
+            ],
+            [
+              12,
+              200,
+              600
+            ],
+            [
+              0,
+              240,
+              555
+            ],
+            [
+              0,
+              225,
+              585
+            ],
+            [
+              0,
+              210,
+              555
+            ],
+            [
+              12,
+              210,
+              540
+            ],
+            [
+              12,
+              210,
+              570
+            ],
+            [
+              12,
+              240,
+              555
+            ],
+            [
+              0,
+              240,
+              45
+            ],
+            [
+              0,
+              225,
+              15
+            ],
+            [
+              0,
+              210,
+              45
+            ]
+          ],
+          "viewGroups": [
+            {
+              "bounds": [
+                [
+                  -6,
+                  9000
+                ],
+                [
+                  -5000,
+                  8388608
+                ],
+                [
+                  -9000,
+                  9000
+                ]
+              ],
+              "faces": 11,
+              "lines": 36
+            },
+            {
+              "bounds": [
+                [
+                  -9000,
+                  -6
+                ],
+                [
+                  -5000,
+                  8388608
+                ],
+                [
+                  -9000,
+                  9000
+                ]
+              ],
+              "faces": 10,
+              "lines": 36
+            }
+          ]
+        },
+        "name": "Viewer elsewhere (default list)"
+      },
+      {
+        "id": "view-0",
+        "mesh": {
+          "alternates": {
+            "viewGroup": 2
+          },
+          "faces": [
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                16,
+                17,
+                14,
+                13
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                6,
+                7,
+                4,
+                5
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                5,
+                4,
+                13,
+                14
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                12,
+                15,
+                14,
+                17
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                3,
+                6,
+                5,
+                8
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 582,
+              "vertices": [
+                10,
+                1,
+                8,
+                15
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                20,
+                22,
+                21
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                27,
+                28,
+                26
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                1,
+                0,
+                2,
+                3
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                9,
+                10,
+                12,
+                11
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                0,
+                1,
+                10,
+                9
+              ]
+            }
+          ],
+          "geometryStart": 267950,
+          "lines": [
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                29,
+                30
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                30,
+                32
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                31,
+                32
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                33,
+                34
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                34,
+                35
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                35,
+                36
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                36,
+                37
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                37,
+                38
+              ]
+            },
+            {
+              "colour": "#ee8800",
+              "sourceColour": 1856,
+              "vertices": [
+                39,
+                40
+              ]
+            },
+            {
+              "colour": "#ee8800",
+              "sourceColour": 1856,
+              "vertices": [
+                40,
+                41
+              ]
+            },
+            {
+              "colour": "#ee8800",
+              "sourceColour": 1856,
+              "vertices": [
+                41,
+                42
+              ]
+            },
+            {
+              "colour": "#ee8800",
+              "sourceColour": 1856,
+              "vertices": [
+                42,
+                39
+              ]
+            },
+            {
+              "colour": "#ee8800",
+              "sourceColour": 1856,
+              "vertices": [
+                43,
+                45
+              ]
+            },
+            {
+              "colour": "#ee8800",
+              "sourceColour": 1856,
+              "vertices": [
+                45,
+                46
+              ]
+            },
+            {
+              "colour": "#ee8800",
+              "sourceColour": 1856,
+              "vertices": [
+                46,
+                48
+              ]
+            },
+            {
+              "colour": "#ee8800",
+              "sourceColour": 1856,
+              "vertices": [
+                44,
+                48
+              ]
+            },
+            {
+              "colour": "#ee8800",
+              "sourceColour": 1856,
+              "vertices": [
+                44,
+                47
+              ]
+            },
+            {
+              "colour": "#ee8800",
+              "sourceColour": 1856,
+              "vertices": [
+                51,
+                52
+              ]
+            },
+            {
+              "colour": "#ee8800",
+              "sourceColour": 1856,
+              "vertices": [
+                49,
+                53
+              ]
+            },
+            {
+              "colour": "#ee8800",
+              "sourceColour": 1856,
+              "vertices": [
+                51,
+                49
+              ]
+            },
+            {
+              "colour": "#ee8800",
+              "sourceColour": 1856,
+              "vertices": [
+                54,
+                52
+              ]
+            },
+            {
+              "colour": "#ee8800",
+              "sourceColour": 1856,
+              "vertices": [
+                54,
+                53
+              ]
+            },
+            {
+              "colour": "#ee8800",
+              "sourceColour": 1856,
+              "vertices": [
+                50,
+                54
+              ]
+            },
+            {
+              "colour": "#ee8800",
+              "sourceColour": 1856,
+              "vertices": [
+                55,
+                57
+              ]
+            },
+            {
+              "colour": "#ee8800",
+              "sourceColour": 1856,
+              "vertices": [
+                58,
+                60
+              ]
+            },
+            {
+              "colour": "#ee8800",
+              "sourceColour": 1856,
+              "vertices": [
+                56,
+                59
+              ]
+            },
+            {
+              "colour": "#ee8800",
+              "sourceColour": 1856,
+              "vertices": [
+                61,
+                64
+              ]
+            },
+            {
+              "colour": "#ee8800",
+              "sourceColour": 1856,
+              "vertices": [
+                62,
+                64
+              ]
+            },
+            {
+              "colour": "#ee8800",
+              "sourceColour": 1856,
+              "vertices": [
+                64,
+                63
+              ]
+            },
+            {
+              "colour": "#ee8800",
+              "sourceColour": 1856,
+              "vertices": [
+                65,
+                66
+              ]
+            },
+            {
+              "colour": "#ee8800",
+              "sourceColour": 1856,
+              "vertices": [
+                66,
+                67
+              ]
+            },
+            {
+              "colour": "#ee8800",
+              "sourceColour": 1856,
+              "vertices": [
+                67,
+                68
+              ]
+            },
+            {
+              "colour": "#ee8800",
+              "sourceColour": 1856,
+              "vertices": [
+                68,
+                69
+              ]
+            },
+            {
+              "colour": "#ee8800",
+              "sourceColour": 1856,
+              "vertices": [
+                66,
+                68
+              ]
+            },
+            {
+              "colour": "#ee8800",
+              "sourceColour": 1856,
+              "vertices": [
+                70,
+                71
+              ]
+            },
+            {
+              "colour": "#ee8800",
+              "sourceColour": 1856,
+              "vertices": [
+                71,
+                72
+              ]
+            }
+          ],
+          "sourceEnd": 268493,
+          "sourceStart": 267950,
+          "texts": [
+            {
+              "anchor": [
+                0,
+                210,
+                540
+              ],
+              "font": 0,
+              "plane": 128,
+              "text": "N         S"
+            },
+            {
+              "anchor": [
+                0,
+                210,
+                440
+              ],
+              "font": 0,
+              "plane": 128,
+              "text": "ORBITAL"
+            },
+            {
+              "anchor": [
+                12,
+                210,
+                40
+              ],
+              "font": 0,
+              "plane": 128,
+              "text": "CITY CENTRE"
+            }
+          ],
+          "vertices": [
+            [
+              12,
+              250,
+              0
+            ],
+            [
+              0,
+              250,
+              0
+            ],
+            [
+              12,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              12,
+              200,
+              30
+            ],
+            [
+              0,
+              200,
+              30
+            ],
+            [
+              0,
+              0,
+              30
+            ],
+            [
+              12,
+              0,
+              30
+            ],
+            [
+              0,
+              200,
+              0
+            ],
+            [
+              12,
+              250,
+              600
+            ],
+            [
+              0,
+              250,
+              600
+            ],
+            [
+              12,
+              0,
+              600
+            ],
+            [
+              0,
+              0,
+              600
+            ],
+            [
+              12,
+              200,
+              570
+            ],
+            [
+              0,
+              200,
+              570
+            ],
+            [
+              0,
+              200,
+              600
+            ],
+            [
+              12,
+              0,
+              570
+            ],
+            [
+              0,
+              0,
+              570
+            ],
+            [
+              12,
+              200,
+              0
+            ],
+            [
+              12,
+              200,
+              600
+            ],
+            [
+              0,
+              240,
+              555
+            ],
+            [
+              0,
+              225,
+              585
+            ],
+            [
+              0,
+              210,
+              555
+            ],
+            [
+              12,
+              210,
+              540
+            ],
+            [
+              12,
+              210,
+              570
+            ],
+            [
+              12,
+              240,
+              555
+            ],
+            [
+              0,
+              240,
+              45
+            ],
+            [
+              0,
+              225,
+              15
+            ],
+            [
+              0,
+              210,
+              45
+            ],
+            [
+              0,
+              210,
+              540
+            ],
+            [
+              0,
+              240,
+              540
+            ],
+            [
+              0,
+              240,
+              510
+            ],
+            [
+              0,
+              210,
+              510
+            ],
+            [
+              0,
+              210,
+              90
+            ],
+            [
+              0,
+              210,
+              60
+            ],
+            [
+              0,
+              225,
+              60
+            ],
+            [
+              0,
+              225,
+              90
+            ],
+            [
+              0,
+              240,
+              90
+            ],
+            [
+              0,
+              240,
+              60
+            ],
+            [
+              0,
+              210,
+              440
+            ],
+            [
+              0,
+              240,
+              440
+            ],
+            [
+              0,
+              240,
+              410
+            ],
+            [
+              0,
+              210,
+              410
+            ],
+            [
+              0,
+              210,
+              395
+            ],
+            [
+              0,
+              225,
+              395
+            ],
+            [
+              0,
+              240,
+              395
+            ],
+            [
+              0,
+              240,
+              365
+            ],
+            [
+              0,
+              210,
+              365
+            ],
+            [
+              0,
+              225,
+              365
+            ],
+            [
+              0,
+              210,
+              350
+            ],
+            [
+              0,
+              225,
+              350
+            ],
+            [
+              0,
+              240,
+              350
+            ],
+            [
+              0,
+              240,
+              320
+            ],
+            [
+              0,
+              210,
+              320
+            ],
+            [
+              0,
+              225,
+              335
+            ],
+            [
+              0,
+              240,
+              305
+            ],
+            [
+              0,
+              240,
+              290
+            ],
+            [
+              0,
+              240,
+              275
+            ],
+            [
+              0,
+              210,
+              305
+            ],
+            [
+              0,
+              210,
+              290
+            ],
+            [
+              0,
+              210,
+              275
+            ],
+            [
+              0,
+              210,
+              245
+            ],
+            [
+              0,
+              240,
+              260
+            ],
+            [
+              0,
+              240,
+              230
+            ],
+            [
+              0,
+              240,
+              245
+            ],
+            [
+              0,
+              210,
+              215
+            ],
+            [
+              0,
+              225,
+              215
+            ],
+            [
+              0,
+              240,
+              200
+            ],
+            [
+              0,
+              225,
+              185
+            ],
+            [
+              0,
+              210,
+              185
+            ],
+            [
+              0,
+              240,
+              170
+            ],
+            [
+              0,
+              210,
+              170
+            ],
+            [
+              0,
+              210,
+              140
+            ]
+          ],
+          "viewGroups": [
+            {
+              "bounds": [
+                [
+                  -6,
+                  9000
+                ],
+                [
+                  -5000,
+                  8388608
+                ],
+                [
+                  -9000,
+                  9000
+                ]
+              ],
+              "faces": 11,
+              "lines": 36
+            },
+            {
+              "bounds": [
+                [
+                  -9000,
+                  -6
+                ],
+                [
+                  -5000,
+                  8388608
+                ],
+                [
+                  -9000,
+                  9000
+                ]
+              ],
+              "faces": 10,
+              "lines": 36
+            }
+          ]
+        },
+        "name": "Viewer within -6 \u2264 X < 9000, Y \u2265 -5000, -9000 \u2264 Z < 9000"
+      },
+      {
+        "id": "view-1",
+        "mesh": {
+          "alternates": {
+            "viewGroup": 2
+          },
+          "faces": [
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                16,
+                17,
+                14,
+                13
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                6,
+                7,
+                4,
+                5
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                5,
+                4,
+                13,
+                14
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                2,
+                18,
+                4,
+                7
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                11,
+                16,
+                13,
+                19
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 582,
+              "vertices": [
+                0,
+                9,
+                19,
+                18
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                25,
+                24,
+                23
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                1,
+                0,
+                2,
+                3
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                9,
+                10,
+                12,
+                11
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                0,
+                1,
+                10,
+                9
+              ]
+            }
+          ],
+          "geometryStart": 267950,
+          "lines": [
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                29,
+                30
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                30,
+                31
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                31,
+                32
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                33,
+                35
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                36,
+                38
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                34,
+                37
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                39,
+                42
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                40,
+                42
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                42,
+                41
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                43,
+                45
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                45,
+                46
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                45,
+                44
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                47,
+                48
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                48,
+                49
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                49,
+                50
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                51,
+                52
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                52,
+                53
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                51,
+                54
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                52,
+                55
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                53,
+                56
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                57,
+                58
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                58,
+                60
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                59,
+                60
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                61,
+                64
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                62,
+                64
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                64,
+                63
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                65,
+                67
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                67,
+                68
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                68,
+                70
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                66,
+                70
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                66,
+                69
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                71,
+                72
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                72,
+                73
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                71,
+                74
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                72,
+                75
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                73,
+                76
+              ]
+            }
+          ],
+          "sourceEnd": 268493,
+          "sourceStart": 267950,
+          "texts": [
+            {
+              "anchor": [
+                0,
+                210,
+                540
+              ],
+              "font": 0,
+              "plane": 128,
+              "text": "N         S"
+            },
+            {
+              "anchor": [
+                0,
+                210,
+                440
+              ],
+              "font": 0,
+              "plane": 128,
+              "text": "ORBITAL"
+            },
+            {
+              "anchor": [
+                12,
+                210,
+                40
+              ],
+              "font": 0,
+              "plane": 128,
+              "text": "CITY CENTRE"
+            }
+          ],
+          "vertices": [
+            [
+              12,
+              250,
+              0
+            ],
+            [
+              0,
+              250,
+              0
+            ],
+            [
+              12,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              12,
+              200,
+              30
+            ],
+            [
+              0,
+              200,
+              30
+            ],
+            [
+              0,
+              0,
+              30
+            ],
+            [
+              12,
+              0,
+              30
+            ],
+            [
+              0,
+              200,
+              0
+            ],
+            [
+              12,
+              250,
+              600
+            ],
+            [
+              0,
+              250,
+              600
+            ],
+            [
+              12,
+              0,
+              600
+            ],
+            [
+              0,
+              0,
+              600
+            ],
+            [
+              12,
+              200,
+              570
+            ],
+            [
+              0,
+              200,
+              570
+            ],
+            [
+              0,
+              200,
+              600
+            ],
+            [
+              12,
+              0,
+              570
+            ],
+            [
+              0,
+              0,
+              570
+            ],
+            [
+              12,
+              200,
+              0
+            ],
+            [
+              12,
+              200,
+              600
+            ],
+            [
+              0,
+              240,
+              555
+            ],
+            [
+              0,
+              225,
+              585
+            ],
+            [
+              0,
+              210,
+              555
+            ],
+            [
+              12,
+              210,
+              540
+            ],
+            [
+              12,
+              210,
+              570
+            ],
+            [
+              12,
+              240,
+              555
+            ],
+            [
+              0,
+              240,
+              45
+            ],
+            [
+              0,
+              225,
+              15
+            ],
+            [
+              0,
+              210,
+              45
+            ],
+            [
+              12,
+              210,
+              70
+            ],
+            [
+              12,
+              210,
+              40
+            ],
+            [
+              12,
+              240,
+              40
+            ],
+            [
+              12,
+              240,
+              70
+            ],
+            [
+              12,
+              240,
+              85
+            ],
+            [
+              12,
+              240,
+              100
+            ],
+            [
+              12,
+              240,
+              115
+            ],
+            [
+              12,
+              210,
+              85
+            ],
+            [
+              12,
+              210,
+              100
+            ],
+            [
+              12,
+              210,
+              115
+            ],
+            [
+              12,
+              210,
+              145
+            ],
+            [
+              12,
+              240,
+              130
+            ],
+            [
+              12,
+              240,
+              160
+            ],
+            [
+              12,
+              240,
+              145
+            ],
+            [
+              12,
+              240,
+              175
+            ],
+            [
+              12,
+              210,
+              190
+            ],
+            [
+              12,
+              225,
+              190
+            ],
+            [
+              12,
+              240,
+              205
+            ],
+            [
+              12,
+              210,
+              295
+            ],
+            [
+              12,
+              210,
+              265
+            ],
+            [
+              12,
+              240,
+              265
+            ],
+            [
+              12,
+              240,
+              295
+            ],
+            [
+              12,
+              210,
+              310
+            ],
+            [
+              12,
+              225,
+              310
+            ],
+            [
+              12,
+              240,
+              310
+            ],
+            [
+              12,
+              210,
+              340
+            ],
+            [
+              12,
+              225,
+              325
+            ],
+            [
+              12,
+              240,
+              340
+            ],
+            [
+              12,
+              210,
+              355
+            ],
+            [
+              12,
+              240,
+              355
+            ],
+            [
+              12,
+              240,
+              385
+            ],
+            [
+              12,
+              210,
+              385
+            ],
+            [
+              12,
+              210,
+              415
+            ],
+            [
+              12,
+              240,
+              400
+            ],
+            [
+              12,
+              240,
+              430
+            ],
+            [
+              12,
+              240,
+              415
+            ],
+            [
+              12,
+              210,
+              445
+            ],
+            [
+              12,
+              225,
+              445
+            ],
+            [
+              12,
+              240,
+              445
+            ],
+            [
+              12,
+              240,
+              475
+            ],
+            [
+              12,
+              210,
+              475
+            ],
+            [
+              12,
+              225,
+              475
+            ],
+            [
+              12,
+              210,
+              490
+            ],
+            [
+              12,
+              225,
+              490
+            ],
+            [
+              12,
+              240,
+              490
+            ],
+            [
+              12,
+              210,
+              520
+            ],
+            [
+              12,
+              225,
+              505
+            ],
+            [
+              12,
+              240,
+              520
+            ]
+          ],
+          "viewGroups": [
+            {
+              "bounds": [
+                [
+                  -6,
+                  9000
+                ],
+                [
+                  -5000,
+                  8388608
+                ],
+                [
+                  -9000,
+                  9000
+                ]
+              ],
+              "faces": 11,
+              "lines": 36
+            },
+            {
+              "bounds": [
+                [
+                  -9000,
+                  -6
+                ],
+                [
+                  -5000,
+                  8388608
+                ],
+                [
+                  -9000,
+                  9000
+                ]
+              ],
+              "faces": 10,
+              "lines": 36
+            }
+          ]
+        },
+        "name": "Viewer within -9000 \u2264 X < -6, Y \u2265 -5000, -9000 \u2264 Z < 9000"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

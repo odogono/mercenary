@@ -1,0 +1,1387 @@
+{
+  "model": {
+    "conditions": [
+      "articulation angle ($7888)"
+    ],
+    "evidence": [],
+    "id": "object-037e24",
+    "instanceOrientation": {
+      "angleBiasByte": 0,
+      "modeByte": 255,
+      "rotation": "articulated"
+    },
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "BLUE BEACON LOCR",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      53
+    ],
+    "sourceAddress": 228900,
+    "status": "decoded",
+    "supportTop": null,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "articulation": {
+            "angle": "$7888",
+            "axis": 0,
+            "pivot": [
+              0,
+              25,
+              28
+            ],
+            "vertices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          },
+          "faces": [
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                5,
+                4,
+                3
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                7,
+                6,
+                9,
+                10
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                6,
+                8,
+                11,
+                9
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                8,
+                7,
+                10,
+                11
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 582,
+              "vertices": [
+                1,
+                0,
+                3,
+                4
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                0,
+                2,
+                5,
+                3
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                2,
+                1,
+                4,
+                5
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                0,
+                1,
+                2
+              ]
+            }
+          ],
+          "geometryStart": 228910,
+          "lines": [],
+          "sourceEnd": 229042,
+          "sourceStart": 228900,
+          "vertices": [
+            [
+              -10,
+              40,
+              20
+            ],
+            [
+              0,
+              40,
+              40
+            ],
+            [
+              10,
+              40,
+              20
+            ],
+            [
+              -10,
+              25,
+              20
+            ],
+            [
+              0,
+              25,
+              40
+            ],
+            [
+              10,
+              25,
+              20
+            ],
+            [
+              -2,
+              25,
+              26
+            ],
+            [
+              0,
+              25,
+              30
+            ],
+            [
+              2,
+              25,
+              26
+            ],
+            [
+              -2,
+              0,
+              26
+            ],
+            [
+              0,
+              0,
+              30
+            ],
+            [
+              2,
+              0,
+              26
+            ]
+          ]
+        },
+        "name": "Articulation angle $00"
+      },
+      {
+        "id": "angle-20",
+        "mesh": {
+          "articulation": {
+            "angle": "$7888",
+            "axis": 0,
+            "pivot": [
+              0,
+              25,
+              28
+            ],
+            "vertices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          },
+          "faces": [
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                5,
+                4,
+                3
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                7,
+                6,
+                9,
+                10
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                6,
+                8,
+                11,
+                9
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                8,
+                7,
+                10,
+                11
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 582,
+              "vertices": [
+                1,
+                0,
+                3,
+                4
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                0,
+                2,
+                5,
+                3
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                2,
+                1,
+                4,
+                5
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                0,
+                1,
+                2
+              ]
+            }
+          ],
+          "geometryStart": 228910,
+          "lines": [],
+          "sourceEnd": 229042,
+          "sourceStart": 228900,
+          "vertices": [
+            [
+              -14,
+              40,
+              28
+            ],
+            [
+              8,
+              40,
+              36
+            ],
+            [
+              0,
+              40,
+              14
+            ],
+            [
+              -14,
+              25,
+              28
+            ],
+            [
+              8,
+              25,
+              36
+            ],
+            [
+              0,
+              25,
+              14
+            ],
+            [
+              -2,
+              25,
+              26
+            ],
+            [
+              0,
+              25,
+              30
+            ],
+            [
+              2,
+              25,
+              26
+            ],
+            [
+              -2,
+              0,
+              26
+            ],
+            [
+              0,
+              0,
+              30
+            ],
+            [
+              2,
+              0,
+              26
+            ]
+          ]
+        },
+        "name": "Articulation angle $20"
+      },
+      {
+        "id": "angle-40",
+        "mesh": {
+          "articulation": {
+            "angle": "$7888",
+            "axis": 0,
+            "pivot": [
+              0,
+              25,
+              28
+            ],
+            "vertices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          },
+          "faces": [
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                5,
+                4,
+                3
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                7,
+                6,
+                9,
+                10
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                6,
+                8,
+                11,
+                9
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                8,
+                7,
+                10,
+                11
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 582,
+              "vertices": [
+                1,
+                0,
+                3,
+                4
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                0,
+                2,
+                5,
+                3
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                2,
+                1,
+                4,
+                5
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                0,
+                1,
+                2
+              ]
+            }
+          ],
+          "geometryStart": 228910,
+          "lines": [],
+          "sourceEnd": 229042,
+          "sourceStart": 228900,
+          "vertices": [
+            [
+              -8,
+              40,
+              36
+            ],
+            [
+              10,
+              40,
+              28
+            ],
+            [
+              -8,
+              40,
+              18
+            ],
+            [
+              -8,
+              25,
+              36
+            ],
+            [
+              10,
+              25,
+              28
+            ],
+            [
+              -8,
+              25,
+              18
+            ],
+            [
+              -2,
+              25,
+              26
+            ],
+            [
+              0,
+              25,
+              30
+            ],
+            [
+              2,
+              25,
+              26
+            ],
+            [
+              -2,
+              0,
+              26
+            ],
+            [
+              0,
+              0,
+              30
+            ],
+            [
+              2,
+              0,
+              26
+            ]
+          ]
+        },
+        "name": "Articulation angle $40"
+      },
+      {
+        "id": "angle-60",
+        "mesh": {
+          "articulation": {
+            "angle": "$7888",
+            "axis": 0,
+            "pivot": [
+              0,
+              25,
+              28
+            ],
+            "vertices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          },
+          "faces": [
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                5,
+                4,
+                3
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                7,
+                6,
+                9,
+                10
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                6,
+                8,
+                11,
+                9
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                8,
+                7,
+                10,
+                11
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 582,
+              "vertices": [
+                1,
+                0,
+                3,
+                4
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                0,
+                2,
+                5,
+                3
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                2,
+                1,
+                4,
+                5
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                0,
+                1,
+                2
+              ]
+            }
+          ],
+          "geometryStart": 228910,
+          "lines": [],
+          "sourceEnd": 229042,
+          "sourceStart": 228900,
+          "vertices": [
+            [
+              0,
+              40,
+              40
+            ],
+            [
+              8,
+              40,
+              18
+            ],
+            [
+              -14,
+              40,
+              26
+            ],
+            [
+              0,
+              25,
+              40
+            ],
+            [
+              8,
+              25,
+              18
+            ],
+            [
+              -14,
+              25,
+              26
+            ],
+            [
+              -2,
+              25,
+              26
+            ],
+            [
+              0,
+              25,
+              30
+            ],
+            [
+              2,
+              25,
+              26
+            ],
+            [
+              -2,
+              0,
+              26
+            ],
+            [
+              0,
+              0,
+              30
+            ],
+            [
+              2,
+              0,
+              26
+            ]
+          ]
+        },
+        "name": "Articulation angle $60"
+      },
+      {
+        "id": "angle-80",
+        "mesh": {
+          "articulation": {
+            "angle": "$7888",
+            "axis": 0,
+            "pivot": [
+              0,
+              25,
+              28
+            ],
+            "vertices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          },
+          "faces": [
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                5,
+                4,
+                3
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                7,
+                6,
+                9,
+                10
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                6,
+                8,
+                11,
+                9
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                8,
+                7,
+                10,
+                11
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 582,
+              "vertices": [
+                1,
+                0,
+                3,
+                4
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                0,
+                2,
+                5,
+                3
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                2,
+                1,
+                4,
+                5
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                0,
+                1,
+                2
+              ]
+            }
+          ],
+          "geometryStart": 228910,
+          "lines": [],
+          "sourceEnd": 229042,
+          "sourceStart": 228900,
+          "vertices": [
+            [
+              10,
+              40,
+              36
+            ],
+            [
+              0,
+              40,
+              16
+            ],
+            [
+              -10,
+              40,
+              36
+            ],
+            [
+              10,
+              25,
+              36
+            ],
+            [
+              0,
+              25,
+              16
+            ],
+            [
+              -10,
+              25,
+              36
+            ],
+            [
+              -2,
+              25,
+              26
+            ],
+            [
+              0,
+              25,
+              30
+            ],
+            [
+              2,
+              25,
+              26
+            ],
+            [
+              -2,
+              0,
+              26
+            ],
+            [
+              0,
+              0,
+              30
+            ],
+            [
+              2,
+              0,
+              26
+            ]
+          ]
+        },
+        "name": "Articulation angle $80"
+      },
+      {
+        "id": "angle-a0",
+        "mesh": {
+          "articulation": {
+            "angle": "$7888",
+            "axis": 0,
+            "pivot": [
+              0,
+              25,
+              28
+            ],
+            "vertices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          },
+          "faces": [
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                5,
+                4,
+                3
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                7,
+                6,
+                9,
+                10
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                6,
+                8,
+                11,
+                9
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                8,
+                7,
+                10,
+                11
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 582,
+              "vertices": [
+                1,
+                0,
+                3,
+                4
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                0,
+                2,
+                5,
+                3
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                2,
+                1,
+                4,
+                5
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                0,
+                1,
+                2
+              ]
+            }
+          ],
+          "geometryStart": 228910,
+          "lines": [],
+          "sourceEnd": 229042,
+          "sourceStart": 228900,
+          "vertices": [
+            [
+              12,
+              40,
+              26
+            ],
+            [
+              -10,
+              40,
+              18
+            ],
+            [
+              -2,
+              40,
+              40
+            ],
+            [
+              12,
+              25,
+              26
+            ],
+            [
+              -10,
+              25,
+              18
+            ],
+            [
+              -2,
+              25,
+              40
+            ],
+            [
+              -2,
+              25,
+              26
+            ],
+            [
+              0,
+              25,
+              30
+            ],
+            [
+              2,
+              25,
+              26
+            ],
+            [
+              -2,
+              0,
+              26
+            ],
+            [
+              0,
+              0,
+              30
+            ],
+            [
+              2,
+              0,
+              26
+            ]
+          ]
+        },
+        "name": "Articulation angle $A0"
+      },
+      {
+        "id": "angle-c0",
+        "mesh": {
+          "articulation": {
+            "angle": "$7888",
+            "axis": 0,
+            "pivot": [
+              0,
+              25,
+              28
+            ],
+            "vertices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          },
+          "faces": [
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                5,
+                4,
+                3
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                7,
+                6,
+                9,
+                10
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                6,
+                8,
+                11,
+                9
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                8,
+                7,
+                10,
+                11
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 582,
+              "vertices": [
+                1,
+                0,
+                3,
+                4
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                0,
+                2,
+                5,
+                3
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                2,
+                1,
+                4,
+                5
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                0,
+                1,
+                2
+              ]
+            }
+          ],
+          "geometryStart": 228910,
+          "lines": [],
+          "sourceEnd": 229042,
+          "sourceStart": 228900,
+          "vertices": [
+            [
+              8,
+              40,
+              18
+            ],
+            [
+              -12,
+              40,
+              28
+            ],
+            [
+              8,
+              40,
+              38
+            ],
+            [
+              8,
+              25,
+              18
+            ],
+            [
+              -12,
+              25,
+              28
+            ],
+            [
+              8,
+              25,
+              38
+            ],
+            [
+              -2,
+              25,
+              26
+            ],
+            [
+              0,
+              25,
+              30
+            ],
+            [
+              2,
+              25,
+              26
+            ],
+            [
+              -2,
+              0,
+              26
+            ],
+            [
+              0,
+              0,
+              30
+            ],
+            [
+              2,
+              0,
+              26
+            ]
+          ]
+        },
+        "name": "Articulation angle $C0"
+      },
+      {
+        "id": "angle-e0",
+        "mesh": {
+          "articulation": {
+            "angle": "$7888",
+            "axis": 0,
+            "pivot": [
+              0,
+              25,
+              28
+            ],
+            "vertices": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          },
+          "faces": [
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                5,
+                4,
+                3
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                7,
+                6,
+                9,
+                10
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                6,
+                8,
+                11,
+                9
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                8,
+                7,
+                10,
+                11
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 582,
+              "vertices": [
+                1,
+                0,
+                3,
+                4
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                0,
+                2,
+                5,
+                3
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                2,
+                1,
+                4,
+                5
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                0,
+                1,
+                2
+              ]
+            }
+          ],
+          "geometryStart": 228910,
+          "lines": [],
+          "sourceEnd": 229042,
+          "sourceStart": 228900,
+          "vertices": [
+            [
+              -2,
+              40,
+              14
+            ],
+            [
+              -10,
+              40,
+              36
+            ],
+            [
+              12,
+              40,
+              28
+            ],
+            [
+              -2,
+              25,
+              14
+            ],
+            [
+              -10,
+              25,
+              36
+            ],
+            [
+              12,
+              25,
+              28
+            ],
+            [
+              -2,
+              25,
+              26
+            ],
+            [
+              0,
+              25,
+              30
+            ],
+            [
+              2,
+              25,
+              26
+            ],
+            [
+              -2,
+              0,
+              26
+            ],
+            [
+              0,
+              0,
+              30
+            ],
+            [
+              2,
+              0,
+              26
+            ]
+          ]
+        },
+        "name": "Articulation angle $E0"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

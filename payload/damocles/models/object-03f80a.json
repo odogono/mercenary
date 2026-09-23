@@ -1,0 +1,172 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-03f80a",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "MUSIC STAND",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      291
+    ],
+    "sourceAddress": 260106,
+    "status": "decoded",
+    "supportTop": 40,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [],
+          "geometryStart": 260106,
+          "lines": [
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                0,
+                4
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                1,
+                4
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                2,
+                4
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                3,
+                5
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                6,
+                7
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                7,
+                8
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                8,
+                9
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                9,
+                6
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                6,
+                8
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                7,
+                9
+              ]
+            }
+          ],
+          "sourceEnd": 260212,
+          "sourceStart": 260106,
+          "vertices": [
+            [
+              -10,
+              0,
+              -10
+            ],
+            [
+              0,
+              0,
+              10
+            ],
+            [
+              10,
+              0,
+              -10
+            ],
+            [
+              0,
+              5,
+              0
+            ],
+            [
+              0,
+              15,
+              0
+            ],
+            [
+              0,
+              35,
+              0
+            ],
+            [
+              -10,
+              30,
+              -5
+            ],
+            [
+              -10,
+              40,
+              5
+            ],
+            [
+              10,
+              40,
+              5
+            ],
+            [
+              10,
+              30,
+              -5
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

@@ -56,16 +56,24 @@ describe('the localhost Data Payload route', () => {
     }
   });
 
-  test('serves one safe nested JSON segment and no deeper', async () => {
+  test('serves two safe nested JSON segments and no deeper', async () => {
     const root = await mkdtemp(join(tmpdir(), 'mercenary-payload-route-'));
     try {
-      await mkdir(join(root, 'damocles'));
+      await mkdir(join(root, 'damocles/models'), { recursive: true });
       await writeFile(join(root, 'damocles/system.json'), '{}');
-      expect(
-        (await payloadResponse('/payload/damocles/system.json', root))?.status
-      ).toBe(200);
+      await writeFile(join(root, 'damocles/models/object-041b1e.json'), '{}');
       for (const path of [
-        '/payload/damocles/nested/system.json',
+        '/payload/damocles/system.json',
+        '/payload/damocles/models/object-041b1e.json'
+      ]) {
+        expect((await payloadResponse(path, root))?.status).toBe(200);
+      }
+      for (const path of [
+        '/payload/damocles/models/nested/object-041b1e.json',
+        '/payload/damocles/models/object_041b1e.json',
+        '/payload/damocles/models/Object-041b1e.json',
+        '/payload/damocles/models/-041b1e.json',
+        '/payload/damocles/models/..json',
         '/payload/damocles/%2e%2e/system.json',
         '/payload/Damocles/system.json'
       ]) {

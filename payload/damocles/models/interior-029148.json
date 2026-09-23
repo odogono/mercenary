@@ -1,0 +1,645 @@
+{
+  "model": {
+    "detailSelection": [
+      {
+        "boxes": [
+          {
+            "bounds": [
+              [
+                -32768,
+                32767
+              ],
+              [
+                160,
+                32767
+              ],
+              [
+                -32768,
+                32767
+              ]
+            ],
+            "records": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14
+            ]
+          }
+        ],
+        "default": [
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ]
+      },
+      {
+        "boxes": [
+          {
+            "bounds": [
+              [
+                0,
+                460
+              ],
+              [
+                0,
+                160
+              ],
+              [
+                120,
+                280
+              ]
+            ],
+            "records": []
+          },
+          {
+            "bounds": [
+              [
+                0,
+                240
+              ],
+              [
+                0,
+                160
+              ],
+              [
+                0,
+                120
+              ]
+            ],
+            "records": []
+          },
+          {
+            "bounds": [
+              [
+                280,
+                370
+              ],
+              [
+                0,
+                128
+              ],
+              [
+                120,
+                130
+              ]
+            ],
+            "records": []
+          },
+          {
+            "bounds": [
+              [
+                240,
+                460
+              ],
+              [
+                -32768,
+                32767
+              ],
+              [
+                0,
+                120
+              ]
+            ],
+            "records": [
+              9,
+              10,
+              11,
+              8,
+              15,
+              16,
+              17,
+              4
+            ]
+          },
+          {
+            "bounds": [
+              [
+                0,
+                460
+              ],
+              [
+                -32768,
+                32767
+              ],
+              [
+                -32768,
+                0
+              ]
+            ],
+            "records": [
+              9,
+              10,
+              11,
+              8,
+              13,
+              15,
+              16,
+              17,
+              4,
+              18,
+              19,
+              20,
+              21
+            ]
+          },
+          {
+            "bounds": [
+              [
+                0,
+                460
+              ],
+              [
+                -32768,
+                32767
+              ],
+              [
+                280,
+                32767
+              ]
+            ],
+            "records": [
+              13,
+              9,
+              12
+            ]
+          },
+          {
+            "bounds": [
+              [
+                460,
+                32767
+              ],
+              [
+                -32768,
+                32767
+              ],
+              [
+                -32768,
+                32767
+              ]
+            ],
+            "records": [
+              8,
+              10,
+              9,
+              12,
+              11,
+              4,
+              5,
+              15,
+              16,
+              17,
+              18,
+              19,
+              20,
+              21,
+              6
+            ]
+          }
+        ],
+        "default": [
+          10,
+          8,
+          11,
+          12,
+          13,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          7,
+          6
+        ]
+      }
+    ],
+    "evidence": [],
+    "id": "interior-029148",
+    "kind": "interior",
+    "linkedInstances": [],
+    "name": "Building detail 35",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      35
+    ],
+    "sourceAddress": 168264,
+    "status": "partial",
+    "variants": [
+      {
+        "id": "palette-49",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 0,
+              "vertices": [
+                4,
+                3,
+                19,
+                22
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32914,
+              "sourceIndex": 1,
+              "vertices": [
+                15,
+                16,
+                17,
+                18
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 32908,
+              "sourceIndex": 2,
+              "vertices": [
+                6,
+                5,
+                21,
+                23
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 3,
+              "vertices": [
+                11,
+                12,
+                13,
+                14
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32904,
+              "sourceIndex": 4,
+              "vertices": [
+                5,
+                4,
+                22,
+                21
+              ]
+            },
+            {
+              "colour": "#664444",
+              "sourceColour": 32910,
+              "sourceIndex": 5,
+              "vertices": [
+                3,
+                2,
+                20,
+                19
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 32908,
+              "sourceIndex": 6,
+              "vertices": [
+                2,
+                1,
+                24,
+                20
+              ]
+            },
+            {
+              "colour": "#664444",
+              "sourceColour": 32910,
+              "sourceIndex": 7,
+              "vertices": [
+                1,
+                6,
+                23,
+                24
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32902,
+              "sourceIndex": 8,
+              "vertices": [
+                7,
+                8,
+                4,
+                5
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 9,
+              "vertices": [
+                0,
+                10,
+                2,
+                3
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 10,
+              "vertices": [
+                8,
+                0,
+                3,
+                4
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32896,
+              "sourceIndex": 11,
+              "vertices": [
+                5,
+                6,
+                7
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 12,
+              "vertices": [
+                10,
+                9,
+                1,
+                2
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 13,
+              "vertices": [
+                1,
+                9,
+                7,
+                6
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32896,
+              "sourceIndex": 14,
+              "vertices": [
+                0,
+                8,
+                9,
+                10
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 15,
+              "vertices": [
+                4,
+                3,
+                17,
+                16
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 16,
+              "vertices": [
+                4,
+                16,
+                15,
+                22
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 17,
+              "vertices": [
+                18,
+                17,
+                3,
+                19
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 32908,
+              "sourceIndex": 18,
+              "vertices": [
+                6,
+                5,
+                12,
+                11
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 32908,
+              "sourceIndex": 19,
+              "vertices": [
+                6,
+                11,
+                14,
+                23
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 32908,
+              "sourceIndex": 20,
+              "vertices": [
+                23,
+                14,
+                13,
+                21
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 32908,
+              "sourceIndex": 21,
+              "vertices": [
+                13,
+                12,
+                5,
+                21
+              ]
+            }
+          ],
+          "geometryStart": 168264,
+          "lines": [],
+          "recordCount": 22,
+          "sourceEnd": 168571,
+          "sourceStart": 168264,
+          "vertices": [
+            [
+              340,
+              250,
+              160
+            ],
+            [
+              0,
+              160,
+              280
+            ],
+            [
+              460,
+              160,
+              280
+            ],
+            [
+              460,
+              160,
+              120
+            ],
+            [
+              240,
+              160,
+              120
+            ],
+            [
+              240,
+              160,
+              0
+            ],
+            [
+              0,
+              160,
+              0
+            ],
+            [
+              120,
+              250,
+              50
+            ],
+            [
+              120,
+              250,
+              160
+            ],
+            [
+              120,
+              250,
+              240
+            ],
+            [
+              340,
+              250,
+              240
+            ],
+            [
+              50,
+              128,
+              0
+            ],
+            [
+              150,
+              128,
+              0
+            ],
+            [
+              150,
+              50,
+              0
+            ],
+            [
+              50,
+              50,
+              0
+            ],
+            [
+              290,
+              0,
+              120
+            ],
+            [
+              290,
+              128,
+              120
+            ],
+            [
+              370,
+              128,
+              120
+            ],
+            [
+              370,
+              0,
+              120
+            ],
+            [
+              460,
+              0,
+              120
+            ],
+            [
+              460,
+              0,
+              280
+            ],
+            [
+              240,
+              0,
+              0
+            ],
+            [
+              240,
+              0,
+              120
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              280
+            ]
+          ]
+        },
+        "name": "Structure-bound palette 49"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

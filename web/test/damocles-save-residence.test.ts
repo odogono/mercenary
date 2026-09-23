@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
 
-import { parseCatalogue, type Catalogue } from '../src/catalogue/data.ts';
+import { type Catalogue } from '../src/catalogue/data.ts';
 import {
   effectiveMessageRow,
   type DamoclesMessageId
@@ -33,13 +33,12 @@ import {
   presentedText,
   type DamoclesStrings
 } from '../src/damocles/strings.ts';
+import { loadCatalogue } from './fixtures/catalogue.ts';
 
 let catalogue: Catalogue;
 let strings: DamoclesStrings;
 beforeAll(async () => {
-  catalogue = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  catalogue = await loadCatalogue();
   strings = parseDamoclesStrings(
     await Bun.file('../payload/damocles/strings.json').json()
   );

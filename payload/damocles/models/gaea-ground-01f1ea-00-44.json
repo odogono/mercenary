@@ -1,0 +1,184 @@
+{
+  "model": {
+    "evidence": [
+      {
+        "claim": "Live GAEA per-cell ground/pad/road record at $1E000; this workspace overwrites the Eris first-world index.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-gaea-ur-city-workspace.md"
+      }
+    ],
+    "id": "gaea-ground-01f1ea-00-44",
+    "kind": "ground",
+    "linkedInstances": [
+      "gaea-chaldea-metropolis-ground-44"
+    ],
+    "name": "GAEA ground 68",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      544
+    ],
+    "sourceAddress": 127466,
+    "status": "decoded",
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#000000",
+              "doubleSided": true,
+              "sourceColour": 32768,
+              "sourceIndex": 0,
+              "vertices": [
+                0,
+                1,
+                2,
+                3
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sceneSlots": [
+                240,
+                244
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 1,
+              "vertices": [
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11
+              ]
+            }
+          ],
+          "lines": [
+            {
+              "colour": "#cccccc",
+              "sceneSlots": [
+                244
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 2,
+              "vertices": [
+                12,
+                13
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sceneSlots": [
+                240
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 3,
+              "vertices": [
+                14,
+                15
+              ]
+            }
+          ],
+          "sourceEnd": 127542,
+          "sourceStart": 127466,
+          "vertices": [
+            [
+              1000,
+              0,
+              -1500
+            ],
+            [
+              -500,
+              0,
+              -1500
+            ],
+            [
+              -500,
+              0,
+              1500
+            ],
+            [
+              1000,
+              0,
+              1500
+            ],
+            [
+              -32767,
+              0,
+              100
+            ],
+            [
+              0,
+              0,
+              100
+            ],
+            [
+              32767,
+              0,
+              100
+            ],
+            [
+              458752,
+              0,
+              0
+            ],
+            [
+              32767,
+              0,
+              -100
+            ],
+            [
+              0,
+              0,
+              -100
+            ],
+            [
+              -32767,
+              0,
+              -100
+            ],
+            [
+              -65536,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              -65536,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              458752,
+              0,
+              0
+            ]
+          ]
+        },
+        "name": "Recovered cell fill \u00b7 transform $00"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

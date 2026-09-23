@@ -1,0 +1,43 @@
+{
+  "model": {
+    "evidence": [
+      {
+        "claim": "Empty plan and wall list at $01A618; linked building detail 1 at $02620E is an immediate $8000 vertex terminator. Nineteen Eris cells share this placeholder; they have no recovered building mesh.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-eris-structure-01a618.md"
+      }
+    ],
+    "id": "structure-01a618",
+    "kind": "structure",
+    "linkedInstances": [],
+    "name": "Structure 100",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "Empty surface record: no plan vertices or walls. The linked building detail is itself an intentionally empty record, so there is no detail geometry to place. That empty detail carries no visibility groups either, so this record keeps no structure selector and its region queues are not retained.",
+    "recordClass": "empty",
+    "relatedModels": [
+      "interior-02620e"
+    ],
+    "sceneColours": [
+      {
+        "colour": "#eeee22",
+        "sourceColour": 32898
+      },
+      {
+        "colour": "#66aaaa",
+        "sourceColour": 32914
+      }
+    ],
+    "slots": [
+      100
+    ],
+    "sourceAddress": 108056,
+    "status": "decoded",
+    "variants": []
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

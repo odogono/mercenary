@@ -1,0 +1,143 @@
+{
+  "model": {
+    "evidence": [
+      {
+        "claim": "Live METIS per-cell ground/pad/road record at $1E000; this workspace overwrites the Eris first-world index.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-non-eris-workspaces.md"
+      }
+    ],
+    "id": "metis-ground-01edf2-03-65",
+    "kind": "ground",
+    "linkedInstances": [
+      "metis-ground-65"
+    ],
+    "name": "METIS ground 101",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "Ground $6000 vector text is copied into the frame stream untransformed, and this cell has a nonzero orientation.",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      716
+    ],
+    "sourceAddress": 126450,
+    "status": "partial",
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sceneSlots": [
+                240
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 0,
+              "vertices": [
+                0,
+                1,
+                2,
+                3,
+                4
+              ]
+            },
+            {
+              "colour": "#000066",
+              "doubleSided": true,
+              "sourceColour": 3,
+              "sourceIndex": 2,
+              "vertices": [
+                7,
+                8,
+                9,
+                10
+              ]
+            }
+          ],
+          "lines": [
+            {
+              "colour": "#cccccc",
+              "sceneSlots": [
+                240
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 1,
+              "vertices": [
+                5,
+                6
+              ]
+            }
+          ],
+          "sourceEnd": 126511,
+          "sourceStart": 126450,
+          "vertices": [
+            [
+              -32767,
+              0,
+              100
+            ],
+            [
+              100,
+              0,
+              100
+            ],
+            [
+              100,
+              0,
+              -100
+            ],
+            [
+              -32767,
+              0,
+              -100
+            ],
+            [
+              -327680,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              -327680,
+              0,
+              0
+            ],
+            [
+              100,
+              0,
+              -2700
+            ],
+            [
+              -5150,
+              0,
+              -2700
+            ],
+            [
+              -5150,
+              0,
+              700
+            ],
+            [
+              100,
+              0,
+              700
+            ]
+          ]
+        },
+        "name": "Recovered cell fill \u00b7 transform $03"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

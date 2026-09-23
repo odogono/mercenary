@@ -1,0 +1,111 @@
+{
+  "model": {
+    "evidence": [
+      {
+        "claim": "Live PAN per-cell ground/pad/road record at $1E000; this workspace overwrites the Eris first-world index.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-non-eris-workspaces.md"
+      }
+    ],
+    "id": "pan-ground-01e796-03-34",
+    "kind": "ground",
+    "linkedInstances": [
+      "pan-ground-34"
+    ],
+    "name": "PAN ground 52",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      768
+    ],
+    "sourceAddress": 124822,
+    "status": "decoded",
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sceneSlots": [
+                240
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 0,
+              "vertices": [
+                0,
+                1,
+                2,
+                3,
+                4
+              ]
+            }
+          ],
+          "lines": [
+            {
+              "colour": "#cccccc",
+              "sceneSlots": [
+                240
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 1,
+              "vertices": [
+                5,
+                6
+              ]
+            }
+          ],
+          "sourceEnd": 124860,
+          "sourceStart": 124822,
+          "vertices": [
+            [
+              -32767,
+              0,
+              100
+            ],
+            [
+              100,
+              0,
+              100
+            ],
+            [
+              100,
+              0,
+              -100
+            ],
+            [
+              -32767,
+              0,
+              -100
+            ],
+            [
+              -262144,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              -262144,
+              0,
+              0
+            ]
+          ]
+        },
+        "name": "Recovered cell fill \u00b7 transform $03"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

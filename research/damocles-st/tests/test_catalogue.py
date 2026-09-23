@@ -2905,5 +2905,79 @@ class SettlementRoadNetworkTests(unittest.TestCase):
         self.assertEqual(reached, live_edges)
 
 
+
+class StoredLayoutTests(unittest.TestCase):
+    """The Catalogue is stored as one shared document and one file per Model (ADR 0048)."""
+
+    @staticmethod
+    def result():
+        def model(model_id, kind, **extra):
+            return {'id': model_id, 'kind': kind, 'name': model_id.upper(), 'recordClass': 'geometry',
+                    'slots': [1], 'status': 'decoded', 'variants': [], **extra}
+
+        def instance(instance_id, model_id, body=None, parent=None):
+            return {'id': instance_id, 'model': model_id,
+                    'location': None if body is None else {'body': body},
+                    'placement': None if parent is None else {'parent': parent}}
+
+        return {
+            'schemaVersion': 16, 'title': 'Damocles',
+            'source': {'programSha256': 'p' * 64, 'ramSha256': 'r' * 64, 'run': 'run-1',
+                       'authority': 'a', 'evidence': 'e'},
+            'bodies': [{'id': 'body-1'}, {'id': 'body-2'}, {'id': 'body-3'}],
+            'models': [
+                model('structure-b', 'structure', structureSelection={'detailModel': 'interior-c'}),
+                model('interior-c', 'interior'),
+                model('object-a', 'object'),
+                model('ground-d', 'ground'),
+                model('object-unplaced', 'object'),
+            ],
+            'instances': [
+                instance('i-structure', 'structure-b', body='body-1'),
+                instance('i-resident', 'object-a', parent='i-structure'),
+                instance('i-nowhere', 'object-unplaced'),
+            ],
+            'roadNetworks': [{'body': 'body-2', 'cells': [{'model': 'ground-d'}, {'model': None}]}],
+        }
+
+    def test_a_body_draws_its_instances_residents_roads_and_selected_interiors(self):
+        from damocleslab.catalogue import body_models
+        self.assertEqual(body_models(self.result()), {
+            'body-1': ['interior-c', 'object-a', 'structure-b'],
+            'body-2': ['ground-d'],
+            'body-3': [],
+        })
+
+    def test_the_shared_document_indexes_every_model_and_carries_none(self):
+        from damocleslab.catalogue import split_catalogue
+        document, files = split_catalogue(self.result())
+        self.assertNotIn('models', document)
+        self.assertEqual(document['schemaVersion'], 16)
+        self.assertEqual([entry['id'] for entry in document['modelIndex']],
+                         ['structure-b', 'interior-c', 'object-a', 'ground-d', 'object-unplaced'])
+        self.assertEqual(document['modelIndex'][3], {
+            'id': 'ground-d', 'kind': 'ground', 'name': 'GROUND-D', 'recordClass': 'geometry',
+            'slots': [1], 'status': 'decoded'})
+        self.assertEqual(document['bodies'][1], {'id': 'body-2', 'models': ['ground-d']})
+        self.assertEqual(set(files), {entry['id'] for entry in document['modelIndex']})
+        self.assertEqual(files['object-a'], {
+            'schemaVersion': 16, 'source': {'programSha256': 'p' * 64, 'run': 'run-1'},
+            'model': self.result()['models'][2]})
+
+    def test_writing_removes_model_files_the_run_no_longer_produces(self):
+        import tempfile
+        from damocleslab.catalogue import write_catalogue
+        with tempfile.TemporaryDirectory() as root:
+            output = Path(root) / 'catalogue.json'
+            (Path(root) / 'models').mkdir()
+            (Path(root) / 'models' / 'object-retired.json').write_text('{}')
+            write_catalogue(self.result(), output)
+            written = sorted(path.name for path in (Path(root) / 'models').iterdir())
+            self.assertEqual(written, ['ground-d.json', 'interior-c.json', 'object-a.json',
+                                       'object-unplaced.json', 'structure-b.json'])
+            self.assertTrue(output.read_text().endswith('}\n'))
+            self.assertNotIn('models', json.loads(output.read_text()))
+
+
 if __name__ == '__main__':
     unittest.main()

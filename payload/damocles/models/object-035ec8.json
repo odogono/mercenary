@@ -1,0 +1,251 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [
+      {
+        "claim": "Resident vehicle slot 3 pairs with key slot 181 by the recovered +178 table relation and matching source names.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-vip-limo.md"
+      }
+    ],
+    "id": "object-035ec8",
+    "instanceOrientation": {
+      "angleBiasByte": 128,
+      "modeByte": 64,
+      "rotation": "yaw"
+    },
+    "kind": "object",
+    "linkedInstances": [
+      "object-slot-181"
+    ],
+    "name": "EAGLE NINE S E",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      3
+    ],
+    "sourceAddress": 220872,
+    "status": "decoded",
+    "supportTop": null,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                1,
+                2,
+                3
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                0,
+                6,
+                7
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                1,
+                3,
+                8
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                0,
+                9,
+                6
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                13,
+                7,
+                6,
+                3,
+                2,
+                12
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                5,
+                6,
+                9
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                3,
+                4,
+                8
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                4,
+                5,
+                9,
+                8
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                0,
+                1,
+                8,
+                9
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                1,
+                11,
+                12,
+                2
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                0,
+                7,
+                13,
+                10
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                10,
+                13,
+                12,
+                11
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                1,
+                0,
+                10,
+                11
+              ]
+            }
+          ],
+          "geometryStart": 220876,
+          "lines": [],
+          "sourceEnd": 221053,
+          "sourceStart": 220872,
+          "vertices": [
+            [
+              0,
+              5,
+              300
+            ],
+            [
+              5,
+              5,
+              300
+            ],
+            [
+              160,
+              5,
+              -100
+            ],
+            [
+              50,
+              30,
+              -100
+            ],
+            [
+              5,
+              30,
+              -100
+            ],
+            [
+              0,
+              30,
+              -100
+            ],
+            [
+              -40,
+              30,
+              -100
+            ],
+            [
+              -150,
+              5,
+              -100
+            ],
+            [
+              5,
+              60,
+              -80
+            ],
+            [
+              0,
+              60,
+              -80
+            ],
+            [
+              0,
+              0,
+              300
+            ],
+            [
+              5,
+              0,
+              300
+            ],
+            [
+              160,
+              0,
+              -100
+            ],
+            [
+              -150,
+              0,
+              -100
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

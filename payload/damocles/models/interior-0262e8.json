@@ -1,0 +1,25 @@
+{
+  "model": {
+    "evidence": [],
+    "id": "interior-0262e8",
+    "kind": "interior",
+    "linkedInstances": [],
+    "name": "Building detail 2",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "Empty building-detail record: vertex list terminates immediately.",
+    "recordClass": "empty",
+    "relatedModels": [],
+    "slots": [
+      2
+    ],
+    "sourceAddress": 156392,
+    "status": "decoded",
+    "variants": []
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

@@ -13,9 +13,10 @@ import {
   surfaceAnchor,
   wrapImages
 } from '../src/atlas/surface.ts';
-import { parseCatalogue, type Catalogue } from '../src/catalogue/data.ts';
+import { type Catalogue } from '../src/catalogue/data.ts';
 import { SURFACE_CELLS } from '../src/damocles/world.ts';
 import { readGammaSystem } from '../src/flyover/documents.ts';
+import { loadCatalogue } from './fixtures/catalogue.ts';
 
 const FRAME = { height: 800, width: 1280 };
 const ASPECT = FRAME.height / FRAME.width;
@@ -27,9 +28,7 @@ const DAMOCLES = 29;
 
 let cached: Catalogue | undefined;
 const catalogue = async () => {
-  cached =
-    cached ??
-    parseCatalogue(await Bun.file('../payload/damocles/catalogue.json').json());
+  cached = cached ?? (await loadCatalogue());
   return cached;
 };
 

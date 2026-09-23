@@ -1,0 +1,708 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-0389ca",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "EXPLOSIVE-ARMED!",
+    "nameStatus": "verified",
+    "omissions": [
+      "liveText"
+    ],
+    "reason": "Object text draws the explosive readout at $CD14 as the disarmed '0.00' every pinned capture reads. $04DAFC formats that field as M.SS from the armed deadline less the clock at $793E, so the running countdown is live mission state and is not baked into the model.",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      257
+    ],
+    "sourceAddress": 231882,
+    "status": "partial",
+    "supportTop": 40,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                5,
+                6,
+                2,
+                1
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                7,
+                4,
+                0,
+                3
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                8,
+                9,
+                13,
+                12
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                9,
+                10,
+                14,
+                13
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                15,
+                14,
+                10,
+                11
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                8,
+                12,
+                15,
+                11
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                16,
+                17,
+                18,
+                19
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                20,
+                21,
+                25,
+                24
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                21,
+                22,
+                26,
+                25
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                27,
+                26,
+                22,
+                23
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                20,
+                24,
+                27,
+                23
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                28,
+                29,
+                33,
+                32
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                29,
+                30,
+                34,
+                33
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                35,
+                34,
+                30,
+                31
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                28,
+                32,
+                35,
+                31
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                36,
+                37,
+                41,
+                40
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                37,
+                38,
+                42,
+                41
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                43,
+                42,
+                38,
+                39
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                36,
+                40,
+                43,
+                39
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                44,
+                45,
+                46,
+                47
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                48,
+                49,
+                53,
+                52
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                49,
+                50,
+                54,
+                53
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                55,
+                54,
+                50,
+                51
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                48,
+                52,
+                55,
+                51
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                56,
+                57,
+                61,
+                60
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                57,
+                58,
+                62,
+                61
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                63,
+                62,
+                58,
+                59
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                56,
+                60,
+                63,
+                59
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                0,
+                1,
+                2,
+                3
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                4,
+                5,
+                1,
+                0
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                6,
+                7,
+                3,
+                2
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                7,
+                6,
+                5,
+                4
+              ]
+            }
+          ],
+          "geometryStart": 231882,
+          "lines": [],
+          "sourceEnd": 232014,
+          "sourceStart": 231882,
+          "texts": [
+            {
+              "anchor": [
+                -35,
+                10,
+                -10
+              ],
+              "countdown": true,
+              "font": 1,
+              "plane": 0,
+              "text": "0.00"
+            },
+            {
+              "anchor": [
+                35,
+                10,
+                10
+              ],
+              "countdown": true,
+              "font": 1,
+              "plane": 0,
+              "text": "0.00"
+            }
+          ],
+          "vertices": [
+            [
+              -40,
+              0,
+              20
+            ],
+            [
+              -40,
+              0,
+              -20
+            ],
+            [
+              40,
+              0,
+              -20
+            ],
+            [
+              40,
+              0,
+              20
+            ],
+            [
+              -40,
+              40,
+              20
+            ],
+            [
+              -40,
+              40,
+              -20
+            ],
+            [
+              40,
+              40,
+              -20
+            ],
+            [
+              40,
+              40,
+              20
+            ],
+            [
+              -32,
+              31,
+              -10
+            ],
+            [
+              -20,
+              31,
+              -10
+            ],
+            [
+              -20,
+              10,
+              -10
+            ],
+            [
+              -32,
+              10,
+              -10
+            ],
+            [
+              -29,
+              28,
+              -10
+            ],
+            [
+              -23,
+              28,
+              -10
+            ],
+            [
+              -23,
+              13,
+              -10
+            ],
+            [
+              -29,
+              13,
+              -10
+            ],
+            [
+              -11,
+              13,
+              -10
+            ],
+            [
+              -8,
+              13,
+              -10
+            ],
+            [
+              -8,
+              10,
+              -10
+            ],
+            [
+              -11,
+              10,
+              -10
+            ],
+            [
+              4,
+              31,
+              -10
+            ],
+            [
+              16,
+              31,
+              -10
+            ],
+            [
+              16,
+              10,
+              -10
+            ],
+            [
+              4,
+              10,
+              -10
+            ],
+            [
+              7,
+              28,
+              -10
+            ],
+            [
+              13,
+              28,
+              -10
+            ],
+            [
+              13,
+              13,
+              -10
+            ],
+            [
+              7,
+              13,
+              -10
+            ],
+            [
+              22,
+              31,
+              -10
+            ],
+            [
+              34,
+              31,
+              -10
+            ],
+            [
+              34,
+              10,
+              -10
+            ],
+            [
+              22,
+              10,
+              -10
+            ],
+            [
+              25,
+              28,
+              -10
+            ],
+            [
+              31,
+              28,
+              -10
+            ],
+            [
+              31,
+              13,
+              -10
+            ],
+            [
+              25,
+              13,
+              -10
+            ],
+            [
+              32,
+              31,
+              10
+            ],
+            [
+              20,
+              31,
+              10
+            ],
+            [
+              20,
+              10,
+              10
+            ],
+            [
+              32,
+              10,
+              10
+            ],
+            [
+              29,
+              28,
+              10
+            ],
+            [
+              23,
+              28,
+              10
+            ],
+            [
+              23,
+              13,
+              10
+            ],
+            [
+              29,
+              13,
+              10
+            ],
+            [
+              11,
+              13,
+              10
+            ],
+            [
+              8,
+              13,
+              10
+            ],
+            [
+              8,
+              10,
+              10
+            ],
+            [
+              11,
+              10,
+              10
+            ],
+            [
+              -4,
+              31,
+              10
+            ],
+            [
+              -16,
+              31,
+              10
+            ],
+            [
+              -16,
+              10,
+              10
+            ],
+            [
+              -4,
+              10,
+              10
+            ],
+            [
+              -7,
+              28,
+              10
+            ],
+            [
+              -13,
+              28,
+              10
+            ],
+            [
+              -13,
+              13,
+              10
+            ],
+            [
+              -7,
+              13,
+              10
+            ],
+            [
+              -22,
+              31,
+              10
+            ],
+            [
+              -34,
+              31,
+              10
+            ],
+            [
+              -34,
+              10,
+              10
+            ],
+            [
+              -22,
+              10,
+              10
+            ],
+            [
+              -25,
+              28,
+              10
+            ],
+            [
+              -31,
+              28,
+              10
+            ],
+            [
+              -31,
+              13,
+              10
+            ],
+            [
+              -25,
+              13,
+              10
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

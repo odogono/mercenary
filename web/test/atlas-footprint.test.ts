@@ -11,11 +11,11 @@ import {
 import {
   instanceById,
   modelById,
-  parseCatalogue,
   type Catalogue,
   type Instance,
   type Model
 } from '../src/catalogue/data.ts';
+import { loadCatalogue } from './fixtures/catalogue.ts';
 
 const FRAME = { height: 800, width: 1280 };
 const ASPECT = FRAME.height / FRAME.width;
@@ -28,9 +28,7 @@ const STATE_OFFICE = 'eris-surface-89';
 
 let cached: Catalogue | undefined;
 const catalogue = async () => {
-  cached =
-    cached ??
-    parseCatalogue(await Bun.file('../payload/damocles/catalogue.json').json());
+  cached = cached ?? (await loadCatalogue());
   return cached;
 };
 

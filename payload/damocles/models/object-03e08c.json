@@ -1,0 +1,888 @@
+{
+  "model": {
+    "conditions": [
+      "viewerPosition"
+    ],
+    "evidence": [],
+    "id": "object-03e08c",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "Object 156",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      156
+    ],
+    "sourceAddress": 254092,
+    "status": "decoded",
+    "supportTop": null,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "alternates": {
+            "viewGroup": 1
+          },
+          "faces": [
+            {
+              "colour": "#ee0000",
+              "sourceColour": 1792,
+              "vertices": [
+                15,
+                16,
+                17,
+                18,
+                19
+              ]
+            },
+            {
+              "colour": "#ee0000",
+              "sourceColour": 1792,
+              "vertices": [
+                15,
+                19,
+                20,
+                21
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                14,
+                8,
+                21
+              ]
+            },
+            {
+              "colour": "#aa0000",
+              "sourceColour": 1280,
+              "vertices": [
+                8,
+                15,
+                21
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                8,
+                16,
+                15
+              ]
+            },
+            {
+              "colour": "#aa0000",
+              "sourceColour": 1280,
+              "vertices": [
+                8,
+                9,
+                16
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                9,
+                10,
+                16
+              ]
+            },
+            {
+              "colour": "#aa0000",
+              "sourceColour": 1280,
+              "vertices": [
+                10,
+                17,
+                16
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                10,
+                11,
+                17
+              ]
+            },
+            {
+              "colour": "#aa0000",
+              "sourceColour": 1280,
+              "vertices": [
+                11,
+                18,
+                17
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                11,
+                19,
+                18
+              ]
+            },
+            {
+              "colour": "#aa0000",
+              "sourceColour": 1280,
+              "vertices": [
+                11,
+                12,
+                19
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                12,
+                13,
+                19
+              ]
+            },
+            {
+              "colour": "#aa0000",
+              "sourceColour": 1280,
+              "vertices": [
+                13,
+                20,
+                19
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                13,
+                21,
+                20
+              ]
+            },
+            {
+              "colour": "#aa0000",
+              "sourceColour": 1280,
+              "vertices": [
+                13,
+                14,
+                21
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                14,
+                13,
+                7
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                7,
+                8,
+                14
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                0,
+                8,
+                7
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                9,
+                8,
+                0
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                0,
+                1,
+                9
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                1,
+                2,
+                9
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                10,
+                9,
+                2
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                2,
+                3,
+                10
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                3,
+                4,
+                10
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                11,
+                10,
+                4
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                4,
+                5,
+                11
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                12,
+                11,
+                5
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                5,
+                6,
+                12
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                13,
+                12,
+                6
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                6,
+                7,
+                13
+              ]
+            }
+          ],
+          "geometryStart": 254096,
+          "lines": [],
+          "sourceEnd": 254641,
+          "sourceStart": 254092,
+          "vertices": [
+            [
+              0,
+              0,
+              20000
+            ],
+            [
+              20000,
+              0,
+              15000
+            ],
+            [
+              25000,
+              0,
+              5000
+            ],
+            [
+              20000,
+              0,
+              -10000
+            ],
+            [
+              10000,
+              0,
+              -20000
+            ],
+            [
+              -10000,
+              0,
+              -20000
+            ],
+            [
+              -25000,
+              0,
+              -5000
+            ],
+            [
+              -15000,
+              0,
+              15000
+            ],
+            [
+              0,
+              30000,
+              5000
+            ],
+            [
+              5000,
+              30000,
+              2000
+            ],
+            [
+              6000,
+              30000,
+              -3000
+            ],
+            [
+              0,
+              30000,
+              -6000
+            ],
+            [
+              -6000,
+              30000,
+              -5000
+            ],
+            [
+              -7000,
+              30000,
+              0
+            ],
+            [
+              -5000,
+              30000,
+              4000
+            ],
+            [
+              0,
+              15000,
+              2000
+            ],
+            [
+              2000,
+              15000,
+              1000
+            ],
+            [
+              3000,
+              15000,
+              -2000
+            ],
+            [
+              0,
+              15000,
+              -4000
+            ],
+            [
+              -3000,
+              15000,
+              -3000
+            ],
+            [
+              -4000,
+              15000,
+              0
+            ],
+            [
+              -3000,
+              15000,
+              2000
+            ]
+          ],
+          "viewGroups": [
+            {
+              "bounds": [
+                [
+                  -600,
+                  700
+                ],
+                [
+                  -8388607,
+                  -3000
+                ],
+                [
+                  -500,
+                  600
+                ]
+              ],
+              "faces": 31,
+              "lines": 0
+            }
+          ]
+        },
+        "name": "Viewer elsewhere (default list)"
+      },
+      {
+        "id": "view-0",
+        "mesh": {
+          "alternates": {
+            "viewGroup": 1
+          },
+          "faces": [
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                14,
+                13,
+                7
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                7,
+                8,
+                14
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                0,
+                8,
+                7
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                9,
+                8,
+                0
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                0,
+                1,
+                9
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                1,
+                2,
+                9
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                10,
+                9,
+                2
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                2,
+                3,
+                10
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                3,
+                4,
+                10
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                11,
+                10,
+                4
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                4,
+                5,
+                11
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                12,
+                11,
+                5
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                5,
+                6,
+                12
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                13,
+                12,
+                6
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                6,
+                7,
+                13
+              ]
+            },
+            {
+              "colour": "#ee0000",
+              "sourceColour": 1792,
+              "vertices": [
+                15,
+                16,
+                17,
+                18,
+                19
+              ]
+            },
+            {
+              "colour": "#ee0000",
+              "sourceColour": 1792,
+              "vertices": [
+                15,
+                19,
+                20,
+                21
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                14,
+                8,
+                21
+              ]
+            },
+            {
+              "colour": "#aa0000",
+              "sourceColour": 1280,
+              "vertices": [
+                8,
+                15,
+                21
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                8,
+                16,
+                15
+              ]
+            },
+            {
+              "colour": "#aa0000",
+              "sourceColour": 1280,
+              "vertices": [
+                8,
+                9,
+                16
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                9,
+                10,
+                16
+              ]
+            },
+            {
+              "colour": "#aa0000",
+              "sourceColour": 1280,
+              "vertices": [
+                10,
+                17,
+                16
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                10,
+                11,
+                17
+              ]
+            },
+            {
+              "colour": "#aa0000",
+              "sourceColour": 1280,
+              "vertices": [
+                11,
+                18,
+                17
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                11,
+                19,
+                18
+              ]
+            },
+            {
+              "colour": "#aa0000",
+              "sourceColour": 1280,
+              "vertices": [
+                11,
+                12,
+                19
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                12,
+                13,
+                19
+              ]
+            },
+            {
+              "colour": "#aa0000",
+              "sourceColour": 1280,
+              "vertices": [
+                13,
+                20,
+                19
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                13,
+                21,
+                20
+              ]
+            },
+            {
+              "colour": "#aa0000",
+              "sourceColour": 1280,
+              "vertices": [
+                13,
+                14,
+                21
+              ]
+            }
+          ],
+          "geometryStart": 254096,
+          "lines": [],
+          "sourceEnd": 254641,
+          "sourceStart": 254092,
+          "vertices": [
+            [
+              0,
+              0,
+              20000
+            ],
+            [
+              20000,
+              0,
+              15000
+            ],
+            [
+              25000,
+              0,
+              5000
+            ],
+            [
+              20000,
+              0,
+              -10000
+            ],
+            [
+              10000,
+              0,
+              -20000
+            ],
+            [
+              -10000,
+              0,
+              -20000
+            ],
+            [
+              -25000,
+              0,
+              -5000
+            ],
+            [
+              -15000,
+              0,
+              15000
+            ],
+            [
+              0,
+              30000,
+              5000
+            ],
+            [
+              5000,
+              30000,
+              2000
+            ],
+            [
+              6000,
+              30000,
+              -3000
+            ],
+            [
+              0,
+              30000,
+              -6000
+            ],
+            [
+              -6000,
+              30000,
+              -5000
+            ],
+            [
+              -7000,
+              30000,
+              0
+            ],
+            [
+              -5000,
+              30000,
+              4000
+            ],
+            [
+              0,
+              15000,
+              2000
+            ],
+            [
+              2000,
+              15000,
+              1000
+            ],
+            [
+              3000,
+              15000,
+              -2000
+            ],
+            [
+              0,
+              15000,
+              -4000
+            ],
+            [
+              -3000,
+              15000,
+              -3000
+            ],
+            [
+              -4000,
+              15000,
+              0
+            ],
+            [
+              -3000,
+              15000,
+              2000
+            ]
+          ],
+          "viewGroups": [
+            {
+              "bounds": [
+                [
+                  -600,
+                  700
+                ],
+                [
+                  -8388607,
+                  -3000
+                ],
+                [
+                  -500,
+                  600
+                ]
+              ],
+              "faces": 31,
+              "lines": 0
+            }
+          ]
+        },
+        "name": "Viewer within -600 \u2264 X < 700, Y < -3000, -500 \u2264 Z < 600"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

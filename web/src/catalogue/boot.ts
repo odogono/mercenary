@@ -1,7 +1,8 @@
 import { readGammaSystem } from '../flyover/documents.ts';
 import { assertBrowserDocument } from '../shell/documentPath.ts';
 import {
-  parseCatalogue,
+  payloadJson,
+  readCatalogue,
   selectModels,
   type Catalogue,
   type Model
@@ -365,15 +366,12 @@ const readAtlasBodies = async () => {
 const start = async () => {
   try {
     assertBrowserDocument(location.pathname, 'catalogue');
-    const [response, bodies] = await Promise.all([
-      fetch('/payload/damocles/catalogue.json'),
+    const [catalogue, bodies] = await Promise.all([
+      readCatalogue(payloadJson),
       readAtlasBodies()
     ]);
     atlasBodies = bodies;
-    if (!response.ok) {
-      throw new Error(`Dataset request returned HTTP ${response.status}.`);
-    }
-    data = parseCatalogue(await response.json());
+    data = catalogue;
     node('error').hidden = true;
     node('catalogue').hidden = false;
     const decoded = data.models.filter(

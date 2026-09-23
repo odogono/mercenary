@@ -1,0 +1,132 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-03f888",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "LARGE BOX",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      292
+    ],
+    "sourceAddress": 260232,
+    "status": "decoded",
+    "supportTop": 48,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                5,
+                4,
+                7,
+                6
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                7,
+                4,
+                0,
+                3
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                5,
+                6,
+                2,
+                1
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                6,
+                7,
+                3,
+                2
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                4,
+                5,
+                1,
+                0
+              ]
+            }
+          ],
+          "geometryStart": 260232,
+          "lines": [],
+          "sourceEnd": 260321,
+          "sourceStart": 260232,
+          "vertices": [
+            [
+              -48,
+              0,
+              -48
+            ],
+            [
+              48,
+              0,
+              -48
+            ],
+            [
+              48,
+              0,
+              48
+            ],
+            [
+              -48,
+              0,
+              48
+            ],
+            [
+              -48,
+              48,
+              -48
+            ],
+            [
+              48,
+              48,
+              -48
+            ],
+            [
+              48,
+              48,
+              48
+            ],
+            [
+              -48,
+              48,
+              48
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

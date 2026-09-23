@@ -1,0 +1,169 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-03d76c",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "MEMO PAD",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      146
+    ],
+    "sourceAddress": 251756,
+    "status": "decoded",
+    "supportTop": 4,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                0,
+                1,
+                2,
+                3
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                5,
+                6,
+                2,
+                1
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                0,
+                3,
+                7,
+                4
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                3,
+                2,
+                6,
+                7
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                1,
+                0,
+                4,
+                5
+              ]
+            }
+          ],
+          "geometryStart": 251756,
+          "lines": [
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                8,
+                9
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                11,
+                10
+              ]
+            }
+          ],
+          "sourceEnd": 251877,
+          "sourceStart": 251756,
+          "vertices": [
+            [
+              20,
+              4,
+              0
+            ],
+            [
+              0,
+              4,
+              0
+            ],
+            [
+              0,
+              4,
+              32
+            ],
+            [
+              20,
+              4,
+              32
+            ],
+            [
+              20,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              32
+            ],
+            [
+              20,
+              0,
+              32
+            ],
+            [
+              16,
+              4,
+              4
+            ],
+            [
+              4,
+              4,
+              4
+            ],
+            [
+              4,
+              4,
+              8
+            ],
+            [
+              16,
+              4,
+              8
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

@@ -1,0 +1,262 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-03992e",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "TV CONTROL",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      93
+    ],
+    "sourceAddress": 235822,
+    "status": "decoded",
+    "supportTop": 5,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                0,
+                3,
+                4,
+                11
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                11,
+                4,
+                7,
+                8
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                12,
+                13,
+                14,
+                15
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                16,
+                17,
+                18,
+                19
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                10,
+                11,
+                8,
+                9
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                4,
+                5,
+                6,
+                7
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                1,
+                0,
+                11,
+                10
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                3,
+                2,
+                5,
+                4
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                2,
+                1,
+                10,
+                5
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                5,
+                10,
+                9,
+                6
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                0,
+                1,
+                2,
+                3
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                9,
+                8,
+                7,
+                6
+              ]
+            }
+          ],
+          "geometryStart": 235822,
+          "lines": [],
+          "sourceEnd": 236032,
+          "sourceStart": 235822,
+          "vertices": [
+            [
+              0,
+              5,
+              25
+            ],
+            [
+              0,
+              0,
+              25
+            ],
+            [
+              5,
+              0,
+              25
+            ],
+            [
+              5,
+              5,
+              25
+            ],
+            [
+              10,
+              5,
+              15
+            ],
+            [
+              10,
+              0,
+              15
+            ],
+            [
+              10,
+              0,
+              0
+            ],
+            [
+              10,
+              5,
+              0
+            ],
+            [
+              -5,
+              5,
+              0
+            ],
+            [
+              -5,
+              0,
+              0
+            ],
+            [
+              -5,
+              0,
+              15
+            ],
+            [
+              -5,
+              5,
+              15
+            ],
+            [
+              1,
+              5,
+              15
+            ],
+            [
+              4,
+              5,
+              15
+            ],
+            [
+              4,
+              5,
+              12
+            ],
+            [
+              1,
+              5,
+              12
+            ],
+            [
+              1,
+              5,
+              5
+            ],
+            [
+              4,
+              5,
+              5
+            ],
+            [
+              4,
+              5,
+              2
+            ],
+            [
+              1,
+              5,
+              2
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

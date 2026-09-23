@@ -1,0 +1,4293 @@
+{
+  "model": {
+    "evidence": [],
+    "id": "structure-01c66e",
+    "kind": "structure",
+    "linkedInstances": [],
+    "name": "Structure 140",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
+    "recordClass": "geometry",
+    "relatedModels": [
+      "interior-02b030"
+    ],
+    "sceneColours": [
+      {
+        "colour": "#4488cc",
+        "sourceColour": 32896
+      },
+      {
+        "colour": "#000000",
+        "sourceColour": 32906
+      }
+    ],
+    "slots": [
+      140
+    ],
+    "sourceAddress": 116334,
+    "status": "partial",
+    "structureSelection": {
+      "attachments": [
+        {
+          "constructor": {
+            "leafCount": 2,
+            "motionAxis": "x"
+          },
+          "controlWord": 16896,
+          "mesh": {
+            "faces": [
+              {
+                "colour": "#00aaaa",
+                "doubleSided": true,
+                "sourceColour": 37010,
+                "vertices": [
+                  0,
+                  1,
+                  2,
+                  3
+                ]
+              },
+              {
+                "colour": "#00cccc",
+                "doubleSided": true,
+                "sourceColour": 36996,
+                "vertices": [
+                  4,
+                  5,
+                  6,
+                  7
+                ]
+              },
+              {
+                "colour": "#00cccc",
+                "doubleSided": true,
+                "sourceColour": 37004,
+                "vertices": [
+                  8,
+                  9,
+                  10,
+                  11
+                ]
+              },
+              {
+                "colour": "#00aaaa",
+                "doubleSided": true,
+                "sourceColour": 37010,
+                "vertices": [
+                  12,
+                  13,
+                  14,
+                  15
+                ]
+              },
+              {
+                "colour": "#00cccc",
+                "doubleSided": true,
+                "sourceColour": 36996,
+                "vertices": [
+                  16,
+                  17,
+                  18,
+                  19
+                ]
+              },
+              {
+                "colour": "#00cccc",
+                "doubleSided": true,
+                "sourceColour": 37004,
+                "vertices": [
+                  20,
+                  21,
+                  22,
+                  23
+                ]
+              }
+            ],
+            "lines": [],
+            "vertices": [
+              [
+                -40,
+                0,
+                -235
+              ],
+              [
+                0,
+                0,
+                -235
+              ],
+              [
+                0,
+                120,
+                -235
+              ],
+              [
+                -40,
+                120,
+                -235
+              ],
+              [
+                0,
+                0,
+                -235
+              ],
+              [
+                0,
+                0,
+                -215
+              ],
+              [
+                0,
+                120,
+                -215
+              ],
+              [
+                0,
+                120,
+                -235
+              ],
+              [
+                0,
+                0,
+                -215
+              ],
+              [
+                -40,
+                0,
+                -215
+              ],
+              [
+                -40,
+                120,
+                -215
+              ],
+              [
+                0,
+                120,
+                -215
+              ],
+              [
+                0,
+                0,
+                -235
+              ],
+              [
+                40,
+                0,
+                -235
+              ],
+              [
+                40,
+                120,
+                -235
+              ],
+              [
+                0,
+                120,
+                -235
+              ],
+              [
+                0,
+                0,
+                -235
+              ],
+              [
+                0,
+                0,
+                -215
+              ],
+              [
+                0,
+                120,
+                -215
+              ],
+              [
+                0,
+                120,
+                -235
+              ],
+              [
+                40,
+                0,
+                -215
+              ],
+              [
+                0,
+                0,
+                -215
+              ],
+              [
+                0,
+                120,
+                -215
+              ],
+              [
+                40,
+                120,
+                -215
+              ]
+            ]
+          },
+          "proximityBox": {
+            "x": [
+              -200,
+              200
+            ],
+            "z": [
+              -400,
+              200
+            ]
+          },
+          "slot": 1020
+        }
+      ],
+      "detailModel": "interior-02b030",
+      "detailVariant": "palette-55",
+      "liveSelector": false,
+      "plan": {
+        "faces": [
+          {
+            "colour": "#00cccc",
+            "doubleSided": true,
+            "sourceColour": 32904,
+            "sourceIndex": 0,
+            "vertices": [
+              0,
+              1,
+              2,
+              3
+            ]
+          },
+          {
+            "colour": "#4488cc",
+            "doubleSided": true,
+            "sourceColour": 32902,
+            "sourceIndex": 1,
+            "vertices": [
+              4,
+              5,
+              6,
+              7
+            ]
+          },
+          {
+            "colour": "#00cccc",
+            "doubleSided": true,
+            "sourceColour": 32904,
+            "sourceIndex": 2,
+            "vertices": [
+              8,
+              9,
+              10,
+              11
+            ]
+          },
+          {
+            "colour": "#4488cc",
+            "doubleSided": true,
+            "sourceColour": 32902,
+            "sourceIndex": 3,
+            "vertices": [
+              12,
+              13,
+              14,
+              15
+            ]
+          },
+          {
+            "colour": "#4488cc",
+            "doubleSided": true,
+            "sourceColour": 32896,
+            "sourceIndex": 4,
+            "vertices": [
+              16,
+              17,
+              18,
+              19
+            ]
+          },
+          {
+            "colour": "#4488cc",
+            "doubleSided": true,
+            "sourceColour": 32896,
+            "sourceIndex": 5,
+            "vertices": [
+              20,
+              21,
+              22,
+              23
+            ]
+          },
+          {
+            "colour": "#4488cc",
+            "doubleSided": true,
+            "sourceColour": 32902,
+            "sourceIndex": 6,
+            "vertices": [
+              24,
+              25,
+              26,
+              27
+            ]
+          },
+          {
+            "colour": "#4488cc",
+            "sourceColour": 61574,
+            "sourceIndex": 7,
+            "vertices": [
+              28,
+              29,
+              30,
+              31
+            ]
+          },
+          {
+            "colour": "#aaaaaa",
+            "sourceColour": 53378,
+            "sourceIndex": 8,
+            "vertices": [
+              32,
+              33,
+              34,
+              35
+            ]
+          },
+          {
+            "colour": "#4488cc",
+            "sourceColour": 57472,
+            "sourceIndex": 9,
+            "vertices": [
+              36,
+              37,
+              38,
+              39
+            ]
+          },
+          {
+            "colour": "#aaaaaa",
+            "sourceColour": 49282,
+            "sourceIndex": 10,
+            "vertices": [
+              40,
+              41,
+              42,
+              43
+            ]
+          },
+          {
+            "colour": "#aaaaaa",
+            "sourceColour": 49282,
+            "sourceIndex": 11,
+            "vertices": [
+              44,
+              45,
+              46,
+              47
+            ]
+          },
+          {
+            "colour": "#eeeeee",
+            "sourceColour": 61588,
+            "sourceIndex": 12,
+            "vertices": [
+              48,
+              49,
+              50,
+              51
+            ]
+          },
+          {
+            "colour": "#eeeeee",
+            "doubleSided": true,
+            "sourceColour": 32916,
+            "sourceIndex": 13,
+            "vertices": [
+              52,
+              53,
+              54,
+              55
+            ]
+          },
+          {
+            "colour": "#00cccc",
+            "doubleSided": true,
+            "sourceColour": 32904,
+            "sourceIndex": 14,
+            "vertices": [
+              56,
+              57,
+              58,
+              59
+            ]
+          },
+          {
+            "colour": "#aaaaaa",
+            "doubleSided": true,
+            "sourceColour": 32898,
+            "sourceIndex": 15,
+            "vertices": [
+              60,
+              61,
+              62,
+              63
+            ]
+          },
+          {
+            "colour": "#00cccc",
+            "doubleSided": true,
+            "sourceColour": 32904,
+            "sourceIndex": 16,
+            "vertices": [
+              64,
+              65,
+              66,
+              67
+            ]
+          },
+          {
+            "colour": "#4488cc",
+            "sourceColour": 41094,
+            "sourceIndex": 17,
+            "vertices": [
+              68,
+              69,
+              70,
+              71
+            ]
+          },
+          {
+            "colour": "#eeeeee",
+            "sourceColour": 41108,
+            "sourceIndex": 18,
+            "vertices": [
+              72,
+              73,
+              74,
+              75
+            ]
+          },
+          {
+            "colour": "#4488cc",
+            "sourceColour": 41094,
+            "sourceIndex": 19,
+            "vertices": [
+              76,
+              77,
+              78,
+              79
+            ]
+          },
+          {
+            "colour": "#eeeeee",
+            "sourceColour": 41108,
+            "sourceIndex": 20,
+            "vertices": [
+              80,
+              81,
+              82,
+              83
+            ]
+          },
+          {
+            "colour": "#4488cc",
+            "sourceColour": 41094,
+            "sourceIndex": 21,
+            "vertices": [
+              84,
+              85,
+              86,
+              87
+            ]
+          },
+          {
+            "colour": "#00cccc",
+            "sourceColour": 41104,
+            "sourceIndex": 22,
+            "vertices": [
+              88,
+              89,
+              90,
+              91
+            ]
+          },
+          {
+            "colour": "#00aaaa",
+            "sourceColour": 41106,
+            "sourceIndex": 23,
+            "vertices": [
+              92,
+              93,
+              94,
+              95
+            ]
+          },
+          {
+            "colour": "#00cccc",
+            "sourceColour": 41104,
+            "sourceIndex": 24,
+            "vertices": [
+              96,
+              97,
+              98,
+              99
+            ]
+          },
+          {
+            "colour": "#00aaaa",
+            "sourceColour": 41106,
+            "sourceIndex": 25,
+            "vertices": [
+              100,
+              101,
+              102,
+              103
+            ]
+          },
+          {
+            "colour": "#00cccc",
+            "doubleSided": true,
+            "sourceColour": 32900,
+            "sourceIndex": 26,
+            "vertices": [
+              104,
+              105,
+              106,
+              107
+            ]
+          },
+          {
+            "colour": "#4488cc",
+            "doubleSided": true,
+            "sourceColour": 32902,
+            "sourceIndex": 27,
+            "vertices": [
+              108,
+              109,
+              110,
+              111
+            ]
+          },
+          {
+            "colour": "#00cccc",
+            "doubleSided": true,
+            "sourceColour": 32900,
+            "sourceIndex": 28,
+            "vertices": [
+              112,
+              113,
+              114,
+              115
+            ]
+          },
+          {
+            "colour": "#4488cc",
+            "doubleSided": true,
+            "sourceColour": 32902,
+            "sourceIndex": 29,
+            "vertices": [
+              116,
+              117,
+              118,
+              119
+            ]
+          },
+          {
+            "colour": "#4488cc",
+            "sourceColour": 57472,
+            "sourceIndex": 30,
+            "vertices": [
+              120,
+              121,
+              122,
+              123
+            ]
+          },
+          {
+            "colour": "#888888",
+            "sourceColour": 49304,
+            "sourceIndex": 31,
+            "vertices": [
+              124,
+              125,
+              126,
+              127
+            ]
+          },
+          {
+            "colour": "#664444",
+            "sourceColour": 45198,
+            "sourceIndex": 32,
+            "vertices": [
+              128,
+              129,
+              130,
+              131
+            ]
+          },
+          {
+            "colour": "#664444",
+            "sourceColour": 45198,
+            "sourceIndex": 33,
+            "vertices": [
+              132,
+              133,
+              134,
+              135
+            ]
+          },
+          {
+            "colour": "#664444",
+            "sourceColour": 45198,
+            "sourceIndex": 34,
+            "vertices": [
+              136,
+              137,
+              138,
+              139
+            ]
+          },
+          {
+            "colour": "#664444",
+            "sourceColour": 45198,
+            "sourceIndex": 35,
+            "vertices": [
+              140,
+              141,
+              142,
+              143
+            ]
+          },
+          {
+            "colour": "#664444",
+            "sourceColour": 45198,
+            "sourceIndex": 36,
+            "vertices": [
+              144,
+              145,
+              146,
+              147
+            ]
+          },
+          {
+            "colour": "#664444",
+            "sourceColour": 45198,
+            "sourceIndex": 37,
+            "vertices": [
+              148,
+              149,
+              150,
+              151
+            ]
+          },
+          {
+            "colour": "#664444",
+            "sourceColour": 45198,
+            "sourceIndex": 38,
+            "vertices": [
+              152,
+              153,
+              154,
+              155
+            ]
+          },
+          {
+            "colour": "#eeeeee",
+            "doubleSided": true,
+            "sourceColour": 32916,
+            "sourceIndex": 39,
+            "vertices": [
+              156,
+              157,
+              158,
+              159
+            ]
+          }
+        ],
+        "lines": [],
+        "sourceEnd": 116678,
+        "sourceStart": 116334,
+        "vertices": [
+          [
+            -200,
+            0,
+            -200
+          ],
+          [
+            -200,
+            0,
+            200
+          ],
+          [
+            -200,
+            200,
+            200
+          ],
+          [
+            -200,
+            200,
+            -200
+          ],
+          [
+            -200,
+            0,
+            200
+          ],
+          [
+            200,
+            0,
+            200
+          ],
+          [
+            200,
+            200,
+            200
+          ],
+          [
+            -200,
+            200,
+            200
+          ],
+          [
+            200,
+            0,
+            200
+          ],
+          [
+            200,
+            0,
+            -200
+          ],
+          [
+            200,
+            200,
+            -200
+          ],
+          [
+            200,
+            200,
+            200
+          ],
+          [
+            200,
+            0,
+            -200
+          ],
+          [
+            40,
+            0,
+            -200
+          ],
+          [
+            40,
+            200,
+            -200
+          ],
+          [
+            200,
+            200,
+            -200
+          ],
+          [
+            40,
+            0,
+            -200
+          ],
+          [
+            40,
+            0,
+            -240
+          ],
+          [
+            40,
+            200,
+            -240
+          ],
+          [
+            40,
+            200,
+            -200
+          ],
+          [
+            -40,
+            0,
+            -240
+          ],
+          [
+            -40,
+            0,
+            -200
+          ],
+          [
+            -40,
+            200,
+            -200
+          ],
+          [
+            -40,
+            200,
+            -240
+          ],
+          [
+            -40,
+            0,
+            -200
+          ],
+          [
+            -200,
+            0,
+            -200
+          ],
+          [
+            -200,
+            200,
+            -200
+          ],
+          [
+            -40,
+            200,
+            -200
+          ],
+          [
+            40,
+            200,
+            -200
+          ],
+          [
+            -40,
+            200,
+            -200
+          ],
+          [
+            -40,
+            120,
+            -200
+          ],
+          [
+            40,
+            120,
+            -200
+          ],
+          [
+            -40,
+            120,
+            -200
+          ],
+          [
+            -40,
+            120,
+            -240
+          ],
+          [
+            40,
+            120,
+            -240
+          ],
+          [
+            40,
+            120,
+            -200
+          ],
+          [
+            200,
+            200,
+            -200
+          ],
+          [
+            200,
+            200,
+            200
+          ],
+          [
+            -200,
+            200,
+            200
+          ],
+          [
+            -200,
+            200,
+            -200
+          ],
+          [
+            -200,
+            0,
+            -200
+          ],
+          [
+            -200,
+            0,
+            200
+          ],
+          [
+            200,
+            0,
+            200
+          ],
+          [
+            200,
+            0,
+            -200
+          ],
+          [
+            40,
+            0,
+            -200
+          ],
+          [
+            40,
+            0,
+            -240
+          ],
+          [
+            -40,
+            0,
+            -240
+          ],
+          [
+            -40,
+            0,
+            -200
+          ],
+          [
+            -40,
+            200,
+            -240
+          ],
+          [
+            40,
+            200,
+            -240
+          ],
+          [
+            40,
+            120,
+            -240
+          ],
+          [
+            -40,
+            120,
+            -240
+          ],
+          [
+            -240,
+            0,
+            -240
+          ],
+          [
+            -40,
+            0,
+            -240
+          ],
+          [
+            -40,
+            200,
+            -240
+          ],
+          [
+            -240,
+            200,
+            -240
+          ],
+          [
+            -240,
+            0,
+            240
+          ],
+          [
+            -240,
+            0,
+            -240
+          ],
+          [
+            -240,
+            200,
+            -240
+          ],
+          [
+            -240,
+            200,
+            240
+          ],
+          [
+            240,
+            0,
+            240
+          ],
+          [
+            -240,
+            0,
+            240
+          ],
+          [
+            -240,
+            200,
+            240
+          ],
+          [
+            240,
+            200,
+            240
+          ],
+          [
+            240,
+            0,
+            -240
+          ],
+          [
+            240,
+            0,
+            240
+          ],
+          [
+            240,
+            200,
+            240
+          ],
+          [
+            240,
+            200,
+            -240
+          ],
+          [
+            -340,
+            48,
+            -240
+          ],
+          [
+            -240,
+            48,
+            -240
+          ],
+          [
+            -240,
+            0,
+            -240
+          ],
+          [
+            -340,
+            0,
+            -240
+          ],
+          [
+            -340,
+            48,
+            340
+          ],
+          [
+            -340,
+            48,
+            -240
+          ],
+          [
+            -340,
+            0,
+            -240
+          ],
+          [
+            -340,
+            0,
+            340
+          ],
+          [
+            340,
+            48,
+            340
+          ],
+          [
+            -340,
+            48,
+            340
+          ],
+          [
+            -340,
+            0,
+            340
+          ],
+          [
+            340,
+            0,
+            340
+          ],
+          [
+            340,
+            48,
+            -240
+          ],
+          [
+            340,
+            48,
+            340
+          ],
+          [
+            340,
+            0,
+            340
+          ],
+          [
+            340,
+            0,
+            -240
+          ],
+          [
+            240,
+            48,
+            -240
+          ],
+          [
+            340,
+            48,
+            -240
+          ],
+          [
+            340,
+            0,
+            -240
+          ],
+          [
+            240,
+            0,
+            -240
+          ],
+          [
+            900,
+            48,
+            -900
+          ],
+          [
+            -900,
+            48,
+            -900
+          ],
+          [
+            -900,
+            0,
+            -900
+          ],
+          [
+            900,
+            0,
+            -900
+          ],
+          [
+            -900,
+            48,
+            -900
+          ],
+          [
+            -900,
+            48,
+            900
+          ],
+          [
+            -900,
+            0,
+            900
+          ],
+          [
+            -900,
+            0,
+            -900
+          ],
+          [
+            -900,
+            48,
+            900
+          ],
+          [
+            900,
+            48,
+            900
+          ],
+          [
+            900,
+            0,
+            900
+          ],
+          [
+            -900,
+            0,
+            900
+          ],
+          [
+            900,
+            48,
+            900
+          ],
+          [
+            900,
+            48,
+            -900
+          ],
+          [
+            900,
+            0,
+            -900
+          ],
+          [
+            900,
+            0,
+            900
+          ],
+          [
+            1000,
+            0,
+            1000
+          ],
+          [
+            1000,
+            0,
+            -1000
+          ],
+          [
+            1000,
+            200,
+            -1000
+          ],
+          [
+            1000,
+            200,
+            1000
+          ],
+          [
+            1000,
+            0,
+            -1000
+          ],
+          [
+            -1000,
+            0,
+            -1000
+          ],
+          [
+            -1000,
+            200,
+            -1000
+          ],
+          [
+            1000,
+            200,
+            -1000
+          ],
+          [
+            -1000,
+            0,
+            -1000
+          ],
+          [
+            -1000,
+            0,
+            1000
+          ],
+          [
+            -1000,
+            200,
+            1000
+          ],
+          [
+            -1000,
+            200,
+            -1000
+          ],
+          [
+            -1000,
+            0,
+            1000
+          ],
+          [
+            1000,
+            0,
+            1000
+          ],
+          [
+            1000,
+            200,
+            1000
+          ],
+          [
+            -1000,
+            200,
+            1000
+          ],
+          [
+            1000,
+            200,
+            1000
+          ],
+          [
+            -1000,
+            200,
+            1000
+          ],
+          [
+            -1000,
+            200,
+            -1000
+          ],
+          [
+            1000,
+            200,
+            -1000
+          ],
+          [
+            1000,
+            0,
+            -1000
+          ],
+          [
+            -1000,
+            0,
+            -1000
+          ],
+          [
+            -1000,
+            0,
+            1000
+          ],
+          [
+            1000,
+            0,
+            1000
+          ],
+          [
+            340,
+            48,
+            240
+          ],
+          [
+            340,
+            48,
+            -240
+          ],
+          [
+            240,
+            48,
+            -240
+          ],
+          [
+            240,
+            48,
+            240
+          ],
+          [
+            340,
+            48,
+            240
+          ],
+          [
+            -340,
+            48,
+            240
+          ],
+          [
+            -340,
+            48,
+            340
+          ],
+          [
+            340,
+            48,
+            340
+          ],
+          [
+            -240,
+            48,
+            240
+          ],
+          [
+            -240,
+            48,
+            -240
+          ],
+          [
+            -340,
+            48,
+            -240
+          ],
+          [
+            -340,
+            48,
+            240
+          ],
+          [
+            -900,
+            48,
+            1000
+          ],
+          [
+            900,
+            48,
+            1000
+          ],
+          [
+            900,
+            48,
+            900
+          ],
+          [
+            -900,
+            48,
+            900
+          ],
+          [
+            1000,
+            48,
+            1000
+          ],
+          [
+            1000,
+            48,
+            -1000
+          ],
+          [
+            900,
+            48,
+            -1000
+          ],
+          [
+            900,
+            48,
+            1000
+          ],
+          [
+            900,
+            48,
+            -1000
+          ],
+          [
+            -900,
+            48,
+            -1000
+          ],
+          [
+            -900,
+            48,
+            -900
+          ],
+          [
+            900,
+            48,
+            -900
+          ],
+          [
+            -1000,
+            48,
+            -1000
+          ],
+          [
+            -1000,
+            48,
+            1000
+          ],
+          [
+            -900,
+            48,
+            1000
+          ],
+          [
+            -900,
+            48,
+            -1000
+          ],
+          [
+            40,
+            0,
+            -240
+          ],
+          [
+            240,
+            0,
+            -240
+          ],
+          [
+            240,
+            200,
+            -240
+          ],
+          [
+            40,
+            200,
+            -240
+          ]
+        ]
+      },
+      "regions": [
+        {
+          "bounds": [
+            [
+              -200,
+              200
+            ],
+            [
+              -200,
+              200
+            ]
+          ],
+          "flags": 8193,
+          "gate": "none",
+          "queue": [
+            {
+              "index": 9,
+              "kind": "face"
+            },
+            {
+              "index": 10,
+              "kind": "face"
+            },
+            {
+              "index": 11,
+              "kind": "face"
+            },
+            {
+              "index": 27,
+              "kind": "face"
+            },
+            {
+              "index": 28,
+              "kind": "face"
+            },
+            {
+              "index": 26,
+              "kind": "face"
+            },
+            {
+              "index": 38,
+              "kind": "face"
+            },
+            {
+              "index": 37,
+              "kind": "face"
+            },
+            {
+              "index": 36,
+              "kind": "face"
+            },
+            {
+              "index": 23,
+              "kind": "face"
+            },
+            {
+              "index": 22,
+              "kind": "face"
+            },
+            {
+              "index": 25,
+              "kind": "face"
+            },
+            {
+              "index": 0,
+              "kind": "face"
+            },
+            {
+              "index": 1,
+              "kind": "face"
+            },
+            {
+              "index": 2,
+              "kind": "face"
+            },
+            {
+              "index": 4,
+              "kind": "face"
+            },
+            {
+              "index": 5,
+              "kind": "face"
+            },
+            {
+              "index": 8,
+              "kind": "face"
+            },
+            {
+              "kind": "attachment",
+              "slot": 1020
+            },
+            {
+              "index": 7,
+              "kind": "face"
+            },
+            {
+              "index": 3,
+              "kind": "face"
+            },
+            {
+              "index": 6,
+              "kind": "face"
+            }
+          ]
+        },
+        {
+          "bounds": [
+            [
+              -32,
+              32
+            ],
+            [
+              -240,
+              -200
+            ]
+          ],
+          "flags": 1021,
+          "gate": "attachmentLatch",
+          "insetAxis": "x",
+          "queue": [
+            {
+              "index": 9,
+              "kind": "face"
+            },
+            {
+              "index": 10,
+              "kind": "face"
+            },
+            {
+              "index": 11,
+              "kind": "face"
+            },
+            {
+              "index": 27,
+              "kind": "face"
+            },
+            {
+              "index": 28,
+              "kind": "face"
+            },
+            {
+              "index": 26,
+              "kind": "face"
+            },
+            {
+              "index": 38,
+              "kind": "face"
+            },
+            {
+              "index": 37,
+              "kind": "face"
+            },
+            {
+              "index": 36,
+              "kind": "face"
+            },
+            {
+              "index": 23,
+              "kind": "face"
+            },
+            {
+              "index": 22,
+              "kind": "face"
+            },
+            {
+              "index": 25,
+              "kind": "face"
+            },
+            {
+              "index": 0,
+              "kind": "face"
+            },
+            {
+              "index": 1,
+              "kind": "face"
+            },
+            {
+              "index": 2,
+              "kind": "face"
+            },
+            {
+              "index": 8,
+              "kind": "face"
+            },
+            {
+              "index": 5,
+              "kind": "face"
+            },
+            {
+              "index": 4,
+              "kind": "face"
+            },
+            {
+              "kind": "attachment",
+              "slot": 1020
+            }
+          ]
+        },
+        {
+          "bounds": [
+            [
+              -240,
+              240
+            ],
+            [
+              -900,
+              -240
+            ]
+          ],
+          "flags": 1,
+          "gate": "none",
+          "queue": [
+            {
+              "index": 9,
+              "kind": "face"
+            },
+            {
+              "index": 10,
+              "kind": "face"
+            },
+            {
+              "index": 11,
+              "kind": "face"
+            },
+            {
+              "index": 26,
+              "kind": "face"
+            },
+            {
+              "index": 27,
+              "kind": "face"
+            },
+            {
+              "index": 28,
+              "kind": "face"
+            },
+            {
+              "index": 29,
+              "kind": "face"
+            },
+            {
+              "index": 35,
+              "kind": "face"
+            },
+            {
+              "index": 36,
+              "kind": "face"
+            },
+            {
+              "index": 37,
+              "kind": "face"
+            },
+            {
+              "index": 38,
+              "kind": "face"
+            },
+            {
+              "index": 22,
+              "kind": "face"
+            },
+            {
+              "index": 23,
+              "kind": "face"
+            },
+            {
+              "index": 24,
+              "kind": "face"
+            },
+            {
+              "index": 25,
+              "kind": "face"
+            },
+            {
+              "index": 32,
+              "kind": "face"
+            },
+            {
+              "index": 34,
+              "kind": "face"
+            },
+            {
+              "index": 0,
+              "kind": "face"
+            },
+            {
+              "index": 1,
+              "kind": "face"
+            },
+            {
+              "index": 2,
+              "kind": "face"
+            },
+            {
+              "index": 4,
+              "kind": "face"
+            },
+            {
+              "index": 5,
+              "kind": "face"
+            },
+            {
+              "index": 8,
+              "kind": "face"
+            },
+            {
+              "kind": "attachment",
+              "slot": 1020
+            },
+            {
+              "index": 17,
+              "kind": "face"
+            },
+            {
+              "index": 21,
+              "kind": "face"
+            },
+            {
+              "index": 12,
+              "kind": "face"
+            },
+            {
+              "index": 39,
+              "kind": "face"
+            },
+            {
+              "index": 13,
+              "kind": "face"
+            }
+          ]
+        },
+        {
+          "bounds": [
+            [
+              -900,
+              -340
+            ],
+            [
+              -240,
+              240
+            ]
+          ],
+          "flags": 1,
+          "gate": "none",
+          "queue": [
+            {
+              "index": 26,
+              "kind": "face"
+            },
+            {
+              "index": 27,
+              "kind": "face"
+            },
+            {
+              "index": 28,
+              "kind": "face"
+            },
+            {
+              "index": 29,
+              "kind": "face"
+            },
+            {
+              "index": 35,
+              "kind": "face"
+            },
+            {
+              "index": 36,
+              "kind": "face"
+            },
+            {
+              "index": 37,
+              "kind": "face"
+            },
+            {
+              "index": 38,
+              "kind": "face"
+            },
+            {
+              "index": 22,
+              "kind": "face"
+            },
+            {
+              "index": 23,
+              "kind": "face"
+            },
+            {
+              "index": 24,
+              "kind": "face"
+            },
+            {
+              "index": 25,
+              "kind": "face"
+            },
+            {
+              "index": 33,
+              "kind": "face"
+            },
+            {
+              "index": 14,
+              "kind": "face"
+            },
+            {
+              "index": 34,
+              "kind": "face"
+            },
+            {
+              "index": 18,
+              "kind": "face"
+            }
+          ]
+        },
+        {
+          "bounds": [
+            [
+              340,
+              900
+            ],
+            [
+              -240,
+              240
+            ]
+          ],
+          "flags": 1,
+          "gate": "none",
+          "queue": [
+            {
+              "index": 26,
+              "kind": "face"
+            },
+            {
+              "index": 27,
+              "kind": "face"
+            },
+            {
+              "index": 28,
+              "kind": "face"
+            },
+            {
+              "index": 29,
+              "kind": "face"
+            },
+            {
+              "index": 35,
+              "kind": "face"
+            },
+            {
+              "index": 36,
+              "kind": "face"
+            },
+            {
+              "index": 37,
+              "kind": "face"
+            },
+            {
+              "index": 38,
+              "kind": "face"
+            },
+            {
+              "index": 22,
+              "kind": "face"
+            },
+            {
+              "index": 23,
+              "kind": "face"
+            },
+            {
+              "index": 24,
+              "kind": "face"
+            },
+            {
+              "index": 25,
+              "kind": "face"
+            },
+            {
+              "index": 33,
+              "kind": "face"
+            },
+            {
+              "index": 16,
+              "kind": "face"
+            },
+            {
+              "index": 32,
+              "kind": "face"
+            },
+            {
+              "index": 20,
+              "kind": "face"
+            }
+          ]
+        },
+        {
+          "bounds": [
+            [
+              -340,
+              0
+            ],
+            [
+              340,
+              900
+            ]
+          ],
+          "flags": 1,
+          "gate": "none",
+          "queue": [
+            {
+              "index": 26,
+              "kind": "face"
+            },
+            {
+              "index": 27,
+              "kind": "face"
+            },
+            {
+              "index": 28,
+              "kind": "face"
+            },
+            {
+              "index": 29,
+              "kind": "face"
+            },
+            {
+              "index": 35,
+              "kind": "face"
+            },
+            {
+              "index": 36,
+              "kind": "face"
+            },
+            {
+              "index": 37,
+              "kind": "face"
+            },
+            {
+              "index": 38,
+              "kind": "face"
+            },
+            {
+              "index": 22,
+              "kind": "face"
+            },
+            {
+              "index": 23,
+              "kind": "face"
+            },
+            {
+              "index": 24,
+              "kind": "face"
+            },
+            {
+              "index": 25,
+              "kind": "face"
+            },
+            {
+              "index": 32,
+              "kind": "face"
+            },
+            {
+              "index": 14,
+              "kind": "face"
+            },
+            {
+              "index": 34,
+              "kind": "face"
+            },
+            {
+              "index": 15,
+              "kind": "face"
+            },
+            {
+              "index": 33,
+              "kind": "face"
+            },
+            {
+              "index": 19,
+              "kind": "face"
+            }
+          ]
+        },
+        {
+          "bounds": [
+            [
+              240,
+              900
+            ],
+            [
+              -900,
+              -240
+            ]
+          ],
+          "flags": 1,
+          "gate": "none",
+          "queue": [
+            {
+              "index": 9,
+              "kind": "face"
+            },
+            {
+              "index": 10,
+              "kind": "face"
+            },
+            {
+              "index": 11,
+              "kind": "face"
+            },
+            {
+              "index": 26,
+              "kind": "face"
+            },
+            {
+              "index": 27,
+              "kind": "face"
+            },
+            {
+              "index": 28,
+              "kind": "face"
+            },
+            {
+              "index": 29,
+              "kind": "face"
+            },
+            {
+              "index": 35,
+              "kind": "face"
+            },
+            {
+              "index": 36,
+              "kind": "face"
+            },
+            {
+              "index": 37,
+              "kind": "face"
+            },
+            {
+              "index": 38,
+              "kind": "face"
+            },
+            {
+              "index": 22,
+              "kind": "face"
+            },
+            {
+              "index": 23,
+              "kind": "face"
+            },
+            {
+              "index": 24,
+              "kind": "face"
+            },
+            {
+              "index": 25,
+              "kind": "face"
+            },
+            {
+              "index": 34,
+              "kind": "face"
+            },
+            {
+              "index": 33,
+              "kind": "face"
+            },
+            {
+              "index": 0,
+              "kind": "face"
+            },
+            {
+              "index": 1,
+              "kind": "face"
+            },
+            {
+              "index": 5,
+              "kind": "face"
+            },
+            {
+              "index": 8,
+              "kind": "face"
+            },
+            {
+              "kind": "attachment",
+              "slot": 1020
+            },
+            {
+              "index": 16,
+              "kind": "face"
+            },
+            {
+              "index": 32,
+              "kind": "face"
+            },
+            {
+              "index": 20,
+              "kind": "face"
+            },
+            {
+              "index": 12,
+              "kind": "face"
+            },
+            {
+              "index": 39,
+              "kind": "face"
+            },
+            {
+              "index": 13,
+              "kind": "face"
+            },
+            {
+              "index": 17,
+              "kind": "face"
+            },
+            {
+              "index": 21,
+              "kind": "face"
+            }
+          ]
+        },
+        {
+          "bounds": [
+            [
+              -900,
+              -240
+            ],
+            [
+              -900,
+              -240
+            ]
+          ],
+          "flags": 1,
+          "gate": "none",
+          "queue": [
+            {
+              "index": 9,
+              "kind": "face"
+            },
+            {
+              "index": 10,
+              "kind": "face"
+            },
+            {
+              "index": 11,
+              "kind": "face"
+            },
+            {
+              "index": 26,
+              "kind": "face"
+            },
+            {
+              "index": 27,
+              "kind": "face"
+            },
+            {
+              "index": 28,
+              "kind": "face"
+            },
+            {
+              "index": 29,
+              "kind": "face"
+            },
+            {
+              "index": 35,
+              "kind": "face"
+            },
+            {
+              "index": 36,
+              "kind": "face"
+            },
+            {
+              "index": 37,
+              "kind": "face"
+            },
+            {
+              "index": 38,
+              "kind": "face"
+            },
+            {
+              "index": 22,
+              "kind": "face"
+            },
+            {
+              "index": 23,
+              "kind": "face"
+            },
+            {
+              "index": 24,
+              "kind": "face"
+            },
+            {
+              "index": 25,
+              "kind": "face"
+            },
+            {
+              "index": 32,
+              "kind": "face"
+            },
+            {
+              "index": 33,
+              "kind": "face"
+            },
+            {
+              "index": 1,
+              "kind": "face"
+            },
+            {
+              "index": 2,
+              "kind": "face"
+            },
+            {
+              "index": 4,
+              "kind": "face"
+            },
+            {
+              "index": 8,
+              "kind": "face"
+            },
+            {
+              "kind": "attachment",
+              "slot": 1020
+            },
+            {
+              "index": 14,
+              "kind": "face"
+            },
+            {
+              "index": 34,
+              "kind": "face"
+            },
+            {
+              "index": 18,
+              "kind": "face"
+            },
+            {
+              "index": 12,
+              "kind": "face"
+            },
+            {
+              "index": 39,
+              "kind": "face"
+            },
+            {
+              "index": 13,
+              "kind": "face"
+            },
+            {
+              "index": 21,
+              "kind": "face"
+            },
+            {
+              "index": 17,
+              "kind": "face"
+            }
+          ]
+        },
+        {
+          "bounds": [
+            [
+              0,
+              340
+            ],
+            [
+              340,
+              900
+            ]
+          ],
+          "flags": 1,
+          "gate": "none",
+          "queue": [
+            {
+              "index": 26,
+              "kind": "face"
+            },
+            {
+              "index": 27,
+              "kind": "face"
+            },
+            {
+              "index": 28,
+              "kind": "face"
+            },
+            {
+              "index": 29,
+              "kind": "face"
+            },
+            {
+              "index": 35,
+              "kind": "face"
+            },
+            {
+              "index": 36,
+              "kind": "face"
+            },
+            {
+              "index": 37,
+              "kind": "face"
+            },
+            {
+              "index": 38,
+              "kind": "face"
+            },
+            {
+              "index": 22,
+              "kind": "face"
+            },
+            {
+              "index": 23,
+              "kind": "face"
+            },
+            {
+              "index": 24,
+              "kind": "face"
+            },
+            {
+              "index": 25,
+              "kind": "face"
+            },
+            {
+              "index": 34,
+              "kind": "face"
+            },
+            {
+              "index": 16,
+              "kind": "face"
+            },
+            {
+              "index": 32,
+              "kind": "face"
+            },
+            {
+              "index": 15,
+              "kind": "face"
+            },
+            {
+              "index": 33,
+              "kind": "face"
+            },
+            {
+              "index": 19,
+              "kind": "face"
+            }
+          ]
+        },
+        {
+          "bounds": [
+            [
+              340,
+              900
+            ],
+            [
+              340,
+              900
+            ]
+          ],
+          "flags": 1,
+          "gate": "none",
+          "queue": [
+            {
+              "index": 26,
+              "kind": "face"
+            },
+            {
+              "index": 27,
+              "kind": "face"
+            },
+            {
+              "index": 28,
+              "kind": "face"
+            },
+            {
+              "index": 29,
+              "kind": "face"
+            },
+            {
+              "index": 35,
+              "kind": "face"
+            },
+            {
+              "index": 36,
+              "kind": "face"
+            },
+            {
+              "index": 37,
+              "kind": "face"
+            },
+            {
+              "index": 38,
+              "kind": "face"
+            },
+            {
+              "index": 22,
+              "kind": "face"
+            },
+            {
+              "index": 23,
+              "kind": "face"
+            },
+            {
+              "index": 24,
+              "kind": "face"
+            },
+            {
+              "index": 25,
+              "kind": "face"
+            },
+            {
+              "index": 34,
+              "kind": "face"
+            },
+            {
+              "index": 16,
+              "kind": "face"
+            },
+            {
+              "index": 15,
+              "kind": "face"
+            },
+            {
+              "index": 32,
+              "kind": "face"
+            },
+            {
+              "index": 33,
+              "kind": "face"
+            },
+            {
+              "index": 19,
+              "kind": "face"
+            },
+            {
+              "index": 20,
+              "kind": "face"
+            }
+          ]
+        },
+        {
+          "bounds": [
+            [
+              -900,
+              -340
+            ],
+            [
+              340,
+              900
+            ]
+          ],
+          "flags": 1,
+          "gate": "none",
+          "queue": [
+            {
+              "index": 26,
+              "kind": "face"
+            },
+            {
+              "index": 27,
+              "kind": "face"
+            },
+            {
+              "index": 28,
+              "kind": "face"
+            },
+            {
+              "index": 29,
+              "kind": "face"
+            },
+            {
+              "index": 35,
+              "kind": "face"
+            },
+            {
+              "index": 36,
+              "kind": "face"
+            },
+            {
+              "index": 37,
+              "kind": "face"
+            },
+            {
+              "index": 38,
+              "kind": "face"
+            },
+            {
+              "index": 22,
+              "kind": "face"
+            },
+            {
+              "index": 23,
+              "kind": "face"
+            },
+            {
+              "index": 24,
+              "kind": "face"
+            },
+            {
+              "index": 25,
+              "kind": "face"
+            },
+            {
+              "index": 32,
+              "kind": "face"
+            },
+            {
+              "index": 14,
+              "kind": "face"
+            },
+            {
+              "index": 15,
+              "kind": "face"
+            },
+            {
+              "index": 34,
+              "kind": "face"
+            },
+            {
+              "index": 33,
+              "kind": "face"
+            },
+            {
+              "index": 18,
+              "kind": "face"
+            },
+            {
+              "index": 19,
+              "kind": "face"
+            }
+          ]
+        },
+        {
+          "bounds": [
+            [
+              -900,
+              -340
+            ],
+            [
+              240,
+              340
+            ]
+          ],
+          "flags": 1,
+          "gate": "none",
+          "queue": [
+            {
+              "index": 26,
+              "kind": "face"
+            },
+            {
+              "index": 27,
+              "kind": "face"
+            },
+            {
+              "index": 28,
+              "kind": "face"
+            },
+            {
+              "index": 29,
+              "kind": "face"
+            },
+            {
+              "index": 35,
+              "kind": "face"
+            },
+            {
+              "index": 36,
+              "kind": "face"
+            },
+            {
+              "index": 37,
+              "kind": "face"
+            },
+            {
+              "index": 38,
+              "kind": "face"
+            },
+            {
+              "index": 22,
+              "kind": "face"
+            },
+            {
+              "index": 23,
+              "kind": "face"
+            },
+            {
+              "index": 24,
+              "kind": "face"
+            },
+            {
+              "index": 25,
+              "kind": "face"
+            },
+            {
+              "index": 32,
+              "kind": "face"
+            },
+            {
+              "index": 14,
+              "kind": "face"
+            },
+            {
+              "index": 15,
+              "kind": "face"
+            },
+            {
+              "index": 33,
+              "kind": "face"
+            },
+            {
+              "index": 34,
+              "kind": "face"
+            },
+            {
+              "index": 18,
+              "kind": "face"
+            }
+          ]
+        },
+        {
+          "bounds": [
+            [
+              340,
+              900
+            ],
+            [
+              240,
+              340
+            ]
+          ],
+          "flags": 1,
+          "gate": "none",
+          "queue": [
+            {
+              "index": 26,
+              "kind": "face"
+            },
+            {
+              "index": 27,
+              "kind": "face"
+            },
+            {
+              "index": 28,
+              "kind": "face"
+            },
+            {
+              "index": 29,
+              "kind": "face"
+            },
+            {
+              "index": 35,
+              "kind": "face"
+            },
+            {
+              "index": 36,
+              "kind": "face"
+            },
+            {
+              "index": 37,
+              "kind": "face"
+            },
+            {
+              "index": 38,
+              "kind": "face"
+            },
+            {
+              "index": 22,
+              "kind": "face"
+            },
+            {
+              "index": 23,
+              "kind": "face"
+            },
+            {
+              "index": 24,
+              "kind": "face"
+            },
+            {
+              "index": 25,
+              "kind": "face"
+            },
+            {
+              "index": 34,
+              "kind": "face"
+            },
+            {
+              "index": 16,
+              "kind": "face"
+            },
+            {
+              "index": 15,
+              "kind": "face"
+            },
+            {
+              "index": 32,
+              "kind": "face"
+            },
+            {
+              "index": 33,
+              "kind": "face"
+            },
+            {
+              "index": 20,
+              "kind": "face"
+            }
+          ]
+        }
+      ],
+      "scale": [
+        1,
+        1
+      ]
+    },
+    "variants": [
+      {
+        "id": "assembly",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#00cccc",
+              "doubleSided": true,
+              "sourceColour": 32904,
+              "sourceIndex": 0,
+              "vertices": [
+                0,
+                1,
+                2,
+                3
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "doubleSided": true,
+              "sourceColour": 32902,
+              "sourceIndex": 1,
+              "vertices": [
+                4,
+                5,
+                6,
+                7
+              ]
+            },
+            {
+              "colour": "#00cccc",
+              "doubleSided": true,
+              "sourceColour": 32904,
+              "sourceIndex": 2,
+              "vertices": [
+                8,
+                9,
+                10,
+                11
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "doubleSided": true,
+              "sourceColour": 32902,
+              "sourceIndex": 3,
+              "vertices": [
+                12,
+                13,
+                14,
+                15
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "doubleSided": true,
+              "sourceColour": 32896,
+              "sourceIndex": 4,
+              "vertices": [
+                16,
+                17,
+                18,
+                19
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "doubleSided": true,
+              "sourceColour": 32896,
+              "sourceIndex": 5,
+              "vertices": [
+                20,
+                21,
+                22,
+                23
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "doubleSided": true,
+              "sourceColour": 32902,
+              "sourceIndex": 6,
+              "vertices": [
+                24,
+                25,
+                26,
+                27
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 61574,
+              "sourceIndex": 7,
+              "vertices": [
+                28,
+                29,
+                30,
+                31
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 53378,
+              "sourceIndex": 8,
+              "vertices": [
+                32,
+                33,
+                34,
+                35
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 57472,
+              "sourceIndex": 9,
+              "vertices": [
+                36,
+                37,
+                38,
+                39
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 49282,
+              "sourceIndex": 10,
+              "vertices": [
+                40,
+                41,
+                42,
+                43
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 49282,
+              "sourceIndex": 11,
+              "vertices": [
+                44,
+                45,
+                46,
+                47
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 61588,
+              "sourceIndex": 12,
+              "vertices": [
+                48,
+                49,
+                50,
+                51
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "doubleSided": true,
+              "sourceColour": 32916,
+              "sourceIndex": 13,
+              "vertices": [
+                52,
+                53,
+                54,
+                55
+              ]
+            },
+            {
+              "colour": "#00cccc",
+              "doubleSided": true,
+              "sourceColour": 32904,
+              "sourceIndex": 14,
+              "vertices": [
+                56,
+                57,
+                58,
+                59
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "doubleSided": true,
+              "sourceColour": 32898,
+              "sourceIndex": 15,
+              "vertices": [
+                60,
+                61,
+                62,
+                63
+              ]
+            },
+            {
+              "colour": "#00cccc",
+              "doubleSided": true,
+              "sourceColour": 32904,
+              "sourceIndex": 16,
+              "vertices": [
+                64,
+                65,
+                66,
+                67
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 41094,
+              "sourceIndex": 17,
+              "vertices": [
+                68,
+                69,
+                70,
+                71
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 41108,
+              "sourceIndex": 18,
+              "vertices": [
+                72,
+                73,
+                74,
+                75
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 41094,
+              "sourceIndex": 19,
+              "vertices": [
+                76,
+                77,
+                78,
+                79
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 41108,
+              "sourceIndex": 20,
+              "vertices": [
+                80,
+                81,
+                82,
+                83
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 41094,
+              "sourceIndex": 21,
+              "vertices": [
+                84,
+                85,
+                86,
+                87
+              ]
+            },
+            {
+              "colour": "#00cccc",
+              "sourceColour": 41104,
+              "sourceIndex": 22,
+              "vertices": [
+                88,
+                89,
+                90,
+                91
+              ]
+            },
+            {
+              "colour": "#00aaaa",
+              "sourceColour": 41106,
+              "sourceIndex": 23,
+              "vertices": [
+                92,
+                93,
+                94,
+                95
+              ]
+            },
+            {
+              "colour": "#00cccc",
+              "sourceColour": 41104,
+              "sourceIndex": 24,
+              "vertices": [
+                96,
+                97,
+                98,
+                99
+              ]
+            },
+            {
+              "colour": "#00aaaa",
+              "sourceColour": 41106,
+              "sourceIndex": 25,
+              "vertices": [
+                100,
+                101,
+                102,
+                103
+              ]
+            },
+            {
+              "colour": "#00cccc",
+              "doubleSided": true,
+              "sourceColour": 32900,
+              "sourceIndex": 26,
+              "vertices": [
+                104,
+                105,
+                106,
+                107
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "doubleSided": true,
+              "sourceColour": 32902,
+              "sourceIndex": 27,
+              "vertices": [
+                108,
+                109,
+                110,
+                111
+              ]
+            },
+            {
+              "colour": "#00cccc",
+              "doubleSided": true,
+              "sourceColour": 32900,
+              "sourceIndex": 28,
+              "vertices": [
+                112,
+                113,
+                114,
+                115
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "doubleSided": true,
+              "sourceColour": 32902,
+              "sourceIndex": 29,
+              "vertices": [
+                116,
+                117,
+                118,
+                119
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 57472,
+              "sourceIndex": 30,
+              "vertices": [
+                120,
+                121,
+                122,
+                123
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 49304,
+              "sourceIndex": 31,
+              "vertices": [
+                124,
+                125,
+                126,
+                127
+              ]
+            },
+            {
+              "colour": "#664444",
+              "sourceColour": 45198,
+              "sourceIndex": 32,
+              "vertices": [
+                128,
+                129,
+                130,
+                131
+              ]
+            },
+            {
+              "colour": "#664444",
+              "sourceColour": 45198,
+              "sourceIndex": 33,
+              "vertices": [
+                132,
+                133,
+                134,
+                135
+              ]
+            },
+            {
+              "colour": "#664444",
+              "sourceColour": 45198,
+              "sourceIndex": 34,
+              "vertices": [
+                136,
+                137,
+                138,
+                139
+              ]
+            },
+            {
+              "colour": "#664444",
+              "sourceColour": 45198,
+              "sourceIndex": 35,
+              "vertices": [
+                140,
+                141,
+                142,
+                143
+              ]
+            },
+            {
+              "colour": "#664444",
+              "sourceColour": 45198,
+              "sourceIndex": 36,
+              "vertices": [
+                144,
+                145,
+                146,
+                147
+              ]
+            },
+            {
+              "colour": "#664444",
+              "sourceColour": 45198,
+              "sourceIndex": 37,
+              "vertices": [
+                148,
+                149,
+                150,
+                151
+              ]
+            },
+            {
+              "colour": "#664444",
+              "sourceColour": 45198,
+              "sourceIndex": 38,
+              "vertices": [
+                152,
+                153,
+                154,
+                155
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "doubleSided": true,
+              "sourceColour": 32916,
+              "sourceIndex": 39,
+              "vertices": [
+                156,
+                157,
+                158,
+                159
+              ]
+            },
+            {
+              "colour": "#00cccc",
+              "sourceColour": 32900,
+              "sourceIndex": 0,
+              "vertices": [
+                171,
+                172,
+                170,
+                169
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32898,
+              "sourceIndex": 1,
+              "vertices": [
+                169,
+                170,
+                166,
+                165
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32916,
+              "sourceIndex": 2,
+              "vertices": [
+                172,
+                168,
+                166,
+                170
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32916,
+              "sourceIndex": 3,
+              "vertices": [
+                167,
+                171,
+                169,
+                165
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32898,
+              "sourceIndex": 4,
+              "vertices": [
+                167,
+                168,
+                172,
+                171
+              ]
+            },
+            {
+              "colour": "#008888",
+              "sourceColour": 32928,
+              "sourceIndex": 5,
+              "vertices": [
+                168,
+                160,
+                166
+              ]
+            },
+            {
+              "colour": "#008888",
+              "sourceColour": 32928,
+              "sourceIndex": 6,
+              "vertices": [
+                166,
+                160,
+                164
+              ]
+            },
+            {
+              "colour": "#008888",
+              "sourceColour": 32928,
+              "sourceIndex": 7,
+              "vertices": [
+                167,
+                165,
+                163
+              ]
+            },
+            {
+              "colour": "#008888",
+              "sourceColour": 32928,
+              "sourceIndex": 8,
+              "vertices": [
+                165,
+                164,
+                163
+              ]
+            },
+            {
+              "colour": "#008888",
+              "sourceColour": 32928,
+              "sourceIndex": 9,
+              "vertices": [
+                165,
+                166,
+                164
+              ]
+            },
+            {
+              "colour": "#008888",
+              "sourceColour": 32928,
+              "sourceIndex": 10,
+              "vertices": [
+                161,
+                162,
+                164
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32916,
+              "sourceIndex": 11,
+              "vertices": [
+                162,
+                163,
+                164
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32916,
+              "sourceIndex": 12,
+              "vertices": [
+                161,
+                164,
+                160
+              ]
+            }
+          ],
+          "lines": [],
+          "sourceEnd": 116678,
+          "sourceStart": 116334,
+          "vertices": [
+            [
+              -200,
+              0,
+              -200
+            ],
+            [
+              -200,
+              0,
+              200
+            ],
+            [
+              -200,
+              200,
+              200
+            ],
+            [
+              -200,
+              200,
+              -200
+            ],
+            [
+              -200,
+              0,
+              200
+            ],
+            [
+              200,
+              0,
+              200
+            ],
+            [
+              200,
+              200,
+              200
+            ],
+            [
+              -200,
+              200,
+              200
+            ],
+            [
+              200,
+              0,
+              200
+            ],
+            [
+              200,
+              0,
+              -200
+            ],
+            [
+              200,
+              200,
+              -200
+            ],
+            [
+              200,
+              200,
+              200
+            ],
+            [
+              200,
+              0,
+              -200
+            ],
+            [
+              40,
+              0,
+              -200
+            ],
+            [
+              40,
+              200,
+              -200
+            ],
+            [
+              200,
+              200,
+              -200
+            ],
+            [
+              40,
+              0,
+              -200
+            ],
+            [
+              40,
+              0,
+              -240
+            ],
+            [
+              40,
+              200,
+              -240
+            ],
+            [
+              40,
+              200,
+              -200
+            ],
+            [
+              -40,
+              0,
+              -240
+            ],
+            [
+              -40,
+              0,
+              -200
+            ],
+            [
+              -40,
+              200,
+              -200
+            ],
+            [
+              -40,
+              200,
+              -240
+            ],
+            [
+              -40,
+              0,
+              -200
+            ],
+            [
+              -200,
+              0,
+              -200
+            ],
+            [
+              -200,
+              200,
+              -200
+            ],
+            [
+              -40,
+              200,
+              -200
+            ],
+            [
+              40,
+              200,
+              -200
+            ],
+            [
+              -40,
+              200,
+              -200
+            ],
+            [
+              -40,
+              120,
+              -200
+            ],
+            [
+              40,
+              120,
+              -200
+            ],
+            [
+              -40,
+              120,
+              -200
+            ],
+            [
+              -40,
+              120,
+              -240
+            ],
+            [
+              40,
+              120,
+              -240
+            ],
+            [
+              40,
+              120,
+              -200
+            ],
+            [
+              200,
+              200,
+              -200
+            ],
+            [
+              200,
+              200,
+              200
+            ],
+            [
+              -200,
+              200,
+              200
+            ],
+            [
+              -200,
+              200,
+              -200
+            ],
+            [
+              -200,
+              0,
+              -200
+            ],
+            [
+              -200,
+              0,
+              200
+            ],
+            [
+              200,
+              0,
+              200
+            ],
+            [
+              200,
+              0,
+              -200
+            ],
+            [
+              40,
+              0,
+              -200
+            ],
+            [
+              40,
+              0,
+              -240
+            ],
+            [
+              -40,
+              0,
+              -240
+            ],
+            [
+              -40,
+              0,
+              -200
+            ],
+            [
+              -40,
+              200,
+              -240
+            ],
+            [
+              40,
+              200,
+              -240
+            ],
+            [
+              40,
+              120,
+              -240
+            ],
+            [
+              -40,
+              120,
+              -240
+            ],
+            [
+              -240,
+              0,
+              -240
+            ],
+            [
+              -40,
+              0,
+              -240
+            ],
+            [
+              -40,
+              200,
+              -240
+            ],
+            [
+              -240,
+              200,
+              -240
+            ],
+            [
+              -240,
+              0,
+              240
+            ],
+            [
+              -240,
+              0,
+              -240
+            ],
+            [
+              -240,
+              200,
+              -240
+            ],
+            [
+              -240,
+              200,
+              240
+            ],
+            [
+              240,
+              0,
+              240
+            ],
+            [
+              -240,
+              0,
+              240
+            ],
+            [
+              -240,
+              200,
+              240
+            ],
+            [
+              240,
+              200,
+              240
+            ],
+            [
+              240,
+              0,
+              -240
+            ],
+            [
+              240,
+              0,
+              240
+            ],
+            [
+              240,
+              200,
+              240
+            ],
+            [
+              240,
+              200,
+              -240
+            ],
+            [
+              -340,
+              48,
+              -240
+            ],
+            [
+              -240,
+              48,
+              -240
+            ],
+            [
+              -240,
+              0,
+              -240
+            ],
+            [
+              -340,
+              0,
+              -240
+            ],
+            [
+              -340,
+              48,
+              340
+            ],
+            [
+              -340,
+              48,
+              -240
+            ],
+            [
+              -340,
+              0,
+              -240
+            ],
+            [
+              -340,
+              0,
+              340
+            ],
+            [
+              340,
+              48,
+              340
+            ],
+            [
+              -340,
+              48,
+              340
+            ],
+            [
+              -340,
+              0,
+              340
+            ],
+            [
+              340,
+              0,
+              340
+            ],
+            [
+              340,
+              48,
+              -240
+            ],
+            [
+              340,
+              48,
+              340
+            ],
+            [
+              340,
+              0,
+              340
+            ],
+            [
+              340,
+              0,
+              -240
+            ],
+            [
+              240,
+              48,
+              -240
+            ],
+            [
+              340,
+              48,
+              -240
+            ],
+            [
+              340,
+              0,
+              -240
+            ],
+            [
+              240,
+              0,
+              -240
+            ],
+            [
+              900,
+              48,
+              -900
+            ],
+            [
+              -900,
+              48,
+              -900
+            ],
+            [
+              -900,
+              0,
+              -900
+            ],
+            [
+              900,
+              0,
+              -900
+            ],
+            [
+              -900,
+              48,
+              -900
+            ],
+            [
+              -900,
+              48,
+              900
+            ],
+            [
+              -900,
+              0,
+              900
+            ],
+            [
+              -900,
+              0,
+              -900
+            ],
+            [
+              -900,
+              48,
+              900
+            ],
+            [
+              900,
+              48,
+              900
+            ],
+            [
+              900,
+              0,
+              900
+            ],
+            [
+              -900,
+              0,
+              900
+            ],
+            [
+              900,
+              48,
+              900
+            ],
+            [
+              900,
+              48,
+              -900
+            ],
+            [
+              900,
+              0,
+              -900
+            ],
+            [
+              900,
+              0,
+              900
+            ],
+            [
+              1000,
+              0,
+              1000
+            ],
+            [
+              1000,
+              0,
+              -1000
+            ],
+            [
+              1000,
+              200,
+              -1000
+            ],
+            [
+              1000,
+              200,
+              1000
+            ],
+            [
+              1000,
+              0,
+              -1000
+            ],
+            [
+              -1000,
+              0,
+              -1000
+            ],
+            [
+              -1000,
+              200,
+              -1000
+            ],
+            [
+              1000,
+              200,
+              -1000
+            ],
+            [
+              -1000,
+              0,
+              -1000
+            ],
+            [
+              -1000,
+              0,
+              1000
+            ],
+            [
+              -1000,
+              200,
+              1000
+            ],
+            [
+              -1000,
+              200,
+              -1000
+            ],
+            [
+              -1000,
+              0,
+              1000
+            ],
+            [
+              1000,
+              0,
+              1000
+            ],
+            [
+              1000,
+              200,
+              1000
+            ],
+            [
+              -1000,
+              200,
+              1000
+            ],
+            [
+              1000,
+              200,
+              1000
+            ],
+            [
+              -1000,
+              200,
+              1000
+            ],
+            [
+              -1000,
+              200,
+              -1000
+            ],
+            [
+              1000,
+              200,
+              -1000
+            ],
+            [
+              1000,
+              0,
+              -1000
+            ],
+            [
+              -1000,
+              0,
+              -1000
+            ],
+            [
+              -1000,
+              0,
+              1000
+            ],
+            [
+              1000,
+              0,
+              1000
+            ],
+            [
+              340,
+              48,
+              240
+            ],
+            [
+              340,
+              48,
+              -240
+            ],
+            [
+              240,
+              48,
+              -240
+            ],
+            [
+              240,
+              48,
+              240
+            ],
+            [
+              340,
+              48,
+              240
+            ],
+            [
+              -340,
+              48,
+              240
+            ],
+            [
+              -340,
+              48,
+              340
+            ],
+            [
+              340,
+              48,
+              340
+            ],
+            [
+              -240,
+              48,
+              240
+            ],
+            [
+              -240,
+              48,
+              -240
+            ],
+            [
+              -340,
+              48,
+              -240
+            ],
+            [
+              -340,
+              48,
+              240
+            ],
+            [
+              -900,
+              48,
+              1000
+            ],
+            [
+              900,
+              48,
+              1000
+            ],
+            [
+              900,
+              48,
+              900
+            ],
+            [
+              -900,
+              48,
+              900
+            ],
+            [
+              1000,
+              48,
+              1000
+            ],
+            [
+              1000,
+              48,
+              -1000
+            ],
+            [
+              900,
+              48,
+              -1000
+            ],
+            [
+              900,
+              48,
+              1000
+            ],
+            [
+              900,
+              48,
+              -1000
+            ],
+            [
+              -900,
+              48,
+              -1000
+            ],
+            [
+              -900,
+              48,
+              -900
+            ],
+            [
+              900,
+              48,
+              -900
+            ],
+            [
+              -1000,
+              48,
+              -1000
+            ],
+            [
+              -1000,
+              48,
+              1000
+            ],
+            [
+              -900,
+              48,
+              1000
+            ],
+            [
+              -900,
+              48,
+              -1000
+            ],
+            [
+              40,
+              0,
+              -240
+            ],
+            [
+              240,
+              0,
+              -240
+            ],
+            [
+              240,
+              200,
+              -240
+            ],
+            [
+              40,
+              200,
+              -240
+            ],
+            [
+              500,
+              0,
+              500
+            ],
+            [
+              500,
+              0,
+              -500
+            ],
+            [
+              -500,
+              0,
+              -500
+            ],
+            [
+              -500,
+              0,
+              500
+            ],
+            [
+              0,
+              612,
+              0
+            ],
+            [
+              -100,
+              122,
+              400
+            ],
+            [
+              100,
+              122,
+              400
+            ],
+            [
+              -100,
+              0,
+              500
+            ],
+            [
+              100,
+              0,
+              500
+            ],
+            [
+              -100,
+              122,
+              300
+            ],
+            [
+              100,
+              122,
+              300
+            ],
+            [
+              -100,
+              0,
+              300
+            ],
+            [
+              100,
+              0,
+              300
+            ]
+          ]
+        },
+        "name": "Structure and detail \u00b7 palette 55"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

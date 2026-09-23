@@ -1,0 +1,474 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-03852a",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "TABLE",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [
+      "object-038546"
+    ],
+    "slots": [
+      243,
+      244,
+      245
+    ],
+    "sourceAddress": 230698,
+    "status": "decoded",
+    "supportTop": 50,
+    "variants": [
+      {
+        "id": "object-038546",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                14,
+                13,
+                16,
+                17
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                13,
+                12,
+                15,
+                16
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                12,
+                14,
+                17,
+                15
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                12,
+                13,
+                14
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                3,
+                4,
+                5
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                8,
+                7,
+                10,
+                11
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                7,
+                6,
+                9,
+                10
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                6,
+                8,
+                11,
+                9
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                2,
+                1,
+                4,
+                3
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                1,
+                0,
+                5,
+                4
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                0,
+                2,
+                3,
+                5
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                0,
+                1,
+                2
+              ]
+            }
+          ],
+          "geometryStart": 230818,
+          "lines": [],
+          "sourceEnd": 231013,
+          "sourceStart": 230726,
+          "vertices": [
+            [
+              -44,
+              50,
+              -20
+            ],
+            [
+              0,
+              50,
+              40
+            ],
+            [
+              44,
+              50,
+              -20
+            ],
+            [
+              44,
+              46,
+              -20
+            ],
+            [
+              0,
+              46,
+              40
+            ],
+            [
+              -44,
+              46,
+              -20
+            ],
+            [
+              -5,
+              46,
+              -4
+            ],
+            [
+              0,
+              46,
+              2
+            ],
+            [
+              5,
+              46,
+              -4
+            ],
+            [
+              -5,
+              4,
+              -4
+            ],
+            [
+              0,
+              4,
+              2
+            ],
+            [
+              5,
+              4,
+              -4
+            ],
+            [
+              -40,
+              4,
+              -18
+            ],
+            [
+              0,
+              4,
+              36
+            ],
+            [
+              40,
+              4,
+              -18
+            ],
+            [
+              -40,
+              0,
+              -18
+            ],
+            [
+              0,
+              0,
+              36
+            ],
+            [
+              40,
+              0,
+              -18
+            ]
+          ]
+        },
+        "name": "TABLE \u00b7 object-038546"
+      },
+      {
+        "id": "object-03852a",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                14,
+                13,
+                16,
+                17
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                13,
+                12,
+                15,
+                16
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                12,
+                14,
+                17,
+                15
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                12,
+                13,
+                14
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                3,
+                4,
+                5
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                8,
+                7,
+                10,
+                11
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                7,
+                6,
+                9,
+                10
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                6,
+                8,
+                11,
+                9
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                2,
+                1,
+                4,
+                3
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                1,
+                0,
+                5,
+                4
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                0,
+                2,
+                3,
+                5
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                0,
+                1,
+                2
+              ]
+            }
+          ],
+          "geometryStart": 230818,
+          "lines": [],
+          "sourceEnd": 231013,
+          "sourceStart": 230698,
+          "vertices": [
+            [
+              -44,
+              50,
+              -20
+            ],
+            [
+              0,
+              50,
+              40
+            ],
+            [
+              44,
+              50,
+              -20
+            ],
+            [
+              44,
+              46,
+              -20
+            ],
+            [
+              0,
+              46,
+              40
+            ],
+            [
+              -44,
+              46,
+              -20
+            ],
+            [
+              -5,
+              46,
+              -4
+            ],
+            [
+              0,
+              46,
+              2
+            ],
+            [
+              5,
+              46,
+              -4
+            ],
+            [
+              -5,
+              4,
+              -4
+            ],
+            [
+              0,
+              4,
+              2
+            ],
+            [
+              5,
+              4,
+              -4
+            ],
+            [
+              -40,
+              4,
+              -18
+            ],
+            [
+              0,
+              4,
+              36
+            ],
+            [
+              40,
+              4,
+              -18
+            ],
+            [
+              -40,
+              0,
+              -18
+            ],
+            [
+              0,
+              0,
+              36
+            ],
+            [
+              40,
+              0,
+              -18
+            ]
+          ]
+        },
+        "name": "TABLE \u00b7 object-03852a"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

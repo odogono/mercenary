@@ -1,4 +1,8 @@
-import { parseCatalogue, type Catalogue } from '../catalogue/data.ts';
+import {
+  payloadJson,
+  readCatalogue,
+  type Catalogue
+} from '../catalogue/data.ts';
 import {
   readGammaSystem,
   type GammaSystemDocument
@@ -122,11 +126,9 @@ let pending: ReturnType<typeof setTimeout> | undefined;
 let bodyView: MapView | undefined;
 /// The Catalogue, and the islands of the Body currently open.
 ///
-/// Fetched only on first entering a Body, never for the System Range. `catalogue.json` is 40 MiB
-/// because it carries 1,241 Models and 1,746 Instances, and the Atlas needs 60 KiB of coastlines
-/// out of it. `/damocles` and `/damocles/catalogue` both fetch the whole thing already, so this
-/// is the established cost rather than a new one, but there is no reason to pay it for a reader
-/// who only ever looks at the System Range.
+/// Fetched only on first entering a Body, never for the System Range: the shared document and
+/// every Model file, most of which the Atlas never draws. A reader who only ever looks at the
+/// System Range has no reason to pay for it.
 let catalogue: Catalogue | undefined;
 let catalogueRequest: Promise<void> | undefined;
 let surface: BodySurface | undefined;
@@ -639,18 +641,15 @@ const loadSurface = (sourceIndex: number, then: () => void) => {
   }
   catalogueRequest =
     catalogueRequest ??
-    fetch('/payload/damocles/catalogue.json')
-      .then(async response => {
-        if (!response.ok) {
-          throw new Error(`Request returned HTTP ${response.status}.`);
-        }
-        catalogue = parseCatalogue(await response.json());
+    readCatalogue(payloadJson)
+      .then(read => {
+        catalogue = read;
       })
       .catch(error => {
         catalogueRequest = undefined;
         failure.hidden = false;
         failure.textContent =
-          `/payload/damocles/catalogue.json: ${error instanceof Error ? error.message : String(error)}\n` +
+          `${error instanceof Error ? error.message : String(error)}\n` +
           'The sea and the Surface Cell grid are drawn from the System authority; coastlines need the Catalogue.';
       });
   void catalogueRequest.then(() => {

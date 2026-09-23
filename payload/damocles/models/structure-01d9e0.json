@@ -1,0 +1,3144 @@
+{
+  "model": {
+    "conditions": [
+      "articulation angle ($7888)"
+    ],
+    "evidence": [],
+    "id": "structure-01d9e0",
+    "kind": "structure",
+    "linkedInstances": [],
+    "name": "Structure 208",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "Empty surface record: no plan vertices or walls. Includes its linked articulated detail, turned in this record's own 2\u00d7-2 frame at 8 sampled $7888 angles. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
+    "recordClass": "empty",
+    "relatedModels": [
+      "interior-0268ee"
+    ],
+    "sceneColours": [
+      {
+        "colour": "#eeeeee",
+        "sourceColour": 1911
+      },
+      {
+        "colour": "#eeeeee",
+        "sourceColour": 1911
+      }
+    ],
+    "slots": [
+      208
+    ],
+    "sourceAddress": 121312,
+    "status": "partial",
+    "structureSelection": {
+      "attachments": [],
+      "detailModel": "interior-0268ee",
+      "detailVariant": "palette-115",
+      "liveSelector": false,
+      "plan": {
+        "faces": [],
+        "lines": [],
+        "sourceEnd": 121326,
+        "sourceStart": 121312,
+        "vertices": []
+      },
+      "regions": [
+        {
+          "bounds": [
+            [
+              -32768,
+              32767
+            ],
+            [
+              -32768,
+              -100
+            ]
+          ],
+          "flags": 49152,
+          "gate": "none",
+          "queue": []
+        },
+        {
+          "bounds": [
+            [
+              -32768,
+              32767
+            ],
+            [
+              300,
+              32767
+            ]
+          ],
+          "flags": 49152,
+          "gate": "none",
+          "queue": []
+        },
+        {
+          "bounds": [
+            [
+              -32768,
+              -200
+            ],
+            [
+              -100,
+              300
+            ]
+          ],
+          "flags": 49152,
+          "gate": "none",
+          "queue": []
+        },
+        {
+          "bounds": [
+            [
+              200,
+              32767
+            ],
+            [
+              -100,
+              300
+            ]
+          ],
+          "flags": 49152,
+          "gate": "none",
+          "queue": []
+        }
+      ],
+      "scale": [
+        2,
+        -2
+      ]
+    },
+    "variants": [
+      {
+        "id": "assembly",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 0,
+              "vertices": [
+                21,
+                19,
+                22
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 1,
+              "vertices": [
+                17,
+                15,
+                13,
+                11
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32896,
+              "sourceIndex": 2,
+              "vertices": [
+                22,
+                20,
+                21
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 3,
+              "vertices": [
+                21,
+                20,
+                14,
+                15
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 4,
+              "vertices": [
+                15,
+                14,
+                12,
+                13
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32896,
+              "sourceIndex": 5,
+              "vertices": [
+                22,
+                19,
+                18
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 6,
+              "vertices": [
+                18,
+                19,
+                17,
+                16
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 7,
+              "vertices": [
+                16,
+                17,
+                11,
+                10
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 8,
+              "vertices": [
+                22,
+                18,
+                20
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32902,
+              "sourceIndex": 9,
+              "vertices": [
+                20,
+                18,
+                16,
+                14
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 10,
+              "vertices": [
+                14,
+                16,
+                10,
+                12
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 11,
+              "vertices": [
+                0,
+                1,
+                4
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 12,
+              "vertices": [
+                0,
+                4,
+                3
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32906,
+              "sourceIndex": 13,
+              "vertices": [
+                4,
+                1,
+                5,
+                8
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32904,
+              "sourceIndex": 14,
+              "vertices": [
+                3,
+                4,
+                8,
+                7
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 15,
+              "vertices": [
+                8,
+                5,
+                9
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 16,
+              "vertices": [
+                7,
+                8,
+                9
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 17,
+              "vertices": [
+                0,
+                2,
+                1
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 18,
+              "vertices": [
+                0,
+                3,
+                2
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32904,
+              "sourceIndex": 19,
+              "vertices": [
+                1,
+                2,
+                6,
+                5
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32906,
+              "sourceIndex": 20,
+              "vertices": [
+                2,
+                3,
+                7,
+                6
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 21,
+              "vertices": [
+                5,
+                6,
+                9
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 22,
+              "vertices": [
+                6,
+                7,
+                9
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32902,
+              "sourceIndex": 23,
+              "vertices": [
+                19,
+                21,
+                15,
+                17
+              ]
+            }
+          ],
+          "lines": [],
+          "vertices": [
+            [
+              0,
+              1500,
+              -40
+            ],
+            [
+              60,
+              1400,
+              -40
+            ],
+            [
+              0,
+              1400,
+              -80
+            ],
+            [
+              -60,
+              1400,
+              -40
+            ],
+            [
+              0,
+              1400,
+              0
+            ],
+            [
+              60,
+              200,
+              -40
+            ],
+            [
+              0,
+              200,
+              -80
+            ],
+            [
+              -60,
+              200,
+              -40
+            ],
+            [
+              0,
+              200,
+              0
+            ],
+            [
+              0,
+              100,
+              -40
+            ],
+            [
+              -200,
+              0,
+              0
+            ],
+            [
+              -200,
+              0,
+              300
+            ],
+            [
+              200,
+              0,
+              0
+            ],
+            [
+              200,
+              0,
+              300
+            ],
+            [
+              100,
+              300,
+              0
+            ],
+            [
+              100,
+              300,
+              200
+            ],
+            [
+              -100,
+              300,
+              0
+            ],
+            [
+              -100,
+              300,
+              200
+            ],
+            [
+              -100,
+              900,
+              0
+            ],
+            [
+              -100,
+              900,
+              200
+            ],
+            [
+              100,
+              900,
+              0
+            ],
+            [
+              100,
+              900,
+              200
+            ],
+            [
+              0,
+              1000,
+              100
+            ]
+          ]
+        },
+        "name": "Structure and detail \u00b7 palette 115 \u00b7 articulation angle $00"
+      },
+      {
+        "id": "assembly-angle-20",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 0,
+              "vertices": [
+                21,
+                19,
+                22
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 1,
+              "vertices": [
+                17,
+                15,
+                13,
+                11
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32896,
+              "sourceIndex": 2,
+              "vertices": [
+                22,
+                20,
+                21
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 3,
+              "vertices": [
+                21,
+                20,
+                14,
+                15
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 4,
+              "vertices": [
+                15,
+                14,
+                12,
+                13
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32896,
+              "sourceIndex": 5,
+              "vertices": [
+                22,
+                19,
+                18
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 6,
+              "vertices": [
+                18,
+                19,
+                17,
+                16
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 7,
+              "vertices": [
+                16,
+                17,
+                11,
+                10
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 8,
+              "vertices": [
+                22,
+                18,
+                20
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32902,
+              "sourceIndex": 9,
+              "vertices": [
+                20,
+                18,
+                16,
+                14
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 10,
+              "vertices": [
+                14,
+                16,
+                10,
+                12
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 11,
+              "vertices": [
+                0,
+                1,
+                4
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 12,
+              "vertices": [
+                0,
+                4,
+                3
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32906,
+              "sourceIndex": 13,
+              "vertices": [
+                4,
+                1,
+                5,
+                8
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32904,
+              "sourceIndex": 14,
+              "vertices": [
+                3,
+                4,
+                8,
+                7
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 15,
+              "vertices": [
+                8,
+                5,
+                9
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 16,
+              "vertices": [
+                7,
+                8,
+                9
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 17,
+              "vertices": [
+                0,
+                2,
+                1
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 18,
+              "vertices": [
+                0,
+                3,
+                2
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32904,
+              "sourceIndex": 19,
+              "vertices": [
+                1,
+                2,
+                6,
+                5
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32906,
+              "sourceIndex": 20,
+              "vertices": [
+                2,
+                3,
+                7,
+                6
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 21,
+              "vertices": [
+                5,
+                6,
+                9
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 22,
+              "vertices": [
+                6,
+                7,
+                9
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32902,
+              "sourceIndex": 23,
+              "vertices": [
+                19,
+                21,
+                15,
+                17
+              ]
+            }
+          ],
+          "lines": [],
+          "vertices": [
+            [
+              -496,
+              1294,
+              -40
+            ],
+            [
+              -382,
+              1266,
+              -40
+            ],
+            [
+              -426,
+              1224,
+              -80
+            ],
+            [
+              -468,
+              1180,
+              -40
+            ],
+            [
+              -426,
+              1224,
+              0
+            ],
+            [
+              466,
+              418,
+              -40
+            ],
+            [
+              424,
+              374,
+              -80
+            ],
+            [
+              380,
+              332,
+              -40
+            ],
+            [
+              424,
+              374,
+              0
+            ],
+            [
+              494,
+              304,
+              -40
+            ],
+            [
+              -200,
+              0,
+              0
+            ],
+            [
+              -200,
+              0,
+              300
+            ],
+            [
+              200,
+              0,
+              0
+            ],
+            [
+              200,
+              0,
+              300
+            ],
+            [
+              100,
+              300,
+              0
+            ],
+            [
+              100,
+              300,
+              200
+            ],
+            [
+              -100,
+              300,
+              0
+            ],
+            [
+              -100,
+              300,
+              200
+            ],
+            [
+              -100,
+              900,
+              0
+            ],
+            [
+              -100,
+              900,
+              200
+            ],
+            [
+              100,
+              900,
+              0
+            ],
+            [
+              100,
+              900,
+              200
+            ],
+            [
+              0,
+              1000,
+              100
+            ]
+          ]
+        },
+        "name": "Structure and detail \u00b7 palette 115 \u00b7 articulation angle $20"
+      },
+      {
+        "id": "assembly-angle-40",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 0,
+              "vertices": [
+                21,
+                19,
+                22
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 1,
+              "vertices": [
+                17,
+                15,
+                13,
+                11
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32896,
+              "sourceIndex": 2,
+              "vertices": [
+                22,
+                20,
+                21
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 3,
+              "vertices": [
+                21,
+                20,
+                14,
+                15
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 4,
+              "vertices": [
+                15,
+                14,
+                12,
+                13
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32896,
+              "sourceIndex": 5,
+              "vertices": [
+                22,
+                19,
+                18
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 6,
+              "vertices": [
+                18,
+                19,
+                17,
+                16
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 7,
+              "vertices": [
+                16,
+                17,
+                11,
+                10
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 8,
+              "vertices": [
+                22,
+                18,
+                20
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32902,
+              "sourceIndex": 9,
+              "vertices": [
+                20,
+                18,
+                16,
+                14
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 10,
+              "vertices": [
+                14,
+                16,
+                10,
+                12
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 11,
+              "vertices": [
+                0,
+                1,
+                4
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 12,
+              "vertices": [
+                0,
+                4,
+                3
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32906,
+              "sourceIndex": 13,
+              "vertices": [
+                4,
+                1,
+                5,
+                8
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32904,
+              "sourceIndex": 14,
+              "vertices": [
+                3,
+                4,
+                8,
+                7
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 15,
+              "vertices": [
+                8,
+                5,
+                9
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 16,
+              "vertices": [
+                7,
+                8,
+                9
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 17,
+              "vertices": [
+                0,
+                2,
+                1
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 18,
+              "vertices": [
+                0,
+                3,
+                2
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32904,
+              "sourceIndex": 19,
+              "vertices": [
+                1,
+                2,
+                6,
+                5
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32906,
+              "sourceIndex": 20,
+              "vertices": [
+                2,
+                3,
+                7,
+                6
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 21,
+              "vertices": [
+                5,
+                6,
+                9
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 22,
+              "vertices": [
+                6,
+                7,
+                9
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32902,
+              "sourceIndex": 23,
+              "vertices": [
+                19,
+                21,
+                15,
+                17
+              ]
+            }
+          ],
+          "lines": [],
+          "vertices": [
+            [
+              -700,
+              800,
+              -40
+            ],
+            [
+              -600,
+              858,
+              -40
+            ],
+            [
+              -600,
+              800,
+              -80
+            ],
+            [
+              -600,
+              740,
+              -40
+            ],
+            [
+              -600,
+              800,
+              0
+            ],
+            [
+              598,
+              858,
+              -40
+            ],
+            [
+              598,
+              800,
+              -80
+            ],
+            [
+              598,
+              740,
+              -40
+            ],
+            [
+              598,
+              800,
+              0
+            ],
+            [
+              698,
+              800,
+              -40
+            ],
+            [
+              -200,
+              0,
+              0
+            ],
+            [
+              -200,
+              0,
+              300
+            ],
+            [
+              200,
+              0,
+              0
+            ],
+            [
+              200,
+              0,
+              300
+            ],
+            [
+              100,
+              300,
+              0
+            ],
+            [
+              100,
+              300,
+              200
+            ],
+            [
+              -100,
+              300,
+              0
+            ],
+            [
+              -100,
+              300,
+              200
+            ],
+            [
+              -100,
+              900,
+              0
+            ],
+            [
+              -100,
+              900,
+              200
+            ],
+            [
+              100,
+              900,
+              0
+            ],
+            [
+              100,
+              900,
+              200
+            ],
+            [
+              0,
+              1000,
+              100
+            ]
+          ]
+        },
+        "name": "Structure and detail \u00b7 palette 115 \u00b7 articulation angle $40"
+      },
+      {
+        "id": "assembly-angle-60",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 0,
+              "vertices": [
+                21,
+                19,
+                22
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 1,
+              "vertices": [
+                17,
+                15,
+                13,
+                11
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32896,
+              "sourceIndex": 2,
+              "vertices": [
+                22,
+                20,
+                21
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 3,
+              "vertices": [
+                21,
+                20,
+                14,
+                15
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 4,
+              "vertices": [
+                15,
+                14,
+                12,
+                13
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32896,
+              "sourceIndex": 5,
+              "vertices": [
+                22,
+                19,
+                18
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 6,
+              "vertices": [
+                18,
+                19,
+                17,
+                16
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 7,
+              "vertices": [
+                16,
+                17,
+                11,
+                10
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 8,
+              "vertices": [
+                22,
+                18,
+                20
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32902,
+              "sourceIndex": 9,
+              "vertices": [
+                20,
+                18,
+                16,
+                14
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 10,
+              "vertices": [
+                14,
+                16,
+                10,
+                12
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 11,
+              "vertices": [
+                0,
+                1,
+                4
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 12,
+              "vertices": [
+                0,
+                4,
+                3
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32906,
+              "sourceIndex": 13,
+              "vertices": [
+                4,
+                1,
+                5,
+                8
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32904,
+              "sourceIndex": 14,
+              "vertices": [
+                3,
+                4,
+                8,
+                7
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 15,
+              "vertices": [
+                8,
+                5,
+                9
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 16,
+              "vertices": [
+                7,
+                8,
+                9
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 17,
+              "vertices": [
+                0,
+                2,
+                1
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 18,
+              "vertices": [
+                0,
+                3,
+                2
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32904,
+              "sourceIndex": 19,
+              "vertices": [
+                1,
+                2,
+                6,
+                5
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32906,
+              "sourceIndex": 20,
+              "vertices": [
+                2,
+                3,
+                7,
+                6
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 21,
+              "vertices": [
+                5,
+                6,
+                9
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 22,
+              "vertices": [
+                6,
+                7,
+                9
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32902,
+              "sourceIndex": 23,
+              "vertices": [
+                19,
+                21,
+                15,
+                17
+              ]
+            }
+          ],
+          "lines": [],
+          "vertices": [
+            [
+              -496,
+              304,
+              -40
+            ],
+            [
+              -468,
+              418,
+              -40
+            ],
+            [
+              -426,
+              374,
+              -80
+            ],
+            [
+              -382,
+              332,
+              -40
+            ],
+            [
+              -426,
+              374,
+              0
+            ],
+            [
+              380,
+              1266,
+              -40
+            ],
+            [
+              424,
+              1224,
+              -80
+            ],
+            [
+              466,
+              1180,
+              -40
+            ],
+            [
+              424,
+              1224,
+              0
+            ],
+            [
+              494,
+              1294,
+              -40
+            ],
+            [
+              -200,
+              0,
+              0
+            ],
+            [
+              -200,
+              0,
+              300
+            ],
+            [
+              200,
+              0,
+              0
+            ],
+            [
+              200,
+              0,
+              300
+            ],
+            [
+              100,
+              300,
+              0
+            ],
+            [
+              100,
+              300,
+              200
+            ],
+            [
+              -100,
+              300,
+              0
+            ],
+            [
+              -100,
+              300,
+              200
+            ],
+            [
+              -100,
+              900,
+              0
+            ],
+            [
+              -100,
+              900,
+              200
+            ],
+            [
+              100,
+              900,
+              0
+            ],
+            [
+              100,
+              900,
+              200
+            ],
+            [
+              0,
+              1000,
+              100
+            ]
+          ]
+        },
+        "name": "Structure and detail \u00b7 palette 115 \u00b7 articulation angle $60"
+      },
+      {
+        "id": "assembly-angle-80",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 0,
+              "vertices": [
+                21,
+                19,
+                22
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 1,
+              "vertices": [
+                17,
+                15,
+                13,
+                11
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32896,
+              "sourceIndex": 2,
+              "vertices": [
+                22,
+                20,
+                21
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 3,
+              "vertices": [
+                21,
+                20,
+                14,
+                15
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 4,
+              "vertices": [
+                15,
+                14,
+                12,
+                13
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32896,
+              "sourceIndex": 5,
+              "vertices": [
+                22,
+                19,
+                18
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 6,
+              "vertices": [
+                18,
+                19,
+                17,
+                16
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 7,
+              "vertices": [
+                16,
+                17,
+                11,
+                10
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 8,
+              "vertices": [
+                22,
+                18,
+                20
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32902,
+              "sourceIndex": 9,
+              "vertices": [
+                20,
+                18,
+                16,
+                14
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 10,
+              "vertices": [
+                14,
+                16,
+                10,
+                12
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 11,
+              "vertices": [
+                0,
+                1,
+                4
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 12,
+              "vertices": [
+                0,
+                4,
+                3
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32906,
+              "sourceIndex": 13,
+              "vertices": [
+                4,
+                1,
+                5,
+                8
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32904,
+              "sourceIndex": 14,
+              "vertices": [
+                3,
+                4,
+                8,
+                7
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 15,
+              "vertices": [
+                8,
+                5,
+                9
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 16,
+              "vertices": [
+                7,
+                8,
+                9
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 17,
+              "vertices": [
+                0,
+                2,
+                1
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 18,
+              "vertices": [
+                0,
+                3,
+                2
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32904,
+              "sourceIndex": 19,
+              "vertices": [
+                1,
+                2,
+                6,
+                5
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32906,
+              "sourceIndex": 20,
+              "vertices": [
+                2,
+                3,
+                7,
+                6
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 21,
+              "vertices": [
+                5,
+                6,
+                9
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 22,
+              "vertices": [
+                6,
+                7,
+                9
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32902,
+              "sourceIndex": 23,
+              "vertices": [
+                19,
+                21,
+                15,
+                17
+              ]
+            }
+          ],
+          "lines": [],
+          "vertices": [
+            [
+              0,
+              100,
+              -40
+            ],
+            [
+              -60,
+              200,
+              -40
+            ],
+            [
+              0,
+              200,
+              -80
+            ],
+            [
+              60,
+              200,
+              -40
+            ],
+            [
+              0,
+              200,
+              0
+            ],
+            [
+              -60,
+              1400,
+              -40
+            ],
+            [
+              0,
+              1400,
+              -80
+            ],
+            [
+              60,
+              1400,
+              -40
+            ],
+            [
+              0,
+              1400,
+              0
+            ],
+            [
+              0,
+              1500,
+              -40
+            ],
+            [
+              -200,
+              0,
+              0
+            ],
+            [
+              -200,
+              0,
+              300
+            ],
+            [
+              200,
+              0,
+              0
+            ],
+            [
+              200,
+              0,
+              300
+            ],
+            [
+              100,
+              300,
+              0
+            ],
+            [
+              100,
+              300,
+              200
+            ],
+            [
+              -100,
+              300,
+              0
+            ],
+            [
+              -100,
+              300,
+              200
+            ],
+            [
+              -100,
+              900,
+              0
+            ],
+            [
+              -100,
+              900,
+              200
+            ],
+            [
+              100,
+              900,
+              0
+            ],
+            [
+              100,
+              900,
+              200
+            ],
+            [
+              0,
+              1000,
+              100
+            ]
+          ]
+        },
+        "name": "Structure and detail \u00b7 palette 115 \u00b7 articulation angle $80"
+      },
+      {
+        "id": "assembly-angle-a0",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 0,
+              "vertices": [
+                21,
+                19,
+                22
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 1,
+              "vertices": [
+                17,
+                15,
+                13,
+                11
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32896,
+              "sourceIndex": 2,
+              "vertices": [
+                22,
+                20,
+                21
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 3,
+              "vertices": [
+                21,
+                20,
+                14,
+                15
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 4,
+              "vertices": [
+                15,
+                14,
+                12,
+                13
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32896,
+              "sourceIndex": 5,
+              "vertices": [
+                22,
+                19,
+                18
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 6,
+              "vertices": [
+                18,
+                19,
+                17,
+                16
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 7,
+              "vertices": [
+                16,
+                17,
+                11,
+                10
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 8,
+              "vertices": [
+                22,
+                18,
+                20
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32902,
+              "sourceIndex": 9,
+              "vertices": [
+                20,
+                18,
+                16,
+                14
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 10,
+              "vertices": [
+                14,
+                16,
+                10,
+                12
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 11,
+              "vertices": [
+                0,
+                1,
+                4
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 12,
+              "vertices": [
+                0,
+                4,
+                3
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32906,
+              "sourceIndex": 13,
+              "vertices": [
+                4,
+                1,
+                5,
+                8
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32904,
+              "sourceIndex": 14,
+              "vertices": [
+                3,
+                4,
+                8,
+                7
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 15,
+              "vertices": [
+                8,
+                5,
+                9
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 16,
+              "vertices": [
+                7,
+                8,
+                9
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 17,
+              "vertices": [
+                0,
+                2,
+                1
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 18,
+              "vertices": [
+                0,
+                3,
+                2
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32904,
+              "sourceIndex": 19,
+              "vertices": [
+                1,
+                2,
+                6,
+                5
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32906,
+              "sourceIndex": 20,
+              "vertices": [
+                2,
+                3,
+                7,
+                6
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 21,
+              "vertices": [
+                5,
+                6,
+                9
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 22,
+              "vertices": [
+                6,
+                7,
+                9
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32902,
+              "sourceIndex": 23,
+              "vertices": [
+                19,
+                21,
+                15,
+                17
+              ]
+            }
+          ],
+          "lines": [],
+          "vertices": [
+            [
+              494,
+              304,
+              -40
+            ],
+            [
+              380,
+              332,
+              -40
+            ],
+            [
+              424,
+              374,
+              -80
+            ],
+            [
+              466,
+              418,
+              -40
+            ],
+            [
+              424,
+              374,
+              0
+            ],
+            [
+              -468,
+              1180,
+              -40
+            ],
+            [
+              -426,
+              1224,
+              -80
+            ],
+            [
+              -382,
+              1266,
+              -40
+            ],
+            [
+              -426,
+              1224,
+              0
+            ],
+            [
+              -496,
+              1294,
+              -40
+            ],
+            [
+              -200,
+              0,
+              0
+            ],
+            [
+              -200,
+              0,
+              300
+            ],
+            [
+              200,
+              0,
+              0
+            ],
+            [
+              200,
+              0,
+              300
+            ],
+            [
+              100,
+              300,
+              0
+            ],
+            [
+              100,
+              300,
+              200
+            ],
+            [
+              -100,
+              300,
+              0
+            ],
+            [
+              -100,
+              300,
+              200
+            ],
+            [
+              -100,
+              900,
+              0
+            ],
+            [
+              -100,
+              900,
+              200
+            ],
+            [
+              100,
+              900,
+              0
+            ],
+            [
+              100,
+              900,
+              200
+            ],
+            [
+              0,
+              1000,
+              100
+            ]
+          ]
+        },
+        "name": "Structure and detail \u00b7 palette 115 \u00b7 articulation angle $A0"
+      },
+      {
+        "id": "assembly-angle-c0",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 0,
+              "vertices": [
+                21,
+                19,
+                22
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 1,
+              "vertices": [
+                17,
+                15,
+                13,
+                11
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32896,
+              "sourceIndex": 2,
+              "vertices": [
+                22,
+                20,
+                21
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 3,
+              "vertices": [
+                21,
+                20,
+                14,
+                15
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 4,
+              "vertices": [
+                15,
+                14,
+                12,
+                13
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32896,
+              "sourceIndex": 5,
+              "vertices": [
+                22,
+                19,
+                18
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 6,
+              "vertices": [
+                18,
+                19,
+                17,
+                16
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 7,
+              "vertices": [
+                16,
+                17,
+                11,
+                10
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 8,
+              "vertices": [
+                22,
+                18,
+                20
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32902,
+              "sourceIndex": 9,
+              "vertices": [
+                20,
+                18,
+                16,
+                14
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 10,
+              "vertices": [
+                14,
+                16,
+                10,
+                12
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 11,
+              "vertices": [
+                0,
+                1,
+                4
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 12,
+              "vertices": [
+                0,
+                4,
+                3
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32906,
+              "sourceIndex": 13,
+              "vertices": [
+                4,
+                1,
+                5,
+                8
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32904,
+              "sourceIndex": 14,
+              "vertices": [
+                3,
+                4,
+                8,
+                7
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 15,
+              "vertices": [
+                8,
+                5,
+                9
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 16,
+              "vertices": [
+                7,
+                8,
+                9
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 17,
+              "vertices": [
+                0,
+                2,
+                1
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 18,
+              "vertices": [
+                0,
+                3,
+                2
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32904,
+              "sourceIndex": 19,
+              "vertices": [
+                1,
+                2,
+                6,
+                5
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32906,
+              "sourceIndex": 20,
+              "vertices": [
+                2,
+                3,
+                7,
+                6
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 21,
+              "vertices": [
+                5,
+                6,
+                9
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 22,
+              "vertices": [
+                6,
+                7,
+                9
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32902,
+              "sourceIndex": 23,
+              "vertices": [
+                19,
+                21,
+                15,
+                17
+              ]
+            }
+          ],
+          "lines": [],
+          "vertices": [
+            [
+              700,
+              800,
+              -40
+            ],
+            [
+              600,
+              740,
+              -40
+            ],
+            [
+              600,
+              800,
+              -80
+            ],
+            [
+              600,
+              860,
+              -40
+            ],
+            [
+              600,
+              800,
+              0
+            ],
+            [
+              -600,
+              740,
+              -40
+            ],
+            [
+              -600,
+              800,
+              -80
+            ],
+            [
+              -600,
+              860,
+              -40
+            ],
+            [
+              -600,
+              800,
+              0
+            ],
+            [
+              -700,
+              800,
+              -40
+            ],
+            [
+              -200,
+              0,
+              0
+            ],
+            [
+              -200,
+              0,
+              300
+            ],
+            [
+              200,
+              0,
+              0
+            ],
+            [
+              200,
+              0,
+              300
+            ],
+            [
+              100,
+              300,
+              0
+            ],
+            [
+              100,
+              300,
+              200
+            ],
+            [
+              -100,
+              300,
+              0
+            ],
+            [
+              -100,
+              300,
+              200
+            ],
+            [
+              -100,
+              900,
+              0
+            ],
+            [
+              -100,
+              900,
+              200
+            ],
+            [
+              100,
+              900,
+              0
+            ],
+            [
+              100,
+              900,
+              200
+            ],
+            [
+              0,
+              1000,
+              100
+            ]
+          ]
+        },
+        "name": "Structure and detail \u00b7 palette 115 \u00b7 articulation angle $C0"
+      },
+      {
+        "id": "assembly-angle-e0",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 0,
+              "vertices": [
+                21,
+                19,
+                22
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 1,
+              "vertices": [
+                17,
+                15,
+                13,
+                11
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32896,
+              "sourceIndex": 2,
+              "vertices": [
+                22,
+                20,
+                21
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 3,
+              "vertices": [
+                21,
+                20,
+                14,
+                15
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 4,
+              "vertices": [
+                15,
+                14,
+                12,
+                13
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32896,
+              "sourceIndex": 5,
+              "vertices": [
+                22,
+                19,
+                18
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 6,
+              "vertices": [
+                18,
+                19,
+                17,
+                16
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 7,
+              "vertices": [
+                16,
+                17,
+                11,
+                10
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32898,
+              "sourceIndex": 8,
+              "vertices": [
+                22,
+                18,
+                20
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32902,
+              "sourceIndex": 9,
+              "vertices": [
+                20,
+                18,
+                16,
+                14
+              ]
+            },
+            {
+              "colour": "#aaaaaa",
+              "sourceColour": 32900,
+              "sourceIndex": 10,
+              "vertices": [
+                14,
+                16,
+                10,
+                12
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 11,
+              "vertices": [
+                0,
+                1,
+                4
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 12,
+              "vertices": [
+                0,
+                4,
+                3
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32906,
+              "sourceIndex": 13,
+              "vertices": [
+                4,
+                1,
+                5,
+                8
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32904,
+              "sourceIndex": 14,
+              "vertices": [
+                3,
+                4,
+                8,
+                7
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 15,
+              "vertices": [
+                8,
+                5,
+                9
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 16,
+              "vertices": [
+                7,
+                8,
+                9
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 17,
+              "vertices": [
+                0,
+                2,
+                1
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 18,
+              "vertices": [
+                0,
+                3,
+                2
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32904,
+              "sourceIndex": 19,
+              "vertices": [
+                1,
+                2,
+                6,
+                5
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32906,
+              "sourceIndex": 20,
+              "vertices": [
+                2,
+                3,
+                7,
+                6
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32908,
+              "sourceIndex": 21,
+              "vertices": [
+                5,
+                6,
+                9
+              ]
+            },
+            {
+              "colour": "#002288",
+              "sourceColour": 32910,
+              "sourceIndex": 22,
+              "vertices": [
+                6,
+                7,
+                9
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32902,
+              "sourceIndex": 23,
+              "vertices": [
+                19,
+                21,
+                15,
+                17
+              ]
+            }
+          ],
+          "lines": [],
+          "vertices": [
+            [
+              494,
+              1294,
+              -40
+            ],
+            [
+              466,
+              1180,
+              -40
+            ],
+            [
+              424,
+              1224,
+              -80
+            ],
+            [
+              380,
+              1266,
+              -40
+            ],
+            [
+              424,
+              1224,
+              0
+            ],
+            [
+              -382,
+              332,
+              -40
+            ],
+            [
+              -426,
+              374,
+              -80
+            ],
+            [
+              -468,
+              418,
+              -40
+            ],
+            [
+              -426,
+              374,
+              0
+            ],
+            [
+              -496,
+              304,
+              -40
+            ],
+            [
+              -200,
+              0,
+              0
+            ],
+            [
+              -200,
+              0,
+              300
+            ],
+            [
+              200,
+              0,
+              0
+            ],
+            [
+              200,
+              0,
+              300
+            ],
+            [
+              100,
+              300,
+              0
+            ],
+            [
+              100,
+              300,
+              200
+            ],
+            [
+              -100,
+              300,
+              0
+            ],
+            [
+              -100,
+              300,
+              200
+            ],
+            [
+              -100,
+              900,
+              0
+            ],
+            [
+              -100,
+              900,
+              200
+            ],
+            [
+              100,
+              900,
+              0
+            ],
+            [
+              100,
+              900,
+              200
+            ],
+            [
+              0,
+              1000,
+              100
+            ]
+          ]
+        },
+        "name": "Structure and detail \u00b7 palette 115 \u00b7 articulation angle $E0"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

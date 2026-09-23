@@ -1,0 +1,659 @@
+{
+  "model": {
+    "detailSelection": [
+      {
+        "boxes": [],
+        "default": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11
+        ]
+      },
+      {
+        "boxes": [
+          {
+            "bounds": [
+              [
+                -100,
+                100
+              ],
+              [
+                0,
+                200
+              ],
+              [
+                400,
+                500
+              ]
+            ],
+            "records": [
+              12,
+              13,
+              14,
+              15,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7
+            ]
+          },
+          {
+            "bounds": [
+              [
+                -500,
+                500
+              ],
+              [
+                0,
+                200
+              ],
+              [
+                -500,
+                500
+              ]
+            ],
+            "records": [
+              12,
+              13,
+              14,
+              15,
+              1,
+              2,
+              3
+            ]
+          },
+          {
+            "bounds": [
+              [
+                -500,
+                500
+              ],
+              [
+                0,
+                200
+              ],
+              [
+                500,
+                2500
+              ]
+            ],
+            "records": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              10,
+              11
+            ]
+          }
+        ],
+        "default": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11
+        ]
+      }
+    ],
+    "evidence": [],
+    "id": "interior-02ad48",
+    "kind": "interior",
+    "linkedInstances": [],
+    "name": "Building detail 44",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      44
+    ],
+    "sourceAddress": 175432,
+    "status": "partial",
+    "variants": [
+      {
+        "id": "palette-37",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#882222",
+              "sourceColour": 32896,
+              "sourceIndex": 0,
+              "vertices": [
+                9,
+                10,
+                6,
+                5
+              ]
+            },
+            {
+              "colour": "#aa2200",
+              "sourceColour": 32916,
+              "sourceIndex": 1,
+              "vertices": [
+                10,
+                8,
+                6
+              ]
+            },
+            {
+              "colour": "#aa2200",
+              "sourceColour": 32916,
+              "sourceIndex": 2,
+              "vertices": [
+                7,
+                9,
+                5
+              ]
+            },
+            {
+              "colour": "#664444",
+              "sourceColour": 32910,
+              "sourceIndex": 3,
+              "vertices": [
+                7,
+                8,
+                10,
+                9
+              ]
+            },
+            {
+              "colour": "#ee6600",
+              "sourceColour": 32928,
+              "sourceIndex": 4,
+              "vertices": [
+                8,
+                0,
+                6
+              ]
+            },
+            {
+              "colour": "#ee6600",
+              "sourceColour": 32928,
+              "sourceIndex": 5,
+              "vertices": [
+                6,
+                0,
+                4
+              ]
+            },
+            {
+              "colour": "#ee6600",
+              "sourceColour": 32928,
+              "sourceIndex": 6,
+              "vertices": [
+                3,
+                7,
+                5
+              ]
+            },
+            {
+              "colour": "#ee6600",
+              "sourceColour": 32928,
+              "sourceIndex": 7,
+              "vertices": [
+                3,
+                5,
+                4
+              ]
+            },
+            {
+              "colour": "#ee6600",
+              "sourceColour": 32928,
+              "sourceIndex": 8,
+              "vertices": [
+                4,
+                5,
+                6
+              ]
+            },
+            {
+              "colour": "#ee6600",
+              "sourceColour": 32928,
+              "sourceIndex": 9,
+              "vertices": [
+                1,
+                2,
+                4
+              ]
+            },
+            {
+              "colour": "#cc4400",
+              "sourceColour": 32918,
+              "sourceIndex": 10,
+              "vertices": [
+                2,
+                3,
+                4
+              ]
+            },
+            {
+              "colour": "#cc4400",
+              "sourceColour": 32918,
+              "sourceIndex": 11,
+              "vertices": [
+                1,
+                4,
+                0
+              ]
+            },
+            {
+              "colour": "#cc4400",
+              "sourceColour": 32934,
+              "sourceIndex": 12,
+              "vertices": [
+                12,
+                15,
+                13
+              ]
+            },
+            {
+              "colour": "#aa2200",
+              "sourceColour": 32942,
+              "sourceIndex": 13,
+              "vertices": [
+                13,
+                15,
+                14
+              ]
+            },
+            {
+              "colour": "#aa2200",
+              "sourceColour": 32942,
+              "sourceIndex": 14,
+              "vertices": [
+                12,
+                11,
+                15
+              ]
+            },
+            {
+              "colour": "#cc4400",
+              "sourceColour": 32934,
+              "sourceIndex": 15,
+              "vertices": [
+                15,
+                11,
+                14
+              ]
+            }
+          ],
+          "geometryStart": 175432,
+          "lines": [],
+          "recordCount": 16,
+          "sourceEnd": 175630,
+          "sourceStart": 175432,
+          "vertices": [
+            [
+              500,
+              0,
+              500
+            ],
+            [
+              500,
+              0,
+              -500
+            ],
+            [
+              -500,
+              0,
+              -500
+            ],
+            [
+              -500,
+              0,
+              500
+            ],
+            [
+              0,
+              1225,
+              0
+            ],
+            [
+              -100,
+              245,
+              400
+            ],
+            [
+              100,
+              245,
+              400
+            ],
+            [
+              -100,
+              0,
+              500
+            ],
+            [
+              100,
+              0,
+              500
+            ],
+            [
+              -100,
+              0,
+              400
+            ],
+            [
+              100,
+              0,
+              400
+            ],
+            [
+              375,
+              245,
+              175
+            ],
+            [
+              375,
+              245,
+              -375
+            ],
+            [
+              -375,
+              245,
+              -375
+            ],
+            [
+              -375,
+              245,
+              175
+            ],
+            [
+              0,
+              1175,
+              0
+            ]
+          ]
+        },
+        "name": "Structure-bound palette 37"
+      },
+      {
+        "id": "palette-75",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#882222",
+              "sourceColour": 32896,
+              "sourceIndex": 0,
+              "vertices": [
+                9,
+                10,
+                6,
+                5
+              ]
+            },
+            {
+              "colour": "#aa2200",
+              "sourceColour": 32916,
+              "sourceIndex": 1,
+              "vertices": [
+                10,
+                8,
+                6
+              ]
+            },
+            {
+              "colour": "#aa2200",
+              "sourceColour": 32916,
+              "sourceIndex": 2,
+              "vertices": [
+                7,
+                9,
+                5
+              ]
+            },
+            {
+              "colour": "#664444",
+              "sourceColour": 32910,
+              "sourceIndex": 3,
+              "vertices": [
+                7,
+                8,
+                10,
+                9
+              ]
+            },
+            {
+              "colour": "#ee6600",
+              "sourceColour": 32928,
+              "sourceIndex": 4,
+              "vertices": [
+                8,
+                0,
+                6
+              ]
+            },
+            {
+              "colour": "#ee6600",
+              "sourceColour": 32928,
+              "sourceIndex": 5,
+              "vertices": [
+                6,
+                0,
+                4
+              ]
+            },
+            {
+              "colour": "#ee6600",
+              "sourceColour": 32928,
+              "sourceIndex": 6,
+              "vertices": [
+                3,
+                7,
+                5
+              ]
+            },
+            {
+              "colour": "#ee6600",
+              "sourceColour": 32928,
+              "sourceIndex": 7,
+              "vertices": [
+                3,
+                5,
+                4
+              ]
+            },
+            {
+              "colour": "#ee6600",
+              "sourceColour": 32928,
+              "sourceIndex": 8,
+              "vertices": [
+                4,
+                5,
+                6
+              ]
+            },
+            {
+              "colour": "#ee6600",
+              "sourceColour": 32928,
+              "sourceIndex": 9,
+              "vertices": [
+                1,
+                2,
+                4
+              ]
+            },
+            {
+              "colour": "#cc4400",
+              "sourceColour": 32918,
+              "sourceIndex": 10,
+              "vertices": [
+                2,
+                3,
+                4
+              ]
+            },
+            {
+              "colour": "#cc4400",
+              "sourceColour": 32918,
+              "sourceIndex": 11,
+              "vertices": [
+                1,
+                4,
+                0
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32934,
+              "sourceIndex": 12,
+              "vertices": [
+                12,
+                15,
+                13
+              ]
+            },
+            {
+              "colour": "#006644",
+              "sourceColour": 32942,
+              "sourceIndex": 13,
+              "vertices": [
+                13,
+                15,
+                14
+              ]
+            },
+            {
+              "colour": "#006644",
+              "sourceColour": 32942,
+              "sourceIndex": 14,
+              "vertices": [
+                12,
+                11,
+                15
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32934,
+              "sourceIndex": 15,
+              "vertices": [
+                15,
+                11,
+                14
+              ]
+            }
+          ],
+          "geometryStart": 175432,
+          "lines": [],
+          "recordCount": 16,
+          "sourceEnd": 175630,
+          "sourceStart": 175432,
+          "vertices": [
+            [
+              500,
+              0,
+              500
+            ],
+            [
+              500,
+              0,
+              -500
+            ],
+            [
+              -500,
+              0,
+              -500
+            ],
+            [
+              -500,
+              0,
+              500
+            ],
+            [
+              0,
+              1225,
+              0
+            ],
+            [
+              -100,
+              245,
+              400
+            ],
+            [
+              100,
+              245,
+              400
+            ],
+            [
+              -100,
+              0,
+              500
+            ],
+            [
+              100,
+              0,
+              500
+            ],
+            [
+              -100,
+              0,
+              400
+            ],
+            [
+              100,
+              0,
+              400
+            ],
+            [
+              375,
+              245,
+              175
+            ],
+            [
+              375,
+              245,
+              -375
+            ],
+            [
+              -375,
+              245,
+              -375
+            ],
+            [
+              -375,
+              245,
+              175
+            ],
+            [
+              0,
+              1175,
+              0
+            ]
+          ]
+        },
+        "name": "Structure-bound palette 75"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

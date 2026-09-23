@@ -1,6 +1,5 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
 
-import { parseCatalogue } from '../src/catalogue/data.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import {
   initialDamoclesSaveScript,
@@ -13,16 +12,17 @@ import {
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { arrivalPoses } from './damocles-pose.ts';
+import { loadCatalogue } from './fixtures/catalogue.ts';
 
 let loaded: DamoclesContent;
 
 beforeAll(async () => {
   const [catalogueValue, presentation, stringsValue] = await Promise.all([
-    Bun.file('../payload/damocles/catalogue.json').json(),
+    loadCatalogue(),
     Bun.file(new URL('../damocles/eris.json', import.meta.url)).json(),
     Bun.file('../payload/damocles/strings.json').json()
   ]);
-  const catalogue = parseCatalogue(catalogueValue);
+  const catalogue = catalogueValue;
   const doc = readErisPresentation(presentation);
   loaded = {
     catalogue,

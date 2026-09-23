@@ -1,0 +1,212 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-03fd86",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "MEDICAL SUPPLIES",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      299
+    ],
+    "sourceAddress": 261510,
+    "status": "decoded",
+    "supportTop": 50,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                4,
+                7,
+                3,
+                0
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                13,
+                14,
+                19,
+                8
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                11,
+                16,
+                17,
+                10
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                5,
+                4,
+                0,
+                1
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                7,
+                6,
+                2,
+                3
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                6,
+                5,
+                1,
+                2
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                6,
+                7,
+                4,
+                5
+              ]
+            }
+          ],
+          "geometryStart": 261510,
+          "lines": [],
+          "sourceEnd": 261685,
+          "sourceStart": 261510,
+          "vertices": [
+            [
+              -20,
+              0,
+              -20
+            ],
+            [
+              -20,
+              0,
+              20
+            ],
+            [
+              20,
+              0,
+              20
+            ],
+            [
+              20,
+              0,
+              -20
+            ],
+            [
+              -20,
+              50,
+              -20
+            ],
+            [
+              -20,
+              50,
+              20
+            ],
+            [
+              20,
+              50,
+              20
+            ],
+            [
+              20,
+              50,
+              -20
+            ],
+            [
+              -5,
+              10,
+              -20
+            ],
+            [
+              -5,
+              20,
+              -20
+            ],
+            [
+              -15,
+              20,
+              -20
+            ],
+            [
+              -15,
+              30,
+              -20
+            ],
+            [
+              -5,
+              30,
+              -20
+            ],
+            [
+              -5,
+              40,
+              -20
+            ],
+            [
+              5,
+              40,
+              -20
+            ],
+            [
+              5,
+              30,
+              -20
+            ],
+            [
+              15,
+              30,
+              -20
+            ],
+            [
+              15,
+              20,
+              -20
+            ],
+            [
+              5,
+              20,
+              -20
+            ],
+            [
+              5,
+              10,
+              -20
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

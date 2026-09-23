@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 
-import { parseCatalogue, type Model } from '../src/catalogue/data.ts';
+import { type Model } from '../src/catalogue/data.ts';
 import { detailForms } from '../src/catalogue/details.ts';
+import { loadCatalogue } from './fixtures/catalogue.ts';
 
 const primitive = (sourceIndex: number) => ({
   colour: '#ffffff',
@@ -98,9 +99,7 @@ describe('building detail visibility forms', () => {
 });
 
 test('every retained detail selector offers its visibility lists', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   const withSelector = data.models.filter(model => model.detailSelection);
   expect(withSelector).toHaveLength(59);
   expect(withSelector.every(model => detailForms(model).length > 0)).toBe(true);

@@ -1,0 +1,311 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-041cbe",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "Object 340",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      340
+    ],
+    "sourceAddress": 269502,
+    "status": "decoded",
+    "supportTop": 460,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#664444",
+              "sourceColour": 802,
+              "vertices": [
+                0,
+                1,
+                3
+              ]
+            },
+            {
+              "colour": "#664444",
+              "sourceColour": 802,
+              "vertices": [
+                1,
+                2,
+                3
+              ]
+            },
+            {
+              "colour": "#664444",
+              "sourceColour": 802,
+              "vertices": [
+                2,
+                0,
+                3
+              ]
+            },
+            {
+              "colour": "#22aa44",
+              "sourceColour": 338,
+              "vertices": [
+                4,
+                6,
+                5
+              ]
+            },
+            {
+              "colour": "#22aa44",
+              "sourceColour": 338,
+              "vertices": [
+                4,
+                7,
+                6
+              ]
+            },
+            {
+              "colour": "#22aa44",
+              "sourceColour": 338,
+              "vertices": [
+                4,
+                8,
+                7
+              ]
+            },
+            {
+              "colour": "#22aa44",
+              "sourceColour": 338,
+              "vertices": [
+                4,
+                5,
+                8
+              ]
+            },
+            {
+              "colour": "#22aa44",
+              "sourceColour": 338,
+              "vertices": [
+                5,
+                6,
+                10,
+                9
+              ]
+            },
+            {
+              "colour": "#22aa44",
+              "sourceColour": 338,
+              "vertices": [
+                6,
+                7,
+                11,
+                10
+              ]
+            },
+            {
+              "colour": "#22aa44",
+              "sourceColour": 338,
+              "vertices": [
+                7,
+                8,
+                12,
+                11
+              ]
+            },
+            {
+              "colour": "#22aa44",
+              "sourceColour": 338,
+              "vertices": [
+                8,
+                5,
+                9,
+                12
+              ]
+            },
+            {
+              "colour": "#22aa44",
+              "sourceColour": 338,
+              "vertices": [
+                9,
+                10,
+                14,
+                13
+              ]
+            },
+            {
+              "colour": "#22aa44",
+              "sourceColour": 338,
+              "vertices": [
+                10,
+                11,
+                15,
+                14
+              ]
+            },
+            {
+              "colour": "#22aa44",
+              "sourceColour": 338,
+              "vertices": [
+                11,
+                12,
+                16,
+                15
+              ]
+            },
+            {
+              "colour": "#22aa44",
+              "sourceColour": 338,
+              "vertices": [
+                12,
+                9,
+                13,
+                16
+              ]
+            },
+            {
+              "colour": "#22aa44",
+              "sourceColour": 338,
+              "vertices": [
+                17,
+                13,
+                14
+              ]
+            },
+            {
+              "colour": "#22aa44",
+              "sourceColour": 338,
+              "vertices": [
+                17,
+                14,
+                15
+              ]
+            },
+            {
+              "colour": "#22aa44",
+              "sourceColour": 338,
+              "vertices": [
+                17,
+                15,
+                16
+              ]
+            },
+            {
+              "colour": "#22aa44",
+              "sourceColour": 338,
+              "vertices": [
+                17,
+                16,
+                13
+              ]
+            }
+          ],
+          "geometryStart": 269502,
+          "lines": [],
+          "sourceEnd": 269738,
+          "sourceStart": 269502,
+          "vertices": [
+            [
+              0,
+              0,
+              36
+            ],
+            [
+              32,
+              0,
+              -20
+            ],
+            [
+              -32,
+              0,
+              -20
+            ],
+            [
+              0,
+              400,
+              0
+            ],
+            [
+              0,
+              120,
+              0
+            ],
+            [
+              200,
+              200,
+              0
+            ],
+            [
+              0,
+              200,
+              -200
+            ],
+            [
+              -200,
+              200,
+              0
+            ],
+            [
+              0,
+              200,
+              200
+            ],
+            [
+              250,
+              280,
+              0
+            ],
+            [
+              0,
+              280,
+              -250
+            ],
+            [
+              -250,
+              280,
+              0
+            ],
+            [
+              0,
+              280,
+              250
+            ],
+            [
+              200,
+              400,
+              0
+            ],
+            [
+              0,
+              400,
+              -200
+            ],
+            [
+              -200,
+              400,
+              0
+            ],
+            [
+              0,
+              400,
+              200
+            ],
+            [
+              0,
+              460,
+              0
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

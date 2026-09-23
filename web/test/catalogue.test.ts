@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'bun:test';
 
-import { parseCatalogue, selectModels } from '../src/catalogue/data.ts';
+import {
+  parseCatalogue as parseStored,
+  selectModels
+} from '../src/catalogue/data.ts';
 import { triangulate } from '../src/catalogue/geometry.ts';
+import { loadCatalogue } from './fixtures/catalogue.ts';
 
 it('retains recovered Drop metadata and rejects values outside the native word range', () => {
   const value = fixture();
@@ -22,6 +26,37 @@ it('retains recovered Drop metadata and rejects values outside the native word r
     }
   }
 });
+
+interface FixtureModel {
+  readonly id: string;
+  readonly kind: string;
+  readonly name: string;
+  readonly recordClass?: string;
+  readonly slots: readonly number[];
+  readonly status: string;
+}
+
+/// The synthetic fixture carries its Models inline and states nothing twice, so the model
+/// index and each Body's Model list are derived here, the way the generator derives them.
+/// Every contract test below then exercises the stored checks against an honest index.
+const parseCatalogue = (value: unknown) => {
+  const v = value as {
+    readonly bodies: readonly Record<string, unknown>[];
+    readonly models: readonly FixtureModel[];
+  };
+  return parseStored({
+    ...v,
+    bodies: v.bodies.map(body => ({ models: [], ...body })),
+    modelIndex: v.models.map(model => ({
+      id: model.id,
+      kind: model.kind,
+      name: model.name,
+      recordClass: model.recordClass ?? 'geometry',
+      slots: model.slots,
+      status: model.status
+    }))
+  });
+};
 
 const fixture = () => ({
   bodies: [{ id: 'body-1', name: 'Test body' }],
@@ -76,7 +111,7 @@ const fixture = () => ({
     }
   ],
   places: [],
-  schemaVersion: 15,
+  schemaVersion: 16,
   source: {
     authority: 'Synthetic test',
     evidence: 'test',
@@ -260,9 +295,7 @@ describe('Damocles catalogue contract', () => {
     expect(() => parseCatalogue(counts)).toThrow('count');
   });
   it('checks the generated dataset rather than only a synthetic fixture', async () => {
-    const data = parseCatalogue(
-      await Bun.file('../payload/damocles/catalogue.json').json()
-    );
+    const data = await loadCatalogue();
     expect(data.models.some(model => model.status === 'decoded')).toBe(true);
   });
   it('rejects a coverage census that does not match the models', () => {
@@ -313,9 +346,7 @@ it('handles triangular roof records with a repeated fourth corner', () => {
 });
 
 it('can triangulate every exposed recovered face', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   for (const model of data.models) {
     for (const form of model.variants) {
       for (const face of form.mesh.faces) {
@@ -328,9 +359,7 @@ it('can triangulate every exposed recovered face', async () => {
 });
 
 it('keeps a generated census ledger that cannot drift from the models', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   expect(data.coverage.census.unique).toBe(data.models.length);
   expect(data.coverage.complete).toBe(false);
   expect(data.models.some(model => model.recordClass === 'null')).toBe(true);
@@ -403,9 +432,7 @@ it('rejects contradictory slot and place relationships', () => {
 });
 
 it('keeps the live Vesta Parliament exterior and filled E marker', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   const parliament = data.instances.find(
     instance => instance.id === 'vesta-surface-64'
   )!;
@@ -422,9 +449,7 @@ it('keeps the live Vesta Parliament exterior and filled E marker', async () => {
 });
 
 it('keeps the spaceport exterior and room layout separate at their shared scale', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   const spaceport = data.models.find(model => model.id === 'structure-01484e')!;
   expect(spaceport.variants.map(form => form.id)).toEqual([
     'exterior',
@@ -462,9 +487,7 @@ it('keeps the spaceport exterior and room layout separate at their shared scale'
 });
 
 it('places the scene joins of the cell the capture stands in', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   const runway = data.models.find(model => model.id === 'ground-020f8e-00-87')!;
   expect(runway.status).toBe('decoded');
   expect(runway.reason).toBe('');
@@ -479,9 +502,7 @@ it('places the scene joins of the cell the capture stands in', async () => {
 });
 
 it('recovers the spaceport pad strip as a per-cell ground record', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   const pad = data.models.find(model => model.id === 'ground-021afe-00-88')!;
   expect(pad.kind).toBe('ground');
   expect(pad.status).toBe('decoded');
@@ -514,9 +535,7 @@ it('recovers the spaceport pad strip as a per-cell ground record', async () => {
 });
 
 it('uses surface slot zero palette for structureless ground objects', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   for (const id of ['ground-021f7c-04-34', 'ground-021f7c-07-94']) {
     const ground = data.models.find(model => model.id === id)!;
     expect(ground.relatedModels).toContain('object-041b1e');
@@ -533,9 +552,7 @@ it('uses surface slot zero palette for structureless ground objects', async () =
 });
 
 it('offers a ground template one form per evidenced scene palette', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   // Object 337's faces name scene colour word 1, which palette 2 fills with
   // $777 and the other three evidenced palettes fill with $771. Showing a
   // single palette 0 form hid that difference behind an unbound default.
@@ -571,9 +588,7 @@ it('offers a ground template one form per evidenced scene palette', async () => 
 });
 
 it('recovers the spaceport wall below the window without closing the opening', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   const room = data.models
     .find(m => m.id === 'structure-01484e')!
     .variants.find(v => v.id === 'interior-layout')!.mesh;
@@ -592,9 +607,7 @@ it('recovers the spaceport wall below the window without closing the opening', a
 });
 
 it('leaves the combined spaceport window and doorway open instead of overlaying closed facades', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   const model = data.models.find(m => m.id === 'structure-01484e')!;
   for (const id of ['exterior', 'combined']) {
     const mesh = model.variants.find(v => v.id === id)!.mesh;
@@ -619,9 +632,7 @@ it('leaves the combined spaceport window and doorway open instead of overlaying 
 });
 
 it('closes only the spaceport door while keeping the window and shared geometry intact', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   const model = data.models.find(m => m.id === 'structure-01484e')!;
   for (const view of ['exterior', 'combined'] as const) {
     const open = model.variants.find(v => v.id === view)!;
@@ -643,9 +654,7 @@ it('closes only the spaceport door while keeping the window and shared geometry 
 });
 
 it('identifies the reviewed spaceport and preserves its region-one visibility evidence', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   const spaceport = data.models.find(model => model.id === 'structure-01484e')!;
   expect(spaceport.name).toBe('Capital Spaceport');
   expect(spaceport.nameStatus).toBe('candidate');
@@ -672,9 +681,7 @@ it('identifies the reviewed spaceport and preserves its region-one visibility ev
 });
 
 it('draws every source silhouette vertex of the V.I.P. limo key body', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   const key = data.models.find(model => model.id === 'object-03e494')!;
   const { mesh } = key.variants.find(variant => variant.id === key.id)!;
   // The source body contains nine paired front/back vertices. A plate and
@@ -690,9 +697,7 @@ it('draws every source silhouette vertex of the V.I.P. limo key body', async () 
 });
 
 it('accounts for Structure 100 as an empty placeholder, not missing walls', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   const model = data.models.find(item => item.id === 'structure-01a618')!;
   // An authored empty is decoded: the record parses cleanly to its terminator
   // and holds no geometry by construction, like an empty ground record.
@@ -720,9 +725,7 @@ it('accounts for Structure 100 as an empty placeholder, not missing walls', asyn
 });
 
 it('keeps V.I.P. limo key lettering in model space on its plate', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   const key = data.models.find(model => model.id === 'object-03e494')!;
   const { mesh } = key.variants.find(variant => variant.id === key.id)!;
   const lettering = mesh.lines.filter(line => line.colour === '#000000');
@@ -742,9 +745,7 @@ it('keeps V.I.P. limo key lettering in model space on its plate', async () => {
 });
 
 it('decodes the V.I.P. limo key and preserves its source display code', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   const key = data.models.find(model => model.id === 'object-03e494')!;
   const form = key.variants.find(variant => variant.id === key.id)!;
   expect(key.status).toBe('decoded');
@@ -778,9 +779,7 @@ it('decodes the V.I.P. limo key and preserves its source display code', async ()
 });
 
 it('places the V.I.P. limo at the Capital Spaceport and links its verified key', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   const limo = data.models.find(model => model.id === 'object-036176')!;
   const limoInstance = data.instances.find(
     instance => instance.id === 'object-slot-5'
@@ -819,9 +818,7 @@ it('places the V.I.P. limo at the Capital Spaceport and links its verified key',
 });
 
 it('links each recovered vehicle to its matching key', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   for (const [vehicleSlot, keySlot] of [
     [2, 180],
     [3, 181],
@@ -865,9 +862,7 @@ it('links each recovered vehicle to its matching key', async () => {
 });
 
 it('places slot 180 through its decoded structure association', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   const key = data.instances.find(
     instance => instance.id === 'object-slot-180'
   )!;
@@ -967,9 +962,7 @@ it('places slot 180 through its decoded structure association', async () => {
 });
 
 it('places only residents selected by the native surface-body association', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   const expected = new Map<number, number>([
     [164, 1],
     [165, 3],
@@ -1094,9 +1087,7 @@ it('places only residents selected by the native surface-body association', asyn
 });
 
 it('records the cell background colours a surface record carries', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   const withColours = data.models.filter(model => model.sceneColours?.length);
   expect(withColours).toHaveLength(265);
   expect(withColours.every(model => model.kind === 'structure')).toBe(true);
@@ -1112,9 +1103,7 @@ it('records the cell background colours a surface record carries', async () => {
 });
 
 it('paints the runway designations a ground record carries as vector text', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   const runway = data.models.find(model => model.id === 'ground-0205d2-00')!;
   expect(runway.status).toBe('decoded');
   expect(runway.reason).toBe('');
@@ -1141,9 +1130,7 @@ it('paints the runway designations a ground record carries as vector text', asyn
 });
 
 it('gives each door key and transporter slot its own label form', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   const key = data.models.find(model => model.id === 'object-036d64')!;
   expect(key.status).toBe('decoded');
   expect(key.conditions).toContain('resident slot (letter label)');
@@ -1191,9 +1178,7 @@ it('gives each door key and transporter slot its own label form', async () => {
 });
 
 it('samples the free-running articulation angle for the six turning objects', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   const turning = data.models.filter(
     model =>
       model.kind === 'object' &&
@@ -1218,9 +1203,7 @@ it('samples the free-running articulation angle for the six turning objects', as
 });
 
 it('turns each articulated building detail in every structure frame that places it', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   // Nothing is left holding the articulated omission.
   expect(data.models.filter(m => m.omissions.includes('articulated'))).toEqual(
     []
@@ -1303,9 +1286,7 @@ it('turns each articulated building detail in every structure frame that places 
 });
 
 it('an $F0 entrance names a key index the cell resolves to a letter', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   const live = data.models.filter(
     model => model.structureSelection?.liveSelector
   );
@@ -1338,9 +1319,7 @@ it('an $F0 entrance names a key index the cell resolves to a letter', async () =
 });
 
 it('an unreachable record stays an ordinal and draws nothing', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   const carrying = data.models.filter(model =>
     model.variants.some(form => form.mesh.unreferencedRecords?.length)
   );
@@ -1368,9 +1347,7 @@ it('an unreachable record stays an ordinal and draws nothing', async () => {
 });
 
 it('every record now carries a verdict and none is unresolved', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   expect(data.coverage.census.unresolved).toBe(0);
   expect(data.models.filter(model => model.status === 'unresolved')).toEqual(
     []
@@ -1386,9 +1363,7 @@ it('every record now carries a verdict and none is unresolved', async () => {
 });
 
 it('binds a level to the structure its floor table names', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   const bySlot = new Map(
     data.models
       .filter(model => model.kind === 'structure')
@@ -1542,9 +1517,7 @@ describe('Damocles island records', () => {
 });
 
 it('admits every island record of every body surface into the catalogue', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   expect(data.islands).toHaveLength(62);
   expect(new Set(data.islands.map(island => island.body)).size).toBe(30);
   // A record is not a settlement and a settlement is not a record: 21 carry no
@@ -1570,9 +1543,7 @@ it('admits every island record of every body surface into the catalogue', async 
 });
 
 it('keeps a seam-crossing extent whole rather than reading it as empty', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   const island = (id: string) => data.islands.find(item => item.id === id)!;
   // Snow Island's west coast reaches body x = -8, which is 4088 on the torus.
   const snow = island('island-eris-06327c').extent;
@@ -1600,9 +1571,7 @@ it('keeps a seam-crossing extent whole rather than reading it as empty', async (
 });
 
 it('shares one coastline definition between two bodies', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   const capital = data.islands.find(
     island => island.id === 'island-eris-063272'
   )!;
@@ -1620,9 +1589,7 @@ it('shares one coastline definition between two bodies', async () => {
 });
 
 it('separates two cells with the same label by their island record', async () => {
-  const data = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  const data = await loadCatalogue();
   const cell: readonly [number, number] = [9, 8];
   const bodyCell = (id: string) => {
     const island = data.islands.find(item => item.id === id)!;

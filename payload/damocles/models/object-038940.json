@@ -1,0 +1,26 @@
+{
+  "model": {
+    "evidence": [],
+    "id": "object-038940",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "Object 74",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "procedural: $8004 draws the $350E0 point field at $04CFA4; no authored polygon geometry",
+    "recordClass": "procedural",
+    "relatedModels": [],
+    "slots": [
+      74
+    ],
+    "sourceAddress": 231744,
+    "status": "decoded",
+    "supportTop": null,
+    "variants": []
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

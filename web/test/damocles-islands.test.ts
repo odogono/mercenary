@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'bun:test';
 
-import { parseCatalogue } from '../src/catalogue/data.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import {
   classifyPosition,
@@ -15,16 +14,14 @@ import {
   surfaceOffset,
   type ErisSurface
 } from '../src/damocles/world.ts';
+import { loadCatalogue } from './fixtures/catalogue.ts';
 
 const load = async (): Promise<ErisSurface> => {
   const [catalogue, presentation] = await Promise.all([
-    Bun.file('../payload/damocles/catalogue.json').json(),
+    loadCatalogue(),
     Bun.file(new URL('../damocles/eris.json', import.meta.url)).json()
   ]);
-  return erisSurfaceFrom(
-    parseCatalogue(catalogue),
-    readErisPresentation(presentation)
-  );
+  return erisSurfaceFrom(catalogue, readErisPresentation(presentation));
 };
 
 /// The 115 probe points of #391, verbatim, as the laboratory asked the Working Authority for
