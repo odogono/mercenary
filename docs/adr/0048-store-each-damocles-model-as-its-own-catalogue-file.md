@@ -20,7 +20,10 @@ any Model.
 
 - **A model index**, in extraction order, giving each Model's id, name, kind, status, record class
   and slots. That is exactly what the inspector's list and filter read, and it is enough to run the
-  slot-accounting and census checks against the tables without a Model file.
+  slot-accounting and census checks against the tables without a Model file. Where a Model records
+  them, the index also carries its storey height and support top: the two facts a game rule reads
+  without drawing. A structure residence is admitted by the one and a Drop decided by the other, so
+  a Save can be validated, and play can go on, before any Model file has been read.
 - **Each Body's Model list**: every Model its Instances name, a placed resident reaching its Body
   through its parent; every ground Model its road networks lay; and the interior each of those
   structures selects its detail from. The extractor derives it, so it is diffable and testable, and
@@ -64,5 +67,11 @@ an index diff as wide as the Model diff.
   hyphenated, still `.json` only.
 - `schemaVersion` is 16 in the shared document and in every Model file. Payload fields added later
   still do not move it; a layout change does.
-- A consumer that needs every Model reads about 1,240 files. The browser reads them a few dozen at a
-  time, because Chrome refuses fetches outright once too many are outstanding.
+- The browser never reads every Model. The game reads a Body's Models island by island, the one
+  the player stands on first, and draws each island whole once it has landed; an Instance whose
+  Model has not landed is neither drawn nor collided with. A restore first reads its island and
+  the structure it saved as bound. The inspector reads the one Model it shows, and the Atlas the
+  structures of the Body in view. Files are read a few dozen at a time, because Chrome refuses
+  fetches outright once too many are outstanding.
+- A Model file that cannot be read leaves its Instances undrawn and says so; it does not stop play.
+- Tests and whole-Catalogue checks still read every file, through the same reader.

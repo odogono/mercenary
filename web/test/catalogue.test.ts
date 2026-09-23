@@ -34,6 +34,8 @@ interface FixtureModel {
   readonly recordClass?: string;
   readonly slots: readonly number[];
   readonly status: string;
+  readonly storeyHeight?: unknown;
+  readonly supportTop?: unknown;
 }
 
 /// The synthetic fixture carries its Models inline and states nothing twice, so the model
@@ -53,7 +55,9 @@ const parseCatalogue = (value: unknown) => {
       name: model.name,
       recordClass: model.recordClass ?? 'geometry',
       slots: model.slots,
-      status: model.status
+      status: model.status,
+      ...('storeyHeight' in model ? { storeyHeight: model.storeyHeight } : {}),
+      ...('supportTop' in model ? { supportTop: model.supportTop } : {})
     }))
   });
 };

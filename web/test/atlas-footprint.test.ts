@@ -10,12 +10,11 @@ import {
 } from '../src/atlas/footprint.ts';
 import {
   instanceById,
-  modelById,
   type Catalogue,
   type Instance,
   type Model
 } from '../src/catalogue/data.ts';
-import { loadCatalogue } from './fixtures/catalogue.ts';
+import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
 const FRAME = { height: 800, width: 1280 };
 const ASPECT = FRAME.height / FRAME.width;
@@ -37,7 +36,7 @@ const pair = async (
 ): Promise<{ readonly instance: Instance; readonly model: Model }> => {
   const data = await catalogue();
   const instance = instanceById(data, instanceId)!;
-  return { instance, model: modelById(data, instance.model)! };
+  return { instance, model: modelsOf(data).peek(instance.model)! };
 };
 
 describe('an Atlas footprint', () => {
@@ -143,7 +142,7 @@ describe('an Atlas footprint', () => {
     const data = await catalogue();
     // Structure 100 is the intentionally empty surface record: no plan vertices and no walls.
     const empty = instanceById(data, 'eris-surface-33')!;
-    const model = modelById(data, empty.model)!;
+    const model = modelsOf(data).peek(empty.model)!;
     expect(footprintMesh(model)).toBeNull();
     expect(footprintOf(model, empty)).toBeNull();
   });
@@ -152,14 +151,14 @@ describe('an Atlas footprint', () => {
 describe('a Body’s footprints', () => {
   test('are the Surface Structures placed on it, and what has no outline', async () => {
     const data = await catalogue();
-    const { drawn, gaps } = readBodyFootprints(data, ERIS);
+    const { drawn, gaps } = readBodyFootprints(data, modelsOf(data), ERIS);
     expect(drawn).toHaveLength(57);
     expect(gaps).toHaveLength(20);
     expect(drawn.map(footprint => footprint.id)).toContain(SPACEPORT);
     // Object and ground Instances are not footprints: one is a thing standing on the ground
     // whose Object Residence a Drop rewrites, and the other is the cell's own surface.
     for (const footprint of drawn) {
-      expect(modelById(data, footprint.modelId)?.kind).toBe('structure');
+      expect(modelsOf(data).peek(footprint.modelId)?.kind).toBe('structure');
     }
   });
 
@@ -167,7 +166,9 @@ describe('a Body’s footprints', () => {
     // What #405 left in fog and this task was to answer, pinned because the panel prints it.
     const data = await catalogue();
     const bodies = data.bodies.map(body => Number(body.id.split('-')[1]));
-    const all = bodies.flatMap(index => readBodyFootprints(data, index).drawn);
+    const all = bodies.flatMap(
+      index => readBodyFootprints(data, modelsOf(data), index).drawn
+    );
     expect(all).toHaveLength(579);
     expect(all.filter(footprint => footprint.source === 'plan')).toHaveLength(
       577
@@ -177,7 +178,7 @@ describe('a Body’s footprints', () => {
     ).toHaveLength(2);
     // The exterior Mesh is all but absent, so the fallback is the rule rather than the relief.
     const onBodies = bodies.filter(
-      index => readBodyFootprints(data, index).drawn.length > 0
+      index => readBodyFootprints(data, modelsOf(data), index).drawn.length > 0
     );
     expect(onBodies).toHaveLength(19);
     // Every recovered structure Instance is drawn as modelled: nothing on the surface carries a
@@ -190,7 +191,7 @@ describe('a Body’s footprints', () => {
 describe('picking a footprint', () => {
   test('finds the rectangle under a Body Coordinate', async () => {
     const data = await catalogue();
-    const { drawn } = readBodyFootprints(data, ERIS);
+    const { drawn } = readBodyFootprints(data, modelsOf(data), ERIS);
     const spaceport = drawn.find(footprint => footprint.id === SPACEPORT)!;
     const view = { cx: spaceport.at.x, cz: spaceport.at.z, span: 1 };
     // The middle of its own rectangle, which is not the Instance's position: the mesh is not
@@ -209,7 +210,7 @@ describe('picking a footprint', () => {
 
   test('is tested against every wrap image the camera can see', async () => {
     const data = await catalogue();
-    const { drawn } = readBodyFootprints(data, ERIS);
+    const { drawn } = readBodyFootprints(data, modelsOf(data), ERIS);
     const spaceport = drawn.find(footprint => footprint.id === SPACEPORT)!;
     const middle = {
       x: (spaceport.corners[0].x + spaceport.corners[2].x) / 2,

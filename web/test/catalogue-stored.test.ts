@@ -7,14 +7,14 @@ import {
   modelPath,
   parseCatalogueDocument,
   parseModelFile,
-  readCatalogue,
-  type CatalogueDocument
+  type Catalogue
 } from '../src/catalogue/data.ts';
+import { ModelStore, readCatalogue } from '../src/catalogue/modelStore.ts';
 import { loadCatalogue, readPayloadJson } from './fixtures/catalogue.ts';
 
 /// The Catalogue document and one real Model file, for refusal tests to edit copies of.
 const stored = async () => {
-  const document: CatalogueDocument = parseCatalogueDocument(
+  const document: Catalogue = parseCatalogueDocument(
     await readPayloadJson(CATALOGUE_PATH)
   );
   const id = 'structure-01484e';
@@ -151,5 +151,79 @@ describe('the stored Damocles Catalogue', () => {
         '/payload/damocles/models/structure-01484e.json: HTTP 404'
       );
     });
+  });
+});
+
+/// A store over the real payload that records every path it reads, and can refuse one.
+const counted = async () => {
+  const catalogue = parseCatalogueDocument(
+    await readPayloadJson(CATALOGUE_PATH)
+  );
+  const reads: string[] = [];
+  let refuse: string | undefined;
+  const store = new ModelStore(catalogue, path => {
+    reads.push(path);
+    return path === refuse
+      ? Promise.reject(new Error('HTTP 503'))
+      : readPayloadJson(path);
+  });
+  return {
+    catalogue,
+    reads,
+    refuse: (path: string | undefined) => {
+      refuse = path;
+    },
+    store
+  };
+};
+
+describe('the Model store', () => {
+  test('reads a file once, however many ask for it at once', async () => {
+    const { reads, store } = await counted();
+    expect(store.peek('object-035cfc')).toBeUndefined();
+    const [first, second] = await Promise.all([
+      store.get('object-035cfc'),
+      store.get('object-035cfc')
+    ]);
+    expect(first).toBe(second);
+    expect(store.peek('object-035cfc')).toBe(first);
+    await store.get('object-035cfc');
+    expect(reads).toEqual([modelPath('object-035cfc')]);
+  });
+
+  test('admits a structure only together with the interior it binds', async () => {
+    const { reads, store } = await counted();
+    const spaceport = await store.get('structure-01484e');
+    const interior = spaceport.structureSelection!.detailModel;
+    expect(store.peek(interior)).toBeDefined();
+    expect(reads).toEqual([modelPath('structure-01484e'), modelPath(interior)]);
+  });
+
+  test('forgets a failed read so a later one can succeed', async () => {
+    const { refuse, store } = await counted();
+    refuse(modelPath('object-035cfc'));
+    expect(await store.prefetch(['object-035cfc', 'object-035d12'])).toEqual([
+      new Error('/payload/damocles/models/object-035cfc.json: HTTP 503')
+    ]);
+    expect(store.peek('object-035d12')).toBeDefined();
+    expect(store.peek('object-035cfc')).toBeUndefined();
+    refuse(undefined);
+    expect(await store.prefetch(['object-035cfc'])).toEqual([]);
+    expect(store.peek('object-035cfc')).toBeDefined();
+  });
+
+  test('refuses an id the index does not name without reading anything', async () => {
+    const { reads, store } = await counted();
+    await expect(store.get('object-ffffff')).rejects.toThrow(
+      "not in the Catalogue's model index"
+    );
+    expect(reads).toEqual([]);
+  });
+
+  test('grows only as Models land', async () => {
+    const { store } = await counted();
+    expect(store.size).toBe(0);
+    await store.prefetch(['object-035cfc', 'object-035cfc', 'object-035d12']);
+    expect(store.size).toBe(2);
   });
 });

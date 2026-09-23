@@ -14,14 +14,18 @@ import {
   surfaceOffset,
   type ErisSurface
 } from '../src/damocles/world.ts';
-import { loadCatalogue } from './fixtures/catalogue.ts';
+import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
 const load = async (): Promise<ErisSurface> => {
   const [catalogue, presentation] = await Promise.all([
     loadCatalogue(),
     Bun.file(new URL('../damocles/eris.json', import.meta.url)).json()
   ]);
-  return erisSurfaceFrom(catalogue, readErisPresentation(presentation));
+  return erisSurfaceFrom(
+    catalogue,
+    modelsOf(catalogue),
+    readErisPresentation(presentation)
+  );
 };
 
 /// The 115 probe points of #391, verbatim, as the laboratory asked the Working Authority for

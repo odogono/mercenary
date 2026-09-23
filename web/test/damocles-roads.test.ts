@@ -132,7 +132,7 @@ describe('the recovered Damocles Settlement road networks', () => {
 
   test('an overridden cell draws a record the classifier did not pick', async () => {
     const catalogue = await load();
-    const models = new Set(catalogue.models.map(model => model.id));
+    const models = new Set(catalogue.modelIndex.map(model => model.id));
     let overridden = 0;
     for (const network of catalogue.roadNetworks) {
       for (const cell of network.cells) {

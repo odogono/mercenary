@@ -218,12 +218,16 @@ test('a Body draws its recovered coastlines, whole across the seam', async ({
 test('zooming into a Body reveals its islands and hands over continuously', async ({
   page
 }) => {
-  // The Catalogue is 40 MiB, so the System Range must not fetch it until a surface is worth
-  // drawing (#435).
+  // The System Range fetches nothing of the Catalogue until a surface is worth drawing (#435),
+  // and a Body's surface fetches the shared document and no Model file (ADR 0048).
   const fetches: string[] = [];
+  const models: string[] = [];
   page.on('request', request => {
     if (request.url().includes('catalogue.json')) {
       fetches.push(request.url());
+    }
+    if (request.url().includes('/payload/damocles/models/')) {
+      models.push(request.url());
     }
   });
   await page.goto('/damocles/atlas');
@@ -239,6 +243,8 @@ test('zooming into a Body reveals its islands and hands over continuously', asyn
   await expect(page.locator('#status')).toContainText(
     'recovered islands drawn on ERIS at an authored scale'
   );
+  expect(fetches).toHaveLength(1);
+  expect(models).toEqual([]);
   // The one authored quantity in the Atlas, so the panel states it rather than assuming it.
   await expect(page.locator('#panel')).toContainText(
     'The scale placing them on the disc is authored'

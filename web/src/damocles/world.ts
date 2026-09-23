@@ -1,13 +1,15 @@
-import type {
-  Catalogue,
-  DetailGroup,
-  IslandBoxKind,
-  Kind,
-  Mesh,
-  Model,
-  Recovery,
-  StructureSelection
+import {
+  modelSummaryById,
+  type Catalogue,
+  type DetailGroup,
+  type IslandBoxKind,
+  type Kind,
+  type Mesh,
+  type Model,
+  type Recovery,
+  type StructureSelection
 } from '../catalogue/data.ts';
+import type { ModelLookup } from '../catalogue/modelStore.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import type { ErisPresentationDocument } from './documents.ts';
 
@@ -372,8 +374,41 @@ export interface SurfaceAnchor {
   readonly origin: { readonly x: number; readonly z: number };
 }
 
+/// The Models a Body's workspace draws, in the order a player standing at `position` needs
+/// them: first the island they stand on, together with the few Instances that name no island;
+/// then each other island in turn (ADR 0048). Each wave is read whole before it is drawn, so an
+/// island's structures appear together rather than one by one.
+export const modelWaves = (
+  catalogue: Catalogue,
+  surface: ErisSurface,
+  position: Vector3
+): readonly (readonly string[])[] => {
+  const arrival = nearestIsland(surface, position)?.id ?? null;
+  const byIsland = new Map<string | null, Set<string>>([[arrival, new Set()]]);
+  for (const instance of catalogue.instances) {
+    const location = instance.location;
+    if (location === null || location.body !== surface.body.id) {
+      continue;
+    }
+    const key = location.island ?? arrival;
+    let wave = byIsland.get(key);
+    if (wave === undefined) {
+      wave = new Set();
+      byIsland.set(key, wave);
+    }
+    wave.add(instance.model);
+  }
+  return [...byIsland.values()]
+    .map(wave => [...wave])
+    .filter(wave => wave.length > 0);
+};
+
+/// The workspace of one Body, built from the Models in hand. An Instance whose Model has not
+/// been read yet is left out entirely, drawn and collided with by nobody, until a later build
+/// has it (ADR 0048); an Instance naming a Model the index does not know is a payload fault.
 export const erisSurfaceFrom = (
   catalogue: Catalogue,
+  models: ModelLookup,
   doc: ErisPresentationDocument,
   anchor: SurfaceAnchor = { bodyId: doc.body.id, origin: doc.grid.origin }
 ): ErisSurface => {
@@ -388,23 +423,25 @@ export const erisSurfaceFrom = (
       `The Damocles Catalogue has no body ${anchor.bodyId} for ${doc.body.name}`
     );
   }
-  const models = new Map(catalogue.models.map(model => [model.id, model]));
   const placements: ErisPlacement[] = [];
   for (const instance of catalogue.instances) {
     const location = instance.location;
     if (location === null || location.body !== body.id) {
       continue;
     }
-    const model = models.get(instance.model);
-    if (model === undefined) {
+    if (modelSummaryById(catalogue, instance.model) === undefined) {
       throw new Error(
         `Damocles Instance ${instance.id} names unknown model ${instance.model}`
       );
     }
+    const model = models.peek(instance.model);
+    if (model === undefined) {
+      continue;
+    }
     const mesh = structureMesh(model, doc.structureFallback);
     const selection = model.structureSelection;
     const detail =
-      selection === undefined ? undefined : models.get(selection.detailModel);
+      selection === undefined ? undefined : models.peek(selection.detailModel);
     placements.push({
       ...(selection === undefined || detail?.detailSelection === undefined
         ? {}

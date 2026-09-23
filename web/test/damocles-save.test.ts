@@ -18,7 +18,7 @@ import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { createNewGameAction } from '../src/shell/menu.ts';
 import { titleStorageKeys } from '../src/shell/title.ts';
 import { arrivalPoses } from './damocles-pose.ts';
-import { loadCatalogue } from './fixtures/catalogue.ts';
+import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
 const load = async () => {
   const [rawCatalogue, presentationText, rawStrings] = await Promise.all([
@@ -33,10 +33,11 @@ const load = async () => {
     catalogue,
     doc,
     identity: damoclesSaveIdentity(catalogue, presentationSha256),
+    models: modelsOf(catalogue),
     poses: await arrivalPoses(),
     presentationSha256,
     strings: parseDamoclesStrings(rawStrings),
-    surface: erisSurfaceFrom(catalogue, doc)
+    surface: erisSurfaceFrom(catalogue, modelsOf(catalogue), doc)
   };
 };
 

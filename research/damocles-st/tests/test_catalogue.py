@@ -2900,7 +2900,7 @@ class StoredLayoutTests(unittest.TestCase):
             'models': [
                 model('structure-b', 'structure', structureSelection={'detailModel': 'interior-c'}),
                 model('interior-c', 'interior'),
-                model('object-a', 'object'),
+                model('object-a', 'object', supportTop=48),
                 model('ground-d', 'ground'),
                 model('object-unplaced', 'object'),
             ],
@@ -2931,6 +2931,8 @@ class StoredLayoutTests(unittest.TestCase):
             'id': 'ground-d', 'kind': 'ground', 'name': 'GROUND-D', 'recordClass': 'geometry',
             'slots': [1], 'status': 'decoded'})
         self.assertEqual(document['bodies'][1], {'id': 'body-2', 'models': ['ground-d']})
+        self.assertEqual(document['modelIndex'][2]['supportTop'], 48)
+        self.assertNotIn('storeyHeight', document['modelIndex'][2])
         self.assertEqual(set(files), {entry['id'] for entry in document['modelIndex']})
         self.assertEqual(files['object-a'], {
             'schemaVersion': 16, 'source': {'programSha256': 'p' * 64, 'run': 'run-1'},

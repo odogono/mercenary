@@ -15,7 +15,7 @@ import {
   startPose,
   structureInCell
 } from '../src/damocles/world.ts';
-import { loadCatalogue } from './fixtures/catalogue.ts';
+import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
 const load = async () => {
   const [catalogue, presentation] = await Promise.all([
@@ -31,7 +31,7 @@ const load = async () => {
 describe('the Eris surface from the Damocles Catalogue', () => {
   test('places every recovered Eris instance in raw units', async () => {
     const { catalogue, doc } = await load();
-    const surface = erisSurfaceFrom(catalogue, doc);
+    const surface = erisSurfaceFrom(catalogue, modelsOf(catalogue), doc);
     expect(surface.body).toEqual({ id: 'body-11', name: 'ERIS' });
     expect(surface.placements).toHaveLength(207);
     const spaceport = surface.placements.find(
@@ -64,7 +64,7 @@ describe('the Eris surface from the Damocles Catalogue', () => {
 
   test("reads Eris's five island records and measures cells from the nearest", async () => {
     const { catalogue, doc } = await load();
-    const surface = erisSurfaceFrom(catalogue, doc);
+    const surface = erisSurfaceFrom(catalogue, modelsOf(catalogue), doc);
     expect(
       surface.islands.map(island => [island.areaName, island.origin])
     ).toEqual([
@@ -108,7 +108,7 @@ describe('the Eris surface from the Damocles Catalogue', () => {
 
   test('measures the Island-Local Cell across the surface wrap', async () => {
     const { catalogue, doc } = await load();
-    const surface = erisSurfaceFrom(catalogue, doc);
+    const surface = erisSurfaceFrom(catalogue, modelsOf(catalogue), doc);
     const capital = surface.islands[0]!;
     // The surface is a 4096-cell torus on both axes, so a cell four short of wrapping round to
     // Capital City's origin is four west of it and not 4092 east.
@@ -129,7 +129,7 @@ describe('the Eris surface from the Damocles Catalogue', () => {
 
   test('binds only the current-cell structure and gates its plan to the central half', async () => {
     const { catalogue, doc } = await load();
-    const surface = erisSurfaceFrom(catalogue, doc);
+    const surface = erisSurfaceFrom(catalogue, modelsOf(catalogue), doc);
     const office = surface.placements.find(
       placement => placement.id === 'eris-surface-89'
     )!;
@@ -171,7 +171,7 @@ describe('the Eris surface from the Damocles Catalogue', () => {
       structureFallback: (typeof doc)['structureFallback'],
       id: string
     ): { faceCount: number; vertices: number } => {
-      const found = erisSurfaceFrom(catalogue, {
+      const found = erisSurfaceFrom(catalogue, modelsOf(catalogue), {
         ...doc,
         structureFallback
       }).placements.find(entry => entry.id === id)!;
@@ -220,9 +220,11 @@ describe('the Eris surface from the Damocles Catalogue', () => {
           : model
       )
     };
-    const combinedOpen = erisSurfaceFrom(withoutClosed, doc).placements.find(
-      entry => entry.id === 'eris-surface-87'
-    )!;
+    const combinedOpen = erisSurfaceFrom(
+      withoutClosed,
+      modelsOf(withoutClosed),
+      doc
+    ).placements.find(entry => entry.id === 'eris-surface-87')!;
     expect(combinedOpen.faceCount).toBe(69);
     const exteriorOnly = {
       ...catalogue,
@@ -237,14 +239,16 @@ describe('the Eris surface from the Damocles Catalogue', () => {
           : model
       )
     };
-    expect(() => erisSurfaceFrom(exteriorOnly, doc)).toThrow(
+    expect(() =>
+      erisSurfaceFrom(exteriorOnly, modelsOf(exteriorOnly), doc)
+    ).toThrow(
       'Damocles model structure-01484e has no combined variant to draw'
     );
   });
 
   test('draws nothing for unrecovered geometry and counts the gap', async () => {
     const { catalogue, doc } = await load();
-    const surface = erisSurfaceFrom(catalogue, doc);
+    const surface = erisSurfaceFrom(catalogue, modelsOf(catalogue), doc);
     const unresolved = surface.placements.filter(
       placement => placement.mesh === undefined
     );
@@ -260,7 +264,7 @@ describe('the Eris surface from the Damocles Catalogue', () => {
 
   test('starts on foot in the spaceport cell at the arrival ship', async () => {
     const { catalogue, doc } = await load();
-    const surface = erisSurfaceFrom(catalogue, doc);
+    const surface = erisSurfaceFrom(catalogue, modelsOf(catalogue), doc);
     const pose = startPose(doc);
     expect(cellOf(pose.position, surface.grid)).toEqual({ x: 7, z: 8 });
     expect(pose.position.y).toBe(63);
@@ -274,7 +278,7 @@ describe('the Eris surface from the Damocles Catalogue', () => {
 
   test('names the recovered Eris places by cell', async () => {
     const { catalogue, doc } = await load();
-    const surface = erisSurfaceFrom(catalogue, doc);
+    const surface = erisSurfaceFrom(catalogue, modelsOf(catalogue), doc);
     expect(surface.places).toHaveLength(11);
     const spaceport = surface.places.find(
       place => place.id === 'place-025042'
@@ -285,7 +289,7 @@ describe('the Eris surface from the Damocles Catalogue', () => {
 
   test('turns the V.I.P. limo by its drawn instance angle', async () => {
     const { catalogue, doc } = await load();
-    const surface = erisSurfaceFrom(catalogue, doc);
+    const surface = erisSurfaceFrom(catalogue, modelsOf(catalogue), doc);
     const limo = surface.placements.find(
       placement => placement.id === 'object-slot-5'
     )!;

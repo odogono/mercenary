@@ -381,6 +381,22 @@ test('/damocles boots the Damocles Gameplay Session on foot at Eris Capital Spac
 
   expect(requests).toContain('/payload/damocles/catalogue.json');
   expect(requests).toContain('/damocles/eris.json');
+  // Only Eris's own Models are read, not the Catalogue's 1,241 (ADR 0048).
+  const catalogue = (await (
+    await page.request.get('/payload/damocles/catalogue.json')
+  ).json()) as {
+    bodies: { id: string; models: string[] }[];
+  };
+  const eris = new Set(
+    catalogue.bodies
+      .find(body => body.id === 'body-11')!
+      .models.map(id => `/payload/damocles/models/${id}.json`)
+  );
+  const models = requests.filter(path =>
+    path.startsWith('/payload/damocles/models/')
+  );
+  expect(models.length).toBeGreaterThan(0);
+  expect(models.filter(path => !eris.has(path))).toEqual([]);
   expect(requests).not.toContain('/payload/manifest.json');
   expect(requests).not.toContain('/payload/world.json');
   expect(requests).not.toContain('/settings.json');

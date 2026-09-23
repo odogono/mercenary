@@ -17,7 +17,7 @@ import {
 } from '../src/damocles/session.ts';
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
-import { loadCatalogue } from './fixtures/catalogue.ts';
+import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
 let catalogue: Catalogue;
 /// The raw payload, for the acceptance-matrix generator, which reads it as published.
@@ -33,12 +33,13 @@ beforeAll(async () => {
   content = {
     catalogue,
     doc,
+    models: modelsOf(catalogue),
     poses: parseDamoclesArrivalPoses(arrivalPoses),
     presentationSha256: 'test',
     strings: parseDamoclesStrings(
       await Bun.file('../payload/damocles/strings.json').json()
     ),
-    surface: erisSurfaceFrom(catalogue, doc)
+    surface: erisSurfaceFrom(catalogue, modelsOf(catalogue), doc)
   };
 });
 

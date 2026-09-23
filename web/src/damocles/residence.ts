@@ -1,6 +1,6 @@
 import {
   instanceById,
-  modelById,
+  modelSummaryById,
   type Catalogue,
   type Instance
 } from '../catalogue/data.ts';
@@ -140,7 +140,7 @@ export const structureStoreyHeight = (
   parentId: string
 ): number | undefined => {
   const parent = instanceById(catalogue, parentId);
-  const model = modelById(catalogue, parent?.model);
+  const model = modelSummaryById(catalogue, parent?.model);
   const height = model?.storeyHeight;
   return height !== undefined && Number.isSafeInteger(height) && height > 0
     ? height
@@ -152,7 +152,7 @@ export const validStructureResidence = (
   residence: Extract<Residence, { readonly kind: 'structure' }>
 ): boolean => {
   const parent = instanceById(catalogue, residence.parent);
-  const parentModel = modelById(catalogue, parent?.model);
+  const parentModel = modelSummaryById(catalogue, parent?.model);
   if (
     parent?.location?.body !== residence.body ||
     parentModel?.kind !== 'structure'
@@ -336,7 +336,10 @@ export const generateAcceptanceMatrix = (
       for (const support of supports) {
         const demand = instance.handling?.requiredSupportRank ?? 0;
         const supply = support.instance.handling?.suppliedSupportRank ?? 0;
-        const top = modelById(catalogue, support.instance.model)?.supportTop;
+        const top = modelSummaryById(
+          catalogue,
+          support.instance.model
+        )?.supportTop;
         const rankPasses = demand !== 0 && supply !== 0 && supply >= demand;
         const formPasses = top !== null && top !== undefined;
         const heightPasses = formPasses && top <= 63;

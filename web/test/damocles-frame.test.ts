@@ -25,7 +25,7 @@ import {
   type ErisSurface
 } from '../src/damocles/world.ts';
 import { ERIS_BODY } from './damocles-pose.ts';
-import { loadCatalogue } from './fixtures/catalogue.ts';
+import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
 const load = async () => {
   const [catalogue, presentation] = await Promise.all([
@@ -33,7 +33,7 @@ const load = async () => {
     Bun.file(new URL('../damocles/eris.json', import.meta.url)).json()
   ]);
   const doc = readErisPresentation(presentation);
-  return { doc, surface: erisSurfaceFrom(catalogue, doc) };
+  return { doc, surface: erisSurfaceFrom(catalogue, modelsOf(catalogue), doc) };
 };
 
 const square = (doubleSided = false): Mesh => ({

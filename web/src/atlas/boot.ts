@@ -1,8 +1,10 @@
 import {
+  CATALOGUE_PATH,
+  parseCatalogueDocument,
   payloadJson,
-  readCatalogue,
   type Catalogue
 } from '../catalogue/data.ts';
+import { ModelStore } from '../catalogue/modelStore.ts';
 import {
   readGammaSystem,
   type GammaSystemDocument
@@ -28,6 +30,7 @@ import {
   placeSurfaceLabels
 } from './draw.ts';
 import {
+  bodyStructureModels,
   footprintAt,
   readBodyFootprints,
   type BodyFootprints
@@ -126,10 +129,11 @@ let pending: ReturnType<typeof setTimeout> | undefined;
 let bodyView: MapView | undefined;
 /// The Catalogue, and the islands of the Body currently open.
 ///
-/// Fetched only on first entering a Body, never for the System Range: the shared document and
-/// every Model file, most of which the Atlas never draws. A reader who only ever looks at the
-/// System Range has no reason to pay for it.
+/// Fetched only on first entering a Body, never for the System Range: the shared document, which
+/// carries every island and road, and then only the structure Models of the Body in view.
 let catalogue: Catalogue | undefined;
+/// The Models footprints are measured from, read a Body's structures at a time.
+let models: ModelStore | undefined;
 let catalogueRequest: Promise<void> | undefined;
 let surface: BodySurface | undefined;
 /// The Body's derived footprints, read once beside its surface. Separate from `surface` because
@@ -641,15 +645,16 @@ const loadSurface = (sourceIndex: number, then: () => void) => {
   }
   catalogueRequest =
     catalogueRequest ??
-    readCatalogue(payloadJson)
-      .then(read => {
-        catalogue = read;
+    payloadJson(CATALOGUE_PATH)
+      .then(value => {
+        catalogue = parseCatalogueDocument(value);
+        models = new ModelStore(catalogue, payloadJson);
       })
       .catch(error => {
         catalogueRequest = undefined;
         failure.hidden = false;
         failure.textContent =
-          `${error instanceof Error ? error.message : String(error)}\n` +
+          `${CATALOGUE_PATH}: ${error instanceof Error ? error.message : String(error)}\n` +
           'The sea and the Surface Cell grid are drawn from the System authority; coastlines need the Catalogue.';
       });
   void catalogueRequest.then(() => {
@@ -659,19 +664,44 @@ const loadSurface = (sourceIndex: number, then: () => void) => {
   });
 };
 
+/// Reads the structures a Body's footprints are measured from, then measures them again, if the
+/// reader is still on that Body. Islands and roads are already drawn from the Catalogue's own
+/// document by then; the footprints join them when their Models land (ADR 0048).
+const readFootprintModels = (sourceIndex: number) => {
+  if (!catalogue || !models) {
+    return;
+  }
+  const wanted = bodyStructureModels(catalogue, sourceIndex);
+  if (wanted.every(id => models!.peek(id) !== undefined)) {
+    return;
+  }
+  void models.prefetch(wanted).then(failures => {
+    if (failures.length > 0) {
+      failure.hidden = false;
+      failure.textContent = `${failures[0]!.message}\nFootprints need every structure Model on the Body.`;
+    }
+    if (catalogue && models && selectedBody()?.sourceIndex === sourceIndex) {
+      footprints = readBodyFootprints(catalogue, models, sourceIndex);
+      render();
+    }
+  });
+};
+
 /// The Body Range's islands, once the Catalogue is readable.
 const loadBodySurface = (sourceIndex: number) => {
   surface = catalogue ? readBodySurface(catalogue, sourceIndex) : undefined;
-  footprints = catalogue
-    ? readBodyFootprints(catalogue, sourceIndex)
-    : undefined;
+  footprints =
+    catalogue && models
+      ? readBodyFootprints(catalogue, models, sourceIndex)
+      : undefined;
   loadSurface(sourceIndex, () => {
     const body = selectedBody();
-    if (!catalogue || !body) {
+    if (!catalogue || !models || !body) {
       return;
     }
     surface = readBodySurface(catalogue, body.sourceIndex);
-    footprints = readBodyFootprints(catalogue, body.sourceIndex);
+    footprints = readBodyFootprints(catalogue, models, body.sourceIndex);
+    readFootprintModels(body.sourceIndex);
     // `render` rather than `drawBodyRange`: a deep link may name a picked island, and until the
     // Catalogue is read there is no record to put in the panel. Re-rendering is idempotent here
     // because the state has not moved, so the camera survives and nothing is refetched.

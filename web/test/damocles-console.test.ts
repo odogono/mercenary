@@ -13,7 +13,7 @@ import { parseConsoleCommand } from '../src/shell/console.ts';
 import type { PreferencesStore } from '../src/shell/preferences.ts';
 import type { SavePersistence } from '../src/shell/saves.ts';
 import { arrivalPoses } from './damocles-pose.ts';
-import { loadCatalogue } from './fixtures/catalogue.ts';
+import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
 let content: DamoclesContent | undefined;
 
@@ -31,10 +31,11 @@ const contentOf = async (): Promise<DamoclesContent> => {
   content = {
     catalogue,
     doc,
+    models: modelsOf(catalogue),
     poses: await arrivalPoses(),
     presentationSha256: 'test-presentation',
     strings: parseDamoclesStrings(strings),
-    surface: erisSurfaceFrom(catalogue, doc)
+    surface: erisSurfaceFrom(catalogue, modelsOf(catalogue), doc)
   };
   return content;
 };

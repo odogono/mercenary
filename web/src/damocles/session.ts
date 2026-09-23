@@ -1,9 +1,10 @@
 import {
   instanceById,
-  modelById,
+  modelSummaryById,
   type Catalogue,
   type EntranceAttachment
 } from '../catalogue/data.ts';
+import type { ModelStore } from '../catalogue/modelStore.ts';
 import { IDLE, MAXIMUM_STEP, type Intent } from '../gameCore/index.ts';
 import type { TitleSession } from '../shell/title.ts';
 import {
@@ -61,6 +62,7 @@ import {
   erisSurfaceFrom,
   insideCentralCellHalf,
   islandLocalCell,
+  modelWaves,
   nearestIsland,
   startPose,
   structureInCell,
@@ -128,6 +130,8 @@ export type Selection =
 export interface DamoclesContent {
   readonly catalogue: Catalogue;
   readonly doc: ErisPresentationDocument;
+  /// The Catalogue's Models, read a Body's islands at a time (ADR 0048).
+  readonly models: ModelStore;
   /// The arrival Poses, which decide which Bodies are switchable.
   readonly poses: ArrivalPoses;
   /// One identity over every Damocles presentation document, hashed from the bytes served.
@@ -150,7 +154,9 @@ const inventorySourceLabel = (
 ): string => {
   const instance = instanceById(catalogue, instanceId);
   const model =
-    instance === undefined ? undefined : modelById(catalogue, instance.model);
+    instance === undefined
+      ? undefined
+      : modelSummaryById(catalogue, instance.model);
   return (model?.name ?? instanceId).slice(0, 16).padEnd(16);
 };
 
@@ -183,6 +189,15 @@ const scriptForSave = (script: ScriptState): DamoclesSaveScript => ({
   triggers: script.triggers.map(({ armed, index }) => ({ armed, index }))
 });
 
+/// The workspace origin a Body's admitted arrival Pose publishes, if it has one.
+const workspaceOriginFor = (
+  content: DamoclesContent,
+  bodyId: string
+): { readonly x: number; readonly z: number } | undefined =>
+  content.poses.poses.find(
+    pose => pose.body === bodyId && pose.workspaceOrigin !== null
+  )?.workspaceOrigin ?? undefined;
+
 /// The single owner of Damocles's Session State.
 ///
 /// Time reaches it as seconds and is stepped at no more than the shared `MAXIMUM_STEP`, so a
@@ -212,8 +227,14 @@ export class DamoclesSession implements TitleSession<
   private pose: Pose;
   private regionIndex: number | null = null;
   private residence = new Map<string, Residence>();
-  /// The Body the session is standing on. A switch rebuilds it; walking never does.
+  /// The Body the session is standing on. A switch rebuilds it; walking never does, and nor
+  /// does anything but a wave of that Body's Models landing (ADR 0048).
   private surface: ErisSurface;
+  /// How many Models were in hand when `surface` was built.
+  private surfaceModels = 0;
+  /// Waves of Models that have landed, and how many of them `surface` has seen.
+  private wavesLanded = 0;
+  private wavesApplied = 0;
   private script: ScriptState;
   private scrollCounter: number;
 
@@ -265,27 +286,130 @@ export class DamoclesSession implements TitleSession<
     // Pose before anything binds against it.
     this.surface = this.surfaceFor(this.pose.body);
     this.bindAt(this.pose, restore?.structure);
+    this.readBody();
   }
 
-  /// The surface for a Body, anchored at the workspace origin its admitted Pose publishes.
-  ///
-  /// The document's own surface is reused where it already names that Body, so the common case
-  /// rebuilds nothing. `validateRestore` has already refused a Body with no admitted Pose, so a
-  /// missing origin here is a programming error rather than a refusal.
-  private surfaceFor(bodyId: string): ErisSurface {
-    if (bodyId === this.content.surface.body.id) {
-      return this.content.surface;
+  /// The Models a restore needs before a session can be built from it and are not in hand yet:
+  /// the island the saved Pose stands on, and the structure it saved as bound, which the
+  /// constructor refuses to restore without. Everything else streams in once the session runs.
+  /// A restore the constructor will refuse whatever is read needs nothing, so it is refused at
+  /// once: one naming a Body with no admitted Pose, or a bound structure on another Body.
+  static missingModels(
+    content: DamoclesContent,
+    restore: DamoclesSaveSnapshot
+  ): readonly string[] {
+    const origin = workspaceOriginFor(content, restore.pose.body);
+    const bound = instanceById(
+      content.catalogue,
+      restore.structure?.instanceId ?? undefined
+    );
+    if (
+      origin === undefined ||
+      (restore.structure != null && bound?.location?.body !== restore.pose.body)
+    ) {
+      return [];
     }
-    const origin = this.content.poses.poses.find(
-      pose => pose.body === bodyId && pose.workspaceOrigin !== null
-    )?.workspaceOrigin;
-    if (origin === undefined || origin === null) {
+    const surface = erisSurfaceFrom(
+      content.catalogue,
+      content.models,
+      content.doc,
+      { bodyId: restore.pose.body, origin }
+    );
+    return [
+      ...(modelWaves(content.catalogue, surface, restore.pose.position)[0] ??
+        []),
+      ...(bound === undefined ? [] : [bound.model])
+    ].filter(id => content.models.peek(id) === undefined);
+  }
+
+  /// Reads what `missingModels` names.
+  static async prepare(
+    content: DamoclesContent,
+    restore: DamoclesSaveSnapshot
+  ): Promise<void> {
+    await content.models.prefetch(
+      DamoclesSession.missingModels(content, restore)
+    );
+  }
+
+  /// Reads the current Body's Models island by island, nearest first, counting each wave as it
+  /// lands so the next step rebuilds the surface with it.
+  private readBody(): void {
+    const body = this.surface.body.id;
+    const waves = modelWaves(
+      this.content.catalogue,
+      this.surface,
+      this.pose.position
+    );
+    void (async () => {
+      for (const wave of waves) {
+        await this.content.models.prefetch(wave);
+        if (this.surface.body.id !== body) {
+          return;
+        }
+        this.wavesLanded += 1;
+      }
+    })();
+  }
+
+  /// Rebuilds the surface once a wave has landed that brought Models it lacks, keeping the bound
+  /// structure bound, or binding one the player turns out to be standing in.
+  private refreshSurface(): void {
+    if (this.wavesLanded === this.wavesApplied) {
+      return;
+    }
+    this.wavesApplied = this.wavesLanded;
+    if (this.content.models.size === this.surfaceModels) {
+      return;
+    }
+    this.surface = this.buildSurface(this.surface.body.id);
+    const bound = this.boundPlacement;
+    if (bound === null) {
+      this.bindAt(this.pose);
+    } else {
+      this.boundPlacement =
+        this.surface.placements.find(placement => placement.id === bound.id) ??
+        bound;
+    }
+  }
+
+  /// The surface for a Body, anchored at the workspace origin its admitted Pose publishes, and
+  /// built from whatever of its Models are in hand. `validateRestore` has already refused a
+  /// Body with no admitted Pose, so a missing origin here is a programming error rather than a
+  /// refusal.
+  ///
+  /// The loaded surface is reused where it names that Body and already holds every Instance
+  /// whose Model is in hand, so the common case rebuilds nothing; one built before later waves
+  /// landed is rebuilt instead.
+  private surfaceFor(bodyId: string): ErisSurface {
+    const loaded = this.content.surface;
+    if (
+      bodyId === loaded.body.id &&
+      loaded.placements.length ===
+        this.content.catalogue.instances.filter(
+          instance =>
+            instance.location?.body === bodyId &&
+            this.content.models.peek(instance.model) !== undefined
+        ).length
+    ) {
+      this.surfaceModels = this.content.models.size;
+      return loaded;
+    }
+    return this.buildSurface(bodyId);
+  }
+
+  private buildSurface(bodyId: string): ErisSurface {
+    const origin = workspaceOriginFor(this.content, bodyId);
+    if (origin === undefined) {
       throw new Error(`Damocles Body ${bodyId} has no admitted arrival Pose`);
     }
-    return erisSurfaceFrom(this.content.catalogue, this.content.doc, {
-      bodyId,
-      origin
-    });
+    this.surfaceModels = this.content.models.size;
+    return erisSurfaceFrom(
+      this.content.catalogue,
+      this.content.models,
+      this.content.doc,
+      { bodyId, origin }
+    );
   }
 
   private validateRestore(restore: DamoclesSaveSnapshot): void {
@@ -600,8 +724,13 @@ export class DamoclesSession implements TitleSession<
         continue;
       }
       const position = this.worldPosition(instance.id, residence);
-      const model = modelById(this.content.catalogue, instance.model);
-      if (position === null || model === undefined) {
+      if (position === null) {
+        continue;
+      }
+      const model = this.content.models.peek(instance.model);
+      if (model === undefined) {
+        // Drawn once its file lands: residents are recomputed every snapshot.
+        void this.content.models.prefetch([instance.model]);
         continue;
       }
       const form =
@@ -644,7 +773,7 @@ export class DamoclesSession implements TitleSession<
       return label.slice(0, 16 + this.scrollCounter);
     }
     const instance = instanceById(this.content.catalogue, head);
-    const model = modelById(this.content.catalogue, instance?.model);
+    const model = modelSummaryById(this.content.catalogue, instance?.model);
     return model?.name ?? head;
   }
 
@@ -748,6 +877,7 @@ export class DamoclesSession implements TitleSession<
   }
 
   advance(seconds: number): DamoclesSnapshot {
+    this.refreshSurface();
     let remaining = Math.max(0, seconds);
     while (remaining > 0) {
       const step = Math.min(MAXIMUM_STEP, remaining);
@@ -848,7 +978,8 @@ export class DamoclesSession implements TitleSession<
       return undefined;
     }
     return (
-      modelById(this.content.catalogue, instance.model)?.name ?? instanceId
+      modelSummaryById(this.content.catalogue, instance.model)?.name ??
+      instanceId
     );
   }
 
@@ -963,7 +1094,7 @@ export class DamoclesSession implements TitleSession<
     if (residence === undefined || residence.kind === 'carried') {
       return undefined;
     }
-    const model = modelById(
+    const model = modelSummaryById(
       this.content.catalogue,
       this.instanceFor(support.id)?.model
     );
@@ -1212,6 +1343,7 @@ export class DamoclesSession implements TitleSession<
     this.regionIndex = null;
     this.attachmentUnits = new Map();
     this.bindAt(this.pose);
+    this.readBody();
     return { kind: 'switched', pose: arrival.id };
   }
 

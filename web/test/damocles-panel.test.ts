@@ -13,7 +13,7 @@ import { damoclesTitle } from '../src/damocles/title.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { intent } from '../src/gameCore/index.ts';
 import { arrivalPoses } from './damocles-pose.ts';
-import { loadCatalogue } from './fixtures/catalogue.ts';
+import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
 const content = async () => {
   const [catalogue, presentation, strings] = await Promise.all([
@@ -26,10 +26,11 @@ const content = async () => {
   return {
     catalogue: parsed,
     doc,
+    models: modelsOf(parsed),
     poses: await arrivalPoses(),
     presentationSha256: 'test-presentation',
     strings: parseDamoclesStrings(strings),
-    surface: erisSurfaceFrom(parsed, doc)
+    surface: erisSurfaceFrom(parsed, modelsOf(parsed), doc)
   };
 };
 

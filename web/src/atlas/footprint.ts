@@ -1,4 +1,11 @@
-import type { Catalogue, Instance, Mesh, Model } from '../catalogue/data.ts';
+import {
+  modelSummaryById,
+  type Catalogue,
+  type Instance,
+  type Mesh,
+  type Model
+} from '../catalogue/data.ts';
+import type { ModelLookup } from '../catalogue/modelStore.ts';
 import { DAMOCLES_CELL_UNITS } from '../damocles/residence.ts';
 import { placementHeading } from '../damocles/world.ts';
 import type { MapPoint, MapView } from './mapView.ts';
@@ -146,21 +153,19 @@ export const footprintOf = (
 /// building on it — its Object Residence is mutable, a Drop rewrites it (`CONTEXT.md`) — and a
 /// ground record is the cell's own surface, which the roads band already declined to paint in
 /// (#414). Drawing either as a footprint would put three different claims under one rectangle.
+///
+/// Measured from the Models in hand: a structure whose file has not been read is neither drawn
+/// nor a gap until it has (ADR 0048). `bodyStructureModels` names what to read first.
 export const readBodyFootprints = (
   catalogue: Catalogue,
+  models: ModelLookup,
   sourceIndex: number
 ): BodyFootprints => {
-  const bodyId = catalogueBodyId(sourceIndex);
-  const models = new Map(catalogue.models.map(model => [model.id, model]));
   const drawn: Footprint[] = [];
   const gaps: FootprintGap[] = [];
-  for (const instance of catalogue.instances) {
-    const model = models.get(instance.model);
-    if (
-      !instance.location ||
-      instance.location.body !== bodyId ||
-      model?.kind !== 'structure'
-    ) {
+  for (const instance of bodyStructures(catalogue, sourceIndex)) {
+    const model = models.peek(instance.model);
+    if (model === undefined) {
       continue;
     }
     const footprint = footprintOf(model, instance);
@@ -177,6 +182,25 @@ export const readBodyFootprints = (
   }
   return { drawn, gaps };
 };
+
+const bodyStructures = (catalogue: Catalogue, sourceIndex: number) => {
+  const bodyId = catalogueBodyId(sourceIndex);
+  return catalogue.instances.filter(
+    instance =>
+      instance.location?.body === bodyId &&
+      modelSummaryById(catalogue, instance.model)?.kind === 'structure'
+  );
+};
+
+/// The Models a Body's footprints are measured from.
+export const bodyStructureModels = (
+  catalogue: Catalogue,
+  sourceIndex: number
+): readonly string[] => [
+  ...new Set(
+    bodyStructures(catalogue, sourceIndex).map(instance => instance.model)
+  )
+];
 
 /// Whether a Body Coordinate falls inside a footprint's own rectangle, by ray casting. Four
 /// corners, so nothing cleverer earns its keep, and the same arithmetic serves a turned

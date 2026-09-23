@@ -4639,6 +4639,10 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
 
 SCHEMA_VERSION = 16
 MODEL_INDEX_FIELDS = ('id', 'kind', 'name', 'recordClass', 'slots', 'status')
+# The facts a game rule reads without drawing: a structure's storey pitch admits a structure
+# residence, and a support's top decides a Drop. Indexed where the Model records them, so a
+# Save can be validated before any Model file is read.
+MODEL_INDEX_RULE_FIELDS = ('storeyHeight', 'supportTop')
 
 
 def body_models(result: dict) -> dict[str, list[str]]:
@@ -4682,7 +4686,10 @@ def split_catalogue(result: dict) -> tuple[dict, dict[str, dict]]:
     document = {key: value for key, value in result.items() if key != 'models'}
     document['schemaVersion'] = SCHEMA_VERSION
     document['bodies'] = [{**body, 'models': closure[body['id']]} for body in result['bodies']]
-    document['modelIndex'] = [{field: model[field] for field in MODEL_INDEX_FIELDS} for model in result['models']]
+    document['modelIndex'] = [
+        {**{field: model[field] for field in MODEL_INDEX_FIELDS},
+         **{field: model[field] for field in MODEL_INDEX_RULE_FIELDS if field in model}}
+        for model in result['models']]
     source = {'programSha256': result['source']['programSha256'], 'run': result['source']['run']}
     files = {model['id']: {'schemaVersion': SCHEMA_VERSION, 'source': source, 'model': model}
              for model in result['models']}

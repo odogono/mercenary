@@ -1,4 +1,5 @@
-import { readCatalogue } from '../catalogue/data.ts';
+import { CATALOGUE_PATH, parseCatalogueDocument } from '../catalogue/data.ts';
+import { ModelStore } from '../catalogue/modelStore.ts';
 import type { PanelViewModel } from '../shell/panel.ts';
 import { titleStorageKeys, type TitleRuntime } from '../shell/title.ts';
 import { readErisPresentation } from './documents.ts';
@@ -11,7 +12,7 @@ import {
   type DamoclesSnapshot
 } from './session.ts';
 import { parseDamoclesStrings } from './strings.ts';
-import { erisSurfaceFrom } from './world.ts';
+import { erisSurfaceFrom, modelWaves, startPose } from './world.ts';
 
 export const DAMOCLES_STRINGS_PATH = '/payload/damocles/strings.json';
 export const DAMOCLES_ARRIVAL_POSES_PATH =
@@ -56,15 +57,18 @@ export const damoclesTitle: TitleRuntime<
 > = {
   create: (content, restore) => new DamoclesSession(content, restore),
   load: async fetch => {
-    // The Catalogue is its shared document and one file per Model (ADR 0048); the reader
-    // labels any failure with the path that failed.
-    const [catalogue, rawPresentation, rawStrings, rawPoses] =
+    // The Catalogue is its shared document and one file per Model (ADR 0048). Only the
+    // document is read here; Models are read by id as a Body needs them.
+    const [rawCatalogue, rawPresentation, rawStrings, rawPoses] =
       await Promise.all([
-        readCatalogue(async path => (await fetch(path)).value),
+        fetch(CATALOGUE_PATH),
         fetch(ERIS_PRESENTATION_PATH),
         fetch(DAMOCLES_STRINGS_PATH),
         fetch(DAMOCLES_ARRIVAL_POSES_PATH)
       ]);
+    const catalogue = labelled(CATALOGUE_PATH, () =>
+      parseCatalogueDocument(rawCatalogue.value)
+    );
     const doc = labelled(ERIS_PRESENTATION_PATH, () =>
       readErisPresentation(rawPresentation.value)
     );
@@ -86,13 +90,27 @@ export const damoclesTitle: TitleRuntime<
         `${DAMOCLES_ARRIVAL_POSES_PATH}: program identity does not match the Catalogue`
       );
     }
+    const models = new ModelStore(
+      catalogue,
+      async path => (await fetch(path)).value
+    );
+    // The island the opening Pose stands on is read before the first frame, so a new game opens
+    // on a whole island; the rest of the Body streams in behind it.
+    const opening = erisSurfaceFrom(catalogue, models, doc);
+    const failures = await models.prefetch(
+      modelWaves(catalogue, opening, startPose(doc).position)[0] ?? []
+    );
+    if (failures.length > 0) {
+      throw failures[0]!;
+    }
     return {
       catalogue,
       doc,
+      models,
       poses,
       presentationSha256: await presentationIdentity([rawPresentation.text]),
       strings,
-      surface: erisSurfaceFrom(catalogue, doc)
+      surface: erisSurfaceFrom(catalogue, models, doc)
     };
   },
   panelViewModel: (snapshot, content): PanelViewModel =>

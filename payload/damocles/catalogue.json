@@ -53177,7 +53177,8 @@
         376,
         377
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-035d12",
@@ -53187,7 +53188,8 @@
       "slots": [
         1
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-035d98",
@@ -53197,7 +53199,8 @@
       "slots": [
         2
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-035ec8",
@@ -53207,7 +53210,8 @@
       "slots": [
         3
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-035f92",
@@ -53217,7 +53221,8 @@
       "slots": [
         4
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-036176",
@@ -53227,7 +53232,8 @@
       "slots": [
         5
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-03e702",
@@ -53238,7 +53244,8 @@
         6,
         260
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-036324",
@@ -53249,7 +53256,8 @@
         7,
         265
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-03f54a",
@@ -53261,7 +53269,8 @@
         15,
         287
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 20
     },
     {
       "id": "object-03e81c",
@@ -53272,7 +53281,8 @@
         10,
         261
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-036426",
@@ -53282,7 +53292,8 @@
       "slots": [
         11
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-03672c",
@@ -53292,7 +53303,8 @@
       "slots": [
         12
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-036838",
@@ -53302,7 +53314,8 @@
       "slots": [
         13
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-0369d2",
@@ -53312,7 +53325,8 @@
       "slots": [
         14
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-03f9cc",
@@ -53324,7 +53338,8 @@
         98,
         294
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 90
     },
     {
       "id": "object-03fbb6",
@@ -53339,7 +53354,8 @@
         217,
         297
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 60
     },
     {
       "id": "object-0401f0",
@@ -53350,7 +53366,8 @@
         28,
         305
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 50
     },
     {
       "id": "object-036d64",
@@ -53369,7 +53386,8 @@
         38,
         39
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-04042c",
@@ -53380,7 +53398,8 @@
         40,
         307
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 85
     },
     {
       "id": "object-036e70",
@@ -53390,7 +53409,8 @@
       "slots": [
         41
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 40
     },
     {
       "id": "object-036f2a",
@@ -53405,7 +53425,8 @@
         233,
         235
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 38
     },
     {
       "id": "object-0370c8",
@@ -53418,7 +53439,8 @@
         226,
         227
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 50
     },
     {
       "id": "object-0372ba",
@@ -53428,7 +53450,8 @@
       "slots": [
         44
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 70
     },
     {
       "id": "object-037414",
@@ -53438,7 +53461,8 @@
       "slots": [
         45
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 25
     },
     {
       "id": "object-03751e",
@@ -53448,7 +53472,8 @@
       "slots": [
         46
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 55
     },
     {
       "id": "object-037648",
@@ -53458,7 +53483,8 @@
       "slots": [
         47
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 40
     },
     {
       "id": "object-0377a8",
@@ -53468,7 +53494,8 @@
       "slots": [
         48
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 20
     },
     {
       "id": "object-0378ee",
@@ -53478,7 +53505,8 @@
       "slots": [
         49
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 20
     },
     {
       "id": "object-0379bc",
@@ -53488,7 +53516,8 @@
       "slots": [
         50
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 48
     },
     {
       "id": "object-037b70",
@@ -53498,7 +53527,8 @@
       "slots": [
         51
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 60
     },
     {
       "id": "object-037cb4",
@@ -53508,7 +53538,8 @@
       "slots": [
         52
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 100
     },
     {
       "id": "object-037e24",
@@ -53518,7 +53549,8 @@
       "slots": [
         53
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-037ec6",
@@ -53528,7 +53560,8 @@
       "slots": [
         54
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-03fb48",
@@ -53544,7 +53577,8 @@
         162,
         296
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 15
     },
     {
       "id": "object-037f68",
@@ -53554,7 +53588,8 @@
       "slots": [
         56
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 45
     },
     {
       "id": "object-03fce8",
@@ -53565,7 +53600,8 @@
         57,
         298
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 94
     },
     {
       "id": "object-038108",
@@ -53576,7 +53612,8 @@
         58,
         97
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 80
     },
     {
       "id": "object-0383a6",
@@ -53586,7 +53623,8 @@
       "slots": [
         59
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 34
     },
     {
       "id": "object-03843e",
@@ -53599,7 +53637,8 @@
         241,
         242
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 60
     },
     {
       "id": "object-038546",
@@ -53609,7 +53648,8 @@
       "slots": [
         61
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 50
     },
     {
       "id": "object-03878a",
@@ -53619,7 +53659,8 @@
       "slots": [
         63
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 0
     },
     {
       "id": "object-038820",
@@ -53638,7 +53679,8 @@
         72,
         73
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-038940",
@@ -53648,7 +53690,8 @@
       "slots": [
         74
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-038956",
@@ -53667,7 +53710,8 @@
         83,
         256
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 40
     },
     {
       "id": "object-038a62",
@@ -53677,7 +53721,8 @@
       "slots": [
         84
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 50
     },
     {
       "id": "object-038b98",
@@ -53687,7 +53732,8 @@
       "slots": [
         85
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 50
     },
     {
       "id": "object-038d5a",
@@ -53697,7 +53743,8 @@
       "slots": [
         86
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 60
     },
     {
       "id": "object-038c82",
@@ -53707,7 +53754,8 @@
       "slots": [
         87
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 55
     },
     {
       "id": "object-038fec",
@@ -53717,7 +53765,8 @@
       "slots": [
         88
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 50
     },
     {
       "id": "object-03918a",
@@ -53727,7 +53776,8 @@
       "slots": [
         89
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 80
     },
     {
       "id": "object-03934e",
@@ -53737,7 +53787,8 @@
       "slots": [
         90
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 80
     },
     {
       "id": "object-039476",
@@ -53747,7 +53798,8 @@
       "slots": [
         91
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 60
     },
     {
       "id": "object-03971e",
@@ -53757,7 +53809,8 @@
       "slots": [
         92
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 85
     },
     {
       "id": "object-03992e",
@@ -53767,7 +53820,8 @@
       "slots": [
         93
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 5
     },
     {
       "id": "object-039a14",
@@ -53777,7 +53831,8 @@
       "slots": [
         94
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 25
     },
     {
       "id": "object-039b7a",
@@ -53787,7 +53842,8 @@
       "slots": [
         95
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-040618",
@@ -53798,7 +53854,8 @@
         96,
         309
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 60
     },
     {
       "id": "object-0406d4",
@@ -53810,7 +53867,8 @@
         100,
         310
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 80
     },
     {
       "id": "object-039d6a",
@@ -53820,7 +53878,8 @@
       "slots": [
         101
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 26
     },
     {
       "id": "object-039ea8",
@@ -53830,7 +53889,8 @@
       "slots": [
         102
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 60
     },
     {
       "id": "object-041c0a",
@@ -53840,7 +53900,8 @@
       "slots": [
         103
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 20
     },
     {
       "id": "object-03a1d4",
@@ -53850,7 +53911,8 @@
       "slots": [
         104
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 60
     },
     {
       "id": "object-03a3b8",
@@ -53860,7 +53922,8 @@
       "slots": [
         105
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 70
     },
     {
       "id": "object-0425f6",
@@ -53870,7 +53933,8 @@
       "slots": [
         106
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 30
     },
     {
       "id": "object-03a500",
@@ -53880,7 +53944,8 @@
       "slots": [
         107
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 50
     },
     {
       "id": "object-03a67e",
@@ -53890,7 +53955,8 @@
       "slots": [
         108
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 44
     },
     {
       "id": "object-03a7da",
@@ -53900,7 +53966,8 @@
       "slots": [
         109
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 47
     },
     {
       "id": "object-03a8a2",
@@ -53910,7 +53977,8 @@
       "slots": [
         110
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 60
     },
     {
       "id": "object-03a9b8",
@@ -53920,7 +53988,8 @@
       "slots": [
         111
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 60
     },
     {
       "id": "object-036c10",
@@ -53930,7 +53999,8 @@
       "slots": [
         112
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 76
     },
     {
       "id": "object-03ab26",
@@ -53941,7 +54011,8 @@
         113,
         193
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 60
     },
     {
       "id": "object-04084c",
@@ -53954,7 +54025,8 @@
         209,
         311
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 48
     },
     {
       "id": "object-03ac80",
@@ -53966,7 +54038,8 @@
         215,
         216
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 60
     },
     {
       "id": "object-040a68",
@@ -53980,7 +54053,8 @@
         213,
         312
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 60
     },
     {
       "id": "object-03af66",
@@ -53990,7 +54064,8 @@
       "slots": [
         117
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 60
     },
     {
       "id": "object-03b204",
@@ -54001,7 +54076,8 @@
         118,
         220
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 30
     },
     {
       "id": "object-03b320",
@@ -54011,7 +54087,8 @@
       "slots": [
         119
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 50
     },
     {
       "id": "object-03b436",
@@ -54021,7 +54098,8 @@
       "slots": [
         120
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 45
     },
     {
       "id": "object-03b550",
@@ -54031,7 +54109,8 @@
       "slots": [
         121
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 60
     },
     {
       "id": "object-03b6cc",
@@ -54041,7 +54120,8 @@
       "slots": [
         122
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 30
     },
     {
       "id": "object-03b7ba",
@@ -54051,7 +54131,8 @@
       "slots": [
         123
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 40
     },
     {
       "id": "object-03b8ce",
@@ -54061,7 +54142,8 @@
       "slots": [
         124
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 50
     },
     {
       "id": "object-03baba",
@@ -54071,7 +54153,8 @@
       "slots": [
         125
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 2
     },
     {
       "id": "object-03bb50",
@@ -54081,7 +54164,8 @@
       "slots": [
         126
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 50
     },
     {
       "id": "object-03bd02",
@@ -54091,7 +54175,8 @@
       "slots": [
         127
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 20
     },
     {
       "id": "object-03bdec",
@@ -54101,7 +54186,8 @@
       "slots": [
         128
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-03bf28",
@@ -54111,7 +54197,8 @@
       "slots": [
         129
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 6
     },
     {
       "id": "object-03bfb4",
@@ -54121,7 +54208,8 @@
       "slots": [
         130
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 65
     },
     {
       "id": "object-03c12a",
@@ -54131,7 +54219,8 @@
       "slots": [
         131
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 30
     },
     {
       "id": "object-03c24c",
@@ -54141,7 +54230,8 @@
       "slots": [
         132
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 65
     },
     {
       "id": "object-03c44e",
@@ -54151,7 +54241,8 @@
       "slots": [
         133
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 30
     },
     {
       "id": "object-03c5bc",
@@ -54162,7 +54253,8 @@
         134,
         144
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 70
     },
     {
       "id": "object-03c838",
@@ -54172,7 +54264,8 @@
       "slots": [
         135
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 70
     },
     {
       "id": "object-03cc70",
@@ -54182,7 +54275,8 @@
       "slots": [
         136
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 70
     },
     {
       "id": "object-03cf38",
@@ -54192,7 +54286,8 @@
       "slots": [
         137
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 55
     },
     {
       "id": "object-03d18e",
@@ -54202,7 +54297,8 @@
       "slots": [
         138
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 34
     },
     {
       "id": "object-03d274",
@@ -54212,7 +54308,8 @@
       "slots": [
         139
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 15
     },
     {
       "id": "object-04101c",
@@ -54229,7 +54326,8 @@
         199,
         313
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 50
     },
     {
       "id": "object-03d320",
@@ -54239,7 +54337,8 @@
       "slots": [
         141
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 10
     },
     {
       "id": "object-03d416",
@@ -54249,7 +54348,8 @@
       "slots": [
         142
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 52
     },
     {
       "id": "object-03d514",
@@ -54259,7 +54359,8 @@
       "slots": [
         143
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 2
     },
     {
       "id": "object-03d5aa",
@@ -54269,7 +54370,8 @@
       "slots": [
         145
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 50
     },
     {
       "id": "object-03d76c",
@@ -54279,7 +54381,8 @@
       "slots": [
         146
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 4
     },
     {
       "id": "object-03d7fa",
@@ -54289,7 +54392,8 @@
       "slots": [
         147
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 20
     },
     {
       "id": "object-03d9bc",
@@ -54299,7 +54403,8 @@
       "slots": [
         148
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 7
     },
     {
       "id": "object-03daf8",
@@ -54309,7 +54414,8 @@
       "slots": [
         149
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 28
     },
     {
       "id": "object-03dca2",
@@ -54319,7 +54425,8 @@
       "slots": [
         150
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 6
     },
     {
       "id": "object-03dd66",
@@ -54329,7 +54436,8 @@
       "slots": [
         151
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 2
     },
     {
       "id": "object-03de06",
@@ -54339,7 +54447,8 @@
       "slots": [
         152
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 60
     },
     {
       "id": "object-03df0e",
@@ -54349,7 +54458,8 @@
       "slots": [
         153
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 8
     },
     {
       "id": "object-03dff2",
@@ -54359,7 +54469,8 @@
       "slots": [
         154
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 2
     },
     {
       "id": "object-03e08c",
@@ -54369,7 +54480,8 @@
       "slots": [
         156
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-03f384",
@@ -54381,7 +54493,8 @@
         158,
         285
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-036b46",
@@ -54391,7 +54504,8 @@
       "slots": [
         163
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-03e2c6",
@@ -54408,7 +54522,8 @@
         170,
         171
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-03e2ea",
@@ -54421,7 +54536,8 @@
         174,
         175
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-03e30e",
@@ -54434,7 +54550,8 @@
         178,
         179
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-03e446",
@@ -54444,7 +54561,8 @@
       "slots": [
         180
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-03e460",
@@ -54454,7 +54572,8 @@
       "slots": [
         181
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-03e47a",
@@ -54464,7 +54583,8 @@
       "slots": [
         182
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-03e494",
@@ -54474,7 +54594,8 @@
       "slots": [
         183
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-03e4ae",
@@ -54484,7 +54605,8 @@
       "slots": [
         184
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-03e4c8",
@@ -54494,7 +54616,8 @@
       "slots": [
         188
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-03e4e2",
@@ -54504,7 +54627,8 @@
       "slots": [
         190
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-03e4fc",
@@ -54514,7 +54638,8 @@
       "slots": [
         191
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-03b1b0",
@@ -54525,7 +54650,8 @@
         192,
         221
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 30
     },
     {
       "id": "object-040868",
@@ -54538,7 +54664,8 @@
         206,
         207
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 48
     },
     {
       "id": "object-040884",
@@ -54548,7 +54675,8 @@
       "slots": [
         202
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 48
     },
     {
       "id": "object-0408a0",
@@ -54558,7 +54686,8 @@
       "slots": [
         204
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 48
     },
     {
       "id": "object-0408bc",
@@ -54569,7 +54698,8 @@
         205,
         208
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 48
     },
     {
       "id": "object-040a84",
@@ -54579,7 +54709,8 @@
       "slots": [
         212
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 60
     },
     {
       "id": "object-040ad8",
@@ -54589,7 +54720,8 @@
       "slots": [
         214
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 60
     },
     {
       "id": "object-03d6be",
@@ -54599,7 +54731,8 @@
       "slots": [
         218
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 1
     },
     {
       "id": "object-03e5fc",
@@ -54609,7 +54742,8 @@
       "slots": [
         219
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 6
     },
     {
       "id": "object-03b194",
@@ -54621,7 +54755,8 @@
         223,
         224
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 30
     },
     {
       "id": "object-0370e4",
@@ -54633,7 +54768,8 @@
         229,
         237
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 50
     },
     {
       "id": "object-036f62",
@@ -54643,7 +54779,8 @@
       "slots": [
         234
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 38
     },
     {
       "id": "object-036f7e",
@@ -54655,7 +54792,8 @@
         238,
         239
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 38
     },
     {
       "id": "object-03852a",
@@ -54667,7 +54805,8 @@
         244,
         245
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 50
     },
     {
       "id": "object-03867a",
@@ -54678,7 +54817,8 @@
         246,
         247
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 40
     },
     {
       "id": "object-041e7c",
@@ -54691,7 +54831,8 @@
         250,
         343
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 280
     },
     {
       "id": "object-041edc",
@@ -54704,7 +54845,8 @@
         253,
         344
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 400
     },
     {
       "id": "object-041f9c",
@@ -54716,7 +54858,8 @@
         255,
         346
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 460
     },
     {
       "id": "object-0389ca",
@@ -54726,7 +54869,8 @@
       "slots": [
         257
       ],
-      "status": "partial"
+      "status": "partial",
+      "supportTop": 40
     },
     {
       "id": "object-03e694",
@@ -54738,7 +54882,8 @@
         259,
         359
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-03e930",
@@ -54750,7 +54895,8 @@
         273,
         362
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-03e9c6",
@@ -54761,7 +54907,8 @@
         263,
         363
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-03ea9e",
@@ -54772,7 +54919,8 @@
         264,
         364
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-03eb4a",
@@ -54783,7 +54931,8 @@
         266,
         272
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 24
     },
     {
       "id": "object-03ebc4",
@@ -54793,7 +54942,8 @@
       "slots": [
         268
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 220
     },
     {
       "id": "object-03ecbc",
@@ -54804,7 +54954,8 @@
         270,
         370
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 70
     },
     {
       "id": "object-03edba",
@@ -54814,7 +54965,8 @@
       "slots": [
         274
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 70
     },
     {
       "id": "object-03ee44",
@@ -54824,7 +54976,8 @@
       "slots": [
         275
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 60
     },
     {
       "id": "object-03eea4",
@@ -54834,7 +54987,8 @@
       "slots": [
         276
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 60
     },
     {
       "id": "object-03ef18",
@@ -54844,7 +54998,8 @@
       "slots": [
         277
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 60
     },
     {
       "id": "object-03efa2",
@@ -54854,7 +55009,8 @@
       "slots": [
         278
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 60
     },
     {
       "id": "object-03f024",
@@ -54864,7 +55020,8 @@
       "slots": [
         279
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 60
     },
     {
       "id": "object-03f092",
@@ -54874,7 +55031,8 @@
       "slots": [
         280
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 60
     },
     {
       "id": "object-03f12a",
@@ -54884,7 +55042,8 @@
       "slots": [
         281
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 60
     },
     {
       "id": "object-03f1c2",
@@ -54894,7 +55053,8 @@
       "slots": [
         282
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 45
     },
     {
       "id": "object-03f240",
@@ -54904,7 +55064,8 @@
       "slots": [
         283
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 60
     },
     {
       "id": "object-03f312",
@@ -54914,7 +55075,8 @@
       "slots": [
         284
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 50
     },
     {
       "id": "object-03f432",
@@ -54924,7 +55086,8 @@
       "slots": [
         286
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 60
     },
     {
       "id": "object-03f624",
@@ -54934,7 +55097,8 @@
       "slots": [
         288
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 80
     },
     {
       "id": "object-03f6be",
@@ -54944,7 +55108,8 @@
       "slots": [
         289
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 60
     },
     {
       "id": "object-03f774",
@@ -54954,7 +55119,8 @@
       "slots": [
         290
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 20
     },
     {
       "id": "object-03f80a",
@@ -54964,7 +55130,8 @@
       "slots": [
         291
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 40
     },
     {
       "id": "object-03f888",
@@ -54974,7 +55141,8 @@
       "slots": [
         292
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 48
     },
     {
       "id": "object-03f8f6",
@@ -54984,7 +55152,8 @@
       "slots": [
         293
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 45
     },
     {
       "id": "object-03faba",
@@ -54994,7 +55163,8 @@
       "slots": [
         295
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 150
     },
     {
       "id": "object-03fd86",
@@ -55004,7 +55174,8 @@
       "slots": [
         299
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 50
     },
     {
       "id": "object-03fe4a",
@@ -55014,7 +55185,8 @@
       "slots": [
         300
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 30
     },
     {
       "id": "object-03ff90",
@@ -55024,7 +55196,8 @@
       "slots": [
         301
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 45
     },
     {
       "id": "object-040066",
@@ -55034,7 +55207,8 @@
       "slots": [
         302
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 30
     },
     {
       "id": "object-040118",
@@ -55044,7 +55218,8 @@
       "slots": [
         303
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 60
     },
     {
       "id": "object-040170",
@@ -55054,7 +55229,8 @@
       "slots": [
         304
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 60
     },
     {
       "id": "object-040350",
@@ -55064,7 +55240,8 @@
       "slots": [
         306
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 160
     },
     {
       "id": "object-040540",
@@ -55075,7 +55252,8 @@
         308,
         360
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 1270
     },
     {
       "id": "object-040ca0",
@@ -55085,7 +55263,8 @@
       "slots": [
         314
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 1270
     },
     {
       "id": "object-040cf0",
@@ -55096,7 +55275,8 @@
         315,
         318
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 88
     },
     {
       "id": "object-040daa",
@@ -55107,7 +55287,8 @@
         316,
         317
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 88
     },
     {
       "id": "object-040e64",
@@ -55118,7 +55299,8 @@
         319,
         320
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 180
     },
     {
       "id": "object-040f22",
@@ -55128,7 +55310,8 @@
       "slots": [
         321
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 32
     },
     {
       "id": "object-041144",
@@ -55138,7 +55321,8 @@
       "slots": [
         322
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 50
     },
     {
       "id": "object-041224",
@@ -55148,7 +55332,8 @@
       "slots": [
         323
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 50
     },
     {
       "id": "object-041306",
@@ -55158,7 +55343,8 @@
       "slots": [
         324
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 50
     },
     {
       "id": "object-0413e8",
@@ -55168,7 +55354,8 @@
       "slots": [
         325
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 50
     },
     {
       "id": "object-0414ca",
@@ -55178,7 +55365,8 @@
       "slots": [
         327
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 250
     },
     {
       "id": "object-0416ae",
@@ -55188,7 +55376,8 @@
       "slots": [
         328
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 250
     },
     {
       "id": "object-0418ce",
@@ -55198,7 +55387,8 @@
       "slots": [
         332
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": null
     },
     {
       "id": "object-04190e",
@@ -55208,7 +55398,8 @@
       "slots": [
         333
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 290
     },
     {
       "id": "object-041992",
@@ -55218,7 +55409,8 @@
       "slots": [
         334
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 290
     },
     {
       "id": "object-041a16",
@@ -55228,7 +55420,8 @@
       "slots": [
         335
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 290
     },
     {
       "id": "object-041a9a",
@@ -55238,7 +55431,8 @@
       "slots": [
         336
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 290
     },
     {
       "id": "object-041b1e",
@@ -55248,7 +55442,8 @@
       "slots": [
         337
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 320
     },
     {
       "id": "object-041b8a",
@@ -55258,7 +55453,8 @@
       "slots": [
         338
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 320
     },
     {
       "id": "object-041cbe",
@@ -55268,7 +55464,8 @@
       "slots": [
         340
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 460
     },
     {
       "id": "object-041daa",
@@ -55278,7 +55475,8 @@
       "slots": [
         342
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 115
     },
     {
       "id": "object-041f3c",
@@ -55288,7 +55486,8 @@
       "slots": [
         345
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 300
     },
     {
       "id": "object-042088",
@@ -55298,7 +55497,8 @@
       "slots": [
         347
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 600
     },
     {
       "id": "object-042140",
@@ -55308,7 +55508,8 @@
       "slots": [
         351
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 800
     },
     {
       "id": "object-0421fa",
@@ -55318,7 +55519,8 @@
       "slots": [
         352
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 140
     },
     {
       "id": "object-0422d2",
@@ -55328,7 +55530,8 @@
       "slots": [
         353
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 140
     },
     {
       "id": "object-0423aa",
@@ -55338,7 +55541,8 @@
       "slots": [
         354
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 140
     },
     {
       "id": "object-042482",
@@ -55348,7 +55552,8 @@
       "slots": [
         355
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 140
     },
     {
       "id": "object-04255a",
@@ -55358,7 +55563,8 @@
       "slots": [
         358
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 100
     },
     {
       "id": "object-04273a",
@@ -55368,7 +55574,8 @@
       "slots": [
         369
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 70
     },
     {
       "id": "object-04282c",
@@ -55378,7 +55585,8 @@
       "slots": [
         371
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 140
     },
     {
       "id": "object-0428e6",
@@ -55388,7 +55596,8 @@
       "slots": [
         372
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 140
     },
     {
       "id": "object-0429a0",
@@ -55398,7 +55607,8 @@
       "slots": [
         373
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 140
     },
     {
       "id": "object-042a5a",
@@ -55408,7 +55618,8 @@
       "slots": [
         374
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 90
     },
     {
       "id": "object-042b0c",
@@ -55418,7 +55629,8 @@
       "slots": [
         375
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "supportTop": 90
     },
     {
       "id": "structure-00ed68",
@@ -55462,7 +55674,8 @@
       "slots": [
         2
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 240
     },
     {
       "id": "structure-00ef8c",
@@ -55472,7 +55685,8 @@
       "slots": [
         3
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 240
     },
     {
       "id": "structure-00efa6",
@@ -55532,7 +55746,8 @@
       "slots": [
         9
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 240
     },
     {
       "id": "structure-00f862",
@@ -55542,7 +55757,8 @@
       "slots": [
         10
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 240
     },
     {
       "id": "structure-00f874",
@@ -55552,7 +55768,8 @@
       "slots": [
         11
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-00f88e",
@@ -55582,7 +55799,8 @@
       "slots": [
         14
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-00fc64",
@@ -55592,7 +55810,8 @@
       "slots": [
         15
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 110
     },
     {
       "id": "structure-00fc7e",
@@ -55612,7 +55831,8 @@
       "slots": [
         17
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 110
     },
     {
       "id": "structure-00fec6",
@@ -55622,7 +55842,8 @@
       "slots": [
         18
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 240
     },
     {
       "id": "structure-00fed8",
@@ -55632,7 +55853,8 @@
       "slots": [
         19
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 240
     },
     {
       "id": "structure-00feea",
@@ -55642,7 +55864,8 @@
       "slots": [
         20
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 240
     },
     {
       "id": "structure-00ff04",
@@ -55672,7 +55895,8 @@
       "slots": [
         23
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 240
     },
     {
       "id": "structure-010152",
@@ -55682,7 +55906,8 @@
       "slots": [
         24
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 240
     },
     {
       "id": "structure-010164",
@@ -55692,7 +55917,8 @@
       "slots": [
         25
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 240
     },
     {
       "id": "structure-010176",
@@ -55702,7 +55928,8 @@
       "slots": [
         26
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 240
     },
     {
       "id": "structure-010188",
@@ -55712,7 +55939,8 @@
       "slots": [
         27
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-0101ae",
@@ -55752,7 +55980,8 @@
       "slots": [
         31
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-010b9a",
@@ -55762,7 +55991,8 @@
       "slots": [
         32
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-010bb4",
@@ -55782,7 +56012,8 @@
       "slots": [
         34
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 300
     },
     {
       "id": "structure-010d32",
@@ -55802,7 +56033,8 @@
       "slots": [
         36
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 300
     },
     {
       "id": "structure-010ea8",
@@ -55812,7 +56044,8 @@
       "slots": [
         37
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-010ec2",
@@ -55842,7 +56075,8 @@
       "slots": [
         40
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 110
     },
     {
       "id": "structure-011af4",
@@ -55862,7 +56096,8 @@
       "slots": [
         42
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 200
     },
     {
       "id": "structure-011c52",
@@ -55902,7 +56137,8 @@
       "slots": [
         46
       ],
-      "status": "decoded"
+      "status": "decoded",
+      "storeyHeight": 150
     },
     {
       "id": "structure-012302",
@@ -55912,7 +56148,8 @@
       "slots": [
         50
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01231c",
@@ -55942,7 +56179,8 @@
       "slots": [
         53
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01280a",
@@ -55972,7 +56210,8 @@
       "slots": [
         56
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-012b7a",
@@ -56002,7 +56241,8 @@
       "slots": [
         59
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 200
     },
     {
       "id": "structure-012f84",
@@ -56042,7 +56282,8 @@
       "slots": [
         64
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-0135d6",
@@ -56102,7 +56343,8 @@
       "slots": [
         70
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 317
     },
     {
       "id": "structure-014574",
@@ -56132,7 +56374,8 @@
       "slots": [
         73
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 200
     },
     {
       "id": "structure-01484e",
@@ -56152,7 +56395,8 @@
       "slots": [
         75
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-014aec",
@@ -56232,7 +56476,8 @@
       "slots": [
         83
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 128
     },
     {
       "id": "structure-01669e",
@@ -56262,7 +56507,8 @@
       "slots": [
         86
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 120
     },
     {
       "id": "structure-016c86",
@@ -56292,7 +56538,8 @@
       "slots": [
         89
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 180
     },
     {
       "id": "structure-01730e",
@@ -56382,7 +56629,8 @@
       "slots": [
         98
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 180
     },
     {
       "id": "structure-01a5f2",
@@ -56412,7 +56660,8 @@
       "slots": [
         101
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 110
     },
     {
       "id": "structure-01a648",
@@ -56422,7 +56671,8 @@
       "slots": [
         103
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 110
     },
     {
       "id": "structure-01a65a",
@@ -56432,7 +56682,8 @@
       "slots": [
         104
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 180
     },
     {
       "id": "structure-01a66c",
@@ -56442,7 +56693,8 @@
       "slots": [
         105
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01a67e",
@@ -56452,7 +56704,8 @@
       "slots": [
         106
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 240
     },
     {
       "id": "structure-01a690",
@@ -56462,7 +56715,8 @@
       "slots": [
         107
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 240
     },
     {
       "id": "structure-01a6a2",
@@ -56472,7 +56726,8 @@
       "slots": [
         108
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 110
     },
     {
       "id": "structure-01a6c0",
@@ -56482,7 +56737,8 @@
       "slots": [
         109
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01a6d2",
@@ -56492,7 +56748,8 @@
       "slots": [
         110
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 240
     },
     {
       "id": "structure-01a6e4",
@@ -56502,7 +56759,8 @@
       "slots": [
         111
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 240
     },
     {
       "id": "structure-01a6f6",
@@ -56512,7 +56770,8 @@
       "slots": [
         112
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 240
     },
     {
       "id": "structure-01a708",
@@ -56522,7 +56781,8 @@
       "slots": [
         113
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 240
     },
     {
       "id": "structure-01a71a",
@@ -56532,7 +56792,8 @@
       "slots": [
         114
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 240
     },
     {
       "id": "structure-01a72c",
@@ -56542,7 +56803,8 @@
       "slots": [
         115
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 240
     },
     {
       "id": "structure-01a73e",
@@ -56552,7 +56814,8 @@
       "slots": [
         116
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01a750",
@@ -56562,7 +56825,8 @@
       "slots": [
         117
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01a762",
@@ -56572,7 +56836,8 @@
       "slots": [
         118
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 110
     },
     {
       "id": "structure-01a774",
@@ -56582,7 +56847,8 @@
       "slots": [
         119
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01a786",
@@ -56592,7 +56858,8 @@
       "slots": [
         120
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01a7a0",
@@ -56632,7 +56899,8 @@
       "slots": [
         128
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01b854",
@@ -56652,7 +56920,8 @@
       "slots": [
         130
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01b974",
@@ -56672,7 +56941,8 @@
       "slots": [
         132
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 200
     },
     {
       "id": "structure-01baa6",
@@ -56732,7 +57002,8 @@
       "slots": [
         138
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01c522",
@@ -56782,7 +57053,8 @@
       "slots": [
         143
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01d176",
@@ -56792,7 +57064,8 @@
       "slots": [
         144
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 240
     },
     {
       "id": "structure-01d188",
@@ -56802,7 +57075,8 @@
       "slots": [
         145
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 200
     },
     {
       "id": "structure-01d1a2",
@@ -56822,7 +57096,8 @@
       "slots": [
         147
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 200
     },
     {
       "id": "structure-01d1d2",
@@ -56832,7 +57107,8 @@
       "slots": [
         148
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 200
     },
     {
       "id": "structure-01d1e4",
@@ -56842,7 +57118,8 @@
       "slots": [
         149
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01d1fe",
@@ -56862,7 +57139,8 @@
       "slots": [
         151
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01d328",
@@ -56872,7 +57150,8 @@
       "slots": [
         152
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01d33a",
@@ -56882,7 +57161,8 @@
       "slots": [
         153
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01d34c",
@@ -56892,7 +57172,8 @@
       "slots": [
         154
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01d35e",
@@ -56902,7 +57183,8 @@
       "slots": [
         155
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01d370",
@@ -56912,7 +57194,8 @@
       "slots": [
         156
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01d382",
@@ -56922,7 +57205,8 @@
       "slots": [
         157
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01d394",
@@ -56932,7 +57216,8 @@
       "slots": [
         158
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01d3b2",
@@ -56942,7 +57227,8 @@
       "slots": [
         159
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01d3c4",
@@ -56952,7 +57238,8 @@
       "slots": [
         160
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01d3d6",
@@ -56962,7 +57249,8 @@
       "slots": [
         161
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01d3e8",
@@ -56972,7 +57260,8 @@
       "slots": [
         162
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01d3fa",
@@ -56982,7 +57271,8 @@
       "slots": [
         163
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01d40c",
@@ -56992,7 +57282,8 @@
       "slots": [
         164
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01d41e",
@@ -57002,7 +57293,8 @@
       "slots": [
         165
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01d430",
@@ -57012,7 +57304,8 @@
       "slots": [
         166
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01d442",
@@ -57022,7 +57315,8 @@
       "slots": [
         167
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01d454",
@@ -57032,7 +57326,8 @@
       "slots": [
         168
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01d466",
@@ -57042,7 +57337,8 @@
       "slots": [
         169
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01d478",
@@ -57052,7 +57348,8 @@
       "slots": [
         170
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01d48a",
@@ -57062,7 +57359,8 @@
       "slots": [
         171
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01d49c",
@@ -57072,7 +57370,8 @@
       "slots": [
         172
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01d4ae",
@@ -57082,7 +57381,8 @@
       "slots": [
         173
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01d4c0",
@@ -57092,7 +57392,8 @@
       "slots": [
         174
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01d4d2",
@@ -57102,7 +57403,8 @@
       "slots": [
         175
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 200
     },
     {
       "id": "structure-01d4e4",
@@ -57112,7 +57414,8 @@
       "slots": [
         176
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 180
     },
     {
       "id": "structure-01d4f6",
@@ -57122,7 +57425,8 @@
       "slots": [
         177
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 180
     },
     {
       "id": "structure-01d508",
@@ -57132,7 +57436,8 @@
       "slots": [
         178
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 180
     },
     {
       "id": "structure-01d51a",
@@ -57142,7 +57447,8 @@
       "slots": [
         179
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 180
     },
     {
       "id": "structure-01d52c",
@@ -57152,7 +57458,8 @@
       "slots": [
         180
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 180
     },
     {
       "id": "structure-01d53e",
@@ -57162,7 +57469,8 @@
       "slots": [
         181
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 180
     },
     {
       "id": "structure-01d550",
@@ -57172,7 +57480,8 @@
       "slots": [
         182
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 180
     },
     {
       "id": "structure-01d56a",
@@ -57192,7 +57501,8 @@
       "slots": [
         184
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01d68c",
@@ -57202,7 +57512,8 @@
       "slots": [
         185
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01d69e",
@@ -57212,7 +57523,8 @@
       "slots": [
         186
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01d6bc",
@@ -57222,7 +57534,8 @@
       "slots": [
         187
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01d6ce",
@@ -57232,7 +57545,8 @@
       "slots": [
         188
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01d6e0",
@@ -57242,7 +57556,8 @@
       "slots": [
         189
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01d6f2",
@@ -57252,7 +57567,8 @@
       "slots": [
         190
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01d704",
@@ -57262,7 +57578,8 @@
       "slots": [
         191
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01d716",
@@ -57272,7 +57589,8 @@
       "slots": [
         192
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01d728",
@@ -57282,7 +57600,8 @@
       "slots": [
         193
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01d73a",
@@ -57292,7 +57611,8 @@
       "slots": [
         194
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01d758",
@@ -57302,7 +57622,8 @@
       "slots": [
         195
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 200
     },
     {
       "id": "structure-01d76a",
@@ -57312,7 +57633,8 @@
       "slots": [
         196
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 200
     },
     {
       "id": "structure-01d77c",
@@ -57322,7 +57644,8 @@
       "slots": [
         197
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01d78e",
@@ -57332,7 +57655,8 @@
       "slots": [
         198
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01d7a0",
@@ -57342,7 +57666,8 @@
       "slots": [
         199
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01d7b2",
@@ -57352,7 +57677,8 @@
       "slots": [
         200
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01d7d0",
@@ -57362,7 +57688,8 @@
       "slots": [
         201
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01d7e2",
@@ -57372,7 +57699,8 @@
       "slots": [
         202
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01d7f4",
@@ -57382,7 +57710,8 @@
       "slots": [
         203
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01d806",
@@ -57392,7 +57721,8 @@
       "slots": [
         204
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01d820",
@@ -57442,7 +57772,8 @@
       "slots": [
         209
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01da34",
@@ -57452,7 +57783,8 @@
       "slots": [
         210
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01da46",
@@ -57462,7 +57794,8 @@
       "slots": [
         211
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01da58",
@@ -57472,7 +57805,8 @@
       "slots": [
         212
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01da6a",
@@ -57482,7 +57816,8 @@
       "slots": [
         213
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01da7c",
@@ -57492,7 +57827,8 @@
       "slots": [
         214
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01da8e",
@@ -57502,7 +57838,8 @@
       "slots": [
         215
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01daa0",
@@ -57512,7 +57849,8 @@
       "slots": [
         216
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01dab2",
@@ -57522,7 +57860,8 @@
       "slots": [
         217
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01dac4",
@@ -57532,7 +57871,8 @@
       "slots": [
         218
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01dad6",
@@ -57542,7 +57882,8 @@
       "slots": [
         219
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01dae8",
@@ -57552,7 +57893,8 @@
       "slots": [
         220
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01db06",
@@ -57562,7 +57904,8 @@
       "slots": [
         221
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01db24",
@@ -57572,7 +57915,8 @@
       "slots": [
         222
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01db36",
@@ -57582,7 +57926,8 @@
       "slots": [
         223
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01db48",
@@ -57592,7 +57937,8 @@
       "slots": [
         224
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01db5a",
@@ -57602,7 +57948,8 @@
       "slots": [
         225
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01db6c",
@@ -57612,7 +57959,8 @@
       "slots": [
         226
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01db7e",
@@ -57622,7 +57970,8 @@
       "slots": [
         227
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01db90",
@@ -57632,7 +57981,8 @@
       "slots": [
         228
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01dba2",
@@ -57642,7 +57992,8 @@
       "slots": [
         229
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01dbb4",
@@ -57652,7 +58003,8 @@
       "slots": [
         230
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01dbc6",
@@ -57662,7 +58014,8 @@
       "slots": [
         231
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01dbd8",
@@ -57672,7 +58025,8 @@
       "slots": [
         232
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01dbea",
@@ -57682,7 +58036,8 @@
       "slots": [
         233
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01dbfc",
@@ -57692,7 +58047,8 @@
       "slots": [
         234
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01dc0e",
@@ -57702,7 +58058,8 @@
       "slots": [
         235
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01dc20",
@@ -57712,7 +58069,8 @@
       "slots": [
         236
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01dc32",
@@ -57722,7 +58080,8 @@
       "slots": [
         237
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01dc44",
@@ -57732,7 +58091,8 @@
       "slots": [
         238
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01dc56",
@@ -57742,7 +58102,8 @@
       "slots": [
         239
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01dc68",
@@ -57752,7 +58113,8 @@
       "slots": [
         240
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01dc7a",
@@ -57762,7 +58124,8 @@
       "slots": [
         241
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01dc8c",
@@ -57772,7 +58135,8 @@
       "slots": [
         242
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01dc9e",
@@ -57782,7 +58146,8 @@
       "slots": [
         243
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01dcb0",
@@ -57792,7 +58157,8 @@
       "slots": [
         244
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01dcc2",
@@ -57802,7 +58168,8 @@
       "slots": [
         245
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01dcd4",
@@ -57812,7 +58179,8 @@
       "slots": [
         246
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01dcf2",
@@ -57822,7 +58190,8 @@
       "slots": [
         247
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 180
     },
     {
       "id": "structure-01dd04",
@@ -57832,7 +58201,8 @@
       "slots": [
         248
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 180
     },
     {
       "id": "structure-01dd16",
@@ -57842,7 +58212,8 @@
       "slots": [
         249
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 180
     },
     {
       "id": "structure-01dd28",
@@ -57852,7 +58223,8 @@
       "slots": [
         250
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 180
     },
     {
       "id": "structure-01dd3a",
@@ -57862,7 +58234,8 @@
       "slots": [
         251
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01dd58",
@@ -57872,7 +58245,8 @@
       "slots": [
         252
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01dd6a",
@@ -57882,7 +58256,8 @@
       "slots": [
         253
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01dd7c",
@@ -57892,7 +58267,8 @@
       "slots": [
         255
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01dd8e",
@@ -57902,7 +58278,8 @@
       "slots": [
         257
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01ddac",
@@ -57912,7 +58289,8 @@
       "slots": [
         258
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01ddbe",
@@ -57922,7 +58300,8 @@
       "slots": [
         259
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 200
     },
     {
       "id": "structure-01ddd0",
@@ -57932,7 +58311,8 @@
       "slots": [
         260
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 200
     },
     {
       "id": "structure-01dde2",
@@ -57942,7 +58322,8 @@
       "slots": [
         261
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01ddf4",
@@ -57952,7 +58333,8 @@
       "slots": [
         262
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 180
     },
     {
       "id": "structure-01de06",
@@ -57962,7 +58344,8 @@
       "slots": [
         263
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 180
     },
     {
       "id": "structure-01de18",
@@ -57972,7 +58355,8 @@
       "slots": [
         264
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 180
     },
     {
       "id": "structure-01de2a",
@@ -57982,7 +58366,8 @@
       "slots": [
         265
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01de3c",
@@ -57992,7 +58377,8 @@
       "slots": [
         266
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01de4e",
@@ -58002,7 +58388,8 @@
       "slots": [
         267
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01de60",
@@ -58012,7 +58399,8 @@
       "slots": [
         268
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 150
     },
     {
       "id": "structure-01de72",
@@ -58022,7 +58410,8 @@
       "slots": [
         269
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 180
     },
     {
       "id": "structure-01de84",
@@ -58032,7 +58421,8 @@
       "slots": [
         270
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01de96",
@@ -58042,7 +58432,8 @@
       "slots": [
         271
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 180
     },
     {
       "id": "structure-01dea8",
@@ -58052,7 +58443,8 @@
       "slots": [
         272
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 180
     },
     {
       "id": "structure-01deba",
@@ -58062,7 +58454,8 @@
       "slots": [
         273
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 180
     },
     {
       "id": "structure-01decc",
@@ -58072,7 +58465,8 @@
       "slots": [
         274
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 180
     },
     {
       "id": "structure-01dede",
@@ -58082,7 +58476,8 @@
       "slots": [
         275
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "structure-01def0",
@@ -58092,7 +58487,8 @@
       "slots": [
         276
       ],
-      "status": "partial"
+      "status": "partial",
+      "storeyHeight": 160
     },
     {
       "id": "interior-02d3a8",
