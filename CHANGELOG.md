@@ -12,6 +12,20 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Added
 
+- **Damocles players can board and leave craft.** `B` beside a placed craft
+  runs the recovered board gate's eight tests in order. Its reach is 1024
+  units, twice the Take's. A craft boards while its Vehicle Key is carried,
+  and `DART II` boards unkeyed. Without the key, the Damocles Display shows
+  `VEHICLE KEY REQUIRED`, and `INTERSTELLARSHIP` shows `SHIP NOT REFITTED FOR
+  FURTHER FLIGHT`. Every other refusal is silent. Boarding takes the craft out
+  of Object Residence, puts the eye 63 units above where it stood, and faces
+  the camera along its recovered heading. Aboard, nothing moves: the craft
+  cannot be driven, and Take, Drop, the Body switch and `goto` do nothing. `L`
+  levels the view and puts the craft back where the player is leaving it, as a
+  direct-placement Drop would. The player is then on foot. `AUTHOR'S CHAIR`
+  boards as a seatable object from Authors House's exterior regions. A Session
+  Resume captured aboard restores the player on foot beside the craft until
+  Occupancy is saved (#416).
 - **The Damocles Catalogue says what the board gate answers for each
   resident object.** Every resident instance carries a boarding block: whether
   it can be boarded, whether it boards unkeyed, as a seatable object or only
