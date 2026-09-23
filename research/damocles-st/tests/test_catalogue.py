@@ -5,7 +5,7 @@ import sys
 import unittest
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from damocleslab.catalogue import decode_mesh, read_catalogue, st_rgb
+from damocleslab.catalogue import SCHEMA_VERSION, decode_mesh, read_catalogue, st_rgb
 
 class CatalogueTests(unittest.TestCase):
     def test_drop_support_scanner_uses_native_form_gate_and_raw_y(self):
@@ -339,6 +339,7 @@ class SourceTests(unittest.TestCase):
         struct.pack_into('>I', data, 0x4bd10, 0x35700)
         struct.pack_into('>I', data, 0x4bd22, 0x26000)
         _empty_island_table(data)
+        _board_gate(data)
         # Synthetic table entries share a deliberately empty model in each bank.
         for base, count in [(0x35700, 378), (0xe900, 280), (0x26000, 130)]:
             for slot in range(count):
@@ -358,6 +359,7 @@ class SourceTests(unittest.TestCase):
         struct.pack_into('>I', data, 0x4bd10, 0x35700)
         struct.pack_into('>I', data, 0x4bd22, 0x26000)
         _empty_island_table(data)
+        _board_gate(data)
         for base, count in [(0x35700, 378), (0xe900, 280), (0x26000, 130)]:
             for slot in range(count):
                 struct.pack_into('>I', data, base + slot * 4, 0x1000)
@@ -550,6 +552,11 @@ def _empty_island_table(data: bytearray) -> None:
     struct.pack_into('>H', data, 0x63040, 0x8000)
 
 
+def _board_gate(data: bytearray) -> None:
+    """The board gate every loaded world carries, which the boarding blocks read (#408)."""
+    data[0x542E0:0x542E0 + len(BoardingAdmissionTests.GATE)] = BoardingAdmissionTests.GATE
+
+
 def _empty_world():
     data = bytearray(1048576)
     struct.pack_into('>I', data, 0x4bd10, 0x35700)
@@ -559,6 +566,7 @@ def _empty_world():
             struct.pack_into('>I', data, base + slot * 4, 0x1000)
         struct.pack_into('>H', data, base + 0x1000, 0x8000)
     _empty_island_table(data)
+    _board_gate(data)
     return data
 
 
@@ -2945,7 +2953,7 @@ class StoredLayoutTests(unittest.TestCase):
                     'placement': None if parent is None else {'parent': parent}}
 
         return {
-            'schemaVersion': 16, 'title': 'Damocles',
+            'schemaVersion': SCHEMA_VERSION, 'title': 'Damocles',
             'source': {'programSha256': 'p' * 64, 'ramSha256': 'r' * 64, 'run': 'run-1',
                        'authority': 'a', 'evidence': 'e'},
             'bodies': [{'id': 'body-1'}, {'id': 'body-2'}, {'id': 'body-3'}],
@@ -2976,7 +2984,7 @@ class StoredLayoutTests(unittest.TestCase):
         from damocleslab.catalogue import split_catalogue
         document, files = split_catalogue(self.result())
         self.assertNotIn('models', document)
-        self.assertEqual(document['schemaVersion'], 16)
+        self.assertEqual(document['schemaVersion'], SCHEMA_VERSION)
         self.assertEqual([entry['id'] for entry in document['modelIndex']],
                          ['structure-b', 'interior-c', 'object-a', 'ground-d', 'object-unplaced'])
         self.assertEqual(document['modelIndex'][3], {
@@ -2987,7 +2995,7 @@ class StoredLayoutTests(unittest.TestCase):
         self.assertNotIn('storeyHeight', document['modelIndex'][2])
         self.assertEqual(set(files), {entry['id'] for entry in document['modelIndex']})
         self.assertEqual(files['object-a'], {
-            'schemaVersion': 16, 'source': {'programSha256': 'p' * 64, 'run': 'run-1'},
+            'schemaVersion': SCHEMA_VERSION, 'source': {'programSha256': 'p' * 64, 'run': 'run-1'},
             'model': self.result()['models'][2]})
 
     def test_writing_removes_model_files_the_run_no_longer_produces(self):
@@ -3003,6 +3011,149 @@ class StoredLayoutTests(unittest.TestCase):
                                        'object-unplaced.json', 'structure-b.json'])
             self.assertTrue(output.read_text().endswith('}\n'))
             self.assertNotIn('models', json.loads(output.read_text()))
+
+
+class BoardingAdmissionTests(unittest.TestCase):
+    """The board gate's admission facts, published per resident instance (#408)."""
+
+    # $0542E0-$05434F as the pinned image holds it: the refusal chooser, then the gate.
+    GATE = bytes.fromhex(
+        '3208 0c410004 6750 0c410038 6c4a 0c41001c 6706 7203 60000510 7216 6000050a 4e75'
+        '0c7800097b42 6ef6 26387b46 67f0 0838000e7b34 67e8 2043 e44b 67e2 0c030017 64dc'
+        '32387ab0 6ad6 0c7800787aa8 67ce 4a287272 6aa8 22790004bd10 d3f18000 0c518001 66b8'
+        '0c2900400003 66b0'.replace(' ', ''))
+
+    _instances = None
+
+    @classmethod
+    def image(cls, patch=None):
+        data = bytearray(1048576)
+        data[0x542E0:0x542E0 + len(cls.GATE)] = cls.GATE
+        for address, value in (patch or {}).items():
+            data[address] = value
+        return bytes(data)
+
+    def instances(self):
+        if BoardingAdmissionTests._instances is None:
+            root = Path(__file__).resolve().parents[3]
+            document = json.loads((root / 'payload' / 'damocles' / 'catalogue.json').read_text())
+            self.assertEqual(document['schemaVersion'], SCHEMA_VERSION)
+            BoardingAdmissionTests._instances = {i['id']: i for i in document['instances']}
+        return BoardingAdmissionTests._instances
+
+    def boarding(self, slot):
+        return self.instances()[f'object-slot-{slot}']['boarding']
+
+    def test_the_gate_constants_are_read_from_the_image(self):
+        from damocleslab.catalogue import decode_board_gate
+        self.assertEqual(decode_board_gate(self.image()), {
+            'boardableBound': 23, 'unkeyedSlot': 1, 'seatableFrom': 14, 'ownRefusalSlot': 7,
+            'ownRefusal': 'system-string-22', 'keyRefusal': 'system-string-3',
+            'pairOffset': 178, 'orientationMode': 0x40,
+        })
+        # An operand is read, not assumed: move the bound and the decode follows it.
+        self.assertEqual(decode_board_gate(self.image({0x54321: 0x10}))['boardableBound'], 16)
+        # An opcode is checked: a different instruction is not this gate.
+        with self.assertRaises(ValueError):
+            decode_board_gate(self.image({0x5431E: 0x0d}))
+
+    def test_the_pinned_image_holds_the_recovered_gate(self):
+        from damocleslab.catalogue import decode_board_gate
+        root = Path(__file__).resolve().parents[1]
+        first = root / 'work' / 'observe-first-world-20260818T101013Z-c5a32b7d' / 'observed.ram'
+        if not first.exists():
+            self.skipTest('Working-Authority RAM captures are Restricted Material')
+        self.assertEqual(decode_board_gate(first.read_bytes()),
+                         decode_board_gate(self.image()))
+
+    def test_each_resident_takes_the_chooser_outcome_its_slot_selects(self):
+        from damocleslab.catalogue import resident_boarding
+        gate = {'boardableBound': 23, 'unkeyedSlot': 1, 'seatableFrom': 14, 'ownRefusalSlot': 7,
+                'ownRefusal': 'system-string-22', 'keyRefusal': 'system-string-3',
+                'pairOffset': 178, 'orientationMode': 0x40}
+        yaw = {'angleBiasByte': 0, 'modeByte': 0x40, 'rotation': 'yaw'}
+        present = {'object-slot-183', 'object-slot-185'}
+
+        def board(slot, orientation=yaw):
+            return resident_boarding(slot, orientation, gate, present, resident=True)
+
+        self.assertEqual(
+            {k: v for k, v in board(5).items() if k != 'reason'},
+            {'boardable': True, 'boardableProvenance': 'derived',
+             'admission': 'paired', 'admissionProvenance': 'derived',
+             'pairedSlot': 183, 'pairedInstance': 'object-slot-183', 'pairedProvenance': 'derived',
+             'refusal': 'system-string-3', 'refusalProvenance': 'recovered'})
+        self.assertEqual((board(7)['pairedInstance'], board(7)['refusal']),
+                         ('object-slot-185', 'system-string-22'))
+        self.assertEqual((board(1)['admission'], board(1)['pairedSlot'], board(1)['refusal']),
+                         ('unkeyed', None, None))
+        self.assertEqual((board(14)['admission'], board(22)['admission']), ('seatable', 'seatable'))
+        # A pair whose slot holds no instance is recorded as missing, not invented.
+        self.assertEqual((board(11)['pairedSlot'], board(11)['pairedInstance']), (189, None))
+        self.assertIn('slot 189', board(11)['reason'])
+        # The model guard: without the single-Y-turn command the gate refuses silently.
+        self.assertFalse(board(5, None)['boardable'])
+        self.assertFalse(board(5, {**yaw, 'modeByte': 0x80})['boardable'])
+        self.assertEqual(board(5, None)['refusal'], 'system-string-3')
+        # At the bound and above, the gate refuses before the key test: no chooser outcome.
+        self.assertEqual(
+            {k: v for k, v in board(23).items() if k != 'reason'},
+            {'boardable': False, 'boardableProvenance': 'derived',
+             'admission': None, 'admissionProvenance': 'derived',
+             'pairedSlot': None, 'pairedInstance': None, 'pairedProvenance': 'derived',
+             'refusal': None, 'refusalProvenance': 'recovered'})
+
+    def test_every_placed_craft_and_the_authors_chair_publish_the_recovered_gate(self):
+        keyed = {2: 180, 3: 181, 4: 182, 5: 183, 6: 184, 10: 188, 12: 190, 13: 191}
+        for slot, key in keyed.items():
+            with self.subTest(slot=slot):
+                self.assertIsNotNone(self.instances()[f'object-slot-{slot}']['location'])
+                boarding = self.boarding(slot)
+                self.assertTrue(boarding['boardable'])
+                self.assertEqual((boarding['admission'], boarding['pairedInstance'],
+                                  boarding['refusal']),
+                                 ('paired', f'object-slot-{key}', 'system-string-3'))
+        self.assertEqual((self.boarding(1)['boardable'], self.boarding(1)['admission'],
+                          self.boarding(1)['pairedInstance']), (True, 'unkeyed', None))
+        seven = self.boarding(7)
+        self.assertEqual((seven['boardable'], seven['pairedInstance'], seven['refusal']),
+                         (True, 'object-slot-185', 'system-string-22'))
+        self.assertTrue(self.instances()['object-slot-185']['name'].startswith('SETTEE'))
+        chair = self.boarding(14)
+        self.assertTrue(self.instances()['object-slot-14']['name'].startswith("AUTHOR'S CHAIR"))
+        self.assertEqual((chair['boardable'], chair['admission'], chair['pairedInstance'],
+                          chair['refusal']), (True, 'seatable', None, None))
+
+    def test_only_those_are_boardable(self):
+        boardable = sorted(int(i['id'].rsplit('-', 1)[1]) for i in self.instances().values()
+                           if i['boarding'] is not None and i['boarding']['boardable'])
+        self.assertEqual(boardable, [1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14])
+
+    def test_the_attack_ship_is_not_boardable_and_says_why(self):
+        ship = self.boarding(11)
+        self.assertFalse(ship['boardable'])
+        self.assertEqual((ship['pairedSlot'], ship['pairedInstance']), (189, None))
+        self.assertIn('model guard', ship['reason'])
+        self.assertIn('No residence', ship['reason'])
+        self.assertFalse(self.boarding(15)['boardable'])
+
+    def test_no_settee_is_boardable(self):
+        settees = [i for i in self.instances().values() if i['name'].startswith('SETTEE')]
+        self.assertTrue(settees)
+        for settee in settees:
+            self.assertFalse(settee['boarding']['boardable'])
+            self.assertIsNone(settee['boarding']['admission'])
+
+    def test_only_resident_instances_carry_a_boarding_block_and_every_field_its_provenance(self):
+        for instance in self.instances().values():
+            boarding = instance['boarding']
+            self.assertEqual(boarding is not None, instance['id'].startswith('object-slot-'),
+                             instance['id'])
+            if boarding is None:
+                continue
+            for field in ('boardable', 'admission', 'paired', 'refusal'):
+                self.assertIn(boarding[f'{field}Provenance'], ('recovered', 'derived'))
+            self.assertTrue(boarding['reason'])
 
 
 if __name__ == '__main__':

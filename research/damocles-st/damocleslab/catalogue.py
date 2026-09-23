@@ -1830,6 +1830,111 @@ def resident_handling(association_a: bytes) -> dict | None:
     }
 
 
+# The refusal chooser $0542E0 and the board gate $054302-$05434F, with each operand
+# the admission facts depend on masked out of the instruction check and read instead.
+BOARD_GATE_START = 0x542E0
+BOARD_GATE = bytes.fromhex(
+    '3208 0c410004 6750 0c410038 6c4a 0c41001c 6706 7203 60000510 7216 6000050a 4e75'
+    '0c7800097b42 6ef6 26387b46 67f0 0838000e7b34 67e8 2043 e44b 67e2 0c030017 64dc'
+    '32387ab0 6ad6 0c7800787aa8 67ce 4a287272 6aa8 22790004bd10 d3f18000 0c518001 66b8'
+    '0c2900400003 66b0'.replace(' ', ''))
+BOARD_GATE_OPERANDS = {
+    'unkeyed': (0x542E4, 2), 'seatable': (0x542EA, 2), 'own': (0x542F0, 2),
+    'keyString': (0x542F5, 1), 'ownString': (0x542FB, 1), 'bound': (0x54321, 1),
+    'keyByte': (0x54334, 2), 'mode': (0x5434A, 2),
+}
+# $6FAA + 4*slot is the handling byte resident_handling decodes; the key test reads the
+# same array at an offset.
+HANDLING_BYTES = 0x6FAA
+
+
+def decode_board_gate(data: bytes) -> dict:
+    """Read the board gate's admission constants from the image (#407, #408).
+
+    `$05431E` bounds boardable slots; the chooser at `$0542E0` compares four times
+    the slot (the selection longword) and loads the system string `$054808`
+    presents; `$054332` tests bit 7 of `$7272 + 4*slot`, which is the handling
+    byte of slot + (`$7272` - `$6FAA`) / 4; `$054348` requires the model record's
+    `$8001` mode byte. See docs/research/damocles-arrival-routes.md#the-board-gate
+    and docs/research/damocles-board-leave-paths.md.
+    """
+    window = bytearray(data[BOARD_GATE_START:BOARD_GATE_START + len(BOARD_GATE)])
+    expected = bytearray(BOARD_GATE)
+    for address, size in BOARD_GATE_OPERANDS.values():
+        offset = address - BOARD_GATE_START
+        window[offset:offset + size] = expected[offset:offset + size] = bytes(size)
+    if window != expected:
+        raise ValueError('not the recovered board gate at $0542E0')
+
+    def operand(name: str) -> int:
+        address, size = BOARD_GATE_OPERANDS[name]
+        return int.from_bytes(data[address:address + size], 'big')
+
+    return {
+        'boardableBound': operand('bound'),
+        'unkeyedSlot': operand('unkeyed') // 4,
+        'seatableFrom': operand('seatable') // 4,
+        'ownRefusalSlot': operand('own') // 4,
+        'ownRefusal': f"system-string-{operand('ownString')}",
+        'keyRefusal': f"system-string-{operand('keyString')}",
+        'pairOffset': (operand('keyByte') - HANDLING_BYTES) // 4,
+        'orientationMode': operand('mode'),
+    }
+
+
+def resident_boarding(slot: int, orientation: dict | None, gate: dict,
+                      instance_ids: set[str], resident: bool) -> dict:
+    """What the board gate answers for one resident slot, as a Catalogue block.
+
+    Boardable is the gate's own two table facts, the bound and the model guard;
+    the reach, region, Occupancy and VOID guards are live state, and whether the
+    paired object is carried is the Carried Stack's. The chooser outcome and the
+    refusal it presents are published for every slot under the bound, including
+    one the model guard refuses, because the key test runs first.
+    """
+    bound = gate['boardableBound']
+    model_guard = orientation is not None and orientation['modeByte'] == gate['orientationMode']
+    block = {
+        'boardable': 0 < slot < bound and model_guard, 'boardableProvenance': 'derived',
+        'admission': None, 'admissionProvenance': 'derived',
+        'pairedSlot': None, 'pairedInstance': None, 'pairedProvenance': 'derived',
+        'refusal': None, 'refusalProvenance': 'recovered',
+    }
+    if slot >= bound:
+        block['reason'] = (f'Slot {slot} is at or above the boardable bound {bound} ($05431E), '
+                           'so the gate refuses it silently before the key test.')
+        return block
+    reasons = []
+    if slot == gate['unkeyedSlot']:
+        block['admission'] = 'unkeyed'
+        reasons.append(f'The refusal chooser admits slot {slot} without a paired object ($0542E2).')
+    elif slot >= gate['seatableFrom']:
+        block['admission'] = 'seatable'
+        reasons.append(f"The refusal chooser admits slots {gate['seatableFrom']} and above as "
+                       'seatable objects without a paired object ($0542E8).')
+    else:
+        paired = slot + gate['pairOffset']
+        instance = f'object-slot-{paired}'
+        refusal = gate['ownRefusal'] if slot == gate['ownRefusalSlot'] else gate['keyRefusal']
+        block.update(admission='paired', pairedSlot=paired, refusal=refusal,
+                     pairedInstance=instance if instance in instance_ids else None)
+        reasons.append(f'The key test admits it only while slot {paired} is carried ($054332); '
+                       f'otherwise the chooser refuses with {refusal} ($0542E0).')
+        if block['pairedInstance'] is None:
+            reasons.append(f'Slot {paired} holds no resident instance, so the paired object is '
+                           'missing and the key test cannot pass.')
+    if model_guard:
+        reasons.append('Its model opens with the single-Y-turn orientation command, so the '
+                       'model guard admits it ($054338).')
+    else:
+        reasons.append('Its model does not open with the single-Y-turn orientation command, so '
+                       'the model guard refuses it silently whatever else holds ($054338).')
+    if not resident:
+        reasons.append('No residence is resolved for it, so play cannot reach it.')
+    block['reason'] = ' '.join(reasons)
+    return block
+
+
 def resident_placement_class(association_a: bytes) -> int | None:
     """Decode the placement class the drop handler writes and the draw pass reads.
 
@@ -4820,6 +4925,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         'Every resident slot also carries Association A byte 3, decoded as placementClass. It is mutable placement state rather than identity: direct placement copies $7A39 over it at $0546FC and support placement inherits the support\'s, so a session departs from the authored value as objects move. $7A39 is the 3x3 zone of the intra-cell position against the bound structure\'s extent rectangle (docs/research/damocles-placement-class.md). The class is not the handling byte\'s low nibble; they disagree for 176 of the 241 resident slots.',
         'Every body surface carries its base colour and the 4096 x 4096 Surface Cell extent $058F64 masks positions onto; both axes wrap, so an extent whose upper bound is below its lower bound is a wrapped span rather than an empty one. The islands collection holds all 62 records of the per-body lists at $04BD1E, one entry a record: origin, coastline vertices and edge words, the backwards extent/core/exclusion boxes, land colour, structure group, the group record it binds and that group\'s area name. A record has no name of its own. 21 records share the coastline-less stub whose extent and core boxes are the whole coordinate plane, so $0560F2 answers core everywhere on those bodies -- land, no sea, no coast. The VOID slot\'s table entry is excluded because VOID is the space-as-place sentinel rather than a body surface. The classifier itself is not replayed here and the nearest-record metric at $056490 is not decoded. A surface placement names the Damocles Island whose origin equals the Structure Workspace origin it was placed against; resident coordinates come from the resident arrays, are already Body Coordinates, and name no record (docs/research/damocles-eris-islands.md, docs/research/damocles-island-census.md).',
         'Every resident slot carries the interaction byte the take handler tests, decoded as handling. Bit 4 refuses silently, bit 5 diverts to the refusal message, and the low nibble is the drop handler\'s rank pair: bits 0-1 are the support rank the slot supplies and bits 2-3 the support rank it requires; bits 6 and 7 are live state and are zero in the pinned capture. Nothing here selects a candidate: which object is selected is the per-frame nearest-drawn rule in docs/research/damocles-object-selection.md, not a catalogue field.',
+        'Every resident slot carries boarding, what the board gate answers for it, with the gate\'s constants read from the refusal chooser and gate at $0542E0-$05434F rather than assumed. Boardable is the gate\'s two table facts, the bound at slot 23 and the model guard\'s single-Y-turn orientation command; the reach, region, Occupancy and VOID guards are live state and the key test asks the Carried Stack. Under the bound the chooser outcome, the paired slot at slot + 178 and the refusal string are published even where the model guard refuses, because the key test runs first; a paired slot with no instance is published as missing. No seated eye height is published: boarding puts the eye at the resident position plus 63 for every slot (docs/design/damocles-boarding-admission.md).',
     ]
     if gaea_coverage:
         coverage_notes.append(gaea_coverage)
@@ -4831,15 +4937,25 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             'path': f'{label.title()} live workspace',
             'finding': note,
         })
+    board_gate = decode_board_gate(data)
+    resident_ids = {f'object-slot-{slot}' for slot in range(1, 256)}
+    instance_ids = {instance['id'] for instance in instances}
     for instance in instances:
         instance.setdefault('associationGroups', None)
+        instance['boarding'] = None
+        if instance['id'] in resident_ids:
+            instance['boarding'] = resident_boarding(
+                int(instance['id'].rsplit('-', 1)[1]),
+                by_address[instance['model']].get('instanceOrientation'), board_gate,
+                instance_ids,
+                resident=instance['location'] is not None or instance['placement'] is not None)
     return {'schemaVersion': SCHEMA_VERSION, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
             'bodies': bodies, 'islands': islands, 'places': places, 'tables': tables,
             'roadNetworks': road_networks,
             'coverage': coverage_ledger(models, tables, coverage_notes, disk_load, road_networks)}
 
 
-SCHEMA_VERSION = 16
+SCHEMA_VERSION = 17
 MODEL_INDEX_FIELDS = ('id', 'kind', 'name', 'recordClass', 'slots', 'status')
 # The facts a game rule reads without drawing: a structure's storey pitch admits a structure
 # residence, and a support's top decides a Drop. Indexed where the Model records them, so a

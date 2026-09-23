@@ -1,17 +1,14 @@
 import {
   DOOR_STATES,
+  PROVENANCES,
   STRUCTURE_VIEWS,
   type DoorState,
+  type Provenance,
   type StructureView
 } from '../catalogue/data.ts';
 import type { Vector3 } from '../orientation/index.ts';
 
-/// How a value in a Damocles presentation document came to be (ADR 0043).
-///
-/// `recovered` is Working-Authority Evidence with Research Provenance; `derived` follows
-/// mechanically from recovered values; `authored` is this project's placeholder for a value the
-/// original has not yet yielded, and has a research issue behind it.
-export type Provenance = 'authored' | 'derived' | 'recovered';
+export type { Provenance };
 
 export interface ErisPresentationDocument {
   readonly body: {
@@ -193,7 +190,7 @@ const oneOf = <T extends string>(
     ? (value as T)
     : fail(path, `should be one of ${options.join(', ')}`);
 const provenance = (value: unknown, path: string): Provenance =>
-  oneOf(value, ['authored', 'derived', 'recovered'], path);
+  oneOf(value, PROVENANCES, path);
 const colour = (value: unknown, path: string): string => {
   const result = text(value, path);
   return /^#[\da-f]{6}$/.test(result)

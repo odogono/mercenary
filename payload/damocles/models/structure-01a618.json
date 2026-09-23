@@ -35,7 +35,7 @@
     "status": "decoded",
     "variants": []
   },
-  "schemaVersion": 16,
+  "schemaVersion": 17,
   "source": {
     "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
     "run": "observe-first-world-20260818T101013Z-c5a32b7d"

@@ -75,6 +75,7 @@ const fixture = () => ({
         levelSelector: number;
         structureGroupSelector: number;
       },
+      boarding: null as null | Record<string, unknown>,
       handling: null as null | {
         byte: number;
         carried: boolean;
@@ -115,7 +116,7 @@ const fixture = () => ({
     }
   ],
   places: [],
-  schemaVersion: 16,
+  schemaVersion: 17,
   source: {
     authority: 'Synthetic test',
     evidence: 'test',
@@ -249,6 +250,49 @@ describe('Damocles catalogue contract', () => {
     expect(() => parseCatalogue(badRefusal)).toThrow('message/silent');
   });
 
+  it("carries the board gate's admission facts for a resident slot", () => {
+    // The gate's table facts are published per instance, so the session reads them
+    // rather than compiling slot constants (#408).
+    const boarding = {
+      admission: 'paired',
+      admissionProvenance: 'derived',
+      boardable: true,
+      boardableProvenance: 'derived',
+      pairedInstance: 'instance-1',
+      pairedProvenance: 'derived',
+      pairedSlot: 183,
+      reason: 'The key test admits it only while slot 183 is carried.',
+      refusal: 'system-string-3',
+      refusalProvenance: 'recovered'
+    };
+    const keyed = fixture();
+    keyed.instances[0]!.boarding = boarding;
+    expect(parseCatalogue(keyed).instances[0]!.boarding).toEqual(
+      boarding as never
+    );
+    expect(parseCatalogue(fixture()).instances[0]!.boarding).toBeNull();
+    const predates = fixture();
+    delete (predates.instances[0] as { boarding?: unknown }).boarding;
+    expect(() => parseCatalogue(predates)).toThrow('no boarding block');
+    const missing = fixture();
+    missing.instances[0]!.boarding = { ...boarding, pairedInstance: null };
+    expect(
+      parseCatalogue(missing).instances[0]!.boarding!.pairedInstance
+    ).toBeNull();
+    for (const [change, message] of [
+      [{ pairedInstance: 'instance-9' }, 'paired instance'],
+      [{ admission: 'friendly' }, 'unkeyed/seatable/paired'],
+      [{ refusal: 'VEHICLE KEY REQUIRED' }, 'system string'],
+      [{ pairedSlot: null }, 'paired slot'],
+      [{ admission: 'unkeyed' }, 'paired slot'],
+      [{ boardableProvenance: 'guessed' }, 'authored/derived/recovered']
+    ] as const) {
+      const bad = fixture();
+      bad.instances[0]!.boarding = { ...boarding, ...change };
+      expect(() => parseCatalogue(bad)).toThrow(message);
+    }
+  });
+
   it('keeps a measured bank extent and the slots a world binds', () => {
     const data = parseCatalogue(fixture());
     expect(data.tables[0]!.extent!.followedAt).toBe(64);
@@ -301,6 +345,39 @@ describe('Damocles catalogue contract', () => {
   it('checks the generated dataset rather than only a synthetic fixture', async () => {
     const data = await loadCatalogue();
     expect(data.models.some(model => model.status === 'decoded')).toBe(true);
+  });
+  it('publishes the recovered board gate for every placed craft', async () => {
+    const data = await loadCatalogue();
+    const boarding = (slot: number) =>
+      data.instances.find(item => item.id === `object-slot-${slot}`)!.boarding!;
+    expect(
+      data.instances
+        .filter(item => item.boarding?.boardable)
+        .map(item => item.id)
+    ).toEqual(
+      [1, 2, 3, 4, 5, 6, 7, 10, 12, 13, 14].map(slot => `object-slot-${slot}`)
+    );
+    expect(boarding(5)).toMatchObject({
+      admission: 'paired',
+      pairedInstance: 'object-slot-183',
+      refusal: 'system-string-3'
+    });
+    expect(boarding(7)).toMatchObject({
+      pairedInstance: 'object-slot-185',
+      refusal: 'system-string-22'
+    });
+    expect(boarding(1).admission).toBe('unkeyed');
+    expect(boarding(14).admission).toBe('seatable');
+    expect(boarding(11)).toMatchObject({
+      boardable: false,
+      pairedInstance: null,
+      pairedSlot: 189
+    });
+    expect(
+      data.instances.filter(
+        item => item.id.startsWith('object-slot-') !== (item.boarding !== null)
+      )
+    ).toEqual([]);
   });
   it('rejects a coverage census that does not match the models', () => {
     const bad = fixture();

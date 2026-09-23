@@ -12,6 +12,15 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Added
 
+- **The Damocles Catalogue says what the board gate answers for each
+  resident object.** Every resident instance carries a boarding block: whether
+  it can be boarded, whether it boards unkeyed, as a seatable object or only
+  with its paired object carried, which instance that is, and the system string
+  a refusal shows. The extractor reads the gate's own constants from the
+  program image rather than restating them. Eleven objects can be boarded: the
+  placed craft on Eris, Gaea, Dion, Bacchus and Thalia, and `AUTHOR'S CHAIR`.
+  No `SETTEE` can, and `ATTACK SHIP` records why it cannot. Each field says
+  whether it is recovered or derived. The Catalogue schema is now 17 (#408).
 - **The Atlas draws Road Pieces at the Street Range.** Each captured road
   cell's **Drawn Record**, the ground record it actually draws, is drawn in its
   recovered face colours and face order. That covers pads and aprons a
