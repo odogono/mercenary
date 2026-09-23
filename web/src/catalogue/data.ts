@@ -7,6 +7,13 @@ export const DOOR_STATES = ['closed', 'open'] as const;
 export type DoorState = (typeof DOOR_STATES)[number];
 export const STRUCTURE_VIEWS = ['combined', 'exterior'] as const;
 export type StructureView = (typeof STRUCTURE_VIEWS)[number];
+/// How a value in the Catalogue or a Damocles presentation document came to be (ADR 0043).
+///
+/// `recovered` is Working-Authority Evidence with Research Provenance; `derived` follows
+/// mechanically from recovered values; `authored` is this project's placeholder for a value the
+/// original has not yet yielded, and has a research issue behind it.
+export const PROVENANCES = ['authored', 'derived', 'recovered'] as const;
+export type Provenance = (typeof PROVENANCES)[number];
 export interface Primitive {
   readonly colour: string;
   readonly doubleSided?: boolean;
@@ -250,6 +257,8 @@ export interface StructureSelection {
   }[];
   readonly scale: readonly [number, number];
 }
+export const ADMISSIONS = ['unkeyed', 'seatable', 'paired'] as const;
+export type Admission = (typeof ADMISSIONS)[number];
 export interface Instance {
   readonly association: {
     readonly body: string;
@@ -271,6 +280,27 @@ export interface Instance {
         }[];
       }[]
     | null;
+  /**
+   * What the board gate ($054302-$05434F) answers for this resident slot, or null on every
+   * instance that is not one. `boardable` is the gate's two table facts: the slot is under
+   * the bound and the model carries the single-Y-turn orientation command. The chooser's
+   * `admission`, the `pairedSlot` whose carried bit the key test reads, and the `refusal`
+   * it presents are published for every slot under the bound, even one the model guard
+   * refuses, because the key test runs first. `pairedInstance` is null where the paired
+   * slot holds no instance: the pair is missing, not invented (#407, #408).
+   */
+  readonly boarding: {
+    readonly admission: Admission | null;
+    readonly admissionProvenance: Provenance;
+    readonly boardable: boolean;
+    readonly boardableProvenance: Provenance;
+    readonly pairedInstance: string | null;
+    readonly pairedProvenance: Provenance;
+    readonly pairedSlot: number | null;
+    readonly reason: string;
+    readonly refusal: string | null;
+    readonly refusalProvenance: Provenance;
+  } | null;
   readonly handling: {
     readonly byte: number;
     readonly carried: boolean;
@@ -467,7 +497,7 @@ export interface Catalogue {
   readonly modelIndex: readonly ModelSummary[];
   readonly places: readonly Place[];
   readonly roadNetworks: readonly RoadNetwork[];
-  readonly schemaVersion: 16;
+  readonly schemaVersion: 17;
   readonly source: {
     readonly authority: string;
     readonly evidence: string;
@@ -1089,7 +1119,7 @@ const modelRecord = (item: unknown): Model => {
 /// here against the index; a Model's own record is checked when its file arrives.
 export const parseCatalogueDocument = (value: unknown): Catalogue => {
   const r = object(value);
-  if (r['schemaVersion'] !== 16) {
+  if (r['schemaVersion'] !== 17) {
     fail('unsupported schema version');
   }
   const src = object(r['source']);
@@ -1357,9 +1387,38 @@ export const parseCatalogueDocument = (value: unknown): Catalogue => {
         takeable: boolean(h['takeable'])
       };
     }
+    let boarding: Instance['boarding'] = null;
+    if (i['boarding'] !== null && i['boarding'] !== undefined) {
+      const b = object(i['boarding']);
+      const admission =
+        b['admission'] === null ? null : choice(b['admission'], ADMISSIONS);
+      const pairedSlot =
+        b['pairedSlot'] === null ? null : byte(b['pairedSlot']);
+      if ((admission === 'paired') !== (pairedSlot !== null)) {
+        fail('a paired admission and a paired slot come together');
+      }
+      const refusal = b['refusal'] === null ? null : string(b['refusal']);
+      if (refusal !== null && !/^system-string-\d+$/.test(refusal)) {
+        fail(`refusal ${refusal} is not a system string`);
+      }
+      boarding = {
+        admission,
+        admissionProvenance: choice(b['admissionProvenance'], PROVENANCES),
+        boardable: boolean(b['boardable']),
+        boardableProvenance: choice(b['boardableProvenance'], PROVENANCES),
+        pairedInstance:
+          b['pairedInstance'] === null ? null : string(b['pairedInstance']),
+        pairedProvenance: choice(b['pairedProvenance'], PROVENANCES),
+        pairedSlot,
+        reason: string(b['reason']),
+        refusal,
+        refusalProvenance: choice(b['refusalProvenance'], PROVENANCES)
+      };
+    }
     return {
       association,
       associationGroups,
+      boarding,
       handling,
       id: string(i['id']),
       keyBase:
@@ -1380,6 +1439,13 @@ export const parseCatalogueDocument = (value: unknown): Catalogue => {
   });
   const instanceIds = unique(instances);
   for (const instance of instances) {
+    if (instance.boarding?.pairedInstance) {
+      reference(
+        instanceIds,
+        instance.boarding.pairedInstance,
+        'paired instance'
+      );
+    }
     if (instance.placement !== null) {
       reference(instanceIds, instance.placement.parent, 'parent instance');
       if (instance.placement.parent === instance.id) {
@@ -1610,7 +1676,7 @@ export const parseCatalogueDocument = (value: unknown): Catalogue => {
     modelIndex,
     places,
     roadNetworks,
-    schemaVersion: 16,
+    schemaVersion: 17,
     source,
     tables
   };
@@ -1713,7 +1779,7 @@ export const parseModel = (value: unknown, document: Catalogue): Model => {
 /// Catalogue's own so a file left behind by another run is refused rather than drawn.
 export const parseModelFile = (value: unknown, document: Catalogue): Model => {
   const r = object(value);
-  if (r['schemaVersion'] !== 16) {
+  if (r['schemaVersion'] !== 17) {
     fail('unsupported model file schema version');
   }
   const src = object(r['source']);

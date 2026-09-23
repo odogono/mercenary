@@ -349,6 +349,35 @@ null on every instance that is not a resident slot. Nothing in the catalogue
 selects a candidate: which object a take acts on is the per-frame nearest-drawn
 rule in [object selection and the take range gate](damocles-object-selection.md).
 
+Every resident-slot instance also carries `boarding`, what the board gate answers
+for it (#408), and it is null on every other instance. The extractor reads the
+gate's constants from the refusal chooser and gate at `$0542E0`–`$05434F`,
+masking each operand out of an instruction check, so the bound, the `+178` pairing
+and the two refusal strings are read from the image rather than written down:
+
+- `boardable` is the gate's two table facts: the slot is below the bound at 23
+  and the model record opens with the single-Y-turn orientation command
+  (`instanceOrientation.modeByte` 64). The reach, region, Occupancy and VOID
+  guards are live state, and the key test asks the Carried Stack.
+- Under the bound, `admission` is `unkeyed` for slot 1, `seatable` for slots 14
+  and above, and otherwise `paired`, with `pairedSlot` at slot + 178, the
+  `pairedInstance` at that slot, and the `refusal` the chooser presents:
+  `system-string-22` for slot 7, `system-string-3` for the rest. These are
+  published even where the model guard refuses, because the key test runs first.
+  A paired slot with no instance, such as slot 11's `NULL` slot 189, keeps its
+  `pairedSlot` and has a null `pairedInstance`.
+- At slot 23 and above the gate refuses silently before the key test, so
+  `admission`, the pair and `refusal` are null.
+- Each field has a `…Provenance` beside it under ADR 0043: `derived` for the
+  bound, admission and pair, `recovered` for the refusal. `reason` states the
+  outcome in words, including an unresolved residence.
+
+Eleven instances are boardable: the placed craft at slots 1–7, 10, 12 and 13, and
+`AUTHOR'S CHAIR` at slot 14. `ATTACK SHIP` (slot 11) and `NEUTRON FUEL` (slots 8
+and 15) fail the model guard, and every `SETTEE` sits past the bound. No seated
+eye height is published: boarding puts the eye at the resident position plus 63
+for every slot ([boarding admission](../design/damocles-boarding-admission.md)).
+
 ## Recovered data grammar
 
 These are independently documented functional findings, not translated renderer

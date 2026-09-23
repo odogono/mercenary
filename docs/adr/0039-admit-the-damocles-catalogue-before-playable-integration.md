@@ -12,4 +12,4 @@ _(Status note, 2026-09-11: ADR 0043 admits Damocles play; "playable integration 
 
 _(Status note, 2026-09-15: Catalogue unique-record totals live in the generated `coverage.census` ledger rather than in this ADR.)_
 
-_(Status note, 2026-09-23: ADR 0048 stores the Catalogue as one shared document and one file per Damocles Model. The data contract is that directory, at schema version 16.)_
+_(Status note, 2026-09-23: ADR 0048 stores the Catalogue as one shared document and one file per Damocles Model. The data contract is that directory, at schema version 16; #408's per-instance boarding block moved it to 17.)_
