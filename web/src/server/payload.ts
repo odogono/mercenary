@@ -5,9 +5,28 @@ const FONT_FILES = new Map([
   ['/payload/fonts/damocles.woff2', 'fonts/damocles.woff2']
 ]);
 
+/// Whether an `Accept-Encoding` header admits gzip. A `q=0` weight is a refusal, so it
+/// does not count; every browser the Shell runs in sends gzip unweighted.
+const acceptsGzip = (acceptEncoding: string | null): boolean =>
+  acceptEncoding !== null &&
+  acceptEncoding
+    .split(',')
+    .map(part => part.trim().toLowerCase().split(';'))
+    .some(
+      ([coding, ...params]) =>
+        (coding === 'gzip' || coding === '*') &&
+        !params.some(param => /^\s*q\s*=\s*0(?:\.0*)?\s*$/.test(param))
+    );
+
+/// Serves the Data Payload. JSON documents are gzipped on the fly when the client accepts
+/// it (#435): the checked-in files stay indented for review, and indentation is exactly
+/// what compresses away, so the 40 MiB Damocles Catalogue crosses the wire as under 2 MiB.
+/// Compression is per request rather than cached: it costs about 125 ms for the largest
+/// document, and this server only ever answers one local browser.
 export const payloadResponse = async (
   pathname: string,
-  payload: string
+  payload: string,
+  acceptEncoding: string | null = null
 ): Promise<Response | undefined> => {
   if (!pathname.startsWith('/payload/')) {
     return undefined;
@@ -32,7 +51,16 @@ export const payloadResponse = async (
   if (!(await file.exists())) {
     return new Response('not found', { status: 404 });
   }
-  return new Response(file, {
-    headers: { 'content-type': 'application/json' }
+  if (!acceptsGzip(acceptEncoding)) {
+    return new Response(file, {
+      headers: { 'content-type': 'application/json', vary: 'accept-encoding' }
+    });
+  }
+  return new Response(Bun.gzipSync(await file.bytes()), {
+    headers: {
+      'content-encoding': 'gzip',
+      'content-type': 'application/json',
+      vary: 'accept-encoding'
+    }
   });
 };

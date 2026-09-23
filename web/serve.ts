@@ -96,7 +96,11 @@ const server = Bun.serve({
       return browserDocument;
     }
 
-    const payloadAsset = await payloadResponse(url.pathname, payload);
+    const payloadAsset = await payloadResponse(
+      url.pathname,
+      payload,
+      request.headers.get('accept-encoding')
+    );
     if (payloadAsset !== undefined) {
       return payloadAsset;
     }
