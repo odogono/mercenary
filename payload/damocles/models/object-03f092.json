@@ -1,0 +1,176 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-03f092",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "KEY",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      280
+    ],
+    "sourceAddress": 258194,
+    "status": "decoded",
+    "supportTop": 60,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                9,
+                8,
+                2,
+                3
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                9,
+                3,
+                4,
+                10
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                2,
+                8,
+                7,
+                1
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                10,
+                4,
+                5,
+                11
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                1,
+                7,
+                6,
+                0
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                3,
+                2,
+                1,
+                0,
+                5,
+                4
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                8,
+                9,
+                10,
+                11,
+                6,
+                7
+              ]
+            }
+          ],
+          "geometryStart": 258194,
+          "lines": [],
+          "sourceEnd": 258325,
+          "sourceStart": 258194,
+          "vertices": [
+            [
+              10,
+              0,
+              -5
+            ],
+            [
+              20,
+              30,
+              -5
+            ],
+            [
+              10,
+              60,
+              -5
+            ],
+            [
+              -10,
+              60,
+              -5
+            ],
+            [
+              -20,
+              30,
+              -5
+            ],
+            [
+              -10,
+              0,
+              -5
+            ],
+            [
+              10,
+              0,
+              5
+            ],
+            [
+              20,
+              30,
+              5
+            ],
+            [
+              10,
+              60,
+              5
+            ],
+            [
+              -10,
+              60,
+              5
+            ],
+            [
+              -20,
+              30,
+              5
+            ],
+            [
+              -10,
+              0,
+              5
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

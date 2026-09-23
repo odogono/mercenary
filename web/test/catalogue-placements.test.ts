@@ -1,12 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 
-import { parseCatalogue, type Instance } from '../src/catalogue/data.ts';
+import { type Instance } from '../src/catalogue/data.ts';
 import { atlasBodyIds, atlasLinkFor } from '../src/catalogue/placements.ts';
 import { readGammaSystem } from '../src/flyover/documents.ts';
+import { loadCatalogue } from './fixtures/catalogue.ts';
 
-const catalogue = parseCatalogue(
-  await Bun.file('../payload/damocles/catalogue.json').json()
-);
+const catalogue = await loadCatalogue();
 const system = readGammaSystem(
   await Bun.file('../payload/damocles/system.json').json()
 );

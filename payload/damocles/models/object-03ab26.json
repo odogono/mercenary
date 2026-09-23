@@ -1,0 +1,393 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-03ab26",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "FRIDGE",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      113,
+      193
+    ],
+    "sourceAddress": 240422,
+    "status": "decoded",
+    "supportTop": 60,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                10,
+                6,
+                7,
+                11
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                2,
+                10,
+                11,
+                3
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                0,
+                1,
+                2,
+                3
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                12,
+                13,
+                14,
+                15
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                27,
+                26,
+                25,
+                24
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                26,
+                28,
+                29,
+                25
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                22,
+                21,
+                20,
+                23
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                24,
+                18,
+                19,
+                27
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                20,
+                16,
+                18,
+                23
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                25,
+                29,
+                18,
+                24
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                22,
+                19,
+                17,
+                21
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                27,
+                19,
+                28,
+                26
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                18,
+                16,
+                17,
+                19
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                7,
+                6,
+                5,
+                4
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                4,
+                8,
+                11,
+                7
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                9,
+                5,
+                6,
+                10
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                8,
+                0,
+                3,
+                11
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                1,
+                9,
+                10,
+                2
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                8,
+                4,
+                5,
+                9
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                0,
+                8,
+                9,
+                1
+              ]
+            }
+          ],
+          "geometryStart": 240422,
+          "lines": [],
+          "sourceEnd": 240748,
+          "sourceStart": 240422,
+          "vertices": [
+            [
+              -20,
+              60,
+              -15
+            ],
+            [
+              20,
+              60,
+              -15
+            ],
+            [
+              20,
+              0,
+              -15
+            ],
+            [
+              -20,
+              0,
+              -15
+            ],
+            [
+              -20,
+              60,
+              15
+            ],
+            [
+              20,
+              60,
+              15
+            ],
+            [
+              20,
+              0,
+              15
+            ],
+            [
+              -20,
+              0,
+              15
+            ],
+            [
+              -20,
+              60,
+              -10
+            ],
+            [
+              20,
+              60,
+              -10
+            ],
+            [
+              20,
+              0,
+              -10
+            ],
+            [
+              -20,
+              0,
+              -10
+            ],
+            [
+              -15,
+              25,
+              -15
+            ],
+            [
+              -15,
+              35,
+              -15
+            ],
+            [
+              -9,
+              35,
+              -15
+            ],
+            [
+              -9,
+              25,
+              -15
+            ],
+            [
+              -13,
+              34,
+              -15
+            ],
+            [
+              -11,
+              34,
+              -15
+            ],
+            [
+              -13,
+              34,
+              -19
+            ],
+            [
+              -11,
+              34,
+              -19
+            ],
+            [
+              -13,
+              32,
+              -15
+            ],
+            [
+              -11,
+              32,
+              -15
+            ],
+            [
+              -11,
+              32,
+              -19
+            ],
+            [
+              -13,
+              32,
+              -19
+            ],
+            [
+              -13,
+              26,
+              -19
+            ],
+            [
+              -13,
+              26,
+              -17
+            ],
+            [
+              -11,
+              26,
+              -17
+            ],
+            [
+              -11,
+              26,
+              -19
+            ],
+            [
+              -11,
+              34,
+              -17
+            ],
+            [
+              -13,
+              34,
+              -17
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

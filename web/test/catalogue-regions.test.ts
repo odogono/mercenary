@@ -1,11 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 
-import {
-  parseCatalogue,
-  type Mesh,
-  type Model
-} from '../src/catalogue/data.ts';
+import { type Mesh, type Model } from '../src/catalogue/data.ts';
 import { regionForms } from '../src/catalogue/regions.ts';
+import { loadCatalogue } from './fixtures/catalogue.ts';
 
 const known = (index: number | undefined): index is number =>
   index !== undefined;
@@ -154,8 +151,7 @@ describe('region inspection forms', () => {
   });
 });
 
-const catalogue = async () =>
-  parseCatalogue(await Bun.file('../payload/damocles/catalogue.json').json());
+const catalogue = async () => await loadCatalogue();
 
 test('every retained structure selector offers its regions', async () => {
   const data = await catalogue();

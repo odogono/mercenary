@@ -10,6 +10,7 @@ import {
 } from '../src/damocles/selection.ts';
 import { erisSurfaceFrom, startPose } from '../src/damocles/world.ts';
 import { ERIS_BODY } from './damocles-pose.ts';
+import { readRawCatalogue } from './fixtures/catalogue.ts';
 
 interface RawModel {
   detailSelection: { default: number[] }[];
@@ -25,9 +26,7 @@ interface RawModel {
     }[];
   };
 }
-const raw: { models: RawModel[] } = await Bun.file(
-  '../payload/damocles/catalogue.json'
-).json();
+const raw = (await readRawCatalogue()) as unknown as { models: RawModel[] };
 const catalogue = parseCatalogue(raw);
 const doc = readErisPresentation(await Bun.file('damocles/eris.json').json());
 const placement = erisSurfaceFrom(catalogue, doc).placements.find(

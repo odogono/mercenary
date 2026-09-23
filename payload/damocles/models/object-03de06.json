@@ -1,0 +1,299 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-03de06",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "PIANO",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      152
+    ],
+    "sourceAddress": 253446,
+    "status": "decoded",
+    "supportTop": 60,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                0,
+                3,
+                4,
+                13
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                14,
+                16,
+                17,
+                19
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                20,
+                21,
+                22,
+                23
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                13,
+                4,
+                5,
+                11
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                11,
+                5,
+                7,
+                9
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                6,
+                5,
+                4
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                11,
+                12,
+                13
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                3,
+                2,
+                8,
+                6
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                6,
+                8,
+                7,
+                5
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                1,
+                0,
+                12,
+                10
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                10,
+                12,
+                11,
+                9
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                2,
+                1,
+                10,
+                8
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                0,
+                1,
+                2,
+                3
+              ]
+            }
+          ],
+          "geometryStart": 253446,
+          "lines": [
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                15,
+                18
+              ]
+            }
+          ],
+          "sourceEnd": 253689,
+          "sourceStart": 253446,
+          "vertices": [
+            [
+              120,
+              60,
+              40
+            ],
+            [
+              120,
+              60,
+              0
+            ],
+            [
+              0,
+              60,
+              0
+            ],
+            [
+              0,
+              60,
+              40
+            ],
+            [
+              0,
+              30,
+              40
+            ],
+            [
+              0,
+              26,
+              60
+            ],
+            [
+              0,
+              26,
+              40
+            ],
+            [
+              0,
+              0,
+              60
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              120,
+              0,
+              60
+            ],
+            [
+              120,
+              0,
+              0
+            ],
+            [
+              120,
+              26,
+              60
+            ],
+            [
+              120,
+              26,
+              40
+            ],
+            [
+              120,
+              30,
+              40
+            ],
+            [
+              80,
+              50,
+              40
+            ],
+            [
+              60,
+              50,
+              40
+            ],
+            [
+              40,
+              50,
+              40
+            ],
+            [
+              40,
+              36,
+              40
+            ],
+            [
+              60,
+              36,
+              40
+            ],
+            [
+              80,
+              36,
+              40
+            ],
+            [
+              84,
+              36,
+              40
+            ],
+            [
+              36,
+              36,
+              40
+            ],
+            [
+              36,
+              34,
+              40
+            ],
+            [
+              84,
+              34,
+              40
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

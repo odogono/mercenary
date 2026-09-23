@@ -1,0 +1,213 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-040066",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "PROVISIONS",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      302
+    ],
+    "sourceAddress": 262246,
+    "status": "decoded",
+    "supportTop": 30,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                0,
+                1,
+                2,
+                3
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                4,
+                5,
+                1,
+                0
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                6,
+                7,
+                3,
+                2
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                7,
+                4,
+                0,
+                3
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                5,
+                6,
+                2,
+                1
+              ]
+            }
+          ],
+          "geometryStart": 262246,
+          "lines": [
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                9,
+                10
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                10,
+                11
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                11,
+                8
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                12,
+                13
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                14,
+                15
+              ]
+            }
+          ],
+          "sourceEnd": 262403,
+          "sourceStart": 262246,
+          "vertices": [
+            [
+              -30,
+              30,
+              -18
+            ],
+            [
+              -30,
+              30,
+              18
+            ],
+            [
+              30,
+              30,
+              18
+            ],
+            [
+              30,
+              30,
+              -18
+            ],
+            [
+              -24,
+              0,
+              -12
+            ],
+            [
+              -24,
+              0,
+              12
+            ],
+            [
+              24,
+              0,
+              12
+            ],
+            [
+              24,
+              0,
+              -12
+            ],
+            [
+              -30,
+              30,
+              -9
+            ],
+            [
+              -30,
+              30,
+              9
+            ],
+            [
+              -18,
+              30,
+              9
+            ],
+            [
+              -18,
+              30,
+              -9
+            ],
+            [
+              -18,
+              30,
+              0
+            ],
+            [
+              30,
+              30,
+              0
+            ],
+            [
+              12,
+              30,
+              -3
+            ],
+            [
+              24,
+              30,
+              -3
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

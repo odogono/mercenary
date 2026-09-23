@@ -1,0 +1,250 @@
+{
+  "model": {
+    "evidence": [
+      {
+        "claim": "Live VESTA per-cell ground/pad/road record at $1E000; this workspace overwrites the Eris first-world index.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-vesta-workspace.md"
+      }
+    ],
+    "id": "vesta-ground-021d70-06-24",
+    "kind": "ground",
+    "linkedInstances": [
+      "vesta-ground-24"
+    ],
+    "name": "VESTA ground 36",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      260
+    ],
+    "sourceAddress": 138608,
+    "status": "decoded",
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#664444",
+              "doubleSided": true,
+              "sourceColour": 802,
+              "sourceIndex": 0,
+              "vertices": [
+                0,
+                1,
+                2,
+                3,
+                4
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sceneSlots": [
+                240,
+                244
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 1,
+              "vertices": [
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "doubleSided": true,
+              "sceneSlots": [
+                240,
+                244
+              ],
+              "sourceColour": 1911,
+              "sourceIndex": 4,
+              "vertices": [
+                17,
+                18,
+                19,
+                20,
+                21,
+                22,
+                23,
+                24
+              ]
+            }
+          ],
+          "lines": [
+            {
+              "colour": "#cccccc",
+              "sceneSlots": [
+                244
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 2,
+              "vertices": [
+                13,
+                14
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sceneSlots": [
+                240
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 3,
+              "vertices": [
+                15,
+                16
+              ]
+            }
+          ],
+          "sourceEnd": 138720,
+          "sourceStart": 138608,
+          "vertices": [
+            [
+              1000,
+              0,
+              1800
+            ],
+            [
+              3800,
+              0,
+              1800
+            ],
+            [
+              3800,
+              0,
+              -1800
+            ],
+            [
+              1000,
+              0,
+              -1800
+            ],
+            [
+              5,
+              0,
+              0
+            ],
+            [
+              200,
+              0,
+              32767
+            ],
+            [
+              200,
+              0,
+              0
+            ],
+            [
+              200,
+              0,
+              -32767
+            ],
+            [
+              0,
+              0,
+              -131072
+            ],
+            [
+              -200,
+              0,
+              -32767
+            ],
+            [
+              -200,
+              0,
+              0
+            ],
+            [
+              -200,
+              0,
+              32767
+            ],
+            [
+              0,
+              0,
+              262144
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              262144
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              -131072
+            ],
+            [
+              5,
+              0,
+              32767
+            ],
+            [
+              5,
+              0,
+              0
+            ],
+            [
+              5,
+              0,
+              -32767
+            ],
+            [
+              0,
+              0,
+              -131072
+            ],
+            [
+              -5,
+              0,
+              -32767
+            ],
+            [
+              -5,
+              0,
+              0
+            ],
+            [
+              -5,
+              0,
+              32767
+            ],
+            [
+              0,
+              0,
+              262144
+            ]
+          ]
+        },
+        "name": "Recovered cell fill \u00b7 transform $06"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

@@ -1,0 +1,884 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-03b204",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "COFFEE TABLE",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [
+      "object-03b1b0",
+      "object-03b194"
+    ],
+    "slots": [
+      118,
+      220
+    ],
+    "sourceAddress": 242180,
+    "status": "decoded",
+    "supportTop": 30,
+    "variants": [
+      {
+        "id": "object-03b204",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                22,
+                18,
+                17,
+                21
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                20,
+                16,
+                19,
+                23
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                21,
+                17,
+                16,
+                20
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                23,
+                19,
+                18,
+                22
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                16,
+                17,
+                18,
+                19
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                7,
+                6,
+                5,
+                4
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                15,
+                14,
+                13,
+                12
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                8,
+                9,
+                10,
+                11
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                12,
+                13,
+                9,
+                8
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                11,
+                10,
+                14,
+                15
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                6,
+                2,
+                1,
+                5
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                4,
+                0,
+                3,
+                7
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                5,
+                1,
+                0,
+                4
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                7,
+                3,
+                2,
+                6
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 582,
+              "vertices": [
+                0,
+                1,
+                2,
+                3
+              ]
+            }
+          ],
+          "geometryStart": 242188,
+          "lines": [],
+          "sourceEnd": 242443,
+          "sourceStart": 242180,
+          "vertices": [
+            [
+              -35,
+              30,
+              -25
+            ],
+            [
+              -35,
+              30,
+              25
+            ],
+            [
+              35,
+              30,
+              25
+            ],
+            [
+              35,
+              30,
+              -25
+            ],
+            [
+              -35,
+              28,
+              -25
+            ],
+            [
+              -35,
+              28,
+              25
+            ],
+            [
+              35,
+              28,
+              25
+            ],
+            [
+              35,
+              28,
+              -25
+            ],
+            [
+              -2,
+              2,
+              -2
+            ],
+            [
+              -2,
+              28,
+              -2
+            ],
+            [
+              2,
+              28,
+              -2
+            ],
+            [
+              2,
+              2,
+              -2
+            ],
+            [
+              -2,
+              2,
+              2
+            ],
+            [
+              -2,
+              28,
+              2
+            ],
+            [
+              2,
+              28,
+              2
+            ],
+            [
+              2,
+              2,
+              2
+            ],
+            [
+              -15,
+              2,
+              -15
+            ],
+            [
+              -15,
+              2,
+              15
+            ],
+            [
+              15,
+              2,
+              15
+            ],
+            [
+              15,
+              2,
+              -15
+            ],
+            [
+              -15,
+              0,
+              -15
+            ],
+            [
+              -15,
+              0,
+              15
+            ],
+            [
+              15,
+              0,
+              15
+            ],
+            [
+              15,
+              0,
+              -15
+            ]
+          ]
+        },
+        "name": "COFFEE TABLE \u00b7 object-03b204"
+      },
+      {
+        "id": "object-03b1b0",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                22,
+                18,
+                17,
+                21
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                20,
+                16,
+                19,
+                23
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                21,
+                17,
+                16,
+                20
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                23,
+                19,
+                18,
+                22
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                16,
+                17,
+                18,
+                19
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                7,
+                6,
+                5,
+                4
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                15,
+                14,
+                13,
+                12
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                8,
+                9,
+                10,
+                11
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                12,
+                13,
+                9,
+                8
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                11,
+                10,
+                14,
+                15
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                6,
+                2,
+                1,
+                5
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                4,
+                0,
+                3,
+                7
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                5,
+                1,
+                0,
+                4
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                7,
+                3,
+                2,
+                6
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                0,
+                1,
+                2,
+                3
+              ]
+            }
+          ],
+          "geometryStart": 242188,
+          "lines": [],
+          "sourceEnd": 242443,
+          "sourceStart": 242096,
+          "vertices": [
+            [
+              -35,
+              30,
+              -25
+            ],
+            [
+              -35,
+              30,
+              25
+            ],
+            [
+              35,
+              30,
+              25
+            ],
+            [
+              35,
+              30,
+              -25
+            ],
+            [
+              -35,
+              28,
+              -25
+            ],
+            [
+              -35,
+              28,
+              25
+            ],
+            [
+              35,
+              28,
+              25
+            ],
+            [
+              35,
+              28,
+              -25
+            ],
+            [
+              -2,
+              2,
+              -2
+            ],
+            [
+              -2,
+              28,
+              -2
+            ],
+            [
+              2,
+              28,
+              -2
+            ],
+            [
+              2,
+              2,
+              -2
+            ],
+            [
+              -2,
+              2,
+              2
+            ],
+            [
+              -2,
+              28,
+              2
+            ],
+            [
+              2,
+              28,
+              2
+            ],
+            [
+              2,
+              2,
+              2
+            ],
+            [
+              -15,
+              2,
+              -15
+            ],
+            [
+              -15,
+              2,
+              15
+            ],
+            [
+              15,
+              2,
+              15
+            ],
+            [
+              15,
+              2,
+              -15
+            ],
+            [
+              -15,
+              0,
+              -15
+            ],
+            [
+              -15,
+              0,
+              15
+            ],
+            [
+              15,
+              0,
+              15
+            ],
+            [
+              15,
+              0,
+              -15
+            ]
+          ]
+        },
+        "name": "COFFEE TABLE \u00b7 object-03b1b0"
+      },
+      {
+        "id": "object-03b194",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                22,
+                18,
+                17,
+                21
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                20,
+                16,
+                19,
+                23
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                21,
+                17,
+                16,
+                20
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                23,
+                19,
+                18,
+                22
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                16,
+                17,
+                18,
+                19
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                7,
+                6,
+                5,
+                4
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                15,
+                14,
+                13,
+                12
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                8,
+                9,
+                10,
+                11
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                12,
+                13,
+                9,
+                8
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                11,
+                10,
+                14,
+                15
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                6,
+                2,
+                1,
+                5
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                4,
+                0,
+                3,
+                7
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                5,
+                1,
+                0,
+                4
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                7,
+                3,
+                2,
+                6
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                0,
+                1,
+                2,
+                3
+              ]
+            }
+          ],
+          "geometryStart": 242188,
+          "lines": [],
+          "sourceEnd": 242443,
+          "sourceStart": 242068,
+          "vertices": [
+            [
+              -35,
+              30,
+              -25
+            ],
+            [
+              -35,
+              30,
+              25
+            ],
+            [
+              35,
+              30,
+              25
+            ],
+            [
+              35,
+              30,
+              -25
+            ],
+            [
+              -35,
+              28,
+              -25
+            ],
+            [
+              -35,
+              28,
+              25
+            ],
+            [
+              35,
+              28,
+              25
+            ],
+            [
+              35,
+              28,
+              -25
+            ],
+            [
+              -2,
+              2,
+              -2
+            ],
+            [
+              -2,
+              28,
+              -2
+            ],
+            [
+              2,
+              28,
+              -2
+            ],
+            [
+              2,
+              2,
+              -2
+            ],
+            [
+              -2,
+              2,
+              2
+            ],
+            [
+              -2,
+              28,
+              2
+            ],
+            [
+              2,
+              28,
+              2
+            ],
+            [
+              2,
+              2,
+              2
+            ],
+            [
+              -15,
+              2,
+              -15
+            ],
+            [
+              -15,
+              2,
+              15
+            ],
+            [
+              15,
+              2,
+              15
+            ],
+            [
+              15,
+              2,
+              -15
+            ],
+            [
+              -15,
+              0,
+              -15
+            ],
+            [
+              -15,
+              0,
+              15
+            ],
+            [
+              15,
+              0,
+              15
+            ],
+            [
+              15,
+              0,
+              -15
+            ]
+          ]
+        },
+        "name": "COFFEE TABLE \u00b7 object-03b194"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

@@ -1,0 +1,199 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-03d274",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "CORN FLAKES",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      139
+    ],
+    "sourceAddress": 250484,
+    "status": "decoded",
+    "supportTop": 15,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                0,
+                3,
+                4,
+                7
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                12,
+                13,
+                14,
+                15
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                3,
+                2,
+                5,
+                4
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                1,
+                0,
+                7,
+                6
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                2,
+                1,
+                6,
+                5
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                0,
+                1,
+                2,
+                3
+              ]
+            }
+          ],
+          "geometryStart": 250484,
+          "lines": [
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                8,
+                9
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                10,
+                11
+              ]
+            }
+          ],
+          "sourceEnd": 250636,
+          "sourceStart": 250484,
+          "vertices": [
+            [
+              10,
+              15,
+              4
+            ],
+            [
+              10,
+              15,
+              0
+            ],
+            [
+              0,
+              15,
+              0
+            ],
+            [
+              0,
+              15,
+              4
+            ],
+            [
+              0,
+              0,
+              4
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              10,
+              0,
+              0
+            ],
+            [
+              10,
+              0,
+              4
+            ],
+            [
+              9,
+              13,
+              4
+            ],
+            [
+              1,
+              13,
+              4
+            ],
+            [
+              7,
+              11,
+              4
+            ],
+            [
+              3,
+              11,
+              4
+            ],
+            [
+              8,
+              7,
+              4
+            ],
+            [
+              2,
+              7,
+              4
+            ],
+            [
+              2,
+              2,
+              4
+            ],
+            [
+              8,
+              2,
+              4
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

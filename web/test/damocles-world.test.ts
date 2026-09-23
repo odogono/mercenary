@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'bun:test';
 
-import { parseCatalogue } from '../src/catalogue/data.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import {
   SURFACE_CELLS,
@@ -16,14 +15,15 @@ import {
   startPose,
   structureInCell
 } from '../src/damocles/world.ts';
+import { loadCatalogue } from './fixtures/catalogue.ts';
 
 const load = async () => {
   const [catalogue, presentation] = await Promise.all([
-    Bun.file('../payload/damocles/catalogue.json').json(),
+    loadCatalogue(),
     Bun.file(new URL('../damocles/eris.json', import.meta.url)).json()
   ]);
   return {
-    catalogue: parseCatalogue(catalogue),
+    catalogue,
     doc: readErisPresentation(presentation)
   };
 };

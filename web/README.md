@@ -154,7 +154,8 @@ Build. Both are read for understanding; neither is copied (ADR 0002, ADR 0014, A
 ## Damocles Catalogue
 
 Open `/catalogue` directly or use the game menu's **Damocles catalogue** link.
-This desktop inspection page loads only `payload/damocles/catalogue.json`, with
+This desktop inspection page loads only the Damocles Catalogue, `payload/damocles/catalogue.json`
+and its Model files under `payload/damocles/models/`, with
 orbit/zoom, original flat colours, wireframe, visual forms, evidence, instance
 links and a per-body list of recovered placements, each handing over to the Gamma
 Atlas at its own position; the Atlas is where placements are drawn (#415). Recovery

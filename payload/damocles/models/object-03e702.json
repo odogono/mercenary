@@ -1,0 +1,344 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [
+      {
+        "claim": "Resident vehicle slot 6 pairs with key slot 184 by the recovered +178 table relation and matching source names.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-vip-limo.md"
+      }
+    ],
+    "id": "object-03e702",
+    "instanceOrientation": {
+      "angleBiasByte": 0,
+      "modeByte": 64,
+      "rotation": "yaw"
+    },
+    "kind": "object",
+    "linkedInstances": [
+      "object-slot-184"
+    ],
+    "name": "TARG TOURER",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      6,
+      260
+    ],
+    "sourceAddress": 255746,
+    "status": "decoded",
+    "supportTop": null,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                3,
+                11,
+                12,
+                4
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                4,
+                12,
+                13,
+                5
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                1,
+                9,
+                10,
+                2
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                2,
+                10,
+                11,
+                3
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                5,
+                13,
+                14,
+                6
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                13,
+                12,
+                15,
+                14
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                4,
+                5,
+                6,
+                7
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                10,
+                9,
+                16,
+                11
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                11,
+                16,
+                8,
+                18
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                12,
+                18,
+                15
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                12,
+                11,
+                18
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                3,
+                4,
+                19
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                4,
+                7,
+                19
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                1,
+                2,
+                3,
+                17
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                17,
+                3,
+                19,
+                0
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                9,
+                1,
+                17,
+                16
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                16,
+                17,
+                0,
+                8
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                0,
+                19,
+                18,
+                8
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                19,
+                7,
+                6,
+                14,
+                15,
+                18
+              ]
+            }
+          ],
+          "geometryStart": 255750,
+          "lines": [],
+          "sourceEnd": 256007,
+          "sourceStart": 255746,
+          "vertices": [
+            [
+              -70,
+              0,
+              160
+            ],
+            [
+              -60,
+              60,
+              120
+            ],
+            [
+              -60,
+              60,
+              0
+            ],
+            [
+              -70,
+              30,
+              -30
+            ],
+            [
+              -70,
+              20,
+              -120
+            ],
+            [
+              -40,
+              20,
+              -160
+            ],
+            [
+              -40,
+              0,
+              -160
+            ],
+            [
+              -70,
+              0,
+              -120
+            ],
+            [
+              70,
+              0,
+              160
+            ],
+            [
+              60,
+              60,
+              120
+            ],
+            [
+              60,
+              60,
+              0
+            ],
+            [
+              70,
+              30,
+              -30
+            ],
+            [
+              70,
+              20,
+              -120
+            ],
+            [
+              40,
+              20,
+              -160
+            ],
+            [
+              40,
+              0,
+              -160
+            ],
+            [
+              70,
+              0,
+              -120
+            ],
+            [
+              70,
+              30,
+              140
+            ],
+            [
+              -70,
+              30,
+              140
+            ],
+            [
+              70,
+              0,
+              -30
+            ],
+            [
+              -70,
+              0,
+              -30
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

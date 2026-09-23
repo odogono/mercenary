@@ -1,0 +1,260 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-03e9c6",
+    "instanceOrientation": {
+      "angleBiasByte": 192,
+      "modeByte": 64,
+      "rotation": "yaw"
+    },
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "SPRINTCAR",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      263,
+      363
+    ],
+    "sourceAddress": 256454,
+    "status": "decoded",
+    "supportTop": null,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                7,
+                12,
+                3
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                6,
+                2,
+                11
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                6,
+                7,
+                4,
+                5
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                8,
+                9,
+                10
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                13,
+                15,
+                14
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                13,
+                9,
+                8,
+                15
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                9,
+                13,
+                14,
+                10
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                5,
+                4,
+                0,
+                1
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                0,
+                4,
+                3
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                5,
+                1,
+                2
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                4,
+                7,
+                3
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                2,
+                6,
+                5
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                7,
+                6,
+                11,
+                12
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                1,
+                0,
+                12,
+                11
+              ]
+            }
+          ],
+          "geometryStart": 256458,
+          "lines": [],
+          "sourceEnd": 256650,
+          "sourceStart": 256454,
+          "vertices": [
+            [
+              -120,
+              0,
+              -20
+            ],
+            [
+              -120,
+              0,
+              20
+            ],
+            [
+              160,
+              0,
+              60
+            ],
+            [
+              160,
+              0,
+              -60
+            ],
+            [
+              -40,
+              20,
+              -40
+            ],
+            [
+              -40,
+              20,
+              40
+            ],
+            [
+              220,
+              50,
+              60
+            ],
+            [
+              220,
+              50,
+              -60
+            ],
+            [
+              -40,
+              20,
+              -10
+            ],
+            [
+              220,
+              60,
+              -10
+            ],
+            [
+              220,
+              50,
+              -10
+            ],
+            [
+              220,
+              0,
+              100
+            ],
+            [
+              220,
+              0,
+              -100
+            ],
+            [
+              220,
+              60,
+              10
+            ],
+            [
+              220,
+              50,
+              10
+            ],
+            [
+              -40,
+              20,
+              10
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

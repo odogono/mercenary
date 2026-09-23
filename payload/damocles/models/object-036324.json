@@ -1,0 +1,319 @@
+{
+  "model": {
+    "conditions": [
+      "viewerPosition"
+    ],
+    "evidence": [],
+    "id": "object-036324",
+    "instanceOrientation": {
+      "angleBiasByte": 128,
+      "modeByte": 64,
+      "rotation": "yaw"
+    },
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "INTERSTELLARSHIP",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      7,
+      265
+    ],
+    "sourceAddress": 221988,
+    "status": "decoded",
+    "supportTop": null,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "alternates": {
+            "viewGroup": 1
+          },
+          "faces": [
+            {
+              "colour": "#664444",
+              "sourceColour": 802,
+              "vertices": [
+                10,
+                12,
+                9
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                9,
+                12,
+                11
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                11,
+                12,
+                10
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                3,
+                6,
+                7
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                3,
+                7,
+                4
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                5,
+                6,
+                3
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                4,
+                7,
+                8
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                6,
+                5,
+                8
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                4,
+                8,
+                5
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                10,
+                9,
+                0
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                9,
+                11,
+                2
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                11,
+                10,
+                1
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                4,
+                5,
+                2,
+                1
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                4,
+                10,
+                3
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                1,
+                10,
+                4
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                10,
+                0,
+                3
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                3,
+                9,
+                5
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                9,
+                2,
+                5
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                0,
+                9,
+                3
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                8,
+                7,
+                6
+              ]
+            }
+          ],
+          "geometryStart": 221992,
+          "lines": [],
+          "sourceEnd": 222225,
+          "sourceStart": 221988,
+          "vertices": [
+            [
+              0,
+              124,
+              -560
+            ],
+            [
+              72,
+              0,
+              -560
+            ],
+            [
+              -72,
+              0,
+              -560
+            ],
+            [
+              0,
+              124,
+              100
+            ],
+            [
+              72,
+              0,
+              100
+            ],
+            [
+              -72,
+              0,
+              100
+            ],
+            [
+              -36,
+              40,
+              300
+            ],
+            [
+              36,
+              40,
+              300
+            ],
+            [
+              0,
+              20,
+              260
+            ],
+            [
+              -36,
+              62,
+              -400
+            ],
+            [
+              36,
+              62,
+              -400
+            ],
+            [
+              0,
+              0,
+              -400
+            ],
+            [
+              0,
+              40,
+              0
+            ]
+          ],
+          "viewGroups": [
+            {
+              "bounds": [
+                [
+                  -36,
+                  36
+                ],
+                [
+                  -124,
+                  0
+                ],
+                [
+                  -260,
+                  400
+                ]
+              ],
+              "faces": 0,
+              "lines": 0
+            }
+          ]
+        },
+        "name": "Viewer elsewhere (default list)"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

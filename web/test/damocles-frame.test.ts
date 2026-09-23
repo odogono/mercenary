@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { parseCatalogue, type Mesh } from '../src/catalogue/data.ts';
+import { type Mesh } from '../src/catalogue/data.ts';
 import {
   readErisPresentation,
   type ErisPresentationDocument
@@ -25,14 +25,15 @@ import {
   type ErisSurface
 } from '../src/damocles/world.ts';
 import { ERIS_BODY } from './damocles-pose.ts';
+import { loadCatalogue } from './fixtures/catalogue.ts';
 
 const load = async () => {
   const [catalogue, presentation] = await Promise.all([
-    Bun.file('../payload/damocles/catalogue.json').json(),
+    loadCatalogue(),
     Bun.file(new URL('../damocles/eris.json', import.meta.url)).json()
   ]);
   const doc = readErisPresentation(presentation);
-  return { doc, surface: erisSurfaceFrom(parseCatalogue(catalogue), doc) };
+  return { doc, surface: erisSurfaceFrom(catalogue, doc) };
 };
 
 const square = (doubleSided = false): Mesh => ({

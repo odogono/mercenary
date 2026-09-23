@@ -6,16 +6,14 @@ import {
   islandLocalCell,
   readBodySurface
 } from '../src/atlas/surface.ts';
-import { parseCatalogue } from '../src/catalogue/data.ts';
 import { SURFACE_CELLS } from '../src/damocles/world.ts';
 import { readGammaSystem } from '../src/flyover/documents.ts';
+import { loadCatalogue } from './fixtures/catalogue.ts';
 
 const ERIS = 11;
 
 const payloads = async () => ({
-  catalogue: parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  ),
+  catalogue: await loadCatalogue(),
   system: readGammaSystem(
     await Bun.file('../payload/damocles/system.json').json()
   )

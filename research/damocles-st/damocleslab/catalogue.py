@@ -4631,10 +4631,92 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         })
     for instance in instances:
         instance.setdefault('associationGroups', None)
-    return {'schemaVersion': 15, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
+    return {'schemaVersion': SCHEMA_VERSION, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
             'bodies': bodies, 'islands': islands, 'places': places, 'tables': tables,
             'roadNetworks': road_networks,
             'coverage': coverage_ledger(models, tables, coverage_notes, disk_load, road_networks)}
+
+
+SCHEMA_VERSION = 16
+MODEL_INDEX_FIELDS = ('id', 'kind', 'name', 'recordClass', 'slots', 'status')
+
+
+def body_models(result: dict) -> dict[str, list[str]]:
+    """Every Model id a Body can draw, keyed by body id: the Models of the Instances on it
+    (a placed resident reaches its Body through its parent), the ground Models its road
+    networks lay, and the interior each of those structures selects its detail from.
+    A Body with nothing on it maps to an empty list."""
+    instances = {instance['id']: instance for instance in result['instances']}
+    models = {model['id']: model for model in result['models']}
+
+    def body_of(instance: dict, seen: frozenset = frozenset()):
+        if instance['location'] is not None:
+            return instance['location']['body']
+        placement = instance['placement']
+        if placement is None or placement['parent'] in seen:
+            return None
+        return body_of(instances[placement['parent']], seen | {instance['id']})
+
+    closure: dict[str, set] = {body['id']: set() for body in result['bodies']}
+    for instance in result['instances']:
+        body = body_of(instance)
+        if body is not None:
+            closure[body].add(instance['model'])
+    for network in result['roadNetworks']:
+        closure[network['body']].update(cell['model'] for cell in network['cells'] if cell['model'] is not None)
+    for ids in closure.values():
+        for model_id in list(ids):
+            selection = models[model_id].get('structureSelection')
+            if selection is not None:
+                ids.add(selection['detailModel'])
+    return {body: sorted(ids) for body, ids in closure.items()}
+
+
+def split_catalogue(result: dict) -> tuple[dict, dict[str, dict]]:
+    """The Catalogue as it is stored (ADR 0048): one shared document carrying everything
+    but the Models, with a model index in extraction order and each Body's Model list, and
+    one file per Model.
+    Each Model file carries the run's source identity so a file from another run is
+    refused on arrival rather than drawn."""
+    closure = body_models(result)
+    document = {key: value for key, value in result.items() if key != 'models'}
+    document['schemaVersion'] = SCHEMA_VERSION
+    document['bodies'] = [{**body, 'models': closure[body['id']]} for body in result['bodies']]
+    document['modelIndex'] = [{field: model[field] for field in MODEL_INDEX_FIELDS} for model in result['models']]
+    source = {'programSha256': result['source']['programSha256'], 'run': result['source']['run']}
+    files = {model['id']: {'schemaVersion': SCHEMA_VERSION, 'source': source, 'model': model}
+             for model in result['models']}
+    return document, files
+
+
+def write_catalogue(result: dict, output: Path) -> None:
+    """Writes the shared document to `output` and each Model to `models/<id>.json` beside
+    it, removing Model files this run no longer produces so the directory is exactly the
+    index. Both are indented and key-sorted so a regenerated Model reads as its own diff."""
+    document, files = split_catalogue(result)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(document, indent=2, sort_keys=True) + '\n')
+    directory = output.parent / 'models'
+    directory.mkdir(exist_ok=True)
+    for stale in directory.glob('*.json'):
+        if stale.stem not in files:
+            stale.unlink()
+    for model_id, file in files.items():
+        (directory / f'{model_id}.json').write_text(json.dumps(file, indent=2, sort_keys=True) + '\n')
+
+
+def read_catalogue(output: Path) -> dict:
+    """The stored Catalogue read back whole, in the shape `extract` returns: the shared document
+    at `output` with each Model reinserted from `models/` in index order, and without the index
+    and Body lists the split derives. Reassembly is lossless (ADR 0048)."""
+    document = json.loads(output.read_text())
+    directory = output.parent / 'models'
+    result = {key: value for key, value in document.items() if key != 'modelIndex'}
+    result['bodies'] = [{key: value for key, value in body.items() if key != 'models'}
+                        for body in document['bodies']]
+    result['models'] = [json.loads((directory / f"{entry['id']}.json").read_text())['model']
+                        for entry in document['modelIndex']]
+    return result
 
 
 def validate_source(manifest: dict, pin: dict) -> None:
@@ -4668,8 +4750,7 @@ def main():
               'programSha256': manifest['authority']['programSha256'],
               'evidence': 'docs/research/damocles-catalogue.md'}
     result = extract(data, source, workspaces or None)
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(result, indent=2, sort_keys=True) + '\n')
+    write_catalogue(result, args.output)
     from collections import Counter
     print(json.dumps({'models': len(result['models']), 'status': dict(Counter(m['status'] for m in result['models']))}))
 

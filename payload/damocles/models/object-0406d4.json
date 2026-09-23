@@ -1,0 +1,417 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-0406d4",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "COMMUCAT CONSOLE",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      99,
+      100,
+      310
+    ],
+    "sourceAddress": 263892,
+    "status": "decoded",
+    "supportTop": 80,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                11,
+                10,
+                13,
+                7
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                9,
+                8,
+                4,
+                12
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                10,
+                9,
+                12,
+                13
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                17,
+                14,
+                15,
+                16
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                21,
+                18,
+                19,
+                20
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                25,
+                22,
+                23,
+                24
+              ]
+            },
+            {
+              "colour": "#4444aa",
+              "sourceColour": 549,
+              "vertices": [
+                29,
+                26,
+                27,
+                28
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                3,
+                37,
+                10,
+                11
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                36,
+                0,
+                8,
+                9
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                37,
+                36,
+                9,
+                10
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                7,
+                13,
+                6
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                12,
+                4,
+                5
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                13,
+                12,
+                5,
+                6
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                0,
+                1,
+                5,
+                4
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                2,
+                3,
+                7,
+                6
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                1,
+                2,
+                6,
+                5
+              ]
+            }
+          ],
+          "geometryStart": 263892,
+          "lines": [
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                30,
+                31
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                32,
+                33
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                34,
+                35
+              ]
+            }
+          ],
+          "sourceEnd": 264248,
+          "sourceStart": 263892,
+          "vertices": [
+            [
+              -50,
+              0,
+              -30
+            ],
+            [
+              -80,
+              0,
+              10
+            ],
+            [
+              80,
+              0,
+              10
+            ],
+            [
+              50,
+              0,
+              -30
+            ],
+            [
+              -50,
+              50,
+              -30
+            ],
+            [
+              -80,
+              80,
+              10
+            ],
+            [
+              80,
+              80,
+              10
+            ],
+            [
+              50,
+              50,
+              -30
+            ],
+            [
+              -50,
+              20,
+              -30
+            ],
+            [
+              -15,
+              20,
+              0
+            ],
+            [
+              15,
+              20,
+              0
+            ],
+            [
+              50,
+              20,
+              -30
+            ],
+            [
+              -15,
+              50,
+              0
+            ],
+            [
+              15,
+              50,
+              0
+            ],
+            [
+              -45,
+              25,
+              -25
+            ],
+            [
+              -45,
+              45,
+              -25
+            ],
+            [
+              -20,
+              45,
+              -5
+            ],
+            [
+              -20,
+              25,
+              -5
+            ],
+            [
+              20,
+              25,
+              -5
+            ],
+            [
+              20,
+              45,
+              -5
+            ],
+            [
+              45,
+              45,
+              -25
+            ],
+            [
+              45,
+              25,
+              -25
+            ],
+            [
+              -10,
+              25,
+              0
+            ],
+            [
+              -10,
+              30,
+              0
+            ],
+            [
+              -5,
+              30,
+              0
+            ],
+            [
+              -5,
+              25,
+              0
+            ],
+            [
+              5,
+              25,
+              0
+            ],
+            [
+              5,
+              30,
+              0
+            ],
+            [
+              10,
+              30,
+              0
+            ],
+            [
+              10,
+              25,
+              0
+            ],
+            [
+              -10,
+              35,
+              0
+            ],
+            [
+              10,
+              35,
+              0
+            ],
+            [
+              -10,
+              40,
+              0
+            ],
+            [
+              10,
+              40,
+              0
+            ],
+            [
+              -10,
+              45,
+              0
+            ],
+            [
+              10,
+              45,
+              0
+            ],
+            [
+              -15,
+              0,
+              0
+            ],
+            [
+              15,
+              0,
+              0
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

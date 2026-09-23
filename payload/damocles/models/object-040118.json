@@ -1,0 +1,110 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-040118",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "DATABANK",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      303
+    ],
+    "sourceAddress": 262424,
+    "status": "decoded",
+    "supportTop": 60,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                3,
+                2,
+                5,
+                4
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                1,
+                0,
+                4,
+                5
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                1,
+                5,
+                2
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                3,
+                4,
+                0
+              ]
+            }
+          ],
+          "geometryStart": 262424,
+          "lines": [],
+          "sourceEnd": 262492,
+          "sourceStart": 262424,
+          "vertices": [
+            [
+              -30,
+              0,
+              -30
+            ],
+            [
+              30,
+              0,
+              -30
+            ],
+            [
+              30,
+              0,
+              30
+            ],
+            [
+              -30,
+              0,
+              30
+            ],
+            [
+              -30,
+              60,
+              0
+            ],
+            [
+              30,
+              60,
+              0
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

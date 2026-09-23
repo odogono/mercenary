@@ -1,0 +1,217 @@
+{
+  "model": {
+    "evidence": [
+      {
+        "claim": "Per-cell ground/pad/road record at $1E000, selected by the $1E400 word table and $83DC orientation byte ($054E40).",
+        "confidence": "verified",
+        "source": "docs/research/damocles-eris-ground.md"
+      },
+      {
+        "claim": "Scene joins come from the authored seed longword at $1E000+$88 ($05493E), so cells sharing this source record draw different geometry and each keeps its own identity.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-eris-ground.md"
+      }
+    ],
+    "id": "ground-01efb8-03-22",
+    "kind": "ground",
+    "linkedInstances": [
+      "eris-ground-22"
+    ],
+    "name": "Ground 34",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      34
+    ],
+    "sourceAddress": 126904,
+    "status": "decoded",
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#664444",
+              "doubleSided": true,
+              "sourceColour": 802,
+              "sourceIndex": 0,
+              "vertices": [
+                0,
+                1,
+                2,
+                3,
+                4
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sceneSlots": [
+                240
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 1,
+              "vertices": [
+                5,
+                6,
+                7,
+                8,
+                9
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sceneSlots": [
+                252
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 2,
+              "vertices": [
+                10,
+                11,
+                12,
+                13,
+                14
+              ]
+            }
+          ],
+          "lines": [
+            {
+              "colour": "#cccccc",
+              "sceneSlots": [
+                240
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 3,
+              "vertices": [
+                15,
+                16
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sceneSlots": [
+                252
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 4,
+              "vertices": [
+                17,
+                18
+              ]
+            }
+          ],
+          "sourceEnd": 126994,
+          "sourceStart": 126904,
+          "vertices": [
+            [
+              0,
+              0,
+              1600
+            ],
+            [
+              0,
+              0,
+              800
+            ],
+            [
+              -800,
+              0,
+              0
+            ],
+            [
+              -1600,
+              0,
+              0
+            ],
+            [
+              -1600,
+              0,
+              1600
+            ],
+            [
+              -32767,
+              0,
+              100
+            ],
+            [
+              -100,
+              0,
+              100
+            ],
+            [
+              100,
+              0,
+              -100
+            ],
+            [
+              -32767,
+              0,
+              -100
+            ],
+            [
+              -131072,
+              0,
+              0
+            ],
+            [
+              100,
+              0,
+              32767
+            ],
+            [
+              100,
+              0,
+              -100
+            ],
+            [
+              -100,
+              0,
+              -100
+            ],
+            [
+              -100,
+              0,
+              32767
+            ],
+            [
+              0,
+              0,
+              131072
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              -131072,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              131072
+            ]
+          ]
+        },
+        "name": "Recovered cell fill \u00b7 transform $03"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

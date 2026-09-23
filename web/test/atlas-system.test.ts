@@ -34,12 +34,12 @@ import {
   markerView,
   projectSystem
 } from '../src/atlas/system.ts';
-import { parseCatalogue } from '../src/catalogue/data.ts';
 import {
   bodyRadius,
   readGammaSystem,
   type GammaBody
 } from '../src/flyover/documents.ts';
+import { loadCatalogue } from './fixtures/catalogue.ts';
 
 const FRAME = { height: 600, width: 900 };
 const ASPECT = FRAME.height / FRAME.width;
@@ -658,9 +658,7 @@ describe('the Atlas selection panel', () => {
   });
 
   test('states only recovered numbers for a Damocles Island', async () => {
-    const data = parseCatalogue(
-      await Bun.file('../payload/damocles/catalogue.json').json()
-    );
+    const data = await loadCatalogue();
     const capital = data.islands.find(
       island => island.areaName === 'CAPITAL CITY'
     )!;
@@ -682,9 +680,7 @@ describe('the Atlas selection panel', () => {
   });
 
   test('states only recovered numbers for a Damocles Place', async () => {
-    const data = parseCatalogue(
-      await Bun.file('../payload/damocles/catalogue.json').json()
-    );
+    const data = await loadCatalogue();
     const place = data.places.find(
       candidate => candidate.name === 'STATE OFFICE'
     )!;
@@ -718,9 +714,7 @@ describe('the Atlas selection panel', () => {
   });
 
   test('says a record crossing the seam wraps, and writes the span as a wrap', async () => {
-    const data = parseCatalogue(
-      await Bun.file('../payload/damocles/catalogue.json').json()
-    );
+    const data = await loadCatalogue();
     const snow = data.islands.find(
       island => island.areaName === 'SNOW ISLAND'
     )!;

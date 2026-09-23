@@ -1,0 +1,397 @@
+{
+  "model": {
+    "detailSelection": [
+      {
+        "boxes": [],
+        "default": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18
+        ]
+      },
+      {
+        "boxes": [
+          {
+            "bounds": [
+              [
+                -100,
+                100
+              ],
+              [
+                0,
+                150
+              ],
+              [
+                -100,
+                100
+              ]
+            ],
+            "records": []
+          }
+        ],
+        "default": [
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18
+        ]
+      }
+    ],
+    "evidence": [],
+    "id": "interior-030a8e",
+    "kind": "interior",
+    "linkedInstances": [],
+    "name": "Building detail 91",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "Shape and structure-bound colours decoded. Both view-conditioned visibility groups are recovered, and every authored box list and group default is offered as its own inspection form because a free-orbit view has no player position to select one with.",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      91
+    ],
+    "sourceAddress": 199310,
+    "status": "partial",
+    "variants": [
+      {
+        "id": "palette-6",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#882222",
+              "sourceColour": 32896,
+              "sourceIndex": 0,
+              "vertices": [
+                0,
+                4,
+                7,
+                3
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 32896,
+              "sourceIndex": 1,
+              "vertices": [
+                10,
+                14,
+                17,
+                13
+              ]
+            },
+            {
+              "colour": "#aaaa66",
+              "sourceColour": 32898,
+              "sourceIndex": 2,
+              "vertices": [
+                2,
+                6,
+                5,
+                1
+              ]
+            },
+            {
+              "colour": "#aa8800",
+              "sourceColour": 32900,
+              "sourceIndex": 3,
+              "vertices": [
+                4,
+                5,
+                6,
+                7
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32902,
+              "sourceIndex": 4,
+              "vertices": [
+                0,
+                1,
+                5,
+                4
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32902,
+              "sourceIndex": 5,
+              "vertices": [
+                7,
+                6,
+                2,
+                3
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32904,
+              "sourceIndex": 6,
+              "vertices": [
+                10,
+                11,
+                15,
+                14
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32904,
+              "sourceIndex": 7,
+              "vertices": [
+                17,
+                16,
+                12,
+                13
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 32896,
+              "sourceIndex": 8,
+              "vertices": [
+                12,
+                16,
+                15,
+                11
+              ]
+            },
+            {
+              "colour": "#888844",
+              "sourceColour": 32906,
+              "sourceIndex": 9,
+              "vertices": [
+                7,
+                6,
+                5,
+                4
+              ]
+            },
+            {
+              "colour": "#888844",
+              "sourceColour": 32906,
+              "sourceIndex": 10,
+              "vertices": [
+                0,
+                1,
+                11,
+                10
+              ]
+            },
+            {
+              "colour": "#888844",
+              "sourceColour": 32906,
+              "sourceIndex": 11,
+              "vertices": [
+                11,
+                1,
+                2,
+                12
+              ]
+            },
+            {
+              "colour": "#888844",
+              "sourceColour": 32906,
+              "sourceIndex": 12,
+              "vertices": [
+                13,
+                12,
+                2,
+                3
+              ]
+            },
+            {
+              "colour": "#aaaa66",
+              "sourceColour": 32898,
+              "sourceIndex": 13,
+              "vertices": [
+                4,
+                5,
+                1,
+                0
+              ]
+            },
+            {
+              "colour": "#aaaa66",
+              "sourceColour": 32898,
+              "sourceIndex": 14,
+              "vertices": [
+                3,
+                2,
+                6,
+                7
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32902,
+              "sourceIndex": 15,
+              "vertices": [
+                6,
+                9,
+                5
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32902,
+              "sourceIndex": 16,
+              "vertices": [
+                1,
+                8,
+                2
+              ]
+            },
+            {
+              "colour": "#664444",
+              "sourceColour": 32908,
+              "sourceIndex": 17,
+              "vertices": [
+                5,
+                9,
+                8,
+                1
+              ]
+            },
+            {
+              "colour": "#aa8800",
+              "sourceColour": 32900,
+              "sourceIndex": 18,
+              "vertices": [
+                2,
+                8,
+                9,
+                6
+              ]
+            }
+          ],
+          "geometryStart": 199310,
+          "lines": [],
+          "recordCount": 19,
+          "sourceEnd": 199553,
+          "sourceStart": 199310,
+          "vertices": [
+            [
+              -100,
+              0,
+              -100
+            ],
+            [
+              -100,
+              150,
+              -100
+            ],
+            [
+              100,
+              150,
+              -100
+            ],
+            [
+              100,
+              0,
+              -100
+            ],
+            [
+              -100,
+              0,
+              100
+            ],
+            [
+              -100,
+              150,
+              100
+            ],
+            [
+              100,
+              150,
+              100
+            ],
+            [
+              100,
+              0,
+              100
+            ],
+            [
+              0,
+              250,
+              -50
+            ],
+            [
+              0,
+              250,
+              50
+            ],
+            [
+              -40,
+              0,
+              -100
+            ],
+            [
+              -40,
+              90,
+              -100
+            ],
+            [
+              40,
+              90,
+              -100
+            ],
+            [
+              40,
+              0,
+              -100
+            ],
+            [
+              -40,
+              0,
+              -90
+            ],
+            [
+              -40,
+              90,
+              -90
+            ],
+            [
+              40,
+              90,
+              -90
+            ],
+            [
+              40,
+              0,
+              -90
+            ]
+          ]
+        },
+        "name": "Structure-bound palette 6"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

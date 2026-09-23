@@ -1,0 +1,606 @@
+{
+  "model": {
+    "evidence": [
+      {
+        "claim": "Per-cell ground/pad/road record at $1E000, selected by the $1E400 word table and $83DC orientation byte ($054E40).",
+        "confidence": "verified",
+        "source": "docs/research/damocles-eris-ground.md"
+      }
+    ],
+    "id": "ground-0205d2-00",
+    "kind": "ground",
+    "linkedInstances": [
+      "eris-ground-29",
+      "gaea-ur-city-ground-29"
+    ],
+    "name": "Ground 41",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      41
+    ],
+    "sourceAddress": 132562,
+    "status": "decoded",
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sourceColour": 32782,
+              "sourceIndex": 1,
+              "vertices": [
+                2,
+                3,
+                4,
+                5,
+                6
+              ]
+            }
+          ],
+          "lines": [
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32782,
+              "sourceIndex": 0,
+              "vertices": [
+                0,
+                1
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                7,
+                8
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                8,
+                10
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                10,
+                11
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                11,
+                12
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                12,
+                13
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                13,
+                15
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                15,
+                16
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                16,
+                7
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                9,
+                14
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                23,
+                22
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                22,
+                21
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                21,
+                20
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                20,
+                19
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                19,
+                18
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                18,
+                17
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                17,
+                26
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                26,
+                25
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                25,
+                24
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                24,
+                20
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                27,
+                28
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                29,
+                30
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                30,
+                32
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                32,
+                33
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                33,
+                34
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                34,
+                35
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                35,
+                37
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                37,
+                38
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                38,
+                29
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                31,
+                36
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                39,
+                40
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                40,
+                41
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                41,
+                42
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                42,
+                43
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                43,
+                44
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                44,
+                45
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                45,
+                46
+              ]
+            }
+          ],
+          "sourceEnd": 132622,
+          "sourceStart": 132562,
+          "texts": [
+            {
+              "anchor": [
+                -700,
+                0,
+                150
+              ],
+              "font": 3,
+              "plane": 64,
+              "text": "09-02"
+            }
+          ],
+          "vertices": [
+            [
+              800,
+              0,
+              800
+            ],
+            [
+              -2800,
+              0,
+              -600
+            ],
+            [
+              800,
+              0,
+              -600
+            ],
+            [
+              -2800,
+              0,
+              -600
+            ],
+            [
+              -2800,
+              0,
+              450
+            ],
+            [
+              -2450,
+              0,
+              800
+            ],
+            [
+              800,
+              0,
+              800
+            ],
+            [
+              -780,
+              0,
+              -170
+            ],
+            [
+              -900,
+              0,
+              -170
+            ],
+            [
+              -940,
+              0,
+              -130
+            ],
+            [
+              -980,
+              0,
+              -90
+            ],
+            [
+              -980,
+              0,
+              70
+            ],
+            [
+              -900,
+              0,
+              150
+            ],
+            [
+              -780,
+              0,
+              150
+            ],
+            [
+              -740,
+              0,
+              110
+            ],
+            [
+              -700,
+              0,
+              70
+            ],
+            [
+              -700,
+              0,
+              -90
+            ],
+            [
+              -1100,
+              0,
+              -170
+            ],
+            [
+              -1220,
+              0,
+              -170
+            ],
+            [
+              -1300,
+              0,
+              -90
+            ],
+            [
+              -1300,
+              0,
+              30
+            ],
+            [
+              -1300,
+              0,
+              70
+            ],
+            [
+              -1220,
+              0,
+              150
+            ],
+            [
+              -1060,
+              0,
+              150
+            ],
+            [
+              -1100,
+              0,
+              30
+            ],
+            [
+              -1020,
+              0,
+              -50
+            ],
+            [
+              -1020,
+              0,
+              -90
+            ],
+            [
+              -1340,
+              0,
+              30
+            ],
+            [
+              -1580,
+              0,
+              30
+            ],
+            [
+              -1740,
+              0,
+              -170
+            ],
+            [
+              -1860,
+              0,
+              -170
+            ],
+            [
+              -1900,
+              0,
+              -130
+            ],
+            [
+              -1940,
+              0,
+              -90
+            ],
+            [
+              -1940,
+              0,
+              70
+            ],
+            [
+              -1860,
+              0,
+              150
+            ],
+            [
+              -1740,
+              0,
+              150
+            ],
+            [
+              -1700,
+              0,
+              110
+            ],
+            [
+              -1660,
+              0,
+              70
+            ],
+            [
+              -1660,
+              0,
+              -90
+            ],
+            [
+              -1980,
+              0,
+              -90
+            ],
+            [
+              -2060,
+              0,
+              -170
+            ],
+            [
+              -2180,
+              0,
+              -170
+            ],
+            [
+              -2220,
+              0,
+              -90
+            ],
+            [
+              -2220,
+              0,
+              -50
+            ],
+            [
+              -1980,
+              0,
+              110
+            ],
+            [
+              -1980,
+              0,
+              150
+            ],
+            [
+              -2260,
+              0,
+              150
+            ]
+          ]
+        },
+        "name": "Recovered cell fill \u00b7 transform $00"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

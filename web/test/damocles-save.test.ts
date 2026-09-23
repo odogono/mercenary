@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'bun:test';
 
-import { parseCatalogue } from '../src/catalogue/data.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import { createDamoclesResumePersistence } from '../src/damocles/resume.ts';
 import {
@@ -19,14 +18,15 @@ import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { createNewGameAction } from '../src/shell/menu.ts';
 import { titleStorageKeys } from '../src/shell/title.ts';
 import { arrivalPoses } from './damocles-pose.ts';
+import { loadCatalogue } from './fixtures/catalogue.ts';
 
 const load = async () => {
   const [rawCatalogue, presentationText, rawStrings] = await Promise.all([
-    Bun.file('../payload/damocles/catalogue.json').json(),
+    loadCatalogue(),
     Bun.file(new URL('../damocles/eris.json', import.meta.url)).text(),
     Bun.file('../payload/damocles/strings.json').json()
   ]);
-  const catalogue = parseCatalogue(rawCatalogue);
+  const catalogue = rawCatalogue;
   const doc = readErisPresentation(JSON.parse(presentationText));
   const presentationSha256 = await sha256(presentationText);
   return {

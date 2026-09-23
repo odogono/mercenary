@@ -1,0 +1,396 @@
+{
+  "model": {
+    "evidence": [
+      {
+        "claim": "Live DION per-cell ground/pad/road record at $1E000; this workspace overwrites the Eris first-world index.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-dion-workspace.md"
+      }
+    ],
+    "id": "dion-ground-020a38-00-82",
+    "kind": "ground",
+    "linkedInstances": [
+      "dion-ground-82"
+    ],
+    "name": "DION ground 130",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      394
+    ],
+    "sourceAddress": 133688,
+    "status": "decoded",
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sceneSlots": [
+                240,
+                244
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 0,
+              "vertices": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sceneSlots": [
+                252,
+                248
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 1,
+              "vertices": [
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15
+              ]
+            },
+            {
+              "colour": "#000000",
+              "doubleSided": true,
+              "sourceColour": 32768,
+              "sourceIndex": 6,
+              "vertices": [
+                24,
+                25,
+                26,
+                27,
+                28
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sourceColour": 32782,
+              "sourceIndex": 7,
+              "vertices": [
+                29,
+                30,
+                31,
+                32
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sourceColour": 32782,
+              "sourceIndex": 8,
+              "vertices": [
+                33,
+                34,
+                35,
+                36,
+                37
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sourceColour": 32782,
+              "sourceIndex": 9,
+              "vertices": [
+                38,
+                39,
+                40,
+                41
+              ]
+            }
+          ],
+          "lines": [
+            {
+              "colour": "#cccccc",
+              "sceneSlots": [
+                240
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 2,
+              "vertices": [
+                16,
+                17
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sceneSlots": [
+                244
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 3,
+              "vertices": [
+                18,
+                19
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sceneSlots": [
+                248
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 4,
+              "vertices": [
+                20,
+                21
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sceneSlots": [
+                252
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 5,
+              "vertices": [
+                22,
+                23
+              ]
+            }
+          ],
+          "sourceEnd": 133854,
+          "sourceStart": 133688,
+          "vertices": [
+            [
+              -32767,
+              0,
+              100
+            ],
+            [
+              100,
+              0,
+              100
+            ],
+            [
+              32767,
+              0,
+              100
+            ],
+            [
+              65536,
+              0,
+              0
+            ],
+            [
+              32767,
+              0,
+              -100
+            ],
+            [
+              -100,
+              0,
+              -100
+            ],
+            [
+              -32767,
+              0,
+              -100
+            ],
+            [
+              -131072,
+              0,
+              0
+            ],
+            [
+              100,
+              0,
+              32767
+            ],
+            [
+              100,
+              0,
+              100
+            ],
+            [
+              100,
+              0,
+              -32767
+            ],
+            [
+              0,
+              0,
+              -393216
+            ],
+            [
+              -100,
+              0,
+              -32767
+            ],
+            [
+              -100,
+              0,
+              -100
+            ],
+            [
+              -100,
+              0,
+              32767
+            ],
+            [
+              0,
+              0,
+              262144
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              65536,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              -131072,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              262144
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              -393216
+            ],
+            [
+              500,
+              0,
+              1250
+            ],
+            [
+              500,
+              0,
+              2500
+            ],
+            [
+              3000,
+              0,
+              2500
+            ],
+            [
+              3000,
+              0,
+              1250
+            ],
+            [
+              2500,
+              0,
+              750
+            ],
+            [
+              500,
+              0,
+              1250
+            ],
+            [
+              0,
+              0,
+              1250
+            ],
+            [
+              0,
+              0,
+              1500
+            ],
+            [
+              750,
+              0,
+              1500
+            ],
+            [
+              2250,
+              0,
+              500
+            ],
+            [
+              500,
+              0,
+              500
+            ],
+            [
+              500,
+              0,
+              1250
+            ],
+            [
+              750,
+              0,
+              1500
+            ],
+            [
+              2500,
+              0,
+              750
+            ],
+            [
+              2250,
+              0,
+              0
+            ],
+            [
+              2250,
+              0,
+              500
+            ],
+            [
+              2500,
+              0,
+              750
+            ],
+            [
+              2500,
+              0,
+              0
+            ]
+          ]
+        },
+        "name": "Recovered cell fill \u00b7 transform $00"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

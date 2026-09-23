@@ -1,0 +1,192 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-03dd66",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "DAMOCLES FILE",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      151
+    ],
+    "sourceAddress": 253286,
+    "status": "decoded",
+    "supportTop": 2,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                5,
+                4,
+                3,
+                2
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                8,
+                9,
+                10
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                10,
+                9,
+                8
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                1,
+                0,
+                7,
+                6
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                6,
+                7,
+                4,
+                5
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                0,
+                1,
+                2,
+                3
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                0,
+                3,
+                4,
+                7
+              ]
+            }
+          ],
+          "geometryStart": 253286,
+          "lines": [
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                11,
+                12
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                9,
+                10
+              ]
+            }
+          ],
+          "sourceEnd": 253425,
+          "sourceStart": 253286,
+          "vertices": [
+            [
+              20,
+              2,
+              0
+            ],
+            [
+              20,
+              0,
+              0
+            ],
+            [
+              4,
+              0,
+              0
+            ],
+            [
+              4,
+              2,
+              0
+            ],
+            [
+              4,
+              2,
+              24
+            ],
+            [
+              4,
+              0,
+              24
+            ],
+            [
+              20,
+              0,
+              24
+            ],
+            [
+              20,
+              2,
+              24
+            ],
+            [
+              4,
+              1,
+              2
+            ],
+            [
+              -4,
+              1,
+              6
+            ],
+            [
+              4,
+              1,
+              20
+            ],
+            [
+              4,
+              1,
+              6
+            ],
+            [
+              0,
+              1,
+              8
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

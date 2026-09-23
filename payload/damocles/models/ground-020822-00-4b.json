@@ -1,0 +1,244 @@
+{
+  "model": {
+    "evidence": [
+      {
+        "claim": "Per-cell ground/pad/road record at $1E000, selected by the $1E400 word table and $83DC orientation byte ($054E40).",
+        "confidence": "verified",
+        "source": "docs/research/damocles-eris-ground.md"
+      },
+      {
+        "claim": "Scene joins come from the authored seed longword at $1E000+$12C ($05493E), so cells sharing this source record draw different geometry and each keeps its own identity.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-eris-ground.md"
+      }
+    ],
+    "id": "ground-020822-00-4b",
+    "kind": "ground",
+    "linkedInstances": [
+      "eris-ground-4b"
+    ],
+    "name": "Ground 75",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      75
+    ],
+    "sourceAddress": 133154,
+    "status": "decoded",
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sceneSlots": [
+                240
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 0,
+              "vertices": [
+                0,
+                1,
+                2,
+                3,
+                4
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sourceColour": 32782,
+              "sourceIndex": 2,
+              "vertices": [
+                7,
+                8,
+                9,
+                10
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sourceColour": 32782,
+              "sourceIndex": 3,
+              "vertices": [
+                11,
+                12,
+                13,
+                14
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sourceColour": 32782,
+              "sourceIndex": 4,
+              "vertices": [
+                15,
+                16,
+                17,
+                18
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sourceColour": 32782,
+              "sourceIndex": 5,
+              "vertices": [
+                19,
+                20,
+                21,
+                22
+              ]
+            }
+          ],
+          "lines": [
+            {
+              "colour": "#cccccc",
+              "sceneSlots": [
+                240
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 1,
+              "vertices": [
+                5,
+                6
+              ]
+            }
+          ],
+          "sourceEnd": 133268,
+          "sourceStart": 133154,
+          "vertices": [
+            [
+              32767,
+              0,
+              -100
+            ],
+            [
+              -250,
+              0,
+              -100
+            ],
+            [
+              -250,
+              0,
+              100
+            ],
+            [
+              32767,
+              0,
+              100
+            ],
+            [
+              131072,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              131072,
+              0,
+              0
+            ],
+            [
+              -250,
+              0,
+              -500
+            ],
+            [
+              -250,
+              0,
+              100
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              -500
+            ],
+            [
+              1000,
+              0,
+              -500
+            ],
+            [
+              1000,
+              0,
+              -2500
+            ],
+            [
+              -2500,
+              0,
+              -4000
+            ],
+            [
+              -1000,
+              0,
+              -500
+            ],
+            [
+              1000,
+              0,
+              -2250
+            ],
+            [
+              1000,
+              0,
+              -2000
+            ],
+            [
+              1400,
+              0,
+              -2000
+            ],
+            [
+              1600,
+              0,
+              -2250
+            ],
+            [
+              1400,
+              0,
+              -2000
+            ],
+            [
+              1400,
+              0,
+              0
+            ],
+            [
+              1600,
+              0,
+              0
+            ],
+            [
+              1600,
+              0,
+              -2250
+            ]
+          ]
+        },
+        "name": "Recovered cell fill \u00b7 transform $00"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

@@ -1,0 +1,198 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-03ea9e",
+    "instanceOrientation": {
+      "angleBiasByte": 0,
+      "modeByte": 64,
+      "rotation": "yaw"
+    },
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "C-H EAGLE 8 S E",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      264,
+      364
+    ],
+    "sourceAddress": 256670,
+    "status": "decoded",
+    "supportTop": null,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                4,
+                5,
+                2,
+                1
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 1041,
+              "vertices": [
+                5,
+                3,
+                0,
+                2
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                3,
+                4,
+                1,
+                0
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                4,
+                3,
+                5
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                6,
+                7,
+                8
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                10,
+                9,
+                11
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                14,
+                12,
+                13
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                2,
+                0,
+                1
+              ]
+            }
+          ],
+          "geometryStart": 256674,
+          "lines": [],
+          "sourceEnd": 256821,
+          "sourceStart": 256670,
+          "vertices": [
+            [
+              -120,
+              0,
+              160
+            ],
+            [
+              0,
+              0,
+              -160
+            ],
+            [
+              120,
+              0,
+              160
+            ],
+            [
+              -120,
+              50,
+              160
+            ],
+            [
+              0,
+              50,
+              -160
+            ],
+            [
+              120,
+              50,
+              160
+            ],
+            [
+              60,
+              20,
+              0
+            ],
+            [
+              120,
+              40,
+              160
+            ],
+            [
+              120,
+              10,
+              160
+            ],
+            [
+              -60,
+              20,
+              0
+            ],
+            [
+              -120,
+              40,
+              160
+            ],
+            [
+              -120,
+              10,
+              160
+            ],
+            [
+              -60,
+              50,
+              160
+            ],
+            [
+              60,
+              50,
+              160
+            ],
+            [
+              0,
+              50,
+              0
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

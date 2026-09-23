@@ -1,0 +1,262 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-0378ee",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "READING GLASSES",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      49
+    ],
+    "sourceAddress": 227566,
+    "status": "decoded",
+    "supportTop": 20,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                5,
+                1,
+                2,
+                6
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                13,
+                5,
+                6
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                0,
+                4,
+                7,
+                3
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                4,
+                14,
+                7
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                0,
+                1,
+                2,
+                3
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                3,
+                2,
+                1,
+                0
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                2,
+                1,
+                5,
+                6
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                13,
+                6,
+                5
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                4,
+                0,
+                3,
+                7
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                14,
+                4,
+                7
+              ]
+            }
+          ],
+          "geometryStart": 227566,
+          "lines": [
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                2,
+                12
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                8,
+                11
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                11,
+                12
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                8,
+                10
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                3,
+                9
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                9,
+                10
+              ]
+            }
+          ],
+          "sourceEnd": 227752,
+          "sourceStart": 227566,
+          "vertices": [
+            [
+              20,
+              20,
+              15
+            ],
+            [
+              -20,
+              20,
+              15
+            ],
+            [
+              -20,
+              17,
+              15
+            ],
+            [
+              20,
+              17,
+              15
+            ],
+            [
+              20,
+              20,
+              -15
+            ],
+            [
+              -20,
+              20,
+              -15
+            ],
+            [
+              -20,
+              17,
+              -15
+            ],
+            [
+              20,
+              17,
+              -15
+            ],
+            [
+              0,
+              17,
+              15
+            ],
+            [
+              15,
+              0,
+              15
+            ],
+            [
+              5,
+              0,
+              15
+            ],
+            [
+              -5,
+              0,
+              15
+            ],
+            [
+              -15,
+              0,
+              15
+            ],
+            [
+              -17,
+              0,
+              -20
+            ],
+            [
+              17,
+              0,
+              -20
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

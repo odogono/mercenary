@@ -1,4 +1,4 @@
-import { parseCatalogue } from '../catalogue/data.ts';
+import { readCatalogue } from '../catalogue/data.ts';
 import type { PanelViewModel } from '../shell/panel.ts';
 import { titleStorageKeys, type TitleRuntime } from '../shell/title.ts';
 import { readErisPresentation } from './documents.ts';
@@ -13,7 +13,6 @@ import {
 import { parseDamoclesStrings } from './strings.ts';
 import { erisSurfaceFrom } from './world.ts';
 
-export const DAMOCLES_CATALOGUE_PATH = '/payload/damocles/catalogue.json';
 export const DAMOCLES_STRINGS_PATH = '/payload/damocles/strings.json';
 export const DAMOCLES_ARRIVAL_POSES_PATH =
   '/payload/damocles/arrival-poses.json';
@@ -57,18 +56,17 @@ export const damoclesTitle: TitleRuntime<
 > = {
   create: (content, restore) => new DamoclesSession(content, restore),
   load: async fetch => {
-    const [rawCatalogue, rawPresentation, rawStrings, rawPoses] =
+    // The Catalogue is its shared document and one file per Model (ADR 0048); the reader
+    // labels any failure with the path that failed.
+    const [catalogue, rawPresentation, rawStrings, rawPoses] =
       await Promise.all([
-        fetch(DAMOCLES_CATALOGUE_PATH),
+        readCatalogue(async path => (await fetch(path)).value),
         fetch(ERIS_PRESENTATION_PATH),
         fetch(DAMOCLES_STRINGS_PATH),
         fetch(DAMOCLES_ARRIVAL_POSES_PATH)
       ]);
     const doc = labelled(ERIS_PRESENTATION_PATH, () =>
       readErisPresentation(rawPresentation.value)
-    );
-    const catalogue = labelled(DAMOCLES_CATALOGUE_PATH, () =>
-      parseCatalogue(rawCatalogue.value)
     );
     const strings = labelled(DAMOCLES_STRINGS_PATH, () =>
       parseDamoclesStrings(rawStrings.value)

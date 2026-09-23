@@ -1,0 +1,945 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-036f7e",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "MANAGERS DESK",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [
+      "object-036f2a",
+      "object-036f62"
+    ],
+    "slots": [
+      236,
+      238,
+      239
+    ],
+    "sourceAddress": 225150,
+    "status": "decoded",
+    "supportTop": 38,
+    "variants": [
+      {
+        "id": "object-036f2a",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                11,
+                10,
+                8,
+                9
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                12,
+                13,
+                15,
+                14
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                10,
+                11,
+                13,
+                12
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                12,
+                20,
+                18,
+                16
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                20,
+                21,
+                19,
+                18
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                21,
+                13,
+                17,
+                19
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                22,
+                25,
+                24,
+                23
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                0,
+                4,
+                12,
+                14
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                12,
+                4,
+                7,
+                10
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                10,
+                7,
+                3,
+                8
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                13,
+                5,
+                1,
+                15
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                5,
+                13,
+                11,
+                6
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                6,
+                11,
+                9,
+                2
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                5,
+                4,
+                0,
+                1
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                7,
+                6,
+                2,
+                3
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          ],
+          "geometryStart": 225186,
+          "lines": [],
+          "sourceEnd": 225460,
+          "sourceStart": 225066,
+          "vertices": [
+            [
+              68,
+              0,
+              28
+            ],
+            [
+              68,
+              0,
+              -30
+            ],
+            [
+              -52,
+              0,
+              -30
+            ],
+            [
+              -52,
+              0,
+              28
+            ],
+            [
+              68,
+              38,
+              28
+            ],
+            [
+              68,
+              38,
+              -30
+            ],
+            [
+              -52,
+              38,
+              -30
+            ],
+            [
+              -52,
+              38,
+              28
+            ],
+            [
+              -50,
+              0,
+              28
+            ],
+            [
+              -50,
+              0,
+              -30
+            ],
+            [
+              -50,
+              36,
+              28
+            ],
+            [
+              -50,
+              36,
+              -30
+            ],
+            [
+              66,
+              36,
+              28
+            ],
+            [
+              66,
+              36,
+              -30
+            ],
+            [
+              66,
+              0,
+              28
+            ],
+            [
+              66,
+              0,
+              -30
+            ],
+            [
+              66,
+              20,
+              28
+            ],
+            [
+              66,
+              20,
+              -30
+            ],
+            [
+              36,
+              20,
+              28
+            ],
+            [
+              36,
+              20,
+              -30
+            ],
+            [
+              36,
+              36,
+              28
+            ],
+            [
+              36,
+              36,
+              -30
+            ],
+            [
+              46,
+              24,
+              -30
+            ],
+            [
+              56,
+              24,
+              -30
+            ],
+            [
+              56,
+              25,
+              -30
+            ],
+            [
+              46,
+              25,
+              -30
+            ]
+          ]
+        },
+        "name": "PROCESSORS DESK \u00b7 object-036f2a"
+      },
+      {
+        "id": "object-036f62",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                11,
+                10,
+                8,
+                9
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                12,
+                13,
+                15,
+                14
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                10,
+                11,
+                13,
+                12
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                12,
+                20,
+                18,
+                16
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                20,
+                21,
+                19,
+                18
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                21,
+                13,
+                17,
+                19
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                22,
+                25,
+                24,
+                23
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                0,
+                4,
+                12,
+                14
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                12,
+                4,
+                7,
+                10
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                10,
+                7,
+                3,
+                8
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                13,
+                5,
+                1,
+                15
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                5,
+                13,
+                11,
+                6
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                6,
+                11,
+                9,
+                2
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                5,
+                4,
+                0,
+                1
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                7,
+                6,
+                2,
+                3
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          ],
+          "geometryStart": 225186,
+          "lines": [],
+          "sourceEnd": 225460,
+          "sourceStart": 225122,
+          "vertices": [
+            [
+              68,
+              0,
+              28
+            ],
+            [
+              68,
+              0,
+              -30
+            ],
+            [
+              -52,
+              0,
+              -30
+            ],
+            [
+              -52,
+              0,
+              28
+            ],
+            [
+              68,
+              38,
+              28
+            ],
+            [
+              68,
+              38,
+              -30
+            ],
+            [
+              -52,
+              38,
+              -30
+            ],
+            [
+              -52,
+              38,
+              28
+            ],
+            [
+              -50,
+              0,
+              28
+            ],
+            [
+              -50,
+              0,
+              -30
+            ],
+            [
+              -50,
+              36,
+              28
+            ],
+            [
+              -50,
+              36,
+              -30
+            ],
+            [
+              66,
+              36,
+              28
+            ],
+            [
+              66,
+              36,
+              -30
+            ],
+            [
+              66,
+              0,
+              28
+            ],
+            [
+              66,
+              0,
+              -30
+            ],
+            [
+              66,
+              20,
+              28
+            ],
+            [
+              66,
+              20,
+              -30
+            ],
+            [
+              36,
+              20,
+              28
+            ],
+            [
+              36,
+              20,
+              -30
+            ],
+            [
+              36,
+              36,
+              28
+            ],
+            [
+              36,
+              36,
+              -30
+            ],
+            [
+              46,
+              24,
+              -30
+            ],
+            [
+              56,
+              24,
+              -30
+            ],
+            [
+              56,
+              25,
+              -30
+            ],
+            [
+              46,
+              25,
+              -30
+            ]
+          ]
+        },
+        "name": "AUTHORS DESK \u00b7 object-036f62"
+      },
+      {
+        "id": "object-036f7e",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                11,
+                10,
+                8,
+                9
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                12,
+                13,
+                15,
+                14
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                10,
+                11,
+                13,
+                12
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                12,
+                20,
+                18,
+                16
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                20,
+                21,
+                19,
+                18
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                21,
+                13,
+                17,
+                19
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                22,
+                25,
+                24,
+                23
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                0,
+                4,
+                12,
+                14
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                12,
+                4,
+                7,
+                10
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                10,
+                7,
+                3,
+                8
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                13,
+                5,
+                1,
+                15
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                5,
+                13,
+                11,
+                6
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                6,
+                11,
+                9,
+                2
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                5,
+                4,
+                0,
+                1
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                7,
+                6,
+                2,
+                3
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          ],
+          "geometryStart": 225186,
+          "lines": [],
+          "sourceEnd": 225460,
+          "sourceStart": 225150,
+          "vertices": [
+            [
+              68,
+              0,
+              28
+            ],
+            [
+              68,
+              0,
+              -30
+            ],
+            [
+              -52,
+              0,
+              -30
+            ],
+            [
+              -52,
+              0,
+              28
+            ],
+            [
+              68,
+              38,
+              28
+            ],
+            [
+              68,
+              38,
+              -30
+            ],
+            [
+              -52,
+              38,
+              -30
+            ],
+            [
+              -52,
+              38,
+              28
+            ],
+            [
+              -50,
+              0,
+              28
+            ],
+            [
+              -50,
+              0,
+              -30
+            ],
+            [
+              -50,
+              36,
+              28
+            ],
+            [
+              -50,
+              36,
+              -30
+            ],
+            [
+              66,
+              36,
+              28
+            ],
+            [
+              66,
+              36,
+              -30
+            ],
+            [
+              66,
+              0,
+              28
+            ],
+            [
+              66,
+              0,
+              -30
+            ],
+            [
+              66,
+              20,
+              28
+            ],
+            [
+              66,
+              20,
+              -30
+            ],
+            [
+              36,
+              20,
+              28
+            ],
+            [
+              36,
+              20,
+              -30
+            ],
+            [
+              36,
+              36,
+              28
+            ],
+            [
+              36,
+              36,
+              -30
+            ],
+            [
+              46,
+              24,
+              -30
+            ],
+            [
+              56,
+              24,
+              -30
+            ],
+            [
+              56,
+              25,
+              -30
+            ],
+            [
+              46,
+              25,
+              -30
+            ]
+          ]
+        },
+        "name": "MANAGERS DESK \u00b7 object-036f7e"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

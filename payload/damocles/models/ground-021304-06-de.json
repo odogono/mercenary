@@ -1,0 +1,1196 @@
+{
+  "model": {
+    "evidence": [
+      {
+        "claim": "Per-cell ground/pad/road record at $1E000, selected by the $1E400 word table and $83DC orientation byte ($054E40).",
+        "confidence": "verified",
+        "source": "docs/research/damocles-eris-ground.md"
+      },
+      {
+        "claim": "Scene joins come from the authored seed longword at $1E000+$378 ($05493E), so cells sharing this source record draw different geometry and each keeps its own identity.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-eris-ground.md"
+      }
+    ],
+    "id": "ground-021304-06-de",
+    "kind": "ground",
+    "linkedInstances": [
+      "eris-ground-de"
+    ],
+    "name": "Ground 222",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [
+      "object-041b1e"
+    ],
+    "slots": [
+      222
+    ],
+    "sourceAddress": 135940,
+    "status": "decoded",
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sceneSlots": [
+                252
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 0,
+              "vertices": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sceneSlots": [
+                240
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 1,
+              "vertices": [
+                6,
+                7,
+                8,
+                9,
+                10,
+                11
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sourceColour": 32782,
+              "sourceIndex": 5,
+              "vertices": [
+                18,
+                19,
+                20,
+                21
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sourceColour": 32782,
+              "sourceIndex": 6,
+              "vertices": [
+                22,
+                23,
+                24,
+                25
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sourceColour": 32782,
+              "sourceIndex": 7,
+              "vertices": [
+                26,
+                27,
+                28,
+                29
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sourceColour": 32782,
+              "sourceIndex": 8,
+              "vertices": [
+                30,
+                31,
+                32,
+                33
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "doubleSided": true,
+              "sceneSlots": [
+                240
+              ],
+              "sourceColour": 1911,
+              "sourceIndex": 9,
+              "vertices": [
+                34,
+                35,
+                36,
+                37,
+                38
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "doubleSided": true,
+              "sceneSlots": [
+                252
+              ],
+              "sourceColour": 1911,
+              "sourceIndex": 10,
+              "vertices": [
+                39,
+                40,
+                41,
+                42,
+                43
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "doubleSided": true,
+              "sourceColour": 1911,
+              "sourceIndex": 11,
+              "vertices": [
+                44,
+                45,
+                46,
+                47
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "doubleSided": true,
+              "sourceColour": 1911,
+              "sourceIndex": 12,
+              "vertices": [
+                48,
+                49,
+                50,
+                51
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "doubleSided": true,
+              "sourceColour": 1911,
+              "sourceIndex": 13,
+              "vertices": [
+                52,
+                53,
+                54,
+                55
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "doubleSided": true,
+              "sourceColour": 1911,
+              "sourceIndex": 14,
+              "vertices": [
+                56,
+                57,
+                58,
+                59
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 1092,
+              "vertices": [
+                69,
+                70,
+                72,
+                76
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 1092,
+              "vertices": [
+                68,
+                69,
+                76,
+                71
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 1092,
+              "vertices": [
+                70,
+                68,
+                71,
+                72
+              ]
+            },
+            {
+              "colour": "#eeee22",
+              "sourceColour": 32898,
+              "vertices": [
+                76,
+                72,
+                75,
+                74
+              ]
+            },
+            {
+              "colour": "#eeee22",
+              "sourceColour": 32898,
+              "vertices": [
+                71,
+                76,
+                74,
+                73
+              ]
+            },
+            {
+              "colour": "#eeee22",
+              "sourceColour": 32898,
+              "vertices": [
+                72,
+                71,
+                73,
+                75
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                73,
+                74,
+                75
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 1092,
+              "vertices": [
+                78,
+                79,
+                81,
+                85
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 1092,
+              "vertices": [
+                77,
+                78,
+                85,
+                80
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 1092,
+              "vertices": [
+                79,
+                77,
+                80,
+                81
+              ]
+            },
+            {
+              "colour": "#eeee22",
+              "sourceColour": 32898,
+              "vertices": [
+                85,
+                81,
+                84,
+                83
+              ]
+            },
+            {
+              "colour": "#eeee22",
+              "sourceColour": 32898,
+              "vertices": [
+                80,
+                85,
+                83,
+                82
+              ]
+            },
+            {
+              "colour": "#eeee22",
+              "sourceColour": 32898,
+              "vertices": [
+                81,
+                80,
+                82,
+                84
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                82,
+                83,
+                84
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 1092,
+              "vertices": [
+                87,
+                88,
+                90,
+                94
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 1092,
+              "vertices": [
+                86,
+                87,
+                94,
+                89
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 1092,
+              "vertices": [
+                88,
+                86,
+                89,
+                90
+              ]
+            },
+            {
+              "colour": "#eeee22",
+              "sourceColour": 32898,
+              "vertices": [
+                94,
+                90,
+                93,
+                92
+              ]
+            },
+            {
+              "colour": "#eeee22",
+              "sourceColour": 32898,
+              "vertices": [
+                89,
+                94,
+                92,
+                91
+              ]
+            },
+            {
+              "colour": "#eeee22",
+              "sourceColour": 32898,
+              "vertices": [
+                90,
+                89,
+                91,
+                93
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                91,
+                92,
+                93
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 1092,
+              "vertices": [
+                96,
+                97,
+                99,
+                103
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 1092,
+              "vertices": [
+                95,
+                96,
+                103,
+                98
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 1092,
+              "vertices": [
+                97,
+                95,
+                98,
+                99
+              ]
+            },
+            {
+              "colour": "#eeee22",
+              "sourceColour": 32898,
+              "vertices": [
+                103,
+                99,
+                102,
+                101
+              ]
+            },
+            {
+              "colour": "#eeee22",
+              "sourceColour": 32898,
+              "vertices": [
+                98,
+                103,
+                101,
+                100
+              ]
+            },
+            {
+              "colour": "#eeee22",
+              "sourceColour": 32898,
+              "vertices": [
+                99,
+                98,
+                100,
+                102
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                100,
+                101,
+                102
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 1092,
+              "vertices": [
+                105,
+                106,
+                108,
+                112
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 1092,
+              "vertices": [
+                104,
+                105,
+                112,
+                107
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 1092,
+              "vertices": [
+                106,
+                104,
+                107,
+                108
+              ]
+            },
+            {
+              "colour": "#eeee22",
+              "sourceColour": 32898,
+              "vertices": [
+                112,
+                108,
+                111,
+                110
+              ]
+            },
+            {
+              "colour": "#eeee22",
+              "sourceColour": 32898,
+              "vertices": [
+                107,
+                112,
+                110,
+                109
+              ]
+            },
+            {
+              "colour": "#eeee22",
+              "sourceColour": 32898,
+              "vertices": [
+                108,
+                107,
+                109,
+                111
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                109,
+                110,
+                111
+              ]
+            }
+          ],
+          "lines": [
+            {
+              "colour": "#cccccc",
+              "sceneSlots": [
+                252
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 2,
+              "vertices": [
+                12,
+                13
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sceneSlots": [
+                240
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 3,
+              "vertices": [
+                14,
+                15
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32782,
+              "sourceIndex": 4,
+              "vertices": [
+                16,
+                17
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "sourceIndex": 15,
+              "vertices": [
+                60,
+                61
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "sourceIndex": 16,
+              "vertices": [
+                62,
+                63
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "sourceIndex": 17,
+              "vertices": [
+                64,
+                65
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "sourceIndex": 18,
+              "vertices": [
+                66,
+                67
+              ]
+            }
+          ],
+          "sourceEnd": 136224,
+          "sourceStart": 135940,
+          "vertices": [
+            [
+              -32767,
+              0,
+              200
+            ],
+            [
+              -1200,
+              0,
+              200
+            ],
+            [
+              -800,
+              0,
+              0
+            ],
+            [
+              -1200,
+              0,
+              -200
+            ],
+            [
+              -32767,
+              0,
+              -200
+            ],
+            [
+              -393216,
+              0,
+              0
+            ],
+            [
+              -200,
+              0,
+              -32767
+            ],
+            [
+              -200,
+              0,
+              -1200
+            ],
+            [
+              0,
+              0,
+              -800
+            ],
+            [
+              200,
+              0,
+              -1200
+            ],
+            [
+              200,
+              0,
+              -32767
+            ],
+            [
+              0,
+              0,
+              -131072
+            ],
+            [
+              -800,
+              0,
+              0
+            ],
+            [
+              -393216,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              -800
+            ],
+            [
+              0,
+              0,
+              -131072
+            ],
+            [
+              -800,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              -800
+            ],
+            [
+              -640,
+              0,
+              100
+            ],
+            [
+              -800,
+              0,
+              -270
+            ],
+            [
+              -1200,
+              0,
+              -200
+            ],
+            [
+              -1200,
+              0,
+              200
+            ],
+            [
+              -640,
+              0,
+              100
+            ],
+            [
+              -200,
+              0,
+              -200
+            ],
+            [
+              -480,
+              0,
+              -480
+            ],
+            [
+              -800,
+              0,
+              -270
+            ],
+            [
+              -200,
+              0,
+              -200
+            ],
+            [
+              100,
+              0,
+              -640
+            ],
+            [
+              -270,
+              0,
+              -800
+            ],
+            [
+              -480,
+              0,
+              -480
+            ],
+            [
+              100,
+              0,
+              -640
+            ],
+            [
+              200,
+              0,
+              -1200
+            ],
+            [
+              -200,
+              0,
+              -1200
+            ],
+            [
+              -270,
+              0,
+              -800
+            ],
+            [
+              -5,
+              0,
+              -32767
+            ],
+            [
+              -5,
+              0,
+              -1200
+            ],
+            [
+              5,
+              0,
+              -1200
+            ],
+            [
+              5,
+              0,
+              -32767
+            ],
+            [
+              0,
+              0,
+              -131072
+            ],
+            [
+              -32767,
+              0,
+              5
+            ],
+            [
+              -1200,
+              0,
+              5
+            ],
+            [
+              -1200,
+              0,
+              -5
+            ],
+            [
+              -32767,
+              0,
+              -5
+            ],
+            [
+              -393216,
+              0,
+              0
+            ],
+            [
+              -1200,
+              0,
+              5
+            ],
+            [
+              -729,
+              0,
+              -98
+            ],
+            [
+              -731,
+              0,
+              -103
+            ],
+            [
+              -1200,
+              0,
+              -5
+            ],
+            [
+              -729,
+              0,
+              -98
+            ],
+            [
+              -348,
+              0,
+              -348
+            ],
+            [
+              -353,
+              0,
+              -353
+            ],
+            [
+              -731,
+              0,
+              -103
+            ],
+            [
+              -348,
+              0,
+              -348
+            ],
+            [
+              -98,
+              0,
+              -729
+            ],
+            [
+              -103,
+              0,
+              -731
+            ],
+            [
+              -353,
+              0,
+              -353
+            ],
+            [
+              -98,
+              0,
+              -729
+            ],
+            [
+              5,
+              0,
+              -1200
+            ],
+            [
+              -5,
+              0,
+              -1200
+            ],
+            [
+              -103,
+              0,
+              -731
+            ],
+            [
+              -1200,
+              0,
+              -5
+            ],
+            [
+              -731,
+              0,
+              -103
+            ],
+            [
+              -731,
+              0,
+              -103
+            ],
+            [
+              -353,
+              0,
+              -353
+            ],
+            [
+              -353,
+              0,
+              -353
+            ],
+            [
+              -103,
+              0,
+              -731
+            ],
+            [
+              -103,
+              0,
+              -731
+            ],
+            [
+              -5,
+              0,
+              -1200
+            ],
+            [
+              -24000,
+              0,
+              -291
+            ],
+            [
+              -23992,
+              0,
+              -305
+            ],
+            [
+              -24008,
+              0,
+              -305
+            ],
+            [
+              -24000,
+              260,
+              -291
+            ],
+            [
+              -24008,
+              260,
+              -305
+            ],
+            [
+              -24000,
+              320,
+              -264
+            ],
+            [
+              -23968,
+              320,
+              -320
+            ],
+            [
+              -24032,
+              320,
+              -320
+            ],
+            [
+              -23992,
+              260,
+              -305
+            ],
+            [
+              -8000,
+              0,
+              309
+            ],
+            [
+              -7992,
+              0,
+              295
+            ],
+            [
+              -8008,
+              0,
+              295
+            ],
+            [
+              -8000,
+              260,
+              309
+            ],
+            [
+              -8008,
+              260,
+              295
+            ],
+            [
+              -8000,
+              320,
+              336
+            ],
+            [
+              -7968,
+              320,
+              280
+            ],
+            [
+              -8032,
+              320,
+              280
+            ],
+            [
+              -7992,
+              260,
+              295
+            ],
+            [
+              -600,
+              0,
+              -591
+            ],
+            [
+              -592,
+              0,
+              -605
+            ],
+            [
+              -608,
+              0,
+              -605
+            ],
+            [
+              -600,
+              260,
+              -591
+            ],
+            [
+              -608,
+              260,
+              -605
+            ],
+            [
+              -600,
+              320,
+              -564
+            ],
+            [
+              -568,
+              320,
+              -620
+            ],
+            [
+              -632,
+              320,
+              -620
+            ],
+            [
+              -592,
+              260,
+              -605
+            ],
+            [
+              300,
+              0,
+              -7991
+            ],
+            [
+              308,
+              0,
+              -8005
+            ],
+            [
+              292,
+              0,
+              -8005
+            ],
+            [
+              300,
+              260,
+              -7991
+            ],
+            [
+              292,
+              260,
+              -8005
+            ],
+            [
+              300,
+              320,
+              -7964
+            ],
+            [
+              332,
+              320,
+              -8020
+            ],
+            [
+              268,
+              320,
+              -8020
+            ],
+            [
+              308,
+              260,
+              -8005
+            ],
+            [
+              -300,
+              0,
+              -23991
+            ],
+            [
+              -292,
+              0,
+              -24005
+            ],
+            [
+              -308,
+              0,
+              -24005
+            ],
+            [
+              -300,
+              260,
+              -23991
+            ],
+            [
+              -308,
+              260,
+              -24005
+            ],
+            [
+              -300,
+              320,
+              -23964
+            ],
+            [
+              -268,
+              320,
+              -24020
+            ],
+            [
+              -332,
+              320,
+              -24020
+            ],
+            [
+              -292,
+              260,
+              -24005
+            ]
+          ]
+        },
+        "name": "Recovered cell fill \u00b7 transform $06"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

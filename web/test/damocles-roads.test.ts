@@ -1,9 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 
-import { parseCatalogue, type Catalogue } from '../src/catalogue/data.ts';
+import { type Catalogue } from '../src/catalogue/data.ts';
+import { loadCatalogue } from './fixtures/catalogue.ts';
 
-const load = async (): Promise<Catalogue> =>
-  parseCatalogue(await Bun.file('../payload/damocles/catalogue.json').json());
+const load = async (): Promise<Catalogue> => await loadCatalogue();
 
 /// The first-world capture stands in Capital City cell $87 with the ground window latched
 /// at radius 3, and docs/research/damocles-eris-ground.md reads its live ground-extent

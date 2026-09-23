@@ -1,0 +1,403 @@
+{
+  "model": {
+    "evidence": [
+      {
+        "claim": "Live LOGOS per-cell ground/pad/road record at $1E000; this workspace overwrites the Eris first-world index.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-non-eris-workspaces.md"
+      }
+    ],
+    "id": "logos-ground-023012-05-32",
+    "kind": "ground",
+    "linkedInstances": [
+      "logos-ground-32"
+    ],
+    "name": "LOGOS ground 50",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      741
+    ],
+    "sourceAddress": 143378,
+    "status": "decoded",
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sceneSlots": [
+                244
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 0,
+              "vertices": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sceneSlots": [
+                240
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 1,
+              "vertices": [
+                6,
+                7,
+                8,
+                9,
+                10,
+                11
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sceneSlots": [
+                252
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 2,
+              "vertices": [
+                12,
+                13,
+                14,
+                15,
+                16
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sourceColour": 32782,
+              "sourceIndex": 6,
+              "vertices": [
+                23,
+                24,
+                25
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sourceColour": 32782,
+              "sourceIndex": 7,
+              "vertices": [
+                26,
+                27,
+                28,
+                29
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sourceColour": 32782,
+              "sourceIndex": 8,
+              "vertices": [
+                30,
+                31,
+                32,
+                33,
+                34
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sourceColour": 32782,
+              "sourceIndex": 9,
+              "vertices": [
+                35,
+                36,
+                37,
+                38
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sourceColour": 32782,
+              "sourceIndex": 10,
+              "vertices": [
+                39,
+                40,
+                41
+              ]
+            }
+          ],
+          "lines": [
+            {
+              "colour": "#cccccc",
+              "sceneSlots": [
+                244
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 3,
+              "vertices": [
+                17,
+                18
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sceneSlots": [
+                240
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 4,
+              "vertices": [
+                19,
+                20
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sceneSlots": [
+                252
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 5,
+              "vertices": [
+                21,
+                22
+              ]
+            }
+          ],
+          "sourceEnd": 143540,
+          "sourceStart": 143378,
+          "vertices": [
+            [
+              -100,
+              0,
+              -32767
+            ],
+            [
+              -100,
+              0,
+              -900
+            ],
+            [
+              0,
+              0,
+              -540
+            ],
+            [
+              100,
+              0,
+              -800
+            ],
+            [
+              100,
+              0,
+              -32767
+            ],
+            [
+              0,
+              0,
+              -65536
+            ],
+            [
+              100,
+              0,
+              32767
+            ],
+            [
+              100,
+              0,
+              800
+            ],
+            [
+              0,
+              0,
+              540
+            ],
+            [
+              -100,
+              0,
+              900
+            ],
+            [
+              -100,
+              0,
+              32767
+            ],
+            [
+              0,
+              0,
+              196608
+            ],
+            [
+              32767,
+              0,
+              -100
+            ],
+            [
+              700,
+              0,
+              -100
+            ],
+            [
+              700,
+              0,
+              100
+            ],
+            [
+              32767,
+              0,
+              100
+            ],
+            [
+              393216,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              -540
+            ],
+            [
+              0,
+              0,
+              -65536
+            ],
+            [
+              0,
+              0,
+              540
+            ],
+            [
+              0,
+              0,
+              196608
+            ],
+            [
+              400,
+              0,
+              0
+            ],
+            [
+              393216,
+              0,
+              0
+            ],
+            [
+              200,
+              0,
+              -600
+            ],
+            [
+              100,
+              0,
+              -800
+            ],
+            [
+              0,
+              0,
+              -540
+            ],
+            [
+              400,
+              0,
+              0
+            ],
+            [
+              500,
+              0,
+              -200
+            ],
+            [
+              200,
+              0,
+              -600
+            ],
+            [
+              0,
+              0,
+              -540
+            ],
+            [
+              500,
+              0,
+              200
+            ],
+            [
+              700,
+              0,
+              100
+            ],
+            [
+              700,
+              0,
+              -100
+            ],
+            [
+              500,
+              0,
+              -200
+            ],
+            [
+              400,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              540
+            ],
+            [
+              200,
+              0,
+              600
+            ],
+            [
+              500,
+              0,
+              200
+            ],
+            [
+              400,
+              0,
+              0
+            ],
+            [
+              100,
+              0,
+              800
+            ],
+            [
+              200,
+              0,
+              600
+            ],
+            [
+              0,
+              0,
+              540
+            ]
+          ]
+        },
+        "name": "Recovered cell fill \u00b7 transform $05"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

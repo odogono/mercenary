@@ -1,0 +1,388 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-039a14",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "CASH REGISTER",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      94
+    ],
+    "sourceAddress": 236052,
+    "status": "decoded",
+    "supportTop": 25,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                0,
+                3,
+                4,
+                5
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                12,
+                13,
+                14,
+                15
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                7,
+                6,
+                5,
+                4
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                16,
+                17,
+                18,
+                19
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                20,
+                21,
+                22,
+                23
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                24,
+                25,
+                26,
+                27
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                6,
+                7,
+                8,
+                11
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                28,
+                29,
+                30,
+                31
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                3,
+                2,
+                9,
+                4
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                4,
+                9,
+                7
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                9,
+                8,
+                7
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                1,
+                0,
+                5,
+                10
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                5,
+                6,
+                10
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                6,
+                11,
+                10
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                2,
+                1,
+                10,
+                9
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                32,
+                33,
+                34,
+                35
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                0,
+                1,
+                2,
+                3
+              ]
+            }
+          ],
+          "geometryStart": 236052,
+          "lines": [],
+          "sourceEnd": 236389,
+          "sourceStart": 236052,
+          "vertices": [
+            [
+              -15,
+              25,
+              20
+            ],
+            [
+              -15,
+              25,
+              30
+            ],
+            [
+              15,
+              25,
+              30
+            ],
+            [
+              15,
+              25,
+              20
+            ],
+            [
+              15,
+              20,
+              20
+            ],
+            [
+              -15,
+              20,
+              20
+            ],
+            [
+              -15,
+              10,
+              0
+            ],
+            [
+              15,
+              10,
+              0
+            ],
+            [
+              15,
+              0,
+              0
+            ],
+            [
+              15,
+              0,
+              30
+            ],
+            [
+              -15,
+              0,
+              30
+            ],
+            [
+              -15,
+              0,
+              0
+            ],
+            [
+              -14,
+              24,
+              20
+            ],
+            [
+              14,
+              24,
+              20
+            ],
+            [
+              14,
+              21,
+              20
+            ],
+            [
+              -14,
+              21,
+              20
+            ],
+            [
+              -12,
+              19,
+              18
+            ],
+            [
+              -10,
+              19,
+              18
+            ],
+            [
+              -10,
+              11,
+              2
+            ],
+            [
+              -12,
+              11,
+              2
+            ],
+            [
+              -1,
+              19,
+              18
+            ],
+            [
+              1,
+              19,
+              18
+            ],
+            [
+              1,
+              11,
+              2
+            ],
+            [
+              -1,
+              11,
+              2
+            ],
+            [
+              12,
+              19,
+              18
+            ],
+            [
+              12,
+              11,
+              2
+            ],
+            [
+              10,
+              11,
+              2
+            ],
+            [
+              10,
+              19,
+              18
+            ],
+            [
+              -14,
+              9,
+              0
+            ],
+            [
+              14,
+              9,
+              0
+            ],
+            [
+              14,
+              1,
+              0
+            ],
+            [
+              -14,
+              1,
+              0
+            ],
+            [
+              14,
+              24,
+              30
+            ],
+            [
+              -14,
+              24,
+              30
+            ],
+            [
+              -14,
+              21,
+              30
+            ],
+            [
+              14,
+              21,
+              30
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

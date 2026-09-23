@@ -1,0 +1,232 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-03a7da",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "RUBBISH BIN",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      109
+    ],
+    "sourceAddress": 239578,
+    "status": "decoded",
+    "supportTop": 47,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                11,
+                10,
+                13,
+                14
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                0,
+                1,
+                2,
+                5
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                1,
+                10,
+                11,
+                2
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                13,
+                0,
+                5,
+                14
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                6,
+                7,
+                8,
+                9
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                2,
+                11,
+                12,
+                3
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                14,
+                5,
+                4,
+                15
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                5,
+                2,
+                3,
+                4
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                11,
+                14,
+                15,
+                12
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                0,
+                13,
+                10,
+                1
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                4,
+                3,
+                12,
+                15
+              ]
+            }
+          ],
+          "geometryStart": 239578,
+          "lines": [],
+          "sourceEnd": 239757,
+          "sourceStart": 239578,
+          "vertices": [
+            [
+              -7,
+              47,
+              -5
+            ],
+            [
+              7,
+              47,
+              -5
+            ],
+            [
+              12,
+              30,
+              -10
+            ],
+            [
+              7,
+              0,
+              -5
+            ],
+            [
+              -7,
+              0,
+              -5
+            ],
+            [
+              -12,
+              30,
+              -10
+            ],
+            [
+              -4,
+              45,
+              -6
+            ],
+            [
+              4,
+              45,
+              -6
+            ],
+            [
+              9,
+              30,
+              -10
+            ],
+            [
+              -9,
+              30,
+              -10
+            ],
+            [
+              7,
+              47,
+              5
+            ],
+            [
+              12,
+              30,
+              10
+            ],
+            [
+              7,
+              0,
+              5
+            ],
+            [
+              -7,
+              47,
+              5
+            ],
+            [
+              -12,
+              30,
+              10
+            ],
+            [
+              -7,
+              0,
+              5
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

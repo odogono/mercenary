@@ -1,0 +1,517 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-0379bc",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "BATH",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      50
+    ],
+    "sourceAddress": 227772,
+    "status": "decoded",
+    "supportTop": 48,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                30,
+                31,
+                25,
+                22
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 582,
+              "vertices": [
+                32,
+                33,
+                35,
+                34
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                4,
+                5,
+                31,
+                30
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                22,
+                25,
+                9,
+                6
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                6,
+                4,
+                30,
+                22
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                5,
+                9,
+                25,
+                31
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                20,
+                21,
+                19,
+                18
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                21,
+                20,
+                23,
+                24
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                13,
+                12,
+                14,
+                15
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                18,
+                19,
+                17,
+                16
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                10,
+                11,
+                8,
+                7
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                14,
+                12,
+                18,
+                16
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                18,
+                12,
+                10,
+                20
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                20,
+                10,
+                7,
+                23
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                19,
+                13,
+                15,
+                17
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                13,
+                19,
+                21,
+                11
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                11,
+                21,
+                24,
+                8
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                12,
+                13,
+                11,
+                10
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                16,
+                17,
+                15,
+                14
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                5,
+                4,
+                0,
+                1
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                6,
+                9,
+                3,
+                2
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                4,
+                6,
+                2,
+                0
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                9,
+                5,
+                1,
+                3
+              ]
+            }
+          ],
+          "geometryStart": 227772,
+          "lines": [
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                32,
+                28
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                33,
+                29
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                35,
+                27
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                34,
+                26
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                27,
+                26
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                26,
+                28
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                28,
+                29
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                29,
+                27
+              ]
+            }
+          ],
+          "sourceEnd": 228187,
+          "sourceStart": 227772,
+          "vertices": [
+            [
+              -15,
+              0,
+              80
+            ],
+            [
+              15,
+              0,
+              80
+            ],
+            [
+              -15,
+              0,
+              5
+            ],
+            [
+              15,
+              0,
+              5
+            ],
+            [
+              -17,
+              40,
+              90
+            ],
+            [
+              17,
+              40,
+              90
+            ],
+            [
+              -17,
+              40,
+              0
+            ],
+            [
+              -2,
+              40,
+              0
+            ],
+            [
+              2,
+              40,
+              0
+            ],
+            [
+              17,
+              40,
+              0
+            ],
+            [
+              -2,
+              48,
+              0
+            ],
+            [
+              2,
+              48,
+              0
+            ],
+            [
+              -2,
+              48,
+              14
+            ],
+            [
+              2,
+              48,
+              14
+            ],
+            [
+              -2,
+              44,
+              14
+            ],
+            [
+              2,
+              44,
+              14
+            ],
+            [
+              -2,
+              44,
+              10
+            ],
+            [
+              2,
+              44,
+              10
+            ],
+            [
+              -2,
+              46,
+              10
+            ],
+            [
+              2,
+              46,
+              10
+            ],
+            [
+              -2,
+              46,
+              5
+            ],
+            [
+              2,
+              46,
+              5
+            ],
+            [
+              -15,
+              40,
+              3
+            ],
+            [
+              -2,
+              40,
+              3
+            ],
+            [
+              2,
+              40,
+              3
+            ],
+            [
+              15,
+              40,
+              3
+            ],
+            [
+              -13,
+              5,
+              7
+            ],
+            [
+              13,
+              5,
+              7
+            ],
+            [
+              -13,
+              5,
+              77
+            ],
+            [
+              13,
+              5,
+              77
+            ],
+            [
+              -15,
+              40,
+              87
+            ],
+            [
+              15,
+              40,
+              87
+            ],
+            [
+              -14,
+              30,
+              85
+            ],
+            [
+              14,
+              30,
+              85
+            ],
+            [
+              -14,
+              30,
+              2
+            ],
+            [
+              14,
+              30,
+              2
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

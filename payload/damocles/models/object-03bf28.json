@@ -1,0 +1,162 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-03bf28",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "BATHROOM SCALES",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      129
+    ],
+    "sourceAddress": 245544,
+    "status": "decoded",
+    "supportTop": 6,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                3,
+                0,
+                5,
+                6
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                4,
+                1,
+                2,
+                7
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                5,
+                4,
+                7,
+                6
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                1,
+                0,
+                3,
+                2
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                0,
+                1,
+                4,
+                5
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                8,
+                9,
+                10,
+                11
+              ]
+            }
+          ],
+          "geometryStart": 245544,
+          "lines": [],
+          "sourceEnd": 245664,
+          "sourceStart": 245544,
+          "vertices": [
+            [
+              30,
+              6,
+              0
+            ],
+            [
+              -30,
+              6,
+              0
+            ],
+            [
+              -30,
+              0,
+              0
+            ],
+            [
+              30,
+              0,
+              0
+            ],
+            [
+              -30,
+              6,
+              60
+            ],
+            [
+              30,
+              6,
+              60
+            ],
+            [
+              30,
+              0,
+              60
+            ],
+            [
+              -30,
+              0,
+              60
+            ],
+            [
+              12,
+              6,
+              6
+            ],
+            [
+              -12,
+              6,
+              6
+            ],
+            [
+              -12,
+              6,
+              18
+            ],
+            [
+              12,
+              6,
+              18
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

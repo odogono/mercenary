@@ -1,0 +1,246 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-03f240",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "NOVADRIVE",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      283
+    ],
+    "sourceAddress": 258624,
+    "status": "decoded",
+    "supportTop": 60,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                12,
+                4,
+                3,
+                11
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                4,
+                12,
+                13,
+                5
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                11,
+                3,
+                2,
+                10
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                5,
+                13,
+                14,
+                6
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                10,
+                2,
+                1,
+                9
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                6,
+                14,
+                15,
+                7
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                9,
+                1,
+                0,
+                8
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                7,
+                15,
+                8,
+                0
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                12,
+                11,
+                10,
+                9,
+                8
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                8,
+                15,
+                14,
+                13,
+                12
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                4,
+                5,
+                6,
+                7,
+                0
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                0,
+                1,
+                2,
+                3,
+                4
+              ]
+            }
+          ],
+          "geometryStart": 258624,
+          "lines": [],
+          "sourceEnd": 258814,
+          "sourceStart": 258624,
+          "vertices": [
+            [
+              0,
+              0,
+              -45
+            ],
+            [
+              -20,
+              10,
+              -45
+            ],
+            [
+              -30,
+              30,
+              -45
+            ],
+            [
+              -20,
+              50,
+              -45
+            ],
+            [
+              0,
+              60,
+              -45
+            ],
+            [
+              20,
+              50,
+              -45
+            ],
+            [
+              30,
+              30,
+              -45
+            ],
+            [
+              20,
+              10,
+              -45
+            ],
+            [
+              0,
+              0,
+              45
+            ],
+            [
+              -20,
+              10,
+              45
+            ],
+            [
+              -30,
+              30,
+              45
+            ],
+            [
+              -20,
+              50,
+              45
+            ],
+            [
+              0,
+              60,
+              45
+            ],
+            [
+              20,
+              50,
+              45
+            ],
+            [
+              30,
+              30,
+              45
+            ],
+            [
+              20,
+              10,
+              45
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

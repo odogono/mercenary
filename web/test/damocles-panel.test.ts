@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'bun:test';
 
-import { parseCatalogue } from '../src/catalogue/data.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import {
   bodyCoordinateReadout,
@@ -14,14 +13,15 @@ import { damoclesTitle } from '../src/damocles/title.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { intent } from '../src/gameCore/index.ts';
 import { arrivalPoses } from './damocles-pose.ts';
+import { loadCatalogue } from './fixtures/catalogue.ts';
 
 const content = async () => {
   const [catalogue, presentation, strings] = await Promise.all([
-    Bun.file('../payload/damocles/catalogue.json').json(),
+    loadCatalogue(),
     Bun.file(new URL('../damocles/eris.json', import.meta.url)).json(),
     Bun.file('../payload/damocles/strings.json').json()
   ]);
-  const parsed = parseCatalogue(catalogue);
+  const parsed = catalogue;
   const doc = readErisPresentation(presentation);
   return {
     catalogue: parsed,

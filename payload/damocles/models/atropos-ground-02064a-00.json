@@ -1,0 +1,101 @@
+{
+  "model": {
+    "evidence": [
+      {
+        "claim": "Live ATROPOS per-cell ground/pad/road record at $1E000; this workspace overwrites the Eris first-world index.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-non-eris-workspaces.md"
+      }
+    ],
+    "id": "atropos-ground-02064a-00",
+    "kind": "ground",
+    "linkedInstances": [
+      "atropos-ground-01",
+      "atropos-ground-02",
+      "atropos-ground-20"
+    ],
+    "name": "ATROPOS ground 1",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      489
+    ],
+    "sourceAddress": 132682,
+    "status": "decoded",
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sourceColour": 32782,
+              "sourceIndex": 1,
+              "vertices": [
+                2,
+                3,
+                4,
+                5
+              ]
+            }
+          ],
+          "lines": [
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32782,
+              "sourceIndex": 0,
+              "vertices": [
+                0,
+                1
+              ]
+            }
+          ],
+          "sourceEnd": 132715,
+          "sourceStart": 132682,
+          "vertices": [
+            [
+              600,
+              0,
+              -600
+            ],
+            [
+              -600,
+              0,
+              600
+            ],
+            [
+              600,
+              0,
+              -600
+            ],
+            [
+              -600,
+              0,
+              -600
+            ],
+            [
+              -600,
+              0,
+              600
+            ],
+            [
+              600,
+              0,
+              600
+            ]
+          ]
+        },
+        "name": "Recovered cell fill \u00b7 transform $00"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

@@ -1,0 +1,272 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-03df0e",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "SCROLL",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      153
+    ],
+    "sourceAddress": 253710,
+    "status": "decoded",
+    "supportTop": 8,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                8,
+                9,
+                7,
+                6
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                10,
+                11,
+                9,
+                8
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                6,
+                7,
+                5,
+                4
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                12,
+                13,
+                11,
+                10
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                3,
+                2,
+                4,
+                5
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                14,
+                15,
+                13,
+                12
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                1,
+                0,
+                2,
+                3
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                15,
+                14,
+                0,
+                1
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                11,
+                10,
+                8,
+                9
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                4,
+                5,
+                7,
+                6
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                13,
+                12,
+                10,
+                11
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                2,
+                3,
+                5,
+                4
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                15,
+                14,
+                12,
+                13
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                0,
+                1,
+                3,
+                2
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                14,
+                15,
+                1,
+                0
+              ]
+            }
+          ],
+          "geometryStart": 253710,
+          "lines": [],
+          "sourceEnd": 253917,
+          "sourceStart": 253710,
+          "vertices": [
+            [
+              4,
+              8,
+              20
+            ],
+            [
+              4,
+              8,
+              -20
+            ],
+            [
+              2,
+              6,
+              20
+            ],
+            [
+              2,
+              6,
+              -20
+            ],
+            [
+              2,
+              2,
+              20
+            ],
+            [
+              2,
+              2,
+              -20
+            ],
+            [
+              4,
+              0,
+              20
+            ],
+            [
+              4,
+              0,
+              -20
+            ],
+            [
+              8,
+              0,
+              20
+            ],
+            [
+              8,
+              0,
+              -20
+            ],
+            [
+              10,
+              2,
+              20
+            ],
+            [
+              10,
+              2,
+              -20
+            ],
+            [
+              10,
+              6,
+              20
+            ],
+            [
+              10,
+              6,
+              -20
+            ],
+            [
+              8,
+              8,
+              20
+            ],
+            [
+              8,
+              8,
+              -20
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

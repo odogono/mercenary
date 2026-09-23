@@ -1,0 +1,37 @@
+{
+  "model": {
+    "evidence": [],
+    "id": "structure-01d1a2",
+    "kind": "structure",
+    "linkedInstances": [],
+    "name": "Structure 146",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "Empty surface record: no plan vertices or walls. The linked building detail is itself an intentionally empty record, so there is no detail geometry to place. That empty detail carries no visibility groups either, so this record keeps no structure selector and its region queues are not retained.",
+    "recordClass": "empty",
+    "relatedModels": [
+      "interior-02620e"
+    ],
+    "sceneColours": [
+      {
+        "colour": "#eeeeee",
+        "sourceColour": 32898
+      },
+      {
+        "colour": "#666666",
+        "sourceColour": 32914
+      }
+    ],
+    "slots": [
+      146
+    ],
+    "sourceAddress": 119202,
+    "status": "decoded",
+    "variants": []
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

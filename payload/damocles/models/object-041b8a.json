@@ -1,0 +1,827 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [
+      {
+        "claim": "7 authored $7000 ground placements bind this template to scene palette 76: CLOTHO cell $13, CLOTHO cell $33, CLOTHO cell $36, CLOTHO cell $46, CLOTHO cell $47, CLOTHO cell $63, and more.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-catalogue.md"
+      },
+      {
+        "claim": "9 authored $7000 ground placements bind this template to scene palette 107: CLOTHO cell $23, CLOTHO cell $34, CLOTHO cell $35, CLOTHO cell $43, CLOTHO cell $53, CLOTHO cell $57, and more.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-catalogue.md"
+      },
+      {
+        "claim": "5 authored $7000 ground placements bind this template to scene palette 113: BACCHUS cell $11, BACCHUS cell $20, BACCHUS cell $22, BACCHUS cell $71, BACCHUS cell $72.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-catalogue.md"
+      },
+      {
+        "claim": "3 authored $7000 ground placements bind this template to scene palette 130: BACCHUS cell $10, BACCHUS cell $12, BACCHUS cell $30.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-catalogue.md"
+      },
+      {
+        "claim": "1 authored $7000 ground placement bind this template to scene palette 131: BACCHUS cell $31.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-catalogue.md"
+      },
+      {
+        "claim": "7 authored $7000 ground placements bind this template to scene palette 132: BACCHUS cell $32, BACCHUS cell $41, BACCHUS cell $42, BACCHUS cell $51, BACCHUS cell $52, BACCHUS cell $61, and more.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-catalogue.md"
+      }
+    ],
+    "id": "object-041b8a",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "Object 338",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "Shape decoded; its scene colours resolve through the palette each placing cell selects, evidenced here as palette 76, 107, 113, 130, 131, 132.",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      338
+    ],
+    "sourceAddress": 269194,
+    "status": "decoded",
+    "supportTop": 320,
+    "variants": [
+      {
+        "id": "palette-76",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#888888",
+              "sourceColour": 32914,
+              "vertices": [
+                1,
+                2,
+                4,
+                8
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32914,
+              "vertices": [
+                0,
+                1,
+                8,
+                3
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32914,
+              "vertices": [
+                2,
+                0,
+                3,
+                4
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32916,
+              "vertices": [
+                8,
+                4,
+                7,
+                6
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32916,
+              "vertices": [
+                3,
+                8,
+                6,
+                5
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32916,
+              "vertices": [
+                4,
+                3,
+                5,
+                7
+              ]
+            },
+            {
+              "colour": "#664444",
+              "sourceColour": 802,
+              "vertices": [
+                5,
+                6,
+                7
+              ]
+            }
+          ],
+          "geometryStart": 269194,
+          "lines": [],
+          "sourceEnd": 269302,
+          "sourceStart": 269194,
+          "vertices": [
+            [
+              0,
+              0,
+              9
+            ],
+            [
+              8,
+              0,
+              -5
+            ],
+            [
+              -8,
+              0,
+              -5
+            ],
+            [
+              0,
+              260,
+              9
+            ],
+            [
+              -8,
+              260,
+              -5
+            ],
+            [
+              0,
+              320,
+              36
+            ],
+            [
+              32,
+              320,
+              -20
+            ],
+            [
+              -32,
+              320,
+              -20
+            ],
+            [
+              8,
+              260,
+              -5
+            ]
+          ]
+        },
+        "name": "Recovered form \u00b7 palette 76"
+      },
+      {
+        "id": "palette-107",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#888888",
+              "sourceColour": 32914,
+              "vertices": [
+                1,
+                2,
+                4,
+                8
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32914,
+              "vertices": [
+                0,
+                1,
+                8,
+                3
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32914,
+              "vertices": [
+                2,
+                0,
+                3,
+                4
+              ]
+            },
+            {
+              "colour": "#eecc22",
+              "sourceColour": 32916,
+              "vertices": [
+                8,
+                4,
+                7,
+                6
+              ]
+            },
+            {
+              "colour": "#eecc22",
+              "sourceColour": 32916,
+              "vertices": [
+                3,
+                8,
+                6,
+                5
+              ]
+            },
+            {
+              "colour": "#eecc22",
+              "sourceColour": 32916,
+              "vertices": [
+                4,
+                3,
+                5,
+                7
+              ]
+            },
+            {
+              "colour": "#664444",
+              "sourceColour": 802,
+              "vertices": [
+                5,
+                6,
+                7
+              ]
+            }
+          ],
+          "geometryStart": 269194,
+          "lines": [],
+          "sourceEnd": 269302,
+          "sourceStart": 269194,
+          "vertices": [
+            [
+              0,
+              0,
+              9
+            ],
+            [
+              8,
+              0,
+              -5
+            ],
+            [
+              -8,
+              0,
+              -5
+            ],
+            [
+              0,
+              260,
+              9
+            ],
+            [
+              -8,
+              260,
+              -5
+            ],
+            [
+              0,
+              320,
+              36
+            ],
+            [
+              32,
+              320,
+              -20
+            ],
+            [
+              -32,
+              320,
+              -20
+            ],
+            [
+              8,
+              260,
+              -5
+            ]
+          ]
+        },
+        "name": "Recovered form \u00b7 palette 107"
+      },
+      {
+        "id": "palette-113",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#882222",
+              "sourceColour": 32914,
+              "vertices": [
+                1,
+                2,
+                4,
+                8
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 32914,
+              "vertices": [
+                0,
+                1,
+                8,
+                3
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 32914,
+              "vertices": [
+                2,
+                0,
+                3,
+                4
+              ]
+            },
+            {
+              "colour": "#eeee22",
+              "sourceColour": 32916,
+              "vertices": [
+                8,
+                4,
+                7,
+                6
+              ]
+            },
+            {
+              "colour": "#eeee22",
+              "sourceColour": 32916,
+              "vertices": [
+                3,
+                8,
+                6,
+                5
+              ]
+            },
+            {
+              "colour": "#eeee22",
+              "sourceColour": 32916,
+              "vertices": [
+                4,
+                3,
+                5,
+                7
+              ]
+            },
+            {
+              "colour": "#664444",
+              "sourceColour": 802,
+              "vertices": [
+                5,
+                6,
+                7
+              ]
+            }
+          ],
+          "geometryStart": 269194,
+          "lines": [],
+          "sourceEnd": 269302,
+          "sourceStart": 269194,
+          "vertices": [
+            [
+              0,
+              0,
+              9
+            ],
+            [
+              8,
+              0,
+              -5
+            ],
+            [
+              -8,
+              0,
+              -5
+            ],
+            [
+              0,
+              260,
+              9
+            ],
+            [
+              -8,
+              260,
+              -5
+            ],
+            [
+              0,
+              320,
+              36
+            ],
+            [
+              32,
+              320,
+              -20
+            ],
+            [
+              -32,
+              320,
+              -20
+            ],
+            [
+              8,
+              260,
+              -5
+            ]
+          ]
+        },
+        "name": "Recovered form \u00b7 palette 113"
+      },
+      {
+        "id": "palette-130",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#882222",
+              "sourceColour": 32914,
+              "vertices": [
+                1,
+                2,
+                4,
+                8
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 32914,
+              "vertices": [
+                0,
+                1,
+                8,
+                3
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 32914,
+              "vertices": [
+                2,
+                0,
+                3,
+                4
+              ]
+            },
+            {
+              "colour": "#eeee22",
+              "sourceColour": 32916,
+              "vertices": [
+                8,
+                4,
+                7,
+                6
+              ]
+            },
+            {
+              "colour": "#eeee22",
+              "sourceColour": 32916,
+              "vertices": [
+                3,
+                8,
+                6,
+                5
+              ]
+            },
+            {
+              "colour": "#eeee22",
+              "sourceColour": 32916,
+              "vertices": [
+                4,
+                3,
+                5,
+                7
+              ]
+            },
+            {
+              "colour": "#664444",
+              "sourceColour": 802,
+              "vertices": [
+                5,
+                6,
+                7
+              ]
+            }
+          ],
+          "geometryStart": 269194,
+          "lines": [],
+          "sourceEnd": 269302,
+          "sourceStart": 269194,
+          "vertices": [
+            [
+              0,
+              0,
+              9
+            ],
+            [
+              8,
+              0,
+              -5
+            ],
+            [
+              -8,
+              0,
+              -5
+            ],
+            [
+              0,
+              260,
+              9
+            ],
+            [
+              -8,
+              260,
+              -5
+            ],
+            [
+              0,
+              320,
+              36
+            ],
+            [
+              32,
+              320,
+              -20
+            ],
+            [
+              -32,
+              320,
+              -20
+            ],
+            [
+              8,
+              260,
+              -5
+            ]
+          ]
+        },
+        "name": "Recovered form \u00b7 palette 130"
+      },
+      {
+        "id": "palette-131",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#882222",
+              "sourceColour": 32914,
+              "vertices": [
+                1,
+                2,
+                4,
+                8
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 32914,
+              "vertices": [
+                0,
+                1,
+                8,
+                3
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 32914,
+              "vertices": [
+                2,
+                0,
+                3,
+                4
+              ]
+            },
+            {
+              "colour": "#eeee22",
+              "sourceColour": 32916,
+              "vertices": [
+                8,
+                4,
+                7,
+                6
+              ]
+            },
+            {
+              "colour": "#eeee22",
+              "sourceColour": 32916,
+              "vertices": [
+                3,
+                8,
+                6,
+                5
+              ]
+            },
+            {
+              "colour": "#eeee22",
+              "sourceColour": 32916,
+              "vertices": [
+                4,
+                3,
+                5,
+                7
+              ]
+            },
+            {
+              "colour": "#664444",
+              "sourceColour": 802,
+              "vertices": [
+                5,
+                6,
+                7
+              ]
+            }
+          ],
+          "geometryStart": 269194,
+          "lines": [],
+          "sourceEnd": 269302,
+          "sourceStart": 269194,
+          "vertices": [
+            [
+              0,
+              0,
+              9
+            ],
+            [
+              8,
+              0,
+              -5
+            ],
+            [
+              -8,
+              0,
+              -5
+            ],
+            [
+              0,
+              260,
+              9
+            ],
+            [
+              -8,
+              260,
+              -5
+            ],
+            [
+              0,
+              320,
+              36
+            ],
+            [
+              32,
+              320,
+              -20
+            ],
+            [
+              -32,
+              320,
+              -20
+            ],
+            [
+              8,
+              260,
+              -5
+            ]
+          ]
+        },
+        "name": "Recovered form \u00b7 palette 131"
+      },
+      {
+        "id": "palette-132",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#882222",
+              "sourceColour": 32914,
+              "vertices": [
+                1,
+                2,
+                4,
+                8
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 32914,
+              "vertices": [
+                0,
+                1,
+                8,
+                3
+              ]
+            },
+            {
+              "colour": "#882222",
+              "sourceColour": 32914,
+              "vertices": [
+                2,
+                0,
+                3,
+                4
+              ]
+            },
+            {
+              "colour": "#eeee22",
+              "sourceColour": 32916,
+              "vertices": [
+                8,
+                4,
+                7,
+                6
+              ]
+            },
+            {
+              "colour": "#eeee22",
+              "sourceColour": 32916,
+              "vertices": [
+                3,
+                8,
+                6,
+                5
+              ]
+            },
+            {
+              "colour": "#eeee22",
+              "sourceColour": 32916,
+              "vertices": [
+                4,
+                3,
+                5,
+                7
+              ]
+            },
+            {
+              "colour": "#664444",
+              "sourceColour": 802,
+              "vertices": [
+                5,
+                6,
+                7
+              ]
+            }
+          ],
+          "geometryStart": 269194,
+          "lines": [],
+          "sourceEnd": 269302,
+          "sourceStart": 269194,
+          "vertices": [
+            [
+              0,
+              0,
+              9
+            ],
+            [
+              8,
+              0,
+              -5
+            ],
+            [
+              -8,
+              0,
+              -5
+            ],
+            [
+              0,
+              260,
+              9
+            ],
+            [
+              -8,
+              260,
+              -5
+            ],
+            [
+              0,
+              320,
+              36
+            ],
+            [
+              32,
+              320,
+              -20
+            ],
+            [
+              -32,
+              320,
+              -20
+            ],
+            [
+              8,
+              260,
+              -5
+            ]
+          ]
+        },
+        "name": "Recovered form \u00b7 palette 132"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

@@ -1,0 +1,394 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-0372ba",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "ANTIQUE CLOCK",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      44
+    ],
+    "sourceAddress": 225978,
+    "status": "decoded",
+    "supportTop": 70,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                6,
+                5,
+                13,
+                14
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                14,
+                13,
+                10,
+                9
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                1,
+                2,
+                5,
+                6
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                10,
+                11,
+                3,
+                2
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                8,
+                9,
+                1,
+                0
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                9,
+                10,
+                2,
+                1
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                5,
+                4,
+                12,
+                13
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                7,
+                6,
+                14,
+                15
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                13,
+                12,
+                11,
+                10
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                15,
+                14,
+                9,
+                8
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                2,
+                3,
+                4,
+                5
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                0,
+                1,
+                6,
+                7
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                16,
+                17,
+                18,
+                19
+              ]
+            },
+            {
+              "colour": "#886644",
+              "sourceColour": 1074,
+              "vertices": [
+                24,
+                25,
+                26,
+                27
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                23,
+                22,
+                21,
+                20
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                20,
+                21,
+                17,
+                16
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                19,
+                18,
+                22,
+                23
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                17,
+                21,
+                22,
+                18
+              ]
+            }
+          ],
+          "geometryStart": 225978,
+          "lines": [
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                28,
+                29
+              ]
+            },
+            {
+              "colour": "#000000",
+              "sourceColour": 32768,
+              "vertices": [
+                28,
+                30
+              ]
+            }
+          ],
+          "sourceEnd": 226304,
+          "sourceStart": 225978,
+          "vertices": [
+            [
+              -10,
+              0,
+              -6
+            ],
+            [
+              -10,
+              15,
+              -6
+            ],
+            [
+              -5,
+              20,
+              -4
+            ],
+            [
+              -5,
+              50,
+              -4
+            ],
+            [
+              5,
+              50,
+              -4
+            ],
+            [
+              5,
+              20,
+              -4
+            ],
+            [
+              10,
+              15,
+              -6
+            ],
+            [
+              10,
+              0,
+              -6
+            ],
+            [
+              -10,
+              0,
+              6
+            ],
+            [
+              -10,
+              15,
+              6
+            ],
+            [
+              -5,
+              20,
+              4
+            ],
+            [
+              -5,
+              50,
+              4
+            ],
+            [
+              5,
+              50,
+              4
+            ],
+            [
+              5,
+              20,
+              4
+            ],
+            [
+              10,
+              15,
+              6
+            ],
+            [
+              10,
+              0,
+              6
+            ],
+            [
+              -10,
+              50,
+              -6
+            ],
+            [
+              -10,
+              70,
+              -6
+            ],
+            [
+              10,
+              70,
+              -6
+            ],
+            [
+              10,
+              50,
+              -6
+            ],
+            [
+              -10,
+              50,
+              6
+            ],
+            [
+              -10,
+              70,
+              6
+            ],
+            [
+              10,
+              70,
+              6
+            ],
+            [
+              10,
+              50,
+              6
+            ],
+            [
+              -7,
+              53,
+              -6
+            ],
+            [
+              -7,
+              67,
+              -6
+            ],
+            [
+              7,
+              67,
+              -6
+            ],
+            [
+              7,
+              53,
+              -6
+            ],
+            [
+              0,
+              60,
+              -6
+            ],
+            [
+              0,
+              65,
+              -6
+            ],
+            [
+              4,
+              56,
+              -6
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

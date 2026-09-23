@@ -29,7 +29,7 @@ _spec = importlib.util.spec_from_file_location(
 probe = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(probe)
 
-from damocleslab.catalogue import structure_level_binding  # noqa: E402
+from damocleslab.catalogue import read_catalogue, structure_level_binding  # noqa: E402
 
 CATALOGUE = {
     'instances': [
@@ -178,8 +178,7 @@ class LiveCaptureGateTests(unittest.TestCase):
     def test_every_resident_naming_a_captured_scene_resolves_in_the_bound_list(self):
         import json
 
-        catalogue = json.loads(
-            (LAB_ROOT.parents[1] / 'payload' / 'damocles' / 'catalogue.json').read_text())
+        catalogue = read_catalogue((LAB_ROOT.parents[1] / 'payload' / 'damocles' / 'catalogue.json'))
         resolved = 0
         for name in self.CAPTURES:
             check = probe.check_memstate(self.ram, self.live(name), name, catalogue)

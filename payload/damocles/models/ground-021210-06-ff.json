@@ -1,0 +1,624 @@
+{
+  "model": {
+    "evidence": [
+      {
+        "claim": "Per-cell ground/pad/road record at $1E000, selected by the $1E400 word table and $83DC orientation byte ($054E40).",
+        "confidence": "verified",
+        "source": "docs/research/damocles-eris-ground.md"
+      },
+      {
+        "claim": "Scene joins come from the authored seed longword at $1E000+$3FC ($05493E), so cells sharing this source record draw different geometry and each keeps its own identity.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-eris-ground.md"
+      }
+    ],
+    "id": "ground-021210-06-ff",
+    "kind": "ground",
+    "linkedInstances": [
+      "eris-ground-ff"
+    ],
+    "name": "Ground 255",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      255
+    ],
+    "sourceAddress": 135696,
+    "status": "decoded",
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sceneSlots": [
+                252
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 0,
+              "vertices": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sceneSlots": [
+                240
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 1,
+              "vertices": [
+                6,
+                7,
+                8,
+                9,
+                10,
+                11
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sourceColour": 32782,
+              "sourceIndex": 5,
+              "vertices": [
+                18,
+                19,
+                20,
+                21
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sourceColour": 32782,
+              "sourceIndex": 6,
+              "vertices": [
+                22,
+                23,
+                24,
+                25
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sourceColour": 32782,
+              "sourceIndex": 7,
+              "vertices": [
+                26,
+                27,
+                28,
+                29
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sourceColour": 32782,
+              "sourceIndex": 8,
+              "vertices": [
+                30,
+                31,
+                32,
+                33
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "doubleSided": true,
+              "sceneSlots": [
+                240
+              ],
+              "sourceColour": 1911,
+              "sourceIndex": 9,
+              "vertices": [
+                34,
+                35,
+                36,
+                37,
+                38
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "doubleSided": true,
+              "sceneSlots": [
+                252
+              ],
+              "sourceColour": 1911,
+              "sourceIndex": 10,
+              "vertices": [
+                39,
+                40,
+                41,
+                42,
+                43
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "doubleSided": true,
+              "sourceColour": 1911,
+              "sourceIndex": 11,
+              "vertices": [
+                44,
+                45,
+                46,
+                47
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "doubleSided": true,
+              "sourceColour": 1911,
+              "sourceIndex": 12,
+              "vertices": [
+                48,
+                49,
+                50,
+                51
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "doubleSided": true,
+              "sourceColour": 1911,
+              "sourceIndex": 13,
+              "vertices": [
+                52,
+                53,
+                54,
+                55
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "doubleSided": true,
+              "sourceColour": 1911,
+              "sourceIndex": 14,
+              "vertices": [
+                56,
+                57,
+                58,
+                59
+              ]
+            }
+          ],
+          "lines": [
+            {
+              "colour": "#cccccc",
+              "sceneSlots": [
+                252
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 2,
+              "vertices": [
+                12,
+                13
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sceneSlots": [
+                240
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 3,
+              "vertices": [
+                14,
+                15
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "sourceColour": 32782,
+              "sourceIndex": 4,
+              "vertices": [
+                16,
+                17
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "sourceIndex": 15,
+              "vertices": [
+                60,
+                61
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "sourceIndex": 16,
+              "vertices": [
+                62,
+                63
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "sourceIndex": 17,
+              "vertices": [
+                64,
+                65
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "sourceIndex": 18,
+              "vertices": [
+                66,
+                67
+              ]
+            }
+          ],
+          "sourceEnd": 135940,
+          "sourceStart": 135696,
+          "vertices": [
+            [
+              -32767,
+              0,
+              200
+            ],
+            [
+              -1200,
+              0,
+              200
+            ],
+            [
+              -800,
+              0,
+              0
+            ],
+            [
+              -1200,
+              0,
+              -200
+            ],
+            [
+              -32767,
+              0,
+              -200
+            ],
+            [
+              -131072,
+              0,
+              0
+            ],
+            [
+              -200,
+              0,
+              -32767
+            ],
+            [
+              -200,
+              0,
+              -1200
+            ],
+            [
+              0,
+              0,
+              -800
+            ],
+            [
+              200,
+              0,
+              -1200
+            ],
+            [
+              200,
+              0,
+              -32767
+            ],
+            [
+              0,
+              0,
+              -196608
+            ],
+            [
+              -800,
+              0,
+              0
+            ],
+            [
+              -131072,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              -800
+            ],
+            [
+              0,
+              0,
+              -196608
+            ],
+            [
+              -800,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              -800
+            ],
+            [
+              -640,
+              0,
+              100
+            ],
+            [
+              -800,
+              0,
+              -270
+            ],
+            [
+              -1200,
+              0,
+              -200
+            ],
+            [
+              -1200,
+              0,
+              200
+            ],
+            [
+              -640,
+              0,
+              100
+            ],
+            [
+              -200,
+              0,
+              -200
+            ],
+            [
+              -480,
+              0,
+              -480
+            ],
+            [
+              -800,
+              0,
+              -270
+            ],
+            [
+              -200,
+              0,
+              -200
+            ],
+            [
+              100,
+              0,
+              -640
+            ],
+            [
+              -270,
+              0,
+              -800
+            ],
+            [
+              -480,
+              0,
+              -480
+            ],
+            [
+              100,
+              0,
+              -640
+            ],
+            [
+              200,
+              0,
+              -1200
+            ],
+            [
+              -200,
+              0,
+              -1200
+            ],
+            [
+              -270,
+              0,
+              -800
+            ],
+            [
+              -5,
+              0,
+              -32767
+            ],
+            [
+              -5,
+              0,
+              -1200
+            ],
+            [
+              5,
+              0,
+              -1200
+            ],
+            [
+              5,
+              0,
+              -32767
+            ],
+            [
+              0,
+              0,
+              -196608
+            ],
+            [
+              -32767,
+              0,
+              5
+            ],
+            [
+              -1200,
+              0,
+              5
+            ],
+            [
+              -1200,
+              0,
+              -5
+            ],
+            [
+              -32767,
+              0,
+              -5
+            ],
+            [
+              -131072,
+              0,
+              0
+            ],
+            [
+              -1200,
+              0,
+              5
+            ],
+            [
+              -729,
+              0,
+              -98
+            ],
+            [
+              -731,
+              0,
+              -103
+            ],
+            [
+              -1200,
+              0,
+              -5
+            ],
+            [
+              -729,
+              0,
+              -98
+            ],
+            [
+              -348,
+              0,
+              -348
+            ],
+            [
+              -353,
+              0,
+              -353
+            ],
+            [
+              -731,
+              0,
+              -103
+            ],
+            [
+              -348,
+              0,
+              -348
+            ],
+            [
+              -98,
+              0,
+              -729
+            ],
+            [
+              -103,
+              0,
+              -731
+            ],
+            [
+              -353,
+              0,
+              -353
+            ],
+            [
+              -98,
+              0,
+              -729
+            ],
+            [
+              5,
+              0,
+              -1200
+            ],
+            [
+              -5,
+              0,
+              -1200
+            ],
+            [
+              -103,
+              0,
+              -731
+            ],
+            [
+              -1200,
+              0,
+              -5
+            ],
+            [
+              -731,
+              0,
+              -103
+            ],
+            [
+              -731,
+              0,
+              -103
+            ],
+            [
+              -353,
+              0,
+              -353
+            ],
+            [
+              -353,
+              0,
+              -353
+            ],
+            [
+              -103,
+              0,
+              -731
+            ],
+            [
+              -103,
+              0,
+              -731
+            ],
+            [
+              -5,
+              0,
+              -1200
+            ]
+          ]
+        },
+        "name": "Recovered cell fill \u00b7 transform $06"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

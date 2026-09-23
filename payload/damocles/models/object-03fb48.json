@@ -1,0 +1,138 @@
+{
+  "model": {
+    "conditions": [],
+    "evidence": [],
+    "id": "object-03fb48",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "GOLD",
+    "nameStatus": "verified",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      55,
+      155,
+      159,
+      160,
+      161,
+      162,
+      296
+    ],
+    "sourceAddress": 260936,
+    "status": "decoded",
+    "supportTop": 15,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                7,
+                4,
+                5,
+                6
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                5,
+                4,
+                0,
+                1
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 1620,
+              "vertices": [
+                7,
+                6,
+                2,
+                3
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                6,
+                5,
+                1,
+                2
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 1347,
+              "vertices": [
+                4,
+                7,
+                3,
+                0
+              ]
+            }
+          ],
+          "geometryStart": 260936,
+          "lines": [],
+          "sourceEnd": 261025,
+          "sourceStart": 260936,
+          "vertices": [
+            [
+              -10,
+              0,
+              -30
+            ],
+            [
+              -10,
+              0,
+              30
+            ],
+            [
+              10,
+              0,
+              30
+            ],
+            [
+              10,
+              0,
+              -30
+            ],
+            [
+              -5,
+              15,
+              -25
+            ],
+            [
+              -5,
+              15,
+              25
+            ],
+            [
+              5,
+              15,
+              25
+            ],
+            [
+              5,
+              15,
+              -25
+            ]
+          ]
+        },
+        "name": "Recovered form"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

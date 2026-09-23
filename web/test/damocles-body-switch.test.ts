@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
 
-import { parseCatalogue, type Catalogue } from '../src/catalogue/data.ts';
+import { type Catalogue } from '../src/catalogue/data.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import { planErisFrame } from '../src/damocles/frame.ts';
 import {
@@ -22,15 +22,14 @@ import {
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { arrivalPoses } from './damocles-pose.ts';
+import { loadCatalogue } from './fixtures/catalogue.ts';
 
 let catalogue: Catalogue;
 let content: DamoclesContent;
 let poses: ArrivalPoses;
 
 beforeAll(async () => {
-  catalogue = parseCatalogue(
-    await Bun.file('../payload/damocles/catalogue.json').json()
-  );
+  catalogue = await loadCatalogue();
   const doc = readErisPresentation(await Bun.file('damocles/eris.json').json());
   poses = await arrivalPoses();
   content = {

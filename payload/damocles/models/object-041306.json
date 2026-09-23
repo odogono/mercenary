@@ -1,0 +1,1087 @@
+{
+  "model": {
+    "conditions": [
+      "viewerPosition"
+    ],
+    "evidence": [],
+    "id": "object-041306",
+    "kind": "object",
+    "linkedInstances": [],
+    "name": "Object 324",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      324
+    ],
+    "sourceAddress": 267014,
+    "status": "decoded",
+    "supportTop": 50,
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "alternates": {
+            "viewGroup": 1
+          },
+          "faces": [
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                0,
+                7,
+                8,
+                9,
+                2,
+                1
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                9,
+                8,
+                7,
+                0,
+                1,
+                2
+              ]
+            }
+          ],
+          "geometryStart": 267014,
+          "lines": [],
+          "sourceEnd": 267240,
+          "sourceStart": 267014,
+          "texts": [
+            {
+              "anchor": [
+                18,
+                39,
+                0
+              ],
+              "font": 0,
+              "plane": 0,
+              "text": "BROAD STREET"
+            }
+          ],
+          "vertices": [
+            [
+              20,
+              50,
+              0
+            ],
+            [
+              10,
+              42,
+              0
+            ],
+            [
+              20,
+              34,
+              0
+            ],
+            [
+              30,
+              34,
+              0
+            ],
+            [
+              36,
+              34,
+              0
+            ],
+            [
+              36,
+              0,
+              0
+            ],
+            [
+              30,
+              0,
+              0
+            ],
+            [
+              120,
+              50,
+              0
+            ],
+            [
+              130,
+              42,
+              0
+            ],
+            [
+              120,
+              34,
+              0
+            ],
+            [
+              110,
+              34,
+              0
+            ],
+            [
+              104,
+              34,
+              0
+            ],
+            [
+              104,
+              0,
+              0
+            ],
+            [
+              110,
+              0,
+              0
+            ]
+          ],
+          "viewGroups": [
+            {
+              "bounds": [
+                [
+                  -6000,
+                  6000
+                ],
+                [
+                  -3000,
+                  0
+                ],
+                [
+                  -6000,
+                  6000
+                ]
+              ],
+              "faces": 6,
+              "lines": 55
+            }
+          ]
+        },
+        "name": "Viewer elsewhere (default list)"
+      },
+      {
+        "id": "view-0",
+        "mesh": {
+          "alternates": {
+            "viewGroup": 1
+          },
+          "faces": [
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                11,
+                10,
+                13,
+                12
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                10,
+                11,
+                12,
+                13
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                3,
+                4,
+                5,
+                6
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                6,
+                5,
+                4,
+                3
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                0,
+                7,
+                8,
+                9,
+                2,
+                1
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                9,
+                8,
+                7,
+                0,
+                1,
+                2
+              ]
+            }
+          ],
+          "geometryStart": 267014,
+          "lines": [
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                3,
+                6
+              ]
+            },
+            {
+              "colour": "#664422",
+              "sourceColour": 801,
+              "vertices": [
+                10,
+                13
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                0,
+                7
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 1911,
+              "vertices": [
+                9,
+                2
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                16,
+                17
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                14,
+                18
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                16,
+                14
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                19,
+                17
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                19,
+                18
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                15,
+                19
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                20,
+                22
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                22,
+                23
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                23,
+                25
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                21,
+                25
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                21,
+                24
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                26,
+                27
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                27,
+                28
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                28,
+                29
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                29,
+                26
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                30,
+                31
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                31,
+                32
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                32,
+                33
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                33,
+                34
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                31,
+                33
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                35,
+                37
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                38,
+                36
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                36,
+                39
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                37,
+                38
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                35,
+                39
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                40,
+                41
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                41,
+                42
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                42,
+                43
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                43,
+                44
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                44,
+                45
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                46,
+                49
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                47,
+                49
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                49,
+                48
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                50,
+                52
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                52,
+                53
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                53,
+                55
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                51,
+                55
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                51,
+                54
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                56,
+                57
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                57,
+                58
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                56,
+                59
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                57,
+                60
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                58,
+                61
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                62,
+                63
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                63,
+                64
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                62,
+                65
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                63,
+                66
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                64,
+                67
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                68,
+                71
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                69,
+                71
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 819,
+              "vertices": [
+                71,
+                70
+              ]
+            }
+          ],
+          "sourceEnd": 267240,
+          "sourceStart": 267014,
+          "texts": [
+            {
+              "anchor": [
+                18,
+                39,
+                0
+              ],
+              "font": 0,
+              "plane": 0,
+              "text": "BROAD STREET"
+            }
+          ],
+          "vertices": [
+            [
+              20,
+              50,
+              0
+            ],
+            [
+              10,
+              42,
+              0
+            ],
+            [
+              20,
+              34,
+              0
+            ],
+            [
+              30,
+              34,
+              0
+            ],
+            [
+              36,
+              34,
+              0
+            ],
+            [
+              36,
+              0,
+              0
+            ],
+            [
+              30,
+              0,
+              0
+            ],
+            [
+              120,
+              50,
+              0
+            ],
+            [
+              130,
+              42,
+              0
+            ],
+            [
+              120,
+              34,
+              0
+            ],
+            [
+              110,
+              34,
+              0
+            ],
+            [
+              104,
+              34,
+              0
+            ],
+            [
+              104,
+              0,
+              0
+            ],
+            [
+              110,
+              0,
+              0
+            ],
+            [
+              18,
+              39,
+              0
+            ],
+            [
+              18,
+              42,
+              0
+            ],
+            [
+              18,
+              45,
+              0
+            ],
+            [
+              24,
+              45,
+              0
+            ],
+            [
+              24,
+              39,
+              0
+            ],
+            [
+              21,
+              42,
+              0
+            ],
+            [
+              27,
+              39,
+              0
+            ],
+            [
+              27,
+              42,
+              0
+            ],
+            [
+              27,
+              45,
+              0
+            ],
+            [
+              33,
+              45,
+              0
+            ],
+            [
+              33,
+              39,
+              0
+            ],
+            [
+              33,
+              42,
+              0
+            ],
+            [
+              36,
+              39,
+              0
+            ],
+            [
+              36,
+              45,
+              0
+            ],
+            [
+              42,
+              45,
+              0
+            ],
+            [
+              42,
+              39,
+              0
+            ],
+            [
+              45,
+              39,
+              0
+            ],
+            [
+              45,
+              42,
+              0
+            ],
+            [
+              48,
+              45,
+              0
+            ],
+            [
+              51,
+              42,
+              0
+            ],
+            [
+              51,
+              39,
+              0
+            ],
+            [
+              54,
+              45,
+              0
+            ],
+            [
+              60,
+              42,
+              0
+            ],
+            [
+              54,
+              39,
+              0
+            ],
+            [
+              57,
+              39,
+              0
+            ],
+            [
+              57,
+              45,
+              0
+            ],
+            [
+              72,
+              39,
+              0
+            ],
+            [
+              78,
+              39,
+              0
+            ],
+            [
+              78,
+              42,
+              0
+            ],
+            [
+              72,
+              42,
+              0
+            ],
+            [
+              72,
+              45,
+              0
+            ],
+            [
+              78,
+              45,
+              0
+            ],
+            [
+              84,
+              39,
+              0
+            ],
+            [
+              81,
+              45,
+              0
+            ],
+            [
+              87,
+              45,
+              0
+            ],
+            [
+              84,
+              45,
+              0
+            ],
+            [
+              90,
+              39,
+              0
+            ],
+            [
+              90,
+              42,
+              0
+            ],
+            [
+              90,
+              45,
+              0
+            ],
+            [
+              96,
+              45,
+              0
+            ],
+            [
+              96,
+              39,
+              0
+            ],
+            [
+              96,
+              42,
+              0
+            ],
+            [
+              99,
+              39,
+              0
+            ],
+            [
+              99,
+              42,
+              0
+            ],
+            [
+              99,
+              45,
+              0
+            ],
+            [
+              105,
+              39,
+              0
+            ],
+            [
+              102,
+              42,
+              0
+            ],
+            [
+              105,
+              45,
+              0
+            ],
+            [
+              108,
+              39,
+              0
+            ],
+            [
+              108,
+              42,
+              0
+            ],
+            [
+              108,
+              45,
+              0
+            ],
+            [
+              114,
+              39,
+              0
+            ],
+            [
+              111,
+              42,
+              0
+            ],
+            [
+              114,
+              45,
+              0
+            ],
+            [
+              120,
+              39,
+              0
+            ],
+            [
+              117,
+              45,
+              0
+            ],
+            [
+              123,
+              45,
+              0
+            ],
+            [
+              120,
+              45,
+              0
+            ]
+          ],
+          "viewGroups": [
+            {
+              "bounds": [
+                [
+                  -6000,
+                  6000
+                ],
+                [
+                  -3000,
+                  0
+                ],
+                [
+                  -6000,
+                  6000
+                ]
+              ],
+              "faces": 6,
+              "lines": 55
+            }
+          ]
+        },
+        "name": "Viewer within -6000 \u2264 X < 6000, -3000 \u2264 Y < 0, -6000 \u2264 Z < 6000"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}
