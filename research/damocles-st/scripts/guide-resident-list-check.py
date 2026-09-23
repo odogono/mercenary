@@ -43,6 +43,9 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from damocleslab.catalogue import read_catalogue  # noqa: E402
+
 #: The list's floor tags, as read. A wing suffix (``4S``) is a wing, not a floor.
 FLOOR = {'G': 0, 'B': 10}
 
@@ -106,7 +109,7 @@ def main() -> int:
     text = args.list.read_text(encoding='utf-8', errors='replace')
     print(f'list sha256 {hashlib.sha256(text.encode()).hexdigest()}')
 
-    catalogue = json.loads(args.catalogue.read_text())
+    catalogue = read_catalogue(args.catalogue)
     bodies = {b['name'].upper(): b['id'] for b in catalogue['bodies']}
     models = {m['id']: m for m in catalogue['models']}
     rows, notes = parse_list(text)

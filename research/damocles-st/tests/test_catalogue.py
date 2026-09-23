@@ -5,7 +5,7 @@ import sys
 import unittest
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from damocleslab.catalogue import decode_mesh, st_rgb
+from damocleslab.catalogue import decode_mesh, read_catalogue, st_rgb
 
 class CatalogueTests(unittest.TestCase):
     def test_drop_support_scanner_uses_native_form_gate_and_raw_y(self):
@@ -724,9 +724,7 @@ class CensusTests(unittest.TestCase):
         omissions it describes.
         """
         root = Path(__file__).resolve().parents[3]
-        document = json.loads(
-            (root / 'payload' / 'damocles' / 'catalogue.json').read_text()
-        )
+        document = read_catalogue((root / 'payload' / 'damocles' / 'catalogue.json'))
         models = document['models']
         unexplored = document['coverage']['unexplored']
 
@@ -756,9 +754,7 @@ class CensusTests(unittest.TestCase):
 
     def test_a_decoded_detail_selector_does_not_claim_unsimulated_visibility(self):
         root = Path(__file__).resolve().parents[3]
-        document = json.loads(
-            (root / 'payload' / 'damocles' / 'catalogue.json').read_text()
-        )
+        document = read_catalogue((root / 'payload' / 'damocles' / 'catalogue.json'))
         details = [m for m in document['models'] if 'detailSelection' in m]
         self.assertEqual(len(details), 59)
         for model in details:
@@ -771,9 +767,7 @@ class IntentionalEmptyTests(unittest.TestCase):
 
     def payload(self):
         root = Path(__file__).resolve().parents[3]
-        return json.loads(
-            (root / 'payload' / 'damocles' / 'catalogue.json').read_text()
-        )
+        return read_catalogue((root / 'payload' / 'damocles' / 'catalogue.json'))
 
     def test_every_empty_or_null_record_reads_decoded(self):
         models = self.payload()['models']
@@ -925,9 +919,7 @@ class ArticulatedDetailPayloadTests(unittest.TestCase):
 
     def payload(self):
         root = Path(__file__).resolve().parents[3]
-        return json.loads(
-            (root / 'payload' / 'damocles' / 'catalogue.json').read_text()
-        )
+        return read_catalogue((root / 'payload' / 'damocles' / 'catalogue.json'))
 
     def test_every_placed_articulated_detail_is_turned_in_each_frame(self):
         document = self.payload()
@@ -992,9 +984,7 @@ class UnreferencedRecordTests(unittest.TestCase):
 
     def test_building_detail_69_keeps_four_records_nothing_selects(self):
         root = Path(__file__).resolve().parents[3]
-        document = json.loads(
-            (root / 'payload' / 'damocles' / 'catalogue.json').read_text()
-        )
+        document = read_catalogue((root / 'payload' / 'damocles' / 'catalogue.json'))
         model = next(
             m for m in document['models'] if m['id'] == 'interior-02e44e'
         )
@@ -1034,9 +1024,7 @@ class UnreferencedRecordTests(unittest.TestCase):
     def test_only_a_building_detail_may_keep_one(self):
         """Only a detail has selector lists that can prove unreachability."""
         root = Path(__file__).resolve().parents[3]
-        document = json.loads(
-            (root / 'payload' / 'damocles' / 'catalogue.json').read_text()
-        )
+        document = read_catalogue((root / 'payload' / 'damocles' / 'catalogue.json'))
         carrying = [
             model for model in document['models']
             if any('unreferencedRecords' in variant['mesh']
@@ -1118,9 +1106,7 @@ class AttachmentKeyTests(unittest.TestCase):
         they agree letter for letter.
         """
         root = Path(__file__).resolve().parents[3]
-        payload = json.loads(
-            (root / 'payload' / 'damocles' / 'catalogue.json').read_text()
-        )
+        payload = read_catalogue((root / 'payload' / 'damocles' / 'catalogue.json'))
         models = {model['id']: model for model in payload['models']}
         keyed = {}
         for instance in payload['instances']:
@@ -1155,9 +1141,7 @@ class AttachmentKeyTests(unittest.TestCase):
     def test_the_eris_keyed_entrances_install_no_base(self):
         """Which is why a shut door never blocked anything on Eris."""
         root = Path(__file__).resolve().parents[3]
-        payload = json.loads(
-            (root / 'payload' / 'damocles' / 'catalogue.json').read_text()
-        )
+        payload = read_catalogue((root / 'payload' / 'damocles' / 'catalogue.json'))
         models = {model['id']: model for model in payload['models']}
         for instance in payload['instances']:
             selection = models.get(instance['model'], {}).get('structureSelection')
@@ -2115,9 +2099,7 @@ class SceneColourTemplateTests(unittest.TestCase):
 
     def payload(self):
         root = Path(__file__).resolve().parents[3]
-        return json.loads(
-            (root / 'payload' / 'damocles' / 'catalogue.json').read_text()
-        )
+        return read_catalogue((root / 'payload' / 'damocles' / 'catalogue.json'))
 
     def test_only_these_six_records_name_the_scene_colour_table(self):
         document = self.payload()
@@ -2193,9 +2175,7 @@ class BankExtentTests(unittest.TestCase):
 
     def payload(self):
         root = Path(__file__).resolve().parents[3]
-        return json.loads(
-            (root / 'payload' / 'damocles' / 'catalogue.json').read_text()
-        )
+        return read_catalogue((root / 'payload' / 'damocles' / 'catalogue.json'))
 
     def test_each_pointer_bank_reports_measured_bounds(self):
         document = self.payload()
@@ -2287,9 +2267,7 @@ class WorldConditionedSlotTests(unittest.TestCase):
 
     def test_the_payload_qualifies_every_model_the_window_reaches(self):
         root = Path(__file__).resolve().parents[3]
-        document = json.loads(
-            (root / 'payload' / 'damocles' / 'catalogue.json').read_text()
-        )
+        document = read_catalogue((root / 'payload' / 'damocles' / 'catalogue.json'))
         qualified = {
             model['id']: model for model in document['models']
             if model.get('worldConditionedSlots')
@@ -2480,9 +2458,7 @@ class StructureLevelBindingTests(unittest.TestCase):
     def structures(self):
         if StructureLevelBindingTests._structures is None:
             root = Path(__file__).resolve().parents[3]
-            document = json.loads(
-                (root / 'payload' / 'damocles' / 'catalogue.json').read_text()
-            )
+            document = read_catalogue((root / 'payload' / 'damocles' / 'catalogue.json'))
             by_slot = {}
             for model in document['models']:
                 if model['kind'] != 'structure':
@@ -2542,9 +2518,7 @@ class IslandTests(unittest.TestCase):
     @staticmethod
     def payload():
         root = Path(__file__).resolve().parents[3]
-        return json.loads(
-            (root / 'payload' / 'damocles' / 'catalogue.json').read_text()
-        )
+        return read_catalogue((root / 'payload' / 'damocles' / 'catalogue.json'))
 
     @staticmethod
     def _box(x, z):
@@ -2736,9 +2710,7 @@ class SettlementRoadNetworkTests(unittest.TestCase):
 
     def payload(self):
         root = Path(__file__).resolve().parents[3]
-        return json.loads(
-            (root / 'payload' / 'damocles' / 'catalogue.json').read_text()
-        )
+        return read_catalogue((root / 'payload' / 'damocles' / 'catalogue.json'))
 
     def captures(self):
         from damocleslab.catalogue import hatari_memstate_ram

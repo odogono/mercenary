@@ -4705,6 +4705,20 @@ def write_catalogue(result: dict, output: Path) -> None:
         (directory / f'{model_id}.json').write_text(json.dumps(file, indent=2, sort_keys=True) + '\n')
 
 
+def read_catalogue(output: Path) -> dict:
+    """The stored Catalogue read back whole, in the shape `extract` returns: the shared document
+    at `output` with each Model reinserted from `models/` in index order, and without the index
+    and Body lists the split derives. Reassembly is lossless (ADR 0048)."""
+    document = json.loads(output.read_text())
+    directory = output.parent / 'models'
+    result = {key: value for key, value in document.items() if key != 'modelIndex'}
+    result['bodies'] = [{key: value for key, value in body.items() if key != 'models'}
+                        for body in document['bodies']]
+    result['models'] = [json.loads((directory / f"{entry['id']}.json").read_text())['model']
+                        for entry in document['modelIndex']]
+    return result
+
+
 def validate_source(manifest: dict, pin: dict) -> None:
     for key, item in [('programSha256', 'programImage'), ('tosSha256', 'tosImage')]:
         if manifest['authority'][key] != pin[item]['hashes']['sha256']:

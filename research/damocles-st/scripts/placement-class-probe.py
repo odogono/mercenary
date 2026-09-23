@@ -63,7 +63,7 @@ LAB_ROOT = Path(__file__).resolve().parents[1]
 REPO = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(LAB_ROOT))
 
-from damocleslab.catalogue import hatari_memstate_ram  # noqa: E402
+from damocleslab.catalogue import hatari_memstate_ram, read_catalogue  # noqa: E402
 
 CATALOGUE = REPO / 'payload' / 'damocles' / 'catalogue.json'
 SNAPSHOTS = LAB_ROOT / 'snapshots'
@@ -203,7 +203,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     ram = (args.run / 'observed.ram').read_bytes()
-    catalogue = json.loads(CATALOGUE.read_text())
+    catalogue = read_catalogue(CATALOGUE)
     report = {'census': census(ram, catalogue), 'states': []}
 
     memstates = list(args.memstates)
