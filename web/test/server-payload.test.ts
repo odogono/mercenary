@@ -75,4 +75,36 @@ describe('the localhost Data Payload route', () => {
       await rm(root, { force: true, recursive: true });
     }
   });
+
+  test('gzips JSON for a client that accepts it, byte-for-byte', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'mercenary-payload-route-'));
+    try {
+      const body = JSON.stringify({ indented: [1, 2, 3] }, null, 2) + '\n';
+      await writeFile(join(root, 'object-effects.json'), body);
+
+      const zipped = await payloadResponse(
+        '/payload/object-effects.json',
+        root,
+        'gzip, deflate, br'
+      );
+      expect(zipped?.status).toBe(200);
+      expect(zipped?.headers.get('content-encoding')).toBe('gzip');
+      expect(zipped?.headers.get('content-type')).toBe('application/json');
+      expect(zipped?.headers.get('vary')).toBe('accept-encoding');
+      const bytes = new Uint8Array(await zipped!.arrayBuffer());
+      expect(new TextDecoder().decode(Bun.gunzipSync(bytes))).toBe(body);
+
+      for (const refusal of [null, '', 'br', 'identity', 'gzip;q=0']) {
+        const plain = await payloadResponse(
+          '/payload/object-effects.json',
+          root,
+          refusal
+        );
+        expect(plain?.headers.get('content-encoding')).toBeNull();
+        expect(await plain?.text()).toBe(body);
+      }
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
 });
