@@ -1,8 +1,11 @@
 import {
   CATALOGUE_PATH,
+  instanceById,
+  modelSummaryById,
   parseCatalogueDocument,
   payloadJson,
-  type Catalogue
+  type Catalogue,
+  type Instance
 } from '../catalogue/data.ts';
 import { ModelStore } from '../catalogue/modelStore.ts';
 import {
@@ -13,6 +16,8 @@ import { assertBrowserDocument } from '../shell/documentPath.ts';
 import {
   RANGE_LABEL,
   ROAD_PIECE_ZOOM_NOTE,
+  SETTLEMENT_SPAN,
+  STREET_SPAN,
   SURFACE_SPAN,
   bodyBounds,
   fitBody,
@@ -46,7 +51,12 @@ import {
   type MapPoint,
   type MapView
 } from './mapView.ts';
-import { renderPanel } from './panel.ts';
+import {
+  renderPanel,
+  type FootprintAbsence,
+  type InstanceSelection,
+  type SettlementSelection
+} from './panel.ts';
 import { centreReadout, type ReadoutRow } from './readout.ts';
 import {
   bodyRoadPieceModels,
@@ -54,9 +64,26 @@ import {
   type BodyRoadPieces
 } from './roadPiece.ts';
 import {
+  SEARCH_KIND_LABEL,
+  buildSearchIndex,
+  instancePlacement,
+  isSearchKind,
+  modelPlacements,
+  querySearch,
+  settlementCentre,
+  type SearchRecord
+} from './search.ts';
+import {
+  renderSearch,
+  type SearchItemView,
+  type SearchView
+} from './searchView.ts';
+import {
+  NO_SEARCH,
   SYSTEM_RANGE,
   atlasHref,
   readAtlasState,
+  type AtlasSearch,
   type AtlasState
 } from './state.ts';
 import {
@@ -64,7 +91,9 @@ import {
   NO_WORKSPACE_NOTICE,
   ROAD_GAP_NOTICE,
   bodyRoadGap,
+  catalogueBodyId,
   islandAt,
+  placePosition,
   readBodySurface,
   settlementRoads,
   settlementsInView,
@@ -188,6 +217,9 @@ const placeCentre = (into: HTMLElement, rows: readonly ReadoutRow[]) => {
   }
 };
 
+/// What the search section is showing, which every Range carries.
+const currentSearch = (): AtlasSearch => state.search ?? NO_SEARCH;
+
 const selectedBody = () => {
   const current = state;
   return current.level === 'body'
@@ -200,49 +232,93 @@ const selectedBody = () => {
 const recordCamera = () => {
   clearTimeout(pending);
   pending = setTimeout(() => {
-    const current = state;
-    if (current.level === 'body') {
-      history.replaceState(
-        null,
-        '',
-        atlasHref(
-          bodyView
-            ? {
-                bodyId: current.bodyId,
-                instanceId: current.instanceId,
-                islandId: current.islandId,
-                level: 'body',
-                placeId: current.placeId,
-                view: { span: bodyView.span, x: bodyView.cx, z: bodyView.cz }
-              }
-            : {
-                bodyId: current.bodyId,
-                instanceId: current.instanceId,
-                islandId: current.islandId,
-                level: 'body',
-                placeId: current.placeId,
-                view: null
-              }
-        )
-      );
-      return;
-    }
-    if (!view) {
-      return;
-    }
-    history.replaceState(
-      null,
-      '',
-      atlasHref(
-        atFit
-          ? SYSTEM_RANGE
-          : {
-              level: 'system',
-              view: { span: view.span, x: view.cx, z: view.cz }
-            }
-      )
-    );
+    history.replaceState(null, '', atlasHref(withCamera(state)));
   }, 250);
+};
+
+/// The state with the camera actually on screen, which is what the URL should carry. A Body's
+/// selection and the search travel with it untouched.
+const withCamera = (current: AtlasState): AtlasState => {
+  if (current.level === 'body') {
+    return {
+      ...current,
+      view: bodyView
+        ? { span: bodyView.span, x: bodyView.cx, z: bodyView.cz }
+        : null
+    };
+  }
+  return {
+    ...current,
+    view: view && !atFit ? { span: view.span, x: view.cx, z: view.cz } : null
+  };
+};
+
+/// The picked Instance, found by its own record rather than through a footprint (#453), and why
+/// no footprint stands for it where none does. Null where nothing is picked, the record is
+/// unknown, or it is not located on the Body on screen: a parent-local or unlocated Instance is
+/// never given a place on the map.
+const pickedInstance = (): InstanceSelection | null => {
+  const current = state;
+  if (
+    current.level !== 'body' ||
+    !current.instanceId ||
+    !catalogue ||
+    !system
+  ) {
+    return null;
+  }
+  const instance = instanceById(catalogue, current.instanceId);
+  if (!instance) {
+    return null;
+  }
+  const placed = instancePlacement(system, catalogue, instance);
+  if (placed.kind !== 'located' || placed.body.id !== current.bodyId) {
+    return null;
+  }
+  const model = modelSummaryById(catalogue, instance.model);
+  const drawn = footprints?.drawn.some(value => value.id === instance.id);
+  let absence: FootprintAbsence | null;
+  if (drawn) {
+    absence = bodyBand && showsFootprints(bodyBand) ? null : 'band';
+  } else if (model?.kind === 'structure') {
+    absence = footprints?.gaps.some(value => value.id === instance.id)
+      ? 'gap'
+      : 'pending';
+  } else {
+    absence =
+      model?.kind === 'ground'
+        ? 'ground'
+        : model?.kind === 'interior'
+          ? 'interior'
+          : 'object';
+  }
+  return absence === null ? null : { absence, at: placed.at, instance, model };
+};
+
+/// The picked Settlement, by the island record carrying it, if it is on the Body on screen.
+const pickedSettlement = (): SettlementSelection | null => {
+  const current = state;
+  if (current.level !== 'body' || !current.settlementId || !catalogue) {
+    return null;
+  }
+  const island = catalogue.islands.find(
+    value => value.id === current.settlementId
+  );
+  const body = selectedBody();
+  if (
+    !island ||
+    island.areaName === null ||
+    !body ||
+    island.body !== catalogueBodyId(body.sourceIndex)
+  ) {
+    return null;
+  }
+  const workspace = surface?.settlements.find(value => value.id === island.id);
+  return {
+    island,
+    roads: workspace ? settlementRoads(workspace) : 'gap',
+    runs: workspace?.road?.lines.length ?? 0
+  };
 };
 
 /// The sidebar panel. Separate from `render` because `drawRange` is what discovers whether a
@@ -296,6 +372,7 @@ const renderSelectionPanel = () => {
               footprints.drawn.find(value => value.id === instanceId) ?? null
           }
         : null,
+    instance: pickedInstance(),
     island: pickedId
       ? (catalogue?.islands.find(island => island.id === pickedId) ?? null)
       : null,
@@ -311,6 +388,7 @@ const renderSelectionPanel = () => {
         }
       : null,
     roads,
+    settlement: pickedSettlement(),
     surfaceOnDisc: onDisc
   });
 };
@@ -464,6 +542,7 @@ const labelHref = (label: PlacedLabel): string => {
     islandId: label.kind === 'settlement' ? label.id : null,
     level: 'body',
     placeId: label.kind === 'place' ? label.id : null,
+    search: currentSearch(),
     view: bodyView
       ? { span: bodyView.span, x: bodyView.cx, z: bodyView.cz }
       : null
@@ -593,7 +672,9 @@ const drawBodyRange = () => {
   const current = state;
   const band = rangeOf(bodyView, frame.width);
   const picked =
-    current.level === 'body' ? (current.placeId ?? current.islandId) : null;
+    current.level === 'body'
+      ? (current.placeId ?? current.settlementId ?? current.islandId)
+      : null;
   const instanceId = current.level === 'body' ? current.instanceId : null;
   const shown = labelsInBand(surface?.labels ?? [], band);
   // Which groups are in frame is discovered before anything is drawn, because both the dashed
@@ -641,7 +722,8 @@ const drawBodyRange = () => {
     {
       drawn: showsFootprints(band) ? (footprints?.drawn ?? []) : [],
       selectedId: instanceId
-    }
+    },
+    pickedInstance()?.at ?? null
   );
   placeSurfaceLabels(bodyLabelLayer, layout, picked, labelHref);
   const cells = bodyView.span / Math.max(frame.width, 1);
@@ -687,30 +769,40 @@ const drawBodyRange = () => {
 
 /// The Catalogue is read once and kept. A failure leaves the sea and the grid drawn, and says so
 /// in the status line, rather than blanking a Range that is already telling the reader something.
+/// The one request for the Catalogue's shared document, which the map and the search both wait
+/// on. A failure is forgotten so the next reader to ask retries it.
+const requestCatalogue = (): Promise<void> =>
+  (catalogueRequest ??= payloadJson(CATALOGUE_PATH).then(
+    value => {
+      catalogue = parseCatalogueDocument(value);
+      models = new ModelStore(catalogue, payloadJson);
+      searchIndex = undefined;
+      renderSearchSection();
+    },
+    (error: unknown) => {
+      catalogueRequest = undefined;
+      throw error instanceof Error ? error : new Error(String(error));
+    }
+  ));
+
 const loadSurface = (sourceIndex: number, then: () => void) => {
   if (catalogue) {
     then();
     return;
   }
-  catalogueRequest =
-    catalogueRequest ??
-    payloadJson(CATALOGUE_PATH)
-      .then(value => {
-        catalogue = parseCatalogueDocument(value);
-        models = new ModelStore(catalogue, payloadJson);
-      })
-      .catch(error => {
-        catalogueRequest = undefined;
-        failure.hidden = false;
-        failure.textContent =
-          `${CATALOGUE_PATH}: ${error instanceof Error ? error.message : String(error)}\n` +
-          'The sea and the Surface Cell grid are drawn from the System authority; coastlines need the Catalogue.';
-      });
-  void catalogueRequest.then(() => {
-    if (catalogue) {
-      then();
+  requestCatalogue().then(
+    () => {
+      if (catalogue) {
+        then();
+      }
+    },
+    (error: unknown) => {
+      failure.hidden = false;
+      failure.textContent =
+        `${CATALOGUE_PATH}: ${error instanceof Error ? error.message : String(error)}\n` +
+        'The sea and the Surface Cell grid are drawn from the System authority; coastlines need the Catalogue.';
     }
-  });
+  );
 };
 
 /// Reads the structures a Body's footprints are measured from and the ground records its road
@@ -839,7 +931,9 @@ const render = () => {
       String(anchor.dataset['body'] === body?.id)
     );
   }
+  clearUnknownSelection();
   renderSelectionPanel();
+  renderSearchSection();
   if (body) {
     drawBodyRange();
   } else {
@@ -847,9 +941,14 @@ const render = () => {
   }
 };
 
+/// A deliberate move: pushes history. The search travels with it unless the move names its own.
 const go = (next: AtlasState) => {
   clearTimeout(pending);
-  history.pushState(null, '', atlasHref(next));
+  history.pushState(
+    null,
+    '',
+    atlasHref({ ...next, search: next.search ?? currentSearch() })
+  );
   render();
 };
 
@@ -1099,7 +1198,24 @@ document.addEventListener('click', event => {
   }
   event.preventDefault();
   clearTimeout(pending);
-  history.pushState(null, '', url.pathname + url.search);
+  // A link written without search keys, such as a roster entry, keeps the search open: moving
+  // about the map is not a reason to lose the question being asked.
+  const searched = ['q', 'kind', 'searchBody', 'model'].some(key =>
+    url.searchParams.has(key)
+  );
+  history.pushState(
+    null,
+    '',
+    searched || !system
+      ? url.pathname + url.search
+      : atlasHref({
+          ...readAtlasState(
+            url.search,
+            system.bodies.map(body => body.id)
+          ),
+          search: currentSearch()
+        })
+  );
   render();
 });
 
@@ -1110,6 +1226,362 @@ window.addEventListener('popstate', render);
 new ResizeObserver(drawRange).observe(systemRange);
 new ResizeObserver(drawBodyRange).observe(bodyRange);
 
+/// The research search (#453). It renders when the URL or its own controls change, never from a
+/// camera redraw, so panning cannot rewrite the list under the reader's pointer.
+const searchElements = {
+  model: node('search-model'),
+  more: node<HTMLButtonElement>('search-more'),
+  results: node('search-results'),
+  retry: node<HTMLButtonElement>('search-retry'),
+  status: node('search-status')
+};
+const searchInput = node<HTMLInputElement>('search-q');
+const searchKind = node<HTMLSelectElement>('search-kind');
+const searchBody = node<HTMLSelectElement>('search-body');
+/// How many results are listed at once, and added by each "show more".
+const SEARCH_PAGE = 25;
+let searchIndex: readonly SearchRecord[] | undefined;
+let searchShown = SEARCH_PAGE;
+/// Why the Catalogue could not be read for the search, until a retry.
+let searchFailure: string | undefined;
+
+const MODEL_KIND_LABEL = {
+  ground: 'ground record',
+  interior: 'building detail',
+  object: 'object',
+  structure: 'Surface Structure'
+} as const;
+
+/// Anything but a Body needs the Catalogue's shared document; Bodies are in the Gamma System.
+const needsCatalogue = (search: AtlasSearch): boolean =>
+  search.modelId !== null || (search.q.trim() !== '' && search.kind !== 'body');
+
+const readForSearch = () => {
+  searchFailure = undefined;
+  requestCatalogue().catch((error: unknown) => {
+    searchFailure = error instanceof Error ? error.message : String(error);
+    renderSearchSection();
+  });
+};
+
+/// A move to one record on one Body, keeping the search.
+const onBody = (
+  bodyId: string,
+  picked: {
+    readonly instanceId?: string;
+    readonly placeId?: string;
+    readonly settlementId?: string;
+  },
+  at: MapPoint | null,
+  span: number
+): string =>
+  atlasHref({
+    bodyId,
+    instanceId: picked.instanceId ?? null,
+    islandId: null,
+    level: 'body',
+    placeId: picked.placeId ?? null,
+    search: currentSearch(),
+    settlementId: picked.settlementId ?? null,
+    view: at ? { span, x: at.x, z: at.z } : null
+  });
+
+const catalogueInstance = (id: string): string =>
+  `/catalogue?instance=${encodeURIComponent(id)}`;
+
+const catalogueModel = (id: string): string =>
+  `/catalogue?model=${encodeURIComponent(id)}`;
+
+const bodyNames = (ids: readonly string[]): string =>
+  ids
+    .map(id => system?.bodies.find(body => body.id === id)?.name ?? id)
+    .join(', ');
+
+/// One Instance as a line: on the map where it is located on a Body the Atlas draws, and
+/// otherwise only in the Catalogue, with what is known of where it is and nothing invented.
+const instanceItem = (instance: Instance): SearchItemView => {
+  const context = `Instance · ${instance.id}`;
+  const placed = instancePlacement(system!, catalogue!, instance);
+  switch (placed.kind) {
+    case 'located':
+      return {
+        atlasHref: onBody(
+          placed.body.id,
+          { instanceId: instance.id },
+          placed.at,
+          STREET_SPAN
+        ),
+        catalogueHref: null,
+        context: `${context} · ${placed.body.name} · Catalogue placement ${placed.at.x.toFixed(2)} / ${placed.at.z.toFixed(2)}`,
+        name: instance.name
+      };
+    case 'parent':
+      return {
+        atlasHref: null,
+        catalogueHref: catalogueInstance(instance.id),
+        context: `${context} · inside ${placed.parent?.name ?? instance.placement?.parent ?? 'another Instance'}, at a position local to it`,
+        name: instance.name
+      };
+    case 'unmapped':
+      return {
+        atlasHref: null,
+        catalogueHref: catalogueInstance(instance.id),
+        context: `${context} · on ${placed.catalogueBodyId}, which the Atlas does not draw`,
+        name: instance.name
+      };
+    case 'unlocated':
+      return {
+        atlasHref: null,
+        catalogueHref: catalogueInstance(instance.id),
+        context: `${context} · no recovered location`,
+        name: instance.name
+      };
+  }
+};
+
+const resultItem = (record: SearchRecord): SearchItemView => {
+  const label = SEARCH_KIND_LABEL[record.kind];
+  const where = record.bodyIds.length
+    ? bodyNames(record.bodyIds)
+    : 'on no Body the Atlas draws';
+  switch (record.kind) {
+    case 'body': {
+      const body = system!.bodies.find(value => value.id === record.id)!;
+      return {
+        atlasHref: onBody(record.id, {}, null, SURFACE_SPAN),
+        catalogueHref: null,
+        context: `${label} · source slot ${body.sourceIndex}`,
+        name: record.name
+      };
+    }
+    case 'settlement': {
+      const island = catalogue!.islands.find(value => value.id === record.id)!;
+      const bodyId = record.bodyIds[0];
+      return {
+        atlasHref: bodyId
+          ? onBody(
+              bodyId,
+              { settlementId: record.id },
+              settlementCentre(island),
+              SETTLEMENT_SPAN
+            )
+          : null,
+        catalogueHref: null,
+        context: `${label} · ${record.id} · ${where}`,
+        name: record.name
+      };
+    }
+    case 'place': {
+      const place = catalogue!.places.find(value => value.id === record.id)!;
+      const at = placePosition(catalogue!, place);
+      const bodyId = record.bodyIds[0];
+      return {
+        atlasHref:
+          at && bodyId
+            ? onBody(bodyId, { placeId: record.id }, at, SETTLEMENT_SPAN)
+            : null,
+        catalogueHref: null,
+        context:
+          `${label} · ${record.id} · ${where}` +
+          (at ? '' : ' · no located Instance, so nowhere to show it'),
+        name: record.name
+      };
+    }
+    case 'model': {
+      const model = modelSummaryById(catalogue!, record.id)!;
+      return {
+        atlasHref: atlasHref({
+          ...withCamera(state),
+          search: { ...currentSearch(), modelId: record.id }
+        }),
+        catalogueHref: catalogueModel(record.id),
+        context:
+          `${label} · ${record.id} · ${MODEL_KIND_LABEL[model.kind]} · ` +
+          (record.bodyIds.length
+            ? `located on ${where}`
+            : 'no located Instance'),
+        name: record.name
+      };
+    }
+    case 'instance':
+      return instanceItem(instanceById(catalogue!, record.id)!);
+  }
+};
+
+/// Every recorded occurrence of the chosen Model, grouped by Body. None is chosen for the
+/// reader: which occurrence they want is theirs to pick.
+const modelView = (modelId: string) => {
+  const placements = modelPlacements(system!, catalogue!, modelId);
+  if (!placements) {
+    return null;
+  }
+  const located = placements.byBody.reduce(
+    (sum, group) => sum + group.instances.length,
+    0
+  );
+  const total =
+    located +
+    placements.parentLocal.length +
+    placements.unlocated.length +
+    placements.unmapped.length;
+  return {
+    catalogueHref: catalogueModel(modelId),
+    groups: [
+      ...placements.byBody.map(group => ({
+        items: group.instances.map(entry => instanceItem(entry.instance)),
+        title: `${group.body.name} · ${group.instances.length}`
+      })),
+      {
+        items: placements.parentLocal.map(entry =>
+          instanceItem(entry.instance)
+        ),
+        title: `Inside another Instance · ${placements.parentLocal.length}`
+      },
+      {
+        items: placements.unmapped.map(instanceItem),
+        title: `On a Body the Atlas does not draw · ${placements.unmapped.length}`
+      },
+      {
+        items: placements.unlocated.map(instanceItem),
+        title: `No recovered location · ${placements.unlocated.length}`
+      }
+    ].filter(group => group.items.length > 0),
+    heading: `Model · ${placements.model.name}`,
+    summary:
+      `${placements.model.id} · ${MODEL_KIND_LABEL[placements.model.kind]} · ` +
+      `${total} recorded Instance${total === 1 ? '' : 's'}, ${located} located on the map. ` +
+      'Choose one to see where it is recovered to be.'
+  };
+};
+
+const searchStatus = (
+  search: AtlasSearch,
+  found: number,
+  waiting: boolean
+): string => {
+  if (!search.q.trim()) {
+    return 'Search Bodies, Settlements, Damocles Places, Models and Instances by name or record id.';
+  }
+  if (searchFailure !== undefined && needsCatalogue(search)) {
+    return `The Catalogue could not be read (${searchFailure}), so only Bodies are searched. ${found} found.`;
+  }
+  if (waiting) {
+    return `${found} Bod${found === 1 ? 'y' : 'ies'} found so far · reading the Catalogue for Settlements, Places, Models and Instances.`;
+  }
+  const scope =
+    (search.kind ? ` among ${SEARCH_KIND_LABEL[search.kind]} records` : '') +
+    (search.bodyId ? ` on ${bodyNames([search.bodyId])}` : '');
+  return found
+    ? `${found} result${found === 1 ? '' : 's'}${scope}.`
+    : `No match for “${search.q.trim()}”${scope}.`;
+};
+
+const renderSearchSection = () => {
+  if (!system) {
+    return;
+  }
+  const search = currentSearch();
+  if (searchInput.value !== search.q) {
+    searchInput.value = search.q;
+  }
+  searchKind.value = search.kind ?? '';
+  searchBody.value = search.bodyId ?? '';
+  const wanted = needsCatalogue(search);
+  if (
+    wanted &&
+    !catalogue &&
+    !catalogueRequest &&
+    searchFailure === undefined
+  ) {
+    readForSearch();
+  }
+  searchIndex ??= buildSearchIndex(system, catalogue);
+  const results = querySearch(searchIndex, {
+    bodyId: search.bodyId,
+    kind: search.kind,
+    q: search.q
+  });
+  let model: SearchView['model'] = null;
+  if (search.modelId && catalogue) {
+    model = modelView(search.modelId);
+    if (!model) {
+      // A Model the Catalogue does not hold clears itself rather than showing an empty list.
+      state = { ...state, search: { ...search, modelId: null } };
+      history.replaceState(null, '', atlasHref(withCamera(state)));
+    }
+  }
+  const waiting = wanted && !catalogue && searchFailure === undefined;
+  renderSearch(searchElements, {
+    failed: searchFailure !== undefined && wanted && !catalogue,
+    items: results.slice(0, searchShown).map(resultItem),
+    model,
+    more: Math.max(0, Math.min(SEARCH_PAGE, results.length - searchShown)),
+    status: searchStatus(search, results.length, waiting)
+  });
+};
+
+/// Typing and filtering replace the URL rather than pushing it: a query being typed is not a
+/// place to come back to one keystroke at a time.
+const replaceSearch = (next: AtlasSearch) => {
+  clearTimeout(pending);
+  state = { ...state, search: next };
+  history.replaceState(null, '', atlasHref(withCamera(state)));
+  searchShown = SEARCH_PAGE;
+  renderSearchSection();
+};
+
+node('search-form').addEventListener('submit', event => event.preventDefault());
+searchInput.addEventListener('input', () =>
+  replaceSearch({ ...currentSearch(), q: searchInput.value })
+);
+searchKind.addEventListener('change', () =>
+  replaceSearch({
+    ...currentSearch(),
+    kind: isSearchKind(searchKind.value) ? searchKind.value : null
+  })
+);
+searchBody.addEventListener('change', () =>
+  replaceSearch({ ...currentSearch(), bodyId: searchBody.value || null })
+);
+searchElements.more.addEventListener('click', () => {
+  searchShown += SEARCH_PAGE;
+  renderSearchSection();
+});
+searchElements.retry.addEventListener('click', () => {
+  readForSearch();
+  renderSearchSection();
+});
+
+/// A selection naming a record the Catalogue does not hold, or one that cannot be on this Body,
+/// clears itself rather than leaving a key in the URL that nothing on screen answers to.
+const clearUnknownSelection = () => {
+  const current = state;
+  if (current.level !== 'body' || !catalogue || !system) {
+    return;
+  }
+  let next = current;
+  if (current.settlementId && !pickedSettlement()) {
+    next = { ...next, settlementId: null };
+  }
+  const instance = current.instanceId
+    ? instanceById(catalogue, current.instanceId)
+    : undefined;
+  if (
+    current.instanceId &&
+    (!instance ||
+      (() => {
+        const placed = instancePlacement(system, catalogue, instance);
+        return placed.kind !== 'located' || placed.body.id !== current.bodyId;
+      })())
+  ) {
+    next = { ...next, instanceId: null };
+  }
+  if (next !== current) {
+    state = next;
+    history.replaceState(null, '', atlasHref(withCamera(state)));
+  }
+};
+
 const start = async () => {
   const path = '/payload/damocles/system.json';
   try {
@@ -1119,6 +1591,12 @@ const start = async () => {
     }
     system = readGammaSystem(await response.json());
     failure.hidden = true;
+    for (const body of system.bodies) {
+      const option = document.createElement('option');
+      option.value = body.id;
+      option.textContent = body.name;
+      searchBody.append(option);
+    }
     mountRoster(system);
     render();
   } catch (error) {

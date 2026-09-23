@@ -158,3 +158,9 @@ export const showsRoadPieces = (view: MapView, widthPixels: number): boolean =>
 /// (`rangeOf` needs only 100 pixels of width for it), and inside the camera's own zoom ceiling
 /// at any frame too.
 export const STREET_SPAN = 1;
+
+/// The span a search opens a Settlement or a Damocles Place at (#453): wide enough that a
+/// 16-cell Structure Workspace, and the name written at its origin, fit top to bottom in a frame
+/// up to about 1.6:1, and narrow enough to stay in the Settlement band down to a 300-pixel
+/// frame, so the Settlement's roads and its Places' names are drawn when the reader arrives.
+export const SETTLEMENT_SPAN = 28;

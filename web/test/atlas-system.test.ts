@@ -19,7 +19,13 @@ import {
   roadFacts,
   roadProvenance
 } from '../src/atlas/panel.ts';
-import { atlasHref, atlasSearch, readAtlasState } from '../src/atlas/state.ts';
+import {
+  NO_SEARCH,
+  atlasHref,
+  atlasSearch,
+  readAtlasState,
+  type AtlasState
+} from '../src/atlas/state.ts';
 import {
   BODY_ROAD_GAP_NOTICE,
   NO_WORKSPACE_NOTICE,
@@ -502,9 +508,14 @@ describe('the Atlas System Range labels', () => {
   });
 });
 
+/// What a read fills in for a state written without search or a Settlement.
+const readBack = (state: AtlasState): AtlasState =>
+  state.level === 'system'
+    ? { search: NO_SEARCH, ...state }
+    : { search: NO_SEARCH, settlementId: null, ...state };
+
 describe('the Atlas state', () => {
   const ids = ['eris', 'dialis'];
-
   test('round-trips a Range and its camera through the URL', () => {
     for (const state of [
       { level: 'system', view: null } as const,
@@ -546,7 +557,7 @@ describe('the Atlas state', () => {
         view: { span: 1, x: 71.49, z: 136.52 }
       } as const
     ]) {
-      expect(readAtlasState(atlasSearch(state), ids)).toEqual(state);
+      expect(readAtlasState(atlasSearch(state), ids)).toEqual(readBack(state));
     }
     expect(atlasHref({ level: 'system', view: null })).toBe('/damocles/atlas');
     expect(
@@ -616,6 +627,7 @@ describe('the Atlas state', () => {
     ]) {
       expect(readAtlasState(search, ids)).toEqual({
         level: 'system',
+        search: NO_SEARCH,
         view: null
       });
     }
@@ -625,13 +637,66 @@ describe('the Atlas state', () => {
     // The camera goes with it: those numbers were written in the missing Body's units.
     expect(readAtlasState('?body=void&x=1&z=2&span=3', ids)).toEqual({
       level: 'system',
+      search: NO_SEARCH,
       view: null
     });
     expect(readAtlasState('?body=', ids)).toEqual({
       level: 'system',
+      search: NO_SEARCH,
       view: null
     });
-    expect(readAtlasState('', ids)).toEqual({ level: 'system', view: null });
+    expect(readAtlasState('', ids)).toEqual({
+      level: 'system',
+      search: NO_SEARCH,
+      view: null
+    });
+  });
+
+  test("carries search through every Range, apart from the map's own Body (#453)", () => {
+    const search = {
+      bodyId: 'dialis',
+      kind: 'model',
+      modelId: 'object-035d12',
+      q: 'dart ii'
+    } as const;
+    for (const state of [
+      { level: 'system', search, view: null } as const,
+      {
+        bodyId: 'eris',
+        instanceId: null,
+        islandId: null,
+        level: 'body',
+        placeId: null,
+        search,
+        settlementId: 'island-eris-063272',
+        view: { span: 20, x: 72, z: 136 }
+      } as const
+    ]) {
+      expect(readAtlasState(atlasSearch(state), ids)).toEqual(state);
+    }
+    expect(
+      atlasHref({
+        bodyId: 'eris',
+        instanceId: null,
+        islandId: null,
+        level: 'body',
+        placeId: null,
+        search,
+        settlementId: null,
+        view: null
+      })
+    ).toBe(
+      '/damocles/atlas?body=eris&q=dart+ii&kind=model&searchBody=dialis&model=object-035d12'
+    );
+    // A Body the search cannot hold falls back to the whole System, and the query survives a
+    // map Body that falls back too.
+    expect(
+      readAtlasState('?body=void&q=key&kind=nope&searchBody=void', ids)
+    ).toEqual({
+      level: 'system',
+      search: { bodyId: null, kind: null, modelId: null, q: 'key' },
+      view: null
+    });
   });
 });
 
