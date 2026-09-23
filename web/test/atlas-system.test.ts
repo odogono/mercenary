@@ -816,11 +816,11 @@ describe('the Atlas selection panel', () => {
       label: 'CAPITAL CITY',
       value: '37 runs'
     });
-    // Outward of the Street Range the Drawn Records are named as a layer to zoom for.
+    // Further out the Drawn Records are named as a layer to zoom for.
     expect(roadProvenance(capital).join(' ')).toContain(
-      'from the Street Range'
+      'from 0.003 Surface Cells per pixel'
     );
-    // At the Street Range they are drawn, and the image-derived cells that have none are
+    // Close enough, they are drawn, and the image-derived cells that have none are
     // stated rather than filled in with another cell's geometry (ADR 0014, #460).
     const street = { ...capital, pieces: { drawn: 88, undrawn: 74 } };
     expect(roadFacts(street)).toContainEqual({

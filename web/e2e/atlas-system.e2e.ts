@@ -733,9 +733,10 @@ test('the Settlement Range draws a Settlement\u2019s recovered road network', as
     'data-recovery',
     'recovered'
   );
-  // The Drawn Records wait for the Street Range, and the status line says where to find them.
+  // The Drawn Records wait until a road is as wide as the line, and the status line says
+  // where to find them.
   await expect(page.locator('#status')).toContainText(
-    '88 Road Pieces, from the Street Range'
+    '88 Road Pieces, from 0.003 Surface Cells per pixel'
   );
   expect(await piecePixels(page)).toBe(0);
 
@@ -808,6 +809,16 @@ test('the Street Range draws each captured road cell\u2019s Drawn Record', async
   expect(await roadPixels(page)).toBe(0);
   await expect(page.locator('#panel')).toContainText('Drawn Record');
   await expect(page.locator('#panel')).toContainText('#460');
+
+  // Where the Street Range opens a road is under a pixel wide, so the gold line holds until
+  // 0.003 Surface Cells per pixel rather than swapping for a shimmer at the band edge.
+  await page.goto(`/damocles/atlas?${STRAIGHT_VIEW}&span=5`);
+  await expect(page.locator('#system-scale')).toContainText('Street Range');
+  await expect(page.locator('#status')).toContainText(
+    '88 Road Pieces, from 0.003 Surface Cells per pixel',
+    { timeout: 20_000 }
+  );
+  expect(await roadPixels(page)).toBeGreaterThan(0);
 
   // KEY WEST's network is image-derived: its runs stay drawn and no piece is invented for them.
   await page.goto(`/damocles/atlas?${IMAGE_STRAIGHT_VIEW}&span=1`);

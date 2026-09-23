@@ -1,5 +1,6 @@
 import type { Instance, Island, Place } from '../catalogue/data.ts';
 import type { GammaBody, GammaSystemDocument } from '../flyover/documents.ts';
+import { ROAD_PIECE_ZOOM_NOTE } from './bodyRange.ts';
 import type { Footprint } from './footprint.ts';
 import type { MapPoint } from './mapView.ts';
 import {
@@ -317,7 +318,7 @@ export const roadProvenance = (roads: RoadSelection): readonly string[] => {
             'orientation byte and joined to the scene points its workspace hands it, so it is ' +
             'placed at the cell’s centre and nothing more (#459).'
         : 'Each road cell’s Drawn Record — the ground record it actually draws — takes the ' +
-            'place of its centre line from the Street Range, where a capture recovered it (#459).'
+            `place of its centre line ${ROAD_PIECE_ZOOM_NOTE}, where a capture recovered it (#459).`
     );
     if (roads.pieces?.undrawn) {
       notes.push(

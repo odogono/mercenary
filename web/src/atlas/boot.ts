@@ -12,6 +12,7 @@ import {
 import { assertBrowserDocument } from '../shell/documentPath.ts';
 import {
   RANGE_LABEL,
+  ROAD_PIECE_ZOOM_NOTE,
   SURFACE_SPAN,
   bodyBounds,
   fitBody,
@@ -151,6 +152,9 @@ let roadPieces: BodyRoadPieces | undefined;
 /// Which band the Body Range's camera is in, so the panel can describe the layers that band
 /// actually draws. Written by `drawBodyRange`, which is what discovers it.
 let bodyBand: BodyRange | undefined;
+/// Whether that camera is close enough to draw Road Pieces, which happens inside the Street Range
+/// rather than at a band edge. Written by `drawBodyRange` beside `bodyBand`.
+let piecesShown = false;
 /// The Structure Workspaces that camera can see. A road gap belongs to a group and not to a
 /// Body, so what the panel and the status line owe the reader is what is true of the groups in
 /// front of them; `drawBodyRange` discovers these the same way it discovers the band.
@@ -264,7 +268,7 @@ const renderSelectionPanel = () => {
             .length,
           onBody: surface.settlements.length,
           pieces:
-            roadPieces && showsRoadPieces(bodyBand)
+            roadPieces && piecesShown
               ? {
                   drawn: roadPieces.drawn.length,
                   undrawn: roadPieces.undrawn
@@ -515,7 +519,7 @@ const roadNote = (band: BodyRange): string => {
   const onBody =
     ` \u00b7 roads: ${captured} of ${surface.settlements.length} Structure ` +
     `Workspace${surface.settlements.length === 1 ? '' : 's'} captured on this Body` +
-    pieceNote(band);
+    pieceNote();
   if (!inView.length) {
     // Over open sea at this band: no group is in frame to say anything about, so the Body's
     // own standing is what is left to say.
@@ -535,15 +539,15 @@ const roadNote = (band: BodyRange): string => {
 };
 
 /// What this band has to say about the road cells' Drawn Records: how many it draws and how many
-/// it cannot, or, outward of the Street Range, that they are there to be seen.
-const pieceNote = (band: BodyRange): string => {
+/// it cannot, or, further out, that they are there to be seen.
+const pieceNote = (): string => {
   if (!roadPieces || (!roadPieces.drawn.length && !roadPieces.undrawn)) {
     return '';
   }
   const { drawn, undrawn } = roadPieces;
-  if (!showsRoadPieces(band)) {
+  if (!piecesShown) {
     return drawn.length
-      ? ` \u00b7 ${drawn.length} Road Piece${drawn.length === 1 ? '' : 's'}, from the Street Range`
+      ? ` \u00b7 ${drawn.length} Road Piece${drawn.length === 1 ? '' : 's'}, ${ROAD_PIECE_ZOOM_NOTE}`
       : '';
   }
   return (
@@ -603,7 +607,8 @@ const drawBodyRange = () => {
           frame.height / Math.max(frame.width, 1)
         )
       : [];
-  const pieces = showsRoadPieces(band) ? (roadPieces?.drawn ?? []) : [];
+  piecesShown = showsRoadPieces(bodyView, frame.width);
+  const pieces = piecesShown ? (roadPieces?.drawn ?? []) : [];
   // Where a network's Drawn Records are drawn, they are the road and its centre line would
   // only hide the game's own marking down the middle of it. An image-derived network has no
   // pieces to draw, so it keeps its line, and a captured one keeps it until its Models land.
@@ -619,7 +624,7 @@ const drawBodyRange = () => {
   // describes what the reader is looking at, so a change in either re-renders it — the same
   // arrangement the authored-scale note has. Keyed, because a pan that changes neither must not
   // rewrite the sidebar on every frame.
-  const key = `${band}|${inView.map(settlement => settlement.id).join(',')}|${instanceId ?? ''}`;
+  const key = `${band}|${piecesShown}|${inView.map(settlement => settlement.id).join(',')}|${instanceId ?? ''}`;
   if (panelKey !== key) {
     panelKey = key;
     renderSelectionPanel();

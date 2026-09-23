@@ -31,6 +31,11 @@ export const fitBody = (frame: {
     Math.max(1, frame.width / Math.max(frame.height, Number.MIN_VALUE))
 });
 
+/// How far in a Body camera may go: twice the kernel's `MAX_ZOOM`. At that ceiling a Surface
+/// Cell was about 1,900 pixels across a 1,000-pixel frame and a recovered road about eleven, so
+/// the Drawn Records the Street Range exists for were only just readable (#459).
+export const BODY_MAX_ZOOM = 16_384;
+
 /// What bounds a Body camera: the whole surface, with the centre taken modulo the surface rather
 /// than clamped into it.
 export const bodyBounds = (frame: {
@@ -39,6 +44,7 @@ export const bodyBounds = (frame: {
 }): MapBounds => ({
   centre: 'wrap',
   fit: fitBody(frame),
+  maxZoom: BODY_MAX_ZOOM,
   period: SURFACE_CELLS
 });
 
@@ -125,17 +131,22 @@ export const FOOTPRINT_BAND: BodyRange = 'street';
 export const showsFootprints = (band: BodyRange): boolean =>
   BODY_RANGES.indexOf(band) >= BODY_RANGES.indexOf(FOOTPRINT_BAND);
 
-/// The band a road cell's Drawn Record appears at, in place of its network's centre lines.
+/// How many Surface Cells a css pixel may cover where a road cell's Drawn Record appears, in
+/// place of its network's centre line.
 ///
-/// The Street Range and no wider, the band footprints share. A recovered road is about 400
-/// engine units across a 65,536-unit Surface Cell, so at the Settlement Range, where a cell is
-/// 10 to 100 pixels, a piece is a fraction of a pixel and its markings are noise under the
-/// centre line that already says where the road runs (#459).
-export const ROAD_PIECE_BAND: BodyRange = 'street';
+/// Inside the Street Range rather than at its edge. A recovered road is about 400 engine units
+/// across a 65,536-unit Surface Cell, so where the band opens, at a hundredth of a cell to the
+/// pixel, a road is well under a pixel wide and shimmers as the camera moves; swapping the
+/// steady gold line for it there made the map jitter. At 0.003 it is two pixels, the width of
+/// the line it replaces (#459).
+export const ROAD_PIECE_CELLS_PER_PIXEL = 0.003;
 
-/// Whether a band draws Road Pieces, and so whether it must count the road cells it cannot.
-export const showsRoadPieces = (band: BodyRange): boolean =>
-  BODY_RANGES.indexOf(band) >= BODY_RANGES.indexOf(ROAD_PIECE_BAND);
+/// Where to zoom to see them, in the unit the scale readout counts in.
+export const ROAD_PIECE_ZOOM_NOTE = `from ${ROAD_PIECE_CELLS_PER_PIXEL} Surface Cells per pixel`;
+
+/// Whether a camera draws Road Pieces, and so whether it must count the road cells it cannot.
+export const showsRoadPieces = (view: MapView, widthPixels: number): boolean =>
+  view.span / Math.max(widthPixels, 1) < ROAD_PIECE_CELLS_PER_PIXEL;
 
 /// The span a hand-off into the Street Range opens at: one Surface Cell across the map's width.
 ///
@@ -145,5 +156,5 @@ export const showsRoadPieces = (band: BodyRange): boolean =>
 /// Eris is 0.031 of a cell and the smallest a tenth of that, so the reader would have no fixed
 /// sense of how big anything is. It is inside the Street band at any frame a browser can have
 /// (`rangeOf` needs only 100 pixels of width for it), and inside the camera's own zoom ceiling
-/// up to a 2:1 frame, past which the first gesture eases it back out.
+/// at any frame too.
 export const STREET_SPAN = 1;

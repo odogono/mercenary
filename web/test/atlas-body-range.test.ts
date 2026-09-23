@@ -1,11 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
+  BODY_MAX_ZOOM,
   BODY_RANGES,
   FOOTPRINT_BAND,
   LABEL_BAND,
   ROAD_BAND,
-  ROAD_PIECE_BAND,
+  ROAD_PIECE_CELLS_PER_PIXEL,
   STREET_SPAN,
   SURFACE_SPAN,
   bodyBounds,
@@ -85,8 +86,10 @@ describe('the wrapping surface camera', () => {
     // a deepest one.
     expect(clampView(bounds, { cx: 0, cz: 0, span: 1e9 }).span).toBe(fit.span);
     expect(clampView(bounds, { cx: 0, cz: 0, span: 1e-9 }).span).toBe(
-      fit.span / MAX_ZOOM
+      fit.span / BODY_MAX_ZOOM
     );
+    // Deeper than the kernel's own ceiling, which the Catalogue keeps.
+    expect(BODY_MAX_ZOOM).toBeGreaterThan(MAX_ZOOM);
   });
 
   test('leaves a clamped world exactly as it was', () => {
@@ -243,12 +246,22 @@ describe('which bands draw a road network', () => {
   });
 });
 
-describe('which bands draw a Road Piece', () => {
-  test('draws Drawn Records at the Street Range alone', () => {
-    // A recovered road is about 400 engine units across a 65,536-unit cell, so outward of this
-    // band a piece is a fraction of a pixel under the centre line that already shows the run.
-    expect(BODY_RANGES.filter(showsRoadPieces)).toEqual(['street']);
-    expect(ROAD_PIECE_BAND).toBe(FOOTPRINT_BAND);
+/// A camera over a 1,000-pixel frame covering this many Surface Cells to the pixel.
+const cameraAt = (cellsPerPixel: number) => ({
+  cx: 0,
+  cz: 0,
+  span: cellsPerPixel * 1000
+});
+
+describe('which cameras draw a Road Piece', () => {
+  test('draws Drawn Records from inside the Street Range', () => {
+    // A recovered road is about 400 engine units across a 65,536-unit cell. Where the Street
+    // Range opens it is a fraction of a pixel and shimmers; at the threshold it is two pixels,
+    // the width of the centre line it replaces.
+    expect(rangeOf(cameraAt(0.005), 1000)).toBe('street');
+    expect(showsRoadPieces(cameraAt(0.005), 1000)).toBe(false);
+    expect(showsRoadPieces(cameraAt(0.0029), 1000)).toBe(true);
+    expect((400 / 65_536 / ROAD_PIECE_CELLS_PER_PIXEL).toFixed(0)).toBe('2');
   });
 });
 
