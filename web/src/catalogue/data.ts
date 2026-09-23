@@ -1387,8 +1387,12 @@ export const parseCatalogueDocument = (value: unknown): Catalogue => {
         takeable: boolean(h['takeable'])
       };
     }
+    // Required since schema 17: a document without the key predates boarding (#408).
+    if (i['boarding'] === undefined) {
+      fail('instance has no boarding block');
+    }
     let boarding: Instance['boarding'] = null;
-    if (i['boarding'] !== null && i['boarding'] !== undefined) {
+    if (i['boarding'] !== null) {
       const b = object(i['boarding']);
       const admission =
         b['admission'] === null ? null : choice(b['admission'], ADMISSIONS);

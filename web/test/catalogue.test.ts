@@ -75,7 +75,7 @@ const fixture = () => ({
         levelSelector: number;
         structureGroupSelector: number;
       },
-      boarding: undefined as undefined | Record<string, unknown>,
+      boarding: null as null | Record<string, unknown>,
       handling: null as null | {
         byte: number;
         carried: boolean;
@@ -271,6 +271,9 @@ describe('Damocles catalogue contract', () => {
       boarding as never
     );
     expect(parseCatalogue(fixture()).instances[0]!.boarding).toBeNull();
+    const predates = fixture();
+    delete (predates.instances[0] as { boarding?: unknown }).boarding;
+    expect(() => parseCatalogue(predates)).toThrow('no boarding block');
     const missing = fixture();
     missing.instances[0]!.boarding = { ...boarding, pairedInstance: null };
     expect(

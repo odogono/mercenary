@@ -66,7 +66,10 @@ an index diff as wide as the Model diff.
 - The dev server's payload route admits digits and two directory levels, still lowercase and
   hyphenated, still `.json` only.
 - `schemaVersion` is 16 in the shared document and in every Model file. Payload fields added later
-  still do not move it; a layout change does.
+  still do not move it; a layout change does. _(Amended 2026-09-23 by
+  [#408](https://github.com/odogono/mercenary/issues/408): a field a Save depends on moves it too,
+  so a Damocles Save is never written against a Catalogue that lacks it. The per-instance boarding
+  block made it 17.)_
 - The browser never reads every Model. The game reads a Body's Models island by island, the one
   the player stands on first, and draws each island whole once it has landed; an Instance whose
   Model has not landed is neither drawn nor collided with. A restore first reads its island and

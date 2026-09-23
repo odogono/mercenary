@@ -3037,7 +3037,7 @@ class BoardingAdmissionTests(unittest.TestCase):
         if BoardingAdmissionTests._instances is None:
             root = Path(__file__).resolve().parents[3]
             document = json.loads((root / 'payload' / 'damocles' / 'catalogue.json').read_text())
-            self.assertEqual(document['schemaVersion'], 17)
+            self.assertEqual(document['schemaVersion'], SCHEMA_VERSION)
             BoardingAdmissionTests._instances = {i['id']: i for i in document['instances']}
         return BoardingAdmissionTests._instances
 
@@ -3075,7 +3075,7 @@ class BoardingAdmissionTests(unittest.TestCase):
         present = {'object-slot-183', 'object-slot-185'}
 
         def board(slot, orientation=yaw):
-            return resident_boarding(slot, orientation, gate, present.__contains__, resident=True)
+            return resident_boarding(slot, orientation, gate, present, resident=True)
 
         self.assertEqual(
             {k: v for k, v in board(5).items() if k != 'reason'},

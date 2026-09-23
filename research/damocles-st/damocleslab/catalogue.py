@@ -1883,7 +1883,7 @@ def decode_board_gate(data: bytes) -> dict:
 
 
 def resident_boarding(slot: int, orientation: dict | None, gate: dict,
-                      has_instance, resident: bool) -> dict:
+                      instance_ids: set[str], resident: bool) -> dict:
     """What the board gate answers for one resident slot, as a Catalogue block.
 
     Boardable is the gate's own two table facts, the bound and the model guard;
@@ -1893,9 +1893,9 @@ def resident_boarding(slot: int, orientation: dict | None, gate: dict,
     one the model guard refuses, because the key test runs first.
     """
     bound = gate['boardableBound']
-    turns = orientation is not None and orientation['modeByte'] == gate['orientationMode']
+    model_guard = orientation is not None and orientation['modeByte'] == gate['orientationMode']
     block = {
-        'boardable': 0 < slot < bound and turns, 'boardableProvenance': 'derived',
+        'boardable': 0 < slot < bound and model_guard, 'boardableProvenance': 'derived',
         'admission': None, 'admissionProvenance': 'derived',
         'pairedSlot': None, 'pairedInstance': None, 'pairedProvenance': 'derived',
         'refusal': None, 'refusalProvenance': 'recovered',
@@ -1917,13 +1917,13 @@ def resident_boarding(slot: int, orientation: dict | None, gate: dict,
         instance = f'object-slot-{paired}'
         refusal = gate['ownRefusal'] if slot == gate['ownRefusalSlot'] else gate['keyRefusal']
         block.update(admission='paired', pairedSlot=paired, refusal=refusal,
-                     pairedInstance=instance if has_instance(instance) else None)
+                     pairedInstance=instance if instance in instance_ids else None)
         reasons.append(f'The key test admits it only while slot {paired} is carried ($054332); '
                        f'otherwise the chooser refuses with {refusal} ($0542E0).')
         if block['pairedInstance'] is None:
             reasons.append(f'Slot {paired} holds no resident instance, so the paired object is '
                            'missing and the key test cannot pass.')
-    if turns:
+    if model_guard:
         reasons.append('Its model opens with the single-Y-turn orientation command, so the '
                        'model guard admits it ($054338).')
     else:
@@ -4947,7 +4947,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             instance['boarding'] = resident_boarding(
                 int(instance['id'].rsplit('-', 1)[1]),
                 by_address[instance['model']].get('instanceOrientation'), board_gate,
-                instance_ids.__contains__,
+                instance_ids,
                 resident=instance['location'] is not None or instance['placement'] is not None)
     return {'schemaVersion': SCHEMA_VERSION, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
             'bodies': bodies, 'islands': islands, 'places': places, 'tables': tables,
