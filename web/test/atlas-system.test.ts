@@ -881,11 +881,29 @@ describe('the Atlas selection panel', () => {
       label: 'CAPITAL CITY',
       value: '37 runs'
     });
-    // What is drawn is the network and not its surface: the pieces are recovered and unused,
-    // and no pad or ground colouring is invented to fill it in (ADR 0014).
+    // Further out the Drawn Records are named as a layer to zoom for.
     expect(roadProvenance(capital).join(' ')).toContain(
-      'none of them is drawn here'
+      'from 0.003 Surface Cells per pixel'
     );
+    // Close enough, they are drawn, and the image-derived cells that have none are
+    // stated rather than filled in with another cell's geometry (ADR 0014, #460).
+    const street = { ...capital, pieces: { drawn: 88, undrawn: 74 } };
+    expect(roadFacts(street)).toContainEqual({
+      label: 'Road Pieces drawn',
+      value: '88 on this Body'
+    });
+    expect(roadFacts(street)).toContainEqual({
+      label: 'Road cells undrawn',
+      value: '74 with no Drawn Record recovered'
+    });
+    const streetRead = roadProvenance(street).join(' ');
+    expect(streetRead).toContain('Drawn Record');
+    expect(streetRead).toContain('#460');
+    expect(
+      roadProvenance({ ...capital, pieces: { drawn: 88, undrawn: 0 } }).join(
+        ' '
+      )
+    ).not.toContain('#460');
     // A workspace publishing no Settlement name is named by where it is, because that is all
     // it has: LUCAN's own recovered network belongs to one of the thirteen.
     expect(

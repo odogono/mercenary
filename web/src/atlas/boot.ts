@@ -15,6 +15,7 @@ import {
 import { assertBrowserDocument } from '../shell/documentPath.ts';
 import {
   RANGE_LABEL,
+  ROAD_PIECE_ZOOM_NOTE,
   SETTLEMENT_SPAN,
   STREET_SPAN,
   SURFACE_SPAN,
@@ -23,6 +24,7 @@ import {
   labelsInBand,
   rangeOf,
   showsFootprints,
+  showsRoadPieces,
   showsRoads,
   type BodyRange
 } from './bodyRange.ts';
@@ -56,6 +58,11 @@ import {
   type SettlementSelection
 } from './panel.ts';
 import { centreReadout, type ReadoutRow } from './readout.ts';
+import {
+  bodyRoadPieceModels,
+  readBodyRoadPieces,
+  type BodyRoadPieces
+} from './roadPiece.ts';
 import {
   SEARCH_KIND_LABEL,
   buildSearchIndex,
@@ -169,9 +176,14 @@ let surface: BodySurface | undefined;
 /// they are the one derived layer on the map and are measured from the Models rather than from
 /// the Body's own records (#413).
 let footprints: BodyFootprints | undefined;
+/// The Body's road cells' Drawn Records, read from the same Models store once their files land.
+let roadPieces: BodyRoadPieces | undefined;
 /// Which band the Body Range's camera is in, so the panel can describe the layers that band
 /// actually draws. Written by `drawBodyRange`, which is what discovers it.
 let bodyBand: BodyRange | undefined;
+/// Whether that camera is close enough to draw Road Pieces, which happens inside the Street Range
+/// rather than at a band edge. Written by `drawBodyRange` beside `bodyBand`.
+let piecesShown = false;
 /// The Structure Workspaces that camera can see. A road gap belongs to a group and not to a
 /// Body, so what the panel and the status line owe the reader is what is true of the groups in
 /// front of them; `drawBodyRange` discovers these the same way it discovers the band.
@@ -331,6 +343,13 @@ const renderSelectionPanel = () => {
           captured: surface.settlements.filter(value => value.road !== null)
             .length,
           onBody: surface.settlements.length,
+          pieces:
+            roadPieces && piecesShown
+              ? {
+                  drawn: roadPieces.drawn.length,
+                  undrawn: roadPieces.undrawn
+                }
+              : null,
           settlements: inView.map(value => ({
             name: value.areaName,
             origin: value.origin,
@@ -578,7 +597,8 @@ const roadNote = (band: BodyRange): string => {
   ).length;
   const onBody =
     ` \u00b7 roads: ${captured} of ${surface.settlements.length} Structure ` +
-    `Workspace${surface.settlements.length === 1 ? '' : 's'} captured on this Body`;
+    `Workspace${surface.settlements.length === 1 ? '' : 's'} captured on this Body` +
+    pieceNote();
   if (!inView.length) {
     // Over open sea at this band: no group is in frame to say anything about, so the Body's
     // own standing is what is left to say.
@@ -594,6 +614,26 @@ const roadNote = (band: BodyRange): string => {
       ? ` \u00b7 and ${rest} more group${rest === 1 ? '' : 's'} in view`
       : '') +
     onBody
+  );
+};
+
+/// What this band has to say about the road cells' Drawn Records: how many it draws and how many
+/// it cannot, or, further out, that they are there to be seen.
+const pieceNote = (): string => {
+  if (!roadPieces || (!roadPieces.drawn.length && !roadPieces.undrawn)) {
+    return '';
+  }
+  const { drawn, undrawn } = roadPieces;
+  if (!piecesShown) {
+    return drawn.length
+      ? ` \u00b7 ${drawn.length} Road Piece${drawn.length === 1 ? '' : 's'}, ${ROAD_PIECE_ZOOM_NOTE}`
+      : '';
+  }
+  return (
+    ` \u00b7 ${drawn.length} Road Piece${drawn.length === 1 ? '' : 's'} drawn` +
+    (undrawn
+      ? `, ${undrawn} road cell${undrawn === 1 ? '' : 's'} with no Drawn Record recovered`
+      : '')
   );
 };
 
@@ -648,15 +688,24 @@ const drawBodyRange = () => {
           frame.height / Math.max(frame.width, 1)
         )
       : [];
+  piecesShown = showsRoadPieces(bodyView, frame.width);
+  const pieces = piecesShown ? (roadPieces?.drawn ?? []) : [];
+  // Where a network's Drawn Records are drawn, they are the road and its centre line would
+  // only hide the game's own marking down the middle of it. An image-derived network has no
+  // pieces to draw, so it keeps its line, and a captured one keeps it until its Models land.
+  const pieced = new Set(pieces.map(piece => piece.networkId));
   const roads = {
     gaps: inView.filter(settlement => settlement.road === null),
-    networks: showsRoads(band) ? (surface?.roads ?? []) : []
+    networks: showsRoads(band)
+      ? (surface?.roads ?? []).filter(road => !pieced.has(road.id))
+      : [],
+    pieces
   };
   // The band decides which layers are drawn and which groups are in frame, and the panel
   // describes what the reader is looking at, so a change in either re-renders it — the same
   // arrangement the authored-scale note has. Keyed, because a pan that changes neither must not
   // rewrite the sidebar on every frame.
-  const key = `${band}|${inView.map(settlement => settlement.id).join(',')}|${instanceId ?? ''}`;
+  const key = `${band}|${piecesShown}|${inView.map(settlement => settlement.id).join(',')}|${instanceId ?? ''}`;
   if (panelKey !== key) {
     panelKey = key;
     renderSelectionPanel();
@@ -756,24 +805,29 @@ const loadSurface = (sourceIndex: number, then: () => void) => {
   );
 };
 
-/// Reads the structures a Body's footprints are measured from, then measures them again, if the
-/// reader is still on that Body. Islands and roads are already drawn from the Catalogue's own
-/// document by then; the footprints join them when their Models land (ADR 0048).
-const readFootprintModels = (sourceIndex: number) => {
+/// Reads the structures a Body's footprints are measured from and the ground records its road
+/// cells draw, then reads both layers again, if the reader is still on that Body. Islands and
+/// road centre lines are already drawn from the Catalogue's own document by then; footprints and
+/// Road Pieces join them when their Models land (ADR 0048).
+const readBodyModels = (sourceIndex: number) => {
   if (!catalogue || !models) {
     return;
   }
-  const wanted = bodyStructureModels(catalogue, sourceIndex);
+  const wanted = [
+    ...bodyStructureModels(catalogue, sourceIndex),
+    ...bodyRoadPieceModels(catalogue, sourceIndex)
+  ];
   if (wanted.every(id => models!.peek(id) !== undefined)) {
     return;
   }
   void models.prefetch(wanted).then(failures => {
     if (failures.length > 0) {
       failure.hidden = false;
-      failure.textContent = `${failures[0]!.message}\nFootprints need every structure Model on the Body.`;
+      failure.textContent = `${failures[0]!.message}\nFootprints and Road Pieces need every structure and road-cell Model on the Body.`;
     }
     if (catalogue && models && selectedBody()?.sourceIndex === sourceIndex) {
       footprints = readBodyFootprints(catalogue, models, sourceIndex);
+      roadPieces = readBodyRoadPieces(catalogue, models, sourceIndex);
       render();
     }
   });
@@ -786,6 +840,10 @@ const loadBodySurface = (sourceIndex: number) => {
     catalogue && models
       ? readBodyFootprints(catalogue, models, sourceIndex)
       : undefined;
+  roadPieces =
+    catalogue && models
+      ? readBodyRoadPieces(catalogue, models, sourceIndex)
+      : undefined;
   loadSurface(sourceIndex, () => {
     const body = selectedBody();
     if (!catalogue || !models || !body) {
@@ -793,7 +851,8 @@ const loadBodySurface = (sourceIndex: number) => {
     }
     surface = readBodySurface(catalogue, body.sourceIndex);
     footprints = readBodyFootprints(catalogue, models, body.sourceIndex);
-    readFootprintModels(body.sourceIndex);
+    roadPieces = readBodyRoadPieces(catalogue, models, body.sourceIndex);
+    readBodyModels(body.sourceIndex);
     // `render` rather than `drawBodyRange`: a deep link may name a picked island, and until the
     // Catalogue is read there is no record to put in the panel. Re-rendering is idempotent here
     // because the state has not moved, so the camera survives and nothing is refetched.

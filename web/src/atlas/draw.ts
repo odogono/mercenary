@@ -2,6 +2,7 @@ import { SURFACE_CELLS } from '../damocles/world.ts';
 import type { GammaBody } from '../flyover/documents.ts';
 import type { Footprint } from './footprint.ts';
 import { gridStep, project, type MapPoint, type MapView } from './mapView.ts';
+import type { RoadPiece } from './roadPiece.ts';
 import {
   layOutSurfaceLabels,
   nearestImage,
@@ -53,12 +54,13 @@ const SETTLEMENT_MARK_RADIUS = 3.5;
 /// A recovered road network. Warmer than the coastline outline so a network reads as something
 /// built on the land rather than as another edge of it.
 const ROAD = '#d8b25a';
-/// A run is one Surface Cell wide, so the line is drawn as a fraction of a cell rather than at a
-/// fixed pixel width: it then grows with the zoom the way the ground it lies on does. A fifth,
-/// because the network is drawn as the centre lines the runs are and not as the cell-wide band
-/// the road pieces fill — the width is legibility and carries no recovered quantity.
-const ROAD_CELL_FRACTION = 0.2;
-const ROAD_MIN_WIDTH = 1;
+/// A fixed pixel width at every zoom, like every other stroke on the map. The network is drawn
+/// as the centre lines the runs are, and the width is legibility and carries no recovered
+/// quantity: a line sized to the cell grew past twenty pixels at the Street Range (#459).
+const ROAD_WIDTH = 2;
+/// A Road Piece's two-point edges. A hairline, because a recovered road is a fraction of a pixel
+/// wide as the Street Range opens, and the edge is what shows where its markings run.
+const ROAD_PIECE_EDGE_WIDTH = 1;
 /// The square of a Structure Workspace whose roads were never captured, dashed and dimmer than
 /// a drawn network. The group's 16 cells are recovered even where what stands in them is not,
 /// so the map can show the reader exactly where the hole is rather than leaving blank ground
@@ -184,10 +186,9 @@ const drawRoads = (
   roads: readonly SurfaceRoad[]
 ) => {
   const aspect = frame.height / Math.max(frame.width, 1);
-  const cellPixels = frame.width / Math.max(view.span, Number.MIN_VALUE);
   context.strokeStyle = ROAD;
   context.lineCap = 'round';
-  context.lineWidth = Math.max(ROAD_MIN_WIDTH, cellPixels * ROAD_CELL_FRACTION);
+  context.lineWidth = ROAD_WIDTH;
   for (const road of roads) {
     if (!road.lines.length) {
       continue;
@@ -210,6 +211,65 @@ const drawRoads = (
     }
   }
   context.lineCap = 'butt';
+};
+
+/// One primitive's path, in every wrap image the camera can see, handed to `paint` per image.
+const tracePrimitive = (
+  context: CanvasRenderingContext2D,
+  view: MapView,
+  frame: SystemFrame,
+  aspect: number,
+  points: readonly MapPoint[],
+  paint: () => void
+) => {
+  for (const image of wrapImages(points, view, aspect)) {
+    context.beginPath();
+    for (const [index, point] of image.entries()) {
+      const { u, v } = project(view, point, aspect);
+      const x = u * frame.width,
+        y = v * frame.height;
+      if (index === 0) {
+        context.moveTo(x, y);
+      } else {
+        context.lineTo(x, y);
+      }
+    }
+    paint();
+  }
+};
+
+/// Each road cell's Drawn Record this band shows, in its recovered colours: faces in the
+/// record's own order, so a later face paints over an earlier one as the ground stream leaves
+/// them, then the record's edges over its faces.
+///
+/// Wrapped primitive by primitive rather than piece by piece. A scene join can reach ten cells
+/// along its run, so a piece's bounding box is no smaller than the network's, and a face that
+/// is on screen is the one worth drawing.
+const drawRoadPieces = (
+  context: CanvasRenderingContext2D,
+  view: MapView,
+  frame: SystemFrame,
+  pieces: readonly RoadPiece[]
+) => {
+  const aspect = frame.height / Math.max(frame.width, 1);
+  for (const piece of pieces) {
+    for (const face of piece.faces) {
+      context.fillStyle = face.colour;
+      tracePrimitive(context, view, frame, aspect, face.points, () => {
+        context.closePath();
+        context.fill();
+      });
+    }
+  }
+  context.lineWidth = ROAD_PIECE_EDGE_WIDTH;
+  for (const piece of pieces) {
+    for (const edge of piece.edges) {
+      context.strokeStyle = edge.colour;
+      tracePrimitive(context, view, frame, aspect, edge.points, () =>
+        context.stroke()
+      );
+    }
+  }
 };
 
 /// The Structure Workspaces in view whose road network no capture has loaded, each as its own
@@ -343,7 +403,8 @@ const drawLabelMarks = (
 
 /// A Body's surface: sea in the Body's own recovered base colour, every recovered Damocles
 /// Island filled in its own land colour with each of its wrap images, every recovered road
-/// network the band shows drawn over the land it lies on, and a Surface Cell grid over the top.
+/// network the band shows drawn over the land it lies on — as its road cells' Drawn Records at
+/// the Street Range, where they were captured — and a Surface Cell grid over the top.
 /// The grid and the seam sit above the land so the coordinate reference stays readable on it,
 /// and the seam is brighter than the grid because a uniform lattice looks identical everywhere.
 export const drawBodySurface = (
@@ -364,6 +425,9 @@ export const drawBodySurface = (
   roads: {
     readonly gaps: readonly SurfaceSettlement[];
     readonly networks: readonly SurfaceRoad[];
+    /// The road cells' Drawn Records, already gated by `showsRoadPieces`. A network whose
+    /// pieces are drawn is left out of `networks`: the pieces are its road.
+    readonly pieces?: readonly RoadPiece[];
   } = { gaps: [], networks: [] },
   /// The derived footprints this band draws, already gated by `showsFootprints`, and whichever
   /// is picked.
@@ -408,6 +472,7 @@ export const drawBodySurface = (
       context.stroke();
     }
   }
+  drawRoadPieces(context, view, frame, roads.pieces ?? []);
   drawRoads(context, view, frame, roads.networks);
   drawRoadGaps(context, view, frame, roads.gaps);
   drawFootprints(context, view, frame, footprints.drawn, footprints.selectedId);

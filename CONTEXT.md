@@ -586,6 +586,18 @@ _Avoid_: Deferred vertices, synthetic geometry, road mesh
 The surface's roads and runways, selected for a position and an altitude from the Reference Build's own tables rather than from the structures standing near the player.
 _Avoid_: Roads, terrain, ground detail, map overlay
 
+**Road Piece**:
+What one road cell of a Damocles Settlement draws on the ground: the ground record chosen for the cell by its class from the Settlement's six selectors, turned by the cell's orientation, unless a placement in the Settlement's own stream replaced it. A Road Piece is the cell's surface; the run it lies on is the network.
+_Avoid_: Road tile, road mesh, road segment, road model
+
+**Selected Piece**:
+The ground record a road cell's class chose from its Settlement's six selectors, whether or not a placement later replaced it. Recovered for every road cell, captured or not.
+_Avoid_: Default piece, road type, piece name
+
+**Drawn Record**:
+The ground record a road cell actually draws, resolved for that cell alone — its orientation and scene joins applied, and any placement replacement taken — which may differ from its Selected Piece. Two cells sharing a Selected Piece may draw different geometry, so one cell's Drawn Record never stands in for another's.
+_Avoid_: Override, drawn piece, resolved model, road geometry
+
 **Visibility Selector**:
 What decides which of the world's geometry is worth projecting for one Pose, before anything is projected: the selected Surface Structures, the Map Lines for where the player is, and the objects present — or, underground, one Room and the things standing in it.
 _Avoid_: Culler, frustum culling, scene graph, filter

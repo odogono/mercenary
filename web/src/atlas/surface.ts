@@ -44,9 +44,9 @@ export interface SurfaceGap {
 /// One Settlement's recovered road network, as the map draws it: the authored runs of one
 /// captured Structure Workspace group, each already a one-cell-wide line (#441).
 ///
-/// The pieces are in the Catalogue too, with their rotations and the ground record each cell
-/// draws, but nothing here reads them: the runs alone are the network the game itself draws
-/// from the air, and drawing a piece's faces would be a second, larger claim.
+/// The runs alone: they are the network the game itself draws from the air. Each cell's Drawn
+/// Record is a separate layer with its own gaps, read from the cell's Model rather than from
+/// the Catalogue's document (`roadPiece.ts`, #459).
 export interface SurfaceRoad {
   readonly areaName: string | null;
   readonly id: string;
