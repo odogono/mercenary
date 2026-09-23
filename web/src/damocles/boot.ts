@@ -211,13 +211,25 @@ try {
   const controls = new BrowserControlProfile({
     drop: () => commitAction(() => session.drop()),
     fire: () => undefined,
-    leaveCraft: () => undefined,
-    occupancy: () => ({ kind: 'onFoot' }),
+    leaveCraft: () => commitAction(() => session.leave()),
+    // The shared profile reads only whether the player is aboard. Its numeric slot is Targ's
+    // identity, so the Damocles instance id is only translated here, at the boundary.
+    occupancy: () => {
+      const occupancy = session.occupancy;
+      return occupancy.kind === 'onFoot'
+        ? occupancy
+        : {
+            kind: 'aboard',
+            slot: Number(/\d+$/.exec(occupancy.instance)?.[0] ?? 0)
+          };
+    },
     page: () => undefined,
     press: () => undefined,
     reach: action => {
       if (action === 'take') {
         commitAction(() => session.take());
+      } else if (action === 'board') {
+        commitAction(() => session.board());
       }
     },
     rideLift: () => undefined,
@@ -596,6 +608,9 @@ try {
       snapshot.structure?.attachments[0]?.openUnits ?? 0
     );
     root['structureInstance'] = snapshot.structure?.instanceId ?? '';
+    // The instance the player is aboard, empty on foot, so a browser pass can see a board land.
+    root['occupancy'] =
+      snapshot.occupancy.kind === 'aboard' ? snapshot.occupancy.instance : '';
     // Which region of the bound structure the player stands in. It decides which residents are
     // exposed, so a browser pass cannot judge visibility or a region-bound refusal without it.
     root['region'] = String(snapshot.structure?.regionIndex ?? '');

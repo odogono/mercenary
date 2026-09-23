@@ -11,8 +11,13 @@ import { SCRIPT_FOR_TRIGGER, TRIGGER_FOR_RESIDENT } from './scripts.ts';
 /// grid units while an Object Residence is in the same world units the renderer and Pose use.
 export const DAMOCLES_CELL_UNITS = 65_536;
 
+/// Where a Damocles resident object is. `occupied` is the object the player is aboard: boarding
+/// removes it from Object Residence, so it is neither placed nor carried, and it is not drawn or
+/// selectable until leaving restores it (#407). Its Catalogue coordinates are stale while it is
+/// occupied and must not stand in for a place.
 export type Residence =
   | { readonly kind: 'carried'; readonly placementClass: number }
+  | { readonly kind: 'occupied'; readonly placementClass: number }
   | {
       readonly body: string;
       readonly kind: 'surface';
@@ -29,7 +34,10 @@ export type Residence =
       readonly position: Vector3;
     };
 
-export type PlacedResidence = Exclude<Residence, { readonly kind: 'carried' }>;
+export type PlacedResidence = Exclude<
+  Residence,
+  { readonly kind: 'carried' | 'occupied' }
+>;
 
 export interface ResidenceDeparture {
   readonly instance: string;
@@ -99,7 +107,7 @@ export const insertionsInRegion = (
 export const catalogueResidence = (
   catalogue: Catalogue,
   instanceId: string
-): Residence | undefined => {
+): PlacedResidence | undefined => {
   const instance = instanceById(catalogue, instanceId);
   if (instance === undefined) {
     return undefined;
@@ -297,7 +305,7 @@ export const generateAcceptanceMatrix = (
         value
       ): value is {
         readonly instance: Instance;
-        readonly residence: Residence;
+        readonly residence: PlacedResidence;
       } => value !== undefined
     )
     .sort((left, right) => compareText(left.instance.id, right.instance.id));
@@ -311,7 +319,7 @@ export const generateAcceptanceMatrix = (
   );
   const rows = admitted.flatMap(({ body, poses }) =>
     residents.map(({ instance, residence }): AcceptanceRow => {
-      const residentBody = residence.kind === 'carried' ? body : residence.body;
+      const residentBody = residence.body;
       const takes =
         residentBody === body &&
         instance.handling !== null &&
@@ -322,7 +330,6 @@ export const generateAcceptanceMatrix = (
       const supports = residents.filter(
         candidate =>
           candidate.instance.id !== instance.id &&
-          candidate.residence.kind !== 'carried' &&
           candidate.residence.body === body
       );
       const drops: AcceptanceRow['drops'][number][] = [

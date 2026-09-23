@@ -188,6 +188,8 @@ const messageIds = new Set<DamoclesMessageId>([
   'script62-inline-3',
   'system-string-1',
   'system-string-2',
+  'system-string-22',
+  'system-string-3',
   'system-string-50',
   'system-string-9'
 ]);
@@ -241,7 +243,11 @@ const identityOf = (value: unknown): DamoclesSaveIdentity => {
   };
 };
 
-const residenceOf = (value: unknown): Residence => {
+/// A saved Residence is carried or placed. Occupancy is not a Save field yet (#417), so a
+/// Session Resume captured aboard writes the occupied object's residence from before boarding.
+const residenceOf = (
+  value: unknown
+): Exclude<Residence, { readonly kind: 'occupied' }> => {
   const residence = object(value, 'snapshot.residence[].residence');
   const kind = residence['kind'];
   const placementClass = integer(
@@ -535,9 +541,13 @@ const scriptOf = (
     }
   } else if (
     message !== null &&
-    !['system-string-1', 'system-string-2', 'system-string-9'].includes(
-      message.id
-    )
+    ![
+      'system-string-1',
+      'system-string-2',
+      'system-string-22',
+      'system-string-3',
+      'system-string-9'
+    ].includes(message.id)
   ) {
     return fail('parked script can only present a system message');
   }

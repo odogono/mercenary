@@ -10,6 +10,7 @@ import type { TitleSession } from '../shell/title.ts';
 import {
   displayCells,
   type DamoclesDisplay,
+  type DamoclesMessageId,
   type DisplayCells
 } from './display.ts';
 import type { ErisPresentationDocument } from './documents.ts';
@@ -58,6 +59,7 @@ import {
 } from './selection.ts';
 import { presentedText, type DamoclesStrings } from './strings.ts';
 import {
+  bearingFromYaw,
   cellOf,
   erisSurfaceFrom,
   insideCentralCellHalf,
@@ -75,9 +77,10 @@ import {
 
 /// What the Damocles Gameplay Session can say about itself in this slice.
 ///
-/// The player is on foot on one admitted Body. Object Residence, the head-significant Carried
-/// Stack, live inventory capacity and the bounded Damocles Script are session-owned state; the
-/// renderer receives only their immutable projection.
+/// The player is on foot on one admitted Body, or aboard one resident object there that does not
+/// move (#407). Object Residence, the head-significant Carried Stack, live inventory capacity,
+/// Occupancy and the bounded Damocles Script are session-owned state; the renderer receives only
+/// their immutable projection.
 export interface DamoclesSnapshot {
   /// The Catalogue name of the Body the player is standing on. Published because the panel and
   /// the console both name the location, and both said ERIS whatever Body a switch had reached.
@@ -100,11 +103,11 @@ export interface DamoclesSnapshot {
   /// `cell` on a Body with no island record.
   readonly islandCell: ErisCell;
   /// Where the player stands against `island`: on its core, elsewhere on it, or at sea. The
-  /// renderer reads it to colour the ground plane; the coast a player cannot walk across and
-  /// the refusal to leave a craft over water are the same answer, and are not wired yet (#394).
+  /// renderer reads it to colour the ground plane, and leaving refuses on its `sea` answer. The
+  /// coast a player cannot walk across is the same answer, and is not wired yet (#394).
   readonly landSea: LandSea;
   readonly message: Presenting | null;
-  readonly occupancy: { readonly kind: 'onFoot' };
+  readonly occupancy: DamoclesOccupancy;
   readonly pose: Pose;
   readonly residence: readonly ResidenceDeparture[];
   readonly residents: readonly ErisPlacement[];
@@ -118,6 +121,26 @@ export interface DamoclesSnapshot {
 }
 
 export type { Residence, ResidenceDeparture } from './residence.ts';
+
+/// What the player is inside: on foot, or aboard one resident instance, named by its instance id
+/// as everything else in Damocles is. Aboard, that instance's Object Residence is `occupied`.
+export type DamoclesOccupancy =
+  | { readonly kind: 'onFoot' }
+  | { readonly instance: string; readonly kind: 'aboard' };
+
+/// Board test 1: the nearest drawn object is under 1024 units from the Pose. Derived from
+/// `$054302`'s exponent test under the selection note's float rule; the Take's reach is 512.
+const BOARD_REACH = 1024;
+
+/// The VOID staging Body, `$78`, which Take and Drop already refuse on.
+const VOID_BODY = 'body-30';
+
+/// The messages the refusal chooser `$0542E0` can present. The Data Payload names which one each
+/// resident takes; this only narrows its string to a presentable id.
+const BOARD_REFUSALS: readonly Extract<
+  DamoclesMessageId,
+  'system-string-22' | 'system-string-3'
+>[] = ['system-string-3', 'system-string-22'];
 
 export type Selection =
   | { readonly kind: 'none' }
@@ -220,6 +243,12 @@ export class DamoclesSession implements TitleSession<
   private elapsed: number;
   private effects: Effect[] = [];
   private frameAccumulator: number;
+  /// The instance the player is aboard, or null on foot.
+  private occupied: string | null = null;
+  /// The occupied instance's Object Residence departure from before boarding, or undefined where
+  /// it had none and stood at its Catalogue residence. A Session Resume captured aboard writes
+  /// it back, because Occupancy is not a Save field until #417.
+  private boardedFrom: Residence | undefined;
   private pendingBriefcaseDrop: {
     readonly head: string;
     readonly residence: PlacedResidence;
@@ -535,11 +564,16 @@ export class DamoclesSession implements TitleSession<
       this.regionIndex = restore.regionIndex;
       return;
     }
-    this.regionIndex =
-      placement !== undefined &&
+    this.regionIndex = this.regionAt(pose);
+  }
+
+  /// The bound structure's region the Pose stands in, where the Pose is in its cell's central half.
+  private regionAt(pose: Pose): number | null {
+    const placement = this.boundPlacement;
+    return placement !== null &&
       insideCentralCellHalf(pose.position, this.surface.grid)
-        ? structureRegionAt(placement, pose, this.negateModelZ, this.unitsFor)
-        : null;
+      ? structureRegionAt(placement, pose, this.negateModelZ, this.unitsFor)
+      : null;
   }
 
   private structureSnapshot(): BoundStructureSnapshot | null {
@@ -586,7 +620,7 @@ export class DamoclesSession implements TitleSession<
     readonly y: number;
     readonly z: number;
   } | null {
-    if (residence.kind === 'carried') {
+    if (residence.kind === 'carried' || residence.kind === 'occupied') {
       return null;
     }
     if (residence.kind === 'surface') {
@@ -641,7 +675,11 @@ export class DamoclesSession implements TitleSession<
         continue;
       }
       const residence = this.residenceFor(placement.id);
-      if (residence === undefined || residence.kind === 'carried') {
+      if (
+        residence === undefined ||
+        residence.kind === 'carried' ||
+        residence.kind === 'occupied'
+      ) {
         continue;
       }
       const position = this.worldPosition(placement.id, residence);
@@ -719,6 +757,7 @@ export class DamoclesSession implements TitleSession<
       if (
         residence === undefined ||
         residence.kind === 'carried' ||
+        residence.kind === 'occupied' ||
         (departure === undefined && residence.kind === 'surface')
       ) {
         continue;
@@ -830,6 +869,8 @@ export class DamoclesSession implements TitleSession<
       | 'system-string-0'
       | 'system-string-1'
       | 'system-string-2'
+      | 'system-string-22'
+      | 'system-string-3'
       | 'system-string-9'
   ): void {
     if (this.script.execution === null && this.script.message === null) {
@@ -862,7 +903,7 @@ export class DamoclesSession implements TitleSession<
           : islandLocalCell(this.pose.position, this.surface.grid, island),
       landSea: classifyPosition(this.surface, this.pose.position).kind,
       message: this.script.message,
-      occupancy: { kind: 'onFoot' },
+      occupancy: this.occupancy,
       pose: this.pose,
       residence: [...this.residence].map(([instance, residence]) => ({
         instance,
@@ -881,7 +922,11 @@ export class DamoclesSession implements TitleSession<
     let remaining = Math.max(0, seconds);
     while (remaining > 0) {
       const step = Math.min(MAXIMUM_STEP, remaining);
-      const moved = walk(this.pose, this.intent, step, this.rules);
+      // No Mover runs aboard, so the Pose holds: driving is not admitted (ADR 0047).
+      const aboard = this.occupied !== null;
+      const moved = aboard
+        ? this.pose
+        : walk(this.pose, this.intent, step, this.rules);
       this.bindAt(moved);
       const placement = this.boundPlacement;
       if (placement !== null) {
@@ -911,23 +956,26 @@ export class DamoclesSession implements TitleSession<
           );
         }
       }
-      if (
-        placement !== null &&
-        insideCentralCellHalf(moved.position, this.surface.grid)
-      ) {
-        const clamped = clampStructureStep(
-          placement,
-          this.pose,
-          moved,
-          this.negateModelZ,
-          this.unitsFor,
-          this.regionIndex
-        );
-        this.pose = clamped.pose;
-        this.regionIndex = clamped.regionIndex;
-      } else {
-        this.pose = moved;
-        this.regionIndex = null;
+      // Aboard there is no step to clamp, and the region boarding selected stands.
+      if (!aboard) {
+        if (
+          placement !== null &&
+          insideCentralCellHalf(moved.position, this.surface.grid)
+        ) {
+          const clamped = clampStructureStep(
+            placement,
+            this.pose,
+            moved,
+            this.negateModelZ,
+            this.unitsFor,
+            this.regionIndex
+          );
+          this.pose = clamped.pose;
+          this.regionIndex = clamped.regionIndex;
+        } else {
+          this.pose = moved;
+          this.regionIndex = null;
+        }
       }
       this.elapsed += step;
       this.frameAccumulator += step * this.content.doc.time.vblHertz;
@@ -945,7 +993,14 @@ export class DamoclesSession implements TitleSession<
     return this.snapshot;
   }
 
+  /// Aboard, the occupied instance is written with the residence it had before boarding and the
+  /// player on foot at the Pose, which is its origin plus the eye height: the state leaving would
+  /// reach for every surface object, since nothing moves aboard. Occupancy itself is #417's.
   captureResume(): DamoclesSaveSnapshot {
+    const residence = new Map(this.residence);
+    if (this.occupied !== null) {
+      this.restoreBoardedFrom(residence, this.occupied);
+    }
     return {
       briefcaseStore: [...this.briefcaseStore],
       carried: [...this.carried],
@@ -953,7 +1008,7 @@ export class DamoclesSession implements TitleSession<
       frameAccumulator: this.frameAccumulator,
       pendingBriefcaseDrop: this.pendingBriefcaseDrop,
       pose: this.pose,
-      residence: [...this.residence].map(([instance, residence]) => ({
+      residence: [...residence].map(([instance, residence]) => ({
         instance,
         residence
       })),
@@ -983,7 +1038,147 @@ export class DamoclesSession implements TitleSession<
     );
   }
 
+  /// Put the occupied instance back where boarding found it: its departure, or its Catalogue
+  /// residence where it had none.
+  private restoreBoardedFrom(
+    residence: Map<string, Residence>,
+    instance: string
+  ): void {
+    if (this.boardedFrom === undefined) {
+      residence.delete(instance);
+    } else {
+      residence.set(instance, this.boardedFrom);
+    }
+  }
+
+  /// What the player is inside. Cheap, for a Control Profile that asks on every key.
+  get occupancy(): DamoclesOccupancy {
+    return this.occupied === null
+      ? { kind: 'onFoot' }
+      : { instance: this.occupied, kind: 'aboard' };
+  }
+
+  /// `B`: the board gate `$054302`–`$05434E`, its eight tests in the Reference Build's order
+  /// (docs/design/damocles-boarding-admission.md). The first that fails decides; every refusal
+  /// but the key test's is silent and changes nothing.
+  board(): { readonly kind: 'boarded' | 'refused' } {
+    // 1. The nearest drawn object is inside the board reach, which is not the Take's.
+    const selected = this.nearestCandidate(BOARD_REACH);
+    // 2. The Selection names an instance. Slot 0 is no published instance.
+    const instance =
+      selected === undefined ? undefined : this.instanceFor(selected.id);
+    if (selected === undefined || instance === undefined) {
+      return { kind: 'refused' };
+    }
+    // 3. The current structure region's flags have bit 14 set, or no region is current.
+    const region =
+      this.regionIndex === null
+        ? undefined
+        : this.boundPlacement?.selection?.structure.regions[this.regionIndex];
+    if (region !== undefined && (region.flags & 0x40_00) === 0) {
+      return { kind: 'refused' };
+    }
+    // 4. Slots 1 to 22: the chooser's admission is published for exactly those.
+    const boarding = instance.boarding;
+    if (boarding === null || boarding.admission === null) {
+      return { kind: 'refused' };
+    }
+    // 5. On foot. 6. Not on the VOID staging Body.
+    if (this.occupied !== null || this.pose.body === VOID_BODY) {
+      return { kind: 'refused' };
+    }
+    // 7. The key test asks the Carried Stack for the paired object; unkeyed and seatable
+    // admissions need none. A missing pair can never be carried.
+    if (
+      boarding.admission === 'paired' &&
+      (boarding.pairedInstance === null ||
+        !this.liveCarriedInstance(boarding.pairedInstance))
+    ) {
+      const refusal = BOARD_REFUSALS.find(id => id === boarding.refusal);
+      if (refusal === undefined) {
+        throw new Error(
+          `Damocles cannot present board refusal ${boarding.refusal}`
+        );
+      }
+      this.presentSystem(refusal);
+      return { kind: 'refused' };
+    }
+    // 8. The model guard: the model opens with the single-Y-turn orientation command.
+    if (!boarding.boardable) {
+      return { kind: 'refused' };
+    }
+
+    // `$054350`–`$0543BA`, in one step. The Carried Stack is unchanged: boarding does not
+    // consume the Vehicle Key.
+    const previous = this.residenceFor(instance.id);
+    this.boardedFrom = this.residence.get(instance.id);
+    this.residence.set(instance.id, {
+      kind: 'occupied',
+      placementClass: previous?.placementClass ?? instance.placementClass ?? 0
+    });
+    this.occupied = instance.id;
+    // The instance angle byte, 256 a turn, becomes the yaw word, 1024 a turn, with no model
+    // bias ($054390). Nothing moves aboard, so the byte is still the Catalogue's.
+    const byte = instance.location?.heading ?? instance.placement?.heading ?? 0;
+    this.pose = {
+      body: this.pose.body,
+      heading: bearingFromYaw(byte * 4, this.content.doc.orientation),
+      // Not written by boarding; on foot nothing pitches the view.
+      pitch: this.pose.pitch,
+      position: {
+        x: selected.position.x,
+        y: selected.position.y + this.rules.eyeHeight,
+        z: selected.position.z
+      }
+    };
+    // Authored: the region is taken afresh at the new Pose. Whether the original's changes here
+    // is not established (#407), but keeping the pressed-from region would have the first step
+    // after leaving clamp the player back into it, away from the object's origin.
+    this.bindAt(this.pose);
+    this.regionIndex = this.regionAt(this.pose);
+    return { kind: 'boarded' };
+  }
+
+  /// `L`: the leave path `$05449C`–`$05450E`. Its four tests refuse silently.
+  leave(): { readonly kind: 'left' | 'refused' } {
+    // 1. Aboard.
+    const instance = this.occupied;
+    if (instance === null) {
+      return { kind: 'refused' };
+    }
+    // 2. The occupied object is in ground contact: always, since no Mover runs aboard.
+    // 3. Not at sea by the island classification. 4. Not on the VOID staging Body.
+    if (
+      classifyPosition(this.surface, this.pose.position).kind === 'sea' ||
+      this.pose.body === VOID_BODY
+    ) {
+      return { kind: 'refused' };
+    }
+    const occupied = this.residence.get(instance);
+    const placed = this.directResidence(occupied?.placementClass ?? 0);
+    if (
+      placed.kind === 'structure' &&
+      !validStructureResidence(this.content.catalogue, placed)
+    ) {
+      // Authored: a structure placement the session cannot hold would lose the object, so it
+      // returns where boarding found it -- the same place, since nothing moves aboard.
+      this.restoreBoardedFrom(this.residence, instance);
+    } else {
+      this.residence.set(instance, placed);
+    }
+    // Roll and pitch are leveled ($0544C6, $0544CC). The instance angle byte takes the yaw ÷ 4
+    // ($0544FA); with no Mover aboard that is the byte boarding read, which is not stored.
+    this.pose = { ...this.pose, pitch: 0 };
+    this.occupied = null;
+    this.boardedFrom = undefined;
+    return { kind: 'left' };
+  }
+
   take(): { readonly kind: 'refused' | 'took' } {
+    // Authored: no capture shows a Take completing aboard (#407).
+    if (this.occupied !== null) {
+      return { kind: 'refused' };
+    }
     const selection = this.selection();
     if (selection.kind === 'none' || !selection.inRange) {
       return { kind: 'refused' };
@@ -995,7 +1190,7 @@ export class DamoclesSession implements TitleSession<
       return { kind: 'refused' };
     }
     if (
-      this.pose.body === 'body-30' ||
+      this.pose.body === VOID_BODY ||
       handling === null ||
       handling === undefined
     ) {
@@ -1091,7 +1286,11 @@ export class DamoclesSession implements TitleSession<
     };
   }): PlacedResidence | undefined {
     const residence = this.residenceFor(support.id);
-    if (residence === undefined || residence.kind === 'carried') {
+    if (
+      residence === undefined ||
+      residence.kind === 'carried' ||
+      residence.kind === 'occupied'
+    ) {
       return undefined;
     }
     const model = modelSummaryById(
@@ -1165,6 +1364,30 @@ export class DamoclesSession implements TitleSession<
       return placed;
     }
 
+    const placementClass =
+      this.residenceFor(head)?.placementClass ?? dropped?.placementClass ?? 0;
+    const placed = this.directResidence(placementClass);
+    if (placed.kind === 'surface') {
+      return placed;
+    }
+    const parent = instanceById(this.content.catalogue, placed.parent);
+    if (
+      !parent?.associationGroups?.some(
+        group => group.group === placed.insertionGroup
+      ) ||
+      !validStructureResidence(this.content.catalogue, placed)
+    ) {
+      this.presentSystem('system-string-9');
+      return undefined;
+    }
+    return placed;
+  }
+
+  /// `$0546CC`, the direct-placement Drop: the point one eye height below the Pose, on the
+  /// surface where no structure region is current or the region's flags have bit 14 set, and
+  /// otherwise in the bound structure at the current region's insertion group. The Drop's own
+  /// checks are the caller's; leaving enters here after them.
+  private directResidence(placementClass: number): PlacedResidence {
     const structure = this.boundPlacement;
     const region =
       this.regionIndex === null
@@ -1174,8 +1397,6 @@ export class DamoclesSession implements TitleSession<
     // The native direct path copies $7A39, the player's 3x3 zone against the bound
     // structure's extent rectangle. That rectangle has no static decode yet (#356), so the
     // Residence keeps the class it already carries rather than inventing a zone.
-    const placementClass =
-      this.residenceFor(head)?.placementClass ?? dropped?.placementClass ?? 0;
     if (structure === null || exterior || this.regionIndex === null) {
       return {
         body: this.pose.body,
@@ -1188,17 +1409,9 @@ export class DamoclesSession implements TitleSession<
         }
       };
     }
-    const insertionGroup = this.regionIndex + 1;
-    const parent = instanceById(this.content.catalogue, structure.id);
-    if (
-      !parent?.associationGroups?.some(group => group.group === insertionGroup)
-    ) {
-      this.presentSystem('system-string-9');
-      return undefined;
-    }
-    const placed: Residence = {
+    return {
       body: this.pose.body,
-      insertionGroup,
+      insertionGroup: this.regionIndex + 1,
       kind: 'structure',
       // Floor-aware binding is unrecovered: the static rule mapping a level to its bound
       // structure is open (#355), so an interior Drop may only write the level the port
@@ -1212,14 +1425,6 @@ export class DamoclesSession implements TitleSession<
         z: this.pose.position.z - structure.position.z
       }
     };
-    if (
-      placed.kind === 'structure' &&
-      !validStructureResidence(this.content.catalogue, placed)
-    ) {
-      this.presentSystem('system-string-9');
-      return undefined;
-    }
-    return placed;
   }
 
   private finishDrop(head: string, residence: Residence): void {
@@ -1243,8 +1448,10 @@ export class DamoclesSession implements TitleSession<
   drop(): { readonly kind: 'dropped' | 'refused' } {
     const head = this.carried[0];
     if (
+      // Authored: no capture shows a Drop completing aboard (#407).
+      this.occupied !== null ||
       head === undefined ||
-      this.pose.body === 'body-30' ||
+      this.pose.body === VOID_BODY ||
       this.scrollCounter !== 0
     ) {
       return { kind: 'refused' };
@@ -1300,6 +1507,10 @@ export class DamoclesSession implements TitleSession<
   ):
     | { readonly kind: 'declined'; readonly reason: string }
     | { readonly kind: 'switched'; readonly pose: string } {
+    // Authored: a switch would carry the player away from an object resident nowhere (#407).
+    if (this.occupied !== null) {
+      return { kind: 'declined', reason: 'the player is aboard; leave first' };
+    }
     const resolution: PoseResolution = resolvePose(
       this.content.poses,
       this.content.catalogue,
@@ -1349,6 +1560,10 @@ export class DamoclesSession implements TitleSession<
 
   /// Land at an Eris cell's centre, keeping heading and the walk eye height.
   teleportToCell(x: number, z: number): void {
+    // Authored, as the Body switch is: aboard, the occupied object is resident nowhere (#407).
+    if (this.occupied !== null) {
+      throw new Error('the player is aboard; leave first');
+    }
     const { grid } = this.surface;
     if (
       !Number.isInteger(x) ||

@@ -286,6 +286,8 @@ export const presentSystemMessage = (
     | 'system-string-0'
     | 'system-string-1'
     | 'system-string-2'
+    | 'system-string-22'
+    | 'system-string-3'
     | 'system-string-9',
   rules: ScriptRules
 ): ScriptState => present(input, id, rules.messageFrames);
