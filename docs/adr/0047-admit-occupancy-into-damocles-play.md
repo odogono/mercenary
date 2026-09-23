@@ -1,6 +1,8 @@
 # Admit Occupancy into Damocles play as Damocles-native code
 
 Accepted, 2026-09-20, for the [Damocles Occupancy map](https://github.com/odogono/mercenary/issues/403).
+
+_(Amended 2026-09-23, issue #407: the seated eye height is **recovered**, not derived. Boarding sets the eye to the craft's resident position plus 63 in Y at `$05437A`–`$054384`, the same 63 as on foot, for every slot, and the boarded captures of `V.I.P. LIMO` and `EAGLE NINE S E` both read 63. No model's Y bounds take part, so the consequence below that derives it from them is withdrawn. The gate also has an eighth guard, not seven: after the key test, `$054338`–`$05434E` refuses silently unless the object's model record carries the single-Y-turn orientation command. See [the board and leave paths note](../research/damocles-board-leave-paths.md). The decision itself, and the rejected alternative's reasoning, stand.)_
 A Damocles Gameplay Session may put the player aboard a resident object that admits them. The
 recovered board gate is delivered whole: admission, refusal with the recovered message the original
 chooses, and leaving again, with the object's Object Residence removed on admission and restored at
