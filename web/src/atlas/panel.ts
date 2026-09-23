@@ -220,6 +220,16 @@ export interface RoadSelection {
   readonly captured: number;
   /// Structure Workspaces recovered on this Body, drawn or not: 0 where the Body binds none.
   readonly onBody: number;
+  /// The road cells' Drawn Records on this Body, from the band that draws them; null outward of
+  /// it.
+  readonly pieces?:
+    | {
+        readonly drawn: number;
+        /// Road cells whose Drawn Record is not recovered: the image-derived networks.
+        readonly undrawn: number;
+      }
+    | null
+    | undefined;
   /// Those the camera can see, in the Catalogue's order, each with what was recovered in it.
   readonly settlements: readonly {
     readonly name: string | null;
@@ -263,6 +273,22 @@ export const roadFacts = (roads: RoadSelection): readonly BodyFact[] => [
           value: `${roads.captured} of ${roads.onBody} on this Body`
         }
       ]
+    : []),
+  ...(roads.pieces
+    ? [
+        {
+          label: 'Road Pieces drawn',
+          value: `${roads.pieces.drawn} on this Body`
+        },
+        ...(roads.pieces.undrawn
+          ? [
+              {
+                label: 'Road cells undrawn',
+                value: `${roads.pieces.undrawn} with no Drawn Record recovered`
+              }
+            ]
+          : [])
+      ]
     : [])
 ];
 
@@ -283,10 +309,27 @@ export const roadProvenance = (roads: RoadSelection): readonly string[] => {
       'Recovered: the runs the classifier at $04EC30 finds in the group’s own extent grid, ' +
         'which are the lines the game itself draws from the air (#441). Each is one Surface ' +
         'Cell wide and drawn as its centre line, placed at the group’s origin in Surface Cells.',
-      'The road pieces are recovered too — each cell’s piece, its rotation and the ground ' +
-        'record it draws — and none of them is drawn here. This layer is the network and not ' +
-        'its surface: no pad, no ground colouring and no piece face is invented to fill it in.'
+      roads.pieces
+        ? 'Under each centre line is the road cell’s Drawn Record: the ground record the cell ' +
+            'actually draws, which a placement in the group’s own stream may have put in place ' +
+            'of the Selected Piece ($04ECEE), in its recovered face colours and face order. A ' +
+            'capture’s record is that cell’s own resolved geometry, already turned by its ' +
+            'orientation byte and joined to the scene points its workspace hands it, so it is ' +
+            'placed at the cell’s centre and nothing more (#459).'
+        : 'Each road cell’s Drawn Record — the ground record it actually draws — is drawn ' +
+            'under its centre line from the Street Range, where a capture recovered it (#459).'
     );
+    if (roads.pieces?.undrawn) {
+      notes.push(
+        `${roads.pieces.undrawn} road cell${roads.pieces.undrawn === 1 ? '' : 's'} on this ` +
+          'Body belong to a network expanded from the group’s authored stream rather than ' +
+          'read from a capture. Their Selected Piece is recovered and their Drawn Record is ' +
+          'not: the scene joins and any placement that replaced the piece exist only in a live ' +
+          'workspace, and another cell’s geometry for the same record would be a different ' +
+          'shape. They keep the centre line alone, and no piece face is invented for them ' +
+          '(#460).'
+      );
+    }
   }
   if (kinds.has('none')) {
     notes.push(

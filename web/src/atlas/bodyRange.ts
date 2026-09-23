@@ -125,6 +125,18 @@ export const FOOTPRINT_BAND: BodyRange = 'street';
 export const showsFootprints = (band: BodyRange): boolean =>
   BODY_RANGES.indexOf(band) >= BODY_RANGES.indexOf(FOOTPRINT_BAND);
 
+/// The band a road cell's Drawn Record appears at, under the network's centre lines.
+///
+/// The Street Range and no wider, the band footprints share. A recovered road is about 400
+/// engine units across a 65,536-unit Surface Cell, so at the Settlement Range, where a cell is
+/// 10 to 100 pixels, a piece is a fraction of a pixel and its markings are noise under the
+/// centre line that already says where the road runs (#459).
+export const ROAD_PIECE_BAND: BodyRange = 'street';
+
+/// Whether a band draws Road Pieces, and so whether it must count the road cells it cannot.
+export const showsRoadPieces = (band: BodyRange): boolean =>
+  BODY_RANGES.indexOf(band) >= BODY_RANGES.indexOf(ROAD_PIECE_BAND);
+
 /// The span a hand-off into the Street Range opens at: one Surface Cell across the map's width.
 ///
 /// The cell rather than the footprint it holds. Structures stand one to a Surface Cell, so the

@@ -5,6 +5,7 @@ import {
   FOOTPRINT_BAND,
   LABEL_BAND,
   ROAD_BAND,
+  ROAD_PIECE_BAND,
   STREET_SPAN,
   SURFACE_SPAN,
   bodyBounds,
@@ -12,6 +13,7 @@ import {
   labelsInBand,
   rangeOf,
   showsFootprints,
+  showsRoadPieces,
   showsRoads
 } from '../src/atlas/bodyRange.ts';
 import {
@@ -238,6 +240,15 @@ describe('which bands draw a road network', () => {
     expect(showsRoads('street')).toBe(true);
     expect(showsRoads('body')).toBe(false);
     expect(showsRoads('coastal')).toBe(false);
+  });
+});
+
+describe('which bands draw a Road Piece', () => {
+  test('draws Drawn Records at the Street Range alone', () => {
+    // A recovered road is about 400 engine units across a 65,536-unit cell, so outward of this
+    // band a piece is a fraction of a pixel under the centre line that already shows the run.
+    expect(BODY_RANGES.filter(showsRoadPieces)).toEqual(['street']);
+    expect(ROAD_PIECE_BAND).toBe(FOOTPRINT_BAND);
   });
 });
 
