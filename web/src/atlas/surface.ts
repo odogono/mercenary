@@ -1,4 +1,9 @@
-import type { Catalogue, Island } from '../catalogue/data.ts';
+import {
+  instanceById,
+  type Catalogue,
+  type Island,
+  type Place
+} from '../catalogue/data.ts';
 import { SURFACE_CELLS } from '../damocles/world.ts';
 import { project, type MapPoint, type MapView } from './mapView.ts';
 
@@ -192,6 +197,24 @@ const meanOfInstances = (positions: readonly MapPoint[]): MapPoint => {
   };
 };
 
+/// Where a Damocles Place is drawn: the wrap-aware mean of its located Instances, or null when
+/// none of them carries a recovered location. A Place whose every Instance has an unrecovered
+/// location has no position to be drawn at, and inventing one would be a claim, so it stays in
+/// the Catalogue and off the map.
+export const placePosition = (
+  catalogue: Catalogue,
+  place: Place
+): MapPoint | null => {
+  const positions = place.instances
+    .map(id => instanceById(catalogue, id))
+    .filter(instance => instance?.location)
+    .map(instance => ({
+      x: instance!.location!.position[0],
+      z: instance!.location!.position[2]
+    }));
+  return positions.length ? meanOfInstances(positions) : null;
+};
+
 /// The names on one Body: its Settlements and its Damocles Places.
 ///
 /// A Settlement is written at the island record's own origin rather than over the middle of the
@@ -214,24 +237,9 @@ const readLabels = (
   ...catalogue.places
     .filter(place => place.body === bodyId)
     .flatMap(place => {
-      const positions = place.instances
-        .map(id => catalogue.instances.find(instance => instance.id === id))
-        .filter(instance => instance?.location)
-        .map(instance => ({
-          x: instance!.location!.position[0],
-          z: instance!.location!.position[2]
-        }));
-      // A Place whose every Instance has an unrecovered location has no position to be drawn
-      // at, and inventing one would be a claim. It stays in the Catalogue and off the map.
-      return positions.length
-        ? [
-            {
-              at: meanOfInstances(positions),
-              id: place.id,
-              kind: 'place' as const,
-              name: place.name
-            }
-          ]
+      const at = placePosition(catalogue, place);
+      return at
+        ? [{ at, id: place.id, kind: 'place' as const, name: place.name }]
         : [];
     })
 ];

@@ -283,6 +283,35 @@ const drawFootprints = (
   }
 };
 
+/// Radius of the picked-location marker, in css pixels: large enough to find at any band.
+const LOCATION_MARK_RADIUS = 9;
+
+/// A picked Instance that has no footprint drawn, marked where it stands in every wrap image: a
+/// ring with a cross through it, in the selection accent, so it reads as "here" and not as a
+/// footprint or a Damocles Place.
+const drawSelectedMarker = (
+  context: CanvasRenderingContext2D,
+  view: MapView,
+  frame: SystemFrame,
+  at: MapPoint
+) => {
+  const aspect = frame.height / Math.max(frame.width, 1);
+  context.strokeStyle = SELECTED;
+  context.lineWidth = SELECTED_WIDTH;
+  for (const [image] of wrapImages([at], view, aspect)) {
+    const { u, v } = project(view, image!, aspect);
+    const x = u * frame.width,
+      y = v * frame.height;
+    context.beginPath();
+    context.arc(x, y, LOCATION_MARK_RADIUS, 0, 2 * Math.PI);
+    context.moveTo(x - LOCATION_MARK_RADIUS * 1.6, y);
+    context.lineTo(x + LOCATION_MARK_RADIUS * 1.6, y);
+    context.moveTo(x, y - LOCATION_MARK_RADIUS * 1.6);
+    context.lineTo(x, y + LOCATION_MARK_RADIUS * 1.6);
+    context.stroke();
+  }
+};
+
 /// A name's own point, drawn as the map draws a marker: a Damocles Place as a filled dot, a
 /// Settlement as a ring, because a Settlement is an area whose name is written at the origin its
 /// Structure Workspace is built at rather than a single thing standing there.
@@ -341,7 +370,10 @@ export const drawBodySurface = (
   footprints: {
     readonly drawn: readonly Footprint[];
     readonly selectedId: string | null;
-  } = { drawn: [], selectedId: null }
+  } = { drawn: [], selectedId: null },
+  /// Where a picked Instance stands when no footprint is drawn for it (#453), in Body
+  /// Coordinates, or null.
+  marker: MapPoint | null = null
 ): SurfaceLabelLayout => {
   const context = surfaceOf(canvas, frame);
   if (!context) {
@@ -381,6 +413,9 @@ export const drawBodySurface = (
   drawFootprints(context, view, frame, footprints.drawn, footprints.selectedId);
   drawGrid(context, view, frame);
   drawSeams(context, view, frame);
+  if (marker) {
+    drawSelectedMarker(context, view, frame, marker);
+  }
   context.font = LABEL_FONT;
   const layout = layOutSurfaceLabels(names.labels, view, frame, {
     charWidth: context.measureText('M').width,

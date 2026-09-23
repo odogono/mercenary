@@ -135,3 +135,9 @@ export const showsFootprints = (band: BodyRange): boolean =>
 /// (`rangeOf` needs only 100 pixels of width for it), and inside the camera's own zoom ceiling
 /// up to a 2:1 frame, past which the first gesture eases it back out.
 export const STREET_SPAN = 1;
+
+/// The span a search opens a Settlement or a Damocles Place at (#453): wide enough that a
+/// 16-cell Structure Workspace, and the name written at its origin, fit top to bottom in a frame
+/// up to about 1.6:1, and narrow enough to stay in the Settlement band down to a 300-pixel
+/// frame, so the Settlement's roads and its Places' names are drawn when the reader arrives.
+export const SETTLEMENT_SPAN = 28;
