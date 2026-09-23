@@ -10,7 +10,7 @@ import {
 } from '../src/damocles/selection.ts';
 import { erisSurfaceFrom, startPose } from '../src/damocles/world.ts';
 import { ERIS_BODY } from './damocles-pose.ts';
-import { readRawCatalogue } from './fixtures/catalogue.ts';
+import { modelsOf, readRawCatalogue } from './fixtures/catalogue.ts';
 
 interface RawModel {
   detailSelection: { default: number[] }[];
@@ -29,9 +29,11 @@ interface RawModel {
 const raw = (await readRawCatalogue()) as unknown as { models: RawModel[] };
 const catalogue = parseCatalogue(raw);
 const doc = readErisPresentation(await Bun.file('damocles/eris.json').json());
-const placement = erisSurfaceFrom(catalogue, doc).placements.find(
-  p => p.id === 'eris-surface-87'
-)!;
+const placement = erisSurfaceFrom(
+  catalogue,
+  modelsOf(catalogue),
+  doc
+).placements.find(p => p.id === 'eris-surface-87')!;
 const entrance = placement.selection!.structure.attachments[0]!;
 const OPEN_ENTRANCE_UNITS = attachmentOpenLimit(entrance);
 const units =
@@ -46,9 +48,11 @@ const at = (x: number, z: number, y = 63) => ({
 });
 
 test('Eris cell 52 receives the selector following an odd-addressed detail face stream', () => {
-  const cell = erisSurfaceFrom(catalogue, doc).placements.find(
-    p => p.id === 'eris-surface-52'
-  )!;
+  const cell = erisSurfaceFrom(
+    catalogue,
+    modelsOf(catalogue),
+    doc
+  ).placements.find(p => p.id === 'eris-surface-52')!;
   expect(cell.modelId).toBe('structure-010152');
   expect(cell.selection).toBeDefined();
   expect(cell.selection!.structure.attachments).toEqual([]);
@@ -58,9 +62,11 @@ test('Eris cell 52 receives the selector following an odd-addressed detail face 
 });
 
 test('STATE OFFICE moves its recovered two-leaf attachment on Z', () => {
-  const office = erisSurfaceFrom(catalogue, doc).placements.find(
-    p => p.id === 'eris-surface-89'
-  )!;
+  const office = erisSurfaceFrom(
+    catalogue,
+    modelsOf(catalogue),
+    doc
+  ).placements.find(p => p.id === 'eris-surface-89')!;
   const attachment = office.selection!.structure.attachments[0]!;
   expect(attachment.controlWord).toBe(0x82_00);
   expect(attachment.slot).toBe(0x03_fc);
@@ -96,9 +102,11 @@ test('STATE OFFICE moves its recovered two-leaf attachment on Z', () => {
 });
 
 test('STATE OFFICE leaves rise to the soffit of the doorway they fill', () => {
-  const office = erisSurfaceFrom(catalogue, doc).placements.find(
-    p => p.id === 'eris-surface-89'
-  )!;
+  const office = erisSurfaceFrom(
+    catalogue,
+    modelsOf(catalogue),
+    doc
+  ).placements.find(p => p.id === 'eris-surface-89')!;
   const structure = office.selection!.structure;
   const north = structure.attachments.find(a => a.slot === 0x03_f0)!;
   expect(north.constructor).toEqual({ leafCount: 2, motionAxis: 'x' });

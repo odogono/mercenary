@@ -168,6 +168,9 @@ try {
     storage,
     surface
   });
+  if (resumeRead.kind === 'restored') {
+    await DamoclesSession.prepare(content, resumeRead.snapshot);
+  }
   let session = new DamoclesSession(
     content,
     resumeRead.kind === 'restored' ? resumeRead.snapshot : undefined
@@ -293,11 +296,30 @@ try {
     poses: content.poses,
     release,
     restore: saved => {
-      replaceSession(saved);
-      snapshot = session.snapshot;
-      shellConsole.write(['— LOADED SLOT —']);
-      menu.show('none');
-      publish();
+      const loaded = (): void => {
+        replaceSession(saved);
+        snapshot = session.snapshot;
+        shellConsole.write(['— LOADED SLOT —']);
+        menu.show('none');
+        publish();
+      };
+      // A session cannot bind a structure it has no Model for (ADR 0048). Usually everything
+      // the Save stands on is in hand and it loads at once, refusing as it always has; a Save on
+      // an island not read yet loads once that island has been.
+      const missing = DamoclesSession.missingModels(content, saved);
+      if (missing.length === 0) {
+        loaded();
+        return;
+      }
+      void content.models.prefetch(missing).then(() => {
+        try {
+          loaded();
+        } catch (error) {
+          shellConsole.write([
+            `LOAD REFUSED: ${error instanceof Error ? error.message : String(error)}`
+          ]);
+        }
+      });
     },
     slotKey: keys.save,
     storage,
@@ -428,6 +450,7 @@ try {
       });
       notices.dismiss();
       if (recovered.kind === 'restored') {
+        await DamoclesSession.prepare(content, recovered.snapshot);
         replaceSession(recovered.snapshot);
         notices.resumed();
       } else {

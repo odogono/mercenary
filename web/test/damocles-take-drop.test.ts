@@ -12,7 +12,7 @@ import {
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { arrivalPoses } from './damocles-pose.ts';
-import { loadCatalogue } from './fixtures/catalogue.ts';
+import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
 let loaded: DamoclesContent;
 
@@ -27,10 +27,11 @@ beforeAll(async () => {
   loaded = {
     catalogue,
     doc,
+    models: modelsOf(catalogue),
     poses: await arrivalPoses(),
     presentationSha256: 'test',
     strings: parseDamoclesStrings(stringsValue),
-    surface: erisSurfaceFrom(catalogue, doc)
+    surface: erisSurfaceFrom(catalogue, modelsOf(catalogue), doc)
   };
 });
 
@@ -170,7 +171,7 @@ describe('ordinary Eris limo-key take and drop', () => {
         ...loaded,
         catalogue: {
           ...loaded.catalogue,
-          models: loaded.catalogue.models.map(model =>
+          modelIndex: loaded.catalogue.modelIndex.map(model =>
             model.id === key.model
               ? { ...model, supportTop: top }
               : model.id === parentModel
@@ -228,7 +229,7 @@ describe('ordinary Eris limo-key take and drop', () => {
         ...loaded,
         catalogue: {
           ...loaded.catalogue,
-          models: loaded.catalogue.models.map(model => {
+          modelIndex: loaded.catalogue.modelIndex.map(model => {
             if (model.id !== supportModel) {
               return model;
             }

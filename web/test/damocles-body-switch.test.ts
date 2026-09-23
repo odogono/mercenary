@@ -22,7 +22,7 @@ import {
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { arrivalPoses } from './damocles-pose.ts';
-import { loadCatalogue } from './fixtures/catalogue.ts';
+import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
 let catalogue: Catalogue;
 let content: DamoclesContent;
@@ -35,12 +35,13 @@ beforeAll(async () => {
   content = {
     catalogue,
     doc,
+    models: modelsOf(catalogue),
     poses,
     presentationSha256: 'test',
     strings: parseDamoclesStrings(
       await Bun.file('../payload/damocles/strings.json').json()
     ),
-    surface: erisSurfaceFrom(catalogue, doc)
+    surface: erisSurfaceFrom(catalogue, modelsOf(catalogue), doc)
   };
 });
 

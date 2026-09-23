@@ -429,7 +429,7 @@ describe('body-aware Save Snapshot admission', () => {
     for (const height of [undefined, 0, -1, 1.5]) {
       const changed = {
         ...catalogue,
-        models: catalogue.models.map(model => {
+        modelIndex: catalogue.modelIndex.map(model => {
           if (model.id !== parent.model) {
             return model;
           }

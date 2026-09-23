@@ -420,6 +420,10 @@ export interface ModelSummary {
   readonly recordClass: RecordClass;
   readonly slots: readonly number[];
   readonly status: Model['status'];
+  /** A structure's storey pitch, where recovered: admits a structure residence. */
+  readonly storeyHeight?: number;
+  /** A support's top, where recovered: decides a Drop onto it. */
+  readonly supportTop?: number | null;
 }
 export interface Catalogue {
   readonly bodies: readonly {
@@ -460,7 +464,6 @@ export interface Catalogue {
   readonly instances: readonly Instance[];
   readonly islands: readonly Island[];
   readonly modelIndex: readonly ModelSummary[];
-  readonly models: readonly Model[];
   readonly places: readonly Place[];
   readonly roadNetworks: readonly RoadNetwork[];
   readonly schemaVersion: 16;
@@ -1083,7 +1086,7 @@ const modelRecord = (item: unknown): Model => {
 /// The shared Catalogue document: everything but the Models, which it names through its
 /// model index (ADR 0048). Every check that needs only a Model's kind, status or slots runs
 /// here against the index; a Model's own record is checked when its file arrives.
-export const parseCatalogueDocument = (value: unknown): CatalogueDocument => {
+export const parseCatalogueDocument = (value: unknown): Catalogue => {
   const r = object(value);
   if (r['schemaVersion'] !== 16) {
     fail('unsupported schema version');
@@ -1111,7 +1114,18 @@ export const parseCatalogueDocument = (value: unknown): CatalogueDocument => {
       name: string(m['name']),
       recordClass: choice(m['recordClass'], RECORD_CLASSES),
       slots: list(m['slots']).map(integer),
-      status: choice(m['status'], ['decoded', 'partial', 'unresolved'])
+      status: choice(m['status'], ['decoded', 'partial', 'unresolved']),
+      ...(m['storeyHeight'] === undefined
+        ? {}
+        : { storeyHeight: nonnegativeSignedWord(m['storeyHeight']) }),
+      ...(m['supportTop'] === undefined
+        ? {}
+        : {
+            supportTop:
+              m['supportTop'] === null
+                ? null
+                : nonnegativeSignedWord(m['supportTop'])
+          })
     };
   });
   const modelIds = unique(modelIndex);
@@ -1601,17 +1615,20 @@ export const parseCatalogueDocument = (value: unknown): CatalogueDocument => {
   };
 };
 
-/// The Catalogue as the shared document stores it, before any Model file is read.
-export type CatalogueDocument = Omit<Catalogue, 'models'>;
+/// The Catalogue with every Model read, as tests and whole-Catalogue checks hold it. The
+/// browser never assembles one: it reads Models by id through a `ModelStore`.
+export interface AssembledCatalogue extends Catalogue {
+  readonly models: readonly Model[];
+}
 
 const documentIds = new WeakMap<
-  CatalogueDocument,
+  Catalogue,
   {
     readonly instances: ReadonlySet<string>;
     readonly models: ReadonlyMap<string, ModelSummary>;
   }
 >();
-const idsOf = (document: CatalogueDocument) => {
+const idsOf = (document: Catalogue) => {
   let ids = documentIds.get(document);
   if (ids === undefined) {
     ids = {
@@ -1626,17 +1643,21 @@ const idsOf = (document: CatalogueDocument) => {
 /// One Model record checked against the shared document: its own shape, that the index lists
 /// it with the same summary, and that every Model and Instance it names exists. The one check
 /// that needs a second Model's record, a structure's detail binding, waits for assembly.
-export const parseModel = (
-  value: unknown,
-  document: CatalogueDocument
-): Model => {
+export const parseModel = (value: unknown, document: Catalogue): Model => {
   const model = modelRecord(value);
   const ids = idsOf(document);
   const summary = ids.models.get(model.id);
   if (summary === undefined) {
     return fail(`model ${model.id} is not in the model index`);
   }
-  for (const field of ['kind', 'name', 'recordClass', 'status'] as const) {
+  for (const field of [
+    'kind',
+    'name',
+    'recordClass',
+    'status',
+    'storeyHeight',
+    'supportTop'
+  ] as const) {
     if (summary[field] !== model[field]) {
       fail(`model ${model.id} ${field} disagrees with the model index`);
     }
@@ -1689,10 +1710,7 @@ export const parseModel = (
 
 /// One stored Model file: the record, and the run it was extracted from, which must be the
 /// Catalogue's own so a file left behind by another run is refused rather than drawn.
-export const parseModelFile = (
-  value: unknown,
-  document: CatalogueDocument
-): Model => {
+export const parseModelFile = (value: unknown, document: Catalogue): Model => {
   const r = object(value);
   if (r['schemaVersion'] !== 16) {
     fail('unsupported model file schema version');
@@ -1707,12 +1725,27 @@ export const parseModelFile = (
   return parseModel(r['model'], document);
 };
 
+/// A structure's selector must name a variant of an interior that carries a detail selector.
+export const checkDetailBinding = (
+  structure: Model,
+  detail: Model | undefined
+): void => {
+  const selection = structure.structureSelection;
+  if (
+    selection !== undefined &&
+    (detail?.detailSelection === undefined ||
+      !detail.variants.some(v => v.id === selection.detailVariant))
+  ) {
+    fail('invalid selector detail binding');
+  }
+};
+
 /// The whole Catalogue from its document and exactly the Models its index names, in index
 /// order, with the structure-to-interior bindings that need two Model records checked.
 export const assembleCatalogue = (
-  document: CatalogueDocument,
+  document: Catalogue,
   models: readonly Model[]
-): Catalogue => {
+): AssembledCatalogue => {
   unique(models);
   const byId = new Map(models.map(model => [model.id, model]));
   if (
@@ -1723,15 +1756,8 @@ export const assembleCatalogue = (
   }
   for (const model of models) {
     const selection = model.structureSelection;
-    if (selection === undefined) {
-      continue;
-    }
-    const detail = byId.get(selection.detailModel);
-    if (
-      detail?.detailSelection === undefined ||
-      !detail.variants.some(v => v.id === selection.detailVariant)
-    ) {
-      fail('invalid selector detail binding');
+    if (selection !== undefined) {
+      checkDetailBinding(model, byId.get(selection.detailModel));
     }
   }
   return {
@@ -1741,7 +1767,7 @@ export const assembleCatalogue = (
 };
 
 /// A Catalogue held as one value with its Models inline, as tests build one.
-export const parseCatalogue = (value: unknown): Catalogue => {
+export const parseCatalogue = (value: unknown): AssembledCatalogue => {
   const { models, ...rest } = object(value);
   const document = parseCatalogueDocument(rest);
   return assembleCatalogue(
@@ -1754,16 +1780,6 @@ export const CATALOGUE_PATH = '/payload/damocles/catalogue.json';
 export const modelPath = (id: string): string =>
   `/payload/damocles/models/${id}.json`;
 
-const at = async <T>(path: string, read: () => Promise<T>): Promise<T> => {
-  try {
-    return await read();
-  } catch (error) {
-    throw new Error(
-      `${path}: ${error instanceof Error ? error.message : String(error)}`
-    );
-  }
-};
-
 /// One payload path fetched and parsed as JSON, refusing any answer but success.
 export const payloadJson = async (path: string): Promise<unknown> => {
   const response = await fetch(path);
@@ -1773,50 +1789,6 @@ export const payloadJson = async (path: string): Promise<unknown> => {
   return response.json();
 };
 
-/// How many Model files are in flight at once. Chrome refuses fetches outright once too many
-/// are outstanding, and 1,241 at once is past that; measured on localhost, 16 to 64 read every
-/// file in about 0.4 s and 6 takes twice as long.
-const MODEL_READS_IN_FLIGHT = 32;
-
-/// `each` over `items`, at most `MODEL_READS_IN_FLIGHT` at a time, results in item order.
-const inPool = async <T, R>(
-  items: readonly T[],
-  each: (item: T) => Promise<R>
-): Promise<R[]> => {
-  const results: R[] = Array.from({ length: items.length });
-  let next = 0;
-  const worker = async () => {
-    while (next < items.length) {
-      const index = next++;
-      results[index] = await each(items[index]!);
-    }
-  };
-  await Promise.all(
-    Array.from(
-      { length: Math.min(MODEL_READS_IN_FLIGHT, items.length) },
-      worker
-    )
-  );
-  return results;
-};
-
-/// Reads the stored Catalogue: the shared document, then every Model file its index names.
-/// `read` answers one payload path with its parsed JSON, so the browser and the tests share
-/// one reader and differ only in how a path is fetched.
-export const readCatalogue = async (
-  read: (path: string) => Promise<unknown>
-): Promise<Catalogue> => {
-  const document = await at(CATALOGUE_PATH, async () =>
-    parseCatalogueDocument(await read(CATALOGUE_PATH))
-  );
-  const models = await inPool(document.modelIndex, ({ id }) =>
-    at(modelPath(id), async () =>
-      parseModelFile(await read(modelPath(id)), document)
-    )
-  );
-  return assembleCatalogue(document, models);
-};
-
 /// Id lookup for a Catalogue, memoised per Catalogue object.
 ///
 /// The Damocles draw and selection passes resolve ids per resident per frame, and a linear scan
@@ -1824,11 +1796,14 @@ export const readCatalogue = async (
 /// simulate, past the end-to-end fixture's navigation timeout.
 ///
 /// The memo is a `WeakMap` keyed by the Catalogue rather than a field on it, because tests and
-/// callers derive a Catalogue by spreading one and replacing `instances` or `models`. A stored
+/// callers derive a Catalogue by spreading one and replacing `instances` or `modelIndex`. A stored
 /// index would go stale against the replacement and answer from the original; a spread makes a
 /// new object, so this builds it a fresh index instead.
 const instanceIndex = new WeakMap<Catalogue, ReadonlyMap<string, Instance>>();
-const modelIndex = new WeakMap<Catalogue, ReadonlyMap<string, Model>>();
+const summaryIndex = new WeakMap<
+  Catalogue,
+  ReadonlyMap<string, ModelSummary>
+>();
 
 export const instanceById = (
   catalogue: Catalogue,
@@ -1845,17 +1820,19 @@ export const instanceById = (
   return index.get(id);
 };
 
-export const modelById = (
+/// What the index says about a Model, whether or not its file has been read. Every game rule
+/// reads this; only drawing needs the Model record itself.
+export const modelSummaryById = (
   catalogue: Catalogue,
   id: string | undefined
-): Model | undefined => {
+): ModelSummary | undefined => {
   if (id === undefined) {
     return undefined;
   }
-  let index = modelIndex.get(catalogue);
+  let index = summaryIndex.get(catalogue);
   if (index === undefined) {
-    index = new Map(catalogue.models.map(item => [item.id, item]));
-    modelIndex.set(catalogue, index);
+    index = new Map(catalogue.modelIndex.map(item => [item.id, item]));
+    summaryIndex.set(catalogue, index);
   }
   return index.get(id);
 };
@@ -1865,9 +1842,9 @@ export const selectModels = (
   query: string,
   kind: string,
   status: string
-): readonly Model[] => {
+): readonly ModelSummary[] => {
   const words = query.toLowerCase().trim().split(/\s+/);
-  return data.models.filter(
+  return data.modelIndex.filter(
     model =>
       (!kind || model.kind === kind) &&
       (!status || model.status === status) &&

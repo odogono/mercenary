@@ -1,19 +1,27 @@
 import { readGammaSystem } from '../flyover/documents.ts';
 import { assertBrowserDocument } from '../shell/documentPath.ts';
 import {
+  CATALOGUE_PATH,
+  modelSummaryById,
+  parseCatalogueDocument,
   payloadJson,
-  readCatalogue,
   selectModels,
   type Catalogue,
-  type Model
+  type Model,
+  type ModelSummary
 } from './data.ts';
 import { detailForms } from './details.ts';
 import { address, element, link, node } from './dom.ts';
+import { ModelStore } from './modelStore.ts';
 import { atlasBodyIds, atlasLinkFor, renderPlacements } from './placements.ts';
 import { regionForms } from './regions.ts';
 import { createViewer } from './viewer.ts';
 
 let data: Catalogue;
+/// The Models, read one at a time as the reader opens them (ADR 0048).
+let models: ModelStore;
+/// Counts selections, so a Model read that lands after the reader has moved on is dropped.
+let selections = 0;
 // The join from a Catalogue Body to the Atlas's own, read from the Gamma System document. The
 // Catalogue needs none of it to show a record, so a document that cannot be read costs the
 // hand-off into the Atlas and nothing else (#415).
@@ -54,6 +62,7 @@ const showModel = (model: Model | undefined, instanceId: string | null) => {
   const details = node('details');
   details.replaceChildren();
   variant.replaceChildren();
+  variant.disabled = true;
   node('door-control').hidden = true;
   if (!model) {
     node('model-name').textContent = 'Model not found';
@@ -171,12 +180,7 @@ const showModel = (model: Model | undefined, instanceId: string | null) => {
   // than only described.
   const forms = [
     ...model.variants,
-    ...regionForms(
-      model,
-      data.models.find(
-        item => item.id === model.structureSelection?.detailModel
-      )
-    ),
+    ...regionForms(model, models.peek(model.structureSelection?.detailModel)),
     ...detailForms(model)
   ];
   const chosen = new URL(location.href).searchParams.get('variant');
@@ -268,7 +272,7 @@ const showModel = (model: Model | undefined, instanceId: string | null) => {
   if (model.relatedModels.length) {
     details.append(element('h3', 'Related geometry'));
     for (const id of model.relatedModels) {
-      const related = data.models.find(m => m.id === id)!;
+      const related = modelSummaryById(data, id)!;
       const p = element('p');
       p.append(link(related.name, 'model', id));
       details.append(p);
@@ -303,6 +307,42 @@ const showModel = (model: Model | undefined, instanceId: string | null) => {
   details.append(list);
 };
 
+/// Shows the chosen Model, reading its file first if it is not in hand. The list and the
+/// placements are drawn from the Catalogue's own document and never wait for it.
+const openModel = (
+  summary: ModelSummary | undefined,
+  instanceId: string | null
+) => {
+  const selection = ++selections;
+  const held = models.peek(summary?.id);
+  if (summary === undefined || held !== undefined) {
+    showModel(held, instanceId);
+    return;
+  }
+  node('model-name').textContent = summary.name;
+  node('model-id').textContent = summary.id;
+  node('details').replaceChildren();
+  variant.replaceChildren();
+  variant.disabled = true;
+  viewer?.show(null);
+  message('Reading this model.');
+  models.get(summary.id).then(
+    model => {
+      if (selection === selections) {
+        message('');
+        showModel(model, instanceId);
+      }
+    },
+    (error: unknown) => {
+      if (selection === selections) {
+        message(
+          `This model could not be read. ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+    }
+  );
+};
+
 const render = () => {
   const params = new URL(location.href).searchParams;
   search.value = params.get('q') ?? '';
@@ -312,13 +352,13 @@ const render = () => {
   const instance = data.instances.find(item => item.id === instanceId);
   const requested = params.get('model');
   const model = instanceId
-    ? data.models.find(item => item.id === instance?.model)
+    ? modelSummaryById(data, instance?.model)
     : requested
-      ? data.models.find(item => item.id === requested)
-      : data.models.find(item => item.status === 'decoded');
+      ? modelSummaryById(data, requested)
+      : data.modelIndex.find(item => item.status === 'decoded');
   const results = selectModels(data, search.value, kind.value, recovery.value);
   node('result-count').textContent =
-    `${results.length} of ${data.models.length} models`;
+    `${results.length} of ${data.modelIndex.length} models`;
   const nav = node('results');
   nav.replaceChildren();
   if (!results.length) {
@@ -340,7 +380,7 @@ const render = () => {
     );
     nav.append(a);
   }
-  showModel(model, instanceId);
+  openModel(model, instanceId);
   body.value = params.get('body') ?? instance?.location?.body ?? 'body-11';
   if (!body.value) {
     body.selectedIndex = 0;
@@ -367,19 +407,30 @@ const start = async () => {
   try {
     assertBrowserDocument(location.pathname, 'catalogue');
     const [catalogue, bodies] = await Promise.all([
-      readCatalogue(payloadJson),
+      payloadJson(CATALOGUE_PATH).then(value => {
+        try {
+          return parseCatalogueDocument(value);
+        } catch (error) {
+          throw new Error(
+            `${CATALOGUE_PATH}: ${error instanceof Error ? error.message : String(error)}`
+          );
+        }
+      }),
       readAtlasBodies()
     ]);
     atlasBodies = bodies;
     data = catalogue;
+    models = new ModelStore(catalogue, payloadJson);
     node('error').hidden = true;
     node('catalogue').hidden = false;
-    const decoded = data.models.filter(
+    const decoded = data.modelIndex.filter(
         model => model.status === 'decoded'
       ).length,
-      partial = data.models.filter(model => model.status === 'partial').length;
+      partial = data.modelIndex.filter(
+        model => model.status === 'partial'
+      ).length;
     node('summary').textContent =
-      `${data.models.length} models · ${decoded} decoded · ${partial} partial · ${data.models.length - decoded - partial} unresolved`;
+      `${data.modelIndex.length} models · ${decoded} decoded · ${partial} partial · ${data.modelIndex.length - decoded - partial} unresolved`;
     if (!viewer) {
       try {
         viewer = createViewer(node<HTMLCanvasElement>('model-view'));

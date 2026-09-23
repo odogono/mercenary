@@ -683,3 +683,19 @@ test('the ledger states measured bank extents and the loads behind them', async 
   );
   await expect(page.locator('#details')).toContainText('GAEA holds it as');
 });
+
+test('reads only the Model it shows, never the whole Catalogue (ADR 0048)', async ({
+  page
+}) => {
+  const models: string[] = [];
+  page.on('request', request => {
+    const path = new URL(request.url()).pathname;
+    if (path.startsWith('/payload/damocles/models/')) {
+      models.push(path);
+    }
+  });
+  await page.goto('/catalogue?model=object-035d12');
+  await expect(page.locator('#model-name')).toHaveText('DART II');
+  await expect(page.locator('#result-count')).toContainText('1241 models');
+  expect(models).toEqual(['/payload/damocles/models/object-035d12.json']);
+});

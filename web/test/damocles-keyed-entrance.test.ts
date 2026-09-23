@@ -9,7 +9,7 @@ import {
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { arrivalPoses } from './damocles-pose.ts';
-import { loadCatalogue } from './fixtures/catalogue.ts';
+import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
 /// A door key's own object slot is the cell's `$7AFB` base plus the entrance's key index, and
 /// its printed letter is that slot's distance from slot 30 ($059FA0). Authors House stands on
@@ -26,12 +26,13 @@ beforeAll(async () => {
   content = {
     catalogue,
     doc,
+    models: modelsOf(catalogue),
     poses: await arrivalPoses(),
     presentationSha256: 'test',
     strings: parseDamoclesStrings(
       await Bun.file('../payload/damocles/strings.json').json()
     ),
-    surface: erisSurfaceFrom(catalogue, doc)
+    surface: erisSurfaceFrom(catalogue, modelsOf(catalogue), doc)
   };
 });
 
@@ -87,10 +88,15 @@ const doorUnits = (session: DamoclesSession): number =>
 
 describe('a keyed Entrance Attachment', () => {
   test('is the one Authors House carries, keyed to door key A', () => {
-    const placement = erisSurfaceFrom(catalogue, content.doc, {
-      bodyId: 'body-4',
-      origin: content.doc.grid.origin
-    }).placements.find(item => item.id === AUTHORS_HOUSE)!;
+    const placement = erisSurfaceFrom(
+      catalogue,
+      modelsOf(catalogue),
+      content.doc,
+      {
+        bodyId: 'body-4',
+        origin: content.doc.grid.origin
+      }
+    ).placements.find(item => item.id === AUTHORS_HOUSE)!;
     expect(placement.keyBase).toBe(0x1e);
     const keyed = placement.selection!.structure.attachments.filter(
       item => item.keyIndex !== undefined
