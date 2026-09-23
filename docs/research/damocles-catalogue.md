@@ -99,9 +99,13 @@ run grid is not capture state a memstate has to supply: `$04EB60`–`$04EC2C` bu
 from a run-length extent stream in the group's own authored record, so #447 expands
 it for every group. `attestation` says which of the two a network is — `capture`
 where a memstate stood in the workspace and the replay reproduced its live `$0083DC`,
-`image` where the grid came from the authored stream — and `overridden` is null
-rather than false on an image-derived cell, because the placement replacement at
-`$04ECEE` exists only in a live `$1E400`. A network with no run is a recovered "this
+`image` where the grid came from the authored stream. An image-derived cell carries
+its Drawn Record too (#460): `load_structure_workspace` replays the whole loader,
+`$04EB60`–`$04ED12`, including the placement replacement at `$04ECEE`, so its `model`
+is the record the cell draws — oriented, scene-joined and palette-bound as the loader
+would leave it — and `overridden` is answered, not null. That adds 475 ground Models;
+the replay draws every captured road cell exactly as its live workspace does, and the
+extractor raises if it ever does not. A network with no run is a recovered "this
 Settlement has no roads", which is SOLON BASE, GAEA `$0E` and THE MIDAS PROJECT.
 `coverage.roads` counts them.
 `coverage.classifications.roadTemplate` is a different thing and is not that count:
@@ -293,7 +297,7 @@ displays each table's qualification. Every slot maps to one model identity;
 repeated pointers share a model and retain all slot indices. No pointer scan is
 represented as a model census.
 
-Current extraction accounts for **1241 unique records**: **915 decoded**,
+Current extraction accounts for **1716 unique records**: **1390 decoded**,
 **326 partial**, and **0 unresolved**. “Decoded” means the supported record was
 parsed completely; it does not mean every model has received a human fidelity
 review. Partial records expose recovered geometry and explain omitted features.

@@ -2297,6 +2297,12 @@ def expand_run_grid(data: bytes, group: int) -> tuple[bytes, list[int]]:
 
     Returns the 1 KiB grid and the six road-piece selector words.
     """
+    grid, selectors, _cursor = _expand_group_stream(data, group)
+    return grid, selectors
+
+
+def _expand_group_stream(data: bytes, group: int) -> tuple[bytes, list[int], int]:
+    """`expand_run_grid`, and where the group's placement stream starts after it."""
     root = ROAD_RUN_GRID + struct.unpack_from('>H', data, ROAD_GROUP_ROOT)[0]
     cursor = root + struct.unpack_from('>H', data, root + group * 2)[0] + 2
     grid = bytearray(1024)
@@ -2328,7 +2334,67 @@ def expand_run_grid(data: bytes, group: int) -> tuple[bytes, list[int]]:
         struct.unpack_from('>H', data, ROAD_SELECTOR_TABLE + data[cursor + index] * 2)[0]
         for index in range(6)
     ]
-    return bytes(grid), selectors
+    return bytes(grid), selectors, cursor + 6
+
+
+def load_structure_workspace(data: bytes, group: int) -> bytes:
+    """Replay $04EB60-$04ED12: the workspace the loader builds for one group.
+
+    Everything a cell's Drawn Record depends on is written by this one pass over
+    the group's authored stream, so a group nobody has stood in can be loaded
+    from the program image the way the game loads it:
+
+    - the run grid at $01E000, which is also the scene-seed table $05493E reads;
+    - the six selectors at $01E640 and, through the classifier at $04EC30, the
+      $0083DC orientation byte and the $01E400 Selected Piece of every cell;
+    - the placement loop at $04ECAA, which continues the same stream. Each entry
+      is a master-table index and a cell, then the $ABDC structure slot and, when
+      that is nonzero, its key byte and dx/dz. $04ECEE-$04ED0E then replaces the
+      cell's $01E400 word with the placement's own record when the two records'
+      first bytes share a high nybble; when they do not, `bne.w $05097A` lands on
+      an `rts` and the loader gives up, so that is an error and not a rule.
+
+    The record bank the words index is resident: past the six selector words, a
+    capture's $01E64E onwards is the program image's. The pass after $04ED14
+    (the named-area pointer and the $6364 state overlay on $ABDC) is left out:
+    neither writes anything the ground decoder reads.
+
+    Returns a copy of `data` with those tables written.
+    """
+    grid, selectors, cursor = _expand_group_stream(data, group)
+    workspace = bytearray(data)
+    struct.pack_into('>H', workspace, 0x794E, group)
+    workspace[ROAD_RUN_GRID:ROAD_RUN_GRID + 1024] = grid
+    workspace[0x7AEE:0x7AF0] = data[cursor - 8:cursor - 6]
+    struct.pack_into('>6H', workspace, ROAD_PIECE_SELECTORS, *selectors)
+    for cell in range(256):
+        orientation = data[ROAD_CLASS_TABLE + grid_cell_class(grid[cell * 4:cell * 4 + 4], cell)]
+        workspace[0x83DC + cell] = orientation
+        struct.pack_into('>H', workspace, 0x1E400 + cell * 2,
+                         selectors[((orientation >> 3) & 0xE) // 2])
+    workspace[0xABDC:0xABDC + 1024] = bytes(1024)
+    for _ in range(1024):
+        index = data[cursor]
+        if index == 0xFF:
+            break
+        cell, slot = data[cursor + 1], data[cursor + 2]
+        cursor += 3
+        workspace[0xABDC + cell * 4 + 1] = slot
+        if slot:
+            workspace[0xABDC + cell * 4] = data[cursor]
+            workspace[0xABDC + cell * 4 + 2:0xABDC + cell * 4 + 4] = data[cursor + 1:cursor + 3]
+            cursor += 3
+        selected = struct.unpack_from('>H', workspace, 0x1E400 + cell * 2)[0]
+        placed = struct.unpack_from('>H', data, ROAD_SELECTOR_TABLE + index * 2)[0]
+        if (data[ROAD_RUN_GRID + selected] ^ data[ROAD_RUN_GRID + placed]) & 0xF0:
+            raise ValueError(
+                f'group ${group:02X} cell ${cell:02X} places record ${placed:04X} over '
+                f'${selected:04X} of another record class; the loader returns there'
+            )
+        struct.pack_into('>H', workspace, 0x1E400 + cell * 2, placed)
+    else:
+        raise ValueError(f'group ${group:02X} placement stream terminator missing')
+    return bytes(workspace)
 
 
 def road_cell_class(data: bytes, cell: int) -> int:
@@ -2404,8 +2470,8 @@ def decode_road_network(data: bytes, ground_models: dict[int, str], identity: st
             # $04ECEE-$04ED0E lets a placement in the group's stream replace the
             # classifier's choice with its own record when the two share a
             # record class, so the drawn record is not always the road piece.
-            # That replacement is only in a live $1E400; without a capture the
-            # question is unanswered rather than answered no.
+            # The replacement is in a live $1E400 or `load_structure_workspace`'s
+            # replay of one; given neither, the question is unanswered.
             'overridden': None if cell_index is None else (
                 struct.unpack_from('>H', cell_index, cell * 2)[0] != selections[cell]
             ),
@@ -2447,9 +2513,11 @@ def decode_road_network(data: bytes, ground_models: dict[int, str], identity: st
                 "Structure group run-length extent stream expanded by $04EB60-$04EC2C "
                 "into the $01E000 run grid, then classified by $04EC30-$04EC92 into the "
                 "$01E600 table's orientation byte and one of the six road-piece "
-                "selectors at $01E640. No capture stands in this workspace, so there is "
-                "no live $0083DC to check against; the expansion reproduces $01E000 "
-                "byte for byte on every capture that does bind a group."
+                "selectors at $01E640, and the placement loop at $04ECAA-$04ED12 "
+                "replayed over it for each cell's Drawn Record. No capture stands in "
+                "this workspace, so there is no live $0083DC to check against; the "
+                "replay reproduces $01E000, $0083DC and $01E400 on every capture that "
+                "does bind a group."
             ),
             # Verified either way: what differs is whether this group was seen
             # live, which `attestation` carries, not whether the decode holds.
@@ -3088,6 +3156,141 @@ def record_template_palettes(template_palettes: dict, template_models: list[str]
         cells.append(f'{label} cell ${cell:02X}')
 
 
+def decode_cell_ground(workspace: bytes, data: bytes, cell: int, tables: list,
+                       by_address: dict, hardware: list[int]
+                       ) -> tuple[int, dict, list[str], int, list[str], int | None]:
+    """Decode the ground record one cell of a loaded workspace draws.
+
+    The record is the cell's $1E400 word, oriented by its $83DC byte and joined
+    to the scene through the seed longword at $1E000; its scene colours bind to
+    the palette of the structure $ABDC places on the cell. `workspace` is either
+    a capture or `load_structure_workspace`'s replay, and the two decode alike.
+
+    Returns the record address, the mesh with any $7000 templates placed, its
+    gaps, the transform, the template Models and the palette index.
+    """
+    offset = int.from_bytes(workspace[0x1e400 + cell * 2:0x1e402 + cell * 2], 'big')
+    address = 0x1e000 + offset
+    structure_slot = struct.unpack_from('>H', workspace, 0xabdc + cell * 4)[0] & 0x1FF
+    palette, palette_index = None, None
+    if structure_slot < len(tables[1]['entries']):
+        structure_model = tables[1]['entries'][structure_slot]
+        if structure_model in by_address:
+            palette_index = by_address[structure_model].get('paletteIndex') or 0
+            palette = palette_at(data, palette_index)
+    try:
+        mesh, gaps, transform, placements = decode_ground(
+            workspace, address, workspace[0x83dc + cell], palette, hardware,
+            cell,
+        )
+    except (ValueError, struct.error) as error:
+        mesh, gaps, transform, placements = (
+            {'vertices': [], 'faces': [], 'lines': [], 'sourceStart': address, 'sourceEnd': address},
+            [str(error)],
+            0xFF,
+            [],
+        )
+    mesh, template_models, template_gaps = compose_ground_templates(
+        mesh, placements, tables[0]['entries'], by_address, workspace, palette, hardware
+    )
+    return address, mesh, sorted(set(gaps + template_gaps)), transform, template_models, palette_index
+
+
+def attach_image_ground(workspace: bytes, data: bytes, prefix: str, label: str, grid: bytes,
+                        models: list, tables: list, by_address: dict, hardware: list[int],
+                        template_palettes: dict) -> dict[int, str]:
+    """The Drawn Record of every road cell in a workspace replayed from the image.
+
+    `workspace` is `load_structure_workspace`'s, so the record, its orientation,
+    its scene joins and any placement replacement are the ones the loader would
+    have built. Only road cells are decoded: the network is what asked.
+
+    A Model is shared only where it is the same geometry. The shared identity a
+    captured record gets names its address and transform, but a scene-joined
+    record draws differently under another group's seeds, and a record's scene
+    colours follow the palette of the structure on its cell; so an existing
+    Model is reused only when its mesh is the mesh decoded here, and otherwise
+    the cell gets one qualified by its group, and by the cell if even that is
+    taken.
+    """
+    by_cell = {}
+    ground_table = next(table for table in tables if table['kind'] == 'ground')
+    for cell in range(256):
+        if not grid_cell_class(grid[cell * 4:cell * 4 + 4], cell):
+            continue
+        address, mesh, gaps, transform, template_models, palette_index = decode_cell_ground(
+            workspace, data, cell, tables, by_address, hardware
+        )
+        record_template_palettes(
+            template_palettes, template_models, palette_index, label, cell
+        )
+        drawn = bool(mesh['faces'] or mesh['lines'])
+        shared = f'ground-{address:06x}-{transform:02x}'
+        if uses_scene_points(mesh):
+            shared += f'-{cell:02x}'
+        candidates = (shared, f'{prefix}-{shared}', f'{prefix}-{shared}-{cell:02x}')
+        model_id = next((
+            identity for identity in candidates
+            if identity in by_address and (
+                by_address[identity]['variants'][0]['mesh'] == mesh
+                if by_address[identity]['variants'] else not drawn
+            )
+        ), None)
+        if model_id is None:
+            model_id = next(identity for identity in candidates[1:] if identity not in by_address)
+            model = {
+                'id': model_id,
+                'kind': 'ground',
+                'name': f'{label} ground {cell}',
+                'nameStatus': 'unknown',
+                'slots': [],
+                'sourceAddress': address,
+                'status': 'unresolved',
+                'reason': '',
+                'variants': [],
+                'relatedModels': template_models,
+                'linkedInstances': [],
+                'evidence': [{
+                    'claim': (
+                        f'{label} road cell ${cell:02X}: the per-cell ground/pad/road record at '
+                        '$1E000 the workspace loader would draw there, replayed from the '
+                        "group's authored stream by $04EB60-$04ED12 -- its $1E400 record "
+                        'after any placement replacement, its $83DC orientation and its '
+                        '$1E000 scene seed. No capture stands in this workspace; the same '
+                        'replay reproduces those tables on every capture that does.'
+                    ),
+                    'confidence': 'verified',
+                    'source': 'docs/research/damocles-eris-ground.md',
+                }],
+            }
+            if drawn:
+                model['variants'] = [{
+                    'id': 'record',
+                    'name': f'Recovered cell fill · transform ${transform:02x}',
+                    'mesh': mesh,
+                }]
+                model['status'] = 'partial' if gaps else 'decoded'
+                model['reason'] = ' '.join(gaps)
+            else:
+                model['reason'] = ' '.join(gaps) or EMPTY_GROUND_REASON
+                if gaps == [EMPTY_GROUND_REASON]:
+                    model['status'] = 'decoded'
+            by_address[model_id] = model
+            models.append(model)
+            # The census: a Model no capture's $1E400 slot names takes the next
+            # entry after the live workspaces' own, as theirs do after index 255.
+            ground_table['entries'].append(model_id)
+            ground_table['entryCount'] = len(ground_table['entries'])
+            model['slots'] = [len(ground_table['entries']) - 1]
+        by_cell[cell] = model_id
+    if by_cell and 'image-derived' not in ground_table['extentEvidence']:
+        ground_table['extentEvidence'] += (
+            ' The last entries are image-derived road cells: the ground record the loader '
+            'would draw there, replayed from the group\'s authored stream.'
+        )
+    return by_cell
+
+
 def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: list,
                           instances: list, places: list, by_address: dict, bodies: list,
                           islands: list, hardware: list[int], template_palettes: dict,
@@ -3197,35 +3400,15 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
             next(item for item in places if item['id'] == place[0])['instances'].append(identity)
     ground_unique = 0
     ground_model_by_cell: dict[int, str] = {}
+    ground_mesh_by_cell: dict[int, dict] = {}
     for cell in range(256):
-        offset = int.from_bytes(workspace[0x1e400 + cell * 2:0x1e402 + cell * 2], 'big')
-        address = 0x1e000 + offset
-        structure_slot = struct.unpack_from('>H', workspace, 0xabdc + cell * 4)[0] & 0x1FF
-        palette, palette_index = None, None
-        if structure_slot < len(tables[1]['entries']):
-            structure_model = tables[1]['entries'][structure_slot]
-            if structure_model in by_address:
-                palette_index = by_address[structure_model].get('paletteIndex') or 0
-                palette = palette_at(data, palette_index)
-        try:
-            mesh, gaps, transform, _placements = decode_ground(
-                workspace, address, workspace[0x83dc + cell], palette, hardware,
-                cell,
-            )
-        except (ValueError, struct.error) as error:
-            mesh, gaps, transform, _placements = (
-                {'vertices': [], 'faces': [], 'lines': [], 'sourceStart': address, 'sourceEnd': address},
-                [str(error)],
-                0xFF,
-                [],
-            )
-        mesh, template_models, template_gaps = compose_ground_templates(
-            mesh, _placements, tables[0]['entries'], by_address, workspace, palette, hardware
+        address, mesh, gaps, transform, template_models, palette_index = decode_cell_ground(
+            workspace, data, cell, tables, by_address, hardware
         )
+        ground_mesh_by_cell[cell] = mesh
         record_template_palettes(
             template_palettes, template_models, palette_index, label, cell
         )
-        gaps = sorted(set(gaps + template_gaps))
         shared_id = f'ground-{address:06x}-{transform:02x}'
         if uses_scene_points(mesh):
             shared_id += f'-{cell:02x}'
@@ -3329,6 +3512,18 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
         live_orientations=workspace[0x83DC:0x84DC],
     )
     network['structureGroup'] = group
+    # What lets an image-derived cell publish its Drawn Record: the workspace
+    # the loader would build, replayed from the program image, draws every road
+    # cell exactly as this capture's live workspace does.
+    replayed = load_structure_workspace(data, group) if network['cells'] else data
+    for item in network['cells']:
+        cell = item['cell']
+        if decode_cell_ground(replayed, data, cell, tables, by_address, hardware)[1] != \
+                ground_mesh_by_cell[cell]:
+            raise ValueError(
+                f'{label} road cell ${cell:02X}: the replayed workspace draws a different '
+                'record from the live one'
+            )
     if not any(item['id'] == network['id'] for item in road_networks):
         road_networks.append(network)
     return (
@@ -3856,14 +4051,21 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         slug = re.sub(r'[^a-z0-9]+', '-', bodies[body]['name'].lower()).strip('-')
         suffix = (re.sub(r'[^a-z0-9]+', '-', island['areaName'].lower()).strip('-')
                   if island['areaName'] else f'{group:02x}')
-        grid, selectors = expand_run_grid(data, group)
+        label = island['areaName'] or f'{bodies[body]["name"]} group ${group:02X}'
+        workspace = load_structure_workspace(data, group)
+        grid = workspace[ROAD_RUN_GRID:ROAD_RUN_GRID + 1024]
         network = decode_road_network(
-            data, {}, f'roads-{slug}-{suffix}', body,
-            (island['origin'][0], island['origin'][1]), island,
-            island['areaName'] or f'{bodies[body]["name"]} group ${group:02X}',
+            data, attach_image_ground(
+                workspace, data, f'{slug}-{suffix}', label, grid, models, tables,
+                by_address, hardware, template_palettes,
+            ),
+            f'roads-{slug}-{suffix}', body,
+            (island['origin'][0], island['origin'][1]), island, label,
             WORKSPACE_SWEEP_EVIDENCE,
-            grid=grid, selectors=selectors,
-            cell_index=None, live_orientations=None,
+            grid=grid,
+            selectors=[struct.unpack_from('>H', workspace, ROAD_PIECE_SELECTORS + i * 2)[0]
+                       for i in range(6)],
+            cell_index=workspace[0x1E400:0x1E600], live_orientations=None,
         )
         network['structureGroup'] = group
         road_networks.append(network)

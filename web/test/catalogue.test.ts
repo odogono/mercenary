@@ -557,23 +557,26 @@ it('uses surface slot zero palette for structureless ground objects', async () =
 
 it('offers a ground template one form per evidenced scene palette', async () => {
   const data = await loadCatalogue();
-  // Object 337's faces name scene colour word 1, which palette 2 fills with
-  // $777 and the other three evidenced palettes fill with $771. Showing a
-  // single palette 0 form hid that difference behind an unbound default.
+  // Object 337's faces name scene colour word 1, which palettes 2, 43 and 94
+  // fill with $777 and palettes 1, 51 and 62 fill with $771. Showing a single
+  // palette 0 form hid that difference behind an unbound default. Palettes 43
+  // and 94 are the image-derived road cells of BARE ISLAND and KEY WEST (#460).
   const template = data.models.find(model => model.id === 'object-041b1e')!;
   expect(template.variants.map(variant => variant.id)).toEqual([
     'palette-1',
     'palette-2',
+    'palette-43',
     'palette-51',
-    'palette-62'
+    'palette-62',
+    'palette-94'
   ]);
   expect(template.omissions).not.toContain('paletteBinding');
   const sceneColour = (index: number) =>
     template.variants[index]!.mesh.faces.find(
       face => face.sourceColour === 0x80_82
     )!.colour;
-  expect([0, 2, 3].map(sceneColour)).toEqual(['#eeee22', '#eeee22', '#eeee22']);
-  expect(sceneColour(1)).toBe('#eeeeee');
+  expect([0, 3, 4].map(sceneColour)).toEqual(['#eeee22', '#eeee22', '#eeee22']);
+  expect([1, 2, 5].map(sceneColour)).toEqual(['#eeeeee', '#eeeeee', '#eeeeee']);
 
   // The one template no captured cell table placed is now placed. Eighteen further
   // live workspaces (#172) bind it through six evidenced palettes, which is the

@@ -99,10 +99,11 @@ describe('an Atlas Road Piece', () => {
     expect(checked).toBeGreaterThan(0);
   });
 
-  test('draws only captured cells, and counts the image-derived ones', async () => {
+  test('draws every road cell, captured or image-derived', async () => {
     const data = await catalogue();
     let drawnTotal = 0;
     let undrawnTotal = 0;
+    const attestations = new Set<string>();
     for (const body of data.bodies) {
       const sourceIndex = Number(body.id.slice('body-'.length));
       const { drawn, undrawn } = readBodyRoadPieces(
@@ -111,20 +112,21 @@ describe('an Atlas Road Piece', () => {
         sourceIndex
       );
       for (const piece of drawn) {
-        const network = data.roadNetworks.find(
-          value => value.id === piece.networkId
-        )!;
-        expect(network.attestation).toBe('capture');
+        attestations.add(
+          data.roadNetworks.find(value => value.id === piece.networkId)!
+            .attestation
+        );
       }
       drawnTotal += drawn.length;
       undrawnTotal += undrawn;
     }
-    // The 693 captured road cells each draw their own record; the 478 expanded from the
-    // authored stream have a Selected Piece and no Drawn Record (#460).
+    // The 693 captured road cells each draw their own record, and so do the 478 expanded from
+    // the authored stream, whose Drawn Records the lab replays from the image (#460).
     const cells = data.roadNetworks.flatMap(network => network.cells);
-    expect(drawnTotal).toBe(cells.filter(cell => cell.model !== null).length);
-    expect(undrawnTotal).toBe(cells.filter(cell => cell.model === null).length);
-    expect(undrawnTotal).toBeGreaterThan(0);
+    expect(drawnTotal).toBe(cells.length);
+    expect(drawnTotal).toBe(693 + 478);
+    expect(undrawnTotal).toBe(0);
+    expect([...attestations].sort()).toEqual(['capture', 'image']);
   });
 
   test('waits for a Model before drawing its piece', async () => {
@@ -133,8 +135,8 @@ describe('an Atlas Road Piece', () => {
       Promise.reject(new Error('not fetched'))
     );
     const { drawn, undrawn } = readBodyRoadPieces(data, empty, ERIS);
-    // Nothing is read yet, so nothing is drawn; the image-derived cells are known from the
-    // document alone.
+    // Nothing is read yet, so nothing is drawn; a cell with no Model at all would be known from
+    // the document alone, and none is.
     expect(drawn).toEqual([]);
     expect(undrawn).toBe(
       data.roadNetworks

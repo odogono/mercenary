@@ -8,11 +8,12 @@ import { catalogueBodyId } from './surface.ts';
 /// cell actually draws, which a placement may have replaced, laid on the surface in Body
 /// Coordinates. Nothing here touches the DOM.
 ///
-/// Recovered, not derived. A captured cell's Model is that cell's own resolved geometry —
-/// already turned by its orientation byte and already joined to the scene points its workspace's
-/// seed hands it — so it is placed at the cell's centre and nothing more (#459). An image-derived
-/// cell has a Selected Piece and no Drawn Record, and another cell's Model sharing that record
-/// would be a different shape, so it is counted and not drawn (#460).
+/// Recovered, not derived. A cell's Model is that cell's own resolved geometry — already turned
+/// by its orientation byte and already joined to the scene points its workspace's seed hands it —
+/// so it is placed at the cell's centre and nothing more (#459). On an image-derived network the
+/// workspace is the lab's replay of the loader rather than a capture, and the Model is the same
+/// kind of thing (#460). A cell with no Model is counted and not drawn: another cell's Model
+/// sharing its record would be a different shape.
 
 /// One face or edge of a Drawn Record, in its recovered colour, in Body Coordinates.
 ///
@@ -33,16 +34,16 @@ export interface RoadPiece {
   readonly faces: readonly RoadPiecePrimitive[];
   readonly modelId: string;
   readonly networkId: string;
-  /// Whether a placement replaced the Selected Piece. Always known here: only a capture records
-  /// the Drawn Record, and a capture answers this too.
+  /// Whether a placement replaced the Selected Piece. Always known here: whatever recovered the
+  /// Drawn Record, a capture or the loader's replay, answers this too.
   readonly overridden: boolean | null;
   readonly pieceName: RoadNetwork['cells'][number]['pieceName'];
 }
 
 export interface BodyRoadPieces {
   readonly drawn: readonly RoadPiece[];
-  /// Road cells on this Body whose Drawn Record is not recovered: the image-derived networks,
-  /// where the run grid was expanded from the authored stream and no capture stood.
+  /// Road cells on this Body whose Drawn Record is not recovered. None in the shipped payload
+  /// since #460.
   readonly undrawn: number;
 }
 

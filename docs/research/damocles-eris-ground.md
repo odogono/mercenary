@@ -878,10 +878,10 @@ gate. `tests/test_catalogue.py` pins both.
 
 So a captured group keeps its live self-check and an uncaptured one is an
 expansion of the same kind, validated 25 ways. The payload marks which is which
-in `attestation`, `capture` or `image`, and `overridden` is **null** rather than
-false on an image-derived cell: the placement replacement at `$04ECEE` is only
-in a live `$1E400`, so without a capture the question is unanswered rather than
-answered no.
+in `attestation`, `capture` or `image`. As #447 left it, `overridden` was
+**null** on an image-derived cell, on the reading that the placement replacement
+at `$04ECEE` is only in a live `$1E400`; #460 below shows the replacement is
+replayable too, and answers it.
 
 ### The twenty groups this recovers
 
@@ -908,6 +908,61 @@ at 0. It counts models still carrying the `$7000` road-template omission, which
 is a different thing that was already discharged; a scalar could not answer a
 per-Body question in any case. A consumer asking whether a Body's roads were
 recovered asks `roadNetworks` for an entry naming that Body.
+
+## Research update — #460: the Drawn Record is authored too
+
+#447 gave every image-derived road cell its **Selected Piece** and left its
+**Drawn Record** — the record the cell actually draws — as `model: null`,
+`overridden: null`. The reading was that three things stand between the two and
+only a live workspace carries them: the `$83DC` orientation, the scene joins
+from the seed longword at `$1E000 + cell × 4` (`$05493E`), and the placement
+replacement at `$04ECEE`–`$04ED0E`. None of the three needs a capture.
+
+- The **orientation** is the classifier's own output, which #441 already
+  reproduces.
+- The **seed table is the run grid**. `SCENE_SEED_TABLE` and `ROAD_RUN_GRID` are
+  the same `$1E000`: the four bytes `$05493E` rotates into slots `$F0`–`$FC` are
+  the cell's row and column run endpoints, which `expand_run_grid` already
+  rebuilds.
+- The **placement replacement** is the same authored stream, read on. After the
+  six selector indices, `$04ECAA` walks `(index, cell, slot[, key, dx, dz])`
+  entries to an `$FF`. Each writes the cell's `$ABDC` structure slot, then
+  replaces its `$1E400` word with the master-table record `index` names —
+  provided the two records' first bytes share a high nybble. If they do not,
+  `bne.w $05097A` lands on a bare `rts` and the loader simply stops, so the
+  nybble test is a guard, not a second rule. No authored stream trips it.
+
+The records those words index are resident. Past the six selector words at
+`$1E640`–`$1E64C`, every capture's `$1E64E` onwards is the program image's, so
+the record bank does not depend on which group is loaded.
+
+`load_structure_workspace` replays `$04EB60`–`$04ED12` over the program image.
+Against every memstate on disk — 33 captures over 25 distinct groups — it
+reproduces the live `$1E000`, `$1E400`, `$1E640`, `$0083DC` and `$7AEE` byte
+for byte, and `$ABDC` too, except on the one capture with `$7A2A` set
+(`damocles.midas`), where `$04ED2A`–`$04ED3C` floods `$ABDC` with its first
+entry. That flag is run state, not the group's stream, and MIDAS has no road
+cell. The pass after `$04ED14` is not replayed, because nothing in it is read
+by the ground decoder.
+
+The extractor holds this to the machine: for every captured workspace it
+decodes each road cell a second time from the replay and raises unless the
+mesh is identical. On all 693 captured road cells, it is.
+
+So each of the 478 image-derived cells now publishes the Drawn Record the loader
+would have left it: 114 of them a placement's record rather than the Selected
+Piece, and 364 the piece itself. All 478 decode completely and every one is
+scene-joined, which is why they cannot borrow another cell's Model. They add
+**475 ground Models**; the other three are identical to first-world Models and
+share them. A Model is shared only where its mesh is identical, because a
+record's scene colours follow the palette of the structure `$ABDC` puts on its
+cell. BARE ISLAND and KEY WEST cells bind `object-041b1e` through two palettes
+no capture had evidenced, 43 and 94.
+
+| Range | What | sha256 |
+| --- | --- | --- |
+| `$04ECAA`–`$04ED14` | the placement loop and replacement (#460) | `de1569a225de408317e11c6ac805bb995816bd6e37da3902579d89487d04378f` |
+| `$01E64E`–`$01E84E` | the master record table, resident | `d0df36edbe8dbb98903b89e016b357c1b8a1f1b87093c84f21facb58782657f6` |
 
 ## Unresolved
 

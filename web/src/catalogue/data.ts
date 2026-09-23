@@ -107,9 +107,10 @@ export interface RoadNetwork {
     /**
      * `$04ECEE`-`$04ED0E` lets a placement in the group's own stream replace the
      * classifier's record with its own where the two share a record class, so the drawn
-     * record is not always the road piece the class selected. Only a live `$01E400`
-     * carries the replacement, so this is `null` on an image-derived network: the
-     * question is unanswered there, not answered no.
+     * record is not always the road piece the class selected. A live `$01E400` carries
+     * the replacement, and so does the lab's replay of the loader on an image-derived
+     * network (#460). `null` means neither was available: the question is unanswered
+     * there, not answered no.
      */
     readonly overridden: boolean | null;
     readonly piece: number;

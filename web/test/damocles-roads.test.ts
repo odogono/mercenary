@@ -142,8 +142,10 @@ describe('the recovered Damocles Settlement road networks', () => {
         if (cell.overridden === true) {
           overridden += 1;
         }
-        // Only a live $01E400 answers the question at all.
-        expect(cell.overridden === null).toBe(network.attestation === 'image');
+        // A live $01E400 answers the question, and so does the lab's replay of the loader on
+        // an image-derived network (#460), so no shipped cell leaves it open.
+        expect(cell.overridden).not.toBeNull();
+        expect(cell.model).not.toBeNull();
       }
       // A piece index always names one of the group's own six selectors.
       for (const cell of network.cells) {
