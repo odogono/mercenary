@@ -696,6 +696,6 @@ test('reads only the Model it shows, never the whole Catalogue (ADR 0048)', asyn
   });
   await page.goto('/catalogue?model=object-035d12');
   await expect(page.locator('#model-name')).toHaveText('DART II');
-  await expect(page.locator('#result-count')).toContainText('1241 models');
+  await expect(page.locator('#result-count')).toContainText('1716 models');
   expect(models).toEqual(['/payload/damocles/models/object-035d12.json']);
 });

@@ -885,8 +885,8 @@ describe('the Atlas selection panel', () => {
     expect(roadProvenance(capital).join(' ')).toContain(
       'from 0.003 Surface Cells per pixel'
     );
-    // Close enough, they are drawn, and the image-derived cells that have none are
-    // stated rather than filled in with another cell's geometry (ADR 0014, #460).
+    // Close enough, they are drawn, and any cells that have none are stated rather than
+    // filled in with another cell's geometry (ADR 0014).
     const street = { ...capital, pieces: { drawn: 88, undrawn: 74 } };
     expect(roadFacts(street)).toContainEqual({
       label: 'Road Pieces drawn',
@@ -898,12 +898,14 @@ describe('the Atlas selection panel', () => {
     });
     const streetRead = roadProvenance(street).join(' ');
     expect(streetRead).toContain('Drawn Record');
-    expect(streetRead).toContain('#460');
-    expect(
-      roadProvenance({ ...capital, pieces: { drawn: 88, undrawn: 0 } }).join(
-        ' '
-      )
-    ).not.toContain('#460');
+    expect(streetRead).toContain('no piece face is invented');
+    // Where no capture stood, the Drawn Records are the loader's replay, and the panel says so.
+    const whole = roadProvenance({
+      ...capital,
+      pieces: { drawn: 88, undrawn: 0 }
+    }).join(' ');
+    expect(whole).toContain('replayed from the program image (#460)');
+    expect(whole).not.toContain('no piece face is invented');
     // A workspace publishing no Settlement name is named by where it is, because that is all
     // it has: LUCAN's own recovered network belongs to one of the thirteen.
     expect(

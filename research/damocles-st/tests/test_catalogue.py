@@ -1269,7 +1269,9 @@ class AttachmentKeyTests(unittest.TestCase):
             for name, original in originals.items():
                 setattr(catalogue, name, original)
 
-        self.assertEqual(len(seen), 41)
+        # 41 from the captures, and eight more the image-derived road cells
+        # letter (#460).
+        self.assertEqual(len(seen), 49)
         self.assertEqual([hex(a) for a, f in seen.items() if not f & 0x8000], [])
         self.assertEqual([hex(a) for a, f in seen.items() if f & 0xF == 4], [])
         self.assertEqual(sorted({f & 0xF for f in seen.values()}), [0, 1, 2, 3, 5])
@@ -2122,7 +2124,9 @@ class SceneColourTemplateTests(unittest.TestCase):
             'object-041992': ['palette-1'],
             'object-041a16': ['palette-1'],
             'object-041a9a': ['palette-1'],
-            'object-041b1e': ['palette-1', 'palette-2', 'palette-51', 'palette-62'],
+            # Image-derived road cells on BARE ISLAND and KEY WEST place it too (#460).
+            'object-041b1e': ['palette-1', 'palette-2', 'palette-43', 'palette-51',
+                              'palette-62', 'palette-94'],
         }
         for identity, variant_ids in expected.items():
             model = models[identity]
@@ -2830,10 +2834,6 @@ class SettlementRoadNetworkTests(unittest.TestCase):
         # the image, which is a different provenance and not a lesser network.
         attested = [n for n in networks if n['attestation'] == 'capture']
         self.assertEqual(len(attested), 1 + len(self.WORKSPACES))
-        self.assertTrue(all(
-            cell['overridden'] is None
-            for n in networks if n['attestation'] == 'image'
-            for cell in n['cells']))
         # An empty network is a reading: these three Settlements have no roads.
         self.assertEqual(
             sorted(n['id'] for n in networks if not n['cells']),
@@ -2841,6 +2841,58 @@ class SettlementRoadNetworkTests(unittest.TestCase):
         # Twenty-one Bodies now carry roads: the twenty a capture reached,
         # plus LACHESIS, which no pose stands on and no craft route reaches.
         self.assertEqual(len({n['body'] for n in networks if n['cells']}), 21)
+
+    def test_the_loader_replay_reproduces_every_captures_live_workspace(self):
+        """The workspace a group's Drawn Records come from, rebuilt from the image.
+
+        $04EB60-$04ED12 writes every table the ground decoder reads for a cell --
+        the run grid that doubles as the scene seed, the $0083DC orientation, the
+        $01E400 record after the placement replacement, and the $00ABDC slot the
+        palette follows. The replay has to match the machine on all of them.
+        """
+        from damocleslab.catalogue import hatari_memstate_ram, load_structure_workspace
+        root = Path(__file__).resolve().parents[1]
+        run = root / 'work' / 'observe-first-world-20260818T101013Z-c5a32b7d'
+        if not (run / 'observed.ram').is_file():
+            self.skipTest('Working-Authority RAM captures are Restricted Material')
+        image = (run / 'observed.ram').read_bytes()
+        captures = [(path.name, hatari_memstate_ram(path.read_bytes()))
+                    for path in sorted(root.glob('snapshots/*.sav'))]
+        groups = set()
+        for name, memory in [('first-world', image)] + captures:
+            if len(memory) != 1048576:
+                continue
+            group = struct.unpack_from('>H', memory, 0x794e)[0]
+            replayed = load_structure_workspace(image, group)
+            # The record bank the $1E400 words index is resident, so the replay
+            # reads it from the image: past the six selectors nothing differs.
+            spans = [(0x1E000, 0x400), (0x1E400, 0x200), (0x1E640, 12), (0x83DC, 256),
+                     (0x7AEE, 2), (0x1E64E, 0x30000 - 0x1E64E)]
+            # $04ED2A-$04ED3C floods $ABDC with its first entry while $7A2A is
+            # set, which is run state and not the group's stream.
+            if not memory[0x7A2A]:
+                spans.append((0xABDC, 1024))
+            for start, length in spans:
+                self.assertEqual(replayed[start:start + length],
+                                 memory[start:start + length], f'{name} ${start:05X}')
+            groups.add(group)
+        # Only five captures are tracked; require the group they share.
+        self.assertLessEqual({0x12}, groups)
+
+    def test_every_image_road_cell_publishes_its_drawn_record(self):
+        payload = self.payload()
+        models = {model['id']: model for model in payload['models']}
+        cells = [cell for network in payload['roadNetworks']
+                 if network['attestation'] == 'image' for cell in network['cells']]
+        self.assertEqual(len(cells), 478)
+        for cell in cells:
+            self.assertIn(cell['overridden'], (True, False))
+            model = models[cell['model']]
+            self.assertEqual(model['kind'], 'ground')
+            self.assertTrue(model['variants'], cell)
+        # A placement replaced the Selected Piece on some cells and not others,
+        # which is the question an image network could not answer before.
+        self.assertEqual(sum(cell['overridden'] for cell in cells), 114)
 
     def test_the_capital_city_network_is_the_one_the_aerial_view_draws(self):
         """The pinned capture's live ground-extent edge list, cell by cell.

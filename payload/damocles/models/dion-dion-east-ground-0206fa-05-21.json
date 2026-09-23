@@ -1,0 +1,237 @@
+{
+  "model": {
+    "evidence": [
+      {
+        "claim": "DION EAST road cell $21: the per-cell ground/pad/road record at $1E000 the workspace loader would draw there, replayed from the group's authored stream by $04EB60-$04ED12 -- its $1E400 record after any placement replacement, its $83DC orientation and its $1E000 scene seed. No capture stands in this workspace; the same replay reproduces those tables on every capture that does.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-eris-ground.md"
+      }
+    ],
+    "id": "dion-dion-east-ground-0206fa-05-21",
+    "kind": "ground",
+    "linkedInstances": [],
+    "name": "DION EAST ground 33",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      1313
+    ],
+    "sourceAddress": 132858,
+    "status": "decoded",
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sceneSlots": [
+                240
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 0,
+              "vertices": [
+                0,
+                1,
+                2,
+                3,
+                4
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sourceColour": 32782,
+              "sourceIndex": 2,
+              "vertices": [
+                7,
+                8,
+                9,
+                10
+              ]
+            },
+            {
+              "colour": "#000000",
+              "doubleSided": true,
+              "sourceColour": 32768,
+              "sourceIndex": 3,
+              "vertices": [
+                11,
+                12,
+                13,
+                14
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sourceColour": 32782,
+              "sourceIndex": 4,
+              "vertices": [
+                15,
+                16,
+                17,
+                18
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sourceColour": 32782,
+              "sourceIndex": 5,
+              "vertices": [
+                19,
+                20,
+                21,
+                22
+              ]
+            }
+          ],
+          "lines": [
+            {
+              "colour": "#cccccc",
+              "sceneSlots": [
+                240
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 1,
+              "vertices": [
+                5,
+                6
+              ]
+            }
+          ],
+          "sourceEnd": 132972,
+          "sourceStart": 132858,
+          "vertices": [
+            [
+              100,
+              0,
+              32767
+            ],
+            [
+              100,
+              0,
+              -250
+            ],
+            [
+              -100,
+              0,
+              -250
+            ],
+            [
+              -100,
+              0,
+              32767
+            ],
+            [
+              0,
+              0,
+              196608
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              196608
+            ],
+            [
+              500,
+              0,
+              -250
+            ],
+            [
+              -100,
+              0,
+              -250
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              500,
+              0,
+              0
+            ],
+            [
+              500,
+              0,
+              1000
+            ],
+            [
+              2500,
+              0,
+              1000
+            ],
+            [
+              2500,
+              0,
+              -1000
+            ],
+            [
+              500,
+              0,
+              -1000
+            ],
+            [
+              2250,
+              0,
+              1000
+            ],
+            [
+              2000,
+              0,
+              1000
+            ],
+            [
+              2000,
+              0,
+              1400
+            ],
+            [
+              2250,
+              0,
+              1600
+            ],
+            [
+              2000,
+              0,
+              1400
+            ],
+            [
+              0,
+              0,
+              1400
+            ],
+            [
+              0,
+              0,
+              1600
+            ],
+            [
+              2250,
+              0,
+              1600
+            ]
+          ]
+        },
+        "name": "Recovered cell fill \u00b7 transform $05"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

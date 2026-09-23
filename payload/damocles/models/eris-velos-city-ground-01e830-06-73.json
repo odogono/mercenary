@@ -1,0 +1,147 @@
+{
+  "model": {
+    "evidence": [
+      {
+        "claim": "VELOS CITY road cell $73: the per-cell ground/pad/road record at $1E000 the workspace loader would draw there, replayed from the group's authored stream by $04EB60-$04ED12 -- its $1E400 record after any placement replacement, its $83DC orientation and its $1E000 scene seed. No capture stands in this workspace; the same replay reproduces those tables on every capture that does.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-eris-ground.md"
+      }
+    ],
+    "id": "eris-velos-city-ground-01e830-06-73",
+    "kind": "ground",
+    "linkedInstances": [],
+    "name": "VELOS CITY ground 115",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "",
+    "recordClass": "geometry",
+    "relatedModels": [],
+    "slots": [
+      911
+    ],
+    "sourceAddress": 124976,
+    "status": "decoded",
+    "variants": [
+      {
+        "id": "record",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sceneSlots": [
+                240
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 0,
+              "vertices": [
+                0,
+                1,
+                2,
+                3,
+                4
+              ]
+            },
+            {
+              "colour": "#cccccc",
+              "doubleSided": true,
+              "sourceColour": 32782,
+              "sourceIndex": 2,
+              "vertices": [
+                7,
+                8,
+                9,
+                10,
+                11
+              ]
+            }
+          ],
+          "lines": [
+            {
+              "colour": "#cccccc",
+              "sceneSlots": [
+                240
+              ],
+              "sourceColour": 32782,
+              "sourceIndex": 1,
+              "vertices": [
+                5,
+                6
+              ]
+            }
+          ],
+          "sourceEnd": 125038,
+          "sourceStart": 124976,
+          "vertices": [
+            [
+              -100,
+              0,
+              -32767
+            ],
+            [
+              -100,
+              0,
+              100
+            ],
+            [
+              100,
+              0,
+              100
+            ],
+            [
+              100,
+              0,
+              -32767
+            ],
+            [
+              0,
+              0,
+              -196608
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              -196608
+            ],
+            [
+              -1015,
+              0,
+              600
+            ],
+            [
+              -1015,
+              0,
+              1200
+            ],
+            [
+              982,
+              0,
+              1200
+            ],
+            [
+              982,
+              0,
+              600
+            ],
+            [
+              0,
+              0,
+              0
+            ]
+          ]
+        },
+        "name": "Recovered cell fill \u00b7 transform $06"
+      }
+    ]
+  },
+  "schemaVersion": 16,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}
