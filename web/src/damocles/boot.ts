@@ -598,10 +598,17 @@ try {
     status.textContent = text;
   };
 
-  const expose = (triangles: number): void => {
+  const expose = (
+    triangles: number,
+    drawnPlacements: readonly string[]
+  ): void => {
     const root = canvas.dataset;
     root['cell'] = `${snapshot.cell.x}-${snapshot.cell.z}`;
+    // Session time, so a browser pass can measure a speed per session second rather than per
+    // wall-clock second, which a loaded browser stretches.
+    root['elapsed'] = String(snapshot.elapsed);
     root['x'] = String(snapshot.pose.position.x);
+    root['y'] = String(snapshot.pose.position.y);
     root['z'] = String(snapshot.pose.position.z);
     root['heading'] = String(snapshot.pose.heading);
     root['attachmentOpenUnits'] = String(
@@ -625,6 +632,10 @@ try {
       .map(([cue, count]) => `${cue}:${count}`)
       .join(' ');
     root['triangles'] = String(triangles);
+    // Every structure and object the frame drew, repeats kept, so a browser pass can tell an
+    // occupied craft is not drawn and a left one is drawn once rather than inferring it from a
+    // triangle count that also moves with the view.
+    root['drawn'] = drawnPlacements.join(' ');
     root['unresolved'] = String(snapshot.surface.unresolvedCount);
   };
   const draw = (): void => {
@@ -663,7 +674,7 @@ try {
     panel.draw(
       damoclesPanelViewModel(snapshot, content.doc, controls.intent.running)
     );
-    expose(plan.triangleCount);
+    expose(plan.triangleCount, plan.drawnPlacements);
     paintNotices();
   };
   publish = draw;

@@ -329,3 +329,81 @@ is named.
   state, because there is none beyond the Carried Stack.
 - **#418** verifies the traces above in the browser and records the unexercised guards as
   unexercised.
+
+## Browser verification (#418)
+
+Run on 2026-09-24 against `f131d6c` (`web` 0.20.0, Damocles Save schema 6, Catalogue schema 17), in
+Playwright's Chromium at 1280 × 900, with `bun test` (1696 passing), `typecheck`, `lint` and `knip`
+green on the same tree.
+
+The pass lives in [`web/e2e/damocles-boarding.e2e.ts`](../../web/e2e/damocles-boarding.e2e.ts) and
+shares [`web/e2e/damocles-play.ts`](../../web/e2e/damocles-play.ts) with the limo-key and
+body-aware passes. Every test drives the session through the Control Profile's own keys (arrows,
+`T`, `D`, `B`, `L`) and development-console lines, and asserts the page raised no errors. Two
+places are reached by moving the start rather than walking, which is the idiom those passes
+already use: `DART II`, 2500 cells from the spaceport, and Gaea's UR City arrival Pose, moved
+beside `99 CHEVY` before the authored switch lands on it. Run it with
+`bun run test:e2e damocles-boarding`.
+
+### The traces, in the browser
+
+| Trace                                                            | Browser route                                                                                      | Result                                                                                                                                                                                           |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Walk to `V.I.P. LIMO` with an empty Carried Stack, press `B`     | Start beside the limo in spaceport region 4                                                        | `VEHICLE KEY REQUIRED`; on foot; the limo drawn once                                                                                                                                             |
+| Take `KEY- V.I.P. LIMO`, walk to the limo, press `B`             | From the doorway line, `T`, then walk north through the doorway until the limo is in reach         | Aboard slot 5; the eye at the limo's position with `y` 63, the on-foot height; the heading is the angle byte × 4 as yaw; the limo drawn nowhere; the key still carried; walking moves nothing    |
+| Aboard, press `B`                                                | The same session                                                                                   | Still aboard, the Pose unchanged                                                                                                                                                                 |
+| Aboard, press `L`                                                | The same session                                                                                   | On foot at the same Pose; the limo drawn exactly once, and still drawn once after backing away                                                                                                   |
+| Take the key, drop it, press `B` beside the limo                 | `T` and `D` on the doorway line after the response parks, then walk north                          | `VEHICLE KEY REQUIRED`: the key is a carried requirement (#404)                                                                                                                                  |
+| Drop the key, take it back, press `B`                            | Walk back to the dropped key, `T`, walk north again                                                | Aboard                                                                                                                                                                                           |
+| Carry `KEY- V.I.P. LIMO` only, press `B` beside `EAGLE NINE S E` | `T` at the key, `goto 9 9`, turn with short taps and walk into reach                               | `VEHICLE KEY REQUIRED`; on foot                                                                                                                                                                  |
+| Press `B` beside `INTERSTELLARSHIP`                              | Start beside it in spaceport region 10                                                             | `SHIP NOT REFITTED FOR FURTHER FLIGHT`; on foot                                                                                                                                                  |
+| Press `B` inside Capital Spaceport region 1 beside a dropped key | Drop the key at the far edge of region 0 once the response parks, then step into region 1          | Nothing: no message, on foot, the Pose unchanged                                                                                                                                                 |
+| Press `B` beside an object past the boardable bound              | Start at the limo key's approach in region 9, which carries bit 14                                 | Nothing: the key (slot 183) is refused by the bound at 23                                                                                                                                        |
+| Press `B` beside `DART II`                                       | Start beside it                                                                                    | Aboard unkeyed; `L` leaves it drawn once                                                                                                                                                         |
+| A craft on another Body                                          | `switch gaea-ur-city-4-2` beside `99 CHEVY`; press `B`; then the key written into a Save, `B`, `L` | `VEHICLE KEY REQUIRED` without the key; with it, aboard, drawn nowhere, then left and drawn once                                                                                                 |
+| Saves: before boarding, aboard, after leaving                    | `save 1`/`2`/`3` at each, then `load` each                                                         | Each restores its own Occupancy and Pose; the aboard record says `aboard` with an `occupied` departure and restores the same seated view with the limo drawn nowhere; leaving it leaves one limo |
+| Session Resume: before boarding, aboard, after leaving           | Reload the page in each state                                                                      | The same three states, identically                                                                                                                                                               |
+| A schema 5 record                                                | The aboard Save rewritten to schema 5's shape, then `load`                                         | `load refused`; the live session on foot where it was; the stored record byte-identical                                                                                                          |
+
+### What was added so the browser could answer
+
+Two readouts were published from the Damocles boot, for the same reason `data-region` was:
+`data-y`, the eye height, which boarding and leaving move; and `data-drawn`, every structure and
+object placement the frame plan emitted, repeats kept. A triangle count also moves with the
+view, so it could not say that an occupied craft is drawn nowhere or that a left one is drawn
+once. `data-drawn` reads the plan's new `drawnPlacements`, and a unit test pins the same claim
+against the planner. Neither readout changes behaviour.
+
+### Unexercised, and why
+
+- **Boarding a craft off Eris by an ordinary route.** Only two Vehicle Keys for craft off Eris
+  have a recovered place: `KEY - 99 CHEVY` (slot 180, in `eris-structure-0251d7`) and
+  `KEY- TARG TOURER` (slot 184, in `vesta-surface-64`). Both are level 1 structure residents, and
+  floor-aware binding is unrecovered ([#355](https://github.com/odogono/mercenary/issues/355)),
+  so neither is ever exposed. The refusal on Gaea is ordinary play. The board and leave that
+  follow it start from a Save with the key written into the Carried Stack, and the test says so.
+- **`AUTHOR'S CHAIR`.** Ordinary play cannot reach it behind Authors House's keyed door. It is
+  covered only by the deterministic suite.
+- **A `SETTEE`.** No `SETTEE` is placed anywhere in the Catalogue. The boardable bound's silent
+  refusal is exercised on the limo key instead.
+- **The region test on its own.** `B` in region 1, which lacks bit 14, is silent, but the only
+  object in reach there is the limo key, which the slot bound refuses as well. The browser cannot
+  tell the two refusals apart, so board test 3 stays **unexercised** as a distinct outcome.
+- **The VOID staging Body.** Board test 6 and leave test 4: no route reaches Body `$78`.
+- **Leave tests 2 and 3.** Nothing aboard moves, so the craft never leaves ground contact and
+  never reaches the sea.
+- **"Drawn where it was left rather than at its original coordinates."** Nothing moves aboard,
+  so the leave position is the boarding position, and the browser cannot separate the two by
+  where the craft stands. What it does show is that the left craft is drawn once, from its
+  Object Residence departure, and never also from its Catalogue placement.
+
+### Remaining limitations
+
+- **This is confirmation, not proof.** The deterministic suites remain the authority.
+- **Four browser tests outside this pass were failing on `main`, and are fixed alongside it.**
+  Three in `damocles-body-aware.e2e.ts` still expected Gaea to have one admitted Pose. It has had
+  two since [#390](https://github.com/odogono/mercenary/pull/390) recovered the transporter's
+  workspace, so they now switch to `gaea-ur-city-4-2` by name and use `midas` for the Pose with
+  no recovered origin. The NAV 09-09 door walk in `damocles.e2e.ts` timed the leaf against the
+  wall clock, so it failed whenever a loaded browser advanced session time more slowly. Its
+  waits now allow for that load.

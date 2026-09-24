@@ -29,6 +29,9 @@ export const FLOATS_PER_VERTEX = 7;
 
 export interface ErisFramePlan {
   readonly clear: readonly [number, number, number];
+  /// Every structure and object placement the plan emitted, once per emission, in draw order.
+  /// Ground records are not listed. An id appearing twice is an object drawn twice.
+  readonly drawnPlacements: readonly string[];
   readonly farPlane: number;
   /// Triangles of the Body's base plane, which lead the vertex list.
   readonly fillTriangleCount: number;
@@ -463,20 +466,24 @@ export const planErisFrame = (
     ...hiddenResidents,
     ...residents.map(resident => resident.id)
   ]);
+  const drawnPlacements: string[] = [];
   for (const placement of drawn) {
     if (hidden.has(placement.id)) {
       continue;
     }
     if (placement.kind !== 'ground') {
       emitPlacement(placement);
+      drawnPlacements.push(placement.id);
     }
   }
   for (const resident of residents) {
     emitPlacement(resident);
+    drawnPlacements.push(resident.id);
   }
 
   return {
     clear: channels(doc.sky.colour),
+    drawnPlacements,
     farPlane: doc.camera.farPlane,
     fillTriangleCount,
     groundTriangleCount,

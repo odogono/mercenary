@@ -10,12 +10,18 @@ import {
   closeConsole,
   damoclesSaveSlot,
   displayRow,
+  held,
   inventory,
+  messageText,
+  pressUntilInventory,
   ready,
+  responseParks,
   run,
   scrollPixels,
   soundCues,
   spaceportWorld,
+  stepIntoDoorway,
+  walkUntil,
   watchErrors
 } from './damocles-play.ts';
 
@@ -30,24 +36,6 @@ import {
 /// long by design rather than by accident, and each says so with its own timeout.
 
 const KEY_LABEL = 'KEY- V.I.P. LIMO';
-
-/// One message record, read from the Data Payload rather than copied into the test, so the
-/// assertions compare against what the game was served. A record's leading spaces are the
-/// original's own hand-centring and belong to the row; the published row is trimmed, so `held`
-/// is what a test sees once the record has arrived.
-const messageText = async (page: Page, id: string): Promise<string> => {
-  const strings = (await (
-    await page.request.get('/payload/damocles/strings.json')
-  ).json()) as {
-    readonly inlineMessages: readonly {
-      readonly id: string;
-      readonly text: string;
-    }[];
-  };
-  return strings.inlineMessages.find(message => message.id === id)!.text;
-};
-
-const held = (text: string): string => text.trim();
 
 const BLANK_ROW = ' '.repeat(48);
 
@@ -73,49 +61,6 @@ const localZ = async (page: Page, origin: { readonly z: number }) =>
 
 const triangles = async (page: Page): Promise<number> =>
   Number(await frame(page).getAttribute('data-triangles'));
-
-/// Hold one walking key until the session reaches the state the caller is waiting for.
-const walkUntil = async (
-  page: Page,
-  key: 'ArrowDown' | 'ArrowUp',
-  reached: () => Promise<boolean>,
-  timeout = 30_000
-): Promise<void> => {
-  await page.keyboard.down(key);
-  try {
-    await expect.poll(reached, { intervals: [50], timeout }).toBe(true);
-  } finally {
-    await page.keyboard.up(key);
-  }
-};
-
-/// Both take and drop are refused while the inventory label is still scrolling, so the ordinary
-/// way to use them is to press again until the session accepts.
-const pressUntilInventory = async (
-  page: Page,
-  key: 'd' | 't',
-  label: string
-): Promise<void> => {
-  await expect
-    .poll(
-      async () => {
-        await page.keyboard.press(key);
-        return inventory(page).textContent();
-      },
-      { timeout: 10_000 }
-    )
-    .toBe(label);
-};
-
-/// Wait for the response to reach its recorded end: the third record held, and then the blank
-/// row its clearing line leaves. Anchoring on the third record matters, because a row part way
-/// through a handover can be all spaces without the response having ended.
-const responseParks = async (page: Page, third: string): Promise<void> => {
-  await expect
-    .poll(async () => displayRow(page), { timeout: 30_000 })
-    .toBe(held(third));
-  await expect.poll(async () => displayRow(page), { timeout: 30_000 }).toBe('');
-};
 
 interface SavedRecord {
   snapshot: {
@@ -152,22 +97,71 @@ const rewriteRecord = async (
 /// Save repeatedly until the stored record was taken in the phase the test is about. A Save is
 /// a console line, so which phase it lands in cannot be chosen in advance: a record is arriving
 /// for 36 frames of every 200, and the wait is 200 frames of every 1000.
+///
+/// The retries run against a deadline rather than a count: a quick browser can spend 25 saves
+/// inside the 200 frames before a wait begins. `save` is how one attempt is made, so a phase
+/// too short to hit by typing can bring its own.
 const saveDuring = async (
   page: Page,
   slot: 1 | 2 | 3,
   phase: (record: SavedRecord) => boolean,
-  attempts = 25
-): Promise<SavedRecord> => {
-  for (let attempt = 0; attempt < attempts; attempt += 1) {
+  save: () => Promise<void> = async () => {
     expect(await run(page, `save ${slot} confirm`)).toContain(
       `saved slot ${slot}`
     );
+  }
+): Promise<SavedRecord> => {
+  const deadline = Date.now() + 40_000;
+  while (Date.now() < deadline) {
+    await save();
     const record = await savedRecord(page, slot);
     if (phase(record)) {
       return record;
     }
   }
-  throw new Error(`no Save landed in the expected phase after ${attempts}`);
+  throw new Error('no Save landed in the expected phase within 40 seconds');
+};
+
+/// Save on the first frame a record is seen arriving over the row. Typing the line and waiting
+/// for the page to answer takes longer than the 36-frame arrival under load, so the line is
+/// typed into the console first and submitted from the page, on that frame, with the same
+/// `Enter` the console reads.
+const saveOnArrival = (page: Page, slot: 1 | 2 | 3) => async () => {
+  const input = page.locator('#console-input');
+  if (!(await input.evaluate(node => node === document.activeElement))) {
+    await page.keyboard.press('`');
+    await expect(input).toBeFocused();
+  }
+  await input.fill(`save ${slot} confirm`);
+  const log = page.locator('#console-log > *');
+  const before = await log.count();
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve, reject) => {
+        const frame = document.querySelector<HTMLElement>('#frame')!;
+        const field =
+          document.querySelector<HTMLInputElement>('#console-input')!;
+        const deadline = performance.now() + 20_000;
+        const tick = () => {
+          const pixels = Number(frame.dataset['damoclesScroll']);
+          if (pixels > 0 && pixels <= 64) {
+            field.dispatchEvent(
+              new KeyboardEvent('keydown', { bubbles: true, key: 'Enter' })
+            );
+            resolve();
+          } else if (performance.now() > deadline) {
+            reject(new Error('no record arrived within 20 seconds'));
+          } else {
+            requestAnimationFrame(tick);
+          }
+        };
+        tick();
+      })
+  );
+  await expect(log).not.toHaveCount(before);
+  expect((await log.allTextContents()).slice(before).join(' | ')).toContain(
+    `saved slot ${slot}`
+  );
 };
 
 test('the supported pickup runs the response once and parks', async ({
@@ -326,7 +320,8 @@ test('a Save round-trips the response at each of its phases', async ({
   const scrolling = await saveDuring(
     page,
     1,
-    record => record.snapshot.script.display.kind === 'scrolling'
+    record => record.snapshot.script.display.kind === 'scrolling',
+    saveOnArrival(page, 1)
   );
   expect(scrolling.snapshot.script.message).not.toBeNull();
   expect(await run(page, 'load 1')).toContain('restored slot 1');
@@ -485,12 +480,7 @@ test('a drop in the doorway region after the response has parked is refused', as
     'ArrowUp',
     async () => (await localZ(page, origin)) < -700
   );
-  for (let step = 0; step < 40 && (await region(page)) !== '1'; step += 1) {
-    await page.keyboard.down('ArrowUp');
-    await page.waitForTimeout(40);
-    await page.keyboard.up('ArrowUp');
-  }
-  expect(await region(page)).toBe('1');
+  await stepIntoDoorway(page);
 
   // The drop is refused, the key stays carried, and the parked host presents the refusal.
   const cues = await soundCues(page);

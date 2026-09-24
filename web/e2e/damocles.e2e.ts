@@ -175,6 +175,7 @@ test('the spaceport and current-cell structures use recovered selector behavior'
 test('an ordinary Eris structure opens its door and clamps the eye at NAV 09-09', async ({
   page
 }) => {
+  test.setTimeout(90_000);
   await page.addInitScript(
     key => localStorage.removeItem(key),
     DAMOCLES_RESUME_KEY
@@ -226,19 +227,31 @@ test('an ordinary Eris structure opens its door and clamps the eye at NAV 09-09'
   await page.unroute('**/damocles/eris.json');
 
   // The doorway: the leaf answers the approach, and only a fully open leaf frees the latched
-  // region, so the eye crosses the wall line rather than stopping at it.
+  // region, so the eye crosses the wall line rather than stopping at it. The leaf opens at 92
+  // units in 2.64 seconds of session time, and a loaded browser advances that slower than the
+  // wall clock, so these waits allow for the load rather than timing the leaf from outside.
+  // The fully open leaf is watched every frame: the eye walks on through the doorway and the
+  // leaf starts closing behind it, so a poll a second apart can miss the open state entirely.
+  const load = { timeout: 20_000 };
   await startAt(210, 700);
   expect(await openUnits()).toBeGreaterThan(0);
   await page.keyboard.down('ArrowUp');
-  await expect.poll(openUnits).toBe(112);
-  await expect.poll(localZ).toBeLessThan(570);
+  await page.waitForFunction(
+    () =>
+      document.querySelector<HTMLElement>('#frame')?.dataset[
+        'attachmentOpenUnits'
+      ] === '112',
+    undefined,
+    { polling: 'raf', ...load }
+  );
+  await expect.poll(localZ, load).toBeLessThan(570);
   await page.keyboard.up('ArrowUp');
 
   // Retreat re-closes it.
   await page.keyboard.down('ArrowDown');
-  await expect.poll(localZ).toBeGreaterThan(900);
+  await expect.poll(localZ, load).toBeGreaterThan(900);
   await page.keyboard.up('ArrowDown');
-  await expect.poll(openUnits).toBe(0);
+  await expect.poll(openUnits, load).toBe(0);
   await page.unroute('**/damocles/eris.json');
 });
 
@@ -502,16 +515,25 @@ test('R latches running, which lights the lamp and lengthens the step', async ({
   const frame = page.locator('#frame');
   const lamp = page.locator('#panel-damocles [data-lamp=runLamp]');
 
-  // One leg of the same held walk, so the two are compared over equal frames.
+  // One leg of a held walk, as a speed in units per session second. Both readings are taken
+  // while the key is held, and each reads position and session time from the same frame, so
+  // neither the frames either side of the hold nor a loaded browser's slower clock enters it.
+  const reading = () =>
+    frame.evaluate(node => ({
+      elapsed: Number(node.dataset['elapsed']),
+      x: Number(node.dataset['x']),
+      z: Number(node.dataset['z'])
+    }));
   const leg = async (): Promise<number> => {
-    const fromX = Number(await frame.getAttribute('data-x'));
-    const fromZ = Number(await frame.getAttribute('data-z'));
     await page.keyboard.down('ArrowUp');
+    await page.waitForTimeout(200);
+    const from = await reading();
     await page.waitForTimeout(500);
+    const to = await reading();
     await page.keyboard.up('ArrowUp');
-    return Math.hypot(
-      Number(await frame.getAttribute('data-x')) - fromX,
-      Number(await frame.getAttribute('data-z')) - fromZ
+    expect(to.elapsed).toBeGreaterThan(from.elapsed);
+    return (
+      Math.hypot(to.x - from.x, to.z - from.z) / (to.elapsed - from.elapsed)
     );
   };
 
@@ -522,7 +544,7 @@ test('R latches running, which lights the lamp and lengthens the step', async ({
   await expect(lamp).toHaveClass(/on/);
   const ran = await leg();
   // Exact-VBL Working Authority traces recover a $50 run update against a
-  // $30 walk update (5/3); the bounds allow browser-timed leg variation.
+  // $30 walk update (5/3); the bounds allow for the frame each reading lands on.
   expect(ran).toBeGreaterThan(walked * 1.4);
   expect(ran).toBeLessThan(walked * 1.9);
 
