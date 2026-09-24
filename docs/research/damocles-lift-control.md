@@ -364,10 +364,9 @@ What the port can bind and implement from this note without inventing anything:
 
 ## What this does not settle
 
-- **Ride presentation and timing** ([#472](https://github.com/odogono/mercenary/issues/472)):
-  how many frames a countdown tick is, what the door does on arrival (the samples show
-  the new structure's latch at 1, moving), and whether anything besides the label is
-  drawn during the ride.
+- **Ride presentation and timing**: recovered by #472 in
+  [the lift ride](damocles-lift-ride.md). A countdown tick is one substep, about one
+  VBL; the door reopens on arrival; nothing but the doors and the label is drawn.
 - **Where `$CD04` is drawn** ([#473](https://github.com/odogono/mercenary/issues/473)).
 - **What `$7882` means**, the mode in which digit keys go to `$059184` instead of the lift.
 - **Sound.** Not examined. The runs had sound off.
