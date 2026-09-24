@@ -70,7 +70,7 @@ Input traces:
 | Hypothesis                                                                               | Status                      | Working-Authority Evidence                                                                                                                         |
 | ---------------------------------------------------------------------------------------- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Walk with joystick; board with `B` near craft while holding matching key; leave with `L` | **Confirmed (ground limo)** | Take key with Right-Shift+Up; `B` boards V.I.P. limo; leave recording uses Space then `L`. Arrival ship also responds to `B` but is flight-locked. |
-| Number keys set craft speed                                                              | **Confirmed (panel)**       | Boarded digit presses change the `+ 000 000 NNN` field next to `ERIS` (key 1→`002`, 4→`024`, 9→`400`).                                             |
+| Number keys set craft speed                                                              | **Confirmed (panel)**       | Boarded digit presses change the `+ 000 000 NNN` field next to `ERIS`: a live speed, not a fixed value per key (human probe 1→`002`, 4→`024`, 9→`400`; #208 correction below). |
 | Near-c flight accelerates Eris time                                                      | **Unresolved**              | No spaceworthy craft boarded; VOID not entered. Idle impact-clock advance remains as in #81.                                                       |
 | Orbital mechanics / VOID dynamics                                                        | **Unresolved**              | Limo is a ground vehicle; arrival ship announces it is not refitted for further flight.                                                            |
 
@@ -83,7 +83,7 @@ Input traces:
 | Take object         | **Right Shift + Up**    | `T` alone does nothing; recording shows Right Shift + Up when the key is acquired                                                                                                                    |
 | Board / enter craft | **`B`**                 | Boarded limo snapshot; arrival-ship probe message                                                                                                                                                    |
 | Leave craft         | **`L`** (after stop)    | Leave recording: digit, Space, then `L`; panel velocity returns to `+ 000 000 000`                                                                                                                   |
-| Craft speed         | **Number keys `1`–`9`** | Panel velocity `002` / `024` / `400` for keys 1 / 4 / 9                                                                                                                                              |
+| Craft speed         | **Number keys `1`–`9`** | Panel velocity rises after the key; human probe `002` / `024` / `400` for keys 1 / 4 / 9, which depend on when the panel is read                                                                    |
 | Run on foot         | **`R` toggle**          | A released tap persists; a second explicit press/release restores walking. Forward step `$30` → `$50` (×`5/3`); initial north-facing right turn `$10` → `$18` (×`3/2`). See #205 measurements below. |
 
 Arrival ship at the pad (`board-probe-…127f768b`): pressing `B` yields message
@@ -137,14 +137,31 @@ While boarded, number keys change the large signed field beside `ERIS`:
 |   4 | `024`                   |
 |   9 | `400`                   |
 
-#208 re-ran keys `1` and `4` from `boarded-limo.sav` with the game loop running
-(`panel-readout-probe.py velocity`). PNGs still show `002` / `024`. A whole-RAM
-search found **no** BE16/BE32/packed-BCD cell equal to 2, 24, or 400 that
-changed with the key. `$007B60` / `$00797A` still track recent scancodes (key 4
-→ `$0006`) and are not the velocity word. A poke of `$4DFE8` (a nearby digit-ish
-scratch) did not retarget the panel. Key `9` did not take under FIFO `keydown 10`
-in this harness (panel stayed `000`); the `400` reading remains the earlier
-human digit-probe.
+These readings come from the human digit probe. They are not fixed per-key values: the panel
+shows the craft's current speed, which the throttle drives and a collision reverses
+([arrival routes](damocles-arrival-routes.md#the-throttle-is-7bac-from-a-scancode-indexed-table)).
+
+**Correction (2026-09-24).** The #208 re-run did not press the keys it named.
+`panel-readout-probe.py` sent `hatari-event keydown 2` and `keydown 5`, and Hatari reads a
+one-character argument as a host character. So "key 1" pressed `2` and "key 4" pressed `5`.
+The recorded `$7B60` of `$0006` for "key 4" is the make code of `5`, which confirms it. Its
+`002` / `024` therefore did not reproduce the human readings for keys 1 and 4.
+
+With the probe fixed to send `02`, `05` and `0A`, `$7B60` reads `$0002`, `$0005` and `$000A`.
+Starting from `boarded-limo.sav`, 100 VBLs after the key the panel reads `001` for key 1,
+`012` for key 4 and `000` for key 9. After 500 VBLs, key 4 has driven the limo into the
+building ahead and the panel reads `- 000 000 000`. The runs are
+`panel-velocity-key1-100vbl-20260924T151413Z-0b7a5bf1`,
+`panel-velocity-key4-100vbl-20260924T151421Z-26404408`,
+`panel-velocity-key9-100vbl-20260924T151429Z-f6a5cd15` and
+`panel-velocity-key4-500vbl-20260924T151509Z-2029b532`. The field is a live speed, so no
+single panel value belongs to a key.
+
+The earlier whole-RAM search found **no** BE16/BE32/packed-BCD cell equal to 2, 24 or 400
+that changed with the key. It searched for values from runs that pressed the wrong keys,
+so it does not rule out a speed word. `$007B60` and `$00797A` track recent scancodes and
+are not the velocity word. A poke of `$4DFE8`, a nearby scratch word that looked like a
+digit, did not retarget the panel.
 
 Joystick still steers while boarded (`$79C2` poke / stick recording).
 
@@ -369,8 +386,8 @@ Disassembly was required or produced.
 | Arrival ship flight-gated                                                                     | `SHIP NOT REFITTED FOR FURTHER FLIGHT`                                                           |
 | Inventory `KEY- V.I.P. LIMO` + `$03E484`                                                      | `$04DDBC` buffer in boarded/left RAM                                                             |
 | Walk flag `$7A8E`/`$7AAE` (1 foot / 0 boarded)                                                | four-way RAM compare; reverts on leave                                                           |
-| Number keys set panel speed                                                                   | digit probe PNGs `002`/`024`/`400`; #208 FIFO keys 1/4 while running                             |
-| Integer RAM cell for `+ 000 000 NNN`                                                          | **Fog** — no BE16/BE32/BCD 2/24/400 that tracks the key (#208)                                   |
+| Number keys set panel speed                                                                   | digit probe PNGs `002`/`024`/`400`; corrected FIFO keys 1/4/9 (2026-09-24)                       |
+| Integer RAM cell for `+ 000 000 NNN`                                                          | **Fog** — #208's search used runs that pressed the wrong keys; not re-searched                   |
 | VOID / flight dynamics not reached                                                            | limo ground-only; ship not refitted                                                              |
 | Camera yaw `$7AA2`/`$7AC2`, 1024 per turn, N = `$200`, clockwise                              | yaw-probe hold/period runs; compass tape frames                                                  |
 | North = +z, east = +x (`$7A9A`, `$7A92`)                                                      | yaw-probe axis runs                                                                              |

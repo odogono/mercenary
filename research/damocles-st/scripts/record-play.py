@@ -49,7 +49,7 @@ from pathlib import Path
 LAB_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(LAB_ROOT))
 
-from damocleslab.core import JOYSTICK1_SOFTCOPY, LabError, validate_image  # noqa: E402
+from damocleslab.core import JOYSTICK1_SOFTCOPY, LabError, format_hatari_key, validate_image  # noqa: E402
 from damocleslab.laboratory import (  # noqa: E402
     WORK_ROOT,
     _fifo_send,
@@ -713,9 +713,9 @@ def replay(
                         ],
                     )
                 elif action["kind"] == "keydown":
-                    _fifo_send(fh, [f"hatari-event keydown {action['scan']}"])
+                    _fifo_send(fh, [f"hatari-event keydown {format_hatari_key(action['scan'])}"])
                 elif action["kind"] == "keyup":
-                    _fifo_send(fh, [f"hatari-event keyup {action['scan']}"])
+                    _fifo_send(fh, [f"hatari-event keyup {format_hatari_key(action['scan'])}"])
             # Let the final move settle, release the stick, then capture + quit.
             tail = end_t - (time.monotonic() - t0)
             time.sleep(max(0.5, tail))
