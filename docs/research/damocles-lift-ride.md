@@ -175,6 +175,23 @@ palette byte zero. Its per-Floor bytes bind palette index 30 (`$D69A`) on Floors
 palette (`$1A`), so its rides never rebind one. The probe predicts each arrival's
 binding from the capture's record and raises if the trace differs.
 
+## Where the Floor's structure is drawn
+
+The arrival moves the eye up a Floor but leaves the structure-local eye height at 63.
+The game keeps the structure-local eye as three longs: X at `$79A6`, Y at `$79AA` and
+Z at `$79AE`, and reads their low words `$79A8`, `$79AC` and `$79B0`. The structure
+draws from that eye, never from the world eye `$799A`–`$79A2`. The region draw
+`$05A756` measures its heights `$7B26`–`$7B2A` from `$79AC`, and the wall-text draw
+`$053FB4`–`$053FC4` subtracts `$79A8`, `$79AC` and `$79B0` from each vertex. Only two
+instructions write `$79AA`, and both write the constant 63: `$055948` on foot and
+`$055BA6` on arrival at a Floor. Local X and Z come from the pose less the structure's
+origin (`$055BE0`–`$055BF8`, `$059D8C`). Nothing takes the Floor's height off local Y.
+
+So on every Floor the structure is drawn with its local floor 63 below the eye. The eye
+stands at Floor × storey + 63, so in world terms the bound structure is drawn Floor ×
+storey above its placement. The port draws it there
+([#487](https://github.com/odogono/mercenary/issues/487)).
+
 ## Sound
 
 Hatari runs with sound off in this laboratory. What follows is the PSG programme the

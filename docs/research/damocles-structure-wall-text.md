@@ -145,9 +145,9 @@ face-order step forward (`WALL_TEXT_ORDER`), the same step that settles a ground
 later face, so the text lies over its coplanar wall the way the game's painter pass leaves
 it. The Catalogue's region inspection forms show the text too, in its own font.
 
-The State Office's `B A S E M E N T` is published, but the port cannot show it yet. On a
-Floor above 0 the eye stands at that Floor's height, while the frame still draws the bound
-structure from the placement's ground height, so no wall of Floor 10 is in view.
+The State Office's `B A S E M E N T` shows on Floor 10's lintel since
+[#487](https://github.com/odogono/mercenary/issues/487) draws the bound structure at its
+Floor's height ([the lift ride note](damocles-lift-ride.md#where-the-floors-structure-is-drawn)).
 
 ## What this does not settle
 
