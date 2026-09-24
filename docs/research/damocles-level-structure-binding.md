@@ -166,7 +166,8 @@ word stored just before it. 31 of the 155 palettes `$D200` indexes have a non-ze
 them 66: the Metis capture has `$7A4E` = `$FFFF` and `$7A10` = `$DB74`, 24 bytes past
 `$DB5C`. The Catalogue resolves every palette at its base, as it always has. Entry 3
 reads `$222` in both halves of palette 66, so the Metis floor is `#444444` either way.
-Which half is day, and whether a model should carry both, is still open.
+Which half is day, and whether a model should carry both, is still open
+([#497](https://github.com/odogono/mercenary/issues/497)).
 
 ### The level domain is 0 to 10, and the game says so
 
