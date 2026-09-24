@@ -206,6 +206,7 @@ describe('body-aware Object Residence', () => {
         briefcaseStore: [],
         elapsed: 0,
         frameAccumulator: 0,
+        occupancy: { kind: 'onFoot' as const },
         pendingBriefcaseDrop: null,
         pose: {
           body: row.body,

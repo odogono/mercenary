@@ -42,7 +42,11 @@ import type { Pose } from './world.ts';
 /// Association A byte 3 rather than the handling byte's low nibble that version 4 stored.
 /// There is no migration: a schema-4 record's classes are not schema-5 classes, so it is
 /// refused whole (ADR 0044).
-export const DAMOCLES_SAVE_SCHEMA_VERSION = 5 as const;
+///
+/// Version 6 carries Occupancy: the instance the player is aboard, whose Object Residence is
+/// `occupied` (#417). A schema-5 record cannot say whether its player was aboard, so it is
+/// refused whole rather than defaulted to on foot.
+export const DAMOCLES_SAVE_SCHEMA_VERSION = 6 as const;
 export const DAMOCLES_DESTINATION = 'damocles' as const;
 
 /// What a restore must match exactly before it may continue this game (ADR 0026).
@@ -76,6 +80,7 @@ export interface DamoclesSaveSnapshot {
   readonly carried: readonly string[];
   readonly elapsed: number;
   readonly frameAccumulator: number;
+  readonly occupancy: DamoclesSaveOccupancy;
   readonly pendingBriefcaseDrop: {
     readonly head: string;
     readonly residence: PlacedResidence;
@@ -86,6 +91,12 @@ export interface DamoclesSaveSnapshot {
   readonly scrollCounter: number;
   readonly structure: BoundStructureSnapshot | null;
 }
+
+/// What the player is inside, as the session's own Occupancy says it. Aboard, the Pose is the
+/// seated view and the occupied instance's Object Residence departure is `occupied`.
+export type DamoclesSaveOccupancy =
+  | { readonly kind: 'onFoot' }
+  | { readonly instance: string; readonly kind: 'aboard' };
 
 export interface DamoclesSaveScript {
   readonly counter: number;
@@ -218,6 +229,8 @@ const poseOf = (value: unknown): Pose => {
     heading: pose['heading'],
     // A Save carries no pitch: nothing in play moves the view off level, so a restored Pose is
     // level and a Save written before #394 restores identically to one written after it.
+    // Boarding keeps the on-foot pitch and nothing aboard moves, so a seated view is level too.
+    // Driving is what would pitch the view, and saving that is the driving map's to decide.
     pitch: 0,
     position: { x: position['x'], y: position['y'], z: position['z'] }
   };
@@ -243,11 +256,9 @@ const identityOf = (value: unknown): DamoclesSaveIdentity => {
   };
 };
 
-/// A saved Residence is carried or placed. Occupancy is not a Save field yet (#417), so a
-/// Session Resume captured aboard writes the occupied object's residence from before boarding.
-const residenceOf = (
-  value: unknown
-): Exclude<Residence, { readonly kind: 'occupied' }> => {
+/// A saved Residence is carried, occupied or placed. An occupied one is only admissible where
+/// Occupancy names its instance, which the snapshot decides rather than this.
+const residenceOf = (value: unknown): Residence => {
   const residence = object(value, 'snapshot.residence[].residence');
   const kind = residence['kind'];
   const placementClass = integer(
@@ -256,7 +267,7 @@ const residenceOf = (
     0,
     255
   );
-  if (kind === 'carried') {
+  if (kind === 'carried' || kind === 'occupied') {
     return { kind, placementClass };
   }
   const body = residence['body'];
@@ -598,6 +609,52 @@ const validateResidence = (
   }
 };
 
+const occupancyOf = (value: unknown): DamoclesSaveOccupancy => {
+  const occupancy = object(value, 'snapshot.occupancy');
+  if (occupancy['kind'] === 'onFoot') {
+    return { kind: 'onFoot' };
+  }
+  if (
+    occupancy['kind'] !== 'aboard' ||
+    typeof occupancy['instance'] !== 'string' ||
+    occupancy['instance'] === ''
+  ) {
+    return fail('snapshot.occupancy is neither on foot nor aboard');
+  }
+  return { instance: occupancy['instance'], kind: 'aboard' };
+};
+
+/// Occupancy and Object Residence must say the same thing: aboard names the one instance whose
+/// departure is `occupied`, and on foot there is none. A craft that is occupied and resident
+/// too, at a departure or at its Catalogue placement, is a state boarding never leaves. With a
+/// Catalogue, the occupied instance must also be one the board gate could have admitted: in the
+/// Catalogue and published as boardable (#408).
+export const validateOccupancy = (
+  occupancy: DamoclesSaveOccupancy,
+  residence: readonly ResidenceDeparture[],
+  catalogue?: Catalogue
+): void => {
+  const aboard = occupancy.kind === 'aboard' ? occupancy.instance : null;
+  const occupied = residence.filter(item => item.residence.kind === 'occupied');
+  if (
+    (occupancy.kind !== 'aboard' && occupancy.kind !== 'onFoot') ||
+    occupied.length !== (aboard === null ? 0 : 1) ||
+    (aboard !== null && occupied[0]?.instance !== aboard)
+  ) {
+    fail('Occupancy and Object Residence disagree');
+  }
+  if (aboard === null || catalogue === undefined) {
+    return;
+  }
+  const instance = catalogue.instances.find(item => item.id === aboard);
+  if (instance === undefined) {
+    fail('Occupancy names no Catalogue instance');
+  }
+  if (instance?.boarding?.boardable !== true) {
+    fail('Occupancy names an instance that is not boardable');
+  }
+};
+
 export const encodeDamoclesSave = (record: DamoclesSaveRecord): string =>
   JSON.stringify(record);
 
@@ -746,12 +803,15 @@ export const decodeDamoclesSave = (
       carried[0] !== pending['head'] ||
       carried.length <= 10 ||
       placement.kind === 'carried' ||
+      placement.kind === 'occupied' ||
       briefcaseStore.length !== 0
     ) {
       return fail('pendingBriefcaseDrop contradicts the Carried Stack');
     }
     pendingBriefcaseDrop = { head: pending['head'], residence: placement };
   }
+  const occupancy = occupancyOf(snapshot['occupancy']);
+  validateOccupancy(occupancy, residence, catalogue);
   const pose = poseOf(snapshot['pose']);
   if (catalogue !== undefined) {
     if (!catalogue.bodies.some(body => body.id === pose.body)) {
@@ -868,6 +928,7 @@ export const decodeDamoclesSave = (
       carried,
       elapsed: snapshot['elapsed'],
       frameAccumulator,
+      occupancy,
       pendingBriefcaseDrop,
       pose,
       residence,

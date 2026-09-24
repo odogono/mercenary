@@ -30,10 +30,12 @@ import {
   type Residence,
   type ResidenceDeparture
 } from './residence.ts';
-import type {
-  BoundStructureSnapshot,
-  DamoclesSaveScript,
-  DamoclesSaveSnapshot
+import {
+  validateOccupancy,
+  type BoundStructureSnapshot,
+  type DamoclesSaveOccupancy,
+  type DamoclesSaveScript,
+  type DamoclesSaveSnapshot
 } from './save.ts';
 import {
   fireTrigger,
@@ -124,9 +126,8 @@ export type { Residence, ResidenceDeparture } from './residence.ts';
 
 /// What the player is inside: on foot, or aboard one resident instance, named by its instance id
 /// as everything else in Damocles is. Aboard, that instance's Object Residence is `occupied`.
-export type DamoclesOccupancy =
-  | { readonly kind: 'onFoot' }
-  | { readonly instance: string; readonly kind: 'aboard' };
+/// A Save carries it as it is (#417).
+export type DamoclesOccupancy = DamoclesSaveOccupancy;
 
 /// Board test 1: the nearest drawn object is under 1024 units from the Pose. Derived from
 /// `$054302`'s exponent test under the selection note's float rule; the Take's reach is 512.
@@ -246,8 +247,10 @@ export class DamoclesSession implements TitleSession<
   /// The instance the player is aboard, or null on foot.
   private occupied: string | null = null;
   /// The occupied instance's Object Residence departure from before boarding, or undefined where
-  /// it had none and stood at its Catalogue residence. A Session Resume captured aboard writes
-  /// it back, because Occupancy is not a Save field until #417.
+  /// it had none and stood at its Catalogue residence. Leaving falls back to it where the leave
+  /// placement cannot be held. A Save does not carry it, so a session restored aboard falls back to
+  /// the Catalogue residence. Nothing moves aboard, so that fallback is reached only where the
+  /// earlier leave from this place fell back too.
   private boardedFrom: Residence | undefined;
   private pendingBriefcaseDrop: {
     readonly head: string;
@@ -311,6 +314,8 @@ export class DamoclesSession implements TitleSession<
     this.residence = new Map(
       restore?.residence?.map(item => [item.instance, item.residence]) ?? []
     );
+    this.occupied =
+      restore?.occupancy.kind === 'aboard' ? restore.occupancy.instance : null;
     // A restore may name a Body other than the document's, so the surface is anchored from the
     // Pose before anything binds against it.
     this.surface = this.surfaceFor(this.pose.body);
@@ -447,6 +452,12 @@ export class DamoclesSession implements TitleSession<
     ) {
       throw new Error('saved Pose names an unknown Body');
     }
+    // Occupancy first: an occupied craft is otherwise named only as an untracked departure.
+    validateOccupancy(
+      restore.occupancy,
+      restore.residence,
+      this.content.catalogue
+    );
     if (
       new Set(restore.carried).size !== restore.carried.length ||
       new Set(restore.residence.map(item => item.instance)).size !==
@@ -993,22 +1004,17 @@ export class DamoclesSession implements TitleSession<
     return this.snapshot;
   }
 
-  /// Aboard, the occupied instance is written with the residence it had before boarding and the
-  /// player on foot at the Pose, which is its origin plus the eye height: the state leaving would
-  /// reach for every surface object, since nothing moves aboard. Occupancy itself is #417's.
+  /// Aboard, the occupied instance's departure is `occupied` and the Pose is the seated view.
   captureResume(): DamoclesSaveSnapshot {
-    const residence = new Map(this.residence);
-    if (this.occupied !== null) {
-      this.restoreBoardedFrom(residence, this.occupied);
-    }
     return {
       briefcaseStore: [...this.briefcaseStore],
       carried: [...this.carried],
       elapsed: this.elapsed,
       frameAccumulator: this.frameAccumulator,
+      occupancy: this.occupancy,
       pendingBriefcaseDrop: this.pendingBriefcaseDrop,
       pose: this.pose,
-      residence: [...residence].map(([instance, residence]) => ({
+      residence: [...this.residence].map(([instance, residence]) => ({
         instance,
         residence
       })),

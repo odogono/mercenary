@@ -15,7 +15,8 @@ import {
   DAMOCLES_SAVE_SCHEMA_VERSION,
   damoclesSaveIdentity,
   decodeDamoclesSave,
-  initialDamoclesSaveScript
+  initialDamoclesSaveScript,
+  type DamoclesSaveOccupancy
 } from '../src/damocles/save.ts';
 import {
   fireTrigger,
@@ -59,6 +60,7 @@ const record = () => ({
     carried: [] as string[],
     elapsed: 0,
     frameAccumulator: 0,
+    occupancy: { kind: 'onFoot' } as DamoclesSaveOccupancy,
     pendingBriefcaseDrop: null as {
       head: string;
       residence: ReturnType<typeof surface>;

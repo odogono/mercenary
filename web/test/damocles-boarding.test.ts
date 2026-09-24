@@ -4,9 +4,19 @@ import type { Catalogue } from '../src/catalogue/data.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import { catalogueResidence } from '../src/damocles/residence.ts';
 import {
+  readDamoclesResume,
+  writeDamoclesResume
+} from '../src/damocles/resume.ts';
+import {
+  DAMOCLES_SAVE_SCHEMA_VERSION,
+  damoclesSaveIdentity,
+  decodeDamoclesSave,
+  encodeDamoclesSave,
   initialDamoclesSaveScript,
   type DamoclesSaveSnapshot
 } from '../src/damocles/save.ts';
+import { createDamoclesSavePersistence } from '../src/damocles/saves.ts';
+import { TRIGGER_FOR_RESIDENT } from '../src/damocles/scripts.ts';
 import { structureRegionAt } from '../src/damocles/selection.ts';
 import {
   DamoclesSession,
@@ -23,6 +33,7 @@ import {
   structureInCell,
   type ErisSurface
 } from '../src/damocles/world.ts';
+import { titleStorageKeys } from '../src/shell/title.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
@@ -84,6 +95,7 @@ const standingAt = (
     carried: [...carried],
     elapsed: 0,
     frameAccumulator: 0,
+    occupancy: { kind: 'onFoot' },
     pendingBriefcaseDrop: null,
     pose,
     residence: carried.map(instance => ({
@@ -95,7 +107,15 @@ const standingAt = (
         )!.placementClass!
       }
     })),
-    script: initialDamoclesSaveScript(),
+    // Carrying a pickup trigger's object means its trigger has fired, as a Save must say.
+    script: {
+      ...initialDamoclesSaveScript(),
+      triggers: initialDamoclesSaveScript().triggers.map(trigger =>
+        carried.some(id => TRIGGER_FOR_RESIDENT[id] === trigger.index)
+          ? { ...trigger, armed: false }
+          : trigger
+      )
+    },
     scrollCounter: 0,
     structure:
       placement === undefined
@@ -418,17 +438,223 @@ describe('aboard', () => {
       kind: 'aboard'
     });
   });
+});
 
-  test('a Session Resume captured aboard restores the craft resident and the player beside it', () => {
-    const session = beside(LIMO, [LIMO_KEY]);
-    session.board();
-    const saved = session.captureResume();
-    expect(saved.residence.map(item => item.residence.kind)).not.toContain(
-      'occupied'
+const identity = () => damoclesSaveIdentity(content.catalogue, 'test');
+
+const aboardLimo = (): DamoclesSession => {
+  const session = beside(LIMO, [LIMO_KEY]);
+  expect(session.board()).toEqual({ kind: 'boarded' });
+  return session;
+};
+
+const encoded = (snapshot: DamoclesSaveSnapshot): string =>
+  encodeDamoclesSave({
+    identity: identity(),
+    savedAt: '2026-09-24T09:00:00.000Z',
+    schemaVersion: DAMOCLES_SAVE_SCHEMA_VERSION,
+    snapshot,
+    where: 'ERIS 07-08'
+  });
+const decoded = (text: string): DamoclesSaveSnapshot =>
+  decodeDamoclesSave(text, identity(), {
+    catalogue: content.catalogue,
+    poses: content.poses,
+    strings: content.strings
+  }).snapshot;
+const roundTrip = (session: DamoclesSession): DamoclesSession =>
+  new DamoclesSession(content, decoded(encoded(session.captureResume())));
+
+const memoryStorage = () => {
+  const map = new Map<string, string>();
+  return {
+    map,
+    storage: {
+      getItem: (key: string) => map.get(key) ?? null,
+      removeItem: (key: string) => {
+        map.delete(key);
+      },
+      setItem: (key: string, value: string) => {
+        map.set(key, value);
+      }
+    }
+  };
+};
+
+describe('Occupancy across a Save and a Session Resume', () => {
+  test('a Save taken aboard restores aboard the same craft, at the same seated view', () => {
+    const session = aboardLimo();
+    const restored = roundTrip(session);
+
+    expect(restored.snapshot.occupancy).toEqual({
+      instance: LIMO,
+      kind: 'aboard'
+    });
+    expect(restored.snapshot.pose).toEqual(session.snapshot.pose);
+    expect(restored.snapshot.structure).toEqual(session.snapshot.structure);
+    // Absent from Object Residence: neither placed nor carried, so it is not drawn.
+    expect(
+      restored.snapshot.residence.find(item => item.instance === LIMO)
+        ?.residence.kind
+    ).toBe('occupied');
+    expect(restored.snapshot.residents.map(item => item.id)).not.toContain(
+      LIMO
     );
-    const restored = new DamoclesSession(content, saved);
+    expect(restored.captureResume()).toEqual(session.captureResume());
+
+    // Leaving the restored session reaches the state leaving the original does.
+    expect(session.leave()).toEqual({ kind: 'left' });
+    expect(restored.leave()).toEqual({ kind: 'left' });
+    expect(restored.captureResume()).toEqual(session.captureResume());
+  });
+
+  test('a Save taken on foot after leaving restores on foot with the craft resident at the leave position', () => {
+    const session = aboardLimo();
+    session.leave();
+    const restored = roundTrip(session);
+
     expect(restored.snapshot.occupancy).toEqual({ kind: 'onFoot' });
+    expect(restored.snapshot.pose).toEqual(session.snapshot.pose);
+    expect(
+      restored.snapshot.residence.find(item => item.instance === LIMO)
+        ?.residence
+    ).toMatchObject({ body: 'body-11', position: placedAt(LIMO) });
     expect(restored.snapshot.selection).toMatchObject({ instance: LIMO });
+    expect(restored.captureResume()).toEqual(session.captureResume());
+  });
+
+  test('the Session Resume carries the same state and restores identically', () => {
+    const session = aboardLimo();
+    const { map, storage } = memoryStorage();
+    writeDamoclesResume(storage, identity(), session);
+    const read = readDamoclesResume(storage, identity(), {
+      catalogue: content.catalogue,
+      poses: content.poses,
+      strings: content.strings
+    });
+    if (read.kind !== 'restored') {
+      throw new Error(`Session Resume was ${read.kind}`);
+    }
+    expect(read.snapshot).toEqual(decoded(encoded(session.captureResume())));
+    const restored = new DamoclesSession(content, read.snapshot);
+    expect(restored.snapshot.occupancy).toEqual(session.snapshot.occupancy);
+    expect(restored.snapshot.pose).toEqual(session.snapshot.pose);
+    expect(restored.captureResume()).toEqual(session.captureResume());
+  });
+
+  test('a schema 5 record is refused whole, leaving the live session and the stored Save untouched', () => {
+    let session = aboardLimo();
+    const live = session;
+    const { map, storage } = memoryStorage();
+    const keys = titleStorageKeys('damocles');
+    const { occupancy: _, ...schema5Snapshot } = session.captureResume();
+    const schema5 = JSON.stringify({
+      ...JSON.parse(encoded(session.captureResume())),
+      schemaVersion: 5,
+      snapshot: {
+        ...schema5Snapshot,
+        residence: schema5Snapshot.residence.filter(
+          item => item.residence.kind !== 'occupied'
+        )
+      }
+    });
+    map.set(keys.save(1), schema5);
+    const before = JSON.stringify(live.captureResume());
+    const persistence = createDamoclesSavePersistence({
+      capture: () => ({ snapshot: session.captureResume(), where: 'ERIS' }),
+      catalogue: content.catalogue,
+      identity: identity(),
+      poses: content.poses,
+      release: () => undefined,
+      restore: snapshot => {
+        session = new DamoclesSession(content, snapshot);
+      },
+      slotKey: keys.save,
+      storage,
+      strings: content.strings
+    });
+
+    expect(persistence.load(1).kind).toBe('failed');
+    expect(session).toBe(live);
+    expect(JSON.stringify(session.captureResume())).toBe(before);
+    expect(map.get(keys.save(1))).toBe(schema5);
+    expect(() => decoded(schema5)).toThrow(/schema 5/);
+  });
+
+  test('an occupied instance that is absent, not boardable, or still resident is refused', () => {
+    const snapshot = aboardLimo().captureResume();
+    const occupied = (instance: string): DamoclesSaveSnapshot => ({
+      ...snapshot,
+      occupancy: { instance, kind: 'aboard' },
+      residence: snapshot.residence.map(item =>
+        item.instance === LIMO ? { ...item, instance } : item
+      )
+    });
+    const refusals: [string, DamoclesSaveSnapshot, RegExp][] = [
+      ['absent', occupied('object-slot-999'), /Occupancy/],
+      // The limo's Vehicle Key is handled but is no craft.
+      [
+        'not boardable',
+        {
+          ...occupied(LIMO_KEY),
+          carried: [],
+          residence: [
+            {
+              instance: LIMO_KEY,
+              residence: { kind: 'occupied', placementClass: 4 }
+            }
+          ]
+        },
+        /Occupancy/
+      ],
+      [
+        'still resident',
+        {
+          ...snapshot,
+          residence: snapshot.residence.filter(item => item.instance !== LIMO)
+        },
+        /Occupancy/
+      ],
+      [
+        'placed as well as occupied',
+        {
+          ...snapshot,
+          residence: snapshot.residence.map(item =>
+            item.instance === LIMO
+              ? {
+                  instance: LIMO,
+                  residence: {
+                    body: 'body-11',
+                    kind: 'surface' as const,
+                    placementClass: item.residence.placementClass,
+                    position: placedAt(LIMO)
+                  }
+                }
+              : item
+          )
+        },
+        /Occupancy/
+      ],
+      [
+        'occupied on foot',
+        { ...snapshot, occupancy: { kind: 'onFoot' } },
+        /Occupancy/
+      ],
+      [
+        'malformed',
+        {
+          ...snapshot,
+          occupancy: {
+            kind: 'driving'
+          } as unknown as DamoclesSaveSnapshot['occupancy']
+        },
+        /occupancy/i
+      ]
+    ];
+    for (const [label, record, reason] of refusals) {
+      expect(() => decoded(encoded(record)), label).toThrow(reason);
+      expect(() => new DamoclesSession(content, record), label).toThrow(reason);
+    }
   });
 });
 

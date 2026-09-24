@@ -50,6 +50,7 @@ const besideKey = (soundPermitted = true): DamoclesSession => {
       carried: [],
       elapsed: 0,
       frameAccumulator: 0,
+      occupancy: { kind: 'onFoot' },
       pendingBriefcaseDrop: null,
       pose: {
         body: 'body-11',
@@ -96,6 +97,7 @@ const dynamicAtOrigin = (
     carried: [...carried],
     elapsed: 0,
     frameAccumulator: 0,
+    occupancy: { kind: 'onFoot' },
     pendingBriefcaseDrop: null,
     pose: {
       body: 'body-11',
@@ -448,6 +450,7 @@ describe('ordinary Eris limo-key take and drop', () => {
       carried: [],
       elapsed: 0,
       frameAccumulator: 0,
+      occupancy: { kind: 'onFoot' },
       pendingBriefcaseDrop: null,
       pose: {
         body: 'body-11',
@@ -485,6 +488,7 @@ describe('ordinary Eris limo-key take and drop', () => {
       carried: ['object-slot-183', 'object-slot-92'],
       elapsed: 0,
       frameAccumulator: 0,
+      occupancy: { kind: 'onFoot' },
       pendingBriefcaseDrop: null,
       pose: {
         body: 'body-11',
@@ -563,6 +567,7 @@ describe('ordinary Eris limo-key take and drop', () => {
       carried,
       elapsed: 0,
       frameAccumulator: 0,
+      occupancy: { kind: 'onFoot' },
       pendingBriefcaseDrop: null,
       pose: {
         body: 'body-11',
