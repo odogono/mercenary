@@ -456,12 +456,14 @@ const encoded = (snapshot: DamoclesSaveSnapshot): string =>
     snapshot,
     where: 'ERIS 07-08'
   });
+/// The Data Payload a shipping restore reads, so every rule applies.
+const saveContent = () => ({
+  catalogue: content.catalogue,
+  poses: content.poses,
+  strings: content.strings
+});
 const decoded = (text: string): DamoclesSaveSnapshot =>
-  decodeDamoclesSave(text, identity(), {
-    catalogue: content.catalogue,
-    poses: content.poses,
-    strings: content.strings
-  }).snapshot;
+  decodeDamoclesSave(text, identity(), saveContent()).snapshot;
 const roundTrip = (session: DamoclesSession): DamoclesSession =>
   new DamoclesSession(content, decoded(encoded(session.captureResume())));
 
@@ -525,13 +527,9 @@ describe('Occupancy across a Save and a Session Resume', () => {
 
   test('the Session Resume carries the same state and restores identically', () => {
     const session = aboardLimo();
-    const { map, storage } = memoryStorage();
+    const { storage } = memoryStorage();
     writeDamoclesResume(storage, identity(), session);
-    const read = readDamoclesResume(storage, identity(), {
-      catalogue: content.catalogue,
-      poses: content.poses,
-      strings: content.strings
-    });
+    const read = readDamoclesResume(storage, identity(), saveContent());
     if (read.kind !== 'restored') {
       throw new Error(`Session Resume was ${read.kind}`);
     }

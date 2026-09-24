@@ -204,8 +204,8 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 - **Damocles Saves and Session Resumes remember whether the player is aboard.
   The Damocles Save Snapshot goes from schema 5 to 6, so existing Damocles
-  Saves and Session Resumes are refused.** A Save taken aboard a craft restores
-  aboard the same craft, at the same seated view, with the craft still out of
+  Saves and Session Resumes are refused.** A Save taken aboard a craft or seatable
+  object restores aboard it, at the same seated view, with the craft still out of
   Object Residence. Before this, a Session Resume captured aboard put the player
   on foot beside the craft. A record is refused whole if it names an occupied
   instance that is not in the Catalogue, is not boardable, or is still resident.

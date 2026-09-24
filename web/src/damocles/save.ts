@@ -648,10 +648,10 @@ export const validateOccupancy = (
   }
   const instance = catalogue.instances.find(item => item.id === aboard);
   if (instance === undefined) {
-    fail('Occupancy names no Catalogue instance');
+    return fail('Occupancy names no Catalogue instance');
   }
-  if (instance?.boarding?.boardable !== true) {
-    fail('Occupancy names an instance that is not boardable');
+  if (instance.boarding?.boardable !== true) {
+    return fail('Occupancy names an instance that is not boardable');
   }
 };
 
