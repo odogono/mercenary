@@ -61,6 +61,12 @@ export interface LevelBinding {
    */
   readonly floors: readonly {
     readonly level: number;
+    /**
+     * The scene palette this Floor is drawn in: the record's palette byte (record+4), or its
+     * per-level entry (record+18+level) where that byte is zero (`$054DB4`, `$055B2E`). Absent
+     * where the per-level entry would lie past the record's own extent.
+     */
+    readonly paletteIndex?: number;
     readonly structureId: string;
     readonly structureSlot: number;
   }[];
@@ -69,7 +75,17 @@ export interface LevelBinding {
    * records are shorter than the format; entries past this are not claimed.
    */
   readonly levelsAuthored: number;
+  /**
+   * Each palette a Floor names, resolved for the entries its structure's `$80xx` colour words
+   * name (entry `(word & $7E) / 2`). A Floor's structure is drawn through this palette, not its
+   * own record's. An entry no bound structure names is null.
+   */
+  readonly palettes?: readonly FloorPalette[];
   readonly tableAddress: number;
+}
+export interface FloorPalette {
+  readonly colours: readonly (string | null)[];
+  readonly paletteIndex: number;
 }
 export interface Evidence {
   readonly claim: string;
@@ -765,13 +781,43 @@ const levelBinding = (value: unknown): LevelBinding => {
     }
     return {
       level,
+      ...(floor['paletteIndex'] === undefined
+        ? {}
+        : { paletteIndex: byte(floor['paletteIndex']) }),
       structureId: string(floor['structureId']),
       structureSlot: byte(floor['structureSlot'])
     };
   });
+  const palettes =
+    record['palettes'] === undefined
+      ? undefined
+      : list(record['palettes']).map((entry): FloorPalette => {
+          const palette = object(entry);
+          const colours = list(palette['colours']).map(colour => {
+            if (colour !== null && !/^#[\da-f]{6}$/i.test(string(colour))) {
+              fail('invalid floor palette colour');
+            }
+            return colour as string | null;
+          });
+          if (colours.length > 64) {
+            fail('a scene palette holds at most 64 entries');
+          }
+          return { colours, paletteIndex: byte(palette['paletteIndex']) };
+        });
+  for (const floor of floors) {
+    if (
+      floor.paletteIndex !== undefined &&
+      !palettes?.some(entry => entry.paletteIndex === floor.paletteIndex)
+    ) {
+      fail(
+        `floor ${floor.level} names unpublished palette ${floor.paletteIndex}`
+      );
+    }
+  }
   return {
     floors,
     levelsAuthored,
+    ...(palettes === undefined ? {} : { palettes }),
     tableAddress: integer(record['tableAddress'])
   };
 };

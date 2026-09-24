@@ -2652,6 +2652,82 @@ class StructureLevelBindingTests(unittest.TestCase):
         for model in self.structures().values():
             self.assertEqual('levelBinding' in model, 'storeyHeight' in model)
 
+    def test_every_floor_names_the_palette_the_alias_record_binds(self):
+        # record+4, or record+18+level where that byte is zero (#493).
+        binding = self.structures()[70]['levelBinding']
+        self.assertEqual([(f['level'], f['paletteIndex']) for f in binding['floors']],
+                         [(0, 30), (1, 30), (2, 71), (3, 30), (10, 30)])
+        binding = self.structures()[155]['levelBinding']
+        self.assertEqual({f['paletteIndex'] for f in binding['floors']}, {66})
+        missing = [
+            (model['slots'][0], floor['level'])
+            for model in self.structures().values()
+            for floor in model.get('levelBinding', {}).get('floors', [])
+            if 'paletteIndex' not in floor
+        ]
+        # Slot 37 leaves its palette byte zero and omits the table it defers to.
+        self.assertEqual(missing, [(37, 0), (37, 1)])
+
+    def test_recolouring_a_floor_through_its_palette_is_decoding_it_in_that_palette(self):
+        # The port recolours a bound Floor's $80xx words from the published
+        # palette rather than carrying a second decode; this holds it to one.
+        from damocleslab.catalogue import (
+            decode_structure, decode_structure_selection, palette_at, third_wall_height, u32,
+        )
+
+        root = Path(__file__).resolve().parents[1]
+        first = root / 'work' / 'observe-first-world-20260818T101013Z-c5a32b7d' / 'observed.ram'
+        if not first.is_file():
+            self.skipTest('the pinned first-world RAM lives in the ignored research workspace')
+        data = first.read_bytes()
+        hardware = list(struct.unpack_from('>16H', data, 0x6fd00))
+        base = u32(data, 0x4bd0c)
+
+        def primitives(value):
+            if isinstance(value, dict):
+                if isinstance(value.get('sourceColour'), int):
+                    yield value['sourceColour'], value.get('colour')
+                for item in value.values():
+                    yield from primitives(item)
+            elif isinstance(value, list):
+                for item in value:
+                    yield from primitives(item)
+
+        pairs = {}
+        for model in self.structures().values():
+            binding = model.get('levelBinding')
+            if binding is None:
+                continue
+            colours = {p['paletteIndex']: p['colours'] for p in binding.get('palettes', [])}
+            for floor in binding['floors']:
+                if 'paletteIndex' in floor:
+                    pairs[(floor['structureSlot'], floor['paletteIndex'])] = colours[floor['paletteIndex']]
+        checked = 0
+        for (slot, index), colours in sorted(pairs.items()):
+            published = self.structures()[slot]
+            if 'structureSelection' not in published:
+                continue
+            address = base + u32(data, base + slot * 4)
+            if struct.unpack_from('>H', data, address)[0] & 0x8000:
+                pointer = base + u32(data, base + data[address + 6] * 4)
+                scale = struct.unpack_from('>bb', data, address + 2)
+            else:
+                pointer, scale = address, struct.unpack_from('>bb', data, address - 8)
+            palette = palette_at(data, index)
+            mesh, _ = decode_structure(data, pointer, palette, hardware, scale, third_wall_height(data))
+            scene = mesh.pop('sceneColours')
+            selection = decode_structure_selection(data, mesh, scale, palette, hardware)
+            selection.pop('associationRoot')
+            selection.pop('wallTextGaps')
+            recoloured = [
+                (word, colours[(word & 0x7e) // 2] if word & 0x8080 == 0x8080 else colour)
+                for word, colour in primitives([published['structureSelection'], published['sceneColours']])
+            ]
+            decoded = json.loads(json.dumps([selection, scene], sort_keys=True))
+            self.assertEqual(recoloured, list(primitives(decoded)), (slot, index))
+            checked += 1
+        self.assertGreater(checked, 100)
+
 
 class IslandTests(unittest.TestCase):
     """The per-body island records, their coastlines and the surfaces they sit on."""

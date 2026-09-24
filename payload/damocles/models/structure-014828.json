@@ -7,46 +7,148 @@
       "floors": [
         {
           "level": 0,
+          "paletteIndex": 89,
           "structureId": "structure-012f84",
           "structureSlot": 60
         },
         {
           "level": 1,
+          "paletteIndex": 86,
           "structureId": "structure-01324e",
           "structureSlot": 61
         },
         {
           "level": 2,
+          "paletteIndex": 87,
           "structureId": "structure-01324e",
           "structureSlot": 61
         },
         {
           "level": 3,
+          "paletteIndex": 88,
           "structureId": "structure-01324e",
           "structureSlot": 61
         },
         {
           "level": 4,
+          "paletteIndex": 90,
           "structureId": "structure-01324e",
           "structureSlot": 61
         },
         {
           "level": 5,
+          "paletteIndex": 86,
           "structureId": "structure-01324e",
           "structureSlot": 61
         },
         {
           "level": 6,
+          "paletteIndex": 89,
           "structureId": "structure-00ed68",
           "structureSlot": 62
         },
         {
           "level": 10,
+          "paletteIndex": 89,
           "structureId": "structure-01341e",
           "structureSlot": 63
         }
       ],
       "levelsAuthored": 12,
+      "palettes": [
+        {
+          "colours": [
+            "#ee8822",
+            "#ee6622",
+            "#ccaa88",
+            "#664444",
+            "#4488cc",
+            "#888888",
+            null,
+            null,
+            "#664444",
+            "#444444",
+            "#eeeeaa",
+            "#eeeeee",
+            "#eeee66"
+          ],
+          "paletteIndex": 86
+        },
+        {
+          "colours": [
+            "#ee8822",
+            "#ee6622",
+            "#ccaa88",
+            "#664444",
+            "#4488cc",
+            "#888888",
+            null,
+            null,
+            "#664444",
+            "#444444",
+            "#aaaa00",
+            "#eeeeee",
+            "#008800"
+          ],
+          "paletteIndex": 87
+        },
+        {
+          "colours": [
+            "#ee8822",
+            "#ee6622",
+            "#ccaa88",
+            "#664444",
+            "#4488cc",
+            "#888888",
+            null,
+            null,
+            "#4488cc",
+            "#444444",
+            "#eeaa22",
+            "#eeeeee",
+            "#aaaacc"
+          ],
+          "paletteIndex": 88
+        },
+        {
+          "colours": [
+            "#ee8822",
+            "#ee6622",
+            "#ccaa88",
+            "#664444",
+            "#4488cc",
+            "#888888",
+            null,
+            "#886666",
+            "#882222",
+            "#444444",
+            "#eeeecc",
+            "#eeeeee",
+            "#eeccee",
+            "#ccaacc",
+            "#cceeee"
+          ],
+          "paletteIndex": 89
+        },
+        {
+          "colours": [
+            "#ee8822",
+            "#ee6622",
+            "#ccaa88",
+            "#664444",
+            "#4488cc",
+            "#888888",
+            null,
+            null,
+            "#664444",
+            "#444444",
+            "#cceecc",
+            "#eeeeee",
+            "#aaccaa"
+          ],
+          "paletteIndex": 90
+        }
+      ],
       "tableAddress": 84014
     },
     "linkedInstances": [],

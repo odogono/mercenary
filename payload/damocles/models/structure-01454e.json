@@ -53,31 +53,84 @@
       "floors": [
         {
           "level": 0,
+          "paletteIndex": 30,
           "structureId": "structure-01730e",
           "structureSlot": 90
         },
         {
           "level": 1,
+          "paletteIndex": 30,
           "structureId": "structure-017b8c",
           "structureSlot": 92
         },
         {
           "level": 2,
+          "paletteIndex": 71,
           "structureId": "structure-017b8c",
           "structureSlot": 92
         },
         {
           "level": 3,
+          "paletteIndex": 30,
           "structureId": "structure-0180a2",
           "structureSlot": 93
         },
         {
           "level": 10,
+          "paletteIndex": 30,
           "structureId": "structure-0178ce",
           "structureSlot": 91
         }
       ],
       "levelsAuthored": 12,
+      "palettes": [
+        {
+          "colours": [
+            "#000066",
+            "#eeeeee",
+            "#666666",
+            "#888888",
+            "#4488cc",
+            "#000000",
+            "#664444",
+            "#882222",
+            "#cccccc",
+            "#aaaaaa",
+            "#eeaaaa",
+            "#aaaaaa",
+            null,
+            "#446644",
+            "#668866",
+            "#88aa88",
+            "#aaccaa",
+            "#cceecc"
+          ],
+          "paletteIndex": 30
+        },
+        {
+          "colours": [
+            "#000066",
+            "#eeeeee",
+            "#666666",
+            "#888888",
+            "#4488cc",
+            "#000000",
+            "#664444",
+            "#882222",
+            "#cccccc",
+            "#aaaaaa",
+            "#eeaaaa",
+            "#aaaaaa",
+            null,
+            "#224466",
+            "#446688",
+            "#6688aa",
+            "#88aacc",
+            "#aaccee"
+          ],
+          "paletteIndex": 71
+        }
+      ],
       "tableAddress": 83284
     },
     "linkedInstances": [

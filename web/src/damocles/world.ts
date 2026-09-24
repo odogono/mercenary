@@ -2,10 +2,12 @@ import {
   modelSummaryById,
   type Catalogue,
   type DetailGroup,
+  type FloorPalette,
   type IslandBoxKind,
   type Kind,
   type Mesh,
   type Model,
+  type Primitive,
   type Recovery,
   type StructureSelection
 } from '../catalogue/data.ts';
@@ -440,10 +442,115 @@ export const floorsOf = (
 ): NonNullable<Model['levelBinding']>['floors'] =>
   models.peek(placement.modelId)?.levelBinding?.floors ?? [];
 
+/// A colour word through the Floor's palette: `$80xx` with bit 7 set names entry
+/// `(word & $7E) / 2` of the palette bound in `$7A0E`; any other word keeps its own colour.
+const paletteColour = (
+  sourceColour: number,
+  colour: string,
+  palette: FloorPalette
+): string =>
+  (sourceColour & 0x80_80) === 0x80_80
+    ? (palette.colours[(sourceColour & 0x7e) >> 1] ?? colour)
+    : colour;
+
+const recolourPrimitive = (
+  primitive: Primitive,
+  palette: FloorPalette
+): Primitive => ({
+  ...primitive,
+  colour: paletteColour(primitive.sourceColour, primitive.colour, palette)
+});
+
+const recolourMesh = (mesh: Mesh, palette: FloorPalette): Mesh => ({
+  ...mesh,
+  faces: mesh.faces.map(face => recolourPrimitive(face, palette)),
+  lines: mesh.lines.map(line => recolourPrimitive(line, palette))
+});
+
+const recolourStructure = (
+  structure: StructureSelection,
+  palette: FloorPalette
+): StructureSelection => ({
+  ...structure,
+  attachments: structure.attachments.map(attachment => ({
+    ...attachment,
+    mesh: recolourMesh(attachment.mesh, palette)
+  })),
+  ...(structure.floorLabels === undefined
+    ? {}
+    : {
+        floorLabels: structure.floorLabels.map(label => ({
+          ...label,
+          colour: paletteColour(label.sourceColour, label.colour, palette)
+        }))
+      }),
+  plan: recolourMesh(structure.plan, palette),
+  ...(structure.wallTexts === undefined
+    ? {}
+    : {
+        wallTexts: structure.wallTexts.map(text => ({
+          ...text,
+          ...(text.fallback === undefined
+            ? {}
+            : {
+                fallback: {
+                  ...text.fallback,
+                  mesh: recolourMesh(text.fallback.mesh, palette)
+                }
+              }),
+          mesh: recolourMesh(text.mesh, palette)
+        }))
+      })
+});
+
+/// One recolouring per structure Model and palette, so a Floor's selector keeps its identity
+/// however often it is bound: residence and draw caches compare it by reference.
+const floorSelections = new WeakMap<
+  Model,
+  WeakMap<FloorPalette, NonNullable<ErisPlacement['selection']>>
+>();
+
+/// A Floor's selector drawn through the palette its alias record binds (`$054DB4`, `$055B2E`),
+/// not the one the bound structure's own record names. Scene colours follow the same palette.
+const floorSelection = (
+  model: Model,
+  models: ModelLookup,
+  palette: FloorPalette | undefined
+): ErisPlacement['selection'] => {
+  const selection = placementSelection(model, models);
+  if (selection === undefined || palette === undefined) {
+    return selection;
+  }
+  let byPalette = floorSelections.get(model);
+  if (byPalette === undefined) {
+    byPalette = new WeakMap();
+    floorSelections.set(model, byPalette);
+  }
+  let recoloured = byPalette.get(palette);
+  if (recoloured === undefined) {
+    const [ceiling, floor] = (model.sceneColours ?? []).map(entry =>
+      entry.colour === undefined
+        ? undefined
+        : paletteColour(entry.sourceColour, entry.colour, palette)
+    );
+    recoloured = {
+      ...selection,
+      ...(ceiling === undefined || floor === undefined
+        ? {}
+        : { background: { ceiling, floor } }),
+      detail: recolourMesh(selection.detail, palette),
+      structure: recolourStructure(selection.structure, palette)
+    };
+    byPalette.set(palette, recoloured);
+  }
+  return recoloured;
+};
+
 /// A bound structure placement as it stands on one Floor. Floor 0 is the ground bind the
 /// surface already holds; any other Floor takes its selector from the structure its Floor Table
-/// entry binds (`$055BD8`). Undefined where the table binds no structure at that Floor, or that
-/// structure's Model or interior is not in hand yet. Nothing here derives a Floor from height.
+/// entry binds (`$055BD8`), coloured through the palette the entry names. Undefined where the
+/// table binds no structure at that Floor, or that structure's Model or interior is not in hand
+/// yet. Nothing here derives a Floor from height.
 export const floorPlacement = (
   placement: ErisPlacement,
   models: ModelLookup,
@@ -457,8 +564,13 @@ export const floorPlacement = (
     return placement;
   }
   const model = models.peek(entry.structureId);
+  const palette = models
+    .peek(placement.modelId)
+    ?.levelBinding?.palettes?.find(
+      item => item.paletteIndex === entry.paletteIndex
+    );
   const selection =
-    model === undefined ? undefined : placementSelection(model, models);
+    model === undefined ? undefined : floorSelection(model, models, palette);
   return selection === undefined ? undefined : { ...placement, selection };
 };
 

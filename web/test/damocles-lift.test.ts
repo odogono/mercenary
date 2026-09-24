@@ -84,8 +84,9 @@ const boundSlot = (session: DamoclesSession): number | undefined => {
   const selection = session.snapshot.surface.placements.find(
     item => item.id === STATE_OFFICE
   )?.selection?.structure;
+  // A Floor's selector is recoloured through its palette, which leaves its regions as they are.
   const model = catalogue.models.find(
-    item => item.structureSelection === selection
+    item => item.structureSelection?.regions === selection?.regions
   );
   return model?.recordClass === 'alias'
     ? model.levelBinding?.floors.find(entry => entry.level === 0)?.structureSlot
