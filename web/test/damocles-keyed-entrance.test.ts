@@ -76,6 +76,7 @@ const atAuthorsHouseDoor = (carried: readonly string[]): DamoclesSession => {
         openUnits: 0,
         slot: item.slot
       })),
+      floor: 0,
       instanceId: AUTHORS_HOUSE,
       regionIndex: null
     }

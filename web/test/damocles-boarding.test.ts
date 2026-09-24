@@ -127,6 +127,7 @@ const standingAt = (
                 openUnits: 0,
                 slot: attachment.slot
               })) ?? [],
+            floor: 0,
             instanceId: placement.id,
             regionIndex: insideCentralCellHalf(position, surface.grid)
               ? structureRegionAt(

@@ -17,7 +17,7 @@ const HELP = [
   'panel <targ|damocles> · set <name> <value>',
   `set names: ${SETTING_NAMES.join(', ')}`,
   'save <slot> [confirm] · load <slot>',
-  'switch <pose-id|body>'
+  'switch <pose-id|body> · floor <n>'
 ];
 
 const threeDecimals = (value: number): string => {
@@ -162,6 +162,12 @@ export const executeDamoclesConsoleCommand = (
         `switched to ${outcome.pose}`,
         `${damoclesWhere(snapshot)} · cell ${snapshot.cell.x}-${snapshot.cell.z}`
       ];
+    }
+    case 'floor': {
+      const outcome = host.session().changeFloor(command.floor);
+      return outcome.kind === 'refused'
+        ? [`floor refused: ${outcome.reason}`]
+        : [`moved to Floor ${command.floor}`];
     }
     case 'gotoRoom':
       return ['Damocles has no Rooms'];
