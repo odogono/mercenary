@@ -546,14 +546,43 @@ describe('Save and Session Resume carry the Floor', () => {
     );
   });
 
-  test('a schema-6 record is refused', () => {
+  test('a schema-7 record is refused', () => {
     const record = JSON.parse(saved(inStateOffice().captureResume())) as {
       schemaVersion: number;
     };
-    record.schemaVersion = 6;
+    record.schemaVersion = 7;
     expect(() => decoded(JSON.stringify(record))).toThrow(
-      'schema 6 is not Damocles Save 7'
+      'schema 7 is not Damocles Save 8'
     );
+  });
+
+  test('a lift ride and doorway round-trip, and are refused outside their bounds', () => {
+    const record = inStateOffice().captureResume();
+    const ride = { countdown: 12, destination: 10, label: 0 };
+    const withLift = (doorway: unknown, lift: unknown) =>
+      saved({
+        ...record,
+        structure: { ...record.structure!, doorway, ride: lift } as never
+      });
+    expect(decoded(withLift(0x03_f4, ride)).structure).toMatchObject({
+      doorway: 0x03_f4,
+      ride
+    });
+    for (const doorway of [0x03_f5, 0, undefined]) {
+      expect(() => decoded(withLift(doorway, null))).toThrow(
+        'bound structure state is outside its recovered bounds'
+      );
+    }
+    for (const lift of [
+      { ...ride, countdown: 0 },
+      { ...ride, countdown: 26 },
+      { ...ride, destination: 11 },
+      { ...ride, label: -1 }
+    ]) {
+      expect(() => decoded(withLift(null, lift))).toThrow(
+        'lift ride is outside its recovered bounds'
+      );
+    }
   });
 
   test('a restore on Floor 10 reads the Floor structure before it binds', async () => {

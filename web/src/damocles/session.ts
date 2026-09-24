@@ -31,11 +31,13 @@ import {
   type ResidenceDeparture
 } from './residence.ts';
 import {
+  LIFT_STEP_TICKS,
   validateOccupancy,
   type BoundStructureSnapshot,
   type DamoclesSaveOccupancy,
   type DamoclesSaveScript,
-  type DamoclesSaveSnapshot
+  type DamoclesSaveSnapshot,
+  type LiftRideSnapshot
 } from './save.ts';
 import {
   fireTrigger,
@@ -70,6 +72,7 @@ import {
   islandLocalCell,
   modelWaves,
   nearestIsland,
+  pitchFromWord,
   startPose,
   structureInCell,
   type ErisCell,
@@ -189,6 +192,23 @@ const inventorySourceLabel = (
 // The pinned Structure 74 trace moved 92 one-unit ticks in 2.64 seconds.
 const ATTACHMENT_UNITS_PER_SECOND = 92 / 2.64;
 
+/// A region whose flags have bit 13 is a Damocles Lift (docs/research/damocles-lift-control.md).
+const LIFT_REGION = 0x20_00;
+
+/// The pitch word `$055BA6` writes on arrival at a Floor.
+const ARRIVAL_PITCH_WORD = 0x01_ff;
+
+/// The Floor the label shows after one step towards `destination`: `$055A88`–`$055AB2`. The
+/// lift walks B, G, 1, … 9, so Floor 10 is below Floor 0 and is always reached going down.
+const nextLabel = (label: number, destination: number): number =>
+  destination < label || destination === 10
+    ? label === 10
+      ? 0
+      : label === 0
+        ? 10
+        : label - 1
+    : label + 1;
+
 /// `busy`, and each trigger's script, queue bit and sticky bit, are recomputed rather than
 /// stored: they are content, and the recovered program has no writer that could move them.
 const scriptFromSave = (saved: DamoclesSaveScript): ScriptState => ({
@@ -240,6 +260,11 @@ export class DamoclesSession implements TitleSession<
   private readonly scriptRules: ScriptRules;
   private readonly soundPermitted: () => boolean;
   private attachmentUnits = new Map<number, number>();
+  /// `$7AE6`: the attachment slot of the last doorway region the region walk accepted in the
+  /// bound structure, or null before one has been crossed there. A ride pins its door shut.
+  private doorway: number | null = null;
+  /// A Damocles Lift ride between admission and arrival, or null when none is pending.
+  private ride: LiftRideSnapshot | null = null;
   /// The bound structure as it stands on `floor`: the surface's own placement on Floor 0, and
   /// otherwise that placement carrying the selector of the structure the Floor binds.
   private boundPlacement: ErisPlacement | null = null;
@@ -593,6 +618,10 @@ export class DamoclesSession implements TitleSession<
     }
     this.boundPlacement = floored ?? null;
     this.floor = floored === undefined ? 0 : floor;
+    // Authored: `$7AE6` is not known to be cleared here, but a slot names an attachment of one
+    // structure, so the port forgets it rather than pin a same-numbered door in another.
+    this.doorway = null;
+    this.ride = null;
     this.attachmentUnits = new Map(
       floored?.selection?.structure.attachments.map(attachment => [
         attachment.slot,
@@ -625,13 +654,55 @@ export class DamoclesSession implements TitleSession<
       ) {
         throw new Error('saved attachments do not match the bound structure');
       }
+      const region =
+        restore.regionIndex === null
+          ? undefined
+          : floored.selection!.structure.regions[restore.regionIndex];
+      if (
+        restore.ride !== null &&
+        (region === undefined ||
+          (region.flags & LIFT_REGION) === 0 ||
+          !this.floorBound(placement!, restore.ride.destination))
+      ) {
+        throw new Error('saved lift ride does not match the bound structure');
+      }
       this.attachmentUnits = new Map(
         restore.attachments.map(item => [item.slot, item.openUnits])
       );
       this.regionIndex = restore.regionIndex;
+      this.doorway = restore.doorway;
+      this.ride = restore.ride;
       return;
     }
-    this.regionIndex = this.regionAt(pose);
+    this.enterRegion(this.regionAt(pose));
+  }
+
+  /// Takes the region the walk accepted, remembering a doorway's attachment slot as `$05A372`
+  /// does. A doorway is a region its attachment's latch gates.
+  private enterRegion(index: number | null): void {
+    this.regionIndex = index;
+    const region =
+      index === null
+        ? undefined
+        : this.boundPlacement?.selection?.structure.regions[index];
+    if (region?.gate === 'attachmentLatch') {
+      this.doorway = region.flags & 0x03_fc;
+    }
+  }
+
+  /// Whether a structure's Floor Table binds `floor`.
+  private floorBound(ground: ErisPlacement, floor: number): boolean {
+    return floorsOf(ground, this.content.models).some(
+      entry => entry.level === floor
+    );
+  }
+
+  /// The surface's own placement of the bound structure, as it stands on Floor 0.
+  private groundPlacement(): ErisPlacement | undefined {
+    const bound = this.boundPlacement;
+    return bound === null
+      ? undefined
+      : this.surface.placements.find(placement => placement.id === bound.id);
   }
 
   /// The bound structure's region the Pose stands in, where the Pose is in its cell's central half.
@@ -652,9 +723,11 @@ export class DamoclesSession implements TitleSession<
         openUnits,
         slot
       })),
+      doorway: this.doorway,
       floor: this.floor,
       instanceId: this.boundPlacement.id,
-      regionIndex: this.regionIndex
+      regionIndex: this.regionIndex,
+      ride: this.ride
     };
   }
 
@@ -1056,6 +1129,9 @@ export class DamoclesSession implements TitleSession<
         ? this.pose
         : walk(this.pose, this.intent, step, this.rules);
       this.bindAt(moved);
+      // `$059562` steps the ride before `$05AA3C` moves the doors, so a tick sees them as they
+      // stood before this step moved them.
+      const doorShut = this.rideDoorShut();
       const placement = this.boundPlacement;
       if (placement !== null) {
         const local = structureLocalPosition(
@@ -1063,8 +1139,12 @@ export class DamoclesSession implements TitleSession<
           moved.position,
           this.negateModelZ
         );
+        // `$055B04`: a ride pins the doorway's door shut whether or not the player is near it.
+        const pinned = this.ride === null ? null : this.doorway;
         for (const attachment of placement.selection!.structure.attachments) {
-          const approached = insideLocalBox(local, attachment.proximityBox);
+          const approached =
+            attachment.slot !== pinned &&
+            insideLocalBox(local, attachment.proximityBox);
           const opening =
             approached && this.attachmentKeyHeld(placement, attachment);
           if (approached && !opening) {
@@ -1099,7 +1179,10 @@ export class DamoclesSession implements TitleSession<
             this.regionIndex
           );
           this.pose = clamped.pose;
-          this.regionIndex = clamped.regionIndex;
+          // `$05A35C`: the region is not reselected while a ride is pending.
+          if (this.ride === null) {
+            this.enterRegion(clamped.regionIndex);
+          }
         } else {
           this.pose = moved;
           this.regionIndex = null;
@@ -1115,6 +1198,7 @@ export class DamoclesSession implements TitleSession<
         const transition = runFrame(this.script, this.scriptRules);
         this.script = transition.state;
         this.effects.push(...transition.effects);
+        this.stepRide(doorShut);
       }
       remaining -= step;
     }
@@ -1723,27 +1807,88 @@ export class DamoclesSession implements TitleSession<
     return (
       this.occupied === null &&
       region !== undefined &&
-      (region.flags & 0x20_00) !== 0
+      (region.flags & LIFT_REGION) !== 0
     );
   }
 
   /// A lift key asking for `floor`: `$055AE0`. Outside a lift the key is not the lift's. In one,
-  /// a Floor the label already shows, or one the Floor Table leaves zero, is refused silently and
+  /// the Floor the label shows now, or one the Floor Table leaves zero, is refused silently and
   /// changes nothing.
   ///
-  /// Authored: the ride is an instant rebind until its presentation lands (#476, recovered by
-  /// #472). The Working Authority steps the label one Floor per 25 ticks behind a closed door
-  /// before it arrives, at the same Floor and height this rebind gives.
-  rideLift(floor: number): { readonly kind: 'noLift' | 'refused' | 'rode' } {
+  /// An admitted key starts the ride, or during one replaces its destination, and pins the
+  /// doorway's door shut. `advance` then plays the ride as #472 recovered it
+  /// (docs/research/damocles-lift-ride.md): once the door is shut the label steps one Floor
+  /// every 25 ticks, and one period after it shows the destination the player arrives.
+  rideLift(floor: number): {
+    readonly kind: 'admitted' | 'noLift' | 'refused';
+  } {
     if (!this.inLift) {
       return { kind: 'noLift' };
     }
-    if (floor === this.floor) {
+    const ground = this.groundPlacement();
+    if (
+      floor === this.labelFloor ||
+      ground === undefined ||
+      !this.floorBound(ground, floor)
+    ) {
       return { kind: 'refused' };
     }
-    return this.changeFloor(floor).kind === 'moved'
-      ? { kind: 'rode' }
-      : { kind: 'refused' };
+    this.ride = {
+      countdown: this.ride?.countdown ?? LIFT_STEP_TICKS,
+      destination: floor,
+      label: this.labelFloor
+    };
+    return { kind: 'admitted' };
+  }
+
+  /// `$7AC4`: the Floor the Floor Label shows. It is the player's Floor except during a ride,
+  /// when it steps through each Floor passed.
+  get labelFloor(): number {
+    return this.ride?.label ?? this.floor;
+  }
+
+  /// Whether the door a ride pins has stopped: shut, since the ride is closing it. A doorway slot
+  /// the bound structure has no attachment for has no door to wait on.
+  private rideDoorShut(): boolean {
+    return this.doorway === null || this.unitsFor(this.doorway) === 0;
+  }
+
+  /// One tick of a pending ride: the step routine `$055A6E`, which the frame loop calls once a
+  /// substep. A substep is one VBL while a frame takes 4 to 8 of them, which the port's frame
+  /// clock stands in for.
+  private stepRide(doorShut: boolean): void {
+    const ride = this.ride;
+    // `$055A76`: nothing counts while the pinned door is still moving.
+    if (ride === null || !doorShut) {
+      return;
+    }
+    if (ride.countdown > 1) {
+      this.ride = { ...ride, countdown: ride.countdown - 1 };
+      return;
+    }
+    if (ride.label !== ride.destination) {
+      this.ride = {
+        countdown: LIFT_STEP_TICKS,
+        destination: ride.destination,
+        label: nextLabel(ride.label, ride.destination)
+      };
+      return;
+    }
+    // `$055B12`–`$055B88`: the arrival. The Floor's structure is bound, Y set and the pitch
+    // levelled; X, Z and yaw stay. The new structure's doors start shut and open by proximity.
+    if (this.changeFloor(ride.destination).kind !== 'moved') {
+      // Authored: the Floor's structure is not read yet, so the arrival waits a tick for it.
+      this.ride = { ...ride, countdown: 1 };
+      return;
+    }
+    this.pose = {
+      ...this.pose,
+      pitch: pitchFromWord(ARRIVAL_PITCH_WORD, this.content.doc.orientation)
+    };
+    // `$055B88` ends in the shared sound request `$054848` a take makes.
+    if (this.soundPermitted()) {
+      this.effects.push({ cue: 'take', type: 'sound-request' });
+    }
   }
 
   /// Stand on another Floor of the bound structure, as the development console's `floor N`.
@@ -1751,7 +1896,8 @@ export class DamoclesSession implements TitleSession<
   /// The lift's arrival and the console's are both this instant rebind. It acts only where the
   /// bound structure's Floor Table binds `floor`, and there binds that Floor's structure, sets Y
   /// to the Floor times the storey pitch plus the eye height, and leaves X, Z and the view as
-  /// they are. The new structure's attachments start closed and its region is taken afresh.
+  /// they are. The new structure's attachments start closed and its region is taken afresh. Any
+  /// ride pending ends.
   changeFloor(
     floor: number
   ):
@@ -1761,21 +1907,12 @@ export class DamoclesSession implements TitleSession<
     if (this.occupied !== null) {
       return { kind: 'refused', reason: 'the player is aboard; leave first' };
     }
-    const bound = this.boundPlacement;
-    const ground =
-      bound === null
-        ? undefined
-        : this.surface.placements.find(placement => placement.id === bound.id);
-    if (bound === null || ground === undefined) {
+    const ground = this.groundPlacement();
+    if (ground === undefined) {
       return { kind: 'refused', reason: 'not inside a structure' };
     }
     const storey = this.content.models.peek(ground.modelId)?.storeyHeight;
-    if (
-      storey === undefined ||
-      !floorsOf(ground, this.content.models).some(
-        entry => entry.level === floor
-      )
-    ) {
+    if (storey === undefined || !this.floorBound(ground, floor)) {
       return {
         kind: 'refused',
         reason: `${ground.name} binds no Floor ${floor}`
@@ -1790,6 +1927,7 @@ export class DamoclesSession implements TitleSession<
     }
     this.floor = floor;
     this.boundPlacement = floored;
+    this.ride = null;
     this.attachmentUnits = new Map(
       floored.selection?.structure.attachments.map(attachment => [
         attachment.slot,
@@ -1803,7 +1941,7 @@ export class DamoclesSession implements TitleSession<
         y: floor * storey + this.rules.eyeHeight
       }
     };
-    this.regionIndex = this.regionAt(this.pose);
+    this.enterRegion(this.regionAt(this.pose));
     return { kind: 'moved' };
   }
 }

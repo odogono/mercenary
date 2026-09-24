@@ -50,7 +50,11 @@ import type { Pose } from './world.ts';
 /// Version 7 carries the bound structure's Floor (#474). A schema-6 record cannot say which
 /// Floor its player stood on, and a Floor is never derived from the Pose's height, so it is
 /// refused whole rather than defaulted to Floor 0.
-export const DAMOCLES_SAVE_SCHEMA_VERSION = 7 as const;
+///
+/// Version 8 carries a Damocles Lift ride in progress and the doorway `$7AE6` names, whose
+/// door the next ride pins (#476). A schema-7 record cannot say which doorway its player last
+/// crossed, so it is refused whole rather than defaulted to none.
+export const DAMOCLES_SAVE_SCHEMA_VERSION = 8 as const;
 export const DAMOCLES_DESTINATION = 'damocles' as const;
 
 /// What a restore must match exactly before it may continue this game (ADR 0026).
@@ -72,12 +76,31 @@ export interface BoundStructureSnapshot {
     readonly openUnits: number;
     readonly slot: number;
   }[];
+  /// `$7AE6`: the attachment slot of the last doorway region the region walk accepted in this
+  /// structure, or null before one has been crossed. A lift ride pins that slot's door shut.
+  readonly doorway: number | null;
   /// The Floor the player stands on, 0 to 10. The attachments and region are the structure's
   /// that this Floor binds, so a restore binds the Floor before it checks them.
   readonly floor: number;
   readonly instanceId: string;
   readonly regionIndex: number | null;
+  /// A Damocles Lift ride in progress, or null when none is pending (`$788A` = `$FFFF`).
+  readonly ride: LiftRideSnapshot | null;
 }
+
+/// A Damocles Lift ride between admission and arrival (docs/research/damocles-lift-ride.md).
+/// The region stays frozen for the whole ride, so the player is still in the lift it began in.
+export interface LiftRideSnapshot {
+  /// `$788E`: ticks until the next step, 1 to 25. It runs only while the pinned door is shut.
+  readonly countdown: number;
+  /// `$788A`: the Floor asked for. A later admitted key replaces it.
+  readonly destination: number;
+  /// `$7AC4`: the Floor the Floor Label shows, stepped one Floor at a time along B, G, 1 … 9.
+  readonly label: number;
+}
+
+/// `$788C`: the lift's step period in ticks, a constant 25.
+export const LIFT_STEP_TICKS = 25;
 
 /// The highest Floor: the Floor Table's level 10, which the lift labels `B`.
 export const HIGHEST_FLOOR = 10;
@@ -891,11 +914,20 @@ export const decodeDamoclesSave = (
     const instanceId = bound['instanceId'];
     const regionIndex = bound['regionIndex'];
     const floor = bound['floor'];
+    const doorway = bound['doorway'];
+    const floorOf = (value: unknown): value is number =>
+      Number.isInteger(value) &&
+      (value as number) >= 0 &&
+      (value as number) <= HIGHEST_FLOOR;
+    const attachmentSlot = (value: unknown): value is number =>
+      Number.isInteger(value) &&
+      (value as number) > 0 &&
+      (value as number) <= 0x03_fc &&
+      (value as number) % 4 === 0;
     if (
       typeof instanceId !== 'string' ||
-      !Number.isInteger(floor) ||
-      (floor as number) < 0 ||
-      (floor as number) > HIGHEST_FLOOR ||
+      !floorOf(floor) ||
+      (doorway !== null && !attachmentSlot(doorway)) ||
       instanceId === '' ||
       (regionIndex !== null &&
         (!Number.isInteger(regionIndex) ||
@@ -910,18 +942,30 @@ export const decodeDamoclesSave = (
       const slot = attachment['slot'];
       const openUnits = attachment['openUnits'];
       if (
-        !Number.isInteger(slot) ||
-        (slot as number) <= 0 ||
-        (slot as number) > 0x03_fc ||
-        (slot as number) % 4 !== 0 ||
+        !attachmentSlot(slot) ||
         !finite(openUnits) ||
         openUnits < 0 ||
         openUnits > 32_767
       ) {
         return fail('attachment state is outside its recovered bounds');
       }
-      return { openUnits, slot: slot as number };
+      return { openUnits, slot };
     });
+    let ride: LiftRideSnapshot | null = null;
+    if (bound['ride'] !== null) {
+      const saved = object(bound['ride'], 'snapshot.structure.ride');
+      const { countdown, destination, label } = saved;
+      if (
+        !Number.isInteger(countdown) ||
+        (countdown as number) < 1 ||
+        (countdown as number) > LIFT_STEP_TICKS ||
+        !floorOf(destination) ||
+        !floorOf(label)
+      ) {
+        return fail('lift ride is outside its recovered bounds');
+      }
+      ride = { countdown: countdown as number, destination, label };
+    }
     if (
       new Set(attachments.map(item => item.slot)).size !== attachments.length
     ) {
@@ -929,9 +973,11 @@ export const decodeDamoclesSave = (
     }
     structure = {
       attachments,
-      floor: floor as number,
+      doorway,
+      floor,
       instanceId,
-      regionIndex: regionIndex as number | null
+      regionIndex: regionIndex as number | null,
+      ride
     };
   }
   return {

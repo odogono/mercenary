@@ -69,9 +69,11 @@ const besideKey = (soundPermitted = true): DamoclesSession => {
         attachments: parent.selection!.structure.attachments.map(
           attachment => ({ openUnits: 0, slot: attachment.slot })
         ),
+        doorway: null,
         floor: 0,
         instanceId: parent.id,
-        regionIndex: 0
+        regionIndex: 0,
+        ride: null
       }
     } satisfies DamoclesSaveSnapshot,
     { soundPermitted: () => soundPermitted }
