@@ -1898,6 +1898,99 @@ class SurfacePrimitiveTests(unittest.TestCase):
         self.assertEqual(set(seen.values()), {48}, seen)
 
 
+class FloorLabelTests(unittest.TestCase):
+    """Structure wall text ($059EB6) and the Floor Label it draws through $CD04 (#473)."""
+
+    @staticmethod
+    def _world(text: bytes, token_target: int = 0xCD04) -> bytearray:
+        # One wall, one wall-text record on queue byte 1, one region queueing it.
+        post = struct.pack('>H', 0x0006) + bytes([0x82, 1])
+        post += struct.pack('>4h', 0, -610, 70, -60) + struct.pack('>bbH', -4, 4, 0x0777)
+        post += text + b'\0' * (2 - len(text) % 2)
+        post += b'\0\0'
+        post += struct.pack('>H', 0x2001) + struct.pack('>4h', -100, 100, -100, 100)
+        post += bytes.fromhex('01 00')
+        data = SurfacePrimitiveTests._surface(
+            [(5, 5), (60, 5), (60, 60), (5, 60)], bytes.fromhex('0102 0777'), post
+        )
+        struct.pack_into('>I', data, 0xCCA0, token_target)
+        return data
+
+    def _selection(self, data: bytearray) -> dict:
+        from damocleslab.catalogue import decode_structure, decode_structure_selection
+
+        mesh, _ = decode_structure(bytes(data), 0x1000, None, None, (1, 1), 48)
+        return decode_structure_selection(bytes(data), mesh, (1, 1), [0] * 16, [0] * 16)
+
+    def test_a_token_reaching_cd04_is_published_as_a_floor_label(self):
+        selection = self._selection(self._world(b'\x80'))
+        self.assertEqual(selection['floorLabels'], [{
+            'face': {'kind': 'face', 'index': 0},
+            'anchor': [-610, 70, -60],
+            'plane': 0x80,
+            'font': 2,
+            'scale': [-4, 4],
+            'colour': '#eeeeee',
+            'sourceColour': 0x0777,
+        }])
+        self.assertEqual(selection['wallTextGaps'], [])
+        self.assertEqual([entry['kind'] for entry in selection['regions'][0]['queue']], ['face'])
+
+    def test_other_wall_text_is_named_rather_than_drawn(self):
+        literal = self._selection(self._world(b'EXIT'))
+        self.assertNotIn('floorLabels', literal)
+        self.assertEqual(
+            literal['wallTextGaps'], ['Wall text "EXIT" on queue byte 1 ($059EB6) is not drawn.']
+        )
+        elsewhere = self._selection(self._world(b'\x80', token_target=0xCD37))
+        self.assertNotIn('floorLabels', elsewhere)
+        self.assertIn('"<$80>"', elsewhere['wallTextGaps'][0])
+
+    def test_the_placement_follows_the_builder_under_a_placement_scale(self):
+        from damocleslab.catalogue import wall_text_placement
+
+        # Both records reproduce the live $C8C0 table of their capture byte for
+        # byte (floor-label-probe.py decode): Tolosa slot 136 at scale 3 x 3,
+        # whose offset's low bit multiplies the rest by the scale along Z, and
+        # Atropos slot 141 at -4 x -3, whose negative X scale mirrors the glyphs.
+        tolosa = wall_text_placement({
+            'command': 8, 'flags': 0x81, 'offset': -139, 'position': [-600, 90, 0],
+            'scale': [-3, 4],
+        }, (3, 3))
+        self.assertEqual(tolosa, {'anchor': [-1800, 90, 210], 'plane': 0x80,
+                                  'scale': [-3, 4], 'advance': -24})
+        atropos = wall_text_placement({
+            'command': 6, 'flags': 0x82, 'offset': 0, 'position': [110, 90, 165],
+            'scale': [4, 4],
+        }, (-4, -3))
+        self.assertEqual(atropos, {'anchor': [-440, 90, -495], 'plane': 0x80,
+                                   'scale': [-4, 4], 'advance': -24})
+
+    def test_the_payload_publishes_the_state_office_lift_labels(self):
+        root = Path(__file__).resolve().parents[3]
+        document = read_catalogue(root / 'payload' / 'damocles' / 'catalogue.json')
+        models = {model['id']: model for model in document['models']}
+        glyphs = document['floorLabelGlyphs']
+        self.assertEqual(sorted(glyphs), ['1', '2'])
+        for font in glyphs.values():
+            self.assertEqual(sorted(font), sorted('G123456789B'))
+        # The State Office's Floors 0, 1/2 and 10 bind slots 76, 78 and 79; each
+        # has the same two labels, one beside each lift car's doorway.
+        for identity in ('structure-014aec', 'structure-014f52', 'structure-01532a'):
+            labels = models[identity]['structureSelection']['floorLabels']
+            self.assertEqual(
+                [(label['anchor'], label['face']['index']) for label in labels
+                 if label['anchor'][0] == -610],
+                [([-610, 70, -260], 14), ([-610, 70, -60], 25)], identity,
+            )
+        labelled = [model for model in models.values()
+                    if (model.get('structureSelection') or {}).get('floorLabels')]
+        for model in labelled:
+            for label in model['structureSelection']['floorLabels']:
+                self.assertIn(str(label['font']), glyphs, model['id'])
+                self.assertIn(label['plane'], (0, 0x80), model['id'])
+
+
 class DetailSelectionTests(unittest.TestCase):
     """Detail selector bytes name source records, tabulated at $053BAE."""
 

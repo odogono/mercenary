@@ -7,7 +7,7 @@
     "name": "Structure 123",
     "nameStatus": "unknown",
     "omissions": [],
-    "reason": "Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
+    "reason": "Wall text \"NESBITT LIBRARY\" on queue byte 71 ($059EB6) is not drawn. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
     "recordClass": "geometry",
     "relatedModels": [
       "interior-029c66"
@@ -1141,6 +1141,27 @@
       ],
       "detailModel": "interior-029c66",
       "detailVariant": "palette-63",
+      "floorLabels": [
+        {
+          "anchor": [
+            570,
+            90,
+            2220
+          ],
+          "colour": "#4488cc",
+          "face": {
+            "index": 104,
+            "kind": "face"
+          },
+          "font": 1,
+          "plane": 128,
+          "scale": [
+            -3,
+            3
+          ],
+          "sourceColour": 582
+        }
+      ],
       "liveSelector": false,
       "plan": {
         "faces": [

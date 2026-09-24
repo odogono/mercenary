@@ -269,5 +269,6 @@ What the port can present as recovered:
   named only.
 - **Frames faster than 4 VBLs or slower than 8**, where substeps stop tracking VBLs,
   were not observed.
-- **Where the Floor Label is drawn** stays [#473](https://github.com/odogono/mercenary/issues/473).
-  The screenshots show it drawn in-world beside the door, changing at each step.
+- **Where the Floor Label is drawn** is settled by [#473](https://github.com/odogono/mercenary/issues/473)
+  in [the Floor Label draw site](damocles-floor-label.md): structure wall text beside each
+  lift car's door, drawn by the departure Floor's records while the label steps.

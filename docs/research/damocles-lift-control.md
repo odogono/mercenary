@@ -367,6 +367,8 @@ What the port can bind and implement from this note without inventing anything:
 - **Ride presentation and timing**: recovered by #472 in
   [the lift ride](damocles-lift-ride.md). A countdown tick is one substep, about one
   VBL; the door reopens on arrival; nothing but the doors and the label is drawn.
-- **Where `$CD04` is drawn** ([#473](https://github.com/odogono/mercenary/issues/473)).
+- **Where `$CD04` is drawn** ([#473](https://github.com/odogono/mercenary/issues/473)): settled in
+  [the Floor Label draw site](damocles-floor-label.md). It is structure wall text beside each
+  lift car's door, and during a ride the departure Floor's records draw each Floor passed.
 - **What `$7882` means**, the mode in which digit keys go to `$059184` instead of the lift.
 - **Sound.** Not examined. The runs had sound off.

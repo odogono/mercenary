@@ -7,7 +7,7 @@
     "name": "Structure 79",
     "nameStatus": "unknown",
     "omissions": [],
-    "reason": "An $F0 entrance takes its key letter from the cell it stands in, not from this record: $054CBE turns the cell's $ABDC entry byte into the $7AFB base and $059FA0 forms the label as low nybble plus base plus $23. The constructor reads only bits 8, 9 and 15, so the geometry is the same whichever path runs. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
+    "reason": "Wall text \"B A S E M E N T\" on queue byte 6 ($059EB6) is not drawn. An $F0 entrance takes its key letter from the cell it stands in, not from this record: $054CBE turns the cell's $ABDC entry byte into the $7AFB base and $059FA0 forms the label as low nybble plus base plus $23. The constructor reads only bits 8, 9 and 15, so the geometry is the same whichever path runs. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
     "recordClass": "geometry",
     "relatedModels": [
       "interior-02a9a4"
@@ -666,6 +666,46 @@
       ],
       "detailModel": "interior-02a9a4",
       "detailVariant": "palette-26",
+      "floorLabels": [
+        {
+          "anchor": [
+            -610,
+            70,
+            -260
+          ],
+          "colour": "#eeeeee",
+          "face": {
+            "index": 14,
+            "kind": "face"
+          },
+          "font": 2,
+          "plane": 128,
+          "scale": [
+            -4,
+            4
+          ],
+          "sourceColour": 1911
+        },
+        {
+          "anchor": [
+            -610,
+            70,
+            -60
+          ],
+          "colour": "#eeeeee",
+          "face": {
+            "index": 25,
+            "kind": "face"
+          },
+          "font": 2,
+          "plane": 128,
+          "scale": [
+            -4,
+            4
+          ],
+          "sourceColour": 1911
+        }
+      ],
       "liveSelector": true,
       "plan": {
         "faces": [

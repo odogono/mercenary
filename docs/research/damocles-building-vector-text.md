@@ -77,6 +77,7 @@ the tokens:
 | Structure-workspace face marker | `$8D`–`$96` (`$CD37`–`$CD49`) | Written by the placing structure |
 | Place name and kind | `$97`, `$98` (`$CD4C`, `$CD58`) | Written by the current workspace |
 | Live mission state | `$88` (`$CD14`) | Formatted at `$04DAFC`; see below |
+| Floor Label | `$80`, `$81` (`$CD04`) | Written by the lift; reached only from structure wall text, not from any `$60xx` record ([Floor Label](damocles-floor-label.md)) |
 
 ### Frame animations
 

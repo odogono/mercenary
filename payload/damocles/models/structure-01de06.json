@@ -953,6 +953,27 @@
       ],
       "detailModel": "interior-02d83e",
       "detailVariant": "palette-148",
+      "floorLabels": [
+        {
+          "anchor": [
+            300,
+            90,
+            -1230
+          ],
+          "colour": "#eeeeee",
+          "face": {
+            "index": 103,
+            "kind": "face"
+          },
+          "font": 2,
+          "plane": 0,
+          "scale": [
+            6,
+            8
+          ],
+          "sourceColour": 1911
+        }
+      ],
       "liveSelector": false,
       "plan": {
         "faces": [

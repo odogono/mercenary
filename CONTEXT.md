@@ -467,7 +467,7 @@ One level, 0 to 10, of a Surface Structure that its Floor Table binds to a struc
 _Avoid_: Level (bare), storey, basement
 
 **Floor Label**:
-The character a Damocles Lift shows for a Floor: `G` for Floor 0, `B` for Floor 10, the digit otherwise. It is a label, not a position: Floor 10 is the highest Floor in the structure's coordinates.
+The character a Damocles Lift shows for a Floor: `G` for Floor 0, `B` for Floor 10, the digit otherwise. It is a label, not a position: Floor 10 is the highest Floor in the structure's coordinates. The game draws it as wall text on the structure beside each lift car, and on some landings, showing the Floor the lift is at or passing.
 _Avoid_: Basement, floor number
 
 **Damocles Lift**:

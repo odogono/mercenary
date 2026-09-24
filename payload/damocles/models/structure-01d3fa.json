@@ -48,7 +48,7 @@
     "name": "Structure 163",
     "nameStatus": "unknown",
     "omissions": [],
-    "reason": "Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
+    "reason": "The Floor Label on queue byte 20 selects font 4, whose $054016 fallback to font 3 reads $706E and $7116; it is withheld. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
     "recordClass": "alias",
     "relatedModels": [
       "structure-01669e",
@@ -708,6 +708,46 @@
       ],
       "detailModel": "interior-02f2c8",
       "detailVariant": "palette-27",
+      "floorLabels": [
+        {
+          "anchor": [
+            210,
+            105,
+            -105
+          ],
+          "colour": "#ee6600",
+          "face": {
+            "index": 11,
+            "kind": "face"
+          },
+          "font": 2,
+          "plane": 128,
+          "scale": [
+            3,
+            3
+          ],
+          "sourceColour": 32902
+        },
+        {
+          "anchor": [
+            210,
+            105,
+            95
+          ],
+          "colour": "#ee6600",
+          "face": {
+            "index": 22,
+            "kind": "face"
+          },
+          "font": 2,
+          "plane": 128,
+          "scale": [
+            3,
+            3
+          ],
+          "sourceColour": 32902
+        }
+      ],
       "liveSelector": false,
       "plan": {
         "faces": [

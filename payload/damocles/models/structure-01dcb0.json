@@ -58,7 +58,7 @@
     "name": "Structure 244",
     "nameStatus": "unknown",
     "omissions": [],
-    "reason": "Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
+    "reason": "Wall text \"EXIT\" on queue byte 22 ($059EB6) is not drawn. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
     "recordClass": "alias",
     "relatedModels": [
       "structure-01231c",
@@ -507,6 +507,46 @@
       ],
       "detailModel": "interior-02bc56",
       "detailVariant": "palette-22",
+      "floorLabels": [
+        {
+          "anchor": [
+            260,
+            85,
+            -1160
+          ],
+          "colour": "#000000",
+          "face": {
+            "index": 4,
+            "kind": "face"
+          },
+          "font": 1,
+          "plane": 0,
+          "scale": [
+            4,
+            3
+          ],
+          "sourceColour": 32768
+        },
+        {
+          "anchor": [
+            168,
+            115,
+            -1140
+          ],
+          "colour": "#4488cc",
+          "face": {
+            "index": 9,
+            "kind": "face"
+          },
+          "font": 1,
+          "plane": 0,
+          "scale": [
+            -2,
+            2
+          ],
+          "sourceColour": 32900
+        }
+      ],
       "liveSelector": false,
       "plan": {
         "faces": [
