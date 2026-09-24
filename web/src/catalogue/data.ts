@@ -254,10 +254,35 @@ export interface FloorLabel {
   readonly anchor: Point;
   readonly colour: string;
   readonly face: RegionQueueEntry;
+  /** Present on a font-4 record: the font it draws in instead while the fallback holds. */
+  readonly fallback?: FontFallback;
   readonly font: number;
   readonly plane: 0 | 128;
   readonly scale: readonly [number, number];
   readonly sourceColour: number;
+}
+/**
+ * `$054010`-`$054022`: text in font 4 draws in `font` instead while any resident slot in
+ * `whileCarried` is carried, the handling-byte bit 7 at `$6FAA + 4 * slot` that the Take sets
+ * and the Drop clears (slot 49, READING GLASSES, and slot 91, RED HERRING).
+ */
+export interface FontFallback {
+  readonly font: number;
+  readonly whileCarried: readonly number[];
+}
+/**
+ * A structure wall-text record ($059EB6) whose text is literal, so it needs no live state.
+ * Its glyphs are baked into `mesh` in the structure's scaled local frame, lying in the plane
+ * of `face` (`plane` 0 is XY, 128 is ZY). `$05A41A` draws it straight after `face` whenever a
+ * region queue draws that entry. A font-4 record also carries its `fallback` glyphs.
+ */
+export interface WallText {
+  readonly face: RegionQueueEntry;
+  readonly fallback?: FontFallback & { readonly mesh: Mesh };
+  readonly font: number;
+  readonly mesh: Mesh;
+  readonly plane: 0 | 128;
+  readonly text: string;
 }
 /** The characters `$055AB8`-`$055AD8` write into `$CD04`: G at Floor 0, B at Floor 10. */
 export const FLOOR_LABEL_CHARACTERS = [
@@ -297,6 +322,7 @@ export interface StructureSelection {
     readonly queue: readonly RegionQueueEntry[];
   }[];
   readonly scale: readonly [number, number];
+  readonly wallTexts?: readonly WallText[];
 }
 export const ADMISSIONS = ['unkeyed', 'seatable', 'paired'] as const;
 export type Admission = (typeof ADMISSIONS)[number];
@@ -863,6 +889,25 @@ const detailSelection = (value: unknown): readonly DetailGroup[] => {
   }
   return groups;
 };
+const textPlane = (value: unknown): 0 | 128 => {
+  const plane = integer(value);
+  return plane === 0 || plane === 0x80
+    ? plane
+    : fail('invalid wall text plane');
+};
+/// Only font 4 has a fallback, and a fallback names at least one resident slot.
+const fontFallback = (
+  value: unknown,
+  font: number,
+  extra: readonly string[] = []
+): FontFallback => {
+  const f = fields(value, ['font', 'whileCarried', ...extra]);
+  const slots = list(f['whileCarried']).map(byte);
+  if (font !== 4 || slots.length === 0) {
+    fail('invalid font fallback');
+  }
+  return { font: byte(f['font']), whileCarried: slots };
+};
 const structureSelection = (value: unknown): StructureSelection => {
   const s = fields(value, [
     'plan',
@@ -872,7 +917,8 @@ const structureSelection = (value: unknown): StructureSelection => {
     'detailVariant',
     'regions',
     'liveSelector',
-    'floorLabels'
+    'floorLabels',
+    'wallTexts'
   ]);
   const plan = mesh(s['plan'], true);
   const scale = list(s['scale']).map(number);
@@ -1047,11 +1093,13 @@ const structureSelection = (value: unknown): StructureSelection => {
             'anchor',
             'colour',
             'face',
+            'fallback',
             'font',
             'plane',
             'scale',
             'sourceColour'
           ]);
+          const font = byte(l['font']);
           const plane = integer(l['plane']);
           const glyphScale = list(l['scale']).map(number);
           const colour = string(l['colour']);
@@ -1071,7 +1119,10 @@ const structureSelection = (value: unknown): StructureSelection => {
             anchor: point(l['anchor']),
             colour,
             face: queueEntry(l['face']),
-            font: byte(l['font']),
+            ...(l['fallback'] === undefined
+              ? {}
+              : { fallback: fontFallback(l['fallback'], font) }),
+            font,
             plane: plane as 0 | 128,
             scale: [glyphScale[0]!, glyphScale[1]!],
             sourceColour: unsignedWord(l['sourceColour'])
@@ -1079,6 +1130,42 @@ const structureSelection = (value: unknown): StructureSelection => {
         });
   if (floorLabels?.length === 0) {
     fail('empty floor label list');
+  }
+  const wallTexts =
+    s['wallTexts'] === undefined
+      ? undefined
+      : list(s['wallTexts']).map((value): WallText => {
+          const w = fields(value, [
+            'face',
+            'fallback',
+            'font',
+            'mesh',
+            'plane',
+            'text'
+          ]);
+          const font = byte(w['font']);
+          const text = string(w['text']);
+          if (!/^[ -~]+$/.test(text)) {
+            fail('invalid wall text');
+          }
+          const fallback =
+            w['fallback'] === undefined
+              ? undefined
+              : {
+                  ...fontFallback(w['fallback'], font, ['mesh']),
+                  mesh: mesh(object(w['fallback'])['mesh'])
+                };
+          return {
+            face: queueEntry(w['face']),
+            ...(fallback === undefined ? {} : { fallback }),
+            font,
+            mesh: mesh(w['mesh']),
+            plane: textPlane(w['plane']),
+            text
+          };
+        });
+  if (wallTexts?.length === 0) {
+    fail('empty wall text list');
   }
   return {
     attachments,
@@ -1088,7 +1175,8 @@ const structureSelection = (value: unknown): StructureSelection => {
     ...(s['liveSelector'] === true ? { liveSelector: true } : {}),
     plan,
     regions,
-    scale: [scale[0]!, scale[1]!]
+    scale: [scale[0]!, scale[1]!],
+    ...(wallTexts === undefined ? {} : { wallTexts })
   };
 };
 
@@ -1918,8 +2006,14 @@ export const parseModel = (value: unknown, document: Catalogue): Model => {
       fail('invalid selector detail binding');
     }
     for (const label of selection.floorLabels ?? []) {
-      if (document.floorLabelGlyphs[String(label.font)] === undefined) {
-        fail(`floor label font ${label.font} has no glyphs`);
+      const fonts = [label.font, label.fallback?.font];
+      for (const font of fonts) {
+        if (
+          font !== undefined &&
+          document.floorLabelGlyphs[String(font)] === undefined
+        ) {
+          fail(`floor label font ${font} has no glyphs`);
+        }
       }
     }
   }

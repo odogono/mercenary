@@ -49,10 +49,13 @@ it('publishes a Floor Label beside each State Office lift car on every Floor', a
 
 it('carries every Floor Label character in each font a label uses', async () => {
   const data = await loadCatalogue();
+  // A font-4 label draws in its font-3 fallback while slot 49 or 91 is carried (#485).
   const fonts = new Set(
     data.models.flatMap(model =>
-      (model.structureSelection?.floorLabels ?? []).map(label =>
-        String(label.font)
+      (model.structureSelection?.floorLabels ?? []).flatMap(label =>
+        [label.font, label.fallback?.font]
+          .filter(font => font !== undefined)
+          .map(String)
       )
     )
   );

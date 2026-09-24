@@ -1902,9 +1902,9 @@ class FloorLabelTests(unittest.TestCase):
     """Structure wall text ($059EB6) and the Floor Label it draws through $CD04 (#473)."""
 
     @staticmethod
-    def _world(text: bytes, token_target: int = 0xCD04) -> bytearray:
+    def _world(text: bytes, token_target: int = 0xCD04, flags: int = 0x82) -> bytearray:
         # One wall, one wall-text record on queue byte 1, one region queueing it.
-        post = struct.pack('>H', 0x0006) + bytes([0x82, 1])
+        post = struct.pack('>H', 0x0006) + bytes([flags, 1])
         post += struct.pack('>4h', 0, -610, 70, -60) + struct.pack('>bbH', -4, 4, 0x0777)
         post += text + b'\0' * (2 - len(text) % 2)
         post += b'\0\0'
@@ -1914,6 +1914,11 @@ class FloorLabelTests(unittest.TestCase):
             [(5, 5), (60, 5), (60, 60), (5, 60)], bytes.fromhex('0102 0777'), post
         )
         struct.pack_into('>I', data, 0xCCA0, token_target)
+        # A stroked 'I' in font 4 from (0, 0) to (0, 2), and in font 3 to (1, 2).
+        for font, glyph, pointer in ((4, '0000 0002 81 0408 00', 0x200), (3, '0000 0102 81 0408 00', 0x210)):
+            struct.pack_into('>h', data, 0x31700 + (ord('I') + font * 64 - 32) * 2, pointer)
+            glyph = bytes.fromhex(glyph)
+            data[0x31700 + pointer:0x31700 + pointer + len(glyph)] = glyph
         return data
 
     def _selection(self, data: bytearray) -> dict:
@@ -1936,15 +1941,40 @@ class FloorLabelTests(unittest.TestCase):
         self.assertEqual(selection['wallTextGaps'], [])
         self.assertEqual([entry['kind'] for entry in selection['regions'][0]['queue']], ['face'])
 
-    def test_other_wall_text_is_named_rather_than_drawn(self):
-        literal = self._selection(self._world(b'EXIT'))
-        self.assertNotIn('floorLabels', literal)
-        self.assertEqual(
-            literal['wallTextGaps'], ['Wall text "EXIT" on queue byte 1 ($059EB6) is not drawn.']
-        )
-        elsewhere = self._selection(self._world(b'\x80', token_target=0xCD37))
-        self.assertNotIn('floorLabels', elsewhere)
-        self.assertIn('"<$80>"', elsewhere['wallTextGaps'][0])
+    def test_a_font_four_floor_label_names_its_font_three_fallback(self):
+        # $054016 draws font 4 as font 3 while the handling byte at $706E or
+        # $7116, slot 49 or 91, has its carried bit set.
+        selection = self._selection(self._world(b'\x80', flags=0x84))
+        self.assertEqual(selection['floorLabels'][0]['font'], 4)
+        self.assertEqual(selection['floorLabels'][0]['fallback'], {'font': 3, 'whileCarried': [49, 91]})
+        self.assertEqual(selection['wallTextGaps'], [])
+
+    def test_literal_wall_text_is_baked_where_the_builder_places_it(self):
+        selection = self._selection(self._world(b'II', flags=0x04))
+        self.assertNotIn('floorLabels', selection)
+        self.assertEqual(selection['wallTextGaps'], [])
+        [text] = selection['wallTexts']
+        self.assertEqual({key: text[key] for key in ('face', 'text', 'font', 'plane')},
+                         {'face': {'kind': 'face', 'index': 0}, 'text': 'II', 'font': 4, 'plane': 0})
+        # XY plane: the advance is the control's 6 units times the glyph X scale -4.
+        self.assertEqual(text['mesh']['vertices'],
+                         [[-610, 70, -60], [-610, 78, -60], [-634, 70, -60], [-634, 78, -60]])
+        self.assertEqual([line['vertices'] for line in text['mesh']['lines']], [[0, 1], [2, 3]])
+        self.assertEqual({line['colour'] for line in text['mesh']['lines']}, {'#eeeeee'})
+        self.assertEqual(text['fallback']['font'], 3)
+        self.assertEqual(text['fallback']['whileCarried'], [49, 91])
+        self.assertEqual(text['fallback']['mesh']['vertices'],
+                         [[-610, 70, -60], [-614, 78, -60], [-634, 70, -60], [-638, 78, -60]])
+
+    def test_token_wall_text_is_named_rather_than_drawn(self):
+        key_letter = self._selection(self._world(b'\x80', token_target=0xCD37))
+        self.assertNotIn('floorLabels', key_letter)
+        self.assertNotIn('wallTexts', key_letter)
+        self.assertIn('"<$80>"', key_letter['wallTextGaps'][0])
+        self.assertIn('door key letter $059FC4 writes at $CD37', key_letter['wallTextGaps'][0])
+        self.assertIn('slot $3FC', key_letter['wallTextGaps'][0])
+        readout = self._selection(self._world(b'\x80', token_target=0xCD19))
+        self.assertIn('Trading Post', readout['wallTextGaps'][0])
 
     def test_the_placement_follows_the_builder_under_a_placement_scale(self):
         from damocleslab.catalogue import wall_text_placement
@@ -1971,7 +2001,7 @@ class FloorLabelTests(unittest.TestCase):
         document = read_catalogue(root / 'payload' / 'damocles' / 'catalogue.json')
         models = {model['id']: model for model in document['models']}
         glyphs = document['floorLabelGlyphs']
-        self.assertEqual(sorted(glyphs), ['1', '2'])
+        self.assertEqual(sorted(glyphs), ['1', '2', '3', '4'])
         for font in glyphs.values():
             self.assertEqual(sorted(font), sorted('G123456789B'))
         # The State Office's Floors 0, 1/2 and 10 bind slots 76, 78 and 79; each
@@ -1983,6 +2013,12 @@ class FloorLabelTests(unittest.TestCase):
                  if label['anchor'][0] == -610],
                 [([-610, 70, -260], 14), ([-610, 70, -60], 25)], identity,
             )
+        # Floor 10's structure also carries the literal B A S E M E N T, on the
+        # plan face its queue byte 6 names, in the ZY plane of that face.
+        [basement] = models['structure-01532a']['structureSelection']['wallTexts']
+        self.assertEqual((basement['text'], basement['face'], basement['plane'], basement['font']),
+                         ('B A S E M E N T', {'kind': 'face', 'index': 5}, 0x80, 3))
+        self.assertEqual({vertex[0] for vertex in basement['mesh']['vertices']}, {-410})
         labelled = [model for model in models.values()
                     if (model.get('structureSelection') or {}).get('floorLabels')]
         for model in labelled:

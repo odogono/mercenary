@@ -7,7 +7,7 @@
     "name": "Structure 84",
     "nameStatus": "unknown",
     "omissions": [],
-    "reason": "The Floor Label on queue byte 20 selects font 4, whose $054016 fallback to font 3 reads $706E and $7116; it is withheld. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
+    "reason": "Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
     "recordClass": "geometry",
     "relatedModels": [
       "structure-016684",
@@ -705,6 +705,32 @@
             3
           ],
           "sourceColour": 32902
+        },
+        {
+          "anchor": [
+            -200,
+            40,
+            -10
+          ],
+          "colour": "#aaaa66",
+          "face": {
+            "index": 19,
+            "kind": "face"
+          },
+          "fallback": {
+            "font": 3,
+            "whileCarried": [
+              49,
+              91
+            ]
+          },
+          "font": 4,
+          "plane": 128,
+          "scale": [
+            3,
+            4
+          ],
+          "sourceColour": 32900
         }
       ],
       "liveSelector": false,

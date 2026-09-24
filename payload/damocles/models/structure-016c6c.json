@@ -38,7 +38,7 @@
     "name": "Structure 86",
     "nameStatus": "unknown",
     "omissions": [],
-    "reason": "Wall text \"68 09 20 33\" on queue byte 34 ($059EB6) is not drawn. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
+    "reason": "Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
     "recordClass": "alias",
     "relatedModels": [
       "structure-016c86",
@@ -3446,6 +3446,1419 @@
       "scale": [
         1,
         1
+      ],
+      "wallTexts": [
+        {
+          "face": {
+            "index": 33,
+            "kind": "face"
+          },
+          "fallback": {
+            "font": 3,
+            "mesh": {
+              "faces": [],
+              "lines": [
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    0,
+                    1
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    1,
+                    2
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    2,
+                    3
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    3,
+                    9
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    9,
+                    8
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    7,
+                    8
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    6,
+                    7
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    5,
+                    6
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    4,
+                    5
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    3,
+                    4
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    10,
+                    11
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    11,
+                    12
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    12,
+                    13
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    13,
+                    19
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    10,
+                    21
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    20,
+                    21
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    14,
+                    20
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    14,
+                    15
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    15,
+                    16
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    16,
+                    17
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    17,
+                    18
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    18,
+                    19
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    22,
+                    23
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    23,
+                    25
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    25,
+                    26
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    26,
+                    27
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    27,
+                    28
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    28,
+                    30
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    30,
+                    31
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    31,
+                    22
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    24,
+                    29
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    38,
+                    37
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    37,
+                    36
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    36,
+                    35
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    35,
+                    34
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    34,
+                    33
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    33,
+                    32
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    32,
+                    41
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    41,
+                    40
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    40,
+                    39
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    39,
+                    35
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    42,
+                    43
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    43,
+                    44
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    44,
+                    45
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    45,
+                    46
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    46,
+                    47
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    47,
+                    48
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    48,
+                    49
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    50,
+                    51
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    51,
+                    53
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    53,
+                    54
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    54,
+                    55
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    55,
+                    56
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    56,
+                    58
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    58,
+                    59
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    59,
+                    50
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    52,
+                    57
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    60,
+                    61
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    61,
+                    62
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    62,
+                    63
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    63,
+                    64
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    64,
+                    65
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    65,
+                    66
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    66,
+                    67
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    68,
+                    69
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    69,
+                    70
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    70,
+                    71
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    71,
+                    72
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    72,
+                    73
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    73,
+                    74
+                  ]
+                },
+                {
+                  "colour": "#aaaa66",
+                  "sourceColour": 32900,
+                  "vertices": [
+                    74,
+                    75
+                  ]
+                }
+              ],
+              "vertices": [
+                [
+                  -146,
+                  67,
+                  -100
+                ],
+                [
+                  -162,
+                  67,
+                  -100
+                ],
+                [
+                  -170,
+                  59,
+                  -100
+                ],
+                [
+                  -170,
+                  55,
+                  -100
+                ],
+                [
+                  -170,
+                  43,
+                  -100
+                ],
+                [
+                  -162,
+                  35,
+                  -100
+                ],
+                [
+                  -150,
+                  35,
+                  -100
+                ],
+                [
+                  -142,
+                  43,
+                  -100
+                ],
+                [
+                  -142,
+                  47,
+                  -100
+                ],
+                [
+                  -150,
+                  55,
+                  -100
+                ],
+                [
+                  -130,
+                  67,
+                  -100
+                ],
+                [
+                  -118,
+                  67,
+                  -100
+                ],
+                [
+                  -110,
+                  63,
+                  -100
+                ],
+                [
+                  -110,
+                  55,
+                  -100
+                ],
+                [
+                  -110,
+                  47,
+                  -100
+                ],
+                [
+                  -110,
+                  39,
+                  -100
+                ],
+                [
+                  -118,
+                  35,
+                  -100
+                ],
+                [
+                  -130,
+                  35,
+                  -100
+                ],
+                [
+                  -138,
+                  39,
+                  -100
+                ],
+                [
+                  -138,
+                  47,
+                  -100
+                ],
+                [
+                  -138,
+                  55,
+                  -100
+                ],
+                [
+                  -138,
+                  63,
+                  -100
+                ],
+                [
+                  -66,
+                  67,
+                  -100
+                ],
+                [
+                  -54,
+                  67,
+                  -100
+                ],
+                [
+                  -50,
+                  63,
+                  -100
+                ],
+                [
+                  -46,
+                  59,
+                  -100
+                ],
+                [
+                  -46,
+                  43,
+                  -100
+                ],
+                [
+                  -54,
+                  35,
+                  -100
+                ],
+                [
+                  -66,
+                  35,
+                  -100
+                ],
+                [
+                  -70,
+                  39,
+                  -100
+                ],
+                [
+                  -74,
+                  43,
+                  -100
+                ],
+                [
+                  -74,
+                  59,
+                  -100
+                ],
+                [
+                  -34,
+                  67,
+                  -100
+                ],
+                [
+                  -22,
+                  67,
+                  -100
+                ],
+                [
+                  -14,
+                  59,
+                  -100
+                ],
+                [
+                  -14,
+                  47,
+                  -100
+                ],
+                [
+                  -14,
+                  43,
+                  -100
+                ],
+                [
+                  -22,
+                  35,
+                  -100
+                ],
+                [
+                  -38,
+                  35,
+                  -100
+                ],
+                [
+                  -34,
+                  47,
+                  -100
+                ],
+                [
+                  -42,
+                  55,
+                  -100
+                ],
+                [
+                  -42,
+                  59,
+                  -100
+                ],
+                [
+                  22,
+                  59,
+                  -100
+                ],
+                [
+                  30,
+                  67,
+                  -100
+                ],
+                [
+                  42,
+                  67,
+                  -100
+                ],
+                [
+                  46,
+                  59,
+                  -100
+                ],
+                [
+                  46,
+                  55,
+                  -100
+                ],
+                [
+                  22,
+                  39,
+                  -100
+                ],
+                [
+                  22,
+                  35,
+                  -100
+                ],
+                [
+                  50,
+                  35,
+                  -100
+                ],
+                [
+                  62,
+                  67,
+                  -100
+                ],
+                [
+                  74,
+                  67,
+                  -100
+                ],
+                [
+                  78,
+                  63,
+                  -100
+                ],
+                [
+                  82,
+                  59,
+                  -100
+                ],
+                [
+                  82,
+                  43,
+                  -100
+                ],
+                [
+                  74,
+                  35,
+                  -100
+                ],
+                [
+                  62,
+                  35,
+                  -100
+                ],
+                [
+                  58,
+                  39,
+                  -100
+                ],
+                [
+                  54,
+                  43,
+                  -100
+                ],
+                [
+                  54,
+                  59,
+                  -100
+                ],
+                [
+                  118,
+                  67,
+                  -100
+                ],
+                [
+                  146,
+                  67,
+                  -100
+                ],
+                [
+                  138,
+                  55,
+                  -100
+                ],
+                [
+                  146,
+                  47,
+                  -100
+                ],
+                [
+                  146,
+                  43,
+                  -100
+                ],
+                [
+                  138,
+                  35,
+                  -100
+                ],
+                [
+                  126,
+                  35,
+                  -100
+                ],
+                [
+                  118,
+                  43,
+                  -100
+                ],
+                [
+                  150,
+                  67,
+                  -100
+                ],
+                [
+                  178,
+                  67,
+                  -100
+                ],
+                [
+                  170,
+                  55,
+                  -100
+                ],
+                [
+                  178,
+                  47,
+                  -100
+                ],
+                [
+                  178,
+                  43,
+                  -100
+                ],
+                [
+                  170,
+                  35,
+                  -100
+                ],
+                [
+                  158,
+                  35,
+                  -100
+                ],
+                [
+                  150,
+                  43,
+                  -100
+                ]
+              ]
+            },
+            "whileCarried": [
+              49,
+              91
+            ]
+          },
+          "font": 4,
+          "mesh": {
+            "faces": [],
+            "lines": [
+              {
+                "colour": "#aaaa66",
+                "sourceColour": 32900,
+                "vertices": [
+                  0,
+                  1
+                ]
+              },
+              {
+                "colour": "#aaaa66",
+                "sourceColour": 32900,
+                "vertices": [
+                  1,
+                  2
+                ]
+              },
+              {
+                "colour": "#aaaa66",
+                "sourceColour": 32900,
+                "vertices": [
+                  2,
+                  3
+                ]
+              },
+              {
+                "colour": "#aaaa66",
+                "sourceColour": 32900,
+                "vertices": [
+                  4,
+                  5
+                ]
+              },
+              {
+                "colour": "#aaaa66",
+                "sourceColour": 32900,
+                "vertices": [
+                  5,
+                  6
+                ]
+              },
+              {
+                "colour": "#aaaa66",
+                "sourceColour": 32900,
+                "vertices": [
+                  6,
+                  7
+                ]
+              },
+              {
+                "colour": "#aaaa66",
+                "sourceColour": 32900,
+                "vertices": [
+                  7,
+                  8
+                ]
+              },
+              {
+                "colour": "#aaaa66",
+                "sourceColour": 32900,
+                "vertices": [
+                  8,
+                  9
+                ]
+              },
+              {
+                "colour": "#aaaa66",
+                "sourceColour": 32900,
+                "vertices": [
+                  13,
+                  10
+                ]
+              },
+              {
+                "colour": "#aaaa66",
+                "sourceColour": 32900,
+                "vertices": [
+                  10,
+                  12
+                ]
+              },
+              {
+                "colour": "#aaaa66",
+                "sourceColour": 32900,
+                "vertices": [
+                  10,
+                  11
+                ]
+              },
+              {
+                "colour": "#aaaa66",
+                "sourceColour": 32900,
+                "vertices": [
+                  11,
+                  12
+                ]
+              },
+              {
+                "colour": "#aaaa66",
+                "sourceColour": 32900,
+                "vertices": [
+                  14,
+                  16
+                ]
+              },
+              {
+                "colour": "#aaaa66",
+                "sourceColour": 32900,
+                "vertices": [
+                  16,
+                  15
+                ]
+              },
+              {
+                "colour": "#aaaa66",
+                "sourceColour": 32900,
+                "vertices": [
+                  16,
+                  17
+                ]
+              },
+              {
+                "colour": "#aaaa66",
+                "sourceColour": 32900,
+                "vertices": [
+                  18,
+                  19
+                ]
+              },
+              {
+                "colour": "#aaaa66",
+                "sourceColour": 32900,
+                "vertices": [
+                  19,
+                  20
+                ]
+              },
+              {
+                "colour": "#aaaa66",
+                "sourceColour": 32900,
+                "vertices": [
+                  20,
+                  21
+                ]
+              },
+              {
+                "colour": "#aaaa66",
+                "sourceColour": 32900,
+                "vertices": [
+                  21,
+                  22
+                ]
+              },
+              {
+                "colour": "#aaaa66",
+                "sourceColour": 32900,
+                "vertices": [
+                  26,
+                  23
+                ]
+              },
+              {
+                "colour": "#aaaa66",
+                "sourceColour": 32900,
+                "vertices": [
+                  23,
+                  25
+                ]
+              },
+              {
+                "colour": "#aaaa66",
+                "sourceColour": 32900,
+                "vertices": [
+                  23,
+                  24
+                ]
+              },
+              {
+                "colour": "#aaaa66",
+                "sourceColour": 32900,
+                "vertices": [
+                  24,
+                  25
+                ]
+              },
+              {
+                "colour": "#aaaa66",
+                "sourceColour": 32900,
+                "vertices": [
+                  27,
+                  28
+                ]
+              },
+              {
+                "colour": "#aaaa66",
+                "sourceColour": 32900,
+                "vertices": [
+                  28,
+                  29
+                ]
+              },
+              {
+                "colour": "#aaaa66",
+                "sourceColour": 32900,
+                "vertices": [
+                  29,
+                  30
+                ]
+              },
+              {
+                "colour": "#aaaa66",
+                "sourceColour": 32900,
+                "vertices": [
+                  30,
+                  31
+                ]
+              },
+              {
+                "colour": "#aaaa66",
+                "sourceColour": 32900,
+                "vertices": [
+                  32,
+                  33
+                ]
+              },
+              {
+                "colour": "#aaaa66",
+                "sourceColour": 32900,
+                "vertices": [
+                  33,
+                  34
+                ]
+              },
+              {
+                "colour": "#aaaa66",
+                "sourceColour": 32900,
+                "vertices": [
+                  34,
+                  35
+                ]
+              },
+              {
+                "colour": "#aaaa66",
+                "sourceColour": 32900,
+                "vertices": [
+                  35,
+                  36
+                ]
+              }
+            ],
+            "vertices": [
+              [
+                -166,
+                51,
+                -100
+              ],
+              [
+                -170,
+                67,
+                -100
+              ],
+              [
+                -162,
+                67,
+                -100
+              ],
+              [
+                -154,
+                35,
+                -100
+              ],
+              [
+                -134,
+                51,
+                -100
+              ],
+              [
+                -134,
+                35,
+                -100
+              ],
+              [
+                -122,
+                35,
+                -100
+              ],
+              [
+                -122,
+                67,
+                -100
+              ],
+              [
+                -130,
+                67,
+                -100
+              ],
+              [
+                -130,
+                43,
+                -100
+              ],
+              [
+                -66,
+                51,
+                -100
+              ],
+              [
+                -58,
+                35,
+                -100
+              ],
+              [
+                -74,
+                35,
+                -100
+              ],
+              [
+                -66,
+                67,
+                -100
+              ],
+              [
+                -42,
+                51,
+                -100
+              ],
+              [
+                -26,
+                67,
+                -100
+              ],
+              [
+                -38,
+                51,
+                -100
+              ],
+              [
+                -26,
+                35,
+                -100
+              ],
+              [
+                38,
+                35,
+                -100
+              ],
+              [
+                22,
+                43,
+                -100
+              ],
+              [
+                22,
+                51,
+                -100
+              ],
+              [
+                30,
+                67,
+                -100
+              ],
+              [
+                38,
+                51,
+                -100
+              ],
+              [
+                62,
+                51,
+                -100
+              ],
+              [
+                70,
+                35,
+                -100
+              ],
+              [
+                54,
+                35,
+                -100
+              ],
+              [
+                62,
+                67,
+                -100
+              ],
+              [
+                118,
+                51,
+                -100
+              ],
+              [
+                122,
+                35,
+                -100
+              ],
+              [
+                126,
+                51,
+                -100
+              ],
+              [
+                134,
+                51,
+                -100
+              ],
+              [
+                134,
+                67,
+                -100
+              ],
+              [
+                150,
+                51,
+                -100
+              ],
+              [
+                154,
+                35,
+                -100
+              ],
+              [
+                158,
+                51,
+                -100
+              ],
+              [
+                166,
+                51,
+                -100
+              ],
+              [
+                166,
+                67,
+                -100
+              ]
+            ]
+          },
+          "plane": 0,
+          "text": "68 09 20 33"
+        }
       ]
     },
     "variants": [

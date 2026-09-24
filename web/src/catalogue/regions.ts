@@ -1,4 +1,10 @@
-import type { Mesh, Model, Point, Primitive } from './data.ts';
+import type {
+  Mesh,
+  Model,
+  Point,
+  Primitive,
+  RegionQueueEntry
+} from './data.ts';
 import { HIGH_SENTINEL, LOW_SENTINEL, axisLabel, byRecord } from './forms.ts';
 
 /**
@@ -41,6 +47,15 @@ const scaled = (mesh: Mesh, [x, z]: readonly [number, number]): Mesh => ({
   vertices: mesh.vertices.map(([a, b, c]) => [a * x, b, c * z] as Point)
 });
 
+/** Whether a wall text's `face` names this region queue entry. */
+export const sameQueueEntry = (
+  a: RegionQueueEntry,
+  b: RegionQueueEntry
+): boolean =>
+  a.kind === b.kind &&
+  (a.kind === 'attachment' || a.index === (b as { index: number }).index) &&
+  (a.kind === 'face' || a.slot === (b as { slot: number }).slot);
+
 export interface RegionForm {
   /** Region forms never carry the spaceport's door or camera extras. */
   readonly doorState?: undefined;
@@ -76,26 +91,34 @@ export const regionForms = (
     detailMesh === undefined ? undefined : byRecord(detailMesh.faces);
   const detailLines =
     detailMesh === undefined ? undefined : byRecord(detailMesh.lines);
+  const queueParts = (entry: RegionQueueEntry): Mesh[] => {
+    if (entry.kind === 'face') {
+      const faces = plan.get(entry.index) ?? [];
+      return [{ ...selection.plan, faces, lines: [] }];
+    }
+    const attachment = attachments.get(entry.slot);
+    if (attachment === undefined) {
+      return [];
+    }
+    if (entry.kind === 'attachment') {
+      return [attachment.mesh];
+    }
+    const face = attachment.mesh.faces[entry.index];
+    return face === undefined
+      ? []
+      : [{ ...attachment.mesh, faces: [face], lines: [] }];
+  };
   const forms: RegionForm[] = [];
   for (const [index, region] of selection.regions.entries()) {
     const planParts: Mesh[] = [];
     for (const entry of region.queue) {
-      if (entry.kind === 'face') {
-        const faces = plan.get(entry.index) ?? [];
-        planParts.push({ ...selection.plan, faces, lines: [] });
-        continue;
-      }
-      const attachment = attachments.get(entry.slot);
-      if (attachment === undefined) {
-        continue;
-      }
-      if (entry.kind === 'attachment') {
-        planParts.push(attachment.mesh);
-        continue;
-      }
-      const face = attachment.mesh.faces[entry.index];
-      if (face !== undefined) {
-        planParts.push({ ...attachment.mesh, faces: [face], lines: [] });
+      planParts.push(...queueParts(entry));
+      // Each wall text draws straight after the entry it rides on, in its own font: a free
+      // orbit carries nothing, so no font-4 fallback applies.
+      for (const text of selection.wallTexts ?? []) {
+        if (sameQueueEntry(text.face, entry)) {
+          planParts.push(text.mesh);
+        }
       }
     }
     const detailParts: Mesh[] = [];

@@ -5,7 +5,7 @@ import { Camera } from '../projection/index.ts';
 import type { ErisPresentationDocument } from './documents.ts';
 import { classifyPosition, coastlineInBodyUnits } from './islands.ts';
 import type { BoundStructureSnapshot } from './save.ts';
-import { structureMeshes } from './selection.ts';
+import { structureMeshes, type CarriedSlot } from './selection.ts';
 import {
   insideCentralCellHalf,
   withinDrawBound,
@@ -192,6 +192,49 @@ const displayStrokeQuad = (
   ];
 };
 
+/// A wall text shares its face's plane and the game draws it after that face, so its glyphs
+/// take the smallest face-order pull, the one that settles a ground record's later face.
+const WALL_TEXT_ORDER = 1;
+
+/// A glyph stroke as a quad in its wall text's own plane: XY (`plane` 0) or ZY (128).
+const wallStrokeQuad = (
+  start: readonly [number, number, number],
+  end: readonly [number, number, number],
+  plane: 0 | 128
+):
+  | readonly [
+      readonly [number, number, number],
+      readonly [number, number, number],
+      readonly [number, number, number],
+      readonly [number, number, number]
+    ]
+  | null => {
+  const along = plane === 0 ? 0 : 2;
+  const da = end[along] - start[along];
+  const dy = end[1] - start[1];
+  const length = Math.hypot(da, dy);
+  if (length === 0) {
+    return null;
+  }
+  const a = (-dy / length) * DISPLAY_STROKE_HALF_WIDTH;
+  const y = (da / length) * DISPLAY_STROKE_HALF_WIDTH;
+  const shifted = (
+    vertex: readonly [number, number, number],
+    sign: number
+  ): readonly [number, number, number] => {
+    const result: [number, number, number] = [...vertex];
+    result[along] += sign * a;
+    result[1] += sign * y;
+    return result;
+  };
+  return [
+    shifted(start, 1),
+    shifted(end, 1),
+    shifted(end, -1),
+    shifted(start, -1)
+  ];
+};
+
 type WorldTriangle = readonly [Vector3, Vector3, Vector3];
 
 const doubleSidedQuad = (
@@ -324,7 +367,8 @@ export const planErisFrame = (
   doc: ErisPresentationDocument,
   structure: BoundStructureSnapshot | null = null,
   residents: readonly ErisPlacement[] = [],
-  hiddenResidents: readonly string[] = []
+  hiddenResidents: readonly string[] = [],
+  carriedSlot: CarriedSlot = () => false
 ): ErisFramePlan => {
   const camera = new Camera({
     farPlane: doc.camera.farPlane,
@@ -395,6 +439,54 @@ export const planErisFrame = (
   const openUnits = new Map(
     structure?.attachments.map(item => [item.slot, item.openUnits]) ?? []
   );
+  // Glyph fills and strokes both face either way: the game draws a wall text whenever its
+  // face is drawn, from whichever side the player stands.
+  const emitWallText = (
+    mesh: Mesh,
+    plane: 0 | 128,
+    placement: ErisPlacement
+  ): void => {
+    const triangles = trianglesOf(mesh);
+    skippedFaces += triangles.skipped;
+    for (let i = 0; i < triangles.indices.length; i += 3) {
+      const colour = triangles.colours[i / 3]!;
+      const corners = [0, 1, 2].map(corner =>
+        placed(
+          mesh.vertices[triangles.indices[i + corner]!]!,
+          placement,
+          negateZ
+        )
+      );
+      for (const vertex of [...corners, ...[...corners].reverse()]) {
+        emit(vertex, colour, WALL_TEXT_ORDER);
+      }
+      triangleCount += 2;
+    }
+    for (const line of mesh.lines) {
+      for (let index = 0; index < line.vertices.length - 1; index += 1) {
+        const quad = wallStrokeQuad(
+          mesh.vertices[line.vertices[index]!]!,
+          mesh.vertices[line.vertices[index + 1]!]!,
+          plane
+        );
+        if (quad === null) {
+          continue;
+        }
+        const colour = channels(line.colour);
+        for (const triangle of doubleSidedQuad(
+          placed(quad[0], placement, negateZ),
+          placed(quad[1], placement, negateZ),
+          placed(quad[2], placement, negateZ),
+          placed(quad[3], placement, negateZ)
+        )) {
+          for (const vertex of triangle) {
+            emit(vertex, colour, WALL_TEXT_ORDER);
+          }
+          triangleCount += 1;
+        }
+      }
+    }
+  };
   const emitPlacement = (placement: ErisPlacement): void => {
     const isBound = active && placement.id === structure?.instanceId;
     for (const mesh of structureMeshes(
@@ -402,8 +494,13 @@ export const planErisFrame = (
       pose,
       negateZ,
       slot => (isBound ? (openUnits.get(slot) ?? 0) : 0),
-      isBound ? structure.regionIndex : null
+      isBound ? structure.regionIndex : null,
+      carriedSlot
     )) {
+      if (mesh.wallTextPlane !== undefined) {
+        emitWallText(mesh, mesh.wallTextPlane, placement);
+        continue;
+      }
       const triangles = trianglesOf(mesh);
       skippedFaces += triangles.skipped;
       for (let i = 0; i < triangles.indices.length; i += 3) {

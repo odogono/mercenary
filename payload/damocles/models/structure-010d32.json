@@ -7,7 +7,7 @@
     "name": "Structure 35",
     "nameStatus": "unknown",
     "omissions": [],
-    "reason": "Wall text \"BRIEFCASE\" on queue byte 15 ($059EB6) is not drawn. Wall text \"BRIEFCASE\" on queue byte 13 ($059EB6) is not drawn. The linked building detail is itself an intentionally empty record, so there is no detail geometry to place. Its 2 Floor Label record(s) ride on region queues that are not retained, so none is published. That empty detail carries no visibility groups either, so this record keeps no structure selector and its region queues are not retained.",
+    "reason": "The linked building detail is itself an intentionally empty record, so there is no detail geometry to place. Its 2 Floor Label record(s) ride on region queues that are not retained, so none is published. Its literal wall text \"BRIEFCASE\", \"BRIEFCASE\" rides on region queues that are not retained, so none is published. That empty detail carries no visibility groups either, so this record keeps no structure selector and its region queues are not retained.",
     "recordClass": "geometry",
     "relatedModels": [
       "structure-010e8a",

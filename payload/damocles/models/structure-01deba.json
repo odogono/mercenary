@@ -18,7 +18,7 @@
     "name": "Structure 273",
     "nameStatus": "unknown",
     "omissions": [],
-    "reason": "Wall text \"<$8A>\" on queue byte 28 ($059EB6) is not drawn. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
+    "reason": "Wall text \"<$8A>\" on queue byte 28 ($059EB6) is not drawn: it prints the BCD readout $04E05A formats at $CD19 in the Trading Post, structure $52 room 9, which differs between captures. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
     "recordClass": "alias",
     "relatedModels": [
       "structure-015eea",

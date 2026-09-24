@@ -470,6 +470,10 @@ _Avoid_: Level (bare), storey, basement
 The character a Damocles Lift shows for a Floor: `G` for Floor 0, `B` for Floor 10, the digit otherwise. It is a label, not a position: Floor 10 is the highest Floor in the structure's coordinates. The game draws it as wall text on the structure beside each lift car, and on some landings, showing the Floor the lift is at or passing.
 _Avoid_: Basement, floor number
 
+**Wall Text**:
+Vector text a Surface Structure's own record places on one of its faces. The game draws it straight after that face whenever a region draws the face. It is literal text, a Floor Label, or a live token such as a door key letter. Font 4 is an alien script that draws as font 3 while the player carries READING GLASSES or RED HERRING.
+_Avoid_: Sign, decal, building-detail text
+
 **Damocles Lift**:
 A structure region whose flags mark it as a lift, where a player on foot changes Floor by key. It reaches only the Floors its Floor Table binds, and refuses every other Floor and the one its Floor Label already shows. It rides in the order B, G, 1 … 9, so Floor 10 lies just below Floor 0 on the ride, though it is the highest Floor in the structure's coordinates.
 _Avoid_: Elevator, Lift Journey, lift object, lift attachment

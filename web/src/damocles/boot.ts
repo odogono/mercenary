@@ -653,7 +653,8 @@ try {
         ...snapshot.carried,
         ...snapshot.briefcaseStore,
         ...snapshot.residence.map(item => item.instance)
-      ]
+      ],
+      slot => session.carriesSlot(slot)
     );
     const { castShadows, presentationPreset } = preferences.current();
     const shadowEdge = castShadows ?? DEFAULT_CAST_SHADOWS;
