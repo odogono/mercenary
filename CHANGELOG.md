@@ -23,9 +23,7 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
   cannot be driven, and Take, Drop, the Body switch and `goto` do nothing. `L`
   levels the view and puts the craft back where the player is leaving it, as a
   direct-placement Drop would. The player is then on foot. `AUTHOR'S CHAIR`
-  boards as a seatable object from Authors House's exterior regions. A Session
-  Resume captured aboard restores the player on foot beside the craft until
-  Occupancy is saved (#416).
+  boards as a seatable object from Authors House's exterior regions (#416).
 - **The Damocles Catalogue says what the board gate answers for each
   resident object.** Every resident instance carries a boarding block: whether
   it can be boarded, whether it boards unkeyed, as a seatable object or only
@@ -204,6 +202,17 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Changed
 
+- **Damocles Saves and Session Resumes remember whether the player is aboard.
+  The Damocles Save Snapshot goes from schema 5 to 6, so existing Damocles
+  Saves and Session Resumes are refused.** A Save taken aboard a craft or seatable
+  object restores aboard it, at the same seated view, with the craft still out of
+  Object Residence. Before this, a Session Resume captured aboard put the player
+  on foot beside the craft. A record is refused whole if it names an occupied
+  instance that is not in the Catalogue, is not boardable, or is still resident.
+  It is also refused if its Occupancy and Object Residence disagree. There is no
+  migration, by ADR 0044. A schema-5 record cannot say whether its player was
+  aboard, so it is not treated as on foot, and a refused restore leaves the live
+  session and the stored Save untouched. Targ's Saves are unaffected (#417).
 - **One map: the Catalogue's marker map is the Gamma Atlas now.** The Catalogue drew
   its own pan-and-zoom map of a Body's placements, with its own gesture handling, its
   own scale readout and its own clustering; the Atlas draws the same placements over

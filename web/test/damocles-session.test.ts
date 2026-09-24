@@ -57,6 +57,7 @@ const atSpaceport = (
     carried: [],
     elapsed: 0,
     frameAccumulator: 0,
+    occupancy: { kind: 'onFoot' },
     pendingBriefcaseDrop: null,
     pose: {
       body: ERIS_BODY,
@@ -101,6 +102,7 @@ const atStructure = (
     carried: [],
     elapsed: 0,
     frameAccumulator: 0,
+    occupancy: { kind: 'onFoot' },
     pendingBriefcaseDrop: null,
     pose: {
       body: ERIS_BODY,
