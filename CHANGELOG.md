@@ -12,19 +12,32 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Added
 
+- **A Damocles lift ride plays out as the ST's does.** A Floor key in a lift
+  now pins the car's door shut, even with the player standing beside it. Once
+  the door is shut, the Floor Label steps one Floor every 25 VBLs through each
+  Floor passed: 2 to B shows 1, then G, then B. The player arrives 25 VBLs
+  after the label shows the destination. The arrival binds the Floor's
+  structure, sets the height and levels the view, and keeps X, Z and the
+  heading. It asks for the same sound a take does, and the new Floor's door
+  then opens around the player. A key for another bound Floor during a ride
+  replaces the destination, and the region holds until the ride arrives.
+  Nothing else is drawn: there is no fade and no camera movement. The door
+  closes at the port's one attachment rate, about 46 VBLs for the State Office
+  car against the ST's 30, because the rate for each door is not decoded. The
+  door tones every door shares are not presented yet. The page publishes
+  `data-floor-label` and `data-ride-destination`. The Save carries a ride in
+  progress and the doorway last crossed, whose door the next ride pins. That
+  is schema 8, and a schema-7 record is refused whole (#476).
+- **Damocles players can ride a lift between Floors.** On foot in
   a structure region whose flags have bit 13, the recovered keys ask for a
   Floor: `1`–`9` for Floors 1–9, `0` or `B` for Floor 10, and `G` for Floor 0.
   The ST's `Esc` also asks for Floor 0, but the Browser Shell keeps Escape for
   the System Menu. The lift refuses, silently and changing nothing, the Floor
   it is on and any Floor its Floor Table leaves zero, so in the Eris State
   Office only G, 1, 2 and B are reached. Outside a lift car the keys keep their
-  ordinary meaning, and `B` still boards. The ride is an instant rebind to the
-  Floor's structure at Floor times storey pitch plus eye height, with X and Z
-  kept. That is an authored placeholder until the recovered ride's presentation
-  lands: the door closing, the Floor Label stepping through each Floor, and the
-  door reopening (#476). The console's `floor N` stays as a development
-  shortcut (#475).
-FURTHER FLIGHT`. Every other refusal is silent. Boarding takes the craft out
+  ordinary meaning, and `B` still boards. The player arrives on the Floor's
+  structure at Floor times storey pitch plus eye height, with X and Z kept. The
+  console's `floor N` stays as an instant development shortcut (#475).
 - **Damocles players can board and leave craft.** `B` beside a placed craft
   runs the recovered board gate's eight tests in order. Its reach is 1024
   units, twice the Take's. A craft boards while its Vehicle Key is carried,

@@ -5,11 +5,16 @@ import { bootAt, watchErrors } from './damocles-play.ts';
 /// Browser verification of riding a Damocles Lift (#475) in the Eris State Office, whose Floor
 /// Table binds Floors 0, 1, 2 and 10 at a storey pitch of 150. The lift is region 4, one of the
 /// two lift cars (X −890..−610, Z −95..100 local); the hall outside it is region 0. The ride is
-/// an instant rebind until its presentation lands (#476).
+/// played as #472 recovered it (#476): the door shuts, the label steps one Floor every 25 VBLs,
+/// and the arrival follows one period after the label shows the destination.
 
 const STATE_OFFICE = 'eris-surface-89';
 const LIFT_CAR = { x: -750, z: 0 };
 const HALL = { x: -300, z: 0 };
+/// In the hall, just outside the lift door's Proximity Box (X −890..−450), facing west into the
+/// car through its doorway, region 2.
+const BEFORE_THE_DOOR = { x: -440, z: 0 };
+const FACING_WEST = 256;
 
 const frame = (page: Page) => page.locator('#frame');
 
@@ -69,5 +74,51 @@ test('outside the lift car the Floor keys do nothing', async ({ page }) => {
     await page.keyboard.press(key);
   }
   expect(await floorAndY(page)).toEqual({ floor: '0', y: '63' });
+  expect(errors).toEqual([]);
+});
+
+test('walked in through the door, 1 rides: the label steps, and the arrival is 25 VBLs later', async ({
+  page
+}) => {
+  test.setTimeout(120_000);
+  const errors = watchErrors(page);
+  await bootAt(page, BEFORE_THE_DOOR, FACING_WEST, { structure: STATE_OFFICE });
+  await expect(frame(page)).toHaveAttribute('data-region', '0');
+  await page.keyboard.down('ArrowUp');
+  await expect(frame(page)).toHaveAttribute('data-region', '4', {
+    timeout: 20_000
+  });
+  await page.keyboard.up('ArrowUp');
+
+  // Session time at each change of the label and the Floor, read as the page publishes them.
+  await frame(page).evaluate(node => {
+    const seen: [string, string, number][] = [];
+    (window as unknown as { liftSeen: typeof seen }).liftSeen = seen;
+    new MutationObserver(() => {
+      const last = seen.at(-1);
+      const label = node.dataset['floorLabel']!;
+      const floor = node.dataset['floor']!;
+      if (last === undefined || last[0] !== label || last[1] !== floor) {
+        seen.push([label, floor, Number(node.dataset['elapsed'])]);
+      }
+    }).observe(node, { attributes: true });
+  });
+  await page.keyboard.press('1');
+  await expect(frame(page)).toHaveAttribute('data-ride-destination', '1');
+  await expect(frame(page)).toHaveAttribute('data-floor', '1', {
+    timeout: 10_000
+  });
+  await expect(frame(page)).toHaveAttribute('data-ride-destination', '');
+  await expect(frame(page)).toHaveAttribute('data-y', '213');
+  const seen = await page.evaluate(
+    () =>
+      (window as unknown as { liftSeen: [string, string, number][] }).liftSeen
+  );
+  const stepped = seen.find(([label, floor]) => label === '1' && floor === '0');
+  const arrived = seen.find(([label, floor]) => label === '1' && floor === '1');
+  expect(stepped).toBeDefined();
+  expect(arrived).toBeDefined();
+  // 25 VBLs at 50 Hz, give or take the frames the page publishes between.
+  expect(arrived![2] - stepped![2]).toBeCloseTo(0.5, 1);
   expect(errors).toEqual([]);
 });

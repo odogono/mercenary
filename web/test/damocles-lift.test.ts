@@ -2,12 +2,18 @@ import { beforeAll, describe, expect, test } from 'bun:test';
 
 import type { AssembledCatalogue } from '../src/catalogue/data.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
+import { attachmentOpenLimit } from '../src/damocles/selection.ts';
 import {
   DamoclesSession,
   type DamoclesContent
 } from '../src/damocles/session.ts';
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
-import { cellOf, erisSurfaceFrom } from '../src/damocles/world.ts';
+import {
+  cellOf,
+  erisSurfaceFrom,
+  pitchFromWord
+} from '../src/damocles/world.ts';
+import { intent } from '../src/gameCore/index.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
@@ -117,6 +123,62 @@ describe('the lift admits its keys only where the player is in one', () => {
   });
 });
 
+const VBL = 1 / 50;
+
+/// Advances one VBL at a time until `done`, and says how many VBLs that took.
+const vblsUntil = (session: DamoclesSession, done: () => boolean): number => {
+  for (let vbls = 1; vbls <= 2000; vbls += 1) {
+    session.advance(VBL);
+    if (done()) {
+      return vbls;
+    }
+  }
+  throw new Error('the ride did not finish in 2000 VBLs');
+};
+
+const riding = (session: DamoclesSession) => session.snapshot.structure?.ride;
+
+/// Asks for `floor` and plays the ride out, returning the VBLs from the key to the arrival.
+const ride = (session: DamoclesSession, floor: number): number => {
+  expect(session.rideLift(floor)).toEqual({ kind: 'admitted' });
+  return vblsUntil(session, () => riding(session) === null);
+};
+
+const LIFT_DOOR = 0x03_f4;
+
+/// In the lift car having walked in through its doorway, region 2, whose door `$3F4` stands
+/// open around the player, as it does in the State Office capture.
+const throughTheDoor = (): DamoclesSession => {
+  const saved = inLift().captureResume();
+  const door = content.surface.placements
+    .find(item => item.id === STATE_OFFICE)!
+    .selection!.structure.attachments.find(item => item.slot === LIFT_DOOR)!;
+  const session = new DamoclesSession(content, {
+    ...saved,
+    structure: {
+      ...saved.structure!,
+      attachments: saved.structure!.attachments.map(item =>
+        item.slot === LIFT_DOOR
+          ? { ...item, openUnits: attachmentOpenLimit(door) }
+          : item
+      ),
+      doorway: LIFT_DOOR
+    }
+  });
+  session.advance(VBL);
+  expect(openUnits(session)).toBe(attachmentOpenLimit(door));
+  session.drainEffects();
+  return session;
+};
+
+const openUnits = (session: DamoclesSession): number | undefined =>
+  session.snapshot.structure?.attachments.find(item => item.slot === LIFT_DOOR)
+    ?.openUnits;
+
+/// The port's door speed: #472 measured about 30 VBLs for this 32-unit door on the ST, but
+/// the rate per attachment is not decoded, so the port closes it at its one attachment rate.
+const DOOR_CLOSE_VBLS = Math.ceil((32 / (92 / 2.64)) * 50);
+
 describe('a ride in the State Office lift', () => {
   test('G, 2, B, 1 and back to G, with X and Z kept', () => {
     const session = inLift();
@@ -128,7 +190,7 @@ describe('a ride in the State Office lift', () => {
       { floor: 0, slot: 76 }
     ];
     for (const { floor, slot } of route) {
-      expect(session.rideLift(floor)).toEqual({ kind: 'rode' });
+      ride(session, floor);
       const { pose, structure } = session.snapshot;
       expect(structure?.floor).toBe(floor);
       expect(boundSlot(session)).toBe(slot);
@@ -146,7 +208,7 @@ describe('a ride in the State Office lift', () => {
     const session = inLift();
     for (const floor of [0, 1, 2, 10]) {
       if (floor !== session.snapshot.structure?.floor) {
-        expect(session.rideLift(floor)).toEqual({ kind: 'rode' });
+        ride(session, floor);
       }
       const before = session.captureResume();
       for (let unbound = 3; unbound <= 9; unbound += 1) {
@@ -161,12 +223,146 @@ describe('a ride in the State Office lift', () => {
     const ground = session.captureResume();
     expect(session.rideLift(0)).toEqual({ kind: 'refused' });
     expect(session.captureResume()).toEqual(ground);
-    expect(session.rideLift(2)).toEqual({ kind: 'rode' });
+    ride(session, 2);
     const upstairs = session.captureResume();
     expect(session.rideLift(2)).toEqual({ kind: 'refused' });
     expect(session.captureResume()).toEqual(upstairs);
   });
+});
 
+describe('the ride as #472 recovered it', () => {
+  test('G to 1: the door shuts, the label steps 25 VBLs later, and 25 more bring the arrival', () => {
+    const session = throughTheDoor();
+    const before = session.snapshot;
+    expect(session.rideLift(1)).toEqual({ kind: 'admitted' });
+    expect(riding(session)).toEqual({
+      countdown: 25,
+      destination: 1,
+      label: 0
+    });
+
+    // The door is pinned shut although the player stands inside its Proximity Box.
+    const shut = vblsUntil(session, () => openUnits(session) === 0);
+    expect(shut).toBe(DOOR_CLOSE_VBLS);
+    expect(riding(session)?.countdown).toBe(25);
+
+    const stepped = vblsUntil(session, () => session.labelFloor !== 0);
+    expect(stepped).toBe(25);
+    expect(session.labelFloor).toBe(1);
+    // Nothing but the label has moved: the player is on Floor 0, in the ground structure.
+    const during = session.snapshot;
+    expect(during.structure?.floor).toBe(0);
+    expect(boundSlot(session)).toBe(76);
+    expect(during.pose).toEqual(before.pose);
+    expect(session.drainEffects()).toEqual([]);
+
+    const arrived = vblsUntil(session, () => riding(session) === null);
+    expect(arrived).toBe(25);
+    const after = session.snapshot;
+    expect(after.structure?.floor).toBe(1);
+    expect(boundSlot(session)).toBe(78);
+    expect(after.pose.position).toEqual({
+      ...before.pose.position,
+      y: STOREY + eye()
+    });
+    expect(after.pose.heading).toBe(before.pose.heading);
+    expect(after.pose.pitch).toBe(
+      pitchFromWord(0x01_ff, content.doc.orientation)
+    );
+    // `$055B88`'s shared sound request, once, at the arrival.
+    expect(session.drainEffects()).toEqual([
+      { cue: 'take', type: 'sound-request' }
+    ]);
+
+    // The new Floor's door starts shut and opens around the player.
+    expect(openUnits(session)).toBe(0);
+    session.advance(1);
+    expect(openUnits(session)).toBeGreaterThan(0);
+  });
+
+  test('2 to B steps the label through 1 and G, 25 VBLs apart', () => {
+    const session = throughTheDoor();
+    ride(session, 2);
+    vblsUntil(session, () => openUnits(session) === 32);
+    expect(session.rideLift(10)).toEqual({ kind: 'admitted' });
+    const shut = vblsUntil(session, () => openUnits(session) === 0);
+    const labels: [number, number][] = [];
+    let vbls = shut;
+    while (riding(session) !== null) {
+      const label = session.labelFloor;
+      session.advance(VBL);
+      vbls += 1;
+      if (riding(session) !== null && session.labelFloor !== label) {
+        labels.push([vbls - shut, session.labelFloor]);
+      }
+    }
+    expect(labels).toEqual([
+      [25, 1],
+      [50, 0],
+      [75, 10]
+    ]);
+    expect(vbls - shut).toBe(100);
+    expect(session.snapshot.structure?.floor).toBe(10);
+    expect(session.snapshot.pose.position.y).toBe(10 * STOREY + eye());
+  });
+
+  test('a key mid-ride replaces the destination; the Floor the label shows is refused', () => {
+    const session = throughTheDoor();
+    expect(session.rideLift(2)).toEqual({ kind: 'admitted' });
+    vblsUntil(session, () => session.labelFloor === 1);
+    expect(session.rideLift(1)).toEqual({ kind: 'refused' });
+    expect(session.rideLift(10)).toEqual({ kind: 'admitted' });
+    expect(riding(session)).toMatchObject({ destination: 10, label: 1 });
+    vblsUntil(session, () => riding(session) === null);
+    expect(session.snapshot.structure?.floor).toBe(10);
+  });
+
+  test('the region holds for the whole ride', () => {
+    const session = throughTheDoor();
+    session.rideLift(1);
+    session.intent = intent({ walk: 1 });
+    vblsUntil(session, () => {
+      expect(session.snapshot.structure?.regionIndex).toBe(4);
+      return riding(session) === null;
+    });
+  });
+
+  test('a ride saved part-way resumes where it was', () => {
+    const played = throughTheDoor();
+    played.rideLift(2);
+    vblsUntil(played, () => played.labelFloor === 1);
+    const saved = played.captureResume();
+    expect(saved.structure?.ride).toMatchObject({ destination: 2, label: 1 });
+    const resumed = new DamoclesSession(content, saved);
+    expect(vblsUntil(resumed, () => riding(resumed) === null)).toBe(
+      vblsUntil(played, () => riding(played) === null)
+    );
+    expect(resumed.snapshot.pose).toEqual(played.snapshot.pose);
+    expect(resumed.snapshot.structure?.floor).toBe(2);
+  });
+
+  test('a saved ride outside a lift is refused', () => {
+    const saved = standingIn(0).captureResume();
+    expect(
+      () =>
+        new DamoclesSession(content, {
+          ...saved,
+          structure: {
+            ...saved.structure!,
+            ride: { countdown: 25, destination: 1, label: 0 }
+          }
+        })
+    ).toThrow('saved lift ride does not match the bound structure');
+  });
+
+  test('with no doorway crossed there is no door to wait on', () => {
+    const session = inLift();
+    expect(session.snapshot.structure?.doorway).toBeNull();
+    expect(ride(session, 1)).toBe(50);
+  });
+});
+
+describe('outside a lift', () => {
   test('aboard there is no lift', () => {
     const session = inLift();
     // The board gate itself refuses in a region without bit 14, so the craft is restored aboard.

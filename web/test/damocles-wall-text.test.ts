@@ -112,9 +112,11 @@ const surface: ErisSurface = {
 };
 const bound = {
   attachments: [],
+  doorway: null,
   floor: 0,
   instanceId: 'test',
-  regionIndex: 0
+  regionIndex: 0,
+  ride: null
 };
 
 test('a wall text draws straight after the queue entry it rides on', () => {

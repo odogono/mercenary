@@ -127,6 +127,7 @@ const standingAt = (
                 openUnits: 0,
                 slot: attachment.slot
               })) ?? [],
+            doorway: null,
             floor: 0,
             instanceId: placement.id,
             regionIndex: insideCentralCellHalf(position, surface.grid)
@@ -135,7 +136,8 @@ const standingAt = (
                   pose,
                   of.doc.orientation.modelZ === 'negate'
                 )
-              : null
+              : null,
+            ride: null
           }
   } satisfies DamoclesSaveSnapshot);
 };

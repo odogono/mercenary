@@ -625,6 +625,11 @@ try {
     root['structureInstance'] = snapshot.structure?.instanceId ?? '';
     // The Floor the player stands on in that structure, 0 where none is bound.
     root['floor'] = String(snapshot.structure?.floor ?? 0);
+    // A Damocles Lift ride: the Floor the label shows, which steps during one, and the Floor
+    // asked for, empty when no ride is pending.
+    const ride = snapshot.structure?.ride ?? null;
+    root['floorLabel'] = String(ride?.label ?? snapshot.structure?.floor ?? 0);
+    root['rideDestination'] = ride === null ? '' : String(ride.destination);
     // The instance the player is aboard, empty on foot, so a browser pass can see a board land.
     root['occupancy'] =
       snapshot.occupancy.kind === 'aboard' ? snapshot.occupancy.instance : '';

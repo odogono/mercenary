@@ -79,9 +79,11 @@ const atSpaceport = (
           slot: attachment.slot
         })
       ),
+      doorway: null,
       floor: 0,
       instanceId: entrance.id,
-      regionIndex: null
+      regionIndex: null,
+      ride: null
     }
   });
 };
@@ -125,9 +127,11 @@ const atStructure = (
           slot: attachment.slot
         })
       ),
+      doorway: null,
       floor: 0,
       instanceId,
-      regionIndex: null
+      regionIndex: null,
+      ride: null
     }
   });
 };
