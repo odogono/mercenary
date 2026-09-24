@@ -97,22 +97,71 @@ const rewriteRecord = async (
 /// Save repeatedly until the stored record was taken in the phase the test is about. A Save is
 /// a console line, so which phase it lands in cannot be chosen in advance: a record is arriving
 /// for 36 frames of every 200, and the wait is 200 frames of every 1000.
+///
+/// The retries run against a deadline rather than a count: a quick browser can spend 25 saves
+/// inside the 200 frames before a wait begins. `save` is how one attempt is made, so a phase
+/// too short to hit by typing can bring its own.
 const saveDuring = async (
   page: Page,
   slot: 1 | 2 | 3,
   phase: (record: SavedRecord) => boolean,
-  attempts = 25
-): Promise<SavedRecord> => {
-  for (let attempt = 0; attempt < attempts; attempt += 1) {
+  save: () => Promise<void> = async () => {
     expect(await run(page, `save ${slot} confirm`)).toContain(
       `saved slot ${slot}`
     );
+  }
+): Promise<SavedRecord> => {
+  const deadline = Date.now() + 40_000;
+  while (Date.now() < deadline) {
+    await save();
     const record = await savedRecord(page, slot);
     if (phase(record)) {
       return record;
     }
   }
-  throw new Error(`no Save landed in the expected phase after ${attempts}`);
+  throw new Error('no Save landed in the expected phase within 40 seconds');
+};
+
+/// Save on the first frame a record is seen arriving over the row. Typing the line and waiting
+/// for the page to answer takes longer than the 36-frame arrival under load, so the line is
+/// typed into the console first and submitted from the page, on that frame, with the same
+/// `Enter` the console reads.
+const saveOnArrival = (page: Page, slot: 1 | 2 | 3) => async () => {
+  const input = page.locator('#console-input');
+  if (!(await input.evaluate(node => node === document.activeElement))) {
+    await page.keyboard.press('`');
+    await expect(input).toBeFocused();
+  }
+  await input.fill(`save ${slot} confirm`);
+  const log = page.locator('#console-log > *');
+  const before = await log.count();
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve, reject) => {
+        const frame = document.querySelector<HTMLElement>('#frame')!;
+        const field =
+          document.querySelector<HTMLInputElement>('#console-input')!;
+        const deadline = performance.now() + 20_000;
+        const tick = () => {
+          const pixels = Number(frame.dataset['damoclesScroll']);
+          if (pixels > 0 && pixels <= 64) {
+            field.dispatchEvent(
+              new KeyboardEvent('keydown', { bubbles: true, key: 'Enter' })
+            );
+            resolve();
+          } else if (performance.now() > deadline) {
+            reject(new Error('no record arrived within 20 seconds'));
+          } else {
+            requestAnimationFrame(tick);
+          }
+        };
+        tick();
+      })
+  );
+  await expect(log).not.toHaveCount(before);
+  expect((await log.allTextContents()).slice(before).join(' | ')).toContain(
+    `saved slot ${slot}`
+  );
 };
 
 test('the supported pickup runs the response once and parks', async ({
@@ -271,7 +320,8 @@ test('a Save round-trips the response at each of its phases', async ({
   const scrolling = await saveDuring(
     page,
     1,
-    record => record.snapshot.script.display.kind === 'scrolling'
+    record => record.snapshot.script.display.kind === 'scrolling',
+    saveOnArrival(page, 1)
   );
   expect(scrolling.snapshot.script.message).not.toBeNull();
   expect(await run(page, 'load 1')).toContain('restored slot 1');

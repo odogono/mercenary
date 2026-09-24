@@ -604,6 +604,9 @@ try {
   ): void => {
     const root = canvas.dataset;
     root['cell'] = `${snapshot.cell.x}-${snapshot.cell.z}`;
+    // Session time, so a browser pass can measure a speed per session second rather than per
+    // wall-clock second, which a loaded browser stretches.
+    root['elapsed'] = String(snapshot.elapsed);
     root['x'] = String(snapshot.pose.position.x);
     root['y'] = String(snapshot.pose.position.y);
     root['z'] = String(snapshot.pose.position.z);
