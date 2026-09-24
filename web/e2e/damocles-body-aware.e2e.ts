@@ -118,7 +118,11 @@ test('the console body switch moves Body, Pose and cell together', async ({
     page.locator('#panel-damocles [data-field=locationName]')
   ).toHaveText('VESTA');
 
-  expect(await run(page, 'switch gaea')).toContain('switched to gaea-ur-city');
+  // Gaea has two admitted Poses since #390 recovered the transporter's workspace, so the switch
+  // names the Pose rather than the Body.
+  expect(await run(page, 'switch gaea-ur-city-4-2')).toContain(
+    'switched to gaea-ur-city-4-2'
+  );
   await closeConsole(page);
   await expect(frame).toHaveAttribute('data-cell', '4-2');
 
@@ -148,7 +152,7 @@ test('a switched Body draws its own workspace', async ({ page }) => {
   await expect(frame).toHaveAttribute('data-triangles', '422');
   await expect(frame).toHaveAttribute('data-unresolved', '46');
 
-  expect(await run(page, 'switch gaea')).toContain('switched');
+  expect(await run(page, 'switch gaea-ur-city-4-2')).toContain('switched');
   await closeConsole(page);
   await expect(frame).toHaveAttribute('data-triangles', '521');
   await expect(frame).toHaveAttribute('data-unresolved', '0');
@@ -170,12 +174,13 @@ test('a declined switch leaves live play exactly as it was', async ({
   };
 
   // A Body with more than one admitted Pose, a Pose with no recovered origin, and a name that
-  // is neither. Each declines with a reason that names the problem.
+  // is neither. Each declines with a reason that names the problem. MIDAS stands in for the
+  // missing origin now that #390 recovered Gaea's transporter workspace.
   expect(await run(page, 'switch eris')).toContain(
     'eris-spaceport-onfoot, eris-transporter-11-8'
   );
-  expect(await run(page, 'switch gaea-transporter')).toContain(
-    'no recovered workspace origin'
+  expect(await run(page, 'switch midas')).toContain(
+    'midas has no recovered workspace origin'
   );
   expect(await run(page, 'switch tharsis')).toContain(
     "no Body or Pose named 'tharsis'"

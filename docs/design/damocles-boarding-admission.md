@@ -400,7 +400,10 @@ against the planner. Neither readout changes behaviour.
 ### Remaining limitations
 
 - **This is confirmation, not proof.** The deterministic suites remain the authority.
-- **Four browser tests outside this pass fail on `main` as well.** Three in
-  `damocles-body-aware.e2e.ts` expect Gaea to have one admitted Pose, but it now has two
-  (`gaea-transporter`, `gaea-ur-city-4-2`). One in `damocles.e2e.ts` expects the eye clamped at
-  NAV 09-09. They fail identically on `f131d6c` without this change, and are not fixed here.
+- **Four browser tests outside this pass were failing on `main`, and are fixed alongside it.**
+  Three in `damocles-body-aware.e2e.ts` still expected Gaea to have one admitted Pose. It has had
+  two since [#390](https://github.com/odogono/mercenary/pull/390) recovered the transporter's
+  workspace, so they now switch to `gaea-ur-city-4-2` by name and use `midas` for the Pose with
+  no recovered origin. The NAV 09-09 door walk in `damocles.e2e.ts` timed the leaf against the
+  wall clock, so it failed whenever a loaded browser advanced session time more slowly. Its
+  waits now allow for that load.
