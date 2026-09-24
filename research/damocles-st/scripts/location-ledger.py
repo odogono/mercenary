@@ -86,6 +86,16 @@ BODY_STEP_SHIFT = 18
 BODY_STEPS = 0x400
 BODY_Z_BIAS = 0x100
 
+# The day/night terminator at $050562 (#494, #497). $0062EA + 4*body is the Body's
+# rotation accumulator, which the VBL handler advances by the rate the catalogue
+# publishes; the surface pass adds its high word to $7A1E, masked to ten bits, so one
+# turn is $04000000. $79BE
+# is the Body's sub-stellar longitude, written once on arrival at $04EA30 as a table
+# atan2 of the Body's centre, and $7A4E is the terminator's own day flag.
+BODY_TURN = 0x62EA
+SUB_STELLAR_LONGITUDE = 0x79BE
+DAYLIGHT = 0x7A4E
+
 CELL_UNITS = 65536
 CELLS_PER_AXIS = 16
 YAW_UNITS_PER_TURN = 1024
@@ -305,6 +315,14 @@ def read_pose(label: str, path: Path) -> dict:
             f"({derived['stepX']}, {derived['stepZ']})"
         )
     pose['bodyCoordinate'] = derived
+    # The terminator is derived from the turn and the sub-stellar longitude, and
+    # refused where it disagrees with the engine's own day flag.
+    pose['bodyTurn'] = u32(ram, BODY_TURN + selector)
+    pose['subStellarLongitude'] = u16(ram, SUB_STELLAR_LONGITUDE)
+    lit = daylight(pose['subStellarLongitude'], pose['bodyTurn'], derived['stepX'], derived['stepZ'])
+    if lit != bool(u16(ram, DAYLIGHT)):
+        raise ValueError(f'{label}: the terminator disagrees with the engine day flag ${u16(ram, DAYLIGHT):04X}')
+    pose['daylight'] = lit
 
     cell = u16(ram, CELL_WORD)
     if cell > 0xFF:
@@ -341,6 +359,13 @@ def read_pose(label: str, path: Path) -> dict:
         'not anchored to one.'
     )
     return pose
+
+
+def daylight(sub_stellar_longitude: int, body_turn: int, step_x: int, step_z: int) -> bool:
+    """$050562: day where the observer's System longitude is a quarter turn or more from
+    the sub-stellar longitude, bit 9 of the biased latitude (``stepZ``) inverting the answer."""
+    longitude = (step_x + (body_turn >> 16)) % BODY_STEPS
+    return bool((((sub_stellar_longitude - longitude + 0x100) & 0x200) + step_z) & 0x200)
 
 
 def body_coordinate(position_x: int, position_z: int) -> dict:
@@ -393,7 +418,7 @@ def render_ledger(ledger: dict) -> str:
 
 def render_poses(poses: list[dict]) -> str:
     lines = [
-        f"{'id':<24}{'body':<9}{'cell':>6}{'yaw':>7}{'bearing':>10}{'nav':>9}  position"
+        f"{'id':<24}{'body':<9}{'cell':>6}{'yaw':>7}{'bearing':>10}{'nav':>9}{'sky':>7}  position"
     ]
     for pose in poses:
         cell = '—' if pose['cell'] is None else f"${pose['cell']:02X}"
@@ -402,7 +427,8 @@ def render_poses(poses: list[dict]) -> str:
         lines.append(
             f"{pose['id']:<24}{pose['body']:<9}{cell:>6}{yaw:>7}"
             f"{bearing_degrees(pose['yaw']):>9.2f}°"
-            f"{pose['bodyCoordinate']['readout']:>9}  "
+            f"{pose['bodyCoordinate']['readout']:>9}"
+            f"{'day' if pose['daylight'] else 'night':>7}  "
             f"{position['x']}, {position['y']}, {position['z']}"
         )
     return '\n'.join(lines)
@@ -430,6 +456,8 @@ def published_pose(pose: dict, names: dict[str, str]) -> dict:
         'onFoot': pose['onFoot'],
         'position': pose['position'],
         'yaw': pose['yaw'],
+        'bodyTurn': pose['bodyTurn'],
+        'subStellarLongitude': pose['subStellarLongitude'],
         'cell': pose['cell'],
         'localCell': pose.get('localCell'),
         'workspaceOrigin': pose.get('workspaceOrigin'),
@@ -468,6 +496,12 @@ def payload_document(poses: list[dict], catalogue: dict) -> dict:
                 'modulo $0400, rising clockwise.',
                 'The yaw word is published raw and carries bits above $03FF; only its low ten '
                 'bits are the bearing, as the existing Eris presentation document already assumes.',
+                'bodyTurn is the Body\'s rotation accumulator at $0062EA + 4 x body, one turn '
+                'every $04000000, and subStellarLongitude is $79BE, the Body\'s sub-stellar longitude in '
+                'the same 1024-step angle as the yaw. Together with the position they decide the '
+                'terminator at $050562; each pose\'s answer agrees with the engine day flag $7A4E. '
+                'The sub-stellar longitude is a table atan2 of the Body\'s centre and is read, '
+                'not recomputed; on DAMOCLES, whose centre moves, it is the value its arrival wrote.',
                 'The cell is read from the engine cell word $7B5C, the same word the resident '
                 'object and object-drop matchers compare against. Where the body has a recovered '
                 '16x16 workspace origin, the camera longwords reproduce that cell independently '

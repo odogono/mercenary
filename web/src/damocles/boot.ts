@@ -652,6 +652,8 @@ try {
     // triangle count that also moves with the view.
     root['drawn'] = drawnPlacements.join(' ');
     root['unresolved'] = String(snapshot.surface.unresolvedCount);
+    // The terminator's answer, so a browser pass can say which sky and palette half it expects.
+    root['daylight'] = String(snapshot.daylight);
   };
   const draw = (): void => {
     // The surface comes from the Session Snapshot rather than the presentation document, so a
@@ -667,7 +669,8 @@ try {
         ...snapshot.briefcaseStore,
         ...snapshot.residence.map(item => item.instance)
       ],
-      slot => session.carriesSlot(slot)
+      slot => session.carriesSlot(slot),
+      snapshot.daylight
     );
     const { castShadows, presentationPreset } = preferences.current();
     const shadowEdge = castShadows ?? DEFAULT_CAST_SHADOWS;

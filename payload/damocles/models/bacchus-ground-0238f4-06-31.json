@@ -161,6 +161,7 @@
             },
             {
               "colour": "#eeee22",
+              "dayColour": "#000000",
               "sourceColour": 32916,
               "vertices": [
                 51,
@@ -171,6 +172,7 @@
             },
             {
               "colour": "#eeee22",
+              "dayColour": "#000000",
               "sourceColour": 32916,
               "vertices": [
                 46,
@@ -181,6 +183,7 @@
             },
             {
               "colour": "#eeee22",
+              "dayColour": "#000000",
               "sourceColour": 32916,
               "vertices": [
                 47,
@@ -230,6 +233,7 @@
             },
             {
               "colour": "#eeee22",
+              "dayColour": "#000000",
               "sourceColour": 32916,
               "vertices": [
                 60,
@@ -240,6 +244,7 @@
             },
             {
               "colour": "#eeee22",
+              "dayColour": "#000000",
               "sourceColour": 32916,
               "vertices": [
                 55,
@@ -250,6 +255,7 @@
             },
             {
               "colour": "#eeee22",
+              "dayColour": "#000000",
               "sourceColour": 32916,
               "vertices": [
                 56,
@@ -299,6 +305,7 @@
             },
             {
               "colour": "#eeee22",
+              "dayColour": "#000000",
               "sourceColour": 32916,
               "vertices": [
                 69,
@@ -309,6 +316,7 @@
             },
             {
               "colour": "#eeee22",
+              "dayColour": "#000000",
               "sourceColour": 32916,
               "vertices": [
                 64,
@@ -319,6 +327,7 @@
             },
             {
               "colour": "#eeee22",
+              "dayColour": "#000000",
               "sourceColour": 32916,
               "vertices": [
                 65,

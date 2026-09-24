@@ -158,16 +158,17 @@ and a test in `research/damocles-st/tests/test_catalogue.py` holds that to a fre
 decode in the same palette for every published pair. Slot 37 leaves its byte zero and
 omits the table, so its two floors claim no palette.
 
-**Not resolved: the second palette.** `$7A0E` is a long, so its low word is `$7A10`.
+**The second palette, since resolved.** `$7A0E` is a long, so its low word is `$7A10`.
 `$050562`–`$0505AA` (the day/night terminator in
 [the Gamma System research](damocles-gamma-system.md)) copies `$7A14` into it when
 `$7A4E` is set and `$7A12` when it is clear. `$7A14` is the palette plus the offset
 word stored just before it. 31 of the 155 palettes `$D200` indexes have a non-zero offset, among
 them 66: the Metis capture has `$7A4E` = `$FFFF` and `$7A10` = `$DB74`, 24 bytes past
-`$DB5C`. The Catalogue resolves every palette at its base, as it always has. Entry 3
-reads `$222` in both halves of palette 66, so the Metis floor is `#444444` either way.
-Which half is day, and whether a model should carry both, is still open
-([#497](https://github.com/odogono/mercenary/issues/497)).
+`$DB5C`. Entry 3 reads `$222` in both halves of palette 66, so the Metis floor is
+`#444444` either way. [#497](https://github.com/odogono/mercenary/issues/497) settled
+that `$7A14` is the day half. `colour` stays the base, a `dayColour` beside it carries the
+day half where the two differ, and a Floor palette carries `dayColours`. See
+[the day/night terminator](damocles-day-night-terminator.md).
 
 ### The level domain is 0 to 10, and the game says so
 

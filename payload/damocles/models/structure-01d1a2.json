@@ -15,10 +15,12 @@
     "sceneColours": [
       {
         "colour": "#eeeeee",
+        "dayColour": "#000000",
         "sourceColour": 32898
       },
       {
         "colour": "#666666",
+        "dayColour": "#aaaaaa",
         "sourceColour": 32914
       }
     ],

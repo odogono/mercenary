@@ -50,7 +50,7 @@ describe('the authored Eris presentation document', () => {
     });
     expect(document.rendering.unresolvedModels).toBe('nothing');
     expect(document.camera.nearPlane).toBeLessThan(11);
-    expect(document.schemaVersion).toBe(7);
+    expect(document.schemaVersion).toBe(8);
     expect(document.time).toEqual({
       // The impact deadline a fresh game starts from, and the VBLs it spends on one of its
       // own seconds (#368, #208).
@@ -121,7 +121,7 @@ describe('the authored Eris presentation document', () => {
       'titleSlug should be damocles'
     );
     expect(() => readErisPresentation({ ...base, schemaVersion: 2 })).toThrow(
-      'schemaVersion should be 7'
+      'schemaVersion should be 8'
     );
     expect(() =>
       readErisPresentation({
@@ -145,15 +145,14 @@ describe('the authored Eris presentation document', () => {
     ).toThrow('lighting.ambientGround should be a lowercase six-digit colour');
   });
 
-  test('holds a colour to the palette entry it claims', async () => {
+  test('refuses a start turn or a camera outside its range', async () => {
     const base = await tracked();
-    const sky = base['sky'] as Record<string, unknown>;
+    const start = base['start'] as Record<string, unknown>;
+    // The sky is the Body's own now (#494): the document carries no sky block to claim one.
+    expect(() => readErisPresentation({ ...base, sky: {} })).toThrow();
     expect(() =>
-      readErisPresentation({ ...base, sky: { ...sky, colour: '#00ff00' } })
-    ).toThrow('sky.colour should match its palette entry');
-    expect(() =>
-      readErisPresentation({ ...base, sky: { ...sky, paletteIndex: 16 } })
-    ).toThrow('sky.paletteIndex should index the sixteen-entry palette');
+      readErisPresentation({ ...base, start: { ...start, bodyTurn: 2 ** 32 } })
+    ).toThrow('start.bodyTurn should be an unsigned longword');
     const camera = base['camera'] as Record<string, unknown>;
     expect(() =>
       readErisPresentation({

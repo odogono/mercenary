@@ -3123,6 +3123,7 @@
             },
             {
               "colour": "#eeeeee",
+              "dayColour": "#000000",
               "sourceColour": 32920,
               "sourceIndex": 5,
               "vertices": [

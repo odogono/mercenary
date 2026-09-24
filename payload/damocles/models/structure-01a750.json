@@ -83,6 +83,20 @@
             "#884444",
             "#eeeeee"
           ],
+          "dayColours": [
+            "#000000",
+            "#000000",
+            "#aa6666",
+            "#4488cc",
+            "#aa6666",
+            "#aaaaaa",
+            "#888888",
+            "#666666",
+            "#eeeeee",
+            "#882222",
+            "#884444",
+            "#000000"
+          ],
           "paletteIndex": 92
         }
       ],
@@ -1894,6 +1908,7 @@
             },
             {
               "colour": "#eeeeee",
+              "dayColour": "#000000",
               "sourceColour": 32918,
               "sourceIndex": 23,
               "vertices": [
@@ -1927,6 +1942,7 @@
             },
             {
               "colour": "#eeeeee",
+              "dayColour": "#000000",
               "sourceColour": 32898,
               "sourceIndex": 26,
               "vertices": [
@@ -1982,6 +1998,7 @@
             },
             {
               "colour": "#eeeeee",
+              "dayColour": "#000000",
               "sourceColour": 32898,
               "sourceIndex": 31,
               "vertices": [

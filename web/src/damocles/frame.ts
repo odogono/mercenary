@@ -1,4 +1,8 @@
-import { FLOOR_LABEL_CHARACTERS, type Mesh } from '../catalogue/data.ts';
+import {
+  FLOOR_LABEL_CHARACTERS,
+  type Mesh,
+  type Primitive
+} from '../catalogue/data.ts';
 import { triangulate } from '../catalogue/geometry.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import { Camera } from '../projection/index.ts';
@@ -75,8 +79,12 @@ interface Triangles {
 }
 
 /// Triangulate a Damocles Model once. The same eight models recur across Eris's placements,
-/// so the ear clipping is keyed by mesh and the frame reuses it.
-const triangulated = new WeakMap<Mesh, Triangles>();
+/// so the ear clipping is keyed by mesh and the frame reuses it. The corners are shared by both
+/// halves of the palette; the colours are kept per half.
+const triangulated = {
+  day: new WeakMap<Mesh, Triangles>(),
+  night: new WeakMap<Mesh, Triangles>()
+};
 const faceCorners = new WeakMap<object, WeakMap<object, number[] | null>>();
 
 const appendTriangles = (
@@ -94,8 +102,13 @@ const appendTriangles = (
   }
 };
 
-const trianglesOf = (mesh: Mesh): Triangles => {
-  const cached = triangulated.get(mesh);
+/// A primitive's colour in the half of the palette the terminator binds (#497).
+const litColour = (primitive: Primitive, daylight: boolean): string =>
+  daylight ? (primitive.dayColour ?? primitive.colour) : primitive.colour;
+
+const trianglesOf = (mesh: Mesh, daylight: boolean): Triangles => {
+  const halves = daylight ? triangulated.day : triangulated.night;
+  const cached = halves.get(mesh);
   if (cached !== undefined) {
     return cached;
   }
@@ -122,7 +135,7 @@ const trianglesOf = (mesh: Mesh): Triangles => {
       skipped += 1;
       continue;
     }
-    const colour = channels(face.colour);
+    const colour = channels(litColour(face, daylight));
     appendTriangles(indices, colours, faces, corners, colour, faceIndex);
     if (face.doubleSided === true) {
       const reversed: number[] = [];
@@ -133,7 +146,7 @@ const trianglesOf = (mesh: Mesh): Triangles => {
     }
   }
   const result = { colours, faces, indices, skipped };
-  triangulated.set(mesh, result);
+  halves.set(mesh, result);
   return result;
 };
 
@@ -384,7 +397,10 @@ export const planErisFrame = (
   structure: BoundStructureSnapshot | null = null,
   residents: readonly ErisPlacement[] = [],
   hiddenResidents: readonly string[] = [],
-  carriedSlot: CarriedSlot = () => false
+  carriedSlot: CarriedSlot = () => false,
+  /// The terminator's answer for the Pose (`$050562`): which half of the scene palette every
+  /// `$80xx` word is read through, and which of the Body's two sky words fills the sky.
+  daylight = false
 ): ErisFramePlan => {
   const camera = new Camera({
     farPlane: doc.camera.farPlane,
@@ -421,7 +437,16 @@ export const planErisFrame = (
   // plan queue (`$0596F0` → `$05A730`). That queue carries its own wall texts and insertions.
   // No ground record, island fill, road edge or object stream is drawn (#491).
   const enclosed = region !== undefined && (region.flags & 0x80_00) === 0;
-  const background = enclosed ? bound?.selection?.background : undefined;
+  // The scene colours are resolved through `$7A0E` when the structure is assembled
+  // (`$059DA2`), so the half they take is the one bound then. The port takes the current half,
+  // which differs only while the terminator crosses a player standing in one structure.
+  const enclosedBackground = enclosed
+    ? bound?.selection?.background
+    : undefined;
+  const background =
+    daylight && enclosedBackground?.day !== undefined
+      ? enclosedBackground.day
+      : enclosedBackground;
 
   // Land and sea, in the order the Working Authority paints them ($0597EC..$05983C). The base
   // plane is the Body's own colour and every island is filled over it — except while the
@@ -478,7 +503,7 @@ export const planErisFrame = (
     plane: 0 | 128,
     placement: ErisPlacement
   ): void => {
-    const triangles = trianglesOf(mesh);
+    const triangles = trianglesOf(mesh, daylight);
     skippedFaces += triangles.skipped;
     for (let i = 0; i < triangles.indices.length; i += 3) {
       const colour = triangles.colours[i / 3]!;
@@ -504,7 +529,7 @@ export const planErisFrame = (
         if (quad === null) {
           continue;
         }
-        const colour = channels(line.colour);
+        const colour = channels(litColour(line, daylight));
         for (const triangle of doubleSidedQuad(
           placed(quad[0], placement, negateZ),
           placed(quad[1], placement, negateZ),
@@ -535,7 +560,7 @@ export const planErisFrame = (
         emitWallText(mesh, mesh.wallTextPlane, placement);
         continue;
       }
-      const triangles = trianglesOf(mesh);
+      const triangles = trianglesOf(mesh, daylight);
       skippedFaces += triangles.skipped;
       for (let i = 0; i < triangles.indices.length; i += 3) {
         const colour = triangles.colours[i / 3]!;
@@ -563,7 +588,7 @@ export const planErisFrame = (
             if (quad === null) {
               continue;
             }
-            const colour = channels(line.colour);
+            const colour = channels(litColour(line, daylight));
             for (const triangle of doubleSidedQuad(
               placed(quad[0], placement, negateZ),
               placed(quad[1], placement, negateZ),
@@ -615,7 +640,17 @@ export const planErisFrame = (
   }
 
   return {
-    clear: channels(background?.ceiling ?? doc.sky.colour),
+    // Outside an enclosed region `$059638` fills the sky with `$7C86`, the Body's day or night
+    // word (#494). The VOID slot has no sky words and is not a surface a Session stands on, so
+    // it clears to black rather than to an invented sky.
+    clear: channels(
+      background?.ceiling ??
+        (surface.sky === null
+          ? '#000000'
+          : daylight
+            ? surface.sky.day.colour
+            : surface.sky.night.colour)
+    ),
     drawnPlacements,
     farPlane: doc.camera.farPlane,
     fillTriangleCount,

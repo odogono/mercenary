@@ -46,6 +46,7 @@ const besideKey = (soundPermitted = true): DamoclesSession => {
   return new DamoclesSession(
     loaded,
     {
+      bodyTurn: 0,
       briefcaseStore: [],
       carried: [],
       elapsed: 0,
@@ -96,6 +97,7 @@ const dynamicAtOrigin = (
   content = loaded
 ): DamoclesSession =>
   new DamoclesSession(content, {
+    bodyTurn: 0,
     briefcaseStore: [],
     carried: [...carried],
     elapsed: 0,
@@ -449,6 +451,7 @@ describe('ordinary Eris limo-key take and drop', () => {
     )!;
     const [x, _y, z] = sunshade.location!.position;
     const session = new DamoclesSession(loaded, {
+      bodyTurn: 0,
       briefcaseStore: [],
       carried: [],
       elapsed: 0,
@@ -487,6 +490,7 @@ describe('ordinary Eris limo-key take and drop', () => {
 
   test('rotates the head and drops the newly selected object', () => {
     const session = new DamoclesSession(loaded, {
+      bodyTurn: 0,
       briefcaseStore: [],
       carried: ['object-slot-183', 'object-slot-92'],
       elapsed: 0,
@@ -566,6 +570,7 @@ describe('ordinary Eris limo-key take and drop', () => {
       'object-slot-234'
     ];
     const overflow = new DamoclesSession(loaded, {
+      bodyTurn: 0,
       briefcaseStore: [],
       carried,
       elapsed: 0,

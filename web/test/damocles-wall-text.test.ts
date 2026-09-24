@@ -120,6 +120,7 @@ const surface: ErisSurface = {
   islands: [],
   placements: [placement],
   places: [],
+  sky: null,
   unresolvedCount: 0
 };
 const bound: BoundStructureSnapshot = {

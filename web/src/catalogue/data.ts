@@ -15,7 +15,17 @@ export type StructureView = (typeof STRUCTURE_VIEWS)[number];
 export const PROVENANCES = ['authored', 'derived', 'recovered'] as const;
 export type Provenance = (typeof PROVENANCES)[number];
 export interface Primitive {
+  /**
+   * The colour a `$80xx` word takes through the dark half of its scene palette, which `$050562`
+   * binds while the Body is dark; every other word's only colour.
+   */
   readonly colour: string;
+  /**
+   * The colour the same word takes through the palette's day half, the base plus the signed
+   * word stored before it, which `$050562` binds in `$7A10` while the Body is in daylight.
+   * Absent where the palette has one half or both halves agree.
+   */
+  readonly dayColour?: string;
   readonly doubleSided?: boolean;
   /** Scene point slots this ground primitive joins, placed or not. */
   readonly sceneSlots?: readonly number[];
@@ -85,6 +95,8 @@ export interface LevelBinding {
 }
 export interface FloorPalette {
   readonly colours: readonly (string | null)[];
+  /** The palette's day half for the same entries, where it changes any of them. */
+  readonly dayColours?: readonly (string | null)[];
   readonly paletteIndex: number;
 }
 export interface Evidence {
@@ -201,6 +213,7 @@ export interface Model {
   /** Background colours the frame loop installs for a cell, not wall colours. */
   readonly sceneColours?: readonly {
     readonly colour?: string;
+    readonly dayColour?: string;
     readonly sourceColour: number;
   }[];
   readonly slots: readonly number[];
@@ -269,6 +282,7 @@ export type RegionQueueEntry =
 export interface FloorLabel {
   readonly anchor: Point;
   readonly colour: string;
+  readonly dayColour?: string;
   readonly face: RegionQueueEntry;
   /** Present on a font-4 record: the font it draws in instead while the fallback holds. */
   readonly fallback?: FontFallback;
@@ -539,6 +553,10 @@ export interface ModelSummary {
   /** A support's top, where recovered: decides a Drop onto it. */
   readonly supportTop?: number | null;
 }
+export interface BodySky {
+  readonly day: { readonly colour: string; readonly sourceColour: number };
+  readonly night: { readonly colour: string; readonly sourceColour: number };
+}
 export interface Catalogue {
   readonly bodies: readonly {
     /**
@@ -549,6 +567,17 @@ export interface Catalogue {
     readonly bodySurface: {
       readonly baseColour: string;
       readonly extentCells: readonly [number, number];
+      /**
+       * What the VBL handler adds to the Body's rotation accumulator (`$835C + 4 * body`). The
+       * low ten bits of the accumulator's high word are the angle, so one turn is `$04000000`;
+       * the terminator at `$050562` adds that angle to the observer's longitude.
+       */
+      readonly rotationRate: number;
+      /**
+       * The two sky words at `$85DC + 4 * body`: the terminator puts `day` in `$7C86` while the
+       * Body is in daylight and `night` otherwise, and `$059638` fills the sky with it.
+       */
+      readonly sky: BodySky;
       readonly sourceColour: number;
       readonly wrapsX: boolean;
       readonly wrapsZ: boolean;
@@ -793,16 +822,24 @@ const levelBinding = (value: unknown): LevelBinding => {
       ? undefined
       : list(record['palettes']).map((entry): FloorPalette => {
           const palette = object(entry);
-          const colours = list(palette['colours']).map(colour => {
-            if (colour !== null && !/^#[\da-f]{6}$/i.test(string(colour))) {
-              fail('invalid floor palette colour');
-            }
-            return colour as string | null;
-          });
-          if (colours.length > 64) {
-            fail('a scene palette holds at most 64 entries');
+          const colours = paletteEntries(palette['colours']);
+          const dayColours =
+            palette['dayColours'] === undefined
+              ? undefined
+              : paletteEntries(palette['dayColours']);
+          if (
+            dayColours !== undefined &&
+            dayColours.some(
+              (colour, index) => (colour === null) !== (colours[index] == null)
+            )
+          ) {
+            fail('a palette day half names other entries than its night half');
           }
-          return { colours, paletteIndex: byte(palette['paletteIndex']) };
+          return {
+            colours,
+            ...(dayColours === undefined ? {} : { dayColours }),
+            paletteIndex: byte(palette['paletteIndex'])
+          };
         });
   for (const floor of floors) {
     if (
@@ -820,6 +857,32 @@ const levelBinding = (value: unknown): LevelBinding => {
     ...(palettes === undefined ? {} : { palettes }),
     tableAddress: integer(record['tableAddress'])
   };
+};
+
+/// One half of a published scene palette: a colour per entry, null where nothing names it.
+const paletteEntries = (value: unknown): (string | null)[] => {
+  const colours = list(value).map(colour => {
+    if (colour !== null && !/^#[\da-f]{6}$/i.test(string(colour))) {
+      fail('invalid floor palette colour');
+    }
+    return colour as string | null;
+  });
+  if (colours.length > 64) {
+    fail('a scene palette holds at most 64 entries');
+  }
+  return colours;
+};
+
+/// A day-half colour: absent, or a colour like any other.
+const optionalDayColour = (value: unknown): string | undefined => {
+  if (value === undefined) {
+    return undefined;
+  }
+  const colour = string(value);
+  if (!/^#[\da-f]{6}$/i.test(colour)) {
+    fail('invalid day colour');
+  }
+  return colour;
 };
 
 const mesh = (value: unknown, allowEmpty = false): Mesh => {
@@ -842,6 +905,7 @@ const mesh = (value: unknown, allowEmpty = false): Mesh => {
       if (!/^#[\da-f]{6}$/i.test(colour)) {
         fail('invalid colour');
       }
+      const dayColour = optionalDayColour(p['dayColour']);
       if (
         p['doubleSided'] !== undefined &&
         typeof p['doubleSided'] !== 'boolean'
@@ -851,6 +915,7 @@ const mesh = (value: unknown, allowEmpty = false): Mesh => {
       return {
         ...(p['doubleSided'] === true ? { doubleSided: true } : {}),
         colour,
+        ...(dayColour === undefined ? {} : { dayColour }),
         sourceColour: integer(p['sourceColour']),
         ...(p['sceneSlots'] === undefined
           ? {}
@@ -1138,6 +1203,7 @@ const structureSelection = (value: unknown): StructureSelection => {
           const l = fields(value, [
             'anchor',
             'colour',
+            'dayColour',
             'face',
             'fallback',
             'font',
@@ -1161,9 +1227,11 @@ const structureSelection = (value: unknown): StructureSelection => {
           if (!/^#[\da-f]{6}$/i.test(colour)) {
             fail('invalid floor label colour');
           }
+          const dayColour = optionalDayColour(l['dayColour']);
           return {
             anchor: point(l['anchor']),
             colour,
+            ...(dayColour === undefined ? {} : { dayColour }),
             face: queueEntry(l['face']),
             ...(l['fallback'] === undefined
               ? {}
@@ -1277,10 +1345,12 @@ const modelRecord = (item: unknown): Model => {
       : {
           sceneColours: list(m['sceneColours']).map(value => {
             const entry = object(value);
+            const dayColour = optionalDayColour(entry['dayColour']);
             return {
               ...(entry['colour'] === undefined
                 ? {}
                 : { colour: string(entry['colour']) }),
+              ...(dayColour === undefined ? {} : { dayColour }),
               sourceColour: integer(entry['sourceColour'])
             };
           })
@@ -1453,9 +1523,24 @@ export const parseCatalogueDocument = (value: unknown): Catalogue => {
       if (extentCells.some(cells => cells <= 0)) {
         fail('body surface extent is empty');
       }
+      const rotationRate = integer(surface['rotationRate']);
+      if (rotationRate < 0 || rotationRate > 0xff_ff_ff_ff) {
+        fail('body rotation rate is not an unsigned longword');
+      }
+      const skyWord = (value: unknown) => {
+        const entry = object(value);
+        const colour = string(entry['colour']);
+        if (!/^#[\da-f]{6}$/i.test(colour)) {
+          fail('invalid body sky colour');
+        }
+        return { colour, sourceColour: unsignedWord(entry['sourceColour']) };
+      };
+      const sky = object(surface['sky']);
       bodySurface = {
         baseColour: string(surface['baseColour']),
         extentCells,
+        rotationRate,
+        sky: { day: skyWord(sky['day']), night: skyWord(sky['night']) },
         sourceColour: unsignedWord(surface['sourceColour']),
         wrapsX: boolean(surface['wrapsX']),
         wrapsZ: boolean(surface['wrapsZ'])

@@ -56,6 +56,7 @@ const record = () => ({
   savedAt: '2026-09-18T17:00:00Z',
   schemaVersion: DAMOCLES_SAVE_SCHEMA_VERSION,
   snapshot: {
+    bodyTurn: 0,
     briefcaseStore: [] as string[],
     carried: [] as string[],
     elapsed: 0,

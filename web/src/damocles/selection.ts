@@ -461,6 +461,7 @@ export const floorLabelMesh = (
   const [sx, sy] = label.scale;
   const primitive = (vertices: readonly number[]): Primitive => ({
     colour: label.colour,
+    ...(label.dayColour === undefined ? {} : { dayColour: label.dayColour }),
     sourceColour: label.sourceColour,
     vertices
   });

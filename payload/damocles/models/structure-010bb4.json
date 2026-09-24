@@ -35,6 +35,7 @@
           "faces": [
             {
               "colour": "#eeeeee",
+              "dayColour": "#00aaaa",
               "doubleSided": true,
               "sourceColour": 32896,
               "sourceIndex": 0,
@@ -59,6 +60,7 @@
             },
             {
               "colour": "#eeee22",
+              "dayColour": "#00aaaa",
               "doubleSided": true,
               "sourceColour": 32898,
               "sourceIndex": 2,
@@ -83,6 +85,7 @@
             },
             {
               "colour": "#00aaaa",
+              "dayColour": "#000000",
               "doubleSided": true,
               "sourceColour": 32924,
               "sourceIndex": 4,
@@ -107,6 +110,7 @@
             },
             {
               "colour": "#00aaaa",
+              "dayColour": "#000000",
               "doubleSided": true,
               "sourceColour": 32924,
               "sourceIndex": 6,
@@ -131,6 +135,7 @@
             },
             {
               "colour": "#eeee22",
+              "dayColour": "#00aaaa",
               "doubleSided": true,
               "sourceColour": 32898,
               "sourceIndex": 8,
@@ -155,6 +160,7 @@
             },
             {
               "colour": "#eeeeee",
+              "dayColour": "#00aaaa",
               "doubleSided": true,
               "sourceColour": 32896,
               "sourceIndex": 10,
@@ -167,6 +173,7 @@
             },
             {
               "colour": "#eeee22",
+              "dayColour": "#00aaaa",
               "doubleSided": true,
               "sourceColour": 32898,
               "sourceIndex": 11,
