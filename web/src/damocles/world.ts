@@ -119,6 +119,8 @@ export interface ErisSurface {
   /// its sea, on a Body that has one. Null on the VOID slot, which is not a surface.
   readonly baseColour: string | null;
   readonly body: { readonly id: string; readonly name: string };
+  /// The Catalogue's Floor Label glyphs by font, which every Floor Label record draws from.
+  readonly floorLabelGlyphs: Catalogue['floorLabelGlyphs'];
   readonly grid: ErisGrid;
   /// This Body's island records, in list order. Empty where the Body carries none.
   readonly islands: readonly ErisIsland[];
@@ -649,6 +651,7 @@ export const erisSurfaceFrom = (
   return {
     baseColour: body.bodySurface?.baseColour ?? null,
     body: { id: body.id, name: body.name },
+    floorLabelGlyphs: catalogue.floorLabelGlyphs,
     grid,
     islands: catalogue.islands
       .filter(island => island.body === body.id)

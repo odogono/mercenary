@@ -1,11 +1,15 @@
-import type { Mesh } from '../catalogue/data.ts';
+import { FLOOR_LABEL_CHARACTERS, type Mesh } from '../catalogue/data.ts';
 import { triangulate } from '../catalogue/geometry.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import { Camera } from '../projection/index.ts';
 import type { ErisPresentationDocument } from './documents.ts';
 import { classifyPosition, coastlineInBodyUnits } from './islands.ts';
 import type { BoundStructureSnapshot } from './save.ts';
-import { structureMeshes, type CarriedSlot } from './selection.ts';
+import {
+  structureMeshes,
+  type CarriedSlot,
+  type FloorLabelGlyphs
+} from './selection.ts';
 import {
   insideCentralCellHalf,
   withinDrawBound,
@@ -361,6 +365,18 @@ const islandFillTriangles = (
   return triangles;
 };
 
+/// The glyphs every Floor Label draws this frame. `$CD04` is one byte for the whole workspace,
+/// so each label shows the Floor the lift's label stands at: during a ride it steps through the
+/// Floors passed, before the destination binds (#473). Floor 0 outside any structure.
+export const floorLabelGlyphsOf = (
+  surface: ErisSurface,
+  structure: BoundStructureSnapshot | null
+): FloorLabelGlyphs => {
+  const character =
+    FLOOR_LABEL_CHARACTERS[structure?.ride?.label ?? structure?.floor ?? 0]!;
+  return font => surface.floorLabelGlyphs[String(font)]?.[character];
+};
+
 export const planErisFrame = (
   surface: ErisSurface,
   pose: Pose,
@@ -503,6 +519,7 @@ export const planErisFrame = (
       }
     }
   };
+  const floorLabelGlyph = floorLabelGlyphsOf(surface, structure);
   const emitPlacement = (placement: ErisPlacement): void => {
     const isBound = active && placement.id === structure?.instanceId;
     for (const mesh of structureMeshes(
@@ -511,7 +528,8 @@ export const planErisFrame = (
       negateZ,
       slot => (isBound ? (openUnits.get(slot) ?? 0) : 0),
       isBound ? structure.regionIndex : null,
-      carriedSlot
+      carriedSlot,
+      floorLabelGlyph
     )) {
       if (mesh.wallTextPlane !== undefined) {
         emitWallText(mesh, mesh.wallTextPlane, placement);

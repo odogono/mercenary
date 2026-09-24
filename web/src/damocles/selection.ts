@@ -1,6 +1,8 @@
 import type {
   Bounds,
   EntranceAttachment,
+  FloorLabel,
+  FloorLabelGlyph,
   Mesh,
   Primitive,
   RegionQueueEntry,
@@ -42,6 +44,10 @@ const wallTextMesh = (mesh: Mesh, plane: 0 | 128): StructureMesh => {
 /// Whether a resident slot is in the player's carried state.
 export type CarriedSlot = (slot: number) => boolean;
 const nothingCarried: CarriedSlot = () => false;
+/// The glyph the Floor Label at `$CD04` shows now in a font, or undefined where the Catalogue
+/// carries none for that font.
+export type FloorLabelGlyphs = (font: number) => FloorLabelGlyph | undefined;
+const noFloorLabel: FloorLabelGlyphs = () => undefined;
 
 /** A world position expressed in a placement's model-local frame. */
 export const structureLocalPosition = (
@@ -290,7 +296,8 @@ export const structureMeshes = (
   negateZ: boolean,
   openUnits: AttachmentUnits = closedAttachment,
   selectedRegionIndex?: number | null,
-  carriedSlot: CarriedSlot = nothingCarried
+  carriedSlot: CarriedSlot = nothingCarried,
+  floorLabelGlyphs: FloorLabelGlyphs = noFloorLabel
 ): readonly StructureMesh[] => {
   const fallback = () => (placement.mesh === undefined ? [] : [placement.mesh]);
   const selection = placement.selection;
@@ -310,11 +317,20 @@ export const structureMeshes = (
     return fallback();
   }
   // `$05A41A` appends each wall text straight after the queue entry it rides on, so it draws
-  // exactly when and where that entry does.
-  const wallTexts = (entry: RegionQueueEntry): StructureMesh[] =>
-    (structure.wallTexts ?? [])
+  // exactly when and where that entry does. A Floor Label is wall text too, in list order with
+  // the literal records; no record carries both kinds on one face.
+  const wallTexts = (entry: RegionQueueEntry): StructureMesh[] => [
+    ...(structure.floorLabels ?? []).flatMap(label => {
+      if (!sameQueueEntry(label.face, entry)) {
+        return [];
+      }
+      const glyph = floorLabelGlyphs(floorLabelFont(label, carriedSlot));
+      return glyph === undefined ? [] : [floorLabelMesh(label, glyph)];
+    }),
+    ...(structure.wallTexts ?? [])
       .filter(text => sameQueueEntry(text.face, entry))
-      .map(text => wallTextMesh(wallTextGlyphs(text, carriedSlot), text.plane));
+      .map(text => wallTextMesh(wallTextGlyphs(text, carriedSlot), text.plane))
+  ];
   const plan = region.queue.flatMap((entry): StructureMesh[] => {
     if (entry.kind === 'attachment') {
       const attachment = structure.attachments.find(
@@ -410,3 +426,54 @@ export const wallTextGlyphs = (
   text.fallback !== undefined && text.fallback.whileCarried.some(carriedSlot)
     ? text.fallback.mesh
     : text.mesh;
+
+/// The font a Floor Label draws in: font 4's fallback while `$054016` finds a named slot carried.
+export const floorLabelFont = (
+  label: FloorLabel,
+  carriedSlot: CarriedSlot
+): number =>
+  label.fallback !== undefined && label.fallback.whileCarried.some(carriedSlot)
+    ? label.fallback.font
+    : label.font;
+
+const floorLabelMeshes = new WeakMap<
+  FloorLabel,
+  WeakMap<FloorLabelGlyph, StructureMesh>
+>();
+/// One Floor Label glyph placed as `$059EB6` places the record: point (x, y) at
+/// `anchor + (x * sx, y * sy, 0)` on the XY plane, or `anchor + (0, y * sy, x * sx)` on ZY.
+/// The label is one character, so the advance never applies. Cached per record and glyph, so
+/// the frame's triangulation cache keeps hitting while the label holds.
+export const floorLabelMesh = (
+  label: FloorLabel,
+  glyph: FloorLabelGlyph
+): StructureMesh => {
+  let byGlyph = floorLabelMeshes.get(label);
+  if (byGlyph === undefined) {
+    byGlyph = new WeakMap();
+    floorLabelMeshes.set(label, byGlyph);
+  }
+  const cached = byGlyph.get(glyph);
+  if (cached !== undefined) {
+    return cached;
+  }
+  const [ax, ay, az] = label.anchor;
+  const [sx, sy] = label.scale;
+  const primitive = (vertices: readonly number[]): Primitive => ({
+    colour: label.colour,
+    sourceColour: label.sourceColour,
+    vertices
+  });
+  const mesh: StructureMesh = {
+    faces: (glyph.faces ?? []).map(primitive),
+    lines: (glyph.lines ?? []).map(primitive),
+    vertices: glyph.points.map(([x, y]) =>
+      label.plane === 0
+        ? [ax + x * sx, ay + y * sy, az]
+        : [ax, ay + y * sy, az + x * sx]
+    ),
+    wallTextPlane: label.plane
+  };
+  byGlyph.set(glyph, mesh);
+  return mesh;
+};

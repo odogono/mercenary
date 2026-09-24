@@ -213,6 +213,10 @@ empty afterwards: the payload reproduces byte for byte.
 
 ## For #477
 
+[#477](https://github.com/odogono/mercenary/issues/477) delivered this: `structureMeshes`
+places the glyph `floorLabelGlyphsOf` picks for the session's label, and the frame draws it
+as it draws other wall text.
+
 - Draw each `floorLabels` entry of the bound structure right after its `face` whenever a
   region queue draws that entry. Use the glyph of the session Floor's label in the entry's
   font, placed by the rule above, in the entry's colour.

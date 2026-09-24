@@ -73,6 +73,7 @@ const placement = (
 const surfaceOf = (placements: readonly ErisPlacement[]): ErisSurface => ({
   baseColour: '#000066',
   body: { id: 'body-11', name: 'ERIS' },
+  floorLabelGlyphs: {},
   grid: { cellsPerAxis: 16, cellUnits: 65_536, origin: { x: 64, z: 128 } },
   islands: [],
   placements,
