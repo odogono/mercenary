@@ -471,8 +471,8 @@ The character a Damocles Lift shows for a Floor: `G` for Floor 0, `B` for Floor 
 _Avoid_: Basement, floor number
 
 **Damocles Lift**:
-The control inside a structure that changes the player's Floor. It reaches only the Floors its Floor Table binds and refuses every other.
-_Avoid_: Elevator, Lift Journey
+A structure region whose flags mark it as a lift, where a player on foot changes Floor by key. It reaches only the Floors its Floor Table binds, and refuses every other Floor and the one its Floor Label already shows. It rides in the order B, G, 1 … 9, so Floor 10 lies just below Floor 0 on the ride, though it is the highest Floor in the structure's coordinates.
+_Avoid_: Elevator, Lift Journey, lift object, lift attachment
 
 **Structure Workspace**:
 The single bound current-cell Damocles Instance whose plan, attachments and regions the Working Authority holds live. Region selection, the selected-region ±11 eye clamp and plan drawing apply only while the Pose is in the central half of that cell on both axes; attachment motion is deliberately broader and may finish re-closing that instance's leaves outside it.
