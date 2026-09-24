@@ -16,6 +16,7 @@ from damocleslab.core import (  # noqa: E402
     compare_reproducible_runs,
     extract_disassembly,
     extract_stable_ram,
+    format_hatari_key,
     parse_ram_ranges,
     parse_register_log,
     resolve_stick_bitmask,
@@ -80,6 +81,17 @@ class RegisterParseTests(unittest.TestCase):
         self.assertEqual(registers["PC"], 0x68582)
         self.assertEqual(registers["A6"], 0x68A82)
         self.assertEqual(stable_registers({**registers, "D5": 47, "D6": 1, "D7": 1})["A6"], 0x68A82)
+
+
+class HatariKeyTests(unittest.TestCase):
+    def test_pads_a_one_digit_scancode_so_hatari_does_not_read_a_character(self) -> None:
+        self.assertEqual(format_hatari_key(0x01), "01")
+        self.assertEqual(format_hatari_key(0x05), "05")
+
+    def test_leaves_longer_scancodes_and_key_names_alone(self) -> None:
+        self.assertEqual(format_hatari_key(57), "57")
+        self.assertEqual(format_hatari_key(0x30), "48")
+        self.assertEqual(format_hatari_key("a"), "a")
 
 
 class ScenarioValidationTests(unittest.TestCase):

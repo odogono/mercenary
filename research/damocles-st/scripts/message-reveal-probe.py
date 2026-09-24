@@ -72,7 +72,7 @@ from typing import Any
 LAB_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(LAB_ROOT))
 
-from damocleslab.core import JOYSTICK1_SOFTCOPY, LabError, validate_image  # noqa: E402
+from damocleslab.core import JOYSTICK1_SOFTCOPY, LabError, format_hatari_key, validate_image  # noqa: E402
 from damocleslab.laboratory import (  # noqa: E402
     WORK_ROOT,
     _fifo_send,
@@ -413,7 +413,7 @@ def _replay(
                         ],
                     )
                 elif kind in ("keydown", "keyup"):
-                    _fifo_send(handle, [f"hatari-event {kind} {action['scan']}"])
+                    _fifo_send(handle, [f"hatari-event {kind} {format_hatari_key(action['scan'])}"])
                 elif kind == "statesave":
                     _fifo_send(
                         handle,
@@ -474,7 +474,7 @@ def _hold_and_sample(
                 ],
             )
             for scan in KEYS_UNDER_TEST:
-                _fifo_send(handle, [f"hatari-event keydown {scan}"])
+                _fifo_send(handle, [f"hatari-event keydown {format_hatari_key(scan)}"])
                 time.sleep(0.05)
             t0 = time.monotonic()
             for index, offset in enumerate(HOLD_SAMPLES):
@@ -693,7 +693,7 @@ def run_case(name: str, roms_root: Path | None, settle: float) -> dict:
             time.sleep(settle)
             _fifo_send(handle, ["hatari-stop", arm, "hatari-cont"])
             for event in pre_events:
-                _fifo_send(handle, [f"hatari-event {event['kind']} {event['scan']}"])
+                _fifo_send(handle, [f"hatari-event {event['kind']} {format_hatari_key(event['scan'])}"])
                 time.sleep(0.1)
             started = _wait_for(first_stop, process, 60.0 if name == "clear" else 30.0)
             reached = _wait_for(sentinel, process, 300.0) if started else False

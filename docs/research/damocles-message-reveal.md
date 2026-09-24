@@ -230,6 +230,13 @@ the response ran to completion unchanged: message 2 and message 3 each reached c
 `$04` delay call ran its 200 frames, the clearing line reached counter 200, and the interpreter was
 back at the idle jump with its busy flag clear. Nothing was shortened, skipped or cancelled.
 
+The first run of this case, `message-reveal-keys-20260917T132426Z-1b9b746b`, held `1` instead
+of Escape. The probe sent make code `$01` as `keydown 1`, which Hatari reads as the host
+character `1`. It now sends `01`. The re-run `message-reveal-keys-20260924T151542Z-b261bf7a`
+holds a real Escape, and each of its nine samples matches the first run's message pointer,
+script program counter, busy flag and shorten flag. The reveal counters differ by at most five,
+which is sampling jitter.
+
 That case **samples rather than traces**, at nine points across the response. The trace mechanism
 could not be used for it: in this harness a breakpoint chain does not arm once inputs are held, and
 any command reaching the command FIFO around the arm wedges the debugger before the first stop
@@ -437,6 +444,7 @@ hashes and the toolchain.
 |---|---|
 | `message-reveal-reveal-20260917T132316Z-bca08269` | `692f2cc59f79a1c579eb172cb9909b662139a72061a9699c8cc596c1f63e3554` |
 | `message-reveal-keys-20260917T132426Z-1b9b746b` | `d35d4f2dc0cce59b1d766a5052847aba15420f01110e6536323bb430aa2c6a1f` |
+| `message-reveal-keys-20260924T151542Z-b261bf7a` (Escape corrected) | `cdaef1972c2068221e22ddbf348021772757f0b175244fb8573e10f834371a0f` |
 | `message-reveal-indexed-20260917T132615Z-a6b8b6b5` | `6cc21eb2ec36bdb5c81b247885191130484b2670b2ba44c60a7ef93fde6bcbc7` |
 | `message-reveal-clear-20260917T132729Z-21784d96` | `00e91a5c9693f276987b96cef5639a24e126e238b3fdac125c2794b82f815c29` |
 | `message-reveal-system-20260917T132846Z-cc35752d` | `21a59d64909ba2416823f0ea26d741dcf3c276adfd385b5adac54b79796c7446` |

@@ -45,7 +45,7 @@ from typing import Any
 LAB_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(LAB_ROOT))
 
-from damocleslab.core import LabError, file_hash, validate_image  # noqa: E402
+from damocleslab.core import LabError, file_hash, format_hatari_key, validate_image  # noqa: E402
 from damocleslab.laboratory import (  # noqa: E402
     WORK_ROOT,
     _fifo_send,
@@ -62,7 +62,7 @@ STICK = 0x79C2
 UP = 0x01
 CAMERA_X = 0x7A92
 CAMERA_Z = 0x7A9A
-NUMBER_SCANCODES = {1: 2, 4: 5, 9: 10}
+NUMBER_SCANCODES = {1: 0x02, 4: 0x05, 9: 0x0A}  # ST make codes for the digit keys
 DEFAULT_SNAPSHOT_ROOT = LAB_ROOT / "snapshots"
 SNAPSHOTS = {
     "clock": "eris-spaceport-onfoot.sav",
@@ -223,9 +223,9 @@ def _observe(
                     assert key is not None
                     scan = NUMBER_SCANCODES[key]
                     # Number keys only take if the game loop is running.
-                    _fifo_send(fifo, [f"hatari-event keydown {scan}"])
+                    _fifo_send(fifo, [f"hatari-event keydown {format_hatari_key(scan)}"])
                     time.sleep(0.12)
-                    _fifo_send(fifo, [f"hatari-event keyup {scan + 128}"])
+                    _fifo_send(fifo, [f"hatari-event keyup {format_hatari_key(scan)}"])
                     time.sleep(max(1.2, vbls / 50.0))
                     _fifo_send(
                         fifo,

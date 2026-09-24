@@ -116,9 +116,14 @@ _STICK_BITMASKS = {
 
 
 def format_hatari_key(key: str | int) -> str:
-    """Render a scenario key as a hatari-event argument."""
+    """Render a scenario key as a hatari-event argument.
+
+    Hatari reads a one-character argument as a host character, not a scancode:
+    ``keydown 3`` presses the ``3`` key (ST make code ``$04``). An integer is
+    therefore always sent with at least two digits, so ``3`` becomes ``03``.
+    """
     if isinstance(key, int):
-        return str(key)
+        return f"{key:02d}"
     return key
 
 
