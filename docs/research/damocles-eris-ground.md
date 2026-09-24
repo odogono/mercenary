@@ -580,6 +580,33 @@ instead, so Capital Spaceport's `$809A` → `#AAAAAA` and `$808E` → `#4488CC` 
 note that the second of the pair "is the sky blue behind it in the captured
 display" is withdrawn.
 
+### Inside an enclosed region
+
+[#491](https://github.com/odogono/mercenary/issues/491) reads the other branch.
+`$7B34` is the flags word of the bound structure's current region. `$0595F6`
+tests its bit 15:
+
+- **Bit 15 set** takes `$059622`, the branch above: sky, the Body's ground word,
+  the object stream with the bound structure inside it, the ground records and
+  the road edges (`$0596D0`–`$0596EC`). The Capital Spaceport's regions (`$8000`,
+  `$C000`) and the State Office lobby (Floor 0 region 0, `$8000`) are drawn this way.
+- **Bit 15 clear** is an enclosed region. `$059600` writes `$7C82` to colour 8
+  and `$059606` writes `$7C84` to the split word, so the fill reads as the
+  structure's first scene colour above the horizon and its second below. These
+  are the two words after the record's heights, resolved through the scene palette
+  at `$059DA2`–`$059DC6`, and published as `sceneColours`. `$05961E` then jumps to
+  `$0596F0`, which runs `$05A730` only: the interior scene reset falls into the
+  plan renderer `$05A744`. That renderer walks the region queue at `$05A7DC`, and
+  within it the wall texts (`$053FAC`) and object insertions (`$0531C2` →
+  `$053232`). No detail, object stream, ground record, island fill or road edge
+  is drawn.
+
+So an enclosed room's floor and ceiling are these two fills, not faces. Every
+region on the State Office's Floors 1, 2 and 10 is enclosed. Floor 10's colours
+are `#eeeeee` for the ceiling and `#006666` for the floor. The port clears to the
+first and draws its eye-relative base plane in the second, whose horizon is at
+eye level as the split is for a level on-foot view.
+
 Either way the conclusion about geometry is unchanged and now covers both bands:
 the background has **no model-space geometry to recover** above or below the
 horizon.
