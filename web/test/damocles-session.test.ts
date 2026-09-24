@@ -79,6 +79,7 @@ const atSpaceport = (
           slot: attachment.slot
         })
       ),
+      floor: 0,
       instanceId: entrance.id,
       regionIndex: null
     }
@@ -124,6 +125,7 @@ const atStructure = (
           slot: attachment.slot
         })
       ),
+      floor: 0,
       instanceId,
       regionIndex: null
     }

@@ -27,6 +27,7 @@ export type ConsoleCommand =
   | { readonly kind: 'time' }
   | { readonly kind: 'setTime'; readonly secondsOfDay: number }
   | { readonly kind: 'dropObject'; readonly selector?: string }
+  | { readonly floor: number; readonly kind: 'floor' }
   | { readonly kind: 'getObject'; readonly slot?: number }
   | {
       readonly height?: number;
@@ -249,6 +250,11 @@ export const parseConsoleCommand = (
         throw new Error('switch takes one Pose id, or a Body name');
       }
       return { kind: 'switchBody', name: rest[0]! };
+    case 'floor':
+      if (rest.length !== 1) {
+        throw new Error('floor takes one Floor');
+      }
+      return { floor: integer(rest[0]!, 'a Floor'), kind: 'floor' };
     case 'where':
       if (rest.length !== 0) {
         throw new Error('where takes no arguments');
@@ -457,6 +463,8 @@ export const executeConsoleCommand = (
       return HELP;
     case 'switchBody':
       return ['Targ has one Body'];
+    case 'floor':
+      return ['Targ has no Floors'];
     case 'where': {
       const snapshot = deps.session().snapshot;
       const { heading, pitch, position, roll } = snapshot.player;

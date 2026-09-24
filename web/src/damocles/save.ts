@@ -46,7 +46,11 @@ import type { Pose } from './world.ts';
 /// Version 6 carries Occupancy: the instance the player is aboard, whose Object Residence is
 /// `occupied` (#417). A schema-5 record cannot say whether its player was aboard, so it is
 /// refused whole rather than defaulted to on foot.
-export const DAMOCLES_SAVE_SCHEMA_VERSION = 6 as const;
+///
+/// Version 7 carries the bound structure's Floor (#474). A schema-6 record cannot say which
+/// Floor its player stood on, and a Floor is never derived from the Pose's height, so it is
+/// refused whole rather than defaulted to Floor 0.
+export const DAMOCLES_SAVE_SCHEMA_VERSION = 7 as const;
 export const DAMOCLES_DESTINATION = 'damocles' as const;
 
 /// What a restore must match exactly before it may continue this game (ADR 0026).
@@ -68,9 +72,15 @@ export interface BoundStructureSnapshot {
     readonly openUnits: number;
     readonly slot: number;
   }[];
+  /// The Floor the player stands on, 0 to 10. The attachments and region are the structure's
+  /// that this Floor binds, so a restore binds the Floor before it checks them.
+  readonly floor: number;
   readonly instanceId: string;
   readonly regionIndex: number | null;
 }
+
+/// The highest Floor: the Floor Table's level 10, which the lift labels `B`.
+export const HIGHEST_FLOOR = 10;
 
 export interface DamoclesSaveSnapshot {
   // Both continuation fields may be omitted together and are then normalized to empty;
@@ -880,8 +890,12 @@ export const decodeDamoclesSave = (
     const bound = object(snapshot['structure'], 'snapshot.structure');
     const instanceId = bound['instanceId'];
     const regionIndex = bound['regionIndex'];
+    const floor = bound['floor'];
     if (
       typeof instanceId !== 'string' ||
+      !Number.isInteger(floor) ||
+      (floor as number) < 0 ||
+      (floor as number) > HIGHEST_FLOOR ||
       instanceId === '' ||
       (regionIndex !== null &&
         (!Number.isInteger(regionIndex) ||
@@ -915,6 +929,7 @@ export const decodeDamoclesSave = (
     }
     structure = {
       attachments,
+      floor: floor as number,
       instanceId,
       regionIndex: regionIndex as number | null
     };

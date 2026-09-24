@@ -202,6 +202,20 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Changed
 
+- **Damocles Saves and Session Resumes remember the player's Floor. The
+  Damocles Save Snapshot goes from schema 6 to 7, so existing Damocles Saves
+  and Session Resumes are refused.** The session tracks the Floor the player
+  stands on in the bound structure, 0 outside a multi-Floor structure. It binds
+  the structure that Floor's Floor Table entry names, so the Eris State Office
+  binds slot 78 on Floors 1 and 2 and slot 79 on Floor 10. Until the lift is
+  ridden (#475), the development console's `floor N` changes Floor. It acts only
+  where the bound structure's Floor Table binds N. It sets Y to N times the
+  storey pitch plus the eye height and leaves X and Z alone. Binding another
+  structure returns the player to Floor 0. The page publishes the Floor as
+  `data-floor`. A Save restores its Floor at the same pose. A record is refused
+  whole if its Floor is outside 0–10 or its structure does not bind it. No Floor
+  is ever derived from the pose's height, and a schema-6 record is not treated
+  as Floor 0 (#474).
 - **Damocles Saves and Session Resumes remember whether the player is aboard.
   The Damocles Save Snapshot goes from schema 5 to 6, so existing Damocles
   Saves and Session Resumes are refused.** A Save taken aboard a craft or seatable

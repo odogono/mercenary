@@ -403,6 +403,55 @@ export const modelWaves = (
     .filter(wave => wave.length > 0);
 };
 
+/// A structure Model's selector together with the interior detail it binds, or undefined where
+/// it has none or the interior is not in hand.
+const placementSelection = (
+  model: Model,
+  models: ModelLookup
+): ErisPlacement['selection'] => {
+  const selection = model.structureSelection;
+  const detail =
+    selection === undefined ? undefined : models.peek(selection.detailModel);
+  return selection === undefined || detail?.detailSelection === undefined
+    ? undefined
+    : {
+        detail: detail.variants.find(v => v.id === selection.detailVariant)!
+          .mesh,
+        groups: detail.detailSelection,
+        structure: selection
+      };
+};
+
+/// The Floors a structure placement's Floor Table binds, each with the structure Model it binds.
+/// Empty where its Model has no Floor Table or is not in hand.
+export const floorsOf = (
+  placement: ErisPlacement,
+  models: ModelLookup
+): NonNullable<Model['levelBinding']>['floors'] =>
+  models.peek(placement.modelId)?.levelBinding?.floors ?? [];
+
+/// A bound structure placement as it stands on one Floor. Floor 0 is the ground bind the
+/// surface already holds; any other Floor takes its selector from the structure its Floor Table
+/// entry binds (`$055BD8`). Undefined where the table binds no structure at that Floor, or that
+/// structure's Model or interior is not in hand yet. Nothing here derives a Floor from height.
+export const floorPlacement = (
+  placement: ErisPlacement,
+  models: ModelLookup,
+  floor: number
+): ErisPlacement | undefined => {
+  const entry = floorsOf(placement, models).find(item => item.level === floor);
+  if (entry === undefined) {
+    return undefined;
+  }
+  if (floor === 0) {
+    return placement;
+  }
+  const model = models.peek(entry.structureId);
+  const selection =
+    model === undefined ? undefined : placementSelection(model, models);
+  return selection === undefined ? undefined : { ...placement, selection };
+};
+
 /// The workspace of one Body, built from the Models in hand. An Instance whose Model has not
 /// been read yet is left out entirely, drawn and collided with by nobody, until a later build
 /// has it (ADR 0048); an Instance naming a Model the index does not know is a payload fault.
@@ -439,21 +488,9 @@ export const erisSurfaceFrom = (
       continue;
     }
     const mesh = structureMesh(model, doc.structureFallback);
-    const selection = model.structureSelection;
-    const detail =
-      selection === undefined ? undefined : models.peek(selection.detailModel);
+    const selection = placementSelection(model, models);
     placements.push({
-      ...(selection === undefined || detail?.detailSelection === undefined
-        ? {}
-        : {
-            selection: {
-              detail: detail.variants.find(
-                v => v.id === selection.detailVariant
-              )!.mesh,
-              groups: detail.detailSelection,
-              structure: selection
-            }
-          }),
+      ...(selection === undefined ? {} : { selection }),
       faceCount: mesh?.faces.length ?? 0,
       heading: placementHeading(model, location.heading),
       id: instance.id,

@@ -64,6 +64,8 @@ import {
   bearingFromYaw,
   cellOf,
   erisSurfaceFrom,
+  floorPlacement,
+  floorsOf,
   insideCentralCellHalf,
   islandLocalCell,
   modelWaves,
@@ -238,7 +240,19 @@ export class DamoclesSession implements TitleSession<
   private readonly scriptRules: ScriptRules;
   private readonly soundPermitted: () => boolean;
   private attachmentUnits = new Map<number, number>();
+  /// The bound structure as it stands on `floor`: the surface's own placement on Floor 0, and
+  /// otherwise that placement carrying the selector of the structure the Floor binds.
   private boundPlacement: ErisPlacement | null = null;
+  /// The Floor the player stands on in the bound structure, 0 when none is bound. Only a
+  /// deliberate act changes it -- the console today, the lift later -- and it is never read off
+  /// the Pose's height. Binding another structure puts it back to 0.
+  private floor = 0;
+  /// The surface as published, with the bound placement on its Floor, and what it was built from.
+  private floorSurface: {
+    readonly bound: ErisPlacement;
+    readonly surface: ErisSurface;
+    readonly under: ErisSurface;
+  } | null = null;
   private briefcaseStore: string[];
   private carried: string[];
   private elapsed: number;
@@ -349,21 +363,42 @@ export class DamoclesSession implements TitleSession<
       content.doc,
       { bodyId: restore.pose.body, origin }
     );
+    // The structure a saved Floor binds is named only by the bound Model's Floor Table, so it
+    // is missing only once that Model is in hand; `prepare` reads again until nothing is.
+    const floor = restore.structure?.floor ?? 0;
+    const floorStructure =
+      bound === undefined || floor === 0
+        ? undefined
+        : content.models
+            .peek(bound.model)
+            ?.levelBinding?.floors.find(entry => entry.level === floor)
+            ?.structureId;
     return [
       ...(modelWaves(content.catalogue, surface, restore.pose.position)[0] ??
         []),
-      ...(bound === undefined ? [] : [bound.model])
+      ...(bound === undefined ? [] : [bound.model]),
+      ...(floorStructure === undefined ? [] : [floorStructure])
     ].filter(id => content.models.peek(id) === undefined);
   }
 
-  /// Reads what `missingModels` names.
+  /// Reads what `missingModels` names, until it names nothing it has not already tried.
   static async prepare(
     content: DamoclesContent,
     restore: DamoclesSaveSnapshot
   ): Promise<void> {
-    await content.models.prefetch(
-      DamoclesSession.missingModels(content, restore)
-    );
+    const tried = new Set<string>();
+    for (;;) {
+      const missing = DamoclesSession.missingModels(content, restore).filter(
+        id => !tried.has(id)
+      );
+      if (missing.length === 0) {
+        return;
+      }
+      for (const id of missing) {
+        tried.add(id);
+      }
+      await content.models.prefetch(missing);
+    }
   }
 
   /// Reads the current Body's Models island by island, nearest first, counting each wave as it
@@ -401,9 +436,16 @@ export class DamoclesSession implements TitleSession<
     if (bound === null) {
       this.bindAt(this.pose);
     } else {
+      const ground = this.surface.placements.find(
+        placement => placement.id === bound.id
+      );
+      // The Floor's structure stays bound: its selector does not change with the surface.
       this.boundPlacement =
-        this.surface.placements.find(placement => placement.id === bound.id) ??
-        bound;
+        ground === undefined
+          ? bound
+          : this.floor === 0 || bound.selection === undefined
+            ? ground
+            : { ...ground, selection: bound.selection };
     }
   }
 
@@ -541,23 +583,37 @@ export class DamoclesSession implements TitleSession<
     if (placement?.id === this.boundPlacement?.id && restore === undefined) {
       return;
     }
-    this.boundPlacement = placement ?? null;
+    const floor = restore?.floor ?? 0;
+    const floored =
+      placement === undefined || floor === 0
+        ? placement
+        : floorPlacement(placement, this.content.models, floor);
+    if (floored === undefined && placement !== undefined) {
+      throw new Error('saved Floor is not one the structure binds');
+    }
+    this.boundPlacement = floored ?? null;
+    this.floor = floored === undefined ? 0 : floor;
     this.attachmentUnits = new Map(
-      placement?.selection?.structure.attachments.map(attachment => [
+      floored?.selection?.structure.attachments.map(attachment => [
         attachment.slot,
         0
       ]) ?? []
     );
-    if (restore !== undefined && restore !== null && placement !== undefined) {
+    if (placement !== undefined) {
+      // Read ahead the structures its Floors bind, so a Floor change finds them in hand.
+      void this.content.models.prefetch(
+        floorsOf(placement, this.content.models).map(entry => entry.structureId)
+      );
+    }
+    if (restore !== undefined && restore !== null && floored !== undefined) {
       if (
         restore.attachments.length !== this.attachmentUnits.size ||
         new Set(restore.attachments.map(item => item.slot)).size !==
           restore.attachments.length ||
         (restore.regionIndex !== null &&
-          restore.regionIndex >=
-            placement.selection!.structure.regions.length) ||
+          restore.regionIndex >= floored.selection!.structure.regions.length) ||
         restore.attachments.some(({ openUnits, slot }) => {
-          const attachment = placement.selection!.structure.attachments.find(
+          const attachment = floored.selection!.structure.attachments.find(
             item => item.slot === slot
           );
           return (
@@ -596,9 +652,35 @@ export class DamoclesSession implements TitleSession<
         openUnits,
         slot
       })),
+      floor: this.floor,
       instanceId: this.boundPlacement.id,
       regionIndex: this.regionIndex
     };
+  }
+
+  /// The surface as the renderer draws it: the bound structure on its Floor. The same object
+  /// comes back until the surface or the binding changes, so a frame does not rebuild it.
+  private publishedSurface(): ErisSurface {
+    const bound = this.boundPlacement;
+    if (bound === null || this.floor === 0) {
+      return this.surface;
+    }
+    if (
+      this.floorSurface?.bound !== bound ||
+      this.floorSurface.under !== this.surface
+    ) {
+      this.floorSurface = {
+        bound,
+        surface: {
+          ...this.surface,
+          placements: this.surface.placements.map(placement =>
+            placement.id === bound.id ? bound : placement
+          )
+        },
+        under: this.surface
+      };
+    }
+    return this.floorSurface.surface;
   }
 
   private residenceFor(instanceId: string): Residence | undefined {
@@ -924,7 +1006,7 @@ export class DamoclesSession implements TitleSession<
       scrollCounter: this.scrollCounter,
       selection: this.selection(),
       structure: this.structureSnapshot(),
-      surface: this.surface
+      surface: this.publishedSurface()
     };
   }
 
@@ -1595,5 +1677,66 @@ export class DamoclesSession implements TitleSession<
     };
     this.boundPlacement = null;
     this.bindAt(this.pose);
+  }
+
+  /// Stand on another Floor of the bound structure, as the development console's `floor N`.
+  ///
+  /// Authored until the lift is (#475): the rebind is instant. It acts only where the bound
+  /// structure's Floor Table binds `floor`, and there binds that Floor's structure, sets Y to
+  /// the Floor times the storey pitch plus the eye height, and leaves X, Z and the view as they
+  /// are. The new structure's attachments start closed and its region is taken afresh.
+  changeFloor(
+    floor: number
+  ):
+    | { readonly kind: 'moved' }
+    | { readonly kind: 'refused'; readonly reason: string } {
+    // Authored, as the Body switch is: aboard, the occupied object is resident nowhere (#407).
+    if (this.occupied !== null) {
+      return { kind: 'refused', reason: 'the player is aboard; leave first' };
+    }
+    const bound = this.boundPlacement;
+    const ground =
+      bound === null
+        ? undefined
+        : this.surface.placements.find(placement => placement.id === bound.id);
+    if (bound === null || ground === undefined) {
+      return { kind: 'refused', reason: 'not inside a structure' };
+    }
+    const storey = this.content.models.peek(ground.modelId)?.storeyHeight;
+    if (
+      storey === undefined ||
+      !floorsOf(ground, this.content.models).some(
+        entry => entry.level === floor
+      )
+    ) {
+      return {
+        kind: 'refused',
+        reason: `${ground.name} binds no Floor ${floor}`
+      };
+    }
+    const floored = floorPlacement(ground, this.content.models, floor);
+    if (floored === undefined) {
+      return {
+        kind: 'refused',
+        reason: `Floor ${floor} of ${ground.name} is not read yet`
+      };
+    }
+    this.floor = floor;
+    this.boundPlacement = floored;
+    this.attachmentUnits = new Map(
+      floored.selection?.structure.attachments.map(attachment => [
+        attachment.slot,
+        0
+      ]) ?? []
+    );
+    this.pose = {
+      ...this.pose,
+      position: {
+        ...this.pose.position,
+        y: floor * storey + this.rules.eyeHeight
+      }
+    };
+    this.regionIndex = this.regionAt(this.pose);
+    return { kind: 'moved' };
   }
 }

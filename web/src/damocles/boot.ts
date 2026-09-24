@@ -318,12 +318,11 @@ try {
       // A session cannot bind a structure it has no Model for (ADR 0048). Usually everything
       // the Save stands on is in hand and it loads at once, refusing as it always has; a Save on
       // an island not read yet loads once that island has been.
-      const missing = DamoclesSession.missingModels(content, saved);
-      if (missing.length === 0) {
+      if (DamoclesSession.missingModels(content, saved).length === 0) {
         loaded();
         return;
       }
-      void content.models.prefetch(missing).then(() => {
+      void DamoclesSession.prepare(content, saved).then(() => {
         try {
           loaded();
         } catch (error) {
@@ -362,6 +361,7 @@ try {
       snapshot = session.snapshot;
       if (
         command.kind === 'dropObject' ||
+        command.kind === 'floor' ||
         command.kind === 'getObject' ||
         command.kind === 'gotoCell' ||
         command.kind === 'load' ||
@@ -615,6 +615,8 @@ try {
       snapshot.structure?.attachments[0]?.openUnits ?? 0
     );
     root['structureInstance'] = snapshot.structure?.instanceId ?? '';
+    // The Floor the player stands on in that structure, 0 where none is bound.
+    root['floor'] = String(snapshot.structure?.floor ?? 0);
     // The instance the player is aboard, empty on foot, so a browser pass can see a board land.
     root['occupancy'] =
       snapshot.occupancy.kind === 'aboard' ? snapshot.occupancy.instance : '';
