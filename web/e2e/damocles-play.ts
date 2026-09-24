@@ -156,3 +156,82 @@ export const watchErrors = (page: Page): string[] => {
   });
   return errors;
 };
+
+/// One message record, read from the Data Payload rather than copied into the test, so the
+/// assertions compare against what the game was served. A record's leading spaces are the
+/// original's own hand-centring and belong to the row; the published row is trimmed, so `held`
+/// is what a test sees once the record has arrived.
+export const messageText = async (page: Page, id: string): Promise<string> => {
+  const strings = (await (
+    await page.request.get('/payload/damocles/strings.json')
+  ).json()) as {
+    readonly inlineMessages: readonly {
+      readonly id: string;
+      readonly text: string;
+    }[];
+  };
+  return strings.inlineMessages.find(message => message.id === id)!.text;
+};
+
+export const held = (text: string): string => text.trim();
+
+/// Hold one walking key until the session reaches the state the caller is waiting for.
+export const walkUntil = async (
+  page: Page,
+  key: 'ArrowDown' | 'ArrowUp',
+  reached: () => Promise<boolean>,
+  timeout = 30_000
+): Promise<void> => {
+  await page.keyboard.down(key);
+  try {
+    await expect.poll(reached, { intervals: [50], timeout }).toBe(true);
+  } finally {
+    await page.keyboard.up(key);
+  }
+};
+
+/// Both take and drop are refused while the inventory label is still scrolling, so the ordinary
+/// way to use them is to press again until the session accepts.
+export const pressUntilInventory = async (
+  page: Page,
+  key: 'd' | 't',
+  label: string
+): Promise<void> => {
+  await expect
+    .poll(
+      async () => {
+        await page.keyboard.press(key);
+        return inventory(page).textContent();
+      },
+      { timeout: 10_000 }
+    )
+    .toBe(label);
+};
+
+/// Wait for the response to reach its recorded end: the third record held, and then the blank
+/// row its clearing line leaves. Anchoring on the third record matters, because a row part way
+/// through a handover can be all spaces without the response having ended.
+export const responseParks = async (
+  page: Page,
+  third: string
+): Promise<void> => {
+  await expect
+    .poll(async () => displayRow(page), { timeout: 30_000 })
+    .toBe(held(third));
+  await expect.poll(async () => displayRow(page), { timeout: 30_000 }).toBe('');
+};
+
+/// Step from the spaceport's region 0 into the doorway, native region 1, with short taps. The
+/// doorway is forty units deep, which a walk at full speed crosses in six frames, so a tap that
+/// lands in region 2 beyond it steps back rather than failing the route.
+export const stepIntoDoorway = async (page: Page): Promise<void> => {
+  const region = async () =>
+    (await page.locator('#frame').getAttribute('data-region')) ?? '';
+  for (let step = 0; step < 80 && (await region()) !== '1'; step += 1) {
+    const key = (await region()) === '2' ? 'ArrowDown' : 'ArrowUp';
+    await page.keyboard.down(key);
+    await page.waitForTimeout(25);
+    await page.keyboard.up(key);
+  }
+  expect(await region()).toBe('1');
+};

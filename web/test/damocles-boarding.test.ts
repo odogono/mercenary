@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, test } from 'bun:test';
 
 import type { Catalogue } from '../src/catalogue/data.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
+import { planErisFrame } from '../src/damocles/frame.ts';
 import { catalogueResidence } from '../src/damocles/residence.ts';
 import {
   readDamoclesResume,
@@ -653,6 +654,37 @@ describe('Occupancy across a Save and a Session Resume', () => {
       expect(() => decoded(encoded(record)), label).toThrow(reason);
       expect(() => new DamoclesSession(content, record), label).toThrow(reason);
     }
+  });
+});
+
+/// What the boot hands the planner: every resident with a departure is hidden from its
+/// Catalogue placement, and the residents drawn at a departure are passed in.
+const drawn = (session: DamoclesSession): readonly string[] => {
+  const snapshot = session.snapshot;
+  return planErisFrame(
+    snapshot.surface,
+    snapshot.pose,
+    content.doc,
+    snapshot.structure,
+    snapshot.residents,
+    [
+      ...snapshot.carried,
+      ...snapshot.briefcaseStore,
+      ...snapshot.residence.map(item => item.instance)
+    ]
+  ).drawnPlacements;
+};
+const count = (ids: readonly string[], id: string): number =>
+  ids.filter(item => item === id).length;
+
+describe('the frame plan', () => {
+  test('draws an occupied craft nowhere and a left one exactly once', () => {
+    const session = beside(LIMO, [LIMO_KEY]);
+    expect(count(drawn(session), LIMO)).toBe(1);
+    session.board();
+    expect(count(drawn(session), LIMO)).toBe(0);
+    session.leave();
+    expect(count(drawn(session), LIMO)).toBe(1);
   });
 });
 

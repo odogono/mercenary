@@ -10,12 +10,18 @@ import {
   closeConsole,
   damoclesSaveSlot,
   displayRow,
+  held,
   inventory,
+  messageText,
+  pressUntilInventory,
   ready,
+  responseParks,
   run,
   scrollPixels,
   soundCues,
   spaceportWorld,
+  stepIntoDoorway,
+  walkUntil,
   watchErrors
 } from './damocles-play.ts';
 
@@ -30,24 +36,6 @@ import {
 /// long by design rather than by accident, and each says so with its own timeout.
 
 const KEY_LABEL = 'KEY- V.I.P. LIMO';
-
-/// One message record, read from the Data Payload rather than copied into the test, so the
-/// assertions compare against what the game was served. A record's leading spaces are the
-/// original's own hand-centring and belong to the row; the published row is trimmed, so `held`
-/// is what a test sees once the record has arrived.
-const messageText = async (page: Page, id: string): Promise<string> => {
-  const strings = (await (
-    await page.request.get('/payload/damocles/strings.json')
-  ).json()) as {
-    readonly inlineMessages: readonly {
-      readonly id: string;
-      readonly text: string;
-    }[];
-  };
-  return strings.inlineMessages.find(message => message.id === id)!.text;
-};
-
-const held = (text: string): string => text.trim();
 
 const BLANK_ROW = ' '.repeat(48);
 
@@ -73,49 +61,6 @@ const localZ = async (page: Page, origin: { readonly z: number }) =>
 
 const triangles = async (page: Page): Promise<number> =>
   Number(await frame(page).getAttribute('data-triangles'));
-
-/// Hold one walking key until the session reaches the state the caller is waiting for.
-const walkUntil = async (
-  page: Page,
-  key: 'ArrowDown' | 'ArrowUp',
-  reached: () => Promise<boolean>,
-  timeout = 30_000
-): Promise<void> => {
-  await page.keyboard.down(key);
-  try {
-    await expect.poll(reached, { intervals: [50], timeout }).toBe(true);
-  } finally {
-    await page.keyboard.up(key);
-  }
-};
-
-/// Both take and drop are refused while the inventory label is still scrolling, so the ordinary
-/// way to use them is to press again until the session accepts.
-const pressUntilInventory = async (
-  page: Page,
-  key: 'd' | 't',
-  label: string
-): Promise<void> => {
-  await expect
-    .poll(
-      async () => {
-        await page.keyboard.press(key);
-        return inventory(page).textContent();
-      },
-      { timeout: 10_000 }
-    )
-    .toBe(label);
-};
-
-/// Wait for the response to reach its recorded end: the third record held, and then the blank
-/// row its clearing line leaves. Anchoring on the third record matters, because a row part way
-/// through a handover can be all spaces without the response having ended.
-const responseParks = async (page: Page, third: string): Promise<void> => {
-  await expect
-    .poll(async () => displayRow(page), { timeout: 30_000 })
-    .toBe(held(third));
-  await expect.poll(async () => displayRow(page), { timeout: 30_000 }).toBe('');
-};
 
 interface SavedRecord {
   snapshot: {
@@ -485,12 +430,7 @@ test('a drop in the doorway region after the response has parked is refused', as
     'ArrowUp',
     async () => (await localZ(page, origin)) < -700
   );
-  for (let step = 0; step < 40 && (await region(page)) !== '1'; step += 1) {
-    await page.keyboard.down('ArrowUp');
-    await page.waitForTimeout(40);
-    await page.keyboard.up('ArrowUp');
-  }
-  expect(await region(page)).toBe('1');
+  await stepIntoDoorway(page);
 
   // The drop is refused, the key stays carried, and the parked host presents the refusal.
   const cues = await soundCues(page);
