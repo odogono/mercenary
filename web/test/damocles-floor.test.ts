@@ -6,6 +6,7 @@ import { executeDamoclesConsoleCommand } from '../src/damocles/console.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import {
   FLOATS_PER_VERTEX,
+  floorLabelGlyphsOf,
   planErisFrame,
   type ErisFramePlan
 } from '../src/damocles/frame.ts';
@@ -362,6 +363,100 @@ describe('the player stands on one Floor', () => {
     );
     expect(Math.min(...heights)).toBe(10 * STOREY + 115);
     expect(Math.max(...heights)).toBe(10 * STOREY + 123);
+  });
+
+  test('the lift shows G, 1, 2 and B on Floors 0, 1, 2 and 10, at the recovered placement', () => {
+    for (const [floor, character] of [
+      [0, 'G'],
+      [1, '1'],
+      [2, '2'],
+      [10, 'B']
+    ] as const) {
+      const session = inStateOffice();
+      expect(session.changeFloor(floor)).toEqual({ kind: 'moved' });
+      const { pose, structure, surface } = session.snapshot;
+      const drawn = surface.placements.find(item => item.id === STATE_OFFICE)!;
+      const { floorLabels = [], regions } = drawn.selection!.structure;
+      // One label beside each lift car's doorway, on queue bytes 15 and 26 (#473).
+      const lift = floorLabels.filter(label => label.anchor[0] === -610);
+      expect(lift.map(label => [label.face, label.anchor])).toEqual([
+        [{ index: 14, kind: 'face' }, [-610, 70, -260]],
+        [{ index: 25, kind: 'face' }, [-610, 70, -60]]
+      ]);
+      const glyph = catalogue.floorLabelGlyphs['2']![character]!;
+      for (const label of lift) {
+        expect([label.font, label.plane, label.scale]).toEqual([
+          2,
+          128,
+          [-4, 4]
+        ]);
+        const { face: entry } = label;
+        if (entry.kind !== 'face') {
+          throw new Error('the lift labels ride on plan faces');
+        }
+        const regionIndex = regions.findIndex(region =>
+          region.queue.some(
+            item => item.kind === 'face' && item.index === entry.index
+          )
+        );
+        expect(regionIndex).toBeGreaterThanOrEqual(0);
+        const meshes = structureMeshes(
+          drawn,
+          pose,
+          negateZ(),
+          undefined,
+          regionIndex,
+          undefined,
+          floorLabelGlyphsOf(surface, structure)
+        );
+        const face = meshes.findIndex(mesh =>
+          mesh.faces.some(item => item.sourceIndex === entry.index)
+        );
+        const drawnLabel = meshes[face + 1]!;
+        expect(drawnLabel.wallTextPlane).toBe(128);
+        expect(drawnLabel.vertices).toEqual(
+          glyph.points.map(([x, y]) => [
+            -610,
+            70 + y * 4,
+            label.anchor[2] - x * 4
+          ])
+        );
+        expect(
+          [...drawnLabel.faces, ...drawnLabel.lines].every(
+            item => item.colour === label.colour
+          )
+        ).toBe(true);
+      }
+    }
+  });
+
+  test('outside a structure carrying a Floor Label record, no label is drawn', () => {
+    const labelled = content.surface.placements.filter(
+      item => item.selection?.structure.floorLabels !== undefined
+    );
+    expect(labelled.map(item => item.id)).toContain(STATE_OFFICE);
+    const unlabelled = content.surface.placements.find(
+      item =>
+        item.selection !== undefined &&
+        item.selection.structure.floorLabels === undefined
+    )!;
+    const glyphs = floorLabelGlyphsOf(content.surface, null);
+    const base = new DamoclesSession(content).snapshot.pose;
+    for (const [index] of unlabelled.selection!.structure.regions.entries()) {
+      const pose = { ...base, position: unlabelled.position };
+      const withLabels = structureMeshes(
+        unlabelled,
+        pose,
+        negateZ(),
+        undefined,
+        index,
+        undefined,
+        glyphs
+      );
+      expect(withLabels).toEqual(
+        structureMeshes(unlabelled, pose, negateZ(), undefined, index)
+      );
+    }
   });
 
   test('an enclosed region fills ceiling and floor from its scene colours, and draws only the structure', () => {

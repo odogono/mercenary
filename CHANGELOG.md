@@ -12,6 +12,14 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Added
 
+- **A Damocles Floor Label shows the Floor.** Every structure wall text that
+  prints the Floor Label now draws the label's character in its own font, right
+  after the face it rides on and wherever that face is drawn. That is `G` on
+  Floor 0, the digit on Floors 1 to 9 and `B` on Floor 10. The State Office
+  lift shows `G`, `1`, `2` and `B` beside each car's doorway. During a ride the
+  label steps through each Floor passed before the destination binds. A font-4
+  label draws in font 3 while READING GLASSES or RED HERRING is carried. A
+  structure with no Floor Label record draws none (#477).
 - **A Damocles lift ride plays out as the ST's does.** A Floor key in a lift
   now pins the car's door shut, even with the player standing beside it. Once
   the door is shut, the Floor Label steps one Floor every 25 VBLs through each
