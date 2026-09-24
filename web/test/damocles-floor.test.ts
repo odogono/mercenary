@@ -5,6 +5,11 @@ import { ModelStore } from '../src/catalogue/modelStore.ts';
 import { executeDamoclesConsoleCommand } from '../src/damocles/console.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import {
+  FLOATS_PER_VERTEX,
+  planErisFrame,
+  type ErisFramePlan
+} from '../src/damocles/frame.ts';
+import {
   DAMOCLES_SAVE_SCHEMA_VERSION,
   damoclesSaveIdentity,
   decodeDamoclesSave,
@@ -100,6 +105,30 @@ const inRegionZero = (floor: number): DamoclesSession => {
       regionIndex: structureRegionAt(bound, pose, negateZ())
     }
   });
+};
+
+const rgb = (colour: string): readonly [number, number, number] => [
+  Number.parseInt(colour.slice(1, 3), 16) / 255,
+  Number.parseInt(colour.slice(3, 5), 16) / 255,
+  Number.parseInt(colour.slice(5, 7), 16) / 255
+];
+
+/// The colours of the base plane's triangles, which lead the vertex list.
+const fillColours = (plan: ErisFramePlan): Set<string> => {
+  const colours = new Set<string>();
+  for (let vertex = 0; vertex < plan.fillTriangleCount * 3; vertex += 1) {
+    const at = vertex * FLOATS_PER_VERTEX + 3;
+    colours.add(
+      `#${[0, 1, 2]
+        .map(channel =>
+          Math.round(plan.vertices[at + channel]! * 255)
+            .toString(16)
+            .padStart(2, '0')
+        )
+        .join('')}`
+    );
+  }
+  return colours;
 };
 
 /// The slot of the structure whose selector the published State Office placement carries.
@@ -332,6 +361,31 @@ describe('the player stands on one Floor', () => {
     );
     expect(Math.min(...heights)).toBe(10 * STOREY + 115);
     expect(Math.max(...heights)).toBe(10 * STOREY + 123);
+  });
+
+  test('an enclosed region fills ceiling and floor from its scene colours, and draws only the structure', () => {
+    for (const [floor, ceiling, ground] of [
+      [1, '#eeaa00', '#662200'],
+      [2, '#eeaa00', '#662200'],
+      [10, '#eeeeee', '#006666']
+    ] as const) {
+      const { pose, structure, surface } = inRegionZero(floor).snapshot;
+      const plan = planErisFrame(surface, pose, content.doc, structure);
+      expect(plan.clear).toEqual(rgb(ceiling));
+      expect(plan.fillTriangleCount).toBeGreaterThan(0);
+      expect(fillColours(plan)).toEqual(new Set([ground]));
+      expect(plan.islandTriangleCount).toBe(0);
+      expect(plan.groundTriangleCount).toBe(0);
+      expect(plan.drawnPlacements).toEqual([STATE_OFFICE]);
+    }
+  });
+
+  test('a region with flag bit 15 set keeps the sky and the Body around it', () => {
+    const { pose, structure, surface } = inRegionZero(0).snapshot;
+    // Floor 0's region 0 is `$8000`, the lobby.
+    const plan = planErisFrame(surface, pose, content.doc, structure);
+    expect(plan.clear).toEqual(rgb(content.doc.sky.colour));
+    expect(plan.drawnPlacements.length).toBeGreaterThan(1);
   });
 
   test("the attachments are the Floor structure's own, closed on arrival", () => {

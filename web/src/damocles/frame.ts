@@ -390,14 +390,32 @@ export const planErisFrame = (
     values.push(view.x, view.y, view.z, colour[0], colour[1], colour[2], order);
   };
 
+  const active =
+    structure !== null && insideCentralCellHalf(pose.position, surface.grid);
+  const bound = active
+    ? surface.placements.find(item => item.id === structure.instanceId)
+    : undefined;
+  const region =
+    structure?.regionIndex === null || structure?.regionIndex === undefined
+      ? undefined
+      : bound?.selection?.structure.regions[structure.regionIndex];
+  // An enclosed region is one whose flags have bit 15 clear. There the frame loop takes the
+  // branch at `$0595FA` that fills above the horizon in the structure's first scene colour and
+  // below it in the second (`$059600`, `$059606`), and draws nothing but the bound structure's
+  // plan queue (`$0596F0` → `$05A730`). That queue carries its own wall texts and insertions.
+  // No ground record, island fill, road edge or object stream is drawn (#491).
+  const enclosed = region !== undefined && (region.flags & 0x80_00) === 0;
+  const background = enclosed ? bound?.selection?.background : undefined;
+
   // Land and sea, in the order the Working Authority paints them ($0597EC..$05983C). The base
   // plane is the Body's own colour and every island is filled over it — except while the
   // player stands on an island's core, where the engine draws the ground plane in that
   // island's colour instead and the fill would only draw the ground underfoot a second time
-  // at one depth (#394).
+  // at one depth (#394). In an enclosed region the plane is the structure's floor colour: an
+  // infinite plane below the eye meets the sky at eye level, as the raster split does.
   const here = classifyPosition(surface, pose.position);
   const underfoot = here.kind === 'core' ? here.island : undefined;
-  const base = underfoot?.landColour ?? surface.baseColour;
+  const base = background?.floor ?? underfoot?.landColour ?? surface.baseColour;
   // A Body with no recovered surface colour draws no plane at all rather than an invented one
   // (ADR 0043). No Body a Session stands on is in that state; the VOID slot is not a surface.
   if (base !== null) {
@@ -415,7 +433,7 @@ export const planErisFrame = (
   }
   const fillTriangleCount = triangleCount;
 
-  for (const island of surface.islands) {
+  for (const island of enclosed ? [] : surface.islands) {
     if (island.id === underfoot?.id) {
       continue;
     }
@@ -434,8 +452,6 @@ export const planErisFrame = (
   }
   const islandTriangleCount = triangleCount - fillTriangleCount;
 
-  const active =
-    structure !== null && insideCentralCellHalf(pose.position, surface.grid);
   const openUnits = new Map(
     structure?.attachments.map(item => [item.slot, item.openUnits]) ?? []
   );
@@ -549,9 +565,11 @@ export const planErisFrame = (
   // The recovered draw bound (#370, #373): the Working Authority draws a cell's ground
   // records and its Surface Structure from that cell alone, and its objects from anywhere on
   // the Body. At the Eris arrival Pose that is 4 of the workspace's 207 placements.
-  const drawn = surface.placements.filter(placement =>
-    withinDrawBound(placement, pose.position, surface.grid)
-  );
+  const drawn = enclosed
+    ? [bound!]
+    : surface.placements.filter(placement =>
+        withinDrawBound(placement, pose.position, surface.grid)
+      );
   for (const placement of drawn) {
     if (placement.kind === 'ground') {
       emitPlacement(placement);
@@ -579,7 +597,7 @@ export const planErisFrame = (
   }
 
   return {
-    clear: channels(doc.sky.colour),
+    clear: channels(background?.ceiling ?? doc.sky.colour),
     drawnPlacements,
     farPlane: doc.camera.farPlane,
     fillTriangleCount,

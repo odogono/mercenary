@@ -95,6 +95,10 @@ export interface ErisPlacement {
   readonly name: string;
   readonly position: Vector3;
   readonly selection?: {
+    /// The structure record's two scene colours (`$059DA2`–`$059DC6`): what the frame loop
+    /// fills above and below the horizon while the player stands in one of its enclosed regions.
+    /// Absent where the Catalogue has not resolved both.
+    readonly background?: { readonly ceiling: string; readonly floor: string };
     readonly detail: Mesh;
     readonly groups: readonly DetailGroup[];
     readonly structure: StructureSelection;
@@ -412,9 +416,15 @@ const placementSelection = (
   const selection = model.structureSelection;
   const detail =
     selection === undefined ? undefined : models.peek(selection.detailModel);
+  const [ceiling, floor] = (model.sceneColours ?? []).map(
+    entry => entry.colour
+  );
   return selection === undefined || detail?.detailSelection === undefined
     ? undefined
     : {
+        ...(ceiling === undefined || floor === undefined
+          ? {}
+          : { background: { ceiling, floor } }),
         detail: detail.variants.find(v => v.id === selection.detailVariant)!
           .mesh,
         groups: detail.detailSelection,
