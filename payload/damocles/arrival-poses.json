@@ -13,6 +13,7 @@
    "Bodies absent from this document have no capture of the player standing on them. Absence is an unresolved gap, not evidence that the body is unlandable.",
    "Positions are raw signed engine longwords in the body-local surface grid at 65,536 units per cell. The yaw word wraps every 1024 units with north at $0200 modulo $0400, rising clockwise.",
    "The yaw word is published raw and carries bits above $03FF; only its low ten bits are the bearing, as the existing Eris presentation document already assumes.",
+   "bodyTurn is the Body's rotation accumulator at $0062EA + 4 x body, one turn every $04000000, and subStellarLongitude is $79BE, the Body's sub-stellar longitude in the same 1024-step angle as the yaw. Together with the position they decide the terminator at $050562; each pose's answer agrees with the engine day flag $7A4E. The sub-stellar longitude is a table atan2 of the Body's centre and is read, not recomputed; on DAMOCLES, whose centre moves, it is the value its arrival wrote.",
    "The cell is read from the engine cell word $7B5C, the same word the resident object and object-drop matchers compare against. Where the body has a recovered 16x16 workspace origin, the camera longwords reproduce that cell independently and workspaceOrigin carries the origin.",
    "A 16x16 workspace is a window onto a body surface that spans thousands of cells, so one body can carry several. Where the longwords put a pose outside the one recovered workspace on its body, workspaceOrigin is null and the evidence field says so; impliedWorkspaceOrigin always carries the origin that pose's own longwords and cell imply, so an unanchored cell can be anchored later without guessing. Two poses that agree on an implied origin stand in the same window.",
    "Source memstates are Restricted Material and are not published; their SHA-256 values identify them.",
@@ -46,6 +47,8 @@
     "z": 45187500
    },
    "yaw": 63984,
+   "bodyTurn": 3003742496,
+   "subStellarLongitude": 661,
    "cell": 18,
    "localCell": {
     "x": 2,
@@ -84,6 +87,8 @@
     "z": 228950707
    },
    "yaw": 780,
+   "bodyTurn": 24599617,
+   "subStellarLongitude": 953,
    "cell": 181,
    "localCell": {
     "x": 5,
@@ -119,6 +124,8 @@
     "z": 19757658
    },
    "yaw": 64887,
+   "bodyTurn": 1320070290,
+   "subStellarLongitude": 962,
    "cell": 51,
    "localCell": {
     "x": 3,
@@ -157,6 +164,8 @@
     "z": 86343888
    },
    "yaw": 63008,
+   "bodyTurn": 244018906,
+   "subStellarLongitude": 218,
    "cell": 50,
    "localCell": {
     "x": 2,
@@ -195,6 +204,8 @@
     "z": 87064898
    },
    "yaw": 59927,
+   "bodyTurn": 262688126,
+   "subStellarLongitude": 218,
    "cell": 227,
    "localCell": {
     "x": 3,
@@ -233,6 +244,8 @@
     "z": 14844268
    },
    "yaw": 988,
+   "bodyTurn": 2782509556,
+   "subStellarLongitude": 219,
    "cell": 17,
    "localCell": {
     "x": 1,
@@ -271,6 +284,8 @@
     "z": 19690965
    },
    "yaw": 62527,
+   "bodyTurn": 437252186,
+   "subStellarLongitude": 211,
    "cell": 1,
    "localCell": {
     "x": 1,
@@ -309,6 +324,8 @@
     "z": 117602545
    },
    "yaw": 559,
+   "bodyTurn": 50072610,
+   "subStellarLongitude": 582,
    "cell": 36,
    "localCell": {
     "x": 4,
@@ -347,6 +364,8 @@
     "z": 50890231
    },
    "yaw": 58286,
+   "bodyTurn": 77302080,
+   "subStellarLongitude": 582,
    "cell": 136,
    "localCell": {
     "x": 8,
@@ -385,6 +404,8 @@
     "z": 57572209
    },
    "yaw": 64810,
+   "bodyTurn": 53908812,
+   "subStellarLongitude": 582,
    "cell": 85,
    "localCell": {
     "x": 5,
@@ -423,6 +444,8 @@
     "z": 94859970
    },
    "yaw": 65045,
+   "bodyTurn": 688491657,
+   "subStellarLongitude": 583,
    "cell": 34,
    "localCell": {
     "x": 2,
@@ -461,6 +484,8 @@
     "z": 8940589
    },
    "yaw": 1536,
+   "bodyTurn": 23516460,
+   "subStellarLongitude": 347,
    "cell": 135,
    "localCell": {
     "x": 7,
@@ -499,6 +524,8 @@
     "z": 8945118
    },
    "yaw": 58568,
+   "bodyTurn": 35390571,
+   "subStellarLongitude": 347,
    "cell": 139,
    "localCell": {
     "x": 11,
@@ -537,6 +564,8 @@
     "z": 91587189
    },
    "yaw": 65422,
+   "bodyTurn": 31602479,
+   "subStellarLongitude": 346,
    "cell": 17,
    "localCell": {
     "x": 1,
@@ -575,6 +604,8 @@
     "z": 218595213
    },
    "yaw": 790,
+   "bodyTurn": 3937881026,
+   "subStellarLongitude": 347,
    "cell": 17,
    "localCell": {
     "x": 1,
@@ -613,6 +644,8 @@
     "z": 20544365
    },
    "yaw": 1556,
+   "bodyTurn": 1792723946,
+   "subStellarLongitude": 347,
    "cell": 100,
    "localCell": {
     "x": 4,
@@ -651,6 +684,8 @@
     "z": 20547167
    },
    "yaw": 58802,
+   "bodyTurn": 1412547396,
+   "subStellarLongitude": 347,
    "cell": 100,
    "localCell": {
     "x": 4,
@@ -689,6 +724,8 @@
     "z": 70288873
    },
    "yaw": 59942,
+   "bodyTurn": 106301008,
+   "subStellarLongitude": 346,
    "cell": 96,
    "localCell": {
     "x": 0,
@@ -727,6 +764,8 @@
     "z": 229920
    },
    "yaw": 439,
+   "bodyTurn": 267919860,
+   "subStellarLongitude": 345,
    "cell": 49,
    "localCell": {
     "x": 1,
@@ -765,6 +804,8 @@
     "z": 173702108
    },
    "yaw": 57026,
+   "bodyTurn": 20265664,
+   "subStellarLongitude": 416,
    "cell": 36,
    "localCell": {
     "x": 4,
@@ -803,6 +844,8 @@
     "z": 117998423
    },
    "yaw": 2023,
+   "bodyTurn": 220589060,
+   "subStellarLongitude": 187,
    "cell": 20,
    "localCell": {
     "x": 4,
@@ -841,6 +884,8 @@
     "z": 213614542
    },
    "yaw": 65489,
+   "bodyTurn": 929202680,
+   "subStellarLongitude": 191,
    "cell": 54,
    "localCell": {
     "x": 6,
@@ -879,6 +924,8 @@
     "z": 104496724
    },
    "yaw": 56357,
+   "bodyTurn": 3121889225,
+   "subStellarLongitude": 854,
    "cell": 130,
    "localCell": {
     "x": 2,
@@ -917,6 +964,8 @@
     "z": 103058305
    },
    "yaw": 2329,
+   "bodyTurn": 443421877,
+   "subStellarLongitude": 852,
    "cell": 18,
    "localCell": {
     "x": 2,
@@ -955,6 +1004,8 @@
     "z": 53968702
    },
    "yaw": 64468,
+   "bodyTurn": 138817800,
+   "subStellarLongitude": 852,
    "cell": 37,
    "localCell": {
     "x": 5,
@@ -993,6 +1044,8 @@
     "z": 18055367
    },
    "yaw": 57290,
+   "bodyTurn": 65032592,
+   "subStellarLongitude": 621,
    "cell": 121,
    "localCell": {
     "x": 9,
@@ -1031,6 +1084,8 @@
     "z": 214692179
    },
    "yaw": 2140,
+   "bodyTurn": 13016280,
+   "subStellarLongitude": 586,
    "cell": 0,
    "localCell": {
     "x": 0,

@@ -147,6 +147,30 @@ const fixture = () => ({
   ]
 });
 
+/// The fixture with one face on its Model, carrying `face`'s colour fields.
+const withFace = (face: Record<string, unknown>) => {
+  const data = fixture();
+  Object.assign(data.models[0]!, {
+    status: 'decoded',
+    variants: [
+      {
+        id: 'record',
+        mesh: {
+          faces: [{ sourceColour: 0x80_86, vertices: [0, 1, 2], ...face }],
+          lines: [],
+          vertices: [
+            [0, 0, 0],
+            [1, 0, 0],
+            [0, 1, 0]
+          ]
+        },
+        name: 'Record'
+      }
+    ]
+  });
+  return data;
+};
+
 describe('Damocles catalogue contract', () => {
   it('preserves unidentified models and unknown locations', () => {
     const data = parseCatalogue(fixture());
@@ -291,6 +315,23 @@ describe('Damocles catalogue contract', () => {
       bad.instances[0]!.boarding = { ...boarding, ...change };
       expect(() => parseCatalogue(bad)).toThrow(message);
     }
+  });
+
+  it("keeps a face's day half beside its colour, and refuses a malformed one (#497)", () => {
+    const lit = parseCatalogue(
+      withFace({ colour: '#444444', dayColour: '#000000' })
+    );
+    expect(lit.models[0]!.variants[0]!.mesh.faces[0]).toMatchObject({
+      colour: '#444444',
+      dayColour: '#000000'
+    });
+    const one = parseCatalogue(withFace({ colour: '#444444' }));
+    expect(
+      one.models[0]!.variants[0]!.mesh.faces[0]!.dayColour
+    ).toBeUndefined();
+    expect(() =>
+      parseCatalogue(withFace({ colour: '#444444', dayColour: 'black' }))
+    ).toThrow('invalid day colour');
   });
 
   it('keeps a measured bank extent and the slots a world binds', () => {
@@ -1620,9 +1661,22 @@ it('admits every island record of every body surface into the catalogue', async 
   expect(eris.bodySurface).toEqual({
     baseColour: '#000066',
     extentCells: [4096, 4096],
+    // One turn in 209,062 VBLs (docs/research/damocles-gamma-system.md).
+    rotationRate: 0x01_41,
+    // `$85DC + 4 * 11`: the pinned first-world night is `$001` (#494).
+    sky: {
+      day: { colour: '#66aaee', sourceColour: 0x03_57 },
+      night: { colour: '#000022', sourceColour: 0x00_01 }
+    },
     sourceColour: 0x00_03,
     wrapsX: true,
     wrapsZ: true
+  });
+  // Metis's pair is the one `damocles.metis.transporter` holds in `$7946`/`$7948`.
+  const metis = surfaces.find(body => body.name === 'METIS')!;
+  expect(metis.bodySurface?.sky).toEqual({
+    day: { colour: '#66aaaa', sourceColour: 0x03_55 },
+    night: { colour: '#002222', sourceColour: 0x00_11 }
   });
 });
 

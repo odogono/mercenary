@@ -55,6 +55,26 @@ def colour_value(word: int, palette: list[int] | None, hardware: list[int] | Non
     return st_rgb(word)
 
 
+def day_colour(word: int, palette: list[int] | None, hardware: list[int] | None) -> dict:
+    """``dayColour`` for a ``$80xx`` word whose palette's day half gives another colour.
+
+    ``$054E12``-``$054E28`` binds a scene palette's base in ``$7A12`` and the base plus
+    the signed word stored just before it in ``$7A14``. Each frame the terminator at
+    ``$050562`` copies ``$7A14`` into ``$7A10``, the low word of the ``$7A0E`` binding
+    every ``$80xx`` read goes through, while the Body is in daylight, and ``$7A12``
+    while it is dark. ``colour`` stays the dark half, as it always was. A palette whose
+    offset is zero has one half, and a word both halves agree on needs no second colour.
+    """
+    day = getattr(palette, 'day', None)
+    if day is None or word & 0x8080 != 0x8080:
+        return {}
+    try:
+        night, lit = colour_value(word, palette, hardware), colour_value(word, day, hardware)
+    except ValueError:
+        return {}
+    return {} if lit == night else {'dayColour': lit}
+
+
 def decode_key_lettering(data: bytes, reader: Reader, code: str, vertices: list,
                          lines: list, hardware: list[int] | None) -> list[int]:
     """Decode the key's inline vector-text record and source stroke glyphs."""
@@ -199,6 +219,7 @@ def append_vector_text(data: bytes, text: str, font: int, anchor: list[int],
                        palette: list[int] | None, hardware: list[int] | None) -> None:
     """Append source font fills or strokes in a building detail's text plane."""
     rgb = colour_value(colour, palette, hardware)
+    day = day_colour(colour, palette, hardware)
     for character_index, character in enumerate(text):
         glyph = read_glyph(data, font, character)
         offset = len(vertices)
@@ -213,12 +234,14 @@ def append_vector_text(data: bytes, text: str, font: int, anchor: list[int],
             faces.append({
                 'vertices': [offset + ref for ref in refs],
                 'colour': rgb,
+                **day,
                 'sourceColour': colour,
             })
         for a, b in glyph.get('lines', []):
             lines.append({
                 'vertices': [offset + a, offset + b],
                 'colour': rgb,
+                **day,
                 'sourceColour': colour,
             })
 
@@ -433,6 +456,7 @@ def decode_placed_lettering(data: bytes, reader: Reader, anchor: list[int],
         raise ValueError('vector-text terminator missing')
     text = ''.join(characters)
     rgb = colour_value(colour, palette, hardware)
+    day = day_colour(colour, palette, hardware)
     for character_index, character in enumerate(text):
         glyph_index = ord(character) + font * 64 - 32
         pointer_address = 0x31700 + glyph_index * 2
@@ -468,7 +492,7 @@ def decode_placed_lettering(data: bytes, reader: Reader, anchor: list[int],
                 if any(ref % 4 or ref // 4 > len(vertices) - offset for ref in refs):
                     raise ValueError('invalid filled vector-text glyph reference')
                 faces.append({'vertices': [offset + ref // 4 - 1 for ref in refs],
-                              'colour': rgb, 'sourceColour': colour})
+                              'colour': rgb, **day, 'sourceColour': colour})
             else:
                 raise ValueError('filled vector-text glyph terminator missing')
             continue
@@ -480,7 +504,7 @@ def decode_placed_lettering(data: bytes, reader: Reader, anchor: list[int],
             if any(ref == 0 or ref % 4 or ref // 4 > len(vertices) - offset for ref in (a, b)):
                 raise ValueError('invalid vector-text glyph reference')
             lines.append({'vertices': [offset + a // 4 - 1, offset + b // 4 - 1],
-                          'colour': rgb, 'sourceColour': colour})
+                          'colour': rgb, **day, 'sourceColour': colour})
         else:
             raise ValueError('vector-text glyph line terminator missing')
     return {'anchor': anchor, 'text': text, 'font': font, 'plane': plane,
@@ -811,7 +835,8 @@ def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = 
             if len(refs) < (2 if line else 3):
                 raise ValueError('degenerate polygon record')
             primitive = {'vertices': [ref // 4 - 1 for ref in refs],
-                         'colour': colour_value(colour, palette, hardware), 'sourceColour': colour}
+                         'colour': colour_value(colour, palette, hardware),
+                         **day_colour(colour, palette, hardware), 'sourceColour': colour}
             (lines if line else faces).append(primitive)
             tag_record(kind, faces, lines, first_face, first_line, record)
         raise ValueError('face terminator missing')
@@ -996,7 +1021,8 @@ def _scene_colours(words: list[int], palette: list[int] | None,
     resolved = []
     for word in words:
         try:
-            resolved.append({'colour': colour_value(word, palette, hardware), 'sourceColour': word})
+            resolved.append({'colour': colour_value(word, palette, hardware),
+                             **day_colour(word, palette, hardware), 'sourceColour': word})
         except ValueError:
             resolved.append({'sourceColour': word})
     return resolved
@@ -1059,7 +1085,8 @@ def decode_structure(data: bytes, start: int, palette: list[int] | None = None,
             polygon.reverse()
         offset = len(vertices)
         vertices.extend(polygon)
-        faces.append({'vertices': list(range(offset, offset + len(polygon))), 'colour': rgb, 'sourceColour': colour,
+        faces.append({'vertices': list(range(offset, offset + len(polygon))), 'colour': rgb,
+                      **day_colour(colour & 0x8fff, palette, hardware), 'sourceColour': colour,
                       'sourceIndex': source_index,
                       **({'doubleSided': True} if form in (0, 1) else {})})
     else:
@@ -1236,6 +1263,7 @@ def decode_ground(data: bytes, start: int, orientation: int,
                 offset = len(vertices)
                 vertices.extend(kept)
                 lines.append({'vertices': [offset, offset + 1], 'colour': rgb,
+                              **day_colour(colour & ~0x4000, palette, hardware),
                               'sourceColour': colour & ~0x4000, 'sourceIndex': source_index,
                               **_scene_tag(edge_refs, plan)})
             continue
@@ -1259,6 +1287,7 @@ def decode_ground(data: bytes, start: int, orientation: int,
             offset = len(vertices)
             vertices.extend(kept)
             faces.append({'vertices': list(range(offset, offset + len(kept))), 'colour': rgb,
+                          **day_colour(colour, palette, hardware),
                           'sourceColour': colour, 'sourceIndex': source_index, 'doubleSided': True,
                           **_scene_tag(refs, plan)})
         elif refs:
@@ -1550,6 +1579,7 @@ def closed_attachment_mesh(x0: int, z0: int, x1: int, z1: int, colours: list[int
         attachment['faces'].append({
             'vertices': list(range(offset, offset + 4)),
             'colour': colour_value(colour & 0x8fff, palette, hardware),
+            **day_colour(colour & 0x8fff, palette, hardware),
             'sourceColour': colour,
             'doubleSided': True,
         })
@@ -1865,6 +1895,7 @@ def decode_structure_selection(data: bytes, mesh: dict, scale: tuple[int, int],
                 'font': font,
                 'scale': placement['scale'],
                 'colour': colour_value(text['colour'], palette, hardware),
+                **day_colour(text['colour'], palette, hardware),
                 'sourceColour': text['colour'],
                 **({'fallback': dict(FONT_FALLBACK)} if font == FALLBACK_FONT else {}),
             })
@@ -1968,9 +1999,32 @@ def s32(data: bytes, p: int) -> int:
     return int.from_bytes(data[p:p + 4], 'big', signed=True)
 
 
-def palette_at(data: bytes, index: int) -> list[int]:
-    p = 0xd200 + int.from_bytes(data[0xd200 + index * 2:0xd202 + index * 2], 'big')
-    return list(struct.unpack_from('>64H', data, p))
+SCENE_PALETTES = 0xD200
+
+
+class ScenePalette(list):
+    """A scene palette's 64 words from its base, with its day half beside them.
+
+    ``day`` is the 64 words from the base plus ``offset``, the signed word stored at
+    ``base - 2`` (``$054E24``), or None where that word is zero and the palette has one half.
+    """
+
+    def __init__(self, words: list[int], index: int, offset: int, day: list[int] | None):
+        super().__init__(words)
+        self.index, self.offset, self.day = index, offset, day
+
+
+def scene_palette_count(data: bytes) -> int:
+    """How many palettes ``$D200`` indexes: its first entry's offset is the table's own length."""
+    return struct.unpack_from('>H', data, SCENE_PALETTES)[0] // 2
+
+
+def palette_at(data: bytes, index: int) -> ScenePalette:
+    table = SCENE_PALETTES + index * 2
+    p = SCENE_PALETTES + int.from_bytes(data[table:table + 2], 'big')
+    offset = struct.unpack_from('>h', data, p - 2)[0]
+    day = list(struct.unpack_from('>64H', data, p + offset)) if offset else None
+    return ScenePalette(list(struct.unpack_from('>64H', data, p)), index, offset, day)
 
 
 def surface_resident_body(association: bytes) -> int | None:
@@ -2375,6 +2429,33 @@ BODY_COLOUR_TABLE = 0x60C0
 BODY_COORDINATES = 'Body Coordinates'
 ISLAND_EVIDENCE = 'docs/research/damocles-eris-islands.md'
 ISLAND_CENSUS_EVIDENCE = 'docs/research/damocles-island-census.md'
+
+
+BODY_SKY_TABLE = 0x85DC
+BODY_ROTATION_RATES = 0x835C
+
+
+def body_sky(data: bytes, body: int) -> dict:
+    """The body's two authored sky colours, night then day, at $85DC + 4*body.
+
+    $0592BC/$0592C2 copy them into $7948 and $7946 when the body is entered, and
+    the terminator at $050562 puts one of them in $7C86 each frame, which
+    $059638 writes into colour 8 of the viewport fill outside an enclosed region.
+    """
+    night, day = struct.unpack_from('>HH', data, BODY_SKY_TABLE + body * 4)
+    return {'day': {'colour': st_rgb(day & 0xFFF), 'sourceColour': day},
+            'night': {'colour': st_rgb(night & 0xFFF), 'sourceColour': night}}
+
+
+def body_rotation_rate(data: bytes, body: int) -> int:
+    """What the VBL handler adds to the body's rotation accumulator at $62EA + 4*body.
+
+    The table at $835C is the authored rate at $82DC shifted right six bits. The
+    accumulator's high word's low ten bits are the angle the surface passes add to
+    the observer's longitude, so one turn is $04000000
+    (docs/research/damocles-gamma-system.md).
+    """
+    return struct.unpack_from('>I', data, BODY_ROTATION_RATES + body * 4)[0]
 
 
 def body_base_colour(data: bytes, body: int) -> int:
@@ -3005,7 +3086,9 @@ def bind_floor_palettes(models: list[dict], data: bytes, hardware: list[int]) ->
     ``#444444``, not in slot 58's palette 28 as ``#882222``. So every palette
     a floor names is published beside the table, resolved for exactly the
     entries its structure's selector, scene colours and detail name. An entry
-    no bound structure names is ``None``.
+    no bound structure names is ``None``. Where the palette's day half
+    (``day_colour``) changes any of those entries, ``dayColours`` carries that
+    half for the same entries.
     """
     by_id = {model['id']: model for model in models}
     for model in models:
@@ -3028,13 +3111,19 @@ def bind_floor_palettes(models: list[dict], data: bytes, hardware: list[int]) ->
         palettes = []
         for index, referenced in sorted(entries.items()):
             palette = palette_at(data, index)
-            colours = [None] * (max(referenced) + 1 if referenced else 0)
-            for entry in referenced:
-                try:
-                    colours[entry] = colour_value(palette[entry], None, hardware)
-                except ValueError:
-                    pass
-            palettes.append({'colours': colours, 'paletteIndex': index})
+            halves = [palette] if palette.day is None else [palette, palette.day]
+            resolved = []
+            for half in halves:
+                colours = [None] * (max(referenced) + 1 if referenced else 0)
+                for entry in referenced:
+                    try:
+                        colours[entry] = colour_value(half[entry], None, hardware)
+                    except ValueError:
+                        pass
+                resolved.append(colours)
+            day = resolved[1:] and resolved[1] != resolved[0]
+            palettes.append({'colours': resolved[0], **({'dayColours': resolved[1]} if day else {}),
+                             'paletteIndex': index})
         if palettes:
             binding['palettes'] = palettes
 
@@ -4186,6 +4275,8 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
             'baseColour': st_rgb(body_base_colour(data, index)),
             'sourceColour': body_base_colour(data, index),
             'extentCells': [SURFACE_CELLS, SURFACE_CELLS],
+            'rotationRate': body_rotation_rate(data, index),
+            'sky': body_sky(data, index),
             'wrapsX': True,
             'wrapsZ': True,
         }
@@ -5204,7 +5295,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         'workspace identity unresolved.',
         'View-conditioned face groups, $8003/$8006/$8009 header states and object $6000 vector text are decoded as separate forms; the in-game selector for each form is named in the model conditions, not simulated.',
         'Eris cell ground/pad/road records at $1E000 retain $7000 object placements through existing address-based model identities; surface slot zero supplies palette zero for structureless cells, empty records are intentional and add no geometry at $056634, and $F0/$F4 joins remain view-conditioned.',
-        'The sky and the ground band below the horizon are excluded as rendering-only state, not omitted geometry: $059CE2 fills the whole viewport in colour index 8 and the MFP Timer B handler at $052280 rewrites $FF8250 at scanline $7BFC, taking the sky from $7C86 and the band from the body workspace word at $7A1A. The scene slots below $F0 that $05499E allocates are excluded on the same footing: they are a per-frame slot numbering over the $1E000 corner longwords already decoded here, drawn as two-point edges at $054AD2, and research/damocles-st/scripts/ground-extent-check.py reconstructs the live list, lowest slot and $5E40 bytes from captured RAM alone.',
+        'The sky and the ground band below the horizon are rendering-only state, not omitted geometry: $059CE2 fills the whole viewport in colour index 8 and the MFP Timer B handler at $052280 rewrites $FF8250 at scanline $7BFC, taking the sky from $7C86 and the band from the body workspace word at $7A1A. Each body surface publishes the two sky words the terminator at $050562 chooses between for $7C86 ($85DC + 4*body, night then day) and the rotation rate at $835C its accumulator advances by each VBL; the terminator itself is the reader\'s to run, from the position and the accumulator. The same terminator copies $7A14, the bound palette\'s base plus the signed word at base - 2, into $7A10 by day and $7A12, the base, by night, so every $80xx colour here is the night half and a dayColour beside it is the day half where the two differ. The scene slots below $F0 that $05499E allocates are excluded on the same footing: they are a per-frame slot numbering over the $1E000 corner longwords already decoded here, drawn as two-point edges at $054AD2, and research/damocles-st/scripts/ground-extent-check.py reconstructs the live list, lowest slot and $5E40 bytes from captured RAM alone.',
         'The documented zero-latch and $F0 post-plan constructors are retained, including the cell-derived door-key label; no discovered record carries an attachment omission. The $DF visual-change branch is accounted for: $059F64 reads the nine-entry $6364 table and substitutes character $DF for the entrance label glyph, while $04ED4A replays the same table over the $ABDC cell workspace to replace or clear an already-resident surface assembly. Neither introduces a record, and the table is all zero in every pinned capture, so neither branch is exercised by an observed state.',
         'Seven building-detail $60xx vector-text records retain their polygon geometry; inline text and live $CCA0 tokens use source filled/stroke glyphs.',
         'Every $6000 vector-text record in the census was inventoried: all 41 set the inline flag and none selects font 4, so the indirect-pointer and font-4 paths are unreached rather than unresolved. $CCA0 tokens divide into slot-derived labels, frame animations whose script is model data, structure-workspace face markers, and one live countdown.',

@@ -77,6 +77,7 @@ const surfaceOf = (placements: readonly ErisPlacement[]): ErisSurface => ({
   islands: [],
   placements,
   places: [],
+  sky: null,
   unresolvedCount: placements.filter(p => p.mesh === undefined).length
 });
 
@@ -154,7 +155,12 @@ describe('an Eris frame in Filled Presentation', () => {
       plan.triangleCount * 3 * FLOATS_PER_VERTEX
     );
     expect(plan.skippedFaces).toBe(0);
-    expect(plan.clear).toEqual([0x49 / 255, 0x92 / 255, 0xdb / 255]);
+    // Outside a structure the sky is the Body's own word; `planErisFrame` defaults to night,
+    // Eris's `$001` (#494).
+    expect(plan.clear).toEqual([0, 0, 0x22 / 255]);
+    expect(
+      planErisFrame(surface, pose, doc, null, [], [], () => false, true).clear
+    ).toEqual([0x66 / 255, 0xaa / 255, 0xee / 255]);
     const withoutMeshes = surfaceOf(
       surface.placements.filter(p => p.mesh === undefined)
     );

@@ -12,6 +12,23 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Added
 
+- **Damocles Bodies turn through day and night, and the scene follows.** The
+  port now runs the ST's terminator at `$050562`. Each Body's rotation
+  accumulator advances every VBL by the Body's own rate, and the terminator
+  compares the resulting longitude with the Body's sub-stellar longitude
+  `$79BE`. By day the sky takes the Body's day word and every scene-palette
+  colour takes the palette's day half, the base plus the signed word stored
+  before it (`$7A14`). By night both take the base. The one authored blue sky
+  is gone: Eris starts at night under its own `$001`, and
+  `switch metis-transporter` stands by day under Metis's teal `$355`. The
+  Catalogue publishes a `dayColour` beside every colour whose palette halves
+  differ, `dayColours` on Floor palettes, and each Body surface's `sky` pair
+  and `rotationRate`. Each arrival pose publishes its `bodyTurn` and
+  `subStellarLongitude`. All 33 captures agree with the terminator, and the
+  published colours match each capture's bound half on both sides of it. The
+  page publishes `data-daylight`. The Save carries the turn, which is schema 9,
+  and a schema-8 record is refused whole. The Eris presentation document drops
+  its `sky` block and gains `start.bodyTurn`, which is schema 8 (#494, #497).
 - **A Damocles lift ride plays out as the ST's does.** A Floor key in a lift
   now pins the car's door shut, even with the player standing beside it. Once
   the door is shut, the Floor Label steps one Floor every 25 VBLs through each

@@ -92,6 +92,7 @@ const standingAt = (
   const pose = { body, heading: 0, pitch: 0, position };
   const placement = structureInCell(surface, position);
   return new DamoclesSession(of, {
+    bodyTurn: 0,
     briefcaseStore: [],
     carried: [...carried],
     elapsed: 0,

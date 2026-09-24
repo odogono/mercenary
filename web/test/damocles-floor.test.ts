@@ -385,7 +385,8 @@ describe('the player stands on one Floor', () => {
     const { pose, structure, surface } = inRegionZero(0).snapshot;
     // Floor 0's region 0 is `$8000`, the lobby.
     const plan = planErisFrame(surface, pose, content.doc, structure);
-    expect(plan.clear).toEqual(rgb(content.doc.sky.colour));
+    // Eris at night, as the start capture is: its night word `$001` (#494).
+    expect(plan.clear).toEqual(rgb('#000022'));
     expect(plan.drawnPlacements.length).toBeGreaterThan(1);
   });
 
@@ -552,7 +553,7 @@ describe('Save and Session Resume carry the Floor', () => {
     };
     record.schemaVersion = 7;
     expect(() => decoded(JSON.stringify(record))).toThrow(
-      'schema 7 is not Damocles Save 8'
+      'schema 7 is not Damocles Save 9'
     );
   });
 

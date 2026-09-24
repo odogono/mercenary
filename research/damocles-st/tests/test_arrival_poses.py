@@ -43,6 +43,9 @@ def workspace(body_index: int, cell: int, origin: tuple[int, int]) -> bytes:
     derived = location_ledger.body_coordinate(position_x, position_z)
     struct.pack_into('>H', ram, location_ledger.BODY_COORDINATE_X, derived['stepX'])
     struct.pack_into('>H', ram, location_ledger.BODY_COORDINATE_Z, derived['stepZ'])
+    # The engine's day flag for a zero turn and sub-stellar longitude (#497).
+    lit = location_ledger.daylight(0, 0, derived['stepX'], derived['stepZ'])
+    struct.pack_into('>H', ram, location_ledger.DAYLIGHT, 0xFFFF if lit else 0)
     return bytes(ram)
 
 
@@ -115,6 +118,35 @@ class ArrivalPosePublicationTests(unittest.TestCase):
         struct.pack_into('>H', ram, location_ledger.BODY_COORDINATE_X, 99)
         with self.assertRaisesRegex(ValueError, 'disagrees with the camera longwords'):
             self.read('bogus', bytes(ram))
+
+    def test_the_terminator_is_published_as_its_inputs_and_checked_against_the_day_flag(self):
+        # The Eris start pose stands at night (#494): turn 358 of 1024 puts the
+        # observer's System longitude at 375, 28 steps past the sub-stellar $15B,
+        # and latitude step 290 leaves bit 9 clear.
+        ram = bytearray(workspace(11, 0x87, (64, 128)))
+        struct.pack_into('>I', ram, location_ledger.BODY_TURN + 11 * 4, 0x0166_0000)
+        struct.pack_into('>H', ram, location_ledger.SUB_STELLAR_LONGITUDE, 0x15B)
+        pose = self.read('eris', bytes(ram))
+        self.assertFalse(pose['daylight'])
+        published = location_ledger.published_pose(pose, {'body-11': 'ERIS'})
+        self.assertEqual((published['bodyTurn'], published['subStellarLongitude']),
+                         (0x0166_0000, 0x15B))
+        # A quarter turn later (#439's jump) the same place is in daylight, and the
+        # engine's flag has to say so.
+        struct.pack_into('>I', ram, location_ledger.BODY_TURN + 11 * 4, 0x0266_0000)
+        with self.assertRaisesRegex(ValueError, 'terminator disagrees'):
+            self.read('eris-day', bytes(ram))
+        struct.pack_into('>H', ram, location_ledger.DAYLIGHT, 0xFFFF)
+        self.assertTrue(self.read('eris-day', bytes(ram))['daylight'])
+
+    def test_the_latitude_half_turn_flips_the_terminator(self):
+        # $05057A: the latitude's bit 9 is added in, so across it the answer inverts.
+        self.assertFalse(location_ledger.daylight(0x100, 0, 0x100, 0x000))
+        self.assertTrue(location_ledger.daylight(0x100, 0, 0x100, 0x200))
+        self.assertTrue(location_ledger.daylight(0x100, 0, 0x300, 0x000))
+        self.assertFalse(location_ledger.daylight(0x100, 0, 0x300, 0x200))
+        # The turn's high word moves the observer's longitude, not the position.
+        self.assertTrue(location_ledger.daylight(0x100, 0x0200_0000, 0x100, 0x000))
 
     def test_a_cell_word_outside_a_workspace_is_refused(self):
         with self.assertRaisesRegex(ValueError, 'outside a 16x16 workspace'):
