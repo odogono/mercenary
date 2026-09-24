@@ -112,6 +112,120 @@ const decoded = (encoded: string): DamoclesSaveSnapshot =>
   }).snapshot;
 
 describe('the player stands on one Floor', () => {
+  test('a resident on an authored upper Floor is drawn and selectable only there', () => {
+    const session = inStateOffice();
+    expect(session.changeFloor(1)).toEqual({ kind: 'moved' });
+    const upstairs = session.captureResume();
+    const parent = content.surface.placements.find(
+      item => item.id === STATE_OFFICE
+    )!;
+    const position = {
+      x: upstairs.pose.position.x - parent.position.x,
+      y: STOREY,
+      z: upstairs.pose.position.z - parent.position.z
+    };
+    const original = catalogue.instances.find(
+      item => item.id === 'object-slot-180'
+    )!;
+    const resident = {
+      ...original,
+      association: {
+        ...original.association!,
+        insertionGroupSelector: 1,
+        insertions: [],
+        levelSelector: 1
+      },
+      placement: {
+        ...original.placement!,
+        parent: STATE_OFFICE,
+        position: [position.x, position.y, position.z] as const
+      }
+    };
+    const isolated: DamoclesContent = {
+      ...content,
+      catalogue: {
+        ...catalogue,
+        instances: catalogue.instances.map(item =>
+          item.id === resident.id ? resident : item
+        )
+      }
+    };
+    const placed = new DamoclesSession(isolated, {
+      ...upstairs,
+      residence: [
+        {
+          instance: resident.id,
+          residence: {
+            body: upstairs.pose.body,
+            insertionGroup: 1,
+            kind: 'structure',
+            level: 1,
+            parent: STATE_OFFICE,
+            placementClass: resident.placementClass!,
+            position
+          }
+        }
+      ],
+      structure: { ...upstairs.structure!, regionIndex: 0 }
+    });
+    expect(placed.snapshot.residents.map(item => item.id)).toContain(
+      resident.id
+    );
+    expect(placed.snapshot.selection).toMatchObject({
+      instance: resident.id,
+      kind: 'object'
+    });
+    expect(placed.changeFloor(2)).toEqual({ kind: 'moved' });
+    expect(placed.snapshot.residents.map(item => item.id)).not.toContain(
+      resident.id
+    );
+    expect(placed.changeFloor(0)).toEqual({ kind: 'moved' });
+    expect(placed.snapshot.residents.map(item => item.id)).not.toContain(
+      resident.id
+    );
+  });
+
+  test('an interior Drop records the current Floor', () => {
+    const session = inStateOffice();
+    expect(session.changeFloor(1)).toEqual({ kind: 'moved' });
+    const snapshot = session.captureResume();
+    const parent = catalogue.instances.find(item => item.id === STATE_OFFICE)!;
+    const dropContent: DamoclesContent = {
+      ...content,
+      catalogue: {
+        ...catalogue,
+        instances: catalogue.instances.map(item =>
+          item.id === STATE_OFFICE
+            ? { ...parent, associationGroups: [{ group: 1, pairs: [] }] }
+            : item
+        )
+      }
+    };
+    const dropping = new DamoclesSession(dropContent, {
+      ...snapshot,
+      carried: ['object-slot-92'],
+      residence: [
+        {
+          instance: 'object-slot-92',
+          residence: { kind: 'carried', placementClass: 0 }
+        }
+      ],
+      structure: { ...snapshot.structure!, regionIndex: 0 }
+    });
+    expect(dropping.drop()).toEqual({ kind: 'dropped' });
+    expect(dropping.snapshot.residence).toContainEqual({
+      instance: 'object-slot-92',
+      residence: expect.objectContaining({
+        kind: 'structure',
+        level: 1,
+        parent: STATE_OFFICE
+      })
+    });
+    expect(dropping.snapshot.residents.map(item => item.id)).toContain(
+      'object-slot-92'
+    );
+  });
+
   test('Floor 0 when the State Office is bound, and outside any structure', () => {
     const session = new DamoclesSession(content);
     expect(session.snapshot.structure?.floor ?? 0).toBe(0);

@@ -722,10 +722,22 @@ export class DamoclesSession implements TitleSession<
     if (
       residence.body !== this.pose.body ||
       residence.parent !== this.boundPlacement?.id ||
-      residence.level !== 0 ||
+      residence.level !== this.floor ||
       this.regionIndex === null
     ) {
       return null;
+    }
+    if (residence.level !== 0) {
+      const parent = this.surface.placements.find(
+        placement => placement.id === residence.parent
+      );
+      if (
+        parent === undefined ||
+        floorPlacement(parent, this.content.models, residence.level)?.selection
+          ?.structure !== this.boundPlacement.selection?.structure
+      ) {
+        return null;
+      }
     }
     if (this.insertions(instanceId, residence) === 0) {
       return null;
@@ -1501,10 +1513,8 @@ export class DamoclesSession implements TitleSession<
       body: this.pose.body,
       insertionGroup: this.regionIndex + 1,
       kind: 'structure',
-      // Floor-aware binding is unrecovered: the static rule mapping a level to its bound
-      // structure is open (#355), so an interior Drop may only write the level the port
-      // can bind.
-      level: 0,
+      // The bound placement carries the structure selected by this Floor's table entry.
+      level: this.floor,
       parent: structure.id,
       placementClass,
       position: {
