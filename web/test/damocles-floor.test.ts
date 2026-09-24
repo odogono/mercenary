@@ -136,8 +136,9 @@ const boundSlot = (session: DamoclesSession): number | undefined => {
   const selection = session.snapshot.surface.placements.find(
     item => item.id === STATE_OFFICE
   )?.selection?.structure;
+  // A Floor's selector is recoloured through its palette, which leaves its regions as they are.
   const model = catalogue.models.find(
-    item => item.structureSelection === selection
+    item => item.structureSelection?.regions === selection?.regions
   );
   // Floor 0 is the ground bind, which the alias record carries as its own selector.
   return model?.recordClass === 'alias'

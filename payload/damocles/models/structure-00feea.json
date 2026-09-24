@@ -7,11 +7,26 @@
       "floors": [
         {
           "level": 0,
+          "paletteIndex": 11,
           "structureId": "structure-010014",
           "structureSlot": 22
         }
       ],
       "levelsAuthored": 12,
+      "palettes": [
+        {
+          "colours": [
+            "#664444",
+            "#888844",
+            "#eeeeee",
+            "#aaaa66",
+            "#888888",
+            "#666666",
+            "#4488cc"
+          ],
+          "paletteIndex": 11
+        }
+      ],
       "tableAddress": 65264
     },
     "linkedInstances": [],

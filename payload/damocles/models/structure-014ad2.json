@@ -13,26 +13,56 @@
       "floors": [
         {
           "level": 0,
+          "paletteIndex": 26,
           "structureId": "structure-014aec",
           "structureSlot": 76
         },
         {
           "level": 1,
+          "paletteIndex": 26,
           "structureId": "structure-014f52",
           "structureSlot": 78
         },
         {
           "level": 2,
+          "paletteIndex": 26,
           "structureId": "structure-014f52",
           "structureSlot": 78
         },
         {
           "level": 10,
+          "paletteIndex": 26,
           "structureId": "structure-01532a",
           "structureSlot": 79
         }
       ],
       "levelsAuthored": 12,
+      "palettes": [
+        {
+          "colours": [
+            "#882222",
+            "#666666",
+            "#888888",
+            "#aaaaaa",
+            "#cccccc",
+            "#eeeeee",
+            "#664444",
+            "#882222",
+            "#664444",
+            "#ccaa88",
+            "#006666",
+            "#00aaaa",
+            "#662200",
+            null,
+            "#aa6600",
+            "#cc8800",
+            "#eeaa00",
+            "#00cccc",
+            "#4488cc"
+          ],
+          "paletteIndex": 26
+        }
+      ],
       "tableAddress": 84696
     },
     "linkedInstances": [],

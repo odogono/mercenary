@@ -255,6 +255,16 @@ FURTHER FLIGHT`. Every other refusal is silent. Boarding takes the craft out
 
 ### Fixed
 
+- **A Damocles Floor above 0 is drawn in the palette its building binds.** The
+  port coloured an upper Floor's walls, floor and scene colours through the
+  palette of the structure the Floor Table binds. The game uses the palette the
+  building's alias record binds: its palette byte, or its per-Floor entry where
+  that byte is zero. At Metis DOOBERRYS SOLICITORS on Floor 9, the floor now
+  draws `#444444` as on the ST, not slot 58's own `#882222`. Vesta Parliament
+  now draws Floor 2 in palette 71 and its other Floors in palette 30. The
+  Catalogue publishes each Floor's `paletteIndex` and the colours it resolves
+  beside the Floor Table (#493).
+
 - **The Atlas road e2e describes the payload it ships with.** #448 recovered every
   Structure Workspace's network, so the three road tests written for #414 were
   still asserting KEY WEST and MIDAS as gaps, 1 of 5 workspaces on ERIS and 37 runs

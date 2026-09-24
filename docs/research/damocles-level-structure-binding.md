@@ -109,6 +109,65 @@ Two records are shorter than the format and run into the record that follows:
 `structure-010ea8` (slot 37) omits its palette table, and `structure-0122fa` (slot 46)
 ends after two floor bytes. Entries past a record's own extent are not published.
 
+### A Floor is drawn in the record's palette
+
+A Floor's structure is drawn in the palette bound in `$7A0E`, not in its own record's.
+Every scene colour word with bits 15 and 7 set (`$80xx`) resolves through that binding
+at entry `(word & $7E) / 2` (`$04F99E`, `$059DA2` and the other readers of `$7A0E`). Only
+two places write the binding, and both take it from the alias record:
+
+```text
+054E04  move.b  -$6(a2), d0      ; the palette byte `$054DB4` left in d0's slot
+054E12  movea.l $4BD16, a0       ; the palette table, $D200
+054E18  adda.w  (a0, d0.w), a0
+054E1C  move.l  a0, $7A0E
+054E20  move.w  a0, $7A12        ; the palette
+054E24  adda.w  -$2(a0), a0      ; plus the offset word stored before it
+054E28  move.w  a0, $7A14        ; the second palette
+
+055B2E  tst.b   -$2(a0)          ; record+4: a palette byte of its own
+055B32  bne.b   $55B56           ; keeps its binding on every Floor
+055B36  move.b  $C(a0, d1.w), d2 ; else the destination level's entry
+...                              ; then the same three writes, at $055B46-$055B52
+```
+
+So a record with a palette byte draws every Floor in that palette, and a record whose
+byte is zero draws each Floor in its entry of the per-level table. The structure
+assembly at `$059D70` never rebinds the palette.
+[#493](https://github.com/odogono/mercenary/issues/493) found the port drawing each upper Floor in
+the bound structure's own palette instead.
+
+Four captures agree, with the index predicted from the static record and matched
+against the base the capture's `$7A12` holds:
+
+| Capture | Record | Floor | Palette |
+| --- | --- | --- | --- |
+| `damocles.metis.transporter` | slot 155, byte `$42` | 9 | 66 (`$DB5C`) |
+| `damocles.eris.lift` | slot 75, byte `$1A` | 0 | 26 (`$D5DE`) |
+| `vesta-parliament-4-6` | slot 70, byte 0 | 0 | 30 (`$D69A`) |
+| `damocles.vesta.transporter` | slot 70, byte 0 | 10 | 30 (`$D69A`) |
+
+At Metis DOOBERRYS SOLICITORS, Floor 9 binds slot 58, whose own record names palette 28.
+Its floor face in region 4 is `$C086`, entry 3. Palette 28 gives `#882222` and palette 66
+gives `$222`, `#444444`, which is what the ST draws. Of the 463 floors that claim a
+palette, 332 name one other than the bound structure's own. The Catalogue
+publishes each floor's `paletteIndex` beside its slot. `levelBinding.palettes` resolves
+each named palette for exactly the entries its bound structures' selectors, scene
+colours and detail name. The port recolours a Floor's selector through that palette,
+and a test in `research/damocles-st/tests/test_catalogue.py` holds that to a fresh
+decode in the same palette for every published pair. Slot 37 leaves its byte zero and
+omits the table, so its two floors claim no palette.
+
+**Not resolved: the second palette.** `$7A0E` is a long, so its low word is `$7A10`.
+`$050562`–`$0505AA` (the day/night terminator in
+[the Gamma System research](damocles-gamma-system.md)) copies `$7A14` into it when
+`$7A4E` is set and `$7A12` when it is clear. `$7A14` is the palette plus the offset
+word stored just before it. 31 of the 155 palettes `$D200` indexes have a non-zero offset, among
+them 66: the Metis capture has `$7A4E` = `$FFFF` and `$7A10` = `$DB74`, 24 bytes past
+`$DB5C`. The Catalogue resolves every palette at its base, as it always has. Entry 3
+reads `$222` in both halves of palette 66, so the Metis floor is `#444444` either way.
+Which half is day, and whether a model should carry both, is still open.
+
 ### The level domain is 0 to 10, and the game says so
 
 The lift's own indicator bounds the domain independently of the table. It writes one

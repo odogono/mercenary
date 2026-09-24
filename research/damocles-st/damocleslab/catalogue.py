@@ -2934,6 +2934,13 @@ def structure_level_binding(data: bytes, slot: int, count: int = 280) -> dict | 
     So a level selects a structure slot by lookup, not by arithmetic: Vesta
     Parliament's table reads 90, 92, 92, 93 and then 91 at level 10.
 
+    Each floor also names the scene palette its Floor is drawn in, which is the
+    alias record's rather than the bound structure's own. ``$054DB4`` binds the
+    palette byte at record+4 into ``$7A0E``; where that byte is zero,
+    ``$054DC8`` binds level 0's entry of the parallel table at record+18 and
+    ``$055B2E``--``$055B52`` rebinds the destination level's on arrival. A
+    per-level entry past the record's own extent is not claimed.
+
     A plain structure record has no alias header and therefore no table, so it
     offers level 0 alone and this returns ``None``. The table is twelve bytes,
     but two authored records are shorter than the format and run into the
@@ -2952,15 +2959,84 @@ def structure_level_binding(data: bytes, slot: int, count: int = 280) -> dict | 
         if a > address
     )
     extent = STRUCTURE_LEVELS if not following else max(0, min(STRUCTURE_LEVELS, following[0] - table))
+    palettes = table + STRUCTURE_LEVELS
     floors = []
     for level in range(extent):
         target = data[table + level]
         if not target:
             continue
         target_address = base + u32(data, base + target * 4)
-        floors.append({'level': level, 'structureId': f'structure-{target_address:06x}',
-                       'structureSlot': target})
+        floor = {'level': level, 'structureId': f'structure-{target_address:06x}',
+                 'structureSlot': target}
+        if data[address + 4]:
+            floor['paletteIndex'] = data[address + 4]
+        elif not following or palettes + level < following[0]:
+            floor['paletteIndex'] = data[palettes + level]
+        floors.append(floor)
     return {'floors': floors, 'levelsAuthored': extent, 'tableAddress': table}
+
+
+def palette_entries(value) -> set[int]:
+    """The scene palette entries a published fragment's ``$80xx`` words name.
+
+    A word with bits 15 and 7 set resolves through the bound palette at entry
+    ``(word & $7E) / 2`` (``colour_value``); the other bits are face flags.
+    """
+    if isinstance(value, dict):
+        found = set()
+        word = value.get('sourceColour')
+        if isinstance(word, int) and word & 0x8080 == 0x8080:
+            found.add((word & 0x7e) // 2)
+        for item in value.values():
+            found |= palette_entries(item)
+        return found
+    if isinstance(value, list):
+        return set().union(*map(palette_entries, value)) if value else set()
+    return set()
+
+
+def bind_floor_palettes(models: list[dict], data: bytes, hardware: list[int]) -> None:
+    """Publish the colours each Floor's bound palette gives its structure.
+
+    A Floor above 0 draws the structure its floor table binds, but its
+    ``$80xx`` colour words resolve through the palette the alias record binds
+    in ``$7A0E``, not the one that structure's own record names; Metis
+    DOOBERRYS SOLICITORS draws slot 58's floor ``$C086`` in palette 66 as
+    ``#444444``, not in slot 58's palette 28 as ``#882222``. So every palette
+    a floor names is published beside the table, resolved for exactly the
+    entries its structure's selector, scene colours and detail name. An entry
+    no bound structure names is ``None``.
+    """
+    by_id = {model['id']: model for model in models}
+    for model in models:
+        binding = model.get('levelBinding')
+        if binding is None:
+            continue
+        entries: dict[int, set[int]] = {}
+        for floor in binding['floors']:
+            target = by_id.get(floor['structureId'])
+            if 'paletteIndex' not in floor or target is None:
+                continue
+            selection = target.get('structureSelection')
+            detail = [] if selection is None else [
+                variant['mesh'] for variant in by_id.get(selection['detailModel'], {}).get('variants', [])
+                if variant['id'] == selection['detailVariant']
+            ]
+            entries.setdefault(floor['paletteIndex'], set()).update(
+                palette_entries([selection, target.get('sceneColours'), detail])
+            )
+        palettes = []
+        for index, referenced in sorted(entries.items()):
+            palette = palette_at(data, index)
+            colours = [None] * (max(referenced) + 1 if referenced else 0)
+            for entry in referenced:
+                try:
+                    colours[entry] = colour_value(palette[entry], None, hardware)
+                except ValueError:
+                    pass
+            palettes.append({'colours': colours, 'paletteIndex': index})
+        if palettes:
+            binding['palettes'] = palettes
 
 
 def structure_origin(resident_position: tuple[int, int, int], dx: int, dz: int) -> tuple[int, int, int]:
@@ -5159,6 +5235,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                 by_address[instance['model']].get('instanceOrientation'), board_gate,
                 instance_ids,
                 resident=instance['location'] is not None or instance['placement'] is not None)
+    bind_floor_palettes(models, data, hardware)
     label_fonts = {
         font for model in models
         for label in (model.get('structureSelection') or {}).get('floorLabels', [])

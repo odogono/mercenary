@@ -137,7 +137,10 @@ indexes by the destination level before assembling that structure: one structure
 per level, 0 to 11, where zero means the level has no floor. A record has a floor
 table exactly when it has a pitch, both coming from bit 15 of the same word, and
 `levelsAuthored` records how many of the twelve bytes lie inside the record's own
-extent so the two short authored records claim nothing past themselves. See
+extent so the two short authored records claim nothing past themselves. Each floor
+also carries the `paletteIndex` it is drawn in, which is the alias record's (record+4,
+or record+18+level where that byte is zero), and `levelBinding.palettes` resolves each
+named palette for the entries the bound structures' `$80xx` words name. See
 [the level-to-structure binding](damocles-level-structure-binding.md). `supportTop` is the
 drop handler's raw-Y maximum at `$0545DE`–`$054610`, or `null` when its model-form
 gate refuses. It is not the renderer's mesh maximum: text and articulated forms

@@ -7,56 +7,85 @@
       "floors": [
         {
           "level": 0,
+          "paletteIndex": 92,
           "structureId": "structure-012b7a",
           "structureSlot": 57
         },
         {
           "level": 1,
+          "paletteIndex": 92,
           "structureId": "structure-012d2e",
           "structureSlot": 58
         },
         {
           "level": 2,
+          "paletteIndex": 92,
           "structureId": "structure-012d2e",
           "structureSlot": 58
         },
         {
           "level": 3,
+          "paletteIndex": 92,
           "structureId": "structure-012d2e",
           "structureSlot": 58
         },
         {
           "level": 4,
+          "paletteIndex": 92,
           "structureId": "structure-012d2e",
           "structureSlot": 58
         },
         {
           "level": 5,
+          "paletteIndex": 92,
           "structureId": "structure-012d2e",
           "structureSlot": 58
         },
         {
           "level": 6,
+          "paletteIndex": 92,
           "structureId": "structure-012d2e",
           "structureSlot": 58
         },
         {
           "level": 7,
+          "paletteIndex": 92,
           "structureId": "structure-012d2e",
           "structureSlot": 58
         },
         {
           "level": 8,
+          "paletteIndex": 92,
           "structureId": "structure-012d2e",
           "structureSlot": 58
         },
         {
           "level": 9,
+          "paletteIndex": 92,
           "structureId": "structure-012d2e",
           "structureSlot": 58
         }
       ],
       "levelsAuthored": 12,
+      "palettes": [
+        {
+          "colours": [
+            "#000000",
+            "#eeeeee",
+            "#aa6666",
+            "#4488cc",
+            "#aa6666",
+            "#aaaaaa",
+            "#888888",
+            "#666666",
+            "#eeeeee",
+            "#882222",
+            "#884444",
+            "#eeeeee"
+          ],
+          "paletteIndex": 92
+        }
+      ],
       "tableAddress": 108374
     },
     "linkedInstances": [],

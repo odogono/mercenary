@@ -7,16 +7,40 @@
       "floors": [
         {
           "level": 0,
+          "paletteIndex": 42,
           "structureId": "structure-011c52",
           "structureSlot": 43
         },
         {
           "level": 10,
+          "paletteIndex": 42,
           "structureId": "structure-011f96",
           "structureSlot": 44
         }
       ],
       "levelsAuthored": 12,
+      "palettes": [
+        {
+          "colours": [
+            null,
+            "#000000",
+            "#222222",
+            "#666666",
+            "#888888",
+            "#aaaaaa",
+            "#cccccc",
+            "#eeeeee",
+            "#664444",
+            "#aa8800",
+            null,
+            "#8800aa",
+            "#886600",
+            "#666600",
+            "#ccaa88"
+          ],
+          "paletteIndex": 42
+        }
+      ],
       "tableAddress": 72766
     },
     "linkedInstances": [],

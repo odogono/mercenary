@@ -7,61 +7,92 @@
       "floors": [
         {
           "level": 0,
+          "paletteIndex": 70,
           "structureId": "structure-01280a",
           "structureSlot": 54
         },
         {
           "level": 1,
+          "paletteIndex": 70,
           "structureId": "structure-0129be",
           "structureSlot": 55
         },
         {
           "level": 2,
+          "paletteIndex": 70,
           "structureId": "structure-0129be",
           "structureSlot": 55
         },
         {
           "level": 3,
+          "paletteIndex": 70,
           "structureId": "structure-0129be",
           "structureSlot": 55
         },
         {
           "level": 4,
+          "paletteIndex": 70,
           "structureId": "structure-0129be",
           "structureSlot": 55
         },
         {
           "level": 5,
+          "paletteIndex": 70,
           "structureId": "structure-0129be",
           "structureSlot": 55
         },
         {
           "level": 6,
+          "paletteIndex": 70,
           "structureId": "structure-0129be",
           "structureSlot": 55
         },
         {
           "level": 7,
+          "paletteIndex": 70,
           "structureId": "structure-0129be",
           "structureSlot": 55
         },
         {
           "level": 8,
+          "paletteIndex": 70,
           "structureId": "structure-0129be",
           "structureSlot": 55
         },
         {
           "level": 9,
+          "paletteIndex": 70,
           "structureId": "structure-0129be",
           "structureSlot": 55
         },
         {
           "level": 10,
+          "paletteIndex": 70,
           "structureId": "structure-00fad6",
           "structureSlot": 13
         }
       ],
       "levelsAuthored": 12,
+      "palettes": [
+        {
+          "colours": [
+            "#eeeeee",
+            null,
+            "#664444",
+            "#882222",
+            "#4488cc",
+            "#aaaaaa",
+            "#666666",
+            null,
+            "#888888",
+            "#884444",
+            "#aa4444",
+            null,
+            "#aa0000"
+          ],
+          "paletteIndex": 70
+        }
+      ],
       "tableAddress": 108230
     },
     "linkedInstances": [],
