@@ -462,6 +462,18 @@ _Avoid_: Door flag, region mask, collision layer
 The twelve bytes in a scaled Surface Structure's alias record naming which structure each of its levels binds, zero where a level has no floor. The level indexes it; the storey pitch in the same record gives that floor its height. Level 0's entry is the ground bind.
 _Avoid_: Storey list, floor map, level index
 
+**Floor**:
+One level, 0 to 10, of a Surface Structure that its Floor Table binds to a structure. Inside a structure the player stands on exactly one Floor, at a height that Floor and the storey pitch fix.
+_Avoid_: Level (bare), storey, basement
+
+**Floor Label**:
+The character a Damocles Lift shows for a Floor: `G` for Floor 0, `B` for Floor 10, the digit otherwise. It is a label, not a position: Floor 10 is the highest Floor in the structure's coordinates.
+_Avoid_: Basement, floor number
+
+**Damocles Lift**:
+The control inside a structure that changes the player's Floor. It reaches only the Floors its Floor Table binds and refuses every other.
+_Avoid_: Elevator, Lift Journey
+
 **Structure Workspace**:
 The single bound current-cell Damocles Instance whose plan, attachments and regions the Working Authority holds live. Region selection, the selected-region ±11 eye clamp and plan drawing apply only while the Pose is in the central half of that cell on both axes; attachment motion is deliberately broader and may finish re-closing that instance's leaves outside it.
 _Avoid_: Active structure, current building, bound model
