@@ -234,10 +234,59 @@ export interface EntranceAttachment {
   };
   readonly slot: number;
 }
+export type RegionQueueEntry =
+  | { readonly index: number; readonly kind: 'face' }
+  | { readonly kind: 'attachment'; readonly slot: number }
+  | {
+      readonly index: number;
+      readonly kind: 'attachmentFace';
+      readonly slot: number;
+    };
+/**
+ * A structure wall-text record ($059EB6) whose text is one token reaching the Floor Label
+ * at `$CD04`, placed as the builder places it under this record's scale. `$05A41A` draws it
+ * straight after `face` whenever a region queue draws that entry. Its glyph is the Floor
+ * Label's current character in `font`, from the Catalogue's `floorLabelGlyphs`: each glyph
+ * point (x, y) lands at `anchor + (x * scale[0], y * scale[1], 0)` on the XY plane (`plane`
+ * 0) or `anchor + (0, y * scale[1], x * scale[0])` on the ZY plane (`plane` 128).
+ */
+export interface FloorLabel {
+  readonly anchor: Point;
+  readonly colour: string;
+  readonly face: RegionQueueEntry;
+  readonly font: number;
+  readonly plane: 0 | 128;
+  readonly scale: readonly [number, number];
+  readonly sourceColour: number;
+}
+/** The characters `$055AB8`-`$055AD8` write into `$CD04`: G at Floor 0, B at Floor 10. */
+export const FLOOR_LABEL_CHARACTERS = [
+  'G',
+  '1',
+  '2',
+  '3',
+  '4',
+  '5',
+  '6',
+  '7',
+  '8',
+  '9',
+  'B'
+] as const;
+/**
+ * One source glyph from the `$31700` font table in unscaled glyph units: `faces` for a
+ * filled glyph, `lines` for a stroked one, both naming indices into `points`.
+ */
+export interface FloorLabelGlyph {
+  readonly faces?: readonly (readonly number[])[];
+  readonly lines?: readonly (readonly [number, number])[];
+  readonly points: readonly (readonly [number, number])[];
+}
 export interface StructureSelection {
   readonly attachments: readonly EntranceAttachment[];
   readonly detailModel: string;
   readonly detailVariant: string;
+  readonly floorLabels?: readonly FloorLabel[];
   readonly liveSelector?: boolean;
   readonly plan: Mesh;
   readonly regions: readonly {
@@ -245,15 +294,7 @@ export interface StructureSelection {
     readonly flags: number;
     readonly gate: RegionGate;
     readonly insetAxis?: 'x' | 'z';
-    readonly queue: readonly (
-      | { readonly index: number; readonly kind: 'face' }
-      | { readonly kind: 'attachment'; readonly slot: number }
-      | {
-          readonly index: number;
-          readonly kind: 'attachmentFace';
-          readonly slot: number;
-        }
-    )[];
+    readonly queue: readonly RegionQueueEntry[];
   }[];
   readonly scale: readonly [number, number];
 }
@@ -492,6 +533,10 @@ export interface Catalogue {
     readonly tables: readonly CoverageTable[];
     readonly unexplored: readonly string[];
   };
+  /** Every Floor Label character, by the font a published Floor Label draws it in. */
+  readonly floorLabelGlyphs: Readonly<
+    Record<string, Readonly<Record<string, FloorLabelGlyph>>>
+  >;
   readonly instances: readonly Instance[];
   readonly islands: readonly Island[];
   readonly modelIndex: readonly ModelSummary[];
@@ -826,7 +871,8 @@ const structureSelection = (value: unknown): StructureSelection => {
     'detailModel',
     'detailVariant',
     'regions',
-    'liveSelector'
+    'liveSelector',
+    'floorLabels'
   ]);
   const plan = mesh(s['plan'], true);
   const scale = list(s['scale']).map(number);
@@ -923,6 +969,36 @@ const structureSelection = (value: unknown): StructureSelection => {
   if (bySlot.size !== attachments.length) {
     fail('duplicate attachment slot');
   }
+  const queueEntry = (value: unknown): RegionQueueEntry => {
+    const entry = object(value);
+    if (entry['kind'] === 'attachment') {
+      const item = fields(entry, ['kind', 'slot']);
+      const itemSlot = integer(item['slot']);
+      if (!bySlot.has(itemSlot)) {
+        fail('missing region attachment');
+      }
+      return { kind: 'attachment', slot: itemSlot };
+    }
+    if (entry['kind'] === 'attachmentFace') {
+      const item = fields(entry, ['kind', 'slot', 'index']);
+      const itemSlot = integer(item['slot']);
+      const owner = bySlot.get(itemSlot) ?? fail('missing region attachment');
+      const face = integer(item['index']);
+      if (face < 0 || face >= owner.mesh.faces.length) {
+        fail('invalid attachment face reference');
+      }
+      return { index: face, kind: 'attachmentFace', slot: itemSlot };
+    }
+    fields(entry, ['kind', 'index']);
+    if (entry['kind'] !== 'face') {
+      fail('unknown region queue tag');
+    }
+    const index = integer(entry['index']);
+    if (!sources.has(index)) {
+      fail('invalid plan face reference');
+    }
+    return { index, kind: 'face' };
+  };
   const regions = list(s['regions']).map(value => {
     const r = fields(value, ['flags', 'bounds', 'queue', 'gate', 'insetAxis']);
     const flags = integer(r['flags']);
@@ -951,41 +1027,7 @@ const structureSelection = (value: unknown): StructureSelection => {
       flags,
       gate,
       ...(insetAxis === undefined ? {} : { insetAxis }),
-      queue: list(r['queue']).map(value => {
-        const entry = object(value);
-        if (entry['kind'] === 'attachment') {
-          const item = fields(entry, ['kind', 'slot']);
-          const itemSlot = integer(item['slot']);
-          if (!bySlot.has(itemSlot)) {
-            fail('missing region attachment');
-          }
-          return { kind: 'attachment', slot: itemSlot } as const;
-        }
-        if (entry['kind'] === 'attachmentFace') {
-          const item = fields(entry, ['kind', 'slot', 'index']);
-          const itemSlot = integer(item['slot']);
-          const owner =
-            bySlot.get(itemSlot) ?? fail('missing region attachment');
-          const face = integer(item['index']);
-          if (face < 0 || face >= owner.mesh.faces.length) {
-            fail('invalid attachment face reference');
-          }
-          return {
-            index: face,
-            kind: 'attachmentFace',
-            slot: itemSlot
-          } as const;
-        }
-        fields(entry, ['kind', 'index']);
-        if (entry['kind'] !== 'face') {
-          fail('unknown region queue tag');
-        }
-        const index = integer(entry['index']);
-        if (!sources.has(index)) {
-          fail('invalid plan face reference');
-        }
-        return { index, kind: 'face' } as const;
-      })
+      queue: list(r['queue']).map(queueEntry)
     };
   });
   if (regions.length === 0) {
@@ -997,10 +1039,52 @@ const structureSelection = (value: unknown): StructureSelection => {
   ) {
     fail('invalid live selector flag');
   }
+  const floorLabels =
+    s['floorLabels'] === undefined
+      ? undefined
+      : list(s['floorLabels']).map((value): FloorLabel => {
+          const l = fields(value, [
+            'anchor',
+            'colour',
+            'face',
+            'font',
+            'plane',
+            'scale',
+            'sourceColour'
+          ]);
+          const plane = integer(l['plane']);
+          const glyphScale = list(l['scale']).map(number);
+          const colour = string(l['colour']);
+          if (plane !== 0 && plane !== 0x80) {
+            fail('invalid floor label plane');
+          }
+          if (
+            glyphScale.length !== 2 ||
+            glyphScale.some(n => !Number.isInteger(n) || n === 0)
+          ) {
+            fail('invalid floor label scale');
+          }
+          if (!/^#[\da-f]{6}$/i.test(colour)) {
+            fail('invalid floor label colour');
+          }
+          return {
+            anchor: point(l['anchor']),
+            colour,
+            face: queueEntry(l['face']),
+            font: byte(l['font']),
+            plane: plane as 0 | 128,
+            scale: [glyphScale[0]!, glyphScale[1]!],
+            sourceColour: unsignedWord(l['sourceColour'])
+          };
+        });
+  if (floorLabels?.length === 0) {
+    fail('empty floor label list');
+  }
   return {
     attachments,
     detailModel: string(s['detailModel']),
     detailVariant: string(s['detailVariant']),
+    ...(floorLabels === undefined ? {} : { floorLabels }),
     ...(s['liveSelector'] === true ? { liveSelector: true } : {}),
     plan,
     regions,
@@ -1117,6 +1201,71 @@ const modelRecord = (item: unknown): Model => {
 /// The shared Catalogue document: everything but the Models, which it names through its
 /// model index (ADR 0048). Every check that needs only a Model's kind, status or slots runs
 /// here against the index; a Model's own record is checked when its file arrives.
+const glyphIndex = (value: unknown, count: number): number => {
+  const index = integer(value);
+  return index < count ? index : fail('invalid glyph point reference');
+};
+const floorLabelGlyphs = (value: unknown): Catalogue['floorLabelGlyphs'] =>
+  Object.fromEntries(
+    Object.entries(object(value)).map(([font, characters]) => {
+      if (!/^\d+$/.test(font)) {
+        fail('invalid floor label font');
+      }
+      const table = object(characters);
+      if (
+        Object.keys(table).length !== FLOOR_LABEL_CHARACTERS.length ||
+        FLOOR_LABEL_CHARACTERS.some(character => table[character] === undefined)
+      ) {
+        fail('floor label font does not carry every Floor Label character');
+      }
+      return [
+        font,
+        Object.fromEntries(
+          FLOOR_LABEL_CHARACTERS.map(character => {
+            const g = fields(table[character], ['faces', 'lines', 'points']);
+            const points = list(g['points']).map(value => {
+              const xy = list(value).map(number);
+              if (xy.length !== 2 || xy.some(n => !Number.isInteger(n))) {
+                fail('invalid glyph point');
+              }
+              return [xy[0]!, xy[1]!] as const;
+            });
+            if ((g['faces'] === undefined) === (g['lines'] === undefined)) {
+              fail('a glyph is either filled or stroked');
+            }
+            const glyph: FloorLabelGlyph =
+              g['faces'] === undefined
+                ? {
+                    lines: list(g['lines']).map(value => {
+                      const pair = list(value).map(v =>
+                        glyphIndex(v, points.length)
+                      );
+                      if (pair.length !== 2) {
+                        fail('invalid glyph stroke');
+                      }
+                      return [pair[0]!, pair[1]!] as const;
+                    }),
+                    points
+                  }
+                : {
+                    faces: list(g['faces']).map(value => {
+                      const refs = list(value).map(v =>
+                        glyphIndex(v, points.length)
+                      );
+                      if (refs.length < 3) {
+                        fail('invalid glyph fill');
+                      }
+                      return refs;
+                    }),
+                    points
+                  };
+            return [character, glyph];
+          })
+        )
+      ];
+    })
+  );
+
 export const parseCatalogueDocument = (value: unknown): Catalogue => {
   const r = object(value);
   if (r['schemaVersion'] !== 17) {
@@ -1675,6 +1824,7 @@ export const parseCatalogueDocument = (value: unknown): Catalogue => {
           ? []
           : strings(coverage['unexplored'])
     },
+    floorLabelGlyphs: floorLabelGlyphs(r['floorLabelGlyphs'] ?? {}),
     instances,
     islands,
     modelIndex,
@@ -1766,6 +1916,11 @@ export const parseModel = (value: unknown, document: Catalogue): Model => {
     }
     if (ids.models.get(selection.detailModel)?.kind !== 'interior') {
       fail('invalid selector detail binding');
+    }
+    for (const label of selection.floorLabels ?? []) {
+      if (document.floorLabelGlyphs[String(label.font)] === undefined) {
+        fail(`floor label font ${label.font} has no glyphs`);
+      }
     }
   }
   for (const id of model.relatedModels) {

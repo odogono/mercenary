@@ -725,6 +725,46 @@
       ],
       "detailModel": "interior-02cfdc",
       "detailVariant": "palette-46",
+      "floorLabels": [
+        {
+          "anchor": [
+            50,
+            75,
+            2270
+          ],
+          "colour": "#000000",
+          "face": {
+            "index": 11,
+            "kind": "face"
+          },
+          "font": 1,
+          "plane": 128,
+          "scale": [
+            2,
+            2
+          ],
+          "sourceColour": 32768
+        },
+        {
+          "anchor": [
+            50,
+            75,
+            -2030
+          ],
+          "colour": "#000000",
+          "face": {
+            "index": 46,
+            "kind": "face"
+          },
+          "font": 1,
+          "plane": 128,
+          "scale": [
+            2,
+            2
+          ],
+          "sourceColour": 32768
+        }
+      ],
       "liveSelector": false,
       "plan": {
         "faces": [

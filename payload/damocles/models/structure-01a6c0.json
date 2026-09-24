@@ -306,6 +306,27 @@
       ],
       "detailModel": "interior-02cab0",
       "detailVariant": "palette-70",
+      "floorLabels": [
+        {
+          "anchor": [
+            -90,
+            90,
+            -1740
+          ],
+          "colour": "#eeeeee",
+          "face": {
+            "index": 4,
+            "kind": "face"
+          },
+          "font": 2,
+          "plane": 0,
+          "scale": [
+            4,
+            4
+          ],
+          "sourceColour": 1911
+        }
+      ],
       "liveSelector": false,
       "plan": {
         "faces": [

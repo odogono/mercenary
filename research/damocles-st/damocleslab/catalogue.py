@@ -141,6 +141,58 @@ def expand_vector_text(data: bytes, reader: Reader, token_data: bytes | None = N
     raise ValueError('vector-text terminator missing')
 
 
+def read_glyph(data: bytes, font: int, character: str) -> dict:
+    """One source glyph from the `$31700` font table, in unscaled glyph units.
+
+    The result has `points`, then `faces` for a `$80` filled glyph or `lines`
+    for an `$81` stroke glyph, each naming zero-based point indices.
+    """
+    glyph_index = ord(character) + font * 64 - 32
+    pointer_address = 0x31700 + glyph_index * 2
+    if glyph_index < 0 or pointer_address + 2 > len(data):
+        raise ValueError('vector-text glyph outside source font')
+    pointer = Reader(data, pointer_address).signed()
+    glyph = Reader(data, 0x31700 + pointer)
+    points = []
+    for _ in range(63):
+        x = int.from_bytes(glyph.take(1), 'big', signed=True)
+        if x in (-128, -127):
+            filled = x == -128
+            break
+        y = int.from_bytes(glyph.take(1), 'big', signed=True)
+        points.append([x, y])
+    else:
+        raise ValueError('vector-text glyph vertex terminator missing')
+    if filled:
+        faces = []
+        for _ in range(256):
+            first = glyph.take(1)[0]
+            if first == 0:
+                return {'points': points, 'faces': faces}
+            refs = [first]
+            for _ in range(255):
+                ref = glyph.take(1)[0]
+                if ref == 0:
+                    break
+                refs.append(ref)
+            else:
+                raise ValueError('filled vector-text polygon terminator missing')
+            if any(ref % 4 or ref // 4 > len(points) for ref in refs):
+                raise ValueError('invalid filled vector-text glyph reference')
+            faces.append([ref // 4 - 1 for ref in refs])
+        raise ValueError('filled vector-text glyph terminator missing')
+    lines = []
+    for _ in range(256):
+        a = glyph.take(1)[0]
+        if a == 0:
+            return {'points': points, 'lines': lines}
+        b = glyph.take(1)[0]
+        if any(ref == 0 or ref % 4 or ref // 4 > len(points) for ref in (a, b)):
+            raise ValueError('invalid vector-text glyph reference')
+        lines.append([a // 4 - 1, b // 4 - 1])
+    raise ValueError('vector-text glyph line terminator missing')
+
+
 def append_vector_text(data: bytes, text: str, font: int, anchor: list[int],
                        advance: int, scale_x: int, scale_y: int, plane: int,
                        colour: int, vertices: list, faces: list, lines: list,
@@ -148,64 +200,27 @@ def append_vector_text(data: bytes, text: str, font: int, anchor: list[int],
     """Append source font fills or strokes in a building detail's text plane."""
     rgb = colour_value(colour, palette, hardware)
     for character_index, character in enumerate(text):
-        glyph_index = ord(character) + font * 64 - 32
-        pointer_address = 0x31700 + glyph_index * 2
-        if glyph_index < 0 or pointer_address + 2 > len(data):
-            raise ValueError('vector-text glyph outside source font')
-        pointer = Reader(data, pointer_address).signed()
-        glyph = Reader(data, 0x31700 + pointer)
+        glyph = read_glyph(data, font, character)
         offset = len(vertices)
-        for _ in range(63):
-            x = int.from_bytes(glyph.take(1), 'big', signed=True)
-            if x in (-128, -127):
-                filled = x == -128
-                break
-            y = int.from_bytes(glyph.take(1), 'big', signed=True)
+        for x, y in glyph['points']:
             horizontal = character_index * advance + x * scale_x
             vertices.append(
                 [anchor[0] + horizontal, anchor[1] + y * scale_y, anchor[2]]
                 if plane == 0
                 else [anchor[0], anchor[1] + y * scale_y, anchor[2] + horizontal]
             )
-        else:
-            raise ValueError('vector-text glyph vertex terminator missing')
-        if filled:
-            for _ in range(256):
-                first = glyph.take(1)[0]
-                if first == 0:
-                    break
-                refs = [first]
-                for _ in range(255):
-                    ref = glyph.take(1)[0]
-                    if ref == 0:
-                        break
-                    refs.append(ref)
-                else:
-                    raise ValueError('filled vector-text polygon terminator missing')
-                if any(ref % 4 or ref // 4 > len(vertices) - offset for ref in refs):
-                    raise ValueError('invalid filled vector-text glyph reference')
-                faces.append({
-                    'vertices': [offset + ref // 4 - 1 for ref in refs],
-                    'colour': rgb,
-                    'sourceColour': colour,
-                })
-            else:
-                raise ValueError('filled vector-text glyph terminator missing')
-            continue
-        for _ in range(256):
-            a = glyph.take(1)[0]
-            if a == 0:
-                break
-            b = glyph.take(1)[0]
-            if any(ref == 0 or ref % 4 or ref // 4 > len(vertices) - offset for ref in (a, b)):
-                raise ValueError('invalid vector-text glyph reference')
-            lines.append({
-                'vertices': [offset + a // 4 - 1, offset + b // 4 - 1],
+        for refs in glyph.get('faces', []):
+            faces.append({
+                'vertices': [offset + ref for ref in refs],
                 'colour': rgb,
                 'sourceColour': colour,
             })
-        else:
-            raise ValueError('vector-text glyph line terminator missing')
+        for a, b in glyph.get('lines', []):
+            lines.append({
+                'vertices': [offset + a, offset + b],
+                'colour': rgb,
+                'sourceColour': colour,
+            })
 
 
 def decode_building_lettering(data: bytes, reader: Reader, vertices: list,
@@ -1564,20 +1579,92 @@ def attachment_leaf_height(mesh: dict, x: list[int], z: list[int], band: int) ->
     return min(soffits, default=band)
 
 
-def skip_other_post_plan(reader: Reader) -> None:
-    """Skip a non-entrance post-plan record whose control low byte is 1–15."""
-    reader.take(2)
-    reader.word()
-    reader.word()
-    reader.word()
-    reader.word()
-    reader.take(4)
+def read_wall_text(reader: Reader, command: int) -> dict:
+    """A post-plan wall-text record: a control whose low byte is 1–15 ($059EB6).
+
+    After the control come a flags byte and the region-queue byte of the face
+    it rides on, an offset word, X/Y/Z, the two glyph scales, a colour and a
+    NUL-terminated text, padded to an even address. The builder stores a
+    pointer to the text rather than the text, so the draw pass reaches it
+    through the indirect path at $054080 whatever the flags' bit 15 says.
+    """
+    flags, face = reader.take(2)
+    offset, x, y, z = (reader.signed() for _ in range(4))
+    scale_x, scale_y = struct.unpack('>bb', reader.take(2))
+    colour = reader.word()
+    text = bytearray()
     for _ in range(1024):
-        if reader.take(1) == b'\0':
+        character = reader.take(1)[0]
+        if character == 0:
             if reader.p & 1:
                 reader.take(1)
-            return
+            return {'command': command, 'flags': flags, 'face': face, 'offset': offset,
+                    'position': [x, y, z], 'scale': [scale_x, scale_y],
+                    'colour': colour, 'text': bytes(text)}
+        text.append(character)
     raise ValueError('other post-plan record terminator missing')
+
+
+def wall_text_placement(text: dict, scale: tuple[int, int]) -> dict:
+    """$059EB6–$059F3C: where a wall-text record draws under a placement scale.
+
+    X and Z take the placement scale and Y does not. Flags bit 7 turns the
+    glyphs into the ZY plane. The offset's low bit asks for the rest of it to
+    be multiplied by the placement scale along the text, and the offset is
+    subtracted along the text. A negative scale across the text mirrors the
+    glyphs, the advance and the offset.
+    """
+    scale_x, scale_z = scale
+    x, y, z = text['position']
+    x, z = x * scale_x, z * scale_z
+    zy = bool(text['flags'] & 0x80)
+    along, across = (scale_z, scale_x) if zy else (scale_x, scale_z)
+    offset = text['offset'] >> 1
+    if text['offset'] & 1:
+        offset *= abs(along)
+    glyph_x, glyph_y = text['scale']
+    advance = text['command'] * glyph_x
+    if across < 0:
+        glyph_x, advance, offset = -glyph_x, -advance, -offset
+    if zy:
+        z -= offset
+    else:
+        x -= offset
+    return {'anchor': [x, y, z], 'plane': text['flags'] & 0xC0,
+            'scale': [glyph_x, glyph_y], 'advance': advance}
+
+
+# $055AB8-$055AD8 and $055B72 write the Floor Label into $CD04, and the
+# $CCA0 entries for tokens $80 and $81 both point there in every capture.
+FLOOR_LABEL_TARGET = 0xCD04
+# G at Floor 0, the digit at 1 to 9, B at 10.
+FLOOR_LABEL_CHARACTERS = 'G123456789B'
+
+
+def floor_label_token(data: bytes, text: dict) -> int | None:
+    """The token byte when a wall text is exactly one token that reaches $CD04."""
+    if len(text['text']) != 1 or not text['text'][0] & 0x80:
+        return None
+    index = text['text'][0] & 0x7F
+    pointer = u32(data, 0xCCA0 + index * 4)
+    return text['text'][0] if pointer == FLOOR_LABEL_TARGET else None
+
+
+def wall_text_label(text: dict) -> str:
+    """The record's text for a reason string, a token shown as its byte."""
+    return ''.join(
+        f'<${character:02X}>' if character & 0x80 else chr(character)
+        for character in text['text']
+    )
+
+
+def floor_label_glyphs(data: bytes, fonts: set[int]) -> dict:
+    """Every Floor Label character in each font a published Floor Label uses."""
+    return {
+        str(font): {character: read_glyph(data, font, character)
+                    for character in FLOOR_LABEL_CHARACTERS}
+        for font in sorted(fonts)
+    }
 
 
 def check_unreferenced(mesh: dict, groups: list) -> None:
@@ -1641,6 +1728,7 @@ def decode_structure_selection(data: bytes, mesh: dict, scale: tuple[int, int],
         raise ValueError('zero structure selection scale')
     reader = Reader(data, mesh['sourceEnd'] - 2)
     attachments = []
+    wall_texts = []
     slot = ATTACHMENT_SLOT_MASK
     band = Reader(data, mesh['sourceStart'] + 2).signed()
     for _ in range(64):
@@ -1683,7 +1771,7 @@ def decode_structure_selection(data: bytes, mesh: dict, scale: tuple[int, int],
             slot -= 4
             continue
         if 1 <= low < 0x10:
-            skip_other_post_plan(reader)
+            wall_texts.append(read_wall_text(reader, command))
             continue
         raise ValueError('unknown structure attachment form')
     else:
@@ -1698,6 +1786,40 @@ def decode_structure_selection(data: bytes, mesh: dict, scale: tuple[int, int],
         next_face += added
     regions = []
     sources = {face['sourceIndex'] for face in mesh['faces']}
+    # $05A41A appends a wall text to the draw list straight after the queue
+    # entry whose byte x 4 equals the record's own face byte x 4, so the face
+    # resolves exactly as a region queue byte does.
+    floor_labels, wall_text_gaps = [], []
+    for text in wall_texts:
+        token = floor_label_token(data, text)
+        font = text['flags'] & 0xF
+        face = resolve_region_reference(
+            text['face'], max(sources, default=-1) + 1, by_slot, attachment_faces
+        )
+        if token is not None and font != 4 and not text['flags'] & 0x40:
+            placement = wall_text_placement(text, scale)
+            floor_labels.append({
+                'face': face,
+                'anchor': placement['anchor'],
+                'plane': placement['plane'],
+                'font': font,
+                'scale': placement['scale'],
+                'colour': colour_value(text['colour'], palette, hardware),
+                'sourceColour': text['colour'],
+            })
+        elif token is not None:
+            wall_text_gaps.append(
+                f'The Floor Label on queue byte {text["face"]} selects font {font}, whose '
+                '$054016 fallback to font 3 reads $706E and $7116; it is withheld.'
+                if font == 4 else
+                f'The Floor Label on queue byte {text["face"]} uses glyph plane '
+                f'${text["flags"] & 0xC0:02X}, which no wall text was seen to use; it is withheld.'
+            )
+        else:
+            wall_text_gaps.append(
+                f'Wall text "{wall_text_label(text)}" on queue byte {text["face"]} '
+                '($059EB6) is not drawn.'
+            )
     for _ in range(256):
         flags = reader.word()
         if flags == 0:
@@ -1744,6 +1866,11 @@ def decode_structure_selection(data: bytes, mesh: dict, scale: tuple[int, int],
         'regions': regions,
         'scale': list(scale),
         'liveSelector': any(item['controlWord'] & 0xFF == 0xF0 for item in attachments),
+        # The Floor Label is one token reaching $CD04, so each record is placed
+        # here and its glyph comes from the document's floorLabelGlyphs.
+        **({'floorLabels': floor_labels} if floor_labels else {}),
+        # Stated in the model reason by the caller, not published here.
+        'wallTextGaps': wall_text_gaps,
         # The region loop stops on the same zero selector the native walk stops
         # on at $05A26A, and $05A2FA publishes the address just past it as the
         # structure's association-list root in $7B0E. So this offset is that
@@ -3722,11 +3849,12 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                         # structure-group probe derives from; it is not a
                         # published catalogue fact, so it stays out of the payload.
                         structure_association_roots[identity] = selection.pop('associationRoot')
+                        wall_text_gaps = selection.pop('wallTextGaps')
                         model['structureSelection'] = selection
                         gaps = [
                             gap for gap in gaps
                             if gap != 'Authored surface attachments/openings are not yet decoded.'
-                        ]
+                        ] + wall_text_gaps
                     except (ValueError, struct.error) as error:
                         gaps.append(f'Structure selection unavailable: {error}.')
                     if mesh['faces']:
@@ -4780,6 +4908,11 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         variant_id = f'palette-{palette_index}'
         if detail is None or 'detailSelection' not in detail or not any(v['id'] == variant_id for v in detail['variants']):
             del model['structureSelection']
+            if selection.get('floorLabels'):
+                model['reason'] += (
+                    f" Its {len(selection['floorLabels'])} Floor Label record(s) ride on"
+                    ' region queues that are not retained, so none is published.'
+                )
             if detail is not None and detail.get('intentionalEmpty'):
                 model['reason'] += (
                     ' That empty detail carries no visibility groups either, so this'
@@ -4949,9 +5082,14 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                 by_address[instance['model']].get('instanceOrientation'), board_gate,
                 instance_ids,
                 resident=instance['location'] is not None or instance['placement'] is not None)
+    label_fonts = {
+        label['font'] for model in models
+        for label in (model.get('structureSelection') or {}).get('floorLabels', [])
+    }
     return {'schemaVersion': SCHEMA_VERSION, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
             'bodies': bodies, 'islands': islands, 'places': places, 'tables': tables,
             'roadNetworks': road_networks,
+            'floorLabelGlyphs': floor_label_glyphs(data, label_fonts),
             'coverage': coverage_ledger(models, tables, coverage_notes, disk_load, road_networks)}
 
 

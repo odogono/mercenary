@@ -65,6 +65,8 @@ For body-aware interaction (#345), each resident instance carries `placementClas
 
 Each surface-cell placement carries `keyBase`, the `$7AFB` door-key base its `$ABDC` entry byte installs (`$054CBE`), or null where it installs none. An `$F0` Entrance Attachment in that cell's structure is keyed to object slot `keyBase + keyIndex` and opens only while that slot is in the Carried Stack (#362). The base belongs to the cell, so one structure record is keyed where it stands on Dion and free where it stands on Eris. See [generic entrance attachments](damocles-generic-entrance-attachments.md#the-live-condition-predicate-is-the-carried-stack--confirmed).
 
+A structure selection whose post-plan list carries a wall text reaching the Floor Label (`$CD04`, tokens `$80`/`$81`) carries `floorLabels`: the queue entry the text rides on, the builder's anchor, plane, font, glyph scales and colour at the record's own scale. The document's `floorLabelGlyphs` holds `G`, `1`–`9` and `B` in each font those labels use, so a session draws the label for its current Floor (#473). Other wall text, and the three font-4 labels, are named in the model reason and not drawn. See [Floor Label](damocles-floor-label.md).
+
 The `islands` collection is the whole Gamma System's landmasses: all 62 ten-byte
 records of the per-body lists the table at `$04BD1E` roots, one entry a record,
 keyed `island-<body-slug>-<recordAddress>` because a record carries no name of its
