@@ -12,6 +12,11 @@ import {
   type DamoclesSaveSnapshot
 } from '../src/damocles/save.ts';
 import {
+  structureLocalPosition,
+  structureMeshes,
+  structureRegionAt
+} from '../src/damocles/selection.ts';
+import {
   DamoclesSession,
   type DamoclesContent
 } from '../src/damocles/session.ts';
@@ -62,6 +67,39 @@ const inStateOffice = (): DamoclesSession => {
   session.teleportToCell(cell.x, cell.z);
   expect(session.snapshot.structure?.instanceId).toBe(STATE_OFFICE);
   return session;
+};
+
+const negateZ = () => content.doc.orientation.modelZ === 'negate';
+
+/// A session on `floor` of the State Office, standing at the middle of that Floor's region 0.
+const inRegionZero = (floor: number): DamoclesSession => {
+  const session = inStateOffice();
+  expect(session.changeFloor(floor)).toEqual({ kind: 'moved' });
+  const resume = session.captureResume();
+  const bound = session.snapshot.surface.placements.find(
+    item => item.id === STATE_OFFICE
+  )!;
+  const [xs, zs] = bound.selection!.structure.regions[0]!.bounds;
+  const x = (xs![0] + xs![1]) / 2;
+  const z = ((zs![0] + zs![1]) / 2) * (negateZ() ? -1 : 1);
+  const cos = Math.cos(bound.heading);
+  const sin = Math.sin(bound.heading);
+  const pose = {
+    ...resume.pose,
+    position: {
+      ...resume.pose.position,
+      x: bound.position.x + x * cos + z * sin,
+      z: bound.position.z - x * sin + z * cos
+    }
+  };
+  return new DamoclesSession(content, {
+    ...resume,
+    pose,
+    structure: {
+      ...resume.structure!,
+      regionIndex: structureRegionAt(bound, pose, negateZ())
+    }
+  });
 };
 
 /// The slot of the structure whose selector the published State Office placement carries.
@@ -253,6 +291,47 @@ describe('the player stands on one Floor', () => {
       });
       expect(after.pose.heading).toBe(before.heading);
     }
+  });
+
+  test("the bound structure is drawn at its Floor's height, 63 below the eye", () => {
+    const ground = content.surface.placements.find(
+      item => item.id === STATE_OFFICE
+    )!;
+    for (const floor of [0, 1, 2, 10]) {
+      const session = inRegionZero(floor);
+      const { pose, structure, surface } = session.snapshot;
+      expect(structure?.regionIndex).toBe(0);
+      const drawn = surface.placements.find(item => item.id === STATE_OFFICE)!;
+      expect(drawn.position).toEqual({
+        ...ground.position,
+        y: ground.position.y + floor * STOREY
+      });
+      // `$79AC`, the structure-local eye height the game draws from, is 63 on every Floor.
+      expect(structureLocalPosition(drawn, pose.position, negateZ()).y).toBe(
+        eye()
+      );
+      const heights = structureMeshes(drawn, pose, negateZ(), undefined, 0)
+        .filter(mesh => mesh.wallTextPlane === undefined)
+        .flatMap(mesh =>
+          mesh.vertices.map(vertex => drawn.position.y + vertex[1])
+        );
+      expect(Math.min(...heights)).toBeLessThan(pose.position.y);
+      expect(Math.max(...heights)).toBeGreaterThan(pose.position.y);
+    }
+  });
+
+  test('B A S E M E N T is drawn on Floor 10, above the eye', () => {
+    const { pose, surface } = inRegionZero(10).snapshot;
+    const drawn = surface.placements.find(item => item.id === STATE_OFFICE)!;
+    const basement = structureMeshes(drawn, pose, negateZ(), undefined, 0)
+      .filter(mesh => mesh.wallTextPlane !== undefined)
+      .find(mesh => mesh.vertices.every(vertex => vertex[0] === -410));
+    expect(basement).toBeDefined();
+    const heights = basement!.vertices.map(
+      vertex => drawn.position.y + vertex[1]
+    );
+    expect(Math.min(...heights)).toBe(10 * STOREY + 115);
+    expect(Math.max(...heights)).toBe(10 * STOREY + 123);
   });
 
   test("the attachments are the Floor structure's own, closed on arrival", () => {

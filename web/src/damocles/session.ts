@@ -658,8 +658,14 @@ export class DamoclesSession implements TitleSession<
     };
   }
 
-  /// The surface as the renderer draws it: the bound structure on its Floor. The same object
-  /// comes back until the surface or the binding changes, so a frame does not rebuild it.
+  /// The surface as the renderer draws it: the bound structure on its Floor, at that Floor's
+  /// height. The same object comes back until the surface or the binding changes, so a frame
+  /// does not rebuild it.
+  ///
+  /// The game draws a bound structure from the structure-local eye (`$79A8`/`$79AC`/`$79B0`,
+  /// read at `$05A756` and `$053FB4`), and every write of the local eye height makes it 63
+  /// (`$055948` on foot, `$055BA6` on arrival at a Floor). The eye stands at Floor × storey
+  /// + 63, so the structure is drawn Floor × storey above its placement (#487).
   private publishedSurface(): ErisSurface {
     const bound = this.boundPlacement;
     if (bound === null || this.floor === 0) {
@@ -669,12 +675,23 @@ export class DamoclesSession implements TitleSession<
       this.floorSurface?.bound !== bound ||
       this.floorSurface.under !== this.surface
     ) {
+      const storey = this.content.models.peek(bound.modelId)?.storeyHeight;
+      const drawn =
+        storey === undefined
+          ? bound
+          : {
+              ...bound,
+              position: {
+                ...bound.position,
+                y: bound.position.y + this.floor * storey
+              }
+            };
       this.floorSurface = {
         bound,
         surface: {
           ...this.surface,
           placements: this.surface.placements.map(placement =>
-            placement.id === bound.id ? bound : placement
+            placement.id === bound.id ? drawn : placement
           )
         },
         under: this.surface
