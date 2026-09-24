@@ -12,6 +12,19 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Added
 
+  a structure region whose flags have bit 13, the recovered keys ask for a
+  Floor: `1`–`9` for Floors 1–9, `0` or `B` for Floor 10, and `G` for Floor 0.
+  The ST's `Esc` also asks for Floor 0, but the Browser Shell keeps Escape for
+  the System Menu. The lift refuses, silently and changing nothing, the Floor
+  it is on and any Floor its Floor Table leaves zero, so in the Eris State
+  Office only G, 1, 2 and B are reached. Outside a lift car the keys keep their
+  ordinary meaning, and `B` still boards. The ride is an instant rebind to the
+  Floor's structure at Floor times storey pitch plus eye height, with X and Z
+  kept. That is an authored placeholder until the recovered ride's presentation
+  lands: the door closing, the Floor Label stepping through each Floor, and the
+  door reopening (#476). The console's `floor N` stays as a development
+  shortcut (#475).
+FURTHER FLIGHT`. Every other refusal is silent. Boarding takes the craft out
 - **Damocles players can board and leave craft.** `B` beside a placed craft
   runs the recovered board gate's eight tests in order. Its reach is 1024
   units, twice the Take's. A craft boards while its Vehicle Key is carried,

@@ -1695,12 +1695,46 @@ export class DamoclesSession implements TitleSession<
     this.bindAt(this.pose);
   }
 
+  /// Whether the player is in a Damocles Lift: the dispatcher's gate `$0555DC`–`$0555F0`, on foot
+  /// in a structure region whose flags have bit 13 (docs/research/damocles-lift-control.md). The
+  /// Working Authority also asks that `$7882` be zero, a digit-key mode the port does not have.
+  get inLift(): boolean {
+    const region =
+      this.regionIndex === null
+        ? undefined
+        : this.boundPlacement?.selection?.structure.regions[this.regionIndex];
+    return (
+      this.occupied === null &&
+      region !== undefined &&
+      (region.flags & 0x20_00) !== 0
+    );
+  }
+
+  /// A lift key asking for `floor`: `$055AE0`. Outside a lift the key is not the lift's. In one,
+  /// a Floor the label already shows, or one the Floor Table leaves zero, is refused silently and
+  /// changes nothing.
+  ///
+  /// Authored: the ride is an instant rebind until its presentation lands (#476, recovered by
+  /// #472). The Working Authority steps the label one Floor per 25 ticks behind a closed door
+  /// before it arrives, at the same Floor and height this rebind gives.
+  rideLift(floor: number): { readonly kind: 'noLift' | 'refused' | 'rode' } {
+    if (!this.inLift) {
+      return { kind: 'noLift' };
+    }
+    if (floor === this.floor) {
+      return { kind: 'refused' };
+    }
+    return this.changeFloor(floor).kind === 'moved'
+      ? { kind: 'rode' }
+      : { kind: 'refused' };
+  }
+
   /// Stand on another Floor of the bound structure, as the development console's `floor N`.
   ///
-  /// Authored until the lift is (#475): the rebind is instant. It acts only where the bound
-  /// structure's Floor Table binds `floor`, and there binds that Floor's structure, sets Y to
-  /// the Floor times the storey pitch plus the eye height, and leaves X, Z and the view as they
-  /// are. The new structure's attachments start closed and its region is taken afresh.
+  /// The lift's arrival and the console's are both this instant rebind. It acts only where the
+  /// bound structure's Floor Table binds `floor`, and there binds that Floor's structure, sets Y
+  /// to the Floor times the storey pitch plus the eye height, and leaves X, Z and the view as
+  /// they are. The new structure's attachments start closed and its region is taken afresh.
   changeFloor(
     floor: number
   ):

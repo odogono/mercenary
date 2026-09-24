@@ -400,6 +400,8 @@ try {
     drop: () => performAndRefresh(() => session.drop()),
     fire: () => performAndRefresh(() => session.fire()),
     leaveCraft: () => performAndRefresh(() => session.leaveCraft()),
+    // Targ has no Damocles Lift: its lift is the Lift Journey, ridden with `rideLift`.
+    liftKey: () => false,
     occupancy: () => snapshot.occupancy,
     // The live Benson Script owns the message line. Bracket paging remains a Control Profile
     // action for the scriptless Swift fallback, but this required scripted shell has no pager.
