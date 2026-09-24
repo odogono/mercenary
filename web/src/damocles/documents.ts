@@ -78,14 +78,12 @@ export interface ErisPresentationDocument {
     readonly provenance: Provenance;
     readonly unresolvedModels: 'nothing';
   };
-  readonly schemaVersion: 7;
-  readonly sky: {
-    readonly colour: string;
-    readonly note: string;
-    readonly paletteIndex: number;
-    readonly provenance: Provenance;
-  };
+  readonly schemaVersion: 8;
   readonly start: {
+    /// Eris's rotation accumulator in the start capture (`$62EA + 4 * 11`), which the
+    /// terminator reads with the position (#497). A switch takes the arrival Pose's instead.
+    readonly bodyTurn: number;
+    readonly bodyTurnProvenance: Provenance;
     readonly evidence: string;
     /// The camera pitch word as captured. Play never moves it — nothing on foot pitches the
     /// view — so it is the level word for the arrival, and the island validation views of #394
@@ -248,7 +246,6 @@ export const readErisPresentation = (
     'camera',
     'palette',
     'ground',
-    'sky',
     'lighting',
     'rendering',
     'structureFallback',
@@ -275,6 +272,8 @@ export const readErisPresentation = (
     'waitFrames'
   ]);
   const start = object(root['start'], 'start', [
+    'bodyTurn',
+    'bodyTurnProvenance',
     'position',
     'positionProvenance',
     'yaw',
@@ -322,12 +321,6 @@ export const readErisPresentation = (
     'fillDropUnits',
     'note'
   ]);
-  const sky = object(root['sky'], 'sky', [
-    'colour',
-    'paletteIndex',
-    'provenance',
-    'note'
-  ]);
   const lighting = object(root['lighting'], 'lighting', [
     'sunDirection',
     'sunColour',
@@ -355,15 +348,9 @@ export const readErisPresentation = (
   const outdoor = (outdoorRaw as unknown[]).map((word, index) =>
     stWord(word, `palette.outdoor[${index}]`)
   );
-  const paletteColour = (index: unknown, path: string): string => {
-    const position = integer(index, path);
-    return position < 16
-      ? stColour(outdoor[position]!)
-      : fail(path, 'should index the sixteen-entry palette');
-  };
-  const skyColour = colour(sky['colour'], 'sky.colour');
-  if (skyColour !== paletteColour(sky['paletteIndex'], 'sky.paletteIndex')) {
-    fail('sky.colour', 'should match its palette entry');
+  const bodyTurn = integer(start['bodyTurn'], 'start.bodyTurn');
+  if (bodyTurn < 0 || bodyTurn > 0xff_ff_ff_ff) {
+    fail('start.bodyTurn', 'should be an unsigned longword');
   }
   const nearPlane = positive(camera['nearPlane'], 'camera.nearPlane');
   const farPlane = positive(camera['farPlane'], 'camera.farPlane');
@@ -474,14 +461,13 @@ export const readErisPresentation = (
         'rendering.unresolvedModels'
       )
     },
-    schemaVersion: literal(root['schemaVersion'], 7, 'schemaVersion'),
-    sky: {
-      colour: skyColour,
-      note: text(sky['note'], 'sky.note'),
-      paletteIndex: integer(sky['paletteIndex'], 'sky.paletteIndex'),
-      provenance: provenance(sky['provenance'], 'sky.provenance')
-    },
+    schemaVersion: literal(root['schemaVersion'], 8, 'schemaVersion'),
     start: {
+      bodyTurn,
+      bodyTurnProvenance: provenance(
+        start['bodyTurnProvenance'],
+        'start.bodyTurnProvenance'
+      ),
       evidence: text(start['evidence'], 'start.evidence'),
       pitch: integer(start['pitch'], 'start.pitch'),
       position: point(start['position'], 'start.position'),

@@ -20,11 +20,16 @@ import { bearingFromYaw, type Pose } from './world.ts';
 
 export interface ArrivalPose {
   readonly body: string;
+  /// The Body's rotation accumulator when the capture was taken (`$62EA + 4 * body`), one turn
+  /// every `$04000000`. The terminator reads the low ten bits of its high word (#497).
+  readonly bodyTurn: number;
   readonly cell: number;
   readonly id: string;
   readonly name: string;
   readonly onFoot: boolean;
   readonly position: Vector3;
+  /// `$79BE`: the Body's sub-stellar longitude, 1024 steps a turn, written on arrival.
+  readonly subStellarLongitude: number;
   /// Null where the Body has no recovered 16x16 workspace origin.
   readonly workspaceOrigin: { readonly x: number; readonly z: number } | null;
   readonly yaw: number;
@@ -51,6 +56,13 @@ const finite = (value: unknown, path: string): number =>
   typeof value === 'number' && Number.isFinite(value)
     ? value
     : fail(`${path} is not a finite number`);
+
+const unsigned = (value: unknown, limit: number, path: string): number =>
+  Number.isInteger(value) &&
+  (value as number) >= 0 &&
+  (value as number) <= limit
+    ? (value as number)
+    : fail(`${path} is not an integer from 0 to ${limit}`);
 
 const originOf = (
   value: unknown,
@@ -86,6 +98,11 @@ export const parseDamoclesArrivalPoses = (value: unknown): ArrivalPoses => {
     }
     return {
       body: text(pose['body'], `arrival pose ${index} body`),
+      bodyTurn: unsigned(
+        pose['bodyTurn'],
+        0xff_ff_ff_ff,
+        `arrival pose ${index} bodyTurn`
+      ),
       cell: finite(pose['cell'], `arrival pose ${index} cell`),
       id: text(pose['id'], `arrival pose ${index} id`),
       name: text(pose['name'], `arrival pose ${index} name`),
@@ -95,6 +112,11 @@ export const parseDamoclesArrivalPoses = (value: unknown): ArrivalPoses => {
         y: finite(position['y'], `arrival pose ${index} position.y`),
         z: finite(position['z'], `arrival pose ${index} position.z`)
       },
+      subStellarLongitude: unsigned(
+        pose['subStellarLongitude'],
+        0x3_ff,
+        `arrival pose ${index} subStellarLongitude`
+      ),
       workspaceOrigin: originOf(
         pose['workspaceOrigin'],
         `arrival pose ${index} workspaceOrigin`

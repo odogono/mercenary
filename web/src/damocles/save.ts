@@ -54,7 +54,12 @@ import type { Pose } from './world.ts';
 /// Version 8 carries a Damocles Lift ride in progress and the doorway `$7AE6` names, whose
 /// door the next ride pins (#476). A schema-7 record cannot say which doorway its player last
 /// crossed, so it is refused whole rather than defaulted to none.
-export const DAMOCLES_SAVE_SCHEMA_VERSION = 8 as const;
+///
+/// Version 9 carries the current Body's rotation accumulator, which with the Pose decides the
+/// terminator: the sky and the half of the scene palette the scene is drawn in (#494, #497). A
+/// schema-8 record cannot say how far its Body had turned, so it is refused whole rather than
+/// defaulted to the start's.
+export const DAMOCLES_SAVE_SCHEMA_VERSION = 9 as const;
 export const DAMOCLES_DESTINATION = 'damocles' as const;
 
 /// What a restore must match exactly before it may continue this game (ADR 0026).
@@ -109,6 +114,8 @@ export interface DamoclesSaveSnapshot {
   // Both continuation fields may be omitted together and are then normalized to empty;
   // partial omission is invalid. Since the schema-5 bump no shipped build writes a record
   // that omits them, so this leniency is now unreachable rather than load-bearing.
+  /// The current Body's rotation accumulator (`$62EA + 4 * body`), one turn every `$04000000`.
+  readonly bodyTurn: number;
   readonly briefcaseStore: readonly string[];
   readonly carried: readonly string[];
   readonly elapsed: number;
@@ -748,6 +755,14 @@ export const decodeDamoclesSave = (
   if (carried.length > capacity || new Set(carried).size !== carried.length) {
     return fail('Carried Stack is over capacity or duplicated');
   }
+  const bodyTurn = snapshot['bodyTurn'];
+  if (
+    !Number.isInteger(bodyTurn) ||
+    (bodyTurn as number) < 0 ||
+    (bodyTurn as number) > 0xff_ff_ff_ff
+  ) {
+    return fail('bodyTurn is not an unsigned longword');
+  }
   const frameAccumulator = snapshot['frameAccumulator'];
   if (
     !finite(frameAccumulator) ||
@@ -985,6 +1000,7 @@ export const decodeDamoclesSave = (
     savedAt: record['savedAt'],
     schemaVersion: DAMOCLES_SAVE_SCHEMA_VERSION,
     snapshot: {
+      bodyTurn: bodyTurn as number,
       briefcaseStore,
       carried,
       elapsed: snapshot['elapsed'],

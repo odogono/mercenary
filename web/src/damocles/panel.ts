@@ -58,9 +58,20 @@ const bodyStep = (value: number, bias = 0): number =>
 const bodyDigits = (step: number): string =>
   String(Math.floor((step * 1000) / 1024)).padStart(3, '0');
 
+/// The two steps the engine keeps at `$7A1E` and `$7A22`, the z step biased a quarter turn. The
+/// readout prints them, and the terminator reads them as longitude and latitude (#497).
+export const bodySteps = (
+  position: Vector3
+): { readonly x: number; readonly z: number } => ({
+  x: bodyStep(position.x),
+  z: bodyStep(position.z, BODY_Z_BIAS)
+});
+
 /// The Body Coordinate Readout, from the player's position on the Body (#371).
-export const bodyCoordinateReadout = (position: Vector3): string =>
-  `${bodyDigits(bodyStep(position.x))}-${bodyDigits(bodyStep(position.z, BODY_Z_BIAS))}`;
+export const bodyCoordinateReadout = (position: Vector3): string => {
+  const steps = bodySteps(position);
+  return `${bodyDigits(steps.x)}-${bodyDigits(steps.z)}`;
+};
 
 /// The impact clock, as `HH-MM-SS` counting down toward the comet's arrival (#368).
 ///

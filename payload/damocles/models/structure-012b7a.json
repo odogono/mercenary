@@ -1814,6 +1814,7 @@
             },
             {
               "colour": "#eeee22",
+              "dayColour": "#00eeee",
               "sourceColour": 32918,
               "sourceIndex": 23,
               "vertices": [
@@ -1847,6 +1848,7 @@
             },
             {
               "colour": "#eeee22",
+              "dayColour": "#00eeee",
               "sourceColour": 32898,
               "sourceIndex": 26,
               "vertices": [
@@ -1902,6 +1904,7 @@
             },
             {
               "colour": "#eeee22",
+              "dayColour": "#00eeee",
               "sourceColour": 32898,
               "sourceIndex": 31,
               "vertices": [

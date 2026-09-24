@@ -7,6 +7,17 @@
           4096,
           4096
         ],
+        "rotationRate": 0,
+        "sky": {
+          "day": {
+            "colour": "#000000",
+            "sourceColour": 0
+          },
+          "night": {
+            "colour": "#000000",
+            "sourceColour": 0
+          }
+        },
         "sourceColour": 1911,
         "wrapsX": true,
         "wrapsZ": true
@@ -22,6 +33,17 @@
           4096,
           4096
         ],
+        "rotationRate": 21648,
+        "sky": {
+          "day": {
+            "colour": "#000022",
+            "sourceColour": 1
+          },
+          "night": {
+            "colour": "#000022",
+            "sourceColour": 1
+          }
+        },
         "sourceColour": 546,
         "wrapsX": true,
         "wrapsZ": true
@@ -54,6 +76,17 @@
           4096,
           4096
         ],
+        "rotationRate": 343,
+        "sky": {
+          "day": {
+            "colour": "#000022",
+            "sourceColour": 1
+          },
+          "night": {
+            "colour": "#000022",
+            "sourceColour": 1
+          }
+        },
         "sourceColour": 1344,
         "wrapsX": true,
         "wrapsZ": true
@@ -69,6 +102,17 @@
           4096,
           4096
         ],
+        "rotationRate": 16170,
+        "sky": {
+          "day": {
+            "colour": "#000022",
+            "sourceColour": 1
+          },
+          "night": {
+            "colour": "#000022",
+            "sourceColour": 1
+          }
+        },
         "sourceColour": 1092,
         "wrapsX": true,
         "wrapsZ": true
@@ -130,6 +174,17 @@
           4096,
           4096
         ],
+        "rotationRate": 2302,
+        "sky": {
+          "day": {
+            "colour": "#aaaa00",
+            "sourceColour": 1360
+          },
+          "night": {
+            "colour": "#222200",
+            "sourceColour": 272
+          }
+        },
         "sourceColour": 85,
         "wrapsX": true,
         "wrapsZ": true
@@ -411,6 +466,17 @@
           4096,
           4096
         ],
+        "rotationRate": 34414,
+        "sky": {
+          "day": {
+            "colour": "#000022",
+            "sourceColour": 1
+          },
+          "night": {
+            "colour": "#000022",
+            "sourceColour": 1
+          }
+        },
         "sourceColour": 1092,
         "wrapsX": true,
         "wrapsZ": true
@@ -446,6 +512,17 @@
           4096,
           4096
         ],
+        "rotationRate": 5546,
+        "sky": {
+          "day": {
+            "colour": "#000022",
+            "sourceColour": 1
+          },
+          "night": {
+            "colour": "#000022",
+            "sourceColour": 1
+          }
+        },
         "sourceColour": 802,
         "wrapsX": true,
         "wrapsZ": true
@@ -501,6 +578,17 @@
           4096,
           4096
         ],
+        "rotationRate": 1012,
+        "sky": {
+          "day": {
+            "colour": "#000022",
+            "sourceColour": 1
+          },
+          "night": {
+            "colour": "#000022",
+            "sourceColour": 1
+          }
+        },
         "sourceColour": 1041,
         "wrapsX": true,
         "wrapsZ": true
@@ -527,6 +615,17 @@
           4096,
           4096
         ],
+        "rotationRate": 690,
+        "sky": {
+          "day": {
+            "colour": "#66aa00",
+            "sourceColour": 848
+          },
+          "night": {
+            "colour": "#222200",
+            "sourceColour": 272
+          }
+        },
         "sourceColour": 48,
         "wrapsX": true,
         "wrapsZ": true
@@ -782,6 +881,17 @@
           4096,
           4096
         ],
+        "rotationRate": 633,
+        "sky": {
+          "day": {
+            "colour": "#000022",
+            "sourceColour": 1
+          },
+          "night": {
+            "colour": "#000022",
+            "sourceColour": 1
+          }
+        },
         "sourceColour": 802,
         "wrapsX": true,
         "wrapsZ": true
@@ -815,6 +925,17 @@
           4096,
           4096
         ],
+        "rotationRate": 7101,
+        "sky": {
+          "day": {
+            "colour": "#000022",
+            "sourceColour": 1
+          },
+          "night": {
+            "colour": "#000022",
+            "sourceColour": 1
+          }
+        },
         "sourceColour": 819,
         "wrapsX": true,
         "wrapsZ": true
@@ -859,6 +980,17 @@
           4096,
           4096
         ],
+        "rotationRate": 321,
+        "sky": {
+          "day": {
+            "colour": "#66aaee",
+            "sourceColour": 855
+          },
+          "night": {
+            "colour": "#000022",
+            "sourceColour": 1
+          }
+        },
         "sourceColour": 3,
         "wrapsX": true,
         "wrapsZ": true
@@ -1156,6 +1288,17 @@
           4096,
           4096
         ],
+        "rotationRate": 383,
+        "sky": {
+          "day": {
+            "colour": "#66aa66",
+            "sourceColour": 851
+          },
+          "night": {
+            "colour": "#002200",
+            "sourceColour": 16
+          }
+        },
         "sourceColour": 819,
         "wrapsX": true,
         "wrapsZ": true
@@ -1176,6 +1319,17 @@
           4096,
           4096
         ],
+        "rotationRate": 51622,
+        "sky": {
+          "day": {
+            "colour": "#000022",
+            "sourceColour": 1
+          },
+          "night": {
+            "colour": "#000022",
+            "sourceColour": 1
+          }
+        },
         "sourceColour": 1092,
         "wrapsX": true,
         "wrapsZ": true
@@ -1207,6 +1361,17 @@
           4096,
           4096
         ],
+        "rotationRate": 12662,
+        "sky": {
+          "day": {
+            "colour": "#886688",
+            "sourceColour": 1076
+          },
+          "night": {
+            "colour": "#220022",
+            "sourceColour": 257
+          }
+        },
         "sourceColour": 582,
         "wrapsX": true,
         "wrapsZ": true
@@ -1281,6 +1446,17 @@
           4096,
           4096
         ],
+        "rotationRate": 944,
+        "sky": {
+          "day": {
+            "colour": "#66aaaa",
+            "sourceColour": 853
+          },
+          "night": {
+            "colour": "#002222",
+            "sourceColour": 17
+          }
+        },
         "sourceColour": 1041,
         "wrapsX": true,
         "wrapsZ": true
@@ -1345,6 +1521,17 @@
           4096,
           4096
         ],
+        "rotationRate": 3890,
+        "sky": {
+          "day": {
+            "colour": "#000022",
+            "sourceColour": 1
+          },
+          "night": {
+            "colour": "#000022",
+            "sourceColour": 1
+          }
+        },
         "sourceColour": 802,
         "wrapsX": true,
         "wrapsZ": true
@@ -1668,6 +1855,17 @@
           4096,
           4096
         ],
+        "rotationRate": 179,
+        "sky": {
+          "day": {
+            "colour": "#aaccee",
+            "sourceColour": 1383
+          },
+          "night": {
+            "colour": "#000022",
+            "sourceColour": 1
+          }
+        },
         "sourceColour": 1092,
         "wrapsX": true,
         "wrapsZ": true
@@ -1731,6 +1929,17 @@
           4096,
           4096
         ],
+        "rotationRate": 58355,
+        "sky": {
+          "day": {
+            "colour": "#000022",
+            "sourceColour": 1
+          },
+          "night": {
+            "colour": "#000022",
+            "sourceColour": 1
+          }
+        },
         "sourceColour": 1041,
         "wrapsX": true,
         "wrapsZ": true
@@ -1746,6 +1955,17 @@
           4096,
           4096
         ],
+        "rotationRate": 246,
+        "sky": {
+          "day": {
+            "colour": "#aa00aa",
+            "sourceColour": 1285
+          },
+          "night": {
+            "colour": "#220022",
+            "sourceColour": 257
+          }
+        },
         "sourceColour": 1856,
         "wrapsX": true,
         "wrapsZ": true
@@ -1761,6 +1981,17 @@
           4096,
           4096
         ],
+        "rotationRate": 2140,
+        "sky": {
+          "day": {
+            "colour": "#aaaa00",
+            "sourceColour": 1360
+          },
+          "night": {
+            "colour": "#222200",
+            "sourceColour": 272
+          }
+        },
         "sourceColour": 546,
         "wrapsX": true,
         "wrapsZ": true
@@ -1802,6 +2033,17 @@
           4096,
           4096
         ],
+        "rotationRate": 10168,
+        "sky": {
+          "day": {
+            "colour": "#cccc00",
+            "sourceColour": 1632
+          },
+          "night": {
+            "colour": "#222200",
+            "sourceColour": 272
+          }
+        },
         "sourceColour": 582,
         "wrapsX": true,
         "wrapsZ": true
@@ -1847,6 +2089,17 @@
           4096,
           4096
         ],
+        "rotationRate": 1390,
+        "sky": {
+          "day": {
+            "colour": "#cc0000",
+            "sourceColour": 1536
+          },
+          "night": {
+            "colour": "#220000",
+            "sourceColour": 256
+          }
+        },
         "sourceColour": 582,
         "wrapsX": true,
         "wrapsZ": true
@@ -1862,6 +2115,17 @@
           4096,
           4096
         ],
+        "rotationRate": 27391,
+        "sky": {
+          "day": {
+            "colour": "#008800",
+            "sourceColour": 64
+          },
+          "night": {
+            "colour": "#002200",
+            "sourceColour": 16
+          }
+        },
         "sourceColour": 819,
         "wrapsX": true,
         "wrapsZ": true
@@ -1911,6 +2175,17 @@
           4096,
           4096
         ],
+        "rotationRate": 2084,
+        "sky": {
+          "day": {
+            "colour": "#000022",
+            "sourceColour": 1
+          },
+          "night": {
+            "colour": "#000022",
+            "sourceColour": 1
+          }
+        },
         "sourceColour": 1092,
         "wrapsX": true,
         "wrapsZ": true
@@ -1926,6 +2201,17 @@
           4096,
           4096
         ],
+        "rotationRate": 3697,
+        "sky": {
+          "day": {
+            "colour": "#6688aa",
+            "sourceColour": 837
+          },
+          "night": {
+            "colour": "#002222",
+            "sourceColour": 17
+          }
+        },
         "sourceColour": 1041,
         "wrapsX": true,
         "wrapsZ": true
@@ -1972,6 +2258,17 @@
           4096,
           4096
         ],
+        "rotationRate": 1100,
+        "sky": {
+          "day": {
+            "colour": "#8888aa",
+            "sourceColour": 1093
+          },
+          "night": {
+            "colour": "#222222",
+            "sourceColour": 273
+          }
+        },
         "sourceColour": 802,
         "wrapsX": true,
         "wrapsZ": true
@@ -2014,6 +2311,17 @@
           4096,
           4096
         ],
+        "rotationRate": 568,
+        "sky": {
+          "day": {
+            "colour": "#000022",
+            "sourceColour": 1
+          },
+          "night": {
+            "colour": "#000022",
+            "sourceColour": 1
+          }
+        },
         "sourceColour": 1092,
         "wrapsX": true,
         "wrapsZ": true
@@ -2066,6 +2374,17 @@
           4096,
           4096
         ],
+        "rotationRate": 17895,
+        "sky": {
+          "day": {
+            "colour": "#000022",
+            "sourceColour": 1
+          },
+          "night": {
+            "colour": "#000022",
+            "sourceColour": 1
+          }
+        },
         "sourceColour": 582,
         "wrapsX": true,
         "wrapsZ": true
@@ -2081,6 +2400,17 @@
           4096,
           4096
         ],
+        "rotationRate": 186,
+        "sky": {
+          "day": {
+            "colour": "#000022",
+            "sourceColour": 1
+          },
+          "night": {
+            "colour": "#000022",
+            "sourceColour": 1
+          }
+        },
         "sourceColour": 0,
         "wrapsX": true,
         "wrapsZ": true
@@ -2251,7 +2581,7 @@
       "Interior residents carry a parent and a parent-local placement where their structure group is one a pinned capture binds and the live $ABDC matches the static decode: Vesta group $05 cells $64 (VESTA PARLIAMENT) and $73 (GUM STORE), and Dion group $02. Three Dion records decode a parent but are not placed, because the derived local position falls outside the parent extent: slots 102, 66 and 34. Seven Vesta residents above level 0 are placed without insertions, because the insertion group they name is absent from the parent structure's association list, which is the list bound at level 0; the interior list is unreached (https://github.com/odogono/mercenary/issues/331). The ten Dion residents in groups $1B and $1C are not placed: no pinned capture binds either group, so they keep the disposition #324 records for Gaea group $0F -- bound to a static group record, named workspace identity unresolved.",
       "View-conditioned face groups, $8003/$8006/$8009 header states and object $6000 vector text are decoded as separate forms; the in-game selector for each form is named in the model conditions, not simulated.",
       "Eris cell ground/pad/road records at $1E000 retain $7000 object placements through existing address-based model identities; surface slot zero supplies palette zero for structureless cells, empty records are intentional and add no geometry at $056634, and $F0/$F4 joins remain view-conditioned.",
-      "The sky and the ground band below the horizon are excluded as rendering-only state, not omitted geometry: $059CE2 fills the whole viewport in colour index 8 and the MFP Timer B handler at $052280 rewrites $FF8250 at scanline $7BFC, taking the sky from $7C86 and the band from the body workspace word at $7A1A. The scene slots below $F0 that $05499E allocates are excluded on the same footing: they are a per-frame slot numbering over the $1E000 corner longwords already decoded here, drawn as two-point edges at $054AD2, and research/damocles-st/scripts/ground-extent-check.py reconstructs the live list, lowest slot and $5E40 bytes from captured RAM alone.",
+      "The sky and the ground band below the horizon are rendering-only state, not omitted geometry: $059CE2 fills the whole viewport in colour index 8 and the MFP Timer B handler at $052280 rewrites $FF8250 at scanline $7BFC, taking the sky from $7C86 and the band from the body workspace word at $7A1A. Each body surface publishes the two sky words the terminator at $050562 chooses between for $7C86 ($85DC + 4*body, night then day) and the rotation rate at $835C its accumulator advances by each VBL; the terminator itself is the reader's to run, from the position and the accumulator. The same terminator copies $7A14, the bound palette's base plus the signed word at base - 2, into $7A10 by day and $7A12, the base, by night, so every $80xx colour here is the night half and a dayColour beside it is the day half where the two differ. The scene slots below $F0 that $05499E allocates are excluded on the same footing: they are a per-frame slot numbering over the $1E000 corner longwords already decoded here, drawn as two-point edges at $054AD2, and research/damocles-st/scripts/ground-extent-check.py reconstructs the live list, lowest slot and $5E40 bytes from captured RAM alone.",
       "The documented zero-latch and $F0 post-plan constructors are retained, including the cell-derived door-key label; no discovered record carries an attachment omission. The $DF visual-change branch is accounted for: $059F64 reads the nine-entry $6364 table and substitutes character $DF for the entrance label glyph, while $04ED4A replays the same table over the $ABDC cell workspace to replace or clear an already-resident surface assembly. Neither introduces a record, and the table is all zero in every pinned capture, so neither branch is exercised by an observed state.",
       "Seven building-detail $60xx vector-text records retain their polygon geometry; inline text and live $CCA0 tokens use source filled/stroke glyphs.",
       "Every $6000 vector-text record in the census was inventoried: all 41 set the inline flag and none selects font 4, so the indirect-pointer and font-4 paths are unreached rather than unresolved. $CCA0 tokens divide into slot-derived labels, frame animations whose script is model data, structure-workspace face markers, and one live countdown.",

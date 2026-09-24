@@ -1,5 +1,6 @@
 import {
   modelSummaryById,
+  type BodySky,
   type Catalogue,
   type DetailGroup,
   type FloorPalette,
@@ -99,8 +100,9 @@ export interface ErisPlacement {
   readonly selection?: {
     /// The structure record's two scene colours (`$059DA2`–`$059DC6`): what the frame loop
     /// fills above and below the horizon while the player stands in one of its enclosed regions.
-    /// Absent where the Catalogue has not resolved both.
-    readonly background?: { readonly ceiling: string; readonly floor: string };
+    /// `day` is the pair through the palette's day half, where that differs (#497). Absent where
+    /// the Catalogue has not resolved both.
+    readonly background?: SceneBackground;
     readonly detail: Mesh;
     readonly groups: readonly DetailGroup[];
     readonly structure: StructureSelection;
@@ -114,6 +116,39 @@ export interface ErisPlace {
   readonly name: string;
 }
 
+export interface SceneBackground {
+  readonly ceiling: string;
+  readonly day?: { readonly ceiling: string; readonly floor: string };
+  readonly floor: string;
+}
+
+/// A colour word's two halves: `colour` through the palette `$050562` binds while the Body is
+/// dark, and `dayColour` through the one it binds in daylight where the two differ (#497).
+interface Halves {
+  readonly colour: string;
+  readonly dayColour?: string;
+}
+
+/// The background two scene colours give, where both are resolved.
+const sceneBackground = (
+  ceiling: Halves | undefined,
+  floor: Halves | undefined
+): SceneBackground | undefined =>
+  ceiling === undefined || floor === undefined
+    ? undefined
+    : {
+        ceiling: ceiling.colour,
+        ...(ceiling.dayColour === undefined && floor.dayColour === undefined
+          ? {}
+          : {
+              day: {
+                ceiling: ceiling.dayColour ?? ceiling.colour,
+                floor: floor.dayColour ?? floor.colour
+              }
+            }),
+        floor: floor.colour
+      };
+
 export interface ErisSurface {
   /// The colour `$7C88` draws this Body's surface in wherever no island is painted over it:
   /// its sea, on a Body that has one. Null on the VOID slot, which is not a surface.
@@ -126,6 +161,9 @@ export interface ErisSurface {
   readonly islands: readonly ErisIsland[];
   readonly placements: readonly ErisPlacement[];
   readonly places: readonly ErisPlace[];
+  /// The Body's day and night sky words, which the terminator chooses between for `$7C86`.
+  /// Null on the VOID slot, which is not a surface.
+  readonly sky: BodySky | null;
   /// Placements whose model has no recovered faces: drawn as nothing, counted as a gap
   /// (ADR 0043).
   readonly unresolvedCount: number;
@@ -420,15 +458,14 @@ const placementSelection = (
   const selection = model.structureSelection;
   const detail =
     selection === undefined ? undefined : models.peek(selection.detailModel);
-  const [ceiling, floor] = (model.sceneColours ?? []).map(
-    entry => entry.colour
+  const [ceiling, floor] = (model.sceneColours ?? []).map(entry =>
+    entry.colour === undefined ? undefined : { ...entry, colour: entry.colour }
   );
+  const background = sceneBackground(ceiling, floor);
   return selection === undefined || detail?.detailSelection === undefined
     ? undefined
     : {
-        ...(ceiling === undefined || floor === undefined
-          ? {}
-          : { background: { ceiling, floor } }),
+        ...(background === undefined ? {} : { background }),
         detail: detail.variants.find(v => v.id === selection.detailVariant)!
           .mesh,
         groups: detail.detailSelection,
@@ -445,23 +482,37 @@ export const floorsOf = (
   models.peek(placement.modelId)?.levelBinding?.floors ?? [];
 
 /// A colour word through the Floor's palette: `$80xx` with bit 7 set names entry
-/// `(word & $7E) / 2` of the palette bound in `$7A0E`; any other word keeps its own colour.
-const paletteColour = (
-  sourceColour: number,
-  colour: string,
+/// `(word & $7E) / 2` of the palette bound in `$7A0E`, in both its halves; any other word
+/// keeps its own colours. The structure's own `dayColour` belongs to its own palette, so the
+/// Floor's day half replaces it rather than falling back to it.
+const paletteColours = (
+  item: Halves & { readonly sourceColour: number },
   palette: FloorPalette
-): string =>
-  (sourceColour & 0x80_80) === 0x80_80
-    ? (palette.colours[(sourceColour & 0x7e) >> 1] ?? colour)
-    : colour;
+): Halves => {
+  const entry = (item.sourceColour & 0x7e) >> 1;
+  const colour =
+    (item.sourceColour & 0x80_80) === 0x80_80
+      ? palette.colours[entry]
+      : undefined;
+  if (colour === undefined || colour === null) {
+    return item.dayColour === undefined
+      ? { colour: item.colour }
+      : { colour: item.colour, dayColour: item.dayColour };
+  }
+  const dayColour = palette.dayColours?.[entry] ?? colour;
+  return dayColour === colour ? { colour } : { colour, dayColour };
+};
+
+/// `item` with its colours replaced by `halves`, dropping a `dayColour` the halves do not carry.
+const withHalves = <T extends Halves>(item: T, halves: Halves): T => {
+  const { dayColour: _, ...rest } = item;
+  return { ...rest, ...halves } as T;
+};
 
 const recolourPrimitive = (
   primitive: Primitive,
   palette: FloorPalette
-): Primitive => ({
-  ...primitive,
-  colour: paletteColour(primitive.sourceColour, primitive.colour, palette)
-});
+): Primitive => withHalves(primitive, paletteColours(primitive, palette));
 
 const recolourMesh = (mesh: Mesh, palette: FloorPalette): Mesh => ({
   ...mesh,
@@ -481,10 +532,9 @@ const recolourStructure = (
   ...(structure.floorLabels === undefined
     ? {}
     : {
-        floorLabels: structure.floorLabels.map(label => ({
-          ...label,
-          colour: paletteColour(label.sourceColour, label.colour, palette)
-        }))
+        floorLabels: structure.floorLabels.map(label =>
+          withHalves(label, paletteColours(label, palette))
+        )
       }),
   plan: recolourMesh(structure.plan, palette),
   ...(structure.wallTexts === undefined
@@ -533,13 +583,13 @@ const floorSelection = (
     const [ceiling, floor] = (model.sceneColours ?? []).map(entry =>
       entry.colour === undefined
         ? undefined
-        : paletteColour(entry.sourceColour, entry.colour, palette)
+        : paletteColours({ ...entry, colour: entry.colour }, palette)
     );
+    const background = sceneBackground(ceiling, floor);
+    const { background: _, ...unbacked } = selection;
     recoloured = {
-      ...selection,
-      ...(ceiling === undefined || floor === undefined
-        ? {}
-        : { background: { ceiling, floor } }),
+      ...unbacked,
+      ...(background === undefined ? {} : { background }),
       detail: recolourMesh(selection.detail, palette),
       structure: recolourStructure(selection.structure, palette)
     };
@@ -672,6 +722,7 @@ export const erisSurfaceFrom = (
       })),
     placements,
     places,
+    sky: body.bodySurface?.sky ?? null,
     unresolvedCount: placements.filter(
       placement =>
         placement.mesh === undefined && placement.selection === undefined

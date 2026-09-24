@@ -85,6 +85,7 @@
             },
             {
               "colour": "#eeee22",
+              "dayColour": "#00aaaa",
               "sourceColour": 32898,
               "vertices": [
                 8,
@@ -95,6 +96,7 @@
             },
             {
               "colour": "#eeee22",
+              "dayColour": "#00aaaa",
               "sourceColour": 32898,
               "vertices": [
                 3,
@@ -105,6 +107,7 @@
             },
             {
               "colour": "#eeee22",
+              "dayColour": "#00aaaa",
               "sourceColour": 32898,
               "vertices": [
                 4,
@@ -469,6 +472,7 @@
             },
             {
               "colour": "#eeee22",
+              "dayColour": "#6688aa",
               "sourceColour": 32898,
               "vertices": [
                 8,
@@ -479,6 +483,7 @@
             },
             {
               "colour": "#eeee22",
+              "dayColour": "#6688aa",
               "sourceColour": 32898,
               "vertices": [
                 3,
@@ -489,6 +494,7 @@
             },
             {
               "colour": "#eeee22",
+              "dayColour": "#6688aa",
               "sourceColour": 32898,
               "vertices": [
                 4,
@@ -597,6 +603,7 @@
             },
             {
               "colour": "#eeee22",
+              "dayColour": "#00aaaa",
               "sourceColour": 32898,
               "vertices": [
                 8,
@@ -607,6 +614,7 @@
             },
             {
               "colour": "#eeee22",
+              "dayColour": "#00aaaa",
               "sourceColour": 32898,
               "vertices": [
                 3,
@@ -617,6 +625,7 @@
             },
             {
               "colour": "#eeee22",
+              "dayColour": "#00aaaa",
               "sourceColour": 32898,
               "vertices": [
                 4,
@@ -725,6 +734,7 @@
             },
             {
               "colour": "#eeeeee",
+              "dayColour": "#000000",
               "sourceColour": 32898,
               "vertices": [
                 8,
@@ -735,6 +745,7 @@
             },
             {
               "colour": "#eeeeee",
+              "dayColour": "#000000",
               "sourceColour": 32898,
               "vertices": [
                 3,
@@ -745,6 +756,7 @@
             },
             {
               "colour": "#eeeeee",
+              "dayColour": "#000000",
               "sourceColour": 32898,
               "vertices": [
                 4,

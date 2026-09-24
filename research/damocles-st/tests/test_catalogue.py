@@ -2686,7 +2686,7 @@ class StructureLevelBindingTests(unittest.TestCase):
         def primitives(value):
             if isinstance(value, dict):
                 if isinstance(value.get('sourceColour'), int):
-                    yield value['sourceColour'], value.get('colour')
+                    yield value['sourceColour'], value.get('colour'), value.get('dayColour', value.get('colour'))
                 for item in value.values():
                     yield from primitives(item)
             elif isinstance(value, list):
@@ -2698,12 +2698,13 @@ class StructureLevelBindingTests(unittest.TestCase):
             binding = model.get('levelBinding')
             if binding is None:
                 continue
-            colours = {p['paletteIndex']: p['colours'] for p in binding.get('palettes', [])}
+            colours = {p['paletteIndex']: (p['colours'], p.get('dayColours', p['colours']))
+                       for p in binding.get('palettes', [])}
             for floor in binding['floors']:
                 if 'paletteIndex' in floor:
                     pairs[(floor['structureSlot'], floor['paletteIndex'])] = colours[floor['paletteIndex']]
         checked = 0
-        for (slot, index), colours in sorted(pairs.items()):
+        for (slot, index), (colours, day_colours) in sorted(pairs.items()):
             published = self.structures()[slot]
             if 'structureSelection' not in published:
                 continue
@@ -2719,14 +2720,167 @@ class StructureLevelBindingTests(unittest.TestCase):
             selection = decode_structure_selection(data, mesh, scale, palette, hardware)
             selection.pop('associationRoot')
             selection.pop('wallTextGaps')
+            # Both halves: a Floor's dayColours stands in for the structure's own
+            # dayColour exactly as its colours stand in for colour (#497).
             recoloured = [
-                (word, colours[(word & 0x7e) // 2] if word & 0x8080 == 0x8080 else colour)
-                for word, colour in primitives([published['structureSelection'], published['sceneColours']])
+                (word, colours[(word & 0x7e) // 2], day_colours[(word & 0x7e) // 2])
+                if word & 0x8080 == 0x8080 else (word, colour, day)
+                for word, colour, day in primitives([published['structureSelection'], published['sceneColours']])
             ]
             decoded = json.loads(json.dumps([selection, scene], sort_keys=True))
             self.assertEqual(recoloured, list(primitives(decoded)), (slot, index))
             checked += 1
         self.assertGreater(checked, 100)
+
+
+class PaletteHalfTests(unittest.TestCase):
+    """The terminator's choice of sky and palette half (#494, #497)."""
+
+    @staticmethod
+    def daylight(ram: bytes) -> bool:
+        """$050562 from the position and the rotation accumulator, not from $42C6C/$42C70.
+
+        $059372 takes the longitude from the high word of $7AB2, $05935A the latitude from
+        $7ABA biased by a quarter turn; the accumulator's high word turns the longitude into
+        the System frame, and $79BE is the sub-stellar longitude written on arrival.
+        """
+        def word(address):
+            return struct.unpack_from('>H', ram, address)[0]
+
+        body = word(0x7AA8)
+        rotation = word(0x62EA + body)
+        longitude = ((struct.unpack_from('>h', ram, 0x7AB2)[0] >> 2) + rotation) & 0x3FF
+        latitude = ((struct.unpack_from('>h', ram, 0x7ABA)[0] >> 2) + 0x100) & 0x3FF
+        return bool((((word(0x79BE) - longitude + 0x100) & 0x200) + latitude) & 0x200)
+
+    def captures(self):
+        from damocleslab.catalogue import hatari_memstate_ram
+
+        root = Path(__file__).resolve().parents[1]
+        paths = sorted(root.glob('snapshots/*.sav'))
+        if len(paths) < 20:
+            self.skipTest('Working-Authority RAM captures are Restricted Material')
+        return [(path.stem, hatari_memstate_ram(path.read_bytes())) for path in paths]
+
+    def image(self):
+        root = Path(__file__).resolve().parents[1]
+        first = root / 'work' / 'observe-first-world-20260818T101013Z-c5a32b7d' / 'observed.ram'
+        if not first.is_file():
+            self.skipTest('the pinned first-world RAM lives in the ignored research workspace')
+        return first.read_bytes()
+
+    def test_the_terminator_chooses_the_sky_and_the_palette_half_in_every_capture(self):
+        from damocleslab.catalogue import body_sky, palette_at, scene_palette_count
+
+        data = self.image()
+        bases = {0xD200 + struct.unpack_from('>H', data, 0xD200 + index * 2)[0]: index
+                 for index in range(scene_palette_count(data))}
+        halves = set()
+        for name, ram in self.captures():
+            def word(address):
+                return struct.unpack_from('>H', ram, address)[0]
+
+            day = self.daylight(ram)
+            self.assertEqual(word(0x7A4E) != 0, day, name)
+            self.assertEqual(word(0x7C86), word(0x7946 if day else 0x7948), name)
+            self.assertEqual(word(0x7A10), word(0x7A14 if day else 0x7A12), name)
+            # The sky pair is the image's own, not a capture's.
+            sky = body_sky(data, word(0x7AA8) // 4)
+            self.assertEqual((word(0x7946), word(0x7948)),
+                             (sky['day']['sourceColour'], sky['night']['sourceColour']), name)
+            # The offset word is static: the half each capture binds is the image's.
+            palette = palette_at(data, bases[word(0x7A12)])
+            self.assertEqual((word(0x7A14) - word(0x7A12)) & 0xFFFF, palette.offset & 0xFFFF, name)
+            if palette.offset:
+                halves.add(day)
+        # Both halves of a two-half palette are captured, not only the one Metis shows.
+        self.assertEqual(halves, {False, True})
+
+    def test_a_floor_publishes_the_half_its_capture_draws(self):
+        from damocleslab.catalogue import colour_value, scene_palette_count
+
+        data = self.image()
+        hardware = list(struct.unpack_from('>16H', data, 0x6fd00))
+        bases = {0xD200 + struct.unpack_from('>H', data, 0xD200 + index * 2)[0]: index
+                 for index in range(scene_palette_count(data))}
+        root = Path(__file__).resolve().parents[3]
+        document = read_catalogue(root / 'payload' / 'damocles' / 'catalogue.json')
+        published = {}
+        for model in document['models']:
+            for entry in model.get('levelBinding', {}).get('palettes', []):
+                published.setdefault(entry['paletteIndex'], []).append(entry)
+        checked = set()
+        for name, ram in self.captures():
+            index = bases[struct.unpack_from('>H', ram, 0x7A12)[0]]
+            day = self.daylight(ram)
+            drawn = list(struct.unpack_from('>64H', ram, struct.unpack_from('>H', ram, 0x7A10)[0]))
+            for entry in published.get(index, []):
+                colours = entry.get('dayColours', entry['colours']) if day else entry['colours']
+                for position, colour in enumerate(colours):
+                    if colour is not None:
+                        self.assertEqual(colour, colour_value(0x8080 | position * 2, drawn, hardware),
+                                         (name, index, position))
+                checked.add((index, day))
+        # Palette 66 is captured by day at both Metis and Gaea.
+        self.assertIn((66, True), checked)
+
+    def test_a_structure_publishes_the_half_its_capture_draws(self):
+        # Outside a Floor above 0, $7A12 is the palette the structure's own record
+        # names, so each $80xx word it publishes must be the capture's half.
+        from damocleslab.catalogue import colour_value, palette_at, scene_palette_count
+
+        data = self.image()
+        hardware = list(struct.unpack_from('>16H', data, 0x6fd00))
+        bases = {0xD200 + struct.unpack_from('>H', data, 0xD200 + index * 2)[0]: index
+                 for index in range(scene_palette_count(data))}
+        root = Path(__file__).resolve().parents[3]
+        document = read_catalogue(root / 'payload' / 'damocles' / 'catalogue.json')
+        by_palette = {}
+        for model in document['models']:
+            if model['kind'] != 'structure' or 'structureSelection' not in model:
+                continue
+            address = model['sourceAddress']
+            if struct.unpack_from('>H', data, address)[0] & 0x8000:
+                index = data[address + 4] or data[address + 18]
+            else:
+                index = data[address - 6]
+            by_palette.setdefault(index, []).append(model)
+
+        def primitives(value):
+            if isinstance(value, dict):
+                word = value.get('sourceColour')
+                if isinstance(word, int) and word & 0x8080 == 0x8080 and 'colour' in value:
+                    yield word, value['colour'], value.get('dayColour', value['colour'])
+                for item in value.values():
+                    yield from primitives(item)
+            elif isinstance(value, list):
+                for item in value:
+                    yield from primitives(item)
+
+        checked = set()
+        for name, ram in self.captures():
+            index = bases[struct.unpack_from('>H', ram, 0x7A12)[0]]
+            day = self.daylight(ram)
+            drawn = list(struct.unpack_from('>64H', ram, struct.unpack_from('>H', ram, 0x7A10)[0]))
+            for model in by_palette.get(index, []):
+                for word, night, lit in primitives([model['structureSelection'], model.get('sceneColours')]):
+                    self.assertEqual(lit if day else night,
+                                     colour_value(word & 0x8fff, drawn, hardware), (name, model['id']))
+                checked.add((index, day))
+        # Two-half palettes are drawn on both sides of the terminator.
+        two_half = {day for index, day in checked if palette_at(data, index).day is not None}
+        self.assertEqual(two_half, {False, True}, checked)
+
+    def test_a_one_half_palette_publishes_one_colour(self):
+        from damocleslab.catalogue import ScenePalette, day_colour
+
+        night = [0x777] * 64
+        self.assertEqual(day_colour(0x8086, ScenePalette(night, 0, 0, None), None), {})
+        lit = ScenePalette(night, 0, 24, [0x777, 0x777, 0x777, 0x222] + [0x777] * 60)
+        self.assertEqual(day_colour(0x8086, lit, None), {'dayColour': '#444444'})
+        # A word both halves agree on, or one that names no palette entry, has one colour.
+        self.assertEqual(day_colour(0x8084, lit, None), {})
+        self.assertEqual(day_colour(0x0222, lit, None), {})
 
 
 class IslandTests(unittest.TestCase):

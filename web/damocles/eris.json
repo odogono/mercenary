@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 7,
+  "schemaVersion": 8,
   "titleSlug": "damocles",
   "body": {
     "id": "body-11",
@@ -26,7 +26,9 @@
     "pitch": 512,
     "yaw": 1536,
     "yawProvenance": "recovered",
-    "evidence": "research/damocles-st/snapshots/eris-spaceport-onfoot.sav: $7A92 = $004770B1, $7A96 = 63, $7A9A = $00886C2D, on foot ($7A8E = 1), cell $87; camera yaw word $7AA2 = $0600, the panel compass centred on N (docs/research/damocles-walk-board-flight.md, yaw-probe runs 2026-09-11). Camera pitch word $7AC0 = $0200, level: nothing on foot pitches the view."
+    "bodyTurn": 23516460,
+    "bodyTurnProvenance": "recovered",
+    "evidence": "research/damocles-st/snapshots/eris-spaceport-onfoot.sav: $7A92 = $004770B1, $7A96 = 63, $7A9A = $00886C2D, on foot ($7A8E = 1), cell $87; camera yaw word $7AA2 = $0600, the panel compass centred on N (docs/research/damocles-walk-board-flight.md, yaw-probe runs 2026-09-11). Camera pitch word $7AC0 = $0200, level: nothing on foot pitches the view. Eris's rotation accumulator $62EA + 4 x 11 = $0166D52C, the arrival pose's bodyTurn, which puts the start at night (docs/research/damocles-day-night-terminator.md)."
   },
   "eye": {
     "heightUnits": 63,
@@ -87,12 +89,6 @@
     "geometryProvenance": "authored",
     "fillDropUnits": 1,
     "note": "The Body's own surface under everything else, drawn as rings around the eye out to the camera's far plane, standing in for the separate native surface/background path rather than geometry in the per-cell ground records (#221). Its colour is not authored here: the base plane takes the Body's recovered base colour $7C88 and each Damocles Island is filled over it in its own recovered land colour, both from the Damocles Catalogue, and while the player stands on an island's core the base plane takes that land colour instead (#394). Empty records contain no default quad and return immediately in the native ground renderer; $7000 placements are recovered while camera-dependent $F0/$F4 horizon slots stay outside static model geometry. fillDropUnits is how far below y = 0 this stand-in sits so recovered faces draw over it without z-fighting. Recovered pad and road polygons come from the Damocles Catalogue ground family (docs/research/damocles-eris-ground.md, docs/research/damocles-eris-islands.md)."
-  },
-  "sky": {
-    "colour": "#4992db",
-    "paletteIndex": 10,
-    "provenance": "authored",
-    "note": "Palette entry 246 read as the daytime sky; no sky model is decoded."
   },
   "lighting": {
     "sunDirection": {

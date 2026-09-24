@@ -141,7 +141,12 @@ extent so the two short authored records claim nothing past themselves. Each flo
 also carries the `paletteIndex` it is drawn in, which is the alias record's (record+4,
 or record+18+level where that byte is zero), and `levelBinding.palettes` resolves each
 named palette for the entries the bound structures' `$80xx` words name. See
-[the level-to-structure binding](damocles-level-structure-binding.md). `supportTop` is the
+[the level-to-structure binding](damocles-level-structure-binding.md). Every `$80xx`
+colour the Catalogue resolves is the palette's base half, which the terminator binds by
+night. Where the palette's day half, the base plus the signed word before it, gives a
+different colour, a `dayColour` sits beside it, and a Floor palette carries `dayColours`
+for the same entries. Each Body surface also publishes its `sky` pair and `rotationRate`
+([the day/night terminator](damocles-day-night-terminator.md)). `supportTop` is the
 drop handler's raw-Y maximum at `$0545DE`–`$054610`, or `null` when its model-form
 gate refuses. It is not the renderer's mesh maximum: text and articulated forms
 must not change it. The signed opening-word comparison admits ordinary vertex
@@ -617,7 +622,9 @@ code. Targeted disassembly used to establish them remains ignored at
   The two scene colours are the **cell background**, not wall colours: `$059DA2`
   resolves them through the structure's scene palette into `$7C82`/`$7C84` and
   the frame loop installs them at `$059600`. They are now decoded onto the model
-  as `sceneColours` (265 records). The viewport itself is a raster block fill at
+  as `sceneColours` (265 records), each with a `dayColour` where the palette's day half
+  differs ([the day/night terminator](damocles-day-night-terminator.md#the-scene-colours-latch)).
+  The viewport itself is a raster block fill at
   `$059CE2`, an unrolled `movem.l` over the 136-line viewport, so the background
   holds no geometry a model could carry.
 - Wall records contain two one-based plan references and a type/colour word.

@@ -90,6 +90,21 @@
             null,
             "#aa0000"
           ],
+          "dayColours": [
+            "#000000",
+            null,
+            "#664444",
+            "#882222",
+            "#4488cc",
+            "#aaaaaa",
+            "#666666",
+            null,
+            "#888888",
+            "#884444",
+            "#aa4444",
+            null,
+            "#aa0000"
+          ],
           "paletteIndex": 70
         }
       ],
@@ -1896,6 +1911,7 @@
             },
             {
               "colour": "#eeeeee",
+              "dayColour": "#000000",
               "sourceColour": 32918,
               "sourceIndex": 23,
               "vertices": [

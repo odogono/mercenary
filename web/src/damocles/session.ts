@@ -62,6 +62,7 @@ import {
   structureRegionAt
 } from './selection.ts';
 import { presentedText, type DamoclesStrings } from './strings.ts';
+import { advanceTurn, inDaylight } from './terminator.ts';
 import {
   bearingFromYaw,
   cellOf,
@@ -92,10 +93,15 @@ export interface DamoclesSnapshot {
   /// The Catalogue name of the Body the player is standing on. Published because the panel and
   /// the console both name the location, and both said ERIS whatever Body a switch had reached.
   readonly bodyName: string;
+  /// The current Body's rotation accumulator (`$62EA + 4 * body`), one turn every `$04000000`.
+  readonly bodyTurn: number;
   readonly briefcaseStore: readonly string[];
   readonly capacity: number;
   readonly carried: readonly string[];
   readonly cell: ErisCell;
+  /// The terminator's answer for the Pose (`$050562`): the sky takes the Body's day word and
+  /// every `$80xx` colour the scene palette's day half (#494, #497).
+  readonly daylight: boolean;
   readonly display: DamoclesDisplay;
   readonly displayCells: DisplayCells;
   readonly elapsed: number;
@@ -279,6 +285,9 @@ export class DamoclesSession implements TitleSession<
     readonly under: ErisSurface;
   } | null = null;
   private briefcaseStore: string[];
+  /// The current Body's rotation accumulator, advanced by its rate every VBL (`$051E4E`). Only
+  /// the Body underfoot is kept: a switch takes the arrival Pose's own.
+  private bodyTurn: number;
   private carried: string[];
   private elapsed: number;
   private effects: Effect[] = [];
@@ -341,6 +350,7 @@ export class DamoclesSession implements TitleSession<
       position: { ...opening.position }
     };
     this.elapsed = restore?.elapsed ?? 0;
+    this.bodyTurn = restore?.bodyTurn ?? content.doc.start.bodyTurn;
     this.briefcaseStore = [...(restore?.briefcaseStore ?? [])];
     this.pendingBriefcaseDrop = restore?.pendingBriefcaseDrop ?? null;
     this.carried = [...(restore?.carried ?? [])];
@@ -1020,6 +1030,26 @@ export class DamoclesSession implements TitleSession<
     return (body?.name ?? this.pose.body).toUpperCase();
   }
 
+  /// What the VBL handler adds to the current Body's rotation accumulator.
+  private rotationRate(): number {
+    return (
+      this.content.catalogue.bodies.find(item => item.id === this.pose.body)
+        ?.bodySurface?.rotationRate ?? 0
+    );
+  }
+
+  /// The terminator for the Pose, against the sub-stellar longitude the Body's arrival Poses
+  /// captured. Every admitted Body has one, since a Session stands only on those.
+  private daylight(): boolean {
+    const longitude = this.content.poses.poses.find(
+      pose => pose.body === this.pose.body
+    )?.subStellarLongitude;
+    return (
+      longitude !== undefined &&
+      inDaylight(longitude, this.bodyTurn, this.pose.position)
+    );
+  }
+
   private capacity(): number {
     return this.carried.includes('object-slot-108') ? 20 : 10;
   }
@@ -1083,10 +1113,12 @@ export class DamoclesSession implements TitleSession<
     const island = nearestIsland(this.surface, this.pose.position);
     return {
       bodyName: this.bodyName(),
+      bodyTurn: this.bodyTurn,
       briefcaseStore: [...this.briefcaseStore],
       capacity: this.capacity(),
       carried: [...this.carried],
       cell: cellOf(this.pose.position, this.surface.grid),
+      daylight: this.daylight(),
       display: this.script.display,
       displayCells: displayCells(
         this.script.display,
@@ -1192,6 +1224,7 @@ export class DamoclesSession implements TitleSession<
       this.frameAccumulator += step * this.content.doc.time.vblHertz;
       const frames = Math.floor(this.frameAccumulator + 1e-9);
       this.frameAccumulator = Math.max(0, this.frameAccumulator - frames);
+      this.bodyTurn = advanceTurn(this.bodyTurn, this.rotationRate(), frames);
       for (let frame = 0; frame < frames; frame += 1) {
         this.scrollCounter +=
           this.scrollCounter < 0 ? 1 : this.scrollCounter > 0 ? -1 : 0;
@@ -1208,6 +1241,7 @@ export class DamoclesSession implements TitleSession<
   /// Aboard, the occupied instance's departure is `occupied` and the Pose is the seated view.
   captureResume(): DamoclesSaveSnapshot {
     return {
+      bodyTurn: this.bodyTurn,
       briefcaseStore: [...this.briefcaseStore],
       carried: [...this.carried],
       elapsed: this.elapsed,
@@ -1755,6 +1789,7 @@ export class DamoclesSession implements TitleSession<
     // Everything that could refuse has refused. From here the commit cannot fail.
     this.surface = surface;
     this.pose = poseOfArrival(arrival, this.content.doc);
+    this.bodyTurn = arrival.bodyTurn;
     this.boundPlacement = null;
     this.regionIndex = null;
     this.attachmentUnits = new Map();

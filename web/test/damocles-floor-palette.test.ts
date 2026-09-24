@@ -163,6 +163,43 @@ describe('a Floor is coloured through the palette its alias record binds', () =>
     expect(differ.size).toBeGreaterThan(0);
   });
 
+  test("a Floor's day half replaces the bound structure's own (#497)", () => {
+    // Palette 66 has two halves, 24 bytes apart. The Floor's `dayColours` stand in for slot
+    // 58's own `dayColour`, which belongs to slot 58's palette 28.
+    const alias = catalogue.models.find(
+      model => model.kind === 'structure' && model.slots[0] === 155
+    )!;
+    const palette = alias.levelBinding!.palettes!.find(
+      item => item.paletteIndex === 66
+    )!;
+    expect(palette.dayColours).toBeDefined();
+    const placement = onFloor('metis-transporter', DOOBERRYS, 9);
+    for (const [drawn, own] of drawnBeside(placement, 58)) {
+      if (paletteEntry(drawn.sourceColour) === undefined) {
+        expect(drawn.dayColour).toBe(own.dayColour);
+      }
+    }
+    const detail = placement.selection!.detail;
+    let lit = 0;
+    for (const drawn of [
+      ...drawnBeside(placement, 58).map(([item]) => item),
+      ...detail.faces,
+      ...detail.lines
+    ]) {
+      const at = paletteEntry(drawn.sourceColour);
+      if (at === undefined) {
+        continue;
+      }
+      expect([drawn.colour, drawn.dayColour ?? drawn.colour]).toEqual([
+        palette.colours[at]!,
+        palette.dayColours![at]!
+      ]);
+      lit += drawn.dayColour === undefined ? 0 : 1;
+    }
+    // Entries 1 and 11 turn from `#eeeeee` to `#000000` by day, and the detail names them.
+    expect(lit).toBeGreaterThan(0);
+  });
+
   test("a Floor's selector keeps its identity however often it is bound", () => {
     const session = new DamoclesSession(content);
     session.switchToPose('metis-transporter');

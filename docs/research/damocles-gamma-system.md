@@ -296,7 +296,7 @@ and the centres are read here as constants.
 | Reader    | What it does                                                                                                                                                                             |
 | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `$04529C` | Builds the celestial orientation matrix. It indexes the 1024-entry table at `$064000` with `$042C6C` and `$042C6C + $100` — sine and cosine of the phase-shifted longitude — and with `$042C70` and `$042C70 + $100` for the latitude, then composes them with the further angle words at `$042C2C`/`$042C30`/`$042C34`/`$042C38`. Reached through the vector `$042D18`, which the surface pass calls at `$0597E2`. |
-| `$050562` | The day/night terminator. `$0079BE - $042C6C + $100`, masked to bit 9, then the same test on `$042C70`, selects `$7946` or `$7948` into `$7C86` and sets or clears `$7A4E`.               |
+| `$050562` | The day/night terminator. `$0079BE - $042C6C + $100`, masked to bit 9, then the same test on `$042C70`, selects `$7946` or `$7948` into `$7C86`, sets or clears `$7A4E`, and binds the scene palette's day half or base in `$7A10` ([the day/night terminator](damocles-day-night-terminator.md)). |
 
 `$0079BE` is written once on arrival, at `$04EA30`, as the atan2 of the Body's
 **own centre** about the System origin, EOR `$200`. DIALIS, the only Body whose
