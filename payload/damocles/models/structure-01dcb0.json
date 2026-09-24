@@ -58,7 +58,7 @@
     "name": "Structure 244",
     "nameStatus": "unknown",
     "omissions": [],
-    "reason": "Wall text \"EXIT\" on queue byte 22 ($059EB6) is not drawn. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
+    "reason": "Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
     "recordClass": "alias",
     "relatedModels": [
       "structure-01231c",
@@ -2490,6 +2490,298 @@
       "scale": [
         -2,
         -2
+      ],
+      "wallTexts": [
+        {
+          "face": {
+            "index": 21,
+            "kind": "face"
+          },
+          "font": 1,
+          "mesh": {
+            "faces": [
+              {
+                "colour": "#882222",
+                "sourceColour": 32904,
+                "vertices": [
+                  0,
+                  1,
+                  2,
+                  3
+                ]
+              },
+              {
+                "colour": "#882222",
+                "sourceColour": 32904,
+                "vertices": [
+                  0,
+                  3,
+                  8,
+                  11
+                ]
+              },
+              {
+                "colour": "#882222",
+                "sourceColour": 32904,
+                "vertices": [
+                  8,
+                  9,
+                  10,
+                  11
+                ]
+              },
+              {
+                "colour": "#882222",
+                "sourceColour": 32904,
+                "vertices": [
+                  4,
+                  5,
+                  6,
+                  7
+                ]
+              },
+              {
+                "colour": "#882222",
+                "sourceColour": 32904,
+                "vertices": [
+                  20,
+                  12,
+                  13,
+                  23,
+                  22,
+                  21
+                ]
+              },
+              {
+                "colour": "#882222",
+                "sourceColour": 32904,
+                "vertices": [
+                  14,
+                  15,
+                  16,
+                  17,
+                  18,
+                  19
+                ]
+              },
+              {
+                "colour": "#882222",
+                "sourceColour": 32904,
+                "vertices": [
+                  24,
+                  25,
+                  26,
+                  27
+                ]
+              },
+              {
+                "colour": "#882222",
+                "sourceColour": 32904,
+                "vertices": [
+                  28,
+                  29,
+                  30,
+                  31
+                ]
+              },
+              {
+                "colour": "#882222",
+                "sourceColour": 32904,
+                "vertices": [
+                  32,
+                  33,
+                  34,
+                  35
+                ]
+              }
+            ],
+            "lines": [],
+            "vertices": [
+              [
+                132,
+                131,
+                -640
+              ],
+              [
+                144,
+                131,
+                -640
+              ],
+              [
+                144,
+                129,
+                -640
+              ],
+              [
+                134,
+                129,
+                -640
+              ],
+              [
+                134,
+                125,
+                -640
+              ],
+              [
+                140,
+                125,
+                -640
+              ],
+              [
+                140,
+                123,
+                -640
+              ],
+              [
+                132,
+                123,
+                -640
+              ],
+              [
+                134,
+                117,
+                -640
+              ],
+              [
+                144,
+                117,
+                -640
+              ],
+              [
+                144,
+                115,
+                -640
+              ],
+              [
+                132,
+                115,
+                -640
+              ],
+              [
+                148,
+                131,
+                -640
+              ],
+              [
+                150,
+                131,
+                -640
+              ],
+              [
+                158,
+                131,
+                -640
+              ],
+              [
+                160,
+                131,
+                -640
+              ],
+              [
+                160,
+                129,
+                -640
+              ],
+              [
+                150,
+                115,
+                -640
+              ],
+              [
+                148,
+                115,
+                -640
+              ],
+              [
+                148,
+                117,
+                -640
+              ],
+              [
+                148,
+                129,
+                -640
+              ],
+              [
+                158,
+                115,
+                -640
+              ],
+              [
+                160,
+                115,
+                -640
+              ],
+              [
+                160,
+                117,
+                -640
+              ],
+              [
+                170,
+                131,
+                -640
+              ],
+              [
+                172,
+                131,
+                -640
+              ],
+              [
+                172,
+                115,
+                -640
+              ],
+              [
+                170,
+                115,
+                -640
+              ],
+              [
+                180,
+                131,
+                -640
+              ],
+              [
+                192,
+                131,
+                -640
+              ],
+              [
+                192,
+                129,
+                -640
+              ],
+              [
+                180,
+                129,
+                -640
+              ],
+              [
+                184,
+                131,
+                -640
+              ],
+              [
+                186,
+                131,
+                -640
+              ],
+              [
+                186,
+                115,
+                -640
+              ],
+              [
+                184,
+                115,
+                -640
+              ]
+            ]
+          },
+          "plane": 0,
+          "text": "EXIT"
+        }
       ]
     },
     "variants": [

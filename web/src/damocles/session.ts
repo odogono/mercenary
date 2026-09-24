@@ -949,6 +949,12 @@ export class DamoclesSession implements TitleSession<
     return this.liveCarriedInstance(`object-slot-${slot}`);
   }
 
+  /// Bit 7 of the handling byte at `$6FAA + 4 * slot`, for the renderer: the font-4 wall text
+  /// fallback at `$054016` reads it for slots 49 and 91.
+  carriesSlot(slot: number): boolean {
+    return this.liveCarriedSlot(slot);
+  }
+
   /// `$05AA82..$05AA98`: an `$F0` Entrance Attachment inside its Proximity Box opens only
   /// while the matching door key is in the Carried Stack.
   ///

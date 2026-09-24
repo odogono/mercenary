@@ -45,7 +45,9 @@ sys.path.insert(0, str(LAB_ROOT))
 
 from damocleslab.catalogue import (  # noqa: E402
     FLOOR_LABEL_TARGET,
+    FONT_FALLBACK,
     Reader,
+    append_vector_text,
     authored_entrance_control,
     decode_structure,
     decode_structure_selection,
@@ -151,8 +153,8 @@ def assembled_structure(ram: bytes) -> tuple[int, int] | None:
     return found[0] if found else None
 
 
-def published_labels(document: dict, record: int, scale: tuple[int, int]) -> list[list] | None:
-    """The Catalogue's Floor Labels for this record at this placement scale, if it publishes one."""
+def published_selection(document: dict, record: int, scale: tuple[int, int]) -> dict | None:
+    """The Catalogue's selection for this record at this placement scale, if it publishes one."""
     identity = f"structure-{record:06x}"
     for model in document["models"]:
         if model["kind"] != "structure" or (model["id"] != identity and identity not in model.get("relatedModels", [])):
@@ -160,9 +162,43 @@ def published_labels(document: dict, record: int, scale: tuple[int, int]) -> lis
         selection = model.get("structureSelection")
         if selection is None or tuple(selection["scale"]) != scale:
             continue
-        return [[label["face"], label["anchor"], label["scale"], label["font"]]
-                for label in selection.get("floorLabels", [])]
+        return selection
     return None
+
+
+def published_labels(selection: dict) -> list[list]:
+    return [[label["face"], label["anchor"], label["scale"], label["font"], label.get("fallback")]
+            for label in selection.get("floorLabels", [])]
+
+
+def geometry(mesh: dict) -> list:
+    """A mesh's shape without its colours: vertices, then each face and stroke's indices."""
+    return [mesh["vertices"], [face["vertices"] for face in mesh["faces"]],
+            [line["vertices"] for line in mesh["lines"]]]
+
+
+def is_literal(text: dict[str, Any]) -> bool:
+    return not text["flags"] & 0x40 and not any(character & 0x80 for character in text["text"])
+
+
+def table_text(ram: bytes, index: int, font: int | None = None) -> list:
+    """Glyphs for the capture's own $C8C0 entry `index`, read through the entry's text pointer.
+
+    Only the capture's bytes go in: the anchor, flags, advance, scales and colour
+    the builder stored, and the text wherever its pointer leads.
+    """
+    entry = WALL_TEXT + index * 20
+    face = struct.unpack(">H", ram[entry:entry + 2])[0] // 4
+    x, y, z, flags, advance = struct.unpack(">3hHh", ram[entry + 2:entry + 12])
+    glyph_x, glyph_y = struct.unpack(">bb", ram[entry + 12:entry + 14])
+    colour = struct.unpack(">H", ram[entry + 14:entry + 16])[0]
+    pointer = u32(ram, entry + 16)
+    text = ram[pointer:ram.index(0, pointer)].decode("ascii")
+    vertices, faces, lines = [], [], []
+    append_vector_text(ram, text, flags & 0xF if font is None else font, [x, y, z], advance,
+                       glyph_x, glyph_y, flags & 0xC0, colour, vertices, faces, lines,
+                       palette_at(ram, 0), hardware(ram))
+    return [face, text, geometry({"vertices": vertices, "faces": faces, "lines": lines})]
 
 
 def decode(snapshots: Path) -> int:
@@ -192,23 +228,41 @@ def decode(snapshots: Path) -> int:
         if live != predicted:
             raise LabError(f"{name}: $C8C0 {live.hex()} is not the decoded {predicted.hex()}")
         labels = [text for text in texts if floor_label_token(ram, text) is not None]
-        drawable = [text for text in labels if text["flags"] & 0xF != 4]
+        drawable = [text for text in labels if not text["flags"] & 0x40]
+        literal = [index for index, text in enumerate(texts) if is_literal(text)]
         if name in REQUIRED:
             if floor != REQUIRED[name]:
                 raise LabError(f"not reached: {name} stands on Floor {floor}")
             if not drawable:
                 raise LabError(f"not reached: {name}'s structure carries no Floor Label")
-        published = published_labels(document, record, scale)
-        if drawable and published is None:
+        selection = published_selection(document, record, scale)
+        if (drawable or literal) and selection is None:
             raise LabError(f"{name}: the Catalogue publishes no selection for slot {slot} at scale {scale}")
-        if published is not None:
+        if selection is not None:
+            published = published_labels(selection)
             expected = []
             for text in drawable:
                 placed = wall_text_placement(text, scale)
+                font = text["flags"] & 0xF
                 expected.append([{"index": text["face"] - 1, "kind": "face"}, placed["anchor"],
-                                 placed["scale"], text["flags"] & 0xF])
+                                 placed["scale"], font, FONT_FALLBACK if font == 4 else None])
             if published != expected:
                 raise LabError(f"{name}: the Catalogue's labels {published} are not the table's {expected}")
+            # Each literal wall text must draw exactly the glyphs the capture's own
+            # table entry places, in its font and in the font-3 fallback.
+            published_texts = [
+                [text["face"]["index"] + 1, text["text"], geometry(text["mesh"]),
+                 geometry(text["fallback"]["mesh"]) if "fallback" in text else None]
+                for text in selection.get("wallTexts", [])
+            ]
+            expected_texts = []
+            for index in literal:
+                face, characters, shape = table_text(ram, index)
+                fallback = (table_text(ram, index, FONT_FALLBACK["font"])[2]
+                            if texts[index]["flags"] & 0xF == 4 else None)
+                expected_texts.append([face, characters, shape, fallback])
+            if published_texts != expected_texts:
+                raise LabError(f"{name}: the Catalogue's wall text is not what the $C8C0 table places")
         seen.add(name)
         rows.append({
             "capture": name,
@@ -219,6 +273,7 @@ def decode(snapshots: Path) -> int:
             "record": f"${record:06X}",
             "placementScale": list(scale),
             "wallTexts": len(texts),
+            "literalWallTexts": [texts[index]["text"].decode("ascii") for index in literal],
             "floorLabels": [
                 {"face": text["face"], "token": f"${text['text'][0]:02X}", "font": text["flags"] & 0xF,
                  **wall_text_placement(text, scale)}

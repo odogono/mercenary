@@ -2,8 +2,11 @@ import type {
   Bounds,
   EntranceAttachment,
   Mesh,
-  Primitive
+  Primitive,
+  RegionQueueEntry,
+  WallText
 } from '../catalogue/data.ts';
+import { sameQueueEntry } from '../catalogue/regions.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import type { ErisPlacement, Pose } from './world.ts';
 
@@ -23,6 +26,22 @@ const subset = (key: object, mesh: Mesh, faces: readonly Primitive[]): Mesh => {
   return result;
 };
 const scaledDetails = new WeakMap<object, Mesh>();
+
+/// A draw component of a bound structure. Wall text carries the plane its glyphs lie in, since
+/// it shares that plane with the face it rides on and is drawn over it.
+export type StructureMesh = Mesh & { readonly wallTextPlane?: 0 | 128 };
+const wallTextMeshes = new WeakMap<Mesh, StructureMesh>();
+const wallTextMesh = (mesh: Mesh, plane: 0 | 128): StructureMesh => {
+  let cached = wallTextMeshes.get(mesh);
+  if (cached === undefined) {
+    cached = { ...mesh, wallTextPlane: plane };
+    wallTextMeshes.set(mesh, cached);
+  }
+  return cached;
+};
+/// Whether a resident slot is in the player's carried state.
+export type CarriedSlot = (slot: number) => boolean;
+const nothingCarried: CarriedSlot = () => false;
 
 /** A world position expressed in a placement's model-local frame. */
 export const structureLocalPosition = (
@@ -270,8 +289,9 @@ export const structureMeshes = (
   pose: Pose,
   negateZ: boolean,
   openUnits: AttachmentUnits = closedAttachment,
-  selectedRegionIndex?: number | null
-): readonly Mesh[] => {
+  selectedRegionIndex?: number | null,
+  carriedSlot: CarriedSlot = nothingCarried
+): readonly StructureMesh[] => {
   const fallback = () => (placement.mesh === undefined ? [] : [placement.mesh]);
   const selection = placement.selection;
   if (selection === undefined) {
@@ -289,15 +309,24 @@ export const structureMeshes = (
   if (region === undefined) {
     return fallback();
   }
-  const plan = region.queue.flatMap(entry => {
+  // `$05A41A` appends each wall text straight after the queue entry it rides on, so it draws
+  // exactly when and where that entry does.
+  const wallTexts = (entry: RegionQueueEntry): StructureMesh[] =>
+    (structure.wallTexts ?? [])
+      .filter(text => sameQueueEntry(text.face, entry))
+      .map(text => wallTextMesh(wallTextGlyphs(text, carriedSlot), text.plane));
+  const plan = region.queue.flatMap((entry): StructureMesh[] => {
     if (entry.kind === 'attachment') {
       const attachment = structure.attachments.find(
         item => item.slot === entry.slot
       )!;
-      return [movingAttachment(attachment, openUnits(entry.slot))];
+      return [
+        movingAttachment(attachment, openUnits(entry.slot)),
+        ...wallTexts(entry)
+      ];
     }
     const face = structure.plan.faces.find(f => f.sourceIndex === entry.index)!;
-    return [subset(face, structure.plan, [face])];
+    return [subset(face, structure.plan, [face]), ...wallTexts(entry)];
   });
   const detail: Mesh[] = [];
   if ((region.flags & 0x80_00) !== 0) {
@@ -372,3 +401,12 @@ export const structureMeshes = (
     : [...detail, ...plan];
 };
 const detailLists = new WeakMap<Mesh, WeakMap<object, Mesh>>();
+
+/// A wall text's glyphs: font 4's fallback font while `$054016` finds a named slot carried.
+export const wallTextGlyphs = (
+  text: WallText,
+  carriedSlot: CarriedSlot
+): Mesh =>
+  text.fallback !== undefined && text.fallback.whileCarried.some(carriedSlot)
+    ? text.fallback.mesh
+    : text.mesh;

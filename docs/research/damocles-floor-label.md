@@ -118,12 +118,14 @@ The resident bank holds 89 wall-text records in 42 structure records:
 - **73 are a Floor Label**: text exactly `$80` or `$81`, in 39 structure records. Fonts 1
   and 2 draw 70 of them. Three select font 4 (queue byte 20 in slots 84 and 85, queue byte
   13 in slot 88). For font 4, `$054016` substitutes font 3 when `$706E` or `$7116` is
-  negative. Both read positive in all 33 captures, but no instruction in `$40000`–`$5FFFF`
-  names either as a destination, so that condition is not recovered.
+  negative. [#485](damocles-structure-wall-text.md#font-4) recovered that condition: those
+  words are the handling bytes of slots 49 and 91, READING GLASSES and RED HERRING, and
+  bit 7 is the carried flag.
 - **16 are other wall text**: `NOVAGEN`, `EXIT`, `INVENTORY`, `BRIEFCASE`,
   `NESBITT LIBRARY`, `B A S E M E N T`, `68 09 20 33`, and the tokens `$8A` (`$CD19`),
-  `$8D` and `$8E` (structure-workspace face markers). None of this was drawn before, and
-  none of it is drawn now. Each Catalogue model carrying one now names it in its reason.
+  `$8D` and `$8E` (structure-workspace face markers). #473 drew none of it.
+  [#485](damocles-structure-wall-text.md) draws the literal records and names each token
+  record's target in its model's reason.
 
 Every record uses plane 0 (XY) or `$80` (ZY). None sets bit 6.
 
@@ -191,14 +193,16 @@ as a `structureSelection.floorLabels` entry:
 | `scale` | glyph X and Y scales after the builder's mirroring |
 | `colour`, `sourceColour` | resolved through the model's palette, and the raw word |
 
-The document gains `floorLabelGlyphs`: for each font a published label uses (1 and 2),
-the eleven characters `G`, `1`–`9` and `B`, read from `$31700` in unscaled glyph units.
+The document gains `floorLabelGlyphs`: for each font a published label uses, the eleven
+characters `G`, `1`–`9` and `B`, read from `$31700` in unscaled glyph units. That was
+fonts 1 and 2; #485 adds 3 and 4, because a font-4 label now carries a font-3 `fallback`.
 A glyph point (x, y) draws at `anchor + (x·sx, y·sy, 0)` on the XY plane, or
 `anchor + (0, y·sy, x·sx)` on the ZY plane. The label is always one character, so the
 advance is not needed.
 
 Following the `keyBase` precedent, the schema version stays at 17. No Save depends on
-either field. 109 structure models publish 165 labels. Four selections that carry labels
+either field. 109 structure models publish 165 labels, and 170 since #485 published the
+font-4 ones. Four selections that carry labels
 are later dropped for want of a detail binding, and their reasons say their labels went
 with them. The State Office publishes the table above on slots 76, 78 and 79, and on its
 alias `structure-014ad2`.
@@ -215,10 +219,10 @@ empty afterwards: the payload reproduces byte for byte.
 - The same label appears on every structure that carries one, not only inside a Damocles
   Lift. On a ride it follows the stepping label, not the destination.
 - Where no `floorLabels` entry exists, draw no label.
+- A label with a `fallback` draws in `fallback.font` while any slot in
+  `fallback.whileCarried` is carried ([#485](damocles-structure-wall-text.md#font-4)).
 
 ## What this does not settle
 
-- **Font 4's condition.** `$706E` and `$7116` are unrecovered. The three font-4 labels are
-  withheld and named.
-- **Other wall text.** The 16 literal and non-Floor-Label token records are named in their
-  models' reasons but not baked. The literal ones need no live state.
+- **Font 4's condition** and **other wall text** were left open here and are settled in
+  [#485](damocles-structure-wall-text.md).

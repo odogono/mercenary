@@ -74,7 +74,7 @@ the tokens:
 | --- | --- | --- |
 | Slot-derived label | `$87` (`$CD12`) | Written by the record's own `$8007`/`$8002` header |
 | Frame animation | `$89` (`$CD9C`), `$8C` (`$CDCE`), `$82` (`$CE6A`) | Descriptor plus static script; see below |
-| Structure-workspace face marker | `$8D`–`$96` (`$CD37`–`$CD49`) | Written by the placing structure |
+| Structure-workspace face marker | `$8D`–`$96` (`$CD37`–`$CD49`) | Written by the placing structure: each Entrance Attachment's door key letter at `$CD35 − slot/2` ([structure wall text](damocles-structure-wall-text.md#token-text)) |
 | Place name and kind | `$97`, `$98` (`$CD4C`, `$CD58`) | Written by the current workspace |
 | Live mission state | `$88` (`$CD14`) | Formatted at `$04DAFC`; see below |
 | Floor Label | `$80`, `$81` (`$CD04`) | Written by the lift; reached only from structure wall text, not from any `$60xx` record ([Floor Label](damocles-floor-label.md)) |
@@ -127,7 +127,9 @@ countdown as the record's one named `liveText` gap.
 ### Indirect text and font 4
 
 Both were named as unresolved because the decoder fails closed on them, not
-because a record was seen selecting either. Inventorying all 41 `$6000` records
+because a record was seen selecting either. Structure wall text does reach both. Its
+builder always stores a text pointer, and four of its records select font 4, which draws as
+font 3 while slot 49 or 91 is carried ([structure wall text](damocles-structure-wall-text.md#font-4)). Inventorying all 41 `$6000` records
 in the census — 28 object, 3 ground, 10 building-detail — shows every one sets
 the inline flag (bit 15) and selects font 0, 1, 2, 3 or 5. Neither path is
 reached, so neither hides a catalogue form. A unit test re-runs the inventory so

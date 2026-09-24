@@ -1658,6 +1658,59 @@ def wall_text_label(text: dict) -> str:
     )
 
 
+# $054010-$054022: font 4 draws as font 3 while the word at $706E or $7116 is
+# negative. Both are handling bytes $6FAA + 4 * slot, whose bit 7 the Take sets
+# and the Drop clears: slot 49, READING GLASSES, and slot 91, RED HERRING.
+FALLBACK_FONT = 4
+FONT_FALLBACK_GATES = (0x706E, 0x7116)
+HANDLING_BYTES = 0x6FAA
+FONT_FALLBACK = {
+    'font': 3,
+    'whileCarried': [(gate - HANDLING_BYTES) // 4 for gate in FONT_FALLBACK_GATES],
+}
+
+# $059FC4 writes each Entrance Attachment's door key letter at $CD35 - slot/2,
+# and tokens $8D-$96 point into that table.
+KEY_LETTER_TABLE = 0xCD35
+KEY_LETTER_TOKENS = range(0xCD37, 0xCD4A)
+# $04E05A runs only in structure $52, room 9 ($7AF0, $7AFC), the Trading Post.
+# $04E0BC-$04E130 then formats six BCD bytes as `000,000,000-00` at $CD19,
+# blanking leading zeros.
+TRADING_READOUT_TARGET = 0xCD19
+
+
+def wall_text_mesh(data: bytes, text: dict, font: int, scale: tuple[int, int],
+                   palette: list[int], hardware: list[int]) -> dict:
+    """A literal wall text's glyphs in `font`, placed as $059EB6 places the record."""
+    placement = wall_text_placement(text, scale)
+    vertices, faces, lines = [], [], []
+    append_vector_text(
+        data, text['text'].decode('ascii'), font, placement['anchor'],
+        placement['advance'], *placement['scale'], placement['plane'], text['colour'],
+        vertices, faces, lines, palette, hardware,
+    )
+    return {'vertices': vertices, 'faces': faces, 'lines': lines}
+
+
+def wall_text_token_gap(data: bytes, text: dict) -> str:
+    """Why a wall text that reaches a token other than the Floor Label is not drawn."""
+    index = next(character for character in text['text'] if character & 0x80) & 0x7F
+    pointer = u32(data, 0xCCA0 + index * 4)
+    if pointer in KEY_LETTER_TOKENS:
+        slot = 0x300 | (-2 * (pointer - KEY_LETTER_TABLE)) & 0xFF
+        return (
+            f'it prints the door key letter $059FC4 writes at ${pointer:04X} for the '
+            f'Entrance Attachment in slot ${slot:03X}, which the key base $7AFB of the '
+            "Instance's cell decides"
+        )
+    if pointer == TRADING_READOUT_TARGET:
+        return (
+            f'it prints the BCD readout $04E05A formats at ${pointer:04X} in the Trading '
+            'Post, structure $52 room 9, which differs between captures'
+        )
+    return f'it prints the live text at ${pointer:04X}, which differs between captures'
+
+
 def floor_label_glyphs(data: bytes, fonts: set[int]) -> dict:
     """Every Floor Label character in each font a published Floor Label uses."""
     return {
@@ -1789,14 +1842,21 @@ def decode_structure_selection(data: bytes, mesh: dict, scale: tuple[int, int],
     # $05A41A appends a wall text to the draw list straight after the queue
     # entry whose byte x 4 equals the record's own face byte x 4, so the face
     # resolves exactly as a region queue byte does.
-    floor_labels, wall_text_gaps = [], []
+    floor_labels, drawn_texts, wall_text_gaps = [], [], []
     for text in wall_texts:
         token = floor_label_token(data, text)
         font = text['flags'] & 0xF
         face = resolve_region_reference(
             text['face'], max(sources, default=-1) + 1, by_slot, attachment_faces
         )
-        if token is not None and font != 4 and not text['flags'] & 0x40:
+        literal = not any(character & 0x80 for character in text['text'])
+        if text['flags'] & 0x40:
+            wall_text_gaps.append(
+                f'Wall text "{wall_text_label(text)}" on queue byte {text["face"]} uses glyph '
+                f'plane ${text["flags"] & 0xC0:02X}, which no wall text was seen to use; it is '
+                'withheld.'
+            )
+        elif token is not None:
             placement = wall_text_placement(text, scale)
             floor_labels.append({
                 'face': face,
@@ -1806,19 +1866,27 @@ def decode_structure_selection(data: bytes, mesh: dict, scale: tuple[int, int],
                 'scale': placement['scale'],
                 'colour': colour_value(text['colour'], palette, hardware),
                 'sourceColour': text['colour'],
+                **({'fallback': dict(FONT_FALLBACK)} if font == FALLBACK_FONT else {}),
             })
-        elif token is not None:
-            wall_text_gaps.append(
-                f'The Floor Label on queue byte {text["face"]} selects font {font}, whose '
-                '$054016 fallback to font 3 reads $706E and $7116; it is withheld.'
-                if font == 4 else
-                f'The Floor Label on queue byte {text["face"]} uses glyph plane '
-                f'${text["flags"] & 0xC0:02X}, which no wall text was seen to use; it is withheld.'
-            )
+        elif literal:
+            characters = text['text'].decode('ascii')
+            drawn_texts.append({
+                'face': face,
+                'text': characters,
+                'font': font,
+                'plane': text['flags'] & 0xC0,
+                'mesh': wall_text_mesh(data, text, font, scale, palette, hardware),
+                **({'fallback': {
+                    **FONT_FALLBACK,
+                    'mesh': wall_text_mesh(
+                        data, text, FONT_FALLBACK['font'], scale, palette, hardware
+                    ),
+                }} if font == FALLBACK_FONT else {}),
+            })
         else:
             wall_text_gaps.append(
                 f'Wall text "{wall_text_label(text)}" on queue byte {text["face"]} '
-                '($059EB6) is not drawn.'
+                f'($059EB6) is not drawn: {wall_text_token_gap(data, text)}.'
             )
     for _ in range(256):
         flags = reader.word()
@@ -1869,6 +1937,9 @@ def decode_structure_selection(data: bytes, mesh: dict, scale: tuple[int, int],
         # The Floor Label is one token reaching $CD04, so each record is placed
         # here and its glyph comes from the document's floorLabelGlyphs.
         **({'floorLabels': floor_labels} if floor_labels else {}),
+        # Literal wall text needs no live state, so its glyphs are baked here in
+        # the structure's scaled local frame.
+        **({'wallTexts': drawn_texts} if drawn_texts else {}),
         # Stated in the model reason by the caller, not published here.
         'wallTextGaps': wall_text_gaps,
         # The region loop stops on the same zero selector the native walk stops
@@ -4913,6 +4984,12 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                     f" Its {len(selection['floorLabels'])} Floor Label record(s) ride on"
                     ' region queues that are not retained, so none is published.'
                 )
+            if selection.get('wallTexts'):
+                named = ', '.join(f'"{text["text"]}"' for text in selection['wallTexts'])
+                model['reason'] += (
+                    f' Its literal wall text {named} rides on region queues that are not'
+                    ' retained, so none is published.'
+                )
             if detail is not None and detail.get('intentionalEmpty'):
                 model['reason'] += (
                     ' That empty detail carries no visibility groups either, so this'
@@ -5083,8 +5160,9 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                 instance_ids,
                 resident=instance['location'] is not None or instance['placement'] is not None)
     label_fonts = {
-        label['font'] for model in models
+        font for model in models
         for label in (model.get('structureSelection') or {}).get('floorLabels', [])
+        for font in (label['font'], *([label['fallback']['font']] if 'fallback' in label else []))
     }
     return {'schemaVersion': SCHEMA_VERSION, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
             'bodies': bodies, 'islands': islands, 'places': places, 'tables': tables,

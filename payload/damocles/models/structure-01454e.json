@@ -93,7 +93,7 @@
     "name": "Structure 70",
     "nameStatus": "unknown",
     "omissions": [],
-    "reason": "Wall text \"EXIT\" on queue byte 1 ($059EB6) is not drawn. Wall text \"EXIT\" on queue byte 6 ($059EB6) is not drawn. An $F0 entrance takes its key letter from the cell it stands in, not from this record: $054CBE turns the cell's $ABDC entry byte into the $7AFB base and $059FA0 forms the label as low nybble plus base plus $23. The constructor reads only bits 8, 9 and 15, so the geometry is the same whichever path runs. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
+    "reason": "An $F0 entrance takes its key letter from the cell it stands in, not from this record: $054CBE turns the cell's $ABDC entry byte into the $7AFB base and $059FA0 forms the label as low nybble plus base plus $23. The constructor reads only bits 8, 9 and 15, so the geometry is the same whichever path runs. Includes linked exterior/interior detail in its neutral pose. Region queues and linked detail lists recovered for on-foot drawing; each region is also offered as its own inspection form, using the detail group default list because a free-orbit view has no player position. Entrance Attachments carry constructor, slot and Proximity Box.",
     "recordClass": "alias",
     "relatedModels": [
       "structure-01730e",
@@ -5077,6 +5077,588 @@
       "scale": [
         3,
         3
+      ],
+      "wallTexts": [
+        {
+          "face": {
+            "index": 0,
+            "kind": "face"
+          },
+          "font": 1,
+          "mesh": {
+            "faces": [
+              {
+                "colour": "#000066",
+                "sourceColour": 32896,
+                "vertices": [
+                  0,
+                  1,
+                  2,
+                  3
+                ]
+              },
+              {
+                "colour": "#000066",
+                "sourceColour": 32896,
+                "vertices": [
+                  0,
+                  3,
+                  8,
+                  11
+                ]
+              },
+              {
+                "colour": "#000066",
+                "sourceColour": 32896,
+                "vertices": [
+                  8,
+                  9,
+                  10,
+                  11
+                ]
+              },
+              {
+                "colour": "#000066",
+                "sourceColour": 32896,
+                "vertices": [
+                  4,
+                  5,
+                  6,
+                  7
+                ]
+              },
+              {
+                "colour": "#000066",
+                "sourceColour": 32896,
+                "vertices": [
+                  20,
+                  12,
+                  13,
+                  23,
+                  22,
+                  21
+                ]
+              },
+              {
+                "colour": "#000066",
+                "sourceColour": 32896,
+                "vertices": [
+                  14,
+                  15,
+                  16,
+                  17,
+                  18,
+                  19
+                ]
+              },
+              {
+                "colour": "#000066",
+                "sourceColour": 32896,
+                "vertices": [
+                  24,
+                  25,
+                  26,
+                  27
+                ]
+              },
+              {
+                "colour": "#000066",
+                "sourceColour": 32896,
+                "vertices": [
+                  28,
+                  29,
+                  30,
+                  31
+                ]
+              },
+              {
+                "colour": "#000066",
+                "sourceColour": 32896,
+                "vertices": [
+                  32,
+                  33,
+                  34,
+                  35
+                ]
+              }
+            ],
+            "lines": [],
+            "vertices": [
+              [
+                -840,
+                174,
+                60
+              ],
+              [
+                -858,
+                174,
+                60
+              ],
+              [
+                -858,
+                171,
+                60
+              ],
+              [
+                -843,
+                171,
+                60
+              ],
+              [
+                -843,
+                165,
+                60
+              ],
+              [
+                -852,
+                165,
+                60
+              ],
+              [
+                -852,
+                162,
+                60
+              ],
+              [
+                -840,
+                162,
+                60
+              ],
+              [
+                -843,
+                153,
+                60
+              ],
+              [
+                -858,
+                153,
+                60
+              ],
+              [
+                -858,
+                150,
+                60
+              ],
+              [
+                -840,
+                150,
+                60
+              ],
+              [
+                -864,
+                174,
+                60
+              ],
+              [
+                -867,
+                174,
+                60
+              ],
+              [
+                -879,
+                174,
+                60
+              ],
+              [
+                -882,
+                174,
+                60
+              ],
+              [
+                -882,
+                171,
+                60
+              ],
+              [
+                -867,
+                150,
+                60
+              ],
+              [
+                -864,
+                150,
+                60
+              ],
+              [
+                -864,
+                153,
+                60
+              ],
+              [
+                -864,
+                171,
+                60
+              ],
+              [
+                -879,
+                150,
+                60
+              ],
+              [
+                -882,
+                150,
+                60
+              ],
+              [
+                -882,
+                153,
+                60
+              ],
+              [
+                -897,
+                174,
+                60
+              ],
+              [
+                -900,
+                174,
+                60
+              ],
+              [
+                -900,
+                150,
+                60
+              ],
+              [
+                -897,
+                150,
+                60
+              ],
+              [
+                -912,
+                174,
+                60
+              ],
+              [
+                -930,
+                174,
+                60
+              ],
+              [
+                -930,
+                171,
+                60
+              ],
+              [
+                -912,
+                171,
+                60
+              ],
+              [
+                -918,
+                174,
+                60
+              ],
+              [
+                -921,
+                174,
+                60
+              ],
+              [
+                -921,
+                150,
+                60
+              ],
+              [
+                -918,
+                150,
+                60
+              ]
+            ]
+          },
+          "plane": 0,
+          "text": "EXIT"
+        },
+        {
+          "face": {
+            "index": 5,
+            "kind": "face"
+          },
+          "font": 1,
+          "mesh": {
+            "faces": [
+              {
+                "colour": "#000066",
+                "sourceColour": 32896,
+                "vertices": [
+                  0,
+                  1,
+                  2,
+                  3
+                ]
+              },
+              {
+                "colour": "#000066",
+                "sourceColour": 32896,
+                "vertices": [
+                  0,
+                  3,
+                  8,
+                  11
+                ]
+              },
+              {
+                "colour": "#000066",
+                "sourceColour": 32896,
+                "vertices": [
+                  8,
+                  9,
+                  10,
+                  11
+                ]
+              },
+              {
+                "colour": "#000066",
+                "sourceColour": 32896,
+                "vertices": [
+                  4,
+                  5,
+                  6,
+                  7
+                ]
+              },
+              {
+                "colour": "#000066",
+                "sourceColour": 32896,
+                "vertices": [
+                  20,
+                  12,
+                  13,
+                  23,
+                  22,
+                  21
+                ]
+              },
+              {
+                "colour": "#000066",
+                "sourceColour": 32896,
+                "vertices": [
+                  14,
+                  15,
+                  16,
+                  17,
+                  18,
+                  19
+                ]
+              },
+              {
+                "colour": "#000066",
+                "sourceColour": 32896,
+                "vertices": [
+                  24,
+                  25,
+                  26,
+                  27
+                ]
+              },
+              {
+                "colour": "#000066",
+                "sourceColour": 32896,
+                "vertices": [
+                  28,
+                  29,
+                  30,
+                  31
+                ]
+              },
+              {
+                "colour": "#000066",
+                "sourceColour": 32896,
+                "vertices": [
+                  32,
+                  33,
+                  34,
+                  35
+                ]
+              }
+            ],
+            "lines": [],
+            "vertices": [
+              [
+                960,
+                174,
+                60
+              ],
+              [
+                942,
+                174,
+                60
+              ],
+              [
+                942,
+                171,
+                60
+              ],
+              [
+                957,
+                171,
+                60
+              ],
+              [
+                957,
+                165,
+                60
+              ],
+              [
+                948,
+                165,
+                60
+              ],
+              [
+                948,
+                162,
+                60
+              ],
+              [
+                960,
+                162,
+                60
+              ],
+              [
+                957,
+                153,
+                60
+              ],
+              [
+                942,
+                153,
+                60
+              ],
+              [
+                942,
+                150,
+                60
+              ],
+              [
+                960,
+                150,
+                60
+              ],
+              [
+                936,
+                174,
+                60
+              ],
+              [
+                933,
+                174,
+                60
+              ],
+              [
+                921,
+                174,
+                60
+              ],
+              [
+                918,
+                174,
+                60
+              ],
+              [
+                918,
+                171,
+                60
+              ],
+              [
+                933,
+                150,
+                60
+              ],
+              [
+                936,
+                150,
+                60
+              ],
+              [
+                936,
+                153,
+                60
+              ],
+              [
+                936,
+                171,
+                60
+              ],
+              [
+                921,
+                150,
+                60
+              ],
+              [
+                918,
+                150,
+                60
+              ],
+              [
+                918,
+                153,
+                60
+              ],
+              [
+                903,
+                174,
+                60
+              ],
+              [
+                900,
+                174,
+                60
+              ],
+              [
+                900,
+                150,
+                60
+              ],
+              [
+                903,
+                150,
+                60
+              ],
+              [
+                888,
+                174,
+                60
+              ],
+              [
+                870,
+                174,
+                60
+              ],
+              [
+                870,
+                171,
+                60
+              ],
+              [
+                888,
+                171,
+                60
+              ],
+              [
+                882,
+                174,
+                60
+              ],
+              [
+                879,
+                174,
+                60
+              ],
+              [
+                879,
+                150,
+                60
+              ],
+              [
+                882,
+                150,
+                60
+              ]
+            ]
+          },
+          "plane": 0,
+          "text": "EXIT"
+        }
       ]
     },
     "variants": [
