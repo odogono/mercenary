@@ -18,6 +18,9 @@ export interface ControlProfileActions {
   readonly drop: () => void;
   readonly fire: () => void;
   readonly leaveCraft: () => void;
+  /// A Damocles Lift key asking for a Floor. Answers whether the player is in a lift: where they
+  /// are not, the key keeps its ordinary meaning.
+  readonly liftKey: (floor: number) => boolean;
   readonly occupancy: () => Occupancy;
   readonly page: (delta: number) => void;
   readonly press: (key: BensonKeyValue | undefined) => void;
@@ -100,6 +103,22 @@ const throttleNotch = (code: string): number | undefined => {
   return match === null ? undefined : Number(match[1]);
 };
 
+/// The Floor a Damocles Lift key asks for, as the Working Authority's dispatcher maps its make
+/// codes (docs/research/damocles-lift-control.md): `1`–`9` for Floors 1–9, `0` and `B` for Floor
+/// 10, `G` for Floor 0. Its `Esc` also asks for Floor 0, but the Browser Shell keeps Escape for
+/// the System Menu, and `G` reaches the same Floor. The ST keypad's digits are other make codes,
+/// so the numpad is not a lift key.
+const liftFloor = (code: string): number | undefined => {
+  if (code === 'Digit0' || code === 'KeyB') {
+    return 10;
+  }
+  if (code === 'KeyG') {
+    return 0;
+  }
+  const match = /^Digit([1-9])$/.exec(code);
+  return match === null ? undefined : Number(match[1]);
+};
+
 /// The browser Control Profile: physical codes at the edge, Movement Intent and Semantic
 /// Actions on the other side. The core sees neither a key code nor a browser event.
 export class BrowserControlProfile {
@@ -142,6 +161,13 @@ export class BrowserControlProfile {
       }
       if (key.code === 'Minus' || key.code === 'Equal') {
         this.actions.throttleStep(key.code === 'Equal' ? 1 : -1);
+        return true;
+      }
+    } else {
+      // The lift takes its keys before their ordinary meaning, as `$0555DC` does before the
+      // rest of the dispatch: in a lift, `B` asks for Floor 10 and never boards.
+      const floor = liftFloor(key.code);
+      if (floor !== undefined && this.actions.liftKey(floor)) {
         return true;
       }
     }

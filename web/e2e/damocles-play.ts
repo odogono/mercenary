@@ -39,22 +39,30 @@ interface Catalogue {
   }[];
 }
 
-/// The Capital Spaceport's own world origin, which every local offset in this file is measured
-/// from and which turns a published `data-x` / `data-z` back into a structure-local offset.
-export const spaceportWorld = async (
-  page: Page
+/// A structure instance's own world origin, which turns a published `data-x` / `data-z` back
+/// into a structure-local offset.
+export const structureWorld = async (
+  page: Page,
+  instance: string
 ): Promise<{ readonly x: number; readonly z: number }> => {
   const catalogue = (await (
     await page.request.get('/payload/damocles/catalogue.json')
   ).json()) as Catalogue;
-  const position = catalogue.instances.find(
-    item => item.id === 'eris-surface-87'
-  )!.location!.position;
+  const position = catalogue.instances.find(item => item.id === instance)!
+    .location!.position;
   return { x: position[0]! * 65_536, z: position[2]! * 65_536 };
 };
 
-/// Boot /damocles with the on-foot start moved to a local offset inside the spaceport, which is
-/// the idiom the existing Damocles suite uses to reach a place without walking there.
+/// The Capital Spaceport's own world origin, which every local offset in this file is measured
+/// from.
+export const spaceportWorld = (
+  page: Page
+): Promise<{ readonly x: number; readonly z: number }> =>
+  structureWorld(page, 'eris-surface-87');
+
+/// Boot /damocles with the on-foot start moved to a local offset inside the spaceport, or inside
+/// `structure`, which is the idiom the existing Damocles suite uses to reach a place without
+/// walking there.
 ///
 /// `keepResume` leaves any Session Resume record alone, so a test can reload the page and
 /// continue the session it was playing; without it the record is cleared before every load.
@@ -62,9 +70,12 @@ export const bootAt = async (
   page: Page,
   local: { readonly x: number; readonly z: number },
   yaw = 512,
-  options: { readonly keepResume?: boolean } = {}
+  options: { readonly keepResume?: boolean; readonly structure?: string } = {}
 ): Promise<void> => {
-  const origin = await spaceportWorld(page);
+  const origin = await structureWorld(
+    page,
+    options.structure ?? 'eris-surface-87'
+  );
   if (options.keepResume !== true) {
     await page.addInitScript(
       key => localStorage.removeItem(key),

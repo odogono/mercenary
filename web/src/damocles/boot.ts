@@ -212,6 +212,13 @@ try {
     drop: () => commitAction(() => session.drop()),
     fire: () => undefined,
     leaveCraft: () => commitAction(() => session.leave()),
+    liftKey: floor => {
+      if (!session.inLift) {
+        return false;
+      }
+      commitAction(() => session.rideLift(floor));
+      return true;
+    },
     // The shared profile reads only whether the player is aboard. Its numeric slot is Targ's
     // identity, so the Damocles instance id is only translated here, at the boundary.
     occupancy: () => {
@@ -232,6 +239,7 @@ try {
         commitAction(() => session.board());
       }
     },
+    // Targ's single lift key. A Damocles Lift is ridden by the Floor keys, through `liftKey`.
     rideLift: () => undefined,
     shutThrottle: () => undefined,
     skipMessage: () => undefined,

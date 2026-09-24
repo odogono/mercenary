@@ -25,11 +25,19 @@ const input = (
 
 const harness = () => {
   let occupancy: Occupancy = { kind: 'onFoot' };
+  let inLift = false;
   const calls: unknown[] = [];
   const actions: ControlProfileActions = {
     drop: () => calls.push('drop'),
     fire: () => calls.push('fire'),
     leaveCraft: () => calls.push('leaveCraft'),
+    liftKey: floor => {
+      if (!inLift) {
+        return false;
+      }
+      calls.push({ liftKey: floor });
+      return true;
+    },
     occupancy: () => occupancy,
     page: delta => calls.push({ page: delta }),
     press: key => calls.push({ press: key }),
@@ -43,6 +51,9 @@ const harness = () => {
   return {
     calls,
     profile: new BrowserControlProfile(actions),
+    setInLift: (next: boolean) => {
+      inLift = next;
+    },
     setOccupancy: (next: Occupancy) => {
       occupancy = next;
     }
@@ -229,6 +240,66 @@ describe('the browser Control Profile', () => {
       { press: undefined },
       { press: undefined },
       { press: undefined }
+    ]);
+  });
+
+  test('in a Damocles Lift, the Floor keys ask for Floors before their ordinary meaning', () => {
+    const { calls, profile, setInLift } = harness();
+    setInLift(true);
+
+    for (const code of [
+      'Digit1',
+      'Digit2',
+      'Digit3',
+      'Digit4',
+      'Digit5',
+      'Digit6',
+      'Digit7',
+      'Digit8',
+      'Digit9',
+      'Digit0',
+      'KeyB',
+      'KeyG'
+    ]) {
+      expect(profile.keyDown(input(code))).toBeTrue();
+    }
+    // The ST keypad is not a lift key, and neither is anything else.
+    profile.keyDown(input('Numpad1'));
+    profile.keyDown(input('KeyT'));
+    expect(calls).toEqual([
+      { liftKey: 1 },
+      { liftKey: 2 },
+      { liftKey: 3 },
+      { liftKey: 4 },
+      { liftKey: 5 },
+      { liftKey: 6 },
+      { liftKey: 7 },
+      { liftKey: 8 },
+      { liftKey: 9 },
+      { liftKey: 10 },
+      { liftKey: 10 },
+      { liftKey: 0 },
+      { press: undefined },
+      { reach: 'take' }
+    ]);
+  });
+
+  test('outside a lift, and aboard, the Floor keys keep their ordinary meaning', () => {
+    const { calls, profile, setInLift, setOccupancy } = harness();
+
+    profile.keyDown(input('Digit1'));
+    profile.keyDown(input('KeyB'));
+    profile.keyDown(input('KeyG'));
+    setInLift(true);
+    setOccupancy({ kind: 'aboard', slot: 4 });
+    profile.keyDown(input('Digit2'));
+    profile.keyDown(input('KeyB'));
+    expect(calls).toEqual([
+      { press: undefined },
+      { reach: 'board' },
+      { press: undefined },
+      { notch: 2 },
+      { reach: 'board' }
     ]);
   });
 
