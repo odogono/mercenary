@@ -1,5 +1,6 @@
 import type { SoundDocument } from '../payload/documents.ts';
 import type { PresentationEvent, SessionSnapshot } from '../session/index.ts';
+import { SoundLifecycle } from './lifecycle.ts';
 
 export type SoundCommand =
   | { readonly kind: 'play'; readonly selector: number; readonly voice: 1 | 2 }
@@ -56,11 +57,7 @@ const scriptCommand = (
 /// Translates ordered presentation steps into the bounded command vocabulary
 /// understood by the AudioWorklet. It never owns or mutates Session State.
 export class SoundPresenter {
-  private state: 'locked' | 'unlocking' | 'unlocked' | 'disposed' = 'locked';
-  private pending: SoundBatch[] = [];
-  private muted = false;
-  private volume = 100;
-  private suspended = false;
+  private readonly lifecycle: SoundLifecycle<SoundCommand>;
   private refreshPersistent = false;
   private lastDisplay = '';
   private liftActive = false;
@@ -72,48 +69,25 @@ export class SoundPresenter {
 
   constructor(
     private readonly document: SoundDocument,
-    private readonly transport: SoundTransport
-  ) {}
+    transport: SoundTransport
+  ) {
+    this.lifecycle = new SoundLifecycle<SoundCommand>(transport);
+  }
 
   async unlock(): Promise<void> {
-    if (this.state === 'unlocked' || this.state === 'disposed') {
+    if (this.lifecycle.phase !== 'locked') {
       return;
     }
-    if (this.state === 'unlocking') {
-      return;
-    }
-    this.state = 'unlocking';
     this.liftActive = false;
     this.lastLiftPitch = undefined;
     this.lastDisplay = '';
     this.lastCraft = undefined;
     this.craftActive = false;
-    try {
-      await this.transport.unlock();
-      if ((this.state as string) === 'disposed') {
-        return;
-      }
-      this.state = 'unlocked';
-      this.transport.send({
-        at: 0,
-        commands: [
-          { kind: 'mute', value: this.muted },
-          { kind: 'volume', value: this.volume }
-        ]
-      });
-      for (const batch of this.pending) {
-        this.transport.send(batch);
-      }
-      this.pending = [];
-    } catch (error) {
-      this.pending = [];
-      this.state = 'locked';
-      throw error;
-    }
+    await this.lifecycle.unlock();
   }
 
   present(step: PresentSoundStep): void {
-    if (this.state === 'disposed' || this.suspended) {
+    if (this.lifecycle.phase === 'disposed' || this.lifecycle.suspended) {
       return;
     }
     const commands: SoundCommand[] = [];
@@ -190,45 +164,32 @@ export class SoundPresenter {
     if (commands.length === 0) {
       return;
     }
-    const batch = { at: step.snapshot.elapsed, commands };
-    if (this.state === 'unlocking') {
-      this.pending.push(batch);
-    } else if (this.state === 'unlocked') {
-      this.transport.send(batch);
-    }
     // In the locked state every audible event is deliberately discarded. The
     // first trusted gesture changes the state to unlocking before its action.
+    this.lifecycle.send({ at: step.snapshot.elapsed, commands });
   }
 
   setMuted(value: boolean, at = 0): void {
-    this.muted = value;
-    this.sendControl({ at, commands: [{ kind: 'mute', value }] });
+    this.lifecycle.setMuted(value, at);
   }
 
   setVolume(value: number, at = 0): void {
-    this.volume = value;
-    this.sendControl({ at, commands: [{ kind: 'volume', value }] });
+    this.lifecycle.setVolume(value, at);
   }
 
   suspend(): void {
-    this.suspended = true;
-    if (this.state !== 'disposed') {
-      this.transport.suspend();
-    }
+    this.lifecycle.suspend();
   }
 
   resume(): void {
-    if (this.suspended) {
+    if (this.lifecycle.suspended) {
       this.refreshPersistent = true;
     }
-    this.suspended = false;
-    if (this.state !== 'disposed') {
-      this.transport.resume();
-    }
+    this.lifecycle.resume();
   }
 
   resetFromSnapshot(snapshot: SessionSnapshot): void {
-    this.pending = [];
+    this.lifecycle.clearPending();
     // A reset clears voice 2, so an in-progress restored journey must start
     // its continuous program again before applying the retained pitch.
     this.liftActive = false;
@@ -236,7 +197,7 @@ export class SoundPresenter {
     this.craftActive = false;
     this.lastCraft = undefined;
     this.lastDisplay = '';
-    this.sendControl({
+    this.lifecycle.send({
       at: snapshot.elapsed,
       commands: [{ kind: 'reset', registers: this.document.initialRegisters }]
     });
@@ -244,18 +205,7 @@ export class SoundPresenter {
   }
 
   dispose(): void {
-    this.state = 'disposed';
-    this.pending = [];
-    this.transport.dispose();
-  }
-
-  private sendControl(batch: SoundBatch): void {
-    if (this.state === 'unlocking') {
-      this.pending.push(batch);
-    }
-    if (this.state === 'unlocked') {
-      this.transport.send(batch);
-    }
+    this.lifecycle.dispose();
   }
 
   private persistentCommands(snapshot: SessionSnapshot): SoundCommand[] {

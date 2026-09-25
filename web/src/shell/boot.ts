@@ -22,6 +22,7 @@ import { installConsole } from './consoleView.ts';
 
 import './damoclesPanelElement.ts';
 
+import { installAudioLifecycle } from './audioLifecycle.ts';
 import {
   DESTINATIONS,
   DepartureDirector,
@@ -436,13 +437,15 @@ try {
   };
   installSuspensionHandlers(window, document, release);
 
+  const audio = installAudioLifecycle({
+    document,
+    ownership,
+    presenter: sound,
+    window
+  });
   const menu = installSystemMenu({
     onLayer: layer => {
-      if (layer === 'none') {
-        sound.resume();
-      } else {
-        sound.suspend();
-      }
+      audio.layerChanged(layer);
       if (layer === 'menu') {
         notices.menuOpened();
         if (ownership.mayPersist()) {
@@ -659,46 +662,6 @@ try {
   });
   window.addEventListener('pagehide', flushResume);
   window.addEventListener('pagehide', () => takeover.close());
-  window.addEventListener('pagehide', () => sound.dispose());
-  window.addEventListener('blur', () => sound.suspend());
-  window.addEventListener('focus', () => {
-    if (!document.hidden && menu.layer() === 'none' && ownership.mayAdvance()) {
-      sound.resume();
-    }
-  });
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-      sound.suspend();
-    } else if (menu.layer() === 'none' && ownership.mayAdvance()) {
-      sound.resume();
-    }
-  });
-
-  const unlockSound = (event: Event): void => {
-    if (!event.isTrusted) {
-      return;
-    }
-    window.removeEventListener('pointerdown', unlockSound, true);
-    window.removeEventListener('keydown', unlockSound, true);
-    void sound
-      .unlock()
-      .then(() => {
-        if (
-          document.hidden ||
-          menu.layer() !== 'none' ||
-          !ownership.mayAdvance()
-        ) {
-          sound.suspend();
-        }
-      })
-      .catch(() => {});
-  };
-  window.addEventListener('pointerdown', unlockSound, {
-    capture: true
-  });
-  window.addEventListener('keydown', unlockSound, {
-    capture: true
-  });
 
   const pointerTakeTarget = (event: MouseEvent): number | undefined => {
     const state = routerState();

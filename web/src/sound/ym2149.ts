@@ -1,3 +1,5 @@
+import type { Chip } from './workletHost.ts';
+
 /// The Atari ST's YM2149 at the register level, for Damocles (#508).
 ///
 /// A project-owned model shared by the live AudioWorklet and deterministic offline tests. It
@@ -50,7 +52,7 @@ const toneDisabled = (mixer: number, channel: number): boolean =>
 const noiseDisabled = (mixer: number, channel: number): boolean =>
   (mixer & (8 << channel)) !== 0;
 
-export class Ym2149 {
+export class Ym2149 implements Chip {
   private readonly registers = new Uint8Array(16);
   private readonly tones: ToneState[] = [
     { counter: 0, output: 0 },

@@ -1,4 +1,5 @@
 import type { SoundDocument } from '../payload/documents.ts';
+import type { Chip } from './workletHost.ts';
 
 const PHASE_SCALE = 0x1_00_00_00;
 const NOISE_BITS = [22, 20, 16, 13, 11, 7, 4, 2] as const;
@@ -36,7 +37,7 @@ const byte = (value: number, name: string): number => {
 /// deterministic offline tests. It implements only controls proven reachable
 /// in the configured Reference Build: triangle, pulse, noise, ring modulation,
 /// gate, and the three ADSR envelopes.
-export class SidSynth {
+export class SidSynth implements Chip<[registers?: readonly number[]]> {
   private readonly voices: VoiceState[] = Array.from(
     { length: 3 },
     initialVoice

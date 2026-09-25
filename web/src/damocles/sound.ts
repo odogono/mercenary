@@ -1,3 +1,4 @@
+import { SoundLifecycle } from '../sound/lifecycle.ts';
 import type { SoundTransport } from '../sound/presenter.ts';
 import type { DamoclesCue } from './psg.ts';
 
@@ -16,105 +17,71 @@ export type DamoclesSoundState =
   'locked' | 'unlocking' | 'running' | 'suspended' | 'disposed';
 
 /// Presents a Damocles Gameplay Session's Sound Cues through the Browser Shell's audio
-/// transport (#508). It follows Targ's `SoundPresenter`: nothing sounds before a trusted
-/// gesture unlocks audio, cues drained while locked are dropped rather than played late, and
-/// mute and volume are the shared preferences. It only reads cues the session has already
+/// transport (#508), through the lifecycle it shares with Targ's `SoundPresenter` (#513): nothing
+/// sounds before a trusted gesture unlocks audio, cues drained while locked are dropped rather
+/// than played late, and mute and volume are the shared preferences. It only reads cues the session has already
 /// drained; it never touches Session State.
 export class DamoclesSoundPresenter {
-  private phase: 'locked' | 'unlocking' | 'unlocked' | 'disposed' = 'locked';
-  private suspended = false;
-  private muted = false;
-  private volume = 100;
+  private readonly lifecycle: SoundLifecycle<DamoclesSoundCommand>;
 
-  constructor(
-    private readonly transport: SoundTransport<DamoclesSoundCommand>
-  ) {}
-
-  get state(): DamoclesSoundState {
-    if (this.phase === 'unlocked') {
-      return this.suspended ? 'suspended' : 'running';
-    }
-    return this.phase;
+  constructor(transport: SoundTransport<DamoclesSoundCommand>) {
+    this.lifecycle = new SoundLifecycle<DamoclesSoundCommand>(transport);
   }
 
-  async unlock(): Promise<void> {
-    if (this.phase !== 'locked') {
-      return;
+  get state(): DamoclesSoundState {
+    const phase = this.lifecycle.phase;
+    if (phase === 'unlocked') {
+      return this.lifecycle.suspended ? 'suspended' : 'running';
     }
-    this.phase = 'unlocking';
-    try {
-      await this.transport.unlock();
-      if ((this.phase as string) === 'disposed') {
-        return;
-      }
-      this.phase = 'unlocked';
-      this.transport.send({
-        at: 0,
-        commands: [
-          { kind: 'mute', value: this.muted },
-          { kind: 'volume', value: this.volume }
-        ]
-      });
-    } catch (error) {
-      this.phase = 'locked';
-      throw error;
-    }
+    return phase;
+  }
+
+  unlock(): Promise<void> {
+    return this.lifecycle.unlock();
   }
 
   /// The cues one session step drained, in the order it asked for them, at its elapsed time.
+  /// Cues drained while audio is still unlocking are dropped along with the locked ones.
   present(cues: readonly DamoclesCue[], at: number): void {
-    if (this.phase !== 'unlocked' || this.suspended || cues.length === 0) {
+    if (
+      this.lifecycle.phase !== 'unlocked' ||
+      this.lifecycle.suspended ||
+      cues.length === 0
+    ) {
       return;
     }
-    this.transport.send({
+    this.lifecycle.send({
       at,
       commands: cues.map(cue => ({ cue, kind: 'cue' as const }))
     });
   }
 
   setMuted(value: boolean): void {
-    this.muted = value;
-    this.sendControl({ kind: 'mute', value });
+    this.lifecycle.setMuted(value);
   }
 
   setVolume(value: number): void {
-    this.volume = value;
-    this.sendControl({ kind: 'volume', value });
+    this.lifecycle.setVolume(value);
   }
 
   /// Silence every channel and forget the timebase: a session replaced, a Save loaded, or the
   /// session lost to another tab. No tone the old session started outlives it. `at` is the
   /// elapsed time of the session that follows, which the transport takes as its new timebase.
   reset(at: number): void {
-    if (this.phase === 'unlocked') {
-      this.transport.send({ at, commands: [{ kind: 'reset' }] });
+    if (this.lifecycle.phase === 'unlocked') {
+      this.lifecycle.send({ at, commands: [{ kind: 'reset' }] });
     }
   }
 
   suspend(): void {
-    this.suspended = true;
-    if (this.phase !== 'disposed') {
-      this.transport.suspend();
-    }
+    this.lifecycle.suspend();
   }
 
   resume(): void {
-    this.suspended = false;
-    if (this.phase !== 'disposed') {
-      this.transport.resume();
-    }
+    this.lifecycle.resume();
   }
 
   dispose(): void {
-    this.phase = 'disposed';
-    this.transport.dispose();
-  }
-
-  private sendControl(
-    command: Extract<DamoclesSoundCommand, { kind: 'mute' | 'volume' }>
-  ): void {
-    if (this.phase === 'unlocked') {
-      this.transport.send({ at: 0, commands: [command] });
-    }
+    this.lifecycle.dispose();
   }
 }

@@ -1,12 +1,8 @@
 import type { SoundDocument } from '../payload/documents.ts';
+import type { ControlCommand } from './lifecycle.ts';
 import type { SoundBatch, SoundCommand, SoundTransport } from './presenter.ts';
 
-/// The commands every processor shares. The transport applies these itself, through its gain,
-/// and forwards the rest.
-type ControlCommand =
-  | { readonly kind: 'mute'; readonly value: boolean }
-  | { readonly kind: 'volume'; readonly value: number };
-
+/// The transport applies the master controls itself, through its gain, and forwards the rest.
 const isControl = (command: {
   readonly kind: string;
 }): command is ControlCommand =>

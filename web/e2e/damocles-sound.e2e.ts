@@ -1,12 +1,12 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { bootAt, watchErrors } from './damocles-play.ts';
+import { tapDestination, type SoundTapScope } from './sound-tap.ts';
 
 /// The browser listening check for Damocles sound (#508), kept apart from the cue tally.
 ///
-/// `data-damocles-cues` proves the session asked for a sound. This file listens instead: an
-/// AnalyserNode is spliced in wherever the page connects a node to its AudioContext's
-/// destination, so it hears exactly what the speakers are given, after mute and volume. A poll
+/// `data-damocles-cues` proves the session asked for a sound. This file listens instead, at the
+/// destination tap, so it hears exactly what the speakers are given, after mute and volume. A poll
 /// notes its RMS level beside the session time and cue tally the page publishes.
 
 const STATE_OFFICE = 'eris-surface-89';
@@ -27,29 +27,13 @@ interface Heard {
 const frame = (page: Page) => page.locator('#frame');
 
 const listen = async (page: Page): Promise<void> => {
+  await tapDestination(page);
   await page.addInitScript(() => {
     const heard: Heard[] = [];
-    const scope = window as unknown as {
+    const scope = window as unknown as SoundTapScope & {
       damoclesHeard: Heard[];
-      damoclesTap?: AnalyserNode;
     };
     scope.damoclesHeard = heard;
-    const connect = AudioNode.prototype.connect as (
-      this: AudioNode,
-      ...args: unknown[]
-    ) => unknown;
-    AudioNode.prototype.connect = function (
-      this: AudioNode,
-      ...args: unknown[]
-    ) {
-      if (args[0] === this.context.destination) {
-        const tap = this.context.createAnalyser();
-        tap.fftSize = 1024;
-        connect.call(this, tap);
-        scope.damoclesTap = tap;
-      }
-      return connect.apply(this, args);
-    } as typeof AudioNode.prototype.connect;
     const close = AudioContext.prototype.close;
     AudioContext.prototype.close = function (this: AudioContext) {
       sessionStorage.setItem('damoclesAudioClosed', 'true');
@@ -57,7 +41,7 @@ const listen = async (page: Page): Promise<void> => {
     };
     const samples = new Float32Array(1024);
     const poll = (): void => {
-      const tap = scope.damoclesTap;
+      const tap = scope.soundTaps.at(-1);
       const node = document.getElementById('frame');
       if (tap !== undefined && node !== null) {
         tap.getFloatTimeDomainData(samples);
