@@ -1,6 +1,42 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Dion group $1B cell $06 record places this instance and binds resident slot 198 at local (484, 2000, -189) on floor 10.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+      },
+      {
+        "claim": "Authored Dion group $1B cell $06 record places this instance and binds resident slot 240 at local (533, 0, -190) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+      },
+      {
+        "claim": "Authored Dion group $1B cell $06 record places this instance and binds resident slot 243 at local (533, 0, -88) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+      },
+      {
+        "claim": "Authored Dion group $1C cell $06 record places this instance and binds resident slot 33 at local (670, 0, 537) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+      },
+      {
+        "claim": "Authored Dion group $1C cell $06 record places this instance and binds resident slot 196 at local (532, 2000, -149) on floor 10.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+      },
+      {
+        "claim": "Authored Dion group $1C cell $06 record places this instance and binds resident slot 241 at local (526, 0, -190) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+      },
+      {
+        "claim": "Authored Dion group $1C cell $06 record places this instance and binds resident slot 244 at local (562, 0, -112) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+      }
+    ],
     "id": "structure-01ddbe",
     "kind": "structure",
     "levelBinding": {
@@ -43,7 +79,15 @@
       ],
       "tableAddress": 122308
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-198",
+      "object-slot-240",
+      "object-slot-243",
+      "object-slot-33",
+      "object-slot-196",
+      "object-slot-241",
+      "object-slot-244"
+    ],
     "name": "Structure 259",
     "nameStatus": "unknown",
     "omissions": [],

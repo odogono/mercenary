@@ -2,14 +2,16 @@
   "model": {
     "evidence": [
       {
-        "claim": "PULVIN MINES road cell $13: the per-cell ground/pad/road record at $1E000 the workspace loader would draw there, replayed from the group's authored stream by $04EB60-$04ED12 -- its $1E400 record after any placement replacement, its $83DC orientation and its $1E000 scene seed. No capture stands in this workspace; the same replay reproduces those tables on every capture that does.",
+        "claim": "PULVIN MINES cell $13: the per-cell ground/pad/road record at $1E000 the workspace loader would draw there, replayed from the group's authored stream by $04EB60-$04ED12 -- its $1E400 record after any placement replacement, its $83DC orientation and its $1E000 scene seed. No capture stands in this workspace; the same replay reproduces those tables on every capture that does.",
         "confidence": "verified",
         "source": "docs/research/damocles-eris-ground.md"
       }
     ],
     "id": "lachesis-pulvin-mines-ground-01e796-06-13",
     "kind": "ground",
-    "linkedInstances": [],
+    "linkedInstances": [
+      "lachesis-pulvin-mines-ground-13"
+    ],
     "name": "PULVIN MINES ground 19",
     "nameStatus": "unknown",
     "omissions": [],
@@ -17,7 +19,7 @@
     "recordClass": "geometry",
     "relatedModels": [],
     "slots": [
-      1338
+      1340
     ],
     "sourceAddress": 124822,
     "status": "decoded",

@@ -3,7 +3,13 @@
     "conditions": [
       "articulation angle ($7888)"
     ],
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Dion group $1B cell $50 record places this instance and binds resident slot 77 at local (-811, 0, 603) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+      }
+    ],
     "id": "structure-01ddd0",
     "kind": "structure",
     "levelBinding": {
@@ -36,7 +42,9 @@
       ],
       "tableAddress": 122326
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-77"
+    ],
     "name": "Structure 260",
     "nameStatus": "unknown",
     "omissions": [],

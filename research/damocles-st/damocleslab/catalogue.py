@@ -3668,7 +3668,7 @@ def decode_cell_ground(workspace: bytes, data: bytes, cell: int, tables: list,
 
 def attach_image_ground(workspace: bytes, data: bytes, prefix: str, label: str, grid: bytes,
                         models: list, tables: list, by_address: dict, hardware: list[int],
-                        template_palettes: dict) -> dict[int, str]:
+                        template_palettes: dict, every_cell: bool = False) -> dict[int, str]:
     """The Drawn Record of every road cell in a workspace replayed from the image.
 
     `workspace` is `load_structure_workspace`'s, so the record, its orientation,
@@ -3682,11 +3682,14 @@ def attach_image_ground(workspace: bytes, data: bytes, prefix: str, label: str, 
     Model is reused only when its mesh is the mesh decoded here, and otherwise
     the cell gets one qualified by its group, and by the cell if even that is
     taken.
+
+    With `every_cell`, every cell is decoded rather than the road cells alone,
+    for an island whose whole workspace is published from the image.
     """
     by_cell = {}
     ground_table = next(table for table in tables if table['kind'] == 'ground')
     for cell in range(256):
-        if not grid_cell_class(grid[cell * 4:cell * 4 + 4], cell):
+        if not every_cell and not grid_cell_class(grid[cell * 4:cell * 4 + 4], cell):
             continue
         address, mesh, gaps, transform, template_models, palette_index = decode_cell_ground(
             workspace, data, cell, tables, by_address, hardware
@@ -3722,7 +3725,7 @@ def attach_image_ground(workspace: bytes, data: bytes, prefix: str, label: str, 
                 'linkedInstances': [],
                 'evidence': [{
                     'claim': (
-                        f'{label} road cell ${cell:02X}: the per-cell ground/pad/road record at '
+                        f'{label} cell ${cell:02X}: the per-cell ground/pad/road record at '
                         '$1E000 the workspace loader would draw there, replayed from the '
                         "group's authored stream by $04EB60-$04ED12 -- its $1E400 record "
                         'after any placement replacement, its $83DC orientation and its '
@@ -3761,16 +3764,55 @@ def attach_image_ground(workspace: bytes, data: bytes, prefix: str, label: str, 
     return by_cell
 
 
+# The Body whose workspace repeats one structure over every cell ($0592FA).
+UNIFORM_FIELD_BODY = 2
+
+
+def image_workspace(data: bytes, island: dict) -> bytes:
+    """The workspace the loader would build for an island nobody has stood in.
+
+    `load_structure_workspace` replays the group's authored stream. The fields a
+    capture would also carry are written as the workspace loader and the
+    island search leave them: the body selector, a camera pair whose origin is
+    the island record's (standing in cell 0), and the group's place list.
+    """
+    group = island['structureGroup']
+    body = int(island['body'].split('-')[1])
+    workspace = bytearray(load_structure_workspace(data, group))
+    origin_x, origin_z = island['origin']
+    struct.pack_into('>H', workspace, 0x7AA8, body * 4)
+    struct.pack_into('>I', workspace, 0x7A92, origin_x << 16)
+    struct.pack_into('>I', workspace, 0x7A2C, 0)
+    struct.pack_into('>I', workspace, 0x7A9A, origin_z << 16)
+    struct.pack_into('>I', workspace, 0x7A34, 0)
+    struct.pack_into('>H', workspace, 0x7B5C, 0)
+    struct.pack_into('>I', workspace, 0x7A6C, walk_group_record(data, group)[2])
+    return bytes(workspace)
+
+
+def image_workspace_prefix(slug: str, island: dict) -> str:
+    """The identity an image-replayed island publishes under, as its roads always have."""
+    suffix = (re.sub(r'[^a-z0-9]+', '-', island['areaName'].lower()).strip('-')
+              if island['areaName'] else f"{island['structureGroup']:02x}")
+    return f'{slug}-{suffix}'
+
+
 def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: list,
                           instances: list, places: list, by_address: dict, bodies: list,
                           islands: list, hardware: list[int], template_palettes: dict,
-                          road_networks: list) -> tuple[str, dict]:
+                          road_networks: list, image_island: dict | None = None
+                          ) -> tuple[str, dict]:
     """Place live $ABDC / ground records from a non-Eris loaded world capture.
 
-    Returns the workspace note and the structure-group binding the capture
-    establishes: its body, its $794E group and the prefix its cell instances
-    were published under.
+    With `image_island`, `workspace` is `image_workspace`'s for that island
+    instead: nothing stood in it, and everything published says so.
+
+    Returns the workspace note and the structure-group binding the workspace
+    establishes: its body, its $794E group, the prefix its cell instances were
+    published under, and whether a capture or the image attests it.
     """
+    source = 'Image-replayed' if image_island else 'Live'
+
     if len(workspace) != 1048576 or u32(workspace, 0x4bd10) != 0x35700 or u32(workspace, 0x4bd22) != 0x26000:
         raise ValueError('live workspace is not a loaded Damocles world capture')
     if workspace[0xe900:0xe900 + 280 * 4] != data[0xe900:0xe900 + 280 * 4]:
@@ -3831,7 +3873,8 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
                 names[place['cell']] = (identity, place['name'])
     if not names:
         area_name = None
-    prefix = live_overlay_prefix(slug, area_name, instances)
+    prefix = (image_workspace_prefix(slug, image_island) if image_island
+              else live_overlay_prefix(slug, area_name, instances))
     occupied = 0
     for cell in range(256):
         address = 0xabdc + cell * 4
@@ -3867,16 +3910,58 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
                 'heading': None,
             },
             'reason': (
-                f"Live {label} $ABDC workspace placement at cell ${cell:02X}; "
+                f"{source} {label} $ABDC workspace placement at cell ${cell:02X}; "
                 'not a census of every island on this body.'
             ),
         })
         if place:
             next(item for item in places if item['id'] == place[0])['instances'].append(identity)
+    def add_ground_instance(cell: int, model_id: str) -> None:
+        model = by_address[model_id]
+        if not model['variants']:
+            return
+        identity = f'{prefix}-ground-{cell:02x}'
+        place = names.get(cell)
+        instances.append({
+            'id': identity,
+            'name': place[1] + ' ground' if place else f"{label} ground cell {cell & 15},{cell >> 4}",
+            'model': model_id,
+            'sourceAddress': 0x1E400 + cell * 2,
+            'association': None,
+            'handling': None,
+            'placementClass': None,
+            'placement': None,
+            'location': {
+                'body': f'body-{body}',
+                'place': place[0] if place else None,
+                'position': [origin_x + (cell & 15) + 0.5, 0, origin_z + (cell >> 4) + 0.5],
+                'coordinateSystem': BODY_COORDINATES,
+                'island': island['id'] if island else None,
+                'heading': None,
+            },
+            'reason': (
+                f"{source} {label} cell ground/pad/road record; intentional empty records have no drawable instance."
+            ),
+        })
+        model['linkedInstances'].append(identity)
+        if place:
+            next(item for item in places if item['id'] == place[0])['instances'].append(identity)
+
     ground_unique = 0
     ground_model_by_cell: dict[int, str] = {}
     ground_mesh_by_cell: dict[int, dict] = {}
-    for cell in range(256):
+    if image_island:
+        # Named, and shared, only where the geometry is the same: a scene-joined
+        # record draws differently under another group's seeds.
+        ground_model_by_cell = attach_image_ground(
+            workspace, data, prefix,
+            image_island['areaName'] or f"{label} group ${image_island['structureGroup']:02X}",
+            workspace[ROAD_RUN_GRID:ROAD_RUN_GRID + 1024],
+            models, tables, by_address, hardware, template_palettes, every_cell=True,
+        )
+        for cell in range(256):
+            add_ground_instance(cell, ground_model_by_cell[cell])
+    for cell in range(256 if not image_island else 0):
         address, mesh, gaps, transform, template_models, palette_index = decode_cell_ground(
             workspace, data, cell, tables, by_address, hardware
         )
@@ -3909,7 +3994,7 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
                 'linkedInstances': [],
                 'evidence': [{
                     'claim': (
-                        f"Live {label} per-cell ground/pad/road record at $1E000; "
+                        f"{source} {label} per-cell ground/pad/road record at $1E000; "
                         'this workspace overwrites the Eris first-world index.'
                     ),
                     'confidence': 'verified',
@@ -3932,36 +4017,8 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
                     model['status'] = 'decoded'
             by_address[model_id] = model
             models.append(model)
-        model = by_address[model_id]
         ground_model_by_cell[cell] = model_id
-        if not model['variants']:
-            continue
-        identity = f'{prefix}-ground-{cell:02x}'
-        place = names.get(cell)
-        instances.append({
-            'id': identity,
-            'name': place[1] + ' ground' if place else f"{label} ground cell {cell & 15},{cell >> 4}",
-            'model': model_id,
-            'sourceAddress': 0x1E400 + cell * 2,
-            'association': None,
-            'handling': None,
-            'placementClass': None,
-            'placement': None,
-            'location': {
-                'body': f'body-{body}',
-                'place': place[0] if place else None,
-                'position': [origin_x + (cell & 15) + 0.5, 0, origin_z + (cell >> 4) + 0.5],
-                'coordinateSystem': BODY_COORDINATES,
-                'island': island['id'] if island else None,
-                'heading': None,
-            },
-            'reason': (
-                f"Live {label} cell ground/pad/road record; intentional empty records have no drawable instance."
-            ),
-        })
-        model['linkedInstances'].append(identity)
-        if place:
-            next(item for item in places if item['id'] == place[0])['instances'].append(identity)
+        add_ground_instance(cell, model_id)
     ground_table = next(table for table in tables if table['kind'] == 'ground')
     extras = [
         model['id']
@@ -3984,14 +4041,14 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
         selectors=[struct.unpack_from('>H', workspace, ROAD_PIECE_SELECTORS + i * 2)[0]
                    for i in range(6)],
         cell_index=workspace[0x1E400:0x1E600],
-        live_orientations=workspace[0x83DC:0x84DC],
+        live_orientations=None if image_island else workspace[0x83DC:0x84DC],
     )
     network['structureGroup'] = group
     # What lets an image-derived cell publish its Drawn Record: the workspace
     # the loader would build, replayed from the program image, draws every road
     # cell exactly as this capture's live workspace does.
     replayed = load_structure_workspace(data, group) if network['cells'] else data
-    for item in network['cells']:
+    for item in network['cells'] if not image_island else []:
         cell = item['cell']
         if decode_cell_ground(replayed, data, cell, tables, by_address, hardware)[1] != \
                 ground_mesh_by_cell[cell]:
@@ -4002,13 +4059,14 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
     if not any(item['id'] == network['id'] for item in road_networks):
         road_networks.append(network)
     note = (
-        f"{label} live $ABDC" + (f" ({area_name})" if area_name else "") +
+        f"{label} {source.lower()} $ABDC" + (f" ({area_name})" if area_name else "") +
         f": body selector $7AA8=${selector:04X}, current cell "
         f"$7B5C=${int.from_bytes(workspace[0x7b5c:0x7b5e], 'big'):02X}; {occupied} surface assemblies "
         f'and {ground_unique} workspace-local ground records. Structure and building-detail pointer '
         'tables match first-world; object unique addresses are unchanged.'
     )
-    binding = {'body': body, 'group': group, 'prefix': prefix, 'workspace': workspace}
+    binding = {'body': body, 'group': group, 'prefix': prefix, 'workspace': workspace,
+               'attestation': 'image' if image_island else 'capture'}
     return note, binding
 
 
@@ -4506,7 +4564,8 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
     workspace_notes = []
     slot_bindings: list[dict] = []
     # The structure-group workspaces a capture has stood in. First-world is Eris's.
-    group_bindings = [{'body': 11, 'group': capital_group, 'prefix': 'eris', 'workspace': data}]
+    group_bindings = [{'body': 11, 'group': capital_group, 'prefix': 'eris', 'workspace': data,
+                       'attestation': 'capture'}]
     if workspaces:
         for workspace in workspaces:
             note, group_binding = attach_live_workspace(
@@ -4519,6 +4578,45 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                 'world': note.split(' live $ABDC', 1)[0],
                 'bindings': object_slot_bindings(data, workspace),
             })
+    # Every island whose group no capture stands in publishes the workspace the
+    # loader would build for it: its structures, ground, places and residents.
+    # The leave-one-out check in the lab tests replays each captured island the
+    # same way and requires the capture's own publication back.
+    #
+    # Midas is not a 16x16 workspace. $0592FA sets $7A2A for body 2 alone, and
+    # $04ED2A then copies cell 0's structure word over every cell, so the one
+    # structure repeats across the whole Body; the Midas capture's $ABDC holds
+    # structure 68 in all 256 cells. Its residents sit at their own cells'
+    # centres far outside any island window, so none is placed here.
+    bound_groups = {(binding['body'], binding['group']) for binding in group_bindings}
+    for island in sorted(islands, key=lambda item: (item['body'], item['structureGroup'] or 0)):
+        group = island['structureGroup']
+        body = int(island['body'].split('-')[1])
+        if not group or (body, group) in bound_groups:
+            continue
+        if body == UNIFORM_FIELD_BODY:
+            for item in instances:
+                if (item['id'].startswith('object-slot-') and item['placement'] is None
+                        and (item.get('association') or {}).get('body') == island['body']
+                        and item['association'].get('structureGroupSelector') == group
+                        and item['association'].get('insertionGroupSelector')):
+                    item['reason'] = (
+                        f'Interior-associated resident on {bodies[body]["name"]}, group '
+                        f'${group:02X}, cell ${item["association"]["cell"]:02X}. Midas draws one '
+                        'structure in every cell ($0592FA sets $7A2A for this Body; $04ED2A '
+                        'copies cell 0\'s structure word over all 256), so the resident stands in '
+                        'the copy at its own cell\'s centre. No 16x16 workspace represents that '
+                        'field, so no parent is published.'
+                    )
+            continue
+        bound_groups.add((body, group))
+        note, group_binding = attach_live_workspace(
+            image_workspace(data, island), data, models, tables, instances, places,
+            by_address, bodies, islands, hardware, template_palettes, road_networks,
+            image_island=island,
+        )
+        workspace_notes.append(note)
+        group_bindings.append(group_binding)
     # Every island record that binds a group, whether or not a capture has ever
     # loaded it. The grid the loader would build is in the group's own authored
     # stream, so a Settlement nobody has stood in still publishes its roads;
@@ -4552,6 +4650,9 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         )
         network['structureGroup'] = group
         road_networks.append(network)
+    # A hand-recovered instance an image-replayed workspace also places keeps its
+    # identity; the workspace's twin is folded into it.
+    merged_parents: dict[str, str] = {}
     chevy_key = instance_by_id.get('object-slot-180')
     chevy_parent_model = by_address.get('structure-01d188')
     chevy_map_record = data[0x251d7:0x251dd]
@@ -4566,25 +4667,45 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         resident_raw = [s32(data, base + 180 * 4) for base in (0x63a8, 0x67a8, 0x6ba8)]
         parent_raw = structure_origin(tuple(resident_raw), dx, dz)
         parent_id = 'eris-structure-0251d7'
+        parent_position = [parent_raw[0] / 65536, 0, parent_raw[2] / 65536]
+        # Bare Island's image-replayed workspace places the same instance at cell
+        # $26, to the bit. The hand-recovered identity is the one Saves and links
+        # already name, so it stays, and takes the island and Place the workspace
+        # supplies; the twin goes.
+        twin = next((item for item in instances
+                     if item['id'].endswith('-surface-26') and item['model'] == chevy_parent_model['id']
+                     and (item['location'] or {}).get('body') == 'body-11'
+                     and item['location']['position'] == parent_position), None)
+        parent_place = twin['location']['place'] if twin else None
         instances.append({
             'id': parent_id,
-            'name': 'Eris structure group $14 cell $26',
+            'name': twin['name'] if twin else 'Eris structure group $14 cell $26',
             'model': chevy_parent_model['id'],
             'sourceAddress': 0x251d7,
             'association': None,
             'handling': None,
             'placementClass': None,
             'placement': None,
+            'keyBase': twin.get('keyBase') if twin else None,
             'location': {
-                'body': 'body-11', 'place': None,
-                'position': [parent_raw[0] / 65536, 0, parent_raw[2] / 65536],
+                'body': 'body-11', 'place': parent_place,
+                'position': parent_position,
                 'coordinateSystem': BODY_COORDINATES,
-                'island': None,
+                'island': twin['location']['island'] if twin else None,
                 'heading': None,
             },
-            'reason': ('Authored structure-group $14 cell $26 instance; source name and named place '
-                       'remain unresolved.'),
+            'reason': ('Authored structure-group $14 cell $26 instance'
+                       + ('; the image-replayed Bare Island workspace places it and names its '
+                          'Place.' if twin else '; source name and named place remain unresolved.')),
         })
+        if twin:
+            instances.remove(twin)
+            merged_parents[twin['id']] = parent_id
+            if twin['id'] in chevy_parent_model['linkedInstances']:
+                chevy_parent_model['linkedInstances'].remove(twin['id'])
+            for place in places:
+                place['instances'] = [parent_id if identity == twin['id'] else identity
+                                      for identity in place['instances']]
         insertions = decode_structure_associations(data, 0x13218).get(0x03)
         if insertions is None:
             raise ValueError('99 Chevy key insertion group is missing')
@@ -4671,7 +4792,8 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                   f'${cell:02X}, so this interior-associated resident has no parent.'
               )
               continue
-          parent = instance_by_id.get(f'{slug}-surface-{cell:02x}')
+          surface_id = f'{slug}-surface-{cell:02x}'
+          parent = instance_by_id.get(merged_parents.get(surface_id, surface_id))
           if parent is None or parent['model'] != tables[1]['entries'][override['slot']]:
               raise ValueError(f'{body_name} cell ${cell:02X} parent model disagrees with its override')
           slot = int(resident['id'].rsplit('-', 1)[1])
@@ -4761,6 +4883,9 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                  f' Its insertion group is absent from {floor_structure}\'s association list, '
                  'so only the region its own group numbers inserts it.')
               + f' Its instance angle byte is ${heading:02X} (#361).'
+              + ('' if group_binding['attestation'] == 'capture' else
+                 ' No capture stands in this group; the workspace is the one its authored '
+                 'stream replays.')
           )
           model = by_address.get(parent['model'])
           if model is not None and resident['id'] not in model['linkedInstances']:
