@@ -14,6 +14,7 @@
    "Positions are raw signed engine longwords in the body-local surface grid at 65,536 units per cell. The yaw word wraps every 1024 units with north at $0200 modulo $0400, rising clockwise.",
    "The yaw word is published raw and carries bits above $03FF; only its low ten bits are the bearing, as the existing Eris presentation document already assumes.",
    "bodyTurn is the Body's rotation accumulator at $0062EA + 4 x body, one turn every $04000000, and subStellarLongitude is $79BE, the Body's sub-stellar longitude in the same 1024-step angle as the yaw. Together with the position they decide the terminator at $050562; each pose's answer agrees with the engine day flag $7A4E. The sub-stellar longitude is a table atan2 of the Body's centre and is read, not recomputed; on DAMOCLES, whose centre moves, it is the value its arrival wrote.",
+   "floor is $7AA4, the Floor the player stands on in the structure bound in the pose's cell, 0 outside one; it equals the live Floor $7AC4, and the position's y is that Floor times the structure's storey pitch $7B00 plus 63. The Floor is read from the capture, not derived from the height.",
    "The cell is read from the engine cell word $7B5C, the same word the resident object and object-drop matchers compare against. Where the body has a recovered 16x16 workspace origin, the camera longwords reproduce that cell independently and workspaceOrigin carries the origin.",
    "A 16x16 workspace is a window onto a body surface that spans thousands of cells, so one body can carry several. Where the longwords put a pose outside the one recovered workspace on its body, workspaceOrigin is null and the evidence field says so; impliedWorkspaceOrigin always carries the origin that pose's own longwords and cell imply, so an unanchored cell can be anchored later without guessing. Two poses that agree on an implied origin stand in the same window.",
    "Source memstates are Restricted Material and are not published; their SHA-256 values identify them.",
@@ -46,6 +47,7 @@
     "y": 63,
     "z": 45187500
    },
+   "floor": 0,
    "yaw": 63984,
    "bodyTurn": 3003742496,
    "subStellarLongitude": 661,
@@ -86,6 +88,7 @@
     "y": 63,
     "z": 228950707
    },
+   "floor": 0,
    "yaw": 780,
    "bodyTurn": 24599617,
    "subStellarLongitude": 953,
@@ -123,6 +126,7 @@
     "y": 63,
     "z": 19757658
    },
+   "floor": 0,
    "yaw": 64887,
    "bodyTurn": 1320070290,
    "subStellarLongitude": 962,
@@ -163,6 +167,7 @@
     "y": 63,
     "z": 86343888
    },
+   "floor": 0,
    "yaw": 63008,
    "bodyTurn": 244018906,
    "subStellarLongitude": 218,
@@ -203,6 +208,7 @@
     "y": 213,
     "z": 87064898
    },
+   "floor": 1,
    "yaw": 59927,
    "bodyTurn": 262688126,
    "subStellarLongitude": 218,
@@ -243,6 +249,7 @@
     "y": 63,
     "z": 14844268
    },
+   "floor": 0,
    "yaw": 988,
    "bodyTurn": 2782509556,
    "subStellarLongitude": 219,
@@ -283,6 +290,7 @@
     "y": 63,
     "z": 19690965
    },
+   "floor": 0,
    "yaw": 62527,
    "bodyTurn": 437252186,
    "subStellarLongitude": 211,
@@ -323,6 +331,7 @@
     "y": 63,
     "z": 117602545
    },
+   "floor": 0,
    "yaw": 559,
    "bodyTurn": 50072610,
    "subStellarLongitude": 582,
@@ -363,6 +372,7 @@
     "y": 213,
     "z": 50890231
    },
+   "floor": 1,
    "yaw": 58286,
    "bodyTurn": 77302080,
    "subStellarLongitude": 582,
@@ -403,6 +413,7 @@
     "y": 63,
     "z": 57572209
    },
+   "floor": 0,
    "yaw": 64810,
    "bodyTurn": 53908812,
    "subStellarLongitude": 582,
@@ -443,6 +454,7 @@
     "y": 63,
     "z": 94859970
    },
+   "floor": 0,
    "yaw": 65045,
    "bodyTurn": 688491657,
    "subStellarLongitude": 583,
@@ -483,6 +495,7 @@
     "y": 63,
     "z": 8940589
    },
+   "floor": 0,
    "yaw": 1536,
    "bodyTurn": 23516460,
    "subStellarLongitude": 347,
@@ -523,6 +536,7 @@
     "y": 1163,
     "z": 8945118
    },
+   "floor": 10,
    "yaw": 58568,
    "bodyTurn": 35390571,
    "subStellarLongitude": 347,
@@ -563,6 +577,7 @@
     "y": 63,
     "z": 91587189
    },
+   "floor": 0,
    "yaw": 65422,
    "bodyTurn": 31602479,
    "subStellarLongitude": 346,
@@ -603,6 +618,7 @@
     "y": 63,
     "z": 218595213
    },
+   "floor": 0,
    "yaw": 790,
    "bodyTurn": 3937881026,
    "subStellarLongitude": 347,
@@ -643,6 +659,7 @@
     "y": 63,
     "z": 20544365
    },
+   "floor": 0,
    "yaw": 1556,
    "bodyTurn": 1792723946,
    "subStellarLongitude": 347,
@@ -683,6 +700,7 @@
     "y": 3233,
     "z": 20547167
    },
+   "floor": 10,
    "yaw": 58802,
    "bodyTurn": 1412547396,
    "subStellarLongitude": 347,
@@ -723,6 +741,7 @@
     "y": 1413,
     "z": 70288873
    },
+   "floor": 9,
    "yaw": 59942,
    "bodyTurn": 106301008,
    "subStellarLongitude": 346,
@@ -763,6 +782,7 @@
     "y": 63,
     "z": 229920
    },
+   "floor": 0,
    "yaw": 439,
    "bodyTurn": 267919860,
    "subStellarLongitude": 345,
@@ -803,6 +823,7 @@
     "y": 703,
     "z": 173702108
    },
+   "floor": 4,
    "yaw": 57026,
    "bodyTurn": 20265664,
    "subStellarLongitude": 416,
@@ -843,6 +864,7 @@
     "y": 213,
     "z": 117998423
    },
+   "floor": 1,
    "yaw": 2023,
    "bodyTurn": 220589060,
    "subStellarLongitude": 187,
@@ -883,6 +905,7 @@
     "y": 63,
     "z": 213614542
    },
+   "floor": 0,
    "yaw": 65489,
    "bodyTurn": 929202680,
    "subStellarLongitude": 191,
@@ -923,6 +946,7 @@
     "y": 63,
     "z": 104496724
    },
+   "floor": 0,
    "yaw": 56357,
    "bodyTurn": 3121889225,
    "subStellarLongitude": 854,
@@ -963,6 +987,7 @@
     "y": 63,
     "z": 103058305
    },
+   "floor": 0,
    "yaw": 2329,
    "bodyTurn": 443421877,
    "subStellarLongitude": 852,
@@ -1003,6 +1028,7 @@
     "y": 63,
     "z": 53968702
    },
+   "floor": 0,
    "yaw": 64468,
    "bodyTurn": 138817800,
    "subStellarLongitude": 852,
@@ -1043,6 +1069,7 @@
     "y": 63,
     "z": 18055367
    },
+   "floor": 0,
    "yaw": 57290,
    "bodyTurn": 65032592,
    "subStellarLongitude": 621,
@@ -1083,6 +1110,7 @@
     "y": 63,
     "z": 214692179
    },
+   "floor": 0,
    "yaw": 2140,
    "bodyTurn": 13016280,
    "subStellarLongitude": 586,

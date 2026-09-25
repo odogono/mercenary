@@ -384,16 +384,20 @@ Screenshots taken facing the State Office car's door show the live label beside 
 wedge and `2` its two wedges and a bar, so the thin shapes are the data, not a
 drawing fault.
 
-Two things the pass does not do through play alone:
+One thing the pass does not do through play alone:
 
 - **`Esc` is not a lift key in the port.** The Browser Shell keeps Escape for the
   System Menu (`web/src/shell/input.ts`), and `G` asks for the same Floor.
-- **An arrival Pose above Floor 0 lands on Floor 0.** `switch vesta-transporter` binds
-  Floor 0 at Y 3233, although the capture's `$7AA4` is 10. `eris-transporter-11-8`
-  would do the same at Y 1163. The session never reads a Floor from a height (#474),
-  and `arrival-poses.json` does not publish the capture's Floor. The Vesta trace moves
-  the Pose into the car, as `vesta-teleport` does, and then sets Floor 10 with the
-  console's `floor 10` until [#505](https://github.com/odogono/mercenary/issues/505) lands it there.
+
+An arrival Pose lands on the Floor its capture stood on
+([#505](https://github.com/odogono/mercenary/issues/505)). `arrival-poses.json` publishes
+each capture's `$7AA4` as `floor`, and the extractor refuses a capture unless it equals
+`$7AC4` and Y = Floor × `$7B00` + 63. `switch vesta-transporter` lands on Floor 10 at
+Y 3233, and `eris-transporter-11-8` on Floor 10 at Y 1163. The session still never reads
+a Floor from a height (#474). Until the cell's structure and that Floor's structure are
+both read, the switched Pose waits with nothing bound, not even Floor 0. The Vesta trace
+still moves the Pose into the car, as `vesta-teleport` does, because the capture stands
+in a corridor.
 
 ## What this does not settle
 

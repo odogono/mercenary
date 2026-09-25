@@ -139,6 +139,30 @@ describe('a Body read progressively', () => {
   });
 });
 
+describe('an arrival above Floor 0 read progressively', () => {
+  test('waits unbound for its structure and its Floor, then lands on Floor 10', async () => {
+    const content = reading();
+    const session = new DamoclesSession(content);
+    await landed(session, content);
+    expect(session.switchToPose('vesta-transporter').kind).toBe('switched');
+    // Nothing of Vesta is in hand yet, so nothing binds, and in particular not Floor 0.
+    expect(session.snapshot.structure).toBeNull();
+    for (let tries = 0; tries < 50; tries += 1) {
+      await landed(session, content);
+      // The Floor's structure is not an island wave; the next step's binding finds it in hand.
+      session.advance(1 / 50);
+      if (session.snapshot.structure !== null) {
+        break;
+      }
+    }
+    expect(session.snapshot.structure).toMatchObject({
+      floor: 10,
+      instanceId: 'vesta-surface-64'
+    });
+    expect(session.snapshot.pose.position.y).toBe(3233);
+  });
+});
+
 describe('a restore read progressively', () => {
   test('binds its saved structure once prepared, on another Body', async () => {
     const away = new DamoclesSession(whole);

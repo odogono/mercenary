@@ -305,6 +305,16 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Fixed
 
+- **A Damocles arrival Pose lands on the Floor it was captured on.** A switch to
+  a Pose captured above Floor 0 used to bind Floor 0 at the capture's height, so
+  `switch vesta-transporter` stood at Y 3233 on G and the lift treated it as G.
+  `arrival-poses.json` now publishes each capture's Floor (`$7AA4`), and the
+  extractor checks it against `$7AC4` and the eye height. The switch binds that
+  Floor's structure. It declines a Floor the structure's Floor Table does not
+  bind, and waits with nothing bound until the structure and that Floor are
+  read. The Vesta and Eris transporter Poses now land on Floor 10, and the DION,
+  GAEA, METIS, LOGOS and PAN transporter Poses on their own Floors (#505).
+
 - **A Damocles Floor above 0 is drawn in the palette its building binds.** The
   port coloured an upper Floor's walls, floor and scene colours through the
   palette of the structure the Floor Table binds. The game uses the palette the

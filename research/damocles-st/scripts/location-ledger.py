@@ -96,6 +96,16 @@ BODY_TURN = 0x62EA
 SUB_STELLAR_LONGITUDE = 0x79BE
 DAYLIGHT = 0x7A4E
 
+# The Floor the player stands on, established in docs/research/damocles-lift-control.md
+# (#471). $7AC4 is the live Floor and $7AA4 its committed copy, which $058F78 refreshes
+# every frame, so the two agree in a settled capture. Outside a structure both are 0.
+# The eye stands at Floor x the bound structure's storey pitch $7B00 + 63, which the
+# capture must reproduce: the Floor is read, never derived from the height (#474).
+FLOOR = 0x7AA4
+FLOOR_LIVE = 0x7AC4
+STOREY = 0x7B00
+FLOOR_EYE = 63
+
 CELL_UNITS = 65536
 CELLS_PER_AXIS = 16
 YAW_UNITS_PER_TURN = 1024
@@ -324,6 +334,17 @@ def read_pose(label: str, path: Path) -> dict:
         raise ValueError(f'{label}: the terminator disagrees with the engine day flag ${u16(ram, DAYLIGHT):04X}')
     pose['daylight'] = lit
 
+    floor = u16(ram, FLOOR)
+    if floor != u16(ram, FLOOR_LIVE):
+        raise ValueError(f'{label}: $7AA4 Floor {floor} disagrees with $7AC4 {u16(ram, FLOOR_LIVE)}')
+    if floor > 10:
+        raise ValueError(f'{label}: Floor {floor} is outside 0..10')
+    if position[1] != floor * u16(ram, STOREY) + FLOOR_EYE:
+        raise ValueError(
+            f'{label}: eye Y {position[1]} is not Floor {floor} x storey {u16(ram, STOREY)} + {FLOOR_EYE}'
+        )
+    pose['floor'] = floor
+
     cell = u16(ram, CELL_WORD)
     if cell > 0xFF:
         raise ValueError(f'{label}: cell word ${cell:04X} is outside a 16x16 workspace')
@@ -418,14 +439,14 @@ def render_ledger(ledger: dict) -> str:
 
 def render_poses(poses: list[dict]) -> str:
     lines = [
-        f"{'id':<24}{'body':<9}{'cell':>6}{'yaw':>7}{'bearing':>10}{'nav':>9}{'sky':>7}  position"
+        f"{'id':<24}{'body':<9}{'cell':>6}{'floor':>6}{'yaw':>7}{'bearing':>10}{'nav':>9}{'sky':>7}  position"
     ]
     for pose in poses:
         cell = '—' if pose['cell'] is None else f"${pose['cell']:02X}"
         yaw = f"${pose['yaw']:04X}"
         position = pose['position']
         lines.append(
-            f"{pose['id']:<24}{pose['body']:<9}{cell:>6}{yaw:>7}"
+            f"{pose['id']:<24}{pose['body']:<9}{cell:>6}{pose['floor']:>6}{yaw:>7}"
             f"{bearing_degrees(pose['yaw']):>9.2f}°"
             f"{pose['bodyCoordinate']['readout']:>9}"
             f"{'day' if pose['daylight'] else 'night':>7}  "
@@ -455,6 +476,7 @@ def published_pose(pose: dict, names: dict[str, str]) -> dict:
         'bodySelector': pose['bodySelector'],
         'onFoot': pose['onFoot'],
         'position': pose['position'],
+        'floor': pose['floor'],
         'yaw': pose['yaw'],
         'bodyTurn': pose['bodyTurn'],
         'subStellarLongitude': pose['subStellarLongitude'],
@@ -502,6 +524,10 @@ def payload_document(poses: list[dict], catalogue: dict) -> dict:
                 'terminator at $050562; each pose\'s answer agrees with the engine day flag $7A4E. '
                 'The sub-stellar longitude is a table atan2 of the Body\'s centre and is read, '
                 'not recomputed; on DAMOCLES, whose centre moves, it is the value its arrival wrote.',
+                'floor is $7AA4, the Floor the player stands on in the structure bound in the '
+                'pose\'s cell, 0 outside one; it equals the live Floor $7AC4, and the position\'s y '
+                'is that Floor times the structure\'s storey pitch $7B00 plus 63. The Floor is read '
+                'from the capture, not derived from the height.',
                 'The cell is read from the engine cell word $7B5C, the same word the resident '
                 'object and object-drop matchers compare against. Where the body has a recovered '
                 '16x16 workspace origin, the camera longwords reproduce that cell independently '

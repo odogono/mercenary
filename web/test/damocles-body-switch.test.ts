@@ -248,6 +248,53 @@ describe('the authored body switch', () => {
   });
 });
 
+describe('an arrival Pose lands on its captured Floor', () => {
+  test('the Vesta and Eris transporter captures land on Floor 10 at their own height', () => {
+    // `$7AA4` is 10 in both captures: storey 317 at Vesta, 110 at Eris (#505).
+    for (const [name, structure, y] of [
+      ['vesta-transporter', 'vesta-surface-64', 3233],
+      ['eris-transporter-11-8', 'eris-surface-8b', 1163]
+    ] as const) {
+      const session = new DamoclesSession(content);
+      expect(session.switchToPose(name).kind).toBe('switched');
+      expect(session.snapshot.structure).toMatchObject({
+        floor: 10,
+        instanceId: structure
+      });
+      expect(session.labelFloor).toBe(10);
+      expect(session.snapshot.pose.position.y).toBe(y);
+    }
+  });
+
+  test('every admitted Pose lands on the Floor its capture stood on', () => {
+    for (const pose of admittedPoses(poses)) {
+      const session = new DamoclesSession(content);
+      expect(session.switchToPose(pose.id).kind).toBe('switched');
+      expect(session.snapshot.structure?.floor ?? 0).toBe(pose.floor);
+      expect(session.snapshot.pose.position.y).toBe(pose.position.y);
+    }
+  });
+
+  test('a Floor the structure in its cell does not bind is declined', () => {
+    const session = new DamoclesSession({
+      ...content,
+      poses: {
+        ...poses,
+        poses: poses.poses.map(pose =>
+          pose.id === 'vesta-transporter' ? { ...pose, floor: 5 } : pose
+        )
+      }
+    });
+    const before = JSON.stringify(session.captureResume());
+    const outcome = session.switchToPose('vesta-transporter');
+    expect(outcome.kind).toBe('declined');
+    expect(outcome.kind === 'declined' && outcome.reason).toEndWith(
+      ' binds no Floor 5'
+    );
+    expect(JSON.stringify(session.captureResume())).toBe(before);
+  });
+});
+
 describe('the cross-body trace', () => {
   test('a Vesta drop survives a switch to Eris, a take, a Save and a restore', () => {
     const identity = damoclesSaveIdentity(catalogue, 'test');
@@ -362,7 +409,8 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
   /// Absolute counts, not comparisons: the browser drew empty sky on every Body but Eris while
   /// every relative assertion in this suite still passed, because it planned the presentation
   /// document's Eris surface whatever Body the Pose named. Only the geometry of the Body stood
-  /// on can catch that, so these are pinned.
+  /// on can catch that, so these are pinned. A transporter capture above Floor 0 draws the
+  /// structure its Floor binds, since the Pose lands on the Floor it was captured on (#505).
   const arrivals = [
     {
       body: 'body-11',
@@ -378,7 +426,7 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
       islandTriangles: 58,
       placements: 207,
       pose: 'eris-transporter-11-8',
-      triangles: 664
+      triangles: 666
     },
     {
       body: 'body-4',
@@ -394,7 +442,7 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
       islandTriangles: 16,
       placements: 390,
       pose: 'dion-transporter',
-      triangles: 404
+      triangles: 512
     },
     {
       body: 'body-8',
@@ -417,10 +465,12 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
     {
       body: 'body-14',
       cell: { x: 4, z: 6 },
+      // A corridor on Floor 10, an enclosed region, where no ground record is drawn (#491).
+      enclosed: true,
       islandTriangles: 0,
       placements: 44,
       pose: 'vesta-transporter',
-      triangles: 362
+      triangles: 302
     }
   ] as const;
 
@@ -446,7 +496,11 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
       // The base plane is the Body's own colour, and the island fills over it are that Body's
       // own records: a surface left on Eris would paint the wrong sea and the wrong coasts.
       expect(plan.fillTriangleCount).toBeGreaterThan(0);
-      expect(plan.groundTriangleCount).toBeGreaterThan(0);
+      if ('enclosed' in arrival) {
+        expect(plan.groundTriangleCount).toBe(0);
+      } else {
+        expect(plan.groundTriangleCount).toBeGreaterThan(0);
+      }
       expect(plan.islandTriangleCount).toBe(arrival.islandTriangles);
     });
   }

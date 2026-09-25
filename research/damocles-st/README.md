@@ -319,7 +319,8 @@ recovered placements and the distinct interior scene selectors each unplaced
 resident still needs. It reads no Restricted Material.
 
 `poses` decodes one on-foot arrival pose per Hatari memstate — the occupancy
-word, body selector, camera longwords and yaw — and reads the workspace cell
+word, body selector, camera longwords, yaw and the Floor `$7AA4` (checked against
+`$7AC4` and the eye height, #505) — and reads the workspace cell
 from `$7B5C`, the engine's own current-cell word. Where the body has a recovered
 body-local origin the camera longwords must reproduce that cell independently,
 and `workspaceOrigin` publishes the origin; where they do not, or where the body
