@@ -1,6 +1,52 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Eris group $14 cell $56 record places this instance and binds resident slot 31 at local (-170, 1500, 980) on floor 10.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $14 cell $56 record places this instance and binds resident slot 42 at local (278, 600, 1513) on floor 4.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $14 cell $56 record places this instance and binds resident slot 43 at local (302, 600, 1405) on floor 4.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $14 cell $56 record places this instance and binds resident slot 75 at local (-478, 490, 1810) on floor 3.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $14 cell $56 record places this instance and binds resident slot 80 at local (-478, 450, 1810) on floor 3.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $14 cell $56 record places this instance and binds resident slot 81 at local (-520, 450, 1318) on floor 3.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $14 cell $56 record places this instance and binds resident slot 146 at local (278, 638, 1513) on floor 4.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $14 cell $56 record places this instance and binds resident slot 150 at local (-564, 648, 1850) on floor 4.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $14 cell $56 record places this instance and binds resident slot 200 at local (-564, 600, 1850) on floor 4.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01a73e",
     "kind": "structure",
     "levelBinding": {
@@ -80,7 +126,17 @@
       ],
       "tableAddress": 108356
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-31",
+      "object-slot-42",
+      "object-slot-43",
+      "object-slot-75",
+      "object-slot-80",
+      "object-slot-81",
+      "object-slot-146",
+      "object-slot-150",
+      "object-slot-200"
+    ],
     "name": "Structure 116",
     "nameStatus": "unknown",
     "omissions": [],

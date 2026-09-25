@@ -1,6 +1,12 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Dion group $1C cell $30 record places this instance and binds resident slot 104 at local (-1770, 0, 1714) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+      }
+    ],
     "id": "structure-01dde2",
     "kind": "structure",
     "levelBinding": {
@@ -32,7 +38,9 @@
       ],
       "tableAddress": 122344
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-104"
+    ],
     "name": "Structure 261",
     "nameStatus": "unknown",
     "omissions": [],

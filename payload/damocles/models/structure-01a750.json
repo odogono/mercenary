@@ -1,6 +1,22 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Eris group $14 cell $47 record places this instance and binds resident slot 149 at local (-584, 1398, 1199) on floor 9.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $14 cell $47 record places this instance and binds resident slot 206 at local (-584, 1350, 1199) on floor 9.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $14 cell $47 record places this instance and binds resident slot 212 at local (-592, 1350, 1046) on floor 9.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01a750",
     "kind": "structure",
     "levelBinding": {
@@ -102,7 +118,11 @@
       ],
       "tableAddress": 108374
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-149",
+      "object-slot-206",
+      "object-slot-212"
+    ],
     "name": "Structure 117",
     "nameStatus": "unknown",
     "omissions": [],

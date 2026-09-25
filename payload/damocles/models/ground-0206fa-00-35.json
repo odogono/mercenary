@@ -15,7 +15,8 @@
     "id": "ground-0206fa-00-35",
     "kind": "ground",
     "linkedInstances": [
-      "eris-ground-35"
+      "eris-ground-35",
+      "eris-velos-city-ground-35"
     ],
     "name": "Ground 53",
     "nameStatus": "unknown",

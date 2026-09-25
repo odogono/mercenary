@@ -1288,9 +1288,9 @@ class AttachmentKeyTests(unittest.TestCase):
             for name, original in originals.items():
                 setattr(catalogue, name, original)
 
-        # 41 from the captures, and eight more the image-derived road cells
-        # letter (#460).
-        self.assertEqual(len(seen), 49)
+        # 41 from the captures, eight more the image-derived road cells letter
+        # (#460), and one an image-replayed island's other cells letter.
+        self.assertEqual(len(seen), 50)
         self.assertEqual([hex(a) for a, f in seen.items() if not f & 0x8000], [])
         self.assertEqual([hex(a) for a, f in seen.items() if f & 0xF == 4], [])
         self.assertEqual(sorted({f & 0xF for f in seen.values()}), [0, 1, 2, 3, 5])
@@ -1539,10 +1539,15 @@ class LiveWorkspaceTests(unittest.TestCase):
         self.assertEqual(current['location']['body'], 'body-4')
         self.assertIsNone(current['location']['place'])
         self.assertEqual(current['name'], 'DION surface cell 2,3')
+        # The live workspace's own cells carry no Place. Dion North and East, replayed from
+        # the image, name their own ANNIES BAR records; no Gaea name reaches Dion at all.
         self.assertFalse(any(
-            i['id'].startswith('dion-') and i['location']['place']
+            i['id'].startswith(('dion-surface-', 'dion-ground-')) and i['location']['place']
             for i in result['instances']
         ))
+        gaea_names = {place['name'] for place in result['places'] if place['body'] == 'body-8'}
+        self.assertFalse(any(place['name'] in gaea_names
+                             for place in result['places'] if place['body'] == 'body-4'))
         self.assertEqual(
             {0x35700 + int.from_bytes(first_bytes[0x35700 + s * 4:0x35704 + s * 4], 'big') for s in range(378)},
             {0x35700 + int.from_bytes(workspace[0x35700 + s * 4:0x35704 + s * 4], 'big') for s in range(378)},
@@ -3524,6 +3529,60 @@ class BoardingAdmissionTests(unittest.TestCase):
             for field in ('boardable', 'admission', 'paired', 'refusal'):
                 self.assertIn(boarding[f'{field}Provenance'], ('recovered', 'derived'))
             self.assertTrue(boarding['reason'])
+
+
+class ImageWorkspaceTests(unittest.TestCase):
+    """The workspace replayed from the image is the one the game builds.
+
+    Every capture stands in an island's group, and the replay of that group has to
+    hold the tables the running game's loader wrote: its $ABDC structures, the run
+    grid, the Selected Pieces, their orientations, the six selectors and the place
+    list. Captures the extractor cannot use as a workspace, because the player does
+    not stand inside the built window (Key West), are checked the same way.
+    """
+
+    TABLES = {'$ABDC': (0xABDC, 1024), 'run grid': (0x1E000, 1024), '$1E400': (0x1E400, 512),
+              '$83DC': (0x83DC, 256), 'selectors': (0x1E640, 12)}
+
+    def test_every_capture_holds_the_replayed_tables(self):
+        import damocleslab.catalogue as catalogue
+
+        root = Path(__file__).resolve().parents[1]
+        first = root / 'work' / 'observe-first-world-20260818T101013Z-c5a32b7d' / 'observed.ram'
+        captures = sorted((root / 'snapshots').glob('*.sav'))
+        if not first.exists() or len(captures) < 10:
+            self.skipTest('Working-Authority RAM captures are Restricted Material')
+        data = first.read_bytes()
+        bodies = [{'id': f'body-{i}', 'name': data[0x81dc + i * 8:0x81e4 + i * 8].decode('ascii').strip()}
+                  for i in range(31)]
+        islands = catalogue.decode_islands(data, bodies)
+        checked = 0
+        for path in captures:
+            try:
+                ram = catalogue.hatari_memstate_ram(path.read_bytes())
+            except Exception:  # noqa: BLE001 - a boarded or title capture is not a workspace
+                continue
+            body = struct.unpack_from('>H', ram, 0x7AA8)[0] // 4
+            group = struct.unpack_from('>H', ram, 0x794E)[0]
+            island = next((item for item in islands if item['body'] == f'body-{body}'
+                           and group and item['structureGroup'] == group), None)
+            if island is None:
+                continue
+            with self.subTest(capture=path.name, body=body, group=group):
+                replayed = catalogue.image_workspace(data, island)
+                if body == catalogue.UNIFORM_FIELD_BODY:
+                    # $0592FA sets $7A2A for Midas alone, and $04ED2A repeats cell 0's
+                    # structure word over every cell; the replay does not model it.
+                    self.assertNotEqual(struct.unpack_from('>H', ram, 0x7A2A)[0], 0)
+                    words = {ram[0xABDC + cell * 4:0xABDE + cell * 4] for cell in range(256)}
+                    self.assertEqual(len(words), 1)
+                    continue
+                self.assertEqual(struct.unpack_from('>H', ram, 0x7A2A)[0], 0)
+                for name, (start, size) in self.TABLES.items():
+                    self.assertEqual(replayed[start:start + size], ram[start:start + size], name)
+                self.assertEqual(replayed[0x7A6C:0x7A70], ram[0x7A6C:0x7A70], '$7A6C')
+                checked += 1
+        self.assertGreaterEqual(checked, 20)
 
 
 if __name__ == '__main__':

@@ -634,6 +634,11 @@ def leave_and_capture(machine: Machine, snapshot_out: Path) -> dict:
     if state["onFoot"] != 1:
         return {"saved": False, "reason": "did not leave the craft",
                 "state": state}
+    return statesave(machine, snapshot_out, state)
+
+
+def statesave(machine: Machine, snapshot_out: Path, state: dict) -> dict:
+    """Statesave the machine as it stands, which is what the catalogue reads."""
     snapshot_out.parent.mkdir(parents=True, exist_ok=True)
     _fifo_send(machine.handle, [
         "hatari-stop",
@@ -656,7 +661,7 @@ def run(snapshot: Path, roms_root: Path | None, target: dict, *,
         climb_seconds: float, cruise_seconds: float, descend_seconds: float,
         speed: int, arrive_cells: float, yaw_tolerance: int,
         ticks: int, burst: float, tolerance: int,
-        fast_forward: bool) -> dict:
+        fast_forward: bool, capture_airborne: bool = False) -> dict:
     authority, config = load_configuration()
     root = resolve_roms_root(roms_root)
     program_path, tos_path = resolve_images(authority, root)
@@ -764,6 +769,14 @@ def run(snapshot: Path, roms_root: Path | None, target: dict, *,
                     if result["descent"]["landed"] and capture_name:
                         result["capture"] = leave_and_capture(
                             machine, SNAPSHOTS / f"{capture_name}.sav")
+
+            if capture_airborne and capture_name and "capture" not in result:
+                # The loader builds $ABDC for the nearest island record whether
+                # or not the craft is down, so a workspace check needs no
+                # landing; the pose it saves is not an arrival.
+                result["capture"] = statesave(
+                    machine, SNAPSHOTS / f"{capture_name}.sav",
+                    machine.sample(keep=True, shot=True))
             result["final"] = machine.sample(keep=True, shot=True)
             _fifo_send(handle, ["hatari-stop"])
             time.sleep(0.4)
@@ -848,6 +861,8 @@ def main() -> None:
     parser.add_argument("--no-fast-forward", dest="fast_forward",
                         action="store_false", default=False)
     parser.add_argument("--json", action="store_true")
+    parser.add_argument("--capture-airborne", action="store_true",
+                        help="statesave over the target even if the descent does not land")
     args = parser.parse_args()
 
     targets = island_targets()
@@ -896,7 +911,7 @@ def main() -> None:
         cruise_seconds=args.cruise_seconds, descend_seconds=args.descend_seconds,
         speed=args.speed, arrive_cells=args.arrive_cells,
         yaw_tolerance=args.yaw_tolerance, ticks=args.ticks, burst=args.burst,
-        tolerance=args.tolerance, fast_forward=args.fast_forward,
+        tolerance=args.tolerance, fast_forward=args.fast_forward, capture_airborne=args.capture_airborne,
     )
     if args.json:
         print(json.dumps(result, indent=1, sort_keys=True, default=str))

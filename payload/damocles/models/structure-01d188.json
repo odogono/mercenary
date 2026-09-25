@@ -5,6 +5,16 @@
         "claim": "Authored group-$14 cell-$26 record places this slot-145 alias instance and binds resident slot 180 at local (-394, 200, 1846).",
         "confidence": "verified",
         "source": "docs/research/damocles-resident-objects.md"
+      },
+      {
+        "claim": "Authored Eris group $14 cell $26 record places this instance and binds resident slot 65 at local (-372, 0, 1493) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $14 cell $26 record places this instance and binds resident slot 145 at local (1134, 2000, 2162) on floor 10.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
       }
     ],
     "id": "structure-01d188",
@@ -97,7 +107,9 @@
       "tableAddress": 119182
     },
     "linkedInstances": [
-      "object-slot-180"
+      "object-slot-180",
+      "object-slot-65",
+      "object-slot-145"
     ],
     "name": "Structure 145",
     "nameStatus": "unknown",

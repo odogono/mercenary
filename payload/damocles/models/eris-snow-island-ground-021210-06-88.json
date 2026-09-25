@@ -2,14 +2,16 @@
   "model": {
     "evidence": [
       {
-        "claim": "SNOW ISLAND road cell $88: the per-cell ground/pad/road record at $1E000 the workspace loader would draw there, replayed from the group's authored stream by $04EB60-$04ED12 -- its $1E400 record after any placement replacement, its $83DC orientation and its $1E000 scene seed. No capture stands in this workspace; the same replay reproduces those tables on every capture that does.",
+        "claim": "SNOW ISLAND cell $88: the per-cell ground/pad/road record at $1E000 the workspace loader would draw there, replayed from the group's authored stream by $04EB60-$04ED12 -- its $1E400 record after any placement replacement, its $83DC orientation and its $1E000 scene seed. No capture stands in this workspace; the same replay reproduces those tables on every capture that does.",
         "confidence": "verified",
         "source": "docs/research/damocles-eris-ground.md"
       }
     ],
     "id": "eris-snow-island-ground-021210-06-88",
     "kind": "ground",
-    "linkedInstances": [],
+    "linkedInstances": [
+      "eris-snow-island-ground-88"
+    ],
     "name": "SNOW ISLAND ground 136",
     "nameStatus": "unknown",
     "omissions": [],

@@ -1,6 +1,12 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Eris group $14 cell $66 record places this instance and binds resident slot 137 at local (-212, 160, -419) on floor 1.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01d164",
     "kind": "structure",
     "levelBinding": {
@@ -46,7 +52,9 @@
       ],
       "tableAddress": 119146
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-137"
+    ],
     "name": "Structure 143",
     "nameStatus": "unknown",
     "omissions": [],

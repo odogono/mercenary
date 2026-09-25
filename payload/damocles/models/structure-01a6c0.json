@@ -5,6 +5,11 @@
         "claim": "Authored Eris group $12 cell $EC record places this instance and binds resident slot 56 at local (210, 150, -1242) on floor 1.",
         "confidence": "verified",
         "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $15 cell $77 record places this instance and binds resident slot 157 at local (-596, 1500, -1111) on floor 10.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
       }
     ],
     "id": "structure-01a6c0",
@@ -117,7 +122,8 @@
       "tableAddress": 108230
     },
     "linkedInstances": [
-      "object-slot-56"
+      "object-slot-56",
+      "object-slot-157"
     ],
     "name": "Structure 109",
     "nameStatus": "unknown",
