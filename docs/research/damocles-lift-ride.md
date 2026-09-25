@@ -210,6 +210,12 @@ audible was heard or is claimed
   traces show `start` at VBL 0 and at the arrival, and `stop` when each door stops. So
   a ride is a door tone and burst, silence while the label steps, and then the pair
   again as the doors open. Every door shares this; it is not lift-specific.
+- **The door edges' guard.** Unlike `$054848`, the edges do not test `$7A0C`. After
+  latching the new state into `$5A9D9`, `$05AA18`–`$05AA24` skip the arming only when the
+  death state `$7A64` is nonzero and bit 14 of `$7B34` is set, so a door starting or
+  stopping while the player is dead outside a structure region is latched but silent. The whole door
+  pass `$05AA3C`, edges included, returns before anything when `$7B02` is negative.
+  The port presents both cues on every edge, since it has no death state (#499).
 - **Arrival.** The YM writes above cut channels B and C. `$054848` then arms `$04C556`
   in `$04BF54` (`$7A0C` was zero in every run): channel B tone period `$60`, envelope
   period `$1F00`, shape 9 ([the shared effect](damocles-script-isa.md#the-native-routines-the-handlers-call-136)).
@@ -268,7 +274,8 @@ What the port can present as recovered:
   structure in one step, set Y, level the pitch, keep X/Z and yaw, bind the per-Floor
   palette when the record has none, and let the door open.
 - **Nothing else is drawn:** no transition, fade or camera motion.
-- **Sound:** door-start tone and door-stop noise burst for every door movement; channels B/C
+- **Sound:** door-start tone and door-stop noise burst for every door movement (presented
+  as the `door-start` and `door-stop` Sound Cues, #499); channels B/C
   cut and the shared `$04C556` effect on arrival. The effects' PSG programmes are
   above; what they sound like was not heard.
 - **Timing basis:** the port should count 25 substeps per step, and a substep is a VBL

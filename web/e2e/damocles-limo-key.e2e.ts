@@ -442,8 +442,9 @@ test('a key left inside the spaceport survives leaving its region, a Save and a 
   );
   expect(await triangles(page)).toBe(withKey);
   await pressUntilInventory(page, 't', KEY_LABEL);
-  // Two takes by key and one through the console, and a drop for each of the first two.
-  expect(await soundCues(page)).toBe('drop:2 take:3');
+  // Two takes by key and one through the console, and a drop for each of the first two. The
+  // doorway's door moved twice on the walk out and back, each time a start and a stop.
+  expect(await soundCues(page)).toBe('door-start:2 door-stop:2 drop:2 take:3');
   await page.waitForTimeout(3000);
   expect(await displayRow(page)).toBe('');
 

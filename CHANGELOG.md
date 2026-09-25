@@ -12,6 +12,18 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Added
 
+- **Damocles doors ask for their tones.** Whenever any door starts moving the
+  session asks for a `door-start` Sound Cue, and when every door has stopped it
+  asks for a `door-stop`. These are the ST's rising and falling edges of `$5A9D8`
+  at `$05A9EE`, which arm the door tone `$04C37A` and the noise burst `$04C2B8`.
+  The cues come after the ride step, as `$05AA3C` does. A lift ride now asks for
+  a start and a stop as the car's door shuts, nothing while the label steps,
+  the arrival's request, and a start and a stop as the new Floor's door opens.
+  The edges do not test the take cue's guard `$7A0C`. The ST silences them only
+  while the player is dead outside a structure region, which the port cannot
+  reach. The Save carries whether a door moved on the last pass (`$5A9D9`), so a
+  door saved while moving does not ask to start again. That is schema 10, and a
+  schema-9 record is refused whole (#499).
 - **Damocles Bodies turn through day and night, and the scene follows.** The
   port now runs the ST's terminator at `$050562`. Each Body's rotation
   accumulator advances every VBL by the Body's own rate, and the terminator
@@ -49,7 +61,7 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
   Nothing else is drawn: there is no fade and no camera movement. The door
   closes at the port's one attachment rate, about 46 VBLs for the State Office
   car against the ST's 30, because the rate for each door is not decoded. The
-  door tones every door shares are not presented yet. The page publishes
+  page publishes
   `data-floor-label` and `data-ride-destination`. The Save carries a ride in
   progress and the doorway last crossed, whose door the next ride pins. That
   is schema 8, and a schema-7 record is refused whole (#476).

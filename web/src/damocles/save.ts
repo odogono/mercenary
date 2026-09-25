@@ -59,7 +59,11 @@ import type { Pose } from './world.ts';
 /// terminator: the sky and the half of the scene palette the scene is drawn in (#494, #497). A
 /// schema-8 record cannot say how far its Body had turned, so it is refused whole rather than
 /// defaulted to the start's.
-export const DAMOCLES_SAVE_SCHEMA_VERSION = 9 as const;
+///
+/// Version 10 carries whether any door moved on the last pass (`$5A9D9`), which the next pass
+/// compares with to ask for the door tones (#499). A schema-9 record cannot say whether a door
+/// had just stopped, so it is refused whole rather than defaulted to still.
+export const DAMOCLES_SAVE_SCHEMA_VERSION = 10 as const;
 export const DAMOCLES_DESTINATION = 'damocles' as const;
 
 /// What a restore must match exactly before it may continue this game (ADR 0026).
@@ -118,6 +122,8 @@ export interface DamoclesSaveSnapshot {
   readonly bodyTurn: number;
   readonly briefcaseStore: readonly string[];
   readonly carried: readonly string[];
+  /// `$5A9D9`: whether any door moved on the last pass.
+  readonly doorsMoving: boolean;
   readonly elapsed: number;
   readonly frameAccumulator: number;
   readonly occupancy: DamoclesSaveOccupancy;
@@ -763,6 +769,10 @@ export const decodeDamoclesSave = (
   ) {
     return fail('bodyTurn is not an unsigned longword');
   }
+  const doorsMoving = snapshot['doorsMoving'];
+  if (typeof doorsMoving !== 'boolean') {
+    return fail('doorsMoving is not a boolean');
+  }
   const frameAccumulator = snapshot['frameAccumulator'];
   if (
     !finite(frameAccumulator) ||
@@ -1003,6 +1013,7 @@ export const decodeDamoclesSave = (
       bodyTurn: bodyTurn as number,
       briefcaseStore,
       carried,
+      doorsMoving,
       elapsed: snapshot['elapsed'],
       frameAccumulator,
       occupancy,
