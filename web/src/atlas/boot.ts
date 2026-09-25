@@ -117,6 +117,7 @@ import {
   type SystemMarker,
   type SystemProjection
 } from './system.ts';
+import { installAtlasTravel } from './travelView.ts';
 
 /// The Atlas document (#405).
 ///
@@ -764,6 +765,7 @@ const drawBodyRange = () => {
     `${body.name} · source slot ${body.sourceIndex} · surface ${SURFACE_SPAN} Surface Cells ` +
     `an axis, wrapping on both · ${surfaceNote}${names}${roadNote(band)}` +
     footprintNote(band);
+  atlasTravel.draw(body.id, bodyView, frame.width, frame.height);
   recordCamera();
 };
 
@@ -934,6 +936,7 @@ const render = () => {
   clearUnknownSelection();
   renderSelectionPanel();
   renderSearchSection();
+  atlasTravel.render();
   if (body) {
     drawBodyRange();
   } else {
@@ -947,10 +950,77 @@ const go = (next: AtlasState) => {
   history.pushState(
     null,
     '',
-    atlasHref({ ...next, search: next.search ?? currentSearch() })
+    atlasHref({
+      ...(state.pin ? { pin: state.pin } : {}),
+      ...next,
+      search: next.search ?? currentSearch()
+    })
   );
   render();
+  if (next.level === 'body' && (next.instanceId || next.placeId)) {
+    const heading =
+      document.getElementById(
+        next.placeId ? 'place-heading' : 'instance-heading'
+      ) ?? document.getElementById('footprint-derived');
+    heading?.scrollIntoView({ block: 'start' });
+  }
 };
+
+const pickBodyPoint = (x: number, y: number) => {
+  const body = selectedBody();
+  if (!body || !surface || !bodyView || state.level !== 'body') {
+    return;
+  }
+  const frame = frameOf(bodyRange);
+  const aspect = frame.height / Math.max(frame.width, 1);
+  // Tested in Body Coordinates rather than in pixels, so a pick is against the recovered ring
+  // and not against a rasterised one.
+  const point = unproject(
+    bodyView,
+    x / Math.max(frame.width, 1),
+    y / Math.max(frame.height, 1),
+    aspect
+  );
+  // A footprint first, and only then the island under it. A rectangle is the smaller, more
+  // specific claim and is drawn on top, so a press that lands on one means it; the band gate
+  // is what keeps a press at the Coastal Range from selecting something invisible.
+  const hit =
+    bodyBand && showsFootprints(bodyBand) && footprints
+      ? footprintAt(footprints.drawn, bodyView, aspect, point)
+      : null;
+  // At Street Range, land is the background for buildings and destination pins.
+  const picked =
+    hit || bodyBand === 'street'
+      ? null
+      : islandAt(surface, bodyView, aspect, point);
+  // Picking bare ground clears the selection, which is the only way to put the panel back to
+  // the Body without leaving it. A press on the map is never a Place: a name takes its own
+  // pointer events, so a Place is only ever picked by its label.
+  go({
+    bodyId: body.id,
+    instanceId: hit?.id ?? null,
+    islandId: picked?.id ?? null,
+    level: 'body',
+    ...(!hit && !picked
+      ? {
+          pin: {
+            bodyId: body.id,
+            x: ((point.x % SURFACE_SPAN) + SURFACE_SPAN) % SURFACE_SPAN,
+            z: ((point.z % SURFACE_SPAN) + SURFACE_SPAN) % SURFACE_SPAN
+          }
+        }
+      : {}),
+    placeId: null,
+    view: { span: bodyView.span, x: bodyView.cx, z: bodyView.cz }
+  });
+};
+
+const atlasTravel = installAtlasTravel({
+  go,
+  pick: pickBodyPoint,
+  state: () => state,
+  system: () => system
+});
 
 const mountRoster = (loaded: GammaSystemDocument) => {
   roster.replaceChildren();
@@ -1070,6 +1140,7 @@ const controls = mountCamera({
 
 /// The Body Range's own gestures, on the same module: it takes a surface descriptor rather than
 /// element ids precisely so a second Range can mount it unchanged.
+
 const bodyControls = mountCamera({
   camera: () => {
     if (!bodyView || !selectedBody()) {
@@ -1087,47 +1158,7 @@ const bodyControls = mountCamera({
       width: frame.width
     };
   },
-  onPick: (x, y) => {
-    const body = selectedBody();
-    if (!body || !surface || !bodyView || state.level !== 'body') {
-      return;
-    }
-    const frame = frameOf(bodyRange);
-    const aspect = frame.height / Math.max(frame.width, 1);
-    // Tested in Body Coordinates rather than in pixels, so a pick is against the recovered ring
-    // and not against a rasterised one.
-    const point = unproject(
-      bodyView,
-      x / Math.max(frame.width, 1),
-      y / Math.max(frame.height, 1),
-      aspect
-    );
-    // A footprint first, and only then the island under it. A rectangle is the smaller, more
-    // specific claim and is drawn on top, so a press that lands on one means it; the band gate
-    // is what keeps a press at the Coastal Range from selecting something invisible.
-    const hit =
-      bodyBand && showsFootprints(bodyBand) && footprints
-        ? footprintAt(footprints.drawn, bodyView, aspect, point)
-        : null;
-    const picked = hit ? null : islandAt(surface, bodyView, aspect, point);
-    // Picking bare ground clears the selection, which is the only way to put the panel back to
-    // the Body without leaving it. A press on the map is never a Place: a name takes its own
-    // pointer events, so a Place is only ever picked by its label.
-    if (
-      (picked?.id ?? null) !== state.islandId ||
-      (hit?.id ?? null) !== state.instanceId ||
-      state.placeId
-    ) {
-      go({
-        bodyId: body.id,
-        instanceId: hit?.id ?? null,
-        islandId: picked?.id ?? null,
-        level: 'body',
-        placeId: null,
-        view: { span: bodyView.span, x: bodyView.cx, z: bodyView.cz }
-      });
-    }
-  },
+  onPick: pickBodyPoint,
   onView: next => {
     bodyView = next;
     drawBodyRange();
@@ -1203,20 +1234,14 @@ document.addEventListener('click', event => {
   const searched = ['q', 'kind', 'searchBody', 'model'].some(key =>
     url.searchParams.has(key)
   );
-  history.pushState(
-    null,
-    '',
-    searched || !system
-      ? url.pathname + url.search
-      : atlasHref({
-          ...readAtlasState(
-            url.search,
-            system.bodies.map(body => body.id)
-          ),
-          search: currentSearch()
-        })
+  const next = readAtlasState(
+    url.search,
+    system?.bodies.map(body => body.id) ?? []
   );
-  render();
+  go({
+    ...next,
+    search: searched ? (next.search ?? NO_SEARCH) : currentSearch()
+  });
 });
 
 window.addEventListener('popstate', render);
@@ -1599,6 +1624,7 @@ const start = async () => {
     }
     mountRoster(system);
     render();
+    void atlasTravel.load();
   } catch (error) {
     failure.hidden = false;
     failure.textContent =

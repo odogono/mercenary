@@ -1,3 +1,8 @@
+import { STREET_SPAN } from '../atlas/bodyRange.ts';
+import { atlasHref } from '../atlas/state.ts';
+import { browserAtlasHandoff } from '../atlas/travel.ts';
+import { readGammaSystem } from '../flyover/documents.ts';
+
 import '../shell/damoclesPanelElement.ts';
 
 import { IDLE } from '../gameCore/index.ts';
@@ -49,7 +54,8 @@ import type { DamoclesCue } from './psg.ts';
 import { ErisRenderer } from './renderer.ts';
 import {
   createDamoclesResumePersistence,
-  readDamoclesResume
+  readDamoclesResume,
+  writeDamoclesResume
 } from './resume.ts';
 import {
   damoclesSaveIdentity,
@@ -151,6 +157,15 @@ try {
     content.catalogue,
     content.presentationSha256
   );
+  const handoff = browserAtlasHandoff();
+  try {
+    handoff.clearPlayer();
+  } catch {
+    /* Opening the Atlas will explain unavailable storage. */
+  }
+  let travelToken = new URL(location.href).searchParams.get('atlasTravel');
+  let atlasBusy = travelToken !== null;
+  let atlasNotice = '';
   const keys = damoclesTitle.storage;
   const notices = createSessionResumeNotices();
   let handleOwnershipLost = (): void => {};
@@ -166,13 +181,23 @@ try {
   const ownershipOutcome = await ownership.claim();
   const resumeRead =
     ownershipOutcome.kind === 'owned'
-      ? readDamoclesResume(storage, identity, {
-          catalogue: content.catalogue,
-          poses: content.poses,
-          strings: content.strings
-        })
+      ? readDamoclesResume(
+          storage,
+          identity,
+          {
+            catalogue: content.catalogue,
+            poses: content.poses,
+            strings: content.strings
+          },
+          { preserveInvalid: travelToken !== null }
+        )
       : ({ kind: 'empty' } as const);
 
+  let protectResume =
+    travelToken !== null &&
+    (resumeRead.kind === 'invalid' ||
+      resumeRead.kind === 'unavailable' ||
+      ownershipOutcome.kind === 'unsupported');
   let applyAudioPreferences = (_preferences: {
     readonly audioMuted: boolean;
     readonly audioVolume: number;
@@ -304,6 +329,9 @@ try {
     });
   let resumePersistence = makeResumePersistence();
   commitAction = (action: () => unknown): void => {
+    if (atlasBusy || protectResume || !ownership.mayAdvance()) {
+      return;
+    }
     action();
     drainEffects();
     snapshot = session.snapshot;
@@ -312,14 +340,14 @@ try {
     publish();
   };
   const checkpointChangedResume = (force = true): void => {
-    if (!ownership.mayPersist()) {
+    if (protectResume || !ownership.mayPersist()) {
       return;
     }
     resumePersistence.dirty();
     resumePersistence.checkpoint(force);
   };
   const flushResume = (): void => {
-    if (ownership.mayPersist()) {
+    if (!protectResume && ownership.mayPersist()) {
       resumePersistence.checkpoint(true);
     }
   };
@@ -345,6 +373,14 @@ try {
   }
 
   const replaceSession = (restore?: DamoclesSaveSnapshot): void => {
+    if (protectResume) {
+      travelToken = null;
+      const url = new URL(location.href);
+      url.searchParams.delete('atlasTravel');
+      history.replaceState(null, '', url.pathname + url.search);
+    }
+    protectResume = false;
+    atlasNotice = '';
     session = new DamoclesSession(content, restore);
     snapshot = session.snapshot;
     // No tone the old session started survives it.
@@ -393,10 +429,146 @@ try {
   installStorageWatch(window, ALL_SLOTS.map(keys.save), persistence.dismiss);
   installSaveChooser({ page: chrome.pages.saves, persistence });
 
+  const openAtlas = async (): Promise<void> => {
+    if (atlasBusy || protectResume || !ownership.mayPersist()) {
+      atlasNotice =
+        'Atlas unavailable: restore or start a game in the owning tab first.';
+      return;
+    }
+    atlasBusy = true;
+    release();
+    try {
+      const system = readGammaSystem(
+        (await requiredJson('/payload/damocles/system.json')).value
+      );
+      const current = session.snapshot;
+      const body = system.bodies.find(
+        item => `body-${item.sourceIndex}` === current.pose.body
+      );
+      if (!body) {
+        throw new Error('The current Body is not in the Atlas.');
+      }
+      const player = {
+        bodyId: body.id,
+        heading: current.pose.heading,
+        x: current.pose.position.x / current.surface.grid.cellUnits,
+        z: current.pose.position.z / current.surface.grid.cellUnits
+      };
+      if (!ownership.mayPersist()) {
+        throw new Error('Session ownership changed.');
+      }
+      handoff.rememberPlayer(player);
+      resumePersistence.dirty();
+      const checkpoint = resumePersistence.checkpoint(true);
+      if (checkpoint.kind === 'failed' || checkpoint.kind === 'disabled') {
+        throw new Error(checkpoint.reason);
+      }
+      location.assign(
+        atlasHref({
+          bodyId: body.id,
+          instanceId: null,
+          islandId: null,
+          level: 'body',
+          placeId: null,
+          view: { span: STREET_SPAN, x: player.x, z: player.z }
+        })
+      );
+    } catch (error) {
+      atlasBusy = false;
+      atlasNotice = `Atlas could not open: ${error instanceof Error ? error.message : String(error)}`;
+      publish();
+    }
+  };
+  document.getElementById('menu-atlas')!.addEventListener('click', event => {
+    event.preventDefault();
+    void openAtlas();
+  });
+
+  const applyAtlasTravel = async (): Promise<void> => {
+    if (travelToken === null) {
+      atlasBusy = false;
+      return;
+    }
+    if (!ownership.mayPersist() && ownershipOutcome.kind !== 'unsupported') {
+      return;
+    }
+    const token = travelToken;
+    release();
+    try {
+      if (protectResume || !ownership.mayPersist()) {
+        throw new Error(
+          'Restore a valid Save or explicitly choose New Game before travelling.'
+        );
+      }
+      const target = handoff.peek(token);
+      if (!target) {
+        throw new Error(
+          'This travel request has expired. Return to the Atlas to choose a pin.'
+        );
+      }
+      atlasNotice = 'Preparing Atlas destination…';
+      const departingSession = session;
+      await DamoclesSession.prepareAtlasTravel(content, target);
+      if (session !== departingSession) {
+        throw new Error('The Gameplay Session changed while preparing travel.');
+      }
+      if (!ownership.mayPersist()) {
+        return;
+      }
+      // Stage the authored action before publication. localStorage.setItem is atomic: if it
+      // throws, the original session and its durable resume are both still intact.
+      const candidate = new DamoclesSession(content, session.captureResume());
+      const outcome = candidate.travelToAtlas(target);
+      if (outcome.kind === 'declined') {
+        throw new Error(outcome.reason);
+      }
+      // Consume before the durable commit: a reload can never replay a committed request.
+      if (!handoff.consume(token)) {
+        throw new Error('This travel request has expired.');
+      }
+      try {
+        writeDamoclesResume(storage, identity, candidate);
+      } catch (error) {
+        // Keep the old record: the ordinary checkpoint helper intentionally removes stale
+        // records on failure, which would destroy this transaction's recovery point.
+        protectResume = true;
+        throw new Error(
+          `Arrival could not be saved. Reload to resume your previous game. ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
+      session = candidate;
+      snapshot = session.snapshot;
+      atlasNotice = 'Arrived at Atlas pin.';
+    } catch (error) {
+      atlasNotice = `Atlas travel refused: ${error instanceof Error ? error.message : String(error)}`;
+      menu.show('menu');
+    } finally {
+      if (
+        ownership.mayPersist() ||
+        protectResume ||
+        ownershipOutcome.kind === 'unsupported'
+      ) {
+        // Keep the recovery entry point on an unreadable resume: reloading must not turn an
+        // explicit refusal into the ordinary boot path's automatic fresh session.
+        if (!protectResume) {
+          travelToken = null;
+          const url = new URL(location.href);
+          url.searchParams.delete('atlasTravel');
+          history.replaceState(null, '', url.pathname + url.search);
+        }
+        atlasBusy = false;
+      }
+      publish();
+    }
+  };
+
   type DamoclesConsoleDeps = ConsoleParseContext & DamoclesConsoleHost;
   const consoleHost: DamoclesConsoleDeps = {
     cellsPerAxis: () => content.doc.grid.cellsPerAxis,
     objectActions: () => 'selected',
+    openAtlas: () => {
+      void openAtlas();
+    },
     // Damocles object slots run 1 through 255, sparsely. Targ's contiguous `objects.length`
     // has no counterpart here, so the bound is the slot byte's range.
     objectSlots: () => 256,
@@ -410,6 +582,12 @@ try {
   const shellConsole = installConsole(chrome.console, consoleHost, release, {
     banner: DAMOCLES_CONSOLE_BANNER,
     execute: (command, deps) => {
+      if (
+        atlasBusy ||
+        (protectResume && command.kind !== 'load' && command.kind !== 'help')
+      ) {
+        return ['Restore a Save or choose New Game before continuing.'];
+      }
       const lines = executeDamoclesConsoleCommand(command, deps);
       drainEffects();
       snapshot = session.snapshot;
@@ -511,18 +689,28 @@ try {
     }
     if (outcome.kind === 'owned') {
       resumePersistence = makeResumePersistence();
-      const recovered = readDamoclesResume(storage, identity, {
-        catalogue: content.catalogue,
-        poses: content.poses,
-        strings: content.strings
-      });
+      const recovered = readDamoclesResume(
+        storage,
+        identity,
+        {
+          catalogue: content.catalogue,
+          poses: content.poses,
+          strings: content.strings
+        },
+        { preserveInvalid: travelToken !== null }
+      );
+      protectResume =
+        travelToken !== null &&
+        (recovered.kind === 'invalid' || recovered.kind === 'unavailable');
       notices.dismiss();
       if (recovered.kind === 'restored') {
         await DamoclesSession.prepare(content, recovered.snapshot);
         replaceSession(recovered.snapshot);
         notices.resumed();
       } else {
-        replaceSession();
+        if (!protectResume) {
+          replaceSession();
+        }
         if (recovered.kind === 'invalid') {
           notices.couldNotResume(recovered.reason);
         } else if (recovered.kind === 'unavailable') {
@@ -533,6 +721,7 @@ try {
         '.chrome-title'
       )!.textContent = 'SESSION ACTIVE IN ANOTHER TAB';
       menu.show('none');
+      await applyAtlasTravel();
     }
     chrome.takeOver.disabled = false;
   });
@@ -677,11 +866,12 @@ try {
     const save = persistence.message('');
     const resume = notices.message();
     const text =
-      save.source === 'shell'
+      atlasNotice ||
+      (save.source === 'shell'
         ? save.text
         : resume.source === 'shell'
           ? resume.text
-          : '';
+          : '');
     if (text === '') {
       status.hidden = true;
       return;
@@ -695,6 +885,7 @@ try {
     drawnPlacements: readonly string[]
   ): void => {
     const root = canvas.dataset;
+    root['body'] = snapshot.pose.body;
     root['cell'] = `${snapshot.cell.x}-${snapshot.cell.z}`;
     // Session time, so a browser pass can measure a speed per session second rather than per
     // wall-clock second, which a loaded browser stretches.
@@ -784,6 +975,7 @@ try {
   };
   publish = draw;
   draw();
+  await applyAtlasTravel();
   canvas.dataset['state'] = 'ready';
   const frame = (timestamp: number): void => {
     if (!running) {
@@ -791,7 +983,12 @@ try {
     }
     try {
       const steps = clock.frame(timestamp, seconds => {
-        if (menu.layer() === 'none' && ownership.mayAdvance()) {
+        if (
+          menu.layer() === 'none' &&
+          !atlasBusy &&
+          !protectResume &&
+          ownership.mayAdvance()
+        ) {
           session.intent = controls.intent;
           snapshot = session.advance(seconds);
           drainEffects();
@@ -803,7 +1000,9 @@ try {
       } else {
         paintNotices();
       }
-      resumePersistence.checkpoint(false);
+      if (!protectResume) {
+        resumePersistence.checkpoint(false);
+      }
       animation = requestAnimationFrame(frame);
     } catch (error) {
       fail(error);

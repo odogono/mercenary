@@ -569,3 +569,26 @@ describe('outside a lift', () => {
     expect(aboard.rideLift(2)).toEqual({ kind: 'noLift' });
   });
 });
+
+test('Atlas Travel cancels a lift journey even within the same structure', () => {
+  const session = inLift();
+  const start = session.snapshot.pose;
+  expect(session.rideLift(2).kind).toBe('admitted');
+  session.advance(1 / 50);
+  expect(session.snapshot.structure?.ride).not.toBeNull();
+  expect(
+    session.travelToAtlas({
+      bodyId: start.body,
+      x: start.position.x / content.doc.grid.cellUnits,
+      z: start.position.z / content.doc.grid.cellUnits
+    })
+  ).toEqual({ kind: 'travelled' });
+  expect(session.snapshot.structure).toMatchObject({
+    doorway: null,
+    floor: 0,
+    ride: null
+  });
+  expect(session.snapshot.pose.position.y).toBe(eye());
+  const restored = new DamoclesSession(content, session.captureResume());
+  expect(restored.snapshot.structure?.ride).toBeNull();
+});

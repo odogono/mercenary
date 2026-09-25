@@ -44,6 +44,7 @@ const sessionOf = async (): Promise<DamoclesSession> =>
   new DamoclesSession(await contentOf());
 
 const host = (session: DamoclesSession) => ({
+  openAtlas: () => undefined,
   persistence: {
     armed: () => undefined,
     delete: () => ({ kind: 'done' }),
@@ -244,4 +245,25 @@ describe('get names what it took', () => {
     expect(run(session, 'drop 94')).toBe("carried head does not match '94'");
     expect(run(session, 'drop 183')).toBe('dropped KEY- V.I.P. LIMO');
   });
+});
+
+test('atlas is a zero-argument shell navigation command', async () => {
+  expect(parseConsoleCommand('atlas', 16)).toEqual({ kind: 'atlas' });
+  expect(() => parseConsoleCommand('atlas eris', 16)).toThrow(
+    'atlas takes no arguments'
+  );
+  const session = await sessionOf();
+  const before = session.captureResume();
+  let opened = false;
+  executeDamoclesConsoleCommand(
+    { kind: 'atlas' },
+    {
+      ...host(session),
+      openAtlas: () => {
+        opened = true;
+      }
+    }
+  );
+  expect(opened).toBeTrue();
+  expect(session.captureResume()).toEqual(before);
 });

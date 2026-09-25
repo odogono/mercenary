@@ -1,0 +1,11 @@
+# Travel from a sessionless Atlas
+
+[Issue #511](https://github.com/odogono/mercenary/issues/511) admits Atlas Travel as an authored exploration shortcut: the player and any occupied object move to an exact Atlas Pin, including across playable Bodies, within one Gameplay Session. This extends ADRs 0028/0030's permitted shell mutations and ADR 0046's console-only Body switching. It is not recovered vehicle travel or part of a fidelity trace.
+
+The Atlas remains sessionless. Opening it checkpoints and suspends play; returning hands a one-time destination request to the game, which acquires ownership, restores the Session Resume and validates the destination before one atomic action. A separate live Atlas owner would complicate session ownership and allow conflicting changes; editing a Save from the map would bypass the Gameplay Session. A missing resume may start play, but an invalid or unavailable resume requires explicit recovery.
+
+Pins carry Body Coordinates, not altitude or a Floor. Arrival is at ground level with heading retained and the view levelled; any lift journey is cancelled. Validation rejects known sea, unavailable destination data, immediate region pushback and an occupied object's invalid future Leave residence. These are the existing gameplay rules, not a new collision-free landing claim. Refusal never moves the pin or partially changes play. Inventory, scripts, display and world changes remain continuous.
+
+Dragging the paused player marker updates the durable Session Resume while keeping the Atlas open. A short game-owned transaction acquires the same exclusive session lock, restores and validates the resume, prepares the destination, applies the existing travel action, and atomically writes the result before releasing ownership. It starts no renderer or simulation loop and refuses if another game owns play. The Atlas updates its marker only after a successful commit. Escape, pointer cancellation, or dropping outside the map leaves play unchanged. Return to Game resumes the updated position.
+
+Feature selection takes priority over pin placement: building footprints, Place labels, Settlement labels, and island picks preserve the existing pin. At Street Range, unoccupied land is map background rather than an island pick, so tapping it places a destination pin.

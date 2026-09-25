@@ -714,7 +714,9 @@ export const renderPanel = (
     root.append(wrapper);
   }
   if (place) {
-    root.append(paragraph(`Place · ${place.place.name}`, 'panel-heading'));
+    const heading = paragraph(`Place · ${place.place.name}`, 'panel-heading');
+    heading.id = 'place-heading';
+    root.append(heading);
     for (const fact of placeFacts(place)) {
       root.append(row(fact.label, fact.value));
     }

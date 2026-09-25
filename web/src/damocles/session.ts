@@ -68,6 +68,7 @@ import {
 import { presentedText, type DamoclesStrings } from './strings.ts';
 import { advanceTurn, inDaylight } from './terminator.ts';
 import {
+  SURFACE_CELLS,
   bearingFromYaw,
   cellOf,
   erisSurfaceFrom,
@@ -148,6 +149,12 @@ export type DamoclesOccupancy = DamoclesSaveOccupancy;
 /// `$054302`'s exponent test under the selection note's float rule; the Take's reach is 512.
 const BOARD_REACH = 1024;
 
+const decline = (reason: string) => ({ kind: 'declined' as const, reason });
+const wrap = (coordinate: number) =>
+  coordinate >= 0
+    ? coordinate % SURFACE_CELLS
+    : ((coordinate % SURFACE_CELLS) + SURFACE_CELLS) % SURFACE_CELLS;
+
 /// The VOID staging Body, `$78`, which Take and Drop already refuse on.
 const VOID_BODY = 'body-30';
 
@@ -165,6 +172,12 @@ export type Selection =
       readonly instance: string;
       readonly kind: 'object';
     };
+
+export interface AtlasDestination {
+  readonly bodyId: string;
+  readonly x: number;
+  readonly z: number;
+}
 
 export interface DamoclesContent {
   readonly catalogue: Catalogue;
@@ -321,8 +334,8 @@ export class DamoclesSession implements TitleSession<
   /// The occupied instance's Object Residence departure from before boarding, or undefined where
   /// it had none and stood at its Catalogue residence. Leaving falls back to it where the leave
   /// placement cannot be held. A Save does not carry it, so a session restored aboard falls back to
-  /// the Catalogue residence. Nothing moves aboard, so that fallback is reached only where the
-  /// earlier leave from this place fell back too.
+  /// the Catalogue residence. Atlas Travel validates the destination Leave residence before
+  /// moving an occupied object, so authored travel never reaches this fallback.
   private boardedFrom: Residence | undefined;
   private pendingBriefcaseDrop: {
     readonly head: string;
@@ -1663,40 +1676,45 @@ export class DamoclesSession implements TitleSession<
   /// surface where no structure region is current or the region's flags have bit 14 set, and
   /// otherwise in the bound structure at the current region's insertion group. The Drop's own
   /// checks are the caller's; leaving enters here after them.
-  private directResidence(placementClass: number): PlacedResidence {
-    const structure = this.boundPlacement;
+  private directResidence(
+    placementClass: number,
+    pose = this.pose,
+    structure = this.boundPlacement,
+    regionIndex = this.regionIndex,
+    floor = this.floor
+  ): PlacedResidence {
     const region =
-      this.regionIndex === null
+      regionIndex === null
         ? undefined
-        : structure?.selection?.structure.regions[this.regionIndex];
+        : structure?.selection?.structure.regions[regionIndex];
     const exterior = region !== undefined && (region.flags & 0x40_00) !== 0;
     // The native direct path copies $7A39, the player's 3x3 zone against the bound
     // structure's extent rectangle. That rectangle has no static decode yet (#356), so the
     // Residence keeps the class it already carries rather than inventing a zone.
-    if (structure === null || exterior || this.regionIndex === null) {
+    if (structure === null || exterior || regionIndex === null) {
       return {
-        body: this.pose.body,
+        body: pose.body,
         kind: 'surface',
         placementClass,
         position: {
-          x: this.pose.position.x,
-          y: this.pose.position.y - this.rules.eyeHeight,
-          z: this.pose.position.z
+          x: pose.position.x,
+          y: pose.position.y - this.rules.eyeHeight,
+          z: pose.position.z
         }
       };
     }
     return {
-      body: this.pose.body,
-      insertionGroup: this.regionIndex + 1,
+      body: pose.body,
+      insertionGroup: regionIndex + 1,
       kind: 'structure',
       // The bound placement carries the structure selected by this Floor's table entry.
-      level: this.floor,
+      level: floor,
       parent: structure.id,
       placementClass,
       position: {
-        x: this.pose.position.x - structure.position.x,
-        y: this.pose.position.y - this.rules.eyeHeight - structure.position.y,
-        z: this.pose.position.z - structure.position.z
+        x: pose.position.x - structure.position.x,
+        y: pose.position.y - this.rules.eyeHeight - structure.position.y,
+        z: pose.position.z - structure.position.z
       }
     };
   }
@@ -1850,6 +1868,131 @@ export class DamoclesSession implements TitleSession<
     this.bindAt(this.pose);
     this.readBody();
     return { kind: 'switched', pose: arrival.id };
+  }
+
+  /// Prepare every placed Model on the target Body before validating an exact pin. A missing
+  /// Model cannot silently turn a building into empty ground. This changes content caches only.
+  static async prepareAtlasTravel(
+    content: DamoclesContent,
+    target: AtlasDestination
+  ): Promise<void> {
+    if (workspaceOriginFor(content, target.bodyId) === undefined) {
+      throw new Error('This Body has no admitted arrival data.');
+    }
+    const errors = await content.models.prefetch(
+      content.catalogue.instances
+        .filter(instance => instance.location?.body === target.bodyId)
+        .map(instance => instance.model)
+    );
+    if (errors.length > 0) {
+      throw new Error(
+        `Destination content could not be loaded: ${errors[0]!.message}`
+      );
+    }
+  }
+
+  /// Authored Atlas Travel. Validate against ground, region and Leave rules before one commit.
+  travelToAtlas(
+    target: AtlasDestination
+  ):
+    | { readonly kind: 'travelled' }
+    | { readonly kind: 'declined'; readonly reason: string } {
+    if (![target.x, target.z].every(Number.isFinite)) {
+      return decline('The pin must have finite Body Coordinates.');
+    }
+    const origin = workspaceOriginFor(this.content, target.bodyId);
+    const arrival = this.content.poses.poses.find(
+      item => item.body === target.bodyId && item.workspaceOrigin !== null
+    );
+    if (
+      origin === undefined ||
+      arrival === undefined ||
+      target.bodyId === VOID_BODY
+    ) {
+      return decline('This Body has no admitted arrival data.');
+    }
+    if (
+      this.content.catalogue.instances.some(
+        instance =>
+          instance.location?.body === target.bodyId &&
+          this.content.models.peek(instance.model) === undefined
+      )
+    ) {
+      return decline('Destination content has not finished loading.');
+    }
+    const surface = erisSurfaceFrom(
+      this.content.catalogue,
+      this.content.models,
+      this.content.doc,
+      { bodyId: target.bodyId, origin }
+    );
+    const pose: Pose = {
+      body: target.bodyId,
+      heading: this.pose.heading,
+      pitch: 0,
+      position: {
+        x: wrap(target.x) * surface.grid.cellUnits,
+        y: this.rules.eyeHeight,
+        z: wrap(target.z) * surface.grid.cellUnits
+      }
+    };
+    if (classifyPosition(surface, pose.position).kind === 'sea') {
+      return decline('The pin is at sea. Choose a point on land.');
+    }
+    const bound = structureInCell(surface, pose.position) ?? null;
+    const region =
+      bound !== null && insideCentralCellHalf(pose.position, surface.grid)
+        ? structureRegionAt(bound, pose, this.negateModelZ)
+        : null;
+    if (bound !== null && region !== null) {
+      const clamped = clampStructureStep(
+        bound,
+        pose,
+        pose,
+        this.negateModelZ,
+        () => 'closed',
+        region
+      ).pose;
+      if (
+        Math.abs(clamped.position.x - pose.position.x) > 0.000_001 ||
+        Math.abs(clamped.position.z - pose.position.z) > 0.000_001
+      ) {
+        return decline('The pin is too close to a structure boundary.');
+      }
+    }
+    if (this.occupied !== null) {
+      const residence = this.directResidence(
+        this.residence.get(this.occupied)?.placementClass ?? 0,
+        pose,
+        bound,
+        region,
+        0
+      );
+      if (
+        residence.kind === 'structure' &&
+        !validStructureResidence(this.content.catalogue, residence)
+      ) {
+        return decline('The occupied object cannot be left at this pin.');
+      }
+    }
+    if (this.pose.body !== pose.body) {
+      this.bodyTurn = arrival.bodyTurn;
+    }
+    this.surface = surface;
+    this.surfaceModels = this.content.models.size;
+    this.pose = pose;
+    this.boundPlacement = bound;
+    this.regionIndex = region;
+    this.floor = 0;
+    this.floorSurface = null;
+    this.arrivalFloor = null;
+    this.attachments = shutAttachments(bound ?? undefined);
+    this.doorway = null;
+    this.ride = null;
+    this.doorsMoving = false;
+    this.boardedFrom = undefined;
+    this.intent = IDLE;
+    return { kind: 'travelled' };
   }
 
   /// Land at an Eris cell's centre, keeping heading and the walk eye height.
