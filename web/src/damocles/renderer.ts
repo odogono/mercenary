@@ -43,8 +43,9 @@ void main() {
   );
 }`;
 
-/// Depth pulled forward per face of a ground record, two 24-bit steps, so a record's later
-/// faces (the white strip over the grey apron) win their shared plane every frame.
+/// Depth pulled forward per face of a ground record or a structure's detail selection, two
+/// 24-bit steps, so later faces (the white strip over the grey apron, a detail glyph over its
+/// wall) win their shared plane every frame.
 const ORDER_DEPTH_STEP = 1.2e-7;
 
 /// Depth added per layer, in the [0, 1] window range. Coplanar faces of different layers

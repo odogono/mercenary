@@ -17,6 +17,10 @@ import {
   shadowCasterVertices
 } from '../src/damocles/renderer.ts';
 import {
+  structureMeshes,
+  structureRegionAt
+} from '../src/damocles/selection.ts';
+import {
   cellOf,
   erisSurfaceFrom,
   startPose,
@@ -465,10 +469,60 @@ describe('an Eris frame in Filled Presentation', () => {
     const groundOrders = orders(fill, groundEnd);
     expect(Math.max(...groundOrders)).toBeGreaterThanOrEqual(3);
     expect(Math.max(...groundOrders)).toBeLessThan(1024);
-    // Structures and objects do not: they resolve by layer alone.
+    // Plan faces and objects do not: they resolve by layer alone.
     expect(new Set(orders(groundEnd, plan.vertices.length))).toEqual(
       new Set([0])
     );
+  });
+
+  test('numbers a detail selection in record order so its glyphs win their wall', async () => {
+    const { doc, surface } = await load();
+    // Outside the building at 11-8, facing its door wall and the E painted beside the door.
+    // The wall (#888844) and the E (#eeeeee) are all detail faces in the plane z = 210.
+    const pose = {
+      ...origin,
+      position: { x: 4_947_050, y: 63, z: 8_945_500 }
+    };
+    const building = surface.placements.find(
+      item => item.id === 'eris-surface-8b'
+    )!;
+    const detail = structureMeshes(building, pose, false).find(
+      mesh => mesh.faceOrdered === true
+    )!;
+    const onWall = (colour: string) =>
+      detail.faces.flatMap((face, index) =>
+        face.colour === colour &&
+        face.vertices.every(vertex => detail.vertices[vertex]![2] === 210)
+          ? [index]
+          : []
+      );
+    const wall = onWall('#888844');
+    const glyph = onWall('#eeeeee');
+    expect(wall).toHaveLength(3);
+    expect(glyph.length).toBeGreaterThanOrEqual(4);
+    expect(Math.min(...glyph)).toBeGreaterThan(Math.max(...wall));
+
+    // The frame carries those indices as face order, which pulls later faces forward. It
+    // selects the detail list only for the structure a session has bound.
+    const plan = planErisFrame(surface, pose, doc, {
+      attachments: [],
+      doorway: null,
+      floor: 0,
+      instanceId: building.id,
+      regionIndex: structureRegionAt(building, pose, false),
+      ride: null
+    });
+    // Past the ground records, so their own face indices cannot stand in.
+    const orders = new Set(
+      Array.from(
+        plan.vertices.slice(
+          fillFloats(plan) + plan.groundTriangleCount * 3 * FLOATS_PER_VERTEX
+        )
+      ).filter((_, index) => index % FLOATS_PER_VERTEX === 6)
+    );
+    for (const index of [...wall, ...glyph]) {
+      expect(orders.has(index)).toBe(true);
+    }
   });
 });
 
