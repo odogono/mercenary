@@ -89,6 +89,8 @@ later complete passes advance eight units; VBL 141 is the open endpoint
 50 Hz**. Arming through VBL 141 includes the probe’s initial main-loop phase.
 `$51D22` is a live speed word, not a door timer; `$59542..$5955C` also permits
 4–7 substeps, so this duration is for the pinned snapshot’s observed cadence.
+[#498](damocles-door-speed.md) confirms the step is one unit per substep in all twelve
+motion paths, so every door's time is its travel in substeps.
 
 The closed VBL-1 slice `$16B4..$1BD3` has SHA-256
 `7969999baf67c150440db4152506d2892c489ba224390b7240e34ba2d255178e`.

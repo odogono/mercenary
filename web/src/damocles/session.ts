@@ -6,6 +6,7 @@ import {
 } from '../catalogue/data.ts';
 import type { ModelStore } from '../catalogue/modelStore.ts';
 import { IDLE, MAXIMUM_STEP, type Intent } from '../gameCore/index.ts';
+import type { Vector3 } from '../orientation/index.ts';
 import type { TitleSession } from '../shell/title.ts';
 import {
   displayCells,
@@ -195,8 +196,10 @@ const inventorySourceLabel = (
   return (model?.name ?? instanceId).slice(0, 16).padEnd(16);
 };
 
-// The pinned Structure 74 trace moved 92 one-unit ticks in 2.64 seconds.
-const ATTACHMENT_UNITS_PER_SECOND = 92 / 2.64;
+/// Every attachment's moving edge steps one unit per substep: all twelve motion paths of
+/// `$05AA3C` load `move.l #1,d4`, and none reads a rate from the record
+/// (docs/research/damocles-door-speed.md). A door's time is its travel in ticks.
+const ATTACHMENT_UNITS_PER_TICK = 1;
 
 /// A region whose flags have bit 13 is a Damocles Lift (docs/research/damocles-lift-control.md).
 const LIFT_REGION = 0x20_00;
@@ -1164,41 +1167,7 @@ export class DamoclesSession implements TitleSession<
         ? this.pose
         : walk(this.pose, this.intent, step, this.rules);
       this.bindAt(moved);
-      // `$059562` steps the ride before `$05AA3C` moves the doors, so a tick sees them as they
-      // stood before this step moved them.
-      const doorShut = this.rideDoorShut();
-      // `$5A9D8`: raised by any door that moves on this pass (`$05AAA4`, `$05AC00`).
-      let doorsMoving = false;
       const placement = this.boundPlacement;
-      if (placement !== null) {
-        const local = structureLocalPosition(
-          placement,
-          moved.position,
-          this.negateModelZ
-        );
-        // `$055B04`: a ride pins the doorway's door shut whether or not the player is near it.
-        const pinned = this.ride === null ? null : this.doorway;
-        for (const attachment of placement.selection!.structure.attachments) {
-          const approached =
-            attachment.slot !== pinned &&
-            insideLocalBox(local, attachment.proximityBox);
-          const opening =
-            approached && this.attachmentKeyHeld(placement, attachment);
-          if (approached && !opening) {
-            this.presentSystem('system-string-0');
-          }
-          const current = this.unitsFor(attachment.slot);
-          const next = Math.max(
-            0,
-            Math.min(
-              attachmentOpenLimit(attachment),
-              current + (opening ? 1 : -1) * ATTACHMENT_UNITS_PER_SECOND * step
-            )
-          );
-          this.attachmentUnits.set(attachment.slot, next);
-          doorsMoving ||= next !== current;
-        }
-      }
       // Aboard there is no step to clamp, and the region boarding selected stands.
       if (!aboard) {
         if (
@@ -1234,9 +1203,11 @@ export class DamoclesSession implements TitleSession<
         const transition = runFrame(this.script, this.scriptRules);
         this.script = transition.state;
         this.effects.push(...transition.effects);
-        this.stepRide(doorShut);
+        // `$059562` steps the ride before `$05AA3C` moves the doors, so a tick sees them as they
+        // stood before it. The doors see the step's Pose before `$05A64A` clamps it.
+        this.stepRide(this.rideDoorShut());
+        this.askForDoorTone(this.moveAttachments(moved.position));
       }
-      this.askForDoorTone(doorsMoving);
       remaining -= step;
     }
     return this.snapshot;
@@ -1891,6 +1862,46 @@ export class DamoclesSession implements TitleSession<
   /// the bound structure has no attachment for has no door to wait on.
   private rideDoorShut(): boolean {
     return this.doorway === null || this.unitsFor(this.doorway) === 0;
+  }
+
+  /// One tick of the bound structure's doors: `$05AA3C`, which the frame loop calls once a
+  /// substep. Each door opens a unit while the player at `position` is inside its Proximity Box
+  /// and holds its key, and closes a unit otherwise. Says whether any door moved: `$5A9D8`,
+  /// which `$05AAA4` and `$05AC00` raise.
+  private moveAttachments(position: Vector3): boolean {
+    const placement = this.boundPlacement;
+    if (placement === null) {
+      return false;
+    }
+    const local = structureLocalPosition(
+      placement,
+      position,
+      this.negateModelZ
+    );
+    // `$055B04`: a ride pins the doorway's door shut whether or not the player is near it.
+    const pinned = this.ride === null ? null : this.doorway;
+    let moving = false;
+    for (const attachment of placement.selection!.structure.attachments) {
+      const approached =
+        attachment.slot !== pinned &&
+        insideLocalBox(local, attachment.proximityBox);
+      const opening =
+        approached && this.attachmentKeyHeld(placement, attachment);
+      if (approached && !opening) {
+        this.presentSystem('system-string-0');
+      }
+      const current = this.unitsFor(attachment.slot);
+      const next = Math.max(
+        0,
+        Math.min(
+          attachmentOpenLimit(attachment),
+          current + (opening ? 1 : -1) * ATTACHMENT_UNITS_PER_TICK
+        )
+      );
+      this.attachmentUnits.set(attachment.slot, next);
+      moving ||= next !== current;
+    }
+    return moving;
   }
 
   /// `$05A9EE`–`$05AA3A`, at the end of the door animation `$05AA3C`, which runs after the ride

@@ -227,9 +227,9 @@ test('an ordinary Eris structure opens its door and clamps the eye at NAV 09-09'
   await page.unroute('**/damocles/eris.json');
 
   // The doorway: the leaf answers the approach, and only a fully open leaf frees the latched
-  // region, so the eye crosses the wall line rather than stopping at it. The leaf opens at 92
-  // units in 2.64 seconds of session time, and a loaded browser advances that slower than the
-  // wall clock, so these waits allow for the load rather than timing the leaf from outside.
+  // region, so the eye crosses the wall line rather than stopping at it. The leaf opens a unit a
+  // tick, 112 ticks of session time, and a loaded browser advances that slower than the wall
+  // clock, so these waits allow for the load rather than timing the leaf from outside.
   // The fully open leaf is watched every frame: the eye walks on through the doorway and the
   // leaf starts closing behind it, so a poll a second apart can miss the open state entirely.
   const load = { timeout: 20_000 };

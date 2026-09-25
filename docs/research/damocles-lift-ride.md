@@ -280,12 +280,14 @@ What the port can present as recovered:
   above; what they sound like was not heard.
 - **Timing basis:** the port should count 25 substeps per step, and a substep is a VBL
   while frames take 4–8 VBLs. Door speed is the attachment animation's, and it differs
-  per door: about 30 VBLs in the State Office, 80 at Vesta.
+  per door: about 30 VBLs in the State Office, 80 at Vesta. [#498](damocles-door-speed.md)
+  found one unit per substep for every door, so the difference is travel.
 
 ## What this does not settle
 
-- **Door animation speed per attachment.** Measured for two doors, not decoded: the
-  rate lives in the attachment animation at `$05AA3C`, beyond this note.
+- **Door animation speed per attachment** is settled by [#498](https://github.com/odogono/mercenary/issues/498)
+  in [how fast a door moves](damocles-door-speed.md): one unit per substep for every door,
+  so the two doors here differ only in travel (32 and 82 units, closing in 33 and 83 substeps).
 - **Moving during a ride.** The runs held no input. Movement `$57CC2` still runs every
   substep, and the region is frozen for the ride ([#471](damocles-lift-control.md#who-writes-788a-and-what-ffff-means)).
   Whether the player can walk about the car mid-ride was not examined.
