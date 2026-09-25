@@ -35,8 +35,13 @@ const subset = (key: object, mesh: Mesh, faces: readonly Primitive[]): Mesh => {
 const scaledDetails = new WeakMap<object, Mesh>();
 
 /// A draw component of a bound structure. Wall text carries the plane its glyphs lie in, since
-/// it shares that plane with the face it rides on and is drawn over it.
-export type StructureMesh = Mesh & { readonly wallTextPlane?: 0 | 128 };
+/// it shares that plane with the face it rides on and is drawn over it. A detail selection is
+/// in the order its records are drawn, which settles its coplanar faces: a detail glyph lies
+/// in the plane of the detail wall it is painted on, and is drawn after it.
+export type StructureMesh = Mesh & {
+  readonly faceOrdered?: true;
+  readonly wallTextPlane?: 0 | 128;
+};
 const wallTextMeshes = new WeakMap<Mesh, StructureMesh>();
 const wallTextMesh = (mesh: Mesh, plane: 0 | 128): StructureMesh => {
   let cached = wallTextMeshes.get(mesh);
@@ -421,7 +426,7 @@ export const structureMeshes = (
     const face = structure.plan.faces.find(f => f.sourceIndex === entry.index)!;
     return [subset(face, structure.plan, [face]), ...wallTexts(entry)];
   });
-  const detail: Mesh[] = [];
+  const detail: StructureMesh[] = [];
   if ((region.flags & 0x80_00) !== 0) {
     const scales = [structure.scale[0], 1, structure.scale[1]];
     const group = groups[1]!;
@@ -482,6 +487,7 @@ export const structureMeshes = (
       const linesByRecord = byRecord(scaled.lines);
       selected = {
         ...scaled,
+        faceOrdered: true,
         faces: records.flatMap(i => facesByRecord.get(i) ?? []),
         lines: records.flatMap(i => linesByRecord.get(i) ?? [])
       };
@@ -493,7 +499,7 @@ export const structureMeshes = (
     ? [...plan, ...detail]
     : [...detail, ...plan];
 };
-const detailLists = new WeakMap<Mesh, WeakMap<object, Mesh>>();
+const detailLists = new WeakMap<Mesh, WeakMap<object, StructureMesh>>();
 
 /// A wall text's glyphs: font 4's fallback font while `$054016` finds a named slot carried.
 export const wallTextGlyphs = (

@@ -908,6 +908,9 @@ try {
     root['skyBodies'] = skyBodies.join(' ');
   };
   const draw = (): void => {
+    const { castShadows, presentationPreset } = preferences.current();
+    const enhanced =
+      presentationPreset === undefined || presentationPreset === 'enhanced';
     // The surface comes from the Session Snapshot rather than the presentation document, so a
     // Body switch or a Save restored onto another Body draws that Body's workspace (#379).
     const plan = planErisFrame(
@@ -924,23 +927,22 @@ try {
       slot => session.carriesSlot(slot),
       snapshot.daylight,
       // The sky Bodies turn with the accumulator the terminator reads, and the comet moves with
-      // the impact clock, so a Save restores all three.
+      // the impact clock, so a Save restores all three. Enhanced presentation moves the Bodies
+      // smoothly between the engine's steps.
       skyPass(system, {
         body: snapshot.pose.body,
         daylight: snapshot.daylight,
         impact: impactTime(snapshot.elapsed, content.doc.time),
         position: snapshot.pose.position,
         sky: snapshot.surface.sky,
+        smooth: enhanced,
         turn: snapshot.bodyTurn
       })
     );
-    const { castShadows, presentationPreset } = preferences.current();
     const shadowEdge = castShadows ?? DEFAULT_CAST_SHADOWS;
     // A Cast Shadow is Enhanced presentation only, and the player may turn its edge off.
     const shadows =
-      content.doc.lighting.shadows &&
-      (presentationPreset === undefined || presentationPreset === 'enhanced') &&
-      shadowEdge !== 'off';
+      content.doc.lighting.shadows && enhanced && shadowEdge !== 'off';
     renderer.render(
       plan,
       shadows
