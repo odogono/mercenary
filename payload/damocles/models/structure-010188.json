@@ -1,6 +1,27 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Eris group $12 cell $CF record places this instance and binds resident slot 35 at local (401, 300, -448) on floor 2.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $12 cell $CF record places this instance and binds resident slot 47 at local (139, 1500, -1046) on floor 10.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $12 cell $CF record places this instance and binds resident slot 228 at local (-127, 150, -595) on floor 1.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $12 cell $CF record places this instance and binds resident slot 236 at local (-133, 150, -475) on floor 1.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-010188",
     "kind": "structure",
     "levelBinding": {
@@ -90,7 +111,12 @@
       ],
       "tableAddress": 65934
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-35",
+      "object-slot-47",
+      "object-slot-228",
+      "object-slot-236"
+    ],
     "name": "Structure 27",
     "nameStatus": "unknown",
     "omissions": [],

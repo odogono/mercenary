@@ -1,6 +1,12 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Pan group $0C cell $14 record places this instance and binds resident slot 190 at local (-294, 150, 1097) on floor 1.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-0127f0",
     "kind": "structure",
     "levelBinding": {
@@ -80,7 +86,9 @@
       ],
       "tableAddress": 75766
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-190"
+    ],
     "name": "Structure 53",
     "nameStatus": "unknown",
     "omissions": [],

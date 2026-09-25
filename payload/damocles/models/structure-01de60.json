@@ -1,6 +1,12 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Logos group $08 cell $36 record places this instance and binds resident slot 121 at local (43, 0, 589) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01de60",
     "kind": "structure",
     "levelBinding": {
@@ -42,7 +48,9 @@
       ],
       "tableAddress": 122470
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-121"
+    ],
     "name": "Structure 268",
     "nameStatus": "unknown",
     "omissions": [],

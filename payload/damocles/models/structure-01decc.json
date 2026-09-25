@@ -1,6 +1,12 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Eris group $12 cell $FD record places this instance and binds resident slot 131 at local (-2685, 0, -1152) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01decc",
     "kind": "structure",
     "levelBinding": {
@@ -34,7 +40,9 @@
       ],
       "tableAddress": 122578
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-131"
+    ],
     "name": "Structure 274",
     "nameStatus": "unknown",
     "omissions": [],

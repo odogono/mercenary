@@ -2,6 +2,26 @@
   "model": {
     "evidence": [
       {
+        "claim": "Authored Tolosa group $17 cell $12 record places this instance and binds resident slot 159 at local (198, 0, -579) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Tolosa group $17 cell $12 record places this instance and binds resident slot 160 at local (240, 0, 83) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Tolosa group $17 cell $12 record places this instance and binds resident slot 161 at local (-174, 0, -241) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Tolosa group $17 cell $12 record places this instance and binds resident slot 162 at local (-174, 0, 385) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
         "claim": "TOLOSA cell 18 installs $7AFB base $25, so the $F0 entrance in slot $3FC carries key letter H at $CD37.",
         "confidence": "verified",
         "source": "docs/research/damocles-generic-entrance-attachments.md"
@@ -14,7 +34,12 @@
     ],
     "id": "structure-01be44",
     "kind": "structure",
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-159",
+      "object-slot-160",
+      "object-slot-161",
+      "object-slot-162"
+    ],
     "name": "Structure 136",
     "nameStatus": "unknown",
     "omissions": [],

@@ -1,9 +1,17 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Eris group $12 cell $12 record places this instance and binds resident slot 209 at local (-1573, 0, -82) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01832e",
     "kind": "structure",
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-209"
+    ],
     "name": "Structure 94",
     "nameStatus": "unknown",
     "omissions": [],

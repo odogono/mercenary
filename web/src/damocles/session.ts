@@ -79,6 +79,7 @@ import {
   modelWaves,
   nearestIsland,
   pitchFromWord,
+  placementHeading,
   startPose,
   structureInCell,
   type ErisCell,
@@ -1067,7 +1068,11 @@ export class DamoclesSession implements TitleSession<
       );
       const placement: ErisPlacement = {
         faceCount: form?.mesh.faces.length ?? 0,
-        heading: base?.heading ?? 0,
+        // A structure resident has no surface placement; it turns by its own instance angle
+        // byte in the parent's frame, which structures never rotate (#361).
+        heading:
+          base?.heading ??
+          placementHeading(model, instance.placement?.heading ?? null),
         id: instance.id,
         keyBase: instance.keyBase,
         kind: model.kind,

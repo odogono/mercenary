@@ -1,6 +1,17 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Perseus group $16 cell $25 record places this instance and binds resident slot 107 at local (-223, 0, -322) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Perseus group $16 cell $25 record places this instance and binds resident slot 126 at local (513, 0, 458) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01dcc2",
     "kind": "structure",
     "levelBinding": {
@@ -48,7 +59,10 @@
       ],
       "tableAddress": 122056
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-107",
+      "object-slot-126"
+    ],
     "name": "Structure 245",
     "nameStatus": "unknown",
     "omissions": [],

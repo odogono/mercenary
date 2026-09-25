@@ -170,6 +170,17 @@ that `$7A14` is the day half. `colour` stays the base, a `dayColour` beside it c
 day half where the two differ, and a Floor palette carries `dayColours`. See
 [the day/night terminator](damocles-day-night-terminator.md).
 
+### A Floor keeps the instance's scale and Building detail
+
+The lift assembles the Floor's slot and rebinds its palette, but it writes neither the
+structure scale (`$539CE`/`$539D2`) nor the Building detail byte (`$53A85`). Only the
+cell bind at `$054D98`–`$054E08` writes them. So a Floor draws its slot's plan and the
+instance's detail at the **instance's** scale. `eris-transporter-11-8` shows the
+difference: on Floor 10 it holds slot 17's (3, 3), while slot 16, the Floor's own
+record, authors (1, 1). 173 upper-Floor entries bind a slot whose own scale differs.
+The port's `floorPlacement` still draws the slot's own Model, at its own scale. See
+[interior residents in every captured workspace](damocles-interior-resident-placement.md#a-floor-keeps-the-instances-scale-and-building-detail).
+
 ### The level domain is 0 to 10, and the game says so
 
 The lift's own indicator bounds the domain independently of the table. It writes one

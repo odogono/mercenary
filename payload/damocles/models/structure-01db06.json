@@ -1,6 +1,17 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Perseus group $16 cell $14 record places this instance and binds resident slot 58 at local (810, 1500, -889) on floor 10.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Perseus group $16 cell $14 record places this instance and binds resident slot 194 at local (665, 1500, -889) on floor 10.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01db06",
     "kind": "structure",
     "levelBinding": {
@@ -64,7 +75,10 @@
       ],
       "tableAddress": 121612
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-58",
+      "object-slot-194"
+    ],
     "name": "Structure 221",
     "nameStatus": "unknown",
     "omissions": [],

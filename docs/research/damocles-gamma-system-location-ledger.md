@@ -141,40 +141,45 @@ have reached that state.
 | # | Body | Residents | Takeable | Surface | Interior | Placed | Surface workspace | Arrival pose |
 | ---: | --- | ---: | ---: | ---: | ---: | ---: | --- | --- |
 | 0 | DIALIS | 0 | 0 | 0 | 0 | 0 | none recovered | none |
-| 1 | ICARUS | 2 | 2 | 1 | 1 | 0 | none recovered | none |
+| 1 | ICARUS | 2 | 2 | 1 | 1 | 1 | none recovered | none |
 | 2 | MIDAS | 5 | 5 | 0 | 5 | 0 | none recovered | `midas` |
-| 3 | ACHERON | 2 | 2 | 1 | 1 | 0 | none recovered | `acheron` |
-| 4 | DION | 30 | 28 | 1 | 29 | 16 | Dion live `$ABDC` | `dion-2-3`, `dion-transporter` |
-| 5 | ATROPOS | 2 | 2 | 1 | 1 | 0 | none recovered | none |
-| 6 | CLOTHO | 17 | 17 | 0 | 17 | 0 | none recovered | `clotho` |
+| 3 | ACHERON | 2 | 2 | 1 | 1 | 1 | none recovered | `acheron` |
+| 4 | DION | 30 | 28 | 1 | 29 | 19 | Dion live `$ABDC` | `dion-2-3`, `dion-transporter` |
+| 5 | ATROPOS | 2 | 2 | 1 | 1 | 1 | none recovered | none |
+| 6 | CLOTHO | 17 | 17 | 0 | 17 | 17 | none recovered | `clotho` |
 | 7 | LACHESIS | 0 | 0 | 0 | 0 | 0 | none recovered | none |
-| 8 | GAEA | 33 | 28 | 5 | 28 | 0 | Birmingham Island authored; UR City live `$ABDC` | `gaea-ur-city-4-2`, `gaea-transporter` |
+| 8 | GAEA | 33 | 28 | 5 | 28 | 28 | Birmingham Island authored; UR City live `$ABDC` | `gaea-ur-city-4-2`, `gaea-transporter` |
 | 9 | CRONUS | 2 | 2 | 2 | 0 | 0 | none recovered | none |
-| 10 | CYCLOPES | 1 | 1 | 0 | 1 | 0 | none recovered | none |
-| 11 | ERIS | 71 | 64 | 7 | 64 | 2 | first-world live `$ABDC` | `eris-spaceport-onfoot`, `eris-transporter-11-8` |
-| 12 | SOLON | 5 | 5 | 1 | 4 | 0 | none recovered | none |
-| 13 | THEON | 4 | 4 | 1 | 3 | 0 | none recovered | `theon` |
+| 10 | CYCLOPES | 1 | 1 | 0 | 1 | 1 | none recovered | none |
+| 11 | ERIS | 71 | 64 | 7 | 64 | 23 | first-world live `$ABDC` | `eris-spaceport-onfoot`, `eris-transporter-11-8` |
+| 12 | SOLON | 5 | 5 | 1 | 4 | 4 | none recovered | none |
+| 13 | THEON | 4 | 4 | 1 | 3 | 3 | none recovered | `theon` |
 | 14 | VESTA | 11 | 10 | 1 | 10 | 10 | Politburo City live `$ABDC` | `vesta-parliament-4-6`, `vesta-transporter` |
-| 15 | METIS | 9 | 8 | 1 | 8 | 0 | none recovered | `metis-transporter` |
+| 15 | METIS | 9 | 8 | 1 | 8 | 8 | none recovered | `metis-transporter` |
 | 16 | LUCAN | 2 | 2 | 2 | 0 | 0 | none recovered | `lucan` |
-| 17 | LOGOS | 4 | 3 | 1 | 3 | 0 | none recovered | `logos-transporter` |
+| 17 | LOGOS | 4 | 3 | 1 | 3 | 3 | none recovered | `logos-transporter` |
 | 18 | AURORA | 0 | 0 | 0 | 0 | 0 | none recovered | none |
 | 19 | TRITON | 0 | 0 | 0 | 0 | 0 | none recovered | none |
-| 20 | PAN | 2 | 2 | 1 | 1 | 0 | none recovered | `pan` |
+| 20 | PAN | 2 | 2 | 1 | 1 | 1 | none recovered | `pan` |
 | 21 | THALIA | 2 | 1 | 2 | 0 | 0 | none recovered | none |
 | 22 | JUNO | 0 | 0 | 0 | 0 | 0 | none recovered | none |
-| 23 | BACCHUS | 6 | 4 | 3 | 3 | 0 | none recovered | `bacchus-transporter` |
+| 23 | BACCHUS | 6 | 4 | 3 | 3 | 3 | none recovered | `bacchus-transporter` |
 | 24 | JASON | 0 | 0 | 0 | 0 | 0 | none recovered | none |
-| 25 | TOLOSA | 5 | 5 | 1 | 4 | 0 | none recovered | none |
-| 26 | PERSEUS | 6 | 6 | 0 | 6 | 0 | none recovered | none |
-| 27 | MENTOR | 8 | 7 | 2 | 6 | 0 | none recovered | `mentor-transporter` |
+| 25 | TOLOSA | 5 | 5 | 1 | 4 | 4 | none recovered | none |
+| 26 | PERSEUS | 6 | 6 | 0 | 6 | 6 | none recovered | none |
+| 27 | MENTOR | 8 | 7 | 2 | 6 | 6 | none recovered | `mentor-transporter` |
 | 28 | SAPPHIRE | 0 | 0 | 0 | 0 | 0 | none recovered | none |
 | 29 | DAMOCLES | 0 | 0 | 0 | 0 | 0 | none recovered | `damocles` |
 | 30 | VOID | 0 | 0 | 0 | 0 | 0 | none recovered | none |
 
 Totals: **241** resident instances, **210** takeable, **34** surface-located,
-**195** interior-associated, **28** with a recovered placement, across **116**
+**195** interior-associated, **139** with a recovered placement, across **116**
 distinct interior scene selectors.
+
+The placement count rose from 28 to 139 on 2026-09-25, when every captured structure
+group was bound and each resident was read against the structure its own Floor binds
+([interior residents in every captured workspace](damocles-interior-resident-placement.md)).
+The paragraph below records the earlier step.
 
 The placement count rose from 2 to 28 with
 [#325](https://github.com/odogono/mercenary/issues/325): Vesta's ten interior
@@ -516,16 +521,18 @@ selectors is by itself a building, Room, floor or named place.
 
 ## What is placed today
 
-Two residents in the entire census have a recovered parent and a local
-placement, both on Eris and both keys:
+**139** residents have a recovered parent and a local placement. The 56 interior
+residents still without one are all in structure groups no capture stands in: Eris
+`$10`, `$11`, `$14` and `$15`, Dion `$1B` and `$1C`, and Midas `$38`. See
+[interior residents in every captured workspace](damocles-interior-resident-placement.md#what-is-not-placed).
+The two placed first, both Eris keys, were:
 
 | Slot | Object           | Parent                                       | Local position    | Evidence                                                  |
 | ---: | ---------------- | -------------------------------------------- | ----------------- | --------------------------------------------------------- |
 |  180 | KEY - 99 CHEVY   | `eris-structure-0251d7` (group `$14`, cell `$26`) | `-394, 200, 1846` | [resident object associations](damocles-resident-objects.md#key---99-chevy) |
 |  183 | KEY- V.I.P. LIMO | `eris-surface-87` (Capital Spaceport region 1)    | `1038, 0, 789`    | [Capital Spaceport interior](damocles-spaceport-interior.md) |
 
-The remaining **193** interior-associated residents have selectors and no
-parent. That is the dominant coverage gap in the programme.
+Both were placed by hand. Every other placement comes from the general binding.
 
 Twenty-one of the 34 surface residents are takeable. Five of those stand on a
 body with a recovered surface workspace — SUNSHADE (slot 92, Eris cell `$4C`),

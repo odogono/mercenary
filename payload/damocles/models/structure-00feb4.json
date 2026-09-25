@@ -1,6 +1,12 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Eris group $12 cell $8B record places this instance and binds resident slot 69 at local (-1044, 1100, 470) on floor 10.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-00feb4",
     "kind": "structure",
     "levelBinding": {
@@ -45,7 +51,9 @@
       ],
       "tableAddress": 65210
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-69"
+    ],
     "name": "Structure 17",
     "nameStatus": "unknown",
     "omissions": [],

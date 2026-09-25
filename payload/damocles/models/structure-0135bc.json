@@ -1,6 +1,52 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Clotho group $32 cell $12 record places this instance and binds resident slot 122 at local (-68, 670, 877) on floor 4.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Clotho group $32 cell $12 record places this instance and binds resident slot 127 at local (438, 670, -1104) on floor 4.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Clotho group $32 cell $12 record places this instance and binds resident slot 140 at local (-74, 480, -940) on floor 3.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Clotho group $32 cell $12 record places this instance and binds resident slot 192 at local (438, 640, -1104) on floor 4.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Clotho group $32 cell $12 record places this instance and binds resident slot 193 at local (308, 320, -439) on floor 2.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Clotho group $32 cell $12 record places this instance and binds resident slot 216 at local (218, 0, 484) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Clotho group $32 cell $12 record places this instance and binds resident slot 217 at local (-104, 640, 677) on floor 4.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Clotho group $32 cell $12 record places this instance and binds resident slot 224 at local (-68, 640, 877) on floor 4.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Clotho group $32 cell $12 record places this instance and binds resident slot 247 at local (412, 0, 542) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-0135bc",
     "kind": "structure",
     "levelBinding": {
@@ -72,7 +118,17 @@
       ],
       "tableAddress": 79298
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-122",
+      "object-slot-127",
+      "object-slot-140",
+      "object-slot-192",
+      "object-slot-193",
+      "object-slot-216",
+      "object-slot-217",
+      "object-slot-224",
+      "object-slot-247"
+    ],
     "name": "Structure 64",
     "nameStatus": "unknown",
     "omissions": [],

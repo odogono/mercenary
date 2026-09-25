@@ -1,6 +1,17 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Dion group $02 cell $E3 record places this instance and binds resident slot 34 at local (-49, 1350, 765) on floor 9.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+      },
+      {
+        "claim": "Authored Dion group $02 cell $E3 record places this instance and binds resident slot 66 at local (-587, 150, 1074) on floor 1.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+      }
+    ],
     "id": "structure-012b60",
     "kind": "structure",
     "levelBinding": {
@@ -102,7 +113,10 @@
       ],
       "tableAddress": 76646
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-34",
+      "object-slot-66"
+    ],
     "name": "Structure 56",
     "nameStatus": "unknown",
     "omissions": [],

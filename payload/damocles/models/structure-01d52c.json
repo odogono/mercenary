@@ -2,6 +2,31 @@
   "model": {
     "evidence": [
       {
+        "claim": "Authored Gaea group $07 cell $17 record places this instance and binds resident slot 64 at local (319, 0, -436) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Gaea group $07 cell $17 record places this instance and binds resident slot 84 at local (1415, 0, 23) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Gaea group $07 cell $17 record places this instance and binds resident slot 141 at local (1389, 48, -1401) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Gaea group $07 cell $17 record places this instance and binds resident slot 197 at local (581, 0, -1760) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Gaea group $07 cell $17 record places this instance and binds resident slot 205 at local (1389, 0, -1401) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
         "claim": "GAEA cell 23 installs $7AFB base $1F, so the $F0 entrance in slot $3FC carries key letter B at $CD37.",
         "confidence": "observed",
         "source": "docs/research/damocles-generic-entrance-attachments.md"
@@ -39,7 +64,13 @@
       ],
       "tableAddress": 120114
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-64",
+      "object-slot-84",
+      "object-slot-141",
+      "object-slot-197",
+      "object-slot-205"
+    ],
     "name": "Structure 180",
     "nameStatus": "unknown",
     "omissions": [],

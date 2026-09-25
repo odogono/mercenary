@@ -1,6 +1,12 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Mentor group $1A cell $44 record places this instance and binds resident slot 144 at local (-2732, 0, -1037) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01dba2",
     "kind": "structure",
     "levelBinding": {
@@ -34,7 +40,9 @@
       ],
       "tableAddress": 121768
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-144"
+    ],
     "name": "Structure 229",
     "nameStatus": "unknown",
     "omissions": [],

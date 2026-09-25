@@ -1,6 +1,12 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Gaea group $0F cell $65 record places this instance and binds resident slot 86 at local (2731, 0, -1119) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01dea8",
     "kind": "structure",
     "levelBinding": {
@@ -34,7 +40,9 @@
       ],
       "tableAddress": 122542
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-86"
+    ],
     "name": "Structure 272",
     "nameStatus": "unknown",
     "omissions": [],

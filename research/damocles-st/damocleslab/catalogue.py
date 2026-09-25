@@ -2304,7 +2304,13 @@ def find_area_placements(data: bytes, header_address: int) -> dict[int, dict]:
 
 
 def decode_structure_associations(data: bytes, start: int) -> dict[int, list[dict]]:
-    """Decode a zero-terminated list of insertion-group records."""
+    """Decode a zero-terminated list of insertion-group records.
+
+    A group may name one region twice: $52D24 copies the pairs verbatim and the
+    queue assembler at $5A3DE inserts once for every pair whose region matches,
+    so both are kept in order. Eris slot 209's structure (root $18824) authors
+    region $0E twice in group $13.
+    """
     reader = Reader(data, start)
     groups: dict[int, list[dict]] = {}
     for _ in range(256):
@@ -2316,7 +2322,6 @@ def decode_structure_associations(data: bytes, start: int) -> dict[int, list[dic
         if selector in groups:
             raise ValueError(f'duplicate insertion group ${selector:02X}')
         insertions = []
-        regions = set()
         for _ in range(256):
             if reader.p >= len(data):
                 raise ValueError('structure association group terminator missing')
@@ -2326,9 +2331,6 @@ def decode_structure_associations(data: bytes, start: int) -> dict[int, list[dic
             if reader.p >= len(data):
                 raise ValueError(f'structure association group ${selector:02X} insertion key missing')
             insertion = reader.take(1)[0]
-            if region in regions:
-                raise ValueError(f'duplicate region ${region:02X} in insertion group ${selector:02X}')
-            regions.add(region)
             insertions.append({
                 'regionSelector': region,
                 'insertionKey': insertion,
@@ -3762,8 +3764,13 @@ def attach_image_ground(workspace: bytes, data: bytes, prefix: str, label: str, 
 def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: list,
                           instances: list, places: list, by_address: dict, bodies: list,
                           islands: list, hardware: list[int], template_palettes: dict,
-                          road_networks: list) -> str:
-    """Place live $ABDC / ground records from a non-Eris loaded world capture."""
+                          road_networks: list) -> tuple[str, dict]:
+    """Place live $ABDC / ground records from a non-Eris loaded world capture.
+
+    Returns the workspace note and the structure-group binding the capture
+    establishes: its body, its $794E group and the prefix its cell instances
+    were published under.
+    """
     if len(workspace) != 1048576 or u32(workspace, 0x4bd10) != 0x35700 or u32(workspace, 0x4bd22) != 0x26000:
         raise ValueError('live workspace is not a loaded Damocles world capture')
     if workspace[0xe900:0xe900 + 280 * 4] != data[0xe900:0xe900 + 280 * 4]:
@@ -3994,13 +4001,15 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
             )
     if not any(item['id'] == network['id'] for item in road_networks):
         road_networks.append(network)
-    return (
+    note = (
         f"{label} live $ABDC" + (f" ({area_name})" if area_name else "") +
         f": body selector $7AA8=${selector:04X}, current cell "
         f"$7B5C=${int.from_bytes(workspace[0x7b5c:0x7b5e], 'big'):02X}; {occupied} surface assemblies "
         f'and {ground_unique} workspace-local ground records. Structure and building-detail pointer '
         'tables match first-world; object unique addresses are unchanged.'
     )
+    binding = {'body': body, 'group': group, 'prefix': prefix, 'workspace': workspace}
+    return note, binding
 
 
 def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = None) -> dict:
@@ -4496,13 +4505,16 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
     road_networks = [capital]
     workspace_notes = []
     slot_bindings: list[dict] = []
+    # The structure-group workspaces a capture has stood in. First-world is Eris's.
+    group_bindings = [{'body': 11, 'group': capital_group, 'prefix': 'eris', 'workspace': data}]
     if workspaces:
         for workspace in workspaces:
-            note = attach_live_workspace(
+            note, group_binding = attach_live_workspace(
                 workspace, data, models, tables, instances, places, by_address, bodies,
                 islands, hardware, template_palettes, road_networks,
             )
             workspace_notes.append(note)
+            group_bindings.append(group_binding)
             slot_bindings.append({
                 'world': note.split(' live $ABDC', 1)[0],
                 'bindings': object_slot_bindings(data, workspace),
@@ -4580,12 +4592,12 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         chevy_key['placement'] = {
             'parent': parent_id,
             'position': resident_local_position(data, 180, tuple(parent_raw)),
-            'heading': None,
+            'heading': data[0x77a8 + 180 * 4],
             'coordinateSystem': 'Eris structure group $14 cell $26 local model units',
         }
         chevy_key['reason'] = (
             'Recovered resident placement in the source-unnamed Eris structure-group $14 cell '
-            '$26 instance. Raw yaw is zero; the absolute angular convention remains unresolved.'
+            f'$26 instance. Its instance angle byte is ${data[0x77a8 + 180 * 4]:02X} (#361).'
         )
         chevy_parent_model['linkedInstances'].append(chevy_key['id'])
         chevy_parent_model['evidence'].append({
@@ -4608,15 +4620,25 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
     # label. So a resident's own body byte gives the body and its group byte
     # gives the workspace, for every group a capture binds.
     #
-    # Vesta group $05 and Dion group $02 are both bound by a capture whose live
-    # $ABDC is byte-identical to the static decode. Dion groups $1B and $1C are
-    # not bound by any capture, so they keep #324's disposition for Gaea group
-    # $0F: bound to a static group record, named workspace identity unresolved,
-    # and no placement emitted.
+    # A capture binds its group when its live $ABDC is byte-identical to the
+    # workspace the loader replays from the group's authored stream; every
+    # capture that attached a workspace does, and one that did not would raise
+    # here. Groups no capture has stood in keep #324's disposition: bound to a
+    # static group record, named workspace identity unresolved, and no
+    # placement emitted.
+    #
+    # A resident on level n belongs to the structure the cell instance's floor
+    # table binds at n ($055B24), which is what the lift assembles there: that
+    # structure's plan bounds the placement and its association list names the
+    # regions that insert the resident. Level 0 is the cell instance itself.
     # The live workspaces attach after instance_by_id is built, so index again.
     instance_by_id = {instance['id']: instance for instance in instances}
-    for body_id, bound_group, slug, body_name in (('body-14', 0x05, 'vesta', 'Vesta'),
-                                                  ('body-4', 0x02, 'dion', 'Dion')):
+    for group_binding in group_bindings:
+      body = group_binding['body']
+      bound_group = group_binding['group']
+      slug = group_binding['prefix']
+      body_id = f'body-{body}'
+      body_name = bodies[body]['name'].title()
       candidates = [
           item for item in instances
           if item['id'].startswith('object-slot-') and item['placement'] is None
@@ -4624,68 +4646,121 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
           and (item.get('association') or {}).get('structureGroupSelector') == bound_group
           and (item.get('association') or {}).get('insertionGroupSelector')
       ]
+      if not candidates:
+          continue
       try:
-          overrides = decode_group_overrides(data, bound_group) if candidates else {}
+          replayed = load_structure_workspace(data, bound_group)
+          overrides = decode_group_overrides(data, bound_group)
       except (ValueError, struct.error) as error:
-          overrides = {}
           for item in candidates:
               item['reason'] = (f'{body_name} structure group ${bound_group:02X} map did not '
                                 f'decode in this capture: {error}.')
+          continue
+      live = group_binding['workspace']
+      if replayed[0xABDC:0xABDC + 1024] != live[0xABDC:0xABDC + 1024]:
+          raise ValueError(f'{body_name} group ${bound_group:02X}: the live $ABDC disagrees '
+                           'with the workspace its authored stream replays')
       for resident in candidates:
           association = resident['association']
           cell = association['cell']
-          parent = instance_by_id.get(f'{slug}-surface-{cell:02x}')
+          level = association['levelSelector']
           override = overrides.get(cell)
-          if parent is None or override is None or override['slot'] is None:
+          if override is None or override['slot'] is None:
+              resident['reason'] = (
+                  f'{body_name} structure group ${bound_group:02X} places no structure in cell '
+                  f'${cell:02X}, so this interior-associated resident has no parent.'
+              )
               continue
-          if parent['model'] != tables[1]['entries'][override['slot']]:
+          parent = instance_by_id.get(f'{slug}-surface-{cell:02x}')
+          if parent is None or parent['model'] != tables[1]['entries'][override['slot']]:
               raise ValueError(f'{body_name} cell ${cell:02X} parent model disagrees with its override')
           slot = int(resident['id'].rsplit('-', 1)[1])
           raw = tuple(s32(data, base + slot * 4) for base in (0x63a8, 0x67a8, 0x6ba8))
           origin = structure_origin(raw, override['dx'], override['dz'])
           local = resident_local_position(data, slot, origin)
+          if level == 0:
+              floor_structure = parent['model']
+          else:
+              floors = (by_address[parent['model']].get('levelBinding') or {}).get('floors') or []
+              floor_structure = next(
+                  (entry['structureId'] for entry in floors if entry['level'] == level), None)
+          if floor_structure is None:
+              resident['reason'] = (
+                  f'Authored {body_name} group ${bound_group:02X} cell ${cell:02X} parent decoded, '
+                  f'but its floor table binds no structure at level {level}, so the resident '
+                  'is not placed.'
+              )
+              continue
           storey = structure_storey_height(data, override['slot'])
-          level = association['levelSelector']
-          if storey is None or not 0 <= local[1] - storey * level < storey:
+          if storey is None:
+              if level != 0:
+                  raise ValueError(f'{body_name} resident slot {slot} is on level {level} of a '
+                                   'structure with no floor pitch')
+              floor_note = ('The structure publishes no storey pitch, so level 0 is its only '
+                            'floor.')
+          elif not 0 <= local[1] - storey * level < storey:
               raise ValueError(f'{body_name} resident slot {slot} is not on floor {level}')
-          model = by_address.get(parent['model'])
+          else:
+              floor_note = (f'Level {level} is floor {level} at the structure\'s {storey}-unit '
+                            f'storey pitch, so the record sits {local[1] - storey * level} units '
+                            'above it.')
+          if level:
+              floor_note += (f' The floor table binds {floor_structure} at that level, and the '
+                             'placement is read against its plan and association list.')
+          # The structure as drawn: the level's plan and the cell instance's
+          # Building detail, both in the instance's scale. Only the cell bind
+          # writes the scale ($054D98/$054DA8, $054DEA/$054DFA) and the detail
+          # ($054DB6/$054E08); the lift assembles a Floor's slot without either,
+          # and eris-transporter-11-8 holds slot 17's 3x3 on Floor 10, whose
+          # slot 16 authors 1x1. A Floor's own plan is decoded in its own scale,
+          # so it is rescaled into the instance's.
+          model = by_address.get(floor_structure)
+          interior_slot, _, scale = structure_bindings.get(parent['model'], (None, None, (1, 1)))
+          own_scale = structure_bindings.get(floor_structure, (None, None, scale))[2]
           extent = None
-          if model and model.get('variants'):
-              vertices = model['variants'][0]['mesh']['vertices']
+          if model and model.get('variants') and all(own_scale):
+              vertices = [[x * scale[0] // own_scale[0], y, z * scale[1] // own_scale[1]]
+                          for x, y, z in model['variants'][0]['mesh']['vertices']]
+              if interior_slot is not None and interior_slot < len(tables[2]['entries']):
+                  detail = by_address[tables[2]['entries'][interior_slot]]
+                  if detail.get('variants'):
+                      vertices += [[x * scale[0], y, z * scale[1]]
+                                   for x, y, z in detail['variants'][0]['mesh']['vertices']]
               extent = [[min(v[axis] for v in vertices), max(v[axis] for v in vertices)]
                         for axis in range(3)]
+          # Without a pitch nothing else bounds the height, so the drawn
+          # structure has to contain it too.
+          axes = (0, 2) if storey is not None else (0, 1, 2)
           if extent and not all(extent[axis][0] <= local[axis] <= extent[axis][1]
-                                for axis in (0, 2)):
+                                for axis in axes):
               resident['reason'] = (
                   f'Authored {body_name} group ${bound_group:02X} cell ${cell:02X} parent '
                   f'decoded, but the '
-                  f'derived local placement {tuple(local)} lies outside the parent extent, '
-                  'so it is not published.'
+                  f'derived local placement {tuple(local)} lies outside the plan of '
+                  f'{floor_structure}, so it is not published.'
               )
               continue
-          root = structure_association_roots.get(parent['model'])
+          root = structure_association_roots.get(floor_structure)
           insertions = None
           if root is not None:
               insertions = decode_structure_associations(data, root).get(
                   association['insertionGroupSelector'])
           if insertions is not None:
               association['insertions'] = insertions
+          heading = data[0x77a8 + slot * 4]
           resident['placement'] = {
               'parent': parent['id'],
               'position': local,
-              'heading': None,
+              'heading': heading,
               'coordinateSystem': f'{body_name} group ${bound_group:02X} cell ${cell:02X} local model units',
           }
-          floor_note = (f'Level {level} is floor {level} at the structure\'s {storey}-unit storey '
-                        f'pitch, so the record sits {local[1] - storey * level} units above it.')
           resident['reason'] = (
               f'Recovered resident placement in the authored {body_name} structure-group '
               f'${bound_group:02X} cell ${cell:02X} instance. {floor_note}'
               + ('' if insertions is not None else
-                 ' Its insertion group is absent from the parent structure\'s association list, '
-                 'which belongs to the structure bound at level 0; the interior list is '
-                 'unreached (#331).')
-              + ' Raw yaw is not published; the absolute angular convention remains unresolved.'
+                 f' Its insertion group is absent from {floor_structure}\'s association list, '
+                 'so only the region its own group numbers inserts it.')
+              + f' Its instance angle byte is ${heading:02X} (#361).'
           )
           model = by_address.get(parent['model'])
           if model is not None and resident['id'] not in model['linkedInstances']:
@@ -4695,7 +4770,9 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                             f'instance and binds resident slot {slot} at local '
                             f'{tuple(local)} on floor {level}.'),
                   'confidence': 'verified',
-                  'source': 'docs/research/damocles-dion-vesta-structure-groups.md',
+                  'source': ('docs/research/damocles-dion-vesta-structure-groups.md'
+                             if body_id in ('body-4', 'body-14') else
+                             'docs/research/damocles-interior-resident-placement.md'),
               })
 
     for vehicle_slot, key_slot in ((2, 180), (3, 181), (4, 182), (5, 183),
@@ -4763,10 +4840,11 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         ]
         spaceport_raw = [round(spaceport['location']['position'][axis] * 65536) for axis in (0, 1, 2)]
         key_position = resident_local_position(data, 183, tuple(spaceport_raw))
-        key['placement'] = {'parent': spaceport['id'], 'position': key_position, 'heading': None,
+        key['placement'] = {'parent': spaceport['id'], 'position': key_position,
+                            'heading': data[0x77a8 + 183 * 4],
                             'coordinateSystem': 'Capital Spaceport local model units'}
-        key['reason'] = ('Recovered resident placement in Capital Spaceport region 1. Raw yaw is zero; '
-                         'the absolute angular convention remains unresolved.')
+        key['reason'] = ('Recovered resident placement in Capital Spaceport region 1. Its instance '
+                         f'angle byte is ${data[0x77a8 + 183 * 4]:02X} (#361).')
     # Scene colour bindings for $7000 ground templates. A template object record
     # carries no palette of its own, so the only evidence its face colours have is
     # the palette each placing cell's surface record selects. Every evidenced

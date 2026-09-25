@@ -1,6 +1,12 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Mentor group $1A cell $45 record places this instance and binds resident slot 89 at local (-2710, 0, -1310) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01dbb4",
     "kind": "structure",
     "levelBinding": {
@@ -34,7 +40,9 @@
       ],
       "tableAddress": 121786
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-89"
+    ],
     "name": "Structure 230",
     "nameStatus": "unknown",
     "omissions": [],

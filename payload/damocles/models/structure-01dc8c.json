@@ -1,6 +1,22 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Clotho group $32 cell $11 record places this instance and binds resident slot 96 at local (-1729, 0, -115) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Clotho group $32 cell $11 record places this instance and binds resident slot 116 at local (-1663, 0, 89) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Clotho group $32 cell $11 record places this instance and binds resident slot 245 at local (-1660, 0, 208) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01dc8c",
     "kind": "structure",
     "levelBinding": {
@@ -47,7 +63,11 @@
       ],
       "tableAddress": 122002
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-96",
+      "object-slot-116",
+      "object-slot-245"
+    ],
     "name": "Structure 242",
     "nameStatus": "unknown",
     "omissions": [],

@@ -1,9 +1,17 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Eris group $12 cell $99 record places this instance and binds resident slot 124 at local (621, 0, 553) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-00ed8e",
     "kind": "structure",
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-124"
+    ],
     "name": "Structure 1",
     "nameStatus": "unknown",
     "omissions": [],

@@ -1,9 +1,29 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Eris group $12 cell $3F record places this instance and binds resident slot 134 at local (2570, 0, 1061) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $12 cell $E8 record places this instance and binds resident slot 182 at local (2641, 0, 1360) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Gaea group $07 cell $39 record places this instance and binds resident slot 26 at local (2703, 0, 1030) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-015eea",
     "kind": "structure",
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-134",
+      "object-slot-182",
+      "object-slot-26"
+    ],
     "name": "Structure 82",
     "nameStatus": "unknown",
     "omissions": [],

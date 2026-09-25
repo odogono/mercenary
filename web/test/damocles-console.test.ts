@@ -182,7 +182,9 @@ describe('get names what it took', () => {
   /// happened to match by accident rather than by rule. The other five are out of reach for
   /// reasons that are evidence boundaries, not defects, and this pins each one:
   ///
-  /// - slots 95, 151 and 181 have **no recovered residence at all**, so nothing places them;
+  /// - slot 95 has **no recovered residence at all**, so nothing places it;
+  /// - slots 151 and 181 are placed in the Eris State Office (cell 9,8), but 181 is on Floor 10
+  ///   and 151's insertion group names regions 1, 6 and 7, while the cell's centre is region 10;
   /// - slot 94 is level 1, and `worldPosition` draws only level 0 (#357);
   /// - slot 101 is level 0 on Dion, but its insertion group 32 never names the one region the
   ///   player can bind to in its cell, so it is positioned and then drawn zero times (#355).
@@ -221,13 +223,27 @@ describe('get names what it took', () => {
     expect(session.switchToPose('body-2').kind).toBe('declined');
   }, 30_000);
 
-  test('the unreachable five have no recovered residence or no level 0', async () => {
+  test('the unreachable five are unplaced, off level 0, or not in the region stood in', async () => {
     // Stated against the Catalogue as well as the session, so a payload change moves this test
     // rather than leaving the reachability test to fail for a reason it cannot name.
     const catalogue = await loadCatalogue();
-    for (const id of ['object-slot-95', 'object-slot-151', 'object-slot-181']) {
-      expect(catalogueResidence(catalogue, id)).toBeUndefined();
-    }
+    expect(catalogueResidence(catalogue, 'object-slot-95')).toBeUndefined();
+    expect(catalogueResidence(catalogue, 'object-slot-151')).toMatchObject({
+      insertionGroup: 7,
+      kind: 'structure',
+      level: 0,
+      parent: 'eris-surface-89'
+    });
+    expect(
+      catalogue.instances
+        .find(item => item.id === 'object-slot-151')!
+        .association!.insertions.map(pair => pair.regionSelector)
+    ).toEqual([1, 6]);
+    expect(catalogueResidence(catalogue, 'object-slot-181')).toMatchObject({
+      kind: 'structure',
+      level: 10,
+      parent: 'eris-surface-89'
+    });
     // Slot 94 is placed, and placed above the ground level the draw pass admits.
     expect(catalogueResidence(catalogue, 'object-slot-94')).toMatchObject({
       kind: 'structure',

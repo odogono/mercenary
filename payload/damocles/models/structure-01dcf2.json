@@ -1,6 +1,12 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Gaea group $0F cell $D4 record places this instance and binds resident slot 30 at local (-1014, 360, 1620) on floor 2.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01dcf2",
     "kind": "structure",
     "levelBinding": {
@@ -47,7 +53,9 @@
       ],
       "tableAddress": 122104
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-30"
+    ],
     "name": "Structure 247",
     "nameStatus": "unknown",
     "omissions": [],

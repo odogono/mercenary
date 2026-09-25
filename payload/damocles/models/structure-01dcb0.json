@@ -1,6 +1,22 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Clotho group $32 cell $01 record places this instance and binds resident slot 208 at local (-160, 300, -944) on floor 2.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Clotho group $32 cell $01 record places this instance and binds resident slot 214 at local (-162, 300, -1096) on floor 2.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Clotho group $32 cell $01 record places this instance and binds resident slot 218 at local (-160, 348, -944) on floor 2.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01dcb0",
     "kind": "structure",
     "levelBinding": {
@@ -98,7 +114,11 @@
       ],
       "tableAddress": 122038
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-208",
+      "object-slot-214",
+      "object-slot-218"
+    ],
     "name": "Structure 244",
     "nameStatus": "unknown",
     "omissions": [],

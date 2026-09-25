@@ -304,6 +304,12 @@ from "the resident's insertion group lives in another structure's list".
 
 ## Open items
 
+**Superseded in part.** [Interior residents in every captured workspace](damocles-interior-resident-placement.md)
+binds every captured group, not only these two, and reads an upper Floor at the cell
+instance's scale. That publishes NOVAGEN SAFE and both Dion `$E3` residents. The items
+below are kept as they were recorded, apart from the Dion groups `$1B` and `$1C`,
+which still have no capture.
+
 - **Ten residents have no insertion mapping.** Seven are Vesta cell `$64` at levels
   `$01`–`$0A`, whose insertion groups `$08`, `$0A` and `$0C` are absent from base
   structure 90's list. That list is complete — the walk past its terminator at

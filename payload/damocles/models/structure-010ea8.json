@@ -2,6 +2,11 @@
   "model": {
     "evidence": [
       {
+        "claim": "Authored Dion group $02 cell $B2 record places this instance and binds resident slot 102 at local (746, 150, 861) on floor 1.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+      },
+      {
         "claim": "Authored Dion group $02 cell $B2 record places this instance and binds resident slot 109 at local (-746, 0, -131) on floor 0.",
         "confidence": "verified",
         "source": "docs/research/damocles-dion-vesta-structure-groups.md"
@@ -46,6 +51,7 @@
       "tableAddress": 69294
     },
     "linkedInstances": [
+      "object-slot-102",
       "object-slot-109",
       "object-slot-111",
       "object-slot-148",

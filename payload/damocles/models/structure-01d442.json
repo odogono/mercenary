@@ -1,6 +1,12 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Acheron group $06 cell $11 record places this instance and binds resident slot 99 at local (291, 0, 338) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01d442",
     "kind": "structure",
     "levelBinding": {
@@ -46,7 +52,9 @@
       ],
       "tableAddress": 119880
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-99"
+    ],
     "name": "Structure 167",
     "nameStatus": "unknown",
     "omissions": [],

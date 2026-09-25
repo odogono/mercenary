@@ -1,6 +1,32 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Gaea group $0F cell $66 record places this instance and binds resident slot 27 at local (-549, 150, 465) on floor 1.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Gaea group $0F cell $66 record places this instance and binds resident slot 125 at local (121, 188, -27) on floor 1.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Gaea group $0F cell $66 record places this instance and binds resident slot 155 at local (-103, 1500, 1175) on floor 10.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Gaea group $0F cell $66 record places this instance and binds resident slot 229 at local (105, 150, -158) on floor 1.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Gaea group $0F cell $66 record places this instance and binds resident slot 239 at local (121, 150, -27) on floor 1.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-010b7c",
     "kind": "structure",
     "levelBinding": {
@@ -90,7 +116,13 @@
       ],
       "tableAddress": 68482
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-27",
+      "object-slot-125",
+      "object-slot-155",
+      "object-slot-229",
+      "object-slot-239"
+    ],
     "name": "Structure 31",
     "nameStatus": "unknown",
     "omissions": [],

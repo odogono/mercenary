@@ -1,0 +1,134 @@
+# Damocles interior residents in every captured workspace
+
+Working-Authority Evidence, recovered 2026-09-25. It extends
+[the Dion and Vesta structure-group maps](damocles-dion-vesta-structure-groups.md)
+(#325) from two hard-coded groups to every structure group a capture stands in, and
+reads each resident against the structure its own Floor binds. The prompt was Metis
+DOOBERRYS SOLICITORS: on Floor 9 the ST draws a PROCESSORS CHAIR and a PROCESSORS
+DESK, and the port drew nothing, because no Metis resident had a placement.
+
+Placed interior residents go from **28 to 139** of the 195 interior-associated
+residents. None of the 28 moves.
+
+## Every capture binds its group
+
+A capture binds its structure group (`$794E`) when its live `$ABDC` is byte-identical
+to the workspace `load_structure_workspace` replays from that group's authored
+stream. That is the rule #325 applied to Vesta `$05` and Dion `$02`. The extractor now
+checks it for every workspace it attaches and raises on a mismatch. All 22 pass:
+first-world (Eris `$12`) and the 21 `--workspace` captures.
+
+| Capture | Body | Group | Capture | Body | Group |
+| --- | --- | --- | --- | --- | --- |
+| first-world | ERIS | `$12` | `damocles.solon` | SOLON | `$04` |
+| `vesta-parliament-4-6` | VESTA | `$05` | `damocles.theon` | THEON | `$09` |
+| `gaea-ur-city-4-2` | GAEA | `$07` | `damocles.metis.transporter` | METIS | `$03` |
+| `dion-2-3` | DION | `$02` | `damocles.lucan` | LUCAN | `$25` |
+| `damocles.icarus` | ICARUS | `$33` | `damocles.logos.transporter` | LOGOS | `$08` |
+| `damocles.acheron` | ACHERON | `$06` | `damocles.pan` | PAN | `$0C` |
+| `damocles.atropos` | ATROPOS | `$37` | `damocles.thalia` | THALIA | `$0B` |
+| `damocles.clotho` | CLOTHO | `$32` | `damocles.bacchus.transporter` | BACCHUS | `$18` |
+| `damocles.gaea.transporter` | GAEA | `$0F` | `damocles.tolosa` | TOLOSA | `$17` |
+| `damocles.cronus` | CRONUS | `$36` | `damocles.perseus` | PERSEUS | `$16` |
+| `damocles.cyclopes` | CYCLOPES | `$35` | `damocles.mentor.transporter` | MENTOR | `$1A` |
+
+Gaea `$0F` is among them, so the disposition #324 recorded for it ("bound to a static
+group record, named workspace identity unresolved") no longer applies: the
+`gaea-transporter` capture stands in it.
+
+## A resident belongs to the structure its Floor binds
+
+A resident on level *n* is read against the structure the cell instance's floor table
+binds at *n* (`$055B24`, [the level-to-structure binding](damocles-level-structure-binding.md)).
+That structure's plan bounds the placement, and its association list gives the regions
+that insert the resident. Level 0 is the cell instance itself. Earlier, every resident
+was read against the level-0 structure. Seven upper-Floor residents were left with the
+implicit own-region pair, and three Dion residents in cell `$E3` fell outside a plan
+that was never theirs. Now all 139 placed residents carry their own group's pairs.
+
+### A Floor keeps the instance's scale and Building detail
+
+Only the cell bind writes the structure scale. `$054D98`/`$054DA8` write it from an
+alias record and `$054DEA`/`$054DFA` from a plain structure's `-8` bytes. The Building
+detail byte `$53A85` likewise has only the two bind-path writers, `$054DB6` and
+`$054E08`. The lift's move (`$055B12` → `$055BA6` → `$059D70`, then `$05A64A`,
+`$052C9C` and `$054744`) reaches none of them. `$054D70` writes `$7AF0` unconditionally
+before either scale write, and `$7AF0` is known never to be rewritten on a lift move.
+
+The live captures agree. Each holds the alias record's scale in `$539CE`/`$539D2`,
+whatever the Floor's own record authors:
+
+| Capture | Floor | Instance slot, scale | Floor slot, own scale | Live `$539CE`/`$539D2` |
+| --- | ---: | --- | --- | --- |
+| `eris-transporter-11-8` | 10 | 17, (3, 3) | 16, **(1, 1)** | **(3, 3)** |
+| `metis-transporter` | 9 | 155, (2, 2) | 58, (2, 2) | (2, 2) |
+| `vesta-transporter` | 10 | 70, (3, 3) | 91, (3, 3) | (3, 3) |
+| `dion-transporter` | 1 | 56, (2, 2) | 58, (2, 2) | (2, 2) |
+| `logos-transporter` | 4 | 267, (1, 1) | 67, (1, 1) | (1, 1) |
+
+So a Floor draws its slot's plan and the instance's Building detail, **both at the
+instance's scale**. The extractor rescales a Floor's own-scale plan into the
+instance's before bounding a resident by it. At the Floor's own scale, fifteen
+residents fall outside the plan. At the instance's scale all fifteen lie inside it,
+and fourteen sit exactly on their Floor's storey line. The fifteenth, ANSAFONE, is 30
+units up, on the COFFEE TABLE at the same X and Z. Among them are ANTIGRAV (Eris
+`$12`/`$29`, Floor 10), GOLD, STOOL, BOOKCASE and TABLE in Solon `$04`/`$11` Floor 10,
+and NOVAGEN SAFE (Dion `$B2`, Floor 1), which #325 had refused.
+
+Across the Catalogue, 173 upper-Floor entries bind a slot whose own scale differs
+from its instance's. This is a limit of the port's Floor rendering, not of the
+payload: `floorPlacement` draws the Floor slot's own Model, at its own scale and with
+its own detail.
+
+## A region may be named twice in one group
+
+`decode_structure_associations` refused a group that names one region twice. The
+native builder copies pairs verbatim (`$52D24`), and the queue assembler inserts once
+for every pair whose region matches (`$5A3DE`). Eris slot 209's structure (root
+`$18824`) authors region `$0E` twice in group `$13`, so both pairs are kept. The port's
+`insertionsInRegion` already counts them. A repeated *group* is still refused, since
+`$52D14` stops at the first match.
+
+## Instance angle
+
+Structure placements publish the instance angle byte (`$77A8 + 4 × slot`) as
+`heading`, as surface locations already did, and the port turns a structure resident
+by it through `placementHeading`. As [#361](https://github.com/odogono/mercenary/issues/361)
+established, only a Model with the single-Y orientation record turns. The Metis Floor 9
+furniture has none, so it draws as modelled whatever its byte reads.
+
+## Result by Body
+
+| Body | Placed | Interior-associated |
+| --- | ---: | ---: |
+| DION | 19 | 29 |
+| CLOTHO | 17 | 17 |
+| GAEA | 28 | 28 |
+| ERIS | 23 | 64 |
+| VESTA | 10 | 10 |
+| METIS | 8 | 8 |
+| PERSEUS, MENTOR | 6 each | 6 each |
+| SOLON, TOLOSA | 4 each | 4 each |
+| THEON, LOGOS, BACCHUS | 3 each | 3 each |
+| ICARUS, ACHERON, ATROPOS, CYCLOPES, PAN | 1 each | 1 each |
+
+Metis DOOBERRYS SOLICITORS (`metis-surface-60`), Floor 9, binds slot 58
+(`structure-012d2e`). PROCESSORS CHAIR sits at local `(-324, 1350, 660)` and
+PROCESSORS DESK at `(-319, 1350, 740)`, with FILOFAX and TRANSPORTER a. All four lie
+on the storey line (9 × 150). Standing at the `metis-transporter` arrival pose (Floor 9,
+region 5), the port draws all four.
+
+## What is not placed
+
+Fifty-six interior residents, all in groups that no capture stands in:
+
+| Body | Groups | Residents |
+| --- | --- | ---: |
+| ERIS | `$10`, `$11`, `$14`, `$15` | 41 |
+| DION | `$1B`, `$1C` | 10 |
+| MIDAS | `$38` | 5 |
+
+Each group replays from the image with `load_structure_workspace` (#460). Under the
+binding rule above, though, a group needs a capture standing in it before its
+residents are published. Eris `$14`'s `KEY - 99 CHEVY` (#172) is the one hand-bound
+exception.

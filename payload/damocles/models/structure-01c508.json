@@ -1,6 +1,17 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Eris group $12 cell $B4 record places this instance and binds resident slot 105 at local (-838, 0, 126) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Gaea group $07 cell $31 record places this instance and binds resident slot 52 at local (-626, 0, -474) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01c508",
     "kind": "structure",
     "levelBinding": {
@@ -46,7 +57,10 @@
       ],
       "tableAddress": 115982
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-105",
+      "object-slot-52"
+    ],
     "name": "Structure 138",
     "nameStatus": "unknown",
     "omissions": [],

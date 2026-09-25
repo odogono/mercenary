@@ -1,6 +1,27 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Solon group $04 cell $11 record places this instance and binds resident slot 55 at local (-2514, 2000, -2474) on floor 10.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Solon group $04 cell $11 record places this instance and binds resident slot 59 at local (-1149, 2000, -2209) on floor 10.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Solon group $04 cell $11 record places this instance and binds resident slot 88 at local (-1311, 2000, -2209) on floor 10.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Solon group $04 cell $11 record places this instance and binds resident slot 246 at local (-1500, 2000, -1855) on floor 10.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01ba8c",
     "kind": "structure",
     "levelBinding": {
@@ -54,7 +75,12 @@
       ],
       "tableAddress": 113298
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-55",
+      "object-slot-59",
+      "object-slot-88",
+      "object-slot-246"
+    ],
     "name": "Structure 132",
     "nameStatus": "unknown",
     "omissions": [],

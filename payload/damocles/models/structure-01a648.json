@@ -1,6 +1,12 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Eris group $12 cell $29 record places this instance and binds resident slot 158 at local (-1103, 1100, 1206) on floor 10.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01a648",
     "kind": "structure",
     "levelBinding": {
@@ -45,7 +51,9 @@
       ],
       "tableAddress": 108110
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-158"
+    ],
     "name": "Structure 103",
     "nameStatus": "unknown",
     "omissions": [],
