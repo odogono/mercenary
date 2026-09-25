@@ -887,7 +887,7 @@ it('decodes the V.I.P. limo key and preserves its source display code', async ()
   )!;
   expect(instance.placement).toEqual({
     coordinateSystem: 'Capital Spaceport local model units',
-    heading: null,
+    heading: 0,
     parent: 'eris-surface-87',
     position: [1038, 0, 789]
   });
@@ -978,12 +978,36 @@ it('links each recovered vehicle to its matching key', async () => {
       source: 'docs/research/damocles-vip-limo.md'
     });
     expect(keyInstance.location).toBeNull();
-    // 180 and 183 are placed by the Eris structure-group recovery; 184 is placed
-    // in Vesta Parliament by the group $05 recovery (#325).
-    if (keySlot !== 180 && keySlot !== 183 && keySlot !== 184) {
-      expect(keyInstance.placement).toBeNull();
-    }
+    // Every key is a structure resident, placed in the workspace a capture binds for its group.
+    expect(keyInstance.placement).not.toBeNull();
   }
+});
+
+it('places DOOBERRYS SOLICITORS Floor 9 residents on the structure Floor 9 binds', async () => {
+  // Metis group $03 is bound by the metis-transporter capture. Floor 9 of cell $60 binds slot
+  // 58, and the chair and desk take their regions from slot 58's association list, not the
+  // ground structure's.
+  const data = await loadCatalogue();
+  const placed = (slot: number) =>
+    data.instances.find(instance => instance.id === `object-slot-${slot}`)!;
+  expect(
+    data.instances.find(instance => instance.id === 'metis-surface-60')!.name
+  ).toBe('DOOBERRYS SOLICITORS');
+  for (const [slot, position] of [
+    [226, [-324, 1350, 660]],
+    [231, [-319, 1350, 740]],
+    [133, [253, 1350, 722]],
+    [67, [234, 1350, 1016]]
+  ] as const) {
+    expect(placed(slot).placement).toMatchObject({
+      parent: 'metis-surface-60',
+      position
+    });
+    expect(placed(slot).association!.levelSelector).toBe(9);
+  }
+  expect(
+    placed(226).association!.insertions.map(pair => pair.regionSelector)
+  ).toEqual([1, 2, 4, 5]);
 });
 
 it('places slot 180 through its decoded structure association', async () => {
@@ -1007,7 +1031,7 @@ it('places slot 180 through its decoded structure association', async () => {
   });
   expect(key.placement).toEqual({
     coordinateSystem: 'Eris structure group $14 cell $26 local model units',
-    heading: null,
+    heading: 0,
     parent: 'eris-structure-0251d7',
     position: [-394, 200, 1846]
   });

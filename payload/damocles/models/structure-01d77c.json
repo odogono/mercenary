@@ -5,6 +5,11 @@
         "claim": "Authored Dion group $02 cell $C2 record places this instance and binds resident slot 63 at local (-255, 160, 410) on floor 1.",
         "confidence": "verified",
         "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+      },
+      {
+        "claim": "Authored Clotho group $32 cell $56 record places this instance and binds resident slot 139 at local (-326, 0, -373) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
       }
     ],
     "id": "structure-01d77c",
@@ -53,7 +58,8 @@
       "tableAddress": 120706
     },
     "linkedInstances": [
-      "object-slot-63"
+      "object-slot-63",
+      "object-slot-139"
     ],
     "name": "Structure 197",
     "nameStatus": "unknown",

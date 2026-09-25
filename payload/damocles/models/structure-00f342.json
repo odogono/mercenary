@@ -1,9 +1,29 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Metis group $03 cell $65 record places this instance and binds resident slot 87 at local (495, 0, 670) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Metis group $03 cell $65 record places this instance and binds resident slot 106 at local (696, 40, -2399) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Metis group $03 cell $65 record places this instance and binds resident slot 114 at local (-26, 0, 533) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-00f342",
     "kind": "structure",
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-87",
+      "object-slot-106",
+      "object-slot-114"
+    ],
     "name": "Structure 7",
     "nameStatus": "unknown",
     "omissions": [],

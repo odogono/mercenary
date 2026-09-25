@@ -1,6 +1,12 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Eris group $12 cell $EC record places this instance and binds resident slot 56 at local (210, 150, -1242) on floor 1.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01a6c0",
     "kind": "structure",
     "levelBinding": {
@@ -110,7 +116,9 @@
       ],
       "tableAddress": 108230
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-56"
+    ],
     "name": "Structure 109",
     "nameStatus": "unknown",
     "omissions": [],

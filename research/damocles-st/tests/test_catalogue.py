@@ -235,6 +235,17 @@ class SourceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'terminator'):
             decode_structure_associations(bytes.fromhex('01 02 10 00'), 0)
 
+    def test_keeps_a_region_named_twice_in_one_group(self):
+        from damocleslab.catalogue import decode_structure_associations
+        self.assertEqual(
+            decode_structure_associations(bytes.fromhex('13 0e 0d 0e 0d 10 0c 00 00'), 0),
+            {0x13: [
+                {'regionSelector': 0x0E, 'insertionKey': 0x0D},
+                {'regionSelector': 0x0E, 'insertionKey': 0x0D},
+                {'regionSelector': 0x10, 'insertionKey': 0x0C},
+            ]},
+        )
+
     def test_preserves_structure_association_pair_order(self):
         from damocleslab.catalogue import decode_structure_associations
         self.assertEqual(

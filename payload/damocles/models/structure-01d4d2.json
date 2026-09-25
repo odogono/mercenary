@@ -1,6 +1,37 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Gaea group $07 cell $21 record places this instance and binds resident slot 78 at local (-246, 2000, 1811) on floor 10.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Gaea group $07 cell $25 record places this instance and binds resident slot 79 at local (-210, 2000, 1840) on floor 10.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Gaea group $07 cell $21 record places this instance and binds resident slot 210 at local (-22, 0, 1031) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Gaea group $07 cell $25 record places this instance and binds resident slot 211 at local (-151, 0, 1181) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Gaea group $07 cell $25 record places this instance and binds resident slot 232 at local (-151, 0, 1271) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Gaea group $07 cell $21 record places this instance and binds resident slot 233 at local (-24, 0, 1101) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01d4d2",
     "kind": "structure",
     "levelBinding": {
@@ -90,7 +121,14 @@
       ],
       "tableAddress": 120024
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-78",
+      "object-slot-79",
+      "object-slot-210",
+      "object-slot-211",
+      "object-slot-232",
+      "object-slot-233"
+    ],
     "name": "Structure 175",
     "nameStatus": "unknown",
     "omissions": [],

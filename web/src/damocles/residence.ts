@@ -197,9 +197,14 @@ export const validStructureResidence = (
       group => group.group === residence.insertionGroup
     ) ?? false;
   // Direct structures do not publish an alias pitch ($054DE0). Level zero at
-  // Y=0 satisfies every positive pitch; this admits no inferred height or elevation.
+  // Y=0 satisfies every positive pitch; this admits no inferred height or elevation. A
+  // recovered level-zero placement is admitted where it stands (a WALL PHONE hangs at Y=40),
+  // as the extractor bounds it by the drawn structure; no other level has a floor to stand on.
   if (height === undefined) {
-    return residence.level === 0 && residence.position.y === 0 && admittedGroup;
+    return (
+      residence.level === 0 &&
+      (recoveredPlacement || (residence.position.y === 0 && admittedGroup))
+    );
   }
   if (!recoveredPlacement && !admittedGroup) {
     return false;

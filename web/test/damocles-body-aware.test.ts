@@ -116,7 +116,7 @@ describe('body-aware Object Residence', () => {
     const expectedPairs = placed.length * admittedBodies.size;
 
     expect(matrix).toMatchObject({
-      residentCount: 28
+      residentCount: 139
     });
     expect(matrix.rows).toHaveLength(expectedPairs);
     // Twenty-one Bodies carry an admitted Pose since #172 recovered their workspace origins,
@@ -125,7 +125,7 @@ describe('body-aware Object Residence', () => {
     for (const body of ['body-4', 'body-8', 'body-11', 'body-14']) {
       expect(matrix.rows.some(row => row.body === body)).toBe(true);
     }
-    expect(new Set(matrix.rows.map(row => row.instance))).toHaveLength(28);
+    expect(new Set(matrix.rows.map(row => row.instance))).toHaveLength(139);
     expect(matrix.rows.every(row => row.take.tag === 'observed')).toBe(true);
     expect(matrix.rows.every(row => row.drops.length > 0)).toBe(true);
     expect(
@@ -295,7 +295,8 @@ describe('body-aware Object Residence', () => {
         });
       }
     }
-  }, 15_000);
+    // 139 placed residents on 21 Bodies: about 5 s alone, three times that in a full run.
+  }, 60_000);
 });
 
 describe('a resident is exposed by its own insertion pairs', () => {
@@ -308,17 +309,16 @@ describe('a resident is exposed by its own insertion pairs', () => {
       item => item.associationGroups !== null
     );
     expect(withTable.map(item => item.id)).toEqual(['eris-surface-87']);
-    // 21 of the 28 placed structure residents carry their own group's pairs. The other seven
-    // have a group the parent's association list does not hold, which the extractor records in
-    // their reason; they keep the implicit pair alone, which is the honest answer rather than a
-    // default.
+    // Every placed structure resident carries its own group's pairs. Seven once kept the
+    // implicit pair alone: they stand on upper Floors, and their pairs are in the association
+    // list of the structure their Floor binds, not the ground structure's.
     const placed = catalogue.instances.filter(
       item => item.placement !== null && item.association !== null
     );
-    expect(placed.length).toBe(28);
+    expect(placed.length).toBe(139);
     expect(
       placed.filter(item => item.association!.insertions.length > 0).length
-    ).toBe(21);
+    ).toBe(139);
   });
 
   test('counts the implicit own-region pair and the explicit ones', () => {

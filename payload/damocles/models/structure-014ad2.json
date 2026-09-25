@@ -2,6 +2,36 @@
   "model": {
     "evidence": [
       {
+        "claim": "Authored Eris group $12 cell $89 record places this instance and binds resident slot 110 at local (236, 150, 137) on floor 1.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $12 cell $89 record places this instance and binds resident slot 115 at local (64, 300, -155) on floor 2.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $12 cell $89 record places this instance and binds resident slot 118 at local (726, 0, -287) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $12 cell $89 record places this instance and binds resident slot 151 at local (726, 30, -287) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $12 cell $89 record places this instance and binds resident slot 181 at local (463, 1500, 92) on floor 10.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $12 cell $89 record places this instance and binds resident slot 187 at local (383, 300, 56) on floor 2.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
         "claim": "Structure 75 at STATE OFFICE aliases this plan and binds four generic Entrance Attachments; slot $03FC is a two-leaf Z entrance.",
         "confidence": "verified",
         "source": "docs/research/damocles-generic-entrance-attachments.md"
@@ -65,7 +95,14 @@
       ],
       "tableAddress": 84696
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-110",
+      "object-slot-115",
+      "object-slot-118",
+      "object-slot-151",
+      "object-slot-181",
+      "object-slot-187"
+    ],
     "name": "Structure 75",
     "nameStatus": "unknown",
     "omissions": [],

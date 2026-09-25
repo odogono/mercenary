@@ -1,6 +1,17 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Gaea group $07 cell $29 record places this instance and binds resident slot 152 at local (-207, 1500, 250) on floor 10.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Gaea group $07 cell $29 record places this instance and binds resident slot 163 at local (-12, 1500, -400) on floor 10.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01d394",
     "kind": "structure",
     "levelBinding": {
@@ -64,7 +75,10 @@
       ],
       "tableAddress": 119706
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-152",
+      "object-slot-163"
+    ],
     "name": "Structure 158",
     "nameStatus": "unknown",
     "omissions": [],

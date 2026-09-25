@@ -442,7 +442,8 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
       islandTriangles: 16,
       placements: 390,
       pose: 'dion-transporter',
-      triangles: 512
+      // Includes TRANSPORTER a (slot 66), placed on Floor 1 against the structure it binds.
+      triangles: 542
     },
     {
       body: 'body-8',

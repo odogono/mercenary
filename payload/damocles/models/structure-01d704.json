@@ -1,6 +1,12 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Cyclopes group $35 cell $22 record places this instance and binds resident slot 46 at local (-34, 0, 584) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01d704",
     "kind": "structure",
     "levelBinding": {
@@ -31,7 +37,9 @@
       ],
       "tableAddress": 120586
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-46"
+    ],
     "name": "Structure 191",
     "nameStatus": "unknown",
     "omissions": [],

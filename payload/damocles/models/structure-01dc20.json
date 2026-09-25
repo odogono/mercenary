@@ -1,6 +1,17 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Bacchus group $18 cell $31 record places this instance and binds resident slot 147 at local (-589, 30, 563) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Bacchus group $18 cell $31 record places this instance and binds resident slot 221 at local (-589, 0, 563) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01dc20",
     "kind": "structure",
     "levelBinding": {
@@ -42,7 +53,10 @@
       ],
       "tableAddress": 121894
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-147",
+      "object-slot-221"
+    ],
     "name": "Structure 236",
     "nameStatus": "unknown",
     "omissions": [],

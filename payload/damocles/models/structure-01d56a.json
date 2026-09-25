@@ -1,9 +1,29 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Theon group $09 cell $32 record places this instance and binds resident slot 82 at local (-414, 0, -3185) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Theon group $09 cell $13 record places this instance and binds resident slot 100 at local (-547, 0, -3062) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Theon group $09 cell $13 record places this instance and binds resident slot 242 at local (-523, 0, -3229) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01d56a",
     "kind": "structure",
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-82",
+      "object-slot-100",
+      "object-slot-242"
+    ],
     "name": "Structure 183",
     "nameStatus": "unknown",
     "omissions": [],

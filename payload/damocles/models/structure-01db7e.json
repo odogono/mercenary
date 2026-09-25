@@ -1,6 +1,22 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Mentor group $1A cell $12 record places this instance and binds resident slot 53 at local (2675, 0, 1232) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Mentor group $1A cell $34 record places this instance and binds resident slot 119 at local (2648, 0, 1269) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Mentor group $1A cell $56 record places this instance and binds resident slot 132 at local (2718, 0, 1229) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01db7e",
     "kind": "structure",
     "levelBinding": {
@@ -34,7 +50,11 @@
       ],
       "tableAddress": 121732
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-53",
+      "object-slot-119",
+      "object-slot-132"
+    ],
     "name": "Structure 227",
     "nameStatus": "unknown",
     "omissions": [],

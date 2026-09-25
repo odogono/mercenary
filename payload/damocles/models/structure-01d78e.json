@@ -5,6 +5,11 @@
         "claim": "Authored Dion group $02 cell $22 record places this instance and binds resident slot 128 at local (356, 0, -645) on floor 0.",
         "confidence": "verified",
         "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+      },
+      {
+        "claim": "Authored Bacchus group $18 cell $21 record places this instance and binds resident slot 130 at local (627, 0, -106) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
       }
     ],
     "id": "structure-01d78e",
@@ -53,7 +58,8 @@
       "tableAddress": 120724
     },
     "linkedInstances": [
-      "object-slot-128"
+      "object-slot-128",
+      "object-slot-130"
     ],
     "name": "Structure 198",
     "nameStatus": "unknown",

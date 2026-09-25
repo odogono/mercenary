@@ -1,6 +1,12 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Atropos group $37 cell $11 record places this instance and binds resident slot 138 at local (271, 160, -182) on floor 1.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01d6bc",
     "kind": "structure",
     "levelBinding": {
@@ -46,7 +52,9 @@
       ],
       "tableAddress": 120514
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-138"
+    ],
     "name": "Structure 187",
     "nameStatus": "unknown",
     "omissions": [],

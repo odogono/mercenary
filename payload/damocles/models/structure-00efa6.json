@@ -1,9 +1,17 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Icarus group $33 cell $12 record places this instance and binds resident slot 91 at local (-390, 0, -587) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-00efa6",
     "kind": "structure",
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-91"
+    ],
     "name": "Structure 4",
     "nameStatus": "unknown",
     "omissions": [],

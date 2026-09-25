@@ -1,6 +1,12 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Clotho group $32 cell $04 record places this instance and binds resident slot 129 at local (-199, 1500, 221) on floor 10.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01d370",
     "kind": "structure",
     "levelBinding": {
@@ -45,7 +51,9 @@
       ],
       "tableAddress": 119670
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-129"
+    ],
     "name": "Structure 156",
     "nameStatus": "unknown",
     "omissions": [],

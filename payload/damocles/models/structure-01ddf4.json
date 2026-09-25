@@ -1,6 +1,27 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Gaea group $0F cell $14 record places this instance and binds resident slot 28 at local (-994, 0, 1736) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Gaea group $0F cell $14 record places this instance and binds resident slot 90 at local (-551, 0, 41) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Gaea group $0F cell $14 record places this instance and binds resident slot 98 at local (-827, 180, 1734) on floor 1.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Gaea group $0F cell $14 record places this instance and binds resident slot 103 at local (-421, 50, 31) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01ddf4",
     "kind": "structure",
     "levelBinding": {
@@ -47,7 +68,12 @@
       ],
       "tableAddress": 122362
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-28",
+      "object-slot-90",
+      "object-slot-98",
+      "object-slot-103"
+    ],
     "name": "Structure 262",
     "nameStatus": "unknown",
     "omissions": [],

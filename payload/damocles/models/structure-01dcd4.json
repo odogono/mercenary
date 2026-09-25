@@ -1,6 +1,12 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Metis group $03 cell $31 record places this instance and binds resident slot 32 at local (608, 0, -352) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01dcd4",
     "kind": "structure",
     "levelBinding": {
@@ -66,7 +72,9 @@
       ],
       "tableAddress": 122074
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-32"
+    ],
     "name": "Structure 246",
     "nameStatus": "unknown",
     "omissions": [],

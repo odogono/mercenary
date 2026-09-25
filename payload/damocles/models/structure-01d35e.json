@@ -1,6 +1,37 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Gaea group $0F cell $88 record places this instance and binds resident slot 70 at local (-493, 150, 936) on floor 1.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Gaea group $0F cell $88 record places this instance and binds resident slot 191 at local (200, 150, 1093) on floor 1.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Metis group $03 cell $60 record places this instance and binds resident slot 67 at local (234, 1350, 1016) on floor 9.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Metis group $03 cell $60 record places this instance and binds resident slot 133 at local (253, 1350, 722) on floor 9.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Metis group $03 cell $60 record places this instance and binds resident slot 226 at local (-324, 1350, 660) on floor 9.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Metis group $03 cell $60 record places this instance and binds resident slot 231 at local (-319, 1350, 740) on floor 9.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01d35e",
     "kind": "structure",
     "levelBinding": {
@@ -102,7 +133,14 @@
       ],
       "tableAddress": 119652
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-70",
+      "object-slot-191",
+      "object-slot-67",
+      "object-slot-133",
+      "object-slot-226",
+      "object-slot-231"
+    ],
     "name": "Structure 155",
     "nameStatus": "unknown",
     "omissions": [],
