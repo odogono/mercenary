@@ -286,6 +286,26 @@ describe('the AudioWorklet processor', () => {
     // The DC blocker's tail is all that is left of the tone.
     expect(Math.max(...vblLevels(after).slice(2))).toBeLessThan(SILENT);
   });
+
+  test('a reset sent while the context is suspended survives the resume', async () => {
+    const processor = await damoclesProcessor();
+    processor.post({
+      at: processor.time(),
+      commands: [{ cue: 'door-start', kind: 'cue' }]
+    });
+    expect(
+      Math.min(...vblLevels(processor.render(0.2)).slice(1))
+    ).toBeGreaterThan(AUDIBLE);
+    // A New Game while the menu holds the context suspended: the reset lands first, then the
+    // resume replaces whatever the old timebase left queued. No block is rendered in between.
+    processor.post({
+      at: processor.time() + 0.05,
+      commands: [{ kind: 'reset' }]
+    });
+    processor.post({ at: 0, commands: [], replacePending: true });
+    const after = processor.render(1);
+    expect(Math.max(...vblLevels(after).slice(2))).toBeLessThan(SILENT);
+  });
 });
 
 class RecordingTransport implements SoundTransport<DamoclesSoundCommand> {

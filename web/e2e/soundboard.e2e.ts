@@ -1,36 +1,14 @@
 import { expect, test, type Page } from '@playwright/test';
 
-/// The sound board (#508): each title's sounds play on demand, and Stop everything silences
-/// them. An AnalyserNode is spliced in wherever a node connects to its context's destination,
-/// so the check listens to what the speakers are given.
+import { tapDestination, type SoundTapScope } from './sound-tap.ts';
 
-const tap = async (page: Page): Promise<void> => {
-  await page.addInitScript(() => {
-    const taps: AnalyserNode[] = [];
-    (window as unknown as { soundTaps: AnalyserNode[] }).soundTaps = taps;
-    const connect = AudioNode.prototype.connect as (
-      this: AudioNode,
-      ...args: unknown[]
-    ) => unknown;
-    AudioNode.prototype.connect = function (
-      this: AudioNode,
-      ...args: unknown[]
-    ) {
-      if (args[0] === this.context.destination) {
-        const analyser = this.context.createAnalyser();
-        analyser.fftSize = 1024;
-        connect.call(this, analyser);
-        taps.push(analyser);
-      }
-      return connect.apply(this, args);
-    } as typeof AudioNode.prototype.connect;
-  });
-};
+/// The sound board (#508): each title's sounds play on demand, and Stop everything silences
+/// them. The check listens at the destination tap, to what the speakers are given.
 
 /// The loudest RMS any tapped output reaches over `seconds`.
 const loudest = (page: Page, seconds: number): Promise<number> =>
   page.evaluate(async seconds => {
-    const taps = (window as unknown as { soundTaps: AnalyserNode[] }).soundTaps;
+    const taps = (window as unknown as SoundTapScope).soundTaps;
     const samples = new Float32Array(1024);
     let peak = 0;
     const until = performance.now() + seconds * 1000;
@@ -53,7 +31,7 @@ test('the sound board plays a Targ and a Damocles sound, and stops them', async 
 }) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
-  await tap(page);
+  await tapDestination(page);
   await page.goto('/sounds');
   const card = (title: RegExp) =>
     page.locator('article.sound').filter({ has: page.getByText(title) });

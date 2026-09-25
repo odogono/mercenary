@@ -1,5 +1,6 @@
 import { DamoclesPsgDriver, type DamoclesCue } from '../src/damocles/psg.ts';
 import { Ym2149 } from '../src/sound/ym2149.ts';
+import { encodeWav } from './wav.ts';
 
 /// Renders what the Damocles sound presenter plays for a timeline of Sound Cues to a mono
 /// 48 kHz WAV, so the port can be put through the same analysis as a Working Authority
@@ -57,31 +58,7 @@ for (let vbl = 0; vbl < vbls; vbl += 1) {
   written = until;
 }
 
-const bytes = new Uint8Array(44 + samples.length * 2);
-const view = new DataView(bytes.buffer);
-const label = (offset: number, text: string): void => {
-  bytes.set(new TextEncoder().encode(text), offset);
-};
-label(0, 'RIFF');
-view.setUint32(4, bytes.length - 8, true);
-label(8, 'WAVEfmt ');
-view.setUint32(16, 16, true);
-view.setUint16(20, 1, true);
-view.setUint16(22, 1, true);
-view.setUint32(24, SAMPLE_RATE, true);
-view.setUint32(28, SAMPLE_RATE * 2, true);
-view.setUint16(32, 2, true);
-view.setUint16(34, 16, true);
-label(36, 'data');
-view.setUint32(40, samples.length * 2, true);
-for (const [index, sample] of samples.entries()) {
-  view.setInt16(
-    44 + index * 2,
-    Math.round(Math.max(-1, Math.min(1, sample)) * 32_767),
-    true
-  );
-}
-await Bun.write(output, bytes);
+await Bun.write(output, encodeWav(samples, SAMPLE_RATE));
 process.stdout.write(
   `${output}: ${samples.length} samples at ${SAMPLE_RATE} Hz\n`
 );

@@ -7,6 +7,7 @@ import '../shell/damoclesPanelElement.ts';
 
 import { IDLE } from '../gameCore/index.ts';
 import { DEFAULT_CAST_SHADOWS } from '../settings/index.ts';
+import { installAudioLifecycle } from '../shell/audioLifecycle.ts';
 import { installShellChrome } from '../shell/chrome.ts';
 import { FixedStepClock } from '../shell/clock.ts';
 import type { ConsoleParseContext } from '../shell/console.ts';
@@ -352,13 +353,15 @@ try {
     }
   };
 
+  const audio = installAudioLifecycle({
+    document,
+    ownership,
+    presenter: sound,
+    window
+  });
   const menu = installSystemMenu({
     onLayer: layer => {
-      if (layer === 'none') {
-        sound.resume();
-      } else {
-        sound.suspend();
-      }
+      audio.layerChanged(layer);
       if (layer === 'menu') {
         notices.menuOpened();
         checkpointChangedResume();
@@ -824,43 +827,7 @@ try {
   window.addEventListener('pagehide', () => {
     flushResume();
     takeover.close();
-    sound.dispose();
   });
-  window.addEventListener('blur', () => sound.suspend());
-  window.addEventListener('focus', () => {
-    if (!document.hidden && menu.layer() === 'none' && ownership.mayAdvance()) {
-      sound.resume();
-    }
-  });
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-      sound.suspend();
-    } else if (menu.layer() === 'none' && ownership.mayAdvance()) {
-      sound.resume();
-    }
-  });
-  // Audio starts only inside a trusted gesture, as Targ's does.
-  const unlockSound = (event: Event): void => {
-    if (!event.isTrusted) {
-      return;
-    }
-    window.removeEventListener('pointerdown', unlockSound, true);
-    window.removeEventListener('keydown', unlockSound, true);
-    void sound
-      .unlock()
-      .then(() => {
-        if (
-          document.hidden ||
-          menu.layer() !== 'none' ||
-          !ownership.mayAdvance()
-        ) {
-          sound.suspend();
-        }
-      })
-      .catch(() => {});
-  };
-  window.addEventListener('pointerdown', unlockSound, { capture: true });
-  window.addEventListener('keydown', unlockSound, { capture: true });
 
   const paintNotices = (): void => {
     const save = persistence.message('');

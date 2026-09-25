@@ -4,6 +4,7 @@ import { isAbsolute, join, relative, resolve } from 'node:path';
 
 import { load } from '../src/payload/load.ts';
 import { renderSidSequence, type SidWrite } from '../src/sound/sequence.ts';
+import { decodeWav, encodeWav } from './wav.ts';
 
 const root = resolve(import.meta.dir, '../..');
 const work = await realpath(join(root, 'research/c64-reference-build/work'));
@@ -22,52 +23,6 @@ const bundle = await load(async name =>
 const output = join(run, `comparison-${Date.now()}`);
 await mkdir(output);
 
-const pcm = (samples: Float32Array): Uint8Array => {
-  const bytes = new Uint8Array(44 + samples.length * 2);
-  const view = new DataView(bytes.buffer);
-  const label = (offset: number, text: string): void => {
-    bytes.set(new TextEncoder().encode(text), offset);
-  };
-  label(0, 'RIFF');
-  view.setUint32(4, bytes.length - 8, true);
-  label(8, 'WAVEfmt ');
-  view.setUint32(16, 16, true);
-  view.setUint16(20, 1, true);
-  view.setUint16(22, 1, true);
-  view.setUint32(24, 48_000, true);
-  view.setUint32(28, 96_000, true);
-  view.setUint16(32, 2, true);
-  view.setUint16(34, 16, true);
-  label(36, 'data');
-  view.setUint32(40, samples.length * 2, true);
-  samples.forEach((sample, index) =>
-    view.setInt16(
-      44 + index * 2,
-      Math.round(Math.max(-1, Math.min(1, sample)) * 32_767),
-      true
-    )
-  );
-  return bytes;
-};
-
-const readPcm = (bytes: Uint8Array): Float32Array => {
-  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-  for (let offset = 12; offset + 8 <= bytes.length;) {
-    const tag = new TextDecoder().decode(bytes.subarray(offset, offset + 4));
-    const length = view.getUint32(offset + 4, true);
-    if (offset + 8 + length > bytes.length) {
-      throw new Error('Truncated WAV');
-    }
-    if (tag === 'data') {
-      return Float32Array.from(
-        { length: length / 2 },
-        (_, index) => view.getInt16(offset + 8 + index * 2, true) / 32_768
-      );
-    }
-    offset += 8 + length + (length % 2);
-  }
-  throw new Error('Missing PCM data');
-};
 const rms = (samples: Float32Array, from: number, to: number): number => {
   const segment = samples.subarray(
     Math.round(from * 48_000),
@@ -98,7 +53,7 @@ for (const probe of manifest.probes) {
   const writes = JSON.parse(
     new TextDecoder().decode(await verified('sid-events.json'))
   ) as SidWrite[];
-  const reference = readPcm(await verified('audio.wav'));
+  const reference = decodeWav(await verified('audio.wav'));
   const rendered = renderSidSequence(bundle.sound, writes, reference.length);
   await Bun.write(
     join(output, `${probe.name}-reference.wav`),
@@ -106,7 +61,7 @@ for (const probe of manifest.probes) {
   );
   await Bun.write(
     join(output, `${probe.name}-browser.wav`),
-    pcm(rendered.subarray(19_200))
+    encodeWav(rendered.subarray(19_200), 48_000)
   );
   metrics.push({
     name: probe.name,
