@@ -23,6 +23,7 @@
           "structureSlot": 139
         },
         {
+          "drawnStructureId": "structure-01c66e-at-m1xm1-detail-30",
           "level": 10,
           "paletteIndex": 78,
           "structureId": "structure-01c66e",
@@ -65,10 +66,7 @@
             "#88aa88",
             null,
             "#224422",
-            null,
-            null,
-            null,
-            "#446688"
+            "#000000"
           ],
           "paletteIndex": 78
         }

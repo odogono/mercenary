@@ -266,6 +266,28 @@ describe('an arrival Pose lands on its captured Floor', () => {
     }
   });
 
+  test('an upper-Floor Pose stands in the region its capture held', () => {
+    // `$7AFC`, the region the queue assembler reads, in each capture above Floor 0. The port
+    // draws an upper Floor in the frame of the instance that binds it (#531): at Eris 11,8
+    // Floor 10 the instance is 3x3 and the Floor's own slot 1x1, and read at its own scale the
+    // Floor is a third the size and the Pose stands in no region at all.
+    for (const [name, floor, region] of [
+      ['eris-transporter-11-8', 10, 5],
+      ['vesta-transporter', 10, 8],
+      ['metis-transporter', 9, 5],
+      ['dion-transporter', 1, 4],
+      ['gaea-transporter', 1, 4],
+      ['logos-transporter', 4, 10],
+      ['pan', 1, 3]
+    ] as const) {
+      const session = new DamoclesSession(content);
+      expect(session.switchToPose(name).kind).toBe('switched');
+      const structure = session.snapshot.structure!;
+      expect(structure.floor).toBe(floor);
+      expect(structure.regionIndex! + 1).toBe(region);
+    }
+  });
+
   test('every admitted Pose lands on the Floor its capture stood on', () => {
     for (const pose of admittedPoses(poses)) {
       const session = new DamoclesSession(content);
@@ -423,10 +445,13 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
     {
       body: 'body-11',
       cell: { x: 11, z: 8 },
-      islandTriangles: 58,
+      islandTriangles: 0,
       placements: 439,
       pose: 'eris-transporter-11-8',
-      triangles: 666
+      // Floor 10 drawn in the instance's 3x3 frame, standing in region 5 as the capture does:
+      // an enclosed region, so no ground record is drawn (#491, #531).
+      enclosed: true,
+      triangles: 330
     },
     {
       body: 'body-4',

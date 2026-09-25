@@ -72,6 +72,7 @@ import {
   bearingFromYaw,
   cellOf,
   erisSurfaceFrom,
+  floorModelId,
   floorPlacement,
   floorsOf,
   insideCentralCellHalf,
@@ -448,13 +449,12 @@ export class DamoclesSession implements TitleSession<
         ? undefined
         : content.models
             .peek(bound.model)
-            ?.levelBinding?.floors.find(entry => entry.level === floor)
-            ?.structureId;
+            ?.levelBinding?.floors.find(entry => entry.level === floor);
     return [
       ...(modelWaves(content.catalogue, surface, restore.pose.position)[0] ??
         []),
       ...(bound === undefined ? [] : [bound.model]),
-      ...(floorStructure === undefined ? [] : [floorStructure])
+      ...(floorStructure === undefined ? [] : [floorModelId(floorStructure)])
     ].filter(id => content.models.peek(id) === undefined);
   }
 
@@ -780,7 +780,7 @@ export class DamoclesSession implements TitleSession<
   /// Floor structure is a placed Model, so neither the Body's waves nor Atlas Travel read them.
   private readFloors(ground: ErisPlacement): void {
     void this.content.models.prefetch(
-      floorsOf(ground, this.content.models).map(entry => entry.structureId)
+      floorsOf(ground, this.content.models).map(floorModelId)
     );
   }
 

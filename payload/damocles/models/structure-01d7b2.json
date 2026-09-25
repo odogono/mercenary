@@ -12,12 +12,14 @@
           "structureSlot": 28
         },
         {
+          "drawnStructureId": "structure-0107a6-at-m3x3-detail-86",
           "level": 1,
           "paletteIndex": 102,
           "structureId": "structure-0107a6",
           "structureSlot": 29
         },
         {
+          "drawnStructureId": "structure-0107a6-at-m3x3-detail-86",
           "level": 2,
           "paletteIndex": 102,
           "structureId": "structure-0107a6",
@@ -59,7 +61,8 @@
             "#00aaaa",
             "#224444",
             "#eeaaaa",
-            "#000000"
+            "#000000",
+            "#882222"
           ],
           "paletteIndex": 102
         }

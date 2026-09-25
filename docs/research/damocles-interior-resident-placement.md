@@ -78,9 +78,10 @@ units up, on the COFFEE TABLE at the same X and Z. Among them are ANTIGRAV (Eris
 and NOVAGEN SAFE (Dion `$B2`, Floor 1), which #325 had refused.
 
 Across the Catalogue, 173 upper-Floor entries bind a slot whose own scale differs
-from its instance's. This is a limit of the port's Floor rendering, not of the
-payload: `floorPlacement` draws the Floor slot's own Model, at its own scale and with
-its own detail.
+from its instance's, and 11 more bind another Building detail. #531 publishes each
+as a Floor form in its instance's frame (`drawnStructureId`), which the port draws.
+Of the 102 upper-Floor residents, 23 stood outside their Floor as it was drawn before
+and none do now.
 
 ## A region may be named twice in one group
 

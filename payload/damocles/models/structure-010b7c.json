@@ -38,18 +38,21 @@
           "structureSlot": 28
         },
         {
+          "drawnStructureId": "structure-0107a6-at-m2xm2-detail-86",
           "level": 1,
           "paletteIndex": 144,
           "structureId": "structure-0107a6",
           "structureSlot": 29
         },
         {
+          "drawnStructureId": "structure-0107a6-at-m2xm2-detail-86",
           "level": 2,
           "paletteIndex": 144,
           "structureId": "structure-0107a6",
           "structureSlot": 29
         },
         {
+          "drawnStructureId": "structure-010908-at-m2xm2-detail-86",
           "level": 10,
           "paletteIndex": 153,
           "structureId": "structure-010908",
@@ -91,7 +94,8 @@
             "#aaaaaa",
             "#224444",
             "#888888",
-            "#000000"
+            "#000000",
+            "#0000ee"
           ],
           "paletteIndex": 144
         },
@@ -104,11 +108,12 @@
             "#224444",
             "#aaccee",
             "#664444",
-            "#88aacc",
+            null,
             "#882222",
             "#000000",
             "#888888",
             "#aaaaaa",
+            "#000000",
             "#000000"
           ],
           "paletteIndex": 153

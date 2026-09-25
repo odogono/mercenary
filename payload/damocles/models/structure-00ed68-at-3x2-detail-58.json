@@ -1,0 +1,326 @@
+{
+  "model": {
+    "evidence": [
+      {
+        "claim": "Only the cell bind writes the structure scale ($054D98/$054DA8, $054DEA/$054DFA) and the Building detail byte ($054DB6/$054E08); the lift's move reaches neither, and eris-transporter-11-8 holds the instance's 3x3 on a Floor whose slot authors 1x1.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
+    "id": "structure-00ed68-at-3x2-detail-58",
+    "kind": "structure",
+    "linkedInstances": [],
+    "name": "Structure 0 \u00b7 Floor frame 3\u00d72",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "Empty surface record: no plan vertices or walls. The Floor form of structure-00ed68: its record decoded at the 3\u00d72 scale of the instance that binds it, with that instance's Building detail interior-02ce86, as the lift draws it.",
+    "recordClass": "empty",
+    "relatedModels": [
+      "structure-00ed68",
+      "interior-02ce86"
+    ],
+    "sceneColours": [
+      {
+        "colour": "#eeee22",
+        "dayColour": "#00aaaa",
+        "sourceColour": 32898
+      },
+      {
+        "colour": "#882222",
+        "sourceColour": 32914
+      }
+    ],
+    "slots": [
+      288
+    ],
+    "sourceAddress": 60776,
+    "status": "partial",
+    "structureSelection": {
+      "attachments": [],
+      "detailModel": "interior-02ce86",
+      "detailVariant": "palette-89",
+      "liveSelector": false,
+      "plan": {
+        "faces": [],
+        "lines": [],
+        "sourceEnd": 60790,
+        "sourceStart": 60776,
+        "vertices": []
+      },
+      "regions": [
+        {
+          "bounds": [
+            [
+              -32768,
+              32767
+            ],
+            [
+              -32768,
+              32767
+            ]
+          ],
+          "flags": 49152,
+          "gate": "none",
+          "queue": []
+        }
+      ],
+      "scale": [
+        3,
+        2
+      ]
+    },
+    "variants": [
+      {
+        "id": "assembly",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#ee8822",
+              "sourceColour": 32896,
+              "sourceIndex": 0,
+              "vertices": [
+                0,
+                16,
+                18,
+                4
+              ]
+            },
+            {
+              "colour": "#ee6622",
+              "sourceColour": 32898,
+              "sourceIndex": 1,
+              "vertices": [
+                16,
+                1,
+                5,
+                18
+              ]
+            },
+            {
+              "colour": "#ee6622",
+              "sourceColour": 32898,
+              "sourceIndex": 2,
+              "vertices": [
+                17,
+                0,
+                4,
+                19
+              ]
+            },
+            {
+              "colour": "#ee8822",
+              "sourceColour": 32896,
+              "sourceIndex": 3,
+              "vertices": [
+                19,
+                7,
+                3,
+                17
+              ]
+            },
+            {
+              "colour": "#ee8822",
+              "sourceColour": 32896,
+              "sourceIndex": 4,
+              "vertices": [
+                1,
+                2,
+                6,
+                5
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "dayColour": "#000000",
+              "sourceColour": 32918,
+              "sourceIndex": 5,
+              "vertices": [
+                8,
+                9,
+                10,
+                11
+              ]
+            },
+            {
+              "colour": "#ee6622",
+              "sourceColour": 32898,
+              "sourceIndex": 6,
+              "vertices": [
+                2,
+                3,
+                7,
+                6
+              ]
+            },
+            {
+              "colour": "#ee6622",
+              "sourceColour": 32898,
+              "sourceIndex": 7,
+              "vertices": [
+                13,
+                1,
+                5,
+                14
+              ]
+            },
+            {
+              "colour": "#ee6622",
+              "sourceColour": 32898,
+              "sourceIndex": 8,
+              "vertices": [
+                14,
+                5,
+                18,
+                15
+              ]
+            },
+            {
+              "colour": "#ee6622",
+              "sourceColour": 32898,
+              "sourceIndex": 9,
+              "vertices": [
+                12,
+                15,
+                18,
+                16
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32904,
+              "sourceIndex": 10,
+              "vertices": [
+                12,
+                13,
+                14,
+                15
+              ]
+            },
+            {
+              "colour": "#444444",
+              "sourceColour": 32914,
+              "sourceIndex": 11,
+              "vertices": [
+                4,
+                5,
+                6,
+                7
+              ]
+            }
+          ],
+          "lines": [],
+          "sourceEnd": 60790,
+          "sourceStart": 60776,
+          "vertices": [
+            [
+              -600,
+              0,
+              2400
+            ],
+            [
+              1800,
+              0,
+              2400
+            ],
+            [
+              1800,
+              0,
+              800
+            ],
+            [
+              -600,
+              0,
+              800
+            ],
+            [
+              -600,
+              1250,
+              2400
+            ],
+            [
+              1800,
+              1250,
+              2400
+            ],
+            [
+              1800,
+              1250,
+              800
+            ],
+            [
+              -600,
+              1250,
+              800
+            ],
+            [
+              1800,
+              50,
+              2300
+            ],
+            [
+              1800,
+              50,
+              900
+            ],
+            [
+              1800,
+              1150,
+              900
+            ],
+            [
+              1800,
+              1150,
+              2300
+            ],
+            [
+              780,
+              0,
+              2400
+            ],
+            [
+              1020,
+              0,
+              2400
+            ],
+            [
+              1020,
+              150,
+              2400
+            ],
+            [
+              780,
+              150,
+              2400
+            ],
+            [
+              0,
+              0,
+              2400
+            ],
+            [
+              -600,
+              0,
+              1950
+            ],
+            [
+              0,
+              1250,
+              2400
+            ],
+            [
+              -600,
+              1250,
+              1950
+            ]
+          ]
+        },
+        "name": "Floor as drawn \u00b7 palette 1"
+      }
+    ]
+  },
+  "schemaVersion": 17,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

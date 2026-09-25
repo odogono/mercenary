@@ -307,8 +307,8 @@ displays each table's qualification. Every slot maps to one model identity;
 repeated pointers share a model and retain all slot indices. No pointer scan is
 represented as a model census.
 
-Current extraction accounts for **1718 unique records**: **1392 decoded**,
-**326 partial**, and **0 unresolved**. “Decoded” means the supported record was
+Current extraction accounts for **1765 unique records**: **1435 decoded**,
+**330 partial**, and **0 unresolved**. “Decoded” means the supported record was
 parsed completely; it does not mean every model has received a human fidelity
 review. Partial records expose recovered geometry and explain omitted features.
 Unresolved records remain searchable and retain their source identity and reason.
