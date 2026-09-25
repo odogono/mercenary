@@ -1,8 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
-  bodyRadius,
-  bodySize,
   readFlyoverPresentation,
   readGammaSystem
 } from '../src/flyover/documents.ts';
@@ -152,16 +150,16 @@ describe('the composed Gamma System', () => {
     for (const body of first) {
       const recovered = stable.find(candidate => candidate.id === body.id)!;
       expect(body.position).toEqual(recovered.position);
-      // The Body's own decoded extent over the derived divisor, not a fraction of how far away
-      // its neighbours happen to be.
-      expect(body.displayRadiusUnits).toBe(bodyRadius(recovered));
+      // The Body's own recovered radius, not a fraction of how far away its neighbours happen
+      // to be.
+      expect(body.displayRadiusUnits).toBe(recovered.radius);
       expect(body.colour).toBe(recovered.baseColour);
       expect(body.ranges).toEqual(['orbital']);
       expect(body.provenance).toEqual({
         colour: 'recovered',
         identity: 'recovered',
         position: 'recovered',
-        radius: 'mechanically-derived',
+        radius: 'recovered',
         ranges: 'authored'
       });
       expect('primaryId' in body).toBeFalse();
@@ -197,12 +195,12 @@ describe('the composed Gamma System', () => {
     for (const [index, a] of stable.entries()) {
       for (const b of stable.slice(index + 1)) {
         pairs += 1;
-        expect(at(a.id) > at(b.id)).toBe(bodySize(a) > bodySize(b));
+        expect(at(a.id) > at(b.id)).toBe(a.size > b.size);
       }
     }
     expect(pairs).toBe(406);
 
-    // Nothing intersects, which is the bound the divisor behind `bodyRadius` was chosen for.
+    // Nothing intersects: no two recovered Bodies overlap.
     for (const [index, a] of stable.entries()) {
       for (const b of stable.slice(index + 1)) {
         expect(at(a.id) + at(b.id)).toBeLessThan(

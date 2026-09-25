@@ -1,5 +1,5 @@
 import { SURFACE_CELLS } from '../damocles/world.ts';
-import { bodyRadius, bodySize, type GammaBody } from '../flyover/documents.ts';
+import type { GammaBody } from '../flyover/documents.ts';
 import {
   clampView,
   clusterAll,
@@ -26,9 +26,10 @@ import { nearestOffset } from './surface.ts';
 /// relationship: no `Primary` is recovered (ADR 0014, `CONTEXT.md`) and this projection discards
 /// Y, so nearness here is nearness on screen.
 ///
-/// A Body's size comes from `bodySize`, which decodes the packed binary float in `radiusExtent`
-/// (#424). The decoded sizes span 500-fold, so far out they are drawn as markers on an authored
-/// scale and close in as the Body itself on the derived one. `SystemMarker.toScale` says which.
+/// A Body's size and radius come from the payload: `size` decodes the packed binary float in
+/// `radiusExtent` (#424), and `radius` is `size / 256` in position units (#528). The sizes span
+/// 500-fold, so far out they are drawn as markers on an authored scale and close in as the Body
+/// itself at its recovered radius. `SystemMarker.toScale` says which.
 
 export interface SystemFrame {
   readonly height: number;
@@ -63,11 +64,11 @@ const LABEL_GAP = 5;
 /// largest square **inscribed** in the disc, so no island falls outside it and nothing has to be
 /// clipped or hidden. For ERIS, whose drawn diameter is 2,400 units, that is 0.414 units a cell.
 export const unitsPerCell = (body: GammaBody): number =>
-  (2 * bodyRadius(body)) / Math.SQRT2 / SURFACE_CELLS;
+  (2 * body.radius) / Math.SQRT2 / SURFACE_CELLS;
 
 /// How far the System Range may zoom in. Deeper than the kernel's default because the hand-over
 /// into a Body is keyed to that Body's own size, and the recovered sizes span 500-fold: the
-/// smallest Bodies — THEON, AURORA and SAPPHIRE, whose derived radius is 40 position units —
+/// smallest Bodies — THEON, AURORA and SAPPHIRE, whose radius is 40 position units —
 /// need 126,327x before their surface fills the frame, where DIALIS needs 253x. At the kernel's
 /// 8192 only 8 of the 30 Bodies could be entered by zooming at all. 2^18 leaves headroom past
 /// the deepest of them.
@@ -113,7 +114,7 @@ const markerRadius = (body: GammaBody, widest: number): number =>
     WIDEST_MARKER,
     Math.max(
       NARROWEST_MARKER,
-      WIDEST_MARKER * (bodySize(body) / Math.max(widest, 1)) ** (1 / 3)
+      WIDEST_MARKER * (body.size / Math.max(widest, 1)) ** (1 / 3)
     )
   );
 
@@ -124,10 +125,10 @@ export interface SystemMarker {
   /// The marker's identity: the id of the Body whose name and size it wears.
   readonly id: string;
   readonly name: string;
-  /// Css pixels: the Body's own derived radius once that covers more than its marker, and an
+  /// Css pixels: the Body's own radius once that covers more than its marker, and an
   /// authored marker size before then.
   readonly radius: number;
-  /// True when `radius` is the Body's derived radius rather than a marker, so the map can say
+  /// True when `radius` is the Body's own radius rather than a marker, so the map can say
   /// whether what is on screen is a size or a symbol.
   readonly toScale: boolean;
   /// The named Body's own recovered position, so a marker never sits on a centroid no Body
@@ -181,10 +182,9 @@ export const projectSystem = (
     return { markers: [], unitsPerPixel };
   }
   const aspect = aspectOf(frame);
-  const widest = Math.max(...bodies.map(bodySize));
+  const widest = Math.max(...bodies.map(body => body.size));
   // A flat threshold serves every camera. Markers are bounded by WIDEST_MARKER, and two Bodies
-  // drawn at their derived radii cannot intersect, because non-overlap is the bound the divisor
-  // behind `bodyRadius` was chosen to satisfy.
+  // drawn at their radii cannot intersect, because no two recovered Bodies overlap.
   const markers = clusterAll(
     bodies.map(pointOf),
     MARKER_GAP * unitsPerPixel
@@ -195,22 +195,22 @@ export const projectSystem = (
     const named = members.reduce((best, index) => {
       const a = bodies[index]!,
         b = bodies[best]!;
-      return bodySize(a) > bodySize(b) ||
-        (bodySize(a) === bodySize(b) && a.sourceIndex < b.sourceIndex)
+      return a.size > b.size ||
+        (a.size === b.size && a.sourceIndex < b.sourceIndex)
         ? index
         : best;
     }, members[0]!);
     const body = bodies[named]!;
     const { u, v } = project(view, pointOf(body), aspect);
     const marker = markerRadius(body, widest);
-    const derived = bodyRadius(body) / unitsPerPixel;
+    const own = body.radius / unitsPerPixel;
     return {
       baseColour: body.baseColour,
       bodyIds: members.map(index => bodies[index]!.id),
       id: body.id,
       name: body.name,
-      radius: Math.max(marker, derived),
-      toScale: derived > marker,
+      radius: Math.max(marker, own),
+      toScale: own > marker,
       world: pointOf(body),
       x: u * frame.width,
       y: v * frame.height

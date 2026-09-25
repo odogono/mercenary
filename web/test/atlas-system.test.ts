@@ -40,11 +40,7 @@ import {
   markerView,
   projectSystem
 } from '../src/atlas/system.ts';
-import {
-  bodyRadius,
-  readGammaSystem,
-  type GammaBody
-} from '../src/flyover/documents.ts';
+import { readGammaSystem, type GammaBody } from '../src/flyover/documents.ts';
 import { loadCatalogue } from './fixtures/catalogue.ts';
 
 const FRAME = { height: 600, width: 900 };
@@ -61,10 +57,13 @@ const body = (
   sourceIndex = 0
 ): GammaBody => ({
   baseColour: '#888888',
+  drawList: [],
   id,
   name: id.toUpperCase(),
   position: { x, y: 0, z },
+  radius: size(radiusExtent) / 256,
   radiusExtent,
+  size: size(radiusExtent),
   sourceColour: 0x7_77,
   sourceIndex
 });
@@ -72,6 +71,8 @@ const body = (
 /// A packed extent (#424): mantissa normalised into $1000..$1FFF against a binary exponent.
 const packed = (exponent: number, mantissa = 0x10_00) =>
   (exponent << 16) | mantissa;
+const size = (radiusExtent: number) =>
+  ((radiusExtent & 0xff_ff) / 0x10_00) * 2 ** (radiusExtent >>> 16);
 
 describe('the Atlas System Range camera', () => {
   test('fits the whole recovered System in both axes', async () => {
@@ -254,30 +255,28 @@ describe('the Atlas System Range markers', () => {
 });
 
 describe('the Atlas System Range sizes', () => {
-  test('carry a derived radius no pair of Bodies can overlap', async () => {
+  test('carry a recovered radius no pair of Bodies overlaps at', async () => {
     const system = await gammaSystem();
-    // RADIUS_DIVISOR is derived, so the bound it satisfies is the test: no two of the thirty
-    // recovered Bodies may overlap at their derived radii. The tightest pair is ERIS and VESTA,
-    // 2,400 units apart, which fixes the divisor's lower bound at 166.4.
+    // The radius is recovered (#528), and it agrees with the bound #424 could only derive: no
+    // two of the thirty recovered Bodies overlap. The tightest pair is ERIS and VESTA, 2,400
+    // units apart, which bounded the divisor below at 166.4.
     let tightest = Infinity;
     for (const [index, a] of system.bodies.entries()) {
       for (const b of system.bodies.slice(index + 1)) {
         tightest = Math.min(
           tightest,
           Math.hypot(a.position.x - b.position.x, a.position.z - b.position.z) -
-            bodyRadius(a) -
-            bodyRadius(b)
+            a.radius -
+            b.radius
         );
       }
     }
     expect(tightest).toBeGreaterThan(0);
     expect(Math.round(tightest)).toBe(840);
-    expect(
-      Math.round(bodyRadius(system.bodies.find(b => b.id === 'eris')!))
-    ).toBe(1200);
+    expect(system.bodies.find(b => b.id === 'eris')!.radius).toBe(1200);
   });
 
-  test('become the Body once its derived radius covers more than its marker', async () => {
+  test('become the Body once its radius covers more than its marker', async () => {
     const system = await gammaSystem();
     const fit = fitSystem(system.bodies, FRAME);
     // Far out every disc is a marker, because a Body really is well under a pixel across.
@@ -286,7 +285,7 @@ describe('the Atlas System Range sizes', () => {
         marker => !marker.toScale
       )
     ).toBe(true);
-    // Close in every disc is the Body. The smallest moons have a derived radius of 40 units, so
+    // Close in every disc is the Body. The smallest moons have a radius of 40 units, so
     // they are the last to cross their marker and that takes a deep camera.
     expect(
       projectSystem(
@@ -316,7 +315,7 @@ describe('the Atlas System Range sizes', () => {
       zoomView(fit, fit, 512),
       FRAME
     );
-    // The point of a derived radius: a disc measures the same on screen as the distances beside
+    // The point of a recovered radius: a disc measures the same on screen as the distances beside
     // it, so ERIS's 1,200-unit radius is drawn against the 2,332 units to SOLON.
     const eris = projection.markers.find(marker => marker.id === 'eris')!;
     const solon = projection.markers.find(marker => marker.id === 'solon')!;
@@ -325,7 +324,7 @@ describe('the Atlas System Range sizes', () => {
     );
     expect(eris.radius).toBeGreaterThan(solon.radius * 5);
     expect(eris.radius).toBeCloseTo(
-      bodyRadius(system.bodies.find(b => b.id === 'eris')!) /
+      system.bodies.find(b => b.id === 'eris')!.radius /
         projection.unitsPerPixel,
       6
     );
@@ -334,8 +333,8 @@ describe('the Atlas System Range sizes', () => {
   test('never overlap one another on screen, at any camera', async () => {
     const system = await gammaSystem();
     const fit = fitSystem(system.bodies, FRAME);
-    // The two regimes the map has. Two discs both drawn at their derived radius can never
-    // intersect, because that is the bound RADIUS_DIVISOR satisfies. Markers are held apart by
+    // The two regimes the map has. Two discs both drawn at their radius can never intersect,
+    // because no two recovered Bodies overlap. Markers are held apart by
     // MARKER_GAP only, so two of them may touch: at 11 css pixels a marker is wider than half
     // the gap, which is a judgement about symbols and not a claim about Bodies.
     for (const factor of [1, 2, 4, 8, 16, 32, 64, 128, 512, 4096]) {

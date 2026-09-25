@@ -27,10 +27,10 @@ export const SYSTEM_RANGE_NOTE =
   'of the largest Body under it and a count of the rest: that is a fact about this drawing at ' +
   'this camera and not a relationship, because no Primary was recovered and this map discards ' +
   'the Y axis. A disc far out is a marker and not a size, compressed so a five-hundred-fold ' +
-  'range of sizes stays legible; close in it is the Body at a radius derived from the ' +
-  'recovered extent, which the scale readout distinguishes. That radius divides the decoded ' +
-  'extent (#424) by 256, the smallest power of two at which no two recovered Bodies overlap, ' +
-  'so a Body may be smaller than drawn and never larger. VOID is a place sentinel rather than ' +
+  'range of sizes stays legible; close in it is the Body at its recovered radius, which the ' +
+  'scale readout distinguishes. That radius is the decoded extent (#424) over 256, because ' +
+  'the game draws a Body in its sky with a pixel radius of extent over depth against positions ' +
+  'at 256 times offset over depth (#528). VOID is a place sentinel rather than ' +
   'one of the 30 physical records and is excluded.';
 
 /// Shown while a Body's surface is drawn on its own disc. The one authored quantity in the

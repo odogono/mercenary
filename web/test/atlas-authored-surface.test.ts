@@ -21,7 +21,7 @@ import {
   unitsPerCell
 } from '../src/atlas/system.ts';
 import { SURFACE_CELLS } from '../src/damocles/world.ts';
-import { bodyRadius, readGammaSystem } from '../src/flyover/documents.ts';
+import { readGammaSystem } from '../src/flyover/documents.ts';
 import { loadCatalogue } from './fixtures/catalogue.ts';
 
 const FRAME = { height: 773.5, width: 961.5 };
@@ -44,7 +44,7 @@ describe('the authored surface scale', () => {
     let checked = 0;
     for (const body of system.bodies) {
       const marker = markers.find(value => value.bodyIds.includes(body.id))!;
-      const radius = bodyRadius(body);
+      const radius = body.radius;
       const surface = readBodySurface(data, body.sourceIndex);
       const anchor = surfaceAnchor(surface);
       for (const island of surface.islands) {
@@ -69,10 +69,7 @@ describe('the authored surface scale', () => {
     // is 2,400 position units, so its 4096-cell surface is 1,697 units across.
     expect(unitsPerCell(eris)).toBeCloseTo(0.4143, 4);
     expect(surfaceUnits(eris)).toBeCloseTo(1697.06, 2);
-    expect(surfaceUnits(eris)).toBeCloseTo(
-      (2 * bodyRadius(eris)) / Math.SQRT2,
-      6
-    );
+    expect(surfaceUnits(eris)).toBeCloseTo((2 * eris.radius) / Math.SQRT2, 6);
   });
 });
 
@@ -182,7 +179,7 @@ describe('the hand-over between the Ranges', () => {
       fit.span / SYSTEM_MAX_ZOOM,
       6
     );
-    // Deep enough for the smallest Body, THEON at a 40-unit derived radius.
+    // Deep enough for the smallest Body, THEON at a 40-unit radius.
     const theon = system.bodies.find(body => body.id === 'theon')!;
     expect((surfaceUnits(theon) / FRAME.height) * FRAME.width).toBeGreaterThan(
       fit.span / SYSTEM_MAX_ZOOM

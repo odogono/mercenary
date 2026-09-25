@@ -74,9 +74,9 @@ test('a marker standing for several Bodies opens to its members', async ({
       page.locator('.system-label').filter({ hasText: name })
     ).toHaveCount(1);
   }
-  // Close in a disc is the Body at its derived radius, which the readout distinguishes.
+  // Close in a disc is the Body at its recovered radius, which the readout distinguishes.
   await expect(page.locator('#system-scale')).toContainText(
-    'discs at derived radius'
+    'discs at recovered radius'
   );
 
   // Now the members are unambiguous, so one of them hops.
@@ -125,7 +125,7 @@ test('a deep-linked camera is restored rather than refitted', async ({
   // 20,000 units across the ERIS group: its members are separate Bodies at their own radii.
   await expect(page.locator('#status')).toContainText('30 markers');
   await expect(page.locator('#system-scale')).toContainText(
-    'discs at derived radius'
+    'discs at recovered radius'
   );
   await expect(page.locator('#system-scale')).not.toContainText('zoom 1×');
   await expect(
@@ -316,7 +316,7 @@ test('a small Body hands over too, not just the large ones', async ({
 }) => {
   // The regression this covers: the hand-over is keyed to a Body's own size, and the recovered
   // sizes span 500-fold, so a single zoom ceiling suited to the largest stranded the other 22.
-  // VESTA, whose derived radius is 360 units against ERIS's 1,200, stopped dead at the ceiling.
+  // VESTA, whose radius is 360 units against ERIS's 1,200, stopped dead at the ceiling.
   await page.goto('/damocles/atlas?x=-630000&z=392400&span=900');
   await expect(page.locator('#system-scale')).toContainText(
     'VESTA surface at an authored scale',
@@ -392,7 +392,7 @@ test('zooms out onto the Body from either side of the coordinate seam', async ({
     }
     await expect(page.locator('#range-system')).toBeVisible();
     const at = new URL(page.url()).searchParams;
-    // Landed on ERIS, whose derived radius is 1,200 units and whose authored surface is 849
+    // Landed on ERIS, whose radius is 1,200 units and whose authored surface is 849
     // units from centre to edge. Before the fix, cell 900 landed 1,024 units out.
     expect(
       Math.hypot(Number(at.get('x')) + 630_000, Number(at.get('z')) - 390_000)
@@ -414,7 +414,7 @@ test('zooming out of a grouped Body returns to that Body, not its group', async 
   const at = new URL(page.url()).searchParams;
   // Back on VESTA. Not exactly its centre, because the camera returns to the point the reader
   // was looking at and a Body's surface is drawn centred on its islands rather than on cell
-  // 2048; but its own derived radius is 360 units, so being within that is being on VESTA.
+  // 2048; but its own radius is 360 units, so being within that is being on VESTA.
   expect(
     Math.hypot(Number(at.get('x')) + 630_000, Number(at.get('z')) - 392_400)
   ).toBeLessThan(360);
