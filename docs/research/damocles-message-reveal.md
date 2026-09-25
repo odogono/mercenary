@@ -388,8 +388,10 @@ deferred path that this response never takes; the blocking helpers at `$055092`â
 **Recorded as a laboratory limitation rather than a program fact**: the held-input case is sampled,
 not traced, because a breakpoint chain does not arm under held input in this harness.
 
-**Unresolved**: what raises `$7B96` and what the `$7856 = $83` / `$7126` test at `$0547F2` decides,
-so the second row colour has a mechanism but no recovered occasion; whether any bank loaded from
+**Resolved since, by [#514](damocles-sound-programmes.md#what-arms-each-programme)**: `$7B96` is
+raised when a page of a readable object is selected (`$04D788`), and the `$7856 = $83` / `$7126` test
+at `$0547F2` is the BOOK (slot `$83`) with the MAGIC CRYSTAL carried, which queues the page's action.
+So the second row colour is a readable object's page. **Unresolved**: whether any bank loaded from
 disk carries a record above `$5A` and so exercises the numeric fields; and, as a laboratory matter
 rather than a program one, why Hatari's `VBL` debugger variable does not keep step with the
 program's frame interrupt across multi-VBL gaps in this scene â€” the traces here avoid it by stopping

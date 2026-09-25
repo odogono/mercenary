@@ -630,6 +630,35 @@ so take the elapsed count from `$051D96` in the captures themselves.
 Findings are in
 [the motion and time note](../../docs/research/damocles-script-motion-time.md#comet-motion-440--confirmed-damocless-centre-is-a-function-of-the-impact-clock).
 
+## Sound programme probe (#514)
+
+Every sound the program can make: the driver's programmes, the Geiger tick, the
+writers outside the vectors and the music player, heard in Hatari at 50 Hz.
+
+```sh
+research/damocles-st/.venv/bin/python research/damocles-st/scripts/sound-programme-probe.py decode
+research/damocles-st/.venv/bin/python research/damocles-st/scripts/sound-programme-probe.py record --roms roms --case limo
+research/damocles-st/.venv/bin/python research/damocles-st/scripts/sound-programme-probe.py analyse <mono.wav>
+```
+
+`decode` needs no Hatari. It checks the byte sequences behind every decoded write,
+table and arming site in the pinned first-world RAM, prints the window hashes and
+decodes the three music voices. `record` boots a case's memstate with sound on,
+pokes the PAL field rate as `lift-sound-probe.py` does, arms a non-stopping
+`:trace` breakpoint on every programme's entry, records Hatari's WAV while it
+plays the case's keys, stick, pokes or live interventions, and writes
+`result.json` with the traced programmes placed on the recording's VBL clock.
+The cases are `boot` (cold, no memstate), `limo`, `transporter`, `lift-wall`,
+`hazard`, `geiger`, `explosive-dropped`, `explosive-carried`, `arm-b`, `music` and
+`music-after-thud`. The interventions are named in each case and in the note.
+
+A live intervention reads `$6000`–`$7FFF` and writes back in two separate
+stop/continue round trips: Hatari stops reading the command FIFO if it is left
+stopped with nothing queued.
+
+Findings are in
+[every Damocles sound programme](../../docs/research/damocles-sound-programmes.md).
+
 ## Failures and acceptance
 
 Hard failure on a wrong STX, wrong TOS, missing Hatari, missed title-screen

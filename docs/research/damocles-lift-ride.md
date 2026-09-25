@@ -286,8 +286,9 @@ So, VBL by VBL:
   C's level 0 at once, unless `$7C0C` or `$033F68` is set. A take or a drop while a
   door tone plays silences it until the next VBL's level step.
 - **`$7A78`**, which the effect sets to 15 and every other request to 3, holds off the
-  periodic tick `$0004C6B2`. `$051D24` decrements it instead of ticking while it is
-  nonzero, so the tick does not rewrite channel B while the count runs. After the
+  Geiger counter's click `$0004C6B2` ([#514](damocles-sound-programmes.md#the-drivers-rules-completed)).
+  `$051D26` decrements it instead of ticking while it is nonzero, so no click rewrites
+  channel B while the count runs. After the
   arrival the traces saw it count 15 down to 0 over 8 VBLs.
 
 The idle `$04C250` is the only programme here that depends on something besides the
@@ -427,16 +428,15 @@ What the port can present as recovered:
   runs. A take's request does not. The port presents the arrival as the request alone,
   since the effect rewrites B's level on the next VBL; the difference lasts less than a
   VBL.
-- **The idle `$04C250`'s engine sound** plays only while `$797A` is not negative. No
-  capture has reached that, and the port does not keep `$797A`, so it is not presented.
-- **The periodic tick `$0004C6B2`**, which `$7A78` holds off, belongs to the timer path
-  ([#136](damocles-script-isa.md#the-native-routines-the-handlers-call-136)). The port
-  has no Sound Cue for it.
-- **The rest of the driver's bank**, `$04BF5C`, `$04C016`, `$04C0B4`, `$04C16E`,
-  `$04C1EE`, `$04C470`, `$04C5A8`, `$04C610`, `$04C630`, `$04C652` and `$04C700`, is
-  armed from code no lift or door reaches. None of it was decoded here.
-- **`$033F68`'s alternate sound path** at `$033F6A` was zero in every capture and was
-  not followed.
+- **The idle `$04C250`'s engine sound** is settled by [#514](https://github.com/odogono/mercenary/issues/514)
+  in [every sound programme](damocles-sound-programmes.md#what-arms-each-programme): `$797A`
+  is the craft's speed as a float, and the engine sounds at speed 1 or more. The port does
+  not keep `$797A`, so it is not presented.
+- **The tick `$0004C6B2`**, which `$7A78` holds off, is the GEIGER COUNTER's click, not
+  the timer path's ([#514](damocles-sound-programmes.md#what-arms-each-programme)).
+- **The rest of the driver's bank** and **`$033F68`'s alternate path** are decoded, heard
+  and tied to their events by [#514](damocles-sound-programmes.md). The alternate path is
+  the GHETTOBLASTER's music.
 - **Where the Floor Label is drawn** is settled by [#473](https://github.com/odogono/mercenary/issues/473)
   in [the Floor Label draw site](damocles-floor-label.md): structure wall text beside each
   lift car's door, drawn by the departure Floor's records while the label steps.

@@ -12,6 +12,28 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Added
 
+- **Every Damocles sound programme is recovered and heard.** Beyond #508's door
+  tone, burst and shared effect, the ST driver's first vector (channel B) holds
+  nine more programmes and its second (channel C) two. The spell is a BOOK page's
+  action with the MAGIC CRYSTAL carried. The splash and the blast mark a craft
+  reaching the ground over sea or land, and the blast also an explosive's
+  deadline. The rest are a transporter hop, a refused boarded move (the bump),
+  the player's shot and ENEMY SHIP DESTROYED, a thud on foot against a wall and
+  when the attack ship fires, its zap, being blown up, and the hazard alarm with
+  its silence at death. The tick #508 left to the timer path is the GEIGER
+  COUNTER's click near the NOVABOMB. The idle channel C voice is a craft engine
+  whose level is log₂ of the speed. Outside the vectors are the per-character
+  message tone on channel A and New Game's falling descent drone on B and C.
+  `$033F68`'s "alternate path" is a three-voice music player for the
+  GHETTOBLASTER: a tune looping every 3328 VBLs. Its hi-hat voice and the
+  first pass of its bass read the TOS ROM header at address 0, so the bass is up
+  to 115 cents flat until it first picks a pitch table. A cold boot is silent
+  through the loader and title. Each reachable sound was recorded in Hatari at
+  50 Hz and matched to its decode, by the event or, where noted, by an
+  intervention. The rest were armed directly and are named as not reached.
+  New tracked `sound-programme-probe.py`, with presentation follow-ups #521 and
+  #522; no application behaviour change (#514).
+
 - **Damocles doors and lifts are heard.** A Damocles presenter now plays the
   session's Sound Cues through the Browser Shell's audio transport. It models the
   ST's YM2149 (tone, noise, envelope, the STF output low-pass) in its own
