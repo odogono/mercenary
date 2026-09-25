@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mercenary · Sound board</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/src/soundboard/soundboard.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <p class="eyebrow">Mercenary / Developer listening</p>
+        <h1>Sound board</h1>
+        <p>
+          Every sound the port can play, through the same synthesis and
+          AudioWorklets the games use. Nothing here reads or writes a Gameplay
+          Session, a Save or a preference.
+        </p>
+        <div class="controls">
+          <label>
+            Volume
+            <input id="volume" type="range" min="0" max="100" value="60" />
+          </label>
+          <label><input id="mute" type="checkbox" /> Mute</label>
+          <button id="stop-all" type="button">Stop everything</button>
+        </div>
+        <p id="status" role="status">Audio starts with your first click.</p>
+      </header>
+      <section aria-labelledby="targ-heading">
+        <h2 id="targ-heading">Targ · SID</h2>
+        <p>
+          The Reference Build's one-shot programmes, the continuous lift and
+          craft voices, and Benson's typing tone.
+        </p>
+        <div id="targ" class="board"></div>
+      </section>
+      <section aria-labelledby="damocles-heading">
+        <h2 id="damocles-heading">Damocles · YM2149</h2>
+        <p>
+          The driver programmes recovered from the ST's 68000 code
+          (docs/research/damocles-lift-ride.md), on a 50 Hz VBL.
+        </p>
+        <div id="damocles" class="board"></div>
+      </section>
+      <p id="error" role="alert"></p>
+    </main>
+    <script type="module" src="/src/soundboard/boot.ts"></script>
+  </body>
+</html>

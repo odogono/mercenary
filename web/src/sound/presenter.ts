@@ -12,16 +12,16 @@ export type SoundCommand =
   | { readonly kind: 'mute'; readonly value: boolean }
   | { readonly kind: 'volume'; readonly value: number };
 
-export interface SoundBatch {
+export interface SoundBatch<Command = SoundCommand> {
   readonly at: number;
-  readonly commands: readonly SoundCommand[];
+  readonly commands: readonly Command[];
   readonly replacePending?: boolean;
 }
 
-export interface SoundTransport {
+export interface SoundTransport<Command = SoundCommand> {
   readonly dispose: () => void;
   readonly resume: () => void;
-  readonly send: (batch: SoundBatch) => void;
+  readonly send: (batch: SoundBatch<Command>) => void;
   readonly suspend: () => void;
   readonly unlock: () => Promise<void>;
 }

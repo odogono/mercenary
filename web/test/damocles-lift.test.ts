@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, test } from 'bun:test';
 
 import type { AssembledCatalogue } from '../src/catalogue/data.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
+import type { DamoclesCue } from '../src/damocles/psg.ts';
 import { attachmentOpenLimit } from '../src/damocles/selection.ts';
 import {
   DamoclesSession,
@@ -15,6 +16,7 @@ import {
 } from '../src/damocles/world.ts';
 import { intent } from '../src/gameCore/index.ts';
 import { arrivalPoses } from './damocles-pose.ts';
+import { damoclesProcessor, vblLevels } from './damocles-sound-processor.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
 /// Riding a Damocles Lift (#475) at the Eris State Office, whose Floor Table binds Floors 0, 1, 2
@@ -503,6 +505,41 @@ describe('the door tones (#499)', () => {
     );
     resumed.advance(VBL);
     expect(cuesOf(resumed)).toEqual(['door-stop']);
+  });
+});
+
+describe('the ride heard (#508)', () => {
+  test('the door tone and burst, silence while the label steps, then the arrival effect and the new door', async () => {
+    const session = throughTheDoor();
+    expect(session.rideLift(1)).toEqual({ kind: 'admitted' });
+    const heard = heardUntil(session, vbls => vbls === 400);
+    // The cues go through the processor as the boot presents them: each VBL's at its end.
+    const processor = await damoclesProcessor();
+    for (const [vbl, cue] of heard) {
+      processor.post({
+        at: vbl * VBL,
+        commands: [{ cue: cue as DamoclesCue, kind: 'cue' }]
+      });
+    }
+    const levels = vblLevels(processor.render(401 * VBL));
+    const at = (cue: string, nth = 0): number =>
+      heard.filter(([, name]) => name === cue)[nth]![0];
+    const audible = (from: number, to: number): boolean =>
+      levels.slice(from, to).every(level => level > 3e-3);
+    const silent = (from: number, to: number): boolean =>
+      levels.slice(from, to).every(level => level < 5e-4);
+    const closed = at('door-stop');
+    const arrival = at('take');
+    expect(arrival).toBe(at('door-start', 1));
+    // The door shuts to its tone.
+    expect(audible(1, closed)).toBeTrue();
+    // Its burst, four VBLs, and then nothing while the label steps.
+    expect(audible(closed, closed + 3)).toBeTrue();
+    expect(silent(closed + 5, arrival)).toBeTrue();
+    // The arrival: the shared effect over the new Floor's door opening, the door's burst, and
+    // the effect's decay, a little over a second, to silence.
+    expect(audible(arrival + 1, at('door-stop', 1) + 3)).toBeTrue();
+    expect(silent(arrival + 55, levels.length)).toBeTrue();
   });
 });
 
