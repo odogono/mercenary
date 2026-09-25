@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
 
 import type { AssembledCatalogue } from '../src/catalogue/data.ts';
+import { ModelStore } from '../src/catalogue/modelStore.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import type { DamoclesCue } from '../src/damocles/psg.ts';
 import { attachmentOpenLimit } from '../src/damocles/selection.ts';
@@ -17,7 +18,11 @@ import {
 import { intent } from '../src/gameCore/index.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import { damoclesProcessor, vblLevels } from './damocles-sound-processor.ts';
-import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
+import {
+  loadCatalogue,
+  modelsOf,
+  readPayloadJson
+} from './fixtures/catalogue.ts';
 
 /// Riding a Damocles Lift (#475) at the Eris State Office, whose Floor Table binds Floors 0, 1, 2
 /// and 10 at a storey pitch of 150 (docs/research/damocles-lift-control.md). A lift is a region
@@ -688,4 +693,40 @@ test('Atlas Travel cancels a lift journey even within the same structure', () =>
   expect(session.snapshot.pose.position.y).toBe(eye());
   const restored = new DamoclesSession(content, session.captureResume());
   expect(restored.snapshot.structure?.ride).toBeNull();
+});
+
+test('after Atlas Travel into the car, the lift reads its Floors and arrives with the door opening', async () => {
+  // Models read as the browser reads them: only the Body's placed Models are in hand after the
+  // travel is prepared, and no Floor structure is a placed Model.
+  const models = new ModelStore(catalogue, readPayloadJson);
+  const lazy: DamoclesContent = {
+    ...content,
+    models,
+    surface: erisSurfaceFrom(catalogue, models, content.doc)
+  };
+  const placement = content.surface.placements.find(
+    item => item.id === STATE_OFFICE
+  )!;
+  const [[x0, x1], [z0, z1]] = placement.selection!.structure.regions[4]!
+    .bounds as [[number, number], [number, number]];
+  const { cellUnits } = content.doc.grid;
+  const target = {
+    bodyId: content.surface.body.id,
+    x: (placement.position.x + (x0 + x1) / 2) / cellUnits,
+    z: (placement.position.z + (z0 + z1) / 2) / cellUnits
+  };
+  await DamoclesSession.prepareAtlasTravel(lazy, target);
+  const session = new DamoclesSession(lazy);
+  expect(session.travelToAtlas(target)).toEqual({ kind: 'travelled' });
+  expect(session.inLift).toBeTrue();
+
+  expect(session.rideLift(1)).toEqual({ kind: 'admitted' });
+  for (let vbl = 0; vbl < 2000 && riding(session) !== null; vbl += 1) {
+    session.advance(VBL);
+    await Bun.sleep(0);
+  }
+  expect(riding(session)).toBeNull();
+  expect(session.snapshot.structure?.floor).toBe(1);
+  session.advance(40 * VBL);
+  expect(openUnits(session)).toBe(DOOR_TRAVEL);
 });
