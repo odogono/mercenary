@@ -149,6 +149,16 @@ arrival pose and no recovered workspace**, and MIDAS still holds MAGIC CRYSTAL,
 the only pickup-trigger object outside Eris, Dion and Vesta. Recovering it needs
 a fresh capture standing in a built MIDAS workspace, not a re-read of this one.
 
+**Since settled from the program (2026-09-25): the uniform field is real.**
+`$0592FA` sets `$7A2A` when the body is Midas (index 2) and for no other body.
+Then `$04ED2A`, in the workspace loader after the placement loop, copies cell 0's
+structure word over all 256 cells, keeping each cell's own offset word. So the
+capture's identical records are what the loader builds, not a stale workspace.
+The camera pair still disagrees because the field has no 16×16 window to stand in.
+Midas's five interior residents sit at the centres of their own cells across the
+whole Body, each inside its cell's copy of structure 68. See
+[interior residents in every captured workspace](damocles-interior-resident-placement.md#what-is-not-placed).
+
 **Amended by [#447](https://github.com/odogono/mercenary/issues/447) for roads
 alone.** The refusal is about *placing cells* against an origin the capture does
 not support, and it stands. It says nothing about the run grid: `$01E000` is

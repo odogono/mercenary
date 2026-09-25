@@ -178,9 +178,9 @@ describe('an Eris frame in Filled Presentation', () => {
       return at.x === cell.x && at.z === cell.z;
     });
     const objects = surface.placements.filter(item => item.kind === 'object');
-    // The Eris arrival Pose stands in cell 07-08: 4 of the workspace's 207 placements are in
-    // it, and the 7 objects on the Body are drawn wherever they stand (#370, #373).
-    expect(surface.placements).toHaveLength(207);
+    // The Eris arrival Pose stands in cell 07-08: 4 of the Body's 439 placements are in it,
+    // and the 7 objects on the Body are drawn wherever they stand (#370, #373).
+    expect(surface.placements).toHaveLength(439);
     expect(here).toHaveLength(4);
     expect(objects).toHaveLength(7);
     const plan = planErisFrame(surface, pose, doc);

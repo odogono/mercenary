@@ -116,7 +116,7 @@ describe('body-aware Object Residence', () => {
     const expectedPairs = placed.length * admittedBodies.size;
 
     expect(matrix).toMatchObject({
-      residentCount: 139
+      residentCount: 190
     });
     expect(matrix.rows).toHaveLength(expectedPairs);
     // Twenty-one Bodies carry an admitted Pose since #172 recovered their workspace origins,
@@ -125,7 +125,7 @@ describe('body-aware Object Residence', () => {
     for (const body of ['body-4', 'body-8', 'body-11', 'body-14']) {
       expect(matrix.rows.some(row => row.body === body)).toBe(true);
     }
-    expect(new Set(matrix.rows.map(row => row.instance))).toHaveLength(139);
+    expect(new Set(matrix.rows.map(row => row.instance))).toHaveLength(190);
     expect(matrix.rows.every(row => row.take.tag === 'observed')).toBe(true);
     expect(matrix.rows.every(row => row.drops.length > 0)).toBe(true);
     expect(
@@ -295,7 +295,7 @@ describe('body-aware Object Residence', () => {
         });
       }
     }
-    // 139 placed residents on 21 Bodies: about 5 s alone, three times that in a full run.
+    // 190 placed residents on 21 Bodies: about 5 s alone, three times that in a full run.
   }, 60_000);
 });
 
@@ -315,10 +315,10 @@ describe('a resident is exposed by its own insertion pairs', () => {
     const placed = catalogue.instances.filter(
       item => item.placement !== null && item.association !== null
     );
-    expect(placed.length).toBe(139);
+    expect(placed.length).toBe(190);
     expect(
       placed.filter(item => item.association!.insertions.length > 0).length
-    ).toBe(139);
+    ).toBe(190);
   });
 
   test('counts the implicit own-region pair and the explicit ones', () => {

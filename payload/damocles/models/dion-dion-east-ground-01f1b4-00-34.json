@@ -2,14 +2,16 @@
   "model": {
     "evidence": [
       {
-        "claim": "DION EAST road cell $34: the per-cell ground/pad/road record at $1E000 the workspace loader would draw there, replayed from the group's authored stream by $04EB60-$04ED12 -- its $1E400 record after any placement replacement, its $83DC orientation and its $1E000 scene seed. No capture stands in this workspace; the same replay reproduces those tables on every capture that does.",
+        "claim": "DION EAST cell $34: the per-cell ground/pad/road record at $1E000 the workspace loader would draw there, replayed from the group's authored stream by $04EB60-$04ED12 -- its $1E400 record after any placement replacement, its $83DC orientation and its $1E000 scene seed. No capture stands in this workspace; the same replay reproduces those tables on every capture that does.",
         "confidence": "verified",
         "source": "docs/research/damocles-eris-ground.md"
       }
     ],
     "id": "dion-dion-east-ground-01f1b4-00-34",
     "kind": "ground",
-    "linkedInstances": [],
+    "linkedInstances": [
+      "dion-dion-east-ground-34"
+    ],
     "name": "DION EAST ground 52",
     "nameStatus": "unknown",
     "omissions": [],
@@ -17,7 +19,7 @@
     "recordClass": "geometry",
     "relatedModels": [],
     "slots": [
-      1322
+      1324
     ],
     "sourceAddress": 127412,
     "status": "decoded",

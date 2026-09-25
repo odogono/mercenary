@@ -416,7 +416,7 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
       body: 'body-11',
       cell: { x: 7, z: 8 },
       islandTriangles: 58,
-      placements: 207,
+      placements: 439,
       pose: 'eris-spaceport-onfoot',
       triangles: 779
     },
@@ -424,7 +424,7 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
       body: 'body-11',
       cell: { x: 11, z: 8 },
       islandTriangles: 58,
-      placements: 207,
+      placements: 439,
       pose: 'eris-transporter-11-8',
       triangles: 666
     },
@@ -432,7 +432,7 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
       body: 'body-4',
       cell: { x: 2, z: 3 },
       islandTriangles: 16,
-      placements: 390,
+      placements: 952,
       pose: 'dion-2-3',
       triangles: 422
     },
@@ -440,7 +440,7 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
       body: 'body-4',
       cell: { x: 3, z: 14 },
       islandTriangles: 16,
-      placements: 390,
+      placements: 952,
       pose: 'dion-transporter',
       // Includes TRANSPORTER a (slot 66), placed on Floor 1 against the structure it binds.
       triangles: 542
@@ -451,7 +451,7 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
       // Gaea's two recovered windows, UR CITY and CHALDEA METROPOLIS, both place
       // into one Body surface; the frame draws only the occupied cell's (#172).
       islandTriangles: 26,
-      placements: 372,
+      placements: 373,
       pose: 'gaea-ur-city-4-2',
       triangles: 521
     },

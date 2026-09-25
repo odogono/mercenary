@@ -1039,14 +1039,22 @@ it('places slot 180 through its decoded structure association', async () => {
     instance => instance.id === key.placement!.parent
   )!;
   expect(parent.model).toBe('structure-01d188');
+  // Bare Island's image-replayed workspace places the same instance at cell $26 and names it,
+  // so the hand-recovered identity keeps its id and takes the island and Place.
+  expect(parent.name).toBe('HANTZEN SALES');
   expect(parent.location).toEqual({
     body: 'body-11',
     coordinateSystem: 'Body Coordinates',
     heading: null,
-    island: null,
-    place: null,
+    island: 'island-eris-063290',
+    place: 'place-02521c',
     position: [3078.484_893_798_828, 0, 514.442_779_541_015_6]
   });
+  expect(
+    data.instances.some(
+      instance => instance.id === 'eris-bare-island-surface-26'
+    )
+  ).toBe(false);
   expect(
     data.models.find(model => model.id === parent.model)!.relatedModels
   ).toContain('structure-012f84');
@@ -1178,11 +1186,12 @@ it('places only residents selected by the native surface-body association', asyn
   );
   expect(gaeaAssemblies).toHaveLength(82);
   // Gaea carries two recovered windows: UR CITY at origin 512,1792 and CHALDEA
-  // METROPOLIS at 256,768 (#172). Both place into one Body surface at their own
-  // world coordinates, which is why this count covers more than one map.
+  // METROPOLIS at 256,768 (#172), and its group $0E island at 3072,256 is replayed from
+  // the image. All place into one Body surface at their own world coordinates, which is
+  // why this count covers more than one map.
   expect(
     data.instances.filter(instance => instance.location?.body === 'body-8')
-  ).toHaveLength(372);
+  ).toHaveLength(373);
   expect(
     data.instances.some(instance => instance.id === 'gaea-ur-city-surface-24')
   ).toBe(true);

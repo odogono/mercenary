@@ -1,6 +1,27 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Eris group $10 cell $03 record places this instance and binds resident slot 85 at local (-3518, 0, 1131) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $10 cell $03 record places this instance and binds resident slot 123 at local (-3842, 0, 668) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $10 cell $03 record places this instance and binds resident slot 143 at local (-3693, 48, -72) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $10 cell $03 record places this instance and binds resident slot 201 at local (-3693, 0, -72) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01dab2",
     "kind": "structure",
     "levelBinding": {
@@ -32,7 +53,12 @@
       ],
       "tableAddress": 121528
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-85",
+      "object-slot-123",
+      "object-slot-143",
+      "object-slot-201"
+    ],
     "name": "Structure 217",
     "nameStatus": "unknown",
     "omissions": [],

@@ -388,16 +388,26 @@ describe('the names on a Body surface', () => {
       'BARE ISLAND',
       'KEY WEST'
     ]);
-    // And the Places are the Catalogue's own, in its order. PLAYTESTER STORES appears twice:
-    // two records carrying one name, which is two Places and not a duplicate.
+    // And the Places are the Catalogue's own, in its order, where anything stands to name.
+    // PLAYTESTER STORES appears twice: two records carrying one name, which is two Places and
+    // not a duplicate. Key West's GUM STORE DRAPERY names a cell its workspace leaves empty,
+    // on the game's own $ABDC as much as the replay's, so it has nothing to be written over.
+    const places = data.places.filter(
+      place => place.body === catalogueBodyId(ERIS)
+    );
     expect(
       labels.filter(label => label.kind === 'place').map(label => label.name)
     ).toEqual(
-      data.places
-        .filter(place => place.body === catalogueBodyId(ERIS))
+      places
+        .filter(place => place.instances.length > 0)
         .map(place => place.name)
     );
-    expect(labels.filter(label => label.kind === 'place')).toHaveLength(11);
+    expect(
+      places
+        .filter(place => place.instances.length === 0)
+        .map(place => place.name)
+    ).toEqual(['GUM STORE DRAPERY']);
+    expect(labels.filter(label => label.kind === 'place')).toHaveLength(23);
   });
 
   test('writes a Settlement at the origin its workspace is built at', async () => {
@@ -407,13 +417,19 @@ describe('the names on a Body surface', () => {
     const record = data.islands.find(island => island.id === capital.id)!;
     expect(capital.at).toEqual({ x: 64, z: 128 });
     expect([record.origin[0], record.origin[1]]).toEqual([64, 128]);
-    // Every Place on the island falls inside that workspace's 16 cells, so the name lands on
-    // what it names rather than out at sea.
+    // Every Place falls inside one Settlement's 16 cells, so the name lands on what it names
+    // rather than out at sea.
+    const settlements = labels.filter(label => label.kind === 'settlement');
     for (const place of labels.filter(label => label.kind === 'place')) {
-      expect(place.at.x - capital.at.x).toBeGreaterThanOrEqual(0);
-      expect(place.at.x - capital.at.x).toBeLessThan(16);
-      expect(place.at.z - capital.at.z).toBeGreaterThanOrEqual(0);
-      expect(place.at.z - capital.at.z).toBeLessThan(16);
+      expect(
+        settlements.some(
+          settlement =>
+            place.at.x - settlement.at.x >= 0 &&
+            place.at.x - settlement.at.x < 16 &&
+            place.at.z - settlement.at.z >= 0 &&
+            place.at.z - settlement.at.z < 16
+        )
+      ).toBe(true);
     }
   });
 
@@ -468,10 +484,19 @@ describe('laying names out against a camera', () => {
 
   test('withholds a name rather than writing it over another', async () => {
     const { labels } = await eris();
-    const places = labels.filter(label => label.kind === 'place');
-    // Eris's eleven Places share sixteen cells. At a camera showing the whole surface they are
-    // a pixel apart, so all but the two the pile has room for are withheld, and every Place on
-    // the frame is either written or counted: a name never simply disappears.
+    // Capital City's eleven Places share its sixteen cells. At a camera showing the whole
+    // surface they are a pixel apart, so all but the two the pile has room for are withheld,
+    // and every Place on the frame is either written or counted: a name never simply
+    // disappears.
+    const places = labels.filter(
+      label =>
+        label.kind === 'place' &&
+        label.at.x >= 64 &&
+        label.at.x < 80 &&
+        label.at.z >= 128 &&
+        label.at.z < 144
+    );
+    expect(places).toHaveLength(11);
     const wide = layOutSurfaceLabels(places, fitBody(FRAME), FRAME, METRICS);
     const written = new Set(wide.placed.map(label => label.id));
     expect(written.size).toBeLessThan(places.length);

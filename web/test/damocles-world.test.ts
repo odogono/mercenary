@@ -33,7 +33,8 @@ describe('the Eris surface from the Damocles Catalogue', () => {
     const { catalogue, doc } = await load();
     const surface = erisSurfaceFrom(catalogue, modelsOf(catalogue), doc);
     expect(surface.body).toEqual({ id: 'body-11', name: 'ERIS' });
-    expect(surface.placements).toHaveLength(207);
+    // Capital City's captured workspace and the four islands replayed from the image.
+    expect(surface.placements).toHaveLength(439);
     const spaceport = surface.placements.find(
       placement => placement.id === 'eris-surface-87'
     )!;
@@ -253,12 +254,14 @@ describe('the Eris surface from the Damocles Catalogue', () => {
       placement => placement.mesh === undefined
     );
     // INTERSTELLARSHIP and RED BEACON now draw; only the intentional empty
-    // surface record has nothing to place.
-    expect(unresolved).toHaveLength(19);
-    expect(surface.unresolvedCount).toBe(19);
+    // surface record has nothing to place, on Capital City and the other four islands.
+    expect(unresolved).toHaveLength(22);
+    expect(surface.unresolvedCount).toBe(22);
     expect(unresolved.every(placement => placement.faceCount === 0)).toBe(true);
+    // Two intentionally empty records: Capital City places 01a618, Bare Island and Key West
+    // 01d1a2.
     expect(new Set(unresolved.map(placement => placement.modelId))).toEqual(
-      new Set(['structure-01a618'])
+      new Set(['structure-01a618', 'structure-01d1a2'])
     );
   });
 
@@ -279,7 +282,8 @@ describe('the Eris surface from the Damocles Catalogue', () => {
   test('names the recovered Eris places by cell', async () => {
     const { catalogue, doc } = await load();
     const surface = erisSurfaceFrom(catalogue, modelsOf(catalogue), doc);
-    expect(surface.places).toHaveLength(11);
+    // Capital City's eleven and the other islands' twelve that name a placement.
+    expect(surface.places).toHaveLength(23);
     const spaceport = surface.places.find(
       place => place.id === 'place-025042'
     )!;

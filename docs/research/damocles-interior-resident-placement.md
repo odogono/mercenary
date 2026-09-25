@@ -8,7 +8,9 @@ DOOBERRYS SOLICITORS: on Floor 9 the ST draws a PROCESSORS CHAIR and a PROCESSOR
 DESK, and the port drew nothing, because no Metis resident had a placement.
 
 Placed interior residents go from **28 to 139** of the 195 interior-associated
-residents. None of the 28 moves.
+residents. None of the 28 moves. Publishing the workspaces of groups no capture
+stands in, replayed from the image, then takes it to **190**; see
+[Groups no capture stands in](#groups-no-capture-stands-in).
 
 ## Every capture binds its group
 
@@ -118,17 +120,80 @@ PROCESSORS DESK at `(-319, 1350, 740)`, with FILOFAX and TRANSPORTER a. All four
 on the storey line (9 × 150). Standing at the `metis-transporter` arrival pose (Floor 9,
 region 5), the port draws all four.
 
+## Groups no capture stands in
+
+A capture was never what supplied a resident's position. The resident arrays are
+byte-identical in every snapshot. What a capture supplied was the building the
+resident belongs to, and the building comes from the group's authored stream:
+`load_structure_workspace` replays it. The group's place on its Body comes from
+its island record. So every island whose group no capture stands in now publishes
+the workspace the loader would build for it: structures, ground, Places and
+residents. `image_workspace` writes the few fields a capture would also carry (the
+body selector, a camera pair at the island's origin, and the group's place list)
+and hands the result to the same attach path the captures use. Each instance's
+reason says "Image-replayed", and each road network keeps `attestation: "image"`.
+
+Twenty islands are published this way, on Eris (Snow Island `$10`, Velos City `$11`,
+Bare Island `$14`, Key West `$15`), Dion (North `$1B`, East `$1C`), Gaea (`$0E`),
+Lachesis (Pulvin Mines) and eleven Lucan groups. Midas is the exception, below.
+Placed residents go from **139 to 190**; the only interior residents still
+without a placement are Midas's five.
+
+Bare Island's workspace places, at cell `$26`, exactly the instance #172
+recovered by hand for `KEY - 99 CHEVY`: the same model at the same position to the
+bit. It also names it, **HANTZEN SALES**. The hand-recovered identity
+`eris-structure-0251d7` is kept, since Saves and links already name it. It takes the
+workspace's island and Place, and the workspace's twin is folded into it. Two
+further residents, slots 65 and 145, now bind to it through the general path.
+
+### How far to trust the replay
+
+Four independent checks, all passing.
+
+1. **Leave-one-out, every capture.** `scripts/image-workspace-check.py` reruns the
+   whole extraction without each of the 21 workspace captures in turn, so that
+   capture's island is published from the image instead. It then compares the two
+   publications cell by cell: structure model, position, Place and key base; ground
+   geometry; and every resident's parent cell, local position, heading and
+   insertion pairs. **All 21 are identical.** Two differ only in sign text: Vesta
+   Parliament (`$64`) and Tolosa (`$12`) carry dynamic vector text read from the
+   capture's RAM. That text belongs to the building's detail Model, not to the
+   workspace, and without the capture the Model draws its static form.
+2. **The game's own tables, every capture on disk.** `ImageWorkspaceTests` checks
+   that the replay holds what the running loader wrote in each of 32 captures:
+   `$ABDC`, the run grid, `$1E400`, `$83DC`, the six selectors and `$7A6C`. The 32
+   include captures the extractor cannot use as a workspace. **Key West** (`$15`)
+   is one of the groups published here from the image alone, and the game's tables
+   in `damocles.key-west.sav` are byte-identical to the replay. That capture was
+   never usable as a workspace because the player stands 60 cells outside the
+   built window; the loader had built the tables all the same.
+3. **A live flight to Dion North.** `workspace-capture-probe.py` flew the Dion pose's
+   craft to DION NORTH (`$1B`) with real stick and key input, nothing injected, and
+   statesaved over it (`--capture-airborne`; the descent does not land in the time
+   allowed). The capture, `dion-north-airborne.sav` (SHA-256
+   `71d0a1224672551e4a0ddcefa32903007b3a284a123012d6e83cd68261064c64`), stands
+   inside the built window: its implied origin is the island's (3316, 1378). The
+   running loader's tables are byte-identical to the replay, and leave-one-out with
+   it added publishes the same 25 structures, 256 ground cells and 5 placed residents
+   whether the island comes from the capture or from the image. It stays a
+   verification capture, not a Catalogue input.
+4. **The port draws them.** A session standing on synthetic arrival poses inside
+   image-derived buildings binds HATHAWAYS WINE BAR, POSTOFFICE SORTING and TRADING
+   POST on Snow Island, a Velos City building, and HANTZEN SALES, and draws the
+   resident stood beside in each.
+
 ## What is not placed
 
-Fifty-six interior residents, all in groups that no capture stands in:
+Midas's five interior residents. Midas is not a 16×16 workspace. `$0592FA` sets
+`$7A2A` when the body is Midas (index 2) and for no other body. Then `$04ED2A`, after
+the placement loop, copies cell 0's structure word over all 256 cells, keeping each
+cell's own offset word. The Midas capture's `$ABDC` shows it: structure 68 in every
+cell. [The non-Eris workspace note](damocles-non-eris-workspaces.md) had refused
+that reading on the capture's disagreeing origin; the program settles it.
 
-| Body | Groups | Residents |
-| --- | --- | ---: |
-| ERIS | `$10`, `$11`, `$14`, `$15` | 41 |
-| DION | `$1B`, `$1C` | 10 |
-| MIDAS | `$38` | 5 |
-
-Each group replays from the image with `load_structure_workspace` (#460). Under the
-binding rule above, though, a group needs a capture standing in it before its
-residents are published. Eris `$14`'s `KEY - 99 CHEVY` (#172) is the one hand-bound
-exception.
+The five residents (three DOOR KEY As, MAGIC CRYSTAL and CHEESE SANDWICH) are
+scattered across the whole Body, from X 430 to 2364. Each sits at its own cell's
+centre (low words ≈ `$8000`), with one cell phase (+1, +10) shared by all five, so
+each stands inside its cell's copy of structure 68. No island window represents
+that, and the port has no workspace that repeats one structure across a Body.
+Publishing them needs that form first.
