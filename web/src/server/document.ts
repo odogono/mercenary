@@ -21,7 +21,8 @@ const DOCUMENT_FILES: Record<BrowserDocument, string> = {
   damocles: 'damocles.html',
   'first-offer': 'first-offer.html',
   flyover: 'flyover.html',
-  gameplay: 'index.html'
+  gameplay: 'index.html',
+  sounds: 'sounds.html'
 };
 
 export const documentResponse = async (

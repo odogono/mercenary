@@ -1,6 +1,12 @@
 export type SystemId = 'gamma' | 'targ';
 export type BrowserDocument =
-  'atlas' | 'catalogue' | 'damocles' | 'first-offer' | 'flyover' | 'gameplay';
+  | 'atlas'
+  | 'catalogue'
+  | 'damocles'
+  | 'first-offer'
+  | 'flyover'
+  | 'gameplay'
+  | 'sounds';
 
 export type DocumentPath =
   | { readonly document: 'first-offer'; readonly kind: 'document' }
@@ -8,6 +14,7 @@ export type DocumentPath =
   | { readonly document: 'catalogue'; readonly kind: 'document' }
   | { readonly document: 'atlas'; readonly kind: 'document' }
   | { readonly document: 'damocles'; readonly kind: 'document' }
+  | { readonly document: 'sounds'; readonly kind: 'document' }
   | {
       readonly document: 'flyover';
       readonly kind: 'document';
@@ -28,6 +35,8 @@ const documents = new Map<string, DocumentPath>([
   ['/damocles', { document: 'damocles', kind: 'document' }],
   ['/damocles/first-offer', { document: 'first-offer', kind: 'document' }],
   ['/catalogue', { document: 'catalogue', kind: 'document' }],
+  // Every title's sounds on demand, for listening; it holds no session.
+  ['/sounds', { document: 'sounds', kind: 'document' }],
   // The Atlas is sessionless and Gamma-only, so it hangs off the Damocles Title's path
   // rather than taking a System of its own (ADR 0041).
   ['/damocles/atlas', { document: 'atlas', kind: 'document' }],
@@ -46,6 +55,8 @@ const aliases = new Map<string, string>([
   ['/damocles/', '/damocles'],
   ['/catalogue.html', '/catalogue'],
   ['/catalogue/', '/catalogue'],
+  ['/sounds.html', '/sounds'],
+  ['/sounds/', '/sounds'],
   ['/atlas.html', '/damocles/atlas'],
   ['/damocles/atlas/', '/damocles/atlas'],
   ['/debug', '/targ/debug'],

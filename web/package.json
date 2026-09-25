@@ -23,6 +23,7 @@
       "src/catalogue/boot.ts",
       "src/damocles/boot.ts",
       "src/damocles/firstOfferDemo.ts",
+      "src/soundboard/boot.ts",
       "src/flyover/boot.ts",
       "src/sound/worklet.ts",
       "src/damocles/soundWorklet.ts",
