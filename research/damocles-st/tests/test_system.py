@@ -118,6 +118,26 @@ class PinnedTests(unittest.TestCase):
         self.assertEqual(self.bodies['eris']['radius'], 1_200)
         self.assertEqual(self.bodies['dialis']['radius'], 20_000)
 
+    def test_the_comet_block_is_the_440_table_and_the_528_geometry(self):
+        comet = self.payload['comet']
+        records = comet['waypoints']['records']
+        self.assertEqual(len(records), 31)
+        # docs/research/damocles-script-motion-time.md's table: the guard, a middle record, and
+        # record 28 on ERIS at zero on the clock.
+        self.assertEqual(records[0], {'seconds': -15500, 'x': -369066, 'z': 1119852})
+        self.assertEqual(records[14], {'seconds': -7000, 'x': 50628, 'z': 90831})
+        self.assertEqual(records[28], {'seconds': 0, **{axis: self.bodies['eris']['position'][axis]
+                                                        for axis in ('x', 'z')}})
+        self.assertEqual(comet['tailShift'], 2)
+        self.assertEqual(comet['headPoints']['offsets'], [
+            {'x': 0, 'y': -250, 'z': 0}, {'x': 0, 'y': 250, 'z': 0},
+            {'x': -250, 'y': 0, 'z': 0}, {'x': 250, 'y': 0, 'z': 0}])
+        # Two double-sided white triangles: tip and the Y pair, tip and the X pair.
+        self.assertEqual([face['points'] for face in comet['polygons']['faces']],
+                         [[0, 1, 2], [2, 1, 0], [4, 3, 0], [0, 3, 4]])
+        self.assertEqual({face['colour'] for face in comet['polygons']['faces']}, {'#eeeeee'})
+        self.assertEqual(comet['headDisc']['slots'], [0, 12])
+
 
 if __name__ == '__main__':
     unittest.main()

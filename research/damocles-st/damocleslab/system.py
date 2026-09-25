@@ -15,6 +15,10 @@ Sizes at `$006040` are packed binary floats (#424), and the sky pass draws a Bod
 with pixel radius `size / depth` against positions at `256 * u / depth` (#528), so a
 Body's radius is `size / 256` System units. See docs/research/damocles-gamma-system.md
 and docs/research/damocles-sky-bodies.md.
+
+DAMOCLES is drawn through a comet path of its own (`$04FBF2`), and its centre is the
+impact clock's (#440): `$051E88` interpolates the waypoint table at `$052022`. The
+`comet` block publishes both, so a Session can place and draw the comet (#538).
 """
 from __future__ import annotations
 
@@ -50,8 +54,27 @@ HALF_WIDTH_DIVISOR_ADDRESS = 0x045A0C
 HORIZON_ROW_ON_FOOT_ADDRESS = 0x0530A6
 HORIZON_ROW_OTHERWISE_ADDRESS = 0x0530B0
 
+# The comet (#538). `$051088` installs the waypoint cursor beside the start deadline, and
+# `$051E88` walks thirty-one ten-byte records of seconds to impact, X and Z. `$04FBF2`
+# projects a tail tip at the centre plus the centre shifted right by `$04FC18`'s count,
+# then the head points at `$04FD12`, and `$04F8FE` draws the four polygons at `$04FD2C`.
+WAYPOINT_INSTALL = 0x051088
+WAYPOINTS = 0x052022
+WAYPOINT_RECORD = 10
+WAYPOINT_COUNT = 31
+TAIL_SHIFT = 0x04FC18
+HEAD_POINTS_LOAD = 0x04FC48
+HEAD_POINTS = 0x04FD12
+POLYGONS_LOAD = 0x04FCA6
+POLYGONS = 0x04FD2C
+POLYGON_CALLS = 0x04FCBE
+HEAD_DISC = 0x04FCE6
+# `$04FBF6` projects the tail tip into slot `$80` and each head point into the next.
+COMET_SLOT = 0x80
+
 EVIDENCE = 'docs/research/damocles-gamma-system.md'
 SKY_EVIDENCE = 'docs/research/damocles-sky-bodies.md'
+MOTION_EVIDENCE = 'docs/research/damocles-script-motion-time.md'
 
 
 def hex_address(address: int) -> str:
@@ -132,6 +155,67 @@ def sky(data: bytes) -> dict:
     }
 
 
+def expect_code(data: bytes, address: int, code: bytes, what: str) -> None:
+    if data[address:address + len(code)] != code:
+        raise ValueError(f'${address:06x} is not {what}')
+
+
+def comet(data: bytes) -> dict:
+    """The comet's path and geometry (#538): the waypoint table and the tail and head."""
+    expect_code(data, WAYPOINT_INSTALL, b'\x21\xfc' + WAYPOINTS.to_bytes(4, 'big') + b'\x78\x2c',
+                'the move.l that installs the waypoint cursor at $782C')
+    end = WAYPOINTS + WAYPOINT_COUNT * WAYPOINT_RECORD
+    waypoints = []
+    for address in range(WAYPOINTS, end, WAYPOINT_RECORD):
+        seconds, x, z = struct.unpack_from('>hii', data, address)
+        waypoints.append({'seconds': seconds, 'x': x, 'z': z})
+    expect_code(data, TAIL_SHIFT, b'\x32\x3c', 'the move.w #imm,d1 that sets the tail shift')
+    expect_code(data, HEAD_POINTS_LOAD, b'\x49\xf9' + HEAD_POINTS.to_bytes(4, 'big'),
+                'the lea that loads the head points')
+    expect_code(data, POLYGONS_LOAD, b'\x41\xf9' + POLYGONS.to_bytes(4, 'big'),
+                'the lea that loads the comet polygons')
+    expect_code(data, HEAD_DISC, b'\x20\x3c', 'the move.l #imm,d0 that picks the head disc slots')
+    points = []
+    address = HEAD_POINTS
+    while struct.unpack_from('>H', data, address)[0] != 0x8000:
+        x, y, z = struct.unpack_from('>hhh', data, address)
+        points.append({'x': x, 'y': y, 'z': z})
+        address += 6
+    # One `bsr.w $04F8FE` a polygon, each a colour word then point slots ended by $00.
+    calls = 0
+    while data[POLYGON_CALLS + calls * 4:POLYGON_CALLS + calls * 4 + 2] == b'\x61\x00':
+        calls += 1
+    polygons = []
+    address = POLYGONS
+    for _ in range(calls):
+        colour = struct.unpack_from('>H', data, address)[0]
+        address += 2
+        slots = []
+        while data[address]:
+            slot = data[address] - COMET_SLOT
+            if slot % 4 or not 0 <= slot // 4 <= len(points):
+                raise ValueError(f'comet polygon slot ${data[address]:02x} is not a projected point')
+            slots.append(slot // 4)
+            address += 1
+        address += 1
+        polygons.append({'colour': st_rgb(colour), 'sourceColour': colour, 'points': slots})
+    head_slots = struct.unpack_from('>HH', data, HEAD_DISC + 2)
+    return {
+        'evidence': SKY_EVIDENCE,
+        'motionEvidence': MOTION_EVIDENCE,
+        'headDisc': {'address': hex_address(HEAD_DISC), 'slots': [head_slots[1] // 4, head_slots[0] // 4]},
+        'headPoints': {'address': hex_address(HEAD_POINTS), 'offsets': points},
+        'polygons': {'address': hex_address(POLYGONS), 'faces': polygons},
+        'tailShift': struct.unpack_from('>H', data, TAIL_SHIFT + 2)[0],
+        'waypoints': {
+            'address': hex_address(WAYPOINTS),
+            'end': hex_address(end),
+            'sha256': hashlib.sha256(data[WAYPOINTS:end]).hexdigest(),
+            'records': waypoints,
+        },
+    }
+
+
 def body(data: bytes, index: int, ids: list[str]) -> dict:
     x, y, z = (struct.unpack_from('>i', data, table + index * 4)[0]
                for table in (BODY_X, BODY_Y, BODY_Z))
@@ -182,7 +266,8 @@ def extract(data: bytes, source: dict) -> dict:
                 'No explicit type or Primary field and no complete orbital elements were '
                 'recovered, so those properties are absent rather than inferred.',
                 'DAMOCLES position is a capture-time sample and is not an epoch or a static '
-                'authored position; its X and Z differ in the second cold run.',
+                'authored position; its X and Z differ in the second cold run. The position at any '
+                'moment is the impact clock\'s, through comet.waypoints (#440).',
                 'VOID is source slot 30 and a place/sentinel, not one of the 30 physical selectors '
                 'scanned by the space renderer; it is intentionally absent from bodies.',
                 'baseColour is recovered, not authored: sourceColour is the low word of the '
@@ -206,6 +291,15 @@ def extract(data: bytes, source: dict) -> dict:
                 'half-width divisor that $045A0C loads to correct for non-square pixels, and the '
                 'clip rows $0530A6 and $0530B0 store. $7964 and $799E are RAM, not code, and hold '
                 'the published values in every one of 61 captured memstates.',
+                'comet carries what places and draws DAMOCLES beyond its Body record (#538). '
+                'waypoints is the table $051E88 interpolates from the impact clock (#440): seconds '
+                'to impact, X and Z, the path lying in Y = 0. $051088 installs its cursor beside '
+                'the start deadline. The tail tip is the centre plus the centre shifted right by '
+                'tailShift, Y 0; headPoints are offsets from the centre, projected into the slots '
+                'after the tip; each polygon face names its points by index, 0 the tip and 1 on '
+                'the head points, in the order $04F8FE draws them. headDisc gives the palette '
+                'slots of the disc $04FCE6 draws last, first span then second; with the split at '
+                'the rim only the first is painted.',
             ],
         },
         'coordinateSystem': {
@@ -214,6 +308,7 @@ def extract(data: bytes, source: dict) -> dict:
             'axes': ['x', 'y', 'z'],
         },
         'sky': sky(data),
+        'comet': comet(data),
         'bodies': bodies,
     }
 

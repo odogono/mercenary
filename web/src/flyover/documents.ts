@@ -149,6 +149,50 @@ export interface GammaSky {
   readonly projectionScale: number;
 }
 
+/// What places and draws the comet DAMOCLES beyond its Body record (#538).
+export interface GammaComet {
+  readonly evidence: string;
+  /// The palette slots of the disc `$04FCE6` draws over the head, first span then second. With
+  /// its split at the rim only the first is painted.
+  readonly headDisc: {
+    readonly address: string;
+    readonly slots: readonly [number, number];
+  };
+  /// The head points as offsets from the comet's centre, projected into the slots after the
+  /// tail tip (`$04FD12`).
+  readonly headPoints: {
+    readonly address: string;
+    readonly offsets: readonly {
+      readonly x: number;
+      readonly y: number;
+      readonly z: number;
+    }[];
+  };
+  readonly motionEvidence: string;
+  /// The polygons `$04F8FE` draws, in order. A face names its points by index: 0 is the tail
+  /// tip and 1 on are the head points.
+  readonly polygons: {
+    readonly address: string;
+    readonly faces: readonly {
+      readonly colour: string;
+      readonly points: readonly number[];
+      readonly sourceColour: number;
+    }[];
+  };
+  /// The tail tip is the centre plus the centre shifted right by this many bits, at Y 0: a
+  /// quarter further from DIALIS again (`$04FC18`).
+  readonly tailShift: number;
+  /// The path `$051E88` interpolates from the impact clock (#440): seconds to impact, which
+  /// count up to zero, and the X and Z the comet's centre holds then. Its Y is 0.
+  readonly waypoints: GammaSourceWindow & {
+    readonly records: readonly {
+      readonly seconds: number;
+      readonly x: number;
+      readonly z: number;
+    }[];
+  };
+}
+
 export interface GammaSourceWindow {
   readonly address: string;
   readonly end: string;
@@ -157,6 +201,7 @@ export interface GammaSourceWindow {
 
 export interface GammaSystemDocument {
   readonly bodies: readonly GammaBody[];
+  readonly comet: GammaComet;
   readonly coordinateSystem: {
     readonly axes: readonly ['x', 'y', 'z'];
     readonly kind: 'resident-cartesian-centre';
@@ -232,6 +277,12 @@ const integer = (value: unknown, path: string): number => {
   return Number.isSafeInteger(number) && number >= 0
     ? number
     : fail(path, 'should be a nonnegative integer');
+};
+const signedInteger = (value: unknown, path: string): number => {
+  const number = finite(value, path);
+  return Number.isSafeInteger(number)
+    ? number
+    : fail(path, 'should be an integer');
 };
 const positiveInteger = (value: unknown, path: string): number => {
   const number = integer(value, path);
@@ -350,6 +401,118 @@ const readGammaSky = (value: unknown): GammaSky => {
   };
 };
 
+const readGammaComet = (value: unknown): GammaComet => {
+  const comet = object(value, 'comet', [
+    'evidence',
+    'headDisc',
+    'headPoints',
+    'motionEvidence',
+    'polygons',
+    'tailShift',
+    'waypoints'
+  ]);
+  const headDisc = object(comet['headDisc'], 'comet.headDisc', [
+    'address',
+    'slots'
+  ]);
+  const slots = array(headDisc['slots'], 'comet.headDisc.slots').map(
+    (slot, index) => integer(slot, `comet.headDisc.slots[${index}]`)
+  );
+  if (slots.length !== 2) {
+    fail('comet.headDisc.slots', 'should hold two palette slots');
+  }
+  const headPoints = object(comet['headPoints'], 'comet.headPoints', [
+    'address',
+    'offsets'
+  ]);
+  const offsets = array(headPoints['offsets'], 'comet.headPoints.offsets').map(
+    (offset, index) => point(offset, `comet.headPoints.offsets[${index}]`)
+  );
+  const polygons = object(comet['polygons'], 'comet.polygons', [
+    'address',
+    'faces'
+  ]);
+  const faces = array(polygons['faces'], 'comet.polygons.faces').map(
+    (raw, index) => {
+      const path = `comet.polygons.faces[${index}]`;
+      const face = object(raw, path, ['colour', 'points', 'sourceColour']);
+      const sourceColour = integer(
+        face['sourceColour'],
+        `${path}.sourceColour`
+      );
+      const faceColour = colour(face['colour'], `${path}.colour`);
+      if (sourceColour > 0xf_ff || faceColour !== expandStRgb(sourceColour)) {
+        fail(`${path}.colour`, 'should be the expansion of sourceColour');
+      }
+      const points = array(face['points'], `${path}.points`).map(
+        (entry, pointIndex) => {
+          const at = integer(entry, `${path}.points[${pointIndex}]`);
+          return at <= offsets.length
+            ? at
+            : fail(`${path}.points[${pointIndex}]`, 'names no projected point');
+        }
+      );
+      if (points.length < 3) {
+        fail(`${path}.points`, 'should name at least three points');
+      }
+      return { colour: faceColour, points, sourceColour };
+    }
+  );
+  const waypoints = object(comet['waypoints'], 'comet.waypoints', [
+    'address',
+    'end',
+    'records',
+    'sha256'
+  ]);
+  const records = array(waypoints['records'], 'comet.waypoints.records').map(
+    (raw, index) => {
+      const path = `comet.waypoints.records[${index}]`;
+      const record = object(raw, path, ['seconds', 'x', 'z']);
+      return {
+        seconds: signedInteger(record['seconds'], `${path}.seconds`),
+        x: signedInteger(record['x'], `${path}.x`),
+        z: signedInteger(record['z'], `${path}.z`)
+      };
+    }
+  );
+  if (records.length < 2) {
+    fail('comet.waypoints.records', 'should hold at least one segment');
+  }
+  for (let index = 1; index < records.length; index += 1) {
+    if (records[index]!.seconds < records[index - 1]!.seconds) {
+      fail('comet.waypoints.records', 'should run forward in time');
+    }
+  }
+  return {
+    evidence: text(comet['evidence'], 'comet.evidence'),
+    headDisc: {
+      address: text(headDisc['address'], 'comet.headDisc.address'),
+      slots: [slots[0]!, slots[1]!]
+    },
+    headPoints: {
+      address: text(headPoints['address'], 'comet.headPoints.address'),
+      offsets
+    },
+    motionEvidence: text(comet['motionEvidence'], 'comet.motionEvidence'),
+    polygons: {
+      address: text(polygons['address'], 'comet.polygons.address'),
+      faces
+    },
+    tailShift: integer(comet['tailShift'], 'comet.tailShift'),
+    waypoints: {
+      ...sourceWindow(
+        {
+          address: waypoints['address'],
+          end: waypoints['end'],
+          sha256: waypoints['sha256']
+        },
+        'comet.waypoints'
+      ),
+      records
+    }
+  };
+};
+
 export const readGammaSystem = (value: unknown): GammaSystemDocument => {
   const root = object(value, '$', [
     'schemaVersion',
@@ -358,6 +521,7 @@ export const readGammaSystem = (value: unknown): GammaSystemDocument => {
     'coverage',
     'coordinateSystem',
     'sky',
+    'comet',
     'bodies'
   ]);
   const source = object(root['source'], 'source', [
@@ -382,6 +546,7 @@ export const readGammaSystem = (value: unknown): GammaSystemDocument => {
     fail('coordinateSystem.axes', 'should be x, y, z');
   }
   const sky = readGammaSky(root['sky']);
+  const comet = readGammaComet(root['comet']);
   const bodies = array(root['bodies'], 'bodies').map(
     (raw, index): GammaBody => {
       const path = `bodies[${index}]`;
@@ -478,6 +643,7 @@ export const readGammaSystem = (value: unknown): GammaSystemDocument => {
   }
   return {
     bodies,
+    comet,
     coordinateSystem: {
       axes: ['x', 'y', 'z'],
       kind: literal(

@@ -57,6 +57,7 @@ checks that closed form against 24 pinned Hatari frames from six poses in four c
 | How a Body meets the horizon | **Confirmed** on foot (hard cut at row 68); in flight, **Partially confirmed** (static only) | [Draw order and clipping](#draw-order-and-clipping) |
 | Is DIALIS drawn as a disc? | **Confirmed**: a full disc, never phased | [DIALIS](#dialis) |
 | Is DAMOCLES drawn through the same path? | **Partially confirmed**: the tail matches frames; the head disc colour is decoded statically and was never large enough to see | [DAMOCLES](#damocles) |
+| What sets `$7A82`, the tail's ERIS quarter? | **Confirmed** (static): only the end of the waypoint table at zero on the clock, which destroys the comet too unless ERIS is already gone | [DAMOCLES](#damocles) |
 | Pinned oracle frames | **Confirmed**: 24 frames, 6 poses, 4 clusters | [Pinned frames](#pinned-frames) |
 
 ## Working Authority and evidence
@@ -286,7 +287,8 @@ The comet's colour word is `$E000`, which is negative. Pass 2 skips the palette 
 - Five points are projected through `$05668A` into slots `$80..$90`. The first is the
   **tail tip**, at `X_d + X_d/4`, `Y = 0`, `Z_d + Z_d/4`. That is 1.25 times the comet's
   centre, directly away from DIALIS. When `$7A82 ≠ 0` the quarter is taken from ERIS's
-  X/Z instead (`$5F6C`/`$5FEC`); `$7A82` is 0 in every capture. The other four are
+  X/Z instead (`$5F6C`/`$5FEC`); `$7A82` is 0 in every capture (see below for what sets it).
+  The other four are
   **head points** at the comet centre ±250 in Y and ±250 in X (the table at `$04FD12`).
   In space (`$7A8E = 2`) they go through `V` alone, not `M`.
 - `$04F8FE` draws four polygons from `$04FD2C`. Each has colour `$0777`, and they form two
@@ -299,14 +301,36 @@ The comet's colour word is `$E000`, which is negative. Pass 2 skips the palette 
   i.e. **black**. The head radius `size/d` is below one pixel at every range reached, so
   this is **not verified**.
 
+Pass 2 lets the comet through with its depth negative (`$05315A`), so the tail can be drawn
+while the head is behind the eye. The head disc then is not (`tst.w $842(a0)` at `$04FCFE`).
+The comet path is still entered through `$04FBAE`'s `cmpi.w #$4000, d2` on the head's
+screen x.
+
 At the ranges seen from a surface (250,000 units and more), the head points collapse to
-under a pixel, and the comet is a thin white streak from the head towards the tail tip.
-Three MIDAS frames match the predicted ends to within a pixel:
+under a pixel, and the comet is a thin white streak from the head towards the tail tip. The
+fill still paints every row the streak crosses, two or three pixels a row in the MIDAS
+frames. Three MIDAS frames match the predicted ends to within a pixel:
 
 | Frame | Predicted head | Predicted tip | Streak on screen |
 | --- | --- | --- | --- |
 | lon 696 | (199.6, 24.0) | (211.5, 14.9) | (199, 24) … (212, 15) |
 | lon 704 | (189.2, 31.9) | (200.8, 23.0) | (190, 31) … (201, 23) |
+
+All three frames hold the impact clock at `$793C = -6639` with `$7942` putting the fraction
+at 13/32, and DAMOCLES at `(50716, 63754)`: #440's formula on segment 14 gives exactly that.
+
+### What sets `$7A82`
+
+`$7A82` is written in two places. `$05939E`'s installer clears it beside the waypoint cursor,
+and `$051FB8` sets it to `$FFFF` when the mover reaches the table's zero time word (record
+28, ERIS's centre at zero on the clock). Just before that, `$051FB2` calls `$051F42`. That
+routine destroys DAMOCLES (`$74`) and ERIS (`$2C`) through `$04C98E`, but only if neither is
+already destroyed (`tst.w $626a(a0)` and `tst.w $6296.w`). A destroyed Body is skipped by
+pass 2 and by the mover. So the ERIS-quarter branch can draw only when ERIS was destroyed
+before the impact and the comet was not: the comet then goes on in a straight line past its
+end, and its tail points a quarter of ERIS's position on. That belongs to the endgame
+([#110](https://github.com/odogono/mercenary/issues/110)). `$7A82` also stops `$051F00` from
+refreshing the X drift `$7A84`.
 
 ## The closed form
 
@@ -399,7 +423,9 @@ Read the code windows above from `observed.ram` with Capstone (the lab venv has 
 - **The sky background fill** was not found. The frames only show that the area under
   the Bodies is palette slot 8.
 - **The comet head disc** colour (black, slot 0, with an empty slot-12 span) is a literal
-  reading of `$04FCE6`. The disc was never a pixel wide in any frame.
+  reading of `$04FCE6`. The disc was never a pixel wide in any frame. The port draws it as
+  read (#538). From ERIS it is 64,000 / range pixels, so it first reaches `$045A0C`'s
+  one-row width within about 76,000 units, late in the countdown.
 - **In-flight and space views** (`$042C74 = $88`, and `$7A8E = 2` using `V` alone) are
   static reading only. The all-body scan `$052DB0` that the space branch uses was not
   re-checked here.
@@ -410,5 +436,22 @@ Read the code windows above from `observed.ram` with Capstone (the lab venv has 
   [#529](https://github.com/odogono/mercenary/issues/529) publishes in
   `payload/damocles/system.json`. It hands the rotated offset to the Camera that draws the
   structures and cuts the disc at the view's centre row. It draws the disc round, because
-  the port's pixels are square. The comet's geometry is not published, so DAMOCLES is not
-  drawn yet.
+  the port's pixels are square.
+- **The port draws the comet** (#538, `web/src/damocles/comet.ts` and `sky.ts`) from the
+  `comet` block `damocleslab.system` now publishes: the #440 waypoint table, the tail shift,
+  the head points, the four polygons and the head disc's slots. The Session's impact clock
+  places the centre with #440's arithmetic, so a Save restores the comet with the clock.
+  The polygons are cut short of the eye and at the view's centre row. The port's pixels are
+  finer than the ST's, so it adds a quad one ST pixel wide from the head to the tip where
+  the ST fill would paint a pixel a row. Two things are left out on purpose. The comet is
+  not drawn once the clock reaches zero, because `$051F42` destroys it there; ERIS's own
+  destruction and the rest of the collision are #110's. `$7A82` and the X drift are never
+  set, because nothing the port models sets them.
+- **The port's Camera** reads the eye's yaw and pitch exactly, where the ST's `$064000`
+  table is half a step on. Against the MIDAS frames that moves the comet's head by about
+  1.0 pixel right and 0.7 up, and the tip by 0.8 and 1.1. The head still lands on a lit
+  pixel of the streak in all three frames. The tip lands within one pixel at 696 and 704,
+  and within two at 688, where the offset carries it across a row. The sky pass alone,
+  through the ST's own view matrix, matches the probe's predictions to 0.01 pixel. The
+  offset moves the ground and structures by the same amount, so it is the Camera's question
+  and not the sky's.

@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, test } from 'bun:test';
 
 import type { AssembledCatalogue } from '../src/catalogue/data.ts';
 import { ModelStore } from '../src/catalogue/modelStore.ts';
+import { impactTime } from '../src/damocles/comet.ts';
 import { executeDamoclesConsoleCommand } from '../src/damocles/console.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import {
@@ -488,6 +489,7 @@ describe('the player stands on one Floor', () => {
         skyPass(system, {
           body: pose.body,
           daylight,
+          impact: impactTime(0, content.doc.time),
           position: pose.position,
           sky: surface.sky,
           turn: bodyTurn
