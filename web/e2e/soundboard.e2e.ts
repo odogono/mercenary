@@ -45,6 +45,18 @@ test('the sound board plays a Targ and a Damocles sound, and stops them', async 
   expect(await loudest(page, 0.5)).toBeGreaterThan(1e-3);
   await page.getByRole('button', { name: 'Stop everything' }).click();
   await page.waitForTimeout(300);
+
+  // #514: a programme no session asks for yet, and the tune from the Data Payload.
+  await card(/^Transporter · /)
+    .getByRole('button', { name: 'Play' })
+    .click();
+  expect(await loudest(page, 0.5)).toBeGreaterThan(1e-3);
+  await card(/^GHETTOBLASTER/)
+    .getByRole('button', { name: 'Play' })
+    .click();
+  expect(await loudest(page, 1)).toBeGreaterThan(1e-3);
+  await page.getByRole('button', { name: 'Stop everything' }).click();
+  await page.waitForTimeout(300);
   expect(await loudest(page, 0.5)).toBeLessThan(1e-4);
   expect(errors).toEqual([]);
   await expect(page.locator('#error')).toHaveText('');

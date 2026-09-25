@@ -705,5 +705,21 @@ messages from the resident script bank, verbatim padding included, with per-reco
 source addresses and digests. See
 [the strings note](../../docs/research/damocles-script-strings.md).
 
+## Music extraction (#514)
+
+```sh
+PYTHONPATH=research/damocles-st research/damocles-st/.venv/bin/python -m damocleslab.music \
+  --run research/damocles-st/work/observe-first-world-20260818T101013Z-c5a32b7d \
+  --output payload/damocles/music.json
+```
+
+Extracts the GHETTOBLASTER's tune: the three voice streams of the player at `$033F6A` to the
+jump that closes each loop, every volume and pitch table the pointer tables hold, and the
+eight bytes at address 0 that a voice with no table walks (the capture's TOS header, not the
+game's). It fails closed on voices of different lengths, a jump off an op or entry boundary,
+or a table the pointer tables do not hold, and `tests/test_music.py` checks the tracked
+payload reproduces byte for byte from the pinned capture. See
+[every sound programme](../../docs/research/damocles-sound-programmes.md#the-music-player).
+
 See [`SPEC.md`](SPEC.md), [`BOOT-AND-UNPACKING.md`](BOOT-AND-UNPACKING.md), and
 [`HATARI-RESEARCH.md`](HATARI-RESEARCH.md).

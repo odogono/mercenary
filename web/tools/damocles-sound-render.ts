@@ -1,8 +1,11 @@
-import { DamoclesPsgDriver, type DamoclesCue } from '../src/damocles/psg.ts';
+import {
+  DamoclesPsgDriver,
+  type DamoclesRequest
+} from '../src/damocles/psg.ts';
 import { Ym2149 } from '../src/sound/ym2149.ts';
 import { encodeWav } from './wav.ts';
 
-/// Renders what the Damocles sound presenter plays for a timeline of Sound Cues to a mono
+/// Renders what the Damocles sound presenter plays for a timeline of driver requests to a mono
 /// 48 kHz WAV, so the port can be put through the same analysis as a Working Authority
 /// recording (#508, `research/damocles-st/scripts/lift-sound-probe.py analyse`).
 ///
@@ -10,10 +13,34 @@ import { encodeWav } from './wav.ts';
 ///     [--timeline 0:door-start,33:door-stop,83:take,83:door-start,116:door-stop]
 ///
 /// The default timeline is the State Office ride from G to 1 as the session asks for it: the
-/// door shuts over 33 VBLs, the label steps 50 more, and the arrival opens the new door.
+/// door shuts over 33 VBLs, the label steps 50 more, and the arrival opens the new door. Any
+/// request the driver takes may appear (#514), so
+/// `0:spell,300:splash,600:transporter,900:bump,1200:blast,1500:shot,1800:thud,2100:zap,2400:blown-up`
+/// renders the programmes `sound-programme-probe.py`'s `arm-b` case recorded, 6 s apart.
 
 const SAMPLE_RATE = 48_000;
-const CUES = new Set<string>(['door-start', 'door-stop', 'drop', 'take']);
+const REQUESTS = new Set<string>([
+  'blast',
+  'blown-up',
+  'bump',
+  'channel-c-off',
+  'descent-end',
+  'descent-start',
+  'descent-step',
+  'door-start',
+  'door-stop',
+  'drop',
+  'geiger-click',
+  'hazard-alarm',
+  'restore',
+  'shot',
+  'spell',
+  'splash',
+  'take',
+  'thud',
+  'transporter',
+  'zap'
+] satisfies DamoclesRequest[]);
 
 const argument = (name: string, fallback: string): string => {
   const index = process.argv.indexOf(name);
@@ -33,14 +60,16 @@ const timeline = argument(
   .split(',')
   .map(entry => {
     const [vbl, cue] = entry.split(':');
-    if (!CUES.has(cue ?? '') || !Number.isInteger(Number(vbl))) {
+    if (!REQUESTS.has(cue ?? '') || !Number.isInteger(Number(vbl))) {
       throw new Error(`Not a VBL:cue pair: ${entry}`);
     }
-    return { cue: cue as DamoclesCue, vbl: Number(vbl) };
+    return { cue: cue as DamoclesRequest, vbl: Number(vbl) };
   });
 
 const chip = new Ym2149(SAMPLE_RATE);
 const driver = new DamoclesPsgDriver();
+// As the AudioWorklet does: the program's reset `$0508BC` before anything sounds.
+driver.powerOn(chip);
 const vbls = Math.ceil(seconds * vblHertz);
 const samples = new Float32Array(Math.round(seconds * SAMPLE_RATE));
 let written = 0;

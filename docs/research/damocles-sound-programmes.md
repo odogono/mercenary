@@ -444,6 +444,12 @@ Presentation, in the port, of what its sessions can reach now:
 - [#522](https://github.com/odogono/mercenary/issues/522): the message tone, per VBL of a
   message's scroll-in.
 
+The sound board (`/sounds`) plays every programme above through the port's own driver,
+and the tune from `payload/damocles/music.json`, which `damocleslab.music` extracts. Rendered
+offline, the port's programmes run within 3 VBLs of the `arm-b` recording at the same
+pitches. They decay about 5 % more slowly, which is the port's datasheet ladder against
+Hatari's volume table.
+
 The rest have no session behaviour to attach to yet: craft motion (engine, bump,
 grounding), shots and the attack ship, transporters, hazards, explosives, the Geiger
 counter, the BOOK, and the GHETTOBLASTER's music. Each should be presented with the

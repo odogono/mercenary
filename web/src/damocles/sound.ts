@@ -1,14 +1,22 @@
 import { SoundLifecycle } from '../sound/lifecycle.ts';
 import type { SoundTransport } from '../sound/presenter.ts';
-import type { DamoclesCue } from './psg.ts';
+import type { DamoclesCue, DamoclesMusicData, DamoclesRequest } from './psg.ts';
 
-/// What the Damocles processor needs to know: how often its VBL runs.
+/// What the Damocles processor needs to know: how often its VBL runs, and the
+/// GHETTOBLASTER's tune where something may ask for it (the sound board; no session does).
 export interface DamoclesSoundDocument {
+  readonly music?: DamoclesMusicData;
   readonly vblHertz: number;
 }
 
+/// A session sends only its Sound Cues. The sound board also sends the driver's other
+/// programmes and the state the ST's own code would feed it: the craft's speed, a message's
+/// characters, the GHETTOBLASTER's switch.
 export type DamoclesSoundCommand =
-  | { readonly cue: DamoclesCue; readonly kind: 'cue' }
+  | { readonly cue: DamoclesRequest; readonly kind: 'cue' }
+  | { readonly exponent: number; readonly kind: 'speed' }
+  | { readonly code: number | null; readonly kind: 'message' }
+  | { readonly kind: 'music'; readonly playing: boolean }
   | { readonly kind: 'reset' }
   | { readonly kind: 'mute'; readonly value: boolean }
   | { readonly kind: 'volume'; readonly value: number };

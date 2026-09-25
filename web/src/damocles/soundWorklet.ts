@@ -13,18 +13,31 @@ registerChipProcessor<DamoclesSoundCommand, DamoclesSoundDocument>(
   'Damocles sound',
   (document, sampleRate) => {
     const chip = new Ym2149(sampleRate);
-    const driver = new DamoclesPsgDriver();
+    const driver = new DamoclesPsgDriver(document.music ?? null);
+    // The program's reset `$0508BC` runs at start-up, before anything sounds.
+    driver.powerOn(chip);
     return {
       apply: command => {
         // The transport's gain applies mute and volume.
-        if (command.kind === 'cue') {
-          driver.request(command.cue, chip);
+        switch (command.kind) {
+          case 'cue':
+            driver.request(command.cue, chip);
+            return;
+          case 'speed':
+            driver.setSpeedExponent(command.exponent);
+            return;
+          case 'message':
+            driver.messageCharacter(command.code, chip);
+            return;
+          case 'music':
+            driver.setMusic(command.playing);
         }
       },
       chip,
       reset: () => {
         driver.reset();
         chip.reset();
+        driver.powerOn(chip);
       },
       tick: { hertz: document.vblHertz, run: () => driver.vbl(chip) }
     };
