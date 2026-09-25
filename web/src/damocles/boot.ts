@@ -257,15 +257,20 @@ try {
   };
   applyAudioPreferences(preferences.current());
 
-  /// A tally of the Sound Cues the session asked for, and the messages whose tone it asked for,
-  /// as they are drained. It proves requests, not audible output: #301 reads it to see one take
-  /// ask for exactly one sound, and the presenter's own state is published beside it.
+  /// A tally of the Sound Cues the session asked for, as they are drained, and apart from it a
+  /// count of the messages whose tone it asked for. They prove requests, not audible output:
+  /// #301 reads the tally to see one take ask for exactly one sound, and the presenter's own
+  /// state is published beside it.
   const cueTally = new Map<string, number>();
+  let messageTones = 0;
   const drainEffects = (): void => {
     const effects = session.drainEffects();
     for (const effect of effects) {
-      const name = effect.type === 'message' ? 'message' : effect.cue;
-      cueTally.set(name, (cueTally.get(name) ?? 0) + 1);
+      if (effect.type === 'message') {
+        messageTones += 1;
+      } else {
+        cueTally.set(effect.cue, (cueTally.get(effect.cue) ?? 0) + 1);
+      }
     }
     sound.present(effects, snapshot.elapsed);
   };
@@ -885,6 +890,7 @@ try {
       .sort(([left], [right]) => left.localeCompare(right))
       .map(([cue, count]) => `${cue}:${count}`)
       .join(' ');
+    root['damoclesMessageTones'] = String(messageTones);
     // Whether the sound presenter is locked, running or suspended, apart from the cue tally.
     root['damoclesAudio'] = audioUnavailable ? 'unavailable' : sound.state;
     root['triangles'] = String(triangles);

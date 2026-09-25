@@ -24,6 +24,7 @@ interface Heard {
   readonly cues: string;
   readonly elapsed: number;
   readonly level: number;
+  readonly messageTones: number;
 }
 
 const frame = (page: Page) => page.locator('#frame');
@@ -54,7 +55,8 @@ const listen = async (page: Page): Promise<void> => {
         heard.push({
           cues: node.dataset['damoclesCues'] ?? '',
           elapsed: Number(node.dataset['elapsed']),
-          level: Math.sqrt(sum / samples.length)
+          level: Math.sqrt(sum / samples.length),
+          messageTones: Number(node.dataset['damoclesMessageTones'])
         });
       }
       requestAnimationFrame(poll);
@@ -94,9 +96,10 @@ const walkIntoTheLift = async (page: Page): Promise<void> => {
   });
   await page.keyboard.up('ArrowUp');
   await expect(frame(page)).toHaveAttribute('data-damocles-audio', 'running');
+  // The hall holds the eye at the door until its latch opens, so the walk in thuds once (#521).
   await expect(frame(page)).toHaveAttribute(
     'data-damocles-cues',
-    'door-start:1 door-stop:1'
+    'door-start:1 door-stop:1 thud:1'
   );
 };
 
@@ -107,7 +110,7 @@ const rideToFloor1 = async (page: Page): Promise<void> => {
   });
   await expect(frame(page)).toHaveAttribute(
     'data-damocles-cues',
-    'door-start:3 door-stop:3 take:1',
+    'door-start:3 door-stop:3 take:1 thud:1',
     { timeout: 10_000 }
   );
   // Long enough for the arrival effect's second of decay to end.
@@ -159,7 +162,9 @@ test('a refusal message is heard while it scrolls in, and silent once the text i
   await page.keyboard.press('Shift');
   await expect(frame(page)).toHaveAttribute('data-damocles-audio', 'running');
   await page.keyboard.press('b');
-  await expect(frame(page)).toHaveAttribute('data-damocles-cues', 'message:1');
+  await expect(frame(page)).toHaveAttribute('data-damocles-message-tones', '1');
+  // No Sound Cue: the refusal's only sound is its message's.
+  await expect(frame(page)).toHaveAttribute('data-damocles-cues', '');
   await expect(frame(page)).toHaveAttribute(
     'data-damocles-row',
     'VEHICLE KEY REQUIRED',
@@ -167,7 +172,9 @@ test('a refusal message is heard while it scrolls in, and silent once the text i
   );
   await page.waitForTimeout(1500);
   const samples = await heard(page);
-  const shown = when(samples, 'message:1');
+  const found = samples.find(sample => sample.messageTones === 1);
+  expect(found, 'a poll after the message began').toBeDefined();
+  const shown = found!.elapsed;
   const before = levelsBetween(samples, 0, shown);
   expect(before.length).toBeGreaterThan(2);
   expect(Math.max(...before)).toBeLessThan(SILENT);
@@ -227,7 +234,7 @@ test('a new game stops a door tone mid-way, and leaving the title closes audio',
   await page.keyboard.press('1');
   await expect(frame(page)).toHaveAttribute(
     'data-damocles-cues',
-    'door-start:2 door-stop:1'
+    'door-start:2 door-stop:1 thud:1'
   );
   await page.keyboard.press('Escape');
   await page.locator('#new-game').click();
