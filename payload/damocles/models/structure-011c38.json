@@ -1,6 +1,32 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Eris group $10 cell $46 record places this instance and binds resident slot 41 at local (436, 2000, -189) on floor 10.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $10 cell $46 record places this instance and binds resident slot 45 at local (507, 50, -71) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $10 cell $46 record places this instance and binds resident slot 60 at local (518, 0, -189) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $10 cell $46 record places this instance and binds resident slot 61 at local (507, 0, -71) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $10 cell $46 record places this instance and binds resident slot 76 at local (525, 2000, 550) on floor 10.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-011c38",
     "kind": "structure",
     "levelBinding": {
@@ -43,7 +69,13 @@
       ],
       "tableAddress": 72766
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-41",
+      "object-slot-45",
+      "object-slot-60",
+      "object-slot-61",
+      "object-slot-76"
+    ],
     "name": "Structure 42",
     "nameStatus": "unknown",
     "omissions": [],

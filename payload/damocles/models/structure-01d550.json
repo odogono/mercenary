@@ -5,6 +5,21 @@
         "claim": "Authored Dion group $02 cell $E9 record places this instance and binds resident slot 135 at local (2704, 0, 1047) on floor 0.",
         "confidence": "verified",
         "source": "docs/research/damocles-dion-vesta-structure-groups.md"
+      },
+      {
+        "claim": "Authored Eris group $10 cell $43 record places this instance and binds resident slot 113 at local (2712, 0, 1122) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $11 cell $73 record places this instance and binds resident slot 93 at local (2724, 0, 1139) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Dion group $1B cell $41 record places this instance and binds resident slot 120 at local (2726, 0, 1187) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-dion-vesta-structure-groups.md"
       }
     ],
     "id": "structure-01d550",
@@ -41,7 +56,10 @@
       "tableAddress": 120150
     },
     "linkedInstances": [
-      "object-slot-135"
+      "object-slot-135",
+      "object-slot-113",
+      "object-slot-93",
+      "object-slot-120"
     ],
     "name": "Structure 182",
     "nameStatus": "unknown",

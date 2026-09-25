@@ -152,8 +152,8 @@ describe('a Body’s footprints', () => {
   test('are the Surface Structures placed on it, and what has no outline', async () => {
     const data = await catalogue();
     const { drawn, gaps } = readBodyFootprints(data, modelsOf(data), ERIS);
-    expect(drawn).toHaveLength(57);
-    expect(gaps).toHaveLength(20);
+    expect(drawn).toHaveLength(161);
+    expect(gaps).toHaveLength(23);
     expect(drawn.map(footprint => footprint.id)).toContain(SPACEPORT);
     // Object and ground Instances are not footprints: one is a thing standing on the ground
     // whose Object Residence a Drop rewrites, and the other is the cell's own surface.
@@ -169,13 +169,13 @@ describe('a Body’s footprints', () => {
     const all = bodies.flatMap(
       index => readBodyFootprints(data, modelsOf(data), index).drawn
     );
-    expect(all).toHaveLength(579);
+    expect(all).toHaveLength(715);
     expect(all.filter(footprint => footprint.source === 'plan')).toHaveLength(
-      577
+      712
     );
     expect(
       all.filter(footprint => footprint.source === 'exterior')
-    ).toHaveLength(2);
+    ).toHaveLength(3);
     // The exterior Mesh is all but absent, so the fallback is the rule rather than the relief.
     const onBodies = bodies.filter(
       index => readBodyFootprints(data, modelsOf(data), index).drawn.length > 0

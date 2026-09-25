@@ -1,6 +1,22 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Eris group $15 cell $89 record places this instance and binds resident slot 44 at local (253, 150, 648) on floor 1.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $15 cell $89 record places this instance and binds resident slot 237 at local (329, 150, 138) on floor 1.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $15 cell $89 record places this instance and binds resident slot 238 at local (329, 150, 276) on floor 1.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01dd3a",
     "kind": "structure",
     "levelBinding": {
@@ -66,7 +82,11 @@
       ],
       "tableAddress": 122176
     },
-    "linkedInstances": [],
+    "linkedInstances": [
+      "object-slot-44",
+      "object-slot-237",
+      "object-slot-238"
+    ],
     "name": "Structure 251",
     "nameStatus": "unknown",
     "omissions": [],

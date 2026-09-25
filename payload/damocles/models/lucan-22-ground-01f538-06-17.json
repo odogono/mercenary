@@ -2,14 +2,16 @@
   "model": {
     "evidence": [
       {
-        "claim": "LUCAN group $22 road cell $17: the per-cell ground/pad/road record at $1E000 the workspace loader would draw there, replayed from the group's authored stream by $04EB60-$04ED12 -- its $1E400 record after any placement replacement, its $83DC orientation and its $1E000 scene seed. No capture stands in this workspace; the same replay reproduces those tables on every capture that does.",
+        "claim": "LUCAN group $22 cell $17: the per-cell ground/pad/road record at $1E000 the workspace loader would draw there, replayed from the group's authored stream by $04EB60-$04ED12 -- its $1E400 record after any placement replacement, its $83DC orientation and its $1E000 scene seed. No capture stands in this workspace; the same replay reproduces those tables on every capture that does.",
         "confidence": "verified",
         "source": "docs/research/damocles-eris-ground.md"
       }
     ],
     "id": "lucan-22-ground-01f538-06-17",
     "kind": "ground",
-    "linkedInstances": [],
+    "linkedInstances": [
+      "lucan-22-ground-17"
+    ],
     "name": "LUCAN group $22 ground 23",
     "nameStatus": "unknown",
     "omissions": [],

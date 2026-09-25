@@ -2,14 +2,16 @@
   "model": {
     "evidence": [
       {
-        "claim": "VELOS CITY road cell $54: the per-cell ground/pad/road record at $1E000 the workspace loader would draw there, replayed from the group's authored stream by $04EB60-$04ED12 -- its $1E400 record after any placement replacement, its $83DC orientation and its $1E000 scene seed. No capture stands in this workspace; the same replay reproduces those tables on every capture that does.",
+        "claim": "VELOS CITY cell $54: the per-cell ground/pad/road record at $1E000 the workspace loader would draw there, replayed from the group's authored stream by $04EB60-$04ED12 -- its $1E400 record after any placement replacement, its $83DC orientation and its $1E000 scene seed. No capture stands in this workspace; the same replay reproduces those tables on every capture that does.",
         "confidence": "verified",
         "source": "docs/research/damocles-eris-ground.md"
       }
     ],
     "id": "eris-velos-city-ground-022eb0-06-54",
     "kind": "ground",
-    "linkedInstances": [],
+    "linkedInstances": [
+      "eris-velos-city-ground-54"
+    ],
     "name": "VELOS CITY ground 84",
     "nameStatus": "unknown",
     "omissions": [],

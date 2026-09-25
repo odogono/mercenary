@@ -30,6 +30,61 @@
         "claim": "Authored Metis group $03 cell $60 record places this instance and binds resident slot 231 at local (-319, 1350, 740) on floor 9.",
         "confidence": "verified",
         "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $11 cell $54 record places this instance and binds resident slot 40 at local (254, 150, 722) on floor 1.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $11 cell $14 record places this instance and binds resident slot 48 at local (-466, 348, 925) on floor 2.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $11 cell $14 record places this instance and binds resident slot 117 at local (215, 1350, 1052) on floor 9.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $11 cell $14 record places this instance and binds resident slot 185 at local (-587, 150, 974) on floor 1.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $11 cell $54 record places this instance and binds resident slot 186 at local (-258, 150, 758) on floor 1.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $11 cell $14 record places this instance and binds resident slot 207 at local (-466, 300, 925) on floor 2.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $11 cell $14 record places this instance and binds resident slot 213 at local (215, 1350, 709) on floor 9.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $11 cell $14 record places this instance and binds resident slot 222 at local (338, 1350, 760) on floor 9.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $11 cell $54 record places this instance and binds resident slot 223 at local (-42, 150, 690) on floor 1.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $11 cell $14 record places this instance and binds resident slot 227 at local (-141, 150, 661) on floor 1.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Eris group $11 cell $14 record places this instance and binds resident slot 235 at local (-141, 150, 787) on floor 1.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
       }
     ],
     "id": "structure-01d35e",
@@ -139,7 +194,18 @@
       "object-slot-67",
       "object-slot-133",
       "object-slot-226",
-      "object-slot-231"
+      "object-slot-231",
+      "object-slot-40",
+      "object-slot-48",
+      "object-slot-117",
+      "object-slot-185",
+      "object-slot-186",
+      "object-slot-207",
+      "object-slot-213",
+      "object-slot-222",
+      "object-slot-223",
+      "object-slot-227",
+      "object-slot-235"
     ],
     "name": "Structure 155",
     "nameStatus": "unknown",
