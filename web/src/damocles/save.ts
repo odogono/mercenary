@@ -28,6 +28,7 @@ import {
   type ScriptId,
   type Step
 } from './scripts.ts';
+import type { AttachmentLatch } from './selection.ts';
 import { presentedText, type DamoclesStrings } from './strings.ts';
 import type { Pose } from './world.ts';
 
@@ -63,7 +64,12 @@ import type { Pose } from './world.ts';
 /// Version 10 carries whether any door moved on the last pass (`$5A9D9`), which the next pass
 /// compares with to ask for the door tones (#499). A schema-9 record cannot say whether a door
 /// had just stopped, so it is refused whole rather than defaulted to still.
-export const DAMOCLES_SAVE_SCHEMA_VERSION = 10 as const;
+///
+/// Version 11 carries each attachment's latch (`$5A41 + slot`) beside its open units (#498).
+/// The latch settles a pass after its edge reaches the endpoint on most paths, and a ride sets it
+/// moving on a shut door, so it is not a function of the units. A schema-10 record cannot say
+/// whether a door at its endpoint had latched, so it is refused whole rather than derived.
+export const DAMOCLES_SAVE_SCHEMA_VERSION = 11 as const;
 export const DAMOCLES_DESTINATION = 'damocles' as const;
 
 /// What a restore must match exactly before it may continue this game (ADR 0026).
@@ -82,6 +88,8 @@ export interface DamoclesSaveIdentity {
 
 export interface BoundStructureSnapshot {
   readonly attachments: readonly {
+    /// `$5A41 + slot`. Closed stands shut and open at the endpoint; moving stands anywhere.
+    readonly latch: AttachmentLatch;
     readonly openUnits: number;
     readonly slot: number;
   }[];
@@ -966,15 +974,21 @@ export const decodeDamoclesSave = (
       const attachment = object(value, 'snapshot.structure.attachments[]');
       const slot = attachment['slot'];
       const openUnits = attachment['openUnits'];
+      const latch = attachment['latch'];
       if (
         !attachmentSlot(slot) ||
-        !finite(openUnits) ||
-        openUnits < 0 ||
-        openUnits > 32_767
+        !Number.isInteger(openUnits) ||
+        (openUnits as number) < 0 ||
+        (openUnits as number) > 32_767 ||
+        (latch !== 'closed' && latch !== 'moving' && latch !== 'open')
       ) {
         return fail('attachment state is outside its recovered bounds');
       }
-      return { openUnits, slot };
+      return {
+        latch: latch as AttachmentLatch,
+        openUnits: openUnits as number,
+        slot
+      };
     });
     let ride: LiftRideSnapshot | null = null;
     if (bound['ride'] !== null) {

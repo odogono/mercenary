@@ -443,7 +443,7 @@ A Surface Cell counted from a Damocles Island's origin rather than from the Body
 _Avoid_: Surface Cell, cell reference, grid reference, Body Coordinate
 
 **Entrance Attachment**:
-One recovered post-plan component of a Damocles Model, allocated its own attachment slot counting down from `$03FC`, whose control word is its Attachment Constructor. While the Pose is inside that attachment's Proximity Box, each moving leaf advances one model unit per tick until it stands eight units inside its outer edge; outside the box the leaves return and re-close. The leaves stay in the region queue for the whole motion, and a region naming the slot is selectable only at the fully-open endpoint. Capital Spaceport's `$4200` two-leaf X entrance and STATE OFFICE's `$8200` two-leaf Z entrance are two members of one family, not two mechanisms.
+One recovered post-plan component of a Damocles Model, allocated its own attachment slot counting down from `$03FC`, whose control word is its Attachment Constructor. While the Pose is inside that attachment's Proximity Box, each moving leaf advances one model unit per tick until it stands eight units inside its outer edge; outside the box the leaves return and re-close. The leaves stay in the region queue for the whole motion, and a region naming the slot is selectable only while the attachment's latch reads fully open. The latch settles on the tick the leaves reach an endpoint, or on the tick after it, as the constructor's path compares its edge. Capital Spaceport's `$4200` two-leaf X entrance and STATE OFFICE's `$8200` two-leaf Z entrance are two members of one family, not two mechanisms.
 _Avoid_: Doorway, detail door face, Entrance Latch, spaceport door
 
 **Attachment Constructor**:
@@ -483,7 +483,7 @@ The single bound current-cell Damocles Instance whose plan, attachments and regi
 _Avoid_: Active structure, current building, bound model
 
 **Entrance Latch** (historical):
-The #237 Gameplay Session boolean that opened Capital Spaceport's Entrance Attachment on first entry to the Proximity Box and never cleared. Recovered motion uses the live RAM latch `$5E3D` (`$00` closed, `$01` moving, `$FF` fully open) and re-closes outside the box; the session stores that progress as open units, not this sticky flag.
+The #237 Gameplay Session boolean that opened Capital Spaceport's Entrance Attachment on first entry to the Proximity Box and never cleared. Recovered motion uses the live RAM latch `$5E3D` (`$00` closed, `$01` moving, `$FF` fully open) and re-closes outside the box; the session stores that progress as open units and the latch, not this sticky flag.
 _Avoid_: Doorway state, proximity state
 
 **Plan Refusal** (historical):

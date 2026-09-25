@@ -1,8 +1,15 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
 
-import type { AssembledCatalogue } from '../src/catalogue/data.ts';
+import type {
+  AssembledCatalogue,
+  EntranceAttachment
+} from '../src/catalogue/data.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
-import { attachmentOpenLimit } from '../src/damocles/selection.ts';
+import {
+  attachmentOpenLimit,
+  stepAttachment,
+  type AttachmentState
+} from '../src/damocles/selection.ts';
 import {
   DamoclesSession,
   type DamoclesContent
@@ -78,6 +85,7 @@ const atSpaceport = (
     structure: {
       ...saved.structure!,
       attachments: placement.selection!.structure.attachments.map(item => ({
+        latch: openUnits === 0 ? 'closed' : 'open',
         openUnits,
         slot: item.slot
       })),
@@ -86,10 +94,12 @@ const atSpaceport = (
   });
 };
 
-const doorUnits = (session: DamoclesSession): number =>
+const spaceportDoor = (session: DamoclesSession) =>
   session.snapshot.structure!.attachments.find(
     item => item.slot === SPACEPORT_DOOR
-  )!.openUnits;
+  )!;
+const doorUnits = (session: DamoclesSession): number =>
+  spaceportDoor(session).openUnits;
 
 /// Advances one VBL at a time until `done`, and says how many VBLs that took.
 const vblsUntil = (session: DamoclesSession, done: () => boolean): number => {
@@ -154,9 +164,111 @@ describe('every door moves one unit a tick', () => {
   });
 });
 
+/// The first attachment the Catalogue carries of a constructor shape.
+const firstOf = (
+  leafCount: 1 | 2,
+  movingSide?: 'high' | 'low'
+): EntranceAttachment =>
+  catalogue.models
+    .flatMap(model => model.structureSelection?.attachments ?? [])
+    .find(
+      item =>
+        item.constructor.leafCount === leafCount &&
+        item.constructor.movingSide === movingSide
+    )!;
+
+/// Passes from one settled latch to the other, and the pass the edge arrived on.
+const settle = (
+  attachment: EntranceAttachment,
+  opening: boolean
+): { arrived: number; latched: number } => {
+  const travel = attachmentOpenLimit(attachment);
+  let state: AttachmentState = opening
+    ? { latch: 'closed', openUnits: 0 }
+    : { latch: 'open', openUnits: travel };
+  let arrived = 0;
+  for (let pass = 1; pass <= travel + 2; pass += 1) {
+    const next = stepAttachment(attachment, state, opening);
+    if (next === undefined) {
+      return { arrived, latched: pass - 1 };
+    }
+    state = next;
+    if (arrived === 0 && state.openUnits === (opening ? travel : 0)) {
+      arrived = pass;
+    }
+  }
+  throw new Error('the latch did not settle');
+};
+
+describe('the latch settles as its path compares the edge', () => {
+  test('two leaves latch a pass after the edge arrives, opening and closing', () => {
+    // `$05AB8C`–`$05AB92` and `$05ACEE`–`$05ACF2` test the rising inner edge with `bpl`.
+    const door = firstOf(2);
+    const travel = attachmentOpenLimit(door);
+    for (const opening of [true, false]) {
+      expect(settle(door, opening)).toEqual({
+        arrived: travel,
+        latched: travel + 1
+      });
+    }
+  });
+
+  test('a low leaf latches open a pass late and closed on arrival', () => {
+    // Its low edge rises to open (`$05AC30`, `bpl`) and falls to close (`$05AAD2`, `bmi`).
+    const door = firstOf(1, 'low');
+    const travel = attachmentOpenLimit(door);
+    expect(settle(door, true)).toEqual({
+      arrived: travel,
+      latched: travel + 1
+    });
+    expect(settle(door, false)).toEqual({ arrived: travel, latched: travel });
+  });
+
+  test('a high leaf latches open on arrival and closed a pass late', () => {
+    // Its high edge falls to open (`$05AC5A`, `bmi`) and rises to close (`$05AAFA`, `bpl`).
+    const door = firstOf(1, 'high');
+    const travel = attachmentOpenLimit(door);
+    expect(settle(door, true)).toEqual({ arrived: travel, latched: travel });
+    expect(settle(door, false)).toEqual({
+      arrived: travel,
+      latched: travel + 1
+    });
+  });
+
+  test('a door that has settled takes no path, and a moving latch at its endpoint settles', () => {
+    const door = firstOf(2);
+    const travel = attachmentOpenLimit(door);
+    expect(
+      stepAttachment(door, { latch: 'open', openUnits: travel }, true)
+    ).toBeUndefined();
+    expect(
+      stepAttachment(door, { latch: 'closed', openUnits: 0 }, false)
+    ).toBeUndefined();
+    // As `$055B0A` leaves a shut door when a ride is admitted.
+    expect(
+      stepAttachment(door, { latch: 'moving', openUnits: 0 }, false)
+    ).toEqual({ latch: 'closed', openUnits: 0 });
+  });
+
+  test('the Capital Spaceport door latches open a tick after its edge arrives', () => {
+    const door = content.surface.placements
+      .find(item => item.id === SPACEPORT)!
+      .selection!.structure.attachments.find(
+        item => item.slot === SPACEPORT_DOOR
+      )!;
+    const [x0, x1] = door.proximityBox.x;
+    const [z0, z1] = door.proximityBox.z;
+    const session = atSpaceport((x0 + x1) / 2, (z0 + z1) / 2, 0);
+    expect(vblsUntil(session, () => doorUnits(session) === 92)).toBe(92);
+    expect(spaceportDoor(session).latch).toBe('moving');
+    session.advance(VBL);
+    expect(spaceportDoor(session).latch).toBe('open');
+  });
+});
+
 describe('the doors #472 timed on the ST', () => {
-  // The traces put each door's latch change at travel + 1 substeps: the tick after the edge
-  // reaches its endpoint is the one that sets `$FF` or clears to `$00`.
+  // These are all two-leaf doors, so each latch changes at travel + 1 substeps: the tick after
+  // the edge reaches its endpoint is the one that sets `$FF` or clears to `$00`.
   test('the State Office lift door $3F4 travels 32 units on every Floor it binds', () => {
     // Floors 0, 1, 2 and 10 bind slots 76, 78, 78 and 79; the ST cleared its latch at substep 33.
     expect([76, 78, 79].map(slot => travelOf(slot, 0x03_f4))).toEqual([

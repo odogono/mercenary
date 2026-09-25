@@ -6,7 +6,8 @@ import {
   attachmentOpenLimit,
   clampStructureStep,
   structureMeshes,
-  structureRegionAt
+  structureRegionAt,
+  type AttachmentLatch
 } from '../src/damocles/selection.ts';
 import { erisSurfaceFrom, startPose } from '../src/damocles/world.ts';
 import { ERIS_BODY } from './damocles-pose.ts';
@@ -40,6 +41,10 @@ const units =
   (value: number) =>
   (_slot: number): number =>
     value;
+const latched =
+  (latch: AttachmentLatch) =>
+  (_slot: number): AttachmentLatch =>
+    latch;
 const at = (x: number, z: number, y = 63) => ({
   body: ERIS_BODY,
   heading: 0,
@@ -171,14 +176,19 @@ test('inside, window and doorway replace the detail list, preserving empty and f
 });
 
 test('region pushback clamps only the blocked axis and preserves wall sliding', () => {
-  const region = structureRegionAt(placement, at(1000, -1000), false, units(0));
+  const region = structureRegionAt(
+    placement,
+    at(1000, -1000),
+    false,
+    latched('closed')
+  );
   expect(region).toBe(2);
   const pushed = clampStructureStep(
     placement,
     at(1000, -1000),
     at(1100, 0),
     false,
-    units(0),
+    latched('closed'),
     region
   );
   expect(pushed.pose.position.x).toBe(placement.position.x + 1100);
@@ -190,14 +200,14 @@ test('region pushback clamps only the blocked axis and preserves wall sliding', 
     placement,
     at(700, 0),
     false,
-    units(0)
+    latched('closed')
   );
   const window = clampStructureStep(
     placement,
     at(700, 0),
     at(1000, 0),
     false,
-    units(0),
+    latched('closed'),
     windowRegion
   );
   expect(window.pose.position.x).toBe(placement.position.x + 788);
@@ -205,15 +215,13 @@ test('region pushback clamps only the blocked axis and preserves wall sliding', 
 
 test('open doorway X uses the bind-time inset, not the catalogue slab span', () => {
   const inDoor = at(1400, -780);
-  expect(
-    structureRegionAt(placement, inDoor, false, units(OPEN_ENTRANCE_UNITS))
-  ).toBe(1);
+  expect(structureRegionAt(placement, inDoor, false, latched('open'))).toBe(1);
   const left = clampStructureStep(
     placement,
     inDoor,
     at(1300, -780),
     false,
-    units(OPEN_ENTRANCE_UNITS),
+    latched('open'),
     1
   );
   expect(left.pose.position.x).toBe(placement.position.x + 1311);
@@ -223,23 +231,28 @@ test('open doorway X uses the bind-time inset, not the catalogue slab span', () 
     inDoor,
     at(1500, -780),
     false,
-    units(OPEN_ENTRANCE_UNITS),
+    latched('open'),
     1
   );
   expect(right.pose.position.x).toBe(placement.position.x + 1488);
   expect(right.regionIndex).toBe(1);
 });
 
-test('the doorway region is admitted only at the fully-open endpoint', () => {
+test('the doorway region is admitted only once its latch reads fully open', () => {
   const outside = at(1400, -820);
-  const region = structureRegionAt(placement, outside, false, units(0));
+  const region = structureRegionAt(
+    placement,
+    outside,
+    false,
+    latched('closed')
+  );
   expect(region).toBe(2);
   const closed = clampStructureStep(
     placement,
     outside,
     at(1400, -790),
     false,
-    units(OPEN_ENTRANCE_UNITS - 1),
+    latched('moving'),
     region
   );
   expect(closed.pose.position.z).toBe(placement.position.z - 812);
@@ -248,7 +261,7 @@ test('the doorway region is admitted only at the fully-open endpoint', () => {
     outside,
     at(1400, -790),
     false,
-    units(OPEN_ENTRANCE_UNITS),
+    latched('open'),
     region
   );
   expect(open.pose.position.z).toBe(placement.position.z - 790);

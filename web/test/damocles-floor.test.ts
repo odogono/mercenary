@@ -648,7 +648,7 @@ describe('Save and Session Resume carry the Floor', () => {
     };
     record.schemaVersion = 7;
     expect(() => decoded(JSON.stringify(record))).toThrow(
-      'schema 7 is not Damocles Save 10'
+      'schema 7 is not Damocles Save 11'
     );
   });
 
@@ -664,6 +664,35 @@ describe('Save and Session Resume carry the Floor', () => {
         'doorsMoving is not a boolean'
       );
     }
+  });
+
+  test('each door’s latch round-trips, and a record without one is refused', () => {
+    const record = inStateOffice().captureResume();
+    const withLatch = (latch: unknown) =>
+      saved({
+        ...record,
+        structure: {
+          ...record.structure!,
+          attachments: record.structure!.attachments.map((item, index) =>
+            index === 0 ? { ...item, latch } : item
+          )
+        } as never
+      });
+    for (const latch of ['closed', 'moving'] as const) {
+      expect(decoded(withLatch(latch)).structure?.attachments[0]?.latch).toBe(
+        latch
+      );
+    }
+    for (const latch of [undefined, 0, 'shut']) {
+      expect(() => decoded(withLatch(latch))).toThrow(
+        'attachment state is outside its recovered bounds'
+      );
+    }
+    // A latch settles only at its endpoint, so a shut door cannot be restored latched open.
+    const open = decoded(withLatch('open'));
+    expect(() => new DamoclesSession(content, open)).toThrow(
+      'saved attachments do not match the bound structure'
+    );
   });
 
   test('a lift ride and doorway round-trip, and are refused outside their bounds', () => {

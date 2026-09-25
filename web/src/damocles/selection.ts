@@ -16,6 +16,11 @@ const EYE_CLEARANCE = 11;
 const LEAF_ENDPOINT_INSET = 8;
 export type AttachmentUnits = (slot: number) => number;
 const closedAttachment: AttachmentUnits = () => 0;
+/// `$5A41 + slot`, an attachment's latch: `$00` closed, `$01` moving, `$FF` fully open
+/// (docs/research/damocles-generic-entrance-attachments.md).
+export type AttachmentLatch = 'closed' | 'moving' | 'open';
+export type AttachmentLatches = (slot: number) => AttachmentLatch;
+const closedLatch: AttachmentLatches = () => 'closed';
 
 const subsets = new WeakMap<object, Mesh>();
 const subset = (key: object, mesh: Mesh, faces: readonly Primitive[]): Mesh => {
@@ -88,22 +93,58 @@ export const attachmentOpenLimit = (attachment: EntranceAttachment): number => {
   );
 };
 
+export interface AttachmentState {
+  readonly latch: AttachmentLatch;
+  readonly openUnits: number;
+}
+
+/// Whether a path of `$05AA3C` changes the latch on the substep its edge reaches the endpoint,
+/// rather than the one after. Each path steps its edge and compares it with the endpoint. Where
+/// the edge's coordinate falls towards the endpoint the test is `cmp`/`bmi`, which stops at
+/// equality. Where it rises the test is `cmp`/`bpl`, which carries on at equality and stops a
+/// substep later. A one-leaf door's low edge rises to open and falls to close, and its high edge
+/// the reverse. Two leaves test the rising inner edge both ways (docs/research/damocles-door-speed.md).
+const latchesOnArrival = (
+  attachment: EntranceAttachment,
+  opening: boolean
+): boolean =>
+  attachment.constructor.leafCount === 1 &&
+  attachment.constructor.movingSide === (opening ? 'high' : 'low');
+
+/// One pass of `$05AA3C` over one attachment, which the frame loop makes once a substep. A pass
+/// opening a door not latched open, or closing one not latched closed, sets the latch moving and
+/// steps the edge a unit (`move.l #1,d4`). Once a step would reach or pass the endpoint, the edge
+/// is clamped there and the latch set to `$FF` or cleared to `$00`. Undefined where no path runs,
+/// so the pass does not raise `$5A9D8`.
+export const stepAttachment = (
+  attachment: EntranceAttachment,
+  state: AttachmentState,
+  opening: boolean
+): AttachmentState | undefined => {
+  if (state.latch === (opening ? 'open' : 'closed')) {
+    return undefined;
+  }
+  const travel = attachmentOpenLimit(attachment);
+  const next = state.openUnits + (opening ? 1 : -1);
+  const beyond = opening ? next - travel : -next;
+  if (beyond > 0 || (beyond === 0 && latchesOnArrival(attachment, opening))) {
+    return opening
+      ? { latch: 'open', openUnits: travel }
+      : { latch: 'closed', openUnits: 0 };
+  }
+  return { latch: 'moving', openUnits: next };
+};
+
+/// `$05A366`–`$05A386`: a region an attachment gates is selectable only while that attachment's
+/// latch is negative, `$FF`.
 const regionIsAvailable = (
-  placement: ErisPlacement,
   region: NonNullable<
     ErisPlacement['selection']
   >['structure']['regions'][number],
-  openUnits: AttachmentUnits
-): boolean => {
-  if (region.gate !== 'attachmentLatch') {
-    return true;
-  }
-  const slot = region.flags & 0x03_fc;
-  const attachment = placement.selection!.structure.attachments.find(
-    item => item.slot === slot
-  )!;
-  return openUnits(slot) >= attachmentOpenLimit(attachment);
-};
+  latches: AttachmentLatches
+): boolean =>
+  region.gate !== 'attachmentLatch' ||
+  latches(region.flags & 0x03_fc) === 'open';
 
 /** Bind-time ±11 copy on the resolved axis. `$0200` remains unresolved and uninset. */
 const workspaceBounds = (
@@ -126,7 +167,7 @@ export const structureRegionAt = (
   placement: ErisPlacement,
   pose: Pose,
   negateZ: boolean,
-  openUnits: AttachmentUnits = closedAttachment
+  latches: AttachmentLatches = closedLatch
 ): number | null => {
   const selection = placement.selection;
   if (selection === undefined) {
@@ -137,7 +178,7 @@ export const structureRegionAt = (
   const index = selection.structure.regions.findIndex(region => {
     const bounds = workspaceBounds(region);
     return (
-      regionIsAvailable(placement, region, openUnits) &&
+      regionIsAvailable(region, latches) &&
       bounds.every(
         ([min, max], axis) => min <= local[axis]! && local[axis]! < max
       )
@@ -176,7 +217,7 @@ export const clampStructureStep = (
   from: Pose,
   to: Pose,
   negateZ: boolean,
-  openUnits: AttachmentUnits,
+  latches: AttachmentLatches,
   selectedRegionIndex: number | null
 ): ClampedStructureStep => {
   const selection = placement.selection;
@@ -185,13 +226,12 @@ export const clampStructureStep = (
   }
   const regions = selection.structure.regions;
   const currentIndex =
-    selectedRegionIndex ??
-    structureRegionAt(placement, from, negateZ, openUnits);
+    selectedRegionIndex ?? structureRegionAt(placement, from, negateZ, latches);
   const current = currentIndex === null ? undefined : regions[currentIndex];
   if (current === undefined) {
     return {
       pose: to,
-      regionIndex: structureRegionAt(placement, to, negateZ, openUnits)
+      regionIndex: structureRegionAt(placement, to, negateZ, latches)
     };
   }
 
@@ -211,7 +251,7 @@ export const clampStructureStep = (
       const bounds = workspaceBounds(region);
       return (
         index !== currentIndex &&
-        regionIsAvailable(placement, region, openUnits) &&
+        regionIsAvailable(region, latches) &&
         bounds[axis]![upper ? 0 : 1] === edge &&
         bounds[other]![0] + clearance <= coordinates[other]! &&
         coordinates[other]! < bounds[other]![1] - clearance
@@ -241,7 +281,7 @@ export const clampStructureStep = (
   return {
     pose,
     regionIndex:
-      structureRegionAt(placement, pose, negateZ, openUnits) ?? currentIndex
+      structureRegionAt(placement, pose, negateZ, latches) ?? currentIndex
   };
 };
 
@@ -307,9 +347,18 @@ export const structureMeshes = (
   const { groups, structure } = selection;
   const point = structureLocalPosition(placement, pose.position, negateZ);
   const local = [point.x, point.y, point.z];
+  // Without a session's region there are no latches either, so a door at rest at its endpoint
+  // stands for one latched open.
   const regionIndex =
     selectedRegionIndex === undefined
-      ? structureRegionAt(placement, pose, negateZ, openUnits)
+      ? structureRegionAt(placement, pose, negateZ, slot =>
+          openUnits(slot) >=
+          attachmentOpenLimit(
+            structure.attachments.find(item => item.slot === slot)!
+          )
+            ? 'open'
+            : 'closed'
+        )
       : selectedRegionIndex;
   const region =
     regionIndex === null ? undefined : structure.regions[regionIndex];

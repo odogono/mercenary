@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
+import type { EntranceAttachment } from '../src/catalogue/data.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import {
   DAMOCLES_RESUME_STORAGE_KEY,
@@ -11,7 +12,10 @@ import {
   damoclesSaveIdentity,
   initialDamoclesSaveScript
 } from '../src/damocles/save.ts';
-import { attachmentOpenLimit } from '../src/damocles/selection.ts';
+import {
+  attachmentOpenLimit,
+  type AttachmentLatch
+} from '../src/damocles/selection.ts';
 import {
   DamoclesSession,
   type DamoclesContent
@@ -77,6 +81,7 @@ const atSpaceport = (
     structure: {
       attachments: entrance.selection!.structure.attachments.map(
         (attachment, index) => ({
+          latch: restingLatch(attachment, index === 0 ? entranceOpenUnits : 0),
           openUnits: index === 0 ? entranceOpenUnits : 0,
           slot: attachment.slot
         })
@@ -89,6 +94,17 @@ const atSpaceport = (
     }
   });
 };
+
+/// The latch a door restored `openUnits` open reads: settled at either end, moving between.
+const restingLatch = (
+  attachment: EntranceAttachment,
+  openUnits: number
+): AttachmentLatch =>
+  openUnits === 0
+    ? 'closed'
+    : openUnits === attachmentOpenLimit(attachment)
+      ? 'open'
+      : 'moving';
 
 const firstAttachmentUnits = (session: DamoclesSession): number =>
   session.snapshot.structure?.attachments[0]?.openUnits ?? 0;
@@ -127,6 +143,7 @@ const atStructure = (
     structure: {
       attachments: placement.selection!.structure.attachments.map(
         (attachment, index) => ({
+          latch: restingLatch(attachment, index === 0 ? firstOpenUnits : 0),
           openUnits: index === 0 ? firstOpenUnits : 0,
           slot: attachment.slot
         })

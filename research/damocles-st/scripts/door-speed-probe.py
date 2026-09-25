@@ -22,7 +22,8 @@ of that frame's substeps. The step countdown only runs once the latch has
 cleared, so the countdown at the first stop with the latch clear says how
 many of that frame's substeps came after it. The count must be the door's
 travel plus one: the edge reaches its endpoint on the travel-th tick, and the
-next tick clears the latch.
+next tick clears the latch. That holds for these doors because both have two
+leaves; a one-leaf door clears on the travel-th tick when its low edge falls.
 
 Run from the repository root:
 
