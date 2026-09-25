@@ -14,6 +14,7 @@ import {
   type CarriedSlot,
   type FloorLabelGlyphs
 } from './selection.ts';
+import type { SkyBody, SkyPass } from './sky.ts';
 import {
   insideCentralCellHalf,
   withinDrawBound,
@@ -57,9 +58,27 @@ export interface ErisFramePlan {
   readonly nearPlane: number;
   /// Faces the triangulator refused, drawn as nothing and counted.
   readonly skippedFaces: number;
+  /// The sky Bodies (#530), in draw order, whether or not any of each is drawn.
+  readonly skyBodies: readonly SkyBodyPlacement[];
+  /// The sky Bodies' discs, in the same seven-float vertices as `vertices` and in draw order.
+  /// They are painted over the sky fill before anything else, and everything else covers them.
+  readonly skyVertices: Float32Array;
   readonly triangleCount: number;
   readonly verticalFieldOfViewDegrees: number;
   readonly vertices: Float32Array;
+}
+
+/// Where a sky Body's disc lies in the view, as tangents: `x` right and `y` up from the view's
+/// centre, and `radius` the disc's `size / depth` pixels over the projection scale. A Body at
+/// `(x, y)` is where #528's closed form puts it at `160 + scale·x`, `68 − scale·y`.
+export interface SkyBodyPlacement {
+  /// Whether any of the disc is drawn: in front of the eye, at least one row wide, and above
+  /// the horizon row somewhere.
+  readonly drawn: boolean;
+  readonly id: string;
+  readonly radius: number;
+  readonly x: number;
+  readonly y: number;
 }
 
 const channels = (colour: string): readonly [number, number, number] => [
@@ -378,6 +397,87 @@ const islandFillTriangles = (
   return triangles;
 };
 
+/// The ST screen's centre column, about which `$05668A` places a Body at `160 − F·u/d`.
+const SKY_CENTRE_COLUMN = 160;
+
+/// Rows of a disc between the horizon and its top: the angles a circle is sampled at.
+const SKY_DISC_SLABS = 32;
+
+/// How far out along its direction a sky Body's disc is placed. The discs are painted with the
+/// depth test off and write no depth, so this only has to lie inside the frustum.
+const skyDepth = (doc: ErisPresentationDocument): number =>
+  doc.camera.farPlane / 2;
+
+/// One sky Body as horizontal slabs, `$045916`'s rows made continuous: each row from `−w` to
+/// `+w` about the centre, split at `split·w`, and cut at the horizon row, which on foot is the
+/// view's centre row (`$042C74 = $44`, row 68 of 136). The disc is round here where the ST's
+/// is widened by `1/0.84375`: that widening makes it round on the ST's non-square pixels, and
+/// the port's pixels are square.
+const skyDiscTriangles = (
+  body: SkyBody,
+  placement: SkyBodyPlacement,
+  depth: number,
+  emit: (view: Vector3, colour: readonly [number, number, number]) => void
+): void => {
+  const lit = channels(body.colour);
+  const shadow = channels(body.shadow);
+  const [first, second] = body.first === 'lit' ? [lit, shadow] : [shadow, lit];
+  const { radius, x, y } = placement;
+  const rows: {
+    readonly left: number;
+    readonly right: number;
+    readonly split: number;
+    readonly y: number;
+  }[] = [];
+  for (let slab = 0; slab <= SKY_DISC_SLABS; slab += 1) {
+    const row = Math.max(
+      0,
+      y - radius * Math.cos((slab * Math.PI) / SKY_DISC_SLABS)
+    );
+    const dy = row - y;
+    const w = Math.sqrt(Math.max(0, radius * radius - dy * dy));
+    rows.push({ left: x - w, right: x + w, split: x + body.split * w, y: row });
+  }
+  const at = (u: number, v: number): Vector3 => ({
+    x: u * depth,
+    y: v * depth,
+    z: depth
+  });
+  const quad = (
+    corners: readonly [Vector3, Vector3, Vector3, Vector3],
+    colour: readonly [number, number, number]
+  ): void => {
+    for (const index of [0, 1, 2, 0, 2, 3]) {
+      emit(corners[index]!, colour);
+    }
+  };
+  for (let index = 0; index < SKY_DISC_SLABS; index += 1) {
+    const low = rows[index]!;
+    const high = rows[index + 1]!;
+    if (high.y <= low.y) {
+      continue;
+    }
+    quad(
+      [
+        at(low.left, low.y),
+        at(low.split, low.y),
+        at(high.split, high.y),
+        at(high.left, high.y)
+      ],
+      first
+    );
+    quad(
+      [
+        at(low.split, low.y),
+        at(low.right, low.y),
+        at(high.right, high.y),
+        at(high.split, high.y)
+      ],
+      second
+    );
+  }
+};
+
 /// The glyphs every Floor Label draws this frame. `$CD04` is one byte for the whole workspace,
 /// so each label shows the Floor the lift's label stands at: during a ride it steps through the
 /// Floors passed, before the destination binds (#473). Floor 0 outside any structure.
@@ -400,7 +500,9 @@ export const planErisFrame = (
   carriedSlot: CarriedSlot = () => false,
   /// The terminator's answer for the Pose (`$050562`): which half of the scene palette every
   /// `$80xx` word is read through, and which of the Body's two sky words fills the sky.
-  daylight = false
+  daylight = false,
+  /// The Bodies the current Body's draw list names (#530). None where the frame has no sky pass.
+  sky: SkyPass | null = null
 ): ErisFramePlan => {
   const camera = new Camera({
     farPlane: doc.camera.farPlane,
@@ -447,6 +549,58 @@ export const planErisFrame = (
     daylight && enclosedBackground?.day !== undefined
       ? enclosedBackground.day
       : enclosedBackground;
+
+  // The sky passes (`$05309A`) run after the sky fill and before the ground, in list order
+  // with no depth sort, so a later Body covers an earlier one and the ground and structures
+  // cover them all. The enclosed branch runs no sky pass, as it runs no sky fill (#491).
+  const skyValues: number[] = [];
+  const skyPlacements: SkyBodyPlacement[] = [];
+  const skyAt = skyDepth(doc);
+  const skyBodies = enclosed || sky === null ? [] : sky.bodies;
+  const projectionScale = sky?.projectionScale ?? 0;
+  const halfWidthDivisor = sky?.halfWidthDivisor ?? 0;
+  for (const body of skyBodies) {
+    const view = camera.viewSpace(
+      toCameraSpace({
+        x: pose.position.x + body.offset.x,
+        y: pose.position.y + body.offset.y,
+        z: pose.position.z + body.offset.z
+      })
+    );
+    if (view.z <= 0) {
+      skyPlacements.push({ drawn: false, id: body.id, radius: 0, x: 0, y: 0 });
+      continue;
+    }
+    const placement = {
+      id: body.id,
+      radius: body.size / (projectionScale * view.z),
+      x: view.x / view.z,
+      y: view.y / view.z
+    };
+    // `$04FBAE` skips a Body whose screen x does not fit a signed word less its top bit
+    // (`cmpi.w #$4000`), about the centre column 160. `$045928`'s rows are
+    // `⌊√(r² − dy²) / 0.84375⌋` wide, so a disc under that many pixels across has no row at all.
+    const column = SKY_CENTRE_COLUMN + placement.x * projectionScale;
+    const drawn =
+      column >= -0x40_00 &&
+      column < 0x40_00 &&
+      placement.radius * projectionScale >= halfWidthDivisor &&
+      placement.y + placement.radius > 0;
+    skyPlacements.push({ ...placement, drawn });
+    if (drawn) {
+      skyDiscTriangles(body, { ...placement, drawn }, skyAt, (vertex, colour) =>
+        skyValues.push(
+          vertex.x,
+          vertex.y,
+          vertex.z,
+          colour[0],
+          colour[1],
+          colour[2],
+          0
+        )
+      );
+    }
+  }
 
   // Land and sea, in the order the Working Authority paints them ($0597EC..$05983C). The base
   // plane is the Body's own colour and every island is filled over it — except while the
@@ -658,6 +812,8 @@ export const planErisFrame = (
     islandTriangleCount,
     nearPlane: doc.camera.nearPlane,
     skippedFaces,
+    skyBodies: skyPlacements,
+    skyVertices: new Float32Array(skyValues),
     triangleCount,
     verticalFieldOfViewDegrees: doc.camera.verticalFieldOfViewDegrees,
     vertices: new Float32Array(values)

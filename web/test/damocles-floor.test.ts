@@ -26,8 +26,13 @@ import {
   DamoclesSession,
   type DamoclesContent
 } from '../src/damocles/session.ts';
+import { skyPass } from '../src/damocles/sky.ts';
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { cellOf, erisSurfaceFrom } from '../src/damocles/world.ts';
+import {
+  readGammaSystem,
+  type GammaSystemDocument
+} from '../src/flyover/documents.ts';
 import { parseConsoleCommand } from '../src/shell/console.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import {
@@ -44,6 +49,7 @@ const STOREY = 150;
 
 let catalogue: AssembledCatalogue;
 let content: DamoclesContent;
+let system: GammaSystemDocument;
 
 beforeAll(async () => {
   catalogue = await loadCatalogue();
@@ -59,6 +65,9 @@ beforeAll(async () => {
     ),
     surface: erisSurfaceFrom(catalogue, modelsOf(catalogue), doc)
   };
+  system = readGammaSystem(
+    await Bun.file('../payload/damocles/system.json').json()
+  );
 });
 
 const eye = () => content.doc.eye.heightUnits;
@@ -465,9 +474,29 @@ describe('the player stands on one Floor', () => {
       [2, '#eeaa00', '#662200'],
       [10, '#eeeeee', '#006666']
     ] as const) {
-      const { pose, structure, surface } = inRegionZero(floor).snapshot;
-      const plan = planErisFrame(surface, pose, content.doc, structure);
+      const { bodyTurn, daylight, pose, structure, surface } =
+        inRegionZero(floor).snapshot;
+      const plan = planErisFrame(
+        surface,
+        pose,
+        content.doc,
+        structure,
+        [],
+        [],
+        () => false,
+        daylight,
+        skyPass(system, {
+          body: pose.body,
+          daylight,
+          position: pose.position,
+          sky: surface.sky,
+          turn: bodyTurn
+        })
+      );
       expect(plan.clear).toEqual(rgb(ceiling));
+      // No sky pass runs in the enclosed branch, as no sky fill does (#530).
+      expect(plan.skyBodies).toEqual([]);
+      expect(plan.skyVertices.length).toBe(0);
       expect(plan.fillTriangleCount).toBeGreaterThan(0);
       expect(fillColours(plan)).toEqual(new Set([ground]));
       expect(plan.islandTriangleCount).toBe(0);

@@ -371,6 +371,7 @@ export interface ErisLightingRender {
 
 export class ErisRenderer {
   private readonly buffer: WebGLBuffer;
+  private readonly skyBuffer: WebGLBuffer;
   private readonly canvas: HTMLCanvasElement;
   private readonly enabledAttributes = new Set<number>();
   private enhanced: EnhancedResources | undefined;
@@ -392,10 +393,12 @@ export class ErisRenderer {
     this.gl = gl;
     this.shaderProgram = program(gl);
     const buffer = gl.createBuffer();
-    if (buffer === null) {
+    const skyBuffer = gl.createBuffer();
+    if (buffer === null || skyBuffer === null) {
       throw new Error('Could not allocate the Damocles geometry buffer.');
     }
     this.buffer = buffer;
+    this.skyBuffer = skyBuffer;
     canvas.addEventListener('webglcontextlost', event => {
       event.preventDefault();
       onContextLost();
@@ -428,8 +431,19 @@ export class ErisRenderer {
     }
     gl.clearColor(plan.clear[0], plan.clear[1], plan.clear[2], 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    this.drawSky(plan);
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
+    this.cullAsConfigured();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, plan.vertices, gl.DYNAMIC_DRAW);
+    this.bindGeometry(this.shaderProgram, this.buffer, COLOUR_ATTRIBUTES);
+    this.setProjection(this.shaderProgram, plan);
+    this.drawLayers(this.shaderProgram, plan);
+  }
+
+  private cullAsConfigured(): void {
+    const gl = this.gl;
     if (this.options.cullBackFaces) {
       gl.enable(gl.CULL_FACE);
       gl.frontFace(gl.CW);
@@ -437,29 +451,26 @@ export class ErisRenderer {
     } else {
       gl.disable(gl.CULL_FACE);
     }
-    gl.useProgram(this.shaderProgram);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, plan.vertices, gl.DYNAMIC_DRAW);
-    for (const [name, offset, size] of COLOUR_ATTRIBUTES) {
-      const attribute = gl.getAttribLocation(this.shaderProgram, name);
-      gl.enableVertexAttribArray(attribute);
-      gl.vertexAttribPointer(attribute, size, gl.FLOAT, false, STRIDE, offset);
-      this.enabledAttributes.add(attribute);
+  }
+
+  /// The sky Bodies, painted over the sky fill in the plan's order with the depth buffer left
+  /// alone, so everything drawn after covers them (#530). They are flat in both presentations;
+  /// an Enhanced sky is #114's.
+  private drawSky(plan: ErisFramePlan): void {
+    const gl = this.gl;
+    if (plan.skyVertices.length === 0) {
+      return;
     }
-    gl.uniform1f(
-      requiredUniform(gl, this.shaderProgram, 'aspect'),
-      this.canvas.width / this.canvas.height
-    );
-    gl.uniform1f(
-      requiredUniform(gl, this.shaderProgram, 'tangent'),
-      Math.tan((plan.verticalFieldOfViewDegrees * Math.PI) / 360)
-    );
-    gl.uniform2f(
-      requiredUniform(gl, this.shaderProgram, 'depthRange'),
-      plan.nearPlane,
-      plan.farPlane
-    );
-    this.drawLayers(this.shaderProgram, plan);
+    gl.disable(gl.DEPTH_TEST);
+    gl.depthMask(false);
+    gl.disable(gl.CULL_FACE);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.skyBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, plan.skyVertices, gl.DYNAMIC_DRAW);
+    this.bindGeometry(this.shaderProgram, this.skyBuffer, COLOUR_ATTRIBUTES);
+    this.setProjection(this.shaderProgram, plan);
+    gl.uniform1f(requiredUniform(gl, this.shaderProgram, 'depthBias'), 0);
+    gl.drawArrays(gl.TRIANGLES, 0, plan.skyVertices.length / FLOATS_PER_VERTEX);
+    gl.depthMask(true);
   }
 
   /// The Body's surface first, then the recovered ground records, then everything else, each
@@ -673,13 +684,10 @@ export class ErisRenderer {
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     gl.clearColor(plan.clear[0], plan.clear[1], plan.clear[2], 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    if (this.options.cullBackFaces) {
-      gl.enable(gl.CULL_FACE);
-      gl.frontFace(gl.CW);
-      gl.cullFace(gl.BACK);
-    } else {
-      gl.disable(gl.CULL_FACE);
-    }
+    this.drawSky(plan);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL);
+    this.cullAsConfigured();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
     gl.bufferData(gl.ARRAY_BUFFER, plan.vertices, gl.DYNAMIC_DRAW);
     this.bindGeometry(resources.colourProgram, this.buffer, COLOUR_ATTRIBUTES);
