@@ -177,8 +177,13 @@ structure scale (`$539CE`/`$539D2`) nor the Building detail byte (`$53A85`). Onl
 cell bind at `$054D98`–`$054E08` writes them. So a Floor draws its slot's plan and the
 instance's detail at the **instance's** scale. `eris-transporter-11-8` shows the
 difference: on Floor 10 it holds slot 17's (3, 3), while slot 16, the Floor's own
-record, authors (1, 1). 173 upper-Floor entries bind a slot whose own scale differs.
-The port's `floorPlacement` still draws the slot's own Model, at its own scale. See
+record, authors (1, 1). 173 upper-Floor entries bind a slot whose own scale differs, and
+11 more bind a slot with another Building detail. Since #531 the extractor publishes each
+such Floor again in its instance's frame, one derived Model per slot, scale and detail (47
+in all), named in the Floor entry's `drawnStructureId`; `structureId` stays the authored
+slot, and the port draws the derived form. At the seven upper-Floor captures the port now
+stands in the region `$7AFC` holds; read at its own scale, Eris 11,8 Floor 10 was a third
+of its size and the capture's pose stood in no region at all. See
 [interior residents in every captured workspace](damocles-interior-resident-placement.md#a-floor-keeps-the-instances-scale-and-building-detail).
 
 ### The level domain is 0 to 10, and the game says so

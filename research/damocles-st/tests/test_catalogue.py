@@ -793,18 +793,20 @@ class IntentionalEmptyTests(unittest.TestCase):
         settled = [
             m for m in models if m['recordClass'] in ('empty', 'null')
         ]
-        self.assertEqual(len(settled), 13)
+        # Three of them are Floor forms of the empty surface record 00ed68 (#531).
+        self.assertEqual(len(settled), 16)
         kinds = {m['kind'] for m in settled}
         self.assertEqual(kinds, {'object', 'structure', 'interior', 'ground'})
         for model in settled:
             self.assertTrue(model['reason'].strip(), model['id'])
             if model['variants']:
-                # Four empty surface records still show a linked detail's mesh,
-                # so they stay partial for that detail's own limitations.
+                # Four empty surface records, and the three Floor forms of one,
+                # still show a linked detail's mesh, so they stay partial for
+                # that detail's own limitations.
                 self.assertEqual(model['status'], 'partial', model['id'])
             else:
                 self.assertEqual(model['status'], 'decoded', model['id'])
-        self.assertEqual(sum(1 for m in settled if m['variants']), 4)
+        self.assertEqual(sum(1 for m in settled if m['variants']), 7)
         self.assertEqual(sum(1 for m in settled if not m['variants']), 9)
 
     def test_nothing_is_left_unresolved(self):

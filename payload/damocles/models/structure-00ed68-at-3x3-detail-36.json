@@ -1,0 +1,543 @@
+{
+  "model": {
+    "evidence": [
+      {
+        "claim": "Only the cell bind writes the structure scale ($054D98/$054DA8, $054DEA/$054DFA) and the Building detail byte ($054DB6/$054E08); the lift's move reaches neither, and eris-transporter-11-8 holds the instance's 3x3 on a Floor whose slot authors 1x1.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
+    "id": "structure-00ed68-at-3x3-detail-36",
+    "kind": "structure",
+    "linkedInstances": [],
+    "name": "Structure 0 \u00b7 Floor frame 3\u00d73",
+    "nameStatus": "unknown",
+    "omissions": [],
+    "reason": "Empty surface record: no plan vertices or walls. The Floor form of structure-00ed68: its record decoded at the 3\u00d73 scale of the instance that binds it, with that instance's Building detail interior-029392, as the lift draws it.",
+    "recordClass": "empty",
+    "relatedModels": [
+      "structure-00ed68",
+      "interior-029392"
+    ],
+    "sceneColours": [
+      {
+        "colour": "#eeee22",
+        "dayColour": "#00aaaa",
+        "sourceColour": 32898
+      },
+      {
+        "colour": "#882222",
+        "sourceColour": 32914
+      }
+    ],
+    "slots": [
+      300
+    ],
+    "sourceAddress": 60776,
+    "status": "partial",
+    "structureSelection": {
+      "attachments": [],
+      "detailModel": "interior-029392",
+      "detailVariant": "palette-54",
+      "liveSelector": false,
+      "plan": {
+        "faces": [],
+        "lines": [],
+        "sourceEnd": 60790,
+        "sourceStart": 60776,
+        "vertices": []
+      },
+      "regions": [
+        {
+          "bounds": [
+            [
+              -32768,
+              32767
+            ],
+            [
+              -32768,
+              32767
+            ]
+          ],
+          "flags": 49152,
+          "gate": "none",
+          "queue": []
+        }
+      ],
+      "scale": [
+        3,
+        3
+      ]
+    },
+    "variants": [
+      {
+        "id": "assembly",
+        "mesh": {
+          "faces": [
+            {
+              "colour": "#666666",
+              "sourceColour": 32924,
+              "sourceIndex": 0,
+              "vertices": [
+                14,
+                15,
+                13,
+                12
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32928,
+              "sourceIndex": 1,
+              "vertices": [
+                5,
+                7,
+                11,
+                9
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 32930,
+              "sourceIndex": 2,
+              "vertices": [
+                7,
+                6,
+                10,
+                11
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32922,
+              "sourceIndex": 3,
+              "vertices": [
+                0,
+                2,
+                4,
+                6
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32922,
+              "sourceIndex": 4,
+              "vertices": [
+                3,
+                1,
+                7,
+                5
+              ]
+            },
+            {
+              "colour": "#444444",
+              "sourceColour": 32920,
+              "sourceIndex": 5,
+              "vertices": [
+                1,
+                0,
+                6,
+                7
+              ]
+            },
+            {
+              "colour": "#444444",
+              "sourceColour": 32920,
+              "sourceIndex": 6,
+              "vertices": [
+                2,
+                3,
+                5,
+                4
+              ]
+            },
+            {
+              "colour": "#666666",
+              "sourceColour": 32924,
+              "sourceIndex": 7,
+              "vertices": [
+                0,
+                1,
+                3,
+                2
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32922,
+              "sourceIndex": 8,
+              "vertices": [
+                13,
+                15,
+                19,
+                17
+              ]
+            },
+            {
+              "colour": "#000066",
+              "sourceColour": 32896,
+              "sourceIndex": 9,
+              "vertices": [
+                20,
+                21,
+                22,
+                23
+              ]
+            },
+            {
+              "colour": "#444444",
+              "sourceColour": 32920,
+              "sourceIndex": 10,
+              "vertices": [
+                15,
+                14,
+                18,
+                19
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32932,
+              "sourceIndex": 11,
+              "vertices": [
+                5,
+                7,
+                11,
+                9
+              ]
+            },
+            {
+              "colour": "#ccaa88",
+              "sourceColour": 32934,
+              "sourceIndex": 12,
+              "vertices": [
+                4,
+                5,
+                9,
+                8
+              ]
+            },
+            {
+              "colour": "#444444",
+              "sourceColour": 32920,
+              "sourceIndex": 13,
+              "vertices": [
+                12,
+                13,
+                17,
+                16
+              ]
+            },
+            {
+              "colour": "#cc8800",
+              "sourceColour": 32914,
+              "sourceIndex": 14,
+              "vertices": [
+                6,
+                4,
+                8,
+                10
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32928,
+              "sourceIndex": 15,
+              "vertices": [
+                4,
+                5,
+                9,
+                8
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32922,
+              "sourceIndex": 16,
+              "vertices": [
+                14,
+                12,
+                16,
+                18
+              ]
+            },
+            {
+              "colour": "#4488cc",
+              "sourceColour": 32936,
+              "sourceIndex": 17,
+              "vertices": [
+                6,
+                4,
+                8,
+                10
+              ]
+            },
+            {
+              "colour": "#aa8866",
+              "sourceColour": 32938,
+              "sourceIndex": 18,
+              "vertices": [
+                7,
+                6,
+                10,
+                11
+              ]
+            },
+            {
+              "colour": "#6600cc",
+              "sourceColour": 32940,
+              "sourceIndex": 19,
+              "vertices": [
+                5,
+                7,
+                11,
+                9
+              ]
+            },
+            {
+              "colour": "#664444",
+              "sourceColour": 32942,
+              "sourceIndex": 20,
+              "vertices": [
+                7,
+                6,
+                10,
+                11
+              ]
+            },
+            {
+              "colour": "#880088",
+              "sourceColour": 32944,
+              "sourceIndex": 21,
+              "vertices": [
+                5,
+                7,
+                11,
+                9
+              ]
+            },
+            {
+              "colour": "#664444",
+              "sourceColour": 32946,
+              "sourceIndex": 22,
+              "vertices": [
+                4,
+                5,
+                9,
+                8
+              ]
+            },
+            {
+              "colour": "#6600cc",
+              "sourceColour": 32948,
+              "sourceIndex": 23,
+              "vertices": [
+                6,
+                4,
+                8,
+                10
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32950,
+              "sourceIndex": 24,
+              "vertices": [
+                4,
+                5,
+                9,
+                8
+              ]
+            },
+            {
+              "colour": "#880088",
+              "sourceColour": 32952,
+              "sourceIndex": 25,
+              "vertices": [
+                6,
+                4,
+                8,
+                10
+              ]
+            },
+            {
+              "colour": "#eeeeee",
+              "sourceColour": 32954,
+              "sourceIndex": 26,
+              "vertices": [
+                7,
+                6,
+                10,
+                11
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32922,
+              "sourceIndex": 27,
+              "vertices": [
+                13,
+                22,
+                21,
+                17
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32922,
+              "sourceIndex": 28,
+              "vertices": [
+                13,
+                15,
+                23,
+                22
+              ]
+            },
+            {
+              "colour": "#888888",
+              "sourceColour": 32922,
+              "sourceIndex": 29,
+              "vertices": [
+                15,
+                19,
+                20,
+                23
+              ]
+            }
+          ],
+          "lines": [],
+          "sourceEnd": 60790,
+          "sourceStart": 60776,
+          "vertices": [
+            [
+              2400,
+              1000,
+              750
+            ],
+            [
+              2400,
+              1000,
+              1050
+            ],
+            [
+              2700,
+              1000,
+              750
+            ],
+            [
+              2700,
+              1000,
+              1050
+            ],
+            [
+              2775,
+              900,
+              675
+            ],
+            [
+              2775,
+              900,
+              1125
+            ],
+            [
+              2325,
+              900,
+              675
+            ],
+            [
+              2325,
+              900,
+              1125
+            ],
+            [
+              2775,
+              600,
+              675
+            ],
+            [
+              2775,
+              600,
+              1125
+            ],
+            [
+              2325,
+              600,
+              675
+            ],
+            [
+              2325,
+              600,
+              1125
+            ],
+            [
+              2850,
+              600,
+              600
+            ],
+            [
+              2850,
+              600,
+              1200
+            ],
+            [
+              2250,
+              600,
+              600
+            ],
+            [
+              2250,
+              600,
+              1200
+            ],
+            [
+              2850,
+              0,
+              600
+            ],
+            [
+              2850,
+              0,
+              1200
+            ],
+            [
+              2250,
+              0,
+              600
+            ],
+            [
+              2250,
+              0,
+              1200
+            ],
+            [
+              2400,
+              0,
+              1200
+            ],
+            [
+              2700,
+              0,
+              1200
+            ],
+            [
+              2700,
+              150,
+              1200
+            ],
+            [
+              2400,
+              150,
+              1200
+            ]
+          ]
+        },
+        "name": "Floor as drawn \u00b7 palette 1"
+      }
+    ]
+  },
+  "schemaVersion": 17,
+  "source": {
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+  }
+}

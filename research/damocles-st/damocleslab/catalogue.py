@@ -3078,6 +3078,107 @@ def palette_entries(value) -> set[int]:
     return set()
 
 
+def bind_floor_structures(models: list[dict], by_address: dict, tables: list,
+                          structure_bindings: dict, data: bytes, hardware: list[int]) -> None:
+    """Publish each upper Floor as the lift draws it: in the instance's frame.
+
+    Only the cell bind writes the structure scale ($054D98/$054DA8 from an alias
+    record, $054DEA/$054DFA from a plain one) and the Building detail byte
+    ($054DB6/$054E08). The lift's move ($055B12 -> $055BA6 -> $059D70) assembles
+    the Floor's slot without touching either, so a Floor draws its slot's plan
+    and the instance's detail at the instance's scale; eris-transporter-11-8
+    holds slot 17's 3x3 on Floor 10, whose slot 16 authors 1x1. Where a Floor's
+    slot differs from its instance in either, the slot's record is decoded again
+    in the instance's frame, bound to the instance's detail, and the Floor names
+    that Model in ``drawnStructureId``. ``structureId`` stays the authored slot.
+    One Model serves every Floor with the same slot, scale and detail.
+    """
+    base = u32(data, 0x4bd0c)
+    third = third_wall_height(data)
+    signed = lambda value: f'm{-value}' if value < 0 else str(value)
+    for model in list(models):
+        binding = model.get('levelBinding')
+        instance = model.get('structureSelection')
+        if binding is None or model['id'] not in structure_bindings or instance is None:
+            continue
+        detail_slot, _, scale = structure_bindings[model['id']]
+        scale = tuple(scale)
+        for floor in binding['floors']:
+            floor_id = floor['structureId']
+            if floor['level'] == 0 or floor_id not in structure_bindings:
+                continue
+            own_detail, own_palette, own_scale = structure_bindings[floor_id]
+            if tuple(own_scale) == scale and own_detail == detail_slot:
+                continue
+            identity = (f'{floor_id}-at-{signed(scale[0])}x{signed(scale[1])}'
+                        f'-detail-{detail_slot}')
+            if identity not in by_address:
+                address = base + u32(data, base + floor['structureSlot'] * 4)
+                pointer = address
+                if struct.unpack_from('>H', data, address)[0] & 0x8000:
+                    pointer = base + u32(data, base + data[address + 6] * 4)
+                palette = palette_at(data, own_palette)
+                try:
+                    mesh, gaps = decode_structure(data, pointer, palette, hardware, scale, third)
+                    scene_colours = mesh.pop('sceneColours')
+                    selection = decode_structure_selection(data, mesh, scale, palette, hardware)
+                except (ValueError, struct.error):
+                    continue
+                selection.pop('associationRoot')
+                gaps = [gap for gap in gaps
+                        if gap != 'Authored surface attachments/openings are not yet decoded.'
+                        ] + selection.pop('wallTextGaps')
+                selection['detailModel'] = instance['detailModel']
+                selection['detailVariant'] = instance['detailVariant']
+                detail = next(variant['mesh'] for variant in by_address[instance['detailModel']]['variants']
+                              if variant['id'] == instance['detailVariant'])
+                drawn = (assemble_mesh(mesh, turn_detail_mesh(data, detail, scale, 0), (1, 1))
+                         if 'articulation' in detail else assemble_mesh(mesh, detail, scale))
+                source = by_address[floor_id]
+                derived = {
+                    'id': identity, 'kind': 'structure',
+                    'name': f"{source['name']} · Floor frame {scale[0]}\u00d7{scale[1]}",
+                    'nameStatus': 'unknown', 'slots': [], 'sourceAddress': source['sourceAddress'],
+                    'status': 'partial' if gaps else 'decoded',
+                    'reason': ' '.join(gaps + [
+                        f"The Floor form of {floor_id}: its record decoded at the "
+                        f"{scale[0]}\u00d7{scale[1]} scale of the instance that binds it, with "
+                        f"that instance's Building detail {instance['detailModel']}, as the "
+                        'lift draws it.'
+                    ]),
+                    'variants': [{'id': 'assembly',
+                                  'name': f'Floor as drawn · palette {own_palette}',
+                                  'mesh': drawn}],
+                    'relatedModels': [floor_id, instance['detailModel']],
+                    'linkedInstances': [],
+                    'evidence': [{
+                        'claim': ('Only the cell bind writes the structure scale ($054D98/$054DA8, '
+                                  '$054DEA/$054DFA) and the Building detail byte ($054DB6/$054E08); '
+                                  "the lift's move reaches neither, and eris-transporter-11-8 holds "
+                                  "the instance's 3x3 on a Floor whose slot authors 1x1."),
+                        'confidence': 'verified',
+                        'source': 'docs/research/damocles-interior-resident-placement.md',
+                    }],
+                    'sceneColours': scene_colours,
+                    'structureSelection': selection,
+                }
+                classify_record(derived, False)
+                by_address[identity] = derived
+                models.append(derived)
+                # The census: a Floor form no authored slot names takes the next
+                # entry after the table's own, as image ground records do.
+                structure_table = next(table for table in tables if table['kind'] == 'structure')
+                if 'Floor forms' not in structure_table['extentEvidence']:
+                    structure_table['extentEvidence'] += (
+                        ' Entries after index 279 are Floor forms: an upper Floor\'s record '
+                        'decoded in the frame of the instance that binds it, not table slots.'
+                    )
+                structure_table['entries'].append(identity)
+                structure_table['entryCount'] = len(structure_table['entries'])
+                derived['slots'] = [len(structure_table['entries']) - 1]
+            floor['drawnStructureId'] = identity
+
+
 def bind_floor_palettes(models: list[dict], data: bytes, hardware: list[int]) -> None:
     """Publish the colours each Floor's bound palette gives its structure.
 
@@ -3099,7 +3200,7 @@ def bind_floor_palettes(models: list[dict], data: bytes, hardware: list[int]) ->
             continue
         entries: dict[int, set[int]] = {}
         for floor in binding['floors']:
-            target = by_id.get(floor['structureId'])
+            target = by_id.get(floor.get('drawnStructureId', floor['structureId']))
             if 'paletteIndex' not in floor or target is None:
                 continue
             selection = target.get('structureSelection')
@@ -5529,6 +5630,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                 by_address[instance['model']].get('instanceOrientation'), board_gate,
                 instance_ids,
                 resident=instance['location'] is not None or instance['placement'] is not None)
+    bind_floor_structures(models, by_address, tables, structure_bindings, data, hardware)
     bind_floor_palettes(models, data, hardware)
     label_fonts = {
         font for model in models

@@ -494,8 +494,9 @@ it('keeps a generated census ledger that cannot drift from the models', async ()
     data.models.filter(model => model.conditions.includes('viewerPosition'))
       .length
   ).toBe(19);
+  // 256 table records, and 47 Floor forms: an upper Floor in its instance's frame (#531).
   expect(data.models.filter(model => model.structureSelection).length).toBe(
-    256
+    303
   );
   expect(data.models.filter(model => model.detailSelection).length).toBe(59);
   expect(
@@ -507,7 +508,7 @@ it('keeps a generated census ledger that cannot drift from the models', async ()
   ).toBe(true);
   expect(
     data.models.filter(model => model.structureSelection?.liveSelector).length
-  ).toBe(13);
+  ).toBe(14);
   expect(
     data.coverage.diskLoad.some(item => item.path.includes('title-screen'))
   ).toBe(true);
@@ -1247,7 +1248,8 @@ it('places only residents selected by the native surface-body association', asyn
 it('records the cell background colours a surface record carries', async () => {
   const data = await loadCatalogue();
   const withColours = data.models.filter(model => model.sceneColours?.length);
-  expect(withColours).toHaveLength(265);
+  // Including the 47 Floor forms, which keep their slot's own scene colours.
+  expect(withColours).toHaveLength(312);
   expect(withColours.every(model => model.kind === 'structure')).toBe(true);
   // Capital Spaceport resolves both through its own scene palette; the frame
   // loop installs them for a raster fill, so they are not wall colours.
@@ -1448,7 +1450,7 @@ it('an $F0 entrance names a key index the cell resolves to a letter', async () =
   const live = data.models.filter(
     model => model.structureSelection?.liveSelector
   );
-  expect(live).toHaveLength(13);
+  expect(live).toHaveLength(14);
   const keyed = live.flatMap(model =>
     model.structureSelection!.attachments.filter(
       item => item.keyIndex !== undefined
@@ -1456,7 +1458,8 @@ it('an $F0 entrance names a key index the cell resolves to a letter', async () =
   );
   // Every $F0 control in the bank carries key index 0, so the letter is the
   // cell's base letter; the nybble is still what the source adds.
-  expect(keyed).toHaveLength(14);
+  // One more on the Floor form of a keyed record (#531).
+  expect(keyed).toHaveLength(15);
   expect(keyed.every(item => item.keyIndex === 0)).toBe(true);
   expect(keyed.every(item => (item.controlWord & 0xff) === 0xf0)).toBe(true);
   // A zero-latch entrance has no key index at all.
@@ -1517,6 +1520,68 @@ it('every record now carries a verdict and none is unresolved', async () => {
     if (model.status === 'decoded' && model.variants.length === 0) {
       expect(['empty', 'null', 'procedural']).toContain(model.recordClass);
     }
+  }
+});
+
+it('draws an upper Floor in the frame of the instance that binds it', async () => {
+  // Only the cell bind writes the structure scale and the Building detail; the lift's move
+  // reaches neither (#531). Eris 11,8 is instance slot 17 at 3x3, and its Floor 10 binds slot 16,
+  // whose own record is 1x1: the Floor is published again in the instance's frame.
+  const data = await loadCatalogue();
+  const model = (id: string) => data.models.find(item => item.id === id)!;
+  const floorOf = (instanceId: string, level: number) => {
+    const instance = data.instances.find(item => item.id === instanceId)!;
+    const record = model(instance.model);
+    return {
+      entry: record.levelBinding!.floors.find(item => item.level === level)!,
+      record
+    };
+  };
+  const eris = floorOf('eris-surface-8b', 10);
+  expect(eris.record.structureSelection!.scale).toEqual([3, 3]);
+  expect(model(eris.entry.structureId).structureSelection!.scale).toEqual([
+    1, 1
+  ]);
+  const drawn = model(eris.entry.drawnStructureId!);
+  expect(drawn.structureSelection!.scale).toEqual([3, 3]);
+  expect(drawn.structureSelection!.detailModel).toBe(
+    eris.record.structureSelection!.detailModel
+  );
+  expect(drawn.relatedModels).toContain(eris.entry.structureId);
+  // A Floor whose slot already agrees with its instance is drawn as it stands.
+  const metis = floorOf('metis-surface-60', 9);
+  expect(metis.entry.drawnStructureId).toBeUndefined();
+  expect(model(metis.entry.structureId).structureSelection!.scale).toEqual(
+    metis.record.structureSelection!.scale
+  );
+});
+
+it('stands every upper-Floor resident inside the Floor as drawn', async () => {
+  // A resident is placed in its instance's frame; the Floor the port draws has to be in it too.
+  const data = await loadCatalogue();
+  const model = (id: string) => data.models.find(item => item.id === id)!;
+  const upper = data.instances.filter(
+    item => item.placement !== null && item.association!.levelSelector > 0
+  );
+  expect(upper.length).toBeGreaterThan(30);
+  for (const resident of upper) {
+    const parent = data.instances.find(
+      item => item.id === resident.placement!.parent
+    )!;
+    const entry = model(parent.model).levelBinding!.floors.find(
+      item => item.level === resident.association!.levelSelector
+    )!;
+    const vertices = model(entry.drawnStructureId ?? entry.structureId)
+      .variants[0]!.mesh.vertices;
+    const [x, , z] = resident.placement!.position;
+    const xs = vertices.map(vertex => vertex[0]);
+    const zs = vertices.map(vertex => vertex[2]);
+    expect([resident.id, Math.min(...xs) <= x && x <= Math.max(...xs)]).toEqual(
+      [resident.id, true]
+    );
+    expect([resident.id, Math.min(...zs) <= z && z <= Math.max(...zs)]).toEqual(
+      [resident.id, true]
+    );
   }
 });
 

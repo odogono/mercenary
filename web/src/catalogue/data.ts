@@ -70,6 +70,13 @@ export interface LevelBinding {
    * leaves zero has no floor and the lift refuses it ($055B28).
    */
   readonly floors: readonly {
+    /**
+     * The Model this Floor is drawn and walked with, where it is not `structureId` itself: the
+     * slot's record decoded in the frame of the instance that binds it, with that instance's
+     * Building detail. Only the cell bind writes the structure scale and the detail byte, and
+     * the lift's move reaches neither, so a Floor keeps its instance's (#531).
+     */
+    readonly drawnStructureId?: string;
     readonly level: number;
     /**
      * The scene palette this Floor is drawn in: the record's palette byte (record+4), or its
@@ -809,6 +816,9 @@ const levelBinding = (value: unknown): LevelBinding => {
       return fail(`floor level ${level} lies past the record's own extent`);
     }
     return {
+      ...(floor['drawnStructureId'] === undefined
+        ? {}
+        : { drawnStructureId: string(floor['drawnStructureId']) }),
       level,
       ...(floor['paletteIndex'] === undefined
         ? {}

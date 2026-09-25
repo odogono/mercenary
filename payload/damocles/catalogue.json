@@ -2605,9 +2605,9 @@
   ],
   "coverage": {
     "census": {
-      "decoded": 1392,
-      "partial": 326,
-      "unique": 1718,
+      "decoded": 1435,
+      "partial": 330,
+      "unique": 1765,
       "unresolved": 0
     },
     "classifications": {
@@ -2615,8 +2615,8 @@
       "articulated": 0,
       "attachments": 0,
       "conditionalForms": 48,
-      "empty": 12,
-      "geometry": 1521,
+      "empty": 15,
+      "geometry": 1565,
       "liveText": 1,
       "null": 1,
       "omittedSelector": 0,
@@ -2932,14 +2932,14 @@
       {
         "address": 59648,
         "aliases": 183,
-        "decoded": 5,
-        "empty": 9,
-        "extentEvidence": "Relative-pointer table $00E900-$00ED5F, 280 entries. The 8 bytes that follow are the first record's eight metadata bytes, so a further entry would overlap authored record data: the entry count is bounded above, not assumed. Records run $00ED68-$01DEFA (highest table target $01DEF0), then 261 zero bytes up to the $01E000 ground workspace seed table. The bank is bounded in this capture; it is not a census of every packed disk file.",
+        "decoded": 48,
+        "empty": 12,
+        "extentEvidence": "Relative-pointer table $00E900-$00ED5F, 280 entries. The 8 bytes that follow are the first record's eight metadata bytes, so a further entry would overlap authored record data: the entry count is bounded above, not assumed. Records run $00ED68-$01DEFA (highest table target $01DEF0), then 261 zero bytes up to the $01E000 ground workspace seed table. The bank is bounded in this capture; it is not a census of every packed disk file. Entries after index 279 are Floor forms: an upper Floor's record decoded in the frame of the instance that binds it, not table slots.",
         "kind": "structure",
         "nullRecords": 0,
-        "partial": 261,
-        "slots": 280,
-        "unique": 266,
+        "partial": 265,
+        "slots": 327,
+        "unique": 313,
         "unresolved": 0
       },
       {
@@ -112307,6 +112307,476 @@
         1342
       ],
       "status": "decoded"
+    },
+    {
+      "id": "structure-0129be-at-2x2-detail-56",
+      "kind": "structure",
+      "name": "Structure 55 \u00b7 Floor frame 2\u00d72",
+      "recordClass": "geometry",
+      "slots": [
+        280
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-00fad6-at-2x2-detail-56",
+      "kind": "structure",
+      "name": "Structure 13 \u00b7 Floor frame 2\u00d72",
+      "recordClass": "geometry",
+      "slots": [
+        281
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-00fc7e-at-3x3-detail-41",
+      "kind": "structure",
+      "name": "Structure 16 \u00b7 Floor frame 3\u00d73",
+      "recordClass": "geometry",
+      "slots": [
+        282
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-0107a6-at-m2xm2-detail-86",
+      "kind": "structure",
+      "name": "Structure 29 \u00b7 Floor frame -2\u00d7-2",
+      "recordClass": "geometry",
+      "slots": [
+        283
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-010908-at-m2xm2-detail-86",
+      "kind": "structure",
+      "name": "Structure 30 \u00b7 Floor frame -2\u00d7-2",
+      "recordClass": "geometry",
+      "slots": [
+        284
+      ],
+      "status": "partial"
+    },
+    {
+      "id": "structure-01137c-at-2x2-detail-67",
+      "kind": "structure",
+      "name": "Structure 39 \u00b7 Floor frame 2\u00d72",
+      "recordClass": "geometry",
+      "slots": [
+        285
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-00fc7e-at-m4xm4-detail-41",
+      "kind": "structure",
+      "name": "Structure 16 \u00b7 Floor frame -4\u00d7-4",
+      "recordClass": "geometry",
+      "slots": [
+        286
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-01324e-at-3x2-detail-58",
+      "kind": "structure",
+      "name": "Structure 61 \u00b7 Floor frame 3\u00d72",
+      "recordClass": "geometry",
+      "slots": [
+        287
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-00ed68-at-3x2-detail-58",
+      "kind": "structure",
+      "name": "Structure 0 \u00b7 Floor frame 3\u00d72",
+      "recordClass": "empty",
+      "slots": [
+        288
+      ],
+      "status": "partial"
+    },
+    {
+      "id": "structure-01341e-at-3x2-detail-58",
+      "kind": "structure",
+      "name": "Structure 63 \u00b7 Floor frame 3\u00d72",
+      "recordClass": "geometry",
+      "slots": [
+        289
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-019cda-at-3x3-detail-66",
+      "kind": "structure",
+      "name": "Structure 97 \u00b7 Floor frame 3\u00d73",
+      "recordClass": "geometry",
+      "slots": [
+        290
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-00fc7e-at-4x4-detail-41",
+      "kind": "structure",
+      "name": "Structure 16 \u00b7 Floor frame 4\u00d74",
+      "recordClass": "geometry",
+      "slots": [
+        291
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-0129be-at-2xm2-detail-53",
+      "kind": "structure",
+      "name": "Structure 55 \u00b7 Floor frame 2\u00d7-2",
+      "recordClass": "geometry",
+      "slots": [
+        292
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-00fad6-at-2xm2-detail-53",
+      "kind": "structure",
+      "name": "Structure 13 \u00b7 Floor frame 2\u00d7-2",
+      "recordClass": "geometry",
+      "slots": [
+        293
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-00fc7e-at-2x2-detail-41",
+      "kind": "structure",
+      "name": "Structure 16 \u00b7 Floor frame 2\u00d72",
+      "recordClass": "geometry",
+      "slots": [
+        294
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-0129be-at-3xm3-detail-56",
+      "kind": "structure",
+      "name": "Structure 55 \u00b7 Floor frame 3\u00d7-3",
+      "recordClass": "geometry",
+      "slots": [
+        295
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-00fad6-at-3xm3-detail-56",
+      "kind": "structure",
+      "name": "Structure 13 \u00b7 Floor frame 3\u00d7-3",
+      "recordClass": "geometry",
+      "slots": [
+        296
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-0129be-at-2x3-detail-53",
+      "kind": "structure",
+      "name": "Structure 55 \u00b7 Floor frame 2\u00d73",
+      "recordClass": "geometry",
+      "slots": [
+        297
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-00fad6-at-2x3-detail-53",
+      "kind": "structure",
+      "name": "Structure 13 \u00b7 Floor frame 2\u00d73",
+      "recordClass": "geometry",
+      "slots": [
+        298
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-012d2e-at-3x3-detail-56",
+      "kind": "structure",
+      "name": "Structure 58 \u00b7 Floor frame 3\u00d73",
+      "recordClass": "geometry",
+      "slots": [
+        299
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-00ed68-at-3x3-detail-36",
+      "kind": "structure",
+      "name": "Structure 0 \u00b7 Floor frame 3\u00d73",
+      "recordClass": "empty",
+      "slots": [
+        300
+      ],
+      "status": "partial"
+    },
+    {
+      "id": "structure-00ed68-at-m4xm4-detail-37",
+      "kind": "structure",
+      "name": "Structure 0 \u00b7 Floor frame -4\u00d7-4",
+      "recordClass": "empty",
+      "slots": [
+        301
+      ],
+      "status": "partial"
+    },
+    {
+      "id": "structure-01aab2-at-m3xm3-detail-38",
+      "kind": "structure",
+      "name": "Structure 123 \u00b7 Floor frame -3\u00d7-3",
+      "recordClass": "geometry",
+      "slots": [
+        302
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-01cf68-at-3x3-detail-30",
+      "kind": "structure",
+      "name": "Structure 142 \u00b7 Floor frame 3\u00d73",
+      "recordClass": "geometry",
+      "slots": [
+        303
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-013ae0-at-m2x2-detail-59",
+      "kind": "structure",
+      "name": "Structure 66 \u00b7 Floor frame -2\u00d72",
+      "recordClass": "geometry",
+      "slots": [
+        304
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-013e2e-at-m2x2-detail-59",
+      "kind": "structure",
+      "name": "Structure 67 \u00b7 Floor frame -2\u00d72",
+      "recordClass": "geometry",
+      "slots": [
+        305
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-012d2e-at-2xm2-detail-56",
+      "kind": "structure",
+      "name": "Structure 58 \u00b7 Floor frame 2\u00d7-2",
+      "recordClass": "geometry",
+      "slots": [
+        306
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-00fc7e-at-3x3-detail-40",
+      "kind": "structure",
+      "name": "Structure 16 \u00b7 Floor frame 3\u00d73",
+      "recordClass": "geometry",
+      "slots": [
+        307
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-00fc7e-at-m3xm3-detail-40",
+      "kind": "structure",
+      "name": "Structure 16 \u00b7 Floor frame -3\u00d7-3",
+      "recordClass": "geometry",
+      "slots": [
+        308
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-01c66e-at-m1xm1-detail-30",
+      "kind": "structure",
+      "name": "Structure 140 \u00b7 Floor frame -1\u00d7-1",
+      "recordClass": "geometry",
+      "slots": [
+        309
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-016990-at-m1x1-detail-83",
+      "kind": "structure",
+      "name": "Structure 85 \u00b7 Floor frame -1\u00d71",
+      "recordClass": "geometry",
+      "slots": [
+        310
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-0170ac-at-1xm1-detail-84",
+      "kind": "structure",
+      "name": "Structure 88 \u00b7 Floor frame 1\u00d7-1",
+      "recordClass": "geometry",
+      "slots": [
+        311
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-019cda-at-m3x3-detail-66",
+      "kind": "structure",
+      "name": "Structure 97 \u00b7 Floor frame -3\u00d73",
+      "recordClass": "geometry",
+      "slots": [
+        312
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-0107a6-at-m2x2-detail-86",
+      "kind": "structure",
+      "name": "Structure 29 \u00b7 Floor frame -2\u00d72",
+      "recordClass": "geometry",
+      "slots": [
+        313
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-01cf68-at-m4xm3-detail-30",
+      "kind": "structure",
+      "name": "Structure 142 \u00b7 Floor frame -4\u00d7-3",
+      "recordClass": "geometry",
+      "slots": [
+        314
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-01324e-at-2xm2-detail-58",
+      "kind": "structure",
+      "name": "Structure 61 \u00b7 Floor frame 2\u00d7-2",
+      "recordClass": "geometry",
+      "slots": [
+        315
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-01341e-at-2xm2-detail-58",
+      "kind": "structure",
+      "name": "Structure 63 \u00b7 Floor frame 2\u00d7-2",
+      "recordClass": "geometry",
+      "slots": [
+        316
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-01cf68-at-m3xm3-detail-30",
+      "kind": "structure",
+      "name": "Structure 142 \u00b7 Floor frame -3\u00d7-3",
+      "recordClass": "geometry",
+      "slots": [
+        317
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-0107a6-at-m3x3-detail-86",
+      "kind": "structure",
+      "name": "Structure 29 \u00b7 Floor frame -3\u00d73",
+      "recordClass": "geometry",
+      "slots": [
+        318
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-012d2e-at-m2xm2-detail-56",
+      "kind": "structure",
+      "name": "Structure 58 \u00b7 Floor frame -2\u00d7-2",
+      "recordClass": "geometry",
+      "slots": [
+        319
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-01c66e-at-1x1-detail-30",
+      "kind": "structure",
+      "name": "Structure 140 \u00b7 Floor frame 1\u00d71",
+      "recordClass": "geometry",
+      "slots": [
+        320
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-012626-at-m2xm2-detail-51",
+      "kind": "structure",
+      "name": "Structure 52 \u00b7 Floor frame -2\u00d7-2",
+      "recordClass": "geometry",
+      "slots": [
+        321
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-0107a6-at-m2xm2-detail-87",
+      "kind": "structure",
+      "name": "Structure 29 \u00b7 Floor frame -2\u00d7-2",
+      "recordClass": "geometry",
+      "slots": [
+        322
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-019cda-at-m3xm3-detail-66",
+      "kind": "structure",
+      "name": "Structure 97 \u00b7 Floor frame -3\u00d7-3",
+      "recordClass": "geometry",
+      "slots": [
+        323
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-019cda-at-3xm3-detail-66",
+      "kind": "structure",
+      "name": "Structure 97 \u00b7 Floor frame 3\u00d7-3",
+      "recordClass": "geometry",
+      "slots": [
+        324
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-013ae0-at-m1xm1-detail-59",
+      "kind": "structure",
+      "name": "Structure 66 \u00b7 Floor frame -1\u00d7-1",
+      "recordClass": "geometry",
+      "slots": [
+        325
+      ],
+      "status": "decoded"
+    },
+    {
+      "id": "structure-013e2e-at-m1xm1-detail-59",
+      "kind": "structure",
+      "name": "Structure 67 \u00b7 Floor frame -1\u00d7-1",
+      "recordClass": "geometry",
+      "slots": [
+        326
+      ],
+      "status": "decoded"
     }
   ],
   "places": [
@@ -135307,9 +135777,56 @@
         "structure-01def0",
         "structure-00ed68",
         "structure-00ed68",
-        "structure-00ed68"
+        "structure-00ed68",
+        "structure-0129be-at-2x2-detail-56",
+        "structure-00fad6-at-2x2-detail-56",
+        "structure-00fc7e-at-3x3-detail-41",
+        "structure-0107a6-at-m2xm2-detail-86",
+        "structure-010908-at-m2xm2-detail-86",
+        "structure-01137c-at-2x2-detail-67",
+        "structure-00fc7e-at-m4xm4-detail-41",
+        "structure-01324e-at-3x2-detail-58",
+        "structure-00ed68-at-3x2-detail-58",
+        "structure-01341e-at-3x2-detail-58",
+        "structure-019cda-at-3x3-detail-66",
+        "structure-00fc7e-at-4x4-detail-41",
+        "structure-0129be-at-2xm2-detail-53",
+        "structure-00fad6-at-2xm2-detail-53",
+        "structure-00fc7e-at-2x2-detail-41",
+        "structure-0129be-at-3xm3-detail-56",
+        "structure-00fad6-at-3xm3-detail-56",
+        "structure-0129be-at-2x3-detail-53",
+        "structure-00fad6-at-2x3-detail-53",
+        "structure-012d2e-at-3x3-detail-56",
+        "structure-00ed68-at-3x3-detail-36",
+        "structure-00ed68-at-m4xm4-detail-37",
+        "structure-01aab2-at-m3xm3-detail-38",
+        "structure-01cf68-at-3x3-detail-30",
+        "structure-013ae0-at-m2x2-detail-59",
+        "structure-013e2e-at-m2x2-detail-59",
+        "structure-012d2e-at-2xm2-detail-56",
+        "structure-00fc7e-at-3x3-detail-40",
+        "structure-00fc7e-at-m3xm3-detail-40",
+        "structure-01c66e-at-m1xm1-detail-30",
+        "structure-016990-at-m1x1-detail-83",
+        "structure-0170ac-at-1xm1-detail-84",
+        "structure-019cda-at-m3x3-detail-66",
+        "structure-0107a6-at-m2x2-detail-86",
+        "structure-01cf68-at-m4xm3-detail-30",
+        "structure-01324e-at-2xm2-detail-58",
+        "structure-01341e-at-2xm2-detail-58",
+        "structure-01cf68-at-m3xm3-detail-30",
+        "structure-0107a6-at-m3x3-detail-86",
+        "structure-012d2e-at-m2xm2-detail-56",
+        "structure-01c66e-at-1x1-detail-30",
+        "structure-012626-at-m2xm2-detail-51",
+        "structure-0107a6-at-m2xm2-detail-87",
+        "structure-019cda-at-m3xm3-detail-66",
+        "structure-019cda-at-3xm3-detail-66",
+        "structure-013ae0-at-m1xm1-detail-59",
+        "structure-013e2e-at-m1xm1-detail-59"
       ],
-      "entryCount": 280,
+      "entryCount": 327,
       "extent": {
         "bankEnd": 122619,
         "entryCount": 280,
@@ -135322,7 +135839,7 @@
         "tableStart": 59648,
         "zeroFillBytes": 261
       },
-      "extentEvidence": "Relative-pointer table $00E900-$00ED5F, 280 entries. The 8 bytes that follow are the first record's eight metadata bytes, so a further entry would overlap authored record data: the entry count is bounded above, not assumed. Records run $00ED68-$01DEFA (highest table target $01DEF0), then 261 zero bytes up to the $01E000 ground workspace seed table. The bank is bounded in this capture; it is not a census of every packed disk file.",
+      "extentEvidence": "Relative-pointer table $00E900-$00ED5F, 280 entries. The 8 bytes that follow are the first record's eight metadata bytes, so a further entry would overlap authored record data: the entry count is bounded above, not assumed. Records run $00ED68-$01DEFA (highest table target $01DEF0), then 261 zero bytes up to the $01E000 ground workspace seed table. The bank is bounded in this capture; it is not a census of every packed disk file. Entries after index 279 are Floor forms: an upper Floor's record decoded in the frame of the instance that binds it, not table slots.",
       "kind": "structure"
     },
     {

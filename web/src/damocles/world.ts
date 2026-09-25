@@ -473,6 +473,12 @@ const placementSelection = (
       };
 };
 
+/// The Model a Floor is drawn and walked with: its form in the binding instance's frame where
+/// the extractor publishes one, otherwise the structure its Floor Table entry binds (#531).
+export const floorModelId = (
+  entry: NonNullable<Model['levelBinding']>['floors'][number]
+): string => entry.drawnStructureId ?? entry.structureId;
+
 /// The Floors a structure placement's Floor Table binds, each with the structure Model it binds.
 /// Empty where its Model has no Floor Table or is not in hand.
 export const floorsOf = (
@@ -615,7 +621,7 @@ export const floorPlacement = (
   if (floor === 0) {
     return placement;
   }
-  const model = models.peek(entry.structureId);
+  const model = models.peek(floorModelId(entry));
   const palette = models
     .peek(placement.modelId)
     ?.levelBinding?.palettes?.find(

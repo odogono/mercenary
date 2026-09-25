@@ -12,60 +12,70 @@
           "structureSlot": 54
         },
         {
+          "drawnStructureId": "structure-0129be-at-2x2-detail-56",
           "level": 1,
           "paletteIndex": 29,
           "structureId": "structure-0129be",
           "structureSlot": 55
         },
         {
+          "drawnStructureId": "structure-0129be-at-2x2-detail-56",
           "level": 2,
           "paletteIndex": 29,
           "structureId": "structure-0129be",
           "structureSlot": 55
         },
         {
+          "drawnStructureId": "structure-0129be-at-2x2-detail-56",
           "level": 3,
           "paletteIndex": 29,
           "structureId": "structure-0129be",
           "structureSlot": 55
         },
         {
+          "drawnStructureId": "structure-0129be-at-2x2-detail-56",
           "level": 4,
           "paletteIndex": 29,
           "structureId": "structure-0129be",
           "structureSlot": 55
         },
         {
+          "drawnStructureId": "structure-0129be-at-2x2-detail-56",
           "level": 5,
           "paletteIndex": 29,
           "structureId": "structure-0129be",
           "structureSlot": 55
         },
         {
+          "drawnStructureId": "structure-0129be-at-2x2-detail-56",
           "level": 6,
           "paletteIndex": 29,
           "structureId": "structure-0129be",
           "structureSlot": 55
         },
         {
+          "drawnStructureId": "structure-0129be-at-2x2-detail-56",
           "level": 7,
           "paletteIndex": 29,
           "structureId": "structure-0129be",
           "structureSlot": 55
         },
         {
+          "drawnStructureId": "structure-0129be-at-2x2-detail-56",
           "level": 8,
           "paletteIndex": 29,
           "structureId": "structure-0129be",
           "structureSlot": 55
         },
         {
+          "drawnStructureId": "structure-0129be-at-2x2-detail-56",
           "level": 9,
           "paletteIndex": 29,
           "structureId": "structure-0129be",
           "structureSlot": 55
         },
         {
+          "drawnStructureId": "structure-00fad6-at-2x2-detail-56",
           "level": 10,
           "paletteIndex": 29,
           "structureId": "structure-00fad6",
@@ -77,7 +87,7 @@
         {
           "colours": [
             "#eeeeee",
-            null,
+            "#4488cc",
             "#4488cc",
             "#664444",
             "#4488cc",
@@ -87,12 +97,12 @@
             "#888888",
             "#8888aa",
             "#aaaacc",
-            null,
+            "#eeeeee",
             "#aaccee"
           ],
           "dayColours": [
             "#000000",
-            null,
+            "#4488cc",
             "#4488cc",
             "#664444",
             "#4488cc",
@@ -102,7 +112,7 @@
             "#888888",
             "#8888aa",
             "#aaaacc",
-            null,
+            "#000000",
             "#aaccee"
           ],
           "paletteIndex": 29
