@@ -362,6 +362,39 @@ What the port can bind and implement from this note without inventing anything:
   X/Z unchanged.
 - **Entry:** a walk into a building starts on Floor 0 (decoded, not observed live).
 
+## Browser verification (#478)
+
+`web/e2e/damocles-lift-sweep.e2e.ts` rides both captured lifts in the port with the
+lift's own keys. It records every label the page publishes (`data-floor-label`), walks
+out of the car onto each Floor and back, and checks that the page raised no errors.
+
+| Trace | Port | ST run it matches |
+| --- | --- | --- |
+| State Office, G → 1 → 2 → B → G | labels G,1 · 1,2 · 2,1,G,B · B,G; Y 213, 363, 1563, 63; region 4 throughout | `ride`: G,1,2 then 2,1,G,B |
+| State Office, 3–9 and the current Floor's key, on every Floor | refused; nothing moves | `ride`: `3` and `G` refused |
+| State Office, walk out on Floors 1 and 2 | stops at X −412 in region 8; Floor, Y and structure held | `walk-out-2`: stops at (−412, 0) |
+| State Office, walk out on Floors 0 and 10 | hall region 0 of that Floor's structure | `walk-out-0` (Floor 0) |
+| State Office, Save on Floor 2, ride to B, load | Floor 2, same pose; reload resumes Floor 2; `G` then rides 2,1,G | — |
+| Vesta, in the west car on Floor 10 | `G`: B,G in one step, Y 63; `3`: G,1,2,3, Y 1014; 4–9 refused | `vesta-teleport` |
+| Vesta, `1`, `B`, `2`, `0` | 3,2,1 · 1,G,B · B,G,1,2 · 2,1,G,B; Y 380, 3233, 697, 3233 | — |
+| Vesta, walk out on every bound Floor | hall region 17 on Floor 0, region 4 on 1, 2, 3 and 10 | — |
+
+Screenshots taken facing the State Office car's door show the live label beside it:
+`G`, `1`, `2` and `B` from font 2's `floorLabelGlyphs`. `1` is that font's single
+wedge and `2` its two wedges and a bar, so the thin shapes are the data, not a
+drawing fault.
+
+Two things the pass does not do through play alone:
+
+- **`Esc` is not a lift key in the port.** The Browser Shell keeps Escape for the
+  System Menu (`web/src/shell/input.ts`), and `G` asks for the same Floor.
+- **An arrival Pose above Floor 0 lands on Floor 0.** `switch vesta-transporter` binds
+  Floor 0 at Y 3233, although the capture's `$7AA4` is 10. `eris-transporter-11-8`
+  would do the same at Y 1163. The session never reads a Floor from a height (#474),
+  and `arrival-poses.json` does not publish the capture's Floor. The Vesta trace moves
+  the Pose into the car, as `vesta-teleport` does, and then sets Floor 10 with the
+  console's `floor 10` until [#505](https://github.com/odogono/mercenary/issues/505) lands it there.
+
 ## What this does not settle
 
 - **Ride presentation and timing**: recovered by #472 in
