@@ -211,7 +211,7 @@ are not claimed as a stable table.
 | `$0082DC` contains orbital angular velocities                          | **Disproved (#439)**                                  | The phase never reaches a Body centre. It is Body Rotation: `$04E970` subtracts it to enter a Body's frame and `$059384`/`$0595C8`/`$0597AA` add it to leave it. |
 | A parallel record supplies type (star/planet/moon/comet)               | **Partially confirmed**                               | No explicit type byte was found. Confirmed symmetric draw clusters plus relative centres support a structurally inferred star/9-planet/19-moon partition. |
 | A parallel record supplies Primary                                     | **Partially confirmed**                               | No explicit parent field was found. Cluster anchors support the Primary assignments below. DAMOCLES has no Primary to find: #440 shows its centre comes from an authored waypoint table, not from any parent.        |
-| A parallel record supplies radius                                      | **Confirmed (encoding decoded, #424)**                | `$006040 + selector` controls apparent size in the all-body scan and is subtracted from range for arrival/contact. The field is a packed binary float; the physical unit is still unknown. |
+| A parallel record supplies radius                                      | **Confirmed (encoding decoded, #424)**                | `$006040 + selector` controls apparent size in the all-body scan and its exponent is compared with range's for arrival/contact. The field is a packed binary float; #528 fixes the unit: radius = size / 256 System units ([sky Bodies](damocles-sky-bodies.md#apparent-size-and-the-424-unit)). |
 | A parallel record supplies orbit radius/elements or Cartesian position | **Cartesian Confirmed; orbit elements Disproved (#439)** | X/Y/Z body-centre arrays are recovered and are the whole of a Body's placement. No orbit centre, plane, period or eccentricity is read anywhere, and only DAMOCLES's centre is ever written. |
 | The game draws bodies at range from VOID                               | **Confirmed (code path), live appearance Unresolved** | The space branch calls the 30-body range/sort/project loop. No live in-flight VOID display capture verifies final appearance; the `$78` selector captured under #439 is the dead prompt, whose view is black. |
 
@@ -589,7 +589,9 @@ The three exceptional lists are also bounded facts:
 Thus the resident records answer one part of “how bodies are drawn at range”:
 the current place/body selects an explicit list of other body records, and the
 renderer projects the listed records through the ordinary geometry path. The
-available run proves that path for Eris. The VOID list's contents are
+available run proves that path for Eris. #528 decodes how each listed Body becomes
+pixels, as a disc split by a terminator ellipse
+([sky Bodies](damocles-sky-bodies.md)). The VOID list's contents are
 Confirmed statically, but its live selection and resulting display remain
 Unresolved until VOID is reached or the selector is perturbed under capture.
 
@@ -602,11 +604,13 @@ Y at `$00626A`, packed appearance at `$0060C0`, and live angular phase at
 More decisively, `$052DB0..$053078` scans selectors `$74` down through `$00`,
 reads X/Y/Z, computes and sorts range, derives apparent size from `$006040`,
 then submits the body through the normal geometry call at `$04FBAE`.
-`$052FCA..$052FEA` also subtracts `$006040(selector)` from nearest-body range
-for its arrival/contact test. This confirms `$006040` as the engine's
-radius/extent parameter. Its numeric encoding is decoded below (#424): the
-field is a packed binary float, not the integer its raw longword suggests. The
-physical unit is still not decoded.
+`$052FCA..$052FEA` also compares `$006040(selector)` with the nearest-body range
+for its arrival/contact test. It subtracts the two **exponent words**, not the
+values ([#528](damocles-sky-bodies.md#apparent-size-and-the-424-unit)). This
+confirms `$006040` as the engine's radius/extent parameter. Its numeric
+encoding is decoded below (#424): the field is a packed binary float, not the
+integer its raw longword suggests. Its unit is settled by #528: radius =
+size / 256 System units.
 
 The space branch at `$0598A6..$059912` calls that full scan at `$0598FA`.
 Consequently the VOID view does not depend only on VOID's one-entry local draw
@@ -912,7 +916,7 @@ planet entries, the 30 named plus VOID plus one unused. This project recovers
 the parallel phase-rate source at `$0082DC` is 32 longwords, which may be where
 the claim comes from.
 
-### Issue #424 body size at `$006040` — Confirmed (encoding decoded; physical unit Unresolved)
+### Issue #424 body size at `$006040` — Confirmed (encoding decoded; unit settled by #528)
 
 The `$006040` field the body-centre section above calls a "radius/extent
 parameter" is a **packed binary float**, not the integer its raw longword
@@ -984,8 +988,16 @@ and every body is nearly the same size. Decoded it spans **500 times**.
 | 28 | SAPPHIRE | 857088 | `0x0d1400` | 13 | `0x1400` | 10,240 | Moon |
 | 29 | DAMOCLES | 991040 | `0x0f1f40` | 15 | `0x1f40` | 64,000 | Comet |
 
-The **physical unit remains Unresolved**: the decode yields sizes in their own
-unit and nothing recovered ties that unit to the positional one. For a
+**The unit is settled by #528**
+([sky Bodies](damocles-sky-bodies.md#apparent-size-and-the-424-unit)). The sky
+renderer draws a listed Body with pixel radius `size / depth`, while positions
+project as `256 · u / depth`, so a Body is a sphere of radius **`size / 256`
+System units**. 24 pinned frames match that pixel for pixel. The arrival test
+agrees: it fires when the range's exponent is at least 8 below the size's, i.e.
+within about two radii. What follows was written before that and is kept as
+the record:
+the decode yields sizes in their own unit, and nothing recovered at the time
+tied that unit to the positional one. For a
 consumer drawing a body against the distance scale, non-overlap of all thirty
 bodies bounds the divisor below at **166.4** (tightest pair ERIS and VESTA,
 2,400 units apart). That is a bound, not a decoding, and must be labelled
@@ -1256,7 +1268,8 @@ best leads (21-byte place stride, ~0x1A key stride, pointer scan into the body
 name table). Not completed here:
 
 - An explicit per-body type / Primary field
-- Physical units for centre/extent values. Orbit centre, distance and plane are
+- Physical units for centre values (the extent unit is settled by #528: radius =
+  size / 256 System units). Orbit centre, distance and plane are
   no longer among them: #439 shows the engine holds no orbital elements at all,
   because the System it draws is static apart from the comet
 - A live in-flight VOID observation with the craft in space (the body-at-range
