@@ -16,7 +16,10 @@ import type { Effect } from './script.ts';
 /// already made and writes nothing back.
 
 /// What a Gameplay Session asks for.
-export type DamoclesCue = Effect['cue'];
+export type DamoclesCue = Extract<
+  Effect,
+  { readonly type: 'sound-request' }
+>['cue'];
 
 /// The rest of the driver, which no session asks for yet; the sound board plays them.
 export type DamoclesProgramme =
@@ -354,6 +357,54 @@ class MusicPlayer {
   }
 }
 
+/// `$052402`'s walk through a message: the reveal counter `$7BE6`, the text pointer `$7B98`
+/// and the sub-cell shift `$0523B6`.
+class MessageReveal {
+  private counter: number | null = null;
+  private cursor = 0;
+  private shift = -2;
+
+  constructor(private readonly text: string) {}
+
+  /// One VBL: the character code whose tone it sounds, `'hold'` when it writes nothing, or
+  /// `'silent'` once the scroll-in is over.
+  step(): number | 'hold' | 'silent' {
+    if (this.counter === null) {
+      // `$0523C6`: counter 0 and the shift `$FFFE`.
+      this.counter = 0;
+      return 'hold';
+    }
+    this.counter += 1;
+    if (this.counter === 37) {
+      return 'hold';
+    }
+    if (this.counter > 37) {
+      return 'silent';
+    }
+    // `$052424` pitches from the first fetch. A spent shift fetches again at `$0525C4` to start
+    // the next glyph pair and resets to 4, and each VBL takes 2 off it, so the pointer runs 2, 1,
+    // 1: the tones are characters 0, 2, 3, 4, 6, 7 and so on, never 1, 5, 9.
+    const code = this.fetch();
+    if (this.shift < 0) {
+      this.fetch();
+      this.shift = 4;
+    }
+    this.shift -= 2;
+    return code;
+  }
+
+  /// `$05234C`. At the terminator it answers a space and leaves the pointer on the NUL. No
+  /// record holds a numeric field (a code of `$61` or above), so that path is not followed.
+  private fetch(): number {
+    const code = this.text.charCodeAt(this.cursor);
+    if (Number.isNaN(code) || code === 0) {
+      return 0x20;
+    }
+    this.cursor += 1;
+    return code;
+  }
+}
+
 export class DamoclesPsgDriver {
   /// `$7C04`: the driver keeps its own copy of the mixer and edits that, never reading the chip.
   private mixer = 0xff;
@@ -367,6 +418,8 @@ export class DamoclesPsgDriver {
   private engineSounding = false;
   /// The descent drone's two periods, `$7BEE` (channel B) and `$7BF0` (channel C).
   private drone = { b: 0x04_00, c: 0x04_80 };
+  /// The message presenting behind the gate `$7BA0`, while its scroll-in still writes channel A.
+  private message: MessageReveal | null = null;
   private readonly music: MusicPlayer | null;
 
   constructor(music: DamoclesMusicData | null = null) {
@@ -468,22 +521,10 @@ export class DamoclesPsgDriver {
     this.speedExponent = exponent;
   }
 
-  /// One VBL of `$052402`'s scroll-in, from the VBL at `$051E1E`: channel A's fine period is
-  /// the character times two, at level 12, or 0 for a space; `null` is a VBL after the
-  /// scroll-in or the message's end `$0523DC`, level 0.
-  messageCharacter(code: number | null, sink: PsgSink): void {
-    if (this.musicPlaying) {
-      return;
-    }
-    if (code === null) {
-      sink.write(8, 0);
-      return;
-    }
-    sink.write(0, (code * 2) & 0xff);
-    sink.write(8, 12);
-    if (code === 0x20) {
-      sink.write(8, 0);
-    }
+  /// A message raised the gate `$7BA0` with `text` behind the pointer `$7B98`. `$052402`, in
+  /// the VBL at `$051E1E`, begins it on the next VBL and sounds its scroll-in on the 36 after.
+  showMessage(text: string): void {
+    this.message = new MessageReveal(text);
   }
 
   /// `$0594A4`: the GHETTOBLASTER switched on while carried, or off. Without the tune there is
@@ -492,14 +533,16 @@ export class DamoclesPsgDriver {
     this.music?.ask(playing);
   }
 
-  /// One VBL: the music player while it plays, otherwise the first vector and then the second.
+  /// One VBL: the music player while it plays, otherwise the first vector and then the second;
+  /// then the message routine, which runs either way and only writes while the music is off.
   vbl(sink: PsgSink): void {
     if (this.music !== null && this.musicPlaying) {
       this.music.vbl(sink);
-      return;
+    } else {
+      this.stepChannelB(sink);
+      this.stepChannelC(sink);
     }
-    this.stepChannelB(sink);
-    this.stepChannelC(sink);
+    this.stepMessage(sink);
   }
 
   reset(): void {
@@ -508,8 +551,41 @@ export class DamoclesPsgDriver {
     this.channelC = { kind: 'engine' };
     this.speedExponent = -1;
     this.engineSounding = false;
+    this.message = null;
     if (this.music !== null) {
       this.music.state = 0;
+    }
+  }
+
+  /// One VBL of `$052402` (`docs/research/damocles-message-reveal.md#sound`). Counter 0 is the
+  /// VBL that finds the gate just raised and writes nothing. On 1 to 36 channel A's fine period
+  /// (register 0 only) is the character fetched first that VBL times two, at level 12, or 0 for
+  /// a space. 37 copies the row and writes nothing, so the last tone holds a second VBL; from 38
+  /// every VBL writes level 0 until the message ends. Nothing else writes channel A while the
+  /// music is off, so the first of those writes stands for all of them and the reveal ends there.
+  private stepMessage(sink: PsgSink): void {
+    const message = this.message;
+    if (message === null) {
+      return;
+    }
+    const tone = message.step();
+    if (tone === 'hold') {
+      return;
+    }
+    if (tone === 'silent') {
+      this.message = null;
+    }
+    if (this.musicPlaying) {
+      return;
+    }
+    if (tone === 'silent') {
+      sink.write(8, 0);
+      return;
+    }
+    sink.write(0, (tone * 2) & 0xff);
+    sink.write(8, 12);
+    if (tone === 0x20) {
+      sink.write(8, 0);
     }
   }
 

@@ -310,22 +310,72 @@ describe('outside the vectors', () => {
     expect(sink.taken()).toEqual([]);
   });
 
-  test('the message tone: the character twice over at level 12, a space silent', () => {
+  test('the message tone: nothing on the VBL that begins it, then 36 VBLs of the scroll-in', () => {
     const driver = new DamoclesPsgDriver();
     const sink = recorder();
-    driver.messageCharacter(0x41, sink);
-    expect(sink.taken()).toEqual([
+    driver.showMessage('AB CDEFG');
+    driver.vbl(sink);
+    expect(sink.taken()).toEqual([]);
+    const vbls = Array.from({ length: 38 }, () => {
+      driver.vbl(sink);
+      return sink.taken();
+    });
+    // Characters 0, 2, 3, 4, 6, 7: the second fetch of a VBL is drawn and never heard.
+    expect(vbls[0]).toEqual([
       [0, 0x82],
       [8, 12]
     ]);
-    driver.messageCharacter(0x20, sink);
-    expect(sink.taken()).toEqual([
+    expect(vbls[1]).toEqual([
       [0, 0x40],
       [8, 12],
       [8, 0]
     ]);
-    driver.messageCharacter(null, sink);
-    expect(sink.taken()).toEqual([[8, 0]]);
+    expect(vbls.slice(2, 6).map(writes => lastTo(writes, 0))).toEqual([
+      0x86, 0x88, 0x8c, 0x8e
+    ]);
+    // Past the terminator every fetch is a space.
+    expect(vbls.slice(6, 36).every(writes => lastTo(writes, 8) === 0)).toBe(
+      true
+    );
+    // VBL 37 copies the row and writes nothing; 38 silences channel A, and that is the end.
+    expect(vbls[36]).toEqual([]);
+    expect(vbls[37]).toEqual([[8, 0]]);
+    driver.vbl(sink);
+    expect(sink.taken()).toEqual([]);
+  });
+
+  test('the last character of a full row sounds on the 36th VBL and holds through the 37th', () => {
+    const driver = new DamoclesPsgDriver();
+    const sink = recorder();
+    // 48 characters, the last one a `Z`.
+    driver.showMessage(`${' '.repeat(47)}Z`);
+    const vbls = Array.from({ length: 39 }, () => {
+      driver.vbl(sink);
+      return sink.taken();
+    });
+    expect(vbls[36]).toEqual([
+      [0, 0xb4],
+      [8, 12]
+    ]);
+    expect(vbls[37]).toEqual([]);
+    expect(vbls[38]).toEqual([[8, 0]]);
+  });
+
+  test('a message shown again begins again, and a reset forgets it', () => {
+    const driver = new DamoclesPsgDriver();
+    const sink = recorder();
+    driver.showMessage('AAAA');
+    driver.vbl(sink);
+    driver.vbl(sink);
+    sink.taken();
+    driver.showMessage('BBBB');
+    driver.vbl(sink);
+    expect(sink.taken()).toEqual([]);
+    driver.vbl(sink);
+    expect(lastTo(sink.taken(), 0)).toBe(0x84);
+    driver.reset();
+    driver.vbl(sink);
+    expect(sink.taken()).toEqual([]);
   });
 
   test('the descent drone: B $400 and C $480 at level 9, 4 longer a step, then the restore', () => {
@@ -407,12 +457,20 @@ describe('the music player', () => {
   test('it replaces both vectors while it plays, and the message tone stands aside', () => {
     const { driver, sink } = playing();
     driver.request('door-start', sink);
-    driver.messageCharacter(0x41, sink);
     driver.vbl(sink);
     const writes = sink.taken();
     expect(writes.map(([register]) => register)).toEqual([
       6, 8, 2, 3, 9, 4, 5, 10
     ]);
+    // A message's scroll-in, begun and then sounding, writes nothing over the tune.
+    const quiet = playing();
+    const shown = playing();
+    shown.driver.showMessage('AAAA');
+    for (let vbl = 0; vbl < 3; vbl += 1) {
+      quiet.driver.vbl(quiet.sink);
+      shown.driver.vbl(shown.sink);
+      expect(shown.sink.taken()).toEqual(quiet.sink.taken());
+    }
   });
 
   test('the hi-hat and the first pass of the bass read the bytes at address 0', () => {
@@ -508,10 +566,10 @@ describe('on the YM2149', () => {
     // a channel with its tone off is only a step, which the coupling capacitor lets die away.
     chip.reset();
     const driver = new DamoclesPsgDriver();
-    driver.messageCharacter(0x41, chip);
+    driver.showMessage('A'.repeat(48));
     expect(render(driver, chip, 10)[9]!).toBeLessThan(5e-4);
     driver.powerOn(chip);
-    driver.messageCharacter(0x41, chip);
+    driver.showMessage('A'.repeat(48));
     expect(render(driver, chip, 10)[9]!).toBeGreaterThan(3e-3);
   });
 });

@@ -10,6 +10,8 @@ import { tapDestination, type SoundTapScope } from './sound-tap.ts';
 /// notes its RMS level beside the session time and cue tally the page publishes.
 
 const STATE_OFFICE = 'eris-surface-89';
+/// Beside the V.I.P. LIMO in the Capital Spaceport, without its key (see damocles-boarding.e2e.ts).
+const BESIDE_LIMO = { x: 1714 + 150, z: -3241 };
 /// In the hall, facing west into the lift car through its doorway (see damocles-lift.e2e.ts).
 const BEFORE_THE_DOOR = { x: -440, z: 0 };
 const FACING_WEST = 256;
@@ -143,6 +145,41 @@ test('a lift ride is heard: door tone and burst, silence while the label steps, 
   const after = levelsBetween(samples, arrival + 1.3, end);
   expect(after.length).toBeGreaterThan(4);
   expect(Math.max(...after)).toBeLessThan(SILENT);
+  expect(errors).toEqual([]);
+});
+
+test('a refusal message is heard while it scrolls in, and silent once the text is still', async ({
+  page
+}) => {
+  test.setTimeout(120_000);
+  const errors = watchErrors(page);
+  await listen(page);
+  await bootAt(page, BESIDE_LIMO);
+  // A key the Control Profile ignores is the trusted gesture that starts audio.
+  await page.keyboard.press('Shift');
+  await expect(frame(page)).toHaveAttribute('data-damocles-audio', 'running');
+  await page.keyboard.press('b');
+  await expect(frame(page)).toHaveAttribute('data-damocles-cues', 'message:1');
+  await expect(frame(page)).toHaveAttribute(
+    'data-damocles-row',
+    'VEHICLE KEY REQUIRED',
+    { timeout: 5000 }
+  );
+  await page.waitForTimeout(1500);
+  const samples = await heard(page);
+  const shown = when(samples, 'message:1');
+  const before = levelsBetween(samples, 0, shown);
+  expect(before.length).toBeGreaterThan(2);
+  expect(Math.max(...before)).toBeLessThan(SILENT);
+  // The record's 14 leading spaces are silent. Its `V`, character 14, sounds on VBL 11 of the
+  // scroll-in and its last heard letter, the `E` of character 32, on VBL 25: 0.22 to 0.52 s in.
+  // The margins keep the frame clock and the analyser's window out of the judgement.
+  const tones = levelsBetween(samples, shown + 0.28, shown + 0.46);
+  expect(tones.length).toBeGreaterThan(2);
+  expect(Math.max(...tones)).toBeGreaterThan(AUDIBLE);
+  const still = levelsBetween(samples, shown + 0.9, samples.at(-1)!.elapsed);
+  expect(still.length).toBeGreaterThan(4);
+  expect(Math.max(...still)).toBeLessThan(SILENT);
   expect(errors).toEqual([]);
 });
 

@@ -51,7 +51,6 @@ import { planErisFrame } from './frame.ts';
 import { erisLighting } from './lighting.ts';
 import { damoclesPanelViewModel } from './panel.ts';
 import { damoclesTakeTargetAt } from './pointer.ts';
-import type { DamoclesCue } from './psg.ts';
 import { ErisRenderer } from './renderer.ts';
 import {
   createDamoclesResumePersistence,
@@ -258,19 +257,17 @@ try {
   };
   applyAudioPreferences(preferences.current());
 
-  /// A tally of the Sound Cues the session asked for, as they are drained. It proves requests,
-  /// not audible output: #301 reads it to see one take ask for exactly one sound, and the
-  /// presenter's own state is published beside it.
+  /// A tally of the Sound Cues the session asked for, and the messages whose tone it asked for,
+  /// as they are drained. It proves requests, not audible output: #301 reads it to see one take
+  /// ask for exactly one sound, and the presenter's own state is published beside it.
   const cueTally = new Map<string, number>();
   const drainEffects = (): void => {
-    const cues: DamoclesCue[] = [];
-    for (const effect of session.drainEffects()) {
-      if (effect.type === 'sound-request') {
-        cueTally.set(effect.cue, (cueTally.get(effect.cue) ?? 0) + 1);
-        cues.push(effect.cue);
-      }
+    const effects = session.drainEffects();
+    for (const effect of effects) {
+      const name = effect.type === 'message' ? 'message' : effect.cue;
+      cueTally.set(name, (cueTally.get(name) ?? 0) + 1);
     }
-    sound.present(cues, snapshot.elapsed);
+    sound.present(effects, snapshot.elapsed);
   };
 
   const controls = new BrowserControlProfile({

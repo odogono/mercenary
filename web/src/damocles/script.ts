@@ -61,13 +61,21 @@ export interface ScriptState {
   readonly triggers: readonly Trigger[];
 }
 
-export interface Effect {
-  /// `door-start` and `door-stop` are the second sound vector's door tone and noise burst
-  /// (`$04C37A`, `$04C2B8`), asked for as any door starts and stops moving. `thud` is the first
-  /// vector's noise `$04C630`, asked for as an on-foot step is first refused at a region edge.
-  readonly cue: 'door-start' | 'door-stop' | 'drop' | 'take' | 'thud';
-  readonly type: 'sound-request';
-}
+export type Effect =
+  | {
+      /// `door-start` and `door-stop` are the second sound vector's door tone and noise burst
+      /// (`$04C37A`, `$04C2B8`), asked for as any door starts and stops moving. `thud` is the
+      /// first vector's noise `$04C630`, asked for as an on-foot step is first refused at a
+      /// region edge.
+      readonly cue: 'door-start' | 'door-stop' | 'drop' | 'take' | 'thud';
+      readonly type: 'sound-request';
+    }
+  | {
+      /// A message has raised the gate and begins to scroll in, with the text it presents. The
+      /// ST's VBL sounds channel A from that text as it arrives (#522).
+      readonly text: string;
+      readonly type: 'message';
+    };
 
 export interface ScriptTransition {
   readonly effects: readonly Effect[];
@@ -229,6 +237,19 @@ const takePending = (state: ScriptState, rules: ScriptRules): ScriptState => {
   );
 };
 
+/// The message a transition began, if it began one: a reveal at its start that was not there
+/// before.
+const shown = (
+  before: ScriptState,
+  after: ScriptState,
+  rules: ScriptRules
+): readonly Effect[] =>
+  after.display !== before.display &&
+  after.display.kind === 'scrolling' &&
+  after.display.reveal.pixels === 0
+    ? [{ text: rules.messageText(after.display.id), type: 'message' }]
+    : [];
+
 export const runFrame = (
   input: ScriptState,
   rules: ScriptRules
@@ -249,7 +270,8 @@ export const runFrame = (
         remainingFrames === 0 ? null : { ...state.message, remainingFrames }
     };
   }
-  return { effects: [], state: takePending(runToBlock(state, rules), rules) };
+  const next = takePending(runToBlock(state, rules), rules);
+  return { effects: shown(state, next, rules), state: next };
 };
 
 /// `$054770`, entered past the busy test and the `$7A88` clear the dispatch loop performs.
@@ -274,13 +296,14 @@ export const fireTrigger = (
     };
   }
   // The launch path clears bit 7 only, so trigger 5's $A0 becomes $20 and stays queueable.
-  const state: ScriptState = {
+  const entered: ScriptState = {
     ...enter(input, trigger.script),
     triggers: input.triggers.map(item =>
       item.index === index && !item.sticky ? { ...item, armed: false } : item
     )
   };
-  return { effects: [], state: runToBlock(state, rules) };
+  const state = runToBlock(entered, rules);
+  return { effects: shown(input, state, rules), state };
 };
 
 export const presentSystemMessage = (
@@ -293,4 +316,7 @@ export const presentSystemMessage = (
     | 'system-string-3'
     | 'system-string-9',
   rules: ScriptRules
-): ScriptState => present(input, id, rules.messageFrames);
+): ScriptTransition => {
+  const state = present(input, id, rules.messageFrames);
+  return { effects: shown(input, state, rules), state };
+};

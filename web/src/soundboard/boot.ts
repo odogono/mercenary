@@ -598,23 +598,20 @@ try {
   const message = card(
     damoclesBoard,
     'Message tone · $052402',
-    'Channel A while a message scrolls in: each VBL’s character times two at level 12, a space silent, for 36 VBLs.'
+    'Channel A while a message scrolls in: for 36 VBLs, the first character each fetches times two at level 12, a space silent. The pointer runs 2, 1, 1, so characters 1, 5, 9… are never heard.'
   );
   const messageText = document.createElement('input');
   messageText.value = '               TOO HEAVY                     ';
   messageText.setAttribute('aria-label', 'Damocles message text');
   message.before(messageText);
-  button(message, 'Type', () => {
-    const text = messageText.value.toUpperCase();
-    const timeline: (readonly [number, DamoclesSoundCommand])[] = [];
-    for (let vbl = 0; vbl < 36; vbl += 1) {
-      // Past the end of a record the fetch returns a space.
-      const code = vbl < text.length ? text.charCodeAt(vbl) : 0x20;
-      timeline.push([vbl, { code, kind: 'message' }]);
-    }
-    timeline.push([36, { code: null, kind: 'message' }]);
-    void playDamocles(timeline);
-  });
+  button(
+    message,
+    'Type',
+    () =>
+      void playDamocles([
+        [0, { kind: 'message', text: messageText.value.toUpperCase() }]
+      ])
+  );
 
   const descentSteps = 277;
   button(

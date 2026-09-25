@@ -172,8 +172,8 @@ For the contract's 200-frame messages the division is
 |---|---|
 | 1 | the gate turns from `$0001` to `$FFFF`; nothing is drawn |
 | 1–36 | arrival: 36 eight-pixel scrolls, one per frame, with one tone per frame |
-| 37 | the finished row is copied into the other screen buffer (`$052638`); channel A goes silent |
-| 38–199 | reading hold: the row is not touched and both buffers agree |
+| 37 | the finished row is copied into the other screen buffer (`$052638`); the last tone holds |
+| 38–199 | reading hold: the row is not touched and both buffers agree; every frame silences channel A |
 | 200 | the gate is lowered and the interpreter resumes; **the row is left exactly as it is** |
 
 There is no departure phase. A message stays on the row until the next one scrolls over it, which is
@@ -249,14 +249,16 @@ unexplored one.
 
 ## Sound
 
-The reveal is audible. On each of frames 1 to 36, the character fetched that frame sets the
+The reveal is audible. On each of frames 1 to 36, the first character fetched that frame sets the
 YM2149's channel A fine-tune period (register 0) to **twice its character code** and channel A's
-volume (register 8) to **12**; a space sets the volume to 0 instead, and every frame past 37 sets it
-to 0. The writes are to `$FFFF8800`/`$FFFF8802` directly, gated on `$033F68` being zero — it is
+volume (register 8) to **12**; a space sets the volume to 0 instead. A frame's second fetch (the
+spent sub-cell shift's, at `$0525C4`) is drawn and not heard. Frame 37 writes nothing, so the last
+tone holds through it, and every frame from 38 sets the volume to 0. The writes are to `$FFFF8800`/`$FFFF8802` directly, gated on `$033F68` being zero — it is
 zero in every capture, and non-zero diverts the frame interrupt to an installed driver at `$033F6A`.
 
-This is recovered statically. Hatari runs with sound off in this laboratory, so **no audible output
-was observed or is claimed**, exactly as for [the pickup path's sound request](damocles-limo-key-pickup.md).
+This was recovered statically. It has since been heard in Hatari, and the port matches it VBL for
+VBL: see [the sound programmes note](damocles-sound-programmes.md#the-message-tone-vbl-by-vbl)
+(#514, #522).
 
 ## Observed traces
 

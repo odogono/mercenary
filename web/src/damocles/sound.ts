@@ -1,6 +1,7 @@
 import { SoundLifecycle } from '../sound/lifecycle.ts';
 import type { SoundTransport } from '../sound/presenter.ts';
-import type { DamoclesCue, DamoclesMusicData, DamoclesRequest } from './psg.ts';
+import type { DamoclesMusicData, DamoclesRequest } from './psg.ts';
+import type { Effect } from './script.ts';
 
 /// What the Damocles processor needs to know: how often its VBL runs, and the
 /// GHETTOBLASTER's tune where something may ask for it (the sound board; no session does).
@@ -9,13 +10,13 @@ export interface DamoclesSoundDocument {
   readonly vblHertz: number;
 }
 
-/// A session sends only its Sound Cues. The sound board also sends the driver's other
-/// programmes and the state the ST's own code would feed it: the craft's speed, a message's
-/// characters, the GHETTOBLASTER's switch.
+/// A session sends its Sound Cues and the text of each message it begins. The sound board also
+/// sends the driver's other programmes and the state the ST's own code would feed it: the
+/// craft's speed, the GHETTOBLASTER's switch.
 export type DamoclesSoundCommand =
   | { readonly cue: DamoclesRequest; readonly kind: 'cue' }
   | { readonly exponent: number; readonly kind: 'speed' }
-  | { readonly code: number | null; readonly kind: 'message' }
+  | { readonly kind: 'message'; readonly text: string }
   | { readonly kind: 'music'; readonly playing: boolean }
   | { readonly kind: 'reset' }
   | { readonly kind: 'mute'; readonly value: boolean }
@@ -24,10 +25,10 @@ export type DamoclesSoundCommand =
 export type DamoclesSoundState =
   'locked' | 'unlocking' | 'running' | 'suspended' | 'disposed';
 
-/// Presents a Damocles Gameplay Session's Sound Cues through the Browser Shell's audio
+/// Presents a Damocles Gameplay Session's Sound Cues and message tone through the Browser Shell's audio
 /// transport (#508), through the lifecycle it shares with Targ's `SoundPresenter` (#513): nothing
 /// sounds before a trusted gesture unlocks audio, cues drained while locked are dropped rather
-/// than played late, and mute and volume are the shared preferences. It only reads cues the session has already
+/// than played late, and mute and volume are the shared preferences. It only reads effects the session has already
 /// drained; it never touches Session State.
 export class DamoclesSoundPresenter {
   private readonly lifecycle: SoundLifecycle<DamoclesSoundCommand>;
@@ -48,19 +49,24 @@ export class DamoclesSoundPresenter {
     return this.lifecycle.unlock();
   }
 
-  /// The cues one session step drained, in the order it asked for them, at its elapsed time.
-  /// Cues drained while audio is still unlocking are dropped along with the locked ones.
-  present(cues: readonly DamoclesCue[], at: number): void {
+  /// The effects one session step drained, in the order it made them, at its elapsed time: its
+  /// Sound Cues, and the messages whose scroll-in the driver sounds. Effects drained while audio
+  /// is still unlocking are dropped along with the locked ones.
+  present(effects: readonly Effect[], at: number): void {
     if (
       this.lifecycle.phase !== 'unlocked' ||
       this.lifecycle.suspended ||
-      cues.length === 0
+      effects.length === 0
     ) {
       return;
     }
     this.lifecycle.send({
       at,
-      commands: cues.map(cue => ({ cue, kind: 'cue' as const }))
+      commands: effects.map(effect =>
+        effect.type === 'message'
+          ? { kind: 'message' as const, text: effect.text }
+          : { cue: effect.cue, kind: 'cue' as const }
+      )
     });
   }
 

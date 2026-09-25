@@ -5,16 +5,26 @@ import {
   initialDamoclesSaveScript,
   type DamoclesSaveSnapshot
 } from '../src/damocles/save.ts';
+import type { Effect } from '../src/damocles/script.ts';
 import {
   DamoclesSession,
   type DamoclesContent
 } from '../src/damocles/session.ts';
-import { parseDamoclesStrings } from '../src/damocles/strings.ts';
+import {
+  parseDamoclesStrings,
+  presentedText
+} from '../src/damocles/strings.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
 let loaded: DamoclesContent;
+
+/// The ask for a message's tone, as the session makes it when the message begins.
+const shown = (id: Parameters<typeof presentedText>[1]): Effect => ({
+  text: presentedText(loaded.strings, id)!,
+  type: 'message'
+});
 
 beforeAll(async () => {
   const [catalogueValue, presentation, stringsValue] = await Promise.all([
@@ -396,6 +406,7 @@ describe('ordinary Eris limo-key take and drop', () => {
     ]);
     expect(session.snapshot.residents).toEqual([]);
     expect(session.drainEffects()).toEqual([
+      shown('script2-inline-1'),
       { cue: 'take', type: 'sound-request' }
     ]);
     expect(session.take()).toEqual({ kind: 'refused' });
@@ -413,6 +424,7 @@ describe('ordinary Eris limo-key take and drop', () => {
     expect(session.drop()).toEqual({ kind: 'dropped' });
     expect(session.snapshot.carried).toEqual([]);
     expect(session.drainEffects()).toEqual([
+      shown('script2-inline-1'),
       { cue: 'take', type: 'sound-request' },
       { cue: 'drop', type: 'sound-request' }
     ]);
@@ -441,14 +453,15 @@ describe('ordinary Eris limo-key take and drop', () => {
       id: 'system-string-9',
       remainingFrames: 200
     });
-    expect(parkedInRegion2.drainEffects()).toEqual([]);
+    expect(parkedInRegion2.drainEffects()).toEqual([shown('system-string-9')]);
   });
 
   test('keeps state changes when the recovered sound guard refuses', () => {
     const session = besideKey(false);
     expect(session.take()).toEqual({ kind: 'took' });
     expect(session.snapshot.carried).toEqual(['object-slot-183']);
-    expect(session.drainEffects()).toEqual([]);
+    // `$7A0C` guards the take's cue, not the tone of the message the take launches.
+    expect(session.drainEffects()).toEqual([shown('script2-inline-1')]);
   });
 
   test('takes a non-key surface resident and keeps it at the Carried Stack head', () => {

@@ -521,7 +521,9 @@ describe('the eye at a region edge (#517)', () => {
 });
 
 const cuesOf = (session: DamoclesSession): string[] =>
-  session.drainEffects().map(effect => effect.cue);
+  session
+    .drainEffects()
+    .flatMap(effect => (effect.type === 'sound-request' ? [effect.cue] : []));
 
 /// Advances one VBL at a time until `done` is given the VBL count and says true, noting each cue
 /// asked for with the VBL it was asked for on.
