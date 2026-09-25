@@ -195,6 +195,34 @@ test('a Save and a Session Resume made on Floor 2 of the State Office keep the F
   expect(errors).toEqual([]);
 });
 
+/// Atlas Travel binds the structure at the pin directly, and no Floor structure is a placed Model,
+/// so the lift itself has to read the Floors it rides to. Travel starts at the spaceport facing
+/// east, and the pin is the State Office car's centre: 4816896 − 750 and 8944164 + 2.5 world
+/// units, over the 65536 units of a cell.
+test('after Atlas Travel into the State Office car, the lift arrives upstairs and the Floor can be walked out onto', async ({
+  page
+}) => {
+  test.setTimeout(120_000);
+  const errors = watchErrors(page);
+  await bootAt(page, { x: 0, z: 0 }, FACING_EAST);
+  await page.goto(
+    '/damocles/atlas?body=eris&pinBody=eris&pinX=73.48855590820312&pinZ=136.47714233398438'
+  );
+  await page.locator('#travel-here').click();
+  await ready(page);
+  await expect(frame(page)).toHaveAttribute(
+    'data-structure-instance',
+    STATE_OFFICE
+  );
+  await expect(frame(page)).toHaveAttribute('data-region', '4');
+  await watchLabels(page);
+  expect(await ride(page, '1', 1, 213)).toEqual(['0', '1']);
+  await walkOutAndBack(page, '4', '8');
+  expect(await ride(page, 'b', 10, 1563)).toEqual(['1', '0', '10']);
+  await walkOutAndBack(page, '4', '0');
+  expect(errors).toEqual([]);
+});
+
 /// The Vesta Parliament (cell 4,6), where the Vesta transporter capture stands: Floor Table 0,
 /// 1, 2, 3 and 10, storey 317. Its west lift car is region 15 on Floor 0 and region 0 on every
 /// other Floor (X −2070..−1530, Z −570..0 local), with its doorway on the +Z side. Facing the

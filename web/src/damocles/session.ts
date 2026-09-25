@@ -669,11 +669,7 @@ export class DamoclesSession implements TitleSession<
         if (!this.floorBound(placement, arrival)) {
           throw new Error(`${placement.name} binds no Floor ${arrival}`);
         }
-        void this.content.models.prefetch(
-          floorsOf(placement, this.content.models).map(
-            entry => entry.structureId
-          )
-        );
+        this.readFloors(placement);
         return;
       }
       this.arrivalFloor = null;
@@ -694,10 +690,7 @@ export class DamoclesSession implements TitleSession<
     this.ride = null;
     this.attachments = shutAttachments(floored);
     if (placement !== undefined) {
-      // Read ahead the structures its Floors bind, so a Floor change finds them in hand.
-      void this.content.models.prefetch(
-        floorsOf(placement, this.content.models).map(entry => entry.structureId)
-      );
+      this.readFloors(placement);
     }
     if (restore !== undefined && restore !== null && floored !== undefined) {
       if (
@@ -777,6 +770,14 @@ export class DamoclesSession implements TitleSession<
     if (region?.gate === 'attachmentLatch') {
       this.doorway = region.flags & 0x03_fc;
     }
+  }
+
+  /// Reads ahead the structures `ground`'s Floors bind, so a Floor change finds them in hand. No
+  /// Floor structure is a placed Model, so neither the Body's waves nor Atlas Travel read them.
+  private readFloors(ground: ErisPlacement): void {
+    void this.content.models.prefetch(
+      floorsOf(ground, this.content.models).map(entry => entry.structureId)
+    );
   }
 
   /// Whether a structure's Floor Table binds `floor`.
@@ -1983,6 +1984,9 @@ export class DamoclesSession implements TitleSession<
     this.surfaceModels = this.content.models.size;
     this.pose = pose;
     this.boundPlacement = bound;
+    if (bound !== null) {
+      this.readFloors(bound);
+    }
     this.regionIndex = region;
     this.floor = 0;
     this.floorSurface = null;
@@ -2174,7 +2178,12 @@ export class DamoclesSession implements TitleSession<
     // `$055B12`–`$055B88`: the arrival. The Floor's structure is bound, Y set and the pitch
     // levelled; X, Z and yaw stay. The new structure's doors start shut and open by proximity.
     if (this.changeFloor(ride.destination).kind !== 'moved') {
-      // Authored: the Floor's structure is not read yet, so the arrival waits a tick for it.
+      // Authored: the Floor's structure is not read yet, so the arrival waits a tick for it,
+      // asking again in case a read failed.
+      const ground = this.groundPlacement();
+      if (ground !== undefined) {
+        this.readFloors(ground);
+      }
       this.ride = { ...ride, countdown: 1 };
       return;
     }
