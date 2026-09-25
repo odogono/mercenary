@@ -89,10 +89,11 @@ test('walked in through the door, 1 rides: the label steps, and the arrival is 2
     timeout: 20_000
   });
   await page.keyboard.up('ArrowUp');
-  // The door opened for the walk in, and stands open around the player.
+  // The door opened for the walk in, and stands open around the player. The hall held the eye
+  // at the door until its latch opened, and that refused step thudded once (#521).
   await expect(frame(page)).toHaveAttribute(
     'data-damocles-cues',
-    'door-start:1 door-stop:1'
+    'door-start:1 door-stop:1 thud:1'
   );
 
   // Session time at each change of the label, the Floor and the cues, read as the page
@@ -125,7 +126,7 @@ test('walked in through the door, 1 rides: the label steps, and the arrival is 2
   // The new Floor's door opens around the player as the old one shut: a start and a stop each.
   await expect(frame(page)).toHaveAttribute(
     'data-damocles-cues',
-    'door-start:3 door-stop:3 take:1',
+    'door-start:3 door-stop:3 take:1 thud:1',
     { timeout: 10_000 }
   );
   const seen = await page.evaluate(

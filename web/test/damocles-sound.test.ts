@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 
-import { DamoclesPsgDriver, type PsgSink } from '../src/damocles/psg.ts';
+import {
+  DamoclesPsgDriver,
+  type DamoclesCue,
+  type PsgSink
+} from '../src/damocles/psg.ts';
+import type { Effect } from '../src/damocles/script.ts';
 import {
   DamoclesSoundPresenter,
   type DamoclesSoundCommand
@@ -333,12 +338,17 @@ class RecordingTransport implements SoundTransport<DamoclesSoundCommand> {
   }
 }
 
+const cue = (name: DamoclesCue): Effect => ({
+  cue: name,
+  type: 'sound-request'
+});
+
 describe('the presenter', () => {
   test('drops cues until a gesture unlocks audio, then sends them in order', async () => {
     const transport = new RecordingTransport();
     const sound = new DamoclesSoundPresenter(transport);
     expect(sound.state).toBe('locked');
-    sound.present(['door-start'], 1);
+    sound.present([cue('door-start')], 1);
     sound.setMuted(true);
     sound.setVolume(40);
     expect(transport.batches).toEqual([]);
@@ -354,7 +364,7 @@ describe('the presenter', () => {
         ]
       }
     ]);
-    sound.present(['take', 'door-start'], 2);
+    sound.present([cue('take'), cue('door-start')], 2);
     sound.present([], 3);
     expect(transport.batches.at(-1)).toEqual({
       at: 2,
@@ -372,7 +382,7 @@ describe('the presenter', () => {
     await sound.unlock();
     sound.suspend();
     expect(sound.state).toBe('suspended');
-    sound.present(['door-start'], 1);
+    sound.present([cue('door-start')], 1);
     expect(transport.batches).toHaveLength(1);
     sound.resume();
     sound.reset(7);
@@ -382,9 +392,23 @@ describe('the presenter', () => {
     });
     sound.dispose();
     expect(sound.state).toBe('disposed');
-    sound.present(['take'], 8);
+    sound.present([cue('take')], 8);
     expect(transport.batches).toHaveLength(2);
     expect(transport.calls).toEqual(['unlock', 'suspend', 'resume', 'dispose']);
+  });
+
+  test('a message becomes the driver’s message command', async () => {
+    const transport = new RecordingTransport();
+    const sound = new DamoclesSoundPresenter(transport);
+    await sound.unlock();
+    sound.present([{ text: 'TOO HEAVY', type: 'message' }, cue('drop')], 4);
+    expect(transport.batches.at(-1)).toEqual({
+      at: 4,
+      commands: [
+        { kind: 'message', text: 'TOO HEAVY' },
+        { cue: 'drop', kind: 'cue' }
+      ]
+    });
   });
 
   test('a failed unlock leaves it locked and silent', async () => {
@@ -394,7 +418,7 @@ describe('the presenter', () => {
     expect(sound.unlock()).rejects.toThrow('no audio');
     await Promise.resolve();
     expect(sound.state).toBe('locked');
-    sound.present(['take'], 1);
+    sound.present([cue('take')], 1);
     expect(transport.batches).toEqual([]);
   });
 });

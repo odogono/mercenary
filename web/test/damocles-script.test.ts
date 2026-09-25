@@ -4,6 +4,7 @@ import { BLANK_DAMOCLES_ROW } from '../src/damocles/display.ts';
 import {
   fireTrigger,
   initialScriptState,
+  presentSystemMessage,
   runFrame,
   type ScriptRules,
   type ScriptState
@@ -195,6 +196,43 @@ describe('the five further pickup responses', () => {
 
 /// Trigger 6's response, 400 frames long, as something for a second pickup to contend with.
 const running = () => fireTrigger(initialScriptState(), 6, rules).state;
+
+describe('the message tone', () => {
+  test('each message asks for its tone once, with its text, on the frame it begins', () => {
+    const fired = fireTrigger(initialScriptState(), 2, rules);
+    expect(fired.effects).toEqual([
+      { text: rules.messageText('script2-inline-1'), type: 'message' }
+    ]);
+    const asked: { frame: number; text: string }[] = [];
+    let state = fired.state;
+    for (let frame = 1; frame <= 1000; frame += 1) {
+      const transition = runFrame(state, rules);
+      state = transition.state;
+      for (const effect of transition.effects) {
+        if (effect.type === 'message') {
+          asked.push({ frame, text: effect.text });
+        }
+      }
+    }
+    expect(asked).toEqual([
+      { frame: 200, text: rules.messageText('script2-inline-2') },
+      { frame: 400, text: rules.messageText('script2-inline-3') },
+      { frame: 800, text: rules.messageText('system-string-50') }
+    ]);
+  });
+
+  test('a system message asks for it too', () => {
+    const shown = presentSystemMessage(
+      initialScriptState(),
+      'system-string-1',
+      rules
+    );
+    expect(shown.effects).toEqual([
+      { text: rules.messageText('system-string-1'), type: 'message' }
+    ]);
+    expect(runFrame(shown.state, rules).effects).toEqual([]);
+  });
+});
 
 describe('busy arbitration', () => {
   test('a queueable trigger is queued and stays armed', () => {

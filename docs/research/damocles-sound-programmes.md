@@ -403,6 +403,33 @@ switched). In each, the program's own path ran from the poked state onward.
 - The idle engine `$04C250` is not lift-specific and not always silent. It sounds whenever
   a craft moves at speed 1 or more, and the `limo` and `boot` runs heard it.
 
+## The message tone, VBL by VBL
+
+[#522](https://github.com/odogono/mercenary/issues/522) read the Help message's tones one
+VBL at a time from a second `limo` run. Each VBL's 960 samples were matched against the 59
+pitches 62500 / code Hz, for codes `$20` to `$5A`. The Help message is system string 10,
+`F1=SAVE  F2=LOAD  F10=QUIT  OTHER=RETURN TO GAME`, 48 characters, shown from its first
+character.
+
+- **Only the first fetch of a VBL is heard.** `$052424` pitches channel A from the
+  character `$05234C` returns. When the sub-cell shift `$0523B6` is spent, `$0525C4`
+  fetches again for the next glyph pair, and that character is drawn but never heard. The
+  pointer runs 2, 1, 1, so the tones are characters 0, 2, 3, 4, 6, 7 and so on, and never
+  1, 5, 9 and so on. The recording's tail is `R E T R N ␣ O ␣ G M E`, which is
+  `RETURN TO GAME` less its `U`, `T` and `A`.
+- **The last tone holds for two VBLs.** Counter 37 branches to the row copy `$052638`,
+  which writes nothing to the chip. Channel A is first silenced at counter 38 (`$0523EC`).
+  The final `E` sounds on VBLs 36 and 37, and the level is 0 from VBL 38.
+- **Pitch, level and timing.** The tones fall on VBLs 1 to 36 after the VBL that finds
+  the gate raised, one per VBL, at −22.1 dB once Help's click has decayed. Digits and `=`
+  sit at 1302 to 1603 Hz, under the click at 1305 Hz, and are not separable there.
+
+The port's render (`web/tools/damocles-sound-render.ts --timeline 0:take --message 0:<text>`
+at 50.0532 Hz) matches it VBL for VBL. Every tone that stands clear of the click is on the
+same code at the same VBL, the last `E` holds for the same two VBLs, and the port is
+silent from the same VBL on. The port plays the tones at −20.9 dB, 1.2 dB above Hatari.
+That is within the margin #508 accepted for the door tone.
+
 ## Runs
 
 ```sh
@@ -415,6 +442,7 @@ research/damocles-st/.venv/bin/python research/damocles-st/scripts/sound-program
 | --- | --- | --- |
 | `boot` | `sound-boot-20260925T105803Z-88ed8445` | `e7566d168e62a0f053ebe7b98c8403f089626be1b7ad9abcd143e3fb1f66f8d7` |
 | `limo` | `sound-limo-20260925T111232Z-f0e91c15` | `d9774f2b140863ecb883536e067c40bd332706bdc75b9820189b47c5a09e1906` |
+| `limo` (#522) | `sound-limo-20260925T121449Z-75fad2f2` | `a0342b15a85f5619b3e556cd6ac9541adcead5e8ff5a6bbed406126ca0cf401b` |
 | `transporter` | `sound-transporter-20260925T105804Z-9c0035b4` | `266e7c74588450acdab7238806b9617942a1c25097b6162e2ec8a3d80c11a6c2` |
 | `lift-wall` | `sound-lift-wall-20260925T105859Z-76d6f546` | `cb4e3aef917b819d10ad0d9594d75cba70a1ff696ecc02477fbb675e3da3c99f` |
 | `hazard` | `sound-hazard-20260925T110119Z-833bf04a` | `878a8d6786ba537ff76f44efba0ad655fdb44c6527a9f8a50b384ed28dc3edc9` |
@@ -443,7 +471,8 @@ Presentation, in the port, of what its sessions can reach now:
   edge of a clamped on-foot step. Done: the session's `thud` Sound Cue, after each step's
   substeps (`web/test/damocles-lift.test.ts`, "the wall thud").
 - [#522](https://github.com/odogono/mercenary/issues/522): the message tone, per VBL of a
-  message's scroll-in.
+  message's scroll-in. Done: the session hands the driver each message's text as it
+  begins, and the driver's VBL runs the scroll-in ([above](#the-message-tone-vbl-by-vbl)).
 
 The sound board (`/sounds`) plays every programme above through the port's own driver,
 and the tune from `payload/damocles/music.json`, which `damocleslab.music` extracts. Rendered

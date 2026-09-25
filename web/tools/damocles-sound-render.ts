@@ -17,6 +17,7 @@ import { encodeWav } from './wav.ts';
 /// request the driver takes may appear (#514), so
 /// `0:spell,300:splash,600:transporter,900:bump,1200:blast,1500:shot,1800:thud,2100:zap,2400:blown-up`
 /// renders the programmes `sound-programme-probe.py`'s `arm-b` case recorded, 6 s apart.
+/// `--message 40:TEXT` also shows a message on VBL 40, so its scroll-in's tone plays (#522).
 
 const SAMPLE_RATE = 48_000;
 const REQUESTS = new Set<string>([
@@ -66,6 +67,19 @@ const timeline = argument(
     return { cue: cue as DamoclesRequest, vbl: Number(vbl) };
   });
 
+const message = ((): { readonly text: string; readonly vbl: number } | null => {
+  const entry = argument('--message', '');
+  if (entry === '') {
+    return null;
+  }
+  const colon = entry.indexOf(':');
+  const vbl = Number(entry.slice(0, colon));
+  if (colon === -1 || !Number.isInteger(vbl)) {
+    throw new Error(`Not a VBL:text pair: ${entry}`);
+  }
+  return { text: entry.slice(colon + 1), vbl };
+})();
+
 const chip = new Ym2149(SAMPLE_RATE);
 const driver = new DamoclesPsgDriver();
 // As the AudioWorklet does: the program's reset `$0508BC` before anything sounds.
@@ -77,6 +91,9 @@ for (let vbl = 0; vbl < vbls; vbl += 1) {
   // A cue asked for during a frame lands before the VBL that follows it.
   for (const entry of timeline.filter(item => item.vbl === vbl)) {
     driver.request(entry.cue, chip);
+  }
+  if (message?.vbl === vbl) {
+    driver.showMessage(message.text);
   }
   driver.vbl(chip);
   const until = Math.min(

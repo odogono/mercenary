@@ -10,6 +10,8 @@ import { tapDestination, type SoundTapScope } from './sound-tap.ts';
 /// notes its RMS level beside the session time and cue tally the page publishes.
 
 const STATE_OFFICE = 'eris-surface-89';
+/// Beside the V.I.P. LIMO in the Capital Spaceport, without its key (see damocles-boarding.e2e.ts).
+const BESIDE_LIMO = { x: 1714 + 150, z: -3241 };
 /// In the hall, facing west into the lift car through its doorway (see damocles-lift.e2e.ts).
 const BEFORE_THE_DOOR = { x: -440, z: 0 };
 const FACING_WEST = 256;
@@ -22,6 +24,7 @@ interface Heard {
   readonly cues: string;
   readonly elapsed: number;
   readonly level: number;
+  readonly messageTones: number;
 }
 
 const frame = (page: Page) => page.locator('#frame');
@@ -52,7 +55,8 @@ const listen = async (page: Page): Promise<void> => {
         heard.push({
           cues: node.dataset['damoclesCues'] ?? '',
           elapsed: Number(node.dataset['elapsed']),
-          level: Math.sqrt(sum / samples.length)
+          level: Math.sqrt(sum / samples.length),
+          messageTones: Number(node.dataset['damoclesMessageTones'])
         });
       }
       requestAnimationFrame(poll);
@@ -92,9 +96,10 @@ const walkIntoTheLift = async (page: Page): Promise<void> => {
   });
   await page.keyboard.up('ArrowUp');
   await expect(frame(page)).toHaveAttribute('data-damocles-audio', 'running');
+  // The hall holds the eye at the door until its latch opens, so the walk in thuds once (#521).
   await expect(frame(page)).toHaveAttribute(
     'data-damocles-cues',
-    'door-start:1 door-stop:1'
+    'door-start:1 door-stop:1 thud:1'
   );
 };
 
@@ -105,7 +110,7 @@ const rideToFloor1 = async (page: Page): Promise<void> => {
   });
   await expect(frame(page)).toHaveAttribute(
     'data-damocles-cues',
-    'door-start:3 door-stop:3 take:1',
+    'door-start:3 door-stop:3 take:1 thud:1',
     { timeout: 10_000 }
   );
   // Long enough for the arrival effect's second of decay to end.
@@ -143,6 +148,45 @@ test('a lift ride is heard: door tone and burst, silence while the label steps, 
   const after = levelsBetween(samples, arrival + 1.3, end);
   expect(after.length).toBeGreaterThan(4);
   expect(Math.max(...after)).toBeLessThan(SILENT);
+  expect(errors).toEqual([]);
+});
+
+test('a refusal message is heard while it scrolls in, and silent once the text is still', async ({
+  page
+}) => {
+  test.setTimeout(120_000);
+  const errors = watchErrors(page);
+  await listen(page);
+  await bootAt(page, BESIDE_LIMO);
+  // A key the Control Profile ignores is the trusted gesture that starts audio.
+  await page.keyboard.press('Shift');
+  await expect(frame(page)).toHaveAttribute('data-damocles-audio', 'running');
+  await page.keyboard.press('b');
+  await expect(frame(page)).toHaveAttribute('data-damocles-message-tones', '1');
+  // No Sound Cue: the refusal's only sound is its message's.
+  await expect(frame(page)).toHaveAttribute('data-damocles-cues', '');
+  await expect(frame(page)).toHaveAttribute(
+    'data-damocles-row',
+    'VEHICLE KEY REQUIRED',
+    { timeout: 5000 }
+  );
+  await page.waitForTimeout(1500);
+  const samples = await heard(page);
+  const found = samples.find(sample => sample.messageTones === 1);
+  expect(found, 'a poll after the message began').toBeDefined();
+  const shown = found!.elapsed;
+  const before = levelsBetween(samples, 0, shown);
+  expect(before.length).toBeGreaterThan(2);
+  expect(Math.max(...before)).toBeLessThan(SILENT);
+  // The record's 14 leading spaces are silent. Its `V`, character 14, sounds on VBL 11 of the
+  // scroll-in and its last heard letter, the `E` of character 32, on VBL 25: 0.22 to 0.52 s in.
+  // The margins keep the frame clock and the analyser's window out of the judgement.
+  const tones = levelsBetween(samples, shown + 0.28, shown + 0.46);
+  expect(tones.length).toBeGreaterThan(2);
+  expect(Math.max(...tones)).toBeGreaterThan(AUDIBLE);
+  const still = levelsBetween(samples, shown + 0.9, samples.at(-1)!.elapsed);
+  expect(still.length).toBeGreaterThan(4);
+  expect(Math.max(...still)).toBeLessThan(SILENT);
   expect(errors).toEqual([]);
 });
 
@@ -190,7 +234,7 @@ test('a new game stops a door tone mid-way, and leaving the title closes audio',
   await page.keyboard.press('1');
   await expect(frame(page)).toHaveAttribute(
     'data-damocles-cues',
-    'door-start:2 door-stop:1'
+    'door-start:2 door-stop:1 thud:1'
   );
   await page.keyboard.press('Escape');
   await page.locator('#new-game').click();

@@ -1187,7 +1187,13 @@ export class DamoclesSession implements TitleSession<
       | 'system-string-9'
   ): void {
     if (this.script.execution === null && this.script.message === null) {
-      this.script = presentSystemMessage(this.script, id, this.scriptRules);
+      const transition = presentSystemMessage(
+        this.script,
+        id,
+        this.scriptRules
+      );
+      this.script = transition.state;
+      this.effects.push(...transition.effects);
     }
   }
 
@@ -1541,7 +1547,9 @@ export class DamoclesSession implements TitleSession<
     // $0543D2 walks the object-to-trigger table for every committed pickup, not just the key.
     const trigger = TRIGGER_FOR_RESIDENT[selection.instance];
     if (trigger !== undefined) {
-      this.script = fireTrigger(this.script, trigger, this.scriptRules).state;
+      const transition = fireTrigger(this.script, trigger, this.scriptRules);
+      this.script = transition.state;
+      this.effects.push(...transition.effects);
     }
     if (this.soundPermitted()) {
       this.effects.push({ cue: 'take', type: 'sound-request' });

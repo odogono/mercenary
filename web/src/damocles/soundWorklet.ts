@@ -27,7 +27,7 @@ registerChipProcessor<DamoclesSoundCommand, DamoclesSoundDocument>(
             driver.setSpeedExponent(command.exponent);
             return;
           case 'message':
-            driver.messageCharacter(command.code, chip);
+            driver.showMessage(command.text);
             return;
           case 'music':
             driver.setMusic(command.playing);
