@@ -12,6 +12,23 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Added
 
+- **Damocles doors and lifts are heard.** A Damocles presenter now plays the
+  session's Sound Cues through the Browser Shell's audio transport. It models the
+  ST's YM2149 (tone, noise, envelope, the STF output low-pass) in its own
+  AudioWorklet, and runs the driver programmes recovered from the 68000 code on
+  a 50 Hz VBL of its own. The door tone `$04C37A` is channel C's buzz gated by
+  noise, swelling from level 10 to 13 and falling to a 9-to-5 loop. The burst
+  `$04C2B8` is noise stepping 12, 8, 4, 0. The shared effect `$04C556`, which
+  takes, drops and the lift's arrival all ask for, is a 1302 Hz tone on channel
+  B under a one-second envelope decay. A ride therefore sounds its door, falls
+  silent while the label steps, and plays the arrival over the new door. Audio
+  starts only on a trusted gesture. It follows the shared mute and volume
+  preferences, suspends with the menu or a hidden tab, and is reset when the
+  session is replaced or lost, so no tone survives a New Game, a load or a
+  takeover. Leaving the title closes it. `data-damocles-audio` publishes the
+  presenter's state beside the cue tally. A Playwright pass listens to the
+  page's own output, apart from the tally. The research note records the
+  programmes and a Hatari recording of the ride that they match (#508).
 - **Damocles doors ask for their tones.** Whenever any door starts moving the
   session asks for a `door-start` Sound Cue, and when every door has stopped it
   asks for a `door-stop`. These are the ST's rising and falling edges of `$5A9D8`

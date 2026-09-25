@@ -1,18 +1,34 @@
 import type { SoundDocument } from '../payload/documents.ts';
 import type { SoundBatch, SoundCommand, SoundTransport } from './presenter.ts';
 
+/// The commands every processor shares. The transport applies these itself, through its gain,
+/// and forwards the rest.
+type ControlCommand =
+  | { readonly kind: 'mute'; readonly value: boolean }
+  | { readonly kind: 'volume'; readonly value: number };
+
+const isControl = (command: {
+  readonly kind: string;
+}): command is ControlCommand =>
+  command.kind === 'mute' || command.kind === 'volume';
+
 type AudioContextConstructor = new () => AudioContext;
 
 export interface AudioWorkletTransportOptions {
   readonly context?: AudioContextConstructor;
   readonly node?: typeof AudioWorkletNode;
   readonly onFailure: (reason: string) => void;
+  /// The registered processor name, Targ's SID unless another title names its own.
+  readonly processor?: string;
   readonly workletUrl?: string;
 }
 
 /// Lazily owns the browser audio graph. Runtime or hardware failure is reported
 /// once and leaves gameplay running in silence.
-export class AudioWorkletTransport implements SoundTransport {
+export class AudioWorkletTransport<
+  Command extends { readonly kind: string } = SoundCommand,
+  Document = SoundDocument
+> implements SoundTransport<Command> {
   private context: AudioContext | undefined;
   private gain: GainNode | undefined;
   private node: AudioWorkletNode | undefined;
@@ -24,7 +40,7 @@ export class AudioWorkletTransport implements SoundTransport {
   private suspended = false;
 
   constructor(
-    private readonly document: SoundDocument,
+    private readonly document: Document,
     private readonly options: AudioWorkletTransportOptions
   ) {}
 
@@ -54,10 +70,14 @@ export class AudioWorkletTransport implements SoundTransport {
       if (Node === undefined) {
         throw new Error('AudioWorklet is unavailable');
       }
-      const node = new Node(context, 'mercenary-sid', {
-        outputChannelCount: [1],
-        processorOptions: { document: this.document }
-      });
+      const node = new Node(
+        context,
+        this.options.processor ?? 'mercenary-sid',
+        {
+          outputChannelCount: [1],
+          processorOptions: { document: this.document }
+        }
+      );
       const gain = context.createGain();
       gain.gain.value = this.muted ? 0 : this.volume / 100;
       node.connect(gain).connect(context.destination);
@@ -65,7 +85,7 @@ export class AudioWorkletTransport implements SoundTransport {
       this.node = node;
       this.gain = gain;
       node.onprocessorerror = () =>
-        this.report(new Error('SID AudioWorklet failed'));
+        this.report(new Error('Sound AudioWorklet failed'));
       if (this.suspended) {
         await context.suspend();
       }
@@ -74,7 +94,7 @@ export class AudioWorkletTransport implements SoundTransport {
     }
   }
 
-  send(batch: SoundBatch): void {
+  send(batch: SoundBatch<Command>): void {
     const context = this.context;
     const node = this.node;
     if (
@@ -85,16 +105,16 @@ export class AudioWorkletTransport implements SoundTransport {
     ) {
       return;
     }
-    const audible: SoundCommand[] = [];
+    const audible: Command[] = [];
     for (const command of batch.commands) {
-      if (command.kind === 'mute') {
+      if (!isControl(command)) {
+        audible.push(command);
+      } else if (command.kind === 'mute') {
         this.muted = command.value;
         this.applyGain(context.currentTime);
-      } else if (command.kind === 'volume') {
+      } else {
         this.volume = command.value;
         this.applyGain(context.currentTime);
-      } else {
-        audible.push(command);
       }
     }
     if (audible.length > 0) {
