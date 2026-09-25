@@ -1252,7 +1252,8 @@ export class DamoclesSession implements TitleSession<
             moved,
             this.negateModelZ,
             this.latchFor,
-            this.regionIndex
+            this.regionIndex,
+            this.ride !== null
           );
           this.pose = clamped.pose;
           // `$05A35C`: the region is not reselected while a ride is pending.

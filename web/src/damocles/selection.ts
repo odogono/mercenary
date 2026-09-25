@@ -211,14 +211,22 @@ export interface ClampedStructureStep {
   readonly regionIndex: number | null;
 }
 
-/** Apply the Working Authority's selected-region XZ eye pushback after one Mover step. */
+/// The Working Authority's eye pushback `$05A64A` after one Mover step. Inside the current
+/// region's inset box the step stands. Past an inset edge but inside the region's own box, it
+/// stands where a region's opposite edge is this edge and its inset span holds the other
+/// coordinate, whatever that region's gate (`$05A504`), and is otherwise clamped to the inset.
+/// Past the region's own box the regions are walked (`$05A32C`): a region selected becomes
+/// current, and with none the step is clamped to the own box with no inset (`$05A4CA`). A
+/// pending ride refuses every region (`$05A35C`), and a gated one is refused until its latch
+/// is open (docs/research/damocles-lift-ride-movement.md).
 export const clampStructureStep = (
   placement: ErisPlacement,
   from: Pose,
   to: Pose,
   negateZ: boolean,
   latches: AttachmentLatches,
-  selectedRegionIndex: number | null
+  selectedRegionIndex: number | null,
+  ridePending = false
 ): ClampedStructureStep => {
   const selection = placement.selection;
   if (selection === undefined) {
@@ -239,32 +247,43 @@ export const clampStructureStep = (
   const coordinates = [local.x, local.z];
   const currentBounds = workspaceBounds(current);
   const clearance = clearanceFor(current.flags);
-  const adjusted = [
-    [currentBounds[0]![0] + clearance, currentBounds[0]![1] - clearance],
-    [currentBounds[1]![0] + clearance, currentBounds[1]![1] - clearance]
-  ] as const;
 
-  const admitsNeighbour = (axis: number, upper: boolean): boolean => {
-    const other = axis === 0 ? 1 : 0;
-    const edge = currentBounds[axis]![upper ? 1 : 0];
-    return regions.some((region, index) => {
-      const bounds = workspaceBounds(region);
-      return (
-        index !== currentIndex &&
-        regionIsAvailable(region, latches) &&
-        bounds[axis]![upper ? 0 : 1] === edge &&
-        bounds[other]![0] + clearance <= coordinates[other]! &&
-        coordinates[other]! < bounds[other]![1] - clearance
-      );
-    });
-  };
-
-  for (const axis of [0, 1]) {
-    const [min, max] = adjusted[axis]!;
-    if (coordinates[axis]! < min && !admitsNeighbour(axis, false)) {
-      coordinates[axis] = min;
-    } else if (coordinates[axis]! >= max && !admitsNeighbour(axis, true)) {
-      coordinates[axis] = max - 1;
+  const withinOwnBox = currentBounds.every(
+    ([min, max], axis) => min <= coordinates[axis]! && coordinates[axis]! < max
+  );
+  if (withinOwnBox) {
+    const standsAtEdge = (axis: number, upper: boolean): boolean => {
+      const other = axis === 0 ? 1 : 0;
+      const edge = currentBounds[axis]![upper ? 1 : 0];
+      return regions.some((region, index) => {
+        const bounds = workspaceBounds(region);
+        return (
+          index !== currentIndex &&
+          bounds[axis]![upper ? 0 : 1] === edge &&
+          bounds[other]![0] + clearance <= coordinates[other]! &&
+          coordinates[other]! < bounds[other]![1] - clearance
+        );
+      });
+    };
+    for (const axis of [0, 1]) {
+      const min = currentBounds[axis]![0] + clearance;
+      const max = currentBounds[axis]![1] - clearance;
+      if (coordinates[axis]! < min && !standsAtEdge(axis, false)) {
+        coordinates[axis] = min;
+      } else if (coordinates[axis]! >= max && !standsAtEdge(axis, true)) {
+        coordinates[axis] = max - 1;
+      }
+    }
+  } else {
+    const selected = ridePending
+      ? null
+      : structureRegionAt(placement, to, negateZ, latches);
+    if (selected !== null) {
+      return { pose: to, regionIndex: selected };
+    }
+    for (const axis of [0, 1]) {
+      const [min, max] = currentBounds[axis]!;
+      coordinates[axis] = Math.min(Math.max(coordinates[axis]!, min), max - 1);
     }
   }
 

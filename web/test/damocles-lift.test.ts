@@ -418,6 +418,103 @@ describe('the ride as #472 recovered it', () => {
   });
 });
 
+/// The eye in the State Office's own frame. It is drawn unturned and this document keeps model Z.
+const localEye = (session: DamoclesSession) => {
+  const placement = content.surface.placements.find(
+    item => item.id === STATE_OFFICE
+  )!;
+  const { x, z } = session.snapshot.pose.position;
+  return { x: x - placement.position.x, z: z - placement.position.z };
+};
+
+/// `session` with its eye turned to `heading` and walking, where π/2 is local +X.
+const walking = (
+  session: DamoclesSession,
+  heading: number
+): DamoclesSession => {
+  const saved = session.captureResume();
+  const turned = new DamoclesSession(content, {
+    ...saved,
+    pose: { ...saved.pose, heading }
+  });
+  turned.intent = intent({ walk: 1 });
+  return turned;
+};
+
+/// Where the Working Authority holds the eye at a region edge (#517,
+/// docs/research/damocles-lift-ride-movement.md). Past an inset edge that a neighbour shares, the
+/// eye stands whatever the neighbour's gate. Past the region's own edge, with no region it may
+/// select there, it is clamped to that edge less one.
+describe('the eye at a region edge (#517)', () => {
+  test('a ride holds the eye at the car’s doorway, its edge less one', () => {
+    const session = walking(throughTheDoor(), Math.PI / 2);
+    expect(session.rideLift(1)).toEqual({ kind: 'admitted' });
+    const held: number[] = [];
+    vblsUntil(session, () => {
+      expect(session.snapshot.structure?.regionIndex).toBe(4);
+      expect(localEye(session).x).toBeLessThanOrEqual(-611);
+      held.push(localEye(session).x);
+      return riding(session) === null;
+    });
+    // Region 2 shares the car's edge at X −610 and its inset Z span holds the eye.
+    expect(held.at(-1)).toBe(-611);
+    expect(held.filter(x => x === -611).length).toBeGreaterThan(40);
+  });
+
+  test('walls with no region beyond hold the eye at the inset during a ride', () => {
+    for (const [heading, axis, stop] of [
+      [-Math.PI / 2, 'x', -879],
+      [0, 'z', 88],
+      [Math.PI, 'z', -84]
+    ] as const) {
+      const session = walking(throughTheDoor(), heading);
+      session.rideLift(1);
+      vblsUntil(session, () => riding(session) === null);
+      expect(localEye(session)[axis]).toBeCloseTo(stop, 6);
+      expect(session.snapshot.structure?.regionIndex).toBe(4);
+    }
+  });
+
+  test('with no ride the hall holds the eye at door $3FC until its latch is open', () => {
+    const HALL_DOOR = 0x03_fc;
+    const hall = standingIn(0);
+    const saved = hall.captureResume();
+    const placement = content.surface.placements.find(
+      item => item.id === STATE_OFFICE
+    )!;
+    const session = walking(
+      new DamoclesSession(content, {
+        ...saved,
+        pose: {
+          ...saved.pose,
+          position: {
+            x: placement.position.x + 200,
+            y: saved.pose.position.y,
+            z: placement.position.z - 100
+          }
+        }
+      }),
+      Math.PI / 2
+    );
+    const latch = () =>
+      session.snapshot.structure?.attachments.find(
+        item => item.slot === HALL_DOOR
+      )?.latch;
+    let heldWhileShut = 0;
+    vblsUntil(session, () => {
+      if (latch() !== 'open') {
+        expect(session.snapshot.structure?.regionIndex).toBe(0);
+        expect(localEye(session).x).toBeLessThanOrEqual(289);
+        heldWhileShut += localEye(session).x === 289 ? 1 : 0;
+      }
+      return session.snapshot.structure?.regionIndex === 6;
+    });
+    expect(heldWhileShut).toBeGreaterThan(20);
+    expect(latch()).toBe('open');
+    expect(localEye(session).x).toBeGreaterThanOrEqual(290);
+  });
+});
+
 const cuesOf = (session: DamoclesSession): string[] =>
   session.drainEffects().map(effect => effect.cue);
 
