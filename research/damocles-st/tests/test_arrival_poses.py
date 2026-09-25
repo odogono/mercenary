@@ -152,6 +152,33 @@ class ArrivalPosePublicationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'outside a 16x16 workspace'):
             self.read('bogus', workspace(2, 0x1B5, (0, 0)))
 
+    def test_the_floor_is_read_from_the_capture(self):
+        # Outside a structure both Floor words are 0 and the eye stands at 63.
+        published = location_ledger.published_pose(
+            self.read('eris', workspace(11, 0x87, (64, 128))), {})
+        self.assertEqual(published['floor'], 0)
+        # The Vesta transporter capture: Floor 10 at storey 317 (#505).
+        ram = bytearray(workspace(14, 0x64, (1083, 307)))
+        struct.pack_into('>H', ram, location_ledger.FLOOR, 10)
+        struct.pack_into('>H', ram, location_ledger.FLOOR_LIVE, 10)
+        struct.pack_into('>H', ram, location_ledger.STOREY, 317)
+        struct.pack_into('>i', ram, location_ledger.CAMERA_Y, 3233)
+        published = location_ledger.published_pose(self.read('vesta', bytes(ram)), {})
+        self.assertEqual(published['floor'], 10)
+        self.assertEqual(published['position']['y'], 3233)
+
+    def test_a_floor_the_capture_does_not_agree_on_is_refused(self):
+        ram = bytearray(workspace(14, 0x64, (1083, 307)))
+        struct.pack_into('>H', ram, location_ledger.FLOOR, 10)
+        struct.pack_into('>H', ram, location_ledger.STOREY, 317)
+        struct.pack_into('>i', ram, location_ledger.CAMERA_Y, 3233)
+        with self.assertRaisesRegex(ValueError, r'disagrees with \$7AC4'):
+            self.read('bogus', bytes(ram))
+        struct.pack_into('>H', ram, location_ledger.FLOOR_LIVE, 10)
+        struct.pack_into('>i', ram, location_ledger.CAMERA_Y, 3000)
+        with self.assertRaisesRegex(ValueError, 'is not Floor 10 x storey 317'):
+            self.read('bogus', bytes(ram))
+
 
 if __name__ == '__main__':
     unittest.main()

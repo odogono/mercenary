@@ -24,6 +24,9 @@ export interface ArrivalPose {
   /// every `$04000000`. The terminator reads the low ten bits of its high word (#497).
   readonly bodyTurn: number;
   readonly cell: number;
+  /// `$7AA4`: the Floor the capture stands on in the structure bound in its cell, 0 outside
+  /// one. Read from the capture, never from the height (#474, #505).
+  readonly floor: number;
   readonly id: string;
   readonly name: string;
   readonly onFoot: boolean;
@@ -104,6 +107,7 @@ export const parseDamoclesArrivalPoses = (value: unknown): ArrivalPoses => {
         `arrival pose ${index} bodyTurn`
       ),
       cell: finite(pose['cell'], `arrival pose ${index} cell`),
+      floor: unsigned(pose['floor'], 10, `arrival pose ${index} floor`),
       id: text(pose['id'], `arrival pose ${index} id`),
       name: text(pose['name'], `arrival pose ${index} name`),
       onFoot: pose['onFoot'],

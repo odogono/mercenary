@@ -278,6 +278,13 @@ export class DamoclesSession implements TitleSession<
   /// deliberate act changes it -- the console today, the lift later -- and it is never read off
   /// the Pose's height. Binding another structure puts it back to 0.
   private floor = 0;
+  /// The Floor a switched-to arrival Pose was captured on (`$7AA4`), and the cell it stands in,
+  /// until it lands. A Pose above Floor 0 waits unbound for the structure in its cell and for
+  /// that Floor's structure to be read, and is dropped if the player leaves the cell first.
+  private arrivalFloor: {
+    readonly cell: ErisCell;
+    readonly floor: number;
+  } | null = null;
   /// The surface as published, with the bound placement on its Floor, and what it was built from.
   private floorSurface: {
     readonly bound: ErisPlacement;
@@ -621,7 +628,29 @@ export class DamoclesSession implements TitleSession<
     if (placement?.id === this.boundPlacement?.id && restore === undefined) {
       return;
     }
-    const floor = restore?.floor ?? 0;
+    const arrival = restore === undefined ? this.landingFloor(pose) : null;
+    if (arrival !== null) {
+      if (placement === undefined) {
+        return;
+      }
+      if (
+        floorPlacement(placement, this.content.models, arrival) === undefined
+      ) {
+        // The payload's Floor comes from the same capture as the structure's Floor Table, so a
+        // Floor the table does not bind is a payload fault, not a refusal.
+        if (!this.floorBound(placement, arrival)) {
+          throw new Error(`${placement.name} binds no Floor ${arrival}`);
+        }
+        void this.content.models.prefetch(
+          floorsOf(placement, this.content.models).map(
+            entry => entry.structureId
+          )
+        );
+        return;
+      }
+      this.arrivalFloor = null;
+    }
+    const floor = restore?.floor ?? arrival ?? 0;
     const floored =
       placement === undefined || floor === 0
         ? placement
@@ -688,6 +717,21 @@ export class DamoclesSession implements TitleSession<
       return;
     }
     this.enterRegion(this.regionAt(pose));
+  }
+
+  /// The Floor a switch's arrival still has to land on where the Pose stands in its cell, or
+  /// null. Leaving the cell first drops it: the Floor belongs to that cell's structure.
+  private landingFloor(pose: Pose): number | null {
+    const pending = this.arrivalFloor;
+    if (pending === null) {
+      return null;
+    }
+    const cell = cellOf(pose.position, this.surface.grid);
+    if (cell.x !== pending.cell.x || cell.z !== pending.cell.z) {
+      this.arrivalFloor = null;
+      return null;
+    }
+    return pending.floor;
   }
 
   /// Takes the region the walk accepted, remembering a doorway's attachment slot as `$05A372`
@@ -1791,13 +1835,32 @@ export class DamoclesSession implements TitleSession<
         reason: error instanceof Error ? error.message : String(error)
       };
     }
+    const pose = poseOfArrival(arrival, this.content.doc);
+    // The Pose lands on the Floor its capture stood on, never one read off its height (#505).
+    // Where the structure in its cell is in hand its Floor Table must bind that Floor; where it
+    // is not, the arrival waits for it.
+    const ground = structureInCell(surface, pose.position);
+    if (
+      arrival.floor !== 0 &&
+      ground !== undefined &&
+      !this.floorBound(ground, arrival.floor)
+    ) {
+      return {
+        kind: 'declined',
+        reason: `${ground.name} binds no Floor ${arrival.floor}`
+      };
+    }
     // Everything that could refuse has refused. From here the commit cannot fail.
     this.surface = surface;
-    this.pose = poseOfArrival(arrival, this.content.doc);
+    this.pose = pose;
     this.bodyTurn = arrival.bodyTurn;
     this.boundPlacement = null;
     this.regionIndex = null;
     this.attachmentUnits = new Map();
+    this.arrivalFloor =
+      arrival.floor === 0
+        ? null
+        : { cell: cellOf(pose.position, surface.grid), floor: arrival.floor };
     this.bindAt(this.pose);
     this.readBody();
     return { kind: 'switched', pose: arrival.id };
@@ -1833,6 +1896,7 @@ export class DamoclesSession implements TitleSession<
       }
     };
     this.boundPlacement = null;
+    this.arrivalFloor = null;
     this.bindAt(this.pose);
   }
 

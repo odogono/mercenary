@@ -201,10 +201,8 @@ test('a Save and a Session Resume made on Floor 2 of the State Office keep the F
 /// door walks out into each Floor's hall: region 17 on Floor 0 and region 4 on every other.
 ///
 /// The capture stands on Floor 10 in a corridor; #471's `vesta-teleport` moved it into the car,
-/// and this test moves the arrival Pose there the same way. The switch itself binds Floor 0
-/// whatever the Pose's height, since no Floor is read off a height (#474) and an arrival Pose
-/// does not publish its Floor, so `floor 10` puts the player back on the capture's Floor until
-/// #505 lands the switch there.
+/// and this test moves the arrival Pose there the same way. The switch lands on the Floor the
+/// capture publishes (`$7AA4`, #505), never one read off the Pose's height (#474).
 const VESTA = 'vesta-surface-64';
 const VESTA_CAR = { x: -1800, z: -285 };
 /// The arrival Pose's yaw word, 1024 a turn, that faces +Z and the car's doorway.
@@ -243,7 +241,8 @@ test('the Vesta lift wraps from B to G in one step and rides every bound Floor',
     'switched to vesta-transporter'
   );
   await expect(frame(page)).toHaveAttribute('data-structure-instance', VESTA);
-  expect(await run(page, 'floor 10')).toContain('moved to Floor 10');
+  await expect(frame(page)).toHaveAttribute('data-floor', '10');
+  await expect(frame(page)).toHaveAttribute('data-floor-label', '10');
   await closeConsole(page);
   await expect(frame(page)).toHaveAttribute('data-y', '3233');
   await expect(frame(page)).toHaveAttribute('data-region', '0');
@@ -267,5 +266,28 @@ test('the Vesta lift wraps from B to G in one step and rides every bound Floor',
     await refused(page, ['4', '5', '6', '7', '8', '9']);
     await walkOutAndBack(page, car, VESTA_HALLS[floor]!);
   }
+  expect(errors).toEqual([]);
+});
+
+/// The Eris transporter capture at cell 11,8 stands on Floor 10 of its structure, storey 110,
+/// and the switch lands it there at its own height (#505).
+test('the Eris transporter Pose lands on Floor 10', async ({ page }) => {
+  const errors = watchErrors(page);
+  await page.addInitScript(
+    key => localStorage.removeItem(key),
+    DAMOCLES_RESUME_KEY
+  );
+  await page.goto('/damocles');
+  await ready(page);
+  expect(await run(page, 'switch eris-transporter-11-8')).toContain(
+    'switched to eris-transporter-11-8'
+  );
+  await closeConsole(page);
+  await expect(frame(page)).toHaveAttribute(
+    'data-structure-instance',
+    'eris-surface-8b'
+  );
+  await expect(frame(page)).toHaveAttribute('data-floor', '10');
+  await expect(frame(page)).toHaveAttribute('data-y', '1163');
   expect(errors).toEqual([]);
 });
