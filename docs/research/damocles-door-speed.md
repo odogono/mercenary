@@ -28,10 +28,14 @@ The Catalogue already publishes it. Each attachment's closed `mesh`, `leafCount`
 `motionAxis` give it, and the port reads it as `attachmentOpenLimit`. There is nothing new
 to publish.
 
-A door reaches its endpoint on substep `travel`. The **latch** changes one substep later,
-at `travel + 1`: an opening door writes `$FF` and a closing door clears to `$00`. That is
-the substep the next step would overshoot the endpoint and is clamped instead
-(`cmp`/`bpl` after each `add.w d4`/`sub.w d4`).
+A door reaches its endpoint on substep `travel`. The **latch** changes when a step would
+reach or pass the endpoint and is clamped there instead: an opening door writes `$FF` and a
+closing door clears to `$00`. Whether reaching the endpoint exactly counts depends on the path
+(corrected 2026-09-25, [below](#the-latch-substep-per-path)). Two leaves latch one substep
+after the edge arrives, at `travel + 1`, both ways. A single leaf latches at `travel` one way and
+`travel + 1` the other.
+
+The doors #472 timed all have two leaves:
 
 | Door | Structure slots | Travel | ST latch change | #472 measured |
 | --- | --- | ---: | ---: | --- |
@@ -83,6 +87,41 @@ destination. The endpoint insets are `subq.w #8`/`addq.w #8` at `$05AC24`, `$05A
 The close paths only return a door to where it was built: `$1E40`/`$1E42` for one leaf,
 the midpoint of the two outer edges for two. They use the same one-unit step.
 
+### The latch substep, per path
+
+Added 2026-09-25 from the same range (`$05AA3C`–`$05AD51`, hash above). Every path starts by
+writing `$01` to the latch (`$05AAAC` closing, `$05AC08` opening) and raising `$5A9D8`. It then
+steps the edge and compares it with the endpoint. An opening pass is skipped only when the latch
+is already `$FF` (`$05ABFA`, `bmi`), and a closing pass only when it is `$00` (`$05AAA0`, `beq`).
+
+Where the edge's coordinate **falls** towards its endpoint, the comparison is `cmp`/`bmi`. The
+path carries on only while the endpoint is still below the edge, so reaching it exactly clamps and
+latches on that substep. Where the edge **rises**, the comparison is `cmp`/`bpl`. The path carries
+on while the endpoint is at or above the edge, so the edge first lands on the endpoint as a plain
+move, and the latch changes on the next substep, when the step would pass it.
+
+| Constructor | Path | Edge | Test | Latch |
+| --- | --- | --- | --- | ---: |
+| One leaf, bit 8 set (`movingSide: low`) | open, `$05AC30`/`$05AC8A` | low edge rises | `bpl` | `travel + 1` |
+| | close, `$05AAD2`/`$05AB28` | low edge falls | `bmi` | `travel` |
+| One leaf, bit 8 clear (`movingSide: high`) | open, `$05AC5A`/`$05ACB4` | high edge falls | `bmi` | `travel` |
+| | close, `$05AAFA`/`$05AB50` | high edge rises | `bpl` | `travel + 1` |
+| Two leaves, bit 9 set | open, `$05ACEE`/`$05AD2E` | upper inner edge rises | `bpl` | `travel + 1` |
+| | close, `$05AB8C`/`$05ABD0` | lower inner edge rises | `bpl` | `travel + 1` |
+
+The substep that only settles the latch still took a path, so it still wrote `$01` first and
+raised `$5A9D8`. The door tone ([#499](damocles-lift-ride.md)) therefore stops one pass later on
+a `travel + 1` path than the edge's motion alone would say.
+
+The lift's admission writes `$01` to the doorway's latch whether or not its door is shut
+(`$055B0A`, [lift control](damocles-lift-control.md)). A ride asked for with the door already
+shut therefore waits one substep, the closing pass that clears the latch at once. That pass
+raises `$5A9D8`, so the tone starts and stops. The same holds for a key admitted mid-ride.
+
+Earlier drafts of this note said every latch changes at `travel + 1`. That holds for the doors
+#472 timed, all of which have two leaves. It does not hold for the 170 one-leaf attachments
+across the Catalogue's Models (63 `low`, 107 `high`), which latch at `travel` one way.
+
 ## The step, in the traces
 
 #472's traces record, at every VBL, the frame counter `$7AE8`, the VBLs the last frame
@@ -116,27 +155,28 @@ burst, ahead of the VBLs they stand for.
 ## For the port
 
 The port moved every door at 92 / 2.64 units per second, the Structure 74 trace read in
-seconds. It now moves each door one unit per tick in the frame loop, after the ride's
-step, as `$059562`–`$059570` orders them. A tick is a VBL, the stand-in the ride already
-uses for a substep ([#472](damocles-lift-ride.md#for-470s-ride-presentation-task-476)).
-Each door's time is its own travel:
+seconds. It now runs `$05AA3C` once per tick in the frame loop, after the ride's step, as
+`$059562`–`$059570` orders them. A tick is one substep ([ADR 0049](../adr/0049-run-one-damocles-substep-per-tick-without-st-frame-cost.md)).
+Each door keeps its open units and its latch (`stepAttachment` in `web/src/damocles/selection.ts`).
+The latch settles on the substep its path does, per the table above. A region the door gates is
+selectable only while the latch reads open. The ride waits for the latch to read closed, and
+admission sets it moving. The latch is part of a Damocles Save from schema 11.
 
-| Door | Port, ticks | ST |
-| --- | ---: | --- |
-| State Office lift `$3F4` closes | 32 | 33 substeps, about 30 VBLs |
-| G → 1 ride, key to arrival | 82 | 83 substeps, VBL 80–81 |
-| Vesta lift `$3FC` | 82 | 83 substeps, about 80 VBLs |
-| Capital Spaceport `$3FC` | 92 | 93 substeps; 132 VBLs where frames took 11 |
+Door travel, latch and ride, in substeps. The port's ticks equal the ST's substeps:
 
-Two known differences remain:
+| Door | Edge arrives | Latch | ST, measured |
+| --- | ---: | ---: | --- |
+| State Office lift `$3F4` closes | 32 | 33 | 33 substeps, about 30 VBLs |
+| G → 1 ride, key to arrival | | 83 | 83 substeps, VBL 80–81 |
+| Vesta lift `$3FC` closes | 82 | 83 | 83 substeps, about 80 VBLs |
+| Capital Spaceport `$3FC` | 92 | 93 | 93 substeps; 132 VBLs where frames took 11 |
 
-- **The latch substep.** The port keeps only how far each door is open, not the latch, so
-  it counts a door shut or open on the tick it reaches its endpoint, one tick before
-  the ST's latch changes. The ride therefore starts counting one tick early, and a
-  latched region frees one tick early.
-- **Frame cost.** The ST runs 4–8 substeps a frame whatever the frame took, so a door
-  is slower in VBLs where frames take more than 8. That is the Structure 74 figure's
-  2.64 s. The port does not model frame cost and runs one substep per VBL.
+One difference remains, and ADR 0049 records it. **Frame cost** is not modelled. The ST runs
+4–8 substeps a frame whatever the frame took, so in VBLs a door is slower where frames take more
+than 8, and a frame's substeps land ahead of the VBLs they stand for. The port runs one substep
+per VBL. Its elapsed time matches an ST VBL measurement within one frame's burst where frames took
+4–8 VBLs, as at the State Office and Vesta. The Structure 74 figure, 2.64 s, is excluded, not
+matched: the port takes 1.86 s.
 
 ## Runs
 

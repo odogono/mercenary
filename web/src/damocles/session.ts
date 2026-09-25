@@ -59,8 +59,11 @@ import {
   attachmentOpenLimit,
   clampStructureStep,
   insideLocalBox,
+  stepAttachment,
   structureLocalPosition,
-  structureRegionAt
+  structureRegionAt,
+  type AttachmentLatch,
+  type AttachmentState
 } from './selection.ts';
 import { presentedText, type DamoclesStrings } from './strings.ts';
 import { advanceTurn, inDaylight } from './terminator.ts';
@@ -196,10 +199,19 @@ const inventorySourceLabel = (
   return (model?.name ?? instanceId).slice(0, 16).padEnd(16);
 };
 
-/// Every attachment's moving edge steps one unit per substep: all twelve motion paths of
-/// `$05AA3C` load `move.l #1,d4`, and none reads a rate from the record
-/// (docs/research/damocles-door-speed.md). A door's time is its travel in ticks.
-const ATTACHMENT_UNITS_PER_TICK = 1;
+/// A door as a structure binds it: shut, its latch `$00`.
+const SHUT: AttachmentState = { latch: 'closed', openUnits: 0 };
+
+/// Every attachment of `placement`, shut.
+const shutAttachments = (
+  placement: ErisPlacement | undefined
+): Map<number, AttachmentState> =>
+  new Map(
+    placement?.selection?.structure.attachments.map(attachment => [
+      attachment.slot,
+      SHUT
+    ]) ?? []
+  );
 
 /// A region whose flags have bit 13 is a Damocles Lift (docs/research/damocles-lift-control.md).
 const LIFT_REGION = 0x20_00;
@@ -268,7 +280,7 @@ export class DamoclesSession implements TitleSession<
   private readonly rules: WalkRules;
   private readonly scriptRules: ScriptRules;
   private readonly soundPermitted: () => boolean;
-  private attachmentUnits = new Map<number, number>();
+  private attachments = new Map<number, AttachmentState>();
   /// `$7AE6`: the attachment slot of the last doorway region the region walk accepted in the
   /// bound structure, or null before one has been crossed there. A ride pins its door shut.
   private doorway: number | null = null;
@@ -615,8 +627,8 @@ export class DamoclesSession implements TitleSession<
     }
   }
 
-  private readonly unitsFor = (slot: number): number =>
-    this.attachmentUnits.get(slot) ?? 0;
+  private readonly latchFor = (slot: number): AttachmentLatch =>
+    (this.attachments.get(slot) ?? SHUT).latch;
 
   private bindAt(pose: Pose, restore?: BoundStructureSnapshot | null): void {
     const placement =
@@ -667,12 +679,7 @@ export class DamoclesSession implements TitleSession<
     // structure, so the port forgets it rather than pin a same-numbered door in another.
     this.doorway = null;
     this.ride = null;
-    this.attachmentUnits = new Map(
-      floored?.selection?.structure.attachments.map(attachment => [
-        attachment.slot,
-        0
-      ]) ?? []
-    );
+    this.attachments = shutAttachments(floored);
     if (placement !== undefined) {
       // Read ahead the structures its Floors bind, so a Floor change finds them in hand.
       void this.content.models.prefetch(
@@ -681,19 +688,25 @@ export class DamoclesSession implements TitleSession<
     }
     if (restore !== undefined && restore !== null && floored !== undefined) {
       if (
-        restore.attachments.length !== this.attachmentUnits.size ||
+        restore.attachments.length !== this.attachments.size ||
         new Set(restore.attachments.map(item => item.slot)).size !==
           restore.attachments.length ||
         (restore.regionIndex !== null &&
           restore.regionIndex >= floored.selection!.structure.regions.length) ||
-        restore.attachments.some(({ openUnits, slot }) => {
+        restore.attachments.some(({ latch, openUnits, slot }) => {
           const attachment = floored.selection!.structure.attachments.find(
             item => item.slot === slot
           );
+          if (attachment === undefined) {
+            return true;
+          }
+          const travel = attachmentOpenLimit(attachment);
+          // A latch settles only at its endpoint; moving, the edge may stand anywhere.
           return (
-            attachment === undefined ||
             openUnits < 0 ||
-            openUnits > attachmentOpenLimit(attachment)
+            openUnits > travel ||
+            (latch === 'closed' && openUnits !== 0) ||
+            (latch === 'open' && openUnits !== travel)
           );
         })
       ) {
@@ -711,8 +724,11 @@ export class DamoclesSession implements TitleSession<
       ) {
         throw new Error('saved lift ride does not match the bound structure');
       }
-      this.attachmentUnits = new Map(
-        restore.attachments.map(item => [item.slot, item.openUnits])
+      this.attachments = new Map(
+        restore.attachments.map(({ latch, openUnits, slot }) => [
+          slot,
+          { latch, openUnits }
+        ])
       );
       this.regionIndex = restore.regionIndex;
       this.doorway = restore.doorway;
@@ -770,7 +786,7 @@ export class DamoclesSession implements TitleSession<
     const placement = this.boundPlacement;
     return placement !== null &&
       insideCentralCellHalf(pose.position, this.surface.grid)
-      ? structureRegionAt(placement, pose, this.negateModelZ, this.unitsFor)
+      ? structureRegionAt(placement, pose, this.negateModelZ, this.latchFor)
       : null;
   }
 
@@ -779,10 +795,9 @@ export class DamoclesSession implements TitleSession<
       return null;
     }
     return {
-      attachments: [...this.attachmentUnits].map(([slot, openUnits]) => ({
-        openUnits,
-        slot
-      })),
+      attachments: [...this.attachments].map(
+        ([slot, { latch, openUnits }]) => ({ latch, openUnits, slot })
+      ),
       doorway: this.doorway,
       floor: this.floor,
       instanceId: this.boundPlacement.id,
@@ -1223,7 +1238,7 @@ export class DamoclesSession implements TitleSession<
             this.pose,
             moved,
             this.negateModelZ,
-            this.unitsFor,
+            this.latchFor,
             this.regionIndex
           );
           this.pose = clamped.pose;
@@ -1827,7 +1842,7 @@ export class DamoclesSession implements TitleSession<
     this.bodyTurn = arrival.bodyTurn;
     this.boundPlacement = null;
     this.regionIndex = null;
-    this.attachmentUnits = new Map();
+    this.attachments = new Map();
     this.arrivalFloor =
       arrival.floor === 0
         ? null
@@ -1913,6 +1928,13 @@ export class DamoclesSession implements TitleSession<
       destination: floor,
       label: this.labelFloor
     };
+    // `$055B0A` sets the doorway's latch moving, even where its door is already shut, so the
+    // countdown waits for the next pass to clear it.
+    const door =
+      this.doorway === null ? undefined : this.attachments.get(this.doorway);
+    if (door !== undefined) {
+      this.attachments.set(this.doorway!, { ...door, latch: 'moving' });
+    }
     return { kind: 'admitted' };
   }
 
@@ -1922,16 +1944,16 @@ export class DamoclesSession implements TitleSession<
     return this.ride?.label ?? this.floor;
   }
 
-  /// Whether the door a ride pins has stopped: shut, since the ride is closing it. A doorway slot
-  /// the bound structure has no attachment for has no door to wait on.
+  /// Whether the door a ride pins has stopped: its latch reads `$00`, since the ride is closing it
+  /// (`$055A76`). A doorway slot the bound structure has no attachment for has no door to wait on.
   private rideDoorShut(): boolean {
-    return this.doorway === null || this.unitsFor(this.doorway) === 0;
+    return this.doorway === null || this.latchFor(this.doorway) === 'closed';
   }
 
   /// One tick of the bound structure's doors: `$05AA3C`, which the frame loop calls once a
-  /// substep. Each door opens a unit while the player at `position` is inside its Proximity Box
-  /// and holds its key, and closes a unit otherwise. Says whether any door moved: `$5A9D8`,
-  /// which `$05AAA4` and `$05AC00` raise.
+  /// substep. Each door opens while the player at `position` is inside its Proximity Box and
+  /// holds its key, and closes otherwise. Says whether any door's path ran: `$5A9D8`, which
+  /// `$05AAA4` and `$05AC00` raise, including on the pass that only settles a latch.
   private moveAttachments(position: Vector3): boolean {
     const placement = this.boundPlacement;
     if (placement === null) {
@@ -1954,16 +1976,15 @@ export class DamoclesSession implements TitleSession<
       if (approached && !opening) {
         this.presentSystem('system-string-0');
       }
-      const current = this.unitsFor(attachment.slot);
-      const next = Math.max(
-        0,
-        Math.min(
-          attachmentOpenLimit(attachment),
-          current + (opening ? 1 : -1) * ATTACHMENT_UNITS_PER_TICK
-        )
+      const next = stepAttachment(
+        attachment,
+        this.attachments.get(attachment.slot) ?? SHUT,
+        opening
       );
-      this.attachmentUnits.set(attachment.slot, next);
-      moving ||= next !== current;
+      if (next !== undefined) {
+        this.attachments.set(attachment.slot, next);
+        moving = true;
+      }
     }
     return moving;
   }
@@ -2060,12 +2081,7 @@ export class DamoclesSession implements TitleSession<
     this.floor = floor;
     this.boundPlacement = floored;
     this.ride = null;
-    this.attachmentUnits = new Map(
-      floored.selection?.structure.attachments.map(attachment => [
-        attachment.slot,
-        0
-      ]) ?? []
-    );
+    this.attachments = shutAttachments(floored);
     this.pose = {
       ...this.pose,
       position: {

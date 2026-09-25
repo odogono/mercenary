@@ -126,6 +126,7 @@ const standingAt = (
         : {
             attachments:
               placement.selection?.structure.attachments.map(attachment => ({
+                latch: 'closed' as const,
                 openUnits: 0,
                 slot: attachment.slot
               })) ?? [],

@@ -160,7 +160,11 @@ const throughTheDoor = (): DamoclesSession => {
       ...saved.structure!,
       attachments: saved.structure!.attachments.map(item =>
         item.slot === LIFT_DOOR
-          ? { ...item, openUnits: attachmentOpenLimit(door) }
+          ? {
+              latch: 'open',
+              openUnits: attachmentOpenLimit(door),
+              slot: item.slot
+            }
           : item
       ),
       doorway: LIFT_DOOR
@@ -172,13 +176,18 @@ const throughTheDoor = (): DamoclesSession => {
   return session;
 };
 
+const liftDoor = (session: DamoclesSession) =>
+  session.snapshot.structure?.attachments.find(item => item.slot === LIFT_DOOR);
 const openUnits = (session: DamoclesSession): number | undefined =>
-  session.snapshot.structure?.attachments.find(item => item.slot === LIFT_DOOR)
-    ?.openUnits;
+  liftDoor(session)?.openUnits;
+const latchOf = (session: DamoclesSession): string | undefined =>
+  liftDoor(session)?.latch;
 
-/// The door moves one unit a tick, so it shuts in its 32 units of travel: the ST cleared its
-/// latch one substep later, at 33 (docs/research/damocles-door-speed.md).
-const DOOR_CLOSE_VBLS = 32;
+/// The door moves one unit a tick, so its edge travels 32 units in 32 ticks. It has two leaves,
+/// whose paths settle the latch on the pass after the edge arrives, so the latch changes on the
+/// 33rd, as the ST's did (docs/research/damocles-door-speed.md).
+const DOOR_TRAVEL = 32;
+const DOOR_LATCH_VBLS = DOOR_TRAVEL + 1;
 
 describe('a ride in the State Office lift', () => {
   test('G, 2, B, 1 and back to G, with X and Z kept', () => {
@@ -242,9 +251,15 @@ describe('the ride as #472 recovered it', () => {
       label: 0
     });
 
-    // The door is pinned shut although the player stands inside its Proximity Box.
-    const shut = vblsUntil(session, () => openUnits(session) === 0);
-    expect(shut).toBe(DOOR_CLOSE_VBLS);
+    // The door is pinned shut although the player stands inside its Proximity Box. Its edge
+    // is shut after its travel, and the latch clears on the pass after.
+    expect(vblsUntil(session, () => openUnits(session) === 0)).toBe(
+      DOOR_TRAVEL
+    );
+    expect(latchOf(session)).toBe('moving');
+    const shut =
+      DOOR_TRAVEL + vblsUntil(session, () => latchOf(session) === 'closed');
+    expect(shut).toBe(DOOR_LATCH_VBLS);
     expect(riding(session)?.countdown).toBe(25);
 
     const stepped = vblsUntil(session, () => session.labelFloor !== 0);
@@ -260,8 +275,9 @@ describe('the ride as #472 recovered it', () => {
 
     const arrived = vblsUntil(session, () => riding(session) === null);
     expect(arrived).toBe(25);
-    // 82 ticks from the key: within one of the 80-81 VBLs #472 traced (83 substeps there).
-    expect(shut + stepped + arrived).toBe(82);
+    // 83 ticks from the key: the 83 substeps #472 traced. The ST stamped the arrival at VBL
+    // 80-81 because it ran several substeps a frame; the port's clock is the substep (ADR 0049).
+    expect(shut + stepped + arrived).toBe(83);
     const after = session.snapshot;
     expect(after.structure?.floor).toBe(1);
     expect(boundSlot(session)).toBe(78);
@@ -292,7 +308,7 @@ describe('the ride as #472 recovered it', () => {
     ride(session, 2);
     vblsUntil(session, () => openUnits(session) === 32);
     expect(session.rideLift(10)).toEqual({ kind: 'admitted' });
-    const shut = vblsUntil(session, () => openUnits(session) === 0);
+    const shut = vblsUntil(session, () => latchOf(session) === 'closed');
     const labels: [number, number][] = [];
     let vbls = shut;
     while (riding(session) !== null) {
@@ -367,6 +383,37 @@ describe('the ride as #472 recovered it', () => {
     expect(session.snapshot.structure?.doorway).toBeNull();
     expect(ride(session, 1)).toBe(50);
   });
+
+  test('a key with the door already shut still waits a pass for its latch', () => {
+    // `$055B0A` sets the latch moving on admission, so a door that is already shut takes one
+    // pass to clear it again, and that pass raises the door tone for one tick.
+    const saved = throughTheDoor().captureResume();
+    const session = new DamoclesSession(content, {
+      ...saved,
+      structure: {
+        ...saved.structure!,
+        attachments: saved.structure!.attachments.map(item =>
+          item.slot === LIFT_DOOR
+            ? { latch: 'closed', openUnits: 0, slot: item.slot }
+            : item
+        )
+      }
+    });
+    expect(session.rideLift(1)).toEqual({ kind: 'admitted' });
+    expect(latchOf(session)).toBe('moving');
+    const heard = heardUntil(session, () => riding(session) === null);
+    // One pass later than with no doorway to wait on, and the new Floor's door starts at once.
+    expect(heard).toEqual([
+      [1, 'door-start'],
+      [2, 'door-stop'],
+      [51, 'take'],
+      [51, 'door-start']
+    ]);
+    expect(heard.slice(0, 2)).toEqual([
+      [1, 'door-start'],
+      [2, 'door-stop']
+    ]);
+  });
 });
 
 const cuesOf = (session: DamoclesSession): string[] =>
@@ -429,16 +476,17 @@ describe('the door tones (#499)', () => {
     expect(session.rideLift(1)).toEqual({ kind: 'admitted' });
     // Long enough for the new Floor's door to open and stand open a while.
     const heard = heardUntil(session, vbls => vbls === 400);
-    const arrival = DOOR_CLOSE_VBLS + 50;
+    const arrival = DOOR_LATCH_VBLS + 50;
     expect(heard).toEqual([
       [1, 'door-start'],
-      // The door reaches shut on tick 32; the pass after that sees it still.
-      [DOOR_CLOSE_VBLS + 1, 'door-stop'],
+      // The door's edge is shut on tick 32 and its latch clears on tick 33, a pass that still
+      // raises `$5A9D8`. The pass after that sees it still.
+      [DOOR_LATCH_VBLS + 1, 'door-stop'],
       // `$05AA3C` runs after the arrival's step in the same substep, so the new door starts at
-      // once, and stands open 32 ticks later.
+      // once, and latches open 33 ticks in.
       [arrival, 'take'],
       [arrival, 'door-start'],
-      [arrival + DOOR_CLOSE_VBLS, 'door-stop']
+      [arrival + DOOR_LATCH_VBLS, 'door-stop']
     ]);
   });
 
@@ -450,7 +498,9 @@ describe('the door tones (#499)', () => {
     const saved = session.captureResume();
     expect(saved.doorsMoving).toBeTrue();
     const resumed = new DamoclesSession(content, saved);
-    expect(heardUntil(resumed, () => openUnits(resumed) === 0)).toEqual([]);
+    expect(heardUntil(resumed, () => latchOf(resumed) === 'closed')).toEqual(
+      []
+    );
     resumed.advance(VBL);
     expect(cuesOf(resumed)).toEqual(['door-stop']);
   });

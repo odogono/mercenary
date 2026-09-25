@@ -69,7 +69,11 @@ const besideKey = (soundPermitted = true): DamoclesSession => {
       scrollCounter: 0,
       structure: {
         attachments: parent.selection!.structure.attachments.map(
-          attachment => ({ openUnits: 0, slot: attachment.slot })
+          attachment => ({
+            latch: 'closed' as const,
+            openUnits: 0,
+            slot: attachment.slot
+          })
         ),
         doorway: null,
         floor: 0,

@@ -73,6 +73,7 @@ const atAuthorsHouseDoor = (carried: readonly string[]): DamoclesSession => {
     })),
     structure: {
       attachments: placement.selection!.structure.attachments.map(item => ({
+        latch: 'closed' as const,
         openUnits: 0,
         slot: item.slot
       })),
