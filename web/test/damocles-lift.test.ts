@@ -176,9 +176,9 @@ const openUnits = (session: DamoclesSession): number | undefined =>
   session.snapshot.structure?.attachments.find(item => item.slot === LIFT_DOOR)
     ?.openUnits;
 
-/// The port's door speed: #472 measured about 30 VBLs for this 32-unit door on the ST, but
-/// the rate per attachment is not decoded, so the port closes it at its one attachment rate.
-const DOOR_CLOSE_VBLS = Math.ceil((32 / (92 / 2.64)) * 50);
+/// The door moves one unit a tick, so it shuts in its 32 units of travel: the ST cleared its
+/// latch one substep later, at 33 (docs/research/damocles-door-speed.md).
+const DOOR_CLOSE_VBLS = 32;
 
 describe('a ride in the State Office lift', () => {
   test('G, 2, B, 1 and back to G, with X and Z kept', () => {
@@ -260,6 +260,8 @@ describe('the ride as #472 recovered it', () => {
 
     const arrived = vblsUntil(session, () => riding(session) === null);
     expect(arrived).toBe(25);
+    // 82 ticks from the key: within one of the 80-81 VBLs #472 traced (83 substeps there).
+    expect(shut + stepped + arrived).toBe(82);
     const after = session.snapshot;
     expect(after.structure?.floor).toBe(1);
     expect(boundSlot(session)).toBe(78);
@@ -271,15 +273,18 @@ describe('the ride as #472 recovered it', () => {
     expect(after.pose.pitch).toBe(
       pitchFromWord(0x01_ff, content.doc.orientation)
     );
-    // `$055B88`'s shared sound request, once, at the arrival.
+    // `$055B88`'s shared sound request, once, at the arrival, and the new Floor's door starts
+    // moving in the same tick.
     expect(session.drainEffects()).toEqual([
-      { cue: 'take', type: 'sound-request' }
+      { cue: 'take', type: 'sound-request' },
+      { cue: 'door-start', type: 'sound-request' }
     ]);
 
-    // The new Floor's door starts shut and opens around the player.
-    expect(openUnits(session)).toBe(0);
-    session.advance(1);
-    expect(openUnits(session)).toBeGreaterThan(0);
+    // The new Floor's door starts shut, and the arrival's own tick already opens it a unit:
+    // `$05AA3C` runs after the step in the same substep.
+    expect(openUnits(session)).toBe(1);
+    session.advance(10 * VBL);
+    expect(openUnits(session)).toBe(11);
   });
 
   test('2 to B steps the label through 1 and G, 25 VBLs apart', () => {
@@ -427,11 +432,13 @@ describe('the door tones (#499)', () => {
     const arrival = DOOR_CLOSE_VBLS + 50;
     expect(heard).toEqual([
       [1, 'door-start'],
-      // The door reaches shut on the VBL after this; the pass after that sees it still.
+      // The door reaches shut on tick 32; the pass after that sees it still.
       [DOOR_CLOSE_VBLS + 1, 'door-stop'],
+      // `$05AA3C` runs after the arrival's step in the same substep, so the new door starts at
+      // once, and stands open 32 ticks later.
       [arrival, 'take'],
-      [arrival + 1, 'door-start'],
-      [arrival + 1 + DOOR_CLOSE_VBLS, 'door-stop']
+      [arrival, 'door-start'],
+      [arrival + DOOR_CLOSE_VBLS, 'door-stop']
     ]);
   });
 
