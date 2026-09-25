@@ -31,7 +31,8 @@ export type DamoclesResumeRead =
 export const readDamoclesResume = (
   storage: SessionResumeStorage | undefined,
   identity: DamoclesSaveIdentity,
-  content: DamoclesSaveContent = {}
+  content: DamoclesSaveContent = {},
+  options: { readonly preserveInvalid?: boolean } = {}
 ): DamoclesResumeRead => {
   if (storage === undefined) {
     return { kind: 'unavailable', reason: 'browser storage is unavailable' };
@@ -53,7 +54,9 @@ export const readDamoclesResume = (
   } catch (error) {
     const reason = reasonOf(error);
     try {
-      storage.removeItem(DAMOCLES_RESUME_STORAGE_KEY);
+      if (!options.preserveInvalid) {
+        storage.removeItem(DAMOCLES_RESUME_STORAGE_KEY);
+      }
     } catch {
       // The record is already being ignored.
     }

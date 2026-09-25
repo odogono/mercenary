@@ -235,8 +235,16 @@ The shell-owned internal development surface in which a free Camera moves throug
 _Avoid_: Free-flight mode, spectator mode, Gameplay Session, game viewer
 
 **Atlas**:
-The shell-owned sessionless map surface presenting the Gamma System and its Bodies top-down, continuously across its Ranges from the whole System down to structure footprints, drawing only recovered content or content explicitly labelled derived or authored, and showing what is not recovered as a gap. It is neither the Game Surface nor a fidelity claim.
+The shell-owned sessionless map surface presenting the Gamma System and its Bodies top-down, continuously across its Ranges from the whole System down to structure footprints, drawing only recovered content or content explicitly labelled derived or authored, and showing what is not recovered as a gap. It can select an Atlas Pin and request Atlas Travel without owning play. It is neither the Game Surface nor a fidelity claim.
 _Avoid_: Map mode, Game Surface, Flyover, Catalogue marker map, world map
+
+**Atlas Pin**:
+One selected point on a Body's surface, independent of the player's position.
+_Avoid_: Location, player marker, waypoint collection
+
+**Atlas Travel**:
+An authored exploration action that moves the player and any occupied object to an Atlas Pin within the same Gameplay Session, without a journey or passage of game time.
+_Avoid_: Vehicle travel, recovered travel, new session
 
 **Trace Oracle**:
 The accepted macOS implementation frozen at the annotated `trace-oracle-last-good` tag, together with the deterministic traces it regenerates, held as the tagged equivalence authority that the canonical browser implementation must reproduce rather than as a live implementation (ADR 0019).
@@ -391,7 +399,7 @@ The Browser Shell overlay opened with Escape that pauses stepping and owns the s
 _Avoid_: Pause menu, options screen, main menu
 
 **Shell Console**:
-The Browser Shell's slide-down development command line, reaching the Gameplay Session's own actions and the stores that own each preference, Save, and adjustable presentation value rather than the state behind them; alone among Browser Shell surfaces it may write play rather than only presenting it, which is why its commands are never part of a trace (ADR 0028).
+The Browser Shell's slide-down development command line, reaching the Gameplay Session's own actions and the stores that own each preference, Save, and adjustable presentation value rather than the state behind them; it admits development changes to play, which is why its commands are never part of a trace (ADR 0028). Atlas Travel is a separate authored exploration action (ADR 0050).
 _Avoid_: Cheat console, terminal, dev overlay
 
 **Initial Release**:

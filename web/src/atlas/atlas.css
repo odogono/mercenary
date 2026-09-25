@@ -205,7 +205,8 @@ h2 {
   background: var(--panel);
 }
 
-#search {
+#search,
+#pin-panel {
   padding: 1rem 1.25rem;
   border-bottom: 1px solid var(--border);
 }
@@ -224,7 +225,9 @@ h2 {
 
 #search-form input,
 #search-form select,
-#search button {
+#search button,
+#pin-panel button,
+#pin-menu button {
   padding: 0.2rem 0.4rem;
   color: var(--text);
   font-family: inherit;
@@ -357,7 +360,7 @@ h2 {
 @media (width <= 60rem) {
   #atlas {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(16rem, 1fr) auto;
+    grid-template-rows: minmax(28rem, 65vh) auto;
   }
 
   .sidebar {
@@ -366,11 +369,11 @@ h2 {
   }
 }
 
-/* One row, always. The scale readout is written from inside the ResizeObserver on the map, so
-   a toolbar that could wrap would shrink the frame that had just been measured. */
+/* Controls wrap on narrow screens; the scale stays on one clipped line so its text cannot
+   change the measured map height during a redraw. */
 #system-toolbar {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
   /* A grid item defaults to `min-width: auto`, so without this the unwrappable toolbar sets the
      stage column's minimum width and pushes the map out under the sidebar. */
@@ -465,4 +468,104 @@ h2 {
 .centre-authored::after {
   color: var(--muted);
   content: ' · authored scale';
+}
+
+#pin-coordinates {
+  overflow-wrap: anywhere;
+}
+#pin-status {
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+.pin-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+.atlas-marker {
+  position: absolute;
+  z-index: 4;
+  transform: translate(-50%, -50%);
+}
+.player-marker {
+  width: 32px;
+  height: 40px;
+  pointer-events: auto;
+  touch-action: none;
+  cursor: grab;
+}
+.player-marker.dragging {
+  cursor: grabbing;
+}
+.player-person {
+  position: relative;
+  width: 32px;
+  height: 40px;
+  fill: #ffd25c;
+  stroke: #fff4ce;
+  stroke-width: 1.5;
+  filter: drop-shadow(0 2px 2px #0009);
+}
+.player-cone {
+  pointer-events: none;
+  display: none;
+  position: absolute;
+  width: 110px;
+  height: 110px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) rotate(var(--heading));
+  fill: #61c8ff66;
+  stroke: #a2dfff99;
+  stroke-width: 1;
+}
+.player-marker[data-facing='known'] .player-cone {
+  pointer-events: none;
+  display: block;
+}
+.pin-marker {
+  width: 32px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.pin-marker svg {
+  width: 100%;
+  height: 100%;
+  fill: var(--accent);
+  stroke: #e0f6ff;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  filter: drop-shadow(0 1px 2px #0009);
+}
+#pin-menu {
+  position: absolute;
+  z-index: 5;
+  width: max-content;
+  max-width: calc(100% - 1rem);
+  padding: 0.5rem;
+  background: var(--background);
+  border: 1px solid var(--border);
+}
+#pin-menu button {
+  min-height: 2.5rem;
+}
+
+#pin-panel button,
+#pin-menu button {
+  min-height: 2.5rem;
+  cursor: pointer;
+}
+#pin-panel button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+#pin-panel button:focus-visible,
+.pin-marker:focus-visible,
+#pin-menu button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }

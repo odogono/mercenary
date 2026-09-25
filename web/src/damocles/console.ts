@@ -11,7 +11,7 @@ import type { DamoclesSession } from './session.ts';
 const SETTING_NAMES = Object.keys(SETTING_VALUES);
 
 const HELP = [
-  'help · where · inventory',
+  'help · where · inventory · atlas',
   'goto <x> <z>',
   'get [<object-slot>] · drop [<object-slot|name>]',
   'panel <targ|damocles> · set <name> <value>',
@@ -31,6 +31,7 @@ export const DAMOCLES_CONSOLE_BANNER = [
 ] as const;
 
 export interface DamoclesConsoleHost extends ConsoleSettingHost {
+  readonly openAtlas: () => void;
   readonly persistence: SavePersistence;
   readonly session: () => DamoclesSession;
 }
@@ -46,6 +47,9 @@ export const executeDamoclesConsoleCommand = (
   host: DamoclesConsoleHost
 ): readonly string[] => {
   switch (command.kind) {
+    case 'atlas':
+      host.openAtlas();
+      return ['Opening Gamma Atlas…'];
     case 'help':
       return HELP;
     case 'where': {

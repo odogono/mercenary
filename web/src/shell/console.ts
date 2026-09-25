@@ -21,6 +21,7 @@ import type { TypefaceId } from './typography.ts';
 /// Parsing is separated from doing so that what the console accepts can be reasoned about without
 /// a session to run it against — the same reason the trace decoder is its own function.
 export type ConsoleCommand =
+  | { readonly kind: 'atlas' }
   | { readonly kind: 'help' }
   | { readonly kind: 'where' }
   | { readonly kind: 'inventory' }
@@ -243,6 +244,11 @@ export const parseConsoleCommand = (
   const rest = words.slice(1);
 
   switch (verb) {
+    case 'atlas':
+      if (rest.length !== 0) {
+        throw new Error('atlas takes no arguments');
+      }
+      return { kind: 'atlas' };
     case 'help':
       return { kind: 'help' };
     case 'switch':
@@ -459,6 +465,8 @@ export const executeConsoleCommand = (
   deps: ConsoleDeps
 ): readonly string[] => {
   switch (command.kind) {
+    case 'atlas':
+      return ['The Gamma Atlas belongs to Damocles'];
     case 'help':
       return HELP;
     case 'switchBody':

@@ -7,7 +7,7 @@ test('the Damocles System Menu reaches the Atlas', async ({ page }) => {
   await page.keyboard.press('Escape');
   await expect(surface).toHaveAttribute('data-layer', 'menu');
   await page.locator('#page-menu #menu-atlas').click();
-  await expect(page).toHaveURL('/damocles/atlas');
+  await expect(page).toHaveURL(/\/damocles\/atlas\?body=eris/);
   await expect(page.locator('#title')).toHaveText('Gamma Atlas');
   await expect(page.locator('#failure')).toBeHidden();
 });

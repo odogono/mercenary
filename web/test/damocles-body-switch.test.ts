@@ -538,3 +538,74 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
     ).toBe(422);
   });
 });
+
+describe('Atlas Travel', () => {
+  test('travels to exact fractional Body Coordinates and preserves session continuity', async () => {
+    const opened = new DamoclesSession(content);
+    opened.teleportToCell(7, 8);
+    const session = standingAt(opened, 'object-slot-183');
+    expect(session.take().kind).toBe('took');
+    session.advance(1 / 50);
+    const before = session.captureResume();
+    const target = { bodyId: 'body-14', x: 1087.1, z: 313.1 };
+    await DamoclesSession.prepareAtlasTravel(content, target);
+    expect(session.travelToAtlas(target)).toEqual({ kind: 'travelled' });
+    const after = session.captureResume();
+    expect(after.pose.body).toBe(target.bodyId);
+    expect(after.pose.position).toEqual({
+      x: target.x * content.doc.grid.cellUnits,
+      y: content.doc.eye.heightUnits,
+      z: target.z * content.doc.grid.cellUnits
+    });
+    expect(after.pose.heading).toBe(before.pose.heading);
+    expect(after.pose.pitch).toBe(0);
+    expect(after.script).toEqual(before.script);
+    expect(after.carried).toEqual(before.carried);
+    expect(after.residence).toEqual(before.residence);
+    expect(after.elapsed).toBe(before.elapsed);
+  });
+
+  test('refuses unplayable Bodies and non-finite coordinates atomically', () => {
+    const session = new DamoclesSession(content);
+    const before = session.captureResume();
+    for (const target of [
+      { bodyId: 'body-unknown', x: 0, z: 0 },
+      { bodyId: 'body-11', x: Number.NaN, z: 0 },
+      { bodyId: 'body-11', x: 0, z: Infinity },
+      { bodyId: 'body-11', x: 0, z: 0 }
+    ]) {
+      expect(session.travelToAtlas(target).kind).toBe('declined');
+      expect(session.captureResume()).toEqual(before);
+    }
+  });
+
+  test('carries an occupied object across Bodies and leaves it there after reload', () => {
+    const initial = new DamoclesSession(content).captureResume();
+    const instance = catalogue.instances.find(
+      item => item.boarding?.boardable && item.boarding.admission !== null
+    )!;
+    const session = new DamoclesSession(content, {
+      ...initial,
+      occupancy: { instance: instance.id, kind: 'aboard' },
+      residence: [
+        {
+          instance: instance.id,
+          residence: {
+            kind: 'occupied',
+            placementClass: instance.placementClass ?? 0
+          }
+        }
+      ]
+    });
+    expect(
+      session.travelToAtlas({ bodyId: 'body-14', x: 1087.1, z: 313.1 }).kind
+    ).toBe('travelled');
+    const restored = new DamoclesSession(content, session.captureResume());
+    expect(restored.leave().kind).toBe('left');
+    expect(
+      restored
+        .captureResume()
+        .residence.find(item => item.instance === instance.id)?.residence
+    ).toMatchObject({ body: 'body-14', kind: 'surface' });
+  });
+});

@@ -29,7 +29,8 @@ test('clicking ERIS in the roster hops into the Body', async ({ page }) => {
   await expect(page.locator('#roster a')).toHaveCount(30);
   await page.locator('#roster a[data-body="eris"]').click();
 
-  await expect(page).toHaveURL('/damocles/atlas?body=eris');
+  // Camera coordinates are added by an idle timer; the Body is the navigation contract.
+  await expect(page).toHaveURL(/\/damocles\/atlas\?body=eris(?:&|$)/);
   await expect(page.locator('#breadcrumb-body')).toHaveText('ERIS');
   await expect(page.locator('#panel')).toContainText('-630,000');
   await expect(page.locator('#range-system')).toBeHidden();
@@ -480,6 +481,7 @@ test('picking an island fills the panel and survives the link', async ({
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
 
   await expect(page).toHaveURL(/\bisland=island-eris-/);
+  expect(new URL(page.url()).searchParams.has('pinX')).toBe(false);
   await expect(page.locator('#panel')).toContainText('CAPITAL CITY');
   await expect(page.locator('#panel')).toContainText('Origin X/Z');
   // An island carries no name of its own, and the panel must say so rather than heading the
@@ -591,6 +593,8 @@ test('picking a Damocles Place fills the panel and reaches the Catalogue', async
   await expect(page).toHaveURL(/\bplace=place-/);
   await expect(page).not.toHaveURL(/\bisland=/);
   await expect(page.locator('#panel')).toContainText('Place · STATE OFFICE');
+  await expect(page.locator('#atlas-pin')).toBeHidden();
+  expect(new URL(page.url()).searchParams.has('pinX')).toBe(false);
   // Its position is its Instances' and the panel says so.
   await expect(page.locator('#panel')).toContainText('Mean cell');
   await expect(page.locator('#panel')).toContainText(
@@ -624,6 +628,7 @@ test('picking a Settlement name picks the island that publishes it', async ({
   // A Settlement is carried by an island record, so the name reaches the record the Catalogue
   // can actually show rather than a Settlement entry that does not exist.
   await expect(page).toHaveURL(/\bisland=island-eris-/);
+  expect(new URL(page.url()).searchParams.has('pinX')).toBe(false);
   await expect(page.locator('#panel')).toContainText(
     'carries no name of its own'
   );
@@ -844,17 +849,18 @@ test('the Street Range draws each road cell\u2019s Drawn Record', async ({
 /// road gap at all. The gap path is kept regardless — the payload is derived from captures and
 /// the image and can regress — and this is how its notices and its dashed square stay covered
 /// in the browser rather than only in principle (#450).
-const withoutNetworks = (page: Page, ...ids: readonly string[]) =>
-  page.route('**/payload/damocles/catalogue.json', async route => {
-    const response = await route.fetch();
-    const payload = (await response.json()) as {
-      roadNetworks: { id: string }[];
-    };
-    payload.roadNetworks = payload.roadNetworks.filter(
-      network => !ids.includes(network.id)
-    );
-    await route.fulfill({ json: payload, response });
-  });
+const withoutNetworks = async (page: Page, ...ids: readonly string[]) => {
+  // Read the fixture before navigation. A route.fetch still running when a test closes its
+  // context can dispose the response while json() reads it and fail the following test.
+  const response = await page.request.get('/payload/damocles/catalogue.json');
+  const payload = (await response.json()) as { roadNetworks: { id: string }[] };
+  payload.roadNetworks = payload.roadNetworks.filter(
+    network => !ids.includes(network.id)
+  );
+  await page.route('**/payload/damocles/catalogue.json', route =>
+    route.fulfill({ json: payload })
+  );
+};
 
 test('a Settlement’s roads are stated for the group in view, not the Body', async ({
   page
@@ -1055,7 +1061,9 @@ test('the Street Range draws a derived footprint for each placed structure', asy
 });
 
 test('tapping a footprint reaches its Catalogue entry', async ({ page }) => {
-  await page.goto(`/damocles/atlas?${SPACEPORT_VIEW}&span=1`);
+  await page.goto(
+    `/damocles/atlas?${SPACEPORT_VIEW}&span=1&pinBody=eris&pinX=71.2&pinZ=136.2`
+  );
   await expect(page.locator('#status')).toContainText('57 derived footprints', {
     timeout: 20_000
   });
@@ -1064,6 +1072,9 @@ test('tapping a footprint reaches its Catalogue entry', async ({ page }) => {
 
   await expect(page).toHaveURL(/\binstance=eris-surface-87\b/);
   await expect(page.locator('#panel')).toContainText('CAPITAL SPACEPORT');
+  await expect(page.locator('#footprint-derived')).toBeInViewport();
+  expect(new URL(page.url()).searchParams.get('pinX')).toBe('71.2');
+  expect(new URL(page.url()).searchParams.get('pinZ')).toBe('136.2');
   // The one Model carrying an exterior Mesh, so this is the one footprint on the map that did
   // not fall back to the plan.
   await expect(page.locator('#footprint-derived')).toHaveAttribute(

@@ -35,7 +35,11 @@ export const NO_SEARCH: AtlasSearch = {
   q: ''
 };
 
-export type AtlasState =
+export interface AtlasPin extends MapPoint {
+  readonly bodyId: string;
+}
+
+export type AtlasState = { readonly pin?: AtlasPin } & (
   | {
       readonly level: 'system';
       readonly search?: AtlasSearch;
@@ -61,7 +65,8 @@ export type AtlasState =
       /// Settlement is the area a Structure Workspace publishes, not the island under it.
       readonly settlementId?: string | null;
       readonly view: AtlasView | null;
-    };
+    }
+);
 
 export const SYSTEM_RANGE: AtlasState = { level: 'system', view: null };
 
@@ -107,13 +112,27 @@ export const readAtlasState = (
 ): AtlasState => {
   const params = new URLSearchParams(search);
   const searched = readSearch(params, bodyIds);
+  const pinBody = params.get('pinBody');
+  const pinX = params.get('pinX');
+  const pinZ = params.get('pinZ');
+  const pin =
+    pinBody !== null &&
+    bodyIds.includes(pinBody) &&
+    pinX !== null &&
+    pinX.trim() !== '' &&
+    pinZ !== null &&
+    pinZ.trim() !== '' &&
+    Number.isFinite(Number(pinX)) &&
+    Number.isFinite(Number(pinZ))
+      ? { pin: { bodyId: pinBody, x: Number(pinX), z: Number(pinZ) } }
+      : {};
   const bodyId = params.get('body');
   if (bodyId !== null && !bodyIds.includes(bodyId)) {
-    return { ...SYSTEM_RANGE, search: searched };
+    return { ...SYSTEM_RANGE, ...pin, search: searched };
   }
   const view = readView(params);
   if (bodyId === null) {
-    return { level: 'system', search: searched, view };
+    return { level: 'system', ...pin, search: searched, view };
   }
   const named = (key: string) => {
     const value = params.get(key);
@@ -121,6 +140,7 @@ export const readAtlasState = (
   };
   return {
     bodyId,
+    ...pin,
     instanceId: named('instance'),
     islandId: named('island'),
     level: 'body',
@@ -133,6 +153,11 @@ export const readAtlasState = (
 
 export const atlasSearch = (state: AtlasState): string => {
   const params = new URLSearchParams();
+  if (state.pin) {
+    params.set('pinBody', state.pin.bodyId);
+    params.set('pinX', String(state.pin.x));
+    params.set('pinZ', String(state.pin.z));
+  }
   if (state.level === 'body') {
     params.set('body', state.bodyId);
     if (state.islandId) {

@@ -1,5 +1,8 @@
 # Switch Damocles Bodies within one Gameplay Session
 
+Extended by [ADR 0050](0050-travel-from-a-sessionless-atlas.md), which admits authored Atlas Travel through the Gameplay Session.
+
+
 Accepted for the [Gamma System pickup programme](https://github.com/odogono/mercenary/issues/313);
 implementation follows its research and design gates. An authored Shell Console action may move
 the player to another Body at a validated arrival Pose while preserving one Damocles Gameplay

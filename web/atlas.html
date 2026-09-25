@@ -19,6 +19,8 @@
             +
           </button>
           <button id="system-fit">Fit System</button>
+          <a id="return-game" href="/damocles">Return to Game</a>
+          <button id="recenter-player" hidden>Show player</button>
           <span id="system-scale" class="muted"></span>
         </div>
         <div
@@ -39,6 +41,42 @@
           hidden
         >
           <canvas id="body-map"></canvas>
+          <span
+            id="atlas-player"
+            class="atlas-marker player-marker"
+            role="img"
+            aria-label="Player position when play paused"
+            title="Drag to move the player here. Escape cancels. You can also place a pin and choose Travel Here."
+            hidden
+          >
+            <svg class="player-cone" viewBox="0 0 100 100" aria-hidden="true">
+              <path d="M50 50 L20 4 Q50 -7 80 4 Z" />
+            </svg>
+            <svg class="player-person" viewBox="0 0 32 40" aria-hidden="true">
+              <circle cx="16" cy="8" r="6" />
+              <path
+                d="M10 17 Q16 14 22 17 L25 27 L21 28 L20 37 H12 L11 28 L7 27 Z"
+              />
+            </svg>
+          </span>
+          <button
+            id="atlas-pin"
+            class="atlas-marker pin-marker"
+            aria-label="Atlas Pin. Open travel menu"
+            aria-haspopup="menu"
+            aria-controls="pin-menu"
+            aria-expanded="false"
+            hidden
+          >
+            <svg viewBox="0 0 32 40" aria-hidden="true">
+              <path
+                d="M9 36 V5 M10 6 C17 1 21 11 28 6 V22 C21 27 17 17 10 22"
+              />
+            </svg>
+          </button>
+          <div id="pin-menu" role="menu" aria-label="Atlas Pin" hidden>
+            <button id="pin-menu-travel" role="menuitem">Travel Here</button>
+          </div>
           <div
             id="body-labels"
             aria-label="Settlements and Damocles Places"
@@ -49,6 +87,15 @@
         <p id="failure" role="alert" hidden></p>
       </section>
       <aside class="sidebar">
+        <section id="pin-panel" aria-labelledby="pin-heading">
+          <h2 id="pin-heading">Atlas Pin</h2>
+          <p id="pin-coordinates"></p>
+          <div class="pin-actions">
+            <button id="show-pin" disabled>Show pin</button>
+            <button id="travel-here" disabled>Travel Here</button>
+          </div>
+          <p id="pin-status" role="status"></p>
+        </section>
         <section id="search" aria-labelledby="search-heading">
           <h2 id="search-heading">Search</h2>
           <form id="search-form" role="search">

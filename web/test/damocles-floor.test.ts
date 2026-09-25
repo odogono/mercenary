@@ -544,6 +544,7 @@ describe('the player stands on one Floor', () => {
 
 const run = (session: DamoclesSession, line: string) =>
   executeDamoclesConsoleCommand(parseConsoleCommand(line, 16, 256)!, {
+    openAtlas: () => undefined,
     persistence: undefined as never,
     preferences: undefined as never,
     session: () => session,
