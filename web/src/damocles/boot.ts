@@ -35,6 +35,7 @@ import {
   loadTypography,
   readTypefacePreference
 } from '../shell/typography.ts';
+import { AudioWorkletTransport } from '../sound/transport.ts';
 import {
   DAMOCLES_CONSOLE_BANNER,
   executeDamoclesConsoleCommand,
@@ -44,6 +45,7 @@ import { planErisFrame } from './frame.ts';
 import { erisLighting } from './lighting.ts';
 import { damoclesPanelViewModel } from './panel.ts';
 import { damoclesTakeTargetAt } from './pointer.ts';
+import type { DamoclesCue } from './psg.ts';
 import { ErisRenderer } from './renderer.ts';
 import {
   createDamoclesResumePersistence,
@@ -56,12 +58,17 @@ import {
 } from './save.ts';
 import { createDamoclesSavePersistence } from './saves.ts';
 import { DamoclesSession } from './session.ts';
+import {
+  DamoclesSoundPresenter,
+  type DamoclesSoundCommand,
+  type DamoclesSoundDocument
+} from './sound.ts';
 import { damoclesTitle } from './title.ts';
 
 /// The Damocles Gameplay Session's document (ADR 0043, ADR 0044).
 ///
-/// Loads none of Targ's Data Payload. System Menu, Saves and Shell Console are the shared
-/// Browser Shell host; Arrival, Departure, Benson and sound stay in Targ's boot.
+/// Loads none of Targ's Data Payload. System Menu, Saves, Shell Console and the audio transport
+/// are the shared Browser Shell host; Arrival, Departure, Benson and the SID stay in Targ's boot.
 
 const surface = document.getElementById('game-surface')!;
 const chrome = installShellChrome(surface, {
@@ -107,6 +114,7 @@ const requiredJson = async (pathname: string): Promise<PayloadDocument> => {
 
 let animation: number | undefined;
 let running = true;
+let stopSound = (): void => {};
 
 const fail = (error: unknown): void => {
   if (!running) {
@@ -116,6 +124,7 @@ const fail = (error: unknown): void => {
   if (animation !== undefined) {
     cancelAnimationFrame(animation);
   }
+  stopSound();
   canvas.hidden = true;
   panelSection.hidden = true;
   status.hidden = true;
@@ -164,7 +173,12 @@ try {
         })
       : ({ kind: 'empty' } as const);
 
+  let applyAudioPreferences = (_preferences: {
+    readonly audioMuted: boolean;
+    readonly audioVolume: number;
+  }): void => {};
   const preferences = createPreferences({
+    onChange: changed => applyAudioPreferences(changed),
     storage,
     surface
   });
@@ -196,16 +210,41 @@ try {
   const panel = installPanel(panelElements);
   let commitAction = (_action: () => unknown): void => {};
 
-  /// Damocles has no sound presenter in this slice, so a drained Sound Cue request leaves no
-  /// trace a browser pass could read. Tallying the cues as they are drained is how #301 can
-  /// verify from outside the session that one successful take asks for exactly one sound.
+  // The transport reports a failed audio graph once and carries on in silence.
+  let audioUnavailable = false;
+  const sound = new DamoclesSoundPresenter(
+    new AudioWorkletTransport<DamoclesSoundCommand, DamoclesSoundDocument>(
+      { vblHertz: content.doc.time.vblHertz },
+      {
+        onFailure: () => {
+          audioUnavailable = true;
+          notices.audioUnavailable();
+        },
+        processor: 'damocles-ym',
+        workletUrl: '/src/damocles/soundWorklet.ts'
+      }
+    )
+  );
+  stopSound = () => sound.dispose();
+  applyAudioPreferences = changed => {
+    sound.setMuted(changed.audioMuted);
+    sound.setVolume(changed.audioVolume);
+  };
+  applyAudioPreferences(preferences.current());
+
+  /// A tally of the Sound Cues the session asked for, as they are drained. It proves requests,
+  /// not audible output: #301 reads it to see one take ask for exactly one sound, and the
+  /// presenter's own state is published beside it.
   const cueTally = new Map<string, number>();
   const drainEffects = (): void => {
+    const cues: DamoclesCue[] = [];
     for (const effect of session.drainEffects()) {
       if (effect.type === 'sound-request') {
         cueTally.set(effect.cue, (cueTally.get(effect.cue) ?? 0) + 1);
+        cues.push(effect.cue);
       }
     }
+    sound.present(cues, snapshot.elapsed);
   };
 
   const controls = new BrowserControlProfile({
@@ -287,6 +326,11 @@ try {
 
   const menu = installSystemMenu({
     onLayer: layer => {
+      if (layer === 'none') {
+        sound.resume();
+      } else {
+        sound.suspend();
+      }
       if (layer === 'menu') {
         notices.menuOpened();
         checkpointChangedResume();
@@ -303,6 +347,8 @@ try {
   const replaceSession = (restore?: DamoclesSaveSnapshot): void => {
     session = new DamoclesSession(content, restore);
     snapshot = session.snapshot;
+    // No tone the old session started survives it.
+    sound.reset(snapshot.elapsed);
     checkpointChangedResume();
   };
 
@@ -384,6 +430,8 @@ try {
   });
 
   handleOwnershipLost = () => {
+    sound.reset(snapshot.elapsed);
+    sound.suspend();
     release();
     shellConsole.close();
     notices.ownership('SESSION OPENED ELSEWHERE');
@@ -587,7 +635,43 @@ try {
   window.addEventListener('pagehide', () => {
     flushResume();
     takeover.close();
+    sound.dispose();
   });
+  window.addEventListener('blur', () => sound.suspend());
+  window.addEventListener('focus', () => {
+    if (!document.hidden && menu.layer() === 'none' && ownership.mayAdvance()) {
+      sound.resume();
+    }
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      sound.suspend();
+    } else if (menu.layer() === 'none' && ownership.mayAdvance()) {
+      sound.resume();
+    }
+  });
+  // Audio starts only inside a trusted gesture, as Targ's does.
+  const unlockSound = (event: Event): void => {
+    if (!event.isTrusted) {
+      return;
+    }
+    window.removeEventListener('pointerdown', unlockSound, true);
+    window.removeEventListener('keydown', unlockSound, true);
+    void sound
+      .unlock()
+      .then(() => {
+        if (
+          document.hidden ||
+          menu.layer() !== 'none' ||
+          !ownership.mayAdvance()
+        ) {
+          sound.suspend();
+        }
+      })
+      .catch(() => {});
+  };
+  window.addEventListener('pointerdown', unlockSound, { capture: true });
+  window.addEventListener('keydown', unlockSound, { capture: true });
 
   const paintNotices = (): void => {
     const save = persistence.message('');
@@ -646,6 +730,8 @@ try {
       .sort(([left], [right]) => left.localeCompare(right))
       .map(([cue, count]) => `${cue}:${count}`)
       .join(' ');
+    // Whether the sound presenter is locked, running or suspended, apart from the cue tally.
+    root['damoclesAudio'] = audioUnavailable ? 'unavailable' : sound.state;
     root['triangles'] = String(triangles);
     // Every structure and object the frame drew, repeats kept, so a browser pass can tell an
     // occupied craft is not drawn and a left one is drawn once rather than inferring it from a

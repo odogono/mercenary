@@ -23,6 +23,10 @@ describe('the Browser Shell document path', () => {
       document: 'damocles',
       kind: 'document'
     });
+    expect(resolveDocumentPath('/sounds')).toEqual({
+      document: 'sounds',
+      kind: 'document'
+    });
     expect(resolveDocumentPath('/damocles/atlas')).toEqual({
       document: 'atlas',
       kind: 'document'
@@ -46,6 +50,8 @@ describe('the Browser Shell document path', () => {
       ['/damocles/', '/damocles'],
       ['/catalogue.html', '/catalogue'],
       ['/catalogue/', '/catalogue'],
+      ['/sounds.html', '/sounds'],
+      ['/sounds/', '/sounds'],
       ['/atlas.html', '/damocles/atlas'],
       ['/damocles/atlas/', '/damocles/atlas'],
       ['/debug', '/targ/debug'],

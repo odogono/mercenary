@@ -56,6 +56,7 @@ The Y rule holds at arrival for Floors 1, 2 and 10 in the State Office (Y 213, 3
 | State Office capture | `rehosted/eris-lift.sav`, `7ba0352ffc3b3b0d1195e9cbfaec09598d4edd49f3ae4dc1f9a516cacb3de5a9` ([rehosted by #471](damocles-lift-control.md#the-state-office-capture-rehosted)) |
 | Vesta capture | `rehosted/vesta-transporter.sav`, `1590a28cf3d063e9bd5575ede79fc153d78c0f77a45d6a84cea9c2bb5fc1a280` |
 | Probe | [`research/damocles-st/scripts/lift-ride-probe.py`](../../research/damocles-st/scripts/lift-ride-probe.py) |
+| Sound probe | [`research/damocles-st/scripts/lift-sound-probe.py`](../../research/damocles-st/scripts/lift-sound-probe.py) (#508) |
 
 | Window | SHA-256 |
 | --- | --- |
@@ -68,9 +69,19 @@ The Y rule holds at arrival for Floors 1, 2 and 10 in the State Office (Y 213, 3
 | Door sound edges `$05A9DC`–`$05AA3B` | `95cc56d36ab788c9119e72e99a75c2e28f90371a6abb630668846d2ae1ae8da0` |
 | Door start effect `$04C37A`–`$04C3C5` | `1aaf53eaab621f63178ae439e17978c2a03b3047b809d9bb43133a3b00ac5982` |
 | Door stop effect `$04C2B8`–`$04C303` | `8db1b9eb4884ea84ceb35617f5490147330b3674a8dd63c18051a20ae6af8af0` |
+| Vector calls `$051DFE`–`$051E1D` | `da17332acf0c6ce1e2829ebc03ca81804e585674e573100761a338704b918762` |
+| Tick hold-off `$051D24`–`$051D73` | `3dcd7cda9cfec2e783373210157225fa766de64fa19a41ef370d9bb610fe4fc2` |
+| Restore and idle `$04C220`–`$04C2B7` | `997e48cabccb4a650e7a74b4d655623dd7cd93814c50f68ecbf9b2daf9f5ae6c` |
+| Burst and its step `$04C2B8`–`$04C379` | `d562cbadec1a5b44a5fa06eb346c5548c44fc11a11503d5ec38ca37de9b0bda6` |
+| Door tone and its step `$04C37A`–`$04C43B` | `9465b7a5adb4e025451b6b463bca63e9f45c9926f237ab2947f4a34ef48c4bc1` |
+| Door tables `$04C43C`–`$04C46F` | `d58e00f9b677a5cd7f2b2fd0f0d258068dd4f24df20ef1d77ff7f91ba1d7d999` |
+| Effect tail `$04C5EC`–`$04C60F` | `08074cfe7fe158cd50c90c4c4387d0fce21b62d508d54047e30b8dbc3d05c87e` |
+| Table walks `$04C722`–`$04C75B` | `9032960176eb2adb67023bb4c838e9e9566d94ca3f95c7a62ebd9f132ee422a8` |
 
-`lift-ride-probe.py decode` recomputes these hashes and checks 21 instruction sequences
-byte for byte before anything below is trusted.
+`lift-ride-probe.py decode` recomputes the first nine hashes and checks 21 instruction
+sequences byte for byte before anything below is trusted. `lift-sound-probe.py decode`
+does the same for the driver windows, and checks the 20 byte sequences, the tables among
+them, that [the programmes](#what-the-programmes-play) are read from.
 
 ## Why the step is 25 VBLs: substeps
 
@@ -194,35 +205,140 @@ storey above its placement. The port draws it there
 
 ## Sound
 
-Hatari runs with sound off in this laboratory. What follows is the PSG programme the
-game arms, recovered statically and confirmed armed at the traced VBLs; nothing
-audible was heard or is claimed
-([as for other effects](damocles-first-offer.md#sound-request-is-not-emitted-sound)).
+What follows is the PSG programme the game arms, recovered statically, confirmed armed
+at the traced VBLs, and since [#508](https://github.com/odogono/mercenary/issues/508)
+also **heard**: Hatari was run with sound on, and its output was recorded over a ride
+([heard in the Working Authority](#heard-in-the-working-authority)). A request is still
+not emitted sound ([as for other effects](damocles-first-offer.md#sound-request-is-not-emitted-sound)).
+That is why the recording is a separate observation.
 
 - **Doors.** The door animation raises `$5A9D8` on every pass in which a door is moving
   (`$05AAA4`, `$05AC00`). `$05A9EE`–`$05AA3A` compares it with the previous pass. On a
-  rising edge it arms `$04C37A` in the second sound vector `$04BF58`: channel C tone
-  period `$0400`, volume 15, with the mixer's channel C tone and noise both enabled
-  (the bits are active-low; `andi #$DB`), then the continuation `$04C3EA`. On a
-  falling edge it arms `$04C2B8`: noise period `$1F`, channel C noise on and tone off
-  (`andi #$DF`, `ori #$04`), then
-  `$04C328`, `$04C220` and `$04C250`. Both set `$04BF20` to the table at `$04C43C`. The
-  traces show `start` at VBL 0 and at the arrival, and `stop` when each door stops. So
-  a ride is a door tone and burst, silence while the label steps, and then the pair
-  again as the doors open. Every door shares this; it is not lift-specific.
+  rising edge it arms `$04C37A` in the second sound vector `$04BF58`, the door tone. On
+  a falling edge it arms `$04C2B8`, the noise burst. The traces show `start` at VBL 0
+  and at the arrival, and `stop` when each door stops. So a ride is a door tone and
+  burst, silence while the label steps, and then the pair again as the doors open.
+  Every door shares this; it is not lift-specific.
 - **The door edges' guard.** Unlike `$054848`, the edges do not test `$7A0C`. After
   latching the new state into `$5A9D9`, `$05AA18`–`$05AA24` skip the arming only when the
-  death state `$7A64` is nonzero and bit 14 of `$7B34` is set, so a door starting or
+  death state `$7A64` is nonzero and bit 14 of `$7B34` is set. So a door starting or
   stopping while the player is dead outside a structure region is latched but silent. The whole door
   pass `$05AA3C`, edges included, returns before anything when `$7B02` is negative.
   The port presents both cues on every edge, since it has no death state (#499).
-- **Arrival.** The YM writes above cut channels B and C. `$054848` then arms `$04C556`
-  in `$04BF54` (`$7A0C` was zero in every run): channel B tone period `$60`, envelope
-  period `$1F00`, shape 9 ([the shared effect](damocles-script-isa.md#the-native-routines-the-handlers-call-136)).
-  The trace sees it armed at the arrival VBL. It disarms itself one VBL later, and
-  `$7A78` counts 15 down to 0 over the next 8 VBLs.
+- **Arrival.** The YM writes in [the arrival](#the-arrival-completely) cut channels B
+  and C. `$054848` then arms `$04C556` in `$04BF54` (`$7A0C` was zero in every run).
+  The trace sees it armed at the arrival VBL. It disarms itself one VBL later.
 - **While the label steps** neither vector is armed. The step routine writes no PSG
   register.
+
+### What the programmes play
+
+The VBL handler calls both vectors every VBL: `$051E0E` calls `$04BF54`, then `$051E16`
+calls `$04BF58`. It skips both, for an alternate native path, when `$033F68` is
+nonzero; that word was zero in every capture. An idle vector points at the bare `rts`
+at `$051E86`. A programme is an entry that sets registers and then either disarms
+itself or re-arms the vector with a continuation. The continuation then runs once a
+VBL. The first vector, `$04BF54`, plays on **channel B**. The second, `$04BF58`, plays
+on **channel C**. So the shared effect and the door sounds never interrupt one another.
+A door edge replaces whatever door programme is running. Each programme keeps its own
+copy of the mixer in `$7C04` and edits only its own channel's bits (they are active
+low). The YM2149 is clocked at 2 MHz, so a tone period *P* sounds at 2 MHz / 16*P*.
+
+Two step routines walk the programmes' tables. `$04C722` walks words, with its counter
+at `$04BF1E` and its pointer at `$04BF20`. `$04C73A` walks bytes, with its counter at
+`$04BF25` and its pointer at `$04BF26`. Every VBL the caller decrements the counter.
+When the counter reaches zero, the routine reads the next `(count, value)` pair and
+reloads the counter with the count. A negative count (`$8000`, or `$80` then an aligned
+long) is a jump to the address that follows it. A count of zero ends the table.
+
+| Programme | Writes | Then |
+| --- | --- | --- |
+| Door tone `$04C37A` | tone C period `$400`; mixer `& $DB` (channel C tone **and** noise on); C level 15; both walks restarted: periods `$04C43C`, levels `$04C44A`, counters 1 | re-arms `$04C3EA` and falls into it the same VBL |
+| Door tone step `$04C3EA` | noise period 0, every VBL; a period step writes tone C; a level step writes C's level | runs until a door edge replaces it |
+| Noise burst `$04C2B8` | tone C period `$400`; noise period `$1F`; mixer `& $DF \| $04` (channel C noise on, tone off); periods `$04C43C`, levels `$04C466`, counters 1 | re-arms `$04C328` and falls into it |
+| Burst step `$04C328` | as the tone step, less the noise write | when the level table ends: re-arms `$04C220`, writing nothing that VBL |
+| Restore `$04C220` | mixer `& $DB`; noise period `$1F` (C's level stays 0) | re-arms `$04C250` and falls into it |
+| Idle `$04C250` | only while `$797A` is not negative: C's level from its high word (at most 15), tone C period `$10`, noise `$1F`, and `$7C0C` ← `$FFFF`; otherwise, if `$7C0C` is set, C's level 0 and `$7C0C` cleared | stays armed |
+| Shared effect `$04C556` | `$7A78` ← 15; envelope period `$1F00`; tone B period `$060`; mixer `& $FD \| $10` (channel B tone on, noise off); tail `$04C5EC`: B's level `$1F` (envelope mode), envelope shape 9 | disarms (`$051E86`) |
+
+| Table | Entries (count, value) |
+| --- | --- |
+| Door periods `$04C43C` | (1, `$3E8`), (1, `$41A`), then back to `$04C43C` |
+| Door tone levels `$04C44A` | (1, 10), (1, 11), (1, 13), (1, 13), (1, 11), (1, 10), (1, 9), (1, 8), (1, 7), (1, 6), (1, 5), then back to `$04C456`, the (1, 9) |
+| Burst levels `$04C466` | (1, 12), (1, 8), (1, 4), (1, 0), end |
+
+So, VBL by VBL:
+
+- **The door tone** is channel C's square gated by the fastest noise (period 0 acts
+  as 1). Its period alternates `$3E8` and `$41A`, 125.0 and 119.2 Hz. Its level swells
+  and falls, 10, 11, 13, 13, 11, 10, 9, 8, 7, 6, 5, then 9, 8, 7, 6, 5 over and over
+  until the door stops. The period `$400` and level 15 the entry writes are replaced
+  within the same VBL.
+- **The burst** is noise alone at period `$1F`, at levels 12, 8, 4 and 0, one VBL each.
+  One VBL later the vector moves to `$04C220`, and one VBL after that the idle `$04C250`
+  begins. Channel C is left at level 0 with tone and noise enabled.
+- **The shared effect** is a 1302 Hz square on channel B under envelope shape 9: one
+  decay from full to silence, 256 × `$1F00` / 2 MHz = 1.016 s, and then silence held.
+  It runs for a single VBL; the chip's envelope does the rest.
+- **The request `$054848` cuts channel C** as soon as it arms the effect. It writes
+  C's level 0 at once, unless `$7C0C` or `$033F68` is set. A take or a drop while a
+  door tone plays silences it until the next VBL's level step.
+- **`$7A78`**, which the effect sets to 15 and every other request to 3, holds off the
+  periodic tick `$0004C6B2`. `$051D24` decrements it instead of ticking while it is
+  nonzero, so the tick does not rewrite channel B while the count runs. After the
+  arrival the traces saw it count 15 down to 0 over 8 VBLs.
+
+The idle `$04C250` is the only programme here that depends on something besides the
+requests. It reads `$797A`, which was negative in every capture examined, on foot or
+aboard (`$FF001000`, and `$FEFE10D0` in the boarded car). There it only clears
+`$7C0C`, which nothing in a lift sets. So in a lift channel C is silent between door
+sounds.
+
+### Heard in the Working Authority
+
+`lift-sound-probe.py record` boots the State Office capture with sound on at 48 kHz
+(`--ym-mixing model`), pokes `$FFFF820A` ← `$02` for the PAL rate the UK release ran
+at ([display rate](damocles-display-rate.md)), and records Hatari's own WAV over a
+ride from G to 1 and back. Cycles per field read 133604 before the poke and 160256
+after it, which is 50.05 Hz. The WAV is filled by the emulation, not by the host audio
+device, so host timing decides only which VBL a key lands on. Run
+`lift-sound-eris-20260925T081244Z-e1ea8a22`, mono WAV
+`41ee76bd0e519f20d39309914ad005b9b698e727429006e0c335caffce7a7c69`.
+
+| Sound | Heard (ride 1, ride 2) | Decoded |
+| --- | --- | --- |
+| Door tone | a buzz under noise; fundamental 126/122 and 130/120 Hz on alternate VBLs; 8.5 % of its power above 5 kHz | 125.0 / 119.2 Hz, gated by noise |
+| Door tone levels | low band per VBL −32.7 −29.5 −22.9 −23.0 −29.6 −32.9 −35.8 −39.0 −42.9 −45.3 −48.0, then −35.7 −39.6 −42.1 −45.2 …, about 3.2 dB a level; the loop restarts every 100 ms | 10, 11, 13, 13, 11, 10, 9, 8, 7, 6, 5, then 9 to 5; 5 VBLs |
+| Door tone length | 30 and 32 VBLs as the car's door shuts, 28 and 36 as the new one opens | until the door stops |
+| Burst | −21.9, −32.2, −42.6 dB, then a −54 dB tail, then silence | 12, 8, 4, 0, a VBL each |
+| While the label steps | silence, 0.92 s: burst to arrival 50.0 and 49.0 VBLs | nothing armed |
+| Arrival | 1305.9 Hz (1.46 Hz bins); in its band −12.0 dB at onset, falling about 48 dB in 0.95 s, below −113 dB by 1.0 s | 1302 Hz; envelope 9, 1.016 s of 32 steps of 1.5 dB |
+| The new door | starts on the arrival's VBL and plays under it | both vectors in one VBL |
+
+Nothing else sounds. There is no channel A, no engine, and nothing between the rides;
+the lead-in never passes 1 LSB. So the programmes above are what a ride plays, VBL by
+VBL, in the order decoded. The door lengths differ from ride to ride because
+`$05AA3C` runs once a substep and a frame takes 4 to 8 VBLs; they are not a property
+of the sound. The recording also has clicks at each onset. These are the chip's
+unipolar output stepping, which Hatari's DC filter then removes.
+
+**Limits.** This is Hatari 2.6.1's model of an STF's output, not a real machine's.
+Its `model` mixing takes its volume table from sc68; the datasheet's 1.5 dB ladder predicts
+3 dB a fixed level, against the 3.2 dB heard. Its C10 low-pass is derived from the STF
+schematic for a corner of 7.7 kHz while the chip pulls up and 2.1 kHz while R8 pulls
+down. But `sound.c` applies those coefficients, meant for 44.1 or 48 kHz, to every
+250 kHz sample (`YM2149_DoSamples_250`). That leaves its effective corners near 43 and
+11 kHz, which is why the door tone carries 8.5 % of its power above 5 kHz. A mixed WAV
+also cannot say which channel played what; the decode does.
+
+**The port against it.** `web/tools/damocles-sound-render.ts` renders what the
+presenter plays for the State Office ride, and the same `analyse` reads it. Pitches,
+level steps, lengths and silences agree: door tone 126.1/119.7 Hz, the levels 3 dB
+apart, the burst 12 dB a step, the arrival 1302 Hz with the same decay. With its
+output gain set to match, the door peak is −21.1 dB against −21.9, and the arrival
+−12.1 against −11.3. The port's low-pass keeps the schematic's corners, so it is
+darker: 3.2 % of the door tone's power above 5 kHz, and 2.4 % of the arrival's
+against 5.7 %.
 
 ## Runs
 
@@ -230,6 +346,10 @@ audible was heard or is claimed
 python3 research/damocles-st/scripts/lift-ride-probe.py decode
 python3 research/damocles-st/scripts/lift-ride-probe.py live --roms roms --case eris
 python3 research/damocles-st/scripts/lift-ride-probe.py live --roms roms --case vesta
+research/damocles-st/.venv/bin/python research/damocles-st/scripts/lift-sound-probe.py decode
+research/damocles-st/.venv/bin/python research/damocles-st/scripts/lift-sound-probe.py record --roms roms
+research/damocles-st/.venv/bin/python research/damocles-st/scripts/lift-sound-probe.py analyse <mono.wav>
+(cd web && bun tools/damocles-sound-render.ts <port.wav>)
 ```
 
 `live` boots one rehosted memstate with fast-forward off, arms a chain over the command
@@ -276,8 +396,9 @@ What the port can present as recovered:
 - **Nothing else is drawn:** no transition, fade or camera motion.
 - **Sound:** door-start tone and door-stop noise burst for every door movement (presented
   as the `door-start` and `door-stop` Sound Cues, #499); channels B/C
-  cut and the shared `$04C556` effect on arrival. The effects' PSG programmes are
-  above; what they sound like was not heard.
+  cut and the shared `$04C556` effect on arrival. The programmes are
+  [above](#what-the-programmes-play), and they were [heard](#heard-in-the-working-authority).
+  #508 presents them.
 - **Timing basis:** the port should count 25 substeps per step, and a substep is a VBL
   while frames take 4–8 VBLs. Door speed is the attachment animation's, and it differs
   per door: about 30 VBLs in the State Office, 80 at Vesta. [#498](damocles-door-speed.md)
@@ -295,6 +416,23 @@ What the port can present as recovered:
   named only.
 - **Frames faster than 4 VBLs or slower than 8**, where substeps stop tracking VBLs,
   were not observed.
+- **What a real ST sounds like.** The recording is Hatari's model of an STF's output,
+  and its low-pass runs at the wrong rate ([limits](#heard-in-the-working-authority)).
+  No original machine was recorded.
+- **The arrival's own channel B cut.** `$055C1E` zeroes B's level before `$054848`
+  runs. A take's request does not. The port presents the arrival as the request alone,
+  since the effect rewrites B's level on the next VBL; the difference lasts less than a
+  VBL.
+- **The idle `$04C250`'s engine sound** plays only while `$797A` is not negative. No
+  capture has reached that, and the port does not keep `$797A`, so it is not presented.
+- **The periodic tick `$0004C6B2`**, which `$7A78` holds off, belongs to the timer path
+  ([#136](damocles-script-isa.md#the-native-routines-the-handlers-call-136)). The port
+  has no Sound Cue for it.
+- **The rest of the driver's bank**, `$04BF5C`, `$04C016`, `$04C0B4`, `$04C16E`,
+  `$04C1EE`, `$04C470`, `$04C5A8`, `$04C610`, `$04C630`, `$04C652` and `$04C700`, is
+  armed from code no lift or door reaches. None of it was decoded here.
+- **`$033F68`'s alternate sound path** at `$033F6A` was zero in every capture and was
+  not followed.
 - **Where the Floor Label is drawn** is settled by [#473](https://github.com/odogono/mercenary/issues/473)
   in [the Floor Label draw site](damocles-floor-label.md): structure wall text beside each
   lift car's door, drawn by the departure Floor's records while the label steps.

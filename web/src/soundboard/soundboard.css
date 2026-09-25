@@ -1,0 +1,96 @@
+:root {
+  color-scheme: dark;
+  --background: #111719;
+  --surface: #1b2427;
+  --text: #e4ebe8;
+  --muted: #b2c2bb;
+  --border: #566960;
+  --accent: #a8e1c1;
+  --error: #ffb5a8;
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--background);
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+main {
+  max-width: 72rem;
+  margin: auto;
+  padding: 1.5rem;
+}
+header {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 1rem;
+}
+h1 {
+  font-size: 2rem;
+  line-height: 1.2;
+  margin: 0.5rem 0 1rem;
+}
+p {
+  color: var(--muted);
+}
+.eyebrow {
+  color: var(--accent);
+  margin: 0;
+}
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+.board {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+}
+.sound {
+  display: grid;
+  gap: 0.4rem;
+  align-content: start;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  background: var(--surface);
+}
+.sound h3 {
+  font-size: 1rem;
+  margin: 0;
+}
+.sound p {
+  font-size: 0.85rem;
+  margin: 0;
+}
+.sound .buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+button {
+  font: inherit;
+  color: var(--text);
+  background: #26353a;
+  border: 1px solid var(--border);
+  border-radius: 0.3rem;
+  padding: 0.3rem 0.7rem;
+  cursor: pointer;
+}
+button:hover,
+button:focus-visible {
+  border-color: var(--accent);
+}
+input[type='range'] {
+  width: 100%;
+}
+.controls input[type='range'] {
+  width: 10rem;
+}
+#error {
+  color: var(--error);
+}
