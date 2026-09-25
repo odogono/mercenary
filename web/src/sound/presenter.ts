@@ -33,6 +33,23 @@ export interface PresentSoundStep {
   readonly suppressTransient?: boolean;
 }
 
+/// Benson's voice 3 frequency high byte for the character the display last shifted in, or the
+/// silence byte when no burst is shifting.
+export const bensonFrequencyHigh = (
+  rule: SoundDocument['bensonDisplay'],
+  character: string | undefined
+): number => {
+  if (character === undefined) {
+    return rule.stopFrequencyHigh;
+  }
+  const code = character.charCodeAt(0) & rule.characterMask;
+  return (
+    ((code === rule.spaceCode ? rule.spaceFrequencyHigh : code) +
+      rule.frequencyHighBias) &
+    0xff
+  );
+};
+
 const scriptCommand = (
   event: Extract<PresentationEvent, { readonly script: unknown }>
 ): SoundCommand | undefined => {
@@ -215,20 +232,11 @@ export class SoundPresenter {
     const display = snapshot.bensonMessage?.soundCharacter ?? '';
     if (refresh || display !== this.lastDisplay) {
       this.lastDisplay = display;
-      const character = display.at(-1)?.charCodeAt(0);
       const rule = this.document.bensonDisplay;
-      const value =
-        character === undefined
-          ? rule.stopFrequencyHigh
-          : (((character & rule.characterMask) === rule.spaceCode
-              ? rule.spaceFrequencyHigh
-              : character & rule.characterMask) +
-              rule.frequencyHighBias) &
-            0xff;
       commands.push({
         kind: 'write',
         register: rule.frequencyHighRegister,
-        value
+        value: bensonFrequencyHigh(rule, display.at(-1))
       });
     }
 
