@@ -67,6 +67,18 @@ export const bodySteps = (
   z: bodyStep(position.z, BODY_Z_BIAS)
 });
 
+const wrapStep = (step: number): number =>
+  ((step % BODY_STEPS) + BODY_STEPS) % BODY_STEPS;
+
+/// `bodySteps` before the shift drops the fraction: where between two steps the player stands.
+/// Only the Enhanced sky reads it; the engine never sees a fractional step.
+export const continuousBodySteps = (
+  position: Vector3
+): { readonly x: number; readonly z: number } => ({
+  x: wrapStep(position.x / BODY_STEP_UNITS),
+  z: wrapStep(position.z / BODY_STEP_UNITS + BODY_Z_BIAS)
+});
+
 /// The Body Coordinate Readout, from the player's position on the Body (#371).
 export const bodyCoordinateReadout = (position: Vector3): string => {
   const steps = bodySteps(position);
