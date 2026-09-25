@@ -645,6 +645,57 @@ describe('the ride heard (#508)', () => {
   });
 });
 
+/// Every cue asked for over `vbls` VBLs.
+const heardFor = (session: DamoclesSession, vbls: number): string[] => {
+  const heard: string[] = [];
+  for (let vbl = 0; vbl < vbls; vbl += 1) {
+    session.advance(VBL);
+    heard.push(...cuesOf(session));
+  }
+  return heard;
+};
+const thuds = (heard: readonly string[]) =>
+  heard.filter(cue => cue === 'thud').length;
+
+/// The thud `$04C630` on the rising edge of a refused step (#521,
+/// docs/research/damocles-sound-programmes.md): once as contact starts, not once a frame.
+describe('the wall thud (#521)', () => {
+  test('holding the stick into a wall asks for one thud; stepping back and in again, another', () => {
+    const session = walking(inLift(), -Math.PI / 2);
+    // The car's back wall has no region beyond, so the inset holds the eye at X −879.
+    expect(thuds(heardFor(session, 200))).toBe(1);
+    expect(localEye(session).x).toBeCloseTo(-879, 6);
+
+    session.intent = intent({ walk: -1 });
+    expect(thuds(heardFor(session, 10))).toBe(0);
+    expect(localEye(session).x).toBeGreaterThan(-879);
+
+    session.intent = intent({ walk: 1 });
+    expect(thuds(heardFor(session, 100))).toBe(1);
+  });
+
+  test('a wall the eye rests against, with the stick released, asks for nothing', () => {
+    const session = walking(inLift(), -Math.PI / 2);
+    heardFor(session, 200);
+    session.intent = intent({});
+    expect(thuds(heardFor(session, 50))).toBe(0);
+  });
+
+  test('the thud is presented as the recorded noise, a 0.26 s decay', async () => {
+    const session = walking(inLift(), -Math.PI / 2);
+    const heard = heardUntil(session, vbls => vbls === 200);
+    const [at] = heard.find(([, cue]) => cue === 'thud')!;
+    const processor = await damoclesProcessor();
+    // Only the thud is posted, so the car door's tones do not cover its decay.
+    processor.post({ at: at * VBL, commands: [{ cue: 'thud', kind: 'cue' }] });
+    const levels = vblLevels(processor.render((at + 40) * VBL));
+    expect(levels.slice(0, at).every(level => level < 5e-4)).toBeTrue();
+    expect(levels[at + 1]!).toBeGreaterThan(3e-3);
+    // 256 × $800 / 2 MHz = 0.26 s: 13 VBLs, and silent after.
+    expect(levels.slice(at + 15).every(level => level < 5e-4)).toBeTrue();
+  });
+});
+
 describe('outside a lift', () => {
   test('aboard there is no lift', () => {
     const session = inLift();

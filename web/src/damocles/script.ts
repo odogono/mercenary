@@ -63,8 +63,9 @@ export interface ScriptState {
 
 export interface Effect {
   /// `door-start` and `door-stop` are the second sound vector's door tone and noise burst
-  /// (`$04C37A`, `$04C2B8`), asked for as any door starts and stops moving.
-  readonly cue: 'door-start' | 'door-stop' | 'drop' | 'take';
+  /// (`$04C37A`, `$04C2B8`), asked for as any door starts and stops moving. `thud` is the first
+  /// vector's noise `$04C630`, asked for as an on-foot step is first refused at a region edge.
+  readonly cue: 'door-start' | 'door-stop' | 'drop' | 'take' | 'thud';
   readonly type: 'sound-request';
 }
 
