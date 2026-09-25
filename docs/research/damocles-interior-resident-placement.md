@@ -148,7 +148,7 @@ further residents, slots 65 and 145, now bind to it through the general path.
 
 ### How far to trust the replay
 
-Three independent checks, all passing.
+Four independent checks, all passing.
 
 1. **Leave-one-out, every capture.** `scripts/image-workspace-check.py` reruns the
    whole extraction without each of the 21 workspace captures in turn, so that
@@ -167,7 +167,17 @@ Three independent checks, all passing.
    in `damocles.key-west.sav` are byte-identical to the replay. That capture was
    never usable as a workspace because the player stands 60 cells outside the
    built window; the loader had built the tables all the same.
-3. **The port draws them.** A session standing on synthetic arrival poses inside
+3. **A live flight to Dion North.** `workspace-capture-probe.py` flew the Dion pose's
+   craft to DION NORTH (`$1B`) with real stick and key input, nothing injected, and
+   statesaved over it (`--capture-airborne`; the descent does not land in the time
+   allowed). The capture, `dion-north-airborne.sav` (SHA-256
+   `71d0a1224672551e4a0ddcefa32903007b3a284a123012d6e83cd68261064c64`), stands
+   inside the built window: its implied origin is the island's (3316, 1378). The
+   running loader's tables are byte-identical to the replay, and leave-one-out with
+   it added publishes the same 25 structures, 256 ground cells and 5 placed residents
+   whether the island comes from the capture or from the image. It stays a
+   verification capture, not a Catalogue input.
+4. **The port draws them.** A session standing on synthetic arrival poses inside
    image-derived buildings binds HATHAWAYS WINE BAR, POSTOFFICE SORTING and TRADING
    POST on Snow Island, a Velos City building, and HANTZEN SALES, and draws the
    resident stood beside in each.
