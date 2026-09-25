@@ -79,7 +79,9 @@ The Y rule holds at arrival for Floors 1, 2 and 10 in the State Office (Y 213, 3
 | Table walks `$04C722`–`$04C75B` | `9032960176eb2adb67023bb4c838e9e9566d94ca3f95c7a62ebd9f132ee422a8` |
 
 `lift-ride-probe.py decode` recomputes the first nine hashes and checks 21 instruction
-sequences byte for byte before anything below is trusted. `lift-sound-probe.py decode`
+sequences byte for byte before anything below is trusted. Since #509 it also checks the
+movement windows and ten more sequences, for
+[moving during a ride](damocles-lift-ride-movement.md). `lift-sound-probe.py decode`
 does the same for the driver windows, and checks the 20 byte sequences, the tables among
 them, that [the programmes](#what-the-programmes-play) are read from.
 
@@ -409,13 +411,15 @@ What the port can present as recovered:
 - **Door animation speed per attachment** is settled by [#498](https://github.com/odogono/mercenary/issues/498)
   in [how fast a door moves](damocles-door-speed.md): one unit per substep for every door,
   so the two doors here differ only in travel (32 and 82 units, closing in 33 and 83 substeps).
-- **Moving during a ride.** The runs held no input. Movement `$57CC2` still runs every
-  substep, and the region is frozen for the ride ([#471](damocles-lift-control.md#who-writes-788a-and-what-ffff-means)).
-  Whether the player can walk about the car mid-ride was not examined.
+- **Moving during a ride** is settled by [#509](https://github.com/odogono/mercenary/issues/509)
+  in [moving during a Damocles Lift ride](damocles-lift-ride-movement.md). The player walks
+  and turns freely inside the car, cannot leave it, and keeps the walked pose and yaw
+  across the arrival.
 - **`$7BC8`, `$7AB0`, `$070100`, `$070108`**, which the arrival clears or sets, are
   named only.
-- **Frames faster than 4 VBLs or slower than 8**, where substeps stop tracking VBLs,
-  were not observed.
+- **Frames slower than 8 VBLs**, where substeps stop tracking VBLs, were not observed
+  here. Frames faster than 4 were seen by #509 while walking in the Vesta car
+  ([frames faster than 4 VBLs](damocles-lift-ride-movement.md#cases)).
 - **What a real ST sounds like.** The recording is Hatari's model of an STF's output,
   and its low-pass runs at the wrong rate ([limits](#heard-in-the-working-authority)).
   No original machine was recorded.
