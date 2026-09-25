@@ -405,9 +405,10 @@ Read the code windows above from `observed.ram` with Capstone (the lab venv has 
   re-checked here.
 - **`$04CFA4`**, called from `$05309A` when `$7834 ≠ 0` and `$7830 ≥ 0`, was not read.
   `$7830` is `$002C` (ERIS) in four captures, all with `$7834 = 0`.
-- **The port does not draw sky Bodies yet.** Implementing them is a follow-up.
-  [#529](https://github.com/odogono/mercenary/issues/529) publishes what it needs in
-  `payload/damocles/system.json`: each Body's `drawList`, `size` and `radius = size / 256`.
-  It also adds a `sky` block with the projection scale `$7964`, the eye height `$799E`,
-  the half-width divisor `$045A0C` and the clip rows `$0530A6`/`$0530B0`. The comet's
-  geometry is not published.
+- **The port draws the listed Bodies** (#530, `web/src/damocles/sky.ts`) from the
+  `drawList`, `size` and `sky` block
+  [#529](https://github.com/odogono/mercenary/issues/529) publishes in
+  `payload/damocles/system.json`. It hands the rotated offset to the Camera that draws the
+  structures and cuts the disc at the view's centre row. It draws the disc round, because
+  the port's pixels are square. The comet's geometry is not published, so DAMOCLES is not
+  drawn yet.

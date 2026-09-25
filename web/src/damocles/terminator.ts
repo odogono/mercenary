@@ -19,6 +19,21 @@ const LONGWORD = 2 ** 32;
 export const advanceTurn = (turn: number, rate: number, vbls: number): number =>
   (turn + ((rate * vbls) % LONGWORD)) % LONGWORD;
 
+/// The sky angles `$042C6C` and `$042C70`: the System-frame longitude, which is the
+/// observer's longitude step turned by the accumulator's high word (`$059384`), and the biased
+/// latitude step. The terminator and the sky Bodies (#530) both read them, so sunrise and the
+/// Bodies' places come from the one accumulator.
+export const skyAngles = (
+  turn: number,
+  position: Vector3
+): { readonly latitude: number; readonly longitude: number } => {
+  const steps = bodySteps(position);
+  return {
+    latitude: steps.z,
+    longitude: (steps.x + Math.floor(turn / 0x1_00_00)) & 0x3_ff
+  };
+};
+
 /// Whether the terminator puts the observer at `position` in daylight: where the System
 /// longitude is a quarter turn or more from the sub-stellar longitude, bit 9 of the biased
 /// latitude step inverting the answer (`$050562`-`$05057E`).
@@ -27,10 +42,9 @@ export const inDaylight = (
   turn: number,
   position: Vector3
 ): boolean => {
-  const steps = bodySteps(position);
-  const longitude = (steps.x + Math.floor(turn / 0x1_00_00)) & 0x3_ff;
+  const { latitude, longitude } = skyAngles(turn, position);
   return (
-    ((((subStellarLongitude - longitude + 0x1_00) & 0x2_00) + steps.z) &
+    ((((subStellarLongitude - longitude + 0x1_00) & 0x2_00) + latitude) &
       0x2_00) !==
     0
   );

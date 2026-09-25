@@ -64,6 +64,7 @@ import {
 } from './save.ts';
 import { createDamoclesSavePersistence } from './saves.ts';
 import { DamoclesSession } from './session.ts';
+import { skyPass } from './sky.ts';
 import {
   DamoclesSoundPresenter,
   type DamoclesSoundCommand,
@@ -147,8 +148,11 @@ try {
   } catch {
     storage = undefined;
   }
-  const [content] = await Promise.all([
+  const [content, system] = await Promise.all([
     damoclesTitle.load(requiredJson),
+    requiredJson('/payload/damocles/system.json').then(document =>
+      readGammaSystem(document.value)
+    ),
     loadTypography()
   ]);
   applyTypeface(document.documentElement, readTypefacePreference(storage));
@@ -443,9 +447,6 @@ try {
     atlasBusy = true;
     release();
     try {
-      const system = readGammaSystem(
-        (await requiredJson('/payload/damocles/system.json')).value
-      );
       const current = session.snapshot;
       const body = system.bodies.find(
         item => `body-${item.sourceIndex}` === current.pose.body
@@ -851,7 +852,8 @@ try {
 
   const expose = (
     triangles: number,
-    drawnPlacements: readonly string[]
+    drawnPlacements: readonly string[],
+    skyBodies: readonly string[]
   ): void => {
     const root = canvas.dataset;
     root['body'] = snapshot.pose.body;
@@ -901,6 +903,8 @@ try {
     root['unresolved'] = String(snapshot.surface.unresolvedCount);
     // The terminator's answer, so a browser pass can say which sky and palette half it expects.
     root['daylight'] = String(snapshot.daylight);
+    // The sky Bodies any of whose disc the frame draws, in draw order (#530).
+    root['skyBodies'] = skyBodies.join(' ');
   };
   const draw = (): void => {
     // The surface comes from the Session Snapshot rather than the presentation document, so a
@@ -917,7 +921,15 @@ try {
         ...snapshot.residence.map(item => item.instance)
       ],
       slot => session.carriesSlot(slot),
-      snapshot.daylight
+      snapshot.daylight,
+      // The sky Bodies turn with the accumulator the terminator reads, so a Save restores both.
+      skyPass(system, {
+        body: snapshot.pose.body,
+        daylight: snapshot.daylight,
+        position: snapshot.pose.position,
+        sky: snapshot.surface.sky,
+        turn: snapshot.bodyTurn
+      })
     );
     const { castShadows, presentationPreset } = preferences.current();
     const shadowEdge = castShadows ?? DEFAULT_CAST_SHADOWS;
@@ -940,7 +952,11 @@ try {
     panel.draw(
       damoclesPanelViewModel(snapshot, content.doc, controls.intent.running)
     );
-    expose(plan.triangleCount, plan.drawnPlacements);
+    expose(
+      plan.triangleCount,
+      plan.drawnPlacements,
+      plan.skyBodies.filter(body => body.drawn).map(body => body.id)
+    );
     paintNotices();
   };
   publish = draw;

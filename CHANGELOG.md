@@ -12,6 +12,16 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Added
 
+- **Damocles draws the other Bodies of a cluster in the surface sky.** On METIS by day
+  ERIS is a large `#000066` crescent cut flat at the horizon, and VESTA a small `#4488cc`
+  one. Each Body on the current Body's draw list is turned through the celestial
+  rotation `R(lon, lat)` from the same accumulator the terminator reads, so sunrise and
+  the Bodies move together and a Save restores both. The disc is split by #528's vertical
+  terminator ellipse. Its unlit part is the sky by day where there is air and black
+  otherwise, and the ground and structures cover it. Every listed Body lands where #528's
+  pinned frame RAM puts it. Enclosed regions draw no sky Bodies. DAMOCLES's comet path is
+  left for #538 (#530).
+
 - **The Damocles Data Payload carries each Body's sky draw list and true size.**
   `payload/damocles/system.json` is now extracted by `damocleslab.system` rather than
   transcribed. Each Body gains `drawList`, the Bodies its sky draws in the engine's order
