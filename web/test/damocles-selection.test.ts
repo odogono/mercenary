@@ -186,7 +186,7 @@ test('region pushback clamps only the blocked axis and preserves wall sliding', 
   const pushed = clampStructureStep(
     placement,
     at(1000, -1000),
-    at(1100, 0),
+    at(1100, -805),
     false,
     latched('closed'),
     region
@@ -204,8 +204,8 @@ test('region pushback clamps only the blocked axis and preserves wall sliding', 
   );
   const window = clampStructureStep(
     placement,
-    at(700, 0),
-    at(1000, 0),
+    at(780, 0),
+    at(795, 0),
     false,
     latched('closed'),
     windowRegion
@@ -247,18 +247,33 @@ test('the doorway region is admitted only once its latch reads fully open', () =
     latched('closed')
   );
   expect(region).toBe(2);
-  const closed = clampStructureStep(
+  // The doorway shares the inset edge and its inset X span holds the eye, so whatever its
+  // latch the eye stands past the inset (`$05A504`).
+  const band = clampStructureStep(
     placement,
     outside,
+    at(1400, -805),
+    false,
+    latched('closed'),
+    region
+  );
+  expect(band.pose.position.z).toBe(placement.position.z - 805);
+  expect(band.regionIndex).toBe(region);
+  // Past the room's own edge the doorway is refused until open, and the eye is held at the
+  // edge less one (`$05A4CA`).
+  const closed = clampStructureStep(
+    placement,
+    at(1400, -805),
     at(1400, -790),
     false,
     latched('moving'),
     region
   );
-  expect(closed.pose.position.z).toBe(placement.position.z - 812);
+  expect(closed.pose.position.z).toBe(placement.position.z - 801);
+  expect(closed.regionIndex).toBe(region);
   const open = clampStructureStep(
     placement,
-    outside,
+    at(1400, -805),
     at(1400, -790),
     false,
     latched('open'),
@@ -266,6 +281,17 @@ test('the doorway region is admitted only once its latch reads fully open', () =
   );
   expect(open.pose.position.z).toBe(placement.position.z - 790);
   expect(open.regionIndex).toBe(1);
+  // A pending ride refuses every region, open or not (`$05A35C`).
+  const riding = clampStructureStep(
+    placement,
+    at(1400, -805),
+    at(1400, -790),
+    false,
+    latched('open'),
+    region,
+    true
+  );
+  expect(riding.pose.position.z).toBe(placement.position.z - 801);
 });
 
 test('the Entrance Attachment stays rendered and interpolates its inner edges', () => {

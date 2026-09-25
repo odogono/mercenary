@@ -189,6 +189,12 @@ clamping to the current region with no inset (`$05A4CA`). A correction that drop
 from the edge test must add that fallback, or a ride would let the eye through the doorway.
 [#517](https://github.com/odogono/mercenary/issues/517) specifies it.
 
+[#517](https://github.com/odogono/mercenary/issues/517) made both changes together:
+`clampStructureStep` no longer tests the gate at an inset edge, and past the region's own box
+it clamps to that box with no inset when no region may be selected, with a pending ride
+refusing every region. The port now holds the eye at X −611 and X 289
+(`web/test/damocles-lift.test.ts`, "the eye at a region edge").
+
 The port walks about 6.6 units a tick on foot, against 10 a substep here. The walk is outside
 ADR 0049, advanced by session seconds from a derived average
 ([`walk` in eris.json](../../web/damocles/eris.json)), and this note does not revisit it.
