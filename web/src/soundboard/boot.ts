@@ -1,3 +1,5 @@
+import { BensonDisplay } from '../benson/display.ts';
+import { BensonHostState } from '../benson/host.ts';
 import type { DamoclesCue } from '../damocles/psg.ts';
 import type {
   DamoclesSoundCommand,
@@ -6,7 +8,7 @@ import type {
 import type { SoundDocument } from '../payload/documents.ts';
 import { readers } from '../payload/read.ts';
 import { assertBrowserDocument } from '../shell/documentPath.ts';
-import type { SoundCommand } from '../sound/presenter.ts';
+import { bensonFrequencyHigh, type SoundCommand } from '../sound/presenter.ts';
 import { AudioWorkletTransport } from '../sound/transport.ts';
 
 /// The sound board: every sound the port plays, on demand, for listening (#508).
@@ -73,19 +75,6 @@ const slider = (
   input.addEventListener('input', () => change(Number(input.value)));
   wrapper.append(input);
   parent.after(wrapper);
-};
-
-/// Benson's voice 3 frequency high byte for the character the display last showed.
-const bensonFrequency = (
-  rule: SoundDocument['bensonDisplay'],
-  character: string
-): number => {
-  const code = character.charCodeAt(0) & rule.characterMask;
-  return (
-    ((code === rule.spaceCode ? rule.spaceFrequencyHigh : code) +
-      rule.frequencyHighBias) &
-    0xff
-  );
 };
 
 const hex = (value: number): string =>
@@ -336,38 +325,43 @@ try {
   const benson = card(
     targBoard,
     'Benson typing',
-    'Voice 3 follows each character Benson shows, ten a second here.'
+    'Voice 3 follows each character Benson shows: 25 shifts at 50 Hz, then the silent wait.'
   );
   const text = document.createElement('input');
   text.value = 'WELCOME TO TARG';
   text.setAttribute('aria-label', 'Benson text');
   benson.before(text);
   button(benson, 'Type', () => {
-    const characters = [...text.value];
+    // The Session's own display, stepped a frame at a time, so the bursts, the pause and the
+    // trailing spaces match the game rather than an even typing rate.
+    const display = new BensonDisplay(VBL_HERTZ);
+    display.start(text.value, BensonHostState.defaultMessageInterval);
     void unlock().then(() => {
       const start = now();
-      for (const [index, character] of characters.entries()) {
-        targ.send({
-          at: start + index * 0.1,
-          commands: [
-            {
-              kind: 'write',
-              register: bensonDisplay.frequencyHighRegister,
-              value: bensonFrequency(bensonDisplay, character)
-            }
-          ]
-        });
+      let last: number | undefined;
+      for (let frame = 0; ; frame += 1) {
+        const value = bensonFrequencyHigh(
+          bensonDisplay,
+          display.soundCharacter
+        );
+        if (value !== last) {
+          targ.send({
+            at: start + frame * VBL,
+            commands: [
+              {
+                kind: 'write',
+                register: bensonDisplay.frequencyHighRegister,
+                value
+              }
+            ]
+          });
+          last = value;
+        }
+        if (display.isFinished) {
+          break;
+        }
+        display.advance(VBL);
       }
-      targ.send({
-        at: start + characters.length * 0.1,
-        commands: [
-          {
-            kind: 'write',
-            register: bensonDisplay.frequencyHighRegister,
-            value: bensonDisplay.stopFrequencyHigh
-          }
-        ]
-      });
     });
   });
   button(targBoard, 'Stop Targ', stopTarg);
