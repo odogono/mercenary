@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Damocles Lift ride probe (#472).
+"""Damocles Lift ride probe (#472, movement #509).
 
 #471 recovered the order of a ride: a key is admitted, the door is pinned and
 closes, the Floor Label steps one Floor per 25 countdown ticks, and one expiry
@@ -32,11 +32,22 @@ The ``vesta`` case makes #471's one intervention, at the chain's first stop:
 it writes the player's X/Z (pose low words and structure-local copies) to
 stand inside the Vesta transporter's lift region. Nothing else is written.
 
+``movement`` (#509) holds the joystick through rides. Each case boots the
+memstate afresh and runs a fixed chain whose stop scripts write the inputs at
+fixed stops: the lift key into the ACIA mailbox and the stick into its
+joystick-1 byte, which is what the ACIA handler itself would write. So a case
+needs no host timing at all. It raises unless the region holds for the whole
+ride, the settled eye stays inside the car and within the clamp the decode
+predicts, and the arrival moves the eye by no more than the held stick walks
+in a frame. Two controls run without a ride: the same walk out of the open
+doorway, and a walk at the State Office hall's shut door.
+
 Run from the repository root:
 
   python3 research/damocles-st/scripts/lift-ride-probe.py decode
   python3 research/damocles-st/scripts/lift-ride-probe.py live --roms roms --case eris
   python3 research/damocles-st/scripts/lift-ride-probe.py live --roms roms --case vesta
+  python3 research/damocles-st/scripts/lift-ride-probe.py movement --roms roms [--case NAME ...]
 
 Generated evidence stays below the laboratory's ignored ``work/`` directory.
 """
@@ -127,6 +138,11 @@ STATIC_WINDOWS = {
     "door-sound-edges": (0x05A9DC, 0x05AA3C),
     "door-start-sound": (0x04C37A, 0x04C3C6),
     "door-stop-sound": (0x04C2B8, 0x04C304),
+    # #509: what holds the eye during a ride.
+    "mover-on-foot": (0x058CFE, 0x058D7E),
+    "region-walk": (0x05A32C, 0x05A4D0),
+    "clamp-edges": (0x05A4D0, 0x05A646),
+    "clamp-entry": (0x05A64A, 0x05A6EC),
 }
 
 # Instruction words the decode rests on, checked byte for byte.
@@ -152,6 +168,17 @@ CODE_FACTS = {
     0x05A9DC: ("31fc00037a7823fc0004c2b80004bf58", "doors stop: arm $04C2B8"),
     0x05AAA4: ("13fc00010005a9d8", "a moving door raises the flag"),
     0x059570: ("610014ca", "the door animation runs after the step in each substep"),
+    # #509: movement during a ride.
+    0x05956C: ("6100e754", "bsr $57cc2: the Mover runs every substep, ride or not"),
+    0x058CFE: ("103879c2", "the on-foot Mover reads the joystick-1 byte"),
+    0x0594DC: ("6100bfb8", "bsr $55496: the key is read before the frame's substeps"),
+    0x05A35C: ("4a78788a6a000160", "the region walk refuses every region while a ride is pending"),
+    0x05A37E: ("4a295a416a00013e", "a gated region is selectable only once its latch is negative"),
+    0x05A4CA: ("7c0060000122", "no region selected: clamp to the current one with no inset"),
+    0x05A67C: ("7c004a387b356b0a7c0bd4469646", "the clamp's inset is 11 unless $7B35 is negative"),
+    0x05A504: ("341043f90000b22e3e387b3243e9000eb4690004", "the edge test looks for a neighbour by its bounds alone"),
+    0x05A6E8: ("6100fc42", "bsr $5a32c: past the region's own edge, walk the regions"),
+    0x05A63C: ("13fc00010005a646", "a clamp raises $5A646"),
 }
 
 
@@ -258,12 +285,16 @@ WINDOWS = {
     "sound": (0x4BF50, 0x4BF5C),
     "mailbox": (0x55588, 0x55590),
     "doorsound": (0x5A9D8, 0x5A9DC),
+    "clamped": (0x5A646, 0x5A648),
 }
 DOOR_MOVING = 0x5A9D9  # $05AA12: last pass's "a door moved" flag, whose edges pick the door sound
 SOUND_VECTOR_B = 0x4BF58
 DOOR_START_SOUND = 0x4C37A  # $05AA2A: armed when doors start moving
 DOOR_STOP_SOUND = 0x4C2B8  # $05A9DC: armed when they stop
 MAILBOX = 0x5558C  # the ACIA handler's make-code mailbox, read by $0555B8
+STICK = 0x79C2  # $05556E: the ACIA handler's joystick-1 byte, read by the Mover $058CFE
+REGION = 0x7B12  # the selected region's bounds, which $05A3C4 publishes
+CLAMPED = 0x5A646  # $05A63C: the clamp pushed the eye back this substep
 
 
 def _state(ram: bytes) -> dict[str, Any]:
@@ -297,6 +328,10 @@ def _state(ram: bytes) -> dict[str, Any]:
         "soundVectorB": _u32(ram, SOUND_VECTOR_B),
         "doorMoving": ram[DOOR_MOVING],
         "mixer": ram[MIXER_SHADOW],
+        "stick": ram[STICK],
+        "region": _u32(ram, REGION),
+        "clamped": ram[CLAMPED],
+        "latches": ram[LATCH : LATCH + 0x400 : 4].hex(),
     }
 
 
@@ -316,8 +351,12 @@ def _read_stop(run: Path, index: int) -> dict[str, Any] | None:
     return s
 
 
-def _write_chain(run: Path, vbls: int, first_lines: list[str]) -> list[Path]:
-    """One stop per VBL. Each script saves its windows, arms the next and continues."""
+def _write_chain(run: Path, vbls: int, first_lines: list[str], lines_at: dict[int, list[str]] | None = None) -> list[Path]:
+    """One stop per VBL. Each script saves its windows, arms the next and continues.
+
+    ``lines_at`` adds debugger lines to the stops it names, after they are saved:
+    what they write is seen from the next stop on.
+    """
     scripts = [run / f"trace-{i:04d}.txt" for i in range(vbls)]
     for index, script in enumerate(scripts):
         lines = ["setopt hex"]
@@ -326,6 +365,7 @@ def _write_chain(run: Path, vbls: int, first_lines: list[str]) -> list[Path]:
         for key, (start, end) in WINDOWS.items():
             lines.append(f"savebin {_stop_path(run, index, key).resolve()} ${start:x} ${end - start:x}")
         lines.append(f"screenshot {(run / f't{index:04d}.png').resolve()}")
+        lines += (lines_at or {}).get(index, [])
         if index + 1 < vbls:
             lines.append(f'b VBL = "VBL+1" :once :quiet :file {scripts[index + 1].resolve()}')
             lines.append("c")
@@ -643,6 +683,402 @@ def live(roms: Path | None, case: str, settle: float) -> int:
     return 0
 
 
+# --- movement (#509) ---------------------------------------------------------
+#
+# The rides above held no input. These cases hold the joystick through a ride.
+# Every input is written from the chain's own stop scripts at a fixed stop, so a
+# case is deterministic from its first stop: the lift key is the make code the
+# ACIA handler would leave in the mailbox $05558C (the dispatcher $055496 reads
+# it and writes $FF back), and the stick is the byte it would leave in $79C2
+# ($05556E), which the Mover reads every substep ($058CFE). Nothing else is
+# written, except the Vesta case's teleport at the first stop.
+
+UP, DOWN, LEFT, RIGHT = 0x01, 0x02, 0x04, 0x08
+
+
+def _teleport_lines(ram: bytes, x: int, z: int) -> list[str]:
+    """Put the eye at structure-local (x, z): the pose X/Z low words and the local copies."""
+    origin_x, origin_z = _u16(ram, 0x7AF2), _u16(ram, 0x7AF4)
+    writes = {POSE_X: (x + origin_x) & 0xFFFF, POSE_Z: (z + origin_z) & 0xFFFF, POS_X: x & 0xFFFF, POS_Z: z & 0xFFFF}
+    return [f"w ${address:x} {value >> 8:02x} {value & 0xFF:02x}" for address, value in writes.items()]
+
+
+# The door control: the State Office hall (region 0), in line with the door $3FC (region 5,
+# X 290..300, Z -149..-51) and facing it, as the capture faces +X.
+HALL_DOOR = {"local": [200, -100], "slot": 0x3FC, "doorRegion": 5}
+
+
+def hall_teleport(ram: bytes) -> tuple[list[str], dict[str, Any]]:
+    x, z = HALL_DOOR["local"]
+    return _teleport_lines(ram, x, z), {"local": [x, z], "hallDoor": HALL_DOOR}
+
+
+CASES["eris-hall"] = ("rehosted/eris-lift.sav", [], hall_teleport)
+INPUT_STOP = 10  # the first key and stick go in at this stop
+CLEARANCE = 11  # $05A684: the clamp's inset when $7B35 is not negative
+
+
+def _poke(address: int, value: int) -> str:
+    return f"w ${address:x} {value:02x}"
+
+
+# name: (source case, stops, {stop: [(address, byte)]}, the Floor the ride must end at, or None
+# for a control with no ride)
+MOVEMENT_CASES: dict[str, tuple[str, int, dict[int, list[tuple[int, int]]], int | None]] = {
+    # Walk at the doorway from the admission on, and keep walking after the arrival.
+    "eris-forward": ("eris", 300, {INPUT_STOP: [(MAILBOX, SCANCODES["1"]), (STICK, UP)]}, 1),
+    # Walk at the open doorway, and press the key in the frame whose substeps would carry the eye
+    # through it: from the stick at stop 10 the frames move the eye at stops 17, 24, 31 and 37,
+    # and the key is read at $0594DC, before that frame's substeps.
+    "eris-walk-in": ("eris", 260, {INPUT_STOP: [(STICK, UP)], INPUT_STOP + 23: [(MAILBOX, SCANCODES["1"])]}, 1),
+    # The same walk with no key: the eye leaves the car through the open doorway.
+    "eris-walk-out": ("eris", 80, {INPUT_STOP: [(STICK, UP)]}, None),
+    # No ride: walk at a door that is shut, and see where the clamp holds the eye while it opens.
+    "eris-hall-door": ("eris-hall", 200, {INPUT_STOP: [(STICK, UP)]}, None),
+    # Back into the car's back wall.
+    "eris-backward": ("eris", 200, {INPUT_STOP: [(MAILBOX, SCANCODES["1"]), (STICK, DOWN)]}, 1),
+    # Turn on the spot for the whole ride.
+    "eris-turn": ("eris", 200, {INPUT_STOP: [(MAILBOX, SCANCODES["1"]), (STICK, RIGHT)]}, 1),
+    # Walk while turning, into the side walls.
+    "eris-arc": ("eris", 200, {INPUT_STOP: [(MAILBOX, SCANCODES["1"]), (STICK, UP | RIGHT)]}, 1),
+    # Ask for 2 and walk; once the door is shut, while the label still shows G, ask for 1.
+    "eris-redirect": (
+        "eris",
+        220,
+        {INPUT_STOP: [(MAILBOX, SCANCODES["2"]), (STICK, UP | LEFT)], INPUT_STOP + 50: [(MAILBOX, SCANCODES["1"])]},
+        1,
+    ),
+    # The Vesta car, from the middle of its region, walking as the capture faces.
+    "vesta-forward": ("vesta", 300, {INPUT_STOP: [(MAILBOX, SCANCODES["2"]), (STICK, UP)]}, 2),
+    "vesta-arc": ("vesta", 300, {INPUT_STOP: [(MAILBOX, SCANCODES["2"]), (STICK, UP | LEFT)]}, 2),
+}
+
+
+def _regions(ram: bytes) -> list[dict[str, Any]]:
+    out = []
+    for index in range(_u16(ram, 0x7B32) + 1):
+        base = REGIONS + 14 * index
+        out.append(
+            {
+                "index": index,
+                "pointer": base + 2,
+                "flags": _u16(ram, base),
+                "bounds": [_s16(ram, base + 2 + 2 * k) for k in range(4)],
+            }
+        )
+    return out
+
+
+def predicted_limits(regions: list[dict[str, Any]], car: dict[str, Any], across: tuple[int, int]) -> list[int]:
+    """Where $05A64A stops the eye at each edge of the car while no region can be reselected.
+
+    Past the car's inset edge, $05A504-$05A5EA look for a region whose opposite
+    edge is the car's and whose inset span holds the other coordinate. They test
+    no latch. If one is found the eye goes on to the car's own edge, where
+    $05A6E8 walks the regions; $05A35C refuses every one while a ride is
+    pending, and $05A4CA clamps to the car with no inset. Otherwise the inset
+    edge holds. ``across`` is the (Z, X) the eye stands at along each edge.
+    Returns [x min, x max, z min, z max], inclusive.
+    """
+    x0, x1, z0, z1 = car["bounds"]
+    inset = 0 if car["flags"] & 0x80 else CLEARANCE
+
+    def neighbour(axis: int, upper: bool) -> bool:
+        edge = car["bounds"][2 * axis + (1 if upper else 0)]
+        coordinate = across[axis]
+        other = 1 - axis
+        for region in regions:
+            if region is car:
+                continue
+            bounds = region["bounds"]
+            lo, hi = bounds[2 * other] + inset, bounds[2 * other + 1] - inset
+            if bounds[2 * axis + (0 if upper else 1)] == edge and lo <= coordinate < hi:
+                return True
+        return False
+
+    return [
+        x0 if neighbour(0, False) else x0 + inset,
+        x1 - 1 if neighbour(0, True) else x1 - inset - 1,
+        z0 if neighbour(1, False) else z0 + inset,
+        z1 - 1 if neighbour(1, True) else z1 - inset - 1,
+    ]
+
+
+def run_chain(roms: Path | None, run: Path, snapshot: Path, stops: int, first_lines: list[str], lines_at: dict[int, list[str]], settle: float) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Boot ``snapshot``, run a chain of ``stops`` stops to its end, and read every stop."""
+    _write_chain(run, stops, first_lines, lines_at)
+    meta: dict[str, Any] = {}
+    authority, config = load_configuration()
+    program, tos = resolve_images(authority, resolve_roms_root(roms))
+    meta["programSha256"] = validate_image(program, authority["programImage"], label="Working Authority STX")["hashes"]["sha256"]
+    meta["tosSha256"] = validate_image(tos, authority["tosImage"], label="TOS image")["hashes"]["sha256"]
+    hatari, toolchain = discover_toolchain(config)
+    meta["toolchain"] = toolchain.as_dict()
+    fifo_path = run / "cmd.fifo"
+    parse = run / "parse.txt"
+    parse.write_text("c\n", encoding="utf-8")
+    command = build_hatari_command(
+        hatari_binary=hatari,
+        tos=tos,
+        disk_a=program,
+        machine_model=config["machineModel"],
+        memsize_mib=config["memsizeMiB"],
+        parse_script=parse,
+        fast_forward=False,
+        statusbar=False,
+        cmd_fifo=fifo_path,
+        extra_args=["--memstate", str(snapshot.resolve())],
+    )
+    env = os.environ.copy()
+    env.update(headless_env())
+    with (run / "hatari.log").open("w", encoding="utf-8") as log:
+        process = subprocess.Popen(
+            command, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, text=True, env=env
+        )
+        try:
+            for _ in range(300):
+                if fifo_path.exists() or process.poll() is not None:
+                    break
+                time.sleep(0.02)
+            _check(fifo_path.exists(), f"Hatari did not create {fifo_path}; status={process.poll()}")
+            with fifo_path.open("w", encoding="utf-8") as fifo:
+                time.sleep(settle)
+                _check(process.poll() is None, "Hatari exited during restore; is the memstate rehosted?")
+                _fifo_send(fifo, [f'hatari-debug b VBL = "VBL+1" :once :quiet :file {(run / "trace-0000.txt").resolve()}'])
+                seen, last = 0, time.monotonic()
+                while process.poll() is None:
+                    while _read_stop(run, seen) is not None:
+                        seen, last = seen + 1, time.monotonic()
+                    _check(time.monotonic() - last < 60, f"not reached: the trace stalled after {seen} stops")
+                    time.sleep(0.05)
+        except BrokenPipeError:
+            pass
+        finally:
+            if process.poll() is None:
+                process.kill()
+                process.wait(timeout=5)
+            if fifo_path.exists():
+                fifo_path.unlink()
+    trace = []
+    while (s := _read_stop(run, len(trace))) is not None:
+        trace.append(s)
+    _check(len(trace) == stops, f"not reached: {len(trace)} of {stops} stops")
+    for a, b in zip(trace, trace[1:]):
+        _check((b["vbl"] - a["vbl"]) & 0xFFFF == 1, f"stop {b['stop']}: VBL clock moved {(b['vbl'] - a['vbl']) & 0xFFFF}")
+    return trace, meta
+
+
+def _settled(s: dict[str, Any]) -> bool:
+    """A stop outside the substep loop. Inside it a VBL can land between the Mover and
+    the clamp, and the eye is then where the step put it, not where the clamp left it."""
+    return s["substeps"] == 0
+
+
+def _frame_step(trace: list[dict[str, Any]]) -> int:
+    """The largest move of the eye, on either axis, between two consecutive settled stops."""
+    settled = [s for s in trace if _settled(s) and s["regionFlags"] & LIFT_BIT]
+    return max(
+        (max(abs(b["local"][0] - a["local"][0]), abs(b["local"][1] - a["local"][1])) for a, b in zip(settled, settled[1:]) if a["region"] == b["region"]),
+        default=0,
+    )
+
+
+def analyse_walk_out(trace: list[dict[str, Any]], regions: list[dict[str, Any]]) -> dict[str, Any]:
+    """The control: the same walk with no key leaves the car through its open doorway."""
+    by_pointer = {r["pointer"]: r for r in regions}
+    _check(all(s["destination"] == -1 for s in trace), "a ride was admitted with no key")
+    car = by_pointer.get(trace[0]["region"])
+    _check(car is not None and car["flags"] & LIFT_BIT, "not reached: the control did not start in a lift region")
+    left = next((s for s in trace if s["region"] != trace[0]["region"]), None)
+    _check(left is not None, "the control never left the car")
+    region = by_pointer.get(left["region"])
+    return {
+        "car": car,
+        "leftAtStop": left["stop"],
+        "into": region,
+        "local": left["local"],
+        "latch": left["latch"],
+    }
+
+
+def analyse_hall_door(trace: list[dict[str, Any]], regions: list[dict[str, Any]]) -> dict[str, Any]:
+    """No ride: where the clamp holds the eye at a door that is not latched open.
+
+    $05A504-$05A5EA admit the door's region past the hall's inset edge whatever its latch;
+    $05A366-$05A386 then refuse it at the hall's own edge until the latch reads $FF, and
+    $05A4CA clamps to the hall with no inset. So the eye waits at the hall's edge less one.
+    """
+    by_pointer = {r["pointer"]: r for r in regions}
+    _check(all(s["destination"] == -1 for s in trace), "a ride was admitted with no key")
+    slot = HALL_DOOR["slot"]
+    door_region = regions[HALL_DOOR["doorRegion"]]
+    hall = next((r for r in regions if r["index"] == 0), None)
+    start = next((s for s in trace if _settled(s) and s["region"] == hall["pointer"]), None)
+    _check(start is not None, "not reached: the teleport did not select the hall")
+    latch = lambda s: int(s["latches"][2 * (slot // 4) : 2 * (slot // 4) + 2], 16)
+    waiting = [s for s in trace if _settled(s) and s["region"] == hall["pointer"] and latch(s) != 0xFF]
+    _check(waiting, "not reached: the door was open before the eye reached it")
+    held = max(s["local"][0] for s in waiting)
+    predicted = predicted_limits(regions, hall, (start["local"][1], start["local"][0]))[1]
+    _check(held <= predicted, f"the eye passed the hall's edge {predicted} while the door was shut: {held}")
+    through = next((s for s in trace[start["stop"] :] if _settled(s) and s["region"] != hall["pointer"]), None)
+    _check(through is None or latch(through) == 0xFF, "the eye left the hall before the door latched open")
+    return {
+        "hall": hall,
+        "door": door_region,
+        "start": start["local"],
+        "heldAt": held,
+        "predicted": predicted,
+        "portWouldHold": hall["bounds"][1] - CLEARANCE - 1,
+        "latchesWhileHeld": sorted({latch(s) for s in waiting if s["local"][0] == held}),
+        "stopsHeld": sum(1 for s in waiting if s["local"][0] == held),
+        "throughAtStop": through["stop"] if through else None,
+        "throughInto": by_pointer[through["region"]]["index"] if through else None,
+        "throughLocal": through["local"] if through else None,
+    }
+
+
+def analyse_movement(trace: list[dict[str, Any]], regions: list[dict[str, Any]], destination: int | None, inputs: dict[int, list[tuple[int, int]]], case: str = "") -> dict[str, Any]:
+    if destination is None:
+        return analyse_hall_door(trace, regions) if case == "eris-hall-door" else analyse_walk_out(trace, regions)
+    by_pointer = {r["pointer"]: r for r in regions}
+    admit = next((s for s in trace if s["destination"] != -1), None)
+    _check(admit is not None and admit["stop"] > 0, "not reached: no admission bracketed by two stops")
+    before = trace[admit["stop"] - 1]
+    car = by_pointer.get(before["region"])
+    _check(car is not None and car["flags"] & LIFT_BIT, "not reached: the admission was not made in a lift region")
+    started = next((s for s in trace[admit["stop"] :] if s["destination"] == -1), None)
+    _check(started is not None, "not reached: no arrival")
+    arrival = next((s for s in trace[started["stop"] :] if s["regionFlags"] & LIFT_BIT and _settled(s)), None)
+    _check(arrival is not None, "not reached: the arrival never republished a lift region")
+    _check(arrival["floor"] == destination, f"arrived at {arrival['floor']}, not {destination}")
+    riding = trace[admit["stop"] : started["stop"]]
+    settled = [s for s in riding if _settled(s)]
+    last = settled[-1]
+    closed = next((s for s in riding if s["latch"] == 0), None)
+    _check(closed is not None, "not reached: the door never closed")
+
+    held = sorted({s["stick"] for s in riding})
+    moved = any((s["local"], s["yaw"]) != (before["local"], before["yaw"]) for s in riding)
+    _check(moved or held == [0], f"not reached: stick {held} held but nothing moved during the ride")
+
+    # The region is frozen: the same bounds and flags from the admission to the arrival.
+    _check(all(s["region"] == before["region"] for s in riding), "the region changed during the ride")
+    _check(all(s["regionFlags"] == before["regionFlags"] for s in riding), "the region flags changed during the ride")
+    _check(all(s["door"] == before["door"] for s in riding), "the doorway slot changed during the ride")
+    # So the settled eye never leaves the car's box, whatever is held.
+    x0, x1, z0, z1 = car["bounds"]
+    outside = [s["stop"] for s in settled if not (x0 <= s["local"][0] < x1 and z0 <= s["local"][1] < z1)]
+    _check(not outside, f"the eye left the car during the ride at stops {outside[:5]}")
+    _check(all(s["y"] == before["y"] for s in riding), "Y moved during the ride")
+    # The arrival writes no X/Z (the no-input rides show them unchanged). With the stick held,
+    # the substeps of the arrival's frame walk on, so the eye may move by one frame's walk.
+    step = _frame_step(trace)
+    shift = [arrival["local"][0] - last["local"][0], arrival["local"][1] - last["local"][1]]
+    _check(max(map(abs, shift)) <= step, f"the eye moved {shift} across the arrival, more than a frame's walk {step}")
+    if held == [0]:
+        _check(shift == [0, 0], "X/Z moved on arrival")
+    if case == "eris-walk-in":
+        # The key must land in the frame whose substeps would carry the eye out of the open doorway.
+        _check(before["latch"] == 0xFF, f"not reached: the door was not open at the key (latch ${before['latch']:02X})")
+        _check(before["local"][0] + step >= x1, f"not reached: at the key the eye was {x1 - before['local'][0]} short of the doorway, more than a frame's walk")
+
+    # Where the clamp held the eye: every stop that pushed against an edge.
+    extremes = {
+        "x": [min(s["local"][0] for s in settled), max(s["local"][0] for s in settled)],
+        "z": [min(s["local"][1] for s in settled), max(s["local"][1] for s in settled)],
+    }
+    limits = predicted_limits(regions, car, (before["local"][1], before["local"][0]))
+    for name, value, limit, beyond in (
+        ("x min", extremes["x"][0], limits[0], lambda v, l: v < l),
+        ("x max", extremes["x"][1], limits[1], lambda v, l: v > l),
+        ("z min", extremes["z"][0], limits[2], lambda v, l: v < l),
+        ("z max", extremes["z"][1], limits[3], lambda v, l: v > l),
+    ):
+        _check(not beyond(value, limit), f"{name} {value} passed the predicted clamp {limit}")
+
+    def rel(s: dict[str, Any]) -> int:
+        return (s["vbl"] - admit["vbl"]) & 0xFFFF
+
+    path = [(rel(s), s["local"][0], s["local"][1], f"${s['yaw']:04X}", s["clamped"]) for s in settled]
+    changes = [path[0]] + [p for q, p in zip(path, path[1:]) if p[1:4] != q[1:4]]
+    after = trace[arrival["stop"] :]
+    left_car = next((s for s in after if s["region"] != arrival["region"]), None)
+    return {
+        "car": car,
+        "inputs": {str(k): [f"${a:05X}<-${v:02X}" for a, v in pokes] for k, pokes in inputs.items()},
+        "stick": held,
+        "admittedAtStop": admit["stop"],
+        "doorClosedVbl": rel(closed),
+        "arrivalVbl": rel(arrival),
+        "destinations": sorted({s["destination"] for s in riding}),
+        "labels": [s["label"] for p, s in zip([before] + riding, riding) if s["label"] != p["label"]],
+        "start": {"local": before["local"], "yaw": f"${before['yaw']:04X}", "latch": before["latch"]},
+        "end": {"local": last["local"], "yaw": f"${last['yaw']:04X}"},
+        "arrival": {"local": arrival["local"], "yaw": f"${arrival['yaw']:04X}", "pitch": f"${arrival['pitch']:04X}", "y": arrival["y"]},
+        "extremes": extremes,
+        "predictedLimits": limits,
+        "clampedStops": sum(1 for s in settled if s["clamped"]),
+        "frameStep": step,
+        "arrivalShift": shift,
+        "frameVbls": sorted({s["frameVbls"] for s in riding}),
+        "unsettledStops": len(riding) - len(settled),
+        "pathChanges": changes if len(changes) <= 60 else changes[:30] + changes[-30:],
+        "afterArrival": {
+            "regionChangeVbl": rel(left_car) if left_car else None,
+            "regionFlags": f"${left_car['regionFlags']:04X}" if left_car else None,
+            "local": left_car["local"] if left_car else None,
+            "doorLatches": sorted({s["latch"] for s in after}),
+            "finalLocal": trace[-1]["local"],
+        },
+    }
+
+
+def movement(roms: Path | None, cases: list[str], settle: float) -> int:
+    failures = []
+    for name in cases:
+        source, stops, inputs, destination = MOVEMENT_CASES[name]
+        snapshot_name, _, intervention = CASES[source]
+        snapshot = SNAPSHOTS / snapshot_name
+        _check(snapshot.is_file(), f"snapshot not found: {snapshot}")
+        run = WORK_ROOT / _run_id(f"lift-move-{name}")
+        run.mkdir(parents=True)
+        ram = bytearray(hatari_memstate_ram(snapshot.read_bytes()))
+        first_lines: list[str] = []
+        meta: dict[str, Any] = {}
+        if intervention:
+            first_lines, meta = intervention(bytes(ram))
+        regions = _regions(bytes(ram))
+        lines_at = {stop: [_poke(a, v) for a, v in pokes] for stop, pokes in inputs.items()}
+        error = None
+        result: dict[str, Any] = {}
+        try:
+            trace, chain_meta = run_chain(roms, run, snapshot, stops, first_lines, lines_at, settle)
+            meta.update(chain_meta)
+            (run / "trace.json").write_text(json.dumps(trace) + "\n", encoding="utf-8")
+            if meta.get("local"):
+                _check(meta["local"] in (trace[0]["local"], trace[1]["local"]), "the teleport did not land")
+            result = analyse_movement(trace, regions, destination, inputs, name)
+        except LabError as failure:
+            error = str(failure)
+            failures.append(f"{name}: {error}")
+        document = {
+            "schemaVersion": 1,
+            "case": name,
+            "result": result,
+            "error": error,
+            "meta": meta,
+            "snapshot": snapshot_name,
+            "snapshotSha256": file_hash(snapshot),
+            "createdAt": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+        }
+        (run / "result.json").write_text(json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        print(json.dumps({"run": run.name, "case": name, "result": result, "error": error}, indent=1))
+    if failures:
+        raise LabError("; ".join(failures))
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = parser.add_subparsers(dest="mode", required=True)
@@ -651,9 +1087,15 @@ def main() -> int:
     live_parser.add_argument("--roms", type=Path)
     live_parser.add_argument("--case", choices=tuple(CASES), required=True)
     live_parser.add_argument("--settle-seconds", type=float, default=4.0)
+    movement_parser = sub.add_parser("movement")
+    movement_parser.add_argument("--roms", type=Path)
+    movement_parser.add_argument("--case", choices=tuple(MOVEMENT_CASES), action="append")
+    movement_parser.add_argument("--settle-seconds", type=float, default=4.0)
     args = parser.parse_args()
     if args.mode == "decode":
         return decode()
+    if args.mode == "movement":
+        return movement(args.roms, args.case or list(MOVEMENT_CASES), args.settle_seconds)
     return live(args.roms, args.case, args.settle_seconds)
 
 
