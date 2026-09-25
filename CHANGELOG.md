@@ -12,6 +12,22 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Added
 
+- **The sound board plays every Damocles sound programme.** The port's YM2149 driver
+  now holds everything #514 recovered: channel B's spell, splash, transporter, bump,
+  blast, shot, thud, zap and blown up, and the Geiger counter's click that cuts them.
+  Channel C gains the hazard alarm, its silence and the craft engine, whose level is
+  the speed's exponent. Outside the vectors come the per-character message tone and
+  the New Game descent drone. The GHETTOBLASTER's music player replaces both vectors
+  while it plays, walking a tune `damocleslab.music` extracts into
+  `payload/damocles/music.json`; its hi-hat and first bass pass read the capture's TOS
+  header at address 0, as the ST's do. The worklet now runs the program's reset
+  `$0508BC` at start and on every reset, which leaves channel A's tone on for the
+  message tone and is otherwise silent. `/sounds` has a card for each, with a speed
+  slider for the engine, three Geiger distances, a message to type and the tune. The
+  board's Geiger draws are uniform, where the ST reads a table at `$77000`, and its
+  descent paces one step every 3 VBLs from the boot recording. No session asks for any
+  of them yet (#521 and #522 are the next).
+
 - **Every Damocles sound programme is recovered and heard.** Beyond #508's door
   tone, burst and shared effect, the ST driver's first vector (channel B) holds
   nine more programmes and its second (channel C) two. The spell is a BOOK page's

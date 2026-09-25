@@ -1,6 +1,7 @@
 import { BensonDisplay } from '../benson/display.ts';
 import { BensonHostState } from '../benson/host.ts';
-import type { DamoclesCue } from '../damocles/psg.ts';
+import { DAMOCLES_MUSIC_PATH, parseDamoclesMusic } from '../damocles/music.ts';
+import type { DamoclesRequest } from '../damocles/psg.ts';
 import type {
   DamoclesSoundCommand,
   DamoclesSoundDocument
@@ -90,6 +91,13 @@ try {
     { name: 'sound.json' },
     await response.json()
   );
+  const musicResponse = await fetch(DAMOCLES_MUSIC_PATH);
+  if (!musicResponse.ok) {
+    throw new Error(
+      `${DAMOCLES_MUSIC_PATH} answered HTTP ${musicResponse.status}`
+    );
+  }
+  const music = parseDamoclesMusic(await musicResponse.json());
 
   const failed = (reason: string): void => {
     errorLine.textContent = `Audio unavailable: ${reason}`;
@@ -101,7 +109,10 @@ try {
     DamoclesSoundCommand,
     DamoclesSoundDocument
   >(
-    { vblHertz: VBL_HERTZ },
+    {
+      music: { ...music, addressZero: music.addressZero.bytes },
+      vblHertz: VBL_HERTZ
+    },
     {
       onFailure: failed,
       processor: 'damocles-ym',
@@ -156,14 +167,21 @@ try {
   ): Promise<void> =>
     unlock().then(() => targ.send({ at: now() + delay, commands }));
   const playDamocles = (
-    timeline: readonly (readonly [vbl: number, cue: DamoclesCue])[]
+    timeline: readonly (readonly [
+      vbl: number,
+      command: DamoclesRequest | DamoclesSoundCommand
+    ])[]
   ): Promise<void> =>
     unlock().then(() => {
       const start = now();
-      for (const [vbl, cue] of timeline) {
+      for (const [vbl, command] of timeline) {
         damocles.send({
           at: start + vbl * VBL,
-          commands: [{ cue, kind: 'cue' }]
+          commands: [
+            typeof command === 'string'
+              ? { cue: command, kind: 'cue' }
+              : command
+          ]
         });
       }
     });
@@ -369,52 +387,55 @@ try {
   // --- Damocles --------------------------------------------------------------
 
   const damoclesBoard = document.getElementById('damocles')!;
-  const cues: readonly [string, string, (readonly [number, DamoclesCue])[]][] =
+  const cues: readonly [
+    string,
+    string,
+    (readonly [number, DamoclesRequest])[]
+  ][] = [
     [
+      'Door tone · $04C37A',
+      'A door starts moving. It loops until a door stops, so stop it with the burst.',
+      [[0, 'door-start']]
+    ],
+    [
+      'Door burst · $04C2B8',
+      'Every door has stopped: noise at levels 12, 8, 4, 0.',
+      [[0, 'door-stop']]
+    ],
+    [
+      'A door moving · 33 VBLs',
+      'The State Office lift door shutting: its tone, then its burst.',
       [
-        'Door tone · $04C37A',
-        'A door starts moving. It loops until a door stops, so stop it with the burst.',
-        [[0, 'door-start']]
-      ],
-      [
-        'Door burst · $04C2B8',
-        'Every door has stopped: noise at levels 12, 8, 4, 0.',
-        [[0, 'door-stop']]
-      ],
-      [
-        'A door moving · 33 VBLs',
-        'The State Office lift door shutting: its tone, then its burst.',
-        [
-          [0, 'door-start'],
-          [33, 'door-stop']
-        ]
-      ],
-      [
-        'Shared effect · $04C556',
-        'A take, a drop or a lift arrival: 1302 Hz under a one-second decay.',
-        [[0, 'take']]
-      ],
-      [
-        'Lift ride G → 1',
-        'The door shuts, the label steps in silence, the arrival over the new door opening.',
-        [
-          [0, 'door-start'],
-          [33, 'door-stop'],
-          [83, 'take'],
-          [83, 'door-start'],
-          [116, 'door-stop']
-        ]
-      ],
-      [
-        'A take while a door moves',
-        'The request cuts channel C until the next VBL, and both play on.',
-        [
-          [0, 'door-start'],
-          [15, 'take'],
-          [40, 'door-stop']
-        ]
+        [0, 'door-start'],
+        [33, 'door-stop']
       ]
-    ];
+    ],
+    [
+      'Shared effect · $04C556',
+      'A take, a drop or a lift arrival: 1302 Hz under a one-second decay.',
+      [[0, 'take']]
+    ],
+    [
+      'Lift ride G → 1',
+      'The door shuts, the label steps in silence, the arrival over the new door opening.',
+      [
+        [0, 'door-start'],
+        [33, 'door-stop'],
+        [83, 'take'],
+        [83, 'door-start'],
+        [116, 'door-stop']
+      ]
+    ],
+    [
+      'A take while a door moves',
+      'The request cuts channel C until the next VBL, and both play on.',
+      [
+        [0, 'door-start'],
+        [15, 'take'],
+        [40, 'door-stop']
+      ]
+    ]
+  ];
   for (const [title, description, timeline] of cues) {
     button(
       card(damoclesBoard, title, description),
@@ -422,6 +443,213 @@ try {
       () => void playDamocles(timeline)
     );
   }
+
+  // The rest of the driver (#514, docs/research/damocles-sound-programmes.md). No Gameplay
+  // Session asks for these yet; each card names what does in the ST.
+  const programmes: readonly [
+    string,
+    string,
+    (readonly [number, DamoclesRequest])[]
+  ][] = [
+    [
+      'Spell · $04BF5C',
+      'A BOOK page’s action with the MAGIC CRYSTAL carried: a five-VBL warble under a 4.2 s decay. Not reached in play.',
+      [[0, 'spell']]
+    ],
+    [
+      'Splash · $04C016',
+      'A craft reaching the ground over sea: noise stepping its period under a 0.85 s decay. Not reached in play.',
+      [[0, 'splash']]
+    ],
+    [
+      'Transporter · $04C0B4',
+      'A transporter hop: tone and noise alternating low and high under a 1.05 s decay.',
+      [[0, 'transporter']]
+    ],
+    [
+      'Transporter hop, as recorded',
+      'The Eris hop: the thud as the player steps against the arrival cube cuts the transporter 13 VBLs in.',
+      [
+        [0, 'transporter'],
+        [13, 'thud']
+      ]
+    ],
+    [
+      'Bump · $04C470',
+      'A boarded move refused, as the limo hitting a building: a 31 Hz tone under a 1.58 s decay.',
+      [[0, 'bump']]
+    ],
+    [
+      'Blast · $04C5A8',
+      'An explosive’s deadline, and a craft reaching the ground on land: noise, 2.1 s.',
+      [[0, 'blast']]
+    ],
+    [
+      'Shot · $04C610',
+      'The player fires, and ENEMY SHIP DESTROYED: noise, 0.49 s.',
+      [[0, 'shot']]
+    ],
+    [
+      'Thud · $04C630',
+      'On foot against a wall, and the attack ship firing: noise, 0.26 s.',
+      [[0, 'thud']]
+    ],
+    [
+      'Zap · $04C652',
+      'The attack ship’s shot reaching the player: 10.4 kHz tone and noise, 2.1 s. Not reached in play.',
+      [[0, 'zap']]
+    ],
+    [
+      'Blown up · $04C700',
+      'A carried explosive or NOVABOMB, or too close to a blast: noise, 4.7 s.',
+      [[0, 'blown-up']]
+    ],
+    [
+      'A carried explosive',
+      'The deadline’s blast, replaced by blown up when the burst’s first frame finds it carried (4 VBLs here).',
+      [
+        [0, 'blast'],
+        [4, 'blown-up']
+      ]
+    ],
+    [
+      'Hazard alarm · $04C16E',
+      'TOO COLD, TOO HOT or NO AIR: 61 Hz on channel C for the ten seconds (500 VBLs), then silence at death.',
+      [
+        [0, 'hazard-alarm'],
+        [500, 'channel-c-off']
+      ]
+    ]
+  ];
+  for (const [title, description, timeline] of programmes) {
+    button(
+      card(damoclesBoard, title, description),
+      'Play',
+      () => void playDamocles(timeline)
+    );
+  }
+
+  let exponent = 4;
+  const craftEngine = card(
+    damoclesBoard,
+    'Craft engine · $04C250',
+    'Channel C’s idle voice: 7.8 kHz tone and noise at the speed’s exponent (log₂), at most 15, and silent below speed 1.'
+  );
+  button(
+    craftEngine,
+    'Start',
+    () =>
+      void playDamocles([
+        [0, 'restore'],
+        [0, { exponent, kind: 'speed' }]
+      ])
+  );
+  button(
+    craftEngine,
+    'Stop',
+    () => void playDamocles([[0, { exponent: -1, kind: 'speed' }]])
+  );
+  const exponentSlider = document.createElement('label');
+  exponentSlider.textContent = 'Speed exponent';
+  const exponentInput = document.createElement('input');
+  exponentInput.type = 'range';
+  exponentInput.min = '0';
+  exponentInput.max = '16';
+  exponentInput.value = String(exponent);
+  exponentInput.addEventListener('input', () => {
+    exponent = Number(exponentInput.value);
+    void playDamocles([[0, { exponent, kind: 'speed' }]]);
+  });
+  exponentSlider.append(exponentInput);
+  craftEngine.after(exponentSlider);
+
+  // `$051D26` ticks from the VBL and Timer B handlers, about twice a VBL. Each tick counts
+  // up and clicks once a draw scaled by the rate falls at or under the count. The ST draws
+  // from a table at $77000; the board draws uniformly instead.
+  const geigerTimeline = (
+    rate: number,
+    seconds: number
+  ): (readonly [number, DamoclesRequest])[] => {
+    const clicks: (readonly [number, DamoclesRequest])[] = [];
+    let count = 0;
+    for (let tick = 0; tick < seconds * VBL_HERTZ * 2; tick += 1) {
+      count += 1;
+      if (Math.floor(Math.random() * rate) <= count) {
+        count = 0;
+        clicks.push([tick / 2, 'geiger-click']);
+      }
+    }
+    return clicks;
+  };
+  const geiger = card(
+    damoclesBoard,
+    'Geiger counter · $04C6B2',
+    'The GEIGER COUNTER, carried and on, near the NOVABOMB: a 2604 Hz click at rate 3 within about 362 units, 2 more a doubling of distance. Draws are uniform here.'
+  );
+  button(geiger, 'Click', () => void playDamocles([[0, 'geiger-click']]));
+  for (const [label, rate] of [
+    ['Beside it', 3],
+    ['2048 units', 9],
+    ['32768 units', 17]
+  ] as const) {
+    button(geiger, label, () => void playDamocles(geigerTimeline(rate, 5)));
+  }
+
+  const message = card(
+    damoclesBoard,
+    'Message tone · $052402',
+    'Channel A while a message scrolls in: each VBL’s character times two at level 12, a space silent, for 36 VBLs.'
+  );
+  const messageText = document.createElement('input');
+  messageText.value = '               TOO HEAVY                     ';
+  messageText.setAttribute('aria-label', 'Damocles message text');
+  message.before(messageText);
+  button(message, 'Type', () => {
+    const text = messageText.value.toUpperCase();
+    const timeline: (readonly [number, DamoclesSoundCommand])[] = [];
+    for (let vbl = 0; vbl < 36; vbl += 1) {
+      // Past the end of a record the fetch returns a space.
+      const code = vbl < text.length ? text.charCodeAt(vbl) : 0x20;
+      timeline.push([vbl, { code, kind: 'message' }]);
+    }
+    timeline.push([36, { code: null, kind: 'message' }]);
+    void playDamocles(timeline);
+  });
+
+  const descentSteps = 277;
+  button(
+    card(
+      damoclesBoard,
+      'New Game descent · $051274',
+      'Channels B and C from 122 and 109 Hz, 4 longer a step until touchdown. One step every 3 VBLs here, the boot recording’s pace; the game steps once a pass of its loop.'
+    ),
+    'Play',
+    () =>
+      void playDamocles([
+        [0, 'descent-start'],
+        ...Array.from(
+          { length: descentSteps },
+          (_, step) => [3 * (step + 1), 'descent-step'] as const
+        ),
+        [3 * (descentSteps + 1), 'descent-end']
+      ])
+  );
+
+  const tune = card(
+    damoclesBoard,
+    `GHETTOBLASTER · $033F6A`,
+    `The music player, from the Data Payload: three voices looping every ${music.loopVbls} VBLs. Its hi-hat and first bass pass read address 0, the TOS ROM’s header.`
+  );
+  button(
+    tune,
+    'Play',
+    () => void playDamocles([[0, { kind: 'music', playing: true }]])
+  );
+  button(
+    tune,
+    'Stop',
+    () => void playDamocles([[0, { kind: 'music', playing: false }]])
+  );
   button(damoclesBoard, 'Stop Damocles', stopDamocles);
 } catch (error) {
   errorLine.textContent =
