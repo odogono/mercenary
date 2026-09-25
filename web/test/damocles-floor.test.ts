@@ -648,8 +648,22 @@ describe('Save and Session Resume carry the Floor', () => {
     };
     record.schemaVersion = 7;
     expect(() => decoded(JSON.stringify(record))).toThrow(
-      'schema 7 is not Damocles Save 9'
+      'schema 7 is not Damocles Save 10'
     );
+  });
+
+  test('whether a door moved last pass round-trips, and a record without it is refused', () => {
+    const record = inStateOffice().captureResume();
+    for (const doorsMoving of [false, true]) {
+      expect(decoded(saved({ ...record, doorsMoving })).doorsMoving).toBe(
+        doorsMoving
+      );
+    }
+    for (const doorsMoving of [undefined, 1]) {
+      expect(() => decoded(saved({ ...record, doorsMoving } as never))).toThrow(
+        'doorsMoving is not a boolean'
+      );
+    }
   });
 
   test('a lift ride and doorway round-trip, and are refused outside their bounds', () => {

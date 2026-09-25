@@ -255,7 +255,8 @@ describe('the ride as #472 recovered it', () => {
     expect(during.structure?.floor).toBe(0);
     expect(boundSlot(session)).toBe(76);
     expect(during.pose).toEqual(before.pose);
-    expect(session.drainEffects()).toEqual([]);
+    // The only sound so far is the door's tone and burst as it shut.
+    expect(cuesOf(session)).toEqual(['door-start', 'door-stop']);
 
     const arrived = vblsUntil(session, () => riding(session) === null);
     expect(arrived).toBe(25);
@@ -360,6 +361,91 @@ describe('the ride as #472 recovered it', () => {
     const session = inLift();
     expect(session.snapshot.structure?.doorway).toBeNull();
     expect(ride(session, 1)).toBe(50);
+  });
+});
+
+const cuesOf = (session: DamoclesSession): string[] =>
+  session.drainEffects().map(effect => effect.cue);
+
+/// Advances one VBL at a time until `done` is given the VBL count and says true, noting each cue
+/// asked for with the VBL it was asked for on.
+const heardUntil = (
+  session: DamoclesSession,
+  done: (vbls: number) => boolean
+): [number, string][] => {
+  const heard: [number, string][] = [];
+  let vbls = 0;
+  vblsUntil(session, () => {
+    vbls += 1;
+    heard.push(...cuesOf(session).map((cue): [number, string] => [vbls, cue]));
+    return done(vbls);
+  });
+  return heard;
+};
+
+/// Every VBL's cues, in order, until no cue has been asked for and no ride is pending for
+/// `settle` VBLs.
+const tones = (session: DamoclesSession, settle: number): string[] => {
+  const heard: string[] = [];
+  let still = 0;
+  vblsUntil(session, () => {
+    const cues = cuesOf(session);
+    heard.push(...cues);
+    still = cues.length === 0 && riding(session) === null ? still + 1 : 0;
+    return still === settle;
+  });
+  return heard;
+};
+
+describe('the door tones (#499)', () => {
+  test('a door opening asks for one start and one stop, and closing the same again', () => {
+    const session = inLift();
+    expect(openUnits(session)).toBe(0);
+    // Standing in the car, its door opens around the player and then stands open.
+    expect(tones(session, 100)).toEqual(['door-start', 'door-stop']);
+    expect(openUnits(session)).toBe(32);
+
+    // In the hall the same door, left open, shuts.
+    const hall = standingIn(0).captureResume();
+    const away = new DamoclesSession(content, {
+      ...hall,
+      structure: {
+        ...hall.structure!,
+        attachments: session.captureResume().structure!.attachments
+      }
+    });
+    expect(openUnits(away)).toBe(32);
+    expect(tones(away, 100)).toEqual(['door-start', 'door-stop']);
+    expect(openUnits(away)).toBe(0);
+  });
+
+  test('a ride: start and stop as the door shuts, nothing while the label steps, the arrival, then the new door', () => {
+    const session = throughTheDoor();
+    expect(session.rideLift(1)).toEqual({ kind: 'admitted' });
+    // Long enough for the new Floor's door to open and stand open a while.
+    const heard = heardUntil(session, vbls => vbls === 400);
+    const arrival = DOOR_CLOSE_VBLS + 50;
+    expect(heard).toEqual([
+      [1, 'door-start'],
+      // The door reaches shut on the VBL after this; the pass after that sees it still.
+      [DOOR_CLOSE_VBLS + 1, 'door-stop'],
+      [arrival, 'take'],
+      [arrival + 1, 'door-start'],
+      [arrival + 1 + DOOR_CLOSE_VBLS, 'door-stop']
+    ]);
+  });
+
+  test('the edge survives a Save: a door saved moving does not start again', () => {
+    const session = throughTheDoor();
+    session.rideLift(1);
+    session.advance(VBL);
+    expect(cuesOf(session)).toEqual(['door-start']);
+    const saved = session.captureResume();
+    expect(saved.doorsMoving).toBeTrue();
+    const resumed = new DamoclesSession(content, saved);
+    expect(heardUntil(resumed, () => openUnits(resumed) === 0)).toEqual([]);
+    resumed.advance(VBL);
+    expect(cuesOf(resumed)).toEqual(['door-stop']);
   });
 });
 

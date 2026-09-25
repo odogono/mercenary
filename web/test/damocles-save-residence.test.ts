@@ -59,6 +59,7 @@ const record = () => ({
     bodyTurn: 0,
     briefcaseStore: [] as string[],
     carried: [] as string[],
+    doorsMoving: false,
     elapsed: 0,
     frameAccumulator: 0,
     occupancy: { kind: 'onFoot' } as DamoclesSaveOccupancy,

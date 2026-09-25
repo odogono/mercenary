@@ -62,7 +62,9 @@ export interface ScriptState {
 }
 
 export interface Effect {
-  readonly cue: 'drop' | 'take';
+  /// `door-start` and `door-stop` are the second sound vector's door tone and noise burst
+  /// (`$04C37A`, `$04C2B8`), asked for as any door starts and stops moving.
+  readonly cue: 'door-start' | 'door-stop' | 'drop' | 'take';
   readonly type: 'sound-request';
 }
 

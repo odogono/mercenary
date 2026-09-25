@@ -205,6 +205,7 @@ describe('body-aware Object Residence', () => {
       const base = {
         bodyTurn: 0,
         briefcaseStore: [],
+        doorsMoving: false,
         elapsed: 0,
         frameAccumulator: 0,
         occupancy: { kind: 'onFoot' as const },

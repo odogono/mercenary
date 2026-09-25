@@ -95,6 +95,7 @@ const standingAt = (
     bodyTurn: 0,
     briefcaseStore: [],
     carried: [...carried],
+    doorsMoving: false,
     elapsed: 0,
     frameAccumulator: 0,
     occupancy: { kind: 'onFoot' },

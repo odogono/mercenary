@@ -77,7 +77,7 @@ test('outside the lift car the Floor keys do nothing', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
-test('walked in through the door, 1 rides: the label steps, and the arrival is 25 VBLs later', async ({
+test('walked in through the door, 1 rides: the label steps, and the arrival is 25 VBLs later, with the door tones either side', async ({
   page
 }) => {
   test.setTimeout(120_000);
@@ -89,17 +89,29 @@ test('walked in through the door, 1 rides: the label steps, and the arrival is 2
     timeout: 20_000
   });
   await page.keyboard.up('ArrowUp');
+  // The door opened for the walk in, and stands open around the player.
+  await expect(frame(page)).toHaveAttribute(
+    'data-damocles-cues',
+    'door-start:1 door-stop:1'
+  );
 
-  // Session time at each change of the label and the Floor, read as the page publishes them.
+  // Session time at each change of the label, the Floor and the cues, read as the page
+  // publishes them.
   await frame(page).evaluate(node => {
-    const seen: [string, string, number][] = [];
+    const seen: [string, string, string, number][] = [];
     (window as unknown as { liftSeen: typeof seen }).liftSeen = seen;
     new MutationObserver(() => {
       const last = seen.at(-1);
       const label = node.dataset['floorLabel']!;
       const floor = node.dataset['floor']!;
-      if (last === undefined || last[0] !== label || last[1] !== floor) {
-        seen.push([label, floor, Number(node.dataset['elapsed'])]);
+      const cues = node.dataset['damoclesCues']!;
+      if (
+        last === undefined ||
+        last[0] !== label ||
+        last[1] !== floor ||
+        last[2] !== cues
+      ) {
+        seen.push([label, floor, cues, Number(node.dataset['elapsed'])]);
       }
     }).observe(node, { attributes: true });
   });
@@ -110,15 +122,36 @@ test('walked in through the door, 1 rides: the label steps, and the arrival is 2
   });
   await expect(frame(page)).toHaveAttribute('data-ride-destination', '');
   await expect(frame(page)).toHaveAttribute('data-y', '213');
+  // The new Floor's door opens around the player as the old one shut: a start and a stop each.
+  await expect(frame(page)).toHaveAttribute(
+    'data-damocles-cues',
+    'door-start:3 door-stop:3 take:1',
+    { timeout: 10_000 }
+  );
   const seen = await page.evaluate(
     () =>
-      (window as unknown as { liftSeen: [string, string, number][] }).liftSeen
+      (window as unknown as { liftSeen: [string, string, string, number][] })
+        .liftSeen
   );
-  const stepped = seen.find(([label, floor]) => label === '1' && floor === '0');
-  const arrived = seen.find(([label, floor]) => label === '1' && floor === '1');
-  expect(stepped).toBeDefined();
-  expect(arrived).toBeDefined();
+  const at = (found: (typeof seen)[number] | undefined): number => {
+    expect(found).toBeDefined();
+    return found![3];
+  };
+  const stepped = at(
+    seen.find(([label, floor]) => label === '1' && floor === '0')
+  );
+  const arrived = at(
+    seen.find(([label, floor]) => label === '1' && floor === '1')
+  );
   // 25 VBLs at 50 Hz, give or take the frames the page publishes between.
-  expect(arrived![2] - stepped![2]).toBeCloseTo(0.5, 1);
+  expect(arrived - stepped).toBeCloseTo(0.5, 1);
+  // The door shut before the label stepped, nothing sounded while it stepped, and the arrival's
+  // request came before the new door's tone.
+  const shut = at(seen.find(([, , cues]) => cues.includes('door-stop:2')));
+  const take = at(seen.find(([, , cues]) => cues.includes('take:1')));
+  const opening = at(seen.find(([, , cues]) => cues.includes('door-start:3')));
+  expect(shut).toBeLessThan(stepped);
+  expect(take).toBe(arrived);
+  expect(opening).toBeGreaterThanOrEqual(take);
   expect(errors).toEqual([]);
 });

@@ -289,6 +289,8 @@ export class DamoclesSession implements TitleSession<
   /// the Body underfoot is kept: a switch takes the arrival Pose's own.
   private bodyTurn: number;
   private carried: string[];
+  /// `$5A9D9`: whether any door moved on the last pass, which the next pass compares with.
+  private doorsMoving: boolean;
   private elapsed: number;
   private effects: Effect[] = [];
   private frameAccumulator: number;
@@ -354,6 +356,7 @@ export class DamoclesSession implements TitleSession<
     this.briefcaseStore = [...(restore?.briefcaseStore ?? [])];
     this.pendingBriefcaseDrop = restore?.pendingBriefcaseDrop ?? null;
     this.carried = [...(restore?.carried ?? [])];
+    this.doorsMoving = restore?.doorsMoving ?? false;
     this.frameAccumulator = restore?.frameAccumulator ?? 0;
     this.scrollCounter = restore?.scrollCounter ?? 0;
     this.script =
@@ -1164,6 +1167,8 @@ export class DamoclesSession implements TitleSession<
       // `$059562` steps the ride before `$05AA3C` moves the doors, so a tick sees them as they
       // stood before this step moved them.
       const doorShut = this.rideDoorShut();
+      // `$5A9D8`: raised by any door that moves on this pass (`$05AAA4`, `$05AC00`).
+      let doorsMoving = false;
       const placement = this.boundPlacement;
       if (placement !== null) {
         const local = structureLocalPosition(
@@ -1183,17 +1188,15 @@ export class DamoclesSession implements TitleSession<
             this.presentSystem('system-string-0');
           }
           const current = this.unitsFor(attachment.slot);
-          this.attachmentUnits.set(
-            attachment.slot,
-            Math.max(
-              0,
-              Math.min(
-                attachmentOpenLimit(attachment),
-                current +
-                  (opening ? 1 : -1) * ATTACHMENT_UNITS_PER_SECOND * step
-              )
+          const next = Math.max(
+            0,
+            Math.min(
+              attachmentOpenLimit(attachment),
+              current + (opening ? 1 : -1) * ATTACHMENT_UNITS_PER_SECOND * step
             )
           );
+          this.attachmentUnits.set(attachment.slot, next);
+          doorsMoving ||= next !== current;
         }
       }
       // Aboard there is no step to clamp, and the region boarding selected stands.
@@ -1233,6 +1236,7 @@ export class DamoclesSession implements TitleSession<
         this.effects.push(...transition.effects);
         this.stepRide(doorShut);
       }
+      this.askForDoorTone(doorsMoving);
       remaining -= step;
     }
     return this.snapshot;
@@ -1244,6 +1248,7 @@ export class DamoclesSession implements TitleSession<
       bodyTurn: this.bodyTurn,
       briefcaseStore: [...this.briefcaseStore],
       carried: [...this.carried],
+      doorsMoving: this.doorsMoving,
       elapsed: this.elapsed,
       frameAccumulator: this.frameAccumulator,
       occupancy: this.occupancy,
@@ -1886,6 +1891,23 @@ export class DamoclesSession implements TitleSession<
   /// the bound structure has no attachment for has no door to wait on.
   private rideDoorShut(): boolean {
     return this.doorway === null || this.unitsFor(this.doorway) === 0;
+  }
+
+  /// `$05A9EE`–`$05AA3A`, at the end of the door animation `$05AA3C`, which runs after the ride
+  /// step: a rising edge of "any door moved" arms the door tone `$04C37A` in the second sound
+  /// vector `$04BF58`, and a falling edge the noise burst `$04C2B8`. `$7A0C`, which silences the
+  /// take cue, is not tested. The edge is dropped, though still latched, while the death state
+  /// `$7A64` is set outside a structure region (bit 14 of `$7B34`), and the port has no death
+  /// state, so every edge asks.
+  private askForDoorTone(doorsMoving: boolean): void {
+    if (doorsMoving === this.doorsMoving) {
+      return;
+    }
+    this.doorsMoving = doorsMoving;
+    this.effects.push({
+      cue: doorsMoving ? 'door-start' : 'door-stop',
+      type: 'sound-request'
+    });
   }
 
   /// One tick of a pending ride: the step routine `$055A6E`, which the frame loop calls once a
