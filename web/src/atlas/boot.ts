@@ -476,7 +476,7 @@ const drawRange = () => {
     ` · grid ${formatUnits(gridStep(view.span, frame.width))} units` +
     // Which of a size and a symbol is on screen is stated rather than left to be guessed.
     (scaled
-      ? ` · ${scaled} of ${projection.markers.length} discs at derived radius`
+      ? ` · ${scaled} of ${projection.markers.length} discs at recovered radius`
       : ' · discs are markers, not sizes') +
     // The scale relating a surface to a disc is authored, so it is named every time one is
     // drawn rather than explained once in the panel and then left implicit (#437).

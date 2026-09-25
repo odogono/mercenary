@@ -705,6 +705,22 @@ messages from the resident script bank, verbatim padding included, with per-reco
 source addresses and digests. See
 [the strings note](../../docs/research/damocles-script-strings.md).
 
+## Gamma System extraction (#529)
+
+```sh
+PYTHONPATH=research/damocles-st research/damocles-st/.venv/bin/python -m damocleslab.system \
+  --run research/damocles-st/work/observe-first-world-20260818T101013Z-c5a32b7d \
+  --output payload/damocles/system.json
+```
+
+Extracts the 30 physical Body records: name, centre, colour, the packed size at `$006040`
+with its decode and `size / 256` radius, and each Body's sky draw list from `$00809C`, in
+the engine's order. It also writes the static sky facts #528 found. It fails closed on a list
+pointer outside `$00811C..$0081CC`, a byte that is not a Body selector, or an unnormalised
+size. `tests/test_system.py` checks the tracked payload reproduces and that every list is
+the bytes at its pointer. See [the Gamma System note](../../docs/research/damocles-gamma-system.md)
+and [the sky Bodies note](../../docs/research/damocles-sky-bodies.md).
+
 ## Music extraction (#514)
 
 ```sh

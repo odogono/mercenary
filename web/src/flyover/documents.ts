@@ -103,6 +103,10 @@ export type FlyoverPresentationDocument =
 export interface GammaBody {
   /// The `$0060C0` slot's low word masked to twelve bits, expanded as catalogue.json expands it.
   readonly baseColour: string;
+  /// The Bodies the sky passes draw while standing on this one, as Body ids in the engine's
+  /// order, read from `$00809C + 4 * sourceIndex`. The engine draws them in this order with no
+  /// depth sort, so a later entry covers an earlier one.
+  readonly drawList: readonly string[];
   readonly id: string;
   readonly name: string;
   readonly position: {
@@ -111,40 +115,45 @@ export interface GammaBody {
     readonly z: number;
   };
   readonly positionKind?: 'capture-time-sample';
+  /// The Body's radius in position units: `size / 256`, recovered by #528. The sky pass
+  /// draws a Body with pixel radius `size / depth`, and positions at `256 · u / depth`.
+  readonly radius: number;
   /// The raw longword from `$006040 + 4 * sourceIndex`, which is a packed binary float rather
-  /// than the integer it looks like. Read it through `bodySize` (#424); read as an integer it
+  /// than the integer it looks like. `size` is its decode (#424); read as an integer it
   /// flattens the System's 500-fold size range to 1.69-fold.
   readonly radiusExtent: number;
+  /// `radiusExtent` decoded: the low word is a mantissa normalised into `$1000..$1FFF`, with
+  /// an implicit 1 at bit 12, and the high word is a binary exponent.
+  readonly size: number;
   readonly sourceColour: number;
   readonly sourceIndex: number;
 }
 
-/// A Body's size, decoded from the packed binary float in `radiusExtent`: the low word is a
-/// mantissa normalised into `$1000..$1FFF`, an implicit 1 at bit 12, and the high word is a
-/// binary exponent. Decoded, not derived — `docs/research/damocles-gamma-system.md` records the
-/// four corroborations, the strongest being that the antilog table at `$60000` emits exactly
-/// this form, which is why `$052EBC` indexes it with the mantissa alone.
-///
-/// The unit is the field's own. Nothing recovered ties it to the coordinate scale, so a consumer
-/// drawing a Body against distances needs a divisor of its own and must label it derived
-/// (ADR 0014).
-export const bodySize = (body: GammaBody): number =>
-  ((body.radiusExtent & 0xff_ff) / 0x10_00) * 2 ** (body.radiusExtent >>> 16);
+/// The static facts the sky pass reads beyond the Body records
+/// (`docs/research/damocles-sky-bodies.md`).
+export interface GammaSky {
+  readonly drawListArea: GammaSourceWindow;
+  readonly drawListPointers: GammaSourceWindow;
+  readonly evidence: string;
+  /// How far above its own Body's centre the sky's eye stands (`$799E`).
+  readonly eyeHeight: number;
+  /// What each disc row's half-width is divided by (`$045A0C`), which corrects for the ST's
+  /// non-square low-resolution pixels.
+  readonly halfWidthDivisor: number;
+  /// The screen row the sky passes clip Bodies at: on foot, and in flight or space.
+  readonly horizonRows: {
+    readonly onFoot: number;
+    readonly otherwise: number;
+  };
+  /// The projection's focal scale (`$7964`), and the number of size units per radius.
+  readonly projectionScale: number;
+}
 
-/// Position units per unit of decoded size, turning a Body's size into a radius on the same
-/// scale as its recovered position. **Derived, not decoded** (ADR 0014): #424 decodes the sizes
-/// but not their physical unit, and nothing recovered ties that unit to the positional one. The
-/// bound is that no two of the thirty Bodies may overlap, which needs at least 166.4 from the
-/// tightest pair, ERIS and VESTA at 2,400 units. 256 is the power of two above it and a shift on
-/// a 68000. Being a lower bound, a Body may be smaller than this and never larger.
-///
-/// It lives here rather than in a surface because it is a property of the field's unit. Two
-/// surfaces drawing Bodies to scale must not each carry a copy of it and drift apart.
-const RADIUS_DIVISOR = 256;
-
-/// A Body's radius in position units, so it can be drawn against the distance scale.
-export const bodyRadius = (body: GammaBody): number =>
-  bodySize(body) / RADIUS_DIVISOR;
+export interface GammaSourceWindow {
+  readonly address: string;
+  readonly end: string;
+  readonly sha256: string;
+}
 
 export interface GammaSystemDocument {
   readonly bodies: readonly GammaBody[];
@@ -158,6 +167,7 @@ export interface GammaSystemDocument {
     readonly notes: readonly string[];
   };
   readonly schemaVersion: 1;
+  readonly sky: GammaSky;
   readonly source: {
     readonly authority: string;
     readonly colourTableSha256: string;
@@ -285,6 +295,61 @@ const unique = (values: readonly string[], path: string): void => {
   }
 };
 
+/// Decode the engine's packed binary float, refusing a mantissa outside `$1000..$1FFF`.
+const unpackSize = (raw: number, path: string): number => {
+  const mantissa = raw & 0xff_ff;
+  return mantissa >= 0x10_00 && mantissa < 0x20_00
+    ? (mantissa / 0x10_00) * 2 ** (raw >>> 16)
+    : fail(path, 'should hold a normalised packed-float mantissa');
+};
+
+const sha256 = (value: unknown, path: string): string => {
+  const hash = text(value, path);
+  return /^[\da-f]{64}$/.test(hash)
+    ? hash
+    : fail(path, 'should be a lowercase SHA-256 digest');
+};
+
+const sourceWindow = (value: unknown, path: string): GammaSourceWindow => {
+  const window = object(value, path, ['address', 'end', 'sha256']);
+  return {
+    address: text(window['address'], `${path}.address`),
+    end: text(window['end'], `${path}.end`),
+    sha256: sha256(window['sha256'], `${path}.sha256`)
+  };
+};
+
+const readGammaSky = (value: unknown): GammaSky => {
+  const sky = object(value, 'sky', [
+    'drawListArea',
+    'drawListPointers',
+    'evidence',
+    'eyeHeight',
+    'halfWidthDivisor',
+    'horizonRows',
+    'projectionScale'
+  ]);
+  const rows = object(sky['horizonRows'], 'sky.horizonRows', [
+    'onFoot',
+    'otherwise'
+  ]);
+  return {
+    drawListArea: sourceWindow(sky['drawListArea'], 'sky.drawListArea'),
+    drawListPointers: sourceWindow(
+      sky['drawListPointers'],
+      'sky.drawListPointers'
+    ),
+    evidence: text(sky['evidence'], 'sky.evidence'),
+    eyeHeight: positive(sky['eyeHeight'], 'sky.eyeHeight'),
+    halfWidthDivisor: positive(sky['halfWidthDivisor'], 'sky.halfWidthDivisor'),
+    horizonRows: {
+      onFoot: positiveInteger(rows['onFoot'], 'sky.horizonRows.onFoot'),
+      otherwise: positiveInteger(rows['otherwise'], 'sky.horizonRows.otherwise')
+    },
+    projectionScale: positive(sky['projectionScale'], 'sky.projectionScale')
+  };
+};
+
 export const readGammaSystem = (value: unknown): GammaSystemDocument => {
   const root = object(value, '$', [
     'schemaVersion',
@@ -292,6 +357,7 @@ export const readGammaSystem = (value: unknown): GammaSystemDocument => {
     'source',
     'coverage',
     'coordinateSystem',
+    'sky',
     'bodies'
   ]);
   const source = object(root['source'], 'source', [
@@ -304,12 +370,7 @@ export const readGammaSystem = (value: unknown): GammaSystemDocument => {
   ]);
   const readHash = (
     field: 'colourTableSha256' | 'programSha256' | 'ramSha256'
-  ) => {
-    const hash = text(source[field], `source.${field}`);
-    return /^[\da-f]{64}$/.test(hash)
-      ? hash
-      : fail(`source.${field}`, 'should be a lowercase SHA-256 digest');
-  };
+  ) => sha256(source[field], `source.${field}`);
   const coverage = object(root['coverage'], 'coverage', ['complete', 'notes']);
   const coordinate = object(root['coordinateSystem'], 'coordinateSystem', [
     'kind',
@@ -320,6 +381,7 @@ export const readGammaSystem = (value: unknown): GammaSystemDocument => {
   if (axes.join(',') !== 'x,y,z') {
     fail('coordinateSystem.axes', 'should be x, y, z');
   }
+  const sky = readGammaSky(root['sky']);
   const bodies = array(root['bodies'], 'bodies').map(
     (raw, index): GammaBody => {
       const path = `bodies[${index}]`;
@@ -335,6 +397,9 @@ export const readGammaSystem = (value: unknown): GammaSystemDocument => {
         'sourceColour',
         'position',
         'radiusExtent',
+        'size',
+        'radius',
+        'drawList',
         ...(hasPositionKind ? ['positionKind'] : [])
       ]);
       const id = identifier(body['id'], `${path}.id`);
@@ -359,13 +424,31 @@ export const readGammaSystem = (value: unknown): GammaSystemDocument => {
       if (baseColour !== expandStRgb(sourceColour)) {
         fail(`${path}.baseColour`, 'should be the expansion of sourceColour');
       }
+      const radiusExtent = positiveInteger(
+        body['radiusExtent'],
+        `${path}.radiusExtent`
+      );
+      const size = positive(body['size'], `${path}.size`);
+      if (size !== unpackSize(radiusExtent, `${path}.radiusExtent`)) {
+        fail(`${path}.size`, 'should be the decode of radiusExtent');
+      }
+      const radius = positive(body['radius'], `${path}.radius`);
+      if (radius !== size / sky.projectionScale) {
+        fail(`${path}.radius`, 'should be size / sky.projectionScale');
+      }
       return {
         baseColour,
+        drawList: array(body['drawList'], `${path}.drawList`).map(
+          (entry, entryIndex) =>
+            identifier(entry, `${path}.drawList[${entryIndex}]`)
+        ),
         id,
         name: text(body['name'], `${path}.name`),
         position: point(body['position'], `${path}.position`),
         ...(positionKind === undefined ? {} : { positionKind }),
-        radiusExtent: positive(body['radiusExtent'], `${path}.radiusExtent`),
+        radius,
+        radiusExtent,
+        size,
         sourceColour,
         sourceIndex: integer(body['sourceIndex'], `${path}.sourceIndex`)
       };
@@ -384,6 +467,14 @@ export const readGammaSystem = (value: unknown): GammaSystemDocument => {
   }
   if (bodies.filter(body => body.positionKind !== undefined).length !== 1) {
     fail('bodies', 'should contain exactly one capture-time sample');
+  }
+  const ids = new Set(bodies.map(body => body.id));
+  for (const [index, body] of bodies.entries()) {
+    for (const entry of body.drawList) {
+      if (!ids.has(entry)) {
+        fail(`bodies[${index}].drawList`, `names unknown Body ${entry}`);
+      }
+    }
   }
   return {
     bodies,
@@ -405,6 +496,7 @@ export const readGammaSystem = (value: unknown): GammaSystemDocument => {
       notes: strings(coverage['notes'], 'coverage.notes')
     },
     schemaVersion: literal(root['schemaVersion'], 1, 'schemaVersion'),
+    sky,
     source: {
       authority: text(source['authority'], 'source.authority'),
       colourTableSha256: readHash('colourTableSha256'),
@@ -462,7 +554,7 @@ const radiusRule = (
     };
   }
   if (kind === 'recovered-extent') {
-    // No parameters: the radius is the Body's own decoded extent over RADIUS_DIVISOR, so there
+    // No parameters: the radius is the Body's own recovered radius in system.json, so there
     // is nothing here for a presentation to choose.
     object(value, path, ['kind']);
     if (systemId !== 'gamma') {

@@ -1,7 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
-  bodySize,
   readFlyoverPresentation,
   readGammaSystem
 } from '../src/flyover/documents.ts';
@@ -355,12 +354,12 @@ describe('the recovered Gamma System document', () => {
     });
   });
 
-  test('decodes the packed binary float in radiusExtent', async () => {
+  test('publishes the decode of the packed binary float in radiusExtent', async () => {
     const document = readGammaSystem(
       await Bun.file('../payload/damocles/system.json').json()
     );
     const of = (id: string) =>
-      bodySize(document.bodies.find(body => body.id === id)!);
+      document.bodies.find(body => body.id === id)!.size;
     // The decode's own test: a packed float's mantissa is normalised, an integer's is not.
     // Eleven distinct mantissas across thirty Bodies, every one of them in range (#424).
     for (const body of document.bodies) {
@@ -373,7 +372,9 @@ describe('the recovered Gamma System document', () => {
     // DIALIS is the star and becomes the largest object in the System. Read as an integer it
     // is unremarkable, which is the structural corroboration of the decode.
     expect(of('dialis')).toBe(5_120_000);
-    expect(Math.max(...document.bodies.map(bodySize))).toBe(of('dialis'));
+    expect(Math.max(...document.bodies.map(body => body.size))).toBe(
+      of('dialis')
+    );
     // In every satellite cluster the structurally inferred Primary outranks its satellites.
     for (const [primary, satellites] of [
       ['eris', ['solon', 'theon', 'vesta', 'metis', 'lucan']],
@@ -391,11 +392,79 @@ describe('the recovered Gamma System document', () => {
     }
     // Decoded the System spans 500x; read as an integer it spans 1.69x, which is what made
     // TRITON draw barely larger than PAN.
-    const sizes = document.bodies.map(bodySize);
+    const sizes = document.bodies.map(body => body.size);
     expect(Math.max(...sizes) / Math.min(...sizes)).toBe(500);
     expect(of('triton') / of('pan')).toBeCloseTo(13.64, 2);
     // Checked against a captured game frame, where ERIS drew 3.24x VESTA at near-equal range.
     expect(of('eris') / of('vesta')).toBeCloseTo(3.33, 2);
+  });
+
+  test('publishes each radius as a 256th of its size (#528)', async () => {
+    const document = readGammaSystem(
+      await Bun.file('../payload/damocles/system.json').json()
+    );
+    const of = (id: string) =>
+      document.bodies.find(body => body.id === id)!.radius;
+    expect(document.sky.projectionScale).toBe(256);
+    expect(of('eris')).toBe(1200);
+    expect(of('vesta')).toBe(360);
+    expect(of('dialis')).toBe(20_000);
+    expect(of('theon')).toBe(40);
+
+    const size = await Bun.file('../payload/damocles/system.json').json();
+    size.bodies[11].size += 1;
+    expect(() => readGammaSystem(size)).toThrow('bodies[11].size');
+    const radius = await Bun.file('../payload/damocles/system.json').json();
+    radius.bodies[11].radius = 1500;
+    expect(() => readGammaSystem(radius)).toThrow('bodies[11].radius');
+  });
+
+  test('publishes every draw list in the engine order', async () => {
+    const document = readGammaSystem(
+      await Bun.file('../payload/damocles/system.json').json()
+    );
+    const of = (id: string) =>
+      document.bodies.find(body => body.id === id)!.drawList;
+    // `$00` is DIALIS: the walker at `$0530EE` stops only at a negative byte, so it leads
+    // every list and DIALIS's own list is DIALIS alone.
+    expect(of('eris')).toEqual([
+      'dialis',
+      'solon',
+      'theon',
+      'vesta',
+      'metis',
+      'lucan',
+      'damocles'
+    ]);
+    expect(of('metis')).toEqual([
+      'dialis',
+      'damocles',
+      'eris',
+      'solon',
+      'theon',
+      'vesta',
+      'lucan'
+    ]);
+    expect(of('dialis')).toEqual(['dialis']);
+    expect(of('damocles')).toEqual([
+      'eris',
+      'solon',
+      'theon',
+      'vesta',
+      'metis',
+      'lucan',
+      'dialis',
+      'icarus'
+    ]);
+    expect(document.sky.drawListPointers).toEqual({
+      address: '0x00809c',
+      end: '0x008118',
+      sha256: '5e80c8d7c46cc1a8fef6215f708d4614be403866a4dd58415a9468debf5c0909'
+    });
+
+    const unknown = await Bun.file('../payload/damocles/system.json').json();
+    unknown.bodies[11].drawList.push('void');
+    expect(() => readGammaSystem(unknown)).toThrow('unknown Body void');
   });
 
   test('pins the recovered Body colour table', async () => {

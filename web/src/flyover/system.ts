@@ -8,7 +8,6 @@ import {
 } from '../sky/index.ts';
 import { TargPresentationClock } from '../sky/time.ts';
 import {
-  bodyRadius,
   type FlyoverBackdropPresentation,
   type FlyoverBodyMeshPresentation,
   type FlyoverCameraPresentation,
@@ -32,7 +31,7 @@ export interface FlyoverBody {
     readonly colour: 'authored' | 'recovered';
     readonly identity: 'authored' | 'recovered';
     readonly position: FlyoverValueProvenance;
-    readonly radius: 'authored' | 'mechanically-derived';
+    readonly radius: FlyoverValueProvenance;
     readonly ranges: 'authored';
   };
   readonly ranges: readonly FlyoverRange[];
@@ -192,12 +191,12 @@ export const composeGammaSystem = (
     }
     return {
       colour: source.baseColour,
-      // The Body's own decoded extent (#424) over the derived divisor, so the System is drawn
-      // at its recovered relative sizes: DIALIS a star, the moons moons. This replaced a
+      // The Body's own recovered radius (#528), so the System is drawn at its recovered
+      // sizes: DIALIS a star, the moons moons. This replaced a
       // fraction of the distance to the nearest neighbour, which was the only rule available
       // before the extent was decoded and got 48% of size comparisons backwards, drawing an
       // isolated moon larger than a planet in a tight group.
-      displayRadiusUnits: bodyRadius(source),
+      displayRadiusUnits: source.radius,
       id: body.id,
       position: { ...source.position },
       provenance: {
@@ -205,9 +204,7 @@ export const composeGammaSystem = (
         colour: 'recovered',
         identity: 'recovered',
         position: 'recovered',
-        // The size is recovered and decoded; the divisor tying it to the positional scale is
-        // derived and bounded rather than decoded, so the radius as a whole is not `recovered`.
-        radius: 'mechanically-derived'
+        radius: 'recovered'
       },
       ranges: body.ranges
     } satisfies FlyoverBody;

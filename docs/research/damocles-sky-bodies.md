@@ -260,8 +260,9 @@ Consequences, each seen in the pinned frames:
   on-foot capture, which puts the horizon on the centre row, and pass 2 never draws below
   it. ERIS is cut flat at row 68 in the THEON frames, as it is at the horizon in issue
   frame 1.
-- **List order, not depth.** For the ERIS cluster the list is DIALIS, DAMOCLES, then the
-  moons in slot order, and a later entry overwrites an earlier one. On THEON, METIS (8 px)
+- **List order, not depth.** For a moon of the ERIS cluster the list is DIALIS, DAMOCLES,
+  then the other members in slot order, ERIS first. ERIS's own list puts DAMOCLES last. A
+  later entry overwrites an earlier one. On THEON, METIS (8 px)
   is drawn on top of ERIS.
 - In flight (`$042C74 = $88`) Bodies may draw to row 136 and the ground covers them later.
   That is static reading only.
@@ -404,5 +405,9 @@ Read the code windows above from `observed.ram` with Capstone (the lab venv has 
   re-checked here.
 - **`$04CFA4`**, called from `$05309A` when `$7834 ≠ 0` and `$7830 ≥ 0`, was not read.
   `$7830` is `$002C` (ERIS) in four captures, all with `$7834 = 0`.
-- **The port does not draw sky Bodies yet.** Implementing them, and publishing
-  `radius = size / 256` in `payload/damocles/system.json`'s coverage text, are follow-ups.
+- **The port does not draw sky Bodies yet.** Implementing them is a follow-up.
+  [#529](https://github.com/odogono/mercenary/issues/529) publishes what it needs in
+  `payload/damocles/system.json`: each Body's `drawList`, `size` and `radius = size / 256`.
+  It also adds a `sky` block with the projection scale `$7964`, the eye height `$799E`,
+  the half-width divisor `$045A0C` and the clip rows `$0530A6`/`$0530B0`. The comet's
+  geometry is not published.

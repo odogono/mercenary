@@ -580,11 +580,24 @@ symmetric and the renderer does not distinguish parent from child. The
 planet/moon typing and the proposed first-member Primary rule therefore remain
 **Partially confirmed**, not Confirmed.
 
+Every cluster list starts with DIALIS (`$00`). In each moon's list DAMOCLES comes next,
+then the other members in slot order. In each planet's list the moons come next and
+DAMOCLES comes last. So ERIS's list is DIALIS, SOLON, THEON, VESTA, METIS, LUCAN,
+DAMOCLES, and METIS's is DIALIS, DAMOCLES, ERIS, SOLON, THEON, VESTA, LUCAN.
+
 The three exceptional lists are also bounded facts:
 
-- DIALIS (slot 0): no selectors.
+- DIALIS (slot 0): DIALIS only (`00 FF` at `$00811C`).
 - DAMOCLES (slot 29): ERIS through LUCAN, then DIALIS and ICARUS.
-- VOID (slot 30): DIALIS only.
+- VOID (slot 30): DIALIS only (`00 FF` at `$0081CB`).
+
+_(Corrected 2026-09-25, [#529](https://github.com/odogono/mercenary/issues/529).)_ This
+note first said DIALIS's list held no selectors. The walker at `$0530EE` stops only at a
+negative byte, so `$00` is a DIALIS entry and not padding, and DIALIS's list is the same as
+VOID's. No capture stands on either.
+`payload/damocles/system.json` publishes every physical Body's list as `drawList`, in
+this order, and `research/damocles-st/tests/test_system.py` checks each list against the
+bytes at its `$00809C` pointer.
 
 Thus the resident records answer one part of “how bodies are drawn at range”:
 the current place/body selects an explicit list of other body records, and the
@@ -1004,8 +1017,9 @@ bodies bounds the divisor below at **166.4** (tightest pair ERIS and VESTA,
 derived wherever it is used (ADR 0014).
 
 `payload/damocles/system.json` continues to publish the raw longword as
-`radiusExtent`, unchanged, so no schema or value change follows from this. Its
-`coverage` block now states that the encoding is decoded and the physical unit
+`radiusExtent`, unchanged. Since #529 it also publishes the decode as `size` and
+`size / 256` as `radius`. Neither is a field a Save reads, so `schemaVersion` stays 1.
+Before #528, its `coverage` block said that the encoding was decoded and the physical unit
 is not.
 
 The provenance is worth recording: the packing was found because an Atlas
@@ -1293,7 +1307,7 @@ name table). Not completed here:
 | World tables absent at title, present after Space+wait | Title capture vs `first-world` observe RAM                                                                 |
 | 31×8 body names at `$0081DC`                           | Two cold `first-world` runs, equal SHA-256                                                                 |
 | Body X/Y/Z and radius/extent arrays                    | Same runs; `$052DB0..$053078` range, apparent-size, and arrival/contact consumers                          |
-| `payload/damocles/system.json`                         | Direct transcription of those recovered physical records; source and coverage are embedded in the document |
+| `payload/damocles/system.json`                         | Extracted from those recovered physical records by `damocleslab.system` (#529); source and coverage are embedded in the document |
 | 31 per-body range-draw lists                           | Same runs; Eris pointer binding and `$0530C8..$0531BC` list readers                                        |
 | 31 per-body `0RGB` colours at `$0060C0`                | Same runs; 124 bytes SHA-256 `9fdcf239…273f75aa`; low word of each `index * 4` longword masked at `$0592B0`; 29 of 29 agree with an independent observer |
 | VOID all-body drawing                                  | Space branch `$0598A6..$059912` calls 30-body scan `$052DB0`                                               |

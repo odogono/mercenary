@@ -12,6 +12,15 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Added
 
+- **The Damocles Data Payload carries each Body's sky draw list and true size.**
+  `payload/damocles/system.json` is now extracted by `damocleslab.system` rather than
+  transcribed. Each Body gains `drawList`, the Bodies its sky draws in the engine's order
+  from `$00809C`, and `size` and `radius`, the #424 decode and `size / 256` System units
+  (#528). A new `sky` block carries the projection scale, eye height, half-width divisor
+  and clip rows the sky pass reads. The Atlas and the Flyover now read the published
+  radius, which is recovered rather than derived, and say so. DIALIS's list is DIALIS
+  alone, not empty as the research first said (#529).
+
 - **The sound board plays every Damocles sound programme.** The port's YM2149 driver
   now holds everything #514 recovered: channel B's spell, splash, transporter, bump,
   blast, shot, thud, zap and blown up, and the Geiger counter's click that cuts them.
