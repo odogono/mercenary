@@ -718,7 +718,10 @@ export const planErisFrame = (
       skippedFaces += triangles.skipped;
       for (let i = 0; i < triangles.indices.length; i += 3) {
         const colour = triangles.colours[i / 3]!;
-        const order = placement.kind === 'ground' ? triangles.faces[i / 3]! : 0;
+        const order =
+          placement.kind === 'ground' || mesh.faceOrdered === true
+            ? triangles.faces[i / 3]!
+            : 0;
         for (let corner = 0; corner < 3; corner += 1) {
           emit(
             placed(
