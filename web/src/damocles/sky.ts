@@ -1,7 +1,7 @@
 import type { BodySky } from '../catalogue/data.ts';
 import type { GammaSystemDocument } from '../flyover/documents.ts';
 import type { Vector3 } from '../orientation/index.ts';
-import { skyAngles } from './terminator.ts';
+import { continuousSkyAngles, skyAngles } from './terminator.ts';
 
 /// The other Bodies of a cluster in a Body's sky (#530), to the closed form #528 recovered
 /// (docs/research/damocles-sky-bodies.md).
@@ -93,6 +93,9 @@ export interface SkyInputs {
   /// The player's position on the Body, whose Body Coordinate steps the sky angles start from.
   readonly position: Vector3;
   readonly sky: BodySky | null;
+  /// Enhanced presentation: move the Bodies with the whole accumulator and the exact position
+  /// rather than in the engine's 1/1024-turn steps, which jump a Body 0.35° at a time.
+  readonly smooth?: boolean;
   /// The Body's rotation accumulator (`$62EA + 4 * body`).
   readonly turn: number;
 }
@@ -127,7 +130,9 @@ const skyBodies = (
   if (here === undefined) {
     return [];
   }
-  const { latitude, longitude } = skyAngles(inputs.turn, inputs.position);
+  const { latitude, longitude } = (
+    inputs.smooth === true ? continuousSkyAngles : skyAngles
+  )(inputs.turn, inputs.position);
   const rotation = celestialRotation(longitude, latitude);
   const eye = {
     x: here.position.x,

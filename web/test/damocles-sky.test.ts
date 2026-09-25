@@ -19,6 +19,7 @@ import {
 } from '../src/damocles/session.ts';
 import { skyPass, type SkyBody } from '../src/damocles/sky.ts';
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
+import { continuousSkyAngles, skyAngles } from '../src/damocles/terminator.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import {
   readGammaSystem,
@@ -366,5 +367,58 @@ describe('the frame from a METIS pose', () => {
     const actual = planOf(restored);
     expect(actual.skyBodies).toEqual(expected.skyBodies);
     expect(actual.skyVertices).toEqual(expected.skyVertices);
+  });
+});
+
+/// ERIS's offset from METIS at `turn`, stepped as the engine does or smooth.
+const erisFromMetis = (turn: number, smooth: boolean) => {
+  const pose = arrival('metis-transporter');
+  return skyPass(system, {
+    body: pose.body,
+    daylight: false,
+    position: pose.position,
+    sky: null,
+    smooth,
+    turn
+  }).bodies.find(body => body.id === 'eris')!.offset;
+};
+
+describe('the Enhanced sky moves between the engine steps', () => {
+  test('the smooth angles run ahead of the stepped ones by less than the two fractions', () => {
+    for (const id of ['metis-transporter', 'theon', 'eris-spaceport-onfoot']) {
+      const { position } = arrival(id);
+      for (const turn of [0, 0x1_23_45, 0x0f_ff_ff_ff, 0xff_ff_ff_ff]) {
+        const stepped = skyAngles(turn, position);
+        const smooth = continuousSkyAngles(turn, position);
+        const ahead = (smooth.longitude - stepped.longitude + 0x4_00) % 0x4_00;
+        expect(ahead).toBeGreaterThanOrEqual(0);
+        expect(ahead).toBeLessThan(2);
+        const up = smooth.latitude - stepped.latitude;
+        expect(up).toBeGreaterThanOrEqual(0);
+        expect(up).toBeLessThan(1);
+      }
+    }
+    // Where both fractions are zero they are the engine's angles exactly.
+    const whole = { x: 631 * 0x4_00_00, y: 63, z: 268 * 0x4_00_00 };
+    expect(continuousSkyAngles(0x89_00_00, whole)).toEqual(
+      skyAngles(0x89_00_00, whole)
+    );
+  });
+
+  test('a few VBLs move ERIS smoothly, where the stepped sky holds it still', () => {
+    const turn = turnFor('metis-transporter', 768);
+    // METIS turns 944 a VBL, so ten VBLs are a seventh of a step.
+    const later = turn + 10 * 944;
+    expect(erisFromMetis(later, false)).toEqual(erisFromMetis(turn, false));
+    const before = erisFromMetis(turn, true);
+    const after = erisFromMetis(later, true);
+    const moved = Math.hypot(
+      after.x - before.x,
+      after.y - before.y,
+      after.z - before.z
+    );
+    // A whole step turns a 7,200-unit offset by 2π/1024, about 44 units; a seventh is about 6.
+    expect(moved).toBeGreaterThan(4);
+    expect(moved).toBeLessThan(8);
   });
 });

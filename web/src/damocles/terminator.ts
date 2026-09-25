@@ -1,5 +1,5 @@
 import type { Vector3 } from '../orientation/index.ts';
-import { bodySteps } from './panel.ts';
+import { bodySteps, continuousBodySteps } from './panel.ts';
 
 /// The Damocles day/night terminator, `$050562` (#494, #497).
 ///
@@ -31,6 +31,21 @@ export const skyAngles = (
   return {
     latitude: steps.z,
     longitude: (steps.x + Math.floor(turn / 0x1_00_00)) & 0x3_ff
+  };
+};
+
+/// The sky angles without the engine's truncation: the whole accumulator over `$10000`, and the
+/// player's position between Body Coordinate steps. They agree with `skyAngles` wherever the
+/// accumulator's low word and the step fractions are zero, and between those points they move
+/// on where the engine holds. Enhanced presentation only.
+export const continuousSkyAngles = (
+  turn: number,
+  position: Vector3
+): { readonly latitude: number; readonly longitude: number } => {
+  const steps = continuousBodySteps(position);
+  return {
+    latitude: steps.z,
+    longitude: (steps.x + turn / 0x1_00_00) % 0x4_00
   };
 };
 

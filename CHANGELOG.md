@@ -12,6 +12,14 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Added
 
+- **The Enhanced preset moves the Damocles sky Bodies smoothly.** The engine turns the
+  sky in whole 1/1024-turn steps, and walking reaches it in four-cell steps, so on METIS
+  a Body jumps 0.35° every 1.4 seconds. Enhanced presentation now reads the whole
+  accumulator and the exact position instead, so the Bodies glide at the same speed and
+  never stray more than two steps from where the engine has them. Authentic keeps the
+  engine's steps. Day and night still turn on the whole step in both, so play and Saves
+  are unchanged.
+
 - **Damocles draws the other Bodies of a cluster in the surface sky.** On METIS by day
   ERIS is a large `#000066` crescent cut flat at the horizon, and VESTA a small `#4488cc`
   one. Each Body on the current Body's draw list is turned through the celestial
