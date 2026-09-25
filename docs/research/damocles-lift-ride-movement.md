@@ -201,9 +201,10 @@ ADR 0049, advanced by session seconds from a derived average
 
 ## What this does not settle
 
-- **The bump sound.** The clamp raises `$5A646`. The frame loop arms `$04C630` on the
+- **The wall sound.** The clamp raises `$5A646`. The frame loop arms `$04C630` on the
   vector `$04BF54` when it rises (`$05958A`–`$0595B2`). The runs saw the flag. The sound was
-  not recorded, and the port has no Sound Cue for it.
+  not recorded here. [The sound programmes](damocles-sound-programmes.md) recorded it as the
+  thud, and the port asks for it as the `thud` Sound Cue (#521).
 - **Running** (the R toggle) was not held. It changes the step, not the clamp.
 - **A key during the arrival frame's own substeps**, and walking while the doors are still
   opening on the new Floor, beyond the one `eris-forward` shows, were not traced separately.

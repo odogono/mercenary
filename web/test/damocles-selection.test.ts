@@ -194,6 +194,7 @@ test('region pushback clamps only the blocked axis and preserves wall sliding', 
   expect(pushed.pose.position.x).toBe(placement.position.x + 1100);
   expect(pushed.pose.position.z).toBe(placement.position.z - 812);
   expect(pushed.regionIndex).toBe(region);
+  expect(pushed.refused).toBeTrue();
 
   // Region 10 and the room do not share an edge: the lower window wall remains solid.
   const windowRegion = structureRegionAt(
@@ -226,6 +227,7 @@ test('open doorway X uses the bind-time inset, not the catalogue slab span', () 
   );
   expect(left.pose.position.x).toBe(placement.position.x + 1311);
   expect(left.regionIndex).toBe(1);
+  expect(left.refused).toBeTrue();
   const right = clampStructureStep(
     placement,
     inDoor,
@@ -259,6 +261,7 @@ test('the doorway region is admitted only once its latch reads fully open', () =
   );
   expect(band.pose.position.z).toBe(placement.position.z - 805);
   expect(band.regionIndex).toBe(region);
+  expect(band.refused).toBeFalse();
   // Past the room's own edge the doorway is refused until open, and the eye is held at the
   // edge less one (`$05A4CA`).
   const closed = clampStructureStep(
@@ -271,6 +274,7 @@ test('the doorway region is admitted only once its latch reads fully open', () =
   );
   expect(closed.pose.position.z).toBe(placement.position.z - 801);
   expect(closed.regionIndex).toBe(region);
+  expect(closed.refused).toBeTrue();
   const open = clampStructureStep(
     placement,
     at(1400, -805),
@@ -281,6 +285,7 @@ test('the doorway region is admitted only once its latch reads fully open', () =
   );
   expect(open.pose.position.z).toBe(placement.position.z - 790);
   expect(open.regionIndex).toBe(1);
+  expect(open.refused).toBeFalse();
   // A pending ride refuses every region, open or not (`$05A35C`).
   const riding = clampStructureStep(
     placement,

@@ -328,6 +328,9 @@ export class DamoclesSession implements TitleSession<
   private doorsMoving: boolean;
   private elapsed: number;
   private effects: Effect[] = [];
+  /// `$5A647`: whether the clamp refused a step in the last frame, which the next frame's
+  /// `$5A646` is compared with.
+  private stepRefused = false;
   private frameAccumulator: number;
   /// The instance the player is aboard, or null on foot.
   private occupied: string | null = null;
@@ -1241,6 +1244,8 @@ export class DamoclesSession implements TitleSession<
         : walk(this.pose, this.intent, step, this.rules);
       this.bindAt(moved);
       const placement = this.boundPlacement;
+      // `$059520` clears `$5A646` every frame, and only the clamp raises it.
+      let refused = false;
       // Aboard there is no step to clamp, and the region boarding selected stands.
       if (!aboard) {
         if (
@@ -1257,6 +1262,7 @@ export class DamoclesSession implements TitleSession<
             this.ride !== null
           );
           this.pose = clamped.pose;
+          refused = clamped.refused;
           // `$05A35C`: the region is not reselected while a ride is pending.
           if (this.ride === null) {
             this.enterRegion(clamped.regionIndex);
@@ -1282,6 +1288,7 @@ export class DamoclesSession implements TitleSession<
         this.stepRide(this.rideDoorShut());
         this.askForDoorTone(this.moveAttachments(moved.position));
       }
+      this.askForThud(refused);
       remaining -= step;
     }
     return this.snapshot;
@@ -2152,6 +2159,16 @@ export class DamoclesSession implements TitleSession<
       cue: doorsMoving ? 'door-start' : 'door-stop',
       type: 'sound-request'
     });
+  }
+
+  /// `$05958A`–`$0595B2`, after the substep loop: a step refused this frame and not the last
+  /// arms the thud `$04C630` in the first sound vector (`$059594`), so pushing into a wall asks
+  /// once as contact starts, not once a frame. The edge is not kept in a Save.
+  private askForThud(refused: boolean): void {
+    if (refused && !this.stepRefused) {
+      this.effects.push({ cue: 'thud', type: 'sound-request' });
+    }
+    this.stepRefused = refused;
   }
 
   /// One tick of a pending ride: the step routine `$055A6E`, which the frame loop calls once a

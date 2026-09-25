@@ -33,7 +33,6 @@ export type DamoclesProgramme =
   | 'shot'
   | 'spell'
   | 'splash'
-  | 'thud'
   | 'transporter'
   | 'zap';
 

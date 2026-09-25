@@ -440,7 +440,8 @@ round trips (stop, `savebin`, continue; then stop, `w`, continue), not one stop 
 Presentation, in the port, of what its sessions can reach now:
 
 - [#521](https://github.com/odogono/mercenary/issues/521): the wall thud, on the rising
-  edge of a clamped on-foot step.
+  edge of a clamped on-foot step. Done: the session's `thud` Sound Cue, after each step's
+  substeps (`web/test/damocles-lift.test.ts`, "the wall thud").
 - [#522](https://github.com/odogono/mercenary/issues/522): the message tone, per VBL of a
   message's scroll-in.
 

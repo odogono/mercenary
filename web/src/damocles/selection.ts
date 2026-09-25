@@ -208,6 +208,9 @@ const clearanceFor = (flags: number): number =>
 
 export interface ClampedStructureStep {
   readonly pose: Pose;
+  /// The step reached the clamp `$05A5F0`, which raises `$5A646`: the eye was held back rather
+  /// than standing past an edge or entering another region.
+  readonly refused: boolean;
   readonly regionIndex: number | null;
 }
 
@@ -230,7 +233,7 @@ export const clampStructureStep = (
 ): ClampedStructureStep => {
   const selection = placement.selection;
   if (selection === undefined) {
-    return { pose: to, regionIndex: null };
+    return { pose: to, refused: false, regionIndex: null };
   }
   const regions = selection.structure.regions;
   const currentIndex =
@@ -239,6 +242,7 @@ export const clampStructureStep = (
   if (current === undefined) {
     return {
       pose: to,
+      refused: false,
       regionIndex: structureRegionAt(placement, to, negateZ, latches)
     };
   }
@@ -251,6 +255,7 @@ export const clampStructureStep = (
   const withinOwnBox = currentBounds.every(
     ([min, max], axis) => min <= coordinates[axis]! && coordinates[axis]! < max
   );
+  let refused = false;
   if (withinOwnBox) {
     const standsAtEdge = (axis: number, upper: boolean): boolean => {
       const other = axis === 0 ? 1 : 0;
@@ -270,8 +275,10 @@ export const clampStructureStep = (
       const max = currentBounds[axis]![1] - clearance;
       if (coordinates[axis]! < min && !standsAtEdge(axis, false)) {
         coordinates[axis] = min;
+        refused = true;
       } else if (coordinates[axis]! >= max && !standsAtEdge(axis, true)) {
         coordinates[axis] = max - 1;
+        refused = true;
       }
     }
   } else {
@@ -279,8 +286,9 @@ export const clampStructureStep = (
       ? null
       : structureRegionAt(placement, to, negateZ, latches);
     if (selected !== null) {
-      return { pose: to, regionIndex: selected };
+      return { pose: to, refused: false, regionIndex: selected };
     }
+    refused = true;
     for (const axis of [0, 1]) {
       const [min, max] = currentBounds[axis]!;
       coordinates[axis] = Math.min(Math.max(coordinates[axis]!, min), max - 1);
@@ -299,6 +307,7 @@ export const clampStructureStep = (
   };
   return {
     pose,
+    refused,
     regionIndex:
       structureRegionAt(placement, pose, negateZ, latches) ?? currentIndex
   };
