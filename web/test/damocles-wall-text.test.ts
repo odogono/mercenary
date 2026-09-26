@@ -164,38 +164,43 @@ test('font 4 draws its font-3 fallback while slot 49 or 91 is carried', () => {
   ).toEqual(stroke.lines);
 });
 
-/// Each recovered triangle's colour and face order, in draw order.
+/// Each recovered triangle's colour, in draw order, and whether it shares the first one's
+/// plane to the bit.
 const orders = (carriedSlot?: (slot: number) => boolean) => {
   const plan = planErisFrame(surface, pose, doc, bound, [], [], carriedSlot);
   const recovered = plan.vertices.slice(
     (plan.fillTriangleCount + plan.islandTriangleCount) * 3 * FLOATS_PER_VERTEX
   );
-  const result: [string, number][] = [];
+  const result: [string, boolean][] = [];
+  const first = recovered.slice(6, 10).join();
   for (let i = 0; i < recovered.length; i += FLOATS_PER_VERTEX * 3) {
-    const [r, g, b, order] = recovered.slice(i + 3, i + 7);
-    result.push([`${r}${g}${b}`, order!]);
+    const [r, g, b] = recovered.slice(i + 3, i + 6);
+    result.push([
+      `${r}${g}${b}`,
+      recovered.slice(i + 6, i + 10).join() === first
+    ]);
   }
   return result;
 };
 
-test('the frame pulls wall text over its coplanar wall and faces it both ways', () => {
+test('the frame ties wall text to its wall, draws it after, and faces it both ways', () => {
   // The wall's two triangles, then the stroke as a quad drawn from both sides.
   expect(orders()).toEqual([
-    ['100', 0],
-    ['100', 0],
-    ['010', 1],
-    ['010', 1],
-    ['010', 1],
-    ['010', 1]
+    ['100', true],
+    ['100', true],
+    ['010', true],
+    ['010', true],
+    ['010', true],
+    ['010', true]
   ]);
   // The fallback's filled bar, both windings of both triangles.
   expect(orders(slot => slot === 91)).toEqual([
-    ['100', 0],
-    ['100', 0],
-    ['001', 1],
-    ['001', 1],
-    ['001', 1],
-    ['001', 1]
+    ['100', true],
+    ['100', true],
+    ['001', true],
+    ['001', true],
+    ['001', true],
+    ['001', true]
   ]);
 });
 
@@ -385,16 +390,12 @@ test('the frame draws the label over its wall, from both sides', () => {
   const recovered = plan.vertices.slice(
     (plan.fillTriangleCount + plan.islandTriangleCount) * 3 * FLOATS_PER_VERTEX
   );
-  const colours: [number, number][] = [];
+  const colours: number[] = [];
   for (let i = 0; i < recovered.length; i += FLOATS_PER_VERTEX * 3) {
-    colours.push([recovered[i + 3]!, recovered[i + 6]!]);
+    colours.push(recovered[i + 3]!);
   }
   const grey = Math.fround(0x77 / 255);
-  // The wall's two triangles, then the filled '1' in both windings.
-  expect(colours).toEqual([
-    [1, 0],
-    [1, 0],
-    [grey, 1],
-    [grey, 1]
-  ]);
+  // The wall's two triangles, then the filled '1' in both windings: drawn after, so it wins
+  // the plane it shares with a wall.
+  expect(colours).toEqual([1, 1, grey, grey]);
 });

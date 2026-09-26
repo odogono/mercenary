@@ -7,6 +7,7 @@ import {
 } from '../src/damocles/documents.ts';
 import {
   FLOATS_PER_VERTEX,
+  modelPlane,
   planErisFrame,
   type ErisFramePlan
 } from '../src/damocles/frame.ts';
@@ -233,8 +234,12 @@ describe('an Eris frame in Filled Presentation', () => {
       expect(Math.abs(view[0]!)).toBeCloseTo(10, 3);
       expect(view[1]).toBeCloseTo(-63, 3);
       expect(Math.abs(view[2]! - 1000)).toBeCloseTo(10, 3);
-      // Red, and no face order: only ground records carry one.
-      expect(view.slice(3)).toEqual([1, 0, 0, 0]);
+      // Red, in the plane y = 0 seen from 63 units above it: n·p + d = 0 with n up.
+      expect(view.slice(3, 6)).toEqual([1, 0, 0]);
+      expect(view[6]).toBeCloseTo(0, 12);
+      expect(view[7]).toBe(1);
+      expect(view[8]).toBeCloseTo(0, 12);
+      expect(view[9]).toBe(63);
     }
   });
 
@@ -454,28 +459,24 @@ describe('an Eris frame in Filled Presentation', () => {
     );
   });
 
-  test('numbers each ground record face so later faces win a shared plane', async () => {
+  test('ties every ground record face at y = 0 to one plane, bit for bit', async () => {
     const { doc, surface } = await load();
     const plan = planErisFrame(surface, startPose(doc), doc);
     const fill = fillFloats(plan);
     const groundEnd = fill + plan.groundTriangleCount * 3 * FLOATS_PER_VERTEX;
-    const orders = (from: number, to: number) =>
-      Array.from(plan.vertices.slice(from, to)).filter(
-        (_, index) => index % FLOATS_PER_VERTEX === 6
-      );
-    // The recovered pads and aprons carry their face index; a cell's white strip is a later
-    // face than its grey apron. Composed $7000 objects retain their own bounded source index,
-    // so the combined ground mesh may exceed the old pre-composition 32-face ceiling.
-    const groundOrders = orders(fill, groundEnd);
-    expect(Math.max(...groundOrders)).toBeGreaterThanOrEqual(3);
-    expect(Math.max(...groundOrders)).toBeLessThan(1024);
-    // Plan faces and objects do not: they resolve by layer alone.
-    expect(new Set(orders(groundEnd, plan.vertices.length))).toEqual(
-      new Set([0])
+    // Pads, aprons and the white strips over them all lie in y = 0. However each face was
+    // triangulated, it carries the same plane, so the later face wins by draw order alone.
+    const level = new Set(
+      planesOf(plan, fill, plan.vertices.length)
+        .filter(plane => plane[1]! > 0.99 && Math.abs(plane[3]! - 63) < 1e-3)
+        .map(plane => plane.join())
     );
+    expect(level.size).toBe(1);
+    const ground = planesOf(plan, fill, groundEnd);
+    expect(ground.some(plane => level.has(plane.join()))).toBe(true);
   });
 
-  test('numbers a detail selection in record order so its glyphs win their wall', async () => {
+  test('ties a detail glyph to its wall and draws it after', async () => {
     const { doc, surface } = await load();
     // Outside the building at 11-8, facing its door wall and the E painted beside the door.
     // The wall (#888844) and the E (#eeeeee) are all detail faces in the plane z = 210.
@@ -486,24 +487,19 @@ describe('an Eris frame in Filled Presentation', () => {
     const building = surface.placements.find(
       item => item.id === 'eris-surface-8b'
     )!;
-    const detail = structureMeshes(building, pose, false).find(
-      mesh => mesh.faceOrdered === true
-    )!;
+    const meshes = structureMeshes(building, pose, false);
     const onWall = (colour: string) =>
-      detail.faces.flatMap((face, index) =>
-        face.colour === colour &&
-        face.vertices.every(vertex => detail.vertices[vertex]![2] === 210)
-          ? [index]
-          : []
+      meshes.flatMap(mesh =>
+        mesh.faces.filter(
+          face =>
+            face.colour === colour &&
+            face.vertices.every(vertex => mesh.vertices[vertex]![2] === 210)
+        )
       );
-    const wall = onWall('#888844');
-    const glyph = onWall('#eeeeee');
-    expect(wall).toHaveLength(3);
-    expect(glyph.length).toBeGreaterThanOrEqual(4);
-    expect(Math.min(...glyph)).toBeGreaterThan(Math.max(...wall));
+    expect(onWall('#888844')).toHaveLength(3);
+    expect(onWall('#eeeeee').length).toBeGreaterThanOrEqual(4);
 
-    // The frame carries those indices as face order, which pulls later faces forward. It
-    // selects the detail list only for the structure a session has bound.
+    // The frame selects the detail list only for the structure a session has bound.
     const plan = planErisFrame(surface, pose, doc, {
       attachments: [],
       doorway: null,
@@ -512,19 +508,110 @@ describe('an Eris frame in Filled Presentation', () => {
       regionIndex: structureRegionAt(building, pose, false),
       ride: null
     });
-    // Past the ground records, so their own face indices cannot stand in.
-    const orders = new Set(
-      Array.from(
-        plan.vertices.slice(
-          fillFloats(plan) + plan.groundTriangleCount * 3 * FLOATS_PER_VERTEX
+    const from =
+      fillFloats(plan) + plan.groundTriangleCount * 3 * FLOATS_PER_VERTEX;
+    const triangles = trianglesOf(plan, from);
+    const coloured = (hex: string) =>
+      triangles.flatMap((triangle, index) =>
+        triangle.colour.every(
+          (channel, at) =>
+            channel ===
+            Math.fround(
+              Number.parseInt(hex.slice(1 + 2 * at, 3 + 2 * at), 16) / 255
+            )
         )
-      ).filter((_, index) => index % FLOATS_PER_VERTEX === 6)
-    );
-    for (const index of [...wall, ...glyph]) {
-      expect(orders.has(index)).toBe(true);
+          ? [{ index, plane: triangle.plane.join() }]
+          : []
+      );
+    const wall = coloured('#888844');
+    const glyph = coloured('#eeeeee');
+    const wallPlanes = new Set(wall.map(item => item.plane));
+    const painted = glyph.filter(item => wallPlanes.has(item.plane));
+    expect(painted.length).toBeGreaterThanOrEqual(4);
+    for (const item of painted) {
+      const under = wall.filter(other => other.plane === item.plane);
+      expect(item.index).toBeGreaterThan(Math.max(...under.map(o => o.index)));
     }
   });
 });
+
+describe('a face plane', () => {
+  test('is the same bits from any face in the plane, however it winds', () => {
+    // An oblique integer plane, 2x + 3y + 6z = 60, cut into two unlike polygons.
+    const vertices = [
+      [30, 0, 0],
+      [0, 20, 0],
+      [0, 0, 10],
+      [6, 4, 6],
+      [12, 6, 3],
+      [3, 16, 1]
+    ] as const;
+    const one = modelPlane(vertices, [0, 1, 2]);
+    const other = modelPlane(vertices, [5, 4, 3]);
+    expect(one).not.toBeNull();
+    expect(other).toEqual(one);
+    const [nx, ny, nz, d] = one!;
+    expect([nx * 7, ny * 7, nz * 7, d * 7].map(Math.round)).toEqual([
+      2, 3, 6, -60
+    ]);
+  });
+
+  test('keeps an axis-aligned plane exact off the integers', () => {
+    const integral = modelPlane(
+      [
+        [0, 0, 210],
+        [40, 0, 210],
+        [40, 30, 210]
+      ],
+      [0, 1, 2]
+    );
+    const stroke = modelPlane(
+      [
+        [1.25, 3.5, 210],
+        [7.75, 3.5, 210],
+        [7.75, 4.25, 210],
+        [1.25, 4.25, 210]
+      ],
+      [3, 2, 1, 0]
+    );
+    expect(integral).toEqual([0, 0, 1, -210]);
+    expect(stroke).toEqual(integral);
+  });
+
+  test('is none for a degenerate face', () => {
+    expect(
+      modelPlane(
+        [
+          [0, 0, 0],
+          [1, 1, 1],
+          [2, 2, 2]
+        ],
+        [0, 1, 2]
+      )
+    ).toBeNull();
+  });
+});
+
+/// Each vertex's plane between two float offsets of a plan's vertices.
+const planesOf = (plan: ErisFramePlan, from: number, to: number) => {
+  const planes: number[][] = [];
+  for (let at = from; at < to; at += FLOATS_PER_VERTEX) {
+    planes.push(Array.from(plan.vertices.slice(at + 6, at + 10)));
+  }
+  return planes;
+};
+
+/// Each triangle's colour and plane from a float offset on, in draw order.
+const trianglesOf = (plan: ErisFramePlan, from: number) => {
+  const triangles: { colour: number[]; plane: number[] }[] = [];
+  for (let at = from; at < plan.vertices.length; at += 3 * FLOATS_PER_VERTEX) {
+    triangles.push({
+      colour: Array.from(plan.vertices.slice(at + 3, at + 6)),
+      plane: Array.from(plan.vertices.slice(at + 6, at + 10))
+    });
+  }
+  return triangles;
+};
 
 const fakeContext = () => {
   const calls: string[] = [];
