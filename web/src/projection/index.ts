@@ -286,9 +286,19 @@ export class Camera {
   /// World coordinates are binary32 and the arithmetic is binary64, which in the kit is a
   /// widening at this boundary and here is simply what a JavaScript number already is.
   viewSpace(world: Vector3): Vector3 {
-    const relativeX = world.x - this.position.x;
-    const relativeY = world.y - this.position.y;
-    const relativeZ = world.z - this.position.z;
+    return this.viewDirection({
+      x: world.x - this.position.x,
+      y: world.y - this.position.y,
+      z: world.z - this.position.z
+    });
+  }
+
+  /// Turn a world direction, or a point already relative to the camera, into view space: the
+  /// rotation `viewSpace` applies, without the translation.
+  viewDirection(relative: Vector3): Vector3 {
+    const relativeX = relative.x;
+    const relativeY = relative.y;
+    const relativeZ = relative.z;
     // Reference heading zero faces -Z; increasing heading turns toward -X.
     // Right remains +X at zero. Negating both right and forward would rotate
     // the view but retain the incorrect handedness of the frozen Mac camera.

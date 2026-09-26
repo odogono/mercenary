@@ -26,15 +26,17 @@ import {
 
 /// One frame of Eris in Filled Presentation, planned without a graphics context.
 ///
-/// Vertices are camera-relative view-space positions with a flat colour and a face order,
-/// seven floats each (`FLOATS_PER_VERTEX`), so
+/// Vertices are camera-relative view-space positions with a flat colour and their face's
+/// plane, ten floats each (`FLOATS_PER_VERTEX`), so
 /// the GPU never sees a raw world coordinate: Eris positions run to nine million units and
 /// would lose their low bits in binary32. The perspective divide is the renderer's; this plan
 /// says only what the frustum is.
-/// view xyz, colour rgb, then the face's order within its ground record (zero elsewhere):
-/// later faces of a record draw over earlier ones where they share a plane, as a painter's
-/// stream would leave them.
-export const FLOATS_PER_VERTEX = 7;
+/// view xyz, colour rgb, then the face's view-space plane `n·p + d = 0` as nx ny nz d. The
+/// renderer takes each fragment's depth from that plane rather than from interpolated
+/// corners, so faces that share a plane carry bit-identical planes (`modelPlane`) and tie
+/// exactly, and the later one in draw order wins, as a painter's stream would leave it (#545).
+/// A plane of all zeros is none, and the renderer falls back to the interpolated depth.
+export const FLOATS_PER_VERTEX = 10;
 
 export interface ErisFramePlan {
   readonly clear: readonly [number, number, number];
@@ -61,7 +63,7 @@ export interface ErisFramePlan {
   /// The sky Bodies (#530) and the comet (#538), in draw order, whether or not any of each is
   /// drawn.
   readonly skyBodies: readonly SkyBodyPlacement[];
-  /// The sky Bodies' discs and the comet, in the same seven-float vertices as `vertices` and in
+  /// The sky Bodies' discs and the comet, in the same ten-float vertices as `vertices` and in
   /// draw order.
   /// They are painted over the sky fill before anything else, and everything else covers them.
   readonly skyVertices: Float32Array;
@@ -201,8 +203,120 @@ const placed = (
   };
 };
 
+/// A face's plane `n·p + d = 0` with a unit normal: nx, ny, nz, d.
+export type FacePlane = readonly [number, number, number, number];
+
+/// No plane: the renderer uses the interpolated depth for a face it cannot place.
+const NO_PLANE: FacePlane = [0, 0, 0, 0];
+
+const greatestDivisor = (a: number, b: number): number => {
+  let x = Math.abs(a);
+  let y = Math.abs(b);
+  while (y !== 0) {
+    [x, y] = [y, x % y];
+  }
+  return x;
+};
+
+/// A polygon's plane in its model's frame, the same bits for every face in that plane (#545).
+///
+/// The normal is Newell's, taken about the first corner so a coordinate the corners share
+/// contributes exact zeros. Damocles model coordinates are integers, and then the normal is
+/// an integer vector: divided by its greatest common divisor and given a canonical sign, it and
+/// the offset `-n·v` are exact and identical whichever face of the plane they came from, and
+/// only then made unit. Corners off the integers (a Floor Label's scaled glyph, a stroke quad)
+/// take the unit normal first; an axis-aligned plane still comes out exact, which is every
+/// wall text's and every stroke's.
+export const modelPlane = (
+  vertices: readonly (readonly [number, number, number])[],
+  corners: readonly number[]
+): FacePlane | null => {
+  const origin = vertices[corners[0]!]!;
+  let nx = 0;
+  let ny = 0;
+  let nz = 0;
+  let integral = true;
+  for (let index = 0; index < corners.length; index += 1) {
+    const a = vertices[corners[index]!]!;
+    const b = vertices[corners[(index + 1) % corners.length]!]!;
+    integral &&= a.every(Number.isInteger);
+    const [ax, ay, az] = [a[0] - origin[0], a[1] - origin[1], a[2] - origin[2]];
+    const [bx, by, bz] = [b[0] - origin[0], b[1] - origin[1], b[2] - origin[2]];
+    nx += (ay - by) * (az + bz);
+    ny += (az - bz) * (ax + bx);
+    nz += (ax - bx) * (ay + by);
+  }
+  if (integral) {
+    const divisor = greatestDivisor(greatestDivisor(nx, ny), nz);
+    if (divisor === 0) {
+      return null;
+    }
+    [nx, ny, nz] = [nx / divisor, ny / divisor, nz / divisor];
+  }
+  const sign =
+    nx > 0 || (nx === 0 && (ny > 0 || (ny === 0 && nz > 0))) ? 1 : -1;
+  [nx, ny, nz] = [sign * nx, sign * ny, sign * nz];
+  const length = Math.hypot(nx, ny, nz);
+  if (length === 0 || !Number.isFinite(length)) {
+    return null;
+  }
+  let d: number;
+  if (integral) {
+    d = -(nx * origin[0] + ny * origin[1] + nz * origin[2]) / length;
+    [nx, ny, nz] = [nx / length, ny / length, nz / length];
+  } else {
+    [nx, ny, nz] = [nx / length, ny / length, nz / length];
+    d = -(nx * origin[0] + ny * origin[1] + nz * origin[2]);
+  }
+  // Adding zero turns a negative zero positive, so a sign choice never splits a plane's bits.
+  return [nx + 0, ny + 0, nz + 0, d + 0];
+};
+
+const modelPlanes = new WeakMap<object, WeakMap<object, FacePlane | null>>();
+
+/// A mesh face's model plane, cached per vertex list and face as the triangulation is.
+const facePlaneOf = (mesh: Mesh, face: Primitive): FacePlane | null => {
+  let byFace = modelPlanes.get(mesh.vertices);
+  if (byFace === undefined) {
+    byFace = new WeakMap();
+    modelPlanes.set(mesh.vertices, byFace);
+  }
+  let plane = byFace.get(face);
+  if (plane === undefined) {
+    plane = modelPlane(mesh.vertices, face.vertices);
+    byFace.set(face, plane);
+  }
+  return plane;
+};
+
+/// A model plane placed as `placed` places its corners, with its offset taken from `eye`
+/// rather than from Eris's origin, so it keeps its low bits nine million units out. A
+/// horizontal plane comes out the same for every placement at one height: its turned normal
+/// has exact zeros across, so a structure's base and the ground record under it tie exactly.
+const placedPlane = (
+  plane: FacePlane,
+  placement: ErisPlacement,
+  negateZ: boolean,
+  eye: Vector3
+): FacePlane => {
+  const [x, y, modelZ, d] = plane;
+  const z = negateZ ? -modelZ : modelZ;
+  const sin = Math.sin(placement.heading);
+  const cos = Math.cos(placement.heading);
+  const nx = x * cos + z * sin;
+  const nz = -x * sin + z * cos;
+  return [
+    nx,
+    y,
+    nz,
+    d -
+      (nx * (placement.position.x - eye.x) +
+        y * (placement.position.y - eye.y) +
+        nz * (placement.position.z - eye.z))
+  ];
+};
+
 const DISPLAY_STROKE_HALF_WIDTH = 0.75;
-const DISPLAY_STROKE_SURFACE_OFFSET = 0.01;
 
 const displayStrokeQuad = (
   start: readonly [number, number, number],
@@ -224,16 +338,12 @@ const displayStrokeQuad = (
   const x = (-dy / length) * DISPLAY_STROKE_HALF_WIDTH;
   const y = (dx / length) * DISPLAY_STROKE_HALF_WIDTH;
   return [
-    [start[0] + x, start[1] + y, start[2] - DISPLAY_STROKE_SURFACE_OFFSET],
-    [end[0] + x, end[1] + y, end[2] - DISPLAY_STROKE_SURFACE_OFFSET],
-    [end[0] - x, end[1] - y, end[2] - DISPLAY_STROKE_SURFACE_OFFSET],
-    [start[0] - x, start[1] - y, start[2] - DISPLAY_STROKE_SURFACE_OFFSET]
+    [start[0] + x, start[1] + y, start[2]],
+    [end[0] + x, end[1] + y, end[2]],
+    [end[0] - x, end[1] - y, end[2]],
+    [start[0] - x, start[1] - y, start[2]]
   ];
 };
-
-/// A wall text shares its face's plane and the game draws it after that face, so its glyphs
-/// take the smallest face-order pull, the one that settles a ground record's later face.
-const WALL_TEXT_ORDER = 1;
 
 /// A glyph stroke as a quad in its wall text's own plane: XY (`plane` 0) or ZY (128).
 const wallStrokeQuad = (
@@ -636,11 +746,37 @@ export const planErisFrame = (
   const emit = (
     world: Vector3,
     colour: readonly [number, number, number],
-    order: number
+    plane: FacePlane
   ) => {
     const view = camera.viewSpace(toCameraSpace(world));
-    values.push(view.x, view.y, view.z, colour[0], colour[1], colour[2], order);
+    values.push(
+      view.x,
+      view.y,
+      view.z,
+      colour[0],
+      colour[1],
+      colour[2],
+      ...plane
+    );
   };
+  /// A plane in Eris, its offset already taken from the eye, as the view sees it.
+  const viewPlane = (world: FacePlane): FacePlane => {
+    const normal = camera.viewDirection(
+      toCameraSpace({ x: world[0], y: world[1], z: world[2] })
+    );
+    return [normal.x, normal.y, normal.z, world[3]];
+  };
+  const placementPlane = (
+    plane: FacePlane | null,
+    placement: ErisPlacement
+  ): FacePlane =>
+    plane === null
+      ? NO_PLANE
+      : viewPlane(placedPlane(plane, placement, negateZ, pose.position));
+  const quadPlane = (
+    quad: readonly (readonly [number, number, number])[],
+    placement: ErisPlacement
+  ): FacePlane => placementPlane(modelPlane(quad, [0, 1, 2, 3]), placement);
 
   const active =
     structure !== null && insideCentralCellHalf(pose.position, surface.grid);
@@ -689,6 +825,7 @@ export const planErisFrame = (
     vertex: Vector3,
     colour: readonly [number, number, number]
   ): void => {
+    // The sky is drawn with depth off; its plane is the one its discs are laid out on.
     skyValues.push(
       vertex.x,
       vertex.y,
@@ -696,7 +833,10 @@ export const planErisFrame = (
       colour[0],
       colour[1],
       colour[2],
-      0
+      0,
+      0,
+      1,
+      -skyAt
     );
   };
   // `$04FBAE` skips a Body whose screen x does not fit a signed word less its top bit
@@ -772,6 +912,13 @@ export const planErisFrame = (
   const base = background?.floor ?? underfoot?.landColour ?? surface.baseColour;
   // A Body with no recovered surface colour draws no plane at all rather than an invented one
   // (ADR 0043). No Body a Session stands on is in that state; the VOID slot is not a surface.
+  // The base plane and the island fills are one plane, y = −drop.
+  const surfacePlane = viewPlane([
+    0,
+    1,
+    0,
+    doc.ground.fillDropUnits + pose.position.y
+  ]);
   if (base !== null) {
     const colour = channels(base);
     for (const triangle of basePlaneTriangles(
@@ -780,7 +927,7 @@ export const planErisFrame = (
       pose.position
     )) {
       for (const vertex of triangle) {
-        emit(vertex, colour, 0);
+        emit(vertex, colour, surfacePlane);
       }
       triangleCount += 1;
     }
@@ -799,7 +946,7 @@ export const planErisFrame = (
       pose.position
     )) {
       for (const vertex of triangle) {
-        emit(vertex, colour, 0);
+        emit(vertex, colour, surfacePlane);
       }
       triangleCount += 1;
     }
@@ -810,7 +957,8 @@ export const planErisFrame = (
     structure?.attachments.map(item => [item.slot, item.openUnits]) ?? []
   );
   // Glyph fills and strokes both face either way: the game draws a wall text whenever its
-  // face is drawn, from whichever side the player stands.
+  // face is drawn, from whichever side the player stands. They lie in their face's plane and
+  // follow it in draw order, so they win it.
   const emitWallText = (
     mesh: Mesh,
     plane: 0 | 128,
@@ -820,6 +968,10 @@ export const planErisFrame = (
     skippedFaces += triangles.skipped;
     for (let i = 0; i < triangles.indices.length; i += 3) {
       const colour = triangles.colours[i / 3]!;
+      const facePlane = placementPlane(
+        facePlaneOf(mesh, mesh.faces[triangles.faces[i / 3]!]!),
+        placement
+      );
       const corners = [0, 1, 2].map(corner =>
         placed(
           mesh.vertices[triangles.indices[i + corner]!]!,
@@ -828,7 +980,7 @@ export const planErisFrame = (
         )
       );
       for (const vertex of [...corners, ...[...corners].reverse()]) {
-        emit(vertex, colour, WALL_TEXT_ORDER);
+        emit(vertex, colour, facePlane);
       }
       triangleCount += 2;
     }
@@ -843,6 +995,7 @@ export const planErisFrame = (
           continue;
         }
         const colour = channels(litColour(line, daylight));
+        const strokePlane = quadPlane(quad, placement);
         for (const triangle of doubleSidedQuad(
           placed(quad[0], placement, negateZ),
           placed(quad[1], placement, negateZ),
@@ -850,7 +1003,7 @@ export const planErisFrame = (
           placed(quad[3], placement, negateZ)
         )) {
           for (const vertex of triangle) {
-            emit(vertex, colour, WALL_TEXT_ORDER);
+            emit(vertex, colour, strokePlane);
           }
           triangleCount += 1;
         }
@@ -875,12 +1028,18 @@ export const planErisFrame = (
       }
       const triangles = trianglesOf(mesh, daylight);
       skippedFaces += triangles.skipped;
+      let planeFace = -1;
+      let plane = NO_PLANE;
       for (let i = 0; i < triangles.indices.length; i += 3) {
         const colour = triangles.colours[i / 3]!;
-        const order =
-          placement.kind === 'ground' || mesh.faceOrdered === true
-            ? triangles.faces[i / 3]!
-            : 0;
+        const face = triangles.faces[i / 3]!;
+        if (face !== planeFace) {
+          planeFace = face;
+          plane = placementPlane(
+            facePlaneOf(mesh, mesh.faces[face]!),
+            placement
+          );
+        }
         for (let corner = 0; corner < 3; corner += 1) {
           emit(
             placed(
@@ -889,7 +1048,7 @@ export const planErisFrame = (
               negateZ
             ),
             colour,
-            order
+            plane
           );
         }
         triangleCount += 1;
@@ -905,6 +1064,7 @@ export const planErisFrame = (
               continue;
             }
             const colour = channels(litColour(line, daylight));
+            const strokePlane = quadPlane(quad, placement);
             for (const triangle of doubleSidedQuad(
               placed(quad[0], placement, negateZ),
               placed(quad[1], placement, negateZ),
@@ -912,7 +1072,7 @@ export const planErisFrame = (
               placed(quad[3], placement, negateZ)
             )) {
               for (const vertex of triangle) {
-                emit(vertex, colour, 0);
+                emit(vertex, colour, strokePlane);
               }
               triangleCount += 1;
             }

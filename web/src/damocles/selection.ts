@@ -37,9 +37,8 @@ const scaledDetails = new WeakMap<object, Mesh>();
 /// A draw component of a bound structure. Wall text carries the plane its glyphs lie in, since
 /// it shares that plane with the face it rides on and is drawn over it. A detail selection is
 /// in the order its records are drawn, which settles its coplanar faces: a detail glyph lies
-/// in the plane of the detail wall it is painted on, and is drawn after it.
+/// in the plane of the detail wall it is painted on, and is drawn after it (#545).
 export type StructureMesh = Mesh & {
-  readonly faceOrdered?: true;
   readonly wallTextPlane?: 0 | 128;
 };
 const wallTextMeshes = new WeakMap<Mesh, StructureMesh>();
@@ -487,7 +486,6 @@ export const structureMeshes = (
       const linesByRecord = byRecord(scaled.lines);
       selected = {
         ...scaled,
-        faceOrdered: true,
         faces: records.flatMap(i => facesByRecord.get(i) ?? []),
         lines: records.flatMap(i => linesByRecord.get(i) ?? [])
       };

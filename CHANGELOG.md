@@ -398,6 +398,14 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Fixed
 
+- **Coplanar Damocles faces no longer fight.** Each fragment's depth now comes from where
+  the pixel's ray meets its face's plane, not from depth interpolated across the triangle.
+  Faces that share a plane carry bit-identical planes, so they tie exactly, and the one
+  drawn later wins, as in the game's painter's order. This fixes the tearing Metis
+  transporter ceiling and the breaking-up cube symbols. It also replaces the per-category
+  face-order and stroke-offset biases that the ground records, detail glyphs, wall text and
+  display strokes each needed. Enhanced lighting takes its normal from the same plane (#545).
+
 - **A Damocles arrival Pose lands on the Floor it was captured on.** A switch to
   a Pose captured above Floor 0 used to bind Floor 0 at the capture's height, so
   `switch vesta-transporter` stood at Y 3233 on G and the lift treated it as G.

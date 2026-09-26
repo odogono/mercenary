@@ -10,8 +10,9 @@ import {
 ///
 /// Damocles's original fill order is unrecovered, and a depth buffer is not a claim about it:
 /// it draws the same picture any correct ordering would, except where faces are coplanar.
-/// There the plan's three layers settle the tie: structures over the recovered ground records
-/// over the authored fill, each layer a few depth steps behind the last (`LAYER_DEPTH_BIAS`).
+/// There draw order settles the tie. Every fragment's depth comes from its face's plane, and
+/// faces sharing a plane carry the same plane bit for bit, so they tie exactly and `LEQUAL`
+/// keeps the later one, as the painter's stream the plan follows would (#545).
 /// Faces are flat in their catalogue colours with no lighting, which is what the Working
 /// Authority shows outdoors (ADR 0043).
 /// The shape follows the Flyover renderer rather than Targ's line-list `Renderer`, whose
@@ -19,18 +20,18 @@ import {
 const VERTEX = `#version 300 es
 in vec3 view;
 in vec3 colour;
-in float order;
+in vec4 plane;
 uniform float aspect;
 uniform float tangent;
 uniform vec2 depthRange;
 out vec3 faceColour;
 out float viewDepth;
-flat out float faceOrder;
+flat out vec4 facePlane;
 
 void main() {
   faceColour = colour;
   viewDepth = view.z;
-  faceOrder = order;
+  facePlane = plane;
   float nearPlane = depthRange.x;
   float farPlane = depthRange.y;
   float depthA = (farPlane + nearPlane) / (farPlane - nearPlane);
@@ -43,15 +44,11 @@ void main() {
   );
 }`;
 
-/// Depth pulled forward per face of a ground record or a structure's detail selection, two
-/// 24-bit steps, so later faces (the white strip over the grey apron, a detail glyph over its
-/// wall) win their shared plane every frame.
-const ORDER_DEPTH_STEP = 1.2e-7;
-
-/// Depth added per layer, in the [0, 1] window range. Coplanar faces of different layers
-/// differ in interpolated log depth by well under a 24-bit step, and a ground record's face
-/// order spans at most a few dozen steps, so this keeps every record behind every structure
-/// and ahead of the Body's surface. In distance it is six parts in a hundred thousand.
+/// Depth added per layer, in the [0, 1] window range, keeping every ground record behind every
+/// structure and ahead of the Body's surface. Plane depth already ties a structure's base with
+/// the record under it and draw order settles it; this is the margin for a record whose
+/// placement height differs in its last bits. In distance it is six parts in a hundred
+/// thousand.
 const LAYER_DEPTH_BIAS = 4e-6;
 
 /// The layer the Body's whole surface sits on: its base plane and the Damocles Island fills
@@ -63,7 +60,7 @@ const STRIDE = FLOATS_PER_VERTEX * 4;
 const COLOUR_ATTRIBUTES = [
   ['view', 0, 3],
   ['colour', 12, 3],
-  ['order', 24, 1]
+  ['plane', 24, 4]
 ] as const;
 
 /// Depth is logarithmic in view distance, written per fragment (#221). The fixed-point z/w
@@ -71,13 +68,30 @@ const COLOUR_ATTRIBUTES = [
 /// a far plane out at the sea horizon, a fill one unit under the recovered pads is
 /// unresolvable a cell away. log2(1 + z) / log2(1 + far) keeps a constant relative
 /// resolution, about one part in a million at any range.
+///
+/// The view depth itself is not interpolated from the corners but found where the pixel's ray
+/// meets the face's plane (#545). Interpolation lands two coplanar faces built from different
+/// triangles about a millionth apart, as much as a depth step, and they fought wherever no bias
+/// had been added to settle them. The plane is flat per face and computed the same way at the
+/// same pixel, so faces sharing one tie to the bit and draw order decides. A face without a
+/// plane, or a ray that misses its plane in front of the eye, keeps the interpolated depth.
 const LOG_DEPTH = `
 uniform vec2 depthRange;
 uniform float depthBias;
-flat in float faceOrder;
-float logDepth(float viewDepth) {
-  return log2(max(1.0 + viewDepth, 1e-6)) / log2(1.0 + depthRange.y)
-    + depthBias - faceOrder * ${ORDER_DEPTH_STEP.toExponential()};
+uniform float aspect;
+uniform float tangent;
+uniform vec2 viewport;
+flat in vec4 facePlane;
+float planeDepth(float interpolated) {
+  vec2 ndc = gl_FragCoord.xy / viewport * 2.0 - 1.0;
+  vec3 ray = vec3(ndc.x * aspect * tangent, ndc.y * tangent, 1.0);
+  float facing = dot(facePlane.xyz, ray);
+  float depth = facing == 0.0 ? 0.0 : -facePlane.w / facing;
+  return depth > 0.0 ? depth : interpolated;
+}
+float logDepth(float interpolated) {
+  float viewDepth = planeDepth(interpolated);
+  return log2(max(1.0 + viewDepth, 1e-6)) / log2(1.0 + depthRange.y) + depthBias;
 }`;
 
 const FRAGMENT = `#version 300 es
@@ -111,15 +125,15 @@ vec4 project(vec3 view) {
 const LIT_VERTEX = `#version 300 es
 in vec3 view;
 in vec3 colour;
-in float order;
+in vec4 plane;
 ${PROJECT}
 out vec3 faceColour;
 out vec3 viewPosition;
-flat out float faceOrder;
+flat out vec4 facePlane;
 void main() {
   faceColour = colour;
   viewPosition = view;
-  faceOrder = order;
+  facePlane = plane;
   gl_Position = project(view);
 }`;
 
@@ -183,8 +197,17 @@ float shadowAt(vec3 p, vec3 n, float ndl) {
   return 1.0;
 }
 
+// The face's own normal, turned toward the eye as the screen-space one was: the eye is at the
+// origin, so it is on the side the plane's offset is positive.
+vec3 faceNormal() {
+  if (dot(facePlane.xyz, facePlane.xyz) == 0.0) {
+    return normalize(-cross(dFdx(viewPosition), dFdy(viewPosition)));
+  }
+  return facePlane.w < 0.0 ? -facePlane.xyz : facePlane.xyz;
+}
+
 void main() {
-  vec3 n = normalize(-cross(dFdx(viewPosition), dFdy(viewPosition)));
+  vec3 n = faceNormal();
   float lambert = max(dot(n, sunView), 0.0);
   float shadow = lambert > 0.0 ? shadowAt(viewPosition, n, lambert) : 1.0;
   vec3 ambient = mix(ambientGround, ambientSky, n.y * 0.5 + 0.5);
@@ -629,6 +652,11 @@ export class ErisRenderer {
       requiredUniform(gl, shaderProgram, 'depthRange'),
       plan.nearPlane,
       plan.farPlane
+    );
+    gl.uniform2f(
+      requiredUniform(gl, shaderProgram, 'viewport'),
+      this.canvas.width,
+      this.canvas.height
     );
   }
 
