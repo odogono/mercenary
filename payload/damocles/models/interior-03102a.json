@@ -122,6 +122,17 @@
       }
     ],
     "evidence": [],
+    "extent": {
+      "header": 1200,
+      "x": [
+        -100,
+        100
+      ],
+      "z": [
+        -100,
+        100
+      ]
+    },
     "id": "interior-03102a",
     "kind": "interior",
     "linkedInstances": [],

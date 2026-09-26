@@ -227,11 +227,16 @@ position against the bound structure's extent rectangle, recomputed at `$059076`
 times it and indexes the draw-order priority table. See
 [placement class](../research/damocles-placement-class.md).
 
-A Drop **keeps the class the object already carries** rather than writing a zone, because the
-extent rectangle has no static decode yet: it is reached through a structure-slot numbering that
-is not related to the Catalogue's. That is a recorded departure from `$0546FC`, not a claim about
-the original. A support placement inherits the support's class, as recovered, and needs no
-rectangle.
+A direct Drop, and leaving, **write the zone** (#356). The rectangle belongs to the bound
+structure's Building detail: the cell bind copies the structure record's detail byte into
+`$53A85`, the Catalogue publishes that detail as the selection's `detailModel`, and each Building
+detail Model publishes its `extent` in raw units. The session scales it by the selection's `scale`
+about the placement's intra-cell origin, as `$053A8C` does. A cell with no structure gives zone 0.
+A support placement copies the support's class (`$0546C4`) and needs no rectangle.
+
+Because a Drop writes a zone, a saved Residence may carry any zone 0–8 as well as its authored
+class. Every authored class is also 0–8, so a Save carrying a handling-nibble value of 9–15 is
+still refused, but one carrying a lower value can no longer be told apart from a zone.
 
 ### The storey-pitch invariant
 
@@ -685,9 +690,6 @@ Named so that they are not mistaken for decisions this contract made.
   all 23 tracked memstates, so the refusal is unobserved, and the port's on-foot Mover has no
   vertical term to produce any other value (ADR 0016). This is blocked on vertical movement, not
   on drop work.
-- **The bound structure's extent rectangle** (#356), which the placement class a direct Drop writes is
-  computed against. The transform and the zone rule are recovered; the mapping from a Catalogue
-  structure instance to the slot that reaches the source record is not.
 
 None of these is resolved by an implementation default. Each blocks the behaviour that would need
 it, and no authored placeholder is proposed for any of them.

@@ -228,7 +228,8 @@ describe('ordinary Eris limo-key take and drop', () => {
             kind: 'structure',
             level: 0,
             parent: 'eris-surface-87',
-            placementClass: 0,
+            // `$0546C4`: the support's class, KEY- V.I.P. LIMO's authored 4.
+            placementClass: 4,
             position: { x: 1038, y: 2, z: 789 }
           }
         });
@@ -277,7 +278,8 @@ describe('ordinary Eris limo-key take and drop', () => {
           residence: {
             body: 'body-11',
             kind: 'surface',
-            placementClass: 0,
+            // `$0546C4`: the support's class, DAMOCLES FILE's authored 4.
+            placementClass: 4,
             position: { x: 0, y: 12, z: 0 }
           }
         });
@@ -626,7 +628,8 @@ describe('ordinary Eris limo-key take and drop', () => {
       residence: {
         body: 'body-11',
         kind: 'surface',
-        placementClass: 4,
+        // No structure is bound at the Body origin, so the zone is 0 over the authored 4.
+        placementClass: 0,
         position: { x: 0, y: 0, z: 0 }
       }
     });
@@ -641,7 +644,7 @@ describe('ordinary Eris limo-key take and drop', () => {
       residence: {
         body: 'body-11',
         kind: 'surface',
-        placementClass: 4,
+        placementClass: 0,
         position: { x: movedPose.x, y: 0, z: movedPose.z }
       }
     });
@@ -697,7 +700,8 @@ describe('ordinary Eris limo-key take and drop', () => {
       residence: {
         body: 'body-11',
         kind: 'surface',
-        placementClass: 0,
+        // The support's class, not SUNSHADE's own authored 0.
+        placementClass: 4,
         position: { x: 0, y: 2, z: 0 }
       }
     });

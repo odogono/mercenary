@@ -97,6 +97,17 @@
       }
     ],
     "evidence": [],
+    "extent": {
+      "header": 0,
+      "x": [
+        150,
+        -200
+      ],
+      "z": [
+        200,
+        -200
+      ]
+    },
     "id": "interior-028668",
     "kind": "interior",
     "linkedInstances": [],

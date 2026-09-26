@@ -615,6 +615,17 @@
         "source": "docs/research/damocles-building-vector-text.md"
       }
     ],
+    "extent": {
+      "header": 250,
+      "x": [
+        0,
+        200
+      ],
+      "z": [
+        700,
+        900
+      ]
+    },
     "id": "interior-029c66",
     "kind": "interior",
     "linkedInstances": [],

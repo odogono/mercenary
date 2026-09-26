@@ -1061,6 +1061,58 @@ class UnreferencedRecordTests(unittest.TestCase):
         self.assertTrue(all(m['kind'] == 'interior' for m in carrying))
 
 
+class DetailExtentTests(unittest.TestCase):
+    """#356: the rectangle $053A8C-$053B38 walks backwards from a Building detail's entry."""
+
+    def test_the_walk_crosses_seven_word_then_six_word_groups(self):
+        from damocleslab.catalogue import decode_detail_extent
+
+        # In address order below the entry: Z pair, X pair and header (read downwards), the
+        # six-word groups' terminator and group, then the seven-word groups' terminator and
+        # two groups -- Capital Spaceport's own words at $0303A0, with made-up groups.
+        below = [600, -400, 800, 400, 850, -32768,
+                 1, 2, 3, 4, 5, 6, -32768,
+                 1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5, 6, 7]
+        data = struct.pack(f'>{len(below)}h', *below)
+        self.assertEqual(decode_detail_extent(data, len(data)),
+                         {'header': 850, 'x': [400, 800], 'z': [-400, 600]})
+
+    def test_a_negative_word_where_the_header_would_be_is_no_extent(self):
+        from damocleslab.catalogue import decode_detail_extent
+
+        data = struct.pack('>3h', -32768, -32768, -32768)
+        self.assertIsNone(decode_detail_extent(data, len(data)))
+
+    def test_every_capture_reproduces_its_live_rectangle(self):
+        """The decode of the live $53A85 slot is what [$7910] points at, in every state."""
+        from damocleslab.catalogue import decode_detail_extent, hatari_memstate_ram
+
+        root = Path(__file__).resolve().parents[1]
+        pinned = root / 'work' / 'observe-first-world-20260818T101013Z-c5a32b7d' / 'observed.ram'
+        if not pinned.exists():
+            self.skipTest('pinned first-world RAM is not present')
+        states = [pinned.read_bytes()] + [
+            hatari_memstate_ram(path.read_bytes()) for path in sorted((root / 'snapshots').glob('*.sav'))
+        ]
+        word = lambda data, address: struct.unpack_from('>H', data, address)[0]
+        signed = lambda data, address: struct.unpack_from('>h', data, address)[0]
+        for ram in states:
+            slot = word(ram, 0x53A84)
+            extent = decode_detail_extent(ram, 0x26000 + struct.unpack_from('>I', ram, 0x26000 + slot * 4)[0])
+            pointer = struct.unpack_from('>I', ram, 0x7910)[0]
+            if extent is None:
+                self.assertEqual(word(ram, pointer), 0x8000)
+                continue
+            scale_x, scale_y, scale_z = (signed(ram, 0x539CE + 2 * axis) for axis in range(3))
+            self.assertEqual(scale_y, 1)
+            origin_x, origin_z = word(ram, 0x7AF2), word(ram, 0x7AF4)
+            x = [(value * scale_x + origin_x) & 0xFFFF for value in extent['x']][::-1 if scale_x < 0 else 1]
+            z = [(value * scale_z + origin_z) & 0xFFFF for value in extent['z']][::-1 if scale_z < 0 else 1]
+            self.assertEqual([word(ram, pointer + 2 * index) for index in range(5)],
+                             [extent['header'], *x, *z])
+        self.assertGreaterEqual(len(states), 6)
+
+
 class AttachmentKeyTests(unittest.TestCase):
     def test_the_cell_entry_byte_installs_the_key_base(self):
         from damocleslab.catalogue import cell_key_base

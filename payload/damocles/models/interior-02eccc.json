@@ -334,6 +334,17 @@
       }
     ],
     "evidence": [],
+    "extent": {
+      "header": 200,
+      "x": [
+        -250,
+        950
+      ],
+      "z": [
+        -250,
+        250
+      ]
+    },
     "id": "interior-02eccc",
     "kind": "interior",
     "linkedInstances": [],

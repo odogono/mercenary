@@ -1,6 +1,17 @@
 {
   "model": {
     "evidence": [],
+    "extent": {
+      "header": 30000,
+      "x": [
+        -25000,
+        25000
+      ],
+      "z": [
+        -20000,
+        20000
+      ]
+    },
     "id": "interior-0262e8",
     "kind": "interior",
     "linkedInstances": [],

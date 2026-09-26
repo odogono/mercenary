@@ -290,6 +290,17 @@
         "source": "docs/research/damocles-catalogue.md"
       }
     ],
+    "extent": {
+      "header": 100,
+      "x": [
+        -100,
+        100
+      ],
+      "z": [
+        -100,
+        100
+      ]
+    },
     "id": "interior-026556",
     "kind": "interior",
     "linkedInstances": [],

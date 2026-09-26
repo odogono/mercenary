@@ -7,6 +7,7 @@ import {
 } from './display.ts';
 import { admittedPoses, type ArrivalPoses } from './poses.ts';
 import {
+  admissiblePlacementClass,
   validStructureResidence,
   type PlacedResidence,
   type Residence,
@@ -644,9 +645,9 @@ const validateResidence = (
     }
     const residence = departure.residence;
     // The recovered placement class is Association A byte 3, not the handling byte's low
-    // nibble, and the Drop does not yet rewrite it: a saved Residence may only carry the
-    // class the Catalogue authored (docs/research/damocles-placement-class.md).
-    if (residence.placementClass !== (instance?.placementClass ?? 0)) {
+    // nibble. A Drop or leave rewrites it with a zone, so a saved Residence carries a zone
+    // or the class the Catalogue authored (docs/research/damocles-placement-class.md).
+    if (!admissiblePlacementClass(residence.placementClass, instance)) {
       fail('residence placement class contradicts the Catalogue');
     }
     if (

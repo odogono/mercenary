@@ -24,8 +24,10 @@ import {
   type PoseResolution
 } from './poses.ts';
 import {
+  admissiblePlacementClass,
   catalogueResidence,
   insertionsInRegion,
+  placementZone,
   validStructureResidence,
   type PlacedResidence,
   type Residence,
@@ -606,7 +608,7 @@ export class DamoclesSession implements TitleSession<
         this.content.catalogue,
         departure.instance
       )!;
-      if (residence.placementClass !== (instance.placementClass ?? 0)) {
+      if (!admissiblePlacementClass(residence.placementClass, instance)) {
         throw new Error('saved Object Residence contradicts the Catalogue');
       }
       if (residence.kind === 'carried') {
@@ -1464,7 +1466,7 @@ export class DamoclesSession implements TitleSession<
       return { kind: 'refused' };
     }
     const occupied = this.residence.get(instance);
-    const placed = this.directResidence(occupied?.placementClass ?? 0);
+    const placed = this.directResidence();
     if (
       placed.kind === 'structure' &&
       !validStructureResidence(this.content.catalogue, placed)
@@ -1653,18 +1655,13 @@ export class DamoclesSession implements TitleSession<
         this.presentSystem('system-string-9');
         return undefined;
       }
-      const residence = this.supportResidence(selected!);
-      if (residence === undefined) {
+      // `$0546A4`-`$0546CA` copies the support's placement: its X/Z, body, level, region
+      // byte and placement class (`$0546C4`), so the dropped object takes the support's class.
+      const placed = this.supportResidence(selected!);
+      if (placed === undefined) {
         this.presentSystem('system-string-9');
         return undefined;
       }
-      const placed: Residence = {
-        ...residence,
-        placementClass:
-          this.residenceFor(head)?.placementClass ??
-          dropped?.placementClass ??
-          0
-      };
       if (
         placed.kind === 'structure' &&
         !validStructureResidence(this.content.catalogue, placed)
@@ -1675,9 +1672,7 @@ export class DamoclesSession implements TitleSession<
       return placed;
     }
 
-    const placementClass =
-      this.residenceFor(head)?.placementClass ?? dropped?.placementClass ?? 0;
-    const placed = this.directResidence(placementClass);
+    const placed = this.directResidence();
     if (placed.kind === 'surface') {
       return placed;
     }
@@ -1699,7 +1694,6 @@ export class DamoclesSession implements TitleSession<
   /// otherwise in the bound structure at the current region's insertion group. The Drop's own
   /// checks are the caller's; leaving enters here after them.
   private directResidence(
-    placementClass: number,
     pose = this.pose,
     structure = this.boundPlacement,
     regionIndex = this.regionIndex,
@@ -1710,9 +1704,9 @@ export class DamoclesSession implements TitleSession<
         ? undefined
         : structure?.selection?.structure.regions[regionIndex];
     const exterior = region !== undefined && (region.flags & 0x40_00) !== 0;
-    // The native direct path copies $7A39, the player's 3x3 zone against the bound
-    // structure's extent rectangle. That rectangle has no static decode yet (#356), so the
-    // Residence keeps the class it already carries rather than inventing a zone.
+    // `$0546FC` copies $7A39, which the Drop ($054520) and leave ($05449C) paths both
+    // recompute from the Pose first: the zone against the bound structure's extent (#356).
+    const placementClass = placementZone(pose.position, structure);
     if (structure === null || exterior || regionIndex === null) {
       return {
         body: pose.body,
@@ -1983,13 +1977,7 @@ export class DamoclesSession implements TitleSession<
       }
     }
     if (this.occupied !== null) {
-      const residence = this.directResidence(
-        this.residence.get(this.occupied)?.placementClass ?? 0,
-        pose,
-        bound,
-        region,
-        0
-      );
+      const residence = this.directResidence(pose, bound, region, 0);
       if (
         residence.kind === 'structure' &&
         !validStructureResidence(this.content.catalogue, residence)

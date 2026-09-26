@@ -1794,6 +1794,36 @@ def decode_detail_selection(data: bytes, start: int, count: int) -> list:
     return groups
 
 
+def decode_detail_extent(data: bytes, start: int) -> dict | None:
+    """The extent rectangle a Building detail record carries below its entry (#356).
+
+    `$053A8C`-`$053B38` reads the cell's Building detail byte (`$53A85`, which the
+    cell bind copies from the structure record) as a `$26000` slot, then walks the
+    record backwards from its entry: seven-word groups up to a negative word, six-word
+    groups up to the next, then the five words the zone at `$059076` reads -- a header
+    and the X and Z pairs, in the order the walk meets them. A negative word where the
+    header would be means the record has none, and the bind publishes `$8000`, zone 0.
+    Raw units: the bind scales X by `$539CE`, the header by `$539D0` (never written, so
+    1) and Z by `$539D2`, and translates X/Z by the instance's intra-cell origin.
+    """
+    word = lambda address: struct.unpack_from('>h', data, address)[0]
+    cursor = start
+    for group in (14, 12):
+        for _ in range(4096):
+            if cursor < 2:
+                raise ValueError('detail extent terminator missing')
+            if word(cursor - 2) < 0:
+                break
+            cursor -= group
+        else:
+            raise ValueError('detail extent terminator missing')
+        cursor -= 2
+    if word(cursor - 2) < 0:
+        return None
+    header, x_first, x_second, z_first, z_second = (word(cursor - 2 * (index + 1)) for index in range(5))
+    return {'header': header, 'x': [x_first, x_second], 'z': [z_first, z_second]}
+
+
 def selection_note(model: dict) -> str:
     """How a building detail's two view-conditioned visibility groups stand."""
     if 'detailSelection' not in model:
@@ -4216,6 +4246,13 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                 level_binding = structure_level_binding(data, slot, count)
                 if level_binding is not None:
                     model['levelBinding'] = level_binding
+            elif kind == 'interior':
+                # A synthetic image carries no groups below its records; the pinned image
+                # decodes every slot, and the port's payload test holds it to that.
+                try:
+                    model['extent'] = decode_detail_extent(data, address)
+                except (ValueError, struct.error):
+                    pass
             try:
                 if kind == 'structure':
                     pointer = address

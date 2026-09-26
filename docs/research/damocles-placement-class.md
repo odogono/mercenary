@@ -1,7 +1,9 @@
 # Damocles placement class, and the zone a Drop writes
 
 Working-Authority Evidence for
-[#345](https://github.com/odogono/mercenary/issues/345), recovered 2026-09-19.
+[#345](https://github.com/odogono/mercenary/issues/345), recovered 2026-09-19. The extent
+rectangle's static decode, recorded here as the one blocker on a port writing the class, was
+recovered for [#356](https://github.com/odogono/mercenary/issues/356) on 2026-09-26.
 
 It closes a derivation two earlier notes recorded as unresolved: the
 [key drops note](damocles-limo-key-drops.md) ("A complete derivation of this class
@@ -26,11 +28,13 @@ Capstone M68K 68000 in the laboratory virtual environment.
 
 Every reading is produced by the tracked
 [`scripts/placement-class-probe.py`](../../research/damocles-st/scripts/placement-class-probe.py),
-SHA-256 `c4bd4a7b49e4980ac886de8cdb5c4b33d793249f173ee8fc70998d0a5e4226c3`, over the
-pinned RAM and all 23 tracked memstates in `research/damocles-st/snapshots/`. Nothing
-is injected: each memstate is read as saved. The probe's checks are gates rather than
-prints — a state whose recomputed zone disagrees with its live `$7A39`, or whose
-`$7A3A` is not nine times it, raises.
+SHA-256 `9100a425acfc387d8297779e6760222649f34fd32111c7dd3a9a1e7cd6810b91`, over the
+pinned RAM and all 34 memstates in `research/damocles-st/snapshots/` (five are tracked in
+git; the rest live in the main checkout). Nothing is injected: each memstate is read as
+saved. The probe's checks are gates rather than prints. A state raises if its recomputed zone
+disagrees with its live `$7A39`, if its `$7A3A` is not nine times that zone, if the
+Catalogue extent of its live Building detail slot does not reproduce `[$7910]`, or if the
+Catalogue instance bound in its cell names a different detail or scale.
 
 ```sh
 python3 research/damocles-st/scripts/placement-class-probe.py \
@@ -109,38 +113,53 @@ The loop at `$059040`–`$05906A` calls the same routine with each resident's ow
 from `$7B5D`. That is how residents acquire a class of their own; the value the drop
 handler copies is the one left over from the player's evaluation at `$05906E`.
 
-### All 24 states reproduce
+### All 35 states reproduce
 
 Recomputing the zone from each state's `[$7910]` rectangle and its `$7AB4`/`$7ABC`
-reproduces the live `$7A39` and `$7A3A` in the pinned RAM and in every tracked
-memstate — 24 of 24, with no exception and no fitted constant:
+reproduces the live `$7A39` and `$7A3A` in the pinned RAM and in every memstate, 35 of 35,
+with no exception and no fitted constant. The detail column is the live `$53A84` slot and
+the Catalogue Model at that `$26000` entry; the scale is `$539CE`×`$539D2`. A state whose
+detail carries no extent has no rectangle. Its `[$7910]` is the lone `$8000` that forces
+zone 0, and the words past it are stale. The first pass of this table printed those stale
+words as rectangles.
 
-| State | Zone | `$7A39` | `$7A3A` | Structure-local rectangle | Bound structure |
-| --- | ---: | ---: | ---: | --- | --- |
-| `observed.ram` | 0 | 0 | 0 | `800, 1600, -800, 1200` | `eris-surface-87` |
-| `boarded-car` | 2 | 2 | 18 | `800, 1600, -800, 1200` | `eris-surface-87` |
-| `boarded-limo` | 1 | 1 | 9 | `800, 1600, -800, 1200` | `eris-surface-87` |
-| `damocles.acheron` | 0 | 0 | 0 | `-500, 500, -500, 500` | — |
-| `damocles.bacchus.transporter` | 3 | 3 | 27 | `3000, 3800, 800, 1600` | — |
-| `damocles.clotho` | 7 | 7 | 63 | `-500, 900, -1400, -600` | — |
-| `damocles.damocles` | 0 | 0 | 0 | `320, -400, 280, 0` | — |
-| `damocles.dion.transporter` | 4 | 4 | 36 | `-700, 400, 600, 1400` | `dion-surface-e3` |
-| `damocles.eris.transporter.11-8` | 6 | 6 | 54 | `-240, 240, -300, 210` | `eris-surface-8b` |
-| `damocles.gaea.transporter` | 4 | 4 | 36 | `-700, 400, 600, 1400` | — |
-| `damocles.logos.transporter` | 4 | 4 | 36 | `-200, 600, -1200, 1200` | — |
-| `damocles.lucan` | 0 | 0 | 0 | `320, -400, 280, 0` | — |
-| `damocles.mentor.transporter` | 8 | 8 | 72 | `-1600, -800, -600, 400` | — |
-| `damocles.metis.transporter` | 4 | 4 | 36 | `-700, 400, 600, 1400` | — |
-| `damocles.midas` | 7 | 7 | 63 | `-500, 500, -500, 500` | — |
-| `damocles.pan` | 4 | 4 | 36 | `-700, 400, 600, 1400` | — |
-| `damocles.theon` | 7 | 7 | 63 | `-400, 400, -200, 200` | — |
-| `damocles.vesta.transporter` | 4 | 4 | 36 | `-2100, 2100, -600, 1650` | `vesta-surface-64` |
-| `dion-2-3` | 1 | 1 | 9 | `-1840, 0, 0, 1120` | `dion-surface-32` |
-| `eris-spaceport-onfoot` | 0 | 0 | 0 | `800, 1600, -800, 1200` | `eris-surface-87` |
-| `gaea-ur-city-4-2` | 1 | 1 | 9 | `-1500, 1500, -1500, 1500` | `gaea-ur-city-surface-24` |
-| `interior-window` | 4 | 4 | 36 | `800, 1600, -800, 1200` | `eris-surface-87` |
-| `left-limo` | 2 | 2 | 18 | `800, 1600, -800, 1200` | `eris-surface-87` |
-| `vesta-parliament-4-6` | 1 | 1 | 9 | `-2100, 2100, -600, 1650` | `vesta-surface-64` |
+| State | Zone | `$7A39` | `$7A3A` | Detail | Scale | Structure-local rectangle | Bound structure |
+| --- | ---: | ---: | ---: | --- | --- | --- | --- |
+| `observed.ram` | 0 | 0 | 0 | 88 `interior-0303d6` | 2×2 | `800, 1600, -800, 1200` | `eris-surface-87` |
+| `boarded-car` | 2 | 2 | 18 | 88 `interior-0303d6` | 2×2 | `800, 1600, -800, 1200` | `eris-surface-87` |
+| `boarded-limo` | 1 | 1 | 9 | 88 `interior-0303d6` | 2×2 | `800, 1600, -800, 1200` | `eris-surface-87` |
+| `damocles.acheron` | 0 | 0 | 0 | 1 `interior-02620e` | 1×1 | — | — |
+| `damocles.atropos` | 7 | 7 | 63 | 30 `interior-027dfe` | -4×-3 | `-1280, 1280, -960, 960` | `atropos-surface-11` |
+| `damocles.bacchus.transporter` | 3 | 3 | 27 | 36 `interior-029392` | 4×4 | `3000, 3800, 800, 1600` | `bacchus-surface-82` |
+| `damocles.clotho` | 7 | 7 | 63 | 51 `interior-02bc56` | -2×-2 | `-500, 900, -1400, -600` | `clotho-surface-01` |
+| `damocles.cronus` | 0 | 0 | 0 | 1 `interior-02620e` | 1×1 | — | — |
+| `damocles.cyclopes` | 1 | 1 | 9 | 28 `interior-027592` | 16×16 | `-2464, 2464, -2592, 2592` | `cyclopes-surface-22` |
+| `damocles.damocles` | 0 | 0 | 0 | 1 `interior-02620e` | 1×1 | — | — |
+| `damocles.dion.transporter` | 4 | 4 | 36 | 56 `interior-02cab0` | 2×2 | `-700, 400, 600, 1400` | `dion-surface-e3` |
+| `damocles.eris.lift` | 4 | 4 | 36 | 43 `interior-02a9a4` | 1×1 | `-900, 900, -400, 400` | `eris-surface-89` |
+| `damocles.eris.transporter.11-8` | 6 | 6 | 54 | 41 `interior-02a67c` | 3×3 | `-240, 240, -300, 210` | `eris-surface-8b` |
+| `damocles.gaea.transporter` | 4 | 4 | 36 | 56 `interior-02cab0` | 2×2 | `-700, 400, 600, 1400` | `gaea-chaldea-metropolis-surface-88` |
+| `damocles.icarus` | 1 | 1 | 9 | 28 `interior-027592` | 8×8 | `-1232, 1232, -1296, 1296` | `icarus-surface-12` |
+| `damocles.key-west` | 0 | 0 | 0 | 1 `interior-02620e` | 1×1 | — | — |
+| `damocles.logos.transporter` | 4 | 4 | 36 | 59 `interior-02cfdc` | 1×1 | `-200, 600, -1200, 1200` | `logos-surface-24` |
+| `damocles.lucan` | 0 | 0 | 0 | 1 `interior-02620e` | 1×1 | — | — |
+| `damocles.mentor.transporter` | 8 | 8 | 72 | 88 `interior-0303d6` | -2×-1 | `-1600, -800, -600, 400` | `mentor-surface-79` |
+| `damocles.metis.transporter` | 4 | 4 | 36 | 56 `interior-02cab0` | 2×2 | `-700, 400, 600, 1400` | `metis-surface-60` |
+| `damocles.midas` | 7 | 7 | 63 | 42 `interior-02a87e` | 1×1 | `-500, 500, -500, 500` | — |
+| `damocles.pan` | 4 | 4 | 36 | 53 `interior-02c020` | 2×2 | `-700, 400, 600, 1400` | `pan-surface-14` |
+| `damocles.perseus` | 6 | 6 | 54 | 23 `interior-027134` | -3×-3 | `-600, 600, -600, 600` | `perseus-surface-25` |
+| `damocles.solon` | 6 | 6 | 54 | 38 `interior-029c66` | -3×-3 | `-600, 0, -2700, -2100` | `solon-surface-11` |
+| `damocles.thalia` | 0 | 0 | 0 | 1 `interior-02620e` | 1×1 | — | — |
+| `damocles.theon` | 7 | 7 | 63 | 7 `interior-026556` | 4×2 | `-400, 400, -200, 200` | `theon-surface-11` |
+| `damocles.tolosa` | 5 | 5 | 45 | 39 `interior-02a18c` | 3×3 | `-1800, 1800, -1200, 1200` | `tolosa-surface-12` |
+| `damocles.vesta.transporter` | 4 | 4 | 36 | 70 `interior-02e910` | 3×3 | `-2100, 2100, -600, 1650` | `vesta-surface-64` |
+| `dion-2-3` | 1 | 1 | 9 | 34 `interior-028e74` | -4×4 | `-1840, 0, 0, 1120` | `dion-surface-32` |
+| `dion-north-airborne` | 0 | 0 | 0 | 1 `interior-02620e` | 1×1 | — | — |
+| `eris-spaceport-onfoot` | 0 | 0 | 0 | 88 `interior-0303d6` | 2×2 | `800, 1600, -800, 1200` | `eris-surface-87` |
+| `gaea-ur-city-4-2` | 1 | 1 | 9 | 20 `interior-026b08` | -3×-3 | `-1500, 1500, -1500, 1500` | `gaea-ur-city-surface-24` |
+| `interior-window` | 4 | 4 | 36 | 88 `interior-0303d6` | 2×2 | `800, 1600, -800, 1200` | `eris-surface-87` |
+| `left-limo` | 2 | 2 | 18 | 88 `interior-0303d6` | 2×2 | `800, 1600, -800, 1200` | `eris-surface-87` |
+| `vesta-parliament-4-6` | 1 | 1 | 9 | 70 `interior-02e910` | 3×3 | `-2100, 2100, -600, 1650` | `vesta-surface-64` |
 
 Three readings in that table are worth naming.
 
@@ -156,44 +175,81 @@ an authored 4. That observation is now a derivation, not a special case.
 structures through `$7B0E`. The extent record follows the cell, not the storey.
 
 **`$7AF2`/`$7AF4` is the bound structure's intra-cell origin.** Subtracting it gives
-the structure-local rectangle in the table, and for the eight states whose body has a
-recovered surface map it equals the tracked catalogue instance's own position, to the
-unit. The probe gates that match on the body selector at `$7AC9` and on the instance's
-model being a structure, so a coincidence of grid phase on another body cannot claim a
-binding.
+the structure-local rectangle in the table, and for the 29 states whose cell holds a
+catalogued structure instance it equals that instance's own position, to the unit. The
+probe gates that match on the body selector at `$7AC9`, on the player's cell and on the
+instance's model being a structure, so a coincidence of grid phase cannot claim a binding.
+Without the cell gate, Acheron's player, who stands in an empty cell, was matched to a
+structure elsewhere on the body at the same centred phase. The Midas uniform field repeats
+one structure over every cell, so no single catalogued instance stands in the player's cell.
 
-## Where the rectangle comes from, and what is still missing
+## Where the rectangle comes from
 
 `[$7910]` does not point at authored data. It points into the scratch buffer at `$CB88`
 that `$053A8C`–`$053B38` fills:
 
-- `$053AA6` resolves a structure record through the table at `[$4BD22]` (`$26000` in
+- `$053AA6` resolves a Building detail record through the table at `[$4BD22]` (`$26000` in
   the pinned capture), indexed by the slot word that `$053A98` reads from the
   self-modified `$53A84`.
 - `$053ACA` points the destination at `$CB88`; `$053AD0`/`$053AD4` load the
   translation from `$7AF2`/`$7AF4`; `$539CE`/`$539D0`/`$539D2` supply the X, Y and Z
   scales, which for Capital Spaceport read `2, 1, 2` and match the tracked model's
   recovered scale.
-- `$053AD8` then walks the record **backwards**, seven words at a time, transforming
-  six and copying the seventh, until a negative word. `$053AE4` copies that word and
-  `$053B2C` publishes the address just past it as `$7910`. `$053B30` transforms the
-  five words that follow into the header and the two axis pairs the zone reads.
+- `$053AD8` then walks the record **backwards** from its entry, seven words at a time,
+  transforming six and copying the seventh, until a negative word. `$053AE4` copies that
+  word, and six-word groups follow up to the next negative word. `$053B2C` publishes the
+  address just past it as `$7910`, and `$053B30` transforms the five words that follow
+  into the header and the two axis pairs the zone reads. Where a negative word stands in
+  the header's place, `$053B38` writes `$8000` there and the zone is 0.
 
-For Capital Spaceport the source record sits at `$0303A0`–`$0303AA` in the pinned RAM:
-the words `600, 400, 800, 400, 850` below the `$8000` at `$0303AA`, which the scale
-`2, 1, 2` and the origin `31958, 34328` carry to the observed
-`32758, 33558, 33528, 35528`.
+For Capital Spaceport the source record sits at `$0303A0`–`$0303AA` in the pinned RAM. In
+address order the words are `600, -400, 800, 400, 850` below the `$8000` at `$0303AA`: header
+850, X pair `400, 800` and Z pair `-400, 600` as the backward walk meets them. The scale `2, 1, 2`
+and the origin `31958, 34328` carry them to the observed `32758, 33558, 33528, 35528`.
 
-**What is not recovered** is the mapping from a catalogue structure instance to the
-slot `$53A84` holds. Capital Spaceport's record is reached through slot 88 while the
-catalogue records the model at object-table slot 74, and the two numbering spaces are
-not yet related. Until that is decoded the extent rectangle cannot be published as
-static model data, and a port cannot compute the zone for itself. The rectangles above
-are live readings from captures, not an extraction.
+### The slot is the structure's Building detail byte
 
-This is the single blocker on a port writing the placement class on a Drop, tracked as
-[#356](https://github.com/odogono/mercenary/issues/356). It does not affect the authored class,
-which is published.
+`$53A84` is a word, and its only writers are the two `move.b` instructions of the cell bind
+into its low byte `$53A85`. `$054DB6` copies an alias record's byte at +5, and `$054E08`
+copies a plain record's byte at −5. That byte is the record's **Building detail**. The
+Catalogue already decoded it as each structure Model's interior slot and publishes the Model
+it names as the structure selection's `detailModel`. Capital Spaceport is structure slot 74,
+and its record's Building detail byte is 88. The two numbers index different tables, so
+they were never meant to agree.
+
+Nothing else writes `$53A84`, and `$053A8C` has one caller, `$054F10` in the cell bind. The
+lift writes neither the scale nor the detail byte and does not call it, so every Floor of a
+cell keeps the cell's rectangle. The Floor forms the Catalogue publishes for upper Floors
+are already bound to the instance's detail and scale
+([interior resident placement](damocles-interior-resident-placement.md)). `$539D0` has no
+writer in the image, so the header's scale is always 1.
+
+The `$26000` bank is byte-identical in the pinned RAM and in all 34 memstates, so the extent
+is static model data. The Catalogue now publishes it on every Building detail Model as
+`extent: {header, x, z}` in raw units, pairs in the order the walk meets them, or `null`
+where the record carries none. Of the 61 Building detail Models only Building detail 1 carries
+none, and it is the detail structure 0 binds, which is what a cell with no structure binds. The
+instance scale and origin are applied at use.
+
+The probe gates both halves. For all 35 states, the Catalogue extent of the live slot,
+scaled and translated as `$053AFC`–`$053B26` does (the low word of each product, and the pair
+swapped under a negative scale), reproduces all five words at `[$7910]`, or the lone `$8000`.
+For the 29 states whose cell holds a catalogued instance, that instance's structure selection
+names the live detail Model and the live `$539CE`/`$539D2` scale.
+
+### When the zone is taken
+
+`$05906E` classifies the player's position. It is called by the Drop handler's first
+instruction (`$054520`), by the leave path's first instruction (`$05449C`) and by four
+movement sites. A direct Drop and a leave therefore both copy the zone of the Pose they
+place at. A port computes it from the Pose and the bound structure, and needs no zone state
+of its own.
+
+One Catalogue structure publishes a detail with an extent but no structure selection:
+Structure 46 (`structure-0122fa`), an empty surface record at Gaea `gaea-0e-surface-88`,
+binds Building detail 2, whose record has no geometry but carries the rectangle
+`30000; ±25000; ±20000`. The port reads the detail through the selection, so a Drop in that
+one cell writes 0 where the original would compare against that rectangle.
 
 ## The other two #345 gaps
 
@@ -248,17 +304,20 @@ Half-open ranges in the pinned first-world RAM.
 | `$053A8C`–`$053B3C` extent transform and `$7910` publication | `a5a944016609f2cb6526d8482370cb3bca15da288632d1e8570732f340167d3a` |
 | `$05A946`–`$05A98C` the second `[$7910]` consumer | `061f54e50a4c05575ca2925a6a0609d60b07721f2374bc54fe032efe665249a8` |
 | `$053310`–`$053330` draw-priority bump and `$7A3A` index | `3e3fba65cf09a4de8edd155f8a6572ec42da7795af5516bd8a5bff33edaee100` |
+| `$054D82`–`$054E10` cell bind: scale and Building detail byte into `$539CE`/`$539D2`/`$53A85` | `7d57175ecedb8dbfbb0b46d9cf5af0d887abd8927611a267ef155081a1fb8eeb` |
+| `$0546A4`–`$0546CC` support placement, copying the support's class at `$0546C4` | `d5f3f52318eb4c87f213c8da26099da9b803cc56fbc5ad44a9c2f82e4b37b5d9` |
 
 ## Deterministic expectations for the port
 
 1. A Residence's placement class is the recovered Association A byte 3, published as
    `placementClass`. Deriving it from the handling byte is wrong for 176 of the 241
-   residents, and a save that carries a derived value must be refused.
+   residents. A Save may carry a zone 0–8 or the authored class. Every authored class is
+   also 0–8, so only a handling-nibble value of 9–15 can still be told apart and refused.
 2. A slot with no resident state has no placement class, and none is invented for it.
-3. Until the extent rectangle is statically decoded, a Drop keeps the class the object
-   already carries rather than writing a zone. That is a recorded departure from
-   `$0546FC`, not a claim about what the original writes.
-4. A support placement inherits the support's class. The port already does this, and it
-   needs no rectangle.
+3. A direct Drop and a leave write the zone of the Pose they place at against the bound
+   structure's extent: the Building detail Model's `extent` at the structure selection's
+   `scale`, about the placement's intra-cell origin. A cell with no bound structure gives 0.
+4. A support placement copies the support's class (`$0546C4`), not the dropped object's own
+   class, and it needs no rectangle.
 5. `$7A3A`, the draw-order priority index, is nine times the class and is therefore
    derived. It is never stored.
