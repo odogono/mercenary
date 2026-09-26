@@ -12,6 +12,17 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Added
 
+- **Damocles draws the comet DAMOCLES in the surface sky.** It is two white triangles
+  from its head to a tail tip a quarter further from DIALIS, drawn in its draw-list slot
+  and cut at the horizon. From a surface it shows as a thin streak, as on the ST. Its
+  centre follows the Session's impact clock through #440's waypoint table with the ST's
+  own arithmetic, so it moves as the clock runs down and a Save restores it. At #528's
+  pinned MIDAS clock the centre is the frames' RAM value exactly, and the head lands on
+  the frames' own streak. `system.json` gains a `comet` block with the waypoint table,
+  tail shift, head points, polygons and head-disc slots, extracted by
+  `damocleslab.system`. The comet is gone once the clock reaches zero, where the ST
+  destroys it (#538).
+
 - **The Enhanced preset moves the Damocles sky Bodies smoothly.** The engine turns the
   sky in whole 1/1024-turn steps, and walking reaches it in four-cell steps, so on METIS
   a Body jumps 0.35° every 1.4 seconds. Enhanced presentation now reads the whole

@@ -15,12 +15,13 @@
       "Resident first-world records only; not a claim of complete disk coverage.",
       "Coordinates are raw signed engine integers and their physical scale is unresolved. radiusExtent is the raw longword of a packed binary float: its low word is a mantissa normalised into $1000..$1FFF, an implicit 1 at bit 12, and its high word is a binary exponent, so size is (raw & $FFFF) / $1000 * 2^(raw >> 16) (#424). radius is size / 256 in the coordinates' own unit, recovered rather than derived (#528): the sky pass draws a Body with pixel radius size / depth while positions project as 256 * u / depth, and 24 pinned frames match that pixel for pixel.",
       "No explicit type or Primary field and no complete orbital elements were recovered, so those properties are absent rather than inferred.",
-      "DAMOCLES position is a capture-time sample and is not an epoch or a static authored position; its X and Z differ in the second cold run.",
+      "DAMOCLES position is a capture-time sample and is not an epoch or a static authored position; its X and Z differ in the second cold run. The position at any moment is the impact clock's, through comet.waypoints (#440).",
       "VOID is source slot 30 and a place/sentinel, not one of the 30 physical selectors scanned by the space renderer; it is intentionally absent from bodies.",
       "baseColour is recovered, not authored: sourceColour is the low word of the longword at $0060C0 + 4*sourceIndex masked to twelve bits, exactly as $0592AC masks it before publishing it to $7C88, and baseColour expands each nibble by n * 34 as catalogue.json does. DAMOCLES's slot is $0030E000, whose high word the engine never reads, so its masked colour is $000; the VOID sentinel's $777 is excluded along with the rest of that slot.",
       "baseColour is the colour a Body surface is drawn in wherever no island covers it. An island record carries its own land colour, which overrides it for that island, so a consumer drawing a surface needs both and only the base colour is published here; catalogue.json carries the record colours. Triton is the one Body whose record colour differs from its base colour.",
       "drawList is the list the sky passes at $0530C8 and $05313A walk while standing on that Body, read from the pointer at $00809C + 4*sourceIndex into $00811C..$0081CC and kept in the engine's order, which is the order Bodies are drawn in with no depth sort. A $00 byte is DIALIS: the walker stops only at a negative byte. DIALIS's own list holds only DIALIS, as VOID's does; no capture stands on either.",
-      "sky carries the static facts the sky pass reads beyond the Body records: the projection scale at $7964, the eye height above the Body centre at $799E, the half-width divisor that $045A0C loads to correct for non-square pixels, and the clip rows $0530A6 and $0530B0 store. $7964 and $799E are RAM, not code, and hold the published values in every one of 61 captured memstates."
+      "sky carries the static facts the sky pass reads beyond the Body records: the projection scale at $7964, the eye height above the Body centre at $799E, the half-width divisor that $045A0C loads to correct for non-square pixels, and the clip rows $0530A6 and $0530B0 store. $7964 and $799E are RAM, not code, and hold the published values in every one of 61 captured memstates.",
+      "comet carries what places and draws DAMOCLES beyond its Body record (#538). waypoints is the table $051E88 interpolates from the impact clock (#440): seconds to impact, X and Z, the path lying in Y = 0. $051088 installs its cursor beside the start deadline. The tail tip is the centre plus the centre shifted right by tailShift, Y 0; headPoints are offsets from the centre, projected into the slots after the tip; each polygon face names its points by index, 0 the tip and 1 on the head points, in the order $04F8FE draws them. headDisc gives the palette slots of the disc $04FCE6 draws last, first span then second; with the split at the rim only the first is painted."
     ]
   },
   "coordinateSystem": {
@@ -51,6 +52,246 @@
       "otherwise": 136
     },
     "projectionScale": 256
+  },
+  "comet": {
+    "evidence": "docs/research/damocles-sky-bodies.md",
+    "motionEvidence": "docs/research/damocles-script-motion-time.md",
+    "headDisc": {
+      "address": "0x04fce6",
+      "slots": [
+        0,
+        12
+      ]
+    },
+    "headPoints": {
+      "address": "0x04fd12",
+      "offsets": [
+        {
+          "x": 0,
+          "y": -250,
+          "z": 0
+        },
+        {
+          "x": 0,
+          "y": 250,
+          "z": 0
+        },
+        {
+          "x": -250,
+          "y": 0,
+          "z": 0
+        },
+        {
+          "x": 250,
+          "y": 0,
+          "z": 0
+        }
+      ]
+    },
+    "polygons": {
+      "address": "0x04fd2c",
+      "faces": [
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 1911,
+          "points": [
+            0,
+            1,
+            2
+          ]
+        },
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 1911,
+          "points": [
+            2,
+            1,
+            0
+          ]
+        },
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 1911,
+          "points": [
+            4,
+            3,
+            0
+          ]
+        },
+        {
+          "colour": "#eeeeee",
+          "sourceColour": 1911,
+          "points": [
+            0,
+            3,
+            4
+          ]
+        }
+      ]
+    },
+    "tailShift": 2,
+    "waypoints": {
+      "address": "0x052022",
+      "end": "0x052158",
+      "sha256": "8ee30f23842fd5007d26dda0974a2742bfcc5f44d1719096217f9c42ab8585a5",
+      "records": [
+        {
+          "seconds": -15500,
+          "x": -369066,
+          "z": 1119852
+        },
+        {
+          "seconds": -15500,
+          "x": -369066,
+          "z": 1119852
+        },
+        {
+          "seconds": -13000,
+          "x": -369066,
+          "z": 1119852
+        },
+        {
+          "seconds": -12500,
+          "x": -303213,
+          "z": 993726
+        },
+        {
+          "seconds": -12000,
+          "x": -242943,
+          "z": 874560
+        },
+        {
+          "seconds": -11500,
+          "x": -188310,
+          "z": 762528
+        },
+        {
+          "seconds": -11000,
+          "x": -139362,
+          "z": 657771
+        },
+        {
+          "seconds": -10500,
+          "x": -96111,
+          "z": 560421
+        },
+        {
+          "seconds": -10000,
+          "x": -58557,
+          "z": 470574
+        },
+        {
+          "seconds": -9500,
+          "x": -26679,
+          "z": 388311
+        },
+        {
+          "seconds": -9000,
+          "x": -417,
+          "z": 313677
+        },
+        {
+          "seconds": -8500,
+          "x": 20304,
+          "z": 246675
+        },
+        {
+          "seconds": -8000,
+          "x": 35610,
+          "z": 187272
+        },
+        {
+          "seconds": -7500,
+          "x": 45651,
+          "z": 135378
+        },
+        {
+          "seconds": -7000,
+          "x": 50628,
+          "z": 90831
+        },
+        {
+          "seconds": -6500,
+          "x": 50751,
+          "z": 53370
+        },
+        {
+          "seconds": -6000,
+          "x": 46203,
+          "z": 22608
+        },
+        {
+          "seconds": -5500,
+          "x": 36906,
+          "z": -1992
+        },
+        {
+          "seconds": -5000,
+          "x": 21942,
+          "z": -20946
+        },
+        {
+          "seconds": -4500,
+          "x": -1839,
+          "z": -33750
+        },
+        {
+          "seconds": -4000,
+          "x": -39576,
+          "z": -36267
+        },
+        {
+          "seconds": -3500,
+          "x": -90594,
+          "z": -23526
+        },
+        {
+          "seconds": -3000,
+          "x": -150405,
+          "z": 3852
+        },
+        {
+          "seconds": -2500,
+          "x": -217317,
+          "z": 43965
+        },
+        {
+          "seconds": -2000,
+          "x": -290853,
+          "z": 95643
+        },
+        {
+          "seconds": -1500,
+          "x": -370770,
+          "z": 158160
+        },
+        {
+          "seconds": -1000,
+          "x": -456867,
+          "z": 231009
+        },
+        {
+          "seconds": -500,
+          "x": -548943,
+          "z": 313785
+        },
+        {
+          "seconds": 0,
+          "x": -630000,
+          "z": 390000
+        },
+        {
+          "seconds": 500,
+          "x": -720000,
+          "z": 480000
+        },
+        {
+          "seconds": 1000,
+          "x": -810000,
+          "z": 570000
+        }
+      ]
+    }
   },
   "bodies": [
     {

@@ -42,6 +42,7 @@ import {
   readTypefacePreference
 } from '../shell/typography.ts';
 import { AudioWorkletTransport } from '../sound/transport.ts';
+import { impactTime } from './comet.ts';
 import {
   DAMOCLES_CONSOLE_BANNER,
   executeDamoclesConsoleCommand,
@@ -925,11 +926,13 @@ try {
       ],
       slot => session.carriesSlot(slot),
       snapshot.daylight,
-      // The sky Bodies turn with the accumulator the terminator reads, so a Save restores both.
-      // Enhanced presentation moves them smoothly between the engine's steps.
+      // The sky Bodies turn with the accumulator the terminator reads, and the comet moves with
+      // the impact clock, so a Save restores all three. Enhanced presentation moves the Bodies
+      // smoothly between the engine's steps.
       skyPass(system, {
         body: snapshot.pose.body,
         daylight: snapshot.daylight,
+        impact: impactTime(snapshot.elapsed, content.doc.time),
         position: snapshot.pose.position,
         sky: snapshot.surface.sky,
         smooth: enhanced,

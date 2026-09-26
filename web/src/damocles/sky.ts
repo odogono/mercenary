@@ -1,6 +1,7 @@
 import type { BodySky } from '../catalogue/data.ts';
 import type { GammaSystemDocument } from '../flyover/documents.ts';
 import type { Vector3 } from '../orientation/index.ts';
+import { cometCentre, type ImpactTime } from './comet.ts';
 import { continuousSkyAngles, skyAngles } from './terminator.ts';
 
 /// The other Bodies of a cluster in a Body's sky (#530), to the closed form #528 recovered
@@ -14,9 +15,9 @@ import { continuousSkyAngles, skyAngles } from './terminator.ts';
 /// hands the offset to the same Camera that draws the structures, so a Body keeps its place
 /// among them however the port's view is shaped.
 ///
-/// DAMOCLES is not drawn. `$04FBF2` draws it through a comet path of its own, two triangles
-/// towards a tail tip, and its position is the impact clock's rather than the capture-time
-/// sample `system.json` publishes (#538).
+/// DAMOCLES is drawn through a comet path of its own (`$04FBF2`, #538): two white triangles
+/// from its head to a tail tip, then a disc over the head. Its centre is the impact clock's
+/// (`comet.ts`) rather than the capture-time sample `system.json` publishes.
 
 /// The 1024-step sine table at `$064000`: entry `a` is `sin((a + ½) · 2π / 1024)`, and the
 /// cosine is the entry a quarter turn on.
@@ -51,6 +52,7 @@ export interface SkyBody {
   /// the Body is non-negative.
   readonly first: 'lit' | 'shadow';
   readonly id: string;
+  readonly kind: 'disc';
   /// The Body's centre less the eye, in the current Body's surface frame.
   readonly offset: Vector3;
   /// The unlit side's colour: the sky by day on a Body with an atmosphere, `$000` otherwise.
@@ -62,6 +64,36 @@ export interface SkyBody {
   /// DIALIS's is 1, a full disc.
   readonly split: number;
 }
+
+/// The comet as the sky pass sees it this frame. Every offset is from the eye, in the current
+/// Body's surface frame, as a disc's is.
+export interface SkyComet {
+  /// The polygons `$04F8FE` draws, in order, each naming `points` by index.
+  readonly faces: readonly {
+    readonly colour: string;
+    readonly points: readonly number[];
+  }[];
+  /// The disc `$04FCE6` draws over the head once the polygons are down, where the head is in
+  /// front of the eye. `$042C04 = $7FFF0000` puts its split at the rim, so it is one colour:
+  /// palette slot 0, which the surface pass holds at `$000`. It is under a pixel from every
+  /// surface at every clock a Session reaches before the impact, so no frame has shown it.
+  readonly head: {
+    readonly colour: string;
+    readonly size: number;
+  } | null;
+  readonly id: string;
+  readonly kind: 'comet';
+  /// The comet's centre.
+  readonly offset: Vector3;
+  /// The tail tip, then the head points, in the slots `$04FBF6` projects them into.
+  readonly points: readonly Vector3[];
+}
+
+export type SkyItem = SkyBody | SkyComet;
+
+/// The colours a palette slot holds in the surface pass, as far as the sky reads them.
+/// `$0597E2` loads slot 8 with the sky; slot 0 is `$000`.
+const PALETTE_SLOT_0 = '#000000';
 
 /// `C = round(2^15 cos φ)`, saturated to a signed word (`$04FEB4`).
 const phaseWord = (cosPhase: number): number =>
@@ -90,6 +122,8 @@ export interface SkyInputs {
   readonly body: string;
   /// The terminator's answer (`$7A4E`).
   readonly daylight: boolean;
+  /// The impact clock, which places the comet.
+  readonly impact: ImpactTime;
   /// The player's position on the Body, whose Body Coordinate steps the sky angles start from.
   readonly position: Vector3;
   readonly sky: BodySky | null;
@@ -103,8 +137,9 @@ export interface SkyInputs {
 /// One frame's sky pass: its Bodies, and the two static facts the frame measures them by.
 export interface SkyPass {
   /// Every Body the current Body's draw list names, in the list's order, which is the order the
-  /// engine draws them in with no depth sort. DAMOCLES is left out (see above).
-  readonly bodies: readonly SkyBody[];
+  /// engine draws them in with no depth sort. DAMOCLES is its comet, and is gone once the
+  /// impact clock reaches zero.
+  readonly bodies: readonly SkyItem[];
   /// `$045A0C`: a disc narrower than this many pixels at its widest row has no row at all.
   readonly halfWidthDivisor: number;
   /// `$7964`: the projection scale a disc's `size / depth` pixel radius is measured against.
@@ -123,7 +158,7 @@ export const skyPass = (
 const skyBodies = (
   system: GammaSystemDocument,
   inputs: SkyInputs
-): readonly SkyBody[] => {
+): readonly SkyItem[] => {
   const here = system.bodies.find(
     body => `body-${body.sourceIndex}` === inputs.body
   );
@@ -147,19 +182,29 @@ const skyBodies = (
     inputs.sky !== null &&
     inputs.sky.day.colour !== inputs.sky.night.colour
       ? inputs.sky.day.colour
-      : '#000000';
-  const result: SkyBody[] = [];
-  for (const id of here.drawList) {
-    const body = system.bodies.find(item => item.id === id);
-    if (body === undefined || body.positionKind === 'capture-time-sample') {
-      continue;
-    }
-    const x = body.position.x - eye.x;
-    const y = body.position.y - eye.y;
-    const z = body.position.z - eye.z;
+      : PALETTE_SLOT_0;
+  const surfaceOffset = (point: Vector3): Vector3 => {
+    const x = point.x - eye.x;
+    const y = point.y - eye.y;
+    const z = point.z - eye.z;
     const [east, up, north] = rotation.map(
       row => row[0] * x + row[1] * y + row[2] * z
     ) as [number, number, number];
+    return { x: east, y: up, z: north };
+  };
+  const result: SkyItem[] = [];
+  for (const id of here.drawList) {
+    const body = system.bodies.find(item => item.id === id);
+    if (body === undefined) {
+      continue;
+    }
+    if (body.positionKind === 'capture-time-sample') {
+      const comet = skyComet(system, body, inputs.impact, surfaceOffset);
+      if (comet !== null) {
+        result.push(comet);
+      }
+      continue;
+    }
     // `$04FBAE` skips the phase for DIALIS and leaves `C = $7FFF` with no swap, so the split
     // lands at the rim and the whole disc is its own colour.
     const phase =
@@ -170,11 +215,57 @@ const skyBodies = (
       colour: body.baseColour,
       first: phase.first,
       id: body.id,
-      offset: { x: east, y: up, z: north },
+      kind: 'disc',
+      offset: surfaceOffset(body.position),
       shadow,
       size: body.size,
       split: phase.split
     });
   }
   return result;
+};
+
+/// `$04FBF2`: the comet's points about its centre at the impact clock, or null once it is gone.
+const skyComet = (
+  system: GammaSystemDocument,
+  body: GammaSystemDocument['bodies'][number],
+  impact: ImpactTime,
+  surfaceOffset: (point: Vector3) => Vector3
+): SkyComet | null => {
+  const { comet } = system;
+  const centre = cometCentre(comet, impact);
+  if (centre === null) {
+    return null;
+  }
+  // `$04FC14..$04FC22`: the tip is a quarter further from DIALIS again, at Y 0. `$7A82 ≠ 0`
+  // takes the quarter from ERIS's X and Z instead; the mover raises it only where the table
+  // ends at zero on the clock, which destroys the comet too unless ERIS was already destroyed.
+  // That is the endgame's (#110), so the port reads the comet's own centre.
+  const tip = {
+    x: centre.x + (centre.x >> comet.tailShift),
+    y: 0,
+    z: centre.z + (centre.z >> comet.tailShift)
+  };
+  const head = { x: centre.x, y: body.position.y, z: centre.z };
+  const [firstSlot] = comet.headDisc.slots;
+  return {
+    faces: comet.polygons.faces.map(face => ({
+      colour: face.colour,
+      points: face.points
+    })),
+    head: firstSlot === 0 ? { colour: PALETTE_SLOT_0, size: body.size } : null,
+    id: body.id,
+    kind: 'comet',
+    offset: surfaceOffset(head),
+    points: [
+      surfaceOffset(tip),
+      ...comet.headPoints.offsets.map(offset =>
+        surfaceOffset({
+          x: head.x + offset.x,
+          y: head.y + offset.y,
+          z: head.z + offset.z
+        })
+      )
+    ]
+  };
 };

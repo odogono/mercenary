@@ -367,6 +367,12 @@ the body-destruction dispatcher at `$04C8D2`. What arms it and what it means
 for play belongs to the endgame (#110); it is named here because the formula is
 incomplete without it. In every run cited below `$007A7E` is zero.
 
+`payload/damocles/system.json` publishes the table as `comet.waypoints`, and the port
+places the comet from the Session's impact clock with this formula
+([#538](https://github.com/odogono/mercenary/issues/538), `web/src/damocles/comet.ts`).
+Before `-15500` the port holds record 0. It leaves the drift out, and it takes the comet as
+gone once the clock reaches zero.
+
 #### Past zero on the clock
 
 Advancing onto record 28 finds a **zero time word**, which `$051FAA` reads as

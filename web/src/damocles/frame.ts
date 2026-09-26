@@ -14,7 +14,7 @@ import {
   type CarriedSlot,
   type FloorLabelGlyphs
 } from './selection.ts';
-import type { SkyBody, SkyPass } from './sky.ts';
+import type { SkyBody, SkyComet, SkyPass } from './sky.ts';
 import {
   insideCentralCellHalf,
   withinDrawBound,
@@ -58,9 +58,11 @@ export interface ErisFramePlan {
   readonly nearPlane: number;
   /// Faces the triangulator refused, drawn as nothing and counted.
   readonly skippedFaces: number;
-  /// The sky Bodies (#530), in draw order, whether or not any of each is drawn.
+  /// The sky Bodies (#530) and the comet (#538), in draw order, whether or not any of each is
+  /// drawn.
   readonly skyBodies: readonly SkyBodyPlacement[];
-  /// The sky Bodies' discs, in the same seven-float vertices as `vertices` and in draw order.
+  /// The sky Bodies' discs and the comet, in the same seven-float vertices as `vertices` and in
+  /// draw order.
   /// They are painted over the sky fill before anything else, and everything else covers them.
   readonly skyVertices: Float32Array;
   readonly triangleCount: number;
@@ -70,10 +72,11 @@ export interface ErisFramePlan {
 
 /// Where a sky Body's disc lies in the view, as tangents: `x` right and `y` up from the view's
 /// centre, and `radius` the disc's `size / depth` pixels over the projection scale. A Body at
-/// `(x, y)` is where #528's closed form puts it at `160 + scale·x`, `68 − scale·y`.
+/// `(x, y)` is where #528's closed form puts it at `160 + scale·x`, `68 − scale·y`. The comet's
+/// is its head's, and all zero where the head is behind the eye.
 export interface SkyBodyPlacement {
   /// Whether any of the disc is drawn: in front of the eye, at least one row wide, and above
-  /// the horizon row somewhere.
+  /// the horizon row somewhere. For the comet, whether any of its tail or head is.
   readonly drawn: boolean;
   readonly id: string;
   readonly radius: number;
@@ -408,13 +411,128 @@ const SKY_DISC_SLABS = 32;
 const skyDepth = (doc: ErisPresentationDocument): number =>
   doc.camera.farPlane / 2;
 
+/// Where the comet's polygons are cut short of the eye, in view depth. They are projected
+/// before they are drawn, so this only has to keep the divide away from zero.
+const SKY_NEAR_DEPTH = 1e-6;
+
+type Tangent = { readonly x: number; readonly y: number };
+
+/// Sutherland–Hodgman against one half-space: keep where `side` is not negative.
+const clipPolygon = <T extends Tangent>(
+  polygon: readonly T[],
+  side: (point: T) => number,
+  between: (from: T, to: T, t: number) => T
+): T[] => {
+  const result: T[] = [];
+  for (let index = 0; index < polygon.length; index += 1) {
+    const from = polygon[index]!;
+    const to = polygon[(index + 1) % polygon.length]!;
+    const a = side(from);
+    const b = side(to);
+    if (a >= 0) {
+      result.push(from);
+    }
+    if (a >= 0 !== b >= 0) {
+      result.push(between(from, to, a / (a - b)));
+    }
+  }
+  return result;
+};
+
+const lerp3 = (from: Vector3, to: Vector3, t: number): Vector3 => ({
+  x: from.x + (to.x - from.x) * t,
+  y: from.y + (to.y - from.y) * t,
+  z: from.z + (to.z - from.z) * t
+});
+
+const lerp2 = (from: Tangent, to: Tangent, t: number): Tangent => ({
+  x: from.x + (to.x - from.x) * t,
+  y: from.y + (to.y - from.y) * t
+});
+
+/// The comet's polygons, `$04F8FE`'s, in view space: cut short of the eye, projected, cut at the
+/// horizon row (the `$04FB1C` fill limit, patched to row 68 on foot), and fanned into
+/// triangles at the sky's depth. Returns whether any of it is left.
+///
+/// From a surface the head is a few hundred units across at a quarter of a million away, so
+/// the triangles are under a pixel wide. The ST's scan fill still paints every row they
+/// cross, and #528's frames show the comet as a streak a pixel or more wide all the way to the
+/// tip. The port's pixels are finer than the ST's, so it adds that floor as a quad one ST
+/// pixel wide from the head to the tip.
+const skyCometTriangles = (
+  comet: SkyComet,
+  view: readonly Vector3[],
+  pixel: number,
+  depth: number,
+  emit: (view: Vector3, colour: readonly [number, number, number]) => void
+): boolean => {
+  let drawn = false;
+  const fill = (
+    polygon: readonly Tangent[],
+    colour: readonly [number, number, number]
+  ): void => {
+    const cut = clipPolygon(polygon, point => point.y, lerp2);
+    for (let index = 1; index + 1 < cut.length; index += 1) {
+      for (const point of [cut[0]!, cut[index]!, cut[index + 1]!]) {
+        emit({ x: point.x * depth, y: point.y * depth, z: depth }, colour);
+      }
+      drawn = true;
+    }
+  };
+  const project = (point: Vector3): Tangent => ({
+    x: point.x / point.z,
+    y: point.y / point.z
+  });
+  for (const face of comet.faces) {
+    const front = clipPolygon(
+      face.points.map(index => view[index]!),
+      point => point.z - SKY_NEAR_DEPTH,
+      lerp3
+    );
+    fill(front.map(project), channels(face.colour));
+  }
+  const [tip, ...heads] = view;
+  const colour = comet.faces[0]?.colour;
+  if (tip === undefined || heads.length === 0 || colour === undefined) {
+    return drawn;
+  }
+  const head = {
+    x: heads.reduce((sum, point) => sum + point.x, 0) / heads.length,
+    y: heads.reduce((sum, point) => sum + point.y, 0) / heads.length,
+    z: heads.reduce((sum, point) => sum + point.z, 0) / heads.length
+  };
+  const segment = clipPolygon(
+    [head, tip],
+    point => point.z - SKY_NEAR_DEPTH,
+    lerp3
+  );
+  if (segment.length >= 2) {
+    const [from, to] = [project(segment[0]!), project(segment[1]!)];
+    const length = Math.hypot(to.x - from.x, to.y - from.y);
+    if (length > 0) {
+      const nx = (-(to.y - from.y) / length) * (pixel / 2);
+      const ny = ((to.x - from.x) / length) * (pixel / 2);
+      fill(
+        [
+          { x: from.x - nx, y: from.y - ny },
+          { x: to.x - nx, y: to.y - ny },
+          { x: to.x + nx, y: to.y + ny },
+          { x: from.x + nx, y: from.y + ny }
+        ],
+        channels(colour)
+      );
+    }
+  }
+  return drawn;
+};
+
 /// One sky Body as horizontal slabs, `$045916`'s rows made continuous: each row from `−w` to
 /// `+w` about the centre, split at `split·w`, and cut at the horizon row, which on foot is the
 /// view's centre row (`$042C74 = $44`, row 68 of 136). The disc is round here where the ST's
 /// is widened by `1/0.84375`: that widening makes it round on the ST's non-square pixels, and
 /// the port's pixels are square.
 const skyDiscTriangles = (
-  body: SkyBody,
+  body: Pick<SkyBody, 'colour' | 'first' | 'shadow' | 'split'>,
   placement: SkyBodyPlacement,
   depth: number,
   emit: (view: Vector3, colour: readonly [number, number, number]) => void
@@ -559,46 +677,87 @@ export const planErisFrame = (
   const skyBodies = enclosed || sky === null ? [] : sky.bodies;
   const projectionScale = sky?.projectionScale ?? 0;
   const halfWidthDivisor = sky?.halfWidthDivisor ?? 0;
-  for (const body of skyBodies) {
-    const view = camera.viewSpace(
+  const skyView = (offset: Vector3): Vector3 =>
+    camera.viewSpace(
       toCameraSpace({
-        x: pose.position.x + body.offset.x,
-        y: pose.position.y + body.offset.y,
-        z: pose.position.z + body.offset.z
+        x: pose.position.x + offset.x,
+        y: pose.position.y + offset.y,
+        z: pose.position.z + offset.z
       })
     );
-    if (view.z <= 0) {
-      skyPlacements.push({ drawn: false, id: body.id, radius: 0, x: 0, y: 0 });
+  const skyEmit = (
+    vertex: Vector3,
+    colour: readonly [number, number, number]
+  ): void => {
+    skyValues.push(
+      vertex.x,
+      vertex.y,
+      vertex.z,
+      colour[0],
+      colour[1],
+      colour[2],
+      0
+    );
+  };
+  // `$04FBAE` skips a Body whose screen x does not fit a signed word less its top bit
+  // (`cmpi.w #$4000`), about the centre column 160.
+  const onScreen = (x: number): boolean => {
+    const column = SKY_CENTRE_COLUMN + x * projectionScale;
+    return column >= -0x40_00 && column < 0x40_00;
+  };
+  // `$045928`'s rows are `⌊√(r² − dy²) / 0.84375⌋` wide, so a disc under that many pixels
+  // across has no row at all.
+  const discDrawn = (placement: Omit<SkyBodyPlacement, 'drawn'>): boolean =>
+    placement.radius * projectionScale >= halfWidthDivisor &&
+    placement.y + placement.radius > 0;
+  for (const body of skyBodies) {
+    const view = skyView(body.offset);
+    const placement =
+      view.z > 0
+        ? {
+            id: body.id,
+            radius:
+              (body.kind === 'disc' ? body.size : (body.head?.size ?? 0)) /
+              (projectionScale * view.z),
+            x: view.x / view.z,
+            y: view.y / view.z
+          }
+        : { id: body.id, radius: 0, x: 0, y: 0 };
+    if (body.kind === 'comet') {
+      // Pass 2 lets the comet through with its centre behind the eye (`$05315A`), since its
+      // tail may still be in front, and draws the head disc only where the centre is not.
+      if (view.z > 0 && !onScreen(placement.x)) {
+        skyPlacements.push({ ...placement, drawn: false });
+        continue;
+      }
+      let drawn = skyCometTriangles(
+        body,
+        body.points.map(skyView),
+        1 / projectionScale,
+        skyAt,
+        skyEmit
+      );
+      if (view.z > 0 && body.head !== null && discDrawn(placement)) {
+        const { colour } = body.head;
+        skyDiscTriangles(
+          { colour, first: 'lit', shadow: colour, split: 1 },
+          { ...placement, drawn: true },
+          skyAt,
+          skyEmit
+        );
+        drawn = true;
+      }
+      skyPlacements.push({ ...placement, drawn });
       continue;
     }
-    const placement = {
-      id: body.id,
-      radius: body.size / (projectionScale * view.z),
-      x: view.x / view.z,
-      y: view.y / view.z
-    };
-    // `$04FBAE` skips a Body whose screen x does not fit a signed word less its top bit
-    // (`cmpi.w #$4000`), about the centre column 160. `$045928`'s rows are
-    // `⌊√(r² − dy²) / 0.84375⌋` wide, so a disc under that many pixels across has no row at all.
-    const column = SKY_CENTRE_COLUMN + placement.x * projectionScale;
-    const drawn =
-      column >= -0x40_00 &&
-      column < 0x40_00 &&
-      placement.radius * projectionScale >= halfWidthDivisor &&
-      placement.y + placement.radius > 0;
+    if (view.z <= 0) {
+      skyPlacements.push({ ...placement, drawn: false });
+      continue;
+    }
+    const drawn = onScreen(placement.x) && discDrawn(placement);
     skyPlacements.push({ ...placement, drawn });
     if (drawn) {
-      skyDiscTriangles(body, { ...placement, drawn }, skyAt, (vertex, colour) =>
-        skyValues.push(
-          vertex.x,
-          vertex.y,
-          vertex.z,
-          colour[0],
-          colour[1],
-          colour[2],
-          0
-        )
-      );
+      skyDiscTriangles(body, { ...placement, drawn }, skyAt, skyEmit);
     }
   }
 

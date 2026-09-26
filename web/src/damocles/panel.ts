@@ -1,5 +1,6 @@
 import type { Vector3 } from '../orientation/index.ts';
 import type { PanelViewModel } from '../shell/panel.ts';
+import { impactTime } from './comet.ts';
 import type { ErisPresentationDocument } from './documents.ts';
 import type { DamoclesSnapshot } from './session.ts';
 import type { ErisCell } from './world.ts';
@@ -96,12 +97,7 @@ export const impactClock = (
   elapsed: number,
   time: ErisPresentationDocument['time']
 ): string => {
-  // The epsilon is the one the Session uses on its own frame accumulator: elapsed is a sum of
-  // fixed steps, so an exact hour of them lands a hair under the hour.
-  const spent = Math.floor(
-    (elapsed * time.vblHertz) / time.impactVblsPerSecond + 1e-9
-  );
-  const remaining = Math.max(0, time.impactDeadlineSeconds - spent);
+  const remaining = -impactTime(elapsed, time).seconds;
   return [
     Math.floor(remaining / 3600),
     Math.floor(remaining / 60) % 60,
