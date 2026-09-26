@@ -6,6 +6,7 @@ import {
 } from '../catalogue/data.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import { SCRIPT_FOR_TRIGGER, TRIGGER_FOR_RESIDENT } from './scripts.ts';
+import type { ErisPlacement } from './world.ts';
 
 /// The raw-coordinate unit used by the Damocles surface grid.  A catalogue location is in
 /// grid units while an Object Residence is in the same world units the renderer and Pose use.
@@ -50,6 +51,70 @@ export interface ResidenceDeparture {
 /// nothing derives one for it.
 const placementClassOf = (instance: Instance): number =>
   instance.placementClass ?? 0;
+
+/// Whether a Residence may carry this placement class: one `placementZone` can write (0-8),
+/// or the class the Catalogue authored for it. Every authored class is itself 0-8, so a
+/// handling-nibble value of 9-15 is what this refuses.
+export const admissiblePlacementClass = (
+  placementClass: number,
+  instance: Instance | undefined
+): boolean =>
+  placementClass <= 8 || placementClass === (instance?.placementClass ?? 0);
+
+/// The low word of a raw coordinate: the position within its 65536-unit cell.
+const cellWord = (value: number): number => Math.floor(value) & 0xff_ff;
+
+/// One axis of the rectangle `$053AFC`-`$053B26` builds: each extent word times the scale,
+/// keeping the low word, plus the intra-cell origin, the pair swapped where the scale is
+/// negative.
+const zoneEdges = (
+  pair: readonly [number, number],
+  scale: number,
+  origin: number
+): readonly [number, number] => {
+  const [first, second] = pair.map(
+    value => (value * scale + cellWord(origin)) & 0xff_ff
+  ) as [number, number];
+  return scale < 0 ? [second, first] : [first, second];
+};
+
+/// Below, within or past one axis's edges, as two unsigned word comparisons.
+const zoneAcross = (
+  value: number,
+  [low, high]: readonly [number, number]
+): number => (value < low ? 0 : value <= high ? 1 : 2);
+
+/// `$059076`: the placement class a direct Drop or a leave writes (`$0546FC` copies `$7A39`).
+/// It is the 3x3 zone of the intra-cell position against the bound structure's extent
+/// rectangle: 0/1/2 across X plus 0/3/6 across Z. The rectangle is the Building detail's
+/// extent at the structure's X/Z scale about the instance's intra-cell origin. A cell with no
+/// structure binds structure 0, whose detail carries no extent, so it and a detail without
+/// one both give zone 0 (docs/research/damocles-placement-class.md).
+export const placementZone = (
+  position: Vector3,
+  structure: Pick<ErisPlacement, 'position' | 'selection'> | null
+): number => {
+  const selection = structure?.selection;
+  if (structure === null || selection === undefined) {
+    return 0;
+  }
+  const { extent } = selection;
+  if (extent === null) {
+    return 0;
+  }
+  const [scaleX, scaleZ] = selection.structure.scale;
+  return (
+    zoneAcross(
+      cellWord(position.x),
+      zoneEdges(extent.x, scaleX, structure.position.x)
+    ) +
+    3 *
+      zoneAcross(
+        cellWord(position.z),
+        zoneEdges(extent.z, scaleZ, structure.position.z)
+      )
+  );
+};
 
 const positionOf = (position: readonly [number, number, number]): Vector3 => ({
   x: position[0],

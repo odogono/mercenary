@@ -192,10 +192,22 @@ export interface RoadNetwork {
   /** The Structure Workspace group this network belongs to. */
   readonly structureGroup: number;
 }
+export interface DetailExtent {
+  readonly header: number;
+  readonly x: readonly [number, number];
+  readonly z: readonly [number, number];
+}
 export interface Model {
   readonly conditions: readonly string[];
   readonly detailSelection?: readonly DetailGroup[];
   readonly evidence: readonly Evidence[];
+  /**
+   * A Building detail's extent rectangle, the words its record carries below its entry that
+   * the cell bind scales by the instance, translates by its intra-cell origin and publishes
+   * as `[$7910]` (`$053A8C`-`$053B38`). Raw units, pairs in record order. Null where the
+   * record carries none, which the bind publishes as `$8000`; absent on other kinds.
+   */
+  readonly extent?: DetailExtent | null;
   readonly id: string;
   /**
    * The record's `$8001` orientation command: how the draw path turns every instance of
@@ -720,6 +732,21 @@ const signedWord = (value: unknown): number => {
   return Number.isSafeInteger(n) && n >= -0x80_00 && n <= 0x7f_ff
     ? n
     : fail('expected a signed word');
+};
+const signedWordPair = (value: unknown): readonly [number, number] => {
+  const [first, second, ...rest] = list(value).map(signedWord);
+  return first === undefined || second === undefined || rest.length > 0
+    ? fail('expected a word pair')
+    : [first, second];
+};
+/** A published extent's header is nonnegative: a negative word there is the record's terminator. */
+const detailExtent = (value: unknown): DetailExtent => {
+  const e = object(value);
+  return {
+    header: nonnegativeSignedWord(e['header']),
+    x: signedWordPair(e['x']),
+    z: signedWordPair(e['z'])
+  };
 };
 const evidenceList = (value: unknown): readonly Evidence[] =>
   list(value).map(item => {
@@ -1366,6 +1393,9 @@ const modelRecord = (item: unknown): Model => {
           })
         }),
     evidence: evidenceList(m['evidence']),
+    ...(m['extent'] === undefined
+      ? {}
+      : { extent: m['extent'] === null ? null : detailExtent(m['extent']) }),
     id: string(m['id']),
     kind: choice(m['kind'], ['object', 'structure', 'interior', 'ground']),
     linkedInstances: strings(m['linkedInstances']),

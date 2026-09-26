@@ -220,6 +220,17 @@
       }
     ],
     "evidence": [],
+    "extent": {
+      "header": 160,
+      "x": [
+        10,
+        420
+      ],
+      "z": [
+        0,
+        260
+      ]
+    },
     "id": "interior-0313da",
     "kind": "interior",
     "linkedInstances": [],

@@ -2,6 +2,7 @@ import {
   modelSummaryById,
   type BodySky,
   type Catalogue,
+  type DetailExtent,
   type DetailGroup,
   type FloorPalette,
   type IslandBoxKind,
@@ -104,6 +105,10 @@ export interface ErisPlacement {
     /// the Catalogue has not resolved both.
     readonly background?: SceneBackground;
     readonly detail: Mesh;
+    /// The Building detail's extent rectangle in raw units, or null where it carries none
+    /// (#356). A Floor keeps the instance's detail and scale, so this is the cell's rectangle
+    /// on every Floor, as the bind that publishes `[$7910]` runs for the cell alone.
+    readonly extent: DetailExtent | null;
     readonly groups: readonly DetailGroup[];
     readonly structure: StructureSelection;
   };
@@ -468,6 +473,7 @@ const placementSelection = (
         ...(background === undefined ? {} : { background }),
         detail: detail.variants.find(v => v.id === selection.detailVariant)!
           .mesh,
+        extent: detail.extent ?? null,
         groups: detail.detailSelection,
         structure: selection
       };

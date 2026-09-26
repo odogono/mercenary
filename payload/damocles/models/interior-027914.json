@@ -444,6 +444,17 @@
       }
     ],
     "evidence": [],
+    "extent": {
+      "header": 240,
+      "x": [
+        -320,
+        320
+      ],
+      "z": [
+        -320,
+        320
+      ]
+    },
     "id": "interior-027914",
     "kind": "interior",
     "linkedInstances": [],

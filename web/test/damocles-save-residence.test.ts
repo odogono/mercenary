@@ -250,7 +250,8 @@ describe('body-aware Save Snapshot admission', () => {
         residence: { ...surface(0), body: 'unknown' }
       },
       { instance: 'unknown', residence: surface() },
-      { instance: 'object-slot-92', residence: surface(7) }
+      // A Drop writes zones 0-8, so only a class past them contradicts the Catalogue.
+      { instance: 'object-slot-92', residence: surface(9) }
     ]) {
       const value = record();
       value.snapshot.residence.push(departure);
@@ -332,7 +333,7 @@ describe('body-aware Save Snapshot admission', () => {
     carry(value, ['object-slot-92']);
     value.snapshot.residence[0]!.residence = {
       kind: 'carried',
-      placementClass: 7
+      placementClass: 9
     };
     expect(() => decode(value)).toThrow(/class/);
     carry(value, [
@@ -368,7 +369,7 @@ describe('body-aware Save Snapshot admission', () => {
     ]);
     value.snapshot.pendingBriefcaseDrop = {
       head: 'object-slot-108',
-      residence: surface(7)
+      residence: surface(9)
     };
     expect(() => decode(value)).toThrow(/Catalogue/);
   });
