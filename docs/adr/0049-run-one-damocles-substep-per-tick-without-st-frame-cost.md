@@ -1,8 +1,8 @@
 # Run one Damocles substep per tick, without the ST's frame cost
 
-Proposed, 2026-09-25, for [#498](https://github.com/odogono/mercenary/issues/498). It awaits the
-maintainer's review. Until then the frame-cost difference below is a documented difference, not an
-approved one.
+Accepted, 2026-09-26, for [#498](https://github.com/odogono/mercenary/issues/498). Proposed
+2026-09-25. The frame-cost difference below is an approved, retained difference from the Working
+Authority.
 
 The ST's frame loop does not run its game rules once per VBL. Each rendered frame runs
 `clamp($51D22, 4, 8)` **substeps**, where `$51D22` is the VBLs the last frame took, and every
