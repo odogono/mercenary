@@ -160,7 +160,14 @@ idle pairs from `eris-spaceport-onfoot.sav` (`panel-readout-probe.py clock`):
 |  500 | `-8579` → `-8554` | 25 s | `02-22-59` → `02-22-33` |
 
 **Tick.** 500 VBLs / 25 displayed seconds = **20 VBLs per displayed second** at
-PAL 50 Hz (2.5 displayed seconds per host second while idle on foot). Packed
+PAL 50 Hz (2.5 displayed seconds per host second while idle on foot).
+
+**Correction (#551, 2026-09-27).** The tick above does not reproduce. The VBL handler at
+`$051E6E` subtracts `$7876` (32 on foot and on a Body) from `$787A` every VBL, and each time it
+passes zero adds one to `$793C` and reloads `$7878` (1 600). So the clock gains one second every
+**50 VBLs**, which is real time at 50 Hz, and γ seconds per 50 VBLs in space. An exact-VBL chain
+from the same memstate ticks at stops 24, 74, 124, 174 and 224. See
+[the panel aboard note](damocles-panel-aboard.md#the-impact-clock). Packed
 BCD and ASCII `HH-MM-SS` searches of the same dumps are empty; the digits are
 drawn, not stored as text.
 
