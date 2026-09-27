@@ -3,6 +3,7 @@ import { beforeAll, describe, expect, test } from 'bun:test';
 import type { Catalogue } from '../src/catalogue/data.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import { planErisFrame } from '../src/damocles/frame.ts';
+import { damoclesPanelViewModel } from '../src/damocles/panel.ts';
 import { catalogueResidence } from '../src/damocles/residence.ts';
 import {
   readDamoclesResume,
@@ -444,6 +445,26 @@ describe('aboard', () => {
       instance: LIMO,
       kind: 'aboard'
     });
+  });
+
+  test('the first panel lamp lights aboard below $28FA and is dark on foot', () => {
+    const session = beside(LIMO, [LIMO_KEY]);
+    const lamp = (snapshot = session.snapshot) =>
+      damoclesPanelViewModel(snapshot, content.doc).groundLamp;
+    // `eris-spaceport-onfoot`: `$7A8E` = 1, the lamp dark.
+    expect(lamp()).toBe(false);
+    session.board();
+    // `boarded-limo`: `$7A8E` = 0 and `$7AB6` = 63, the lamp lit.
+    expect(lamp()).toBe(true);
+    // `dion-north-airborne`: aboard at `$7AB6` = 70084, the lamp dark again.
+    const { pose } = session.snapshot;
+    const at = (y: number) =>
+      lamp({
+        ...session.snapshot,
+        pose: { ...pose, position: { ...pose.position, y } }
+      });
+    expect(at(0x28_fa - 1)).toBe(true);
+    expect(at(0x28_fa)).toBe(false);
   });
 });
 
