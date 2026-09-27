@@ -107,6 +107,9 @@ export const impactClock = (
     .join('-');
 };
 
+/// `$7AB6` below which `$0509F6` lights the first lamp aboard (docs/research/damocles-panel-lamps.md).
+const LOW_ALTITUDE_LAMP_UNITS = 0x28_fa;
+
 export const damoclesPanelViewModel = (
   snapshot: DamoclesSnapshot,
   doc: ErisPresentationDocument,
@@ -126,7 +129,11 @@ export const damoclesPanelViewModel = (
   compassDegrees: bearingDegrees(snapshot.pose.heading),
   damoclesDisplay: snapshot.displayCells,
   elevationDegrees: 0,
-  groundLamp: true,
+  // `$0509F6`: lit only aboard (`$7A8E` clear) with the eye below `$28FA`, so a craft on the
+  // ground lights it and the player on foot never does.
+  groundLamp:
+    snapshot.occupancy.kind === 'aboard' &&
+    snapshot.pose.position.y < LOW_ALTITUDE_LAMP_UNITS,
   inventory: snapshot.inventoryLabel,
   inventoryFill: snapshot.carried.length,
   locationAxes: cellReadoutAxes(snapshot.islandCell),

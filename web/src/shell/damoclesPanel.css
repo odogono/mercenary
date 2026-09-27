@@ -30,6 +30,7 @@ damocles-panel {
   --clock-ink: var(--st-black);
   --lamp-off: var(--st-4);
   --lamp-on: #aaccaa;
+  --ground-lamp-on: #aaccee;
   --temperature-fill: #ee0000;
   --power-fill: #0000ee;
   --capacity-fill: #0000ee;
@@ -462,6 +463,11 @@ damocles-panel .damocles-lamp::before {
 
 damocles-panel .damocles-lamp.on::before {
   background: var(--lamp-on);
+}
+
+/* `$0509F6` clears plane 3 of this lamp, leaving the inventory window's colour 2. */
+damocles-panel .damocles-lamp[data-lamp='groundLamp'].on::before {
+  background: var(--ground-lamp-on);
 }
 
 damocles-panel #damocles-clock {
