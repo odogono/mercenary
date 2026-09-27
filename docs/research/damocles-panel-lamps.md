@@ -12,8 +12,8 @@ The three lamps left of the impact clock are, left to right:
 | Lamp   | Routine               | Lit when                                             | Lit colour                                 |
 | ------ | --------------------- | ---------------------------------------------------- | ------------------------------------------ |
 | First  | `$0509F6`             | aboard (`$7A8E` = 0) **and** eye Y `$7AB6` < `$28FA` | colour 2, the inventory window's `#aaccee` |
-| Second | `$050A5A`             | not decoded                                          | not decoded                                |
-| Third  | `$05097C` / `$05099A` | the run toggle is on (`$7B3A` = 3)                   | colour 8, green                            |
+| Second | `$050A5C`             | the encounter gate `$070104` is non-zero (Tolosa)    | colour 9, red `#ee0000`                    |
+| Third  | `$05097C` / `$05099A` | the run toggle is on (`$7B3A` = 3)                   | colour 8, green `#aaccaa`                  |
 
 On foot the first lamp is never lit. Aboard a craft on the ground it always is.
 
@@ -52,5 +52,8 @@ Every other on-foot capture reads `$7A8E` = 1.
 
 ## Fog
 
-- The second lamp's routine at `$050A5A` is not decoded. The port keeps it unlit.
-- The exact colour-8 value is taken from the panel rendition, not from a palette capture.
+- The second lamp was decoded under #551, in [the panel aboard note](damocles-panel-aboard.md#the-second-lamp):
+  `$050A5A` is its cache word and the routine starts at `$050A5C`. The port has no Tolosa
+  encounter, so it keeps the lamp unlit.
+- The lit colours `#aaccee`, `#ee0000` and `#aaccaa` and the unlit `#444444` are read from Hatari
+  frames (#551), not from a palette capture.

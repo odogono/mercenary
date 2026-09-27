@@ -95,6 +95,8 @@ The **`--country uk` cold boot** is the same experiment from the other end: the 
 
 **The impact clock.** [The motion-and-time note](damocles-script-motion-time.md#time--comet-deadline--confirmed-panel-advances-ram-encoding-confirmed-208) records 20 VBL per displayed second at `$793C`, already stated "at PAL 50 Hz". Confirmed: 2.5 displayed seconds per real second while idle on foot.
 
+**Correction (#551, 2026-09-27).** The 20 is wrong. The VBL handler ticks `$793C` once every `$7878` / `$7876` = 1 600 / 32 = **50 VBLs**, so the clock keeps real time at 50 Hz on foot and on a Body. In space it runs γ times faster. Exact-VBL chains and the program's own VBL counter between captures agree; see [the panel aboard note](damocles-panel-aboard.md#the-impact-clock).
+
 **The limo-key response in seconds.** The recovered frame counts convert at 20.0 ms per frame:
 
 | Recovered duration | Frames | Seconds at 50 Hz |
