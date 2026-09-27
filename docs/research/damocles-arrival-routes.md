@@ -228,11 +228,14 @@ key 9 (`$7BAC = 12`) about **3,000,000** — the panel reads the latter as
 `- 299 792 224`, the speed of light in metres per second.
 
 **Boarding presets `$7BAC` to `$FF001000`** at `$054744`, and the collision
-response at `$059750` forces it to `$FFF0` every time a move is refused. A
-craft parked against something therefore looks inert: the throttle is being
-overwritten each frame, not ignored. Re-pressing the speed key each tick is what
-distinguishes "refused" from "unset", and it is how the craft gets off the
-ground.
+response at `$059750` forces its exponent to `$FFF0` every time a move is
+refused. A craft parked against something therefore looks inert, because its
+throttle is now close to zero. (Corrected 2026-09-27 by
+[the collision response note](damocles-collision-response.md): the throttle is
+written once per refusal, not overwritten each frame. The refusal also reverses
+the craft by one step, and a held key is one press.) A fresh speed-key press after
+each refusal is what distinguishes "refused" from "unset", and it is how the craft
+gets off the ground.
 
 ### Launch is gated on ground contact and on the craft's own parameters
 
