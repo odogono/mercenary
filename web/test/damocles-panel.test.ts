@@ -133,18 +133,18 @@ describe('the Damocles Panel Rendition on Damocles Session State', () => {
     }
   });
 
-  test('counts the impact clock down at two and a half seconds a Session second', async () => {
+  test('counts the impact clock down in real time, one second a Session second', async () => {
     const loaded = await content();
     const session = new DamoclesSession(loaded);
-    // 20 VBLs a displayed second at 50 Hz (#208): ten Session seconds spend twenty-five of the
+    // 50 VBLs a displayed second at 50 Hz (#551): ten Session seconds spend ten of the
     // deadline's own seconds, and standing still spends them just as walking does.
     session.advance(10);
     expect(damoclesPanelViewModel(session.snapshot, loaded.doc).clock).toBe(
-      '04-18-55'
+      '04-19-10'
     );
     session.advance(3590);
     expect(damoclesPanelViewModel(session.snapshot, loaded.doc).clock).toBe(
-      '01-49-20'
+      '03-19-20'
     );
   });
 
@@ -153,7 +153,7 @@ describe('the Damocles Panel Rendition on Damocles Session State', () => {
     const { time } = loaded.doc;
     const exhausted =
       (time.impactDeadlineSeconds * time.impactVblsPerSecond) / time.vblHertz;
-    expect(impactClock(exhausted - 1, time)).toBe('00-00-03');
+    expect(impactClock(exhausted - 1, time)).toBe('00-00-01');
     expect(impactClock(exhausted, time)).toBe('00-00-00');
     // A Session that models no impact has nothing to do when the deadline passes, so the
     // readout holds at nought and play goes on.

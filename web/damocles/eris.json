@@ -112,7 +112,7 @@
     "messageFrames": 200,
     "impactDeadlineSeconds": 15560,
     "impactDeadlineProvenance": "recovered",
-    "impactVblsPerSecond": 20,
+    "impactVblsPerSecond": 50,
     "impactProvenance": "recovered",
     "provenance": "recovered",
     "vblHertz": 50,

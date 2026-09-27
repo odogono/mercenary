@@ -24,7 +24,7 @@ Two older claims no longer stand:
 
 - **The impact clock does not run at 20 VBLs a displayed second** (#208). It runs at 50, so it keeps
   real time at PAL 50 Hz. The trace and the memstate pairs are below. `web/damocles/eris.json`
-  still publishes `impactVblsPerSecond: 20`, so the port's clock runs 2.5 times too fast.
+  published `impactVblsPerSecond: 20` until #556 set it to 50.
 - **The speed field's sign is not a direction of travel.** It is the sign of the speed float's
   mantissa. The launch writes a negative throttle (`$7BAC` = `$000EF000`), and the collision
   response negates the mantissa (`$059744`). That is why the panel reads `-` in space and after a
@@ -260,7 +260,7 @@ From the pinned first-world RAM (`b019301e…`):
   `**` past 99 and on Floor 10.
 - The second lamp is `$070104 ≠ 0`, lit `#ee0000`. The port has no Tolosa encounter, so it stays unlit until
   one exists.
-- `impactVblsPerSecond` should be 50, not 20. In space the clock advances γ = min(√(1 + v²/1024),
+- `impactVblsPerSecond` is 50, not 20 (set in #556). In space the clock advances γ = min(√(1 + v²/1024),
   `$7FFF`/32) times faster. `$7878` also depends on the time option (n = 6 is the only value seen).
 
 ## Fog

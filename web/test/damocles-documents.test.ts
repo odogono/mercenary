@@ -57,7 +57,7 @@ describe('the authored Eris presentation document', () => {
       impactDeadlineProvenance: 'recovered',
       impactDeadlineSeconds: 15_560,
       impactProvenance: 'recovered',
-      impactVblsPerSecond: 20,
+      impactVblsPerSecond: 50,
       messageFrames: 200,
       provenance: 'recovered',
       // One craft pass every four ticks aboard, derived from the traced frames (ADR 0051).
