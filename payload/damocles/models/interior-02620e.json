@@ -1,5 +1,9 @@
 {
   "model": {
+    "boxes": {
+      "supports": [],
+      "walls": []
+    },
     "evidence": [],
     "extent": null,
     "id": "interior-02620e",

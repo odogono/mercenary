@@ -1,5 +1,24 @@
 {
   "model": {
+    "boxes": {
+      "supports": [],
+      "walls": [
+        {
+          "x": [
+            -200,
+            200
+          ],
+          "y": [
+            0,
+            350
+          ],
+          "z": [
+            -200,
+            200
+          ]
+        }
+      ]
+    },
     "detailSelection": [
       {
         "boxes": [

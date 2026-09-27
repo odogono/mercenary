@@ -1795,6 +1795,32 @@ def decode_detail_selection(data: bytes, start: int, count: int) -> list:
     return groups
 
 
+def _detail_record_walk(data: bytes, start: int) -> tuple[list[list[int]], list[list[int]], int]:
+    """`$053AD8`-`$053B2A`: the seven-word and six-word groups below a Building detail's entry.
+
+    The walk reads backwards from the entry, so each group's words are listed in the order the
+    bind meets them, which is the order it writes them to `$CB88`. Returns both lists and the
+    cursor just below the six-word list's terminator.
+    """
+    word = lambda address: struct.unpack_from('>h', data, address)[0]
+    cursor = start
+    lists: list[list[list[int]]] = []
+    for group in (14, 12):
+        groups = []
+        for _ in range(4096):
+            if cursor < 2:
+                raise ValueError('detail extent terminator missing')
+            if word(cursor - 2) < 0:
+                break
+            groups.append([word(cursor - 2 * (index + 1)) for index in range(group // 2)])
+            cursor -= group
+        else:
+            raise ValueError('detail extent terminator missing')
+        lists.append(groups)
+        cursor -= 2
+    return lists[0], lists[1], cursor
+
+
 def decode_detail_extent(data: bytes, start: int) -> dict | None:
     """The extent rectangle a Building detail record carries below its entry (#356).
 
@@ -1808,21 +1834,29 @@ def decode_detail_extent(data: bytes, start: int) -> dict | None:
     1) and Z by `$539D2`, and translates X/Z by the instance's intra-cell origin.
     """
     word = lambda address: struct.unpack_from('>h', data, address)[0]
-    cursor = start
-    for group in (14, 12):
-        for _ in range(4096):
-            if cursor < 2:
-                raise ValueError('detail extent terminator missing')
-            if word(cursor - 2) < 0:
-                break
-            cursor -= group
-        else:
-            raise ValueError('detail extent terminator missing')
-        cursor -= 2
+    _, _, cursor = _detail_record_walk(data, start)
     if word(cursor - 2) < 0:
         return None
     header, x_first, x_second, z_first, z_second = (word(cursor - 2 * (index + 1)) for index in range(5))
     return {'header': header, 'x': [x_first, x_second], 'z': [z_first, z_second]}
+
+
+def decode_detail_boxes(data: bytes, start: int) -> dict:
+    """The two box lists the same walk copies to `$CB88` (#550, #556).
+
+    `$053AF0` writes each group as Y pair, X pair, Z pair, and a seven-word group then
+    copies its last word, the tag. `supports` are the seven-word groups: the refusal test
+    `$0590AE` and the support search `$0583EA` both read them. `walls` are the six-word
+    groups, which only `$0590AE` reads. Raw units, pairs in the order the walk meets them:
+    the bind multiplies Y by `$539D0` (1), X and Z by the structure's scale, adds the
+    intra-cell origin to X and Z, and swaps a pair whose scale is negative.
+    """
+    supports, walls, _ = _detail_record_walk(data, start)
+    box = lambda words: {'y': words[0:2], 'x': words[2:4], 'z': words[4:6]}
+    return {
+        'supports': [{**box(words), 'tag': words[6] & 0xFFFF} for words in supports],
+        'walls': [box(words) for words in walls],
+    }
 
 
 def selection_note(model: dict) -> str:
@@ -4400,6 +4434,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                 # decodes every slot, and the port's payload test holds it to that.
                 try:
                     model['extent'] = decode_detail_extent(data, address)
+                    model['boxes'] = decode_detail_boxes(data, address)
                 except (ValueError, struct.error):
                     pass
             try:
