@@ -2,6 +2,7 @@ import {
   modelSummaryById,
   type BodySky,
   type Catalogue,
+  type DetailBoxes,
   type DetailExtent,
   type DetailGroup,
   type FloorPalette,
@@ -84,6 +85,9 @@ export interface Pose {
   /// the validation views of #394 are what tilt it.
   readonly pitch: number;
   readonly position: Vector3;
+  /// Radians the view is banked about the direction of travel, positive banking right. Only a
+  /// flying craft's roll word `$7ABE` sets it (#556); absent or nought otherwise.
+  readonly roll?: number;
 }
 
 export interface ErisPlacement {
@@ -104,6 +108,9 @@ export interface ErisPlacement {
     /// `day` is the pair through the palette's day half, where that differs (#497). Absent where
     /// the Catalogue has not resolved both.
     readonly background?: SceneBackground;
+    /// The Building detail's support and wall boxes, unbound (#556): the craft Mover binds
+    /// them at the structure's scale about its intra-cell origin, as `$053AF0` does.
+    readonly boxes: DetailBoxes;
     readonly detail: Mesh;
     /// The Building detail's extent rectangle in raw units, or null where it carries none
     /// (#356). A Floor keeps the instance's detail and scale, so this is the cell's rectangle
@@ -471,6 +478,7 @@ const placementSelection = (
     ? undefined
     : {
         ...(background === undefined ? {} : { background }),
+        boxes: detail.boxes ?? { supports: [], walls: [] },
         detail: detail.variants.find(v => v.id === selection.detailVariant)!
           .mesh,
         extent: detail.extent ?? null,

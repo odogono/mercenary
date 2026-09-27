@@ -23,9 +23,7 @@ export type DamoclesCue = Extract<
 
 /// The rest of the driver, which no session asks for yet; the sound board plays them.
 export type DamoclesProgramme =
-  | 'blast'
   | 'blown-up'
-  | 'bump'
   | 'channel-c-off'
   | 'descent-end'
   | 'descent-start'
@@ -35,7 +33,6 @@ export type DamoclesProgramme =
   | 'restore'
   | 'shot'
   | 'spell'
-  | 'splash'
   | 'transporter'
   | 'zap';
 
@@ -448,6 +445,7 @@ export class DamoclesPsgDriver {
     switch (request) {
       case 'drop':
       case 'take':
+      case 'throttle':
         // `$054848`, after the session's `$7A0C` guard: arm `$04C556`, then cut channel C at
         // once, unless the engine is sounding (`$7C0C`) or the music plays (`$033F68`).
         this.channelB = { entry: 'effect', kind: 'armed' };

@@ -426,14 +426,42 @@ describe("AUTHOR'S CHAIR in Authors House", () => {
   });
 });
 
+/// One craft pass: `ticksPerPass` VBLs of session time.
+const passes = (
+  session: DamoclesSession,
+  count: number,
+  intent: { readonly pitch?: number; readonly turn?: number } = {}
+): void => {
+  session.intent = { ...session.intent, pitch: 0, turn: 0, ...intent };
+  for (let pass = 0; pass < count; pass += 1) {
+    session.advance(content.doc.time.ticksPerPass / content.doc.time.vblHertz);
+  }
+};
+const cues = (session: DamoclesSession): string[] =>
+  session
+    .drainEffects()
+    .flatMap(effect => (effect.type === 'sound-request' ? [effect.cue] : []));
+
 describe('aboard', () => {
-  test('no Mover runs, and Take, Drop, the Body switch and goto do nothing', () => {
+  test('the craft Mover runs instead of the walk, and Take, Drop, the Body switch and goto do nothing', () => {
     const session = beside(LIMO, [LIMO_KEY]);
     session.board();
-    const pose = session.snapshot.pose;
+    const seated = session.snapshot.pose;
+    // With the throttle at the stop preset's zero, walking moves nothing. The stick turns the
+    // limo 6 yaw units a pass, a pass every four ticks: 12 passes in a second. The ground pass
+    // levels the pitch to `$1FF`, a unit above the view's `$200`.
     session.intent = { ...session.intent, turn: 1, walk: 1 };
     session.advance(1);
-    expect(session.snapshot.pose).toEqual(pose);
+    const pose = session.snapshot.pose;
+    expect(pose.position).toEqual({
+      x: Math.round(seated.position.x),
+      y: Math.round(seated.position.y),
+      z: Math.round(seated.position.z)
+    });
+    const turn = ((pose.heading - seated.heading) / (2 * Math.PI)) * 1024;
+    expect(((Math.round(turn) % 1024) + 1024) % 1024).toBe(12 * 6);
+    expect(pose.pitch).toBeCloseTo((2 * Math.PI) / 1024, 12);
+    session.intent = { ...session.intent, turn: 0, walk: 0 };
 
     expect(session.take()).toEqual({ kind: 'refused' });
     expect(session.drop()).toEqual({ kind: 'refused' });
@@ -445,6 +473,91 @@ describe('aboard', () => {
       instance: LIMO,
       kind: 'aboard'
     });
+  });
+
+  test('drives the limo on the throttle keys, and a Building detail box bounces it back once', () => {
+    const session = beside(LIMO, [LIMO_KEY]);
+    session.board();
+    const start = session.snapshot.pose.position;
+    // Key 4 is scancode `$05`: forward at exponent 7, one key effect.
+    session.throttleKey(0x05);
+    session.throttleKey(0x05);
+    expect(cues(session)).toEqual(['throttle']);
+    passes(session, 20);
+    // On the ground the limo settles at 33.6 a pass, which the speed field prints as 012.
+    expect(
+      damoclesPanelViewModel(session.snapshot, content.doc).speedLabel
+    ).toBe('+ 000 000 012');
+    expect(session.snapshot.craft?.panelSpeed).toBe(34);
+    const moved = session.snapshot.pose.position;
+    expect(Math.hypot(moved.x - start.x, moved.z - start.z)).toBeGreaterThan(
+      500
+    );
+    // Driven on, it meets the spaceport's first support box, bumps once and glides back with
+    // the throttle's exponent at `$FFF0` and the mantissa flipped.
+    passes(session, 120);
+    expect(cues(session)).toEqual(['bump']);
+    expect(session.snapshot.craft?.throttle).toBe(0xff_f0_f0_00);
+    expect(
+      damoclesPanelViewModel(session.snapshot, content.doc).speedLabel
+    ).toBe('- 000 000 000');
+    // Leaving drops it where it stopped, facing as it was driven.
+    const at = session.snapshot.pose;
+    expect(session.leave()).toEqual({ kind: 'left' });
+    expect(
+      session.snapshot.residence.find(item => item.instance === LIMO)?.residence
+    ).toMatchObject({
+      kind: 'surface',
+      position: { x: at.position.x, y: at.position.y - eye, z: at.position.z }
+    });
+    expect(
+      damoclesPanelViewModel(session.snapshot, content.doc).speedLabel
+    ).toBe('+ 000 000 000');
+  });
+
+  test('flies EAGLE NINE S E off the ground, refuses to leave in the air, and lands it', () => {
+    const EAGLE = 'object-slot-3';
+    const session = beside(EAGLE, [pairedKey(EAGLE)]);
+    expect(session.board()).toEqual({ kind: 'boarded' });
+    session.throttleKey(0x05);
+    passes(session, 30);
+    // Taxiing at key 4: 50 a pass, in contact, the nose held level at `$1FF`.
+    expect(session.snapshot.craft?.panelSpeed).toBe(50);
+    expect(session.snapshot.pose.position.y).toBe(63);
+    // The stick's down bit lifts the nose 8 a pass; at 32 or more it survives contact.
+    passes(session, 20, { pitch: 1 });
+    expect(session.snapshot.pose.position.y).toBeGreaterThan(1000);
+    expect(
+      damoclesPanelViewModel(session.snapshot, content.doc).altitude
+    ).not.toBe('000000');
+    expect(session.leave()).toEqual({ kind: 'refused' });
+    // Nose down to `$22F` and hold: a soft touchdown, level and in contact.
+    passes(session, 26, { pitch: -1 });
+    passes(session, 80);
+    expect(session.snapshot.pose.position.y).toBe(63);
+    expect(session.snapshot.occupancy).toEqual({
+      instance: EAGLE,
+      kind: 'aboard'
+    });
+    expect(cues(session)).toEqual(['throttle']);
+    expect(session.leave()).toEqual({ kind: 'left' });
+  });
+
+  test('a dive past 45° is a hard landing that puts the player on foot', () => {
+    const EAGLE = 'object-slot-3';
+    const session = beside(EAGLE, [pairedKey(EAGLE)]);
+    session.board();
+    session.throttleKey(0x05);
+    passes(session, 30);
+    passes(session, 20, { pitch: 1 });
+    passes(session, 40);
+    // `$0582E8`: a pitch at or past `$280` below 64 goes to the landing handler, which stops
+    // the craft and, on land, runs the leave path under the noise `$04C5A8`.
+    passes(session, 40, { pitch: -1 });
+    passes(session, 60);
+    expect(session.snapshot.occupancy).toEqual({ kind: 'onFoot' });
+    expect(cues(session)).toEqual(['throttle', 'blast']);
+    expect(session.snapshot.pose.position.y).toBe(63);
   });
 
   test('the first panel lamp lights aboard below $28FA and is dark on foot', () => {

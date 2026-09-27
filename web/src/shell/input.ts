@@ -29,6 +29,9 @@ export interface ControlProfileActions {
   readonly shutThrottle: () => void;
   readonly skipMessage: () => void;
   readonly throttleNotchValue: (notch: number) => void;
+  /// A reverse gear aboard: the ST's `F1`–`F10`, which Damocles's throttle table reads as the
+  /// digits' notches in reverse (#556). A Title with no reverse gear leaves it out.
+  readonly throttleReverseNotch?: (notch: number) => void;
   readonly throttleStep: (delta: number) => void;
 }
 
@@ -95,6 +98,12 @@ const axis = (
   negative: string
 ): number => (held.has(positive) ? 1 : 0) - (held.has(negative) ? 1 : 0);
 
+/// `F1`–`F10` as the notch each reverses.
+const reverseNotch = (code: string): number | undefined => {
+  const match = /^F([1-9]|10)$/.exec(code);
+  return match === null ? undefined : Number(match[1]);
+};
+
 const throttleNotch = (code: string): number | undefined => {
   if (code === 'Digit0') {
     return 10;
@@ -157,6 +166,11 @@ export class BrowserControlProfile {
       const notch = throttleNotch(key.code);
       if (notch !== undefined) {
         this.actions.throttleNotchValue(notch);
+        return true;
+      }
+      const reverse = reverseNotch(key.code);
+      if (reverse !== undefined && this.actions.throttleReverseNotch) {
+        this.actions.throttleReverseNotch(reverse);
         return true;
       }
       if (key.code === 'Minus' || key.code === 'Equal') {

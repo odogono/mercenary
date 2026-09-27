@@ -313,10 +313,16 @@ try {
     },
     // Targ's single lift key. A Damocles Lift is ridden by the Floor keys, through `liftKey`.
     rideLift: () => undefined,
-    shutThrottle: () => undefined,
+    // The throttle keys as the ST scancodes the table at `$0557D6` is indexed by: `1`–`9`
+    // are `$02`–`$0A`, `0` is `$0B`, `F1`–`F10` are `$3B`–`$44` and Space is `$39` (#556).
+    shutThrottle: () => commitAction(() => session.throttleKey(0x39)),
     skipMessage: () => undefined,
-    throttleNotchValue: () => undefined,
-    throttleStep: () => undefined
+    throttleNotchValue: notch =>
+      commitAction(() => session.throttleKey(notch === 10 ? 0x0b : notch + 1)),
+    throttleReverseNotch: notch =>
+      commitAction(() => session.throttleKey(0x3a + notch)),
+    throttleStep: delta =>
+      commitAction(() => session.throttleScale(delta > 0 ? 1 : -1))
   });
   const clock = new FixedStepClock();
   const release = (): void => {
@@ -866,6 +872,9 @@ try {
     root['y'] = String(snapshot.pose.position.y);
     root['z'] = String(snapshot.pose.position.z);
     root['heading'] = String(snapshot.pose.heading);
+    // The view's pitch and bank, which the craft Mover moves aboard (#556).
+    root['pitch'] = String(snapshot.pose.pitch);
+    root['roll'] = String(snapshot.pose.roll ?? 0);
     root['attachmentOpenUnits'] = String(
       snapshot.structure?.attachments[0]?.openUnits ?? 0
     );
