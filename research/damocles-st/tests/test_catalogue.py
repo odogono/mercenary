@@ -1129,6 +1129,58 @@ class DetailExtentTests(unittest.TestCase):
                              [extent['header'], *x, *z])
         self.assertGreaterEqual(len(states), 6)
 
+    def test_the_walk_publishes_both_box_lists_in_bind_order(self):
+        from damocleslab.catalogue import decode_detail_boxes
+
+        below = [600, -400, 800, 400, 850, -32768,
+                 16, 15, 14, 13, 12, 11, -32768,
+                 -32768, 27, 26, 25, 24, 23, 22, 7, 6, 5, 4, 3, 2, 1]
+        data = struct.pack(f'>{len(below)}h', *below)
+        self.assertEqual(decode_detail_boxes(data, len(data)), {
+            'supports': [
+                {'y': [1, 2], 'x': [3, 4], 'z': [5, 6], 'tag': 7},
+                {'y': [22, 23], 'x': [24, 25], 'z': [26, 27], 'tag': 0x8000},
+            ],
+            'walls': [{'y': [11, 12], 'x': [13, 14], 'z': [15, 16]}],
+        })
+
+    def test_every_capture_reproduces_its_live_box_lists(self):
+        """The decode of the live $53A85 slot, bound as $053AF0 binds it, is the $CB88 lists."""
+        from damocleslab.catalogue import decode_detail_boxes, hatari_memstate_ram
+
+        root = Path(__file__).resolve().parents[1]
+        pinned = root / 'work' / 'observe-first-world-20260818T101013Z-c5a32b7d' / 'observed.ram'
+        if not pinned.exists():
+            self.skipTest('pinned first-world RAM is not present')
+        states = [pinned.read_bytes()] + [
+            hatari_memstate_ram(path.read_bytes()) for path in sorted((root / 'snapshots').glob('*.sav'))
+        ]
+        word = lambda data, address: struct.unpack_from('>H', data, address)[0]
+        signed = lambda data, address: struct.unpack_from('>h', data, address)[0]
+        boxes_seen = 0
+        for ram in states:
+            slot = word(ram, 0x53A84)
+            boxes = decode_detail_boxes(ram, 0x26000 + struct.unpack_from('>I', ram, 0x26000 + slot * 4)[0])
+            scale_x, _, scale_z = (signed(ram, 0x539CE + 2 * axis) for axis in range(3))
+            origin_x, origin_z = word(ram, 0x7AF2), word(ram, 0x7AF4)
+
+            def bound(box):
+                x = [(v * scale_x + origin_x) & 0xFFFF for v in box['x']][::-1 if scale_x < 0 else 1]
+                z = [(v * scale_z + origin_z) & 0xFFFF for v in box['z']][::-1 if scale_z < 0 else 1]
+                return [v & 0xFFFF for v in box['y']] + x + z
+
+            expected = [w for box in boxes['supports'] for w in bound(box) + [box['tag']]] + [None]
+            expected += [w for box in boxes['walls'] for w in bound(box)] + [None]
+            live = [word(ram, 0xCB88 + 2 * index) for index in range(len(expected))]
+            for index, value in enumerate(expected):
+                if value is None:
+                    self.assertTrue(live[index] & 0x8000, 'a list ends in a negative word')
+                else:
+                    self.assertEqual(live[index], value)
+            boxes_seen += len(boxes['supports']) + len(boxes['walls'])
+        self.assertGreaterEqual(len(states), 6)
+        self.assertGreater(boxes_seen, 0)
+
 
 class AttachmentKeyTests(unittest.TestCase):
     def test_the_cell_entry_byte_installs_the_key_base(self):

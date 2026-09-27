@@ -1,5 +1,24 @@
 {
   "model": {
+    "boxes": {
+      "supports": [],
+      "walls": [
+        {
+          "x": [
+            20,
+            60
+          ],
+          "y": [
+            0,
+            1550
+          ],
+          "z": [
+            20,
+            60
+          ]
+        }
+      ]
+    },
     "conditions": [
       "articulation angle ($7888)",
       "structure scale ($539CE/$539D2)"

@@ -1842,3 +1842,26 @@ it('separates two cells with the same label by their island record', async () =>
   expect(stateOffice.location!.coordinateSystem).toBe('Body Coordinates');
   expect(stateOffice.location!.position.map(Math.floor)).toEqual([73, 0, 136]);
 });
+
+it('publishes each Building detail its support and wall boxes (#556)', async () => {
+  const data = await loadCatalogue();
+  const details = data.models.filter(model => model.kind === 'interior');
+  expect(details.every(model => model.boxes !== undefined)).toBe(true);
+  // The census of docs/research/damocles-collision-response.md: 61 details, 36 + 230 boxes.
+  expect(details.length).toBe(61);
+  expect(
+    details.reduce((sum, model) => sum + model.boxes!.supports.length, 0)
+  ).toBe(36);
+  expect(
+    details.reduce((sum, model) => sum + model.boxes!.walls.length, 0)
+  ).toBe(230);
+  // Capital Spaceport's, which the note gives bound at scale 2, 1, 2 about 31958, 34328.
+  const spaceport = details.find(model => model.id === 'interior-0303d6')!;
+  expect(spaceport.boxes).toEqual({
+    supports: [
+      { tag: 0x80_00, x: [400, 800], y: [0, 300], z: [-400, 400] },
+      { tag: 0x80_00, x: [400, 600], y: [0, 850], z: [400, 600] }
+    ],
+    walls: [{ x: [-375, 625], y: [600, 850], z: [375, 625] }]
+  });
+});

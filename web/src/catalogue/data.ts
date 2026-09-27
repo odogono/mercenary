@@ -197,7 +197,26 @@ export interface DetailExtent {
   readonly x: readonly [number, number];
   readonly z: readonly [number, number];
 }
+/** One box of a Building detail's lists, raw words, pairs in the order the bind meets them. */
+export interface DetailBox {
+  readonly x: readonly [number, number];
+  readonly y: readonly [number, number];
+  readonly z: readonly [number, number];
+}
+/**
+ * The two box lists the cell bind `$053AF0` copies to `$CB88` (#550, #556). `supports` are the
+ * seven-word groups, which the refusal test `$0590AE` and the support search `$0583EA` both
+ * read, with the tag word the search stores as the support level. `walls` are the six-word
+ * groups, which only the refusal test reads. The bind multiplies X and Z by the structure's
+ * scale, adds the intra-cell origin and swaps a pair under a negative scale; Y is taken as is.
+ */
+export interface DetailBoxes {
+  readonly supports: readonly (DetailBox & { readonly tag: number })[];
+  readonly walls: readonly DetailBox[];
+}
 export interface Model {
+  /** A Building detail's box lists; absent on other kinds. */
+  readonly boxes?: DetailBoxes;
   readonly conditions: readonly string[];
   readonly detailSelection?: readonly DetailGroup[];
   readonly evidence: readonly Evidence[];
@@ -840,6 +859,24 @@ const detailExtent = (value: unknown): DetailExtent => {
     z: signedWordPair(e['z'])
   };
 };
+const detailBox = (value: unknown, keys: readonly string[]): DetailBox => {
+  const b = fields(value, keys);
+  return {
+    x: signedWordPair(b['x']),
+    y: signedWordPair(b['y']),
+    z: signedWordPair(b['z'])
+  };
+};
+const detailBoxes = (value: unknown): DetailBoxes => {
+  const b = fields(value, ['supports', 'walls']);
+  return {
+    supports: list(b['supports']).map(item => ({
+      ...detailBox(item, ['tag', 'x', 'y', 'z']),
+      tag: integer(object(item)['tag'])
+    })),
+    walls: list(b['walls']).map(item => detailBox(item, ['x', 'y', 'z']))
+  };
+};
 const evidenceList = (value: unknown): readonly Evidence[] =>
   list(value).map(item => {
     const entry = object(item);
@@ -1468,6 +1505,7 @@ const modelRecord = (item: unknown): Model => {
     fail('unresolved model needs an explanation');
   }
   return {
+    ...(m['boxes'] === undefined ? {} : { boxes: detailBoxes(m['boxes']) }),
     conditions: m['conditions'] === undefined ? [] : strings(m['conditions']),
     ...(m['sceneColours'] === undefined
       ? {}
