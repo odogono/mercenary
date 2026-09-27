@@ -88,9 +88,9 @@ export const bodyCoordinateReadout = (position: Vector3): string => {
 
 /// The impact clock, as `HH-MM-SS` counting down toward the comet's arrival (#368).
 ///
-/// `$793C` holds minus the remaining seconds and counts up toward zero at 20 VBLs a displayed
-/// second (#208), so a Session second is `vblHertz / impactVblsPerSecond` displayed seconds:
-/// two and a half of them at PAL 50 Hz. A Session that models no impact still has to answer
+/// `$793C` holds minus the remaining seconds and counts up toward zero at 50 VBLs a displayed
+/// second (#551, correcting #208's 20), so a Session second is `vblHertz / impactVblsPerSecond`
+/// displayed seconds: exactly one at PAL 50 Hz, on foot and aboard on a Body. A Session that models no impact still has to answer
 /// for the moment the deadline runs out, and what it answers is `00-00-00`: the clock stops
 /// there and play goes on, because there is no impact here to arrive.
 export const impactClock = (

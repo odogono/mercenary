@@ -662,7 +662,7 @@ describe('the comet in a Session', () => {
       system.comet,
       impactTime(session.snapshot.elapsed, content.doc.time)
     )!;
-    session.advance(20);
+    session.advance(50);
     const to = cometCentre(
       system.comet,
       impactTime(session.snapshot.elapsed, content.doc.time)

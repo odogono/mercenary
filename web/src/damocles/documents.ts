@@ -108,7 +108,7 @@ export interface ErisPresentationDocument {
     /// installs at `$793C` before play begins, recovered as `-15560` (#368).
     readonly impactDeadlineSeconds: number;
     readonly impactProvenance: Provenance;
-    /// VBLs the impact clock spends on one displayed second, recovered as 20 (#208).
+    /// VBLs the impact clock spends on one displayed second, recovered as 50 (#551; #208 read 20).
     readonly impactVblsPerSecond: number;
     readonly messageFrames: number;
     readonly provenance: 'recovered';
@@ -521,7 +521,7 @@ export const readErisPresentation = (
       ),
       impactVblsPerSecond: literal(
         time['impactVblsPerSecond'],
-        20,
+        50,
         'time.impactVblsPerSecond'
       ),
       messageFrames: literal(time['messageFrames'], 200, 'time.messageFrames'),

@@ -17,7 +17,7 @@ export interface ImpactTime {
   readonly seconds: number;
 }
 
-/// `$793C` counts up one second every twenty VBLs (#208), from minus the deadline. The epsilon
+/// `$793C` counts up one second every fifty VBLs (#551), from minus the deadline. The epsilon
 /// is the one the Session uses on its own frame accumulator: elapsed is a sum of fixed steps, so
 /// an exact hour of them lands a hair under the hour.
 export const impactTime = (

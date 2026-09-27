@@ -391,7 +391,7 @@ The navigation window beside the Navigation Readout, naming the player's Island-
 _Avoid_: Grid reference, city coordinates, location coordinates, tile readout, Body Coordinate
 
 **Impact Clock**:
-The Damocles Panel Rendition's `HH-MM-SS` window counting what is left before the comet arrives, kept as minus the remaining seconds and spending one of them every twenty VBLs, so a real second costs two and a half of its own. A fresh game is given `04-19-20` of it on the title screen, and the original's scripted arrival has spent an hour and a half of that before the player first stands on Eris. It is Damocles's alone: the Targ rendition's clock is the Targ Orrery's local time, which is not a deadline and does not run out.
+The Damocles Panel Rendition's `HH-MM-SS` window counting what is left before the comet arrives, kept as minus the remaining seconds and spending one of them every fifty VBLs, so at PAL 50 Hz it keeps real time on foot and aboard on a Body. A fresh game is given `04-19-20` of it on the title screen, and the original's scripted arrival has spent an hour and a half of that before the player first stands on Eris. It is Damocles's alone: the Targ rendition's clock is the Targ Orrery's local time, which is not a deadline and does not run out.
 _Avoid_: Countdown, comet timer, deadline clock, session clock
 
 **System Menu**:
