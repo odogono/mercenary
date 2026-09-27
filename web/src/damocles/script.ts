@@ -66,8 +66,19 @@ export type Effect =
       /// `door-start` and `door-stop` are the second sound vector's door tone and noise burst
       /// (`$04C37A`, `$04C2B8`), asked for as any door starts and stops moving. `thud` is the
       /// first vector's noise `$04C630`, asked for as an on-foot step is first refused at a
-      /// region edge.
-      readonly cue: 'door-start' | 'door-stop' | 'drop' | 'take' | 'thud';
+      /// region edge. Aboard (#556), `bump` is `$04C470` on a refused move, `blast` (`$04C5A8`)
+      /// and `splash` (`$04C016`) a hard landing on land and at sea, and `throttle` the key
+      /// effect `$054848` a throttle key asks for, as a take or a drop does.
+      readonly cue:
+        | 'blast'
+        | 'bump'
+        | 'door-start'
+        | 'door-stop'
+        | 'drop'
+        | 'splash'
+        | 'take'
+        | 'throttle'
+        | 'thud';
       readonly type: 'sound-request';
     }
   | {

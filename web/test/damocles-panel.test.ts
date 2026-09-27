@@ -2,10 +2,12 @@ import { describe, expect, test } from 'bun:test';
 
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import {
+  altitudeWindow,
   bodyCoordinateReadout,
   cellReadout,
   damoclesPanelViewModel,
-  impactClock
+  impactClock,
+  speedField
 } from '../src/damocles/panel.ts';
 import { DamoclesSession } from '../src/damocles/session.ts';
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
@@ -209,5 +211,27 @@ describe('the Damocles Panel Rendition on Damocles Session State', () => {
       { negative: false, text: '07' },
       { negative: false, text: '08' }
     ]);
+  });
+});
+
+describe('the panel aboard (#551, #556)', () => {
+  test('prints the speed field from `$4DFEC` as 4.28 digits, signed by the speed float', () => {
+    // The traced readings of docs/research/damocles-panel-aboard.md.
+    expect(speedField(34, 0x00_05_10_ce)).toBe('+ 000 000 012');
+    expect(speedField(555, 0x00_09_11_56)).toBe('+ 000 000 206');
+    expect(speedField(107, 0x00_06_1a_c2)).toBe('+ 000 000 039');
+    expect(speedField(6396, 0x00_0c_18_fc)).toBe('+ 000 002 382');
+    // After a refused move the speed's mantissa is negative and its magnitude near nought.
+    expect(speedField(0, 0xff_ee_ef_30)).toBe('- 000 000 000');
+  });
+
+  test('prints eye Y ÷ 2²⁰ in the altitude window, starred past 99 and on Floor 10', () => {
+    expect(altitudeWindow(63, 0)).toBe('000000');
+    expect(altitudeWindow(0x2_bf, 0)).toBe('000006');
+    expect(altitudeWindow(70_084, 0)).toBe('000668');
+    expect(altitudeWindow(3_043_327, 0)).toBe('029023');
+    expect(altitudeWindow(29_031_839, 0)).toBe('276869');
+    expect(altitudeWindow(105_000_000, 0)).toBe('******');
+    expect(altitudeWindow(3233, 10)).toBe('******');
   });
 });

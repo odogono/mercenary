@@ -9,6 +9,22 @@ import { IDLE, MAXIMUM_STEP, type Intent } from '../gameCore/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import type { TitleSession } from '../shell/title.ts';
 import {
+  NO_BOXES,
+  STICK_DOWN,
+  STICK_LEFT,
+  STICK_RIGHT,
+  STICK_UP,
+  bindBoxes,
+  craftFrame,
+  craftProgram,
+  throttleDown,
+  throttleForEntry,
+  throttleUp,
+  type BoundBoxes,
+  type CraftProgram,
+  type CraftState
+} from './craft.ts';
+import {
   displayCells,
   type DamoclesDisplay,
   type DamoclesMessageId,
@@ -94,8 +110,8 @@ import {
 
 /// What the Damocles Gameplay Session can say about itself in this slice.
 ///
-/// The player is on foot on one admitted Body, or aboard one resident object there that does not
-/// move (#407). Object Residence, the head-significant Carried Stack, live inventory capacity,
+/// The player is on foot on one admitted Body, or aboard one resident object there, which the
+/// craft Mover drives and flies on the Body's surface (#556, ADR 0051). Object Residence, the head-significant Carried Stack, live inventory capacity,
 /// Occupancy and the bounded Damocles Script are session-owned state; the renderer receives only
 /// their immutable projection.
 export interface DamoclesSnapshot {
@@ -108,6 +124,9 @@ export interface DamoclesSnapshot {
   readonly capacity: number;
   readonly carried: readonly string[];
   readonly cell: ErisCell;
+  /// The craft words aboard, or null on foot (ADR 0051). `held` names a gate the port has no
+  /// rule for: the craft stops there rather than run an invented one.
+  readonly craft: DamoclesCraftSnapshot | null;
   /// The terminator's answer for the Pose (`$050562`): the sky takes the Body's day word and
   /// every `$80xx` colour the scene palette's day half (#494, #497).
   readonly daylight: boolean;
@@ -143,6 +162,19 @@ export interface DamoclesSnapshot {
 }
 
 export type { Residence, ResidenceDeparture } from './residence.ts';
+
+/// What the panel and the console read of the craft aboard.
+export interface DamoclesCraftSnapshot {
+  /// `space`: the pre-pass Y reached the frame loop's space entry, which #558 admits.
+  /// `unrecovered`: the occupied slot's entry is not a surface craft pass the port runs.
+  readonly held: 'space' | 'unrecovered' | null;
+  /// `$4DFEC`, the speed field's integer.
+  readonly panelSpeed: number;
+  readonly slot: number;
+  /// `$797A` and `$7BAC`, as the program's floats.
+  readonly speed: number;
+  readonly throttle: number;
+}
 
 /// What the player is inside: on foot, or aboard one resident instance, named by its instance id
 /// as everything else in Damocles is. Aboard, that instance's Object Residence is `occupied`.
@@ -338,6 +370,19 @@ export class DamoclesSession implements TitleSession<
   private frameAccumulator: number;
   /// The instance the player is aboard, or null on foot.
   private occupied: string | null = null;
+  /// The craft Mover's words while aboard (ADR 0051), or null on foot.
+  private craft: CraftState | null = null;
+  /// The occupied slot, which indexes the craft table as `$7AB0` does.
+  private craftSlot = 0;
+  /// Ticks since the last pass; a pass runs on every `time.ticksPerPass`-th.
+  private craftTicks = 0;
+  /// Why the craft stands still with no rule to run, or null while the Mover runs.
+  private craftHeld: DamoclesCraftSnapshot['held'] = null;
+  /// The instance angle byte leaving writes (`$0544FA`), by instance. Session State a Save does
+  /// not carry yet (#557): a restored object stands at its Catalogue angle again.
+  private angleBytes = new Map<string, number>();
+  /// The craft pass's published numbers, or null in a document that carries none.
+  private readonly craftProgram: CraftProgram | null;
   /// The occupied instance's Object Residence departure from before boarding, or undefined where
   /// it had none and stood at its Catalogue residence. Leaving falls back to it where the leave
   /// placement cannot be held. A Save does not carry it, so a session restored aboard falls back to
@@ -386,6 +431,10 @@ export class DamoclesSession implements TitleSession<
     };
     this.soundPermitted = options.soundPermitted ?? (() => true);
     this.negateModelZ = content.doc.orientation.modelZ === 'negate';
+    this.craftProgram =
+      content.catalogue.craft === null
+        ? null
+        : craftProgram(content.catalogue.craft);
     const opening = restore?.pose ?? startPose(content.doc);
     this.pose = {
       body: opening.body,
@@ -410,6 +459,11 @@ export class DamoclesSession implements TitleSession<
     );
     this.occupied =
       restore?.occupancy.kind === 'aboard' ? restore.occupancy.instance : null;
+    if (this.occupied !== null) {
+      // Authored until #557 saves the craft words: a craft restored aboard stands at rest at
+      // the saved seat, in contact and level, as boarding leaves it.
+      this.seat(this.occupied, this.pose);
+    }
     // A restore may name a Body other than the document's, so the surface is anchored from the
     // Pose before anything binds against it.
     this.surface = this.surfaceFor(this.pose.body);
@@ -1073,8 +1127,14 @@ export class DamoclesSession implements TitleSession<
         // A structure resident has no surface placement; it turns by its own instance angle
         // byte in the parent's frame, which structures never rotate (#361).
         heading:
-          base?.heading ??
-          placementHeading(model, instance.placement?.heading ?? null),
+          this.angleBytes.has(instance.id) || base === undefined
+            ? placementHeading(
+                model,
+                this.angleBytes.get(instance.id) ??
+                  instance.placement?.heading ??
+                  null
+              )
+            : base.heading,
         id: instance.id,
         keyBase: instance.keyBase,
         kind: model.kind,
@@ -1213,6 +1273,16 @@ export class DamoclesSession implements TitleSession<
       capacity: this.capacity(),
       carried: [...this.carried],
       cell: cellOf(this.pose.position, this.surface.grid),
+      craft:
+        this.craft === null
+          ? null
+          : {
+              held: this.craftHeld,
+              panelSpeed: this.craft.panelSpeed,
+              slot: this.craftSlot,
+              speed: this.craft.speed,
+              throttle: this.craft.throttle
+            },
       daylight: this.daylight(),
       display: this.script.display,
       displayCells: displayCells(
@@ -1250,7 +1320,7 @@ export class DamoclesSession implements TitleSession<
     let remaining = Math.max(0, seconds);
     while (remaining > 0) {
       const step = Math.min(MAXIMUM_STEP, remaining);
-      // No Mover runs aboard, so the Pose holds: driving is not admitted (ADR 0047).
+      // Aboard, the craft Mover moves the Pose once a pass, on the frame clock below.
       const aboard = this.occupied !== null;
       const moved = aboard
         ? this.pose
@@ -1259,7 +1329,7 @@ export class DamoclesSession implements TitleSession<
       const placement = this.boundPlacement;
       // `$059520` clears `$5A646` every frame, and only the clamp raises it.
       let refused = false;
-      // Aboard there is no step to clamp, and the region boarding selected stands.
+      // Aboard there is no step to clamp: `$0590AE` refuses a craft instead.
       if (!aboard) {
         if (
           placement !== null &&
@@ -1296,10 +1366,15 @@ export class DamoclesSession implements TitleSession<
         const transition = runFrame(this.script, this.scriptRules);
         this.script = transition.state;
         this.effects.push(...transition.effects);
+        this.tickCraft();
         // `$059562` steps the ride before `$05AA3C` moves the doors, so a tick sees them as they
-        // stood before it. The doors see the step's Pose before `$05A64A` clamps it.
+        // stood before it. The doors see the step's Pose before `$05A64A` clamps it. Aboard,
+        // the port keeps ticking both every VBL; whether `$05970E` moves them is unrecovered
+        // (ADR 0051).
         this.stepRide(this.rideDoorShut());
-        this.askForDoorTone(this.moveAttachments(moved.position));
+        this.askForDoorTone(
+          this.moveAttachments(aboard ? this.pose.position : moved.position)
+        );
       }
       this.askForThud(refused);
       remaining -= step;
@@ -1318,7 +1393,13 @@ export class DamoclesSession implements TitleSession<
       frameAccumulator: this.frameAccumulator,
       occupancy: this.occupancy,
       pendingBriefcaseDrop: this.pendingBriefcaseDrop,
-      pose: this.pose,
+      // The bank is the craft's, which a Save does not carry yet (#557).
+      pose: {
+        body: this.pose.body,
+        heading: this.pose.heading,
+        pitch: this.pose.pitch,
+        position: this.pose.position
+      },
       residence: [...this.residence].map(([instance, residence]) => ({
         instance,
         residence
@@ -1367,6 +1448,197 @@ export class DamoclesSession implements TitleSession<
     return this.occupied === null
       ? { kind: 'onFoot' }
       : { instance: this.occupied, kind: 'aboard' };
+  }
+
+  /// The Pose the craft words draw: the attitude words as the Camera's turns (ADR 0051 decision
+  /// 4). Roll is `$7ABE` read signed, positive banking right as a right turn raises it.
+  private poseFromCraft(craft: CraftState): Pose {
+    const orientation = this.content.doc.orientation;
+    const roll = ((craft.roll & 0xff_ff) << 16) >> 16;
+    return {
+      body: this.pose.body,
+      heading: bearingFromYaw(craft.yaw & 0x3_ff, orientation),
+      pitch: pitchFromWord(craft.pitch, orientation),
+      position: { x: craft.x, y: craft.y, z: craft.z },
+      ...(roll === 0
+        ? {}
+        : { roll: (roll / orientation.yawUnitsPerTurn) * 2 * Math.PI })
+    };
+  }
+
+  /// The craft words boarding leaves (`$054374`–`$0543B0`): the seat at the craft's origin
+  /// plus the eye, the instance angle byte × 4 as yaw, and the stop preset. Pitch and roll are
+  /// not written, so they are the on-foot view's, and the frame's sines are still the on-foot
+  /// attitude's. On foot the player is always in ground contact.
+  private seat(instance: string, at: Pose): void {
+    const orientation = this.content.doc.orientation;
+    const units = orientation.yawUnitsPerTurn;
+    const footYaw =
+      Math.round((at.heading / (2 * Math.PI)) * units + orientation.yawNorth) &
+      (units - 1);
+    const footPitch =
+      Math.round(orientation.pitchLevel - (at.pitch / (2 * Math.PI)) * units) &
+      (units - 1);
+    const slot = Number(/^object-slot-(\d+)$/.exec(instance)?.[1] ?? -1);
+    const byte = this.angleByte(instance);
+    const zero = this.craftProgram?.constants.zero ?? 0xff_00_10_00;
+    const craft: CraftState = {
+      contact: 0x3f,
+      panelSpeed: 0,
+      pitch: footPitch,
+      roll: 0,
+      speed: zero >>> 0,
+      supported: 0,
+      supportLevel: 0,
+      throttle: zero >>> 0,
+      trig: { pitch: footPitch, yaw: footYaw },
+      turnRate: zero >>> 0,
+      x: Math.round(at.position.x),
+      y: Math.round(at.position.y),
+      yaw: (byte * 4) & 0xff_ff,
+      z: Math.round(at.position.z)
+    };
+    this.craft = craft;
+    this.craftSlot = slot;
+    this.craftTicks = 0;
+    const entry = this.craftProgram?.slots[slot];
+    this.craftHeld =
+      entry === undefined ||
+      (entry.class !== 'flying' && entry.class !== 'wheeled')
+        ? 'unrecovered'
+        : null;
+  }
+
+  /// The instance angle byte as it stands: the one leaving last wrote, or the Catalogue's.
+  private angleByte(instance: string): number {
+    const known = this.angleBytes.get(instance);
+    if (known !== undefined) {
+      return known;
+    }
+    const catalogued = this.instanceFor(instance);
+    return catalogued?.location?.heading ?? catalogued?.placement?.heading ?? 0;
+  }
+
+  /// The bound structure's support and wall boxes as the cell bind leaves them at `$CB88`.
+  /// A cell with no structure binds Building detail 1, which holds none.
+  private boundBoxes(): BoundBoxes {
+    const placement = this.boundPlacement;
+    const selection = placement?.selection;
+    if (placement === null || selection === undefined) {
+      return NO_BOXES;
+    }
+    return bindBoxes(selection.boxes, selection.structure.scale, {
+      x: placement.position.x,
+      z: placement.position.z
+    });
+  }
+
+  /// The joystick byte `$79C2` the pass reads, from the Movement Intent: up is nose down.
+  private stick(): number {
+    const { pitch, turn } = this.intent;
+    return (
+      (pitch < 0 ? STICK_UP : 0) |
+      (pitch > 0 ? STICK_DOWN : 0) |
+      (turn < 0 ? STICK_LEFT : 0) |
+      (turn > 0 ? STICK_RIGHT : 0)
+    );
+  }
+
+  /// One tick aboard: every `ticksPerPass`-th runs a frame of the craft Mover (ADR 0051).
+  private tickCraft(): void {
+    const program = this.craftProgram;
+    const craft = this.craft;
+    if (craft === null || program === null || this.craftHeld !== null) {
+      return;
+    }
+    this.craftTicks += 1;
+    if (this.craftTicks < this.content.doc.time.ticksPerPass) {
+      return;
+    }
+    this.craftTicks = 0;
+    const slot = program.slots[this.craftSlot]!;
+    const frame = craftFrame(
+      program,
+      slot,
+      craft,
+      this.stick(),
+      this.boundBoxes()
+    );
+    this.craft = frame.state;
+    this.pose = this.poseFromCraft(frame.state);
+    this.bindAt(this.pose);
+    // Authored, as boarding's: the region is taken afresh where the craft now stands.
+    this.regionIndex = this.regionAt(this.pose);
+    switch (frame.outcome) {
+      case 'refused':
+        // `$05975A`–`$059760`: the bump on sound channel B.
+        this.effects.push({ cue: 'bump', type: 'sound-request' });
+        break;
+      case 'landed':
+        this.touchDown();
+        break;
+      case 'space':
+        this.craftHeld = 'space';
+        break;
+      case 'moved':
+        break;
+    }
+  }
+
+  /// `$057D16`–`$057D60`, after the landing handler has set the craft down and stopped it: the
+  /// island answer masked with the Body's `$794A` decides. Land runs the leave path and the
+  /// noise `$04C5A8`; sea keeps the player aboard under `$04C016`. `$794A`'s high byte is `$FF`
+  /// on Eris, the only Body it is recovered for, so the port takes the answer unmasked.
+  /// Not modelled: the engine flag `$7C0C`, `$78EE`, and the pause `$051036`.
+  private touchDown(): void {
+    const sea =
+      classifyPosition(this.surface, this.pose.position).kind === 'sea';
+    if (sea) {
+      this.effects.push({ cue: 'splash', type: 'sound-request' });
+      return;
+    }
+    this.effects.push({ cue: 'blast', type: 'sound-request' });
+    this.leave();
+  }
+
+  /// A throttle key aboard (`$0556AA`): the table entry at `$0557D6` for the ST scancode. Space's
+  /// `$80` writes the zero and leaves the speed to decay. A change asks for the key effect
+  /// `$054848`; the same value again writes nothing. The trim `$7A1C` and the launch swing
+  /// `$7B0C` it clears are not modelled.
+  throttleKey(scancode: number): void {
+    const program = this.craftProgram;
+    const craft = this.craft;
+    if (program === null || craft === null) {
+      return;
+    }
+    const entry = program.throttleKeys.find(
+      key => key.scancode === scancode
+    )?.entry;
+    if (entry === undefined) {
+      return;
+    }
+    const throttle = throttleForEntry(craft, entry, program.constants);
+    if (throttle === undefined) {
+      return;
+    }
+    this.craft = { ...craft, throttle };
+    this.effects.push({ cue: 'throttle', type: 'sound-request' });
+  }
+
+  /// `-` and `=` aboard (`$05575E`, `$055798`): the throttle scaled down or up a step.
+  throttleScale(direction: -1 | 1): void {
+    const program = this.craftProgram;
+    const craft = this.craft;
+    if (program === null || craft === null) {
+      return;
+    }
+    const next =
+      direction < 0 ? throttleDown(program, craft) : throttleUp(program, craft);
+    if (next === undefined) {
+      return;
+    }
+    this.craft = next;
+    this.effects.push({ cue: 'throttle', type: 'sound-request' });
   }
 
   /// `B`: the board gate `$054302`–`$05434E`, its eight tests in the Reference Build's order
@@ -1429,19 +1701,17 @@ export class DamoclesSession implements TitleSession<
     });
     this.occupied = instance.id;
     // The instance angle byte, 256 a turn, becomes the yaw word, 1024 a turn, with no model
-    // bias ($054390). Nothing moves aboard, so the byte is still the Catalogue's.
-    const byte = instance.location?.heading ?? instance.placement?.heading ?? 0;
-    this.pose = {
-      body: this.pose.body,
-      heading: bearingFromYaw(byte * 4, this.content.doc.orientation),
-      // Not written by boarding; on foot nothing pitches the view.
-      pitch: this.pose.pitch,
+    // bias ($054390). The craft words take the seat; pitch is not written, so the view keeps
+    // the on-foot pitch.
+    this.seat(instance.id, {
+      ...this.pose,
       position: {
         x: selected.position.x,
         y: selected.position.y + this.rules.eyeHeight,
         z: selected.position.z
       }
-    };
+    });
+    this.pose = this.poseFromCraft(this.craft!);
     // Authored: the region is taken afresh at the new Pose. Whether the original's changes here
     // is not established (#407), but keeping the pressed-from region would have the first step
     // after leaving clamp the player back into it, away from the object's origin.
@@ -1457,9 +1727,10 @@ export class DamoclesSession implements TitleSession<
     if (instance === null) {
       return { kind: 'refused' };
     }
-    // 2. The occupied object is in ground contact: always, since no Mover runs aboard.
+    // 2. The occupied object is in ground contact `$7ACA`.
     // 3. Not at sea by the island classification. 4. Not on the VOID staging Body.
     if (
+      this.craft?.contact === 0 ||
       classifyPosition(this.surface, this.pose.position).kind === 'sea' ||
       this.pose.body === VOID_BODY
     ) {
@@ -1472,14 +1743,24 @@ export class DamoclesSession implements TitleSession<
       !validStructureResidence(this.content.catalogue, placed)
     ) {
       // Authored: a structure placement the session cannot hold would lose the object, so it
-      // returns where boarding found it -- the same place, since nothing moves aboard.
+      // returns where boarding found it, however far it was driven.
       this.restoreBoardedFrom(this.residence, instance);
     } else {
       this.residence.set(instance, placed);
     }
-    // Roll and pitch are leveled ($0544C6, $0544CC). The instance angle byte takes the yaw ÷ 4
-    // ($0544FA); with no Mover aboard that is the byte boarding read, which is not stored.
-    this.pose = { ...this.pose, pitch: 0 };
+    // The stop preset runs and roll and pitch are levelled ($0544C2-$0544CC). The instance angle
+    // byte takes the yaw ÷ 4 ($0544FA).
+    if (this.craft !== null) {
+      this.angleBytes.set(instance, (this.craft.yaw >> 2) & 0xff);
+    }
+    this.pose = {
+      body: this.pose.body,
+      heading: this.pose.heading,
+      pitch: 0,
+      position: this.pose.position
+    };
+    this.craft = null;
+    this.craftHeld = null;
     this.occupied = null;
     this.boardedFrom = undefined;
     return { kind: 'left' };

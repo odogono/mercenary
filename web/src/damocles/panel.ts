@@ -9,7 +9,9 @@ import type { ErisCell } from './world.ts';
 ///
 /// Under ADR 0027 the same chrome dressed Targ data; here every readout that has a recovered
 /// meaning shows it, and every readout that does not is a static placeholder named as one.
-/// The credit readout has no economy behind it yet, and on foot the craft velocity is nought.
+/// The credit readout has no economy behind it yet. The speed field and the altitude window
+/// read the craft Mover's words aboard (#556). The second lamp stays unlit: it is the Tolosa
+/// encounter gate `$070104`, and the port has no encounter.
 
 /// One axis of the Cell Readout: the magnitude of an Island-Local Cell in two digits, or `**`
 /// once that magnitude passes 99. The sign is not printed here — a negative axis is printed in
@@ -107,6 +109,41 @@ export const impactClock = (
     .join('-');
 };
 
+/// `$04DFF4`: the speed field from `$04DFEC`, a sign then nine digits read as a 4.28 fraction.
+/// The first digit is the long's top nibble; each later one is the top nibble after the long
+/// is masked to 28 bits and multiplied by ten. The sign is the speed float's mantissa word
+/// `$797C`, so a craft gliding back after a refused move reads `-` (#551).
+export const speedField = (panelSpeed: number, speed: number): string => {
+  let value = panelSpeed >>> 0;
+  let digits = '';
+  for (let index = 0; index < 9; index += 1) {
+    digits += String(Math.floor(value / 0x10_00_00_00));
+    value = (value & 0x0f_ff_ff_ff) * 10;
+  }
+  const sign = (speed & 0x80_00) === 0 ? '+' : '-';
+  return `${sign} ${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
+};
+
+/// `$04DF42`: the altitude window on a Body. Eye Y shifted right four and rounded on the bit
+/// shifted out, printed as 16.16: two whole digits, then the fraction times 100 twice. A whole
+/// part of 100 or more, or Floor 10, prints six stars (#551).
+export const altitudeWindow = (eyeY: number, floor: number): string => {
+  const y = Math.floor(eyeY);
+  const value = ((y >> 4) + ((y >> 3) & 1)) >>> 0;
+  const whole = Math.floor(value / 0x1_00_00);
+  if (floor === 10 || whole >= 100) {
+    return '******';
+  }
+  let fraction = value & 0xff_ff;
+  let digits = String(whole).padStart(2, '0');
+  for (let pair = 0; pair < 2; pair += 1) {
+    fraction *= 100;
+    digits += String(Math.floor(fraction / 0x1_00_00)).padStart(2, '0');
+    fraction &= 0xff_ff;
+  }
+  return digits;
+};
+
 /// `$7AB6` below which `$0509F6` lights the first lamp aboard (docs/research/damocles-panel-lamps.md).
 const LOW_ALTITUDE_LAMP_UNITS = 0x28_fa;
 
@@ -116,9 +153,12 @@ export const damoclesPanelViewModel = (
   running = false
 ): PanelViewModel => ({
   // The altitude window is six digits wide here, which is the width the original prints and
-  // one wider than the Targ instrument the Benson Panel shares its view model with (#368).
-  // The value behind it is still a placeholder: on foot there is no altitude to report.
-  altitude: '000000',
+  // one wider than the Targ instrument the Benson Panel shares its view model with (#368). It
+  // reads eye Y on foot as aboard, so it shows `000000` at the ground and stars on Floor 10.
+  altitude: altitudeWindow(
+    snapshot.pose.position.y,
+    snapshot.structure?.floor ?? 0
+  ),
   altitudeLamp: false,
   attackLamp: false,
   // The Body Coordinate Readout: the original prints `016-283` here at the Eris start pose,
@@ -143,5 +183,9 @@ export const damoclesPanelViewModel = (
   messageColour: undefined,
   runLamp: running,
   speed: '+0000',
-  speedLabel: '+ 000 000 000'
+  // Cleared by boarding and by the stop preset leaving runs, so on foot it reads nought.
+  speedLabel:
+    snapshot.craft === null
+      ? '+ 000 000 000'
+      : speedField(snapshot.craft.panelSpeed, snapshot.craft.speed)
 });

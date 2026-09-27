@@ -102,6 +102,33 @@ describe('the browser Control Profile', () => {
     expect(profile.intent.pitch).toBe(1);
   });
 
+  test('aboard, F1-F10 are reverse notches where the Title has a reverse gear', () => {
+    const { calls, profile, setOccupancy } = harness();
+    // Without the action, a function key is not the profile's.
+    setOccupancy({ kind: 'aboard', slot: 5 });
+    expect(profile.keyDown(input('F4'))).toBeFalse();
+    const reversing = new BrowserControlProfile({
+      drop: () => undefined,
+      fire: () => undefined,
+      leaveCraft: () => undefined,
+      liftKey: () => false,
+      occupancy: () => ({ kind: 'aboard', slot: 5 }),
+      page: () => undefined,
+      press: () => undefined,
+      reach: () => undefined,
+      rideLift: () => undefined,
+      shutThrottle: () => undefined,
+      skipMessage: () => undefined,
+      throttleNotchValue: () => undefined,
+      throttleReverseNotch: notch => calls.push({ reverse: notch }),
+      throttleStep: () => undefined
+    });
+    expect(reversing.keyDown(input('F4'))).toBeTrue();
+    expect(reversing.keyDown(input('F10'))).toBeTrue();
+    expect(reversing.keyDown(input('F11'))).toBeFalse();
+    expect(calls).toEqual([{ reverse: 4 }, { reverse: 10 }]);
+  });
+
   test('R latches running on and off without acknowledging a script', () => {
     const { calls, profile } = harness();
 

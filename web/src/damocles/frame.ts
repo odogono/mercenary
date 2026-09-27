@@ -737,7 +737,8 @@ export const planErisFrame = (
     heading: -pose.heading,
     nearPlane: doc.camera.nearPlane,
     pitch: pose.pitch,
-    position: toCameraSpace(pose.position)
+    position: toCameraSpace(pose.position),
+    roll: pose.roll ?? 0
   });
   const negateZ = doc.orientation.modelZ === 'negate';
   const values: number[] = [];

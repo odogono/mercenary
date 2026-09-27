@@ -100,6 +100,7 @@ const placement: ErisPlacement = {
   name: 'TEST',
   position: { x: HALF, y: 0, z: HALF + 100 },
   selection: {
+    boxes: { supports: [], walls: [] },
     detail: { faces: [], lines: [], vertices: [] },
     extent: null,
     groups: [],
