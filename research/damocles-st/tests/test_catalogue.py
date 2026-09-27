@@ -351,6 +351,7 @@ class SourceTests(unittest.TestCase):
         struct.pack_into('>I', data, 0x4bd22, 0x26000)
         _empty_island_table(data)
         _board_gate(data)
+        _craft(data)
         # Synthetic table entries share a deliberately empty model in each bank.
         for base, count in [(0x35700, 378), (0xe900, 280), (0x26000, 130)]:
             for slot in range(count):
@@ -371,6 +372,7 @@ class SourceTests(unittest.TestCase):
         struct.pack_into('>I', data, 0x4bd22, 0x26000)
         _empty_island_table(data)
         _board_gate(data)
+        _craft(data)
         for base, count in [(0x35700, 378), (0xe900, 280), (0x26000, 130)]:
             for slot in range(count):
                 struct.pack_into('>I', data, base + slot * 4, 0x1000)
@@ -557,15 +559,29 @@ class VisibilityListTests(unittest.TestCase):
 
 def _empty_island_table(data: bytearray) -> None:
     """A per-body island list that terminates at once: a world with no islands."""
-    struct.pack_into('>I', data, 0x4bd1e, 0x63000)
+    struct.pack_into('>I', data, 0x4bd1e, 0x6A000)
     for body in range(31):
-        struct.pack_into('>h', data, 0x63000 + body * 2, 0x40)
-    struct.pack_into('>H', data, 0x63040, 0x8000)
+        struct.pack_into('>h', data, 0x6A000 + body * 2, 0x40)
+    struct.pack_into('>H', data, 0x6A040, 0x8000)
 
 
 def _board_gate(data: bytearray) -> None:
     """The board gate every loaded world carries, which the boarding blocks read (#408)."""
     data[0x542E0:0x542E0 + len(BoardingAdmissionTests.GATE)] = BoardingAdmissionTests.GATE
+
+
+def _craft(data: bytearray) -> None:
+    """The craft pass every loaded world carries, which the craft block reads (#555): its
+    instructions as the pinned image holds them, sixteen flying entries and the log table."""
+    from damocleslab.catalogue import CRAFT_INSTRUCTIONS, CRAFT_TABLE, craft_log_table
+    for address, instruction, *_ in CRAFT_INSTRUCTIONS.values():
+        code = bytes.fromhex(instruction)
+        data[address:address + len(code)] = code
+    for slot in range(16):
+        base = CRAFT_TABLE + slot * 32
+        struct.pack_into('>Hh', data, base, 0x6000, 0x57F46 - (base + 2))
+    for address, value in craft_log_table().items():
+        struct.pack_into('>H', data, address, value)
 
 
 def _empty_world():
@@ -578,6 +594,7 @@ def _empty_world():
         struct.pack_into('>H', data, base + 0x1000, 0x8000)
     _empty_island_table(data)
     _board_gate(data)
+    _craft(data)
     return data
 
 
@@ -3583,6 +3600,94 @@ class BoardingAdmissionTests(unittest.TestCase):
             for field in ('boardable', 'admission', 'paired', 'refusal'):
                 self.assertIn(boarding[f'{field}Provenance'], ('recovered', 'derived'))
             self.assertTrue(boarding['reason'])
+
+
+class CraftTests(unittest.TestCase):
+    """Every slot's Craft Parameter Block and the craft pass's constants (#555, ADR 0051)."""
+
+    PINNED = Path(__file__).resolve().parents[1] / 'work' / \
+        'observe-first-world-20260818T101013Z-c5a32b7d' / 'observed.ram'
+
+    @staticmethod
+    def image(patch=None):
+        data = bytearray(1048576)
+        _craft(data)
+        for address, value in (patch or {}).items():
+            data[address] = value
+        return bytes(data)
+
+    def pinned(self):
+        if not self.PINNED.exists():
+            self.skipTest('Working-Authority RAM captures are Restricted Material')
+        from damocleslab.catalogue import decode_craft
+        return decode_craft(self.PINNED.read_bytes())
+
+    def test_constants_are_read_from_their_instructions(self):
+        from damocleslab.catalogue import decode_craft
+        craft = decode_craft(self.image())
+        self.assertEqual(craft['constants']['landingStep'], {'address': 0x582D8, 'operand': -100})
+        self.assertEqual(craft['constants']['spaceEntry']['operand'], 0x1F0)
+        self.assertNotIn('altitudeCapStore', craft['constants'])
+        # An operand is read, not assumed: move the landing gate and the decode follows it.
+        self.assertEqual(decode_craft(self.image({0x582DD: 0x80}))['constants']['landingStep']['operand'], -128)
+        # An opcode is checked: a different instruction is not this pass.
+        with self.assertRaises(ValueError):
+            decode_craft(self.image({0x582D8: 0x0d}))
+        # A compare and its store must agree.
+        with self.assertRaises(ValueError):
+            decode_craft(self.image({0x5831B: 0xFE}))
+
+    def test_each_slot_branches_to_a_recovered_routine(self):
+        from damocleslab.catalogue import CRAFT_TABLE, decode_craft
+        self.assertEqual({s['class'] for s in decode_craft(self.image())['slots']}, {'flying'})
+        with self.assertRaises(ValueError):
+            decode_craft(self.image({CRAFT_TABLE + 3: 0x00}))
+
+    def test_the_log_table_must_follow_its_rule(self):
+        from damocleslab.catalogue import decode_craft
+        with self.assertRaises(ValueError):
+            decode_craft(self.image({0x65003: 0x40}))
+
+    def test_the_pinned_slots_carry_the_recovered_parameters(self):
+        slots = {s['slot']: s for s in self.pinned()['slots']}
+        classes = {slot: s['class'] for slot, s in slots.items()}
+        self.assertEqual([s for s, c in classes.items() if c == 'wheeled'], [2, 5, 6, 13])
+        self.assertEqual(classes[0], 'space')
+        self.assertEqual(classes[9], 'fall')
+        self.assertEqual(slots[9]['fall'], {'yStep': 37, 'tumbleStep': 13, 'pitchStep': 25, 'yawStep': 19})
+        # V.I.P. LIMO: damping 2^-16, acceleration 6.0, no pitch, lag 0.5, gain 0.525390625.
+        self.assertEqual(slots[5]['parameters'], {
+            'turnDamping': 0xFFF01000, 'turnAcceleration': 0x00021800, 'pitchStep': 0,
+            'rollExponent': -32, 'speedLag': 0xFFFF1000, 'ceiling': 90, 'thrustGain': 0xFFFF10D0,
+        })
+        # EAGLE NINE S E: damping 0.9375, acceleration 1.0, pitch 8, gain 0.78125, ceiling 900.
+        self.assertEqual(slots[3]['parameters']['turnDamping'], 0xFFFF1E00)
+        self.assertEqual(slots[3]['parameters']['pitchStep'], 8)
+        self.assertEqual(slots[3]['parameters']['ceiling'], 900)
+        self.assertEqual(slots[3]['parameters']['thrustGain'], 0xFFFF1900)
+
+    def test_the_pinned_constants_and_tables_are_the_recovered_ones(self):
+        craft = self.pinned()
+        operands = {name: c['operand'] for name, c in craft['constants'].items()}
+        self.assertEqual(operands['zero'], 0xFF001000)
+        self.assertEqual(operands['takeOff'], 0x0004FFFF)
+        self.assertEqual(operands['landingPitch'] << 2, 0x280)
+        self.assertEqual((operands['groundY'], operands['groundEye'], operands['levelPitch']), (64, 63, 0x1FF))
+        self.assertEqual(operands['collisionExponent'], 0xFFF0)
+        self.assertEqual(craft['table']['sha256'],
+                         '463e1cb0c1e349a112f920e3e61a639b4cb685ee784fbc57f43ed5e6ab6b01de')
+        self.assertEqual(craft['arithmetic']['exp']['sha256'],
+                         'f21d7cf049056a87abcb33d18af13b544a50daecb9087cd690f3c63f3698fb6d')
+        keys = {k['scancode']: k['entry'] for k in craft['throttleKeys']['keys']}
+        self.assertEqual([keys[code] for code in range(0x02, 0x0C)], list(range(8, 28, 2)))
+        self.assertEqual([keys[code] for code in range(0x3B, 0x45)], list(range(9, 29, 2)))
+        self.assertEqual(keys[0x39], 0x80)
+
+    def test_the_payload_publishes_the_pinned_block(self):
+        craft = self.pinned()
+        root = Path(__file__).resolve().parents[3]
+        document = json.loads((root / 'payload' / 'damocles' / 'catalogue.json').read_text())
+        self.assertEqual(document['craft'], craft)
 
 
 class ImageWorkspaceTests(unittest.TestCase):

@@ -390,6 +390,52 @@ and 15) fail the model guard, and every `SETTEE` sits past the bound. No seated
 eye height is published: boarding puts the eye at the resident position plus 63
 for every slot ([boarding admission](../design/damocles-boarding-admission.md)).
 
+The document also carries `craft`, the numbers the craft Mover runs on (#555,
+[ADR 0051](../adr/0051-run-the-damocles-craft-pass-exactly-once-every-four-ticks.md)).
+The rules they feed are in [the craft control note](damocles-craft-control.md).
+As with the gate, each constant is an instruction's operand: the extractor checks
+the instruction with its operand masked, then reads the operand.
+
+- `slots` holds all sixteen 32-byte entries of `$055C80`, the address that the
+  dispatch `$057CE8` adds. `class` names the routine each entry's `bra.w` reaches:
+  `space` (`$05872E`, slot 0), `flying` (`$057F46`), `wheeled` (`$057DE6`, slots 2,
+  5, 6 and 13) or `fall` (`$057D64`, slot 9).
+  - An entry other than the fall carries `parameters`, the seven words the pass
+    reads, as the table holds them. `turnDamping` (+4), `turnAcceleration` (+8),
+    `speedLag` (+14) and `thrustGain` (+1C) are raw floats in the program's number
+    system. `pitchStep` (+C), `rollExponent` (+E) and `ceiling` (+1A) are signed
+    words.
+  - The fall carries `fall`: `yStep`, `tumbleStep`, `pitchStep` and `yawStep`.
+  - The unread +10 and +18 are left out.
+  - An entry that branches to any other routine stops the extraction.
+- `constants` lists each constant with the address of the instruction that holds it
+  and its operand:
+
+  | Constant | Operand | What the pass does with it |
+  | --- | --- | --- |
+  | `throttleDouble`, `contactQuarter`, `altitudeScale` | `$10000`, `$20000`, `$100000` | add to or subtract from a float's exponent: throttle × 2, ÷ 4 in contact, Y ÷ 65,536 |
+  | `altitudeCap` | `$00051000` | 32.0, the cap on the altitude factor, checked twice |
+  | `groundY`, `groundEye`, `supportEye`, `contact`, `supported` | 64, 63, 63, 63, 63 | the contact test and what contact writes |
+  | `landingStep`, `landingPitch` | −100, `$A0` | the hard-landing gates; the pitch is compared after `lsr.w #2`, so `$280` |
+  | `levelPitch`, `pitchMask` | `$1FF`, `$3FF` | level, compared and stored (checked twice), and the ten-bit mask |
+  | `takeOff` | `$0004FFFF` | the speed long must compare above it to keep a nose-up pitch in contact |
+  | `verticalLow`, `verticalHigh` | `$080`, `$180` | the cos⁴ yaw window near the vertical |
+  | `wheeledDrop` | `$40` | the wheeled tail's one-pass landing test on `$7A30` |
+  | `spaceEntry` | `$1F0` | the high word of Y at which the frame loop enters space |
+  | `collisionExponent` | `$FFF0` | the throttle exponent a refused move writes |
+  | `zero` | `$FF001000` | the stop preset's zero |
+  | `throttleDown`, `throttleUp`, `throttleCap` | `$FFFF1F80`, `$1080`, `$000E0000` | `-` and `=` scaling, and the cap above which `=` is ignored |
+  | `throttleKeyBound` | `$44` | the highest scancode the throttle table serves |
+
+- `throttleKeys` lists the non-zero bytes of the table at `$0557D6` by scancode.
+  `1`–`0` are entries 8–26, `F1`–`F10` are 9–27, and `Space` is `$80`, which stops
+  the craft.
+- `arithmetic` carries the exponent table (`$60000`, 4,096 words) and the sine table
+  (`$64000`, 1,024 floats) as hex, each with its SHA-256. The log table is not
+  carried. Extraction checks that every normalised mantissa's entry follows the rule
+  the port regenerates it from, and `log.sha256` is the digest of the image's two
+  ranges, `$62000`–`$63002` and `$65000`–`$66000`, in that order.
+
 ## Recovered data grammar
 
 These are independently documented functional findings, not translated renderer

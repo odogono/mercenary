@@ -112,6 +112,10 @@ export interface ErisPresentationDocument {
     readonly impactVblsPerSecond: number;
     readonly messageFrames: number;
     readonly provenance: 'recovered';
+    /// Session ticks per craft pass aboard, derived from the traced frames (ADR 0051).
+    readonly ticksPerPass: number;
+    readonly ticksPerPassEvidence: string;
+    readonly ticksPerPassProvenance: 'derived';
     readonly vblHertz: number;
     readonly vblProvenance: 'derived';
     readonly waitFrames: number;
@@ -267,6 +271,9 @@ export const readErisPresentation = (
     'impactVblsPerSecond',
     'messageFrames',
     'provenance',
+    'ticksPerPass',
+    'ticksPerPassEvidence',
+    'ticksPerPassProvenance',
     'vblHertz',
     'vblProvenance',
     'waitFrames'
@@ -519,6 +526,16 @@ export const readErisPresentation = (
       ),
       messageFrames: literal(time['messageFrames'], 200, 'time.messageFrames'),
       provenance: literal(time['provenance'], 'recovered', 'time.provenance'),
+      ticksPerPass: literal(time['ticksPerPass'], 4, 'time.ticksPerPass'),
+      ticksPerPassEvidence: text(
+        time['ticksPerPassEvidence'],
+        'time.ticksPerPassEvidence'
+      ),
+      ticksPerPassProvenance: literal(
+        time['ticksPerPassProvenance'],
+        'derived',
+        'time.ticksPerPassProvenance'
+      ),
       vblHertz: literal(time['vblHertz'], 50, 'time.vblHertz'),
       vblProvenance: literal(
         time['vblProvenance'],

@@ -117,6 +117,9 @@
     "provenance": "recovered",
     "vblHertz": 50,
     "vblProvenance": "derived",
+    "ticksPerPass": 4,
+    "ticksPerPassProvenance": "derived",
+    "ticksPerPassEvidence": "ADR 0051: aboard, the craft pass runs once per rendered frame and never reads the frame's VBL count; the traced frames of docs/research/damocles-craft-control.md took 7,743 VBLs over 1,880 passes, a mean of 4.12, rounded to whole ticks. Elapsed seconds aboard are not claimed to match the ST's.",
     "waitFrames": 200
   },
   "structureFallback": {
