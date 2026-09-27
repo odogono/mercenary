@@ -356,6 +356,96 @@ export interface FloorLabelGlyph {
   readonly lines?: readonly (readonly [number, number])[];
   readonly points: readonly (readonly [number, number])[];
 }
+/** The routine a craft slot's entry at `$055C80` branches to (#549). */
+export type CraftClass = 'fall' | 'flying' | 'space' | 'wheeled';
+/**
+ * The seven words the craft pass reads through `a0`, as the table holds them. The four
+ * floats are raw longs in the program's number system: a signed exponent word over a signed
+ * mantissa word in units of `$1000` (ADR 0051).
+ */
+export interface CraftParameters {
+  readonly ceiling: number;
+  readonly pitchStep: number;
+  readonly rollExponent: number;
+  readonly speedLag: number;
+  readonly thrustGain: number;
+  readonly turnAcceleration: number;
+  readonly turnDamping: number;
+}
+/** The four words the slot-9 fall `$057D64` reads instead. */
+export interface CraftFall {
+  readonly pitchStep: number;
+  readonly tumbleStep: number;
+  readonly yawStep: number;
+  readonly yStep: number;
+}
+export interface CraftSlot {
+  readonly class: CraftClass;
+  readonly fall: CraftFall | null;
+  readonly parameters: CraftParameters | null;
+  readonly routine: number;
+  readonly slot: number;
+}
+/** Every craft pass constant the Catalogue publishes, named for what the pass does with it. */
+export const CRAFT_CONSTANTS = [
+  'altitudeCap',
+  'altitudeScale',
+  'collisionExponent',
+  'contact',
+  'contactQuarter',
+  'groundEye',
+  'groundY',
+  'landingPitch',
+  'landingStep',
+  'levelPitch',
+  'pitchMask',
+  'spaceEntry',
+  'supportEye',
+  'supported',
+  'takeOff',
+  'throttleCap',
+  'throttleDouble',
+  'throttleDown',
+  'throttleKeyBound',
+  'throttleUp',
+  'verticalHigh',
+  'verticalLow',
+  'wheeledDrop',
+  'zero'
+] as const;
+export type CraftConstant = (typeof CRAFT_CONSTANTS)[number];
+/**
+ * The craft pass as the Catalogue publishes it (#555, ADR 0051): every slot's Craft Parameter
+ * Block, each constant as the operand of the instruction at `address`, the throttle keys, and
+ * the exponent and sine tables. The log table is not carried: `craftLogTable` regenerates it,
+ * and `log.sha256` is the digest of the image's own.
+ */
+export interface Craft {
+  readonly arithmetic: {
+    readonly exp: { readonly sha256: string; readonly words: Uint16Array };
+    readonly log: {
+      readonly ranges: readonly (readonly [number, number])[];
+      readonly sha256: string;
+    };
+    readonly sine: { readonly longs: Uint32Array; readonly sha256: string };
+  };
+  readonly constants: Readonly<
+    Record<
+      CraftConstant,
+      { readonly address: number; readonly operand: number }
+    >
+  >;
+  readonly evidence: string;
+  readonly slots: readonly CraftSlot[];
+  readonly table: { readonly address: number; readonly sha256: string };
+  readonly throttleKeys: {
+    readonly address: number;
+    readonly keys: readonly {
+      readonly entry: number;
+      readonly scancode: number;
+    }[];
+  };
+}
 export interface StructureSelection {
   readonly attachments: readonly EntranceAttachment[];
   readonly detailModel: string;
@@ -623,6 +713,8 @@ export interface Catalogue {
     readonly tables: readonly CoverageTable[];
     readonly unexplored: readonly string[];
   };
+  /** The craft pass's published numbers; null only in a synthetic document without them. */
+  readonly craft: Craft | null;
   /** Every Floor Label character, by the font a published Floor Label draws it in. */
   readonly floorLabelGlyphs: Readonly<
     Record<string, Readonly<Record<string, FloorLabelGlyph>>>
@@ -1510,6 +1602,149 @@ const floorLabelGlyphs = (value: unknown): Catalogue['floorLabelGlyphs'] =>
     })
   );
 
+const sha256 = (value: unknown): string => {
+  const hash = string(value);
+  return /^[\da-f]{64}$/.test(hash) ? hash : fail('invalid digest');
+};
+const signedInteger = (value: unknown): number => {
+  const n = number(value);
+  return Number.isSafeInteger(n) ? n : fail('expected an integer');
+};
+const hexWords = (value: unknown, bytes: number, width: 2 | 4): number[] => {
+  const hex = string(value);
+  if (hex.length !== bytes * 2 || !/^[\da-f]*$/.test(hex)) {
+    fail('invalid craft table');
+  }
+  const digits = width * 2;
+  return Array.from({ length: bytes / width }, (_, i) =>
+    Number.parseInt(hex.slice(i * digits, (i + 1) * digits), 16)
+  );
+};
+const CRAFT_CLASSES: readonly CraftClass[] = [
+  'fall',
+  'flying',
+  'space',
+  'wheeled'
+];
+const craftSlot = (value: unknown, index: number): CraftSlot => {
+  const s = fields(value, ['class', 'fall', 'parameters', 'routine', 'slot']);
+  const kind = string(s['class']) as CraftClass;
+  if (!CRAFT_CLASSES.includes(kind) || integer(s['slot']) !== index) {
+    fail('invalid craft slot');
+  }
+  if (
+    (kind === 'fall') !== (s['fall'] !== undefined) ||
+    (kind === 'fall') === (s['parameters'] !== undefined)
+  ) {
+    fail('a craft slot carries the fall or the pass parameters');
+  }
+  const words = <K extends string>(raw: unknown, keys: readonly K[]) => {
+    const r = fields(raw, keys);
+    return Object.fromEntries(
+      keys.map(key => [key, signedInteger(r[key])])
+    ) as Record<K, number>;
+  };
+  return {
+    class: kind,
+    fall:
+      s['fall'] === undefined
+        ? null
+        : words(s['fall'], ['pitchStep', 'tumbleStep', 'yawStep', 'yStep']),
+    parameters:
+      s['parameters'] === undefined
+        ? null
+        : words(s['parameters'], [
+            'ceiling',
+            'pitchStep',
+            'rollExponent',
+            'speedLag',
+            'thrustGain',
+            'turnAcceleration',
+            'turnDamping'
+          ]),
+    routine: integer(s['routine']),
+    slot: index
+  };
+};
+const craft = (value: unknown): Craft => {
+  const c = fields(value, [
+    'arithmetic',
+    'constants',
+    'evidence',
+    'slots',
+    'table',
+    'throttleKeys'
+  ]);
+  const slots = list(c['slots']).map(craftSlot);
+  if (slots.length !== 16) {
+    fail('the craft table has sixteen slots');
+  }
+  const rawConstants = object(c['constants']);
+  if (
+    Object.keys(rawConstants).length !== CRAFT_CONSTANTS.length ||
+    CRAFT_CONSTANTS.some(name => rawConstants[name] === undefined)
+  ) {
+    fail('the craft block does not carry every craft constant');
+  }
+  const constants = Object.fromEntries(
+    CRAFT_CONSTANTS.map(name => {
+      const k = fields(rawConstants[name], ['address', 'operand']);
+      return [
+        name,
+        { address: integer(k['address']), operand: signedInteger(k['operand']) }
+      ];
+    })
+  ) as Craft['constants'];
+  const table = fields(c['table'], ['address', 'sha256']);
+  const keys = fields(c['throttleKeys'], ['address', 'keys']);
+  const arithmetic = fields(c['arithmetic'], ['exp', 'log', 'sine']);
+  const exp = fields(arithmetic['exp'], ['address', 'hex', 'sha256']);
+  const sine = fields(arithmetic['sine'], ['address', 'hex', 'sha256']);
+  const log = fields(arithmetic['log'], ['generated', 'ranges', 'sha256']);
+  if (
+    integer(exp['address']) !== 0x6_00_00 ||
+    integer(sine['address']) !== 0x6_40_00 ||
+    log['generated'] !== true
+  ) {
+    fail('invalid craft arithmetic');
+  }
+  return {
+    arithmetic: {
+      exp: {
+        sha256: sha256(exp['sha256']),
+        words: Uint16Array.from(hexWords(exp['hex'], 0x20_00, 2))
+      },
+      log: {
+        ranges: list(log['ranges']).map(value => {
+          const range = list(value).map(integer);
+          return range.length === 2 && range[0]! < range[1]!
+            ? ([range[0]!, range[1]!] as const)
+            : fail('invalid craft log range');
+        }),
+        sha256: sha256(log['sha256'])
+      },
+      sine: {
+        longs: Uint32Array.from(hexWords(sine['hex'], 0x10_00, 4)),
+        sha256: sha256(sine['sha256'])
+      }
+    },
+    constants,
+    evidence: string(c['evidence']),
+    slots,
+    table: {
+      address: integer(table['address']),
+      sha256: sha256(table['sha256'])
+    },
+    throttleKeys: {
+      address: integer(keys['address']),
+      keys: list(keys['keys']).map(value => {
+        const k = fields(value, ['entry', 'scancode']);
+        return { entry: byte(k['entry']), scancode: byte(k['scancode']) };
+      })
+    }
+  };
+};
+
 export const parseCatalogueDocument = (value: unknown): Catalogue => {
   const r = object(value);
   if (r['schemaVersion'] !== 17) {
@@ -2083,6 +2318,7 @@ export const parseCatalogueDocument = (value: unknown): Catalogue => {
           ? []
           : strings(coverage['unexplored'])
     },
+    craft: r['craft'] === undefined ? null : craft(r['craft']),
     floorLabelGlyphs: floorLabelGlyphs(r['floorLabelGlyphs'] ?? {}),
     instances,
     islands,
