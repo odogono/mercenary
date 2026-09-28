@@ -120,6 +120,10 @@ settlement date and a characterisation — mineral exploration, self-reproducing
 machines, penal colonies, military bases, gas giants unsuitable for habitation,
 currency reserves, way stations, a parliament, a yuppie colony.
 
+#572 found that the landing fires these, one per Body, and that each opens with a random skip.
+`$2A` and `$3C` are not landing messages. See
+[the landing messages](damocles-landing-messages.md).
+
 **This is a direct lift for #80.** The scripts name bodies and cities
 (ICARUS, MIDAS, ACHERON, DION, CLOTHO, VESTA, LUCAN, LOGOS, TRITON, HADES,
 THALIA, JUNO, TOLOSA, PENN, TOR CITY among them) and several describe a place as

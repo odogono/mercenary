@@ -331,8 +331,8 @@ history. `dion-north-airborne` has DION's `$23` at `$00` and LACHESIS's `$26` at
 So the `cross` landing **did** fire a trigger. At the landing stop `$26` goes to `$00` and the
 busy bit 6 of `$7BD9` is set. Thirty-eight passes later, at stop 253, a message is presented
 (`$7BA0` set, `$7B98` = `$72336`, reading on to `$7235A` by stop 260). The
-`return` landing on DION fires nothing, since `$23` was already disarmed. The script
-`$70080 + 2 × $26` and its text were not decoded.
+`return` landing on DION fires nothing, since `$23` was already disarmed. #572 decoded the
+scripts: see [the landing messages](damocles-landing-messages.md).
 
 ## Bodies
 
@@ -383,9 +383,9 @@ states neither can be the nearest Body or a destination. Why they are flagged wa
 - **What the Body switch `$56488` does in space-arrival terms**, beyond binding the Body. The port
   lands at the recovered point and binds the Body as its switch does
   ([ADR 0052](../adr/0052-land-a-damocles-craft-at-the-recovered-landing-point.md)).
-- **The landing message.** The `cross` landing fired LACHESIS's trigger `$26`
-  ([above](#the-landing-triggers-567)), but its script and text were not decoded, nor were any
-  other Body's.
+- ~~**The landing message.**~~ Decoded by #572 in
+  [the landing messages](damocles-landing-messages.md). Most are a gazetteer line that a random
+  draw skips about two landings in three.
 - **The out-of-scene flag** on ERIS and DAMOCLES in later memstates. It is probably tied to the
   impact, but that is not established.
 - **The panel's first form** (`$7876` ≤ `$20`) was not reached in space. Every traced space pass had
