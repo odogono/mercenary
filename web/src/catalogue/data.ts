@@ -460,6 +460,40 @@ export const CRAFT_CONSTANTS = [
   'zero'
 ] as const;
 export type CraftConstant = (typeof CRAFT_CONSTANTS)[number];
+/** Every TOLOSA encounter constant the Catalogue publishes (#581). */
+export const ENCOUNTER_CONSTANTS = [
+  'coast',
+  'deathSelector',
+  'deathString',
+  'fadeSteps',
+  'fadeWait',
+  'hold',
+  'killBox',
+  'killFlash',
+  'killString',
+  'shipShotShift',
+  'shipShotSteps',
+  'shotSpeedBias',
+  'shotSteps',
+  'steerShift',
+  'window',
+  'zapBox',
+  'zapFlash',
+  'zapString'
+] as const;
+export type EncounterConstant = (typeof ENCOUNTER_CONSTANTS)[number];
+/** One moving-object pool record as the first world holds it: the resident arrays at slot × 4. */
+export interface EncounterSlot {
+  /** Association B byte 0: the body selector the object was stamped with, 0 where unplaced. */
+  readonly body: number;
+  /** `$612A + slot × 4`: the steps left, 0 where not in flight. */
+  readonly counter: number;
+  /** `$63A8`/`$67A8`/`$6BA8 + slot × 4`, as unsigned longs. */
+  readonly position: readonly [number, number, number];
+  readonly slot: number;
+  /** `$614A`/`$616A`/`$618A + slot × 4`, signed 16.16 per step. */
+  readonly velocity: readonly [number, number, number];
+}
 /**
  * The craft pass as the Catalogue publishes it (#555, ADR 0051): every slot's Craft Parameter
  * Block, each constant as the operand of the instruction at `address`, the throttle keys, and
@@ -502,6 +536,21 @@ export interface Craft {
       { readonly address: number; readonly operand: number }
     >
   >;
+  /**
+   * The TOLOSA encounter's pool (#581): the constants of the fire launcher `$050B96`, the stepper
+   * `$050ABC` and the attack routine `$050D80`, and the first world's records for slots 8, 11 and
+   * 15, which a New Game starts from.
+   */
+  readonly encounter: {
+    readonly constants: Readonly<
+      Record<
+        EncounterConstant,
+        { readonly address: number; readonly operand: number }
+      >
+    >;
+    readonly evidence: string;
+    readonly slots: readonly EncounterSlot[];
+  };
   readonly evidence: string;
   /**
    * `$77000`: the 2,048-word noise table the pointer `$7E18` walks (#576). The main loop steps
@@ -1765,12 +1814,58 @@ const craftSlot = (value: unknown, index: number): CraftSlot => {
     slot: index
   };
 };
+const encounter = (value: unknown): Craft['encounter'] => {
+  const e = fields(value, ['constants', 'evidence', 'slots']);
+  const raw = object(e['constants']);
+  if (
+    Object.keys(raw).length !== ENCOUNTER_CONSTANTS.length ||
+    ENCOUNTER_CONSTANTS.some(name => raw[name] === undefined)
+  ) {
+    fail('the encounter block does not carry every encounter constant');
+  }
+  const constants = Object.fromEntries(
+    ENCOUNTER_CONSTANTS.map(name => {
+      const k = fields(raw[name], ['address', 'operand']);
+      return [
+        name,
+        { address: integer(k['address']), operand: signedInteger(k['operand']) }
+      ];
+    })
+  ) as Craft['encounter']['constants'];
+  const triple = (value: unknown, read: (item: unknown) => number) => {
+    const items = list(value).map(read);
+    return items.length === 3
+      ? ([items[0]!, items[1]!, items[2]!] as const)
+      : fail('an encounter record triple has three longs');
+  };
+  const slots = list(e['slots']).map(value => {
+    const s = fields(value, [
+      'body',
+      'counter',
+      'position',
+      'slot',
+      'velocity'
+    ]);
+    return {
+      body: integer(s['body']),
+      counter: integer(s['counter']),
+      position: triple(s['position'], integer),
+      slot: integer(s['slot']),
+      velocity: triple(s['velocity'], signedInteger)
+    };
+  });
+  if (slots.map(slot => slot.slot).join() !== '8,11,15') {
+    fail('the encounter block carries slots 8, 11 and 15');
+  }
+  return { constants, evidence: string(e['evidence']), slots };
+};
 const craft = (value: unknown): Craft => {
   const c = fields(value, [
     'arithmetic',
     'bodies',
     'boot',
     'constants',
+    'encounter',
     'evidence',
     'noise',
     'slots',
@@ -1893,6 +1988,7 @@ const craft = (value: unknown): Craft => {
       };
     })(),
     constants,
+    encounter: encounter(c['encounter']),
     evidence: string(c['evidence']),
     noise: (() => {
       const noise = fields(c['noise'], [

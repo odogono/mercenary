@@ -33,6 +33,14 @@ import {
   type DisplayCells
 } from './display.ts';
 import type { ErisPresentationDocument } from './documents.ts';
+import {
+  encounterPass,
+  encounterProgram,
+  poolObjectShown,
+  type EncounterProgram,
+  type Pool,
+  type PoolObject
+} from './encounter.ts';
 import { classifyPosition, type LandSea } from './islands.ts';
 import { walk, type WalkRules } from './mover.ts';
 import {
@@ -67,10 +75,12 @@ import {
   presentSystemMessage,
   runFrame,
   stepNoise,
+  zapNoise,
   type Effect,
   type Presenting,
   type ScriptRules,
-  type ScriptState
+  type ScriptState,
+  type SystemMessageId
 } from './script.ts';
 import {
   SCRIPT_FOR_TRIGGER,
@@ -173,6 +183,8 @@ export interface DamoclesSnapshot {
   readonly pose: Pose;
   readonly residence: readonly ResidenceDeparture[];
   readonly residents: readonly ErisPlacement[];
+  /// What the TOLOSA encounter's zap, its flashes and the death state do to the screen (#581).
+  readonly screen: DamoclesScreen;
   readonly scrollCounter: number;
   readonly selection: Selection;
   readonly structure: BoundStructureSnapshot | null;
@@ -183,6 +195,19 @@ export interface DamoclesSnapshot {
 }
 
 export type { Residence, ResidenceDeparture } from './residence.ts';
+
+/// The screen effects of the TOLOSA encounter (#581, ADR 0055), as the session's clock has them.
+export interface DamoclesScreen {
+  /// The death loop has cleared the view and named the Body VOID (`$050FF8`).
+  readonly dead: boolean;
+  /// Fade steps taken, each one level off every palette component (`$050FAC`), 0 to 8.
+  readonly fade: number;
+  /// The zap's palette-noise loop `$050ECC` is running, and the main loop with it is blocked.
+  readonly noise: boolean;
+  /// The VBL handler shifted a set bit out of the flash word `$51D24` this tick, and painted the
+  /// view white.
+  readonly white: boolean;
+}
 
 /// What the panel and the console read of the craft aboard.
 export interface DamoclesCraftSnapshot {
@@ -350,7 +375,8 @@ const scriptForSave = (script: ScriptState): DamoclesSaveScript => ({
   message: script.message,
   noise: script.noise,
   pending: script.pending,
-  triggers: script.triggers.map(({ armed, index }) => ({ armed, index }))
+  triggers: script.triggers.map(({ armed, index }) => ({ armed, index })),
+  zaps: script.zaps
 });
 
 /// The workspace origin a Body's admitted arrival Pose publishes, if it has one.
@@ -372,6 +398,9 @@ const surfaceOriginFor = (
   workspaceOriginFor(content, bodyId) ??
   (landsOn(content.catalogue, bodyId) ? { x: 0, z: 0 } : undefined);
 
+/// A position on a Body as `$7AB2` holds it, masked to the surface's 28 bits (`$058F64`).
+const surfaceLong = (value: number): number => (value >>> 0) & 0x0f_ff_ff_ff;
+
 /// The single owner of Damocles's Session State.
 ///
 /// Time reaches it as seconds and is stepped at no more than the shared `MAXIMUM_STEP`, so a
@@ -381,6 +410,9 @@ export class DamoclesSession implements TitleSession<
   DamoclesSaveSnapshot
 > {
   intent: Intent = IDLE;
+  /// The fire button, bit 7 of the joystick softcopy `$79C2`: held, not pressed. The launcher
+  /// fires whenever it is held and the player's shot is not in flight (#581).
+  firing = false;
 
   private readonly content: DamoclesContent;
   private readonly negateModelZ: boolean;
@@ -453,6 +485,19 @@ export class DamoclesSession implements TitleSession<
   private angleBytes = new Map<string, number>();
   /// The craft pass's published numbers, or null in a document that carries none.
   private readonly craftProgram: CraftProgram | null;
+  /// The TOLOSA encounter's published numbers, or null in a document that carries none.
+  private readonly encounterProgram: EncounterProgram | null;
+  /// Slots 8, 11 and 15 of the moving-object pool (#581).
+  private pool: Pool | null;
+  /// Ticks since a zap began, or null while the player is alive. A zap blocks the main loop for
+  /// the noise loop, then the death sequence fades the view and the loop waits for a restore.
+  private death: number | null = null;
+  /// Whether the death loop's `$21` has been presented.
+  private deathMessage = false;
+  /// `$51D24`, the flash word the VBL handler shifts left each tick, and whether the bit it shifted
+  /// out this tick was set.
+  private flashWord = 0;
+  private flashWhite = false;
   /// The occupied instance's Object Residence departure from before boarding, or undefined where
   /// it had none and stood at its Catalogue residence. Leaving falls back to it where the leave
   /// placement cannot be held. A Save does not carry it, so a session restored aboard falls back to
@@ -506,6 +551,15 @@ export class DamoclesSession implements TitleSession<
       content.catalogue.craft === null
         ? null
         : craftProgram(content.catalogue.craft);
+    this.encounterProgram =
+      content.catalogue.craft === null
+        ? null
+        : encounterProgram(content.catalogue.craft);
+    this.pool =
+      restore?.encounter?.pool ?? this.encounterProgram?.initial ?? null;
+    if (restore?.encounter?.dead === true) {
+      this.death = this.deathEnd();
+    }
     const boot = content.catalogue.craft?.boot;
     this.spaceMemory = {
       nearest: boot?.nearest.value ?? 0,
@@ -1129,8 +1183,13 @@ export class DamoclesSession implements TitleSession<
         seen.add(placement.id);
       }
     }
+    // Authored (ADR 0055): a moving object is drawn but never selected. Whether a shot left in
+    // the air by leaving the craft can be taken on foot is unrecovered.
+    const pooled = new Set(
+      this.poolObjects().map(([slot]) => `object-slot-${slot}`)
+    );
     for (const resident of this.visibleResidents()) {
-      if (seen.has(resident.id)) {
+      if (seen.has(resident.id) || pooled.has(resident.id)) {
         continue;
       }
       candidates.push({ id: resident.id, position: resident.position });
@@ -1214,40 +1273,10 @@ export class DamoclesSession implements TitleSession<
       if (position === null) {
         continue;
       }
-      const model = this.content.models.peek(instance.model);
-      if (model === undefined) {
-        // Drawn once its file lands: residents are recomputed every snapshot.
-        void this.content.models.prefetch([instance.model]);
+      const placement = this.residentPlacement(instance, position);
+      if (placement === undefined) {
         continue;
       }
-      const form =
-        model.variants.find(variant => variant.id === model.id) ??
-        model.variants[0];
-      const base = this.surface.placements.find(
-        placement => placement.id === instance.id
-      );
-      const placement: ErisPlacement = {
-        faceCount: form?.mesh.faces.length ?? 0,
-        // A structure resident has no surface placement; it turns by its own instance angle
-        // byte in the parent's frame, which structures never rotate (#361).
-        heading:
-          this.angleBytes.has(instance.id) || base === undefined
-            ? placementHeading(
-                model,
-                this.angleBytes.get(instance.id) ??
-                  instance.placement?.heading ??
-                  null
-              )
-            : base.heading,
-        id: instance.id,
-        keyBase: instance.keyBase,
-        kind: model.kind,
-        mesh: form?.mesh,
-        modelId: model.id,
-        name: model.name,
-        position,
-        status: model.status
-      };
       // One insertion is one drawn copy, and `worldPosition` has already refused zero.
       const copies =
         residence.kind === 'structure'
@@ -1255,7 +1284,78 @@ export class DamoclesSession implements TitleSession<
           : 1;
       residents.push(...Array.from({ length: copies }, () => placement));
     }
+    // The moving-object pool (#581): a record stamped with the current Body is drawn where it
+    // flies, as the surface residence list `$52C9C` draws it, and not from an enclosed region.
+    for (const [slot, object] of this.poolObjects()) {
+      if (enclosed || !poolObjectShown(object, this.selector())) {
+        continue;
+      }
+      const instance = this.instanceFor(`object-slot-${slot}`);
+      const placement =
+        instance === undefined
+          ? undefined
+          : this.residentPlacement(instance, {
+              x: object.position[0],
+              y: object.position[1] | 0,
+              z: object.position[2]
+            });
+      if (placement !== undefined) {
+        residents.push(placement);
+      }
+    }
     return residents;
+  }
+
+  private poolObjects(): readonly (readonly [number, PoolObject])[] {
+    const pool = this.pool;
+    return pool === null
+      ? []
+      : [
+          [8, pool.shot],
+          [11, pool.ship],
+          [15, pool.shipShot]
+        ];
+  }
+
+  /// A resident drawn at `position` in its Model's own form, once the Model is in hand.
+  private residentPlacement(
+    instance: NonNullable<ReturnType<DamoclesSession['instanceFor']>>,
+    position: Vector3
+  ): ErisPlacement | undefined {
+    const model = this.content.models.peek(instance.model);
+    if (model === undefined) {
+      // Drawn once its file lands: residents are recomputed every snapshot.
+      void this.content.models.prefetch([instance.model]);
+      return undefined;
+    }
+    const form =
+      model.variants.find(variant => variant.id === model.id) ??
+      model.variants[0];
+    const base = this.surface.placements.find(
+      placement => placement.id === instance.id
+    );
+    return {
+      faceCount: form?.mesh.faces.length ?? 0,
+      // A structure resident has no surface placement; it turns by its own instance angle
+      // byte in the parent's frame, which structures never rotate (#361).
+      heading:
+        this.angleBytes.has(instance.id) || base === undefined
+          ? placementHeading(
+              model,
+              this.angleBytes.get(instance.id) ??
+                instance.placement?.heading ??
+                null
+            )
+          : base.heading,
+      id: instance.id,
+      keyBase: instance.keyBase,
+      kind: model.kind,
+      mesh: form?.mesh,
+      modelId: model.id,
+      name: model.name,
+      position,
+      status: model.status
+    };
   }
 
   private inventoryLabel(): string {
@@ -1277,9 +1377,11 @@ export class DamoclesSession implements TitleSession<
   /// The Catalogue's name for the Body underfoot, falling back to its id so a Body the
   /// Catalogue does not name still reads as something a player can act on.
   private bodyName(): string {
-    const body = this.content.catalogue.bodies.find(
-      item => item.id === this.pose.body
-    );
+    // `$050FF8`: the death loop names the Body by the selector it writes, VOID's.
+    const id = this.screen().dead
+      ? `body-${(this.encounterProgram?.constants.deathSelector ?? 0) / 4}`
+      : this.pose.body;
+    const body = this.content.catalogue.bodies.find(item => item.id === id);
     return (body?.name ?? this.pose.body).toUpperCase();
   }
 
@@ -1362,16 +1464,7 @@ export class DamoclesSession implements TitleSession<
     return this.liveCarriedSlot(placement.keyBase + attachment.keyIndex);
   }
 
-  private presentSystem(
-    id:
-      | 'system-string-0'
-      | 'system-string-1'
-      | 'system-string-2'
-      | 'system-string-21'
-      | 'system-string-22'
-      | 'system-string-3'
-      | 'system-string-9'
-  ): void {
+  private presentSystem(id: SystemMessageId): void {
     if (this.script.execution === null && this.script.message === null) {
       const transition = presentSystemMessage(
         this.script,
@@ -1430,6 +1523,7 @@ export class DamoclesSession implements TitleSession<
         residence
       })),
       residents: this.visibleResidents(),
+      screen: this.screen(),
       scrollCounter: this.scrollCounter,
       selection: this.selection(),
       structure: this.structureSnapshot(),
@@ -1442,17 +1536,20 @@ export class DamoclesSession implements TitleSession<
     let remaining = Math.max(0, seconds);
     while (remaining > 0) {
       const step = Math.min(MAXIMUM_STEP, remaining);
-      // Aboard, the craft Mover moves the Pose once a pass, on the frame clock below.
+      // Aboard, the craft Mover moves the Pose once a pass, on the frame clock below. From a zap
+      // on, the main loop is blocked in the noise loop and then the death loop, so nothing moves.
       const aboard = this.occupied !== null;
-      const moved = aboard
-        ? this.pose
-        : walk(this.pose, this.intent, step, this.rules);
+      const frozen = this.death !== null;
+      const moved =
+        aboard || frozen
+          ? this.pose
+          : walk(this.pose, this.intent, step, this.rules);
       this.bindAt(moved);
       const placement = this.boundPlacement;
       // `$059520` clears `$5A646` every frame, and only the clamp raises it.
       let refused = false;
       // Aboard there is no step to clamp: `$0590AE` refuses a craft instead.
-      if (!aboard) {
+      if (!aboard && !frozen) {
         if (
           placement !== null &&
           insideCentralCellHalf(moved.position, this.surface.grid)
@@ -1488,6 +1585,11 @@ export class DamoclesSession implements TitleSession<
         const transition = runFrame(this.script, this.scriptRules);
         this.script = transition.state;
         this.effects.push(...transition.effects);
+        this.tickFlash();
+        if (this.death !== null) {
+          this.tickDeath();
+          continue;
+        }
         if (this.occupied === null) {
           this.tickFoot();
         } else {
@@ -1522,6 +1624,10 @@ export class DamoclesSession implements TitleSession<
       craft: this.craftForSave(),
       doorsMoving: this.doorsMoving,
       elapsed: this.elapsed,
+      encounter:
+        this.pool === null
+          ? null
+          : { dead: this.death !== null, pool: this.pool },
       footTicks: this.footTicks,
       frameAccumulator: this.frameAccumulator,
       occupancy: this.occupancy,
@@ -1892,19 +1998,24 @@ export class DamoclesSession implements TitleSession<
     this.bindAt(this.pose);
     // Authored, as boarding's: the region is taken afresh where the craft now stands.
     this.regionIndex = this.regionAt(this.pose);
-    switch (frame.outcome) {
-      case 'refused':
-        // `$05975A`–`$059760`: the bump on sound channel B.
-        this.effects.push({ cue: 'bump', type: 'sound-request' });
-        break;
-      case 'landed':
-        this.touchDown();
-        break;
-      case 'space':
-        this.enterSpace(frame.state);
-        break;
-      case 'moved':
-        break;
+    if (frame.outcome === 'space') {
+      // `$05976A`–`$059776`: into space, and back to the join without the pool.
+      this.enterSpace(frame.state);
+      return;
+    }
+    if (frame.outcome === 'refused') {
+      // `$05975A`–`$059760`: the bump on sound channel B.
+      this.effects.push({ cue: 'bump', type: 'sound-request' });
+    }
+    // `$05987A`: the fire launcher, the stepper and the attack routine, after the pass and the
+    // draw. The landing handler leaves the craft inside the pass, so a hard touchdown on land
+    // runs the pool on foot, where the launcher refuses.
+    const landedOnLand =
+      frame.outcome === 'landed' &&
+      classifyPosition(this.surface, this.pose.position).kind !== 'sea';
+    this.runPool(true, !landedOnLand);
+    if (frame.outcome === 'landed') {
+      this.touchDown();
     }
   }
 
@@ -1931,9 +2042,139 @@ export class DamoclesSession implements TitleSession<
       range: frame.space.range
     };
     this.pose = this.spacePose(frame.craft);
+    // `$059906`: the space path runs the launcher and the stepper, but not the attack routine,
+    // before `$059928` raises an arrival.
+    this.runPool(false, true);
     if (frame.arrival !== null) {
       this.landCraft(program, frame, frame.arrival);
     }
+  }
+
+  /// The body selector `$7AA8`'s low byte, 4 × the Body, and `$FF` in space.
+  private selector(): number {
+    if (this.space !== null) {
+      return 0xff;
+    }
+    return (Number(/^body-(\d+)$/.exec(this.pose.body)?.[1] ?? 0) * 4) & 0xff;
+  }
+
+  /// One pass of the moving-object pool (#581, ADR 0055), from the craft words the pass left.
+  /// The camera is the craft's position: on a Body masked to the surface's 28 bits as `$7AB2` is,
+  /// and in space the space words'.
+  private runPool(attack: boolean, aboard: boolean): void {
+    const program = this.encounterProgram;
+    const craft = this.craft;
+    if (program === null || this.pool === null || craft === null) {
+      return;
+    }
+    const space = this.space;
+    const camera: readonly [number, number, number] =
+      space === null
+        ? [surfaceLong(craft.x), craft.y >>> 0, surfaceLong(craft.z)]
+        : [space.x >>> 0, space.y >>> 0, space.z >>> 0];
+    const selector = this.selector();
+    const result = encounterPass(program, this.pool, {
+      attack,
+      bodyByte: selector,
+      camera,
+      firing: aboard && this.firing,
+      gate: this.script.encounter,
+      selector,
+      space: space !== null,
+      speed: craft.speed,
+      trig: { pitch: craft.pitch & 0x3_ff, yaw: craft.yaw & 0x3_ff }
+    });
+    this.pool = result.pool;
+    this.script = { ...this.script, encounter: result.gate };
+    const k = program.constants;
+    for (const event of result.events) {
+      switch (event) {
+        case 'fire':
+          this.effects.push({ cue: 'shot', type: 'sound-request' });
+          break;
+        case 'kill':
+          // `$050B4A`–`$050B64`: the shot programme, the short flash and `$31` through the
+          // shortened helper `$054808`.
+          this.effects.push({ cue: 'shot', type: 'sound-request' });
+          this.flashWord = k.killFlash & 0xff_ff;
+          this.presentSystem(
+            `system-string-${k.killString}` as SystemMessageId
+          );
+          break;
+        case 'ship-fire':
+          this.effects.push({ cue: 'thud', type: 'sound-request' });
+          break;
+        case 'steer':
+          break;
+        case 'zap':
+          // `$050DFA`–`$050E0A`: the zapped programme, then the noise loop, which turns one table
+          // word. The string, the flash and the death state follow once it returns.
+          this.effects.push({ cue: 'zap', type: 'sound-request' });
+          this.script = zapNoise(this.script);
+          this.death = 0;
+          this.deathMessage = false;
+          break;
+      }
+    }
+  }
+
+  /// `$051D74`–`$051D94`, in the VBL handler: the flash word shifts left once a tick, and a set
+  /// bit shifted out paints the view white for that tick.
+  private tickFlash(): void {
+    this.flashWhite = (this.flashWord & 0x80_00) !== 0;
+    this.flashWord = (this.flashWord << 1) & 0xff_ff;
+  }
+
+  /// The ticks from a zap to the death loop: the noise loop, then the fade's steps, each after
+  /// its VBL waits (`$050FAC`–`$050FF4`).
+  private deathEnd(): number {
+    const k = this.encounterProgram!.constants;
+    return (
+      this.content.doc.time.zapNoiseTicks + (k.fadeSteps + 1) * (k.fadeWait + 1)
+    );
+  }
+
+  /// One tick from a zap on. The noise loop returns into the rest of the zap, which presents
+  /// `$30` and sets the flash word, and the next pass enters the death sequence at once. Once
+  /// the fade has run, the loop at `$051016` presents `$21` as soon as the row is free
+  /// (`$05509C` waits for it) and then waits for a restore.
+  private tickDeath(): void {
+    const k = this.encounterProgram!.constants;
+    const noise = this.content.doc.time.zapNoiseTicks;
+    const death = this.death!;
+    if (death === noise) {
+      this.presentSystem(`system-string-${k.zapString}` as SystemMessageId);
+      this.flashWord = k.zapFlash & 0xff_ff;
+    }
+    if (death >= this.deathEnd()) {
+      if (!this.deathMessage && this.script.message === null) {
+        this.presentSystem(`system-string-${k.deathString}` as SystemMessageId);
+        this.deathMessage = this.script.message !== null;
+      }
+      return;
+    }
+    this.death = death + 1;
+  }
+
+  private screen(): DamoclesScreen {
+    const death = this.death;
+    if (death === null || this.encounterProgram === null) {
+      return { dead: false, fade: 0, noise: false, white: this.flashWhite };
+    }
+    const k = this.encounterProgram.constants;
+    const noise = this.content.doc.time.zapNoiseTicks;
+    return {
+      dead: death >= this.deathEnd(),
+      fade:
+        death < noise
+          ? 0
+          : Math.min(
+              k.fadeSteps + 1,
+              Math.floor((death - noise) / (k.fadeWait + 1))
+            ),
+      noise: death < noise,
+      white: this.flashWhite
+    };
   }
 
   /// `$059268`, the frame an arrival is raised: aboard over the landing point `$04E936` on the
@@ -2014,7 +2255,12 @@ export class DamoclesSession implements TitleSession<
   launchCraft(): void {
     const program = this.craftProgram;
     const craft = this.craft;
-    if (program === null || craft === null || this.craftHeld !== null) {
+    if (
+      program === null ||
+      craft === null ||
+      this.craftHeld !== null ||
+      this.death !== null
+    ) {
       return;
     }
     const result = launch(
@@ -2059,7 +2305,7 @@ export class DamoclesSession implements TitleSession<
   throttleKey(scancode: number): void {
     const program = this.craftProgram;
     const craft = this.craft;
-    if (program === null || craft === null) {
+    if (program === null || craft === null || this.death !== null) {
       return;
     }
     const entry = program.throttleKeys.find(
@@ -2080,7 +2326,7 @@ export class DamoclesSession implements TitleSession<
   throttleScale(direction: -1 | 1): void {
     const program = this.craftProgram;
     const craft = this.craft;
-    if (program === null || craft === null) {
+    if (program === null || craft === null || this.death !== null) {
       return;
     }
     const next =
@@ -2096,6 +2342,10 @@ export class DamoclesSession implements TitleSession<
   /// (docs/design/damocles-boarding-admission.md). The first that fails decides; every refusal
   /// but the key test's is silent and changes nothing.
   board(): { readonly kind: 'boarded' | 'refused' } {
+    // From a zap on, the main loop reads no key but the death loop's.
+    if (this.death !== null) {
+      return { kind: 'refused' };
+    }
     // 1. The nearest drawn object is inside the board reach, which is not the Take's.
     const selected = this.nearestCandidate(BOARD_REACH);
     // 2. The Selection names an instance. Slot 0 is no published instance.
@@ -2179,7 +2429,7 @@ export class DamoclesSession implements TitleSession<
   leave(): { readonly kind: 'left' | 'refused' } {
     // 1. Aboard.
     const instance = this.occupied;
-    if (instance === null) {
+    if (instance === null || this.death !== null) {
       return { kind: 'refused' };
     }
     // 2. The occupied object is in ground contact `$7ACA` ($0544A8).
@@ -2225,7 +2475,7 @@ export class DamoclesSession implements TitleSession<
 
   take(): { readonly kind: 'refused' | 'took' } {
     // Authored: no capture shows a Take completing aboard (#407).
-    if (this.occupied !== null) {
+    if (this.occupied !== null || this.death !== null) {
       return { kind: 'refused' };
     }
     const selection = this.selection();
@@ -2303,7 +2553,11 @@ export class DamoclesSession implements TitleSession<
   }
 
   rotateForward(): { readonly kind: 'refused' | 'rotated' } {
-    if (this.scrollCounter !== 0 || this.carried.length === 0) {
+    if (
+      this.scrollCounter !== 0 ||
+      this.carried.length === 0 ||
+      this.death !== null
+    ) {
       return { kind: 'refused' };
     }
     const [head, ...rest] = this.carried;
@@ -2316,7 +2570,11 @@ export class DamoclesSession implements TitleSession<
   }
 
   rotateBackward(): { readonly kind: 'refused' | 'rotated' } {
-    if (this.scrollCounter !== 0 || this.carried.length === 0) {
+    if (
+      this.scrollCounter !== 0 ||
+      this.carried.length === 0 ||
+      this.death !== null
+    ) {
       return { kind: 'refused' };
     }
     const tail = this.carried.at(-1)!;
@@ -2507,7 +2765,8 @@ export class DamoclesSession implements TitleSession<
     if (
       head === undefined ||
       this.pose.body === VOID_BODY ||
-      this.scrollCounter !== 0
+      this.scrollCounter !== 0 ||
+      this.death !== null
     ) {
       return { kind: 'refused' };
     }
@@ -2825,6 +3084,9 @@ export class DamoclesSession implements TitleSession<
   } {
     if (!this.inLift) {
       return { kind: 'noLift' };
+    }
+    if (this.death !== null) {
+      return { kind: 'refused' };
     }
     const ground = this.groundPlacement();
     if (

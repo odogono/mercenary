@@ -209,6 +209,19 @@ describe('the browser Control Profile', () => {
     expect(calls).toEqual(['fire']);
   });
 
+  test('F is held until it is released, for a fire read as a level', () => {
+    const { profile } = harness();
+
+    expect(profile.firing).toBeFalse();
+    profile.keyDown(input('KeyF'));
+    expect(profile.firing).toBeTrue();
+    expect(profile.keyUp(input('KeyF'))).toBeTrue();
+    expect(profile.firing).toBeFalse();
+    profile.keyDown(input('KeyF'));
+    profile.releaseAll();
+    expect(profile.firing).toBeFalse();
+  });
+
   test('space keeps both its meanings and gains no third', () => {
     const { calls, profile, setOccupancy } = harness();
 

@@ -103,9 +103,16 @@ import type { Pose } from './world.ts';
 /// record is migrated at phase 0 with its own pointer: it was saved by a port that held the
 /// pointer on foot, so any phase is one it could have reached. Schemas 11 to 13 now migrate with
 /// the pointer a New Game starts at, `NEW_GAME_NOISE`.
-export const DAMOCLES_SAVE_SCHEMA_VERSION = 15 as const;
+///
+/// Version 16 carries the TOLOSA encounter (#581, ADR 0055): the pool's records for slots 8, 11
+/// and 15, whether the player is dead, and the noise words zaps have turned. The original's save
+/// covers the pool and `$7A64` but not the table; carrying the turned words makes a restored draw
+/// the one an uninterrupted run makes, as the pointer's does. A schema-15 record or older is
+/// migrated alive, with no word turned and the pool the first world's: no earlier port ran the
+/// pool, so its records stood where the first world left them.
+export const DAMOCLES_SAVE_SCHEMA_VERSION = 16 as const;
 /// The older schemas a restore migrates rather than refuses.
-const MIGRATED_SCHEMA_VERSIONS: readonly unknown[] = [11, 12, 13, 14];
+const MIGRATED_SCHEMA_VERSIONS: readonly unknown[] = [11, 12, 13, 14, 15];
 /// The schemas from before the landing messages (#576), which carry no landing trigger.
 const PRE_LANDING_SCHEMA_VERSIONS: readonly unknown[] = [11, 12, 13];
 export const DAMOCLES_DESTINATION = 'damocles' as const;
@@ -237,6 +244,9 @@ export interface DamoclesSaveSnapshot {
   /// `$5A9D9`: whether any door moved on the last pass.
   readonly doorsMoving: boolean;
   readonly elapsed: number;
+  /// The TOLOSA encounter, or null for the first world's pool with the player alive, as a
+  /// migrated record resumes with.
+  readonly encounter: DamoclesSaveEncounter | null;
   /// On foot, ticks since the last main-loop pass, below `time.ticksPerPassOnFoot` (ADR 0054).
   readonly footTicks: number;
   readonly frameAccumulator: number;
@@ -280,6 +290,27 @@ export interface DamoclesSaveScript {
     readonly armed: boolean;
     readonly index: number;
   }[];
+  /// The noise words zaps have turned, one entry a zap.
+  readonly zaps: readonly number[];
+}
+
+/// One moving-object pool record (`$612A`, `$614A`–`$618A`, `$63A8`–`$6BA8` and Association B's
+/// byte 0 at slot × 4).
+export interface DamoclesSavePoolObject {
+  readonly body: number;
+  readonly counter: number;
+  readonly position: readonly [number, number, number];
+  readonly velocity: readonly [number, number, number];
+}
+
+/// The TOLOSA encounter (#581): the pool, and whether a zap has killed the player (`$7A64` = 1).
+export interface DamoclesSaveEncounter {
+  readonly dead: boolean;
+  readonly pool: {
+    readonly ship: DamoclesSavePoolObject;
+    readonly shipShot: DamoclesSavePoolObject;
+    readonly shot: DamoclesSavePoolObject;
+  };
 }
 
 export const initialDamoclesSaveScript = (): DamoclesSaveScript => {
@@ -294,7 +325,8 @@ export const initialDamoclesSaveScript = (): DamoclesSaveScript => {
     message: script.message,
     noise: script.noise,
     pending: script.pending,
-    triggers: script.triggers.map(({ armed, index }) => ({ armed, index }))
+    triggers: script.triggers.map(({ armed, index }) => ({ armed, index })),
+    zaps: script.zaps
   };
 };
 
@@ -502,6 +534,9 @@ const messageIds = new Set<DamoclesMessageId>([
   'system-string-21',
   'system-string-22',
   'system-string-3',
+  'system-string-33',
+  'system-string-48',
+  'system-string-49',
   'system-string-50',
   'system-string-9'
 ]);
@@ -761,7 +796,8 @@ const executionOf = (value: unknown): Execution | null => {
 const scriptOf = (
   value: unknown,
   strings: DamoclesStrings | undefined,
-  migrated: boolean
+  migrated: boolean,
+  current: boolean
 ): DamoclesSaveScript => {
   const script = object(value, 'snapshot.script');
   const counter = integer(
@@ -821,18 +857,16 @@ const scriptOf = (
   const noise = migrated
     ? NEW_GAME_NOISE
     : integer(script['noise'], 'snapshot.script.noise', 0, NOISE_WORDS - 1);
-  // Only TOLOSA's script writes either, and it sets the flag before it arms the gate. So an
-  // armed gate needs the flag, and the flag needs the gate unless TOLOSA's script is between
-  // the two.
-  const tolosa = SCRIPT_FOR_TRIGGER[0x38];
-  const tolosaRunning =
-    execution?.script === tolosa ||
-    (execution?.returnStack.some(frame => frame.script === tolosa) ?? false);
-  if (
-    (encounter !== 0 && (flags & TOLOSA_VISITED_FLAG) === 0) ||
-    ((flags & TOLOSA_VISITED_FLAG) !== 0 && encounter === 0 && !tolosaRunning)
-  ) {
-    return fail('the encounter gate and the TOLOSA flag disagree');
+  const zaps = current
+    ? array(script['zaps'], 'snapshot.script.zaps').map(word =>
+        integer(word, 'snapshot.script.zaps[]', 0, NOISE_WORDS - 1)
+      )
+    : [];
+  // Only TOLOSA's script arms the gate, and it sets the flag first, so an armed gate needs the
+  // flag. A kill or a zap clears the gate and leaves the flag (#581), so the flag no longer
+  // needs the gate.
+  if (encounter !== 0 && (flags & TOLOSA_VISITED_FLAG) === 0) {
+    return fail('the encounter gate is armed but TOLOSA was never visited');
   }
   // A one-shot trigger is disarmed as its script launches, so it cannot be armed while that
   // script is running.
@@ -909,6 +943,9 @@ const scriptOf = (
       'system-string-21',
       'system-string-22',
       'system-string-3',
+      'system-string-33',
+      'system-string-48',
+      'system-string-49',
       'system-string-9'
     ].includes(message.id)
   ) {
@@ -927,7 +964,75 @@ const scriptOf = (
     message,
     noise,
     pending,
-    triggers: table
+    triggers: table,
+    zaps
+  };
+};
+
+const poolObjectOf = (
+  value: unknown,
+  path: string,
+  counters: (counter: number) => boolean
+): DamoclesSavePoolObject => {
+  const record = object(value, path);
+  const longs = (key: string, minimum: number, maximum: number) => {
+    const items = array(record[key], `${path}.${key}`).map(item =>
+      integer(item, `${path}.${key}[]`, minimum, maximum)
+    );
+    return items.length === 3
+      ? ([items[0]!, items[1]!, items[2]!] as const)
+      : fail(`${path}.${key} must hold three longs`);
+  };
+  const counter = integer(record['counter'], `${path}.counter`, 0, 0xff_ff);
+  if (!counters(counter)) {
+    return fail(`${path}.counter is not one the pool reaches`);
+  }
+  return {
+    body: integer(record['body'], `${path}.body`, 0, 0xff),
+    counter,
+    position: longs('position', 0, 0xff_ff_ff_ff),
+    velocity: longs('velocity', -0x80_00_00_00, 0x7f_ff_ff_ff)
+  };
+};
+
+/// A shot flies 32 steps; the ship coasts from `$805A` down to `$8000`, holds at `$7FFF`, or has
+/// never been placed or was downed (0).
+const shotCounter = (counter: number): boolean => counter <= 0x20;
+const shipCounter = (counter: number): boolean =>
+  counter === 0 ||
+  counter === 0x7f_ff ||
+  (counter >= 0x80_00 && counter <= 0x80_5a);
+
+const encounterOf = (value: unknown, gate: number): DamoclesSaveEncounter => {
+  const encounter = object(value, 'snapshot.encounter');
+  if (typeof encounter['dead'] !== 'boolean') {
+    return fail('snapshot.encounter.dead must be a boolean');
+  }
+  const pool = object(encounter['pool'], 'snapshot.encounter.pool');
+  const dead = encounter['dead'];
+  // Only a zap kills, and it clears the gate as it does.
+  if (dead && gate !== 0) {
+    return fail('a dead player with the encounter gate armed');
+  }
+  return {
+    dead,
+    pool: {
+      ship: poolObjectOf(
+        pool['ship'],
+        'snapshot.encounter.pool.ship',
+        shipCounter
+      ),
+      shipShot: poolObjectOf(
+        pool['shipShot'],
+        'snapshot.encounter.pool.shipShot',
+        shotCounter
+      ),
+      shot: poolObjectOf(
+        pool['shot'],
+        'snapshot.encounter.pool.shot',
+        shotCounter
+      )
+    }
   };
 };
 
@@ -1239,13 +1344,22 @@ export const decodeDamoclesSave = (
     -16,
     16
   );
+  const current = record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION;
   const script = scriptOf(
     snapshot['script'],
     strings,
-    PRE_LANDING_SCHEMA_VERSIONS.includes(record['schemaVersion'])
+    PRE_LANDING_SCHEMA_VERSIONS.includes(record['schemaVersion']),
+    current
   );
+  // Null is the first world's pool with the player alive, which is also what a migrated record
+  // resumes with.
+  const encounter =
+    current && snapshot['encounter'] !== null
+      ? encounterOf(snapshot['encounter'], script.encounter)
+      : null;
   const footTicks =
-    record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION
+    record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION ||
+    record['schemaVersion'] === 15
       ? integer(snapshot['footTicks'], 'snapshot.footTicks', 0, 255)
       : 0;
   // An armed trigger requires its object to be at its Catalogue placement and absent from the
@@ -1356,6 +1470,7 @@ export const decodeDamoclesSave = (
       craft,
       doorsMoving,
       elapsed: snapshot['elapsed'],
+      encounter,
       footTicks,
       frameAccumulator,
       occupancy,

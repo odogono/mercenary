@@ -2357,6 +2357,70 @@ CRAFT_BOOT_WORDS = {'range': 0x791C, 'nearest': 0x7924, 'pitchRate': 0x7974}
 CRAFT_NOISE_TABLE = (0x77000, 0x78000)
 
 
+# The TOLOSA encounter's moving-object pool (#581): the fire launcher $050B96, the stepper
+# $050ABC and the attack routine $050D80, which the aboard frame path calls in turn at $05987A.
+# Each constant is an instruction's operand, checked and read as the craft pass's are. The pool
+# records are the resident arrays at slot * 4; only slots 8, 11 and 15 are ever written, and the
+# first world's are the stale records a New Game starts from
+# (docs/research/damocles-tolosa-encounter.md).
+ENCOUNTER_INSTRUCTIONS = {
+    'shotSteps': (0x50BCE, '317c0020612a', 2, 2, False),
+    'shotSpeedBias': (0x50BE4, '2a3c000a1f00', 2, 4, False),
+    'killBox': (0x50B3C, '223c00000400', 2, 4, False),
+    'killFlash': (0x50B5A, '33fcaa0000051d24', 2, 2, False),
+    'window': (0x50D98, '223c00003000', 2, 4, False),
+    'shipShotSteps': (0x50DB4, '397c0020612a', 2, 2, False),
+    'shipShotShift': (0x50DC4, '7004', 1, 1, False),
+    'zapBox': (0x50DEC, '223c00000400', 2, 4, False),
+    'zapFlash': (0x50E32, '33fcaaaa00051d24', 2, 2, False),
+    'steerShift': (0x50E46, '7006', 1, 1, False),
+    'coast': (0x50E50, '397c805a612a', 2, 2, False),
+    'hold': (0x50AC8, '0c407fff', 2, 2, False),
+    'zapString': (0x50E14, '7230', 1, 1, False),
+    'killString': (0x50B62, '7231', 1, 1, False),
+    # The death sequence $050F9E: dbra counts of the fade's steps and of the VBL waits before
+    # each, the selector VOID is shown with, and the string the loop at $051016 waits under.
+    'fadeSteps': (0x50FAC, '7e07', 1, 1, False),
+    'fadeWait': (0x50FAE, '7007', 1, 1, False),
+    'deathSelector': (0x50FF8, '31fc00787aa8', 2, 2, False),
+    'deathString': (0x51010, '7221', 1, 1, False),
+}
+ENCOUNTER_SLOTS = (8, 11, 15)
+POOL_COUNTER, POOL_VELOCITY, POOL_POSITION, POOL_ASSOCIATION_B = 0x612A, (0x614A, 0x616A, 0x618A), (0x63A8, 0x67A8, 0x6BA8), 0x73A8
+
+
+def decode_encounter(data: bytes) -> dict:
+    """The pool's constants and the first world's records for slots 8, 11 and 15."""
+    def operand(name: str) -> int:
+        address, instruction, offset, size, signed = ENCOUNTER_INSTRUCTIONS[name]
+        expected = bytearray.fromhex(instruction)
+        window = bytearray(data[address:address + len(expected)])
+        window[offset:offset + size] = expected[offset:offset + size] = bytes(size)
+        if window != expected:
+            raise ValueError(f'not the recovered encounter instruction {name} at ${address:06X}')
+        return int.from_bytes(data[address + offset:address + offset + size], 'big', signed=signed)
+
+    def long(address: int, signed: bool) -> int:
+        return int.from_bytes(data[address:address + 4], 'big', signed=signed)
+
+    slots = []
+    for slot in ENCOUNTER_SLOTS:
+        o = 4 * slot
+        slots.append({
+            'slot': slot,
+            'counter': int.from_bytes(data[POOL_COUNTER + o:POOL_COUNTER + o + 2], 'big'),
+            'body': data[POOL_ASSOCIATION_B + o],
+            'position': [long(base + o, False) for base in POOL_POSITION],
+            'velocity': [long(base + o, True) for base in POOL_VELOCITY],
+        })
+    return {
+        'evidence': 'docs/research/damocles-tolosa-encounter.md',
+        'constants': {name: {'address': spec[0], 'operand': operand(name)}
+                      for name, spec in ENCOUNTER_INSTRUCTIONS.items()},
+        'slots': slots,
+    }
+
+
 def craft_log_table() -> dict[int, int]:
     """The log table by address: log2 of the mantissa as a 12-bit fraction in the top twelve
     bits, capped below 1.0, with bit 0 the mantissa's sign. The port generates it from this rule,
@@ -2469,6 +2533,7 @@ def decode_craft(data: bytes) -> dict:
                  for name, address in CRAFT_BOOT_WORDS.items()},
         'noise': {'evidence': 'docs/research/damocles-landing-messages.md',
                   **carried(CRAFT_NOISE_TABLE)},
+        'encounter': decode_encounter(data),
     }
 
 
@@ -5900,7 +5965,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         'Every body surface carries its base colour and the 4096 x 4096 Surface Cell extent $058F64 masks positions onto; both axes wrap, so an extent whose upper bound is below its lower bound is a wrapped span rather than an empty one. The islands collection holds all 62 records of the per-body lists at $04BD1E, one entry a record: origin, coastline vertices and edge words, the backwards extent/core/exclusion boxes, land colour, structure group, the group record it binds and that group\'s area name. A record has no name of its own. 21 records share the coastline-less stub whose extent and core boxes are the whole coordinate plane, so $0560F2 answers core everywhere on those bodies -- land, no sea, no coast. The VOID slot\'s table entry is excluded because VOID is the space-as-place sentinel rather than a body surface. The classifier itself is not replayed here and the nearest-record metric at $056490 is not decoded. A surface placement names the Damocles Island whose origin equals the Structure Workspace origin it was placed against; resident coordinates come from the resident arrays, are already Body Coordinates, and name no record (docs/research/damocles-eris-islands.md, docs/research/damocles-island-census.md).',
         'Every resident slot carries the interaction byte the take handler tests, decoded as handling. Bit 4 refuses silently, bit 5 diverts to the refusal message, and the low nibble is the drop handler\'s rank pair: bits 0-1 are the support rank the slot supplies and bits 2-3 the support rank it requires; bits 6 and 7 are live state and are zero in the pinned capture. Nothing here selects a candidate: which object is selected is the per-frame nearest-drawn rule in docs/research/damocles-object-selection.md, not a catalogue field.',
         'Every resident slot carries boarding, what the board gate answers for it, with the gate\'s constants read from the refusal chooser and gate at $0542E0-$05434F rather than assumed. Boardable is the gate\'s two table facts, the bound at slot 23 and the model guard\'s single-Y-turn orientation command; the reach, region, Occupancy and VOID guards are live state and the key test asks the Carried Stack. Under the bound the chooser outcome, the paired slot at slot + 178 and the refusal string are published even where the model guard refuses, because the key test runs first; a paired slot with no instance is published as missing. No seated eye height is published: boarding puts the eye at the resident position plus 63 for every slot (docs/design/damocles-boarding-admission.md).',
-        'The document carries craft, the craft pass as ADR 0051 runs it: all sixteen Craft Parameter Block entries at $055C80 with the routine class each entry\'s bra.w reaches, the pass\'s constants read as instruction operands with each opcode checked, the throttle key table at $0557D6, and the exponent and sine tables. The log table is checked against the rule the port regenerates it from and published only as a digest. The entries\' unread words +10 and +18 are left out (docs/research/damocles-craft-control.md). Since #566 it also carries the launch, swing, space entry and space pass constants, the landing\'s arctan byte table and octant words, and the Body table the range scan $052DB0 walks (docs/research/damocles-space-flight.md). Since #576 it also carries the noise table at $77000, which the main loop steps a word a pass and the landing scripts\' random skip reads (docs/research/damocles-landing-messages.md).',
+        'The document carries craft, the craft pass as ADR 0051 runs it: all sixteen Craft Parameter Block entries at $055C80 with the routine class each entry\'s bra.w reaches, the pass\'s constants read as instruction operands with each opcode checked, the throttle key table at $0557D6, and the exponent and sine tables. The log table is checked against the rule the port regenerates it from and published only as a digest. The entries\' unread words +10 and +18 are left out (docs/research/damocles-craft-control.md). Since #566 it also carries the launch, swing, space entry and space pass constants, the landing\'s arctan byte table and octant words, and the Body table the range scan $052DB0 walks (docs/research/damocles-space-flight.md). Since #576 it also carries the noise table at $77000, which the main loop steps a word a pass and the landing scripts\' random skip reads (docs/research/damocles-landing-messages.md). Since #581 it also carries the TOLOSA encounter\'s pool constants and the first world\'s records for slots 8, 11 and 15 (docs/research/damocles-tolosa-encounter.md).',
     ]
     if gaea_coverage:
         coverage_notes.append(gaea_coverage)

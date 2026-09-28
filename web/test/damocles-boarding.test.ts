@@ -101,6 +101,7 @@ const standingAt = (
     craft: null,
     doorsMoving: false,
     elapsed: 0,
+    encounter: null,
     footTicks: 0,
     frameAccumulator: 0,
     occupancy: { kind: 'onFoot' },
@@ -1031,6 +1032,7 @@ describe('the craft words across a Save and a Session Resume (#557)', () => {
     expect(migrated).toEqual({
       ...current,
       angleBytes: [],
+      encounter: null,
       script: { ...current.script, noise: NEW_GAME_NOISE },
       spaceMemory: null
     });
@@ -1746,12 +1748,17 @@ describe('the landing messages (#576)', () => {
       ).toThrow(message);
     refused(
       { encounter: 1 },
-      'the encounter gate and the TOLOSA flag disagree'
+      'the encounter gate is armed but TOLOSA was never visited'
     );
-    refused(
-      { flags: 0x00_02 },
-      'the encounter gate and the TOLOSA flag disagree'
-    );
+    // A kill or a zap clears the gate and leaves the flag (#581), so this one is reachable.
+    expect(
+      decoded(
+        encoded({
+          ...snapshot,
+          script: { ...snapshot.script, flags: 0x00_02 }
+        } as DamoclesSaveSnapshot)
+      ).script.flags
+    ).toBe(0x00_02);
     refused(
       { flags: 0x00_01 },
       'script flags name a bit no ported script writes'
@@ -1842,6 +1849,197 @@ describe('the noise pointer on foot and at New Game (#582)', () => {
         snapshot: older
       })
     );
-    expect(migrated).toEqual({ ...current, footTicks: 0 });
+    expect(migrated).toEqual({ ...current, encounter: null, footTicks: 0 });
+  });
+});
+
+const ERIS_SELECTOR = 0x2c;
+/// The craft's position as the pool's camera holds it.
+const cameraOf = (session: DamoclesSession) => {
+  const { x, y, z } = session.snapshot.pose.position;
+  return [x >>> 0, y >>> 0, z >>> 0] as const;
+};
+const poolOf = (session: DamoclesSession) =>
+  session.captureResume().encounter!.pool;
+const drawnIds = (session: DamoclesSession) =>
+  session.snapshot.residents.map(item => item.id);
+
+describe('the TOLOSA encounter (#581)', () => {
+  const ERIS = ERIS_SELECTOR;
+  const at = cameraOf;
+  const record = (
+    counter: number,
+    position: readonly [number, number, number],
+    body = ERIS
+  ): {
+    body: number;
+    counter: number;
+    position: readonly [number, number, number];
+    velocity: readonly [number, number, number];
+  } => ({
+    body,
+    counter,
+    position,
+    velocity: [0, 0, 0]
+  });
+  const idle = record(0, [0, 0, 0], 0);
+  /// The session again with the gate armed, as TOLOSA's landing leaves it, and the ship as given.
+  const armedWith = (
+    session: DamoclesSession,
+    ship: ReturnType<typeof record>,
+    shipShot = idle
+  ): DamoclesSession => {
+    const snapshot = session.captureResume();
+    return new DamoclesSession(
+      content,
+      decoded(
+        encoded({
+          ...snapshot,
+          encounter: { dead: false, pool: { ship, shipShot, shot: idle } },
+          script: { ...snapshot.script, encounter: 1, flags: 0x00_02 }
+        })
+      )
+    );
+  };
+  const pool = poolOf;
+
+  test('held fire launches a shot every 32 passes and draws it, never selecting it', () => {
+    const session = aboardLimo();
+    cues(session);
+    session.firing = true;
+    passes(session, 1);
+    expect(cues(session)).toContain('shot');
+    expect(pool(session).shot).toMatchObject({ body: ERIS, counter: 31 });
+    expect(drawnIds(session)).toContain('object-slot-8');
+    expect(session.snapshot.selection).not.toMatchObject({
+      instance: 'object-slot-8'
+    });
+    passes(session, 31);
+    expect(pool(session).shot).toMatchObject({ body: 0, counter: 0 });
+    expect(drawnIds(session)).not.toContain('object-slot-8');
+    cues(session);
+    passes(session, 1);
+    expect(cues(session)).toContain('shot');
+    expect(pool(session).shot.counter).toBe(31);
+  });
+
+  test('on foot the pool does not run', () => {
+    const walker = beside(LIMO);
+    const [x, y, z] = at(walker);
+    const session = armedWith(walker, {
+      ...record(0x80_30, [x + 0x1_00_00, y, z]),
+      velocity: [-0x1_00, 0, 0]
+    });
+    const before = pool(session);
+    tick(session, 200);
+    expect(pool(session)).toEqual(before);
+    expect(session.snapshot.encounter).toBe(1);
+  });
+
+  test('the ship steers at a craft outside its window', () => {
+    const craft = aboardLimo();
+    const [x, y, z] = at(craft);
+    const session = armedWith(craft, record(0, [x + 0x40_00, y, z]));
+    passes(session, 1);
+    // The attack routine runs after the stepper, so the coast starts counting next pass.
+    expect(pool(session).ship).toMatchObject({
+      body: ERIS,
+      counter: 0x80_5a,
+      velocity: [-0x1_00, 0, 0]
+    });
+    passes(session, 1);
+    expect(pool(session).ship.position[0]).toBe(x + 0x40_00 - 0x1_00);
+    expect(drawnIds(session)).toContain('object-slot-11');
+  });
+
+  test('shooting the ship down clears the gate and flashes the view', () => {
+    const craft = aboardLimo();
+    // Parked on the camera and coasting, so it neither steers nor fires: the shot's first step
+    // is inside the $400 box.
+    const session = armedWith(craft, record(0x80_50, at(craft)));
+    cues(session);
+    session.firing = true;
+    passes(session, 1);
+    // The launch and the kill each ask for the shot programme `$04C610`.
+    expect(cues(session).filter(cue => cue === 'shot')).toHaveLength(2);
+    expect(session.snapshot.message?.id).toBe('system-string-49');
+    expect(session.snapshot.encounter).toBe(0);
+    expect(pool(session).ship).toMatchObject({ body: 0, counter: 0 });
+    expect(pool(session).shot).toMatchObject({ body: 0, counter: 0 });
+    expect(drawnIds(session)).not.toContain('object-slot-11');
+    // `$AA00`: four white ticks in the next eight.
+    session.firing = false;
+    let white = 0;
+    for (let k = 0; k < 8; k += 1) {
+      tick(session, 1);
+      white += session.snapshot.screen.white ? 1 : 0;
+    }
+    expect(white).toBe(4);
+    expect(session.snapshot.screen.dead).toBe(false);
+  });
+
+  test('a zap kills the player: noise, the flash, the fade, VOID and the death message', () => {
+    const craft = aboardLimo();
+    const [x, y, z] = at(craft);
+    // Parked inside the window with its shot already on the camera.
+    const session = armedWith(
+      craft,
+      record(0x7f_ff, [x + 0x1_00, y, z]),
+      record(0x10, [x, y, z])
+    );
+    const noise = session.captureResume().script.noise;
+    cues(session);
+    passes(session, 1);
+    expect(cues(session)).toContain('zap');
+    expect(session.snapshot.screen).toMatchObject({ dead: false, noise: true });
+    expect(session.snapshot.encounter).toBe(0);
+    expect(session.captureResume().script.zaps).toEqual([
+      (noise + 1 - 2 + 0x8_00) % 0x8_00
+    ]);
+    const pose = session.snapshot.pose;
+    session.throttleKey(0x05);
+    expect(session.leave()).toEqual({ kind: 'refused' });
+    const shown = messages(session, content.doc.time.zapNoiseTicks + 2);
+    expect(shown).toEqual(["YOU'VE BEEN ZAPPED"]);
+    expect(session.snapshot.screen.noise).toBe(false);
+    tick(session, 64);
+    expect(session.snapshot.screen).toMatchObject({ dead: true, fade: 8 });
+    expect(session.snapshot.bodyName).toBe('VOID');
+    expect(session.snapshot.pose).toEqual(pose);
+    expect(messages(session, 400)).toEqual([
+      "YOU'RE A BIT DEAD - TO QUIT OR LOAD PRESS HELP"
+    ]);
+    // A Save of a dead game restores dead, as the original's F1 does.
+    const restored = roundTrip(session);
+    expect(restored.snapshot.screen.dead).toBe(true);
+    expect(restored.captureResume().encounter?.dead).toBe(true);
+    expect(restored.board()).toEqual({ kind: 'refused' });
+  });
+
+  test('the Save refuses pool state no play reaches', () => {
+    const snapshot = armedWith(
+      aboardLimo(),
+      record(0x80_5a, [0, 0, 0])
+    ).captureResume();
+    const refused = (encounter: object, message: string) =>
+      expect(() =>
+        decoded(encoded({ ...snapshot, encounter } as DamoclesSaveSnapshot))
+      ).toThrow(message);
+    const { pool: saved } = snapshot.encounter!;
+    refused(
+      { dead: false, pool: { ...saved, ship: { ...saved.ship, counter: 5 } } },
+      'snapshot.encounter.pool.ship.counter is not one the pool reaches'
+    );
+    refused(
+      {
+        dead: false,
+        pool: { ...saved, shot: { ...saved.shot, counter: 0x21 } }
+      },
+      'snapshot.encounter.pool.shot.counter is not one the pool reaches'
+    );
+    refused(
+      { dead: true, pool: saved },
+      'a dead player with the encounter gate armed'
+    );
   });
 });

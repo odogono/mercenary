@@ -56,6 +56,7 @@ const carryingKeyAt = (x: number, z: number): DamoclesSession => {
     craft: null,
     doorsMoving: false,
     elapsed: 0,
+    encounter: null,
     footTicks: 0,
     frameAccumulator: 0,
     occupancy: { kind: 'onFoot' },

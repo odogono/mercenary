@@ -71,7 +71,11 @@ describe('the authored Eris presentation document', () => {
       ticksPerPassProvenance: 'derived',
       vblHertz: 50,
       vblProvenance: 'derived',
-      waitFrames: 200
+      waitFrames: 200,
+      // The zap's noise flash, measured VBL by VBL (ADR 0055).
+      zapNoiseTicks: 98,
+      zapNoiseTicksEvidence: expect.stringContaining('ADR 0055'),
+      zapNoiseTicksProvenance: 'observed'
     });
     expect(document.structureFallback.view).toBe('combined');
     expect(document.structureFallback.doorState).toBe('closed');

@@ -31,10 +31,8 @@ export type DamoclesProgramme =
   | 'geiger-click'
   | 'hazard-alarm'
   | 'restore'
-  | 'shot'
   | 'spell'
-  | 'transporter'
-  | 'zap';
+  | 'transporter';
 
 export type DamoclesRequest = DamoclesCue | DamoclesProgramme;
 

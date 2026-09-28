@@ -66,6 +66,12 @@ import {
   type DamoclesSaveSnapshot
 } from './save.ts';
 import { createDamoclesSavePersistence } from './saves.ts';
+import {
+  NOISE_BANDS,
+  NOISE_ROWS,
+  noiseBands,
+  presentScreen
+} from './screen.ts';
 import { DamoclesSession } from './session.ts';
 import { skyPass, spaceSkyPass } from './sky.ts';
 import {
@@ -90,6 +96,7 @@ const chrome = installShellChrome(surface, {
 const status = document.getElementById('status')!;
 const failure = document.getElementById('failure')!;
 const canvas = document.getElementById('frame') as HTMLCanvasElement;
+const noiseCanvas = document.getElementById('frame-noise') as HTMLCanvasElement;
 const panelSection = document.getElementById('panel')!;
 const panelScale = document.getElementById('panel-scale')!;
 const panelRoot = document.getElementById('panel-damocles')!;
@@ -340,6 +347,7 @@ try {
     controls.releaseAll();
     clock.reset();
     session.intent = IDLE;
+    session.firing = false;
   };
   installSuspensionHandlers(window, document, release);
 
@@ -937,6 +945,17 @@ try {
     root['unresolved'] = String(snapshot.surface.unresolvedCount);
     // The terminator's answer, so a browser pass can say which sky and palette half it expects.
     root['daylight'] = String(snapshot.daylight);
+    // The TOLOSA encounter's screen (#581): what a browser pass can see of a zap and a death.
+    const screen = snapshot.screen;
+    root['screen'] = screen.dead
+      ? 'dead'
+      : screen.noise
+        ? 'noise'
+        : screen.fade > 0
+          ? `fade-${screen.fade}`
+          : screen.white
+            ? 'white'
+            : 'clear';
     // The sky Bodies any of whose disc the frame draws, in draw order (#530).
     root['skyBodies'] = skyBodies.join(' ');
     // The star pixels the frame plots, and the island fill triangles it paints flat over the
@@ -949,6 +968,29 @@ try {
     content.catalogue.craft === null
       ? null
       : craftProgram(content.catalogue.craft).arithmetic;
+  /// The zap's palette-noise loop (#581): bands of the noise table's colours over the view while
+  /// it runs, a fresh set every tick.
+  const noiseWords = content.catalogue.craft?.noise.words ?? new Uint16Array();
+  let noiseTick = 0;
+  const paintNoise = (running: boolean): void => {
+    noiseCanvas.hidden = !running;
+    if (!running) {
+      return;
+    }
+    noiseTick += 1;
+    noiseCanvas.width = NOISE_BANDS;
+    noiseCanvas.height = NOISE_ROWS;
+    const context = noiseCanvas.getContext('2d');
+    if (context === null) {
+      return;
+    }
+    noiseBands(noiseWords, noiseTick).forEach((bands, row) =>
+      bands.forEach((colour, band) => {
+        context.fillStyle = colour;
+        context.fillRect(band, row, 1, 1);
+      })
+    );
+  };
   const draw = (): void => {
     const { castShadows, presentationPreset } = preferences.current();
     const enhanced =
@@ -1020,8 +1062,10 @@ try {
       enhanced &&
       shadowEdge !== 'off' &&
       space === null;
+    const screen = snapshot.screen;
+    paintNoise(screen.noise);
     renderer.render(
-      plan,
+      presentScreen(plan, screen),
       shadows
         ? {
             eyeWorld: snapshot.pose.position,
@@ -1060,6 +1104,7 @@ try {
           ownership.mayAdvance()
         ) {
           session.intent = controls.intent;
+          session.firing = controls.firing;
           snapshot = session.advance(seconds);
           drainEffects();
           resumePersistence.dirty();

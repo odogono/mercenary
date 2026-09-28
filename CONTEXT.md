@@ -510,6 +510,10 @@ _Avoid_: Gameplay Session, Damocles world, level data
 A program from Damocles's successor 16-bit bytecode VM Confirmed in the Working Authority, distinct from a Benson Script and from the C64 Benson encoding (ADR 0015).
 _Avoid_: Benson Script (for Damocles), game script, ST bytecode dump
 
+**Damocles Death State**:
+Where a zap leaves the Damocles player: the main loop stops, the view fades to black, the Body reads VOID, and only restoring a Save leaves it; a Save made in it restores into it (ADR 0055).
+_Avoid_: Game over, respawn, lives
+
 **Filled Presentation**:
 Damocles's filled-polygon, palette-driven world view Confirmed in Working-Authority Evidence; the Game Surface mode of the Damocles Gameplay Session, distinct from Targ's wireframe line-list Game Surface (ADR 0019, ADR 0043).
 _Avoid_: Wireframe view, remastered graphics, Departure Record

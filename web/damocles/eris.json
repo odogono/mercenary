@@ -125,7 +125,10 @@
     "ticksPerPassOnFoot": 8,
     "ticksPerPassOnFootProvenance": "derived",
     "ticksPerPassOnFootEvidence": "ADR 0054: on foot the main loop's join $05948C steps the noise pointer once per rendered frame, and a frame runs clamp($51D22, 4, 8) substeps, one per session tick (ADR 0049). The six idle on-foot scenes of docs/research/damocles-noise-draws.md ran 270 passes at 7 or 8 substeps each, a mean of 7.58, rounded to whole ticks. Scenes whose frames took under 8 VBLs are not claimed to match.",
-    "waitFrames": 200
+    "waitFrames": 200,
+    "zapNoiseTicks": 98,
+    "zapNoiseTicksProvenance": "observed",
+    "zapNoiseTicksEvidence": "ADR 0055: the zap's palette-noise loop $050ECC runs 65,535 steps with the main loop blocked. The VBL-by-VBL death run of docs/research/damocles-tolosa-encounter.md saw the death state and the white flash set 98 VBLs after the zap pass began. The length depends on the loop's cycles against the interrupt load, so it is measured, not derived."
   },
   "structureFallback": {
     "view": "combined",

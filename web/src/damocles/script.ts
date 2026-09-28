@@ -54,7 +54,7 @@ export interface ScriptState {
   /// and restores it, so one indexed record presents for 50 frames here and 200 elsewhere.
   readonly displayDuration: number;
   /// Bank word `$070104`, the encounter gate TOLOSA's script arms (#576). The panel's second
-  /// lamp reads it. The attack ship it also arms is not ported.
+  /// lamp reads it, and the attack ship runs while it is set (#581).
   readonly encounter: number;
   readonly execution: Execution | null;
   /// `$7BD8` without the busy bit 6, which `busy` is. Only TOLOSA's bit 1 is written here.
@@ -68,6 +68,10 @@ export interface ScriptState {
   /// queue. Consumed by the frame loop once the busy flag clears, not by the trigger itself.
   readonly pending: number | null;
   readonly triggers: readonly Trigger[];
+  /// The table words zaps have turned, one entry a zap, in the order they fell (#581). `$050ECC`
+  /// rotates the word two before the pointer left by one bit each time, so the table is state and
+  /// not only content. The original's save covers neither the table nor the pointer.
+  readonly zaps: readonly number[];
 }
 
 /// The 2,048 words `$77000`-`$77FFE` the pointer wraps inside (`and.w #$FFF`, `or.w #$7000`).
@@ -78,6 +82,29 @@ export const NOISE_WORDS = 0x8_00;
 /// and the ship comes to rest at word 1,041 (`docs/research/damocles-noise-draws.md`). The port
 /// has neither the descent nor the arrival, so it starts where they leave the pointer.
 export const NEW_GAME_NOISE = 1041;
+
+/// The noise word at `index` as the zaps have left it: the Catalogue's word turned left once for
+/// every zap that fell on it.
+export const noiseWord = (
+  state: ScriptState,
+  rules: ScriptRules,
+  index: number
+): number | undefined => {
+  const word = rules.noise[index];
+  if (word === undefined) {
+    return undefined;
+  }
+  const turns = state.zaps.filter(zapped => zapped === index).length % 16;
+  return ((word << turns) | (word >>> (16 - turns))) & 0xff_ff;
+};
+
+/// `$050ECC`, the zap's palette-noise loop: 65,535 steps from the pointer, each rotating the word
+/// it visits right by one. 1,023 of the 1,024 words it visits turn 64 times and come back; the word
+/// two before the pointer turns 63 times, a rotate left by one. The pointer does not move.
+export const zapNoise = (state: ScriptState): ScriptState => ({
+  ...state,
+  zaps: [...state.zaps, (state.noise - 2 + NOISE_WORDS) % NOISE_WORDS]
+});
 
 /// `$05948C`, the main loop's join: one word a pass, with nothing read.
 export const stepNoise = (state: ScriptState): ScriptState => ({
@@ -93,16 +120,22 @@ export type Effect =
       /// region edge. Aboard (#556), `bump` is `$04C470` on a refused move, `blast` (`$04C5A8`)
       /// and `splash` (`$04C016`) a hard landing on land and at sea, and `throttle` the key
       /// effect `$054848` a throttle key asks for, as a take or a drop does.
+      ///
+      /// The TOLOSA encounter (#581) asks for `shot` (`$04C610`) as the player fires or downs the
+      /// ship, `thud` as the ship fires (`$04C630`, the same programme), and `zap` (`$04C652`) as
+      /// its shot hits.
       readonly cue:
         | 'blast'
         | 'bump'
         | 'door-start'
         | 'door-stop'
         | 'drop'
+        | 'shot'
         | 'splash'
         | 'take'
         | 'throttle'
-        | 'thud';
+        | 'thud'
+        | 'zap';
       readonly type: 'sound-request';
     }
   | {
@@ -146,7 +179,8 @@ export const initialScriptState = (): ScriptState => ({
   message: null,
   noise: NEW_GAME_NOISE,
   pending: null,
-  triggers: triggerTable()
+  triggers: triggerTable(),
+  zaps: []
 });
 
 const present = (
@@ -209,7 +243,7 @@ const runToBlock = (initial: ScriptState, rules: ScriptRules): ScriptState => {
         break;
       case 'random-skip': {
         // `$051A5E` reads the word and steps the pointer before it compares.
-        const word = rules.noise[state.noise];
+        const word = noiseWord(state, rules, state.noise);
         if (word === undefined) {
           throw new Error(`the noise table has no word ${state.noise}`);
         }
@@ -378,16 +412,22 @@ export const fireTrigger = (
   return { effects: shown(input, state, rules), state };
 };
 
+/// The system strings a native routine presents.
+export type SystemMessageId =
+  | 'system-string-0'
+  | 'system-string-1'
+  | 'system-string-2'
+  | 'system-string-21'
+  | 'system-string-22'
+  | 'system-string-3'
+  | 'system-string-33'
+  | 'system-string-48'
+  | 'system-string-49'
+  | 'system-string-9';
+
 export const presentSystemMessage = (
   input: ScriptState,
-  id:
-    | 'system-string-0'
-    | 'system-string-1'
-    | 'system-string-2'
-    | 'system-string-21'
-    | 'system-string-22'
-    | 'system-string-3'
-    | 'system-string-9',
+  id: SystemMessageId,
   rules: ScriptRules
 ): ScriptTransition => {
   const state = present(input, id, rules.messageFrames);
