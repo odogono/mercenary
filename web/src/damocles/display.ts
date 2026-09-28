@@ -86,6 +86,9 @@ export type DamoclesMessageId =
   | 'system-string-21'
   | 'system-string-22'
   | 'system-string-3'
+  | 'system-string-33'
+  | 'system-string-48'
+  | 'system-string-49'
   | 'system-string-50'
   | 'system-string-9';
 

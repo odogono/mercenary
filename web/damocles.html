@@ -65,6 +65,23 @@
         touch-action: manipulation;
       }
 
+      #frame,
+      #frame-noise {
+        grid-area: 1 / 1;
+      }
+
+      #panel {
+        grid-area: 2 / 1;
+      }
+
+      #frame-noise {
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+        image-rendering: pixelated;
+        pointer-events: none;
+      }
+
       #frame[data-take-target] {
         cursor: pointer;
       }
@@ -117,6 +134,7 @@
       <canvas id="frame" role="img" aria-label="Eris, on foot" hidden>
         Your browser cannot display the Damocles world view.
       </canvas>
+      <canvas id="frame-noise" aria-hidden="true" hidden></canvas>
       <section id="panel" role="region" aria-label="Damocles panel" hidden>
         <div id="panel-scale">
           <damocles-panel

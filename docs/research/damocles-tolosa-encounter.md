@@ -186,6 +186,9 @@ went to VOID with `$21`.
 
 ## What this means for the port
 
+[ADR 0055](../adr/0055-run-the-damocles-tolosa-encounter-as-traced-and-kill-the-player-it-zaps.md)
+records what the port took from this.
+
 - Port the three routines as one pass over a pool of slots 8, 11 and 15, run after the craft
   Mover's pass aboard. In space, run only the launcher and the stepper. On foot, run nothing. The
   Golden Traces give each pass's inputs and pool, so a test can step them exactly.

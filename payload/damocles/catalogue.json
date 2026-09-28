@@ -2842,7 +2842,7 @@
       "Every body surface carries its base colour and the 4096 x 4096 Surface Cell extent $058F64 masks positions onto; both axes wrap, so an extent whose upper bound is below its lower bound is a wrapped span rather than an empty one. The islands collection holds all 62 records of the per-body lists at $04BD1E, one entry a record: origin, coastline vertices and edge words, the backwards extent/core/exclusion boxes, land colour, structure group, the group record it binds and that group's area name. A record has no name of its own. 21 records share the coastline-less stub whose extent and core boxes are the whole coordinate plane, so $0560F2 answers core everywhere on those bodies -- land, no sea, no coast. The VOID slot's table entry is excluded because VOID is the space-as-place sentinel rather than a body surface. The classifier itself is not replayed here and the nearest-record metric at $056490 is not decoded. A surface placement names the Damocles Island whose origin equals the Structure Workspace origin it was placed against; resident coordinates come from the resident arrays, are already Body Coordinates, and name no record (docs/research/damocles-eris-islands.md, docs/research/damocles-island-census.md).",
       "Every resident slot carries the interaction byte the take handler tests, decoded as handling. Bit 4 refuses silently, bit 5 diverts to the refusal message, and the low nibble is the drop handler's rank pair: bits 0-1 are the support rank the slot supplies and bits 2-3 the support rank it requires; bits 6 and 7 are live state and are zero in the pinned capture. Nothing here selects a candidate: which object is selected is the per-frame nearest-drawn rule in docs/research/damocles-object-selection.md, not a catalogue field.",
       "Every resident slot carries boarding, what the board gate answers for it, with the gate's constants read from the refusal chooser and gate at $0542E0-$05434F rather than assumed. Boardable is the gate's two table facts, the bound at slot 23 and the model guard's single-Y-turn orientation command; the reach, region, Occupancy and VOID guards are live state and the key test asks the Carried Stack. Under the bound the chooser outcome, the paired slot at slot + 178 and the refusal string are published even where the model guard refuses, because the key test runs first; a paired slot with no instance is published as missing. No seated eye height is published: boarding puts the eye at the resident position plus 63 for every slot (docs/design/damocles-boarding-admission.md).",
-      "The document carries craft, the craft pass as ADR 0051 runs it: all sixteen Craft Parameter Block entries at $055C80 with the routine class each entry's bra.w reaches, the pass's constants read as instruction operands with each opcode checked, the throttle key table at $0557D6, and the exponent and sine tables. The log table is checked against the rule the port regenerates it from and published only as a digest. The entries' unread words +10 and +18 are left out (docs/research/damocles-craft-control.md). Since #566 it also carries the launch, swing, space entry and space pass constants, the landing's arctan byte table and octant words, and the Body table the range scan $052DB0 walks (docs/research/damocles-space-flight.md). Since #576 it also carries the noise table at $77000, which the main loop steps a word a pass and the landing scripts' random skip reads (docs/research/damocles-landing-messages.md).",
+      "The document carries craft, the craft pass as ADR 0051 runs it: all sixteen Craft Parameter Block entries at $055C80 with the routine class each entry's bra.w reaches, the pass's constants read as instruction operands with each opcode checked, the throttle key table at $0557D6, and the exponent and sine tables. The log table is checked against the rule the port regenerates it from and published only as a digest. The entries' unread words +10 and +18 are left out (docs/research/damocles-craft-control.md). Since #566 it also carries the launch, swing, space entry and space pass constants, the landing's arctan byte table and octant words, and the Body table the range scan $052DB0 walks (docs/research/damocles-space-flight.md). Since #576 it also carries the noise table at $77000, which the main loop steps a word a pass and the landing scripts' random skip reads (docs/research/damocles-landing-messages.md). Since #581 it also carries the TOLOSA encounter's pool constants and the first world's records for slots 8, 11 and 15 (docs/research/damocles-tolosa-encounter.md).",
       "Gaea Birmingham Island: examined the authored 16\u00d716 placement stream ending at $23E57, recovered 82 surface assemblies and 7 named places; 174 cells have no structure (including 99 CHEVY cell $17). Ground/pad records and Gaea islands other than this authored Birmingham map and any attached live $ABDC overlays remain unresolved.",
       "VESTA live $ABDC (POLITBURO CITY): body selector $7AA8=$0038, current cell $7B5C=$64; 19 surface assemblies and 24 workspace-local ground records. Structure and building-detail pointer tables match first-world; object unique addresses are unchanged.",
       "GAEA live $ABDC (UR CITY): body selector $7AA8=$0020, current cell $7B5C=$24; 22 surface assemblies and 32 workspace-local ground records. Structure and building-detail pointer tables match first-world; object unique addresses are unchanged.",
@@ -3468,6 +3468,130 @@
         "address": 345924,
         "operand": 4278194176
       }
+    },
+    "encounter": {
+      "constants": {
+        "coast": {
+          "address": 331344,
+          "operand": 32858
+        },
+        "deathSelector": {
+          "address": 331768,
+          "operand": 120
+        },
+        "deathString": {
+          "address": 331792,
+          "operand": 33
+        },
+        "fadeSteps": {
+          "address": 331692,
+          "operand": 7
+        },
+        "fadeWait": {
+          "address": 331694,
+          "operand": 7
+        },
+        "hold": {
+          "address": 330440,
+          "operand": 32767
+        },
+        "killBox": {
+          "address": 330556,
+          "operand": 1024
+        },
+        "killFlash": {
+          "address": 330586,
+          "operand": 43520
+        },
+        "killString": {
+          "address": 330594,
+          "operand": 49
+        },
+        "shipShotShift": {
+          "address": 331204,
+          "operand": 4
+        },
+        "shipShotSteps": {
+          "address": 331188,
+          "operand": 32
+        },
+        "shotSpeedBias": {
+          "address": 330724,
+          "operand": 663296
+        },
+        "shotSteps": {
+          "address": 330702,
+          "operand": 32
+        },
+        "steerShift": {
+          "address": 331334,
+          "operand": 6
+        },
+        "window": {
+          "address": 331160,
+          "operand": 12288
+        },
+        "zapBox": {
+          "address": 331244,
+          "operand": 1024
+        },
+        "zapFlash": {
+          "address": 331314,
+          "operand": 43690
+        },
+        "zapString": {
+          "address": 331284,
+          "operand": 48
+        }
+      },
+      "evidence": "docs/research/damocles-tolosa-encounter.md",
+      "slots": [
+        {
+          "body": 0,
+          "counter": 0,
+          "position": [
+            206685019,
+            948888,
+            34596572
+          ],
+          "slot": 8,
+          "velocity": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "body": 0,
+          "counter": 0,
+          "position": [
+            209321822,
+            20836212,
+            77294560
+          ],
+          "slot": 11,
+          "velocity": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "body": 0,
+          "counter": 0,
+          "position": [
+            179524619,
+            59,
+            103059486
+          ],
+          "slot": 15,
+          "velocity": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
     },
     "evidence": "docs/research/damocles-craft-control.md",
     "noise": {

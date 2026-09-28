@@ -129,6 +129,11 @@ export interface ErisPresentationDocument {
     readonly vblHertz: number;
     readonly vblProvenance: 'derived';
     readonly waitFrames: number;
+    /// Session ticks the zap's palette-noise loop `$050ECC` blocks the main loop for, measured
+    /// VBL by VBL (ADR 0055).
+    readonly zapNoiseTicks: number;
+    readonly zapNoiseTicksEvidence: string;
+    readonly zapNoiseTicksProvenance: 'observed';
   };
   readonly titleSlug: 'damocles';
   readonly walk: {
@@ -291,7 +296,10 @@ export const readErisPresentation = (
     'ticksPerPassOnFootProvenance',
     'vblHertz',
     'vblProvenance',
-    'waitFrames'
+    'waitFrames',
+    'zapNoiseTicks',
+    'zapNoiseTicksEvidence',
+    'zapNoiseTicksProvenance'
   ]);
   const start = object(root['start'], 'start', [
     'bodyTurn',
@@ -580,7 +588,17 @@ export const readErisPresentation = (
         'derived',
         'time.vblProvenance'
       ),
-      waitFrames: literal(time['waitFrames'], 200, 'time.waitFrames')
+      waitFrames: literal(time['waitFrames'], 200, 'time.waitFrames'),
+      zapNoiseTicks: literal(time['zapNoiseTicks'], 98, 'time.zapNoiseTicks'),
+      zapNoiseTicksEvidence: text(
+        time['zapNoiseTicksEvidence'],
+        'time.zapNoiseTicksEvidence'
+      ),
+      zapNoiseTicksProvenance: literal(
+        time['zapNoiseTicksProvenance'],
+        'observed',
+        'time.zapNoiseTicksProvenance'
+      )
     },
     titleSlug: literal(root['titleSlug'], 'damocles', 'titleSlug'),
     walk: {

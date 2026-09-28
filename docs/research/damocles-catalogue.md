@@ -464,6 +464,12 @@ the instruction with its operand masked, then reads the operand.
   walks it: the main loop steps it a word a pass, and a landing script's random skip reads a
   word. It is byte-identical in every memstate. See
   [the landing messages](damocles-landing-messages.md).
+- `encounter` carries the TOLOSA encounter's pool (#581). `constants` are the operands of the
+  fire launcher `$050B96`, the stepper `$050ABC`, the attack routine `$050D80` and the death
+  sequence `$050F9E`, each read from its checked instruction. `slots` are the first world's
+  records for slots 8, 11 and 15: the counter, Association B's body byte, and the position and
+  velocity longs. A New Game starts the pool from them. See
+  [the TOLOSA encounter](damocles-tolosa-encounter.md).
 
 ## Recovered data grammar
 

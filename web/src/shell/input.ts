@@ -160,6 +160,13 @@ export class BrowserControlProfile {
     });
   }
 
+  /// Whether the fire key is held. A Title whose fire is the joystick button's level, as
+  /// Damocles's launcher `$050B96` reads it (#581), asks this; one whose fire is a press takes
+  /// `fire` alone.
+  get firing(): boolean {
+    return this.held.has('KeyF');
+  }
+
   keyDown(key: BrowserKey): boolean {
     if (browserChord(key)) {
       return false;
@@ -240,6 +247,7 @@ export class BrowserControlProfile {
       // input as detected would let firing answer a question a script asked.
       case 'KeyF':
         this.actions.fire();
+        this.held.add(key.code);
         break;
       // Running is Movement Intent, so R does not `press` either, for the same
       // reason firing does not. The key is still held so that its release is

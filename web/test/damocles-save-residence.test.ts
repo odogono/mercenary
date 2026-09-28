@@ -63,6 +63,7 @@ const record = () => ({
     craft: null,
     doorsMoving: false,
     elapsed: 0,
+    encounter: null,
     footTicks: 0,
     frameAccumulator: 0,
     occupancy: { kind: 'onFoot' } as DamoclesSaveOccupancy,
@@ -153,7 +154,8 @@ const waiting = (trigger: number, resident: string) => {
     message: state.message,
     noise: state.noise,
     pending: state.pending,
-    triggers: state.triggers.map(({ armed, index }) => ({ armed, index }))
+    triggers: state.triggers.map(({ armed, index }) => ({ armed, index })),
+    zaps: state.zaps
   };
   return value;
 };

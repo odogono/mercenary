@@ -573,8 +573,9 @@ def _board_gate(data: bytearray) -> None:
 def _craft(data: bytearray) -> None:
     """The craft pass every loaded world carries, which the craft block reads (#555): its
     instructions as the pinned image holds them, sixteen flying entries and the log table."""
-    from damocleslab.catalogue import CRAFT_INSTRUCTIONS, CRAFT_TABLE, craft_log_table
-    for address, instruction, *_ in CRAFT_INSTRUCTIONS.values():
+    from damocleslab.catalogue import (CRAFT_INSTRUCTIONS, CRAFT_TABLE, ENCOUNTER_INSTRUCTIONS,
+                                       craft_log_table)
+    for address, instruction, *_ in (*CRAFT_INSTRUCTIONS.values(), *ENCOUNTER_INSTRUCTIONS.values()):
         code = bytes.fromhex(instruction)
         data[address:address + len(code)] = code
     for slot in range(16):
@@ -3717,6 +3718,30 @@ class CraftTests(unittest.TestCase):
         self.assertEqual(slots[3]['parameters']['pitchStep'], 8)
         self.assertEqual(slots[3]['parameters']['ceiling'], 900)
         self.assertEqual(slots[3]['parameters']['thrustGain'], 0xFFFF1900)
+
+    def test_the_encounter_constants_are_read_from_their_instructions(self):
+        from damocleslab.catalogue import decode_craft
+        encounter = decode_craft(self.image())['encounter']
+        operands = {name: c['operand'] for name, c in encounter['constants'].items()}
+        self.assertEqual((operands['window'], operands['zapBox'], operands['killBox']),
+                         (0x3000, 0x400, 0x400))
+        self.assertEqual((operands['coast'], operands['hold']), (0x805A, 0x7FFF))
+        self.assertEqual((operands['steerShift'], operands['shipShotShift']), (6, 4))
+        self.assertEqual((operands['zapString'], operands['killString'], operands['deathString']),
+                         (0x30, 0x31, 0x21))
+        # A moved window is read; a different opcode is refused.
+        self.assertEqual(decode_craft(self.image({0x50D9C: 0x40}))['encounter']['constants']
+                         ['window']['operand'], 0x4000)
+        with self.assertRaises(ValueError):
+            decode_craft(self.image({0x50D98: 0x24}))
+        self.assertEqual([slot['slot'] for slot in encounter['slots']], [8, 11, 15])
+
+    def test_the_pinned_pool_is_the_first_world_stale_records(self):
+        slots = {s['slot']: s for s in self.pinned()['encounter']['slots']}
+        self.assertEqual(slots[11], {'slot': 11, 'counter': 0, 'body': 0,
+                                     'position': [0x0C79FF5E, 0x013DEF74, 0x049B6BE0],
+                                     'velocity': [0, 0, 0]})
+        self.assertTrue(all(s['counter'] == 0 and s['body'] == 0 for s in slots.values()))
 
     def test_the_pinned_constants_and_tables_are_the_recovered_ones(self):
         craft = self.pinned()
