@@ -53,7 +53,7 @@ const displacement = (ticks: number, axis: ReturnType<typeof rate>): number => {
 
 /// DAMOCLES's System X and Z at an impact clock, or null once the clock has reached the table's
 /// zero record: there `$051F42` destroys DAMOCLES and ERIS, and the sky pass skips a destroyed
-/// Body (`$05314C`). What the collision looks like is the endgame's (#110).
+/// Body (`$05314C`). What the collision looks like is the endgame's (#580).
 ///
 /// Two readings are the port's, both where the three first records coincide so either gives the
 /// same point. Before the first record's time, `-15500`, the ST's cursor rests on record 0 with

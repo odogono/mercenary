@@ -371,7 +371,7 @@ one to `$00793C`.
 `$007A84` is `$007A7E - $00793C` recomputed each frame until `$007A82` is set.
 `$007A7E` is armed in exactly two places, `$04C8FC` and `$04D8B0`, both inside
 the body-destruction dispatcher at `$04C8D2`. What arms it and what it means
-for play belongs to the endgame (#110); it is named here because the formula is
+for play belongs to the endgame (#580); it is named here because the formula is
 incomplete without it. In every run cited below `$007A7E` is zero.
 
 `payload/damocles/system.json` publishes the table as `comet.waypoints`, and the port
@@ -390,7 +390,7 @@ mover then raises `$007A82`, and copies records 28 and
 from then on. `$051F6C` thereafter extends that pair 500 seconds at a time by
 reflecting the endpoint, so the comet continues in a straight line at its final
 180-a-second-per-axis velocity forever. Record 30 is never reached. How the
-collision is presented remains #110; this note records only that the table ends
+collision is presented remains #580's; this note records only that the table ends
 by destroying two Bodies and that motion continues.
 
 #### The second effect: carrying the player
@@ -484,7 +484,7 @@ python3 research/damocles-st/scripts/comet-motion-probe.py --case pose \
 | Reconcile a stored pose | `--case pose --samples 3 --interval 0.5` | Residual 0 against a memstate captured by other work; `occupancy [1]`, `carry gate $1634 [7]`; run `comet-motion-pose-20260922T105311Z-7b344426`. |
 
 Residual Fog: what `$001634` is and what arms `$007A7E` (both endgame-adjacent,
-#110); whether flight / near-c time changes the clock's own rate, which is
+#580); whether flight / near-c time changes the clock's own rate, which is
 still #86 and which — now that position follows the clock exactly — would move
 the comet as well as the countdown.
 

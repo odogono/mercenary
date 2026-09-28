@@ -181,7 +181,7 @@ ticks every 50 VBLs, exactly as on foot. The throttle only matters in space.
 When `$793C` is positive it counts up and wraps a day at a time (`$052176`). The two Dion
 captures (`dion-2-3`, `dion-north-airborne`) and three of the 2026-09-19 captures (Perseus,
 Thalia, Tolosa) hold positive values and draw them as elapsed time. What a positive clock means
-for the ending is #110's question, not this note's.
+for the ending is the endgame map's question (#580), not this note's.
 
 **Correction to #208.** #208 recorded 12 and 25 displayed seconds over 250 and 500 VBLs, and
 that figure spread into [the display-rate note](damocles-display-rate.md), the motion-and-time
