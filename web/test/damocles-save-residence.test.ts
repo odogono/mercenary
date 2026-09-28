@@ -78,6 +78,7 @@ const record = () => ({
     residence: [] as { instance: string; residence: Residence }[],
     script: initialDamoclesSaveScript(),
     scrollCounter: 0,
+    spaceMemory: null,
     structure: null
   },
   where: 'VESTA'

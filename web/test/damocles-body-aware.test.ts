@@ -220,6 +220,7 @@ describe('body-aware Object Residence', () => {
         },
         script: initialDamoclesSaveScript(),
         scrollCounter: 0,
+        spaceMemory: null,
         structure: null
       };
       const session = new DamoclesSession(isolated, {

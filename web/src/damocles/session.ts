@@ -16,7 +16,6 @@ import {
   STICK_UP,
   bindBoxes,
   craftFrame,
-  craftPanelSpeed,
   craftProgram,
   launch,
   throttleDown,
@@ -434,11 +433,8 @@ export class DamoclesSession implements TitleSession<
   private craftHeld: DamoclesCraftSnapshot['held'] = null;
   /// The space words while in space (occupancy 2), or null on a Body.
   private space: SpaceState | null = null;
-  /// The craft words and the Pose the space entry left, which a Save in space carries (#566).
-  private spaceEntry: {
-    readonly craft: CraftState;
-    readonly pose: Pose;
-  } | null = null;
+  /// In space, where the craft left the Body: the session's Pose stays there (#566).
+  private spaceEntry: Vector3 | null = null;
   /// The range, nearest Body and pitch rate the last flight left, which the next reads.
   private spaceMemory: SpaceMemory;
   /// The instance angle byte leaving writes (`$0544FA`), by instance.
@@ -503,6 +499,9 @@ export class DamoclesSession implements TitleSession<
       pitchRate: boot?.pitchRate.value ?? 0xff_00_10_00,
       range: boot?.range.value ?? 0
     };
+    if (restore?.spaceMemory != null) {
+      this.spaceMemory = { ...restore.spaceMemory };
+    }
     const opening = restore?.pose ?? startPose(content.doc);
     this.pose = {
       body: opening.body,
@@ -538,7 +537,10 @@ export class DamoclesSession implements TitleSession<
       } else {
         this.resumeCraft(this.occupied, saved);
       }
-      this.pose = this.poseFromCraft(this.craft!);
+      this.pose =
+        this.space === null
+          ? this.poseFromCraft(this.craft!)
+          : this.spacePose(this.craft!);
     }
     // A restore may name a Body other than the document's, so the surface is anchored from the
     // Pose before anything binds against it.
@@ -1479,8 +1481,7 @@ export class DamoclesSession implements TitleSession<
 
   /// Aboard, the occupied instance's departure is `occupied` and the Pose is the seated view.
   captureResume(): DamoclesSaveSnapshot {
-    // In space the Pose is the one the space entry left, whose words `craft` carries.
-    const pose = this.spaceEntry?.pose ?? this.pose;
+    const pose = this.pose;
     return {
       angleBytes: [...this.angleBytes].map(([instance, byte]) => ({
         byte,
@@ -1508,27 +1509,39 @@ export class DamoclesSession implements TitleSession<
       })),
       script: scriptForSave(this.script),
       scrollCounter: this.scrollCounter,
+      spaceMemory: { ...this.spaceMemory },
       structure: this.structureSnapshot()
     };
   }
 
-  /// Aboard, the craft words; in space, the words as the space entry found them, flagged, so a
-  /// resume enters space afresh from the Body's centre (#566: a Save in space is a later
-  /// ticket's). The launch swing is not carried.
+  /// Aboard, the craft words, and in space the space words beside them (#568). The position is
+  /// the Pose's on a Body and the space words' in space.
   private craftForSave(): DamoclesSaveCraft | null {
-    const craft = this.spaceEntry?.craft ?? this.craft;
+    const craft = this.craft;
     if (craft === null) {
       return null;
     }
+    const space = this.space;
     return {
       contact: craft.contact,
-      enteringSpace: this.spaceEntry !== null,
+      panelSpeed: craft.panelSpeed,
       passTicks: this.craftTicks,
       pitch: craft.pitch,
       roll: craft.roll,
+      space:
+        space === null
+          ? null
+          : {
+              dilation: space.dilation,
+              hold: space.hold,
+              x: space.x,
+              y: space.y,
+              z: space.z
+            },
       speed: craft.speed,
       supported: craft.supported,
       supportLevel: craft.supportLevel,
+      swing: craft.swing,
       throttle: craft.throttle,
       trig: { pitch: craft.trig.pitch, yaw: craft.trig.yaw },
       turnRate: craft.turnRate,
@@ -1621,13 +1634,14 @@ export class DamoclesSession implements TitleSession<
       yaw,
       z: Math.round(at.position.z)
     };
-    this.boardCraft(instance, craft, 0, false);
+    this.boardCraft(instance, craft, 0);
   }
 
-  /// The craft words a Save carried aboard, at the saved Pose's position. A record whose Pose
-  /// is not the one those words draw is one no play produces, so it is refused.
+  /// The craft words a Save carried aboard, at the saved Pose's position, or in space at the
+  /// space words' with the Pose at the space entry's. A record whose Pose is not the one those
+  /// words draw is one no play produces, so it is refused.
   private resumeCraft(instance: string, saved: DamoclesSaveCraft): void {
-    const { enteringSpace, passTicks, ...words } = saved;
+    const { passTicks, space, ...words } = saved;
     const { position } = this.pose;
     if (
       !Number.isInteger(position.x) ||
@@ -1641,32 +1655,45 @@ export class DamoclesSession implements TitleSession<
     if (passTicks >= this.content.doc.time.ticksPerPass) {
       throw new Error('saved craft pass phase is outside a pass');
     }
-    if (enteringSpace && this.slotHeld(this.slotOf(instance)) !== null) {
-      throw new Error(
-        'saved craft reached space on a slot the Mover never runs'
-      );
+    if (
+      (space !== null || words.swing) &&
+      this.slotHeld(this.slotOf(instance)) !== null
+    ) {
+      throw new Error('saved craft launched on a slot the Mover never runs');
     }
+    const inSpace = space !== null && space !== 'entry';
+    if (
+      inSpace &&
+      (space.hold > (this.craftProgram?.constants.spaceHold ?? 0) ||
+        this.catalogueBody() === undefined)
+    ) {
+      throw new Error('saved space words are not ones a flight leaves');
+    }
+    // In space the pass writes the space position into the pose words too.
+    const at = inSpace ? space : this.pose.position;
     this.boardCraft(
       instance,
       {
         ...words,
-        panelSpeed: craftPanelSpeed(words.speed),
-        // A Save does not carry the launch swing `$7B0C` (#566).
-        swing: false,
-        x: this.pose.position.x,
-        y: this.pose.position.y,
-        z: this.pose.position.z
+        x: at.x,
+        y: at.y,
+        z: at.z
       },
-      passTicks,
-      enteringSpace
+      passTicks
     );
+    if (space === 'entry') {
+      // A migrated schema-12 record: its words are the ones the space entry found.
+      this.enterSpace(this.craft!);
+    } else if (inSpace) {
+      this.spaceEntry = { ...this.pose.position };
+      this.space = { ...this.spaceMemory, ...space };
+    }
   }
 
   private boardCraft(
     instance: string,
     craft: CraftState,
-    passTicks: number,
-    enteringSpace: boolean
+    passTicks: number
   ): void {
     const slot = this.slotOf(instance);
     this.craft = craft;
@@ -1675,9 +1702,6 @@ export class DamoclesSession implements TitleSession<
     this.craftHeld = this.slotHeld(slot);
     this.space = null;
     this.spaceEntry = null;
-    if (enteringSpace) {
-      this.enterSpace(craft);
-    }
   }
 
   /// `$055868` after the frame's pass: space, from the centre of the Body the craft left. The
@@ -1691,9 +1715,8 @@ export class DamoclesSession implements TitleSession<
         `${this.pose.body} is not in the craft block's Body table`
       );
     }
-    const entry = { craft, pose: this.poseFromCraft(craft) };
     const entered = enterSpace(program, craft, this.spaceMemory, body);
-    this.spaceEntry = entry;
+    this.spaceEntry = { ...this.poseFromCraft(craft).position };
     this.space = entered.space;
     this.craft = entered.craft;
     this.pose = this.spacePose(entered.craft);
@@ -1709,7 +1732,7 @@ export class DamoclesSession implements TitleSession<
   private spacePose(craft: CraftState): Pose {
     return {
       ...this.poseFromCraft(craft),
-      position: this.spaceEntry!.pose.position
+      position: this.spaceEntry!
     };
   }
 

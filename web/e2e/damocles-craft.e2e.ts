@@ -204,7 +204,7 @@ test('EAGLE NINE S E takes off, reads its altitude, and a steep dive puts the pl
   const flying = JSON.parse(
     (await page.evaluate(k => localStorage.getItem(k), damoclesSaveSlot(2)))!
   ) as SavedRecord;
-  expect(flying.schemaVersion).toBe(12);
+  expect(flying.schemaVersion).toBe(13);
   expect(flying.snapshot.occupancy).toEqual({
     instance: EAGLE,
     kind: 'aboard'
@@ -487,5 +487,51 @@ test('EAGLE NINE S E lands back on DION, then crosses to LACHESIS, lands over it
     Number(await frame(page).getAttribute('data-triangles'))
   ).toBeGreaterThan(0);
   await shot(page, 'eagle-down-on-lachesis', testInfo);
+  expect(errors).toEqual([]);
+});
+
+test('EAGLE NINE S E saved in space, reloaded and loaded, flies on to its arrival over DION (#568)', async ({
+  page
+}, testInfo) => {
+  test.setTimeout(300_000);
+  const errors = watchErrors(page);
+  await boardEagleOnDion(page);
+  // The throttle cut as space is entered, so the craft stays in DION's arrival range while the
+  // hold counts down, and the Save is taken before it runs out.
+  await launchIntoSpace(page, DION_CENTRE, 'Space');
+  expect(await run(page, 'save 2')).toContain('saved');
+  const saved = JSON.parse(
+    (await page.evaluate(k => localStorage.getItem(k), damoclesSaveSlot(2)))!
+  ) as SavedRecord & {
+    snapshot: {
+      craft: { space: { hold: number; x: number; z: number } | null };
+      pose: { body: string };
+    };
+  };
+  expect(saved.schemaVersion).toBe(13);
+  expect(saved.snapshot.pose.body).toBe('body-4');
+  const space = saved.snapshot.craft.space!;
+  expect(space.hold).toBeGreaterThan(0);
+  await page.reload();
+  await ready(page);
+  expect(await run(page, 'load 2')).toContain('restored slot 2');
+  await closeConsole(page);
+  // Resumed in space where the Save left it, not at DION's centre afresh.
+  await expect(frame(page)).toHaveAttribute('data-occupancy', EAGLE);
+  await expect(frame(page)).toHaveAttribute('data-space-nearest', 'body-4');
+  const [x, , z] = (await frame(page).getAttribute('data-space-position'))!
+    .split(' ')
+    .map(Number);
+  expect(Math.hypot(x! - space.x, z! - space.z)).toBeLessThan(5000);
+  expect(Number(await frame(page).getAttribute('data-triangles'))).toBe(0);
+  await shot(page, 'eagle-resumed-in-space', testInfo);
+  // The hold runs out and the landing puts it back over DION, still aboard.
+  await expect(frame(page)).toHaveAttribute('data-space-nearest', '', {
+    timeout: 60_000
+  });
+  await expect(frame(page)).toHaveAttribute('data-body', 'body-4');
+  await expect(frame(page)).toHaveAttribute('data-occupancy', EAGLE);
+  expect(await attribute(page, 'y')).toBeGreaterThan(25_000_000);
+  await shot(page, 'eagle-landed-after-resume', testInfo);
   expect(errors).toEqual([]);
 });

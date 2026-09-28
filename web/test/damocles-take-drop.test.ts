@@ -79,6 +79,7 @@ const besideKey = (soundPermitted = true): DamoclesSession => {
       residence: [],
       script: initialDamoclesSaveScript(),
       scrollCounter: 0,
+      spaceMemory: null,
       structure: {
         attachments: parent.selection!.structure.attachments.map(
           attachment => ({
@@ -161,6 +162,7 @@ const dynamicAtOrigin = (
       )
     },
     scrollCounter: 0,
+    spaceMemory: null,
     structure: null
   });
 
@@ -499,6 +501,7 @@ describe('ordinary Eris limo-key take and drop', () => {
       residence: [],
       script: initialDamoclesSaveScript(),
       scrollCounter: 0,
+      spaceMemory: null,
       structure: null
     });
     expect(session.snapshot.selection).toEqual({
@@ -551,6 +554,7 @@ describe('ordinary Eris limo-key take and drop', () => {
         )
       },
       scrollCounter: 0,
+      spaceMemory: null,
       structure: null
     });
     expect(session.snapshot.inventoryLabel).toContain('KEY-');
@@ -625,6 +629,7 @@ describe('ordinary Eris limo-key take and drop', () => {
         )
       },
       scrollCounter: 0,
+      spaceMemory: null,
       structure: null
     });
     expect(overflow.drop()).toEqual({ kind: 'refused' });

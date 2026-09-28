@@ -123,6 +123,7 @@ const standingAt = (
       )
     },
     scrollCounter: 0,
+    spaceMemory: null,
     structure:
       placement === undefined
         ? null
@@ -864,9 +865,9 @@ const partPass = (session: DamoclesSession): void => {
   );
 };
 
-/// A current record as schema 11 wrote it: no craft words and no angle bytes.
+/// A current record as schema 11 wrote it: no craft words, no angle bytes and no space words.
 const schema11 = (snapshot: DamoclesSaveSnapshot): string => {
-  const { angleBytes: _a, craft: _c, ...older } = snapshot;
+  const { angleBytes: _a, craft: _c, spaceMemory: _m, ...older } = snapshot;
   return JSON.stringify({
     ...JSON.parse(encoded(snapshot)),
     schemaVersion: 11,
@@ -1013,7 +1014,7 @@ describe('the craft words across a Save and a Session Resume (#557)', () => {
     session.leave();
     const current = session.captureResume();
     const migrated = decoded(schema11(current));
-    expect(migrated).toEqual({ ...current, angleBytes: [] });
+    expect(migrated).toEqual({ ...current, angleBytes: [], spaceMemory: null });
     const schema10 = JSON.stringify({
       ...JSON.parse(schema11(current)),
       schemaVersion: 10
@@ -1369,15 +1370,210 @@ describe('launch and space (#566)', () => {
     expect(restored.snapshot.surface.grid.origin).toEqual({ x: 0, z: 0 });
     expect(restored.snapshot.daylight).toBe(down.daylight);
   });
+});
 
-  test('a Save in space resumes at the space entry, as the craft entered it', () => {
+/// Resumes `session` from its Save, holds the restore equal to it, and returns the restore.
+const resumed = (session: DamoclesSession): DamoclesSession => {
+  cues(session);
+  const restored = roundTrip(session);
+  expect(restored.captureResume()).toEqual(session.captureResume());
+  expect(restored.snapshot.pose).toEqual(session.snapshot.pose);
+  expect(restored.snapshot.craft).toEqual(session.snapshot.craft);
+  return restored;
+};
+
+describe('a Save in space and during the launch swing (#568)', () => {
+  const EAGLE = 'object-slot-3';
+  const aloft = (): DamoclesSession => {
+    const session = beside(EAGLE, [pairedKey(EAGLE)]);
+    session.board();
+    session.throttleKey(0x05);
+    passes(session, 30);
+    passes(session, 20, { pitch: 1 });
+    cues(session);
+    return session;
+  };
+
+  test('mid-swing, the swing runs on into space as an uninterrupted run does', () => {
+    const session = aloft();
+    session.launchCraft();
+    passes(session, 2);
+    partPass(session);
+    const saved = session.captureResume();
+    expect(saved.craft).toMatchObject({ space: null, swing: true });
+    const restored = resumed(session);
+    inStep(restored, session, each => {
+      toSpace(each);
+      passes(each, 20, { turn: 1 });
+    });
+    expect(session.snapshot.craft?.space).not.toBeNull();
+  });
+
+  test('on the space entry’s frame, the first pass reads the last flight’s range', () => {
     const session = aloft();
     session.launchCraft();
     toSpace(session);
-    const entered = session.snapshot;
+    const saved = session.captureResume();
+    expect(saved.craft?.space).toMatchObject({
+      hold: content.catalogue.craft!.constants.spaceHold.operand,
+      x: -630_000,
+      y: 64,
+      z: 390_000
+    });
+    const restored = resumed(session);
+    inStep(restored, session, each => passes(each, 12, { pitch: 1 }));
+  });
+
+  test('in flight, turning and pitching, the next passes match an uninterrupted run', () => {
+    const session = aloft();
+    session.launchCraft();
+    toSpace(session);
     passes(session, 10, { turn: 1 });
-    const restored = roundTrip(session);
-    expect(restored.snapshot.pose).toEqual(entered.pose);
-    expect(restored.snapshot.craft).toEqual(entered.craft);
+    passes(session, 6, { pitch: -1 });
+    partPass(session);
+    const saved = session.captureResume();
+    // The Pose stays where the craft left ERIS; the space words carry the flight.
+    expect(saved.pose.position).toEqual(session.snapshot.pose.position);
+    expect(saved.craft?.space).not.toBeNull();
+    expect(saved.spaceMemory?.pitchRate).not.toBe(
+      content.catalogue.craft!.boot.pitchRate.value
+    );
+    const restored = resumed(session);
+    inStep(restored, session, each => {
+      passes(each, 20, { pitch: 1, turn: -1 });
+      passes(each, 20);
+    });
+    expect(restored.snapshot.craft?.space?.position).not.toMatchObject(
+      saved.craft!.space as object
+    );
+  });
+
+  test('in the hold, the resumed craft lands when the uninterrupted one does, and flies on', () => {
+    const session = aloft();
+    session.launchCraft();
+    toSpace(session);
+    session.throttleKey(0x39);
+    passes(session, 20);
+    const saved = session.captureResume();
+    expect(saved.craft?.space).toMatchObject({ hold: 30 });
+    const restored = resumed(session);
+    inStep(restored, session, each => passes(each, 30));
+    expect(session.snapshot.craft?.space).not.toBeNull();
+    inStep(restored, session, each => passes(each, 1));
+    expect(session.snapshot.craft?.space).toBeNull();
+    expect(restored.snapshot.pose.position.y).toBe(0x01_80_00_00);
+    // The space words the flight left carry over the surface, across a Save, to the next launch.
+    const landed = resumed(session);
+    expect(landed.captureResume().spaceMemory).toEqual(saved.spaceMemory);
+    inStep(landed, session, each => {
+      passes(each, 20, { pitch: 1 });
+      each.launchCraft();
+      toSpace(each);
+      passes(each, 10);
+    });
+  });
+
+  test('a Session Resume in space keeps flying', () => {
+    const session = aloft();
+    session.launchCraft();
+    toSpace(session);
+    passes(session, 8, { turn: 1 });
+    const { storage } = memoryStorage();
+    writeDamoclesResume(storage, identity(), session);
+    const read = readDamoclesResume(storage, identity(), saveContent());
+    if (read.kind !== 'restored') {
+      throw new Error(`Session Resume was ${read.kind}`);
+    }
+    const restored = new DamoclesSession(content, read.snapshot);
+    cues(session);
+    inStep(restored, session, each => passes(each, 30, { turn: -1 }));
+  });
+
+  test('a schema-12 record in space enters space afresh from its Body, as it did', () => {
+    const session = aloft();
+    const aboard = session.captureResume();
+    const { space: _s, swing: _w, ...words } = aboard.craft!;
+    const { spaceMemory: _m, ...older } = aboard;
+    const record = JSON.stringify({
+      ...JSON.parse(encoded(aboard)),
+      schemaVersion: 12,
+      snapshot: { ...older, craft: { ...words, enteringSpace: true } }
+    });
+    const snapshot = decoded(record);
+    expect(snapshot.craft).toMatchObject({ space: 'entry', swing: false });
+    expect(snapshot.spaceMemory).toBeNull();
+    const restored = new DamoclesSession(content, snapshot);
+    expect(restored.snapshot.craft?.space).toMatchObject({
+      nearest: 'body-11',
+      position: { x: -630_000, y: 64, z: 390_000 }
+    });
+    expect(restored.snapshot.pose.position).toEqual(aboard.pose.position);
+    // Its next Save is a schema-13 one in space, which resumes as it stands.
+    passes(restored, 5, { turn: 1 });
+    const again = roundTrip(restored);
+    expect(again.captureResume()).toEqual(restored.captureResume());
+
+    // Aboard on a Body, a schema-12 record has no swing and the first world's space words.
+    const ground = decoded(
+      JSON.stringify({
+        ...JSON.parse(record),
+        snapshot: { ...older, craft: { ...words, enteringSpace: false } }
+      })
+    );
+    expect(ground.craft).toMatchObject({ space: null, swing: false });
+    const onGround = new DamoclesSession(content, ground);
+    expect(onGround.captureResume()).toEqual({
+      ...aboard,
+      spaceMemory: {
+        nearest: content.catalogue.craft!.boot.nearest.value,
+        pitchRate: content.catalogue.craft!.boot.pitchRate.value,
+        range: content.catalogue.craft!.boot.range.value
+      }
+    });
+  });
+
+  test('space words no flight leaves are refused', () => {
+    const session = aloft();
+    session.launchCraft();
+    toSpace(session);
+    passes(session, 3);
+    const snapshot = session.captureResume();
+    const craft = snapshot.craft!;
+    const space = craft.space as Exclude<typeof craft.space, 'entry' | null>;
+    const decodeRefusals: [string, DamoclesSaveSnapshot, RegExp][] = [
+      [
+        'a swing in space',
+        { ...snapshot, craft: { ...craft, swing: true } },
+        /swings in space/
+      ],
+      [
+        'a position past a long',
+        { ...snapshot, craft: { ...craft, space: { ...space, x: 2 ** 31 } } },
+        /space\.x/
+      ],
+      [
+        'an unaligned nearest Body',
+        { ...snapshot, spaceMemory: { ...snapshot.spaceMemory!, nearest: 6 } },
+        /nearest/
+      ],
+      [
+        'a nearest Body past the table',
+        {
+          ...snapshot,
+          spaceMemory: { ...snapshot.spaceMemory!, nearest: 4 * 64 }
+        },
+        /nearest/
+      ]
+    ];
+    for (const [label, record, reason] of decodeRefusals) {
+      expect(() => decoded(encoded(record)), label).toThrow(reason);
+    }
+    const held = {
+      ...snapshot,
+      craft: { ...craft, space: { ...space, hold: 51 } }
+    };
+    expect(() => new DamoclesSession(content, decoded(encoded(held)))).toThrow(
+      /space words/
+    );
   });
 });

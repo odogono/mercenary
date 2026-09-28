@@ -1,4 +1,5 @@
 import type { Catalogue } from '../catalogue/data.ts';
+import { craftPanelSpeed } from './craft.ts';
 import {
   DAMOCLES_ROW_CELLS,
   effectiveMessageRow,
@@ -76,9 +77,16 @@ import type { Pose } from './world.ts';
 /// the instance angle byte each leave wrote (`$0544FA`). A schema-11 record is migrated, not
 /// refused: aboard, it is seated at the boarding preset (`$054744`) facing the saved heading,
 /// which is what every schema-11 restore did, and its objects stand at their Catalogue angles.
-export const DAMOCLES_SAVE_SCHEMA_VERSION = 12 as const;
-/// The one older schema a restore migrates rather than refuses.
-const MIGRATED_SCHEMA_VERSION = 11;
+///
+/// Version 13 carries space (#568): the craft's space words in space (Occupancy 2), the launch
+/// swing `$7B0C` aboard, and the pitch rate, nearest Body and range every flight leaves for the
+/// next. The range is saved rather than recomputed: on the space entry's frame it is still the
+/// last flight's, which no restore could rebuild. Schemas 11 and 12 are migrated: a schema-12
+/// record has no swing in progress and the first world's space words, and one saved in space
+/// carried only the words the space entry found, so it enters space afresh, as it did.
+export const DAMOCLES_SAVE_SCHEMA_VERSION = 13 as const;
+/// The older schemas a restore migrates rather than refuses.
+const MIGRATED_SCHEMA_VERSIONS: readonly unknown[] = [11, 12];
 export const DAMOCLES_DESTINATION = 'damocles' as const;
 
 /// What a restore must match exactly before it may continue this game (ADR 0026).
@@ -132,23 +140,29 @@ export const LIFT_STEP_TICKS = 25;
 export const HIGHEST_FLOOR = 10;
 
 /// The craft Mover's words aboard (ADR 0051 decision 4), in the program's units. The position
-/// is the Pose's, which aboard is the craft's X, Y and Z. The panel's speed copy `$4DFEC` is not
-/// carried: every pass and the stop preset leave it the integer of the speed's magnitude.
+/// is the Pose's, which aboard is the craft's X, Y and Z.
 export interface DamoclesSaveCraft {
   /// `$7ACA`: `$3F` in ground contact, else 0.
   readonly contact: number;
-  /// Whether the frame loop has reached the space entry (#558), which holds the Mover.
-  readonly enteringSpace: boolean;
+  /// `$4DFEC`, the panel's speed copy, a signed long. A surface pass leaves it the integer of the
+  /// speed's magnitude, but the launch and the swing leave it stale, and in space it is γ's form
+  /// (#551), so schema 13 carries it. A schema-12 record's is the surface pass's.
+  readonly panelSpeed: number;
   /// Ticks since the last pass, below `time.ticksPerPass`.
   readonly passTicks: number;
   /// `$7AC0`, `$7ABE` and `$7AC2`. Yaw is the unmasked word.
   readonly pitch: number;
   readonly roll: number;
+  /// In space (Occupancy 2), the space words; null on a Body. `entry` is a migrated schema-12
+  /// record saved in space, whose craft words are the ones the space entry found.
+  readonly space: DamoclesSaveSpace | 'entry' | null;
   /// `$797A`, a float.
   readonly speed: number;
   /// `$7BC8` and `$7B02`: standing on a support, and that support's tag.
   readonly supported: number;
   readonly supportLevel: number;
+  /// `$7B0C`: the launch swing is running. The space entry clears it.
+  readonly swing: boolean;
   /// `$7BAC`, a float.
   readonly throttle: number;
   /// The pitch and yaw the frame's attitude sines were taken at, which differ from the
@@ -157,6 +171,30 @@ export interface DamoclesSaveCraft {
   /// `$7970`, a float.
   readonly turnRate: number;
   readonly yaw: number;
+}
+
+/// The words only space keeps (docs/research/damocles-space-flight.md, "What this means for the
+/// port"). The pitch is derived from the pitch rate each pass, so the craft's pitch word is the
+/// derived one and the rate is in `spaceMemory`.
+export interface DamoclesSaveSpace {
+  /// `$7876`: 32γ, as the last pass left it.
+  readonly dilation: number;
+  /// `$7B0A`: passes left before an arrival may be raised.
+  readonly hold: number;
+  /// `$799A`, `$799E` and `$79A2`: the craft's position in the System, signed longs.
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+}
+
+/// The space words a flight leaves behind for the next, and in space the current ones.
+export interface DamoclesSaveSpaceMemory {
+  /// `$7924`: the nearest Body's table offset, 4 × the Body.
+  readonly nearest: number;
+  /// `$7974`: the pitch rate, a float.
+  readonly pitchRate: number;
+  /// `$791C`: the nearest range, a float, as the last frame's scan left it.
+  readonly range: number;
 }
 
 export interface DamoclesSaveSnapshot {
@@ -188,6 +226,9 @@ export interface DamoclesSaveSnapshot {
   readonly residence: readonly ResidenceDeparture[];
   readonly script: DamoclesSaveScript;
   readonly scrollCounter: number;
+  /// The pitch rate, nearest Body and range, or null for the first world's, as a migrated record
+  /// resumes with.
+  readonly spaceMemory: DamoclesSaveSpaceMemory | null;
   readonly structure: BoundStructureSnapshot | null;
 }
 
@@ -234,21 +275,79 @@ const float = (value: unknown, path: string): number =>
 const flag = (item: unknown, path: string): number =>
   item === 0 || item === 0x3f ? item : fail(`${path} is neither 0 nor $3F`);
 
-const craftOf = (value: unknown): DamoclesSaveCraft => {
+const long = (value: unknown, path: string): number =>
+  integer(value, path, -0x80_00_00_00, 0x7f_ff_ff_ff);
+
+const spaceOf = (value: unknown): DamoclesSaveSpace => {
+  const space = object(value, 'snapshot.craft.space');
+  return {
+    dilation: word(space['dilation'], 'snapshot.craft.space.dilation'),
+    hold: word(space['hold'], 'snapshot.craft.space.hold'),
+    x: long(space['x'], 'snapshot.craft.space.x'),
+    y: long(space['y'], 'snapshot.craft.space.y'),
+    z: long(space['z'], 'snapshot.craft.space.z')
+  };
+};
+
+const spaceMemoryOf = (
+  value: unknown,
+  catalogue: Catalogue | undefined
+): DamoclesSaveSpaceMemory => {
+  const memory = object(value, 'snapshot.spaceMemory');
+  const nearest = integer(
+    memory['nearest'],
+    'snapshot.spaceMemory.nearest',
+    0,
+    0xff_ff
+  );
+  const bodies = catalogue?.craft?.bodies.length;
+  if (nearest % 4 !== 0 || (bodies !== undefined && nearest / 4 >= bodies)) {
+    return fail('snapshot.spaceMemory.nearest names no Body in the range scan');
+  }
+  return {
+    nearest,
+    pitchRate: float(memory['pitchRate'], 'snapshot.spaceMemory.pitchRate'),
+    range: float(memory['range'], 'snapshot.spaceMemory.range')
+  };
+};
+
+/// Schema 12 said whether the space entry had been reached (`enteringSpace`), and had no swing;
+/// schema 13 carries the space words instead.
+const craftOf = (value: unknown, schema12: boolean): DamoclesSaveCraft => {
   const craft = object(value, 'snapshot.craft');
   const trig = object(craft['trig'], 'snapshot.craft.trig');
-  if (typeof craft['enteringSpace'] !== 'boolean') {
-    return fail('snapshot.craft.enteringSpace is not a boolean');
+  const speed = float(craft['speed'], 'snapshot.craft.speed');
+  let space: DamoclesSaveCraft['space'];
+  let swing = false;
+  if (schema12) {
+    if (typeof craft['enteringSpace'] !== 'boolean') {
+      return fail('snapshot.craft.enteringSpace is not a boolean');
+    }
+    space = craft['enteringSpace'] ? 'entry' : null;
+  } else {
+    if (typeof craft['swing'] !== 'boolean') {
+      return fail('snapshot.craft.swing is not a boolean');
+    }
+    swing = craft['swing'];
+    space = craft['space'] === null ? null : spaceOf(craft['space']);
+    // The space entry clears the swing, and nothing sets it in space.
+    if (swing && space !== null) {
+      return fail('snapshot.craft swings in space');
+    }
   }
   return {
     contact: flag(craft['contact'], 'snapshot.craft.contact'),
-    enteringSpace: craft['enteringSpace'],
+    panelSpeed: schema12
+      ? craftPanelSpeed(speed)
+      : long(craft['panelSpeed'], 'snapshot.craft.panelSpeed'),
     passTicks: integer(craft['passTicks'], 'snapshot.craft.passTicks', 0, 255),
     pitch: word(craft['pitch'], 'snapshot.craft.pitch'),
     roll: word(craft['roll'], 'snapshot.craft.roll'),
-    speed: float(craft['speed'], 'snapshot.craft.speed'),
+    space,
+    speed,
     supported: flag(craft['supported'], 'snapshot.craft.supported'),
     supportLevel: word(craft['supportLevel'], 'snapshot.craft.supportLevel'),
+    swing,
     throttle: float(craft['throttle'], 'snapshot.craft.throttle'),
     trig: {
       pitch: word(trig['pitch'], 'snapshot.craft.trig.pitch'),
@@ -837,8 +936,8 @@ export interface DamoclesSaveContent {
 /// Decode a Damocles Save or Session Resume, or throw the exact refusal.
 ///
 /// Identity is exact: a Targ envelope, a schema older than 11, or a Catalogue or presentation
-/// mismatch cannot become play without a migration this version does not have. A schema-11
-/// record is migrated to this one.
+/// mismatch cannot become play without a migration this version does not have. A schema-11 or
+/// schema-12 record is migrated to this one.
 export const decodeDamoclesSave = (
   encoded: string,
   expected: DamoclesSaveIdentity,
@@ -852,8 +951,12 @@ export const decodeDamoclesSave = (
     return fail('not JSON');
   }
   const record = object(parsed, 'save');
-  const migrated = record['schemaVersion'] === MIGRATED_SCHEMA_VERSION;
-  if (record['schemaVersion'] !== DAMOCLES_SAVE_SCHEMA_VERSION && !migrated) {
+  const schema11 = record['schemaVersion'] === 11;
+  const schema12 = record['schemaVersion'] === 12;
+  if (
+    record['schemaVersion'] !== DAMOCLES_SAVE_SCHEMA_VERSION &&
+    !MIGRATED_SCHEMA_VERSIONS.includes(record['schemaVersion'])
+  ) {
     return fail(
       `schema ${String(record['schemaVersion'])} is not Damocles Save ${DAMOCLES_SAVE_SCHEMA_VERSION}`
     );
@@ -994,13 +1097,18 @@ export const decodeDamoclesSave = (
   const occupancy = occupancyOf(snapshot['occupancy']);
   validateOccupancy(occupancy, residence, catalogue);
   let craft: DamoclesSaveCraft | null = null;
-  if (!migrated) {
+  if (!schema11) {
     if ((snapshot['craft'] === null) !== (occupancy.kind === 'onFoot')) {
       return fail('craft words and Occupancy disagree');
     }
-    craft = snapshot['craft'] === null ? null : craftOf(snapshot['craft']);
+    craft =
+      snapshot['craft'] === null ? null : craftOf(snapshot['craft'], schema12);
   }
-  const angleBytes = migrated
+  const spaceMemory =
+    schema11 || schema12 || snapshot['spaceMemory'] === null
+      ? null
+      : spaceMemoryOf(snapshot['spaceMemory'], catalogue);
+  const angleBytes = schema11
     ? []
     : angleBytesOf(snapshot['angleBytes'], catalogue);
   const pose = poseOf(snapshot['pose']);
@@ -1164,6 +1272,7 @@ export const decodeDamoclesSave = (
       residence,
       script,
       scrollCounter,
+      spaceMemory,
       structure
     },
     where: record['where']

@@ -166,18 +166,23 @@ The port has no rule for each of these, so it does not invent one:
   Entrance Attachments is unrecovered (ADR 0051).
 - **The region aboard** is taken afresh after every pass, as boarding already takes it. That is
   authored.
-- **Saving aboard (#557).** Damocles Save schema 12 carries the craft words in `craft`: the
+- **Saving aboard (#557).** Damocles Save schema 12 carried the craft words in `craft`: the
   turn rate, speed and throttle as the program's floats, pitch, roll, unmasked yaw, contact, the
-  support words, the attitude the frame's sines were taken at, the pass phase, and whether the
-  space entry holds the Mover. The position is the Pose's. The panel's speed copy is not
-  carried, because every pass and the stop preset leave it the integer of the speed's
-  magnitude. A restore draws the Pose from the words and refuses a record whose Pose they
+  support words, the attitude the frame's sines were taken at, and the pass phase. The position
+  is the Pose's. A restore draws the Pose from the words and refuses a record whose Pose they
   don't draw. The next pass then matches an uninterrupted run. The Save also carries each left
-  craft's angle byte. **A Save in space** (#566) is a later ticket's. Until then it carries the
-  words and the Pose the space entry left, flagged, and a restore enters space afresh from the
-  Body's centre. The flight since the entry, the launch swing and the space words a flight
-  leaves for the next are not carried. A schema-11 record is migrated rather than refused. Aboard, it is seated
+  craft's angle byte. A schema-11 record is migrated rather than refused. Aboard, it is seated
   at the boarding preset (`$054744`), level and in contact, facing the saved heading.
+- **Saving in space and during the swing (#568).** Schema 13 adds the launch swing `$7B0C` and
+  the panel's speed copy `$4DFEC` to `craft`. The copy is carried because the launch and the
+  swing leave it stale and in space it is γ's form. In space, `craft.space` holds γ `$7876`, the
+  hold `$7B0A` and the space position, and the Pose stays at the space entry's place on the
+  Body. `spaceMemory` holds the pitch rate `$7974`, the nearest Body `$7924` and the range
+  `$791C`. They are saved on a Body too, because only the space path writes them and the next
+  flight reads them. The range is saved, not recomputed: on the space entry's frame it is still
+  the last flight's, and no restore can rebuild that. A schema-12 record is migrated with no
+  swing and the first world's space words. One saved in space carried only the words the space
+  entry found, so it enters space afresh from its Body's centre, as it did.
 - **Atlas Travel aboard** sets the craft down at the pin, at rest and facing as it was. That is
   authored. Before this, the next pass flew from where the craft had been.
 
