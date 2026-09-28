@@ -73,6 +73,7 @@ const carryingKeyAt = (x: number, z: number): DamoclesSession => {
       )
     },
     scrollCounter: 0,
+    spaceMemory: null,
     structure: {
       attachments: parent.selection!.structure.attachments.map(attachment => ({
         latch: 'closed' as const,

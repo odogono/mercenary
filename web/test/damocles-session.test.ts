@@ -80,6 +80,7 @@ const atSpaceport = (
     residence: [],
     script: initialDamoclesSaveScript(),
     scrollCounter: 0,
+    spaceMemory: null,
     structure: {
       attachments: entrance.selection!.structure.attachments.map(
         (attachment, index) => ({
@@ -144,6 +145,7 @@ const atStructure = (
     residence: [],
     script: initialDamoclesSaveScript(),
     scrollCounter: 0,
+    spaceMemory: null,
     structure: {
       attachments: placement.selection!.structure.attachments.map(
         (attachment, index) => ({
