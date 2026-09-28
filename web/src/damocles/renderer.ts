@@ -479,21 +479,27 @@ export class ErisRenderer {
 
   /// The sky Bodies, painted over the sky fill in the plan's order with the depth buffer left
   /// alone, so everything drawn after covers them (#530). They are flat in both presentations;
-  /// an Enhanced sky is #114's.
+  /// an Enhanced sky is #114's. The ground to the horizon follows them the same way, as
+  /// `$0599D6` follows the sky pass (#573).
   private drawSky(plan: ErisFramePlan): void {
     const gl = this.gl;
-    if (plan.skyVertices.length === 0) {
+    const sky = plan.skyVertices.length;
+    const horizon = plan.horizonVertices.length;
+    if (sky + horizon === 0) {
       return;
     }
+    const vertices = new Float32Array(sky + horizon);
+    vertices.set(plan.skyVertices);
+    vertices.set(plan.horizonVertices, sky);
     gl.disable(gl.DEPTH_TEST);
     gl.depthMask(false);
     gl.disable(gl.CULL_FACE);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.skyBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, plan.skyVertices, gl.DYNAMIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.DYNAMIC_DRAW);
     this.bindGeometry(this.shaderProgram, this.skyBuffer, COLOUR_ATTRIBUTES);
     this.setProjection(this.shaderProgram, plan);
     gl.uniform1f(requiredUniform(gl, this.shaderProgram, 'depthBias'), 0);
-    gl.drawArrays(gl.TRIANGLES, 0, plan.skyVertices.length / FLOATS_PER_VERTEX);
+    gl.drawArrays(gl.TRIANGLES, 0, vertices.length / FLOATS_PER_VERTEX);
     gl.depthMask(true);
   }
 

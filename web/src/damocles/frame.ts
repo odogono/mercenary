@@ -52,6 +52,10 @@ export interface ErisFramePlan {
   /// ground records a hair behind so a building's pad lies over the cell's apron, as a
   /// painter's ground stream drawn before its structures would leave it.
   readonly groundTriangleCount: number;
+  /// The ground to the horizon, in the same ten-float vertices as `vertices`: one polygon
+  /// below the horizon line in the base plane's colour, painted after the sky Bodies and
+  /// before everything else (#573). Empty where there is no base plane.
+  readonly horizonVertices: Float32Array;
   /// Triangles of the Damocles Island fills, which follow the base plane and precede the
   /// ground records. They are exactly coplanar with the base plane — the same surface painted
   /// a second colour, which is what land and sea are — so the renderer paints them over it in
@@ -421,7 +425,8 @@ const doubleSidedQuad = (
 /// It is no longer clipped to the workspace, and it is no longer green. The plane is the Body's
 /// own surface in its recovered base colour — Eris's `$0003` sea — and it runs to the far plane
 /// because the surface does: a Body is a 4096-cell torus, not a 16-cell window with sky beyond
-/// it. Where land begins is the island fills' business, not this one's (#394).
+/// it. Where land begins is the island fills' business, not this one's (#394). Past the far
+/// plane the ground to the horizon is `horizonFillVertices`'s (#573).
 const FILL_INNER_HALF_UNITS = 256;
 
 const degenerate = (triangle: WorldTriangle): boolean => {
@@ -559,6 +564,47 @@ const lerp2 = (from: Tangent, to: Tangent, t: number): Tangent => ({
   x: from.x + (to.x - from.x) * t,
   y: from.y + (to.y - from.y) * t
 });
+
+/// How far the horizon fill's square runs either side of the view's centre, in tangents of the
+/// view angle. Well past any frustum a canvas gives; the fill is painted with the depth test
+/// off, so only its outline matters.
+const HORIZON_REACH = 16;
+
+/// The ground to the horizon, `$0599D6`'s fill (#573): a square across the view at the sky's
+/// depth, cut to the half below the line where view directions turn horizontal, and fanned.
+///
+/// Aboard, the ST's flight branch (`$059822`) draws the stars and the sky pass, then
+/// `$0599D6`, which fills the viewport below a horizon line in colour 15, the Body's base
+/// colour `$7C88`. The line comes from the roll, the pitch and the projection scale alone, so
+/// the fill reaches the horizon at any height. Hatari frames over LACHESIS at Y 25.6, 26.5
+/// and 27.7 million show the same 30 rows of `$411` below a starfield. The base plane ends at
+/// the far plane, so from much above it only this fill is there. Nearer the surface the base
+/// plane covers it in the same colour.
+const horizonFillVertices = (
+  up: Vector3,
+  depth: number,
+  colour: readonly [number, number, number]
+): number[] => {
+  const reach = depth * HORIZON_REACH;
+  const square: Vector3[] = [
+    { x: -reach, y: -reach, z: depth },
+    { x: reach, y: -reach, z: depth },
+    { x: reach, y: reach, z: depth },
+    { x: -reach, y: reach, z: depth }
+  ];
+  const below = clipPolygon(
+    square,
+    point => -(point.x * up.x + point.y * up.y + point.z * up.z),
+    lerp3
+  );
+  const values: number[] = [];
+  for (let index = 1; index + 1 < below.length; index += 1) {
+    for (const point of [below[0]!, below[index]!, below[index + 1]!]) {
+      values.push(point.x, point.y, point.z, ...colour, 0, 0, 1, -depth);
+    }
+  }
+  return values;
+};
 
 /// The comet's polygons, `$04F8FE`'s, in view space: cut short of the eye, projected, cut at the
 /// horizon row (the `$04FB1C` fill limit, patched to row 68 on foot), and fanned into
@@ -915,8 +961,12 @@ export const planErisFrame = (
   // island's colour instead and the fill would only draw the ground underfoot a second time
   // at one depth (#394). In an enclosed region the plane is the structure's floor colour: an
   // infinite plane below the eye meets the sky at eye level, as the raster split does.
+  // Aboard, the flight branch takes the island's colour only while Y's high word `$7A30` is
+  // zero, and the Body's `$7C88` above that (`$05982E`..`$05983C`): over LACHESIS at Y
+  // `$1800000` the ST fills `$411`, not the land's `$211` (#573).
   const here = classifyPosition(surface, pose.position);
-  const underfoot = here.kind === 'core' ? here.island : undefined;
+  const grounded = Math.floor(pose.position.y / 0x1_00_00) === 0;
+  const underfoot = here.kind === 'core' && grounded ? here.island : undefined;
   const base = inSpace
     ? null
     : (background?.floor ?? underfoot?.landColour ?? surface.baseColour);
@@ -929,6 +979,18 @@ export const planErisFrame = (
     0,
     doc.ground.fillDropUnits + pose.position.y
   ]);
+  const horizonValues =
+    base === null
+      ? []
+      : horizonFillVertices(
+          {
+            x: surfacePlane[0],
+            y: surfacePlane[1],
+            z: surfacePlane[2]
+          },
+          skyAt,
+          channels(base)
+        );
   if (base !== null) {
     const colour = channels(base);
     for (const triangle of basePlaneTriangles(
@@ -1143,6 +1205,7 @@ export const planErisFrame = (
     farPlane: doc.camera.farPlane,
     fillTriangleCount,
     groundTriangleCount,
+    horizonVertices: new Float32Array(horizonValues),
     islandTriangleCount,
     nearPlane: doc.camera.nearPlane,
     skippedFaces,
