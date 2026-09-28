@@ -2322,6 +2322,8 @@ CRAFT_INSTRUCTIONS = {
     'arrivalGap': (0x52FE2, '0c40fff9', 2, 2, True),
     # The landing $059268 leaves the space position at the Body's centre, this high.
     'spaceY': (0x592CE, '21fc00000040799e', 2, 4, True),
+    # ... and puts the craft this high over the landing point (#567).
+    'landingY': (0x59274, '21fc018000007ab6', 2, 4, True),
 }
 # Two instructions the pass runs twice, once to compare and once to store: they must agree.
 CRAFT_PAIRED = {'altitudeCapStore': 'altitudeCap', 'levelPitchStore': 'levelPitch',
@@ -2341,7 +2343,10 @@ CRAFT_ARCTAN_TABLE = (0x63002, 0x63104)
 CRAFT_OCTANTS = 0x4EAF2
 # The Body table the range scan $052DB0 walks, from the offset at $7C0E down to 0 (#558): X, Y,
 # Z and the extent float, one long each per Body. A negative Y takes a Body out of the scene.
-CRAFT_BODY_TABLES = {'x': 0x5F40, 'y': 0x626A, 'z': 0x5FC0, 'extent': 0x6040}
+# The rotation accumulator $62EA is the first world's: every capture's is the first world's plus
+# the Body's rate times one VBL count shared by every Body, which the landing reads (#567).
+CRAFT_BODY_TABLES = {'x': 0x5F40, 'y': 0x626A, 'z': 0x5FC0, 'extent': 0x6040, 'turn': 0x62EA}
+CRAFT_UNSIGNED_BODY_WORDS = ('extent', 'turn')
 CRAFT_LAST_BODY = 0x7C0E
 # The space words the first world boots with, which only a flight in space rewrites: the range
 # $791C and nearest Body $7924 the first space pass reads, and the pitch rate $7974 (#558).
@@ -2427,7 +2432,7 @@ def decode_craft(data: bytes) -> dict:
     if last % 4 or last > 0x78:
         raise ValueError(f'the range scan starts at an offset ${last:X} past the Body table')
     bodies = [{key: (int.from_bytes(data[base + offset:base + offset + 4], 'big', signed=True)
-                     if key != 'extent' else u32(base + offset))
+                     if key not in CRAFT_UNSIGNED_BODY_WORDS else u32(base + offset))
                for key, base in CRAFT_BODY_TABLES.items()}
               for offset in range(0, last + 4, 4)]
 

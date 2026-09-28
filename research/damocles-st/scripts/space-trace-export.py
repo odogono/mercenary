@@ -56,12 +56,18 @@ WORDS = {
     "pitchRate": (probe.PITCH_RATE, "u"), "dilation": (probe.DILATION, "w"),
     "spaceX": (probe.SPACE_X, "l"), "spaceY": (probe.SPACE_Y, "l"), "spaceZ": (probe.SPACE_Z, "l"),
     "altitude": (ccp.ALTITUDE, "u"), "poseY": (0x7A30, "l"),
+    # The landing point's longitude $7A1E and latitude $7A22, and the terminator word $79BE
+    # the landing writes (#567).
+    "longitude": (0x7A1E, "w"), "latitude": (0x7A22, "w"), "terminator": (0x79BE, "w"),
 }
 # The frame's attitude sines $7AD6-$7AE5: cos and sin of pitch, then of yaw.
 SINES = (ccp.COS_PITCH, ccp.SIN_PITCH, ccp.COS_YAW, ccp.SIN_YAW)
 # The Body table the range scan walks, from the offset at $7C0E down to 0.
 BODY_X, BODY_Y, BODY_Z, BODY_EXTENT = 0x5F40, 0x626A, 0x5FC0, 0x6040
 LAST_BODY = 0x7C0E
+# Every Body's rotation accumulator, which the landing reads for its destination (#567). It
+# moves every VBL, so it is carried only on the stop before a landing.
+BODY_TURN = 0x62EA
 
 
 def words(ram: bytes) -> dict:
@@ -86,6 +92,11 @@ def bodies(ram: bytes) -> list[list[int]]:
             for a0 in range(0, last + 4, 4)]
 
 
+def turns(ram: bytes) -> list[int]:
+    last = struct.unpack_from(">I", ram, LAST_BODY)[0]
+    return [struct.unpack_from(">I", ram, BODY_TURN + a0)[0] for a0 in range(0, last + 4, 4)]
+
+
 def find(works: list[Path], name: str) -> Path:
     for work in works:
         if (work / name).is_dir():
@@ -102,7 +113,8 @@ def export(case: str, run: Path) -> dict:
     for stop, lines in spec["inputs"].items():
         written.setdefault(int(stop), []).extend(ccp._pokes(lines))
     stops, tables = [], []
-    for index, raw in enumerate(probe.load_stops(run)):
+    loaded = probe.load_stops(run)
+    for index, raw in enumerate(loaded):
         ram = bytearray(raw)
         key = None
         for address, data in written.get(index, []):
@@ -118,6 +130,9 @@ def export(case: str, run: Path) -> dict:
         if table not in tables:
             tables.append(table)
         stop["bodies"] = tables.index(table)
+        after = loaded[index + 1] if index + 1 < len(loaded) else None
+        if after is not None and stop["occupancy"] == 2 and struct.unpack_from(">H", after, probe.OCCUPANCY)[0] == 0:
+            stop["turns"] = turns(bytes(ram))
         stops.append(stop)
     return {"bodyTables": tables, "case": case, "run": run.name, "stops": stops}
 

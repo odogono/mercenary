@@ -3751,11 +3751,11 @@ class CraftTests(unittest.TestCase):
 
     def test_the_body_table_is_walked_from_the_scan_offset(self):
         from damocleslab.catalogue import decode_craft
-        patch = {0x7C11: 0x04, 0x5F44: 0x12, 0x626A: 0x80, 0x6043: 0x40}
+        patch = {0x7C11: 0x04, 0x5F44: 0x12, 0x626A: 0x80, 0x6043: 0x40, 0x62EE: 0x81}
         bodies = decode_craft(self.image(patch))['bodies']
         self.assertEqual(bodies['entries'], [
-            {'x': 0, 'y': -0x80000000, 'z': 0, 'extent': 0x40},
-            {'x': 0x12000000, 'y': 0, 'z': 0, 'extent': 0},
+            {'x': 0, 'y': -0x80000000, 'z': 0, 'extent': 0x40, 'turn': 0},
+            {'x': 0x12000000, 'y': 0, 'z': 0, 'extent': 0, 'turn': 0x81000000},
         ])
         with self.assertRaises(ValueError):
             decode_craft(self.image({0x7C11: 0x7C}))
@@ -3769,12 +3769,14 @@ class CraftTests(unittest.TestCase):
         bodies = craft['bodies']['entries']
         # DIALIS to DAMOCLES: the scan starts at $74, and every Body is in the first world's scene.
         self.assertEqual(len(bodies), 30)
-        self.assertEqual(bodies[1], {'x': 46500, 'y': 0, 'z': 36000, 'extent': 0x000F1F40})
+        self.assertEqual(bodies[1], {'x': 46500, 'y': 0, 'z': 36000, 'extent': 0x000F1F40,
+                                     'turn': 0x4728F150})
         self.assertTrue(all(body['y'] >= 0 for body in bodies))
         # The first world boots nearest ERIS, with the range and the pitch rate the port starts from.
         self.assertEqual({name: word['value'] for name, word in craft['boot'].items()},
                          {'range': 0x000A137A, 'nearest': 0x2C, 'pitchRate': 0xFF001000})
         self.assertEqual(craft['constants']['spaceY']['operand'], 64)
+        self.assertEqual(craft['constants']['landingY']['operand'], 0x01800000)
 
     def test_the_payload_publishes_the_pinned_block(self):
         craft = self.pinned()

@@ -1,6 +1,7 @@
 # Switch Damocles Bodies within one Gameplay Session
 
 Extended by [ADR 0050](0050-travel-from-a-sessionless-atlas.md), which admits authored Atlas Travel through the Gameplay Session.
+Extended by [ADR 0052](0052-land-a-damocles-craft-at-the-recovered-landing-point.md), which lands a craft from space at the recovered landing point, on Bodies with or without an admitted Pose.
 
 
 Accepted for the [Gamma System pickup programme](https://github.com/odogono/mercenary/issues/313);

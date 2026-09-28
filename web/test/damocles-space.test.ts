@@ -13,10 +13,16 @@ import {
 } from '../src/damocles/craft.ts';
 import {
   enterSpace,
+  land,
+  landingPoint,
+  landingTrigger,
   spaceAltitude,
   spaceFrame,
+  subStellarLongitude,
   type SpaceState
 } from '../src/damocles/space.ts';
+import { turnOnClock } from '../src/damocles/terminator.ts';
+import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue } from './fixtures/catalogue.ts';
 
 /// The launch, the swing, the space entry, the space pass and the range scan against the traced
@@ -36,6 +42,9 @@ interface Stop {
   /// The scancode the stop script wrote to the key mailbox. Its handler runs after this
   /// stop's pass, so its words are the next stop's.
   readonly key: number | null;
+  /// `$7A22` and `$7A1E`: the last landing point's latitude and longitude.
+  readonly latitude: number;
+  readonly longitude: number;
   readonly nearest: number;
   readonly occupancy: number;
   readonly panelSpeed: number;
@@ -54,8 +63,12 @@ interface Stop {
   readonly supported: number;
   readonly supportLevel: number;
   readonly swing: number;
+  /// `$79BE`, the terminator word.
+  readonly terminator: number;
   readonly throttle: number;
   readonly turnRate: number;
+  /// Every Body's rotation accumulator `$62EA`, carried only on the stop before a landing.
+  readonly turns?: readonly number[];
   readonly x: number;
   readonly y: number;
   readonly yaw: number;
@@ -135,9 +148,12 @@ const spaceOf = (stop: Stop): SpaceState => ({
   z: stop.spaceZ
 });
 
+/// The trace's Body table, with the turns where the stop carries them and the first world's
+/// elsewhere: only the landing reads a turn.
 const bodiesOf = (trace: Trace, stop: Stop): CraftBody[] =>
-  trace.bodyTables[stop.bodies]!.map(([x, y, z, extent]) => ({
+  trace.bodyTables[stop.bodies]!.map(([x, y, z, extent], index) => ({
     extent,
+    turn: stop.turns?.[index] ?? catalogue.craft!.bodies[index]!.turn,
     x,
     y,
     z
@@ -273,9 +289,42 @@ describe('the launch and space flight replay every traced pass word for word (#5
           bodiesOf(trace, after)
         );
         if (after.occupancy === 0) {
-          // The arrival: the landing `$059268` is the next ticket's, so only the Body the
-          // frame raised it for is compared.
+          // The arrival and, the same frame, the landing `$059268` over the Body it was
+          // raised for (#567).
           expect(frame.arrival, at).toBe(after.destination);
+          const body = bodiesOf(trace, before)[frame.arrival! / 4]!;
+          const point = landingPoint(
+            program.arithmetic,
+            frame.space,
+            body,
+            body.turn
+          );
+          expect(
+            {
+              latitude: point.latitude,
+              longitude: point.longitude,
+              terminator: point.terminator
+            },
+            at
+          ).toEqual({
+            latitude: after.latitude,
+            longitude: after.longitude,
+            terminator: after.terminator
+          });
+          const landed = land(program, frame.craft, point, NO_BOXES);
+          expect(craftWords(landed, false), at).toEqual(
+            craftWords(after, false)
+          );
+          expect(landed.supportLevel, at).toBe(after.supportLevel);
+          // The space position is the Body's centre, 64 up, for the next space entry.
+          expect([after.spaceX, after.spaceY, after.spaceZ], at).toEqual([
+            body.x,
+            program.constants.spaceY,
+            body.z
+          ]);
+          expect(landingTrigger(frame.arrival!), at).toBe(
+            frame.arrival! / 4 + 0x1f
+          );
           counts.arrival += 1;
           continue;
         }
@@ -345,4 +394,93 @@ test('the altitude window in space reads the range ÷ 16,384', () => {
   const window = spaceAltitude(program, 0x00_0b_12_90);
   expect(window >>> 16).toBe(0);
   expect(Math.floor(((window & 0xff_ff) * 10_000) / 0x1_00_00)).toBe(1450);
+});
+
+describe('the landing (#567)', () => {
+  test('carries the destination turn on the clock every Body shares', async () => {
+    // Each landing's turns are the first world's plus each rate times one VBL count: solved
+    // from the Body the craft left, it gives every other Body's, the destination's included.
+    const rates = catalogue.bodies.map(
+      body => body.bodySurface?.rotationRate ?? 0
+    );
+    for (const name of ['return', 'cross']) {
+      const stop = (await read(name)).stops.find(item => item.turns)!;
+      const from = { rate: rates[4]!, start: catalogue.craft!.bodies[4]!.turn };
+      catalogue.craft!.bodies.forEach((body, index) => {
+        expect(
+          turnOnClock(
+            { ...from, turn: stop.turns![4]! },
+            { rate: rates[index]!, start: body.turn }
+          ),
+          `${name} Body ${index}`
+        ).toBe(stop.turns![index]!);
+      });
+    }
+    // Eris in the start capture, `eris-spaceport-onfoot`, is 18,111 VBLs after the first world.
+    const eris = catalogue.craft!.bodies[11]!;
+    expect(
+      turnOnClock(
+        { rate: rates[11]!, start: eris.turn, turn: eris.turn },
+        { rate: rates[11]!, start: eris.turn + rates[11]! * 18_111 }
+      )
+    ).toBe(eris.turn + rates[11]! * 18_111);
+    expect(
+      turnOnClock({ rate: 4, start: 0, turn: 2 }, { rate: rates[7]!, start: 0 })
+    ).toBeNull();
+  });
+
+  test('writes the terminator word every arrival Pose captured', async () => {
+    // The comet's capture stood where the impact clock had moved it, not at its Catalogue place.
+    const poses = (await arrivalPoses()).poses.filter(
+      pose => pose.body !== 'body-29'
+    );
+    expect(poses).toHaveLength(26);
+    for (const pose of poses) {
+      const index = Number(pose.body.slice('body-'.length));
+      expect(
+        subStellarLongitude(
+          program.arithmetic,
+          catalogue.craft!.bodies[index]!
+        ),
+        pose.id
+      ).toBe(pose.subStellarLongitude);
+    }
+  });
+
+  test('queues no trigger on ERIS or the comet', () => {
+    expect(landingTrigger(11 * 4)).toBeNull();
+    expect(landingTrigger(29 * 4)).toBeNull();
+    expect(landingTrigger(7 * 4)).toBe(0x26);
+  });
+
+  test('never finds a support at the landing height', () => {
+    const point = {
+      latitude: 0x1_00,
+      longitude: 0,
+      terminator: 0,
+      x: 0x00_10_00_00,
+      z: 0x00_10_00_00
+    };
+    const everywhere = {
+      supports: [
+        {
+          tag: 1,
+          x: [0, 0xff_ff] as const,
+          y: [0, 0] as const,
+          z: [0, 0xff_ff] as const
+        }
+      ],
+      walls: []
+    };
+    const landed = land(
+      program,
+      { ...aloft(), contact: 0x3f },
+      point,
+      everywhere
+    );
+    expect(landed.y).toBe(0x01_80_00_00);
+    expect([landed.contact, landed.supported, landed.supportLevel]).toEqual([
+      0, 0, 0
+    ]);
+  });
 });

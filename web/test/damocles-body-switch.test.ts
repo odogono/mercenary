@@ -391,36 +391,42 @@ describe('the cross-body trace', () => {
   });
 });
 
-describe('a Save names a Body with an admitted Pose', () => {
-  test('a Body the Catalogue knows but no Pose anchors is refused', () => {
+describe('a Save names a Body an admitted Pose or a landing reaches', () => {
+  test('a Body neither anchors is refused, and one only a landing reaches is not (#567)', () => {
     const identity = damoclesSaveIdentity(catalogue, 'test');
     const session = new DamoclesSession(content);
     const snapshot = session.captureResume();
-    const record = {
+    const on = (body: string, where: string) => ({
       identity,
       savedAt: '2026-09-19T12:00:00.000Z',
       schemaVersion: DAMOCLES_SAVE_SCHEMA_VERSION,
-      // MIDAS has an arrival Pose and no recovered workspace origin, so no admitted Pose
-      // anchors it; ICARUS used to stand here and is admitted since #172.
-      snapshot: { ...snapshot, pose: { ...snapshot.pose, body: 'body-2' } },
-      where: 'MIDAS'
-    };
-    expect(() =>
-      decodeDamoclesSave(encodeDamoclesSave(record), identity, {
+      snapshot: { ...snapshot, pose: { ...snapshot.pose, body } },
+      where
+    });
+    // DIALIS, the star, is never arrived at, and VOID is not in the range scan's table.
+    for (const [body, where] of [
+      ['body-0', 'DIALIS'],
+      ['body-30', 'VOID']
+    ] as const) {
+      expect(() =>
+        decodeDamoclesSave(encodeDamoclesSave(on(body, where)), identity, {
+          catalogue,
+          poses
+        })
+      ).toThrow(/no admitted Pose or landing reaches/);
+    }
+    // MIDAS has an arrival Pose and no recovered workspace origin, but a landing reaches it.
+    expect(
+      decodeDamoclesSave(encodeDamoclesSave(on('body-2', 'MIDAS')), identity, {
         catalogue,
         poses
-      })
-    ).toThrow(/admitted arrival Pose/);
+      }).snapshot.pose.body
+    ).toBe('body-2');
     // Without the poses the older rule still applies, so the Catalogue check is not weakened.
     expect(() =>
-      decodeDamoclesSave(
-        encodeDamoclesSave({
-          ...record,
-          snapshot: { ...snapshot, pose: { ...snapshot.pose, body: 'nowhere' } }
-        }),
-        identity,
-        { catalogue }
-      )
+      decodeDamoclesSave(encodeDamoclesSave(on('nowhere', 'MIDAS')), identity, {
+        catalogue
+      })
     ).toThrow(/unknown Body/);
   });
 });

@@ -64,3 +64,44 @@ export const inDaylight = (
     0
   );
 };
+
+/// Another Body's accumulator on the clock every Body turns by (#567). `$051E4E` adds every
+/// Body's rate on the same VBL, so every capture's table is the first world's plus each rate
+/// times one VBL count shared by all of them. The count is solved from the Body whose turn is
+/// known and carried to `to`. It is found modulo 2^(32 − k), k the rate's power of two; no Body's
+/// rate has k above 4, so the part left unknown never reaches bits 16–25, the angle. Null where
+/// `turn` is not on the clock, as no capture and no play leaves it.
+export const turnOnClock = (
+  from: {
+    readonly rate: number;
+    readonly start: number;
+    readonly turn: number;
+  },
+  to: { readonly rate: number; readonly start: number }
+): number | null => {
+  const modulus = 1n << 32n;
+  let rate = BigInt(from.rate);
+  let gap = (BigInt(from.turn) - BigInt(from.start)) % modulus;
+  gap = gap < 0n ? gap + modulus : gap;
+  if (rate === 0n) {
+    return gap === 0n ? to.start : null;
+  }
+  let bits = 32n;
+  while ((rate & 1n) === 0n) {
+    if ((gap & 1n) !== 0n) {
+      return null;
+    }
+    rate >>= 1n;
+    gap >>= 1n;
+    bits -= 1n;
+  }
+  const window = 1n << bits;
+  // The odd rate's inverse modulo 2^bits, by Newton's iteration: each step doubles the bits.
+  let inverse = rate;
+  for (let step = 0; step < 5; step += 1) {
+    inverse = (inverse * (2n - rate * inverse)) % window;
+  }
+  inverse = ((inverse % window) + window) % window;
+  const vbls = (gap * inverse) % window;
+  return Number((BigInt(to.start) + BigInt(to.rate) * vbls) % modulus);
+};

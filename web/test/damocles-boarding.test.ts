@@ -1266,21 +1266,108 @@ describe('launch and space (#566)', () => {
     expect(session.snapshot.message?.id).toBe('system-string-21');
   });
 
-  test('stopped in ERIS’s range, the arrival is raised once the hold runs out, and holds the craft', () => {
+  test('stopped in ERIS’s range, the craft lands back over ERIS once the hold runs out (#567)', () => {
     const session = aloft();
     session.launchCraft();
     toSpace(session);
+    const turn = session.snapshot.bodyTurn;
     // Space at once: the craft stays inside ERIS's arrival range, as the traced `return` does.
     session.throttleKey(0x39);
-    // Fifty passes count the hold `$7B0A` down; the next may raise the arrival.
+    // Fifty passes count the hold `$7B0A` down; the next raises the arrival and lands.
     passes(session, 50);
-    expect(session.snapshot.craft?.held).toBeNull();
+    expect(session.snapshot.craft?.space).not.toBeNull();
+    const yaw = session.snapshot.pose.heading;
     passes(session, 1);
-    expect(session.snapshot.craft?.held).toBe('arrival');
-    // The landing is the next ticket's, so nothing moves after the arrival.
-    const held = session.snapshot.craft?.space;
-    passes(session, 5, { turn: 1 });
-    expect(session.snapshot.craft?.space).toEqual(held);
+    const landed = session.snapshot;
+    expect(landed.craft?.space).toBeNull();
+    expect(landed.craft?.held).toBeNull();
+    expect(landed.occupancy).toEqual({ instance: EAGLE, kind: 'aboard' });
+    expect(landed.pose.body).toBe('body-11');
+    expect(landed.surface.body.id).toBe('body-11');
+    // 25,165,824 up over the point under the craft, the heading kept.
+    expect(landed.pose.position.y).toBe(0x01_80_00_00);
+    expect(landed.pose.heading).toBe(yaw);
+    expect(landed.pose.position.x % 0x1_00_00).toBe(0);
+    expect(landed.pose.position.z % 0x1_00_00).toBe(0);
+    // The same Body's turn, carried on the clock, is the one it had.
+    expect(landed.bodyTurn).toBeGreaterThan(turn);
+    // ERIS queues no landing trigger, and the surface pass flies on from here.
+    expect(landed.message).toBeNull();
+    passes(session, 5);
+    expect(session.snapshot.craft?.space).toBeNull();
+    expect(session.snapshot.pose.position.y).toBeLessThanOrEqual(0x01_80_00_00);
+    // A Save after the landing resumes over the point, aboard.
+    const restored = roundTrip(session);
+    expect(restored.snapshot.pose).toEqual(session.snapshot.pose);
+    expect(restored.snapshot.craft).toEqual(session.snapshot.craft);
+  });
+
+  test('crosses from DION to LACHESIS, lands over it, and flies down to its surface (#567)', () => {
+    const session = beside(EAGLE, [pairedKey(EAGLE)]);
+    session.board();
+    // Authored Atlas Travel aboard sets the Eagle down on DION, whose centre space starts from.
+    expect(
+      session.travelToAtlas({ bodyId: 'body-4', x: 3260, z: 1322 })
+    ).toEqual({ kind: 'travelled' });
+    session.throttleKey(0x05);
+    passes(session, 30);
+    passes(session, 20, { pitch: 1 });
+    session.launchCraft();
+    toSpace(session);
+    expect(session.snapshot.craft?.space?.position).toEqual({
+      x: -300_000,
+      y: 64,
+      z: -72_000
+    });
+    // Coast clear of DION on the launch throttle, then key 9, turning onto LACHESIS.
+    passes(session, 5);
+    session.throttleKey(0x39);
+    session.throttleKey(0x0a);
+    const lachesis = content.catalogue.craft!.bodies[7]!;
+    let before = session.snapshot.craft!.space!.position;
+    let landedAt = -1;
+    for (let pass = 0; pass < 400 && landedAt < 0; pass += 1) {
+      const at = session.snapshot.craft!.space!.position;
+      const moving = { x: at.x - before.x, z: at.z - before.z };
+      const wanted = { x: lachesis.x - at.x, z: lachesis.z - at.z };
+      before = at;
+      // The stick right turns the motion clockwise: steer the motion onto the Body.
+      const cross = moving.x * wanted.z - moving.z * wanted.x;
+      passes(session, 1, { turn: cross > 0 ? -1 : 1 });
+      if (session.snapshot.craft?.space === null) {
+        landedAt = pass;
+      }
+    }
+    expect(landedAt).toBeGreaterThan(0);
+    const landed = session.snapshot;
+    expect(landed.pose.body).toBe('body-7');
+    expect(landed.bodyName).toBe('LACHESIS');
+    expect(landed.surface.body.id).toBe('body-7');
+    expect(landed.pose.position.y).toBe(0x01_80_00_00);
+    // LACHESIS has no admitted Pose: the cell counts from the Body's own origin.
+    expect(landed.surface.grid.origin).toEqual({ x: 0, z: 0 });
+    expect(landed.cell).toEqual({
+      x: Math.floor(landed.pose.position.x / 0x1_00_00),
+      z: Math.floor(landed.pose.position.z / 0x1_00_00)
+    });
+    // The trigger `$26` is armed on the ST, but its script is Fog: nothing is presented.
+    expect(landed.message).toBeNull();
+    // Nose down under power to the surface: at sea there, the landing handler keeps the
+    // player aboard.
+    session.throttleKey(0x0a);
+    passes(session, 40, { pitch: -1 });
+    passes(session, 300);
+    const down = session.snapshot;
+    expect(down.pose.body).toBe('body-7');
+    expect(down.craft?.space).toBeNull();
+    expect(down.pose.position.y).toBe(63);
+    expect(down.landSea).toBe('sea');
+    expect(down.occupancy.kind).toBe('aboard');
+    // A Save on LACHESIS resumes there, though no admitted Pose anchors it (ADR 0052).
+    const restored = roundTrip(session);
+    expect(restored.snapshot.pose).toEqual(down.pose);
+    expect(restored.snapshot.surface.grid.origin).toEqual({ x: 0, z: 0 });
+    expect(restored.snapshot.daylight).toBe(down.daylight);
   });
 
   test('a Save in space resumes at the space entry, as the craft entered it', () => {

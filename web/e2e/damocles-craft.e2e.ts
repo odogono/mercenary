@@ -313,3 +313,179 @@ test('EAGLE NINE S E launches on Backspace, swings, climbs into space and turns 
   await expect(frame(page)).toHaveAttribute('data-occupancy', EAGLE);
   expect(errors).toEqual([]);
 });
+
+/// DION's space position, the centre of the Body, and LACHESIS's, which the crossing flies at.
+const DION_CENTRE = '-300000 64 -72000';
+const LACHESIS = { x: -311_200, z: -68_800 };
+
+/// EAGLE NINE S E aboard on DION, set down over open sea east of Birmingham Island through its
+/// Save, as `boardEagle` sets it down beside the Eagle on ERIS.
+const boardEagleOnDion = async (page: Page): Promise<void> => {
+  await boardEagle(page);
+  expect(await run(page, 'save 3')).toContain('saved');
+  const slot = damoclesSaveSlot(3);
+  const record = JSON.parse(
+    (await page.evaluate(k => localStorage.getItem(k), slot))!
+  ) as SavedRecord & {
+    snapshot: { pose: { body: string }; structure: unknown };
+    where: string;
+  };
+  record.snapshot.pose.body = 'body-4';
+  record.snapshot.pose.position = { x: 100 * 65_536, y: 63, z: 100 * 65_536 };
+  record.snapshot.structure = null;
+  record.where = 'DION 00-00';
+  await page.evaluate(
+    ([k, v]) => localStorage.setItem(k!, v!),
+    [slot, JSON.stringify(record)]
+  );
+  expect(await run(page, 'load 3')).toContain('restored slot 3');
+  await closeConsole(page);
+  await ready(page);
+  await expect(frame(page)).toHaveAttribute('data-body', 'body-4');
+  await expect(frame(page)).toHaveAttribute('data-occupancy', EAGLE);
+};
+
+/// Presses the key `code` in the frame the space entry is first drawn, as the traced `return`
+/// presses Space in the first space pass. A pass moves the craft a thousand units near a Body,
+/// so a key Playwright sends after polling for the entry comes several passes too late.
+const pressOnSpaceEntry = (page: Page, code: string): Promise<void> =>
+  page.evaluate(key => {
+    const canvas = document.querySelector<HTMLCanvasElement>('#frame')!;
+    const observer = new MutationObserver(() => {
+      if ((canvas.dataset['spaceNearest'] ?? '') === '') {
+        return;
+      }
+      observer.disconnect();
+      for (const type of ['keydown', 'keyup']) {
+        window.dispatchEvent(
+          new KeyboardEvent(type, { bubbles: true, code: key, key: ' ' })
+        );
+      }
+    });
+    observer.observe(canvas, {
+      attributeFilter: ['data-space-nearest'],
+      attributes: true
+    });
+  }, code);
+
+/// Off the ground on key 4 with the nose up, then Backspace: the launch, the swing and the climb
+/// to the space entry at the Body's centre. `onEntry` is a key pressed as space is entered.
+const launchIntoSpace = async (
+  page: Page,
+  centre: string,
+  onEntry?: string
+): Promise<void> => {
+  await page.keyboard.press('4');
+  await page.keyboard.down('ArrowDown');
+  await expect
+    .poll(async () => attribute(page, 'y'), { timeout: 20_000 })
+    .toBeGreaterThan(2000);
+  await page.keyboard.up('ArrowDown');
+  if (onEntry !== undefined) {
+    await pressOnSpaceEntry(page, onEntry);
+  }
+  await page.keyboard.press('Backspace');
+  await expect(frame(page)).toHaveAttribute(
+    'data-space-nearest',
+    /^body-\d+$/,
+    { timeout: 120_000 }
+  );
+  // The first pass in space moves the craft at once, so only the entry's Body is certain.
+  const [x, , z] = (await frame(page).getAttribute('data-space-position'))!
+    .split(' ')
+    .map(Number);
+  const [cx, , cz] = centre.split(' ').map(Number);
+  expect(Math.hypot(x! - cx!, z! - cz!)).toBeLessThan(5000);
+};
+
+test('EAGLE NINE S E lands back on DION, then crosses to LACHESIS, lands over it and flies down (#567)', async ({
+  page
+}, testInfo) => {
+  test.setTimeout(300_000);
+  const errors = watchErrors(page);
+  await boardEagleOnDion(page);
+  // The throttle cut as space is entered: the craft stays in DION's arrival range, and when the
+  // hold runs out the landing puts it back over DION, 25,165,824 up, still aboard.
+  await launchIntoSpace(page, DION_CENTRE, 'Space');
+  await expect(frame(page)).toHaveAttribute('data-space-nearest', '', {
+    timeout: 60_000
+  });
+  await expect(frame(page)).toHaveAttribute('data-body', 'body-4');
+  await expect(frame(page)).toHaveAttribute('data-occupancy', EAGLE);
+  expect(await attribute(page, 'y')).toBeGreaterThan(25_000_000);
+  await shot(page, 'eagle-landed-over-dion', testInfo);
+
+  // Launched again from high over DION, it coasts clear on the launch throttle, then flies at
+  // LACHESIS on key 9, steering its motion onto the Body until the arrival.
+  await page.keyboard.press('Backspace');
+  await expect(frame(page)).toHaveAttribute(
+    'data-space-nearest',
+    /^body-\d+$/,
+    { timeout: 120_000 }
+  );
+  await page.waitForTimeout(400);
+  await page.keyboard.press('Space');
+  await page.keyboard.press('9');
+  const position = async () => {
+    const text = (await frame(page).getAttribute('data-space-position')) ?? '';
+    if (text === '') {
+      return null;
+    }
+    const [x, , z] = text.split(' ').map(Number);
+    return { x: x!, z: z! };
+  };
+  let before = await position();
+  let held: string | null = null;
+  const deadline = Date.now() + 120_000;
+  for (;;) {
+    await page.waitForTimeout(80);
+    const at = await position();
+    if (at === null || before === null || Date.now() > deadline) {
+      break;
+    }
+    const moving = { x: at.x - before.x, z: at.z - before.z };
+    before = at;
+    if (moving.x === 0 && moving.z === 0) {
+      continue;
+    }
+    const wanted = { x: LACHESIS.x - at.x, z: LACHESIS.z - at.z };
+    const want =
+      moving.x * wanted.z - moving.z * wanted.x > 0
+        ? 'ArrowLeft'
+        : 'ArrowRight';
+    if (want !== held) {
+      if (held !== null) {
+        await page.keyboard.up(held);
+      }
+      await page.keyboard.down(want);
+      held = want;
+    }
+  }
+  if (held !== null) {
+    await page.keyboard.up(held);
+  }
+  await expect(frame(page)).toHaveAttribute('data-space-nearest', '');
+  await expect(frame(page)).toHaveAttribute('data-body', 'body-7');
+  await expect(frame(page)).toHaveAttribute('data-occupancy', EAGLE);
+  await expect(field(page, 'locationName')).toContainText('LACHESIS');
+  await shot(page, 'eagle-landed-over-lachesis', testInfo);
+
+  // Nose down under power to the surface. The point is at sea, where the landing handler keeps
+  // the player aboard.
+  await page.keyboard.down('ArrowUp');
+  await expect
+    .poll(async () => attribute(page, 'pitch'), { timeout: 10_000 })
+    .toBeLessThan(-1);
+  await page.keyboard.up('ArrowUp');
+  await expect
+    .poll(async () => attribute(page, 'y'), { timeout: 120_000 })
+    .toBe(63);
+  await expect(frame(page)).toHaveAttribute('data-body', 'body-7');
+  await expect(frame(page)).toHaveAttribute('data-occupancy', EAGLE);
+  await page.waitForTimeout(500);
+  expect(
+    Number(await frame(page).getAttribute('data-triangles'))
+  ).toBeGreaterThan(0);
+  await shot(page, 'eagle-down-on-lachesis', testInfo);
+  expect(errors).toEqual([]);
+});

@@ -118,10 +118,12 @@ it('publishes what the launch, the space pass and the range scan read (#558)', a
   expect(craft.bodies).toHaveLength(30);
   expect(craft.bodies[11]).toEqual({
     extent: 0x00_12_12_c0,
+    turn: 0x01_0e_1f_ad,
     x: -630_000,
     y: 0,
     z: 390_000
   });
+  expect(craft.constants.landingY.operand).toBe(0x01_80_00_00);
   expect(craft.boot.range.value).toBe(0x00_0a_13_7a);
   expect(craft.boot.nearest.value).toBe(11 * 4);
   // The unnormalised `$2000` a range sum can leave reads `$FFF0`, the word past the table.

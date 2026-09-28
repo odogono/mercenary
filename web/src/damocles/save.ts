@@ -30,6 +30,7 @@ import {
   type Step
 } from './scripts.ts';
 import type { AttachmentLatch } from './selection.ts';
+import { landsOn } from './space.ts';
 import { presentedText, type DamoclesStrings } from './strings.ts';
 import type { Pose } from './world.ts';
 
@@ -1007,13 +1008,14 @@ export const decodeDamoclesSave = (
     if (!catalogue.bodies.some(body => body.id === pose.body)) {
       return fail('pose names an unknown Body');
     }
-    // A Body is only switchable, and only standable, where an admitted Pose anchors it: without
-    // a recovered workspace origin the Pose's cell cannot be related to any resident placement.
+    // A Body is standable where an admitted Pose anchors it, or where a landing from space
+    // reaches it, whose surface is anchored at the Body's own origin (ADR 0052).
     if (
       poses !== undefined &&
-      !admittedPoses(poses).some(item => item.body === pose.body)
+      !admittedPoses(poses).some(item => item.body === pose.body) &&
+      !landsOn(catalogue, pose.body)
     ) {
-      return fail('pose names a Body with no admitted arrival Pose');
+      return fail('pose names a Body no admitted Pose or landing reaches');
     }
     validateResidence(catalogue, residence);
     if (
