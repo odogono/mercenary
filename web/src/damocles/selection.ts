@@ -167,6 +167,12 @@ const workspaceBounds = (
   );
 };
 
+/// A region whose flags have bit 15 clear is enclosed: the frame loop takes the branch at
+/// `$0595FA` and draws the bound structure's plan queue alone, with no ground record, island
+/// fill or object stream (#491).
+export const regionIsEnclosed = (region: { readonly flags: number }): boolean =>
+  (region.flags & 0x80_00) === 0;
+
 export const structureRegionAt = (
   placement: ErisPlacement,
   pose: Pose,

@@ -10,6 +10,7 @@ import type { ErisPresentationDocument } from './documents.ts';
 import { classifyPosition, coastlineInBodyUnits } from './islands.ts';
 import type { BoundStructureSnapshot } from './save.ts';
 import {
+  regionIsEnclosed,
   structureMeshes,
   type CarriedSlot,
   type FloorLabelGlyphs
@@ -844,7 +845,7 @@ export const planErisFrame = (
   // below it in the second (`$059600`, `$059606`), and draws nothing but the bound structure's
   // plan queue (`$0596F0` → `$05A730`). That queue carries its own wall texts and insertions.
   // No ground record, island fill, road edge or object stream is drawn (#491).
-  const enclosed = region !== undefined && (region.flags & 0x80_00) === 0;
+  const enclosed = region !== undefined && regionIsEnclosed(region);
   // The scene colours are resolved through `$7A0E` when the structure is assembled
   // (`$059DA2`), so the half they take is the one bound then. The port takes the current half,
   // which differs only while the terminator crosses a player standing in one structure.

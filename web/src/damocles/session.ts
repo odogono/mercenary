@@ -80,6 +80,7 @@ import {
   attachmentOpenLimit,
   clampStructureStep,
   insideLocalBox,
+  regionIsEnclosed,
   stepAttachment,
   structureLocalPosition,
   structureRegionAt,
@@ -1183,6 +1184,13 @@ export class DamoclesSession implements TitleSession<
 
   private visibleResidents(): readonly ErisPlacement[] {
     const residents: ErisPlacement[] = [];
+    const region =
+      this.regionIndex === null
+        ? undefined
+        : this.boundPlacement?.selection?.structure.regions[this.regionIndex];
+    // An enclosed region draws no object stream, so an object left on the surface is not seen
+    // from it: a craft parked in the State Office lobby stays below Floor 10.
+    const enclosed = region !== undefined && regionIsEnclosed(region);
     for (const instance of this.content.catalogue.instances) {
       const departure = this.residence.get(instance.id);
       const residence = this.residenceFor(instance.id);
@@ -1190,7 +1198,7 @@ export class DamoclesSession implements TitleSession<
         residence === undefined ||
         residence.kind === 'carried' ||
         residence.kind === 'occupied' ||
-        (departure === undefined && residence.kind === 'surface')
+        (residence.kind === 'surface' && (departure === undefined || enclosed))
       ) {
         continue;
       }

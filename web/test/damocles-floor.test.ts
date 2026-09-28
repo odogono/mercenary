@@ -516,6 +516,45 @@ describe('the player stands on one Floor', () => {
     expect(plan.drawnPlacements.length).toBeGreaterThan(1);
   });
 
+  test('a craft left in the lobby is not drawn from an enclosed upper Floor', () => {
+    const LIMO = 'object-slot-5';
+    const ground = content.surface.placements.find(
+      item => item.id === STATE_OFFICE
+    )!;
+    const parked = (floor: number): DamoclesSession => {
+      const resume = inRegionZero(floor).captureResume();
+      return new DamoclesSession(content, {
+        ...resume,
+        residence: [
+          ...resume.residence,
+          {
+            instance: LIMO,
+            residence: {
+              body: resume.pose.body,
+              kind: 'surface',
+              placementClass: 2,
+              position: { ...ground.position, y: 0 }
+            }
+          }
+        ]
+      });
+    };
+    const drawn = (session: DamoclesSession): readonly string[] => {
+      const { pose, residents, structure, surface } = session.snapshot;
+      return planErisFrame(surface, pose, content.doc, structure, residents)
+        .drawnPlacements;
+    };
+    // The lobby's region 0 is `$8000`, which draws the object stream.
+    expect(drawn(parked(0))).toContain(LIMO);
+    for (const floor of [1, 2, 10]) {
+      const session = parked(floor);
+      expect(session.snapshot.residents.map(item => item.id)).not.toContain(
+        LIMO
+      );
+      expect(drawn(session)).not.toContain(LIMO);
+    }
+  });
+
   test("the attachments are the Floor structure's own, closed on arrival", () => {
     const session = inStateOffice();
     session.changeFloor(10);
