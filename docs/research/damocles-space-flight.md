@@ -260,15 +260,18 @@ the arrival is raised on the pass the hold runs out.
    - `$04EA02`: `$79BE` = `atan2(float(Body X), float(Body Z)) ^ $200`, the terminator word of the
      [day/night note](damocles-day-night-terminator.md).
 3. `$54770` queues Damocles Script trigger `body + $1F` where `$7CB4 + body + $1F` is armed. This
-   is skipped for the Bodies at offsets `$2C` (ERIS) and `$74` (VOID).
+   is skipped for the Bodies at offsets `$2C` (ERIS) and `$74` (DAMOCLES, the comet; VOID is
+   `$78` and is not in the scan). See [the landing triggers](#the-landing-triggers-567).
 4. It writes `$7AC6` = `a0` and `$7918`, and `$7C88`/`$7A1A` from `$60C2(a0)`. It writes
    `$7948`/`$7946`/`$794A` from the Body's records. The space position becomes
    `($5F40(a0), $40, $5FC0(a0))`.
 5. It writes `$7A16`/`$7A2A`, sets `$78A6` = −1, runs the pose copy (which masks X's and Z's high
    words to twelve bits), sets `$794E` = −1, and binds the Body with `$56488`. Then come the pose
    copy again, `$54B2E` and `$50B68`.
-6. The support search `$0583EA`. On a support it sets `$7BC8` = `$3F` and Y to the support's top
-   plus 63. Otherwise it clears `$7ACA`, `$7BC8` and `$7B02`.
+6. The support search `$0583EA`. On a support it sets `$7BC8` = `$3F` and Y's low word to the
+   support's top plus 63. Otherwise it clears `$7ACA`, `$7BC8` and `$7B02`. The search opens with
+   `tst.w $7AB6; bne` and refuses any Y whose high word is not nought. Y's high word is `$0180`
+   here, so from the landing it always refuses, and the support branch is never taken (#567).
 
 `$04EA48` is an octant `atan2` of two floats, 1,024 a turn. It sets bit 4 of the octant for a
 negative first operand, bit 8 for a negative second, and bit 2 when the first is not smaller. Its
@@ -296,6 +299,40 @@ shrinks the space position towards the Body by `$F100`/65,536 a pass, less `$100
 turns the yaw down by one a pass. Once the Z high word reaches `$20` it sets `$790E` = −1. While it
 is negative, `$058450` follows the waypoint commands 1–3 at `$78F0` and `$78F4`. No free-flight
 route reaches it. It's a presentation sequence, not flight, and it is outside #558.
+
+## The Body turn clock (#567)
+
+The landing reads the destination's rotation accumulator `$62EA(a0)`. `$051E4E` adds every Body's
+rate `$835C(a0)` to its accumulator in one loop, once a VBL, 32 longs in eight groups of four. So
+every capture's table is the first world's plus each Body's rate times one VBL count `V` that all
+Bodies share. With `V` solved from ERIS, whose rate 321 is odd, all 62 memstates hold to it:
+`eris-spaceport-onfoot`, the port's start, is at `V` = 18,111, and `dion-north-airborne` is at
+93,613. In four of them (`damocles.clotho`, `damocles.cronus` and their rehosted copies) the
+capture came partway through the loop, and Bodies 19 on (CLOTHO) or 17 on (CRONUS) are one VBL
+behind. The two traced landings' stops before landing hold to it too, at 94,261 (`return`) and
+94,606 (`cross`), for all thirty Bodies in the scan.
+
+`V` can be solved from any Body with a non-zero rate. It is found modulo 2^(32 − k), where k is
+the power of two in that Body's rate. No rate has k above 4, so the part left unknown never
+reaches bits 16–25 of any accumulator, which are the angle the landing and the terminator read.
+
+`$04EA02`'s terminator word, taken from each Body's first-world place with the table `atan2`,
+equals the `subStellarLongitude` every arrival Pose captured. The one exception is the comet's,
+which had moved.
+
+## The landing triggers (#567)
+
+In the first world the arming table `$7CB4` holds a one-shot `$80` at `$20`–`$3C`, one byte for
+each Body from ICARUS to DAMOCLES. ERIS's `$2A` is `$80` too, but the landing never fires it.
+TOLOSA's `$38` is `$C0`, so it is sticky. DAMOCLES's `$3C` is `$A0`, queueable, and is never
+fired either. Each memstate has disarmed the triggers of the Bodies landed on in its
+history. `dion-north-airborne` has DION's `$23` at `$00` and LACHESIS's `$26` at `$80`.
+
+So the `cross` landing **did** fire a trigger. At the landing stop `$26` goes to `$00` and the
+busy bit 6 of `$7BD9` is set. Thirty-eight passes later, at stop 253, a message is presented
+(`$7BA0` set, `$7B98` = `$72336`, reading on to `$7235A` by stop 260). The
+`return` landing on DION fires nothing, since `$23` was already disarmed. The script
+`$70080 + 2 × $26` and its text were not decoded.
 
 ## Bodies
 
@@ -343,13 +380,12 @@ states neither can be the nearest Body or a destination. Why they are flagged wa
 
 ## Unresolved
 
-- **What the Body switch `$56488` does in space-arrival terms**, beyond binding the Body. The port's
-  Body switch (ADR 0046) is authored against arrival Poses, and how the recovered landing point
-  maps onto a workspace is for the port ticket.
-- **The landing message.** Neither traced arrival had its trigger armed, so what `body + $1F`
-  presents was not seen.
-- **Arriving at a Body with a support under the landing point** was not traced. `$0583EA` then
-  sets Y to the support's top plus 63.
+- **What the Body switch `$56488` does in space-arrival terms**, beyond binding the Body. The port
+  lands at the recovered point and binds the Body as its switch does
+  ([ADR 0052](../adr/0052-land-a-damocles-craft-at-the-recovered-landing-point.md)).
+- **The landing message.** The `cross` landing fired LACHESIS's trigger `$26`
+  ([above](#the-landing-triggers-567)), but its script and text were not decoded, nor were any
+  other Body's.
 - **The out-of-scene flag** on ERIS and DAMOCLES in later memstates. It is probably tied to the
   impact, but that is not established.
 - **The panel's first form** (`$7876` ≤ `$20`) was not reached in space. Every traced space pass had

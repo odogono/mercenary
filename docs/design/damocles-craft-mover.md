@@ -1,7 +1,8 @@
 # The Damocles craft Mover in play
 
-Implementation note for [#556](https://github.com/odogono/mercenary/issues/556) and the launch
-and space flight of [#566](https://github.com/odogono/mercenary/issues/566), part of the
+Implementation note for [#556](https://github.com/odogono/mercenary/issues/556), the launch
+and space flight of [#566](https://github.com/odogono/mercenary/issues/566) and the landing of
+[#567](https://github.com/odogono/mercenary/issues/567), part of the
 [driving and flying map](https://github.com/odogono/mercenary/issues/548), under
 [ADR 0051](../adr/0051-run-the-damocles-craft-pass-exactly-once-every-four-ticks.md). It records
 what the port runs aboard, where each rule comes from, and what it does not run. The rules
@@ -29,6 +30,9 @@ calls it.
 | `spacePass`, `spaceFrame` | the space pass `$05872E` over slot 0's block, then the frame's range scan `$052DB0`, the hold `$7B0A` and the arrival test `$052FDA` | space flight note |
 | `viewMatrix`, `bodyRange` | `$055F60`/`$045710` and the rotation `$05668A` | space flight note |
 | `craftDivide`, `craftSquare`, `craftSqrt`, `craftLongFloat`, `spaceWord`, `spaceFixed` | the log-table quotient, square and root, `$04BDD8`, `$058B5A`, `$0589D6` | space flight note |
+| `craftAtan2`, `subStellarLongitude` | the octant `atan2` `$04EA48`, and `$04EA02`'s terminator word | space flight note |
+| `landingPoint`, `land`, `landingTrigger` | the landing `$059268`: the point `$04E936`, Y `$1800000`, the support search, the trigger `body + $1F` | space flight note, ADR 0052 |
+| `turnOnClock` | the one VBL count every Body's accumulator `$62EA` shares (`$051E4E`) | space flight note, "The Body turn clock" |
 
 Every constant, the craft table, the throttle key table and the exponent and sine tables come
 from the Catalogue's `craft` block (#555). So do the launch, swing, entry and space pass
@@ -90,9 +94,33 @@ The Building detail boxes come from each detail Model's `boxes` (#556,
 - **The panel in space.** The speed field prints what the space pass leaves in `$4DFEC`, one of
   the three forms of c·v/√(v² + 1024). The altitude window prints `$04DEEE`'s range ÷ 16,384.
   The first lamp stays dark.
-- **An arrival** raised by `$052FDA` holds the craft where it is: `held` reads `arrival`. The
-  landing `$059268` is the next ticket's. DIALIS, offset 0, is never arrived at: `$052FD4`
-  skips the test for it, which the note's model leaves out and no trace reaches.
+- **An arrival** raised by `$052FDA` lands the craft the same frame. DIALIS, offset 0, is never
+  arrived at: `$052FD4` skips the test for it, which the note's model leaves out and no trace
+  reaches.
+
+## Landing (#567)
+
+[ADR 0052](../adr/0052-land-a-damocles-craft-at-the-recovered-landing-point.md) records the
+decisions.
+
+- **The point.** `landingPoint` takes the space position the frame's pass left and the
+  destination from the scanned Body table, comet included. X is the longitude less the high word
+  of the destination's accumulator, and Z the latitude from Y over the extent, both masked to
+  twelve bits as the pose copy masks them. It also returns `$79BE`.
+- **The craft.** `land` puts the craft at the point, Y `$1800000`, and keeps every other word the
+  pass left, throttle and speed included. The support search runs over the destination's bound
+  boxes. It refuses any Y high word but nought, so it finds none, and contact and the support
+  words are cleared. Arriving under power climbs back into space.
+- **The Body switch.** The session swaps in the destination's surface, drops the bound structure,
+  region, Floor, attachments and doorway, and binds again at the point. It clears space and the
+  space entry, and drops the occupied object's pre-boarding residence. The destination's turn is
+  carried from the Body the craft left along the shared clock (`turnOnClock`). The landing's
+  `$79BE` drives the terminator until the next switch. The Carried Stack, Object Residence and
+  the Damocles Script carry over.
+- **Bodies with no admitted Pose,** such as LACHESIS, are anchored at the Body's own origin, so
+  their cell is the Body Coordinate. A Save may name any Body a landing reaches.
+- **The trigger** `body + $1F` is fired through `fireTrigger` except on ERIS and DAMOCLES. No
+  landing trigger has a script in the port, so it changes nothing and presents nothing.
 
 ## Tests
 
@@ -111,14 +139,16 @@ which `research/damocles-st/scripts/space-trace-export.py` exports from the #558
 the key each stop wrote, the attitude sines and the Body table. Every pass matches word for
 word: 812 on a Body (the launch, the swing, the swung climb and the flight after the cross's
 arrival), the 2,382 space passes with every range, nearest Body and hold, both entries into
-space, and the Body each of the two arrivals is raised for.
+space, and the Body each of the two arrivals is raised for. For both arrivals the landing point, the
+latitude and longitude words, `$79BE`, the craft words and the space position match too. The
+traces carry every Body's accumulator on the stop before each landing (#567).
 
 ## Not run, and why
 
 The port has no rule for each of these, so it does not invent one:
 
-- **The landing** `$059268` after an arrival, and what the Body switch does there. The craft is
-  held, and `craft.held` reads `arrival`.
+- **The landing message.** The landing fires the Body's trigger, but no landing trigger's
+  script is in the port, so the trigger does not disarm and nothing is presented (#567).
 - **The scripted flight** `$790E` and the stick replay `$7A0C`, on a Body or in space.
 - **Time dilation.** In space `$7876` is 32γ and the impact clock gains γ seconds per 50 VBLs
   (#551). The port's clock is a function of elapsed time, so it keeps real time in space.

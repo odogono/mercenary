@@ -417,6 +417,7 @@ export const CRAFT_CONSTANTS = [
   'groundY',
   'landingPitch',
   'landingStep',
+  'landingY',
   'launchGate',
   'launchSpeedExponent',
   'launchThrottle',
@@ -481,7 +482,8 @@ export interface Craft {
   /**
    * The Body table the range scan `$052DB0` walks (#558), from offset 0 to the one `$7C0E`
    * names, one entry a Body: its position and its extent float as raw longs. A negative Y is
-   * the out-of-scene flag, which the scan skips.
+   * the out-of-scene flag, which the scan skips. The rotation accumulator `$62EA` is the first
+   * world's (#567).
    */
   readonly bodies: readonly CraftBody[];
   /**
@@ -513,6 +515,8 @@ export interface Craft {
 }
 export interface CraftBody {
   readonly extent: number;
+  /// `$62EA`: the rotation accumulator as the first world holds it, an unsigned long.
+  readonly turn: number;
   readonly x: number;
   readonly y: number;
   readonly z: number;
@@ -1854,9 +1858,10 @@ const craft = (value: unknown): Craft => {
     },
     bodies: (() => {
       const entries = list(bodies['entries']).map(value => {
-        const b = fields(value, ['extent', 'x', 'y', 'z']);
+        const b = fields(value, ['extent', 'turn', 'x', 'y', 'z']);
         return {
           extent: integer(b['extent']),
+          turn: integer(b['turn']),
           x: signedInteger(b['x']),
           y: signedInteger(b['y']),
           z: signedInteger(b['z'])

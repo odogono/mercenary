@@ -11,6 +11,8 @@ import {
   craftNegate,
   craftSqrt,
   craftSquare,
+  supportUnder,
+  type BoundBoxes,
   type CraftArithmetic,
   type CraftProgram,
   type CraftState
@@ -377,3 +379,141 @@ export const spaceFrame = (
 /// read as 16.16 by the shared printer. So the window reads range ÷ 16,384.
 export const spaceAltitude = (program: CraftProgram, range: number): number =>
   spaceFixed(u32(range + program.constants.spaceAltitudeScale));
+
+/// `$04EA48`: the angle of the float pair (d0, d1), 1,024 a turn. The octant takes 4 for a
+/// negative first operand, 8 for a negative second and 2 where the first is not the smaller;
+/// the smaller over the larger, × 256, indexes the arctan bytes, and the octant word offsets
+/// it, negating the table angle where its bit 15 is set.
+export const craftAtan2 = (
+  arithmetic: CraftArithmetic,
+  first: number,
+  second: number
+): number => {
+  let d0 = u32(first);
+  let d1 = u32(second);
+  let octant = 0;
+  if ((d0 & 0x80_00) !== 0) {
+    octant += 4;
+    d0 = craftNegate(d0);
+  }
+  if ((d1 & 0x80_00) !== 0) {
+    octant += 8;
+    d1 = craftNegate(d1);
+  }
+  let ratio = craftDivide(arithmetic, d0, d1);
+  if ((ratio & 0x80_00_00_00) === 0) {
+    octant += 2;
+    ratio = craftDivide(arithmetic, 0x00_00_10_00, ratio);
+  }
+  const index = spaceWord(u32(ratio + 0x8_00_00), true);
+  const byte = arithmetic.arctan[index];
+  if (byte === undefined) {
+    throw new Error(`the arctan table has no entry ${index}`);
+  }
+  const offset = arithmetic.octants[octant / 2]!;
+  return (((offset & 0x80_00) !== 0 ? -byte : byte) + offset) & 0x3_ff;
+};
+
+/// `$04EA02`: the terminator word `$79BE`, the angle of the Body's own place in the System.
+export const subStellarLongitude = (
+  arithmetic: CraftArithmetic,
+  body: CraftBody
+): number =>
+  craftAtan2(arithmetic, craftLongFloat(body.x), craftLongFloat(body.z)) ^
+  0x2_00;
+
+/// Where `$04E936` puts the craft over Body `body` from its space position.
+export interface LandingPoint {
+  /// `$7A22`: the latitude, 0 at one pole and `$200` at the other.
+  readonly latitude: number;
+  /// `$7A1E`: the longitude in the System, before the Body's rotation is taken off.
+  readonly longitude: number;
+  /// `$79BE`, from the Body's place (`$04EA02`).
+  readonly terminator: number;
+  /// X and Z as the pose copy `$058F64` leaves them, the high words masked to twelve bits.
+  readonly x: number;
+  readonly z: number;
+}
+
+/// `$04E936`: the point under the craft. The longitude is the angle of the craft's X/Z offset
+/// from the Body, less the high word of the Body's accumulator `turn`; the latitude is the
+/// angle whose cosine is the craft's Y over the extent, × 256, a pole where that is 1 or more.
+export const landingPoint = (
+  arithmetic: CraftArithmetic,
+  space: { readonly x: number; readonly y: number; readonly z: number },
+  body: CraftBody,
+  turn: number
+): LandingPoint => {
+  const t = arithmetic;
+  const longitude =
+    craftAtan2(
+      t,
+      craftLongFloat(space.x - body.x),
+      craftLongFloat(space.z - body.z)
+    ) ^ 0x2_00;
+  // `asl.w #6` then `asr.w #4`, into the high word; the pose copy masks it to twelve bits.
+  const place = (word: number, shift: number): number =>
+    u32(((sx16(word << shift) >> 4) & 0x0f_ff) * 0x1_00_00);
+  const q = u32(
+    craftDivide(t, craftLongFloat(space.y), body.extent) + 0x8_00_00
+  );
+  let latitude: number;
+  if ((q & 0x80_00_00_00) === 0) {
+    latitude = (q & 0x80_00) !== 0 ? 0x2_00 : 0;
+  } else {
+    const cosine = craftSqrt(
+      t,
+      craftAdd(0x00_00_10_00, craftNegate(craftSquare(t, q)))
+    );
+    latitude = craftAtan2(t, cosine, q);
+  }
+  return {
+    latitude,
+    longitude,
+    terminator: subStellarLongitude(t, body),
+    x: place(longitude - high(turn), 6),
+    z: place(latitude - 0x1_00, 7)
+  };
+};
+
+/// `$059268` for the craft words, after the frame's space pass: aboard again at `$1800000`
+/// over the landing point, the throttle, speed, pitch and yaw kept. The support search
+/// `$0583EA` reads the Body's bound boxes, but it refuses any Y whose high word is not nought,
+/// so from here it finds none, and contact, `$7BC8` and `$7B02` are cleared.
+export const land = (
+  program: CraftProgram,
+  craft: CraftState,
+  point: LandingPoint,
+  boxes: BoundBoxes
+): CraftState => {
+  const k = program.constants;
+  const y = k.landingY;
+  const support = supportUnder(boxes, point.x, y, point.z, k.supportEye);
+  const placed = { ...craft, x: point.x, y, z: point.z };
+  if (support !== undefined) {
+    return {
+      ...placed,
+      supported: k.supported,
+      supportLevel: support.tag,
+      y: long(high(u32(y)), support.y[1] + k.supportEye)
+    };
+  }
+  return { ...placed, contact: 0, supported: 0, supportLevel: 0 };
+};
+
+/// The Damocles Script trigger a landing on the Body at `offset` queues (`$054770`), `body +
+/// $1F`; ERIS (`$2C`) and DAMOCLES, the comet (`$74`), have none.
+export const landingTrigger = (offset: number): number | null =>
+  offset === 0x2c || offset === 0x74 ? null : offset / 4 + 0x1f;
+
+/// Whether a landing can reach the Body `bodyId`: one in the range scan's table but DIALIS,
+/// offset 0, which `$052FDA` never arrives at.
+export const landsOn = (
+  catalogue: {
+    readonly craft: { readonly bodies: readonly CraftBody[] } | null;
+  },
+  bodyId: string
+): boolean => {
+  const index = Number(/^body-(\d+)$/.exec(bodyId)?.[1] ?? -1);
+  return index >= 1 && index < (catalogue.craft?.bodies.length ?? 0);
+};

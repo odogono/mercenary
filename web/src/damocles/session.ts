@@ -88,13 +88,19 @@ import {
 } from './selection.ts';
 import {
   enterSpace,
+  land,
+  landingPoint,
+  landingTrigger,
+  landsOn,
   spaceAltitude,
   spaceFrame,
+  subStellarLongitude,
+  type SpaceFrame,
   type SpaceMemory,
   type SpaceState
 } from './space.ts';
 import { presentedText, type DamoclesStrings } from './strings.ts';
-import { advanceTurn, inDaylight } from './terminator.ts';
+import { advanceTurn, inDaylight, turnOnClock } from './terminator.ts';
 import {
   SURFACE_CELLS,
   bearingFromYaw,
@@ -175,9 +181,8 @@ export type { Residence, ResidenceDeparture } from './residence.ts';
 
 /// What the panel and the console read of the craft aboard.
 export interface DamoclesCraftSnapshot {
-  /// `arrival`: `$052FDA` raised an arrival, and the landing `$059268` is not run yet (#566).
   /// `unrecovered`: the occupied slot's entry is not a surface craft pass the port runs.
-  readonly held: 'arrival' | 'unrecovered' | null;
+  readonly held: 'unrecovered' | null;
   /// `$4DFEC`, the speed field's integer.
   readonly panelSpeed: number;
   readonly slot: number;
@@ -349,6 +354,16 @@ const workspaceOriginFor = (
     pose => pose.body === bodyId && pose.workspaceOrigin !== null
   )?.workspaceOrigin ?? undefined;
 
+/// The origin a Body's surface is anchored at: its admitted Pose's workspace origin, and on a
+/// Body a landing reaches without one, the Body's own origin (ADR 0052). No 16-cell window is
+/// recovered there, so the local cell is the Body Coordinate.
+const surfaceOriginFor = (
+  content: DamoclesContent,
+  bodyId: string
+): { readonly x: number; readonly z: number } | undefined =>
+  workspaceOriginFor(content, bodyId) ??
+  (landsOn(content.catalogue, bodyId) ? { x: 0, z: 0 } : undefined);
+
 /// The single owner of Damocles's Session State.
 ///
 /// Time reaches it as seconds and is stepped at no more than the shared `MAXIMUM_STEP`, so a
@@ -392,8 +407,12 @@ export class DamoclesSession implements TitleSession<
   } | null = null;
   private briefcaseStore: string[];
   /// The current Body's rotation accumulator, advanced by its rate every VBL (`$051E4E`). Only
-  /// the Body underfoot is kept: a switch takes the arrival Pose's own.
+  /// the Body underfoot is kept: a switch takes the arrival Pose's own, and a landing carries
+  /// the clock every Body shares to the destination (#567).
   private bodyTurn: number;
+  /// `$79BE` as the last landing wrote it, or null where no landing has since the session
+  /// started or last switched: the terminator then reads the Body's captured or derived word.
+  private subStellar: number | null = null;
   private carried: string[];
   /// `$5A9D9`: whether any door moved on the last pass, which the next pass compares with.
   private doorsMoving: boolean;
@@ -537,7 +556,7 @@ export class DamoclesSession implements TitleSession<
     content: DamoclesContent,
     restore: DamoclesSaveSnapshot
   ): readonly string[] {
-    const origin = workspaceOriginFor(content, restore.pose.body);
+    const origin = surfaceOriginFor(content, restore.pose.body);
     const bound = instanceById(
       content.catalogue,
       restore.structure?.instanceId ?? undefined
@@ -665,9 +684,11 @@ export class DamoclesSession implements TitleSession<
   }
 
   private buildSurface(bodyId: string): ErisSurface {
-    const origin = workspaceOriginFor(this.content, bodyId);
+    const origin = surfaceOriginFor(this.content, bodyId);
     if (origin === undefined) {
-      throw new Error(`Damocles Body ${bodyId} has no admitted arrival Pose`);
+      throw new Error(
+        `Damocles Body ${bodyId} has no admitted arrival Pose and no landing reaches it`
+      );
     }
     this.surfaceModels = this.content.models.size;
     return erisSurfaceFrom(
@@ -1238,22 +1259,36 @@ export class DamoclesSession implements TitleSession<
 
   /// What the VBL handler adds to the current Body's rotation accumulator.
   private rotationRate(): number {
+    return this.rateOf(this.pose.body);
+  }
+
+  private rateOf(bodyId: string): number {
     return (
-      this.content.catalogue.bodies.find(item => item.id === this.pose.body)
+      this.content.catalogue.bodies.find(item => item.id === bodyId)
         ?.bodySurface?.rotationRate ?? 0
     );
   }
 
-  /// The terminator for the Pose, against the sub-stellar longitude the Body's arrival Poses
-  /// captured. Every admitted Body has one, since a Session stands only on those.
+  /// The terminator for the Pose, against the sub-stellar longitude the last landing wrote, or
+  /// else the one the Body's arrival Poses captured, or else `$04EA02`'s from the Body's place,
+  /// which every capture's but the moving comet's matches (#567).
   private daylight(): boolean {
-    const longitude = this.content.poses.poses.find(
-      pose => pose.body === this.pose.body
-    )?.subStellarLongitude;
+    const longitude =
+      this.subStellar ??
+      this.content.poses.poses.find(pose => pose.body === this.pose.body)
+        ?.subStellarLongitude ??
+      this.derivedSubStellar();
     return (
       longitude !== undefined &&
       inDaylight(longitude, this.bodyTurn, this.pose.position)
     );
+  }
+
+  private derivedSubStellar(): number | undefined {
+    const body = this.catalogueBody();
+    return this.craftProgram === null || body === undefined
+      ? undefined
+      : subStellarLongitude(this.craftProgram.arithmetic, body);
   }
 
   private capacity(): number {
@@ -1807,7 +1842,7 @@ export class DamoclesSession implements TitleSession<
   }
 
   /// A frame in space: the pass over slot 0's block, the range scan, and the arrival hold. An
-  /// arrival holds the craft where it is: the landing `$059268` is the next ticket's (#566).
+  /// arrival lands the craft over the Body it was raised for the same frame (#567).
   private tickSpace(
     program: CraftProgram,
     craft: CraftState,
@@ -1830,8 +1865,80 @@ export class DamoclesSession implements TitleSession<
     };
     this.pose = this.spacePose(frame.craft);
     if (frame.arrival !== null) {
-      this.craftHeld = 'arrival';
+      this.landCraft(program, frame, frame.arrival);
     }
+  }
+
+  /// `$059268`, the frame an arrival is raised: aboard over the landing point `$04E936` on the
+  /// Body at `offset`, 25,165,824 up, with the throttle, speed, pitch and yaw the pass left. The
+  /// Body is bound as a switch binds it (ADR 0046), but at the recovered point rather than an
+  /// arrival Pose (ADR 0052). The destination's turn comes from the clock every Body shares,
+  /// solved from the Body the craft left. The landing queues the Body's trigger, `body + $1F`.
+  private landCraft(
+    program: CraftProgram,
+    frame: SpaceFrame,
+    offset: number
+  ): void {
+    const index = offset / 4;
+    const bodyId = `body-${index}`;
+    const body = this.scannedBodies()[index]!;
+    const turn = this.turnOf(index);
+    const point = landingPoint(program.arithmetic, frame.space, body, turn);
+    const surface = this.surfaceFor(bodyId);
+    this.space = null;
+    this.spaceEntry = null;
+    this.surface = surface;
+    this.bodyTurn = turn;
+    this.subStellar = point.terminator;
+    this.boundPlacement = null;
+    this.regionIndex = null;
+    this.floor = 0;
+    this.floorSurface = null;
+    this.arrivalFloor = null;
+    this.attachments = new Map();
+    this.doorway = null;
+    this.doorsMoving = false;
+    this.boardedFrom = undefined;
+    // `$56488` binds the Body at the point before the support search reads its boxes.
+    const over = {
+      ...frame.craft,
+      x: point.x,
+      y: program.constants.landingY,
+      z: point.z
+    };
+    this.pose = { ...this.poseFromCraft(over), body: bodyId };
+    this.bindAt(this.pose);
+    this.craft = land(program, frame.craft, point, this.boundBoxes());
+    this.pose = this.poseFromCraft(this.craft);
+    this.regionIndex = this.regionAt(this.pose);
+    this.readBody();
+    const trigger = landingTrigger(offset);
+    if (trigger !== null) {
+      // Every landing trigger's script is Fog: the port runs none of them (#567).
+      const transition = fireTrigger(this.script, trigger, this.scriptRules);
+      this.script = transition.state;
+      this.effects.push(...transition.effects);
+    }
+  }
+
+  /// Body `index`'s rotation accumulator now: the current Body's carried along the clock every
+  /// Body turns by, or the first world's where the current turn is off it.
+  private turnOf(index: number): number {
+    const bodies = this.content.catalogue.craft!.bodies;
+    const from = Number(/^body-(\d+)$/.exec(this.pose.body)?.[1] ?? -1);
+    const start = bodies[from]?.turn;
+    const to = {
+      rate: this.rateOf(`body-${index}`),
+      start: bodies[index]!.turn
+    };
+    return (
+      (start === undefined
+        ? null
+        : turnOnClock(
+            { rate: this.rotationRate(), start, turn: this.bodyTurn },
+            to
+          )) ?? to.start
+    );
   }
 
   /// Esc aboard on the ST (`$055822`): the launch. It is silent on the ground and in space, and
@@ -2438,6 +2545,7 @@ export class DamoclesSession implements TitleSession<
     this.surface = surface;
     this.pose = pose;
     this.bodyTurn = arrival.bodyTurn;
+    this.subStellar = null;
     this.boundPlacement = null;
     this.regionIndex = null;
     this.attachments = new Map();
@@ -2551,6 +2659,7 @@ export class DamoclesSession implements TitleSession<
     }
     if (this.pose.body !== pose.body) {
       this.bodyTurn = arrival.bodyTurn;
+      this.subStellar = null;
     }
     this.surface = surface;
     this.surfaceModels = this.content.models.size;

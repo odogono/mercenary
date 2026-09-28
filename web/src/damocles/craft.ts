@@ -45,8 +45,12 @@ const asr32 = (
 
 /// The tables the pass multiplies through, and the sine table it reads its attitude from.
 export interface CraftArithmetic {
+  /// `$063002`: the byte table the landing's `atan2` `$04EA48` indexes by a ratio word.
+  readonly arctan: Uint8Array;
   /// `$60000`: 4,096 mantissa words, indexed by a log fraction.
   readonly exp: Uint16Array;
+  /// `$04EAF2`: the `atan2` octant words, bit 15 set where the table angle is negated.
+  readonly octants: readonly number[];
   /// `$64000`: 1,024 floats, entry i = sin(2π(i + ½)/1024).
   readonly sine: Uint32Array;
 }
@@ -222,7 +226,9 @@ export interface CraftProgram {
 
 export const craftProgram = (craft: Craft): CraftProgram => ({
   arithmetic: {
+    arctan: craft.arithmetic.arctan.bytes,
     exp: craft.arithmetic.exp.words,
+    octants: craft.arithmetic.octants,
     sine: craft.arithmetic.sine.longs
   },
   constants: Object.fromEntries(
@@ -346,8 +352,8 @@ export const insideBox = (
 };
 
 /// `$0583EA`: the first support whose top stands no more than `$80` below the eye less 63,
-/// and whose X/Z bounds hold the point.
-const supportUnder = (
+/// and whose X/Z bounds hold the point. A Y high word other than nought refuses at once.
+export const supportUnder = (
   boxes: BoundBoxes,
   x: number,
   y: number,

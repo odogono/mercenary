@@ -432,6 +432,7 @@ the instruction with its operand masked, then reads the operand.
   | `swingBias`, `swingMask`, `swingLow`, `swingHigh`, `swingStep` | `$80`, `$3FF`, `$180`, `$300`, 16 | the swing `$057F18`; the step is added and subtracted, checked twice |
   | `spaceHold`, `spaceThrottleExponent`, `spaceSpeedExponent`, `spacePitch` | 50, `$000E`, `$0010`, `$1FF` | what the space entry `$055868` writes |
   | `spaceY` | 64 | the space position's Y the landing `$059268` leaves at a Body's centre |
+  | `landingY` | `$01800000` | the Y the landing `$059268` puts the craft at over the landing point (#567) |
   | `spaceRangeScale`, `spaceDilationBias`, `spaceLevelPitch` | `$00101000`, `$000A1000`, `$200` | the space pass `$05872E`: 65,536 in range ÷ (range + 65,536), 1,024 in v² + 1,024, and level |
   | `panelSlowBound`, `panelFastBound` | `$20`, `$BC` | the `$7876` bounds between the panel's three forms |
   | `panelSlowScale`, `panelLightSquared`, `panelLightSquaredScaled`, `panelHalfLightScaled`, `panelLight` | `$001817FC`, `$003B11FA`, `$004511FA`, `$002617FC`, `$2FF77FC6` | c/32, c², 1,024c², 512c and c, the three forms' floats (#551) |
@@ -452,8 +453,10 @@ the instruction with its operand masked, then reads the operand.
 - `bodies` is the Body table the range scan `$052DB0` walks, from offset 0 to the offset
   at `$7C0E` (`$74`, DAMOCLES): each Body's X, Y and Z from `$5F40`, `$626A` and `$5FC0`,
   and its extent float from `$6040`, as raw longs. A negative Y takes a Body out of the
-  scene, and the scan skips it. Every Body is in the first world's scene. See
-  [the space flight note](damocles-space-flight.md).
+  scene, and the scan skips it. Every Body is in the first world's scene. `turn` is the
+  first world's rotation accumulator `$62EA`, unsigned. Every capture's accumulator is this one
+  plus the Body's rate times a VBL count all Bodies share, which is how the landing finds
+  the destination's (#567). See [the space flight note](damocles-space-flight.md).
 - `boot` holds the space words the first world boots with, which only a flight in space
   rewrites: the range `$791C` (`$000A137A`), the nearest Body `$7924` (ERIS, `$2C`) and
   the pitch rate `$7974` (nought). The first space pass reads the range and the nearest Body.
