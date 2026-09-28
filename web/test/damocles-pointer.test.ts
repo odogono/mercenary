@@ -4,6 +4,7 @@ import type { Mesh } from '../src/catalogue/data.ts';
 import { damoclesTakeTargetAt } from '../src/damocles/pointer.ts';
 import type { Selection } from '../src/damocles/session.ts';
 import type { ErisPlacement, Pose } from '../src/damocles/world.ts';
+import { Camera } from '../src/projection/index.ts';
 
 const keyMesh: Mesh = {
   faces: [
@@ -42,10 +43,14 @@ const pose: Pose = {
   position: { x: 0, y: 10, z: 0 }
 };
 
-const target = (selection: Selection, pointer = { x: 512, y: 384 }) =>
+const target = (
+  selection: Selection,
+  pointer = { x: 512, y: 384 },
+  at: Pose = pose
+) =>
   damoclesTakeTargetAt(
     {
-      pose,
+      pose: at,
       residents: [key],
       selection
     },
@@ -87,5 +92,27 @@ describe('the Damocles pointer take target', () => {
         kind: 'object'
       })
     ).toBeUndefined();
+  });
+
+  test('follows the pitch and roll of the Pose, as the frame is drawn', () => {
+    // Looking down at an object on a table: the renderer's camera takes the Pose's pitch and
+    // roll, so the object is drawn away from the middle of the view.
+    const tilted: Pose = { ...pose, pitch: 0.2, roll: 0.1 };
+    const drawn = new Camera({
+      farPlane: 1000,
+      heading: -tilted.heading,
+      nearPlane: 1,
+      pitch: tilted.pitch,
+      position: { x: 0, y: 10, z: 0 },
+      roll: tilted.roll ?? 0,
+      verticalFieldOfView: Math.PI / 4
+    }).projectPoint({ x: 0, y: 10, z: -100 }, { height: 768, width: 1024 })!;
+    const selection: Selection = {
+      inRange: true,
+      instance: 'object-slot-183',
+      kind: 'object'
+    };
+    expect(target(selection, drawn, tilted)).toBe('object-slot-183');
+    expect(target(selection, { x: 512, y: 384 }, tilted)).toBeUndefined();
   });
 });

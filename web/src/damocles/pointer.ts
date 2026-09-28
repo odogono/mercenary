@@ -63,8 +63,11 @@ export const damoclesTakeTargetAt = (
     farPlane: presentation.farPlane,
     heading: -snapshot.pose.heading,
     nearPlane: presentation.nearPlane,
-    pitch: 0,
+    // The frame is drawn through the Pose's pitch and roll (`planErisFrame`), so the object is
+    // hit where it is seen when the view looks down at a table or banks aboard.
+    pitch: snapshot.pose.pitch,
     position: toCameraSpace(snapshot.pose.position),
+    roll: snapshot.pose.roll ?? 0,
     verticalFieldOfView:
       (presentation.verticalFieldOfViewDegrees * Math.PI) / 180
   });
