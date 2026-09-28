@@ -57,9 +57,11 @@ const atSpaceport = (
     placement => placement.id === 'eris-surface-87'
   )!;
   return new DamoclesSession(loaded, {
+    angleBytes: [],
     bodyTurn: 0,
     briefcaseStore: [],
     carried: [],
+    craft: null,
     doorsMoving: false,
     elapsed: 0,
     frameAccumulator: 0,
@@ -119,9 +121,11 @@ const atStructure = (
 ): DamoclesSession => {
   const placement = loaded.surface.placements.find(p => p.id === instanceId)!;
   return new DamoclesSession(loaded, {
+    angleBytes: [],
     bodyTurn: 0,
     briefcaseStore: [],
     carried: [],
+    craft: null,
     doorsMoving: false,
     elapsed: 0,
     frameAccumulator: 0,

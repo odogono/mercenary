@@ -93,9 +93,11 @@ const standingAt = (
   const pose = { body, heading: 0, pitch: 0, position };
   const placement = structureInCell(surface, position);
   return new DamoclesSession(of, {
+    angleBytes: [],
     bodyTurn: 0,
     briefcaseStore: [],
     carried: [...carried],
+    craft: null,
     doorsMoving: false,
     elapsed: 0,
     frameAccumulator: 0,
@@ -792,6 +794,247 @@ describe('Occupancy across a Save and a Session Resume', () => {
     ];
     for (const [label, record, reason] of refusals) {
       expect(() => decoded(encoded(record)), label).toThrow(reason);
+      expect(() => new DamoclesSession(content, record), label).toThrow(reason);
+    }
+  });
+});
+
+/// Runs `session` and an uninterrupted twin through the same play and holds them equal.
+const inStep = (
+  session: DamoclesSession,
+  twin: DamoclesSession,
+  play: (each: DamoclesSession) => void
+): void => {
+  play(session);
+  play(twin);
+  expect(session.captureResume()).toEqual(twin.captureResume());
+  expect(session.snapshot.pose).toEqual(twin.snapshot.pose);
+  expect(session.snapshot.craft).toEqual(twin.snapshot.craft);
+  expect(cues(session)).toEqual(cues(twin));
+};
+
+/// A tick short of a whole pass, so a Save lands between two passes.
+const partPass = (session: DamoclesSession): void => {
+  session.advance(
+    (content.doc.time.ticksPerPass - 1) / content.doc.time.vblHertz
+  );
+};
+
+/// A current record as schema 11 wrote it: no craft words and no angle bytes.
+const schema11 = (snapshot: DamoclesSaveSnapshot): string => {
+  const { angleBytes: _a, craft: _c, ...older } = snapshot;
+  return JSON.stringify({
+    ...JSON.parse(encoded(snapshot)),
+    schemaVersion: 11,
+    snapshot: older
+  });
+};
+
+describe('the craft words across a Save and a Session Resume (#557)', () => {
+  test('a Save taken mid-drive resumes driving, and the next passes match an uninterrupted run', () => {
+    const session = aboardLimo();
+    session.throttleKey(0x05);
+    passes(session, 12, { turn: 1 });
+    partPass(session);
+    const saved = session.captureResume();
+    expect(saved.craft).toMatchObject({
+      contact: 0x3f,
+      passTicks: content.doc.time.ticksPerPass - 1,
+      throttle: session.snapshot.craft!.throttle
+    });
+    cues(session);
+    const restored = roundTrip(session);
+    expect(restored.snapshot.pose).toEqual(session.snapshot.pose);
+    expect(restored.snapshot.craft).toEqual(session.snapshot.craft);
+    expect(restored.captureResume()).toEqual(saved);
+    const at = session.snapshot.pose.position;
+    inStep(restored, session, each => passes(each, 30, { turn: -1 }));
+    const moved = session.snapshot.pose.position;
+    expect(Math.hypot(moved.x - at.x, moved.z - at.z)).toBeGreaterThan(500);
+  });
+
+  test('a Save taken mid-flight resumes climbing and banking, through the Session Resume too', () => {
+    const EAGLE = 'object-slot-3';
+    const session = beside(EAGLE, [pairedKey(EAGLE)]);
+    session.board();
+    session.throttleKey(0x05);
+    passes(session, 30);
+    passes(session, 20, { pitch: 1 });
+    passes(session, 6, { turn: 1 });
+    partPass(session);
+    const pose = session.snapshot.pose;
+    expect(pose.position.y).toBeGreaterThan(1000);
+    expect(pose.roll ?? 0).not.toBe(0);
+    expect(session.captureResume().craft?.contact).toBe(0);
+    cues(session);
+
+    const restored = roundTrip(session);
+    expect(restored.snapshot.pose).toEqual(pose);
+    expect(restored.leave()).toEqual({ kind: 'refused' });
+
+    const { storage } = memoryStorage();
+    writeDamoclesResume(storage, identity(), session);
+    const read = readDamoclesResume(storage, identity(), saveContent());
+    if (read.kind !== 'restored') {
+      throw new Error(`Session Resume was ${read.kind}`);
+    }
+    const resumed = new DamoclesSession(content, read.snapshot);
+    expect(resumed.snapshot.pose).toEqual(pose);
+
+    const play = (each: DamoclesSession) => {
+      passes(each, 10, { turn: 1 });
+      passes(each, 26, { pitch: -1 });
+      passes(each, 80);
+    };
+    play(resumed);
+    inStep(restored, session, play);
+    expect(resumed.captureResume()).toEqual(session.captureResume());
+    expect(session.snapshot.pose.position.y).not.toBe(pose.position.y);
+    expect(session.snapshot.occupancy).toEqual({
+      instance: EAGLE,
+      kind: 'aboard'
+    });
+  });
+
+  test('a Save taken on the boarding frame keeps the on-foot sines the first pass reads', () => {
+    const session = aboardLimo();
+    const saved = session.captureResume().craft!;
+    expect(saved.trig.yaw).not.toBe(saved.yaw);
+    const restored = roundTrip(session);
+    expect(restored.captureResume().craft).toEqual(saved);
+    session.throttleKey(0x05);
+    restored.throttleKey(0x05);
+    inStep(restored, session, each => passes(each, 4, { turn: 1 }));
+  });
+
+  test('a left craft keeps the angle byte its leave wrote across a Save', () => {
+    const session = aboardLimo();
+    passes(session, 12, { turn: 1 });
+    expect(session.leave()).toEqual({ kind: 'left' });
+    const saved = session.captureResume();
+    expect(saved.craft).toBeNull();
+    expect(saved.angleBytes).toEqual([
+      { byte: expect.any(Number), instance: LIMO }
+    ]);
+    const heading = (of: DamoclesSession) =>
+      of.snapshot.residents.find(item => item.id === LIMO)?.heading;
+    const restored = roundTrip(session);
+    expect(heading(restored)).toBe(heading(session)!);
+    expect(heading(restored)).not.toBe(heading(aboardLimo()));
+    expect(restored.captureResume()).toEqual(saved);
+  });
+
+  test('a schema-11 record aboard is migrated to the boarding preset, facing the saved heading', () => {
+    const session = aboardLimo();
+    session.throttleKey(0x05);
+    passes(session, 12, { turn: 1 });
+    const record = decodeDamoclesSave(
+      schema11(session.captureResume()),
+      identity(),
+      saveContent()
+    );
+    expect(record.schemaVersion).toBe(DAMOCLES_SAVE_SCHEMA_VERSION);
+    expect(record.snapshot.craft).toBeNull();
+    expect(record.snapshot.angleBytes).toEqual([]);
+
+    const restored = new DamoclesSession(content, record.snapshot);
+    const zero = content.catalogue.craft!.constants.zero.operand >>> 0;
+    expect(restored.snapshot.occupancy).toEqual({
+      instance: LIMO,
+      kind: 'aboard'
+    });
+    expect(restored.snapshot.craft).toMatchObject({
+      held: null,
+      panelSpeed: 0,
+      speed: zero,
+      throttle: zero
+    });
+    const pose = restored.snapshot.pose;
+    expect(pose.position).toEqual(session.snapshot.pose.position);
+    expect(pose.heading).toBeCloseTo(session.snapshot.pose.heading, 12);
+    expect(pose.pitch).toBe(0);
+    expect(restored.captureResume().craft).toMatchObject({
+      contact: 0x3f,
+      passTicks: 0,
+      turnRate: zero
+    });
+    // It drives again from rest.
+    restored.throttleKey(0x05);
+    passes(restored, 10);
+    expect(restored.snapshot.craft?.panelSpeed).toBeGreaterThan(0);
+  });
+
+  test('a schema-11 record on foot loads as it did, and schema 10 is still refused', () => {
+    const session = aboardLimo();
+    session.leave();
+    const current = session.captureResume();
+    const migrated = decoded(schema11(current));
+    expect(migrated).toEqual({ ...current, angleBytes: [] });
+    const schema10 = JSON.stringify({
+      ...JSON.parse(schema11(current)),
+      schemaVersion: 10
+    });
+    expect(() => decoded(schema10)).toThrow(/schema 10/);
+  });
+
+  test('craft words that contradict Occupancy, their bounds or the Pose are refused', () => {
+    const aboard = aboardLimo();
+    aboard.throttleKey(0x05);
+    passes(aboard, 12, { turn: 1 });
+    const snapshot = aboard.captureResume();
+    const craft = snapshot.craft!;
+    const onFoot = (() => {
+      const session = aboardLimo();
+      session.leave();
+      return session.captureResume();
+    })();
+    const decodeRefusals: [string, DamoclesSaveSnapshot, RegExp][] = [
+      ['aboard with none', { ...snapshot, craft: null }, /Occupancy/],
+      ['on foot with some', { ...onFoot, craft }, /Occupancy/],
+      ['contact', { ...snapshot, craft: { ...craft, contact: 1 } }, /contact/],
+      ['yaw', { ...snapshot, craft: { ...craft, yaw: 0x1_00_00 } }, /yaw/],
+      ['speed', { ...snapshot, craft: { ...craft, speed: -1 } }, /speed/],
+      [
+        'angle byte',
+        { ...onFoot, angleBytes: [{ byte: 256, instance: LIMO }] },
+        /byte/
+      ],
+      [
+        'angle byte of no craft',
+        { ...onFoot, angleBytes: [{ byte: 1, instance: LIMO_KEY }] },
+        /boardable/
+      ]
+    ];
+    for (const [label, record, reason] of decodeRefusals) {
+      expect(() => decoded(encoded(record)), label).toThrow(reason);
+    }
+    const sessionRefusals: [string, DamoclesSaveSnapshot, RegExp][] = [
+      [
+        'heading',
+        { ...snapshot, pose: { ...snapshot.pose, heading: 0.5 } },
+        /craft words draw/
+      ],
+      [
+        'position',
+        {
+          ...snapshot,
+          pose: {
+            ...snapshot.pose,
+            position: { ...snapshot.pose.position, x: 0.5 }
+          }
+        },
+        /craft words draw/
+      ],
+      [
+        'pass phase',
+        {
+          ...snapshot,
+          craft: { ...craft, passTicks: content.doc.time.ticksPerPass }
+        },
+        /pass phase/
+      ]
+    ];
+    for (const [label, record, reason] of sessionRefusals) {
       expect(() => new DamoclesSession(content, record), label).toThrow(reason);
     }
   });

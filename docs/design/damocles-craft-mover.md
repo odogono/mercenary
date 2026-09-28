@@ -27,7 +27,7 @@ from the Catalogue's `craft` block (#555). The log table is regenerated. The Bui
 boxes come from each detail Model's `boxes` (#556, `docs/research/damocles-catalogue.md`).
 
 - **The pass clock.** The session counts VBL ticks aboard and runs one frame of the Mover on
-  every `time.ticksPerPass`-th (4). The count is reset on boarding. It is not saved yet (#557).
+  every `time.ticksPerPass`-th (4). The count is reset on boarding, and a Save carries it.
 - **The stick.** `$79C2` is taken from the Movement Intent: up (nose down) is `pitch < 0`,
   down is `pitch > 0`, left and right follow `turn`.
 - **The throttle keys.** The Control Profile sends `1`–`0`, `F1`–`F10`, Space, `-` and `=`
@@ -81,6 +81,17 @@ The port has no rule for each of these, so it does not invent one:
   Entrance Attachments is unrecovered (ADR 0051).
 - **The region aboard** is taken afresh after every pass, as boarding already takes it. That is
   authored.
+- **Saving aboard (#557).** Damocles Save schema 12 carries the craft words in `craft`: the
+  turn rate, speed and throttle as the program's floats, pitch, roll, unmasked yaw, contact, the
+  support words, the attitude the frame's sines were taken at, the pass phase, and whether the
+  space entry holds the Mover. The position is the Pose's. The panel's speed copy is not
+  carried, because every pass and the stop preset leave it the integer of the speed's
+  magnitude. A restore draws the Pose from the words and refuses a record whose Pose they
+  don't draw. The next pass then matches an uninterrupted run. The Save also carries each left
+  craft's angle byte. A schema-11 record is migrated rather than refused. Aboard, it is seated
+  at the boarding preset (`$054744`), level and in contact, facing the saved heading.
+- **Atlas Travel aboard** sets the craft down at the pin, at rest and facing as it was. That is
+  authored. Before this, the next pass flew from where the craft had been.
 
 ## Carried as Fog
 
@@ -89,5 +100,3 @@ The port has no rule for each of these, so it does not invent one:
 - Which way the ST's view banks is not checked against an ST frame. The port banks right on a
   right turn.
 - CONCORD III, ATTACK SHIP and AUTHOR'S CHAIR in play.
-- Saving aboard: a Save carries neither the craft words, the pass phase nor a left craft's
-  angle byte (#557). A session restored aboard seats the craft at rest, level and in contact.

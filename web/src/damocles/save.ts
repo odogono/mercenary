@@ -70,7 +70,14 @@ import type { Pose } from './world.ts';
 /// The latch settles a pass after its edge reaches the endpoint on most paths, and a ride sets it
 /// moving on a shut door, so it is not a function of the units. A schema-10 record cannot say
 /// whether a door at its endpoint had latched, so it is refused whole rather than derived.
-export const DAMOCLES_SAVE_SCHEMA_VERSION = 11 as const;
+///
+/// Version 12 carries the craft Mover's words aboard and the pass phase (#557, ADR 0051), and
+/// the instance angle byte each leave wrote (`$0544FA`). A schema-11 record is migrated, not
+/// refused: aboard, it is seated at the boarding preset (`$054744`) facing the saved heading,
+/// which is what every schema-11 restore did, and its objects stand at their Catalogue angles.
+export const DAMOCLES_SAVE_SCHEMA_VERSION = 12 as const;
+/// The one older schema a restore migrates rather than refuses.
+const MIGRATED_SCHEMA_VERSION = 11;
 export const DAMOCLES_DESTINATION = 'damocles' as const;
 
 /// What a restore must match exactly before it may continue this game (ADR 0026).
@@ -123,7 +130,40 @@ export const LIFT_STEP_TICKS = 25;
 /// The highest Floor: the Floor Table's level 10, which the lift labels `B`.
 export const HIGHEST_FLOOR = 10;
 
+/// The craft Mover's words aboard (ADR 0051 decision 4), in the program's units. The position
+/// is the Pose's, which aboard is the craft's X, Y and Z. The panel's speed copy `$4DFEC` is not
+/// carried: every pass and the stop preset leave it the integer of the speed's magnitude.
+export interface DamoclesSaveCraft {
+  /// `$7ACA`: `$3F` in ground contact, else 0.
+  readonly contact: number;
+  /// Whether the frame loop has reached the space entry (#558), which holds the Mover.
+  readonly enteringSpace: boolean;
+  /// Ticks since the last pass, below `time.ticksPerPass`.
+  readonly passTicks: number;
+  /// `$7AC0`, `$7ABE` and `$7AC2`. Yaw is the unmasked word.
+  readonly pitch: number;
+  readonly roll: number;
+  /// `$797A`, a float.
+  readonly speed: number;
+  /// `$7BC8` and `$7B02`: standing on a support, and that support's tag.
+  readonly supported: number;
+  readonly supportLevel: number;
+  /// `$7BAC`, a float.
+  readonly throttle: number;
+  /// The pitch and yaw the frame's attitude sines were taken at, which differ from the
+  /// attitude's only before the first pass after boarding.
+  readonly trig: { readonly pitch: number; readonly yaw: number };
+  /// `$7970`, a float.
+  readonly turnRate: number;
+  readonly yaw: number;
+}
+
 export interface DamoclesSaveSnapshot {
+  /// The instance angle byte (`$0544FA`) of each craft a leave has set down, 256 a turn.
+  readonly angleBytes: readonly {
+    readonly byte: number;
+    readonly instance: string;
+  }[];
   // Both continuation fields may be omitted together and are then normalized to empty;
   // partial omission is invalid. Since the schema-5 bump no shipped build writes a record
   // that omits them, so this leniency is now unreachable rather than load-bearing.
@@ -131,6 +171,9 @@ export interface DamoclesSaveSnapshot {
   readonly bodyTurn: number;
   readonly briefcaseStore: readonly string[];
   readonly carried: readonly string[];
+  /// The craft Mover's words aboard, or null on foot. A migrated schema-11 record aboard has
+  /// none, and the session seats it at the boarding preset.
+  readonly craft: DamoclesSaveCraft | null;
   /// `$5A9D9`: whether any door moved on the last pass.
   readonly doorsMoving: boolean;
   readonly elapsed: number;
@@ -179,6 +222,74 @@ export const initialDamoclesSaveScript = (): DamoclesSaveScript => {
     pending: script.pending,
     triggers: script.triggers.map(({ armed, index }) => ({ armed, index }))
   };
+};
+
+const word = (value: unknown, path: string): number =>
+  integer(value, path, 0, 0xff_ff);
+const float = (value: unknown, path: string): number =>
+  integer(value, path, 0, 0xff_ff_ff_ff);
+
+/// `$7ACA` and `$7BC8`: `$3F` or 0.
+const flag = (item: unknown, path: string): number =>
+  item === 0 || item === 0x3f ? item : fail(`${path} is neither 0 nor $3F`);
+
+const craftOf = (value: unknown): DamoclesSaveCraft => {
+  const craft = object(value, 'snapshot.craft');
+  const trig = object(craft['trig'], 'snapshot.craft.trig');
+  if (typeof craft['enteringSpace'] !== 'boolean') {
+    return fail('snapshot.craft.enteringSpace is not a boolean');
+  }
+  return {
+    contact: flag(craft['contact'], 'snapshot.craft.contact'),
+    enteringSpace: craft['enteringSpace'],
+    passTicks: integer(craft['passTicks'], 'snapshot.craft.passTicks', 0, 255),
+    pitch: word(craft['pitch'], 'snapshot.craft.pitch'),
+    roll: word(craft['roll'], 'snapshot.craft.roll'),
+    speed: float(craft['speed'], 'snapshot.craft.speed'),
+    supported: flag(craft['supported'], 'snapshot.craft.supported'),
+    supportLevel: word(craft['supportLevel'], 'snapshot.craft.supportLevel'),
+    throttle: float(craft['throttle'], 'snapshot.craft.throttle'),
+    trig: {
+      pitch: word(trig['pitch'], 'snapshot.craft.trig.pitch'),
+      yaw: word(trig['yaw'], 'snapshot.craft.trig.yaw')
+    },
+    turnRate: float(craft['turnRate'], 'snapshot.craft.turnRate'),
+    yaw: word(craft['yaw'], 'snapshot.craft.yaw')
+  };
+};
+
+const angleBytesOf = (
+  value: unknown,
+  catalogue: Catalogue | undefined
+): DamoclesSaveSnapshot['angleBytes'] => {
+  const angleBytes = array(value, 'snapshot.angleBytes').map(item => {
+    const entry = object(item, 'snapshot.angleBytes[]');
+    const instance = entry['instance'];
+    if (typeof instance !== 'string' || instance === '') {
+      return fail('angle byte names no instance');
+    }
+    return {
+      byte: integer(entry['byte'], 'snapshot.angleBytes[].byte', 0, 0xff),
+      instance
+    };
+  });
+  if (
+    new Set(angleBytes.map(item => item.instance)).size !== angleBytes.length
+  ) {
+    return fail('angle bytes are duplicated');
+  }
+  // Only a leave writes one, so only a boardable instance can have one.
+  if (
+    catalogue !== undefined &&
+    angleBytes.some(
+      ({ instance }) =>
+        catalogue.instances.find(item => item.id === instance)?.boarding
+          ?.boardable !== true
+    )
+  ) {
+    return fail('angle byte names an instance that is not boardable');
+  }
+  return angleBytes;
 };
 
 export interface DamoclesSaveRecord {
@@ -282,10 +393,8 @@ const poseOf = (value: unknown): Pose => {
   return {
     body: pose['body'],
     heading: pose['heading'],
-    // A Save carries no pitch: nothing in play moves the view off level, so a restored Pose is
-    // level and a Save written before #394 restores identically to one written after it.
-    // Boarding keeps the on-foot pitch and nothing aboard moves, so a seated view is level too.
-    // Driving is what would pitch the view, and saving that is the driving map's to decide.
+    // A Save carries no pitch in the Pose: on foot the view is always level. Aboard, the session
+    // draws the Pose from the craft words, whose pitch word `craft` carries (#557).
     pitch: 0,
     position: { x: position['x'], y: position['y'], z: position['z'] }
   };
@@ -724,8 +833,9 @@ export interface DamoclesSaveContent {
 
 /// Decode a Damocles Save or Session Resume, or throw the exact refusal.
 ///
-/// Identity is exact: a Targ envelope, an older schema, or a Catalogue or presentation
-/// mismatch cannot become play without a migration this version does not have.
+/// Identity is exact: a Targ envelope, a schema older than 11, or a Catalogue or presentation
+/// mismatch cannot become play without a migration this version does not have. A schema-11
+/// record is migrated to this one.
 export const decodeDamoclesSave = (
   encoded: string,
   expected: DamoclesSaveIdentity,
@@ -739,7 +849,8 @@ export const decodeDamoclesSave = (
     return fail('not JSON');
   }
   const record = object(parsed, 'save');
-  if (record['schemaVersion'] !== DAMOCLES_SAVE_SCHEMA_VERSION) {
+  const migrated = record['schemaVersion'] === MIGRATED_SCHEMA_VERSION;
+  if (record['schemaVersion'] !== DAMOCLES_SAVE_SCHEMA_VERSION && !migrated) {
     return fail(
       `schema ${String(record['schemaVersion'])} is not Damocles Save ${DAMOCLES_SAVE_SCHEMA_VERSION}`
     );
@@ -879,6 +990,16 @@ export const decodeDamoclesSave = (
   }
   const occupancy = occupancyOf(snapshot['occupancy']);
   validateOccupancy(occupancy, residence, catalogue);
+  let craft: DamoclesSaveCraft | null = null;
+  if (!migrated) {
+    if ((snapshot['craft'] === null) !== (occupancy.kind === 'onFoot')) {
+      return fail('craft words and Occupancy disagree');
+    }
+    craft = snapshot['craft'] === null ? null : craftOf(snapshot['craft']);
+  }
+  const angleBytes = migrated
+    ? []
+    : angleBytesOf(snapshot['angleBytes'], catalogue);
   const pose = poseOf(snapshot['pose']);
   if (catalogue !== undefined) {
     if (!catalogue.bodies.some(body => body.id === pose.body)) {
@@ -1025,9 +1146,11 @@ export const decodeDamoclesSave = (
     savedAt: record['savedAt'],
     schemaVersion: DAMOCLES_SAVE_SCHEMA_VERSION,
     snapshot: {
+      angleBytes,
       bodyTurn: bodyTurn as number,
       briefcaseStore,
       carried,
+      craft,
       doorsMoving,
       elapsed: snapshot['elapsed'],
       frameAccumulator,

@@ -103,8 +103,11 @@ test('the limo drives on the throttle keys, bumps off the spaceport and glides b
 });
 
 interface SavedRecord {
+  schemaVersion: number;
   snapshot: {
     carried: string[];
+    craft: { contact: number } | null;
+    occupancy: { instance?: string; kind: string };
     pose: { heading: number; position: { x: number; y: number; z: number } };
     residence: {
       instance: string;
@@ -190,6 +193,40 @@ test('EAGLE NINE S E takes off, reads its altitude, and a steep dive puts the pl
     .toBeLessThan(0.15);
   await page.keyboard.up('ArrowUp');
   await shot(page, 'eagle-level', testInfo);
+
+  // Saved in flight and loaded after a reload, it flies on from the same craft words (#557).
+  expect(await run(page, 'save 2')).toContain('saved');
+  const flying = JSON.parse(
+    (await page.evaluate(k => localStorage.getItem(k), damoclesSaveSlot(2)))!
+  ) as SavedRecord;
+  expect(flying.schemaVersion).toBe(12);
+  expect(flying.snapshot.occupancy).toEqual({
+    instance: EAGLE,
+    kind: 'aboard'
+  });
+  expect(flying.snapshot.craft).toMatchObject({ contact: 0 });
+  await page.reload();
+  await ready(page);
+  expect(await run(page, 'load 2')).toContain('restored slot 2');
+  await closeConsole(page);
+  await expect(frame(page)).toHaveAttribute('data-occupancy', EAGLE);
+  expect(await attribute(page, 'y')).toBeGreaterThan(1000);
+  await expect(field(page, 'altitude')).not.toHaveText('000000');
+  const resumed = {
+    x: await attribute(page, 'x'),
+    z: await attribute(page, 'z')
+  };
+  await expect
+    .poll(
+      async () =>
+        Math.hypot(
+          (await attribute(page, 'x')) - resumed.x,
+          (await attribute(page, 'z')) - resumed.z
+        ),
+      { timeout: 10_000 }
+    )
+    .toBeGreaterThan(200);
+  await shot(page, 'eagle-resumed', testInfo);
   const level = await attribute(page, 'heading');
   await page.keyboard.down('ArrowRight');
   await expect

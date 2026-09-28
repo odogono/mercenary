@@ -183,6 +183,10 @@ export const craftFloat = (value: number): number => {
 /// A float with its mantissa negated, as `neg.w` on the low word leaves it.
 const negated = (f: number): number => long(high(f), -(f & 0xff_ff));
 
+/// `$4DFEC`, the panel's copy of a speed: the integer of its magnitude.
+export const craftPanelSpeed = (speed: number): number =>
+  craftFixed(sx16(speed) < 0 ? negated(speed) : speed);
+
 /// Every constant the Mover compares against, as the Catalogue publishes it.
 export type CraftConstants = Readonly<Record<CraftConstant, number>>;
 
@@ -398,7 +402,7 @@ export const craftPass = (
   }
   target = mul(target, p.thrustGain);
   const speed = mul(craftAdd(state.speed, target), p.speedLag);
-  const panelSpeed = craftFixed(sx16(speed) < 0 ? negated(speed) : speed);
+  const panelSpeed = craftPanelSpeed(speed);
   // Displacement along the attitude the frame's sines were taken at.
   const cosPitch = sine(t, state.trig.pitch + 0x1_00);
   const sinPitch = sine(t, state.trig.pitch);
