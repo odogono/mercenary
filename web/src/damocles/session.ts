@@ -16,6 +16,7 @@ import {
   STICK_UP,
   bindBoxes,
   craftFrame,
+  craftPanelSpeed,
   craftProgram,
   throttleDown,
   throttleForEntry,
@@ -53,6 +54,7 @@ import {
   LIFT_STEP_TICKS,
   validateOccupancy,
   type BoundStructureSnapshot,
+  type DamoclesSaveCraft,
   type DamoclesSaveOccupancy,
   type DamoclesSaveScript,
   type DamoclesSaveSnapshot,
@@ -378,8 +380,7 @@ export class DamoclesSession implements TitleSession<
   private craftTicks = 0;
   /// Why the craft stands still with no rule to run, or null while the Mover runs.
   private craftHeld: DamoclesCraftSnapshot['held'] = null;
-  /// The instance angle byte leaving writes (`$0544FA`), by instance. Session State a Save does
-  /// not carry yet (#557): a restored object stands at its Catalogue angle again.
+  /// The instance angle byte leaving writes (`$0544FA`), by instance.
   private angleBytes = new Map<string, number>();
   /// The craft pass's published numbers, or null in a document that carries none.
   private readonly craftProgram: CraftProgram | null;
@@ -459,10 +460,18 @@ export class DamoclesSession implements TitleSession<
     );
     this.occupied =
       restore?.occupancy.kind === 'aboard' ? restore.occupancy.instance : null;
+    this.angleBytes = new Map(
+      restore?.angleBytes.map(item => [item.instance, item.byte]) ?? []
+    );
     if (this.occupied !== null) {
-      // Authored until #557 saves the craft words: a craft restored aboard stands at rest at
-      // the saved seat, in contact and level, as boarding leaves it.
-      this.seat(this.occupied, this.pose);
+      const saved = restore?.craft ?? null;
+      if (saved === null) {
+        // A migrated schema-11 record: seated at the boarding preset, facing the saved heading.
+        this.seat(this.occupied, this.pose, this.yawFrom(this.pose));
+      } else {
+        this.resumeCraft(this.occupied, saved);
+      }
+      this.pose = this.poseFromCraft(this.craft!);
     }
     // A restore may name a Body other than the document's, so the surface is anchored from the
     // Pose before anything binds against it.
@@ -1385,15 +1394,20 @@ export class DamoclesSession implements TitleSession<
   /// Aboard, the occupied instance's departure is `occupied` and the Pose is the seated view.
   captureResume(): DamoclesSaveSnapshot {
     return {
+      angleBytes: [...this.angleBytes].map(([instance, byte]) => ({
+        byte,
+        instance
+      })),
       bodyTurn: this.bodyTurn,
       briefcaseStore: [...this.briefcaseStore],
       carried: [...this.carried],
+      craft: this.craftForSave(),
       doorsMoving: this.doorsMoving,
       elapsed: this.elapsed,
       frameAccumulator: this.frameAccumulator,
       occupancy: this.occupancy,
       pendingBriefcaseDrop: this.pendingBriefcaseDrop,
-      // The bank is the craft's, which a Save does not carry yet (#557).
+      // The bank is the craft's roll, which `craft` carries.
       pose: {
         body: this.pose.body,
         heading: this.pose.heading,
@@ -1407,6 +1421,27 @@ export class DamoclesSession implements TitleSession<
       script: scriptForSave(this.script),
       scrollCounter: this.scrollCounter,
       structure: this.structureSnapshot()
+    };
+  }
+
+  private craftForSave(): DamoclesSaveCraft | null {
+    const craft = this.craft;
+    if (craft === null) {
+      return null;
+    }
+    return {
+      contact: craft.contact,
+      enteringSpace: this.craftHeld === 'space',
+      passTicks: this.craftTicks,
+      pitch: craft.pitch,
+      roll: craft.roll,
+      speed: craft.speed,
+      supported: craft.supported,
+      supportLevel: craft.supportLevel,
+      throttle: craft.throttle,
+      trig: { pitch: craft.trig.pitch, yaw: craft.trig.yaw },
+      turnRate: craft.turnRate,
+      yaw: craft.yaw
     };
   }
 
@@ -1467,20 +1502,16 @@ export class DamoclesSession implements TitleSession<
   }
 
   /// The craft words boarding leaves (`$054374`–`$0543B0`): the seat at the craft's origin
-  /// plus the eye, the instance angle byte × 4 as yaw, and the stop preset. Pitch and roll are
-  /// not written, so they are the on-foot view's, and the frame's sines are still the on-foot
-  /// attitude's. On foot the player is always in ground contact.
-  private seat(instance: string, at: Pose): void {
+  /// plus the eye, `yaw` (boarding's is the instance angle byte × 4), and the stop preset. Pitch
+  /// and roll are not written, so they are the on-foot view's, and the frame's sines are still
+  /// the on-foot attitude's. On foot the player is always in ground contact.
+  private seat(instance: string, at: Pose, yaw: number): void {
     const orientation = this.content.doc.orientation;
     const units = orientation.yawUnitsPerTurn;
-    const footYaw =
-      Math.round((at.heading / (2 * Math.PI)) * units + orientation.yawNorth) &
-      (units - 1);
+    const footYaw = this.yawFrom(at);
     const footPitch =
       Math.round(orientation.pitchLevel - (at.pitch / (2 * Math.PI)) * units) &
       (units - 1);
-    const slot = Number(/^object-slot-(\d+)$/.exec(instance)?.[1] ?? -1);
-    const byte = this.angleByte(instance);
     const zero = this.craftProgram?.constants.zero ?? 0xff_00_10_00;
     const craft: CraftState = {
       contact: 0x3f,
@@ -1495,18 +1526,82 @@ export class DamoclesSession implements TitleSession<
       turnRate: zero >>> 0,
       x: Math.round(at.position.x),
       y: Math.round(at.position.y),
-      yaw: (byte * 4) & 0xff_ff,
+      yaw,
       z: Math.round(at.position.z)
     };
+    this.boardCraft(instance, craft, 0, false);
+  }
+
+  /// The craft words a Save carried aboard, at the saved Pose's position. A record whose Pose
+  /// is not the one those words draw is one no play produces, so it is refused.
+  private resumeCraft(instance: string, saved: DamoclesSaveCraft): void {
+    const { enteringSpace, passTicks, ...words } = saved;
+    const { position } = this.pose;
+    if (
+      !Number.isInteger(position.x) ||
+      !Number.isInteger(position.y) ||
+      !Number.isInteger(position.z) ||
+      this.pose.heading !==
+        bearingFromYaw(words.yaw & 0x3_ff, this.content.doc.orientation)
+    ) {
+      throw new Error('saved Pose is not the view the craft words draw');
+    }
+    if (passTicks >= this.content.doc.time.ticksPerPass) {
+      throw new Error('saved craft pass phase is outside a pass');
+    }
+    if (enteringSpace && this.slotHeld(this.slotOf(instance)) !== null) {
+      throw new Error(
+        'saved craft reached space on a slot the Mover never runs'
+      );
+    }
+    this.boardCraft(
+      instance,
+      {
+        ...words,
+        panelSpeed: craftPanelSpeed(words.speed),
+        x: this.pose.position.x,
+        y: this.pose.position.y,
+        z: this.pose.position.z
+      },
+      passTicks,
+      enteringSpace
+    );
+  }
+
+  private boardCraft(
+    instance: string,
+    craft: CraftState,
+    passTicks: number,
+    enteringSpace: boolean
+  ): void {
+    const slot = this.slotOf(instance);
     this.craft = craft;
     this.craftSlot = slot;
-    this.craftTicks = 0;
+    this.craftTicks = passTicks;
+    this.craftHeld = this.slotHeld(slot) ?? (enteringSpace ? 'space' : null);
+  }
+
+  private slotOf(instance: string): number {
+    return Number(/^object-slot-(\d+)$/.exec(instance)?.[1] ?? -1);
+  }
+
+  /// `unrecovered` where the slot's entry is not a surface craft pass the port runs.
+  private slotHeld(slot: number): 'unrecovered' | null {
     const entry = this.craftProgram?.slots[slot];
-    this.craftHeld =
-      entry === undefined ||
+    return entry === undefined ||
       (entry.class !== 'flying' && entry.class !== 'wheeled')
-        ? 'unrecovered'
-        : null;
+      ? 'unrecovered'
+      : null;
+  }
+
+  /// A Pose's heading as the yaw word.
+  private yawFrom(at: Pose): number {
+    const orientation = this.content.doc.orientation;
+    const units = orientation.yawUnitsPerTurn;
+    return (
+      Math.round((at.heading / (2 * Math.PI)) * units + orientation.yawNorth) &
+      (units - 1)
+    );
   }
 
   /// The instance angle byte as it stands: the one leaving last wrote, or the Catalogue's.
@@ -1703,14 +1798,18 @@ export class DamoclesSession implements TitleSession<
     // The instance angle byte, 256 a turn, becomes the yaw word, 1024 a turn, with no model
     // bias ($054390). The craft words take the seat; pitch is not written, so the view keeps
     // the on-foot pitch.
-    this.seat(instance.id, {
-      ...this.pose,
-      position: {
-        x: selected.position.x,
-        y: selected.position.y + this.rules.eyeHeight,
-        z: selected.position.z
-      }
-    });
+    this.seat(
+      instance.id,
+      {
+        ...this.pose,
+        position: {
+          x: selected.position.x,
+          y: selected.position.y + this.rules.eyeHeight,
+          z: selected.position.z
+        }
+      },
+      (this.angleByte(instance.id) * 4) & 0xff_ff
+    );
     this.pose = this.poseFromCraft(this.craft!);
     // Authored: the region is taken afresh at the new Pose. Whether the original's changes here
     // is not established (#407), but keeping the pressed-from region would have the first step
@@ -2272,6 +2371,12 @@ export class DamoclesSession implements TitleSession<
     this.surface = surface;
     this.surfaceModels = this.content.models.size;
     this.pose = pose;
+    if (this.occupied !== null && this.craft !== null) {
+      // Authored: aboard, the craft is set down at the pin at rest, facing as it was, so the
+      // next pass flies from the pin rather than from where the craft was.
+      this.seat(this.occupied, pose, this.craft.yaw);
+      this.pose = this.poseFromCraft(this.craft);
+    }
     this.boundPlacement = bound;
     if (bound !== null) {
       this.readFloors(bound);

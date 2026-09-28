@@ -203,8 +203,10 @@ describe('body-aware Object Residence', () => {
         surface: { ...content.surface, body, placements: [] }
       };
       const base = {
+        angleBytes: [],
         bodyTurn: 0,
         briefcaseStore: [],
+        craft: null,
         doorsMoving: false,
         elapsed: 0,
         frameAccumulator: 0,

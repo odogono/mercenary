@@ -49,9 +49,11 @@ const carryingKeyAt = (x: number, z: number): DamoclesSession => {
     position: { x, y: loaded.doc.eye.heightUnits, z }
   };
   return new DamoclesSession(loaded, {
+    angleBytes: [],
     bodyTurn: 0,
     briefcaseStore: [],
     carried: ['object-slot-183'],
+    craft: null,
     doorsMoving: false,
     elapsed: 0,
     frameAccumulator: 0,
