@@ -439,7 +439,8 @@ Every run records the probe SHA-256 above, program SHA-256 `8d512ac6…a2ef`, Em
 - **The collision response** at `$05970E`–`$059760` is recovered for #550 in PR #553. No route
   here reached it.
 - **`$7B0C` and the space routine.** The post-launch pitch swing `$057F18` and the space routine
-  `$05872E`, which always uses slot 0's parameters, are for the launch sub-issue.
+  `$05872E`, which always uses slot 0's parameters, are decoded in
+  [space flight](damocles-space-flight.md) (#558).
 - **The replay path.** While `$7A0C` is set, the pass takes its stick from a table at `$7A08`,
   one entry per matching frame count `$7AE8`. `$051058` sets it with the table at `$06FD80`,
   on a path reached from `$051036`, which the landing tail jumps to. No traced pass had it

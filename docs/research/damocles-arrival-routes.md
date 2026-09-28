@@ -258,6 +258,10 @@ it raises system string **21**, `VEHICLE NOT EQUIPPED FOR SPACE TRAVEL`.
 On acceptance it commands `$7BAC = $000E` — faster than any digit key — so the
 craft crosses the system in about a second unless the throttle is cut at once.
 
+> **Corrected (#558, [space flight](damocles-space-flight.md#the-launch-handler)):** the launch
+> writes `$7BAC = $000EF000`, a *reverse* throttle at exponent 14. The space entry then writes the
+> high word `$000E`. Near any Body the space pass scales the speed by `range / (range + 65,536)`.
+
 ### Space is a third occupancy, and the destination is the nearest body
 
 `$05586C` sets **`$7AAE = 2`**, a third occupancy beside 1 on foot and 0
@@ -272,6 +276,10 @@ Arrival is one test, at `$052FDA`: the minimum distance minus the body's own
 extent word at `$6040(selector)` below `-7` sets `$7A28`, and `$059920` then
 runs the landing routine at `$059268`, which clears the occupancy, writes the
 body selector from `$7920` and drops the craft in at `$7AB6 = $1800000`.
+
+> **Corrected (#558, [space flight](damocles-space-flight.md#range-nearest-body-and-arrival-052db0)):**
+> the test subtracts the two floats' *exponent words*, and the landing leaves the player aboard,
+> over the sub-craft point, with the craft's throttle, speed, pitch and yaw unchanged.
 
 ### Attitude
 
