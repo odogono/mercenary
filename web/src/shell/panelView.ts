@@ -68,7 +68,7 @@ const surfaceOf = (canvas: HTMLCanvasElement): Surface | undefined => {
 const tokenOf = (root: HTMLElement, name: string): string =>
   getComputedStyle(root).getPropertyValue(name).trim() || '#000';
 
-const drawDamoclesMessage = (
+export const drawDamoclesMessage = (
   canvas: HTMLCanvasElement,
   root: HTMLElement,
   display: NonNullable<PanelViewModel['damoclesDisplay']>
@@ -85,7 +85,7 @@ const drawDamoclesMessage = (
     context.fillText(
       display.cells[index]!,
       index * 6 - (display.scrollPixels % 6),
-      6
+      DAMOCLES_GLYPH_HEIGHT
     );
   }
 };
