@@ -10,8 +10,8 @@ import type { ErisCell } from './world.ts';
 /// Under ADR 0027 the same chrome dressed Targ data; here every readout that has a recovered
 /// meaning shows it, and every readout that does not is a static placeholder named as one.
 /// The credit readout has no economy behind it yet. The speed field and the altitude window
-/// read the craft Mover's words aboard (#556). The second lamp stays unlit: it is the Tolosa
-/// encounter gate `$070104`, and the port has no encounter.
+/// read the craft Mover's words aboard (#556). The second lamp is the encounter gate `$070104`,
+/// which TOLOSA's landing script arms (#576).
 
 /// One axis of the Cell Readout: the magnitude of an Island-Local Cell in two digits, or `**`
 /// once that magnitude passes 99. The sign is not printed here — a negative axis is printed in
@@ -169,7 +169,8 @@ export const damoclesPanelViewModel = (
       ? altitudeWindow(snapshot.pose.position.y, snapshot.structure?.floor ?? 0)
       : printedAltitude(snapshot.craft.space.altitude),
   altitudeLamp: false,
-  attackLamp: false,
+  // `$050A5C`: lit red while the encounter gate `$070104` is non-zero.
+  attackLamp: snapshot.encounter !== 0,
   // The Body Coordinate Readout: the original prints `016-283` here at the Eris start pose,
   // which is what this reproduces (#371).
   bodyCoordinates: bodyCoordinateReadout(snapshot.pose.position),

@@ -2,6 +2,7 @@ import type { Catalogue } from '../catalogue/data.ts';
 import { craftPanelSpeed } from './craft.ts';
 import {
   DAMOCLES_ROW_CELLS,
+  LANDING_MESSAGE_IDS,
   effectiveMessageRow,
   type DamoclesDisplay,
   type DamoclesMessageId
@@ -15,15 +16,19 @@ import {
   type ResidenceDeparture
 } from './residence.ts';
 import {
+  NOISE_WORDS,
   initialScriptState,
   type Execution,
   type Frame,
   type Presenting
 } from './script.ts';
 import {
+  LANDING_TRIGGERS,
   ORDINARY_DISPLAY_FRAMES,
   SCRIPTS,
   SCRIPT_FOR_TRIGGER,
+  TOLOSA_VISITED_FLAG,
+  TRIGGER_ARMING,
   TRIGGER_FOR_RESIDENT,
   WAIT_FROM_DOCUMENT,
   isScriptId,
@@ -84,9 +89,16 @@ import type { Pose } from './world.ts';
 /// last flight's, which no restore could rebuild. Schemas 11 and 12 are migrated: a schema-12
 /// record has no swing in progress and the first world's space words, and one saved in space
 /// carried only the words the space entry found, so it enters space afresh, as it did.
-export const DAMOCLES_SAVE_SCHEMA_VERSION = 13 as const;
+///
+/// Version 14 carries the landing messages (#576): the 27 landing triggers beside the six pickup
+/// triggers, TOLOSA's bit of `$7BD8`, the encounter gate `$070104` and the noise pointer
+/// `$7E18`. The original's own save omits the pointer; carrying it makes a restored draw the one
+/// an uninterrupted run makes. Schemas 11 to 13 are migrated with every landing trigger armed,
+/// no flag, a shut gate and the New Game pointer: no earlier landing spent a trigger, because
+/// the port carried none of their scripts.
+export const DAMOCLES_SAVE_SCHEMA_VERSION = 14 as const;
 /// The older schemas a restore migrates rather than refuses.
-const MIGRATED_SCHEMA_VERSIONS: readonly unknown[] = [11, 12];
+const MIGRATED_SCHEMA_VERSIONS: readonly unknown[] = [11, 12, 13];
 export const DAMOCLES_DESTINATION = 'damocles' as const;
 
 /// What a restore must match exactly before it may continue this game (ADR 0026).
@@ -243,8 +255,14 @@ export interface DamoclesSaveScript {
   readonly display: DamoclesDisplay;
   /// Bank word `$070102`, which the shared epilogue moves and restores.
   readonly displayDuration: number;
+  /// Bank word `$070104`, the encounter gate.
+  readonly encounter: number;
   readonly execution: Execution | null;
+  /// `$7BD8` without the busy bit.
+  readonly flags: number;
   readonly message: Presenting | null;
+  /// The noise pointer `$7E18` as a word index.
+  readonly noise: number;
   /// `$7A88`, the one queued trigger index.
   readonly pending: number | null;
   readonly triggers: readonly {
@@ -259,8 +277,11 @@ export const initialDamoclesSaveScript = (): DamoclesSaveScript => {
     counter: script.counter,
     display: script.display,
     displayDuration: script.displayDuration,
+    encounter: script.encounter,
     execution: script.execution,
+    flags: script.flags,
     message: script.message,
+    noise: script.noise,
     pending: script.pending,
     triggers: script.triggers.map(({ armed, index }) => ({ armed, index }))
   };
@@ -447,8 +468,10 @@ const printableRow = (value: unknown, path: string): string =>
     : fail(`${path} is not a 48-cell printable row`);
 
 /// Every id a Damocles Script or a system refusal can present. The eleven inline records the
-/// five further responses use are already extracted into `payload/damocles/strings.json`.
+/// five further responses use are already extracted into `payload/damocles/strings.json`, and so
+/// are the landing scripts' (#576).
 const messageIds = new Set<DamoclesMessageId>([
+  ...LANDING_MESSAGE_IDS,
   'script11-inline-1',
   'script11-inline-2',
   'script2-inline-1',
@@ -618,6 +641,11 @@ const presentingOf = (
 
 /// The six pickup trigger indices the object-to-trigger table at `$0543EC` names.
 const PICKUP_TRIGGERS: readonly number[] = [2, 5, 6, 11, 20, 62];
+/// Every trigger a schema-14 record carries, pickups and landings.
+const SAVED_TRIGGERS: readonly number[] = [
+  ...PICKUP_TRIGGERS,
+  ...LANDING_TRIGGERS
+];
 
 /// A step is an index into a script's recovered operation list, and a suspended execution may
 /// only name a step the interpreter can actually stop on. `runToBlock` returns in exactly two
@@ -721,7 +749,8 @@ const executionOf = (value: unknown): Execution | null => {
 
 const scriptOf = (
   value: unknown,
-  strings: DamoclesStrings | undefined
+  strings: DamoclesStrings | undefined,
+  migrated: boolean
 ): DamoclesSaveScript => {
   const script = object(value, 'snapshot.script');
   const counter = integer(
@@ -757,14 +786,60 @@ const scriptOf = (
       index
     };
   });
+  const expected = migrated ? PICKUP_TRIGGERS : SAVED_TRIGGERS;
   if (
     new Set(triggers.map(trigger => trigger.index)).size !== triggers.length ||
-    triggers.length !== 6 ||
-    PICKUP_TRIGGERS.some(
-      index => !triggers.some(trigger => trigger.index === index)
-    )
+    triggers.length !== expected.length ||
+    expected.some(index => !triggers.some(trigger => trigger.index === index))
   ) {
     return fail('script trigger table is incomplete or duplicated');
+  }
+  // Before schema 14 no landing had spent a trigger, so each migrates armed.
+  const table = migrated
+    ? [...triggers, ...LANDING_TRIGGERS.map(index => ({ armed: true, index }))]
+    : triggers;
+  const flags = migrated
+    ? 0
+    : integer(script['flags'], 'snapshot.script.flags', 0, 0xff_ff);
+  if ((flags & ~TOLOSA_VISITED_FLAG) !== 0) {
+    return fail('script flags name a bit no ported script writes');
+  }
+  const encounter = migrated
+    ? 0
+    : integer(script['encounter'], 'snapshot.script.encounter', 0, 1);
+  const noise = migrated
+    ? 0
+    : integer(script['noise'], 'snapshot.script.noise', 0, NOISE_WORDS - 1);
+  // Only TOLOSA's script writes either, and it sets the flag before it arms the gate. So an
+  // armed gate needs the flag, and the flag needs the gate unless TOLOSA's script is between
+  // the two.
+  const tolosa = SCRIPT_FOR_TRIGGER[0x38];
+  const tolosaRunning =
+    execution?.script === tolosa ||
+    (execution?.returnStack.some(frame => frame.script === tolosa) ?? false);
+  if (
+    (encounter !== 0 && (flags & TOLOSA_VISITED_FLAG) === 0) ||
+    ((flags & TOLOSA_VISITED_FLAG) !== 0 && encounter === 0 && !tolosaRunning)
+  ) {
+    return fail('the encounter gate and the TOLOSA flag disagree');
+  }
+  // A one-shot trigger is disarmed as its script launches, so it cannot be armed while that
+  // script is running.
+  for (const { armed, index } of table) {
+    const script = SCRIPT_FOR_TRIGGER[index];
+    const sticky =
+      ((TRIGGER_ARMING.find(item => item.index === index)?.byte ?? 0) &
+        0x40) !==
+      0;
+    if (
+      armed &&
+      !sticky &&
+      (execution?.script === script ||
+        (execution?.returnStack.some(frame => frame.script === script) ??
+          false))
+    ) {
+      return fail(`trigger ${index} is armed while its own script is running`);
+    }
   }
   if (pending !== null && !PICKUP_TRIGGERS.includes(pending)) {
     return fail('script pending trigger is not a pickup trigger');
@@ -835,10 +910,13 @@ const scriptOf = (
     counter,
     display,
     displayDuration,
+    encounter,
     execution,
+    flags,
     message,
+    noise,
     pending,
-    triggers
+    triggers: table
   };
 };
 
@@ -1150,7 +1228,11 @@ export const decodeDamoclesSave = (
     -16,
     16
   );
-  const script = scriptOf(snapshot['script'], strings);
+  const script = scriptOf(
+    snapshot['script'],
+    strings,
+    record['schemaVersion'] !== DAMOCLES_SAVE_SCHEMA_VERSION
+  );
   // An armed trigger requires its object to be at its Catalogue placement and absent from the
   // Carried Stack: the launch path clears bit 7, and nothing re-arms a trigger, so an armed
   // trigger whose object has been taken or moved is a state no sequence of actions reaches.
@@ -1166,12 +1248,6 @@ export const decodeDamoclesSave = (
     ) {
       return fail(
         `trigger ${index} contradicts ${instance}'s Object Residence`
-      );
-    }
-    // A response that is running cannot also be waiting to be launched.
-    if (script.execution?.script === SCRIPT_FOR_TRIGGER[index]) {
-      return fail(
-        `trigger ${index} is armed while its own response is running`
       );
     }
   }

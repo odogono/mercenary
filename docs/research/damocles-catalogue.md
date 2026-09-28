@@ -460,6 +460,10 @@ the instruction with its operand masked, then reads the operand.
 - `boot` holds the space words the first world boots with, which only a flight in space
   rewrites: the range `$791C` (`$000A137A`), the nearest Body `$7924` (ERIS, `$2C`) and
   the pitch rate `$7974` (nought). The first space pass reads the range and the nearest Body.
+- `noise` carries the 2,048-word table `$77000`–`$77FFF` as hex (#576). The pointer `$7E18`
+  walks it: the main loop steps it a word a pass, and a landing script's random skip reads a
+  word. It is byte-identical in every memstate. See
+  [the landing messages](damocles-landing-messages.md).
 
 ## Recovered data grammar
 

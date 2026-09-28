@@ -865,13 +865,24 @@ const partPass = (session: DamoclesSession): void => {
   );
 };
 
+/// A schema-13 or older record's script: the six pickup triggers, and no landing state (#576).
+const olderScript = (script: DamoclesSaveSnapshot['script']) => {
+  const { encounter: _e, flags: _f, noise: _n, ...older } = script;
+  return {
+    ...older,
+    triggers: older.triggers.filter(({ index }) =>
+      [2, 5, 6, 11, 20, 62].includes(index)
+    )
+  };
+};
+
 /// A current record as schema 11 wrote it: no craft words, no angle bytes and no space words.
 const schema11 = (snapshot: DamoclesSaveSnapshot): string => {
   const { angleBytes: _a, craft: _c, spaceMemory: _m, ...older } = snapshot;
   return JSON.stringify({
     ...JSON.parse(encoded(snapshot)),
     schemaVersion: 11,
-    snapshot: older
+    snapshot: { ...older, script: olderScript(snapshot.script) }
   });
 };
 
@@ -1014,7 +1025,13 @@ describe('the craft words across a Save and a Session Resume (#557)', () => {
     session.leave();
     const current = session.captureResume();
     const migrated = decoded(schema11(current));
-    expect(migrated).toEqual({ ...current, angleBytes: [], spaceMemory: null });
+    // The drive stepped the noise pointer, which a migrated record restarts from New Game's.
+    expect(migrated).toEqual({
+      ...current,
+      angleBytes: [],
+      script: { ...current.script, noise: 0 },
+      spaceMemory: null
+    });
     const schema10 = JSON.stringify({
       ...JSON.parse(schema11(current)),
       schemaVersion: 10
@@ -1163,6 +1180,51 @@ describe('leaving', () => {
 });
 
 /// Passes until the space entry, which the launch's climb reaches within a few hundred.
+/// EAGLE NINE S E boarded and set down on DION by authored Atlas Travel aboard.
+const onDion = (): DamoclesSession => {
+  const eagle = 'object-slot-3';
+  const session = beside(eagle, [pairedKey(eagle)]);
+  session.board();
+  expect(session.travelToAtlas({ bodyId: 'body-4', x: 3260, z: 1322 })).toEqual(
+    { kind: 'travelled' }
+  );
+  return session;
+};
+
+/// Up from DION, into space from its centre, and steered onto LACHESIS until the landing.
+const flyToLachesis = (session: DamoclesSession): void => {
+  session.throttleKey(0x05);
+  passes(session, 30);
+  passes(session, 20, { pitch: 1 });
+  session.launchCraft();
+  toSpace(session);
+  expect(session.snapshot.craft?.space?.position).toEqual({
+    x: -300_000,
+    y: 64,
+    z: -72_000
+  });
+  // Coast clear of DION on the launch throttle, then key 9, turning onto LACHESIS.
+  passes(session, 5);
+  session.throttleKey(0x39);
+  session.throttleKey(0x0a);
+  const lachesis = content.catalogue.craft!.bodies[7]!;
+  let before = session.snapshot.craft!.space!.position;
+  for (let pass = 0; pass < 400; pass += 1) {
+    const at = session.snapshot.craft!.space!.position;
+    const moving = { x: at.x - before.x, z: at.z - before.z };
+    const wanted = { x: lachesis.x - at.x, z: lachesis.z - at.z };
+    before = at;
+    // The stick right turns the motion clockwise: steer the motion onto the Body.
+    const cross = moving.x * wanted.z - moving.z * wanted.x;
+    passes(session, 1, { turn: cross > 0 ? -1 : 1 });
+    if (session.snapshot.craft?.space === null) {
+      expect(pass).toBeGreaterThan(0);
+      return;
+    }
+  }
+  throw new Error('the crossing never landed');
+};
+
 const toSpace = (session: DamoclesSession): number => {
   for (let pass = 1; pass <= 400; pass += 1) {
     passes(session, 1);
@@ -1304,42 +1366,8 @@ describe('launch and space (#566)', () => {
   });
 
   test('crosses from DION to LACHESIS, lands over it, and flies down to its surface (#567)', () => {
-    const session = beside(EAGLE, [pairedKey(EAGLE)]);
-    session.board();
-    // Authored Atlas Travel aboard sets the Eagle down on DION, whose centre space starts from.
-    expect(
-      session.travelToAtlas({ bodyId: 'body-4', x: 3260, z: 1322 })
-    ).toEqual({ kind: 'travelled' });
-    session.throttleKey(0x05);
-    passes(session, 30);
-    passes(session, 20, { pitch: 1 });
-    session.launchCraft();
-    toSpace(session);
-    expect(session.snapshot.craft?.space?.position).toEqual({
-      x: -300_000,
-      y: 64,
-      z: -72_000
-    });
-    // Coast clear of DION on the launch throttle, then key 9, turning onto LACHESIS.
-    passes(session, 5);
-    session.throttleKey(0x39);
-    session.throttleKey(0x0a);
-    const lachesis = content.catalogue.craft!.bodies[7]!;
-    let before = session.snapshot.craft!.space!.position;
-    let landedAt = -1;
-    for (let pass = 0; pass < 400 && landedAt < 0; pass += 1) {
-      const at = session.snapshot.craft!.space!.position;
-      const moving = { x: at.x - before.x, z: at.z - before.z };
-      const wanted = { x: lachesis.x - at.x, z: lachesis.z - at.z };
-      before = at;
-      // The stick right turns the motion clockwise: steer the motion onto the Body.
-      const cross = moving.x * wanted.z - moving.z * wanted.x;
-      passes(session, 1, { turn: cross > 0 ? -1 : 1 });
-      if (session.snapshot.craft?.space === null) {
-        landedAt = pass;
-      }
-    }
-    expect(landedAt).toBeGreaterThan(0);
+    const session = onDion();
+    flyToLachesis(session);
     const landed = session.snapshot;
     expect(landed.pose.body).toBe('body-7');
     expect(landed.bodyName).toBe('LACHESIS');
@@ -1351,7 +1379,10 @@ describe('launch and space (#566)', () => {
       x: Math.floor(landed.pose.position.x / 0x1_00_00),
       z: Math.floor(landed.pose.position.z / 0x1_00_00)
     });
-    // The trigger `$26` is armed on the ST, but its script is Fog: nothing is presented.
+    // The landing launched LACHESIS's `$26`, which is spent whichever way its draw went.
+    expect(
+      session.captureResume().script.triggers.find(item => item.index === 0x26)
+    ).toEqual({ armed: false, index: 0x26 });
     expect(landed.message).toBeNull();
     // Nose down under power to the surface: at sea there, the landing handler keeps the
     // player aboard.
@@ -1497,7 +1528,11 @@ describe('a Save in space and during the launch swing (#568)', () => {
     const record = JSON.stringify({
       ...JSON.parse(encoded(aboard)),
       schemaVersion: 12,
-      snapshot: { ...older, craft: { ...words, enteringSpace: true } }
+      snapshot: {
+        ...older,
+        craft: { ...words, enteringSpace: true },
+        script: olderScript(older.script)
+      }
     });
     const snapshot = decoded(record);
     expect(snapshot.craft).toMatchObject({ space: 'entry', swing: false });
@@ -1508,7 +1543,7 @@ describe('a Save in space and during the launch swing (#568)', () => {
       position: { x: -630_000, y: 64, z: 390_000 }
     });
     expect(restored.snapshot.pose.position).toEqual(aboard.pose.position);
-    // Its next Save is a schema-13 one in space, which resumes as it stands.
+    // Its next Save is a current one in space, which resumes as it stands.
     passes(restored, 5, { turn: 1 });
     const again = roundTrip(restored);
     expect(again.captureResume()).toEqual(restored.captureResume());
@@ -1517,13 +1552,19 @@ describe('a Save in space and during the launch swing (#568)', () => {
     const ground = decoded(
       JSON.stringify({
         ...JSON.parse(record),
-        snapshot: { ...older, craft: { ...words, enteringSpace: false } }
+        snapshot: {
+          ...older,
+          craft: { ...words, enteringSpace: false },
+          script: olderScript(older.script)
+        }
       })
     );
     expect(ground.craft).toMatchObject({ space: null, swing: false });
     const onGround = new DamoclesSession(content, ground);
+    // The flight stepped the noise pointer, which a migrated record restarts from New Game's.
     expect(onGround.captureResume()).toEqual({
       ...aboard,
+      script: { ...aboard.script, noise: 0 },
       spaceMemory: {
         nearest: content.catalogue.craft!.boot.nearest.value,
         pitchRate: content.catalogue.craft!.boot.pitchRate.value,
@@ -1574,6 +1615,152 @@ describe('a Save in space and during the launch swing (#568)', () => {
     };
     expect(() => new DamoclesSession(content, decoded(encoded(held)))).toThrow(
       /space words/
+    );
+  });
+});
+
+const noiseWords = () => content.catalogue.craft!.noise.words;
+/// DION with the noise pointer at `noise`, which only the draw at the landing reads.
+const seeded = (noise: number): DamoclesSession => {
+  const snapshot = onDion().captureResume();
+  return new DamoclesSession(content, {
+    ...snapshot,
+    script: { ...snapshot.script, noise }
+  });
+};
+const messages = (session: DamoclesSession, frames: number): string[] => {
+  const seen: string[] = [];
+  for (let frame = 0; frame < frames; frame += 1) {
+    session.advance(1 / content.doc.time.vblHertz);
+    for (const effect of session.drainEffects()) {
+      if (effect.type === 'message') {
+        seen.push(effect.text.trim());
+      }
+    }
+  }
+  return seen;
+};
+const inlineText = (id: string): string =>
+  content.strings.inlineMessages.find(item => item.id === id)!.text.trim();
+
+describe('the landing messages (#576)', () => {
+  /// The pointer the crossing reaches the landing's draw at, from a start of 0: the flight is
+  /// the same every time, so it steps the pointer the same number of passes.
+  let flight = -1;
+  beforeAll(() => {
+    const session = seeded(0);
+    flyToLachesis(session);
+    flight = session.captureResume().script.noise - 1;
+  });
+  const drawnAt = (shown: boolean): number => {
+    const start = Array.from({ length: 0x8_00 }, (_, k) => k).find(
+      k => noiseWords()[(k + flight) % 0x8_00]! >= 0xa0_00 === shown
+    )!;
+    return start;
+  };
+  test('a draw of $A000 or more presents LACHESIS three lines after 100 frames', () => {
+    const session = seeded(drawnAt(true));
+    flyToLachesis(session);
+    session.drainEffects();
+    const landed = session.captureResume().script;
+    expect(landed.execution).toMatchObject({
+      script: 'damocles.script.slot-38',
+      step: 2
+    });
+    expect(session.snapshot.message).toBeNull();
+    // A one-shot trigger is disarmed as its script launches, so a Save cannot hold both.
+    const saved = session.captureResume();
+    expect(() =>
+      decoded(
+        encoded({
+          ...saved,
+          script: {
+            ...saved.script,
+            triggers: saved.script.triggers.map(item =>
+              item.index === 0x26 ? { ...item, armed: true } : item
+            )
+          }
+        })
+      )
+    ).toThrow('trigger 38 is armed while its own script is running');
+    // The craft flies on while the script waits: stepping the pointer does not disturb it.
+    const first = messages(session, 101);
+    expect(first).toEqual([inlineText('script38-inline-1')]);
+    // A Save mid-message resumes it.
+    const restored = resumed(session);
+    expect(messages(restored, 650)).toEqual([
+      inlineText('script38-inline-2'),
+      inlineText('script38-inline-3'),
+      ''
+    ]);
+    expect(restored.captureResume().script).toMatchObject({
+      execution: null,
+      message: null
+    });
+  });
+
+  test('a draw below $A000 presents nothing and spends the trigger all the same', () => {
+    const session = seeded(drawnAt(false));
+    flyToLachesis(session);
+    const script = session.captureResume().script;
+    expect(script.execution).toBeNull();
+    expect(script.triggers.find(item => item.index === 0x26)?.armed).toBe(
+      false
+    );
+    expect(messages(session, 800)).toEqual([]);
+  });
+
+  test("the encounter gate lights the panel's second lamp and crosses a Save", () => {
+    const session = onDion();
+    const snapshot = session.captureResume();
+    expect(
+      damoclesPanelViewModel(session.snapshot, content.doc).attackLamp
+    ).toBe(false);
+    const visited = new DamoclesSession(
+      content,
+      decoded(
+        encoded({
+          ...snapshot,
+          script: { ...snapshot.script, encounter: 1, flags: 0x00_02 }
+        })
+      )
+    );
+    expect(visited.snapshot.encounter).toBe(1);
+    expect(
+      damoclesPanelViewModel(visited.snapshot, content.doc).attackLamp
+    ).toBe(true);
+  });
+
+  test('landing state no play reaches is refused', () => {
+    const snapshot = onDion().captureResume();
+    const refused = (script: object, message: string) =>
+      expect(() =>
+        decoded(
+          encoded({
+            ...snapshot,
+            script: { ...snapshot.script, ...script }
+          } as DamoclesSaveSnapshot)
+        )
+      ).toThrow(message);
+    refused(
+      { encounter: 1 },
+      'the encounter gate and the TOLOSA flag disagree'
+    );
+    refused(
+      { flags: 0x00_02 },
+      'the encounter gate and the TOLOSA flag disagree'
+    );
+    refused(
+      { flags: 0x00_01 },
+      'script flags name a bit no ported script writes'
+    );
+    refused(
+      { noise: 0x8_00 },
+      'snapshot.script.noise is outside its recovered bounds'
+    );
+    refused(
+      { triggers: snapshot.script.triggers.slice(0, 6) },
+      'script trigger table is incomplete or duplicated'
     );
   });
 });

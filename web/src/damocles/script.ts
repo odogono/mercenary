@@ -53,13 +53,30 @@ export interface ScriptState {
   /// Bank word `$070102`. State, not a per-message constant: the shared epilogue drops it to 50
   /// and restores it, so one indexed record presents for 50 frames here and 200 elsewhere.
   readonly displayDuration: number;
+  /// Bank word `$070104`, the encounter gate TOLOSA's script arms (#576). The panel's second
+  /// lamp reads it. The attack ship it also arms is not ported.
+  readonly encounter: number;
   readonly execution: Execution | null;
+  /// `$7BD8` without the busy bit 6, which `busy` is. Only TOLOSA's bit 1 is written here.
+  readonly flags: number;
   readonly message: Presenting | null;
+  /// The word index of `$7E18` into the noise table: `(pointer - $77000) / 2`. New Game seeds
+  /// it at 0 (`$051090`), each pass steps it (`stepNoise`), and each random skip reads one.
+  readonly noise: number;
   /// `$7A88`. One word, so a second queueable trigger replaces the first rather than joining a
   /// queue. Consumed by the frame loop once the busy flag clears, not by the trigger itself.
   readonly pending: number | null;
   readonly triggers: readonly Trigger[];
 }
+
+/// The 2,048 words `$77000`-`$77FFE` the pointer wraps inside (`and.w #$FFF`, `or.w #$7000`).
+export const NOISE_WORDS = 0x8_00;
+
+/// `$05948C`, the main loop's join: one word a pass, with nothing read.
+export const stepNoise = (state: ScriptState): ScriptState => ({
+  ...state,
+  noise: (state.noise + 1) % NOISE_WORDS
+});
 
 export type Effect =
   | {
@@ -96,6 +113,8 @@ export interface ScriptTransition {
 export interface ScriptRules {
   readonly messageFrames: number;
   readonly messageText: (id: DamoclesMessageId) => string;
+  /// The Catalogue's `craft.noise` words, which a random skip draws from.
+  readonly noise: Uint16Array;
   readonly waitFrames: number;
 }
 
@@ -114,8 +133,11 @@ export const initialScriptState = (): ScriptState => ({
   counter: 0,
   display: { cells: BLANK_DAMOCLES_ROW, kind: 'held' },
   displayDuration: ORDINARY_DISPLAY_FRAMES,
+  encounter: 0,
   execution: null,
+  flags: 0,
   message: null,
+  noise: 0,
   pending: null,
   triggers: triggerTable()
 });
@@ -177,6 +199,38 @@ const runToBlock = (initial: ScriptState, rules: ScriptRules): ScriptState => {
         break;
       case 'reset-wait':
         state = { ...state, counter: 0, execution: advanced };
+        break;
+      case 'random-skip': {
+        // `$051A5E` reads the word and steps the pointer before it compares.
+        const word = rules.noise[state.noise];
+        if (word === undefined) {
+          throw new Error(`the noise table has no word ${state.noise}`);
+        }
+        state = {
+          ...state,
+          execution: word < op.below ? { ...execution, step: op.to } : advanced,
+          noise: (state.noise + 1) % NOISE_WORDS
+        };
+        break;
+      }
+      case 'if-flag':
+        state = {
+          ...state,
+          execution:
+            (state.flags & op.mask) === 0
+              ? advanced
+              : { ...execution, step: op.to }
+        };
+        break;
+      case 'set-flag':
+        state = {
+          ...state,
+          execution: advanced,
+          flags: state.flags | op.mask
+        };
+        break;
+      case 'set-encounter':
+        state = { ...state, encounter: op.value, execution: advanced };
         break;
       case 'poll-wait': {
         const threshold =

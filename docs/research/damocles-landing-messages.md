@@ -225,7 +225,9 @@ that means:
 
 ## What this means for the port
 
-These are recommendations for the follow-up port ticket, not decisions this note makes.
+These are recommendations for the follow-up port ticket, not decisions this note makes. #576
+took them, with the on-foot pointer held
+([ADR 0053](../adr/0053-present-damocles-landing-messages-from-the-recovered-draw.md)).
 
 1. **Arm the 27 landing triggers and carry them in a Save.** Those are `$20`–`$3B` without `$2A`,
    plus TOLOSA. The Save's trigger table is checked to hold exactly the six pickup triggers
