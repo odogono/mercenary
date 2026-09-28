@@ -46,7 +46,8 @@ const pose: Pose = {
 const target = (
   selection: Selection,
   pointer = { x: 512, y: 384 },
-  at: Pose = pose
+  at: Pose = pose,
+  size = { height: 768, width: 1024 }
 ) =>
   damoclesTakeTargetAt(
     {
@@ -59,9 +60,35 @@ const target = (
       nearPlane: 1,
       verticalFieldOfViewDegrees: 45
     },
-    { height: 768, width: 1024 },
+    size,
     pointer
   );
+
+/// Where the renderer's vertex shader puts a world point: the canvas filled by the vertical
+/// field of view, one focal length on both axes.
+const drawnAt = (
+  at: Pose,
+  world: { readonly x: number; readonly y: number; readonly z: number },
+  size: { readonly height: number; readonly width: number }
+) => {
+  const view = new Camera({
+    heading: -at.heading,
+    pitch: at.pitch,
+    position: { ...at.position, z: -at.position.z },
+    roll: at.roll ?? 0
+  }).viewSpace({ ...world, z: -world.z });
+  const focal = size.height / 2 / Math.tan(Math.PI / 8);
+  return {
+    x: size.width / 2 + (view.x * focal) / view.z,
+    y: size.height / 2 - (view.y * focal) / view.z
+  };
+};
+
+const reachable: Selection = {
+  inRange: true,
+  instance: 'object-slot-183',
+  kind: 'object'
+};
 
 describe('the Damocles pointer take target', () => {
   test('selects a reachable object under the pointer', () => {
@@ -94,25 +121,26 @@ describe('the Damocles pointer take target', () => {
     ).toBeUndefined();
   });
 
+  test('hits an object below the view where the frame draws it', () => {
+    // The State Office table: the DAMOCLES FILE sits below eye height on a canvas narrower
+    // than the Reference Viewport's 320:136, where Targ's projection put the hit area above it.
+    const size = { height: 728, width: 1233 };
+    const high: Pose = { ...pose, position: { x: 0, y: 60, z: 0 } };
+    const drawn = drawnAt(high, { x: 0, y: 10, z: 100 }, size);
+    expect(drawn.y).toBeGreaterThan(size.height / 2 + 100);
+    expect(target(reachable, drawn, high, size)).toBe('object-slot-183');
+    expect(
+      target(reachable, { x: drawn.x, y: drawn.y - 120 }, high, size)
+    ).toBeUndefined();
+  });
+
   test('follows the pitch and roll of the Pose, as the frame is drawn', () => {
     // Looking down at an object on a table: the renderer's camera takes the Pose's pitch and
     // roll, so the object is drawn away from the middle of the view.
     const tilted: Pose = { ...pose, pitch: 0.2, roll: 0.1 };
-    const drawn = new Camera({
-      farPlane: 1000,
-      heading: -tilted.heading,
-      nearPlane: 1,
-      pitch: tilted.pitch,
-      position: { x: 0, y: 10, z: 0 },
-      roll: tilted.roll ?? 0,
-      verticalFieldOfView: Math.PI / 4
-    }).projectPoint({ x: 0, y: 10, z: -100 }, { height: 768, width: 1024 })!;
-    const selection: Selection = {
-      inRange: true,
-      instance: 'object-slot-183',
-      kind: 'object'
-    };
-    expect(target(selection, drawn, tilted)).toBe('object-slot-183');
-    expect(target(selection, { x: 512, y: 384 }, tilted)).toBeUndefined();
+    const size = { height: 768, width: 1024 };
+    const drawn = drawnAt(tilted, { x: 0, y: 10, z: 100 }, size);
+    expect(target(reachable, drawn, tilted)).toBe('object-slot-183');
+    expect(target(reachable, { x: 512, y: 384 }, tilted)).toBeUndefined();
   });
 });

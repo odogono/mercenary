@@ -88,17 +88,41 @@ export const damoclesTakeTargetAt = (
       });
     }
   }
+  // The Damocles renderer fills the canvas with the vertical field of view (`VERTEX` in
+  // `renderer.ts`): one focal length, half the canvas height over the half-angle's tangent, on
+  // both axes. `Camera.project` is Targ's Reference Viewport, whose narrower frustum put the hit
+  // area between the object and the middle of the view.
+  const focal =
+    size.height /
+    2 /
+    Math.tan((presentation.verticalFieldOfViewDegrees * Math.PI) / 360);
+  const drawn = (view: {
+    readonly x: number;
+    readonly y: number;
+    readonly z: number;
+  }) => ({
+    x: size.width / 2 + (view.x * focal) / view.z,
+    y: size.height / 2 - (view.y * focal) / view.z
+  });
   const lines = segments
-    .map(segment =>
-      camera.projectSegment(
-        {
-          a: toCameraSpace(placed(segment.a, resident, negateModelZ)),
-          b: toCameraSpace(placed(segment.b, resident, negateModelZ)),
-          ink: 0 as const
-        },
-        size
-      )
-    )
+    .map(segment => {
+      const a = camera.viewSpace(
+        toCameraSpace(placed(segment.a, resident, negateModelZ))
+      );
+      const b = camera.viewSpace(
+        toCameraSpace(placed(segment.b, resident, negateModelZ))
+      );
+      if (a.z > presentation.farPlane && b.z > presentation.farPlane) {
+        return undefined;
+      }
+      const clipped = camera.clipToNearPlane(a, b);
+      if (clipped === undefined) {
+        return undefined;
+      }
+      const first = drawn(clipped[0]);
+      const second = drawn(clipped[1]);
+      return { x1: first.x, x2: second.x, y1: first.y, y2: second.y };
+    })
     .filter(line => line !== undefined);
   if (lines.length === 0) {
     return undefined;
