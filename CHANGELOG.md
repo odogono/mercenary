@@ -398,6 +398,19 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Fixed
 
+- **A new Damocles game starts on Eris by day, under the light blue sky.** The start
+  used to take Eris's rotation from the `eris-spaceport-onfoot` capture, which was made
+  about 24 minutes after the new-game reset and stands at night. A cold boot that presses
+  Space on the title screen hands over control with Eris still at the reset's zero, by day
+  under `$357`. Night falls about five minutes later.
+  `start-turn-probe.py` reproduces the value.
+
+- **A new Damocles game's impact clock starts at `02-47-28`, not `04-19-20`.** The title
+  screen installs `04-19-20`, but the ST's scripted arrival spends it down to `02-47-28`
+  before handing over control on foot. The port skips the arrival, so it now starts the
+  Session with that time already spent. The comet starts where the hand-over puts it.
+  Saves keep the clock they were made with.
+
 - **Coplanar Damocles faces no longer fight.** Each fragment's depth now comes from where
   the pixel's ray meets its face's plane, not from depth interpolated across the triangle.
   Faces that share a plane carry bit-identical planes, so they tie exactly, and the one

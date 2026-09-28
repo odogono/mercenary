@@ -32,6 +32,16 @@ export const impactTime = (
     : { fraction: Math.floor((spent - whole) * 32), seconds: -remaining };
 };
 
+/// The Session seconds a fresh game has already spent when the scripted arrival hands over
+/// control: the reset's deadline less the clock at the hand-over. The port starts there, as the
+/// ST does, rather than at the deadline the title screen installs.
+export const handoverElapsed = (
+  time: ErisPresentationDocument['time']
+): number =>
+  ((time.impactDeadlineSeconds - time.handoverSeconds) *
+    time.impactVblsPerSecond) /
+  time.vblHertz;
+
 /// `$051FDA..$05201A`: an axis's `|delta|` over the segment's length in ticks, as an unsigned
 /// 16.16 rate, with the sign kept aside because the divide works on magnitudes.
 const rate = (delta: number, length: number) => {

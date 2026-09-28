@@ -208,6 +208,18 @@ reads somewhere in the twos. How much is left at hand-over therefore depends
 on how long the title screen sat; `15560` is the only figure that is a
 property of the game rather than of one playthrough.
 
+**Hand-over clock — Confirmed: `02-47-28`.** A later probe,
+`start-turn-probe.py`, samples the same cold boot on every VBL and does not
+bear out that dependence. The runs sent Space from 0.5 to 15 host seconds
+into sampling, and in every one the sweep began by itself, some 500 to 1,900
+debugger VBLs after the deadline was written. In one run the clock first ticked
+down on the title to `04-19-06`. Every run ended the sweep at `02-49-25`, and
+the four runs sampled every one or two VBLs all read **`02-47-28`** as the walk
+flag turned on. The sweep lands on a fixed clock, so the hand-over is a
+property of the game too. The port starts the clock there: a fresh Session
+counts from `02-47-28`, and Eris's rotation counter starts from the reset's
+zero ([the terminator note](damocles-day-night-terminator.md#the-start-turn)).
+
 The same landed frame independently pins two panel widths the port had
 guessed at: the altitude window prints **six** digits (`000000` on foot), and
 the cell beside it reads `07-08` with body coordinates `016-283` — the port's
@@ -225,6 +237,8 @@ python3 research/damocles-st/scripts/deadline-start-probe.py \
   --roms /path/to/roms --start-vbls 0 --interval 5 --count 200 --no-space
 python3 research/damocles-st/scripts/deadline-start-probe.py \
   --roms /path/to/roms --start-vbls 0 --interval 100 --count 1200
+research/damocles-st/.venv/bin/python research/damocles-st/scripts/start-turn-probe.py \
+  --start-vbls 0 --interval 1 --count 12000 --no-screenshots
 ```
 
 Residual Fog: whether flight / near-c time changes this word's rate (still
@@ -540,6 +554,7 @@ Damocles seam *would* need to census — not types to add to `MercenaryKit`.
 | Impact clock advances while idle | `deadline-clock` `observed-t0` → `observed-t1` panel `02-29-13` → `02-24-26` |
 | Impact clock is signed seconds at `$793C` | #208 exact-VBL idle pairs; poke `$FFFFF1F0` → panel `00-59-39` |
 | Fresh-game deadline is `-15560` (`04-19-20`) | #368 cold-boot exact-VBL chain; uninitialised at 1400+775 VBLs, written by 1400+780 |
+| Hand-over clock is `02-47-28` | `start-turn-probe.py`: walk flag `$7A8E` turns on at `-10048` in every run sampled per VBL; the sweep ends at `02-49-25` whatever the title's own wait |
 | Altitude window prints six digits | #368 landed arrival frame reads `000000` on foot |
 | DAMOCLES's centre is interpolated from the clock | #440 `--case path`: residual 0 on both axes at every sample of 24, 10 and 3, across five segments and three poses |
 | The comet's path ends on ERIS's centre | Table record 28 at clock 0 is `-630000, 390000`, ERIS's own body-array centre |

@@ -52,8 +52,10 @@ describe('the authored Eris presentation document', () => {
     expect(document.camera.nearPlane).toBeLessThan(11);
     expect(document.schemaVersion).toBe(8);
     expect(document.time).toEqual({
-      // The impact deadline a fresh game starts from, and the VBLs it spends on one of its
-      // own seconds (#368, #208).
+      // The clock when the arrival hands over control, the impact deadline a fresh game
+      // starts from, and the VBLs it spends on one of its own seconds (#368, #208).
+      handoverProvenance: 'recovered',
+      handoverSeconds: 10_048,
       impactDeadlineProvenance: 'recovered',
       impactDeadlineSeconds: 15_560,
       impactProvenance: 'recovered',

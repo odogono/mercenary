@@ -26,9 +26,9 @@
     "pitch": 512,
     "yaw": 1536,
     "yawProvenance": "recovered",
-    "bodyTurn": 23516460,
+    "bodyTurn": 0,
     "bodyTurnProvenance": "recovered",
-    "evidence": "research/damocles-st/snapshots/eris-spaceport-onfoot.sav: $7A92 = $004770B1, $7A96 = 63, $7A9A = $00886C2D, on foot ($7A8E = 1), cell $87; camera yaw word $7AA2 = $0600, the panel compass centred on N (docs/research/damocles-walk-board-flight.md, yaw-probe runs 2026-09-11). Camera pitch word $7AC0 = $0200, level: nothing on foot pitches the view. Eris's rotation accumulator $62EA + 4 x 11 = $0166D52C, the arrival pose's bodyTurn, which puts the start at night (docs/research/damocles-day-night-terminator.md)."
+    "evidence": "research/damocles-st/snapshots/eris-spaceport-onfoot.sav: $7A92 = $004770B1, $7A96 = 63, $7A9A = $00886C2D, on foot ($7A8E = 1), cell $87; camera yaw word $7AA2 = $0600, the panel compass centred on N (docs/research/damocles-walk-board-flight.md, yaw-probe runs 2026-09-11). Camera pitch word $7AC0 = $0200, level: nothing on foot pitches the view. Eris's rotation accumulator $62EA + 4 x 11 is taken instead from a cold boot that presses Space on the title screen, sampled every VBL: the new-game reset $051052 zeroes it, and at the hand-over, where $7A8E turns 1 with the clock at 02-47-28, it is still 0. That puts the start in daylight under the day sky $357 with $7A4E = $FFFF. The capture's own $0166D52C was taken about 73,000 VBLs after the reset and stands at night (research/damocles-st/scripts/start-turn-probe.py, docs/research/damocles-day-night-terminator.md)."
   },
   "eye": {
     "heightUnits": 63,
@@ -109,6 +109,8 @@
     "provenance": "authored"
   },
   "time": {
+    "handoverSeconds": 10048,
+    "handoverProvenance": "recovered",
     "messageFrames": 200,
     "impactDeadlineSeconds": 15560,
     "impactDeadlineProvenance": "recovered",

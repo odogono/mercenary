@@ -8,7 +8,7 @@ import {
   watchErrors
 } from './damocles-play.ts';
 
-/// Browser verification for the sky Bodies (#530): on METIS at night, with the sky longitude
+/// Browser verification that a fresh game starts by day, and for the sky Bodies (#530): on METIS at night, with the sky longitude
 /// at one of #528's pinned values, ERIS is drawn and VESTA lies under the horizon. And for the
 /// comet (#538): at #528's pinned impact clock it is in METIS's sky, and a Session Resume keeps
 /// it there.
@@ -20,6 +20,26 @@ const METIS_TURN_AT_96 = ((96 - 631) & 0x3_ff) * 0x1_00_00;
 /// Session seconds that read #528's MIDAS clock, `-6639` and 13/32, on a 15,560-second
 /// deadline at 20 VBLs a second and 50 a Session second.
 const ELAPSED_AT_PINNED_CLOCK = ((15_560 - 6639 + 13.5 / 32) * 20) / 50;
+
+test('a fresh game starts on ERIS by day, under the day sky', async ({
+  page
+}, testInfo) => {
+  const errors = watchErrors(page);
+  await page.addInitScript(
+    key => localStorage.removeItem(key),
+    DAMOCLES_RESUME_KEY
+  );
+  await page.goto('/damocles');
+  await ready(page);
+  await expect(page.locator('#frame')).toHaveAttribute('data-daylight', 'true');
+  await testInfo.attach('eris-start', {
+    body: await page.screenshot({
+      path: testInfo.outputPath('eris-start.png')
+    }),
+    contentType: 'image/png'
+  });
+  expect(errors).toEqual([]);
+});
 
 test('METIS at night draws ERIS in the sky and leaves VESTA under the horizon', async ({
   page

@@ -198,9 +198,10 @@ The schema version stays 17: no Save depends on these fields
 ## What the port does
 
 - `web/src/damocles/terminator.ts` implements the closed form and the accumulator's advance.
-- The session starts from `start.bodyTurn`. That is Eris's accumulator in
-  `eris-spaceport-onfoot`, the capture the start position comes from, and it puts the start
-  at night. The session adds the Body's rate for every VBL its frame clock counts. A switch
+- The session starts from `start.bodyTurn`, Eris's accumulator at the hand-over of a fresh
+  game. That is the reset's zero ([below](#the-start-turn)), and it puts the start by day
+  under `$357`.
+  The session adds the Body's rate for every VBL its frame clock counts. A switch
   takes the arrival pose's accumulator, so `switch metis-transporter` stands by day under
   `$355`. The Save carries the accumulator at schema 9.
 - `planErisFrame` takes `daylight`. It clears to the Body's day or night word outside an
@@ -210,7 +211,45 @@ The schema version stays 17: no Save depends on these fields
 - The authored `sky` block in `web/damocles/eris.json` is removed (schema 8). Every Body a
   session can stand on has its own pair.
 
+## The start turn
+
+The session first started from `$0166D52C`, Eris's accumulator in `eris-spaceport-onfoot`,
+the capture the start position comes from. That puts the start at night, but the ST starts
+by day. The capture is not the start of a game.
+
+The new-game reset `$051052` zeroes every accumulator on the title screen, together with
+the impact clock (see [the Gamma System note](damocles-gamma-system.md)). `start-turn-probe.py`
+cold-boots to the pinned title checkpoint and presses Space. It then samples `$6200`–`$7D00`
+on a chain of exact debugger VBLs until after the walk flag `$7A8E` turns on. Two runs
+sampled every VBL agree to within one VBL:
+
+| Debugger VBL | Eris `$62EA + $2C` | Clock | `$7A8E` | `$7C86` |
+| ---: | --- | --- | ---: | --- |
+| 792 | `$00000000` | `04-19-20` | 2 | `$000` |
+| 3196 | `$00000000` | `02-49-25` | 0 | `$001` |
+| 3890 | `$00000000` | `02-49-11` | 0 | `$357` |
+| 9017 | `$00000000` | `02-47-28` | 1 | `$357` |
+| 9040 | `$00000141` | `02-47-28` | 1 | `$357` |
+
+- Eris does not turn during the scripted arrival. At the hand-over its accumulator still holds
+  the reset's zero, and it takes its first step of `$141` about 23 debugger VBLs later.
+- The hand-over's position is the start position, `4681905, 63, 8940589`. It stands by day,
+  with `$7A4E` = `$FFFF` and the day sky `$357`.
+- The terminator puts sunset on that spot 15,350 steps from zero. A coarser run counted
+  15,360 steps as the clock fell from `02-47-24` to `02-42-17`. That is 50 steps for each
+  displayed second, the rate the port uses, so night falls about five minutes after the
+  hand-over.
+- The debugger's VBL count does not advance at the handler's rate, so only the clock
+  measures time here.
+- `eris-spaceport-onfoot` is 73,260 steps from zero, about 24 minutes in. It stands at night.
+
 ## Reproduce
+
+```sh
+research/damocles-st/.venv/bin/python research/damocles-st/scripts/start-turn-probe.py \
+  --start-vbls 0 --interval 1 --count 12000 --no-screenshots
+```
+
 
 ```sh
 research/damocles-st/.venv/bin/python -m unittest \

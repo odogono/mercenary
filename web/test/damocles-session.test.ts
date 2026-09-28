@@ -188,12 +188,13 @@ describe('the Damocles Gameplay Session', () => {
     expect(first.occupancy).toEqual({ kind: 'onFoot' });
     expect(first.cell).toEqual({ x: 7, z: 8 });
     expect(first.carried).toEqual([]);
-    expect(first.elapsed).toBe(0);
+    // The arrival has spent the deadline down to the hand-over's `02-47-28`.
+    expect(first.elapsed).toBe(15_560 - 10_048);
     expect(session.advance(0)).toEqual(first);
     session.intent = intent({ walk: 1 });
     const later = session.advance(0.5);
     expect(first.pose.position).toEqual(first.pose.position);
-    expect(later.elapsed).toBeCloseTo(0.5, 9);
+    expect(later.elapsed - first.elapsed).toBeCloseTo(0.5, 9);
     expect(later.pose.position).not.toEqual(first.pose.position);
     expect(later.pose.position.y).toBe(63);
   });
@@ -211,7 +212,8 @@ describe('the Damocles Gameplay Session', () => {
       pieces.snapshot.pose.position.z,
       3
     );
-    expect(whole.elapsed).toBeCloseTo(1, 9);
+    expect(whole.elapsed - pieces.snapshot.elapsed).toBeCloseTo(0, 9);
+    expect(whole.elapsed).toBeCloseTo(15_560 - 10_048 + 1, 9);
   });
 
   test('refuses swept facade and window steps while preserving free turning', async () => {
