@@ -302,7 +302,7 @@ const skyComet = (
   // `$04FC14..$04FC22`: the tip is a quarter further from DIALIS again, at Y 0. `$7A82 ≠ 0`
   // takes the quarter from ERIS's X and Z instead; the mover raises it only where the table
   // ends at zero on the clock, which destroys the comet too unless ERIS was already destroyed.
-  // That is the endgame's (#110), so the port reads the comet's own centre.
+  // That is the endgame's (#580), so the port reads the comet's own centre.
   const tip = {
     x: centre.x + (centre.x >> comet.tailShift),
     y: 0,

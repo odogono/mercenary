@@ -329,7 +329,7 @@ already destroyed (`tst.w $626a(a0)` and `tst.w $6296.w`). A destroyed Body is s
 pass 2 and by the mover. So the ERIS-quarter branch can draw only when ERIS was destroyed
 before the impact and the comet was not: the comet then goes on in a straight line past its
 end, and its tail points a quarter of ERIS's position on. That belongs to the endgame
-([#110](https://github.com/odogono/mercenary/issues/110)). `$7A82` also stops `$051F00` from
+([#580](https://github.com/odogono/mercenary/issues/580)). `$7A82` also stops `$051F00` from
 refreshing the X drift `$7A84`.
 
 ## The closed form
@@ -445,7 +445,7 @@ Read the code windows above from `observed.ram` with Capstone (the lab venv has 
   finer than the ST's, so it adds a quad one ST pixel wide from the head to the tip where
   the ST fill would paint a pixel a row. Two things are left out on purpose. The comet is
   not drawn once the clock reaches zero, because `$051F42` destroys it there; ERIS's own
-  destruction and the rest of the collision are #110's. `$7A82` and the X drift are never
+  destruction and the rest of the collision are #580's. `$7A82` and the X drift are never
   set, because nothing the port models sets them.
 - **The port's Camera** reads the eye's yaw and pitch exactly, where the ST's `$064000`
   table is half a step on. Against the MIDAS frames that moves the comet's head by about

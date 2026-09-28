@@ -55,6 +55,6 @@ it attacks on every landing and arms the encounter gate `$070104`. The draw read
   trigger queues.
 - The pointer steps on every craft pass. Steps are cheap, and the pointer is Save state rather
   than derived, so a craft pass test that compares whole Saves also compares it.
-- Still open: the attack ship and its resolution, the endgame's `$3C` and the author's-computer
-  `$2A` (#110), and the undecoded native draws. The Geiger click is not yet ported, so nothing
-  else reads the pointer.
+- Still open: the attack ship and its resolution (#581), the endgame's `$3C` (#580), the
+  author's-computer `$2A` (#313), and the undecoded native draws (#582). The Geiger click is not
+  yet ported, so nothing else reads the pointer.

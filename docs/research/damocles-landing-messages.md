@@ -249,16 +249,17 @@ took them, with the on-foot pointer held
    the Save goes beyond the original, which omits it. It makes a restored session deterministic,
    and the ADR should record that.
 4. **`$2A` and `$3C` stay out of the landing.** They belong to the author's computer and the
-   endgame (#110). The port's `landingTrigger` already skips both.
+   endgame (#313, #580). The port's `landingTrigger` already skips both.
 
 ## Unresolved
 
 - **The eight native draw sites** at `$04CCF2`–`$04CD66` and `$05160C`–`$05169E`: what they draw
   for and when they run. None ran in a traced flight, but on foot and in other modes they may.
+  #582 decodes them.
 - **`$7A90` = `$0E`**, the second condition on `$2A`, and what `$7856` case 5 is in play terms,
-  beyond arming the drift and firing `$3C`. Both are for the endgame (#110).
+  beyond arming the drift and firing `$3C`. Both are for the endgame map, #580.
 - **Bit 0 of `$7BD8`**, which `$3C` tests before the State President's lines. Its writer was not
-  traced.
+  traced. #580 lists it.
 - **A landing on TOLOSA was not traced.** Its script is decoded from the bank alone. The gate
   write was confirmed by the [moving-objects](damocles-moving-objects.md#runtime-confirmation)
   `attack-armed` case, which injected `$070104` directly.
