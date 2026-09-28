@@ -63,6 +63,9 @@ describe('the authored Eris presentation document', () => {
       // One craft pass every four ticks aboard, derived from the traced frames (ADR 0051).
       ticksPerPass: 4,
       ticksPerPassEvidence: expect.stringContaining('ADR 0051'),
+      ticksPerPassOnFoot: 8,
+      ticksPerPassOnFootEvidence: expect.stringContaining('ADR 0054'),
+      ticksPerPassOnFootProvenance: 'derived',
       ticksPerPassProvenance: 'derived',
       vblHertz: 50,
       vblProvenance: 'derived',

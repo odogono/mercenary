@@ -63,6 +63,7 @@ const record = () => ({
     craft: null,
     doorsMoving: false,
     elapsed: 0,
+    footTicks: 0,
     frameAccumulator: 0,
     occupancy: { kind: 'onFoot' } as DamoclesSaveOccupancy,
     pendingBriefcaseDrop: null as {
