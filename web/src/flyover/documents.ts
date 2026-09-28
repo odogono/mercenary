@@ -193,6 +193,30 @@ export interface GammaComet {
   };
 }
 
+/// The star list the three starfields plot from (#578): `$0503FE` in flight, `$0505B8` on an
+/// island's core on foot and `$05067C` in space, one pixel a star
+/// (docs/research/damocles-starfield.md).
+export interface GammaStarfield {
+  readonly colours: GammaSourceWindow & {
+    /// The colour each star's index draws in: the word at `$050778 + 4·index + 2`.
+    readonly entries: readonly {
+      readonly colour: string;
+      readonly sourceColour: number;
+    }[];
+  };
+  /// Columns in one turn of yaw. A star's x wraps here.
+  readonly columnsPerTurn: number;
+  readonly evidence: string;
+  readonly list: GammaSourceWindow;
+  /// The rows' pitch offsets: `(pitch − offset) · 4 · pitchScale >> 16` rows scroll off the top.
+  readonly pitchOffsets: { readonly flight: number; readonly space: number };
+  readonly pitchScale: number;
+  /// A yaw step scrolls the columns by `(yaw · 2 · scrollScale) >> 16`.
+  readonly scrollScale: number;
+  /// Sorted by x: the column in the turn, the row in the band, and the colour index.
+  readonly stars: readonly (readonly [number, number, number])[];
+}
+
 export interface GammaSourceWindow {
   readonly address: string;
   readonly end: string;
@@ -221,6 +245,7 @@ export interface GammaSystemDocument {
     readonly ramSha256: string;
     readonly run: string;
   };
+  readonly starfield: GammaStarfield;
   readonly title: 'Damocles';
 }
 
@@ -513,6 +538,102 @@ const readGammaComet = (value: unknown): GammaComet => {
   };
 };
 
+const readGammaStarfield = (value: unknown): GammaStarfield => {
+  const field = object(value, 'starfield', [
+    'colours',
+    'columnsPerTurn',
+    'evidence',
+    'list',
+    'pitchOffsets',
+    'pitchScale',
+    'scrollScale',
+    'stars'
+  ]);
+  const colours = object(field['colours'], 'starfield.colours', [
+    'address',
+    'end',
+    'entries',
+    'sha256'
+  ]);
+  const entries = array(colours['entries'], 'starfield.colours.entries').map(
+    (raw, index) => {
+      const path = `starfield.colours.entries[${index}]`;
+      const entry = object(raw, path, ['colour', 'sourceColour']);
+      const sourceColour = integer(
+        entry['sourceColour'],
+        `${path}.sourceColour`
+      );
+      const entryColour = colour(entry['colour'], `${path}.colour`);
+      if (sourceColour > 0xf_ff || entryColour !== expandStRgb(sourceColour)) {
+        fail(`${path}.colour`, 'should be the expansion of sourceColour');
+      }
+      return { colour: entryColour, sourceColour };
+    }
+  );
+  if (entries.length !== 16) {
+    fail('starfield.colours.entries', 'should hold sixteen colours');
+  }
+  const columnsPerTurn = positiveInteger(
+    field['columnsPerTurn'],
+    'starfield.columnsPerTurn'
+  );
+  const offsets = object(field['pitchOffsets'], 'starfield.pitchOffsets', [
+    'flight',
+    'space'
+  ]);
+  const stars = array(field['stars'], 'starfield.stars').map(
+    (raw, index): readonly [number, number, number] => {
+      const path = `starfield.stars[${index}]`;
+      const [x, row, colourIndex, ...rest] = array(raw, path).map((entry, at) =>
+        integer(entry, `${path}[${at}]`)
+      );
+      if (x === undefined || row === undefined || colourIndex === undefined) {
+        return fail(path, 'should be x, row and colour');
+      }
+      if (
+        rest.length > 0 ||
+        x >= columnsPerTurn ||
+        row > 0x3_ff ||
+        colourIndex > 15
+      ) {
+        fail(path, 'should be x in the turn, a ten-bit row and a colour index');
+      }
+      return [x, row, colourIndex];
+    }
+  );
+  for (let index = 1; index < stars.length; index += 1) {
+    if (stars[index]![0] < stars[index - 1]![0]) {
+      fail('starfield.stars', 'should be sorted by x');
+    }
+  }
+  return {
+    colours: {
+      ...sourceWindow(
+        {
+          address: colours['address'],
+          end: colours['end'],
+          sha256: colours['sha256']
+        },
+        'starfield.colours'
+      ),
+      entries
+    },
+    columnsPerTurn,
+    evidence: text(field['evidence'], 'starfield.evidence'),
+    list: sourceWindow(field['list'], 'starfield.list'),
+    pitchOffsets: {
+      flight: positiveInteger(
+        offsets['flight'],
+        'starfield.pitchOffsets.flight'
+      ),
+      space: positiveInteger(offsets['space'], 'starfield.pitchOffsets.space')
+    },
+    pitchScale: positiveInteger(field['pitchScale'], 'starfield.pitchScale'),
+    scrollScale: positiveInteger(field['scrollScale'], 'starfield.scrollScale'),
+    stars
+  };
+};
+
 export const readGammaSystem = (value: unknown): GammaSystemDocument => {
   const root = object(value, '$', [
     'schemaVersion',
@@ -522,6 +643,7 @@ export const readGammaSystem = (value: unknown): GammaSystemDocument => {
     'coordinateSystem',
     'sky',
     'comet',
+    'starfield',
     'bodies'
   ]);
   const source = object(root['source'], 'source', [
@@ -547,6 +669,7 @@ export const readGammaSystem = (value: unknown): GammaSystemDocument => {
   }
   const sky = readGammaSky(root['sky']);
   const comet = readGammaComet(root['comet']);
+  const starfield = readGammaStarfield(root['starfield']);
   const bodies = array(root['bodies'], 'bodies').map(
     (raw, index): GammaBody => {
       const path = `bodies[${index}]`;
@@ -671,6 +794,7 @@ export const readGammaSystem = (value: unknown): GammaSystemDocument => {
       ramSha256: readHash('ramSha256'),
       run: text(source['run'], 'source.run')
     },
+    starfield,
     title: literal(root['title'], 'Damocles', 'title')
   };
 };

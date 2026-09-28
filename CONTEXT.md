@@ -190,6 +190,10 @@ _Avoid_: Intro cutscene, attract mode, title sequence, Ending
 The authored star field, and the planet growing out of it, that the Arrival's space segment is seen against — distinct from the Targ Star Sphere, the Interstellar Ship Field, and ordinary flight.
 _Avoid_: Star Sphere, Interstellar Ship Field, ordinary-flight starfield, space backdrop
 
+**Damocles Starfield**:
+The Damocles Working Authority's own stars: one recovered list of 1,600 screen-space stars that the frame loop scrolls by yaw and pitch, shears by roll in flight, and plots one ST pixel each before the sky Bodies. It is drawn by night, on a Body with no atmosphere, and always in space. It is a scrolled band of pixels, not a sphere of directions, and it names no star.
+_Avoid_: Star Sphere, Flyover Backdrop, star catalogue, sky dome
+
 **Arrival Narration**:
 The Arrival's own message sequence, authored into the Browser Shell and quoted from the original releases because it belongs to the stripped part of the intro and is in no Data Payload. It borrows the message line as a shell notice does and is not a Benson Message: it never reaches the interpreter, the Host Callout, or the message transcript (ADR 0032).
 _Avoid_: Benson Message, intro script, opening text

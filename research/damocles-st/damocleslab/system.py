@@ -19,12 +19,17 @@ and docs/research/damocles-sky-bodies.md.
 DAMOCLES is drawn through a comet path of its own (`$04FBF2`), and its centre is the
 impact clock's (#440): `$051E88` interpolates the waypoint table at `$052022`. The
 `comet` block publishes both, so a Session can place and draw the comet (#538).
+
+The `starfield` block is the star list and colours the three starfields plot from (#578):
+one pixel a star, scrolled by yaw and pitch in the ST's own word arithmetic. See
+docs/research/damocles-starfield.md.
 """
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
+import re
 import struct
 from pathlib import Path
 
@@ -72,7 +77,30 @@ HEAD_DISC = 0x04FCE6
 # `$04FBF6` projects the tail tip into slot `$80` and each head point into the next.
 COMET_SLOT = 0x80
 
+# The starfields (#578): `$0503FE` in flight, `$0505B8` on an island's core on foot and
+# `$05067C` in space, each from the list at `$05D8C0` in the colours at `$050778`.
+STAR_LIST = 0x05D8C0
+STAR_STEPS = 1024
+STAR_COLOURS = 0x050778
+STAR_COLUMNS_PER_TURN = 1800
+STAR_ROW_MASK = 0x03FF
+STAR_COLOUR_MASK = 0x3C00
+STAR_SCROLL_SCALE = 0xE10E
+STAR_PITCH_SCALE = 0x6CCC
+STAR_PITCH_OFFSET_FLIGHT = 0x128
+STAR_PITCH_OFFSET_SPACE = 0x1C0
+# The last x any yaw reads: 319 columns past the scroll at step 1,023.
+STAR_LAST_COLUMN = 319 + ((1023 * 2 * STAR_SCROLL_SCALE) >> 16)
+STARFIELD_CODE = (
+    (0x050500, b'\xd2\xf1\x50\x00\xca\xfc\xe1\x0e', 'the flight scan: index by yaw, scroll by yaw * $E10E'),
+    (0x0504FA, b'\x43\xf9\x00\x05\xd8\xc0', 'the lea that loads the star list'),
+    (0x050516, b'\x04\x44\x01\x28\xd8\x44\xd8\x44\xc9\xfc\x6c\xcc', 'the flight pitch offset and scale'),
+    (0x0506F6, b'\x04\x44\x01\xc0\xd8\x44\xd8\x44\xc9\xfc\x6c\xcc', 'the space pitch offset and scale'),
+    (0x0504A8, b'\x30\x29\x00\x42', 'the colour loop reading the word $42 past each slot'),
+)
+
 EVIDENCE = 'docs/research/damocles-gamma-system.md'
+STARFIELD_EVIDENCE = 'docs/research/damocles-starfield.md'
 SKY_EVIDENCE = 'docs/research/damocles-sky-bodies.md'
 MOTION_EVIDENCE = 'docs/research/damocles-script-motion-time.md'
 
@@ -216,6 +244,62 @@ def comet(data: bytes) -> dict:
     }
 
 
+def starfield(data: bytes) -> dict:
+    """The star list and colours the three starfields draw from (#578).
+
+    The list at `$05D8C0` opens with 1,024 words, one per yaw step: the byte offset of that
+    step's first star. The stars follow as word pairs sorted by x, 1,800 columns to a turn,
+    and the 268 after the first turn repeat x 0..319 so a scan need not wrap. Each second word
+    is a row in its low bits (0..431) and a colour index in bits 10-13. The index is published
+    as the first star at or past each step's scroll, so it is not carried. Neither is the
+    repeat: a consumer wraps x at `columnsPerTurn`.
+    """
+    for address, code, what in STARFIELD_CODE:
+        expect_code(data, address, code, what)
+    index = [struct.unpack_from('>H', data, STAR_LIST + 2 * step)[0] for step in range(STAR_STEPS)]
+    stars = []
+    address = STAR_LIST + 2 * STAR_STEPS
+    while True:
+        x, word = struct.unpack_from('>HH', data, address)
+        if stars and x < stars[-1][0]:
+            raise ValueError(f'star list ${address:06x} is not sorted by x')
+        if x > STAR_LAST_COLUMN:
+            break
+        if word & ~(STAR_ROW_MASK | STAR_COLOUR_MASK):
+            raise ValueError(f'star word {word:04x} at ${address:06x} has bits outside the row and colour')
+        stars.append((x, word))
+        address += 4
+    end = address
+    once = [star for star in stars if star[0] < STAR_COLUMNS_PER_TURN]
+    if stars[len(once):] != [(x + STAR_COLUMNS_PER_TURN, word) for x, word in once[:len(stars) - len(once)]]:
+        raise ValueError('the stars past one turn do not repeat the first ones')
+    for step, offset in enumerate(index):
+        scroll = (step * 2 * STAR_SCROLL_SCALE) >> 16
+        first = next(k for k, star in enumerate(stars) if star[0] >= scroll)
+        if offset != 2 * STAR_STEPS + 4 * first:
+            raise ValueError(f'yaw step {step} does not index the first star past column {scroll}')
+    colours = [struct.unpack_from('>H', data, STAR_COLOURS + 4 * slot + 2)[0] for slot in range(16)]
+    return {
+        'evidence': STARFIELD_EVIDENCE,
+        'list': {
+            'address': hex_address(STAR_LIST),
+            'end': hex_address(end),
+            'sha256': hashlib.sha256(data[STAR_LIST:end]).hexdigest(),
+        },
+        'colours': {
+            'address': hex_address(STAR_COLOURS),
+            'end': hex_address(STAR_COLOURS + 64),
+            'sha256': hashlib.sha256(data[STAR_COLOURS:STAR_COLOURS + 64]).hexdigest(),
+            'entries': [{'colour': st_rgb(colour), 'sourceColour': colour} for colour in colours],
+        },
+        'columnsPerTurn': STAR_COLUMNS_PER_TURN,
+        'scrollScale': STAR_SCROLL_SCALE,
+        'pitchScale': STAR_PITCH_SCALE,
+        'pitchOffsets': {'flight': STAR_PITCH_OFFSET_FLIGHT, 'space': STAR_PITCH_OFFSET_SPACE},
+        'stars': [[x, word & STAR_ROW_MASK, (word & STAR_COLOUR_MASK) >> 10] for x, word in once],
+    }
+
+
 def body(data: bytes, index: int, ids: list[str]) -> dict:
     x, y, z = (struct.unpack_from('>i', data, table + index * 4)[0]
                for table in (BODY_X, BODY_Y, BODY_Z))
@@ -300,6 +384,14 @@ def extract(data: bytes, source: dict) -> dict:
                 'the head points, in the order $04F8FE draws them. headDisc gives the palette '
                 'slots of the disc $04FCE6 draws last, first span then second; with the split at '
                 'the rim only the first is painted.',
+                'starfield carries the star list the three starfields draw from (#578): $0503FE '
+                'in flight, $0505B8 on an island\'s core on foot and $05067C in space. Each star is '
+                '[x, row, colour]: x in 1,800 columns to a turn, the row the band puts it on, and '
+                'an index into colours, the words at $050778 + 4 * index + 2. A frame scrolls x by '
+                '(yaw * 2 * scrollScale) >> 16 and the rows by ((pitch - offset) * 4 * pitchScale) '
+                '>> 16, both word arithmetic, with the pitch offset for flight or space. The list '
+                'at $05D8C0 also holds a per-yaw index and a repeat of the first 268 stars one '
+                'turn on; both follow from the stars and are not published.',
             ],
         },
         'coordinateSystem': {
@@ -309,6 +401,7 @@ def extract(data: bytes, source: dict) -> dict:
         },
         'sky': sky(data),
         'comet': comet(data),
+        'starfield': starfield(data),
         'bodies': bodies,
     }
 
@@ -323,6 +416,15 @@ def document_source(data: bytes, run: str, program_sha256: str) -> dict:
         'ramSha256': hashlib.sha256(data).hexdigest(),
         'run': run,
     }
+
+
+def dumps(document: dict) -> str:
+    """The document as the payload keeps it: two-space JSON, one star to a line."""
+    text = json.dumps(document, indent=2) + '\n'
+    start = text.index('"stars": [')
+    end = text.index('\n    ]', start)
+    stars = re.sub(r'\[\s+(\d+),\s+(\d+),\s+(\d+)\s+\]', r'[\1, \2, \3]', text[start:end])
+    return text[:start] + stars + text[end:]
 
 
 def main():
@@ -342,7 +444,7 @@ def main():
     source = document_source(data, args.run.name, manifest['authority']['programSha256'])
     result = extract(data, source)
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(result, indent=2) + '\n')
+    args.output.write_text(dumps(result))
     print(json.dumps({'bodies': len(result['bodies']),
                       'drawListEntries': sum(len(b['drawList']) for b in result['bodies'])}))
 

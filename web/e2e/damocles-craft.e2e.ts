@@ -535,3 +535,103 @@ test('EAGLE NINE S E saved in space, reloaded and loaded, flies on to its arriva
   await shot(page, 'eagle-landed-after-resume', testInfo);
   expect(errors).toEqual([]);
 });
+
+/// A number of the 1,024 attitude units to a turn, in radians.
+const turn = (units: number) => (units / 1024) * 2 * Math.PI;
+
+/// Sets the craft down at `position` with the attitude words `pitch` and `yaw`, through a Save
+/// edited aboard and loaded back, as `boardEagleOnDion` sets it down on DION.
+const setCraftAt = async (
+  page: Page,
+  position: { x: number; y: number; z: number },
+  words: { pitch: number; yaw: number }
+): Promise<void> => {
+  // Slot 3, which `boardEagleOnDion` filled, overwritten each time.
+  const saved = await run(page, 'save 3');
+  if (!saved.includes('saved')) {
+    expect(await run(page, 'save 3 confirm')).toContain('saved');
+  }
+  const slot = damoclesSaveSlot(3);
+  const record = JSON.parse(
+    (await page.evaluate(k => localStorage.getItem(k), slot))!
+  ) as SavedRecord & {
+    snapshot: {
+      craft: {
+        contact: number;
+        pitch: number;
+        trig: { pitch: number; yaw: number };
+        yaw: number;
+      };
+      pose: { pitch: number };
+    };
+  };
+  record.snapshot.pose.position = position;
+  record.snapshot.pose.heading = turn(words.yaw - 512);
+  record.snapshot.pose.pitch = turn(512 - words.pitch);
+  record.snapshot.craft = {
+    ...record.snapshot.craft,
+    contact: 0,
+    pitch: words.pitch,
+    trig: { pitch: words.pitch, yaw: words.yaw },
+    yaw: words.yaw
+  };
+  await page.evaluate(
+    ([k, v]) => localStorage.setItem(k!, v!),
+    [slot, JSON.stringify(record)]
+  );
+  expect(await run(page, 'load 3')).toContain('restored slot 3');
+  await closeConsole(page);
+  await ready(page);
+};
+
+test('high over DION the islands reach the horizon, and the stars are drawn by night and in space (#578)', async ({
+  page
+}, testInfo) => {
+  test.setTimeout(300_000);
+  const errors = watchErrors(page);
+  await boardEagleOnDion(page);
+  // The #573 run's stop 30: 5,745,950 up, nose down at pitch word 655, where the ST draws DION's
+  // green islands on its `$055` ground. The island fills end at the far plane, 3,000,000, so
+  // from here only their flat copy over the ground to the horizon is drawn.
+  await setCraftAt(
+    page,
+    { x: 213_981_624, y: 5_745_950, z: 87_996_530 },
+    { pitch: 655, yaw: 664 }
+  );
+  await expect(frame(page)).toHaveAttribute('data-body', 'body-4');
+  expect(await attribute(page, 'y')).toBeGreaterThan(5_000_000);
+  expect(await attribute(page, 'horizon-island-triangles')).toBeGreaterThan(0);
+  // Nose down past pitch `$244` the flight starfield plots nothing.
+  expect(await attribute(page, 'sky-stars')).toBe(0);
+  await shot(page, 'high-over-dion-islands', testInfo);
+
+  // Nose up at pitch 487, as the #573 frames over LACHESIS are: the stars are there unless it
+  // is day on DION, which has an atmosphere.
+  await setCraftAt(
+    page,
+    { x: 213_981_624, y: 5_745_950, z: 87_996_530 },
+    { pitch: 487, yaw: 664 }
+  );
+  const daylight = (await frame(page).getAttribute('data-daylight')) === 'true';
+  const stars = await attribute(page, 'sky-stars');
+  expect(stars > 0).toBe(!daylight);
+  await shot(page, 'high-over-dion-sky', testInfo);
+
+  // Just under the space entry, then Backspace: in space `$05067C` plots the stars by day too.
+  await setCraftAt(
+    page,
+    { x: 213_981_624, y: 32_000_000, z: 87_996_530 },
+    { pitch: 487, yaw: 664 }
+  );
+  await page.keyboard.press('Backspace');
+  await expect(frame(page)).toHaveAttribute(
+    'data-space-nearest',
+    /^body-\d+$/,
+    { timeout: 120_000 }
+  );
+  await expect
+    .poll(async () => attribute(page, 'sky-stars'), { timeout: 10_000 })
+    .toBeGreaterThan(0);
+  await shot(page, 'space-stars', testInfo);
+  expect(errors).toEqual([]);
+});

@@ -2,6 +2,7 @@ import type { BodySky } from '../catalogue/data.ts';
 import type { GammaSystemDocument } from '../flyover/documents.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import { cometCentre, type ImpactTime } from './comet.ts';
+import { starPixels, type StarPixel, type StarView } from './stars.ts';
 import { continuousSkyAngles, skyAngles } from './terminator.ts';
 
 /// The other Bodies of a cluster in a Body's sky (#530), to the closed form #528 recovered
@@ -130,6 +131,8 @@ export interface SkyInputs {
   /// Enhanced presentation: move the Bodies with the whole accumulator and the exact position
   /// rather than in the engine's 1/1024-turn steps, which jump a Body 0.35° at a time.
   readonly smooth?: boolean;
+  /// The view the starfield scrolls by (#578), or null for no stars.
+  readonly stars?: StarView | null;
   /// The Body's rotation accumulator (`$62EA + 4 * body`).
   readonly turn: number;
 }
@@ -144,7 +147,15 @@ export interface SkyPass {
   readonly halfWidthDivisor: number;
   /// `$7964`: the projection scale a disc's `size / depth` pixel radius is measured against.
   readonly projectionScale: number;
+  /// The starfield's pixels, in the ST's screen pixels, in plot order (#578). The stars are
+  /// drawn before the sky pass, so every Body covers them.
+  readonly stars: readonly StarPixel[];
 }
+
+/// Whether the Body has an atmosphere: `$794D`, non-zero exactly where its day and night sky
+/// words differ (#528).
+const hasAtmosphere = (sky: BodySky | null): boolean =>
+  sky !== null && sky.day.colour !== sky.night.colour;
 
 export const skyPass = (
   system: GammaSystemDocument,
@@ -152,7 +163,14 @@ export const skyPass = (
 ): SkyPass => ({
   bodies: skyBodies(system, inputs),
   halfWidthDivisor: system.sky.halfWidthDivisor,
-  projectionScale: system.sky.projectionScale
+  projectionScale: system.sky.projectionScale,
+  // `$0503FE` and `$0505B8` both return at once by day on a Body with an atmosphere.
+  stars:
+    inputs.stars === undefined ||
+    inputs.stars === null ||
+    (inputs.daylight && hasAtmosphere(inputs.sky))
+      ? []
+      : starPixels(system.starfield, inputs.stars)
 });
 
 const skyBodies = (
@@ -178,9 +196,7 @@ const skyBodies = (
   // it is exactly where the Body's day and night sky words differ: on the Bodies with an
   // atmosphere. Otherwise the slot is `$000`.
   const shadow =
-    inputs.daylight &&
-    inputs.sky !== null &&
-    inputs.sky.day.colour !== inputs.sky.night.colour
+    inputs.daylight && inputs.sky !== null && hasAtmosphere(inputs.sky)
       ? inputs.sky.day.colour
       : PALETTE_SLOT_0;
   const surfaceOffset = (point: Vector3): Vector3 => {
@@ -231,13 +247,16 @@ export interface SpaceSkyInputs {
   readonly impact: ImpactTime;
   /// Whether a Body is in the scene: the range scan's negative-Y flag, by source index.
   readonly inScene: (sourceIndex: number) => boolean;
+  /// The view the space starfield `$05067C` scrolls by (#578), or null for no stars. Nothing
+  /// gates it by day.
+  readonly stars?: StarView | null;
 }
 
 /// The Bodies seen from space (#558). The range scan `$052DB0` puts every Body in the scene
 /// that lies in front of the view on the sort list at `$8F5A`, with its range, and lets the
 /// comet through behind it too. The sky is drawn through the view matrix alone (`$7A8E` = 2),
 /// so each offset is the Body's less the craft's in the System's own axes. Read statically
-/// only: the port draws them farthest first, the painter's order, over black.
+/// only: the port draws them farthest first, the painter's order, over `$001`.
 export const spaceSkyPass = (
   system: GammaSystemDocument,
   inputs: SpaceSkyInputs
@@ -283,7 +302,11 @@ export const spaceSkyPass = (
   return {
     bodies: items.sort((a, b) => b.range - a.range).map(entry => entry.item),
     halfWidthDivisor: system.sky.halfWidthDivisor,
-    projectionScale: system.sky.projectionScale
+    projectionScale: system.sky.projectionScale,
+    stars:
+      inputs.stars === undefined || inputs.stars === null
+        ? []
+        : starPixels(system.starfield, inputs.stars)
   };
 };
 
