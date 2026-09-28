@@ -24,6 +24,7 @@ import {
 import {
   cellOf,
   erisSurfaceFrom,
+  pitchFromWord,
   startPose,
   withinDrawBound,
   type ErisPlacement,
@@ -535,6 +536,129 @@ describe('an Eris frame in Filled Presentation', () => {
   });
 });
 
+const channelsOf = (colour: string) =>
+  Array.from(
+    new Float32Array(
+      [1, 3, 5].map(at => Number.parseInt(colour.slice(at, at + 2), 16) / 255)
+    )
+  );
+const verticesOf = (values: Float32Array) => {
+  const vertices: { colour: number[]; view: number[] }[] = [];
+  for (let at = 0; at < values.length; at += FLOATS_PER_VERTEX) {
+    vertices.push({
+      colour: Array.from(values.slice(at + 3, at + 6)),
+      view: Array.from(values.slice(at, at + 3))
+    });
+  }
+  return vertices;
+};
+/// The crossing's pose over LACHESIS in the #558 trace, on Eris: Y `$1800000`, pitch word 487.
+const aloft = (doc: ErisPresentationDocument) => {
+  const start = startPose(doc);
+  return {
+    ...start,
+    pitch: pitchFromWord(487, doc.orientation),
+    position: { ...start.position, y: 0x1_80_00_00 }
+  };
+};
+
+describe('the ground to the horizon', () => {
+  test('reaches the horizon from Y $1800000, where the base plane is past the far plane', async () => {
+    const { doc, surface } = await load();
+    const plan = planErisFrame(surface, aloft(doc), doc);
+    // Every base plane vertex is past the far plane: from this height it draws nothing (#573).
+    const base = verticesOf(
+      plan.vertices.slice(0, plan.fillTriangleCount * 3 * FLOATS_PER_VERTEX)
+    );
+    expect(base.length).toBeGreaterThan(0);
+    for (const { view } of base) {
+      expect(Math.hypot(...view)).toBeGreaterThan(doc.camera.farPlane);
+    }
+    // The horizon fill is there anyway, inside the frustum, in the Body's base colour: aloft
+    // the ST fills `$7C88` even over an island core, where it stood on CAPITAL CITY's land.
+    const horizon = verticesOf(plan.horizonVertices);
+    expect(horizon.length).toBeGreaterThan(0);
+    expect(horizon.length % 3).toBe(0);
+    for (const { colour, view } of horizon) {
+      expect(colour).toEqual(channelsOf(surface.baseColour!));
+      expect(view[2]!).toBeLessThan(doc.camera.farPlane);
+      expect(view[2]!).toBeGreaterThan(doc.camera.nearPlane);
+    }
+    // It spans the view below the horizon line, which with the nose up is `tan θ` under the
+    // centre. The #573 Hatari frames at this pitch show 30 rows of LACHESIS's `$411`, rows 106
+    // to 135 of 136, at Y 25.6, 26.5 and 27.7 million. The port's edge is at ST row 107.6: its
+    // Camera levels at pitch word 512 where the ST's horizon is on the centre row at 511, the
+    // Camera-wide half-step, not the fill's.
+    const tangents = horizon.map(({ view }) => ({
+      x: view[0]! / view[2]!,
+      y: view[1]! / view[2]!
+    }));
+    const top = Math.max(...tangents.map(t => t.y));
+    expect(top).toBeCloseTo(-Math.tan(aloft(doc).pitch), 6);
+    expect(Math.abs(68 - 256 * top - 106)).toBeLessThan(2);
+    const bottom = -Math.tan(
+      (doc.camera.verticalFieldOfViewDegrees * Math.PI) / 360
+    );
+    expect(Math.min(...tangents.map(t => t.y))).toBeLessThan(bottom);
+    expect(Math.min(...tangents.map(t => t.x))).toBeLessThan(-4);
+    expect(Math.max(...tangents.map(t => t.x))).toBeGreaterThan(4);
+  });
+
+  test('does not move with height', async () => {
+    const { doc, surface } = await load();
+    const high = aloft(doc);
+    const higher = {
+      ...high,
+      position: { ...high.position, y: 0x1_a7_4b_20 }
+    };
+    expect(planErisFrame(surface, higher, doc).horizonVertices).toEqual(
+      planErisFrame(surface, high, doc).horizonVertices
+    );
+  });
+
+  test('takes the island colour underfoot on the ground, as the base plane does', async () => {
+    const { doc, surface } = await load();
+    const plan = planErisFrame(surface, startPose(doc), doc);
+    expect(plan.horizonVertices.length).toBeGreaterThan(0);
+    expect(Array.from(plan.horizonVertices.slice(3, 6))).toEqual(
+      Array.from(plan.vertices.slice(3, 6))
+    );
+    // Level on foot, the line is the centre row, where the raster split falls (row 68).
+    const tops: number[] = [];
+    for (
+      let at = 0;
+      at < plan.horizonVertices.length;
+      at += FLOATS_PER_VERTEX
+    ) {
+      tops.push(plan.horizonVertices[at + 1]! / plan.horizonVertices[at + 2]!);
+    }
+    expect(Math.max(...tops)).toBeCloseTo(0, 6);
+  });
+
+  test('is not drawn in space or on a Body with no surface colour', async () => {
+    const { doc, surface } = await load();
+    const space = planErisFrame(
+      surface,
+      aloft(doc),
+      doc,
+      null,
+      [],
+      [],
+      () => false,
+      false,
+      null,
+      true
+    );
+    expect(space.horizonVertices.length).toBe(0);
+    const bare = planErisFrame(
+      { ...surfaceOf([]), baseColour: null },
+      origin,
+      doc
+    );
+    expect(bare.horizonVertices.length).toBe(0);
+  });
+});
+
 describe('a face plane', () => {
   test('is the same bits from any face in the plane, however it winds', () => {
     // An oblique integer plane, 2x + 3y + 6z = 60, cut into two unlike polygons.
@@ -795,8 +919,13 @@ describe('the Eris renderer', () => {
       `draw:15:${fill + islands}:${ground}`,
       `draw:15:${fill + islands + ground}:${rest}`
     ];
+    // The ground to the horizon goes first, over the sky and under everything else (#573).
+    const horizon = `draw:15:0:${plan.horizonVertices.length / FLOATS_PER_VERTEX}`;
+    expect(plan.horizonVertices.length).toBeGreaterThan(0);
     expect(fake.calls.filter(c => c.startsWith('draw:'))).toEqual([
+      horizon,
       ...layered,
+      horizon,
       ...layered
     ]);
     // The base plane's own step, wider than a layer: its outer rings are far-plane-sized
@@ -840,7 +969,8 @@ describe('the Eris renderer', () => {
     expect(fake.calls).not.toContain('texStorage:2048:2048');
     renderer.render(plan);
     expect(fake.compiled).toBe(2);
-    expect(fake.calls.filter(call => call.startsWith('draw:'))).toHaveLength(4);
+    // The ground to the horizon, then the four colour layers.
+    expect(fake.calls.filter(call => call.startsWith('draw:'))).toHaveLength(5);
     expect(fake.calls).not.toContain('texStorage:2048:2048');
   });
 
@@ -886,11 +1016,13 @@ describe('the Eris renderer', () => {
 
     const casterDraw = `draw:15:0:${casters.length / FLOATS_PER_VERTEX}`;
     const fill = plan.fillTriangleCount * 3;
-    // Two shadow maps of deduplicated casters, then the four colour layers: this surface
-    // carries no island records and no ground records, so those two layers are empty.
+    // Two shadow maps of deduplicated casters, the ground to the horizon, then the four
+    // colour layers: this surface carries no island records and no ground records, so those
+    // two layers are empty.
     const once = [
       casterDraw,
       casterDraw,
+      `draw:15:0:${plan.horizonVertices.length / FLOATS_PER_VERTEX}`,
       `draw:15:0:${fill}`,
       `draw:15:${fill}:0`,
       `draw:15:${fill}:0`,
