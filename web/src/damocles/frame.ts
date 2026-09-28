@@ -16,6 +16,7 @@ import {
   type FloorLabelGlyphs
 } from './selection.ts';
 import type { SkyBody, SkyComet, SkyPass } from './sky.ts';
+import { starTangent, type StarPixel } from './stars.ts';
 import {
   insideCentralCellHalf,
   withinDrawBound,
@@ -53,6 +54,9 @@ export interface ErisFramePlan {
   /// ground records a hair behind so a building's pad lies over the cell's apron, as a
   /// painter's ground stream drawn before its structures would leave it.
   readonly groundTriangleCount: number;
+  /// Every island fill, flat, in record order and in the same vertices, painted over the ground
+  /// to the horizon (#578). Past the far plane they are all there is of the islands.
+  readonly horizonIslandVertices: Float32Array;
   /// The ground to the horizon, in the same ten-float vertices as `vertices`: one polygon
   /// below the horizon line in the base plane's colour, painted after the sky Bodies and
   /// before everything else (#573). Empty where there is no base plane.
@@ -68,10 +72,12 @@ export interface ErisFramePlan {
   /// The sky Bodies (#530) and the comet (#538), in draw order, whether or not any of each is
   /// drawn.
   readonly skyBodies: readonly SkyBodyPlacement[];
-  /// The sky Bodies' discs and the comet, in the same ten-float vertices as `vertices` and in
-  /// draw order.
-  /// They are painted over the sky fill before anything else, and everything else covers them.
+  /// The stars (#578), then the sky Bodies' discs and the comet, in the same ten-float vertices
+  /// as `vertices` and in draw order. They are painted over the sky fill before anything else,
+  /// and everything else covers them.
   readonly skyVertices: Float32Array;
+  /// How many star pixels open `skyVertices`, each one ST pixel square.
+  readonly starCount: number;
   readonly triangleCount: number;
   readonly verticalFieldOfViewDegrees: number;
   readonly vertices: Float32Array;
@@ -516,6 +522,9 @@ const islandFillTriangles = (
   return triangles;
 };
 
+/// `$0598CC`: the colour space is filled in, slot 8's `$001`.
+const SPACE_SKY = '#000022';
+
 /// The ST screen's centre column, about which `$05668A` places a Body at `160 − F·u/d`.
 const SKY_CENTRE_COLUMN = 160;
 
@@ -607,6 +616,60 @@ const horizonFillVertices = (
   return values;
 };
 
+/// One island fill in the horizon layer (#578): its triangles in view space, cut at the near
+/// plane, projected, cut to the horizon fill's square and fanned at the sky's depth.
+///
+/// `$056516` draws every island of the Body each frame, in record order, after the horizon
+/// fill `$0599D6`. Each is its coastline projected through `$05668A` and filled flat by
+/// `$04F8F2`, so nothing but the view limits how far off one is drawn. The #573 frames show
+/// DION's islands from every captured height, Y 1.4 to 31 million. The port's island fills
+/// end at the far plane, as the base plane does (#221), so this second copy paints the whole
+/// island flat with the depth test off. Inside the far plane the base plane and the island
+/// fill cover it again in the same pixels.
+const horizonIslandVertices = (
+  triangles: readonly WorldTriangle[],
+  toView: (world: Vector3) => Vector3,
+  nearPlane: number,
+  depth: number,
+  colour: readonly [number, number, number]
+): number[] => {
+  const values: number[] = [];
+  for (const triangle of triangles) {
+    const front = clipPolygon(
+      triangle.map(toView),
+      point => point.z - nearPlane,
+      lerp3
+    );
+    let flat: Tangent[] = front.map(point => ({
+      x: point.x / point.z,
+      y: point.y / point.z
+    }));
+    for (const side of [
+      (point: Tangent) => HORIZON_REACH - point.x,
+      (point: Tangent) => HORIZON_REACH + point.x,
+      (point: Tangent) => HORIZON_REACH - point.y,
+      (point: Tangent) => HORIZON_REACH + point.y
+    ]) {
+      flat = clipPolygon(flat, side, lerp2);
+    }
+    for (let index = 1; index + 1 < flat.length; index += 1) {
+      for (const point of [flat[0]!, flat[index]!, flat[index + 1]!]) {
+        values.push(
+          point.x * depth,
+          point.y * depth,
+          depth,
+          ...colour,
+          0,
+          0,
+          1,
+          -depth
+        );
+      }
+    }
+  }
+  return values;
+};
+
 /// The comet's polygons, `$04F8FE`'s, in view space: cut short of the eye, projected, cut at the
 /// horizon row (the `$04FB1C` fill limit, patched to row 68 on foot), and fanned into
 /// triangles at the sky's depth. Returns whether any of it is left.
@@ -684,6 +747,34 @@ const skyCometTriangles = (
     }
   }
   return drawn;
+};
+
+/// The star pixels as squares one ST pixel on a side, at the sky's depth.
+const skyStarTriangles = (
+  stars: readonly StarPixel[],
+  projectionScale: number,
+  depth: number,
+  emit: (view: Vector3, colour: readonly [number, number, number]) => void
+): void => {
+  const step = 1 / projectionScale;
+  const at = (x: number, y: number): Vector3 => ({
+    x: x * depth,
+    y: y * depth,
+    z: depth
+  });
+  for (const star of stars) {
+    const corner = starTangent(star.column, star.row, projectionScale);
+    const colour = channels(star.colour);
+    const quad = [
+      at(corner.x, corner.y),
+      at(corner.x + step, corner.y),
+      at(corner.x + step, corner.y - step),
+      at(corner.x, corner.y - step)
+    ];
+    for (const index of [0, 1, 2, 0, 2, 3]) {
+      emit(quad[index]!, colour);
+    }
+  }
 };
 
 /// One sky Body as horizontal slabs, `$045916`'s rows made continuous: each row from `−w` to
@@ -780,7 +871,7 @@ export const planErisFrame = (
   daylight = false,
   /// The Bodies the current Body's draw list names (#530). None where the frame has no sky pass.
   sky: SkyPass | null = null,
-  /// In space (#558) the frame draws the sky alone, over black: no ground, island, structure
+  /// In space (#558) the frame draws the sky alone, over `$001`: no ground, island, structure
   /// or object stream.
   inSpace = false
 ): ErisFramePlan => {
@@ -903,6 +994,10 @@ export const planErisFrame = (
   const discDrawn = (placement: Omit<SkyBodyPlacement, 'drawn'>): boolean =>
     placement.radius * projectionScale >= halfWidthDivisor &&
     (inSpace || placement.y + placement.radius > 0);
+  // `$0503FE`, `$0505B8` and `$05067C` plot the stars before the sky pass, so the Bodies cover
+  // them (#578). Each is one ST pixel, which is 1/256 of a unit tangent either way.
+  const stars = enclosed || sky === null ? [] : sky.stars;
+  skyStarTriangles(stars, projectionScale, skyAt, skyEmit);
   for (const body of skyBodies) {
     const view = skyView(body.offset);
     const placement =
@@ -1007,21 +1102,38 @@ export const planErisFrame = (
   }
   const fillTriangleCount = triangleCount;
 
-  for (const island of enclosed || inSpace ? [] : surface.islands) {
-    if (island.id === underfoot?.id) {
-      continue;
-    }
+  // `$0560F2` returns before `$056516` draws any island while the eye is on the core with Y's
+  // high word 0: the ground there is the island's colour to the horizon, and no other island
+  // is drawn over it. Otherwise every island is, the one below included (#578).
+  const islands =
+    enclosed || inSpace || underfoot !== undefined ? [] : surface.islands;
+  const toView = (world: Vector3): Vector3 =>
+    camera.viewSpace(toCameraSpace(world));
+  const horizonIslandValues: number[] = [];
+  for (const island of islands) {
     const colour = channels(island.landColour);
-    for (const triangle of islandFillTriangles(
+    const triangles = islandFillTriangles(
       island,
       surface,
       doc.ground.fillDropUnits,
       pose.position
-    )) {
+    );
+    for (const triangle of triangles) {
       for (const vertex of triangle) {
         emit(vertex, colour, surfacePlane);
       }
       triangleCount += 1;
+    }
+    if (base !== null) {
+      horizonIslandValues.push(
+        ...horizonIslandVertices(
+          triangles,
+          toView,
+          doc.camera.nearPlane,
+          skyAt,
+          colour
+        )
+      );
     }
   }
   const islandTriangleCount = triangleCount - fillTriangleCount;
@@ -1192,26 +1304,31 @@ export const planErisFrame = (
 
   return {
     // Outside an enclosed region `$059638` fills the sky with `$7C86`, the Body's day or night
-    // word (#494). The VOID slot has no sky words and is not a surface a Session stands on, so
-    // it clears to black rather than to an invented sky.
+    // word (#494). In space `$0598CC` loads slot 8 with `$001` and `$059CE2` fills the view in
+    // it, the dark blue behind the stars (#578). The VOID slot has no sky words and is not a
+    // surface a Session stands on, so it clears to black rather than to an invented sky.
     clear: channels(
       background?.ceiling ??
-        (surface.sky === null || inSpace
-          ? '#000000'
-          : daylight
-            ? surface.sky.day.colour
-            : surface.sky.night.colour)
+        (inSpace
+          ? SPACE_SKY
+          : surface.sky === null
+            ? '#000000'
+            : daylight
+              ? surface.sky.day.colour
+              : surface.sky.night.colour)
     ),
     drawnPlacements,
     farPlane: doc.camera.farPlane,
     fillTriangleCount,
     groundTriangleCount,
+    horizonIslandVertices: new Float32Array(horizonIslandValues),
     horizonVertices: new Float32Array(horizonValues),
     islandTriangleCount,
     nearPlane: doc.camera.nearPlane,
     skippedFaces,
     skyBodies: skyPlacements,
     skyVertices: new Float32Array(skyValues),
+    starCount: stars.length,
     triangleCount,
     verticalFieldOfViewDegrees: doc.camera.verticalFieldOfViewDegrees,
     vertices: new Float32Array(values)

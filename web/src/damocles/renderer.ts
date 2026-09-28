@@ -479,18 +479,21 @@ export class ErisRenderer {
 
   /// The sky Bodies, painted over the sky fill in the plan's order with the depth buffer left
   /// alone, so everything drawn after covers them (#530). They are flat in both presentations;
-  /// an Enhanced sky is #114's. The ground to the horizon follows them the same way, as
-  /// `$0599D6` follows the sky pass (#573).
+  /// an Enhanced sky is #114's. The stars go first, as `$0503FE` runs before the sky pass
+  /// (#578). The ground to the horizon follows the Bodies the same way, as `$0599D6` follows
+  /// the sky pass (#573), and the island fills follow it, as `$056516` does (#578).
   private drawSky(plan: ErisFramePlan): void {
     const gl = this.gl;
     const sky = plan.skyVertices.length;
     const horizon = plan.horizonVertices.length;
-    if (sky + horizon === 0) {
+    const islands = plan.horizonIslandVertices.length;
+    if (sky + horizon + islands === 0) {
       return;
     }
-    const vertices = new Float32Array(sky + horizon);
+    const vertices = new Float32Array(sky + horizon + islands);
     vertices.set(plan.skyVertices);
     vertices.set(plan.horizonVertices, sky);
+    vertices.set(plan.horizonIslandVertices, sky + horizon);
     gl.disable(gl.DEPTH_TEST);
     gl.depthMask(false);
     gl.disable(gl.CULL_FACE);

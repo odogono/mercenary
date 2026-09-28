@@ -727,7 +727,8 @@ PYTHONPATH=research/damocles-st research/damocles-st/.venv/bin/python -m damocle
 
 Extracts the 30 physical Body records: name, centre, colour, the packed size at `$006040`
 with its decode and `size / 256` radius, and each Body's sky draw list from `$00809C`, in
-the engine's order. It also writes the static sky facts #528 found. It fails closed on a list
+the engine's order. It also writes the static sky facts #528 found, and the star list and
+colours the three starfields plot from (#578). It fails closed on a list
 pointer outside `$00811C..$0081CC`, a byte that is not a Body selector, or an unnormalised
 size. `tests/test_system.py` checks the tracked payload reproduces and that every list is
 the bytes at its pointer. See [the Gamma System note](../../docs/research/damocles-gamma-system.md)

@@ -13,6 +13,7 @@ from damocleslab.system import (  # noqa: E402
     draw_list,
     extract,
     packed_float,
+    starfield,
 )
 
 REPOSITORY = Path(__file__).resolve().parents[3]
@@ -137,6 +138,29 @@ class PinnedTests(unittest.TestCase):
                          [[0, 1, 2], [2, 1, 0], [4, 3, 0], [0, 3, 4]])
         self.assertEqual({face['colour'] for face in comet['polygons']['faces']}, {'#eeeeee'})
         self.assertEqual(comet['headDisc']['slots'], [0, 12])
+
+    def test_the_starfield_block_is_the_578_list(self):
+        field = self.payload['starfield']
+        self.assertEqual(field['list']['sha256'],
+                         'e4b802d6035968f5665010fecf40b1c1a3a55a60fcee3d18e39eee5af6da5377')
+        stars = field['stars']
+        self.assertEqual(len(stars), 1600)
+        self.assertEqual([x for x, _, _ in stars], sorted(x for x, _, _ in stars))
+        self.assertLess(stars[-1][0], field['columnsPerTurn'])
+        # The band runs from the zenith (row 0 at pitch $128) to the horizon.
+        self.assertEqual((min(row for _, row, _ in stars), max(row for _, row, _ in stars)), (0, 431))
+        self.assertEqual([entry['sourceColour'] for entry in field['colours']['entries']],
+                         [0x777, 0x411, 0x246, 0x322, 0x322, 0x322, 0x322, 0x777,
+                          0x777, 0x411, 0x246, 0x322, 0x322, 0x322, 0x322, 0x322])
+        # One turn of yaw scrolls one turn of columns.
+        self.assertEqual((1024 * 2 * field['scrollScale']) >> 16, field['columnsPerTurn'])
+
+    def test_a_star_list_that_does_not_repeat_its_first_turn_is_refused(self):
+        data = bytearray(self.data)
+        repeat = 0x05D8C0 + 2048 + 4 * 1600
+        data[repeat + 2:repeat + 4] = b'\x00\x01'
+        with self.assertRaisesRegex(ValueError, 'do not repeat'):
+            starfield(bytes(data))
 
 
 if __name__ == '__main__':

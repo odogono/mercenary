@@ -73,9 +73,9 @@ horizon on the centre row at 511. That is the Camera-wide half-step, not the fil
 
 ## Unresolved
 
-- **Islands and stars from altitude.** The ST draws DION's islands over the base colour from
-  millions of units up, and stars over the sky aboard. The port's island fills end at the far
-  plane like the base plane, and the port draws no stars.
+- **Islands and stars from altitude.** Settled by #578: every island is drawn at any range, and
+  the stars are one screen-space list scrolled by yaw and pitch. See
+  [the starfield note](damocles-starfield.md).
 - **The exact horizon line.** `$0599D6`'s arithmetic was read for its inputs, not modelled to the
   pixel.
 

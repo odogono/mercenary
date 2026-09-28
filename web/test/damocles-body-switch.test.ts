@@ -443,10 +443,10 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
     {
       body: 'body-11',
       cell: { x: 7, z: 8 },
-      islandTriangles: 58,
+      islandTriangles: 0,
       placements: 439,
       pose: 'eris-spaceport-onfoot',
-      triangles: 779
+      triangles: 721
     },
     {
       body: 'body-11',
@@ -462,29 +462,29 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
     {
       body: 'body-4',
       cell: { x: 2, z: 3 },
-      islandTriangles: 16,
+      islandTriangles: 0,
       placements: 952,
       pose: 'dion-2-3',
-      triangles: 422
+      triangles: 406
     },
     {
       body: 'body-4',
       cell: { x: 3, z: 14 },
-      islandTriangles: 16,
+      islandTriangles: 0,
       placements: 952,
       pose: 'dion-transporter',
       // Includes TRANSPORTER a (slot 66), placed on Floor 1 against the structure it binds.
-      triangles: 542
+      triangles: 526
     },
     {
       body: 'body-8',
       cell: { x: 4, z: 2 },
       // Gaea's two recovered windows, UR CITY and CHALDEA METROPOLIS, both place
       // into one Body surface; the frame draws only the occupied cell's (#172).
-      islandTriangles: 26,
+      islandTriangles: 0,
       placements: 373,
       pose: 'gaea-ur-city-4-2',
-      triangles: 521
+      triangles: 495
     },
     {
       body: 'body-14',
@@ -533,7 +533,28 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
       } else {
         expect(plan.groundTriangleCount).toBeGreaterThan(0);
       }
+      // Every arrival stands on an island's core or on a Body with no coast, where `$0560F2`
+      // draws no island (#578). One unit above Y's high word every island of the Body is
+      // filled, and only that Body's.
       expect(plan.islandTriangleCount).toBe(arrival.islandTriangles);
+      const aloft = planErisFrame(
+        snapshot.surface,
+        {
+          ...snapshot.pose,
+          position: { ...snapshot.pose.position, y: 0x1_00_00 }
+        },
+        content.doc
+      );
+      const coasts = snapshot.surface.islands.filter(
+        island => island.coastline.vertices.length >= 3
+      );
+      expect(aloft.islandTriangleCount > 0).toBe(coasts.length > 0);
+      const name = catalogue.bodies
+        .find(body => body.id === arrival.body)!
+        .name.toLowerCase();
+      for (const island of coasts) {
+        expect(island.id.startsWith(`island-${name}-`)).toBe(true);
+      }
     });
   }
 
@@ -567,7 +588,7 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
         restored.structure,
         restored.residents
       ).triangleCount
-    ).toBe(422);
+    ).toBe(406);
   });
 });
 

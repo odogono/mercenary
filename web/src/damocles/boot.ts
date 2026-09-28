@@ -48,7 +48,9 @@ import {
   executeDamoclesConsoleCommand,
   type DamoclesConsoleHost
 } from './console.ts';
-import { planErisFrame } from './frame.ts';
+import { craftProgram } from './craft.ts';
+import { FLOATS_PER_VERTEX, planErisFrame } from './frame.ts';
+import { classifyPosition } from './islands.ts';
 import { erisLighting } from './lighting.ts';
 import { damoclesPanelViewModel } from './panel.ts';
 import { damoclesTakeTargetAt } from './pointer.ts';
@@ -71,6 +73,7 @@ import {
   type DamoclesSoundCommand,
   type DamoclesSoundDocument
 } from './sound.ts';
+import { starViewOf, type StarRoutine } from './stars.ts';
 import { damoclesTitle } from './title.ts';
 
 /// The Damocles Gameplay Session's document (ADR 0043, ADR 0044).
@@ -868,7 +871,9 @@ try {
   const expose = (
     triangles: number,
     drawnPlacements: readonly string[],
-    skyBodies: readonly string[]
+    skyBodies: readonly string[],
+    stars: number,
+    horizonIslandTriangles: number
   ): void => {
     const root = canvas.dataset;
     root['body'] = snapshot.pose.body;
@@ -934,12 +939,42 @@ try {
     root['daylight'] = String(snapshot.daylight);
     // The sky Bodies any of whose disc the frame draws, in draw order (#530).
     root['skyBodies'] = skyBodies.join(' ');
+    // The star pixels the frame plots, and the island fill triangles it paints flat over the
+    // ground to the horizon, which from high up are all there is of the islands (#578).
+    root['skyStars'] = String(stars);
+    root['horizonIslandTriangles'] = String(horizonIslandTriangles);
   };
+  // The log tables the roll's tangent is divided through, for the flight starfield's shear.
+  const starArithmetic =
+    content.catalogue.craft === null
+      ? null
+      : craftProgram(content.catalogue.craft).arithmetic;
   const draw = (): void => {
     const { castShadows, presentationPreset } = preferences.current();
     const enhanced =
       presentationPreset === undefined || presentationPreset === 'enhanced';
     const space = snapshot.craft?.space ?? null;
+    // Which starfield the frame loop takes (#578): space's, `$0505B8` on foot on an island's
+    // core, where `$78A6` is 0 and `$7AAA` is not, and the flight branch's anywhere else.
+    const onFoot = snapshot.occupancy.kind === 'onFoot';
+    const routine: StarRoutine =
+      space !== null
+        ? 'space'
+        : onFoot &&
+            classifyPosition(snapshot.surface, snapshot.pose.position).kind ===
+              'core'
+          ? 'onFoot'
+          : 'flight';
+    const stars =
+      starArithmetic === null
+        ? null
+        : starViewOf(
+            snapshot.pose,
+            content.doc.orientation,
+            routine,
+            onFoot,
+            starArithmetic
+          );
     // The surface comes from the Session Snapshot rather than the presentation document, so a
     // Body switch or a Save restored onto another Body draws that Body's workspace (#379).
     const plan = planErisFrame(
@@ -966,13 +1001,15 @@ try {
             position: snapshot.pose.position,
             sky: snapshot.surface.sky,
             smooth: enhanced,
+            stars,
             turn: snapshot.bodyTurn
           })
         : spaceSkyPass(system, {
             eye: space.position,
             impact: impactTime(snapshot.elapsed, content.doc.time),
             inScene: index =>
-              (content.catalogue.craft?.bodies[index]?.y ?? 0) >= 0
+              (content.catalogue.craft?.bodies[index]?.y ?? 0) >= 0,
+            stars
           }),
       space !== null
     );
@@ -1000,7 +1037,9 @@ try {
     expose(
       plan.triangleCount,
       plan.drawnPlacements,
-      plan.skyBodies.filter(body => body.drawn).map(body => body.id)
+      plan.skyBodies.filter(body => body.drawn).map(body => body.id),
+      plan.starCount,
+      plan.horizonIslandVertices.length / (3 * FLOATS_PER_VERTEX)
     );
     paintNotices();
   };

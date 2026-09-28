@@ -22,6 +22,7 @@ import {
   structureRegionAt
 } from '../src/damocles/selection.ts';
 import {
+  bearingFromYaw,
   cellOf,
   erisSurfaceFrom,
   pitchFromWord,
@@ -40,6 +41,18 @@ const load = async () => {
   ]);
   const doc = readErisPresentation(presentation);
   return { doc, surface: erisSurfaceFrom(catalogue, modelsOf(catalogue), doc) };
+};
+
+/// The start pose moved west onto CAPITAL CITY's land outside its core: body cell 58, island
+/// x −6, where the core box starts at −5 (docs/research/damocles-eris-islands.md). The islands
+/// are drawn there, as they are not on the core (#578), and the workspace's ground records are
+/// still in reach.
+const offCore = (doc: ErisPresentationDocument, surface: ErisSurface) => {
+  const start = startPose(doc);
+  return {
+    ...start,
+    position: { ...start.position, x: 58 * surface.grid.cellUnits }
+  };
 };
 
 const square = (doubleSided = false): Mesh => ({
@@ -396,7 +409,8 @@ describe('an Eris frame in Filled Presentation', () => {
 
   test('leaves the Capital Spaceport placements exactly where they were', async () => {
     const { doc, surface } = await load();
-    const pose = startPose(doc);
+    // Off the core, where the islands are drawn: on it no island is (#578).
+    const pose = offCore(doc, surface);
     const plan = planErisFrame(surface, pose, doc);
     // The island fill is a new layer beneath the recovered geometry, not a change to its
     // transform: the structures, roads and ground polygons placed in Body Coordinates at
@@ -650,12 +664,170 @@ describe('the ground to the horizon', () => {
       true
     );
     expect(space.horizonVertices.length).toBe(0);
+    expect(space.horizonIslandVertices.length).toBe(0);
+    // Space is filled in `$001`, slot 8 as `$0598CC` loads it (#578).
+    expect(space.clear).toEqual([0, 0, 0x22 / 0xff]);
     const bare = planErisFrame(
       { ...surfaceOf([]), baseColour: null },
       origin,
       doc
     );
     expect(bare.horizonVertices.length).toBe(0);
+  });
+});
+
+/// ST pixel spans a row of the plan's flat island fills covers: each triangle's tangents at
+/// 256 pixels a unit about column 160 and row 68, cut through the row's middle, and merged.
+const islandSpans = (vertices: Float32Array, row: number) => {
+  const y = row + 0.5;
+  const spans: [number, number][] = [];
+  for (let at = 0; at < vertices.length; at += 3 * FLOATS_PER_VERTEX) {
+    const corners = [0, 1, 2].map(corner => {
+      const base = at + corner * FLOATS_PER_VERTEX;
+      const depth = vertices[base + 2]!;
+      return {
+        x: 160 + (256 * vertices[base]!) / depth,
+        y: 68 - (256 * vertices[base + 1]!) / depth
+      };
+    });
+    const hits: number[] = [];
+    for (let edge = 0; edge < 3; edge += 1) {
+      const a = corners[edge]!;
+      const b = corners[(edge + 1) % 3]!;
+      if ((a.y - y) * (b.y - y) < 0) {
+        hits.push(a.x + ((b.x - a.x) * (y - a.y)) / (b.y - a.y));
+      }
+    }
+    if (hits.length === 2) {
+      spans.push([Math.min(...hits), Math.max(...hits)]);
+    }
+  }
+  spans.sort((a, b) => a[0] - b[0]);
+  const merged: [number, number][] = [];
+  for (const span of spans) {
+    const last = merged.at(-1);
+    if (last !== undefined && span[0] <= last[1] + 1e-6) {
+      last[1] = Math.max(last[1], span[1]);
+    } else {
+      merged.push([...span]);
+    }
+  }
+  return merged;
+};
+
+describe('the islands from altitude', () => {
+  test('are DION NORTH as the ST draws it from 5,117,470 up (#578)', async () => {
+    const catalogue = await loadCatalogue();
+    const { doc } = await load();
+    const surface = erisSurfaceFrom(catalogue, modelsOf(catalogue), doc, {
+      bodyId: 'body-4',
+      origin: { x: 3316, z: 1378 }
+    });
+    // The words the #573 run's stop-30 frame was drawn from, a stop before it: nose down at
+    // pitch word 655 and yaw 664 over DION NORTH, 1.7 times the far plane up.
+    const pose = {
+      body: 'body-4',
+      heading: bearingFromYaw(664, doc.orientation),
+      pitch: pitchFromWord(655, doc.orientation),
+      position: { x: 214_399_288, y: 5_117_470, z: 88_304_370 }
+    };
+    const plan = planErisFrame(surface, pose, doc);
+    const flat = verticesOf(plan.horizonIslandVertices);
+    expect(flat.length).toBeGreaterThan(0);
+    for (const { view } of flat) {
+      expect(view[2]!).toBeLessThan(doc.camera.farPlane);
+    }
+    // The depth-tested fill of the same islands is past the far plane.
+    const fills = verticesOf(
+      plan.vertices.slice(
+        plan.fillTriangleCount * 3 * FLOATS_PER_VERTEX,
+        (plan.fillTriangleCount + plan.islandTriangleCount) *
+          3 *
+          FLOATS_PER_VERTEX
+      )
+    );
+    expect(fills.some(({ view }) => view[2]! > doc.camera.farPlane)).toBe(true);
+    // DION NORTH in the frame, `$040`: its first and last pixel on each row of the 136, read
+    // from `shot-00030.png`. The port's Camera levels half a step from the ST's, 1.6 rows at
+    // this pitch, so the edges are held to three pixels.
+    const frame = [
+      [50, 147, 188],
+      [60, 131, 215],
+      [70, 119, 215],
+      [80, 111, 214],
+      [90, 103, 214],
+      [100, 94, 208],
+      [110, 86, 186],
+      [120, 78, 164],
+      [130, 69, 142],
+      [135, 68, 131]
+    ] as const;
+    for (const [row, first, last] of frame) {
+      const [span] = islandSpans(plan.horizonIslandVertices, row).filter(
+        ([from, to]) => to > 0 && from < 320
+      );
+      expect(Math.abs(span![0] - first)).toBeLessThan(3);
+      expect(Math.abs(span![1] - (last + 1))).toBeLessThan(3);
+    }
+    expect(new Set(flat.map(({ colour }) => colour.join(',')))).toContainEqual(
+      channelsOf('#008800').join(',')
+    );
+  });
+
+  test('are not drawn on an island core on the ground, as `$0560F2` returns first', async () => {
+    const { doc, surface } = await load();
+    const plan = planErisFrame(surface, startPose(doc), doc);
+    expect(plan.islandTriangleCount).toBe(0);
+    expect(plan.horizonIslandVertices.length).toBe(0);
+    // One unit above Y's high word, the core no longer holds and every island is drawn.
+    const lifted = startPose(doc);
+    const aloft = planErisFrame(
+      surface,
+      { ...lifted, position: { ...lifted.position, y: 0x1_00_00 } },
+      doc
+    );
+    expect(aloft.islandTriangleCount).toBeGreaterThan(0);
+    expect(aloft.horizonIslandVertices.length).toBeGreaterThan(0);
+  });
+});
+
+describe('the stars in the frame plan', () => {
+  test('open the sky vertices, one ST pixel square each at its tangent', async () => {
+    const { doc, surface } = await load();
+    const sky = {
+      bodies: [],
+      halfWidthDivisor: 0.843_75,
+      projectionScale: 256,
+      stars: [
+        { colour: '#eeeeee', column: 10, row: 20 },
+        { colour: '#4488cc', column: -300, row: 150 }
+      ]
+    };
+    const plan = planErisFrame(
+      surface,
+      startPose(doc),
+      doc,
+      null,
+      [],
+      [],
+      () => false,
+      false,
+      sky
+    );
+    expect(plan.starCount).toBe(2);
+    const vertices = verticesOf(plan.skyVertices);
+    expect(vertices).toHaveLength(12);
+    const tangents = vertices.map(({ view }) => [
+      view[0]! / view[2]!,
+      view[1]! / view[2]!
+    ]);
+    const first = tangents.slice(0, 6);
+    expect(Math.min(...first.map(([x]) => x!))).toBeCloseTo(-150 / 256, 9);
+    expect(Math.max(...first.map(([x]) => x!))).toBeCloseTo(-149 / 256, 9);
+    expect(Math.max(...first.map(([, y]) => y!))).toBeCloseTo(48 / 256, 9);
+    expect(Math.min(...first.map(([, y]) => y!))).toBeCloseTo(47 / 256, 9);
+    expect(vertices[0]!.colour).toEqual(channelsOf('#eeeeee'));
+    expect(vertices[6]!.colour).toEqual(channelsOf('#4488cc'));
   });
 });
 
@@ -890,7 +1062,18 @@ describe('the Eris renderer', () => {
   test('compiles once and draws the plan as depth-tested culled triangles', async () => {
     (globalThis as { window?: unknown }).window ??= { devicePixelRatio: 1 };
     const { doc, surface } = await load();
-    const plan = planErisFrame(surface, startPose(doc), doc);
+    // Every layer at once: the arrival's cell has ground records, and with CAPITAL CITY's core
+    // box emptied it stands on the island's land, where every island is filled (#578).
+    const coreless = {
+      ...surface,
+      islands: surface.islands.map(island => ({
+        ...island,
+        boxes: island.boxes.map((box, index) =>
+          index === 1 ? { ...box, x: [0, 0] as const, z: [0, 0] as const } : box
+        )
+      }))
+    };
+    const plan = planErisFrame(coreless, startPose(doc), doc);
     const fake = fakeContext();
     const renderer = new ErisRenderer(
       fake.canvas,
@@ -919,9 +1102,11 @@ describe('the Eris renderer', () => {
       `draw:15:${fill + islands}:${ground}`,
       `draw:15:${fill + islands + ground}:${rest}`
     ];
-    // The ground to the horizon goes first, over the sky and under everything else (#573).
-    const horizon = `draw:15:0:${plan.horizonVertices.length / FLOATS_PER_VERTEX}`;
+    // The ground to the horizon goes first, over the sky and under everything else (#573),
+    // with the island fills flat over it (#578).
+    const horizon = `draw:15:0:${(plan.horizonVertices.length + plan.horizonIslandVertices.length) / FLOATS_PER_VERTEX}`;
     expect(plan.horizonVertices.length).toBeGreaterThan(0);
+    expect(plan.horizonIslandVertices.length).toBeGreaterThan(0);
     expect(fake.calls.filter(c => c.startsWith('draw:'))).toEqual([
       horizon,
       ...layered,
