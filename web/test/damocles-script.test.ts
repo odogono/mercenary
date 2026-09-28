@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import { BLANK_DAMOCLES_ROW } from '../src/damocles/display.ts';
 import {
+  NEW_GAME_NOISE,
   fireTrigger,
   initialScriptState,
   presentSystemMessage,
@@ -408,7 +409,7 @@ describe('the landing messages (#576)', () => {
       busy: true,
       execution: { script: 'damocles.script.slot-38', step: 2 },
       message: null,
-      noise: 1
+      noise: NEW_GAME_NOISE + 1
     });
     expect(fired.triggers.find(item => item.index === 0x26)?.armed).toBe(false);
     expect(landingTranscript(fired, 800, shown)).toEqual([
@@ -438,7 +439,7 @@ describe('the landing messages (#576)', () => {
       display: { cells: BLANK_DAMOCLES_ROW, kind: 'held' },
       execution: null,
       message: null,
-      noise: 1
+      noise: NEW_GAME_NOISE + 1
     });
     expect(
       transition.state.triggers.find(item => item.index === 0x26)?.armed
@@ -471,7 +472,7 @@ describe('the landing messages (#576)', () => {
     const skipped = drawing(0);
     const first = fireTrigger(initialScriptState(), 0x38, skipped).state;
     // No random skip: the draw table is never read.
-    expect(first).toMatchObject({ busy: true, noise: 0 });
+    expect(first).toMatchObject({ busy: true, noise: NEW_GAME_NOISE });
     expect(first.triggers.find(item => item.index === 0x38)?.armed).toBe(true);
     expect(landingTranscript(first, 950, skipped)).toEqual([
       { frame: 100, id: 'script56-inline-1' },

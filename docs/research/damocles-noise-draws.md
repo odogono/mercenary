@@ -177,7 +177,8 @@ The on-foot idle frames are constant within a scene because nothing moves. Walki
 ## What this means for the port
 
 These are recommendations for a port ticket, not decisions this note makes. Two of them change
-ADR 0053.
+ADR 0053. The port took points 1 and 2
+([ADR 0054](../adr/0054-step-the-damocles-noise-pointer-on-foot-and-seed-it-where-the-arrival-leaves-it.md)).
 
 1. **Step the pointer on foot, once a pass, on the session's pass clock.** The ST steps it every
    pass in every mode, and on foot nothing else moves it unless the Geiger ticks. Holding it on foot

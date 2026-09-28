@@ -115,6 +115,11 @@ export interface ErisPresentationDocument {
     /// Session ticks per craft pass aboard, derived from the traced frames (ADR 0051).
     readonly ticksPerPass: number;
     readonly ticksPerPassEvidence: string;
+    /// Session ticks per main-loop pass on foot, where only the noise pointer counts passes,
+    /// derived from the traced on-foot frames (ADR 0054).
+    readonly ticksPerPassOnFoot: number;
+    readonly ticksPerPassOnFootEvidence: string;
+    readonly ticksPerPassOnFootProvenance: 'derived';
     readonly ticksPerPassProvenance: 'derived';
     readonly vblHertz: number;
     readonly vblProvenance: 'derived';
@@ -274,6 +279,9 @@ export const readErisPresentation = (
     'ticksPerPass',
     'ticksPerPassEvidence',
     'ticksPerPassProvenance',
+    'ticksPerPassOnFoot',
+    'ticksPerPassOnFootEvidence',
+    'ticksPerPassOnFootProvenance',
     'vblHertz',
     'vblProvenance',
     'waitFrames'
@@ -530,6 +538,20 @@ export const readErisPresentation = (
       ticksPerPassEvidence: text(
         time['ticksPerPassEvidence'],
         'time.ticksPerPassEvidence'
+      ),
+      ticksPerPassOnFoot: literal(
+        time['ticksPerPassOnFoot'],
+        8,
+        'time.ticksPerPassOnFoot'
+      ),
+      ticksPerPassOnFootEvidence: text(
+        time['ticksPerPassOnFootEvidence'],
+        'time.ticksPerPassOnFootEvidence'
+      ),
+      ticksPerPassOnFootProvenance: literal(
+        time['ticksPerPassOnFootProvenance'],
+        'derived',
+        'time.ticksPerPassOnFootProvenance'
       ),
       ticksPerPassProvenance: literal(
         time['ticksPerPassProvenance'],

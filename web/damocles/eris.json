@@ -120,6 +120,9 @@
     "ticksPerPass": 4,
     "ticksPerPassProvenance": "derived",
     "ticksPerPassEvidence": "ADR 0051: aboard, the craft pass runs once per rendered frame and never reads the frame's VBL count; the traced frames of docs/research/damocles-craft-control.md took 7,743 VBLs over 1,880 passes, a mean of 4.12, rounded to whole ticks. Elapsed seconds aboard are not claimed to match the ST's.",
+    "ticksPerPassOnFoot": 8,
+    "ticksPerPassOnFootProvenance": "derived",
+    "ticksPerPassOnFootEvidence": "ADR 0054: on foot the main loop's join $05948C steps the noise pointer once per rendered frame, and a frame runs clamp($51D22, 4, 8) substeps, one per session tick (ADR 0049). The six idle on-foot scenes of docs/research/damocles-noise-draws.md ran 270 passes at 7 or 8 substeps each, a mean of 7.58, rounded to whole ticks. Scenes whose frames took under 8 VBLs are not claimed to match.",
     "waitFrames": 200
   },
   "structureFallback": {

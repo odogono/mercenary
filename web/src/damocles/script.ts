@@ -60,8 +60,9 @@ export interface ScriptState {
   /// `$7BD8` without the busy bit 6, which `busy` is. Only TOLOSA's bit 1 is written here.
   readonly flags: number;
   readonly message: Presenting | null;
-  /// The word index of `$7E18` into the noise table: `(pointer - $77000) / 2`. New Game seeds
-  /// it at 0 (`$051090`), each pass steps it (`stepNoise`), and each random skip reads one.
+  /// The word index of `$7E18` into the noise table: `(pointer - $77000) / 2`. A New Game
+  /// starts at `NEW_GAME_NOISE`, each pass steps it (`stepNoise`), and each random skip reads
+  /// one.
   readonly noise: number;
   /// `$7A88`. One word, so a second queueable trigger replaces the first rather than joining a
   /// queue. Consumed by the frame loop once the busy flag clears, not by the trigger itself.
@@ -71,6 +72,12 @@ export interface ScriptState {
 
 /// The 2,048 words `$77000`-`$77FFE` the pointer wraps inside (`and.w #$FFF`, `or.w #$7000`).
 export const NOISE_WORDS = 0x8_00;
+
+/// Where the pointer stands when a New Game hands the player the start pose (#582). `$051090`
+/// seeds word 0, the descent's streaks then draw 10,085 words and the arrival steps 1,196 passes,
+/// and the ship comes to rest at word 1,041 (`docs/research/damocles-noise-draws.md`). The port
+/// has neither the descent nor the arrival, so it starts where they leave the pointer.
+export const NEW_GAME_NOISE = 1041;
 
 /// `$05948C`, the main loop's join: one word a pass, with nothing read.
 export const stepNoise = (state: ScriptState): ScriptState => ({
@@ -137,7 +144,7 @@ export const initialScriptState = (): ScriptState => ({
   execution: null,
   flags: 0,
   message: null,
-  noise: 0,
+  noise: NEW_GAME_NOISE,
   pending: null,
   triggers: triggerTable()
 });

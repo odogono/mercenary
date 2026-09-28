@@ -16,6 +16,7 @@ import {
   type ResidenceDeparture
 } from './residence.ts';
 import {
+  NEW_GAME_NOISE,
   NOISE_WORDS,
   initialScriptState,
   type Execution,
@@ -96,9 +97,17 @@ import type { Pose } from './world.ts';
 /// an uninterrupted run makes. Schemas 11 to 13 are migrated with every landing trigger armed,
 /// no flag, a shut gate and the New Game pointer: no earlier landing spent a trigger, because
 /// the port carried none of their scripts.
-export const DAMOCLES_SAVE_SCHEMA_VERSION = 14 as const;
+///
+/// Version 15 carries the on-foot pass phase (#582, ADR 0054): on foot the pointer now steps once
+/// every `time.ticksPerPassOnFoot` ticks, as the ST's main loop steps it once a pass. A schema-14
+/// record is migrated at phase 0 with its own pointer: it was saved by a port that held the
+/// pointer on foot, so any phase is one it could have reached. Schemas 11 to 13 now migrate with
+/// the pointer a New Game starts at, `NEW_GAME_NOISE`.
+export const DAMOCLES_SAVE_SCHEMA_VERSION = 15 as const;
 /// The older schemas a restore migrates rather than refuses.
-const MIGRATED_SCHEMA_VERSIONS: readonly unknown[] = [11, 12, 13];
+const MIGRATED_SCHEMA_VERSIONS: readonly unknown[] = [11, 12, 13, 14];
+/// The schemas from before the landing messages (#576), which carry no landing trigger.
+const PRE_LANDING_SCHEMA_VERSIONS: readonly unknown[] = [11, 12, 13];
 export const DAMOCLES_DESTINATION = 'damocles' as const;
 
 /// What a restore must match exactly before it may continue this game (ADR 0026).
@@ -228,6 +237,8 @@ export interface DamoclesSaveSnapshot {
   /// `$5A9D9`: whether any door moved on the last pass.
   readonly doorsMoving: boolean;
   readonly elapsed: number;
+  /// On foot, ticks since the last main-loop pass, below `time.ticksPerPassOnFoot` (ADR 0054).
+  readonly footTicks: number;
   readonly frameAccumulator: number;
   readonly occupancy: DamoclesSaveOccupancy;
   readonly pendingBriefcaseDrop: {
@@ -808,7 +819,7 @@ const scriptOf = (
     ? 0
     : integer(script['encounter'], 'snapshot.script.encounter', 0, 1);
   const noise = migrated
-    ? 0
+    ? NEW_GAME_NOISE
     : integer(script['noise'], 'snapshot.script.noise', 0, NOISE_WORDS - 1);
   // Only TOLOSA's script writes either, and it sets the flag before it arms the gate. So an
   // armed gate needs the flag, and the flag needs the gate unless TOLOSA's script is between
@@ -1231,8 +1242,12 @@ export const decodeDamoclesSave = (
   const script = scriptOf(
     snapshot['script'],
     strings,
-    record['schemaVersion'] !== DAMOCLES_SAVE_SCHEMA_VERSION
+    PRE_LANDING_SCHEMA_VERSIONS.includes(record['schemaVersion'])
   );
+  const footTicks =
+    record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION
+      ? integer(snapshot['footTicks'], 'snapshot.footTicks', 0, 255)
+      : 0;
   // An armed trigger requires its object to be at its Catalogue placement and absent from the
   // Carried Stack: the launch path clears bit 7, and nothing re-arms a trigger, so an armed
   // trigger whose object has been taken or moved is a state no sequence of actions reaches.
@@ -1341,6 +1356,7 @@ export const decodeDamoclesSave = (
       craft,
       doorsMoving,
       elapsed: snapshot['elapsed'],
+      footTicks,
       frameAccumulator,
       occupancy,
       pendingBriefcaseDrop,

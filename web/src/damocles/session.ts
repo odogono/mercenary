@@ -437,6 +437,9 @@ export class DamoclesSession implements TitleSession<
   private craftSlot = 0;
   /// Ticks since the last pass; a pass runs on every `time.ticksPerPass`-th.
   private craftTicks = 0;
+  /// On foot, ticks since the last main-loop pass; one runs on every
+  /// `time.ticksPerPassOnFoot`-th, and all it steps is the noise pointer (ADR 0054).
+  private footTicks = 0;
   /// Why the craft stands still with no rule to run, or null while the Mover runs.
   private craftHeld: DamoclesCraftSnapshot['held'] = null;
   /// The space words while in space (occupancy 2), or null on a Body.
@@ -526,6 +529,7 @@ export class DamoclesSession implements TitleSession<
     this.doorsMoving = restore?.doorsMoving ?? false;
     this.frameAccumulator = restore?.frameAccumulator ?? 0;
     this.scrollCounter = restore?.scrollCounter ?? 0;
+    this.footTicks = restore?.footTicks ?? 0;
     this.script =
       restore?.script === undefined
         ? initialScriptState()
@@ -715,6 +719,9 @@ export class DamoclesSession implements TitleSession<
       !this.content.catalogue.bodies.some(body => body.id === restore.pose.body)
     ) {
       throw new Error('saved Pose names an unknown Body');
+    }
+    if (restore.footTicks >= this.content.doc.time.ticksPerPassOnFoot) {
+      throw new Error('saved on-foot pass phase is outside a pass');
     }
     // Occupancy first: an occupied craft is otherwise named only as an untracked departure.
     validateOccupancy(
@@ -1480,7 +1487,11 @@ export class DamoclesSession implements TitleSession<
         const transition = runFrame(this.script, this.scriptRules);
         this.script = transition.state;
         this.effects.push(...transition.effects);
-        this.tickCraft();
+        if (this.occupied === null) {
+          this.tickFoot();
+        } else {
+          this.tickCraft();
+        }
         // `$059562` steps the ride before `$05AA3C` moves the doors, so a tick sees them as they
         // stood before it. The doors see the step's Pose before `$05A64A` clamps it. Aboard,
         // the port keeps ticking both every VBL; whether `$05970E` moves them is unrecovered
@@ -1510,6 +1521,7 @@ export class DamoclesSession implements TitleSession<
       craft: this.craftForSave(),
       doorsMoving: this.doorsMoving,
       elapsed: this.elapsed,
+      footTicks: this.footTicks,
       frameAccumulator: this.frameAccumulator,
       occupancy: this.occupancy,
       pendingBriefcaseDrop: this.pendingBriefcaseDrop,
@@ -1834,6 +1846,17 @@ export class DamoclesSession implements TitleSession<
       (turn < 0 ? STICK_LEFT : 0) |
       (turn > 0 ? STICK_RIGHT : 0)
     );
+  }
+
+  /// One tick on foot: every `ticksPerPassOnFoot`-th is a main-loop pass, whose join `$05948C`
+  /// steps the noise pointer (ADR 0054). The on-foot rules themselves run per tick (ADR 0049).
+  private tickFoot(): void {
+    this.footTicks += 1;
+    if (this.footTicks < this.content.doc.time.ticksPerPassOnFoot) {
+      return;
+    }
+    this.footTicks = 0;
+    this.script = stepNoise(this.script);
   }
 
   /// One tick aboard: every `ticksPerPass`-th runs a frame of the craft Mover (ADR 0051).

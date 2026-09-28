@@ -18,6 +18,7 @@ import {
   type DamoclesSaveSnapshot
 } from '../src/damocles/save.ts';
 import { createDamoclesSavePersistence } from '../src/damocles/saves.ts';
+import { NEW_GAME_NOISE } from '../src/damocles/script.ts';
 import { TRIGGER_FOR_RESIDENT } from '../src/damocles/scripts.ts';
 import { structureRegionAt } from '../src/damocles/selection.ts';
 import {
@@ -100,6 +101,7 @@ const standingAt = (
     craft: null,
     doorsMoving: false,
     elapsed: 0,
+    footTicks: 0,
     frameAccumulator: 0,
     occupancy: { kind: 'onFoot' },
     pendingBriefcaseDrop: null,
@@ -1029,7 +1031,7 @@ describe('the craft words across a Save and a Session Resume (#557)', () => {
     expect(migrated).toEqual({
       ...current,
       angleBytes: [],
-      script: { ...current.script, noise: 0 },
+      script: { ...current.script, noise: NEW_GAME_NOISE },
       spaceMemory: null
     });
     const schema10 = JSON.stringify({
@@ -1564,7 +1566,7 @@ describe('a Save in space and during the launch swing (#568)', () => {
     // The flight stepped the noise pointer, which a migrated record restarts from New Game's.
     expect(onGround.captureResume()).toEqual({
       ...aboard,
-      script: { ...aboard.script, noise: 0 },
+      script: { ...aboard.script, noise: NEW_GAME_NOISE },
       spaceMemory: {
         nearest: content.catalogue.craft!.boot.nearest.value,
         pitchRate: content.catalogue.craft!.boot.pitchRate.value,
@@ -1762,5 +1764,84 @@ describe('the landing messages (#576)', () => {
       { triggers: snapshot.script.triggers.slice(0, 6) },
       'script trigger table is incomplete or duplicated'
     );
+  });
+});
+
+/// `ticks` VBLs of session time, one at a time.
+const tick = (session: DamoclesSession, ticks: number): void => {
+  for (let k = 0; k < ticks; k += 1) {
+    session.advance(1 / content.doc.time.vblHertz);
+  }
+};
+const noiseOf = (session: DamoclesSession): number =>
+  session.captureResume().script.noise;
+
+describe('the noise pointer on foot and at New Game (#582)', () => {
+  test('a New Game starts where the arrival leaves the pointer, word 1,041', () => {
+    expect(NEW_GAME_NOISE).toBe(1041);
+    const session = new DamoclesSession(content);
+    expect(session.captureResume()).toMatchObject({
+      footTicks: 0,
+      script: { noise: NEW_GAME_NOISE }
+    });
+  });
+
+  test('on foot the pointer steps once every eight ticks, a pass', () => {
+    const session = beside(LIMO);
+    const start = noiseOf(session);
+    const period = content.doc.time.ticksPerPassOnFoot;
+    expect(period).toBe(8);
+    tick(session, period - 1);
+    expect(noiseOf(session)).toBe(start);
+    expect(session.captureResume().footTicks).toBe(period - 1);
+    tick(session, 1);
+    expect(noiseOf(session)).toBe((start + 1) % 0x8_00);
+    tick(session, 10 * period);
+    expect(noiseOf(session)).toBe((start + 11) % 0x8_00);
+  });
+
+  test('aboard the on-foot phase holds and the craft pass steps instead', () => {
+    const session = beside(LIMO, [LIMO_KEY]);
+    tick(session, 3);
+    expect(session.board()).toEqual({ kind: 'boarded' });
+    const start = noiseOf(session);
+    passes(session, 5);
+    expect(session.captureResume()).toMatchObject({
+      footTicks: 3,
+      script: { noise: (start + 5) % 0x8_00 }
+    });
+  });
+
+  test('a Save carries the phase, so a restore steps where an uninterrupted walk steps', () => {
+    const session = beside(LIMO);
+    tick(session, 13);
+    const restored = roundTrip(session);
+    expect(restored.captureResume().footTicks).toBe(5);
+    tick(session, 3);
+    tick(restored, 3);
+    expect(noiseOf(restored)).toBe(noiseOf(session));
+    const saved = session.captureResume();
+    expect(
+      () =>
+        new DamoclesSession(
+          content,
+          decoded(encoded({ ...saved, footTicks: 8 }))
+        )
+    ).toThrow('saved on-foot pass phase is outside a pass');
+  });
+
+  test('a schema-14 record migrates at phase 0 with its own pointer', () => {
+    const session = beside(LIMO);
+    tick(session, 13);
+    const current = session.captureResume();
+    const { footTicks: _f, ...older } = current;
+    const migrated = decoded(
+      JSON.stringify({
+        ...JSON.parse(encoded(current)),
+        schemaVersion: 14,
+        snapshot: older
+      })
+    );
+    expect(migrated).toEqual({ ...current, footTicks: 0 });
   });
 });
