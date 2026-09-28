@@ -68,6 +68,24 @@ export const craftMultiply = (
   b: number
 ): number => exp(arithmetic, u32(log(a) + log(b)));
 
+/// A quotient: the two logs subtracted as longs.
+export const craftDivide = (
+  arithmetic: CraftArithmetic,
+  a: number,
+  b: number
+): number => exp(arithmetic, u32(log(a) - log(b)));
+
+/// A square: the log doubled as a long.
+export const craftSquare = (arithmetic: CraftArithmetic, f: number): number =>
+  exp(arithmetic, u32(log(f) * 2));
+
+/// A square root: `asr.l #1` of the log, then `lsr.w #4` and `andi.w #$FFE` into `$60000`.
+export const craftSqrt = (arithmetic: CraftArithmetic, f: number): number => {
+  const half = asr32(log(f), 1).value;
+  const index = ((half & 0xff_ff) >>> 4) & 0x0f_fe;
+  return long(high(half), arithmetic.exp[index / 2]!);
+};
+
 /// `$04BD34`: `d2 := d1 + d2`, aligning the smaller operand by shifting its mantissa.
 export const craftAdd = (first: number, second: number): number => {
   let d1 = u32(first);
@@ -164,24 +182,27 @@ export const craftWord = (f: number): number => {
   return sx16(d4);
 };
 
-/// `$04BDD4`: a 28-bit signed integer as a float. The exponent is the integer's highest set
-/// bit, the mantissa its next eleven bits, truncated, with the sign on the mantissa. Nought is
+/// `$04BDD8`: a signed long as a float. The exponent is the integer's highest set bit, the
+/// mantissa its next eleven bits, truncated, with the sign on the mantissa. Nought is
 /// `$FFF01000`.
-export const craftFloat = (value: number): number => {
-  const signed = sx32(u32(value) * 16) / 16;
+export const craftLongFloat = (value: number): number => {
+  const signed = sx32(value);
   const magnitude = Math.abs(signed);
   if (magnitude === 0) {
     return 0xff_f0_10_00;
   }
-  const exponent = Math.floor(Math.log2(magnitude));
-  // Math.log2 can land a hair under an exact power of two.
-  const e = 2 ** (exponent + 1) <= magnitude ? exponent + 1 : exponent;
+  const e = 31 - Math.clz32(magnitude);
   const mantissa = Math.floor(magnitude * 2 ** (12 - e)) & 0xff_fe;
   return long(e, signed < 0 ? -mantissa : mantissa);
 };
 
+/// `$04BDD4`: `$04BDD8` on a 28-bit signed integer.
+export const craftFloat = (value: number): number =>
+  craftLongFloat(sx32(u32(value) * 16) >> 4);
+
 /// A float with its mantissa negated, as `neg.w` on the low word leaves it.
-const negated = (f: number): number => long(high(f), -(f & 0xff_ff));
+export const craftNegate = (f: number): number => long(high(f), -(f & 0xff_ff));
+const negated = craftNegate;
 
 /// `$4DFEC`, the panel's copy of a speed: the integer of its magnitude.
 export const craftPanelSpeed = (speed: number): number =>
@@ -232,6 +253,9 @@ export interface CraftState {
   readonly supported: number;
   /// `$7B02`: the support's tag word while standing on one.
   readonly supportLevel: number;
+  /// `$7B0C`: set by the launch (`$055822`) and cleared by the space entry, the stop preset or
+  /// a throttle key that writes. While it is set the pass swings the pitch (`$057F18`).
+  readonly swing: boolean;
   /// `$7BAC`, a float. Its mantissa's sign is the gear.
   readonly throttle: number;
   /// The pitch and yaw the frame's attitude sines `$7AD6`–`$7AE5` were taken at. The trig
@@ -504,6 +528,7 @@ export const stopPreset = (
   ...state,
   panelSpeed: 0,
   speed: u32(constants.zero),
+  swing: false,
   throttle: u32(constants.zero)
 });
 
@@ -516,8 +541,8 @@ export type CraftOutcome =
   /// The landing handler set the craft down and stopped it. The session decides the rest:
   /// `$057D2E` masks the island answer with `$794A` and disembarks unless it says sea.
   | 'landed'
-  /// The pre-pass Y reached `$1F0` × 65,536 and the frame loop would enter space at
-  /// `$055868`, which is not admitted (#558). The pass has run; nothing after it has.
+  /// The pre-pass Y reached `$1F0` × 65,536, so the frame loop enters space at `$055868`
+  /// (`enterSpace`) once the pass has run.
   | 'space';
 
 export interface CraftFrame {
@@ -562,8 +587,21 @@ export const craftFrame = (
   boxes: BoundBoxes
 ): CraftFrame => {
   const k = program.constants;
+  // `$057F46`: while `$7B0C` is set the pass goes to `$057F18` instead. It swings the pitch
+  // towards `$280` and ends, until `(pitch + $80) & $3FF` passes `$300`; after that the pass
+  // runs on with the stick read as nought.
+  const swung = (state.pitch + k.swingBias) & k.swingMask;
+  const swinging = state.swing && swung <= k.swingHigh;
+  const read = state.swing ? 0 : stick;
   const run = (from: CraftState): CraftFrame => {
-    const pass = craftPass(program, slot, from, stick, boxes);
+    if (swinging) {
+      const step = swung > k.swingLow ? k.swingStep : -k.swingStep;
+      return {
+        outcome: 'moved',
+        state: { ...from, pitch: (from.pitch + step) & 0xff_ff }
+      };
+    }
+    const pass = craftPass(program, slot, from, read, boxes);
     return pass.landing
       ? landingHandler(program, pass.state, boxes)
       : { outcome: 'moved', state: pass.state };
@@ -600,9 +638,49 @@ export const craftFrame = (
   };
 };
 
+/// What the launch key did (`$055822`, Esc).
+export type LaunchOutcome =
+  /// Not aboard, or in ground contact: `rts` with nothing written.
+  | 'ignored'
+  /// The slot's `+$1A` is below the gate: system string 21, and nothing written.
+  | 'refused'
+  /// `$7B0C` set, the reverse throttle and the speed's exponent written. The key effect
+  /// `$054848` follows.
+  | 'launched';
+
+/// `$055822`: the launch. It needs the player aboard on a Body (`$7AAE` = 0), out of ground
+/// contact, in a slot whose `+$1A` is at least the gate. It then sets the swing, writes the
+/// reverse throttle `$000EF000` and puts the speed's mantissa under the exponent `$F000`.
+export const launch = (
+  program: CraftProgram,
+  slot: CraftSlot,
+  state: CraftState,
+  inSpace: boolean
+): { readonly outcome: LaunchOutcome; readonly state: CraftState } => {
+  const k = program.constants;
+  if (inSpace || state.contact !== 0) {
+    return { outcome: 'ignored', state };
+  }
+  if (slot.parameters === null) {
+    throw new Error(`craft slot ${slot.slot} has no +$1A for the launch gate`);
+  }
+  if (slot.parameters.ceiling < k.launchGate) {
+    return { outcome: 'refused', state };
+  }
+  return {
+    outcome: 'launched',
+    state: {
+      ...state,
+      speed: long(k.launchSpeedExponent, state.speed),
+      swing: true,
+      throttle: u32(k.launchThrottle)
+    }
+  };
+};
+
 /// `$0556AA`–`$055708`: a throttle key's table entry. `$80` stops, an even entry is forward and
 /// an odd one reverse, at exponent entry ÷ 2. Answers the new throttle, or undefined where the
-/// key writes nothing (an unchanged value).
+/// key writes nothing (an unchanged value). A write also clears the swing `$7B0C` (`$055700`).
 export const throttleForEntry = (
   state: CraftState,
   entry: number,

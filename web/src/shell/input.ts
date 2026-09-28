@@ -17,6 +17,9 @@ export interface BrowserKey {
 export interface ControlProfileActions {
   readonly drop: () => void;
   readonly fire: () => void;
+  /// Launch into space aboard: the ST's Esc (`$055822`), which the Browser Shell keeps for the
+  /// System Menu, so `Backspace` stands in for it (#566). A Title with no launch leaves it out.
+  readonly launch?: () => void;
   readonly leaveCraft: () => void;
   /// A Damocles Lift key asking for a Floor. Answers whether the player is in a lift: where they
   /// are not, the key keeps its ordinary meaning.
@@ -55,6 +58,9 @@ const HELD_CONTROLS = new Set([
 /// Console's key would otherwise be an ordinary code the Control Profile presses, and the shell
 /// would be relying on the order of a switch elsewhere to get it back.
 export const RESERVED_CODES: ReadonlySet<string> = new Set(['Backquote']);
+
+/// The key that launches aboard, standing in for the ST's Esc.
+export const LAUNCH_CODE = 'Backspace';
 
 /// The key that hurries Benson along.
 ///
@@ -175,6 +181,10 @@ export class BrowserControlProfile {
       }
       if (key.code === 'Minus' || key.code === 'Equal') {
         this.actions.throttleStep(key.code === 'Equal' ? 1 : -1);
+        return true;
+      }
+      if (key.code === LAUNCH_CODE && this.actions.launch) {
+        this.actions.launch();
         return true;
       }
     } else {

@@ -225,6 +225,68 @@ const skyBodies = (
   return result;
 };
 
+export interface SpaceSkyInputs {
+  /// The craft's position in the System (`$799A`/`$799E`/`$79A2`).
+  readonly eye: Vector3;
+  readonly impact: ImpactTime;
+  /// Whether a Body is in the scene: the range scan's negative-Y flag, by source index.
+  readonly inScene: (sourceIndex: number) => boolean;
+}
+
+/// The Bodies seen from space (#558). The range scan `$052DB0` puts every Body in the scene
+/// that lies in front of the view on the sort list at `$8F5A`, with its range, and lets the
+/// comet through behind it too. The sky is drawn through the view matrix alone (`$7A8E` = 2),
+/// so each offset is the Body's less the craft's in the System's own axes. Read statically
+/// only: the port draws them farthest first, the painter's order, over black.
+export const spaceSkyPass = (
+  system: GammaSystemDocument,
+  inputs: SpaceSkyInputs
+): SkyPass => {
+  const { eye } = inputs;
+  const offset = (point: Vector3): Vector3 => ({
+    x: point.x - eye.x,
+    y: point.y - eye.y,
+    z: point.z - eye.z
+  });
+  const items: { readonly item: SkyItem; readonly range: number }[] = [];
+  for (const body of system.bodies) {
+    if (!inputs.inScene(body.sourceIndex)) {
+      continue;
+    }
+    if (body.positionKind === 'capture-time-sample') {
+      const comet = skyComet(system, body, inputs.impact, offset);
+      if (comet !== null) {
+        const { x, y, z } = comet.offset;
+        items.push({ item: comet, range: Math.hypot(x, y, z) });
+      }
+      continue;
+    }
+    const phase =
+      body.sourceIndex === 0
+        ? { first: 'lit' as const, split: 0x7f_ff / 0x80_00 }
+        : phaseOf(body.position, eye);
+    const at = offset(body.position);
+    items.push({
+      item: {
+        colour: body.baseColour,
+        first: phase.first,
+        id: body.id,
+        kind: 'disc',
+        offset: at,
+        shadow: PALETTE_SLOT_0,
+        size: body.size,
+        split: phase.split
+      },
+      range: Math.hypot(at.x, at.y, at.z)
+    });
+  }
+  return {
+    bodies: items.sort((a, b) => b.range - a.range).map(entry => entry.item),
+    halfWidthDivisor: system.sky.halfWidthDivisor,
+    projectionScale: system.sky.projectionScale
+  };
+};
+
 /// `$04FBF2`: the comet's points about its centre at the impact clock, or null once it is gone.
 const skyComet = (
   system: GammaSystemDocument,

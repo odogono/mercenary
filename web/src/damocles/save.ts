@@ -365,6 +365,7 @@ const messageIds = new Set<DamoclesMessageId>([
   'script62-inline-3',
   'system-string-1',
   'system-string-2',
+  'system-string-21',
   'system-string-22',
   'system-string-3',
   'system-string-50',
@@ -719,6 +720,7 @@ const scriptOf = (
     ![
       'system-string-1',
       'system-string-2',
+      'system-string-21',
       'system-string-22',
       'system-string-3',
       'system-string-9'

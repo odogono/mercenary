@@ -409,6 +409,7 @@ export interface CraftSlot {
 export const CRAFT_CONSTANTS = [
   'altitudeCap',
   'altitudeScale',
+  'arrivalGap',
   'collisionExponent',
   'contact',
   'contactQuarter',
@@ -416,11 +417,36 @@ export const CRAFT_CONSTANTS = [
   'groundY',
   'landingPitch',
   'landingStep',
+  'launchGate',
+  'launchSpeedExponent',
+  'launchThrottle',
   'levelPitch',
+  'nearestStart',
+  'panelFastBound',
+  'panelHalfLightScaled',
+  'panelLight',
+  'panelLightSquared',
+  'panelLightSquaredScaled',
+  'panelSlowBound',
+  'panelSlowScale',
   'pitchMask',
+  'spaceAltitudeScale',
+  'spaceDilationBias',
   'spaceEntry',
+  'spaceHold',
+  'spaceLevelPitch',
+  'spacePitch',
+  'spaceRangeScale',
+  'spaceSpeedExponent',
+  'spaceThrottleExponent',
+  'spaceY',
   'supportEye',
   'supported',
+  'swingBias',
+  'swingHigh',
+  'swingLow',
+  'swingMask',
+  'swingStep',
   'takeOff',
   'throttleCap',
   'throttleDouble',
@@ -441,13 +467,33 @@ export type CraftConstant = (typeof CRAFT_CONSTANTS)[number];
  */
 export interface Craft {
   readonly arithmetic: {
+    /** `$063002`: the bytes the landing's `atan2` `$04EA48` indexes by its ratio word. */
+    readonly arctan: { readonly bytes: Uint8Array; readonly sha256: string };
     readonly exp: { readonly sha256: string; readonly words: Uint16Array };
     readonly log: {
       readonly ranges: readonly (readonly [number, number])[];
       readonly sha256: string;
     };
+    /** `$04EAF2`: the octant offsets, bit 15 set where the table angle is negated. */
+    readonly octants: readonly number[];
     readonly sine: { readonly longs: Uint32Array; readonly sha256: string };
   };
+  /**
+   * The Body table the range scan `$052DB0` walks (#558), from offset 0 to the one `$7C0E`
+   * names, one entry a Body: its position and its extent float as raw longs. A negative Y is
+   * the out-of-scene flag, which the scan skips.
+   */
+  readonly bodies: readonly CraftBody[];
+  /**
+   * The space words the first world boots with, which only a flight in space rewrites: the
+   * range `$791C` and nearest Body `$7924` the first space pass reads, and the pitch rate `$7974`.
+   */
+  readonly boot: Readonly<
+    Record<
+      'nearest' | 'pitchRate' | 'range',
+      { readonly address: number; readonly value: number }
+    >
+  >;
   readonly constants: Readonly<
     Record<
       CraftConstant,
@@ -464,6 +510,12 @@ export interface Craft {
       readonly scancode: number;
     }[];
   };
+}
+export interface CraftBody {
+  readonly extent: number;
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
 }
 export interface StructureSelection {
   readonly attachments: readonly EntranceAttachment[];
@@ -1707,6 +1759,8 @@ const craftSlot = (value: unknown, index: number): CraftSlot => {
 const craft = (value: unknown): Craft => {
   const c = fields(value, [
     'arithmetic',
+    'bodies',
+    'boot',
     'constants',
     'evidence',
     'slots',
@@ -1735,19 +1789,45 @@ const craft = (value: unknown): Craft => {
   ) as Craft['constants'];
   const table = fields(c['table'], ['address', 'sha256']);
   const keys = fields(c['throttleKeys'], ['address', 'keys']);
-  const arithmetic = fields(c['arithmetic'], ['exp', 'log', 'sine']);
+  const arithmetic = fields(c['arithmetic'], [
+    'arctan',
+    'exp',
+    'log',
+    'octants',
+    'sine'
+  ]);
+  const arctan = fields(arithmetic['arctan'], ['address', 'hex', 'sha256']);
+  const octants = fields(arithmetic['octants'], ['address', 'words']);
+  const bodies = fields(c['bodies'], [
+    'entries',
+    'evidence',
+    'scanFrom',
+    'tables'
+  ]);
+  const scanFrom = fields(bodies['scanFrom'], ['address', 'offset']);
   const exp = fields(arithmetic['exp'], ['address', 'hex', 'sha256']);
   const sine = fields(arithmetic['sine'], ['address', 'hex', 'sha256']);
   const log = fields(arithmetic['log'], ['generated', 'ranges', 'sha256']);
   if (
     integer(exp['address']) !== 0x6_00_00 ||
     integer(sine['address']) !== 0x6_40_00 ||
+    integer(arctan['address']) !== 0x6_30_02 ||
+    integer(octants['address']) !== 0x4_ea_f2 ||
     log['generated'] !== true
   ) {
     fail('invalid craft arithmetic');
   }
   return {
     arithmetic: {
+      arctan: {
+        bytes: Uint8Array.from(
+          hexWords(arctan['hex'], 0x1_02, 2).flatMap(word => [
+            word >> 8,
+            word & 0xff
+          ])
+        ),
+        sha256: sha256(arctan['sha256'])
+      },
       exp: {
         sha256: sha256(exp['sha256']),
         words: Uint16Array.from(hexWords(exp['hex'], 0x20_00, 2))
@@ -1761,11 +1841,46 @@ const craft = (value: unknown): Craft => {
         }),
         sha256: sha256(log['sha256'])
       },
+      octants: (() => {
+        const words = list(octants['words']).map(integer);
+        return words.length === 8 && words.every(word => word <= 0xff_ff)
+          ? words
+          : fail('invalid craft octant words');
+      })(),
       sine: {
         longs: Uint32Array.from(hexWords(sine['hex'], 0x10_00, 4)),
         sha256: sha256(sine['sha256'])
       }
     },
+    bodies: (() => {
+      const entries = list(bodies['entries']).map(value => {
+        const b = fields(value, ['extent', 'x', 'y', 'z']);
+        return {
+          extent: integer(b['extent']),
+          x: signedInteger(b['x']),
+          y: signedInteger(b['y']),
+          z: signedInteger(b['z'])
+        };
+      });
+      string(bodies['evidence']);
+      object(bodies['tables']);
+      return integer(scanFrom['address']) === 0x7c_0e &&
+        entries.length * 4 === integer(scanFrom['offset']) + 4
+        ? entries
+        : fail('invalid craft Body table');
+    })(),
+    boot: (() => {
+      const boot = fields(c['boot'], ['nearest', 'pitchRate', 'range']);
+      const word = (key: string) => {
+        const w = fields(boot[key], ['address', 'value']);
+        return { address: integer(w['address']), value: integer(w['value']) };
+      };
+      return {
+        nearest: word('nearest'),
+        pitchRate: word('pitchRate'),
+        range: word('range')
+      };
+    })(),
     constants,
     evidence: string(c['evidence']),
     slots,

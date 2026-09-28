@@ -129,9 +129,18 @@ export const speedField = (panelSpeed: number, speed: number): string => {
 /// part of 100 or more, or Floor 10, prints six stars (#551).
 export const altitudeWindow = (eyeY: number, floor: number): string => {
   const y = Math.floor(eyeY);
-  const value = ((y >> 4) + ((y >> 3) & 1)) >>> 0;
+  return printedAltitude(
+    floor === 10 ? 0x7f_ff_ff_ff : (y >> 4) + ((y >> 3) & 1)
+  );
+};
+
+/// `$04DF5C`, the printer both altitude forms share: the long as 16.16, two whole digits and
+/// the fraction times 100 twice, or six stars from a whole part of 100. In space the value is
+/// `$04DEEE`'s, the range ÷ 16,384 (#558).
+export const printedAltitude = (long: number): string => {
+  const value = long >>> 0;
   const whole = Math.floor(value / 0x1_00_00);
-  if (floor === 10 || whole >= 100) {
+  if (whole >= 100) {
     return '******';
   }
   let fraction = value & 0xff_ff;
@@ -155,10 +164,10 @@ export const damoclesPanelViewModel = (
   // The altitude window is six digits wide here, which is the width the original prints and
   // one wider than the Targ instrument the Benson Panel shares its view model with (#368). It
   // reads eye Y on foot as aboard, so it shows `000000` at the ground and stars on Floor 10.
-  altitude: altitudeWindow(
-    snapshot.pose.position.y,
-    snapshot.structure?.floor ?? 0
-  ),
+  altitude:
+    snapshot.craft?.space === undefined || snapshot.craft.space === null
+      ? altitudeWindow(snapshot.pose.position.y, snapshot.structure?.floor ?? 0)
+      : printedAltitude(snapshot.craft.space.altitude),
   altitudeLamp: false,
   attackLamp: false,
   // The Body Coordinate Readout: the original prints `016-283` here at the Eris start pose,
@@ -170,9 +179,10 @@ export const damoclesPanelViewModel = (
   damoclesDisplay: snapshot.displayCells,
   elevationDegrees: 0,
   // `$0509F6`: lit only aboard (`$7A8E` clear) with the eye below `$28FA`, so a craft on the
-  // ground lights it and the player on foot never does.
+  // ground lights it and the player on foot never does. In space `$7A8E` is 2.
   groundLamp:
     snapshot.occupancy.kind === 'aboard' &&
+    (snapshot.craft?.space ?? null) === null &&
     snapshot.pose.position.y < LOW_ALTITUDE_LAMP_UNITS,
   inventory: snapshot.inventoryLabel,
   inventoryFill: snapshot.carried.length,

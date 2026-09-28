@@ -18,6 +18,7 @@ import {
   craftFrame,
   craftPanelSpeed,
   craftProgram,
+  launch,
   throttleDown,
   throttleForEntry,
   throttleUp,
@@ -85,6 +86,13 @@ import {
   type AttachmentLatch,
   type AttachmentState
 } from './selection.ts';
+import {
+  enterSpace,
+  spaceAltitude,
+  spaceFrame,
+  type SpaceMemory,
+  type SpaceState
+} from './space.ts';
 import { presentedText, type DamoclesStrings } from './strings.ts';
 import { advanceTurn, inDaylight } from './terminator.ts';
 import {
@@ -167,15 +175,33 @@ export type { Residence, ResidenceDeparture } from './residence.ts';
 
 /// What the panel and the console read of the craft aboard.
 export interface DamoclesCraftSnapshot {
-  /// `space`: the pre-pass Y reached the frame loop's space entry, which #558 admits.
+  /// `arrival`: `$052FDA` raised an arrival, and the landing `$059268` is not run yet (#566).
   /// `unrecovered`: the occupied slot's entry is not a surface craft pass the port runs.
-  readonly held: 'space' | 'unrecovered' | null;
+  readonly held: 'arrival' | 'unrecovered' | null;
   /// `$4DFEC`, the speed field's integer.
   readonly panelSpeed: number;
   readonly slot: number;
+  /// In space (occupancy 2), the space words; null on a Body.
+  readonly space: DamoclesSpaceSnapshot | null;
   /// `$797A` and `$7BAC`, as the program's floats.
   readonly speed: number;
+  /// `$7B0C`: the launch swing is running.
+  readonly swing: boolean;
   readonly throttle: number;
+}
+
+/// What the panel and the frame read of the craft in space (#558).
+export interface DamoclesSpaceSnapshot {
+  /// `$04DEEE`: the altitude window's 16.16 value, range ÷ 16,384.
+  readonly altitude: number;
+  /// `$7876`, 32γ.
+  readonly dilation: number;
+  /// The Catalogue id of the nearest Body `$7924`, `body-<index>`.
+  readonly nearest: string;
+  /// `$799A`/`$799E`/`$79A2`, the craft's position in the System.
+  readonly position: Vector3;
+  /// `$791C`, the nearest range, a float.
+  readonly range: number;
 }
 
 /// What the player is inside: on foot, or aboard one resident instance, named by its instance id
@@ -195,6 +221,8 @@ const wrap = (coordinate: number) =>
 
 /// The VOID staging Body, `$78`, which Take and Drop already refuse on.
 const VOID_BODY = 'body-30';
+/// DAMOCLES, the comet, whose centre the impact clock moves.
+const COMET_BODY = 29;
 
 /// The messages the refusal chooser `$0542E0` can present. The Data Payload names which one each
 /// resident takes; this only narrows its string to a presentable id.
@@ -219,6 +247,11 @@ export interface AtlasDestination {
 
 export interface DamoclesContent {
   readonly catalogue: Catalogue;
+  /// The comet's centre at an elapsed time, which `$051E88` moves before the range scan reads
+  /// the Body table. Where it is absent or the comet is gone the scan reads the Catalogue's.
+  readonly cometAt?: (
+    elapsed: number
+  ) => { readonly x: number; readonly z: number } | null;
   readonly doc: ErisPresentationDocument;
   /// The Catalogue's Models, read a Body's islands at a time (ADR 0048).
   readonly models: ModelStore;
@@ -380,6 +413,15 @@ export class DamoclesSession implements TitleSession<
   private craftTicks = 0;
   /// Why the craft stands still with no rule to run, or null while the Mover runs.
   private craftHeld: DamoclesCraftSnapshot['held'] = null;
+  /// The space words while in space (occupancy 2), or null on a Body.
+  private space: SpaceState | null = null;
+  /// The craft words and the Pose the space entry left, which a Save in space carries (#566).
+  private spaceEntry: {
+    readonly craft: CraftState;
+    readonly pose: Pose;
+  } | null = null;
+  /// The range, nearest Body and pitch rate the last flight left, which the next reads.
+  private spaceMemory: SpaceMemory;
   /// The instance angle byte leaving writes (`$0544FA`), by instance.
   private angleBytes = new Map<string, number>();
   /// The craft pass's published numbers, or null in a document that carries none.
@@ -436,6 +478,12 @@ export class DamoclesSession implements TitleSession<
       content.catalogue.craft === null
         ? null
         : craftProgram(content.catalogue.craft);
+    const boot = content.catalogue.craft?.boot;
+    this.spaceMemory = {
+      nearest: boot?.nearest.value ?? 0,
+      pitchRate: boot?.pitchRate.value ?? 0xff_00_10_00,
+      range: boot?.range.value ?? 0
+    };
     const opening = restore?.pose ?? startPose(content.doc);
     this.pose = {
       body: opening.body,
@@ -1258,6 +1306,7 @@ export class DamoclesSession implements TitleSession<
       | 'system-string-0'
       | 'system-string-1'
       | 'system-string-2'
+      | 'system-string-21'
       | 'system-string-22'
       | 'system-string-3'
       | 'system-string-9'
@@ -1289,7 +1338,9 @@ export class DamoclesSession implements TitleSession<
               held: this.craftHeld,
               panelSpeed: this.craft.panelSpeed,
               slot: this.craftSlot,
+              space: this.spaceSnapshot(),
               speed: this.craft.speed,
+              swing: this.craft.swing,
               throttle: this.craft.throttle
             },
       daylight: this.daylight(),
@@ -1393,6 +1444,8 @@ export class DamoclesSession implements TitleSession<
 
   /// Aboard, the occupied instance's departure is `occupied` and the Pose is the seated view.
   captureResume(): DamoclesSaveSnapshot {
+    // In space the Pose is the one the space entry left, whose words `craft` carries.
+    const pose = this.spaceEntry?.pose ?? this.pose;
     return {
       angleBytes: [...this.angleBytes].map(([instance, byte]) => ({
         byte,
@@ -1409,10 +1462,10 @@ export class DamoclesSession implements TitleSession<
       pendingBriefcaseDrop: this.pendingBriefcaseDrop,
       // The bank is the craft's roll, which `craft` carries.
       pose: {
-        body: this.pose.body,
-        heading: this.pose.heading,
-        pitch: this.pose.pitch,
-        position: this.pose.position
+        body: pose.body,
+        heading: pose.heading,
+        pitch: pose.pitch,
+        position: pose.position
       },
       residence: [...this.residence].map(([instance, residence]) => ({
         instance,
@@ -1424,14 +1477,17 @@ export class DamoclesSession implements TitleSession<
     };
   }
 
+  /// Aboard, the craft words; in space, the words as the space entry found them, flagged, so a
+  /// resume enters space afresh from the Body's centre (#566: a Save in space is a later
+  /// ticket's). The launch swing is not carried.
   private craftForSave(): DamoclesSaveCraft | null {
-    const craft = this.craft;
+    const craft = this.spaceEntry?.craft ?? this.craft;
     if (craft === null) {
       return null;
     }
     return {
       contact: craft.contact,
-      enteringSpace: this.craftHeld === 'space',
+      enteringSpace: this.spaceEntry !== null,
       passTicks: this.craftTicks,
       pitch: craft.pitch,
       roll: craft.roll,
@@ -1521,6 +1577,7 @@ export class DamoclesSession implements TitleSession<
       speed: zero >>> 0,
       supported: 0,
       supportLevel: 0,
+      swing: false,
       throttle: zero >>> 0,
       trig: { pitch: footPitch, yaw: footYaw },
       turnRate: zero >>> 0,
@@ -1559,6 +1616,8 @@ export class DamoclesSession implements TitleSession<
       {
         ...words,
         panelSpeed: craftPanelSpeed(words.speed),
+        // A Save does not carry the launch swing `$7B0C` (#566).
+        swing: false,
         x: this.pose.position.x,
         y: this.pose.position.y,
         z: this.pose.position.z
@@ -1578,7 +1637,70 @@ export class DamoclesSession implements TitleSession<
     this.craft = craft;
     this.craftSlot = slot;
     this.craftTicks = passTicks;
-    this.craftHeld = this.slotHeld(slot) ?? (enteringSpace ? 'space' : null);
+    this.craftHeld = this.slotHeld(slot);
+    this.space = null;
+    this.spaceEntry = null;
+    if (enteringSpace) {
+      this.enterSpace(craft);
+    }
+  }
+
+  /// `$055868` after the frame's pass: space, from the centre of the Body the craft left. The
+  /// session's Pose keeps the entry's position on that Body, so nothing on the surface rebinds;
+  /// the view turns with the craft.
+  private enterSpace(craft: CraftState): void {
+    const program = this.craftProgram;
+    const body = program === null ? undefined : this.catalogueBody();
+    if (program === null || body === undefined) {
+      throw new Error(
+        `${this.pose.body} is not in the craft block's Body table`
+      );
+    }
+    const entry = { craft, pose: this.poseFromCraft(craft) };
+    const entered = enterSpace(program, craft, this.spaceMemory, body);
+    this.spaceEntry = entry;
+    this.space = entered.space;
+    this.craft = entered.craft;
+    this.pose = this.spacePose(entered.craft);
+  }
+
+  /// The craft block's entry for the Body the Pose names.
+  private catalogueBody() {
+    const index = Number(/^body-(\d+)$/.exec(this.pose.body)?.[1] ?? -1);
+    return this.content.catalogue.craft?.bodies[index];
+  }
+
+  /// In space, the view the craft words draw from the space entry's place on the Body.
+  private spacePose(craft: CraftState): Pose {
+    return {
+      ...this.poseFromCraft(craft),
+      position: this.spaceEntry!.pose.position
+    };
+  }
+
+  /// The Body table the range scan reads this frame: the comet where the impact clock has it.
+  private scannedBodies() {
+    const bodies = this.content.catalogue.craft!.bodies;
+    const comet = this.content.cometAt?.(this.elapsed) ?? null;
+    return comet === null
+      ? bodies
+      : bodies.map((body, index) =>
+          index === COMET_BODY ? { ...body, x: comet.x, z: comet.z } : body
+        );
+  }
+
+  private spaceSnapshot(): DamoclesSpaceSnapshot | null {
+    const space = this.space;
+    if (space === null || this.craftProgram === null) {
+      return null;
+    }
+    return {
+      altitude: spaceAltitude(this.craftProgram, space.range),
+      dilation: space.dilation,
+      nearest: `body-${space.nearest / 4}`,
+      position: { x: space.x, y: space.y, z: space.z },
+      range: space.range
+    };
   }
 
   private slotOf(instance: string): number {
@@ -1651,6 +1773,10 @@ export class DamoclesSession implements TitleSession<
       return;
     }
     this.craftTicks = 0;
+    if (this.space !== null) {
+      this.tickSpace(program, craft, this.space);
+      return;
+    }
     const slot = program.slots[this.craftSlot]!;
     const frame = craftFrame(
       program,
@@ -1673,9 +1799,65 @@ export class DamoclesSession implements TitleSession<
         this.touchDown();
         break;
       case 'space':
-        this.craftHeld = 'space';
+        this.enterSpace(frame.state);
         break;
       case 'moved':
+        break;
+    }
+  }
+
+  /// A frame in space: the pass over slot 0's block, the range scan, and the arrival hold. An
+  /// arrival holds the craft where it is: the landing `$059268` is the next ticket's (#566).
+  private tickSpace(
+    program: CraftProgram,
+    craft: CraftState,
+    space: SpaceState
+  ): void {
+    const frame = spaceFrame(
+      program,
+      program.slots[0]!,
+      craft,
+      space,
+      this.stick(),
+      this.scannedBodies()
+    );
+    this.craft = frame.craft;
+    this.space = frame.space;
+    this.spaceMemory = {
+      nearest: frame.space.nearest,
+      pitchRate: frame.space.pitchRate,
+      range: frame.space.range
+    };
+    this.pose = this.spacePose(frame.craft);
+    if (frame.arrival !== null) {
+      this.craftHeld = 'arrival';
+    }
+  }
+
+  /// Esc aboard on the ST (`$055822`): the launch. It is silent on the ground and in space, and
+  /// presents system string 21 for a craft that cannot fly in space. A launch asks for the key
+  /// effect `$054848`.
+  launchCraft(): void {
+    const program = this.craftProgram;
+    const craft = this.craft;
+    if (program === null || craft === null || this.craftHeld !== null) {
+      return;
+    }
+    const result = launch(
+      program,
+      program.slots[this.craftSlot]!,
+      craft,
+      this.space !== null
+    );
+    switch (result.outcome) {
+      case 'launched':
+        this.craft = result.state;
+        this.effects.push({ cue: 'throttle', type: 'sound-request' });
+        break;
+      case 'refused':
+        this.presentSystem('system-string-21');
+        break;
+      case 'ignored':
         break;
     }
   }
@@ -1698,8 +1880,8 @@ export class DamoclesSession implements TitleSession<
 
   /// A throttle key aboard (`$0556AA`): the table entry at `$0557D6` for the ST scancode. Space's
   /// `$80` writes the zero and leaves the speed to decay. A change asks for the key effect
-  /// `$054848`; the same value again writes nothing. The trim `$7A1C` and the launch swing
-  /// `$7B0C` it clears are not modelled.
+  /// `$054848`; the same value again writes nothing. A write clears the launch swing `$7B0C`.
+  /// The trim `$7A1C` it clears is not modelled.
   throttleKey(scancode: number): void {
     const program = this.craftProgram;
     const craft = this.craft;
@@ -1716,7 +1898,7 @@ export class DamoclesSession implements TitleSession<
     if (throttle === undefined) {
       return;
     }
-    this.craft = { ...craft, throttle };
+    this.craft = { ...craft, swing: false, throttle };
     this.effects.push({ cue: 'throttle', type: 'sound-request' });
   }
 
@@ -1860,6 +2042,8 @@ export class DamoclesSession implements TitleSession<
     };
     this.craft = null;
     this.craftHeld = null;
+    this.space = null;
+    this.spaceEntry = null;
     this.occupied = null;
     this.boardedFrom = undefined;
     return { kind: 'left' };

@@ -117,11 +117,11 @@ interface SavedRecord {
   };
 }
 
-test('EAGLE NINE S E takes off, reads its altitude, and a steep dive puts the player on foot', async ({
-  page
-}, testInfo) => {
-  test.setTimeout(180_000);
-  const errors = watchErrors(page);
+/// Beside EAGLE NINE S E on Eris with its key carried, then aboard. No short route carries the
+/// Eagle's key here: it lies on an upper Floor of the State Office. The Save is edited to carry
+/// it, with its pickup trigger fired, and the player stood beside the Eagle, which is the one
+/// state these tests do not reach by play.
+const boardEagle = async (page: Page): Promise<void> => {
   const catalogue = (await (
     await page.request.get('/payload/damocles/catalogue.json')
   ).json()) as {
@@ -133,9 +133,6 @@ test('EAGLE NINE S E takes off, reads its altitude, and a steep dive puts the pl
   };
   const eagle = catalogue.instances.find(item => item.id === EAGLE)!;
   const key = catalogue.instances.find(item => item.id === EAGLE_KEY)!;
-  // No short route carries the Eagle's key here: it lies on an upper Floor of the State
-  // Office. The Save is edited to carry it, with its pickup trigger fired, and the player
-  // stood beside the Eagle, which is the one state this test does not reach by play.
   await bootAt(page, { x: 0, z: 0 });
   expect(await run(page, 'goto 9 9')).toContain('moved to cell 9-9');
   expect(await run(page, 'save 1')).toContain('saved');
@@ -172,6 +169,14 @@ test('EAGLE NINE S E takes off, reads its altitude, and a steep dive puts the pl
 
   await page.keyboard.press('b');
   await expect(frame(page)).toHaveAttribute('data-occupancy', EAGLE);
+};
+
+test('EAGLE NINE S E takes off, reads its altitude, and a steep dive puts the player on foot', async ({
+  page
+}, testInfo) => {
+  test.setTimeout(180_000);
+  const errors = watchErrors(page);
+  await boardEagle(page);
   // Key 4 taxis at 50 a pass: `+ 000 000 018`.
   await page.keyboard.press('4');
   await expect(field(page, 'speedLabel')).toHaveText('+ 000 000 018', {
@@ -251,5 +256,60 @@ test('EAGLE NINE S E takes off, reads its altitude, and a steep dive puts the pl
   });
   expect(await soundCues(page)).toContain('blast:1');
   await shot(page, 'eagle-crashed', testInfo);
+  expect(errors).toEqual([]);
+});
+
+test('EAGLE NINE S E launches on Backspace, swings, climbs into space and turns there (#566)', async ({
+  page
+}, testInfo) => {
+  test.setTimeout(240_000);
+  const errors = watchErrors(page);
+  await boardEagle(page);
+  // Off the ground at key 4 with the nose up.
+  await page.keyboard.press('4');
+  await page.keyboard.down('ArrowDown');
+  await expect
+    .poll(async () => attribute(page, 'y'), { timeout: 20_000 })
+    .toBeGreaterThan(2000);
+  await page.keyboard.up('ArrowDown');
+  // Backspace stands in for the ST's Esc: the swing starts and the nose goes down.
+  await page.keyboard.press('Backspace');
+  await expect(frame(page)).toHaveAttribute('data-craft-swing', 'true');
+  await expect
+    .poll(async () => attribute(page, 'pitch'), { timeout: 10_000 })
+    .toBeLessThan(-0.3);
+  await shot(page, 'eagle-swing', testInfo);
+  // Reverse thrust along the nose-down attitude climbs to the space entry. The craft flies on
+  // from ERIS's centre at once, so where it stands by the time the page is read depends on the
+  // browser's pace: the unit tests hold the entry's exact words.
+  await expect(frame(page)).toHaveAttribute(
+    'data-space-nearest',
+    /^body-\d+$/,
+    {
+      timeout: 120_000
+    }
+  );
+  await expect(frame(page)).toHaveAttribute('data-craft-swing', 'false');
+  expect(await frame(page).getAttribute('data-space-position')).toMatch(
+    /^-?\d+ -?\d+ -?\d+$/
+  );
+  // In space the frame draws the Bodies alone, and the panel reads the relativistic speed and
+  // the range.
+  await expect(field(page, 'speedLabel')).toHaveText(/^- \d{3} /, {
+    timeout: 10_000
+  });
+  await expect(field(page, 'altitude')).not.toHaveText('000000');
+  expect(Number(await frame(page).getAttribute('data-triangles'))).toBe(0);
+  await shot(page, 'eagle-in-space', testInfo);
+  const heading = await attribute(page, 'heading');
+  await page.keyboard.down('ArrowRight');
+  await expect
+    .poll(async () => attribute(page, 'heading'), { timeout: 10_000 })
+    .not.toBe(heading);
+  await page.keyboard.up('ArrowRight');
+  await shot(page, 'eagle-turning-in-space', testInfo);
+  // `L` is refused: in space there is no ground contact.
+  await page.keyboard.press('l');
+  await expect(frame(page)).toHaveAttribute('data-occupancy', EAGLE);
   expect(errors).toEqual([]);
 });

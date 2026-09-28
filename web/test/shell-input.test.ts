@@ -129,6 +129,35 @@ describe('the browser Control Profile', () => {
     expect(calls).toEqual([{ reverse: 4 }, { reverse: 10 }]);
   });
 
+  test('aboard, Backspace launches where the Title has a launch', () => {
+    const { calls, profile, setOccupancy } = harness();
+    // Without the action, Backspace is the browser's.
+    setOccupancy({ kind: 'aboard', slot: 3 });
+    expect(profile.keyDown(input('Backspace'))).toBeFalse();
+    let occupancy: Occupancy = { kind: 'onFoot' };
+    const launching = new BrowserControlProfile({
+      drop: () => undefined,
+      fire: () => undefined,
+      launch: () => calls.push('launch'),
+      leaveCraft: () => undefined,
+      liftKey: () => false,
+      occupancy: () => occupancy,
+      page: () => undefined,
+      press: () => undefined,
+      reach: () => undefined,
+      rideLift: () => undefined,
+      shutThrottle: () => undefined,
+      skipMessage: () => undefined,
+      throttleNotchValue: () => undefined,
+      throttleStep: () => undefined
+    });
+    // On foot it launches nothing.
+    expect(launching.keyDown(input('Backspace'))).toBeFalse();
+    occupancy = { kind: 'aboard', slot: 3 };
+    expect(launching.keyDown(input('Backspace'))).toBeTrue();
+    expect(calls).toEqual(['launch']);
+  });
+
   test('R latches running on and off without acknowledging a script', () => {
     const { calls, profile } = harness();
 

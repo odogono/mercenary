@@ -428,6 +428,15 @@ the instruction with its operand masked, then reads the operand.
   | `zero` | `$FF001000` | the stop preset's zero |
   | `throttleDown`, `throttleUp`, `throttleCap` | `$FFFF1F80`, `$1080`, `$000E0000` | `-` and `=` scaling, and the cap above which `=` is ignored |
   | `throttleKeyBound` | `$44` | the highest scancode the throttle table serves |
+  | `launchGate`, `launchThrottle`, `launchSpeedExponent` | 100, `$000EF000`, `$F000` | the launch `$055822`: the `+$1A` it needs, the reverse throttle, the speed's exponent word (#558) |
+  | `swingBias`, `swingMask`, `swingLow`, `swingHigh`, `swingStep` | `$80`, `$3FF`, `$180`, `$300`, 16 | the swing `$057F18`; the step is added and subtracted, checked twice |
+  | `spaceHold`, `spaceThrottleExponent`, `spaceSpeedExponent`, `spacePitch` | 50, `$000E`, `$0010`, `$1FF` | what the space entry `$055868` writes |
+  | `spaceY` | 64 | the space position's Y the landing `$059268` leaves at a Body's centre |
+  | `spaceRangeScale`, `spaceDilationBias`, `spaceLevelPitch` | `$00101000`, `$000A1000`, `$200` | the space pass `$05872E`: 65,536 in range ÷ (range + 65,536), 1,024 in v² + 1,024, and level |
+  | `panelSlowBound`, `panelFastBound` | `$20`, `$BC` | the `$7876` bounds between the panel's three forms |
+  | `panelSlowScale`, `panelLightSquared`, `panelLightSquaredScaled`, `panelHalfLightScaled`, `panelLight` | `$001817FC`, `$003B11FA`, `$004511FA`, `$002617FC`, `$2FF77FC6` | c/32, c², 1,024c², 512c and c, the three forms' floats (#551) |
+  | `spaceAltitudeScale` | `$20000` | the altitude window in space `$04DEEE`: the range × 4 |
+  | `nearestStart`, `arrivalGap` | `$00201000`, −7 | the range scan `$052DB0`'s starting range, and the arrival test `$052FDA` |
 
 - `throttleKeys` lists the non-zero bytes of the table at `$0557D6` by scancode.
   `1`–`0` are entries 8–26, `F1`–`F10` are 9–27, and `Space` is `$80`, which stops
@@ -436,7 +445,18 @@ the instruction with its operand masked, then reads the operand.
   (`$64000`, 1,024 floats) as hex, each with its SHA-256. The log table is not
   carried. Extraction checks that every normalised mantissa's entry follows the rule
   the port regenerates it from, and `log.sha256` is the digest of the image's two
-  ranges, `$62000`–`$63002` and `$65000`–`$66000`, in that order.
+  ranges, `$62000`–`$63002` and `$65000`–`$66002`, in that order. The second range
+  includes `$66000` = `$FFF0`, which an unnormalised mantissa of `$2000` reads (#558).
+  `arctan` carries the landing's byte table `$063002`–`$063104` as hex, and `octants` the
+  eight words at `$04EAF2` that `atan2` `$04EA48` offsets it by.
+- `bodies` is the Body table the range scan `$052DB0` walks, from offset 0 to the offset
+  at `$7C0E` (`$74`, DAMOCLES): each Body's X, Y and Z from `$5F40`, `$626A` and `$5FC0`,
+  and its extent float from `$6040`, as raw longs. A negative Y takes a Body out of the
+  scene, and the scan skips it. Every Body is in the first world's scene. See
+  [the space flight note](damocles-space-flight.md).
+- `boot` holds the space words the first world boots with, which only a flight in space
+  rewrites: the range `$791C` (`$000A137A`), the nearest Body `$7924` (ERIS, `$2C`) and
+  the pitch rate `$7974` (nought). The first space pass reads the range and the nearest Body.
 
 ## Recovered data grammar
 

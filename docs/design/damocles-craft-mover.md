@@ -1,11 +1,13 @@
 # The Damocles craft Mover in play
 
-Implementation note for [#556](https://github.com/odogono/mercenary/issues/556), part of the
+Implementation note for [#556](https://github.com/odogono/mercenary/issues/556) and the launch
+and space flight of [#566](https://github.com/odogono/mercenary/issues/566), part of the
 [driving and flying map](https://github.com/odogono/mercenary/issues/548), under
 [ADR 0051](../adr/0051-run-the-damocles-craft-pass-exactly-once-every-four-ticks.md). It records
 what the port runs aboard, where each rule comes from, and what it does not run. The rules
-themselves are in [the craft control note](../research/damocles-craft-control.md) and
-[the collision response note](../research/damocles-collision-response.md).
+themselves are in [the craft control note](../research/damocles-craft-control.md),
+[the collision response note](../research/damocles-collision-response.md) and
+[the space flight note](../research/damocles-space-flight.md).
 
 ## What runs
 
@@ -21,10 +23,20 @@ calls it.
 | `craftFloat` | `$04BDD4`, which the pose copy `$058F64` uses for `$79BA` = float(−Y) | decoded here |
 | `throttleForEntry`, `throttleDown`, `throttleUp` | `$0556AA`–`$0557D4` | decoded here |
 | `bindBoxes`, `insideBox`, the support search | `$053AF0`, `$0590AE`, `$0583EA` | collision response note |
+| `launch` | the launch handler `$055822` (Esc) | space flight note |
+| the swing in `craftFrame` | `$057F18` while `$7B0C` is set | space flight note |
+| `enterSpace` | the space entry `$055868` | space flight note |
+| `spacePass`, `spaceFrame` | the space pass `$05872E` over slot 0's block, then the frame's range scan `$052DB0`, the hold `$7B0A` and the arrival test `$052FDA` | space flight note |
+| `viewMatrix`, `bodyRange` | `$055F60`/`$045710` and the rotation `$05668A` | space flight note |
+| `craftDivide`, `craftSquare`, `craftSqrt`, `craftLongFloat`, `spaceWord`, `spaceFixed` | the log-table quotient, square and root, `$04BDD8`, `$058B5A`, `$0589D6` | space flight note |
 
 Every constant, the craft table, the throttle key table and the exponent and sine tables come
-from the Catalogue's `craft` block (#555). The log table is regenerated. The Building detail
-boxes come from each detail Model's `boxes` (#556, `docs/research/damocles-catalogue.md`).
+from the Catalogue's `craft` block (#555). So do the launch, swing, entry and space pass
+constants, the Body table the range scan walks and the space words the first world boots with
+(#566). The log table is regenerated, now up to the unnormalised `$2000` a range sum can leave.
+The Building detail boxes come from each detail Model's `boxes` (#556,
+`docs/research/damocles-catalogue.md`). The space law is `web/src/damocles/space.ts`, from
+[the space flight note](../research/damocles-space-flight.md).
 
 - **The pass clock.** The session counts VBL ticks aboard and runs one frame of the Mover on
   every `time.ticksPerPass`-th (4). The count is reset on boarding, and a Save carries it.
@@ -51,6 +63,37 @@ boxes come from each detail Model's `boxes` (#556, `docs/research/damocles-catal
   mantissa. The altitude window prints eye Y ÷ 2²⁰, with `**` past 99 and on Floor 10. It does
   this on foot as well, so an upper Floor now reads a non-zero altitude, as the ST's does.
 
+## Launch and space (#566)
+
+- **The launch key.** The Browser Shell keeps Escape for the System Menu, as it does for the
+  lift's Esc, so `Backspace` aboard stands in for the ST's Esc. `launch` refuses silently in
+  contact or in space, and below a `+$1A` of 100 presents system string 21, VEHICLE NOT
+  EQUIPPED FOR SPACE TRAVEL. Otherwise it sets the swing `$7B0C`, writes the reverse throttle
+  and the speed's exponent, and asks for the key effect.
+- **The swing.** While `$7B0C` is set, a frame swings the pitch 16 towards `$280` and ends,
+  until `(pitch + $80) & $3FF` passes `$300`. After that the common pass runs with the stick
+  read as nought. The stop preset and any throttle key that writes clear it; `-` and `=` do not.
+- **The space entry.** When the pre-pass Y reaches `$1F0` × 65,536, the pass runs and then
+  `enterSpace`: occupancy space, the hold 50, the throttle's and speed's exponent words, the
+  pitch `$1FF`, and the space position at the centre of the Body the craft was on, 64 up. The
+  range, nearest Body and pitch rate the first space pass reads are what the last flight left.
+  The first world's (`$000A137A`, ERIS, nought) come from the Catalogue.
+- **In space** one frame every four ticks runs the space pass over slot 0's block, whatever
+  the craft, then the range to every Body in the scene, rotated by the view as the ST rotates
+  it, and the nearest. The Body table is the Catalogue's, with the comet where the impact clock
+  puts it.
+- **The Pose in space** keeps the place on the Body where the craft left it, so nothing on the
+  surface rebinds. Its heading and pitch are the craft's. The frame draws no ground, island,
+  structure or object, only the Bodies from the space position over black, and cuts no disc at
+  the horizon (`$042C74 = $88`). Which Bodies the ST draws is read statically: every one in the
+  scene, farthest first.
+- **The panel in space.** The speed field prints what the space pass leaves in `$4DFEC`, one of
+  the three forms of c·v/√(v² + 1024). The altitude window prints `$04DEEE`'s range ÷ 16,384.
+  The first lamp stays dark.
+- **An arrival** raised by `$052FDA` holds the craft where it is: `held` reads `arrival`. The
+  landing `$059268` is the next ticket's. DIALIS, offset 0, is never arrived at: `$052FD4`
+  skips the test for it, which the note's model leaves out and no trace reaches.
+
 ## Tests
 
 `web/test/damocles-craft.test.ts` replays the Golden Traces under `traces/damocles/craft/`. The
@@ -62,13 +105,25 @@ copy's float of −Y and the frame-start sines are checked against what the port
 every unpoked stop. `web/test/damocles-boarding.test.ts` and `web/e2e/damocles-craft.e2e.ts`
 cover the session and the browser.
 
+`web/test/damocles-space.test.ts` replays the Golden Traces under `traces/damocles/space/`,
+which `research/damocles-st/scripts/space-trace-export.py` exports from the #558 runs
+`launch`, `steer`, `return` and `cross`. They hold the craft words, the space words, the stick,
+the key each stop wrote, the attitude sines and the Body table. Every pass matches word for
+word: 812 on a Body (the launch, the swing, the swung climb and the flight after the cross's
+arrival), the 2,382 space passes with every range, nearest Body and hold, both entries into
+space, and the Body each of the two arrivals is raised for.
+
 ## Not run, and why
 
 The port has no rule for each of these, so it does not invent one:
 
-- **Space.** When the pre-pass Y reaches `$1F0` × 65,536, the pass has run and the craft is
-  held there. The snapshot's `craft.held` reads `space` (#558). The launch swing `$7B0C` and
-  the stick replay `$7A0C` are never set.
+- **The landing** `$059268` after an arrival, and what the Body switch does there. The craft is
+  held, and `craft.held` reads `arrival`.
+- **The scripted flight** `$790E` and the stick replay `$7A0C`, on a Body or in space.
+- **Time dilation.** In space `$7876` is 32γ and the impact clock gains γ seconds per 50 VBLs
+  (#551). The port's clock is a function of elapsed time, so it keeps real time in space.
+- **The System Coordinate Readout.** In space the ST's navigation window prints the space
+  position's high words (`$04E414`). The port's still prints the Body Coordinate Readout.
 - **Slots without a surface pass.** A slot whose entry is not `flying` or `wheeled`, or a
   seatable slot past the sixteen-entry table, is held as `unrecovered`.
 - **The landing handler's side effects:** the engine flag `$7C0C`, `$78EE`, and the pause at
@@ -88,7 +143,10 @@ The port has no rule for each of these, so it does not invent one:
   carried, because every pass and the stop preset leave it the integer of the speed's
   magnitude. A restore draws the Pose from the words and refuses a record whose Pose they
   don't draw. The next pass then matches an uninterrupted run. The Save also carries each left
-  craft's angle byte. A schema-11 record is migrated rather than refused. Aboard, it is seated
+  craft's angle byte. **A Save in space** (#566) is a later ticket's. Until then it carries the
+  words and the Pose the space entry left, flagged, and a restore enters space afresh from the
+  Body's centre. The flight since the entry, the launch swing and the space words a flight
+  leaves for the next are not carried. A schema-11 record is migrated rather than refused. Aboard, it is seated
   at the boarding preset (`$054744`), level and in contact, facing the saved heading.
 - **Atlas Travel aboard** sets the craft down at the pin, at rest and facing as it was. That is
   authored. Before this, the next pass flew from where the craft had been.

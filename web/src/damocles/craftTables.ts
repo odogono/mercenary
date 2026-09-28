@@ -7,9 +7,11 @@
 /// `Math.log2` gives the same table. The exponent and sine tables are not regenerable and come
 /// from the Catalogue.
 
-/// The first and last normalised mantissas the table serves: `$E000` (−2.0) to `$1FFE`.
+/// The first and last mantissas the table serves: `$E000` (−2.0) to `$2000`. A sum in the range
+/// scan can leave the unnormalised `$2000` (#558), which reads the word just past the table,
+/// `$66000` = `$FFF0`: what the rule gives for 2.0.
 const LOWEST = -0x20_00;
-const HIGHEST = 0x1f_fe;
+const HIGHEST = 0x20_00;
 
 const entry = (magnitude: number): number =>
   Math.min(
@@ -21,9 +23,7 @@ const LOG = (() => {
   const table = new Uint16Array(HIGHEST - LOWEST + 1);
   for (let mantissa = 0x10_00; mantissa <= 0x20_00; mantissa += 2) {
     const fraction = entry(mantissa);
-    if (mantissa <= HIGHEST) {
-      table[mantissa - LOWEST] = fraction;
-    }
+    table[mantissa - LOWEST] = fraction;
     table[-mantissa - LOWEST] = fraction | 1;
   }
   return table;
