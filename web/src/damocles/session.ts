@@ -8,6 +8,7 @@ import type { ModelStore } from '../catalogue/modelStore.ts';
 import { IDLE, MAXIMUM_STEP, type Intent } from '../gameCore/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import type { TitleSession } from '../shell/title.ts';
+import { handoverElapsed } from './comet.ts';
 import {
   NO_BOXES,
   STICK_DOWN,
@@ -521,7 +522,7 @@ export class DamoclesSession implements TitleSession<
       pitch: opening.pitch,
       position: { ...opening.position }
     };
-    this.elapsed = restore?.elapsed ?? 0;
+    this.elapsed = restore?.elapsed ?? handoverElapsed(content.doc.time);
     this.bodyTurn = restore?.bodyTurn ?? content.doc.start.bodyTurn;
     this.briefcaseStore = [...(restore?.briefcaseStore ?? [])];
     this.pendingBriefcaseDrop = restore?.pendingBriefcaseDrop ?? null;

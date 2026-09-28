@@ -103,6 +103,11 @@ export interface ErisPresentationDocument {
     readonly view: StructureView;
   };
   readonly time: {
+    readonly handoverProvenance: Provenance;
+    /// The seconds left on the impact clock when the scripted arrival hands over control on
+    /// foot, where `$7A8E` turns on: `02-47-28`, recovered by `start-turn-probe.py`. A fresh
+    /// Session starts here, the arrival having spent the rest.
+    readonly handoverSeconds: number;
     readonly impactDeadlineProvenance: Provenance;
     /// The seconds a fresh game's impact clock starts from: the word the title screen
     /// installs at `$793C` before play begins, recovered as `-15560` (#368).
@@ -270,6 +275,8 @@ export const readErisPresentation = (
   ]);
   const origin = object(grid['origin'], 'grid.origin', ['x', 'z']);
   const time = object(root['time'], 'time', [
+    'handoverSeconds',
+    'handoverProvenance',
     'impactDeadlineSeconds',
     'impactDeadlineProvenance',
     'impactProvenance',
@@ -514,6 +521,15 @@ export const readErisPresentation = (
       )
     },
     time: {
+      handoverProvenance: provenance(
+        time['handoverProvenance'],
+        'time.handoverProvenance'
+      ),
+      handoverSeconds: literal(
+        time['handoverSeconds'],
+        10_048,
+        'time.handoverSeconds'
+      ),
       impactDeadlineProvenance: provenance(
         time['impactDeadlineProvenance'],
         'time.impactDeadlineProvenance'

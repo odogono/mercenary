@@ -94,8 +94,11 @@ describe('the terminator', () => {
   });
 
   test('a quarter turn of the Body carries the Eris start into daylight', () => {
-    // #439's `jump` added a quarter of a turn once, and the ST went from night to day.
-    const start = content.doc.start;
+    // #439's `jump` added a quarter of a turn once to the on-foot capture, which stands at
+    // night, and the ST went from night to day.
+    const start = content.poses.poses.find(
+      pose => pose.id === 'eris-spaceport-onfoot'
+    )!;
     expect(inDaylight(0x1_5b, start.bodyTurn, start.position)).toBe(false);
     expect(
       inDaylight(
@@ -123,20 +126,35 @@ describe('the terminator', () => {
 });
 
 describe('the session keeps the Body turning', () => {
-  test('starts at night on Eris, under its night sky', () => {
+  test('starts by day on Eris, under its day sky, at the turn a fresh game hands over', () => {
     const session = new DamoclesSession(content);
-    expect(session.snapshot.bodyTurn).toBe(0x01_66_d5_2c);
-    expect(session.snapshot.daylight).toBe(false);
+    // `start-turn-probe.py`: the reset's zero still stands when `$7A8E` turns on.
+    expect(session.snapshot.bodyTurn).toBe(0);
+    expect(session.snapshot.daylight).toBe(true);
     const { pose, structure, surface } = session.snapshot;
-    const plan = planErisFrame(surface, pose, content.doc, structure);
-    expect(hex(plan.clear)).toBe('#000022');
+    const plan = planErisFrame(
+      surface,
+      pose,
+      content.doc,
+      structure,
+      [],
+      [],
+      () => false,
+      true
+    );
+    expect(hex(plan.clear)).toBe('#66aaee');
+    // Night falls on the start about five minutes in, as the probe's run saw.
+    session.advance(300);
+    expect(session.snapshot.daylight).toBe(true);
+    session.advance(10);
+    expect(session.snapshot.daylight).toBe(false);
   });
 
   test('advances the turn by the Body rate every VBL and crosses into daylight', () => {
     const start = new DamoclesSession(content);
     start.advance(1);
     // One second is 50 VBLs at ERIS's `$141` a VBL.
-    expect(start.snapshot.bodyTurn).toBe(0x01_66_d5_2c + 50 * 0x1_41);
+    expect(start.snapshot.bodyTurn).toBe(50 * 0x1_41);
     // Just short of the terminator, which the Eris start pose meets at longitude step `$25C`.
     const edge = 0x2_5c - 17;
     const before = new DamoclesSession(content, {

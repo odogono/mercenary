@@ -56,8 +56,9 @@ describe('the Damocles Panel Rendition on Damocles Session State', () => {
       scrollPixels: 0
     });
     expect(model.speedLabel).toBe('+ 000 000 000');
-    // The impact clock starts at the deadline the title screen installs at `$793C` (#368).
-    expect(model.clock).toBe('04-19-20');
+    // The impact clock starts where the scripted arrival hands over control, having spent
+    // the rest of the deadline the title screen installs at `$793C` (#368).
+    expect(model.clock).toBe('02-47-28');
     // Six digits, which is what the original's altitude window prints and one more than the
     // Targ instrument the view model is shared with (#368).
     expect(model.altitude).toBe('000000');
@@ -145,11 +146,11 @@ describe('the Damocles Panel Rendition on Damocles Session State', () => {
     // deadline's own seconds, and standing still spends them just as walking does.
     session.advance(10);
     expect(damoclesPanelViewModel(session.snapshot, loaded.doc).clock).toBe(
-      '04-19-10'
+      '02-47-18'
     );
     session.advance(3590);
     expect(damoclesPanelViewModel(session.snapshot, loaded.doc).clock).toBe(
-      '03-19-20'
+      '01-47-28'
     );
   });
 
