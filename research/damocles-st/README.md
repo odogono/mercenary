@@ -112,6 +112,18 @@ takes the direct path at level 10, and `metis-transporter` lands on `FILOFAX` at
 level 9, where the support supplies the rank the carried key requires, so the
 model-form and height gates run.
 
+## Ground contact and the direct-drop gate (#357)
+
+```sh
+python3 research/damocles-st/scripts/ground-contact-probe.py
+```
+
+Boots the rehosted `dion-2-3` pose, boards `EAGLE NINE S E`, drops once on the
+ground, climbs until `$7ACA` has read zero three times, and drops again. `:trace`
+markers on the drop handler's entry, its contact test `$05462A` and the
+instruction after it say whether each drop reached the gate and got past it.
+See [the ground-contact research](../../docs/research/damocles-ground-contact.md).
+
 ## Structure Workspace reach and capture (#447)
 
 ```sh

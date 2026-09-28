@@ -2008,7 +2008,7 @@ export class DamoclesSession implements TitleSession<
     if (instance === null) {
       return { kind: 'refused' };
     }
-    // 2. The occupied object is in ground contact `$7ACA`.
+    // 2. The occupied object is in ground contact `$7ACA` ($0544A8).
     // 3. Not at sea by the island classification. 4. Not on the VOID staging Body.
     if (
       this.craft?.contact === 0 ||
@@ -2236,7 +2236,18 @@ export class DamoclesSession implements TitleSession<
       return placed;
     }
 
-    const placed = this.directResidence();
+    // `$05462A`: the direct path refuses silently without ground contact. On foot the player
+    // is always in contact; aboard, a craft off the ground has cleared it (#357).
+    if (this.craft !== null && this.craft.contact === 0) {
+      return undefined;
+    }
+    // Aboard, `$7AAE` is not 1: the handler skips the interior group search ($05453A) and
+    // direct placement writes insertion group zero, the surface placement. The zone is still
+    // taken against the bound structure.
+    const placed =
+      this.occupied === null
+        ? this.directResidence()
+        : this.directResidence(this.pose, this.boundPlacement, null);
     if (placed.kind === 'surface') {
       return placed;
     }
@@ -2320,8 +2331,6 @@ export class DamoclesSession implements TitleSession<
   drop(): { readonly kind: 'dropped' | 'refused' } {
     const head = this.carried[0];
     if (
-      // Authored: no capture shows a Drop completing aboard (#407).
-      this.occupied !== null ||
       head === undefined ||
       this.pose.body === VOID_BODY ||
       this.scrollCounter !== 0

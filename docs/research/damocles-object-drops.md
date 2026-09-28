@@ -222,6 +222,10 @@ skipped. Slot 0 is not a takeable resident — the take handler rejects it at `$
 array, so slot 0's handling byte is plausibly scratch rather than an object. The
 instruction is recorded; the interpretation is **not resolved**.
 
+The contact refusal itself is observed on an ordinary route: aboard `EAGLE NINE S E` above
+the ground, a Drop reaches `$05462A` and gets no further, while a Drop on the ground on the
+same route passes it ([ground contact](damocles-ground-contact.md)).
+
 Direct placement itself (`$0546CC`–`$05471C`) is the write set the key research
 already established, and it is the same for every object:
 

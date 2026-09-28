@@ -445,7 +445,7 @@ const cues = (session: DamoclesSession): string[] =>
     .flatMap(effect => (effect.type === 'sound-request' ? [effect.cue] : []));
 
 describe('aboard', () => {
-  test('the craft Mover runs instead of the walk, and Take, Drop, the Body switch and goto do nothing', () => {
+  test('the craft Mover runs instead of the walk, and Take, the Body switch and goto do nothing', () => {
     const session = beside(LIMO, [LIMO_KEY]);
     session.board();
     const seated = session.snapshot.pose;
@@ -466,7 +466,6 @@ describe('aboard', () => {
     session.intent = { ...session.intent, turn: 0, walk: 0 };
 
     expect(session.take()).toEqual({ kind: 'refused' });
-    expect(session.drop()).toEqual({ kind: 'refused' });
     expect(session.snapshot.carried).toEqual([LIMO_KEY]);
     expect(session.switchToPose('thalia').kind).toBe('declined');
     expect(() => session.teleportToCell(1, 1)).toThrow();
@@ -545,6 +544,26 @@ describe('aboard', () => {
     expect(session.leave()).toEqual({ kind: 'left' });
   });
 
+  // #357, the route `ground-contact-probe.py` runs: a Drop on the ground passes the contact
+  // gate `$05462A`; the same Drop after the climb has cleared `$7ACA` refuses there, silently.
+  test('a Drop aboard completes on the ground and refuses in the air', () => {
+    const EAGLE = 'object-slot-3';
+    const session = beside(EAGLE, [pairedKey(EAGLE), LIMO_KEY]);
+    session.board();
+    expect(session.drop()).toEqual({ kind: 'dropped' });
+    expect(session.snapshot.carried).toEqual([LIMO_KEY]);
+    session.drainEffects();
+
+    session.throttleKey(0x05);
+    passes(session, 30);
+    passes(session, 20, { pitch: 1 });
+    expect(session.captureResume().craft?.contact).toBe(0);
+    expect(session.drop()).toEqual({ kind: 'refused' });
+    expect(session.snapshot.carried).toEqual([LIMO_KEY]);
+    expect(session.snapshot.message).toBeNull();
+    expect(cues(session)).toEqual(['throttle']);
+  });
+
   test('a dive past 45° is a hard landing that puts the player on foot', () => {
     const EAGLE = 'object-slot-3';
     const session = beside(EAGLE, [pairedKey(EAGLE)]);
@@ -580,6 +599,31 @@ describe('aboard', () => {
       });
     expect(at(0x28_fa - 1)).toBe(true);
     expect(at(0x28_fa)).toBe(false);
+  });
+
+  // #357: aboard a craft on the ground, a Drop passes the contact gate and places the head
+  // of the Carried Stack one eye height below the eye -- where the craft stands. Aboard, the
+  // direct placement writes insertion group zero, so it lands on the surface.
+  test('a Drop completes aboard as a surface placement where the craft stands', () => {
+    const session = beside(LIMO, [LIMO_KEY]);
+    session.board();
+    const pose = session.snapshot.pose;
+    const at = { ...pose.position, y: pose.position.y - eye };
+
+    expect(session.drop()).toEqual({ kind: 'dropped' });
+
+    const snapshot = session.snapshot;
+    expect(snapshot.carried).toEqual([]);
+    expect(snapshot.pose).toEqual(pose);
+    expect(snapshot.occupancy).toEqual({ instance: LIMO, kind: 'aboard' });
+    expect(
+      snapshot.residence.find(item => item.instance === LIMO_KEY)?.residence
+    ).toMatchObject({ body: 'body-11', kind: 'surface', position: at });
+    expect(snapshot.message).toBeNull();
+
+    const restored = new DamoclesSession(content, session.captureResume());
+    expect(restored.snapshot.carried).toEqual([]);
+    expect(restored.leave()).toEqual({ kind: 'left' });
   });
 });
 
