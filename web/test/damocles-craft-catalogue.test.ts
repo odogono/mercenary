@@ -98,3 +98,32 @@ it('refuses a craft block that leaves out a constant', async () => {
     parseCatalogue({ ...raw, craft: { ...craft, constants } })
   ).toThrow('the craft block does not carry every craft constant');
 });
+
+it('publishes what the launch, the space pass and the range scan read (#558)', async () => {
+  const craft = (await loadCatalogue()).craft!;
+  expect(craft.constants.launchGate).toEqual({
+    address: 0x05_58_3c,
+    operand: 100
+  });
+  expect(craft.constants.launchThrottle.operand).toBe(0x00_0e_f0_00);
+  expect(craft.constants.spaceRangeScale.operand).toBe(0x00_10_10_00);
+  expect(craft.constants.arrivalGap.operand).toBe(-7);
+  expect(craft.arithmetic.octants).toEqual([
+    0x00_00, 0x81_00, 0x84_00, 0x03_00, 0x82_00, 0x01_00, 0x02_00, 0x83_00
+  ]);
+  expect(digest(craft.arithmetic.arctan.bytes)).toBe(
+    craft.arithmetic.arctan.sha256
+  );
+  // DIALIS to DAMOCLES, the scan's offsets `$74` down to 0, ERIS at 11.
+  expect(craft.bodies).toHaveLength(30);
+  expect(craft.bodies[11]).toEqual({
+    extent: 0x00_12_12_c0,
+    x: -630_000,
+    y: 0,
+    z: 390_000
+  });
+  expect(craft.boot.range.value).toBe(0x00_0a_13_7a);
+  expect(craft.boot.nearest.value).toBe(11 * 4);
+  // The unnormalised `$2000` a range sum can leave reads `$FFF0`, the word past the table.
+  expect(craftLog(0x20_00)).toBe(0xff_f0);
+});

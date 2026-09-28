@@ -574,14 +574,17 @@ const skyCometTriangles = (
   view: readonly Vector3[],
   pixel: number,
   depth: number,
-  emit: (view: Vector3, colour: readonly [number, number, number]) => void
+  emit: (view: Vector3, colour: readonly [number, number, number]) => void,
+  horizonCut = true
 ): boolean => {
   let drawn = false;
   const fill = (
     polygon: readonly Tangent[],
     colour: readonly [number, number, number]
   ): void => {
-    const cut = clipPolygon(polygon, point => point.y, lerp2);
+    const cut = horizonCut
+      ? clipPolygon(polygon, point => point.y, lerp2)
+      : polygon;
     for (let index = 1; index + 1 < cut.length; index += 1) {
       for (const point of [cut[0]!, cut[index]!, cut[index + 1]!]) {
         emit({ x: point.x * depth, y: point.y * depth, z: depth }, colour);
@@ -640,12 +643,13 @@ const skyCometTriangles = (
 /// `+w` about the centre, split at `split·w`, and cut at the horizon row, which on foot is the
 /// view's centre row (`$042C74 = $44`, row 68 of 136). The disc is round here where the ST's
 /// is widened by `1/0.84375`: that widening makes it round on the ST's non-square pixels, and
-/// the port's pixels are square.
+/// the port's pixels are square. In space (`$042C74 = $88`, the view's last row) nothing is cut.
 const skyDiscTriangles = (
   body: Pick<SkyBody, 'colour' | 'first' | 'shadow' | 'split'>,
   placement: SkyBodyPlacement,
   depth: number,
-  emit: (view: Vector3, colour: readonly [number, number, number]) => void
+  emit: (view: Vector3, colour: readonly [number, number, number]) => void,
+  horizonCut = true
 ): void => {
   const lit = channels(body.colour);
   const shadow = channels(body.shadow);
@@ -658,10 +662,8 @@ const skyDiscTriangles = (
     readonly y: number;
   }[] = [];
   for (let slab = 0; slab <= SKY_DISC_SLABS; slab += 1) {
-    const row = Math.max(
-      0,
-      y - radius * Math.cos((slab * Math.PI) / SKY_DISC_SLABS)
-    );
+    const edge = y - radius * Math.cos((slab * Math.PI) / SKY_DISC_SLABS);
+    const row = horizonCut ? Math.max(0, edge) : edge;
     const dy = row - y;
     const w = Math.sqrt(Math.max(0, radius * radius - dy * dy));
     rows.push({ left: x - w, right: x + w, split: x + body.split * w, y: row });
@@ -730,7 +732,10 @@ export const planErisFrame = (
   /// `$80xx` word is read through, and which of the Body's two sky words fills the sky.
   daylight = false,
   /// The Bodies the current Body's draw list names (#530). None where the frame has no sky pass.
-  sky: SkyPass | null = null
+  sky: SkyPass | null = null,
+  /// In space (#558) the frame draws the sky alone, over black: no ground, island, structure
+  /// or object stream.
+  inSpace = false
 ): ErisFramePlan => {
   const camera = new Camera({
     farPlane: doc.camera.farPlane,
@@ -850,7 +855,7 @@ export const planErisFrame = (
   // across has no row at all.
   const discDrawn = (placement: Omit<SkyBodyPlacement, 'drawn'>): boolean =>
     placement.radius * projectionScale >= halfWidthDivisor &&
-    placement.y + placement.radius > 0;
+    (inSpace || placement.y + placement.radius > 0);
   for (const body of skyBodies) {
     const view = skyView(body.offset);
     const placement =
@@ -876,7 +881,8 @@ export const planErisFrame = (
         body.points.map(skyView),
         1 / projectionScale,
         skyAt,
-        skyEmit
+        skyEmit,
+        !inSpace
       );
       if (view.z > 0 && body.head !== null && discDrawn(placement)) {
         const { colour } = body.head;
@@ -884,7 +890,8 @@ export const planErisFrame = (
           { colour, first: 'lit', shadow: colour, split: 1 },
           { ...placement, drawn: true },
           skyAt,
-          skyEmit
+          skyEmit,
+          !inSpace
         );
         drawn = true;
       }
@@ -898,7 +905,7 @@ export const planErisFrame = (
     const drawn = onScreen(placement.x) && discDrawn(placement);
     skyPlacements.push({ ...placement, drawn });
     if (drawn) {
-      skyDiscTriangles(body, { ...placement, drawn }, skyAt, skyEmit);
+      skyDiscTriangles(body, { ...placement, drawn }, skyAt, skyEmit, !inSpace);
     }
   }
 
@@ -910,7 +917,9 @@ export const planErisFrame = (
   // infinite plane below the eye meets the sky at eye level, as the raster split does.
   const here = classifyPosition(surface, pose.position);
   const underfoot = here.kind === 'core' ? here.island : undefined;
-  const base = background?.floor ?? underfoot?.landColour ?? surface.baseColour;
+  const base = inSpace
+    ? null
+    : (background?.floor ?? underfoot?.landColour ?? surface.baseColour);
   // A Body with no recovered surface colour draws no plane at all rather than an invented one
   // (ADR 0043). No Body a Session stands on is in that state; the VOID slot is not a surface.
   // The base plane and the island fills are one plane, y = −drop.
@@ -935,7 +944,7 @@ export const planErisFrame = (
   }
   const fillTriangleCount = triangleCount;
 
-  for (const island of enclosed ? [] : surface.islands) {
+  for (const island of enclosed || inSpace ? [] : surface.islands) {
     if (island.id === underfoot?.id) {
       continue;
     }
@@ -1085,11 +1094,13 @@ export const planErisFrame = (
   // The recovered draw bound (#370, #373): the Working Authority draws a cell's ground
   // records and its Surface Structure from that cell alone, and its objects from anywhere on
   // the Body. At the Eris arrival Pose that is 4 of the workspace's 207 placements.
-  const drawn = enclosed
-    ? [bound!]
-    : surface.placements.filter(placement =>
-        withinDrawBound(placement, pose.position, surface.grid)
-      );
+  const drawn = inSpace
+    ? []
+    : enclosed
+      ? [bound!]
+      : surface.placements.filter(placement =>
+          withinDrawBound(placement, pose.position, surface.grid)
+        );
   for (const placement of drawn) {
     if (placement.kind === 'ground') {
       emitPlacement(placement);
@@ -1111,7 +1122,7 @@ export const planErisFrame = (
       drawnPlacements.push(placement.id);
     }
   }
-  for (const resident of residents) {
+  for (const resident of inSpace ? [] : residents) {
     emitPlacement(resident);
     drawnPlacements.push(resident.id);
   }
@@ -1122,7 +1133,7 @@ export const planErisFrame = (
     // it clears to black rather than to an invented sky.
     clear: channels(
       background?.ceiling ??
-        (surface.sky === null
+        (surface.sky === null || inSpace
           ? '#000000'
           : daylight
             ? surface.sky.day.colour

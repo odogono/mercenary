@@ -1116,3 +1116,137 @@ describe('leaving', () => {
     expect(restored.board()).toEqual({ kind: 'boarded' });
   });
 });
+
+/// Passes until the space entry, which the launch's climb reaches within a few hundred.
+const toSpace = (session: DamoclesSession): number => {
+  for (let pass = 1; pass <= 400; pass += 1) {
+    passes(session, 1);
+    if (session.snapshot.craft?.space !== null) {
+      return pass;
+    }
+  }
+  throw new Error('the launch never reached space');
+};
+
+describe('launch and space (#566)', () => {
+  const EAGLE = 'object-slot-3';
+  /// EAGLE NINE S E off the ground over Eris: key 4, then the nose up.
+  const aloft = (): DamoclesSession => {
+    const session = beside(EAGLE, [pairedKey(EAGLE)]);
+    session.board();
+    session.throttleKey(0x05);
+    passes(session, 30);
+    passes(session, 20, { pitch: 1 });
+    expect(session.snapshot.pose.position.y).toBeGreaterThan(1000);
+    cues(session);
+    return session;
+  };
+
+  test('launches aloft, swings the nose down, climbs backwards into space and turns there', () => {
+    const session = aloft();
+    const pitch = session.snapshot.pose.pitch;
+    session.launchCraft();
+    expect(session.snapshot.craft?.swing).toBe(true);
+    expect(cues(session)).toEqual(['throttle']);
+    // The swing moves the nose alone, 16 a pass, and nothing else.
+    const { position } = session.snapshot.pose;
+    passes(session, 1);
+    expect(session.snapshot.pose.position).toEqual(position);
+    expect(session.snapshot.pose.pitch).not.toBe(pitch);
+    toSpace(session);
+    const entered = session.snapshot;
+    expect(entered.craft?.swing).toBe(false);
+    // From ERIS's centre, 64 up, nearest ERIS as the first world boots.
+    expect(entered.craft?.space).toMatchObject({
+      nearest: 'body-11',
+      position: { x: -630_000, y: 64, z: 390_000 }
+    });
+    // The Pose stays where the craft left the Body; the view is the craft's.
+    passes(session, 10, { turn: 1 });
+    const flying = session.snapshot;
+    expect(flying.pose.position).toEqual(entered.pose.position);
+    expect(flying.pose.heading).not.toBe(entered.pose.heading);
+    expect(flying.craft?.space?.position).not.toEqual(
+      entered.craft?.space?.position
+    );
+    // Reverse thrust near the speed of light, and the range in the altitude window.
+    const panel = damoclesPanelViewModel(flying, content.doc);
+    expect(panel.speedLabel).toMatch(/^- [12]\d\d /);
+    expect(panel.altitude).not.toBe('******');
+    expect(panel.groundLamp).toBe(false);
+    // In space there is no ground contact to leave from, and no second launch.
+    expect(session.leave()).toEqual({ kind: 'refused' });
+    session.launchCraft();
+    expect(cues(session)).toEqual([]);
+    // The frame draws the sky alone.
+    const plan = planErisFrame(
+      flying.surface,
+      flying.pose,
+      content.doc,
+      flying.structure,
+      flying.residents,
+      [],
+      () => false,
+      false,
+      null,
+      true
+    );
+    expect(plan.triangleCount).toBe(0);
+    expect(plan.drawnPlacements).toEqual([]);
+  });
+
+  test('refuses silently on the ground, and a throttle key ends the swing', () => {
+    const session = beside(EAGLE, [pairedKey(EAGLE)]);
+    session.board();
+    session.launchCraft();
+    expect(session.snapshot.craft?.swing).toBe(false);
+    expect(cues(session)).toEqual([]);
+
+    const flying = aloft();
+    flying.launchCraft();
+    passes(flying, 1);
+    flying.throttleKey(0x05);
+    expect(flying.snapshot.craft?.swing).toBe(false);
+  });
+
+  test('CONCORD III, whose +$1A is 90, is not equipped for space travel', () => {
+    const CONCORD = 'object-slot-10';
+    const session = beside(CONCORD, [pairedKey(CONCORD)]);
+    expect(session.board()).toEqual({ kind: 'boarded' });
+    session.throttleKey(0x05);
+    passes(session, 30);
+    passes(session, 20, { pitch: 1 });
+    expect(session.snapshot.pose.position.y).toBeGreaterThan(1000);
+    session.launchCraft();
+    expect(session.snapshot.craft?.swing).toBe(false);
+    expect(session.snapshot.message?.id).toBe('system-string-21');
+  });
+
+  test('stopped in ERIS’s range, the arrival is raised once the hold runs out, and holds the craft', () => {
+    const session = aloft();
+    session.launchCraft();
+    toSpace(session);
+    // Space at once: the craft stays inside ERIS's arrival range, as the traced `return` does.
+    session.throttleKey(0x39);
+    // Fifty passes count the hold `$7B0A` down; the next may raise the arrival.
+    passes(session, 50);
+    expect(session.snapshot.craft?.held).toBeNull();
+    passes(session, 1);
+    expect(session.snapshot.craft?.held).toBe('arrival');
+    // The landing is the next ticket's, so nothing moves after the arrival.
+    const held = session.snapshot.craft?.space;
+    passes(session, 5, { turn: 1 });
+    expect(session.snapshot.craft?.space).toEqual(held);
+  });
+
+  test('a Save in space resumes at the space entry, as the craft entered it', () => {
+    const session = aloft();
+    session.launchCraft();
+    toSpace(session);
+    const entered = session.snapshot;
+    passes(session, 10, { turn: 1 });
+    const restored = roundTrip(session);
+    expect(restored.snapshot.pose).toEqual(entered.pose);
+    expect(restored.snapshot.craft).toEqual(entered.craft);
+  });
+});

@@ -42,7 +42,7 @@ import {
   readTypefacePreference
 } from '../shell/typography.ts';
 import { AudioWorkletTransport } from '../sound/transport.ts';
-import { impactTime } from './comet.ts';
+import { cometCentre, impactTime } from './comet.ts';
 import {
   DAMOCLES_CONSOLE_BANNER,
   executeDamoclesConsoleCommand,
@@ -65,7 +65,7 @@ import {
 } from './save.ts';
 import { createDamoclesSavePersistence } from './saves.ts';
 import { DamoclesSession } from './session.ts';
-import { skyPass } from './sky.ts';
+import { skyPass, spaceSkyPass } from './sky.ts';
 import {
   DamoclesSoundPresenter,
   type DamoclesSoundCommand,
@@ -149,13 +149,19 @@ try {
   } catch {
     storage = undefined;
   }
-  const [content, system] = await Promise.all([
+  const [loaded, system] = await Promise.all([
     damoclesTitle.load(requiredJson),
     requiredJson('/payload/damocles/system.json').then(document =>
       readGammaSystem(document.value)
     ),
     loadTypography()
   ]);
+  // The range scan in space reads the comet where the impact clock has moved it (#558).
+  const content = {
+    ...loaded,
+    cometAt: (elapsed: number) =>
+      cometCentre(system.comet, impactTime(elapsed, loaded.doc.time))
+  };
   applyTypeface(document.documentElement, readTypefacePreference(storage));
   panelRoot.dataset['rendition'] = 'damocles';
   const identity = damoclesSaveIdentity(
@@ -311,6 +317,8 @@ try {
         commitAction(() => session.board());
       }
     },
+    // The ST's Esc aboard (`$055822`), which the Browser Shell keeps for the System Menu.
+    launch: () => commitAction(() => session.launchCraft()),
     // Targ's single lift key. A Damocles Lift is ridden by the Floor keys, through `liftKey`.
     rideLift: () => undefined,
     // The throttle keys as the ST scancodes the table at `$0557D6` is indexed by: `1`–`9`
@@ -875,6 +883,17 @@ try {
     // The view's pitch and bank, which the craft Mover moves aboard (#556).
     root['pitch'] = String(snapshot.pose.pitch);
     root['roll'] = String(snapshot.pose.roll ?? 0);
+    // Space (#558): the launch swing, the nearest Body and its range, and the craft's System
+    // position, empty on a Body; and why the Mover stands still, if it does.
+    const space = snapshot.craft?.space ?? null;
+    root['craftSwing'] = String(snapshot.craft?.swing ?? false);
+    root['craftHeld'] = snapshot.craft?.held ?? '';
+    root['spaceNearest'] = space?.nearest ?? '';
+    root['spaceRange'] = space === null ? '' : String(space.range);
+    root['spacePosition'] =
+      space === null
+        ? ''
+        : `${space.position.x} ${space.position.y} ${space.position.z}`;
     root['attachmentOpenUnits'] = String(
       snapshot.structure?.attachments[0]?.openUnits ?? 0
     );
@@ -920,6 +939,7 @@ try {
     const { castShadows, presentationPreset } = preferences.current();
     const enhanced =
       presentationPreset === undefined || presentationPreset === 'enhanced';
+    const space = snapshot.craft?.space ?? null;
     // The surface comes from the Session Snapshot rather than the presentation document, so a
     // Body switch or a Save restored onto another Body draws that Body's workspace (#379).
     const plan = planErisFrame(
@@ -938,20 +958,31 @@ try {
       // The sky Bodies turn with the accumulator the terminator reads, and the comet moves with
       // the impact clock, so a Save restores all three. Enhanced presentation moves the Bodies
       // smoothly between the engine's steps.
-      skyPass(system, {
-        body: snapshot.pose.body,
-        daylight: snapshot.daylight,
-        impact: impactTime(snapshot.elapsed, content.doc.time),
-        position: snapshot.pose.position,
-        sky: snapshot.surface.sky,
-        smooth: enhanced,
-        turn: snapshot.bodyTurn
-      })
+      space === null
+        ? skyPass(system, {
+            body: snapshot.pose.body,
+            daylight: snapshot.daylight,
+            impact: impactTime(snapshot.elapsed, content.doc.time),
+            position: snapshot.pose.position,
+            sky: snapshot.surface.sky,
+            smooth: enhanced,
+            turn: snapshot.bodyTurn
+          })
+        : spaceSkyPass(system, {
+            eye: space.position,
+            impact: impactTime(snapshot.elapsed, content.doc.time),
+            inScene: index =>
+              (content.catalogue.craft?.bodies[index]?.y ?? 0) >= 0
+          }),
+      space !== null
     );
     const shadowEdge = castShadows ?? DEFAULT_CAST_SHADOWS;
     // A Cast Shadow is Enhanced presentation only, and the player may turn its edge off.
     const shadows =
-      content.doc.lighting.shadows && enhanced && shadowEdge !== 'off';
+      content.doc.lighting.shadows &&
+      enhanced &&
+      shadowEdge !== 'off' &&
+      space === null;
     renderer.render(
       plan,
       shadows

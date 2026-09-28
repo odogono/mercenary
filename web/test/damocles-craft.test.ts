@@ -113,6 +113,7 @@ const stateOf = (stop: Stop, trig = trigOf(stop)): CraftState => ({
   speed: stop.speed,
   supported: stop.supported,
   supportLevel: stop.supportLevel,
+  swing: false,
   throttle: stop.throttle,
   trig,
   turnRate: stop.turnRate,

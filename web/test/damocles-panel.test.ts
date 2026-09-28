@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
+import { craftProgram } from '../src/damocles/craft.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import {
   altitudeWindow,
@@ -7,9 +8,11 @@ import {
   cellReadout,
   damoclesPanelViewModel,
   impactClock,
+  printedAltitude,
   speedField
 } from '../src/damocles/panel.ts';
 import { DamoclesSession } from '../src/damocles/session.ts';
+import { spaceAltitude } from '../src/damocles/space.ts';
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { damoclesTitle } from '../src/damocles/title.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
@@ -233,5 +236,20 @@ describe('the panel aboard (#551, #556)', () => {
     expect(altitudeWindow(29_031_839, 0)).toBe('276869');
     expect(altitudeWindow(105_000_000, 0)).toBe('******');
     expect(altitudeWindow(3233, 10)).toBe('******');
+  });
+});
+
+describe('the panel in space (#551, #558)', () => {
+  test('prints the relativistic speed the space pass leaves in `$4DFEC`', () => {
+    // The first space pass of the traced launch: `$797A` = `$0009E176`, reverse thrust.
+    expect(speedField(804_318_406, 0x00_09_e1_76)).toBe('- 299 631 955');
+  });
+
+  test('prints the nearest range ÷ 16,384 in the altitude window', async () => {
+    const program = craftProgram((await loadCatalogue()).craft!);
+    // Stop 600 of the #551 launch trace: `$791C` = `$000B1290` (2,376) shows `001450`.
+    expect(printedAltitude(spaceAltitude(program, 0x00_0b_12_90))).toBe(
+      '001450'
+    );
   });
 });

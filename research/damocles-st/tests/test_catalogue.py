@@ -3735,6 +3735,47 @@ class CraftTests(unittest.TestCase):
         self.assertEqual([keys[code] for code in range(0x3B, 0x45)], list(range(9, 29, 2)))
         self.assertEqual(keys[0x39], 0x80)
 
+    def test_the_space_constants_are_read_from_their_instructions(self):
+        from damocleslab.catalogue import decode_craft
+        operands = {name: c['operand'] for name, c in decode_craft(self.image())['constants'].items()}
+        self.assertEqual((operands['launchGate'], operands['launchThrottle'], operands['launchSpeedExponent']),
+                         (100, 0x000EF000, 0xF000))
+        self.assertEqual((operands['swingStep'], operands['swingLow'], operands['swingHigh']), (16, 0x180, 0x300))
+        self.assertEqual((operands['spaceHold'], operands['spacePitch'], operands['arrivalGap']), (50, 0x1FF, -7))
+        self.assertEqual(operands['spaceRangeScale'], 0x00101000)
+        self.assertEqual(operands['panelLight'], 0x2FF77FC6)
+        self.assertNotIn('swingStepDown', operands)
+        # The swing's two steps are one constant: they must agree.
+        with self.assertRaises(ValueError):
+            decode_craft(self.image({0x57F3F: 0x20}))
+
+    def test_the_body_table_is_walked_from_the_scan_offset(self):
+        from damocleslab.catalogue import decode_craft
+        patch = {0x7C11: 0x04, 0x5F44: 0x12, 0x626A: 0x80, 0x6043: 0x40}
+        bodies = decode_craft(self.image(patch))['bodies']
+        self.assertEqual(bodies['entries'], [
+            {'x': 0, 'y': -0x80000000, 'z': 0, 'extent': 0x40},
+            {'x': 0x12000000, 'y': 0, 'z': 0, 'extent': 0},
+        ])
+        with self.assertRaises(ValueError):
+            decode_craft(self.image({0x7C11: 0x7C}))
+
+    def test_the_pinned_space_tables_are_the_recovered_ones(self):
+        craft = self.pinned()
+        self.assertEqual(craft['arithmetic']['octants']['words'],
+                         [0x0000, 0x8100, 0x8400, 0x0300, 0x8200, 0x0100, 0x0200, 0x8300])
+        self.assertEqual(craft['arithmetic']['arctan']['sha256'],
+                         '1531a917798ca02861f9c4dfce4b275ef48fbc173950ef99e8a2c7884a939e0c')
+        bodies = craft['bodies']['entries']
+        # DIALIS to DAMOCLES: the scan starts at $74, and every Body is in the first world's scene.
+        self.assertEqual(len(bodies), 30)
+        self.assertEqual(bodies[1], {'x': 46500, 'y': 0, 'z': 36000, 'extent': 0x000F1F40})
+        self.assertTrue(all(body['y'] >= 0 for body in bodies))
+        # The first world boots nearest ERIS, with the range and the pitch rate the port starts from.
+        self.assertEqual({name: word['value'] for name, word in craft['boot'].items()},
+                         {'range': 0x000A137A, 'nearest': 0x2C, 'pitchRate': 0xFF001000})
+        self.assertEqual(craft['constants']['spaceY']['operand'], 64)
+
     def test_the_payload_publishes_the_pinned_block(self):
         craft = self.pinned()
         root = Path(__file__).resolve().parents[3]
