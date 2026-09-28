@@ -70,6 +70,11 @@ and accepted support both set it to 63, while failed support clears it and on-fo
 applies falling. The observed room and exterior drops have contact 63. Unsupported/falling
 drop refusal is instruction-derived and still needs an ordinary-route observation.
 
+> **Since observed** ([#357](https://github.com/odogono/mercenary/issues/357)): an airborne
+> craft's Drop refuses at `$05462A` on an ordinary route. `$057DE6` is the wheeled-craft
+> routine, not an on-foot fall. The on-foot fall is craft slot 9 at `$057D64`. See
+> [ground contact](damocles-ground-contact.md).
+
 ## Why insertion group 12 becomes 1
 
 The Spaceport association-list root `$014AAC` has group 1 and group 12. Both contain authored
@@ -283,7 +288,7 @@ Contact-state source ranges, inclusive, in the same pinned RAM:
 | --- | --- |
 | `$0582AA`–`$05832B` vertical contact update | `2ea45e8c312d477f5865e032057b525c88f8912ce6716d0f623beb32dbfb6f54` |
 | `$0583EA`–`$05843B` support rectangle search | `aed65361dbe13fb59d29acdd4c97737ad5634f0d2530a6c1b428a1daa803b82f` |
-| `$057DE6`–`$057DFD` on-foot unsupported fall | `9fa1f3e044d1e09e2af92fbc7d979d199e3c0340a37b971001ceed22db6cf45c` |
+| `$057DE6`–`$057DFD` wheeled-craft routine (not an on-foot fall; see [ground contact](damocles-ground-contact.md)) | `9fa1f3e044d1e09e2af92fbc7d979d199e3c0340a37b971001ceed22db6cf45c` |
 
 ## Surface residence survives leaving the cell and returning
 
@@ -434,7 +439,7 @@ route.
 | Other interior groups/levels; bound unmatched region | Not observed | Model-wide source-group census only |
 | Interior attachment region | Spaceport region-2 missing-group refusal observed | Other attachment regions have source census only |
 | Passage | Not observed | Source census proves differing group permissions |
-| Nearby-support placement; unsupported/falling refusal | Not observed | Rank, height and contact gates recovered |
+| Nearby-support placement; unsupported/falling refusal | Contact refusal observed aboard an airborne craft ([ground contact](damocles-ground-contact.md)) | Rank, height and contact gates recovered |
 | Inventory-label scrolling refusal | Not observed | Reachable 16-VBL guard recovered |
 | Trading Post native region 9 | Port route only | Native flags/group permit trade; sale/buyback behaviour needs native replay |
 

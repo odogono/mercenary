@@ -100,8 +100,8 @@ Catalogue gap, and the contract is written so that closing it needs no session c
 | The hazard evaluator `$0543FA` leaving calls                                    | The session evaluates no environment hazard on a Drop either; it is carried-object gameplay owned elsewhere ([carry capacity](../research/damocles-carry-capacity.md#carried-object-consequences-that-no-handling-bit-predicts)).                                                      |
 | The sounds boarding requests through `$054848` and `$4BF58`                     | The laboratory runs with sound off; no cue is identified.                                                                                                                                                                                                                              |
 | `$042D14`, which boarding calls                                                 | Undecoded; it is also called from the flight path.                                                                                                                                                                                                                                     |
-| Slot 9's branch at `$0544E0`                                                    | Unreachable: slot 9 is a `NULL` record and the model guard refuses it.                                                                                                                                                                                                                 |
-| Take, Drop, the Body switch and the cell `goto` while aboard                    | Not established by any capture. See [Aboard](#aboard).                                                                                                                                                                                                                                 |
+| Slot 9's branch at `$0544E0`                                                    | Unreachable by boarding: slot 9 is a `NULL` record and the model guard refuses it. It is the on-foot fall's Mover state, which the landing tail leaves through this path ([ground contact](../research/damocles-ground-contact.md#the-fall-is-craft-slot-9-not-057de6)); the session has no fall.                                     |
+| Take, the Body switch and the cell `goto` while aboard                          | Not established by any capture. See [Aboard](#aboard). A Drop aboard is observed and included.                                                                                                                                                                                        |
 | Any Targ change, and any mechanism shared with Targ                             | ADR 0047 and ADR 0043; alignment is [#419](https://github.com/odogono/mercenary/issues/419).                                                                                                                                                                                           |
 | Payload, schema and session code                                                | #408, #416 and #417.                                                                                                                                                                                                                                                                   |
 
@@ -191,10 +191,17 @@ While the Occupancy is an object:
   coordinates must not stand in for one. _Recovered_: the boarded capture holds the
   object's resident coordinates unchanged while its association words say it is not resident.
 - **`B` is refused silently**, by test 5.
-- **Take, Drop, the Body switch and the cell `goto` do nothing.** _Authored._ No capture
-  shows a Take or Drop completing aboard; the selection note records that as untested. The
-  Body switch and the `goto` are the project's own actions (ADR 0046) and would carry the
-  player away from an object that is no longer resident anywhere.
+- **A Drop completes.** _Recovered_: `$054520`, observed aboard `EAGLE NINE S E` on the ground
+  ([ground contact](../research/damocles-ground-contact.md#observed-on-an-ordinary-route)).
+  The Drop's own checks apply as on foot, except that the interior group search at `$05453A`
+  runs only on foot. The contact gate `$05462A` refuses silently while the craft is off the
+  ground. A direct placement puts the object one eye height below the eye, where the object
+  the player occupies stands, and on the surface: aboard, `$7AAE` is not 1, so the insertion
+  group is zero.
+- **Take, the Body switch and the cell `goto` do nothing.** _Authored._ No capture shows a
+  Take completing aboard; the selection note records that as untested. The Body switch and
+  the `goto` are the project's own actions (ADR 0046) and would carry the player away from an
+  object that is no longer resident anywhere.
 
 ### Leaving
 
@@ -288,8 +295,9 @@ invented. No seated eye height is published.
   no resolved placement.
 - **The ground-contact, sea and VOID guards**, on both paths. Recovered from instructions. Each
   is included as a guard and recorded as unexercised.
-- **A Take, a Drop or any other action aboard.** Untested in the original; this contract makes
-  them do nothing, and says it made that choice.
+- **A Take or any other action aboard except a Drop.** Untested in the original; this contract
+  makes them do nothing, and says it made that choice. The Drop is observed and included
+  ([ground contact](../research/damocles-ground-contact.md)).
 - **Resident slot 38.** #404's one counterexample to "bit 7 means carried" cannot reach the
   gate, since slot 38 is below 178, but it keeps the invariant short of a closed rule.
 - **Sound.** Boarding and leaving both request sounds; none is identified.
@@ -313,6 +321,8 @@ is named.
 | Press `B` beside `AUTHOR'S CHAIR` from region 26                 | aboard                                                                   | instructions and published flags only      |
 | Press `B` beside a `SETTEE`                                      | nothing                                                                  | instructions only                          |
 | Aboard, press `B`                                                | nothing                                                                  | instructions only                          |
+| Aboard `EAGLE NINE S E` on the ground, press the drop chord      | head of the Carried Stack placed at the craft, eye Y minus 63            | `ground-contact`, two runs                 |
+| Aboard `EAGLE NINE S E` in the air, press the drop chord         | nothing; refused at `$05462A`                                            | `ground-contact`, two runs                 |
 
 ## Handoff
 

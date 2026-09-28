@@ -294,6 +294,13 @@ so its handling byte is plausibly scratch. Nothing here changes that.
 **Disposition: blocked on vertical movement, and on an observation of contact clearing** —
 tracked as [#357](https://github.com/odogono/mercenary/issues/357).
 
+> **Since observed** ([#357](https://github.com/odogono/mercenary/issues/357)): the craft's own
+> vertical update clears `$7ACA` on an ordinary climb, and the air Drop refuses at `$05462A`
+> while a ground Drop on the same route passes. On foot the player is always in contact. The
+> gate only refuses aboard, where the port's craft Mover now carries contact. `$057DE6` is
+> the wheeled-craft routine; the on-foot fall is craft slot 9. See
+> [ground contact](damocles-ground-contact.md).
+
 ## Source ranges
 
 Half-open ranges in the pinned first-world RAM.
