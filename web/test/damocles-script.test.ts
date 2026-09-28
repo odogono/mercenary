@@ -6,18 +6,25 @@ import {
   initialScriptState,
   presentSystemMessage,
   runFrame,
+  stepNoise,
   type ScriptRules,
   type ScriptState
 } from '../src/damocles/script.ts';
 import {
   CLEARING_LINE_FRAMES,
-  ORDINARY_DISPLAY_FRAMES
+  LANDING_TRIGGERS,
+  ORDINARY_DISPLAY_FRAMES,
+  TOLOSA_VISITED_FLAG
 } from '../src/damocles/scripts.ts';
+import { loadCatalogue } from './fixtures/catalogue.ts';
+
+const PICKUP_TRIGGERS = [2, 5, 6, 11, 20, 62];
 
 const rules: ScriptRules = {
   messageFrames: 200,
   messageText: id =>
     id === 'system-string-50' ? ' '.repeat(48) : id.padEnd(48).slice(0, 48),
+  noise: new Uint16Array(0x8_00),
   waitFrames: 200
 };
 
@@ -282,7 +289,11 @@ describe('busy arbitration', () => {
     for (const index of [2, 5, 6, 11, 20, 62]) {
       state = run(fireTrigger(state, index, rules).state, 1200);
     }
-    expect(state.triggers.filter(trigger => trigger.armed)).toEqual([]);
+    expect(
+      state.triggers.filter(
+        trigger => trigger.armed && PICKUP_TRIGGERS.includes(trigger.index)
+      )
+    ).toEqual([]);
     // A second pass changes nothing at all.
     expect(run(state, 100)).toMatchObject({ busy: false, execution: null });
     for (const index of [2, 5, 6, 11, 20, 62]) {
@@ -334,14 +345,21 @@ describe('a queued response nests inside the script it interrupted', () => {
 });
 
 describe('the recovered trigger table', () => {
-  test('is six one-shot pickup triggers with one queueable byte', () => {
+  test('is six pickup and 27 landing triggers, with one queueable and one sticky byte', () => {
     const triggers = initialScriptState().triggers;
     expect(triggers.map(trigger => trigger.index)).toEqual([
-      2, 5, 6, 11, 20, 62
+      ...PICKUP_TRIGGERS,
+      ...LANDING_TRIGGERS
     ]);
+    // `$20`-`$3B` without ERIS's `$2A`; DAMOCLES's `$3C` is the deflection ending.
+    expect(LANDING_TRIGGERS).toHaveLength(27);
+    expect(LANDING_TRIGGERS).not.toContain(0x2a);
+    expect(LANDING_TRIGGERS).not.toContain(0x3c);
     expect(triggers.every(trigger => trigger.armed)).toBe(true);
-    // Every pickup trigger has bit 6 clear; the table's one sticky byte is index $38.
-    expect(triggers.every(trigger => !trigger.sticky)).toBe(true);
+    // The table's one sticky byte is TOLOSA's `$38`.
+    expect(
+      triggers.filter(trigger => trigger.sticky).map(item => item.index)
+    ).toEqual([0x38]);
     expect(
       triggers.filter(trigger => trigger.queueable).map(item => item.index)
     ).toEqual([5]);
@@ -354,5 +372,139 @@ describe('the recovered trigger table', () => {
       displayDuration: ORDINARY_DISPLAY_FRAMES,
       pending: null
     });
+  });
+});
+
+/// Rules whose noise table holds `word` everywhere, so every draw goes one way.
+const drawing = (word: number): ScriptRules => ({
+  ...rules,
+  noise: new Uint16Array(0x8_00).fill(word)
+});
+const landingTranscript = (
+  initial: ScriptState,
+  frames: number,
+  withRules: ScriptRules
+): readonly { readonly frame: number; readonly id: string }[] => {
+  const seen: { frame: number; id: string }[] = [];
+  let previous: string | null = null;
+  let state = initial;
+  for (let frame = 1; frame <= frames; frame += 1) {
+    state = runFrame(state, withRules).state;
+    const id = state.message?.id ?? null;
+    if (id !== null && id !== previous) {
+      seen.push({ frame, id });
+    }
+    previous = id;
+  }
+  return seen;
+};
+
+describe('the landing messages (#576)', () => {
+  test('a gazetteer waits 100 frames, presents its lines and ends on the shared epilogue', () => {
+    const shown = drawing(0xa0_00);
+    const fired = fireTrigger(initialScriptState(), 0x26, shown).state;
+    // The draw is made at the launch and steps the pointer; the script parks on the wait.
+    expect(fired).toMatchObject({
+      busy: true,
+      execution: { script: 'damocles.script.slot-38', step: 2 },
+      message: null,
+      noise: 1
+    });
+    expect(fired.triggers.find(item => item.index === 0x26)?.armed).toBe(false);
+    expect(landingTranscript(fired, 800, shown)).toEqual([
+      { frame: 100, id: 'script38-inline-1' },
+      { frame: 300, id: 'script38-inline-2' },
+      { frame: 500, id: 'script38-inline-3' },
+      { frame: 700, id: 'system-string-50' }
+    ]);
+    let state = fired;
+    for (let frame = 0; frame < 750; frame += 1) {
+      state = runFrame(state, shown).state;
+    }
+    expect(state).toMatchObject({
+      busy: false,
+      displayDuration: ORDINARY_DISPLAY_FRAMES,
+      execution: null,
+      message: null
+    });
+  });
+
+  test('a word below $A000 skips the message and still spends the trigger', () => {
+    const skipped = drawing(0x9f_ff);
+    const transition = fireTrigger(initialScriptState(), 0x26, skipped);
+    expect(transition.effects).toEqual([]);
+    expect(transition.state).toMatchObject({
+      busy: false,
+      display: { cells: BLANK_DAMOCLES_ROW, kind: 'held' },
+      execution: null,
+      message: null,
+      noise: 1
+    });
+    expect(
+      transition.state.triggers.find(item => item.index === 0x26)?.armed
+    ).toBe(false);
+    // A second landing on the Body is refused before anything is drawn.
+    expect(fireTrigger(transition.state, 0x26, drawing(0xff_ff)).state).toBe(
+      transition.state
+    );
+  });
+
+  test('the traced cross landing draws $C887 after the pass steps the pointer', async () => {
+    const craft = (await loadCatalogue()).craft!;
+    const traced: ScriptRules = { ...rules, noise: craft.noise.words };
+    // Pass 214 left the pointer at `$077A40`, whose word would have skipped.
+    const before: ScriptState = { ...initialScriptState(), noise: 0x5_20 };
+    const stepped = stepNoise(before);
+    const landed = fireTrigger(stepped, 0x26, traced).state;
+    expect(landed.noise).toBe(0x5_22);
+    expect(landingTranscript(landed, 100, traced)).toEqual([
+      { frame: 100, id: 'script38-inline-1' }
+    ]);
+    expect(fireTrigger(before, 0x26, traced).state.execution).toBeNull();
+  });
+
+  test('the pointer wraps inside the 2,048-word table', () => {
+    expect(stepNoise({ ...initialScriptState(), noise: 0x7_ff }).noise).toBe(0);
+  });
+
+  test('TOLOSA stays armed, arms the encounter gate, and skips its introduction once visited', () => {
+    const skipped = drawing(0);
+    const first = fireTrigger(initialScriptState(), 0x38, skipped).state;
+    // No random skip: the draw table is never read.
+    expect(first).toMatchObject({ busy: true, noise: 0 });
+    expect(first.triggers.find(item => item.index === 0x38)?.armed).toBe(true);
+    expect(landingTranscript(first, 950, skipped)).toEqual([
+      { frame: 100, id: 'script56-inline-1' },
+      { frame: 300, id: 'script56-inline-2' },
+      { frame: 500, id: 'system-string-50' },
+      { frame: 650, id: 'script56-inline-3' },
+      { frame: 850, id: 'system-string-50' }
+    ]);
+    let visited = first;
+    for (let frame = 0; frame < 900; frame += 1) {
+      visited = runFrame(visited, skipped).state;
+      if (frame === 848) {
+        expect(visited.encounter).toBe(0);
+      }
+    }
+    expect(visited).toMatchObject({
+      busy: false,
+      encounter: 1,
+      execution: null,
+      flags: TOLOSA_VISITED_FLAG
+    });
+
+    const again = fireTrigger(visited, 0x38, skipped).state;
+    expect(landingTranscript(again, 400, skipped)).toEqual([
+      { frame: 100, id: 'script56-inline-3' },
+      { frame: 300, id: 'system-string-50' }
+    ]);
+  });
+
+  test('a landing while a script runs is discarded and stays armed', () => {
+    const busy = fireTrigger(initialScriptState(), 6, rules).state;
+    const landed = fireTrigger(busy, 0x26, drawing(0xff_ff)).state;
+    expect(landed).toBe(busy);
+    expect(landed.triggers.find(item => item.index === 0x26)?.armed).toBe(true);
   });
 });

@@ -115,6 +115,7 @@ const rules = () => ({
   messageText: (id: DamoclesMessageId) => presentedText(strings, id)!,
   // The Save codec reads trigger 2's `WAIT_FROM_DOCUMENT` threshold as 200 frames, which is
   // what the Eris presentation document authors; the model takes it from the rules.
+  noise: new Uint16Array(0x8_00),
   waitFrames: 200
 });
 
@@ -145,8 +146,11 @@ const waiting = (trigger: number, resident: string) => {
     counter: state.counter,
     display: state.display,
     displayDuration: state.displayDuration,
+    encounter: state.encounter,
     execution: state.execution,
+    flags: state.flags,
     message: state.message,
+    noise: state.noise,
     pending: state.pending,
     triggers: state.triggers.map(({ armed, index }) => ({ armed, index }))
   };

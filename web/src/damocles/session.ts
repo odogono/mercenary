@@ -65,6 +65,7 @@ import {
   initialScriptState,
   presentSystemMessage,
   runFrame,
+  stepNoise,
   type Effect,
   type Presenting,
   type ScriptRules,
@@ -148,6 +149,9 @@ export interface DamoclesSnapshot {
   readonly display: DamoclesDisplay;
   readonly displayCells: DisplayCells;
   readonly elapsed: number;
+  /// Bank word `$070104`, the encounter gate TOLOSA's landing script arms (#576). The panel's
+  /// second lamp `$050A5C` reads it.
+  readonly encounter: number;
   readonly frameAccumulator: number;
   readonly inventoryLabel: string;
   /// The Damocles Island the Cell Readout is counted from, or null on a Body that carries no
@@ -338,8 +342,11 @@ const scriptForSave = (script: ScriptState): DamoclesSaveScript => ({
   counter: script.counter,
   display: script.display,
   displayDuration: script.displayDuration,
+  encounter: script.encounter,
   execution: script.execution,
+  flags: script.flags,
   message: script.message,
+  noise: script.noise,
   pending: script.pending,
   triggers: script.triggers.map(({ armed, index }) => ({ armed, index }))
 });
@@ -485,6 +492,7 @@ export class DamoclesSession implements TitleSession<
         }
         return text;
       },
+      noise: content.catalogue.craft?.noise.words ?? new Uint16Array(),
       waitFrames: content.doc.time.waitFrames
     };
     this.soundPermitted = options.soundPermitted ?? (() => true);
@@ -1389,6 +1397,7 @@ export class DamoclesSession implements TitleSession<
           : this.script.display.cells
       ),
       elapsed: this.elapsed,
+      encounter: this.script.encounter,
       frameAccumulator: this.frameAccumulator,
       inventoryLabel: this.inventoryLabel(),
       island: island ?? null,
@@ -1831,6 +1840,9 @@ export class DamoclesSession implements TitleSession<
       return;
     }
     this.craftTicks = 0;
+    // `$05948C` steps the noise pointer as the pass's frame joins the main loop, before the pass
+    // itself: the traced landing drew the word after it (#576).
+    this.script = stepNoise(this.script);
     if (this.space !== null) {
       this.tickSpace(program, craft, this.space);
       return;
@@ -1937,7 +1949,7 @@ export class DamoclesSession implements TitleSession<
     this.readBody();
     const trigger = landingTrigger(offset);
     if (trigger !== null) {
-      // Every landing trigger's script is Fog: the port runs none of them (#567).
+      // The Body's landing message, which draws its random skip here (#576).
       const transition = fireTrigger(this.script, trigger, this.scriptRules);
       this.script = transition.state;
       this.effects.push(...transition.effects);

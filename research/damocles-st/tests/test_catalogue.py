@@ -3778,6 +3778,18 @@ class CraftTests(unittest.TestCase):
         self.assertEqual(craft['constants']['spaceY']['operand'], 64)
         self.assertEqual(craft['constants']['landingY']['operand'], 0x01800000)
 
+    def test_the_pinned_noise_table_is_the_one_the_landing_draws_from(self):
+        craft = self.pinned()
+        noise = craft['noise']
+        self.assertEqual(noise['address'], 0x77000)
+        self.assertEqual(noise['sha256'],
+                         '7b5e79b4b9981da8357abca3c911d2bcf22a27700c5dafd25348beffe5f15770')
+        words = [int(noise['hex'][i:i + 4], 16) for i in range(0, len(noise['hex']), 4)]
+        self.assertEqual(len(words), 2048)
+        # The traced cross landing drew $C887 at $077A42 and presented LACHESIS's message.
+        self.assertEqual(words[0xA42 // 2], 0xC887)
+        self.assertEqual(sum(word >= 0xA000 for word in words), 754)
+
     def test_the_payload_publishes_the_pinned_block(self):
         craft = self.pinned()
         root = Path(__file__).resolve().parents[3]

@@ -503,6 +503,11 @@ export interface Craft {
     >
   >;
   readonly evidence: string;
+  /**
+   * `$77000`: the 2,048-word noise table the pointer `$7E18` walks (#576). The main loop steps
+   * it a word a pass, and a Script's random skip `$051A5E` reads a word.
+   */
+  readonly noise: { readonly sha256: string; readonly words: Uint16Array };
   readonly slots: readonly CraftSlot[];
   readonly table: { readonly address: number; readonly sha256: string };
   readonly throttleKeys: {
@@ -1767,6 +1772,7 @@ const craft = (value: unknown): Craft => {
     'boot',
     'constants',
     'evidence',
+    'noise',
     'slots',
     'table',
     'throttleKeys'
@@ -1888,6 +1894,21 @@ const craft = (value: unknown): Craft => {
     })(),
     constants,
     evidence: string(c['evidence']),
+    noise: (() => {
+      const noise = fields(c['noise'], [
+        'address',
+        'evidence',
+        'hex',
+        'sha256'
+      ]);
+      string(noise['evidence']);
+      return integer(noise['address']) === 0x7_70_00
+        ? {
+            sha256: sha256(noise['sha256']),
+            words: Uint16Array.from(hexWords(noise['hex'], 0x10_00, 2))
+          }
+        : fail('invalid craft noise table');
+    })(),
     slots,
     table: {
       address: integer(table['address']),

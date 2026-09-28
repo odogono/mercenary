@@ -2351,6 +2351,10 @@ CRAFT_LAST_BODY = 0x7C0E
 # The space words the first world boots with, which only a flight in space rewrites: the range
 # $791C and nearest Body $7924 the first space pass reads, and the pitch rate $7974 (#558).
 CRAFT_BOOT_WORDS = {'range': 0x791C, 'nearest': 0x7924, 'pitchRate': 0x7974}
+# The 2,048-word noise table the pointer $7E18 walks, wrapping inside $77000-$77FFE (#576). The
+# main loop's join $05948C steps it a word a pass, and the landing scripts' if.random $051A5E
+# reads a word. It is byte-identical in every memstate (docs/research/damocles-landing-messages.md).
+CRAFT_NOISE_TABLE = (0x77000, 0x78000)
 
 
 def craft_log_table() -> dict[int, int]:
@@ -2463,6 +2467,8 @@ def decode_craft(data: bytes) -> dict:
                    'entries': bodies},
         'boot': {name: {'address': address, 'value': u32(address)}
                  for name, address in CRAFT_BOOT_WORDS.items()},
+        'noise': {'evidence': 'docs/research/damocles-landing-messages.md',
+                  **carried(CRAFT_NOISE_TABLE)},
     }
 
 
@@ -5894,7 +5900,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         'Every body surface carries its base colour and the 4096 x 4096 Surface Cell extent $058F64 masks positions onto; both axes wrap, so an extent whose upper bound is below its lower bound is a wrapped span rather than an empty one. The islands collection holds all 62 records of the per-body lists at $04BD1E, one entry a record: origin, coastline vertices and edge words, the backwards extent/core/exclusion boxes, land colour, structure group, the group record it binds and that group\'s area name. A record has no name of its own. 21 records share the coastline-less stub whose extent and core boxes are the whole coordinate plane, so $0560F2 answers core everywhere on those bodies -- land, no sea, no coast. The VOID slot\'s table entry is excluded because VOID is the space-as-place sentinel rather than a body surface. The classifier itself is not replayed here and the nearest-record metric at $056490 is not decoded. A surface placement names the Damocles Island whose origin equals the Structure Workspace origin it was placed against; resident coordinates come from the resident arrays, are already Body Coordinates, and name no record (docs/research/damocles-eris-islands.md, docs/research/damocles-island-census.md).',
         'Every resident slot carries the interaction byte the take handler tests, decoded as handling. Bit 4 refuses silently, bit 5 diverts to the refusal message, and the low nibble is the drop handler\'s rank pair: bits 0-1 are the support rank the slot supplies and bits 2-3 the support rank it requires; bits 6 and 7 are live state and are zero in the pinned capture. Nothing here selects a candidate: which object is selected is the per-frame nearest-drawn rule in docs/research/damocles-object-selection.md, not a catalogue field.',
         'Every resident slot carries boarding, what the board gate answers for it, with the gate\'s constants read from the refusal chooser and gate at $0542E0-$05434F rather than assumed. Boardable is the gate\'s two table facts, the bound at slot 23 and the model guard\'s single-Y-turn orientation command; the reach, region, Occupancy and VOID guards are live state and the key test asks the Carried Stack. Under the bound the chooser outcome, the paired slot at slot + 178 and the refusal string are published even where the model guard refuses, because the key test runs first; a paired slot with no instance is published as missing. No seated eye height is published: boarding puts the eye at the resident position plus 63 for every slot (docs/design/damocles-boarding-admission.md).',
-        'The document carries craft, the craft pass as ADR 0051 runs it: all sixteen Craft Parameter Block entries at $055C80 with the routine class each entry\'s bra.w reaches, the pass\'s constants read as instruction operands with each opcode checked, the throttle key table at $0557D6, and the exponent and sine tables. The log table is checked against the rule the port regenerates it from and published only as a digest. The entries\' unread words +10 and +18 are left out (docs/research/damocles-craft-control.md). Since #566 it also carries the launch, swing, space entry and space pass constants, the landing\'s arctan byte table and octant words, and the Body table the range scan $052DB0 walks (docs/research/damocles-space-flight.md).',
+        'The document carries craft, the craft pass as ADR 0051 runs it: all sixteen Craft Parameter Block entries at $055C80 with the routine class each entry\'s bra.w reaches, the pass\'s constants read as instruction operands with each opcode checked, the throttle key table at $0557D6, and the exponent and sine tables. The log table is checked against the rule the port regenerates it from and published only as a digest. The entries\' unread words +10 and +18 are left out (docs/research/damocles-craft-control.md). Since #566 it also carries the launch, swing, space entry and space pass constants, the landing\'s arctan byte table and octant words, and the Body table the range scan $052DB0 walks (docs/research/damocles-space-flight.md). Since #576 it also carries the noise table at $77000, which the main loop steps a word a pass and the landing scripts\' random skip reads (docs/research/damocles-landing-messages.md).',
     ]
     if gaea_coverage:
         coverage_notes.append(gaea_coverage)

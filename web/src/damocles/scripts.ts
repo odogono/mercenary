@@ -15,7 +15,34 @@ export const SCRIPT_IDS = [
   'damocles.script.slot-11',
   'damocles.script.slot-2',
   'damocles.script.slot-20',
+  'damocles.script.slot-32',
+  'damocles.script.slot-33',
+  'damocles.script.slot-34',
+  'damocles.script.slot-35',
+  'damocles.script.slot-36',
+  'damocles.script.slot-37',
+  'damocles.script.slot-38',
+  'damocles.script.slot-39',
+  'damocles.script.slot-40',
+  'damocles.script.slot-41',
+  'damocles.script.slot-43',
+  'damocles.script.slot-44',
+  'damocles.script.slot-45',
+  'damocles.script.slot-46',
+  'damocles.script.slot-47',
+  'damocles.script.slot-48',
+  'damocles.script.slot-49',
   'damocles.script.slot-5',
+  'damocles.script.slot-50',
+  'damocles.script.slot-51',
+  'damocles.script.slot-52',
+  'damocles.script.slot-53',
+  'damocles.script.slot-54',
+  'damocles.script.slot-55',
+  'damocles.script.slot-56',
+  'damocles.script.slot-57',
+  'damocles.script.slot-58',
+  'damocles.script.slot-59',
   'damocles.script.slot-6',
   'damocles.script.slot-62'
 ] as const;
@@ -31,13 +58,22 @@ export const isScriptId = (value: unknown): value is ScriptId =>
 /// `poll-wait` carries its own threshold because the bank's delay subroutines are a family of
 /// fixed-threshold members (`$072CD6`-`$072D2E`), not one routine taking an argument: trigger 5
 /// calls the 500-frame member at `$072D08` and trigger 62 the 150-frame one at `$072CEA`.
+///
+/// The landing scripts add four (#576). `random-skip` is `if.random` `$051A5E`: it draws the
+/// word at the noise pointer and goes to step `to` when the word is below `below`. `if-flag` goes
+/// to `to` when `$7BD8` has any of `mask`, and `set-flag` ors `mask` in. `set-encounter` is
+/// TOLOSA's `bank.write $0104`, the encounter gate `$070104`.
 export type Op =
+  | { readonly below: number; readonly kind: 'random-skip'; readonly to: Step }
   | { readonly frames: number; readonly kind: 'poll-wait' }
   | { readonly frames: number; readonly kind: 'set-duration' }
   | { readonly id: DamoclesMessageId; readonly kind: 'message' }
   | { readonly kind: 'clear-busy' }
+  | { readonly kind: 'if-flag'; readonly mask: number; readonly to: Step }
   | { readonly kind: 'reset-wait' }
-  | { readonly kind: 'return' };
+  | { readonly kind: 'return' }
+  | { readonly kind: 'set-encounter'; readonly value: number }
+  | { readonly kind: 'set-flag'; readonly mask: number };
 
 export type Step = number;
 
@@ -55,16 +91,53 @@ const wait = (frames: number): readonly Op[] => [
   { frames, kind: 'poll-wait' }
 ];
 
+/// `$072D1C`, the call-shaped variant of the shared epilogue: the 50-frame clearing line, and no
+/// busy clear.
+const clearingLine = (): readonly Op[] => [
+  { frames: CLEARING_LINE_FRAMES, kind: 'set-duration' },
+  message('system-string-50'),
+  { frames: ORDINARY_DISPLAY_FRAMES, kind: 'set-duration' }
+];
+
 /// The shared epilogue at `$072CAE`, four instructions: drop the display duration to `$0032`,
 /// present indexed record `$0032`, restore `$00C8`, clear `$0040` in `$7BD8` and return. Sixty-two
 /// of the bank's scripts end on it. The clearing line therefore runs for 50 frames, not 200.
 const sharedEpilogue = (): readonly Op[] => [
-  { frames: CLEARING_LINE_FRAMES, kind: 'set-duration' },
-  message('system-string-50'),
-  { frames: ORDINARY_DISPLAY_FRAMES, kind: 'set-duration' },
+  ...clearingLine(),
   { kind: 'clear-busy' },
   { kind: 'return' }
 ];
+
+/// The operand every landing script's `if.random` compares with: a drawn word below it skips.
+export const LANDING_RANDOM_BELOW = 0xa0_00;
+/// `$072CE0`, the delay member every landing script calls first.
+const LANDING_WAIT_FRAMES = 0x00_64;
+/// Bit 1 of `$7BD8`, which only TOLOSA's script sets: it has been landed on before.
+export const TOLOSA_VISITED_FLAG = 0x00_02;
+
+/// A gazetteer (docs/research/damocles-landing-messages.md): `if.random $A000` to the epilogue's
+/// busy clear at `$072CBE`, the 100-frame wait, the Body's lines, then the shared epilogue. A
+/// skipped draw presents nothing and leaves the row as it was.
+const gazetteer = (
+  entry: number,
+  lines: readonly DamoclesMessageId[]
+): Script => {
+  const body: readonly Op[] = [
+    ...wait(LANDING_WAIT_FRAMES),
+    ...lines.map(message),
+    ...clearingLine()
+  ];
+  return {
+    entry,
+    ops: [
+      { below: LANDING_RANDOM_BELOW, kind: 'random-skip', to: body.length + 1 },
+      ...body,
+      { kind: 'clear-busy' },
+      { kind: 'return' }
+    ],
+    revision: 1
+  };
+};
 
 export interface Script {
   readonly entry: number;
@@ -138,6 +211,145 @@ export const SCRIPTS: Readonly<Record<ScriptId, Script>> = {
     ops: [message('script20-inline-1'), ...sharedEpilogue()],
     revision: 1
   },
+  // $0720B2, trigger $20. ICARUS, Body 1.
+  'damocles.script.slot-32': gazetteer(0x07_20_b2, [
+    'script32-inline-1',
+    'script32-inline-2'
+  ]),
+  // $07211A, trigger $21. MIDAS, Body 2.
+  'damocles.script.slot-33': gazetteer(0x07_21_1a, [
+    'script33-inline-1',
+    'script33-inline-2',
+    'script33-inline-3'
+  ]),
+  // $0721B0, trigger $22. ACHERON, Body 3.
+  'damocles.script.slot-34': gazetteer(0x07_21_b0, [
+    'script34-inline-1',
+    'script34-inline-2'
+  ]),
+  // $072222, trigger $23. DION, Body 4.
+  'damocles.script.slot-35': gazetteer(0x07_22_22, [
+    'script35-inline-1',
+    'script35-inline-2',
+    'script35-inline-3'
+  ]),
+  // $0723C6, trigger $24. ATROPOS, Body 5.
+  'damocles.script.slot-36': gazetteer(0x07_23_c6, [
+    'script36-inline-1',
+    'script36-inline-2'
+  ]),
+  // $0722C0, trigger $25. CLOTHO, Body 6.
+  'damocles.script.slot-37': gazetteer(0x07_22_c0, [
+    'script37-inline-1',
+    'script37-inline-2'
+  ]),
+  // $07232A, trigger $26. LACHESIS, Body 7.
+  'damocles.script.slot-38': gazetteer(0x07_23_2a, [
+    'script38-inline-1',
+    'script38-inline-2',
+    'script38-inline-3'
+  ]),
+  // $072438, trigger $27. GAEA, Body 8.
+  'damocles.script.slot-39': gazetteer(0x07_24_38, [
+    'script39-inline-1',
+    'script39-inline-2',
+    'script39-inline-3'
+  ]),
+  // $072574, trigger $28. CRONUS, Body 9.
+  'damocles.script.slot-40': gazetteer(0x07_25_74, [
+    'script40-inline-1',
+    'script40-inline-2'
+  ]),
+  // $0724D8, trigger $29. CYCLOPES, Body 10.
+  'damocles.script.slot-41': gazetteer(0x07_24_d8, [
+    'script41-inline-1',
+    'script41-inline-2',
+    'script41-inline-3'
+  ]),
+  // $07264E, trigger $2B. SOLON, Body 12.
+  'damocles.script.slot-43': gazetteer(0x07_26_4e, [
+    'script43-inline-1',
+    'script43-inline-2'
+  ]),
+  // $0727A4, trigger $2C. THEON, Body 13.
+  'damocles.script.slot-44': gazetteer(0x07_27_a4, [
+    'script44-inline-1',
+    'script44-inline-2'
+  ]),
+  // $0726C2, trigger $2D. VESTA, Body 14.
+  'damocles.script.slot-45': gazetteer(0x07_26_c2, [
+    'script45-inline-1',
+    'script45-inline-2'
+  ]),
+  // $0725E2, trigger $2E. METIS, Body 15.
+  'damocles.script.slot-46': gazetteer(0x07_25_e2, [
+    'script46-inline-1',
+    'script46-inline-2'
+  ]),
+  // $072734, trigger $2F. LUCAN, Body 16.
+  'damocles.script.slot-47': gazetteer(0x07_27_34, [
+    'script47-inline-1',
+    'script47-inline-2'
+  ]),
+  // $072816, trigger $30. LOGOS, Body 17.
+  'damocles.script.slot-48': gazetteer(0x07_28_16, ['script48-inline-1']),
+  // $072852, trigger $31. AURORA, Body 18.
+  'damocles.script.slot-49': gazetteer(0x07_28_52, ['script49-inline-1']),
+  // $072892, trigger $32. TRITON, Body 19.
+  'damocles.script.slot-50': gazetteer(0x07_28_92, ['script50-inline-1']),
+  // $0728D4, trigger $33. PAN, Body 20.
+  'damocles.script.slot-51': gazetteer(0x07_28_d4, [
+    'script51-inline-1',
+    'script51-inline-2'
+  ]),
+  // $072948, trigger $34. THALIA, Body 21.
+  'damocles.script.slot-52': gazetteer(0x07_29_48, [
+    'script52-inline-1',
+    'script52-inline-2'
+  ]),
+  // $0729BC, trigger $35. JUNO, Body 22.
+  'damocles.script.slot-53': gazetteer(0x07_29_bc, ['script53-inline-1']),
+  // $072B92, trigger $36. BACCHUS, Body 23.
+  'damocles.script.slot-54': gazetteer(0x07_2b_92, [
+    'script54-inline-1',
+    'script54-inline-2'
+  ]),
+  // $072B20, trigger $37. JASON, Body 24.
+  'damocles.script.slot-55': gazetteer(0x07_2b_20, [
+    'script55-inline-1',
+    'script55-inline-2'
+  ]),
+  // $0729FC, trigger $39. PERSEUS, Body 26.
+  'damocles.script.slot-57': gazetteer(0x07_29_fc, [
+    'script57-inline-1',
+    'script57-inline-2'
+  ]),
+  // $072C04, trigger $3A. MENTOR, Body 27.
+  'damocles.script.slot-58': gazetteer(0x07_2c_04, [
+    'script58-inline-1',
+    'script58-inline-2'
+  ]),
+  // $072C6E, trigger $3B. SAPPHIRE, Body 28.
+  'damocles.script.slot-59': gazetteer(0x07_2c_6e, ['script59-inline-1']),
+  // $072A6E. TOLOSA, Body 25: sticky, and no random skip. A first landing takes
+  // 100 + 400 + 50 + 100 + 200 + 50 frames, a later one 100 + 200 + 50: bit 1 of $7BD8 skips
+  // straight to the attack line at $072AE8. Every landing then arms the encounter gate $070104.
+  'damocles.script.slot-56': {
+    entry: 0x07_2a_6e,
+    ops: [
+      ...wait(LANDING_WAIT_FRAMES),
+      { kind: 'if-flag', mask: TOLOSA_VISITED_FLAG, to: 11 },
+      { kind: 'set-flag', mask: TOLOSA_VISITED_FLAG },
+      message('script56-inline-1'),
+      message('script56-inline-2'),
+      ...clearingLine(),
+      ...wait(LANDING_WAIT_FRAMES),
+      message('script56-inline-3'),
+      { kind: 'set-encounter', value: 0x00_01 },
+      ...sharedEpilogue()
+    ],
+    revision: 1
+  },
   // $071E8A. CASH REGISTER, resident slot 94. 150 + 600 + 50 frames: the wait comes first.
   'damocles.script.slot-62': {
     entry: 0x07_1e_8a,
@@ -162,21 +374,35 @@ export const TRIGGER_FOR_RESIDENT: Readonly<Record<string, number>> = {
   'object-slot-95': 20
 };
 
+/// The landing triggers `body + $1F` the port runs: `$20`-`$3B` without ERIS's `$2A`, which the
+/// landing skips and whose script is the author's computer's (#576). DAMOCLES's `$3C` is the
+/// deflection ending, and the landing skips it too.
+export const LANDING_TRIGGERS: readonly number[] = [
+  32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 43, 44, 45, 46, 47, 48, 49, 50, 51,
+  52, 53, 54, 55, 56, 57, 58, 59
+];
+
 export const SCRIPT_FOR_TRIGGER: Readonly<Record<number, ScriptId>> = {
   11: 'damocles.script.slot-11',
   2: 'damocles.script.slot-2',
   20: 'damocles.script.slot-20',
   5: 'damocles.script.slot-5',
   6: 'damocles.script.slot-6',
-  62: 'damocles.script.slot-62'
+  62: 'damocles.script.slot-62',
+  ...Object.fromEntries(
+    LANDING_TRIGGERS.map(index => [
+      index,
+      `damocles.script.slot-${index}` as ScriptId
+    ])
+  )
 };
 
-/// The arming table at `$7CB4` as the pinned capture holds it, for the six pickup triggers.
+/// The arming table at `$7CB4` as the pinned capture holds it, for the six pickup triggers and
+/// the 27 landing triggers.
 ///
 /// Bit 7 is armed, bit 5 queues while busy and bit 6 is sticky. Only trigger 5 is queueable
-/// (`$A0`); every pickup trigger has bit 6 clear, so all six are one-shot. The whole 64-byte
-/// table holds exactly one sticky byte, at index `$38`, which is not a pickup trigger and is
-/// not represented here.
+/// (`$A0`). The whole 64-byte table holds exactly one sticky byte, TOLOSA's `$38` (`$C0`), so
+/// every other trigger here is one-shot.
 ///
 /// Nothing in the recovered program re-arms a trigger: `$7CB4` is referenced by one instruction,
 /// the `lea` at `$054774` inside the launcher. Armed values are what the loaded image supplies.
@@ -189,5 +415,9 @@ export const TRIGGER_ARMING: readonly {
   { byte: 0x80, index: 6 },
   { byte: 0x80, index: 11 },
   { byte: 0x80, index: 20 },
-  { byte: 0x80, index: 62 }
+  { byte: 0x80, index: 62 },
+  ...LANDING_TRIGGERS.map(index => ({
+    byte: index === 0x38 ? 0xc0 : 0x80,
+    index
+  }))
 ];

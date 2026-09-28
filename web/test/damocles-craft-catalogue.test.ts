@@ -129,3 +129,15 @@ it('publishes what the launch, the space pass and the range scan read (#558)', a
   // The unnormalised `$2000` a range sum can leave reads `$FFF0`, the word past the table.
   expect(craftLog(0x20_00)).toBe(0xff_f0);
 });
+
+it('publishes the noise table the landing scripts draw from (#576)', async () => {
+  const noise = (await loadCatalogue()).craft!.noise;
+  expect(noise.words).toHaveLength(0x8_00);
+  expect(digest(bigEndian(noise.words, 2))).toBe(noise.sha256);
+  expect(noise.sha256).toBe(
+    '7b5e79b4b9981da8357abca3c911d2bcf22a27700c5dafd25348beffe5f15770'
+  );
+  // 754 words let a gazetteer through, and the traced cross landing drew `$C887` at `$077A42`.
+  expect(noise.words.filter(word => word >= 0xa0_00)).toHaveLength(754);
+  expect(noise.words[0xa_42 / 2]).toBe(0xc8_87);
+});
