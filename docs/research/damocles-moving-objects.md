@@ -195,7 +195,9 @@ byte and coordinates in the resident arrays.
   frame rate.
 - `fire-onfoot` (`moving-object-fire-onfoot-20260917T193647Z-d7d45ee0`) is the
   control. The same held fire with `$7AB0` = `$FFFF` never places slot 8 and
-  never moves its counter off zero, which is the gate the static reading names.
+  never moves its counter off zero. [#581](damocles-tolosa-encounter.md) found
+  the reason is the on-foot frame path, which never calls `$050B96`, rather than
+  the `$7AB0` gate.
 - `attack-disarmed` (`moving-object-attack-disarmed-20260917T193658Z-d9f0535a`)
   shows that the ordinary first-world value `$070104` = `$0000` keeps slots 11
   and 15 unplaced while slot 8 cycles normally.
@@ -231,6 +233,10 @@ census reads the byte, and that is correct; it is not a claim that either can be
 picked up.
 
 ## What is not recovered here
+
+[#581](damocles-tolosa-encounter.md) has since traced the encounter pass by
+pass. It decodes `$7A64`, `$050ECC` and the `$059906` path, and it answers the
+first item below for aboard play.
 
 - Whether an ordinary route can reach a hit at all. `attack-armed` resolves the
   encounter against a stationary player after 170 s of the ship converging; a
