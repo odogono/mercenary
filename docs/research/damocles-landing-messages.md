@@ -255,7 +255,8 @@ took them, with the on-foot pointer held
 
 - **The eight native draw sites** at `$04CCF2`–`$04CD66` and `$05160C`–`$05169E`: what they draw
   for and when they run. None ran in a traced flight, but on foot and in other modes they may.
-  #582 decodes them.
+  #582 decodes them: they are explosion debris and the New Game descent
+  ([noise draws](damocles-noise-draws.md)).
 - **`$7A90` = `$0E`**, the second condition on `$2A`, and what `$7856` case 5 is in play terms,
   beyond arming the drift and firing `$3C`. Both are for the endgame map, #580.
 - **Bit 0 of `$7BD8`**, which `$3C` tests before the State President's lines. Its writer was not
