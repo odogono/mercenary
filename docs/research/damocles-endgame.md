@@ -7,7 +7,9 @@ drift `$7A7E` and the destruction marker `$04C98E` ([the Gamma System note](damo
 and decoded the BOOK's page actions as sounds ([#514](damocles-sound-programmes.md)). None of them
 said what ends a game. This note decodes the body-destruction dispatcher, the BOOK's wishes, the
 NOVABOMB and the AUTHORS COMPUTER, and the scripts they fire. It then drives the impact and the
-two BOOK endings on a real machine. Authoritative Evidence remains bound to the C64 Reference
+two BOOK endings on a real machine. [#626](https://github.com/odogono/mercenary/issues/626)
+then ran the switches, the NOVABOMB, the AUTHORS COMPUTER, the stacked EXPLOSIVEs and the
+unravelling live, recovered 2026-09-29 ([Live runs for #626](#live-runs-for-626)). Authoritative Evidence remains bound to the C64 Reference
 Build. This note records decoded ST facts only
 ([ADR 0002](../adr/0002-separate-rom-research-from-implementation.md)). RAM, screenshots and
 script listings stay ignored Restricted Material under `research/damocles-st/work/`.
@@ -67,20 +69,25 @@ script listings stay ignored Restricted Material under `research/damocles-st/wor
    With DAMOCLES already destroyed, the mover skips it (`$051EAC`) and `$7A82` is never raised.
 5. **Four things reach the dispatcher.**
    - **The NOVABOMB** (slot 163). Four disguised switches are its detonators: SIDEBOARD,
-     CUPBOARD, HI-FI and WASHBASIN, bits 3 to 6 of `$7872`. Keypad `+` on a switch at the head
-     sets its bit. When all four are set and the bomb's Association B `$7634` is non-zero,
-     `$04D458` clears the association and detonates. There is no distance test. A placed bomb
-     destroys the Body in `$7634`'s first byte (`$04D492`). A carried bomb (`$7236` bit 7)
-     destroys the player's Body (`$7AA6`) and kills the player with system string `$22`, OOPS! -
-     YOU'VE BLOWN YOURSELF UP. The bomb starts on GAEA (`$7634` = `$20090A29`), so switching all
-     four on before moving it destroys GAEA (`$0E`). A bomb on DIALIS reads as no bomb and never
-     goes off.
-   - **The AUTHORS COMPUTER**, option 4. Digits 0 to 4 select an option (`$786C`), `+`/`-` move
-     its value (`$786E`, records at `$7C8C`), and `*` with option 4 destroys Body number
-     `$786E` (0 to 29) through the dispatcher (`$04D4EC`). Options 0 and 3 are the same palette
-     mask and clock rate as BOOK pages 6 and 4.
-   - **Stacked EXPLOSIVEs.** A TIMED DETONATOR blast at digit 9 that clears at least seven
-     EXPLOSIVEs (slots `$4B`–`$53`) destroys the blast's Body (`$04CAD2`).
+     CUPBOARD, HI-FI and WASHBASIN, bits 3 to 6 of `$7872`. Their panels read NOVA TRIGGER 1 to
+     4. A switch is used like a document: Open (keypad Enter) with it carried at the head, then
+     `+` sets its bit and `-` clears it (`$04D420`). When all four are set and the bomb's
+     Association B `$7634` is non-zero, `$04D458` clears the association and detonates. There is
+     no distance test. A placed bomb destroys the Body in `$7634`'s first byte (`$04D492`). A
+     carried bomb (`$7236` bit 7) destroys the player's Body (`$7AA6`). The player then reads
+     system string `$23`, YOU WERE TOO CLOSE - YOU'VE BEEN BLOWN UP, because the marker asks for
+     it first. In space no Body is destroyed and the player reads `$22`, OOPS! - YOU'VE BLOWN
+     YOURSELF UP. The bomb starts on GAEA (`$7634` = `$20090A29`), so switching all four on
+     before moving it destroys GAEA (`$0E`). A bomb on DIALIS reads as no bomb and never goes
+     off.
+   - **The AUTHORS COMPUTER**, option 4. Open needs the player seated on the AUTHOR'S CHAIR
+     (slot 14). Digits 0 to 4 select an option (`$786C`), `+`/`-` move its value (`$786E`,
+     records at `$7C8C`), and `*` with option 4 destroys Body number `$786E` (0 to 29) through
+     the dispatcher (`$04D4EC`). Options 0 and 3 are the same palette mask and clock rate as BOOK
+     pages 6 and 4.
+   - **Stacked EXPLOSIVEs.** An armed EXPLOSIVE going off at size digit 9 destroys the blast's
+     Body (`$04CAD2`) when the blast also clears at least seven other EXPLOSIVEs (slots
+     `$4B`–`$53`), eight in all.
    - **The unravelling**, below.
 6. **The unravelling destroys everything.** The main loop calls `$04BEEE` every pass. It acts
    once the AUTHORS COMPUTER's Association B `$753C` is 0, which happens when the computer is
@@ -89,7 +96,8 @@ script listings stay ignored Restricted Material under `research/damocles-st/wor
    whenever the debris counter `$7834` is idle, it destroys Body `$7A8C` through the marker,
    skipping the dispatcher's triggers, and steps `$7A8C` down by 4. `$7A8C` starts at `$74`,
    so the Bodies go from DAMOCLES down to DIALIS. Past zero it fires `$1A`. The player dies
-   when their own Body comes up.
+   when their own Body comes up. A player in space survives to `$1A`. Each destruction starts
+   64 passes of debris, so the Bodies go about 800 VBLs apart on foot and 250–500 in space.
 7. **`$7BD8` bit 0 has one writer, the first offer's acceptance `$0709AA`.** Natively only the
    Script flag handlers `$051B2A`, `$051B38` and `$051B44` touch `$7BD8`. Among all 497 reachable
    Script ops the only `flags.set $0001` is at `$0709AA`, and every `flags.clear` is `$0040`, so
@@ -157,8 +165,110 @@ research/damocles-st/.venv/bin/python research/damocles-st/scripts/endgame-probe
   --samples 22 --interval 1 --seconds 2 --no-fast-forward
 ```
 
-The NOVABOMB, the AUTHORS COMPUTER, the stacked EXPLOSIVEs and the unravelling are read from the
-code only.
+## Live runs for #626
+
+The same probe gained five cases for #626: `switches` (with `--bomb-carried` and `--space`),
+`computer`, `unravel` and `explosives`. All used no fast-forward. `--space` starts from
+`dion-north-airborne` and presses Esc, which climbs into space ([#551](damocles-panel-aboard.md)),
+then key 1 to cut the throttle. Each sample also records the VBL clock `$051D96`, so the paces
+below are in emulator time. Every run's 24 code windows hash to the pinned first-world RAM's.
+
+Carrying is injected: the probe writes the object to the front of the Carried Stack (`$61CC`/
+`$61CE`). It gives it the shape every captured carried object has: handling bit 7, Association B
+`$7801ii10` with `ii` the stack position, structure byte `$31`, and the stack's position
+(`$81D5`, `ii` × `$12C`, `$1831C`). The objects already carried follow, renumbered. Keys go in
+through `hatari-event`. Enter is followed by a 2 s wait, because Open starts the 64-VBL panel
+transition and `$04D3D2` drops every keypad key while `$52938` is set. The first attempt lost the
+first `+` after each Enter to it.
+
+| Case | Start | Injected | Result |
+| --- | --- | --- | --- |
+| `switches` | `eris-spaceport-onfoot` | the four detonators carried | `+` with no panel open does nothing. Enter on the SIDEBOARD opens NOVA TRIGGER 1 (`$785E` = `$54060600`), and `+` sets bit 3. A second `+` does nothing. With the head rotated to the WASHBASIN, `-` still clears bit 3 and `+` sets it again. CUPBOARD, HI-FI, then WASHBASIN each open and set their bit. The fourth `+` destroys GAEA (`$7BEA` = 1) and starts 64 debris passes. REPORTS ARE COMING IN OF A MAJOR DISASTER (`$0E`) follows 4 s later. |
+| `switches` | rehosted `dion-2-3` | as above | The same. ↓ on the open CUPBOARD drops it: the panel closes (`$785E` = 0), the stack loses it, and bit 4 stays set. The last switch still detonates with the CUPBOARD lying on the floor. A drop in `eris-spaceport-onfoot` was refused (see Unresolved). |
+| `switches --space` | `dion-north-airborne`, Esc | as above | In space `$7AA6` = `$FFFFFFFF` and `$7AAE` = 2. Every switch opens and sets its bit, and the fourth destroys GAEA. ↓ drops nothing in space. |
+| `switches --bomb-carried` | `eris-spaceport-onfoot` | the NOVABOMB and the four detonators carried | The bomb's Association B becomes `$7801ii10` while carried. The fourth `+` takes the bomb out of the stack, destroys ERIS, and launches `$13` (Script PC `$071946`). The player is dead (`$7A64` = 1) and the message bar reads YOU WERE TOO CLOSE - YOU'VE BEEN BLOWN UP (`$23`), then the death loop's `$21`. `$22` never shows. The VBL clock stops 29 VBLs later, and `$13` never gets past its first op. |
+| `switches --bomb-carried --space` | `dion-north-airborne`, Esc | as above | No Body is destroyed, because `$7AA6` is negative. The player dies with OOPS! - YOU'VE BLOWN YOURSELF UP (`$22`). The navigation window still names DION, and `$7AA6` then reads `$FFFF0078`. |
+| `computer` | rehosted `dion-transporter`, on DION | the AUTHORS COMPUTER carried; `$7AB0` = 14 for one Enter | Enter off the chair does nothing. With `$7AB0` = 14, Enter opens the panel (`$785E` = `$65040000`) and launches `$2A`: WARNING - UNINFORMED USE OF AUTHORS COMPUTERS / CAN SERIOUSLY DAMAGE YOUR UNIVERSE. With `$7AB0` restored, every key still works. See the options below. Option 4 value 1 then `*` destroys ICARUS. The drift is armed (`$7A7E` = the clock −7,732), so `$10` then `$12`'s body follow: CONGRATULATIONS ON A REALLY INSPIRED PERFORMANCE … SAVED ERIS AND DAMOCLES, then MESSAGE FROM THE STATE PRESIDENT. |
+| `explosives --count 7` | `gaea-ur-city-4-2`, on GAEA | EXPLOSIVEs 76–81 copied onto 75's spot on ERIS (Association B `$2C040356`); 75 armed with digit 9, 3 s ahead | 75 goes off 2 s later and the six other EXPLOSIVEs lose their Association B. ERIS survives, and 64 debris passes run. |
+| `explosives --count 8` | as above | EXPLOSIVEs 76–82 as well | Seven others are cleared, so ERIS is destroyed (`$7BEA` = 1) and `$13` runs: ARE YOU SURE YOU UNDERSTOOD THE MISSION … BLOW UP THE COMET TO SAVE ERIS. The player on GAEA lives. |
+| `unravel` | `eris-spaceport-onfoot` | the AUTHORS COMPUTER's Association B `$753C` ← 0 | The first samples show THE AUTHORS COMPUTER HAS JUST BEEN DESTROYED … UNRAVELLING (`$01`), and `$01`'s arming byte is already `$20`. DAMOCLES goes at once, then one Body at a time down the list towards DIALIS: 741–869 VBLs apart (the samples are about 125 VBLs apart), at 11.3–13.2 VBLs a debris pass. When the cursor reaches ERIS (`$2C`), ERIS is destroyed with the player on it: `$7A64` = 1 and YOU WERE TOO CLOSE, with the cursor left at `$28`. The VBL clock stops at 95,298, and 20 samples later Hatari stopped answering the FIFO, so this run has no `result.json`. Its kept samples were decoded directly. |
+| `unravel --space` | `dion-north-airborne`, Esc | as above | Post-impact, ERIS and DAMOCLES are already gone. The cursor passes DAMOCLES in one pass, because the marker returns on a destroyed Body, and destroys the rest down to DIALIS: 370–495 VBLs apart, and 247 for the last five, at a median 6.9 VBLs a pass. The 30th destruction fires `$1A` (CONGRATULATIONS - YOU ARE RESPONSIBLE FOR … TIME FOR A SHARP EXIT!), while the player is alive in space (`$7A64` = 0). ARE YOU STILL HERE! … IT'S ALL OVER - YOU'VE DESTROYED IT ALL follows after the 4,500-frame wait. At the first sample showing its third line, the wait counter `$7B9C` read 4,920. The game then runs on with nothing left. |
+| `wish --page 5 --then-impact` | `gaea-ur-city-4-2` | as in #622, with the clock later poked to −5 | `$7A84` reads 2,319 at once, which is `$7A7E` − `$793C` = −4,660 + 6,979. It falls by one a second. At −1 it reads −4,659. At zero `$7A82` rises and `$7A84` stays at −4,659 = `$7A7E` + 1 on every later sample, while DAMOCLES's X (`$5F40` + `$74`) carries on. That is the latch ADR 0057 records from #625. |
+
+```sh
+P=research/damocles-st/.venv/bin/python; E=research/damocles-st/scripts/endgame-probe.py
+S=research/damocles-st/snapshots
+$P $E --case switches --snapshot $S/rehosted/dion-2-3.sav --samples 3 --interval 1 --no-fast-forward
+$P $E --case switches --space --snapshot $S/dion-north-airborne.sav --samples 3 --interval 1 --no-fast-forward
+$P $E --case switches --bomb-carried --snapshot $S/rehosted/eris-spaceport-onfoot.sav \
+  --samples 30 --interval 1 --no-fast-forward
+$P $E --case computer --keys "+,-x2,k1,+x8,k2,+,-x2,k3,+,-,k0,+x4,k4,+,*" \
+  --snapshot $S/rehosted/dion-transporter.sav --samples 25 --interval 1 --no-fast-forward
+$P $E --case explosives --count 8 --seconds 3 --snapshot $S/rehosted/gaea-ur-city-4-2.sav \
+  --samples 16 --interval 1 --no-fast-forward
+$P $E --case unravel --space --snapshot $S/dion-north-airborne.sav --samples 280 --interval 2 \
+  --no-fast-forward
+```
+
+### Answers
+
+1. **The switches.** A switch has to be carried and at the head of the Carried Stack to be
+   **opened**, because Open reads only `$61CE`. `+` and `-` then act on the open panel
+   (`$785F` = 6, `$7860` = the bit × 2), whatever the head is. A placed switch cannot be opened,
+   so it cannot be switched. Its bit survives the drop, though, so a player can switch each
+   detonator on and put it down again. The keypad dispatch comes before the occupancy test, so
+   switching works on foot, aboard and in space. The panel also has to have finished scrolling
+   in. `+` on a bit already set does nothing, including the detonation test.
+   The TV CONTROL (bit 0), GHETTOBLASTER (bit 1, the music `$7A62`) and GEIGER COUNTER (bit 7)
+   share the handler. From the code (not run), switching one of those on or off with all four
+   detonators on also runs the test at `$04D44E`. So a bomb moved since then goes off at that
+   point, provided its Association B is non-zero.
+2. **A carried NOVABOMB** on a Body shows `$23`. `$04D486` runs the dispatcher on the player's
+   Body. The marker finds it is the player's (`$04C9F2`) and requests `$23` through `$04CBAE`,
+   which sets `$7BA0`. `$04D48C`'s request for `$22` then finds `$7BA0` busy and is ignored. In
+   space `$04D47C` skips the dispatcher, and `$22` is the only request.
+3. **The AUTHORS COMPUTER's display** (`$04DA5A`) is its centre-box panel: AUTHORS COMPUTER /
+   PARAMETER No *n* / `-` VALUE *nnn* `+`. The value has three digits, divided at `$04DA64`.
+   Opening needs the player seated on the AUTHOR'S CHAIR, slot 14. `$04D268` tests `$7A90`,
+   which `$058F78` copies from the pose record's `$7AB0` every pass. After that the panel works
+   anywhere until the computer is dropped. A digit only selects the option: it saves the old
+   value to its record and loads the new one. It applies nothing. `+` and `-` step the value by 1,
+   clamp it to 0 and the option's maximum, and then apply it. `*` acts only in option 4.
+
+   | Option | Start, maximum | Applies | Effect seen |
+   | --- | --- | --- | --- |
+   | 0 | 327, 511 | `$7A50` = spread(v ⊕ `$147`) | the world palette mask, as BOOK page 6. The sky and ground change colour. |
+   | 1 | 139, 511 | `$7A52` = spread(v ⊕ `$8B`); the 16 words at `$6FD02` = `$6FD24` ⊕ `$7A52` | the Benson panel's palette. Its frame and windows change colour. |
+   | 2 | 8, 10 | `$7964` = v, as the high word of a long | the projection's scale exponent, added to every projected log value. 9 doubles the picture, 7 halves it. |
+   | 3 | 6, 10 | `$04D612`, the clock rate level `$7C1C` | the same routine as BOOK page 4 (MORE TIME). 7 is slower, and back to 6 restores it. |
+   | 4 | 0, 29 | nothing | `*` destroys Body *v* through the dispatcher |
+
+   spread(x) moves a 9-bit value's three 3-bit fields into ST `0RGB` nibbles: `x` + (`x` &
+   `$1F8`), then + (that & `$380`). For example 328 gives mask `$0017` and 144 in option 1 gives
+   `$0033`, as sampled. At the starting values both masks are 0.
+4. **The unravelling's pace.** `$04BEEE` runs once a main-loop pass and destroys the next Body
+   whenever `$7834` is 0. The marker's debris start sets `$7834` = 64 (`$04CEBC`), and
+   `$04CF52` takes one off each pass, so live Bodies go 64 passes apart. A Body already
+   destroyed costs one pass. The player's own Body costs none, because `$04CBD4` clears `$7834`.
+   A pass took about 12 VBLs on foot in the spaceport and about 7 in space, so in space 27 Bodies went in
+   10,762 VBLs, about 3½ minutes. `$01` fires once. Its arming byte goes from `$A0`
+   to `$20` on the first pass and is never re-armed. While another Script runs, each pass
+   re-queues it into `$7A88`. A player in space survives, because `$7AA8` then matches no Body.
+   `$1A` fires at the 30th destruction (`$04C9C2`), and again from `$04BEE2` once the cursor is
+   negative, where it is already spent. After its three lines, `$1A` calls the 150-frame wait
+   `$072CEA` and the indexed message `$072D1C`, resets the wait counter and loops on
+   `if.wait $1194` at `$070D64`. So its second part starts 4,500 frames after that reset. On
+   foot the unravelling ends at the player's Body: the death stops the VBL clock, and the
+   Script and the unravelling stop with it.
+5. **The stacked-EXPLOSIVE planet kill** needs eight EXPLOSIVEs at the blast: the armed one,
+   which `$04CC16` clears before the count, and seven more that `$04CA20` clears and counts in
+   `d6`. The blast radius is `$40` << digit, `$8000` at 9. Inside a structure with `$7A5A` set,
+   the test is the region byte instead of the distance. The kill destroys the blast's Body
+   through the dispatcher with `$7A7A` = `$FFFF`. From the code, that skips the explosion's own
+   death test at `$04CBA8`, and a player on that Body dies through the marker instead. That was
+   not run.
+6. **The drifted comet's path** is the page 5 row above. It confirms, at the Hatari's own
+   `$7A84`, the latch #625 fitted `cometCentre` to.
 
 ## What this means for the port
 
@@ -175,21 +285,24 @@ code only.
   holds all of it. A port Save needs at least: the destroyed Bodies (and so `$7BEA`), the drift
   `$7A7E`, `$7A82`, the clock rate level `$7C1C` (MORE TIME), the palette mask `$7A50`, the
   unravelling's cursor `$7A8C` and the AUTHORS COMPUTER's association, the NOVABOMB's association
-  and the switch bits `$7872`, and the triggers already spent. Whether the MAGIC CRYSTAL is held
+  and the switch bits `$7872`, and the triggers already spent. The AUTHORS COMPUTER adds its
+  option records `$7C8C`, the panel mask `$7A52` and the view exponent `$7964`. An armed
+  EXPLOSIVE adds `$7A54`, `$7A5C`, `$7866` and `$7868`. The open panel `$785E`–`$7865` is
+  already in the Save ([#596](damocles-head-commands.md)).
+- **Switch bits outlive the switch.** A port must keep `$7872` per bit, not per carried
+  object, because a detonator can be switched on and put down. Whether the MAGIC CRYSTAL is held
   is ordinary carried state.
 
 ## Unresolved
 
-- **A carried NOVABOMB on a Body: `$23` or `$22`?** `$04CBAE` requests `$23` first, and
-  `$05481A` ignores a request while `$7BA0` is busy, so the player probably reads `$23`. Not run.
-- **The unravelling's pace.** How many passes lie between destructions, given each Body's
-  debris, whether `$01` relaunches every pass after its first run, and whether a player in space
-  survives it.
-- **The switches in play.** Whether each detonator must be at the head of the Carried Stack when
-  switched, and whether it works in space.
-- **The AUTHORS COMPUTER's display** (`$04DA5A`) and options 1 and 2 (`$7A52`, the `$6FD02` XOR,
-  `$7964`).
-- **The stacked-EXPLOSIVE planet kill** live, with its blast radius `$40 << 9`.
+- **The refused drop in `eris-spaceport-onfoot`.** ↓ on the open CUPBOARD dropped nothing there,
+  though the same injected carry dropped on `dion-2-3`. It may be the spaceport's drop rules, or a
+  field of a real take the injection does not write. It does not change the switch answers.
+- **The AUTHOR'S CHAIR was not boarded in play.** The computer run stands in `$7AB0` = 14 for the
+  one Enter. What else boarding the chair writes, and whether a seated player can walk, was not
+  run.
+- **A player on a Body destroyed by stacked EXPLOSIVEs** is expected to die through the marker,
+  from the code. Not run.
 - **System string `$10`, GAME SAVE NOT A WINNING SUITUATION**, is a Load refusal at `$05517E`
   when a field of the loaded file is not 7. It is not an ending. The field was not decoded.
 
@@ -205,12 +318,29 @@ Half-open ranges in the pinned first-world RAM
 | `$04CAD2`–`$04CAF0` stacked-explosive planet kill | `519d56f1ae3a1498a947381df177151b2bc4b817da3f0240c4e8c9310a8bacf3` |
 | `$04CBAE`–`$04CBDA` death on a destroyed Body | `31115adc7ac40a0c1a7530ec62c6de8d0c2556af3c7405a6d5ef992af58df083` |
 | `$04D420`–`$04D4D0` switches and the NOVABOMB | `bf7ffce3067f363b32abe0dafcee52e42dbe75e0e193b9c95276069714d88714` |
-| `$04D4D0`–`$04D5DA` AUTHORS COMPUTER options | `2309f034a313504275e29c475c7cb75392c608436fd865828a82b57eed2dce8a` |
+| `$04D4D0`–`$04D5DA` AUTHORS COMPUTER keys | `2309f034a313504275e29c475c7cb75392c608436fd865828a82b57eed2dce8a` |
 | `$04D7F0`–`$04D8F0` BOOK page actions | `701ebb518bfdeae465ced6f4eadce0df0abdfeb825b7613a1a99512496fc7a66` |
 | `$04BEEE`–`$04BF18` the unravelling | `6e26ef1869bda091850095744dfe1fcae423efc553212759c80bf37e90215d14` |
 | `$051EFA`–`$051F3E` drift | `b3ee3a89ac0ad8a546b25ddb90e99c56b67969cdd11b81de662088853d553e07` |
 | `$051F42`–`$051FD0` zero on the clock | `f05d008d28a9bea66f0656d4f335026879dff899fe666e1546ccf7aaad57244b` |
 | `$0547C6`–`$054808` deferred Read | `444e3c095876d8c19a9d599943be62b8f50647ad84847ed80ae152c3bd1c0460` |
+| `$04CA20`–`$04CAD2` the blast test and EXPLOSIVE count | `efa43d529e2fcf7677f06d000a4c01e3b37c8d1711fb9e3d91ef41ac5f64b0f4` |
+| `$04CAF0`–`$04CB4C` taking an object out of the stack | `c65a7d18e9e2a4d1ac03421729805f18b63b7bf86d827f3db5044d8c20a4e694` |
+| `$04CB60`–`$04CBDA` an armed EXPLOSIVE going off | `84359f09f46a16f9f4618f4ed6c6ec4e661094277ecc9586e97d74bbeed47af0` |
+| `$04CBDA`–`$04CCD2` the blast | `c416851b3842507f51e166125e4b7339b9ca3dd5ced1c0be530802e49799898c` |
+| `$04CF4E`–`$04CFA4` the debris pass | `bd40b69c73e7ca15b5b8f07ed49a48f25298a7b52eec03887e722d009cf53bdc` |
+| `$04D24C`–`$04D2C4` Open | `974ae115bbdbb2405faf49ed3e980ba301a5d8ca669c7c2ee59d405400923c25` |
+| `$04D2C4`–`$04D3B4` the Open table | `b22cd7553708149209f273fa2803b3f164872009d196f7879550ecb6b6f2beed` |
+| `$04D3D2`–`$04D420` the keypad dispatch | `c0ee52cb6098ed726288290d744d9379092b78510a0498a26bf4564c16df7b16` |
+| `$04D5DA`–`$04D69C` AUTHORS COMPUTER options | `986af43a9db2b2f0d91245d94d59097a89e0f64128970a53252669edc735a7e7` |
+| `$04D69C`–`$04D762` TIMED DETONATOR keys | `b518ebba373bd6194b50c49b986f3d3e8f4a94e05075bda32d9100573a63562b` |
+| `$04D992`–`$04D9D4` the switch lamp | `a5695ecdaf5b613397af5a553d87d654cae2ba952f281f9e49b32d1032d53299` |
+| `$04DA5A`–`$04DAB6` AUTHORS COMPUTER display | `fb34145507269249030c215b2f04f18ac8f8c5f6e234a7957f90c45020132a23` |
+| `$04DACC`–`$04DAF8` the detonation countdown | `abddeefb68358f8cd3f05a4fa48825ae37f464d7525c1de72daacd6dda2d7476` |
+| `$054770`–`$0547C6` trigger launch | `0e5267c71f7f6d5985f4971cca82a53268e86ad3909048cefa3b9e87142027f0` |
+| `$05481A`–`$054848` system message request | `f3f4699d27dc7ba206c0435d4ef24080af3985985f14167fc5a8617308c7a874` |
+| `$058F78`–`$058F88` the pose record copy to `$7A8E` | `42672a59a4fba45ad2de3422c5d2eb5ad386dfe09c9ff114b02f37a043e75fdd` |
+| `$070C3C`–`$070E22` scripts `$01` and `$1A` | `c2d07e3d27b4752522961ae37d23522df4b2ef187566530141efb3608d4a625d` |
 
 ## Research Provenance
 
@@ -218,3 +348,14 @@ Half-open ranges in the pinned first-world RAM
 - Restricted: the pinned first-world RAM, the rehosted memstates, and the probe's run
   directories `work/endgame-impact-*` and `work/endgame-wish{3,5}-*` (RAM, screenshots and
   `result.json`), all ignored.
+- #626's runs (2026-09-29), in the same ignored `work/`: `endgame-switches-20260929T163238Z-f0699c5b`,
+  `endgame-switches-20260929T163402Z-b3971e5e`, `endgame-switches-space-20260929T163446Z-13778eaa`,
+  `endgame-switches-bomb-20260929T163539Z-077dd012`,
+  `endgame-switches-bomb-space-20260929T163712Z-89e6208d`,
+  `endgame-computer-20260929T164029Z-49484d24`, `endgame-explosives-20260929T164251Z-591655c2`
+  (7), `endgame-explosives-20260929T164312Z-fadfa2f7` (8),
+  `endgame-unravel-20260929T164220Z-cd1d2d16`, `endgame-unravel-space-20260929T164220Z-a19b1955`
+  and `endgame-wish5-20260929T164432Z-bf874629`. Three earlier attempts are superseded:
+  `endgame-switches-20260929T163129Z-2ee374c6` lost keys to the panel transition, and
+  `endgame-computer-20260929T163831Z-3135ff1c` and `…163956Z-b6e07f57` poked `$7A90`, which the
+  pose copy overwrites. The unravelling runs keep every tenth sample and every change.
