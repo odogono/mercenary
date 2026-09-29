@@ -1,7 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 
 import type { BensonMessagePresentation } from '../src/benson/index.ts';
-import { createSessionResumeNotices } from '../src/shell/resumeNotices.ts';
+import {
+  HEAD_COMMAND_KEYS_TEXT,
+  createSessionResumeNotices
+} from '../src/shell/resumeNotices.ts';
 
 const message = (
   displayText: string,
@@ -27,6 +30,23 @@ describe('Session Resume notices on the Benson message line', () => {
     });
     clock = 2000;
     expect(notices.message()).toEqual({ source: 'game', text: '' });
+  });
+
+  test('names the Head Command keys through the message that begins with them', () => {
+    let clock = 0;
+    const notices = createSessionResumeNotices({ time: () => clock });
+
+    notices.headCommandKeys();
+    expect(
+      notices.message(message('PLEASE USE THE FOLLOWING KEYPAD KEYS'))
+    ).toEqual({
+      source: 'shell',
+      text: HEAD_COMMAND_KEYS_TEXT
+    });
+    clock = 7999;
+    expect(notices.message(message('NEXT MESSAGE')).source).toBe('shell');
+    clock = 8000;
+    expect(notices.message().source).toBe('game');
   });
 
   test('lets a Benson Message preempt a recovery notice immediately', () => {

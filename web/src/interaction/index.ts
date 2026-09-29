@@ -13,6 +13,11 @@ export const OUT_OF_THE_WORLD = BensonHostState.outOfTheWorld;
 
 export type InteractionAction = 'take' | 'board';
 
+/// The Damocles keypad's four commands: the ST's Enter, `*`, `+` and `-` (`$04D3D2`). Open acts on
+/// the Carried Stack's head; the other three act on whatever the head opened
+/// (docs/research/damocles-head-commands.md).
+export type HeadCommand = 'open' | 'read' | 'next' | 'previous';
+
 export interface Candidate {
   readonly position: Vector3;
   readonly slot: number;

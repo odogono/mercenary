@@ -5,6 +5,9 @@ export interface SessionResumeNotices {
   readonly couldNotResume: (reason: string) => void;
   readonly dismiss: () => void;
   readonly failed: (reason: string) => void;
+  /// Name the web keys for the Head Commands, which the recovered message names by the ST
+  /// keypad's (#595).
+  readonly headCommandKeys: () => void;
   readonly menuOpened: () => void;
   readonly message: (message?: BensonMessagePresentation) => {
     readonly source: 'game' | 'shell';
@@ -22,12 +25,18 @@ export interface SessionResumeNoticeOptions {
 
 interface Notice {
   readonly expires: number | undefined;
-  readonly kind: 'failure' | 'ownership' | 'resumed';
+  readonly kind: 'controls' | 'failure' | 'ownership' | 'resumed';
   readonly text: string;
 }
 
 const RESUMED_MILLISECONDS = 2000;
 const FAILURE_MILLISECONDS = 5000;
+/// As long as the DAMOCLES FILE's own two messages hold the line (trigger 6, 400 frames).
+const CONTROLS_MILLISECONDS = 8000;
+
+/// The web bindings for the ST keypad's Enter, `*`, `+` and `-`.
+export const HEAD_COMMAND_KEYS_TEXT =
+  'ENTER OPEN · P READ · . NEXT · , PREVIOUS';
 
 /// Lend the Benson message line to recovery without letting shell status suppress play.
 export const createSessionResumeNotices = (
@@ -65,12 +74,25 @@ export const createSessionResumeNotices = (
       failureText = `SESSION RESUME UNAVAILABLE — ${reason.toUpperCase()}`;
       showFailure();
     },
+    headCommandKeys: () => {
+      notice = {
+        expires: time() + CONTROLS_MILLISECONDS,
+        kind: 'controls',
+        text: HEAD_COMMAND_KEYS_TEXT
+      };
+    },
     menuOpened: showFailure,
     message: message => {
       const began =
         message !== undefined && message.occurrence !== previousOccurrence;
       previousOccurrence = message?.occurrence;
-      if (notice?.kind !== 'ownership' && began) {
+      // The keys notice explains the message that begins with it, so that message must not
+      // clear it.
+      if (
+        notice?.kind !== 'ownership' &&
+        notice?.kind !== 'controls' &&
+        began
+      ) {
         notice = undefined;
       }
       if (notice?.expires !== undefined && time() >= notice.expires) {

@@ -23,7 +23,7 @@ const input = (
   repeat: fields.repeat ?? false
 });
 
-const harness = () => {
+const harness = ({ damocles = false } = {}) => {
   let occupancy: Occupancy = { kind: 'onFoot' };
   let inLift = false;
   const calls: unknown[] = [];
@@ -46,7 +46,13 @@ const harness = () => {
     shutThrottle: () => calls.push('shutThrottle'),
     skipMessage: () => calls.push('skipMessage'),
     throttleNotchValue: notch => calls.push({ notch }),
-    throttleStep: delta => calls.push({ throttleStep: delta })
+    throttleStep: delta => calls.push({ throttleStep: delta }),
+    ...(damocles
+      ? {
+          headCommand: command => calls.push({ headCommand: command }),
+          rotateStack: direction => calls.push({ rotateStack: direction })
+        }
+      : {})
   };
   return {
     calls,
@@ -296,6 +302,68 @@ describe('the browser Control Profile', () => {
       { notch: 10 },
       { throttleStep: -1 },
       { throttleStep: 1 }
+    ]);
+  });
+
+  test('a Title with Head Commands takes the keypad keys and their laptop stand-ins', () => {
+    const { calls, profile, setOccupancy } = harness({ damocles: true });
+
+    const codes = [
+      'Enter',
+      'KeyP',
+      'Period',
+      'Comma',
+      'NumpadEnter',
+      'NumpadMultiply',
+      'NumpadAdd',
+      'NumpadSubtract'
+    ];
+    for (const code of codes) {
+      expect(profile.keyDown(input(code))).toBeTrue();
+      expect(profile.keyDown(input(code, { repeat: true }))).toBeTrue();
+    }
+    // Aboard they mean the same, and `-` and `=` stay the throttle.
+    setOccupancy({ kind: 'aboard', slot: 4 });
+    profile.keyDown(input('Enter'));
+    profile.keyDown(input('Minus'));
+    profile.keyDown(input('Equal'));
+    expect(calls).toEqual([
+      { headCommand: 'open' },
+      { headCommand: 'read' },
+      { headCommand: 'next' },
+      { headCommand: 'previous' },
+      { headCommand: 'open' },
+      { headCommand: 'read' },
+      { headCommand: 'next' },
+      { headCommand: 'previous' },
+      { headCommand: 'open' },
+      { throttleStep: -1 },
+      { throttleStep: 1 }
+    ]);
+  });
+
+  test('a Title that rotates the Carried Stack takes the brackets from paging', () => {
+    const { calls, profile } = harness({ damocles: true });
+
+    profile.keyDown(input('BracketLeft'));
+    profile.keyDown(input('BracketRight'));
+    expect(calls).toEqual([
+      { rotateStack: 'forward' },
+      { rotateStack: 'backward' }
+    ]);
+  });
+
+  test('a Title without Head Commands keeps Enter for the browser and P, . and , for scripts', () => {
+    const { calls, profile } = harness();
+
+    expect(profile.keyDown(input('Enter'))).toBeFalse();
+    profile.keyDown(input('KeyP'));
+    profile.keyDown(input('Period'));
+    profile.keyDown(input('Comma'));
+    expect(calls).toEqual([
+      { press: undefined },
+      { press: undefined },
+      { press: undefined }
     ]);
   });
 

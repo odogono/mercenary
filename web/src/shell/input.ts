@@ -3,7 +3,7 @@ import {
   type BensonKey as BensonKeyValue
 } from '../benson/index.ts';
 import { intent, type Intent } from '../gameCore/index.ts';
-import type { InteractionAction } from '../interaction/index.ts';
+import type { HeadCommand, InteractionAction } from '../interaction/index.ts';
 import type { Occupancy } from '../session/index.ts';
 
 export interface BrowserKey {
@@ -17,6 +17,8 @@ export interface BrowserKey {
 export interface ControlProfileActions {
   readonly drop: () => void;
   readonly fire: () => void;
+  /// A Head Command. A Title with none leaves it out, and its keys keep their ordinary meaning.
+  readonly headCommand?: (command: HeadCommand) => void;
   /// Launch into space aboard: the ST's Esc (`$055822`), which the Browser Shell keeps for the
   /// System Menu, so `Backspace` stands in for it (#566). A Title with no launch leaves it out.
   readonly launch?: () => void;
@@ -29,6 +31,9 @@ export interface ControlProfileActions {
   readonly press: (key: BensonKeyValue | undefined) => void;
   readonly reach: (action: InteractionAction) => void;
   readonly rideLift: () => void;
+  /// Rotate the Carried Stack: forward is the ST's Left (`$04DC74`), which sends the head to the
+  /// back. A Title that rotates takes the brackets from `page`.
+  readonly rotateStack?: (direction: 'forward' | 'backward') => void;
   readonly shutThrottle: () => void;
   readonly skipMessage: () => void;
   readonly throttleNotchValue: (notch: number) => void;
@@ -104,6 +109,20 @@ const axis = (
   negative: string
 ): number => (held.has(positive) ? 1 : 0) - (held.has(negative) ? 1 : 0);
 
+/// The Head Command a key gives. The keypad's own keys stay for players who have one; a laptop
+/// has none, so Enter, `P`, `.` and `,` stand in for them (#595). `-` and `=` are the throttle
+/// aboard, which is why Next and Previous are not those.
+const HEAD_COMMANDS: Readonly<Record<string, HeadCommand>> = {
+  Comma: 'previous',
+  Enter: 'open',
+  KeyP: 'read',
+  NumpadAdd: 'next',
+  NumpadEnter: 'open',
+  NumpadMultiply: 'read',
+  NumpadSubtract: 'previous',
+  Period: 'next'
+};
+
 /// `F1`–`F10` as the notch each reverses.
 const reverseNotch = (code: string): number | undefined => {
   const match = /^F([1-9]|10)$/.exec(code);
@@ -172,8 +191,11 @@ export class BrowserControlProfile {
       return false;
     }
     const aboard = this.actions.occupancy().kind === 'aboard';
+    const command = this.actions.headCommand
+      ? HEAD_COMMANDS[key.code]
+      : undefined;
     if (key.repeat) {
-      return handledCode(key.code);
+      return command !== undefined || handledCode(key.code);
     }
     if (aboard) {
       const notch = throttleNotch(key.code);
@@ -203,6 +225,13 @@ export class BrowserControlProfile {
       }
     }
 
+    // The ST sends every keypad key to `$04D3D2` before its occupancy test (`$055690`), so the
+    // Head Commands mean the same on foot, aboard and in space.
+    if (command !== undefined) {
+      this.actions.headCommand!(command);
+      return true;
+    }
+
     switch (key.code) {
       case 'ArrowDown':
       case 'ArrowLeft':
@@ -211,10 +240,18 @@ export class BrowserControlProfile {
         this.holdAndPress(key.code);
         break;
       case 'BracketLeft':
-        this.actions.page(-1);
+        if (this.actions.rotateStack) {
+          this.actions.rotateStack('forward');
+        } else {
+          this.actions.page(-1);
+        }
         break;
       case 'BracketRight':
-        this.actions.page(1);
+        if (this.actions.rotateStack) {
+          this.actions.rotateStack('backward');
+        } else {
+          this.actions.page(1);
+        }
         break;
       case 'Space':
         if (aboard) {

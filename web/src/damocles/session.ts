@@ -6,6 +6,7 @@ import {
 } from '../catalogue/data.ts';
 import type { ModelStore } from '../catalogue/modelStore.ts';
 import { IDLE, MAXIMUM_STEP, type Intent } from '../gameCore/index.ts';
+import type { HeadCommand } from '../interaction/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import type { TitleSession } from '../shell/title.ts';
 import { handoverElapsed } from './comet.ts';
@@ -2584,6 +2585,12 @@ export class DamoclesSession implements TitleSession<
       this.effects.push({ cue: 'take', type: 'sound-request' });
     }
     return { kind: 'rotated' };
+  }
+
+  /// A Head Command on the Carried Stack's head. Bound, but not yet given the document display
+  /// the research recovered (#598), so every command is ignored and changes nothing.
+  headCommand(_command: HeadCommand): { readonly kind: 'ignored' } {
+    return { kind: 'ignored' };
   }
 
   private supportResidence(support: {
