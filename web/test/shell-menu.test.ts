@@ -1,10 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 
 import { createNewGameAction, escapeFrom } from '../src/shell/menu.ts';
+import type { ShellLayer } from '../src/shell/router.ts';
 
-const layerAfter = (
-  layer: 'none' | 'menu' | 'ownership' | 'settings' | 'saves'
-) => {
+const layerAfter = (layer: ShellLayer) => {
   const outcome = escapeFrom(layer, 'closed');
   return outcome.kind === 'layer' ? outcome.layer : undefined;
 };
@@ -19,6 +18,7 @@ describe('what Escape does', () => {
     // A player deep in the chrome expects one key to retreat, not to be dropped into the game.
     expect(layerAfter('settings')).toBe('menu');
     expect(layerAfter('saves')).toBe('menu');
+    expect(layerAfter('controls')).toBe('menu');
   });
 
   test('cannot dismiss a page that does not own the Gameplay Session', () => {
@@ -26,7 +26,13 @@ describe('what Escape does', () => {
   });
 
   test('always reaches play in at most two presses', () => {
-    for (const layer of ['none', 'menu', 'settings', 'saves'] as const) {
+    for (const layer of [
+      'none',
+      'menu',
+      'settings',
+      'controls',
+      'saves'
+    ] as const) {
       const once = layerAfter(layer);
       expect(once === 'none' || layerAfter(once!) === 'none').toBeTrue();
     }
@@ -39,6 +45,7 @@ describe('what Escape does', () => {
       'menu',
       'ownership',
       'settings',
+      'controls',
       'saves'
     ] as const) {
       expect(escapeFrom(layer, 'open')).toEqual({ kind: 'closeConsole' });

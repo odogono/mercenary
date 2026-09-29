@@ -23,6 +23,7 @@ import { installConsole } from './consoleView.ts';
 import './damoclesPanelElement.ts';
 
 import { installAudioLifecycle } from './audioLifecycle.ts';
+import { renderControlsPage } from './controlsView.ts';
 import {
   DESTINATIONS,
   DepartureDirector,
@@ -401,12 +402,9 @@ try {
     drop: () => performAndRefresh(() => session.drop()),
     fire: () => performAndRefresh(() => session.fire()),
     leaveCraft: () => performAndRefresh(() => session.leaveCraft()),
-    // Targ has no Damocles Lift: its lift is the Lift Journey, ridden with `rideLift`.
-    liftKey: () => false,
+    // Targ has no Damocles Lift: its lift is the Lift Journey, ridden with `rideLift`. The live
+    // Benson Script owns the message line, so this scripted shell has no pager either.
     occupancy: () => snapshot.occupancy,
-    // The live Benson Script owns the message line. Bracket paging remains a Control Profile
-    // action for the scriptless Swift fallback, but this required scripted shell has no pager.
-    page: () => {},
     press: key => performAndRefresh(() => session.press(key)),
     reach: action => performAndRefresh(() => session.reach(action)),
     rideLift: () => performAndRefresh(() => session.rideLift()),
@@ -446,6 +444,9 @@ try {
   const menu = installSystemMenu({
     onLayer: layer => {
       audio.layerChanged(layer);
+      if (layer === 'controls') {
+        renderControlsPage(chromePages.controls, controls.describe(false));
+      }
       if (layer === 'menu') {
         notices.menuOpened();
         if (ownership.mayPersist()) {

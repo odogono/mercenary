@@ -1,4 +1,5 @@
 import type { ConsoleElements } from './consoleView.ts';
+import { CONTROL_PROFILE_NAME } from './input.ts';
 import type { MenuPages } from './menu.ts';
 
 /// Title-owned labels on otherwise shared System Menu and Shell Console chrome.
@@ -82,7 +83,7 @@ const page = (
     className: 'chrome-page bezel'
   });
 
-/// Mount the System Menu, settings, save chooser, ownership page and Shell Console.
+/// Mount the System Menu, settings, Controls Page, save chooser, ownership page and Shell Console.
 ///
 /// Markup lives here so both Title documents share one overlay rather than copying it. Tokens
 /// and layout stay in `chrome.css`.
@@ -151,6 +152,11 @@ export const installShellChrome = (
       attrs: { 'data-goto': 'settings', type: 'button' },
       className: 'chrome-button',
       text: 'SETTINGS'
+    }),
+    el('button', {
+      attrs: { 'data-goto': 'controls', type: 'button' },
+      className: 'chrome-button',
+      text: 'CONTROLS'
     }),
     el('button', {
       attrs: { 'data-goto': 'saves', type: 'button' },
@@ -243,9 +249,24 @@ export const installShellChrome = (
     })
   ]);
 
+  // Filled from the Title's Bindings each time it opens: see `controlsView.ts`.
+  const controls = page(
+    'page-controls',
+    'Controls',
+    `CONTROLS · ${CONTROL_PROFILE_NAME.toUpperCase()}`,
+    [
+      el('div', { attrs: { id: 'controls-groups' } }),
+      el('button', {
+        attrs: { 'data-goto': 'menu', type: 'button' },
+        className: 'chrome-button',
+        text: 'BACK'
+      })
+    ]
+  );
+
   const shell = el('div', {
     attrs: { 'data-shell-chrome': '', id: 'shell-chrome' },
-    children: [menu, ownership, settings, saves]
+    children: [menu, ownership, settings, controls, saves]
   });
 
   surface.append(consoleRoot, shell);
@@ -256,7 +277,7 @@ export const installShellChrome = (
   return {
     console: { input, log, surface },
     newGame,
-    pages: { menu, ownership, saves, settings },
+    pages: { controls, menu, ownership, saves, settings },
     takeOver
   };
 };

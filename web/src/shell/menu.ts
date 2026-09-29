@@ -23,6 +23,7 @@ export const escapeFrom = (
       return { kind: 'layer', layer: 'none' };
     case 'ownership':
       return { kind: 'layer', layer: 'ownership' };
+    case 'controls':
     case 'saves':
     case 'settings':
       return { kind: 'layer', layer: 'menu' };
@@ -30,6 +31,7 @@ export const escapeFrom = (
 };
 
 export interface MenuPages {
+  readonly controls: HTMLElement;
   readonly menu: HTMLElement;
   readonly ownership: HTMLElement;
   readonly saves: HTMLElement;

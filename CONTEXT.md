@@ -159,7 +159,7 @@ A separable browser-platform accommodationâ€”such as key bindings, canvas sizing
 _Avoid_: Browser hack, web tweak, responsive mode
 
 **Browser Shell**:
-The browser-owned experience surrounding the Game Surface, including the page, its canvas, controls help, settings, and host feedback.
+The browser-owned experience surrounding the Game Surface, including the page, its canvas, the Controls Page, settings, and host feedback.
 _Avoid_: Web UI, page chrome, wrapper
 
 **Presentation Preset**:
@@ -359,8 +359,16 @@ A player-observable behavior selected by one or more objects' Object Residence â
 _Avoid_: Equipment effect, inventory perk, pickup effect
 
 **Control Profile**:
-A named set of device-specific bindings that maps physical controls to Movement Intent and Semantic Actions.
+A named set of device-specific Bindings that maps physical controls to Movement Intent and Semantic Actions.
 _Avoid_: Keymap, input profile
+
+**Binding**:
+One physical control that a Control Profile maps to a Movement Intent or a Semantic Action, holding in every Occupancy or in only one.
+_Avoid_: Key mapping, shortcut, hotkey
+
+**Controls Page**:
+The System Menu page that lists the active Control Profile's Bindings for the current Title, grouped by Occupancy, with the Occupancy the player is in marked.
+_Avoid_: Keymap screen, help overlay, key reference, controls help
 
 **Accommodation**:
 An optional Web Adaptation that improves access through equivalent input or redundant presentation without changing Game Semantics or player-relevant timing.
@@ -403,7 +411,7 @@ The Damocles Panel Rendition's `HH-MM-SS` window counting what is left before th
 _Avoid_: Countdown, comet timer, deadline clock, session clock
 
 **System Menu**:
-The Browser Shell overlay opened with Escape that pauses stepping and owns the settings page and the Save chooser; shell chrome, never part of the Game Surface.
+The Browser Shell overlay opened with Escape that pauses stepping and owns the settings page, the Controls Page and the Save chooser; shell chrome, never part of the Game Surface.
 _Avoid_: Pause menu, options screen, main menu
 
 **Shell Console**:

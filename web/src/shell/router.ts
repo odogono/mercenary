@@ -18,7 +18,8 @@ export interface RoutedKey extends BrowserKey {
 ///
 /// `none` means the Game Surface has it. Anything else is an open overlay whose own controls
 /// must swallow keys rather than let them reach Movement Intent.
-export type ShellLayer = 'none' | 'menu' | 'ownership' | 'settings' | 'saves';
+export type ShellLayer =
+  'controls' | 'none' | 'menu' | 'ownership' | 'settings' | 'saves';
 
 /// Which authored opening currently holds the Game Surface's keys, if any.
 ///
