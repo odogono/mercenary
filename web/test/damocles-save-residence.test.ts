@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
 
 import { type Catalogue } from '../src/catalogue/data.ts';
+import { initialAuthorsComputer } from '../src/damocles/authorsComputer.ts';
 import {
   effectiveMessageRow,
   type DamoclesMessageId
@@ -64,6 +65,7 @@ const record = () => ({
     carried: [] as string[],
     clockAnchor: null,
     clockLevel: 6,
+    computer: initialAuthorsComputer(),
     craft: null,
     debrisPasses: 0,
     destroyedBodies: [],
@@ -77,6 +79,7 @@ const record = () => ({
     impactPassed: false,
     occupancy: { kind: 'onFoot' } as DamoclesSaveOccupancy,
     paletteMask: 0,
+    panelMask: 0,
     pendingBriefcaseDrop: null as {
       head: string;
       residence: ReturnType<typeof surface>;
@@ -94,7 +97,9 @@ const record = () => ({
     scrollCounter: 0,
     spaceMemory: null,
     structure: null,
-    switches: 0
+    switches: 0,
+    unravelCursor: 29,
+    viewExponent: 8
   },
   where: 'VESTA'
 });

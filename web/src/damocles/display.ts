@@ -71,6 +71,7 @@ export type DocumentMessageId = `document-${number}-${number}`;
 export type DamoclesMessageId =
   | (typeof LANDING_MESSAGE_IDS)[number]
   | `script15-inline-${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10}`
+  | `script1-inline-${1 | 2 | 3}`
   | 'script11-inline-1'
   | 'script11-inline-2'
   | `script14-inline-${1 | 2 | 3 | 4}`
@@ -96,6 +97,8 @@ export type DamoclesMessageId =
   | 'script3-inline-4'
   | 'script3-inline-5'
   | 'script3-inline-6'
+  | 'script42-inline-1'
+  | 'script42-inline-2'
   | 'script4-inline-1'
   | 'script4-inline-2'
   | 'script4-inline-3'

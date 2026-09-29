@@ -1,9 +1,10 @@
 import type { Catalogue } from '../catalogue/data.ts';
 import {
-  MORE_TIME_CLOCK_LEVEL,
-  NEW_GAME_CLOCK_LEVEL,
-  type ClockAnchor
-} from './comet.ts';
+  OPTION_MAXIMA,
+  initialAuthorsComputer,
+  type AuthorsComputer
+} from './authorsComputer.ts';
+import { NEW_GAME_CLOCK_LEVEL, type ClockAnchor } from './comet.ts';
 import { craftPanelSpeed } from './craft.ts';
 import {
   DAMOCLES_ROW_CELLS,
@@ -22,6 +23,7 @@ import {
   type DamoclesDocuments
 } from './documentBank.ts';
 import {
+  AUTHORS_COMPUTER_SLOT,
   DETONATOR_BITS,
   NOVAGEN_SAFE_SLOT,
   TRANSITION_VBLS,
@@ -49,7 +51,7 @@ import {
 import {
   ANSWER_FRAMES,
   BALANCE_MODULUS,
-  COLOURFUL_MASK,
+  COMPUTER_TRIGGERS,
   DESTRUCTION_TRIGGERS,
   ENDING_TRIGGERS,
   LANDING_TRIGGERS,
@@ -182,10 +184,18 @@ import type { Pose } from './world.ts';
 /// Association B is its Object Residence, which the Save already carries, and a detonated bomb
 /// is a removed resident. A schema-22 record or older is migrated with every switch off and
 /// those endings armed: no earlier port could switch one or reach the dispatcher.
-export const DAMOCLES_SAVE_SCHEMA_VERSION = 23 as const;
+///
+/// Version 24 carries the AUTHORS COMPUTER and the unravelling (#628): the option `$786C` and
+/// its records at `$7C8C`, the panel mask `$7A52`, the view exponent `$7964`, the unravelling's
+/// cursor `$7A8C`, and the triggers `$01` and `$2A`. The computer's Association B is its Object
+/// Residence, and a removed computer is what the unravelling reads. The clock level and the
+/// palette mask widen to whatever the computer's options can write. A schema-23 record or older
+/// is migrated with the reset's records, no panel mask, exponent 8, the cursor on DAMOCLES and
+/// both triggers armed.
+export const DAMOCLES_SAVE_SCHEMA_VERSION = 24 as const;
 /// The older schemas a restore migrates rather than refuses.
 const MIGRATED_SCHEMA_VERSIONS: readonly unknown[] = [
-  11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22
+  11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23
 ];
 /// The schemas from before the landing messages (#576), which carry no landing trigger.
 const PRE_LANDING_SCHEMA_VERSIONS: readonly unknown[] = [11, 12, 13];
@@ -323,6 +333,8 @@ export interface DamoclesSaveSnapshot {
   readonly clockAnchor?: ClockAnchor | null;
   /// `$7C1C`, the clock rate level.
   readonly clockLevel?: number;
+  /// The AUTHORS COMPUTER's option and records.
+  readonly computer?: AuthorsComputer;
   /// The craft Mover's words aboard, or null on foot. A migrated schema-11 record aboard has
   /// none, and the session seats it at the boarding preset.
   readonly craft: DamoclesSaveCraft | null;
@@ -348,6 +360,8 @@ export interface DamoclesSaveSnapshot {
   readonly occupancy: DamoclesSaveOccupancy;
   /// `$7A50`, the palette XOR mask.
   readonly paletteMask?: number;
+  /// `$7A52`, the Benson Panel's palette mask.
+  readonly panelMask?: number;
   readonly pendingBriefcaseDrop: {
     readonly head: string;
     readonly residence: PlacedResidence;
@@ -366,6 +380,10 @@ export interface DamoclesSaveSnapshot {
   readonly structure: BoundStructureSnapshot | null;
   /// `$7872`, the switch bits: only the four detonators', bits 3 to 6, are ported.
   readonly switches?: number;
+  /// `$7A8C`, the unravelling's next Body index, -1 once past DIALIS.
+  readonly unravelCursor?: number;
+  /// `$7964`'s high word, the projection's scale exponent.
+  readonly viewExponent?: number;
 }
 
 /// What the player is inside, as the session's own Occupancy says it. Aboard, the Pose is the
@@ -959,10 +977,15 @@ const WISHED_TRIGGERS: readonly number[] = [
   ...IMPACT_TRIGGERS,
   ...ENDING_TRIGGERS
 ];
-/// Every trigger a current record carries: the dispatcher's endings beside those.
+/// Every trigger a schema-23 record carries: the dispatcher's endings beside those.
 const DESTROYED_TRIGGERS: readonly number[] = [
   ...WISHED_TRIGGERS,
   ...DESTRUCTION_TRIGGERS
+];
+/// Every trigger a current record carries: the computer's beside those.
+const COMPUTED_TRIGGERS: readonly number[] = [
+  ...DESTROYED_TRIGGERS,
+  ...COMPUTER_TRIGGERS
 ];
 /// The steps schema 22 put in front of `$0F`'s script: its 150-frame wait.
 const IMPACT_WAIT_STEPS = 2;
@@ -1099,7 +1122,8 @@ const scriptOf = (
   offerSaved: boolean,
   impactSaved: boolean,
   wishSaved: boolean,
-  destructionSaved: boolean
+  destructionSaved: boolean,
+  computerSaved: boolean
 ): DamoclesSaveScript => {
   const script = object(value, 'snapshot.script');
   const counter = integer(
@@ -1147,19 +1171,21 @@ const scriptOf = (
       index
     };
   });
-  const expected = destructionSaved
-    ? DESTROYED_TRIGGERS
-    : wishSaved
-      ? WISHED_TRIGGERS
-      : impactSaved
-        ? IMPACT_TRIGGERS
-        : migrated
-          ? PICKUP_TRIGGERS
-          : offerSaved
-            ? SAVED_TRIGGERS
-            : locationSaved
-              ? WELCOMED_TRIGGERS
-              : LANDED_TRIGGERS;
+  const expected = computerSaved
+    ? COMPUTED_TRIGGERS
+    : destructionSaved
+      ? DESTROYED_TRIGGERS
+      : wishSaved
+        ? WISHED_TRIGGERS
+        : impactSaved
+          ? IMPACT_TRIGGERS
+          : migrated
+            ? PICKUP_TRIGGERS
+            : offerSaved
+              ? SAVED_TRIGGERS
+              : locationSaved
+                ? WELCOMED_TRIGGERS
+                : LANDED_TRIGGERS;
   if (
     new Set(triggers.map(trigger => trigger.index)).size !== triggers.length ||
     triggers.length !== expected.length ||
@@ -1406,10 +1432,12 @@ const headCommandsOf = (
   // A switch's panel opens as a document's does, and its index and item stay 0.
   const panelSlot = (item: unknown, path: string): number => {
     const slot = integer(item, path, 0, 0xff);
-    return switchFor(slot) === undefined ? documentSlot(slot, path) : slot;
+    return switchFor(slot) === undefined && slot !== AUTHORS_COMPUTER_SLOT
+      ? documentSlot(slot, path)
+      : slot;
   };
   const lastItem = (slot: number): number =>
-    switchFor(slot) !== undefined
+    switchFor(slot) !== undefined || slot === AUTHORS_COMPUTER_SLOT
       ? 0
       : documents === undefined
         ? 0xff_ff
@@ -1425,8 +1453,11 @@ const headCommandsOf = (
       return fail('the open document is not carried');
     }
     const index = word(raw['index'], 'snapshot.headCommands.open.index');
-    if (switchFor(slot) !== undefined && index !== 0) {
-      return fail('an open switch pages no index');
+    if (
+      (switchFor(slot) !== undefined || slot === AUTHORS_COMPUTER_SLOT) &&
+      index !== 0
+    ) {
+      return fail('an open switch or computer pages no index');
     }
     open = {
       index,
@@ -1690,6 +1721,7 @@ export const decodeDamoclesSave = (
   }
   const impactRecord =
     record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION ||
+    record['schemaVersion'] === 23 ||
     record['schemaVersion'] === 22 ||
     record['schemaVersion'] === 21;
   const destroyedBodies = impactRecord
@@ -1765,12 +1797,14 @@ export const decodeDamoclesSave = (
   }
   const wishRecord =
     record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION ||
+    record['schemaVersion'] === 23 ||
     record['schemaVersion'] === 22;
   const clockLevel = wishRecord ? snapshot['clockLevel'] : NEW_GAME_CLOCK_LEVEL;
-  // Only page 4 moves the level, and only to 8.
+  // Page 4 moves the level to 8, and the computer's option 3 anywhere from 0 to 10.
   if (
-    clockLevel !== NEW_GAME_CLOCK_LEVEL &&
-    clockLevel !== MORE_TIME_CLOCK_LEVEL
+    !Number.isInteger(clockLevel) ||
+    (clockLevel as number) < 0 ||
+    (clockLevel as number) > OPTION_MAXIMA[3]!
   ) {
     return fail('clock rate level is no level a ported writer sets');
   }
@@ -1786,17 +1820,60 @@ export const decodeDamoclesSave = (
     }
     clockAnchor = { clock: anchor['clock'], elapsed: anchor['elapsed'] };
   }
-  if ((clockAnchor === null) !== (clockLevel === NEW_GAME_CLOCK_LEVEL)) {
+  // The anchor is written on the level's first change, and the computer can move it back.
+  if (clockAnchor === null && clockLevel !== NEW_GAME_CLOCK_LEVEL) {
     return fail('clock anchor and rate level disagree');
   }
-  const paletteMask = wishRecord ? snapshot['paletteMask'] : 0;
-  if (paletteMask !== 0 && paletteMask !== COLOURFUL_MASK) {
-    return fail('palette mask is no mask a ported writer sets');
-  }
+  // A mask is `$213` or the computer's spread of a 9-bit value: ST `0RGB` either way.
+  const stMask = (value: unknown, path: string): number => {
+    const mask = integer(value, path, 0, 0x7_77);
+    return (mask & ~0x7_77) === 0
+      ? mask
+      : fail(`${path} is no mask a ported writer sets`);
+  };
+  const paletteMask = wishRecord
+    ? stMask(snapshot['paletteMask'], 'snapshot.paletteMask')
+    : 0;
+  const computerRecord =
+    record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION;
   const switches =
-    record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION
+    computerRecord || record['schemaVersion'] === 23
       ? integer(snapshot['switches'], 'snapshot.switches', 0, 0xff)
       : 0;
+  let computer = initialAuthorsComputer();
+  if (computerRecord) {
+    const raw = object(snapshot['computer'], 'snapshot.computer');
+    const values = array(raw['values'], 'snapshot.computer.values').map(
+      (value, index) =>
+        integer(
+          value,
+          `snapshot.computer.values[${index}]`,
+          0,
+          OPTION_MAXIMA[index] ?? -1
+        )
+    );
+    if (values.length !== OPTION_MAXIMA.length) {
+      return fail('snapshot.computer.values must hold five records');
+    }
+    computer = {
+      option: integer(raw['option'], 'snapshot.computer.option', 0, 4),
+      values
+    };
+  }
+  const panelMask = computerRecord
+    ? stMask(snapshot['panelMask'], 'snapshot.panelMask')
+    : 0;
+  const viewExponent = computerRecord
+    ? integer(
+        snapshot['viewExponent'],
+        'snapshot.viewExponent',
+        0,
+        OPTION_MAXIMA[2]!
+      )
+    : 8;
+  const unravelCursor = computerRecord
+    ? integer(snapshot['unravelCursor'], 'snapshot.unravelCursor', -1, 29)
+    : 29;
   // Only the four detonators are ported switches.
   if ((switches & ~DETONATOR_BITS) !== 0) {
     return fail('switch bits name a switch the port does not open');
@@ -1974,8 +2051,10 @@ export const decodeDamoclesSave = (
     16
   );
   const current = record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION;
+  // Schema 23 is the first to carry the dispatcher's endings.
+  const destructionSaved = current || record['schemaVersion'] === 23;
   // Schema 22 is the first to carry the BOOK's wishes, and 21 the impact.
-  const wishSaved = current || record['schemaVersion'] === 22;
+  const wishSaved = destructionSaved || record['schemaVersion'] === 22;
   const impactSaved = wishSaved || record['schemaVersion'] === 21;
   const offerSaved = impactSaved || record['schemaVersion'] === 20;
   // Schema 19 is the first to carry the location triggers.
@@ -1996,6 +2075,7 @@ export const decodeDamoclesSave = (
     offerSaved,
     impactSaved,
     wishSaved,
+    destructionSaved,
     current
   );
   const running = runSaved ? snapshot['running'] : false;
@@ -2126,7 +2206,8 @@ export const decodeDamoclesSave = (
       briefcaseStore,
       carried,
       clockAnchor,
-      clockLevel,
+      clockLevel: clockLevel as number,
+      computer,
       craft,
       debrisPasses,
       destroyedBodies,
@@ -2140,6 +2221,7 @@ export const decodeDamoclesSave = (
       impactPassed,
       occupancy,
       paletteMask,
+      panelMask,
       pendingBriefcaseDrop,
       pose,
       removedResidents,
@@ -2149,7 +2231,9 @@ export const decodeDamoclesSave = (
       scrollCounter,
       spaceMemory,
       structure,
-      switches
+      switches,
+      unravelCursor,
+      viewExponent
     },
     where: record['where']
   };

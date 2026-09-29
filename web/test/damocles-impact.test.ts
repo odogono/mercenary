@@ -8,6 +8,7 @@ import {
   encodeDamoclesSave
 } from '../src/damocles/save.ts';
 import {
+  COMPUTER_TRIGGERS,
   DESTRUCTION_TRIGGERS,
   ENDING_TRIGGERS
 } from '../src/damocles/scripts.ts';
@@ -22,7 +23,11 @@ import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
 /// The endings a record older than schema 22 does not carry.
-const OLDER_ENDINGS = [...ENDING_TRIGGERS, ...DESTRUCTION_TRIGGERS];
+const OLDER_ENDINGS = [
+  ...ENDING_TRIGGERS,
+  ...DESTRUCTION_TRIGGERS,
+  ...COMPUTER_TRIGGERS
+];
 
 let content: DamoclesContent;
 

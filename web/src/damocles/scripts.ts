@@ -12,6 +12,7 @@ import type { DamoclesMessageId } from './display.ts';
 /// table at `$0543D2` for each resident and ran each response to its parked stopping point.
 
 export const SCRIPT_IDS = [
+  'damocles.script.slot-1',
   'damocles.script.slot-11',
   'damocles.script.slot-14',
   'damocles.script.slot-15',
@@ -40,6 +41,7 @@ export const SCRIPT_IDS = [
   'damocles.script.slot-40',
   'damocles.script.slot-4',
   'damocles.script.slot-41',
+  'damocles.script.slot-42',
   'damocles.script.slot-43',
   'damocles.script.slot-44',
   'damocles.script.slot-45',
@@ -491,6 +493,24 @@ const everythingDestroyed = (): Script => ({
   revision: 1
 });
 
+/// `$070C3C` and `$07204C`: the 100-frame wait, the lines and the shared epilogue. The
+/// unravelling's `$01` and the AUTHORS COMPUTER's warning `$2A`, which Open fires.
+const computerMessage = (
+  entry: number,
+  trigger: number,
+  lines: number
+): Script => ({
+  entry,
+  ops: [
+    ...wait(LANDING_WAIT_FRAMES),
+    ...Array.from({ length: lines }, (_, index) =>
+      message(`script${trigger}-inline-${index + 1}` as DamoclesMessageId)
+    ),
+    ...sharedEpilogue()
+  ],
+  revision: 1
+});
+
 export interface Script {
   readonly entry: number;
   readonly ops: readonly Op[];
@@ -510,6 +530,7 @@ export const WAIT_FROM_DOCUMENT = -1;
 export const SCRIPTS: Readonly<Record<ScriptId, Script>> = {
   // $07169E, trigger $0F: zero on the impact clock. After the 150-frame wait the State President
   // answers according to the first offer's accepted bit; neither branch changes the balance.
+  'damocles.script.slot-1': computerMessage(0x07_0c_3c, 1, 3),
   'damocles.script.slot-14': report(0x07_18_80, 14),
   'damocles.script.slot-15': {
     entry: 0x07_16_9e,
@@ -697,6 +718,7 @@ export const SCRIPTS: Readonly<Record<ScriptId, Script>> = {
     'script40-inline-1',
     'script40-inline-2'
   ]),
+  'damocles.script.slot-42': computerMessage(0x07_20_4c, 42, 2),
   // $0724D8, trigger $29. CYCLOPES, Body 10.
   'damocles.script.slot-41': gazetteer(0x07_24_d8, [
     'script41-inline-1',
@@ -835,7 +857,18 @@ export const ENDING_TRIGGERS: readonly number[] = [18, 21, 22, 23, 24, 25, 60];
 /// are `$A0` too.
 export const DESTRUCTION_TRIGGERS: readonly number[] = [14, 16, 17, 19, 26, 27];
 
+/// The AUTHORS COMPUTER's triggers (#628): `$01`, which the unravelling fires (`$A0`), and the
+/// warning `$2A`, which Open fires from the AUTHOR'S CHAIR (`$80`, so it is lost while another
+/// script runs).
+export const UNRAVELLING_TRIGGER = 0x01;
+export const COMPUTER_WARNING_TRIGGER = 0x2a;
+export const COMPUTER_TRIGGERS: readonly number[] = [
+  UNRAVELLING_TRIGGER,
+  COMPUTER_WARNING_TRIGGER
+];
+
 export const SCRIPT_FOR_TRIGGER: Readonly<Record<number, ScriptId>> = {
+  1: 'damocles.script.slot-1',
   11: 'damocles.script.slot-11',
   14: 'damocles.script.slot-14',
   15: 'damocles.script.slot-15',
@@ -854,6 +887,7 @@ export const SCRIPT_FOR_TRIGGER: Readonly<Record<number, ScriptId>> = {
   27: 'damocles.script.slot-27',
   3: 'damocles.script.slot-3',
   4: 'damocles.script.slot-4',
+  42: 'damocles.script.slot-42',
   5: 'damocles.script.slot-5',
   6: 'damocles.script.slot-6',
   60: 'damocles.script.slot-60',
@@ -890,6 +924,8 @@ export const TRIGGER_ARMING: readonly {
   { byte: 0xa0, index: 4 },
   ...ENDING_TRIGGERS.map(index => ({ byte: 0xa0, index })),
   ...DESTRUCTION_TRIGGERS.map(index => ({ byte: 0xa0, index })),
+  { byte: 0xa0, index: UNRAVELLING_TRIGGER },
+  { byte: 0x80, index: COMPUTER_WARNING_TRIGGER },
   ...LANDING_TRIGGERS.map(index => ({
     byte: index === 0x38 ? 0xc0 : 0x80,
     index

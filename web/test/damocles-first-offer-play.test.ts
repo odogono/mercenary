@@ -22,6 +22,7 @@ import {
 import {
   ANSWER_FRAMES,
   ANSWER_KEYS,
+  COMPUTER_TRIGGERS,
   DESTRUCTION_TRIGGERS,
   ENDING_TRIGGERS,
   FOURTH_OFFER_BELOW,
@@ -43,7 +44,11 @@ import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
 /// The endings a record older than schema 22 does not carry.
-const OLDER_ENDINGS = [...ENDING_TRIGGERS, ...DESTRUCTION_TRIGGERS];
+const OLDER_ENDINGS = [
+  ...ENDING_TRIGGERS,
+  ...DESTRUCTION_TRIGGERS,
+  ...COMPUTER_TRIGGERS
+];
 
 /// Location trigger 4, script slot `$04` at `$070650` (#612): the first work offer on Floor 2 of
 /// the Eris STATE OFFICE, and its bargaining ladder (docs/research/damocles-first-offer.md,

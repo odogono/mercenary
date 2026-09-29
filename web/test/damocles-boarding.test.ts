@@ -21,6 +21,7 @@ import {
 import { createDamoclesSavePersistence } from '../src/damocles/saves.ts';
 import { NEW_GAME_NOISE } from '../src/damocles/script.ts';
 import {
+  COMPUTER_TRIGGERS,
   DESTRUCTION_TRIGGERS,
   ENDING_TRIGGERS,
   TRIGGER_FOR_RESIDENT
@@ -47,7 +48,11 @@ import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
 /// The endings a record older than schema 22 does not carry.
-const OLDER_ENDINGS = [...ENDING_TRIGGERS, ...DESTRUCTION_TRIGGERS];
+const OLDER_ENDINGS = [
+  ...ENDING_TRIGGERS,
+  ...DESTRUCTION_TRIGGERS,
+  ...COMPUTER_TRIGGERS
+];
 
 /// Boarding and leaving against the #407 contract, docs/design/damocles-boarding-admission.md.
 ///
