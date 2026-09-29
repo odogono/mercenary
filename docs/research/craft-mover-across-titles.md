@@ -17,7 +17,11 @@ Sources:
   [the collision response note](damocles-collision-response.md),
   [ADR 0051](../adr/0051-run-the-damocles-craft-pass-exactly-once-every-four-ticks.md),
   `web/src/damocles/craft.ts`, and the Catalogue's `craft` block.
-- **Mercenary 3.** Nothing. No Mercenary 3 material has been examined.
+- **Mercenary 3.** Initially unexamined when this note was written. The subsequent
+  [integration research for #609](mercenary-iii-integration.md) pins an ST baseline and
+  demonstrates matching math tables, bounded addition behaviour and recurring craft
+  parameters. It also observes scene-dependent craft cadence and a passenger path separate
+  from the ordinary Mover selector. Whole-Mover and boarding convergence remain unproved.
 
 Only decoded values and the port's own code are compared. No program code is copied
 ([ADR 0002](../adr/0002-separate-rom-research-from-implementation.md)).
@@ -43,8 +47,10 @@ Only decoded values and the port's own code are compared. No program code is cop
    shared pass skeleton over a per-Title number system, and per-Title handlers and ground models.
    The first layer costs nothing. The second needs Targ moved onto whole frames, and Targ's
    Golden Traces must then be re-proven, which #419 requires. The third stays per-Title.
-5. **Mercenary 3 is the open question.** If it descends from the ST engine, as Damocles does,
-   `craft.ts` is the natural base and Targ is the outlier. That is a hypothesis to test first.
+5. **Mercenary 3 now has bounded evidence.** The subsequent [#609 report](mercenary-iii-integration.md)
+   supports selected arithmetic and parameter reuse from Damocles, while leaving whole-Mover
+   equivalence, passenger integration and a shared architecture undecided. `craft.ts` remains
+   a candidate foundation, not an admitted cross-title implementation.
 
 ## The loop, rule by rule
 
@@ -180,23 +186,22 @@ session maps those events to its own sound and Occupancy.
 
 ## Mercenary 3
 
-*Mercenary III: The Dion Crisis* has not been examined. Everything here is a hypothesis to test.
+The original five-question hypothesis is now investigated in the
+[#609 integration report](mercenary-iii-integration.md):
 
-- **Hypothesis.** It descends from the ST engine, not the C64 one. If so, its craft table and
-  number system match Damocles's: an entry of `bra.w` plus parameters, log and exponent tables,
-  a float add like `$04BD34`. `craft.ts` would then serve it with a new Catalogue block, and
-  Targ is the outlier.
-- **A first research ticket** would ask five questions, each answerable from one memstate:
-  - Is there a craft table of `bra.w` entries?
-  - Are the log, exponent and sine tables byte-identical to Damocles's?
-  - Is there a float add with `$04BD34`'s shape?
-  - Does the aboard frame path run one pass a frame, as `$05970E` does?
-  - Which Damocles slot parameters recur?
-- **If the hypothesis holds,** two of the three Titles already share `craft.ts`, and the case for
-  layer 2 in Targ's direction weakens. The shared Mover is then the ST one, with Targ adapted to
-  it or left as a sibling.
-- **If it fails,** the three Movers are three data points, and layer 2 has to be designed from
-  all of them.
+- A ten-entry table of branches and parameters is recovered, versus Damocles's sixteen.
+- The actual log, exponent and sine lookup entries are byte-identical.
+- The complete float-add routine is identical, and eight original-runtime operand cases
+  match the existing independent `craftAdd` implementation.
+- Bounded runtime probes observe an ordinary pass per original frame and a collision-retry
+  second pass; frame durations vary, so this is not a universal four-VBL rate.
+- Multiple Damocles parameter blocks recur, but craft identities and whole-Mover equivalence
+  remain unresolved.
+
+These results support investigating selected reuse. They do not mean the Titles already share
+`craft.ts`, or that a new Catalogue block would suffice. Natural taxi travel also uses a passenger
+reference separate from the ordinary Mover selector. The report proposes a bounded passenger
+milestone and retains explicit recovery and architecture decisions before convergence.
 
 ## Recommendation
 
@@ -204,8 +209,9 @@ session maps those events to its own sound and Occupancy.
    inventing Damocles-only names for shared ideas.
 2. Hold #557 and #558 to the current `craft.ts` seams. `craftFrame` returns a state and an
    outcome and already reads everything from the payload, which is the shape layer 3 wants.
-3. Open the Mercenary 3 research ticket before any convergence work. Its answer decides which
-   way layer 2 points.
+3. Review the [Mercenary 3 findings](mercenary-iii-integration.md) and resolve the bounded
+   mechanism and passenger-state gaps before any convergence work. Arithmetic identity alone
+   does not choose layer 2's architecture.
 4. Treat layer 2 for Targ as an ADR-level decision. The question is whether Targ gives up
    closed-form time for whole passes, which would be closer to its Reference Build and would
    re-prove its traces.
@@ -219,4 +225,5 @@ session maps those events to its own sound and Occupancy.
 - Why Targ's ceiling scale is effectively nil while Damocles's halves per 65,536.
 - Whether Targ's descent-rate crash threshold (256 a frame) and Damocles's step of −100 a pass
   are the same rule at different scales.
-- Mercenary 3, entirely.
+- Mercenary 3's full per-pass equivalence, craft/model identities, passenger-service state,
+  timing policy and appropriate shared seams; see the #609 report's ordered follow-ups.
