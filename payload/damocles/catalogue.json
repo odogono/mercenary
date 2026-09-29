@@ -88506,6 +88506,10 @@
       },
       "id": "island-dialis-063144",
       "landColour": "#eeeeee",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 146041
+      },
       "origin": [
         0,
         0
@@ -88569,6 +88573,10 @@
       },
       "id": "island-icarus-063150",
       "landColour": "#444444",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 154808
+      },
       "origin": [
         624,
         688
@@ -88632,6 +88640,10 @@
       },
       "id": "island-midas-06315c",
       "landColour": "#aa8800",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 155264
+      },
       "origin": [
         1729,
         938
@@ -88695,6 +88707,10 @@
       },
       "id": "island-acheron-063168",
       "landColour": "#888888",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 148244
+      },
       "origin": [
         3419,
         298
@@ -88831,6 +88847,29 @@
       },
       "id": "island-dion-063174",
       "landColour": "#006600",
+      "locationTable": {
+        "entries": [
+          {
+            "cell": 222,
+            "floor": 0,
+            "region": 0,
+            "trigger": 10
+          },
+          {
+            "cell": 178,
+            "floor": 0,
+            "region": 0,
+            "trigger": 9
+          },
+          {
+            "cell": 178,
+            "floor": 1,
+            "region": 4,
+            "trigger": 12
+          }
+        ],
+        "sourceAddress": 147199
+      },
       "origin": [
         3252,
         1314
@@ -88950,6 +88989,10 @@
       },
       "id": "island-dion-06317e",
       "landColour": "#008800",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 153603
+      },
       "origin": [
         3316,
         1378
@@ -89069,6 +89112,10 @@
       },
       "id": "island-dion-063188",
       "landColour": "#008800",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 153850
+      },
       "origin": [
         3316,
         1298
@@ -89132,6 +89179,10 @@
       },
       "id": "island-atropos-063194",
       "landColour": "#888888",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 155224
+      },
       "origin": [
         42,
         225
@@ -89285,6 +89336,10 @@
       },
       "id": "island-clotho-0631a0",
       "landColour": "#aaaaaa",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 154729
+      },
       "origin": [
         2421,
         300
@@ -89370,6 +89425,10 @@
       },
       "id": "island-lachesis-0631ac",
       "landColour": "#442222",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 154887
+      },
       "origin": [
         2644,
         153
@@ -89455,6 +89514,10 @@
       },
       "id": "island-lachesis-0631b6",
       "landColour": "#442222",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 146041
+      },
       "origin": [
         2644,
         253
@@ -89540,6 +89603,10 @@
       },
       "id": "island-lachesis-0631c0",
       "landColour": "#442222",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 146041
+      },
       "origin": [
         2644,
         353
@@ -89625,6 +89692,10 @@
       },
       "id": "island-lachesis-0631ca",
       "landColour": "#442222",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 146041
+      },
       "origin": [
         2644,
         453
@@ -89710,6 +89781,10 @@
       },
       "id": "island-lachesis-0631d4",
       "landColour": "#442222",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 146041
+      },
       "origin": [
         2644,
         553
@@ -89795,6 +89870,10 @@
       },
       "id": "island-lachesis-0631de",
       "landColour": "#442222",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 146041
+      },
       "origin": [
         2644,
         653
@@ -89880,6 +89959,10 @@
       },
       "id": "island-lachesis-0631e8",
       "landColour": "#442222",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 146041
+      },
       "origin": [
         2644,
         753
@@ -89965,6 +90048,10 @@
       },
       "id": "island-lachesis-0631f2",
       "landColour": "#442222",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 146041
+      },
       "origin": [
         2644,
         853
@@ -90050,6 +90137,10 @@
       },
       "id": "island-lachesis-0631fc",
       "landColour": "#442222",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 146041
+      },
       "origin": [
         2644,
         953
@@ -90135,6 +90226,10 @@
       },
       "id": "island-lachesis-063206",
       "landColour": "#442222",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 146041
+      },
       "origin": [
         2644,
         1053
@@ -90254,6 +90349,10 @@
       },
       "id": "island-gaea-063212",
       "landColour": "#008800",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 148587
+      },
       "origin": [
         512,
         1792
@@ -90407,6 +90506,155 @@
       },
       "id": "island-gaea-06321c",
       "landColour": "#664444",
+      "locationTable": {
+        "entries": [
+          {
+            "cell": 14,
+            "floor": 6,
+            "region": 9,
+            "trigger": 8
+          },
+          {
+            "cell": 10,
+            "floor": 8,
+            "region": 6,
+            "trigger": 11
+          },
+          {
+            "cell": 3,
+            "floor": 12,
+            "region": 11,
+            "trigger": 6
+          },
+          {
+            "cell": 8,
+            "floor": 6,
+            "region": 13,
+            "trigger": 8
+          },
+          {
+            "cell": 14,
+            "floor": 13,
+            "region": 1,
+            "trigger": 254
+          },
+          {
+            "cell": 1,
+            "floor": -2,
+            "region": 4,
+            "trigger": 6
+          },
+          {
+            "cell": 8,
+            "floor": 10,
+            "region": 254,
+            "trigger": 13
+          },
+          {
+            "cell": 253,
+            "floor": 8,
+            "region": 6,
+            "trigger": 252
+          },
+          {
+            "cell": 3,
+            "floor": -4,
+            "region": 5,
+            "trigger": 6
+          },
+          {
+            "cell": 8,
+            "floor": 9,
+            "region": 252,
+            "trigger": 11
+          },
+          {
+            "cell": 251,
+            "floor": 8,
+            "region": 6,
+            "trigger": 250
+          },
+          {
+            "cell": 6,
+            "floor": -7,
+            "region": 8,
+            "trigger": 6
+          },
+          {
+            "cell": 8,
+            "floor": 0,
+            "region": 248,
+            "trigger": 14
+          },
+          {
+            "cell": 247,
+            "floor": 8,
+            "region": 6,
+            "trigger": 246
+          },
+          {
+            "cell": 6,
+            "floor": -11,
+            "region": 8,
+            "trigger": 6
+          },
+          {
+            "cell": 8,
+            "floor": 3,
+            "region": 244,
+            "trigger": 5
+          },
+          {
+            "cell": 244,
+            "floor": 8,
+            "region": 6,
+            "trigger": 244
+          },
+          {
+            "cell": 9,
+            "floor": -13,
+            "region": 11,
+            "trigger": 6
+          },
+          {
+            "cell": 8,
+            "floor": 1,
+            "region": 242,
+            "trigger": 4
+          },
+          {
+            "cell": 242,
+            "floor": 8,
+            "region": 6,
+            "trigger": 242
+          },
+          {
+            "cell": 10,
+            "floor": 0,
+            "region": 13,
+            "trigger": 2
+          },
+          {
+            "cell": 34,
+            "floor": 71,
+            "region": 0,
+            "trigger": 72
+          },
+          {
+            "cell": 73,
+            "floor": 75,
+            "region": 74,
+            "trigger": 25
+          },
+          {
+            "cell": 119,
+            "floor": 44,
+            "region": 0,
+            "trigger": 23
+          }
+        ],
+        "sourceAddress": 149429
+      },
       "origin": [
         3072,
         256
@@ -90577,6 +90825,17 @@
       },
       "id": "island-gaea-063226",
       "landColour": "#884400",
+      "locationTable": {
+        "entries": [
+          {
+            "cell": 134,
+            "floor": 1,
+            "region": 3,
+            "trigger": 31
+          }
+        ],
+        "sourceAddress": 150322
+      },
       "origin": [
         256,
         768
@@ -90640,6 +90899,10 @@
       },
       "id": "island-cronus-063232",
       "landColour": "#664444",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 155133
+      },
       "origin": [
         2564,
         873
@@ -90793,6 +91056,17 @@
       },
       "id": "island-cyclopes-06323e",
       "landColour": "#88aa88",
+      "locationTable": {
+        "entries": [
+          {
+            "cell": 34,
+            "floor": 0,
+            "region": 0,
+            "trigger": 13
+          }
+        ],
+        "sourceAddress": 155059
+      },
       "origin": [
         3487,
         1445
@@ -90946,6 +91220,10 @@
       },
       "id": "island-cyclopes-063248",
       "landColour": "#88aa88",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 146041
+      },
       "origin": [
         3287,
         1645
@@ -91099,6 +91377,10 @@
       },
       "id": "island-cyclopes-063252",
       "landColour": "#88aa88",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 146041
+      },
       "origin": [
         3287,
         1245
@@ -91252,6 +91534,10 @@
       },
       "id": "island-cyclopes-06325c",
       "landColour": "#88aa88",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 146041
+      },
       "origin": [
         3687,
         1245
@@ -91405,6 +91691,10 @@
       },
       "id": "island-cyclopes-063266",
       "landColour": "#88aa88",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 146041
+      },
       "origin": [
         3687,
         1645
@@ -91541,6 +91831,41 @@
       },
       "id": "island-eris-063272",
       "landColour": "#006600",
+      "locationTable": {
+        "entries": [
+          {
+            "cell": 137,
+            "floor": 0,
+            "region": 0,
+            "trigger": 3
+          },
+          {
+            "cell": 137,
+            "floor": 2,
+            "region": 7,
+            "trigger": 4
+          },
+          {
+            "cell": 207,
+            "floor": 10,
+            "region": 6,
+            "trigger": 8
+          },
+          {
+            "cell": 236,
+            "floor": 1,
+            "region": 3,
+            "trigger": 28
+          },
+          {
+            "cell": 17,
+            "floor": 1,
+            "region": 3,
+            "trigger": 29
+          }
+        ],
+        "sourceAddress": 151829
+      },
       "origin": [
         64,
         128
@@ -91660,6 +91985,10 @@
       },
       "id": "island-eris-06327c",
       "landColour": "#eeeeee",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 150603
+      },
       "origin": [
         32,
         1056
@@ -91779,6 +92108,10 @@
       },
       "id": "island-eris-063286",
       "landColour": "#884400",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 150844
+      },
       "origin": [
         1536,
         768
@@ -91971,6 +92304,10 @@
       },
       "id": "island-eris-063290",
       "landColour": "#664444",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 152219
+      },
       "origin": [
         3072,
         512
@@ -92190,6 +92527,10 @@
       },
       "id": "island-eris-06329a",
       "landColour": "#006600",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 152571
+      },
       "origin": [
         2560,
         3584
@@ -92253,6 +92594,10 @@
       },
       "id": "island-solon-0632a6",
       "landColour": "#666666",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 147551
+      },
       "origin": [
         3974,
         1396
@@ -92316,6 +92661,10 @@
       },
       "id": "island-theon-0632b2",
       "landColour": "#888888",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 149087
+      },
       "origin": [
         2546,
         3334
@@ -92452,6 +92801,17 @@
       },
       "id": "island-vesta-0632be",
       "landColour": "#8844cc",
+      "locationTable": {
+        "entries": [
+          {
+            "cell": 115,
+            "floor": 0,
+            "region": 0,
+            "trigger": 7
+          }
+        ],
+        "sourceAddress": 147840
+      },
       "origin": [
         1083,
         307
@@ -92515,6 +92875,23 @@
       },
       "id": "island-metis-0632ca",
       "landColour": "#882222",
+      "locationTable": {
+        "entries": [
+          {
+            "cell": 96,
+            "floor": 8,
+            "region": 3,
+            "trigger": 30
+          },
+          {
+            "cell": 98,
+            "floor": 0,
+            "region": 0,
+            "trigger": 61
+          }
+        ],
+        "sourceAddress": 147482
+      },
       "origin": [
         2527,
         1066
@@ -92668,6 +93045,10 @@
       },
       "id": "island-lucan-0632d6",
       "landColour": "#ee8888",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 153888
+      },
       "origin": [
         100,
         173
@@ -92821,6 +93202,10 @@
       },
       "id": "island-lucan-0632e0",
       "landColour": "#ee8888",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 153968
+      },
       "origin": [
         173,
         100
@@ -92974,6 +93359,10 @@
       },
       "id": "island-lucan-0632ea",
       "landColour": "#ee8888",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 153994
+      },
       "origin": [
         200,
         0
@@ -93127,6 +93516,10 @@
       },
       "id": "island-lucan-0632f4",
       "landColour": "#ee8888",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 154068
+      },
       "origin": [
         173,
         3996
@@ -93280,6 +93673,10 @@
       },
       "id": "island-lucan-0632fe",
       "landColour": "#ee8888",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 154121
+      },
       "origin": [
         100,
         3923
@@ -93433,6 +93830,10 @@
       },
       "id": "island-lucan-063308",
       "landColour": "#ee8888",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 154171
+      },
       "origin": [
         0,
         3896
@@ -93586,6 +93987,10 @@
       },
       "id": "island-lucan-063312",
       "landColour": "#ee8888",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 154203
+      },
       "origin": [
         3996,
         3923
@@ -93739,6 +94144,10 @@
       },
       "id": "island-lucan-06331c",
       "landColour": "#ee8888",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 154247
+      },
       "origin": [
         3923,
         3996
@@ -93892,6 +94301,10 @@
       },
       "id": "island-lucan-063326",
       "landColour": "#ee8888",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 154276
+      },
       "origin": [
         3896,
         0
@@ -94045,6 +94458,10 @@
       },
       "id": "island-lucan-063330",
       "landColour": "#ee8888",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 154350
+      },
       "origin": [
         3923,
         100
@@ -94198,6 +94615,10 @@
       },
       "id": "island-lucan-06333a",
       "landColour": "#ee8888",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 154412
+      },
       "origin": [
         3996,
         173
@@ -94351,6 +94772,10 @@
       },
       "id": "island-lucan-063344",
       "landColour": "#ee8888",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 154471
+      },
       "origin": [
         0,
         200
@@ -94414,6 +94839,10 @@
       },
       "id": "island-logos-063350",
       "landColour": "#888888",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 148918
+      },
       "origin": [
         1294,
         2648
@@ -94477,6 +94906,10 @@
       },
       "id": "island-aurora-06335c",
       "landColour": "#882222",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 146041
+      },
       "origin": [
         1214,
         683
@@ -94540,6 +94973,10 @@
       },
       "id": "island-triton-063368",
       "landColour": "#442288",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 146041
+      },
       "origin": [
         3337,
         3213
@@ -94603,6 +95040,10 @@
       },
       "id": "island-pan-063374",
       "landColour": "#444444",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 149368
+      },
       "origin": [
         421,
         1799
@@ -94666,6 +95107,10 @@
       },
       "id": "island-thalia-063380",
       "landColour": "#4488cc",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 149220
+      },
       "origin": [
         1999,
         3256
@@ -94729,6 +95174,10 @@
       },
       "id": "island-juno-06338c",
       "landColour": "#4488cc",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 146041
+      },
       "origin": [
         3475,
         854
@@ -94792,6 +95241,17 @@
       },
       "id": "island-bacchus-063398",
       "landColour": "#666666",
+      "locationTable": {
+        "entries": [
+          {
+            "cell": 49,
+            "floor": 0,
+            "region": 0,
+            "trigger": 63
+          }
+        ],
+        "sourceAddress": 153138
+      },
       "origin": [
         1661,
         1586
@@ -94855,6 +95315,10 @@
       },
       "id": "island-jason-0633a4",
       "landColour": "#888888",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 146041
+      },
       "origin": [
         366,
         2187
@@ -94918,6 +95382,10 @@
       },
       "id": "island-tolosa-0633b0",
       "landColour": "#882222",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 152891
+      },
       "origin": [
         2737,
         1571
@@ -95054,6 +95522,10 @@
       },
       "id": "island-perseus-0633bc",
       "landColour": "#000000",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 152755
+      },
       "origin": [
         3834,
         821
@@ -95117,6 +95589,10 @@
       },
       "id": "island-mentor-0633c8",
       "landColour": "#888888",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 153356
+      },
       "origin": [
         2817,
         268
@@ -95180,6 +95656,10 @@
       },
       "id": "island-sapphire-0633d4",
       "landColour": "#4488cc",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 146041
+      },
       "origin": [
         3444,
         2273
@@ -95243,6 +95723,10 @@
       },
       "id": "island-damocles-0633e0",
       "landColour": "#000000",
+      "locationTable": {
+        "entries": [],
+        "sourceAddress": 146041
+      },
       "origin": [
         3991,
         2101

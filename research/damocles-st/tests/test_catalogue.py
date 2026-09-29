@@ -3876,5 +3876,56 @@ class ImageWorkspaceTests(unittest.TestCase):
         self.assertGreaterEqual(checked, 20)
 
 
+class LocationTableTests(unittest.TestCase):
+    """#610: the per-group location-trigger table the workspace loader publishes at $7A68."""
+
+    TABLES = {
+        0x02: ['de00000a', 'b2000009', 'b204010c'],
+        0x03: ['6003081e', '6200003d'],
+        0x05: ['73000007'],
+        0x0F: ['8603011f'],
+        0x12: ['89000003', '89070204', 'cf060a08', 'ec03011c', '1103011d'],
+        0x18: ['3100003f'],
+        0x35: ['2200000d'],
+    }
+
+    @staticmethod
+    def _hex(table: dict) -> list[str]:
+        return [struct.pack('>BBbB', e['cell'], e['region'], e['floor'], e['trigger']).hex()
+                for e in table['entries']]
+
+    def test_pinned_first_world_tables(self):
+        from damocleslab.catalogue import decode_island_records, decode_location_table
+        root = Path(__file__).resolve().parents[1]
+        first = root / 'work' / 'observe-first-world-20260818T101013Z-c5a32b7d' / 'observed.ram'
+        if not first.exists():
+            self.skipTest('Working-Authority RAM captures are Restricted Material')
+        data = first.read_bytes()
+        groups = {record['structureGroup'] for body in range(30) for record in decode_island_records(data, body)}
+        for group in sorted(groups):
+            table = decode_location_table(data, group)
+            if group == 0x0E:
+                # VULCAN ISLAND's place list is unterminated; what the loader reads names
+                # no cell that holds its one structure.
+                self.assertEqual(len(table['entries']), 24)
+                self.assertNotIn(0x88, [e['cell'] for e in table['entries']])
+                continue
+            self.assertEqual(self._hex(table), self.TABLES.get(group, []), f'group ${group:02X}')
+        live = int.from_bytes(data[0x7A68:0x7A6C], 'big')
+        self.assertEqual(decode_location_table(data, 0x12)['sourceAddress'], live)
+
+    def test_every_memstate_publishes_its_groups_table(self):
+        from damocleslab.catalogue import decode_location_table, hatari_memstate_ram
+        root = Path(__file__).resolve().parents[1]
+        saves = sorted((root / 'snapshots').glob('*.sav')) + sorted((root / 'snapshots' / 'rehosted').glob('*.sav'))
+        if not saves:
+            self.skipTest('memstates are Restricted Material')
+        for path in saves:
+            ram = hatari_memstate_ram(path.read_bytes())
+            group = struct.unpack_from('>H', ram, 0x794E)[0]
+            table = decode_location_table(ram, group)
+            self.assertEqual(table['sourceAddress'], int.from_bytes(ram[0x7A68:0x7A6C], 'big'), path.name)
+
+
 if __name__ == '__main__':
     unittest.main()

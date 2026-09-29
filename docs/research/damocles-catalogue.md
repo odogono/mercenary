@@ -90,7 +90,11 @@ Coordinates, where an upper bound below its lower bound is a wrapped span and no
 empty one — Eris's Snow Island and four of Lucan's twelve cross the seam. The VOID
 slot's table entry is excluded: VOID is the space-as-place sentinel, not a Body
 surface. See [the Eris islands note](damocles-eris-islands.md) and
-[the island census](damocles-island-census.md).
+[the island census](damocles-island-census.md). Each island also carries its group's
+`locationTable`, the location-trigger table the workspace loader publishes at
+`$7A68`: its `sourceAddress` and its four-byte `entries` as raw `cell`, `region`,
+signed `floor` and `trigger`. Group `$00` has an empty one. See
+[location triggers](damocles-location-triggers.md).
 
 The `roadNetworks` collection is one entry an **island record that binds a structure
 group**, captured or not: the group's `origin` and `island`, its six road-piece

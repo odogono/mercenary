@@ -218,7 +218,8 @@ that means:
 - **No location fires a landing trigger.** The two table-driven firers, `$054C94` and `$05A6F6`,
   walk the Body's location table at `[$7A68]`, whose entries end in a trigger byte. In the first
   world and all 62 memstates, which hold the tables of the captured Bodies only, those tables name `$03`, `$04`, `$07`–`$0A`, `$0C`, `$0D`,
-  `$1C`–`$1F`, `$3D` and `$3F`, and nothing in `$20`–`$3C`. `$3D` is one METIS entry.
+  `$1C`–`$1F`, `$3D` and `$3F`, and nothing in `$20`–`$3C`. `$3D` is one METIS entry. #610
+  recovered the tables and both walks ([location triggers](damocles-location-triggers.md)).
 - **No code re-arms any byte.** The first world's values come from the loaded image. Each memstate
   holds the disarmed triggers of the Bodies landed on in its history
   ([space flight](damocles-space-flight.md#the-landing-triggers-567)).
@@ -260,7 +261,8 @@ took them, with the on-foot pointer held
 - **`$7A90` = `$0E`**, the second condition on `$2A`, and what `$7856` case 5 is in play terms,
   beyond arming the drift and firing `$3C`. Both are for the endgame map, #580.
 - **Bit 0 of `$7BD8`**, which `$3C` tests before the State President's lines. Its writer was not
-  traced. #580 lists it.
+  traced. #580 lists it. #610 found it: the first offer's acceptance at `$0709AA`
+  ([location triggers](damocles-location-triggers.md)).
 - **A landing on TOLOSA was not traced.** Its script is decoded from the bank alone. The gate
   write was confirmed by the [moving-objects](damocles-moving-objects.md#runtime-confirmation)
   `attack-armed` case, which injected `$070104` directly.
