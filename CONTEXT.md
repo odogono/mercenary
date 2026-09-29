@@ -338,6 +338,10 @@ _Avoid_: Key state, held Semantic Action, control event
 A device-independent one-shot player command whose availability, conflicts, ordering, rate limits, and outcomes are governed by Behavior Cases.
 _Avoid_: Movement Intent, key press, button press, scan code
 
+**Head Command**:
+One of the four Damocles Semantic Actions — Open, Read, Next, Previous — that act on the object at the head of the Carried Stack. What each does depends on that object, and on most objects it does nothing; the Reference Build binds them to the numeric keypad's Enter, `*`, `+` and `-`.
+_Avoid_: Keypad command, object command, document controls, read key
+
 **Semantic Mode**:
 An evidence-backed Game Semantics state class that determines which Semantic Actions are available, how they conflict, which transitions they cause, and their timing, independently of device bindings and Geometry Identity.
 _Avoid_: Control scheme, vehicle identity, input mode
