@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 
-import { drawCompass, drawElevation } from '../src/shell/panelView.ts';
+import {
+  drawCompass,
+  drawDamoclesMessage,
+  drawElevation
+} from '../src/shell/panelView.ts';
 
 interface Fill {
   readonly height: number;
@@ -17,6 +21,7 @@ const recorder = (width: number, height: number) => {
   const texts: { readonly text: string; readonly y: number }[] = [];
   const columns: { readonly text: string; readonly x: number }[] = [];
   const context = {
+    clearRect: () => {},
     fillRect: (x: number, y: number, w: number, h: number) => {
       fills.push({ height: h, width: w, x, y });
       styles.push(String(context.fillStyle));
@@ -182,5 +187,20 @@ describe('the compass tape', () => {
 
     // Turning towards ten brings it to the centre the nought used to hold.
     expect(columnOf(turned, '10')).toBeCloseTo(columnOf(ahead, '00')!, 0);
+  });
+});
+
+describe('the Damocles message line', () => {
+  // The face sits each five-row glyph on the row above a bottom baseline, so a glyph set at
+  // the canvas's own height fills it exactly; one row lower loses the glyphs' feet.
+  test('sets every glyph so its bottom row is the last row of the canvas', () => {
+    const { canvas, root, texts } = recorder(288, 5);
+
+    drawDamoclesMessage(canvas, root, {
+      cells: 'ENT',
+      scrollPixels: 0
+    });
+
+    expect(texts.map(at => at.y)).toEqual([5, 5, 5]);
   });
 });
