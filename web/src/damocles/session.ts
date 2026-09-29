@@ -53,6 +53,7 @@ import {
   closeDocument,
   headCommand,
   initialHeadCommands,
+  opensHead,
   tickCentreBox,
   type CentreBoxSnapshot,
   type DocumentPanel,
@@ -2692,6 +2693,18 @@ export class DamoclesSession implements TitleSession<
       steps: box.steps,
       to: documentPanel(this.content, box.to, null)
     };
+  }
+
+  /// Whether Open would act on the Carried Stack's head, which is the pointer's hover cue (#599).
+  get headOpens(): boolean {
+    const head = this.carried[0];
+    return (
+      this.death === null &&
+      opensHead(
+        head === undefined ? undefined : this.slotOf(head),
+        this.content.documents
+      )
+    );
   }
 
   /// Whether a document is open on the centre box.

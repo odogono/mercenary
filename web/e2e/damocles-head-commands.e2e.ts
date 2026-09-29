@@ -105,3 +105,70 @@ test('opens, pages and reads the DAMOCLES FILE on the centre box', async ({
   );
   expect(errors).toEqual([]);
 });
+
+test('opens, pages and closes the DAMOCLES FILE with the pointer', async ({
+  page
+}) => {
+  test.setTimeout(90_000);
+  const errors = watchErrors(page);
+  await bootAt(page, BESIDE_THE_TABLE, FACING_EAST, {
+    structure: STATE_OFFICE
+  });
+  const head = page.locator('#inventory-window');
+  const close = page.locator('#damocles-centre-close');
+  await page.keyboard.press('t');
+  await expect(inventory(page)).not.toHaveText('EMPTY', { timeout: 5000 });
+  await page.waitForTimeout(500);
+  await page.keyboard.press('t');
+  await expect(inventory(page)).toHaveText(/DAMOCLES FILE|COFFEE TABLE/, {
+    timeout: 5000
+  });
+
+  // ‹ and › show over the name under the pointer, and rotate as [ and ] do.
+  await head.hover();
+  await page.waitForTimeout(500);
+  if ((await inventory(page).textContent())!.trim() !== FILE) {
+    await page.locator('.stack-rotate[data-rotate="forward"]').click();
+    await expect(inventory(page)).toHaveText(FILE, { timeout: 5000 });
+  }
+  await expect(head).toHaveAttribute('data-opens', 'true');
+
+  // Clicking the name opens the head, and ✕ is there while it is open.
+  await expect(close).toBeHidden();
+  await head.click();
+  await expect(frame(page)).toHaveAttribute('data-document', '151 0 0');
+  await expect(frame(page)).toHaveAttribute('data-centre-box-steps', '0', {
+    timeout: 5000
+  });
+  await centreBox(page).hover();
+  await expect(close).toBeVisible();
+
+  // The centre box's right half pages on, its left half back.
+  const box = (await centreBox(page).boundingBox())!;
+  await centreBox(page).click({
+    position: { x: box.width * 0.75, y: box.height / 2 }
+  });
+  await expect(centreBox(page)).toHaveAttribute('data-item', 'HISTORY');
+  await centreBox(page).click({
+    position: { x: box.width * 0.25, y: box.height / 2 }
+  });
+  await expect(centreBox(page)).toHaveAttribute('data-item', 'PROBLEM');
+
+  // The wheel over the world view pages, and a click there pages rather than takes.
+  const view = (await frame(page).boundingBox())!;
+  await page.mouse.move(view.x + view.width / 2, view.y + view.height / 2);
+  await page.mouse.wheel(0, 100);
+  await expect(centreBox(page)).toHaveAttribute('data-item', 'HISTORY');
+  await page.mouse.wheel(0, -100);
+  await expect(centreBox(page)).toHaveAttribute('data-item', 'PROBLEM');
+  await frame(page).click();
+  await expect(frame(page)).toHaveAttribute('data-document', '151 1 1');
+  await expect(frame(page)).not.toHaveAttribute('data-take-target', /.+/);
+
+  // ✕ shows over the centre box, and closes it.
+  await centreBox(page).hover();
+  await close.click();
+  await expect(frame(page)).toHaveAttribute('data-document', '');
+  await expect(close).toBeHidden();
+  expect(errors).toEqual([]);
+});
