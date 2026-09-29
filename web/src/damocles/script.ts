@@ -1,9 +1,13 @@
 import {
-  BLANK_DAMOCLES_ROW,
+  BLANK_DAMOCLES_DISPLAY,
+  DAMOCLES_ROW_CELLS,
   advanceDisplay,
+  beneathOf,
+  isDocumentMessage,
   startDisplay,
   type DamoclesDisplay,
-  type DamoclesMessageId
+  type DamoclesMessageId,
+  type DocumentMessageId
 } from './display.ts';
 import {
   ORDINARY_DISPLAY_FRAMES,
@@ -17,8 +21,16 @@ import {
 
 export interface Presenting {
   readonly id: DamoclesMessageId;
+  /// Where in the record the block presenting starts: 0 but for a document body, which is
+  /// longer than the row and so shown 48 cells at a time.
+  readonly offset: number;
   readonly remainingFrames: number;
 }
+
+/// `$0523A2`: with the shorten flag `$0523BC` set, reading the terminator cuts the live duration
+/// to 50 frames. A Read's deferred path sets the flag (`$0547E4`), so a body's last block holds
+/// for 50 frames where every block before it holds for the full 200.
+export const SHORTENED_DISPLAY_FRAMES = 50;
 
 /// One suspended script and where it stopped. A queued response is taken up as soon as the busy
 /// flag clears, which is **before** the running script returns, so it nests one frame inside a
@@ -67,6 +79,9 @@ export interface ScriptState {
   /// `$7A88`. One word, so a second queueable trigger replaces the first rather than joining a
   /// queue. Consumed by the frame loop once the busy flag clears, not by the trigger itself.
   readonly pending: number | null;
+  /// `$7B96` and `$7B92`: the document body a Read has queued. The dispatch head presents it
+  /// the first frame the gate is down, ahead of any pending trigger or script (`$051944`).
+  readonly read: DocumentMessageId | null;
   readonly triggers: readonly Trigger[];
   /// The table words zaps have turned, one entry a zap, in the order they fell (#581). `$050ECC`
   /// rotates the word two before the pointer left by one bit each time, so the table is state and
@@ -171,7 +186,7 @@ const triggerTable = (): readonly Trigger[] =>
 export const initialScriptState = (): ScriptState => ({
   busy: false,
   counter: 0,
-  display: { cells: BLANK_DAMOCLES_ROW, kind: 'held' },
+  display: BLANK_DAMOCLES_DISPLAY,
   displayDuration: ORDINARY_DISPLAY_FRAMES,
   encounter: 0,
   execution: null,
@@ -179,6 +194,7 @@ export const initialScriptState = (): ScriptState => ({
   message: null,
   noise: NEW_GAME_NOISE,
   pending: null,
+  read: null,
   triggers: triggerTable(),
   zaps: []
 });
@@ -186,17 +202,57 @@ export const initialScriptState = (): ScriptState => ({
 const present = (
   state: ScriptState,
   id: DamoclesMessageId,
-  frames: number
+  frames: number,
+  offset = 0
 ): ScriptState => ({
   ...state,
-  display: startDisplay(
-    id,
-    state.display.kind === 'held'
-      ? state.display.cells
-      : state.display.reveal.beneath
-  ),
-  message: { id, remainingFrames: frames }
+  display: startDisplay(id, beneathOf(state.display), offset),
+  message: { id, offset, remainingFrames: frames }
 });
+
+/// How long one block of a Read's body holds: the default 200 frames (`$0523BA`), or 50 where
+/// the block reads the terminator, which it does when fewer than 48 characters are left.
+const readBlockFrames = (
+  text: string,
+  offset: number,
+  rules: ScriptRules
+): number =>
+  text.length - offset < DAMOCLES_ROW_CELLS
+    ? SHORTENED_DISPLAY_FRAMES
+    : rules.messageFrames;
+
+/// `$0523BE`, at the end of a block: another block from where the pointer stopped if the record
+/// has characters left, and otherwise the gate falls. Only a document body is longer than the
+/// row; the bank's records are not given a second block here.
+const endBlock = (
+  state: ScriptState,
+  message: Presenting,
+  rules: ScriptRules
+): ScriptState => {
+  const offset = message.offset + DAMOCLES_ROW_CELLS;
+  const text = rules.messageText(message.id);
+  return isDocumentMessage(message.id) && offset < text.length
+    ? present(state, message.id, readBlockFrames(text, offset, rules), offset)
+    : { ...state, message: null };
+};
+
+/// `$0547C6`: the dispatch head's deferred path, which a Read queued.
+const presentRead = (
+  state: ScriptState,
+  id: DocumentMessageId,
+  rules: ScriptRules
+): ScriptState =>
+  present(
+    { ...state, read: null },
+    id,
+    readBlockFrames(rules.messageText(id), 0, rules)
+  );
+
+/// `$04D776`: queue a document body, unless a Read is already waiting.
+export const queueRead = (
+  state: ScriptState,
+  id: DocumentMessageId
+): ScriptState => (state.read === null ? { ...state, read: id } : state);
 
 const enter = (state: ScriptState, script: ScriptId): ScriptState => ({
   ...state,
@@ -353,7 +409,14 @@ const shown = (
   after.display !== before.display &&
   after.display.kind === 'scrolling' &&
   after.display.reveal.pixels === 0
-    ? [{ text: rules.messageText(after.display.id), type: 'message' }]
+    ? [
+        {
+          text: rules
+            .messageText(after.display.id)
+            .slice(after.display.reveal.offset),
+          type: 'message'
+        }
+      ]
     : [];
 
 export const runFrame = (
@@ -365,19 +428,23 @@ export const runFrame = (
     counter: (input.counter + 1) % 65_536
   };
   if (state.message !== null) {
-    const remainingFrames = state.message.remainingFrames - 1;
+    const message = state.message;
+    const remainingFrames = message.remainingFrames - 1;
     state = {
       ...state,
-      display: advanceDisplay(
-        state.display,
-        rules.messageText(state.message.id)
-      ),
-      message:
-        remainingFrames === 0 ? null : { ...state.message, remainingFrames }
+      display: advanceDisplay(state.display, rules.messageText(message.id))
     };
+    state =
+      remainingFrames === 0
+        ? endBlock(state, message, rules)
+        : { ...state, message: { ...message, remainingFrames } };
   }
-  const next = takePending(runToBlock(state, rules), rules);
-  return { effects: shown(state, next, rules), state: next };
+  // `$05193E`: nothing is dispatched while the gate is up, and a queued Read goes first.
+  const next =
+    state.message === null && state.read !== null
+      ? presentRead(state, state.read, rules)
+      : takePending(runToBlock(state, rules), rules);
+  return { effects: shown(input, next, rules), state: next };
 };
 
 /// `$054770`, entered past the busy test and the `$7A88` clear the dispatch loop performs.

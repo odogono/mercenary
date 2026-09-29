@@ -9,6 +9,7 @@ import {
 } from '../src/damocles/session.ts';
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { erisSurfaceFrom, modelWaves } from '../src/damocles/world.ts';
+import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import {
   loadCatalogue,
@@ -29,6 +30,7 @@ beforeAll(async () => {
   whole = {
     catalogue,
     doc,
+    documents: await damoclesDocuments(),
     models,
     poses: await arrivalPoses(),
     presentationSha256: 'test',

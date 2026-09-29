@@ -17,6 +17,7 @@ import { presentationIdentity } from '../src/damocles/title.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { createNewGameAction } from '../src/shell/menu.ts';
 import { titleStorageKeys } from '../src/shell/title.ts';
+import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
@@ -32,6 +33,7 @@ const load = async () => {
   return {
     catalogue,
     doc,
+    documents: await damoclesDocuments(),
     identity: damoclesSaveIdentity(catalogue, presentationSha256),
     models: modelsOf(catalogue),
     poses: await arrivalPoses(),
@@ -228,7 +230,12 @@ describe('Damocles Saves', () => {
         display: {
           id: 'script2-inline-1' as const,
           kind: 'scrolling' as const,
-          reveal: { beneath: ' '.repeat(48), offset: 0, pixels: 80 }
+          reveal: {
+            beneath: ' '.repeat(48),
+            beneathPlane: 0 as const,
+            offset: 0,
+            pixels: 80
+          }
         },
         execution: {
           returnStack: [],
@@ -239,6 +246,7 @@ describe('Damocles Saves', () => {
         },
         message: {
           id: 'script2-inline-1' as const,
+          offset: 0,
           remainingFrames: 190
         },
         triggers: initial.script.triggers.map(trigger =>

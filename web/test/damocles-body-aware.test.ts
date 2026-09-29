@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, test } from 'bun:test';
 
 import { type Catalogue } from '../src/catalogue/data.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
+import { initialHeadCommands } from '../src/damocles/headCommands.ts';
 import { parseDamoclesArrivalPoses } from '../src/damocles/poses.ts';
 import {
   catalogueResidence,
@@ -17,6 +18,7 @@ import {
 } from '../src/damocles/session.ts';
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
+import { damoclesDocuments } from './damocles-documents.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
 let catalogue: Catalogue;
@@ -33,6 +35,7 @@ beforeAll(async () => {
   content = {
     catalogue,
     doc,
+    documents: await damoclesDocuments(),
     models: modelsOf(catalogue),
     poses: parseDamoclesArrivalPoses(arrivalPoses),
     presentationSha256: 'test',
@@ -212,6 +215,7 @@ describe('body-aware Object Residence', () => {
         encounter: null,
         footTicks: 0,
         frameAccumulator: 0,
+        headCommands: initialHeadCommands(),
         occupancy: { kind: 'onFoot' as const },
         pendingBriefcaseDrop: null,
         pose: {

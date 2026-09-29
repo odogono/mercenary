@@ -16,6 +16,7 @@ import {
   pitchFromWord
 } from '../src/damocles/world.ts';
 import { intent } from '../src/gameCore/index.ts';
+import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import { damoclesProcessor, vblLevels } from './damocles-sound-processor.ts';
 import {
@@ -41,6 +42,7 @@ beforeAll(async () => {
   content = {
     catalogue,
     doc,
+    documents: await damoclesDocuments(),
     models: modelsOf(catalogue),
     poses: await arrivalPoses(),
     presentationSha256: 'test',

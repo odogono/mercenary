@@ -64,6 +64,10 @@ export const LANDING_MESSAGE_IDS = [
   'script59-inline-1'
 ] as const;
 
+/// The body of one document item, which a Read queues (#598): the object slot, then the item's
+/// position in its document.
+export type DocumentMessageId = `document-${number}-${number}`;
+
 export type DamoclesMessageId =
   | (typeof LANDING_MESSAGE_IDS)[number]
   | 'script11-inline-1'
@@ -90,37 +94,92 @@ export type DamoclesMessageId =
   | 'system-string-48'
   | 'system-string-49'
   | 'system-string-50'
-  | 'system-string-9';
+  | 'system-string-9'
+  | DocumentMessageId;
+
+export const documentMessageId = (
+  slot: number,
+  item: number
+): DocumentMessageId => `document-${slot}-${item}`;
+
+export const isDocumentMessage = (id: string): id is DocumentMessageId =>
+  /^document-\d+-\d+$/.test(id);
+
+/// `$7BA2` as the bitplane a message's glyphs go to: 0 draws them in the row's colour 1, the
+/// ordinary green, and 1 in colour 2, the panel's light blue. Only the deferred path a Read
+/// queues (`$0547CE`) selects plane 1, and the row keeps each glyph's plane as it scrolls.
+export type RowPlane = 0 | 1;
+
+/// The plane a message draws in, which only a document body's Read changes.
+export const messagePlane = (id: DamoclesMessageId): RowPlane =>
+  isDocumentMessage(id) ? 1 : 0;
 
 export interface Reveal {
   readonly beneath: string;
+  /// The plane the row beneath was drawn in. A reveal is a whole row wide, so a row that has
+  /// finished arriving is one message's, in one plane.
+  readonly beneathPlane: RowPlane;
+  /// Where in the record this block starts. A record longer than the row is shown in 48-cell
+  /// blocks, each scrolling the one before it off (`$0523BE`).
   readonly offset: number;
   readonly pixels: number;
 }
 
 export type DamoclesDisplay =
-  | { readonly cells: string; readonly kind: 'held' }
+  | {
+      readonly cells: string;
+      readonly kind: 'held';
+      readonly plane: RowPlane;
+    }
   | {
       readonly id: DamoclesMessageId;
       readonly kind: 'scrolling';
       readonly reveal: Reveal;
     };
 
+/// The row a message scrolls over: a held row, or the row a message still arriving was
+/// scrolling over.
+export interface Beneath {
+  readonly cells: string;
+  readonly plane: RowPlane;
+}
+
 export interface DisplayCells {
   readonly cells: string;
+  /// Each cell's plane, in row order.
+  readonly planes: readonly RowPlane[];
   readonly scrollPixels: number;
 }
 
-export const effectiveMessageRow = (text: string): string =>
-  text.slice(0, DAMOCLES_ROW_CELLS).padEnd(DAMOCLES_ROW_CELLS);
+export const BLANK_DAMOCLES_DISPLAY: DamoclesDisplay = {
+  cells: BLANK_DAMOCLES_ROW,
+  kind: 'held',
+  plane: 0
+};
+
+/// The 48 cells of one block of a record, from `offset`. At the terminator the fetch returns
+/// spaces (`$052398`), so a short block comes to rest left-aligned over a blank remainder.
+export const effectiveMessageRow = (text: string, offset = 0): string =>
+  text.slice(offset, offset + DAMOCLES_ROW_CELLS).padEnd(DAMOCLES_ROW_CELLS);
+
+export const beneathOf = (display: DamoclesDisplay): Beneath =>
+  display.kind === 'held'
+    ? { cells: display.cells, plane: display.plane }
+    : { cells: display.reveal.beneath, plane: display.reveal.beneathPlane };
 
 export const startDisplay = (
   id: DamoclesMessageId,
-  beneath: string
+  beneath: Beneath,
+  offset = 0
 ): DamoclesDisplay => ({
   id,
   kind: 'scrolling',
-  reveal: { beneath, offset: 0, pixels: 0 }
+  reveal: {
+    beneath: beneath.cells,
+    beneathPlane: beneath.plane,
+    offset,
+    pixels: 0
+  }
 });
 
 export const advanceDisplay = (
@@ -132,25 +191,38 @@ export const advanceDisplay = (
   }
   const pixels = display.reveal.pixels + DAMOCLES_SCROLL_PIXELS_PER_FRAME;
   return pixels >= DAMOCLES_ROW_PIXELS
-    ? { cells: effectiveMessageRow(text), kind: 'held' }
+    ? {
+        cells: effectiveMessageRow(text, display.reveal.offset),
+        kind: 'held',
+        plane: messagePlane(display.id)
+      }
     : { ...display, reveal: { ...display.reveal, pixels } };
 };
 
 export const displayCells = (
   display: DamoclesDisplay,
   text: string
-): DisplayCells =>
-  display.kind === 'held'
-    ? { cells: display.cells, scrollPixels: 0 }
-    : (() => {
-        const cellsPassed = Math.floor(
-          display.reveal.pixels / DAMOCLES_CELL_PIXELS
-        );
-        const stream = display.reveal.beneath + effectiveMessageRow(text);
-        return {
-          cells: stream
-            .slice(cellsPassed, cellsPassed + DAMOCLES_ROW_CELLS)
-            .padEnd(DAMOCLES_ROW_CELLS),
-          scrollPixels: display.reveal.pixels
-        };
-      })();
+): DisplayCells => {
+  if (display.kind === 'held') {
+    return {
+      cells: display.cells,
+      planes: Array.from({ length: DAMOCLES_ROW_CELLS }, () => display.plane),
+      scrollPixels: 0
+    };
+  }
+  const cellsPassed = Math.floor(display.reveal.pixels / DAMOCLES_CELL_PIXELS);
+  const stream =
+    display.reveal.beneath + effectiveMessageRow(text, display.reveal.offset);
+  const plane = messagePlane(display.id);
+  return {
+    cells: stream
+      .slice(cellsPassed, cellsPassed + DAMOCLES_ROW_CELLS)
+      .padEnd(DAMOCLES_ROW_CELLS),
+    planes: Array.from({ length: DAMOCLES_ROW_CELLS }, (_, cell) =>
+      cell + cellsPassed < DAMOCLES_ROW_CELLS
+        ? display.reveal.beneathPlane
+        : plane
+    ),
+    scrollPixels: display.reveal.pixels
+  };
+};

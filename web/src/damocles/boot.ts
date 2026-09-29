@@ -104,6 +104,9 @@ const panelSection = document.getElementById('panel')!;
 const panelScale = document.getElementById('panel-scale')!;
 const panelRoot = document.getElementById('panel-damocles')!;
 const panelElements = {
+  damoclesCentreBox: document.getElementById(
+    'damocles-centre-canvas'
+  ) as HTMLCanvasElement,
   damoclesCompass: document.getElementById(
     'damocles-compass-canvas'
   ) as HTMLCanvasElement,
@@ -210,6 +213,7 @@ try {
           identity,
           {
             catalogue: content.catalogue,
+            documents: content.documents,
             poses: content.poses,
             strings: content.strings
           },
@@ -451,6 +455,7 @@ try {
       where: damoclesWhere(session.snapshot)
     }),
     catalogue: content.catalogue,
+    documents: content.documents,
     identity,
     poses: content.poses,
     release,
@@ -748,6 +753,7 @@ try {
         identity,
         {
           catalogue: content.catalogue,
+          documents: content.documents,
           poses: content.poses,
           strings: content.strings
         },
@@ -845,6 +851,14 @@ try {
         );
         if (outcome.kind === 'closeConsole') {
           shellConsole.close();
+        } else if (
+          outcome.layer === 'menu' &&
+          menu.layer() === 'none' &&
+          session.documentOpen
+        ) {
+          // Escape closes an open document before it opens the System Menu: the original has no
+          // key that closes one, so this is one of the #595 Accommodations.
+          commitAction(() => session.closeDocument());
         } else {
           menu.show(outcome.layer);
         }
@@ -952,6 +966,14 @@ try {
     // How far a scrolling record has travelled into the row, so a partially revealed message is
     // observable as something other than a shorter string.
     root['damoclesScroll'] = String(snapshot.displayCells.scrollPixels);
+    // Which cells a Read drew, in plane 1, as a string of plane digits (#598).
+    root['damoclesPlanes'] = snapshot.displayCells.planes.join('');
+    // The open document as `slot item index`, empty when none is open, and the centre box's
+    // transition steps left.
+    const open = snapshot.headCommands.open;
+    root['document'] =
+      open === null ? '' : `${open.slot} ${open.item} ${open.index}`;
+    root['centreBoxSteps'] = String(snapshot.headCommands.box.steps);
     root['damoclesCues'] = [...cueTally]
       .sort(([left], [right]) => left.localeCompare(right))
       .map(([cue, count]) => `${cue}:${count}`)

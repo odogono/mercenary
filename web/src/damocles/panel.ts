@@ -1,7 +1,17 @@
 import type { Vector3 } from '../orientation/index.ts';
-import type { PanelViewModel } from '../shell/panel.ts';
+import type {
+  CentreBoxPanel,
+  CentreBoxView,
+  PanelViewModel
+} from '../shell/panel.ts';
 import { impactTime } from './comet.ts';
 import type { ErisPresentationDocument } from './documents.ts';
+import {
+  CENTRE_BOX_ROWS,
+  TRANSITION_VBLS,
+  type CentreBoxSnapshot,
+  type DocumentPanel
+} from './headCommands.ts';
 import type { DamoclesSnapshot } from './session.ts';
 import type { ErisCell } from './world.ts';
 
@@ -153,6 +163,32 @@ export const printedAltitude = (long: number): string => {
   return digits;
 };
 
+/// An ST `0RGB` word as a CSS colour, three bits a channel as the catalogue extractor expands
+/// them.
+export const stColour = (word: number): string =>
+  `#${[8, 4, 0]
+    .map(shift => (((word >> shift) & 7) * 34).toString(16).padStart(2, '0'))
+    .join('')}`;
+
+const boxPanel = (panel: DocumentPanel | null): CentreBoxPanel | null =>
+  panel === null
+    ? null
+    : {
+        field: stColour(panel.colour3),
+        ground: stColour(panel.colour15),
+        item: panel.item,
+        title: panel.title
+      };
+
+/// `$05293E`, one row a VBL: the panel scrolling out rises for the first 32 steps, and the one
+/// scrolling in rises from below the window for the last 32.
+export const centreBoxView = (box: CentreBoxSnapshot): CentreBoxView =>
+  box.steps === 0
+    ? { panel: boxPanel(box.from), top: 0 }
+    : box.steps >= CENTRE_BOX_ROWS
+      ? { panel: boxPanel(box.from), top: box.steps - TRANSITION_VBLS }
+      : { panel: boxPanel(box.to), top: box.steps };
+
 /// `$7AB6` below which `$0509F6` lights the first lamp aboard (docs/research/damocles-panel-lamps.md).
 const LOW_ALTITUDE_LAMP_UNITS = 0x28_fa;
 
@@ -175,6 +211,7 @@ export const damoclesPanelViewModel = (
   // which is what this reproduces (#371).
   bodyCoordinates: bodyCoordinateReadout(snapshot.pose.position),
   cash: '000,000,000.00',
+  centreBox: centreBoxView(snapshot.centreBox),
   clock: impactClock(snapshot.elapsed, doc.time),
   compassDegrees: bearingDegrees(snapshot.pose.heading),
   damoclesDisplay: snapshot.displayCells,

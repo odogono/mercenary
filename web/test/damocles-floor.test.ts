@@ -35,6 +35,7 @@ import {
   type GammaSystemDocument
 } from '../src/flyover/documents.ts';
 import { parseConsoleCommand } from '../src/shell/console.ts';
+import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import {
   loadCatalogue,
@@ -58,6 +59,7 @@ beforeAll(async () => {
   content = {
     catalogue,
     doc,
+    documents: await damoclesDocuments(),
     models: modelsOf(catalogue),
     poses: await arrivalPoses(),
     presentationSha256: 'test',
@@ -719,7 +721,7 @@ describe('Save and Session Resume carry the Floor', () => {
     };
     record.schemaVersion = 7;
     expect(() => decoded(JSON.stringify(record))).toThrow(
-      'schema 7 is not Damocles Save 16'
+      'schema 7 is not Damocles Save 17'
     );
   });
 

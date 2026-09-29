@@ -29,10 +29,17 @@ import {
 } from './craft.ts';
 import {
   displayCells,
+  documentMessageId,
+  isDocumentMessage,
   type DamoclesDisplay,
   type DamoclesMessageId,
   type DisplayCells
 } from './display.ts';
+import {
+  documentBody,
+  documentFor,
+  type DamoclesDocuments
+} from './documentBank.ts';
 import type { ErisPresentationDocument } from './documents.ts';
 import {
   encounterPass,
@@ -42,6 +49,15 @@ import {
   type Pool,
   type PoolObject
 } from './encounter.ts';
+import {
+  closeDocument,
+  headCommand,
+  initialHeadCommands,
+  tickCentreBox,
+  type CentreBoxSnapshot,
+  type DocumentPanel,
+  type HeadCommandState
+} from './headCommands.ts';
 import { classifyPosition, type LandSea } from './islands.ts';
 import { walk, type WalkRules } from './mover.ts';
 import {
@@ -74,6 +90,7 @@ import {
   fireTrigger,
   initialScriptState,
   presentSystemMessage,
+  queueRead,
   runFrame,
   stepNoise,
   zapNoise,
@@ -153,6 +170,8 @@ export interface DamoclesSnapshot {
   readonly capacity: number;
   readonly carried: readonly string[];
   readonly cell: ErisCell;
+  /// The centre box the Head Commands open documents on, resolved for drawing (#598).
+  readonly centreBox: CentreBoxSnapshot;
   /// The craft words aboard, or null on foot (ADR 0051). `held` names a gate the port has no
   /// rule for: the craft stops there rather than run an invented one.
   readonly craft: DamoclesCraftSnapshot | null;
@@ -166,6 +185,8 @@ export interface DamoclesSnapshot {
   /// second lamp `$050A5C` reads it.
   readonly encounter: number;
   readonly frameAccumulator: number;
+  /// The open document and the centre box's transition (#598).
+  readonly headCommands: HeadCommandState;
   readonly inventoryLabel: string;
   /// The Damocles Island the Cell Readout is counted from, or null on a Body that carries no
   /// island record. An Island-Local Cell names a location only together with this record: the
@@ -289,6 +310,8 @@ export interface DamoclesContent {
     elapsed: number
   ) => { readonly x: number; readonly z: number } | null;
   readonly doc: ErisPresentationDocument;
+  /// The documents the Head Commands open and read (#598).
+  readonly documents: DamoclesDocuments;
   /// The Catalogue's Models, read a Body's islands at a time (ADR 0048).
   readonly models: ModelStore;
   /// The arrival Poses, which decide which Bodies are switchable.
@@ -366,6 +389,32 @@ const scriptFromSave = (saved: DamoclesSaveScript): ScriptState => ({
   })
 });
 
+/// A document's panel for the centre box, titled with the Catalogue's name for its object, or
+/// null for the logo.
+const documentPanel = (
+  content: DamoclesContent,
+  slot: number | null,
+  item: number | null
+): DocumentPanel | null => {
+  const document =
+    slot === null ? undefined : documentFor(content.documents, slot);
+  if (document === undefined) {
+    return null;
+  }
+  const instance = instanceById(
+    content.catalogue,
+    `object-slot-${document.slot}`
+  );
+  return {
+    colour15: document.colour15,
+    colour3: document.colour3,
+    item: item === null ? null : document.items[item]!.name.trimEnd(),
+    title:
+      modelSummaryById(content.catalogue, instance?.model)?.name ??
+      `OBJECT ${document.slot}`
+  };
+};
+
 const scriptForSave = (script: ScriptState): DamoclesSaveScript => ({
   counter: script.counter,
   display: script.display,
@@ -376,6 +425,7 @@ const scriptForSave = (script: ScriptState): DamoclesSaveScript => ({
   message: script.message,
   noise: script.noise,
   pending: script.pending,
+  read: script.read,
   triggers: script.triggers.map(({ armed, index }) => ({ armed, index })),
   zaps: script.zaps
 });
@@ -521,6 +571,7 @@ export class DamoclesSession implements TitleSession<
   private wavesLanded = 0;
   private wavesApplied = 0;
   private script: ScriptState;
+  private headCommands: HeadCommandState;
   private scrollCounter: number;
 
   constructor(
@@ -537,7 +588,9 @@ export class DamoclesSession implements TitleSession<
     this.scriptRules = {
       messageFrames: content.doc.time.messageFrames,
       messageText: id => {
-        const text = presentedText(content.strings, id);
+        const text = isDocumentMessage(id)
+          ? documentBody(content.documents, id)
+          : presentedText(content.strings, id);
         if (text === undefined) {
           throw new Error(`Damocles strings have no ${id}`);
         }
@@ -590,6 +643,7 @@ export class DamoclesSession implements TitleSession<
       restore?.script === undefined
         ? initialScriptState()
         : scriptFromSave(restore.script);
+    this.headCommands = restore?.headCommands ?? initialHeadCommands();
     this.residence = new Map(
       restore?.residence?.map(item => [item.instance, item.residence]) ?? []
     );
@@ -1486,6 +1540,7 @@ export class DamoclesSession implements TitleSession<
       capacity: this.capacity(),
       carried: [...this.carried],
       cell: cellOf(this.pose.position, this.surface.grid),
+      centreBox: this.centreBox(),
       craft:
         this.craft === null
           ? null
@@ -1509,6 +1564,7 @@ export class DamoclesSession implements TitleSession<
       elapsed: this.elapsed,
       encounter: this.script.encounter,
       frameAccumulator: this.frameAccumulator,
+      headCommands: this.headCommands,
       inventoryLabel: this.inventoryLabel(),
       island: island ?? null,
       islandCell:
@@ -1586,6 +1642,9 @@ export class DamoclesSession implements TitleSession<
         const transition = runFrame(this.script, this.scriptRules);
         this.script = transition.state;
         this.effects.push(...transition.effects);
+        // `$05293E` runs in the VBL handler, so the centre box goes on scrolling whatever the
+        // main loop is doing.
+        this.headCommands = tickCentreBox(this.headCommands);
         this.tickFlash();
         if (this.death !== null) {
           this.tickDeath();
@@ -1631,6 +1690,7 @@ export class DamoclesSession implements TitleSession<
           : { dead: this.death !== null, pool: this.pool },
       footTicks: this.footTicks,
       frameAccumulator: this.frameAccumulator,
+      headCommands: this.headCommands,
       occupancy: this.occupancy,
       pendingBriefcaseDrop: this.pendingBriefcaseDrop,
       // The bank is the craft's roll, which `craft` carries.
@@ -2587,10 +2647,67 @@ export class DamoclesSession implements TitleSession<
     return { kind: 'rotated' };
   }
 
-  /// A Head Command on the Carried Stack's head. Bound, but not yet given the document display
-  /// the research recovered (#598), so every command is ignored and changes nothing.
-  headCommand(_command: HeadCommand): { readonly kind: 'ignored' } {
-    return { kind: 'ignored' };
+  /// A Head Command (#598). Open acts on the Carried Stack's head, and Read, Next and Previous
+  /// on the document it opened. Each that acts plays the key click `$054848`. Nothing pauses:
+  /// the keypad reaches `$04D3D2` before the occupancy test, so on foot, aboard and in space
+  /// alike. From a zap on the main loop is blocked, so no key is read.
+  headCommand(command: HeadCommand): {
+    readonly kind: 'closed' | 'ignored' | 'opened' | 'paged' | 'read';
+  } {
+    if (this.death !== null) {
+      return { kind: 'ignored' };
+    }
+    const head = this.carried[0];
+    const outcome = headCommand(
+      this.headCommands,
+      command,
+      head === undefined ? undefined : this.slotOf(head),
+      this.content.documents,
+      this.script.read !== null
+    );
+    if (outcome.kind === 'ignored') {
+      return outcome;
+    }
+    this.headCommands = outcome.state;
+    if (outcome.kind === 'read') {
+      this.script = queueRead(
+        this.script,
+        documentMessageId(outcome.slot, outcome.item)
+      );
+    }
+    if (this.soundPermitted()) {
+      this.effects.push({ cue: 'throttle', type: 'sound-request' });
+    }
+    return { kind: outcome.kind };
+  }
+
+  private centreBox(): CentreBoxSnapshot {
+    const { box, open } = this.headCommands;
+    return {
+      from: documentPanel(
+        this.content,
+        box.from,
+        box.steps === 0 ? (open?.item ?? null) : box.fromItem
+      ),
+      steps: box.steps,
+      to: documentPanel(this.content, box.to, null)
+    };
+  }
+
+  /// Whether a document is open on the centre box.
+  get documentOpen(): boolean {
+    return this.headCommands.open !== null;
+  }
+
+  /// Close the open document as a drop of it does, and scroll the logo back. The original has
+  /// no key for this: Escape uses it first, before a second Escape opens the System Menu, which
+  /// is one of the #595 Accommodations.
+  closeDocument(): { readonly kind: 'closed' | 'ignored' } {
+    if (this.headCommands.open === null) {
+      return { kind: 'ignored' };
+    }
+    this.headCommands = closeDocument(this.headCommands);
+    return { kind: 'closed' };
   }
 
   private supportResidence(support: {
@@ -2762,6 +2879,10 @@ export class DamoclesSession implements TitleSession<
     }
     this.residence.set(head, residence);
     this.scrollCounter = 16;
+    // `$05468E`: dropping the open object closes it and scrolls the logo back.
+    if (this.slotOf(head) === this.headCommands.open?.slot) {
+      this.headCommands = closeDocument(this.headCommands);
+    }
     if (this.soundPermitted()) {
       this.effects.push({ cue: 'drop', type: 'sound-request' });
     }

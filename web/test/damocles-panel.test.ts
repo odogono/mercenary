@@ -17,6 +17,7 @@ import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { damoclesTitle } from '../src/damocles/title.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { intent } from '../src/gameCore/index.ts';
+import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
@@ -31,6 +32,7 @@ const content = async () => {
   return {
     catalogue: parsed,
     doc,
+    documents: await damoclesDocuments(),
     models: modelsOf(parsed),
     poses: await arrivalPoses(),
     presentationSha256: 'test-presentation',
@@ -53,8 +55,11 @@ describe('the Damocles Panel Rendition on Damocles Session State', () => {
     expect(model.inventoryFill).toBe(0);
     expect(model.damoclesDisplay).toEqual({
       cells: ' '.repeat(48),
+      planes: Array(48).fill(0),
       scrollPixels: 0
     });
+    // The centre box rests on the logo until a document is opened (#598).
+    expect(model.centreBox).toEqual({ panel: null, top: 0 });
     expect(model.speedLabel).toBe('+ 000 000 000');
     // The impact clock starts where the scripted arrival hands over control, having spent
     // the rest of the deadline the title screen installs at `$793C` (#368).

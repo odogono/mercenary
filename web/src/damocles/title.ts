@@ -2,6 +2,7 @@ import { CATALOGUE_PATH, parseCatalogueDocument } from '../catalogue/data.ts';
 import { ModelStore } from '../catalogue/modelStore.ts';
 import type { PanelViewModel } from '../shell/panel.ts';
 import { titleStorageKeys, type TitleRuntime } from '../shell/title.ts';
+import { parseDamoclesDocuments } from './documentBank.ts';
 import { readErisPresentation } from './documents.ts';
 import { damoclesPanelViewModel } from './panel.ts';
 import { parseDamoclesArrivalPoses } from './poses.ts';
@@ -15,6 +16,7 @@ import { parseDamoclesStrings } from './strings.ts';
 import { erisSurfaceFrom, modelWaves, startPose } from './world.ts';
 
 export const DAMOCLES_STRINGS_PATH = '/payload/damocles/strings.json';
+export const DAMOCLES_DOCUMENTS_PATH = '/payload/damocles/documents.json';
 export const DAMOCLES_ARRIVAL_POSES_PATH =
   '/payload/damocles/arrival-poses.json';
 export const ERIS_PRESENTATION_PATH = '/damocles/eris.json';
@@ -59,12 +61,13 @@ export const damoclesTitle: TitleRuntime<
   load: async fetch => {
     // The Catalogue is its shared document and one file per Model (ADR 0048). Only the
     // document is read here; Models are read by id as a Body needs them.
-    const [rawCatalogue, rawPresentation, rawStrings, rawPoses] =
+    const [rawCatalogue, rawPresentation, rawStrings, rawPoses, rawDocuments] =
       await Promise.all([
         fetch(CATALOGUE_PATH),
         fetch(ERIS_PRESENTATION_PATH),
         fetch(DAMOCLES_STRINGS_PATH),
-        fetch(DAMOCLES_ARRIVAL_POSES_PATH)
+        fetch(DAMOCLES_ARRIVAL_POSES_PATH),
+        fetch(DAMOCLES_DOCUMENTS_PATH)
       ]);
     const catalogue = labelled(CATALOGUE_PATH, () =>
       parseCatalogueDocument(rawCatalogue.value)
@@ -78,6 +81,14 @@ export const damoclesTitle: TitleRuntime<
     const poses = labelled(DAMOCLES_ARRIVAL_POSES_PATH, () =>
       parseDamoclesArrivalPoses(rawPoses.value)
     );
+    const documents = labelled(DAMOCLES_DOCUMENTS_PATH, () =>
+      parseDamoclesDocuments(rawDocuments.value)
+    );
+    if (documents.source.programSha256 !== catalogue.source.programSha256) {
+      throw new Error(
+        `${DAMOCLES_DOCUMENTS_PATH}: program identity does not match the Catalogue`
+      );
+    }
     if (strings.source.programSha256 !== catalogue.source.programSha256) {
       throw new Error(
         `${DAMOCLES_STRINGS_PATH}: program identity does not match the Catalogue`
@@ -106,6 +117,7 @@ export const damoclesTitle: TitleRuntime<
     return {
       catalogue,
       doc,
+      documents,
       models,
       poses,
       presentationSha256: await presentationIdentity([rawPresentation.text]),

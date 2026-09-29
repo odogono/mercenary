@@ -15,6 +15,9 @@ damocles-panel {
   --panel-face: var(--st-8);
   --msg-bg: var(--st-black);
   --msg-ink: #3ecf3e;
+  /* A Read's body is drawn in the row's second plane, which the palette makes the panel's
+     light blue ($0567), not the green of every other message (#598). */
+  --msg-ink-read: #aaccee;
   --nav-face: #446644;
   --nav-lcd: #aaccaa;
   --nav-ink: var(--st-black);
@@ -325,6 +328,7 @@ damocles-panel #damocles-compass {
 /* The original carries its title here. Targ has no Damocles title to show, so the window names
    the world instead, in the panel's own greys. */
 damocles-panel #damocles-aux {
+  position: relative;
   display: flex;
   width: calc(68 * var(--u));
   height: calc(36 * var(--u));
@@ -341,6 +345,21 @@ damocles-panel #damocles-aux {
     inset 0 calc(2 * var(--u)) 0 var(--st-4),
     inset 0 calc(-1 * var(--u)) 0 var(--st-a),
     inset 0 calc(-2 * var(--u)) 0 var(--st-c);
+}
+
+/* The centre box's window, inside the badge's two-unit bevel. It covers the badge while a
+   document shows or the window scrolls (#598). */
+damocles-panel #damocles-centre-canvas {
+  position: absolute;
+  top: calc(2 * var(--u));
+  left: calc(2 * var(--u));
+  width: calc(64 * var(--u));
+  height: calc(32 * var(--u));
+  image-rendering: pixelated;
+}
+
+damocles-panel #damocles-centre-canvas[hidden] {
+  display: none;
 }
 
 damocles-panel .aux-title {

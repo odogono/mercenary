@@ -12,6 +12,7 @@ import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { parseConsoleCommand } from '../src/shell/console.ts';
 import type { PreferencesStore } from '../src/shell/preferences.ts';
 import type { SavePersistence } from '../src/shell/saves.ts';
+import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
@@ -31,6 +32,7 @@ const contentOf = async (): Promise<DamoclesContent> => {
   content = {
     catalogue,
     doc,
+    documents: await damoclesDocuments(),
     models: modelsOf(catalogue),
     poses: await arrivalPoses(),
     presentationSha256: 'test-presentation',

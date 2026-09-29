@@ -5,6 +5,7 @@ import {
   effectiveMessageRow,
   type DamoclesMessageId
 } from '../src/damocles/display.ts';
+import { initialHeadCommands } from '../src/damocles/headCommands.ts';
 import {
   catalogueResidence,
   structureStoreyHeight,
@@ -66,6 +67,7 @@ const record = () => ({
     encounter: null,
     footTicks: 0,
     frameAccumulator: 0,
+    headCommands: initialHeadCommands(),
     occupancy: { kind: 'onFoot' } as DamoclesSaveOccupancy,
     pendingBriefcaseDrop: null as {
       head: string;
@@ -154,6 +156,7 @@ const waiting = (trigger: number, resident: string) => {
     message: state.message,
     noise: state.noise,
     pending: state.pending,
+    read: state.read,
     triggers: state.triggers.map(({ armed, index }) => ({ armed, index })),
     zaps: state.zaps
   };
@@ -163,7 +166,7 @@ const waiting = (trigger: number, resident: string) => {
 const held = (value: ReturnType<typeof record>, cells: string) => {
   value.snapshot.script = {
     ...value.snapshot.script,
-    display: { cells, kind: 'held' }
+    display: { cells, kind: 'held', plane: 0 }
   };
   return value;
 };
@@ -306,7 +309,12 @@ describe('body-aware Save Snapshot admission', () => {
       display: {
         id: 'system-string-2',
         kind: 'scrolling',
-        reveal: { beneath: ' '.repeat(48), offset: 0, pixels: 0 }
+        reveal: {
+          beneath: ' '.repeat(48),
+          beneathPlane: 0,
+          offset: 0,
+          pixels: 0
+        }
       }
     };
     expect(() => decode(value)).toThrow(/display/);
@@ -324,14 +332,19 @@ describe('body-aware Save Snapshot admission', () => {
         display: {
           id,
           kind: 'scrolling',
-          reveal: { beneath: ' '.repeat(48), offset: 0, pixels: 0 }
+          reveal: {
+            beneath: ' '.repeat(48),
+            beneathPlane: 0,
+            offset: 0,
+            pixels: 0
+          }
         },
-        message: { id, remainingFrames: 200 }
+        message: { id, offset: 0, remainingFrames: 200 }
       };
       expect(decode(value)).toEqual(value);
       value.snapshot.script = {
         ...value.snapshot.script,
-        display: { cells: 'MESSAGE'.padEnd(48), kind: 'held' },
+        display: { cells: 'MESSAGE'.padEnd(48), kind: 'held', plane: 0 },
         message: null
       };
       expect(decode(value)).toEqual(value);
@@ -492,7 +505,8 @@ describe('a suspended Damocles Script holds the row it last wrote', () => {
     const value = waiting(2, 'object-slot-183');
     expect(value.snapshot.script.display).toEqual({
       cells: effectiveMessageRow(presentedText(strings, 'script2-inline-3')!),
-      kind: 'held'
+      kind: 'held',
+      plane: 0
     });
     expect(decode(value)).toEqual(value);
   });
@@ -517,7 +531,8 @@ describe('a suspended Damocles Script holds the row it last wrote', () => {
     const value = waiting(62, 'object-slot-94');
     expect(value.snapshot.script.display).toEqual({
       cells: ' '.repeat(48),
-      kind: 'held'
+      kind: 'held',
+      plane: 0
     });
     expect(decode(value)).toEqual(value);
     const inherited = held(
@@ -531,8 +546,8 @@ describe('a suspended Damocles Script holds the row it last wrote', () => {
     const value = record();
     value.snapshot.script = {
       ...value.snapshot.script,
-      display: { cells: 'NOT THE MESSAGE'.padEnd(48), kind: 'held' },
-      message: { id: 'system-string-2', remainingFrames: 100 }
+      display: { cells: 'NOT THE MESSAGE'.padEnd(48), kind: 'held', plane: 0 },
+      message: { id: 'system-string-2', offset: 0, remainingFrames: 100 }
     };
     expect(() => decode(value)).toThrow(/presenting message row/);
     expect(

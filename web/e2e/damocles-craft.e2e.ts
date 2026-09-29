@@ -204,7 +204,7 @@ test('EAGLE NINE S E takes off, reads its altitude, and a steep dive puts the pl
   const flying = JSON.parse(
     (await page.evaluate(k => localStorage.getItem(k), damoclesSaveSlot(2)))!
   ) as SavedRecord;
-  expect(flying.schemaVersion).toBe(16);
+  expect(flying.schemaVersion).toBe(17);
   expect(flying.snapshot.occupancy).toEqual({
     instance: EAGLE,
     kind: 'aboard'
@@ -508,7 +508,7 @@ test('EAGLE NINE S E saved in space, reloaded and loaded, flies on to its arriva
       pose: { body: string };
     };
   };
-  expect(saved.schemaVersion).toBe(16);
+  expect(saved.schemaVersion).toBe(17);
   expect(saved.snapshot.pose.body).toBe('body-4');
   const space = saved.snapshot.craft.space!;
   expect(space.hold).toBeGreaterThan(0);

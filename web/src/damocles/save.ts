@@ -4,9 +4,24 @@ import {
   DAMOCLES_ROW_CELLS,
   LANDING_MESSAGE_IDS,
   effectiveMessageRow,
+  isDocumentMessage,
+  messagePlane,
   type DamoclesDisplay,
-  type DamoclesMessageId
+  type DamoclesMessageId,
+  type DocumentMessageId,
+  type RowPlane
 } from './display.ts';
+import {
+  documentBody,
+  documentFor,
+  type DamoclesDocuments
+} from './documentBank.ts';
+import {
+  NOVAGEN_SAFE_SLOT,
+  TRANSITION_VBLS,
+  initialHeadCommands,
+  type HeadCommandState
+} from './headCommands.ts';
 import { admittedPoses, type ArrivalPoses } from './poses.ts';
 import {
   admissiblePlacementClass,
@@ -18,6 +33,7 @@ import {
 import {
   NEW_GAME_NOISE,
   NOISE_WORDS,
+  SHORTENED_DISPLAY_FRAMES,
   initialScriptState,
   type Execution,
   type Frame,
@@ -110,9 +126,17 @@ import type { Pose } from './world.ts';
 /// the one an uninterrupted run makes, as the pointer's does. A schema-15 record or older is
 /// migrated alive, with no word turned and the pool the first world's: no earlier port ran the
 /// pool, so its records stood where the first world left them.
-export const DAMOCLES_SAVE_SCHEMA_VERSION = 16 as const;
+///
+/// Version 17 carries the Head Commands' document mode (#598): the open document, its item and
+/// its index, the centre box's transition, and the object and index the last Read copied. The
+/// index is kept apart from the item because a backward wrap sets it to 8. The script carries the
+/// Read `$7B96` queued, and the message row each held row's plane and each block's offset,
+/// because a body is drawn in plane 1 and shown 48 cells at a time. The original's save carries
+/// the open panel too (`$785E`–`$7865`). A schema-16 record or older is migrated with no
+/// document open and every row in plane 0: no earlier port opened one.
+export const DAMOCLES_SAVE_SCHEMA_VERSION = 17 as const;
 /// The older schemas a restore migrates rather than refuses.
-const MIGRATED_SCHEMA_VERSIONS: readonly unknown[] = [11, 12, 13, 14, 15];
+const MIGRATED_SCHEMA_VERSIONS: readonly unknown[] = [11, 12, 13, 14, 15, 16];
 /// The schemas from before the landing messages (#576), which carry no landing trigger.
 const PRE_LANDING_SCHEMA_VERSIONS: readonly unknown[] = [11, 12, 13];
 export const DAMOCLES_DESTINATION = 'damocles' as const;
@@ -250,6 +274,8 @@ export interface DamoclesSaveSnapshot {
   /// On foot, ticks since the last main-loop pass, below `time.ticksPerPassOnFoot` (ADR 0054).
   readonly footTicks: number;
   readonly frameAccumulator: number;
+  /// The open document and the centre box, as a migrated record resumes with none open.
+  readonly headCommands: HeadCommandState;
   readonly occupancy: DamoclesSaveOccupancy;
   readonly pendingBriefcaseDrop: {
     readonly head: string;
@@ -286,6 +312,8 @@ export interface DamoclesSaveScript {
   readonly noise: number;
   /// `$7A88`, the one queued trigger index.
   readonly pending: number | null;
+  /// `$7B96`: the document body a Read has queued and the dispatch head has not yet presented.
+  readonly read: DocumentMessageId | null;
   readonly triggers: readonly {
     readonly armed: boolean;
     readonly index: number;
@@ -325,6 +353,7 @@ export const initialDamoclesSaveScript = (): DamoclesSaveScript => {
     message: script.message,
     noise: script.noise,
     pending: script.pending,
+    read: script.read,
     triggers: script.triggers.map(({ armed, index }) => ({ armed, index })),
     zaps: script.zaps
   };
@@ -541,10 +570,52 @@ const messageIds = new Set<DamoclesMessageId>([
   'system-string-9'
 ]);
 
-const messageId = (value: unknown, path: string): DamoclesMessageId =>
-  typeof value === 'string' && messageIds.has(value as DamoclesMessageId)
+/// The records a Save's message ids are checked against. Either may be absent, and then only the
+/// rules the record alone decides apply.
+interface MessageContent {
+  readonly documents: DamoclesDocuments | undefined;
+  readonly strings: DamoclesStrings | undefined;
+}
+
+/// A document body's id names an object and one of its items. Without the documents only its
+/// form can be checked.
+const bodyOf = (
+  content: MessageContent,
+  id: DocumentMessageId
+): string | undefined =>
+  content.documents === undefined
+    ? undefined
+    : documentBody(content.documents, id);
+
+const messageId = (
+  value: unknown,
+  path: string,
+  content: MessageContent
+): DamoclesMessageId => {
+  if (typeof value === 'string' && isDocumentMessage(value)) {
+    return content.documents === undefined ||
+      bodyOf(content, value) !== undefined
+      ? value
+      : fail(`${path} names an unknown document item`);
+  }
+  return typeof value === 'string' && messageIds.has(value as DamoclesMessageId)
     ? (value as DamoclesMessageId)
     : fail(`${path} names an unknown message`);
+};
+
+/// The text a message presents, or undefined where the content that holds it was not supplied.
+const recordText = (
+  content: MessageContent,
+  id: DamoclesMessageId
+): string | undefined =>
+  isDocumentMessage(id)
+    ? bodyOf(content, id)
+    : content.strings === undefined
+      ? undefined
+      : presentedText(content.strings, id);
+
+const planeOf = (value: unknown, path: string): RowPlane =>
+  value === 0 || value === 1 ? value : fail(`${path} is not a row plane`);
 
 const poseOf = (value: unknown): Pose => {
   const pose = object(value, 'pose');
@@ -637,12 +708,38 @@ const residenceOf = (value: unknown): Residence => {
   };
 };
 
-const displayOf = (value: unknown): DamoclesDisplay => {
+/// A block offset: 0, or for a document body a whole number of rows inside the body.
+const blockOffset = (
+  value: unknown,
+  path: string,
+  id: DamoclesMessageId,
+  content: MessageContent
+): number => {
+  const offset = integer(value, path, 0, 0xff_ff);
+  const text = recordText(content, id);
+  return offset === 0 ||
+    (isDocumentMessage(id) &&
+      offset % DAMOCLES_ROW_CELLS === 0 &&
+      (text === undefined || offset < text.length))
+    ? offset
+    : fail(`${path} is not a block of its record`);
+};
+
+/// Before schema 17 every row was drawn in plane 0 and every message started at its first
+/// character, so a migrated record carries neither.
+const displayOf = (
+  value: unknown,
+  current: boolean,
+  content: MessageContent
+): DamoclesDisplay => {
   const display = object(value, 'snapshot.script.display');
   if (display['kind'] === 'held') {
     return {
       cells: printableRow(display['cells'], 'snapshot.script.display.cells'),
-      kind: 'held'
+      kind: 'held',
+      plane: current
+        ? planeOf(display['plane'], 'snapshot.script.display.plane')
+        : 0
     };
   }
   if (display['kind'] !== 'scrolling') {
@@ -650,37 +747,70 @@ const displayOf = (value: unknown): DamoclesDisplay => {
   }
   const reveal = object(display['reveal'], 'snapshot.script.display.reveal');
   const pixels = integer(reveal['pixels'], 'display.reveal.pixels', 0, 280);
-  if (pixels % 8 !== 0 || reveal['offset'] !== 0) {
+  if (pixels % 8 !== 0 || (!current && reveal['offset'] !== 0)) {
     return fail('display Reveal is not at a commit boundary');
   }
+  const id = messageId(display['id'], 'snapshot.script.display.id', content);
   return {
-    id: messageId(display['id'], 'snapshot.script.display.id'),
+    id,
     kind: 'scrolling',
     reveal: {
       beneath: printableRow(reveal['beneath'], 'display.reveal.beneath'),
-      offset: 0,
+      beneathPlane: current
+        ? planeOf(reveal['beneathPlane'], 'display.reveal.beneathPlane')
+        : 0,
+      offset: current
+        ? blockOffset(reveal['offset'], 'display.reveal.offset', id, content)
+        : 0,
       pixels
     }
   };
 };
 
-/// A presenting message counts down from the duration it started with, which is the bank word
-/// the save records: the shared epilogue's clearing line starts at 50, not 200.
+/// How long a block of a message holds. A script's or a system message's is the bank word the
+/// save records, so the shared epilogue's clearing line starts at 50, not 200. A document body's
+/// is 200, or 50 for the block that reads its terminator, whatever the bank word says.
+const blockDuration = (
+  message: Pick<Presenting, 'id' | 'offset'>,
+  displayDuration: number,
+  content: MessageContent
+): number => {
+  if (!isDocumentMessage(message.id)) {
+    return displayDuration;
+  }
+  const text = recordText(content, message.id);
+  return text !== undefined && text.length - message.offset < DAMOCLES_ROW_CELLS
+    ? SHORTENED_DISPLAY_FRAMES
+    : ORDINARY_DISPLAY_FRAMES;
+};
+
 const presentingOf = (
   value: unknown,
-  displayDuration: number
+  displayDuration: number,
+  current: boolean,
+  content: MessageContent
 ): Presenting | null => {
   if (value === null) {
     return null;
   }
   const message = object(value, 'snapshot.script.message');
+  const id = messageId(message['id'], 'snapshot.script.message.id', content);
+  const offset = current
+    ? blockOffset(
+        message['offset'],
+        'snapshot.script.message.offset',
+        id,
+        content
+      )
+    : 0;
   return {
-    id: messageId(message['id'], 'snapshot.script.message.id'),
+    id,
+    offset,
     remainingFrames: integer(
       message['remainingFrames'],
       'snapshot.script.message.remainingFrames',
       1,
-      displayDuration
+      blockDuration({ id, offset }, displayDuration, content)
     )
   };
 };
@@ -716,11 +846,12 @@ const blockingStep = (script: ScriptId, step: Step): boolean => {
 /// Null where the strings payload was not supplied, or does not hold that record: the row then
 /// cannot be checked at all, and only the generic printable-row rule applies.
 const messageRow = (
-  strings: DamoclesStrings | undefined,
-  id: DamoclesMessageId
+  content: MessageContent,
+  id: DamoclesMessageId,
+  offset = 0
 ): string | null => {
-  const text = strings === undefined ? undefined : presentedText(strings, id);
-  return text === undefined ? null : effectiveMessageRow(text);
+  const text = recordText(content, id);
+  return text === undefined ? null : effectiveMessageRow(text, offset);
 };
 
 /// The row a script has itself written by the time it reaches `step`: the effective row of the
@@ -731,7 +862,7 @@ const messageRow = (
 /// clearing line, a system refusal, or the row the session opened on -- and the script does not
 /// decide it (docs/design/damocles-limo-key-interaction.md).
 const writtenRow = (
-  strings: DamoclesStrings | undefined,
+  content: MessageContent,
   script: ScriptId,
   step: Step
 ): string | null => {
@@ -739,7 +870,7 @@ const writtenRow = (
   for (let index = step - 1; index >= 0; index -= 1) {
     const op = ops[index];
     if (op?.kind === 'message') {
-      return messageRow(strings, op.id);
+      return messageRow(content, op.id);
     }
   }
   return null;
@@ -795,8 +926,9 @@ const executionOf = (value: unknown): Execution | null => {
 
 const scriptOf = (
   value: unknown,
-  strings: DamoclesStrings | undefined,
+  content: MessageContent,
   migrated: boolean,
+  encounterSaved: boolean,
   current: boolean
 ): DamoclesSaveScript => {
   const script = object(value, 'snapshot.script');
@@ -806,7 +938,7 @@ const scriptOf = (
     0,
     65_535
   );
-  const display = displayOf(script['display']);
+  const display = displayOf(script['display'], current, content);
   const displayDuration = integer(
     script['displayDuration'] ?? ORDINARY_DISPLAY_FRAMES,
     'snapshot.script.displayDuration',
@@ -818,7 +950,19 @@ const scriptOf = (
       ? null
       : integer(script['pending'], 'snapshot.script.pending', 0, 255);
   const execution = executionOf(script['execution']);
-  const message = presentingOf(script['message'], displayDuration);
+  const message = presentingOf(
+    script['message'],
+    displayDuration,
+    current,
+    content
+  );
+  const read =
+    !current || script['read'] === null
+      ? null
+      : messageId(script['read'], 'snapshot.script.read', content);
+  if (read !== null && !isDocumentMessage(read)) {
+    return fail('snapshot.script.read names no document item');
+  }
   const triggers: DamoclesSaveScript['triggers'] = array(
     script['triggers'],
     'snapshot.script.triggers'
@@ -857,7 +1001,7 @@ const scriptOf = (
   const noise = migrated
     ? NEW_GAME_NOISE
     : integer(script['noise'], 'snapshot.script.noise', 0, NOISE_WORDS - 1);
-  const zaps = current
+  const zaps = encounterSaved
     ? array(script['zaps'], 'snapshot.script.zaps').map(word =>
         integer(word, 'snapshot.script.zaps[]', 0, NOISE_WORDS - 1)
       )
@@ -889,12 +1033,16 @@ const scriptOf = (
   if (pending !== null && !PICKUP_TRIGGERS.includes(pending)) {
     return fail('script pending trigger is not a pickup trigger');
   }
+  const reading = message !== null && isDocumentMessage(message.id);
   if (message !== null) {
-    const elapsedFrames = displayDuration - message.remainingFrames;
+    const elapsedFrames =
+      blockDuration(message, displayDuration, content) -
+      message.remainingFrames;
     if (
       (elapsedFrames < 36 &&
         (display.kind !== 'scrolling' ||
           display.id !== message.id ||
+          display.reveal.offset !== message.offset ||
           display.reveal.pixels !== 8 * elapsedFrames)) ||
       (elapsedFrames >= 36 && display.kind !== 'held')
     ) {
@@ -903,8 +1051,12 @@ const scriptOf = (
     // A reveal that has run its 36 frames has replaced the row with the presenting message's
     // own, so which message is presenting decides the held cells rather than merely allowing
     // them to be held.
-    const row = messageRow(strings, message.id);
-    if (display.kind === 'held' && row !== null && display.cells !== row) {
+    const row = messageRow(content, message.id, message.offset);
+    if (
+      display.kind === 'held' &&
+      ((row !== null && display.cells !== row) ||
+        display.plane !== messagePlane(message.id))
+    ) {
       return fail('held display is not the presenting message row');
     }
   }
@@ -914,22 +1066,34 @@ const scriptOf = (
   if (execution !== null) {
     const ops = SCRIPTS[execution.script].ops;
     const previous = ops[execution.step - 1];
-    const current = ops[execution.step];
+    const step = ops[execution.step];
+    // A queued Read is presented the first frame the gate is down, ahead of the script
+    // (`$051944`), so a body can present after a script's message and during its wait. The
+    // script resumes once the body's last block is over.
     if (previous?.kind === 'message') {
-      if (message?.id !== previous.id) {
+      if (message?.id !== previous.id && !reading) {
         return fail('script execution is not at a reachable commit boundary');
       }
-    } else if (current?.kind === 'poll-wait') {
-      const threshold =
-        current.frames === WAIT_FROM_DOCUMENT ? 200 : current.frames;
-      if (message !== null || counter >= threshold || display.kind !== 'held') {
+    } else if (step?.kind === 'poll-wait') {
+      const threshold = step.frames === WAIT_FROM_DOCUMENT ? 200 : step.frames;
+      if (
+        !reading &&
+        (message !== null || counter >= threshold || display.kind !== 'held')
+      ) {
         return fail('script execution is not at a reachable commit boundary');
       }
-      // Nothing can present over a suspended execution -- a system refusal is only raised while
-      // the script state is parked and idle -- so a waiting script still holds the row its own
-      // last message left, and a blank or unrelated row mid-wait is a record no play produces.
-      const written = writtenRow(strings, execution.script, execution.step);
-      if (written !== null && display.cells !== written) {
+      // Nothing but a Read presents over a suspended execution -- a system refusal is only
+      // raised while the script state is parked and idle -- so a waiting script holds the row
+      // its own last message left, or a body's, which is drawn in plane 1. A blank or unrelated
+      // row mid-wait is a record no play produces.
+      const written = writtenRow(content, execution.script, execution.step);
+      if (
+        !reading &&
+        display.kind === 'held' &&
+        display.plane === 0 &&
+        written !== null &&
+        display.cells !== written
+      ) {
         return fail('waiting script does not hold the row it last wrote');
       }
     } else {
@@ -937,6 +1101,7 @@ const scriptOf = (
     }
   } else if (
     message !== null &&
+    !reading &&
     ![
       'system-string-1',
       'system-string-2',
@@ -964,9 +1129,102 @@ const scriptOf = (
     message,
     noise,
     pending,
+    read,
     triggers: table,
     zaps
   };
+};
+
+/// The open document and the centre box. The open object is the one Open found at the head, and
+/// only a drop closes it, so it is carried still, or packed in the briefcase with the drop that
+/// stored it (`$054686` compares only the object dropped).
+const headCommandsOf = (
+  value: unknown,
+  held: readonly string[],
+  documents: DamoclesDocuments | undefined
+): HeadCommandState => {
+  const saved = object(value, 'snapshot.headCommands');
+  const documentSlot = (item: unknown, path: string): number => {
+    const slot = integer(item, path, 0, 0xff);
+    if (
+      slot === NOVAGEN_SAFE_SLOT ||
+      (documents !== undefined && documentFor(documents, slot) === undefined)
+    ) {
+      return fail(`${path} names no document the Open table opens`);
+    }
+    return slot;
+  };
+  const panel = (item: unknown, path: string): number | null =>
+    item === null ? null : documentSlot(item, path);
+  let open: HeadCommandState['open'] = null;
+  if (saved['open'] !== null) {
+    const raw = object(saved['open'], 'snapshot.headCommands.open');
+    const slot = documentSlot(raw['slot'], 'snapshot.headCommands.open.slot');
+    const items =
+      documents === undefined
+        ? 0xff_ff
+        : documentFor(documents, slot)!.items.length - 1;
+    if (!held.includes(`object-slot-${slot}`)) {
+      return fail('the open document is not carried');
+    }
+    open = {
+      index: word(raw['index'], 'snapshot.headCommands.open.index'),
+      item: integer(raw['item'], 'snapshot.headCommands.open.item', 0, items),
+      slot
+    };
+  }
+  const box = object(saved['box'], 'snapshot.headCommands.box');
+  const steps = integer(
+    box['steps'],
+    'snapshot.headCommands.box.steps',
+    0,
+    TRANSITION_VBLS
+  );
+  const from = panel(box['from'], 'snapshot.headCommands.box.from');
+  const to = panel(box['to'], 'snapshot.headCommands.box.to');
+  // The box always heads for what is open, and once it has arrived it shows only that.
+  if (to !== (open?.slot ?? null) || (steps === 0 && from !== to)) {
+    return fail('the centre box and the open document disagree');
+  }
+  // A name is drawn only on a document panel that had arrived, and at rest it is the open one's.
+  const fromItem =
+    box['fromItem'] === null
+      ? null
+      : integer(
+          box['fromItem'],
+          'snapshot.headCommands.box.fromItem',
+          0,
+          from === null
+            ? -1
+            : documents === undefined
+              ? 0xff_ff
+              : documentFor(documents, from)!.items.length - 1
+        );
+  if (steps === 0 && fromItem !== null) {
+    return fail('the centre box at rest carries an outgoing name');
+  }
+  const lastRead =
+    saved['lastRead'] === null
+      ? null
+      : (() => {
+          const raw = object(
+            saved['lastRead'],
+            'snapshot.headCommands.lastRead'
+          );
+          return {
+            index: integer(
+              raw['index'],
+              'snapshot.headCommands.lastRead.index',
+              0,
+              0xff
+            ),
+            slot: documentSlot(
+              raw['slot'],
+              'snapshot.headCommands.lastRead.slot'
+            )
+          };
+        })();
+  return { box: { from, fromItem, steps, to }, lastRead, open };
 };
 
 const poolObjectOf = (
@@ -1123,6 +1381,7 @@ export const encodeDamoclesSave = (record: DamoclesSaveRecord): string =>
 /// what the schema and envelope tests exercise. Shipping callers supply all three.
 export interface DamoclesSaveContent {
   readonly catalogue?: Catalogue;
+  readonly documents?: DamoclesDocuments;
   readonly poses?: ArrivalPoses;
   readonly strings?: DamoclesStrings;
 }
@@ -1137,7 +1396,7 @@ export const decodeDamoclesSave = (
   expected: DamoclesSaveIdentity,
   content: DamoclesSaveContent = {}
 ): DamoclesSaveRecord => {
-  const { catalogue, poses, strings } = content;
+  const { catalogue, documents, poses, strings } = content;
   let parsed: unknown;
   try {
     parsed = JSON.parse(encoded);
@@ -1345,21 +1604,30 @@ export const decodeDamoclesSave = (
     16
   );
   const current = record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION;
+  // Schema 16 is the first to carry the encounter.
+  const encounterSaved = current || record['schemaVersion'] === 16;
   const script = scriptOf(
     snapshot['script'],
-    strings,
+    { documents, strings },
     PRE_LANDING_SCHEMA_VERSIONS.includes(record['schemaVersion']),
+    encounterSaved,
     current
   );
+  const headCommands = current
+    ? headCommandsOf(
+        snapshot['headCommands'],
+        [...carried, ...briefcaseStore],
+        documents
+      )
+    : initialHeadCommands();
   // Null is the first world's pool with the player alive, which is also what a migrated record
   // resumes with.
   const encounter =
-    current && snapshot['encounter'] !== null
+    encounterSaved && snapshot['encounter'] !== null
       ? encounterOf(snapshot['encounter'], script.encounter)
       : null;
   const footTicks =
-    record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION ||
-    record['schemaVersion'] === 15
+    encounterSaved || record['schemaVersion'] === 15
       ? integer(snapshot['footTicks'], 'snapshot.footTicks', 0, 255)
       : 0;
   // An armed trigger requires its object to be at its Catalogue placement and absent from the
@@ -1473,6 +1741,7 @@ export const decodeDamoclesSave = (
       encounter,
       footTicks,
       frameAccumulator,
+      headCommands,
       occupancy,
       pendingBriefcaseDrop,
       pose,

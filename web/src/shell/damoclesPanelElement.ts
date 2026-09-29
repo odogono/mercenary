@@ -29,7 +29,7 @@ export class DamoclesPanelElement extends HTMLElement {
             </div>
           </div>
         </div>
-        <div id="damocles-aux"><span class="aux-title${(this.dataset['title'] ?? 'TARG').length > 4 ? ' long' : ''}">${this.dataset['title'] ?? 'TARG'}</span></div>
+        <div id="damocles-aux"><span class="aux-title${(this.dataset['title'] ?? 'TARG').length > 4 ? ' long' : ''}">${this.dataset['title'] ?? 'TARG'}</span><canvas id="damocles-centre-canvas" width="256" height="128" data-provenance="authored" hidden></canvas></div>
         <div id="damocles-right">
           <div id="damocles-inventory" class="block"><div id="inventory-capacity"><div class="fill" style="--fill-rows: 2"></div></div><div class="inventory-stack"><div id="inventory-window" class="readout" data-field="inventory"></div><div class="inventory-foot"><div id="inventory-cash" class="readout"><span class="compact" data-field="cash"></span></div><div class="panel-label compact">INVENTORY</div></div></div></div>
           <div id="damocles-foot"><span class="damocles-lamp" data-lamp="groundLamp"></span><span class="damocles-lamp" data-lamp="attackLamp"></span><span class="damocles-lamp" data-lamp="runLamp"></span><span id="damocles-clock" data-field="clock"></span></div>

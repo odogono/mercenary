@@ -28,7 +28,7 @@ screenshots and traces stay ignored Restricted Material under `research/damocles
    the BOOK's items, which its text happens to call pages.
 5. **Every document is resident, and none is in `strings.json`.** The 19 documents live in one
    bank at `$073500`–`$07612C`, byte-identical in the pinned first-world RAM and all 28
-   rehosted memstates. They hold 91 items. `strings.json` carries none of their bodies.
+   rehosted memstates. They hold 93 items. `strings.json` carries none of their bodies.
 6. **The world does not stop.** The VBL clock and the Impact Clock advance at their normal rate
    while a document is open. The Head Commands work the same on foot, aboard a craft and in
    space, because the keypad dispatch is reached before any occupancy test.
@@ -120,13 +120,19 @@ if mode == 2: $04DB9E                     ; select document `index`
 ```
 
 `$058EC8` points `$5293A` at the mode's panel graphic, taken from the table at `$066100`. For
-modes 2 and 6 it copies a 20-row title strip into the graphic from `$066100 + $400 + 20 ×
-index`. It then sets `$52938` = `$40`. The VBL handler's `$05293E` (called from `$051E22`)
-spends 32 steps scrolling the old centre box out, one row a VBL. At the midpoint it writes the
-two colours to the live palette (`$6FD08`, `$6FD20`). It then spends 32 steps scrolling the new
-graphic in. At zero it draws the mode's content (`$0529D6`). For a document that content is
-the current item's name, drawn by `$04DBBE` at screen offset `$6A84`. The box is the 64-pixel
-window at rows 160–190 of the 320×200 screen, between the navigation and inventory windows.
+modes 2 and 6 it copies a title strip of 20 words, five rows of the 64-pixel window, into the
+graphic from `$066100 + $400 + 20 × index`. It then sets `$52938` = `$40`. The VBL handler's `$05293E` (called from `$051E22`)
+spends 32 steps scrolling the old centre box out, one row a VBL. Every step moves the window's
+contents up a row, and for these 32 steps the row entering at the bottom is cleared to black. At
+the midpoint it writes the two colours to the live palette (`$6FD08`, `$6FD20`). It then spends
+32 steps scrolling the new graphic in, a row of it entering at the bottom each step. At zero it
+draws the mode's content (`$0529D6`). For a document that content is the current item's name,
+drawn by `$04DBBE` at screen offset `$6A84`, so a panel scrolls in with its name field empty. The
+box is the window at columns 128–192 and rows 160–191 of the 320×200 screen, between the
+navigation and inventory windows. In the `damocles-file` frames, colour 15 is the window's
+ground and colour 3 the name field's. The title, `INDEX` and `PRESS * TO VIEW` are grey
+(204, 204, 204) and the name is black. After the drop the logo returns on black, although `$7864`
+still holds the file's colour 15, so the logo does not draw its ground in colour 15.
 
 ### The Open table, `$04D2C4`
 
@@ -198,9 +204,36 @@ the safe is read after blowing it open with a small setting.
 | `*` Read | `$04D776` | Only if `$7B96` = 0: `$7B92` ← `$7858` + 8, the body. `$7B96` ← 1. `$7856` ← object, `$7857` ← index. Click. |
 
 Read hands the body to the [message reveal](damocles-message-reveal.md), which shows it in the
-message bar as it shows any other message. A Read while a message is still pending is ignored.
-The long items, such as the NOVAGEN CABINET's CREDITS or the MEMO PAD's TUE 17TH, are just long
-messages. Their bodies pad words with spaces to line up in the original's fixed-width text.
+message bar much as it shows any other message. A Read while an earlier Read is still waiting in
+`$7B96` is ignored. The long items, such as the NOVAGEN CABINET's CREDITS or the MEMO PAD's TUE
+17TH, are just long messages. Their bodies pad words with spaces to line up in the original's
+fixed-width text.
+
+### How a Read is shown
+
+This section was added for #598. It rests on the disassembly of `$0547C6`–`$054806` and
+`$05193E`–`$05194C` in the pinned first-world RAM, and on the `damocles-file` case's frames.
+
+- **In the row's second colour.** The deferred path at `$0547C6` sets `$7BA2` to 2 (`$0547CE`)
+  before it raises the gate. So the body's glyphs go to bitplane 1, palette index 2, where every
+  other message's go to bitplane 0, index 1. In the captures index 1 is `$0050`, the green, and
+  index 2 is `$0567`, the panel's light blue. The `read` step's frame draws the body in
+  (170, 204, 238) and the `open` step's frame draws the take's message in (0, 170, 0). The
+  maintainer's own capture of the DAMOCLES FILE shows the same change. `$0523E2` clears `$7BA2`
+  when the message finishes. The row keeps whatever planes its glyphs were drawn in, so an
+  ordinary message scrolls green over a light-blue row. The document's own two colours are only
+  the centre box's.
+- **Ahead of everything else, once the gate is down.** The script dispatch head tests the gate
+  `$7BA0` and then `$7B96` (`$051944`), before the pending trigger `$7A88` and before any script
+  step. A Read pressed while a script's message presents waits for that message. It then
+  presents before the script's next step, and the script resumes once the body is over.
+- **In 48-character blocks, the last one shortened.** A body is longer than the row, so the
+  reveal shows it a block at a time (`$0523BE`), each block holding the default 200 frames
+  (`$0523BA`). The deferred path also sets the shorten flag `$0523BC` (`$0547E4`), so the block
+  that reads the terminator holds only 50 frames (`$0523A2`). Many bodies end one space past a
+  whole block, the DAMOCLES FILE's PROBLEM and HISTORY among them, so their last block is a
+  single space, which clears the row. The `read` frame of the `damocles-file` case caught
+  HISTORY's second block, `THE LAST THIRTY YEARS TO CONSIDER THE PROBLEM`.
 
 The index is not the item's position after a wrap back. It is set to 8 whatever the document's
 length, and the next `+` counts on from there. Only the BOOK reads the index. `$0547F2` queues a
