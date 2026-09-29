@@ -10,12 +10,17 @@ import {
   type DocumentMessageId
 } from './display.ts';
 import {
+  BALANCE_MODULUS,
+  BOOK_SLOT,
+  MAGIC_CRYSTAL_SLOT,
+  NEW_GAME_BALANCE,
   NO_KEY,
   ORDINARY_DISPLAY_FRAMES,
   SCRIPTS,
   SCRIPT_FOR_TRIGGER,
   TRIGGER_ARMING,
   WAIT_FROM_DOCUMENT,
+  leadingWordDigits,
   type ScriptId,
   type Step
 } from './scripts.ts';
@@ -60,6 +65,9 @@ export interface Trigger {
 }
 
 export interface ScriptState {
+  /// Record `$00F8` at `$7C42`, the balance, as its twelve packed-decimal digits: the last two are
+  /// hundredths. The panel shows the low eleven.
+  readonly balance: number;
   readonly busy: boolean;
   /// The slots whose carried flag, bit 7 of `$6FAA + 4 * slot`, a script has set without putting
   /// the object on the Carried Stack: the first offer's DOOR KEY A (#612). A take or a drop of the
@@ -95,6 +103,10 @@ export interface ScriptState {
   /// an offer is made, and 0 again after the refusal. Accepting leaves the accepted figure.
   readonly reward: number;
   readonly triggers: readonly Trigger[];
+  /// `$7B96` = `$8000`: a Read of the BOOK with the MAGIC CRYSTAL carried has presented, and the
+  /// page's action waits for the gate to fall (`$0547F2`). While it waits the dispatch head runs
+  /// no script and a second Read is refused, since both share the word.
+  readonly wish: boolean;
   /// The table words zaps have turned, one entry a zap, in the order they fell (#581). `$050ECC`
   /// rotates the word two before the pointer left by one bit each time, so the table is state and
   /// not only content. The original's save covers neither the table nor the pointer.
@@ -153,16 +165,20 @@ export type Effect =
       /// its shot hits.
       ///
       /// A script's `if.key` asks for `answer`, the same key effect `$054848`, as the latch
-      /// matches (#612).
+      /// matches (#612), and a write to the balance asks for it as `credit` (#625).
+      ///
+      /// A BOOK wish arms `spell` (`$04BF5C`) itself, or `bump` for page 8 (#625).
       readonly cue:
         | 'answer'
         | 'blast'
         | 'blown-up'
         | 'bump'
+        | 'credit'
         | 'door-start'
         | 'door-stop'
         | 'drop'
         | 'shot'
+        | 'spell'
         | 'splash'
         | 'take'
         | 'throttle'
@@ -183,6 +199,9 @@ export interface ScriptTransition {
 }
 
 export interface ScriptRules {
+  /// Bit 7 of `$6FAA + 4 * slot`, the slot's carried flag, which `$0547F2` reads for the MAGIC
+  /// CRYSTAL. Absent, nothing is carried.
+  readonly carries?: (slot: number) => boolean;
   readonly messageFrames: number;
   readonly messageText: (id: DamoclesMessageId) => string;
   /// The Catalogue's `craft.noise` words, which a random skip draws from.
@@ -201,6 +220,7 @@ const triggerTable = (): readonly Trigger[] =>
   }));
 
 export const initialScriptState = (): ScriptState => ({
+  balance: NEW_GAME_BALANCE,
   busy: false,
   carried: [],
   counter: 0,
@@ -216,6 +236,7 @@ export const initialScriptState = (): ScriptState => ({
   read: null,
   reward: 0,
   triggers: triggerTable(),
+  wish: false,
   zaps: []
 });
 
@@ -256,23 +277,40 @@ const endBlock = (
     : { ...state, message: null };
 };
 
-/// `$0547C6`: the dispatch head's deferred path, which a Read queued.
+/// `$0547C6`: the dispatch head's deferred path, which a Read queued. `$0547F2` then queues the
+/// page's action behind the body when the object read, `$7856`, is the BOOK and the MAGIC
+/// CRYSTAL is carried.
 const presentRead = (
   state: ScriptState,
   id: DocumentMessageId,
   rules: ScriptRules
 ): ScriptState =>
   present(
-    { ...state, read: null },
+    {
+      ...state,
+      read: null,
+      wish:
+        id.startsWith(`document-${BOOK_SLOT}-`) &&
+        (rules.carries?.(MAGIC_CRYSTAL_SLOT) ?? false)
+    },
     id,
     readBlockFrames(rules.messageText(id), 0, rules)
   );
 
-/// `$04D776`: queue a document body, unless a Read is already waiting.
+/// `$04D776`: queue a document body, unless a Read or a wish is already waiting in `$7B96`.
 export const queueRead = (
   state: ScriptState,
   id: DocumentMessageId
-): ScriptState => (state.read === null ? { ...state, read: id } : state);
+): ScriptState =>
+  state.read === null && !state.wish ? { ...state, read: id } : state;
+
+/// Whether `$7B96` is non-zero, which a Read waits on.
+export const readPending = (state: ScriptState): boolean =>
+  state.read !== null || state.wish;
+
+/// `abcd` over the balance's six bytes, with the extend flag clear as every handler leaves it.
+const credit = (balance: number, digits: number): number =>
+  (balance + digits) % BALANCE_MODULUS;
 
 const enter = (state: ScriptState, script: ScriptId): ScriptState => ({
   ...state,
@@ -368,6 +406,22 @@ const runToBlock = (
         break;
       case 'set-reward':
         state = { ...state, execution: advanced, reward: op.reward };
+        break;
+      case 'add-balance':
+        cues.push({ cue: 'credit', type: 'sound-request' });
+        state = {
+          ...state,
+          balance: credit(state.balance, op.amount),
+          execution: advanced
+        };
+        break;
+      case 'pay-reward':
+        cues.push({ cue: 'credit', type: 'sound-request' });
+        state = {
+          ...state,
+          balance: credit(state.balance, leadingWordDigits(state.reward)),
+          execution: advanced
+        };
         break;
       case 'clear-key':
         state = { ...state, execution: advanced, key: NO_KEY };
@@ -513,12 +567,15 @@ export const runFrame = (
         ? endBlock(state, message, rules)
         : { ...state, message: { ...message, remainingFrames } };
   }
-  // `$05193E`: nothing is dispatched while the gate is up, and a queued Read goes first.
+  // `$05193E`: nothing is dispatched while the gate is up, and a queued Read goes first. A
+  // queued wish takes the dispatch head too, but its action is the session's (`wishDue`).
   const cues: Effect[] = [];
   const next =
     state.message === null && state.read !== null
       ? presentRead(state, state.read, rules)
-      : takePending(runToBlock(state, rules, cues), rules, cues);
+      : state.message === null && state.wish
+        ? state
+        : takePending(runToBlock(state, rules, cues), rules, cues);
   return { effects: [...cues, ...shown(input, next, rules)], state: next };
 };
 
@@ -554,6 +611,11 @@ export const fireTrigger = (
   const state = runToBlock(entered, rules, cues);
   return { effects: [...cues, ...shown(input, state, rules)], state };
 };
+
+/// Whether the dispatch head would take the queued wish this frame: `$7B96` is `$8000` and the
+/// gate is down. The session runs the page's action (`$04D7F0`) and clears the word.
+export const wishDue = (state: ScriptState): boolean =>
+  state.wish && state.message === null;
 
 /// The system strings a native routine presents.
 export type SystemMessageId =

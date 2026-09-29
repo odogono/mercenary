@@ -22,6 +22,7 @@ import {
 import {
   ANSWER_FRAMES,
   ANSWER_KEYS,
+  ENDING_TRIGGERS,
   FOURTH_OFFER_BELOW,
   NO_KEY,
   OFFER_ACCEPTED_FLAG,
@@ -513,7 +514,10 @@ describe('the Save', () => {
       ...older
     } = snapshot.script;
     const withoutOffer = snapshot.script.triggers.filter(
-      item => item.index !== 4 && item.index !== 15
+      item =>
+        item.index !== 4 &&
+        item.index !== 15 &&
+        !ENDING_TRIGGERS.includes(item.index)
     );
     const record = (schemaVersion: number, triggers: unknown) =>
       encoded(

@@ -14,3 +14,12 @@ The Working Authority marks a destroyed Body in its Body table and removes every
 ## Consequences
 
 The Atlas is sessionless and sees destruction only when opened from a paused Gameplay Session; a standalone Atlas still shows its recovered catalogue. This is the same handoff boundary used for the player's Atlas Pin. The debris particle geometry remains a separate presentation task, while its Session and Save timing are part of the marker now.
+
+## Amendment for the BOOK's wishes
+
+Recorded 2026-09-29, for [#625](https://github.com/odogono/mercenary/issues/625).
+
+- **The drift freezes at the latch.** `$051F00` stops recomputing `$7A84` once `$7A82` is set, so after zero the X offset keeps the value the last pass before the latch left, `$7A7E + 1`. After the latch the ST steps the two scratch records on by 500 seconds at a time and interpolates between them with its own 16.16 arithmetic. It does not extend the path as a continuous line. `cometCentre` now does both. The page 5 run reproduces DAMOCLES's centre exactly on every sample either side of zero. That is the trace point 3 asked for.
+- **The clock rate level is state, and `elapsed` stays Session time.** MORE TIME moves `$7C1C` from 6 to 8. The Session keeps the level, plus an anchor: the impact clock, in level-6 seconds, at the Session time it last changed. The clock then runs at `2^(6 − level)` of Session time from that point. `$04D616` shifts the current second's remainder one bit whatever the size of the step, and the anchor reproduces that quirk. Body rotation shifts right by the same step. The articulation angle `$7886` is not modelled by the port, so it is not slowed either. Space's `$7876` dilation of the clock stays unported, as before.
+- **The palette mask is applied to colours, not palette indices.** `$059948` XORs colours 1 to 15 with `$7A50`, with a special case for colour 8. The frame plan carries colours rather than palette indices, so the port XORs every colour it draws, the clear included.
+- **Schema 22** adds the balance (record `$00F8` as twelve BCD digits), the queued page action in `$7B96`, the clock level and its anchor, the palette mask, and the ending triggers `$12`, `$15`–`$19` and `$3C`, all `$A0`. `$12` is authored because `$3C` runs its body. Nothing fires `$12` itself until the dispatcher is ported. `$0F` gained the 150-frame wait it opens on, and a schema-21 execution inside it is moved past that wait.

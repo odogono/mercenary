@@ -12,36 +12,66 @@ import type { DamoclesScreen } from './session.ts';
 const level = (channel: number): number => Math.round(channel * 7);
 const channel = (value: number): number => Math.round((value * 255) / 7) / 255;
 
-const recolour = (
+const recolourChannels = (
   vertices: Float32Array,
-  paint: (value: number) => number
+  [red, green, blue]: readonly [
+    (value: number) => number,
+    (value: number) => number,
+    (value: number) => number
+  ]
 ): Float32Array => {
   const out = new Float32Array(vertices);
   for (let offset = 3; offset < out.length; offset += FLOATS_PER_VERTEX) {
-    out[offset] = paint(out[offset]!);
-    out[offset + 1] = paint(out[offset + 1]!);
-    out[offset + 2] = paint(out[offset + 2]!);
+    out[offset] = red(out[offset]!);
+    out[offset + 1] = green(out[offset + 1]!);
+    out[offset + 2] = blue(out[offset + 2]!);
   }
   return out;
 };
+
+/// `$059948`: page 6's mask XORs each palette word's red, green and blue bits. The ST applies
+/// it to colours 1 to 15 of the view's palette, and to colour 8 only its `$111` part while that
+/// colour has none of `$666` set. The plan carries colours, not palette indices, so the port
+/// applies the whole mask to every colour it draws, the clear included.
+const masked = (value: number, bits: number): number =>
+  channel(level(value) ^ bits);
 
 export const presentScreen = (
   plan: ErisFramePlan,
   screen: DamoclesScreen
 ): ErisFramePlan => {
-  if (!screen.white && screen.fade === 0) {
+  if (!screen.white && screen.fade === 0 && screen.mask === 0) {
     return plan;
   }
-  const paint = screen.white
-    ? () => 1
-    : (value: number) => channel(Math.max(0, level(value) - screen.fade));
+  const bits = [
+    (screen.mask >> 8) & 7,
+    (screen.mask >> 4) & 7,
+    screen.mask & 7
+  ] as const;
+  const faded = (value: number) =>
+    channel(Math.max(0, level(value) - screen.fade));
+  const paint = screen.white ? () => 1 : faded;
+  const channelPaint = (index: 0 | 1 | 2) =>
+    screen.mask === 0
+      ? paint
+      : (value: number) => paint(masked(value, bits[index]));
+  const recolour3 = (vertices: Float32Array): Float32Array =>
+    recolourChannels(vertices, [
+      channelPaint(0),
+      channelPaint(1),
+      channelPaint(2)
+    ]);
   return {
     ...plan,
-    clear: [paint(plan.clear[0]), paint(plan.clear[1]), paint(plan.clear[2])],
-    horizonIslandVertices: recolour(plan.horizonIslandVertices, paint),
-    horizonVertices: recolour(plan.horizonVertices, paint),
-    skyVertices: recolour(plan.skyVertices, paint),
-    vertices: recolour(plan.vertices, paint)
+    clear: [
+      channelPaint(0)(plan.clear[0]),
+      channelPaint(1)(plan.clear[1]),
+      channelPaint(2)(plan.clear[2])
+    ],
+    horizonIslandVertices: recolour3(plan.horizonIslandVertices),
+    horizonVertices: recolour3(plan.horizonVertices),
+    skyVertices: recolour3(plan.skyVertices),
+    vertices: recolour3(plan.vertices)
   };
 };
 

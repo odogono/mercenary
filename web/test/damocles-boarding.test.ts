@@ -20,7 +20,10 @@ import {
 } from '../src/damocles/save.ts';
 import { createDamoclesSavePersistence } from '../src/damocles/saves.ts';
 import { NEW_GAME_NOISE } from '../src/damocles/script.ts';
-import { TRIGGER_FOR_RESIDENT } from '../src/damocles/scripts.ts';
+import {
+  ENDING_TRIGGERS,
+  TRIGGER_FOR_RESIDENT
+} from '../src/damocles/scripts.ts';
 import { structureRegionAt } from '../src/damocles/selection.ts';
 import {
   DamoclesSession,
@@ -1858,7 +1861,11 @@ describe('the noise pointer on foot and at New Game (#582)', () => {
           script: {
             ...older.script,
             triggers: older.script.triggers.filter(
-              item => item.index !== 3 && item.index !== 4 && item.index !== 15
+              item =>
+                item.index !== 3 &&
+                item.index !== 4 &&
+                item.index !== 15 &&
+                !ENDING_TRIGGERS.includes(item.index)
             )
           }
         }

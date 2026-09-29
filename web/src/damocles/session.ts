@@ -9,7 +9,14 @@ import { IDLE, MAXIMUM_STEP, type Intent } from '../gameCore/index.ts';
 import type { HeadCommand } from '../interaction/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import type { TitleSession } from '../shell/title.ts';
-import { handoverElapsed, impactTime } from './comet.ts';
+import {
+  MORE_TIME_CLOCK_LEVEL,
+  NEW_GAME_CLOCK_LEVEL,
+  handoverElapsed,
+  impactTime,
+  type ClockAnchor,
+  type ImpactTime
+} from './comet.ts';
 import {
   NO_BOXES,
   STICK_DOWN,
@@ -94,9 +101,11 @@ import {
   latchKey,
   presentSystemMessage,
   queueRead,
+  readPending,
   runFrame,
   settleCarried,
   stepNoise,
+  wishDue,
   zapNoise,
   type Effect,
   type Presenting,
@@ -105,9 +114,13 @@ import {
   type SystemMessageId
 } from './script.ts';
 import {
+  CHEESE_SANDWICH_SLOT,
+  COLOURFUL_MASK,
+  MAGIC_CRYSTAL_SLOT,
   SCRIPT_FOR_TRIGGER,
   TRIGGER_ARMING,
-  TRIGGER_FOR_RESIDENT
+  TRIGGER_FOR_RESIDENT,
+  WISH_DRIFT
 } from './scripts.ts';
 import {
   attachmentOpenLimit,
@@ -165,6 +178,8 @@ import {
 /// Occupancy and the bounded Damocles Script are session-owned state; the renderer receives only
 /// their immutable projection.
 export interface DamoclesSnapshot {
+  /// Record `$00F8`, the balance, as twelve packed-decimal digits (#625).
+  readonly balance: number;
   readonly blastCentre: {
     readonly body: string;
     readonly x: number;
@@ -200,6 +215,8 @@ export interface DamoclesSnapshot {
   readonly frameAccumulator: number;
   /// The open document and the centre box's transition (#598).
   readonly headCommands: HeadCommandState;
+  /// The impact clock `$793C` and its 1/32 s, at the rate level MORE TIME may have slowed.
+  readonly impact: ImpactTime;
   readonly impactPassed: boolean;
   readonly inventoryLabel: string;
   /// The Damocles Island the Cell Readout is counted from, or null on a Body that carries no
@@ -239,6 +256,9 @@ export interface DamoclesScreen {
   readonly dead: boolean;
   /// Fade steps taken, each one level off every palette component (`$050FAC`), 0 to 8.
   readonly fade: number;
+  /// `$7A50`, the XOR mask `$059948` applies to the view's palette as it flips the frame: page 6
+  /// of the BOOK writes `$213` (#625).
+  readonly mask: number;
   /// The zap's palette-noise loop `$050ECC` is running, and the main loop with it is blocked.
   readonly noise: boolean;
   /// The VBL handler shifted a set bit out of the flash word `$51D24` this tick, and painted the
@@ -295,6 +315,8 @@ const wrap = (coordinate: number) =>
 const VOID_BODY = 'body-30';
 /// DAMOCLES, the comet, whose centre the impact clock moves.
 const COMET_BODY = 29;
+const ERIS_BODY = 'body-11';
+const DAMOCLES_BODY = `body-${COMET_BODY}`;
 
 /// The messages the refusal chooser `$0542E0` can present. The Data Payload names which one each
 /// resident takes; this only narrows its string to a presentable id.
@@ -319,10 +341,11 @@ export interface AtlasDestination {
 
 export interface DamoclesContent {
   readonly catalogue: Catalogue;
-  /// The comet's centre at an elapsed time, which `$051E88` moves before the range scan reads
-  /// the Body table. Where it is absent or the comet is gone the scan reads the Catalogue's.
+  /// The comet's centre at an impact clock in level-6 seconds, which `$051E88` moves before the
+  /// range scan reads the Body table. Where it is absent or the comet is gone the scan reads the
+  /// Catalogue's.
   readonly cometAt?: (
-    elapsed: number,
+    clock: number,
     endgame: { readonly drift: number | null; readonly passed: boolean }
   ) => { readonly x: number; readonly z: number } | null;
   readonly doc: ErisPresentationDocument;
@@ -432,6 +455,7 @@ const documentPanel = (
 };
 
 const scriptForSave = (script: ScriptState): DamoclesSaveScript => ({
+  balance: script.balance,
   carried: script.carried,
   counter: script.counter,
   display: script.display,
@@ -446,6 +470,7 @@ const scriptForSave = (script: ScriptState): DamoclesSaveScript => ({
   read: script.read,
   reward: script.reward,
   triggers: script.triggers.map(({ armed, index }) => ({ armed, index })),
+  wish: script.wish,
   zaps: script.zaps
 });
 
@@ -533,6 +558,14 @@ export class DamoclesSession implements TitleSession<
   private removedResidents = new Set<string>();
   private drift: number | null = null;
   private impactPassed = false;
+  /// `$7C1C`, the clock rate level `$04D616` last set: 6 from the reset, 8 after MORE TIME. A
+  /// second is `$19 << level` counter units, 32 of which go every VBL.
+  private clockLevel = NEW_GAME_CLOCK_LEVEL;
+  /// Where the impact clock stood, in level-6 seconds, when the level last changed, and the
+  /// Session seconds then. Null while the level has never moved, and the clock is `elapsed`.
+  private clockAnchor: ClockAnchor | null = null;
+  /// `$7A50`, the palette XOR mask page 6 writes and `$059948` applies to the view's palette.
+  private paletteMask = 0;
   private effects: Effect[] = [];
   /// `$5A647`: whether the clamp refused a step in the last frame, which the next frame's
   /// `$5A646` is compared with.
@@ -614,6 +647,7 @@ export class DamoclesSession implements TitleSession<
     }
     this.rules = rulesFor(content.doc);
     this.scriptRules = {
+      carries: slot => this.liveCarriedSlot(slot),
       messageFrames: content.doc.time.messageFrames,
       messageText: id => {
         const text = isDocumentMessage(id)
@@ -665,6 +699,9 @@ export class DamoclesSession implements TitleSession<
     this.removedResidents = new Set(restore?.removedResidents ?? []);
     this.drift = restore?.drift ?? null;
     this.impactPassed = restore?.impactPassed ?? false;
+    this.clockLevel = restore?.clockLevel ?? NEW_GAME_CLOCK_LEVEL;
+    this.clockAnchor = restore?.clockAnchor ?? null;
+    this.paletteMask = restore?.paletteMask ?? 0;
     this.bodyTurn = restore?.bodyTurn ?? content.doc.start.bodyTurn;
     this.briefcaseStore = [...(restore?.briefcaseStore ?? [])];
     this.pendingBriefcaseDrop = restore?.pendingBriefcaseDrop ?? null;
@@ -1509,11 +1546,13 @@ export class DamoclesSession implements TitleSession<
     return this.rateOf(this.pose.body);
   }
 
+  /// `$04D616` fills `$835C` with `$82DC` shifted right by the level, and the Catalogue holds it
+  /// at level 6, so a higher level shifts that further. `asr` composes, so this is exact.
   private rateOf(bodyId: string): number {
-    return (
+    const rate =
       this.content.catalogue.bodies.find(item => item.id === bodyId)
-        ?.bodySurface?.rotationRate ?? 0
-    );
+        ?.bodySurface?.rotationRate ?? 0;
+    return Math.floor(rate / 2 ** (this.clockLevel - NEW_GAME_CLOCK_LEVEL));
   }
 
   /// The terminator for the Pose, against the sub-stellar longitude the last landing wrote, or
@@ -1602,6 +1641,7 @@ export class DamoclesSession implements TitleSession<
   get snapshot(): DamoclesSnapshot {
     const island = nearestIsland(this.surface, this.pose.position);
     return {
+      balance: this.script.balance,
       blastCentre: this.blastCentre,
       bodyName: this.bodyName(),
       bodyTurn: this.bodyTurn,
@@ -1637,6 +1677,7 @@ export class DamoclesSession implements TitleSession<
       encounter: this.script.encounter,
       frameAccumulator: this.frameAccumulator,
       headCommands: this.headCommands,
+      impact: this.impact(),
       impactPassed: this.impactPassed,
       inventoryLabel: this.inventoryLabel(),
       island: island ?? null,
@@ -1660,6 +1701,164 @@ export class DamoclesSession implements TitleSession<
       structure: this.structureSnapshot(),
       surface: this.publishedSurface()
     };
+  }
+
+  /// The impact clock in level-6 seconds, which `impactTime` reads. At level 6 it is `elapsed`;
+  /// at level 8 it runs at a quarter of Session time from where MORE TIME left it.
+  private clock(): number {
+    const anchor = this.clockAnchor;
+    return anchor === null
+      ? this.elapsed
+      : anchor.clock +
+          (this.elapsed - anchor.elapsed) /
+            2 ** (this.clockLevel - NEW_GAME_CLOCK_LEVEL);
+  }
+
+  private impact(): ImpactTime {
+    return impactTime(this.clock(), this.content.doc.time);
+  }
+
+  /// `$04D616`: the level sets the second's length `$7878` = `$19 << level` and the Body
+  /// rotation rates. The counter `$787A`, what is left of the current second, is shifted one bit
+  /// toward the new level however far it moves, so from 6 to 8 the second in progress has half
+  /// its old share left of a second four times as long.
+  private setClockLevel(level: number): void {
+    const old = this.clockLevel;
+    if (level === old) {
+      return;
+    }
+    const spent = this.clock() + 1e-9;
+    const whole = Math.floor(spent);
+    const left = (1 - (spent - whole)) * (level > old ? 2 : 0.5);
+    this.clockAnchor = {
+      clock: whole + 1 - left / 2 ** (level - old),
+      elapsed: this.elapsed
+    };
+    this.clockLevel = level;
+  }
+
+  /// `$04D7F0`, the BOOK's page action, which the dispatch head takes once the body a Read of
+  /// the BOOK queued it behind has presented. The word is cleared first, and nothing happens if
+  /// the MAGIC CRYSTAL is no longer carried. The page is `$7857`, sign-extended, so only 1 to 8
+  /// act; the TITLE, index 0, has none.
+  private grantWish(): void {
+    this.script = { ...this.script, wish: false };
+    if (!this.liveCarriedSlot(MAGIC_CRYSTAL_SLOT)) {
+      return;
+    }
+    const index = this.headCommands.lastRead?.index ?? 0;
+    const page = (index << 24) >> 24;
+    // Pages 3 and 5 return first, keeping the crystal, once either Body is gone or the drift is
+    // armed.
+    const ending =
+      !this.destroyedBodies.includes(ERIS_BODY) &&
+      !this.destroyedBodies.includes(DAMOCLES_BODY) &&
+      this.drift === null;
+    switch (page) {
+      case 1:
+        // `$04D838`: the crystal first, so the gift always has room, then the take path.
+        this.takeAway(MAGIC_CRYSTAL_SLOT);
+        this.gift(CHEESE_SANDWICH_SLOT);
+        this.armWishSound('spell');
+        this.fireEnding(21);
+        return;
+      case 2:
+        this.wish(22);
+        return;
+      case 3:
+        if (!ending) {
+          return;
+        }
+        // `$04D87E`: the marker itself, so the dispatcher's own `$12` never fires.
+        this.destroyBody(DAMOCLES_BODY);
+        this.wish(23);
+        return;
+      case 4:
+        this.setClockLevel(MORE_TIME_CLOCK_LEVEL);
+        this.wish(21);
+        return;
+      case 5:
+        if (!ending) {
+          return;
+        }
+        this.drift = WISH_DRIFT;
+        this.wish(60);
+        return;
+      case 6:
+        this.paletteMask = COLOURFUL_MASK;
+        this.wish(21);
+        return;
+      case 7:
+        this.wish(24);
+        return;
+      case 8:
+        // `$04D8D0`: the refusal, then the crystal, and the bump in place of the spell.
+        this.fireEnding(25);
+        this.takeAway(MAGIC_CRYSTAL_SLOT);
+        this.armWishSound('bump');
+        return;
+      default:
+        return;
+    }
+  }
+
+  /// `$04D8F0`, the tail most pages share: the trigger, the crystal, the spell.
+  private wish(trigger: number): void {
+    this.fireEnding(trigger);
+    this.takeAway(MAGIC_CRYSTAL_SLOT);
+    this.armWishSound('spell');
+  }
+
+  /// `$054770`, which queues an ending behind a running script. A player the page itself has
+  /// killed reads nothing more, as at zero on the clock.
+  private fireEnding(trigger: number): void {
+    if (this.death !== null) {
+      return;
+    }
+    const transition = fireTrigger(this.script, trigger, this.scriptRules);
+    this.script = transition.state;
+    this.effects.push(...transition.effects);
+  }
+
+  /// `$7A78` = 3 and the effect vector written directly, with no `$054848` guard.
+  private armWishSound(cue: 'bump' | 'spell'): void {
+    this.effects.push({ cue, type: 'sound-request' });
+  }
+
+  /// `$04CAF4`: the carried flag, Association B and the byte before the record are cleared and
+  /// the slot leaves the Carried Stack. The object is nowhere afterwards, as a resident the
+  /// marker removed is.
+  private takeAway(slot: number): void {
+    const instance = `object-slot-${slot}`;
+    this.carried = this.carried.filter(item => item !== instance);
+    this.residence.delete(instance);
+    this.removedResidents.add(instance);
+    this.script = settleCarried(this.script, slot);
+  }
+
+  /// `$0541E0`: into the take path at `$054240`, past every test of reach, support and the
+  /// scroll. A full Carried Stack refuses silently. The port leaves an object already carried
+  /// where it is rather than stacking it twice.
+  private gift(slot: number): void {
+    const instance = `object-slot-${slot}`;
+    if (
+      this.carried.length === this.capacity() ||
+      this.carried.includes(instance) ||
+      this.briefcaseStore.includes(instance)
+    ) {
+      return;
+    }
+    this.removedResidents.delete(instance);
+    this.carried = [instance, ...this.carried];
+    this.residence.set(instance, {
+      kind: 'carried',
+      placementClass: this.instanceFor(instance)?.placementClass ?? 0
+    });
+    this.script = settleCarried(this.script, slot);
+    this.scrollCounter = -16;
+    if (this.soundPermitted()) {
+      this.effects.push({ cue: 'take', type: 'sound-request' });
+    }
   }
 
   /// `$04C98E`: one marker for impact, the BOOK, the dispatcher and unravelling. A second
@@ -1689,7 +1888,7 @@ export class DamoclesSession implements TitleSession<
     const body = this.content.catalogue.craft!.bodies[index]!;
     const comet =
       index === COMET_BODY
-        ? this.content.cometAt?.(this.elapsed, {
+        ? this.content.cometAt?.(this.clock(), {
             drift: this.drift,
             passed: true
           })
@@ -1720,10 +1919,7 @@ export class DamoclesSession implements TitleSession<
   /// `$051F42`: only the live, undeflected pair reaches the marker. `$7A82` then latches the
   /// passed waypoint so a restored game cannot launch the ending again.
   private tickImpact(): void {
-    if (
-      this.impactPassed ||
-      impactTime(this.elapsed, this.content.doc.time).seconds < 0
-    ) {
+    if (this.impactPassed || this.impact().seconds < 0) {
       return;
     }
     if (
@@ -1806,6 +2002,10 @@ export class DamoclesSession implements TitleSession<
         const transition = runFrame(this.script, this.scriptRules);
         this.script = transition.state;
         this.effects.push(...transition.effects);
+        // The death loop never returns to the dispatch head, so a queued wish waits with it.
+        if (this.death === null && wishDue(this.script)) {
+          this.grantWish();
+        }
         // `$05293E` runs in the VBL handler, so the centre box goes on scrolling whatever the
         // main loop is doing.
         this.headCommands = tickCentreBox(this.headCommands);
@@ -1846,6 +2046,8 @@ export class DamoclesSession implements TitleSession<
       bodyTurn: this.bodyTurn,
       briefcaseStore: [...this.briefcaseStore],
       carried: [...this.carried],
+      clockAnchor: this.clockAnchor,
+      clockLevel: this.clockLevel,
       craft: this.craftForSave(),
       debrisPasses: this.debrisPasses,
       destroyedBodies: [...this.destroyedBodies],
@@ -1861,6 +2063,7 @@ export class DamoclesSession implements TitleSession<
       headCommands: this.headCommands,
       impactPassed: this.impactPassed,
       occupancy: this.occupancy,
+      paletteMask: this.paletteMask,
       pendingBriefcaseDrop: this.pendingBriefcaseDrop,
       // The bank is the craft's roll, which `craft` carries.
       pose: {
@@ -2108,7 +2311,7 @@ export class DamoclesSession implements TitleSession<
   private scannedBodies() {
     const bodies = this.content.catalogue.craft!.bodies;
     const comet =
-      this.content.cometAt?.(this.elapsed, {
+      this.content.cometAt?.(this.clock(), {
         drift: this.drift,
         passed: this.impactPassed
       }) ?? null;
@@ -2399,7 +2602,13 @@ export class DamoclesSession implements TitleSession<
   private screen(): DamoclesScreen {
     const death = this.death;
     if (death === null || this.encounterProgram === null) {
-      return { dead: false, fade: 0, noise: false, white: this.flashWhite };
+      return {
+        dead: false,
+        fade: 0,
+        mask: this.paletteMask,
+        noise: false,
+        white: this.flashWhite
+      };
     }
     const k = this.encounterProgram.constants;
     const noise = this.content.doc.time.zapNoiseTicks;
@@ -2412,6 +2621,7 @@ export class DamoclesSession implements TitleSession<
               k.fadeSteps + 1,
               Math.floor((death - noise) / (k.fadeWait + 1))
             ),
+      mask: this.paletteMask,
       noise: death < noise,
       white: this.flashWhite
     };
@@ -2852,7 +3062,7 @@ export class DamoclesSession implements TitleSession<
       command,
       head === undefined ? undefined : this.slotOf(head),
       this.content.documents,
-      this.script.read !== null
+      readPending(this.script)
     );
     if (outcome.kind === 'ignored') {
       return outcome;

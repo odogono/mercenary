@@ -13,6 +13,7 @@ import {
   encodeDamoclesSave,
   type DamoclesSaveSnapshot
 } from '../src/damocles/save.ts';
+import { ENDING_TRIGGERS } from '../src/damocles/scripts.ts';
 import {
   DamoclesSession,
   type DamoclesContent
@@ -341,7 +342,11 @@ describe('entering the State Office (#611)', () => {
         snapshot: { ...snapshot, script: { ...snapshot.script, triggers } }
       });
     const withoutLocations = snapshot.script.triggers.filter(
-      item => item.index !== 3 && item.index !== 4 && item.index !== 15
+      item =>
+        item.index !== 3 &&
+        item.index !== 4 &&
+        item.index !== 15 &&
+        !ENDING_TRIGGERS.includes(item.index)
     );
     expect(decode(record(18, withoutLocations)).script.triggers).toEqual(
       snapshot.script.triggers

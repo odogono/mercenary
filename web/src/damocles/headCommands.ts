@@ -51,7 +51,7 @@ export interface CentreBoxSnapshot {
 export interface HeadCommandState {
   readonly box: CentreBox;
   /// `$7856`/`$7857`: the object and the low byte of the index the last Read copied, which the
-  /// BOOK's page action reads. The action itself needs the MAGIC CRYSTAL and is not ported.
+  /// BOOK's page action reads when the MAGIC CRYSTAL is carried (#625).
   readonly lastRead: { readonly index: number; readonly slot: number } | null;
   readonly open: OpenDocument | null;
 }

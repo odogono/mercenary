@@ -4,7 +4,7 @@ import type {
   CentreBoxView,
   PanelViewModel
 } from '../shell/panel.ts';
-import { impactTime } from './comet.ts';
+import { impactTime, type ImpactTime } from './comet.ts';
 import type { ErisPresentationDocument } from './documents.ts';
 import {
   CENTRE_BOX_ROWS,
@@ -98,6 +98,13 @@ export const bodyCoordinateReadout = (position: Vector3): string => {
   return `${bodyDigits(steps.x)}-${bodyDigits(steps.z)}`;
 };
 
+/// `$04E1B4`: the balance's twelve digits less the first, as `ddd,ddd,ddd.dd`. A New Game
+/// reads `000,009,000.00`.
+export const cashReadout = (balance: number): string => {
+  const digits = String(balance).padStart(12, '0').slice(1);
+  return `${digits.slice(0, 3)},${digits.slice(3, 6)},${digits.slice(6, 9)}.${digits.slice(9)}`;
+};
+
 /// The impact clock, as `HH-MM-SS` counting down, then up past zero (#368, #624).
 ///
 /// `$793C` holds minus the remaining seconds and counts up toward zero at 50 VBLs a displayed
@@ -107,8 +114,11 @@ export const bodyCoordinateReadout = (position: Vector3): string => {
 export const impactClock = (
   elapsed: number,
   time: ErisPresentationDocument['time']
-): string => {
-  const remaining = Math.abs(impactTime(elapsed, time).seconds) % 86_400;
+): string => clockReadout(impactTime(elapsed, time));
+
+/// The clock's readout from `$793C` itself, which MORE TIME slows (#625).
+export const clockReadout = (impact: ImpactTime): string => {
+  const remaining = Math.abs(impact.seconds) % 86_400;
   return [
     Math.floor(remaining / 3600),
     Math.floor(remaining / 60) % 60,
@@ -209,9 +219,9 @@ export const damoclesPanelViewModel = (
   // The Body Coordinate Readout: the original prints `016-283` here at the Eris start pose,
   // which is what this reproduces (#371).
   bodyCoordinates: bodyCoordinateReadout(snapshot.pose.position),
-  cash: '000,000,000.00',
+  cash: cashReadout(snapshot.balance),
   centreBox: centreBoxView(snapshot.centreBox),
-  clock: impactClock(snapshot.elapsed, doc.time),
+  clock: clockReadout(snapshot.impact),
   compassDegrees: bearingDegrees(snapshot.pose.heading),
   damoclesDisplay: snapshot.displayCells,
   elevationDegrees: 0,

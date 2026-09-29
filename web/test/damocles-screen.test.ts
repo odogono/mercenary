@@ -50,7 +50,7 @@ const colours = (plan: ErisFramePlan) =>
     plan.horizonIslandVertices
   ].map(list => Array.from(list.slice(3, 6)));
 
-const clear = { dead: false, fade: 0, noise: false, white: false };
+const clear = { dead: false, fade: 0, mask: 0, noise: false, white: false };
 
 describe('the zap and death screen', () => {
   test('a clear screen leaves the plan alone', () => {

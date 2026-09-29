@@ -442,6 +442,7 @@ export class DamoclesPsgDriver {
   request(request: DamoclesRequest, sink: PsgSink): void {
     switch (request) {
       case 'answer':
+      case 'credit':
       case 'drop':
       case 'take':
       case 'throttle':
