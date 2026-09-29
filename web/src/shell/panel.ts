@@ -24,8 +24,11 @@ export interface CentreBoxPanel {
   readonly field: string;
   /// Colour 15, the window's ground.
   readonly ground: string;
-  /// The current item's name, which is drawn only once the panel has arrived (`$0529D6`).
+  /// The current item's name, or a switch's lamp, which is drawn only once the panel has arrived
+  /// (`$0529D6`).
   readonly item: string | null;
+  /// A document's panel pages items; a switch's shows its lamp between `−` and `+`.
+  readonly kind: 'document' | 'switch';
   readonly title: string;
 }
 

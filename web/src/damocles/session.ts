@@ -57,10 +57,13 @@ import {
   type PoolObject
 } from './encounter.ts';
 import {
+  DETONATOR_BITS,
   closeDocument,
   headCommand,
   initialHeadCommands,
   opensHead,
+  switchBit,
+  switchFor,
   tickCentreBox,
   type CentreBoxSnapshot,
   type DocumentPanel,
@@ -246,6 +249,8 @@ export interface DamoclesSnapshot {
   /// rebuilds it, so a renderer that plans from the presentation document's own surface instead
   /// would go on drawing Eris after the session had left it (#379).
   readonly surface: ErisSurface;
+  /// `$7872`, the switch bits (#627).
+  readonly switches: number;
 }
 
 export type { Residence, ResidenceDeparture } from './residence.ts';
@@ -317,6 +322,23 @@ const VOID_BODY = 'body-30';
 const COMET_BODY = 29;
 const ERIS_BODY = 'body-11';
 const DAMOCLES_BODY = `body-${COMET_BODY}`;
+/// The Bodies the dispatcher `$04C8D2` names, by selector: DIALIS `$00`, ICARUS `$04`, DION
+/// `$10` and GAEA `$20`.
+const DIALIS_BODY = 'body-0';
+const ICARUS_BODY = 'body-1';
+const DION_BODY = 'body-4';
+const GAEA_BODY = 'body-8';
+/// `$04C8F2`: ICARUS destroyed saves both only with at least this many seconds left.
+export const ICARUS_SECONDS_LEFT = 5990;
+/// `$04C9C2`: the destruction that fires `$1A`.
+const LAST_BODY_COUNT = 30;
+/// `$04CAC4`: an EXPLOSIVE at digit 9 destroys its Body when its blast clears this many others.
+export const PLANET_KILL_EXPLOSIVES = 7;
+/// The NOVABOMB, slot 163 (`$A3`): `$7634` is its Association B and `$7236` its handling byte.
+export const NOVABOMB = 'object-slot-163';
+const NOVABOMB_SLOT = 163;
+/// The AUTHORS COMPUTER, whose Association B `$753C` the dispatcher reads for DION.
+const AUTHORS_COMPUTER = 'object-slot-101';
 
 /// The messages the refusal chooser `$0542E0` can present. The Data Payload names which one each
 /// resident takes; this only narrows its string to a presentable id.
@@ -428,13 +450,26 @@ const scriptFromSave = (saved: DamoclesSaveScript): ScriptState => ({
   })
 });
 
-/// A document's panel for the centre box, titled with the Catalogue's name for its object, or
-/// null for the logo.
+/// A panel for the centre box, or null for the logo. A document is titled with the Catalogue's
+/// name for its object; a switch with its title strip, and its lamp reads `switches`, `$7872`.
+/// `item` is null where nothing has been drawn in the field yet.
 const documentPanel = (
   content: DamoclesContent,
   slot: number | null,
-  item: number | null
+  item: number | null,
+  switches: number
 ): DocumentPanel | null => {
+  const row = switchFor(slot);
+  if (row !== undefined) {
+    return {
+      colour15: row.colour15,
+      colour3: row.colour3,
+      item:
+        item === null ? null : (switches >> switchBit(row)) & 1 ? 'ON' : 'OFF',
+      kind: 'switch',
+      title: row.title
+    };
+  }
   const document =
     slot === null ? undefined : documentFor(content.documents, slot);
   if (document === undefined) {
@@ -448,6 +483,7 @@ const documentPanel = (
     colour15: document.colour15,
     colour3: document.colour3,
     item: item === null ? null : document.items[item]!.name.trimEnd(),
+    kind: 'document',
     title:
       modelSummaryById(content.catalogue, instance?.model)?.name ??
       `OBJECT ${document.slot}`
@@ -566,6 +602,9 @@ export class DamoclesSession implements TitleSession<
   private clockAnchor: ClockAnchor | null = null;
   /// `$7A50`, the palette XOR mask page 6 writes and `$059948` applies to the view's palette.
   private paletteMask = 0;
+  /// `$7872`, the switch bits `+` and `-` set and clear on an open switch (`$04D420`). They
+  /// belong to no carried object: a detonator switched on and put down stays on.
+  private switches = 0;
   private effects: Effect[] = [];
   /// `$5A647`: whether the clamp refused a step in the last frame, which the next frame's
   /// `$5A646` is compared with.
@@ -702,6 +741,7 @@ export class DamoclesSession implements TitleSession<
     this.clockLevel = restore?.clockLevel ?? NEW_GAME_CLOCK_LEVEL;
     this.clockAnchor = restore?.clockAnchor ?? null;
     this.paletteMask = restore?.paletteMask ?? 0;
+    this.switches = restore?.switches ?? 0;
     this.bodyTurn = restore?.bodyTurn ?? content.doc.start.bodyTurn;
     this.briefcaseStore = [...(restore?.briefcaseStore ?? [])];
     this.pendingBriefcaseDrop = restore?.pendingBriefcaseDrop ?? null;
@@ -1699,7 +1739,8 @@ export class DamoclesSession implements TitleSession<
       scrollCounter: this.scrollCounter,
       selection: this.selection(),
       structure: this.structureSnapshot(),
-      surface: this.publishedSurface()
+      surface: this.publishedSurface(),
+      switches: this.switches
     };
   }
 
@@ -1861,6 +1902,144 @@ export class DamoclesSession implements TitleSession<
     }
   }
 
+  /// `$04D420`: `+` sets the open switch's bit of `$7872` and `-` clears it. A key that finds the
+  /// bit already so does nothing, not even the click. Otherwise the detonation test follows,
+  /// which only `-` on the GHETTOBLASTER skips, then the lamp is redrawn and the key clicks
+  /// (`$054848`); the click is left out while the GHETTOBLASTER plays, which the port does not
+  /// start.
+  private throwSwitch(bit: number, on: boolean): 'ignored' | 'switched' {
+    const mask = 1 << bit;
+    if (((this.switches & mask) !== 0) === on) {
+      return 'ignored';
+    }
+    this.switches = on ? this.switches | mask : this.switches & ~mask;
+    this.detonationTest();
+    if (this.soundPermitted()) {
+      this.effects.push({ cue: 'throttle', type: 'sound-request' });
+    }
+    return 'switched';
+  }
+
+  /// `$04D44E`: with the four detonators on, the NOVABOMB goes off wherever it is, since there
+  /// is no distance test. `$7634`'s first byte is the Body it rests on, `$78` while carried, and 0
+  /// once it is gone, so a bomb on DIALIS reads as no bomb. The port reads Association B off the
+  /// bomb's Residence; one packed in the briefcase has none, and it is not known to go off.
+  private detonationTest(): void {
+    if ((this.switches & DETONATOR_BITS) !== DETONATOR_BITS) {
+      return;
+    }
+    const residence = this.residenceFor(NOVABOMB);
+    if (residence?.kind === 'carried') {
+      // `$04D46E`: out of the stack, the player's Body through the dispatcher unless in space
+      // (`$7AA6` negative) or VOID, then the death with `$22`. On a Body the marker has already
+      // asked for `$23`, so `$22` finds the request taken and is dropped.
+      this.takeAway(NOVABOMB_SLOT);
+      if (this.space === null && this.pose.body !== VOID_BODY) {
+        this.dispatchDestruction(this.pose.body);
+      }
+      this.blowUp('system-string-34');
+      return;
+    }
+    if (
+      (residence?.kind !== 'surface' && residence?.kind !== 'structure') ||
+      residence.body === DIALIS_BODY
+    ) {
+      return;
+    }
+    // `$04D460`: the association is cleared, so the bomb is nowhere, then `$04D492`.
+    this.residence.delete(NOVABOMB);
+    this.removedResidents.add(NOVABOMB);
+    this.dispatchDestruction(residence.body);
+  }
+
+  /// `$04C8D2`, the body-destruction dispatcher, which the NOVABOMB, the AUTHORS COMPUTER's
+  /// option 4 and the stacked EXPLOSIVEs reach. A Body already destroyed returns at once.
+  /// Otherwise it may fire the Body's ending, and falls into the marker:
+  ///
+  /// - ICARUS, with DAMOCLES alive and no drift: at least 5,990 s left arms the drift from the
+  ///   clock and fires `$10` if ERIS is alive; less fires `$11`.
+  /// - DAMOCLES, with ERIS alive, no drift and the clock still negative: `$12`.
+  /// - ERIS, with DAMOCLES alive and no drift: `$13`.
+  /// - GAEA: `$0E`. DION, unless the AUTHORS COMPUTER rests there (`$753C` = `$10`): `$1B`.
+  ///
+  /// The drift test is `tst.w` on `$7A7E`'s high word, which every armed drift, being negative,
+  /// sets. A player standing on the Body dies in the marker. The original launches the ending
+  /// before that, but the death loop holds the Script before its first wait ends (#626), so the
+  /// port leaves it unlaunched.
+  dispatchDestruction(bodyId: string): void {
+    if (this.destroyedBodies.includes(bodyId)) {
+      return;
+    }
+    const destroyed = new Set(this.destroyedBodies);
+    const clock = this.impact().seconds;
+    let ending: number | null = null;
+    switch (bodyId) {
+      case ICARUS_BODY:
+        if (!destroyed.has(DAMOCLES_BODY) && this.drift === null) {
+          if (clock > -ICARUS_SECONDS_LEFT) {
+            ending = 0x11;
+          } else {
+            // `$04C8FC`: the drift is armed whether or not ERIS is there to be saved.
+            this.drift = clock;
+            ending = !destroyed.has(ERIS_BODY) ? 0x10 : null;
+          }
+        }
+        break;
+      case DAMOCLES_BODY:
+        if (!destroyed.has(ERIS_BODY) && this.drift === null && clock < 0) {
+          ending = 0x12;
+        }
+        break;
+      case ERIS_BODY:
+        if (!destroyed.has(DAMOCLES_BODY) && this.drift === null) {
+          ending = 0x13;
+        }
+        break;
+      case GAEA_BODY:
+        ending = 0x0e;
+        break;
+      case DION_BODY: {
+        const computer = this.residenceFor(AUTHORS_COMPUTER);
+        const onDion =
+          (computer?.kind === 'surface' || computer?.kind === 'structure') &&
+          computer.body === DION_BODY;
+        ending = onDion ? null : 0x1b;
+        break;
+      }
+    }
+    if (ending !== null && !this.killsPlayer(bodyId)) {
+      this.fireEnding(ending);
+    }
+    this.destroyBody(bodyId);
+  }
+
+  /// `$04CAD2`: an armed EXPLOSIVE going off at size digit 9 whose blast cleared `cleared` other
+  /// EXPLOSIVEs (slots `$4B`-`$53`). Seven or more destroy the blast's Body through the
+  /// dispatcher. The TIMED DETONATOR and its blast are not ported, so nothing calls this yet.
+  explosiveBlast(bodyId: string, cleared: number): void {
+    if (cleared >= PLANET_KILL_EXPLOSIVES) {
+      this.dispatchDestruction(bodyId);
+    }
+  }
+
+  /// `$04C9F2`: whether destroying `bodyId` kills the player, whose Body `$7AA8` is none in space.
+  private killsPlayer(bodyId: string): boolean {
+    return this.space === null && this.pose.body === bodyId;
+  }
+
+  /// `$04CBB0`: the system message `id`, unless one is already asked for (`$05481A`), the death
+  /// sound, the death state `$7A64`, the `$AAAA` flash, and no debris (`$7834` = 0).
+  private blowUp(id: 'system-string-34' | 'system-string-35'): void {
+    if (this.death === null) {
+      this.death = this.deathEnd();
+      this.deathMessage = false;
+    }
+    this.effects.push({ cue: 'blown-up', type: 'sound-request' });
+    this.flashWord = 0xaa_aa;
+    this.debrisPasses = 0;
+    this.presentSystem(id);
+  }
+
   /// `$04C98E`: one marker for impact, the BOOK, the dispatcher and unravelling. A second
   /// request for the same Body changes nothing. Association B is represented by the current
   /// placed Residence, with Catalogue Residence as its fallback.
@@ -1884,6 +2063,10 @@ export class DamoclesSession implements TitleSession<
       }
     }
     this.destroyedBodies.push(bodyId);
+    const lethal = this.killsPlayer(bodyId);
+    if (this.destroyedBodies.length === LAST_BODY_COUNT && !lethal) {
+      this.fireEnding(0x1a);
+    }
     const index = Number(bodyId.slice(5));
     const body = this.content.catalogue.craft!.bodies[index]!;
     const comet =
@@ -1899,14 +2082,10 @@ export class DamoclesSession implements TitleSession<
       y: body.y,
       z: comet?.z ?? body.z
     };
-    if (this.space === null && this.pose.body === bodyId) {
+    if (lethal) {
       // `$04CBAE`: the system message precedes the existing death loop, which later presents
       // `$21`. There is no TOLOSA noise pass before this death.
-      this.death = this.deathEnd();
-      this.deathMessage = false;
-      this.effects.push({ cue: 'blown-up', type: 'sound-request' });
-      this.flashWord = 0xaa_aa;
-      this.presentSystem('system-string-35');
+      this.blowUp('system-string-35');
     } else {
       // `$04CCD2` consumes 192 noise words to seed 64 particles, then `$7834` holds their
       // remaining 64 main-loop passes. The current renderer does not yet draw the particles.
@@ -1922,13 +2101,13 @@ export class DamoclesSession implements TitleSession<
     if (this.impactPassed || this.impact().seconds < 0) {
       return;
     }
-    if (
-      this.destroyedBodies.includes('body-29') ||
-      this.destroyedBodies.includes('body-11')
-    ) {
+    // `$051EAC`: a destroyed DAMOCLES is not moved, so its waypoints never run out.
+    if (this.destroyedBodies.includes(DAMOCLES_BODY)) {
       return;
     }
-    if (this.drift === null) {
+    // With ERIS already gone the comet passes as a drifted one does: nothing is destroyed and
+    // nothing fires, but `$7A82` still latches.
+    if (this.drift === null && !this.destroyedBodies.includes(ERIS_BODY)) {
       this.destroyBody('body-29');
       this.destroyBody('body-11');
       if (this.death === null) {
@@ -2081,7 +2260,8 @@ export class DamoclesSession implements TitleSession<
       script: scriptForSave(this.script),
       scrollCounter: this.scrollCounter,
       spaceMemory: { ...this.spaceMemory },
-      structure: this.structureSnapshot()
+      structure: this.structureSnapshot(),
+      switches: this.switches
     };
   }
 
@@ -3051,7 +3231,8 @@ export class DamoclesSession implements TitleSession<
   /// the keypad reaches `$04D3D2` before the occupancy test, so on foot, aboard and in space
   /// alike. From a zap on the main loop is blocked, so no key is read.
   headCommand(command: HeadCommand): {
-    readonly kind: 'closed' | 'ignored' | 'opened' | 'paged' | 'read';
+    readonly kind:
+      'closed' | 'ignored' | 'opened' | 'paged' | 'read' | 'switched';
   } {
     if (this.death !== null) {
       return { kind: 'ignored' };
@@ -3066,6 +3247,9 @@ export class DamoclesSession implements TitleSession<
     );
     if (outcome.kind === 'ignored') {
       return outcome;
+    }
+    if (outcome.kind === 'switch') {
+      return { kind: this.throwSwitch(switchBit(outcome.row), outcome.on) };
     }
     this.headCommands = outcome.state;
     if (outcome.kind === 'read') {
@@ -3086,10 +3270,11 @@ export class DamoclesSession implements TitleSession<
       from: documentPanel(
         this.content,
         box.from,
-        box.steps === 0 ? (open?.item ?? null) : box.fromItem
+        box.steps === 0 ? (open?.item ?? null) : box.fromItem,
+        this.switches
       ),
       steps: box.steps,
-      to: documentPanel(this.content, box.to, null)
+      to: documentPanel(this.content, box.to, null, this.switches)
     };
   }
 

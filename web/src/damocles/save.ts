@@ -22,9 +22,11 @@ import {
   type DamoclesDocuments
 } from './documentBank.ts';
 import {
+  DETONATOR_BITS,
   NOVAGEN_SAFE_SLOT,
   TRANSITION_VBLS,
   initialHeadCommands,
+  switchFor,
   type HeadCommandState
 } from './headCommands.ts';
 import { admittedPoses, type ArrivalPoses } from './poses.ts';
@@ -48,6 +50,7 @@ import {
   ANSWER_FRAMES,
   BALANCE_MODULUS,
   COLOURFUL_MASK,
+  DESTRUCTION_TRIGGERS,
   ENDING_TRIGGERS,
   LANDING_TRIGGERS,
   LOCATION_TRIGGERS,
@@ -173,10 +176,16 @@ import type { Pose } from './world.ts';
 /// `$7A50`, and the ending triggers. A schema-21 record or older is migrated with the reset's
 /// 9,000 credits, level 6, no mask, and every ending armed: no earlier port wrote any of them.
 /// Its `$0F` execution, if any, is moved past the 150-frame wait schema 22 adds at the front.
-export const DAMOCLES_SAVE_SCHEMA_VERSION = 22 as const;
+///
+/// Version 23 carries the NOVABOMB (#627): the switch bits `$7872`, and the endings only the
+/// body-destruction dispatcher fires, `$0E`, `$10`, `$11`, `$13`, `$1A` and `$1B`. The bomb's
+/// Association B is its Object Residence, which the Save already carries, and a detonated bomb
+/// is a removed resident. A schema-22 record or older is migrated with every switch off and
+/// those endings armed: no earlier port could switch one or reach the dispatcher.
+export const DAMOCLES_SAVE_SCHEMA_VERSION = 23 as const;
 /// The older schemas a restore migrates rather than refuses.
 const MIGRATED_SCHEMA_VERSIONS: readonly unknown[] = [
-  11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21
+  11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22
 ];
 /// The schemas from before the landing messages (#576), which carry no landing trigger.
 const PRE_LANDING_SCHEMA_VERSIONS: readonly unknown[] = [11, 12, 13];
@@ -355,6 +364,8 @@ export interface DamoclesSaveSnapshot {
   /// resumes with.
   readonly spaceMemory: DamoclesSaveSpaceMemory | null;
   readonly structure: BoundStructureSnapshot | null;
+  /// `$7872`, the switch bits: only the four detonators', bits 3 to 6, are ported.
+  readonly switches?: number;
 }
 
 /// What the player is inside, as the session's own Occupancy says it. Aboard, the Pose is the
@@ -943,10 +954,15 @@ const SAVED_TRIGGERS: readonly number[] = [
 ];
 /// Every trigger a schema-21 record carries: the clock's `$0F` beside those.
 const IMPACT_TRIGGERS: readonly number[] = [...SAVED_TRIGGERS, 15];
-/// Every trigger a current record carries: the endings the BOOK fires beside those.
+/// Every trigger a schema-22 record carries: the endings the BOOK fires beside those.
 const WISHED_TRIGGERS: readonly number[] = [
   ...IMPACT_TRIGGERS,
   ...ENDING_TRIGGERS
+];
+/// Every trigger a current record carries: the dispatcher's endings beside those.
+const DESTROYED_TRIGGERS: readonly number[] = [
+  ...WISHED_TRIGGERS,
+  ...DESTRUCTION_TRIGGERS
 ];
 /// The steps schema 22 put in front of `$0F`'s script: its 150-frame wait.
 const IMPACT_WAIT_STEPS = 2;
@@ -1082,7 +1098,8 @@ const scriptOf = (
   locationSaved: boolean,
   offerSaved: boolean,
   impactSaved: boolean,
-  wishSaved: boolean
+  wishSaved: boolean,
+  destructionSaved: boolean
 ): DamoclesSaveScript => {
   const script = object(value, 'snapshot.script');
   const counter = integer(
@@ -1130,17 +1147,19 @@ const scriptOf = (
       index
     };
   });
-  const expected = wishSaved
-    ? WISHED_TRIGGERS
-    : impactSaved
-      ? IMPACT_TRIGGERS
-      : migrated
-        ? PICKUP_TRIGGERS
-        : offerSaved
-          ? SAVED_TRIGGERS
-          : locationSaved
-            ? WELCOMED_TRIGGERS
-            : LANDED_TRIGGERS;
+  const expected = destructionSaved
+    ? DESTROYED_TRIGGERS
+    : wishSaved
+      ? WISHED_TRIGGERS
+      : impactSaved
+        ? IMPACT_TRIGGERS
+        : migrated
+          ? PICKUP_TRIGGERS
+          : offerSaved
+            ? SAVED_TRIGGERS
+            : locationSaved
+              ? WELCOMED_TRIGGERS
+              : LANDED_TRIGGERS;
   if (
     new Set(triggers.map(trigger => trigger.index)).size !== triggers.length ||
     triggers.length !== expected.length ||
@@ -1384,21 +1403,33 @@ const headCommandsOf = (
     }
     return slot;
   };
+  // A switch's panel opens as a document's does, and its index and item stay 0.
+  const panelSlot = (item: unknown, path: string): number => {
+    const slot = integer(item, path, 0, 0xff);
+    return switchFor(slot) === undefined ? documentSlot(slot, path) : slot;
+  };
+  const lastItem = (slot: number): number =>
+    switchFor(slot) !== undefined
+      ? 0
+      : documents === undefined
+        ? 0xff_ff
+        : documentFor(documents, slot)!.items.length - 1;
   const panel = (item: unknown, path: string): number | null =>
-    item === null ? null : documentSlot(item, path);
+    item === null ? null : panelSlot(item, path);
   let open: HeadCommandState['open'] = null;
   if (saved['open'] !== null) {
     const raw = object(saved['open'], 'snapshot.headCommands.open');
-    const slot = documentSlot(raw['slot'], 'snapshot.headCommands.open.slot');
-    const items =
-      documents === undefined
-        ? 0xff_ff
-        : documentFor(documents, slot)!.items.length - 1;
+    const slot = panelSlot(raw['slot'], 'snapshot.headCommands.open.slot');
+    const items = lastItem(slot);
     if (!held.includes(`object-slot-${slot}`)) {
       return fail('the open document is not carried');
     }
+    const index = word(raw['index'], 'snapshot.headCommands.open.index');
+    if (switchFor(slot) !== undefined && index !== 0) {
+      return fail('an open switch pages no index');
+    }
     open = {
-      index: word(raw['index'], 'snapshot.headCommands.open.index'),
+      index,
       item: integer(raw['item'], 'snapshot.headCommands.open.item', 0, items),
       slot
     };
@@ -1424,11 +1455,7 @@ const headCommandsOf = (
           box['fromItem'],
           'snapshot.headCommands.box.fromItem',
           0,
-          from === null
-            ? -1
-            : documents === undefined
-              ? 0xff_ff
-              : documentFor(documents, from)!.items.length - 1
+          from === null ? -1 : lastItem(from)
         );
   if (steps === 0 && fromItem !== null) {
     return fail('the centre box at rest carries an outgoing name');
@@ -1663,6 +1690,7 @@ export const decodeDamoclesSave = (
   }
   const impactRecord =
     record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION ||
+    record['schemaVersion'] === 22 ||
     record['schemaVersion'] === 21;
   const destroyedBodies = impactRecord
     ? array(snapshot['destroyedBodies'], 'snapshot.destroyedBodies').map(
@@ -1735,7 +1763,9 @@ export const decodeDamoclesSave = (
   ) {
     return fail('removed resident list is invalid');
   }
-  const wishRecord = record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION;
+  const wishRecord =
+    record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION ||
+    record['schemaVersion'] === 22;
   const clockLevel = wishRecord ? snapshot['clockLevel'] : NEW_GAME_CLOCK_LEVEL;
   // Only page 4 moves the level, and only to 8.
   if (
@@ -1762,6 +1792,14 @@ export const decodeDamoclesSave = (
   const paletteMask = wishRecord ? snapshot['paletteMask'] : 0;
   if (paletteMask !== 0 && paletteMask !== COLOURFUL_MASK) {
     return fail('palette mask is no mask a ported writer sets');
+  }
+  const switches =
+    record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION
+      ? integer(snapshot['switches'], 'snapshot.switches', 0, 0xff)
+      : 0;
+  // Only the four detonators are ported switches.
+  if ((switches & ~DETONATOR_BITS) !== 0) {
+    return fail('switch bits name a switch the port does not open');
   }
   const carried = array(snapshot['carried'], 'snapshot.carried').map(value =>
     typeof value === 'string' && value !== ''
@@ -1936,8 +1974,9 @@ export const decodeDamoclesSave = (
     16
   );
   const current = record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION;
-  // Schema 21 is the first to carry the impact.
-  const impactSaved = current || record['schemaVersion'] === 21;
+  // Schema 22 is the first to carry the BOOK's wishes, and 21 the impact.
+  const wishSaved = current || record['schemaVersion'] === 22;
+  const impactSaved = wishSaved || record['schemaVersion'] === 21;
   const offerSaved = impactSaved || record['schemaVersion'] === 20;
   // Schema 19 is the first to carry the location triggers.
   const locationSaved = offerSaved || record['schemaVersion'] === 19;
@@ -1956,6 +1995,7 @@ export const decodeDamoclesSave = (
     locationSaved,
     offerSaved,
     impactSaved,
+    wishSaved,
     current
   );
   const running = runSaved ? snapshot['running'] : false;
@@ -2108,7 +2148,8 @@ export const decodeDamoclesSave = (
       script,
       scrollCounter,
       spaceMemory,
-      structure
+      structure,
+      switches
     },
     where: record['where']
   };

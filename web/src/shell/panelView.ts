@@ -1,4 +1,4 @@
-import type { CentreBoxView, PanelViewModel } from './panel.ts';
+import type { CentreBoxPanel, CentreBoxView, PanelViewModel } from './panel.ts';
 
 /// The instruments that are drawn rather than written.
 ///
@@ -201,6 +201,12 @@ export const drawCentreBox = (
     // is narrowed a little to leave it, and a longer one further.
     const pitch = Math.min(5, CENTRE_BOX_WIDTH / panel.title.length);
     centred(context, panel.title, 1, pitch, pitch - 1);
+    if (panel.kind === 'switch') {
+      drawSwitchLamp(context, panel);
+      context.restore();
+      clearTransitionRows(context, view.top);
+      return;
+    }
     context.fillStyle = CENTRE_BOX_TEXT;
     context.fillRect(1, 12, 4, 1);
     context.fillRect(58, 12, 5, 1);
@@ -220,19 +226,49 @@ export const drawCentreBox = (
     centred(context, 'PRESS * TO VIEW', 26, 4, 3);
   }
   context.restore();
-  if (view.top !== 0) {
-    // The rows the transition has cleared, below the panel rising out or above the one rising in.
-    context.fillStyle = '#000000';
-    if (view.top < 0) {
-      context.fillRect(
-        0,
-        CENTRE_BOX_HEIGHT + view.top,
-        CENTRE_BOX_WIDTH,
-        -view.top
-      );
-    } else {
-      context.fillRect(0, 0, CENTRE_BOX_WIDTH, view.top);
-    }
+  clearTransitionRows(context, view.top);
+};
+
+/// The rows the transition has cleared, below the panel rising out or above the one rising in.
+const clearTransitionRows = (
+  context: CanvasRenderingContext2D,
+  top: number
+): void => {
+  if (top === 0) {
+    return;
+  }
+  context.fillStyle = '#000000';
+  if (top < 0) {
+    context.fillRect(0, CENTRE_BOX_HEIGHT + top, CENTRE_BOX_WIDTH, -top);
+  } else {
+    context.fillRect(0, 0, CENTRE_BOX_WIDTH, top);
+  }
+};
+
+/// A switch's `−` lamp `+` (#627), placed from the #626 captures of NOVA TRIGGER 1: the field
+/// in colour 3 on rows 14 to 20 with the name field's bevel, and ON or OFF lettered in it once
+/// the panel has arrived.
+const drawSwitchLamp = (
+  context: CanvasRenderingContext2D,
+  panel: CentreBoxPanel
+): void => {
+  context.fillStyle = CENTRE_BOX_TEXT;
+  context.fillRect(15, 17, 4, 1);
+  context.fillRect(45, 17, 5, 1);
+  context.fillRect(47, 15, 1, 5);
+  context.fillStyle = panel.field;
+  context.fillRect(21, 14, 23, 7);
+  context.fillStyle = CENTRE_BOX_FIELD_DARK;
+  context.fillRect(20, 13, 25, 1);
+  context.fillRect(44, 13, 1, 9);
+  context.fillStyle = CENTRE_BOX_FIELD_LIGHT;
+  context.fillRect(20, 14, 1, 8);
+  context.fillRect(20, 21, 24, 1);
+  if (panel.item !== null) {
+    // ON is lettered on a pitch of eight and OFF of seven and a half, both centred in the field.
+    const pitch = panel.item.length > 2 ? 7.5 : 8;
+    const x = 32.5 - (panel.item.length * pitch - (pitch - 6)) / 2;
+    letter(context, panel.item, x, 15, pitch, 6, CENTRE_BOX_NAME);
   }
 };
 

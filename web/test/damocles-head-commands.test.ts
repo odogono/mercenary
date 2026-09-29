@@ -26,6 +26,7 @@ import {
 } from '../src/damocles/save.ts';
 import { SHORTENED_DISPLAY_FRAMES } from '../src/damocles/script.ts';
 import {
+  DESTRUCTION_TRIGGERS,
   ENDING_TRIGGERS,
   TRIGGER_FOR_RESIDENT
 } from '../src/damocles/scripts.ts';
@@ -38,6 +39,9 @@ import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
+
+/// The endings a record older than schema 22 does not carry.
+const OLDER_ENDINGS = [...ENDING_TRIGGERS, ...DESTRUCTION_TRIGGERS];
 
 const DAMOCLES_FILE = 'object-slot-151';
 const LIMO_KEY = 'object-slot-183';
@@ -219,6 +223,7 @@ describe('Open', () => {
         field: '#44aaee',
         ground: '#0066cc',
         item: 'PROBLEM',
+        kind: 'document',
         title: 'DAMOCLES FILE'
       },
       top: 0
@@ -473,7 +478,7 @@ const beforeLocations = (record: EditableRecord): void => {
       trigger.index !== 3 &&
       trigger.index !== 4 &&
       trigger.index !== 15 &&
-      !ENDING_TRIGGERS.includes(trigger.index)
+      !OLDER_ENDINGS.includes(trigger.index)
   );
 };
 

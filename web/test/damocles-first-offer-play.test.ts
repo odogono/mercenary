@@ -22,6 +22,7 @@ import {
 import {
   ANSWER_FRAMES,
   ANSWER_KEYS,
+  DESTRUCTION_TRIGGERS,
   ENDING_TRIGGERS,
   FOURTH_OFFER_BELOW,
   NO_KEY,
@@ -40,6 +41,9 @@ import { intent } from '../src/gameCore/index.ts';
 import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
+
+/// The endings a record older than schema 22 does not carry.
+const OLDER_ENDINGS = [...ENDING_TRIGGERS, ...DESTRUCTION_TRIGGERS];
 
 /// Location trigger 4, script slot `$04` at `$070650` (#612): the first work offer on Floor 2 of
 /// the Eris STATE OFFICE, and its bargaining ladder (docs/research/damocles-first-offer.md,
@@ -517,7 +521,7 @@ describe('the Save', () => {
       item =>
         item.index !== 4 &&
         item.index !== 15 &&
-        !ENDING_TRIGGERS.includes(item.index)
+        !OLDER_ENDINGS.includes(item.index)
     );
     const record = (schemaVersion: number, triggers: unknown) =>
       encoded(

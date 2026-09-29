@@ -7,7 +7,10 @@ import {
   decodeDamoclesSave,
   encodeDamoclesSave
 } from '../src/damocles/save.ts';
-import { ENDING_TRIGGERS } from '../src/damocles/scripts.ts';
+import {
+  DESTRUCTION_TRIGGERS,
+  ENDING_TRIGGERS
+} from '../src/damocles/scripts.ts';
 import {
   DamoclesSession,
   type DamoclesContent
@@ -17,6 +20,9 @@ import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
+
+/// The endings a record older than schema 22 does not carry.
+const OLDER_ENDINGS = [...ENDING_TRIGGERS, ...DESTRUCTION_TRIGGERS];
 
 let content: DamoclesContent;
 
@@ -163,7 +169,7 @@ describe('zero on the Damocles impact clock', () => {
         script: {
           ...snapshot.script,
           triggers: snapshot.script.triggers.filter(
-            item => item.index !== 15 && !ENDING_TRIGGERS.includes(item.index)
+            item => item.index !== 15 && !OLDER_ENDINGS.includes(item.index)
           )
         }
       },

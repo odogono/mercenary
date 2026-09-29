@@ -13,8 +13,12 @@ import type { DamoclesMessageId } from './display.ts';
 
 export const SCRIPT_IDS = [
   'damocles.script.slot-11',
+  'damocles.script.slot-14',
   'damocles.script.slot-15',
+  'damocles.script.slot-16',
+  'damocles.script.slot-17',
   'damocles.script.slot-18',
+  'damocles.script.slot-19',
   'damocles.script.slot-2',
   'damocles.script.slot-20',
   'damocles.script.slot-21',
@@ -22,6 +26,8 @@ export const SCRIPT_IDS = [
   'damocles.script.slot-23',
   'damocles.script.slot-24',
   'damocles.script.slot-25',
+  'damocles.script.slot-26',
+  'damocles.script.slot-27',
   'damocles.script.slot-3',
   'damocles.script.slot-32',
   'damocles.script.slot-33',
@@ -409,6 +415,82 @@ const erisSavedByWish = (): Script => {
   };
 };
 
+/// `$0713F8`, trigger `$10`: ICARUS destroyed in time (`$04C8FC`). After the 150-frame wait,
+/// Lloyds' four lines and the special reward, then `message.indexed $0032` at the restored 200
+/// frames and a jump into `$12`, as `$3C` does.
+const bothSavedByIcarus = (): Script => {
+  const own: readonly Op[] = [
+    ...wait(PRESIDENT_WAIT_FRAMES),
+    ...[1, 2, 3, 4].map(index =>
+      message(`script16-inline-${index}` as DamoclesMessageId)
+    ),
+    { amount: SPECIAL_REWARD, kind: 'add-balance' },
+    message('system-string-50')
+  ];
+  return {
+    entry: 0x07_13_f8,
+    ops: [...own, ...erisSaved(own.length)],
+    revision: 1
+  };
+};
+
+/// `$07162E`, trigger `$11`: ICARUS destroyed with under 5,990 s left. After the 150-frame wait
+/// only an accepted offer hears GOOD IDEA BUT IT APPEARS TO BE RATHER TOO LATE, with `$072D1C`'s
+/// clearing line; both ways end on the busy clear at `$071698`, which holds the last row.
+const tooLateByIcarus = (): Script => ({
+  entry: 0x07_16_2e,
+  ops: [
+    ...wait(PRESIDENT_WAIT_FRAMES),
+    { kind: 'if-flag', mask: OFFER_ACCEPTED_FLAG, to: 5 },
+    { kind: 'clear-busy' },
+    { kind: 'return' },
+    message('script17-inline-1'),
+    message('script17-inline-2'),
+    ...clearingLine(),
+    { kind: 'clear-busy' },
+    { kind: 'return' }
+  ],
+  revision: 1
+});
+
+/// `$071880`, `$071946` and `$071A08`: the 250-frame wait, four lines and the shared epilogue.
+/// GAEA's and DION's disasters (`$0E`, `$1B`) and ERIS destroyed instead (`$13`).
+const report = (entry: number, trigger: number): Script => ({
+  entry,
+  ops: [
+    ...wait(WISH_WAIT_FRAMES),
+    ...[1, 2, 3, 4].map(index =>
+      message(`script${trigger}-inline-${index}` as DamoclesMessageId)
+    ),
+    ...sharedEpilogue()
+  ],
+  revision: 1
+});
+
+/// `$1A`'s wait, `if.wait $1194` at `$070D64`.
+const STILL_HERE_FRAMES = 0x11_94;
+
+/// `$070CD6`, trigger `$1A`: the 30th Body destroyed. Three lines, the 150-frame wait and
+/// `$072D1C`'s clearing line, then 4,500 frames from a fresh reset of the counter before ARE YOU
+/// STILL HERE! and three more. It ends on its own busy clear, so the last row stays held.
+const everythingDestroyed = (): Script => ({
+  entry: 0x07_0c_d6,
+  ops: [
+    message('script26-inline-1'),
+    message('script26-inline-2'),
+    message('script26-inline-3'),
+    ...wait(PRESIDENT_WAIT_FRAMES),
+    ...clearingLine(),
+    ...wait(STILL_HERE_FRAMES),
+    ...[4, 5, 6, 7].map(index =>
+      message(`script26-inline-${index}` as DamoclesMessageId)
+    ),
+    { kind: 'clear-busy' },
+    { kind: 'return' }
+  ],
+  revision: 1
+});
+
 export interface Script {
   readonly entry: number;
   readonly ops: readonly Op[];
@@ -428,6 +510,7 @@ export const WAIT_FROM_DOCUMENT = -1;
 export const SCRIPTS: Readonly<Record<ScriptId, Script>> = {
   // $07169E, trigger $0F: zero on the impact clock. After the 150-frame wait the State President
   // answers according to the first offer's accepted bit; neither branch changes the balance.
+  'damocles.script.slot-14': report(0x07_18_80, 14),
   'damocles.script.slot-15': {
     entry: 0x07_16_9e,
     ops: [
@@ -444,6 +527,8 @@ export const SCRIPTS: Readonly<Record<ScriptId, Script>> = {
     ],
     revision: 2
   },
+  'damocles.script.slot-16': bothSavedByIcarus(),
+  'damocles.script.slot-17': tooLateByIcarus(),
   'damocles.script.slot-18': {
     entry: 0x07_14_d2,
     ops: erisSaved(0),
@@ -456,6 +541,7 @@ export const SCRIPTS: Readonly<Record<ScriptId, Script>> = {
     revision: 1
   },
   // $0710F6, trigger $16, page 2: the grant line, then a million credits.
+  'damocles.script.slot-19': report(0x07_19_46, 19),
   'damocles.script.slot-22': {
     entry: 0x07_10_f6,
     ops: [
@@ -485,6 +571,8 @@ export const SCRIPTS: Readonly<Record<ScriptId, Script>> = {
     ops: [message('script25-inline-1'), ...sharedEpilogue()],
     revision: 1
   },
+  'damocles.script.slot-26': everythingDestroyed(),
+  'damocles.script.slot-27': report(0x07_1a_08, 27),
   'damocles.script.slot-60': bothSaved(),
   // $07042A. KEY- V.I.P. LIMO, resident slot 183.
   'damocles.script.slot-2': {
@@ -737,15 +825,24 @@ export const LANDING_TRIGGERS: readonly number[] = [
   52, 53, 54, 55, 56, 57, 58, 59
 ];
 
-/// The endings the BOOK's wishes fire (#625), and `$12`, whose body `$3C` runs after its own.
-/// Nothing but the dispatcher fires `$12` itself, which is not ported yet. Every ending's arming
-/// byte is `$A0`, so it queues behind a running script and fires once.
+/// The endings the BOOK's wishes fire (#625), and `$12`, whose body `$3C` runs after its own and
+/// which the dispatcher fires for DAMOCLES. Every ending's arming byte is `$A0`, so it queues
+/// behind a running script and fires once.
 export const ENDING_TRIGGERS: readonly number[] = [18, 21, 22, 23, 24, 25, 60];
+
+/// The endings only the body-destruction dispatcher `$04C8D2` and its marker fire (#627): GAEA's
+/// `$0E`, ICARUS's `$10` and `$11`, ERIS's `$13`, the 30th Body's `$1A` and DION's `$1B`. All
+/// are `$A0` too.
+export const DESTRUCTION_TRIGGERS: readonly number[] = [14, 16, 17, 19, 26, 27];
 
 export const SCRIPT_FOR_TRIGGER: Readonly<Record<number, ScriptId>> = {
   11: 'damocles.script.slot-11',
+  14: 'damocles.script.slot-14',
   15: 'damocles.script.slot-15',
+  16: 'damocles.script.slot-16',
+  17: 'damocles.script.slot-17',
   18: 'damocles.script.slot-18',
+  19: 'damocles.script.slot-19',
   2: 'damocles.script.slot-2',
   20: 'damocles.script.slot-20',
   21: 'damocles.script.slot-21',
@@ -753,6 +850,8 @@ export const SCRIPT_FOR_TRIGGER: Readonly<Record<number, ScriptId>> = {
   23: 'damocles.script.slot-23',
   24: 'damocles.script.slot-24',
   25: 'damocles.script.slot-25',
+  26: 'damocles.script.slot-26',
+  27: 'damocles.script.slot-27',
   3: 'damocles.script.slot-3',
   4: 'damocles.script.slot-4',
   5: 'damocles.script.slot-5',
@@ -790,6 +889,7 @@ export const TRIGGER_ARMING: readonly {
   { byte: 0x80, index: 3 },
   { byte: 0xa0, index: 4 },
   ...ENDING_TRIGGERS.map(index => ({ byte: 0xa0, index })),
+  ...DESTRUCTION_TRIGGERS.map(index => ({ byte: 0xa0, index })),
   ...LANDING_TRIGGERS.map(index => ({
     byte: index === 0x38 ? 0xc0 : 0x80,
     index

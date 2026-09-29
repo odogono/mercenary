@@ -21,6 +21,7 @@ import {
 import { createDamoclesSavePersistence } from '../src/damocles/saves.ts';
 import { NEW_GAME_NOISE } from '../src/damocles/script.ts';
 import {
+  DESTRUCTION_TRIGGERS,
   ENDING_TRIGGERS,
   TRIGGER_FOR_RESIDENT
 } from '../src/damocles/scripts.ts';
@@ -44,6 +45,9 @@ import { titleStorageKeys } from '../src/shell/title.ts';
 import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
+
+/// The endings a record older than schema 22 does not carry.
+const OLDER_ENDINGS = [...ENDING_TRIGGERS, ...DESTRUCTION_TRIGGERS];
 
 /// Boarding and leaving against the #407 contract, docs/design/damocles-boarding-admission.md.
 ///
@@ -1865,7 +1869,7 @@ describe('the noise pointer on foot and at New Game (#582)', () => {
                 item.index !== 3 &&
                 item.index !== 4 &&
                 item.index !== 15 &&
-                !ENDING_TRIGGERS.includes(item.index)
+                !OLDER_ENDINGS.includes(item.index)
             )
           }
         }
