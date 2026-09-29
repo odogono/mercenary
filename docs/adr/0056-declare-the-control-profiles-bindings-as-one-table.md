@@ -40,3 +40,7 @@ would drift from the `switch` whenever a key moved.
 - The named Control Profiles planned for native builds (MAS-0004) can differ in their tables.
 - Key names are US names of physical codes. Naming the printed key of the player's layout is
   left to [#606](https://github.com/odogono/mercenary/issues/606).
+  - Resolved in #606: a label names its layout-dependent keys (letters, `,` `.` `[` `]` `-` `=`)
+    by code, and `web/src/shell/keyNames.ts` prints them from the Keyboard Map API where the
+    browser has it. Digits stay digits, which every layout prints on the key, and a printed key
+    outside the panel typefaces' ASCII keeps its US name.

@@ -18,6 +18,7 @@ import {
   BrowserControlProfile,
   type ControlProfileActions
 } from '../shell/input.ts';
+import { browserKeyNames } from '../shell/keyNames.ts';
 import {
   createNewGameAction,
   escapeFrom,
@@ -202,7 +203,8 @@ try {
   let atlasBusy = travelToken !== null;
   let atlasNotice = '';
   const keys = damoclesTitle.storage;
-  const notices = createSessionResumeNotices();
+  const keyNames = browserKeyNames();
+  const notices = createSessionResumeNotices({ keyNames });
   let handleOwnershipLost = (): void => {};
   const browserLocks =
     navigator.locks === undefined
@@ -442,7 +444,7 @@ try {
       if (layer === 'controls') {
         renderControlsPage(
           chrome.pages.controls,
-          controls.describe(session.inLift)
+          controls.describe(session.inLift, keyNames)
         );
       }
       if (layer === 'menu') {

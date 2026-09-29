@@ -1,10 +1,19 @@
 import { describe, expect, test } from 'bun:test';
 
 import type { BensonMessagePresentation } from '../src/benson/index.ts';
-import {
-  HEAD_COMMAND_KEYS_TEXT,
-  createSessionResumeNotices
-} from '../src/shell/resumeNotices.ts';
+import { headCommandKeysText } from '../src/shell/input.ts';
+import { layoutKeyNames } from '../src/shell/keyNames.ts';
+import { createSessionResumeNotices } from '../src/shell/resumeNotices.ts';
+
+/// The French AZERTY row that holds QWERTY's `M , . /`, and its `P` and brackets.
+const AZERTY = new Map([
+  ['BracketLeft', '^'],
+  ['BracketRight', '$'],
+  ['Comma', ';'],
+  ['KeyM', ','],
+  ['KeyP', 'p'],
+  ['Period', ':']
+]);
 
 const message = (
   displayText: string,
@@ -41,7 +50,7 @@ describe('Session Resume notices on the Benson message line', () => {
       notices.message(message('PLEASE USE THE FOLLOWING KEYPAD KEYS'))
     ).toEqual({
       source: 'shell',
-      text: HEAD_COMMAND_KEYS_TEXT
+      text: headCommandKeysText()
     });
     clock = 7999;
     expect(notices.message(message('NEXT MESSAGE')).source).toBe('shell');
@@ -50,8 +59,19 @@ describe('Session Resume notices on the Benson message line', () => {
   });
 
   test('names the laptop key the Bindings give each Head Command', () => {
-    expect(HEAD_COMMAND_KEYS_TEXT).toBe(
+    expect(headCommandKeysText()).toBe(
       'ENTER OPEN · P READ · . NEXT · , PREVIOUS'
+    );
+  });
+
+  test("names the Head Command keys as the player's layout prints them", () => {
+    const notices = createSessionResumeNotices({
+      keyNames: layoutKeyNames(AZERTY)
+    });
+
+    notices.headCommandKeys();
+    expect(notices.message().text).toBe(
+      'ENTER OPEN · P READ · : NEXT · ; PREVIOUS'
     );
   });
 

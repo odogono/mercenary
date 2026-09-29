@@ -35,6 +35,7 @@ import { installDepartureView } from './departureView.ts';
 import { assertBrowserDocument } from './documentPath.ts';
 import { Renderer, planFrame } from './frame.ts';
 import { BrowserControlProfile } from './input.ts';
+import { browserKeyNames } from './keyNames.ts';
 import { createNewGameAction, escapeFrom, installSystemMenu } from './menu.ts';
 import { BensonMessageTranscript } from './messageTranscript.ts';
 import {
@@ -194,7 +195,8 @@ try {
     surface
   });
   const environment = saveEnvironment(bundle, settings);
-  const notices = createSessionResumeNotices();
+  const keyNames = browserKeyNames();
+  const notices = createSessionResumeNotices({ keyNames });
   let handleOwnershipLost = (): void => {};
   const browserLocks =
     navigator.locks === undefined
@@ -445,7 +447,10 @@ try {
     onLayer: layer => {
       audio.layerChanged(layer);
       if (layer === 'controls') {
-        renderControlsPage(chromePages.controls, controls.describe(false));
+        renderControlsPage(
+          chromePages.controls,
+          controls.describe(false, keyNames)
+        );
       }
       if (layer === 'menu') {
         notices.menuOpened();

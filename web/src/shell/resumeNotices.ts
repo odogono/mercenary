@@ -1,5 +1,6 @@
 import type { BensonMessagePresentation } from '../benson/index.ts';
 import { headCommandKeysText } from './input.ts';
+import type { KeyNames } from './keyNames.ts';
 
 export interface SessionResumeNotices {
   readonly audioUnavailable: () => void;
@@ -21,6 +22,8 @@ export interface SessionResumeNotices {
 }
 
 export interface SessionResumeNoticeOptions {
+  /// How the player's layout prints the Head Command keys (#606). US names without it.
+  readonly keyNames?: KeyNames;
   readonly time?: () => number;
 }
 
@@ -34,10 +37,6 @@ const RESUMED_MILLISECONDS = 2000;
 const FAILURE_MILLISECONDS = 5000;
 /// As long as the DAMOCLES FILE's own two messages hold the line (trigger 6, 400 frames).
 const CONTROLS_MILLISECONDS = 8000;
-
-/// The web bindings for the ST keypad's Enter, `*`, `+` and `-`, named by the same Bindings that
-/// dispatch them (ADR 0056).
-export const HEAD_COMMAND_KEYS_TEXT = headCommandKeysText();
 
 /// Lend the Benson message line to recovery without letting shell status suppress play.
 export const createSessionResumeNotices = (
@@ -79,7 +78,10 @@ export const createSessionResumeNotices = (
       notice = {
         expires: time() + CONTROLS_MILLISECONDS,
         kind: 'controls',
-        text: HEAD_COMMAND_KEYS_TEXT
+        // The web bindings for the ST keypad's Enter, `*`, `+` and `-`, named by the same
+        // Bindings that dispatch them (ADR 0056), when the notice shows rather than at load, so
+        // the layout has had time to answer.
+        text: headCommandKeysText(options.keyNames)
       };
     },
     menuOpened: showFailure,
