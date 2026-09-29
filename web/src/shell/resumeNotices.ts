@@ -1,4 +1,5 @@
 import type { BensonMessagePresentation } from '../benson/index.ts';
+import { headCommandKeysText } from './input.ts';
 
 export interface SessionResumeNotices {
   readonly audioUnavailable: () => void;
@@ -34,9 +35,9 @@ const FAILURE_MILLISECONDS = 5000;
 /// As long as the DAMOCLES FILE's own two messages hold the line (trigger 6, 400 frames).
 const CONTROLS_MILLISECONDS = 8000;
 
-/// The web bindings for the ST keypad's Enter, `*`, `+` and `-`.
-export const HEAD_COMMAND_KEYS_TEXT =
-  'ENTER OPEN · P READ · . NEXT · , PREVIOUS';
+/// The web bindings for the ST keypad's Enter, `*`, `+` and `-`, named by the same Bindings that
+/// dispatch them (ADR 0056).
+export const HEAD_COMMAND_KEYS_TEXT = headCommandKeysText();
 
 /// Lend the Benson message line to recovery without letting shell status suppress play.
 export const createSessionResumeNotices = (

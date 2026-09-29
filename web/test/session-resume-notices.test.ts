@@ -49,6 +49,12 @@ describe('Session Resume notices on the Benson message line', () => {
     expect(notices.message().source).toBe('game');
   });
 
+  test('names the laptop key the Bindings give each Head Command', () => {
+    expect(HEAD_COMMAND_KEYS_TEXT).toBe(
+      'ENTER OPEN · P READ · . NEXT · , PREVIOUS'
+    );
+  });
+
   test('lets a Benson Message preempt a recovery notice immediately', () => {
     const notices = createSessionResumeNotices();
     notices.failed('quota full');

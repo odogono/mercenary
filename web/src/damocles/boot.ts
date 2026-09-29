@@ -12,6 +12,7 @@ import { installShellChrome } from '../shell/chrome.ts';
 import { FixedStepClock } from '../shell/clock.ts';
 import type { ConsoleParseContext } from '../shell/console.ts';
 import { installConsole } from '../shell/consoleView.ts';
+import { renderControlsPage } from '../shell/controlsView.ts';
 import { assertBrowserDocument } from '../shell/documentPath.ts';
 import { BrowserControlProfile } from '../shell/input.ts';
 import {
@@ -311,9 +312,11 @@ try {
       }
     });
 
+  // Fire is the held level `firing`, a Damocles Lift is ridden by the Floor keys through
+  // `liftKey`, and no script asks for a key or can be hurried, so there is no `fire`,
+  // `rideLift`, `press` or `skipMessage`.
   const controls = new BrowserControlProfile({
     drop: () => commitAction(() => session.drop()),
-    fire: () => undefined,
     headCommand: command => commitAction(() => session.headCommand(command)),
     leaveCraft: () => commitAction(() => session.leave()),
     liftKey: floor => {
@@ -334,8 +337,6 @@ try {
             slot: Number(/\d+$/.exec(occupancy.instance)?.[0] ?? 0)
           };
     },
-    page: () => undefined,
-    press: () => undefined,
     reach: action => {
       if (action === 'take') {
         take();
@@ -345,8 +346,6 @@ try {
     },
     // The ST's Esc aboard (`$055822`), which the Browser Shell keeps for the System Menu.
     launch: () => commitAction(() => session.launchCraft()),
-    // Targ's single lift key. A Damocles Lift is ridden by the Floor keys, through `liftKey`.
-    rideLift: () => undefined,
     rotateStack: direction =>
       commitAction(() =>
         direction === 'forward'
@@ -356,7 +355,6 @@ try {
     // The throttle keys as the ST scancodes the table at `$0557D6` is indexed by: `1`–`9`
     // are `$02`–`$0A`, `0` is `$0B`, `F1`–`F10` are `$3B`–`$44` and Space is `$39` (#556).
     shutThrottle: () => commitAction(() => session.throttleKey(0x39)),
-    skipMessage: () => undefined,
     throttleNotchValue: notch =>
       commitAction(() => session.throttleKey(notch === 10 ? 0x0b : notch + 1)),
     throttleReverseNotch: notch =>
@@ -416,6 +414,12 @@ try {
   const menu = installSystemMenu({
     onLayer: layer => {
       audio.layerChanged(layer);
+      if (layer === 'controls') {
+        renderControlsPage(
+          chrome.pages.controls,
+          controls.describe(session.inLift)
+        );
+      }
       if (layer === 'menu') {
         notices.menuOpened();
         checkpointChangedResume();

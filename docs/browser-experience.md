@@ -50,7 +50,9 @@ Damocles condensed panel-label face (CSS approximation in v1), or advance Damocl
   the tracked `settings.json`.
 - `web/src/shell/panel.ts` — pure `panelViewModel(snapshot, context)` + thin diff-updating
   `installPanel`.
-- `web/src/shell/menu.ts`, `settingsView.ts`, `saveChooser.ts` — System Menu layers.
+- `web/src/shell/menu.ts`, `settingsView.ts`, `controlsView.ts`, `saveChooser.ts` — System Menu
+  layers. The Controls Page is drawn from the Control Profile's Binding table each time it opens
+  (ADR 0056).
 - `web/src/shell/saves.ts` — gains a headless `createSavePersistence` core; the chooser and
   the console both drive it.
 - `web/src/shell/console.ts` — `parseConsoleCommand` + `executeConsoleCommand(cmd, deps)`;

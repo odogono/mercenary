@@ -14,9 +14,14 @@ export interface BrowserKey {
   readonly repeat: boolean;
 }
 
+/// What a Title does with each Binding. An optional action a Title leaves out is one it does not
+/// have: its Binding is hidden from the Controls Page, and its keys either keep their ordinary
+/// meaning or, where the table says so, are swallowed.
 export interface ControlProfileActions {
   readonly drop: () => void;
-  readonly fire: () => void;
+  /// Fire as a press. A Title whose fire is the joystick button's level, as Damocles's launcher
+  /// `$050B96` reads it (#581), leaves it out and asks `firing` instead.
+  readonly fire?: () => void;
   /// A Head Command. A Title with none leaves it out, and its keys keep their ordinary meaning.
   readonly headCommand?: (command: HeadCommand) => void;
   /// Launch into space aboard: the ST's Esc (`$055822`), which the Browser Shell keeps for the
@@ -24,18 +29,21 @@ export interface ControlProfileActions {
   readonly launch?: () => void;
   readonly leaveCraft: () => void;
   /// A Damocles Lift key asking for a Floor. Answers whether the player is in a lift: where they
-  /// are not, the key keeps its ordinary meaning.
-  readonly liftKey: (floor: number) => boolean;
+  /// are not, the key keeps its ordinary meaning. A Title with no Damocles Lift leaves it out.
+  readonly liftKey?: (floor: number) => boolean;
   readonly occupancy: () => Occupancy;
-  readonly page: (delta: number) => void;
-  readonly press: (key: BensonKeyValue | undefined) => void;
+  /// Page the message line, for a Title with a pager and no Carried Stack to rotate.
+  readonly page?: (delta: number) => void;
+  /// Answer a script. A Title whose scripts never ask leaves it out.
+  readonly press?: (key: BensonKeyValue | undefined) => void;
   readonly reach: (action: InteractionAction) => void;
-  readonly rideLift: () => void;
+  /// Targ's single lift key, riding the Lift Journey.
+  readonly rideLift?: () => void;
   /// Rotate the Carried Stack: forward is the ST's Left (`$04DC74`), which sends the head to the
   /// back. A Title that rotates takes the brackets from `page`.
   readonly rotateStack?: (direction: 'forward' | 'backward') => void;
   readonly shutThrottle: () => void;
-  readonly skipMessage: () => void;
+  readonly skipMessage?: () => void;
   readonly throttleNotchValue: (notch: number) => void;
   /// A reverse gear aboard: the ST's `F1`–`F10`, which Damocles's throttle table reads as the
   /// digits' notches in reverse (#556). A Title with no reverse gear leaves it out.
@@ -73,6 +81,9 @@ export const LAUNCH_CODE = 'Backspace';
 /// through while the Arrival holds the rest (ADR 0032) rather than restating a code the profile
 /// might later move.
 export const SKIP_MESSAGE_CODE = 'Space';
+
+/// The Control Profile's name, as the Controls Page heads its Bindings.
+export const CONTROL_PROFILE_NAME = 'Keyboard';
 
 const PUNCTUATION_CODES = new Set([
   'Backquote',
@@ -153,6 +164,385 @@ const liftFloor = (code: string): number | undefined => {
   return match === null ? undefined : Number(match[1]);
 };
 
+// Key names are plain ASCII: the panel's typefaces have no arrows or en dash.
+
+/// Where a Binding holds: in every Occupancy, on foot, on foot in a Damocles Lift, or aboard.
+export type BindingGroup = 'aboard' | 'always' | 'lift' | 'onFoot';
+
+export type BindingMode = 'hold' | 'toggle';
+
+/// What a Binding may do to the profile that dispatched it.
+interface BindingTarget {
+  readonly actions: ControlProfileActions;
+  /// Hold the key, so its release is the profile's to swallow.
+  readonly hold: (code: string) => void;
+  /// Hold the key and answer a script with it.
+  readonly holdAndPress: (code: string) => void;
+  readonly toggleRunning: () => void;
+}
+
+/// One physical control mapped to a Movement Intent or Semantic Action (ADR 0056).
+///
+/// The same row dispatches the key and names it on the Controls Page, so the page cannot name a
+/// key the profile does not honour.
+export interface Binding {
+  readonly action: string;
+  readonly group: BindingGroup;
+  /// The keys as the Controls Page names them, a laptop's first. The first is also what the
+  /// Head Command notice names.
+  readonly keys: readonly string[];
+  readonly mode?: (actions: ControlProfileActions) => BindingMode | undefined;
+  /// Handle `code` if it is this Binding's, answering whether it was.
+  readonly press: (code: string, target: BindingTarget) => boolean;
+  /// Whether the Title has this Binding's action. The Controls Page lists only those it has.
+  readonly provided: (actions: ControlProfileActions) => boolean;
+}
+
+const always = (): boolean => true;
+
+const codes =
+  (
+    matching: readonly string[],
+    run: (code: string, target: BindingTarget) => void
+  ): Binding['press'] =>
+  (code, target) => {
+    if (!matching.includes(code)) {
+      return false;
+    }
+    run(code, target);
+    return true;
+  };
+
+const HEAD_COMMAND_LABELS: Readonly<Record<HeadCommand, string>> = {
+  next: 'NEXT',
+  open: 'OPEN',
+  previous: 'PREVIOUS',
+  read: 'READ'
+};
+
+const HEAD_COMMAND_KEYS: Readonly<Record<HeadCommand, readonly string[]>> = {
+  next: ['.', 'NUMPAD +'],
+  open: ['ENTER', 'NUMPAD ENTER'],
+  previous: [',', 'NUMPAD -'],
+  read: ['P', 'NUMPAD *']
+};
+
+const headCommandBinding = (command: HeadCommand): Binding => ({
+  action: HEAD_COMMAND_LABELS[command],
+  group: 'always',
+  keys: HEAD_COMMAND_KEYS[command],
+  // The ST sends every keypad key to `$04D3D2` before its occupancy test (`$055690`), so the
+  // Head Commands mean the same on foot, aboard and in space.
+  press: (code, { actions }) => {
+    if (actions.headCommand === undefined || HEAD_COMMANDS[code] !== command) {
+      return false;
+    }
+    actions.headCommand(command);
+    return true;
+  },
+  provided: actions => actions.headCommand !== undefined
+});
+
+/// Every Binding, in the order the profile tries them: the first to take a key wins. Aboard, the
+/// throttle takes the digits; on foot, the lift takes its keys before their ordinary meaning, as
+/// `$0555DC` does before the rest of the dispatch, so in a lift `B` asks for Floor 10 and never
+/// boards. A key no Binding takes falls through to answering a script.
+export const BINDINGS: readonly Binding[] = [
+  {
+    action: 'THROTTLE',
+    group: 'aboard',
+    keys: ['1-9, 0'],
+    press: (code, { actions }) => {
+      const notch = throttleNotch(code);
+      if (notch === undefined) {
+        return false;
+      }
+      actions.throttleNotchValue(notch);
+      return true;
+    },
+    provided: always
+  },
+  {
+    action: 'REVERSE',
+    group: 'aboard',
+    keys: ['F1-F10'],
+    press: (code, { actions }) => {
+      const notch = reverseNotch(code);
+      if (notch === undefined || actions.throttleReverseNotch === undefined) {
+        return false;
+      }
+      actions.throttleReverseNotch(notch);
+      return true;
+    },
+    provided: actions => actions.throttleReverseNotch !== undefined
+  },
+  {
+    action: 'THROTTLE DOWN / UP',
+    group: 'aboard',
+    keys: ['- / ='],
+    press: codes(['Minus', 'Equal'], (code, { actions }) =>
+      actions.throttleStep(code === 'Equal' ? 1 : -1)
+    ),
+    provided: always
+  },
+  {
+    action: 'LAUNCH',
+    group: 'aboard',
+    keys: ['BACKSPACE'],
+    press: (code, { actions }) => {
+      if (code !== LAUNCH_CODE || actions.launch === undefined) {
+        return false;
+      }
+      actions.launch();
+      return true;
+    },
+    provided: actions => actions.launch !== undefined
+  },
+  {
+    action: 'FLOOR 1-9, 10, 0',
+    group: 'lift',
+    keys: ['1-9, 0 / B, G'],
+    press: (code, { actions }) => {
+      const floor = liftFloor(code);
+      return floor !== undefined && actions.liftKey?.(floor) === true;
+    },
+    provided: actions => actions.liftKey !== undefined
+  },
+  headCommandBinding('open'),
+  headCommandBinding('read'),
+  headCommandBinding('next'),
+  headCommandBinding('previous'),
+  {
+    action: 'PITCH',
+    group: 'aboard',
+    keys: ['UP / DOWN'],
+    press: codes(['ArrowUp', 'ArrowDown'], (code, target) =>
+      target.holdAndPress(code)
+    ),
+    provided: always
+  },
+  {
+    action: 'WALK',
+    group: 'onFoot',
+    keys: ['UP / DOWN'],
+    press: codes(['ArrowUp', 'ArrowDown'], (code, target) =>
+      target.holdAndPress(code)
+    ),
+    provided: always
+  },
+  {
+    action: 'TURN',
+    group: 'always',
+    keys: ['LEFT / RIGHT'],
+    press: codes(['ArrowLeft', 'ArrowRight'], (code, target) =>
+      target.holdAndPress(code)
+    ),
+    provided: always
+  },
+  {
+    action: 'ROTATE STACK',
+    group: 'always',
+    keys: ['[ / ]'],
+    press: (code, { actions }) => {
+      if (
+        actions.rotateStack === undefined ||
+        (code !== 'BracketLeft' && code !== 'BracketRight')
+      ) {
+        return false;
+      }
+      actions.rotateStack(code === 'BracketLeft' ? 'forward' : 'backward');
+      return true;
+    },
+    provided: actions => actions.rotateStack !== undefined
+  },
+  {
+    action: 'PAGE',
+    group: 'always',
+    keys: ['[ / ]'],
+    press: codes(['BracketLeft', 'BracketRight'], (code, { actions }) =>
+      actions.page?.(code === 'BracketLeft' ? -1 : 1)
+    ),
+    provided: actions => actions.page !== undefined
+  },
+  {
+    action: 'SHUT THROTTLE',
+    group: 'aboard',
+    keys: ['SPACE'],
+    press: codes([SKIP_MESSAGE_CODE], (_code, { actions }) =>
+      actions.shutThrottle()
+    ),
+    provided: always
+  },
+  {
+    action: 'SKIP MESSAGE',
+    group: 'onFoot',
+    keys: ['SPACE'],
+    press: codes([SKIP_MESSAGE_CODE], (_code, { actions }) =>
+      actions.skipMessage?.()
+    ),
+    provided: actions => actions.skipMessage !== undefined
+  },
+  {
+    action: 'BOARD',
+    group: 'always',
+    keys: ['B'],
+    press: codes(['KeyB'], (_code, { actions }) => actions.reach('board')),
+    provided: always
+  },
+  {
+    action: 'TAKE',
+    group: 'always',
+    keys: ['T'],
+    press: codes(['KeyT'], (_code, { actions }) => actions.reach('take')),
+    provided: always
+  },
+  {
+    action: 'LEAVE CRAFT',
+    group: 'aboard',
+    keys: ['L'],
+    press: codes(['KeyL'], (_code, { actions }) => actions.leaveCraft()),
+    provided: always
+  },
+  {
+    action: 'RIDE LIFT',
+    group: 'always',
+    keys: ['E'],
+    press: codes(['KeyE'], (_code, { actions }) => actions.rideLift?.()),
+    provided: actions => actions.rideLift !== undefined
+  },
+  {
+    action: 'DROP',
+    group: 'always',
+    keys: ['D'],
+    press: codes(['KeyD'], (_code, { actions }) => actions.drop()),
+    provided: always
+  },
+  // The Reference Build's fire is the joystick's fire button, never a key the scripts poll, so
+  // this deliberately does not also `press`: marking input as detected would let firing answer
+  // a question a script asked. It is held either way, for the Title that reads it as a level.
+  {
+    action: 'FIRE',
+    group: 'always',
+    keys: ['F'],
+    mode: actions => (actions.fire === undefined ? 'hold' : undefined),
+    press: codes(['KeyF'], (code, target) => {
+      target.actions.fire?.();
+      target.hold(code);
+    }),
+    provided: always
+  },
+  // Running is Movement Intent, so R does not `press` either, for the same reason firing does
+  // not. The key is still held so that its release is the profile's to swallow.
+  {
+    action: 'RUN',
+    group: 'always',
+    keys: ['R'],
+    mode: () => 'toggle',
+    press: codes(['KeyR'], (code, target) => {
+      target.toggleRunning();
+      target.hold(code);
+    }),
+    provided: always
+  }
+];
+
+const inGroup = (group: BindingGroup, aboard: boolean): boolean =>
+  group === 'always' || (group === 'aboard') === aboard;
+
+/// The Head Command keys as the DAMOCLES FILE's notice names them: a laptop's key for each.
+export const headCommandKeysText = (): string =>
+  (['open', 'read', 'next', 'previous'] as const)
+    .map(
+      command =>
+        `${HEAD_COMMAND_KEYS[command][0]} ${HEAD_COMMAND_LABELS[command]}`
+    )
+    .join(' · ');
+
+export interface ControlsRow {
+  readonly action: string;
+  readonly keys: string;
+  readonly mode?: BindingMode;
+}
+
+export type ControlsGroupName = BindingGroup | 'pointer' | 'shell';
+
+export interface ControlsGroup {
+  /// Whether this is the Occupancy, or the lift, the player is in. The groups that hold
+  /// everywhere are never marked.
+  readonly current: boolean;
+  readonly name: ControlsGroupName;
+  readonly rows: readonly ControlsRow[];
+  readonly title: string;
+}
+
+export interface ControlsState {
+  readonly inLift: boolean;
+  readonly occupancy: Occupancy;
+}
+
+/// Keys the Browser Shell routes before the Control Profile sees them.
+const SHELL_ROWS: readonly ControlsRow[] = [
+  { action: 'SYSTEM MENU', keys: 'ESC' },
+  { action: 'SHELL CONSOLE', keys: 'BACKTICK' }
+];
+
+const POINTER_ROWS: readonly ControlsRow[] = [
+  { action: 'TAKE', keys: 'CLICK' }
+];
+
+const GROUP_TITLES: Readonly<Record<ControlsGroupName, string>> = {
+  aboard: 'ABOARD',
+  always: 'ALWAYS',
+  lift: 'IN A LIFT',
+  onFoot: 'ON FOOT',
+  pointer: 'POINTER',
+  shell: 'SHELL'
+};
+
+/// The Controls Page's groups for a Title: every Binding it has, grouped by where it holds, with
+/// the groups the player is in marked current. A group with no Binding the Title has is left
+/// out.
+export const describeBindings = (
+  actions: ControlProfileActions,
+  state: ControlsState
+): readonly ControlsGroup[] => {
+  const aboard = state.occupancy.kind === 'aboard';
+  const current: Readonly<Record<BindingGroup, boolean>> = {
+    aboard,
+    always: false,
+    lift: !aboard && state.inLift,
+    onFoot: !aboard
+  };
+  const rows = (group: BindingGroup): readonly ControlsRow[] =>
+    BINDINGS.filter(
+      binding => binding.group === group && binding.provided(actions)
+    ).map(binding => {
+      const mode = binding.mode?.(actions);
+      return {
+        action: binding.action,
+        keys: binding.keys.join(' / '),
+        ...(mode === undefined ? {} : { mode })
+      };
+    });
+  const group = (
+    name: ControlsGroupName,
+    groupRows: readonly ControlsRow[],
+    isCurrent: boolean
+  ): ControlsGroup => ({
+    current: isCurrent,
+    name,
+    rows: groupRows,
+    title: GROUP_TITLES[name]
+  });
+  return [
+    group('shell', SHELL_ROWS, false),
+    group('pointer', POINTER_ROWS, false),
+    ...(['always', 'onFoot', 'lift', 'aboard'] as const).map(name =>
+      group(name, rows(name), current[name])
+    )
+  ].filter(entry => entry.rows.length > 0);
+};
+
 /// The browser Control Profile: physical codes at the edge, Movement Intent and Semantic
 /// Actions on the other side. The core sees neither a key code nor a browser event.
 export class BrowserControlProfile {
@@ -163,9 +553,18 @@ export class BrowserControlProfile {
   /// opening the System Menu must not silently cancel it. It is Control Profile state and not
   /// Session State, so no Save, Session Resume or trace carries it.
   private running = false;
+  private readonly target: BindingTarget;
 
   constructor(actions: ControlProfileActions) {
     this.actions = actions;
+    this.target = {
+      actions,
+      hold: code => this.held.add(code),
+      holdAndPress: code => this.holdAndPress(code),
+      toggleRunning: () => {
+        this.running = !this.running;
+      }
+    };
   }
 
   get intent(): Intent {
@@ -186,120 +585,38 @@ export class BrowserControlProfile {
     return this.held.has('KeyF');
   }
 
+  /// The Controls Page's groups for this profile's Title, as the player stands now.
+  describe(inLift: boolean): readonly ControlsGroup[] {
+    return describeBindings(this.actions, {
+      inLift,
+      occupancy: this.actions.occupancy()
+    });
+  }
+
   keyDown(key: BrowserKey): boolean {
     if (browserChord(key)) {
       return false;
     }
-    const aboard = this.actions.occupancy().kind === 'aboard';
-    const command = this.actions.headCommand
-      ? HEAD_COMMANDS[key.code]
-      : undefined;
     if (key.repeat) {
-      return command !== undefined || handledCode(key.code);
+      return (
+        (this.actions.headCommand !== undefined &&
+          HEAD_COMMANDS[key.code] !== undefined) ||
+        handledCode(key.code)
+      );
     }
-    if (aboard) {
-      const notch = throttleNotch(key.code);
-      if (notch !== undefined) {
-        this.actions.throttleNotchValue(notch);
-        return true;
-      }
-      const reverse = reverseNotch(key.code);
-      if (reverse !== undefined && this.actions.throttleReverseNotch) {
-        this.actions.throttleReverseNotch(reverse);
-        return true;
-      }
-      if (key.code === 'Minus' || key.code === 'Equal') {
-        this.actions.throttleStep(key.code === 'Equal' ? 1 : -1);
-        return true;
-      }
-      if (key.code === LAUNCH_CODE && this.actions.launch) {
-        this.actions.launch();
-        return true;
-      }
-    } else {
-      // The lift takes its keys before their ordinary meaning, as `$0555DC` does before the
-      // rest of the dispatch: in a lift, `B` asks for Floor 10 and never boards.
-      const floor = liftFloor(key.code);
-      if (floor !== undefined && this.actions.liftKey(floor)) {
+    const aboard = this.actions.occupancy().kind === 'aboard';
+    for (const binding of BINDINGS) {
+      if (
+        inGroup(binding.group, aboard) &&
+        binding.press(key.code, this.target)
+      ) {
         return true;
       }
     }
-
-    // The ST sends every keypad key to `$04D3D2` before its occupancy test (`$055690`), so the
-    // Head Commands mean the same on foot, aboard and in space.
-    if (command !== undefined) {
-      this.actions.headCommand!(command);
-      return true;
+    if (!ordinaryCode(key.code)) {
+      return false;
     }
-
-    switch (key.code) {
-      case 'ArrowDown':
-      case 'ArrowLeft':
-      case 'ArrowRight':
-      case 'ArrowUp':
-        this.holdAndPress(key.code);
-        break;
-      case 'BracketLeft':
-        if (this.actions.rotateStack) {
-          this.actions.rotateStack('forward');
-        } else {
-          this.actions.page(-1);
-        }
-        break;
-      case 'BracketRight':
-        if (this.actions.rotateStack) {
-          this.actions.rotateStack('backward');
-        } else {
-          this.actions.page(1);
-        }
-        break;
-      case 'Space':
-        if (aboard) {
-          this.actions.shutThrottle();
-        } else {
-          this.actions.skipMessage();
-        }
-        break;
-      case 'KeyB':
-        this.actions.reach('board');
-        break;
-      case 'KeyT':
-        this.actions.reach('take');
-        break;
-      case 'KeyL':
-        if (aboard) {
-          this.actions.leaveCraft();
-          break;
-        }
-        this.holdAndPress(key.code);
-        break;
-      case 'KeyE':
-        this.actions.rideLift();
-        break;
-      case 'KeyD':
-        this.actions.drop();
-        break;
-      // The Reference Build's fire is the joystick's fire button, never a key
-      // the scripts poll, so this deliberately does not also `press`: marking
-      // input as detected would let firing answer a question a script asked.
-      case 'KeyF':
-        this.actions.fire();
-        this.held.add(key.code);
-        break;
-      // Running is Movement Intent, so R does not `press` either, for the same
-      // reason firing does not. The key is still held so that its release is
-      // the profile's to swallow.
-      case 'KeyR':
-        this.running = !this.running;
-        this.held.add(key.code);
-        break;
-      default:
-        if (!ordinaryCode(key.code)) {
-          return false;
-        }
-        this.holdAndPress(key.code);
-        break;
-    }
+    this.holdAndPress(key.code);
     return true;
   }
 
@@ -314,6 +631,6 @@ export class BrowserControlProfile {
 
   private holdAndPress(code: string): void {
     this.held.add(code);
-    this.actions.press(code === 'KeyY' ? BensonKey.y : undefined);
+    this.actions.press?.(code === 'KeyY' ? BensonKey.y : undefined);
   }
 }

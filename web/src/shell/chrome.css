@@ -28,6 +28,7 @@
   font-family: var(--panel-font);
 }
 
+#game-surface[data-layer='controls'] #page-controls,
 #game-surface[data-layer='menu'] #page-menu,
 #game-surface[data-layer='ownership'] #page-ownership,
 #game-surface[data-layer='settings'] #page-settings,
@@ -234,4 +235,53 @@ html[data-title='damocles'] #game-surface {
   letter-spacing: 0.06em;
   outline: none;
   text-transform: uppercase;
+}
+
+#controls-groups {
+  display: flex;
+  max-height: min(70vh, 520px);
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+}
+
+.controls-group-title {
+  width: fit-content;
+  margin: 0 0 4px;
+  color: var(--label-ink);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+}
+
+/* Lit like a pressed choice: these are the Bindings where the player is. */
+.controls-group[aria-current='true'] .controls-group-title {
+  padding: 1px 6px 0;
+  background: var(--lamp-on);
+  border-radius: 2px;
+  color: #1a1206;
+}
+
+.controls-rows {
+  display: grid;
+  margin: 0;
+  column-gap: 12px;
+  grid-template-columns: minmax(96px, auto) 1fr;
+  row-gap: 2px;
+}
+
+.controls-rows dt {
+  padding: 1px 6px 0;
+  background: var(--lcd-bg);
+  border-radius: 2px;
+  color: var(--lcd-ink);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+
+.controls-rows dd {
+  align-self: center;
+  margin: 0;
+  color: var(--label-ink);
+  font-size: 12px;
+  letter-spacing: 0.06em;
 }
