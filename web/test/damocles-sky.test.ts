@@ -523,6 +523,30 @@ describe('the comet DAMOCLES (#538)', () => {
     expect(pass.bodies.some(body => body.id === 'damocles')).toBe(false);
   });
 
+  test('adds the armed X drift and continues straight after zero', () => {
+    const at = { fraction: 0, seconds: -100 };
+    const base = cometCentre(system.comet, at)!;
+    const drifted = cometCentre(system.comet, at, {
+      drift: -4660,
+      passed: false
+    })!;
+    expect(drifted).toEqual({ x: base.x - 4560, z: base.z });
+    expect(
+      cometCentre(
+        system.comet,
+        { fraction: 0, seconds: 0 },
+        { drift: -4660, passed: true }
+      )
+    ).toEqual({ x: -634_660, z: 390_000 });
+    expect(
+      cometCentre(
+        system.comet,
+        { fraction: 0, seconds: 1 },
+        { drift: -4660, passed: true }
+      )
+    ).toEqual({ x: -634_841, z: 390_180 });
+  });
+
   test('projects its head and tail tip where the pinned frames predict them', () => {
     for (const frame of COMET_FRAMES) {
       const comet = cometOf(

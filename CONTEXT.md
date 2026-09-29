@@ -218,6 +218,10 @@ _Avoid_: Title, Destination, world, star map
 One physical member of a System whose known identity and placement come from that System's authority, without implying that its type, dimensions, Primary or motion are known.
 _Avoid_: World, planet, place, sphere
 
+**Destroyed Body**:
+A Damocles Body marked as destroyed by the endgame: absent from the sky, Atlas and arrival scan, with objects associated to it removed from play. A player standing on it enters the Damocles Death State.
+_Avoid_: Removed Body, missing Body
+
 **Primary**:
 The optional Body that another Body is grouped under in a System's drawn hierarchy; absence means the grouping is not established, not that the Body stands alone. It names how a System organises its Bodies for presentation and naming, and asserts no revolution: in Damocles the recovered System is static apart from its comet, so a Body's Primary is not something it goes round.
 _Avoid_: Parent, centre, star, inferred Primary, orbit, revolution
@@ -407,7 +411,7 @@ The navigation window beside the Navigation Readout, naming the player's Island-
 _Avoid_: Grid reference, city coordinates, location coordinates, tile readout, Body Coordinate
 
 **Impact Clock**:
-The Damocles Panel Rendition's `HH-MM-SS` window counting what is left before the comet arrives, kept as minus the remaining seconds and spending one of them every fifty VBLs, so at PAL 50 Hz it keeps real time on foot and aboard on a Body. A fresh game is given `04-19-20` of it on the title screen, and the original's scripted arrival has spent an hour and a half of that before the player first stands on Eris. It is Damocles's alone: the Targ rendition's clock is the Targ Orrery's local time, which is not a deadline and does not run out.
+The Damocles Panel Rendition's `HH-MM-SS` window counting down to the comet's arrival and then up past zero, spending one second every fifty VBLs and rolling whole days separately. A fresh game is given `04-19-20` of it on the title screen, and the original's scripted arrival has spent an hour and a half of that before the player first stands on Eris. It is Damocles's alone: the Targ rendition's clock is the Targ Orrery's local time.
 _Avoid_: Countdown, comet timer, deadline clock, session clock
 
 **System Menu**:

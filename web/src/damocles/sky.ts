@@ -123,8 +123,11 @@ export interface SkyInputs {
   readonly body: string;
   /// The terminator's answer (`$7A4E`).
   readonly daylight: boolean;
+  readonly destroyedBodies?: readonly string[];
+  readonly drift?: number | null;
   /// The impact clock, which places the comet.
   readonly impact: ImpactTime;
+  readonly impactPassed?: boolean;
   /// The player's position on the Body, whose Body Coordinate steps the sky angles start from.
   readonly position: Vector3;
   readonly sky: BodySky | null;
@@ -214,8 +217,18 @@ const skyBodies = (
     if (body === undefined) {
       continue;
     }
+    if (inputs.destroyedBodies?.includes(`body-${body.sourceIndex}`)) {
+      continue;
+    }
     if (body.positionKind === 'capture-time-sample') {
-      const comet = skyComet(system, body, inputs.impact, surfaceOffset);
+      const comet = skyComet(
+        system,
+        body,
+        inputs.impact,
+        surfaceOffset,
+        inputs.drift ?? null,
+        inputs.impactPassed ?? false
+      );
       if (comet !== null) {
         result.push(comet);
       }
@@ -242,9 +255,12 @@ const skyBodies = (
 };
 
 export interface SpaceSkyInputs {
+  readonly destroyedBodies?: readonly string[];
+  readonly drift?: number | null;
   /// The craft's position in the System (`$799A`/`$799E`/`$79A2`).
   readonly eye: Vector3;
   readonly impact: ImpactTime;
+  readonly impactPassed?: boolean;
   /// Whether a Body is in the scene: the range scan's negative-Y flag, by source index.
   readonly inScene: (sourceIndex: number) => boolean;
   /// The view the space starfield `$05067C` scrolls by (#578), or null for no stars. Nothing
@@ -269,11 +285,21 @@ export const spaceSkyPass = (
   });
   const items: { readonly item: SkyItem; readonly range: number }[] = [];
   for (const body of system.bodies) {
+    if (inputs.destroyedBodies?.includes(`body-${body.sourceIndex}`)) {
+      continue;
+    }
     if (!inputs.inScene(body.sourceIndex)) {
       continue;
     }
     if (body.positionKind === 'capture-time-sample') {
-      const comet = skyComet(system, body, inputs.impact, offset);
+      const comet = skyComet(
+        system,
+        body,
+        inputs.impact,
+        offset,
+        inputs.drift ?? null,
+        inputs.impactPassed ?? false
+      );
       if (comet !== null) {
         const { x, y, z } = comet.offset;
         items.push({ item: comet, range: Math.hypot(x, y, z) });
@@ -315,10 +341,12 @@ const skyComet = (
   system: GammaSystemDocument,
   body: GammaSystemDocument['bodies'][number],
   impact: ImpactTime,
-  surfaceOffset: (point: Vector3) => Vector3
+  surfaceOffset: (point: Vector3) => Vector3,
+  drift: number | null,
+  passed: boolean
 ): SkyComet | null => {
   const { comet } = system;
-  const centre = cometCentre(comet, impact);
+  const centre = cometCentre(comet, impact, { drift, passed });
   if (centre === null) {
     return null;
   }

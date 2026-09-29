@@ -156,10 +156,12 @@ import type { Pose } from './world.ts';
 /// acceptance sets on DOOR KEY A. A Save taken at a prompt resumes polling it without asking
 /// again. A schema-19 record or older is migrated with trigger 4 armed, an empty latch, no
 /// reward and nothing accepted: no earlier port had the script.
-export const DAMOCLES_SAVE_SCHEMA_VERSION = 20 as const;
+/// Version 21 carries destroyed Bodies, the clock-zero latch and the comet drift anchor. A
+/// schema-20 session had no destruction path, so it migrates with all Bodies alive.
+export const DAMOCLES_SAVE_SCHEMA_VERSION = 21 as const;
 /// The older schemas a restore migrates rather than refuses.
 const MIGRATED_SCHEMA_VERSIONS: readonly unknown[] = [
-  11, 12, 13, 14, 15, 16, 17, 18, 19
+  11, 12, 13, 14, 15, 16, 17, 18, 19, 20
 ];
 /// The schemas from before the landing messages (#576), which carry no landing trigger.
 const PRE_LANDING_SCHEMA_VERSIONS: readonly unknown[] = [11, 12, 13];
@@ -279,6 +281,13 @@ export interface DamoclesSaveSnapshot {
     readonly byte: number;
     readonly instance: string;
   }[];
+  /// Slot 74, the last destroyed Body's System-space centre.
+  readonly blastCentre?: {
+    readonly body: string;
+    readonly x: number;
+    readonly y: number;
+    readonly z: number;
+  } | null;
   // Both continuation fields may be omitted together and are then normalized to empty;
   // partial omission is invalid. Since the schema-5 bump no shipped build writes a record
   // that omits them, so this leniency is now unreachable rather than load-bearing.
@@ -289,8 +298,14 @@ export interface DamoclesSaveSnapshot {
   /// The craft Mover's words aboard, or null on foot. A migrated schema-11 record aboard has
   /// none, and the session seats it at the boarding preset.
   readonly craft: DamoclesSaveCraft | null;
+  /// `$7834`: passes left of the marker's debris spray.
+  readonly debrisPasses?: number;
+  /// Body ids whose `$626A` word has bit 15 set, in destruction order.
+  readonly destroyedBodies?: readonly string[];
   /// `$5A9D9`: whether any door moved on the last pass.
   readonly doorsMoving: boolean;
+  /// `$7A7E`, the drift anchor, null while no ending has armed it.
+  readonly drift?: number | null;
   readonly elapsed: number;
   /// The TOLOSA encounter, or null for the first world's pool with the player alive, as a
   /// migrated record resumes with.
@@ -300,12 +315,16 @@ export interface DamoclesSaveSnapshot {
   readonly frameAccumulator: number;
   /// The open document and the centre box, as a migrated record resumes with none open.
   readonly headCommands: HeadCommandState;
+  /// `$7A82`, raised after the waypoint table runs out.
+  readonly impactPassed?: boolean;
   readonly occupancy: DamoclesSaveOccupancy;
   readonly pendingBriefcaseDrop: {
     readonly head: string;
     readonly residence: PlacedResidence;
   } | null;
   readonly pose: Pose;
+  /// Resident slots removed by the marker when their Association B named a destroyed Body.
+  readonly removedResidents?: readonly string[];
   readonly residence: readonly ResidenceDeparture[];
   /// The run toggle, as a migrated record resumes with it off.
   readonly running: boolean;
@@ -579,6 +598,10 @@ const printableRow = (value: unknown, path: string): string =>
 /// are the landing scripts' (#576), the State President's (#611) and the first offer's (#612).
 const messageIds = new Set<DamoclesMessageId>([
   ...LANDING_MESSAGE_IDS,
+  ...Array.from(
+    { length: 10 },
+    (_, index) => `script15-inline-${index + 1}` as DamoclesMessageId
+  ),
   'script11-inline-1',
   'script11-inline-2',
   'script2-inline-1',
@@ -625,6 +648,7 @@ const messageIds = new Set<DamoclesMessageId>([
   'system-string-22',
   'system-string-3',
   'system-string-33',
+  'system-string-35',
   'system-string-48',
   'system-string-49',
   'system-string-50',
@@ -890,6 +914,7 @@ const SAVED_TRIGGERS: readonly number[] = [
   ...LANDED_TRIGGERS,
   ...LOCATION_TRIGGERS
 ];
+const IMPACT_TRIGGERS: readonly number[] = [...SAVED_TRIGGERS, 15];
 
 /// A step is an index into a script's recovered operation list, and a suspended execution may
 /// only name a step the interpreter can actually stop on. `runToBlock` returns in exactly three
@@ -1005,7 +1030,8 @@ const scriptOf = (
   encounterSaved: boolean,
   current: boolean,
   locationSaved: boolean,
-  offerSaved: boolean
+  offerSaved: boolean,
+  impactSaved: boolean
 ): DamoclesSaveScript => {
   const script = object(value, 'snapshot.script');
   const counter = integer(
@@ -1053,13 +1079,15 @@ const scriptOf = (
       index
     };
   });
-  const expected = migrated
-    ? PICKUP_TRIGGERS
-    : offerSaved
-      ? SAVED_TRIGGERS
-      : locationSaved
-        ? WELCOMED_TRIGGERS
-        : LANDED_TRIGGERS;
+  const expected = impactSaved
+    ? IMPACT_TRIGGERS
+    : migrated
+      ? PICKUP_TRIGGERS
+      : offerSaved
+        ? SAVED_TRIGGERS
+        : locationSaved
+          ? WELCOMED_TRIGGERS
+          : LANDED_TRIGGERS;
   if (
     new Set(triggers.map(trigger => trigger.index)).size !== triggers.length ||
     triggers.length !== expected.length ||
@@ -1236,6 +1264,7 @@ const scriptOf = (
       'system-string-22',
       'system-string-3',
       'system-string-33',
+      'system-string-35',
       'system-string-48',
       'system-string-49',
       'system-string-9'
@@ -1561,6 +1590,89 @@ export const decodeDamoclesSave = (
   if (!finite(snapshot['elapsed'])) {
     return fail('elapsed is not a finite number');
   }
+  const destroyedBodies =
+    record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION
+      ? array(snapshot['destroyedBodies'], 'snapshot.destroyedBodies').map(
+          value =>
+            typeof value === 'string' && /^body-(?:\d|[12]\d)$/.test(value)
+              ? value
+              : fail('destroyed Body id is invalid')
+        )
+      : [];
+  if (new Set(destroyedBodies).size !== destroyedBodies.length) {
+    return fail('destroyed Bodies are duplicated');
+  }
+  const debrisPasses =
+    record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION
+      ? integer(snapshot['debrisPasses'], 'snapshot.debrisPasses', 0, 64)
+      : 0;
+  let blastCentre: {
+    readonly body: string;
+    readonly x: number;
+    readonly y: number;
+    readonly z: number;
+  } | null = null;
+  if (
+    record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION &&
+    snapshot['blastCentre'] !== null
+  ) {
+    const centre = object(snapshot['blastCentre'], 'snapshot.blastCentre');
+    if (
+      typeof centre['body'] !== 'string' ||
+      !destroyedBodies.includes(centre['body']) ||
+      !finite(centre['x']) ||
+      !finite(centre['y']) ||
+      !finite(centre['z'])
+    ) {
+      return fail('blast centre is invalid');
+    }
+    blastCentre = {
+      body: centre['body'],
+      x: centre['x'],
+      y: centre['y'],
+      z: centre['z']
+    };
+  }
+  if (debrisPasses > 0 && blastCentre === null) {
+    return fail('debris has no blast centre');
+  }
+  const drift =
+    record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION
+      ? snapshot['drift']
+      : null;
+  if (
+    drift !== null &&
+    (!Number.isInteger(drift) ||
+      (drift as number) < -0x80_00_00_00 ||
+      (drift as number) > 0x7f_ff_ff_ff)
+  ) {
+    return fail('comet drift is outside its recovered bounds');
+  }
+  const impactPassed =
+    record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION
+      ? snapshot['impactPassed']
+      : false;
+  if (typeof impactPassed !== 'boolean') {
+    return fail('impact latch is invalid');
+  }
+  const removedResidents =
+    record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION
+      ? array(snapshot['removedResidents'], 'snapshot.removedResidents').map(
+          value =>
+            typeof value === 'string' && value.length > 0
+              ? value
+              : fail('removed resident id is invalid')
+        )
+      : [];
+  if (
+    new Set(removedResidents).size !== removedResidents.length ||
+    (catalogue !== undefined &&
+      removedResidents.some(
+        id => !catalogue.instances.some(item => item.id === id)
+      ))
+  ) {
+    return fail('removed resident list is invalid');
+  }
   const carried = array(snapshot['carried'], 'snapshot.carried').map(value =>
     typeof value === 'string' && value !== ''
       ? value
@@ -1734,8 +1846,9 @@ export const decodeDamoclesSave = (
     16
   );
   const current = record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION;
+  const offerSaved = current || record['schemaVersion'] === 20;
   // Schema 19 is the first to carry the location triggers.
-  const locationSaved = current || record['schemaVersion'] === 19;
+  const locationSaved = offerSaved || record['schemaVersion'] === 19;
   // Schema 18 is the first to carry the run toggle.
   const runSaved = locationSaved || record['schemaVersion'] === 18;
   // Schema 17 is the first to carry the document mode.
@@ -1749,6 +1862,7 @@ export const decodeDamoclesSave = (
     encounterSaved,
     documentsSaved,
     locationSaved,
+    offerSaved,
     current
   );
   const running = runSaved ? snapshot['running'] : false;
@@ -1874,19 +1988,25 @@ export const decodeDamoclesSave = (
     schemaVersion: DAMOCLES_SAVE_SCHEMA_VERSION,
     snapshot: {
       angleBytes,
+      blastCentre,
       bodyTurn: bodyTurn as number,
       briefcaseStore,
       carried,
       craft,
+      debrisPasses,
+      destroyedBodies,
       doorsMoving,
+      drift: drift as number | null,
       elapsed: snapshot['elapsed'],
       encounter,
       footTicks,
       frameAccumulator,
       headCommands,
+      impactPassed,
       occupancy,
       pendingBriefcaseDrop,
       pose,
+      removedResidents,
       residence,
       running,
       script,

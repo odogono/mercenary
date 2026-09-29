@@ -117,6 +117,7 @@ import {
   type SystemMarker,
   type SystemProjection
 } from './system.ts';
+import { browserAtlasHandoff } from './travel.ts';
 import { installAtlasTravel } from './travelView.ts';
 
 /// The Atlas document (#405).
@@ -1614,7 +1615,16 @@ const start = async () => {
     if (!response.ok) {
       throw new Error(`Request returned HTTP ${response.status}.`);
     }
-    system = readGammaSystem(await response.json());
+    const loaded = readGammaSystem(await response.json());
+    const destroyed = new Set(
+      browserAtlasHandoff().player()?.destroyedBodies ?? []
+    );
+    system = {
+      ...loaded,
+      bodies: loaded.bodies.filter(
+        body => !destroyed.has(`body-${body.sourceIndex}`)
+      )
+    };
     failure.hidden = true;
     for (const body of system.bodies) {
       const option = document.createElement('option');

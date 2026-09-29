@@ -181,8 +181,11 @@ try {
   // The range scan in space reads the comet where the impact clock has moved it (#558).
   const content = {
     ...loaded,
-    cometAt: (elapsed: number) =>
-      cometCentre(system.comet, impactTime(elapsed, loaded.doc.time))
+    cometAt: (
+      elapsed: number,
+      endgame: { readonly drift: number | null; readonly passed: boolean }
+    ) =>
+      cometCentre(system.comet, impactTime(elapsed, loaded.doc.time), endgame)
   };
   applyTypeface(document.documentElement, readTypefacePreference(storage));
   panelRoot.dataset['rendition'] = 'damocles';
@@ -532,6 +535,7 @@ try {
       }
       const player = {
         bodyId: body.id,
+        destroyedBodies: current.destroyedBodies,
         heading: current.pose.heading,
         x: current.pose.position.x / current.surface.grid.cellUnits,
         z: current.pose.position.z / current.surface.grid.cellUnits
@@ -1193,7 +1197,8 @@ try {
       [
         ...snapshot.carried,
         ...snapshot.briefcaseStore,
-        ...snapshot.residence.map(item => item.instance)
+        ...snapshot.residence.map(item => item.instance),
+        ...snapshot.removedResidents
       ],
       slot => session.carriesSlot(slot),
       snapshot.daylight,
@@ -1204,7 +1209,10 @@ try {
         ? skyPass(system, {
             body: snapshot.pose.body,
             daylight: snapshot.daylight,
+            destroyedBodies: snapshot.destroyedBodies,
+            drift: snapshot.drift,
             impact: impactTime(snapshot.elapsed, content.doc.time),
+            impactPassed: snapshot.impactPassed,
             position: snapshot.pose.position,
             sky: snapshot.surface.sky,
             smooth: enhanced,
@@ -1212,8 +1220,11 @@ try {
             turn: snapshot.bodyTurn
           })
         : spaceSkyPass(system, {
+            destroyedBodies: snapshot.destroyedBodies,
+            drift: snapshot.drift,
             eye: space.position,
             impact: impactTime(snapshot.elapsed, content.doc.time),
+            impactPassed: snapshot.impactPassed,
             inScene: index =>
               (content.catalogue.craft?.bodies[index]?.y ?? 0) >= 0,
             stars

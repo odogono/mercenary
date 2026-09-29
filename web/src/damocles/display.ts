@@ -70,6 +70,7 @@ export type DocumentMessageId = `document-${number}-${number}`;
 
 export type DamoclesMessageId =
   | (typeof LANDING_MESSAGE_IDS)[number]
+  | `script15-inline-${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10}`
   | 'script11-inline-1'
   | 'script11-inline-2'
   | 'script2-inline-1'
@@ -117,6 +118,7 @@ export type DamoclesMessageId =
   | 'system-string-22'
   | 'system-string-3'
   | 'system-string-33'
+  | 'system-string-35'
   | 'system-string-48'
   | 'system-string-49'
   | 'system-string-50'

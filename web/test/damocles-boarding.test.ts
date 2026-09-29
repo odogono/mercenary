@@ -1858,7 +1858,7 @@ describe('the noise pointer on foot and at New Game (#582)', () => {
           script: {
             ...older.script,
             triggers: older.script.triggers.filter(
-              item => item.index !== 3 && item.index !== 4
+              item => item.index !== 3 && item.index !== 4 && item.index !== 15
             )
           }
         }

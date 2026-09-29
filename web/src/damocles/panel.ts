@@ -98,18 +98,17 @@ export const bodyCoordinateReadout = (position: Vector3): string => {
   return `${bodyDigits(steps.x)}-${bodyDigits(steps.z)}`;
 };
 
-/// The impact clock, as `HH-MM-SS` counting down toward the comet's arrival (#368).
+/// The impact clock, as `HH-MM-SS` counting down, then up past zero (#368, #624).
 ///
 /// `$793C` holds minus the remaining seconds and counts up toward zero at 50 VBLs a displayed
 /// second (#551, correcting #208's 20), so a Session second is `vblHertz / impactVblsPerSecond`
-/// displayed seconds: exactly one at PAL 50 Hz, on foot and aboard on a Body. A Session that models no impact still has to answer
-/// for the moment the deadline runs out, and what it answers is `00-00-00`: the clock stops
-/// there and play goes on, because there is no impact here to arrive.
+/// displayed seconds: exactly one at PAL 50 Hz, on foot and aboard on a Body. The ST continues
+/// counting after zero and rolls whole days into `$7940`.
 export const impactClock = (
   elapsed: number,
   time: ErisPresentationDocument['time']
 ): string => {
-  const remaining = -impactTime(elapsed, time).seconds;
+  const remaining = Math.abs(impactTime(elapsed, time).seconds) % 86_400;
   return [
     Math.floor(remaining / 3600),
     Math.floor(remaining / 60) % 60,

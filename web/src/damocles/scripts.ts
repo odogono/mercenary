@@ -13,6 +13,7 @@ import type { DamoclesMessageId } from './display.ts';
 
 export const SCRIPT_IDS = [
   'damocles.script.slot-11',
+  'damocles.script.slot-15',
   'damocles.script.slot-2',
   'damocles.script.slot-20',
   'damocles.script.slot-3',
@@ -288,6 +289,23 @@ export interface Script {
 export const WAIT_FROM_DOCUMENT = -1;
 
 export const SCRIPTS: Readonly<Record<ScriptId, Script>> = {
+  // $07169E, trigger $0F: zero on the impact clock. The State President answers according to
+  // the first offer's accepted bit; neither branch changes the balance.
+  'damocles.script.slot-15': {
+    entry: 0x07_16_9e,
+    ops: [
+      { kind: 'if-flag', mask: OFFER_ACCEPTED_FLAG, to: 11 },
+      ...[6, 7, 8, 9, 10].map(index =>
+        message(`script15-inline-${index}` as DamoclesMessageId)
+      ),
+      ...sharedEpilogue(),
+      ...[1, 2, 3, 4, 5].map(index =>
+        message(`script15-inline-${index}` as DamoclesMessageId)
+      ),
+      ...sharedEpilogue()
+    ],
+    revision: 1
+  },
   // $07042A. KEY- V.I.P. LIMO, resident slot 183.
   'damocles.script.slot-2': {
     entry: 0x07_04_2a,
@@ -541,6 +559,7 @@ export const LANDING_TRIGGERS: readonly number[] = [
 
 export const SCRIPT_FOR_TRIGGER: Readonly<Record<number, ScriptId>> = {
   11: 'damocles.script.slot-11',
+  15: 'damocles.script.slot-15',
   2: 'damocles.script.slot-2',
   20: 'damocles.script.slot-20',
   3: 'damocles.script.slot-3',
@@ -569,6 +588,7 @@ export const TRIGGER_ARMING: readonly {
   readonly byte: number;
   readonly index: number;
 }[] = [
+  { byte: 0xa0, index: 15 },
   { byte: 0x80, index: 2 },
   { byte: 0xa0, index: 5 },
   { byte: 0x80, index: 6 },

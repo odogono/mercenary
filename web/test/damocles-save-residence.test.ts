@@ -58,16 +58,21 @@ const record = () => ({
   schemaVersion: DAMOCLES_SAVE_SCHEMA_VERSION,
   snapshot: {
     angleBytes: [],
+    blastCentre: null,
     bodyTurn: 0,
     briefcaseStore: [] as string[],
     carried: [] as string[],
     craft: null,
+    debrisPasses: 0,
+    destroyedBodies: [],
     doorsMoving: false,
+    drift: null,
     elapsed: 0,
     encounter: null,
     footTicks: 0,
     frameAccumulator: 0,
     headCommands: initialHeadCommands(),
+    impactPassed: false,
     occupancy: { kind: 'onFoot' } as DamoclesSaveOccupancy,
     pendingBriefcaseDrop: null as {
       head: string;
@@ -79,6 +84,7 @@ const record = () => ({
       pitch: 0,
       position: { x: 12, y: 80, z: 34 }
     },
+    removedResidents: [],
     residence: [] as { instance: string; residence: Residence }[],
     running: false,
     script: initialDamoclesSaveScript(),
