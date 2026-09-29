@@ -244,7 +244,7 @@ The remaining sequence-critical prerequisites are the passenger/service state an
 
 ## Ordered follow-up issue proposals
 
-R1 now has a [taxi-journey research report](mercenary-iii-taxi-journeys.md) for [#615](https://github.com/odogono/mercenary/issues/615): reproduced routes, passenger admission/exit, selection versus Start, message gates, timing/economic bounds and R2–R4 handoffs. It refines the conditional milestone below without authorizing implementation. R2 has a [content and presentation report](mercenary-iii-taxi-content-presentation.md) for [#618](https://github.com/odogono/mercenary/issues/618).
+R1 now has a [taxi-journey research report](mercenary-iii-taxi-journeys.md) for [#615](https://github.com/odogono/mercenary/issues/615): reproduced routes, passenger admission/exit, selection versus Start, message gates, timing/economic bounds and R2–R4 handoffs. It refines the conditional milestone below without authorizing implementation. R2 has a [content and presentation report](mercenary-iii-taxi-content-presentation.md) for [#618](https://github.com/odogono/mercenary/issues/618). R3 has a [persistence report](mercenary-iii-taxi-persistence.md) for [#619](https://github.com/odogono/mercenary/issues/619).
 
 The table records the original proposals for review; the R1 follow-up is linked above. Evidence work is separated from implementation; exhaustive recovery and general Damocles completion are not prerequisites.
 
