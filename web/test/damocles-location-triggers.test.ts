@@ -13,7 +13,10 @@ import {
   encodeDamoclesSave,
   type DamoclesSaveSnapshot
 } from '../src/damocles/save.ts';
-import { ENDING_TRIGGERS } from '../src/damocles/scripts.ts';
+import {
+  DESTRUCTION_TRIGGERS,
+  ENDING_TRIGGERS
+} from '../src/damocles/scripts.ts';
 import {
   DamoclesSession,
   type DamoclesContent
@@ -24,6 +27,9 @@ import { intent } from '../src/gameCore/index.ts';
 import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
+
+/// The endings a record older than schema 22 does not carry.
+const OLDER_ENDINGS = [...ENDING_TRIGGERS, ...DESTRUCTION_TRIGGERS];
 
 /// The location-trigger table `[$7A68]` and the region walk `$05A6EC` that reads it (#611,
 /// docs/research/damocles-location-triggers.md). In the Eris STATE OFFICE, trigger 3 presents
@@ -346,7 +352,7 @@ describe('entering the State Office (#611)', () => {
         item.index !== 3 &&
         item.index !== 4 &&
         item.index !== 15 &&
-        !ENDING_TRIGGERS.includes(item.index)
+        !OLDER_ENDINGS.includes(item.index)
     );
     expect(decode(record(18, withoutLocations)).script.triggers).toEqual(
       snapshot.script.triggers

@@ -18,6 +18,7 @@ import {
 } from '../src/damocles/script.ts';
 import {
   CLEARING_LINE_FRAMES,
+  DESTRUCTION_TRIGGERS,
   ENDING_TRIGGERS,
   LANDING_TRIGGERS,
   LOCATION_TRIGGERS,
@@ -371,6 +372,7 @@ describe('the recovered trigger table', () => {
       ...PICKUP_TRIGGERS,
       ...LOCATION_TRIGGERS,
       ...ENDING_TRIGGERS,
+      ...DESTRUCTION_TRIGGERS,
       ...LANDING_TRIGGERS
     ]);
     // `$20`-`$3B` without ERIS's `$2A`; DAMOCLES's `$3C` is the deflection ending.
@@ -384,7 +386,7 @@ describe('the recovered trigger table', () => {
     ).toEqual([0x38]);
     expect(
       triggers.filter(trigger => trigger.queueable).map(item => item.index)
-    ).toEqual([15, 5, 4, ...ENDING_TRIGGERS]);
+    ).toEqual([15, 5, 4, ...ENDING_TRIGGERS, ...DESTRUCTION_TRIGGERS]);
     expect(triggers.every(trigger => trigger.script !== null)).toBe(true);
   });
 

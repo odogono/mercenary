@@ -93,7 +93,8 @@ const record = () => ({
     script: initialDamoclesSaveScript(),
     scrollCounter: 0,
     spaceMemory: null,
-    structure: null
+    structure: null,
+    switches: 0
   },
   where: 'VESTA'
 });

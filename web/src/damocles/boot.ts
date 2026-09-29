@@ -1055,6 +1055,8 @@ try {
     root['impactSeconds'] = String(snapshot.impact.seconds);
     root['destroyedBodies'] = snapshot.destroyedBodies.join(' ');
     root['drift'] = snapshot.drift === null ? '' : String(snapshot.drift);
+    // `$7872`, the switch bits, as hex (#627).
+    root['switches'] = snapshot.switches.toString(16);
     root['impactPassed'] = String(snapshot.impactPassed);
     root['x'] = String(snapshot.pose.position.x);
     root['y'] = String(snapshot.pose.position.y);

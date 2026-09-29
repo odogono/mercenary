@@ -626,6 +626,7 @@ export type SystemMessageId =
   | 'system-string-22'
   | 'system-string-3'
   | 'system-string-33'
+  | 'system-string-34'
   | 'system-string-35'
   | 'system-string-48'
   | 'system-string-49'

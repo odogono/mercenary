@@ -186,6 +186,7 @@ const boxPanel = (panel: DocumentPanel | null): CentreBoxPanel | null =>
         field: stColour(panel.colour3),
         ground: stColour(panel.colour15),
         item: panel.item,
+        kind: panel.kind,
         title: panel.title
       };
 

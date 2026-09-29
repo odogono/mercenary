@@ -226,6 +226,10 @@ _Avoid_: Spell, BOOK ending, magic
 A Damocles Body marked as destroyed by the endgame: absent from the sky, Atlas and arrival scan, with objects associated to it removed from play. A player standing on it enters the Damocles Death State.
 _Avoid_: Removed Body, missing Body
 
+**Detonator**:
+One of the four disguised Damocles switches, the SIDEBOARD, CUPBOARD, HI-FI and WASHBASIN, whose panels read NOVA TRIGGER 1 to 4. Opened at the head of the Carried Stack, Next switches it on and Previous off. The switch stays on when the object is put down, and when all four are on the NOVABOMB destroys the Body it rests on, wherever that is, or the player's own Body and the player if it is carried.
+_Avoid_: Trigger, nova switch, fuse
+
 **Primary**:
 The optional Body that another Body is grouped under in a System's drawn hierarchy; absence means the grouping is not established, not that the Body stands alone. It names how a System organises its Bodies for presentation and naming, and asserts no revolution: in Damocles the recovered System is static apart from its comet, so a Body's Primary is not something it goes round.
 _Avoid_: Parent, centre, star, inferred Primary, orbit, revolution
@@ -347,7 +351,7 @@ A device-independent one-shot player command whose availability, conflicts, orde
 _Avoid_: Movement Intent, key press, button press, scan code
 
 **Head Command**:
-One of the four Damocles Semantic Actions — Open, Read, Next, Previous — that the Reference Build binds to the numeric keypad's Enter, `*`, `+` and `-`. Only Open acts on the object at the head of the Carried Stack: on most objects it does nothing, and on one of the documents it opens that document on the Benson Panel's centre box. Read, Next and Previous act on the document already open, whatever the head has rotated to since, and only dropping the open object closes it.
+One of the four Damocles Semantic Actions — Open, Read, Next, Previous — that the Reference Build binds to the numeric keypad's Enter, `*`, `+` and `-`. Only Open acts on the object at the head of the Carried Stack: on most objects it does nothing, and on one of the documents it opens that document on the Benson Panel's centre box. Read, Next and Previous act on the document already open, whatever the head has rotated to since, and only dropping the open object closes it. On a Detonator's panel Next and Previous switch it on and off, and Read does nothing.
 _Avoid_: Keypad command, object command, document controls, read key
 
 **Semantic Mode**:

@@ -12,6 +12,7 @@ import {
 import {
   BOOK_SLOT,
   COLOURFUL_MASK,
+  DESTRUCTION_TRIGGERS,
   ENDING_TRIGGERS,
   MAGIC_CRYSTAL_SLOT,
   NEW_GAME_BALANCE,
@@ -26,6 +27,9 @@ import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
+
+/// The endings a record older than schema 22 does not carry.
+const OLDER_ENDINGS = [...ENDING_TRIGGERS, ...DESTRUCTION_TRIGGERS];
 
 /// The BOOK's wishes with the MAGIC CRYSTAL carried (#625), against the note's two live runs
 /// (docs/research/damocles-endgame.md): `wish --page 5 --then-impact` and `--page 3`, both from
@@ -460,7 +464,7 @@ describe('the wish Save', () => {
           ...snapshot.script,
           balance: undefined,
           triggers: snapshot.script.triggers.filter(
-            item => !ENDING_TRIGGERS.includes(item.index)
+            item => !OLDER_ENDINGS.includes(item.index)
           ),
           wish: undefined
         }
@@ -514,7 +518,7 @@ describe('the wish Save', () => {
           balance: undefined,
           execution: { ...current, revision: 1, step: current.step - 2 },
           triggers: saved.script.triggers.filter(
-            item => !ENDING_TRIGGERS.includes(item.index)
+            item => !OLDER_ENDINGS.includes(item.index)
           ),
           wish: undefined
         }

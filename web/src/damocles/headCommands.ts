@@ -1,7 +1,8 @@
 import type { HeadCommand } from '../interaction/index.ts';
 import { documentFor, type DamoclesDocuments } from './documentBank.ts';
 
-/// The document mode of the Head Commands (#598, docs/research/damocles-head-commands.md).
+/// The document and switch modes of the Head Commands (#598, #627,
+/// docs/research/damocles-head-commands.md).
 ///
 /// Only Open reads the Carried Stack's head. Read, Next and Previous act on the document already
 /// open, whatever the head has rotated to since. The open document shows on the Benson Panel's
@@ -32,14 +33,72 @@ export interface CentreBox {
   readonly to: number | null;
 }
 
-/// A document's panel as the centre box draws it: the object's name, the item name drawn in its
-/// field if one has been, and the Open table row's two colours as ST `0RGB`.
+/// A panel as the centre box draws it: the title, what is drawn in its field if anything has
+/// been, and the Open table row's two colours as ST `0RGB`. A document's field is its current
+/// item's name; a switch's is its lamp, ON or OFF (`$04D992`).
 export interface DocumentPanel {
   readonly colour15: number;
   readonly colour3: number;
   readonly item: string | null;
+  readonly kind: 'document' | 'switch';
   readonly title: string;
 }
+
+/// A mode-6 row of the Open table at `$04D2C4`: a switch, whose index halved is its bit of the
+/// long `$7872` (`$04D420`). The port opens the four disguised detonators, bits 3 to 6, whose
+/// title strips read NOVA TRIGGER 1 to 4 in the #626 captures. The TV CONTROL, the GHETTOBLASTER
+/// and the GEIGER COUNTER share the mode, but what their bits drive is not ported, so they have
+/// no row here yet.
+export interface SwitchRow {
+  readonly colour15: number;
+  readonly colour3: number;
+  readonly index: number;
+  readonly slot: number;
+  readonly title: string;
+}
+
+export const SWITCH_ROWS: readonly SwitchRow[] = [
+  {
+    colour15: 0x6_00,
+    colour3: 0x7_55,
+    index: 0x06,
+    slot: 84,
+    title: 'NOVA TRIGGER 1'
+  },
+  {
+    colour15: 0x6_00,
+    colour3: 0x7_55,
+    index: 0x08,
+    slot: 85,
+    title: 'NOVA TRIGGER 2'
+  },
+  {
+    colour15: 0x6_00,
+    colour3: 0x7_55,
+    index: 0x0a,
+    slot: 86,
+    title: 'NOVA TRIGGER 3'
+  },
+  {
+    colour15: 0x6_00,
+    colour3: 0x7_55,
+    index: 0x0c,
+    slot: 87,
+    title: 'NOVA TRIGGER 4'
+  }
+];
+
+/// The switch row an object slot opens, if it has one.
+export const switchFor = (
+  slot: number | null | undefined
+): SwitchRow | undefined => SWITCH_ROWS.find(row => row.slot === slot);
+
+/// Bits 3 to 6 of `$7872`, the four disguised detonators, all of which the NOVABOMB waits on
+/// (`$04D44E`).
+export const DETONATOR_BITS = 0x78;
+
+/// The bit of `$7872` a switch sets and clears: `$7860`, the row's index, shifted right once.
+export const switchBit = (row: SwitchRow): number => row.index >> 1;
 
 /// The centre box with its panels resolved for drawing. `null` is the DAMOCLES logo.
 export interface CentreBoxSnapshot {
@@ -74,6 +133,12 @@ export const initialHeadCommands = (): HeadCommandState => ({
 
 export type HeadCommandOutcome =
   | { readonly kind: 'ignored' }
+  | {
+      /// `+` (on) or `-` (off) on the open switch: the session owns `$7872`.
+      readonly kind: 'switch';
+      readonly on: boolean;
+      readonly row: SwitchRow;
+    }
   | {
       readonly kind: 'closed' | 'opened' | 'paged';
       readonly state: HeadCommandState;
@@ -126,16 +191,16 @@ export const tickCentreBox = (state: HeadCommandState): HeadCommandState =>
       };
 
 /// Whether Open acts on `head`, the Carried Stack's head slot, once the transition allows a key:
-/// it has a document in the Open table and is not the shut NOVAGEN SAFE.
+/// it has a document or a switch in the Open table and is not the shut NOVAGEN SAFE.
 export const opensHead = (
   head: number | undefined,
   documents: DamoclesDocuments
 ): head is number =>
   head !== undefined &&
   head !== NOVAGEN_SAFE_SLOT &&
-  documentFor(documents, head) !== undefined;
+  (documentFor(documents, head) !== undefined || switchFor(head) !== undefined);
 
-/// `$04D3D2` for the document mode. `head` is the Carried Stack's head slot, if it has one, and
+/// `$04D3D2` for the document and switch modes. `head` is the Carried Stack's head slot, if it has one, and
 /// `readPending` is `$7B96`, which a Read waits on.
 export const headCommand = (
   state: HeadCommandState,
@@ -167,6 +232,14 @@ export const headCommand = (
     };
   }
   const open = state.open;
+  // `$04D420`: a switch panel takes `+` and `-`, whatever the head has rotated to, and nothing
+  // else.
+  const row = switchFor(open?.slot);
+  if (row !== undefined) {
+    return command === 'next' || command === 'previous'
+      ? { kind: 'switch', on: command === 'next', row }
+      : IGNORED;
+  }
   const document =
     open === null ? undefined : documentFor(documents, open.slot);
   if (open === null || document === undefined) {
