@@ -173,10 +173,13 @@ Eight bytes a row: object, mode, index, 0, then colour 15 and colour 3 as ST `0R
 A switch is bit `index / 2` of the long `$7872` (`$04D420`–`$04D4CE`). Switching one draws its
 on/off indicator in the box (`$04D992`). When bits 3 to 6 are all set, which means the four
 disguised detonators are on, and `$7634` is non-zero, `$04D458` clears `$7634` and detonates.
-If `$7236` is not negative it destroys object `$7634` (`$04C8D2`). Otherwise it runs `$04CAF4`
-on the NOVABOMB (163), destroys the Body in `$7AA6` unless that is none or `$78`, and fires
-trigger `$22`. The TOP SECRET FILE's `DETONATE` and `DISGUISE` items describe this. What
-`$7634` and `$7236` hold was not decoded. Porting it belongs to the endgame map, not to #595.
+If `$7236` is not negative it destroys the Body in `$7634`'s first byte (`$04C8D2`). Otherwise
+it runs `$04CAF4` on the NOVABOMB (163), destroys the Body in `$7AA6` unless that is none or
+`$78`, and kills the player through `$04CBB0` with system string `$22`, OOPS! - YOU'VE BLOWN
+YOURSELF UP. That is a system string, not a trigger. The TOP SECRET FILE's `DETONATE` and
+`DISGUISE` items describe this. `$7634` is the NOVABOMB's Association B and `$7236` its
+handling byte, bit 7 carried ([the endgame note](damocles-endgame.md), #622). Porting it
+belongs to [the endgame map](https://github.com/odogono/mercenary/issues/580), not to #595.
 
 The safe's gate `$7A60` has one writer. When an explosion reaches the NOVAGEN SAFE while the
 detonator's digit `$7866` is 3 or less, `$04CA98` sets the gate instead of clearing the safe's
