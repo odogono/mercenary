@@ -15,6 +15,7 @@ export const SCRIPT_IDS = [
   'damocles.script.slot-11',
   'damocles.script.slot-2',
   'damocles.script.slot-20',
+  'damocles.script.slot-3',
   'damocles.script.slot-32',
   'damocles.script.slot-33',
   'damocles.script.slot-34',
@@ -169,6 +170,24 @@ export const SCRIPTS: Readonly<Record<ScriptId, Script>> = {
       { kind: 'return' }
     ],
     revision: 2
+  },
+  // $0704C8, location trigger 3: the State President's welcome, on first entering an indoor
+  // region of the Eris STATE OFFICE on Floor 0. 800 + 50 + 400 frames, and like trigger 6 its
+  // own ending clears the busy flag with no clearing line, so the last row stays held.
+  'damocles.script.slot-3': {
+    entry: 0x07_04_c8,
+    ops: [
+      message('script3-inline-1'),
+      message('script3-inline-2'),
+      message('script3-inline-3'),
+      message('script3-inline-4'),
+      ...clearingLine(),
+      message('script3-inline-5'),
+      message('script3-inline-6'),
+      { kind: 'clear-busy' },
+      { kind: 'return' }
+    ],
+    revision: 1
   },
   // $070AEA. KEY - EAGLE 9SE, resident slot 181. 600 + 500 + 50 frames.
   'damocles.script.slot-5': {
@@ -374,6 +393,11 @@ export const TRIGGER_FOR_RESIDENT: Readonly<Record<string, number>> = {
   'object-slot-95': 20
 };
 
+/// The location triggers the port runs (docs/research/damocles-location-triggers.md): the tables
+/// name twelve more, whose scripts need a balance or a key poll the port lacks, or are not yet
+/// authored. The walk still finds their entries; with no trigger here the launcher refuses them.
+export const LOCATION_TRIGGERS: readonly number[] = [3];
+
 /// The landing triggers `body + $1F` the port runs: `$20`-`$3B` without ERIS's `$2A`, which the
 /// landing skips and whose script is the author's computer's (#576). DAMOCLES's `$3C` is the
 /// deflection ending, and the landing skips it too.
@@ -386,6 +410,7 @@ export const SCRIPT_FOR_TRIGGER: Readonly<Record<number, ScriptId>> = {
   11: 'damocles.script.slot-11',
   2: 'damocles.script.slot-2',
   20: 'damocles.script.slot-20',
+  3: 'damocles.script.slot-3',
   5: 'damocles.script.slot-5',
   6: 'damocles.script.slot-6',
   62: 'damocles.script.slot-62',
@@ -397,8 +422,8 @@ export const SCRIPT_FOR_TRIGGER: Readonly<Record<number, ScriptId>> = {
   )
 };
 
-/// The arming table at `$7CB4` as the pinned capture holds it, for the six pickup triggers and
-/// the 27 landing triggers.
+/// The arming table at `$7CB4` as the pinned capture holds it, for the six pickup triggers, the
+/// State President's location trigger and the 27 landing triggers.
 ///
 /// Bit 7 is armed, bit 5 queues while busy and bit 6 is sticky. Only trigger 5 is queueable
 /// (`$A0`). The whole 64-byte table holds exactly one sticky byte, TOLOSA's `$38` (`$C0`), so
@@ -416,6 +441,7 @@ export const TRIGGER_ARMING: readonly {
   { byte: 0x80, index: 11 },
   { byte: 0x80, index: 20 },
   { byte: 0x80, index: 62 },
+  { byte: 0x80, index: 3 },
   ...LANDING_TRIGGERS.map(index => ({
     byte: index === 0x38 ? 0xc0 : 0x80,
     index

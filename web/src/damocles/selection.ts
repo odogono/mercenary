@@ -222,6 +222,9 @@ export interface ClampedStructureStep {
   /// than standing past an edge or entering another region.
   readonly refused: boolean;
   readonly regionIndex: number | null;
+  /// The step passed the current region's own box, so `$05A6E8` walked the regions and then the
+  /// location table, whether or not a region was selected (docs/research/damocles-location-triggers.md).
+  readonly reselected: boolean;
 }
 
 /// The Working Authority's eye pushback `$05A64A` after one Mover step. Inside the current
@@ -243,7 +246,7 @@ export const clampStructureStep = (
 ): ClampedStructureStep => {
   const selection = placement.selection;
   if (selection === undefined) {
-    return { pose: to, refused: false, regionIndex: null };
+    return { pose: to, refused: false, regionIndex: null, reselected: false };
   }
   const regions = selection.structure.regions;
   const currentIndex =
@@ -253,7 +256,8 @@ export const clampStructureStep = (
     return {
       pose: to,
       refused: false,
-      regionIndex: structureRegionAt(placement, to, negateZ, latches)
+      regionIndex: structureRegionAt(placement, to, negateZ, latches),
+      reselected: false
     };
   }
 
@@ -296,7 +300,12 @@ export const clampStructureStep = (
       ? null
       : structureRegionAt(placement, to, negateZ, latches);
     if (selected !== null) {
-      return { pose: to, refused: false, regionIndex: selected };
+      return {
+        pose: to,
+        refused: false,
+        regionIndex: selected,
+        reselected: true
+      };
     }
     refused = true;
     for (const axis of [0, 1]) {
@@ -319,7 +328,8 @@ export const clampStructureStep = (
     pose,
     refused,
     regionIndex:
-      structureRegionAt(placement, pose, negateZ, latches) ?? currentIndex
+      structureRegionAt(placement, pose, negateZ, latches) ?? currentIndex,
+    reselected: !withinOwnBox
   };
 };
 

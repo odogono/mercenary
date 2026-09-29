@@ -1853,7 +1853,13 @@ describe('the noise pointer on foot and at New Game (#582)', () => {
       JSON.stringify({
         ...JSON.parse(encoded(current)),
         schemaVersion: 14,
-        snapshot: older
+        snapshot: {
+          ...older,
+          script: {
+            ...older.script,
+            triggers: older.script.triggers.filter(item => item.index !== 3)
+          }
+        }
       })
     );
     expect(migrated).toEqual({ ...current, encounter: null, footTicks: 0 });

@@ -60,6 +60,7 @@ import {
   type HeadCommandState
 } from './headCommands.ts';
 import { classifyPosition, type LandSea } from './islands.ts';
+import { locationTrigger } from './locationTriggers.ts';
 import { walk, type WalkRules } from './mover.ts';
 import {
   poseOfArrival,
@@ -1043,6 +1044,32 @@ export class DamoclesSession implements TitleSession<
     }
   }
 
+  /// `$05A6EC`: fire the first location-trigger entry that names the cell, the region and the
+  /// Floor the eye now stands in, through the launcher the pickups and landings use.
+  private walkLocationTable(): void {
+    const index = this.regionIndex;
+    const region =
+      index === null
+        ? undefined
+        : this.boundPlacement?.selection?.structure.regions[index];
+    const island = nearestIsland(this.surface, this.pose.position);
+    if (index === null || region === undefined || island === undefined) {
+      return;
+    }
+    const cell = islandLocalCell(this.pose.position, this.surface.grid, island);
+    const trigger = locationTrigger(island.locationTable, {
+      cell: cell.x + 16 * cell.z,
+      floor: this.floor,
+      region: index + 1,
+      regionFlags: region.flags
+    });
+    if (trigger !== null) {
+      const transition = fireTrigger(this.script, trigger, this.scriptRules);
+      this.script = transition.state;
+      this.effects.push(...transition.effects);
+    }
+  }
+
   /// Reads ahead the structures `ground`'s Floors bind, so a Floor change finds them in hand. No
   /// Floor structure is a placed Model, so neither the Body's waves nor Atlas Travel read them.
   private readFloors(ground: ErisPlacement): void {
@@ -1630,6 +1657,11 @@ export class DamoclesSession implements TitleSession<
           // `$05A35C`: the region is not reselected while a ride is pending.
           if (this.ride === null) {
             this.enterRegion(clamped.regionIndex);
+          }
+          // `$05A6EC` walks the table after the region walk even where it selected nothing, as
+          // against a lift car's wall during a ride.
+          if (clamped.reselected) {
+            this.walkLocationTable();
           }
         } else {
           this.pose = moved;

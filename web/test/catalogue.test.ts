@@ -1653,6 +1653,13 @@ const islandFixture = () => ({
   },
   id: 'island-test-063272',
   landColour: '#006600',
+  locationTable: {
+    entries: [
+      { cell: 0x89, floor: 0, region: 0, trigger: 3 },
+      { cell: 0x89, floor: 2, region: 7, trigger: 4 }
+    ] as { cell: number; floor: number; region: number; trigger: number }[],
+    sourceAddress: 0x02_51_15
+  },
   origin: [32, 1056],
   reason: 'Synthetic island',
   sourceAddress: 0x06_32_72,
@@ -1681,6 +1688,30 @@ describe('Damocles island records', () => {
         'workspace disagrees'
       );
     }
+  });
+  it('carries the group’s location table, and refuses a terminator or an unsigned Floor', () => {
+    const value = { ...fixture(), islands: [islandFixture()] };
+    expect(parseCatalogue(value).islands[0]!.locationTable).toEqual({
+      entries: [
+        { cell: 0x89, floor: 0, region: 0, trigger: 3 },
+        { cell: 0x89, floor: 2, region: 7, trigger: 4 }
+      ],
+      sourceAddress: 0x02_51_15
+    });
+    const terminator = islandFixture();
+    terminator.locationTable.entries = [
+      { cell: 0, floor: 0, region: 0, trigger: 3 }
+    ];
+    expect(() =>
+      parseCatalogue({ ...fixture(), islands: [terminator] })
+    ).toThrow('table terminator');
+    const unsigned = islandFixture();
+    unsigned.locationTable.entries = [
+      { cell: 0x89, floor: 0xff, region: 0, trigger: 3 }
+    ];
+    expect(() => parseCatalogue({ ...fixture(), islands: [unsigned] })).toThrow(
+      'signed byte'
+    );
   });
   it('refuses a coastline whose edge cycle does not close', () => {
     const island = islandFixture();

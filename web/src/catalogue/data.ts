@@ -740,6 +740,17 @@ export interface Island {
   readonly id: string;
   /** The `+8` word, which `$04EB46` publishes to `$7A1A` as the island's fill. */
   readonly landColour: string;
+  /**
+   * The bound group's location-trigger table, which `$04ED26` publishes to `$7A68` from the
+   * byte after the group record's place list. Islands that share a group carry the same
+   * table, and VULCAN ISLAND's is the junk its unterminated place list leaves, as the loader
+   * reads it (docs/research/damocles-location-triggers.md). The zero cell byte that ends it is
+   * not carried.
+   */
+  readonly locationTable: {
+    readonly entries: readonly LocationEntry[];
+    readonly sourceAddress: number;
+  };
   /** The record's `+0`/`+2`, in whole Surface Cells, masked onto the surface. */
   readonly origin: readonly [number, number];
   readonly reason: string;
@@ -751,6 +762,18 @@ export interface Island {
   readonly structureGroup: number;
   /** The group record that workspace is built from; null because group `$00` binds nothing. */
   readonly workspace: number | null;
+}
+/**
+ * One four-byte location-trigger entry, as the region walk `$05A6F6` reads it. `cell` is the
+ * workspace cell byte `$7B5C` holds, never 0, which ends the table. `region` is the 1-based
+ * region index `$7AFC`: 0 matches any region whose flags have bit 14 clear, and `$FF` is the
+ * cell-entry walk's (`$054C94`). `floor` is signed: negative matches any Floor.
+ */
+export interface LocationEntry {
+  readonly cell: number;
+  readonly floor: number;
+  readonly region: number;
+  readonly trigger: number;
 }
 export interface BankExtent {
   readonly bankEnd: number;
@@ -2139,6 +2162,24 @@ export const parseCatalogueDocument = (value: unknown): Catalogue => {
       fail('island boxes are not extent, core and exclusions in order');
     }
     const extent = object(i['extent']);
+    const table = object(i['locationTable']);
+    const entries = list(table['entries']).map((value): LocationEntry => {
+      const entry = object(value);
+      const floor = number(entry['floor']);
+      if (!Number.isSafeInteger(floor) || floor < -0x80 || floor > 0x7f) {
+        fail('location entry Floor is not a signed byte');
+      }
+      return {
+        cell: byte(entry['cell']),
+        floor,
+        region: byte(entry['region']),
+        trigger: byte(entry['trigger'])
+      };
+    });
+    // A zero cell byte ends the table, so an entry cannot carry one.
+    if (entries.some(entry => entry.cell === 0)) {
+      fail('a location entry carries the table terminator');
+    }
     return {
       areaName: i['areaName'] === null ? null : string(i['areaName']),
       body,
@@ -2157,6 +2198,10 @@ export const parseCatalogueDocument = (value: unknown): Catalogue => {
       },
       id: string(i['id']),
       landColour: string(i['landColour']),
+      locationTable: {
+        entries,
+        sourceAddress: integer(table['sourceAddress'])
+      },
       origin: cellPair(i['origin']),
       reason: string(i['reason']),
       sourceAddress: integer(i['sourceAddress']),

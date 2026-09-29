@@ -522,6 +522,10 @@ _Avoid_: Gameplay Session, Damocles world, level data
 A program from Damocles's successor 16-bit bytecode VM Confirmed in the Working Authority, distinct from a Benson Script and from the C64 Benson encoding (ADR 0015).
 _Avoid_: Benson Script (for Damocles), game script, ST bytecode dump
 
+**Location Trigger**:
+A Damocles Script trigger that a structure group's location table fires when the eye enters a region: the table's entry names a cell, a region (or any indoor one) and a Floor, and the walk runs only when the region is reselected, not on a Floor change or a lift arrival. It is distinct from the triggers a pickup or a landing fires, and it shares their launcher, arming and one-shot rule.
+_Avoid_: Room trigger, zone event, area script
+
 **Damocles Death State**:
 Where a zap leaves the Damocles player: the main loop stops, the view fades to black, the Body reads VOID, and only restoring a Save leaves it; a Save made in it restores into it (ADR 0055).
 _Avoid_: Game over, respawn, lives

@@ -454,9 +454,20 @@ interface EditableRecord {
       open: { item: number; slot: number };
     };
     running?: boolean;
-    script: { display: { plane?: number }; read?: string | null };
+    script: {
+      display: { plane?: number };
+      read?: string | null;
+      triggers: { armed: boolean; index: number }[];
+    };
   };
 }
+
+/// Before schema 19 no record carried the State President's location trigger 3.
+const beforeLocations = (record: EditableRecord): void => {
+  record.snapshot.script.triggers = record.snapshot.script.triggers.filter(
+    trigger => trigger.index !== 3
+  );
+};
 
 const identity = () => damoclesSaveIdentity(loaded.catalogue, 'test');
 
@@ -524,6 +535,7 @@ describe('the Save', () => {
     vbls(session, 1);
     const older = edited(session, record => {
       record.schemaVersion = 16;
+      beforeLocations(record);
       delete record.snapshot.headCommands;
       delete record.snapshot.script.read;
       delete record.snapshot.script.display.plane;
@@ -544,6 +556,7 @@ describe('the Save', () => {
     const older = decoded(
       edited(session, record => {
         record.schemaVersion = 17;
+        beforeLocations(record);
         delete record.snapshot.running;
       })
     ).snapshot;

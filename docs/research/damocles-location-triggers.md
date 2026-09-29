@@ -316,8 +316,12 @@ These are recommendations for #611 and #612, not decisions this note makes.
    and five that need a balance (`$07`, `$0D`, `$1D`–`$1F`, `$3F`). The balance is a separate
    economy decision. It should not be invented for them.
 
-"Location Trigger" is a term this note needs and `CONTEXT.md` lacks. It is noted here for
-`/domain-modeling`.
+"Location Trigger" is now defined in `CONTEXT.md`.
+
+[#611](https://github.com/odogono/mercenary/issues/611) ports the region walk
+(`web/src/damocles/locationTriggers.ts`) and script slot 3. It arms trigger 3 alone, and Save
+schema 19 carries it. Trigger 4 and the other twelve have no script in the port, so the launcher
+refuses their entries.
 
 ## Unresolved
 
@@ -328,6 +332,9 @@ These are recommendations for #611 and #612, not decisions this note makes.
 - **`$CF` region 6 on Floor 10, `$EC`, `$11`, the Dion, Vesta, Gaea, Metis, Cyclopes and Bacchus
   entries.** They are decoded from the table and the bank. They were not fired at runtime.
 - **The `$FF` cell-entry walk** was not exercised, because no table has an entry for it.
+- **Trigger 3's length.** The `queue` case clears busy 1,287 VBLs after trigger 3 fires. Six
+  200-frame lines and one 50-frame clearing line make 1,250, which is what the port presents. The
+  other 37 VBLs were not accounted for.
 - **Group `$0E`'s junk place entry.** Its one misread place (cell `$0F`) would name cell `$0F` on
   VULCAN ISLAND with 20 bytes of group `$0F`'s record. That was not checked in play.
 
