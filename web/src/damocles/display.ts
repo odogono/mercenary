@@ -73,10 +73,17 @@ export type DamoclesMessageId =
   | `script15-inline-${1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10}`
   | 'script11-inline-1'
   | 'script11-inline-2'
+  | `script16-inline-${5 | 6 | 7 | 8 | 9 | 10 | 11}`
   | 'script2-inline-1'
   | 'script2-inline-2'
   | 'script2-inline-3'
   | 'script20-inline-1'
+  | 'script21-inline-1'
+  | 'script23-inline-1'
+  | 'script23-inline-2'
+  | 'script23-inline-3'
+  | 'script24-inline-1'
+  | 'script25-inline-1'
   | 'script3-inline-1'
   | 'script3-inline-2'
   | 'script3-inline-3'
@@ -108,6 +115,7 @@ export type DamoclesMessageId =
   | 'script5-inline-3'
   | 'script6-inline-1'
   | 'script6-inline-2'
+  | `script60-inline-${1 | 2 | 3 | 4 | 5}`
   | 'script62-inline-1'
   | 'script62-inline-2'
   | 'script62-inline-3'

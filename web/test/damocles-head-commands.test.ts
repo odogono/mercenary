@@ -25,7 +25,10 @@ import {
   type DamoclesSaveSnapshot
 } from '../src/damocles/save.ts';
 import { SHORTENED_DISPLAY_FRAMES } from '../src/damocles/script.ts';
-import { TRIGGER_FOR_RESIDENT } from '../src/damocles/scripts.ts';
+import {
+  ENDING_TRIGGERS,
+  TRIGGER_FOR_RESIDENT
+} from '../src/damocles/scripts.ts';
 import {
   DamoclesSession,
   type DamoclesContent
@@ -467,7 +470,10 @@ interface EditableRecord {
 const beforeLocations = (record: EditableRecord): void => {
   record.snapshot.script.triggers = record.snapshot.script.triggers.filter(
     trigger =>
-      trigger.index !== 3 && trigger.index !== 4 && trigger.index !== 15
+      trigger.index !== 3 &&
+      trigger.index !== 4 &&
+      trigger.index !== 15 &&
+      !ENDING_TRIGGERS.includes(trigger.index)
   );
 };
 

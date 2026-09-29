@@ -182,10 +182,9 @@ try {
   const content = {
     ...loaded,
     cometAt: (
-      elapsed: number,
+      clock: number,
       endgame: { readonly drift: number | null; readonly passed: boolean }
-    ) =>
-      cometCentre(system.comet, impactTime(elapsed, loaded.doc.time), endgame)
+    ) => cometCentre(system.comet, impactTime(clock, loaded.doc.time), endgame)
   };
   applyTypeface(document.documentElement, readTypefacePreference(storage));
   panelRoot.dataset['rendition'] = 'damocles';
@@ -1050,6 +1049,11 @@ try {
     // Session time, so a browser pass can measure a speed per session second rather than per
     // wall-clock second, which a loaded browser stretches.
     root['elapsed'] = String(snapshot.elapsed);
+    // The endgame (#624, #625): what the Bodies, the drift and the BOOK's wishes have left.
+    root['impactSeconds'] = String(snapshot.impact.seconds);
+    root['destroyedBodies'] = snapshot.destroyedBodies.join(' ');
+    root['drift'] = snapshot.drift === null ? '' : String(snapshot.drift);
+    root['impactPassed'] = String(snapshot.impactPassed);
     root['x'] = String(snapshot.pose.position.x);
     root['y'] = String(snapshot.pose.position.y);
     root['z'] = String(snapshot.pose.position.z);
@@ -1211,7 +1215,7 @@ try {
             daylight: snapshot.daylight,
             destroyedBodies: snapshot.destroyedBodies,
             drift: snapshot.drift,
-            impact: impactTime(snapshot.elapsed, content.doc.time),
+            impact: snapshot.impact,
             impactPassed: snapshot.impactPassed,
             position: snapshot.pose.position,
             sky: snapshot.surface.sky,
@@ -1223,7 +1227,7 @@ try {
             destroyedBodies: snapshot.destroyedBodies,
             drift: snapshot.drift,
             eye: space.position,
-            impact: impactTime(snapshot.elapsed, content.doc.time),
+            impact: snapshot.impact,
             impactPassed: snapshot.impactPassed,
             inScene: index =>
               (content.catalogue.craft?.bodies[index]?.y ?? 0) >= 0,

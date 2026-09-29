@@ -62,6 +62,8 @@ const record = () => ({
     bodyTurn: 0,
     briefcaseStore: [] as string[],
     carried: [] as string[],
+    clockAnchor: null,
+    clockLevel: 6,
     craft: null,
     debrisPasses: 0,
     destroyedBodies: [],
@@ -74,6 +76,7 @@ const record = () => ({
     headCommands: initialHeadCommands(),
     impactPassed: false,
     occupancy: { kind: 'onFoot' } as DamoclesSaveOccupancy,
+    paletteMask: 0,
     pendingBriefcaseDrop: null as {
       head: string;
       residence: ReturnType<typeof surface>;
@@ -154,6 +157,7 @@ const waiting = (trigger: number, resident: string) => {
   const value = record();
   carry(value, [resident]);
   value.snapshot.script = {
+    balance: state.balance,
     carried: state.carried,
     counter: state.counter,
     display: state.display,
@@ -168,6 +172,7 @@ const waiting = (trigger: number, resident: string) => {
     read: state.read,
     reward: state.reward,
     triggers: state.triggers.map(({ armed, index }) => ({ armed, index })),
+    wish: state.wish,
     zaps: state.zaps
   };
   return value;

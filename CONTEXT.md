@@ -218,6 +218,10 @@ _Avoid_: Title, Destination, world, star map
 One physical member of a System whose known identity and placement come from that System's authority, without implying that its type, dimensions, Primary or motion are known.
 _Avoid_: World, planet, place, sphere
 
+**Wish**:
+A Damocles BOOK page's action, granted when the player reads the page while carrying the MAGIC CRYSTAL, which every Wish consumes. Two pages are the cheapest ways to save ERIS; the others give an object, credits, more time, colour, a hint or a refusal. A Wish is not an Ending: what follows is an ordinary Damocles Script and play carries on.
+_Avoid_: Spell, BOOK ending, magic
+
 **Destroyed Body**:
 A Damocles Body marked as destroyed by the endgame: absent from the sky, Atlas and arrival scan, with objects associated to it removed from play. A player standing on it enters the Damocles Death State.
 _Avoid_: Removed Body, missing Body
@@ -411,7 +415,7 @@ The navigation window beside the Navigation Readout, naming the player's Island-
 _Avoid_: Grid reference, city coordinates, location coordinates, tile readout, Body Coordinate
 
 **Impact Clock**:
-The Damocles Panel Rendition's `HH-MM-SS` window counting down to the comet's arrival and then up past zero, spending one second every fifty VBLs and rolling whole days separately. A fresh game is given `04-19-20` of it on the title screen, and the original's scripted arrival has spent an hour and a half of that before the player first stands on Eris. It is Damocles's alone: the Targ rendition's clock is the Targ Orrery's local time.
+The Damocles Panel Rendition's `HH-MM-SS` window counting down to the comet's arrival and then up past zero, spending one second every fifty VBLs, or every two hundred once a Wish has granted MORE TIME, and rolling whole days separately. A fresh game is given `04-19-20` of it on the title screen, and the original's scripted arrival has spent an hour and a half of that before the player first stands on Eris. It is Damocles's alone: the Targ rendition's clock is the Targ Orrery's local time.
 _Avoid_: Countdown, comet timer, deadline clock, session clock
 
 **System Menu**:

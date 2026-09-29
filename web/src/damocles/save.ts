@@ -1,4 +1,9 @@
 import type { Catalogue } from '../catalogue/data.ts';
+import {
+  MORE_TIME_CLOCK_LEVEL,
+  NEW_GAME_CLOCK_LEVEL,
+  type ClockAnchor
+} from './comet.ts';
 import { craftPanelSpeed } from './craft.ts';
 import {
   DAMOCLES_ROW_CELLS,
@@ -41,8 +46,12 @@ import {
 } from './script.ts';
 import {
   ANSWER_FRAMES,
+  BALANCE_MODULUS,
+  COLOURFUL_MASK,
+  ENDING_TRIGGERS,
   LANDING_TRIGGERS,
   LOCATION_TRIGGERS,
+  NEW_GAME_BALANCE,
   NO_KEY,
   OFFER_ACCEPTED_FLAG,
   OFFER_KEY_SLOT,
@@ -158,10 +167,16 @@ import type { Pose } from './world.ts';
 /// reward and nothing accepted: no earlier port had the script.
 /// Version 21 carries destroyed Bodies, the clock-zero latch and the comet drift anchor. A
 /// schema-20 session had no destruction path, so it migrates with all Bodies alive.
-export const DAMOCLES_SAVE_SCHEMA_VERSION = 21 as const;
+///
+/// Version 22 carries the BOOK's wishes (#625): the balance, record `$00F8`, the queued page
+/// action in `$7B96`, the clock rate level `$7C1C` with where it last changed, the palette mask
+/// `$7A50`, and the ending triggers. A schema-21 record or older is migrated with the reset's
+/// 9,000 credits, level 6, no mask, and every ending armed: no earlier port wrote any of them.
+/// Its `$0F` execution, if any, is moved past the 150-frame wait schema 22 adds at the front.
+export const DAMOCLES_SAVE_SCHEMA_VERSION = 22 as const;
 /// The older schemas a restore migrates rather than refuses.
 const MIGRATED_SCHEMA_VERSIONS: readonly unknown[] = [
-  11, 12, 13, 14, 15, 16, 17, 18, 19, 20
+  11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21
 ];
 /// The schemas from before the landing messages (#576), which carry no landing trigger.
 const PRE_LANDING_SCHEMA_VERSIONS: readonly unknown[] = [11, 12, 13];
@@ -295,6 +310,10 @@ export interface DamoclesSaveSnapshot {
   readonly bodyTurn: number;
   readonly briefcaseStore: readonly string[];
   readonly carried: readonly string[];
+  /// `$7C1C`'s last change: where the impact clock stood, and when. Null at the reset's level.
+  readonly clockAnchor?: ClockAnchor | null;
+  /// `$7C1C`, the clock rate level.
+  readonly clockLevel?: number;
   /// The craft Mover's words aboard, or null on foot. A migrated schema-11 record aboard has
   /// none, and the session seats it at the boarding preset.
   readonly craft: DamoclesSaveCraft | null;
@@ -318,6 +337,8 @@ export interface DamoclesSaveSnapshot {
   /// `$7A82`, raised after the waypoint table runs out.
   readonly impactPassed?: boolean;
   readonly occupancy: DamoclesSaveOccupancy;
+  /// `$7A50`, the palette XOR mask.
+  readonly paletteMask?: number;
   readonly pendingBriefcaseDrop: {
     readonly head: string;
     readonly residence: PlacedResidence;
@@ -343,6 +364,8 @@ export type DamoclesSaveOccupancy =
   | { readonly instance: string; readonly kind: 'aboard' };
 
 export interface DamoclesSaveScript {
+  /// Record `$00F8`, the balance, as twelve packed-decimal digits.
+  readonly balance: number;
   /// The slots whose carried flag a script set: the first offer's DOOR KEY A.
   readonly carried: readonly number[];
   readonly counter: number;
@@ -369,6 +392,8 @@ export interface DamoclesSaveScript {
     readonly armed: boolean;
     readonly index: number;
   }[];
+  /// `$7B96` = `$8000`: a page action queued behind a Read of the BOOK.
+  readonly wish: boolean;
   /// The noise words zaps have turned, one entry a zap.
   readonly zaps: readonly number[];
 }
@@ -395,6 +420,7 @@ export interface DamoclesSaveEncounter {
 export const initialDamoclesSaveScript = (): DamoclesSaveScript => {
   const script = initialScriptState();
   return {
+    balance: script.balance,
     carried: script.carried,
     counter: script.counter,
     display: script.display,
@@ -409,6 +435,7 @@ export const initialDamoclesSaveScript = (): DamoclesSaveScript => {
     read: script.read,
     reward: script.reward,
     triggers: script.triggers.map(({ armed, index }) => ({ armed, index })),
+    wish: script.wish,
     zaps: script.zaps
   };
 };
@@ -914,7 +941,18 @@ const SAVED_TRIGGERS: readonly number[] = [
   ...LANDED_TRIGGERS,
   ...LOCATION_TRIGGERS
 ];
+/// Every trigger a schema-21 record carries: the clock's `$0F` beside those.
 const IMPACT_TRIGGERS: readonly number[] = [...SAVED_TRIGGERS, 15];
+/// Every trigger a current record carries: the endings the BOOK fires beside those.
+const WISHED_TRIGGERS: readonly number[] = [
+  ...IMPACT_TRIGGERS,
+  ...ENDING_TRIGGERS
+];
+/// The steps schema 22 put in front of `$0F`'s script: its 150-frame wait.
+const IMPACT_WAIT_STEPS = 2;
+/// `$0F`'s revision before the wait was recovered.
+const UNWAITED_IMPACT_REVISION = 1;
+const IMPACT_SCRIPT: ScriptId = 'damocles.script.slot-15';
 
 /// A step is an index into a script's recovered operation list, and a suspended execution may
 /// only name a step the interpreter can actually stop on. `runToBlock` returns in exactly three
@@ -975,20 +1013,26 @@ const writtenRow = (
   return null;
 };
 
-const frameOf = (value: unknown, path: string): Frame => {
+/// A schema-21 `$0F` step, moved past the wait schema 22 put in front of it.
+const unwaited = (script: ScriptId, step: unknown, waitAdded: boolean) =>
+  waitAdded && script === IMPACT_SCRIPT && Number.isInteger(step)
+    ? (step as number) + IMPACT_WAIT_STEPS
+    : step;
+
+const frameOf = (value: unknown, path: string, waitAdded: boolean): Frame => {
   const frame = object(value, path);
   const script = frame['script'];
   if (!isScriptId(script)) {
     return fail(`${path} names an unknown Damocles Script`);
   }
-  const step = frame['step'];
+  const step = unwaited(script, frame['step'], waitAdded);
   if (!blockingStep(script, step as Step)) {
     return fail(`${path} is not a reachable continuation`);
   }
   return { script, step: step as Step };
 };
 
-const executionOf = (value: unknown): Execution | null => {
+const executionOf = (value: unknown, waitAdded: boolean): Execution | null => {
   if (value === null) {
     return null;
   }
@@ -997,10 +1041,16 @@ const executionOf = (value: unknown): Execution | null => {
   if (!isScriptId(script)) {
     return fail('script execution names an unknown Damocles Script');
   }
-  if (execution['revision'] !== SCRIPTS[script].revision) {
+  const revision =
+    waitAdded &&
+    script === IMPACT_SCRIPT &&
+    execution['revision'] === UNWAITED_IMPACT_REVISION
+      ? SCRIPTS[script].revision
+      : execution['revision'];
+  if (revision !== SCRIPTS[script].revision) {
     return fail('script execution identity, revision or step is incompatible');
   }
-  const step = execution['step'];
+  const step = unwaited(script, execution['step'], waitAdded);
   if (!blockingStep(script, step as Step)) {
     return fail('script execution identity, revision or step is incompatible');
   }
@@ -1008,7 +1058,7 @@ const executionOf = (value: unknown): Execution | null => {
     execution['returnStack'],
     'snapshot.script.execution.returnStack'
   ).map((frame, index) =>
-    frameOf(frame, `snapshot.script.execution.returnStack[${index}]`)
+    frameOf(frame, `snapshot.script.execution.returnStack[${index}]`, waitAdded)
   );
   // A queued response nests one frame inside the script it interrupted, and nothing observed
   // nests deeper: one outer frame is the whole recovered depth.
@@ -1031,7 +1081,8 @@ const scriptOf = (
   current: boolean,
   locationSaved: boolean,
   offerSaved: boolean,
-  impactSaved: boolean
+  impactSaved: boolean,
+  wishSaved: boolean
 ): DamoclesSaveScript => {
   const script = object(value, 'snapshot.script');
   const counter = integer(
@@ -1051,7 +1102,7 @@ const scriptOf = (
     script['pending'] === null || script['pending'] === undefined
       ? null
       : integer(script['pending'], 'snapshot.script.pending', 0, 255);
-  const execution = executionOf(script['execution']);
+  const execution = executionOf(script['execution'], impactSaved && !wishSaved);
   const message = presentingOf(
     script['message'],
     displayDuration,
@@ -1079,15 +1130,17 @@ const scriptOf = (
       index
     };
   });
-  const expected = impactSaved
-    ? IMPACT_TRIGGERS
-    : migrated
-      ? PICKUP_TRIGGERS
-      : offerSaved
-        ? SAVED_TRIGGERS
-        : locationSaved
-          ? WELCOMED_TRIGGERS
-          : LANDED_TRIGGERS;
+  const expected = wishSaved
+    ? WISHED_TRIGGERS
+    : impactSaved
+      ? IMPACT_TRIGGERS
+      : migrated
+        ? PICKUP_TRIGGERS
+        : offerSaved
+          ? SAVED_TRIGGERS
+          : locationSaved
+            ? WELCOMED_TRIGGERS
+            : LANDED_TRIGGERS;
   if (
     new Set(triggers.map(trigger => trigger.index)).size !== triggers.length ||
     triggers.length !== expected.length ||
@@ -1116,6 +1169,22 @@ const scriptOf = (
   const reward = offerSaved
     ? integer(script['reward'], 'snapshot.script.reward', 0, 0xff_ff)
     : 0;
+  const balance = wishSaved
+    ? integer(
+        script['balance'],
+        'snapshot.script.balance',
+        0,
+        BALANCE_MODULUS - 1
+      )
+    : NEW_GAME_BALANCE;
+  const wish = wishSaved ? script['wish'] : false;
+  if (typeof wish !== 'boolean') {
+    return fail('snapshot.script.wish is not a boolean');
+  }
+  // Both are `$7B96`: a Read queued, or the page action a presented Read queued.
+  if (wish && read !== null) {
+    return fail('snapshot.script.wish and read share one word');
+  }
   if (reward !== 0 && !(OFFER_REWARDS as readonly number[]).includes(reward)) {
     return fail('snapshot.script.reward is no offer the first offer makes');
   }
@@ -1276,6 +1345,7 @@ const scriptOf = (
     return fail('scrolling display has no message');
   }
   return {
+    balance,
     carried,
     counter,
     display,
@@ -1290,6 +1360,7 @@ const scriptOf = (
     read,
     reward,
     triggers: table,
+    wish,
     zaps
   };
 };
@@ -1590,32 +1661,30 @@ export const decodeDamoclesSave = (
   if (!finite(snapshot['elapsed'])) {
     return fail('elapsed is not a finite number');
   }
-  const destroyedBodies =
-    record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION
-      ? array(snapshot['destroyedBodies'], 'snapshot.destroyedBodies').map(
-          value =>
-            typeof value === 'string' && /^body-(?:\d|[12]\d)$/.test(value)
-              ? value
-              : fail('destroyed Body id is invalid')
-        )
-      : [];
+  const impactRecord =
+    record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION ||
+    record['schemaVersion'] === 21;
+  const destroyedBodies = impactRecord
+    ? array(snapshot['destroyedBodies'], 'snapshot.destroyedBodies').map(
+        value =>
+          typeof value === 'string' && /^body-(?:\d|[12]\d)$/.test(value)
+            ? value
+            : fail('destroyed Body id is invalid')
+      )
+    : [];
   if (new Set(destroyedBodies).size !== destroyedBodies.length) {
     return fail('destroyed Bodies are duplicated');
   }
-  const debrisPasses =
-    record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION
-      ? integer(snapshot['debrisPasses'], 'snapshot.debrisPasses', 0, 64)
-      : 0;
+  const debrisPasses = impactRecord
+    ? integer(snapshot['debrisPasses'], 'snapshot.debrisPasses', 0, 64)
+    : 0;
   let blastCentre: {
     readonly body: string;
     readonly x: number;
     readonly y: number;
     readonly z: number;
   } | null = null;
-  if (
-    record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION &&
-    snapshot['blastCentre'] !== null
-  ) {
+  if (impactRecord && snapshot['blastCentre'] !== null) {
     const centre = object(snapshot['blastCentre'], 'snapshot.blastCentre');
     if (
       typeof centre['body'] !== 'string' ||
@@ -1636,10 +1705,7 @@ export const decodeDamoclesSave = (
   if (debrisPasses > 0 && blastCentre === null) {
     return fail('debris has no blast centre');
   }
-  const drift =
-    record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION
-      ? snapshot['drift']
-      : null;
+  const drift = impactRecord ? snapshot['drift'] : null;
   if (
     drift !== null &&
     (!Number.isInteger(drift) ||
@@ -1648,22 +1714,18 @@ export const decodeDamoclesSave = (
   ) {
     return fail('comet drift is outside its recovered bounds');
   }
-  const impactPassed =
-    record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION
-      ? snapshot['impactPassed']
-      : false;
+  const impactPassed = impactRecord ? snapshot['impactPassed'] : false;
   if (typeof impactPassed !== 'boolean') {
     return fail('impact latch is invalid');
   }
-  const removedResidents =
-    record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION
-      ? array(snapshot['removedResidents'], 'snapshot.removedResidents').map(
-          value =>
-            typeof value === 'string' && value.length > 0
-              ? value
-              : fail('removed resident id is invalid')
-        )
-      : [];
+  const removedResidents = impactRecord
+    ? array(snapshot['removedResidents'], 'snapshot.removedResidents').map(
+        value =>
+          typeof value === 'string' && value.length > 0
+            ? value
+            : fail('removed resident id is invalid')
+      )
+    : [];
   if (
     new Set(removedResidents).size !== removedResidents.length ||
     (catalogue !== undefined &&
@@ -1672,6 +1734,34 @@ export const decodeDamoclesSave = (
       ))
   ) {
     return fail('removed resident list is invalid');
+  }
+  const wishRecord = record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION;
+  const clockLevel = wishRecord ? snapshot['clockLevel'] : NEW_GAME_CLOCK_LEVEL;
+  // Only page 4 moves the level, and only to 8.
+  if (
+    clockLevel !== NEW_GAME_CLOCK_LEVEL &&
+    clockLevel !== MORE_TIME_CLOCK_LEVEL
+  ) {
+    return fail('clock rate level is no level a ported writer sets');
+  }
+  let clockAnchor: ClockAnchor | null = null;
+  if (wishRecord && snapshot['clockAnchor'] !== null) {
+    const anchor = object(snapshot['clockAnchor'], 'snapshot.clockAnchor');
+    if (
+      !finite(anchor['clock']) ||
+      !finite(anchor['elapsed']) ||
+      anchor['elapsed'] > snapshot['elapsed']
+    ) {
+      return fail('clock anchor is invalid');
+    }
+    clockAnchor = { clock: anchor['clock'], elapsed: anchor['elapsed'] };
+  }
+  if ((clockAnchor === null) !== (clockLevel === NEW_GAME_CLOCK_LEVEL)) {
+    return fail('clock anchor and rate level disagree');
+  }
+  const paletteMask = wishRecord ? snapshot['paletteMask'] : 0;
+  if (paletteMask !== 0 && paletteMask !== COLOURFUL_MASK) {
+    return fail('palette mask is no mask a ported writer sets');
   }
   const carried = array(snapshot['carried'], 'snapshot.carried').map(value =>
     typeof value === 'string' && value !== ''
@@ -1846,7 +1936,9 @@ export const decodeDamoclesSave = (
     16
   );
   const current = record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION;
-  const offerSaved = current || record['schemaVersion'] === 20;
+  // Schema 21 is the first to carry the impact.
+  const impactSaved = current || record['schemaVersion'] === 21;
+  const offerSaved = impactSaved || record['schemaVersion'] === 20;
   // Schema 19 is the first to carry the location triggers.
   const locationSaved = offerSaved || record['schemaVersion'] === 19;
   // Schema 18 is the first to carry the run toggle.
@@ -1863,6 +1955,7 @@ export const decodeDamoclesSave = (
     documentsSaved,
     locationSaved,
     offerSaved,
+    impactSaved,
     current
   );
   const running = runSaved ? snapshot['running'] : false;
@@ -1992,6 +2085,8 @@ export const decodeDamoclesSave = (
       bodyTurn: bodyTurn as number,
       briefcaseStore,
       carried,
+      clockAnchor,
+      clockLevel,
       craft,
       debrisPasses,
       destroyedBodies,
@@ -2004,6 +2099,7 @@ export const decodeDamoclesSave = (
       headCommands,
       impactPassed,
       occupancy,
+      paletteMask,
       pendingBriefcaseDrop,
       pose,
       removedResidents,

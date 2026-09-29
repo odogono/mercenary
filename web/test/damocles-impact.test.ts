@@ -7,6 +7,7 @@ import {
   decodeDamoclesSave,
   encodeDamoclesSave
 } from '../src/damocles/save.ts';
+import { ENDING_TRIGGERS } from '../src/damocles/scripts.ts';
 import {
   DamoclesSession,
   type DamoclesContent
@@ -77,6 +78,9 @@ describe('zero on the Damocles impact clock', () => {
     expect(saved.script.triggers.find(item => item.index === 15)?.armed).toBe(
       false
     );
+    // `$072CEA`: the State President waits 150 frames before speaking.
+    expect(session.snapshot.message).toBeNull();
+    session.advance(3);
     expect(session.snapshot.message?.id).toBe('script15-inline-1');
     expect(session.snapshot.screen.dead).toBe(false);
     const restored = new DamoclesSession(content, saved);
@@ -135,7 +139,7 @@ describe('zero on the Damocles impact clock', () => {
 
   test('runs the unaccepted too-late branch without a reward', () => {
     const session = beforeImpact('gaea-ur-city-4-2');
-    session.advance(3);
+    session.advance(6);
     expect(session.snapshot.message?.id).toBe('script15-inline-6');
     expect(session.captureResume().script.reward).toBe(0);
   });
@@ -158,7 +162,9 @@ describe('zero on the Damocles impact clock', () => {
         removedResidents: undefined,
         script: {
           ...snapshot.script,
-          triggers: snapshot.script.triggers.filter(item => item.index !== 15)
+          triggers: snapshot.script.triggers.filter(
+            item => item.index !== 15 && !ENDING_TRIGGERS.includes(item.index)
+          )
         }
       },
       where: 'ERIS'

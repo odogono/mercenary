@@ -17,6 +17,18 @@ export interface ImpactTime {
   readonly seconds: number;
 }
 
+/// `$7C1C` as the reset leaves it in every capture: a second is `$19 << 6` counter units, 50 VBLs.
+export const NEW_GAME_CLOCK_LEVEL = 6;
+/// Page 4, MORE TIME: `$04D616` with level 8, a second of 200 VBLs.
+export const MORE_TIME_CLOCK_LEVEL = 8;
+
+/// The impact clock where the rate level last changed: `clock` is in level-6 seconds, the unit
+/// `impactTime` reads, at Session seconds `elapsed`.
+export interface ClockAnchor {
+  readonly clock: number;
+  readonly elapsed: number;
+}
+
 /// `$793C` counts up one second every fifty VBLs (#551), from minus the deadline. The epsilon
 /// is the one the Session uses on its own frame accumulator: elapsed is a sum of fixed steps, so
 /// an exact hour of them lands a hair under the hour.
@@ -61,13 +73,68 @@ const displacement = (ticks: number, axis: ReturnType<typeof rate>): number => {
   return axis.negative ? -value : value;
 };
 
+interface Waypoint {
+  readonly seconds: number;
+  readonly x: number;
+  readonly z: number;
+}
+
+/// `$051FBE..$051FA4`: the latch copies the terminator and the record after it to `$7CF4`, and
+/// each time the clock reaches the second's time both times gain 500 and the pair steps on by its
+/// own delta, `next' = 2 * next - start`. The segment keeps its length, so the comet carries
+/// straight on at the last segment's speed.
+const extended = (
+  start: Waypoint,
+  next: Waypoint,
+  seconds: number
+): readonly [Waypoint, Waypoint] => {
+  let first = start;
+  let second = next;
+  while (seconds >= second.seconds) {
+    const stepped = {
+      seconds: second.seconds + EXTENSION_SECONDS,
+      x: 2 * second.x - first.x,
+      z: 2 * second.z - first.z
+    };
+    first = { ...second, seconds: first.seconds + EXTENSION_SECONDS };
+    second = stepped;
+  }
+  return [first, second];
+};
+
+/// `$051F72`, `addi.w #$1F4`: what each extension adds to both scratch records' times.
+const EXTENSION_SECONDS = 500;
+
+/// `$051EBA..$051EF6`: a point `ticks` into the segment from `first` to `second`.
+const interpolate = (
+  first: Waypoint,
+  second: Waypoint,
+  time: ImpactTime
+): { readonly x: number; readonly z: number } => {
+  // `asl.w #5`: a segment's length in ticks is a word, so one longer than 2,047 seconds wraps.
+  const length = ((second.seconds - first.seconds) << 5) & 0xff_ff;
+  if (length === 0) {
+    return { x: first.x, z: first.z };
+  }
+  // `$051EBA..$051EBE`: the seconds into the segment in ticks, plus the second's fraction.
+  const ticks = ((time.seconds - first.seconds) * 32 + time.fraction) & 0xff_ff;
+  return {
+    x: first.x + displacement(ticks, rate(second.x - first.x, length)),
+    z: first.z + displacement(ticks, rate(second.z - first.z, length))
+  };
+};
+
 /// DAMOCLES's System X and Z at an impact clock. At zero the caller must have passed the
 /// waypoint latch to see the extended straight path; a destroyed Body is filtered by its reader.
 ///
 /// Two readings are the port's, both where the three first records coincide so either gives the
 /// same point. Before the first record's time, `-15500`, the ST's cursor rests on record 0 with
-/// whatever rates were last derived, which no capture has seen; the port holds record 0. The X
-/// `$7A84` is the armed anchor `$7A7E` minus clock `$793C`, added to X by `$051EFA`.
+/// whatever rates were last derived, which no capture has seen; the port holds record 0.
+///
+/// The X `$7A84` is the armed anchor `$7A7E` minus clock `$793C`, added to X by `$051EFA`. Once
+/// `$7A82` is set, `$051F00` stops recomputing it, so it keeps the value the last pass before the
+/// latch left: the anchor less −1, the second before zero. The BOOK's page 5 run pins both
+/// readings on every sample either side of zero (#625).
 export const cometCentre = (
   comet: GammaComet,
   time: ImpactTime,
@@ -80,53 +147,30 @@ export const cometCentre = (
   // `$051FAA` reads a zero time word as the end of the table.
   const end = records.findIndex(record => record.seconds === 0);
   const last = end === -1 ? records.length - 1 : end;
+  const drift =
+    endgame.drift === null
+      ? 0
+      : endgame.drift - (endgame.passed ? -1 : time.seconds);
   if (time.seconds >= records[last]!.seconds) {
     if (!endgame.passed) {
       return null;
     }
-    const start = records[last]!;
-    const next = records[last + 1]!;
-    const fraction = time.seconds + time.fraction / 32;
-    return {
-      x:
-        start.x +
-        ((next.x - start.x) * fraction) / (next.seconds - start.seconds) +
-        (endgame.drift === null ? 0 : endgame.drift - time.seconds),
-      z:
-        start.z +
-        ((next.z - start.z) * fraction) / (next.seconds - start.seconds)
-    };
+    const [first, second] = extended(
+      records[last]!,
+      records[last + 1]!,
+      time.seconds
+    );
+    const point = interpolate(first, second, time);
+    return { x: point.x + drift, z: point.z };
   }
   if (time.seconds < records[0]!.seconds) {
-    return {
-      x:
-        records[0]!.x +
-        (endgame.drift === null ? 0 : endgame.drift - time.seconds),
-      z: records[0]!.z
-    };
+    return { x: records[0]!.x + drift, z: records[0]!.z };
   }
   // `$051EB2` advances the cursor while the clock has reached the next record's time.
   let index = 0;
   while (index + 1 < last && time.seconds >= records[index + 1]!.seconds) {
     index += 1;
   }
-  const first = records[index]!;
-  const second = records[index + 1]!;
-  // `asl.w #5`: a segment's length in ticks is a word, so one longer than 2,047 seconds wraps.
-  const length = ((second.seconds - first.seconds) << 5) & 0xff_ff;
-  if (length === 0) {
-    return {
-      x: first.x + (endgame.drift === null ? 0 : endgame.drift - time.seconds),
-      z: first.z
-    };
-  }
-  // `$051EBA..$051EBE`: the seconds into the segment in ticks, plus the second's fraction.
-  const ticks = ((time.seconds - first.seconds) * 32 + time.fraction) & 0xff_ff;
-  return {
-    x:
-      first.x +
-      displacement(ticks, rate(second.x - first.x, length)) +
-      (endgame.drift === null ? 0 : endgame.drift - time.seconds),
-    z: first.z + displacement(ticks, rate(second.z - first.z, length))
-  };
+  const point = interpolate(records[index]!, records[index + 1]!, time);
+  return { x: point.x + drift, z: point.z };
 };

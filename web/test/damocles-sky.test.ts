@@ -537,14 +537,40 @@ describe('the comet DAMOCLES (#538)', () => {
         { fraction: 0, seconds: 0 },
         { drift: -4660, passed: true }
       )
-    ).toEqual({ x: -634_660, z: 390_000 });
+    ).toEqual({ x: -634_659, z: 390_000 });
     expect(
       cometCentre(
         system.comet,
         { fraction: 0, seconds: 1 },
         { drift: -4660, passed: true }
       )
-    ).toEqual({ x: -634_841, z: 390_180 });
+    ).toEqual({ x: -634_839, z: 390_180 });
+  });
+
+  // `wish --page 5 --then-impact` from `gaea-ur-city-4-2` (docs/research/damocles-endgame.md):
+  // `$793C`, the 1/32 s from `$7942`, `$7A82`, and DAMOCLES's centre `$5FB4`/`$6034`. The drift
+  // is armed at −6,979; the clock is then poked to −2. After the latch `$7A84` holds −4,659.
+  const WISH_FIVE_SAMPLES = [
+    { fraction: 20, passed: false, seconds: -6979, x: 52_952, z: 89_211 },
+    { fraction: 13, passed: false, seconds: -6975, x: 52_949, z: 88_928 },
+    { fraction: 16, passed: false, seconds: -6952, x: 52_931, z: 87_198 },
+    { fraction: 25, passed: false, seconds: -2, x: -634_460, z: 389_814 },
+    { fraction: 6, passed: true, seconds: 0, x: -634_692, z: 390_033 },
+    { fraction: 23, passed: true, seconds: 2, x: -635_148, z: 390_489 },
+    { fraction: 20, passed: true, seconds: 6, x: -635_851, z: 391_192 },
+    { fraction: 26, passed: true, seconds: 25, x: -639_305, z: 394_646 }
+  ] as const;
+
+  test('drifts as page 5 of the BOOK leaves it, either side of zero', () => {
+    for (const { fraction, passed, seconds, x, z } of WISH_FIVE_SAMPLES) {
+      expect(
+        cometCentre(
+          system.comet,
+          { fraction, seconds },
+          { drift: -4660, passed }
+        )
+      ).toEqual({ x, z });
+    }
   });
 
   test('projects its head and tail tip where the pinned frames predict them', () => {

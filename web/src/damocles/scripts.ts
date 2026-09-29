@@ -14,8 +14,14 @@ import type { DamoclesMessageId } from './display.ts';
 export const SCRIPT_IDS = [
   'damocles.script.slot-11',
   'damocles.script.slot-15',
+  'damocles.script.slot-18',
   'damocles.script.slot-2',
   'damocles.script.slot-20',
+  'damocles.script.slot-21',
+  'damocles.script.slot-22',
+  'damocles.script.slot-23',
+  'damocles.script.slot-24',
+  'damocles.script.slot-25',
   'damocles.script.slot-3',
   'damocles.script.slot-32',
   'damocles.script.slot-33',
@@ -47,6 +53,7 @@ export const SCRIPT_IDS = [
   'damocles.script.slot-58',
   'damocles.script.slot-59',
   'damocles.script.slot-6',
+  'damocles.script.slot-60',
   'damocles.script.slot-62'
 ] as const;
 
@@ -75,7 +82,13 @@ export const isScriptId = (value: unknown): value is ScriptId =>
 /// to `to` while the unsigned counter is below `below` and falls through at or above it.
 /// `set-carried` is `word.write $00FE` (`$7C3E` = `slot`) and `record.bits $0080` together: bit 7
 /// of `$6FAA + 4 * slot`, the slot's carried flag, with nothing put on the Carried Stack.
+///
+/// The endings add two (#625), both on the balance, record `$00F8`. `add-balance` is
+/// `record.bcd.add $00F8`, six `abcd` steps of `amount` into it. `pay-reward` is
+/// `record.bcd.three $00F8 $00F8 $00F9`, which adds the proposed reward. Each asks for the key
+/// effect `$054848` first (`$051AEE`, `$051BAA`), as the handlers do for record `$00F8` alone.
 export type Op =
+  | { readonly amount: number; readonly kind: 'add-balance' }
   | { readonly below: number; readonly kind: 'if-wait'; readonly to: Step }
   | { readonly below: number; readonly kind: 'random-skip'; readonly to: Step }
   | { readonly code: number; readonly kind: 'if-key'; readonly to: Step }
@@ -85,6 +98,7 @@ export type Op =
   | { readonly kind: 'clear-busy' }
   | { readonly kind: 'clear-key' }
   | { readonly kind: 'if-flag'; readonly mask: number; readonly to: Step }
+  | { readonly kind: 'pay-reward' }
   | { readonly kind: 'reset-wait' }
   | { readonly kind: 'return' }
   | { readonly kind: 'set-carried'; readonly slot: number }
@@ -272,6 +286,129 @@ const firstOffer = (): Script => {
   return { entry: 0x07_06_50, ops, revision: 1 };
 };
 
+/// The BOOK, WISHFUL THINKING OF A MERCENARY, whose Read `$0547F2` compares `$7856` with.
+export const BOOK_SLOT = 0x83;
+/// The MAGIC CRYSTAL, whose carried flag is bit 7 of `$7126`. Every wish takes it (`$04CAF4`).
+export const MAGIC_CRYSTAL_SLOT = 0x5f;
+/// CHEESE SANDWICH, page 1's gift (`$0541E0`).
+export const CHEESE_SANDWICH_SLOT = 0xdb;
+
+/// Page 5's drift anchor `$7A7E`, `$FFFFEDCC`.
+export const WISH_DRIFT = -0x12_34;
+/// Page 6's palette XOR mask `$7A50`.
+export const COLOURFUL_MASK = 0x02_13;
+
+/// Record `$00F8`, the balance at `$7C42`, read as its twelve packed-decimal digits. The last two
+/// are hundredths, so the offers' `$0010` leading word is 10 million. Every one of the 62
+/// memstates and the pinned first world hold `00 00 00 90 00 00`, 9,000 credits.
+export const NEW_GAME_BALANCE = 900_000;
+/// Twelve digits: `abcd` carries out of the sixth byte into nothing.
+export const BALANCE_MODULUS = 1_000_000_000_000;
+
+/// The six-byte field a `record.bcd.add` operand or record `$00F9` holds, as digits: the first
+/// BCD word is the top four digits and the other four bytes are zero.
+export const leadingWordDigits = (word: number): number =>
+  Number.parseInt(word.toString(16).padStart(4, '0'), 10) * 100_000_000;
+
+/// `record.bcd.add $00F8 $0001 $0000 $0000` in `$16`: one million credits.
+export const MILLION_CREDITS = leadingWordDigits(0x00_01);
+/// `record.bcd.add $00F8 $0025 $0000 $0000` in `$3C`: twenty-five million, Lloyds' reward.
+export const SPECIAL_REWARD = leadingWordDigits(0x00_25);
+
+/// `$072CFE`, the 250-frame member of the delay family.
+const WISH_WAIT_FRAMES = 0x00_fa;
+/// `$072CEA`, the 150-frame member the State President's endings open on.
+const PRESIDENT_WAIT_FRAMES = 0x00_96;
+
+/// `$071184`, a call: THE MYSTICAL ORDER OF CARPENTERS GRANT YOUR WISH. Every wish but `$19`
+/// opens on it.
+const grant = (): Op => message('script21-inline-1');
+
+/// `$0714D6`–`$07162A`: the State President's reward tail. With the offer's accepted bit, the
+/// `accepted` lines and record `$00F9` paid into the balance; without it the `declined` lines.
+/// Laid out as the `$0F` port is, the accepted run second, because `if-flag` branches when the
+/// bit is set and the bank's `if.flags :not` when it is clear. `at` is the tail's first step.
+const presidentTail = (
+  at: Step,
+  accepted: readonly DamoclesMessageId[],
+  declined: readonly DamoclesMessageId[]
+): readonly Op[] => [
+  {
+    kind: 'if-flag',
+    mask: OFFER_ACCEPTED_FLAG,
+    to: at + 1 + declined.length + sharedEpilogue().length
+  },
+  ...declined.map(message),
+  ...sharedEpilogue(),
+  ...accepted.map(message),
+  { kind: 'pay-reward' },
+  ...sharedEpilogue()
+];
+
+/// `$0714D2`, trigger `$12`: MESSAGE FROM THE STATE PRESIDENT / CONGRATULATIONS ON SAVING ERIS,
+/// after the 150-frame wait. Its lines are extracted under trigger 16's scope, because `$10`
+/// falls into it. `$3C` jumps here after its own lines, so `at` is the step it starts on.
+const erisSaved = (at: Step): readonly Op[] => [
+  ...wait(PRESIDENT_WAIT_FRAMES),
+  ...presidentTail(
+    at + 2,
+    ['script16-inline-5', 'script16-inline-6', 'script16-inline-7'],
+    [
+      'script16-inline-8',
+      'script16-inline-9',
+      'script16-inline-10',
+      'script16-inline-11'
+    ]
+  )
+];
+
+/// `$071254`, trigger `$3C`, BOOK page 5: the grant line, `$072D1C`'s clearing line, the
+/// 150-frame wait, Lloyds' five lines and the special reward, then `message.indexed $0032` at the
+/// restored 200 frames and a jump into `$12`.
+const bothSaved = (): Script => {
+  const own: readonly Op[] = [
+    grant(),
+    ...clearingLine(),
+    ...wait(PRESIDENT_WAIT_FRAMES),
+    ...[1, 2, 3, 4, 5].map(index =>
+      message(`script60-inline-${index}` as DamoclesMessageId)
+    ),
+    { amount: SPECIAL_REWARD, kind: 'add-balance' },
+    message('system-string-50')
+  ];
+  return {
+    entry: 0x07_12_54,
+    ops: [...own, ...erisSaved(own.length)],
+    revision: 1
+  };
+};
+
+/// `$0711BA`, trigger `$17`, BOOK page 3: the grant line, the clearing line, the 250-frame wait,
+/// the State President's WE DON'T KNOW HOW YOU'VE DONE IT - BUT, then `$12`'s tail from its
+/// reward line (`$071532`) or its last two refusal lines (`$0715C4`).
+const erisSavedByWish = (): Script => {
+  const own: readonly Op[] = [
+    grant(),
+    ...clearingLine(),
+    ...wait(WISH_WAIT_FRAMES),
+    message('script23-inline-1'),
+    message('script23-inline-2'),
+    message('script23-inline-3')
+  ];
+  return {
+    entry: 0x07_11_ba,
+    ops: [
+      ...own,
+      ...presidentTail(
+        own.length,
+        ['script16-inline-7'],
+        ['script16-inline-10', 'script16-inline-11']
+      )
+    ],
+    revision: 1
+  };
+};
+
 export interface Script {
   readonly entry: number;
   readonly ops: readonly Op[];
@@ -289,12 +426,13 @@ export interface Script {
 export const WAIT_FROM_DOCUMENT = -1;
 
 export const SCRIPTS: Readonly<Record<ScriptId, Script>> = {
-  // $07169E, trigger $0F: zero on the impact clock. The State President answers according to
-  // the first offer's accepted bit; neither branch changes the balance.
+  // $07169E, trigger $0F: zero on the impact clock. After the 150-frame wait the State President
+  // answers according to the first offer's accepted bit; neither branch changes the balance.
   'damocles.script.slot-15': {
     entry: 0x07_16_9e,
     ops: [
-      { kind: 'if-flag', mask: OFFER_ACCEPTED_FLAG, to: 11 },
+      ...wait(PRESIDENT_WAIT_FRAMES),
+      { kind: 'if-flag', mask: OFFER_ACCEPTED_FLAG, to: 13 },
       ...[6, 7, 8, 9, 10].map(index =>
         message(`script15-inline-${index}` as DamoclesMessageId)
       ),
@@ -304,8 +442,50 @@ export const SCRIPTS: Readonly<Record<ScriptId, Script>> = {
       ),
       ...sharedEpilogue()
     ],
+    revision: 2
+  },
+  'damocles.script.slot-18': {
+    entry: 0x07_14_d2,
+    ops: erisSaved(0),
     revision: 1
   },
+  // $0710EE, trigger $15: the grant line and the shared epilogue. Pages 1, 4 and 6.
+  'damocles.script.slot-21': {
+    entry: 0x07_10_ee,
+    ops: [grant(), ...sharedEpilogue()],
+    revision: 1
+  },
+  // $0710F6, trigger $16, page 2: the grant line, then a million credits.
+  'damocles.script.slot-22': {
+    entry: 0x07_10_f6,
+    ops: [
+      grant(),
+      { amount: MILLION_CREDITS, kind: 'add-balance' },
+      ...sharedEpilogue()
+    ],
+    revision: 1
+  },
+  'damocles.script.slot-23': erisSavedByWish(),
+  // $071108, trigger $18, page 7: the grant line, the clearing line, TO ACTIVATE - BOARD THE
+  // AUTHOR'S CHAIR, and the 250-frame wait.
+  'damocles.script.slot-24': {
+    entry: 0x07_11_08,
+    ops: [
+      grant(),
+      ...clearingLine(),
+      message('script24-inline-1'),
+      ...wait(WISH_WAIT_FRAMES),
+      ...sharedEpilogue()
+    ],
+    revision: 1
+  },
+  // $07114C, trigger $19, page 8: WE SAID WE'D GRANT YOU A WISH - NOT A MIRACLE, with no grant.
+  'damocles.script.slot-25': {
+    entry: 0x07_11_4c,
+    ops: [message('script25-inline-1'), ...sharedEpilogue()],
+    revision: 1
+  },
+  'damocles.script.slot-60': bothSaved(),
   // $07042A. KEY- V.I.P. LIMO, resident slot 183.
   'damocles.script.slot-2': {
     entry: 0x07_04_2a,
@@ -544,9 +724,9 @@ export const TRIGGER_FOR_RESIDENT: Readonly<Record<string, number>> = {
 };
 
 /// The location triggers the port runs (docs/research/damocles-location-triggers.md): the State
-/// President's welcome and the first offer. The tables name twelve more, whose scripts need a
-/// balance the port lacks, or are not yet authored. The walk still finds their entries; with no
-/// trigger here the launcher refuses them.
+/// President's welcome and the first offer. The tables name twelve more, whose scripts are not
+/// yet authored. The walk still finds their entries; with no trigger here the launcher refuses
+/// them.
 export const LOCATION_TRIGGERS: readonly number[] = [3, 4];
 
 /// The landing triggers `body + $1F` the port runs: `$20`-`$3B` without ERIS's `$2A`, which the
@@ -557,15 +737,27 @@ export const LANDING_TRIGGERS: readonly number[] = [
   52, 53, 54, 55, 56, 57, 58, 59
 ];
 
+/// The endings the BOOK's wishes fire (#625), and `$12`, whose body `$3C` runs after its own.
+/// Nothing but the dispatcher fires `$12` itself, which is not ported yet. Every ending's arming
+/// byte is `$A0`, so it queues behind a running script and fires once.
+export const ENDING_TRIGGERS: readonly number[] = [18, 21, 22, 23, 24, 25, 60];
+
 export const SCRIPT_FOR_TRIGGER: Readonly<Record<number, ScriptId>> = {
   11: 'damocles.script.slot-11',
   15: 'damocles.script.slot-15',
+  18: 'damocles.script.slot-18',
   2: 'damocles.script.slot-2',
   20: 'damocles.script.slot-20',
+  21: 'damocles.script.slot-21',
+  22: 'damocles.script.slot-22',
+  23: 'damocles.script.slot-23',
+  24: 'damocles.script.slot-24',
+  25: 'damocles.script.slot-25',
   3: 'damocles.script.slot-3',
   4: 'damocles.script.slot-4',
   5: 'damocles.script.slot-5',
   6: 'damocles.script.slot-6',
+  60: 'damocles.script.slot-60',
   62: 'damocles.script.slot-62',
   ...Object.fromEntries(
     LANDING_TRIGGERS.map(index => [
@@ -597,6 +789,7 @@ export const TRIGGER_ARMING: readonly {
   { byte: 0x80, index: 62 },
   { byte: 0x80, index: 3 },
   { byte: 0xa0, index: 4 },
+  ...ENDING_TRIGGERS.map(index => ({ byte: 0xa0, index })),
   ...LANDING_TRIGGERS.map(index => ({
     byte: index === 0x38 ? 0xc0 : 0x80,
     index
