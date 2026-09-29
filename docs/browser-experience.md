@@ -53,6 +53,10 @@ Damocles condensed panel-label face (CSS approximation in v1), or advance Damocl
 - `web/src/shell/menu.ts`, `settingsView.ts`, `controlsView.ts`, `saveChooser.ts` — System Menu
   layers. The Controls Page is drawn from the Control Profile's Binding table each time it opens
   (ADR 0056).
+- `web/src/shell/keyNames.ts` — names a Binding's keys as the player's layout prints them where
+  `navigator.keyboard.getLayoutMap()` answers (Chromium), for the Controls Page and the Head
+  Command notice; US names elsewhere, for digits, and for any key the panel typefaces cannot
+  draw (#606).
 - `web/src/shell/saves.ts` — gains a headless `createSavePersistence` core; the chooser and
   the console both drive it.
 - `web/src/shell/console.ts` — `parseConsoleCommand` + `executeConsoleCommand(cmd, deps)`;

@@ -5,6 +5,7 @@ import {
 import { intent, type Intent } from '../gameCore/index.ts';
 import type { HeadCommand, InteractionAction } from '../interaction/index.ts';
 import type { Occupancy } from '../session/index.ts';
+import { US_KEY_NAMES, type KeyNames } from './keyNames.ts';
 
 export interface BrowserKey {
   readonly altKey: boolean;
@@ -170,6 +171,46 @@ const liftFloor = (code: string): number | undefined => {
 
 // Key names are plain ASCII: the panel's typefaces have no arrows or en dash.
 
+/// A key the player's layout may print differently, named by its physical code (#606).
+export interface LayoutKey {
+  readonly code: string;
+}
+
+/// How the Controls Page names a key: fixed text, or text around keys the layout names. Digits
+/// are fixed text, as every layout prints the digit on its key even where the key's own
+/// character is another (AZERTY's `1` key gives `&`).
+export type KeyLabel = string | readonly (LayoutKey | string)[];
+
+const key = (code: string): LayoutKey => ({ code });
+
+/// The US names of the codes a label leaves to the layout.
+const US_NAMES: Readonly<Record<string, string>> = {
+  BracketLeft: '[',
+  BracketRight: ']',
+  Comma: ',',
+  Equal: '=',
+  Minus: '-',
+  Period: '.'
+};
+
+const usName = (code: string): string =>
+  US_NAMES[code] ?? /^Key([A-Z])$/.exec(code)?.[1] ?? code;
+
+/// A label as `names` prints it, each key falling back to its US name.
+export const keyLabelText = (
+  label: KeyLabel,
+  names: KeyNames = US_KEY_NAMES
+): string =>
+  typeof label === 'string'
+    ? label
+    : label
+        .map(part =>
+          typeof part === 'string'
+            ? part
+            : (names.printed(part.code) ?? usName(part.code))
+        )
+        .join('');
+
 /// Where a Binding holds: in every Occupancy, on foot, on foot in a Damocles Lift, or aboard.
 export type BindingGroup = 'aboard' | 'always' | 'lift' | 'onFoot';
 
@@ -194,7 +235,7 @@ export interface Binding {
   readonly group: BindingGroup;
   /// The keys as the Controls Page names them, a laptop's first. The first is also what the
   /// Head Command notice names.
-  readonly keys: readonly string[];
+  readonly keys: readonly KeyLabel[];
   readonly mode?: (actions: ControlProfileActions) => BindingMode | undefined;
   /// Handle `code` if it is this Binding's, answering whether it was.
   readonly press: (code: string, target: BindingTarget) => boolean;
@@ -224,11 +265,11 @@ const HEAD_COMMAND_LABELS: Readonly<Record<HeadCommand, string>> = {
   read: 'READ'
 };
 
-const HEAD_COMMAND_KEYS: Readonly<Record<HeadCommand, readonly string[]>> = {
-  next: ['.', 'NUMPAD +'],
+const HEAD_COMMAND_KEYS: Readonly<Record<HeadCommand, readonly KeyLabel[]>> = {
+  next: [[key('Period')], 'NUMPAD +'],
   open: ['ENTER', 'NUMPAD ENTER'],
-  previous: [',', 'NUMPAD -'],
-  read: ['P', 'NUMPAD *']
+  previous: [[key('Comma')], 'NUMPAD -'],
+  read: [[key('KeyP')], 'NUMPAD *']
 };
 
 const headCommandBinding = (command: HeadCommand): Binding => ({
@@ -283,7 +324,7 @@ export const BINDINGS: readonly Binding[] = [
   {
     action: 'THROTTLE DOWN / UP',
     group: 'aboard',
-    keys: ['- / ='],
+    keys: [[key('Minus'), ' / ', key('Equal')]],
     press: codes(['Minus', 'Equal'], (code, { actions }) =>
       actions.throttleStep(code === 'Equal' ? 1 : -1)
     ),
@@ -305,7 +346,7 @@ export const BINDINGS: readonly Binding[] = [
   {
     action: 'FLOOR 1-9, 10, 0',
     group: 'lift',
-    keys: ['1-9, 0 / B, G'],
+    keys: [['1-9, 0 / ', key('KeyB'), ', ', key('KeyG')]],
     press: (code, { actions }) => {
       const floor = liftFloor(code);
       return floor !== undefined && actions.liftKey?.(floor) === true;
@@ -346,7 +387,7 @@ export const BINDINGS: readonly Binding[] = [
   {
     action: 'ROTATE STACK',
     group: 'always',
-    keys: ['[ / ]'],
+    keys: [[key('BracketLeft'), ' / ', key('BracketRight')]],
     press: (code, { actions }) => {
       if (
         actions.rotateStack === undefined ||
@@ -362,7 +403,7 @@ export const BINDINGS: readonly Binding[] = [
   {
     action: 'PAGE',
     group: 'always',
-    keys: ['[ / ]'],
+    keys: [[key('BracketLeft'), ' / ', key('BracketRight')]],
     press: codes(['BracketLeft', 'BracketRight'], (code, { actions }) =>
       actions.page?.(code === 'BracketLeft' ? -1 : 1)
     ),
@@ -389,35 +430,35 @@ export const BINDINGS: readonly Binding[] = [
   {
     action: 'BOARD',
     group: 'always',
-    keys: ['B'],
+    keys: [[key('KeyB')]],
     press: codes(['KeyB'], (_code, { actions }) => actions.reach('board')),
     provided: always
   },
   {
     action: 'TAKE',
     group: 'always',
-    keys: ['T'],
+    keys: [[key('KeyT')]],
     press: codes(['KeyT'], (_code, { actions }) => actions.reach('take')),
     provided: always
   },
   {
     action: 'LEAVE CRAFT',
     group: 'aboard',
-    keys: ['L'],
+    keys: [[key('KeyL')]],
     press: codes(['KeyL'], (_code, { actions }) => actions.leaveCraft()),
     provided: always
   },
   {
     action: 'RIDE LIFT',
     group: 'always',
-    keys: ['E'],
+    keys: [[key('KeyE')]],
     press: codes(['KeyE'], (_code, { actions }) => actions.rideLift?.()),
     provided: actions => actions.rideLift !== undefined
   },
   {
     action: 'DROP',
     group: 'always',
-    keys: ['D'],
+    keys: [[key('KeyD')]],
     press: codes(['KeyD'], (_code, { actions }) => actions.drop()),
     provided: always
   },
@@ -427,7 +468,7 @@ export const BINDINGS: readonly Binding[] = [
   {
     action: 'FIRE',
     group: 'always',
-    keys: ['F'],
+    keys: [[key('KeyF')]],
     mode: actions => (actions.fire === undefined ? 'hold' : undefined),
     press: codes(['KeyF'], (code, target) => {
       target.actions.fire?.();
@@ -440,7 +481,7 @@ export const BINDINGS: readonly Binding[] = [
   {
     action: 'RUN',
     group: 'always',
-    keys: ['R'],
+    keys: [[key('KeyR')]],
     mode: () => 'toggle',
     press: codes(['KeyR'], (code, target) => {
       target.toggleRunning();
@@ -453,12 +494,13 @@ export const BINDINGS: readonly Binding[] = [
 const inGroup = (group: BindingGroup, aboard: boolean): boolean =>
   group === 'always' || (group === 'aboard') === aboard;
 
-/// The Head Command keys as the DAMOCLES FILE's notice names them: a laptop's key for each.
-export const headCommandKeysText = (): string =>
+/// The Head Command keys as the DAMOCLES FILE's notice names them: a laptop's key for each, as
+/// the player's layout prints it.
+export const headCommandKeysText = (names: KeyNames = US_KEY_NAMES): string =>
   (['open', 'read', 'next', 'previous'] as const)
     .map(
       command =>
-        `${HEAD_COMMAND_KEYS[command][0]} ${HEAD_COMMAND_LABELS[command]}`
+        `${keyLabelText(HEAD_COMMAND_KEYS[command][0]!, names)} ${HEAD_COMMAND_LABELS[command]}`
     )
     .join(' · ');
 
@@ -505,10 +547,11 @@ const GROUP_TITLES: Readonly<Record<ControlsGroupName, string>> = {
 
 /// The Controls Page's groups for a Title: every Binding it has, grouped by where it holds, with
 /// the groups the player is in marked current. A group with no Binding the Title has is left
-/// out.
+/// out. Keys are named as `names` prints them.
 export const describeBindings = (
   actions: ControlProfileActions,
-  state: ControlsState
+  state: ControlsState,
+  names: KeyNames = US_KEY_NAMES
 ): readonly ControlsGroup[] => {
   const aboard = state.occupancy.kind === 'aboard';
   const current: Readonly<Record<BindingGroup, boolean>> = {
@@ -524,7 +567,7 @@ export const describeBindings = (
       const mode = binding.mode?.(actions);
       return {
         action: binding.action,
-        keys: binding.keys.join(' / '),
+        keys: binding.keys.map(label => keyLabelText(label, names)).join(' / '),
         ...(mode === undefined ? {} : { mode })
       };
     });
@@ -602,11 +645,12 @@ export class BrowserControlProfile {
   }
 
   /// The Controls Page's groups for this profile's Title, as the player stands now.
-  describe(inLift: boolean): readonly ControlsGroup[] {
-    return describeBindings(this.actions, {
-      inLift,
-      occupancy: this.actions.occupancy()
-    });
+  describe(inLift: boolean, names?: KeyNames): readonly ControlsGroup[] {
+    return describeBindings(
+      this.actions,
+      { inLift, occupancy: this.actions.occupancy() },
+      names
+    );
   }
 
   keyDown(key: BrowserKey): boolean {

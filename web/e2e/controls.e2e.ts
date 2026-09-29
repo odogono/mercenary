@@ -118,3 +118,28 @@ test('the Targ Controls Page lists only the Bindings Targ has', async ({
   await page.keyboard.press('Escape');
   await expect(surface(page)).toHaveAttribute('data-layer', 'menu');
 });
+
+test('the Controls Page names the keys as the player layout prints them', async ({
+  page
+}) => {
+  // French AZERTY, as Chromium's Keyboard Map API gives it (#606).
+  await page.addInitScript(() => {
+    const layout = new Map([
+      ['Equal', '='],
+      ['Minus', ')']
+    ]);
+    Object.defineProperty(navigator, 'keyboard', {
+      configurable: true,
+      value: { getLayoutMap: () => Promise.resolve(layout) }
+    });
+  });
+  await page.goto('/');
+  await expect(surface(page)).toHaveAttribute('data-state', 'ready');
+  await page.keyboard.press('Space');
+  await page.locator('#departure-skip').click();
+  await expect(surface(page)).toHaveAttribute('data-arrival', 'done');
+
+  await openControls(page);
+  await expect(group(page, 'aboard')).toContainText(') / =');
+  await expect(group(page, 'aboard')).not.toContainText('- / =');
+});
