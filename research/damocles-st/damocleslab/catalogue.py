@@ -2760,6 +2760,45 @@ def decode_group_overrides(data: bytes, group: int) -> dict[int, dict]:
     return walk_group_record(data, group)[1]
 
 
+LOCATION_ENTRY_BYTES = 4
+LOCATION_TABLE_LIMIT = 64
+
+
+def decode_location_table(data: bytes, group: int) -> dict:
+    """One structure group's location-trigger table, as the workspace loader publishes it.
+
+    $04ED14-$04ED24 steps over the place list the way the loader does, not the
+    way `decode_named_area` reads it: a 20-byte header, then one 21-byte place
+    per nonzero cell byte, ending at a zero byte. $04ED26 publishes the byte
+    after it at $7A68. The table there is four-byte entries -- cell, region,
+    Floor, trigger -- ending at a zero cell byte. $05A6F6 matches the cell with
+    $7B5C, the region with $7AFD (0 is any region whose flags have bit 14
+    clear) and the Floor with $7AA5 (negative is any); $054C94 takes the
+    entries whose region is $FF on a cell change. Group $0E's place list has no
+    terminator, so the loader reads on into group $0F's record and the table it
+    publishes is those bytes. They are kept as read. See
+    docs/research/damocles-location-triggers.md.
+    """
+    _record, _overrides, place_list = walk_group_record(data, group)
+    cursor = place_list
+    if data[cursor]:
+        cursor += 20
+        while data[cursor]:
+            cursor += 21
+    cursor += 1
+    table = cursor
+    entries = []
+    for _ in range(LOCATION_TABLE_LIMIT):
+        if cursor + LOCATION_ENTRY_BYTES > len(data):
+            raise ValueError('location table runs off the capture')
+        if not data[cursor]:
+            return {'sourceAddress': table, 'entries': entries}
+        cell, region, floor, trigger = struct.unpack_from('>BBbB', data, cursor)
+        entries.append({'cell': cell, 'region': region, 'floor': floor, 'trigger': trigger})
+        cursor += LOCATION_ENTRY_BYTES
+    raise ValueError('location table limit exceeded')
+
+
 # The per-body island-record list. $0592E8 indexes the table the longword at
 # $04BD1E points at by half the body selector and publishes the list in $7A16;
 # $056464 and $04EB46 then read one record's origin, coastline, group and
@@ -2941,6 +2980,7 @@ def decode_islands(data: bytes, bodies: list) -> list[dict]:
         for record in decode_island_records(data, body):
             group = record['structureGroup']
             workspace, area_name = None, None
+            location_table = decode_location_table(data, group)
             if group:
                 try:
                     workspace, _overrides, place_list = walk_group_record(data, group)
@@ -2965,6 +3005,7 @@ def decode_islands(data: bytes, bodies: list) -> list[dict]:
                 'structureGroup': group,
                 'workspace': workspace,
                 'areaName': area_name,
+                'locationTable': location_table,
                 'reason': (
                     'Coastline-less record: it shares the stub whose extent and core boxes '
                     'are the whole coordinate plane, so $0560F2 answers core everywhere on '
