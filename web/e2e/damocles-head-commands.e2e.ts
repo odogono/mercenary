@@ -143,15 +143,14 @@ test('opens, pages and closes the DAMOCLES FILE with the pointer', async ({
   await centreBox(page).hover();
   await expect(close).toBeVisible();
 
-  // The centre box's right half pages on, its left half back.
+  // The centre box's + pages on and its − back, in the 64 by 32 cells it is lettered on.
   const box = (await centreBox(page).boundingBox())!;
-  await centreBox(page).click({
-    position: { x: box.width * 0.75, y: box.height / 2 }
+  const cell = (x: number, y: number) => ({
+    position: { x: (box.width * x) / 64, y: (box.height * y) / 32 }
   });
+  await centreBox(page).click(cell(60, 12));
   await expect(centreBox(page)).toHaveAttribute('data-item', 'HISTORY');
-  await centreBox(page).click({
-    position: { x: box.width * 0.25, y: box.height / 2 }
-  });
+  await centreBox(page).click(cell(2, 12));
   await expect(centreBox(page)).toHaveAttribute('data-item', 'PROBLEM');
 
   // The wheel over the world view pages, and a click there pages rather than takes.
@@ -164,6 +163,19 @@ test('opens, pages and closes the DAMOCLES FILE with the pointer', async ({
   await frame(page).click();
   await expect(frame(page)).toHaveAttribute('data-document', '151 1 1');
   await expect(frame(page)).not.toHaveAttribute('data-take-target', /.+/);
+
+  // A click on the item's name reads it, as P does, rather than paging.
+  await centreBox(page).click(cell(32, 12));
+  await expect(centreBox(page)).toHaveAttribute('data-item', 'HISTORY');
+  await expect(frame(page)).toHaveAttribute(
+    'data-damocles-row',
+    /A PARLIAMENTARY COMMITTEE/,
+    { timeout: 15_000 }
+  );
+  // Each block the message bar shows is logged to the Shell Console too.
+  await expect(page.locator('#console-log')).toContainText(
+    'BENSON · A PARLIAMENTARY COMMITTEE'
+  );
 
   // ✕ shows over the centre box, and closes it.
   await centreBox(page).hover();

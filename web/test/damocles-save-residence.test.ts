@@ -80,6 +80,7 @@ const record = () => ({
       position: { x: 12, y: 80, z: 34 }
     },
     residence: [] as { instance: string; residence: Residence }[],
+    running: false,
     script: initialDamoclesSaveScript(),
     scrollCounter: 0,
     spaceMemory: null,

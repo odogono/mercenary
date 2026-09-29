@@ -121,6 +121,7 @@ const standingAt = (
       }
     })),
     // Carrying a pickup trigger's object means its trigger has fired, as a Save must say.
+    running: false,
     script: {
       ...initialDamoclesSaveScript(),
       triggers: initialDamoclesSaveScript().triggers.map(trigger =>

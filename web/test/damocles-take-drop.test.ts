@@ -83,6 +83,7 @@ const besideKey = (soundPermitted = true): DamoclesSession => {
         }
       },
       residence: [],
+      running: false,
       script: initialDamoclesSaveScript(),
       scrollCounter: 0,
       spaceMemory: null,
@@ -162,6 +163,7 @@ const dynamicAtOrigin = (
         }
       }
     ],
+    running: false,
     script: {
       ...initialDamoclesSaveScript(),
       triggers: initialDamoclesSaveScript().triggers.map(trigger =>
@@ -512,6 +514,7 @@ describe('ordinary Eris limo-key take and drop', () => {
         }
       },
       residence: [],
+      running: false,
       script: initialDamoclesSaveScript(),
       scrollCounter: 0,
       spaceMemory: null,
@@ -563,6 +566,7 @@ describe('ordinary Eris limo-key take and drop', () => {
           residence: { kind: 'carried', placementClass: 0 }
         }
       ],
+      running: false,
       script: {
         ...initialDamoclesSaveScript(),
         triggers: initialDamoclesSaveScript().triggers.map(trigger =>
@@ -647,6 +651,7 @@ describe('ordinary Eris limo-key take and drop', () => {
         position: { x: 0, y: loaded.doc.eye.heightUnits, z: 0 }
       },
       residence: carried.map(carriedResidence),
+      running: false,
       script: {
         ...initialDamoclesSaveScript(),
         triggers: initialDamoclesSaveScript().triggers.map(trigger =>

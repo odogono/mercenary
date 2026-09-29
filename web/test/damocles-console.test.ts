@@ -1,6 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 
-import { executeDamoclesConsoleCommand } from '../src/damocles/console.ts';
+import {
+  damoclesMessageTranscript,
+  executeDamoclesConsoleCommand
+} from '../src/damocles/console.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import { catalogueResidence } from '../src/damocles/residence.ts';
 import {
@@ -284,4 +287,25 @@ test('atlas is a zero-argument shell navigation command', async () => {
   );
   expect(opened).toBeTrue();
   expect(session.captureResume()).toEqual(before);
+});
+
+describe('the Damocles message transcript', () => {
+  test('logs what the message bar shows, one row a line', () => {
+    expect(damoclesMessageTranscript('  WELCOME TO ERIS  ')).toEqual([
+      'BENSON · WELCOME TO ERIS'
+    ]);
+    // A document body's block is the 48 cells from its start, not the rest of the record.
+    const body =
+      '        REFER TO CONFIDENTIAL FILE IN SAFE        ' + 'SECOND BLOCK';
+    expect(damoclesMessageTranscript(body)).toEqual([
+      'BENSON · REFER TO CONFIDENTIAL FILE IN SAFE'
+    ]);
+    expect(damoclesMessageTranscript('SECOND BLOCK')).toEqual([
+      'BENSON · SECOND BLOCK'
+    ]);
+  });
+
+  test('logs nothing for a blank row', () => {
+    expect(damoclesMessageTranscript(' '.repeat(48))).toEqual([]);
+  });
 });

@@ -134,9 +134,15 @@ import type { Pose } from './world.ts';
 /// because a body is drawn in plane 1 and shown 48 cells at a time. The original's save carries
 /// the open panel too (`$785E`–`$7865`). A schema-16 record or older is migrated with no
 /// document open and every row in plane 0: no earlier port opened one.
-export const DAMOCLES_SAVE_SCHEMA_VERSION = 17 as const;
+///
+/// Version 18 carries the run toggle `$7B3A`, which the run key latches and the run lamp shows.
+/// Until then it was the page's, so a reload or an Atlas move dropped it. A schema-17 record or
+/// older is migrated walking.
+export const DAMOCLES_SAVE_SCHEMA_VERSION = 18 as const;
 /// The older schemas a restore migrates rather than refuses.
-const MIGRATED_SCHEMA_VERSIONS: readonly unknown[] = [11, 12, 13, 14, 15, 16];
+const MIGRATED_SCHEMA_VERSIONS: readonly unknown[] = [
+  11, 12, 13, 14, 15, 16, 17
+];
 /// The schemas from before the landing messages (#576), which carry no landing trigger.
 const PRE_LANDING_SCHEMA_VERSIONS: readonly unknown[] = [11, 12, 13];
 export const DAMOCLES_DESTINATION = 'damocles' as const;
@@ -283,6 +289,8 @@ export interface DamoclesSaveSnapshot {
   } | null;
   readonly pose: Pose;
   readonly residence: readonly ResidenceDeparture[];
+  /// The run toggle, as a migrated record resumes with it off.
+  readonly running: boolean;
   readonly script: DamoclesSaveScript;
   readonly scrollCounter: number;
   /// The pitch rate, nearest Body and range, or null for the first world's, as a migrated record
@@ -1604,16 +1612,22 @@ export const decodeDamoclesSave = (
     16
   );
   const current = record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION;
+  // Schema 17 is the first to carry the document mode.
+  const documentsSaved = current || record['schemaVersion'] === 17;
   // Schema 16 is the first to carry the encounter.
-  const encounterSaved = current || record['schemaVersion'] === 16;
+  const encounterSaved = documentsSaved || record['schemaVersion'] === 16;
   const script = scriptOf(
     snapshot['script'],
     { documents, strings },
     PRE_LANDING_SCHEMA_VERSIONS.includes(record['schemaVersion']),
     encounterSaved,
-    current
+    documentsSaved
   );
-  const headCommands = current
+  const running = current ? snapshot['running'] : false;
+  if (typeof running !== 'boolean') {
+    return fail('running is not a boolean');
+  }
+  const headCommands = documentsSaved
     ? headCommandsOf(
         snapshot['headCommands'],
         [...carried, ...briefcaseStore],
@@ -1746,6 +1760,7 @@ export const decodeDamoclesSave = (
       pendingBriefcaseDrop,
       pose,
       residence,
+      running,
       script,
       scrollCounter,
       spaceMemory,

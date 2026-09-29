@@ -5,6 +5,7 @@ import {
   type ConsoleSettingHost
 } from '../shell/console.ts';
 import type { SavePersistence } from '../shell/saves.ts';
+import { DAMOCLES_ROW_CELLS } from './display.ts';
 import { damoclesWhere } from './save.ts';
 import type { DamoclesSession } from './session.ts';
 
@@ -29,6 +30,14 @@ export const DAMOCLES_CONSOLE_BANNER = [
   'shell console',
   'a development tool: type help for commands'
 ] as const;
+
+/// The transcript line for one message the message bar has started to show, as Targ's
+/// Benson Messages are logged. `text` runs from the block's start to the record's end, so a
+/// document body is logged a block, one row of the bar, at a time.
+export const damoclesMessageTranscript = (text: string): readonly string[] => {
+  const shown = text.slice(0, DAMOCLES_ROW_CELLS).trim();
+  return shown === '' ? [] : [`BENSON · ${shown}`];
+};
 
 export interface DamoclesConsoleHost extends ConsoleSettingHost {
   readonly openAtlas: () => void;

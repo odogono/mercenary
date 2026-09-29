@@ -224,6 +224,7 @@ describe('body-aware Object Residence', () => {
           pitch: 0,
           position: { x: 0, y: 63, z: 0 }
         },
+        running: false,
         script: initialDamoclesSaveScript(),
         scrollCounter: 0,
         spaceMemory: null,

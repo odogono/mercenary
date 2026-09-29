@@ -151,10 +151,22 @@ describe('the Damocles pointer take target', () => {
 
 describe('the pointer’s document paging (#599)', () => {
   test('pages the way the centre box’s − or + stands', () => {
-    expect(centreBoxPage(0, 64)).toBe('previous');
-    expect(centreBoxPage(31.9, 64)).toBe('previous');
-    expect(centreBoxPage(32, 64)).toBe('next');
-    expect(centreBoxPage(63, 64)).toBe('next');
+    const size = { height: 32, width: 64 };
+    expect(centreBoxPage({ x: 0, y: 12 }, size)).toBe('previous');
+    expect(centreBoxPage({ x: 31.9, y: 4 }, size)).toBe('previous');
+    expect(centreBoxPage({ x: 32, y: 24 }, size)).toBe('next');
+    expect(centreBoxPage({ x: 60, y: 12 }, size)).toBe('next');
+  });
+
+  test('reads the item whose name is clicked, as * does', () => {
+    // Scaled up, as the panel draws the box.
+    const size = { height: 128, width: 256 };
+    expect(centreBoxPage({ x: 24, y: 32 }, size)).toBe('read');
+    expect(centreBoxPage({ x: 128, y: 48 }, size)).toBe('read');
+    expect(centreBoxPage({ x: 227, y: 67 }, size)).toBe('read');
+    expect(centreBoxPage({ x: 20, y: 48 }, size)).toBe('previous');
+    expect(centreBoxPage({ x: 232, y: 48 }, size)).toBe('next');
+    expect(centreBoxPage({ x: 128, y: 70 }, size)).toBe('next');
   });
 
   test('turns a mouse notch into one page, down on and up back', () => {

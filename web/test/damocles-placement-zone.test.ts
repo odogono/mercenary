@@ -72,6 +72,7 @@ const carryingKeyAt = (x: number, z: number): DamoclesSession => {
         residence: { kind: 'carried', placementClass: 4 }
       }
     ],
+    running: false,
     script: {
       ...initialDamoclesSaveScript(),
       triggers: initialDamoclesSaveScript().triggers.map(trigger =>

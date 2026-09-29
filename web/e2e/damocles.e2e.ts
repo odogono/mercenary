@@ -548,6 +548,14 @@ test('R latches running, which lights the lamp and lengthens the step', async ({
   expect(ran).toBeGreaterThan(walked * 1.4);
   expect(ran).toBeLessThan(walked * 1.9);
 
+  // The mode is Session State, so the Session Resume a reload restores keeps it on.
+  await page.evaluate(() =>
+    window.dispatchEvent(new PageTransitionEvent('pagehide'))
+  );
+  await page.reload();
+  await expect(frame).toHaveAttribute('data-state', 'ready');
+  await expect(lamp).toHaveClass(/on/);
+
   // The toggle outlasts the key, and a second press puts it back.
   await expect(lamp).toHaveClass(/on/);
   await page.keyboard.press('KeyR');
