@@ -40,8 +40,13 @@ import {
   type Presenting
 } from './script.ts';
 import {
+  ANSWER_FRAMES,
   LANDING_TRIGGERS,
   LOCATION_TRIGGERS,
+  NO_KEY,
+  OFFER_ACCEPTED_FLAG,
+  OFFER_KEY_SLOT,
+  OFFER_REWARDS,
   ORDINARY_DISPLAY_FRAMES,
   SCRIPTS,
   SCRIPT_FOR_TRIGGER,
@@ -50,6 +55,7 @@ import {
   TRIGGER_FOR_RESIDENT,
   WAIT_FROM_DOCUMENT,
   isScriptId,
+  type Op,
   type ScriptId,
   type Step
 } from './scripts.ts';
@@ -144,10 +150,16 @@ import type { Pose } from './world.ts';
 /// pickup and landing triggers, which the region walk fires on first entering the Eris STATE
 /// OFFICE. A schema-18 record or older is migrated with it armed: no earlier port walked the
 /// location table, so none spent it.
-export const DAMOCLES_SAVE_SCHEMA_VERSION = 19 as const;
+///
+/// Version 20 carries the first offer (#612): trigger 4, the key latch `$7B61` a prompt reads,
+/// the proposed reward `$00F9`, the accepted bit 0 of `$7BD8`, and the carried flag the
+/// acceptance sets on DOOR KEY A. A Save taken at a prompt resumes polling it without asking
+/// again. A schema-19 record or older is migrated with trigger 4 armed, an empty latch, no
+/// reward and nothing accepted: no earlier port had the script.
+export const DAMOCLES_SAVE_SCHEMA_VERSION = 20 as const;
 /// The older schemas a restore migrates rather than refuses.
 const MIGRATED_SCHEMA_VERSIONS: readonly unknown[] = [
-  11, 12, 13, 14, 15, 16, 17, 18
+  11, 12, 13, 14, 15, 16, 17, 18, 19
 ];
 /// The schemas from before the landing messages (#576), which carry no landing trigger.
 const PRE_LANDING_SCHEMA_VERSIONS: readonly unknown[] = [11, 12, 13];
@@ -312,6 +324,8 @@ export type DamoclesSaveOccupancy =
   | { readonly instance: string; readonly kind: 'aboard' };
 
 export interface DamoclesSaveScript {
+  /// The slots whose carried flag a script set: the first offer's DOOR KEY A.
+  readonly carried: readonly number[];
   readonly counter: number;
   readonly display: DamoclesDisplay;
   /// Bank word `$070102`, which the shared epilogue moves and restores.
@@ -321,6 +335,8 @@ export interface DamoclesSaveScript {
   readonly execution: Execution | null;
   /// `$7BD8` without the busy bit.
   readonly flags: number;
+  /// `$7B61`, the key latch, `$FF` when empty.
+  readonly key: number;
   readonly message: Presenting | null;
   /// The noise pointer `$7E18` as a word index.
   readonly noise: number;
@@ -328,6 +344,8 @@ export interface DamoclesSaveScript {
   readonly pending: number | null;
   /// `$7B96`: the document body a Read has queued and the dispatch head has not yet presented.
   readonly read: DocumentMessageId | null;
+  /// Record `$00F9`'s first BCD word, the first offer's proposed reward.
+  readonly reward: number;
   readonly triggers: readonly {
     readonly armed: boolean;
     readonly index: number;
@@ -358,16 +376,19 @@ export interface DamoclesSaveEncounter {
 export const initialDamoclesSaveScript = (): DamoclesSaveScript => {
   const script = initialScriptState();
   return {
+    carried: script.carried,
     counter: script.counter,
     display: script.display,
     displayDuration: script.displayDuration,
     encounter: script.encounter,
     execution: script.execution,
     flags: script.flags,
+    key: script.key,
     message: script.message,
     noise: script.noise,
     pending: script.pending,
     read: script.read,
+    reward: script.reward,
     triggers: script.triggers.map(({ armed, index }) => ({ armed, index })),
     zaps: script.zaps
   };
@@ -555,7 +576,7 @@ const printableRow = (value: unknown, path: string): string =>
 
 /// Every id a Damocles Script or a system refusal can present. The eleven inline records the
 /// five further responses use are already extracted into `payload/damocles/strings.json`, and so
-/// are the landing scripts' (#576) and the State President's (#611).
+/// are the landing scripts' (#576), the State President's (#611) and the first offer's (#612).
 const messageIds = new Set<DamoclesMessageId>([
   ...LANDING_MESSAGE_IDS,
   'script11-inline-1',
@@ -570,6 +591,26 @@ const messageIds = new Set<DamoclesMessageId>([
   'script3-inline-4',
   'script3-inline-5',
   'script3-inline-6',
+  'script4-inline-1',
+  'script4-inline-2',
+  'script4-inline-3',
+  'script4-inline-4',
+  'script4-inline-5',
+  'script4-inline-6',
+  'script4-inline-7',
+  'script4-inline-8',
+  'script4-inline-9',
+  'script4-inline-10',
+  'script4-inline-11',
+  'script4-inline-12',
+  'script4-inline-13',
+  'script4-inline-14',
+  'script4-inline-15',
+  'script4-inline-16',
+  'script4-inline-17',
+  'script4-inline-18',
+  'script4-inline-19',
+  'script4-inline-20',
   'script5-inline-1',
   'script5-inline-2',
   'script5-inline-3',
@@ -842,6 +883,8 @@ const LANDED_TRIGGERS: readonly number[] = [
   ...PICKUP_TRIGGERS,
   ...LANDING_TRIGGERS
 ];
+/// Every trigger a schema-19 record carries: the State President's beside those.
+const WELCOMED_TRIGGERS: readonly number[] = [...LANDED_TRIGGERS, 3];
 /// Every trigger a current record carries: pickups, landings and location triggers.
 const SAVED_TRIGGERS: readonly number[] = [
   ...LANDED_TRIGGERS,
@@ -849,9 +892,14 @@ const SAVED_TRIGGERS: readonly number[] = [
 ];
 
 /// A step is an index into a script's recovered operation list, and a suspended execution may
-/// only name a step the interpreter can actually stop on. `runToBlock` returns in exactly two
-/// places: immediately after a `message` op, while that message presents, and *on* a `poll-wait`
-/// op, while its counter is below the threshold.
+/// only name a step the interpreter can actually stop on. `runToBlock` returns in exactly three
+/// places: immediately after a `message` op, while that message presents, *on* a `poll-wait`
+/// op, while its counter is below the threshold, and on a prompt's first key test, where its
+/// `if-wait` loops back to read the keys again on the next frame.
+/// Whether `step` is a prompt's first key test, which follows its `reset-wait`.
+const answering = (ops: readonly Op[], step: Step): boolean =>
+  ops[step]?.kind === 'if-key' && ops[step - 1]?.kind === 'reset-wait';
+
 const blockingStep = (script: ScriptId, step: Step): boolean => {
   const ops = SCRIPTS[script].ops;
   if (!Number.isInteger(step) || step < 0 || step > ops.length) {
@@ -862,6 +910,7 @@ const blockingStep = (script: ScriptId, step: Step): boolean => {
   return (
     ops[step - 1]?.kind === 'message' ||
     ops[step]?.kind === 'poll-wait' ||
+    answering(ops, step) ||
     ops[step - 1]?.kind === 'clear-busy'
   );
 };
@@ -955,7 +1004,8 @@ const scriptOf = (
   migrated: boolean,
   encounterSaved: boolean,
   current: boolean,
-  locationSaved: boolean
+  locationSaved: boolean,
+  offerSaved: boolean
 ): DamoclesSaveScript => {
   const script = object(value, 'snapshot.script');
   const counter = integer(
@@ -1005,9 +1055,11 @@ const scriptOf = (
   });
   const expected = migrated
     ? PICKUP_TRIGGERS
-    : locationSaved
+    : offerSaved
       ? SAVED_TRIGGERS
-      : LANDED_TRIGGERS;
+      : locationSaved
+        ? WELCOMED_TRIGGERS
+        : LANDED_TRIGGERS;
   if (
     new Set(triggers.map(trigger => trigger.index)).size !== triggers.length ||
     triggers.length !== expected.length ||
@@ -1015,8 +1067,8 @@ const scriptOf = (
   ) {
     return fail('script trigger table is incomplete or duplicated');
   }
-  // Before schema 14 no landing had spent a trigger, and before schema 19 no location trigger
-  // had, so each a record lacks migrates armed.
+  // Before schema 14 no landing had spent a trigger, before schema 19 no location trigger had,
+  // and before schema 20 the first offer's had not, so each a record lacks migrates armed.
   const table = TRIGGER_ARMING.map(
     ({ index }) =>
       triggers.find(trigger => trigger.index === index) ?? {
@@ -1027,8 +1079,37 @@ const scriptOf = (
   const flags = migrated
     ? 0
     : integer(script['flags'], 'snapshot.script.flags', 0, 0xff_ff);
-  if ((flags & ~TOLOSA_VISITED_FLAG) !== 0) {
+  if ((flags & ~(TOLOSA_VISITED_FLAG | OFFER_ACCEPTED_FLAG)) !== 0) {
     return fail('script flags name a bit no ported script writes');
+  }
+  const key = offerSaved
+    ? integer(script['key'], 'snapshot.script.key', 0, 0xff)
+    : NO_KEY;
+  const reward = offerSaved
+    ? integer(script['reward'], 'snapshot.script.reward', 0, 0xff_ff)
+    : 0;
+  if (reward !== 0 && !(OFFER_REWARDS as readonly number[]).includes(reward)) {
+    return fail('snapshot.script.reward is no offer the first offer makes');
+  }
+  const carried = offerSaved
+    ? array(script['carried'], 'snapshot.script.carried').map(slot =>
+        integer(slot, 'snapshot.script.carried[]', 0, 0xff)
+      )
+    : [];
+  if (carried.some(slot => slot !== OFFER_KEY_SLOT) || carried.length > 1) {
+    return fail('snapshot.script.carried names a flag no ported script sets');
+  }
+  // Only the first offer writes the reward and the accepted bit, and its trigger is spent as it
+  // launches. The carried flag is set just after the bit, so it needs it; a take or a drop can
+  // settle the flag again, so the bit does not need the flag.
+  const offerArmed = table.find(trigger => trigger.index === 4)?.armed ?? true;
+  if (offerArmed && (reward !== 0 || (flags & OFFER_ACCEPTED_FLAG) !== 0)) {
+    return fail('the first offer is armed but has already been made');
+  }
+  if (carried.length > 0 && (flags & OFFER_ACCEPTED_FLAG) === 0) {
+    return fail(
+      'DOOR KEY A is flagged carried but the offer was never accepted'
+    );
   }
   const encounter = migrated
     ? 0
@@ -1065,8 +1146,13 @@ const scriptOf = (
       return fail(`trigger ${index} is armed while its own script is running`);
     }
   }
-  if (pending !== null && !PICKUP_TRIGGERS.includes(pending)) {
-    return fail('script pending trigger is not a pickup trigger');
+  if (
+    pending !== null &&
+    ((TRIGGER_ARMING.find(item => item.index === pending)?.byte ?? 0) &
+      0x20) ===
+      0
+  ) {
+    return fail('script pending trigger is not a queueable trigger');
   }
   const reading = message !== null && isDocumentMessage(message.id);
   if (message !== null) {
@@ -1109,8 +1195,14 @@ const scriptOf = (
       if (message?.id !== previous.id && !reading) {
         return fail('script execution is not at a reachable commit boundary');
       }
-    } else if (step?.kind === 'poll-wait') {
-      const threshold = step.frames === WAIT_FROM_DOCUMENT ? 200 : step.frames;
+    } else if (step?.kind === 'poll-wait' || answering(ops, execution.step)) {
+      // A prompt loops back while its counter is below 500, so a saved poll is below it.
+      const threshold =
+        step?.kind !== 'poll-wait'
+          ? ANSWER_FRAMES
+          : step.frames === WAIT_FROM_DOCUMENT
+            ? 200
+            : step.frames;
       if (
         !reading &&
         (message !== null || counter >= threshold || display.kind !== 'held')
@@ -1155,16 +1247,19 @@ const scriptOf = (
     return fail('scrolling display has no message');
   }
   return {
+    carried,
     counter,
     display,
     displayDuration,
     encounter,
     execution,
     flags,
+    key,
     message,
     noise,
     pending,
     read,
+    reward,
     triggers: table,
     zaps
   };
@@ -1639,8 +1734,10 @@ export const decodeDamoclesSave = (
     16
   );
   const current = record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION;
+  // Schema 19 is the first to carry the location triggers.
+  const locationSaved = current || record['schemaVersion'] === 19;
   // Schema 18 is the first to carry the run toggle.
-  const runSaved = current || record['schemaVersion'] === 18;
+  const runSaved = locationSaved || record['schemaVersion'] === 18;
   // Schema 17 is the first to carry the document mode.
   const documentsSaved = runSaved || record['schemaVersion'] === 17;
   // Schema 16 is the first to carry the encounter.
@@ -1651,6 +1748,7 @@ export const decodeDamoclesSave = (
     PRE_LANDING_SCHEMA_VERSIONS.includes(record['schemaVersion']),
     encounterSaved,
     documentsSaved,
+    locationSaved,
     current
   );
   const running = runSaved ? snapshot['running'] : false;

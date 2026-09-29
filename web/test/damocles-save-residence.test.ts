@@ -148,16 +148,19 @@ const waiting = (trigger: number, resident: string) => {
   const value = record();
   carry(value, [resident]);
   value.snapshot.script = {
+    carried: state.carried,
     counter: state.counter,
     display: state.display,
     displayDuration: state.displayDuration,
     encounter: state.encounter,
     execution: state.execution,
     flags: state.flags,
+    key: state.key,
     message: state.message,
     noise: state.noise,
     pending: state.pending,
     read: state.read,
+    reward: state.reward,
     triggers: state.triggers.map(({ armed, index }) => ({ armed, index })),
     zaps: state.zaps
   };

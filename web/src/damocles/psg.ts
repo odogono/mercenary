@@ -441,6 +441,7 @@ export class DamoclesPsgDriver {
   /// What a request itself writes, in the frame loop and before any VBL runs.
   request(request: DamoclesRequest, sink: PsgSink): void {
     switch (request) {
+      case 'answer':
       case 'drop':
       case 'take':
       case 'throttle':

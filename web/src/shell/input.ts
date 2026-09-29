@@ -24,6 +24,10 @@ export interface ControlProfileActions {
   readonly fire?: () => void;
   /// A Head Command. A Title with none leaves it out, and its keys keep their ordinary meaning.
   readonly headCommand?: (command: HeadCommand) => void;
+  /// Every key press, as its physical code, before any Binding takes it: the key a script's
+  /// prompt reads, as Damocles's input poll writes each key it reads to `$7B61` (#612). A Title
+  /// whose scripts read no latch leaves it out.
+  readonly keyMake?: (code: string) => void;
   /// Launch into space aboard: the ST's Esc (`$055822`), which the Browser Shell keeps for the
   /// System Menu, so `Backspace` stands in for it (#566). A Title with no launch leaves it out.
   readonly launch?: () => void;
@@ -616,6 +620,7 @@ export class BrowserControlProfile {
         handledCode(key.code)
       );
     }
+    this.actions.keyMake?.(key.code);
     const aboard = this.actions.occupancy().kind === 'aboard';
     for (const binding of BINDINGS) {
       if (

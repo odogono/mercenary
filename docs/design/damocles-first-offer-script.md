@@ -2,6 +2,8 @@
 
 Design for [#288](https://github.com/odogono/mercenary/issues/288), implementing the authoring decision in [ADR 0045](../adr/0045-author-scripts-as-named-typescript-steps.md). Implementation and developer presentation belong to [#289](https://github.com/odogono/mercenary/issues/289) and [#290](https://github.com/odogono/mercenary/issues/290). This document adds no application implementation.
 
+Live play does not use this contract. [#612](https://github.com/odogono/mercenary/issues/612) runs the whole of slot `$04` as `damocles.script.slot-4` in `web/src/damocles/scripts.ts`, on the interpreter every other Damocles Script uses. The step order, the persistent latch, the pre-prompt clear and the 500-tick fall-through below carry over unchanged. The isolated harness `web/src/damocles/firstOffer.ts` stays for the developer page.
+
 ## Evidence and scope
 
 The [first-offer research](../research/damocles-first-offer.md) supplies recovered-address provenance, capture hashes, repeatable probes and their limits. The segment starts at reward setup `$0707DC`, not slot `$04`'s entry `$070650`, and ends **before** executing acceptance `$0709AA` or next-offer `$070830`. Prior briefing, later bargaining, payment, mission consequences and random branches are excluded.
