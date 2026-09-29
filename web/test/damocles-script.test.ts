@@ -19,6 +19,7 @@ import {
 import {
   CLEARING_LINE_FRAMES,
   LANDING_TRIGGERS,
+  LOCATION_TRIGGERS,
   ORDINARY_DISPLAY_FRAMES,
   TOLOSA_VISITED_FLAG
 } from '../src/damocles/scripts.ts';
@@ -362,10 +363,11 @@ describe('a queued response nests inside the script it interrupted', () => {
 });
 
 describe('the recovered trigger table', () => {
-  test('is six pickup and 27 landing triggers, with one queueable and one sticky byte', () => {
+  test('is six pickup, one location and 27 landing triggers, with one queueable and one sticky byte', () => {
     const triggers = initialScriptState().triggers;
     expect(triggers.map(trigger => trigger.index)).toEqual([
       ...PICKUP_TRIGGERS,
+      ...LOCATION_TRIGGERS,
       ...LANDING_TRIGGERS
     ]);
     // `$20`-`$3B` without ERIS's `$2A`; DAMOCLES's `$3C` is the deflection ending.

@@ -41,6 +41,7 @@ import {
 } from './script.ts';
 import {
   LANDING_TRIGGERS,
+  LOCATION_TRIGGERS,
   ORDINARY_DISPLAY_FRAMES,
   SCRIPTS,
   SCRIPT_FOR_TRIGGER,
@@ -138,10 +139,15 @@ import type { Pose } from './world.ts';
 /// Version 18 carries the run toggle `$7B3A`, which the run key latches and the run lamp shows.
 /// Until then it was the page's, so a reload or an Atlas move dropped it. A schema-17 record or
 /// older is migrated walking.
-export const DAMOCLES_SAVE_SCHEMA_VERSION = 18 as const;
+///
+/// Version 19 carries the location triggers (#611): the State President's trigger 3 beside the
+/// pickup and landing triggers, which the region walk fires on first entering the Eris STATE
+/// OFFICE. A schema-18 record or older is migrated with it armed: no earlier port walked the
+/// location table, so none spent it.
+export const DAMOCLES_SAVE_SCHEMA_VERSION = 19 as const;
 /// The older schemas a restore migrates rather than refuses.
 const MIGRATED_SCHEMA_VERSIONS: readonly unknown[] = [
-  11, 12, 13, 14, 15, 16, 17
+  11, 12, 13, 14, 15, 16, 17, 18
 ];
 /// The schemas from before the landing messages (#576), which carry no landing trigger.
 const PRE_LANDING_SCHEMA_VERSIONS: readonly unknown[] = [11, 12, 13];
@@ -549,7 +555,7 @@ const printableRow = (value: unknown, path: string): string =>
 
 /// Every id a Damocles Script or a system refusal can present. The eleven inline records the
 /// five further responses use are already extracted into `payload/damocles/strings.json`, and so
-/// are the landing scripts' (#576).
+/// are the landing scripts' (#576) and the State President's (#611).
 const messageIds = new Set<DamoclesMessageId>([
   ...LANDING_MESSAGE_IDS,
   'script11-inline-1',
@@ -558,6 +564,12 @@ const messageIds = new Set<DamoclesMessageId>([
   'script2-inline-2',
   'script2-inline-3',
   'script20-inline-1',
+  'script3-inline-1',
+  'script3-inline-2',
+  'script3-inline-3',
+  'script3-inline-4',
+  'script3-inline-5',
+  'script3-inline-6',
   'script5-inline-1',
   'script5-inline-2',
   'script5-inline-3',
@@ -825,10 +837,15 @@ const presentingOf = (
 
 /// The six pickup trigger indices the object-to-trigger table at `$0543EC` names.
 const PICKUP_TRIGGERS: readonly number[] = [2, 5, 6, 11, 20, 62];
-/// Every trigger a schema-14 record carries, pickups and landings.
-const SAVED_TRIGGERS: readonly number[] = [
+/// Every trigger a schema-14 to schema-18 record carries, pickups and landings.
+const LANDED_TRIGGERS: readonly number[] = [
   ...PICKUP_TRIGGERS,
   ...LANDING_TRIGGERS
+];
+/// Every trigger a current record carries: pickups, landings and location triggers.
+const SAVED_TRIGGERS: readonly number[] = [
+  ...LANDED_TRIGGERS,
+  ...LOCATION_TRIGGERS
 ];
 
 /// A step is an index into a script's recovered operation list, and a suspended execution may
@@ -937,7 +954,8 @@ const scriptOf = (
   content: MessageContent,
   migrated: boolean,
   encounterSaved: boolean,
-  current: boolean
+  current: boolean,
+  locationSaved: boolean
 ): DamoclesSaveScript => {
   const script = object(value, 'snapshot.script');
   const counter = integer(
@@ -985,7 +1003,11 @@ const scriptOf = (
       index
     };
   });
-  const expected = migrated ? PICKUP_TRIGGERS : SAVED_TRIGGERS;
+  const expected = migrated
+    ? PICKUP_TRIGGERS
+    : locationSaved
+      ? SAVED_TRIGGERS
+      : LANDED_TRIGGERS;
   if (
     new Set(triggers.map(trigger => trigger.index)).size !== triggers.length ||
     triggers.length !== expected.length ||
@@ -993,10 +1015,15 @@ const scriptOf = (
   ) {
     return fail('script trigger table is incomplete or duplicated');
   }
-  // Before schema 14 no landing had spent a trigger, so each migrates armed.
-  const table = migrated
-    ? [...triggers, ...LANDING_TRIGGERS.map(index => ({ armed: true, index }))]
-    : triggers;
+  // Before schema 14 no landing had spent a trigger, and before schema 19 no location trigger
+  // had, so each a record lacks migrates armed.
+  const table = TRIGGER_ARMING.map(
+    ({ index }) =>
+      triggers.find(trigger => trigger.index === index) ?? {
+        armed: true,
+        index
+      }
+  );
   const flags = migrated
     ? 0
     : integer(script['flags'], 'snapshot.script.flags', 0, 0xff_ff);
@@ -1612,8 +1639,10 @@ export const decodeDamoclesSave = (
     16
   );
   const current = record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION;
+  // Schema 18 is the first to carry the run toggle.
+  const runSaved = current || record['schemaVersion'] === 18;
   // Schema 17 is the first to carry the document mode.
-  const documentsSaved = current || record['schemaVersion'] === 17;
+  const documentsSaved = runSaved || record['schemaVersion'] === 17;
   // Schema 16 is the first to carry the encounter.
   const encounterSaved = documentsSaved || record['schemaVersion'] === 16;
   const script = scriptOf(
@@ -1621,9 +1650,10 @@ export const decodeDamoclesSave = (
     { documents, strings },
     PRE_LANDING_SCHEMA_VERSIONS.includes(record['schemaVersion']),
     encounterSaved,
-    documentsSaved
+    documentsSaved,
+    current
   );
-  const running = current ? snapshot['running'] : false;
+  const running = runSaved ? snapshot['running'] : false;
   if (typeof running !== 'boolean') {
     return fail('running is not a boolean');
   }

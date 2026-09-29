@@ -1,6 +1,12 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { bootAt, watchErrors } from './damocles-play.ts';
+import {
+  bootAt,
+  displayRow,
+  held,
+  messageText,
+  watchErrors
+} from './damocles-play.ts';
 import { tapDestination, type SoundTapScope } from './sound-tap.ts';
 
 /// The browser listening check for Damocles sound (#508), kept apart from the cue tally.
@@ -101,6 +107,13 @@ const walkIntoTheLift = async (page: Page): Promise<void> => {
     'data-damocles-cues',
     'door-start:1 door-stop:1 thud:1'
   );
+  // Crossing the door strip launched the State President's welcome (#611), whose lines sound as
+  // they scroll in. The ride waits until the last has arrived, so only the lift is heard.
+  const last = held(await messageText(page, 'script3-inline-6'));
+  await expect
+    .poll(async () => displayRow(page), { timeout: 40_000 })
+    .toBe(last);
+  await page.waitForTimeout(500);
 };
 
 const rideToFloor1 = async (page: Page): Promise<void> => {

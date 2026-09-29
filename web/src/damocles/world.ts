@@ -8,6 +8,7 @@ import {
   type FloorPalette,
   type IslandBoxKind,
   type Kind,
+  type LocationEntry,
   type Mesh,
   type Model,
   type Primitive,
@@ -67,6 +68,8 @@ export interface ErisIsland {
   /// The record's `+8`, which `$04EB46` publishes to `$7A1A`: the colour this island is filled
   /// in, and the colour the ground plane itself takes while the player stands on its core.
   readonly landColour: string;
+  /// The bound group's location-trigger table `[$7A68]`, in table order.
+  readonly locationTable: readonly LocationEntry[];
   readonly origin: ErisCell;
 }
 
@@ -738,6 +741,7 @@ export const erisSurfaceFrom = (
         },
         id: island.id,
         landColour: island.landColour,
+        locationTable: island.locationTable.entries,
         origin: { x: island.origin[0], z: island.origin[1] }
       })),
     placements,
