@@ -9,6 +9,7 @@ interface HandoffStorage {
 }
 
 interface AtlasPlayer extends AtlasDestination {
+  readonly destroyedBodies?: readonly string[];
   readonly heading?: number;
 }
 
@@ -61,9 +62,22 @@ export const createAtlasHandoff = (storage: HandoffStorage | undefined) => {
       const value = read(PLAYER);
       const point = destination(value);
       const heading = (value as { heading?: unknown } | null)?.heading;
+      const destroyedBodies = (value as { destroyedBodies?: unknown } | null)
+        ?.destroyedBodies;
+      const destroyed =
+        Array.isArray(destroyedBodies) &&
+        destroyedBodies.every(
+          id => typeof id === 'string' && /^body-(?:\d|[12]\d)$/.test(id)
+        )
+          ? (destroyedBodies as string[])
+          : [];
+      const endgame =
+        destroyedBodies === undefined ? {} : { destroyedBodies: destroyed };
       return point && typeof heading === 'number' && Number.isFinite(heading)
-        ? { ...point, heading }
-        : point;
+        ? { ...point, ...endgame, heading }
+        : point === null
+          ? null
+          : { ...point, ...endgame };
     },
     rememberPlayer: (player: AtlasPlayer): void =>
       required().setItem(PLAYER, JSON.stringify(player)),

@@ -159,16 +159,15 @@ describe('the Damocles Panel Rendition on Damocles Session State', () => {
     );
   });
 
-  test('stops the impact clock at nought rather than running past it', async () => {
+  test('counts up past zero and rolls whole days', async () => {
     const loaded = await content();
     const { time } = loaded.doc;
     const exhausted =
       (time.impactDeadlineSeconds * time.impactVblsPerSecond) / time.vblHertz;
     expect(impactClock(exhausted - 1, time)).toBe('00-00-01');
     expect(impactClock(exhausted, time)).toBe('00-00-00');
-    // A Session that models no impact has nothing to do when the deadline passes, so the
-    // readout holds at nought and play goes on.
-    expect(impactClock(exhausted * 2, time)).toBe('00-00-00');
+    expect(impactClock(exhausted + 1, time)).toBe('00-00-01');
+    expect(impactClock(exhausted + 86_401, time)).toBe('00-00-01');
   });
 
   test('prints the Island-Local Cell two digits an axis, signed and unbounded', () => {

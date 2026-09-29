@@ -341,7 +341,7 @@ describe('entering the State Office (#611)', () => {
         snapshot: { ...snapshot, script: { ...snapshot.script, triggers } }
       });
     const withoutLocations = snapshot.script.triggers.filter(
-      item => item.index !== 3 && item.index !== 4
+      item => item.index !== 3 && item.index !== 4 && item.index !== 15
     );
     expect(decode(record(18, withoutLocations)).script.triggers).toEqual(
       snapshot.script.triggers

@@ -513,7 +513,7 @@ describe('the Save', () => {
       ...older
     } = snapshot.script;
     const withoutOffer = snapshot.script.triggers.filter(
-      item => item.index !== 4
+      item => item.index !== 4 && item.index !== 15
     );
     const record = (schemaVersion: number, triggers: unknown) =>
       encoded(

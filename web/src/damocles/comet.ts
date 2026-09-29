@@ -1,7 +1,7 @@
 import type { GammaComet } from '../flyover/documents.ts';
 import type { ErisPresentationDocument } from './documents.ts';
 
-/// The comet DAMOCLES's centre, a function of the impact clock alone (#440, #538).
+/// The comet DAMOCLES's centre, from the impact clock and the endgame drift (#440, #538, #624).
 ///
 /// `$051E88` runs once a drawn frame. It finds the two waypoints of `system.json`'s `comet`
 /// table the clock falls between and interpolates them in 1/32-second ticks, with the ST's own
@@ -13,7 +13,7 @@ import type { ErisPresentationDocument } from './documents.ts';
 export interface ImpactTime {
   /// 0 to 31.
   readonly fraction: number;
-  /// Minus the seconds left, so it counts up towards zero. It stops at zero.
+  /// Minus the seconds left, then seconds since impact. `$793C` keeps counting up.
   readonly seconds: number;
 }
 
@@ -26,10 +26,10 @@ export const impactTime = (
 ): ImpactTime => {
   const spent = (elapsed * time.vblHertz) / time.impactVblsPerSecond + 1e-9;
   const whole = Math.floor(spent);
-  const remaining = time.impactDeadlineSeconds - whole;
-  return remaining <= 0
-    ? { fraction: 0, seconds: 0 }
-    : { fraction: Math.floor((spent - whole) * 32), seconds: -remaining };
+  return {
+    fraction: Math.floor((spent - whole) * 32),
+    seconds: whole - time.impactDeadlineSeconds
+  };
 };
 
 /// The Session seconds a fresh game has already spent when the scripted arrival hands over
@@ -61,28 +61,49 @@ const displacement = (ticks: number, axis: ReturnType<typeof rate>): number => {
   return axis.negative ? -value : value;
 };
 
-/// DAMOCLES's System X and Z at an impact clock, or null once the clock has reached the table's
-/// zero record: there `$051F42` destroys DAMOCLES and ERIS, and the sky pass skips a destroyed
-/// Body (`$05314C`). What the collision looks like is the endgame's (#580).
+/// DAMOCLES's System X and Z at an impact clock. At zero the caller must have passed the
+/// waypoint latch to see the extended straight path; a destroyed Body is filtered by its reader.
 ///
 /// Two readings are the port's, both where the three first records coincide so either gives the
 /// same point. Before the first record's time, `-15500`, the ST's cursor rests on record 0 with
 /// whatever rates were last derived, which no capture has seen; the port holds record 0. The X
-/// drift `$7A84` is left out: it is zero unless the body-destruction dispatcher arms `$7A7E`,
-/// which the port does not model.
+/// `$7A84` is the armed anchor `$7A7E` minus clock `$793C`, added to X by `$051EFA`.
 export const cometCentre = (
   comet: GammaComet,
-  time: ImpactTime
+  time: ImpactTime,
+  endgame: { readonly drift: number | null; readonly passed: boolean } = {
+    drift: null,
+    passed: false
+  }
 ): { readonly x: number; readonly z: number } | null => {
   const records = comet.waypoints.records;
   // `$051FAA` reads a zero time word as the end of the table.
   const end = records.findIndex(record => record.seconds === 0);
   const last = end === -1 ? records.length - 1 : end;
   if (time.seconds >= records[last]!.seconds) {
-    return null;
+    if (!endgame.passed) {
+      return null;
+    }
+    const start = records[last]!;
+    const next = records[last + 1]!;
+    const fraction = time.seconds + time.fraction / 32;
+    return {
+      x:
+        start.x +
+        ((next.x - start.x) * fraction) / (next.seconds - start.seconds) +
+        (endgame.drift === null ? 0 : endgame.drift - time.seconds),
+      z:
+        start.z +
+        ((next.z - start.z) * fraction) / (next.seconds - start.seconds)
+    };
   }
   if (time.seconds < records[0]!.seconds) {
-    return { x: records[0]!.x, z: records[0]!.z };
+    return {
+      x:
+        records[0]!.x +
+        (endgame.drift === null ? 0 : endgame.drift - time.seconds),
+      z: records[0]!.z
+    };
   }
   // `$051EB2` advances the cursor while the clock has reached the next record's time.
   let index = 0;
@@ -94,12 +115,18 @@ export const cometCentre = (
   // `asl.w #5`: a segment's length in ticks is a word, so one longer than 2,047 seconds wraps.
   const length = ((second.seconds - first.seconds) << 5) & 0xff_ff;
   if (length === 0) {
-    return { x: first.x, z: first.z };
+    return {
+      x: first.x + (endgame.drift === null ? 0 : endgame.drift - time.seconds),
+      z: first.z
+    };
   }
   // `$051EBA..$051EBE`: the seconds into the segment in ticks, plus the second's fraction.
   const ticks = ((time.seconds - first.seconds) * 32 + time.fraction) & 0xff_ff;
   return {
-    x: first.x + displacement(ticks, rate(second.x - first.x, length)),
+    x:
+      first.x +
+      displacement(ticks, rate(second.x - first.x, length)) +
+      (endgame.drift === null ? 0 : endgame.drift - time.seconds),
     z: first.z + displacement(ticks, rate(second.z - first.z, length))
   };
 };

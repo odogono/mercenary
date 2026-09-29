@@ -9,7 +9,7 @@ import { IDLE, MAXIMUM_STEP, type Intent } from '../gameCore/index.ts';
 import type { HeadCommand } from '../interaction/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import type { TitleSession } from '../shell/title.ts';
-import { handoverElapsed } from './comet.ts';
+import { handoverElapsed, impactTime } from './comet.ts';
 import {
   NO_BOXES,
   STICK_DOWN,
@@ -165,6 +165,12 @@ import {
 /// Occupancy and the bounded Damocles Script are session-owned state; the renderer receives only
 /// their immutable projection.
 export interface DamoclesSnapshot {
+  readonly blastCentre: {
+    readonly body: string;
+    readonly x: number;
+    readonly y: number;
+    readonly z: number;
+  } | null;
   /// The Catalogue name of the Body the player is standing on. Published because the panel and
   /// the console both name the location, and both said ERIS whatever Body a switch had reached.
   readonly bodyName: string;
@@ -182,8 +188,11 @@ export interface DamoclesSnapshot {
   /// The terminator's answer for the Pose (`$050562`): the sky takes the Body's day word and
   /// every `$80xx` colour the scene palette's day half (#494, #497).
   readonly daylight: boolean;
+  readonly debrisPasses: number;
+  readonly destroyedBodies: readonly string[];
   readonly display: DamoclesDisplay;
   readonly displayCells: DisplayCells;
+  readonly drift: number | null;
   readonly elapsed: number;
   /// Bank word `$070104`, the encounter gate TOLOSA's landing script arms (#576). The panel's
   /// second lamp `$050A5C` reads it.
@@ -191,6 +200,7 @@ export interface DamoclesSnapshot {
   readonly frameAccumulator: number;
   /// The open document and the centre box's transition (#598).
   readonly headCommands: HeadCommandState;
+  readonly impactPassed: boolean;
   readonly inventoryLabel: string;
   /// The Damocles Island the Cell Readout is counted from, or null on a Body that carries no
   /// island record. An Island-Local Cell names a location only together with this record: the
@@ -207,6 +217,7 @@ export interface DamoclesSnapshot {
   readonly message: Presenting | null;
   readonly occupancy: DamoclesOccupancy;
   readonly pose: Pose;
+  readonly removedResidents: readonly string[];
   readonly residence: readonly ResidenceDeparture[];
   readonly residents: readonly ErisPlacement[];
   /// What the TOLOSA encounter's zap, its flashes and the death state do to the screen (#581).
@@ -311,7 +322,8 @@ export interface DamoclesContent {
   /// The comet's centre at an elapsed time, which `$051E88` moves before the range scan reads
   /// the Body table. Where it is absent or the comet is gone the scan reads the Catalogue's.
   readonly cometAt?: (
-    elapsed: number
+    elapsed: number,
+    endgame: { readonly drift: number | null; readonly passed: boolean }
   ) => { readonly x: number; readonly z: number } | null;
   readonly doc: ErisPresentationDocument;
   /// The documents the Head Commands open and read (#598).
@@ -515,6 +527,12 @@ export class DamoclesSession implements TitleSession<
   /// `$5A9D9`: whether any door moved on the last pass, which the next pass compares with.
   private doorsMoving: boolean;
   private elapsed: number;
+  private destroyedBodies: string[] = [];
+  private blastCentre: DamoclesSnapshot['blastCentre'] = null;
+  private debrisPasses = 0;
+  private removedResidents = new Set<string>();
+  private drift: number | null = null;
+  private impactPassed = false;
   private effects: Effect[] = [];
   /// `$5A647`: whether the clamp refused a step in the last frame, which the next frame's
   /// `$5A646` is compared with.
@@ -641,6 +659,12 @@ export class DamoclesSession implements TitleSession<
       position: { ...opening.position }
     };
     this.elapsed = restore?.elapsed ?? handoverElapsed(content.doc.time);
+    this.destroyedBodies = [...(restore?.destroyedBodies ?? [])];
+    this.blastCentre = restore?.blastCentre ?? null;
+    this.debrisPasses = restore?.debrisPasses ?? 0;
+    this.removedResidents = new Set(restore?.removedResidents ?? []);
+    this.drift = restore?.drift ?? null;
+    this.impactPassed = restore?.impactPassed ?? false;
     this.bodyTurn = restore?.bodyTurn ?? content.doc.start.bodyTurn;
     this.briefcaseStore = [...(restore?.briefcaseStore ?? [])];
     this.pendingBriefcaseDrop = restore?.pendingBriefcaseDrop ?? null;
@@ -1166,6 +1190,9 @@ export class DamoclesSession implements TitleSession<
   }
 
   private residenceFor(instanceId: string): Residence | undefined {
+    if (this.removedResidents.has(instanceId)) {
+      return undefined;
+    }
     const departure = this.residence.get(instanceId);
     if (departure !== undefined) {
       return departure;
@@ -1575,6 +1602,7 @@ export class DamoclesSession implements TitleSession<
   get snapshot(): DamoclesSnapshot {
     const island = nearestIsland(this.surface, this.pose.position);
     return {
+      blastCentre: this.blastCentre,
       bodyName: this.bodyName(),
       bodyTurn: this.bodyTurn,
       briefcaseStore: [...this.briefcaseStore],
@@ -1595,6 +1623,8 @@ export class DamoclesSession implements TitleSession<
               throttle: this.craft.throttle
             },
       daylight: this.daylight(),
+      debrisPasses: this.debrisPasses,
+      destroyedBodies: [...this.destroyedBodies],
       display: this.script.display,
       displayCells: displayCells(
         this.script.display,
@@ -1602,10 +1632,12 @@ export class DamoclesSession implements TitleSession<
           ? this.scriptRules.messageText(this.script.display.id)
           : this.script.display.cells
       ),
+      drift: this.drift,
       elapsed: this.elapsed,
       encounter: this.script.encounter,
       frameAccumulator: this.frameAccumulator,
       headCommands: this.headCommands,
+      impactPassed: this.impactPassed,
       inventoryLabel: this.inventoryLabel(),
       island: island ?? null,
       islandCell:
@@ -1616,6 +1648,7 @@ export class DamoclesSession implements TitleSession<
       message: this.script.message,
       occupancy: this.occupancy,
       pose: this.pose,
+      removedResidents: [...this.removedResidents],
       residence: [...this.residence].map(([instance, residence]) => ({
         instance,
         residence
@@ -1627,6 +1660,88 @@ export class DamoclesSession implements TitleSession<
       structure: this.structureSnapshot(),
       surface: this.publishedSurface()
     };
+  }
+
+  /// `$04C98E`: one marker for impact, the BOOK, the dispatcher and unravelling. A second
+  /// request for the same Body changes nothing. Association B is represented by the current
+  /// placed Residence, with Catalogue Residence as its fallback.
+  destroyBody(bodyId: string): boolean {
+    if (this.destroyedBodies.includes(bodyId)) {
+      return false;
+    }
+    if (
+      !this.content.catalogue.craft?.bodies.some(
+        (_, index) => `body-${index}` === bodyId
+      )
+    ) {
+      throw new Error(`cannot destroy unknown Body ${bodyId}`);
+    }
+    for (const instance of this.content.catalogue.instances) {
+      const residence = this.residenceFor(instance.id);
+      if (residence?.kind === 'surface' || residence?.kind === 'structure') {
+        if (residence.body === bodyId) {
+          this.removedResidents.add(instance.id);
+        }
+      }
+    }
+    this.destroyedBodies.push(bodyId);
+    const index = Number(bodyId.slice(5));
+    const body = this.content.catalogue.craft!.bodies[index]!;
+    const comet =
+      index === COMET_BODY
+        ? this.content.cometAt?.(this.elapsed, {
+            drift: this.drift,
+            passed: true
+          })
+        : null;
+    this.blastCentre = {
+      body: bodyId,
+      x: comet?.x ?? body.x,
+      y: body.y,
+      z: comet?.z ?? body.z
+    };
+    if (this.space === null && this.pose.body === bodyId) {
+      // `$04CBAE`: the system message precedes the existing death loop, which later presents
+      // `$21`. There is no TOLOSA noise pass before this death.
+      this.death = this.deathEnd();
+      this.deathMessage = false;
+      this.effects.push({ cue: 'blown-up', type: 'sound-request' });
+      this.flashWord = 0xaa_aa;
+      this.presentSystem('system-string-35');
+    } else {
+      // `$04CCD2` consumes 192 noise words to seed 64 particles, then `$7834` holds their
+      // remaining 64 main-loop passes. The current renderer does not yet draw the particles.
+      this.script = { ...this.script, noise: (this.script.noise + 192) % 2048 };
+      this.debrisPasses = 64;
+    }
+    return true;
+  }
+
+  /// `$051F42`: only the live, undeflected pair reaches the marker. `$7A82` then latches the
+  /// passed waypoint so a restored game cannot launch the ending again.
+  private tickImpact(): void {
+    if (
+      this.impactPassed ||
+      impactTime(this.elapsed, this.content.doc.time).seconds < 0
+    ) {
+      return;
+    }
+    if (
+      this.destroyedBodies.includes('body-29') ||
+      this.destroyedBodies.includes('body-11')
+    ) {
+      return;
+    }
+    if (this.drift === null) {
+      this.destroyBody('body-29');
+      this.destroyBody('body-11');
+      if (this.death === null) {
+        const transition = fireTrigger(this.script, 15, this.scriptRules);
+        this.script = transition.state;
+        this.effects.push(...transition.effects);
+      }
+    }
+    this.impactPassed = true;
   }
 
   advance(seconds: number): DamoclesSnapshot {
@@ -1677,7 +1792,10 @@ export class DamoclesSession implements TitleSession<
           this.regionIndex = null;
         }
       }
-      this.elapsed += step;
+      if (this.death === null) {
+        this.elapsed += step;
+        this.tickImpact();
+      }
       this.frameAccumulator += step * this.content.doc.time.vblHertz;
       const frames = Math.floor(this.frameAccumulator + 1e-9);
       this.frameAccumulator = Math.max(0, this.frameAccumulator - frames);
@@ -1724,11 +1842,15 @@ export class DamoclesSession implements TitleSession<
         byte,
         instance
       })),
+      blastCentre: this.blastCentre,
       bodyTurn: this.bodyTurn,
       briefcaseStore: [...this.briefcaseStore],
       carried: [...this.carried],
       craft: this.craftForSave(),
+      debrisPasses: this.debrisPasses,
+      destroyedBodies: [...this.destroyedBodies],
       doorsMoving: this.doorsMoving,
+      drift: this.drift,
       elapsed: this.elapsed,
       encounter:
         this.pool === null
@@ -1737,6 +1859,7 @@ export class DamoclesSession implements TitleSession<
       footTicks: this.footTicks,
       frameAccumulator: this.frameAccumulator,
       headCommands: this.headCommands,
+      impactPassed: this.impactPassed,
       occupancy: this.occupancy,
       pendingBriefcaseDrop: this.pendingBriefcaseDrop,
       // The bank is the craft's roll, which `craft` carries.
@@ -1746,6 +1869,7 @@ export class DamoclesSession implements TitleSession<
         pitch: pose.pitch,
         position: pose.position
       },
+      removedResidents: [...this.removedResidents],
       residence: [...this.residence].map(([instance, residence]) => ({
         instance,
         residence
@@ -1983,12 +2107,18 @@ export class DamoclesSession implements TitleSession<
   /// The Body table the range scan reads this frame: the comet where the impact clock has it.
   private scannedBodies() {
     const bodies = this.content.catalogue.craft!.bodies;
-    const comet = this.content.cometAt?.(this.elapsed) ?? null;
-    return comet === null
-      ? bodies
-      : bodies.map((body, index) =>
-          index === COMET_BODY ? { ...body, x: comet.x, z: comet.z } : body
-        );
+    const comet =
+      this.content.cometAt?.(this.elapsed, {
+        drift: this.drift,
+        passed: this.impactPassed
+      }) ?? null;
+    return bodies.map((body, index) =>
+      this.destroyedBodies.includes(`body-${index}`)
+        ? { ...body, y: -1 }
+        : index === COMET_BODY && comet !== null
+          ? { ...body, x: comet.x, z: comet.z }
+          : body
+    );
   }
 
   private spaceSnapshot(): DamoclesSpaceSnapshot | null {
@@ -2072,6 +2202,7 @@ export class DamoclesSession implements TitleSession<
     }
     this.footTicks = 0;
     this.script = stepNoise(this.script);
+    this.debrisPasses = Math.max(0, this.debrisPasses - 1);
   }
 
   /// One tick aboard: every `ticksPerPass`-th runs a frame of the craft Mover (ADR 0051).
@@ -2089,6 +2220,7 @@ export class DamoclesSession implements TitleSession<
     // `$05948C` steps the noise pointer as the pass's frame joins the main loop, before the pass
     // itself: the traced landing drew the word after it (#576).
     this.script = stepNoise(this.script);
+    this.debrisPasses = Math.max(0, this.debrisPasses - 1);
     if (this.space !== null) {
       this.tickSpace(program, craft, this.space);
       return;
@@ -2297,6 +2429,9 @@ export class DamoclesSession implements TitleSession<
   ): void {
     const index = offset / 4;
     const bodyId = `body-${index}`;
+    if (this.destroyedBodies.includes(bodyId)) {
+      return;
+    }
     const body = this.scannedBodies()[index]!;
     const turn = this.turnOf(index);
     const point = landingPoint(program.arithmetic, frame.space, body, turn);
@@ -3051,6 +3186,12 @@ export class DamoclesSession implements TitleSession<
       };
     }
     const arrival = resolution.pose;
+    if (this.destroyedBodies.includes(arrival.body)) {
+      return {
+        kind: 'declined',
+        reason: `${arrival.id} is on a destroyed Body`
+      };
+    }
     if (!arrival.onFoot) {
       return {
         kind: 'declined',
@@ -3135,7 +3276,8 @@ export class DamoclesSession implements TitleSession<
     if (
       origin === undefined ||
       arrival === undefined ||
-      target.bodyId === VOID_BODY
+      target.bodyId === VOID_BODY ||
+      this.destroyedBodies.includes(target.bodyId)
     ) {
       return decline('This Body has no admitted arrival data.');
     }

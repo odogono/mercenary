@@ -466,7 +466,8 @@ interface EditableRecord {
 /// schema 20 none carried the first offer's trigger 4.
 const beforeLocations = (record: EditableRecord): void => {
   record.snapshot.script.triggers = record.snapshot.script.triggers.filter(
-    trigger => trigger.index !== 3 && trigger.index !== 4
+    trigger =>
+      trigger.index !== 3 && trigger.index !== 4 && trigger.index !== 15
   );
 };
 
