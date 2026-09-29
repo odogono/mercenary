@@ -56,6 +56,7 @@ import {
 import { craftProgram } from './craft.ts';
 import { FLOATS_PER_VERTEX, planErisFrame } from './frame.ts';
 import { classifyPosition } from './islands.ts';
+import { stMakeCode } from './keys.ts';
 import { erisLighting } from './lighting.ts';
 import { damoclesPanelViewModel } from './panel.ts';
 import { centreBoxPage, damoclesTakeTargetAt, wheelPage } from './pointer.ts';
@@ -323,12 +324,18 @@ try {
       }
     });
 
-  // Fire is the held level `firing`, a Damocles Lift is ridden by the Floor keys through
-  // `liftKey`, and no script asks for a key or can be hurried, so there is no `fire`,
-  // `rideLift`, `press` or `skipMessage`.
+  // Fire is the held level `firing`, and a Damocles Lift is ridden by the Floor keys through
+  // `liftKey`. A script's prompt reads the key latch `keyMake` writes, not an answer, and no
+  // script can be hurried, so there is no `fire`, `rideLift`, `press` or `skipMessage`.
   const controlActions: ControlProfileActions = {
     drop: () => commitAction(() => session.drop()),
     headCommand: command => commitAction(() => session.headCommand(command)),
+    keyMake: code => {
+      const make = stMakeCode(code);
+      if (make !== undefined) {
+        session.keyMake(make);
+      }
+    },
     leaveCraft: () => commitAction(() => session.leave()),
     liftKey: floor => {
       if (!session.inLift) {

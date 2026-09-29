@@ -91,9 +91,11 @@ import {
 import {
   fireTrigger,
   initialScriptState,
+  latchKey,
   presentSystemMessage,
   queueRead,
   runFrame,
+  settleCarried,
   stepNoise,
   zapNoise,
   type Effect,
@@ -418,16 +420,19 @@ const documentPanel = (
 };
 
 const scriptForSave = (script: ScriptState): DamoclesSaveScript => ({
+  carried: script.carried,
   counter: script.counter,
   display: script.display,
   displayDuration: script.displayDuration,
   encounter: script.encounter,
   execution: script.execution,
   flags: script.flags,
+  key: script.key,
   message: script.message,
   noise: script.noise,
   pending: script.pending,
   read: script.read,
+  reward: script.reward,
   triggers: script.triggers.map(({ armed, index }) => ({ armed, index })),
   zaps: script.zaps
 });
@@ -1511,6 +1516,10 @@ export class DamoclesSession implements TitleSession<
   }
 
   private liveCarriedInstance(instanceId: string): boolean {
+    // A flag a script set holds until a take or a drop of the object writes it again.
+    if (this.script.carried.includes(this.slotOf(instanceId))) {
+      return true;
+    }
     const departure = this.residence.get(instanceId);
     if (departure !== undefined) {
       return departure.kind === 'carried';
@@ -2397,6 +2406,12 @@ export class DamoclesSession implements TitleSession<
     this.leave();
   }
 
+  /// `$0555B8`: a key the input poll read, as its ST make code. Every key is written to the latch
+  /// `$7B61`, whatever it then does, and a prompt reads it on its next frame (#612).
+  keyMake(code: number): void {
+    this.script = latchKey(this.script, code);
+  }
+
   /// A throttle key aboard (`$0556AA`): the table entry at `$0557D6` for the ST scancode. Space's
   /// `$80` writes the zero and leaves the speed to decay. A change asks for the key effect
   /// `$054848`; the same value again writes nothing. A write clears the launch swing `$7B0C`.
@@ -2637,6 +2652,7 @@ export class DamoclesSession implements TitleSession<
       this.briefcaseStore = [];
     }
     this.residence.set(selection.instance, carriedResidence);
+    this.script = settleCarried(this.script, this.slotOf(selection.instance));
     this.scrollCounter = -16;
     // $0543D2 walks the object-to-trigger table for every committed pickup, not just the key.
     const trigger = TRIGGER_FOR_RESIDENT[selection.instance];
@@ -2938,6 +2954,7 @@ export class DamoclesSession implements TitleSession<
       this.carried = this.carried.slice(1);
     }
     this.residence.set(head, residence);
+    this.script = settleCarried(this.script, this.slotOf(head));
     this.scrollCounter = 16;
     // `$05468E`: dropping the open object closes it and scrolls the logo back.
     if (this.slotOf(head) === this.headCommands.open?.slot) {

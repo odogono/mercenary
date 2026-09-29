@@ -558,3 +558,42 @@ describe('the browser Control Profile', () => {
     });
   });
 });
+
+/// A Damocles-shaped profile, whose prompts read the latch and which has no `press`.
+const latching = () => {
+  const calls: unknown[] = [];
+  const actions: ControlProfileActions = {
+    drop: () => calls.push('drop'),
+    headCommand: command => calls.push({ headCommand: command }),
+    keyMake: code => calls.push({ keyMake: code }),
+    leaveCraft: () => calls.push('leaveCraft'),
+    occupancy: () => ({ kind: 'onFoot' }),
+    reach: action => calls.push({ reach: action }),
+    shutThrottle: () => calls.push('shutThrottle'),
+    throttleNotchValue: notch => calls.push({ notch }),
+    throttleStep: delta => calls.push({ throttleStep: delta })
+  };
+  return { calls, profile: new BrowserControlProfile(actions) };
+};
+
+describe('the key latch a Title’s prompts read (#612)', () => {
+  test('Y, O and N reach the latch and no Binding takes them', () => {
+    const { calls, profile } = latching();
+    for (const code of ['KeyY', 'KeyO', 'KeyN']) {
+      expect(profile.keyDown(input(code))).toBeTrue();
+    }
+    expect(calls).toEqual([
+      { keyMake: 'KeyY' },
+      { keyMake: 'KeyO' },
+      { keyMake: 'KeyN' }
+    ]);
+  });
+
+  test('a bound key is latched too, then does what it does, and a repeat or a chord is not', () => {
+    const { calls, profile } = latching();
+    profile.keyDown(input('KeyT'));
+    profile.keyDown(input('KeyT', { repeat: true }));
+    profile.keyDown(input('KeyY', { metaKey: true }));
+    expect(calls).toEqual([{ keyMake: 'KeyT' }, { reach: 'take' }]);
+  });
+});

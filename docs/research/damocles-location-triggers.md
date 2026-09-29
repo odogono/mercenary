@@ -178,7 +178,7 @@ epilogue `$072CAE` (a 50-frame clearing line, then busy cleared), or the script'
 | Trigger | Entry | Messages | Other ops | Ends | Unported |
 | ---: | --- | --- | --- | --- | --- |
 | `$03` | `$0704C8` | `script3-inline-1..6` | `call $072D1C` after the fourth line | own | — |
-| `$04` | `$070650` | `script4-inline-1..20` | below | own, or `$072CAE` on the refusal | `if.key`, `set.7B60`, `record.write`, `word.write`, `record.bits` |
+| `$04` | `$070650` | `script4-inline-1..20` | below | own, or `$072CAE` on the refusal | — (#612) |
 | `$07` | `$070E82` | `script7-inline-1..3` | `record.bcd.add $00F8` 10,000 | `$072CAE` | `record.bcd.add` |
 | `$08` | `$070F24` | `script8-inline-1..2` | — | `$072CAE` | — |
 | `$09` | `$070E22` | `script9-inline-1` | — | `$072CAE` | — |
@@ -319,9 +319,21 @@ These are recommendations for #611 and #612, not decisions this note makes.
 "Location Trigger" is now defined in `CONTEXT.md`.
 
 [#611](https://github.com/odogono/mercenary/issues/611) ports the region walk
-(`web/src/damocles/locationTriggers.ts`) and script slot 3. It arms trigger 3 alone, and Save
-schema 19 carries it. Trigger 4 and the other twelve have no script in the port, so the launcher
-refuses their entries.
+(`web/src/damocles/locationTriggers.ts`) and script slot 3. Save schema 19 carries trigger 3.
+
+[#612](https://github.com/odogono/mercenary/issues/612) ports slot 4 whole, from `$070650`
+through the ladder, the refusal and the acceptance, as `damocles.script.slot-4` in
+`web/src/damocles/scripts.ts`. It adds `set-reward` (`record.write $00F9`), `clear-key` (`$1C`),
+`if-key` (`$0B`, with the `$054848` request), `if-wait` (`$07` with a target) and `set-carried`
+(`word.write $00FE` and `record.bits $0080` together). Every key the Control Profile is given is
+written to the Key Latch as its ST make code (`web/src/damocles/keys.ts`) before any Binding takes
+it. No Binding takes Y, O or N, so they keep no other meaning. The port's script runs to its next
+block each VBL, so a prompt's loop reads the latch once a frame. The ST dispatches one op per main
+loop pass, so that cadence was not measured against it. The acceptance's carried flag makes
+DOOR KEY A's doors open (`$05AA90`) with nothing on the Carried Stack, until a take or a drop of
+slot 38 writes the flag again. Save schema 20 carries trigger 4, the latch, the reward, bit 0 and
+the flag. A Save at a prompt resumes the poll without asking again. The other twelve have no
+script in the port, so the launcher refuses their entries.
 
 ## Unresolved
 

@@ -10,6 +10,7 @@ import {
   type DocumentMessageId
 } from './display.ts';
 import {
+  NO_KEY,
   ORDINARY_DISPLAY_FRAMES,
   SCRIPTS,
   SCRIPT_FOR_TRIGGER,
@@ -60,6 +61,10 @@ export interface Trigger {
 
 export interface ScriptState {
   readonly busy: boolean;
+  /// The slots whose carried flag, bit 7 of `$6FAA + 4 * slot`, a script has set without putting
+  /// the object on the Carried Stack: the first offer's DOOR KEY A (#612). A take or a drop of the
+  /// object then decides the flag again, as the handlers write it.
+  readonly carried: readonly number[];
   readonly counter: number;
   readonly display: DamoclesDisplay;
   /// Bank word `$070102`. State, not a per-message constant: the shared epilogue drops it to 50
@@ -69,8 +74,12 @@ export interface ScriptState {
   /// lamp reads it, and the attack ship runs while it is set (#581).
   readonly encounter: number;
   readonly execution: Execution | null;
-  /// `$7BD8` without the busy bit 6, which `busy` is. Only TOLOSA's bit 1 is written here.
+  /// `$7BD8` without the busy bit 6, which `busy` is. The first offer's acceptance writes bit 0
+  /// and TOLOSA's script bit 1.
   readonly flags: number;
+  /// `$7B61`, the key latch: the make code of the last key the input poll read, or `NO_KEY`. The
+  /// prompts clear it before they ask, and reading it never consumes it.
+  readonly key: number;
   readonly message: Presenting | null;
   /// The word index of `$7E18` into the noise table: `(pointer - $77000) / 2`. A New Game
   /// starts at `NEW_GAME_NOISE`, each pass steps it (`stepNoise`), and each random skip reads
@@ -82,6 +91,9 @@ export interface ScriptState {
   /// `$7B96` and `$7B92`: the document body a Read has queued. The dispatch head presents it
   /// the first frame the gate is down, ahead of any pending trigger or script (`$051944`).
   readonly read: DocumentMessageId | null;
+  /// The first BCD word of record `$00F9` at `$7C4A`, the first offer's proposed reward: 0 until
+  /// an offer is made, and 0 again after the refusal. Accepting leaves the accepted figure.
+  readonly reward: number;
   readonly triggers: readonly Trigger[];
   /// The table words zaps have turned, one entry a zap, in the order they fell (#581). `$050ECC`
   /// rotates the word two before the pointer left by one bit each time, so the table is state and
@@ -139,7 +151,11 @@ export type Effect =
       /// The TOLOSA encounter (#581) asks for `shot` (`$04C610`) as the player fires or downs the
       /// ship, `thud` as the ship fires (`$04C630`, the same programme), and `zap` (`$04C652`) as
       /// its shot hits.
+      ///
+      /// A script's `if.key` asks for `answer`, the same key effect `$054848`, as the latch
+      /// matches (#612).
       readonly cue:
+        | 'answer'
         | 'blast'
         | 'bump'
         | 'door-start'
@@ -185,16 +201,19 @@ const triggerTable = (): readonly Trigger[] =>
 
 export const initialScriptState = (): ScriptState => ({
   busy: false,
+  carried: [],
   counter: 0,
   display: BLANK_DAMOCLES_DISPLAY,
   displayDuration: ORDINARY_DISPLAY_FRAMES,
   encounter: 0,
   execution: null,
   flags: 0,
+  key: NO_KEY,
   message: null,
   noise: NEW_GAME_NOISE,
   pending: null,
   read: null,
+  reward: 0,
   triggers: triggerTable(),
   zaps: []
 });
@@ -271,7 +290,24 @@ const enter = (state: ScriptState, script: ScriptId): ScriptState => ({
   }
 });
 
-const runToBlock = (initial: ScriptState, rules: ScriptRules): ScriptState => {
+/// `$0555B8`–`$0555D8`: the input poll writes each key it reads to the latch, whatever the key
+/// then does. A prompt reads it on its next frame.
+export const latchKey = (state: ScriptState, code: number): ScriptState =>
+  state.key === code ? state : { ...state, key: code & 0xff };
+
+/// A take or a drop writes the object's carried flag itself, so a flag a script set is the
+/// handler's from then on.
+export const settleCarried = (state: ScriptState, slot: number): ScriptState =>
+  state.carried.includes(slot)
+    ? { ...state, carried: state.carried.filter(item => item !== slot) }
+    : state;
+
+/// Run the execution until it blocks. The sound requests its steps make are pushed to `cues`.
+const runToBlock = (
+  initial: ScriptState,
+  rules: ScriptRules,
+  cues: Effect[]
+): ScriptState => {
   let state = initial;
   for (let guard = 0; guard < 1024; guard += 1) {
     const execution = state.execution;
@@ -329,6 +365,38 @@ const runToBlock = (initial: ScriptState, rules: ScriptRules): ScriptState => {
       case 'set-encounter':
         state = { ...state, encounter: op.value, execution: advanced };
         break;
+      case 'set-reward':
+        state = { ...state, execution: advanced, reward: op.reward };
+        break;
+      case 'clear-key':
+        state = { ...state, execution: advanced, key: NO_KEY };
+        break;
+      case 'if-key':
+        // `$051A7E`: a match asks for `$054848` and branches, and leaves the latch as it was.
+        if (state.key === op.code) {
+          cues.push({ cue: 'answer', type: 'sound-request' });
+          state = { ...state, execution: { ...execution, step: op.to } };
+        } else {
+          state = { ...state, execution: advanced };
+        }
+        break;
+      case 'if-wait':
+        // `$051A42`: the unsigned counter below the operand branches. The branch is always back
+        // to the prompt's first key test, so it waits for the next frame to read the keys again.
+        if (state.counter < op.below) {
+          return { ...state, execution: { ...execution, step: op.to } };
+        }
+        state = { ...state, execution: advanced };
+        break;
+      case 'set-carried':
+        state = {
+          ...state,
+          carried: state.carried.includes(op.slot)
+            ? state.carried
+            : [...state.carried, op.slot],
+          execution: advanced
+        };
+        break;
       case 'poll-wait': {
         const threshold =
           op.frames === WAIT_FROM_DOCUMENT ? rules.waitFrames : op.frames;
@@ -372,7 +440,11 @@ const runToBlock = (initial: ScriptState, rules: ScriptRules): ScriptState => {
 /// Take up a queued response. The dispatch loop at `$05194C` picks `$7A88` up and `$054764` arms
 /// and enters the script, clearing the word first -- so a pending index that no longer names an
 /// armed trigger is consumed and refused, exactly as the `run-N` re-arm cases observed.
-const takePending = (state: ScriptState, rules: ScriptRules): ScriptState => {
+const takePending = (
+  state: ScriptState,
+  rules: ScriptRules,
+  cues: Effect[]
+): ScriptState => {
   if (state.pending === null || state.busy) {
     return state;
   }
@@ -395,7 +467,8 @@ const takePending = (state: ScriptState, rules: ScriptRules): ScriptState => {
           : item
       )
     },
-    rules
+    rules,
+    cues
   );
 };
 
@@ -440,11 +513,12 @@ export const runFrame = (
         : { ...state, message: { ...message, remainingFrames } };
   }
   // `$05193E`: nothing is dispatched while the gate is up, and a queued Read goes first.
+  const cues: Effect[] = [];
   const next =
     state.message === null && state.read !== null
       ? presentRead(state, state.read, rules)
-      : takePending(runToBlock(state, rules), rules);
-  return { effects: shown(input, next, rules), state: next };
+      : takePending(runToBlock(state, rules, cues), rules, cues);
+  return { effects: [...cues, ...shown(input, next, rules)], state: next };
 };
 
 /// `$054770`, entered past the busy test and the `$7A88` clear the dispatch loop performs.
@@ -475,8 +549,9 @@ export const fireTrigger = (
       item.index === index && !item.sticky ? { ...item, armed: false } : item
     )
   };
-  const state = runToBlock(entered, rules);
-  return { effects: shown(input, state, rules), state };
+  const cues: Effect[] = [];
+  const state = runToBlock(entered, rules, cues);
+  return { effects: [...cues, ...shown(input, state, rules)], state };
 };
 
 /// The system strings a native routine presents.

@@ -1765,7 +1765,7 @@ describe('the landing messages (#576)', () => {
       ).script.flags
     ).toBe(0x00_02);
     refused(
-      { flags: 0x00_01 },
+      { flags: 0x00_04 },
       'script flags name a bit no ported script writes'
     );
     refused(
@@ -1857,7 +1857,9 @@ describe('the noise pointer on foot and at New Game (#582)', () => {
           ...older,
           script: {
             ...older.script,
-            triggers: older.script.triggers.filter(item => item.index !== 3)
+            triggers: older.script.triggers.filter(
+              item => item.index !== 3 && item.index !== 4
+            )
           }
         }
       })

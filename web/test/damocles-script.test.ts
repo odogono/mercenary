@@ -363,7 +363,7 @@ describe('a queued response nests inside the script it interrupted', () => {
 });
 
 describe('the recovered trigger table', () => {
-  test('is six pickup, one location and 27 landing triggers, with one queueable and one sticky byte', () => {
+  test('is six pickup, two location and 27 landing triggers, with two queueable and one sticky byte', () => {
     const triggers = initialScriptState().triggers;
     expect(triggers.map(trigger => trigger.index)).toEqual([
       ...PICKUP_TRIGGERS,
@@ -381,7 +381,7 @@ describe('the recovered trigger table', () => {
     ).toEqual([0x38]);
     expect(
       triggers.filter(trigger => trigger.queueable).map(item => item.index)
-    ).toEqual([5]);
+    ).toEqual([5, 4]);
     expect(triggers.every(trigger => trigger.script !== null)).toBe(true);
   });
 

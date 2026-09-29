@@ -526,6 +526,10 @@ _Avoid_: Benson Script (for Damocles), game script, ST bytecode dump
 A Damocles Script trigger that a structure group's location table fires when the eye enters a region: the table's entry names a cell, a region (or any indoor one) and a Floor, and the walk runs only when the region is reselected, not on a Floor change or a lift arrival. It is distinct from the triggers a pickup or a landing fires, and it shares their launcher, arming and one-shot rule.
 _Avoid_: Room trigger, zone event, area script
 
+**Key Latch**:
+Damocles's `$7B61`: the make code of the last key the input poll read, whatever that key then did. A Damocles Script's `(OK?)` prompt clears it before asking and then compares it with Y, O and N once a frame, without consuming it, so a key pressed while the question scrolls in still answers it.
+_Avoid_: Answer, key press event, pending key
+
 **Damocles Death State**:
 Where a zap leaves the Damocles player: the main loop stops, the view fades to black, the Body reads VOID, and only restoring a Save leaves it; a Save made in it restores into it (ADR 0055).
 _Avoid_: Game over, respawn, lives

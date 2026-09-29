@@ -25,6 +25,7 @@ export const SCRIPT_IDS = [
   'damocles.script.slot-38',
   'damocles.script.slot-39',
   'damocles.script.slot-40',
+  'damocles.script.slot-4',
   'damocles.script.slot-41',
   'damocles.script.slot-43',
   'damocles.script.slot-44',
@@ -64,17 +65,31 @@ export const isScriptId = (value: unknown): value is ScriptId =>
 /// word at the noise pointer and goes to step `to` when the word is below `below`. `if-flag` goes
 /// to `to` when `$7BD8` has any of `mask`, and `set-flag` ors `mask` in. `set-encounter` is
 /// TOLOSA's `bank.write $0104`, the encounter gate `$070104`.
+///
+/// The first offer adds five (#612). `set-reward` is `record.write $00F9`, the proposed reward at
+/// `$7C4A`: its first BCD word, since every write slot 4 makes leaves the other four bytes zero.
+/// `clear-key` is `$1C`, the word write `$00FF` to `$7B60` that empties the key latch `$7B61`.
+/// `if-key` is `$0B`: it goes to `to` when the latch holds `code`, asking for the key effect
+/// `$054848` as it does, and never consumes the key. `if-wait` is `$07` with a target: it goes
+/// to `to` while the unsigned counter is below `below` and falls through at or above it.
+/// `set-carried` is `word.write $00FE` (`$7C3E` = `slot`) and `record.bits $0080` together: bit 7
+/// of `$6FAA + 4 * slot`, the slot's carried flag, with nothing put on the Carried Stack.
 export type Op =
+  | { readonly below: number; readonly kind: 'if-wait'; readonly to: Step }
   | { readonly below: number; readonly kind: 'random-skip'; readonly to: Step }
+  | { readonly code: number; readonly kind: 'if-key'; readonly to: Step }
   | { readonly frames: number; readonly kind: 'poll-wait' }
   | { readonly frames: number; readonly kind: 'set-duration' }
   | { readonly id: DamoclesMessageId; readonly kind: 'message' }
   | { readonly kind: 'clear-busy' }
+  | { readonly kind: 'clear-key' }
   | { readonly kind: 'if-flag'; readonly mask: number; readonly to: Step }
   | { readonly kind: 'reset-wait' }
   | { readonly kind: 'return' }
+  | { readonly kind: 'set-carried'; readonly slot: number }
   | { readonly kind: 'set-encounter'; readonly value: number }
-  | { readonly kind: 'set-flag'; readonly mask: number };
+  | { readonly kind: 'set-flag'; readonly mask: number }
+  | { readonly kind: 'set-reward'; readonly reward: number };
 
 export type Step = number;
 
@@ -140,6 +155,122 @@ const gazetteer = (
   };
 };
 
+/// Bit 0 of `$7BD8`, which only the first offer's acceptance `$0709AA` sets: the assignment has
+/// been accepted (docs/research/damocles-location-triggers.md). The deflection ending reads it.
+export const OFFER_ACCEPTED_FLAG = 0x00_01;
+
+/// The key latch `$7B61` with nothing in it: `$1C` writes `$00FF` to the word `$7B60`.
+export const NO_KEY = 0xff;
+
+/// The ST make codes the `(OK?)` prompts compare `$7B61` with: `Y` and `O` accept, `N` declines.
+export const ANSWER_KEYS = { n: 0x31, o: 0x18, y: 0x15 } as const;
+
+/// The polls' `if.wait $01F4`: a prompt is answered within 500 counter ticks or times out.
+export const ANSWER_FRAMES = 0x01_f4;
+
+/// `$0707DC`, `$070830`, `$070888` and `$070914`: the four offers, 10, 15, 20 and 25 million,
+/// as the BCD word `record.write $00F9` leads with. The refusal `$070968` writes zero.
+export const OFFER_REWARDS = [0x00_10, 0x00_15, 0x00_20, 0x00_25] as const;
+
+/// `$07090E`, `if.random $4000`: after the third offer, a word below it skips the fourth offer
+/// and goes straight to the refusal.
+export const FOURTH_OFFER_BELOW = 0x40_00;
+
+/// The slot `$0709AE` writes to `$7C3E`, DOOR KEY A's, whose carried flag the acceptance sets.
+export const OFFER_KEY_SLOT = 38;
+
+/// An `(OK?)` prompt as it follows its question: `reset.wait`, then `Y`, `O` and `N` against
+/// the latch, then the counter, looping to the `Y` test while it is below 500. The loop yields
+/// once a frame, so the keys are read every VBL.
+const answer = (at: Step, accept: Step, decline: Step): readonly Op[] => [
+  { kind: 'reset-wait' },
+  { code: ANSWER_KEYS.y, kind: 'if-key', to: accept },
+  { code: ANSWER_KEYS.o, kind: 'if-key', to: accept },
+  { code: ANSWER_KEYS.n, kind: 'if-key', to: decline },
+  { below: ANSWER_FRAMES, kind: 'if-wait', to: at + 1 }
+];
+
+/// `$070650`, location trigger 4: the first work offer, on first entering region 7 of Floor 2 in
+/// the Eris STATE OFFICE (docs/research/damocles-location-triggers.md). Eight lines of briefing
+/// in three runs, then the bargaining ladder: 10, 15 and 20 million, each asked with the key
+/// latch cleared first. N or the timeout climbs a rung. After 20 an `if.random $4000` decides
+/// whether 25 is offered or the refusal comes at once. The refusal zeroes the reward and ends on
+/// the shared epilogue. Y or O at any rung accepts at `$0709AA`: bit 0 of `$7BD8`, DOOR KEY A's
+/// carried flag, six lines, and the script's own busy clear, which holds the last row.
+const firstOffer = (): Script => {
+  const briefing: readonly Op[] = [
+    message('script4-inline-1'),
+    message('script4-inline-2'),
+    message('script4-inline-3'),
+    message('script4-inline-4'),
+    ...clearingLine(),
+    message('script4-inline-5'),
+    message('script4-inline-6'),
+    ...clearingLine(),
+    message('script4-inline-7'),
+    message('script4-inline-8')
+  ];
+  // Each rung's length is fixed, so the branch targets are the running sums.
+  const ten = briefing.length;
+  const fifteen = ten + 8;
+  const twenty = fifteen + 8;
+  const draw = twenty + 9;
+  const twentyFive = draw + 1;
+  const refusal = twentyFive + 8;
+  const accepted = refusal + 7;
+  const ops: readonly Op[] = [
+    ...briefing,
+    // $0707DC
+    { kind: 'set-reward', reward: OFFER_REWARDS[0] },
+    { kind: 'clear-key' },
+    message('script4-inline-9'),
+    ...answer(ten + 3, accepted, fifteen),
+    // $070830
+    { kind: 'set-reward', reward: OFFER_REWARDS[1] },
+    { kind: 'clear-key' },
+    message('script4-inline-10'),
+    ...answer(fifteen + 3, accepted, twenty),
+    // $070888: the third rung writes the reward and a line before it clears the key.
+    { kind: 'set-reward', reward: OFFER_REWARDS[2] },
+    message('script4-inline-11'),
+    { kind: 'clear-key' },
+    message('script4-inline-12'),
+    ...answer(twenty + 4, accepted, draw),
+    // $07090E
+    { below: FOURTH_OFFER_BELOW, kind: 'random-skip', to: refusal },
+    // $070914
+    { kind: 'set-reward', reward: OFFER_REWARDS[3] },
+    { kind: 'clear-key' },
+    message('script4-inline-13'),
+    ...answer(twentyFive + 3, accepted, refusal),
+    // $070968, then `jump $072CAE`.
+    { kind: 'set-reward', reward: 0 },
+    message('script4-inline-14'),
+    ...sharedEpilogue(),
+    // $0709AA
+    { kind: 'set-flag', mask: OFFER_ACCEPTED_FLAG },
+    { kind: 'set-carried', slot: OFFER_KEY_SLOT },
+    message('script4-inline-15'),
+    message('script4-inline-16'),
+    ...clearingLine(),
+    message('script4-inline-17'),
+    message('script4-inline-18'),
+    ...wait(LANDING_WAIT_FRAMES),
+    message('script4-inline-19'),
+    ...clearingLine(),
+    message('script4-inline-20'),
+    { kind: 'clear-busy' },
+    { kind: 'return' }
+  ];
+  if (
+    ops[accepted]?.kind !== 'set-flag' ||
+    ops[refusal - 1]?.kind !== 'if-wait'
+  ) {
+    throw new Error("the first offer's branch targets do not line up");
+  }
+  return { entry: 0x07_06_50, ops, revision: 1 };
+};
+
 export interface Script {
   readonly entry: number;
   readonly ops: readonly Op[];
@@ -189,6 +320,7 @@ export const SCRIPTS: Readonly<Record<ScriptId, Script>> = {
     ],
     revision: 1
   },
+  'damocles.script.slot-4': firstOffer(),
   // $070AEA. KEY - EAGLE 9SE, resident slot 181. 600 + 500 + 50 frames.
   'damocles.script.slot-5': {
     entry: 0x07_0a_ea,
@@ -393,10 +525,11 @@ export const TRIGGER_FOR_RESIDENT: Readonly<Record<string, number>> = {
   'object-slot-95': 20
 };
 
-/// The location triggers the port runs (docs/research/damocles-location-triggers.md): the tables
-/// name twelve more, whose scripts need a balance or a key poll the port lacks, or are not yet
-/// authored. The walk still finds their entries; with no trigger here the launcher refuses them.
-export const LOCATION_TRIGGERS: readonly number[] = [3];
+/// The location triggers the port runs (docs/research/damocles-location-triggers.md): the State
+/// President's welcome and the first offer. The tables name twelve more, whose scripts need a
+/// balance the port lacks, or are not yet authored. The walk still finds their entries; with no
+/// trigger here the launcher refuses them.
+export const LOCATION_TRIGGERS: readonly number[] = [3, 4];
 
 /// The landing triggers `body + $1F` the port runs: `$20`-`$3B` without ERIS's `$2A`, which the
 /// landing skips and whose script is the author's computer's (#576). DAMOCLES's `$3C` is the
@@ -411,6 +544,7 @@ export const SCRIPT_FOR_TRIGGER: Readonly<Record<number, ScriptId>> = {
   2: 'damocles.script.slot-2',
   20: 'damocles.script.slot-20',
   3: 'damocles.script.slot-3',
+  4: 'damocles.script.slot-4',
   5: 'damocles.script.slot-5',
   6: 'damocles.script.slot-6',
   62: 'damocles.script.slot-62',
@@ -423,10 +557,10 @@ export const SCRIPT_FOR_TRIGGER: Readonly<Record<number, ScriptId>> = {
 };
 
 /// The arming table at `$7CB4` as the pinned capture holds it, for the six pickup triggers, the
-/// State President's location trigger and the 27 landing triggers.
+/// two State Office location triggers and the 27 landing triggers.
 ///
-/// Bit 7 is armed, bit 5 queues while busy and bit 6 is sticky. Only trigger 5 is queueable
-/// (`$A0`). The whole 64-byte table holds exactly one sticky byte, TOLOSA's `$38` (`$C0`), so
+/// Bit 7 is armed, bit 5 queues while busy and bit 6 is sticky. Triggers 4 and 5 are queueable
+/// (`$A0`): the first offer waits in `$7A88` behind the State President's welcome. The whole 64-byte table holds exactly one sticky byte, TOLOSA's `$38` (`$C0`), so
 /// every other trigger here is one-shot.
 ///
 /// Nothing in the recovered program re-arms a trigger: `$7CB4` is referenced by one instruction,
@@ -442,6 +576,7 @@ export const TRIGGER_ARMING: readonly {
   { byte: 0x80, index: 20 },
   { byte: 0x80, index: 62 },
   { byte: 0x80, index: 3 },
+  { byte: 0xa0, index: 4 },
   ...LANDING_TRIGGERS.map(index => ({
     byte: index === 0x38 ? 0xc0 : 0x80,
     index

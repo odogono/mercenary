@@ -462,10 +462,11 @@ interface EditableRecord {
   };
 }
 
-/// Before schema 19 no record carried the State President's location trigger 3.
+/// Before schema 19 no record carried the State President's location trigger 3, and before
+/// schema 20 none carried the first offer's trigger 4.
 const beforeLocations = (record: EditableRecord): void => {
   record.snapshot.script.triggers = record.snapshot.script.triggers.filter(
-    trigger => trigger.index !== 3
+    trigger => trigger.index !== 3 && trigger.index !== 4
   );
 };
 
