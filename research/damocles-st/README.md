@@ -750,5 +750,22 @@ or a table the pointer tables do not hold, and `tests/test_music.py` checks the 
 payload reproduces byte for byte from the pinned capture. See
 [every sound programme](../../docs/research/damocles-sound-programmes.md#the-music-player).
 
+## Document extraction (#598)
+
+```sh
+PYTHONPATH=research/damocles-st research/damocles-st/.venv/bin/python -m damocleslab.documents \
+  --run research/damocles-st/work/observe-first-world-20260818T101013Z-c5a32b7d \
+  --output payload/damocles/documents.json
+```
+
+Extracts the documents the Head Commands read: every mode-2 row of the Open table at
+`$04D2C4` (the object slot, the document index and colours 15 and 3), and each row's items
+from the bank at `$073500`, each an 8-character name and a verbatim body. It writes 19
+documents and 93 items. It fails closed on a table that does not end at `$04D3AC`, a
+document whose header is not `$80 $20 $00` or whose terminator is not at its length plus 4,
+or a byte outside the message row's glyphs. `tests/test_documents.py` checks the tracked
+payload reproduces byte for byte from the pinned capture. See
+[the Head Commands note](../../docs/research/damocles-head-commands.md).
+
 See [`SPEC.md`](SPEC.md), [`BOOT-AND-UNPACKING.md`](BOOT-AND-UNPACKING.md), and
 [`HATARI-RESEARCH.md`](HATARI-RESEARCH.md).

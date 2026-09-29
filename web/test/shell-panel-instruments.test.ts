@@ -198,6 +198,7 @@ describe('the Damocles message line', () => {
 
     drawDamoclesMessage(canvas, root, {
       cells: 'ENT',
+      planes: [0, 0, 0],
       scrollPixels: 0
     });
 

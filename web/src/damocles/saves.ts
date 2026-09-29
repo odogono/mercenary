@@ -5,6 +5,7 @@ import {
   type SaveSlot,
   type SlotStorage
 } from '../shell/saves.ts';
+import type { DamoclesDocuments } from './documentBank.ts';
 import type { ArrivalPoses } from './poses.ts';
 import {
   DAMOCLES_SAVE_SCHEMA_VERSION,
@@ -21,6 +22,7 @@ export interface DamoclesSavePersistenceOptions {
     readonly where: string;
   };
   readonly catalogue: Catalogue;
+  readonly documents?: DamoclesDocuments;
   readonly identity: DamoclesSaveIdentity;
   readonly now?: () => Date;
   readonly poses?: ArrivalPoses;
@@ -41,6 +43,9 @@ export const createDamoclesSavePersistence = (
     decode: encoded => {
       const saved = decodeDamoclesSave(encoded, options.identity, {
         catalogue: options.catalogue,
+        ...(options.documents === undefined
+          ? {}
+          : { documents: options.documents }),
         ...(options.poses === undefined ? {} : { poses: options.poses }),
         ...(options.strings === undefined ? {} : { strings: options.strings })
       });

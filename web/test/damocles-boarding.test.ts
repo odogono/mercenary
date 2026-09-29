@@ -3,6 +3,7 @@ import { beforeAll, describe, expect, test } from 'bun:test';
 import type { Catalogue } from '../src/catalogue/data.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import { planErisFrame } from '../src/damocles/frame.ts';
+import { initialHeadCommands } from '../src/damocles/headCommands.ts';
 import { damoclesPanelViewModel } from '../src/damocles/panel.ts';
 import { catalogueResidence } from '../src/damocles/residence.ts';
 import {
@@ -37,6 +38,7 @@ import {
   type ErisSurface
 } from '../src/damocles/world.ts';
 import { titleStorageKeys } from '../src/shell/title.ts';
+import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
@@ -55,6 +57,7 @@ beforeAll(async () => {
   content = {
     catalogue,
     doc,
+    documents: await damoclesDocuments(),
     models: modelsOf(catalogue),
     poses: await arrivalPoses(),
     presentationSha256: 'test',
@@ -104,6 +107,7 @@ const standingAt = (
     encounter: null,
     footTicks: 0,
     frameAccumulator: 0,
+    headCommands: initialHeadCommands(),
     occupancy: { kind: 'onFoot' },
     pendingBriefcaseDrop: null,
     pose,
@@ -1789,6 +1793,7 @@ describe('the noise pointer on foot and at New Game (#582)', () => {
     const session = new DamoclesSession(content);
     expect(session.captureResume()).toMatchObject({
       footTicks: 0,
+      headCommands: initialHeadCommands(),
       script: { noise: NEW_GAME_NOISE }
     });
   });
@@ -1815,6 +1820,7 @@ describe('the noise pointer on foot and at New Game (#582)', () => {
     passes(session, 5);
     expect(session.captureResume()).toMatchObject({
       footTicks: 3,
+      headCommands: initialHeadCommands(),
       script: { noise: (start + 5) % 0x8_00 }
     });
   });

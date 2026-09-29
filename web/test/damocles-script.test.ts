@@ -1,11 +1,16 @@
 import { describe, expect, test } from 'bun:test';
 
-import { BLANK_DAMOCLES_ROW } from '../src/damocles/display.ts';
+import {
+  BLANK_DAMOCLES_ROW,
+  documentMessageId
+} from '../src/damocles/display.ts';
 import {
   NEW_GAME_NOISE,
+  SHORTENED_DISPLAY_FRAMES,
   fireTrigger,
   initialScriptState,
   presentSystemMessage,
+  queueRead,
   runFrame,
   stepNoise,
   type ScriptRules,
@@ -72,7 +77,7 @@ describe('Damocles Script slot 2', () => {
         script: 'damocles.script.slot-2',
         step: 1
       },
-      message: { id: 'script2-inline-1', remainingFrames: 200 }
+      message: { id: 'script2-inline-1', offset: 0, remainingFrames: 200 }
     });
     expect(
       fired.state.triggers.find(trigger => trigger.index === 2)?.armed
@@ -97,7 +102,11 @@ describe('Damocles Script slot 2', () => {
       execution: null,
       message: null
     });
-    expect(state.display).toEqual({ cells: ' '.repeat(48), kind: 'held' });
+    expect(state.display).toEqual({
+      cells: ' '.repeat(48),
+      kind: 'held',
+      plane: 0
+    });
   });
 
   test('its clearing line is the 200-frame exception, not the shared epilogue', () => {
@@ -106,6 +115,7 @@ describe('Damocles Script slot 2', () => {
     const clearing = run(fired, 800);
     expect(clearing.message).toEqual({
       id: 'system-string-50',
+      offset: 0,
       remainingFrames: ORDINARY_DISPLAY_FRAMES
     });
     expect(clearing.displayDuration).toBe(ORDINARY_DISPLAY_FRAMES);
@@ -142,7 +152,8 @@ describe('the five further pickup responses', () => {
     // The row the second message wrote outlives the script that wrote it.
     expect(parked.display).toEqual({
       cells: 'script6-inline-2'.padEnd(48),
-      kind: 'held'
+      kind: 'held',
+      plane: 0
     });
   });
 
@@ -183,6 +194,7 @@ describe('the five further pickup responses', () => {
     const clearing = run(fired, 200);
     expect(clearing.message).toEqual({
       id: 'system-string-50',
+      offset: 0,
       remainingFrames: CLEARING_LINE_FRAMES
     });
     expect(clearing.displayDuration).toBe(CLEARING_LINE_FRAMES);
@@ -327,7 +339,11 @@ describe('a queued response nests inside the script it interrupted', () => {
     expect(run(nested, 1149).busy).toBe(true);
     const parked = run(nested, 1150);
     expect(parked).toMatchObject({ busy: false, execution: null });
-    expect(parked.display).toEqual({ cells: ' '.repeat(48), kind: 'held' });
+    expect(parked.display).toEqual({
+      cells: ' '.repeat(48),
+      kind: 'held',
+      plane: 0
+    });
   });
 
   test('a queued index whose trigger has since fired is consumed and refused', () => {
@@ -369,7 +385,7 @@ describe('the recovered trigger table', () => {
 
   test('opens on a blank held row with the ordinary display duration', () => {
     expect(initialScriptState()).toMatchObject({
-      display: { cells: BLANK_DAMOCLES_ROW, kind: 'held' },
+      display: { cells: BLANK_DAMOCLES_ROW, kind: 'held', plane: 0 },
       displayDuration: ORDINARY_DISPLAY_FRAMES,
       pending: null
     });
@@ -436,7 +452,7 @@ describe('the landing messages (#576)', () => {
     expect(transition.effects).toEqual([]);
     expect(transition.state).toMatchObject({
       busy: false,
-      display: { cells: BLANK_DAMOCLES_ROW, kind: 'held' },
+      display: { cells: BLANK_DAMOCLES_ROW, kind: 'held', plane: 0 },
       execution: null,
       message: null,
       noise: NEW_GAME_NOISE + 1
@@ -507,5 +523,44 @@ describe('the landing messages (#576)', () => {
     const landed = fireTrigger(busy, 0x26, drawing(0xff_ff)).state;
     expect(landed).toBe(busy);
     expect(landed.triggers.find(item => item.index === 0x26)?.armed).toBe(true);
+  });
+});
+
+describe('a Read the dispatch head presents', () => {
+  const read = documentMessageId(151, 1);
+
+  test('waits for the gate, then goes ahead of the script that raised it', () => {
+    // Trigger 6 is the DAMOCLES FILE's take: two messages and no clearing line.
+    const fired = fireTrigger(initialScriptState(), 6, rules).state;
+    const queued = queueRead(fired, read);
+    expect(queued.read).toBe(read);
+    // `$051944`: the body goes first once the first message is over, and the script's second
+    // message waits for the body to finish. These rules' records fill the row exactly, so the
+    // body never reads its terminator inside a block and holds the full 200.
+    expect(transcript(queued, 450)).toEqual([
+      { frame: 0, id: 'script6-inline-1' },
+      { frame: ORDINARY_DISPLAY_FRAMES, id: read },
+      { frame: 2 * ORDINARY_DISPLAY_FRAMES, id: 'script6-inline-2' }
+    ]);
+  });
+
+  test('keeps only the first of two Reads', () => {
+    const queued = queueRead(
+      queueRead(initialScriptState(), read),
+      documentMessageId(151, 2)
+    );
+    expect(queued.read).toBe(read);
+    // A body shorter than the row reads its terminator in its first block and holds 50.
+    const short: ScriptRules = { ...rules, messageText: () => 'PAGE 1' };
+    const presented = runFrame(queued, short).state;
+    expect(presented.read).toBeNull();
+    expect(presented.message).toEqual({
+      id: read,
+      offset: 0,
+      remainingFrames: SHORTENED_DISPLAY_FRAMES
+    });
+    expect(presented.display).toMatchObject({
+      reveal: { beneathPlane: 0, offset: 0 }
+    });
   });
 });

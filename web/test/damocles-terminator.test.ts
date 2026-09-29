@@ -17,6 +17,7 @@ import {
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { advanceTurn, inDaylight } from '../src/damocles/terminator.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
+import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
@@ -32,6 +33,7 @@ beforeAll(async () => {
   content = {
     catalogue,
     doc,
+    documents: await damoclesDocuments(),
     models: modelsOf(catalogue),
     poses: await arrivalPoses(),
     presentationSha256: 'test',

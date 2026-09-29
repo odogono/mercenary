@@ -95,7 +95,7 @@ test('a zap runs the noise, the fade and VOID to the death message', async ({
   const record = JSON.parse(
     (await page.evaluate(k => localStorage.getItem(k), slot))!
   ) as SavedRecord;
-  expect(record.schemaVersion).toBe(16);
+  expect(record.schemaVersion).toBe(17);
   const { x, y, z } = record.snapshot.pose.position;
   const camera = [x >>> 0, y >>> 0, z >>> 0];
   const idle = {

@@ -479,7 +479,7 @@ test('Saves restore on foot before boarding, aboard, and on foot after leaving',
   // The aboard record says so in its own terms: Occupancy names the limo, and its Object
   // Residence is occupied rather than placed.
   const stored = await savedRecord(page, 2);
-  expect(stored.schemaVersion).toBe(16);
+  expect(stored.schemaVersion).toBe(17);
   expect(stored.snapshot.occupancy).toEqual({ instance: LIMO, kind: 'aboard' });
   expect(
     stored.snapshot.residence.find(item => item.instance === LIMO)?.residence

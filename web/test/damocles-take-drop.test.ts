@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
 
 import { readErisPresentation } from '../src/damocles/documents.ts';
+import { initialHeadCommands } from '../src/damocles/headCommands.ts';
 import {
   initialDamoclesSaveScript,
   type DamoclesSaveSnapshot
@@ -15,6 +16,7 @@ import {
   presentedText
 } from '../src/damocles/strings.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
+import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
@@ -37,6 +39,7 @@ beforeAll(async () => {
   loaded = {
     catalogue,
     doc,
+    documents: await damoclesDocuments(),
     models: modelsOf(catalogue),
     poses: await arrivalPoses(),
     presentationSha256: 'test',
@@ -66,6 +69,7 @@ const besideKey = (soundPermitted = true): DamoclesSession => {
       encounter: null,
       footTicks: 0,
       frameAccumulator: 0,
+      headCommands: initialHeadCommands(),
       occupancy: { kind: 'onFoot' },
       pendingBriefcaseDrop: null,
       pose: {
@@ -127,6 +131,7 @@ const dynamicAtOrigin = (
     encounter: null,
     footTicks: 0,
     frameAccumulator: 0,
+    headCommands: initialHeadCommands(),
     occupancy: { kind: 'onFoot' },
     pendingBriefcaseDrop: null,
     pose: {
@@ -407,7 +412,7 @@ describe('ordinary Eris limo-key take and drop', () => {
     expect(session.snapshot).toMatchObject({
       carried: ['object-slot-183'],
       inventoryLabel: '',
-      message: { id: 'script2-inline-1', remainingFrames: 200 },
+      message: { id: 'script2-inline-1', offset: 0, remainingFrames: 200 },
       scrollCounter: -16
     });
     expect(session.snapshot.residence).toEqual([
@@ -463,6 +468,7 @@ describe('ordinary Eris limo-key take and drop', () => {
     expect(parkedInRegion2.drop()).toEqual({ kind: 'refused' });
     expect(parkedInRegion2.snapshot.message).toEqual({
       id: 'system-string-9',
+      offset: 0,
       remainingFrames: 200
     });
     expect(parkedInRegion2.drainEffects()).toEqual([shown('system-string-9')]);
@@ -492,6 +498,7 @@ describe('ordinary Eris limo-key take and drop', () => {
       encounter: null,
       footTicks: 0,
       frameAccumulator: 0,
+      headCommands: initialHeadCommands(),
       occupancy: { kind: 'onFoot' },
       pendingBriefcaseDrop: null,
       pose: {
@@ -537,6 +544,7 @@ describe('ordinary Eris limo-key take and drop', () => {
       encounter: null,
       footTicks: 0,
       frameAccumulator: 0,
+      headCommands: initialHeadCommands(),
       occupancy: { kind: 'onFoot' },
       pendingBriefcaseDrop: null,
       pose: {
@@ -629,6 +637,7 @@ describe('ordinary Eris limo-key take and drop', () => {
       encounter: null,
       footTicks: 0,
       frameAccumulator: 0,
+      headCommands: initialHeadCommands(),
       occupancy: { kind: 'onFoot' },
       pendingBriefcaseDrop: null,
       pose: {

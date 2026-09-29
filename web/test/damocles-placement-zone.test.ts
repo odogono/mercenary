@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
 
 import { readErisPresentation } from '../src/damocles/documents.ts';
+import { initialHeadCommands } from '../src/damocles/headCommands.ts';
 import { placementZone } from '../src/damocles/residence.ts';
 import { initialDamoclesSaveScript } from '../src/damocles/save.ts';
 import { structureRegionAt } from '../src/damocles/selection.ts';
@@ -10,6 +11,7 @@ import {
 } from '../src/damocles/session.ts';
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { erisSurfaceFrom, type ErisPlacement } from '../src/damocles/world.ts';
+import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
@@ -25,6 +27,7 @@ beforeAll(async () => {
   loaded = {
     catalogue,
     doc,
+    documents: await damoclesDocuments(),
     models: modelsOf(catalogue),
     poses: await arrivalPoses(),
     presentationSha256: 'test',
@@ -59,6 +62,7 @@ const carryingKeyAt = (x: number, z: number): DamoclesSession => {
     encounter: null,
     footTicks: 0,
     frameAccumulator: 0,
+    headCommands: initialHeadCommands(),
     occupancy: { kind: 'onFoot' },
     pendingBriefcaseDrop: null,
     pose,

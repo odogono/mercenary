@@ -1,0 +1,726 @@
+{
+  "bank": {
+    "end": "0x07612c",
+    "sha256": "a83b5f2b1d392643861c6c3bb42a4898606ecc3b283733f43c28065cefef45da",
+    "start": "0x073500"
+  },
+  "coverage": {
+    "complete": true,
+    "notes": [
+      "Every mode-2 row of the Open table at $04D2C4, in table order.",
+      "Every item of each row's document in the bank at $073500, name and body verbatim.",
+      "The other modes (3 to 6) are not published: their objects are outside #598."
+    ]
+  },
+  "documents": [
+    {
+      "address": "0x073526",
+      "colour15": 819,
+      "colour3": 1365,
+      "index": 0,
+      "items": [
+        {
+          "address": "0x07352b",
+          "body": "MEMO 24-12-89 TO ROBERT      REGRET WE SHALL NOTNOT NOW MAKE CHRISTMAS RELEASE DATE -      BRUCE ",
+          "name": "ACTIVE  "
+        },
+        {
+          "address": "0x073595",
+          "body": "        REFER TO CONFIDENTIAL FILE IN SAFE        ",
+          "name": "BENSON  "
+        },
+        {
+          "address": "0x0735d0",
+          "body": "  FILE NOTE: CHECK BAR ARRANGEMENTS OK WITH TIM   ",
+          "name": "BOSHER  "
+        },
+        {
+          "address": "0x07360b",
+          "body": " WITH MEGA THANKS TO MO WARDEN FOR CREATING AND   PRODUCING SOME INSPIRED DAMOCLES DATA DESIGNS  AND TO NEIL TOLOUSE FOR HIS MAJOR CONTIBUTION                      - - - - -                   MANY THANKS TO JACK MOORBY FOR PRINTED GRAPHICS AND TO MARTIN AS EVER FOR CONSTRUCTIVE CRITICISM ",
+          "name": "CREDITS "
+        },
+        {
+          "address": "0x073735",
+          "body": "FILE OPENED 20 MAR 1986 - PAUL'S NAME FOR MERC2  ",
+          "name": "DAMOCLES"
+        },
+        {
+          "address": "0x07376f",
+          "body": "PLEASE WRITE YOUR NAME HERE - - - AND (CONT P94) ",
+          "name": "HACKERS "
+        },
+        {
+          "address": "0x0737a9",
+          "body": "CONTAINS A LIST OF PROJECTED RELEASE DATES ONLY! ",
+          "name": "JOKES   "
+        },
+        {
+          "address": "0x0737e3",
+          "body": "FILE NOTE: STARSIGN - HAS A GOOD EYE FOR A CLUE  ",
+          "name": "LEO     "
+        },
+        {
+          "address": "0x07381d",
+          "body": "TA TO JASON MARTIN - MARK BEDFORD - EDDIE FISHER ",
+          "name": "PLAYTEST"
+        },
+        {
+          "address": "0x073857",
+          "body": " STOP LOOKING IN OUR FILES AND GET ON WITH IT!   ",
+          "name": "QUEST   "
+        },
+        {
+          "address": "0x073891",
+          "body": "GREETINGS TO TEN 'OUT OF THE HAT' OF THOSE WHOSECALLS ON DAMOCLES PROGRESS MAKE IT SO WORTHWHILE                    STANDBY                       ALASTAIR HOOPER - STUART GILL - ALEX GRAHAM      STEVE HARDING - JOHN MILFORD - IAN ROBSON      DAVE ROFFEY - STEVE SEARGENT - ROB WILLIAMS     AND RUSS LANIER WHO'S FLYING IN TO BUY LUNCH!  AND ALSO REGARDS TO HARRODS' ANONYMOUS V I P    ",
+          "name": "TOP TEN "
+        },
+        {
+          "address": "0x073a1b",
+          "body": "MEMO TO TIM: CHECK PAUL'S AMBITION TO HAVE MORE THAN ONE SOLAR SYSTEM NEXT TIME - AND I DO MEAN CHECK IT AS IN STOP IT - PLEASE!          - BJ   ",
+          "name": "UNIVERSE"
+        }
+      ],
+      "length": 1419,
+      "openRow": "0x04d2c4",
+      "sha256": "da12c5647d4b7bb68d851f3c125f64cf5bd5521a012e30399d49f988f92273df",
+      "slot": 111
+    },
+    {
+      "address": "0x073c6e",
+      "colour15": 1075,
+      "colour3": 1604,
+      "index": 2,
+      "items": [
+        {
+          "address": "0x073c73",
+          "body": "       DAMOCLES RELEASE DATE - EASTER 89         ",
+          "name": "DATE 1  "
+        },
+        {
+          "address": "0x073cad",
+          "body": "      DAMOCLES RELEASE DATE - PC SHOW 89         ",
+          "name": "DATE 2  "
+        },
+        {
+          "address": "0x073ce7",
+          "body": "     DAMOCLES RELEASE DATE - CHRISMAS 89         ",
+          "name": "DATE 3  "
+        },
+        {
+          "address": "0x073d21",
+          "body": "       DAMOCLES RELEASE DATE - MARCH 90          ",
+          "name": "DATE 4  "
+        },
+        {
+          "address": "0x073d5b",
+          "body": "      DAMOCLES RELEASE DATE - APRIL 90           ",
+          "name": "DATE 5  "
+        },
+        {
+          "address": "0x073d95",
+          "body": "            A SPECTRUM 48K COMPUTER              ",
+          "name": "ITEM    "
+        }
+      ],
+      "length": 349,
+      "openRow": "0x04d2cc",
+      "sha256": "8c1ed6198c676dee9cd22781b1b658412b351250b58655a297ce9fded2e427fa",
+      "slot": 109
+    },
+    {
+      "address": "0x073dd0",
+      "colour15": 1076,
+      "colour3": 1606,
+      "index": 4,
+      "items": [
+        {
+          "address": "0x073dd5",
+          "body": "        WISHFUL THINKING OF A MERCENARY          ",
+          "name": "TITLE   "
+        },
+        {
+          "address": "0x073e0f",
+          "body": "         I WISH I HAD A CHEESE SANDWICH          ",
+          "name": "PAGE 1  "
+        },
+        {
+          "address": "0x073e49",
+          "body": "I WISH THAT I COULD RECEIVE ONE MILLION CREDITS  ",
+          "name": "PAGE 2  "
+        },
+        {
+          "address": "0x073e83",
+          "body": "  I WISH THAT I COULD SAVE ERIS FROM DAMOCLES    ",
+          "name": "PAGE 3  "
+        },
+        {
+          "address": "0x073ebd",
+          "body": "          I WISH THAT I HAD MORE TIME            ",
+          "name": "PAGE 4  "
+        },
+        {
+          "address": "0x073ef7",
+          "body": "   I WISH I COULD SAVE BOTH ERIS AND DAMOCLES    ",
+          "name": "PAGE 5  "
+        },
+        {
+          "address": "0x073f31",
+          "body": "  I WISH THAT THE UNIVERSE WAS MORE COLOURFUL    ",
+          "name": "PAGE 6  "
+        },
+        {
+          "address": "0x073f6b",
+          "body": "I WISH TO KNOW HOW TO USE THE AUTHOR'S COMPUTER  ",
+          "name": "PAGE 7  "
+        },
+        {
+          "address": "0x073fa5",
+          "body": "         I WISH I HAD MERCENARY III NOW          ",
+          "name": "PAGE 8  "
+        }
+      ],
+      "length": 523,
+      "openRow": "0x04d2d4",
+      "sha256": "b2b51ef42ff66bb99657965d5610940a34a1e8f0e3c31b9bbdf99716f57304f6",
+      "slot": 131
+    },
+    {
+      "address": "0x073fe0",
+      "colour15": 820,
+      "colour3": 1094,
+      "index": 6,
+      "items": [
+        {
+          "address": "0x073fe5",
+          "body": "     SAVE ERIS FROM DAMOCLES IN A FEW HOURS      ",
+          "name": "ACTION  "
+        },
+        {
+          "address": "0x07401f",
+          "body": "MERCENARY 1 FIFTH BIRTHDAY PARTY NOVAGEN OFFICE  ",
+          "name": "ANNIV   "
+        },
+        {
+          "address": "0x074059",
+          "body": "                    NO ENTRY                     ",
+          "name": "CLUES   "
+        },
+        {
+          "address": "0x074093",
+          "body": "  UNLESS CONFIDENCE RETURNS - GET OUT OF ECU'S   ",
+          "name": "INVEST  "
+        },
+        {
+          "address": "0x0740cd",
+          "body": "      AT HATHAWAYS WINE BAR ON SNOW ISLAND       ",
+          "name": "LUNCH   "
+        },
+        {
+          "address": "0x074107",
+          "body": "                    NO POINT                     ",
+          "name": "PHONE   "
+        }
+      ],
+      "length": 349,
+      "openRow": "0x04d2dc",
+      "sha256": "fdb9cb751b478522173c21a599cf340d4c82f04d3ef32b900764fb540f750002",
+      "slot": 133
+    },
+    {
+      "address": "0x075ea2",
+      "colour15": 1074,
+      "colour3": 1891,
+      "index": 8,
+      "items": [
+        {
+          "address": "0x075ea7",
+          "body": "           TO PROFESSOR RALPH HANTZEN            I ACKNOWLEDGE RECEIPT OF THE ITEM SENT WHICH I TAKE TO BE A SOMEWHAT UNUSUAL MEANS OF CLEARING YOUR LONG OUTSTANDING PERSONAL ACCOUNT OVERDRAFT                   - - - - -                    I HAVE TRADED THIS LOCALLY FOR SUFFICIENT FUNDS  ",
+          "name": "ACKNOL  "
+        },
+        {
+          "address": "0x075fd1",
+          "body": " FROM GAEA BANK TO MEGA TRADING POST 05-06 GAEA     RECEIVED 30,000 IGC'S FOR HOUSEHOLD ITEM     ",
+          "name": "RECEIPT "
+        }
+      ],
+      "length": 405,
+      "openRow": "0x04d2e4",
+      "sha256": "94718224b34aad0eed6130b420da3378b484d2ce2127e17575dbcd1ee7123dd1",
+      "slot": 125
+    },
+    {
+      "address": "0x073ab6",
+      "colour15": 1539,
+      "colour3": 1829,
+      "index": 10,
+      "items": [
+        {
+          "address": "0x073abb",
+          "body": "PAUL - ON YOUR IDEA TO USE THE AC FOR TESTING - NO THANKS - I FIND IT POSITIVELY TERRIFYING -BJ  ",
+          "name": "AC      "
+        },
+        {
+          "address": "0x073b25",
+          "body": "BJ- THE MOBILE TRANSPORTER ROUTINE IS NOW IN -PW ",
+          "name": "TIMESAVE"
+        },
+        {
+          "address": "0x073b5f",
+          "body": "PAUL - WHAT'S THIS ABOUT A WISHES SOLUTION? - BJ ",
+          "name": "YOU WISH"
+        },
+        {
+          "address": "0x073b99",
+          "body": "PAUL - MO HAS DONE SOME SPECTACULAR GRAPHICS FORTHE ACHERON TRANSLATION OF THE MIDAS PUZZLE - BJ ",
+          "name": "MILLIONS"
+        },
+        {
+          "address": "0x073c03",
+          "body": " BJ - I CONFIRM THAT THE DISPOSABLE PLANET DOES CREATE A DIVERSION IF CRACKED WITHIN 1:30 HR -PW ",
+          "name": "LLOYDS  "
+        }
+      ],
+      "length": 435,
+      "openRow": "0x04d2ec",
+      "sha256": "bcf2a81a6f3918ecbe82da76520c86948f513700768daec0fa02716d85129969",
+      "slot": 102
+    },
+    {
+      "address": "0x075d10",
+      "colour15": 4,
+      "colour3": 551,
+      "index": 12,
+      "items": [
+        {
+          "address": "0x075d15",
+          "body": "     A MECHANOID - THIS MODEL NOW DISABLED      CONSIDERABLY INCONVENIENCED THE PALYARS ON TARG  ",
+          "name": "01-01   "
+        },
+        {
+          "address": "0x075d7f",
+          "body": "     A CASPER HANLEY EAGLE 8 SE - 'CHEESE'       ",
+          "name": "01-03   "
+        },
+        {
+          "address": "0x075db9",
+          "body": "THE DART - FIRST MASS PRODUCED PERSONAL AIRCRAFT ",
+          "name": "03-01   "
+        },
+        {
+          "address": "0x075df3",
+          "body": " LANDING OF FIRST GAEAN PERSONNED SPACE FLIGHT   ",
+          "name": "03-03   "
+        },
+        {
+          "address": "0x075e2d",
+          "body": "  A HEXAPOD - FORERUNNER OF BEST CUPAND SAUCER   ",
+          "name": "03-05   "
+        },
+        {
+          "address": "0x075e67",
+          "body": " A SPRINTCAR - HOLDS LAND SPEED RECORD OF 3775   ",
+          "name": "05-05   "
+        }
+      ],
+      "length": 397,
+      "openRow": "0x04d2f4",
+      "sha256": "cb3a0c77fe7f4543528c7d964e3a5e80704bc1590a534558099a01caf32d4920",
+      "slot": 112
+    },
+    {
+      "address": "0x074142",
+      "colour15": 54,
+      "colour3": 599,
+      "index": 14,
+      "items": [
+        {
+          "address": "0x074147",
+          "body": "  THE COMET DAMOCLES IS ON A COLLISION COURSE     WITH ERIS - SEE CHART D.1745 FOR TRAJECTORY    ",
+          "name": "PROBLEM "
+        },
+        {
+          "address": "0x0741b1",
+          "body": " A PARLIAMENTARY COMMITTEE HAS BEEN SITTING FOR  THE LAST THIRTY YEARS TO CONSIDER THE PROBLEM  AND HAS PUBLISHED MANY REPORTS - ALL TO NO AVAIL ",
+          "name": "HISTORY "
+        },
+        {
+          "address": "0x07424b",
+          "body": " RUMOUR HAS IT THAT THERE CAN BE AS MANY AS FIVE  WAYS TO SOLVE THE PROBLEM - THE ONLY PROGRESS  SO FAR WAS REPORTED BY PROFESSOR RALPH HANTZEN IN THE DEVELOPMENT OF AN IMMENSELY POWERFUL BOMB ",
+          "name": "SOLUTION"
+        },
+        {
+          "address": "0x074315",
+          "body": " UNFORTUNATELY THE ERIS STATE PRESIDENT AND THE  THE PROF HAD A FIERCE ARGUMENT FOLLOWING FROM AGAME OF CHESS - HANTZEN HAS NOT BEEN SEEN SINCE  ",
+          "name": "SETBACK "
+        },
+        {
+          "address": "0x0743af",
+          "body": "HEAD OF HANTZEN INDUSTRIES WHICH OPERATES AT THE FOREFRONT OF TECHNOLOGY WITH PRODUCTS RANGING   FROM TIN OPENERS TO TIME MACHINES (CRYOGENIC)   ",
+          "name": "HANTZEN "
+        },
+        {
+          "address": "0x074449",
+          "body": " THE MYSTICAL ORDER OF CARPENTERS MAINTAIN THAT  A DEVICE GIVING ACCESS TO A PROFITABLE SOLUTION IS IN EXISTANCE - AND THE AUTHOR DOES CONCEED   THAT IF SO - SUCH A PROSPECT MAY NOT BE UNIQUE  ",
+          "name": "OTHER   "
+        },
+        {
+          "address": "0x074513",
+          "body": "THE DION VERDANT PARTY -DARK GREEN CHAPTER- HAVEMOVED TO PLACE A PRESERVATION ORDER ON DAMOCLES! ",
+          "name": "POLITICS"
+        },
+        {
+          "address": "0x07457d",
+          "body": "LLOYDS GROUP 4 HAVE OFFERED AN ADDITIONAL REWARD OF 25,000,000 ICG'S FOR THE SALVATION OF ERIS    IF ACHIEVED WITHOUT DESTRUCTION OF THE COMET   ",
+          "name": "REWARD  "
+        },
+        {
+          "address": "0x074617",
+          "body": "  LLOYDS CONSIDER DAMOCLES WILL BE A VALUABLE    TOURIST ATTRACTION ON PROJECTED FUTURE VISITS   ",
+          "name": "REASON  "
+        },
+        {
+          "address": "0x074681",
+          "body": " YOUR PANEL DISPLAY IS TUNED TO ERIS TIME TO GO     BEFORE DAMOCLES HITS - PLEASE NOTE THAT     INTERGALACTIC TRAVEL TAKES YOU VERY LITTLE TIME   BUT RAPIDLY DECAYS THE 'ERIS TIME' AVAILABLE   ",
+          "name": "TIME    "
+        },
+        {
+          "address": "0x07474b",
+          "body": "AFTER FULLY READING THIS FILE - PLEASE TAKE THE  ELEVATOR TO MY OFFICE IN THIS BUILDING LOCATED  AT THE END OF THE CORRIDOR ON THE SECOND FLOOR  ",
+          "name": "NEXT    "
+        }
+      ],
+      "length": 1695,
+      "openRow": "0x04d2fc",
+      "sha256": "e11e1ea07e61ea927f9a2afdddc7730bb084d2157de898859f0854f6193a25cb",
+      "slot": 151
+    },
+    {
+      "address": "0x0747e6",
+      "colour15": 774,
+      "colour3": 1319,
+      "index": 16,
+      "items": [
+        {
+          "address": "0x0747eb",
+          "body": "MONIQUE - LAST NIGHT I FIXED YOUR WORD PROCESSOR ",
+          "name": "THU 12TH"
+        },
+        {
+          "address": "0x074825",
+          "body": "   MONIQUE  -  LETTER TO NOVAGEN AS FOLLOWS:     PAUL - I KNOW THERE'S EVERY REASON TO BE LATE   BUT I MUST HAVE THE FOUR DETONATORS COMPLETED    AND READY FOR ME TO PRIME BY THE 18TH LATEST            PARAGRAPH                              DAMOCLES IS DUE IN 2 WEEKS! - REGARDS - RALPH   ",
+          "name": "FRI 13TH"
+        },
+        {
+          "address": "0x07494f",
+          "body": " MONIQUE - LETTER TO STATE PRESIDENT AS FOLLOWS   MY DEAR MARGARET - THANK YOU FOR YOUR LETTER            PARAGRAPH                             I DO KNOW THAT THERE ARE ONLY TEN DAYS TO GO ON   THE PROJECT FOR THE DESTRUCTION OF DAMOCLES             PARAGRAPH                               THE BOMB IS COMPLETE AND ALTHOUGH NOVAGEN IS  BEHIND SCHEDULE - THE DETONATORS WILL BE POSTED TO YOU AND THE THREE OTHER TRUSTEES IN GOOD TIME          PARAGRAPH                              I DO LOOK FORWARD TO OUR CHESS GAME NEXT WEEK            YOURS AFFECTIONATELY - RALPH           ",
+          "name": "TUE 17TH"
+        },
+        {
+          "address": "0x074b99",
+          "body": "MONIQUE - DESPATCH DETONATORS TO TRUSTEES TODAY  ",
+          "name": "WED 18TH"
+        },
+        {
+          "address": "0x074bd3",
+          "body": " MONIQUE - NONE OF THE DETONATORS HAVE ARRIVED!   PLEASE CHECK URGENTLY WITH ERIS POST OFFICE     I'M OFF TO THE COUNTRY HOUSE FOR THE WEEKEND   ",
+          "name": "FRI 20TH"
+        },
+        {
+          "address": "0x074c6d",
+          "body": "   MONIQUE - IT JUST WILL NOT DO TO KNOW THAT    ALL FOUR PARCELS HAVE BEEN TEMPORARILY LOST BY  THE POST OFFICE SORTING BRANCH ON SNOW ISLAND                     - - - - -                     THERE IS NO TIME TO MAKE ANY MORE DETONATORS!    I WANT POSITIVE RESULTS BY TOMORROW - RALPH                      - - - - -                     PS  I'M WITH THE STATE PRESIDENT THIS EVENING   ",
+          "name": "TUE 24TH"
+        },
+        {
+          "address": "0x074df7",
+          "body": "MONIQUE - IF THAT */-#! PHONES - TELL HER I HAVEGONE ON HOLIDAY - AND NOT TO ERIS EITHER - RALPH ",
+          "name": "WED 25TH"
+        }
+      ],
+      "length": 1655,
+      "openRow": "0x04d304",
+      "sha256": "a96a33bfcbed5c644644479a57add7fa8f90fd5f67acba5505d653e7cc184a88",
+      "slot": 146
+    },
+    {
+      "address": "0x074e62",
+      "colour15": 320,
+      "colour3": 1121,
+      "index": 18,
+      "items": [
+        {
+          "address": "0x074e67",
+          "body": "THIS INFO CLASSIFIED UNDER OFFICIAL SECRETS ACT THIS FILE IS CLASSIFIED AS TOP SECRET AND SHOULD  BE KEPT SECURE IN A LOCKED SAFE AT ALL TIMES   ",
+          "name": "SECRET  "
+        },
+        {
+          "address": "0x074f01",
+          "body": "THE PENALTY FOR LEAKING ANY CONTENT OF THIS FILEIS 15 YEARS MINIMUM AT THE PAN HADES LABOUR CAMP ",
+          "name": "PENALTY "
+        },
+        {
+          "address": "0x074f6b",
+          "body": "THE NOVABOMB OPERATES BEYOND PREVIOUS KNOWN LAWSOF PHYSICS - IS INSTANTANEOUS IN EFFECT - AND IS CAPABLE OF DESTROYING THE LARGEST OF PLANETS!   ",
+          "name": "POWER   "
+        },
+        {
+          "address": "0x075005",
+          "body": "     THE DESTRUCTION OF THE COMET DAMOCLES       ",
+          "name": "PURPOSE "
+        },
+        {
+          "address": "0x07503f",
+          "body": " KNOWN ONLY TO THE PROF FOR DELIVERY ON THE DAY  ",
+          "name": "LOCATION"
+        },
+        {
+          "address": "0x075079",
+          "body": " PLACE ON SURFACE OF COMET - REMOTE DETONATION!  ",
+          "name": "METHOD  "
+        },
+        {
+          "address": "0x0750b3",
+          "body": "THE BOMB REQUIRES NO SPECIAL CONDITIONS IN STOREOR TRANSIT - IT EMITS A DETECTABLE LOW LEVEL OF  RADIATION AT LEVELS OK FOR 1 HOUR OF EXPOSURE!  ",
+          "name": "SAFETY  "
+        },
+        {
+          "address": "0x07514d",
+          "body": "FOUR INDIVIDUALLY CODED DETONATORS ARE NECESSARY EACH SWITCHED ON AND TRANSMITTING TO DETONATE   ",
+          "name": "DETONATE"
+        },
+        {
+          "address": "0x0751b7",
+          "body": "   FOR ADDITIONAL SECURITY THE DETONATORS ARE        DISGUISED AS ORDINARY HOUSEHOLD ITEMS       ",
+          "name": "DISGUISE"
+        },
+        {
+          "address": "0x075221",
+          "body": " THE INTEGRITY OF FOUR PROMINENT PEOPLE HOLDING DETONATORS AND A RELIABLE FIFTH HOLDING THE BOMB      MEETS GOVERNMENT SAFETY REGULATIONS        ",
+          "name": "SECURITY"
+        }
+      ],
+      "length": 1109,
+      "openRow": "0x04d30c",
+      "sha256": "f9d74a5428c95fd8f477c29b370c21f64e1b55b947c14c3eb10607f2a6f76dbb",
+      "slot": 150
+    },
+    {
+      "address": "0x0752bc",
+      "colour15": 1584,
+      "colour3": 1874,
+      "index": 20,
+      "items": [
+        {
+          "address": "0x0752c1",
+          "body": "  FROM ERIS POST OFFICE HQ 12-14 CAPITAL CITY     TO BRANCH SORTING OFFICER 00-03 SNOW ISLAND    DEAR BILL - YOU SEEM TO HAVE LOST FOUR PARCELS PLEASE SEND ME COPIES OF YOUR LOSS REPORT FORMS  ",
+          "name": "ADMIN HQ"
+        },
+        {
+          "address": "0x07538b",
+          "body": " TO ERIS POST OFFICE TEMPORARY HQ 00-10 BI DION  DEAR SID - ENCLOSED ARE COPY LOSS REPORT FORMS SEE YOU TOMORROW TO WATCH THE COMET ON TV - BILL ",
+          "name": "REPLY   "
+        },
+        {
+          "address": "0x075425",
+          "body": "ADDRESSED ERIS STATE PRESIDENT- VESTA PARLIAMENT REFUSED DELIVERY AND ORDERED RETURN TO SENDER  THE PROFS NEW LAB ADDRESS TRACED - COPY ENCLOSED ",
+          "name": "LOST 1  "
+        },
+        {
+          "address": "0x0754bf",
+          "body": "SENT COMMISSIONER OF POLICE SELLERS ERIS CAPITALRETURNED TODAY MARKED 'GONE AWAY' AND HELD HERE  ",
+          "name": "LOST 2  "
+        },
+        {
+          "address": "0x075529",
+          "body": " TO WILBERFORCE K DODD - GOVENOR - BANK OF GAEA    WILL WRITE TO THE LOCAL POSTMAN FOR REPORT    ",
+          "name": "LOST 3  "
+        },
+        {
+          "address": "0x075593",
+          "body": "SENT TO LORD CHIEF JUSTICE PICKLES - NIC - METIS   WILL WRITE TO THE LOCAL POSTMAN FOR REPORT    ",
+          "name": "LOST 4  "
+        }
+      ],
+      "length": 829,
+      "openRow": "0x04d314",
+      "sha256": "479fa7af487e4153ff552d950f73f9282486e305dbaec00465a1071131fd8e85",
+      "slot": 143
+    },
+    {
+      "address": "0x0755fe",
+      "colour15": 1347,
+      "colour3": 1893,
+      "index": 22,
+      "items": [
+        {
+          "address": "0x075603",
+          "body": "THE FOLLOWING SUMMARY IS OF PROPOSED LEGISLATION ",
+          "name": "PROPOSAL"
+        },
+        {
+          "address": "0x07563d",
+          "body": "THE STATE PRESIDENT HAS PROPOSED A NEW TAX IDEA  A SIMPLE LEVY ON EVERY MEMBER OF THE COMMUNITY   AND BELEIVES THIS WILL BE ELECTORALY POPULAR   ",
+          "name": "PAPER 1 "
+        },
+        {
+          "address": "0x0756d7",
+          "body": "AN AMEMDMENT CLAUSE 56 TO LAWS ON PEOPLES RIGHTS CALLING FOR EQUAL OPPORTUNITY AND FREEDOM FOR       GREEN HAIRED PURPLE SKINNED QUADRUPEDS     PROVIDED THEY SUPPORT THE GAMMA SQUARE BALL TEAM ",
+          "name": "PAPER 2 "
+        },
+        {
+          "address": "0x0757a1",
+          "body": "THE GAMMA TRADE COMMISSION HAVE MOVED FOR AN END   TO THE LONG TRADITION OF TRADING POSTS IN          DEALING WITH ONLY ONE ITEM AT A TIME      STRONGLY OPPOSED BY THE MENTOR CHAMBER OF TRADE  ",
+          "name": "PAPER 3 "
+        }
+      ],
+      "length": 617,
+      "openRow": "0x04d31c",
+      "sha256": "da0ecd3e77e00239296e62ad8ce2fc88a3d5c327e548ff06e3e8b59ecb4f60b2",
+      "slot": 153
+    },
+    {
+      "address": "0x0759ac",
+      "colour15": 1094,
+      "colour3": 821,
+      "index": 24,
+      "items": [
+        {
+          "address": "0x0759b1",
+          "body": "   PROF HANTZENS NEW ADDRESS IS UR CITY 07-01    ",
+          "name": "ENCLOSED"
+        }
+      ],
+      "length": 59,
+      "openRow": "0x04d324",
+      "sha256": "40216979bb237b7895bb23bf79c003747d45516d896d39f24a55a18751de5fa6",
+      "slot": 154
+    },
+    {
+      "address": "0x07593c",
+      "colour15": 274,
+      "colour3": 1366,
+      "index": 26,
+      "items": [
+        {
+          "address": "0x075941",
+          "body": "CALLER SAID WHY ARE YOU IN THE BACCHUS FLESHPOTS      WHEN YOU ARE SUPPOSED TO BE WORKING        ",
+          "name": "MESSAGE "
+        }
+      ],
+      "length": 107,
+      "openRow": "0x04d32c",
+      "sha256": "580a83d87dee00a4c62c90cf9d4d717858c8179b2ec6e19b584302ba0dcc6cc1",
+      "slot": 147
+    },
+    {
+      "address": "0x07586c",
+      "colour15": 48,
+      "colour3": 96,
+      "index": 28,
+      "items": [
+        {
+          "address": "0x075871",
+          "body": "        HELLO - THIS IS NOVAGEN SOFTWARE        DAMOCLES IS FINISHED AND WE ARE AWAY ON HOLIDAY CAN WE SUGGEST YOU BUY A BLUE BEACON LOCATOR AT MENTOR 02-01 - TO KEEP YOU BUSY UNTIL OUR RETURN ",
+          "name": "ANSWER  "
+        }
+      ],
+      "length": 203,
+      "openRow": "0x04d334",
+      "sha256": "1120a43891a42c01195c886475f9ae759b54a205c48ab38766f2b863d83bdedb",
+      "slot": 148
+    },
+    {
+      "address": "0x075ac6",
+      "colour15": 51,
+      "colour3": 119,
+      "index": 30,
+      "items": [
+        {
+          "address": "0x075acb",
+          "body": " WE NOTE THE ADDITIONAL FLY-THROUGH FACILITY IN YOUR MK5 ACME TRANSPORTERS AND ALTHOUGH PRESENT REQUIREMENTS ARE FOR INTERNAL USE WE APPRECIATE  THIS ADDITIONAL FEATURE - PLEASE INSTALL A MK5  ",
+          "name": "COPY    "
+        }
+      ],
+      "length": 203,
+      "openRow": "0x04d33c",
+      "sha256": "80d5bfd9f97975915f2fbcf5e1a76814b045390d04f8875e969aba856c655784",
+      "slot": 142
+    },
+    {
+      "address": "0x0759ec",
+      "colour15": 816,
+      "colour3": 1904,
+      "index": 32,
+      "items": [
+        {
+          "address": "0x0759f1",
+          "body": "AMONG MY EFFECTS REMOVED INTO YOUR 09-02 STORAGEIS A VERY VALUABLE PIANO- PLEASE TAKE EXTRA CARE ",
+          "name": "SHIPPERS"
+        },
+        {
+          "address": "0x075a5b",
+          "body": "ON YOUR REQUEST FOR FURTHER INFO ON THE NOVABOMBIT'S POWER EQUIVALENT IS EIGHT MAXSET EXPLOSIVES ",
+          "name": "LAB NOTE"
+        }
+      ],
+      "length": 213,
+      "openRow": "0x04d344",
+      "sha256": "cc03a300e4cef799abcf4284514fa53e8ec09b82c46c7532160c1a834ed90fe6",
+      "slot": 141
+    },
+    {
+      "address": "0x075b96",
+      "colour15": 771,
+      "colour3": 1799,
+      "index": 34,
+      "items": [
+        {
+          "address": "0x075b9b",
+          "body": "  FROM THE STATE PRESIDENTS TEMPORARY OFFICE:    I FORGOT TO TELL YOU THAT THE A-Z COMPUTER IN   ERIS POST OFFICE AT 14-11 COULD BE MOST USEFUL  ",
+          "name": "MESSAGE "
+        },
+        {
+          "address": "0x075c35",
+          "body": " SOME IDIOT LEFT THE KEY TO THE NOVAGEN OFFICE              IN THE PUB ON DION EAST              ",
+          "name": "ALSO    "
+        }
+      ],
+      "length": 261,
+      "openRow": "0x04d34c",
+      "sha256": "8be338e6f87307c0736eb2dce1c0d72dcc6f8457ac4fdbaa2adf5c9fc6082dce",
+      "slot": 106
+    },
+    {
+      "address": "0x075ca0",
+      "colour15": 1073,
+      "colour3": 1857,
+      "index": 36,
+      "items": [
+        {
+          "address": "0x075ca5",
+          "body": "     ANY ATTEMPT TO DIVERT THE COMET ORBIT      MUST BE DONE WITHIN 1 HR 30 MIN OF YOUR ARRIVAL  ",
+          "name": "TIME    "
+        }
+      ],
+      "length": 107,
+      "openRow": "0x04d354",
+      "sha256": "cc0058b9ae5b227637e3aadab4735b5508f427d0e58f983d007e504cb00a92dc",
+      "slot": 103
+    }
+  ],
+  "openTable": {
+    "end": "0x04d3ac",
+    "rows": 29,
+    "sha256": "fe06c7e43d7aaa7486282aaf304c860dfd107f33f46e18ac20fdc0ec82549ac4",
+    "start": "0x04d2c4"
+  },
+  "schemaVersion": 1,
+  "source": {
+    "authority": "Damocles Atari ST Working Authority",
+    "evidence": "docs/research/damocles-head-commands.md",
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "ramSha256": "b019301ec5ac355301613db8e2bf6cd6d4a0df41311b6efedacfea87f2a9c967",
+    "run": "observe-first-world-20260818T101013Z-c5a32b7d",
+    "tosSha256": "154803e3ff4851f3dc358b91b16d6b6110d187a81d8132ecb665af49878939d5"
+  },
+  "title": "Damocles"
+}

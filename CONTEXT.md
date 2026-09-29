@@ -23,7 +23,7 @@ The Gameplay Session's persistent row of exactly 23 character cells through whic
 _Avoid_: Message ticker, visible Benson Message, narration line, shell notice
 
 **Damocles Display**:
-The persistent 48-cell message row of a Damocles Gameplay Session, over which a new message scrolls and whose last contents remain until another message replaces them. It remains visible when no message is holding script execution and is distinct from Targ's Benson Display.
+The persistent 48-cell message row of a Damocles Gameplay Session, over which a new message scrolls and whose last contents remain until another message replaces them. It remains visible when no message is holding script execution and is distinct from Targ's Benson Display. A message longer than the row is shown 48 cells at a time, and a document body a Read shows is drawn in the row's second colour, the panel's light blue, rather than the green of every other message.
 _Avoid_: Benson Display (for Damocles), message gate, shell notice
 
 **Craft Parameter Block**:
@@ -339,7 +339,7 @@ A device-independent one-shot player command whose availability, conflicts, orde
 _Avoid_: Movement Intent, key press, button press, scan code
 
 **Head Command**:
-One of the four Damocles Semantic Actions — Open, Read, Next, Previous — that act on the object at the head of the Carried Stack. What each does depends on that object, and on most objects it does nothing; the Reference Build binds them to the numeric keypad's Enter, `*`, `+` and `-`.
+One of the four Damocles Semantic Actions — Open, Read, Next, Previous — that the Reference Build binds to the numeric keypad's Enter, `*`, `+` and `-`. Only Open acts on the object at the head of the Carried Stack: on most objects it does nothing, and on one of the documents it opens that document on the Benson Panel's centre box. Read, Next and Previous act on the document already open, whatever the head has rotated to since, and only dropping the open object closes it.
 _Avoid_: Keypad command, object command, document controls, read key
 
 **Semantic Mode**:

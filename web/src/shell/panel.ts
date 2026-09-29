@@ -17,6 +17,28 @@ export interface PanelContext {
 ///
 /// The two renditions differ in dressing, not in facts: the Damocles panel shows Targ data in
 /// Damocles clothes (ADR 0027), so one view model serves both.
+/// A document's panel in the Damocles centre box: its title, `− ITEM +`, `INDEX` and `PRESS * TO
+/// VIEW`, over its own two colours.
+export interface CentreBoxPanel {
+  /// Colour 3, the item name's field.
+  readonly field: string;
+  /// Colour 15, the window's ground.
+  readonly ground: string;
+  /// The current item's name, which is drawn only once the panel has arrived (`$0529D6`).
+  readonly item: string | null;
+  readonly title: string;
+}
+
+/// What the centre box's 64-by-32 window shows. The transition moves the window's contents up a
+/// row a VBL: the old panel rises out over black rows, and then the new one rises in.
+export interface CentreBoxView {
+  /// The panel in the window, or null for the DAMOCLES logo.
+  readonly panel: CentreBoxPanel | null;
+  /// The row the panel's top stands on: 0 at rest, below 0 while it rises out, above 0 while it
+  /// rises in.
+  readonly top: number;
+}
+
 export interface PanelViewModel {
   /// The altitude window, already formatted, because its width belongs to the rendition and
   /// not to this view model: Targ prints the documented five-digit instrument, Damocles the
@@ -27,10 +49,15 @@ export interface PanelViewModel {
   /// The wide navigation readout: the body coordinates the original prints as `999-999`.
   readonly bodyCoordinates: string;
   readonly cash: string;
+  /// The Damocles centre box, where a document opens (#598). A rendition without one leaves it
+  /// out.
+  readonly centreBox?: CentreBoxView;
   readonly clock: string;
   readonly compassDegrees: number;
   readonly damoclesDisplay?: {
     readonly cells: string;
+    /// Each cell's bitplane: 0 is the ordinary ink and 1 a Read's.
+    readonly planes: readonly (0 | 1)[];
     readonly scrollPixels: number;
   };
   readonly elevationDegrees: number;

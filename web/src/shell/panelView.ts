@@ -1,4 +1,4 @@
-import type { PanelViewModel } from './panel.ts';
+import type { CentreBoxView, PanelViewModel } from './panel.ts';
 
 /// The instruments that are drawn rather than written.
 ///
@@ -6,6 +6,9 @@ import type { PanelViewModel } from './panel.ts';
 /// panel instead of being approximated with elements. Colours are read from the token layer at
 /// draw time, so switching Panel Rendition restyles them along with everything else (ADR 0027).
 export interface PanelCanvases {
+  /// The Damocles centre box's 64-by-32 window, drawn over the logo while it shows a document or
+  /// scrolls (#598).
+  readonly damoclesCentreBox?: HTMLCanvasElement;
   readonly damoclesCompass: HTMLCanvasElement;
   readonly damoclesElevation: HTMLCanvasElement;
   readonly damoclesMessage?: HTMLCanvasElement;
@@ -78,15 +81,158 @@ export const drawDamoclesMessage = (
     return;
   }
   context.clearRect(0, 0, canvas.width, canvas.height);
-  context.fillStyle = tokenOf(root, '--msg-ink');
+  // Plane 0 is the ordinary green and plane 1 the light blue a Read draws in (`$7BA2`).
+  const inks = [tokenOf(root, '--msg-ink'), tokenOf(root, '--msg-ink-read')];
   context.font = DAMOCLES_GLYPH_FONT;
   context.textBaseline = 'bottom';
   for (let index = 0; index < display.cells.length; index += 1) {
+    context.fillStyle = inks[display.planes[index] ?? 0]!;
     context.fillText(
       display.cells[index]!,
       index * 6 - (display.scrollPixels % 6),
       DAMOCLES_GLYPH_HEIGHT
     );
+  }
+};
+
+const CENTRE_BOX_WIDTH = 64;
+const CENTRE_BOX_HEIGHT = 32;
+/// Device pixels to an ST pixel in the centre box's canvas. Narrowed lettering is rasterised at
+/// this resolution, as the panel's `.compact` labels are at the display's, rather than at one
+/// sample an ST pixel.
+const CENTRE_BOX_RESOLUTION = 4;
+/// The centre box's lettering and the name field's bevel, as the Hatari captures show them.
+const CENTRE_BOX_TEXT = '#cccccc';
+const CENTRE_BOX_FIELD_DARK = '#444444';
+const CENTRE_BOX_FIELD_LIGHT = '#eeeeee';
+const CENTRE_BOX_NAME = '#000000';
+
+/// Letter `text` from `x` a glyph every `pitch` columns, each narrowed to `width` columns. The
+/// original's condensed faces are not extracted, so the interface face stands in for them,
+/// narrowed as the panel's `.compact` labels are (ADR 0027).
+const letter = (
+  context: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  pitch: number,
+  width: number,
+  colour: string
+): void => {
+  context.save();
+  context.font = DAMOCLES_GLYPH_FONT;
+  context.textBaseline = 'bottom';
+  context.fillStyle = colour;
+  // Composed onto the caller's transform, which carries the transition's row offset.
+  const base = context.getTransform();
+  for (let index = 0; index < text.length; index += 1) {
+    context.setTransform(base);
+    context.translate(x + index * pitch, y);
+    context.scale(width / 5, 1);
+    context.fillText(text[index]!, 0, DAMOCLES_GLYPH_HEIGHT);
+  }
+  context.restore();
+};
+
+/// `text` lettered centred across the window.
+const centred = (
+  context: CanvasRenderingContext2D,
+  text: string,
+  y: number,
+  pitch: number,
+  width: number
+): void =>
+  letter(
+    context,
+    text,
+    Math.max(1, (CENTRE_BOX_WIDTH - (text.length * pitch - 1)) / 2),
+    y,
+    pitch,
+    width,
+    CENTRE_BOX_TEXT
+  );
+
+/// The Damocles centre box (#598): a document's panel, or the logo while it scrolls.
+///
+/// The original draws a document's title from a strip in the graphic table at `$066100`, which
+/// is not decoded, so the lettering, the `−` and `+` and the name field are authored to match the
+/// Hatari captures of the DAMOCLES FILE (ADR 0043). The colours are recovered: the Open table's
+/// colour 15 is the ground and colour 3 the name field.
+export const drawCentreBox = (
+  canvas: HTMLCanvasElement,
+  view: CentreBoxView
+): void => {
+  const surface = surfaceOf(canvas);
+  if (surface === undefined) {
+    return;
+  }
+  const { context } = surface;
+  context.setTransform(
+    CENTRE_BOX_RESOLUTION,
+    0,
+    0,
+    CENTRE_BOX_RESOLUTION,
+    0,
+    0
+  );
+  context.fillStyle = '#000000';
+  context.fillRect(0, 0, CENTRE_BOX_WIDTH, CENTRE_BOX_HEIGHT);
+  context.save();
+  context.translate(0, view.top);
+  const panel = view.panel;
+  if (panel === null) {
+    // The logo, as the resting badge letters it.
+    context.font = DAMOCLES_GLYPH_FONT;
+    context.textBaseline = 'bottom';
+    const x = (CENTRE_BOX_WIDTH - 8 * 6) / 2;
+    for (const [dx, colour] of [
+      [2, '#444444'],
+      [1, '#666666'],
+      [0, CENTRE_BOX_TEXT]
+    ] as const) {
+      context.fillStyle = colour;
+      context.fillText('DAMOCLES', x + dx, 18 + dx);
+    }
+  } else {
+    context.fillStyle = panel.ground;
+    context.fillRect(0, 0, CENTRE_BOX_WIDTH, CENTRE_BOX_HEIGHT);
+    // The title's face is four columns on a pitch of five. The original keeps a column of
+    // ground between the bevel and the DAMOCLES FILE's first letter, so a title as long as that
+    // is narrowed a little to leave it, and a longer one further.
+    const pitch = Math.min(5, CENTRE_BOX_WIDTH / panel.title.length);
+    centred(context, panel.title, 1, pitch, pitch - 1);
+    context.fillStyle = CENTRE_BOX_TEXT;
+    context.fillRect(1, 12, 4, 1);
+    context.fillRect(58, 12, 5, 1);
+    context.fillRect(60, 10, 1, 5);
+    context.fillStyle = panel.field;
+    context.fillRect(7, 9, 49, 7);
+    context.fillStyle = CENTRE_BOX_FIELD_DARK;
+    context.fillRect(6, 8, 51, 1);
+    context.fillRect(56, 8, 1, 9);
+    context.fillStyle = CENTRE_BOX_FIELD_LIGHT;
+    context.fillRect(6, 9, 1, 8);
+    context.fillRect(6, 16, 50, 1);
+    if (panel.item !== null) {
+      letter(context, panel.item, 8, 10, 6, 5, CENTRE_BOX_NAME);
+    }
+    centred(context, 'INDEX', 19, 4, 3);
+    centred(context, 'PRESS * TO VIEW', 26, 4, 3);
+  }
+  context.restore();
+  if (view.top !== 0) {
+    // The rows the transition has cleared, below the panel rising out or above the one rising in.
+    context.fillStyle = '#000000';
+    if (view.top < 0) {
+      context.fillRect(
+        0,
+        CENTRE_BOX_HEIGHT + view.top,
+        CENTRE_BOX_WIDTH,
+        -view.top
+      );
+    } else {
+      context.fillRect(0, 0, CENTRE_BOX_WIDTH, view.top);
+    }
   }
 };
 
@@ -416,6 +562,7 @@ export const installPanel = (
   elements: PanelElements
 ): { readonly draw: (model: PanelViewModel) => void } => {
   let lastCompass: number | undefined;
+  let lastCentreBox: string | undefined;
   let lastElevation: number | undefined;
   let lastRendition: string | undefined;
   return {
@@ -447,6 +594,22 @@ export const installPanel = (
             model.messageColour === undefined
               ? ''
               : String(model.messageColour);
+        }
+      }
+      const centreCanvas = elements.damoclesCentreBox;
+      if (centreCanvas !== undefined && model.centreBox !== undefined) {
+        // At rest on the logo the badge shows as it always has; the canvas covers it otherwise.
+        const box = model.centreBox;
+        const resting = box.panel === null && box.top === 0;
+        const key = JSON.stringify(box);
+        if (key !== lastCentreBox) {
+          lastCentreBox = key;
+          centreCanvas.hidden = resting;
+          centreCanvas.dataset['panel'] = box.panel?.title ?? '';
+          centreCanvas.dataset['item'] = box.panel?.item ?? '';
+          if (!resting) {
+            drawCentreBox(centreCanvas, box);
+          }
         }
       }
       for (const element of elements.lamps) {

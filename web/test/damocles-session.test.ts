@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import type { EntranceAttachment } from '../src/catalogue/data.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
+import { initialHeadCommands } from '../src/damocles/headCommands.ts';
 import {
   DAMOCLES_RESUME_STORAGE_KEY,
   readDamoclesResume,
@@ -24,6 +25,7 @@ import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { intent } from '../src/gameCore/index.ts';
 import { titleStorageKeys } from '../src/shell/title.ts';
+import { damoclesDocuments } from './damocles-documents.ts';
 import { ERIS_BODY, arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
@@ -38,6 +40,7 @@ const content = async (): Promise<DamoclesContent> => {
   return {
     catalogue: parsed,
     doc,
+    documents: await damoclesDocuments(),
     models: modelsOf(parsed),
     poses: await arrivalPoses(),
     presentationSha256: 'test-presentation',
@@ -67,6 +70,7 @@ const atSpaceport = (
     encounter: null,
     footTicks: 0,
     frameAccumulator: 0,
+    headCommands: initialHeadCommands(),
     occupancy: { kind: 'onFoot' },
     pendingBriefcaseDrop: null,
     pose: {
@@ -134,6 +138,7 @@ const atStructure = (
     encounter: null,
     footTicks: 0,
     frameAccumulator: 0,
+    headCommands: initialHeadCommands(),
     occupancy: { kind: 'onFoot' },
     pendingBriefcaseDrop: null,
     pose: {
