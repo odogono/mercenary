@@ -14,7 +14,10 @@ import type { ConsoleParseContext } from '../shell/console.ts';
 import { installConsole } from '../shell/consoleView.ts';
 import { renderControlsPage } from '../shell/controlsView.ts';
 import { assertBrowserDocument } from '../shell/documentPath.ts';
-import { BrowserControlProfile } from '../shell/input.ts';
+import {
+  BrowserControlProfile,
+  type ControlProfileActions
+} from '../shell/input.ts';
 import {
   createNewGameAction,
   escapeFrom,
@@ -46,6 +49,7 @@ import { AudioWorkletTransport } from '../sound/transport.ts';
 import { cometCentre, impactTime } from './comet.ts';
 import {
   DAMOCLES_CONSOLE_BANNER,
+  damoclesMessageTranscript,
   executeDamoclesConsoleCommand,
   type DamoclesConsoleHost
 } from './console.ts';
@@ -292,11 +296,14 @@ try {
   /// state is published beside it.
   const cueTally = new Map<string, number>();
   let messageTones = 0;
+  // Every message the bar shows is logged to the Shell Console once it is installed.
+  let writeConsole = (_lines: readonly string[]): void => {};
   const drainEffects = (): void => {
     const effects = session.drainEffects();
     for (const effect of effects) {
       if (effect.type === 'message') {
         messageTones += 1;
+        writeConsole(damoclesMessageTranscript(effect.text));
       } else {
         cueTally.set(effect.cue, (cueTally.get(effect.cue) ?? 0) + 1);
       }
@@ -319,7 +326,7 @@ try {
   // Fire is the held level `firing`, a Damocles Lift is ridden by the Floor keys through
   // `liftKey`, and no script asks for a key or can be hurried, so there is no `fire`,
   // `rideLift`, `press` or `skipMessage`.
-  const controls = new BrowserControlProfile({
+  const controlActions: ControlProfileActions = {
     drop: () => commitAction(() => session.drop()),
     headCommand: command => commitAction(() => session.headCommand(command)),
     leaveCraft: () => commitAction(() => session.leave()),
@@ -365,6 +372,11 @@ try {
       commitAction(() => session.throttleKey(0x3a + notch)),
     throttleStep: delta =>
       commitAction(() => session.throttleScale(delta > 0 ? 1 : -1))
+  };
+  // The run mode is Session State, so a Save, a reload and an Atlas move all keep it.
+  const controls = new BrowserControlProfile(controlActions, {
+    running: () => session.running,
+    toggleRunning: () => commitAction(() => session.toggleRunning())
   });
   const clock = new FixedStepClock();
   const release = (): void => {
@@ -669,6 +681,7 @@ try {
       return lines;
     }
   });
+  writeConsole = shellConsole.write;
 
   handleOwnershipLost = () => {
     sound.reset(snapshot.elapsed);
@@ -899,7 +912,10 @@ try {
     const bounds = centreCanvas.getBoundingClientRect();
     commitAction(() =>
       session.headCommand(
-        centreBoxPage(event.clientX - bounds.left, bounds.width)
+        centreBoxPage(
+          { x: event.clientX - bounds.left, y: event.clientY - bounds.top },
+          bounds
+        )
       )
     );
   });

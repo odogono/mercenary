@@ -4,7 +4,8 @@ import { BensonKey } from '../src/benson/index.ts';
 import type { Occupancy } from '../src/session/index.ts';
 import {
   BrowserControlProfile,
-  type ControlProfileActions
+  type ControlProfileActions,
+  type RunningMode
 } from '../src/shell/input.ts';
 
 const input = (
@@ -23,7 +24,10 @@ const input = (
   repeat: fields.repeat ?? false
 });
 
-const harness = ({ damocles = false } = {}) => {
+const harness = ({
+  damocles = false,
+  mode
+}: { damocles?: boolean; mode?: RunningMode } = {}) => {
   let occupancy: Occupancy = { kind: 'onFoot' };
   let inLift = false;
   const calls: unknown[] = [];
@@ -56,7 +60,7 @@ const harness = ({ damocles = false } = {}) => {
   };
   return {
     calls,
-    profile: new BrowserControlProfile(actions),
+    profile: new BrowserControlProfile(actions, mode),
     setInLift: (next: boolean) => {
       inLift = next;
     },
@@ -175,6 +179,30 @@ describe('the browser Control Profile', () => {
     expect(profile.intent.running).toBeTrue();
     profile.keyDown(input('KeyR'));
     expect(profile.intent.running).toBeFalse();
+  });
+
+  test('R toggles the run mode a Title owns, which the intent reads', () => {
+    let running = true;
+    const { profile } = harness({
+      mode: {
+        running: () => running,
+        toggleRunning: () => {
+          running = !running;
+        }
+      }
+    });
+
+    expect(profile.intent.running).toBeTrue();
+    profile.keyDown(input('KeyR'));
+    expect(running).toBeFalse();
+    expect(profile.intent.running).toBeFalse();
+    profile.keyUp(input('KeyR'));
+    // Releasing held input is not a toggle.
+    profile.releaseAll();
+    expect(running).toBeFalse();
+    // A Title that replaces its Session State is read afresh.
+    running = true;
+    expect(profile.intent.running).toBeTrue();
   });
 
   test('R does not retoggle while it is held down', () => {

@@ -84,6 +84,7 @@ const atSpaceport = (
       }
     },
     residence: [],
+    running: false,
     script: initialDamoclesSaveScript(),
     scrollCounter: 0,
     spaceMemory: null,
@@ -152,6 +153,7 @@ const atStructure = (
       }
     },
     residence: [],
+    running: false,
     script: initialDamoclesSaveScript(),
     scrollCounter: 0,
     spaceMemory: null,

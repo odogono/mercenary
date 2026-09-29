@@ -137,11 +137,31 @@ export const damoclesTakeTargetAt = (
     : undefined;
 };
 
+/// The centre box's item name field, in the 64 by 32 cells `drawCentreBox` letters it on,
+/// bevel included.
+const CENTRE_BOX_CELLS = { height: 32, width: 64 } as const;
+const NAME_FIELD = { bottom: 17, left: 6, right: 57, top: 8 } as const;
+
 /// The pointer's paging of an open document (#599), an Accommodation the original has no
-/// pointer for. A click on the centre box pages the way its `−` or `+` stands: the left half
-/// back, the right half on. `x` and `width` are in any one unit.
-export const centreBoxPage = (x: number, width: number): 'next' | 'previous' =>
-  x < width / 2 ? 'previous' : 'next';
+/// pointer for. A click on the item's name reads it, as `*` does. Anywhere else on the centre
+/// box pages the way its `−` or `+` stands: the left half back, the right half on. The point
+/// and the size are in any one unit.
+export const centreBoxPage = (
+  point: Point,
+  size: Size
+): 'next' | 'previous' | 'read' => {
+  const x = (point.x / size.width) * CENTRE_BOX_CELLS.width;
+  const y = (point.y / size.height) * CENTRE_BOX_CELLS.height;
+  if (
+    x >= NAME_FIELD.left &&
+    x < NAME_FIELD.right &&
+    y >= NAME_FIELD.top &&
+    y < NAME_FIELD.bottom
+  ) {
+    return 'read';
+  }
+  return x < CENTRE_BOX_CELLS.width / 2 ? 'previous' : 'next';
+};
 
 /// Wheel travel, in CSS pixels, to one page. A mouse notch is about 100 and a trackpad sends
 /// many small deltas, so the travel is gathered and pages one at a time.

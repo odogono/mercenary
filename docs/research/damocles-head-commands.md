@@ -384,7 +384,8 @@ nothing the keyboard lacks:
 | ------------------------------------------------------------ | ----------- | ------------------------ |
 | The head's name on the inventory window                      | Enter       | Open                     |
 | ‹ and › over the ends of that name                           | `[` and `]` | Rotate the Carried Stack |
-| The centre box's left or right half, where `−` and `+` stand | `,` and `.` | Previous and Next        |
+| The item's name in the centre box's field                    | `P`         | Read                     |
+| The rest of the centre box's left or right half             | `,` and `.` | Previous and Next        |
 | A click on the world view while a document is open           | `.`         | Next                     |
 | The wheel, down or up, over the world view or centre box     | `.` and `,` | Next and Previous        |
 | ✕ in the centre box's corner                                 | Escape      | Close                    |

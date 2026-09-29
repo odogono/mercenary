@@ -543,6 +543,12 @@ export const describeBindings = (
   ].filter(entry => entry.rows.length > 0);
 };
 
+/// Where the run mode lives, when a Title's Session State owns it rather than the profile.
+export interface RunningMode {
+  readonly running: () => boolean;
+  readonly toggleRunning: () => void;
+}
+
 /// The browser Control Profile: physical codes at the edge, Movement Intent and Semantic
 /// Actions on the other side. The core sees neither a key code nor a browser event.
 export class BrowserControlProfile {
@@ -550,20 +556,26 @@ export class BrowserControlProfile {
   private readonly held = new Set<string>();
   /// Running latches rather than following a held key, as the run key does on the Working
   /// Authority. A mode is not a held key, so `releaseAll` leaves it alone: losing focus or
-  /// opening the System Menu must not silently cancel it. It is Control Profile state and not
-  /// Session State, so no Save, Session Resume or trace carries it.
-  private running = false;
+  /// opening the System Menu must not silently cancel it. By default it is Control Profile state,
+  /// which no Save, Session Resume or trace carries. A Title whose Session State owns it, as
+  /// Damocles's does, passes `mode`, and the profile reads and toggles it there.
+  private readonly mode: RunningMode;
   private readonly target: BindingTarget;
 
-  constructor(actions: ControlProfileActions) {
+  constructor(actions: ControlProfileActions, mode?: RunningMode) {
     this.actions = actions;
+    let running = false;
+    this.mode = mode ?? {
+      running: () => running,
+      toggleRunning: () => {
+        running = !running;
+      }
+    };
     this.target = {
       actions,
       hold: code => this.held.add(code),
       holdAndPress: code => this.holdAndPress(code),
-      toggleRunning: () => {
-        this.running = !this.running;
-      }
+      toggleRunning: () => this.mode.toggleRunning()
     };
   }
 
@@ -572,7 +584,7 @@ export class BrowserControlProfile {
     const onFoot = this.actions.occupancy().kind === 'onFoot';
     return intent({
       pitch: onFoot ? 0 : -vertical,
-      running: this.running,
+      running: this.mode.running(),
       turn: axis(this.held, 'ArrowRight', 'ArrowLeft'),
       walk: onFoot ? vertical : 0
     });

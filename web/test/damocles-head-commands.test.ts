@@ -97,6 +97,7 @@ const carrying = (
       }
     })),
     // Taking an object launched its trigger, which disarmed it.
+    running: false,
     script: (() => {
       const script = initialDamoclesSaveScript();
       const taken = carried.map(instance => TRIGGER_FOR_RESIDENT[instance]);
@@ -452,6 +453,7 @@ interface EditableRecord {
       box: { from: number | null; to: number | null };
       open: { item: number; slot: number };
     };
+    running?: boolean;
     script: { display: { plane?: number }; read?: string | null };
   };
 }
@@ -530,6 +532,32 @@ describe('the Save', () => {
     expect(migrated.headCommands).toEqual(initialHeadCommands());
     expect(migrated.script.read).toBeNull();
     expect(migrated.script.display).toMatchObject({ kind: 'held', plane: 0 });
+  });
+
+  test('carries the run toggle, and migrates a schema-17 record walking', () => {
+    const session = opened(carrying([DAMOCLES_FILE]));
+    session.toggleRunning();
+    const saved = decoded(encoded(session)).snapshot;
+    expect(saved.running).toBeTrue();
+    expect(new DamoclesSession(loaded, saved).running).toBeTrue();
+
+    const older = decoded(
+      edited(session, record => {
+        record.schemaVersion = 17;
+        delete record.snapshot.running;
+      })
+    ).snapshot;
+    expect(older.running).toBeFalse();
+    // Schema 17 carried the document mode, which still restores.
+    expect(older.headCommands).toEqual(saved.headCommands);
+
+    expect(() =>
+      decoded(
+        edited(session, record => {
+          delete record.snapshot.running;
+        })
+      )
+    ).toThrow(/running is not a boolean/);
   });
 
   test('refuses a document state no play reaches', () => {

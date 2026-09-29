@@ -525,6 +525,9 @@ export class DamoclesSession implements TitleSession<
   /// On foot, ticks since the last main-loop pass; one runs on every
   /// `time.ticksPerPassOnFoot`-th, and all it steps is the noise pointer (ADR 0054).
   private footTicks = 0;
+  /// `$7B3A`: the run toggle, which the run key latches and the run lamp shows. The Control
+  /// Profile reads it into the Movement Intent, so a Save carries it rather than the page.
+  private runMode = false;
   /// Why the craft stands still with no rule to run, or null while the Mover runs.
   private craftHeld: DamoclesCraftSnapshot['held'] = null;
   /// The space words while in space (occupancy 2), or null on a Body.
@@ -640,6 +643,7 @@ export class DamoclesSession implements TitleSession<
     this.frameAccumulator = restore?.frameAccumulator ?? 0;
     this.scrollCounter = restore?.scrollCounter ?? 0;
     this.footTicks = restore?.footTicks ?? 0;
+    this.runMode = restore?.running ?? false;
     this.script =
       restore?.script === undefined
         ? initialScriptState()
@@ -1705,6 +1709,7 @@ export class DamoclesSession implements TitleSession<
         instance,
         residence
       })),
+      running: this.runMode,
       script: scriptForSave(this.script),
       scrollCounter: this.scrollCounter,
       spaceMemory: { ...this.spaceMemory },
@@ -2705,6 +2710,16 @@ export class DamoclesSession implements TitleSession<
         this.content.documents
       )
     );
+  }
+
+  /// Whether the run toggle is on.
+  get running(): boolean {
+    return this.runMode;
+  }
+
+  /// The run key: latch running on, or off again.
+  toggleRunning(): void {
+    this.runMode = !this.runMode;
   }
 
   /// Whether a document is open on the centre box.
