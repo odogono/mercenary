@@ -10,6 +10,15 @@ import type { HeadCommand } from '../interaction/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import type { TitleSession } from '../shell/title.ts';
 import {
+  DESTROY_OPTION,
+  initialAuthorsComputer,
+  optionEffect,
+  optionValue,
+  selectOption,
+  stepOption,
+  type AuthorsComputer
+} from './authorsComputer.ts';
+import {
   MORE_TIME_CLOCK_LEVEL,
   NEW_GAME_CLOCK_LEVEL,
   handoverElapsed,
@@ -57,6 +66,8 @@ import {
   type PoolObject
 } from './encounter.ts';
 import {
+  AUTHORS_COMPUTER_SLOT,
+  COMPUTER_ROW,
   DETONATOR_BITS,
   closeDocument,
   headCommand,
@@ -119,10 +130,12 @@ import {
 import {
   CHEESE_SANDWICH_SLOT,
   COLOURFUL_MASK,
+  COMPUTER_WARNING_TRIGGER,
   MAGIC_CRYSTAL_SLOT,
   SCRIPT_FOR_TRIGGER,
   TRIGGER_ARMING,
   TRIGGER_FOR_RESIDENT,
+  UNRAVELLING_TRIGGER,
   WISH_DRIFT
 } from './scripts.ts';
 import {
@@ -200,6 +213,8 @@ export interface DamoclesSnapshot {
   readonly cell: ErisCell;
   /// The centre box the Head Commands open documents on, resolved for drawing (#598).
   readonly centreBox: CentreBoxSnapshot;
+  /// The AUTHORS COMPUTER's option and its records (#628).
+  readonly computer: AuthorsComputer;
   /// The craft words aboard, or null on foot (ADR 0051). `held` names a gate the port has no
   /// rule for: the craft stops there rather than run an invented one.
   readonly craft: DamoclesCraftSnapshot | null;
@@ -236,6 +251,8 @@ export interface DamoclesSnapshot {
   readonly landSea: LandSea;
   readonly message: Presenting | null;
   readonly occupancy: DamoclesOccupancy;
+  /// `$7A52`, the XOR mask on the Benson Panel's palette, which the computer's option 1 writes.
+  readonly panelMask: number;
   readonly pose: Pose;
   readonly removedResidents: readonly string[];
   readonly residence: readonly ResidenceDeparture[];
@@ -251,6 +268,12 @@ export interface DamoclesSnapshot {
   readonly surface: ErisSurface;
   /// `$7872`, the switch bits (#627).
   readonly switches: number;
+  /// `$7A8C`, the unravelling's next Body index, -1 once past DIALIS (#628).
+  readonly unravelCursor: number;
+  /// Whether the unravelling runs: the AUTHORS COMPUTER is gone (`$753C` = 0).
+  readonly unravelling: boolean;
+  /// `$7964`'s high word, the projection's scale exponent: each step above 8 doubles the picture.
+  readonly viewExponent: number;
 }
 
 export type { Residence, ResidenceDeparture } from './residence.ts';
@@ -338,7 +361,11 @@ export const PLANET_KILL_EXPLOSIVES = 7;
 export const NOVABOMB = 'object-slot-163';
 const NOVABOMB_SLOT = 163;
 /// The AUTHORS COMPUTER, whose Association B `$753C` the dispatcher reads for DION.
-const AUTHORS_COMPUTER = 'object-slot-101';
+const AUTHORS_COMPUTER = `object-slot-${AUTHORS_COMPUTER_SLOT}`;
+/// The AUTHOR'S CHAIR, the slot the computer opens from (`$7A90` = 14).
+const AUTHORS_CHAIR = 'object-slot-14';
+/// `$7964` = `$00080000` in every memstate: the port's field of view at scale exponent 8.
+export const NEW_GAME_VIEW_EXPONENT = 8;
 
 /// The messages the refusal chooser `$0542E0` can present. The Data Payload names which one each
 /// resident takes; this only narrows its string to a presentable id.
@@ -457,8 +484,20 @@ const documentPanel = (
   content: DamoclesContent,
   slot: number | null,
   item: number | null,
-  switches: number
+  switches: number,
+  computer: AuthorsComputer
 ): DocumentPanel | null => {
+  if (slot === AUTHORS_COMPUTER_SLOT) {
+    return {
+      colour15: COMPUTER_ROW.colour15,
+      colour3: COMPUTER_ROW.colour3,
+      item:
+        item === null ? null : String(optionValue(computer)).padStart(3, '0'),
+      kind: 'computer',
+      parameter: item === null ? null : computer.option,
+      title: COMPUTER_ROW.title
+    };
+  }
   const row = switchFor(slot);
   if (row !== undefined) {
     return {
@@ -467,6 +506,7 @@ const documentPanel = (
       item:
         item === null ? null : (switches >> switchBit(row)) & 1 ? 'ON' : 'OFF',
       kind: 'switch',
+      parameter: null,
       title: row.title
     };
   }
@@ -484,6 +524,7 @@ const documentPanel = (
     colour3: document.colour3,
     item: item === null ? null : document.items[item]!.name.trimEnd(),
     kind: 'document',
+    parameter: null,
     title:
       modelSummaryById(content.catalogue, instance?.model)?.name ??
       `OBJECT ${document.slot}`
@@ -605,6 +646,14 @@ export class DamoclesSession implements TitleSession<
   /// `$7872`, the switch bits `+` and `-` set and clear on an open switch (`$04D420`). They
   /// belong to no carried object: a detonator switched on and put down stays on.
   private switches = 0;
+  /// The AUTHORS COMPUTER's option `$786C` and its records at `$7C8C` (#628).
+  private computer: AuthorsComputer = initialAuthorsComputer();
+  /// `$7A52`, the Benson Panel's palette XOR mask, which the computer's option 1 writes.
+  private panelMask = 0;
+  /// `$7964`'s high word, the projection's scale exponent, which option 2 writes: 8 at the reset.
+  private viewExponent = NEW_GAME_VIEW_EXPONENT;
+  /// `$7A8C`, the unravelling's cursor as a Body index: DAMOCLES first, and -1 once past DIALIS.
+  private unravelCursor = COMET_BODY;
   private effects: Effect[] = [];
   /// `$5A647`: whether the clamp refused a step in the last frame, which the next frame's
   /// `$5A646` is compared with.
@@ -742,6 +791,10 @@ export class DamoclesSession implements TitleSession<
     this.clockAnchor = restore?.clockAnchor ?? null;
     this.paletteMask = restore?.paletteMask ?? 0;
     this.switches = restore?.switches ?? 0;
+    this.computer = restore?.computer ?? initialAuthorsComputer();
+    this.panelMask = restore?.panelMask ?? 0;
+    this.viewExponent = restore?.viewExponent ?? NEW_GAME_VIEW_EXPONENT;
+    this.unravelCursor = restore?.unravelCursor ?? COMET_BODY;
     this.bodyTurn = restore?.bodyTurn ?? content.doc.start.bodyTurn;
     this.briefcaseStore = [...(restore?.briefcaseStore ?? [])];
     this.pendingBriefcaseDrop = restore?.pendingBriefcaseDrop ?? null;
@@ -1666,8 +1719,11 @@ export class DamoclesSession implements TitleSession<
     return this.liveCarriedSlot(placement.keyBase + attachment.keyIndex);
   }
 
+  /// `$05481A`: a system message is dropped only while the display gate `$7BA0` is up, which is
+  /// while a message presents. A script waiting between its lines does not hold the gate, so
+  /// the message goes ahead of its next line (#628).
   private presentSystem(id: SystemMessageId): void {
-    if (this.script.execution === null && this.script.message === null) {
+    if (this.script.message === null) {
       const transition = presentSystemMessage(
         this.script,
         id,
@@ -1690,6 +1746,7 @@ export class DamoclesSession implements TitleSession<
       carried: [...this.carried],
       cell: cellOf(this.pose.position, this.surface.grid),
       centreBox: this.centreBox(),
+      computer: this.computer,
       craft:
         this.craft === null
           ? null
@@ -1728,6 +1785,7 @@ export class DamoclesSession implements TitleSession<
       landSea: classifyPosition(this.surface, this.pose.position).kind,
       message: this.script.message,
       occupancy: this.occupancy,
+      panelMask: this.panelMask,
       pose: this.pose,
       removedResidents: [...this.removedResidents],
       residence: [...this.residence].map(([instance, residence]) => ({
@@ -1740,7 +1798,10 @@ export class DamoclesSession implements TitleSession<
       selection: this.selection(),
       structure: this.structureSnapshot(),
       surface: this.publishedSurface(),
-      switches: this.switches
+      switches: this.switches,
+      unravelCursor: this.unravelCursor,
+      unravelling: this.unravelling(),
+      viewExponent: this.viewExponent
     };
   }
 
@@ -1902,6 +1963,115 @@ export class DamoclesSession implements TitleSession<
     }
   }
 
+  /// `$7A90` = 14: seated on the AUTHOR'S CHAIR, which is what `$04D268` asks before the
+  /// computer opens. After that its keys work anywhere until it is dropped.
+  private seatedAtComputer(): boolean {
+    return this.occupied === AUTHORS_CHAIR;
+  }
+
+  /// `$04D4D0`, `+`, `-` and `*` on the open computer. `+` and `-` step the value, save it,
+  /// apply it and click, even where the clamp left it where it was. `*` acts in option 4 alone,
+  /// destroying Body number value through the dispatcher, with no click.
+  private computerKey(key: '*' | '+' | '-'): 'computed' | 'ignored' {
+    if (key === '*') {
+      if (this.computer.option !== DESTROY_OPTION) {
+        return 'ignored';
+      }
+      this.dispatchDestruction(`body-${optionValue(this.computer)}`);
+      return 'computed';
+    }
+    this.computer = stepOption(this.computer, key === '+' ? 1 : -1);
+    this.applyOption();
+    this.click();
+    return 'computed';
+  }
+
+  /// A keypad digit, `$67`–`$70` through `$04D3AE` (#628). Only the computer's panel reads it
+  /// in the port: 0 to 4 select its option and click, and a higher digit does nothing. The
+  /// TIMED DETONATOR's digits are not ported (#635).
+  keypadDigit(digit: number): { readonly kind: 'computed' | 'ignored' } {
+    if (
+      this.death !== null ||
+      this.headCommands.box.steps !== 0 ||
+      this.headCommands.open?.slot !== AUTHORS_COMPUTER_SLOT
+    ) {
+      return { kind: 'ignored' };
+    }
+    const selected = selectOption(this.computer, digit);
+    if (selected === null) {
+      return { kind: 'ignored' };
+    }
+    this.computer = selected;
+    this.click();
+    return { kind: 'computed' };
+  }
+
+  /// The handler `$04D5D6` names for the option in hand.
+  private applyOption(): void {
+    const effect = optionEffect(
+      this.computer.option,
+      optionValue(this.computer)
+    );
+    switch (effect.kind) {
+      case 'palette-mask':
+        this.paletteMask = effect.mask;
+        return;
+      case 'panel-mask':
+        this.panelMask = effect.mask;
+        return;
+      case 'view-exponent':
+        this.viewExponent = effect.exponent;
+        return;
+      case 'clock-level':
+        this.setClockLevel(effect.level);
+        return;
+      case 'none':
+        return;
+    }
+  }
+
+  /// `$054848`, the key click.
+  private click(): void {
+    if (this.soundPermitted()) {
+      this.effects.push({ cue: 'throttle', type: 'sound-request' });
+    }
+  }
+
+  /// Whether the unravelling runs: `$753C`'s high word is 0 once the marker has removed the
+  /// AUTHORS COMPUTER, with DION or in a blast. Taking it is not enough.
+  private unravelling(): boolean {
+    return this.removedResidents.has(AUTHORS_COMPUTER);
+  }
+
+  /// `$04BEEE`, once a main-loop pass: `$01` is fired every pass, which re-queues it behind a
+  /// running script until it launches once. Whenever the debris counter is idle the next Body
+  /// down from DAMOCLES goes through the marker, skipping the dispatcher's endings, and past
+  /// DIALIS `$1A` is fired instead. A Body already destroyed costs its pass.
+  private tickUnravelling(): void {
+    if (!this.unravelling()) {
+      return;
+    }
+    this.fireEnding(UNRAVELLING_TRIGGER);
+    if (this.debrisPasses !== 0) {
+      return;
+    }
+    if (this.unravelCursor < 0) {
+      this.fireEnding(0x1a);
+      return;
+    }
+    const body = this.unravelCursor;
+    this.unravelCursor -= 1;
+    this.destroyBody(`body-${body}`);
+  }
+
+  /// One main-loop pass's shared work: `$05948C` steps the noise pointer as the frame joins the
+  /// loop, `$04CF52` counts the debris down, and `$04BEEE` runs the unravelling.
+  private mainLoopPass(): void {
+    this.script = stepNoise(this.script);
+    this.debrisPasses = Math.max(0, this.debrisPasses - 1);
+    this.tickUnravelling();
+  }
+
   /// `$04D420`: `+` sets the open switch's bit of `$7872` and `-` clears it. A key that finds the
   /// bit already so does nothing, not even the click. Otherwise the detonation test follows,
   /// which only `-` on the GHETTOBLASTER skips, then the lamp is redrawn and the key clicks
@@ -1914,9 +2084,7 @@ export class DamoclesSession implements TitleSession<
     }
     this.switches = on ? this.switches | mask : this.switches & ~mask;
     this.detonationTest();
-    if (this.soundPermitted()) {
-      this.effects.push({ cue: 'throttle', type: 'sound-request' });
-    }
+    this.click();
     return 'switched';
   }
 
@@ -2227,6 +2395,7 @@ export class DamoclesSession implements TitleSession<
       carried: [...this.carried],
       clockAnchor: this.clockAnchor,
       clockLevel: this.clockLevel,
+      computer: this.computer,
       craft: this.craftForSave(),
       debrisPasses: this.debrisPasses,
       destroyedBodies: [...this.destroyedBodies],
@@ -2243,6 +2412,7 @@ export class DamoclesSession implements TitleSession<
       impactPassed: this.impactPassed,
       occupancy: this.occupancy,
       paletteMask: this.paletteMask,
+      panelMask: this.panelMask,
       pendingBriefcaseDrop: this.pendingBriefcaseDrop,
       // The bank is the craft's roll, which `craft` carries.
       pose: {
@@ -2261,7 +2431,9 @@ export class DamoclesSession implements TitleSession<
       scrollCounter: this.scrollCounter,
       spaceMemory: { ...this.spaceMemory },
       structure: this.structureSnapshot(),
-      switches: this.switches
+      switches: this.switches,
+      unravelCursor: this.unravelCursor,
+      viewExponent: this.viewExponent
     };
   }
 
@@ -2584,8 +2756,7 @@ export class DamoclesSession implements TitleSession<
       return;
     }
     this.footTicks = 0;
-    this.script = stepNoise(this.script);
-    this.debrisPasses = Math.max(0, this.debrisPasses - 1);
+    this.mainLoopPass();
   }
 
   /// One tick aboard: every `ticksPerPass`-th runs a frame of the craft Mover (ADR 0051).
@@ -2602,8 +2773,7 @@ export class DamoclesSession implements TitleSession<
     this.craftTicks = 0;
     // `$05948C` steps the noise pointer as the pass's frame joins the main loop, before the pass
     // itself: the traced landing drew the word after it (#576).
-    this.script = stepNoise(this.script);
-    this.debrisPasses = Math.max(0, this.debrisPasses - 1);
+    this.mainLoopPass();
     if (this.space !== null) {
       this.tickSpace(program, craft, this.space);
       return;
@@ -3232,24 +3402,45 @@ export class DamoclesSession implements TitleSession<
   /// alike. From a zap on the main loop is blocked, so no key is read.
   headCommand(command: HeadCommand): {
     readonly kind:
-      'closed' | 'ignored' | 'opened' | 'paged' | 'read' | 'switched';
+      | 'closed'
+      | 'computed'
+      | 'ignored'
+      | 'opened'
+      | 'paged'
+      | 'read'
+      | 'switched';
   } {
     if (this.death !== null) {
       return { kind: 'ignored' };
     }
     const head = this.carried[0];
+    const headSlot = head === undefined ? undefined : this.slotOf(head);
+    // `$04D262`: Open on the computer from the chair fires the warning first, whether or not the
+    // computer is already open.
+    if (
+      command === 'open' &&
+      this.headCommands.box.steps === 0 &&
+      headSlot === AUTHORS_COMPUTER_SLOT &&
+      this.seatedAtComputer()
+    ) {
+      this.fireEnding(COMPUTER_WARNING_TRIGGER);
+    }
     const outcome = headCommand(
       this.headCommands,
       command,
-      head === undefined ? undefined : this.slotOf(head),
+      headSlot,
       this.content.documents,
-      readPending(this.script)
+      readPending(this.script),
+      this.seatedAtComputer()
     );
     if (outcome.kind === 'ignored') {
       return outcome;
     }
     if (outcome.kind === 'switch') {
       return { kind: this.throwSwitch(switchBit(outcome.row), outcome.on) };
+    }
+    if (outcome.kind === 'computer') {
+      return { kind: this.computerKey(outcome.key) };
     }
     this.headCommands = outcome.state;
     if (outcome.kind === 'read') {
@@ -3271,10 +3462,17 @@ export class DamoclesSession implements TitleSession<
         this.content,
         box.from,
         box.steps === 0 ? (open?.item ?? null) : box.fromItem,
-        this.switches
+        this.switches,
+        this.computer
       ),
       steps: box.steps,
-      to: documentPanel(this.content, box.to, null, this.switches)
+      to: documentPanel(
+        this.content,
+        box.to,
+        null,
+        this.switches,
+        this.computer
+      )
     };
   }
 
@@ -3285,7 +3483,8 @@ export class DamoclesSession implements TitleSession<
       this.death === null &&
       opensHead(
         head === undefined ? undefined : this.slotOf(head),
-        this.content.documents
+        this.content.documents,
+        this.seatedAtComputer()
       )
     );
   }

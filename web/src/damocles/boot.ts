@@ -55,12 +55,22 @@ import {
   type DamoclesConsoleHost
 } from './console.ts';
 import { craftProgram } from './craft.ts';
-import { FLOATS_PER_VERTEX, planErisFrame } from './frame.ts';
+import {
+  FLOATS_PER_VERTEX,
+  planErisFrame,
+  zoomedFieldOfView
+} from './frame.ts';
+import { AUTHORS_COMPUTER_SLOT } from './headCommands.ts';
 import { classifyPosition } from './islands.ts';
 import { stMakeCode } from './keys.ts';
 import { erisLighting } from './lighting.ts';
 import { damoclesPanelViewModel } from './panel.ts';
-import { centreBoxPage, damoclesTakeTargetAt, wheelPage } from './pointer.ts';
+import {
+  centreBoxPage,
+  computerBoxPoint,
+  damoclesTakeTargetAt,
+  wheelPage
+} from './pointer.ts';
 import { ErisRenderer } from './renderer.ts';
 import {
   createDamoclesResumePersistence,
@@ -79,7 +89,7 @@ import {
   noiseBands,
   presentScreen
 } from './screen.ts';
-import { DamoclesSession } from './session.ts';
+import { DamoclesSession, NEW_GAME_VIEW_EXPONENT } from './session.ts';
 import { skyPass, spaceSkyPass } from './sky.ts';
 import {
   DamoclesSoundPresenter,
@@ -340,6 +350,7 @@ try {
         session.keyMake(make);
       }
     },
+    keypadDigit: digit => commitAction(() => session.keypadDigit(digit)),
     leaveCraft: () => commitAction(() => session.leave()),
     liftKey: floor => {
       if (!session.inLift) {
@@ -834,6 +845,29 @@ try {
     );
   };
 
+  /// The presentation as `$7964`'s scale exponent draws it (#628): only the field of view moves.
+  const zoomedDocs = new Map<number, typeof content.doc>();
+  const zoomedDoc = (exponent: number): typeof content.doc => {
+    if (exponent === NEW_GAME_VIEW_EXPONENT) {
+      return content.doc;
+    }
+    let doc = zoomedDocs.get(exponent);
+    if (doc === undefined) {
+      doc = {
+        ...content.doc,
+        camera: {
+          ...content.doc.camera,
+          verticalFieldOfViewDegrees: zoomedFieldOfView(
+            content.doc.camera.verticalFieldOfViewDegrees,
+            exponent
+          )
+        }
+      };
+      zoomedDocs.set(exponent, doc);
+    }
+    return doc;
+  };
+
   const pointerTakeTarget = (event: MouseEvent): string | undefined => {
     const pointer = canvasPointer(canvas, {
       x: event.clientX,
@@ -845,7 +879,7 @@ try {
     }
     return damoclesTakeTargetAt(
       snapshot,
-      content.doc.camera,
+      zoomedDoc(snapshot.viewExponent).camera,
       { height: canvas.height, width: canvas.width },
       pointer.point,
       pointer.hitSlop,
@@ -922,14 +956,20 @@ try {
       return;
     }
     const bounds = centreCanvas.getBoundingClientRect();
-    commitAction(() =>
-      session.headCommand(
-        centreBoxPage(
-          { x: event.clientX - bounds.left, y: event.clientY - bounds.top },
-          bounds
-        )
-      )
-    );
+    const point = {
+      x: event.clientX - bounds.left,
+      y: event.clientY - bounds.top
+    };
+    if (session.snapshot.headCommands.open?.slot === AUTHORS_COMPUTER_SLOT) {
+      const target = computerBoxPoint(point, bounds);
+      commitAction(() =>
+        target === 'parameter'
+          ? session.keypadDigit((session.snapshot.computer.option + 1) % 5)
+          : session.headCommand(target)
+      );
+      return;
+    }
+    commitAction(() => session.headCommand(centreBoxPage(point, bounds)));
   });
   let wheelTravel = 0;
   const pageByWheel = (event: WheelEvent): void => {
@@ -1057,6 +1097,15 @@ try {
     root['drift'] = snapshot.drift === null ? '' : String(snapshot.drift);
     // `$7872`, the switch bits, as hex (#627).
     root['switches'] = snapshot.switches.toString(16);
+    // The AUTHORS COMPUTER (#628): the option and its value, the panel mask as hex, the view
+    // exponent, and the unravelling's next Body, empty until it runs.
+    root['computer'] =
+      `${snapshot.computer.option} ${snapshot.computer.values[snapshot.computer.option]}`;
+    root['panelMask'] = snapshot.panelMask.toString(16);
+    root['viewExponent'] = String(snapshot.viewExponent);
+    root['unravel'] = snapshot.unravelling
+      ? String(snapshot.unravelCursor)
+      : '';
     root['impactPassed'] = String(snapshot.impactPassed);
     root['x'] = String(snapshot.pose.position.x);
     root['y'] = String(snapshot.pose.position.y);
@@ -1199,7 +1248,7 @@ try {
     const plan = planErisFrame(
       snapshot.surface,
       snapshot.pose,
-      content.doc,
+      zoomedDoc(snapshot.viewExponent),
       snapshot.structure,
       snapshot.residents,
       [
@@ -1213,30 +1262,33 @@ try {
       // The sky Bodies turn with the accumulator the terminator reads, and the comet moves with
       // the impact clock, so a Save restores all three. Enhanced presentation moves the Bodies
       // smoothly between the engine's steps.
-      space === null
-        ? skyPass(system, {
-            body: snapshot.pose.body,
-            daylight: snapshot.daylight,
-            destroyedBodies: snapshot.destroyedBodies,
-            drift: snapshot.drift,
-            impact: snapshot.impact,
-            impactPassed: snapshot.impactPassed,
-            position: snapshot.pose.position,
-            sky: snapshot.surface.sky,
-            smooth: enhanced,
-            stars,
-            turn: snapshot.bodyTurn
-          })
-        : spaceSkyPass(system, {
-            destroyedBodies: snapshot.destroyedBodies,
-            drift: snapshot.drift,
-            eye: space.position,
-            impact: snapshot.impact,
-            impactPassed: snapshot.impactPassed,
-            inScene: index =>
-              (content.catalogue.craft?.bodies[index]?.y ?? 0) >= 0,
-            stars
-          }),
+      {
+        ...(space === null
+          ? skyPass(system, {
+              body: snapshot.pose.body,
+              daylight: snapshot.daylight,
+              destroyedBodies: snapshot.destroyedBodies,
+              drift: snapshot.drift,
+              impact: snapshot.impact,
+              impactPassed: snapshot.impactPassed,
+              position: snapshot.pose.position,
+              sky: snapshot.surface.sky,
+              smooth: enhanced,
+              stars,
+              turn: snapshot.bodyTurn
+            })
+          : spaceSkyPass(system, {
+              destroyedBodies: snapshot.destroyedBodies,
+              drift: snapshot.drift,
+              eye: space.position,
+              impact: snapshot.impact,
+              impactPassed: snapshot.impactPassed,
+              inScene: index =>
+                (content.catalogue.craft?.bodies[index]?.y ?? 0) >= 0,
+              stars
+            })),
+        zoom: 2 ** (snapshot.viewExponent - NEW_GAME_VIEW_EXPONENT)
+      },
       space !== null
     );
     const shadowEdge = castShadows ?? DEFAULT_CAST_SHADOWS;

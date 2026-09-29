@@ -18,12 +18,14 @@ import {
 } from '../src/damocles/script.ts';
 import {
   CLEARING_LINE_FRAMES,
+  COMPUTER_TRIGGERS,
   DESTRUCTION_TRIGGERS,
   ENDING_TRIGGERS,
   LANDING_TRIGGERS,
   LOCATION_TRIGGERS,
   ORDINARY_DISPLAY_FRAMES,
-  TOLOSA_VISITED_FLAG
+  TOLOSA_VISITED_FLAG,
+  UNRAVELLING_TRIGGER
 } from '../src/damocles/scripts.ts';
 import { loadCatalogue } from './fixtures/catalogue.ts';
 
@@ -373,6 +375,7 @@ describe('the recovered trigger table', () => {
       ...LOCATION_TRIGGERS,
       ...ENDING_TRIGGERS,
       ...DESTRUCTION_TRIGGERS,
+      ...COMPUTER_TRIGGERS,
       ...LANDING_TRIGGERS
     ]);
     // `$20`-`$3B` without ERIS's `$2A`; DAMOCLES's `$3C` is the deflection ending.
@@ -386,7 +389,14 @@ describe('the recovered trigger table', () => {
     ).toEqual([0x38]);
     expect(
       triggers.filter(trigger => trigger.queueable).map(item => item.index)
-    ).toEqual([15, 5, 4, ...ENDING_TRIGGERS, ...DESTRUCTION_TRIGGERS]);
+    ).toEqual([
+      15,
+      5,
+      4,
+      ...ENDING_TRIGGERS,
+      ...DESTRUCTION_TRIGGERS,
+      UNRAVELLING_TRIGGER
+    ]);
     expect(triggers.every(trigger => trigger.script !== null)).toBe(true);
   });
 

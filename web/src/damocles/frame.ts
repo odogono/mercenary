@@ -858,6 +858,18 @@ export const floorLabelGlyphsOf = (
   return font => surface.floorLabelGlyphs[String(font)]?.[character];
 };
 
+/// The vertical field of view at `$7964`'s scale exponent (#628): 8 is the port's own, and each
+/// step above it doubles the picture, which halves the tangent of the half-angle.
+export const zoomedFieldOfView = (degrees: number, exponent: number): number =>
+  (Math.atan(
+    Math.tan((degrees * Math.PI) / 360) / 2 ** (exponent - VIEW_EXPONENT)
+  ) *
+    360) /
+  Math.PI;
+
+/// `$7964`'s high word at the reset.
+const VIEW_EXPONENT = 8;
+
 export const planErisFrame = (
   surface: ErisSurface,
   pose: Pose,
@@ -956,6 +968,8 @@ export const planErisFrame = (
   const skyAt = skyDepth(doc);
   const skyBodies = enclosed || sky === null ? [] : sky.bodies;
   const projectionScale = sky?.projectionScale ?? 0;
+  // The ST pixels a unit tangent spans at the view's scale exponent (#628).
+  const pixelScale = projectionScale * (sky?.zoom ?? 1);
   const halfWidthDivisor = sky?.halfWidthDivisor ?? 0;
   const skyView = (offset: Vector3): Vector3 =>
     camera.viewSpace(
@@ -986,18 +1000,18 @@ export const planErisFrame = (
   // `$04FBAE` skips a Body whose screen x does not fit a signed word less its top bit
   // (`cmpi.w #$4000`), about the centre column 160.
   const onScreen = (x: number): boolean => {
-    const column = SKY_CENTRE_COLUMN + x * projectionScale;
+    const column = SKY_CENTRE_COLUMN + x * pixelScale;
     return column >= -0x40_00 && column < 0x40_00;
   };
   // `$045928`'s rows are `⌊√(r² − dy²) / 0.84375⌋` wide, so a disc under that many pixels
   // across has no row at all.
   const discDrawn = (placement: Omit<SkyBodyPlacement, 'drawn'>): boolean =>
-    placement.radius * projectionScale >= halfWidthDivisor &&
+    placement.radius * pixelScale >= halfWidthDivisor &&
     (inSpace || placement.y + placement.radius > 0);
   // `$0503FE`, `$0505B8` and `$05067C` plot the stars before the sky pass, so the Bodies cover
   // them (#578). Each is one ST pixel, which is 1/256 of a unit tangent either way.
   const stars = enclosed || sky === null ? [] : sky.stars;
-  skyStarTriangles(stars, projectionScale, skyAt, skyEmit);
+  skyStarTriangles(stars, pixelScale, skyAt, skyEmit);
   for (const body of skyBodies) {
     const view = skyView(body.offset);
     const placement =
@@ -1021,7 +1035,7 @@ export const planErisFrame = (
       let drawn = skyCometTriangles(
         body,
         body.points.map(skyView),
-        1 / projectionScale,
+        1 / pixelScale,
         skyAt,
         skyEmit,
         !inSpace

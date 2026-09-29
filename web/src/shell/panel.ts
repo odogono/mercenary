@@ -27,8 +27,11 @@ export interface CentreBoxPanel {
   /// The current item's name, or a switch's lamp, which is drawn only once the panel has arrived
   /// (`$0529D6`).
   readonly item: string | null;
-  /// A document's panel pages items; a switch's shows its lamp between `−` and `+`.
-  readonly kind: 'document' | 'switch';
+  /// A document's panel pages items; a switch's shows its lamp between `−` and `+`; the AUTHORS
+  /// COMPUTER's shows its option and value (#628).
+  readonly kind: 'computer' | 'document' | 'switch';
+  /// The computer's option, `PARAMETER No`, once drawn; null elsewhere.
+  readonly parameter: number | null;
   readonly title: string;
 }
 
@@ -41,6 +44,10 @@ export interface CentreBoxView {
   /// rises in.
   readonly top: number;
 }
+
+/// An ST `0RGB` XOR mask on the Benson Panel's palette: `$7A52`, which the Damocles AUTHORS
+/// COMPUTER's option 1 writes into all sixteen of the panel's colours but black (#628). The
+/// message bar keeps its own.
 
 export interface PanelViewModel {
   /// The altitude window, already formatted, because its width belongs to the rendition and
@@ -78,6 +85,8 @@ export interface PanelViewModel {
   readonly locationName: string;
   readonly message: string;
   readonly messageColour: number | undefined;
+  /// The panel palette's XOR mask; 0, or absent in a rendition without one, leaves it as drawn.
+  readonly panelMask?: number;
   readonly runLamp: boolean;
   readonly speed: string;
   readonly speedLabel: string;

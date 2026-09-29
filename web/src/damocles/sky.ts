@@ -153,6 +153,10 @@ export interface SkyPass {
   /// The starfield's pixels, in the ST's screen pixels, in plot order (#578). The stars are
   /// drawn before the sky pass, so every Body covers them.
   readonly stars: readonly StarPixel[];
+  /// `2^(exponent - 8)` for the scale exponent the AUTHORS COMPUTER's option 2 writes into
+  /// `$7964` (#628): the ST pixels a unit tangent spans grow with it, so a disc's pixel tests and
+  /// the starfield, which does not read `$7964`, measure by it. Absent is 1.
+  readonly zoom?: number;
 }
 
 /// Whether the Body has an atmosphere: `$794D`, non-zero exactly where its day and night sky

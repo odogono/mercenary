@@ -11,7 +11,10 @@ import {
   encodeDamoclesSave,
   type DamoclesSaveSnapshot
 } from '../src/damocles/save.ts';
-import { DESTRUCTION_TRIGGERS } from '../src/damocles/scripts.ts';
+import {
+  COMPUTER_TRIGGERS,
+  DESTRUCTION_TRIGGERS
+} from '../src/damocles/scripts.ts';
 import {
   DamoclesSession,
   ICARUS_SECONDS_LEFT,
@@ -22,6 +25,7 @@ import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
+import { launchedIntoSpace } from './damocles-space-harness.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
 /// The NOVABOMB and the body-destruction dispatcher `$04C8D2` (#627), against the #626 live
@@ -482,53 +486,9 @@ describe('the body-destruction dispatcher $04C8D2', () => {
   });
 });
 
-/// EAGLE NINE S E boarded on ERIS, flown up and launched until the craft reaches space, then
-/// restored from its own Save with `change` applied.
 const inSpace = (
   change: (saved: DamoclesSaveSnapshot) => DamoclesSaveSnapshot
-): DamoclesSession => {
-  const EAGLE = 'object-slot-3';
-  const first = new DamoclesSession(content);
-  const at = first.snapshot.surface.placements.find(
-    item => item.id === EAGLE
-  )!.position;
-  const key = content.catalogue.instances.find(item => item.id === EAGLE)!
-    .boarding!.pairedInstance!;
-  const saved = first.captureResume();
-  // With no saved structure the restore binds whatever the new cell holds.
-  const { structure: _, ...rest } = saved;
-  const s = new DamoclesSession(content, {
-    ...rest,
-    carried: [key],
-    pose: {
-      ...saved.pose,
-      position: {
-        x: at.x + 150,
-        y: at.y + content.doc.eye.heightUnits,
-        z: at.z
-      }
-    },
-    residence: [...saved.residence, carried(key)]
-  } as unknown as DamoclesSaveSnapshot);
-  expect(s.board()).toEqual({ kind: 'boarded' });
-  const pass = content.doc.time.ticksPerPass / content.doc.time.vblHertz;
-  s.throttleKey(0x05);
-  for (let index = 0; index < 50; index += 1) {
-    s.intent = { ...s.intent, pitch: index < 30 ? 0 : 1 };
-    s.advance(pass);
-  }
-  s.intent = { ...s.intent, pitch: 0 };
-  s.launchCraft();
-  for (
-    let index = 0;
-    index < 400 && s.snapshot.craft?.space == null;
-    index += 1
-  ) {
-    s.advance(pass);
-  }
-  expect(s.snapshot.craft?.space).not.toBeNull();
-  return new DamoclesSession(content, change(s.captureResume()));
-};
+): DamoclesSession => launchedIntoSpace(content, change);
 
 const armedInSpace = (
   held: readonly string[],
@@ -662,7 +622,9 @@ describe('the NOVABOMB Save', () => {
       script: {
         ...saved.script,
         triggers: saved.script.triggers.filter(
-          item => !DESTRUCTION_TRIGGERS.includes(item.index)
+          item =>
+            !DESTRUCTION_TRIGGERS.includes(item.index) &&
+            !COMPUTER_TRIGGERS.includes(item.index)
         )
       }
     };

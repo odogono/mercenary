@@ -14,6 +14,7 @@ import {
   type DamoclesSaveSnapshot
 } from '../src/damocles/save.ts';
 import {
+  COMPUTER_TRIGGERS,
   DESTRUCTION_TRIGGERS,
   ENDING_TRIGGERS
 } from '../src/damocles/scripts.ts';
@@ -29,7 +30,11 @@ import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
 /// The endings a record older than schema 22 does not carry.
-const OLDER_ENDINGS = [...ENDING_TRIGGERS, ...DESTRUCTION_TRIGGERS];
+const OLDER_ENDINGS = [
+  ...ENDING_TRIGGERS,
+  ...DESTRUCTION_TRIGGERS,
+  ...COMPUTER_TRIGGERS
+];
 
 /// The location-trigger table `[$7A68]` and the region walk `$05A6EC` that reads it (#611,
 /// docs/research/damocles-location-triggers.md). In the Eris STATE OFFICE, trigger 3 presents

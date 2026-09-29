@@ -107,6 +107,104 @@ const CENTRE_BOX_FIELD_DARK = '#444444';
 const CENTRE_BOX_FIELD_LIGHT = '#eeeeee';
 const CENTRE_BOX_NAME = '#000000';
 
+/// A `#rrggbb` colour XORed with an ST `0RGB` mask, three bits a channel as the panel draws
+/// them. Black is left as it is: the Damocles AUTHORS COMPUTER's option 1 rewrites every panel
+/// colour but it, and its digits stay black in the #626 captures (#628).
+export const maskedColour = (colour: string, mask: number): string => {
+  const match = /^#([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(colour);
+  if (mask === 0 || match === null) {
+    return colour;
+  }
+  const word = [1, 2, 3].reduce(
+    (total, group) =>
+      (total << 4) | Math.round(Number.parseInt(match[group]!, 16) / 34),
+    0
+  );
+  if (word === 0) {
+    return colour;
+  }
+  const masked = word ^ mask;
+  return `#${[8, 4, 0]
+    .map(shift => (((masked >> shift) & 7) * 34).toString(16).padStart(2, '0'))
+    .join('')}`;
+};
+
+/// A `#rgb` or `#rrggbb` colour as `#rrggbb`, or undefined for anything else.
+const longHex = (colour: string): string | undefined => {
+  const short = /^#([\da-f])([\da-f])([\da-f])$/i.exec(colour);
+  if (short !== null) {
+    return `#${short[1]!.repeat(2)}${short[2]!.repeat(2)}${short[3]!.repeat(2)}`;
+  }
+  return /^#[\da-f]{6}$/i.test(colour) ? colour : undefined;
+};
+
+/// The Damocles Panel Rendition's custom properties that hold its palette, which the panel
+/// mask rewrites. The message bar's are left out: it keeps its own colours in the captures.
+const MASKED_PANEL_PROPERTIES = [
+  '--st-4',
+  '--st-6',
+  '--st-8',
+  '--st-a',
+  '--st-c',
+  '--st-e',
+  '--nav-face',
+  '--nav-lcd',
+  '--nav-ink-negative',
+  '--nav-label',
+  '--gauge-sky',
+  '--gauge-ground',
+  '--inv-face',
+  '--inv-lcd',
+  '--inv-label',
+  '--clock-bg',
+  '--lamp-on',
+  '--ground-lamp-on',
+  '--temperature-fill',
+  '--power-fill',
+  '--capacity-fill'
+] as const;
+
+/// Rewrite the panel's palette through `mask`, or restore the authored one at 0.
+const maskPanel = (panel: HTMLElement, mask: number): void => {
+  for (const property of MASKED_PANEL_PROPERTIES) {
+    panel.style.removeProperty(property);
+  }
+  if (mask === 0) {
+    return;
+  }
+  const authored = getComputedStyle(panel);
+  for (const property of MASKED_PANEL_PROPERTIES) {
+    const colour = longHex(authored.getPropertyValue(property).trim());
+    if (colour !== undefined) {
+      panel.style.setProperty(property, maskedColour(colour, mask));
+    }
+  }
+};
+
+/// The colours the centre box draws in, under the panel mask.
+interface CentreBoxInk {
+  readonly dark: string;
+  readonly field: string;
+  readonly ground: string;
+  readonly light: string;
+  readonly logo: readonly [string, string];
+  readonly name: string;
+  readonly text: string;
+}
+
+const inkOf = (panel: CentreBoxPanel | null, mask: number): CentreBoxInk => {
+  const ink = (colour: string) => maskedColour(colour, mask);
+  return {
+    dark: ink(CENTRE_BOX_FIELD_DARK),
+    field: ink(panel?.field ?? CENTRE_BOX_NAME),
+    ground: ink(panel?.ground ?? CENTRE_BOX_NAME),
+    light: ink(CENTRE_BOX_FIELD_LIGHT),
+    logo: [ink('#444444'), ink('#666666')],
+    name: CENTRE_BOX_NAME,
+    text: ink(CENTRE_BOX_TEXT)
+  };
+};
+
 /// Letter `text` from `x` a glyph every `pitch` columns, each narrowed to `width` columns. The
 /// original's condensed faces are not extracted, so the interface face stands in for them,
 /// narrowed as the panel's `.compact` labels are (ADR 0027).
@@ -140,7 +238,8 @@ const centred = (
   text: string,
   y: number,
   pitch: number,
-  width: number
+  width: number,
+  colour: string
 ): void =>
   letter(
     context,
@@ -149,18 +248,43 @@ const centred = (
     y,
     pitch,
     width,
-    CENTRE_BOX_TEXT
+    colour
   );
+
+/// A field with the name field's bevel: dark along its top and right, light along its left and
+/// bottom, `fill` inside. `x`, `y`, `width` and `height` are the fill's.
+const bevelled = (
+  context: CanvasRenderingContext2D,
+  ink: CentreBoxInk,
+  fill: {
+    readonly height: number;
+    readonly width: number;
+    readonly x: number;
+    readonly y: number;
+  }
+): void => {
+  const { height, width, x, y } = fill;
+  context.fillStyle = ink.field;
+  context.fillRect(x, y, width, height);
+  context.fillStyle = ink.dark;
+  context.fillRect(x - 1, y - 1, width + 2, 1);
+  context.fillRect(x + width, y - 1, 1, height + 2);
+  context.fillStyle = ink.light;
+  context.fillRect(x - 1, y, 1, height + 1);
+  context.fillRect(x - 1, y + height, width + 1, 1);
+};
 
 /// The Damocles centre box (#598): a document's panel, or the logo while it scrolls.
 ///
 /// The original draws a document's title from a strip in the graphic table at `$066100`, which
 /// is not decoded, so the lettering, the `−` and `+` and the name field are authored to match the
 /// Hatari captures of the DAMOCLES FILE (ADR 0043). The colours are recovered: the Open table's
-/// colour 15 is the ground and colour 3 the name field.
+/// colour 15 is the ground and colour 3 the name field. Every colour but black goes through the
+/// panel mask `mask` (#628).
 export const drawCentreBox = (
   canvas: HTMLCanvasElement,
-  view: CentreBoxView
+  view: CentreBoxView,
+  mask = 0
 ): void => {
   const surface = surfaceOf(canvas);
   if (surface === undefined) {
@@ -180,50 +304,51 @@ export const drawCentreBox = (
   context.save();
   context.translate(0, view.top);
   const panel = view.panel;
+  const ink = inkOf(panel, mask);
   if (panel === null) {
     // The logo, as the resting badge letters it.
     context.font = DAMOCLES_GLYPH_FONT;
     context.textBaseline = 'bottom';
     const x = (CENTRE_BOX_WIDTH - 8 * 6) / 2;
     for (const [dx, colour] of [
-      [2, '#444444'],
-      [1, '#666666'],
-      [0, CENTRE_BOX_TEXT]
+      [2, ink.logo[0]],
+      [1, ink.logo[1]],
+      [0, ink.text]
     ] as const) {
       context.fillStyle = colour;
       context.fillText('DAMOCLES', x + dx, 18 + dx);
     }
   } else {
-    context.fillStyle = panel.ground;
+    context.fillStyle = ink.ground;
     context.fillRect(0, 0, CENTRE_BOX_WIDTH, CENTRE_BOX_HEIGHT);
     // The title's face is four columns on a pitch of five. The original keeps a column of
     // ground between the bevel and the DAMOCLES FILE's first letter, so a title as long as that
     // is narrowed a little to leave it, and a longer one further.
     const pitch = Math.min(5, CENTRE_BOX_WIDTH / panel.title.length);
-    centred(context, panel.title, 1, pitch, pitch - 1);
+    centred(
+      context,
+      panel.title,
+      1,
+      pitch,
+      pitch - 1,
+      panel.kind === 'computer' ? ink.dark : ink.text
+    );
     if (panel.kind === 'switch') {
-      drawSwitchLamp(context, panel);
-      context.restore();
-      clearTransitionRows(context, view.top);
-      return;
+      drawSwitchLamp(context, panel, ink);
+    } else if (panel.kind === 'computer') {
+      drawComputer(context, panel, ink);
+    } else {
+      context.fillStyle = ink.text;
+      context.fillRect(1, 12, 4, 1);
+      context.fillRect(58, 12, 5, 1);
+      context.fillRect(60, 10, 1, 5);
+      bevelled(context, ink, { height: 7, width: 49, x: 7, y: 9 });
+      if (panel.item !== null) {
+        letter(context, panel.item, 8, 10, 6, 5, ink.name);
+      }
+      centred(context, 'INDEX', 19, 4, 3, ink.text);
+      centred(context, 'PRESS * TO VIEW', 26, 4, 3, ink.text);
     }
-    context.fillStyle = CENTRE_BOX_TEXT;
-    context.fillRect(1, 12, 4, 1);
-    context.fillRect(58, 12, 5, 1);
-    context.fillRect(60, 10, 1, 5);
-    context.fillStyle = panel.field;
-    context.fillRect(7, 9, 49, 7);
-    context.fillStyle = CENTRE_BOX_FIELD_DARK;
-    context.fillRect(6, 8, 51, 1);
-    context.fillRect(56, 8, 1, 9);
-    context.fillStyle = CENTRE_BOX_FIELD_LIGHT;
-    context.fillRect(6, 9, 1, 8);
-    context.fillRect(6, 16, 50, 1);
-    if (panel.item !== null) {
-      letter(context, panel.item, 8, 10, 6, 5, CENTRE_BOX_NAME);
-    }
-    centred(context, 'INDEX', 19, 4, 3);
-    centred(context, 'PRESS * TO VIEW', 26, 4, 3);
   }
   context.restore();
   clearTransitionRows(context, view.top);
@@ -245,30 +370,57 @@ const clearTransitionRows = (
   }
 };
 
+/// A `−` and a `+` either side of a field, on row `y`: the `+` is `plus` columns in.
+const minusPlus = (
+  context: CanvasRenderingContext2D,
+  colour: string,
+  minus: number,
+  plus: number,
+  y: number
+): void => {
+  context.fillStyle = colour;
+  context.fillRect(minus, y, 4, 1);
+  context.fillRect(plus, y, 5, 1);
+  context.fillRect(plus + 2, y - 2, 1, 5);
+};
+
 /// A switch's `−` lamp `+` (#627), placed from the #626 captures of NOVA TRIGGER 1: the field
 /// in colour 3 on rows 14 to 20 with the name field's bevel, and ON or OFF lettered in it once
 /// the panel has arrived.
 const drawSwitchLamp = (
   context: CanvasRenderingContext2D,
-  panel: CentreBoxPanel
+  panel: CentreBoxPanel,
+  ink: CentreBoxInk
 ): void => {
-  context.fillStyle = CENTRE_BOX_TEXT;
-  context.fillRect(15, 17, 4, 1);
-  context.fillRect(45, 17, 5, 1);
-  context.fillRect(47, 15, 1, 5);
-  context.fillStyle = panel.field;
-  context.fillRect(21, 14, 23, 7);
-  context.fillStyle = CENTRE_BOX_FIELD_DARK;
-  context.fillRect(20, 13, 25, 1);
-  context.fillRect(44, 13, 1, 9);
-  context.fillStyle = CENTRE_BOX_FIELD_LIGHT;
-  context.fillRect(20, 14, 1, 8);
-  context.fillRect(20, 21, 24, 1);
+  minusPlus(context, ink.text, 15, 45, 17);
+  bevelled(context, ink, { height: 7, width: 23, x: 21, y: 14 });
   if (panel.item !== null) {
     // ON is lettered on a pitch of eight and OFF of seven and a half, both centred in the field.
     const pitch = panel.item.length > 2 ? 7.5 : 8;
     const x = 32.5 - (panel.item.length * pitch - (pitch - 6)) / 2;
-    letter(context, panel.item, x, 15, pitch, 6, CENTRE_BOX_NAME);
+    letter(context, panel.item, x, 15, pitch, 6, ink.name);
+  }
+};
+
+/// The AUTHORS COMPUTER's panel (#628, `$04DA5A`), placed from the #626 captures: PARAMETER No
+/// and the option in a small field, then VALUE `−` and the value's three digits `+`, all in the
+/// dark ink on colour 15, the fields in colour 3.
+const drawComputer = (
+  context: CanvasRenderingContext2D,
+  panel: CentreBoxPanel,
+  ink: CentreBoxInk
+): void => {
+  letter(context, 'PARAMETER', 1, 11, 4.3, 3.3, ink.dark);
+  letter(context, 'No', 44, 11, 5, 4, ink.dark);
+  bevelled(context, ink, { height: 7, width: 8, x: 55, y: 10 });
+  letter(context, 'VALUE', 6, 23, 4, 3, ink.dark);
+  minusPlus(context, ink.dark, 28, 55, 25);
+  bevelled(context, ink, { height: 7, width: 20, x: 34, y: 22 });
+  if (panel.parameter !== null) {
+    letter(context, String(panel.parameter), 56, 11, 5, 5, ink.name);
+  }
+  if (panel.item !== null) {
+    letter(context, panel.item, 35, 23, 6, 5, ink.name);
   }
 };
 
@@ -599,6 +751,7 @@ export const installPanel = (
 ): { readonly draw: (model: PanelViewModel) => void } => {
   let lastCompass: number | undefined;
   let lastCentreBox: string | undefined;
+  let lastPanelMask = 0;
   let lastElevation: number | undefined;
   let lastRendition: string | undefined;
   return {
@@ -632,19 +785,26 @@ export const installPanel = (
               : String(model.messageColour);
         }
       }
+      const panelMask = model.panelMask ?? 0;
+      if (panelMask !== lastPanelMask) {
+        lastPanelMask = panelMask;
+        maskPanel(elements.root, panelMask);
+      }
       const centreCanvas = elements.damoclesCentreBox;
       if (centreCanvas !== undefined && model.centreBox !== undefined) {
         // At rest on the logo the badge shows as it always has; the canvas covers it otherwise.
         const box = model.centreBox;
-        const resting = box.panel === null && box.top === 0;
-        const key = JSON.stringify(box);
+        const mask = model.panelMask ?? 0;
+        // A masked logo is drawn rather than left to the badge, which keeps its own colours.
+        const resting = box.panel === null && box.top === 0 && mask === 0;
+        const key = JSON.stringify({ box, mask });
         if (key !== lastCentreBox) {
           lastCentreBox = key;
           centreCanvas.hidden = resting;
           centreCanvas.dataset['panel'] = box.panel?.title ?? '';
           centreCanvas.dataset['item'] = box.panel?.item ?? '';
           if (!resting) {
-            drawCentreBox(centreCanvas, box);
+            drawCentreBox(centreCanvas, box, mask);
           }
         }
       }

@@ -163,6 +163,29 @@ export const centreBoxPage = (
   return x < CENTRE_BOX_CELLS.width / 2 ? 'previous' : 'next';
 };
 
+/// The AUTHORS COMPUTER's parameter field, bevel included (#628).
+const PARAMETER_FIELD = { bottom: 18, left: 54, right: 64, top: 9 } as const;
+
+/// The pointer on the open AUTHORS COMPUTER (#628), an Accommodation for a keyboard with no
+/// keypad digits: a click on the parameter field steps to the next parameter, and anywhere else
+/// steps the value the way its `−` or `+` stands. `*` stays a key, since it can destroy a Body.
+export const computerBoxPoint = (
+  point: Point,
+  size: Size
+): 'next' | 'parameter' | 'previous' => {
+  const x = (point.x / size.width) * CENTRE_BOX_CELLS.width;
+  const y = (point.y / size.height) * CENTRE_BOX_CELLS.height;
+  if (
+    x >= PARAMETER_FIELD.left &&
+    x < PARAMETER_FIELD.right &&
+    y >= PARAMETER_FIELD.top &&
+    y < PARAMETER_FIELD.bottom
+  ) {
+    return 'parameter';
+  }
+  return x < CENTRE_BOX_CELLS.width / 2 ? 'previous' : 'next';
+};
+
 /// Wheel travel, in CSS pixels, to one page. A mouse notch is about 100 and a trackpad sends
 /// many small deltas, so the travel is gathered and pages one at a time.
 export const WHEEL_PAGE_PIXELS = 50;

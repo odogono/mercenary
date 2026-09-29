@@ -187,6 +187,7 @@ const boxPanel = (panel: DocumentPanel | null): CentreBoxPanel | null =>
         ground: stColour(panel.colour15),
         item: panel.item,
         kind: panel.kind,
+        parameter: panel.parameter,
         title: panel.title
       };
 
@@ -226,6 +227,7 @@ export const damoclesPanelViewModel = (
   compassDegrees: bearingDegrees(snapshot.pose.heading),
   damoclesDisplay: snapshot.displayCells,
   elevationDegrees: 0,
+  panelMask: snapshot.panelMask,
   // `$0509F6`: lit only aboard (`$7A8E` clear) with the eye below `$28FA`, so a craft on the
   // ground lights it and the player on foot never does. In space `$7A8E` is 2.
   groundLamp:

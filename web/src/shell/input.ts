@@ -29,6 +29,10 @@ export interface ControlProfileActions {
   /// prompt reads, as Damocles's input poll writes each key it reads to `$7B61` (#612). A Title
   /// whose scripts read no latch leaves it out.
   readonly keyMake?: (code: string) => void;
+  /// A keypad digit, which the ST sends to the Head Commands' dispatch `$04D3D2` with the rest of
+  /// the keypad: the Damocles AUTHORS COMPUTER's parameter (#628). A Title with none leaves it
+  /// out.
+  readonly keypadDigit?: (digit: number) => void;
   /// Launch into space aboard: the ST's Esc (`$055822`), which the Browser Shell keeps for the
   /// System Menu, so `Backspace` stands in for it (#566). A Title with no launch leaves it out.
   readonly launch?: () => void;
@@ -352,6 +356,22 @@ export const BINDINGS: readonly Binding[] = [
       return floor !== undefined && actions.liftKey?.(floor) === true;
     },
     provided: actions => actions.liftKey !== undefined
+  },
+  {
+    // Only the keypad's own digits: the main row's are the throttle aboard, and the AUTHOR'S
+    // CHAIR the computer opens from is aboard. A laptop picks the parameter by pointer (#628).
+    action: 'PARAMETER 0-4',
+    group: 'always',
+    keys: ['NUMPAD 0-4'],
+    press: (code, { actions }) => {
+      const match = /^Numpad([0-4])$/.exec(code);
+      if (match === null || actions.keypadDigit === undefined) {
+        return false;
+      }
+      actions.keypadDigit(Number(match[1]));
+      return true;
+    },
+    provided: actions => actions.keypadDigit !== undefined
   },
   headCommandBinding('open'),
   headCommandBinding('read'),
