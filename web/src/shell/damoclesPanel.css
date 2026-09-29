@@ -362,6 +362,41 @@ damocles-panel #damocles-centre-canvas[hidden] {
   display: none;
 }
 
+/* The pointer's close for an open document (#599), in the window's top right corner. It shows
+   while the pointer is over the window, so the title reads whole otherwise. */
+damocles-panel #damocles-centre-close {
+  position: absolute;
+  top: calc(2 * var(--u));
+  right: calc(2 * var(--u));
+  width: calc(7 * var(--u));
+  height: calc(7 * var(--u));
+  padding: 0;
+  border: 0;
+  background: var(--st-black);
+  color: var(--st-c);
+  cursor: pointer;
+  font:
+    calc(6 * var(--u)) / 1 'Courier New',
+    monospace;
+  visibility: hidden;
+}
+
+damocles-panel #damocles-aux:hover #damocles-centre-close {
+  visibility: visible;
+}
+
+damocles-panel #damocles-centre-close[hidden] {
+  display: none;
+}
+
+damocles-panel #damocles-centre-close:hover {
+  color: var(--st-e);
+}
+
+damocles-panel[data-head-controls] #damocles-centre-canvas[data-open='true'] {
+  cursor: pointer;
+}
+
 damocles-panel .aux-title {
   height: calc(10 * var(--u));
   color: var(--st-c);
@@ -428,6 +463,54 @@ damocles-panel #inventory-window {
   padding: calc(2 * var(--u)) 0 0 calc(3 * var(--u));
   background: var(--inv-lcd);
   color: var(--inv-ink);
+}
+
+/* The head's name and, with `data-head-controls`, the pointer's rotations over its two ends
+   (#599). They show while the pointer is over the name, so the name reads whole otherwise. */
+damocles-panel #inventory-head {
+  position: relative;
+  height: calc(9 * var(--u));
+}
+
+damocles-panel[data-head-controls] #inventory-window[data-opens='true'] {
+  cursor: pointer;
+}
+
+damocles-panel[data-head-controls] #inventory-window[data-opens='true']:hover {
+  outline: var(--u) solid var(--st-e);
+  outline-offset: calc(-1 * var(--u));
+}
+
+damocles-panel .stack-rotate {
+  position: absolute;
+  top: 0;
+  width: calc(7 * var(--u));
+  height: calc(9 * var(--u));
+  padding: 0;
+  border: 0;
+  background: var(--inv-face);
+  color: var(--inv-lcd);
+  cursor: pointer;
+  font:
+    calc(8 * var(--u)) / 1 'Courier New',
+    monospace;
+  visibility: hidden;
+}
+
+damocles-panel .stack-rotate[data-rotate='forward'] {
+  left: 0;
+}
+
+damocles-panel .stack-rotate[data-rotate='backward'] {
+  right: 0;
+}
+
+damocles-panel #inventory-head:hover .stack-rotate {
+  visibility: visible;
+}
+
+damocles-panel .stack-rotate:hover {
+  color: var(--st-e);
 }
 
 damocles-panel .inventory-foot {

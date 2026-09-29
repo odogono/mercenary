@@ -1,7 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 
 import type { Mesh } from '../src/catalogue/data.ts';
-import { damoclesTakeTargetAt } from '../src/damocles/pointer.ts';
+import {
+  centreBoxPage,
+  damoclesTakeTargetAt,
+  wheelPage
+} from '../src/damocles/pointer.ts';
 import type { Selection } from '../src/damocles/session.ts';
 import type { ErisPlacement, Pose } from '../src/damocles/world.ts';
 import { Camera } from '../src/projection/index.ts';
@@ -142,5 +146,41 @@ describe('the Damocles pointer take target', () => {
     const drawn = drawnAt(tilted, { x: 0, y: 10, z: 100 }, size);
     expect(target(reachable, drawn, tilted)).toBe('object-slot-183');
     expect(target(reachable, { x: 512, y: 384 }, tilted)).toBeUndefined();
+  });
+});
+
+describe('the pointer’s document paging (#599)', () => {
+  test('pages the way the centre box’s − or + stands', () => {
+    expect(centreBoxPage(0, 64)).toBe('previous');
+    expect(centreBoxPage(31.9, 64)).toBe('previous');
+    expect(centreBoxPage(32, 64)).toBe('next');
+    expect(centreBoxPage(63, 64)).toBe('next');
+  });
+
+  test('turns a mouse notch into one page, down on and up back', () => {
+    expect(wheelPage(0, 100, 0)).toEqual({ gathered: 0, page: 'next' });
+    expect(wheelPage(0, -100, 0)).toEqual({ gathered: 0, page: 'previous' });
+    // A line or page delta is a notch however small.
+    expect(wheelPage(0, 3, 1)).toEqual({ gathered: 0, page: 'next' });
+    expect(wheelPage(0, -1, 2)).toEqual({ gathered: 0, page: 'previous' });
+  });
+
+  test('gathers a trackpad’s small deltas to one page at a time', () => {
+    let gathered = 0;
+    const pages: (string | undefined)[] = [];
+    for (let event = 0; event < 12; event += 1) {
+      const turned = wheelPage(gathered, 10, 0);
+      gathered = turned.gathered;
+      pages.push(turned.page);
+    }
+    expect(pages.filter(page => page === 'next')).toHaveLength(2);
+    expect(gathered).toBe(20);
+  });
+
+  test('starts afresh when the travel turns, and ignores a sideways scroll', () => {
+    expect(wheelPage(40, -10, 0)).toEqual({ gathered: -10, page: undefined });
+    expect(wheelPage(40, 0, 0)).toEqual({ gathered: 40, page: undefined });
+    // One event turns one page, however hard the flick.
+    expect(wheelPage(0, 400, 0)).toEqual({ gathered: 0, page: 'next' });
   });
 });

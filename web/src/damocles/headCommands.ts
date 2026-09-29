@@ -125,6 +125,16 @@ export const tickCentreBox = (state: HeadCommandState): HeadCommandState =>
             : { ...state.box, steps: state.box.steps - 1 }
       };
 
+/// Whether Open acts on `head`, the Carried Stack's head slot, once the transition allows a key:
+/// it has a document in the Open table and is not the shut NOVAGEN SAFE.
+export const opensHead = (
+  head: number | undefined,
+  documents: DamoclesDocuments
+): head is number =>
+  head !== undefined &&
+  head !== NOVAGEN_SAFE_SLOT &&
+  documentFor(documents, head) !== undefined;
+
 /// `$04D3D2` for the document mode. `head` is the Carried Stack's head slot, if it has one, and
 /// `readPending` is `$7B96`, which a Read waits on.
 export const headCommand = (
@@ -139,10 +149,7 @@ export const headCommand = (
     return IGNORED;
   }
   if (command === 'open') {
-    if (head === undefined || head === NOVAGEN_SAFE_SLOT) {
-      return IGNORED;
-    }
-    if (documentFor(documents, head) === undefined) {
+    if (!opensHead(head, documents)) {
       return IGNORED;
     }
     // `$04D282`: the original ignores Open on the object already open. Closing it here is one of

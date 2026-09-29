@@ -267,6 +267,21 @@ describe('Open', () => {
   });
 });
 
+describe('the pointer’s hover cue', () => {
+  test('says Open acts only on a head with a document', () => {
+    expect(carrying([DAMOCLES_FILE, LIMO_KEY]).headOpens).toBe(true);
+    expect(carrying([LIMO_KEY, DAMOCLES_FILE]).headOpens).toBe(false);
+    expect(carrying([NOVAGEN_SAFE]).headOpens).toBe(false);
+    expect(carrying([]).headOpens).toBe(false);
+  });
+
+  test('follows the head as the stack rotates', () => {
+    const session = carrying([LIMO_KEY, DAMOCLES_FILE]);
+    session.rotateForward();
+    expect(session.headOpens).toBe(true);
+  });
+});
+
 describe('Next and Previous', () => {
   test('step the item and wrap at both ends, the index to 8 on a backward wrap', () => {
     const session = opened(carrying([DAMOCLES_FILE]));

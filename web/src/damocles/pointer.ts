@@ -136,3 +136,40 @@ export const damoclesTakeTargetAt = (
     ? resident.id
     : undefined;
 };
+
+/// The pointer's paging of an open document (#599), an Accommodation the original has no
+/// pointer for. A click on the centre box pages the way its `−` or `+` stands: the left half
+/// back, the right half on. `x` and `width` are in any one unit.
+export const centreBoxPage = (x: number, width: number): 'next' | 'previous' =>
+  x < width / 2 ? 'previous' : 'next';
+
+/// Wheel travel, in CSS pixels, to one page. A mouse notch is about 100 and a trackpad sends
+/// many small deltas, so the travel is gathered and pages one at a time.
+export const WHEEL_PAGE_PIXELS = 50;
+
+/// `WheelEvent.deltaMode`'s line and page units, each of which is a notch on its own.
+const DOM_DELTA_PIXEL = 0;
+
+/// One wheel event over an open document: the page it turns, if any, and the travel gathered
+/// toward the next. Down pages on and up pages back. Travel the other way starts afresh, and
+/// one event turns one page at most, so a hard flick does not skip items unseen.
+export const wheelPage = (
+  gathered: number,
+  deltaY: number,
+  deltaMode: number
+): {
+  readonly gathered: number;
+  readonly page: 'next' | 'previous' | undefined;
+} => {
+  if (deltaY === 0) {
+    return { gathered, page: undefined };
+  }
+  const travel =
+    deltaMode === DOM_DELTA_PIXEL
+      ? (Math.sign(gathered) === Math.sign(deltaY) ? gathered : 0) + deltaY
+      : Math.sign(deltaY) * WHEEL_PAGE_PIXELS;
+  if (Math.abs(travel) < WHEEL_PAGE_PIXELS) {
+    return { gathered: travel, page: undefined };
+  }
+  return { gathered: 0, page: travel > 0 ? 'next' : 'previous' };
+};

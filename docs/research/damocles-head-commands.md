@@ -373,6 +373,34 @@ next Open resets them.
   computer options `$7C8C` and the safe gate `$7A60` are also inside the original Save, but
   they belong to the objects #595 does not port.
 
+## The pointer Accommodation
+
+The original has no pointer for the Carried Stack or its documents.
+[#599](https://github.com/odogono/mercenary/issues/599) adds one to the Damocles Session, as the
+#595 map decided. Each pointer action is a Semantic Action that a key already gives, so it adds
+nothing the keyboard lacks:
+
+| Pointer                                                      | Key         | Action                   |
+| ------------------------------------------------------------ | ----------- | ------------------------ |
+| The head's name on the inventory window                      | Enter       | Open                     |
+| ‹ and › over the ends of that name                           | `[` and `]` | Rotate the Carried Stack |
+| The centre box's left or right half, where `−` and `+` stand | `,` and `.` | Previous and Next        |
+| A click on the world view while a document is open           | `.`         | Next                     |
+| The wheel, down or up, over the world view or centre box     | `.` and `,` | Next and Previous        |
+| ✕ in the centre box's corner                                 | Escape      | Close                    |
+
+- **The hover cue.** The head's name is outlined under the pointer only while Open acts on it,
+  which is when its object has a document and is not the NOVAGEN SAFE.
+- **Clicks while a document is open.** They do not reach the pointer take on the world view.
+  The keyboard take still works.
+- **The controls stay out of the way.** ‹, › and ✕ show only while the pointer is over the name
+  or the centre box, so the name and title read whole otherwise.
+- **The controls never take the focus.** Enter and Space stay game keys.
+- **The wheel.** It pages one item a notch. A trackpad's small deltas are gathered 50 pixels to
+  a page.
+- **Where the controls appear.** The panel draws them only with `data-head-controls`, which only
+  `/damocles` sets. The renditions that dress Targ data have none.
+
 ## Unresolved
 
 - **What closed the DAMOCLES FILE in the player's memstates.** 24 of the 28 hold the file

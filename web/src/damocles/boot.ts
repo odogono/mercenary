@@ -54,7 +54,7 @@ import { FLOATS_PER_VERTEX, planErisFrame } from './frame.ts';
 import { classifyPosition } from './islands.ts';
 import { erisLighting } from './lighting.ts';
 import { damoclesPanelViewModel } from './panel.ts';
-import { damoclesTakeTargetAt } from './pointer.ts';
+import { centreBoxPage, damoclesTakeTargetAt, wheelPage } from './pointer.ts';
 import { ErisRenderer } from './renderer.ts';
 import {
   createDamoclesResumePersistence,
@@ -797,19 +797,25 @@ try {
     opening: 'none'
   });
 
-  const pointerTakeTarget = (event: MouseEvent): string | undefined => {
+  /// Whether a pointer action may reach the session: the same gate a key meets on its way to the
+  /// game.
+  const pointerMayAct = (): boolean => {
     const state = routerState();
+    return (
+      !state.chromeFocus &&
+      state.console === 'closed' &&
+      state.layer === 'none' &&
+      ownership.mayAdvance()
+    );
+  };
+
+  const pointerTakeTarget = (event: MouseEvent): string | undefined => {
     const pointer = canvasPointer(canvas, {
       x: event.clientX,
       y: event.clientY
     });
-    if (
-      state.chromeFocus ||
-      state.console !== 'closed' ||
-      state.layer !== 'none' ||
-      pointer === undefined ||
-      !ownership.mayAdvance()
-    ) {
+    // While a document is open the world view's clicks page it, so nothing there is a take.
+    if (pointer === undefined || !pointerMayAct() || session.documentOpen) {
       return undefined;
     }
     return damoclesTakeTargetAt(
@@ -833,13 +839,101 @@ try {
     delete canvas.dataset['takeTarget'];
   });
   canvas.addEventListener('click', event => {
-    if (event.button !== 0 || pointerTakeTarget(event) === undefined) {
+    if (event.button !== 0) {
+      return;
+    }
+    if (session.documentOpen) {
+      if (pointerMayAct()) {
+        commitAction(() => session.headCommand('next'));
+        event.preventDefault();
+      }
+      return;
+    }
+    if (pointerTakeTarget(event) === undefined) {
       return;
     }
     take();
     delete canvas.dataset['takeTarget'];
     event.preventDefault();
   });
+
+  // The pointer Accommodation for the Carried Stack and its documents (#599). Each is a Semantic
+  // Action a key already gives: the head's name is Enter, ‹ and › are `[` and `]`, the centre
+  // box's halves and the wheel are `,` and `.`, and ✕ is Escape.
+  const centreCanvas = panelElements.damoclesCentreBox;
+  const inventoryWindow =
+    panelRoot.querySelector<HTMLElement>('#inventory-window')!;
+  const centreClose = panelRoot.querySelector<HTMLButtonElement>(
+    '#damocles-centre-close'
+  )!;
+  inventoryWindow.addEventListener('click', event => {
+    if (event.button === 0 && pointerMayAct()) {
+      commitAction(() => session.headCommand('open'));
+    }
+  });
+  for (const button of panelRoot.querySelectorAll<HTMLButtonElement>(
+    '.stack-rotate'
+  )) {
+    // A pressed button would keep the focus, and Enter or Space would then press it again.
+    button.addEventListener('mousedown', event => event.preventDefault());
+    button.addEventListener('click', () => {
+      if (pointerMayAct()) {
+        commitAction(() =>
+          button.dataset['rotate'] === 'forward'
+            ? session.rotateForward()
+            : session.rotateBackward()
+        );
+      }
+    });
+  }
+  centreClose.addEventListener('mousedown', event => event.preventDefault());
+  centreClose.addEventListener('click', () => {
+    if (pointerMayAct()) {
+      commitAction(() => session.closeDocument());
+    }
+  });
+  centreCanvas.addEventListener('click', event => {
+    if (event.button !== 0 || !session.documentOpen || !pointerMayAct()) {
+      return;
+    }
+    const bounds = centreCanvas.getBoundingClientRect();
+    commitAction(() =>
+      session.headCommand(
+        centreBoxPage(event.clientX - bounds.left, bounds.width)
+      )
+    );
+  });
+  let wheelTravel = 0;
+  const pageByWheel = (event: WheelEvent): void => {
+    if (!session.documentOpen || !pointerMayAct()) {
+      wheelTravel = 0;
+      return;
+    }
+    event.preventDefault();
+    const turned = wheelPage(wheelTravel, event.deltaY, event.deltaMode);
+    wheelTravel = turned.gathered;
+    if (turned.page !== undefined) {
+      const page = turned.page;
+      commitAction(() => session.headCommand(page));
+    }
+  };
+  canvas.addEventListener('wheel', pageByWheel, { passive: false });
+  centreCanvas.addEventListener('wheel', pageByWheel, { passive: false });
+  /// The cues: the head's name is outlined under the pointer when Open acts on it, and ✕ shows
+  /// only while a document is open.
+  const drawHeadControls = (): void => {
+    const opens = String(session.headOpens);
+    if (inventoryWindow.dataset['opens'] !== opens) {
+      inventoryWindow.dataset['opens'] = opens;
+    }
+    const open = session.documentOpen;
+    if (centreClose.hidden === open) {
+      centreClose.hidden = !open;
+    }
+    if (centreCanvas.dataset['open'] !== String(open)) {
+      centreCanvas.dataset['open'] = String(open);
+    }
+  };
 
   window.addEventListener('keydown', event => {
     switch (routeKey(routerState(), event)) {
@@ -1126,6 +1220,7 @@ try {
     panel.draw(
       damoclesPanelViewModel(snapshot, content.doc, controls.intent.running)
     );
+    drawHeadControls();
     expose(
       plan.triangleCount,
       plan.drawnPlacements,
