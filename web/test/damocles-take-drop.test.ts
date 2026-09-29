@@ -572,6 +572,12 @@ describe('ordinary Eris limo-key take and drop', () => {
       'object-slot-183'
     ]);
     session.advance(16 / 50);
+    expect(session.snapshot.inventoryLabel).toBe('SUNSHADE');
+    // Head Commands are bound but not yet given behaviour (#598), so none changes the head.
+    for (const command of ['open', 'read', 'next', 'previous'] as const) {
+      expect(session.headCommand(command)).toEqual({ kind: 'ignored' });
+    }
+    expect(session.snapshot.inventoryLabel).toBe('SUNSHADE');
     expect(session.drop()).toEqual({ kind: 'dropped' });
     expect(session.snapshot.carried).toEqual(['object-slot-183']);
     expect(

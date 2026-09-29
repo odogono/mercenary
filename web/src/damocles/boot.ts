@@ -87,6 +87,9 @@ import { damoclesTitle } from './title.ts';
 /// Loads none of Targ's Data Payload. System Menu, Saves, Shell Console and the audio transport
 /// are the shared Browser Shell host; Arrival, Departure, Benson and the SID stay in Targ's boot.
 
+/// The Catalogue instance of the DAMOCLES FILE, resident slot 151.
+const DAMOCLES_FILE = 'object-slot-151';
+
 const surface = document.getElementById('game-surface')!;
 const chrome = installShellChrome(surface, {
   atlasLabel: 'Gamma Atlas',
@@ -296,9 +299,22 @@ try {
     sound.present(effects, snapshot.elapsed);
   };
 
+  // Both take paths, the key and the pointer, come through here. Taking the DAMOCLES FILE shows
+  // its recovered keypad instructions (trigger 6); the notice names the keys a laptop has.
+  const take = (): void =>
+    commitAction(() => {
+      if (
+        session.take().kind === 'took' &&
+        session.snapshot.carried[0] === DAMOCLES_FILE
+      ) {
+        notices.headCommandKeys();
+      }
+    });
+
   const controls = new BrowserControlProfile({
     drop: () => commitAction(() => session.drop()),
     fire: () => undefined,
+    headCommand: command => commitAction(() => session.headCommand(command)),
     leaveCraft: () => commitAction(() => session.leave()),
     liftKey: floor => {
       if (!session.inLift) {
@@ -322,7 +338,7 @@ try {
     press: () => undefined,
     reach: action => {
       if (action === 'take') {
-        commitAction(() => session.take());
+        take();
       } else if (action === 'board') {
         commitAction(() => session.board());
       }
@@ -331,6 +347,12 @@ try {
     launch: () => commitAction(() => session.launchCraft()),
     // Targ's single lift key. A Damocles Lift is ridden by the Floor keys, through `liftKey`.
     rideLift: () => undefined,
+    rotateStack: direction =>
+      commitAction(() =>
+        direction === 'forward'
+          ? session.rotateForward()
+          : session.rotateBackward()
+      ),
     // The throttle keys as the ST scancodes the table at `$0557D6` is indexed by: `1`–`9`
     // are `$02`–`$0A`, `0` is `$0B`, `F1`–`F10` are `$3B`–`$44` and Space is `$39` (#556).
     shutThrottle: () => commitAction(() => session.throttleKey(0x39)),
@@ -804,7 +826,7 @@ try {
     if (event.button !== 0 || pointerTakeTarget(event) === undefined) {
       return;
     }
-    commitAction(() => session.take());
+    take();
     delete canvas.dataset['takeTarget'];
     event.preventDefault();
   });
