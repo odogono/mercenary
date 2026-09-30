@@ -265,8 +265,8 @@ $P $E --case unravel --space --snapshot $S/dion-north-airborne.sav --samples 280
    `d6`. The blast radius is `$40` << digit, `$8000` at 9. Inside a structure with `$7A5A` set,
    the test is the region byte instead of the distance. The kill destroys the blast's Body
    through the dispatcher with `$7A7A` = `$FFFF`. From the code, that skips the explosion's own
-   death test at `$04CBA8`, and a player on that Body dies through the marker instead. That was
-   not run.
+   death test at `$04CBA8`, and a player on that Body dies through the marker instead. #649 ran
+   it (below).
 6. **The drifted comet's path** is the page 5 row above. It confirms, at the Hatari's own
    `$7A84`, the latch #625 fitted `cometCentre` to.
 
@@ -287,7 +287,8 @@ $P $E --case unravel --space --snapshot $S/dion-north-airborne.sav --samples 280
   unravelling's cursor `$7A8C` and the AUTHORS COMPUTER's association, the NOVABOMB's association
   and the switch bits `$7872`, and the triggers already spent. The AUTHORS COMPUTER adds its
   option records `$7C8C`, the panel mask `$7A52` and the view exponent `$7964`. An armed
-  EXPLOSIVE adds `$7A54`, `$7A5C`, `$7866` and `$7868`. The open panel `$785E`–`$7865` is
+  EXPLOSIVE adds `$7A54`, `$7A5C`, `$7866` and `$7868`. A blast's structure damage adds the
+  table `$636A`–`$639F`, as #649 found. The open panel `$785E`–`$7865` is
   already in the Save ([#596](damocles-head-commands.md)).
 - **Switch bits outlive the switch.** A port must keep `$7872` per bit, not per carried
   object, because a detonator can be switched on and put down. Whether the MAGIC CRYSTAL is held
@@ -316,8 +317,9 @@ Read from the pinned first-world RAM for [#635](https://github.com/odogono/merce
   instead of stepping the debris.
 - **`$04CB60`** first rebuilds object slot 29 as the player proxy (`$058FB0`). It takes the
   pose's X and Z, its Y − `$3F`, the Body byte `$7AC9`, and `$7AFD` as the region byte, which is
-  0 unless the player is on foot (`$7AAE` = 1) with bit 14 of the region flags `$7B34` clear. The
-  proxy's cell byte `$73AB` is never written.
+  0 unless the player is on foot (`$7AAE` = 1) with bit 14 of the region flags `$7B34` clear. Its
+  last instruction, `$059000`, writes the current cell `$7B5D` to the proxy's cell byte `$73AB`.
+  #635's hashed range stopped one instruction short of it, and read the byte as never written.
   - *Carried* (bit 7 of `$6FAA`): the EXPLOSIVE leaves the Carried Stack (`$04CAF0`). `$05A928`
     computes `$7A5A`, string 34 is asked for, and the blast goes off at the proxy.
   - *Placed*: it goes off where it lies.
@@ -336,6 +338,7 @@ Read from the pinned first-world RAM for [#635](https://github.com/odogono/merce
   - The spray `$04CCA0` follows, with elevation mask `$FF` and the fall `$FFFFD8F0`. Then
     `$04CCD2` seeds 64 particles from 192 noise words and `$7834` = 64. A carried EXPLOSIVE
     leaves the proxy cleared, so `$7A7A` is 0 and the player always dies.
+  - #649 decodes the entry, the flash word and what follows the reload (below).
 - **The test `$04CA20`** walks slots `$FF` down to 0, skipping slot 74 and any slot whose Body
   byte differs from the centre's. The reach is `$40` << the charge.
   - With `$7A5A` set, a slot whose region byte `$73A9` is not 0 is in reach when its cell byte
@@ -355,9 +358,189 @@ Read from the pinned first-world RAM for [#635](https://github.com/odogono/merce
   - Otherwise it is set if the player stands within `$10` << the charge of the bound Building
     detail's extent rectangle `[$7910]`, measured as the larger of the X and Z word gaps. A cell
     without an extent counts as gap 0.
-- **The player in a structure** carries region byte `$7AFD` and cell byte 0 in the proxy. So a
-  blast with `$7A5A` set reaches that player only when the centre's cell byte is 0. That is read
-  from the code and was not run.
+- **The player in a structure** carries region byte `$7AFD` and the current cell `$7B5D` in the
+  proxy. So a blast with `$7A5A` set reaches that player whenever the player stands in the
+  centre's cell, at any distance. #635 read the cell byte as 0, and #649's run corrects it.
+
+## Live runs for #649
+
+[#649](https://github.com/odogono/mercenary/issues/649) ran #635's decode against Hatari on
+2026-09-30. `endgame-probe.py` gained a `detonator` case, which arms an EXPLOSIVE through the
+TIMED DETONATOR's own keys instead of poking `$7A54`. It carries the TIMED DETONATOR (slot 145)
+and EXPLOSIVE 75 by #626's injection, and then presses:
+
+- Enter, which opens the panel (`$785E` = `$91030000`, mode 3);
+- a keypad digit, the charge;
+- `+` once per 5 s of fuse;
+- → until the EXPLOSIVE is at the head;
+- `*`, which arms it;
+- ↓, which drops it (with `--drop`).
+
+The options are these:
+
+- `--disarm` presses `*` twice more (disarm, re-arm).
+- `--diagonal` moves EXPLOSIVEs 76–79 to offsets around the dropped one.
+- `--move-player` pokes the pose's X high word off after the drop, so the player outlives the blast
+  and Hatari keeps running. `--return-player` pokes it back after the debris.
+- `--teleport` pokes the pose's X and Z high words before anything else.
+- With 3 s left, three `:trace` breakpoints go in: the deadline's `$7834` = −1 (`$04DAEE`), the
+  main loop's once-a-pass `$7834` test (`$059506`) and the blast (`$04CB60`).
+- `--capture` replaces the traces with a one-shot savebin at the blast test's entry (`$04CA20`),
+  and another after it (`$04CC26`).
+
+An object's position long is in the pose high word's units, which are also the reach's units:
+EXPLOSIVE 75 dropped at pose X `$8793` reads `$0CB68793`. The ERIS arrival spot refuses a Drop,
+so the drops are in:
+
+- `dion-2-3`, outdoors, post-impact;
+- `gaea-ur-city-4-2`, outdoors;
+- `dion-transporter`, inside a structure, region 4, cell `$E3`;
+- `vesta-parliament-4-6`, poked into the Parliament door's Proximity Box.
+
+Every run used no fast-forward and samples about a second apart. Each run's 35 code windows hash
+to the pinned first-world RAM's.
+
+| Case | Start | Keys, pokes | Result |
+| --- | --- | --- | --- |
+| `explosives --count 8` | `eris-spaceport-onfoot`, on ERIS | as #626 | ERIS is destroyed (`$7BEA` = 1) with `$7A7A` = `$FFFF`, and the player dies (`$7A64` = 1) with YOU WERE TOO CLOSE - YOU'VE BEEN BLOWN UP (`$23`). The flash word reads `$AA00`, which is `$AAAA` eight VBLs on (`$04CBCC`). The Script PC stays at `$071946`, `$13`'s first op, as with #626's carried NOVABOMB. `$7AA6` then reads `$78`, VOID. |
+| `detonator --charge 6 --fuse 15 --disarm --drop --diagonal --move-player 0x2000` | `dion-2-3` | EXPLOSIVEs 76–79 at (0.9, 0, 0.9), (−0.9, 0, 0.9), (0.9, 0.9, −0.9) and (1.1, 0, 0) × the reach `$1000` | `+` × 3 gives `$786A` = 5, 10, 15. `*` arms it: `$7868` = 6,170, the label reads EXPLOSIVE-ARMED! and the model word is `$32CA`. The second `*` disarms it: `$7A54` = 0, EXPLOSIVE, `$3256`, and `$786A` keeps the 14 s left. The third re-arms it with `$7868` = 6,171 = the clock's 6,157 + 14. The drop leaves `$7A5A` = 0. The panel counts down a second at a time. The trace reads 14 passes, the deadline, **one pass**, the blast. EXPLOSIVEs 75–78 are cleared, and 79 is kept. |
+| `detonator --charge 7 --drop --move-player 0x4000` | `dion-2-3` | | `$7A5A` = `$FF00`. The blast adds `02 32 0000 00 00` at `$636A`. |
+| `detonator --charge 7 --drop --move-player 0x4000` | `gaea-ur-city-4-2` | | `$7A5A` = 0. No entry. |
+| `detonator --charge 8 --drop --move-player 0x6000 --return-player` | `gaea-ur-city-4-2` | | `$7A5A` = `$FF00`. The entry `07 24 0000 00 00` is added. Cell `$24`'s workspace long `$AC6C` goes from `$00AEF552` to `$0000F552`, keeping its dx/dz bytes. Back at the drop spot (`016-drop` against `037-fuse-019`) the building is gone and the ground is left. |
+| `detonator --charge 4 --drop --capture` | `dion-transporter` | | `$7A5A` = `$FF00`. Slot 34 (region 3, cell `$E3`) is cleared, though it is `$4B0` off on one axis against a reach of `$400`. Slot 66 (region 4, cell `$E3`) is cleared too. Slot 6 (region 0, cell `$E3`, `$5FC` off) is kept. At `$04CA20` the proxy `$741C` reads `$100401E3`, so its cell byte is `$7B5D` = `$E3`. After the test it is 0. `$7A7A` = 0, and the player dies with `$23`. The flash word at `$04CA20` is `$FFFA`. The entry is `02 E3 0000 00 00`. |
+| `detonator --charge 3 --drop --teleport 0x8000,0x87c3 --move-player 0x300 --return-player` | `vesta-parliament-4-6` | inside door `$3EC`'s Proximity Box (key slot 34) | The drop gives `$7A56` = `$03EC0022`, and `$7A5A` = 0 at charge 3. The blast adds `05 64 8022 00 EC`. The door's key byte `$5E2F` goes from 34 to 0, and its label byte `$CD3F` from `$45` to `$DF`. Cell `$64`'s word does not change. |
+| `detonator --charge 4` | `dion-transporter` | not dropped | The EXPLOSIVE leaves the Carried Stack. `$7A5A` = `$FF00`, from the proxy's region 4. The blast adds `02 E3 0000 00 00`, and the player dies. |
+
+```sh
+P=research/damocles-st/.venv/bin/python; E=research/damocles-st/scripts/endgame-probe.py
+S=research/damocles-st/snapshots/rehosted; C="--no-fast-forward --interval 1"
+$P $E --case explosives --count 8 --seconds 3 --snapshot $S/eris-spaceport-onfoot.sav --samples 8 $C
+$P $E --case detonator --charge 6 --fuse 15 --drop --disarm --diagonal --move-player 0x2000 \
+  --snapshot $S/dion-2-3.sav --samples 22 $C
+$P $E --case detonator --charge 7 --fuse 10 --drop --move-player 0x4000 \
+  --snapshot $S/dion-2-3.sav --samples 16 $C
+$P $E --case detonator --charge 7 --fuse 10 --drop --move-player 0x4000 \
+  --snapshot $S/gaea-ur-city-4-2.sav --samples 16 $C
+$P $E --case detonator --charge 8 --fuse 10 --drop --move-player 0x6000 --return-player \
+  --snapshot $S/gaea-ur-city-4-2.sav --samples 20 $C
+$P $E --case detonator --charge 4 --fuse 10 --drop --capture \
+  --snapshot $S/dion-transporter.sav --samples 12 $C
+$P $E --case detonator --charge 3 --fuse 10 --drop --teleport 0x8000,0x87c3 --move-player 0x300 \
+  --return-player --snapshot $S/vesta-parliament-4-6.sav --samples 20 $C
+$P $E --case detonator --charge 4 --fuse 10 --snapshot $S/dion-transporter.sav --samples 16 $C
+```
+
+Two Hatari runs at once sometimes miss the probe's 6 s wait for a savebin
+(`sample … read 0 bytes`). Run them one at a time if that happens.
+
+### Answers for #649
+
+1. **The planet kill with the player on the Body** shows `$23`, YOU WERE TOO CLOSE - YOU'VE BEEN
+   BLOWN UP. `$7A7A` = `$FFFF` skips the blast's own death test. The marker at `$04C9F2` then
+   finds the player on the destroyed Body and takes the shared death `$04CBAE`, with `$23` and
+   the `$AAAA` flash. `$13` is launched, and the death loop holds it at its first op.
+2. **The cell test `$7A5A`** is set exactly where #635's decode says. The measurements are:
+   - Inside `dion-transporter`, at charge 4: set.
+   - Outdoors on `dion-2-3`, 1,172 from the extent: clear at charge 6 (`$10` << 6 = 1,024) and
+     set at 7 (2,048).
+   - Outdoors on `gaea-ur-city-4-2`, 2,767 away: clear at 7 and set at 8.
+
+   `$7A5A` is a byte, so a set test reads `$FF00` as a word. A structure resident in the centre's
+   cell is cleared at any distance. Slot 34 lay outside the box and went. A slot whose region
+   byte is 0 keeps the box test even in that cell, as slot 6 did.
+3. **The player inside a structure in a cell-test blast dies whenever the player stands in the
+   centre's cell.** The proxy's cell byte is written after all: `$059000` copies `$7B5D`, the last
+   instruction of `$058FB0`. #635 read the byte as never written because its hashed range ends at
+   `$059000`. From the code, a player in another cell survives at any distance. That was not
+   run.
+4. **The reach is a box.** Objects at 0.9 × the reach on two axes and on all three were cleared,
+   at 1.27 and 1.56 × the reach in distance. The control at 1.1 × on one axis was kept.
+5. **The countdown and the pending blast.**
+   - `$786A` counts down once a second while armed, and the panel shows it (`0:01`, then `0:00`).
+   - `$7834` = −1 lasts exactly one main-loop pass. In each of the six traced runs, one hit of
+     `$059506` falls between `$04DAEE` and `$04CB60`.
+   - `*` on the armed EXPLOSIVE disarms it. `$786A` keeps the seconds left, so a re-arm uses
+     those, not the fuse that was keyed.
+6. **What the port still skips** is below.
+
+### The structure damage, the flash, the name and the sound
+
+- **The damage table** is at `$636A`: nine entries of six bytes. `$04CC48` stops at the first
+  free entry, and with all nine used it overwrites the ninth. An entry is written only at charge 3
+  or more, with the centre's structure byte (`$6FA9`, a Drop's `$794F`) and cell byte both
+  non-zero. Its kind depends on `$7A5A`:
+  - **`$7A5A` set:** `[group, cell, $0000, 0, 0]`, and the centre's region byte `$74D1` is
+    cleared. Each workspace load (`$04EB60`) zeroes the 256 cell longs at `$ABDC`, replays the
+    authored overrides, and then writes each matching entry's word to its cell (`$04ED4A`). So the
+    structure in that cell is removed, and the ground stays. The gaea-8 run shows it.
+  - **`$7A5A` clear, with the player in a door's Proximity Box at the drop:**
+    `[group, cell, $8000 | key slot, level, door slot × 4]`. `$05A928`'s tail finds the door: the
+    first attachment from `$3FC` down with a key byte `$5A43` whose box holds the player, into
+    `$7A56` (slot × 4) and `$7A58` (its key). The loader skips an entry with a negative word. The
+    door builder `$059E9E` matches it on group, level and door slot (its cell compare at
+    `$059F7A` is dead, because `$059F7E` retests the flags). It then leaves the key byte 0 and
+    writes the label glyph `$DF` into `$CD35` − the slot sign-extended ÷ 2. A key byte of 0 opens
+    the door without its key (`$05AA82` → `$05ABF6`).
+  - Otherwise, including `$7A5A` clear with no door, nothing is added and nothing is reloaded.
+
+  After an entry, `$054B2E` rebinds the current cell, so the change shows at once. The Save
+  (`$055422`) and the Load (`$0552CE`) copy `$6140`–`$7E17`, which covers the table. Nothing else
+  writes it or clears it, and a Load replays it through `$058E34` → `$04EB60`. **So a port Save
+  has to carry the table.** A carried blast makes entries too, because its centre is the proxy
+  and carries `$7B5D`.
+- **The flash by charge reads code.** `$04CBEC` is `move.w $4CC4C(pc,d0.w)`, and its 8-bit
+  displacement `$5E` is the truncated −`$A2`. The table the code means, `$8000 $A000 … $EEEE`,
+  is at `$04CB4C`–`$04CB60`, and nothing reads it. Instead the ST reads the code words at
+  `$04CC4C`. At charge 4 the run above caught `$FFFA`, not `$CCAA`.
+
+  | Charge | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+  | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+  | Word read | `$7008` | `$5C48` | `$4A10` | `$57C8` | `$FFFA` | `$4A78` | `$7A5A` | `$6B1A` | `$3038` | `$7A56` |
+
+  The VBL (`$051D74`) shifts the word left once a VBL. On a carry out it sets colour 0 to black
+  and colours 1–15 to `$777` for that VBL, and it skips the tick `$51D26` while the word is
+  non-zero. Timer B still gives the panel its own palette, so only the view flashes. The word is
+  written only when the centre is on the player's Body, at any distance. A caught player's
+  `$AAAA` overwrites it in the same pass. The marker writes `$CA00` for every Body it destroys
+  (`$04C9A0`).
+- **The armed name.** `$4BD10` points at the object model table `$035700`. `*` copies model
+  257 (`+$404`, offset `$32CA`) into the EXPLOSIVE's entry to arm it, and model 256 (`+$400`,
+  `$3256`) to disarm it. The name is the 16 bytes before a model: `   EXPLOSIVE    ` at
+  `$038946`, `EXPLOSIVE-ARMED!` at `$0389BA`. `$04DE9A` then copies the head's name into the
+  inventory label, so the carried EXPLOSIVE reads EXPLOSIVE-ARMED! while armed (seen in the
+  box run). The two models share their vertices, and their faces differ. The model table is
+  outside the Save. After a Load, `$058E60` resets slots 75–82 to model 256, but not slot 83
+  (the loop ends at `$14C`). It re-arms `$7A5E` if `$7A54` is set.
+- **After the blast**, `$052C9C` rebuilds the surface resident list `$7D19` from the slots whose
+  Body is the player's and whose region byte is 0. That drops the cleared objects, and takes in
+  slot 74 if `$74D1` was cleared. On foot, `$05A30E` re-resolves the player's region and clears
+  every resident's draw membership, so that the queue `$05A3DE` rebuilds without the cleared
+  residents.
+- **The sound.** The deadline queues `$04C5A8`: `$7A78` = `$1F`, envelope `$3FFF`, then the noise
+  tail `$04C5C6`. The next pass's carried path replaces it with `$04C700`: `$7A78` = `$47`,
+  envelope `$8F00`, the same tail. A caught player gets `$04C700` again (`$04CBB6`).
+
+### Mismatches with the port, for #650
+
+- **The player proxy's cell** (`session.ts`, `playerProxy`) is 0, and should be the current cell
+  `$7B5D`. With the port's 0, a player in the centre's cell survives a cell-test blast. And a
+  carried blast's centre, which is the proxy, tests residents against cell 0.
+- **The damage table is not ported.** That covers both kinds of entry, the replay on every
+  workspace load, and its place in the Save. The ninth entry is overwritten when the table is full.
+- **The door entry is not ported**: the key byte cleared and the `$DF` label.
+- **The flash by charge is not ported.** The port flashes only `$AAAA`, the TOLOSA kill and the
+  zap. It needs the code words above, on the player's Body only. The marker's `$CA00` is
+  missing as well.
+- **The armed name and model are not ported.** The label should read EXPLOSIVE-ARMED! and the
+  armed model should be drawn while `$7A54` is set. A Load resets slots 75–82 only.
+- These match the port already:
+  - the box reach;
+  - the cell test and the box test for a region-0 slot in the same cell;
+  - the `$7A5A` thresholds;
+  - the one pending pass;
+  - a re-arm using the seconds left;
+  - the `blast` and `blown-up` cues and their order;
+  - the planet kill's `$23` through the marker.
 
 ## Unresolved
 
@@ -367,12 +550,14 @@ Read from the pinned first-world RAM for [#635](https://github.com/odogono/merce
 - **The AUTHOR'S CHAIR was not boarded in play.** The computer run stands in `$7AB0` = 14 for the
   one Enter. What else boarding the chair writes, and whether a seated player can walk, was not
   run.
-- **A player on a Body destroyed by stacked EXPLOSIVEs** is expected to die through the marker,
-  from the code. Not run.
-- **The TIMED DETONATOR's remaining writes** are decoded above but not ported. These are the
-  structure-damage entry at charge 3 or more, the flash word by charge, the armed descriptor
-  (EXPLOSIVE-ARMED!), and `$052C9C` and `$05A30E` after the blast. None of the decode above was
-  run live.
+- **A blown door was not walked through.** #649's door run shows the entry, the key byte
+  cleared and the label changed. That the door then opens without its key (`$05ABF6`) is read
+  from the code. What glyph `$DF` looks like was not decoded.
+- **The door run's view is not evidence.** Its player was poked into the door's Proximity Box,
+  and a poked pose leaves the view stale until the blast's reload rebinds the cell. With the
+  player poked `$1000` away, the building left the view even though its cell word did not
+  change. With the player `$300` away it stayed. A charge 2 control, with no entry and no
+  reload, kept it too.
 - **System string `$10`, GAME SAVE NOT A WINNING SUITUATION**, is a Load refusal at `$05517E`
   when a field of the loaded file is not 7. It is not an ending. The field was not decoded.
 
@@ -412,9 +597,35 @@ Half-open ranges in the pinned first-world RAM
 | `$058F78`–`$058F88` the pose record copy to `$7A8E` | `42672a59a4fba45ad2de3422c5d2eb5ad386dfe09c9ff114b02f37a043e75fdd` |
 | `$0541BA`–`$0541E0` the blast's box test | `074be82f6b42b019ffbcedba7daae670384559339e6d2e4ef692179c6e3d372b` |
 | `$0546F0`–`$054740` a Drop's Association B and `$7A5A` | `3584c37f41ecac6d6f9dd47d217ee73c7b931fc4ed09592396980fc59f2fa957` |
-| `$058FB0`–`$059000` the player proxy, slot 29 | `be05fc1d7db869999ba60de4f917d03e31ff1be5992b10422e3497094528e4ef` |
+| `$058FB0`–`$059000` the player proxy, slot 29, less its last instruction | `be05fc1d7db869999ba60de4f917d03e31ff1be5992b10422e3497094528e4ef` |
 | `$05A928`–`$05A9D8` `$7A5A` and the blast's region | `fac8f1e0f40972710b5316440e57295be4705ee3a1a6ad4a6a7c0e7a79367cd8` |
 | `$070C3C`–`$070E22` scripts `$01` and `$1A` | `c2d07e3d27b4752522961ae37d23522df4b2ef187566530141efb3608d4a625d` |
+| `$058FB0`–`$059006` the player proxy, with its cell byte | `7aa873373a481ddd6c3352c3f78f5d131a208199841393cb2cc9e42d75b4ba3d` |
+| `$0546CC`–`$054744` a Drop's bytes, `$05A928`, `$05A30E` and `$052C9C` | `6e17bc5b69f448eb8c50759b606641b088975e241af5102d08be1ec9562c1b85` |
+| `$04CBDA`–`$04CCA0` the blast centre, flash, damage entry and after-blast calls | `855c0e804a03fddafdb429722fcb8f3b4811c4b0c5855d32f805ccc73c941d4c` |
+| `$04CB4C`–`$04CB60` the flash table no code reads | `9ec35e9543cea166871db9cec4d8e3fa089446d60168cb5aed23b2c893318a5f` |
+| `$04CC4C`–`$04CC60` the code words the flash read lands on | `59175b7fb52750b98a8372b250458b8183859146ed8d82beb63638b5895a6f12` |
+| `$051D74`–`$051D96` the VBL flash | `5ed11f8e01b8a1b6f60b717e714a99f262213527b0223257c4bd72d321d05dba` |
+| `$051D9A`–`$051DD6` the VBL's flash test | `9240ff72597c6b0546bdecb5d5c55faac7e7106e49ce3fec0f2fef1dc98b646f` |
+| `$04C98E`–`$04C9A8` the marker's `$CA00` flash | `57212a6dbf1f1dd53f9896c778667bfb396572ce5df24daf1738af3ce339de8c` |
+| `$04EC94`–`$04ED74` cell overrides and the damage replay | `cb17aab3a566b29143e08f6b81f8c4590cb41f539a0010eca5a7d7c509324ebd` |
+| `$059E9E`–`$059FCA` door attachments and the `$DF` label | `2a2deb92d1edb35750a3f09aab31d3ea9502d32915848ee7ee04f3c05c07e1ff` |
+| `$05A0A8`–`$05A0D0` a door's Proximity Box | `f5afcbeb221845d1864375df1d44a499ac84ae7efd6ae2e0fefc53a4e99f495c` |
+| `$05AA3C`–`$05AAA0` the door key test | `579160e2fc8163519b6848db928e1a666c1841d2f248a4ac4b6994f1fa89e1a4` |
+| `$054B2E`–`$054BF8` the cell rebind after the reload | `22f3caeac48327f762de1fecd2503163123afd9483270fb63c18c0715473fcc1` |
+| `$052C9C`–`$052CDC` the surface resident list | `1668c22282110f270f27986e8deba9d90aa85783b905bd9d584f23c034e006ec` |
+| `$05A30E`–`$05A3DE` the region resolve | `a66ed42e20865d824b72b4b8057529aded4ed7b8d751801a5c1add4d931a77f9` |
+| `$04DE9A`–`$04DECE` the inventory label | `9d5e3819bbecd9c912bad328d4f67f5cddb5d7f2f884de1bbe722bd85b2ac8bd` |
+| `$058E34`–`$058E90` the reload and model reset after a Load | `bf6f52ac2818a9de72345fcb21d5328f54176b64a0c840a47e75e665f305940e` |
+| `$0552A4`–`$0552DA` the Load's copy to `$6140` | `a6537986c3cf6128e95d3efe049172491473a3b6cd73fa2443231d82ab63a5ad` |
+| `$055422`–`$05543A` the Save's range | `c6a36f5087ad92df22f0e56b0b91bd97d3e59ce5a4bde1fb03532ed345f77e13` |
+| `$035B00`–`$035B08` EXPLOSIVE models 256 and 257 | `16c8de321e79a6a55da9f271461ee5b9f0e6461ecb48d81711a4bb8f322e5b3a` |
+| `$038946`–`$038956` the name `   EXPLOSIVE    ` | `c7c56e9dc666019f6ff05d6b5e9f1a323dd732e4ee3ee187ea63812f2c59e372` |
+| `$0389BA`–`$0389CA` the name `EXPLOSIVE-ARMED!` | `32169afd4e0d4be4d5b3bcc29359361e8b1352616a82d29bd0d7719b7bded17b` |
+| `$04C5A8`–`$04C610` the blast sound programme | `320471f4c28b9b7e64e17d978deb1405c6b77cc8e2ea350a0fc0033829474fbd` |
+| `$04C700`–`$04C722` the blown-up sound programme | `aa94578e6b00daf3400adc70e35a2456b704c1e90af468baef93e3fc6db90841` |
+| `$0594F0`–`$059512` the main loop's `$7834` test | `ee735964e6162ee644215680ea032bcf88de512a9c8d2cc0ee7fdac986cc1c4e` |
+| `$05220E`–`$052228` the countdown call | `bcf9e9c5b871fef1aa9427f31806c44cbddf39b85a0b517de4654280609f0583` |
 
 ## Research Provenance
 
@@ -433,3 +644,19 @@ Half-open ranges in the pinned first-world RAM
   `endgame-switches-20260929T163129Z-2ee374c6` lost keys to the panel transition, and
   `endgame-computer-20260929T163831Z-3135ff1c` and `…163956Z-b6e07f57` poked `$7A90`, which the
   pose copy overwrites. The unravelling runs keep every tenth sample and every change.
+- #649's runs (2026-09-30, probe SHA-256
+  `61b216e8c9c8051a2a4970deb395d7d2a32b51c8c9ad4b0ef38182920a689311`), in the same ignored `work/`,
+  in the table's order:
+  - `endgame-explosives-20260930T094853Z-6637c4e3`
+  - `endgame-detonator-20260930T094857Z-9149407e` (box)
+  - `…094938Z-b48f558e` (dion-2-3, 7)
+  - `…095011Z-77f4da59` (gaea, 7)
+  - `…095015Z-a7d6b295` (gaea, 8)
+  - `…095052Z-a2518057` (inside, with `bp-04ca20.bin` and `bp-04cc26.bin`)
+  - `…095149Z-068c5fb5` (door)
+  - `…095120Z-e79962fe` (carried)
+
+  Earlier runs from the same session are superseded, because they came from earlier revisions of
+  the probe. Two of them are the door controls the Unresolved list cites:
+  `endgame-detonator-20260930T093824Z-0ce5589f` (player `$1000` away) and
+  `…093957Z-01cfe41a` (charge 2).
