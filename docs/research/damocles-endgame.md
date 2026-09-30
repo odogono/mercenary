@@ -293,6 +293,72 @@ $P $E --case unravel --space --snapshot $S/dion-north-airborne.sav --samples 280
   object, because a detonator can be switched on and put down. Whether the MAGIC CRYSTAL is held
   is ordinary carried state.
 
+## The TIMED DETONATOR decoded
+
+Read from the pinned first-world RAM for [#635](https://github.com/odogono/mercenary/issues/635),
+2026-09-30. Nothing here was run live. The ranges are hashed below.
+
+- **The panel** (`$04D69C`). While `$7A54` is clear, a digit sets the charge `$7866`. `+` adds 5
+  to `$786A` and clamps it at 595, and `-` takes 5 off and clamps at 0. While `$7A54` is set,
+  every key but `*` is ignored.
+- **`*`** (`$04D6F4`) presents string 13, SELECT EXPLOSIVE IN INVENTORY WINDOW TO ARM, in three
+  cases: while the inventory-label scroll `$04DDD0` runs, when the Carried Stack's head `$61CE` is
+  not an EXPLOSIVE, and when the head is not the armed EXPLOSIVE `$7A5E` while one is armed. On
+  the armed EXPLOSIVE, `*` disarms it: `$7A54` is cleared and its descriptor is restored from
+  `$4BD10` + `$400`. Otherwise it arms the head: `$7A5E` = the slot × 4 (the low word of the long
+  `$7A5C`), `$7A54` = 1, the descriptor comes from + `$404`, and `$7868` = `$793E` + `$786A` as
+  a word.
+- **The countdown** (`$05221A`, only while `$7A54` is set, → `$04DACC`). `$7868` − `$793E` is a
+  signed word. Above 0 it is stored in `$786A`, so the panel counts down. At 0 or less, `$7A54`
+  and `$786A` are cleared, the blast sound programme is queued (`$7A78` = 3, `$4BF54` =
+  `$4C5A8`), and `$7834` = −1.
+- **The next main-loop pass** (`$04CF4E`) finds `$7834` negative and jumps to `$04CB60`
+  instead of stepping the debris.
+- **`$04CB60`** first rebuilds object slot 29 as the player proxy (`$058FB0`). It takes the
+  pose's X and Z, its Y − `$3F`, the Body byte `$7AC9`, and `$7AFD` as the region byte, which is
+  0 unless the player is on foot (`$7AAE` = 1) with bit 14 of the region flags `$7B34` clear. The
+  proxy's cell byte `$73AB` is never written.
+  - *Carried* (bit 7 of `$6FAA`): the EXPLOSIVE leaves the Carried Stack (`$04CAF0`). `$05A928`
+    computes `$7A5A`, string 34 is asked for, and the blast goes off at the proxy.
+  - *Placed*: it goes off where it lies.
+  - The blast then runs `$04CBDA`. If `$7A7A` is 0 afterwards, string 35 follows with the death
+    `$7A64` = 1, the `$AAAA` flash, and `$7834` cleared.
+- **`$04CBDA`** copies the source's place and Association B into slot 74, the blast centre. On
+  the player's Body it also writes a flash word by charge to `$51D24`. It clears the source's
+  Association B, then runs the test `$04CA20`.
+  - If the test returns the planet kill, `$04CAD2` clears the proxy, sets `$7A7A` = `$FFFF` and
+    jumps to the dispatcher. The rest of the routine is skipped.
+  - Otherwise `$7A7A` takes the proxy's Body byte, which the test has cleared if the proxy was
+    in reach, and the proxy is cleared.
+  - At charge 3 or more, a source with non-zero `$6FA9` and cell bytes adds a six-byte entry
+    to the table at `$636A` and reloads the workspace (`$04EB60`). That looks like structure
+    damage. The entry depends on `$7A5A`, `$7A56` and `$7A59`.
+  - The spray `$04CCA0` follows, with elevation mask `$FF` and the fall `$FFFFD8F0`. Then
+    `$04CCD2` seeds 64 particles from 192 noise words and `$7834` = 64. A carried EXPLOSIVE
+    leaves the proxy cleared, so `$7A7A` is 0 and the player always dies.
+- **The test `$04CA20`** walks slots `$FF` down to 0, skipping slot 74 and any slot whose Body
+  byte differs from the centre's. The reach is `$40` << the charge.
+  - With `$7A5A` set, a slot whose region byte `$73A9` is not 0 is in reach when its cell byte
+    `$73AB` equals the centre's. That byte is the island-local cell, X + 16 × Z. For every
+    structure resident on ERIS, the catalogue's `association.cell` equals its structure's cell
+    by this formula.
+  - Every other slot is in reach when `$0541BA` passes: each of the three 32-bit differences,
+    shifted up 4 bits and made positive, is at most the reach shifted up 4 bits. So the reach is
+    a box, not a sphere.
+  - In reach: the NOVAGEN SAFE (`$66`) at charge ≤ 3 sets `$7A60` = `$FFFF` and stays. Anything
+    else has its Association B and `$6FA9` cleared, and EXPLOSIVEs `$4B`–`$53` count in `d6`.
+  - At charge 9 with `d6` ≥ 7, the routine returns with Z set, which is the planet kill.
+- **`$7A5A`** is written only by `$05A928`, which runs when the armed EXPLOSIVE is dropped
+  (`$05472E`) and when it goes off carried. A placed EXPLOSIVE keeps the value from its drop.
+  - It is clear below charge 4.
+  - From charge 4 it is set if the region byte just written is not 0.
+  - Otherwise it is set if the player stands within `$10` << the charge of the bound Building
+    detail's extent rectangle `[$7910]`, measured as the larger of the X and Z word gaps. A cell
+    without an extent counts as gap 0.
+- **The player in a structure** carries region byte `$7AFD` and cell byte 0 in the proxy. So a
+  blast with `$7A5A` set reaches that player only when the centre's cell byte is 0. That is read
+  from the code and was not run.
+
 ## Unresolved
 
 - **The refused drop in `eris-spaceport-onfoot`.** ↓ on the open CUPBOARD dropped nothing there,
@@ -303,6 +369,10 @@ $P $E --case unravel --space --snapshot $S/dion-north-airborne.sav --samples 280
   run.
 - **A player on a Body destroyed by stacked EXPLOSIVEs** is expected to die through the marker,
   from the code. Not run.
+- **The TIMED DETONATOR's remaining writes** are decoded above but not ported. These are the
+  structure-damage entry at charge 3 or more, the flash word by charge, the armed descriptor
+  (EXPLOSIVE-ARMED!), and `$052C9C` and `$05A30E` after the blast. None of the decode above was
+  run live.
 - **System string `$10`, GAME SAVE NOT A WINNING SUITUATION**, is a Load refusal at `$05517E`
   when a field of the loaded file is not 7. It is not an ending. The field was not decoded.
 
@@ -340,6 +410,10 @@ Half-open ranges in the pinned first-world RAM
 | `$054770`–`$0547C6` trigger launch | `0e5267c71f7f6d5985f4971cca82a53268e86ad3909048cefa3b9e87142027f0` |
 | `$05481A`–`$054848` system message request | `f3f4699d27dc7ba206c0435d4ef24080af3985985f14167fc5a8617308c7a874` |
 | `$058F78`–`$058F88` the pose record copy to `$7A8E` | `42672a59a4fba45ad2de3422c5d2eb5ad386dfe09c9ff114b02f37a043e75fdd` |
+| `$0541BA`–`$0541E0` the blast's box test | `074be82f6b42b019ffbcedba7daae670384559339e6d2e4ef692179c6e3d372b` |
+| `$0546F0`–`$054740` a Drop's Association B and `$7A5A` | `3584c37f41ecac6d6f9dd47d217ee73c7b931fc4ed09592396980fc59f2fa957` |
+| `$058FB0`–`$059000` the player proxy, slot 29 | `be05fc1d7db869999ba60de4f917d03e31ff1be5992b10422e3497094528e4ef` |
+| `$05A928`–`$05A9D8` `$7A5A` and the blast's region | `fac8f1e0f40972710b5316440e57295be4705ee3a1a6ad4a6a7c0e7a79367cd8` |
 | `$070C3C`–`$070E22` scripts `$01` and `$1A` | `c2d07e3d27b4752522961ae37d23522df4b2ef187566530141efb3608d4a625d` |
 
 ## Research Provenance

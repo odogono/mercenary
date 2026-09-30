@@ -94,6 +94,7 @@ import {
 import {
   admissiblePlacementClass,
   catalogueResidence,
+  extentGap,
   insertionsInRegion,
   placementZone,
   validStructureResidence,
@@ -172,7 +173,9 @@ import {
   fuseText,
   initialTimedDetonator,
   isExplosiveSlot,
+  regionBlastFor,
   stepFuse,
+  withinReach,
   type TimedDetonator
 } from './timedDetonator.ts';
 import {
@@ -370,19 +373,28 @@ const GAEA_BODY = 'body-8';
 export const ICARUS_SECONDS_LEFT = 5990;
 /// `$04C9C2`: the destruction that fires `$1A`.
 const LAST_BODY_COUNT = 30;
-/// An armed EXPLOSIVE going off (`$04CB60`): its Body, centre and reach, the structure region
-/// it went off in if any, and its own instance.
-interface ExplosiveBlast {
+/// What the blast tests of an object (`$04CA20`): its Body, place, and the Association B region
+/// `$73A9` and cell `$73AB` bytes. The player proxy has no Body in space.
+interface BlastTarget {
+  readonly body: string | null;
+  readonly cell: number;
+  readonly position: Vector3;
+  readonly region: number;
+}
+
+/// An armed EXPLOSIVE going off, from the target it went off at, as the blast centre (slot 74)
+/// copies it (`$04CBF4`).
+interface ExplosiveBlast extends BlastTarget {
   readonly body: string;
-  readonly centre: {
-    readonly x: number;
-    readonly y: number;
-    readonly z: number;
-  };
-  readonly radius: number;
-  readonly region: number | null;
   readonly source: string;
 }
+
+/// Object slot 74 holds the blast centre, and slot 29 the player proxy (`$058FB0`).
+const BLAST_CENTRE = 'object-slot-74';
+const PLAYER_PROXY = 'object-slot-29';
+/// `$7834` = −1: the deadline has passed and the next main-loop pass runs the blast (`$04CF4E`).
+export const BLAST_PENDING = -1;
+
 /// `$04CAC4`: an EXPLOSIVE at digit 9 destroys its Body when its blast clears this many others.
 export const PLANET_KILL_EXPLOSIVES = 7;
 /// The NOVAGEN SAFE, which a small blast opens rather than clears.
@@ -2040,7 +2052,7 @@ export class DamoclesSession implements TitleSession<
 
   /// A keypad digit, `$67`–`$70` through `$04D3AE` (#628, #635). On the computer's panel 0 to 4
   /// select its option and click, and a higher digit does nothing. On the TIMED DETONATOR's any
-  /// digit sets the charge `$7866` (`$04D69C`).
+  /// digit sets the charge `$7866` (`$04D6BC`), until an EXPLOSIVE is armed.
   keypadDigit(digit: number): { readonly kind: 'computed' | 'ignored' } {
     if (
       this.death !== null ||
@@ -2052,6 +2064,9 @@ export class DamoclesSession implements TitleSession<
       return { kind: 'ignored' };
     }
     if (this.headCommands.open?.slot === TIMED_DETONATOR_SLOT) {
+      if (this.timedDetonator.armed) {
+        return { kind: 'ignored' };
+      }
       this.timedDetonator = { ...this.timedDetonator, charge: digit };
       this.click();
       return { kind: 'computed' };
@@ -2068,144 +2083,242 @@ export class DamoclesSession implements TitleSession<
     return { kind: 'computed' };
   }
 
-  /// `$04D69C`: `+` and `-` step the fuse `$786A`. `*` (`$04D6F4`) arms the EXPLOSIVE at the head
-  /// of the Carried Stack, `$7A54` its slot and `$7868` its deadline, or presents system string 13
-  /// when the head is not one.
+  /// `$04D69C`: until an EXPLOSIVE is armed, `+` and `-` step the fuse `$786A` and click. Once
+  /// one is armed, only `*` acts.
   private timedDetonatorKey(key: '*' | '+' | '-'): 'computed' | 'ignored' {
-    if (key !== '*') {
-      this.timedDetonator = {
-        ...this.timedDetonator,
-        fuse: stepFuse(this.timedDetonator.fuse, key)
-      };
-      this.click();
-      return 'computed';
+    const detonator = this.timedDetonator;
+    if (key === '*') {
+      return this.armExplosive();
     }
-    const head = this.carried[0];
-    const slot = head === undefined ? null : this.slotOf(head);
-    if (!isExplosiveSlot(slot)) {
-      this.presentSystem('system-string-13');
+    if (detonator.armed) {
       return 'ignored';
     }
-    this.timedDetonator = {
-      ...this.timedDetonator,
-      deadline: this.clock() + this.timedDetonator.fuse,
-      slot
-    };
+    this.timedDetonator = { ...detonator, fuse: stepFuse(detonator.fuse, key) };
     this.click();
     return 'computed';
   }
 
-  /// A structure resident's place on its Body: the structure's surface position plus the
-  /// resident's own offset, or undefined when the structure is not on a surface.
-  private structurePosition(placed: Extract<Residence, { kind: 'structure' }>) {
+  /// `$04D6F4`: `*` arms the EXPLOSIVE at the head of the Carried Stack, with the deadline
+  /// `$7868` = the clock's second + the fuse, or disarms it if it is the one armed. While the
+  /// inventory label scrolls (`$04DDD0`), on any other head, and on another EXPLOSIVE while one
+  /// is armed, it presents system string 13 instead.
+  private armExplosive(): 'computed' | 'ignored' {
+    const detonator = this.timedDetonator;
+    const head = this.carried[0];
+    const slot = head === undefined ? null : this.slotOf(head);
+    if (
+      this.scrollCounter !== 0 ||
+      !isExplosiveSlot(slot) ||
+      (detonator.armed && slot !== detonator.slot)
+    ) {
+      this.presentSystem('system-string-13');
+      return 'ignored';
+    }
+    this.click();
+    this.timedDetonator = detonator.armed
+      ? { ...detonator, armed: false }
+      : {
+          ...detonator,
+          armed: true,
+          deadline: (this.clockSecond() + detonator.fuse) & 0xff_ff,
+          slot
+        };
+    return 'computed';
+  }
+
+  /// `$793E`, the Impact Clock's whole second, which the fuse counts against.
+  private clockSecond(): number {
+    return Math.floor(this.clock() + 1e-9);
+  }
+
+  /// `$05221A` → `$04DACC`, while an EXPLOSIVE is armed: `$786A` holds the seconds left. At 0 the
+  /// EXPLOSIVE is disarmed, the blast sound starts (`$04DADE`), and `$7834` = −1 hands the blast
+  /// to the next main-loop pass.
+  private tickCountdown(): void {
+    const detonator = this.timedDetonator;
+    if (!detonator.armed) {
+      return;
+    }
+    // `$04DAD0`: a word subtraction, tested signed.
+    const left =
+      (((detonator.deadline - this.clockSecond()) & 0xff_ff) << 16) >> 16;
+    if (left > 0) {
+      if (left !== detonator.fuse) {
+        this.timedDetonator = { ...detonator, fuse: left };
+      }
+      return;
+    }
+    this.timedDetonator = { ...detonator, armed: false, fuse: 0 };
+    this.effects.push({ cue: 'blast', type: 'sound-request' });
+    this.debrisPasses = BLAST_PENDING;
+  }
+
+  /// `$058FB0`: object slot 29 stands in for the player each pass. It takes the Pose, one eye
+  /// height of `$3F` lower, the player's Body (none in space), and as its region the byte a
+  /// Drop would write: the region on foot inside a structure, and otherwise 0. Its cell byte is
+  /// never written, so it stays 0.
+  private playerProxy(): BlastTarget {
+    const index = this.regionIndex;
+    const region =
+      index === null
+        ? undefined
+        : this.boundPlacement?.selection?.structure.regions[index];
+    const indoors =
+      this.occupied === null &&
+      index !== null &&
+      region !== undefined &&
+      (region.flags & 0x40_00) === 0;
+    return {
+      body: this.space === null ? this.pose.body : null,
+      cell: 0,
+      position: {
+        x: this.pose.position.x,
+        y: this.pose.position.y - 0x3f,
+        z: this.pose.position.z
+      },
+      region: indoors ? index + 1 : 0
+    };
+  }
+
+  /// `$05A928`: whether the blast will test residents inside a structure by cell. `region` is
+  /// the Association B region byte the Drop, or the player proxy, carries.
+  private regionBlastHere(region: number): boolean {
+    return regionBlastFor(
+      this.timedDetonator.charge,
+      region,
+      extentGap(this.pose.position, this.boundPlacement)
+    );
+  }
+
+  /// The Association B cell byte `$73AB` of a place on a Body: its island's local cell, X plus
+  /// 16 × Z, as a Drop copies `$7B5D`. A structure resident takes its structure's cell.
+  private cellByte(bodyId: string, position: Vector3): number {
+    const surface = this.surfaceFor(bodyId);
+    const island = nearestIsland(surface, position);
+    if (island === undefined) {
+      return -1;
+    }
+    const cell = islandLocalCell(position, surface.grid, island);
+    return (cell.x + 16 * cell.z) & 0xff;
+  }
+
+  /// What the blast tests of a placed object, or undefined where it is not placed.
+  private blastTarget(id: string): BlastTarget | undefined {
+    const placed = this.residenceFor(id);
+    if (placed?.kind === 'surface') {
+      return {
+        body: placed.body,
+        cell: this.cellByte(placed.body, placed.position),
+        position: placed.position,
+        region: 0
+      };
+    }
+    if (placed?.kind !== 'structure') {
+      return undefined;
+    }
     const parent = this.residenceFor(placed.parent);
     if (parent?.kind !== 'surface') {
       return undefined;
     }
     return {
-      x: parent.position.x + placed.position.x,
-      y: parent.position.y + placed.position.y,
-      z: parent.position.z + placed.position.z
+      body: placed.body,
+      cell: this.cellByte(parent.body, parent.position),
+      position: {
+        x: parent.position.x + placed.position.x,
+        y: parent.position.y + placed.position.y,
+        z: parent.position.z + placed.position.z
+      },
+      region: placed.insertionGroup
     };
   }
 
-  /// `$05221A` → `$04DACC`: the armed EXPLOSIVE goes off once its deadline `$7868` less the
-  /// Impact Clock is 0 or less, and `$04CB60` runs its blast.
-  private tickExplosive(): void {
-    const { charge, deadline, slot } = this.timedDetonator;
-    if (slot === null || deadline === null || this.clock() < deadline) {
+  /// `$04CB60`, from the main-loop pass after the deadline: the armed EXPLOSIVE goes off.
+  ///
+  /// Carried, it leaves the Carried Stack, `$7A5A` is taken where the player stands, string 34
+  /// is asked for, and the blast goes off at the player proxy, which it takes out of the test,
+  /// so the player dies. Placed, it goes off where it lies (`$04CBDA`): the blast centre (slot
+  /// 74) takes its place, it is cleared, and `$04CA20` clears what the blast reaches. At charge
+  /// 9 with seven more EXPLOSIVEs cleared, the dispatcher destroys the Body instead (`$04CAD2`),
+  /// with no spray and no death test. Otherwise the spray starts, and a player the blast caught
+  /// dies with string 35 (`$04CBAE`).
+  private detonate(): void {
+    this.debrisPasses = 0;
+    const { charge, slot } = this.timedDetonator;
+    if (slot === null) {
       return;
     }
-    this.timedDetonator = {
-      ...this.timedDetonator,
-      deadline: null,
-      fuse: 0,
-      slot: null
-    };
-    const blast = this.blastOf(slot, charge);
-    const cleared = this.clearBlast(blast, charge);
-    if (!this.removedResidents.has(blast.source)) {
+    const source = `object-slot-${slot}`;
+    const player = this.playerProxy();
+    let blast: ExplosiveBlast | null = null;
+    // `$04CC16` clears the proxy a carried EXPLOSIVE goes off at, so `$7A7A` reads 0.
+    const atPlayer = this.carried.includes(source);
+    if (atPlayer) {
       this.takeAway(slot);
+      this.timedDetonator = {
+        ...this.timedDetonator,
+        regionBlast: this.regionBlastHere(player.region)
+      };
+      this.effects.push({ cue: 'blown-up', type: 'sound-request' });
+      this.presentSystem('system-string-34');
+      blast =
+        player.body === null ? null : { ...player, body: player.body, source };
+    } else {
+      const target = this.blastTarget(source);
+      if (target !== undefined && target.body !== null) {
+        this.residence.delete(source);
+        this.removedResidents.add(source);
+        blast = { ...target, body: target.body, source };
+      }
+    }
+    // An EXPLOSIVE nowhere in play, packed in the briefcase or removed already, reaches nothing.
+    let caught = atPlayer;
+    if (blast !== null) {
+      this.blastCentre = { body: blast.body, ...blast.position };
+      const reach = this.clearBlast(blast, charge, atPlayer ? null : player);
+      if (charge === 9 && reach.cleared >= PLANET_KILL_EXPLOSIVES) {
+        this.explosiveBlast(blast.body, reach.cleared);
+        return;
+      }
+      caught ||= reach.player;
     }
     this.startDebris();
-    if (charge === 9) {
-      this.explosiveBlast(blast.body, cleared);
-    }
-    // `$04CBA8`: the blast's own death test, which a Body destroyed by the kill has skipped.
-    if (
-      this.space === null &&
-      this.pose.body === blast.body &&
-      !this.destroyedBodies.includes(blast.body) &&
-      this.inBlast(
-        blast,
-        this.regionIndex === null ? null : this.regionIndex + 1,
-        this.pose.position
-      )
-    ) {
-      this.blowUp('system-string-34');
+    if (caught) {
+      this.blowUp('system-string-35');
     }
   }
 
-  /// Where the EXPLOSIVE in `slot` goes off: its placed Residence, or the player carrying it.
-  private blastOf(slot: number, charge: number): ExplosiveBlast {
-    const source = `object-slot-${slot}`;
-    const residence = this.residenceFor(source);
-    const placed =
-      residence?.kind === 'surface' || residence?.kind === 'structure'
-        ? residence
-        : null;
-    return {
-      body: placed?.body ?? this.pose.body,
-      centre:
-        placed?.kind === 'surface'
-          ? placed.position
-          : placed?.kind === 'structure'
-            ? (this.structurePosition(placed) ?? this.pose.position)
-            : this.pose.position,
-      radius: blastRadius(charge),
-      region: placed?.kind === 'structure' ? placed.insertionGroup : null,
-      source
-    };
-  }
-
-  /// `$04CBDA`: inside a structure the test is the region, elsewhere the distance to the centre.
-  private inBlast(
+  /// `$04CA20`: clears the objects on the blast's Body within its reach, and counts the other
+  /// EXPLOSIVEs among them. With `$7A5A` set, a resident inside a structure is in reach when it
+  /// shares the blast's cell byte; everything else must lie within the reach on every axis
+  /// (`$0541BA`). A NOVAGEN SAFE caught at `SAFE_GATE_CHARGE` or less is left in place and sets
+  /// the safe gate `$7A60`. The player proxy, where given, is tested with the
+  /// objects.
+  private clearBlast(
     blast: ExplosiveBlast,
-    region: number | null,
-    position: { readonly x: number; readonly y: number; readonly z: number }
-  ): boolean {
-    return blast.region !== null && region !== null
-      ? region === blast.region
-      : Math.hypot(
-          position.x - blast.centre.x,
-          position.y - blast.centre.y,
-          position.z - blast.centre.z
-        ) <= blast.radius;
-  }
-
-  /// `$04CA20`: clears the placed objects on the blast's Body that it reaches, and counts the
-  /// other EXPLOSIVEs among them. A NOVAGEN SAFE caught at `SAFE_GATE_CHARGE` or less is not
-  /// cleared but sets the safe gate `$7A60`.
-  private clearBlast(blast: ExplosiveBlast, charge: number): number {
+    charge: number,
+    player: BlastTarget | null
+  ): { readonly cleared: number; readonly player: boolean } {
+    const radius = blastRadius(charge);
+    const { regionBlast } = this.timedDetonator;
+    const inReach = (target: BlastTarget): boolean =>
+      target.body === blast.body &&
+      (target.region !== 0 && regionBlast
+        ? target.cell === blast.cell
+        : withinReach(
+            {
+              x: target.position.x - blast.position.x,
+              y: target.position.y - blast.position.y,
+              z: target.position.z - blast.position.z
+            },
+            radius
+          ));
     let cleared = 0;
     for (const { id } of this.content.catalogue.instances) {
-      const placed = this.residenceFor(id);
-      if (placed?.kind !== 'surface' && placed?.kind !== 'structure') {
+      if (id === BLAST_CENTRE || id === PLAYER_PROXY || id === blast.source) {
         continue;
       }
-      const position =
-        placed.kind === 'surface'
-          ? placed.position
-          : this.structurePosition(placed);
-      if (
-        placed.body !== blast.body ||
-        position === undefined ||
-        !this.inBlast(
-          blast,
-          placed.kind === 'structure' ? placed.insertionGroup : null,
-          position
-        )
-      ) {
+      const target = this.blastTarget(id);
+      if (target === undefined || !inReach(target)) {
         continue;
       }
       if (id === NOVAGEN_SAFE && charge <= SAFE_GATE_CHARGE) {
@@ -2214,11 +2327,11 @@ export class DamoclesSession implements TitleSession<
       }
       this.residence.delete(id);
       this.removedResidents.add(id);
-      if (id !== blast.source && isExplosiveSlot(this.slotOf(id))) {
+      if (isExplosiveSlot(this.slotOf(id))) {
         cleared += 1;
       }
     }
-    return cleared;
+    return { cleared, player: player !== null && inReach(player) };
   }
 
   /// `$04CCD2` consumes 192 noise words to seed 64 particles, then `$7834` holds their remaining
@@ -2287,10 +2400,15 @@ export class DamoclesSession implements TitleSession<
   }
 
   /// One main-loop pass's shared work: `$05948C` steps the noise pointer as the frame joins the
-  /// loop, `$04CF52` counts the debris down, and `$04BEEE` runs the unravelling.
+  /// loop, `$04CF52` counts the debris down, or `$04CF4E` runs a pending blast, and `$04BEEE`
+  /// runs the unravelling.
   private mainLoopPass(): void {
     this.script = stepNoise(this.script);
-    this.debrisPasses = Math.max(0, this.debrisPasses - 1);
+    if (this.debrisPasses < 0) {
+      this.detonate();
+    } else {
+      this.debrisPasses = Math.max(0, this.debrisPasses - 1);
+    }
     this.tickUnravelling();
   }
 
@@ -2556,7 +2674,7 @@ export class DamoclesSession implements TitleSession<
       }
       if (this.death === null) {
         this.elapsed += step;
-        this.tickExplosive();
+        this.tickCountdown();
         this.tickImpact();
       }
       this.frameAccumulator += step * this.content.doc.time.vblHertz;
@@ -3914,6 +4032,16 @@ export class DamoclesSession implements TitleSession<
     this.residence.set(head, residence);
     this.script = settleCarried(this.script, this.slotOf(head));
     this.scrollCounter = 16;
+    // `$054722`: dropping the armed EXPLOSIVE takes `$7A5A` where the player stands.
+    const detonator = this.timedDetonator;
+    if (detonator.armed && this.slotOf(head) === detonator.slot) {
+      this.timedDetonator = {
+        ...detonator,
+        regionBlast: this.regionBlastHere(
+          residence.kind === 'structure' ? residence.insertionGroup : 0
+        )
+      };
+    }
     // `$05468E`: dropping the open object closes it and scrolls the logo back.
     if (this.slotOf(head) === this.headCommands.open?.slot) {
       this.headCommands = closeDocument(this.headCommands);

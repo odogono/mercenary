@@ -79,7 +79,6 @@ import {
   EXPLOSIVE_FIRST_SLOT,
   EXPLOSIVE_LAST_SLOT,
   FUSE_MAXIMUM,
-  FUSE_STEP,
   initialTimedDetonator,
   type TimedDetonator
 } from './timedDetonator.ts';
@@ -326,7 +325,8 @@ export interface DamoclesSaveSnapshot {
     readonly byte: number;
     readonly instance: string;
   }[];
-  /// Slot 74, the last destroyed Body's System-space centre.
+  /// Slot 74, the last blast's centre: a destroyed Body's System-space centre, or where an
+  /// EXPLOSIVE went off on its Body.
   readonly blastCentre?: {
     readonly body: string;
     readonly x: number;
@@ -1749,7 +1749,13 @@ export const decodeDamoclesSave = (
     return fail('destroyed Bodies are duplicated');
   }
   const debrisPasses = impactRecord
-    ? integer(snapshot['debrisPasses'], 'snapshot.debrisPasses', 0, 64)
+    ? integer(
+        snapshot['debrisPasses'],
+        'snapshot.debrisPasses',
+        // Schema 25 is the first whose counter can hold a pending blast, −1.
+        record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION ? -1 : 0,
+        64
+      )
     : 0;
   let blastCentre: {
     readonly body: string;
@@ -1761,7 +1767,7 @@ export const decodeDamoclesSave = (
     const centre = object(snapshot['blastCentre'], 'snapshot.blastCentre');
     if (
       typeof centre['body'] !== 'string' ||
-      !destroyedBodies.includes(centre['body']) ||
+      !/^body-\d+$/.test(centre['body']) ||
       !finite(centre['x']) ||
       !finite(centre['y']) ||
       !finite(centre['z'])
@@ -2106,18 +2112,8 @@ export const decodeDamoclesSave = (
   let timedDetonator = initialTimedDetonator();
   if (timedDetonatorSaved) {
     const raw = object(snapshot['timedDetonator'], 'snapshot.timedDetonator');
-    const charge = integer(
-      raw['charge'],
-      'snapshot.timedDetonator.charge',
-      0,
-      9
-    );
-    const fuse = integer(
-      raw['fuse'],
-      'snapshot.timedDetonator.fuse',
-      0,
-      FUSE_MAXIMUM
-    );
+    const truth = (value: unknown, path: string): boolean =>
+      typeof value === 'boolean' ? value : fail(`${path} is not a boolean`);
     const slot =
       raw['slot'] === null
         ? null
@@ -2127,14 +2123,25 @@ export const decodeDamoclesSave = (
             EXPLOSIVE_FIRST_SLOT,
             EXPLOSIVE_LAST_SLOT
           );
-    const deadline = raw['deadline'];
-    if (deadline !== null && (!finite(deadline) || deadline < 0)) {
-      return fail('snapshot.timedDetonator.deadline is not a clock second');
+    timedDetonator = {
+      armed: truth(raw['armed'], 'snapshot.timedDetonator.armed'),
+      charge: integer(raw['charge'], 'snapshot.timedDetonator.charge', 0, 9),
+      deadline: word(raw['deadline'], 'snapshot.timedDetonator.deadline'),
+      fuse: integer(
+        raw['fuse'],
+        'snapshot.timedDetonator.fuse',
+        0,
+        FUSE_MAXIMUM
+      ),
+      regionBlast: truth(
+        raw['regionBlast'],
+        'snapshot.timedDetonator.regionBlast'
+      ),
+      slot
+    };
+    if ((timedDetonator.armed || debrisPasses < 0) && slot === null) {
+      return fail('snapshot.timedDetonator arms no EXPLOSIVE');
     }
-    if (fuse % FUSE_STEP !== 0 || (slot === null) !== (deadline === null)) {
-      return fail('snapshot.timedDetonator is invalid');
-    }
-    timedDetonator = { charge, deadline, fuse, slot };
   }
   const headCommands = documentsSaved
     ? headCommandsOf(
