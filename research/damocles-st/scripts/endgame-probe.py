@@ -38,6 +38,19 @@ downstream of the dispatcher or the marker is poked; the keys are the original's
 ``unravel``    clear the computer's Association B ``$753C`` and sample on.
 ``explosives`` stack ``--count`` EXPLOSIVEs on one spot and arm one at digit 9.
 
+#649 added ``detonator``, which arms an EXPLOSIVE through the TIMED DETONATOR's own
+keys instead of poking `$7A54`:
+
+``detonator``  carry the TIMED DETONATOR (slot 145) and EXPLOSIVE 75, Open the
+               detonator, key the ``--charge`` digit and ``--fuse`` seconds, rotate
+               the EXPLOSIVE to the head and press ``*``. ``--disarm`` presses ``*``
+               twice more first (disarm, re-arm). ``--drop`` drops it with ↓, and
+               ``--diagonal`` then moves EXPLOSIVEs 76-79 to box-but-not-sphere
+               offsets around it. ``--move-player`` pokes the player's X high word
+               that far off after the drop. ``:trace`` breakpoints on the deadline
+               `$04DAEE`, the main loop's `$7834` test `$059506` and the blast
+               `$04CB60` count the passes between the deadline and the blast.
+
 ``--space`` climbs out of ``dion-north-airborne`` first (Esc, then key 1).
 
 Usage (from the repository root):
@@ -123,6 +136,10 @@ BODY_CENTRE_X = 0x5F40       # long per Body selector
 BOMB, AUTHORS_COMPUTER, AUTHORS_CHAIR = 0xA3, 0x65, 0x0E
 SIDEBOARD, CUPBOARD, HIFI, WASHBASIN = 0x54, 0x55, 0x56, 0x57
 EXPLOSIVES = tuple(range(0x4B, 0x54))
+TIMED_DETONATOR = 0x91
+FUSE = 0x786A                # the fuse, and while armed the seconds left ($04DAF4)
+REGION_BLAST = 0x7A5A        # the blast's cell test, written only by $05A928
+TRACED = ((0x4DAEE, "deadline"), (0x59506, "pass"), (0x4CB60, "blast"))
 KEY = {"enter": 0x72, "+": 0x4E, "-": 0x4A, "*": 0x66, "left": 0x4B, "right": 0x4D,
        "down": 0x50, "esc": 0x01, "1": 0x02,
        **{f"k{digit}": code for digit, code in zip("7894561230", range(0x67, 0x71))}}
@@ -153,6 +170,17 @@ CODE_WINDOWS = (
     ("$04DACC-$04DAF8 the detonation countdown", 0x4DACC, 0x4DAF8),
     ("$054770-$0547C6 trigger launch", 0x54770, 0x547C6),
     ("$05481A-$054848 system message request", 0x5481A, 0x54848),
+    ("$058FB0-$059006 the player proxy, slot 29", 0x58FB0, 0x59006),
+    ("$05A928-$05A9D8 $7A5A and the door under the player", 0x5A928, 0x5A9D8),
+    ("$0546CC-$054744 a Drop's bytes", 0x546CC, 0x54744),
+    ("$0541BA-$0541E0 the blast's box test", 0x541BA, 0x541E0),
+    ("$04CB4C-$04CB60 the flash table no code reads", 0x4CB4C, 0x4CB60),
+    ("$04EC94-$04ED74 cell overrides and the damage replay", 0x4EC94, 0x4ED74),
+    ("$059E9E-$059FCA door attachments and the $DF label", 0x59E9E, 0x59FCA),
+    ("$04DE9A-$04DECE the inventory label", 0x4DE9A, 0x4DECE),
+    ("$051D74-$051D96 the VBL flash", 0x51D74, 0x51D96),
+    ("$051D9A-$051DD6 the VBL's flash test", 0x51D9A, 0x51DD6),
+    ("$035B00-$035B08 the EXPLOSIVE models 256 and 257", 0x35B00, 0x35B08),
 )
 
 
@@ -232,6 +260,21 @@ def decode(ram: bytes) -> dict:
         "drift": _s(ram, DRIFT, 4),
         "damoclesX": _s(ram, BODY_CENTRE_X + DAMOCLES, 4),
         "waitCounter": _u(ram, 0x7B9C, 2),
+        "fuse": _u(ram, FUSE, 2),
+        "deadline": _u(ram, DETONATION_TIME, 2),
+        "target": _u(ram, DETONATOR_TARGET + 2, 2) // 4,
+        "regionBlast": f"0x{_u(ram, REGION_BLAST, 2):04x}",
+        "cellEntry": f"0x{_u(ram, 0x7A56, 4):08x}",
+        "flash": f"0x{_u(ram, 0x51D24, 2):04x}",
+        "blastSurvivor": f"0x{_u(ram, 0x7A7A, 2):04x}",
+        "damage": ram[0x636A:0x636A + 54].hex(),
+        "door": {"control": f"0x{_u(ram, 0x5A40 + 0x3EC, 2):04x}", "key": ram[0x5A43 + 0x3EC],
+                 "label": f"0x{ram[0xCD35 - 0x3EC // 2]:02x}"},
+        "descriptor": f"0x{_u(ram, _u(ram, 0x4BD10, 4) + 4 * 0x4B, 4):08x}",
+        "pose": [f"0x{_u(ram, address, 4):08x}" for address in (0x7AB4, 0x7AB8, 0x7ABC)],
+        "explosives": {f"0x{slot:02x}": [f"0x{_u(ram, base + 4 * slot, 4):08x}"
+                                         for base in (ASSOCIATION, *POSITION)]
+                       for slot in EXPLOSIVES},
     }
 
 
@@ -457,6 +500,96 @@ def explosives(machine: Machine, baseline: dict, args: argparse.Namespace) -> di
             "samples": series(machine, "blast", args.samples, args.interval)}
 
 
+def detonator(machine: Machine, baseline: dict, args: argparse.Namespace) -> dict:
+    """Arm EXPLOSIVE 75 with the TIMED DETONATOR's keys, optionally drop it, and
+    sample through the deadline and the blast."""
+    target = EXPLOSIVES[0]
+    out: dict = {}
+    if args.teleport:
+        # Outdoors only: the pose's X and Z high words, then a wait for the cell rebind.
+        x, z = (int(text, 0) for text in args.teleport.split(","))
+        machine.poke(poke(0x7AB4, x, 2), poke(0x7ABC, z, 2))
+        time.sleep(1.5)
+        out["teleport"] = [f"0x{x:04x}", f"0x{z:04x}"]
+        baseline = machine.sample("teleported")
+    out["carry"] = machine.carry([TIMED_DETONATOR, target], baseline["_ram"])
+    rows = [machine.sample("carried"), machine.key("enter", "open")]
+    rows.append(machine.key(f"k{args.charge}", "charge"))
+    for index in range(args.fuse // 5):
+        rows.append(machine.key("+", f"fuse{index:02d}", wait=0.1))
+    machine.head_to(target, rows)
+    rows.append(machine.key("*", "arm"))
+    if args.disarm:
+        rows.append(machine.key("*", "disarm"))
+        rows.append(machine.key("*", "rearm"))
+    if args.drop:
+        rows.append(machine.key("down", "drop", wait=2.0))
+    ram = rows[-1]["_ram"]
+    commands = []
+    if args.diagonal:
+        # Inside the box $0541BA tests, outside the sphere of the same radius, and
+        # one control just past the box on one axis. An object's position long is
+        # in the units of the pose's high word, the reach's units.
+        reach = 0x40 << args.charge
+        offsets = {EXPLOSIVES[1]: (0.9, 0, 0.9), EXPLOSIVES[2]: (-0.9, 0, 0.9),
+                   EXPLOSIVES[3]: (0.9, 0.9, -0.9), EXPLOSIVES[4]: (1.1, 0, 0)}
+        for slot, offset in offsets.items():
+            commands.append(poke(ASSOCIATION + 4 * slot,
+                                 _u(ram, ASSOCIATION + 4 * target, 4), 4))
+            commands.append(poke(HANDLING - 1 + 4 * slot, ram[HANDLING - 1 + 4 * target], 1))
+            for base, fraction in zip(POSITION, offset):
+                value = _u(ram, base + 4 * target, 4) + int(fraction * reach)
+                commands.append(poke(base + 4 * slot, value, 4))
+        out["diagonal"] = {f"0x{slot:02x}": offset for slot, offset in offsets.items()}
+    if args.move_player:
+        commands.append(poke(0x7AB4, _u(ram, 0x7AB4, 2) + args.move_player, 2))
+        out["movedPlayer"] = args.move_player
+    if commands:
+        machine.poke(*commands)
+        rows.append(machine.sample("placed"))
+    armed_traces = False
+    for index in range(args.samples):
+        if index:
+            time.sleep(args.interval)
+        state = machine.sample(f"fuse-{index:03d}")
+        rows.append(state)
+        if not armed_traces and state["armed"] and state["fuse"] <= 3:
+            if args.capture:
+                # One armed :once breakpoint at a time: the first stop arms the next.
+                first, second = (machine.run / f"capture-{n}.txt" for n in (1, 2))
+                first.write_text(
+                    f"setopt hex\nsavebin {(machine.run / 'bp-04ca20.bin').resolve()} 0 $100000\n"
+                    f"b pc = $4cc26 :once :quiet :file {second.resolve()}\nc\n")
+                second.write_text(
+                    f"setopt hex\nsavebin {(machine.run / 'bp-04cc26.bin').resolve()} 0 $100000\nc\n")
+                machine.poke(f"hatari-debug b pc = $4ca20 :once :quiet :file {first.resolve()}")
+            else:
+                machine.poke(*[f"hatari-debug b pc = ${pc:x} :trace" for pc, _ in TRACED])
+            armed_traces = True
+        if (args.return_player and args.move_player and not state["armed"]
+                and state["debris"] == 0 and "returned" not in out):
+            # After the blast, back to the drop spot to see what it left there.
+            machine.poke(poke(0x7AB4, _u(ram, 0x7AB4, 2), 2))
+            out["returned"] = state["sample"]
+        if state["death"] and index > 3 and rows[-2]["death"]:
+            break
+    out["traced"] = armed_traces
+    out["samples"] = rows
+    return out
+
+
+def traced_hits(log: str) -> list[str]:
+    """The :trace hits in order, named. Hatari logs each as
+    "N. CPU breakpoint condition(s) matched K times." with N in arming order."""
+    names = {index + 1: name for index, (_, name) in enumerate(TRACED)}
+    hits = []
+    for line in log.splitlines():
+        head, _, rest = line.strip().partition(". CPU breakpoint condition(s) matched")
+        if rest and head.isdigit():
+            hits.append(names.get(int(head), head))
+    return hits
+
+
 def run(args: argparse.Namespace) -> dict:
     authority, config = load_configuration()
     program, tos = resolve_images(authority, resolve_roms_root(args.roms))
@@ -524,6 +657,8 @@ def run(args: argparse.Namespace) -> dict:
                 result["unravel"] = unravel(machine, args)
             elif args.case == "explosives":
                 result["explosives"] = explosives(machine, baseline, args)
+            elif args.case == "detonator":
+                result["detonator"] = detonator(machine, baseline, args)
             else:
                 result["wish"] = wish(machine, args.page, args.samples, args.interval)
                 if args.then_impact:
@@ -544,6 +679,16 @@ def run(args: argparse.Namespace) -> dict:
         return value
 
     result = clean(result)
+    if args.case == "detonator":
+        hits = traced_hits((run_directory / "hatari.log").read_text(errors="replace"))
+        # Collapse runs of passes: ["deadline", "pass x1", "blast", ...].
+        collapsed: list[str] = []
+        for hit in hits:
+            if collapsed and collapsed[-1].split(" x")[0] == hit == "pass":
+                collapsed[-1] = f"pass x{int(collapsed[-1].split(' x')[1]) + 1}"
+            else:
+                collapsed.append("pass x1" if hit == "pass" else hit)
+        result["detonator"]["traceOrder"] = collapsed
     (run_directory / "result.json").write_text(json.dumps(result, indent=2) + "\n")
     return result
 
@@ -555,7 +700,7 @@ def summarise(result: dict) -> None:
         rows += [("wish", s) for s in result["wish"]["samples"]]
     if "impact" in result:
         rows += [("impact", s) for s in result["impact"]["samples"]]
-    for case in ("space", "switches", "computer", "unravel", "explosives"):
+    for case in ("space", "switches", "computer", "unravel", "explosives", "detonator"):
         if case in result:
             block = result[case]
             rows += [(case, s) for s in block.get("samples", block.get("climb", []))]
@@ -570,6 +715,8 @@ def summarise(result: dict) -> None:
               f"vbl {s['vbl']} x{s['destroyed']} sw {s['switches']} "
               f"pan {s['panel']} opt {s['computerOption']}:{s['computerValue']} "
               f"cur {s['unravelCursor']} deb {s['debris']} "
+              f"arm {s['armed']} fuse {s['fuse']} rb {s['regionBlast']} "
+              f"fl {s['flash']} ok {s['blastSurvivor']} "
               f"| {text[:60]}")
 
 
@@ -577,7 +724,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__,
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--case", required=True, choices=(
-        "impact", "wish", "switches", "computer", "unravel", "explosives"))
+        "impact", "wish", "switches", "computer", "unravel", "explosives", "detonator"))
     parser.add_argument("--space", action="store_true",
                         help="climb into space first (dion-north-airborne)")
     parser.add_argument("--bomb-carried", action="store_true",
@@ -586,6 +733,23 @@ def main() -> None:
                         help="computer: leave $7AB0 at 14 after Enter")
     parser.add_argument("--count", type=int, default=7,
                         help="explosives: EXPLOSIVEs in the stack, the armed one included")
+    parser.add_argument("--charge", type=int, default=4, help="detonator: the size digit")
+    parser.add_argument("--fuse", type=int, default=10,
+                        help="detonator: fuse seconds, keyed as + presses of 5")
+    parser.add_argument("--drop", action="store_true", help="detonator: drop it once armed")
+    parser.add_argument("--disarm", action="store_true",
+                        help="detonator: * twice more after arming (disarm, re-arm)")
+    parser.add_argument("--diagonal", action="store_true",
+                        help="detonator: EXPLOSIVEs 76-79 on box-but-not-sphere offsets")
+    parser.add_argument("--teleport", default=None,
+                        help="detonator: X,Z pose high words to stand at first (outdoors)")
+    parser.add_argument("--return-player", action="store_true",
+                        help="detonator: put the player back at the drop spot after the blast")
+    parser.add_argument("--capture", action="store_true",
+                        help="detonator: save the RAM at the blast test $04CA20 and after it "
+                             "($04CC26) instead of tracing the passes")
+    parser.add_argument("--move-player", type=lambda text: int(text, 0), default=0,
+                        help="detonator: add this to the player's X high word after the drop")
     parser.add_argument("--keys", default="+,-x2,k1,+x8,k2,+,-x2,k0,+x4,k4,+,*",
                         help="computer: comma-separated keys, NAMExN repeats")
     parser.add_argument("--snapshot", type=Path, required=True)
