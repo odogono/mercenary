@@ -1,4 +1,5 @@
 import type { GammaStarfield } from '../flyover/documents.ts';
+import { tan } from '../math/index.ts';
 import { craftDivide, craftFixed, type CraftArithmetic } from './craft.ts';
 import type { ErisPresentationDocument } from './documents.ts';
 import type { Pose } from './world.ts';
@@ -23,7 +24,7 @@ export type StarRoutine = 'flight' | 'onFoot' | 'space';
 
 export interface StarView {
   /// The row the view is clipped at, `$042C74`: 68 on foot, where the ground takes the rest,
-  /// and 136 otherwise.
+  /// and 136 otherwise. Free Look moves the on-foot row with the horizon.
   readonly clipRow: number;
   /// The pitch word `$7AA0`: 512 level, rising nose down.
   readonly pitch: number;
@@ -52,6 +53,7 @@ const CENTRE_COLUMN = 160;
 const CENTRE_ROW = 68;
 const VIEW_COLUMNS = 320;
 const VIEW_ROWS = 136;
+const ST_PIXELS_PER_TANGENT = 256;
 
 const sx16 = (value: number): number => ((value & 0xff_ff) << 16) >> 16;
 
@@ -94,7 +96,10 @@ const TURN = 2 * Math.PI;
 
 /// The view a Pose draws the stars from: its turns as the ST's yaw, pitch and roll words, the
 /// inverses of `bearingFromYaw` and `pitchFromWord`. On foot the ground takes the view below
-/// the horizon row. The port's Camera levels at pitch word 512, so its stars do too.
+/// the horizon row, which is the centre row until Free Look tilts the view: a star is kept
+/// while its whole pixel is above the horizon, as the sky Bodies are cut there. A horizon at or
+/// past the ST's last row leaves the band unclipped, and the ground covers the stars under it.
+/// The port's Camera levels at pitch word 512, so its stars do too.
 export const starViewOf = (
   pose: Pose,
   orientation: ErisPresentationDocument['orientation'],
@@ -106,7 +111,12 @@ export const starViewOf = (
   const word = (turns: number): number =>
     Math.round(turns * units) & (units - 1);
   return {
-    clipRow: onFoot ? CENTRE_ROW : VIEW_ROWS,
+    clipRow: onFoot
+      ? Math.min(
+          VIEW_ROWS,
+          Math.floor(CENTRE_ROW + tan(pose.pitch) * ST_PIXELS_PER_TANGENT)
+        )
+      : VIEW_ROWS,
     pitch: word(orientation.pitchLevel / units - pose.pitch / TURN),
     rollTangent: rollTangent(arithmetic, word((pose.roll ?? 0) / TURN)),
     routine,

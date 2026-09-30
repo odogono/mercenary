@@ -60,10 +60,10 @@
               "sourceColour": 32918,
               "sourceIndex": 0,
               "vertices": [
-                1,
-                5,
+                0,
                 4,
-                0
+                5,
+                1
               ]
             },
             {
@@ -71,10 +71,10 @@
               "sourceColour": 32910,
               "sourceIndex": 1,
               "vertices": [
-                2,
-                6,
+                1,
                 5,
-                1
+                6,
+                2
               ]
             },
             {
@@ -82,10 +82,10 @@
               "sourceColour": 32918,
               "sourceIndex": 2,
               "vertices": [
-                3,
-                7,
+                2,
                 6,
-                2
+                7,
+                3
               ]
             },
             {
@@ -93,10 +93,10 @@
               "sourceColour": 32910,
               "sourceIndex": 3,
               "vertices": [
-                3,
-                0,
+                7,
                 4,
-                7
+                0,
+                3
               ]
             },
             {
@@ -104,10 +104,10 @@
               "sourceColour": 32906,
               "sourceIndex": 4,
               "vertices": [
-                5,
-                6,
+                4,
                 7,
-                4
+                6,
+                5
               ]
             },
             {
@@ -115,10 +115,10 @@
               "sourceColour": 32918,
               "sourceIndex": 5,
               "vertices": [
-                11,
-                10,
+                8,
                 9,
-                8
+                10,
+                11
               ]
             },
             {
@@ -126,10 +126,10 @@
               "sourceColour": 32916,
               "sourceIndex": 6,
               "vertices": [
-                12,
-                13,
+                15,
                 14,
-                15
+                13,
+                12
               ]
             }
           ],

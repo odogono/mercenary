@@ -403,8 +403,18 @@ const detailMesh = (
     )?.records ?? group.default;
   let scaled = scaledDetails.get(selection);
   if (scaled === undefined) {
+    // A scale negative on one axis mirrors the detail, which turns every face's winding over.
+    // The ST has no facing test, but the port culls back faces, so the mirrored faces are
+    // rewound to keep their fronts where the unscaled model has them.
+    const mirrored = structure.scale[0] * structure.scale[1] < 0;
     scaled = {
       ...selection.detail,
+      faces: mirrored
+        ? selection.detail.faces.map(face => ({
+            ...face,
+            vertices: [...face.vertices].reverse()
+          }))
+        : selection.detail.faces,
       vertices: selection.detail.vertices.map(([x, y, z]) => [
         x * structure.scale[0],
         y,

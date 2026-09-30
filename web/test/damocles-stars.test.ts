@@ -1,9 +1,11 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
 
 import { craftProgram, type CraftArithmetic } from '../src/damocles/craft.ts';
+import { readErisPresentation } from '../src/damocles/documents.ts';
 import {
   rollTangent,
   starPixels,
+  starViewOf,
   type StarView
 } from '../src/damocles/stars.ts';
 import {
@@ -266,6 +268,40 @@ describe('the starfield', () => {
     });
     expect(pixels.length).toBeGreaterThan(0);
     expect(Math.max(...pixels.map(pixel => pixel.row))).toBeLessThan(68);
+  });
+});
+
+const levelPose = (pitch: number) => ({
+  body: 'dion',
+  heading: 0,
+  pitch,
+  position: { x: 0, y: 0, z: 0 }
+});
+
+describe('the view on foot', () => {
+  test('clips at the horizon Free Look tilts, not the centre row', async () => {
+    const { orientation } = readErisPresentation(
+      await Bun.file(new URL('../damocles/eris.json', import.meta.url)).json()
+    );
+    const at = (pitch: number, routine: 'flight' | 'onFoot') =>
+      starViewOf(levelPose(pitch), orientation, routine, true, arithmetic);
+    expect(at(0, 'onFoot').clipRow).toBe(68);
+    // Looking up moves the horizon down the view by tan pitch at 256 rows a unit tangent.
+    expect(at(0.2, 'onFoot').clipRow).toBe(
+      Math.floor(68 + Math.tan(0.2) * 256)
+    );
+    expect(at(-0.1, 'onFoot').clipRow).toBe(
+      Math.floor(68 - Math.tan(0.1) * 256)
+    );
+    expect(at(0.5, 'flight').clipRow).toBe(136);
+    for (const routine of ['flight', 'onFoot'] as const) {
+      const view = at(0.2, routine);
+      const pixels = starPixels(field, view);
+      expect(pixels.some(pixel => pixel.row >= 68)).toBe(true);
+      expect(Math.max(...pixels.map(pixel => pixel.row))).toBeLessThan(
+        view.clipRow
+      );
+    }
   });
 });
 
