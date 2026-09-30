@@ -569,6 +569,7 @@ try {
       hasRoom: id => world.rooms.has(id),
       objectName: slot => bundle.text?.messages[slot]?.text,
       objectSlots: () => world.objects.length,
+      pads: () => navigator.getGamepads?.() ?? [],
       persistence,
       preferences,
       present: events => {

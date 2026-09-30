@@ -6,6 +6,7 @@ import type {
 } from '../settings/index.ts';
 import { formatTargTime, parseTargTime } from '../sky/time.ts';
 import { SURFACE, locationText, room } from '../world/index.ts';
+import { describePads, type PadDescription } from './gamepad.ts';
 import type {
   Composition,
   PanelRendition,
@@ -23,6 +24,7 @@ import type { TypefaceId } from './typography.ts';
 export type ConsoleCommand =
   | { readonly kind: 'atlas' }
   | { readonly kind: 'help' }
+  | { readonly kind: 'pads' }
   | { readonly kind: 'where' }
   | { readonly kind: 'inventory' }
   | { readonly kind: 'time' }
@@ -251,6 +253,11 @@ export const parseConsoleCommand = (
       return { kind: 'atlas' };
     case 'help':
       return { kind: 'help' };
+    case 'pads':
+      if (rest.length > 0) {
+        throw new Error('pads takes no arguments');
+      }
+      return { kind: 'pads' };
     case 'switch':
       if (rest.length !== 1) {
         throw new Error('switch takes one Pose id, or a Body name');
@@ -386,6 +393,8 @@ export interface ConsoleDeps extends ConsoleParseContext, ConsoleSettingHost {
   readonly cellSize: () => number;
   readonly hasRoom: (id: number) => boolean;
   readonly objectName: (slot: number) => string | undefined;
+  /// The browser's pads, for `pads`.
+  readonly pads?: () => readonly (PadDescription | null)[];
   readonly persistence: SavePersistence;
   readonly present?: (events: readonly PresentationEvent[]) => void;
   readonly session: () => GameplaySession;
@@ -394,7 +403,7 @@ export interface ConsoleDeps extends ConsoleParseContext, ConsoleSettingHost {
 }
 
 const HELP = [
-  'help · where · time [h]h:mm[:ss] · inventory · get <object-slot>',
+  'help · where · time [h]h:mm[:ss] · inventory · get <object-slot> · pads',
   'drop <object-id|name>',
   'goto <x> <z> [height] · goto room <n> · goto object <slot>',
   'panel <targ|damocles> · set <name> <value>',
@@ -469,6 +478,8 @@ export const executeConsoleCommand = (
       return ['The Gamma Atlas belongs to Damocles'];
     case 'help':
       return HELP;
+    case 'pads':
+      return describePads(deps.pads?.() ?? []);
     case 'switchBody':
       return ['Targ has one Body'];
     case 'floor':

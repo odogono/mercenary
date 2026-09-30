@@ -675,6 +675,7 @@ try {
     // Damocles object slots run 1 through 255, sparsely. Targ's contiguous `objects.length`
     // has no counterpart here, so the bound is the slot byte's range.
     objectSlots: () => 256,
+    pads: () => navigator.getGamepads?.() ?? [],
     persistence,
     preferences,
     session: () => session,

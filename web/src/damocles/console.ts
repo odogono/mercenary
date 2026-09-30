@@ -4,6 +4,7 @@ import {
   type ConsoleCommand,
   type ConsoleSettingHost
 } from '../shell/console.ts';
+import { describePads, type PadDescription } from '../shell/gamepad.ts';
 import type { SavePersistence } from '../shell/saves.ts';
 import { DAMOCLES_ROW_CELLS } from './display.ts';
 import { damoclesWhere } from './save.ts';
@@ -12,7 +13,7 @@ import type { DamoclesSession } from './session.ts';
 const SETTING_NAMES = Object.keys(SETTING_VALUES);
 
 const HELP = [
-  'help · where · inventory · atlas',
+  'help · where · inventory · atlas · pads',
   'goto <x> <z>',
   'get [<object-slot>] · drop [<object-slot|name>]',
   'panel <targ|damocles> · set <name> <value>',
@@ -41,6 +42,8 @@ export const damoclesMessageTranscript = (text: string): readonly string[] => {
 
 export interface DamoclesConsoleHost extends ConsoleSettingHost {
   readonly openAtlas: () => void;
+  /// The browser's pads, for `pads`.
+  readonly pads?: () => readonly (PadDescription | null)[];
   readonly persistence: SavePersistence;
   readonly session: () => DamoclesSession;
 }
@@ -61,6 +64,8 @@ export const executeDamoclesConsoleCommand = (
       return ['Opening Gamma Atlas…'];
     case 'help':
       return HELP;
+    case 'pads':
+      return describePads(host.pads?.() ?? []);
     case 'where': {
       const snapshot = host.session().snapshot;
       const { heading, position } = snapshot.pose;

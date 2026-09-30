@@ -1,8 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 
 import type { Occupancy } from '../src/session/index.ts';
+import { parseConsoleCommand } from '../src/shell/console.ts';
 import {
   connectedPads,
+  describePads,
   heldPadControls,
   quantiseAxis,
   type PadButton,
@@ -407,5 +409,48 @@ describe('the Controls Page’s pad column', () => {
         }
       }
     }
+  });
+});
+
+const described = (
+  buttons: readonly PadButton[],
+  axes: readonly number[],
+  mapping = 'standard'
+) => ({
+  ...pad(buttons, axes, mapping),
+  connected: true,
+  id: '8BitDo Pro 2 (Vendor: 2dc8 Product: 6006)',
+  index: 0
+});
+
+describe('the console’s pads report', () => {
+  test('parses with no arguments', () => {
+    expect(parseConsoleCommand('pads', 64)).toEqual({ kind: 'pads' });
+    expect(() => parseConsoleCommand('pads all', 64)).toThrow(
+      'pads takes no arguments'
+    );
+  });
+
+  test('says when the browser lists no pad', () => {
+    expect(describePads([null, null])[0]).toStartWith('no pads');
+  });
+
+  test('names each pad, what play reads from it, and its raw state', () => {
+    expect(describePads([null, described(['A'], [0, -0.9, 0, 0.1])])).toEqual([
+      'pad 0 · 8BitDo Pro 2 (Vendor: 2dc8 Product: 6006)',
+      '  connected · mapping standard · 17 buttons · 4 axes',
+      '  held: A, LEFT UP',
+      '  raw buttons down: 0',
+      '  raw axes: 0.00 -0.90 0.00 0.10'
+    ]);
+  });
+
+  test('says a pad without the standard mapping is ignored in play', () => {
+    expect(describePads([described(['B'], [0, 0, 0, 0], '')])).toContain(
+      '  ignored in play: not the standard mapping'
+    );
+    expect(describePads([described(['B'], [0, 0, 0, 0], '')])[1]).toContain(
+      'mapping (none)'
+    );
   });
 });

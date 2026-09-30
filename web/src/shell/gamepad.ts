@@ -112,3 +112,44 @@ export const heldPadControls = (
 export const connectedPads = (
   navigatorLike: Partial<Pick<Navigator, 'getGamepads'>>
 ): readonly (PadReading | null)[] => navigatorLike.getGamepads?.() ?? [];
+
+/// The part of a browser `Gamepad` the console reports.
+export interface PadDescription extends PadReading {
+  readonly connected: boolean;
+  readonly id: string;
+  readonly index: number;
+}
+
+const axisText = (value: number): string => {
+  const formatted = value.toFixed(2);
+  return formatted === '-0.00' ? '0.00' : formatted;
+};
+
+/// The console's `pads` report: each pad the browser lists, what the profile reads from it, and
+/// its raw buttons and axes, so a pad that plays wrongly, or not at all, can be told apart from
+/// one the browser never showed.
+export const describePads = (
+  pads: readonly (PadDescription | null)[]
+): readonly string[] => {
+  const listed = pads.filter(pad => pad !== null);
+  if (listed.length === 0) {
+    return [
+      'no pads: the browser lists a pad only after one of its buttons is pressed with this page focused'
+    ];
+  }
+  return listed.flatMap(pad => {
+    const held = [...heldPadControls([pad])];
+    const down = pad.buttons.flatMap((button, index) =>
+      button.pressed || button.value > PAD_THRESHOLD ? [String(index)] : []
+    );
+    return [
+      `pad ${pad.index} · ${pad.id}`,
+      `  ${pad.connected ? 'connected' : 'disconnected'} · mapping ${pad.mapping === '' ? '(none)' : pad.mapping} · ${pad.buttons.length} buttons · ${pad.axes.length} axes`,
+      pad.mapping === 'standard'
+        ? `  held: ${held.length === 0 ? 'nothing' : held.join(', ')}`
+        : '  ignored in play: not the standard mapping',
+      `  raw buttons down: ${down.length === 0 ? 'none' : down.join(' ')}`,
+      `  raw axes: ${pad.axes.map(axisText).join(' ')}`
+    ];
+  });
+};
