@@ -183,22 +183,43 @@ describe('get names what it took', () => {
     );
   });
 
-  test('takes the limo key by slot and names it', async () => {
+  test('bare get takes the selection and names it', async () => {
     const opened = await sessionOf();
     opened.teleportToCell(7, 8);
     const session = await standingAt(opened, 'object-slot-183');
-    expect(run(session, 'get 183')).toBe('took KEY- V.I.P. LIMO');
+    expect(run(session, 'get')).toBe('took KEY- V.I.P. LIMO');
     expect(session.snapshot.carried).toEqual(['object-slot-183']);
   });
 
-  test('a slot that is not the selection is declined by name', async () => {
-    const opened = await sessionOf();
-    opened.teleportToCell(7, 8);
-    const session = await standingAt(opened, 'object-slot-183');
-    expect(run(session, 'get 94')).toBe(
-      'object 94 is not in reach; KEY- V.I.P. LIMO is'
-    );
+  test('get with a slot takes it from afar without moving the player, as Targ does', async () => {
+    const session = await sessionOf();
+    const before = session.snapshot.pose;
+    // CASH REGISTER is a Vesta resident; the player stands on Eris.
+    expect(run(session, 'get 94')).toBe('took object 94');
+    expect(session.snapshot.carried).toEqual(['object-slot-94']);
+    expect(session.snapshot.pose).toEqual(before);
+    expect(run(session, 'get 94')).toBe('object 94 is already carried');
+  });
+
+  test('get with a slot keeps the Take rules', async () => {
+    const session = await sessionOf();
+    expect(run(session, 'get 3')).toBe('object 03 is too heavy');
+    expect(run(session, 'get 156')).toBe('object 156 is fixed in place');
+    expect(run(session, 'get 8')).toBe('object 08 is not in the world');
+    expect(run(session, 'get 9')).toBe('there is no object 09');
     expect(session.snapshot.carried).toEqual([]);
+  });
+
+  test('get with a slot refuses a full Carried Stack', async () => {
+    const session = await sessionOf();
+    const slots = [26, 27, 28, 30, 31, 32, 33, 34, 35, 36];
+    for (const slot of slots) {
+      expect(run(session, `get ${slot}`)).toBe(`took object ${slot}`);
+      // The Carried Stack scrolls for a moment after each Take, as the Take key's does.
+      session.advance(1);
+    }
+    expect(run(session, 'get 37')).toBe('inventory is full');
+    expect(session.snapshot.carried).toHaveLength(slots.length);
   });
 
   /// Only slot 183 can be stood beside in a 16x16 window, which the old `get` refusal happened

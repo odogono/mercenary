@@ -9,6 +9,9 @@ be carried, boarded, dropped, delivered, destroyed, or moved by scripts. The
 console command follows the current residence, so it remains useful after those
 changes.
 
+Damocles's objects are catalogued in
+[Damocles object locations](damocles-object-locations.md).
+
 Surface coordinates are normalised into the unsigned 24-bit world. Room
 coordinates are local to that Room. “Out of world” is the initial parked state
 used by runtime effects and encounters.

@@ -440,6 +440,17 @@ export type Selection =
       readonly kind: 'object';
     };
 
+/// What a console Take of one object slot did, in the terms of Targ's `TakeObjectOutcome`.
+export type DamoclesTakeObjectOutcome =
+  | { readonly kind: 'took'; readonly slot: number }
+  | { readonly kind: 'fixedInPlace'; readonly slot: number }
+  | { readonly kind: 'tooHeavy'; readonly slot: number }
+  | { readonly kind: 'handsFull' }
+  | { readonly kind: 'alreadyCarried'; readonly slot: number }
+  | { readonly kind: 'gone'; readonly slot: number }
+  | { readonly kind: 'missing'; readonly slot: number }
+  | { readonly kind: 'busy'; readonly reason: string };
+
 export interface AtlasDestination {
   readonly bodyId: string;
   readonly x: number;
@@ -3800,24 +3811,62 @@ export class DamoclesSession implements TitleSession<
     if (selection.kind === 'none' || !selection.inRange) {
       return { kind: 'refused' };
     }
-    const instance = this.instanceFor(selection.instance);
+    return this.takeInstance(selection.instance).kind === 'took'
+      ? { kind: 'took' }
+      : { kind: 'refused' };
+  }
+
+  /// Take one object slot without requiring it to be selected or in reach.
+  ///
+  /// This is the Shell Console's remote equivalent of reaching, as Targ's `takeObject` is: it
+  /// skips only the selection and its range, while the handling byte, the Carried Stack limit
+  /// and the pickup triggers still apply as a Take's do.
+  takeObject(slot: number): DamoclesTakeObjectOutcome {
+    const id = `object-slot-${slot}`;
+    const instance = this.instanceFor(id);
+    if (slot === 0 || instance === undefined) {
+      return { kind: 'missing', slot };
+    }
+    const residence = this.residenceFor(id);
+    if (this.carried.includes(id) || residence?.kind === 'carried') {
+      return { kind: 'alreadyCarried', slot };
+    }
+    if (
+      residence === undefined ||
+      residence.kind === 'occupied' ||
+      this.destroyedBodies.includes(residence.body)
+    ) {
+      return { kind: 'gone', slot };
+    }
+    if (this.occupied !== null) {
+      return { kind: 'busy', reason: 'the player is aboard; leave first' };
+    }
+    if (this.death !== null) {
+      return { kind: 'busy', reason: 'the player is dead' };
+    }
+    return this.takeInstance(id);
+  }
+
+  /// The Take once its target is chosen, from the handling byte to the commit.
+  private takeInstance(instanceId: string): DamoclesTakeObjectOutcome {
+    const instance = this.instanceFor(instanceId);
     const handling = instance?.handling;
-    const slot = /^object-slot-(\d+)$/.exec(selection.instance);
-    if (slot !== null && Number(slot[1]) === 0) {
-      return { kind: 'refused' };
+    const slot = this.slotOf(instanceId);
+    if (slot === 0) {
+      return { kind: 'missing', slot };
     }
     if (
       this.pose.body === VOID_BODY ||
       handling === null ||
       handling === undefined
     ) {
-      return { kind: 'refused' };
+      return { kind: 'fixedInPlace', slot };
     }
     if (this.scrollCounter !== 0) {
-      return { kind: 'refused' };
+      return { kind: 'busy', reason: 'the Carried Stack is still scrolling' };
     }
     if ((handling.byte & 0x10) !== 0 && !this.liveCarriedSlot(0)) {
-      return { kind: 'refused' };
+      return { kind: 'fixedInPlace', slot };
     }
     if (
       (handling.byte & 0x20) !== 0 &&
@@ -3826,23 +3875,20 @@ export class DamoclesSession implements TitleSession<
       !this.liveCarriedSlot(158)
     ) {
       this.presentSystem('system-string-2');
-      return { kind: 'refused' };
+      return { kind: 'tooHeavy', slot };
     }
     if (this.carried.length === this.capacity()) {
-      return { kind: 'refused' };
+      return { kind: 'handsFull' };
     }
-    const previous = this.residenceFor(selection.instance);
+    const previous = this.residenceFor(instanceId);
     const carriedResidence: Residence = {
       kind: 'carried',
       placementClass: previous?.placementClass ?? instance?.placementClass ?? 0
     };
-    this.carried = [selection.instance, ...this.carried];
-    if (
-      selection.instance === 'object-slot-108' &&
-      this.briefcaseStore.length > 0
-    ) {
+    this.carried = [instanceId, ...this.carried];
+    if (instanceId === 'object-slot-108' && this.briefcaseStore.length > 0) {
       this.carried = [
-        selection.instance,
+        instanceId,
         ...this.carried.slice(1),
         ...this.briefcaseStore
       ];
@@ -3855,11 +3901,11 @@ export class DamoclesSession implements TitleSession<
       }
       this.briefcaseStore = [];
     }
-    this.residence.set(selection.instance, carriedResidence);
-    this.script = settleCarried(this.script, this.slotOf(selection.instance));
+    this.residence.set(instanceId, carriedResidence);
+    this.script = settleCarried(this.script, this.slotOf(instanceId));
     this.scrollCounter = -16;
     // $0543D2 walks the object-to-trigger table for every committed pickup, not just the key.
-    const trigger = TRIGGER_FOR_RESIDENT[selection.instance];
+    const trigger = TRIGGER_FOR_RESIDENT[instanceId];
     if (trigger !== undefined) {
       const transition = fireTrigger(this.script, trigger, this.scriptRules);
       this.script = transition.state;
@@ -3868,7 +3914,7 @@ export class DamoclesSession implements TitleSession<
     if (this.soundPermitted()) {
       this.effects.push({ cue: 'take', type: 'sound-request' });
     }
-    return { kind: 'took' };
+    return { kind: 'took', slot };
   }
 
   rotateForward(): { readonly kind: 'refused' | 'rotated' } {

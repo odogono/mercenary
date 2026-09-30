@@ -8,7 +8,7 @@ import { describePads, type PadDescription } from '../shell/gamepad.ts';
 import type { SavePersistence } from '../shell/saves.ts';
 import { DAMOCLES_ROW_CELLS } from './display.ts';
 import { damoclesWhere } from './save.ts';
-import type { DamoclesSession } from './session.ts';
+import type { DamoclesSession, DamoclesTakeObjectOutcome } from './session.ts';
 
 const SETTING_NAMES = Object.keys(SETTING_VALUES);
 
@@ -52,6 +52,33 @@ const describeOutcome = (outcome: {
   readonly kind: string;
   readonly reason?: string;
 }): string => outcome.reason ?? outcome.kind;
+
+/// A slot as Targ's console writes one: two digits at least.
+const label = (slot: number): string => String(slot).padStart(2, '0');
+
+/// The console's report of a remote Take, worded as Targ's `get` reports one.
+const describeTake = (
+  outcome: DamoclesTakeObjectOutcome
+): readonly string[] => {
+  switch (outcome.kind) {
+    case 'took':
+      return [`took object ${label(outcome.slot)}`];
+    case 'fixedInPlace':
+      return [`object ${label(outcome.slot)} is fixed in place`];
+    case 'tooHeavy':
+      return [`object ${label(outcome.slot)} is too heavy`];
+    case 'handsFull':
+      return ['inventory is full'];
+    case 'alreadyCarried':
+      return [`object ${label(outcome.slot)} is already carried`];
+    case 'gone':
+      return [`object ${label(outcome.slot)} is not in the world`];
+    case 'missing':
+      return [`there is no object ${label(outcome.slot)}`];
+    case 'busy':
+      return [`get refused: ${outcome.reason}`];
+  }
+};
 
 /// Damocles command set: settings and Saves as Targ, where/goto on Eris, Targ-only verbs refused.
 export const executeDamoclesConsoleCommand = (
@@ -125,20 +152,13 @@ export const executeDamoclesConsoleCommand = (
     }
     case 'getObject': {
       const session = host.session();
+      if (command.slot !== undefined) {
+        return describeTake(session.takeObject(command.slot));
+      }
+      // Bare `get` is the Take key: the original picks up whatever the selection routine chose.
       const selection = session.snapshot.selection;
       if (selection.kind === 'none' || !selection.inRange) {
         return ['nothing is in reach'];
-      }
-      // `take` has no argument: the original picks up whatever the selection routine chose, so a
-      // slot here names what the player expects to be in reach rather than choosing a target.
-      if (
-        command.slot !== undefined &&
-        selection.instance !== `object-slot-${command.slot}`
-      ) {
-        const reachable = session.objectName(selection.instance);
-        return [
-          `object ${command.slot} is not in reach; ${reachable ?? selection.instance} is`
-        ];
       }
       const name = session.objectName(selection.instance);
       return session.take().kind === 'took'
