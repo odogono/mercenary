@@ -97,7 +97,10 @@
     "x": 5,
     "z": 11
    },
-   "workspaceOrigin": null,
+   "workspaceOrigin": {
+    "x": 353,
+    "z": 3482
+   },
    "impliedWorkspaceOrigin": {
     "x": 353,
     "z": 3482
@@ -112,7 +115,7 @@
    "evidence": {
     "memstateSha256": "d11c8506f42caeb8e65f15dfb124a187cf47c728796b975d296841a214f4174f",
     "ramSha256": "52a2720f64dd37d3ca0ff77ce366cfcfc8325ab3c08562d9ba05eb6d07fb6ae1",
-    "cell": "Read from the engine cell word $7B5C. The body has no recovered 16x16 workspace origin, so the cell is not yet anchored to the body surface; the camera longwords imply an origin of 353,3482 for the workspace this pose stands in."
+    "cell": "Read from the engine cell word $7B5C. This body is a uniform field whose island-local cell wraps at 16 ($054B76), so the camera longwords imply the window 353,3482, congruent to the field origin 1729,938 modulo 16 (docs/research/damocles-midas-field.md)."
    }
   },
   {

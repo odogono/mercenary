@@ -77,7 +77,7 @@ const standingAt = (
 };
 
 describe('admitted Poses', () => {
-  test('are the twenty-five anchored Poses on twenty-one Bodies', () => {
+  test('are the twenty-six anchored Poses on twenty-two Bodies', () => {
     // #172 extracted eighteen further live workspaces, so the origins these Poses were waiting
     // on now exist and the Poses are admitted. The gate itself is unchanged: a Pose is admitted
     // exactly when a recovered workspace origin anchors its cell.
@@ -100,6 +100,7 @@ describe('admitted Poses', () => {
       'lucan',
       'mentor-transporter',
       'metis-transporter',
+      'midas',
       'pan',
       'perseus',
       'solon',
@@ -109,16 +110,13 @@ describe('admitted Poses', () => {
       'vesta-parliament-4-6',
       'vesta-transporter'
     ]);
-    expect(new Set(admitted.map(pose => pose.body)).size).toBe(21);
-    // MIDAS and DAMOCLES are the two that stay out, and for a stated reason: neither capture
-    // stands in a built workspace, so the extractor refuses to place either (#172).
+    expect(new Set(admitted.map(pose => pose.body)).size).toBe(22);
+    // MIDAS is a uniform field, so its Pose is anchored to the window it stands in. DAMOCLES is
+    // the one that stays out, for a stated reason: its record binds the empty group $00 (#172).
     const unanchored = poses.poses.filter(
       pose => pose.workspaceOrigin === null
     );
-    expect(unanchored.map(pose => pose.id).sort()).toEqual([
-      'damocles',
-      'midas'
-    ]);
+    expect(unanchored.map(pose => pose.id)).toEqual(['damocles']);
   });
 });
 
@@ -148,9 +146,9 @@ describe('addressing a Pose', () => {
   });
 
   test('an unanchored Pose is declined by name, which is why Poses are addressable', () => {
-    expect(resolvePose(poses, catalogue, 'midas')).toMatchObject({
+    expect(resolvePose(poses, catalogue, 'damocles')).toMatchObject({
       kind: 'unanchored',
-      pose: { id: 'midas' }
+      pose: { id: 'damocles' }
     });
   });
 
@@ -177,7 +175,7 @@ describe('the authored body switch', () => {
   });
 
   test('a declined switch leaves the session untouched', () => {
-    for (const name of ['tharsis', 'vesta', 'midas', 'object-slot-183']) {
+    for (const name of ['tharsis', 'vesta', 'damocles', 'object-slot-183']) {
       const session = new DamoclesSession(content);
       const before = JSON.stringify(session.captureResume());
       const outcome = session.switchToPose(name);
@@ -192,9 +190,9 @@ describe('the authored body switch', () => {
       kind: 'declined',
       reason: "no Body or Pose named 'tharsis'"
     });
-    expect(session.switchToPose('midas')).toEqual({
+    expect(session.switchToPose('damocles')).toEqual({
       kind: 'declined',
-      reason: 'midas has no recovered workspace origin'
+      reason: 'damocles has no recovered workspace origin'
     });
     const ambiguous = session.switchToPose('eris');
     expect(ambiguous.kind).toBe('declined');

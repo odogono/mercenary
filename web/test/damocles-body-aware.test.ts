@@ -119,16 +119,17 @@ describe('body-aware Object Residence', () => {
     const expectedPairs = placed.length * admittedBodies.size;
 
     expect(matrix).toMatchObject({
-      residentCount: 190
+      residentCount: 195
     });
     expect(matrix.rows).toHaveLength(expectedPairs);
-    // Twenty-one Bodies carry an admitted Pose since #172 recovered their workspace origins,
-    // so the matrix now sweeps every placed resident against all of them rather than four.
-    expect(new Set(matrix.rows.map(row => row.body)).size).toBe(21);
+    // Twenty-two Bodies carry an admitted Pose since #172 recovered their workspace origins
+    // and anchored MIDAS to its field, so the matrix sweeps every placed resident against all
+    // of them rather than four.
+    expect(new Set(matrix.rows.map(row => row.body)).size).toBe(22);
     for (const body of ['body-4', 'body-8', 'body-11', 'body-14']) {
       expect(matrix.rows.some(row => row.body === body)).toBe(true);
     }
-    expect(new Set(matrix.rows.map(row => row.instance))).toHaveLength(190);
+    expect(new Set(matrix.rows.map(row => row.instance))).toHaveLength(195);
     expect(matrix.rows.every(row => row.take.tag === 'observed')).toBe(true);
     expect(matrix.rows.every(row => row.drops.length > 0)).toBe(true);
     expect(
@@ -186,9 +187,10 @@ describe('body-aware Object Residence', () => {
     };
     newBodyPose.poses.push({
       ...newBodyPose.poses.find(pose => pose.workspaceOrigin !== null)!,
-      // MIDAS: a Body with an arrival Pose and no recovered workspace origin, so anchoring it
-      // is what would widen the matrix. ICARUS stood here until #172 anchored it.
-      body: 'body-2',
+      // DAMOCLES: a Body with an arrival Pose and no recovered workspace origin, so anchoring
+      // it is what would widen the matrix. ICARUS, then MIDAS, stood here until #172 anchored
+      // each.
+      body: 'body-29',
       id: 'newly-anchored',
       onFoot: false
     });
@@ -199,6 +201,9 @@ describe('body-aware Object Residence', () => {
 
   test('generated observed/derived fixtures execute Take and every support class on every admitted Body', () => {
     const matrix = generateAcceptanceMatrix(catalogue, arrivalPoses);
+    const arrived = new DamoclesSession(content);
+    expect(arrived.switchToPose('midas').kind).toBe('switched');
+    const midasBound = arrived.captureResume().structure;
     for (const row of matrix.rows) {
       const body = catalogue.bodies.find(body => body.id === row.body)!;
       const isolated = {
@@ -228,7 +233,16 @@ describe('body-aware Object Residence', () => {
         script: initialDamoclesSaveScript(),
         scrollCounter: 0,
         spaceMemory: null,
-        structure: null
+        // A uniform field holds a structure in every cell, so a Save standing on one names the
+        // copy it stands in; everywhere else the origin cell binds nothing.
+        structure:
+          row.body === 'body-2'
+            ? {
+                ...midasBound!,
+                instanceId: 'midas-the-midas-project-surface-0-0',
+                regionIndex: null
+              }
+            : null
       };
       const session = new DamoclesSession(isolated, {
         ...base,
@@ -305,7 +319,7 @@ describe('body-aware Object Residence', () => {
         });
       }
     }
-    // 190 placed residents on 21 Bodies: about 5 s alone, three times that in a full run.
+    // 195 placed residents on 22 Bodies: about 5 s alone, three times that in a full run.
   }, 60_000);
 });
 
@@ -325,10 +339,10 @@ describe('a resident is exposed by its own insertion pairs', () => {
     const placed = catalogue.instances.filter(
       item => item.placement !== null && item.association !== null
     );
-    expect(placed.length).toBe(190);
+    expect(placed.length).toBe(195);
     expect(
       placed.filter(item => item.association!.insertions.length > 0).length
-    ).toBe(190);
+    ).toBe(195);
   });
 
   test('counts the implicit own-region pair and the explicit ones', () => {

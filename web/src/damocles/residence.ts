@@ -378,6 +378,9 @@ const arrivalPosesOf = (value: unknown): readonly ArrivalPose[] => {
 /// Generate the acceptance fixture from both payloads.  It is deliberately a Cartesian product:
 /// each recovered resident is checked against every admitted Body, including the body-mismatch
 /// cases that prove a Residence cannot leak between Bodies.
+/// The resident whose carried bit `$0545AC` tests before the Drop's support-rank comparison.
+const RANK_BYPASS_SLOT = 'object-slot-39';
+
 export const generateAcceptanceMatrix = (
   catalogue: Catalogue,
   arrivalPoses: unknown
@@ -451,7 +454,12 @@ export const generateAcceptanceMatrix = (
           catalogue,
           support.instance.model
         )?.supportTop;
-        const rankPasses = demand !== 0 && supply !== 0 && supply >= demand;
+        // `$0545AC` skips the rank comparison while resident slot 39 is carried, and the
+        // fixture's one carried object is the one being dropped. No run has taken slot 39, so
+        // an outcome that rests on the bypass is derived (docs/research/damocles-object-drops.md).
+        const bypass = instance.id === RANK_BYPASS_SLOT;
+        const rankPasses =
+          bypass || (demand !== 0 && supply !== 0 && supply >= demand);
         const formPasses = top !== null && top !== undefined;
         const heightPasses = formPasses && top <= 63;
         drops.push({
@@ -459,7 +467,7 @@ export const generateAcceptanceMatrix = (
           support: support.instance.id,
           supportClass: support.residence.placementClass,
           tag:
-            demand === 0 || (rankPasses && !heightPasses)
+            bypass || demand === 0 || (rankPasses && !heightPasses)
               ? 'derived'
               : 'observed'
         });

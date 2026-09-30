@@ -158,6 +158,15 @@ test('a switched Body draws its own workspace', async ({ page }) => {
   await expect(frame).toHaveAttribute('data-triangles', '495');
   await expect(frame).toHaveAttribute('data-unresolved', '0');
 
+  // MIDAS stores no copy where its Pose stands: the pyramid bound there is the uniform
+  // field's, built for the cell (#172).
+  expect(await run(page, 'switch midas')).toContain('switched');
+  await closeConsole(page);
+  await expect(frame).toHaveAttribute(
+    'data-structure-instance',
+    'midas-the-midas-project-surface-358-3493'
+  );
+
   expect(errors).toEqual([]);
 });
 
@@ -175,13 +184,13 @@ test('a declined switch leaves live play exactly as it was', async ({
   };
 
   // A Body with more than one admitted Pose, a Pose with no recovered origin, and a name that
-  // is neither. Each declines with a reason that names the problem. MIDAS stands in for the
-  // missing origin now that #390 recovered Gaea's transporter workspace.
+  // is neither. Each declines with a reason that names the problem. DAMOCLES stands in for the
+  // missing origin now that #172 anchored MIDAS to its uniform field.
   expect(await run(page, 'switch eris')).toContain(
     'eris-spaceport-onfoot, eris-transporter-11-8'
   );
-  expect(await run(page, 'switch midas')).toContain(
-    'midas has no recovered workspace origin'
+  expect(await run(page, 'switch damocles')).toContain(
+    'damocles has no recovered workspace origin'
   );
   expect(await run(page, 'switch tharsis')).toContain(
     "no Body or Pose named 'tharsis'"

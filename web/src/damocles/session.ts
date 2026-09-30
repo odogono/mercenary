@@ -200,9 +200,11 @@ import {
   modelWaves,
   nearestIsland,
   pitchFromWord,
+  placementById,
   placementHeading,
   startPose,
   structureInCell,
+  withFieldAt,
   type ErisCell,
   type ErisIsland,
   type ErisPlacement,
@@ -1017,9 +1019,7 @@ export class DamoclesSession implements TitleSession<
     if (bound === null) {
       this.bindAt(this.pose);
     } else {
-      const ground = this.surface.placements.find(
-        placement => placement.id === bound.id
-      );
+      const ground = placementById(this.surface, bound.id);
       // The Floor's structure stays bound: its selector does not change with the surface.
       this.boundPlacement =
         ground === undefined
@@ -1364,9 +1364,7 @@ export class DamoclesSession implements TitleSession<
   /// The surface's own placement of the bound structure, as it stands on Floor 0.
   private groundPlacement(): ErisPlacement | undefined {
     const bound = this.boundPlacement;
-    return bound === null
-      ? undefined
-      : this.surface.placements.find(placement => placement.id === bound.id);
+    return bound === null ? undefined : placementById(this.surface, bound.id);
   }
 
   /// The bound structure's region the Pose stands in, where the Pose is in its cell's central half.
@@ -1484,9 +1482,7 @@ export class DamoclesSession implements TitleSession<
       return null;
     }
     if (residence.level !== 0) {
-      const parent = this.surface.placements.find(
-        placement => placement.id === residence.parent
-      );
+      const parent = placementById(this.surface, residence.parent);
       if (
         parent === undefined ||
         floorPlacement(parent, this.content.models, residence.level)?.selection
@@ -1963,7 +1959,7 @@ export class DamoclesSession implements TitleSession<
       selection: this.selection(),
       structure: this.structureSnapshot(),
       structureDamage: this.structureDamage,
-      surface: this.publishedSurface(),
+      surface: withFieldAt(this.publishedSurface(), this.pose.position),
       switches: this.switches,
       timedDetonator: this.timedDetonator,
       unravelCursor: this.unravelCursor,
