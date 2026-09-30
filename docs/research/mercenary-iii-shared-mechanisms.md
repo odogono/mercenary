@@ -18,7 +18,7 @@ It proposes no application, public API, Data Payload, Save format, `/dion` admis
 6. **Most R2/R3 sibling similarities hold up as shared code modulo relocation.** These are the frame pacing and substep clamp, sound driver walkers, day/night test, workspace builder and cell-stream templates, message display machine and clock digit repaint. Two are sibling but distinct: the model table (word offsets, plus a title-specific `$800D` passenger-form op) and the script VM (byte opcodes; several opcodes differ). Every row is classified [below](#4-classification-of-compared-mechanisms).
 7. **The admission matrix separates three kinds of admission:** self-piloted craft, seatable objects and passenger services. MIII's ordinary B handler is Damocles's boarding handler relocated, plus inserts. The taxi's service residents are excluded at step 8, which arms the ten-pass passenger window. The matrix is posted on [#419](https://github.com/odogono/mercenary/issues/419).
 
-**Recommendation for D1** (the decision is D1's): run game time at **50 Hz**, and use a **fixed main-loop cadence of 9 ticks per frame**, with the recovered eight substeps per frame. The [evidence and alternatives](#cadence-options-for-d1) are below. Nothing found blocks D1. Three findings change the milestone's acceptance wording ([list](#milestone-changes-and-d1-blockers)).
+**Recommendation for D1** (the decision is D1's): run game time at **50 Hz**, and use a **fixed main-loop cadence of 9 ticks per frame**, with the recovered eight substeps per frame. **Superseded by [#642](mercenary-iii-taxi-cadence.md):** at exactly 9 the solicitor arrival is refused, and [ADR 0058](../adr/0058-run-mercenary-iii-at-50-hz-with-a-confirmed-fixed-frame-cadence.md) adopts **11**. The [evidence and alternatives](#cadence-options-for-d1) are below. Nothing found blocks D1. Three findings change the milestone's acceptance wording ([list](#milestone-changes-and-d1-blockers)).
 
 ## Baseline and method
 
@@ -146,6 +146,14 @@ This is a **synthetic probe**, not natural play. The 50 Hz `B0` is restored, and
 | 12 | 1,343 | 6,086 | shown | **shown** |
 | 14 | 1,567 | 7,100 | shown | **shown** |
 
+**Exactly fixed cadence ([#642](mercenary-iii-taxi-cadence.md)).** These patched runs are not exact at 8 and 9, and not strictly exact above. #642 re-ran the probe with the wait routine plus a faster emulated CPU, so every frame is exactly N (checked at `$5301E`). It also derived the outcomes from a rule-level calculation. Both give:
+
+| N | 8 | 9 | 10 | 11 | 12 | 14 |
+|---|---|---|---|---|---|---|
+| Solicitor, spaceport | refused, refused | **refused**, refused | refused, **refused** | shown, refused | shown, shown | shown, shown |
+
+The bold cells are where this sweep differed: its solicitor arrival at 9 (ride 1,059 VBL) came after the text hold that an exact 9 (ride 1,008) hits, and its spaceport arrival at 10 was shown where an exact 10 refuses it. Only **11** reproduces both baseline outcomes.
+
 Rides are 112 and 507 frames at every N. Endpoints are identical and exit succeeds in every run. The arrival outcome is not monotonic in N. It depends on whether the frame-timed arrival lands inside a VBL-timed text hold (201 VBL) or in one of the short gaps between holds. The baseline outcomes are therefore an artefact of ST scene cost, not a rule the program applies.
 
 ### Cadence options for D1
@@ -169,7 +177,7 @@ The PAL lineage of this particular STX is not independently established ([integr
    - For: journey durations follow a single measured mean.
    - Against: it breaks every exact integer rule found here: the 112/507-frame rides, the 22-frame descent, the ten-pass admission window, eight substeps per frame and one script opcode per frame. No evidence supports a fractional rule.
 
-**Recommendation: option 1 at 50 Hz with N = 9**, subject to one confirmation: compute both journeys' arrival outcomes for an exactly fixed 9 before writing timed acceptance tests. If that fails, N = 11 is the evidenced fallback. Acceptance should then assert:
+**Recommendation: option 1 at 50 Hz with N = 9**, subject to one confirmation: compute both journeys' arrival outcomes for an exactly fixed 9 before writing timed acceptance tests. If that fails, N = 11 is the evidenced fallback. **Result ([#642](mercenary-iii-taxi-cadence.md)):** exactly 9 fails and exactly 11 passes; ADR 0058 adopts 11. Acceptance should then assert:
 - frame counts exactly;
 - VBL counts exactly;
 - endpoints and within-mechanism order;
@@ -314,7 +322,7 @@ Damocles addresses are from `observed.ram`. MIII hashes are from `B0.ram` = `loa
 
 ## Milestone changes and D1 blockers
 
-**Blocks D1:** nothing. **D1 must decide:** frame rate and cadence ([options](#cadence-options-for-d1)). The confirming probe is to run both journeys' recovered route and script rules at an exactly fixed N and check the two arrival outcomes. If the result is ambiguous, repeat this report's patched-wait sweep at that N.
+**Blocks D1:** nothing. **D1 must decide:** frame rate and cadence ([options](#cadence-options-for-d1)). The confirming probe is to run both journeys' recovered route and script rules at an exactly fixed N and check the two arrival outcomes. If the result is ambiguous, repeat this report's patched-wait sweep at that N. D1 chose 50 Hz with a provisional 9; [#642](mercenary-iii-taxi-cadence.md) ran the probe, and 11 is the confirmed cadence.
 
 **Changes to the milestone's acceptance wording:**
 
