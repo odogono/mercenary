@@ -28,8 +28,8 @@ export interface CentreBoxPanel {
   /// (`$0529D6`).
   readonly item: string | null;
   /// A document's panel pages items; a switch's shows its lamp between `−` and `+`; the AUTHORS
-  /// COMPUTER's shows its option and value (#628).
-  readonly kind: 'computer' | 'detonator' | 'document' | 'switch';
+  /// COMPUTER's shows its option and value (#628); the TIMED DETONATOR's its charge and fuse (#635).
+  readonly kind: 'computer' | 'document' | 'switch' | 'timedDetonator';
   /// The computer's option, `PARAMETER No`, once drawn; null elsewhere.
   readonly parameter: number | null;
   readonly title: string;

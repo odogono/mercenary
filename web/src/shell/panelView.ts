@@ -337,8 +337,8 @@ export const drawCentreBox = (
       drawSwitchLamp(context, panel, ink);
     } else if (panel.kind === 'computer') {
       drawComputer(context, panel, ink);
-    } else if (panel.kind === 'detonator') {
-      drawDetonator(context, panel, ink);
+    } else if (panel.kind === 'timedDetonator') {
+      drawTimedDetonator(context, panel, ink);
     } else {
       context.fillStyle = ink.text;
       context.fillRect(1, 12, 4, 1);
@@ -356,7 +356,9 @@ export const drawCentreBox = (
   clearTransitionRows(context, view.top);
 };
 
-const drawDetonator = (
+/// The TIMED DETONATOR's panel (#635): the charge digit `$7866` and the fuse `$786A` as `M.SS`
+/// (`$04DAFC`). The layout is the port's, not a traced capture.
+const drawTimedDetonator = (
   context: CanvasRenderingContext2D,
   panel: CentreBoxPanel,
   ink: CentreBoxInk

@@ -195,12 +195,12 @@ describe('TIMED DETONATOR', () => {
     expect(s.keypadDigit(3).kind).toBe('computed');
     expect(s.headCommand('next').kind).toBe('computed');
     expect(s.headCommand('read').kind).toBe('computed');
-    expect(s.snapshot.explosive).toMatchObject({
+    expect(s.snapshot.timedDetonator).toMatchObject({
       charge: 3,
       fuse: 5,
       slot: 75
     });
-    expect(s.snapshot.centreBox.from).toMatchObject({ kind: 'detonator' });
+    expect(s.snapshot.centreBox.from).toMatchObject({ kind: 'timedDetonator' });
   });
 
   test('counts down, clears nearby objects and preserves those beyond the radius', () => {
@@ -310,7 +310,7 @@ describe('TIMED DETONATOR', () => {
     for (let index = 0; index < 121; index += 1) {
       s.headCommand('next');
     }
-    expect(s.snapshot.explosive.fuse).toBe(595);
+    expect(s.snapshot.timedDetonator.fuse).toBe(595);
     const saved = s.captureResume();
     const wrongHead = new DamoclesSession(content, {
       ...saved,
@@ -340,7 +340,7 @@ describe('TIMED DETONATOR', () => {
       identity,
       content
     ).snapshot;
-    expect(saved.explosive).toEqual(s.snapshot.explosive);
+    expect(saved.timedDetonator).toEqual(s.snapshot.timedDetonator);
     expect(saved.safeGate).toBe(true);
     const resumed = new DamoclesSession(content, saved);
     resumed.advance(6);
@@ -363,20 +363,42 @@ describe('TIMED DETONATOR', () => {
       })
     ) as { schemaVersion: number; snapshot: Record<string, unknown> };
     record.schemaVersion = 24;
-    delete record.snapshot['explosive'];
+    delete record.snapshot['timedDetonator'];
     delete record.snapshot['safeGate'];
     const migrated = decodeDamoclesSave(
       JSON.stringify(record),
       identity,
       content
     ).snapshot;
-    expect(migrated.explosive).toEqual({
+    expect(migrated.timedDetonator).toEqual({
       charge: 0,
       deadline: null,
       fuse: 0,
       slot: null
     });
     expect(migrated.safeGate).toBe(false);
+  });
+
+  test('a schema-25 Save without the detonator or the safe gate is refused', () => {
+    const identity = damoclesSaveIdentity(
+      content.catalogue,
+      content.presentationSha256
+    );
+    for (const field of ['timedDetonator', 'safeGate']) {
+      const record = JSON.parse(
+        encodeDamoclesSave({
+          identity,
+          savedAt: '2026-09-30T00:00:00.000Z',
+          schemaVersion: DAMOCLES_SAVE_SCHEMA_VERSION,
+          snapshot: open().captureResume(),
+          where: 'ERIS'
+        })
+      ) as { snapshot: Record<string, unknown> };
+      delete record.snapshot[field];
+      expect(() =>
+        decodeDamoclesSave(JSON.stringify(record), identity, content)
+      ).toThrow(`snapshot.${field}`);
+    }
   });
 });
 

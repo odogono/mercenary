@@ -36,6 +36,7 @@ import {
   presentedText,
   type DamoclesStrings
 } from '../src/damocles/strings.ts';
+import { initialTimedDetonator } from '../src/damocles/timedDetonator.ts';
 import { loadCatalogue } from './fixtures/catalogue.ts';
 
 let catalogue: Catalogue;
@@ -73,7 +74,6 @@ const record = () => ({
     drift: null,
     elapsed: 0,
     encounter: null,
-    explosive: { charge: 0, deadline: null, fuse: 0, slot: null },
     footTicks: 0,
     frameAccumulator: 0,
     headCommands: initialHeadCommands(),
@@ -100,6 +100,7 @@ const record = () => ({
     spaceMemory: null,
     structure: null,
     switches: 0,
+    timedDetonator: initialTimedDetonator(),
     unravelCursor: 29,
     viewExponent: 8
   },

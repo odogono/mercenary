@@ -41,7 +41,7 @@ export interface DocumentPanel {
   readonly colour15: number;
   readonly colour3: number;
   readonly item: string | null;
-  readonly kind: 'computer' | 'detonator' | 'document' | 'switch';
+  readonly kind: 'computer' | 'document' | 'switch' | 'timedDetonator';
   /// The AUTHORS COMPUTER's option, `PARAMETER No`, once drawn; null on every other panel.
   readonly parameter: number | null;
   readonly title: string;
@@ -93,6 +93,7 @@ export const SWITCH_ROWS: readonly SwitchRow[] = [
 
 /// The AUTHORS COMPUTER's row of the Open table, mode 4 (`$04D364`).
 export const AUTHORS_COMPUTER_SLOT = 101;
+/// The TIMED DETONATOR, slot 145, the object table's only type 3 (`$04D69C`, #635).
 export const TIMED_DETONATOR_SLOT = 145;
 export const COMPUTER_ROW = {
   colour15: 0x6_66,
@@ -105,6 +106,13 @@ export const COMPUTER_ROW = {
 export const switchFor = (
   slot: number | null | undefined
 ): SwitchRow | undefined => SWITCH_ROWS.find(row => row.slot === slot);
+
+/// A switch, the AUTHORS COMPUTER or the TIMED DETONATOR: a panel that pages no items, so its
+/// index and item stay 0.
+export const pagesNoItems = (slot: number): boolean =>
+  switchFor(slot) !== undefined ||
+  slot === AUTHORS_COMPUTER_SLOT ||
+  slot === TIMED_DETONATOR_SLOT;
 
 /// Bits 3 to 6 of `$7872`, the four disguised detonators, all of which the NOVABOMB waits on
 /// (`$04D44E`).
@@ -151,7 +159,11 @@ export type HeadCommandOutcome =
       readonly key: '*' | '+' | '-';
       readonly kind: 'computer';
     }
-  | { readonly key: '*' | '+' | '-'; readonly kind: 'detonator' }
+  | {
+      /// `$04D69C`: the TIMED DETONATOR's `+`, `-` and `*`; the session owns the charge and fuse.
+      readonly key: '*' | '+' | '-';
+      readonly kind: 'timedDetonator';
+    }
   | {
       /// `+` (on) or `-` (off) on the open switch: the session owns `$7872`.
       readonly kind: 'switch';
@@ -225,8 +237,12 @@ export const opensHead = (
     head === TIMED_DETONATOR_SLOT ||
     (head === AUTHORS_COMPUTER_SLOT && seated));
 
-/// `$04D3D2` for the document, switch and AUTHORS COMPUTER modes. `head` is the Carried Stack's head slot, if it has one, and
+/// `$04D3D2` for the document, switch, TIMED DETONATOR and AUTHORS COMPUTER modes. `head` is the Carried Stack's head slot, if it has one, and
 /// `readPending` is `$7B96`, which a Read waits on.
+/// The keypad key a Head Command presses on a panel that reads `+`, `-` and `*`.
+const keypadKey = (command: HeadCommand): '*' | '+' | '-' =>
+  command === 'next' ? '+' : command === 'previous' ? '-' : '*';
+
 export const headCommand = (
   state: HeadCommandState,
   command: HeadCommand,
@@ -262,16 +278,10 @@ export const headCommand = (
   // `$04D420`: a switch panel takes `+` and `-`, whatever the head has rotated to, and nothing
   // else.
   if (open?.slot === AUTHORS_COMPUTER_SLOT) {
-    return {
-      key: command === 'next' ? '+' : command === 'previous' ? '-' : '*',
-      kind: 'computer'
-    };
+    return { key: keypadKey(command), kind: 'computer' };
   }
   if (open?.slot === TIMED_DETONATOR_SLOT) {
-    return {
-      key: command === 'next' ? '+' : command === 'previous' ? '-' : '*',
-      kind: 'detonator'
-    };
+    return { key: keypadKey(command), kind: 'timedDetonator' };
   }
   const row = switchFor(open?.slot);
   if (row !== undefined) {

@@ -69,6 +69,7 @@ import {
   AUTHORS_COMPUTER_SLOT,
   COMPUTER_ROW,
   DETONATOR_BITS,
+  NOVAGEN_SAFE_SLOT,
   TIMED_DETONATOR_SLOT,
   closeDocument,
   headCommand,
@@ -166,6 +167,15 @@ import {
 import { presentedText, type DamoclesStrings } from './strings.ts';
 import { advanceTurn, inDaylight, turnOnClock } from './terminator.ts';
 import {
+  SAFE_GATE_CHARGE,
+  blastRadius,
+  fuseText,
+  initialTimedDetonator,
+  isExplosiveSlot,
+  stepFuse,
+  type TimedDetonator
+} from './timedDetonator.ts';
+import {
   SURFACE_CELLS,
   bearingFromYaw,
   cellOf,
@@ -231,12 +241,6 @@ export interface DamoclesSnapshot {
   /// Bank word `$070104`, the encounter gate TOLOSA's landing script arms (#576). The panel's
   /// second lamp `$050A5C` reads it.
   readonly encounter: number;
-  readonly explosive: {
-    readonly charge: number;
-    readonly deadline: number | null;
-    readonly fuse: number;
-    readonly slot: number | null;
-  };
   readonly frameAccumulator: number;
   /// The open document and the centre box's transition (#598).
   readonly headCommands: HeadCommandState;
@@ -264,6 +268,7 @@ export interface DamoclesSnapshot {
   readonly removedResidents: readonly string[];
   readonly residence: readonly ResidenceDeparture[];
   readonly residents: readonly ErisPlacement[];
+  /// `$7A60`, the NOVAGEN SAFE's blast gate, which lets Open open the safe (`$04D25C`).
   readonly safeGate: boolean;
   /// What the TOLOSA encounter's zap, its flashes and the death state do to the screen (#581).
   readonly screen: DamoclesScreen;
@@ -276,6 +281,8 @@ export interface DamoclesSnapshot {
   readonly surface: ErisSurface;
   /// `$7872`, the switch bits (#627).
   readonly switches: number;
+  /// The TIMED DETONATOR's charge and fuse, and the EXPLOSIVE it armed (#635).
+  readonly timedDetonator: TimedDetonator;
   /// `$7A8C`, the unravelling's next Body index, -1 once past DIALIS (#628).
   readonly unravelCursor: number;
   /// Whether the unravelling runs: the AUTHORS COMPUTER is gone (`$753C` = 0).
@@ -363,8 +370,23 @@ const GAEA_BODY = 'body-8';
 export const ICARUS_SECONDS_LEFT = 5990;
 /// `$04C9C2`: the destruction that fires `$1A`.
 const LAST_BODY_COUNT = 30;
+/// An armed EXPLOSIVE going off (`$04CB60`): its Body, centre and reach, the structure region
+/// it went off in if any, and its own instance.
+interface ExplosiveBlast {
+  readonly body: string;
+  readonly centre: {
+    readonly x: number;
+    readonly y: number;
+    readonly z: number;
+  };
+  readonly radius: number;
+  readonly region: number | null;
+  readonly source: string;
+}
 /// `$04CAC4`: an EXPLOSIVE at digit 9 destroys its Body when its blast clears this many others.
 export const PLANET_KILL_EXPLOSIVES = 7;
+/// The NOVAGEN SAFE, which a small blast opens rather than clears.
+const NOVAGEN_SAFE = `object-slot-${NOVAGEN_SAFE_SLOT}`;
 /// The NOVABOMB, slot 163 (`$A3`): `$7634` is its Association B and `$7236` its handling byte.
 export const NOVABOMB = 'object-slot-163';
 const NOVABOMB_SLOT = 163;
@@ -494,7 +516,7 @@ const documentPanel = (
   item: number | null,
   switches: number,
   computer: AuthorsComputer,
-  explosive: { readonly charge: number; readonly fuse: number }
+  timedDetonator: TimedDetonator
 ): DocumentPanel | null => {
   if (slot === TIMED_DETONATOR_SLOT) {
     return {
@@ -503,8 +525,8 @@ const documentPanel = (
       item:
         item === null
           ? null
-          : `${explosive.charge} ${Math.floor(explosive.fuse / 60)}.${String(explosive.fuse % 60).padStart(2, '0')}`,
-      kind: 'detonator',
+          : `${timedDetonator.charge} ${fuseText(timedDetonator.fuse)}`,
+      kind: 'timedDetonator',
       parameter: null,
       title: 'TIMED DETONATOR'
     };
@@ -670,12 +692,9 @@ export class DamoclesSession implements TitleSession<
   private switches = 0;
   /// The AUTHORS COMPUTER's option `$786C` and its records at `$7C8C` (#628).
   private computer: AuthorsComputer = initialAuthorsComputer();
-  private explosive = {
-    charge: 0,
-    deadline: null as number | null,
-    fuse: 0,
-    slot: null as number | null
-  };
+  /// The TIMED DETONATOR's charge `$7866` and fuse `$786A`, and the EXPLOSIVE it armed (#635).
+  private timedDetonator: TimedDetonator = initialTimedDetonator();
+  /// `$7A60`, set by a small blast that catches the NOVAGEN SAFE (`$04CBDA`).
   private safeGate = false;
   /// `$7A52`, the Benson Panel's palette XOR mask, which the computer's option 1 writes.
   private panelMask = 0;
@@ -821,12 +840,7 @@ export class DamoclesSession implements TitleSession<
     this.paletteMask = restore?.paletteMask ?? 0;
     this.switches = restore?.switches ?? 0;
     this.computer = restore?.computer ?? initialAuthorsComputer();
-    this.explosive = restore?.explosive ?? {
-      charge: 0,
-      deadline: null,
-      fuse: 0,
-      slot: null
-    };
+    this.timedDetonator = restore?.timedDetonator ?? initialTimedDetonator();
     this.safeGate = restore?.safeGate ?? false;
     this.panelMask = restore?.panelMask ?? 0;
     this.viewExponent = restore?.viewExponent ?? NEW_GAME_VIEW_EXPONENT;
@@ -1808,7 +1822,6 @@ export class DamoclesSession implements TitleSession<
       drift: this.drift,
       elapsed: this.elapsed,
       encounter: this.script.encounter,
-      explosive: this.explosive,
       frameAccumulator: this.frameAccumulator,
       headCommands: this.headCommands,
       impact: this.impact(),
@@ -1837,6 +1850,7 @@ export class DamoclesSession implements TitleSession<
       structure: this.structureSnapshot(),
       surface: this.publishedSurface(),
       switches: this.switches,
+      timedDetonator: this.timedDetonator,
       unravelCursor: this.unravelCursor,
       unravelling: this.unravelling(),
       viewExponent: this.viewExponent
@@ -2024,7 +2038,9 @@ export class DamoclesSession implements TitleSession<
     return 'computed';
   }
 
-  /// A keypad digit through the open computer or TIMED DETONATOR.
+  /// A keypad digit, `$67`–`$70` through `$04D3AE` (#628, #635). On the computer's panel 0 to 4
+  /// select its option and click, and a higher digit does nothing. On the TIMED DETONATOR's any
+  /// digit sets the charge `$7866` (`$04D69C`).
   keypadDigit(digit: number): { readonly kind: 'computed' | 'ignored' } {
     if (
       this.death !== null ||
@@ -2036,7 +2052,7 @@ export class DamoclesSession implements TitleSession<
       return { kind: 'ignored' };
     }
     if (this.headCommands.open?.slot === TIMED_DETONATOR_SLOT) {
-      this.explosive = { ...this.explosive, charge: digit };
+      this.timedDetonator = { ...this.timedDetonator, charge: digit };
       this.click();
       return { kind: 'computed' };
     }
@@ -2052,33 +2068,35 @@ export class DamoclesSession implements TitleSession<
     return { kind: 'computed' };
   }
 
-  private detonatorKey(key: '*' | '+' | '-'): 'computed' | 'ignored' {
+  /// `$04D69C`: `+` and `-` step the fuse `$786A`. `*` (`$04D6F4`) arms the EXPLOSIVE at the head
+  /// of the Carried Stack, `$7A54` its slot and `$7868` its deadline, or presents system string 13
+  /// when the head is not one.
+  private timedDetonatorKey(key: '*' | '+' | '-'): 'computed' | 'ignored' {
     if (key !== '*') {
-      this.explosive = {
-        ...this.explosive,
-        fuse: Math.max(
-          0,
-          Math.min(595, this.explosive.fuse + (key === '+' ? 5 : -5))
-        )
+      this.timedDetonator = {
+        ...this.timedDetonator,
+        fuse: stepFuse(this.timedDetonator.fuse, key)
       };
       this.click();
       return 'computed';
     }
-    const slot =
-      this.carried[0] === undefined ? null : this.slotOf(this.carried[0]);
-    if (slot === null || slot < 75 || slot > 83) {
+    const head = this.carried[0];
+    const slot = head === undefined ? null : this.slotOf(head);
+    if (!isExplosiveSlot(slot)) {
       this.presentSystem('system-string-13');
       return 'ignored';
     }
-    this.explosive = {
-      ...this.explosive,
-      deadline: this.clock() + this.explosive.fuse,
+    this.timedDetonator = {
+      ...this.timedDetonator,
+      deadline: this.clock() + this.timedDetonator.fuse,
       slot
     };
     this.click();
     return 'computed';
   }
 
+  /// A structure resident's place on its Body: the structure's surface position plus the
+  /// resident's own offset, or undefined when the structure is not on a surface.
   private structurePosition(placed: Extract<Residence, { kind: 'structure' }>) {
     const parent = this.residenceFor(placed.parent);
     if (parent?.kind !== 'surface') {
@@ -2091,88 +2109,123 @@ export class DamoclesSession implements TitleSession<
     };
   }
 
+  /// `$05221A` → `$04DACC`: the armed EXPLOSIVE goes off once its deadline `$7868` less the
+  /// Impact Clock is 0 or less, and `$04CB60` runs its blast.
   private tickExplosive(): void {
-    const { charge, deadline, slot } = this.explosive;
+    const { charge, deadline, slot } = this.timedDetonator;
     if (slot === null || deadline === null || this.clock() < deadline) {
       return;
     }
-    this.explosive = { ...this.explosive, deadline: null, fuse: 0, slot: null };
+    this.timedDetonator = {
+      ...this.timedDetonator,
+      deadline: null,
+      fuse: 0,
+      slot: null
+    };
+    const blast = this.blastOf(slot, charge);
+    const cleared = this.clearBlast(blast, charge);
+    if (!this.removedResidents.has(blast.source)) {
+      this.takeAway(slot);
+    }
+    this.startDebris();
+    if (charge === 9) {
+      this.explosiveBlast(blast.body, cleared);
+    }
+    // `$04CBA8`: the blast's own death test, which a Body destroyed by the kill has skipped.
+    if (
+      this.space === null &&
+      this.pose.body === blast.body &&
+      !this.destroyedBodies.includes(blast.body) &&
+      this.inBlast(
+        blast,
+        this.regionIndex === null ? null : this.regionIndex + 1,
+        this.pose.position
+      )
+    ) {
+      this.blowUp('system-string-34');
+    }
+  }
+
+  /// Where the EXPLOSIVE in `slot` goes off: its placed Residence, or the player carrying it.
+  private blastOf(slot: number, charge: number): ExplosiveBlast {
     const source = `object-slot-${slot}`;
     const residence = this.residenceFor(source);
-    const body =
+    const placed =
       residence?.kind === 'surface' || residence?.kind === 'structure'
-        ? residence.body
-        : this.pose.body;
-    const centre =
-      residence?.kind === 'surface'
-        ? residence.position
-        : residence?.kind === 'structure'
-          ? (this.structurePosition(residence) ?? this.pose.position)
-          : this.pose.position;
-    const radius = 0x40 << charge;
-    const sourceRegion =
-      residence?.kind === 'structure' ? residence.insertionGroup : null;
+        ? residence
+        : null;
+    return {
+      body: placed?.body ?? this.pose.body,
+      centre:
+        placed?.kind === 'surface'
+          ? placed.position
+          : placed?.kind === 'structure'
+            ? (this.structurePosition(placed) ?? this.pose.position)
+            : this.pose.position,
+      radius: blastRadius(charge),
+      region: placed?.kind === 'structure' ? placed.insertionGroup : null,
+      source
+    };
+  }
+
+  /// `$04CBDA`: inside a structure the test is the region, elsewhere the distance to the centre.
+  private inBlast(
+    blast: ExplosiveBlast,
+    region: number | null,
+    position: { readonly x: number; readonly y: number; readonly z: number }
+  ): boolean {
+    return blast.region !== null && region !== null
+      ? region === blast.region
+      : Math.hypot(
+          position.x - blast.centre.x,
+          position.y - blast.centre.y,
+          position.z - blast.centre.z
+        ) <= blast.radius;
+  }
+
+  /// `$04CA20`: clears the placed objects on the blast's Body that it reaches, and counts the
+  /// other EXPLOSIVEs among them. A NOVAGEN SAFE caught at `SAFE_GATE_CHARGE` or less is not
+  /// cleared but sets the safe gate `$7A60`.
+  private clearBlast(blast: ExplosiveBlast, charge: number): number {
     let cleared = 0;
-    for (const instance of this.content.catalogue.instances) {
-      const id = instance.id;
+    for (const { id } of this.content.catalogue.instances) {
       const placed = this.residenceFor(id);
       if (placed?.kind !== 'surface' && placed?.kind !== 'structure') {
-        continue;
-      }
-      if (placed.body !== body) {
         continue;
       }
       const position =
         placed.kind === 'surface'
           ? placed.position
           : this.structurePosition(placed);
-      if (position === undefined) {
+      if (
+        placed.body !== blast.body ||
+        position === undefined ||
+        !this.inBlast(
+          blast,
+          placed.kind === 'structure' ? placed.insertionGroup : null,
+          position
+        )
+      ) {
         continue;
       }
-      const inReach =
-        sourceRegion !== null && placed.kind === 'structure'
-          ? placed.insertionGroup === sourceRegion
-          : Math.hypot(
-              position.x - centre.x,
-              position.y - centre.y,
-              position.z - centre.z
-            ) <= radius;
-      if (!inReach) {
-        continue;
-      }
-      if (id === 'object-slot-102' && charge <= 3) {
+      if (id === NOVAGEN_SAFE && charge <= SAFE_GATE_CHARGE) {
         this.safeGate = true;
         continue;
       }
-      this.carried = this.carried.filter(item => item !== id);
       this.residence.delete(id);
       this.removedResidents.add(id);
-      if (id !== source && /^object-slot-(?:7[5-9]|8[0-3])$/.test(id)) {
+      if (id !== blast.source && isExplosiveSlot(this.slotOf(id))) {
         cleared += 1;
       }
     }
-    if (!this.removedResidents.has(source)) {
-      this.takeAway(slot);
-    }
+    return cleared;
+  }
+
+  /// `$04CCD2` consumes 192 noise words to seed 64 particles, then `$7834` holds their remaining
+  /// 64 main-loop passes. The current renderer does not yet draw the particles.
+  private startDebris(): void {
     this.script = { ...this.script, noise: (this.script.noise + 192) % 2048 };
     this.debrisPasses = 64;
-    if (charge === 9) {
-      this.explosiveBlast(body, cleared);
-    }
-    if (
-      this.space === null &&
-      this.pose.body === body &&
-      (sourceRegion !== null && this.regionIndex !== null
-        ? this.regionIndex + 1 === sourceRegion
-        : Math.hypot(
-            this.pose.position.x - centre.x,
-            this.pose.position.y - centre.y,
-            this.pose.position.z - centre.z
-          ) <= radius) &&
-      !this.destroyedBodies.includes(body)
-    ) {
-      this.blowUp('system-string-34');
-    }
   }
 
   /// The handler `$04D5D6` names for the option in hand.
@@ -2424,10 +2477,7 @@ export class DamoclesSession implements TitleSession<
       // `$21`. There is no TOLOSA noise pass before this death.
       this.blowUp('system-string-35');
     } else {
-      // `$04CCD2` consumes 192 noise words to seed 64 particles, then `$7834` holds their
-      // remaining 64 main-loop passes. The current renderer does not yet draw the particles.
-      this.script = { ...this.script, noise: (this.script.noise + 192) % 2048 };
-      this.debrisPasses = 64;
+      this.startDebris();
     }
     return true;
   }
@@ -2576,7 +2626,6 @@ export class DamoclesSession implements TitleSession<
         this.pool === null
           ? null
           : { dead: this.death !== null, pool: this.pool },
-      explosive: this.explosive,
       footTicks: this.footTicks,
       frameAccumulator: this.frameAccumulator,
       headCommands: this.headCommands,
@@ -2604,6 +2653,7 @@ export class DamoclesSession implements TitleSession<
       spaceMemory: { ...this.spaceMemory },
       structure: this.structureSnapshot(),
       switches: this.switches,
+      timedDetonator: this.timedDetonator,
       unravelCursor: this.unravelCursor,
       viewExponent: this.viewExponent
     };
@@ -3615,8 +3665,8 @@ export class DamoclesSession implements TitleSession<
     if (outcome.kind === 'computer') {
       return { kind: this.computerKey(outcome.key) };
     }
-    if (outcome.kind === 'detonator') {
-      return { kind: this.detonatorKey(outcome.key) };
+    if (outcome.kind === 'timedDetonator') {
+      return { kind: this.timedDetonatorKey(outcome.key) };
     }
     this.headCommands = outcome.state;
     if (outcome.kind === 'read') {
@@ -3640,7 +3690,7 @@ export class DamoclesSession implements TitleSession<
         box.steps === 0 ? (open?.item ?? null) : box.fromItem,
         this.switches,
         this.computer,
-        this.explosive
+        this.timedDetonator
       ),
       steps: box.steps,
       to: documentPanel(
@@ -3649,7 +3699,7 @@ export class DamoclesSession implements TitleSession<
         null,
         this.switches,
         this.computer,
-        this.explosive
+        this.timedDetonator
       )
     };
   }
