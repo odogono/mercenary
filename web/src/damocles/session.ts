@@ -38,6 +38,7 @@ import {
   launch,
   throttleDown,
   throttleForEntry,
+  throttleNotchKey,
   throttleUp,
   type BoundBoxes,
   type CraftProgram,
@@ -3624,6 +3625,19 @@ export class DamoclesSession implements TitleSession<
     }
     this.craft = { ...craft, swing: false, throttle };
     this.effects.push({ cue: 'throttle', type: 'sound-request' });
+  }
+
+  /// The pad's shoulder buttons aboard (ADR 0059): the throttle key a notch down or up, pressed.
+  throttleNotchStep(direction: -1 | 1): void {
+    const program = this.craftProgram;
+    const craft = this.craft;
+    if (program === null || craft === null) {
+      return;
+    }
+    const scancode = throttleNotchKey(program, craft, direction);
+    if (scancode !== undefined) {
+      this.throttleKey(scancode);
+    }
   }
 
   /// `-` and `=` aboard (`$05575E`, `$055798`): the throttle scaled down or up a step.

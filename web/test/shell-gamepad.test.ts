@@ -68,6 +68,7 @@ const harness = ({ damocles = false } = {}) => {
     occupancy: () => occupancy,
     reach: action => calls.push({ reach: action }),
     shutThrottle: () => calls.push('shutThrottle'),
+    throttleNotchStep: direction => calls.push({ notchStep: direction }),
     throttleNotchValue: notch => calls.push({ notch }),
     throttleStep: delta => calls.push({ throttleStep: delta }),
     ...(damocles
@@ -243,8 +244,8 @@ describe('the pad as a Control Profile', () => {
     expect(calls).toEqual([
       'leaveCraft',
       'shutThrottle',
-      { throttleStep: 1 },
-      { throttleStep: -1 },
+      { notchStep: 1 },
+      { notchStep: -1 },
       'launch',
       { headCommand: 'open' }
     ]);
@@ -369,6 +370,7 @@ describe('the Controls Page’s pad column', () => {
     rideLift: () => undefined,
     shutThrottle: () => undefined,
     skipMessage: () => undefined,
+    throttleNotchStep: () => undefined,
     throttleNotchValue: () => undefined,
     throttleStep: () => undefined
   };
@@ -385,8 +387,8 @@ describe('the Controls Page’s pad column', () => {
     expect(rows).toContainEqual(['always', 'BOARD', 'A ON FOOT']);
     expect(rows).toContainEqual(['always', 'TURN', 'STICKS LEFT / RIGHT']);
     expect(rows).toContainEqual(['onFoot', 'WALK', 'LEFT STICK UP / DOWN']);
-    expect(rows).toContainEqual(['aboard', 'THROTTLE DOWN / UP', 'LB / RB']);
-    expect(rows).toContainEqual(['aboard', 'THROTTLE', undefined]);
+    expect(rows).toContainEqual(['aboard', 'THROTTLE', 'LB / RB']);
+    expect(rows).toContainEqual(['aboard', 'THROTTLE DOWN / UP', undefined]);
   });
 
   test('no two Bindings a pad reaches in one Occupancy share a button, but for the pager', () => {

@@ -393,6 +393,9 @@ try {
     // The throttle keys as the ST scancodes the table at `$0557D6` is indexed by: `1`–`9`
     // are `$02`–`$0A`, `0` is `$0B`, `F1`–`F10` are `$3B`–`$44` and Space is `$39` (#556).
     shutThrottle: () => commitAction(() => session.throttleKey(0x39)),
+    // The pad's shoulder buttons press a notch's own key (ADR 0059), as Targ's step its ladder.
+    throttleNotchStep: direction =>
+      commitAction(() => session.throttleNotchStep(direction)),
     throttleNotchValue: notch =>
       commitAction(() => session.throttleKey(notch === 10 ? 0x0b : notch + 1)),
     throttleReverseNotch: notch =>

@@ -49,6 +49,7 @@ const harness = ({
     rideLift: () => calls.push('rideLift'),
     shutThrottle: () => calls.push('shutThrottle'),
     skipMessage: () => calls.push('skipMessage'),
+    throttleNotchStep: direction => calls.push({ notchStep: direction }),
     throttleNotchValue: notch => calls.push({ notch }),
     throttleStep: delta => calls.push({ throttleStep: delta }),
     ...(damocles
@@ -129,6 +130,7 @@ describe('the browser Control Profile', () => {
       rideLift: () => undefined,
       shutThrottle: () => undefined,
       skipMessage: () => undefined,
+      throttleNotchStep: () => undefined,
       throttleNotchValue: () => undefined,
       throttleReverseNotch: notch => calls.push({ reverse: notch }),
       throttleStep: () => undefined
@@ -158,6 +160,7 @@ describe('the browser Control Profile', () => {
       rideLift: () => undefined,
       shutThrottle: () => undefined,
       skipMessage: () => undefined,
+      throttleNotchStep: () => undefined,
       throttleNotchValue: () => undefined,
       throttleStep: () => undefined
     });
@@ -570,6 +573,7 @@ const latching = () => {
     occupancy: () => ({ kind: 'onFoot' }),
     reach: action => calls.push({ reach: action }),
     shutThrottle: () => calls.push('shutThrottle'),
+    throttleNotchStep: direction => calls.push({ notchStep: direction }),
     throttleNotchValue: notch => calls.push({ notch }),
     throttleStep: delta => calls.push({ throttleStep: delta })
   };
