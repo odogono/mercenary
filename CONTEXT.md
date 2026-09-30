@@ -351,8 +351,12 @@ How far an Ending's own presentation has got: absent throughout active play, ent
 _Avoid_: gameComplete, win phase, game-over flag, Ending
 
 **Movement Intent**:
-The device-independent held request sampled by a Mover on each simulation step — turning, pitching, walking and running — distinct from persistent state and from a one-shot Semantic Action.
+The device-independent held request sampled by a Mover on each simulation step — turning, pitching, walking, strafing and running — distinct from persistent state and from a one-shot Semantic Action.
 _Avoid_: Key state, held Semantic Action, control event
+
+**Strafe**:
+A sidestep on foot, perpendicular to the heading at the walk step, which neither original has. It belongs to the on-foot Mover rather than making a third one: it meets every refusal, gate and trigger that walking does, running scales it, and walking and strafing together go no faster than walking alone. It is offered only when the player opts into it.
+_Avoid_: Sidestep, lateral walk, slide
 
 **Semantic Action**:
 A device-independent one-shot player command whose availability, conflicts, ordering, rate limits, and outcomes are governed by Behavior Cases.
@@ -393,6 +397,18 @@ _Avoid_: Keymap screen, help overlay, key reference, controls help
 **Accommodation**:
 An optional Web Adaptation that improves access through equivalent input or redundant presentation without changing Game Semantics or player-relevant timing.
 _Avoid_: Assist mode, accessibility mode
+
+**Extension**:
+An opt-in gameplay addition that the original never had and that may change what the player can do or see, off in faithful play and never carried by a Save; unlike an Accommodation it is not equivalent input. Strafe and Free Look are Extensions, and so is Targ's run.
+_Avoid_: Modernization, enhancement, mod, Departure
+
+**Extended Controls**:
+The one player setting that turns on the Strafe and Free Look Extensions together. It is a Browser Shell preference, not Session State, so turning it on or off leaves every Save as it would have been.
+_Avoid_: Modern controls, FPS mode, advanced controls
+
+**Free Look**:
+Tilting the Pose's pitch up and down on foot, which neither original allows, within a fixed limit and at a fixed rate; the view stays where it is left. Everything that reads the Pose follows it, picking included. The pitch returns to level on boarding, on leaving, on a Location change, at the Arrival, and when Extended Controls is turned off. A Save never carries it, so a loaded Save starts level. Aboard, pitch is the craft's own attitude and Free Look does not apply.
+_Avoid_: Mouse look, camera look, head tilt
 
 **Display Composition**:
 A validated arrangement of the world view, status information, and prompts within the Game Surface that preserves their governed information and behaviour.
