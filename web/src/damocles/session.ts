@@ -168,14 +168,23 @@ import {
 import { presentedText, type DamoclesStrings } from './strings.ts';
 import { advanceTurn, inDaylight, turnOnClock } from './terminator.ts';
 import {
+  ARMED_EXPLOSIVE_MODEL,
+  BLAST_FLASH_WORDS,
+  MARKER_FLASH_WORD,
   SAFE_GATE_CHARGE,
   blastRadius,
+  doorUnkeyed,
   fuseText,
   initialTimedDetonator,
   isExplosiveSlot,
   regionBlastFor,
   stepFuse,
+  structureDamageFor,
+  structureRemoved,
+  withStructureDamage,
   withinReach,
+  type BlastDoor,
+  type StructureDamage,
   type TimedDetonator
 } from './timedDetonator.ts';
 import {
@@ -278,6 +287,8 @@ export interface DamoclesSnapshot {
   readonly scrollCounter: number;
   readonly selection: Selection;
   readonly structure: BoundStructureSnapshot | null;
+  /// `$636A`, the structure damage table the TIMED DETONATOR's blasts write (#650).
+  readonly structureDamage: readonly StructureDamage[];
   /// The workspace the player is standing on, anchored at the Body the Pose names. A switch
   /// rebuilds it, so a renderer that plans from the presentation document's own surface instead
   /// would go on drawing Eris after the session had left it (#379).
@@ -462,15 +473,12 @@ const rulesFor = (doc: ErisPresentationDocument): WalkRules => ({
 
 const inventorySourceLabel = (
   catalogue: Catalogue,
-  instanceId: string
-): string => {
-  const instance = instanceById(catalogue, instanceId);
-  const model =
-    instance === undefined
-      ? undefined
-      : modelSummaryById(catalogue, instance.model);
-  return (model?.name ?? instanceId).slice(0, 16).padEnd(16);
-};
+  instanceId: string,
+  modelId: string | undefined
+): string =>
+  (modelSummaryById(catalogue, modelId)?.name ?? instanceId)
+    .slice(0, 16)
+    .padEnd(16);
 
 /// A door as a structure binds it: shut, its latch `$00`.
 const SHUT: AttachmentState = { latch: 'closed', openUnits: 0 };
@@ -708,6 +716,11 @@ export class DamoclesSession implements TitleSession<
   private timedDetonator: TimedDetonator = initialTimedDetonator();
   /// `$7A60`, set by a small blast that catches the NOVAGEN SAFE (`$04CBDA`).
   private safeGate = false;
+  /// `$636A`, the structure damage table, which every workspace load replays (#650).
+  private structureDamage: readonly StructureDamage[] = [];
+  /// The EXPLOSIVE slots whose model entry holds model 257, EXPLOSIVE-ARMED!. `*` swaps it in
+  /// and out; the deadline leaves it in, and the blast takes the EXPLOSIVE away a pass later.
+  private readonly armedModels = new Set<number>();
   /// `$7A52`, the Benson Panel's palette XOR mask, which the computer's option 1 writes.
   private panelMask = 0;
   /// `$7964`'s high word, the projection's scale exponent, which option 2 writes: 8 at the reset.
@@ -854,6 +867,13 @@ export class DamoclesSession implements TitleSession<
     this.computer = restore?.computer ?? initialAuthorsComputer();
     this.timedDetonator = restore?.timedDetonator ?? initialTimedDetonator();
     this.safeGate = restore?.safeGate ?? false;
+    this.structureDamage = restore?.structureDamage ?? [];
+    // `$058E60`: the model table is outside the Save. A Load resets slots 75 to 82 to model 256
+    // and re-arms the armed EXPLOSIVE's; a restored session starts from the reset's table, so
+    // slot 83, which the loop misses, has model 256 as well.
+    if (this.timedDetonator.armed && this.timedDetonator.slot !== null) {
+      this.armedModels.add(this.timedDetonator.slot);
+    }
     this.panelMask = restore?.panelMask ?? 0;
     this.viewExponent = restore?.viewExponent ?? NEW_GAME_VIEW_EXPONENT;
     this.unravelCursor = restore?.unravelCursor ?? COMET_BODY;
@@ -1030,9 +1050,42 @@ export class DamoclesSession implements TitleSession<
         ).length
     ) {
       this.surfaceModels = this.content.models.size;
-      return loaded;
+      return this.withDamage(loaded);
     }
     return this.buildSurface(bodyId);
+  }
+
+  /// `$04EB60`: every workspace load zeroes the cell longs, replays the authored overrides and
+  /// then the damage table (`$04ED4A`), so a structure whose cell a blast cleared is not built
+  /// again. Its ground stays. Islands that share a group share the damage.
+  private withDamage(surface: ErisSurface): ErisSurface {
+    if (!this.structureDamage.some(entry => entry.word === 0)) {
+      return surface;
+    }
+    const placements = surface.placements.filter(placement => {
+      if (placement.kind !== 'structure') {
+        return true;
+      }
+      const island = nearestIsland(surface, placement.position);
+      if (island === undefined) {
+        return true;
+      }
+      const cell = islandLocalCell(placement.position, surface.grid, island);
+      return (
+        cell.x < 0 ||
+        cell.x > 15 ||
+        cell.z < 0 ||
+        cell.z > 15 ||
+        !structureRemoved(
+          this.structureDamage,
+          island.structureGroup,
+          cell.x + 16 * cell.z
+        )
+      );
+    });
+    return placements.length === surface.placements.length
+      ? surface
+      : { ...surface, placements };
   }
 
   private buildSurface(bodyId: string): ErisSurface {
@@ -1043,11 +1096,13 @@ export class DamoclesSession implements TitleSession<
       );
     }
     this.surfaceModels = this.content.models.size;
-    return erisSurfaceFrom(
-      this.content.catalogue,
-      this.content.models,
-      this.content.doc,
-      { bodyId, origin }
+    return this.withDamage(
+      erisSurfaceFrom(
+        this.content.catalogue,
+        this.content.models,
+        this.content.doc,
+        { bodyId, origin }
+      )
     );
   }
 
@@ -1633,10 +1688,11 @@ export class DamoclesSession implements TitleSession<
     instance: NonNullable<ReturnType<DamoclesSession['instanceFor']>>,
     position: Vector3
   ): ErisPlacement | undefined {
-    const model = this.content.models.peek(instance.model);
+    const modelId = this.modelIdOf(instance.id, instance.model);
+    const model = this.content.models.peek(modelId);
     if (model === undefined) {
       // Drawn once its file lands: residents are recomputed every snapshot.
-      void this.content.models.prefetch([instance.model]);
+      void this.content.models.prefetch([modelId]);
       return undefined;
     }
     const form =
@@ -1676,13 +1732,21 @@ export class DamoclesSession implements TitleSession<
         ? ''.padEnd(Math.max(0, this.scrollCounter), ' ')
         : 'EMPTY';
     }
-    const label = inventorySourceLabel(this.content.catalogue, head);
+    const instance = instanceById(this.content.catalogue, head);
+    const modelId =
+      instance === undefined ? undefined : this.modelIdOf(head, instance.model);
+    const label = inventorySourceLabel(this.content.catalogue, head, modelId);
     if (this.scrollCounter < 0) {
       return label.slice(0, 16 + this.scrollCounter);
     }
-    const instance = instanceById(this.content.catalogue, head);
-    const model = modelSummaryById(this.content.catalogue, instance?.model);
-    return model?.name ?? head;
+    return modelSummaryById(this.content.catalogue, modelId)?.name ?? head;
+  }
+
+  /// The model an object's entry holds: EXPLOSIVE-ARMED! for an EXPLOSIVE `*` armed (#650).
+  private modelIdOf(instanceId: string, model: string): string {
+    return this.armedModels.has(this.slotOf(instanceId))
+      ? ARMED_EXPLOSIVE_MODEL
+      : model;
   }
 
   /// The Catalogue's name for the Body underfoot, falling back to its id so a Body the
@@ -1775,10 +1839,48 @@ export class DamoclesSession implements TitleSession<
     placement: ErisPlacement,
     attachment: EntranceAttachment
   ): boolean {
+    const key = this.attachmentKey(placement, attachment);
+    return key === null || this.liveCarriedSlot(key);
+  }
+
+  /// The key byte `$5A43 + slot` of a door, as the object slot of its key, or null for 0. The
+  /// door builder `$059E9E` leaves it 0 where the damage table holds a door entry for the
+  /// bound group, the Floor and the attachment slot (#650).
+  private attachmentKey(
+    placement: ErisPlacement,
+    attachment: EntranceAttachment
+  ): number | null {
     if (attachment.keyIndex === undefined || placement.keyBase === null) {
-      return true;
+      return null;
     }
-    return this.liveCarriedSlot(placement.keyBase + attachment.keyIndex);
+    const group =
+      nearestIsland(this.surface, placement.position)?.structureGroup ?? 0;
+    return doorUnkeyed(this.structureDamage, group, this.floor, attachment.slot)
+      ? null
+      : placement.keyBase + attachment.keyIndex;
+  }
+
+  /// `$05A928`'s tail: the first attachment from `$3FC` down with a key byte whose Proximity Box
+  /// holds the player, into `$7A56` (its slot) and `$7A58` (its key), or none.
+  private doorAround(): BlastDoor | null {
+    const placement = this.boundPlacement;
+    if (placement?.selection === undefined) {
+      return null;
+    }
+    const local = structureLocalPosition(
+      placement,
+      this.pose.position,
+      this.negateModelZ
+    );
+    for (const attachment of [
+      ...placement.selection.structure.attachments
+    ].sort((a, b) => b.slot - a.slot)) {
+      const key = this.attachmentKey(placement, attachment);
+      if (key !== null && insideLocalBox(local, attachment.proximityBox)) {
+        return { key, level: this.floor, slot: attachment.slot };
+      }
+    }
+    return null;
   }
 
   /// `$05481A`: a system message is dropped only while the display gate `$7BA0` is up, which is
@@ -1860,6 +1962,7 @@ export class DamoclesSession implements TitleSession<
       scrollCounter: this.scrollCounter,
       selection: this.selection(),
       structure: this.structureSnapshot(),
+      structureDamage: this.structureDamage,
       surface: this.publishedSurface(),
       switches: this.switches,
       timedDetonator: this.timedDetonator,
@@ -2115,6 +2218,12 @@ export class DamoclesSession implements TitleSession<
       return 'ignored';
     }
     this.click();
+    // `$4BD10` + `$400` or + `$404`: the EXPLOSIVE's model entry becomes model 256 or 257.
+    if (detonator.armed) {
+      this.armedModels.delete(slot);
+    } else {
+      this.armedModels.add(slot);
+    }
     this.timedDetonator = detonator.armed
       ? { ...detonator, armed: false }
       : {
@@ -2156,7 +2265,7 @@ export class DamoclesSession implements TitleSession<
   /// `$058FB0`: object slot 29 stands in for the player each pass. It takes the Pose, one eye
   /// height of `$3F` lower, the player's Body (none in space), and as its region the byte a
   /// Drop would write: the region on foot inside a structure, and otherwise 0. Its cell byte is
-  /// never written, so it stays 0.
+  /// the current cell `$7B5D`, which `$059000` copies (#649).
   private playerProxy(): BlastTarget {
     const index = this.regionIndex;
     const region =
@@ -2170,7 +2279,10 @@ export class DamoclesSession implements TitleSession<
       (region.flags & 0x40_00) === 0;
     return {
       body: this.space === null ? this.pose.body : null,
-      cell: 0,
+      cell:
+        this.space === null
+          ? this.cellByte(this.pose.body, this.pose.position)
+          : 0,
       position: {
         x: this.pose.position.x,
         y: this.pose.position.y - 0x3f,
@@ -2200,6 +2312,14 @@ export class DamoclesSession implements TitleSession<
     }
     const cell = islandLocalCell(position, surface.grid, island);
     return (cell.x + 16 * cell.z) & 0xff;
+  }
+
+  /// The structure byte `$6FA9` a Drop copies from `$794F`: the group of the island the place
+  /// lies on, 0 where it lies on none.
+  private structureByte(bodyId: string, position: Vector3): number {
+    return (
+      nearestIsland(this.surfaceFor(bodyId), position)?.structureGroup ?? 0
+    );
   }
 
   /// What the blast tests of a placed object, or undefined where it is not placed.
@@ -2256,6 +2376,7 @@ export class DamoclesSession implements TitleSession<
       this.takeAway(slot);
       this.timedDetonator = {
         ...this.timedDetonator,
+        door: this.doorAround(),
         regionBlast: this.regionBlastHere(player.region)
       };
       this.effects.push({ cue: 'blown-up', type: 'sound-request' });
@@ -2274,16 +2395,41 @@ export class DamoclesSession implements TitleSession<
     let caught = atPlayer;
     if (blast !== null) {
       this.blastCentre = { body: blast.body, ...blast.position };
+      // `$04CBEC`: on the player's Body, the flash word by charge, which reads code (#649).
+      if (this.space === null && this.pose.body === blast.body) {
+        this.flashWord = BLAST_FLASH_WORDS[charge]!;
+      }
       const reach = this.clearBlast(blast, charge, atPlayer ? null : player);
       if (charge === 9 && reach.cleared >= PLANET_KILL_EXPLOSIVES) {
         this.explosiveBlast(blast.body, reach.cleared);
         return;
       }
       caught ||= reach.player;
+      this.damageStructure(blast, charge);
     }
     this.startDebris();
     if (caught) {
       this.blowUp('system-string-35');
+    }
+  }
+
+  /// `$04CC34`–`$04CC88`: at charge 3 or more, a centre with group and cell bytes adds an entry
+  /// to the damage table. The workspace is then reloaded (`$04EB60`) and the current cell
+  /// rebound (`$054B2E`), so the change shows at once.
+  private damageStructure(blast: ExplosiveBlast, charge: number): void {
+    const entry = structureDamageFor(
+      charge,
+      this.structureByte(blast.body, blast.position),
+      blast.cell,
+      this.timedDetonator
+    );
+    if (entry === null) {
+      return;
+    }
+    this.structureDamage = withStructureDamage(this.structureDamage, entry);
+    if (this.space === null) {
+      this.surface = this.surfaceFor(this.surface.body.id);
+      this.bindAt(this.pose);
     }
   }
 
@@ -2314,7 +2460,13 @@ export class DamoclesSession implements TitleSession<
           ));
     let cleared = 0;
     for (const { id } of this.content.catalogue.instances) {
-      if (id === BLAST_CENTRE || id === PLAYER_PROXY || id === blast.source) {
+      // The test walks object slots `$FF` down to 0: structures and ground are not among them.
+      if (
+        this.slotOf(id) < 0 ||
+        id === BLAST_CENTRE ||
+        id === PLAYER_PROXY ||
+        id === blast.source
+      ) {
         continue;
       }
       const target = this.blastTarget(id);
@@ -2590,6 +2742,7 @@ export class DamoclesSession implements TitleSession<
       y: body.y,
       z: comet?.z ?? body.z
     };
+    this.flashWord = MARKER_FLASH_WORD;
     if (lethal) {
       // `$04CBAE`: the system message precedes the existing death loop, which later presents
       // `$21`. There is no TOLOSA noise pass before this death.
@@ -2770,6 +2923,7 @@ export class DamoclesSession implements TitleSession<
       scrollCounter: this.scrollCounter,
       spaceMemory: { ...this.spaceMemory },
       structure: this.structureSnapshot(),
+      structureDamage: this.structureDamage,
       switches: this.switches,
       timedDetonator: this.timedDetonator,
       unravelCursor: this.unravelCursor,
@@ -2827,8 +2981,10 @@ export class DamoclesSession implements TitleSession<
       return undefined;
     }
     return (
-      modelSummaryById(this.content.catalogue, instance.model)?.name ??
-      instanceId
+      modelSummaryById(
+        this.content.catalogue,
+        this.modelIdOf(instanceId, instance.model)
+      )?.name ?? instanceId
     );
   }
 
@@ -4037,6 +4193,7 @@ export class DamoclesSession implements TitleSession<
     if (detonator.armed && this.slotOf(head) === detonator.slot) {
       this.timedDetonator = {
         ...detonator,
+        door: this.doorAround(),
         regionBlast: this.regionBlastHere(
           residence.kind === 'structure' ? residence.insertionGroup : 0
         )

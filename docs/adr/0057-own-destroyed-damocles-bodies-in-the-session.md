@@ -73,9 +73,57 @@ in `docs/research/damocles-endgame.md`, "The TIMED DETONATOR decoded".
     live Body.
 - **The planet kill skips the spray.** At charge 9 with seven more EXPLOSIVEs cleared, the
   dispatcher destroys the Body, and the blast neither sprays nor tests for death. A player on
-  that Body dies through the marker. That is read from the code and was not run.
-- **Not ported:** the structure damage at charge 3 or more, the flash word by charge, the
-  EXPLOSIVE-ARMED! descriptor, and `$052C9C`/`$05A30E` after the blast.
+  that Body dies through the marker, with `$23`. #649 ran it.
+- **Not ported:** see the #650 amendment below, which ports what #635 left out, and says why
+  two items stay.
 - **Schema 25** adds the TIMED DETONATOR's state and the safe gate, and lets the debris counter
   hold −1. A schema-24 record or older migrates with the reset's state: nothing armed and the
   safe shut.
+
+## Amendment for the rest of the blast
+
+Recorded 2026-09-30, for [#650](https://github.com/odogono/mercenary/issues/650). The decode and
+the live runs are in `docs/research/damocles-endgame.md`, "Live runs for #649".
+
+- **The player proxy carries the current cell.** `$059000` copies `$7B5D` into the proxy's cell
+  byte, so a player indoors in a cell-test blast's cell dies at any distance. #635 had it as 0.
+- **The blast walks object slots only.** `$04CA20` walks slots `$FF` down to 0. The port had
+  walked every Catalogue Instance, so structures and ground within reach became removed
+  residents: no longer drawn, but still bound.
+- **The damage table is Session State and a Save field.** At charge 3 or more, a blast adds a
+  six-byte `$636A` entry, and a full table overwrites the ninth. With `$7A5A` set, the entry
+  removes the structure in the centre's cell. With it clear and a door found at the Drop, it
+  takes that door's key.
+  - The centre's structure byte `$6FA9` is the port's island group at the centre. Its cell byte
+    is the one the cell test already uses.
+  - The ST zeroes and rebuilds the cell longs on every workspace load. The port has no cell
+    table, so every surface it builds leaves out the structures the table removes, on every
+    island of the entry's group. The ground stays. After an entry the port rebuilds the current
+    surface and rebinds, as `$054B2E` does.
+  - `$05A928`'s tail is ported: at the Drop, and when the EXPLOSIVE goes off carried, the first
+    keyed door from `$3FC` down whose Proximity Box holds the player is kept as `$7A56`/`$7A58`.
+    The entry's Floor is taken there as well. That is authored, because #649 did not decode
+    which Floor the entry reads.
+  - A door entry matches group, Floor and door slot, not the cell, since `$059F7A` is dead. The
+    matching door opens without its key.
+- **The flash follows the ST.**
+  - A blast on the player's Body writes the code word its charge reads at `$04CC4C`.
+  - The marker writes `$CA00` for every Body it destroys.
+  - A caught player's `$AAAA` still overwrites both.
+  - A flashed VBL now paints colour 0, the clear, black, and every other colour `$777`. The port
+    had painted the clear white too.
+- **EXPLOSIVE-ARMED! is the armed model.** `*` swaps model 257 into the EXPLOSIVE's entry and
+  disarms back to 256. So the label, the console's name and the drawn model all follow it, from
+  arming until the blast takes the EXPLOSIVE away. The model table is outside the Save. A
+  restore starts from the reset's table and re-arms only an armed EXPLOSIVE, as `$058E60` does.
+  Slot 83, which that loop misses, cannot keep model 257 across a port restore.
+- **Still not ported, and why:**
+  - The door's `$DF` label glyph. The port draws no key letters: the extractor withholds them,
+    since they belong to the cell rather than the model. So there is nothing for `$DF` to
+    replace. The payload has no `$DF` glyph either.
+  - The centre's region byte `$74D1`, which a cell-test entry clears. It only lets `$052C9C`
+    take slot 74 into the surface resident list, and the port draws no blast centre.
+  - `$052C9C` and `$05A30E` need no port. The port recomputes the drawn residents on every
+    snapshot and the region on every step, so a cleared resident is gone at once.
+- **Schema 26** adds the damage table and the door. A schema-25 record migrates with an empty
+  table and no door.

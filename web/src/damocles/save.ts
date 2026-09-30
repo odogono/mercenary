@@ -79,7 +79,10 @@ import {
   EXPLOSIVE_FIRST_SLOT,
   EXPLOSIVE_LAST_SLOT,
   FUSE_MAXIMUM,
+  STRUCTURE_DAMAGE_ENTRIES,
   initialTimedDetonator,
+  type BlastDoor,
+  type StructureDamage,
   type TimedDetonator
 } from './timedDetonator.ts';
 import type { Pose } from './world.ts';
@@ -202,10 +205,14 @@ import type { Pose } from './world.ts';
 /// Version 25 carries the TIMED DETONATOR's charge, fuse, armed EXPLOSIVE slot and deadline,
 /// together with the NOVAGEN SAFE's blast gate. Schema 24 restores with no armed charge and a
 /// shut safe.
-export const DAMOCLES_SAVE_SCHEMA_VERSION = 25 as const;
+///
+/// Version 26 carries the structure damage table `$636A`, which the ST's Save range covers and
+/// every workspace load replays, and the keyed door `$7A56`/`$7A58` the armed EXPLOSIVE was
+/// dropped in. Schema 25 restores with an empty table and no door.
+export const DAMOCLES_SAVE_SCHEMA_VERSION = 26 as const;
 /// The older schemas a restore migrates rather than refuses.
 const MIGRATED_SCHEMA_VERSIONS: readonly unknown[] = [
-  11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24
+  11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25
 ];
 /// The schemas from before the landing messages (#576), which carry no landing trigger.
 const PRE_LANDING_SCHEMA_VERSIONS: readonly unknown[] = [11, 12, 13];
@@ -391,6 +398,8 @@ export interface DamoclesSaveSnapshot {
   /// resumes with.
   readonly spaceMemory: DamoclesSaveSpaceMemory | null;
   readonly structure: BoundStructureSnapshot | null;
+  /// `$636A`, the structure damage table, as a migrated record resumes with it empty.
+  readonly structureDamage?: readonly StructureDamage[];
   /// `$7872`, the switch bits: only the four detonators', bits 3 to 6, are ported.
   readonly switches?: number;
   /// The TIMED DETONATOR's charge and fuse and the EXPLOSIVE it armed, as a migrated record
@@ -487,6 +496,34 @@ export const initialDamoclesSaveScript = (): DamoclesSaveScript => {
 
 const word = (value: unknown, path: string): number =>
   integer(value, path, 0, 0xff_ff);
+const byte = (value: unknown, path: string): number =>
+  integer(value, path, 0, 0xff);
+
+/// `$7A56`/`$7A58`: an attachment slot `$000`–`$3FC`, a key's object slot and a Floor.
+const blastDoorOf = (
+  raw: Record<string, unknown>,
+  path: string
+): BlastDoor => ({
+  key: byte(raw['key'], `${path}.key`),
+  level: byte(raw['level'], `${path}.level`),
+  slot: integer(raw['slot'], `${path}.slot`, 0, 0x3_fc)
+});
+
+/// One six-byte `$636A` entry. A word of 0 or with bit 15 set is all the blast writes.
+const structureDamageOf = (value: unknown, path: string): StructureDamage => {
+  const raw = object(value, path);
+  const entry = {
+    cell: byte(raw['cell'], `${path}.cell`),
+    door: byte(raw['door'], `${path}.door`),
+    group: byte(raw['group'], `${path}.group`),
+    level: byte(raw['level'], `${path}.level`),
+    word: word(raw['word'], `${path}.word`)
+  };
+  if (entry.word !== 0 && (entry.word & 0x80_00) === 0) {
+    return fail(`${path}.word is neither 0 nor a door's`);
+  }
+  return entry;
+};
 const float = (value: unknown, path: string): number =>
   integer(value, path, 0, 0xff_ff_ff_ff);
 
@@ -1733,6 +1770,7 @@ export const decodeDamoclesSave = (
   }
   const impactRecord =
     record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION ||
+    record['schemaVersion'] === 25 ||
     record['schemaVersion'] === 24 ||
     record['schemaVersion'] === 23 ||
     record['schemaVersion'] === 22 ||
@@ -1753,7 +1791,10 @@ export const decodeDamoclesSave = (
         snapshot['debrisPasses'],
         'snapshot.debrisPasses',
         // Schema 25 is the first whose counter can hold a pending blast, −1.
-        record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION ? -1 : 0,
+        record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION ||
+          record['schemaVersion'] === 25
+          ? -1
+          : 0,
         64
       )
     : 0;
@@ -1816,6 +1857,7 @@ export const decodeDamoclesSave = (
   }
   const wishRecord =
     record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION ||
+    record['schemaVersion'] === 25 ||
     record['schemaVersion'] === 24 ||
     record['schemaVersion'] === 23 ||
     record['schemaVersion'] === 22;
@@ -1856,6 +1898,7 @@ export const decodeDamoclesSave = (
     : 0;
   const computerRecord =
     record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION ||
+    record['schemaVersion'] === 25 ||
     record['schemaVersion'] === 24;
   const switches =
     computerRecord || record['schemaVersion'] === 23
@@ -2102,9 +2145,10 @@ export const decodeDamoclesSave = (
   if (typeof running !== 'boolean') {
     return fail('running is not a boolean');
   }
+  // Schema 26 is the first to carry the damage table and the blast's door.
+  const damageSaved = record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION;
   // Schema 25 is the first to carry the TIMED DETONATOR and the safe gate.
-  const timedDetonatorSaved =
-    record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION;
+  const timedDetonatorSaved = damageSaved || record['schemaVersion'] === 25;
   const safeGate = timedDetonatorSaved ? snapshot['safeGate'] : false;
   if (typeof safeGate !== 'boolean') {
     return fail('snapshot.safeGate is not a boolean');
@@ -2123,10 +2167,18 @@ export const decodeDamoclesSave = (
             EXPLOSIVE_FIRST_SLOT,
             EXPLOSIVE_LAST_SLOT
           );
+    const door = damageSaved ? raw['door'] : null;
     timedDetonator = {
       armed: truth(raw['armed'], 'snapshot.timedDetonator.armed'),
       charge: integer(raw['charge'], 'snapshot.timedDetonator.charge', 0, 9),
       deadline: word(raw['deadline'], 'snapshot.timedDetonator.deadline'),
+      door:
+        door === null
+          ? null
+          : blastDoorOf(
+              object(door, 'snapshot.timedDetonator.door'),
+              'snapshot.timedDetonator.door'
+            ),
       fuse: integer(
         raw['fuse'],
         'snapshot.timedDetonator.fuse',
@@ -2142,6 +2194,15 @@ export const decodeDamoclesSave = (
     if ((timedDetonator.armed || debrisPasses < 0) && slot === null) {
       return fail('snapshot.timedDetonator arms no EXPLOSIVE');
     }
+  }
+  const structureDamage = damageSaved
+    ? array(snapshot['structureDamage'], 'snapshot.structureDamage').map(
+        (value, index) =>
+          structureDamageOf(value, `snapshot.structureDamage[${index}]`)
+      )
+    : [];
+  if (structureDamage.length > STRUCTURE_DAMAGE_ENTRIES) {
+    return fail('snapshot.structureDamage holds more than nine entries');
   }
   const headCommands = documentsSaved
     ? headCommandsOf(
@@ -2294,6 +2355,7 @@ export const decodeDamoclesSave = (
       scrollCounter,
       spaceMemory,
       structure,
+      structureDamage,
       switches,
       timedDetonator,
       unravelCursor,

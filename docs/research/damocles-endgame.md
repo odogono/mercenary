@@ -522,6 +522,9 @@ Two Hatari runs at once sometimes miss the probe's 6 s wait for a savebin
 
 ### Mismatches with the port, for #650
 
+[#650](https://github.com/odogono/mercenary/issues/650) ports these. ADR 0057's #650 amendment
+lists what stays unported and why.
+
 - **The player proxy's cell** (`session.ts`, `playerProxy`) is 0, and should be the current cell
   `$7B5D`. With the port's 0, a player in the centre's cell survives a cell-test blast. And a
   carried blast's centre, which is the proxy, tests residents against cell 0.

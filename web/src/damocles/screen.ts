@@ -4,10 +4,11 @@ import type { DamoclesScreen } from './session.ts';
 /// The TOLOSA encounter's screen effects on a planned frame (#581, ADR 0055).
 ///
 /// Every colour the plan carries is an ST palette word scaled over its range, a channel's three
-/// bits `v` as `v / 7`. The VBL handler's flash paints the view's palette white (`$051D7C`), and
-/// each step of the death sequence's fade takes one level off every component, stopping at 0
-/// (`$050FB8`–`$050FF0`). Both are exact in that space. The zap's noise loop writes the hardware
-/// palette directly and is painted over the view instead (`noiseBands`).
+/// bits `v` as `v / 7`. The VBL handler's flash paints the view's colours 1 to 15 `$777` and
+/// colour 0, the clear, black (`$051D7C`, #649). Each step of the death sequence's fade takes
+/// one level off every component, stopping at 0 (`$050FB8`–`$050FF0`). Both are exact in that
+/// space. The zap's noise loop writes the hardware palette directly and is painted over the view
+/// instead (`noiseBands`).
 
 const level = (channel: number): number => Math.round(channel * 7);
 const channel = (value: number): number => Math.round((value * 255) / 7) / 255;
@@ -63,11 +64,14 @@ export const presentScreen = (
     ]);
   return {
     ...plan,
-    clear: [
-      channelPaint(0)(plan.clear[0]),
-      channelPaint(1)(plan.clear[1]),
-      channelPaint(2)(plan.clear[2])
-    ],
+    // `$051D74`: a flash paints colours 1 to 15 `$777` and colour 0, the clear, black.
+    clear: screen.white
+      ? [0, 0, 0]
+      : [
+          channelPaint(0)(plan.clear[0]),
+          channelPaint(1)(plan.clear[1]),
+          channelPaint(2)(plan.clear[2])
+        ],
     horizonIslandVertices: recolour3(plan.horizonIslandVertices),
     horizonVertices: recolour3(plan.horizonVertices),
     skyVertices: recolour3(plan.skyVertices),

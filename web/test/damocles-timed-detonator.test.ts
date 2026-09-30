@@ -16,9 +16,15 @@ import {
 } from '../src/damocles/session.ts';
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import {
+  ARMED_EXPLOSIVE_MODEL,
+  EXPLOSIVE_MODEL,
+  doorUnkeyed,
   initialTimedDetonator,
   regionBlastFor,
+  structureDamageFor,
+  withStructureDamage,
   withinReach,
+  type StructureDamage,
   type TimedDetonator
 } from '../src/damocles/timedDetonator.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
@@ -441,5 +447,444 @@ describe('the Save', () => {
       armed: true
     };
     expect(() => decoded(bad)).toThrow('arms no EXPLOSIVE');
+  });
+});
+
+/// #649's live runs, against the port of what the blast leaves behind (#650).
+
+/// A player at arrival Pose `pose` carrying the armed EXPLOSIVE 75 and the TIMED DETONATOR, the
+/// EXPLOSIVE going off in 3 s, with `changes` over the Pose's own record.
+const posed = (
+  pose: string,
+  detonator: Partial<TimedDetonator>,
+  changes: (
+    saved: DamoclesSaveSnapshot
+  ) => Partial<DamoclesSaveSnapshot> = () => ({})
+): DamoclesSession => {
+  const start = fresh();
+  expect(start.switchToPose(pose).kind).toBe('switched');
+  const saved = start.captureResume();
+  const held = [object(75), DETONATOR];
+  return new DamoclesSession(content, {
+    ...saved,
+    carried: held,
+    residence: [
+      ...saved.residence.filter(item => !held.includes(item.instance)),
+      ...held.map(carried)
+    ],
+    timedDetonator: {
+      ...initialTimedDetonator(),
+      armed: true,
+      deadline: Math.floor(saved.elapsed) + 3,
+      fuse: 3,
+      slot: 75,
+      ...detonator
+    },
+    ...changes(saved)
+  });
+};
+
+const placementIds = (s: DamoclesSession) =>
+  new Set(s.snapshot.surface.placements.map(placement => placement.id));
+
+/// The view's flash, one character a VBL: 1 where the VBL painted it white.
+const flashes = (s: DamoclesSession, count: number): string => {
+  let seen = '';
+  for (let vbl = 0; vbl < count; vbl += 1) {
+    s.advance(1 / 50);
+    seen += s.snapshot.screen.white ? '1' : '0';
+  }
+  return seen;
+};
+
+const bits = (word: number) => word.toString(2).padStart(16, '0');
+
+describe("the structure damage table, against #649's runs", () => {
+  test('a dropped charge 7 on dion-2-3 sets $7A5A and adds 02 32 0000 00 00; charge 6 adds none', () => {
+    for (const charge of [6, 7]) {
+      const s = posed('dion-2-3', { charge });
+      expect(s.drop().kind).toBe('dropped');
+      expect(s.snapshot.timedDetonator.regionBlast).toBe(charge === 7);
+      s.advance(5);
+      expect(s.snapshot.structureDamage).toEqual(
+        charge === 7
+          ? [{ cell: 0x32, door: 0, group: 2, level: 0, word: 0 }]
+          : []
+      );
+      expect(placementIds(s).has('dion-surface-32')).toBe(charge !== 7);
+    }
+  });
+
+  test('on gaea-ur-city-4-2 charge 7 adds none, and charge 8 removes cell $24 and keeps its ground', () => {
+    for (const charge of [7, 8]) {
+      const s = posed('gaea-ur-city-4-2', { charge });
+      const before = s.snapshot.surface.placements;
+      expect(s.drop().kind).toBe('dropped');
+      s.advance(5);
+      expect(s.snapshot.structureDamage).toEqual(
+        charge === 8
+          ? [{ cell: 0x24, door: 0, group: 7, level: 0, word: 0 }]
+          : []
+      );
+      const after = placementIds(s);
+      const gone = before.filter(placement => !after.has(placement.id));
+      expect(gone.map(placement => placement.id)).toEqual(
+        charge === 8 ? ['gaea-ur-city-surface-24'] : []
+      );
+      // The player stood in that cell, so the rebind leaves no structure bound.
+      expect(s.snapshot.structure === null).toBe(charge === 8);
+    }
+  });
+
+  test('a carried charge 4 in dion-transporter takes $7A5A from the proxy and adds 02 E3', () => {
+    const s = posed('dion-transporter', { charge: 4 });
+    s.advance(5);
+    expect(s.snapshot.message?.id).toBe('system-string-34');
+    expect(s.snapshot.timedDetonator.regionBlast).toBe(true);
+    expect(s.snapshot.structureDamage).toEqual([
+      { cell: 0xe3, door: 0, group: 2, level: 0, word: 0 }
+    ]);
+    expect(placementIds(s).has('dion-surface-e3')).toBe(false);
+  });
+
+  test('the proxy carries $7B5D, so a player indoors in the blast cell dies at any distance', () => {
+    // The EXPLOSIVE stands where slot 34 does, in region 3 of cell $E3, as in #649's capture run.
+    const at = content.catalogue.instances.find(
+      item => item.id === object(34)
+    )!.placement!;
+    const s = posed('dion-transporter', {}, saved => ({
+      carried: [DETONATOR],
+      residence: [
+        ...saved.residence.filter(
+          item => item.instance !== object(75) && item.instance !== DETONATOR
+        ),
+        carried(DETONATOR),
+        {
+          instance: object(75),
+          residence: {
+            body: 'body-4',
+            insertionGroup: 3,
+            kind: 'structure',
+            level: 9,
+            parent: at.parent,
+            placementClass: 0,
+            position: {
+              x: at.position[0],
+              y: at.position[1],
+              z: at.position[2]
+            }
+          }
+        }
+      ],
+      timedDetonator: {
+        ...initialTimedDetonator(),
+        armed: true,
+        charge: 4,
+        deadline: Math.floor(saved.elapsed) + 3,
+        fuse: 3,
+        regionBlast: true,
+        slot: 75
+      }
+    }));
+    expect(s.snapshot.structure?.regionIndex).toBe(3);
+    const host = s.snapshot.surface.placements.find(
+      placement => placement.id === at.parent
+    )!;
+    const pose = s.snapshot.pose.position;
+    // The proxy stands `$3F` below the eye. The box test would miss it.
+    expect(
+      withinReach(
+        {
+          x: host.position.x + at.position[0] - pose.x,
+          y: host.position.y + at.position[1] - (pose.y - 0x3f),
+          z: host.position.z + at.position[2] - pose.z
+        },
+        0x4_00
+      )
+    ).toBe(false);
+    s.advance(5);
+    expect(s.snapshot.removedResidents).toContain(object(75));
+    expect(s.snapshot.screen.dead).toBe(true);
+    expect(s.snapshot.message?.id).toBe('system-string-35');
+  });
+
+  test('the blast walks object slots only: no structure or ground is cleared', () => {
+    const s = posed('dion-2-3', { charge: 9 });
+    expect(s.drop().kind).toBe('dropped');
+    s.advance(5);
+    expect(
+      s.snapshot.removedResidents.every(id => id.startsWith('object-slot-'))
+    ).toBe(true);
+  });
+
+  test('the table survives a Save, and every workspace load replays it', () => {
+    const s = posed('gaea-ur-city-4-2', { charge: 8 });
+    s.drop();
+    s.advance(5);
+    const saved = decoded(record(s));
+    expect(saved.structureDamage).toEqual(s.snapshot.structureDamage);
+    const resumed = new DamoclesSession(content, {
+      ...saved,
+      structureDamage: saved.structureDamage!
+    });
+    expect(placementIds(resumed).has('gaea-ur-city-surface-24')).toBe(false);
+    expect(resumed.switchToPose('dion-2-3').kind).toBe('switched');
+    expect(resumed.switchToPose('gaea-ur-city-4-2').kind).toBe('switched');
+    expect(placementIds(resumed).has('gaea-ur-city-surface-24')).toBe(false);
+    expect(placementIds(resumed).has('gaea-ur-city-surface-23')).toBe(
+      placementIds(fresh()).has('gaea-ur-city-surface-23') ||
+        content.catalogue.instances.some(
+          item => item.id === 'gaea-ur-city-surface-23'
+        )
+    );
+  });
+});
+
+/// Authors House, DION group 2 cell `$DE`: its one keyed door is slot `$3FC`, key A in slot 30
+/// (damocles-keyed-entrance.test.ts).
+const AUTHORS_HOUSE = 'dion-surface-de';
+
+/// A player in Authors House's keyed door's Proximity Box, carrying `held` over `changes`.
+const atAuthorsHouseDoor = (
+  held: readonly string[],
+  changes: Partial<DamoclesSaveSnapshot> = {}
+): DamoclesSession => {
+  const start = fresh();
+  expect(start.switchToPose('dion-2-3').kind).toBe('switched');
+  const placement = start.snapshot.surface.placements.find(
+    item => item.id === AUTHORS_HOUSE
+  )!;
+  const box = placement.selection!.structure.attachments.find(
+    item => item.keyIndex !== undefined
+  )!.proximityBox;
+  const saved = start.captureResume();
+  return new DamoclesSession(content, {
+    ...saved,
+    carried: [...held],
+    pose: {
+      ...saved.pose,
+      position: {
+        x: placement.position.x + (box.x[0] + box.x[1]) / 2,
+        y: saved.pose.position.y,
+        z: placement.position.z + (box.z[0] + box.z[1]) / 2
+      }
+    },
+    residence: [
+      ...saved.residence.filter(item => !held.includes(item.instance)),
+      ...held.map(carried)
+    ],
+    structure: {
+      attachments: placement.selection!.structure.attachments.map(item => ({
+        latch: 'closed' as const,
+        openUnits: 0,
+        slot: item.slot
+      })),
+      doorway: null,
+      floor: 0,
+      instanceId: AUTHORS_HOUSE,
+      regionIndex: null,
+      ride: null
+    },
+    ...changes
+  });
+};
+
+const doorUnits = (session: DamoclesSession) =>
+  session.snapshot.structure!.attachments.find(item => item.slot === 0x3_fc)!
+    .openUnits;
+
+const modelOf = (s: DamoclesSession, slot: number) =>
+  s.snapshot.residents.find(item => item.id === object(slot))?.modelId;
+
+const DOOR_ENTRY: StructureDamage = {
+  cell: 0xde,
+  door: 0xfc,
+  group: 2,
+  level: 0,
+  word: 0x80_1e
+};
+
+describe('the door entry', () => {
+  test('a charge 3 dropped in a keyed door takes $7A56/$7A58 and adds a door entry', () => {
+    const s = atAuthorsHouseDoor([object(75), DETONATOR], {
+      timedDetonator: {
+        ...initialTimedDetonator(),
+        armed: true,
+        charge: 3,
+        deadline: Math.floor(fresh().captureResume().elapsed) + 3,
+        fuse: 3,
+        slot: 75
+      }
+    });
+    expect(s.drop().kind).toBe('dropped');
+    expect(s.snapshot.timedDetonator.door).toEqual({
+      key: 30,
+      level: 0,
+      slot: 0x3_fc
+    });
+    expect(s.snapshot.timedDetonator.regionBlast).toBe(false);
+    s.advance(5);
+    expect(s.snapshot.structureDamage).toEqual([DOOR_ENTRY]);
+    // A door entry removes no structure.
+    expect(placementIds(s).has(AUTHORS_HOUSE)).toBe(true);
+  });
+
+  test('the door then opens without its key and says nothing', () => {
+    const locked = atAuthorsHouseDoor([]);
+    locked.advance(2);
+    expect(doorUnits(locked)).toBe(0);
+    const blown = atAuthorsHouseDoor([], { structureDamage: [DOOR_ENTRY] });
+    blown.advance(2);
+    expect(doorUnits(blown)).toBeGreaterThan(0);
+    expect(blown.snapshot.message?.id).not.toBe('system-string-0');
+  });
+
+  test('the builder matches group, Floor and door slot, not the cell ($059F7A is dead)', () => {
+    const table = [DOOR_ENTRY];
+    expect(doorUnkeyed(table, 2, 0, 0x3_fc)).toBe(true);
+    expect(doorUnkeyed([{ ...DOOR_ENTRY, cell: 0x10 }], 2, 0, 0x3_fc)).toBe(
+      true
+    );
+    expect(doorUnkeyed(table, 7, 0, 0x3_fc)).toBe(false);
+    expect(doorUnkeyed(table, 2, 1, 0x3_fc)).toBe(false);
+    expect(doorUnkeyed(table, 2, 0, 0x3_f8)).toBe(false);
+  });
+});
+
+describe('the entry rules', () => {
+  test("#649's Parliament door run: 05 64 8022 00 EC", () => {
+    expect(
+      structureDamageFor(3, 5, 0x64, {
+        door: { key: 0x22, level: 0, slot: 0x3_ec },
+        regionBlast: false
+      })
+    ).toEqual({ cell: 0x64, door: 0xec, group: 5, level: 0, word: 0x80_22 });
+  });
+
+  test('none below charge 3, or with a group or cell of 0, or with no door and $7A5A clear', () => {
+    const door = { key: 0x22, level: 0, slot: 0x3_ec };
+    expect(structureDamageFor(2, 5, 0x64, { door, regionBlast: true })).toBe(
+      null
+    );
+    expect(structureDamageFor(4, 0, 0x64, { door, regionBlast: true })).toBe(
+      null
+    );
+    expect(structureDamageFor(4, 5, 0, { door, regionBlast: true })).toBe(null);
+    expect(
+      structureDamageFor(9, 5, 0x64, { door: null, regionBlast: false })
+    ).toBe(null);
+  });
+
+  test('$7A5A set wins over a door', () => {
+    expect(
+      structureDamageFor(4, 5, 0x64, {
+        door: { key: 0x22, level: 0, slot: 0x3_ec },
+        regionBlast: true
+      })
+    ).toEqual({ cell: 0x64, door: 0, group: 5, level: 0, word: 0 });
+  });
+
+  test('nine entries, and a full table overwrites the ninth', () => {
+    let table: readonly StructureDamage[] = [];
+    for (let cell = 1; cell <= 10; cell += 1) {
+      table = withStructureDamage(table, { ...DOOR_ENTRY, cell });
+    }
+    expect(table.map(entry => entry.cell)).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 10
+    ]);
+  });
+});
+
+describe('the flash by charge', () => {
+  test("a blast on the player's Body flashes the code word its charge reads", () => {
+    for (const [charge, word] of [
+      [4, 0xff_fa],
+      [0, 0x70_08]
+    ] as const) {
+      const { x, z } = away();
+      const s = armed(76, [placed(76, x, z)], { charge });
+      expect(flashes(s, 250)).toContain(bits(word).replace(/^0+/, ''));
+      expect(s.snapshot.screen.dead).toBe(false);
+    }
+  });
+
+  test('a blast on another Body does not flash', () => {
+    const s = armed(76, [placed(76, 0, 0)], { charge: 4 });
+    expect(s.switchToPose('gaea-ur-city-4-2').kind).toBe('switched');
+    expect(flashes(s, 250)).not.toContain('1');
+  });
+
+  test('the marker flashes $CA00 for a Body it destroys', () => {
+    const s = fresh();
+    s.destroyBody('body-4');
+    expect(flashes(s, 16)).toBe(bits(0xca_00));
+  });
+});
+
+describe('EXPLOSIVE-ARMED!', () => {
+  test('* swaps model 257 in and out, and the label reads its name', () => {
+    const s = session();
+    expect(s.snapshot.inventoryLabel).toBe('EXPLOSIVE');
+    expect(s.headCommand('read').kind).toBe('computed');
+    expect(s.snapshot.inventoryLabel).toBe('EXPLOSIVE-ARMED!');
+    expect(s.objectName(object(75))).toBe('EXPLOSIVE-ARMED!');
+    expect(s.headCommand('read').kind).toBe('computed');
+    expect(s.snapshot.inventoryLabel).toBe('EXPLOSIVE');
+  });
+
+  test('a placed armed EXPLOSIVE is drawn in the armed model, which a restore re-arms', () => {
+    const { x, z } = away();
+    const s = armed(76, [placed(76, x, z), placed(77, x, z)], { charge: 1 }, 5);
+    expect(modelOf(s, 76)).toBe(ARMED_EXPLOSIVE_MODEL);
+    expect(modelOf(s, 77)).toBe(EXPLOSIVE_MODEL);
+  });
+
+  test('a restore with the blast pending has reset the model ($058E60)', () => {
+    const { x, z } = away();
+    const s = armed(76, [placed(76, x, z)], { charge: 1 }, 1);
+    for (let vbl = 0; vbl < 200; vbl += 1) {
+      s.advance(1 / 50);
+      if (s.snapshot.debrisPasses === BLAST_PENDING) {
+        break;
+      }
+    }
+    // The deadline leaves model 257 in; the Load's reset takes it out.
+    expect(modelOf(s, 76)).toBe(ARMED_EXPLOSIVE_MODEL);
+    const resumed = new DamoclesSession(content, s.captureResume());
+    expect(modelOf(resumed, 76)).toBe(EXPLOSIVE_MODEL);
+  });
+});
+
+describe('the Save, schema 26', () => {
+  test('a schema-25 Save migrates with no damage and no door', () => {
+    const old = record(session());
+    old.schemaVersion = 25;
+    delete old.snapshot['structureDamage'];
+    const detonator = old.snapshot['timedDetonator'] as Record<string, unknown>;
+    delete detonator['door'];
+    const migrated = decoded(old);
+    expect(migrated.structureDamage).toEqual([]);
+    expect(migrated.timedDetonator?.door).toBe(null);
+  });
+
+  test('resumes the door $05A928 found', () => {
+    const door = { key: 30, level: 0, slot: 0x3_fc };
+    const s = session({ detonator: { door } });
+    expect(decoded(record(s)).timedDetonator?.door).toEqual(door);
+  });
+
+  test('refuses a missing table, a stray word or a tenth entry', () => {
+    const missing = record(session());
+    delete missing.snapshot['structureDamage'];
+    expect(() => decoded(missing)).toThrow('snapshot.structureDamage');
+    const stray = record(session());
+    stray.snapshot['structureDamage'] = [{ ...DOOR_ENTRY, word: 0x12 }];
+    expect(() => decoded(stray)).toThrow('neither 0 nor a door');
+    const full = record(session());
+    full.snapshot['structureDamage'] = Array.from(
+      { length: 10 },
+      () => DOOR_ENTRY
+    );
+    expect(() => decoded(full)).toThrow('more than nine');
   });
 });
