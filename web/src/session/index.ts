@@ -16,6 +16,7 @@ import {
   board as boardCraft,
   enter,
   facing,
+  freeLook,
   gameState,
   leave as leaveCraftCore,
   playerState,
@@ -648,6 +649,14 @@ export class GameplaySession {
   game: GameState;
   intent: Intent = IDLE;
 
+  /// Free Look's pitch on foot (ADR 0059), an Extension. The on-foot Mover levels the Pose every
+  /// step, so after one this is the Pose's whole pitch, and it is written there: drawing and
+  /// picking both see it. No Save or Session Resume carries it. A Location change, boarding and
+  /// leaving level it, as do recentring and turning Extended Controls off.
+  private lookPitch = 0;
+  /// The Room Free Look last tilted the view in, so a step that changed the Location levels it.
+  private lookRoom: number | undefined;
+
   /// The fraction of a frame left over from the last ship-delivery step.
   private deliveryFrames = 0;
   private readonly liftMode: 'instantOracle' | 'reference' = 'reference';
@@ -788,6 +797,11 @@ export class GameplaySession {
         ...this.game,
         craft: this.game.craft ?? null,
         mover: this.game.mover ?? null,
+        // Free Look is never saved: a loaded Save starts level.
+        player: {
+          ...this.game.player,
+          pitch: this.game.player.pitch - this.lookPitch
+        },
         room: this.game.room ?? null,
         touchdown: this.game.touchdown ?? null
       },
@@ -1395,6 +1409,8 @@ export class GameplaySession {
         return undefined;
       }
     }
+    // The ride leaves this Location, which levels Free Look.
+    this.recentreLook();
     if (this.liftMode === 'instantOracle') {
       const previousRoom = locationHostValue(this.location);
       this.game =
@@ -1591,6 +1607,7 @@ export class GameplaySession {
   }
 
   teleport(location: Location): void {
+    this.recentreLook();
     const previousRoom = locationHostValue(this.location);
     this.game = {
       ...this.game,
@@ -1641,6 +1658,7 @@ export class GameplaySession {
   }
 
   place(position: Vector3, heading?: number): void {
+    this.recentreLook();
     this.game = {
       ...this.game,
       player: {
@@ -1712,6 +1730,7 @@ export class GameplaySession {
       ? flight.document.blocks.find(candidate => candidate.handler === 'tumble')
       : undefined;
 
+    this.recentreLook();
     this.game = {
       ...this.game,
       colonyCraftFlag: 0,
@@ -1825,6 +1844,8 @@ export class GameplaySession {
   }
 
   board(slot: number): void {
+    // Free Look does not come aboard: the craft keeps the view's own pitch.
+    this.recentreLook();
     this.residence.set(slot, { kind: 'gone' });
     if (this.content.flight === undefined) {
       this.game = { ...this.game, craft: slot };
@@ -1839,6 +1860,39 @@ export class GameplaySession {
       this.content.flight
     );
     this.republishHostState();
+  }
+
+  /// Level the view Free Look tilted: the recentre control, and turning Extended Controls off.
+  recentreLook(): void {
+    if (this.lookPitch !== 0) {
+      this.game = {
+        ...this.game,
+        player: { ...this.game.player, pitch: 0 }
+      };
+      this.lookPitch = 0;
+    }
+  }
+
+  /// Tilt the view on foot by the Intent's Free Look for `seconds`, after the step. Aboard, in
+  /// a fall, or in a Location the step has just reached, the view is level again.
+  private look(seconds: number): void {
+    const walking =
+      this.game.craft === undefined && this.game.mover === undefined;
+    if (!walking || this.game.room !== this.lookRoom) {
+      // The step has written the Pose's own pitch, so only the share is dropped.
+      this.lookPitch = 0;
+      this.lookRoom = this.game.room;
+      if (!walking) {
+        return;
+      }
+    }
+    this.lookPitch = freeLook(this.lookPitch, this.intent.look, seconds);
+    if (this.lookPitch !== 0) {
+      this.game = {
+        ...this.game,
+        player: { ...this.game.player, pitch: this.lookPitch }
+      };
+    }
   }
 
   throttleNotchValue(notch: number): void {
@@ -2022,8 +2076,13 @@ export class GameplaySession {
       !journeyAtStart
     ) {
       let steered = this.intent;
+      // A mirrored world mirrors a sidestep as it does a turn.
       if (this.game.worldFlipped) {
-        steered = { ...steered, turn: -steered.turn };
+        steered = {
+          ...steered,
+          strafe: -steered.strafe,
+          turn: -steered.turn
+        };
       }
       this.game = step(
         this.game,
@@ -2039,6 +2098,7 @@ export class GameplaySession {
         });
       }
       events.push(...this.traverse());
+      this.look(seconds);
       if (this.game.touchdown !== undefined) {
         events.push('tone', { touchdown: this.game.touchdown });
         if (this.game.touchdown === 'crashed') {

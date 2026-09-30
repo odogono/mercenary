@@ -2,6 +2,7 @@ import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
 import { BensonProgram, BensonSession } from '../src/benson/index.ts';
+import { intent } from '../src/gameCore/index.ts';
 import { GameplaySession, sessionContent } from '../src/session/index.ts';
 import {
   bensonTunables,
@@ -416,14 +417,14 @@ describe('no combat failure this milestone can reach is an Ending', () => {
     session.throttleNotchValue(10);
     // Up first, because a craft already on the ground cannot be flown into it.
     for (let frame = 0; frame < 200; frame += 1) {
-      session.intent = { pitch: 1, running: false, turn: 0, walk: 0 };
+      session.intent = intent({ pitch: 1 });
       session.advance(1 / 20);
       if (session.snapshot.player.position.y > 200_000) {
         break;
       }
     }
     for (let frame = 0; frame < 400; frame += 1) {
-      session.intent = { pitch: -1, running: false, turn: 0, walk: 0 };
+      session.intent = intent({ pitch: -1 });
       session.advance(1 / 20);
       if (session.occupancy.kind === 'onFoot') {
         break;

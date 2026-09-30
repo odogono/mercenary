@@ -1184,9 +1184,9 @@ describe('the Eris renderer', () => {
 
     renderer.render(plan, {
       eyeWorld: origin.position,
-      heading: origin.heading,
-      lighting: erisLighting(doc, origin.heading),
-      shadowEdge: 'soft'
+      lighting: erisLighting(doc, origin),
+      shadowEdge: 'soft',
+      view: origin
     });
     expect(fake.compiled).toBe(6);
     expect(
@@ -1194,9 +1194,9 @@ describe('the Eris renderer', () => {
     ).toHaveLength(2);
     renderer.render(plan, {
       eyeWorld: origin.position,
-      heading: origin.heading,
-      lighting: erisLighting(doc, origin.heading),
-      shadowEdge: 'soft'
+      lighting: erisLighting(doc, origin),
+      shadowEdge: 'soft',
+      view: origin
     });
 
     const casterDraw = `draw:15:0:${casters.length / FLOATS_PER_VERTEX}`;
@@ -1265,8 +1265,8 @@ describe('the Eris renderer', () => {
     );
     const frame = {
       eyeWorld: origin.position,
-      heading: origin.heading,
-      lighting: erisLighting(doc, origin.heading)
+      lighting: erisLighting(doc, origin),
+      view: origin
     };
 
     renderer.render(plan, { ...frame, shadowEdge: 'hard' });

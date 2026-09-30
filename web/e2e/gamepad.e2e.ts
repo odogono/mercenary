@@ -129,3 +129,97 @@ test('Damocles: X takes, the left stick walks and the Controls Page lists the pa
   await expect(always).toContainText('A ON FOOT');
   expect(errors).toEqual([]);
 });
+
+const R3 = 11;
+
+const frameNumber = async (page: Page, name: string): Promise<number> =>
+  Number(await page.locator('#frame').getAttribute(`data-${name}`));
+
+/// Choose `value` for the Settings page's `setting`, and go back to play.
+const choose = async (
+  page: Page,
+  setting: string,
+  value: string
+): Promise<void> => {
+  await page.keyboard.press('Escape');
+  await page.locator('button[data-goto="settings"]').click();
+  await page
+    .locator(`[data-setting="${setting}"] button[value="${value}"]`)
+    .click();
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Escape');
+  await expect(surface(page)).toHaveAttribute('data-layer', 'none');
+};
+
+const onFootControls = async (page: Page) => {
+  await page.keyboard.press('Escape');
+  await page.locator('#page-menu [data-goto=controls]').click();
+  return page.locator('#page-controls [data-group=onFoot]');
+};
+
+test('Damocles: Extended Controls makes the left stick strafe and the right stick look (#655)', async ({
+  page
+}) => {
+  test.setTimeout(120_000);
+  const errors = watchErrors(page);
+  await installPad(page);
+  await bootAt(page, DOORWAY_LINE_LOCAL, FACING_DOORWAY);
+
+  // Off, which is the default: the left stick's X turns and the right stick's Y does nothing.
+  const heading = await frameNumber(page, 'heading');
+  await setPad(page, { axes: [1, 0, 0, -1], buttons: [] });
+  await expect.poll(() => frameNumber(page, 'heading')).not.toBe(heading);
+  await setPad(page, { axes: [0, 0, 0, 0], buttons: [] });
+  expect(await frameNumber(page, 'pitch')).toBe(0);
+  let onFoot = await onFootControls(page);
+  await expect(onFoot).not.toContainText('STRAFE');
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Escape');
+
+  await choose(page, 'extended', 'on');
+  onFoot = await onFootControls(page);
+  await expect(onFoot).toContainText('STRAFE');
+  await expect(onFoot).toContainText('LEFT STICK LEFT / RIGHT');
+  await expect(onFoot).toContainText('LOOK UP / DOWN');
+  await expect(onFoot).toContainText('RECENTRE VIEW');
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Escape');
+
+  // The left stick sidesteps: the player moves and the heading stays.
+  const facing = await frameNumber(page, 'heading');
+  const x = await frameNumber(page, 'x');
+  const z = await frameNumber(page, 'z');
+  await setPad(page, { axes: [-1, 0, 0, 0], buttons: [] });
+  await expect
+    .poll(
+      async () =>
+        Math.hypot(
+          (await frameNumber(page, 'x')) - x,
+          (await frameNumber(page, 'z')) - z
+        ),
+      { timeout: 5000 }
+    )
+    .toBeGreaterThan(20);
+  await setPad(page, { axes: [0, 0, 0, 0], buttons: [] });
+  expect(await frameNumber(page, 'heading')).toBe(facing);
+
+  // The right stick tilts the view up and leaves it there; R3 levels it.
+  await setPad(page, { axes: [0, 0, 0, -1], buttons: [] });
+  await expect.poll(() => frameNumber(page, 'pitch')).toBeGreaterThan(0.5);
+  await setPad(page, { axes: [0, 0, 0, 0], buttons: [] });
+  const tilted = await frameNumber(page, 'pitch');
+  await page.waitForTimeout(300);
+  expect(await frameNumber(page, 'pitch')).toBe(tilted);
+  await tap(page, R3);
+  await expect.poll(() => frameNumber(page, 'pitch')).toBe(0);
+
+  // Turning the setting off levels a tilted view and hides the Bindings again.
+  await setPad(page, { axes: [0, 0, 0, -1], buttons: [] });
+  await expect.poll(() => frameNumber(page, 'pitch')).toBeGreaterThan(0.2);
+  await setPad(page, { axes: [0, 0, 0, 0], buttons: [] });
+  await choose(page, 'extended', 'off');
+  await expect.poll(() => frameNumber(page, 'pitch')).toBe(0);
+  onFoot = await onFootControls(page);
+  await expect(onFoot).not.toContainText('STRAFE');
+  expect(errors).toEqual([]);
+});

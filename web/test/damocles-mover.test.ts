@@ -77,3 +77,38 @@ describe('the Eris on-foot Mover', () => {
     expect(seconds).toBeLessThan(89);
   });
 });
+
+/// Strafe, an Extension (ADR 0059): the walk step at right angles to the heading.
+describe('Strafe on Eris', () => {
+  test('a sidestep right at north is east, and is the step a quarter turn right would walk', () => {
+    const right = walk(start, intent({ strafe: 1 }), 1, rules);
+    expect(right.position.x).toBeCloseTo(start.position.x + 327.68, 6);
+    expect(right.position.z).toBeCloseTo(start.position.z, 6);
+    for (const heading of [0.3, Math.PI / 2, 3, 5.5]) {
+      const facing = { ...start, heading };
+      const strafed = walk(facing, intent({ strafe: 1 }), 0.5, rules);
+      const walked = walk(
+        { ...start, heading: heading + Math.PI / 2 },
+        intent({ walk: 1 }),
+        0.5,
+        rules
+      );
+      expect(strafed.position.x).toBeCloseTo(walked.position.x, 6);
+      expect(strafed.position.z).toBeCloseTo(walked.position.z, 6);
+      expect(strafed.heading).toBe(heading);
+      expect(strafed.pitch).toBe(start.pitch);
+    }
+  });
+
+  test('walking and strafing together go no faster than walking, and running scales both', () => {
+    const both = walk(start, intent({ strafe: -1, walk: 1 }), 1, rules);
+    expect(
+      Math.hypot(
+        both.position.x - start.position.x,
+        both.position.z - start.position.z
+      )
+    ).toBeCloseTo(327.68, 6);
+    const ran = walk(start, intent({ running: true, strafe: -1 }), 1, rules);
+    expect(ran.position.x).toBeCloseTo(start.position.x - (5 / 3) * 327.68, 6);
+  });
+});

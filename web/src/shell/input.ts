@@ -26,6 +26,9 @@ export interface BrowserKey {
 /// meaning or, where the table says so, are swallowed.
 export interface ControlProfileActions {
   readonly drop: () => void;
+  /// Whether the player has turned Extended Controls on: the Strafe and Free Look Extensions
+  /// (ADR 0059), a Browser Shell preference. A Title that offers neither leaves it out.
+  readonly extendedControls?: () => boolean;
   /// Fire as a press. A Title whose fire is the joystick button's level, as Damocles's launcher
   /// `$050B96` reads it (#581), leaves it out and asks `firing` instead.
   readonly fire?: () => void;
@@ -52,6 +55,8 @@ export interface ControlProfileActions {
   /// Answer a script. A Title whose scripts never ask leaves it out.
   readonly press?: (key: BensonKeyValue | undefined) => void;
   readonly reach: (action: InteractionAction) => void;
+  /// Level the view Free Look tilted. Offered only with Extended Controls on.
+  readonly recentreLook?: () => void;
   /// Targ's single lift key, riding the Lift Journey.
   readonly rideLift?: () => void;
   /// Rotate the Carried Stack: forward is the ST's Left (`$04DC74`), which sends the head to the
@@ -129,6 +134,26 @@ const ordinaryCode = (code: string): boolean =>
 const handledCode = (code: string): boolean =>
   !RESERVED_CODES.has(code) &&
   (code === 'Space' || HELD_CONTROLS.has(code) || ordinaryCode(code));
+
+/// Whether the Title offers the Extensions and the player has turned them on.
+const extended = (actions: ControlProfileActions): boolean =>
+  actions.extendedControls?.() === true;
+
+/// The keys only the Extensions answer: Free Look's and its recentre. None is a key the
+/// original reads, so with Extended Controls off each keeps the browser's own meaning.
+const LOOK_UP_CODE = 'PageUp';
+const LOOK_DOWN_CODE = 'PageDown';
+const RECENTRE_CODE = 'Home';
+const EXTENSION_CODES: ReadonlySet<string> = new Set([
+  LOOK_DOWN_CODE,
+  LOOK_UP_CODE,
+  RECENTRE_CODE
+]);
+
+/// Strafe's keys, beside each other on every layout's bottom row. They are ordinary keys, so
+/// they answer a script exactly as they do with Extended Controls off.
+const STRAFE_LEFT_CODE = 'KeyZ';
+const STRAFE_RIGHT_CODE = 'KeyX';
 
 const axis = (
   held: ReadonlySet<string>,
@@ -244,8 +269,8 @@ export interface PadBinding {
   readonly buttons?: readonly (readonly [PadButton, string])[];
   /// The buttons take the Binding on foot only, though its keys hold everywhere.
   readonly onFootOnly?: true;
-  /// The sticks, as the Controls Page names them.
-  readonly sticks?: string;
+  /// The sticks, as the Controls Page names them, which may depend on the Title's actions.
+  readonly sticks?: string | ((actions: ControlProfileActions) => string);
 }
 
 /// One physical control mapped to a Movement Intent or Semantic Action (ADR 0056).
@@ -434,11 +459,72 @@ export const BINDINGS: readonly Binding[] = [
     ),
     provided: always
   },
+  // The Extensions (ADR 0059), listed and answered only while Extended Controls is on.
+  {
+    action: 'STRAFE',
+    group: 'onFoot',
+    keys: [[key(STRAFE_LEFT_CODE), ' / ', key(STRAFE_RIGHT_CODE)]],
+    pad: { sticks: 'LEFT STICK LEFT / RIGHT' },
+    press: (code, target) => {
+      if (
+        !extended(target.actions) ||
+        (code !== STRAFE_LEFT_CODE && code !== STRAFE_RIGHT_CODE)
+      ) {
+        return false;
+      }
+      target.holdAndPress(code);
+      return true;
+    },
+    provided: extended
+  },
+  {
+    action: 'LOOK UP / DOWN',
+    group: 'onFoot',
+    keys: ['PAGE UP / PAGE DOWN'],
+    pad: { sticks: 'RIGHT STICK UP / DOWN' },
+    // Free Look is Movement Intent, so like running it holds without answering a script.
+    press: (code, target) => {
+      if (
+        !extended(target.actions) ||
+        (code !== LOOK_UP_CODE && code !== LOOK_DOWN_CODE)
+      ) {
+        return false;
+      }
+      target.hold(code);
+      return true;
+    },
+    provided: extended
+  },
+  {
+    action: 'RECENTRE VIEW',
+    group: 'onFoot',
+    keys: ['HOME'],
+    pad: { buttons: [['R3', RECENTRE_CODE]] },
+    press: (code, target) => {
+      if (
+        code !== RECENTRE_CODE ||
+        !extended(target.actions) ||
+        target.actions.recentreLook === undefined
+      ) {
+        return false;
+      }
+      target.actions.recentreLook();
+      target.hold(code);
+      return true;
+    },
+    provided: actions => extended(actions) && actions.recentreLook !== undefined
+  },
   {
     action: 'TURN',
     group: 'always',
     keys: ['LEFT / RIGHT'],
-    pad: { sticks: 'STICKS LEFT / RIGHT' },
+    // With Strafe on, the left stick sidesteps on foot and only the right one turns there.
+    pad: {
+      sticks: actions =>
+        extended(actions)
+          ? 'RIGHT STICK LEFT / RIGHT, EITHER ABOARD'
+          : 'STICKS LEFT / RIGHT'
+    },
     press: codes(['ArrowLeft', 'ArrowRight'], (code, target) =>
       target.holdAndPress(code)
     ),
@@ -631,9 +717,12 @@ const GROUP_TITLES: Readonly<Record<ControlsGroupName, string>> = {
 };
 
 /// How the Controls Page names a Binding's pad column.
-const padLabel = (pad: PadBinding): string | undefined => {
+const padLabel = (
+  pad: PadBinding,
+  actions: ControlProfileActions
+): string | undefined => {
   if (pad.sticks !== undefined) {
-    return pad.sticks;
+    return typeof pad.sticks === 'string' ? pad.sticks : pad.sticks(actions);
   }
   if (pad.buttons === undefined) {
     return undefined;
@@ -669,7 +758,8 @@ export const describeBindings = (
       binding => binding.group === group && binding.provided(actions)
     ).map(binding => {
       const mode = binding.mode?.(actions);
-      const pad = binding.pad === undefined ? undefined : padLabel(binding.pad);
+      const pad =
+        binding.pad === undefined ? undefined : padLabel(binding.pad, actions);
       return {
         action: binding.action,
         keys: binding.keys.map(label => keyLabelText(label, names)).join(' / '),
@@ -752,21 +842,33 @@ export class BrowserControlProfile {
 
   /// The keyboard's and the pads' Intents merged and clamped. A stick pushed past the threshold
   /// is its matching arrow: on foot the left stick's Y walks, aboard the right stick's Y
-  /// pitches, and either stick's X turns (ADR 0059 point 3, with Extended Controls off).
+  /// pitches, and either stick's X turns (ADR 0059 point 3). With Extended Controls on, on foot
+  /// the left stick's X strafes instead of turning and the right stick's Y is Free Look, up
+  /// looking up; with it off, neither Extension's keys nor sticks give anything.
   get intent(): Intent {
     const onFoot = this.actions.occupancy().kind === 'onFoot';
+    const extensions = onFoot && extended(this.actions);
     const pad = this.padHeld;
     const vertical =
       axis(this.held, 'ArrowUp', 'ArrowDown') +
       (onFoot
         ? axis(pad, 'LEFT UP', 'LEFT DOWN')
         : axis(pad, 'RIGHT UP', 'RIGHT DOWN'));
-    const padTurn =
-      Number(pad.has('LEFT RIGHT') || pad.has('RIGHT RIGHT')) -
-      Number(pad.has('LEFT LEFT') || pad.has('RIGHT LEFT'));
+    const padTurn = extensions
+      ? axis(pad, 'RIGHT RIGHT', 'RIGHT LEFT')
+      : Number(pad.has('LEFT RIGHT') || pad.has('RIGHT RIGHT')) -
+        Number(pad.has('LEFT LEFT') || pad.has('RIGHT LEFT'));
     return intent({
+      look: extensions
+        ? axis(this.held, LOOK_UP_CODE, LOOK_DOWN_CODE) +
+          axis(pad, 'RIGHT UP', 'RIGHT DOWN')
+        : 0,
       pitch: onFoot ? 0 : -vertical,
       running: this.mode.running(),
+      strafe: extensions
+        ? axis(this.held, STRAFE_RIGHT_CODE, STRAFE_LEFT_CODE) +
+          axis(pad, 'LEFT RIGHT', 'LEFT LEFT')
+        : 0,
       turn: axis(this.held, 'ArrowRight', 'ArrowLeft') + padTurn,
       walk: onFoot ? vertical : 0
     });
@@ -796,6 +898,7 @@ export class BrowserControlProfile {
       return (
         (this.actions.headCommand !== undefined &&
           HEAD_COMMANDS[key.code] !== undefined) ||
+        (extended(this.actions) && EXTENSION_CODES.has(key.code)) ||
         handledCode(key.code)
       );
     }

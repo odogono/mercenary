@@ -3,7 +3,8 @@ import { FLOATS_PER_VERTEX, type ErisFramePlan } from './frame.ts';
 import {
   lightMatrix,
   type ErisLighting,
-  type ShadowWindow
+  type ShadowWindow,
+  type ViewOrientation
 } from './lighting.ts';
 
 /// Eris in Filled Presentation: one WebGL2 program, flat colours, a depth buffer.
@@ -388,9 +389,10 @@ export interface ErisRendererOptions {
 
 export interface ErisLightingRender {
   readonly eyeWorld: Vector3;
-  readonly heading: number;
   readonly lighting: ErisLighting;
   readonly shadowEdge: ShadowEdge;
+  /// The frame camera's turn, which the light matrices must share with the plan's vertices.
+  readonly view: ViewOrientation;
 }
 
 export class ErisRenderer {
@@ -689,7 +691,7 @@ export class ErisRenderer {
   ): void {
     const gl = this.gl;
     const matrices = ERIS_SHADOW_WINDOWS.map(window =>
-      lightMatrix(frame.lighting, frame.heading, frame.eyeWorld, window)
+      lightMatrix(frame.lighting, frame.view, frame.eyeWorld, window)
     );
     const casters = shadowCasterVertices(plan.vertices);
     const casterCount = casters.length / FLOATS_PER_VERTEX;

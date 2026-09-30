@@ -76,8 +76,10 @@ describe('the browser Control Profile', () => {
 
     expect(profile.keyDown(input('ArrowUp'))).toBeTrue();
     expect(profile.intent).toEqual({
+      look: 0,
       pitch: 0,
       running: false,
+      strafe: 0,
       turn: 0,
       walk: 1
     });
@@ -102,8 +104,10 @@ describe('the browser Control Profile', () => {
 
     profile.keyDown(input('ArrowUp'));
     expect(profile.intent).toEqual({
+      look: 0,
       pitch: -1,
       running: false,
+      strafe: 0,
       turn: 0,
       walk: 0
     });
@@ -498,8 +502,10 @@ describe('the browser Control Profile', () => {
     expect(profile.keyDown(input('KeyB', { ctrlKey: true }))).toBeFalse();
     expect(profile.keyDown(input('KeyY', { altKey: true }))).toBeFalse();
     expect(profile.intent).toEqual({
+      look: 0,
       pitch: 0,
       running: false,
+      strafe: 0,
       turn: 0,
       walk: 0
     });
@@ -551,8 +557,10 @@ describe('the browser Control Profile', () => {
     // Losing focus or opening the System Menu releases the keys the player is
     // holding; running is a mode they chose, so it is still on when they return.
     expect(profile.intent).toEqual({
+      look: 0,
       pitch: 0,
       running: true,
+      strafe: 0,
       turn: 0,
       walk: 0
     });

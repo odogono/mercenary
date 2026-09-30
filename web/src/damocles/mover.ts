@@ -1,4 +1,4 @@
-import type { Intent } from '../gameCore/index.ts';
+import { footAxes, type Intent } from '../gameCore/index.ts';
 import type { Pose } from './world.ts';
 
 /// The on-foot Mover for Eris.
@@ -44,20 +44,28 @@ export const walk = (
     pose.heading +
       intent.turn * rules.turnRadiansPerSecond * turnMultiplier * seconds
   );
-  const step =
-    intent.walk *
-    rules.unitsPerSecond *
-    (intent.running ? rules.runMultiplier : 1) *
-    seconds;
+  // Strafe, an Extension (ADR 0059), is the same step at right angles to the heading: east of
+  // north is its right.
+  const axes = footAxes(intent);
+  const run = intent.running ? rules.runMultiplier : 1;
+  const step = axes.walk * rules.unitsPerSecond * run * seconds;
+  const sidestep = axes.strafe * rules.unitsPerSecond * run * seconds;
   return {
     body: pose.body,
     heading,
-    // Walking never tilts the view: on foot the Working Authority leaves `$7AC0` alone.
+    // Walking never tilts the view: on foot the Working Authority leaves `$7AC0` alone. Free
+    // Look is the session's to write.
     pitch: pose.pitch,
     position: {
-      x: pose.position.x + Math.sin(heading) * step,
+      x:
+        pose.position.x +
+        Math.sin(heading) * step +
+        (sidestep === 0 ? 0 : Math.cos(heading) * sidestep),
       y: pose.position.y,
-      z: pose.position.z + Math.cos(heading) * step
+      z:
+        pose.position.z +
+        Math.cos(heading) * step -
+        (sidestep === 0 ? 0 : Math.sin(heading) * sidestep)
     }
   };
 };

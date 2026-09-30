@@ -156,9 +156,12 @@ export const traceOracleRoom255Slots = (
       .map(object => object.slot)
   );
 
+/// A recorded Intent. Traces are faithful play, so they carry neither Extension.
 export const intentFromRecord = (input: TraceObject): Intent => ({
+  look: 0,
   pitch: input['pitch'] as number,
   running: input['running'] as boolean,
+  strafe: 0,
   turn: input['turn'] as number,
   walk: input['walk'] as number
 });

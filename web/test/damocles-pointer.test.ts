@@ -8,6 +8,7 @@ import {
 } from '../src/damocles/pointer.ts';
 import type { Selection } from '../src/damocles/session.ts';
 import type { ErisPlacement, Pose } from '../src/damocles/world.ts';
+import { FREE_LOOK_LIMIT } from '../src/gameCore/index.ts';
 import { Camera } from '../src/projection/index.ts';
 
 const keyMesh: Mesh = {
@@ -146,6 +147,24 @@ describe('the Damocles pointer take target', () => {
     const drawn = drawnAt(tilted, { x: 0, y: 10, z: 100 }, size);
     expect(target(reachable, drawn, tilted)).toBe('object-slot-183');
     expect(target(reachable, { x: 512, y: 384 }, tilted)).toBeUndefined();
+  });
+});
+
+describe('the pointer through Free Look (ADR 0059)', () => {
+  test('hits an object on the floor where a view tilted down to the limit draws it', () => {
+    // Free Look writes the Pose's pitch, so the pointer projects through the same tilt the
+    // frame is drawn with. Level, the object is far below the view.
+    const size = { height: 768, width: 1024 };
+    // The key stands 100 units ahead; from 180 up it is 60° below the horizon.
+    const high: Pose = { ...pose, position: { x: 0, y: 180, z: 0 } };
+    const down: Pose = { ...high, pitch: -FREE_LOOK_LIMIT };
+    const middle = { x: 0, y: 10, z: 100 };
+    const drawn = drawnAt(down, middle, size);
+    expect(drawn.y).toBeGreaterThan(0);
+    expect(drawn.y).toBeLessThan(size.height);
+    expect(drawnAt(high, middle, size).y).toBeGreaterThan(size.height);
+    expect(target(reachable, drawn, down, size)).toBe('object-slot-183');
+    expect(target(reachable, drawn, high, size)).toBeUndefined();
   });
 });
 

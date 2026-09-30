@@ -15,7 +15,11 @@ import {
   erisSurfaceFrom,
   pitchFromWord
 } from '../src/damocles/world.ts';
-import { intent } from '../src/gameCore/index.ts';
+import {
+  FREE_LOOK_LIMIT,
+  FREE_LOOK_RATE,
+  intent
+} from '../src/gameCore/index.ts';
 import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import { damoclesProcessor, vblLevels } from './damocles-sound-processor.ts';
@@ -784,4 +788,145 @@ test('after Atlas Travel into the car, the lift reads its Floors and arrives wit
   expect(session.snapshot.structure?.floor).toBe(1);
   session.advance(40 * VBL);
   expect(openUnits(session)).toBe(DOOR_TRAVEL);
+});
+
+/// `session` with its eye turned to `heading` and sidestepping, right for positive `strafe`.
+const strafing = (
+  session: DamoclesSession,
+  heading: number,
+  strafe = 1
+): DamoclesSession => {
+  const turned = walking(session, heading);
+  turned.intent = intent({ strafe });
+  return turned;
+};
+
+/// `session` after Free Look has tilted its view up, and let go.
+const tilted = (session: DamoclesSession): DamoclesSession => {
+  session.intent = intent({ look: 1 });
+  session.advance(0.4);
+  session.intent = intent({});
+  expect(session.snapshot.pose.pitch).toBeGreaterThan(0.3);
+  return session;
+};
+
+/// Strafe and Free Look (ADR 0059, #655): Extensions the on-foot Mover and the session carry.
+/// A sidestep right from a heading is the walk from a quarter turn clockwise, so each wall below
+/// is met from the heading a quarter turn anticlockwise of the one that walks into it.
+describe('Strafe and Free Look in the State Office', () => {
+  test('a sidestep meets the walls a walk does during a ride, and the ride’s clamp', () => {
+    for (const [heading, axis, stop] of [
+      [-Math.PI / 2, 'x', -879],
+      [0, 'z', 88],
+      [Math.PI, 'z', -84]
+    ] as const) {
+      const session = strafing(throughTheDoor(), heading - Math.PI / 2);
+      session.rideLift(1);
+      vblsUntil(session, () => riding(session) === null);
+      expect(localEye(session)[axis]).toBeCloseTo(stop, 6);
+      expect(session.snapshot.structure?.regionIndex).toBe(4);
+    }
+    // Left is right negated: from the opposite heading a sidestep left meets the back wall.
+    const left = strafing(throughTheDoor(), 0, -1);
+    expect(left.rideLift(1)).toEqual({ kind: 'admitted' });
+    vblsUntil(left, () => riding(left) === null);
+    expect(localEye(left).x).toBeCloseTo(-879, 6);
+  });
+
+  test('a sidestep into the car’s back wall is refused, and thuds once', () => {
+    const session = strafing(inLift(), -Math.PI);
+    expect(thuds(heardFor(session, 200))).toBe(1);
+    expect(localEye(session).x).toBeCloseTo(-879, 6);
+  });
+
+  test('the hall’s door holds a sidestep until its latch is open, and the region gate then admits it', () => {
+    const HALL_DOOR = 0x03_fc;
+    const saved = standingIn(0).captureResume();
+    const placement = content.surface.placements.find(
+      item => item.id === STATE_OFFICE
+    )!;
+    const session = strafing(
+      new DamoclesSession(content, {
+        ...saved,
+        pose: {
+          ...saved.pose,
+          position: {
+            x: placement.position.x + 200,
+            y: saved.pose.position.y,
+            z: placement.position.z - 100
+          }
+        }
+      }),
+      0
+    );
+    const latch = () =>
+      session.snapshot.structure?.attachments.find(
+        item => item.slot === HALL_DOOR
+      )?.latch;
+    let heldWhileShut = 0;
+    vblsUntil(session, () => {
+      if (latch() !== 'open') {
+        expect(localEye(session).x).toBeLessThanOrEqual(289);
+        heldWhileShut += localEye(session).x === 289 ? 1 : 0;
+      }
+      return session.snapshot.structure?.regionIndex === 6;
+    });
+    expect(heldWhileShut).toBeGreaterThan(20);
+  });
+
+  test('Free Look tilts the Pose at the fixed rate, to the limit, and holds', () => {
+    const session = standingIn(0);
+    const level = session.snapshot.pose.pitch;
+    session.intent = intent({ look: 1 });
+    for (let vbl = 0; vbl < 25; vbl += 1) {
+      session.advance(VBL);
+    }
+    expect(session.snapshot.pose.pitch - level).toBeCloseTo(
+      FREE_LOOK_RATE / 2,
+      6
+    );
+    session.intent = intent({});
+    session.advance(1);
+    expect(session.snapshot.pose.pitch - level).toBeCloseTo(
+      FREE_LOOK_RATE / 2,
+      6
+    );
+    session.intent = intent({ look: -1 });
+    session.advance(5);
+    expect(session.snapshot.pose.pitch - level).toBeCloseTo(
+      -FREE_LOOK_LIMIT,
+      9
+    );
+    session.recentreLook();
+    expect(session.snapshot.pose.pitch).toBe(level);
+  });
+
+  test('a Save carries no Free Look, and a restored session starts level', () => {
+    const session = tilted(standingIn(0));
+    const saved = session.captureResume();
+    expect(saved.pose.pitch).toBe(0);
+    expect(new DamoclesSession(content, saved).snapshot.pose.pitch).toBe(0);
+  });
+
+  test('a Floor change levels it, and the lift’s arrival writes its own pitch over a level view', () => {
+    const floored = tilted(standingIn(0));
+    expect(floored.changeFloor(1)).toEqual({ kind: 'moved' });
+    expect(floored.snapshot.pose.pitch).toBe(0);
+
+    const riddenUp = tilted(throughTheDoor());
+    ride(riddenUp, 1);
+    expect(riddenUp.snapshot.pose.pitch).toBe(
+      pitchFromWord(0x01_ff, content.doc.orientation)
+    );
+  });
+
+  test('a move to another cell or Body levels it', () => {
+    const moved = tilted(standingIn(0));
+    moved.teleportToCell(3, 3);
+    expect(moved.snapshot.pose.pitch).toBe(0);
+
+    const switched = tilted(standingIn(0));
+    expect(switched.switchToPose('dion-transporter').kind).toBe('switched');
+    expect(switched.snapshot.pose.pitch).toBe(0);
+  });
 });

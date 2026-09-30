@@ -206,6 +206,18 @@ export const installSettingsView = (
         { label: 'SOFT', value: 'soft' },
         { label: 'BRIGHT', value: 'bright' }
       ]
+    },
+    {
+      // Strafe and Free Look (ADR 0059): Extensions, so faithful play keeps them off.
+      apply: value => {
+        preferences.update({ extendedControls: value === 'on' });
+      },
+      current: () => (preferences.current().extendedControls ? 'on' : 'off'),
+      name: 'extended',
+      options: [
+        { label: 'OFF', value: 'off' },
+        { label: 'STRAFE + FREE LOOK', value: 'on' }
+      ]
     }
   ];
 

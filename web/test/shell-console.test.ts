@@ -88,6 +88,7 @@ const harness = (
         audioMuted: false,
         audioVolume: 100,
         composition: 'panel',
+        extendedControls: false,
         panelRendition: 'targ'
       }),
       update: change => {
@@ -96,6 +97,7 @@ const harness = (
           audioMuted: false,
           audioVolume: 100,
           composition: 'panel',
+          extendedControls: false,
           panelRendition: 'targ'
         };
       }
@@ -299,7 +301,7 @@ describe('reading a console command line', () => {
       }
     }
     expect(() => parse('set volume 4')).toThrow(
-      "unknown setting 'volume': try composition, glow, rendition, road-glow, road-weight, shadows, sky, structures, typeface, weight"
+      "unknown setting 'volume': try composition, extended, glow, rendition, road-glow, road-weight, shadows, sky, structures, typeface, weight"
     );
     expect(() => parse('set sky purple')).toThrow(
       "sky takes document, authentic, enhanced, and not 'purple'"

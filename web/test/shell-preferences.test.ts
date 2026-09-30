@@ -48,6 +48,7 @@ describe('browser shell preferences', () => {
       audioMuted: false,
       audioVolume: 100,
       composition: 'panel',
+      extendedControls: false,
       panelRendition: 'targ'
     });
     expect(readPreferences(undefined)).toEqual(DEFAULT_PREFERENCES);
@@ -59,6 +60,7 @@ describe('browser shell preferences', () => {
       audioMuted: true,
       audioVolume: 37,
       composition: 'strip',
+      extendedControls: false,
       panelRendition: 'damocles',
       presentationPreset: 'authentic',
       structureReach: 'all',
@@ -85,6 +87,7 @@ describe('browser shell preferences', () => {
       audioMuted: false,
       audioVolume: 100,
       composition: 'panel',
+      extendedControls: false,
       panelRendition: 'damocles'
     });
   });

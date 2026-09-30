@@ -51,6 +51,7 @@ export type ConsoleCommand =
 
 export type SettingName =
   | 'composition'
+  | 'extended'
   | 'glow'
   | 'road-glow'
   | 'road-weight'
@@ -66,6 +67,7 @@ export type SettingName =
 /// The value is narrowed at parse time, so execution never re-asks what a string means.
 export type SettingChoice =
   | { readonly name: 'composition'; readonly value: Composition }
+  | { readonly name: 'extended'; readonly value: 'off' | 'on' }
   | { readonly name: 'road-glow'; readonly value: 'document' | WireframeGlow }
   | {
       readonly name: 'road-weight';
@@ -80,6 +82,7 @@ export type SettingChoice =
   | { readonly name: 'weight'; readonly value: 'document' | WireframeWeight };
 
 const COMPOSITIONS: readonly Composition[] = ['panel', 'strip'];
+const SWITCHES: readonly ('off' | 'on')[] = ['off', 'on'];
 const GLOWS: readonly ('document' | WireframeGlow)[] = [
   'document',
   'off',
@@ -113,6 +116,7 @@ const WEIGHTS: readonly ('document' | WireframeWeight)[] = [
 export const SETTING_VALUES: Readonly<Record<SettingName, readonly string[]>> =
   {
     composition: COMPOSITIONS,
+    extended: SWITCHES,
     glow: GLOWS,
     rendition: RENDITIONS,
     'road-glow': GLOWS,
@@ -157,6 +161,10 @@ const SETTING_PARSERS: Readonly<
   composition: word => ({
     name: 'composition',
     value: oneOf(COMPOSITIONS, word, 'composition')
+  }),
+  extended: word => ({
+    name: 'extended',
+    value: oneOf(SWITCHES, word, 'extended')
   }),
   glow: word => ({ name: 'glow', value: oneOf(GLOWS, word, 'glow') }),
   rendition: word => ({
@@ -674,6 +682,9 @@ export const applySetting = (
     case 'composition':
       deps.preferences.update({ composition: setting.value });
       return `composition ${setting.value}`;
+    case 'extended':
+      deps.preferences.update({ extendedControls: setting.value === 'on' });
+      return `extended controls ${setting.value}`;
     case 'rendition':
       deps.preferences.update({ panelRendition: setting.value });
       return `rendition ${setting.value}`;
