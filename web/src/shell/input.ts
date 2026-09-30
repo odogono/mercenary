@@ -59,6 +59,9 @@ export interface ControlProfileActions {
   readonly rotateStack?: (direction: 'forward' | 'backward') => void;
   readonly shutThrottle: () => void;
   readonly skipMessage?: () => void;
+  /// A notch down or up the throttle ladder: the pad's shoulder buttons, the same step in every
+  /// Title (ADR 0059). From a stop up is the lowest notch; below it down is a stop.
+  readonly throttleNotchStep: (direction: -1 | 1) => void;
   readonly throttleNotchValue: (notch: number) => void;
   /// A reverse gear aboard: the ST's `F1`–`F10`, which Damocles's throttle table reads as the
   /// digits' notches in reverse (#556). A Title with no reverse gear leaves it out.
@@ -96,6 +99,10 @@ export const LAUNCH_CODE = 'Backspace';
 /// through while the Arrival holds the rest (ADR 0032) rather than restating a code the profile
 /// might later move.
 export const SKIP_MESSAGE_CODE = 'Space';
+
+/// What the pad's shoulder buttons stand in for aboard: a notch down or up, which no one key is.
+const NOTCH_DOWN_CODE = 'PadNotchDown';
+const NOTCH_UP_CODE = 'PadNotchUp';
 
 /// The Control Profiles' names, as the Controls Page heads its Bindings: the keyboard's and the
 /// gamepad's, which share the one table (ADR 0059).
@@ -238,7 +245,8 @@ interface BindingTarget {
 }
 
 /// A Binding's gamepad column (ADR 0059): the buttons that take it, each with the key it stands
-/// in for, or the sticks that give its Movement Intent. A button reaches the Binding through its
+/// in for (or a code of the profile's own, where no one key is the step), or the sticks that give
+/// its Movement Intent. A button reaches the Binding through its
 /// `press`, so it does exactly what the key does.
 export interface PadBinding {
   readonly buttons?: readonly (readonly [PadButton, string])[];
@@ -331,7 +339,17 @@ export const BINDINGS: readonly Binding[] = [
     action: 'THROTTLE',
     group: 'aboard',
     keys: ['1-9, 0'],
+    pad: {
+      buttons: [
+        ['LB', NOTCH_DOWN_CODE],
+        ['RB', NOTCH_UP_CODE]
+      ]
+    },
     press: (code, { actions }) => {
+      if (code === NOTCH_DOWN_CODE || code === NOTCH_UP_CODE) {
+        actions.throttleNotchStep(code === NOTCH_UP_CODE ? 1 : -1);
+        return true;
+      }
       const notch = throttleNotch(code);
       if (notch === undefined) {
         return false;
@@ -359,12 +377,6 @@ export const BINDINGS: readonly Binding[] = [
     action: 'THROTTLE DOWN / UP',
     group: 'aboard',
     keys: [[key('Minus'), ' / ', key('Equal')]],
-    pad: {
-      buttons: [
-        ['LB', 'Minus'],
-        ['RB', 'Equal']
-      ]
-    },
     press: codes(['Minus', 'Equal'], (code, { actions }) =>
       actions.throttleStep(code === 'Equal' ? 1 : -1)
     ),

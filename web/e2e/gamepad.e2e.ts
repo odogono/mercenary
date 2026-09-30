@@ -5,6 +5,8 @@ import {
   FACING_DOORWAY,
   bootAt,
   inventory,
+  spaceportWorld,
+  walkUntil,
   watchErrors
 } from './damocles-play.ts';
 
@@ -57,6 +59,8 @@ const tap = async (page: Page, ...buttons: number[]): Promise<void> => {
 
 const A = 0;
 const X = 2;
+const LB = 4;
+const RB = 5;
 const BACK = 8;
 const START = 9;
 
@@ -127,5 +131,42 @@ test('Damocles: X takes, the left stick walks and the Controls Page lists the pa
   ).toBeVisible();
   await expect(always).toContainText('RT');
   await expect(always).toContainText('A ON FOOT');
+  expect(errors).toEqual([]);
+});
+
+test('Damocles: RB and LB step the limo’s throttle a notch at a time, as they do the Dart’s', async ({
+  page
+}) => {
+  test.setTimeout(120_000);
+  const errors = watchErrors(page);
+  await installPad(page);
+  await bootAt(page, DOORWAY_LINE_LOCAL, FACING_DOORWAY);
+  const origin = await spaceportWorld(page);
+  await tap(page, X);
+  await expect(inventory(page)).toHaveText('KEY- V.I.P. LIMO', {
+    timeout: 5000
+  });
+  await walkUntil(
+    page,
+    'ArrowUp',
+    async () => (await frameZ(page)) - origin.z < -3000
+  );
+  await tap(page, A);
+  await expect(page.locator('#frame')).toHaveAttribute(
+    'data-occupancy',
+    'object-slot-5'
+  );
+
+  // Four notches up from the stop is key 4, which settles at 012 on the ground.
+  for (let notch = 0; notch < 4; notch += 1) {
+    await tap(page, RB);
+  }
+  const speed = page.locator('#panel-damocles [data-field=speedLabel]');
+  await expect(speed).toHaveText('+ 000 000 012', { timeout: 20_000 });
+  // And four down stop it.
+  for (let notch = 0; notch < 4; notch += 1) {
+    await tap(page, LB);
+  }
+  await expect(speed).toHaveText('+ 000 000 000', { timeout: 20_000 });
   expect(errors).toEqual([]);
 });
