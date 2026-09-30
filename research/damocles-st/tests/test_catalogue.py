@@ -1413,8 +1413,9 @@ class AttachmentKeyTests(unittest.TestCase):
                 setattr(catalogue, name, original)
 
         # 41 from the captures, eight more the image-derived road cells letter
-        # (#460), and one an image-replayed island's other cells letter.
-        self.assertEqual(len(seen), 50)
+        # (#460), one an image-replayed island's other cells letter, and the
+        # four digit pairs of the Midas field's cell number (#172).
+        self.assertEqual(len(seen), 54)
         self.assertEqual([hex(a) for a, f in seen.items() if not f & 0x8000], [])
         self.assertEqual([hex(a) for a, f in seen.items() if f & 0xF == 4], [])
         self.assertEqual(sorted({f & 0xF for f in seen.values()}), [0, 1, 2, 3, 5])
@@ -3181,6 +3182,13 @@ class IslandTests(unittest.TestCase):
         for instance in placed:
             island = islands[instance['location']['island']]
             self.assertEqual(island['body'], instance['location']['body'])
+            if island.get('field'):
+                # A uniform field has no window: a copy stands at the centre of the
+                # Body Coordinate it is named by.
+                x, _, z = instance['location']['position']
+                self.assertTrue(instance['id'].endswith(f'-{int(x)}-{int(z)}'))
+                self.assertEqual((x % 1, z % 1), (0.5, 0.5))
+                continue
             # The position stays a Body Coordinate, inside the 16x16 Structure
             # Workspace the record's origin opens.
             for axis, origin in ((0, island['origin'][0]), (2, island['origin'][1])):
@@ -3861,19 +3869,77 @@ class ImageWorkspaceTests(unittest.TestCase):
                 continue
             with self.subTest(capture=path.name, body=body, group=group):
                 replayed = catalogue.image_workspace(data, island)
-                if body == catalogue.UNIFORM_FIELD_BODY:
-                    # $0592FA sets $7A2A for Midas alone, and $04ED2A repeats cell 0's
-                    # structure word over every cell; the replay does not model it.
-                    self.assertNotEqual(struct.unpack_from('>H', ram, 0x7A2A)[0], 0)
-                    words = {ram[0xABDC + cell * 4:0xABDE + cell * 4] for cell in range(256)}
-                    self.assertEqual(len(words), 1)
-                    continue
-                self.assertEqual(struct.unpack_from('>H', ram, 0x7A2A)[0], 0)
+                # $0592FA sets $7A2A for Midas alone, and $04ED2A then repeats cell 0's
+                # structure word over every cell; the replay models both.
+                self.assertEqual(ram[0x7A2A], 0xFF if body == catalogue.UNIFORM_FIELD_BODY else 0)
+                self.assertEqual(replayed[0x7A2A], ram[0x7A2A])
                 for name, (start, size) in self.TABLES.items():
                     self.assertEqual(replayed[start:start + size], ram[start:start + size], name)
                 self.assertEqual(replayed[0x7A6C:0x7A70], ram[0x7A6C:0x7A70], '$7A6C')
                 checked += 1
         self.assertGreaterEqual(checked, 20)
+
+
+class UniformFieldTests(unittest.TestCase):
+    """Midas: one structure in every Surface Cell, and its neighbours a whole cell out."""
+
+    def _inputs(self):
+        root = Path(__file__).resolve().parents[1]
+        first = root / 'work' / 'observe-first-world-20260818T101013Z-c5a32b7d' / 'observed.ram'
+        midas = root / 'snapshots' / 'damocles.midas.sav'
+        if not first.exists() or not midas.exists():
+            self.skipTest('Working-Authority RAM captures are Restricted Material')
+        import damocleslab.catalogue as catalogue
+        data = first.read_bytes()
+        bodies = [{'id': f'body-{i}', 'name': data[0x81dc + i * 8:0x81e4 + i * 8].decode('ascii').strip()}
+                  for i in range(31)]
+        island = next(item for item in catalogue.decode_islands(data, bodies)
+                      if item['body'] == f'body-{catalogue.UNIFORM_FIELD_BODY}')
+        return catalogue, data, catalogue.hatari_memstate_ram(midas.read_bytes()), island
+
+    def test_the_island_local_cell_wraps_at_sixteen(self):
+        catalogue, _data, ram, island = self._inputs()
+        # $054B76 masks the island-local cell, so the capture's cell word is the
+        # Body Coordinate less the island origin, modulo 16, however far it stands.
+        x, z = struct.unpack_from('>H', ram, 0x7A92)[0], struct.unpack_from('>H', ram, 0x7A9A)[0]
+        origin_x, origin_z = island['origin']
+        cell = struct.unpack_from('>H', ram, 0x7B5C)[0]
+        self.assertEqual(cell, ((x - origin_x) & 15) | ((z - origin_z) & 15) << 4)
+        self.assertGreater(abs(x - origin_x), 16)
+
+    def test_the_ground_paints_the_cell_number_the_capture_holds(self):
+        catalogue, data, ram, island = self._inputs()
+        x, z = struct.unpack_from('>H', ram, 0x7A92)[0], struct.unpack_from('>H', ram, 0x7A9A)[0]
+        number = catalogue.field_cell_number(x, z)
+        # $05504E wrote the pairs the $CCA0 tokens name.
+        pairs = [ram[address:address + 2].decode('ascii')
+                 for address in sorted(catalogue.FIELD_NUMBER_PAIRS)]
+        self.assertEqual(''.join(pairs), number)
+        self.assertEqual(number, '01469861')
+        workspace = catalogue.image_workspace(data, island)
+        address = 0x1E000 + struct.unpack_from('>H', workspace, 0x1E400)[0]
+        places = catalogue.field_number_forms(workspace, address, None, None)
+        self.assertEqual([place['digit'] for place in places], list(range(8)))
+        self.assertEqual([place['token'] for place in places],
+                         [0x83, 0x83, 0x84, 0x84, 0x85, 0x85, 0x86, 0x86])
+
+    def test_neighbour_templates_stand_a_whole_cell_out(self):
+        catalogue, data, ram, island = self._inputs()
+        workspace = catalogue.image_workspace(data, island)
+        address = 0x1E000 + struct.unpack_from('>H', workspace, 0x1E400)[0]
+        _mesh, _gaps, _transform, placements = catalogue.decode_ground(
+            workspace, address, workspace[0x83DC], None, None, 0)
+        doubled = sorted((2 * p['position'][0], 2 * p['position'][2]) for p in placements)
+        # $055004 spawns them into slots 248-255 around the player's own cell.
+        x, z = struct.unpack_from('>H', ram, 0x7A92)[0], struct.unpack_from('>H', ram, 0x7A9A)[0]
+        centre = (x << 16 | 0x8000, z << 16 | 0x8000)
+        spawned = sorted(
+            (struct.unpack_from('>i', ram, 0x63A8 + slot * 4)[0] - centre[0],
+             struct.unpack_from('>i', ram, 0x6BA8 + slot * 4)[0] - centre[1])
+            for slot in catalogue.WORLD_CONDITIONED_OBJECT_SLOTS)
+        self.assertEqual(len(placements), 8)
+        self.assertEqual(spawned, doubled)
+        self.assertEqual({abs(axis) for pair in doubled for axis in pair}, {0, 65534})
 
 
 class LocationTableTests(unittest.TestCase):

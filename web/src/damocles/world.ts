@@ -1,4 +1,5 @@
 import {
+  fieldCopy,
   modelSummaryById,
   type BodySky,
   type Catalogue,
@@ -171,6 +172,9 @@ export interface ErisSurface {
   /// its sea, on a Body that has one. Null on the VOID slot, which is not a surface.
   readonly baseColour: string | null;
   readonly body: { readonly id: string; readonly name: string };
+  /// A uniform field's copies in one Surface Cell, by Body Coordinate, where the Body is one
+  /// (#172). Absent on every other Body. Read it through `fieldCopiesAt`.
+  readonly field?: (x: number, z: number) => readonly ErisPlacement[];
   /// The Catalogue's Floor Label glyphs by font, which every Floor Label record draws from.
   readonly floorLabelGlyphs: Catalogue['floorLabelGlyphs'];
   readonly grid: ErisGrid;
@@ -330,13 +334,81 @@ export const structureInCell = (
   position: Vector3
 ): ErisPlacement | undefined => {
   const current = cellOf(position, surface.grid);
-  return surface.placements.find(
+  return [...surface.placements, ...fieldCopiesAt(surface, position)].find(
     placement =>
       placement.selection !== undefined &&
       placement.kind === 'structure' &&
       cellOf(placement.position, surface.grid).x === current.x &&
       cellOf(placement.position, surface.grid).z === current.z
   );
+};
+
+/// A uniform field's structure and ground in the Surface Cell `position` stands in (#172).
+///
+/// Every cell of the field holds them, and the Catalogue stores only the copies a resident
+/// stands in, so the rest are built here, at the position's own cell and named by its Body
+/// Coordinate. Empty off a field, and in a cell whose copies the surface already holds, so a
+/// stored copy is never drawn twice.
+export const fieldCopiesAt = (
+  surface: ErisSurface,
+  position: Vector3
+): readonly ErisPlacement[] => {
+  if (surface.field === undefined) {
+    return [];
+  }
+  const here = bodyCellOf(position, surface.grid);
+  const copies = surface.field(here.x, here.z);
+  if (
+    copies.some(copy => surface.placements.some(item => item.id === copy.id))
+  ) {
+    return [];
+  }
+  const shift = {
+    x:
+      (Math.floor(position.x / surface.grid.cellUnits) - here.x) *
+      surface.grid.cellUnits,
+    z:
+      (Math.floor(position.z / surface.grid.cellUnits) - here.z) *
+      surface.grid.cellUnits
+  };
+  return shift.x === 0 && shift.z === 0
+    ? copies
+    : copies.map(copy => ({
+        ...copy,
+        position: {
+          ...copy.position,
+          x: copy.position.x + shift.x,
+          z: copy.position.z + shift.z
+        }
+      }));
+};
+
+/// The placement an id names on this surface: one it holds, or a uniform field's copy.
+export const placementById = (
+  surface: ErisSurface,
+  id: string
+): ErisPlacement | undefined => {
+  const held = surface.placements.find(placement => placement.id === id);
+  if (held !== undefined || surface.field === undefined) {
+    return held;
+  }
+  const match = /-(\d+)-(\d+)$/.exec(id);
+  return match === null
+    ? undefined
+    : surface
+        .field(Number(match[1]), Number(match[2]))
+        .find(placement => placement.id === id);
+};
+
+/// The surface as the frame draws it at `position`: with the field's copies in that cell.
+export const withFieldAt = (
+  surface: ErisSurface,
+  position: Vector3
+): ErisSurface => {
+  const copies = fieldCopiesAt(surface, position);
+  return copies.length === 0
+    ? surface
+    : { ...surface, placements: [...surface.placements, ...copies] };
 };
 
 const TURN = 2 * Math.PI;
@@ -651,6 +723,80 @@ export const floorPlacement = (
   return selection === undefined ? undefined : { ...placement, selection };
 };
 
+/// One located Instance as the surface places it, or undefined while its Model is not in hand.
+const placementOf = (
+  instance: Catalogue['instances'][number],
+  models: ModelLookup,
+  doc: ErisPresentationDocument,
+  grid: ErisGrid
+): ErisPlacement | undefined => {
+  const location = instance.location!;
+  const model = models.peek(instance.model);
+  if (model === undefined) {
+    return undefined;
+  }
+  const drawn = structureMesh(model, doc.structureFallback);
+  const mesh =
+    model.cellNumber === undefined || drawn === undefined
+      ? drawn
+      : withCellNumber(
+          drawn,
+          model.cellNumber,
+          Math.floor(location.position[0]),
+          Math.floor(location.position[2])
+        );
+  const selection = placementSelection(model, models);
+  return {
+    ...(selection === undefined ? {} : { selection }),
+    faceCount: mesh?.faces.length ?? 0,
+    heading: placementHeading(model, location.heading),
+    id: instance.id,
+    keyBase: instance.keyBase,
+    kind: model.kind,
+    mesh,
+    modelId: model.id,
+    name: instance.name,
+    position: {
+      x: location.position[0] * grid.cellUnits,
+      y: location.position[1] * grid.cellUnits,
+      z: location.position[2] * grid.cellUnits
+    },
+    status: model.status
+  };
+};
+
+/// The eight digits `$05504E` writes for Body Coordinate x, z: x shifted up twelve bits, ORed
+/// with z, in decimal, most significant first.
+export const fieldCellNumber = (x: number, z: number): string =>
+  (((x << 12) | z) % 100_000_000).toString().padStart(8, '0');
+
+const shiftedBy = (primitive: Primitive, offset: number): Primitive => ({
+  ...primitive,
+  vertices: primitive.vertices.map(index => index + offset)
+});
+
+/// A field ground's mesh with its cell's number painted on: each of the eight places takes the
+/// glyph of its own digit (docs/research/damocles-midas-field.md).
+const withCellNumber = (
+  base: Mesh,
+  cellNumber: NonNullable<Model['cellNumber']>,
+  x: number,
+  z: number
+): Mesh => {
+  const digits = fieldCellNumber(x, z);
+  let vertices = [...base.vertices];
+  const faces = [...base.faces];
+  const lines = [...base.lines];
+  for (const place of cellNumber.places) {
+    const glyph = place.glyphs[digits[place.digit]!]!;
+    const offset = vertices.length;
+    vertices = [...vertices, ...glyph.vertices];
+    faces.push(...glyph.faces.map(face => shiftedBy(face, offset)));
+    lines.push(...glyph.lines.map(line => shiftedBy(line, offset)));
+  }
+  return { ...base, faces, lines, vertices };
+};
+
 /// The workspace of one Body, built from the Models in hand. An Instance whose Model has not
 /// been read yet is left out entirely, drawn and collided with by nobody, until a later build
 /// has it (ADR 0048); an Instance naming a Model the index does not know is a payload fault.
@@ -682,30 +828,41 @@ export const erisSurfaceFrom = (
         `Damocles Instance ${instance.id} names unknown model ${instance.model}`
       );
     }
-    const model = models.peek(instance.model);
-    if (model === undefined) {
-      continue;
+    const placement = placementOf(instance, models, doc, grid);
+    if (placement !== undefined) {
+      placements.push(placement);
     }
-    const mesh = structureMesh(model, doc.structureFallback);
-    const selection = placementSelection(model, models);
-    placements.push({
-      ...(selection === undefined ? {} : { selection }),
-      faceCount: mesh?.faces.length ?? 0,
-      heading: placementHeading(model, location.heading),
-      id: instance.id,
-      keyBase: instance.keyBase,
-      kind: model.kind,
-      mesh,
-      modelId: model.id,
-      name: instance.name,
-      position: {
-        x: location.position[0] * grid.cellUnits,
-        y: location.position[1] * grid.cellUnits,
-        z: location.position[2] * grid.cellUnits
-      },
-      status: model.status
-    });
   }
+  const field = catalogue.islands.find(
+    island => island.body === body.id && island.field !== null
+  )?.field;
+  const copies = new Map<string, readonly ErisPlacement[]>();
+  const fieldAt =
+    field == null
+      ? undefined
+      : (x: number, z: number): readonly ErisPlacement[] => {
+          const key = `${x},${z}`;
+          let held = copies.get(key);
+          if (held === undefined) {
+            held = (['surface', 'ground'] as const).flatMap(kind => {
+              const instance = fieldCopy(
+                catalogue,
+                `${field.instancePrefix}-${kind}-${x}-${z}`
+              );
+              const placement =
+                instance === undefined
+                  ? undefined
+                  : placementOf(instance, models, doc, grid);
+              return placement === undefined ? [] : [placement];
+            });
+            // Only a complete copy is kept: one built before its Models landed is built again.
+            if (held.length === 2) {
+              copies.clear();
+              copies.set(key, held);
+            }
+          }
+          return held;
+        };
   const byId = new Map(placements.map(placement => [placement.id, placement]));
   const places: ErisPlace[] = [];
   for (const place of catalogue.places) {
@@ -726,6 +883,7 @@ export const erisSurfaceFrom = (
   return {
     baseColour: body.bodySurface?.baseColour ?? null,
     body: { id: body.id, name: body.name },
+    ...(fieldAt === undefined ? {} : { field: fieldAt }),
     floorLabelGlyphs: catalogue.floorLabelGlyphs,
     grid,
     islands: catalogue.islands

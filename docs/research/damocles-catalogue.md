@@ -51,7 +51,10 @@ rather than a code change. Two further poses, `midas` and `damocles`, are
 deliberately **not** passed: their camera pair disagrees with the origin their
 own cell word implies, so the extractor refuses them rather than placing cells
 against a fabricated origin. See
-[live surface workspaces beyond Eris](damocles-non-eris-workspaces.md).
+[live surface workspaces beyond Eris](damocles-non-eris-workspaces.md). Neither
+needs a capture now. MIDAS is a uniform field the extractor replays from the
+image ([the Midas field](damocles-midas-field.md)), and DAMOCLES's one island
+record binds the empty group `$00`.
 
 Open `http://127.0.0.1:5173/catalogue`, or follow **Damocles catalogue** from the
 game menu. `?model=object-035d12` opens DART II;
@@ -59,7 +62,9 @@ game menu. `?model=object-035d12` opens DART II;
 `?instance=vesta-surface-64` opens Vesta Parliament;
 `?instance=gaea-ur-city-surface-24` opens the live UR City cell 4,2 overlay;
 `?instance=dion-surface-32` opens the live Dion cell 2,3 overlay;
-`?instance=object-slot-5` opens the V.I.P. LIMO outside the Spaceport.
+`?instance=object-slot-5` opens the V.I.P. LIMO outside the Spaceport;
+`?instance=midas-the-midas-project-surface-2364-376` opens the Midas pyramid
+MAGIC CRYSTAL stands in.
 
 For body-aware interaction (#345), each resident instance carries `placementClass`, Association A byte 3 (`$6FAB + 4*slot`). It is mutable placement state rather than identity — a Drop rewrites it — so this is the authored value a session departs from. It is not the handling byte's low nibble; the two disagree for 176 of the 241 residents. See [placement class](damocles-placement-class.md).
 
@@ -315,7 +320,7 @@ displays each table's qualification. Every slot maps to one model identity;
 repeated pointers share a model and retain all slot indices. No pointer scan is
 represented as a model census.
 
-Current extraction accounts for **1765 unique records**: **1435 decoded**,
+Current extraction accounts for **1766 unique records**: **1436 decoded**,
 **330 partial**, and **0 unresolved**. “Decoded” means the supported record was
 parsed completely; it does not mean every model has received a human fidelity
 review. Partial records expose recovered geometry and explain omitted features.

@@ -1179,14 +1179,16 @@ def decode_ground(data: bytes, start: int, orientation: int,
                   palette: list[int] | None = None,
                   hardware: list[int] | None = None,
                   cell: int | None = None,
-                  scene: dict[int, list[int]] | None = None
+                  scene: dict[int, list[int]] | None = None,
+                  text_records: list[int] | None = None
                   ) -> tuple[dict, list[str], int, list[dict]]:
     """Decode one per-cell ground record.
 
     Given the cell, scene points come from the authored seed table and every
     reference resolves. `scene` overrides that for tests. Without either,
     references above the record's own plan stay unplaced and the remaining
-    local shape is kept.
+    local shape is kept. `text_records`, when given, collects the address of
+    each $6000 vector-text record's position words.
     """
     reader = Reader(data, start)
     first, second = reader.take(1)[0], reader.take(1)[0]
@@ -1247,6 +1249,8 @@ def decode_ground(data: bytes, start: int, orientation: int,
                         'untransformed, and this cell has a nonzero orientation.'
                     )
                     break
+                if text_records is not None:
+                    text_records.append(reader.p & ~1)
                 texts.append(decode_ground_lettering(
                     data, reader, vertices, faces, lines, palette, hardware
                 ))
@@ -3114,8 +3118,8 @@ def _expand_group_stream(data: bytes, group: int) -> tuple[bytes, list[int], int
     return bytes(grid), selectors, cursor + 6
 
 
-def load_structure_workspace(data: bytes, group: int) -> bytes:
-    """Replay $04EB60-$04ED12: the workspace the loader builds for one group.
+def load_structure_workspace(data: bytes, group: int, uniform_field: bool = False) -> bytes:
+    """Replay $04EB60-$04ED3C: the workspace the loader builds for one group.
 
     Everything a cell's Drawn Record depends on is written by this one pass over
     the group's authored stream, so a group nobody has stood in can be loaded
@@ -3135,6 +3139,10 @@ def load_structure_workspace(data: bytes, group: int) -> bytes:
     capture's $01E64E onwards is the program image's. The pass after $04ED14
     (the named-area pointer and the $6364 state overlay on $ABDC) is left out:
     neither writes anything the ground decoder reads.
+
+    With `uniform_field`, which is $7A2A, the Midas flag $0592FA raises: $04ED2A
+    then copies cell 0's $ABDC word, its key byte and structure slot, over all
+    256 cells and keeps each cell's own dx/dz.
 
     Returns a copy of `data` with those tables written.
     """
@@ -3171,6 +3179,9 @@ def load_structure_workspace(data: bytes, group: int) -> bytes:
         struct.pack_into('>H', workspace, 0x1E400 + cell * 2, placed)
     else:
         raise ValueError(f'group ${group:02X} placement stream terminator missing')
+    if uniform_field:
+        for cell in range(1, 256):
+            workspace[0xABDC + cell * 4:0xABDE + cell * 4] = workspace[0xABDC:0xABDE]
     return bytes(workspace)
 
 
@@ -4128,6 +4139,10 @@ def decode_cell_ground(workspace: bytes, data: bytes, cell: int, tables: list,
     the palette of the structure $ABDC places on the cell. `workspace` is either
     a capture or `load_structure_workspace`'s replay, and the two decode alike.
 
+    Where the workspace carries the Midas flag $7A2A, $055004 doubles every $7000
+    template's offset from the cell centre as it spawns it, so a template
+    authored half a cell out stands at the centre of the neighbouring cell.
+
     Returns the record address, the mesh with any $7000 templates placed, its
     gaps, the transform, the template Models and the palette index.
     """
@@ -4152,6 +4167,9 @@ def decode_cell_ground(workspace: bytes, data: bytes, cell: int, tables: list,
             0xFF,
             [],
         )
+    if workspace[0x7A2A]:
+        placements = [{**placement, 'position': [axis * 2 for axis in placement['position']]}
+                      for placement in placements]
     mesh, template_models, template_gaps = compose_ground_templates(
         mesh, placements, tables[0]['entries'], by_address, workspace, palette, hardware
     )
@@ -4270,9 +4288,12 @@ def image_workspace(data: bytes, island: dict) -> bytes:
     """
     group = island['structureGroup']
     body = int(island['body'].split('-')[1])
-    workspace = bytearray(load_structure_workspace(data, group))
+    uniform = body == UNIFORM_FIELD_BODY
+    workspace = bytearray(load_structure_workspace(data, group, uniform_field=uniform))
     origin_x, origin_z = island['origin']
     struct.pack_into('>H', workspace, 0x7AA8, body * 4)
+    # `seq.b $7A2A` at $0592FE: the byte is $FF on Midas and 0 elsewhere.
+    workspace[0x7A2A] = 0xFF if uniform else 0
     struct.pack_into('>I', workspace, 0x7A92, origin_x << 16)
     struct.pack_into('>I', workspace, 0x7A2C, 0)
     struct.pack_into('>I', workspace, 0x7A9A, origin_z << 16)
@@ -4559,6 +4580,204 @@ def attach_live_workspace(workspace: bytes, data: bytes, models: list, tables: l
     )
     binding = {'body': body, 'group': group, 'prefix': prefix, 'workspace': workspace,
                'attestation': 'image' if image_island else 'capture'}
+    return note, binding
+
+
+UNIFORM_FIELD_NOTE = 'docs/research/damocles-midas-field.md'
+
+# $05504E runs at every Midas cell bind ($054F0A). It takes the high word of the
+# player's X ($7AB2) shifted up twelve bits, ORs in the high word of Z ($7ABA),
+# and writes the result as eight decimal digits back from $CD10, skipping a byte
+# after every pair. The pairs are the NUL-terminated strings at $CD06, $CD09,
+# $CD0C and $CD0F, which are what $CCA0 tokens $83-$86 name.
+FIELD_NUMBER_PAIRS = {0xCD06: 0, 0xCD09: 1, 0xCD0C: 2, 0xCD0F: 3}
+
+
+def field_cell_number(x: int, z: int) -> str:
+    """The eight digits $05504E writes for the cell at Body Coordinate x, z."""
+    return f'{((x << 12) | z) % 100_000_000:08d}'
+
+
+def field_number_forms(workspace: bytes, address: int, palette: list[int] | None,
+                       hardware: list[int] | None) -> list[dict]:
+    """Every digit a field's ground record can paint, at each of its eight places.
+
+    The record's text records each print one token, a digit pair. A pair's two
+    characters are drawn as `decode_placed_lettering` draws any text, the second
+    one advance along; each place gets all ten digits so a consumer composes a
+    cell's number from eight small meshes.
+    """
+    records: list[int] = []
+    decode_ground(workspace, address, 0, palette, hardware, 0, text_records=records)
+    places = []
+    for record in records:
+        x, y, z = struct.unpack_from('>3h', workspace, record)
+        anchor = [(x & 0xFFFF) - 0x8000, y, (z & 0xFFFF) - 0x8000]
+        header = workspace[record + 6:record + 14]
+        flags, advance = struct.unpack('>Hh', header[:4])
+        token, terminator = workspace[record + 14], workspace[record + 15]
+        pointer = u32(workspace, 0xCCA0 + (token & 0x7F) * 4)
+        if not token & 0x80 or terminator or pointer not in FIELD_NUMBER_PAIRS:
+            raise ValueError(f'field ground text at ${record:06X} is not a cell-number pair')
+        for column in range(2):
+            origin = object_text_anchor(anchor, flags & 0xC0, column * advance, 0)
+            glyphs = {}
+            for digit in '0123456789':
+                vertices, faces, lines = [], [], []
+                decode_placed_lettering(
+                    workspace, Reader(header + digit.encode() + b'\0', 0), origin,
+                    vertices, faces, lines, palette, hardware, 'ground',
+                )
+                glyphs[digit] = {'vertices': vertices, 'faces': faces, 'lines': lines}
+            places.append({'digit': FIELD_NUMBER_PAIRS[pointer] * 2 + column,
+                           'token': token, 'glyphs': glyphs})
+    if sorted(place['digit'] for place in places) != list(range(8)):
+        raise ValueError('field ground record does not paint all eight cell-number digits')
+    return sorted(places, key=lambda place: place['digit'])
+
+
+def field_cell_id(prefix: str, kind: str, x: int, z: int) -> str:
+    """The identity a uniform field's copy in one Surface Cell publishes under.
+
+    A field's window cell repeats every 16 cells, so its copies are named by the
+    Body Coordinate they stand on, which is unique, rather than the window cell.
+    """
+    return f'{prefix}-{kind}-{x}-{z}'
+
+
+def attach_uniform_field(data: bytes, island: dict, cells: list[tuple[int, int]], models: list,
+                         tables: list, instances: list, by_address: dict, bodies: list,
+                         hardware: list[int], template_palettes: dict) -> tuple[str, dict]:
+    """Publish a Body whose workspace is one structure repeated over every cell.
+
+    $0592FA raises $7A2A for Midas alone. $04ED2A then copies cell 0's $ABDC word
+    over all 256 cells, and $054B76 masks the camera's island-local cell to its
+    low four bits, so the window wraps and the player always stands in a copy.
+    Every Surface Cell of the Body therefore draws the same structure over the
+    same ground record, whose $7000 templates $055004 spawns a whole cell out.
+
+    The field itself is published on the island record. Concrete copies are
+    published only in `cells`, the Body Coordinates a resident stands in, so each
+    resident has a parent to be placed against; the port draws the rest.
+
+    Returns the workspace note and the structure-group binding, which carries the
+    field so residents resolve their parent by Body Coordinate.
+    """
+    workspace = image_workspace(data, island)
+    body = int(island['body'].split('-')[1])
+    label = workspace[0x81dc + body * 8:0x81e4 + body * 8].decode('ascii').strip() or bodies[body]['name']
+    slug = label.lower()
+    prefix = image_workspace_prefix(slug, island)
+    record = struct.unpack_from('>H', workspace, 0xABDC)[0]
+    slot = record & 0x1ff
+    if not slot or slot >= len(tables[1]['entries']):
+        raise ValueError(f'{label} uniform field cell 0 places no structure')
+    structure_id = tables[1]['entries'][slot]
+    key_base = cell_key_base(record >> 8)
+    offsets = {struct.unpack_from('>bb', workspace, 0xABDE + cell * 4) for cell in range(256)}
+    grounds = {workspace[0x1E400 + cell * 2:0x1E402 + cell * 2] for cell in range(256)}
+    if offsets != {(0, 0)} or len(grounds) != 1 or set(workspace[0x83DC:0x84DC]) != {0}:
+        raise ValueError(f'{label} uniform field cells differ; the field would not be uniform')
+    address, mesh, gaps, transform, template_models, palette_index = decode_cell_ground(
+        workspace, data, 0, tables, by_address, hardware
+    )
+    record_template_palettes(template_palettes, template_models, palette_index, label, 0)
+    number = field_number_forms(workspace, address, palette_at(data, palette_index), hardware)
+    ground_id = f'{prefix}-ground-{address:06x}-{transform:02x}'
+    area = island['areaName'] or label
+    ground = {
+        'id': ground_id,
+        'kind': 'ground',
+        'name': f'{area} ground',
+        'nameStatus': 'unknown',
+        'slots': [],
+        'sourceAddress': address,
+        'status': 'partial' if gaps else 'decoded',
+        'reason': ' '.join(gaps + [
+            'Its four text records paint the cell number $05504E writes for the cell the '
+            'player stands in; they carry no glyphs in the record form, and cellNumber '
+            'publishes every digit at each of the eight places.'
+        ]),
+        'variants': [{
+            'id': 'record',
+            'name': f'Recovered cell fill · transform ${transform:02x}',
+            'mesh': mesh,
+        }] if mesh['faces'] or mesh['lines'] else [],
+        'relatedModels': template_models,
+        'linkedInstances': [],
+        'cellNumber': {
+            'rule': ('Body Coordinate x shifted up twelve bits, ORed with z, as eight decimal '
+                     'digits ($05504E); digit 0 is the most significant.'),
+            'places': number,
+        },
+        'evidence': [{
+            'claim': (
+                f'{label} draws this ground record in every Surface Cell: $04ED2A tiles one '
+                '$ABDC word and every cell names the same $1E400 record. $055004 doubles each '
+                '$7000 template offset on this Body alone, so the templates authored half a '
+                'cell out stand at the centres of the eight neighbouring cells.'
+            ),
+            'confidence': 'verified',
+            'source': UNIFORM_FIELD_NOTE,
+        }],
+    }
+    models.append(ground)
+    by_address[ground_id] = ground
+    ground_table = next(table for table in tables if table['kind'] == 'ground')
+    ground_table['entries'].append(ground_id)
+    ground_table['entryCount'] = len(ground_table['entries'])
+    ground['slots'] = [len(ground_table['entries']) - 1]
+    for x, z in sorted(set(cells)):
+        for kind, model_id, source_address in (
+            ('surface', structure_id, 0xABDC),
+            ('ground', ground_id, 0x1E400),
+        ):
+            identity = field_cell_id(prefix, kind, x, z)
+            instances.append({
+                'id': identity,
+                'name': f'{area} {"" if kind == "surface" else "ground "}cell {x},{z}',
+                'model': model_id,
+                'sourceAddress': source_address,
+                'association': None,
+                'handling': None,
+                'keyBase': (key_base or None) if kind == 'surface' else None,
+                'placementClass': None,
+                'placement': None,
+                'location': {
+                    'body': f'body-{body}',
+                    'place': None,
+                    'position': [x + 0.5, 0, z + 0.5],
+                    'coordinateSystem': BODY_COORDINATES,
+                    'island': island['id'],
+                    'heading': None,
+                },
+                'reason': (
+                    f'Image-replayed {label} uniform field copy at Body Coordinate {x},{z}: '
+                    'every Surface Cell of the Body holds it, and this one is published '
+                    'because a resident stands in it.'
+                ),
+            })
+            by_address[model_id]['linkedInstances'].append(identity)
+    island['field'] = {
+        'structure': structure_id,
+        'ground': ground_id,
+        'keyBase': key_base or None,
+        'instancePrefix': prefix,
+
+        'reason': (
+            f'$7A2A is raised for {label} alone ($0592FA): the workspace loader tiles cell '
+            "0's structure over every cell ($04ED2A) and the island-local cell wraps at 16 "
+            '($054B76), so every Surface Cell on the Body draws this structure over this '
+            'ground. A copy is named by its Body Coordinate.'
+        ),
+    }
+    note = (
+        f'{label} image-replayed uniform field ({area}): structure slot {slot} and ground '
+        f'${address:06X} in every Surface Cell; {len(set(cells))} copies published where '
+        'residents stand.'
+    )
+    binding = {'body': body, 'group': island['structureGroup'], 'prefix': prefix,
+               'workspace': workspace, 'attestation': 'image', 'field': island['field']}
     return note, binding
 
 
@@ -5086,34 +5305,42 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
     # Midas is not a 16x16 workspace. $0592FA sets $7A2A for body 2 alone, and
     # $04ED2A then copies cell 0's structure word over every cell, so the one
     # structure repeats across the whole Body; the Midas capture's $ABDC holds
-    # structure 68 in all 256 cells. Its residents sit at their own cells'
-    # centres far outside any island window, so none is placed here.
+    # structure 68 in all 256 cells. It publishes as a uniform field, with a
+    # concrete copy in each Surface Cell a resident of its group stands in.
     bound_groups = {(binding['body'], binding['group']) for binding in group_bindings}
+    uniform_fields: list[tuple[dict, list[tuple[int, int]]]] = []
     for island in sorted(islands, key=lambda item: (item['body'], item['structureGroup'] or 0)):
         group = island['structureGroup']
         body = int(island['body'].split('-')[1])
         if not group or (body, group) in bound_groups:
             continue
         if body == UNIFORM_FIELD_BODY:
-            for item in instances:
-                if (item['id'].startswith('object-slot-') and item['placement'] is None
-                        and (item.get('association') or {}).get('body') == island['body']
-                        and item['association'].get('structureGroupSelector') == group
-                        and item['association'].get('insertionGroupSelector')):
-                    item['reason'] = (
-                        f'Interior-associated resident on {bodies[body]["name"]}, group '
-                        f'${group:02X}, cell ${item["association"]["cell"]:02X}. Midas draws one '
-                        'structure in every cell ($0592FA sets $7A2A for this Body; $04ED2A '
-                        'copies cell 0\'s structure word over all 256), so the resident stands in '
-                        'the copy at its own cell\'s centre. No 16x16 workspace represents that '
-                        'field, so no parent is published.'
-                    )
+            bound_groups.add((body, group))
+            cells = [
+                (s32(data, 0x63a8 + slot * 4) >> 16 & 0xFFF, s32(data, 0x6ba8 + slot * 4) >> 16 & 0xFFF)
+                for item in instances
+                if item['id'].startswith('object-slot-') and item['placement'] is None
+                and (item.get('association') or {}).get('body') == island['body']
+                and item['association'].get('structureGroupSelector') == group
+                and item['association'].get('insertionGroupSelector')
+                for slot in [int(item['id'].rsplit('-', 1)[1])]
+            ]
+            uniform_fields.append((island, cells))
             continue
         bound_groups.add((body, group))
         note, group_binding = attach_live_workspace(
             image_workspace(data, island), data, models, tables, instances, places,
             by_address, bodies, islands, hardware, template_palettes, road_networks,
             image_island=island,
+        )
+        workspace_notes.append(note)
+        group_bindings.append(group_binding)
+    # The field attaches last, so its ground Model takes the census entry after
+    # every island window's rather than shifting theirs.
+    for island, cells in uniform_fields:
+        note, group_binding = attach_uniform_field(
+            data, island, cells, models, tables, instances, by_address, bodies,
+            hardware, template_palettes,
         )
         workspace_notes.append(note)
         group_bindings.append(group_binding)
@@ -5269,8 +5496,9 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
       ]
       if not candidates:
           continue
+      field = group_binding.get('field')
       try:
-          replayed = load_structure_workspace(data, bound_group)
+          replayed = load_structure_workspace(data, bound_group, uniform_field=field is not None)
           overrides = decode_group_overrides(data, bound_group)
       except (ValueError, struct.error) as error:
           for item in candidates:
@@ -5285,19 +5513,24 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
           association = resident['association']
           cell = association['cell']
           level = association['levelSelector']
-          override = overrides.get(cell)
+          slot = int(resident['id'].rsplit('-', 1)[1])
+          raw = tuple(s32(data, base + slot * 4) for base in (0x63a8, 0x67a8, 0x6ba8))
+          override = overrides.get(0 if field else cell)
+          if field and override is not None:
+              # The field's copy in this cell is cell 0's word over the cell's own offsets.
+              dx, dz = struct.unpack_from('>bb', live, 0xABDE + cell * 4)
+              override = {**override, 'dx': dx, 'dz': dz}
           if override is None or override['slot'] is None:
               resident['reason'] = (
                   f'{body_name} structure group ${bound_group:02X} places no structure in cell '
                   f'${cell:02X}, so this interior-associated resident has no parent.'
               )
               continue
-          surface_id = f'{slug}-surface-{cell:02x}'
+          surface_id = (field_cell_id(slug, 'surface', raw[0] >> 16 & 0xFFF, raw[2] >> 16 & 0xFFF)
+                        if field else f'{slug}-surface-{cell:02x}')
           parent = instance_by_id.get(merged_parents.get(surface_id, surface_id))
           if parent is None or parent['model'] != tables[1]['entries'][override['slot']]:
               raise ValueError(f'{body_name} cell ${cell:02X} parent model disagrees with its override')
-          slot = int(resident['id'].rsplit('-', 1)[1])
-          raw = tuple(s32(data, base + slot * 4) for base in (0x63a8, 0x67a8, 0x6ba8))
           origin = structure_origin(raw, override['dx'], override['dz'])
           local = resident_local_position(data, slot, origin)
           if level == 0:

@@ -198,3 +198,8 @@ centre (low words ≈ `$8000`), with one cell phase (+1, +10) shared by all five
 each stands inside its cell's copy of structure 68. No island window represents
 that, and the port has no workspace that repeats one structure across a Body.
 Publishing them needs that form first.
+
+**Since placed (#172).** The Midas island now publishes a `field`, and a copy of
+structure 68 named by its Body Coordinate stands in each resident's cell. The binder
+resolves a field resident's parent by Body Coordinate rather than by window cell, so
+all five are placed at level 0. See [the Midas field](damocles-midas-field.md).

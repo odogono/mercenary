@@ -149,6 +149,12 @@ arrival pose and no recovered workspace**, and MIDAS still holds MAGIC CRYSTAL,
 the only pickup-trigger object outside Eris, Dion and Vesta. Recovering it needs
 a fresh capture standing in a built MIDAS workspace, not a re-read of this one.
 
+**Closed (2026-09-30): neither body needs a fresh capture.** MIDAS publishes as
+a uniform field replayed from the image, with all five residents placed, and its
+capture is consistent once the island-local cell wraps at 16. DAMOCLES's record
+binds the empty group `$00`, and its pose stands outside that record's window.
+See [the Midas field](damocles-midas-field.md).
+
 **Since settled from the program (2026-09-25): the uniform field is real.**
 `$0592FA` sets `$7A2A` when the body is Midas (index 2) and for no other body.
 Then `$04ED2A`, in the workspace loader after the placement loop, copies cell 0's

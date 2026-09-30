@@ -217,6 +217,12 @@ export interface DetailBoxes {
 export interface Model {
   /** A Building detail's box lists; absent on other kinds. */
   readonly boxes?: DetailBoxes;
+  /**
+   * A uniform field's ground record paints the number `$05504E` writes for the cell the
+   * player stands in (#172). Each place is one of its eight digits, most significant first,
+   * with the glyphs of all ten in the ground's own frame; absent on every other Model.
+   */
+  readonly cellNumber?: CellNumber;
   readonly conditions: readonly string[];
   readonly detailSelection?: readonly DetailGroup[];
   readonly evidence: readonly Evidence[];
@@ -273,6 +279,12 @@ export interface Model {
   }[];
   /** Slots a world binds at load time; this record's claim on them is one capture's. */
   readonly worldConditionedSlots?: readonly number[];
+}
+export interface CellNumber {
+  readonly places: readonly {
+    readonly digit: number;
+    readonly glyphs: Readonly<Record<string, Mesh>>;
+  }[];
 }
 export type Bounds = readonly (readonly [number, number])[];
 export interface DetailGroup {
@@ -737,6 +749,14 @@ export interface Island {
     readonly x: readonly [number, number];
     readonly z: readonly [number, number];
   };
+  /**
+   * A uniform field, or null. On MIDAS alone `$0592FA` raises `$7A2A`: the loader tiles cell
+   * 0's structure over every cell (`$04ED2A`) and the island-local cell wraps at 16
+   * (`$054B76`), so every Surface Cell of the Body holds `structure` over `ground`. A copy is
+   * named `<instancePrefix>-surface-<x>-<z>` (and `-ground-`) by its Body Coordinate; the
+   * Catalogue publishes only the copies a resident stands in (docs/research/damocles-midas-field.md).
+   */
+  readonly field: IslandField | null;
   readonly id: string;
   /** The `+8` word, which `$04EB46` publishes to `$7A1A` as the island's fill. */
   readonly landColour: string;
@@ -762,6 +782,12 @@ export interface Island {
   readonly structureGroup: number;
   /** The group record that workspace is built from; null because group `$00` binds nothing. */
   readonly workspace: number | null;
+}
+export interface IslandField {
+  readonly ground: string;
+  readonly instancePrefix: string;
+  readonly keyBase: number | null;
+  readonly structure: string;
 }
 /**
  * One four-byte location-trigger entry, as the region walk `$05A6F6` reads it. `cell` is the
@@ -1182,6 +1208,47 @@ const optionalDayColour = (value: unknown): string | undefined => {
     fail('invalid day colour');
   }
   return colour;
+};
+
+const islandField = (
+  value: unknown,
+  modelIds: ReadonlySet<string>
+): IslandField | null => {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  const f = object(value);
+  const structure = string(f['structure']);
+  const ground = string(f['ground']);
+  reference(modelIds, structure, 'model');
+  reference(modelIds, ground, 'model');
+  const instancePrefix = string(f['instancePrefix']);
+  if (!/^[\da-z-]+$/.test(instancePrefix)) {
+    fail('invalid field instance prefix');
+  }
+  return {
+    ground,
+    instancePrefix,
+    keyBase: f['keyBase'] === null ? null : byte(f['keyBase']),
+    structure
+  };
+};
+
+const cellNumber = (value: unknown): CellNumber => {
+  const places = list(object(value)['places']).map(item => {
+    const place = object(item);
+    const glyphs = object(place['glyphs']);
+    return {
+      digit: byte(place['digit']),
+      glyphs: Object.fromEntries(
+        [...'0123456789'].map(digit => [digit, mesh(glyphs[digit])])
+      )
+    };
+  });
+  if (places.map(place => place.digit).join() !== '0,1,2,3,4,5,6,7') {
+    fail('a cell number paints eight digits in order');
+  }
+  return { places };
 };
 
 const mesh = (value: unknown, allowEmpty = false): Mesh => {
@@ -1684,6 +1751,9 @@ const modelRecord = (item: unknown): Model => {
     ...(m['levelBinding'] === undefined
       ? {}
       : { levelBinding: levelBinding(m['levelBinding']) }),
+    ...(m['cellNumber'] === undefined
+      ? {}
+      : { cellNumber: cellNumber(m['cellNumber']) }),
     ...(m['storeyHeight'] === undefined
       ? {}
       : { storeyHeight: nonnegativeSignedWord(m['storeyHeight']) }),
@@ -2196,6 +2266,7 @@ export const parseCatalogueDocument = (value: unknown): Catalogue => {
         x: cellPair(extent['x']),
         z: cellPair(extent['z'])
       },
+      field: islandField(i['field'], modelIds),
       id: string(i['id']),
       landColour: string(i['landColour']),
       locationTable: {
@@ -2864,7 +2935,83 @@ export const instanceById = (
     index = new Map(catalogue.instances.map(item => [item.id, item]));
     instanceIndex.set(catalogue, index);
   }
-  return index.get(id);
+  return index.get(id) ?? fieldCopy(catalogue, id);
+};
+
+const FIELD_COPY = /^(.+)-(surface|ground)-(\d+)-(\d+)$/;
+const fieldCopies = new WeakMap<Catalogue, Map<string, Instance | undefined>>();
+
+/// A uniform field's copy in one Surface Cell, as the Catalogue would publish it (#172).
+///
+/// The Catalogue names a copy by its Body Coordinate and publishes one only where a resident
+/// stands; every other cell of the field holds the same structure over the same ground, so
+/// its copy is built from the island's field rather than stored. Undefined for any id that
+/// names no field copy, including a Body Coordinate off the surface. Memoised, so a copy keeps
+/// one identity however often it is asked for.
+export const fieldCopy = (
+  catalogue: Catalogue,
+  id: string
+): Instance | undefined => {
+  let copies = fieldCopies.get(catalogue);
+  if (copies === undefined) {
+    copies = new Map();
+    fieldCopies.set(catalogue, copies);
+  }
+  if (copies.has(id)) {
+    return copies.get(id);
+  }
+  const match = FIELD_COPY.exec(id);
+  const island =
+    match === null
+      ? undefined
+      : catalogue.islands.find(item => item.field?.instancePrefix === match[1]);
+  const x = Number(match?.[3]);
+  const z = Number(match?.[4]);
+  const copy =
+    island?.field == null ||
+    x >= FIELD_CELLS ||
+    z >= FIELD_CELLS ||
+    `${x}` !== match![3] ||
+    `${z}` !== match![4]
+      ? undefined
+      : fieldInstance(island, match![2] as 'ground' | 'surface', x, z);
+  copies.set(id, copy);
+  return copy;
+};
+
+/// A Body is this many Surface Cells an axis (`$058F64`), so no copy is named past it.
+const FIELD_CELLS = 0x10_00;
+
+const fieldInstance = (
+  island: Island,
+  kind: 'ground' | 'surface',
+  x: number,
+  z: number
+): Instance => {
+  const field = island.field!;
+  return {
+    association: null,
+    associationGroups: null,
+    boarding: null,
+    handling: null,
+    id: `${field.instancePrefix}-${kind}-${x}-${z}`,
+    keyBase: kind === 'surface' ? field.keyBase : null,
+    location: {
+      body: island.body,
+      coordinateSystem: 'Body Coordinates',
+      heading: null,
+      island: island.id,
+      place: null,
+      position: [x + 0.5, 0, z + 0.5]
+    },
+    model: kind === 'surface' ? field.structure : field.ground,
+    name: `${island.areaName ?? island.id} ${kind === 'surface' ? '' : 'ground '}cell ${x},${z}`,
+    placement: null,
+    placementClass: null,
+    reason:
+      'A uniform field copy the Catalogue does not store: every Surface Cell holds one.',
+    sourceAddress: kind === 'surface' ? 0xab_dc : 0x1_e4_00
+  };
 };
 
 /// What the index says about a Model, whether or not its file has been read. Every game rule

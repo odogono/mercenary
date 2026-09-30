@@ -56,18 +56,32 @@ class ArrivalPosePublicationTests(unittest.TestCase):
         return location_ledger.read_pose(label, path)
 
     def test_body_without_a_recovered_origin_still_publishes_its_cell(self):
-        # MIDAS is body 2: residents, no recovered workspace origin.
-        # MIDAS keeps no recovered origin: its capture does not stand in a
-        # built workspace, so #172 refuses to extract one (see the sweep note).
+        # DAMOCLES is body 29: its one island record binds the empty group $00,
+        # so there is no workspace for a pose to be anchored to.
+        self.assertNotIn(29, location_ledger.WORKSPACE_ORIGINS)
+        self.assertNotIn(29, location_ledger.FIELD_ORIGINS)
+        pose = self.read('damocles', workspace(29, 0x5B, (251, 3275)))
+        published = location_ledger.published_pose(pose, {'body-29': 'DAMOCLES'})
+        self.assertEqual(published['name'], 'DAMOCLES')
+        self.assertEqual(published['cell'], 0x5B)
+        self.assertEqual(published['localCell'], {'x': 11, 'z': 5})
+        self.assertIsNone(published['workspaceOrigin'])
+        self.assertEqual(published['impliedWorkspaceOrigin'], {'x': 251, 'z': 3275})
+        self.assertIn('no recovered 16x16 workspace origin', published['evidence']['cell'])
+
+    def test_a_uniform_field_anchors_the_window_the_pose_stands_in(self):
+        # MIDAS is body 2, a uniform field: the island-local cell wraps at 16
+        # ($054B76), so any window congruent to the island origin is a window.
         self.assertNotIn(2, location_ledger.WORKSPACE_ORIGINS)
+        self.assertEqual(location_ledger.FIELD_ORIGINS[2][0], (1729, 938))
         pose = self.read('midas', workspace(2, 0xB5, (353, 3482)))
         published = location_ledger.published_pose(pose, {'body-2': 'MIDAS'})
-        self.assertEqual(published['name'], 'MIDAS')
         self.assertEqual(published['cell'], 0xB5)
         self.assertEqual(published['localCell'], {'x': 5, 'z': 11})
-        self.assertIsNone(published['workspaceOrigin'])
-        self.assertEqual(published['impliedWorkspaceOrigin'], {'x': 353, 'z': 3482})
-        self.assertIn('no recovered 16x16 workspace origin', published['evidence']['cell'])
+        self.assertEqual(published['workspaceOrigin'], {'x': 353, 'z': 3482})
+        self.assertIn('uniform field', published['evidence']['cell'])
+        with self.assertRaisesRegex(ValueError, 'not congruent'):
+            self.read('midas-off', workspace(2, 0xB5, (354, 3482)))
 
     def test_a_recovered_origin_confirms_the_engine_cell(self):
         # Eris is body 11, origin 64,128 from the catalogue note.

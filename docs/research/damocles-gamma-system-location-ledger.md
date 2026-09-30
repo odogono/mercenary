@@ -142,7 +142,7 @@ have reached that state.
 | ---: | --- | ---: | ---: | ---: | ---: | ---: | --- | --- |
 | 0 | DIALIS | 0 | 0 | 0 | 0 | 0 | none recovered | none |
 | 1 | ICARUS | 2 | 2 | 1 | 1 | 1 | none recovered | none |
-| 2 | MIDAS | 5 | 5 | 0 | 5 | 0 | none recovered | `midas` |
+| 2 | MIDAS | 5 | 5 | 0 | 5 | 5 | uniform field | `midas` |
 | 3 | ACHERON | 2 | 2 | 1 | 1 | 1 | none recovered | `acheron` |
 | 4 | DION | 30 | 28 | 1 | 29 | 29 | Dion live `$ABDC` | `dion-2-3`, `dion-transporter` |
 | 5 | ATROPOS | 2 | 2 | 1 | 1 | 1 | none recovered | none |
@@ -201,7 +201,9 @@ binds. See
   SOLON, THALIA, TOLOSA and PERSEUS. Each has at least one live on-foot capture.
   **Twenty-one of them also have a recovered named 16×16 surface workspace**,
   extracted from the pose captures themselves by #172; MIDAS and DAMOCLES are
-  the exceptions, and their captures do not stand in a built workspace.
+  the exceptions. MIDAS is a uniform field with no one window, and DAMOCLES's
+  record binds the empty group `$00`
+  ([the Midas field](damocles-midas-field.md)).
 - **Residents but no recovered surface workspace and no arrival pose (0):**
   this class is now empty. The eight bodies that filled it — ICARUS, ATROPOS,
   CRONUS, CYCLOPES, SOLON, THALIA, TOLOSA and PERSEUS — were captured on
@@ -243,7 +245,7 @@ instrumented, so this note records the route and not a per-body flight log.
 | Body | Capture | Body selector | Camera X, Y, Z | Yaw | Bearing | Cell | Workspace origin |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | ICARUS | `icarus` | `$0004` | `41058080, 63, 45187500` | `$F9F0` | 354.38° | `$12` | `624,688` implied |
-| MIDAS | `midas` | `$0008` | `23494601, 63, 228950707` | `$030C` | 94.22° | `$B5` | `353,3482` implied |
+| MIDAS | `midas` | `$0008` | `23494601, 63, 228950707` | `$030C` | 94.22° | `$B5` | `353,3482` field window |
 | ACHERON | `acheron` | `$000C` | `224298727, 63, 19757658` | `$FD77` | 311.84° | `$33` | `3419,298` implied |
 | DION | `dion-2-3` | `$0010` | `213288851, 63, 86343888` | `$F620` | 11.25° | `$32` | `3252,1314` confirmed |
 | DION | `dion-transporter` | `$0010` | `213351262, 213, 87064898` | `$EA17` | 8.09° | `$E3` | `3252,1314` confirmed |
@@ -301,6 +303,13 @@ payload says so rather than presenting an unanchored cell as a located one.
 Those two are unanchored for a stated reason rather than for want of a capture:
 their camera pair disagrees with the origin their own cell word implies, so
 neither stands in a built workspace and the extractor refuses to place either.
+
+**Since amended (#172, [the Midas field](damocles-midas-field.md)).** On MIDAS
+the island-local cell wraps at 16 (`$054B76`), so the disagreement is the field's,
+not the capture's. `midas` now publishes the window it stands in, `353,3482`,
+which is congruent to the island origin `1729,938` modulo 16. `damocles` stays
+unanchored: it stands outside the window of a record that binds the empty
+group `$00`.
 
 **The eight new cells agree with the catalogue, independently.** On each of
 ICARUS, ATROPOS, CRONUS, CYCLOPES, SOLON, THALIA, TOLOSA and PERSEUS the cell
@@ -525,9 +534,9 @@ selectors is by itself a building, Room, floor or named place.
 
 ## What is placed today
 
-**190** residents have a recovered parent and a local placement. The only interior
-residents still without one are Midas's five, which stand in a structure Midas repeats
-over every cell of the Body. See
+**195** residents have a recovered parent and a local placement. The last five were
+Midas's, which stand in a structure Midas repeats over every cell of the Body; each is now
+placed in the copy in its own cell ([the Midas field](damocles-midas-field.md)). See also
 [interior residents in every captured workspace](damocles-interior-resident-placement.md#what-is-not-placed).
 The two placed first, both Eris keys, were:
 
@@ -559,7 +568,7 @@ nothing about the placements this table records.
 |  183 | KEY- V.I.P. LIMO |   `$02` | ERIS  | `$12` / `$87` / `$00` | recovered | **yes**   | nothing; delivered under #297 / #300          |
 |  181 | KEY - EAGLE 9SE  |   `$05` | ERIS  | `$12` / `$89` / `$0A` | none      | no        | Eris structure selectors (#252) at cell `$89` |
 |  151 | DAMOCLES FILE    |   `$06` | ERIS  | `$12` / `$89` / `$00` | none      | no        | Eris structure selectors (#252) at cell `$89` |
-|   95 | MAGIC CRYSTAL    |   `$14` | MIDAS | `$38` / `$EB` / `$00` | none      | no        | no Midas surface workspace (#172)             |
+|   95 | MAGIC CRYSTAL    |   `$14` | MIDAS | `$38` / `$EB` / `$00` | recovered | drawn     | a walk of about 2,200 cells from the Pose     |
 |  101 | AUTHORS COMPUTER |   `$0B` | DION  | `$02` / `$DE` / `$00` | recovered | no        | its regions are unwalkable (#362)             |
 |   94 | CASH REGISTER    |   `$3E` | VESTA | `$05` / `$73` / `$01` | recovered | no        | the port draws level 0 only (#355 recovered)  |
 
@@ -820,7 +829,7 @@ bodies remain lower-priority coverage work.
 | Pickup-triggered responses beyond slot 183     | **No**                                     | Responses recovered (#317) and implemented (#346); none of the other five objects is reachable |
 | Interior objects with a recovered placement on DION / VESTA | **No**                        | Placements recovered (#325); nothing exposes them — the association-list root is decoded for Capital Spaceport only |
 | Body switch to any of the other seventeen anchored bodies | **Yes**, for the pose itself     | `payload/damocles/arrival-poses.json`; each cell is engine-read and anchored to a recovered window (#172) |
-| Body switch to MIDAS or DAMOCLES               | **No**                                     | A pose each, unanchored: neither capture stands in a built workspace |
+| Body switch to MIDAS or DAMOCLES               | **MIDAS only**                             | MIDAS's pose is anchored to its field window (#172); DAMOCLES binds no workspace |
 | Surface assemblies on the bodies #172 recovered | **Partly**                                | Twenty-one live workspaces and their place names; no interior placement on any of them |
 | Any of the seven unposed bodies                | **No**                                     | No surface workspace, no arrival pose                                            |
 
@@ -834,10 +843,11 @@ Already owned, and this ledger supplies the target list rather than new scope:
 - **#172** — non-Eris surface structures and places. **Substantially delivered.**
   Seventeen of the eighteen bodies that had residents and no named workspace now
   have one, recovered from their own arrival-pose captures, together with
-  thirty-seven recovered place names. MIDAS is the one that does not, and it is
-  the one holding a trigger object (MAGIC CRYSTAL, slot 95): its capture does not
-  stand in a built workspace, so recovering it needs a fresh capture. See
-  [live surface workspaces beyond Eris](damocles-non-eris-workspaces.md).
+  thirty-seven recovered place names. MIDAS, the one holding a trigger object
+  (MAGIC CRYSTAL, slot 95), turned out to need no capture: it is a uniform field
+  replayed from the image, with all five residents placed. See
+  [live surface workspaces beyond Eris](damocles-non-eris-workspaces.md) and
+  [the Midas field](damocles-midas-field.md).
 
 Additional research under #313, required by the deliveries that use it:
 
@@ -887,8 +897,9 @@ Resolved since this ledger was first written:
 - `complete: false`. Seven of the thirty physical bodies have no arrival pose,
   and none of the seven carries a resident record. Of the twenty-three bodies
   that do have a pose, **twenty-one now have a recovered 16×16 workspace** and
-  their poses are anchored (#172). MIDAS and DAMOCLES are the two that are not,
-  because neither capture stands in a built workspace.
+  their poses are anchored (#172). MIDAS's pose is anchored to its uniform
+  field's window. DAMOCLES's is the one that is not, because its record binds
+  the empty group `$00`.
 - 193 of 195 interior-associated residents have no parent and no local
   placement.
 - Of the 28 residents that **do** have a recovered placement, **nine** can be
