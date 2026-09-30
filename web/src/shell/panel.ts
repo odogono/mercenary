@@ -29,7 +29,7 @@ export interface CentreBoxPanel {
   readonly item: string | null;
   /// A document's panel pages items; a switch's shows its lamp between `−` and `+`; the AUTHORS
   /// COMPUTER's shows its option and value (#628).
-  readonly kind: 'computer' | 'document' | 'switch';
+  readonly kind: 'computer' | 'detonator' | 'document' | 'switch';
   /// The computer's option, `PARAMETER No`, once drawn; null elsewhere.
   readonly parameter: number | null;
   readonly title: string;

@@ -721,7 +721,7 @@ describe('Save and Session Resume carry the Floor', () => {
     };
     record.schemaVersion = 7;
     expect(() => decoded(JSON.stringify(record))).toThrow(
-      'schema 7 is not Damocles Save 24'
+      `schema 7 is not Damocles Save ${DAMOCLES_SAVE_SCHEMA_VERSION}`
     );
   });
 

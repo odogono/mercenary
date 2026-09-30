@@ -26,6 +26,7 @@ import {
   AUTHORS_COMPUTER_SLOT,
   DETONATOR_BITS,
   NOVAGEN_SAFE_SLOT,
+  TIMED_DETONATOR_SLOT,
   TRANSITION_VBLS,
   initialHeadCommands,
   switchFor,
@@ -192,10 +193,14 @@ import type { Pose } from './world.ts';
 /// palette mask widen to whatever the computer's options can write. A schema-23 record or older
 /// is migrated with the reset's records, no panel mask, exponent 8, the cursor on DAMOCLES and
 /// both triggers armed.
-export const DAMOCLES_SAVE_SCHEMA_VERSION = 24 as const;
+///
+/// Version 25 carries the TIMED DETONATOR's charge, fuse, armed EXPLOSIVE slot and deadline,
+/// together with the NOVAGEN SAFE's blast gate. Schema 24 restores with no armed charge and a
+/// shut safe.
+export const DAMOCLES_SAVE_SCHEMA_VERSION = 25 as const;
 /// The older schemas a restore migrates rather than refuses.
 const MIGRATED_SCHEMA_VERSIONS: readonly unknown[] = [
-  11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23
+  11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24
 ];
 /// The schemas from before the landing messages (#576), which carry no landing trigger.
 const PRE_LANDING_SCHEMA_VERSIONS: readonly unknown[] = [11, 12, 13];
@@ -350,6 +355,12 @@ export interface DamoclesSaveSnapshot {
   /// The TOLOSA encounter, or null for the first world's pool with the player alive, as a
   /// migrated record resumes with.
   readonly encounter: DamoclesSaveEncounter | null;
+  readonly explosive?: {
+    readonly charge: number;
+    readonly deadline: number | null;
+    readonly fuse: number;
+    readonly slot: number | null;
+  };
   /// On foot, ticks since the last main-loop pass, below `time.ticksPerPassOnFoot` (ADR 0054).
   readonly footTicks: number;
   readonly frameAccumulator: number;
@@ -372,6 +383,7 @@ export interface DamoclesSaveSnapshot {
   readonly residence: readonly ResidenceDeparture[];
   /// The run toggle, as a migrated record resumes with it off.
   readonly running: boolean;
+  readonly safeGate?: boolean;
   readonly script: DamoclesSaveScript;
   readonly scrollCounter: number;
   /// The pitch rate, nearest Body and range, or null for the first world's, as a migrated record
@@ -1416,13 +1428,14 @@ const scriptOf = (
 const headCommandsOf = (
   value: unknown,
   held: readonly string[],
-  documents: DamoclesDocuments | undefined
+  documents: DamoclesDocuments | undefined,
+  safeGate: boolean
 ): HeadCommandState => {
   const saved = object(value, 'snapshot.headCommands');
   const documentSlot = (item: unknown, path: string): number => {
     const slot = integer(item, path, 0, 0xff);
     if (
-      slot === NOVAGEN_SAFE_SLOT ||
+      (slot === NOVAGEN_SAFE_SLOT && !safeGate) ||
       (documents !== undefined && documentFor(documents, slot) === undefined)
     ) {
       return fail(`${path} names no document the Open table opens`);
@@ -1432,12 +1445,16 @@ const headCommandsOf = (
   // A switch's panel opens as a document's does, and its index and item stay 0.
   const panelSlot = (item: unknown, path: string): number => {
     const slot = integer(item, path, 0, 0xff);
-    return switchFor(slot) === undefined && slot !== AUTHORS_COMPUTER_SLOT
+    return switchFor(slot) === undefined &&
+      slot !== AUTHORS_COMPUTER_SLOT &&
+      slot !== TIMED_DETONATOR_SLOT
       ? documentSlot(slot, path)
       : slot;
   };
   const lastItem = (slot: number): number =>
-    switchFor(slot) !== undefined || slot === AUTHORS_COMPUTER_SLOT
+    switchFor(slot) !== undefined ||
+    slot === AUTHORS_COMPUTER_SLOT ||
+    slot === TIMED_DETONATOR_SLOT
       ? 0
       : documents === undefined
         ? 0xff_ff
@@ -1454,7 +1471,9 @@ const headCommandsOf = (
     }
     const index = word(raw['index'], 'snapshot.headCommands.open.index');
     if (
-      (switchFor(slot) !== undefined || slot === AUTHORS_COMPUTER_SLOT) &&
+      (switchFor(slot) !== undefined ||
+        slot === AUTHORS_COMPUTER_SLOT ||
+        slot === TIMED_DETONATOR_SLOT) &&
       index !== 0
     ) {
       return fail('an open switch or computer pages no index');
@@ -1721,6 +1740,7 @@ export const decodeDamoclesSave = (
   }
   const impactRecord =
     record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION ||
+    record['schemaVersion'] === 24 ||
     record['schemaVersion'] === 23 ||
     record['schemaVersion'] === 22 ||
     record['schemaVersion'] === 21;
@@ -1797,6 +1817,7 @@ export const decodeDamoclesSave = (
   }
   const wishRecord =
     record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION ||
+    record['schemaVersion'] === 24 ||
     record['schemaVersion'] === 23 ||
     record['schemaVersion'] === 22;
   const clockLevel = wishRecord ? snapshot['clockLevel'] : NEW_GAME_CLOCK_LEVEL;
@@ -1835,7 +1856,8 @@ export const decodeDamoclesSave = (
     ? stMask(snapshot['paletteMask'], 'snapshot.paletteMask')
     : 0;
   const computerRecord =
-    record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION;
+    record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION ||
+    record['schemaVersion'] === 24;
   const switches =
     computerRecord || record['schemaVersion'] === 23
       ? integer(snapshot['switches'], 'snapshot.switches', 0, 0xff)
@@ -2050,7 +2072,7 @@ export const decodeDamoclesSave = (
     -16,
     16
   );
-  const current = record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION;
+  const current = computerRecord;
   // Schema 23 is the first to carry the dispatcher's endings.
   const destructionSaved = current || record['schemaVersion'] === 23;
   // Schema 22 is the first to carry the BOOK's wishes, and 21 the impact.
@@ -2082,11 +2104,42 @@ export const decodeDamoclesSave = (
   if (typeof running !== 'boolean') {
     return fail('running is not a boolean');
   }
+  const explosiveSaved =
+    record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION;
+  const safeGate = explosiveSaved ? (snapshot['safeGate'] ?? false) : false;
+  if (typeof safeGate !== 'boolean') {
+    return fail('snapshot.safeGate is not a boolean');
+  }
+  let explosive = {
+    charge: 0,
+    deadline: null as number | null,
+    fuse: 0,
+    slot: null as number | null
+  };
+  if (explosiveSaved && snapshot['explosive'] !== undefined) {
+    const raw = object(snapshot['explosive'], 'snapshot.explosive');
+    const charge = integer(raw['charge'], 'snapshot.explosive.charge', 0, 9);
+    const fuse = integer(raw['fuse'], 'snapshot.explosive.fuse', 0, 595);
+    const slot =
+      raw['slot'] === null
+        ? null
+        : integer(raw['slot'], 'snapshot.explosive.slot', 75, 83);
+    const deadline = raw['deadline'];
+    if (
+      fuse % 5 !== 0 ||
+      (slot === null) !== (deadline === null) ||
+      (deadline !== null && (!finite(deadline) || deadline < 0))
+    ) {
+      return fail('snapshot.explosive is invalid');
+    }
+    explosive = { charge, deadline: deadline as number | null, fuse, slot };
+  }
   const headCommands = documentsSaved
     ? headCommandsOf(
         snapshot['headCommands'],
         [...carried, ...briefcaseStore],
-        documents
+        documents,
+        safeGate
       )
     : initialHeadCommands();
   // Null is the first world's pool with the player alive, which is also what a migrated record
@@ -2215,6 +2268,7 @@ export const decodeDamoclesSave = (
       drift: drift as number | null,
       elapsed: snapshot['elapsed'],
       encounter,
+      explosive,
       footTicks,
       frameAccumulator,
       headCommands,
@@ -2227,6 +2281,7 @@ export const decodeDamoclesSave = (
       removedResidents,
       residence,
       running,
+      safeGate,
       script,
       scrollCounter,
       spaceMemory,
