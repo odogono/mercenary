@@ -123,9 +123,15 @@ export const MAXIMUM_STEP = 1 / 30;
 /// in the Reference Build it is a persistent setting rather than a held input, so it lives in
 /// `GameState` and is changed through `throttleNotch` and `throttleStep`.
 export interface Intent {
+  /// Free Look input on foot (ADR 0059), an Extension: positive tilts the view up. The profile
+  /// leaves it at zero unless the player has turned Extended Controls on.
+  readonly look: number;
   /// Pitch input. Positive is nose up.
   readonly pitch: number;
   readonly running: boolean;
+  /// Strafe input on foot (ADR 0059), an Extension: positive sidesteps to the right. Like `look`
+  /// it is zero unless Extended Controls is on.
+  readonly strafe: number;
   /// Yaw input. Positive turns right, which the loop reaches by negating the craft's yaw
   /// authority exactly as the Reference Build's `INY` on a sign bit did.
   readonly turn: number;
@@ -144,18 +150,57 @@ const clampAxis = (value: number): number =>
   Number.isFinite(value) ? Math.min(1, Math.max(-1, value)) : 0;
 
 export const intent = (fields: {
+  readonly look?: number;
   readonly pitch?: number;
   readonly running?: boolean;
+  readonly strafe?: number;
   readonly turn?: number;
   readonly walk?: number;
 }): Intent => ({
+  look: clampAxis(fields.look ?? 0),
   pitch: clampAxis(fields.pitch ?? 0),
   running: fields.running ?? false,
+  strafe: clampAxis(fields.strafe ?? 0),
   turn: clampAxis(fields.turn ?? 0),
   walk: clampAxis(fields.walk ?? 0)
 });
 
 export const IDLE: Intent = intent({});
+
+/// Walking and strafing together, scaled so that the two at once go no faster than walking alone
+/// (ADR 0059). With no strafe, which is all faithful play ever gives, the walk is returned as it
+/// came.
+export const footAxes = (
+  intent: Intent
+): { readonly strafe: number; readonly walk: number } => {
+  if (intent.strafe === 0) {
+    return { strafe: 0, walk: intent.walk };
+  }
+  const scale = 1 / Math.max(1, Math.hypot(intent.walk, intent.strafe));
+  return { strafe: intent.strafe * scale, walk: intent.walk * scale };
+};
+
+/// How far Free Look tilts the view either way from level: about 60° (ADR 0059).
+export const FREE_LOOK_LIMIT = Math.PI / 3;
+
+/// How fast a held Free Look control tilts the view, in radians a second: from level to the
+/// limit in one second.
+export const FREE_LOOK_RATE = Math.PI / 3;
+
+/// Free Look's pitch after `seconds` of `look`: a fixed rate, held within the limit, and left
+/// where it is when the control is let go. Both Titles' sessions keep it and write it into the
+/// Pose on foot; no Save carries it.
+export const freeLook = (
+  pitch: number,
+  look: number,
+  seconds: number
+): number =>
+  look === 0
+    ? pitch
+    : Math.min(
+        FREE_LOOK_LIMIT,
+        Math.max(-FREE_LOOK_LIMIT, pitch + look * FREE_LOOK_RATE * seconds)
+      );
 
 /// Host bounds and the tuning knobs for how the decoded dynamics feel.
 ///
@@ -711,23 +756,31 @@ const walk = (
         headingSign
   );
   // Walking backwards is the step negated, as the Reference Build did it by flipping the sign bit
-  // of the one value rather than keeping two.
-  const advance =
-    intent.walk *
-    flight.walkStep *
-    (intent.running ? flight.limits.runMultiplier : 1) *
-    frames;
+  // of the one value rather than keeping two. Strafe, an Extension, is the same step at right
+  // angles to the heading, and running scales it alike.
+  const axes = footAxes(intent);
+  const run = intent.running ? flight.limits.runMultiplier : 1;
+  const advance = axes.walk * flight.walkStep * run * frames;
+  const sidestep = axes.strafe * flight.walkStep * run * frames;
   // The routine this comes from has no vertical term. An ordinary walker is
   // held at the walking eye height as before, but a boarded craft taxiing
   // indoors and a walker on the Colony Craft deck keep the altitude they
   // have, because the Reference Build never writes it here at all.
+  // The right of the heading is (cos, -sin) under either heading convention: a quarter turn
+  // right negates the convention's sign along with the sines it multiplies.
   const stepped: Vector3 = {
-    x: player.position.x + sin(heading) * advance * headingSign,
+    x:
+      player.position.x +
+      sin(heading) * advance * headingSign +
+      (sidestep === 0 ? 0 : cos(heading) * sidestep),
     y:
       state.craft !== undefined || state.colonyCraftFlag !== 0
         ? player.position.y
         : flight.groundAltitude,
-    z: player.position.z + cos(heading) * advance * headingSign
+    z:
+      player.position.z +
+      cos(heading) * advance * headingSign -
+      (sidestep === 0 ? 0 : sin(heading) * sidestep)
   };
 
   let position: Vector3;
@@ -750,7 +803,7 @@ const walk = (
     position = contained.position;
     // The step interlock runs down inside the on-foot Mover, so it stalls while the player
     // stands still — which is the whole point of it being steps rather than time.
-    if (intent.walk !== 0) {
+    if (intent.walk !== 0 || intent.strafe !== 0) {
       stepInterlock = Math.max(0, stepInterlock - frames);
     }
   }

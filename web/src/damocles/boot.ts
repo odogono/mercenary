@@ -255,8 +255,15 @@ try {
     readonly audioMuted: boolean;
     readonly audioVolume: number;
   }): void => {};
+  // Turning Extended Controls off levels the view Free Look left tilted (ADR 0059).
+  let applyControlPreferences = (_preferences: {
+    readonly extendedControls: boolean;
+  }): void => {};
   const preferences = createPreferences({
-    onChange: changed => applyAudioPreferences(changed),
+    onChange: changed => {
+      applyAudioPreferences(changed);
+      applyControlPreferences(changed);
+    },
     storage,
     surface
   });
@@ -348,6 +355,7 @@ try {
   // script can be hurried, so there is no `fire`, `rideLift`, `press` or `skipMessage`.
   const controlActions: ControlProfileActions = {
     drop: () => commitAction(() => session.drop()),
+    extendedControls: () => preferences.current().extendedControls,
     headCommand: command => commitAction(() => session.headCommand(command)),
     keyMake: code => {
       const make = stMakeCode(code);
@@ -382,6 +390,8 @@ try {
         commitAction(() => session.board());
       }
     },
+    // Free Look is never saved, so levelling it has nothing to drain or checkpoint.
+    recentreLook: () => session.recentreLook(),
     // The ST's Esc aboard (`$055822`), which the Browser Shell keeps for the System Menu.
     launch: () => commitAction(() => session.launchCraft()),
     rotateStack: direction =>
@@ -414,6 +424,11 @@ try {
     clock.reset();
     session.intent = IDLE;
     session.firing = false;
+  };
+  applyControlPreferences = changed => {
+    if (!changed.extendedControls) {
+      session.recentreLook();
+    }
   };
   installSuspensionHandlers(window, document, release);
 
@@ -1337,9 +1352,9 @@ try {
       shadows
         ? {
             eyeWorld: snapshot.pose.position,
-            heading: snapshot.pose.heading,
-            lighting: erisLighting(content.doc, snapshot.pose.heading),
-            shadowEdge
+            lighting: erisLighting(content.doc, snapshot.pose),
+            shadowEdge,
+            view: snapshot.pose
           }
         : undefined
     );

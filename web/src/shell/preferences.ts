@@ -34,6 +34,9 @@ export interface Preferences {
   /// Absent means the shell's own default edge; Authentic presentation ignores it.
   readonly castShadows?: CastShadowEdge;
   readonly composition: Composition;
+  /// Extended Controls: the Strafe and Free Look Extensions (ADR 0059), off by default. It is
+  /// kept here and never in Session State, so turning it on or off leaves every Save as it was.
+  readonly extendedControls: boolean;
   readonly panelRendition: PanelRendition;
   /// Absent means "whatever the tuning document says".
   readonly presentationPreset?: PresentationSettings['preset'];
@@ -48,6 +51,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   audioMuted: false,
   audioVolume: 100,
   composition: 'panel',
+  extendedControls: false,
   panelRendition: 'targ'
 };
 
@@ -99,6 +103,10 @@ export const validatePreferences = (value: unknown): Preferences => {
     composition: isComposition(source['composition'])
       ? source['composition']
       : DEFAULT_PREFERENCES.composition,
+    extendedControls:
+      typeof source['extendedControls'] === 'boolean'
+        ? source['extendedControls']
+        : DEFAULT_PREFERENCES.extendedControls,
     panelRendition: isRendition(source['panelRendition'])
       ? source['panelRendition']
       : DEFAULT_PREFERENCES.panelRendition,
@@ -233,6 +241,7 @@ export interface PreferencesChange {
   readonly audioVolume?: number;
   readonly castShadows?: CastShadowEdge | undefined;
   readonly composition?: Composition;
+  readonly extendedControls?: boolean;
   readonly panelRendition?: PanelRendition;
   readonly presentationPreset?: PresentationSettings['preset'] | undefined;
   readonly roadGlow?: WireframeGlow | undefined;
@@ -266,6 +275,7 @@ export const createPreferences = (options: {
         next.audioVolume === preferences.audioVolume &&
         next.castShadows === preferences.castShadows &&
         next.composition === preferences.composition &&
+        next.extendedControls === preferences.extendedControls &&
         next.panelRendition === preferences.panelRendition &&
         next.presentationPreset === preferences.presentationPreset &&
         next.structureReach === preferences.structureReach &&

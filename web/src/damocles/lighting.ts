@@ -12,6 +12,16 @@ export interface ErisLighting {
   readonly sunWorld: Vector3;
 }
 
+/// How the frame's camera is turned: the Pose's heading, pitch and roll. The frame plan's
+/// vertices are in this camera's view space (`planErisFrame`), so the sun and the shadow maps
+/// must be turned by all three, or a pitched or banked view slides the shadows over the
+/// geometry: Free Look on foot (ADR 0059), and the craft's attitude aboard.
+export interface ViewOrientation {
+  readonly heading: number;
+  readonly pitch: number;
+  readonly roll?: number;
+}
+
 export interface ShadowWindow {
   readonly depthHalfRange: number;
   readonly halfExtent: number;
@@ -39,25 +49,26 @@ const toCameraSpace = (world: Vector3): Vector3 => ({
   z: -world.z
 });
 
-const toViewDirection = (world: Vector3, heading: number): Vector3 => {
+const toViewDirection = (world: Vector3, view: ViewOrientation): Vector3 => {
   const camera = new Camera({
-    heading: -heading,
-    pitch: 0,
-    position: { x: 0, y: 0, z: 0 }
+    heading: -view.heading,
+    pitch: view.pitch,
+    position: { x: 0, y: 0, z: 0 },
+    roll: view.roll ?? 0
   });
   return camera.viewSpace(toCameraSpace(world));
 };
 
 export const erisLighting = (
   doc: ErisPresentationDocument,
-  heading: number
+  view: ViewOrientation
 ): ErisLighting => {
   const sunWorld = normalise(doc.lighting.sunDirection);
   return {
     ambientGround: channels(doc.lighting.ambientGround),
     ambientSky: channels(doc.lighting.ambientSky),
     sunColour: channels(doc.lighting.sunColour),
-    sunView: toViewDirection(sunWorld, heading),
+    sunView: toViewDirection(sunWorld, view),
     sunWorld
   };
 };
@@ -75,7 +86,7 @@ const dot = (a: Vector3, b: Vector3): number =>
 /// camera-relative view-space vertices in an Eris frame plan.
 export const lightMatrix = (
   lighting: ErisLighting,
-  heading: number,
+  view: ViewOrientation,
   eyeWorld: Vector3,
   window: ShadowWindow
 ): Float32Array => {
@@ -84,9 +95,9 @@ export const lightMatrix = (
     Math.abs(lzWorld.y) > 0.999 ? { x: 0, y: 0, z: 1 } : { x: 0, y: 1, z: 0 };
   const lxWorld = normalise(cross(up, lzWorld));
   const lyWorld = cross(lzWorld, lxWorld);
-  const lx = toViewDirection(lxWorld, heading);
-  const ly = toViewDirection(lyWorld, heading);
-  const lz = toViewDirection(lzWorld, heading);
+  const lx = toViewDirection(lxWorld, view);
+  const ly = toViewDirection(lyWorld, view);
+  const lz = toViewDirection(lzWorld, view);
   const radius = window.halfExtent;
   const depth = window.depthHalfRange;
   const texel = (2 * radius) / window.resolution;

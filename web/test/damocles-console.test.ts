@@ -66,12 +66,14 @@ const host = (session: DamoclesSession) => ({
       audioMuted: false,
       audioVolume: 100,
       composition: 'panel' as const,
+      extendedControls: false,
       panelRendition: 'targ' as const
     }),
     update: () => ({
       audioMuted: false,
       audioVolume: 100,
       composition: 'panel' as const,
+      extendedControls: false,
       panelRendition: 'targ' as const
     })
   } as PreferencesStore,

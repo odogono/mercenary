@@ -42,6 +42,7 @@ import {
   structureInCell,
   type ErisSurface
 } from '../src/damocles/world.ts';
+import { intent } from '../src/gameCore/index.ts';
 import { titleStorageKeys } from '../src/shell/title.ts';
 import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
@@ -2105,5 +2106,50 @@ describe('the TOLOSA encounter (#581)', () => {
       { dead: true, pool: saved },
       'a dead player with the encounter gate armed'
     );
+  });
+});
+
+/// `session` after Free Look has tilted its view up, and let go.
+const lookUp = (session: DamoclesSession): void => {
+  session.intent = intent({ look: 1 });
+  session.advance(0.4);
+  session.intent = intent({});
+  expect(session.snapshot.pose.pitch).toBeGreaterThan(0.3);
+};
+
+/// Free Look (ADR 0059) is an Extension on foot only: boarding and leaving both level it, and
+/// aboard the pitch is the craft's own.
+describe('Free Look and Occupancy', () => {
+  test('boarding levels the view first, so the craft is seated as from a level one', () => {
+    const looked = beside(LIMO, [LIMO_KEY]);
+    const level = beside(LIMO, [LIMO_KEY]);
+    lookUp(looked);
+    level.advance(0.4);
+    expect(looked.board()).toEqual({ kind: 'boarded' });
+    expect(level.board()).toEqual({ kind: 'boarded' });
+    expect(looked.snapshot.pose).toEqual(level.snapshot.pose);
+    expect(looked.captureResume().craft).toEqual(level.captureResume().craft);
+  });
+
+  test('aboard, Free Look does not act, and leaving is level', () => {
+    const looked = beside(LIMO, [LIMO_KEY]);
+    const level = beside(LIMO, [LIMO_KEY]);
+    looked.board();
+    level.board();
+    passes(looked, 4);
+    looked.intent = intent({ look: 1 });
+    passes(looked, 4);
+    passes(level, 8);
+    expect(looked.snapshot.pose).toEqual(level.snapshot.pose);
+    expect(looked.leave()).toEqual({ kind: 'left' });
+    expect(looked.snapshot.pose.pitch).toBe(0);
+  });
+
+  test('a refused boarding leaves the view where Free Look put it', () => {
+    const session = beside(LIMO);
+    lookUp(session);
+    const tilted = session.snapshot.pose.pitch;
+    expect(session.board().kind).toBe('refused');
+    expect(session.snapshot.pose.pitch).toBe(tilted);
   });
 });

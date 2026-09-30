@@ -219,6 +219,7 @@ export const installShellChrome = (
     settingRow('STRUCTURE / OBJECT GLOW', 'glow', 'Structure and object glow'),
     settingRow('ROAD WEIGHT', 'road-weight', 'Road weight'),
     settingRow('ROAD GLOW', 'road-glow', 'Road glow'),
+    settingRow('EXTENDED CONTROLS', 'extended', 'Extended controls'),
     el('div', {
       children: [
         el('label', {

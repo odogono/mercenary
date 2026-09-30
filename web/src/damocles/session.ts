@@ -5,7 +5,12 @@ import {
   type EntranceAttachment
 } from '../catalogue/data.ts';
 import type { ModelStore } from '../catalogue/modelStore.ts';
-import { IDLE, MAXIMUM_STEP, type Intent } from '../gameCore/index.ts';
+import {
+  IDLE,
+  MAXIMUM_STEP,
+  freeLook,
+  type Intent
+} from '../gameCore/index.ts';
 import type { HeadCommand } from '../interaction/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import type { TitleSession } from '../shell/title.ts';
@@ -787,6 +792,13 @@ export class DamoclesSession implements TitleSession<
     readonly residence: PlacedResidence;
   } | null = null;
   private pose: Pose;
+  /// Free Look's share of the Pose's pitch on foot (ADR 0059), an Extension. It is written into
+  /// the Pose, so drawing and picking both see it, but no Save or Session Resume carries it. It
+  /// is taken out again on boarding, on leaving, on a Body or Floor change, and when the player
+  /// recentres the view or turns Extended Controls off.
+  private freeLookPitch = 0;
+  /// The Pose's own pitch while Free Look tilts it, so levelling gives back exactly that.
+  private levelPitch = 0;
   private regionIndex: number | null = null;
   private residence = new Map<string, Residence>();
   /// The Body the session is standing on. A switch rebuilds it; walking never does, and nor
@@ -2824,6 +2836,7 @@ export class DamoclesSession implements TitleSession<
           this.pose = moved;
           this.regionIndex = null;
         }
+        this.look(step);
       }
       if (this.death === null) {
         this.elapsed += step;
@@ -2905,11 +2918,11 @@ export class DamoclesSession implements TitleSession<
       paletteMask: this.paletteMask,
       panelMask: this.panelMask,
       pendingBriefcaseDrop: this.pendingBriefcaseDrop,
-      // The bank is the craft's roll, which `craft` carries.
+      // The bank is the craft's roll, which `craft` carries. Free Look is never saved.
       pose: {
         body: pose.body,
         heading: pose.heading,
-        pitch: pose.pitch,
+        pitch: this.freeLookPitch === 0 ? pose.pitch : this.levelPitch,
         position: pose.position
       },
       removedResidents: [...this.removedResidents],
@@ -3713,6 +3726,8 @@ export class DamoclesSession implements TitleSession<
     // `$054350`–`$0543BA`, in one step. The Carried Stack is unchanged: boarding does not
     // consume the Vehicle Key.
     const previous = this.residenceFor(instance.id);
+    // Free Look does not come aboard: the seat takes the view's own pitch.
+    this.recentreLook();
     this.boardedFrom = this.residence.get(instance.id);
     this.residence.set(instance.id, {
       kind: 'occupied',
@@ -3782,6 +3797,7 @@ export class DamoclesSession implements TitleSession<
       pitch: 0,
       position: this.pose.position
     };
+    this.freeLookPitch = 0;
     this.craft = null;
     this.craftHeld = null;
     this.space = null;
@@ -4013,6 +4029,28 @@ export class DamoclesSession implements TitleSession<
   /// The run key: latch running on, or off again.
   toggleRunning(): void {
     this.runMode = !this.runMode;
+  }
+
+  /// Level the view Free Look tilted: the recentre control, and turning Extended Controls off.
+  /// The Pose keeps whatever pitch it had of its own.
+  recentreLook(): void {
+    if (this.freeLookPitch !== 0) {
+      this.pose = { ...this.pose, pitch: this.levelPitch };
+      this.freeLookPitch = 0;
+    }
+  }
+
+  /// Tilt the view on foot by the Intent's Free Look for `seconds`.
+  private look(seconds: number): void {
+    const pitch = freeLook(this.freeLookPitch, this.intent.look, seconds);
+    if (pitch === this.freeLookPitch) {
+      return;
+    }
+    if (this.freeLookPitch === 0) {
+      this.levelPitch = this.pose.pitch;
+    }
+    this.freeLookPitch = pitch;
+    this.pose = { ...this.pose, pitch: this.levelPitch + pitch };
   }
 
   /// Whether a document is open on the centre box.
@@ -4346,6 +4384,7 @@ export class DamoclesSession implements TitleSession<
     // Everything that could refuse has refused. From here the commit cannot fail.
     this.surface = surface;
     this.pose = pose;
+    this.freeLookPitch = 0;
     this.bodyTurn = arrival.bodyTurn;
     this.subStellar = null;
     this.boundPlacement = null;
@@ -4467,6 +4506,7 @@ export class DamoclesSession implements TitleSession<
     this.surface = surface;
     this.surfaceModels = this.content.models.size;
     this.pose = pose;
+    this.freeLookPitch = 0;
     if (this.occupied !== null && this.craft !== null) {
       // Authored: aboard, the craft is set down at the pin at rest, facing as it was, so the
       // next pass flies from the pin rather than from where the craft was.
@@ -4509,6 +4549,7 @@ export class DamoclesSession implements TitleSession<
         `cell ${x}-${z} is not on Eris (0 through ${grid.cellsPerAxis - 1})`
       );
     }
+    this.recentreLook();
     this.pose = {
       body: this.pose.body,
       heading: this.pose.heading,
@@ -4734,6 +4775,7 @@ export class DamoclesSession implements TitleSession<
         reason: `Floor ${floor} of ${ground.name} is not read yet`
       };
     }
+    this.recentreLook();
     this.floor = floor;
     this.boundPlacement = floored;
     this.ride = null;

@@ -1138,3 +1138,122 @@ describe('the crash tumble the engine installs over a craft', () => {
     expect(state.mover).toBeUndefined();
   });
 });
+
+/// Standing where `start` stands, facing `heading`.
+const facing = (heading: number): GameState => ({
+  ...start(),
+  player: { ...start().player, heading }
+});
+
+/// How far a step carried the player across the ground.
+const moved = (from: GameState, to: GameState) => ({
+  x: to.player.position.x - from.player.position.x,
+  z: to.player.position.z - from.player.position.z
+});
+
+/// Strafe, an Extension (ADR 0059): the walk step at right angles to the heading, inside the
+/// on-foot Mover, so every wall and interlock walking meets it meets too.
+describe('Strafe on foot', () => {
+  const frame = 1 / flight.limits.referenceFrameRate;
+
+  test('a sidestep right is the step a quarter turn right would walk, under either convention', () => {
+    for (const model of [
+      flight,
+      { ...flight, headingConvention: 'traceOracle' as const }
+    ]) {
+      for (const heading of [0, 0.4, Math.PI / 2, 2.5, 4]) {
+        // Which way the heading runs for a right turn is the convention's; ask the Mover, and
+        // read the change the short way round, as the heading wraps.
+        const turned = step(facing(heading), intent({ turn: 1 }), frame, model)
+          .player.heading;
+        const rightward = Math.sign(
+          ((turned - heading + 3 * Math.PI) % (2 * Math.PI)) - Math.PI
+        );
+        const quarter = heading + (rightward * Math.PI) / 2;
+        const strafed = moved(
+          facing(heading),
+          step(facing(heading), intent({ strafe: 1 }), frame, model)
+        );
+        const walked = moved(
+          facing(quarter),
+          step(facing(quarter), intent({ walk: 1 }), frame, model)
+        );
+        expect(strafed.x).toBeCloseTo(walked.x, 6);
+        expect(strafed.z).toBeCloseTo(walked.z, 6);
+        expect(Math.hypot(strafed.x, strafed.z)).toBeCloseTo(80, 6);
+      }
+    }
+  });
+
+  test('left is right negated, and the heading and pitch are untouched', () => {
+    const right = step(start(), intent({ strafe: 1 }), frame, flight);
+    const left = step(start(), intent({ strafe: -1 }), frame, flight);
+    expect(moved(start(), left).x).toBeCloseTo(-moved(start(), right).x, 9);
+    expect(left.player.heading).toBe(start().player.heading);
+    expect(left.player.pitch).toBe(0);
+    expect(left.player.position.y).toBe(flight.groundAltitude);
+  });
+
+  test('walking and strafing together go no faster than walking alone', () => {
+    const both = moved(
+      start(),
+      step(start(), intent({ strafe: 1, walk: 1 }), frame, flight)
+    );
+    expect(Math.hypot(both.x, both.z)).toBeCloseTo(80, 6);
+    expect(Math.abs(both.x)).toBeCloseTo(80 * Math.SQRT1_2, 6);
+  });
+
+  test('running scales the sidestep as it scales the walk', () => {
+    const ran = moved(
+      start(),
+      step(start(), intent({ running: true, strafe: 1 }), frame, flight)
+    );
+    expect(Math.hypot(ran.x, ran.z)).toBeCloseTo(
+      80 * flight.limits.runMultiplier,
+      6
+    );
+  });
+
+  test('with no strafe the step is exactly the walk it always was', () => {
+    const walked = step(start(), intent({ walk: 1 }), frame, flight);
+    expect(walked.player.position.x).toBe(10_000 + 0);
+    expect(walked.player.position.z - 10_000).toBeCloseTo(-80, 9);
+  });
+
+  describe('inside a Room', () => {
+    const walls = new Containment(
+      {
+        bounds: {
+          max: { x: 16 * 256, y: 1024, z: 8 * 256 },
+          min: { x: 0, y: 0, z: 0 }
+        }
+      },
+      { farMargin: 0xdf, nearMargin: 0x20 }
+    );
+
+    test('a wall stops a sidestep and counts the contact, as it does a walk', () => {
+      // Facing +X at the near X wall, a sidestep one way pushes into it.
+      const beside = {
+        ...inside(),
+        player: { ...inside().player, heading: 0 }
+      };
+      const pushes = [1, -1].map(strafe =>
+        step(beside, intent({ strafe }), MAXIMUM_STEP, flight, walls)
+      );
+      const pushed = pushes.find(state => state.wallContact === 1)!;
+      expect(pushed.player.position.x).toBe(walls.near);
+      expect(wallThud(pushed)).toBe(true);
+    });
+
+    test('the step interlock runs down while strafing', () => {
+      const arrived = {
+        ...inside(),
+        player: playerState({ position: { x: 1000, y: 128, z: 1000 } }),
+        stepInterlock: 2
+      };
+      expect(
+        step(arrived, intent({ strafe: 1 }), frame, flight, walls).stepInterlock
+      ).toBeCloseTo(1, 9);
+    });
+  });
+});

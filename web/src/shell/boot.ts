@@ -195,8 +195,15 @@ try {
     readonly audioMuted: boolean;
     readonly audioVolume: number;
   }): void => {};
+  // Turning Extended Controls off levels the view Free Look left tilted (ADR 0059).
+  let applyControlPreferences = (_preferences: {
+    readonly extendedControls: boolean;
+  }): void => {};
   const preferences = createPreferences({
-    onChange: changed => applyAudioPreferences(changed),
+    onChange: changed => {
+      applyAudioPreferences(changed);
+      applyControlPreferences(changed);
+    },
     storage,
     surface
   });
@@ -408,6 +415,7 @@ try {
 
   const controls = new BrowserControlProfile({
     drop: () => performAndRefresh(() => session.drop()),
+    extendedControls: () => preferences.current().extendedControls,
     fire: () => performAndRefresh(() => session.fire()),
     leaveCraft: () => performAndRefresh(() => session.leaveCraft()),
     // Targ has no Damocles Lift: its lift is the Lift Journey, ridden with `rideLift`. The live
@@ -415,6 +423,8 @@ try {
     occupancy: () => snapshot.occupancy,
     press: key => performAndRefresh(() => session.press(key)),
     reach: action => performAndRefresh(() => session.reach(action)),
+    // Free Look is never saved, so levelling it has nothing to present or checkpoint.
+    recentreLook: () => session.recentreLook(),
     rideLift: () => performAndRefresh(() => session.rideLift()),
     shutThrottle: () => performAndRefresh(() => session.shutThrottle()),
     // One key hurries Benson along, and during the Arrival that means the whole opening: the
@@ -443,6 +453,11 @@ try {
     controls.releaseAll();
     clock.reset();
     session.intent = IDLE;
+  };
+  applyControlPreferences = changed => {
+    if (!changed.extendedControls) {
+      session.recentreLook();
+    }
   };
   installSuspensionHandlers(window, document, release);
 
