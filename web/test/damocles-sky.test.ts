@@ -310,7 +310,7 @@ const colours = (vertices: Float32Array): Set<string> => {
   return found;
 };
 
-const planOf = (session: DamoclesSession): ErisFramePlan => {
+const planOf = (session: DamoclesSession, horizonCut = true): ErisFramePlan => {
   const snapshot = session.snapshot;
   return planErisFrame(
     snapshot.surface,
@@ -324,6 +324,7 @@ const planOf = (session: DamoclesSession): ErisFramePlan => {
     skyPass(system, {
       body: snapshot.pose.body,
       daylight: snapshot.daylight,
+      horizonCut,
       impact: impactTime(snapshot.elapsed, content.doc.time),
       position: snapshot.pose.position,
       sky: snapshot.surface.sky,
@@ -381,6 +382,17 @@ describe('the frame from a METIS pose', () => {
         expect(plan.skyVertices[i + 1]!).toBeGreaterThanOrEqual(0);
       }
     }
+  });
+
+  test('in flight (`$042C74 = $88`) nothing is cut at the centre row', () => {
+    const plan = planOf(onMetis(768), false);
+    // VESTA lies wholly under row 68, so on foot it has no row; aboard the ground covers it.
+    expect(pixels(plan, 'vesta').drawn).toBe(true);
+    let lowest = Infinity;
+    for (let i = 0; i < plan.skyVertices.length; i += FLOATS_PER_VERTEX) {
+      lowest = Math.min(lowest, plan.skyVertices[i + 1]!);
+    }
+    expect(lowest).toBeLessThan(0);
   });
 
   test('advancing the Body turn moves the Bodies across the sky', () => {

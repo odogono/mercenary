@@ -377,7 +377,85 @@ const movingAttachment = (
   };
 };
 
-/** Ordered draw components for today's on-foot session. Empty selections are intentional. */
+/// `$539DE`: the building detail's faces from one of its two list groups, the first bounded
+/// record whose box holds the eye's model-local position, else the group's default. Group 0 is
+/// bound at `$C13C`, group 1 at `$C2FE` (docs/research/damocles-structure-draw-selection.md).
+const detailMesh = (
+  selection: NonNullable<ErisPlacement['selection']>,
+  groupIndex: 0 | 1,
+  local: readonly number[]
+): StructureMesh => {
+  const { groups, structure } = selection;
+  const scales = [structure.scale[0], 1, structure.scale[1]];
+  const group = groups[groupIndex]!;
+  const records =
+    group.boxes.find(box =>
+      box.bounds.every(([min, max], axis) => {
+        const scale = scales[axis]!;
+        const a =
+          min === -32_768 && axis !== 1
+            ? -2_147_483_647 * Math.sign(scale)
+            : min * scale;
+        const b =
+          max === 32_767 ? 2_147_483_647 * Math.sign(scale) : max * scale;
+        return Math.min(a, b) < local[axis]! && local[axis]! <= Math.max(a, b);
+      })
+    )?.records ?? group.default;
+  let scaled = scaledDetails.get(selection);
+  if (scaled === undefined) {
+    scaled = {
+      ...selection.detail,
+      vertices: selection.detail.vertices.map(([x, y, z]) => [
+        x * structure.scale[0],
+        y,
+        z * structure.scale[1]
+      ])
+    };
+    scaledDetails.set(selection, scaled);
+  }
+  // Cache per scaled model as list identities may be shared by differently scaled aliases.
+  let lists = detailLists.get(scaled);
+  if (lists === undefined) {
+    lists = new WeakMap();
+    detailLists.set(scaled, lists);
+  }
+  let selected = lists.get(records);
+  if (selected === undefined) {
+    // A selection byte names a source record, which may contribute several
+    // filled glyph faces, a stroke line, or nothing at all.
+    const byRecord = (primitives: readonly Primitive[]) => {
+      const index = new Map<number, Primitive[]>();
+      for (const primitive of primitives) {
+        const key = primitive.sourceIndex;
+        if (key === undefined) {
+          continue;
+        }
+        const bucket = index.get(key);
+        if (bucket === undefined) {
+          index.set(key, [primitive]);
+        } else {
+          bucket.push(primitive);
+        }
+      }
+      return index;
+    };
+    const facesByRecord = byRecord(scaled.faces);
+    const linesByRecord = byRecord(scaled.lines);
+    selected = {
+      ...scaled,
+      faces: records.flatMap(i => facesByRecord.get(i) ?? []),
+      lines: records.flatMap(i => linesByRecord.get(i) ?? [])
+    };
+    lists.set(records, selected);
+  }
+  return selected;
+};
+
+/// Ordered draw components for a structure. Empty selections are intentional.
+///
+/// Aboard, `$0533D4` skips the region's plan queue `$5A744`, and `$53CC2` draws the building
+/// detail from the `$C13C` group while the high word of Y `$7A30` is 0 and nothing above it. The
+/// region and its wall texts play no part, so a craft over a roof sees the roof.
 export const structureMeshes = (
   placement: ErisPlacement,
   pose: Pose,
@@ -385,16 +463,22 @@ export const structureMeshes = (
   openUnits: AttachmentUnits = closedAttachment,
   selectedRegionIndex?: number | null,
   carriedSlot: CarriedSlot = nothingCarried,
-  floorLabelGlyphs: FloorLabelGlyphs = noFloorLabel
+  floorLabelGlyphs: FloorLabelGlyphs = noFloorLabel,
+  aboard = false
 ): readonly StructureMesh[] => {
   const fallback = () => (placement.mesh === undefined ? [] : [placement.mesh]);
   const selection = placement.selection;
   if (selection === undefined) {
     return fallback();
   }
-  const { groups, structure } = selection;
+  const { structure } = selection;
   const point = structureLocalPosition(placement, pose.position, negateZ);
   const local = [point.x, point.y, point.z];
+  if (aboard) {
+    return Math.floor(pose.position.y / 0x1_00_00) === 0
+      ? [detailMesh(selection, 0, local)]
+      : [];
+  }
   // Without a session's region there are no latches either, so a door at rest at its endpoint
   // stands for one latched open.
   const regionIndex =
@@ -441,74 +525,8 @@ export const structureMeshes = (
     const face = structure.plan.faces.find(f => f.sourceIndex === entry.index)!;
     return [subset(face, structure.plan, [face]), ...wallTexts(entry)];
   });
-  const detail: StructureMesh[] = [];
-  if ((region.flags & 0x80_00) !== 0) {
-    const scales = [structure.scale[0], 1, structure.scale[1]];
-    const group = groups[1]!;
-    const records =
-      group.boxes.find(box =>
-        box.bounds.every(([min, max], axis) => {
-          const scale = scales[axis]!;
-          const a =
-            min === -32_768 && axis !== 1
-              ? -2_147_483_647 * Math.sign(scale)
-              : min * scale;
-          const b =
-            max === 32_767 ? 2_147_483_647 * Math.sign(scale) : max * scale;
-          return (
-            Math.min(a, b) < local[axis]! && local[axis]! <= Math.max(a, b)
-          );
-        })
-      )?.records ?? group.default;
-    let scaled = scaledDetails.get(selection);
-    if (scaled === undefined) {
-      scaled = {
-        ...selection.detail,
-        vertices: selection.detail.vertices.map(([x, y, z]) => [
-          x * structure.scale[0],
-          y,
-          z * structure.scale[1]
-        ])
-      };
-      scaledDetails.set(selection, scaled);
-    }
-    // Cache per scaled model as list identities may be shared by differently scaled aliases.
-    let lists = detailLists.get(scaled);
-    if (lists === undefined) {
-      lists = new WeakMap();
-      detailLists.set(scaled, lists);
-    }
-    let selected = lists.get(records);
-    if (selected === undefined) {
-      // A selection byte names a source record, which may contribute several
-      // filled glyph faces, a stroke line, or nothing at all.
-      const byRecord = (primitives: readonly Primitive[]) => {
-        const index = new Map<number, Primitive[]>();
-        for (const primitive of primitives) {
-          const key = primitive.sourceIndex;
-          if (key === undefined) {
-            continue;
-          }
-          const bucket = index.get(key);
-          if (bucket === undefined) {
-            index.set(key, [primitive]);
-          } else {
-            bucket.push(primitive);
-          }
-        }
-        return index;
-      };
-      const facesByRecord = byRecord(scaled.faces);
-      const linesByRecord = byRecord(scaled.lines);
-      selected = {
-        ...scaled,
-        faces: records.flatMap(i => facesByRecord.get(i) ?? []),
-        lines: records.flatMap(i => linesByRecord.get(i) ?? [])
-      };
-      lists.set(records, selected);
-    }
-    detail.push(selected);
-  }
+  const detail =
+    (region.flags & 0x80_00) === 0 ? [] : [detailMesh(selection, 1, local)];
   return (region.flags & 0x40_00) !== 0 && (region.flags & 0x10_00) === 0
     ? [...plan, ...detail]
     : [...detail, ...plan];

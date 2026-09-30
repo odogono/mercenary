@@ -125,6 +125,8 @@ export interface SkyInputs {
   readonly daylight: boolean;
   readonly destroyedBodies?: readonly string[];
   readonly drift?: number | null;
+  /// Whether the sky is cut at the view's centre row (`$042C74 = $44`). Absent is on foot's cut.
+  readonly horizonCut?: boolean;
   /// The impact clock, which places the comet.
   readonly impact: ImpactTime;
   readonly impactPassed?: boolean;
@@ -148,6 +150,10 @@ export interface SkyPass {
   readonly bodies: readonly SkyItem[];
   /// `$045A0C`: a disc narrower than this many pixels at its widest row has no row at all.
   readonly halfWidthDivisor: number;
+  /// `$05309A`'s clip row `$042C74`: `$44`, the view's centre row, in ground contact over land
+  /// (`$7AAA ≠ 0`, `$78A6 ≥ 0`), where no Body or comet row is drawn below it. Otherwise `$88`,
+  /// the view's last row, and aboard the ground fill covers what lies below the horizon.
+  readonly horizonCut: boolean;
   /// `$7964`: the projection scale a disc's `size / depth` pixel radius is measured against.
   readonly projectionScale: number;
   /// The starfield's pixels, in the ST's screen pixels, in plot order (#578). The stars are
@@ -170,6 +176,7 @@ export const skyPass = (
 ): SkyPass => ({
   bodies: skyBodies(system, inputs),
   halfWidthDivisor: system.sky.halfWidthDivisor,
+  horizonCut: inputs.horizonCut ?? true,
   projectionScale: system.sky.projectionScale,
   // `$0503FE` and `$0505B8` both return at once by day on a Body with an atmosphere.
   stars:
@@ -332,6 +339,7 @@ export const spaceSkyPass = (
   return {
     bodies: items.sort((a, b) => b.range - a.range).map(entry => entry.item),
     halfWidthDivisor: system.sky.halfWidthDivisor,
+    horizonCut: false,
     projectionScale: system.sky.projectionScale,
     stars:
       inputs.stars === undefined || inputs.stars === null

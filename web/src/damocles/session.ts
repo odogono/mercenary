@@ -327,6 +327,8 @@ export interface DamoclesScreen {
 
 /// What the panel and the console read of the craft aboard.
 export interface DamoclesCraftSnapshot {
+  /// `$7ACA`: `$3F` in ground contact, else 0.
+  readonly contact: number;
   /// `unrecovered`: the occupied slot's entry is not a surface craft pass the port runs.
   readonly held: 'unrecovered' | null;
   /// `$4DFEC`, the speed field's integer.
@@ -1911,6 +1913,7 @@ export class DamoclesSession implements TitleSession<
         this.craft === null
           ? null
           : {
+              contact: this.craft.contact,
               held: this.craftHeld,
               panelSpeed: this.craft.panelSpeed,
               slot: this.craftSlot,
