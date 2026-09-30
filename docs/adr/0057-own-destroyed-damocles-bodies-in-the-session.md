@@ -46,3 +46,36 @@ Recorded 2026-09-29, for [#628](https://github.com/odogono/mercenary/issues/628)
 - **A system message waits only for the display gate.** `$05481A` drops a request only while `$7BA0` is up, which is while a message presents. The port had also dropped it while a script was waiting between lines, which would have lost the death message whenever an ending was running.
 - **Schema 24** adds the computer's option and records, the panel mask, the scale exponent, the cursor, and triggers `$01` (`$A0`) and `$2A` (`$80`). A schema-23 record or older migrates with the reset's records, no panel mask, exponent 8, the cursor on DAMOCLES, and both triggers armed.
 
+## Amendment for the TIMED DETONATOR
+
+Recorded 2026-09-30, for [#635](https://github.com/odogono/mercenary/issues/635). The decode is
+in `docs/research/damocles-endgame.md`, "The TIMED DETONATOR decoded".
+
+- **The panel is Session State.** Open table mode 3 (`$04D69C`) keeps the charge `$7866`, the
+  fuse `$786A`, the armed flag `$7A54`, the deadline `$7868` and the EXPLOSIVE last armed
+  (`$7A5C`). Until one is armed, digits set the charge and `+`/`-` step the fuse. After that only
+  `*` acts: it disarms the armed EXPLOSIVE, or presents string 13. The countdown writes the
+  seconds left back into `$786A`, as `$04DACC` does, and the deadline is a word on the clock's
+  whole second.
+- **The blast runs on the next main-loop pass.** At the deadline the port sets the debris
+  counter to −1, as `$7834` is. The following pass runs the blast in place of the debris step.
+  The Save can hold that pending state.
+- **The blast is the ST's test.** The reach is a box on every axis, with the ST's four-bit
+  shift. The player is object slot 29's proxy, tested with the objects.
+  - A carried EXPLOSIVE goes off at the player: string 34, then death.
+  - A placed one kills a player it reaches with string 35.
+  - With `$7A5A` set, a structure resident is reached by cell byte. `$7A5A` is computed when
+    the armed EXPLOSIVE is dropped or goes off carried.
+  - A small blast opens the NOVAGEN SAFE rather than clearing it. Every other caught object
+    becomes a removed resident, so the AUTHORS COMPUTER caught in a blast starts the
+    unravelling.
+  - The blast centre takes the EXPLOSIVE's place, so the Save's blast centre may now name a
+    live Body.
+- **The planet kill skips the spray.** At charge 9 with seven more EXPLOSIVEs cleared, the
+  dispatcher destroys the Body, and the blast neither sprays nor tests for death. A player on
+  that Body dies through the marker. That is read from the code and was not run.
+- **Not ported:** the structure damage at charge 3 or more, the flash word by charge, the
+  EXPLOSIVE-ARMED! descriptor, and `$052C9C`/`$05A30E` after the blast.
+- **Schema 25** adds the TIMED DETONATOR's state and the safe gate, and lets the debris counter
+  hold −1. A schema-24 record or older migrates with the reset's state: nothing armed and the
+  safe shut.

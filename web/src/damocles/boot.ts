@@ -1106,6 +1106,13 @@ try {
     root['unravel'] = snapshot.unravelling
       ? String(snapshot.unravelCursor)
       : '';
+    // The TIMED DETONATOR (#635): armed or not, the charge, the fuse or seconds left, and the
+    // EXPLOSIVE it names; then the debris counter `$7834`, -1 while a blast is pending.
+    const detonator = snapshot.timedDetonator;
+    root['timedDetonator'] =
+      `${detonator.armed ? 'armed' : 'safe'} ${detonator.charge} ${detonator.fuse} ${detonator.slot ?? ''}`.trimEnd();
+    root['debrisPasses'] = String(snapshot.debrisPasses);
+    root['removedResidents'] = snapshot.removedResidents.join(' ');
     root['impactPassed'] = String(snapshot.impactPassed);
     root['x'] = String(snapshot.pose.position.x);
     root['y'] = String(snapshot.pose.position.y);

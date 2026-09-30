@@ -23,12 +23,11 @@ import {
   type DamoclesDocuments
 } from './documentBank.ts';
 import {
-  AUTHORS_COMPUTER_SLOT,
   DETONATOR_BITS,
   NOVAGEN_SAFE_SLOT,
   TRANSITION_VBLS,
   initialHeadCommands,
-  switchFor,
+  pagesNoItems,
   type HeadCommandState
 } from './headCommands.ts';
 import { admittedPoses, type ArrivalPoses } from './poses.ts';
@@ -76,6 +75,13 @@ import {
 import type { AttachmentLatch } from './selection.ts';
 import { landsOn } from './space.ts';
 import { presentedText, type DamoclesStrings } from './strings.ts';
+import {
+  EXPLOSIVE_FIRST_SLOT,
+  EXPLOSIVE_LAST_SLOT,
+  FUSE_MAXIMUM,
+  initialTimedDetonator,
+  type TimedDetonator
+} from './timedDetonator.ts';
 import type { Pose } from './world.ts';
 
 /// Version 3 replaced Capital Spaceport fields with the bound structure workspace.
@@ -192,10 +198,14 @@ import type { Pose } from './world.ts';
 /// palette mask widen to whatever the computer's options can write. A schema-23 record or older
 /// is migrated with the reset's records, no panel mask, exponent 8, the cursor on DAMOCLES and
 /// both triggers armed.
-export const DAMOCLES_SAVE_SCHEMA_VERSION = 24 as const;
+///
+/// Version 25 carries the TIMED DETONATOR's charge, fuse, armed EXPLOSIVE slot and deadline,
+/// together with the NOVAGEN SAFE's blast gate. Schema 24 restores with no armed charge and a
+/// shut safe.
+export const DAMOCLES_SAVE_SCHEMA_VERSION = 25 as const;
 /// The older schemas a restore migrates rather than refuses.
 const MIGRATED_SCHEMA_VERSIONS: readonly unknown[] = [
-  11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23
+  11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24
 ];
 /// The schemas from before the landing messages (#576), which carry no landing trigger.
 const PRE_LANDING_SCHEMA_VERSIONS: readonly unknown[] = [11, 12, 13];
@@ -315,7 +325,8 @@ export interface DamoclesSaveSnapshot {
     readonly byte: number;
     readonly instance: string;
   }[];
-  /// Slot 74, the last destroyed Body's System-space centre.
+  /// Slot 74, the last blast's centre: a destroyed Body's System-space centre, or where an
+  /// EXPLOSIVE went off on its Body.
   readonly blastCentre?: {
     readonly body: string;
     readonly x: number;
@@ -372,6 +383,8 @@ export interface DamoclesSaveSnapshot {
   readonly residence: readonly ResidenceDeparture[];
   /// The run toggle, as a migrated record resumes with it off.
   readonly running: boolean;
+  /// `$7A60`, the NOVAGEN SAFE's blast gate, as a migrated record resumes with it shut.
+  readonly safeGate?: boolean;
   readonly script: DamoclesSaveScript;
   readonly scrollCounter: number;
   /// The pitch rate, nearest Body and range, or null for the first world's, as a migrated record
@@ -380,6 +393,9 @@ export interface DamoclesSaveSnapshot {
   readonly structure: BoundStructureSnapshot | null;
   /// `$7872`, the switch bits: only the four detonators', bits 3 to 6, are ported.
   readonly switches?: number;
+  /// The TIMED DETONATOR's charge and fuse and the EXPLOSIVE it armed, as a migrated record
+  /// resumes with the reset's.
+  readonly timedDetonator?: TimedDetonator;
   /// `$7A8C`, the unravelling's next Body index, -1 once past DIALIS.
   readonly unravelCursor?: number;
   /// `$7964`'s high word, the projection's scale exponent.
@@ -1416,13 +1432,14 @@ const scriptOf = (
 const headCommandsOf = (
   value: unknown,
   held: readonly string[],
-  documents: DamoclesDocuments | undefined
+  documents: DamoclesDocuments | undefined,
+  safeGate: boolean
 ): HeadCommandState => {
   const saved = object(value, 'snapshot.headCommands');
   const documentSlot = (item: unknown, path: string): number => {
     const slot = integer(item, path, 0, 0xff);
     if (
-      slot === NOVAGEN_SAFE_SLOT ||
+      (slot === NOVAGEN_SAFE_SLOT && !safeGate) ||
       (documents !== undefined && documentFor(documents, slot) === undefined)
     ) {
       return fail(`${path} names no document the Open table opens`);
@@ -1432,12 +1449,10 @@ const headCommandsOf = (
   // A switch's panel opens as a document's does, and its index and item stay 0.
   const panelSlot = (item: unknown, path: string): number => {
     const slot = integer(item, path, 0, 0xff);
-    return switchFor(slot) === undefined && slot !== AUTHORS_COMPUTER_SLOT
-      ? documentSlot(slot, path)
-      : slot;
+    return pagesNoItems(slot) ? slot : documentSlot(slot, path);
   };
   const lastItem = (slot: number): number =>
-    switchFor(slot) !== undefined || slot === AUTHORS_COMPUTER_SLOT
+    pagesNoItems(slot)
       ? 0
       : documents === undefined
         ? 0xff_ff
@@ -1453,11 +1468,8 @@ const headCommandsOf = (
       return fail('the open document is not carried');
     }
     const index = word(raw['index'], 'snapshot.headCommands.open.index');
-    if (
-      (switchFor(slot) !== undefined || slot === AUTHORS_COMPUTER_SLOT) &&
-      index !== 0
-    ) {
-      return fail('an open switch or computer pages no index');
+    if (pagesNoItems(slot) && index !== 0) {
+      return fail('an open switch, computer or TIMED DETONATOR pages no index');
     }
     open = {
       index,
@@ -1721,6 +1733,7 @@ export const decodeDamoclesSave = (
   }
   const impactRecord =
     record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION ||
+    record['schemaVersion'] === 24 ||
     record['schemaVersion'] === 23 ||
     record['schemaVersion'] === 22 ||
     record['schemaVersion'] === 21;
@@ -1736,7 +1749,13 @@ export const decodeDamoclesSave = (
     return fail('destroyed Bodies are duplicated');
   }
   const debrisPasses = impactRecord
-    ? integer(snapshot['debrisPasses'], 'snapshot.debrisPasses', 0, 64)
+    ? integer(
+        snapshot['debrisPasses'],
+        'snapshot.debrisPasses',
+        // Schema 25 is the first whose counter can hold a pending blast, −1.
+        record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION ? -1 : 0,
+        64
+      )
     : 0;
   let blastCentre: {
     readonly body: string;
@@ -1748,7 +1767,7 @@ export const decodeDamoclesSave = (
     const centre = object(snapshot['blastCentre'], 'snapshot.blastCentre');
     if (
       typeof centre['body'] !== 'string' ||
-      !destroyedBodies.includes(centre['body']) ||
+      !/^body-\d+$/.test(centre['body']) ||
       !finite(centre['x']) ||
       !finite(centre['y']) ||
       !finite(centre['z'])
@@ -1797,6 +1816,7 @@ export const decodeDamoclesSave = (
   }
   const wishRecord =
     record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION ||
+    record['schemaVersion'] === 24 ||
     record['schemaVersion'] === 23 ||
     record['schemaVersion'] === 22;
   const clockLevel = wishRecord ? snapshot['clockLevel'] : NEW_GAME_CLOCK_LEVEL;
@@ -1835,7 +1855,8 @@ export const decodeDamoclesSave = (
     ? stMask(snapshot['paletteMask'], 'snapshot.paletteMask')
     : 0;
   const computerRecord =
-    record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION;
+    record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION ||
+    record['schemaVersion'] === 24;
   const switches =
     computerRecord || record['schemaVersion'] === 23
       ? integer(snapshot['switches'], 'snapshot.switches', 0, 0xff)
@@ -2050,9 +2071,8 @@ export const decodeDamoclesSave = (
     -16,
     16
   );
-  const current = record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION;
   // Schema 23 is the first to carry the dispatcher's endings.
-  const destructionSaved = current || record['schemaVersion'] === 23;
+  const destructionSaved = computerRecord || record['schemaVersion'] === 23;
   // Schema 22 is the first to carry the BOOK's wishes, and 21 the impact.
   const wishSaved = destructionSaved || record['schemaVersion'] === 22;
   const impactSaved = wishSaved || record['schemaVersion'] === 21;
@@ -2076,17 +2096,59 @@ export const decodeDamoclesSave = (
     impactSaved,
     wishSaved,
     destructionSaved,
-    current
+    computerRecord
   );
   const running = runSaved ? snapshot['running'] : false;
   if (typeof running !== 'boolean') {
     return fail('running is not a boolean');
   }
+  // Schema 25 is the first to carry the TIMED DETONATOR and the safe gate.
+  const timedDetonatorSaved =
+    record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION;
+  const safeGate = timedDetonatorSaved ? snapshot['safeGate'] : false;
+  if (typeof safeGate !== 'boolean') {
+    return fail('snapshot.safeGate is not a boolean');
+  }
+  let timedDetonator = initialTimedDetonator();
+  if (timedDetonatorSaved) {
+    const raw = object(snapshot['timedDetonator'], 'snapshot.timedDetonator');
+    const truth = (value: unknown, path: string): boolean =>
+      typeof value === 'boolean' ? value : fail(`${path} is not a boolean`);
+    const slot =
+      raw['slot'] === null
+        ? null
+        : integer(
+            raw['slot'],
+            'snapshot.timedDetonator.slot',
+            EXPLOSIVE_FIRST_SLOT,
+            EXPLOSIVE_LAST_SLOT
+          );
+    timedDetonator = {
+      armed: truth(raw['armed'], 'snapshot.timedDetonator.armed'),
+      charge: integer(raw['charge'], 'snapshot.timedDetonator.charge', 0, 9),
+      deadline: word(raw['deadline'], 'snapshot.timedDetonator.deadline'),
+      fuse: integer(
+        raw['fuse'],
+        'snapshot.timedDetonator.fuse',
+        0,
+        FUSE_MAXIMUM
+      ),
+      regionBlast: truth(
+        raw['regionBlast'],
+        'snapshot.timedDetonator.regionBlast'
+      ),
+      slot
+    };
+    if ((timedDetonator.armed || debrisPasses < 0) && slot === null) {
+      return fail('snapshot.timedDetonator arms no EXPLOSIVE');
+    }
+  }
   const headCommands = documentsSaved
     ? headCommandsOf(
         snapshot['headCommands'],
         [...carried, ...briefcaseStore],
-        documents
+        documents,
+        safeGate
       )
     : initialHeadCommands();
   // Null is the first world's pool with the player alive, which is also what a migrated record
@@ -2227,11 +2289,13 @@ export const decodeDamoclesSave = (
       removedResidents,
       residence,
       running,
+      safeGate,
       script,
       scrollCounter,
       spaceMemory,
       structure,
       switches,
+      timedDetonator,
       unravelCursor,
       viewExponent
     },

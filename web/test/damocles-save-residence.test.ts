@@ -36,6 +36,7 @@ import {
   presentedText,
   type DamoclesStrings
 } from '../src/damocles/strings.ts';
+import { initialTimedDetonator } from '../src/damocles/timedDetonator.ts';
 import { loadCatalogue } from './fixtures/catalogue.ts';
 
 let catalogue: Catalogue;
@@ -93,11 +94,13 @@ const record = () => ({
     removedResidents: [],
     residence: [] as { instance: string; residence: Residence }[],
     running: false,
+    safeGate: false,
     script: initialDamoclesSaveScript(),
     scrollCounter: 0,
     spaceMemory: null,
     structure: null,
     switches: 0,
+    timedDetonator: initialTimedDetonator(),
     unravelCursor: 29,
     viewExponent: 8
   },

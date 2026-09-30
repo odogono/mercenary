@@ -230,6 +230,10 @@ _Avoid_: Removed Body, missing Body
 One of the four disguised Damocles switches, the SIDEBOARD, CUPBOARD, HI-FI and WASHBASIN, whose panels read NOVA TRIGGER 1 to 4. Opened at the head of the Carried Stack, Next switches it on and Previous off. The switch stays on when the object is put down, and when all four are on the NOVABOMB destroys the Body it rests on, wherever that is, or the player's own Body and the player if it is carried.
 _Avoid_: Trigger, nova switch, fuse
 
+**Timed Detonator**:
+The Damocles object that arms the EXPLOSIVEs, and a separate thing from the four Detonators. Opened at the head of the Carried Stack, its panel takes a keypad digit as the charge and Next and Previous as the fuse, in 5-second steps up to 595 seconds. Read arms the EXPLOSIVE then at the head of the Carried Stack, and Read again on that EXPLOSIVE disarms it. While one is armed the panel counts its fuse down and takes no other key. When the fuse runs out the EXPLOSIVE goes off, clearing what lies within its reach, and the reach doubles with each step of the charge. Carried, it kills the player; placed, it kills a player within its reach. A small blast that catches the NOVAGEN SAFE opens the safe rather than clearing it, and a full-charge blast that clears seven more EXPLOSIVEs destroys the Body.
+_Avoid_: Detonator, bomb timer
+
 **Unravelling**:
 The Damocles endgame that follows the AUTHORS COMPUTER's destruction, with DION or in a blast: every Body in turn, from DAMOCLES down to DIALIS, is destroyed a debris lifetime apart, and the 30th destruction reports the demise of the whole System. A player standing on a Body when its turn comes dies with it; only a player in space sees it through.
 _Avoid_: Collapse, universe end, apocalypse
@@ -355,7 +359,7 @@ A device-independent one-shot player command whose availability, conflicts, orde
 _Avoid_: Movement Intent, key press, button press, scan code
 
 **Head Command**:
-One of the four Damocles Semantic Actions — Open, Read, Next, Previous — that the Reference Build binds to the numeric keypad's Enter, `*`, `+` and `-`. Only Open acts on the object at the head of the Carried Stack: on most objects it does nothing, and on one of the documents it opens that document on the Benson Panel's centre box. Read, Next and Previous act on the document already open, whatever the head has rotated to since, and only dropping the open object closes it. On a Detonator's panel Next and Previous switch it on and off, and Read does nothing. The AUTHORS COMPUTER opens only while the player is seated on the AUTHOR'S CHAIR; on its panel the keypad digits pick a parameter, Next and Previous step its value, and Read destroys the numbered Body in parameter 4.
+One of the four Damocles Semantic Actions — Open, Read, Next, Previous — that the Reference Build binds to the numeric keypad's Enter, `*`, `+` and `-`. Only Open acts on the object at the head of the Carried Stack: on most objects it does nothing, and on one of the documents it opens that document on the Benson Panel's centre box. Read, Next and Previous act on the document already open, whatever the head has rotated to since, and only dropping the open object closes it. On a Detonator's panel Next and Previous switch it on and off, and Read does nothing. The AUTHORS COMPUTER opens only while the player is seated on the AUTHOR'S CHAIR; on its panel the keypad digits pick a parameter, Next and Previous step its value, and Read destroys the numbered Body in parameter 4. On the Timed Detonator's panel a digit sets the charge, Next and Previous step the fuse, and Read arms the EXPLOSIVE at the head or disarms the one armed. The NOVAGEN SAFE opens only after a small blast has caught it.
 _Avoid_: Keypad command, object command, document controls, read key
 
 **Semantic Mode**:

@@ -130,6 +130,7 @@ export type DamoclesMessageId =
   | 'script62-inline-3'
   | 'system-string-0'
   | 'system-string-1'
+  | 'system-string-13'
   | 'system-string-2'
   | 'system-string-21'
   | 'system-string-22'

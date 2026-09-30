@@ -621,6 +621,7 @@ export const wishDue = (state: ScriptState): boolean =>
 export type SystemMessageId =
   | 'system-string-0'
   | 'system-string-1'
+  | 'system-string-13'
   | 'system-string-2'
   | 'system-string-21'
   | 'system-string-22'

@@ -116,6 +116,40 @@ export const placementZone = (
   );
 };
 
+/// One axis of `$05A950`–`$05A964`: how far a word lies below or above the edges, else 0.
+const gapAcross = (
+  value: number,
+  [low, high]: readonly [number, number]
+): number => (value < low ? low - value : value > high ? value - high : 0);
+
+/// `$05A946`–`$05A980`: how far an intra-cell position lies outside the bound structure's extent
+/// rectangle, the one `placementZone` reads: the larger of the X and Z word gaps. It is 0 inside
+/// the rectangle, and where the cell's detail carries no extent (`[$7910]` negative).
+export const extentGap = (
+  position: Vector3,
+  structure: Pick<ErisPlacement, 'position' | 'selection'> | null
+): number => {
+  const selection = structure?.selection;
+  if (structure === null || selection === undefined) {
+    return 0;
+  }
+  const { extent } = selection;
+  if (extent === null) {
+    return 0;
+  }
+  const [scaleX, scaleZ] = selection.structure.scale;
+  return Math.max(
+    gapAcross(
+      cellWord(position.x),
+      zoneEdges(extent.x, scaleX, structure.position.x)
+    ),
+    gapAcross(
+      cellWord(position.z),
+      zoneEdges(extent.z, scaleZ, structure.position.z)
+    )
+  );
+};
+
 const positionOf = (position: readonly [number, number, number]): Vector3 => ({
   x: position[0],
   y: position[1],
