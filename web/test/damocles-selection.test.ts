@@ -501,3 +501,97 @@ test('negative detail scales retain lower-exclusive and upper-inclusive world bo
   expect(structureMeshes(p, at(-3, 0), false)[0]!.faces).toHaveLength(0);
   expect(structureMeshes(p, at(-2, 0), false)[0]!.faces).toHaveLength(0);
 });
+
+// Newell's normal, whose sign follows the face's winding.
+const normal = (
+  vertices: readonly (readonly number[])[],
+  face: readonly number[]
+): number[] => {
+  const n = [0, 0, 0];
+  for (let i = 0; i < face.length; i += 1) {
+    const a = vertices[face[i]!]!;
+    const b = vertices[face[(i + 1) % face.length]!]!;
+    n[0]! += (a[1]! - b[1]!) * (a[2]! + b[2]!);
+    n[1]! += (a[2]! - b[2]!) * (a[0]! + b[0]!);
+    n[2]! += (a[0]! - b[0]!) * (a[1]! + b[1]!);
+  }
+  return n;
+};
+
+test('a mirroring structure scale rewinds the detail so its faces keep their fronts', () => {
+  const mirrored = erisSurfaceFrom(
+    catalogue,
+    modelsOf(catalogue),
+    doc
+  ).placements.filter(p => {
+    const scale = p.selection?.structure.scale;
+    return scale !== undefined && scale[0] * scale[1] < 0;
+  });
+  // eris-surface-22 is structure-01a690 at −3×3, the model DION's cells draw too.
+  expect(mirrored.map(p => p.id)).toContain('eris-surface-22');
+  for (const p of mirrored) {
+    const { detail, structure } = p.selection!;
+    const signs = [
+      Math.sign(structure.scale[0]),
+      1,
+      Math.sign(structure.scale[1])
+    ];
+    // Aboard at ground level draws the detail alone, from the `$C13C` group.
+    const [mesh] = structureMeshes(
+      p,
+      { ...at(0, 0), position: p.position },
+      false,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      true
+    );
+    expect(mesh!.faces.length).toBeGreaterThan(0);
+    for (const face of mesh!.faces) {
+      const source = detail.faces.find(
+        f => f.sourceIndex === face.sourceIndex
+      )!;
+      const before = normal(detail.vertices, source.vertices);
+      const after = normal(mesh!.vertices, face.vertices);
+      // The mirror of the unscaled front, not its back.
+      const facing = after.reduce(
+        (sum, value, axis) => sum + value * before[axis]! * signs[axis]!,
+        0
+      );
+      expect(facing).toBeGreaterThan(0);
+    }
+  }
+});
+
+test('a mirroring structure scale leaves every plan floor facing up and every ceiling down', () => {
+  // Form 4 is a floor at 0 and form 3 one at the third height; forms 5 and 6 are ceilings at
+  // the lower and full heights. Mirrored plans face the same way as unmirrored ones.
+  const facing: Record<string, Set<number>> = {};
+  for (const model of catalogue.models) {
+    const selection = model.structureSelection;
+    if (selection === undefined) {
+      continue;
+    }
+    const { plan, scale } = selection;
+    const kind = scale[0] * scale[1] < 0 ? 'mirrored' : 'plain';
+    for (const face of plan.faces) {
+      const form = ((face.sourceColour ?? 0) >> 12) & 7;
+      if (form < 3 || form > 6) {
+        continue;
+      }
+      const up = Math.sign(normal(plan.vertices, face.vertices)[1]!);
+      (facing[`${kind} ${form}`] ??= new Set()).add(up);
+    }
+  }
+  expect(facing).toEqual({
+    'mirrored 3': new Set([1]),
+    'mirrored 4': new Set([1]),
+    'mirrored 5': new Set([-1]),
+    'mirrored 6': new Set([-1]),
+    'plain 3': new Set([1]),
+    'plain 4': new Set([1]),
+    'plain 5': new Set([-1]),
+    'plain 6': new Set([-1])
+  });
+});

@@ -151,6 +151,13 @@ class SurfaceTests(unittest.TestCase):
         self.assertTrue(mesh['faces'][0]['doubleSided'])
         self.assertEqual(mesh['vertices'], [[10, 0, 10], [20, 0, 10], [20, 100, 10], [10, 100, 10]])
 
+    def test_a_mirroring_scale_rewinds_the_plan_faces(self):
+        from damocleslab.catalogue import decode_structure
+        data = bytes.fromhex('01010000 00000000 0064 0050 0777 0444 000a000a 0014000a 0000 01020777 0000 0000')
+        mesh, _ = decode_structure(data, 8, scale=(-1, 1))
+        # The points are mirrored in x, then turned round so the face keeps its front.
+        self.assertEqual(mesh['vertices'], [[-10, 100, 10], [-20, 100, 10], [-20, 0, 10], [-10, 0, 10]])
+
 class SourceTests(unittest.TestCase):
     def test_decodes_zero_terminated_structure_association_groups(self):
         from damocleslab.catalogue import decode_structure_associations
@@ -411,10 +418,15 @@ class AssemblyTests(unittest.TestCase):
         from damocleslab.catalogue import assemble_mesh
         base = {'vertices': [[0,0,0]], 'faces': [], 'lines': []}
         detail = {'vertices': [[1,2,3],[2,2,3],[1,4,3]], 'faces': [{'vertices':[0,1,2],'colour':'#ffffff','sourceColour':0x777}], 'lines': []}
-        combined = assemble_mesh(base, detail, (2,-3))
-        self.assertEqual(combined['vertices'][1], [2,2,-9])
+        combined = assemble_mesh(base, detail, (2,3))
+        self.assertEqual(combined['vertices'][1], [2,2,9])
         self.assertEqual(combined['faces'][0]['vertices'], [1,2,3])
         self.assertEqual(base['vertices'], [[0,0,0]])
+        # A scale negative on one axis mirrors the detail, so its faces are rewound.
+        mirrored = assemble_mesh(base, detail, (2,-3))
+        self.assertEqual(mirrored['vertices'][1], [2,2,-9])
+        self.assertEqual(mirrored['faces'][0]['vertices'], [3,2,1])
+        self.assertEqual(detail['faces'][0]['vertices'], [0,1,2])
 
     def test_interior_negative_height_is_a_transform_tag(self):
         data = struct.pack('>10h', 0,-11,0, 10,0,0, 0,10,0, -32768) + bytes.fromhex('0777 04 08 0c 00 0000')

@@ -1084,6 +1084,12 @@ def decode_structure(data: bytes, start: int, palette: list[int] | None = None,
         if form == 2:
             # The explicit lower-wall polygon reverses its segment endpoints.
             polygon.reverse()
+        if scale[0] * scale[1] < 0:
+            # The points are already scaled, so a scale negative on one axis has
+            # mirrored the polygon and turned its winding over. The ST has no
+            # facing test; this keeps each face's front where an unmirrored
+            # record has it, for a renderer that culls back faces.
+            polygon.reverse()
         offset = len(vertices)
         vertices.extend(polygon)
         faces.append({'vertices': list(range(offset, offset + len(polygon))), 'colour': rgb,
@@ -1350,9 +1356,17 @@ def decode_visibility_list(data: bytes, start: int, face_count: int) -> tuple[li
     raise ValueError('region visibility list terminator missing')
 
 
+def mirror_winding(faces: list[dict], scale: tuple[int, int]) -> list[dict]:
+    """Faces rewound when `scale` mirrors them, so each keeps its front."""
+    if scale[0] * scale[1] >= 0:
+        return faces
+    return [{**face, 'vertices': face['vertices'][::-1]} for face in faces]
+
+
 def assemble_mesh(base: dict, detail: dict, scale: tuple[int, int]) -> dict:
     offset = len(base['vertices'])
     result = {**base, 'vertices': base['vertices'] + [[x * scale[0], y, z * scale[1]] for x, y, z in detail['vertices']]}
+    detail = {**detail, 'faces': mirror_winding(detail['faces'], scale)}
     for kind in ('faces', 'lines'):
         result[kind] = base[kind] + [{**face, 'vertices': [index + offset for index in face['vertices']]} for face in detail[kind]]
     if 'displayCode' in detail:
@@ -1371,6 +1385,7 @@ def turn_detail_mesh(data: bytes, mesh: dict, scale: tuple[int, int], angle: int
     articulation = mesh['articulation']
     return {
         **mesh,
+        'faces': mirror_winding(mesh['faces'], scale),
         'vertices': turn_articulated(
             data, mesh['vertices'], articulation['vertices'], articulation, angle, scale
         ),
