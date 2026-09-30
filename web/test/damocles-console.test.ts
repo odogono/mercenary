@@ -81,6 +81,24 @@ const host = (session: DamoclesSession) => ({
   typeface: () => undefined
 });
 
+/// Every cell of a Body, collecting whatever is drawn anywhere on it.
+const drawnAnywhere = async (pose: string): Promise<ReadonlySet<string>> => {
+  const seen = new Set<string>();
+  for (let x = 0; x < 16; x += 1) {
+    for (let z = 0; z < 16; z += 1) {
+      const probe = await sessionOf();
+      if (probe.switchToPose(pose).kind !== 'switched') {
+        throw new Error(`${pose} did not switch`);
+      }
+      probe.teleportToCell(x, z);
+      for (const item of probe.snapshot.residents) {
+        seen.add(item.id);
+      }
+    }
+  }
+  return seen;
+};
+
 describe('the Damocles Shell Console', () => {
   test('where and goto speak Eris cells', async () => {
     const session = await sessionOf();
@@ -185,36 +203,18 @@ describe('get names what it took', () => {
     expect(session.snapshot.carried).toEqual([]);
   });
 
-  /// Only slot 183 can be stood beside anywhere in the game today, which the old `get` refusal
-  /// happened to match by accident rather than by rule. The other five are out of reach for
-  /// reasons that are evidence boundaries, not defects, and this pins each one:
+  /// Only slot 183 can be stood beside in a 16x16 window, which the old `get` refusal happened
+  /// to match by accident rather than by rule. Slot 95 is drawn on Midas, but only from its own
+  /// cell of the field, far outside any window `goto` reaches (test/damocles-midas-field.test.ts).
+  /// The other four are out of reach for reasons that are evidence boundaries, not defects, and
+  /// this pins each one:
   ///
-  /// - slot 95 has **no recovered residence at all**, so nothing places it;
   /// - slots 151 and 181 are placed in the Eris State Office (cell 9,8), but 181 is on Floor 10
   ///   and 151's insertion group names regions 1, 6 and 7, while the cell's centre is region 10;
   /// - slot 94 is level 1, and `worldPosition` draws only level 0 (#357);
   /// - slot 101 is level 0 on Dion, but its insertion group 32 never names the one region the
   ///   player can bind to in its cell, so it is positioned and then drawn zero times (#355).
   test('slot 183 is the only pickup resident a session can reach', async () => {
-    /// Every cell of a Body, collecting whatever is drawn anywhere on it.
-    const drawnAnywhere = async (
-      pose: string
-    ): Promise<ReadonlySet<string>> => {
-      const seen = new Set<string>();
-      for (let x = 0; x < 16; x += 1) {
-        for (let z = 0; z < 16; z += 1) {
-          const probe = await sessionOf();
-          if (probe.switchToPose(pose).kind !== 'switched') {
-            throw new Error(`${pose} did not switch`);
-          }
-          probe.teleportToCell(x, z);
-          for (const item of probe.snapshot.residents) {
-            seen.add(item.id);
-          }
-        }
-      }
-      return seen;
-    };
     const eris = await drawnAnywhere('eris-spaceport-onfoot');
     expect(eris.has('object-slot-183')).toBe(true);
     expect(eris.has('object-slot-151')).toBe(false);
@@ -225,16 +225,20 @@ describe('get names what it took', () => {
     expect(
       (await drawnAnywhere('vesta-parliament-4-6')).has('object-slot-94')
     ).toBe(false);
-    // body-2 carries MAGIC CRYSTAL and no arrival Pose anchors it, so it cannot be visited.
-    const session = await sessionOf();
-    expect(session.switchToPose('body-2').kind).toBe('declined');
+    // body-2 carries MAGIC CRYSTAL. Its Pose is anchored to the field window it stands in,
+    // about 2,200 cells across the wrapping surface from the crystal's copy.
+    expect((await drawnAnywhere('midas')).has('object-slot-95')).toBe(false);
   }, 30_000);
 
   test('the unreachable five are unplaced, off level 0, or not in the region stood in', async () => {
     // Stated against the Catalogue as well as the session, so a payload change moves this test
     // rather than leaving the reachability test to fail for a reason it cannot name.
     const catalogue = await loadCatalogue();
-    expect(catalogueResidence(catalogue, 'object-slot-95')).toBeUndefined();
+    expect(catalogueResidence(catalogue, 'object-slot-95')).toMatchObject({
+      kind: 'structure',
+      level: 0,
+      parent: 'midas-the-midas-project-surface-2364-376'
+    });
     expect(catalogueResidence(catalogue, 'object-slot-151')).toMatchObject({
       insertionGroup: 7,
       kind: 'structure',

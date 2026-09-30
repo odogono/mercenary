@@ -43,6 +43,7 @@ import {
   launch,
   throttleDown,
   throttleForEntry,
+  throttleNotchKey,
   throttleUp,
   type BoundBoxes,
   type CraftProgram,
@@ -205,9 +206,11 @@ import {
   modelWaves,
   nearestIsland,
   pitchFromWord,
+  placementById,
   placementHeading,
   startPose,
   structureInCell,
+  withFieldAt,
   type ErisCell,
   type ErisIsland,
   type ErisPlacement,
@@ -330,6 +333,8 @@ export interface DamoclesScreen {
 
 /// What the panel and the console read of the craft aboard.
 export interface DamoclesCraftSnapshot {
+  /// `$7ACA`: `$3F` in ground contact, else 0.
+  readonly contact: number;
   /// `unrecovered`: the occupied slot's entry is not a surface craft pass the port runs.
   readonly held: 'unrecovered' | null;
   /// `$4DFEC`, the speed field's integer.
@@ -1029,9 +1034,7 @@ export class DamoclesSession implements TitleSession<
     if (bound === null) {
       this.bindAt(this.pose);
     } else {
-      const ground = this.surface.placements.find(
-        placement => placement.id === bound.id
-      );
+      const ground = placementById(this.surface, bound.id);
       // The Floor's structure stays bound: its selector does not change with the surface.
       this.boundPlacement =
         ground === undefined
@@ -1376,9 +1379,7 @@ export class DamoclesSession implements TitleSession<
   /// The surface's own placement of the bound structure, as it stands on Floor 0.
   private groundPlacement(): ErisPlacement | undefined {
     const bound = this.boundPlacement;
-    return bound === null
-      ? undefined
-      : this.surface.placements.find(placement => placement.id === bound.id);
+    return bound === null ? undefined : placementById(this.surface, bound.id);
   }
 
   /// The bound structure's region the Pose stands in, where the Pose is in its cell's central half.
@@ -1496,9 +1497,7 @@ export class DamoclesSession implements TitleSession<
       return null;
     }
     if (residence.level !== 0) {
-      const parent = this.surface.placements.find(
-        placement => placement.id === residence.parent
-      );
+      const parent = placementById(this.surface, residence.parent);
       if (
         parent === undefined ||
         floorPlacement(parent, this.content.models, residence.level)?.selection
@@ -1927,6 +1926,7 @@ export class DamoclesSession implements TitleSession<
         this.craft === null
           ? null
           : {
+              contact: this.craft.contact,
               held: this.craftHeld,
               panelSpeed: this.craft.panelSpeed,
               slot: this.craftSlot,
@@ -1975,7 +1975,7 @@ export class DamoclesSession implements TitleSession<
       selection: this.selection(),
       structure: this.structureSnapshot(),
       structureDamage: this.structureDamage,
-      surface: this.publishedSurface(),
+      surface: withFieldAt(this.publishedSurface(), this.pose.position),
       switches: this.switches,
       timedDetonator: this.timedDetonator,
       unravelCursor: this.unravelCursor,
@@ -3638,6 +3638,19 @@ export class DamoclesSession implements TitleSession<
     }
     this.craft = { ...craft, swing: false, throttle };
     this.effects.push({ cue: 'throttle', type: 'sound-request' });
+  }
+
+  /// The pad's shoulder buttons aboard (ADR 0059): the throttle key a notch down or up, pressed.
+  throttleNotchStep(direction: -1 | 1): void {
+    const program = this.craftProgram;
+    const craft = this.craft;
+    if (program === null || craft === null) {
+      return;
+    }
+    const scancode = throttleNotchKey(program, craft, direction);
+    if (scancode !== undefined) {
+      this.throttleKey(scancode);
+    }
   }
 
   /// `-` and `=` aboard (`$05575E`, `$055798`): the throttle scaled down or up a step.

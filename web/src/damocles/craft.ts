@@ -729,3 +729,49 @@ export const throttleUp = (
     ? undefined
     : { ...state, throttle: scaled };
 };
+
+/// A throttle as a signed magnitude: the mantissa a 4.12 fraction, the exponent a power of two.
+const throttleMagnitude = (throttle: number): number =>
+  (sx16(throttle) / 0x10_00) * 2 ** sx16(throttle >>> 16);
+
+/// The pad's shoulder buttons aboard (ADR 0059): the throttle key a notch up or down the ladder
+/// `$0557D6` gives the digits and function keys, so a press is one real key and each notch
+/// doubles the speed, as Targ's relative keys step its own ladder. Below the lowest notch either
+/// way, up is key `1` and down is Space's stop. Otherwise the step keeps the gear, digits
+/// forward and function keys in reverse: up is the first notch past the throttle, down the
+/// last one short of it, or the stop below them. Answers the ST scancode, or undefined at the
+/// top of the ladder, where Targ refuses the step too.
+export const throttleNotchKey = (
+  program: CraftProgram,
+  state: CraftState,
+  direction: -1 | 1
+): number | undefined => {
+  const notches = program.throttleKeys
+    .filter(key => key.entry < 0x80)
+    .map(key => ({
+      magnitude: throttleMagnitude(
+        long(key.entry >> 1, (key.entry & 1) === 0 ? 0x10_00 : 0xf0_00)
+      ),
+      scancode: key.scancode
+    }));
+  const stop = program.throttleKeys.find(key => key.entry >= 0x80)?.scancode;
+  const current = throttleMagnitude(state.throttle);
+  const gear = notches
+    .filter(notch => Math.sign(notch.magnitude) === (current < 0 ? -1 : 1))
+    .sort((a, b) => Math.abs(a.magnitude) - Math.abs(b.magnitude));
+  const size = Math.abs(current);
+  const lowest = gear[0];
+  if (lowest === undefined || size < Math.abs(lowest.magnitude)) {
+    const forward = notches
+      .filter(notch => notch.magnitude > 0)
+      .sort((a, b) => a.magnitude - b.magnitude)[0];
+    return direction > 0 ? forward?.scancode : stop;
+  }
+  if (direction > 0) {
+    return gear.find(notch => Math.abs(notch.magnitude) > size)?.scancode;
+  }
+  return (
+    gear.filter(notch => Math.abs(notch.magnitude) < size).at(-1)?.scancode ??
+    stop
+  );
+};

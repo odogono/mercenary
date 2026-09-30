@@ -42,7 +42,7 @@ is always level (`$7AC0` in Damocles), and aboard the pitch is the craft's own a
    |---|---|---|
    | RT | FIRE | FIRE |
    | LT | — | SHUT THROTTLE |
-   | RB / LB | ROTATE STACK › / ‹, or PAGE with a document open | THROTTLE UP / DOWN |
+   | RB / LB | ROTATE STACK › / ‹, or PAGE with a document open | THROTTLE a notch up / down |
    | A | BOARD | LEAVE CRAFT |
    | X | TAKE | TAKE |
    | B | DROP | DROP |
@@ -53,8 +53,13 @@ is always level (`$7AC0` in Damocles), and aboard the pitch is the craft's own a
    | Back | SKIP MESSAGE | LAUNCH |
    | Start | System Menu | System Menu |
 
-   Throttle notches, reverse, Floor numbers and AUTHORS COMPUTER parameters stay on the
-   keyboard, because each needs a digit.
+   RB and LB step the throttle the same way in both Titles: a notch up or down the ladder,
+   which doubles or halves the speed. From a stop, up gives the lowest notch, and down from the
+   lowest notch stops. Targ's relative keys already do this. In Damocles each step presses the
+   notch's own digit, or the function key in reverse, or Space to stop, because the ST's `-`
+   and `=` scale by only about 3% and cannot move a stopped craft. Those two keys stay on the
+   keyboard. Picking one notch directly, reverse gear from a stop, Floor numbers and AUTHORS
+   COMPUTER parameters stay on the keyboard too, because each needs its own key.
 
 ## Considered
 

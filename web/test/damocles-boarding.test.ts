@@ -498,6 +498,39 @@ describe('aboard', () => {
     });
   });
 
+  test('the pad steps the throttle a notch at a time, from a stop and between notches', () => {
+    const session = beside(LIMO, [LIMO_KEY]);
+    session.board();
+    const throttle = () => session.snapshot.craft?.throttle;
+    // From the boarding stop, up is key 1; the digits double from there, as Targ's ladder does.
+    session.throttleNotchStep(1);
+    expect(throttle()).toBe(0x4_10_00);
+    session.throttleNotchStep(1);
+    expect(throttle()).toBe(0x5_10_00);
+    session.throttleNotchStep(-1);
+    session.throttleNotchStep(-1);
+    expect(throttle()).toBe(0xff_00_10_00);
+    // Between notches after `=`, up and down land on the notches either side.
+    session.throttleKey(0x05);
+    session.throttleScale(1);
+    session.throttleNotchStep(1);
+    expect(throttle()).toBe(0x8_10_00);
+    session.throttleScale(1);
+    session.throttleNotchStep(-1);
+    expect(throttle()).toBe(0x8_10_00);
+    // Key 0 is the top: up writes nothing.
+    session.throttleKey(0x0b);
+    session.throttleNotchStep(1);
+    expect(throttle()).toBe(0xd_10_00);
+    // In reverse the step keeps the gear, on the function keys.
+    session.throttleKey(0x3e);
+    session.throttleNotchStep(1);
+    expect(throttle()).toBe(0x8_f0_00);
+    session.throttleNotchStep(-1);
+    session.throttleNotchStep(-1);
+    expect(throttle()).toBe(0x6_f0_00);
+  });
+
   test('drives the limo on the throttle keys, and a Building detail box bounces it back once', () => {
     const session = beside(LIMO, [LIMO_KEY]);
     session.board();

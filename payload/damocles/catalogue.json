@@ -93,7 +93,14 @@
         "wrapsZ": true
       },
       "id": "body-2",
-      "models": [],
+      "models": [
+        "interior-02a87e",
+        "midas-the-midas-project-ground-020540-00",
+        "object-036d64",
+        "object-039b7a",
+        "object-03e5fc",
+        "structure-01430c"
+      ],
       "name": "MIDAS"
     },
     {
@@ -2605,9 +2612,9 @@
   ],
   "coverage": {
     "census": {
-      "decoded": 1435,
+      "decoded": 1436,
       "partial": 330,
-      "unique": 1765,
+      "unique": 1766,
       "unresolved": 0
     },
     "classifications": {
@@ -2616,7 +2623,7 @@
       "attachments": 0,
       "conditionalForms": 48,
       "empty": 15,
-      "geometry": 1565,
+      "geometry": 1566,
       "liveText": 1,
       "null": 1,
       "omittedSelector": 0,
@@ -2826,6 +2833,10 @@
       {
         "finding": "GAEA image-replayed $ABDC: body selector $7AA8=$0020, current cell $7B5C=$00; 1 surface assemblies and 0 workspace-local ground records. Structure and building-detail pointer tables match first-world; object unique addresses are unchanged.",
         "path": "Gaea Image-Replayed $Abdc: Body Selector $7Aa8=$0020, Current Cell $7B5C=$00; 1 Surface Assemblies And 0 Workspace-Local Ground Records. Structure And Building-Detail Pointer Tables Match First-World; Object Unique Addresses Are Unchanged. live workspace"
+      },
+      {
+        "finding": "MIDAS image-replayed uniform field (THE MIDAS PROJECT): structure slot 68 and ground $020540 in every Surface Cell; 5 copies published where residents stand.",
+        "path": "Midas Image-Replayed Uniform Field (The Midas Project): Structure Slot 68 And Ground $020540 In Every Surface Cell; 5 Copies Published Where Residents Stand. live workspace"
       }
     ],
     "notes": [
@@ -2883,7 +2894,8 @@
       "DION image-replayed $ABDC (DION NORTH): body selector $7AA8=$0010, current cell $7B5C=$00; 25 surface assemblies and 0 workspace-local ground records. Structure and building-detail pointer tables match first-world; object unique addresses are unchanged.",
       "DION image-replayed $ABDC (DION EAST): body selector $7AA8=$0010, current cell $7B5C=$00; 25 surface assemblies and 0 workspace-local ground records. Structure and building-detail pointer tables match first-world; object unique addresses are unchanged.",
       "LACHESIS image-replayed $ABDC: body selector $7AA8=$001C, current cell $7B5C=$00; 5 surface assemblies and 0 workspace-local ground records. Structure and building-detail pointer tables match first-world; object unique addresses are unchanged.",
-      "GAEA image-replayed $ABDC: body selector $7AA8=$0020, current cell $7B5C=$00; 1 surface assemblies and 0 workspace-local ground records. Structure and building-detail pointer tables match first-world; object unique addresses are unchanged."
+      "GAEA image-replayed $ABDC: body selector $7AA8=$0020, current cell $7B5C=$00; 1 surface assemblies and 0 workspace-local ground records. Structure and building-detail pointer tables match first-world; object unique addresses are unchanged.",
+      "MIDAS image-replayed uniform field (THE MIDAS PROJECT): structure slot 68 and ground $020540 in every Surface Cell; 5 copies published where residents stand."
     ],
     "roads": {
       "attested": 22,
@@ -2959,14 +2971,14 @@
       {
         "address": 123904,
         "aliases": 0,
-        "decoded": 1174,
+        "decoded": 1175,
         "empty": 1,
         "extentEvidence": "256-cell word table at $01E400; each word is an offset from $01E000. Records are shared across cells. This is the first-world workspace, not a body census. Entries after index 255 are live VESTA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live GAEA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live DION workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ICARUS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ACHERON workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ATROPOS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live CLOTHO workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live GAEA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live CRONUS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live CYCLOPES workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live SOLON workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live THEON workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live METIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LOGOS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live PAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live THALIA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live BACCHUS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live TOLOSA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live PERSEUS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live MENTOR workspace-local ground records, not first-world $1E400 slots. The last entries are image-derived road cells: the ground record the loader would draw there, replayed from the group's authored stream. Entries after index 255 are live ERIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ERIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ERIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ERIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live DION workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live DION workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LACHESIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live GAEA workspace-local ground records, not first-world $1E400 slots.",
         "kind": "ground",
         "nullRecords": 0,
         "partial": 5,
-        "slots": 1343,
-        "unique": 1179,
+        "slots": 1344,
+        "unique": 1180,
         "unresolved": 0
       }
     ],
@@ -7708,7 +7720,20 @@
         "body": "body-2",
         "cell": 34,
         "insertionGroupSelector": 1,
-        "insertions": [],
+        "insertions": [
+          {
+            "insertionKey": 255,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 255,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 255,
+            "regionSelector": 4
+          }
+        ],
         "levelSelector": 0,
         "structureGroupSelector": 56
       },
@@ -7737,9 +7762,18 @@
       "location": null,
       "model": "object-036d64",
       "name": "DOOR KEY A \u00b7 slot 36",
-      "placement": null,
+      "placement": {
+        "coordinateSystem": "Midas group $38 cell $22 local model units",
+        "heading": 0,
+        "parent": "midas-the-midas-project-surface-899-396",
+        "position": [
+          70,
+          0,
+          -8
+        ]
+      },
       "placementClass": 4,
-      "reason": "Interior-associated resident on MIDAS, group $38, cell $22. Midas draws one structure in every cell ($0592FA sets $7A2A for this Body; $04ED2A copies cell 0's structure word over all 256), so the resident stands in the copy at its own cell's centre. No 16x16 workspace represents that field, so no parent is published.",
+      "reason": "Recovered resident placement in the authored Midas structure-group $38 cell $22 instance. The structure publishes no storey pitch, so level 0 is its only floor. Its instance angle byte is $00 (#361). No capture stands in this group; the workspace is the one its authored stream replays.",
       "sourceAddress": 25656
     },
     {
@@ -7747,7 +7781,20 @@
         "body": "body-2",
         "cell": 247,
         "insertionGroupSelector": 1,
-        "insertions": [],
+        "insertions": [
+          {
+            "insertionKey": 255,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 255,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 255,
+            "regionSelector": 4
+          }
+        ],
         "levelSelector": 0,
         "structureGroupSelector": 56
       },
@@ -7776,9 +7823,18 @@
       "location": null,
       "model": "object-036d64",
       "name": "DOOR KEY A \u00b7 slot 37",
-      "placement": null,
+      "placement": {
+        "coordinateSystem": "Midas group $38 cell $F7 local model units",
+        "heading": 0,
+        "parent": "midas-the-midas-project-surface-904-393",
+        "position": [
+          28,
+          0,
+          82
+        ]
+      },
       "placementClass": 4,
-      "reason": "Interior-associated resident on MIDAS, group $38, cell $F7. Midas draws one structure in every cell ($0592FA sets $7A2A for this Body; $04ED2A copies cell 0's structure word over all 256), so the resident stands in the copy at its own cell's centre. No 16x16 workspace represents that field, so no parent is published.",
+      "reason": "Recovered resident placement in the authored Midas structure-group $38 cell $F7 instance. The structure publishes no storey pitch, so level 0 is its only floor. Its instance angle byte is $00 (#361). No capture stands in this group; the workspace is the one its authored stream replays.",
       "sourceAddress": 25660
     },
     {
@@ -7855,7 +7911,20 @@
         "body": "body-2",
         "cell": 35,
         "insertionGroupSelector": 1,
-        "insertions": [],
+        "insertions": [
+          {
+            "insertionKey": 255,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 255,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 255,
+            "regionSelector": 4
+          }
+        ],
         "levelSelector": 0,
         "structureGroupSelector": 56
       },
@@ -7884,9 +7953,18 @@
       "location": null,
       "model": "object-036d64",
       "name": "DOOR KEY A \u00b7 slot 39",
-      "placement": null,
+      "placement": {
+        "coordinateSystem": "Midas group $38 cell $23 local model units",
+        "heading": 0,
+        "parent": "midas-the-midas-project-surface-916-396",
+        "position": [
+          47,
+          0,
+          40
+        ]
+      },
       "placementClass": 4,
-      "reason": "Interior-associated resident on MIDAS, group $38, cell $23. Midas draws one structure in every cell ($0592FA sets $7A2A for this Body; $04ED2A copies cell 0's structure word over all 256), so the resident stands in the copy at its own cell's centre. No 16x16 workspace represents that field, so no parent is published.",
+      "reason": "Recovered resident placement in the authored Midas structure-group $38 cell $23 instance. The structure publishes no storey pitch, so level 0 is its only floor. Its instance angle byte is $00 (#361). No capture stands in this group; the workspace is the one its authored stream replays.",
       "sourceAddress": 25668
     },
     {
@@ -11691,7 +11769,20 @@
         "body": "body-2",
         "cell": 235,
         "insertionGroupSelector": 1,
-        "insertions": [],
+        "insertions": [
+          {
+            "insertionKey": 255,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 255,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 255,
+            "regionSelector": 4
+          }
+        ],
         "levelSelector": 0,
         "structureGroupSelector": 56
       },
@@ -11720,9 +11811,18 @@
       "location": null,
       "model": "object-039b7a",
       "name": "MAGIC CRYSTAL \u00b7 slot 95",
-      "placement": null,
+      "placement": {
+        "coordinateSystem": "Midas group $38 cell $EB local model units",
+        "heading": 0,
+        "parent": "midas-the-midas-project-surface-2364-376",
+        "position": [
+          -8,
+          0,
+          -103
+        ]
+      },
       "placementClass": 4,
-      "reason": "Interior-associated resident on MIDAS, group $38, cell $EB. Midas draws one structure in every cell ($0592FA sets $7A2A for this Body; $04ED2A copies cell 0's structure word over all 256), so the resident stands in the copy at its own cell's centre. No 16x16 workspace represents that field, so no parent is published.",
+      "reason": "Recovered resident placement in the authored Midas structure-group $38 cell $EB instance. The structure publishes no storey pitch, so level 0 is its only floor. Its instance angle byte is $00 (#361). No capture stands in this group; the workspace is the one its authored stream replays.",
       "sourceAddress": 25892
     },
     {
@@ -20224,7 +20324,20 @@
         "body": "body-2",
         "cell": 13,
         "insertionGroupSelector": 1,
-        "insertions": [],
+        "insertions": [
+          {
+            "insertionKey": 255,
+            "regionSelector": 2
+          },
+          {
+            "insertionKey": 255,
+            "regionSelector": 3
+          },
+          {
+            "insertionKey": 255,
+            "regionSelector": 4
+          }
+        ],
         "levelSelector": 0,
         "structureGroupSelector": 56
       },
@@ -20253,9 +20366,18 @@
       "location": null,
       "model": "object-03e5fc",
       "name": "CHEESE SANDWICH \u00b7 slot 219",
-      "placement": null,
+      "placement": {
+        "coordinateSystem": "Midas group $38 cell $0D local model units",
+        "heading": 178,
+        "parent": "midas-the-midas-project-surface-430-3706",
+        "position": [
+          137,
+          0,
+          52
+        ]
+      },
       "placementClass": 4,
-      "reason": "Interior-associated resident on MIDAS, group $38, cell $0D. Midas draws one structure in every cell ($0592FA sets $7A2A for this Body; $04ED2A copies cell 0's structure word over all 256), so the resident stands in the copy at its own cell's centre. No 16x16 workspace represents that field, so no parent is published.",
+      "reason": "Recovered resident placement in the authored Midas structure-group $38 cell $0D instance. The structure publishes no storey pitch, so level 0 is its only floor. Its instance angle byte is $B2 (#361). No capture stands in this group; the workspace is the one its authored stream replays.",
       "sourceAddress": 26388
     },
     {
@@ -88434,6 +88556,266 @@
       "associationGroups": null,
       "boarding": null,
       "handling": null,
+      "id": "midas-the-midas-project-surface-430-3706",
+      "keyBase": null,
+      "location": {
+        "body": "body-2",
+        "coordinateSystem": "Body Coordinates",
+        "heading": null,
+        "island": "island-midas-06315c",
+        "place": null,
+        "position": [
+          430.5,
+          0,
+          3706.5
+        ]
+      },
+      "model": "structure-01430c",
+      "name": "THE MIDAS PROJECT cell 430,3706",
+      "placement": null,
+      "placementClass": null,
+      "reason": "Image-replayed MIDAS uniform field copy at Body Coordinate 430,3706: every Surface Cell of the Body holds it, and this one is published because a resident stands in it.",
+      "sourceAddress": 43996
+    },
+    {
+      "association": null,
+      "associationGroups": null,
+      "boarding": null,
+      "handling": null,
+      "id": "midas-the-midas-project-ground-430-3706",
+      "keyBase": null,
+      "location": {
+        "body": "body-2",
+        "coordinateSystem": "Body Coordinates",
+        "heading": null,
+        "island": "island-midas-06315c",
+        "place": null,
+        "position": [
+          430.5,
+          0,
+          3706.5
+        ]
+      },
+      "model": "midas-the-midas-project-ground-020540-00",
+      "name": "THE MIDAS PROJECT ground cell 430,3706",
+      "placement": null,
+      "placementClass": null,
+      "reason": "Image-replayed MIDAS uniform field copy at Body Coordinate 430,3706: every Surface Cell of the Body holds it, and this one is published because a resident stands in it.",
+      "sourceAddress": 123904
+    },
+    {
+      "association": null,
+      "associationGroups": null,
+      "boarding": null,
+      "handling": null,
+      "id": "midas-the-midas-project-surface-899-396",
+      "keyBase": null,
+      "location": {
+        "body": "body-2",
+        "coordinateSystem": "Body Coordinates",
+        "heading": null,
+        "island": "island-midas-06315c",
+        "place": null,
+        "position": [
+          899.5,
+          0,
+          396.5
+        ]
+      },
+      "model": "structure-01430c",
+      "name": "THE MIDAS PROJECT cell 899,396",
+      "placement": null,
+      "placementClass": null,
+      "reason": "Image-replayed MIDAS uniform field copy at Body Coordinate 899,396: every Surface Cell of the Body holds it, and this one is published because a resident stands in it.",
+      "sourceAddress": 43996
+    },
+    {
+      "association": null,
+      "associationGroups": null,
+      "boarding": null,
+      "handling": null,
+      "id": "midas-the-midas-project-ground-899-396",
+      "keyBase": null,
+      "location": {
+        "body": "body-2",
+        "coordinateSystem": "Body Coordinates",
+        "heading": null,
+        "island": "island-midas-06315c",
+        "place": null,
+        "position": [
+          899.5,
+          0,
+          396.5
+        ]
+      },
+      "model": "midas-the-midas-project-ground-020540-00",
+      "name": "THE MIDAS PROJECT ground cell 899,396",
+      "placement": null,
+      "placementClass": null,
+      "reason": "Image-replayed MIDAS uniform field copy at Body Coordinate 899,396: every Surface Cell of the Body holds it, and this one is published because a resident stands in it.",
+      "sourceAddress": 123904
+    },
+    {
+      "association": null,
+      "associationGroups": null,
+      "boarding": null,
+      "handling": null,
+      "id": "midas-the-midas-project-surface-904-393",
+      "keyBase": null,
+      "location": {
+        "body": "body-2",
+        "coordinateSystem": "Body Coordinates",
+        "heading": null,
+        "island": "island-midas-06315c",
+        "place": null,
+        "position": [
+          904.5,
+          0,
+          393.5
+        ]
+      },
+      "model": "structure-01430c",
+      "name": "THE MIDAS PROJECT cell 904,393",
+      "placement": null,
+      "placementClass": null,
+      "reason": "Image-replayed MIDAS uniform field copy at Body Coordinate 904,393: every Surface Cell of the Body holds it, and this one is published because a resident stands in it.",
+      "sourceAddress": 43996
+    },
+    {
+      "association": null,
+      "associationGroups": null,
+      "boarding": null,
+      "handling": null,
+      "id": "midas-the-midas-project-ground-904-393",
+      "keyBase": null,
+      "location": {
+        "body": "body-2",
+        "coordinateSystem": "Body Coordinates",
+        "heading": null,
+        "island": "island-midas-06315c",
+        "place": null,
+        "position": [
+          904.5,
+          0,
+          393.5
+        ]
+      },
+      "model": "midas-the-midas-project-ground-020540-00",
+      "name": "THE MIDAS PROJECT ground cell 904,393",
+      "placement": null,
+      "placementClass": null,
+      "reason": "Image-replayed MIDAS uniform field copy at Body Coordinate 904,393: every Surface Cell of the Body holds it, and this one is published because a resident stands in it.",
+      "sourceAddress": 123904
+    },
+    {
+      "association": null,
+      "associationGroups": null,
+      "boarding": null,
+      "handling": null,
+      "id": "midas-the-midas-project-surface-916-396",
+      "keyBase": null,
+      "location": {
+        "body": "body-2",
+        "coordinateSystem": "Body Coordinates",
+        "heading": null,
+        "island": "island-midas-06315c",
+        "place": null,
+        "position": [
+          916.5,
+          0,
+          396.5
+        ]
+      },
+      "model": "structure-01430c",
+      "name": "THE MIDAS PROJECT cell 916,396",
+      "placement": null,
+      "placementClass": null,
+      "reason": "Image-replayed MIDAS uniform field copy at Body Coordinate 916,396: every Surface Cell of the Body holds it, and this one is published because a resident stands in it.",
+      "sourceAddress": 43996
+    },
+    {
+      "association": null,
+      "associationGroups": null,
+      "boarding": null,
+      "handling": null,
+      "id": "midas-the-midas-project-ground-916-396",
+      "keyBase": null,
+      "location": {
+        "body": "body-2",
+        "coordinateSystem": "Body Coordinates",
+        "heading": null,
+        "island": "island-midas-06315c",
+        "place": null,
+        "position": [
+          916.5,
+          0,
+          396.5
+        ]
+      },
+      "model": "midas-the-midas-project-ground-020540-00",
+      "name": "THE MIDAS PROJECT ground cell 916,396",
+      "placement": null,
+      "placementClass": null,
+      "reason": "Image-replayed MIDAS uniform field copy at Body Coordinate 916,396: every Surface Cell of the Body holds it, and this one is published because a resident stands in it.",
+      "sourceAddress": 123904
+    },
+    {
+      "association": null,
+      "associationGroups": null,
+      "boarding": null,
+      "handling": null,
+      "id": "midas-the-midas-project-surface-2364-376",
+      "keyBase": null,
+      "location": {
+        "body": "body-2",
+        "coordinateSystem": "Body Coordinates",
+        "heading": null,
+        "island": "island-midas-06315c",
+        "place": null,
+        "position": [
+          2364.5,
+          0,
+          376.5
+        ]
+      },
+      "model": "structure-01430c",
+      "name": "THE MIDAS PROJECT cell 2364,376",
+      "placement": null,
+      "placementClass": null,
+      "reason": "Image-replayed MIDAS uniform field copy at Body Coordinate 2364,376: every Surface Cell of the Body holds it, and this one is published because a resident stands in it.",
+      "sourceAddress": 43996
+    },
+    {
+      "association": null,
+      "associationGroups": null,
+      "boarding": null,
+      "handling": null,
+      "id": "midas-the-midas-project-ground-2364-376",
+      "keyBase": null,
+      "location": {
+        "body": "body-2",
+        "coordinateSystem": "Body Coordinates",
+        "heading": null,
+        "island": "island-midas-06315c",
+        "place": null,
+        "position": [
+          2364.5,
+          0,
+          376.5
+        ]
+      },
+      "model": "midas-the-midas-project-ground-020540-00",
+      "name": "THE MIDAS PROJECT ground cell 2364,376",
+      "placement": null,
+      "placementClass": null,
+      "reason": "Image-replayed MIDAS uniform field copy at Body Coordinate 2364,376: every Surface Cell of the Body holds it, and this one is published because a resident stands in it.",
+      "sourceAddress": 123904
+    },
+    {
+      "association": null,
+      "associationGroups": null,
+      "boarding": null,
+      "handling": null,
       "id": "eris-structure-0251d7",
       "keyBase": null,
       "location": {
@@ -88637,6 +89019,13 @@
           0,
           4096
         ]
+      },
+      "field": {
+        "ground": "midas-the-midas-project-ground-020540-00",
+        "instancePrefix": "midas-the-midas-project",
+        "keyBase": null,
+        "reason": "$7A2A is raised for MIDAS alone ($0592FA): the workspace loader tiles cell 0's structure over every cell ($04ED2A) and the island-local cell wraps at 16 ($054B76), so every Surface Cell on the Body draws this structure over this ground. A copy is named by its Body Coordinate.",
+        "structure": "structure-01430c"
       },
       "id": "island-midas-06315c",
       "landColour": "#aa8800",
@@ -113733,6 +114122,16 @@
       "status": "decoded"
     },
     {
+      "id": "midas-the-midas-project-ground-020540-00",
+      "kind": "ground",
+      "name": "THE MIDAS PROJECT ground",
+      "recordClass": "geometry",
+      "slots": [
+        1343
+      ],
+      "status": "decoded"
+    },
+    {
       "id": "structure-0129be-at-2x2-detail-56",
       "kind": "structure",
       "name": "Structure 55 \u00b7 Floor frame 2\u00d72",
@@ -138761,9 +139160,10 @@
         "lachesis-pulvin-mines-ground-01e796-06-12",
         "lachesis-pulvin-mines-ground-01e796-06-13",
         "lachesis-pulvin-mines-ground-01e796-06-14",
-        "lachesis-pulvin-mines-ground-01e796-06-15"
+        "lachesis-pulvin-mines-ground-01e796-06-15",
+        "midas-the-midas-project-ground-020540-00"
       ],
-      "entryCount": 1343,
+      "entryCount": 1344,
       "extentEvidence": "256-cell word table at $01E400; each word is an offset from $01E000. Records are shared across cells. This is the first-world workspace, not a body census. Entries after index 255 are live VESTA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live GAEA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live DION workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ICARUS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ACHERON workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ATROPOS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live CLOTHO workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live GAEA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live CRONUS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live CYCLOPES workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live SOLON workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live THEON workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live METIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LOGOS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live PAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live THALIA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live BACCHUS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live TOLOSA workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live PERSEUS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live MENTOR workspace-local ground records, not first-world $1E400 slots. The last entries are image-derived road cells: the ground record the loader would draw there, replayed from the group's authored stream. Entries after index 255 are live ERIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ERIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ERIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live ERIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LUCAN workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live DION workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live DION workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live LACHESIS workspace-local ground records, not first-world $1E400 slots. Entries after index 255 are live GAEA workspace-local ground records, not first-world $1E400 slots.",
       "kind": "ground"
     }

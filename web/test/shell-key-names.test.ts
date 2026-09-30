@@ -25,6 +25,7 @@ const damocles = {
   reach: none,
   rotateStack: none,
   shutThrottle: none,
+  throttleNotchStep: none,
   throttleNotchValue: none,
   throttleReverseNotch: none,
   throttleStep: none

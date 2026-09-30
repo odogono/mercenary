@@ -175,6 +175,43 @@ test('inside, window and doorway replace the detail list, preserving empty and f
   ).toBeGreaterThan(0);
 });
 
+const range = (from: number, to: number) =>
+  Array.from({ length: to - from + 1 }, (_, i) => from + i);
+
+test('aboard, the detail is drawn from the $C13C group alone, and nothing high up', () => {
+  const detail = placement.selection!.detail;
+  const faces = (list: readonly number[]) =>
+    list.map(n => detail.faces[n - 1]!);
+  const aboard = (x: number, z: number, y: number) =>
+    structureMeshes(
+      placement,
+      at(x, z, y),
+      false,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      true
+    );
+  // Over the room, inside region 1's plan box: no plan queue, no door, no wall text, and the
+  // `$30678` half-space list (raw Y 0 up, Z below 400) with the doorway and window facades.
+  const over = aboard(1200, 0, 400);
+  expect(over).toHaveLength(1);
+  expect(over[0]!.faces).toEqual(
+    faces([...range(12, 28), 4, 30, 2, 3, 31, 32, 33, 34, 8, 29])
+  );
+  // `$3064A`: raw X 200–1000, Y 600–1200, Z 200–800.
+  expect(aboard(1200, 900, 1000)[0]!.faces).toEqual(
+    faces([31, ...range(1, 29)])
+  );
+  // Past both records, the group's default `$306A4`.
+  expect(aboard(1200, 2000, 400)[0]!.faces).toEqual(
+    faces([1, 2, 3, 31, 8, ...range(12, 28), 4, 35, 30, 34, 29])
+  );
+  // `$53CC2` returns without drawing while `$7A30`, Y's high word, is not 0.
+  expect(aboard(1200, 0, 0x1_00_00)).toEqual([]);
+});
+
 test('region pushback clamps only the blocked axis and preserves wall sliding', () => {
   const region = structureRegionAt(
     placement,

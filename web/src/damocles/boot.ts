@@ -403,6 +403,9 @@ try {
     // The throttle keys as the ST scancodes the table at `$0557D6` is indexed by: `1`–`9`
     // are `$02`–`$0A`, `0` is `$0B`, `F1`–`F10` are `$3B`–`$44` and Space is `$39` (#556).
     shutThrottle: () => commitAction(() => session.throttleKey(0x39)),
+    // The pad's shoulder buttons press a notch's own key (ADR 0059), as Targ's step its ladder.
+    throttleNotchStep: direction =>
+      commitAction(() => session.throttleNotchStep(direction)),
     throttleNotchValue: notch =>
       commitAction(() => session.throttleKey(notch === 10 ? 0x0b : notch + 1)),
     throttleReverseNotch: notch =>
@@ -1268,6 +1271,13 @@ try {
               'core'
           ? 'onFoot'
           : 'flight';
+    // `$05309A` cuts the sky at the view's centre row in ground contact over land (`$7AAA ≠ 0`,
+    // `$78A6 ≥ 0`), and in flight leaves the rest to the ground fill.
+    const horizonCut =
+      onFoot ||
+      (snapshot.craft?.contact !== 0 &&
+        classifyPosition(snapshot.surface, snapshot.pose.position).kind !==
+          'sea');
     const stars =
       starArithmetic === null
         ? null
@@ -1304,6 +1314,7 @@ try {
               daylight: snapshot.daylight,
               destroyedBodies: snapshot.destroyedBodies,
               drift: snapshot.drift,
+              horizonCut,
               impact: snapshot.impact,
               impactPassed: snapshot.impactPassed,
               position: snapshot.pose.position,
@@ -1324,7 +1335,8 @@ try {
             })),
         zoom: 2 ** (snapshot.viewExponent - NEW_GAME_VIEW_EXPONENT)
       },
-      space !== null
+      space !== null,
+      !onFoot
     );
     const shadowEdge = castShadows ?? DEFAULT_CAST_SHADOWS;
     // A Cast Shadow is Enhanced presentation only, and the player may turn its edge off.

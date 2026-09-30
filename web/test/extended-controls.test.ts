@@ -62,6 +62,7 @@ const harness = (extended = false) => {
     reach: action => calls.push({ reach: action }),
     recentreLook: () => calls.push('recentreLook'),
     shutThrottle: () => calls.push('shutThrottle'),
+    throttleNotchStep: direction => calls.push({ notchStep: direction }),
     throttleNotchValue: notch => calls.push({ notch }),
     throttleStep: delta => calls.push({ throttleStep: delta })
   };

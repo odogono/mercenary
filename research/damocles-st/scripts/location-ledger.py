@@ -118,9 +118,9 @@ SWEEP = 'docs/research/damocles-non-eris-workspaces.md'
 
 # A body carries several 16x16 windows, so each entry is a list. An origin is
 # here only where a live workspace has been extracted at it and published in the
-# catalogue payload; #172 recovered eighteen bodies' worth in one pass, and MIDAS
-# and DAMOCLES are deliberately absent because their captures do not stand in a
-# built workspace.
+# catalogue payload; #172 recovered eighteen bodies' worth in one pass. MIDAS is
+# a uniform field (FIELD_ORIGINS below), and DAMOCLES binds the empty group $00,
+# so it has no workspace to stand in.
 WORKSPACE_ORIGINS = {
     1: [((624, 688), SWEEP)],
     3: [((3419, 298), SWEEP)],
@@ -144,6 +144,14 @@ WORKSPACE_ORIGINS = {
     25: [((2737, 1571), SWEEP)],
     26: [((3834, 821), SWEEP)],
     27: [((2817, 268), SWEEP)],
+}
+
+# A uniform field has no one window: $054B76 masks the island-local cell to its
+# low four bits on MIDAS, so the player always stands in the window whose origin
+# is congruent to the island record's modulo 16. That window is the origin a
+# pose there publishes (#172).
+FIELD_ORIGINS = {
+    2: ((1729, 938), 'docs/research/damocles-midas-field.md'),
 }
 
 
@@ -354,6 +362,22 @@ def read_pose(label: str, path: Path) -> dict:
     pose['cell'] = cell
     pose['localCell'] = {'x': local_x, 'z': local_z}
     pose['impliedWorkspaceOrigin'] = {'x': implied_x, 'z': implied_z}
+    field = FIELD_ORIGINS.get(index)
+    if field is not None:
+        (field_x, field_z), evidence = field
+        if (implied_x - field_x) % CELLS_PER_AXIS or (implied_z - field_z) % CELLS_PER_AXIS:
+            raise ValueError(
+                f'{label}: implied origin {implied_x},{implied_z} is not congruent to the '
+                f'field origin {field_x},{field_z} modulo {CELLS_PER_AXIS}'
+            )
+        pose['workspaceOrigin'] = {'x': implied_x, 'z': implied_z}
+        pose['cellEvidence'] = (
+            'Read from the engine cell word $7B5C. This body is a uniform field whose '
+            'island-local cell wraps at 16 ($054B76), so the camera longwords imply the window '
+            f'{implied_x},{implied_z}, congruent to the field origin {field_x},{field_z} '
+            f'modulo 16 ({evidence}).'
+        )
+        return pose
     windows = WORKSPACE_ORIGINS.get(index, [])
     match = next((item for item in windows if item[0] == (implied_x, implied_z)), None)
     if match is not None:

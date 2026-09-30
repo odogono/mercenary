@@ -22,6 +22,7 @@ const targ = (occupancy: Occupancy): ControlProfileActions => ({
   rideLift: none,
   shutThrottle: none,
   skipMessage: none,
+  throttleNotchStep: none,
   throttleNotchValue: none,
   throttleStep: none
 });
@@ -36,6 +37,7 @@ const damocles = (occupancy: Occupancy): ControlProfileActions => ({
   reach: none,
   rotateStack: none,
   shutThrottle: none,
+  throttleNotchStep: none,
   throttleNotchValue: none,
   throttleReverseNotch: none,
   throttleStep: none

@@ -143,6 +143,10 @@ maps slots 30–39 to letters A–J. Why carrying that particular key should rel
 support rules is **unresolved**; the instruction is recorded, its purpose is not
 claimed. Do not implement it as a feature on this evidence alone.
 
+**Since #172**, slot 39 has a placement: it stands on MIDAS, in the copy of structure 68 at
+Body Coordinate 916,396 ([the Midas field](damocles-midas-field.md)). The bypass is still
+unobserved.
+
 ## Both placement paths, observed above level 0
 
 The write sets below were recovered from instructions and, until #326, could only

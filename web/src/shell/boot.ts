@@ -441,6 +441,9 @@ try {
           session.skipMessage();
         }
       }),
+    // Targ's relative keys already step its notch ladder, doubling and halving (ADR 0059).
+    throttleNotchStep: direction =>
+      performAndRefresh(() => session.throttleStep(direction)),
     throttleNotchValue: notch =>
       performAndRefresh(() => session.throttleNotchValue(notch)),
     throttleStep: delta => performAndRefresh(() => session.throttleStep(delta))

@@ -781,7 +781,8 @@ const skyStarTriangles = (
 /// `+w` about the centre, split at `split·w`, and cut at the horizon row, which on foot is the
 /// view's centre row (`$042C74 = $44`, row 68 of 136). The disc is round here where the ST's
 /// is widened by `1/0.84375`: that widening makes it round on the ST's non-square pixels, and
-/// the port's pixels are square. In space (`$042C74 = $88`, the view's last row) nothing is cut.
+/// the port's pixels are square. In flight and in space (`$042C74 = $88`, the view's last row)
+/// nothing is cut.
 const skyDiscTriangles = (
   body: Pick<SkyBody, 'colour' | 'first' | 'shadow' | 'split'>,
   placement: SkyBodyPlacement,
@@ -885,7 +886,10 @@ export const planErisFrame = (
   sky: SkyPass | null = null,
   /// In space (#558) the frame draws the sky alone, over `$001`: no ground, island, structure
   /// or object stream.
-  inSpace = false
+  inSpace = false,
+  /// Aboard a craft on a Body: structures are drawn from their `$C13C` detail group alone, and
+  /// no region's plan queue or enclosed branch is drawn (`$0533D4`, `$53CC2`).
+  aboard = false
 ): ErisFramePlan => {
   const camera = new Camera({
     farPlane: doc.camera.farPlane,
@@ -948,7 +952,8 @@ export const planErisFrame = (
   // below it in the second (`$059600`, `$059606`), and draws nothing but the bound structure's
   // plan queue (`$0596F0` → `$05A730`). That queue carries its own wall texts and insertions.
   // No ground record, island fill, road edge or object stream is drawn (#491).
-  const enclosed = region !== undefined && regionIsEnclosed(region);
+  // The flight branch `$05970E` never reads `$7B34`, so aboard nothing is enclosed.
+  const enclosed = !aboard && region !== undefined && regionIsEnclosed(region);
   // The scene colours are resolved through `$7A0E` when the structure is assembled
   // (`$059DA2`), so the half they take is the one bound then. The port takes the current half,
   // which differs only while the terminator crosses a player standing in one structure.
@@ -971,6 +976,7 @@ export const planErisFrame = (
   // The ST pixels a unit tangent spans at the view's scale exponent (#628).
   const pixelScale = projectionScale * (sky?.zoom ?? 1);
   const halfWidthDivisor = sky?.halfWidthDivisor ?? 0;
+  const horizonCut = !inSpace && (sky?.horizonCut ?? true);
   const skyView = (offset: Vector3): Vector3 =>
     camera.viewSpace(
       toCameraSpace({
@@ -1007,7 +1013,7 @@ export const planErisFrame = (
   // across has no row at all.
   const discDrawn = (placement: Omit<SkyBodyPlacement, 'drawn'>): boolean =>
     placement.radius * pixelScale >= halfWidthDivisor &&
-    (inSpace || placement.y + placement.radius > 0);
+    (!horizonCut || placement.y + placement.radius > 0);
   // `$0503FE`, `$0505B8` and `$05067C` plot the stars before the sky pass, so the Bodies cover
   // them (#578). Each is one ST pixel, which is 1/256 of a unit tangent either way.
   const stars = enclosed || sky === null ? [] : sky.stars;
@@ -1038,7 +1044,7 @@ export const planErisFrame = (
         1 / pixelScale,
         skyAt,
         skyEmit,
-        !inSpace
+        horizonCut
       );
       if (view.z > 0 && body.head !== null && discDrawn(placement)) {
         const { colour } = body.head;
@@ -1047,7 +1053,7 @@ export const planErisFrame = (
           { ...placement, drawn: true },
           skyAt,
           skyEmit,
-          !inSpace
+          horizonCut
         );
         drawn = true;
       }
@@ -1061,7 +1067,13 @@ export const planErisFrame = (
     const drawn = onScreen(placement.x) && discDrawn(placement);
     skyPlacements.push({ ...placement, drawn });
     if (drawn) {
-      skyDiscTriangles(body, { ...placement, drawn }, skyAt, skyEmit, !inSpace);
+      skyDiscTriangles(
+        body,
+        { ...placement, drawn },
+        skyAt,
+        skyEmit,
+        horizonCut
+      );
     }
   }
 
@@ -1219,7 +1231,8 @@ export const planErisFrame = (
       slot => (isBound ? (openUnits.get(slot) ?? 0) : 0),
       isBound ? structure.regionIndex : null,
       carriedSlot,
-      floorLabelGlyph
+      floorLabelGlyph,
+      aboard
     )) {
       if (mesh.wallTextPlane !== undefined) {
         emitWallText(mesh, mesh.wallTextPlane, placement);

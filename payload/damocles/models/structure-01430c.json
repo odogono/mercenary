@@ -1,9 +1,46 @@
 {
   "model": {
-    "evidence": [],
+    "evidence": [
+      {
+        "claim": "Authored Midas group $38 cell $22 record places this instance and binds resident slot 36 at local (70, 0, -8) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Midas group $38 cell $F7 record places this instance and binds resident slot 37 at local (28, 0, 82) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Midas group $38 cell $23 record places this instance and binds resident slot 39 at local (47, 0, 40) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Midas group $38 cell $EB record places this instance and binds resident slot 95 at local (-8, 0, -103) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      },
+      {
+        "claim": "Authored Midas group $38 cell $0D record places this instance and binds resident slot 219 at local (137, 0, 52) on floor 0.",
+        "confidence": "verified",
+        "source": "docs/research/damocles-interior-resident-placement.md"
+      }
+    ],
     "id": "structure-01430c",
     "kind": "structure",
-    "linkedInstances": [],
+    "linkedInstances": [
+      "midas-the-midas-project-surface-430-3706",
+      "midas-the-midas-project-surface-899-396",
+      "midas-the-midas-project-surface-904-393",
+      "midas-the-midas-project-surface-916-396",
+      "midas-the-midas-project-surface-2364-376",
+      "object-slot-36",
+      "object-slot-37",
+      "object-slot-39",
+      "object-slot-95",
+      "object-slot-219"
+    ],
     "name": "Structure 68",
     "nameStatus": "unknown",
     "omissions": [],

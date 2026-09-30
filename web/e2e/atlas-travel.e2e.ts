@@ -241,7 +241,9 @@ test('unplayable Bodies disable travel, and narrow layouts retain a usable map',
   page
 }) => {
   await page.setViewportSize({ height: 720, width: 320 });
-  await page.goto('/damocles/atlas?body=midas&pinBody=midas&pinX=0&pinZ=0');
+  await page.goto(
+    '/damocles/atlas?body=damocles&pinBody=damocles&pinX=0&pinZ=0'
+  );
   await expect(page.locator('#pin-status')).toContainText(
     'no admitted arrival data'
   );

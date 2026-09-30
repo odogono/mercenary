@@ -797,6 +797,7 @@ describe('the stars in the frame plan', () => {
     const sky = {
       bodies: [],
       halfWidthDivisor: 0.843_75,
+      horizonCut: true,
       projectionScale: 256,
       stars: [
         { colour: '#eeeeee', column: 10, row: 20 },
