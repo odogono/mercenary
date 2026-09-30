@@ -38,7 +38,7 @@ test('the Damocles Controls Page lists its Bindings and marks the Occupancy', as
 
   await openControls(page);
   await expect(controlsPage(page).locator('.chrome-title')).toHaveText(
-    'CONTROLS · KEYBOARD'
+    'CONTROLS · KEYBOARD / PAD'
   );
   await expect(controlsPage(page).locator('.controls-group-title')).toHaveText([
     'SHELL',

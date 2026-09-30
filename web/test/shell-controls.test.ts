@@ -87,7 +87,7 @@ describe('the Controls Page', () => {
     expect(groupNamed(groups, 'lift')).toBeUndefined();
     expect(
       groupNamed(groups, 'always')?.rows.find(row => row.action === 'FIRE')
-    ).toEqual({ action: 'FIRE', keys: 'F' });
+    ).toEqual({ action: 'FIRE', keys: 'F', pad: 'RT' });
   });
 
   test('lists only the Bindings Damocles has', () => {
@@ -115,7 +115,8 @@ describe('the Controls Page', () => {
     expect(always.rows.find(row => row.action === 'FIRE')).toEqual({
       action: 'FIRE',
       keys: 'F',
-      mode: 'hold'
+      mode: 'hold',
+      pad: 'RT'
     });
     expect(always.rows.find(row => row.action === 'OPEN')?.keys).toBe(
       'ENTER / NUMPAD ENTER'
