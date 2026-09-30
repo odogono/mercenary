@@ -14,7 +14,7 @@ import type { ConsoleParseContext } from '../shell/console.ts';
 import { installConsole } from '../shell/consoleView.ts';
 import { renderControlsPage } from '../shell/controlsView.ts';
 import { assertBrowserDocument } from '../shell/documentPath.ts';
-import { connectedPads } from '../shell/gamepad.ts';
+import { connectedPads, watchPadEvents } from '../shell/gamepad.ts';
 import {
   BrowserControlProfile,
   type ControlProfileActions
@@ -112,6 +112,8 @@ const DAMOCLES_FILE = 'object-slot-151';
 const hex = (value: number, digits: number): string =>
   value.toString(16).toUpperCase().padStart(digits, '0');
 
+// Watched from the first moment, so the console's `pads` can say what the browser announced.
+const padEvents = watchPadEvents(window);
 const surface = document.getElementById('game-surface')!;
 const chrome = installShellChrome(surface, {
   atlasLabel: 'Gamma Atlas',
@@ -675,6 +677,12 @@ try {
     // Damocles object slots run 1 through 255, sparsely. Targ's contiguous `objects.length`
     // has no counterpart here, so the bound is the slot byte's range.
     objectSlots: () => 256,
+    padEnvironment: () => ({
+      api: typeof navigator.getGamepads === 'function',
+      events: padEvents,
+      secureContext: window.isSecureContext,
+      userAgent: navigator.userAgent
+    }),
     pads: () => navigator.getGamepads?.() ?? [],
     persistence,
     preferences,

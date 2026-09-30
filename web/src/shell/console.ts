@@ -6,7 +6,11 @@ import type {
 } from '../settings/index.ts';
 import { formatTargTime, parseTargTime } from '../sky/time.ts';
 import { SURFACE, locationText, room } from '../world/index.ts';
-import { describePads, type PadDescription } from './gamepad.ts';
+import {
+  describePads,
+  type PadDescription,
+  type PadEnvironment
+} from './gamepad.ts';
 import type {
   Composition,
   PanelRendition,
@@ -394,6 +398,7 @@ export interface ConsoleDeps extends ConsoleParseContext, ConsoleSettingHost {
   readonly hasRoom: (id: number) => boolean;
   readonly objectName: (slot: number) => string | undefined;
   /// The browser's pads, for `pads`.
+  readonly padEnvironment?: () => PadEnvironment;
   readonly pads?: () => readonly (PadDescription | null)[];
   readonly persistence: SavePersistence;
   readonly present?: (events: readonly PresentationEvent[]) => void;
@@ -479,7 +484,7 @@ export const executeConsoleCommand = (
     case 'help':
       return HELP;
     case 'pads':
-      return describePads(deps.pads?.() ?? []);
+      return describePads(deps.pads?.() ?? [], deps.padEnvironment?.());
     case 'switchBody':
       return ['Targ has one Body'];
     case 'floor':

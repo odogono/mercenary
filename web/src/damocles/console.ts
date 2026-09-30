@@ -4,7 +4,11 @@ import {
   type ConsoleCommand,
   type ConsoleSettingHost
 } from '../shell/console.ts';
-import { describePads, type PadDescription } from '../shell/gamepad.ts';
+import {
+  describePads,
+  type PadDescription,
+  type PadEnvironment
+} from '../shell/gamepad.ts';
 import type { SavePersistence } from '../shell/saves.ts';
 import { DAMOCLES_ROW_CELLS } from './display.ts';
 import { damoclesWhere } from './save.ts';
@@ -43,6 +47,7 @@ export const damoclesMessageTranscript = (text: string): readonly string[] => {
 export interface DamoclesConsoleHost extends ConsoleSettingHost {
   readonly openAtlas: () => void;
   /// The browser's pads, for `pads`.
+  readonly padEnvironment?: () => PadEnvironment;
   readonly pads?: () => readonly (PadDescription | null)[];
   readonly persistence: SavePersistence;
   readonly session: () => DamoclesSession;
@@ -65,7 +70,7 @@ export const executeDamoclesConsoleCommand = (
     case 'help':
       return HELP;
     case 'pads':
-      return describePads(host.pads?.() ?? []);
+      return describePads(host.pads?.() ?? [], host.padEnvironment?.());
     case 'where': {
       const snapshot = host.session().snapshot;
       const { heading, position } = snapshot.pose;

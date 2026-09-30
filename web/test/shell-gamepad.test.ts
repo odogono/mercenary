@@ -7,6 +7,7 @@ import {
   describePads,
   heldPadControls,
   quantiseAxis,
+  watchPadEvents,
   type PadButton,
   type PadReading
 } from '../src/shell/gamepad.ts';
@@ -452,5 +453,41 @@ describe('the console’s pads report', () => {
     expect(describePads([described(['B'], [0, 0, 0, 0], '')])[1]).toContain(
       'mapping (none)'
     );
+  });
+});
+
+describe('the pads report’s environment', () => {
+  const environment = {
+    api: true,
+    events: [] as string[],
+    secureContext: true,
+    userAgent: 'Mozilla/5.0 (Macintosh) Chrome/140'
+  };
+
+  test('heads the report with what the browser says, even with no pad', () => {
+    expect(describePads([], environment)).toEqual([
+      'browser: Mozilla/5.0 (Macintosh) Chrome/140',
+      'gamepad api: yes · secure context: yes',
+      'connect events: none since the page loaded',
+      'no pads: the browser lists a pad only after one of its buttons is pressed with this page focused'
+    ]);
+  });
+
+  test('records the connect events a pad announces', () => {
+    const target = new EventTarget();
+    const events = watchPadEvents(target);
+    const announce = (type: string) => {
+      const event = new Event(type);
+      Object.defineProperty(event, 'gamepad', {
+        value: { id: 'Pro Controller', index: 0, mapping: '' }
+      });
+      target.dispatchEvent(event);
+    };
+    announce('gamepadconnected');
+    announce('gamepaddisconnected');
+    expect(events).toEqual([
+      'connected 0 · Pro Controller · mapping (none)',
+      'disconnected 0 · Pro Controller · mapping (none)'
+    ]);
   });
 });

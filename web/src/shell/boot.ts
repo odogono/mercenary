@@ -34,7 +34,7 @@ import {
 import { installDepartureView } from './departureView.ts';
 import { assertBrowserDocument } from './documentPath.ts';
 import { Renderer, planFrame } from './frame.ts';
-import { connectedPads } from './gamepad.ts';
+import { connectedPads, watchPadEvents } from './gamepad.ts';
 import { BrowserControlProfile } from './input.ts';
 import { browserKeyNames } from './keyNames.ts';
 import { createNewGameAction, escapeFrom, installSystemMenu } from './menu.ts';
@@ -84,6 +84,8 @@ const chrome = installShellChrome(surface, {
   catalogueLabel: 'Damocles catalogue',
   menuTitle: 'BENSON G9-ST SYSTEM'
 });
+// Watched from the first moment, so the console's `pads` can say what the browser announced.
+const padEvents = watchPadEvents(window);
 const canvas = document.getElementById('frame') as HTMLCanvasElement;
 const message = document.getElementById('message')!;
 const credits = document.getElementById('credits')!;
@@ -569,6 +571,12 @@ try {
       hasRoom: id => world.rooms.has(id),
       objectName: slot => bundle.text?.messages[slot]?.text,
       objectSlots: () => world.objects.length,
+      padEnvironment: () => ({
+        api: typeof navigator.getGamepads === 'function',
+        events: padEvents,
+        secureContext: window.isSecureContext,
+        userAgent: navigator.userAgent
+      }),
       pads: () => navigator.getGamepads?.() ?? [],
       persistence,
       preferences,
