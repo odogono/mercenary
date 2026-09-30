@@ -4,6 +4,7 @@ import {
   type Primitive
 } from '../catalogue/data.ts';
 import { triangulate } from '../catalogue/geometry.ts';
+import { tan } from '../math/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import { Camera } from '../projection/index.ts';
 import type { ErisPresentationDocument } from './documents.ts';
@@ -685,15 +686,15 @@ const skyCometTriangles = (
   pixel: number,
   depth: number,
   emit: (view: Vector3, colour: readonly [number, number, number]) => void,
-  horizonCut = true
+  horizonRow = 0
 ): boolean => {
   let drawn = false;
   const fill = (
     polygon: readonly Tangent[],
     colour: readonly [number, number, number]
   ): void => {
-    const cut = horizonCut
-      ? clipPolygon(polygon, point => point.y, lerp2)
+    const cut = Number.isFinite(horizonRow)
+      ? clipPolygon(polygon, point => point.y - horizonRow, lerp2)
       : polygon;
     for (let index = 1; index + 1 < cut.length; index += 1) {
       for (const point of [cut[0]!, cut[index]!, cut[index + 1]!]) {
@@ -778,17 +779,17 @@ const skyStarTriangles = (
 };
 
 /// One sky Body as horizontal slabs, `$045916`'s rows made continuous: each row from `−w` to
-/// `+w` about the centre, split at `split·w`, and cut at the horizon row, which on foot is the
-/// view's centre row (`$042C74 = $44`, row 68 of 136). The disc is round here where the ST's
-/// is widened by `1/0.84375`: that widening makes it round on the ST's non-square pixels, and
-/// the port's pixels are square. In flight and in space (`$042C74 = $88`, the view's last row)
-/// nothing is cut.
+/// `+w` about the centre, split at `split·w`, and cut at the horizon row. On foot this is the
+/// view's centre row (`$042C74 = $44`, row 68 of 136), shifted by Free Look. The disc is round
+/// here where the ST's is widened by `1/0.84375`: that widening makes it round on the ST's
+/// non-square pixels, and the port's pixels are square. In flight and in space (`$042C74 = $88`,
+/// the view's last row) nothing is cut.
 const skyDiscTriangles = (
   body: Pick<SkyBody, 'colour' | 'first' | 'shadow' | 'split'>,
   placement: SkyBodyPlacement,
   depth: number,
   emit: (view: Vector3, colour: readonly [number, number, number]) => void,
-  horizonCut = true
+  horizonRow = 0
 ): void => {
   const lit = channels(body.colour);
   const shadow = channels(body.shadow);
@@ -802,7 +803,7 @@ const skyDiscTriangles = (
   }[] = [];
   for (let slab = 0; slab <= SKY_DISC_SLABS; slab += 1) {
     const edge = y - radius * Math.cos((slab * Math.PI) / SKY_DISC_SLABS);
-    const row = horizonCut ? Math.max(0, edge) : edge;
+    const row = Math.max(horizonRow, edge);
     const dy = row - y;
     const w = Math.sqrt(Math.max(0, radius * radius - dy * dy));
     rows.push({ left: x - w, right: x + w, split: x + body.split * w, y: row });
@@ -977,6 +978,10 @@ export const planErisFrame = (
   const pixelScale = projectionScale * (sky?.zoom ?? 1);
   const halfWidthDivisor = sky?.halfWidthDivisor ?? 0;
   const horizonCut = !inSpace && (sky?.horizonCut ?? true);
+  // Free Look moves the on-foot horizon away from the centre row. The disc visibility test,
+  // disc slabs and comet faces must share that cut. Aboard retains the ST's centre-row cut;
+  // in flight or space the ground fill alone covers the sky below the horizon.
+  const horizonRow = horizonCut ? (aboard ? 0 : -tan(pose.pitch)) : -Infinity;
   const skyView = (offset: Vector3): Vector3 =>
     camera.viewSpace(
       toCameraSpace({
@@ -1013,7 +1018,7 @@ export const planErisFrame = (
   // across has no row at all.
   const discDrawn = (placement: Omit<SkyBodyPlacement, 'drawn'>): boolean =>
     placement.radius * pixelScale >= halfWidthDivisor &&
-    (!horizonCut || placement.y + placement.radius > 0);
+    placement.y + placement.radius > horizonRow;
   // `$0503FE`, `$0505B8` and `$05067C` plot the stars before the sky pass, so the Bodies cover
   // them (#578). Each is one ST pixel, which is 1/256 of a unit tangent either way.
   const stars = enclosed || sky === null ? [] : sky.stars;
@@ -1044,7 +1049,7 @@ export const planErisFrame = (
         1 / pixelScale,
         skyAt,
         skyEmit,
-        horizonCut
+        horizonRow
       );
       if (view.z > 0 && body.head !== null && discDrawn(placement)) {
         const { colour } = body.head;
@@ -1053,7 +1058,7 @@ export const planErisFrame = (
           { ...placement, drawn: true },
           skyAt,
           skyEmit,
-          horizonCut
+          horizonRow
         );
         drawn = true;
       }
@@ -1072,7 +1077,7 @@ export const planErisFrame = (
         { ...placement, drawn },
         skyAt,
         skyEmit,
-        horizonCut
+        horizonRow
       );
     }
   }

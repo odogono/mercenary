@@ -70,6 +70,26 @@ test('METIS at night draws ERIS in the sky and leaves VESTA under the horizon', 
     body: await page.screenshot(),
     contentType: 'image/png'
   });
+  expect(await run(page, 'set extended on')).toContain('extended controls on');
+  await closeConsole(page);
+  await page.keyboard.down('PageUp');
+  try {
+    await expect
+      .poll(async () => Number(await frame.getAttribute('data-pitch')), {
+        intervals: [20]
+      })
+      .toBeGreaterThan(0.2);
+  } finally {
+    await page.keyboard.up('PageUp');
+  }
+  // ERIS has moved below the centre row, but its crescent is still above the tilted horizon.
+  await expect(frame).toHaveAttribute('data-sky-bodies', /\beris\b/);
+  await testInfo.attach('metis-free-look', {
+    body: await page.screenshot({
+      path: testInfo.outputPath('metis-free-look.png')
+    }),
+    contentType: 'image/png'
+  });
   expect(errors).toEqual([]);
 });
 

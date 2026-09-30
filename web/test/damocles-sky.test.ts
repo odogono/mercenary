@@ -35,6 +35,7 @@ import {
   readGammaSystem,
   type GammaSystemDocument
 } from '../src/flyover/documents.ts';
+import { IDLE, intent } from '../src/gameCore/index.ts';
 import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
@@ -354,6 +355,46 @@ const pixels = (plan: ErisFramePlan, id: string) => {
 };
 
 describe('the frame from a METIS pose', () => {
+  test('Free Look keeps ERIS visible below the centre row down to the tilted horizon', () => {
+    const session = onMetis(768);
+    expect(pixels(planOf(session), 'eris').drawn).toBe(true);
+    session.intent = intent({ look: 1 });
+    session.advance(0.25);
+    session.intent = IDLE;
+    const plan = planOf(session);
+    const eris = pixels(plan, 'eris');
+    expect(eris.y - eris.r).toBeGreaterThan(68);
+    expect(eris.drawn).toBe(true);
+    const horizon = -Math.tan(session.snapshot.pose.pitch);
+    let lowest = Infinity;
+    for (let i = 0; i < plan.skyVertices.length; i += FLOATS_PER_VERTEX) {
+      const tangent = plan.skyVertices[i + 1]! / plan.skyVertices[i + 2]!;
+      expect(tangent).toBeGreaterThanOrEqual(horizon - 1e-6);
+      lowest = Math.min(lowest, tangent);
+    }
+    expect(lowest).toBeCloseTo(horizon, 6);
+  });
+
+  test.each([0.05, -0.25])(
+    'Free Look clips sky Bodies at the horizon after %s seconds',
+    seconds => {
+      const session = onMetis(768);
+      session.intent = intent({ look: seconds > 0 ? 1 : -1 });
+      session.advance(Math.abs(seconds));
+      session.intent = IDLE;
+      const plan = planOf(session);
+      expect(pixels(plan, 'eris').drawn).toBe(true);
+      const horizon = -Math.tan(session.snapshot.pose.pitch);
+      let lowest = Infinity;
+      for (let i = 0; i < plan.skyVertices.length; i += FLOATS_PER_VERTEX) {
+        const tangent = plan.skyVertices[i + 1]! / plan.skyVertices[i + 2]!;
+        expect(tangent).toBeGreaterThanOrEqual(horizon - 1e-6);
+        lowest = Math.min(lowest, tangent);
+      }
+      expect(lowest).toBeCloseTo(horizon, 6);
+    }
+  );
+
   test('shows ERIS where the pinned frame has it, and VESTA under the horizon', () => {
     const plan = planOf(onMetis(768));
     const eris = pixels(plan, 'eris');
@@ -718,6 +759,22 @@ describe('the frame from the MIDAS pose at the pinned clock', () => {
 });
 
 describe('the comet in a Session', () => {
+  test('Free Look lets the comet extend below the centre row to the tilted horizon', () => {
+    const session = onMetisAt(96, COMET_CLOCK);
+    session.intent = intent({ look: 1 });
+    session.advance(0.25);
+    session.intent = IDLE;
+    const plan = planOf(session);
+    expect(pixels(plan, 'damocles').drawn).toBe(true);
+    const streak = cometPixels(plan);
+    expect(streak.length).toBeGreaterThan(0);
+    expect(Math.max(...streak.map(point => point.y))).toBeGreaterThan(68);
+    const horizon = 68 + Math.tan(session.snapshot.pose.pitch) * 256;
+    for (const point of streak) {
+      expect(point.y).toBeLessThanOrEqual(horizon + 1e-5);
+    }
+  });
+
   test('moves as the impact clock advances', () => {
     const session = onMetisAt(96, COMET_CLOCK);
     const before = pixels(planOf(session), 'damocles');
