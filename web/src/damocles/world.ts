@@ -71,6 +71,8 @@ export interface ErisIsland {
   /// The bound group's location-trigger table `[$7A68]`, in table order.
   readonly locationTable: readonly LocationEntry[];
   readonly origin: ErisCell;
+  /// The record's `+6`, the structure group whose workspace it binds, 0 for none.
+  readonly structureGroup: number;
 }
 
 /// Where the player stands and faces on one Body: raw engine units with north at +z and east
@@ -742,7 +744,8 @@ export const erisSurfaceFrom = (
         id: island.id,
         landColour: island.landColour,
         locationTable: island.locationTable.entries,
-        origin: { x: island.origin[0], z: island.origin[1] }
+        origin: { x: island.origin[0], z: island.origin[1] },
+        structureGroup: island.structureGroup
       })),
     placements,
     places,

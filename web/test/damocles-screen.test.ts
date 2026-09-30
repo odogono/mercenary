@@ -73,14 +73,14 @@ describe('the zap and death screen', () => {
     ).toBe(true);
   });
 
-  test('a flash paints every colour white', () => {
+  test('a flash paints every colour white and the clear, colour 0, black', () => {
     const flashed = presentScreen(planOf(1, 2, 3), { ...clear, white: true });
     expect(
       colours(flashed)
         .flat()
         .every(value => value === 1)
     ).toBe(true);
-    expect(flashed.clear).toEqual([1, 1, 1]);
+    expect(flashed.clear).toEqual([0, 0, 0]);
   });
 
   test('the noise paints ST colours from the table, fresh each tick', () => {

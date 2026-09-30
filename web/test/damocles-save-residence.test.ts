@@ -99,6 +99,7 @@ const record = () => ({
     scrollCounter: 0,
     spaceMemory: null,
     structure: null,
+    structureDamage: [],
     switches: 0,
     timedDetonator: initialTimedDetonator(),
     unravelCursor: 29,

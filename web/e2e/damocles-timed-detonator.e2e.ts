@@ -65,6 +65,7 @@ const holding = async (page: Page, placed = false): Promise<void> => {
         armed: placed,
         charge: 1,
         deadline: placed ? Math.floor(saved.elapsed) + 5 : 0,
+        door: null,
         fuse: placed ? 5 : 0,
         regionBlast: false,
         slot: placed ? 75 : null
@@ -157,5 +158,111 @@ test('an EXPLOSIVE armed from the keypad and still carried blows the player up w
     /object-slot-75/
   );
   await expect(frame).toHaveAttribute('data-screen', /dead/);
+  expect(errors).toEqual([]);
+});
+
+/// #650: a charge 4 blast with `$7A5A` set removes the structure in its cell, and the frame stops
+/// drawing it. The player stands in UR CITY's cell `$24` at gaea-ur-city-4-2, and the EXPLOSIVE
+/// lies armed in the same cell, `$2000` off on X: out of the reach's `$400` box, so the player
+/// lives to see it. `$7A5A` is as a Drop near the extent would leave it.
+test('a blast with $7A5A set removes the structure in its cell and the frame stops drawing it', async ({
+  page
+}, testInfo) => {
+  test.setTimeout(90_000);
+  const errors = watchErrors(page);
+  await page.goto('/damocles');
+  await expect(page.locator('#frame')).toHaveAttribute('data-state', 'ready', {
+    timeout: 20_000
+  });
+  const encoded = await page.evaluate(async () => {
+    const { damoclesTitle } = await import('../src/damocles/title.ts');
+    const { DamoclesSession } = await import('../src/damocles/session.ts');
+    const {
+      DAMOCLES_SAVE_SCHEMA_VERSION,
+      damoclesSaveIdentity,
+      encodeDamoclesSave
+    } = await import('../src/damocles/save.ts');
+    const content = await damoclesTitle.load(async pathname => {
+      const text = await (await fetch(pathname)).text();
+      return { text, value: JSON.parse(text) };
+    });
+    // GAEA's Models are read before the Save is built, so that it binds UR CITY's structure.
+    const first = new DamoclesSession(content);
+    first.switchToPose('gaea-ur-city-4-2');
+    await DamoclesSession.prepare(content, {
+      ...first.captureResume(),
+      structure: null
+    });
+    const session = new DamoclesSession(content);
+    session.switchToPose('gaea-ur-city-4-2');
+    const saved = session.captureResume();
+    const { position } = saved.pose;
+    // Towards the cell's centre, so the EXPLOSIVE stays in the player's cell.
+    const within = position.x % 0x1_00_00;
+    const x = position.x + (within < 0x80_00 ? 0x20_00 : -0x20_00);
+    const snapshot = {
+      ...saved,
+      residence: [
+        ...saved.residence.filter(item => item.instance !== 'object-slot-75'),
+        {
+          instance: 'object-slot-75',
+          residence: {
+            body: saved.pose.body,
+            kind: 'surface' as const,
+            placementClass: 0,
+            position: { x, y: 0, z: position.z }
+          }
+        }
+      ],
+      timedDetonator: {
+        armed: true,
+        charge: 4,
+        deadline: Math.floor(saved.elapsed) + 5,
+        door: null,
+        fuse: 5,
+        regionBlast: true,
+        slot: 75
+      }
+    };
+    return encodeDamoclesSave({
+      identity: damoclesSaveIdentity(
+        content.catalogue,
+        content.presentationSha256
+      ),
+      savedAt: new Date().toISOString(),
+      schemaVersion: DAMOCLES_SAVE_SCHEMA_VERSION,
+      snapshot,
+      where: 'GAEA'
+    });
+  });
+  await page.addInitScript(
+    ({ encoded, key }) => localStorage.setItem(key, encoded),
+    { encoded, key: DAMOCLES_RESUME_KEY }
+  );
+  await page.reload();
+  const frame = page.locator('#frame');
+  await expect(frame).toHaveAttribute('data-state', 'ready', {
+    timeout: 20_000
+  });
+  await expect(frame).toHaveAttribute(
+    'data-structure-instance',
+    'gaea-ur-city-surface-24'
+  );
+  await expect(frame).toHaveAttribute('data-drawn', /gaea-ur-city-surface-24/);
+  await page.screenshot({ path: testInfo.outputPath('structure-before.png') });
+  await expect(frame).toHaveAttribute(
+    'data-structure-damage',
+    '07 24 0000 00 00',
+    { timeout: 15_000 }
+  );
+  await expect(frame).toHaveAttribute('data-structure-instance', '');
+  await expect(frame).not.toHaveAttribute(
+    'data-drawn',
+    /gaea-ur-city-surface-24/
+  );
+  await expect(frame).not.toHaveAttribute('data-screen', /dead/);
+  // Past the flash, so the screenshot shows the ground the structure stood on.
+  await page.waitForTimeout(1000);
+  await page.screenshot({ path: testInfo.outputPath('structure-after.png') });
   expect(errors).toEqual([]);
 });

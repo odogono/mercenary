@@ -107,6 +107,10 @@ import { damoclesTitle } from './title.ts';
 /// The Catalogue instance of the DAMOCLES FILE, resident slot 151.
 const DAMOCLES_FILE = 'object-slot-151';
 
+/// A value as upper-case hex of `digits` digits, as the research notes print bytes and words.
+const hex = (value: number, digits: number): string =>
+  value.toString(16).toUpperCase().padStart(digits, '0');
+
 const surface = document.getElementById('game-surface')!;
 const chrome = installShellChrome(surface, {
   atlasLabel: 'Gamma Atlas',
@@ -1112,6 +1116,13 @@ try {
     root['timedDetonator'] =
       `${detonator.armed ? 'armed' : 'safe'} ${detonator.charge} ${detonator.fuse} ${detonator.slot ?? ''}`.trimEnd();
     root['debrisPasses'] = String(snapshot.debrisPasses);
+    // `$636A`, the structure damage table (#650), one six-byte entry a comma, as #649 prints them.
+    root['structureDamage'] = snapshot.structureDamage
+      .map(
+        entry =>
+          `${hex(entry.group, 2)} ${hex(entry.cell, 2)} ${hex(entry.word, 4)} ${hex(entry.level, 2)} ${hex(entry.door, 2)}`
+      )
+      .join(',');
     root['removedResidents'] = snapshot.removedResidents.join(' ');
     root['impactPassed'] = String(snapshot.impactPassed);
     root['x'] = String(snapshot.pose.position.x);
