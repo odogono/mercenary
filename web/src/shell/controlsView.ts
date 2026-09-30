@@ -30,12 +30,17 @@ export const renderControlsPage = (
       for (const row of group.rows) {
         const keys = document.createElement('dt');
         keys.textContent = row.keys;
+        // Every row has the pad's cell, empty where the pad has no button for it, so the
+        // columns line up.
+        const pad = document.createElement('dd');
+        pad.className = 'controls-pad';
+        pad.textContent = row.pad ?? '';
         const action = document.createElement('dd');
         action.textContent =
           row.mode === undefined
             ? row.action
             : `${row.action} (${MODE_LABELS[row.mode]})`;
-        rows.append(keys, action);
+        rows.append(keys, pad, action);
       }
       section.append(title, rows);
       return section;

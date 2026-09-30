@@ -52,7 +52,13 @@ Damocles condensed panel-label face (CSS approximation in v1), or advance Damocl
   `installPanel`.
 - `web/src/shell/menu.ts`, `settingsView.ts`, `controlsView.ts`, `saveChooser.ts` — System Menu
   layers. The Controls Page is drawn from the Control Profile's Binding table each time it opens
-  (ADR 0056).
+  (ADR 0056), with a pad column beside the keys (ADR 0059).
+- `web/src/shell/gamepad.ts` — reads every connected standard-mapping pad through the Gamepad
+  API and quantises its sticks to -1/0/+1 past 0.5. `BrowserControlProfile.pollPads` runs once
+  per animation frame, before the steps: a button fires on its rising edge through the Binding
+  whose `pad` column names it, the sticks merge with the arrows and are clamped, and a control
+  held through a release is ignored until it comes to rest. `routePad` gates the pad the way
+  `routeKey` gates keys, and Start opens the System Menu (#654).
 - `web/src/shell/keyNames.ts` — names a Binding's keys as the player's layout prints them where
   `navigator.keyboard.getLayoutMap()` answers (Chromium), for the Controls Page and the Head
   Command notice; US names elsewhere, for digits, and for any key the panel typefaces cannot

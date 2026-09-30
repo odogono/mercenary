@@ -2,7 +2,8 @@ import {
   RESERVED_CODES,
   SKIP_MESSAGE_CODE,
   browserChord,
-  type BrowserKey
+  type BrowserKey,
+  type PadRoute
 } from './input.ts';
 
 /// A key press as the router sees it.
@@ -110,6 +111,25 @@ export const routeKey = (state: RouterState, key: RoutedKey): KeyRoute => {
       return 'opening-held';
     case 'arrival':
       return key.code === SKIP_MESSAGE_CODE ? 'game' : 'opening-held';
+    case 'none':
+      return 'game';
+  }
+};
+
+/// Where the pads' controls go, by the same order of precedence as a key's: chrome that has the
+/// keyboard has the pads too, which releases them, and each opening keeps only what it keeps of
+/// the keys. The carousel's commit keys have no button (ADR 0059 leaves the menus to the
+/// keyboard), so it holds the pad as the journey does.
+export const routePad = (state: RouterState): PadRoute => {
+  if (chromeHasKeyboard(state)) {
+    return 'chrome';
+  }
+  switch (state.opening) {
+    case 'carousel':
+    case 'journey':
+      return 'held';
+    case 'arrival':
+      return 'skip';
     case 'none':
       return 'game';
   }

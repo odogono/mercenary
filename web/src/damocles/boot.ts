@@ -14,6 +14,7 @@ import type { ConsoleParseContext } from '../shell/console.ts';
 import { installConsole } from '../shell/consoleView.ts';
 import { renderControlsPage } from '../shell/controlsView.ts';
 import { assertBrowserDocument } from '../shell/documentPath.ts';
+import { connectedPads } from '../shell/gamepad.ts';
 import {
   BrowserControlProfile,
   type ControlProfileActions
@@ -34,7 +35,7 @@ import { canvasPointer } from '../shell/pointer.ts';
 import { createPreferences } from '../shell/preferences.ts';
 import type { SessionResumePersistence } from '../shell/resume.ts';
 import { createSessionResumeNotices } from '../shell/resumeNotices.ts';
-import { routeKey, type RouterState } from '../shell/router.ts';
+import { routeKey, routePad, type RouterState } from '../shell/router.ts';
 import { installSaveChooser } from '../shell/saveChooser.ts';
 import { ALL_SLOTS } from '../shell/saves.ts';
 import { installSettingsView } from '../shell/settingsView.ts';
@@ -1351,6 +1352,14 @@ try {
       return;
     }
     try {
+      // The pads are read before the steps, as a key event arrives before them, and Start is
+      // Escape from play: it opens the System Menu even with a document open, as the pad has
+      // no other way there.
+      if (
+        controls.pollPads(connectedPads(navigator), routePad(routerState()))
+      ) {
+        menu.show('menu');
+      }
       const steps = clock.frame(timestamp, seconds => {
         if (
           menu.layer() === 'none' &&

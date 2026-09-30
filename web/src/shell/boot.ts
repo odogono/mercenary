@@ -34,6 +34,7 @@ import {
 import { installDepartureView } from './departureView.ts';
 import { assertBrowserDocument } from './documentPath.ts';
 import { Renderer, planFrame } from './frame.ts';
+import { connectedPads } from './gamepad.ts';
 import { BrowserControlProfile } from './input.ts';
 import { browserKeyNames } from './keyNames.ts';
 import { createNewGameAction, escapeFrom, installSystemMenu } from './menu.ts';
@@ -53,7 +54,12 @@ import {
   type SessionResumePersistence
 } from './resume.ts';
 import { createSessionResumeNotices } from './resumeNotices.ts';
-import { chromeHasKeyboard, routeKey, type RouterState } from './router.ts';
+import {
+  chromeHasKeyboard,
+  routeKey,
+  routePad,
+  type RouterState
+} from './router.ts';
 import { installSaveChooser } from './saveChooser.ts';
 import { ALL_SLOTS, createSavePersistence, slotStorageKey } from './saves.ts';
 import {
@@ -886,6 +892,11 @@ try {
 
   publish();
   const frame = (timestamp: number): void => {
+    // The pads are read before the steps, as a key event arrives before them, and Start is
+    // Escape from play.
+    if (controls.pollPads(connectedPads(navigator), routePad(routerState()))) {
+      menu.show('menu');
+    }
     // The System Menu pauses the session rather than hiding it: the frame keeps being drawn, so
     // the player can see what they are about to return to, but no time passes.
     if (menu.layer() === 'none' && ownership.mayAdvance()) {

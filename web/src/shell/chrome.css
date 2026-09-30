@@ -237,6 +237,11 @@ html[data-title='damocles'] #game-surface {
   text-transform: uppercase;
 }
 
+/* Three columns, keys, pad and action, need more room than the other pages. */
+#page-controls {
+  max-width: min(92%, 760px);
+}
+
 #controls-groups {
   display: flex;
   max-height: min(70vh, 520px);
@@ -265,11 +270,13 @@ html[data-title='damocles'] #game-surface {
   display: grid;
   margin: 0;
   column-gap: 12px;
-  grid-template-columns: minmax(96px, auto) 1fr;
+  /* The same three columns in every group, so the groups line up with each other. */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   row-gap: 2px;
 }
 
 .controls-rows dt {
+  align-self: start;
   padding: 1px 6px 0;
   background: var(--lcd-bg);
   border-radius: 2px;
@@ -284,4 +291,17 @@ html[data-title='damocles'] #game-surface {
   color: var(--label-ink);
   font-size: 12px;
   letter-spacing: 0.06em;
+}
+
+/* The pad's column reads as a key does; a row the pad has no button for keeps its cell. */
+.controls-rows .controls-pad {
+  align-self: start;
+  padding: 1px 6px 0;
+  background: var(--lcd-bg);
+  border-radius: 2px;
+  color: var(--lcd-ink);
+}
+
+.controls-rows .controls-pad:empty {
+  visibility: hidden;
 }
