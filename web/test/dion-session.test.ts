@@ -60,7 +60,16 @@ describe('the Mercenary III session', () => {
     const content = await dionContent();
     const session = new DionSession(content);
     session.intent = { ...session.intent, walk: 1 };
-    session.advance(20);
+    const held = session.captureResume();
+    const keyless = new DionSession(content, {
+      ...held,
+      snapshot: {
+        ...held.snapshot,
+        narrative: { ...held.snapshot.narrative, keyA: false, pc: null }
+      }
+    });
+    keyless.intent = session.intent;
+    keyless.advance(20);
     const cell = content.world.cells.find(item => item.cell === 0x62)!;
     const originZ =
       (content.world.opening.groupOrigin[1] + cell.z) * 0x1_00_00 +
@@ -68,9 +77,9 @@ describe('the Mercenary III session', () => {
     // The doorway region shares the room's edge at z −840, so the clearance does not apply;
     // the scan refuses the shut doorway and the eye stands on the edge, where #645 saw the
     // keyless player held.
-    expect(session.snapshot.eye[2] - originZ).toBe(-840);
-    expect(session.snapshot.region).toBe(1);
-    expect(session.snapshot.cell).toBe(0x62);
+    expect(keyless.snapshot.eye[2] - originZ).toBe(-840);
+    expect(keyless.snapshot.region).toBe(1);
+    expect(keyless.snapshot.cell).toBe(0x62);
   });
 
   test('turns two heading units a substep', async () => {
@@ -98,8 +107,50 @@ describe('the Mercenary III session', () => {
     expect(fine.snapshot.heading).toBe(coarse.snapshot.heading);
   });
 
-  test('refuses a restore: Session Resume is reserved for #648', async () => {
+  test('restores the same playable moment and tick phase', async () => {
     const content = await dionContent();
-    expect(() => new DionSession(content, { tick: 0 })).toThrow('reserved');
+    const session = new DionSession(content);
+    session.advance(3.147);
+    const restored = new DionSession(content, session.captureResume());
+    expect(restored.snapshot).toEqual(session.snapshot);
+    session.advance(0.153);
+    restored.advance(0.153);
+    expect(restored.snapshot).toEqual(session.snapshot);
   });
+});
+
+test('loads the first head-turn count before toggling and restarts repeated selectors', async () => {
+  const content = await dionContent();
+  const fresh = new DionSession(content).captureResume();
+  const create = (selector: number) =>
+    new DionSession(content, {
+      ...fresh,
+      snapshot: {
+        ...fresh.snapshot,
+        narrative: { ...fresh.snapshot.narrative, cabin: selector, pc: null }
+      }
+    });
+  const session = create(0x4_07);
+  session.advance(11 / 50);
+  expect(session.snapshot.narrative.cabin).toBe(0);
+  expect(session.snapshot.driver.profile).toBe(true);
+  const saved = new DionSession(content, session.captureResume());
+  for (let frame = 0; frame < 7; frame += 1) {
+    session.advance(11 / 50);
+    saved.advance(11 / 50);
+    expect(session.snapshot.driver.profile).toBe(true);
+    expect(saved.snapshot).toEqual(session.snapshot);
+  }
+  session.advance(11 / 50);
+  expect(session.snapshot.driver.profile).toBe(false);
+  const record = session.captureResume();
+  const repeated = new DionSession(content, {
+    ...record,
+    snapshot: {
+      ...record.snapshot,
+      narrative: { ...record.snapshot.narrative, cabin: 0x4_07 }
+    }
+  });
+  repeated.advance(11 / 50);
+  expect(repeated.snapshot.driver.profile).toBe(true);
 });

@@ -25,6 +25,7 @@
       "src/dion/boot.ts",
       "src/damocles/firstOfferDemo.ts",
       "src/soundboard/boot.ts",
+      "src/soundboard/dionWorklet.ts",
       "src/flyover/boot.ts",
       "src/sound/worklet.ts",
       "src/damocles/soundWorklet.ts",
@@ -35,7 +36,9 @@
       "e2e/wireframe-fixture.ts",
       "e2e/damocles-fixture.ts",
       "e2e/*.e2e.ts",
-      "test/**/*.test.ts"
+      "test/**/*.test.ts",
+      "src/dion/soundWorklet.ts",
+      "e2e/dion-fixture.ts"
     ],
     "include": [
       "files",

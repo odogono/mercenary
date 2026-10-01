@@ -962,6 +962,27 @@
     ],
     "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
    }
+  },
+  "taxi": {
+   "progress": 2048,
+   "ramSha256": "5bd00eb63ba83b68ae32992fc201af11047c985948517a4e6f16c0422d8c3aa0",
+   "source": [
+    {
+     "range": [
+      "$06CBC",
+      "$06CC0"
+     ],
+     "sha256": "86d0f132e8c458e0051c8897d93982791dc68f3ab7ae93f99346c6a97a64cd75"
+    },
+    {
+     "range": [
+      "$06C8C",
+      "$06C90"
+     ],
+     "sha256": "e63b3350c36a132a0b1ca8b1b7d7ed9ae4a56a1e6ba9606359a2f7e1c0f800cc"
+    }
+   ],
+   "routeIndex": 0
   }
  }
 }

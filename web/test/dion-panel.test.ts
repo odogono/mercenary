@@ -28,7 +28,7 @@ describe('the Mercenary III panel', () => {
     expect(view.centre).toEqual({ kind: 'logo' });
   });
 
-  test('changes only the clock as game time passes', async () => {
+  test('changes the clock and opening message as game time passes', async () => {
     const content = await dionContent();
     const session = new DionSession(content);
     const before = drawDionPanel(
@@ -44,8 +44,10 @@ describe('the Mercenary III panel', () => {
     );
     const rows = differingRows(before.pixels, after.pixels);
     expect(rows.length).toBeGreaterThan(0);
-    // The clock's seven rows at y 186.
-    expect(rows.every(row => row >= 186 && row < 193)).toBe(true);
+    // Clock at 186 and the tick-paced opening message at 144.
+    expect(
+      rows.every(row => (row >= 186 && row < 193) || (row >= 144 && row < 150))
+    ).toBe(true);
   });
 
   test('shows the card text over the TAXICARD art when a card is up', async () => {
@@ -64,4 +66,34 @@ describe('the Mercenary III panel', () => {
     expect(rows.at(-1)).toBeLessThan(192);
     expect(card.palette.upper[4]).toBe(content.panel.centre.taxicard.colour4);
   });
+});
+
+test('keeps logo colours during scroll-out, swaps on the black midpoint, then reveals the card', async () => {
+  const content = await dionContent();
+  const view = dionPanelView(new DionSession(content).snapshot, content);
+  const draw = (remaining: number) =>
+    drawDionPanel(content.panel, {
+      ...view,
+      centre: { kind: 'card', lines: ['PRESS *', 'TO CALL'], reveal: remaining }
+    });
+  expect(draw(64).palette.upper[4]).toBe(content.panel.centre.logo.colour4);
+  expect(draw(33).palette.lower[1]).toBe(
+    content.panel.centre.logo.colour1From152
+  );
+  const halfway = draw(32);
+  expect(halfway.palette.upper[4]).toBe(content.panel.centre.taxicard.colour4);
+  const { box } = content.panel.centre;
+  const centre = (image: ReturnType<typeof draw>) =>
+    Array.from({ length: box.height }, (_, row) =>
+      image.pixels.slice(
+        (box.y + row - PANEL_TOP) * 320 + box.x,
+        (box.y + row - PANEL_TOP) * 320 + box.x + box.width
+      )
+    );
+  expect(centre(halfway).every(row => row.every(value => value === 0))).toBe(
+    true
+  );
+  expect(centre(draw(16)).some(row => row.some(value => value !== 0))).toBe(
+    true
+  );
 });

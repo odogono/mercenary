@@ -80,7 +80,7 @@ describe('the Mercenary III frame', () => {
     expect(planned.stats.models).toContain(220);
     expect(planned.stats.polygons).toBeGreaterThan(20);
     expect(planned.stats.gaps).toEqual([
-      'horizon line, stars and sky Bodies (#646)'
+      'complete sky Body inventory waived by D1'
     ]);
     // Day sky in colour 8; colours 13..15 fixed by the frame colour setup.
     expect(planned.palette[8]).toBe(0x3_55);
@@ -119,7 +119,7 @@ describe('the Mercenary III frame', () => {
         region
       });
       expect(planned.stats.gaps).toEqual([
-        'horizon line, stars and sky Bodies (#646)'
+        'complete sky Body inventory waived by D1'
       ]);
     }
   });

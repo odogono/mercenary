@@ -195,6 +195,10 @@ def opening_state(ram: Ram, vbl: int | None) -> dict:
             'source': ram.slice(0x563C, 0x563E + max(count, 1)),
         },
         'cash_bcd': {'digits': ram.bytes(0x72DE, 0x72E4).hex(), 'source': ram.slice(0x72DE, 0x72E4)},
+        'taxi': {'progress': ram.word(0x6CBE),
+                 'route_index': (ram.long(0x6C8C) - 0x41F24) // 2,
+                 'ram_sha256': ram.sha256,
+                 'source': [ram.slice(0x6CBC, 0x6CC0), ram.slice(0x6C8C, 0x6C90)]},
         'elapsed_seconds': {'value': ram.long(0x6FCE), 'source': ram.slice(0x6FCE, 0x6FD2)},
     }
 

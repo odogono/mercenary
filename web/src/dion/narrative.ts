@@ -1,11 +1,8 @@
 import { readSources, type DionDocumentKind } from './documents.ts';
 import { address, fail, int, ints, list, record, text } from './read.ts';
 
-/// The MIII documents I1 admits for the journeys I2 will play: ID messages, the
-/// bounded scripts, the PSG programmes and the taxi service. They are read strictly so
-/// that a broken or foreign export is refused at load, but nothing here runs them yet:
-/// the message machine, the script interpreter, the sound presenter and the service
-/// are I2 (#648).
+/// Strict readers for Mercenary III's decoded messages, scripts, sound and service.
+/// The title-local machines consume these facts independently of the source program.
 
 export interface DionMessage {
   readonly header: number;
@@ -17,7 +14,9 @@ export interface DionMessage {
 export interface DionInstruction {
   readonly address: number;
   readonly name: string;
+  readonly next: number;
   readonly op: number;
+  readonly operands: readonly number[];
   readonly text: string | undefined;
 }
 
@@ -35,6 +34,12 @@ export interface DionSoundProgramme {
   readonly channel: string;
   readonly entry: number;
   readonly name: string;
+  readonly registers: readonly (readonly [number, number])[];
+  readonly streams: readonly {
+    readonly loop: number | null;
+    readonly pairs: readonly (readonly [number, number])[];
+    readonly registers: readonly number[];
+  }[];
 }
 
 export interface DionService {
@@ -43,11 +48,14 @@ export interface DionService {
     readonly cell: readonly [number, number];
     readonly code: number;
   }[];
+  readonly headTurns: ReadonlyMap<number, readonly number[]>;
   readonly liftOff: readonly number[];
   readonly opening: {
     readonly carried: readonly number[];
     readonly cash: string;
     readonly elapsedSeconds: number;
+    readonly taxiProgress: number;
+    readonly taxiRouteIndex: number;
   };
   readonly route: readonly {
     readonly control: number;
@@ -158,7 +166,25 @@ export const readDionScripts = (
             return {
               address: address(instruction['address'], `${it}.address`),
               name: text(instruction['name'], `${it}.name`),
+              next: address(
+                list(
+                  record(instruction['source'], `${it}.source`)['range'],
+                  `${it}.source.range`
+                )[1],
+                `${it}.next`
+              ),
               op: hexByte(instruction['op'], `${it}.op`),
+              operands:
+                instruction['operands'] === undefined
+                  ? []
+                  : list(instruction['operands'], `${it}.operands`).map(
+                      (value, index) => {
+                        const at = `${it}.operands[${index}]`;
+                        return typeof value === 'string'
+                          ? address(value, at)
+                          : address(record(value, at)['address'], at);
+                      }
+                    ),
               text:
                 instruction['text'] === undefined
                   ? undefined
@@ -185,10 +211,47 @@ export const readDionSound = (
     (item, index) => {
       const at = `${kind}.programmes[${index}]`;
       const raw = record(item, at);
+      const setup =
+        raw['setup'] == null ? {} : record(raw['setup'], `${at}.setup`);
+      const registers =
+        setup['registers'] === undefined
+          ? {}
+          : record(setup['registers'], `${at}.setup.registers`);
       return {
         channel: text(raw['channel'], `${at}.channel`),
         entry: address(raw['entry'], `${at}.entry`),
-        name: text(raw['name'], `${at}.name`)
+        name: text(raw['name'], `${at}.name`),
+        registers: Object.entries(registers).map(
+          ([key, value]) =>
+            [Number(key.slice(1)), int(value, `${at}.${key}`, 0, 255)] as const
+        ),
+        streams: list(raw['streams'], `${at}.streams`).map((value, index) => {
+          const atStream = `${at}.streams[${index}]`;
+          const stream = record(value, atStream);
+          const names =
+            text(stream['registers'], `${atStream}.registers`).match(
+              /R(\d+)/g
+            ) ?? [];
+          return {
+            loop:
+              stream['loopsToPair'] === undefined
+                ? null
+                : int(stream['loopsToPair'], `${atStream}.loopsToPair`, 0),
+            pairs: list(stream['pairs'], `${atStream}.pairs`).map(
+              (value, index) => {
+                const pair = ints(
+                  value,
+                  `${atStream}.pairs[${index}]`,
+                  2,
+                  0,
+                  65_535
+                );
+                return [pair[0]!, pair[1]!] as const;
+              }
+            ),
+            registers: names.map(name => Number(name.slice(1)))
+          };
+        })
       };
     }
   );
@@ -250,6 +313,19 @@ export const readDionService = (
         };
       }
     ),
+    headTurns: new Map(
+      list(
+        record(body['headTurns'], `${kind}.headTurns`)['sequences'],
+        `${kind}.headTurns.sequences`
+      ).map((value, index) => {
+        const at = `${kind}.headTurns.sequences[${index}]`;
+        const raw = record(value, at);
+        return [
+          address(raw['value'], `${at}.value`),
+          ints(raw['counts'], `${at}.counts`, undefined, 1, 255)
+        ];
+      })
+    ),
     liftOff: ints(
       record(heights['liftOff'], `${kind}.heights.liftOff`)['heights'],
       `${kind}.heights.liftOff.heights`,
@@ -275,6 +351,18 @@ export const readDionService = (
         )['value'],
         `${kind}.openingState.elapsedSeconds.value`,
         0
+      ),
+      taxiProgress: int(
+        record(opening['taxi'], `${kind}.openingState.taxi`)['progress'],
+        `${kind}.openingState.taxi.progress`,
+        0,
+        65_535
+      ),
+      taxiRouteIndex: int(
+        record(opening['taxi'], `${kind}.openingState.taxi`)['routeIndex'],
+        `${kind}.openingState.taxi.routeIndex`,
+        0,
+        25
       )
     },
     route,

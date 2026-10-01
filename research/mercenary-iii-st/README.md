@@ -1,6 +1,6 @@
 # Mercenary III ST laboratory
 
-The reproducible Hatari harness and MIII-only decoders behind `payload/dion/` (#647). Facts from it belong to the **Mercenary III research baseline** pinned in [`config/baseline.json`](config/baseline.json). They are neither Damocles Working-Authority Evidence nor Authoritative Evidence.
+The reproducible Hatari harness and MIII-only decoders behind `payload/dion/` (#647, #648). Facts from it belong to the **Mercenary III research baseline** pinned in [`config/baseline.json`](config/baseline.json). They are neither Damocles Working-Authority Evidence nor Authoritative Evidence.
 
 Nothing here borrows the Damocles laboratory's code, catalogue or assets. Each format is read from Mercenary III's own reader, and that reader's address is cited in the decoder. Under [ADR 0002](../../docs/adr/0002-separate-rom-research-from-implementation.md), the decoders emit data with Research Provenance and translate no code. RAM, screenshots, logs and disassembly are Restricted Material, kept under the ignored `restricted/` root.
 
@@ -29,9 +29,10 @@ M3_RAM=$R/v6000.ram M3_OPENING=$R/start.ram M3_ENTRY_RAM=$R/entry.ram \
 | `ram.py` | Provenance-carrying reads | — |
 | `geometry.py` | Cells, structures, regions, details, ground, models | `$5600C`, `$5AD2C..$5B2D2`, `$54AEE..$54D20`, `$56204`, `$545AE..$549BA` |
 | `world.py` | `world.json`: the fifteen occupied cells, residents, palettes, glyphs, frame facts | Above, plus `$55C58`, `$5A578`, `$7CA2`, `$3E000` |
+| `sky.py` | `world.json`: METIS observer/phase, 1,868 star records, colours and empty horizon | #646, `$50B10`, `$50B66`, `$571A8` |
 | `panel.py` | `panel.json`: artwork, centre box, fonts, strings, readout fields | `$59C2C`, `$4ED8E`, `$53294`, per-field writers |
 | `text.py`, `scripts.py` | `messages.json`, `scripts.json` | `$52AC4`, `$52860..$53002` |
 | `sound.py` | `sound.json` | `$530FC`, `$4CB54`/`$4CB6C` |
 | `service.py` | `service.json` | `$41F18`, `$51CA2`, `$518AC` |
 
-The findings and their comparisons are reported in [the I1 content-boundary report](../../docs/research/mercenary-iii-i1-content-boundary.md).
+The findings and their comparisons are reported in [the I1 content-boundary report](../../docs/research/mercenary-iii-i1-content-boundary.md) and [the I2 implementation report](../../docs/research/mercenary-iii-i2-taxi-implementation.md).

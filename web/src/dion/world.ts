@@ -19,6 +19,7 @@ import {
   word,
   type Provenance
 } from './read.ts';
+import { readDionSky, type DionSky } from './sky.ts';
 
 /// The Mercenary III world document, `payload/dion/world.json`.
 ///
@@ -345,6 +346,7 @@ export interface DionWorld {
   /// `$7E4A`: the Q15 sine table model rotation reads, 256 steps a turn and 320
   /// entries long, so the cosine at +64 never wraps.
   readonly rotationTable: readonly number[];
+  readonly sky: DionSky;
   readonly source: DionSource;
   /// Structure records by geometry slot, then by `"sx,sz"` scale.
   readonly structures: ReadonlyMap<number, ReadonlyMap<string, DionStructure>>;
@@ -803,6 +805,7 @@ export const readDionWorldBody = (
     residents: list(raw['residents'], 'residents').map((item, index) =>
       readResident(item, `residents[${index}]`)
     ),
+    sky: readDionSky(raw['sky']),
     source,
     structures,
     ...readViewFacts(raw)

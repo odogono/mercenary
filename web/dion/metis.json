@@ -25,9 +25,9 @@
       "evidence": "Each of the ST's three-bit guns shown as round(n * 255 / 7), as the Damocles rendition does; the pinned Hatari shows 34n"
     },
     "nightFlip": {
-      "value": "day",
-      "provenance": "authored",
-      "evidence": "Placeholder until #646 validates the turn test and recovers the night sky; every slice checkpoint before 17850 is day"
+      "value": "phase-rule",
+      "provenance": "recovered",
+      "evidence": "#646; docs/research/mercenary-iii-taxi-night-sky.md, cached observer and tick-paced phase, sampled per frame"
     }
   },
   "coverage": [
@@ -284,18 +284,18 @@
       "evidence": "R2; $70148"
     },
     {
-      "item": "Night sky: stars, horizon line and sky Bodies",
-      "status": "gap",
+      "item": "Night stars and empty METIS horizon",
+      "status": "recovered",
       "gates": "I2",
-      "ticket": "#646",
-      "evidence": "The star pass $50B66, horizon pass $571A8 and the sky-Body matrix path are not decoded; the planner draws day colours only"
+      "evidence": "#646; pinned star, colour and observer records",
+      "in": "world.sky"
     },
     {
       "item": "Message tone character skip",
-      "status": "gap",
+      "status": "recovered",
       "gates": "I2",
-      "ticket": "#648",
-      "evidence": "R2 and the text decoder both leave the one-in-four skip unexplained"
+      "evidence": "#648; eight scroll columns per tick consume six-pixel glyphs, tone indices 0,2,3,4,6,7",
+      "in": "sound.programmes"
     },
     {
       "item": "Exact ST rasterisation: horizontal-edge rows, zero-area slivers, lines",
@@ -308,6 +308,12 @@
       "status": "waived",
       "gates": "I2",
       "evidence": "D1 item 5; the model is exported and drawn when the list reaches it"
+    },
+    {
+      "item": "Complete sky Body inventory",
+      "status": "waived",
+      "gates": "I2",
+      "evidence": "D1 item 5; #646 records the bounded night sky"
     }
   ]
 }

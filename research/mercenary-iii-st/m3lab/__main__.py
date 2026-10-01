@@ -75,6 +75,7 @@ def export(run: Path, out: Path) -> None:
     from .scripts import extract_scripts
     from .service import extract_service
     from .sound import extract_sound
+    from .sky import extract_sky
     from .text import extract_messages
     from .world import extract_world
     loaded = Ram.load(run / f'v{LOADED_VBL}.ram')
@@ -83,7 +84,7 @@ def export(run: Path, out: Path) -> None:
     header = {'schemaVersion': SCHEMA_VERSION, 'source': source(run, loaded, opening)}
     header['source']['capture']['entry'] = {'pc': f'${ENTRY[1]:05X}', 'ramSha256': entry.sha256}
     documents = {
-        'world': extract_world(loaded, opening),
+        'world': {**extract_world(loaded, opening), 'sky': extract_sky(loaded, opening)},
         'panel': extract_panel(loaded, entry),
         'messages': extract_messages(loaded),
         'scripts': extract_scripts(loaded),

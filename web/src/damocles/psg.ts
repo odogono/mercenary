@@ -1,5 +1,16 @@
+import {
+  ST_RESET_REGISTERS,
+  messageCharacter,
+  playKeyClick,
+  startDoor,
+  tickDoor,
+  writePeriod,
+  type PsgSink
+} from '../sound/stProgrammes.ts';
 import type { MusicOp, MusicTable } from './music.ts';
 import type { Effect } from './script.ts';
+
+export type { PsgSink } from '../sound/stProgrammes.ts';
 
 /// The Damocles sound driver, as recovered from the ST's 68000 code (#508, #514:
 /// `docs/research/damocles-lift-ride.md#what-the-programmes-play` and
@@ -36,10 +47,6 @@ export type DamoclesProgramme =
 
 export type DamoclesRequest = DamoclesCue | DamoclesProgramme;
 
-export interface PsgSink {
-  readonly write: (register: number, value: number) => void;
-}
-
 /// A table the driver's step routines `$04C722` (words) and `$04C73A` (bytes) walk: each entry
 /// holds its value for `count` VBLs, a count of zero ends the table, and `loop` is where the
 /// `$8000`/`$80` marker sends the walk once the last entry is spent.
@@ -47,44 +54,6 @@ interface StepTable {
   readonly entries: readonly (readonly [count: number, value: number])[];
   readonly loop: number | null;
 }
-
-/// `$04C43C`: the door tone's period, $3E8 and $41A a VBL each, for ever.
-const DOOR_PERIODS: StepTable = {
-  entries: [
-    [1, 0x03_e8],
-    [1, 0x04_1a]
-  ],
-  loop: 0
-};
-
-/// `$04C44A`: the door tone swells and falls, then holds 9 to 5 over and over (`$04C456`).
-const DOOR_START_LEVELS: StepTable = {
-  entries: [
-    [1, 10],
-    [1, 11],
-    [1, 13],
-    [1, 13],
-    [1, 11],
-    [1, 10],
-    [1, 9],
-    [1, 8],
-    [1, 7],
-    [1, 6],
-    [1, 5]
-  ],
-  loop: 6
-};
-
-/// `$04C466`: the door burst's four levels, then the table ends.
-const DOOR_STOP_LEVELS: StepTable = {
-  entries: [
-    [1, 12],
-    [1, 8],
-    [1, 4],
-    [1, 0]
-  ],
-  loop: null
-};
 
 /// `$04C1DC`: the hazard alarm's levels, 16 VBLs a loop.
 const ALARM_LEVELS: StepTable = {
@@ -104,12 +73,6 @@ const ALARM_LEVELS: StepTable = {
 const BUMP_STREAM = [
   0x0f_f0, 0x0f_e0, 0x0f_d0, 0x0f_c2, 0x0f_b0, 0x0f_a0, 0x0f_50, 0x0f_40,
   0xff_ff
-] as const;
-
-/// `$0508F8`: registers 0 to 12 as the reset `$0508BC` writes them. The mixer `$DA` leaves
-/// channel A's tone on, which the message tone needs and nothing else in the driver changes.
-const RESET_REGISTERS = [
-  0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x1f, 0xda, 0x00, 0x10, 0x00, 0x00, 0x00
 ] as const;
 
 /// A walk through one table: the counter `$04BF1E`/`$04BF25` and the pointer after it.
@@ -170,16 +133,9 @@ type ChannelC =
     }
   | { readonly kind: 'alarm-step'; readonly levels: TableWalk }
   | {
+      elapsed: number;
       readonly kind: 'start-step' | 'stop-step';
-      readonly levels: TableWalk;
-      readonly periods: TableWalk;
     };
-
-/// The 68000's `move.w d7,d6; ror.w #8,d7` split of a period into fine and coarse registers.
-const writePeriod = (sink: PsgSink, fine: number, period: number): void => {
-  sink.write(fine, period & 0xff);
-  sink.write(fine + 1, (period >> 8) & 0xff);
-};
 
 /// The tune as the player needs it: the payload's voices and tables, and the bytes at address
 /// 0 that a voice with no table walks (`docs/research/damocles-sound-programmes.md`).
@@ -356,10 +312,11 @@ class MusicPlayer {
 /// and the sub-cell shift `$0523B6`.
 class MessageReveal {
   private counter: number | null = null;
-  private cursor = 0;
-  private shift = -2;
+  private readonly text: string;
 
-  constructor(private readonly text: string) {}
+  constructor(text: string) {
+    this.text = text.split('\0')[0]!;
+  }
 
   /// One VBL: the character code whose tone it sounds, `'hold'` when it writes nothing, or
   /// `'silent'` once the scroll-in is over.
@@ -376,27 +333,7 @@ class MessageReveal {
     if (this.counter > 37) {
       return 'silent';
     }
-    // `$052424` pitches from the first fetch. A spent shift fetches again at `$0525C4` to start
-    // the next glyph pair and resets to 4, and each VBL takes 2 off it, so the pointer runs 2, 1,
-    // 1: the tones are characters 0, 2, 3, 4, 6, 7 and so on, never 1, 5, 9.
-    const code = this.fetch();
-    if (this.shift < 0) {
-      this.fetch();
-      this.shift = 4;
-    }
-    this.shift -= 2;
-    return code;
-  }
-
-  /// `$05234C`. At the terminator it answers a space and leaves the pointer on the NUL. No
-  /// record holds a numeric field (a code of `$61` or above), so that path is not followed.
-  private fetch(): number {
-    const code = this.text.charCodeAt(this.cursor);
-    if (Number.isNaN(code) || code === 0) {
-      return 0x20;
-    }
-    this.cursor += 1;
-    return code;
+    return messageCharacter(this.text, this.counter).charCodeAt(0);
   }
 }
 
@@ -432,9 +369,11 @@ export class DamoclesPsgDriver {
   powerOn(sink: PsgSink): void {
     this.channelB = { kind: 'idle' };
     this.channelC = { kind: 'off' };
-    this.mixer = RESET_REGISTERS[7];
+    this.mixer = ST_RESET_REGISTERS[7];
     if (!this.musicPlaying) {
-      RESET_REGISTERS.forEach((value, register) => sink.write(register, value));
+      ST_RESET_REGISTERS.forEach((value, register) =>
+        sink.write(register, value)
+      );
     }
   }
 
@@ -667,11 +606,8 @@ export class DamoclesPsgDriver {
       case 'effect':
         // `$04C556` and its tail `$04C5EC`: a channel B tone of period $60 under envelope
         // shape 9 of period $1F00, one decay of about a second.
-        this.envelopePeriod(sink, 0x1f_00);
-        writePeriod(sink, 2, 0x00_60);
-        // Channel B tone on, channel B noise off.
-        this.writeMixer(sink, (this.mixer & 0xfd) | 0x10);
-        this.envelopeTail(sink);
+        this.mixer = playKeyClick(sink, this.mixer);
+        this.channelB = { kind: 'idle' };
         return;
       case 'spell':
         // `$04BF5C`: tone B, noise and envelope under a $8021 decay of 4.2 s.
@@ -751,57 +687,22 @@ export class DamoclesPsgDriver {
     switch (c.kind) {
       case 'off':
         return;
-      case 'start': {
-        // `$04C37A`: period $400, channel C tone and noise both on, level 15. The step it falls
-        // into rewrites the period and level in the same VBL.
-        writePeriod(sink, 4, 0x04_00);
-        this.writeMixer(sink, this.mixer & 0xdb);
-        sink.write(10, 15);
-        this.channelC = {
-          kind: 'start-step',
-          levels: new TableWalk(DOOR_START_LEVELS),
-          periods: new TableWalk(DOOR_PERIODS)
-        };
-        this.stepChannelC(sink);
-        return;
-      }
-      case 'start-step': {
-        // `$04C3EA`: the fastest noise, and each table's next step.
-        sink.write(6, 0);
-        const period = c.periods.tick();
-        if (typeof period === 'number') {
-          writePeriod(sink, 4, period);
-        }
-        const level = c.levels.tick();
-        if (typeof level === 'number') {
-          sink.write(10, level);
-        }
-        return;
-      }
+      case 'start':
       case 'stop': {
-        // `$04C2B8`: noise period $1F, channel C noise on and tone off.
-        writePeriod(sink, 4, 0x04_00);
-        sink.write(6, 0x1f);
-        this.writeMixer(sink, (this.mixer & 0xdf) | 0x04);
+        this.mixer = startDoor(sink, this.mixer, c.kind === 'start');
         this.channelC = {
-          kind: 'stop-step',
-          levels: new TableWalk(DOOR_STOP_LEVELS),
-          periods: new TableWalk(DOOR_PERIODS)
+          elapsed: 0,
+          kind: c.kind === 'start' ? 'start-step' : 'stop-step'
         };
         this.stepChannelC(sink);
         return;
       }
+      case 'start-step':
       case 'stop-step': {
-        // `$04C328`: as the tone's step, less the noise write; the burst's end rearms the vector.
-        const period = c.periods.tick();
-        if (typeof period === 'number') {
-          writePeriod(sink, 4, period);
-        }
-        const level = c.levels.tick();
-        if (level === 'end') {
+        const ended = tickDoor(sink, c.kind === 'start-step', c.elapsed);
+        c.elapsed += 1;
+        if (ended) {
           this.channelC = { kind: 'restore' };
-        } else if (level !== undefined) {
-          sink.write(10, level);
         }
         return;
       }
