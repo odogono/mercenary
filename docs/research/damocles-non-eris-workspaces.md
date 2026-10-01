@@ -81,8 +81,8 @@ capture stands.
 | TOLOSA | `ERIS BANK REPOSITORY` | `tolosa` | 14 | 14 | 2737,1571 | `$12` |
 | VESTA | `POLITBURO CITY` | `vesta` | 19 | 24 | 1083,307 | `$64` |
 
-Eris keeps its 76 first-world surface assemblies and 123 ground instances, and
-the authored Birmingham Island map its 82, neither of which this pass touches.
+Eris keeps its 76 first-world surface assemblies and 123 ground instances,
+which this pass does not touch.
 
 **Gaea now carries two live windows.** `UR CITY` at origin 512,1792 and
 `CHALDEA METROPOLIS` at 256,768 place into one body surface at their own world

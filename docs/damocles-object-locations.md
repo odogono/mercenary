@@ -47,7 +47,7 @@ be carried, boarded, dropped, or moved by scripts.
 |  13 | 22 CV | Gaea | Chaldea Metropolis | — | `-248, -1016` | — | `17336390, 50889719` | no |
 |  14 | AUTHOR'S CHAIR | Dion | Birmingham Island | `dion-surface-de` | `goto 14 13` | 0 | `214073125, 86998619` | yes |
 |  15 | NEUTRON FUEL | — | Out of world | — | — | — | — | yes |
-|  26 | COOKER | Gaea | Ur City | `gaea-ur-city-surface-39` | `goto 9 3` † | 0 | `34176787, 117670408` | yes |
+|  26 | COOKER | Gaea | Ur City | `gaea-ur-city-surface-39` | `goto 9 3` | 0 | `34176787, 117670408` | yes |
 |  27 | SETTEE | Gaea | Chaldea Metropolis | BANK OF GAEA HQ | `-250, -1018` | 1 | `17201121, 50756597` | yes |
 |  28 | KITCHEN SINK | Gaea | Chaldea Metropolis | MARILLION APARTMENTS | `-252, -1023` | 0 | `17071734, 50433728` | yes |
 |  30 | DOOR KEY A | Gaea | Chaldea Metropolis | `gaea-chaldea-metropolis-surface-d4` | `-252, -1011` | 2 | `17071714, 51220044` | yes |
@@ -72,7 +72,7 @@ be carried, boarded, dropped, or moved by scripts.
 |  49 | READING GLASSES | Lucan | Unnamed Island (100, 3923) | — | `-3796, 3930` | — | `6610330, 257567824` | yes |
 |  50 | BATH | Dion | Birmingham Island | `dion-surface-09` | `goto 9 0` | 0 | `213746603, 86143933` | yes |
 |  51 | TOWEL RAIL | Dion | Birmingham Island | `dion-surface-09` | `goto 9 0` | 0 | `213746587, 86143735` | yes |
-|  52 | SHOWER | Gaea | Ur City | GUM STORE | `goto 1 3` † | 0 | `33652110, 117670314` | yes |
+|  52 | SHOWER | Gaea | Ur City | GUM STORE | `goto 1 3` | 0 | `33652110, 117670314` | yes |
 |  53 | BLUE BEACON LOCR | Mentor | Mentor Waystation | `mentor-surface-12` | `goto 2 1` | 0 | `184780467, 17663034` | yes |
 |  54 | RED BEACON LOCTR | Vesta | Politburo City | — | `goto 4 4` | — | `71270404, 20414452` | yes |
 |  55 | GOLD | Solon | Solon Base | PENN COLLEGE | `goto 1 1` | 10 | `260536304, 91586786` | yes |
@@ -97,8 +97,8 @@ be carried, boarded, dropped, or moved by scripts.
 |  75 | EXPLOSIVE | Eris | Bare Island | HANTZEN LABORATORY | `3014, 389` | 3 | `201754708, 33915790` | yes |
 |  76 | EXPLOSIVE | Eris | Snow Island | HATHAWAYS WINE BAR | `-26, 932` | 10 | `2523811, 69499978` | yes |
 |  77 | EXPLOSIVE | Dion | Dion North | `dion-dion-north-surface-50` | `64, 69` | 0 | `217350143, 90669269` | yes |
-|  78 | EXPLOSIVE | Gaea | Ur City | INDUSTRIAL CO-OP HSE1 | `goto 1 2` † | 10 | `33649940, 117605893` | yes |
-|  79 | EXPLOSIVE | Gaea | Ur City | INDUSTRIAL CO-OP HSE2 | `goto 5 2` † | 10 | `33912120, 117605922` | yes |
+|  78 | EXPLOSIVE | Gaea | Ur City | INDUSTRIAL CO-OP HSE1 | `goto 1 2` | 10 | `33649940, 117605893` | yes |
+|  79 | EXPLOSIVE | Gaea | Ur City | INDUSTRIAL CO-OP HSE2 | `goto 5 2` | 10 | `33912120, 117605922` | yes |
 |  80 | EXPLOSIVE | Eris | Bare Island | HANTZEN LABORATORY | `3014, 389` | 3 | `201754708, 33915790` | yes |
 |  81 | EXPLOSIVE | Eris | Bare Island | HANTZEN LABORATORY | `3014, 389` | 3 | `201754666, 33915298` | yes |
 |  82 | EXPLOSIVE | Theon | Theon Base | BURDOCK MEDIA LINK | `goto 2 3` | 0 | `167019582, 218726695` | yes |
@@ -228,8 +228,8 @@ be carried, boarded, dropped, or moved by scripts.
 | 207 | TABLE | Eris | Velos City | ERIS TV STUDIOS | `1476, 641` | 2 | `100959752, 50431657` | yes |
 | 208 | TABLE | Clotho | Clotho New Town | LLOYDS GP4 INVESTMENT | `goto 1 0` | 2 | `158760740, 19690164` | yes |
 | 209 | TABLE | Eris | Capital City | `eris-surface-12` | `goto 2 1` | 0 | `4358071, 8484430` | yes |
-| 210 | CHAIR | Gaea | Ur City | INDUSTRIAL CO-OP HSE1 | `goto 1 2` † | 0 | `33650164, 117605113` | yes |
-| 211 | CHAIR | Gaea | Ur City | INDUSTRIAL CO-OP HSE2 | `goto 5 2` † | 0 | `33912179, 117605263` | yes |
+| 210 | CHAIR | Gaea | Ur City | INDUSTRIAL CO-OP HSE1 | `goto 1 2` | 0 | `33650164, 117605113` | yes |
+| 211 | CHAIR | Gaea | Ur City | INDUSTRIAL CO-OP HSE2 | `goto 5 2` | 0 | `33912179, 117605263` | yes |
 | 212 | CHAIR | Eris | Bare Island | HANTZEN ADMIN | `3015, 388` | 9 | `201816980, 33850690` | yes |
 | 213 | CHAIR | Eris | Velos City | ERIS TV STUDIOS | `1476, 641` | 9 | `100960433, 50431441` | yes |
 | 214 | CHAIR | Clotho | Clotho New Town | LLOYDS GP4 INVESTMENT | `goto 1 0` | 2 | `158760738, 19690012` | yes |
@@ -250,8 +250,8 @@ be carried, boarded, dropped, or moved by scripts.
 | 229 | MANAGERS CHAIR | Gaea | Chaldea Metropolis | BANK OF GAEA HQ | `-250, -1018` | 1 | `17201775, 50755974` | yes |
 | 230 | PROCESSORS DESK | Vesta | Politburo City | VESTA PARLIAMENT | `goto 4 6` | 1 | `71272066, 20548237` | yes |
 | 231 | PROCESSORS DESK | Metis | Metis Moonbase | DOOBERRYS SOLICITORS | `goto 0 6` | 9 | `165642071, 70288880` | yes |
-| 232 | PROCESSORS DESK | Gaea | Ur City | INDUSTRIAL CO-OP HSE2 | `goto 5 2` † | 0 | `33912179, 117605353` | yes |
-| 233 | PROCESSORS DESK | Gaea | Ur City | INDUSTRIAL CO-OP HSE1 | `goto 1 2` † | 0 | `33650162, 117605183` | yes |
+| 232 | PROCESSORS DESK | Gaea | Ur City | INDUSTRIAL CO-OP HSE2 | `goto 5 2` | 0 | `33912179, 117605353` | yes |
+| 233 | PROCESSORS DESK | Gaea | Ur City | INDUSTRIAL CO-OP HSE1 | `goto 1 2` | 0 | `33650162, 117605183` | yes |
 | 234 | AUTHORS DESK | Dion | Birmingham Island | `dion-surface-de` | `goto 14 13` | 0 | `214073154, 86998749` | yes |
 | 235 | PROCESSORS DESK | Eris | Velos City | ERIS TV STUDIOS | `1476, 641` | 1 | `100960077, 50431519` | yes |
 | 236 | MANAGERS DESK | Eris | Capital City | LAWSON BANK HQ | `goto 15 12` | 1 | `5211719, 9208233` | yes |
@@ -274,12 +274,6 @@ be carried, boarded, dropped, or moved by scripts.
 | 253 | Unnamed (model of slot 251) | — | Out of world | — | — | — | — | no |
 | 254 | Unnamed | — | Out of world | — | — | — | — | no |
 | 255 | Unnamed (model of slot 254) | — | Out of world | — | — | — | — | no |
-
-† Ur City holds two overlapping structure sets at the same cells: the
-`gaea-surface-*` set and the `gaea-ur-city-surface-*` set captured from the
-live workspace. At these cells the port binds the `gaea-surface-*` structure, so
-the resident's host is never bound and the object cannot be found by walking
-there. `get` still takes it.
 
 ## Bodies and switch targets
 

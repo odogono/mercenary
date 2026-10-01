@@ -118,28 +118,30 @@ test('99 Chevy is listed on Gaea and links to its key', async ({ page }) => {
     'href',
     '/damocles/atlas?body=gaea&instance=object-slot-2&x=519.49&z=1793.49&span=1'
   );
-  // The Body's own placements stay here as a list, each reaching its own entry: 373 of them on
+  // The Body's own placements stay here as a list, each reaching its own entry: 291 of them on
   // Gaea, which is the one thing the Atlas is not for (#415).
   await expect(page.locator('#placement-note')).toContainText(
-    '373 recovered placements · Body Coordinates'
+    '291 recovered placements · Body Coordinates'
   );
-  await expect(page.locator('#locations a')).toHaveCount(373);
+  await expect(page.locator('#locations a')).toHaveCount(291);
   await expect(
     page
       .locator('#locations')
-      .getByRole('link', { name: /^ELMDON SPACEPORT · / })
-  ).toHaveAttribute('href', /instance=gaea-surface-40/);
+      .getByRole('link', { name: /^INDUSTRIAL CO-OP HSE2 · / })
+  ).toHaveAttribute('href', /instance=gaea-ur-city-surface-25/);
   await expect(
     page
       .locator('#locations')
-      .getByRole('link', { name: /^Gaea surface cell 8,2 · / })
-  ).toHaveAttribute('href', /instance=gaea-surface-28/);
-  await page.goto('/catalogue?instance=gaea-surface-40');
-  await expect(page.locator('#details')).toContainText('ELMDON SPACEPORT');
+      .getByRole('link', { name: /^HANTZENS NEW HOUSE · / })
+  ).toHaveAttribute('href', /instance=gaea-ur-city-surface-17/);
+  await page.goto('/catalogue?instance=gaea-ur-city-surface-25');
+  await expect(page.locator('#details')).toContainText('INDUSTRIAL CO-OP HSE2');
   await expect(page.locator('#details')).toContainText(
-    'GAEA · 512.484, 0.000, 1796.523 · Body Coordinates'
+    'GAEA · 517.461, 0.000, 1794.496 · Body Coordinates'
   );
-  await expect(page.locator('#ledger')).toContainText('Gaea Birmingham Island');
+  await expect(page.locator('#ledger')).toContainText(
+    'GAEA live $ABDC (UR CITY)'
+  );
   await expect(page.locator('#ledger')).toContainText('title-screen RAM');
   await expect(page.locator('#ledger')).toContainText('NULL');
   await expect(page.locator('#ledger')).toContainText('Building detail');

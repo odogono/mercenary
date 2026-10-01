@@ -169,9 +169,9 @@ describe('a Body’s footprints', () => {
     const all = bodies.flatMap(
       index => readBodyFootprints(data, modelsOf(data), index).drawn
     );
-    expect(all).toHaveLength(720);
+    expect(all).toHaveLength(638);
     expect(all.filter(footprint => footprint.source === 'plan')).toHaveLength(
-      717
+      635
     );
     expect(
       all.filter(footprint => footprint.source === 'exterior')

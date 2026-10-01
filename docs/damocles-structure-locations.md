@@ -41,24 +41,24 @@ instead.
 | THE TOMB OF SETH | Acheron | Acheron Retreat | `goto 1 1` | 0 | `acheron-surface-11` |
 | ANNIES BAR | Dion | Dion North | `70, 64` | 0, 10 | `dion-dion-north-surface-06` |
 | ANNIES BAR | Dion | Dion East | `70, -16` | 0, 10 | `dion-dion-east-surface-06` |
+| AUTHORS HOUSE | Dion | Birmingham Island | `goto 14 13` | 0 | `dion-surface-de` |
+| ELMDON SPACEPORT | Dion | Birmingham Island | `goto 0 4` | — | `dion-surface-40` |
+| ERIS PO TEMP HQ | Dion | Birmingham Island | `goto 0 10` | 0, 1, 2, 3, 4, 5, 10 | `dion-surface-a0` |
+| GAEA BANK | Dion | Birmingham Island | `goto 1 11` | 0–2 | `dion-surface-b1` |
+| LAWSON BANK | Dion | Birmingham Island | `goto 0 7` | 0, 1 | `dion-surface-70` |
+| NOVAGEN OFFICE | Dion | Birmingham Island | `goto 2 11` | 0, 1 | `dion-surface-b2` |
+| VERDANT PARTY HQ | Dion | Birmingham Island | `goto 3 14` | 0–9 | `dion-surface-e3` |
 | ACTIVE MARKETING | Clotho | Clotho New Town | `goto 2 1` | 0–4 | `clotho-surface-12` |
 | LLOYDS GP4 INVESTMENT | Clotho | Clotho New Town | `goto 1 0` | 0–8 | `clotho-surface-01` |
-| AUTHORS HOUSE | Gaea | Ur City | `goto 14 13` | 0 | `gaea-surface-de` |
 | BANK OF GAEA HQ | Gaea | Chaldea Metropolis | `-250, -1018` | 0, 1, 2, 10 | `gaea-chaldea-metropolis-surface-66` |
-| ELMDON SPACEPORT | Gaea | Ur City | `goto 0 4` | — | `gaea-surface-40` |
-| ERIS PO TEMP HQ | Gaea | Ur City | `goto 0 10` | 0, 1, 2, 3, 4, 5, 10 | `gaea-surface-a0` |
 | ESTATE AGENTS | Gaea | Chaldea Metropolis | `-250, -1016` | 0–9 | `gaea-chaldea-metropolis-surface-86` |
-| GAEA BANK | Gaea | Ur City | `goto 1 11` | 0–2 | `gaea-surface-b1` |
 | GUM STORE | Gaea | Ur City | `goto 1 3` | 0, 1 | `gaea-ur-city-surface-31` |
 | HANTZENS NEW HOUSE | Gaea | Ur City | `goto 7 1` | 0 | `gaea-ur-city-surface-17` |
 | INDUSTRIAL CO-OP HSE1 | Gaea | Ur City | `goto 1 2` | 0, 1, 2, 3, 4, 5, 10 | `gaea-ur-city-surface-21` |
 | INDUSTRIAL CO-OP HSE2 | Gaea | Ur City | `goto 5 2` | 0, 1, 2, 3, 4, 5, 10 | `gaea-ur-city-surface-25` |
-| LAWSON BANK | Gaea | Ur City | `goto 0 7` | 0, 1 | `gaea-surface-70` |
 | MARILLION APARTMENTS | Gaea | Chaldea Metropolis | `-252, -1023` | 0–2 | `gaea-chaldea-metropolis-surface-14` |
 | MEGA TRADING | Gaea | Chaldea Metropolis | `-251, -1018` | 0 | `gaea-chaldea-metropolis-surface-65` |
-| NOVAGEN OFFICE | Gaea | Ur City | `goto 2 11` | 0, 1 | `gaea-surface-b2` |
 | TRADE COMMISSION | Gaea | Chaldea Metropolis | `-248, -1016` | 0–9 | `gaea-chaldea-metropolis-surface-88` |
-| VERDANT PARTY HQ | Gaea | Ur City | `goto 3 14` | 0–9 | `gaea-surface-e3` |
 | IDI PALACE OF FUN | Cyclopes | Idi Centre | `goto 2 2` | 0 | `cyclopes-surface-22` |
 | CAPITAL SPACEPORT | Eris | Capital City | `goto 7 8` | — | `eris-surface-87` |
 | EKMPV & S AD AGENCY | Eris | Velos City | `1476, 645` | 0–9 | `eris-velos-city-surface-54` |
@@ -315,27 +315,13 @@ Outside the `goto` window: these are the cells `where` reports there.
 
 #### Ur City
 
-Ur City holds two overlapping structure sets at the same cells: the
-`gaea-surface-*` set and the `gaea-ur-city-surface-*` set captured from the
-live workspace. Where both occupy a cell, the port binds whichever it meets
-first, so some cells below are listed twice.
-
 Inside the `goto` window: `switch gaea-ur-city-4-2`, then `goto` the cell.
 
 | Model | Floors | Cells |
 | --- | --- | --- |
-| `structure-010ea8` | 0, 1 | `2 11` |
-| `structure-011ada` | 0, 10 | `1 5` |
-| `structure-012136` | — | `5 3`, `13 3`, `6 5`, `7 5`, `11 5`, `12 5`, `6 12`, `12 12` |
-| `structure-012b60` | 0–9 | `3 14` |
-| `structure-0159d0` | — | `4 1`, `9 1`, `14 1`, `7 2`, `8 2`, `10 2`, `11 2`, `9 3`, `5 4`, `13 4`, `8 6`, `9 6`, `10 6`, `8 8`, `9 8`, `10 8`, `5 10`, `13 10`, `9 11`, `7 12`, `8 12`, `10 12`, `11 12`, `4 13`, `9 13` |
 | `structure-015eea` | — | `9 3` |
 | `structure-0172f4` | 0–2 | `0 2`, `0 3` |
-| `structure-01a690` | 0 | `1 3`, `1 4` |
-| `structure-01a73e` | 0, 1, 2, 3, 4, 10 | `2 9` |
 | `structure-01c508` | 0, 1 | `1 3` |
-| `structure-01d1c0` | 0 | `1 2` |
-| `structure-01d1fe` | — | `0 4` |
 | `structure-01d394` | 0, 10 | `3 0`, `9 2` |
 | `structure-01d4ae` | 0 | `5 1`, `8 2` |
 | `structure-01d4c0` | 0 | `4 1`, `6 1`, `4 2`, `6 2`, `7 2` |
@@ -345,25 +331,6 @@ Inside the `goto` window: `switch gaea-ur-city-4-2`, then `goto` the cell.
 | `structure-01d508` | 0–2 | `2 0`, `5 0` |
 | `structure-01d51a` | 0 | `0 1` |
 | `structure-01d52c` | 0 | `7 1` |
-| `structure-01d716` | 0 | `0 5` |
-| `structure-01d728` | 0 | `0 9` |
-| `structure-01d73a` | 0, 1 | `0 7` |
-| `structure-01d758` | 0, 1, 2, 3, 4, 5, 10 | `0 10` |
-| `structure-01d76a` | 0 | `1 12` |
-| `structure-01d77c` | 0, 1 | `2 12` |
-| `structure-01d78e` | 0, 1 | `2 2` |
-| `structure-01d7a0` | 0 | `2 3`, `2 4`, `1 6`, `2 6`, `1 8`, `2 8` |
-| `structure-01d7b2` | 0–2 | `1 11` |
-| `structure-01d7d0` | 0 | `2 5` |
-| `structure-01d7e2` | 0 | `1 9` |
-| `structure-01da22` | 0 | `6 2`, `12 2`, `6 9`, `7 9`, `11 9`, `12 9`, `5 11`, `13 11` |
-| `structure-01da34` | 0 | `9 5`, `9 10` |
-| `structure-01da46` | 0 | `9 4`, `9 9` |
-| `structure-01da58` | 0 | `5 2`, `5 9`, `7 10`, `11 10` |
-| `structure-01da6a` | 0 | `7 4`, `11 4`, `13 5`, `13 12` |
-| `structure-01da7c` | 0 | `13 2`, `13 9` |
-| `structure-01da8e` | 0 | `5 5`, `5 12` |
-| `structure-01daa0` | 0 | `14 13` |
 
 #### Unnamed Island (3072, 256)
 

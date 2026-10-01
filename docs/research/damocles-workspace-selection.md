@@ -240,13 +240,10 @@ byte is `$17`. Because its Association B second byte is zero, the surface path
 does not consume the structure-group selector used by interior residents.
 
 The recovered Gaea origin `(512, 1792)` is derived from Chevy's coordinate
-phase and is also reproduced by the live UR City workspace. It is therefore a
-shared grid phase/coordinate frame, not an absolute island identifier. The
-authored Birmingham stream is empty at `$17`, while the UR City `$ABDC` table
-has HANTZENS NEW HOUSE there. No independent runtime binding selects either
-map for Chevy, so its island assignment remains **Unresolved**. The catalogue's
-Birmingham binding is a documented map-phase choice, not proof that Chevy is
-on Birmingham Island.
+phase and is also reproduced by the live UR City workspace. The BIRMINGHAM
+ISLAND stream once bound to the same phase is structure group `$02`, Dion's
+island ([#673](https://github.com/odogono/mercenary/issues/673)), so UR City is the only Gaea map there and Chevy stands in its
+window.
 
 This leaves the surface and interior conclusions separate:
 

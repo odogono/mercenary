@@ -52,10 +52,12 @@ PYTHONPATH=research/damocles-st python3 -m damocleslab.catalogue \
 - Occupied `$ABDC` cells: **140**. Instance IDs are `dion-surface-{cell}` and
   `dion-ground-{cell}`. The current cell is unnamed `dion-surface-32` /
   `structure-01d7a0`.
-- `$7A6C` still names first-world **BIRMINGHAM ISLAND** (`$23E57`). Those place
-  records already belong to Gaea. The catalogue does not retarget them onto
-  Dion or label Dion cells ELMDON SPACEPORT / LAWSON BANK / etc. Dion's own
-  named-area list is unresolved.
+- `$7A6C` names **BIRMINGHAM ISLAND** (`$23E57`). That is group `$02`'s own
+  area list, not a stale label: `$794E` is `$02`, and the island table binds
+  group `$02` to this island. Its seven places (ELMDON SPACEPORT, LAWSON BANK,
+  ERIS PO TEMP HQ, GAEA BANK, NOVAGEN OFFICE, AUTHORS HOUSE, VERDANT PARTY HQ)
+  name `dion-surface-{cell}` instances. Until [#673](https://github.com/odogono/mercenary/issues/673) they were attached to
+  Gaea, where the same stream had been plotted at the wrong origin.
 - Surface-assembly and building-detail pointer tables are byte-identical to the
   first-world load. Unique object addresses are unchanged. This workspace is
   not a second model bank.

@@ -482,7 +482,7 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
       // Gaea's two recovered windows, UR CITY and CHALDEA METROPOLIS, both place
       // into one Body surface; the frame draws only the occupied cell's (#172).
       islandTriangles: 0,
-      placements: 373,
+      placements: 291,
       pose: 'gaea-ur-city-4-2',
       triangles: 495
     },

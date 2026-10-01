@@ -1052,8 +1052,9 @@ label text, not a Targ `world.json` road grid.
 
 Exact city census and the binary link from place record → body index remain
 **Unresolved** after one follow-up on the best lead (control-byte meaning),
-except for Gaea Birmingham Island: the catalogue now recovers that area's
-`$FF`-terminated assembly map and seven source names from this pool. See
+except for BIRMINGHAM ISLAND: that area's `$FF`-terminated assembly map and
+seven source names in this pool are structure group `$02`, Dion's island, which
+the live Dion capture places ([#673](https://github.com/odogono/mercenary/issues/673)). See
 [catalogue extraction](damocles-catalogue.md).
 
 ### Interiors — Partially confirmed / graph Unresolved

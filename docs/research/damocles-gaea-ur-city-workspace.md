@@ -12,8 +12,7 @@ terms in `CONTEXT.md`.
 
 **In scope:** carving ST RAM from a Hatari 2.6 GUI memory snapshot; placing the
 live `$00ABDC` surface assemblies and `$01E000` ground records of UR City
-without treating them as a new geometry bank and without replacing the authored
-Birmingham Island `gaea-surface-{cell}` identities.
+without treating them as a new geometry bank.
 
 **Out of scope:** other Gaea islands; other bodies' live workspaces; unpacking
 Pasti STX tracks; claiming `coverage.complete`.
@@ -55,11 +54,14 @@ City.
 - `$7A6C` names UR CITY. The area list includes HANTZENS NEW HOUSE at cell `$17`
   (`place-024416`), INDUSTRIAL CO-OP HSE1, INDUSTRIAL CO-OP HSE2, and GUM STORE.
   The current cell `$24` is occupied but unnamed.
-- Occupied `$ABDC` cells: **22**. The authored Birmingham Island map already
-  uses `gaea-surface-{cell}` (82 assemblies). Live UR City therefore uses
-  `gaea-ur-city-surface-{cell}` and `gaea-ur-city-ground-{cell}` so Birmingham
-  identities never change. Cell `$17` is empty in the Birmingham stream (99
-  CHEVY) and occupied here by HANTZENS NEW HOUSE.
+- Occupied `$ABDC` cells: **22**, published as `gaea-ur-city-surface-{cell}`
+  and `gaea-ur-city-ground-{cell}`. Cell `$17` is occupied by HANTZENS NEW
+  HOUSE. The bare `gaea-surface-{cell}` IDs are retired ([#673](https://github.com/odogono/mercenary/issues/673)): they were the
+  82 assemblies of the BIRMINGHAM ISLAND stream, which is structure group `$02`
+  and belongs to Dion's island at 3252,1314. Plotted on Gaea at this origin, they
+  stood over UR City and drew a second structure in its cells (a house beside the
+  tower at cell `$25`). The capture at cell `$25`, `damocles.gaea.5-2.sav`, holds
+  only slot `$AF` there.
 - Surface-assembly and building-detail pointer tables are byte-identical to the
   first-world load. Unique object addresses are unchanged. This workspace is
   not a second model bank.
@@ -67,9 +69,8 @@ City.
   `ground-{addr}-{transform}` identities. Workspace-local fills use
   `gaea-ground-{addr}-{transform}`. This extract adds **18** workspace-local
   ground models and **38** plotted UR City ground instances.
-- The recovered Gaea 16×16 origin matches the Birmingham Chevy phase (world
-  origin 512, 1792). The two maps share that body-local origin qualifier; they
-  are not merged into one island.
+- The recovered Gaea 16×16 origin matches 99 CHEVY's resident phase (world
+  origin 512, 1792), so Chevy stands in UR City's window.
 
 The coverage ledger remains incomplete: other Gaea islands and other bodies'
 live `$ABDC` workspaces are unexplored.

@@ -104,16 +104,15 @@ to them.
   `gaea-ur-city-4-2` pose remains the evidenced standing position.
 - **DION / Birmingham Island:** candidate match. The guide puts transporter 2
   at `03/14`; `dion-transporter` is `$E3` in the same confirmed window as
-  `dion-2-3`. However, the [Dion note](damocles-dion-workspace.md) explicitly
-  leaves the named-area list unresolved and warns against retargeting the
-  first-world Birmingham labels currently attributed to Gaea. Record the
-  agreement without renaming that workspace. Dion North (`~807/586`) and
+  `dion-2-3`. The [Dion note](damocles-dion-workspace.md) now names the window
+  BIRMINGHAM ISLAND: it is group `$02`, and `$7A6C`'s area list is that group's
+  own ([#673](https://github.com/odogono/mercenary/issues/673)). Dion North (`~807/586`) and
   Dion East (`~810/566`) remain separate uncaptured settlement leads.
 - **GAEA / Chaldea:** candidate for `gaea-transporter`. The guide puts cube 6
   at `08/08` in Chaldea (`~065/440`); the pose and transporter slot 70 agree
   on `$88`, implying origin `256,768`. The ledger has not recovered this
   workspace's named-area identity. Do not merge it into Ur City's `512,1792`
-  window or resolve the existing Gaea/Birmingham attribution from this lead.
+  window.
 - **ERIS / capital and VESTA / Politburo City:** guide cells `07/08` / `11/08`
   on Eris and government building `04/06` on Vesta agree with existing poses.
   Vesta's named area and Parliament cell are independently recorded in the

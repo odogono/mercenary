@@ -1182,17 +1182,18 @@ it('places only residents selected by the native surface-body association', asyn
   });
   expect(chevy.reason).toContain('native surface-resident selector');
   expect(chevy.location!.place).toBeNull();
-  const gaeaAssemblies = data.instances.filter(instance =>
-    instance.id.startsWith('gaea-surface-')
-  );
-  expect(gaeaAssemblies).toHaveLength(82);
+  // BIRMINGHAM ISLAND is Dion's group $02, not a Gaea map, so no bare `gaea-surface-`
+  // identity is published (#673).
+  expect(
+    data.instances.some(instance => instance.id.startsWith('gaea-surface-'))
+  ).toBe(false);
   // Gaea carries two recovered windows: UR CITY at origin 512,1792 and CHALDEA
   // METROPOLIS at 256,768 (#172), and its group $0E island at 3072,256 is replayed from
   // the image. All place into one Body surface at their own world coordinates, which is
   // why this count covers more than one map.
   expect(
     data.instances.filter(instance => instance.location?.body === 'body-8')
-  ).toHaveLength(373);
+  ).toHaveLength(291);
   expect(
     data.instances.some(instance => instance.id === 'gaea-ur-city-surface-24')
   ).toBe(true);
@@ -1200,46 +1201,26 @@ it('places only residents selected by the native surface-body association', asyn
     data.instances.find(instance => instance.id === 'gaea-ur-city-surface-17')!
       .name
   ).toBe('HANTZENS NEW HOUSE');
-  for (const id of [
-    'gaea-surface-26',
-    'gaea-surface-27',
-    'gaea-surface-28',
-    'gaea-surface-40'
-  ]) {
-    expect(gaeaAssemblies.some(instance => instance.id === id)).toBe(true);
-  }
-  expect(
-    gaeaAssemblies.some(instance => instance.id === 'gaea-surface-17')
-  ).toBe(false);
-  // The last five are CHALDEA METROPOLIS, Gaea's second recovered window (#172).
-  // They are recovered place records from that window's own area list, not names
-  // extended from Birmingham Island or UR CITY.
+  // UR CITY's own names, and CHALDEA METROPOLIS's from that window's area list (#172).
   const gaeaPlaces = data.places.filter(place => place.body === 'body-8');
   expect(gaeaPlaces.map(place => place.name).sort()).toEqual([
-    'AUTHORS HOUSE',
     'BANK OF GAEA HQ',
-    'ELMDON SPACEPORT',
-    'ERIS PO TEMP HQ',
     'ESTATE AGENTS',
-    'GAEA BANK',
     'GUM STORE',
     'HANTZENS NEW HOUSE',
     'INDUSTRIAL CO-OP HSE1',
     'INDUSTRIAL CO-OP HSE2',
-    'LAWSON BANK',
     'MARILLION APARTMENTS',
     'MEGA TRADING',
-    'NOVAGEN OFFICE',
-    'TRADE COMMISSION',
-    'VERDANT PARTY HQ'
+    'TRADE COMMISSION'
   ]);
+  // Dion's live group $02 capture names them instead.
+  const elmdon = data.places.find(place => place.id === 'place-023e6b')!;
+  expect(elmdon.body).toBe('body-4');
+  expect(elmdon.instances).toContain('dion-surface-40');
   expect(
-    data.instances.find(instance => instance.id === 'gaea-surface-40')!.location
-      ?.place
-  ).toBe('place-023e6b');
-  expect(
-    data.coverage.notes.some(note => note.includes('Gaea Birmingham Island'))
-  ).toBe(true);
+    data.instances.find(instance => instance.id === 'dion-surface-40')!.name
+  ).toBe('ELMDON SPACEPORT');
   expect(
     data.instances.find(instance => instance.id === 'object-slot-8')!.location
   ).toBeNull();

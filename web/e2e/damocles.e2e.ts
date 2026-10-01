@@ -507,6 +507,41 @@ test('the arrow keys walk the player and the Session Resume is Damocles-only', a
   expect(Number(await frame.getAttribute('data-z'))).toBeCloseTo(walkedZ, 3);
 });
 
+test('a resume naming a structure the Catalogue no longer has starts a new game', async ({
+  page
+}) => {
+  // Written while the port bound a retired Instance (#673): it decodes, the session refuses
+  // to bind it, and the reload must still reach a playable new game rather than a black screen.
+  await page.goto('/damocles');
+  const frame = page.locator('#frame');
+  await expect(frame).toHaveAttribute('data-state', 'ready');
+  const startX = await frame.getAttribute('data-x');
+  const startZ = await frame.getAttribute('data-z');
+  await page.evaluate(() =>
+    window.dispatchEvent(new PageTransitionEvent('pagehide'))
+  );
+  const record = JSON.parse(
+    (await page.evaluate(
+      key => window.localStorage.getItem(key),
+      DAMOCLES_RESUME_KEY
+    ))!
+  );
+  record.snapshot.structure.instanceId = 'gaea-surface-25';
+  // The reload's own pagehide writes the resume again, so the edit lands before the boot.
+  await page.addInitScript(
+    ({ key, value }) => window.localStorage.setItem(key, value),
+    { key: DAMOCLES_RESUME_KEY, value: JSON.stringify(record) }
+  );
+
+  await page.reload();
+  await expect(frame).toHaveAttribute('data-state', 'ready');
+  expect(await frame.getAttribute('data-x')).toBe(startX);
+  expect(await frame.getAttribute('data-z')).toBe(startZ);
+  await expect(page.locator('#status')).toContainText(
+    'COULD NOT RESUME — SAVED STRUCTURE DOES NOT MATCH THE CURRENT CELL'
+  );
+});
+
 test('R latches running, which lights the lamp and lengthens the step', async ({
   page
 }) => {
