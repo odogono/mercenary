@@ -1,0 +1,2662 @@
+{
+ "schemaVersion": 1,
+ "source": {
+  "title": "dion",
+  "baseline": "Mercenary III research baseline (pinned ST STX)",
+  "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+  "programSize": 512160,
+  "tosSha256": "154803e3ff4851f3dc358b91b16d6b6110d187a81d8132ecb665af49878939d5",
+  "emulator": {
+   "version": "2.6.1",
+   "sha256": "05723606c75a1f0642395974abdce2cbbe48b0a09a747f65cdfca7ef9201e11a"
+  },
+  "capture": {
+   "recipe": "research/mercenary-iii-st/m3lab/boot.py",
+   "schedule": "export",
+   "inputs": [
+    [
+     6000,
+     [
+      "key",
+      114
+     ]
+    ],
+    [
+     7300,
+     [
+      "key",
+      102
+     ]
+    ],
+    [
+     10000,
+     [
+      "stick",
+      1
+     ]
+    ],
+    [
+     10650,
+     [
+      "stick",
+      0
+     ]
+    ],
+    [
+     10700,
+     [
+      "key",
+      48
+     ]
+    ],
+    [
+     11600,
+     [
+      "key",
+      78
+     ]
+    ],
+    [
+     11900,
+     [
+      "key",
+      78
+     ]
+    ],
+    [
+     12200,
+     [
+      "key",
+      102
+     ]
+    ],
+    [
+     22000,
+     [
+      "key",
+      38
+     ]
+    ]
+   ],
+   "loaded": {
+    "vbl": 6000,
+    "ramSha256": "f8d49b5227c03111be717c39defaabd0974b76d675e6d095a88a420efd124299"
+   },
+   "opening": {
+    "pc": "$5A41A",
+    "armedAtVbl": 4770,
+    "ramSha256": "c1476f479b6e4585b335c65890cb93312318d6e9b7d56cbe926ecf2e2bef8766"
+   },
+   "entry": {
+    "pc": "$6AC32",
+    "ramSha256": "9619599abfb61c6af0f4e8bce905c3be66ebf032319ec74c5c5fb871b6716a4c"
+   }
+  },
+  "evidence": "docs/research/mercenary-iii-integration.md#cold-boot-and-controlled-probes"
+ },
+ "kind": "messages",
+ "ramSha256": "f8d49b5227c03111be717c39defaabd0974b76d675e6d095a88a420efd124299",
+ "sources": [
+  {
+   "range": [
+    "$76721",
+    "$76BCA"
+   ],
+   "sha256": "8d16c237144f8f98cef86f4cc5a0df5d0aa40724c5e9a9c3ba371ad7dc4cda32"
+  },
+  {
+   "range": [
+    "$528F6",
+    "$5292C"
+   ],
+   "sha256": "5d6d8c63ad4bb627c9b79ed50a92d10be39f59e4e3070d0c6412faffaca60c39"
+  },
+  {
+   "range": [
+    "$5295C",
+    "$53002"
+   ],
+   "sha256": "1b0eaa8b26a3f958abf43303811eb4c212a016ceb03e308685cfda30225e038b"
+  },
+  {
+   "range": [
+    "$6FD44",
+    "$6FF46"
+   ],
+   "sha256": "8f88c6edf79e5bdd36a20ba038fc43d55ea53a06860b0b912b3434bbe1becb8e"
+  }
+ ],
+ "encoding": {
+  "decoder": "$52AC4",
+  "buffer": "$5292C",
+  "barWidth": 48,
+  "codes": "four 6-bit codes per three bytes, high bits first; 0 ends; character = code + 31",
+  "centring": "start pointer $7232 = buffer - ceil((48 - length) / 2) when length < 48 ($52B0A)",
+  "idHeader": "nonzero: terminator becomes a space and ceil((48 - length) / 2) spaces follow ($55B42)",
+  "carryQuirk": "after ^2 the next code loses the bits carried from the previous byte ($52978)"
+ },
+ "staticTokens": {
+  "^4": {
+   "expansion": "NEWSFLASH - ",
+   "source": {
+    "range": [
+     "$52A1C",
+     "$52A29"
+    ],
+    "sha256": "20546fb3b3110367cb5338acc13d24dbfdd46074cbc11c33eda3f8e3b0547018"
+   }
+  },
+  "^5": {
+   "expansion": "P C BIL",
+   "source": {
+    "range": [
+     "$52A29",
+     "$52A31"
+    ],
+    "sha256": "10979ddfa7a6ccef5d290e01e93d3b62f6630f2d8fd917a4013fa76fa0d739f8"
+   }
+  },
+  "^6": {
+   "expansion": "MERCENARY",
+   "source": {
+    "range": [
+     "$52A31",
+     "$52A3B"
+    ],
+    "sha256": "9bbca95dc93292eea54f65671143e9f4be73be2a432dc2e32c3906c31c5f10b3"
+   }
+  },
+  "^7": {
+   "expansion": "MILLION",
+   "source": {
+    "range": [
+     "$52A3B",
+     "$52A43"
+    ],
+    "sha256": "d96bc2caac7f390cfd4c441339ce2274cd45a11dc7f9267cb4a78fd144a7d254"
+   }
+  },
+  "^8": {
+   "expansion": "PRESIDENT",
+   "source": {
+    "range": [
+     "$52A43",
+     "$52A4D"
+    ],
+    "sha256": "b667989c0c40f44637f538f16eede435eb754cf42e2700fcc5e90bb3c9983ea3"
+   }
+  },
+  "^9": {
+   "expansion": "ELECTION",
+   "source": {
+    "range": [
+     "$52A4D",
+     "$52A56"
+    ],
+    "sha256": "4a398c21ba003f4468d69eb83db8a058e950afec04133c51fc448b4ef6002d58"
+   }
+  },
+  "\\": {
+   "expansion": " THE",
+   "source": {
+    "range": [
+     "$52A56",
+     "$52A5B"
+    ],
+    "sha256": "237df437fadae5391b86c6784ca470627463aab48fdbc42aad291592d5cbaeb1"
+   }
+  }
+ },
+ "liveTokens": {
+  "[": "BCD byte $6EAA, two digits, leading zero suppressed ($529AE)",
+  "]": "player name $759A, 10 characters, leading/trailing spaces trimmed ($529CC)",
+  "^0": "BCD byte $6EAB, two digits, leading zero suppressed ($529A6)",
+  "^1": "low nibble of byte $6E91, one digit ($5299E)",
+  "^2": "sum of the 26 bytes $6E50,$6E52,...,$6E82 (mod 256), in decimal ($52964, $52978)",
+  "^3": "low nibble of byte $6ECB, one digit ($52A8C)"
+ },
+ "messages": [
+  {
+   "address": "$76722",
+   "raw": "LOCKED",
+   "parts": [
+    {
+     "text": "LOCKED"
+    }
+   ],
+   "text": "LOCKED",
+   "source": {
+    "range": [
+     "$76722",
+     "$76728"
+    ],
+    "sha256": "b593c3298c63a8f40677748fb6dde027c556b4856d1b2a7df682704f62c8f6d1"
+   },
+   "length": 6,
+   "centrePad": 21,
+   "id": 0,
+   "record": "$76721",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD44",
+     "$6FD46"
+    ],
+    "sha256": "be72fcc617eb8df26f7f4e1e5d6ab052e0faef598b0232719f86e018b87661f5"
+   },
+   "headerSource": {
+    "range": [
+     "$76721",
+     "$76722"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$76729",
+   "raw": "WARNING - OBJECTS LEFT IN CASE!",
+   "parts": [
+    {
+     "text": "WARNING - OBJECTS LEFT IN CASE!"
+    }
+   ],
+   "text": "WARNING - OBJECTS LEFT IN CASE!",
+   "source": {
+    "range": [
+     "$76729",
+     "$76741"
+    ],
+    "sha256": "ef30091b3557f9dfff69c6d7f9e1afe084ae1726bd627049f02eb5948433b9b2"
+   },
+   "length": 31,
+   "centrePad": 9,
+   "id": 1,
+   "record": "$76728",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD46",
+     "$6FD48"
+    ],
+    "sha256": "3bcc20eb714b4731e7d0734182b5c28fc98061caa5128ca4dc29e5623680f70c"
+   },
+   "headerSource": {
+    "range": [
+     "$76728",
+     "$76729"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$76742",
+   "raw": "TOO HEAVY",
+   "parts": [
+    {
+     "text": "TOO HEAVY"
+    }
+   ],
+   "text": "TOO HEAVY",
+   "source": {
+    "range": [
+     "$76742",
+     "$7674A"
+    ],
+    "sha256": "0d62ca9bfb3eb6f24e689ffcaad37cf105e0123af864118cce9d03c865adb2f9"
+   },
+   "length": 9,
+   "centrePad": 20,
+   "id": 2,
+   "record": "$76741",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD48",
+     "$6FD4A"
+    ],
+    "sha256": "121648a5543fd422dfef5a1fda5e2c1b8fb5d20166501bcf762a186542f8ba8f"
+   },
+   "headerSource": {
+    "range": [
+     "$76741",
+     "$76742"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$7674B",
+   "raw": "VEHICLE KEY REQUIRED",
+   "parts": [
+    {
+     "text": "VEHICLE KEY REQUIRED"
+    }
+   ],
+   "text": "VEHICLE KEY REQUIRED",
+   "source": {
+    "range": [
+     "$7674B",
+     "$7675B"
+    ],
+    "sha256": "35f0bdce441a90476ab6cb7e0cf7b02dfa1dce4b40f3feb4aa4bb17a17fd9191"
+   },
+   "length": 20,
+   "centrePad": 14,
+   "id": 3,
+   "record": "$7674A",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD4A",
+     "$6FD4C"
+    ],
+    "sha256": "8fb92af601334ca5905b034f643e675e81f5eb7c13eff845d3a0085d19aad419"
+   },
+   "headerSource": {
+    "range": [
+     "$7674A",
+     "$7674B"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$7675C",
+   "raw": "TOO COLD! YOU CAN SURVIVE FOR TEN SECONDS",
+   "parts": [
+    {
+     "text": "TOO COLD! YOU CAN SURVIVE FOR TEN SECONDS"
+    }
+   ],
+   "text": "TOO COLD! YOU CAN SURVIVE FOR TEN SECONDS",
+   "source": {
+    "range": [
+     "$7675C",
+     "$7677C"
+    ],
+    "sha256": "3775778611a93efb5b7063a14daddda37a8353f4c0733675c1b862827779db3d"
+   },
+   "length": 41,
+   "centrePad": 4,
+   "id": 4,
+   "record": "$7675B",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD4C",
+     "$6FD4E"
+    ],
+    "sha256": "bc0e0a5949342fc99cffb241b80a1c526a859f8805583c8913100379cb643120"
+   },
+   "headerSource": {
+    "range": [
+     "$7675B",
+     "$7675C"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$7677D",
+   "raw": "TOO HOT! YOU CAN SURVIVE FOR TEN SECONDS",
+   "parts": [
+    {
+     "text": "TOO HOT! YOU CAN SURVIVE FOR TEN SECONDS"
+    }
+   ],
+   "text": "TOO HOT! YOU CAN SURVIVE FOR TEN SECONDS",
+   "source": {
+    "range": [
+     "$7677D",
+     "$7679C"
+    ],
+    "sha256": "b0ca8005d61f0a4093ef9f5788701b242d820a8ad66b806d334b1612e1069bf0"
+   },
+   "length": 40,
+   "centrePad": 4,
+   "id": 5,
+   "record": "$7677C",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD4E",
+     "$6FD50"
+    ],
+    "sha256": "a7520d22f0d5742a85f856f86a3e5caad0353e9d5d2c64df739831b242a3d9cf"
+   },
+   "headerSource": {
+    "range": [
+     "$7677C",
+     "$7677D"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$7679D",
+   "raw": "NO AIR! YOU CAN SURVIVE FOR TEN SECONDS",
+   "parts": [
+    {
+     "text": "NO AIR! YOU CAN SURVIVE FOR TEN SECONDS"
+    }
+   ],
+   "text": "NO AIR! YOU CAN SURVIVE FOR TEN SECONDS",
+   "source": {
+    "range": [
+     "$7679D",
+     "$767BB"
+    ],
+    "sha256": "e151b2b9ed9d1e534bf5256af015bd46631f43a6afa85f107e6d0fa994568158"
+   },
+   "length": 39,
+   "centrePad": 5,
+   "id": 6,
+   "record": "$7679C",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD50",
+     "$6FD52"
+    ],
+    "sha256": "df77cb4f6467fc255213b7689a0a488f971b81fffd1222a3067a245cc081d1e9"
+   },
+   "headerSource": {
+    "range": [
+     "$7679C",
+     "$7679D"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$767BC",
+   "raw": "POLL UPDATE: ^5 ^0% - ] [%",
+   "parts": [
+    {
+     "text": "POLL UPDATE: "
+    },
+    {
+     "token": "^5",
+     "expansion": "P C BIL"
+    },
+    {
+     "text": " "
+    },
+    {
+     "token": "^0",
+     "live": "BCD byte $6EAB, two digits, leading zero suppressed ($529A6)"
+    },
+    {
+     "text": "% - "
+    },
+    {
+     "token": "]",
+     "live": "player name $759A, 10 characters, leading/trailing spaces trimmed ($529CC)"
+    },
+    {
+     "text": " "
+    },
+    {
+     "token": "[",
+     "live": "BCD byte $6EAA, two digits, leading zero suppressed ($529AE)"
+    },
+    {
+     "text": "%"
+    }
+   ],
+   "text": "POLL UPDATE: P C BIL ^0% - ] [%",
+   "source": {
+    "range": [
+     "$767BC",
+     "$767D1"
+    ],
+    "sha256": "a306cabdd4aa877d2ac88b4722156db4a7bba2204d2c983b31c0fa327b705be4"
+   },
+   "id": 7,
+   "record": "$767BB",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD52",
+     "$6FD54"
+    ],
+    "sha256": "e1695b5027ae4428de0be1bc828cd1ebcd87652ec79bfd09e2194dadc2e4031e"
+   },
+   "headerSource": {
+    "range": [
+     "$767BB",
+     "$767BC"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$767D2",
+   "raw": "PRESSURE TOO HIGH - EMERGENCY ESCAPE ACTIVATED",
+   "parts": [
+    {
+     "text": "PRESSURE TOO HIGH - EMERGENCY ESCAPE ACTIVATED"
+    }
+   ],
+   "text": "PRESSURE TOO HIGH - EMERGENCY ESCAPE ACTIVATED",
+   "source": {
+    "range": [
+     "$767D2",
+     "$767F6"
+    ],
+    "sha256": "c178599986b2448c940bb4678e48740504b66016da6e45aa7db211544052e8b2"
+   },
+   "length": 46,
+   "centrePad": 1,
+   "id": 8,
+   "record": "$767D1",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD54",
+     "$6FD56"
+    ],
+    "sha256": "c1d43ac4bc5f463085342cfb6accfaf055989ad48d771eb9c85f7c3cb2ff1035"
+   },
+   "headerSource": {
+    "range": [
+     "$767D1",
+     "$767D2"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$767F7",
+   "raw": "NO ROOM",
+   "parts": [
+    {
+     "text": "NO ROOM"
+    }
+   ],
+   "text": "NO ROOM",
+   "source": {
+    "range": [
+     "$767F7",
+     "$767FD"
+    ],
+    "sha256": "6f2a2a083efdf649d9e3f93b0d8d656f184e7f67b57b60469d472d5fe5ca17f1"
+   },
+   "length": 7,
+   "centrePad": 21,
+   "id": 9,
+   "record": "$767F6",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD56",
+     "$6FD58"
+    ],
+    "sha256": "fb97f41f653057b512ed47a95cd5db07702305d75084c16fa5ded3ce8b37a3e1"
+   },
+   "headerSource": {
+    "range": [
+     "$767F6",
+     "$767F7"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$767FE",
+   "raw": "F1=SAVE  F2=LOAD  F10=QUIT  OTHER=RETURN TO GAME",
+   "parts": [
+    {
+     "text": "F1=SAVE  F2=LOAD  F10=QUIT  OTHER=RETURN TO GAME"
+    }
+   ],
+   "text": "F1=SAVE  F2=LOAD  F10=QUIT  OTHER=RETURN TO GAME",
+   "source": {
+    "range": [
+     "$767FE",
+     "$76823"
+    ],
+    "sha256": "c6c9aab13d01247ff5ccc1868f7259f4ad0320d42f75835b2da91d3fd653e34b"
+   },
+   "length": 48,
+   "centrePad": 0,
+   "id": 10,
+   "record": "$767FD",
+   "header": 0,
+   "scrollsOut": false,
+   "tableEntry": {
+    "range": [
+     "$6FD58",
+     "$6FD5A"
+    ],
+    "sha256": "d9642d4a0e0badcda5e29ff9b9f592d254c50956c36adc0d6d1b8a014ef293fa"
+   },
+   "headerSource": {
+    "range": [
+     "$767FD",
+     "$767FE"
+    ],
+    "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"
+   }
+  },
+  {
+   "address": "$76824",
+   "raw": "ONLY ONE OBJECT CAN BE TRADED AT A TIME",
+   "parts": [
+    {
+     "text": "ONLY ONE OBJECT CAN BE TRADED AT A TIME"
+    }
+   ],
+   "text": "ONLY ONE OBJECT CAN BE TRADED AT A TIME",
+   "source": {
+    "range": [
+     "$76824",
+     "$76842"
+    ],
+    "sha256": "33477a0f0b81d8bd7e571bfa38a45c547941f09c6321374eb4df1895911b1f48"
+   },
+   "length": 39,
+   "centrePad": 5,
+   "id": 11,
+   "record": "$76823",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD5A",
+     "$6FD5C"
+    ],
+    "sha256": "afea6d0c996c7c03c3b23429ba5f5359cdbf9574da8af5cfcad01d7040e3d192"
+   },
+   "headerSource": {
+    "range": [
+     "$76823",
+     "$76824"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$76843",
+   "raw": "SORRY BUT YOU HAVE INSUFFICIENT FUNDS",
+   "parts": [
+    {
+     "text": "SORRY BUT YOU HAVE INSUFFICIENT FUNDS"
+    }
+   ],
+   "text": "SORRY BUT YOU HAVE INSUFFICIENT FUNDS",
+   "source": {
+    "range": [
+     "$76843",
+     "$76860"
+    ],
+    "sha256": "0e77d6cecd7838fa532caf2cdcd91f1c83659dd424be87c157eb99a29a101d73"
+   },
+   "length": 37,
+   "centrePad": 6,
+   "id": 12,
+   "record": "$76842",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD5C",
+     "$6FD5E"
+    ],
+    "sha256": "f5bf58accfc3eb20bbebd7022558c76ae4acb85e17018c9933271d097da5bbf8"
+   },
+   "headerSource": {
+    "range": [
+     "$76842",
+     "$76843"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$76861",
+   "raw": "SELECT EXPLOSIVE IN INVENTORY WINDOW TO ARM",
+   "parts": [
+    {
+     "text": "SELECT EXPLOSIVE IN INVENTORY WINDOW TO ARM"
+    }
+   ],
+   "text": "SELECT EXPLOSIVE IN INVENTORY WINDOW TO ARM",
+   "source": {
+    "range": [
+     "$76861",
+     "$76882"
+    ],
+    "sha256": "98f239b3fcead50af2d9c0f2f6cf3d31e1f1da3f55542f3650404e708fc90dfe"
+   },
+   "length": 43,
+   "centrePad": 3,
+   "id": 13,
+   "record": "$76860",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD5E",
+     "$6FD60"
+    ],
+    "sha256": "a8401db2002a0997ae8271bfc8f6b2b21c499b38b26e87733b8b035a5337f899"
+   },
+   "headerSource": {
+    "range": [
+     "$76860",
+     "$76861"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$76883",
+   "raw": "PCB ^0% ] [% ^2 ENEMY ^1 MINES ^3 SHIELD",
+   "parts": [
+    {
+     "text": "PCB "
+    },
+    {
+     "token": "^0",
+     "live": "BCD byte $6EAB, two digits, leading zero suppressed ($529A6)"
+    },
+    {
+     "text": "% "
+    },
+    {
+     "token": "]",
+     "live": "player name $759A, 10 characters, leading/trailing spaces trimmed ($529CC)"
+    },
+    {
+     "text": " "
+    },
+    {
+     "token": "[",
+     "live": "BCD byte $6EAA, two digits, leading zero suppressed ($529AE)"
+    },
+    {
+     "text": "% "
+    },
+    {
+     "token": "^2",
+     "live": "sum of the 26 bytes $6E50,$6E52,...,$6E82 (mod 256), in decimal ($52964, $52978)"
+    },
+    {
+     "text": " ENEMY "
+    },
+    {
+     "token": "^1",
+     "live": "low nibble of byte $6E91, one digit ($5299E)"
+    },
+    {
+     "text": " MINES "
+    },
+    {
+     "token": "^3",
+     "live": "low nibble of byte $6ECB, one digit ($52A8C)"
+    },
+    {
+     "text": " SHIELD"
+    }
+   ],
+   "text": "PCB ^0% ] [% ^2 ENEMY ^1 MINES ^3 SHIELD",
+   "source": {
+    "range": [
+     "$76883",
+     "$768A2"
+    ],
+    "sha256": "27ebcdd7f97f790451b430ed1418d7550b92ced26539f9e11e10828fa09de55a"
+   },
+   "id": 14,
+   "record": "$76882",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD60",
+     "$6FD62"
+    ],
+    "sha256": "9a8d8eebc5b714c85c8096597ec23cb382110e7375f75630f6ea6167f1cd917a"
+   },
+   "headerSource": {
+    "range": [
+     "$76882",
+     "$76883"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$768A3",
+   "raw": "NO OTHER TRANSPORTERS AVAILABLE",
+   "parts": [
+    {
+     "text": "NO OTHER TRANSPORTERS AVAILABLE"
+    }
+   ],
+   "text": "NO OTHER TRANSPORTERS AVAILABLE",
+   "source": {
+    "range": [
+     "$768A3",
+     "$768BB"
+    ],
+    "sha256": "92d241d38a1d0472b2525461ab02fbf962cc2e680370f2eab84a971a9f1ab639"
+   },
+   "length": 31,
+   "centrePad": 9,
+   "id": 15,
+   "record": "$768A2",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD62",
+     "$6FD64"
+    ],
+    "sha256": "1b699ccbaf83d79183e2f8671fe476f969629db117d10ee3933d27734e805414"
+   },
+   "headerSource": {
+    "range": [
+     "$768A2",
+     "$768A3"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$768A3",
+   "raw": "NO OTHER TRANSPORTERS AVAILABLE",
+   "parts": [
+    {
+     "text": "NO OTHER TRANSPORTERS AVAILABLE"
+    }
+   ],
+   "text": "NO OTHER TRANSPORTERS AVAILABLE",
+   "source": {
+    "range": [
+     "$768A3",
+     "$768BB"
+    ],
+    "sha256": "92d241d38a1d0472b2525461ab02fbf962cc2e680370f2eab84a971a9f1ab639"
+   },
+   "length": 31,
+   "centrePad": 9,
+   "id": 16,
+   "record": "$768A2",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD64",
+     "$6FD66"
+    ],
+    "sha256": "1b699ccbaf83d79183e2f8671fe476f969629db117d10ee3933d27734e805414"
+   },
+   "headerSource": {
+    "range": [
+     "$768A2",
+     "$768A3"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$768A3",
+   "raw": "NO OTHER TRANSPORTERS AVAILABLE",
+   "parts": [
+    {
+     "text": "NO OTHER TRANSPORTERS AVAILABLE"
+    }
+   ],
+   "text": "NO OTHER TRANSPORTERS AVAILABLE",
+   "source": {
+    "range": [
+     "$768A3",
+     "$768BB"
+    ],
+    "sha256": "92d241d38a1d0472b2525461ab02fbf962cc2e680370f2eab84a971a9f1ab639"
+   },
+   "length": 31,
+   "centrePad": 9,
+   "id": 17,
+   "record": "$768A2",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD66",
+     "$6FD68"
+    ],
+    "sha256": "1b699ccbaf83d79183e2f8671fe476f969629db117d10ee3933d27734e805414"
+   },
+   "headerSource": {
+    "range": [
+     "$768A2",
+     "$768A3"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$768BC",
+   "raw": "INTERMEDIATE TRANSPORTERS NOT AVAILABLE",
+   "parts": [
+    {
+     "text": "INTERMEDIATE TRANSPORTERS NOT AVAILABLE"
+    }
+   ],
+   "text": "INTERMEDIATE TRANSPORTERS NOT AVAILABLE",
+   "source": {
+    "range": [
+     "$768BC",
+     "$768DA"
+    ],
+    "sha256": "4e85e41d4eb436d955b55ec1dc27f6e686af2eb905937851f6c6c6c0c56a9b3d"
+   },
+   "length": 39,
+   "centrePad": 5,
+   "id": 18,
+   "record": "$768BB",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD68",
+     "$6FD6A"
+    ],
+    "sha256": "103c54b6c5b1ad282520a33d86320b77259e797cabe194b9200fb23d965561a3"
+   },
+   "headerSource": {
+    "range": [
+     "$768BB",
+     "$768BC"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$768DB",
+   "raw": "TRANSPORTER NOT AVAILABLE",
+   "parts": [
+    {
+     "text": "TRANSPORTER NOT AVAILABLE"
+    }
+   ],
+   "text": "TRANSPORTER NOT AVAILABLE",
+   "source": {
+    "range": [
+     "$768DB",
+     "$768EF"
+    ],
+    "sha256": "7fd1911c88233f28bbc4cb9ed03bf66c4b788d7b371f11a0f34a21c6956bc6dc"
+   },
+   "length": 25,
+   "centrePad": 12,
+   "id": 19,
+   "record": "$768DA",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD6A",
+     "$6FD6C"
+    ],
+    "sha256": "6b6b4b10bc6a7d80db1094e28ac85671b4f73c677077ed0c29f75e08a773f9d6"
+   },
+   "headerSource": {
+    "range": [
+     "$768DA",
+     "$768DB"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$768DB",
+   "raw": "TRANSPORTER NOT AVAILABLE",
+   "parts": [
+    {
+     "text": "TRANSPORTER NOT AVAILABLE"
+    }
+   ],
+   "text": "TRANSPORTER NOT AVAILABLE",
+   "source": {
+    "range": [
+     "$768DB",
+     "$768EF"
+    ],
+    "sha256": "7fd1911c88233f28bbc4cb9ed03bf66c4b788d7b371f11a0f34a21c6956bc6dc"
+   },
+   "length": 25,
+   "centrePad": 12,
+   "id": 20,
+   "record": "$768DA",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD6C",
+     "$6FD6E"
+    ],
+    "sha256": "6b6b4b10bc6a7d80db1094e28ac85671b4f73c677077ed0c29f75e08a773f9d6"
+   },
+   "headerSource": {
+    "range": [
+     "$768DA",
+     "$768DB"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$768F0",
+   "raw": "VEHICLE NOT EQUIPPED FOR SPACE TRAVEL",
+   "parts": [
+    {
+     "text": "VEHICLE NOT EQUIPPED FOR SPACE TRAVEL"
+    }
+   ],
+   "text": "VEHICLE NOT EQUIPPED FOR SPACE TRAVEL",
+   "source": {
+    "range": [
+     "$768F0",
+     "$7690D"
+    ],
+    "sha256": "a38790789c47f062184039b7053fe148f46c44f79b86a6580118d23f3d3af8ad"
+   },
+   "length": 37,
+   "centrePad": 6,
+   "id": 21,
+   "record": "$768EF",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD6E",
+     "$6FD70"
+    ],
+    "sha256": "f7b7668a6a7f2c9eef7d9b28df02e77cd8dd421503f5c8409be71ef2e7a3ec42"
+   },
+   "headerSource": {
+    "range": [
+     "$768EF",
+     "$768F0"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$7690E",
+   "raw": "YOU DON'T HAVE REGISTERED TITLE TO THIS SITE",
+   "parts": [
+    {
+     "text": "YOU DON'T HAVE REGISTERED TITLE TO THIS SITE"
+    }
+   ],
+   "text": "YOU DON'T HAVE REGISTERED TITLE TO THIS SITE",
+   "source": {
+    "range": [
+     "$7690E",
+     "$76930"
+    ],
+    "sha256": "6db8887e2ba9d45a4f9b5e99da0fcc35027661e67944e145ef4d37aa2af92ea6"
+   },
+   "length": 44,
+   "centrePad": 2,
+   "id": 22,
+   "record": "$7690D",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD70",
+     "$6FD72"
+    ],
+    "sha256": "e73a62106c585ca6f2d07fa05ff954089619680d611da518d784ac61bb7aeafb"
+   },
+   "headerSource": {
+    "range": [
+     "$7690D",
+     "$7690E"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$7690E",
+   "raw": "YOU DON'T HAVE REGISTERED TITLE TO THIS SITE",
+   "parts": [
+    {
+     "text": "YOU DON'T HAVE REGISTERED TITLE TO THIS SITE"
+    }
+   ],
+   "text": "YOU DON'T HAVE REGISTERED TITLE TO THIS SITE",
+   "source": {
+    "range": [
+     "$7690E",
+     "$76930"
+    ],
+    "sha256": "6db8887e2ba9d45a4f9b5e99da0fcc35027661e67944e145ef4d37aa2af92ea6"
+   },
+   "length": 44,
+   "centrePad": 2,
+   "id": 23,
+   "record": "$7690D",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD72",
+     "$6FD74"
+    ],
+    "sha256": "e73a62106c585ca6f2d07fa05ff954089619680d611da518d784ac61bb7aeafb"
+   },
+   "headerSource": {
+    "range": [
+     "$7690D",
+     "$7690E"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$76931",
+   "raw": "YOU DON'T HAVE PLANNING PERMISSION",
+   "parts": [
+    {
+     "text": "YOU DON'T HAVE PLANNING PERMISSION"
+    }
+   ],
+   "text": "YOU DON'T HAVE PLANNING PERMISSION",
+   "source": {
+    "range": [
+     "$76931",
+     "$7694C"
+    ],
+    "sha256": "32d32fee829d739257e0a242b8d56e6071ebf109a9366b729bcbc07a151c7beb"
+   },
+   "length": 34,
+   "centrePad": 7,
+   "id": 24,
+   "record": "$76930",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD74",
+     "$6FD76"
+    ],
+    "sha256": "ab285c8c871e702710507ad64a847103aa259bdefa364ab23b2fcc897c42315f"
+   },
+   "headerSource": {
+    "range": [
+     "$76930",
+     "$76931"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$7694D",
+   "raw": "DANGER!   BUILDERS AT WORK   STAND WELL BACK",
+   "parts": [
+    {
+     "text": "DANGER!   BUILDERS AT WORK   STAND WELL BACK"
+    }
+   ],
+   "text": "DANGER!   BUILDERS AT WORK   STAND WELL BACK",
+   "source": {
+    "range": [
+     "$7694D",
+     "$7696F"
+    ],
+    "sha256": "b6ce1e9d33cc5d226f977c4ef615afe21e4b2aba6d7f62bee4e3682e5c9a58f9"
+   },
+   "length": 44,
+   "centrePad": 2,
+   "id": 25,
+   "record": "$7694C",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD76",
+     "$6FD78"
+    ],
+    "sha256": "8968449595d8d5ff2992bd1a8fa8666df90e82c9e3477d18991be129c0230e85"
+   },
+   "headerSource": {
+    "range": [
+     "$7694C",
+     "$7694D"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$76970",
+   "raw": "HAVE A NICE DAY",
+   "parts": [
+    {
+     "text": "HAVE A NICE DAY"
+    }
+   ],
+   "text": "HAVE A NICE DAY",
+   "source": {
+    "range": [
+     "$76970",
+     "$7697C"
+    ],
+    "sha256": "774c3e5acb42d91c41bf6d50ee8a397bc96853d5fca966a2e78c88f1c5f3c639"
+   },
+   "length": 15,
+   "centrePad": 17,
+   "id": 26,
+   "record": "$7696F",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD78",
+     "$6FD7A"
+    ],
+    "sha256": "cec9afa85029d8bd2fca2ac69f6d8e46be007bccc9ae533759e63dd4a3e00583"
+   },
+   "headerSource": {
+    "range": [
+     "$7696F",
+     "$76970"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$7697D",
+   "raw": "THANK YOU FOR TRAVELLING K A O S",
+   "parts": [
+    {
+     "text": "THANK YOU FOR TRAVELLING K A O S"
+    }
+   ],
+   "text": "THANK YOU FOR TRAVELLING K A O S",
+   "source": {
+    "range": [
+     "$7697D",
+     "$76996"
+    ],
+    "sha256": "354a657c26b268a394b1e6d905f97dd8ce255490a66c9db00bb81ca68afeffca"
+   },
+   "length": 32,
+   "centrePad": 8,
+   "id": 27,
+   "record": "$7697C",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD7A",
+     "$6FD7C"
+    ],
+    "sha256": "edfec06e9dfe9c422a8cb1e8af4ecca284082c0b9a16676099d7b73b2df8a78e"
+   },
+   "headerSource": {
+    "range": [
+     "$7697C",
+     "$7697D"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$76997",
+   "raw": "WE ARE AT YOUR DESTINATION",
+   "parts": [
+    {
+     "text": "WE ARE AT YOUR DESTINATION"
+    }
+   ],
+   "text": "WE ARE AT YOUR DESTINATION",
+   "source": {
+    "range": [
+     "$76997",
+     "$769AC"
+    ],
+    "sha256": "e5244f224d51159afc0c7af090c2eac427633f6bd08ccfcab991ab958f910353"
+   },
+   "length": 26,
+   "centrePad": 11,
+   "id": 28,
+   "record": "$76996",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD7C",
+     "$6FD7E"
+    ],
+    "sha256": "0e11606f3e25e6f21a22c82bf7a1bfff7d6344570724f8b2e837ff4d1e9327e7"
+   },
+   "headerSource": {
+    "range": [
+     "$76996",
+     "$76997"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$769AD",
+   "raw": "YOU'VE BEEN BURRIED UNDER A NEW BUILDING",
+   "parts": [
+    {
+     "text": "YOU'VE BEEN BURRIED UNDER A NEW BUILDING"
+    }
+   ],
+   "text": "YOU'VE BEEN BURRIED UNDER A NEW BUILDING",
+   "source": {
+    "range": [
+     "$769AD",
+     "$769CC"
+    ],
+    "sha256": "a86ea7bf9d93269e805bd02e8a278c612020823ed051e0d58d497352068ffe23"
+   },
+   "length": 40,
+   "centrePad": 4,
+   "id": 29,
+   "record": "$769AC",
+   "header": 0,
+   "scrollsOut": false,
+   "tableEntry": {
+    "range": [
+     "$6FD7E",
+     "$6FD80"
+    ],
+    "sha256": "a9f615c4e7d33cf9a6a23ab8be8800eb0cf68410f011953a4bfa64e1c372f734"
+   },
+   "headerSource": {
+    "range": [
+     "$769AC",
+     "$769AD"
+    ],
+    "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"
+   }
+  },
+  {
+   "address": "$769CD",
+   "raw": "YOU'VE BEEN FROZEN",
+   "parts": [
+    {
+     "text": "YOU'VE BEEN FROZEN"
+    }
+   ],
+   "text": "YOU'VE BEEN FROZEN",
+   "source": {
+    "range": [
+     "$769CD",
+     "$769DC"
+    ],
+    "sha256": "31a28fc79d560a3910a8b590049d0caf71e8136bda5bb0e107367c711e572814"
+   },
+   "length": 18,
+   "centrePad": 15,
+   "id": 30,
+   "record": "$769CC",
+   "header": 0,
+   "scrollsOut": false,
+   "tableEntry": {
+    "range": [
+     "$6FD80",
+     "$6FD82"
+    ],
+    "sha256": "157844a72ea5ce7f2a76a35a40da0184cca9b142f99b62d95fea8207fbdeee06"
+   },
+   "headerSource": {
+    "range": [
+     "$769CC",
+     "$769CD"
+    ],
+    "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"
+   }
+  },
+  {
+   "address": "$769DD",
+   "raw": "YOU'VE BEEN FRIED",
+   "parts": [
+    {
+     "text": "YOU'VE BEEN FRIED"
+    }
+   ],
+   "text": "YOU'VE BEEN FRIED",
+   "source": {
+    "range": [
+     "$769DD",
+     "$769EB"
+    ],
+    "sha256": "be9bbc8c7d9bf0237e6bef5b63213add5778b098405c2abbd80d80ff73e28854"
+   },
+   "length": 17,
+   "centrePad": 16,
+   "id": 31,
+   "record": "$769DC",
+   "header": 0,
+   "scrollsOut": false,
+   "tableEntry": {
+    "range": [
+     "$6FD82",
+     "$6FD84"
+    ],
+    "sha256": "754b870b4e66d009d7788aebee732ee49a0c12a010723899461de38c87cc63a7"
+   },
+   "headerSource": {
+    "range": [
+     "$769DC",
+     "$769DD"
+    ],
+    "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"
+   }
+  },
+  {
+   "address": "$769EC",
+   "raw": "YOU'VE BEEN SUFFOCATED",
+   "parts": [
+    {
+     "text": "YOU'VE BEEN SUFFOCATED"
+    }
+   ],
+   "text": "YOU'VE BEEN SUFFOCATED",
+   "source": {
+    "range": [
+     "$769EC",
+     "$769FE"
+    ],
+    "sha256": "1af611f25836aa9afc290b4652dea8b510f3979fe3153b498da711bb3d13bde4"
+   },
+   "length": 22,
+   "centrePad": 13,
+   "id": 32,
+   "record": "$769EB",
+   "header": 0,
+   "scrollsOut": false,
+   "tableEntry": {
+    "range": [
+     "$6FD84",
+     "$6FD86"
+    ],
+    "sha256": "e3ce9df684e9250f9bed04aa03d5a6fa7192bb2c8d582d9d88640b66650962f2"
+   },
+   "headerSource": {
+    "range": [
+     "$769EB",
+     "$769EC"
+    ],
+    "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"
+   }
+  },
+  {
+   "address": "$769FF",
+   "raw": "YOU'RE A BIT DEAD - TO QUIT OR LOAD PRESS HELP",
+   "parts": [
+    {
+     "text": "YOU'RE A BIT DEAD - TO QUIT OR LOAD PRESS HELP"
+    }
+   ],
+   "text": "YOU'RE A BIT DEAD - TO QUIT OR LOAD PRESS HELP",
+   "source": {
+    "range": [
+     "$769FF",
+     "$76A23"
+    ],
+    "sha256": "9a0548b2c3ff4d677f860d1b69a8afe0ba5f96f404548835ce94409f9a6261be"
+   },
+   "length": 46,
+   "centrePad": 1,
+   "id": 33,
+   "record": "$769FE",
+   "header": 0,
+   "scrollsOut": false,
+   "tableEntry": {
+    "range": [
+     "$6FD86",
+     "$6FD88"
+    ],
+    "sha256": "91386b8e02560f7bc2c58492655ece17722c22c88c57b591bf7dab3c52d8ced7"
+   },
+   "headerSource": {
+    "range": [
+     "$769FE",
+     "$769FF"
+    ],
+    "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"
+   }
+  },
+  {
+   "address": "$76A24",
+   "raw": "OOPS! - YOU'VE BLOWN YOURSELF UP",
+   "parts": [
+    {
+     "text": "OOPS! - YOU'VE BLOWN YOURSELF UP"
+    }
+   ],
+   "text": "OOPS! - YOU'VE BLOWN YOURSELF UP",
+   "source": {
+    "range": [
+     "$76A24",
+     "$76A3D"
+    ],
+    "sha256": "cdeb2faed9d96ce5d2918efba92f215dab4769ef5a45bc1dd6117420681e01d1"
+   },
+   "length": 32,
+   "centrePad": 8,
+   "id": 34,
+   "record": "$76A23",
+   "header": 0,
+   "scrollsOut": false,
+   "tableEntry": {
+    "range": [
+     "$6FD88",
+     "$6FD8A"
+    ],
+    "sha256": "0ff247f8773a31fbbdca33ded742bdc5cca2d33c9bdc7686ba520b8a8b33d1b2"
+   },
+   "headerSource": {
+    "range": [
+     "$76A23",
+     "$76A24"
+    ],
+    "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"
+   }
+  },
+  {
+   "address": "$76A3E",
+   "raw": "YOU WERE TOO CLOSE - YOU'VE BEEN BLOWN UP",
+   "parts": [
+    {
+     "text": "YOU WERE TOO CLOSE - YOU'VE BEEN BLOWN UP"
+    }
+   ],
+   "text": "YOU WERE TOO CLOSE - YOU'VE BEEN BLOWN UP",
+   "source": {
+    "range": [
+     "$76A3E",
+     "$76A5E"
+    ],
+    "sha256": "05639e9ddf170913d9bfcfb3131c907e3bf23118f5dd4152b0d26085fad58478"
+   },
+   "length": 41,
+   "centrePad": 4,
+   "id": 35,
+   "record": "$76A3D",
+   "header": 0,
+   "scrollsOut": false,
+   "tableEntry": {
+    "range": [
+     "$6FD8A",
+     "$6FD8C"
+    ],
+    "sha256": "d942c13bd0a413e0ea68321fad066105e1a153f1d192cd66077c41088f5027be"
+   },
+   "headerSource": {
+    "range": [
+     "$76A3D",
+     "$76A3E"
+    ],
+    "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"
+   }
+  },
+  {
+   "address": "$76A5F",
+   "raw": "WE'VE ARRIVED",
+   "parts": [
+    {
+     "text": "WE'VE ARRIVED"
+    }
+   ],
+   "text": "WE'VE ARRIVED",
+   "source": {
+    "range": [
+     "$76A5F",
+     "$76A6A"
+    ],
+    "sha256": "da7d51efbcb4603f12cb678c313053d6fb29cc1c0e25fdbd3695c4dc5481ff5d"
+   },
+   "length": 13,
+   "centrePad": 18,
+   "id": 36,
+   "record": "$76A5E",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD8C",
+     "$6FD8E"
+    ],
+    "sha256": "c232ac93b9cd856d8e5490e54b4517872fd0364b3245dd0537f9739c34bc1ca5"
+   },
+   "headerSource": {
+    "range": [
+     "$76A5E",
+     "$76A5F"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$76A5F",
+   "raw": "WE'VE ARRIVED",
+   "parts": [
+    {
+     "text": "WE'VE ARRIVED"
+    }
+   ],
+   "text": "WE'VE ARRIVED",
+   "source": {
+    "range": [
+     "$76A5F",
+     "$76A6A"
+    ],
+    "sha256": "da7d51efbcb4603f12cb678c313053d6fb29cc1c0e25fdbd3695c4dc5481ff5d"
+   },
+   "length": 13,
+   "centrePad": 18,
+   "id": 37,
+   "record": "$76A5E",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD8E",
+     "$6FD90"
+    ],
+    "sha256": "c232ac93b9cd856d8e5490e54b4517872fd0364b3245dd0537f9739c34bc1ca5"
+   },
+   "headerSource": {
+    "range": [
+     "$76A5E",
+     "$76A5F"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$76A6B",
+   "raw": "HERE WE ARE",
+   "parts": [
+    {
+     "text": "HERE WE ARE"
+    }
+   ],
+   "text": "HERE WE ARE",
+   "source": {
+    "range": [
+     "$76A6B",
+     "$76A74"
+    ],
+    "sha256": "e27e864023c3c653c60d1c8265191e797fe96b7c4a7476c23ef619d1995e49eb"
+   },
+   "length": 11,
+   "centrePad": 19,
+   "id": 38,
+   "record": "$76A6A",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD90",
+     "$6FD92"
+    ],
+    "sha256": "ddc1d4c6c6a6a60219f0a343dcce77d8e8c5a52dc0998f5e8b8760c40eff305a"
+   },
+   "headerSource": {
+    "range": [
+     "$76A6A",
+     "$76A6B"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$76A75",
+   "raw": "OK - THIS IS IT",
+   "parts": [
+    {
+     "text": "OK - THIS IS IT"
+    }
+   ],
+   "text": "OK - THIS IS IT",
+   "source": {
+    "range": [
+     "$76A75",
+     "$76A81"
+    ],
+    "sha256": "1b426f09aeb73aeb8c7204a8065e882e771796e8822ac4a1597bf880f2b1e865"
+   },
+   "length": 15,
+   "centrePad": 17,
+   "id": 39,
+   "record": "$76A74",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD92",
+     "$6FD94"
+    ],
+    "sha256": "e4223ed20d7ea5740a326e2b268ca6db91d041cf5194f577e393a8ba3b85d8e9"
+   },
+   "headerSource": {
+    "range": [
+     "$76A74",
+     "$76A75"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$76A82",
+   "raw": "WELCOME - PLEASE SELECT YOUR DESTINATION",
+   "parts": [
+    {
+     "text": "WELCOME - PLEASE SELECT YOUR DESTINATION"
+    }
+   ],
+   "text": "WELCOME - PLEASE SELECT YOUR DESTINATION",
+   "source": {
+    "range": [
+     "$76A82",
+     "$76AA1"
+    ],
+    "sha256": "0d2e15e5f0caa6d47bcd54564f2b5fc24a28eb225e4e51849e912ae9d2c876a9"
+   },
+   "length": 40,
+   "centrePad": 4,
+   "id": 40,
+   "record": "$76A81",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD94",
+     "$6FD96"
+    ],
+    "sha256": "219e036bf4f5262015adff429f3a9b579c373bbf1eaf09e5efb1e3d03d504568"
+   },
+   "headerSource": {
+    "range": [
+     "$76A81",
+     "$76A82"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$76AA2",
+   "raw": "BACCHUS AWAITS - WHERE TO ?",
+   "parts": [
+    {
+     "text": "BACCHUS AWAITS - WHERE TO ?"
+    }
+   ],
+   "text": "BACCHUS AWAITS - WHERE TO ?",
+   "source": {
+    "range": [
+     "$76AA2",
+     "$76AB7"
+    ],
+    "sha256": "4944ee34a1a7e759c4a5b96e8b8375f7f15149a859da79327aeb82c79b074f01"
+   },
+   "length": 27,
+   "centrePad": 11,
+   "id": 41,
+   "record": "$76AA1",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD96",
+     "$6FD98"
+    ],
+    "sha256": "e4a56af4becfb3fe00fa1fbc118ebda978187b53fa83ee8b1e996c9374230b21"
+   },
+   "headerSource": {
+    "range": [
+     "$76AA1",
+     "$76AA2"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$76AB8",
+   "raw": "HI\\RE! - OK - WHERE WE OFF TO ?",
+   "parts": [
+    {
+     "text": "HI"
+    },
+    {
+     "token": "\\",
+     "expansion": " THE"
+    },
+    {
+     "text": "RE! - OK - WHERE WE OFF TO ?"
+    }
+   ],
+   "text": "HI THERE! - OK - WHERE WE OFF TO ?",
+   "source": {
+    "range": [
+     "$76AB8",
+     "$76AD0"
+    ],
+    "sha256": "9080530a87cb4cbbc401d1cd15d76bae78f9b1db8585624e17b46a81cf7c787c"
+   },
+   "length": 34,
+   "centrePad": 7,
+   "id": 42,
+   "record": "$76AB7",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD98",
+     "$6FD9A"
+    ],
+    "sha256": "f785c3ce1d580c8f22c1db8a14cf1268e44279ff5d461361dbbfaf19e8b11578"
+   },
+   "headerSource": {
+    "range": [
+     "$76AB7",
+     "$76AB8"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$76AD1",
+   "raw": "WHERE TO GUV ?",
+   "parts": [
+    {
+     "text": "WHERE TO GUV ?"
+    }
+   ],
+   "text": "WHERE TO GUV ?",
+   "source": {
+    "range": [
+     "$76AD1",
+     "$76ADD"
+    ],
+    "sha256": "268a5dadabf60873b4ae44424556c77a577391a6f692a68bfc20383057bb46b8"
+   },
+   "length": 14,
+   "centrePad": 17,
+   "id": 43,
+   "record": "$76AD0",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD9A",
+     "$6FD9C"
+    ],
+    "sha256": "a6be9ffadd14e52a7936c020b70d42b9a3aa6094c4d19073b718ead5906ddd55"
+   },
+   "headerSource": {
+    "range": [
+     "$76AD0",
+     "$76AD1"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$76ADE",
+   "raw": "HELLO - WHERE CAN I TAKE YOU ?",
+   "parts": [
+    {
+     "text": "HELLO - WHERE CAN I TAKE YOU ?"
+    }
+   ],
+   "text": "HELLO - WHERE CAN I TAKE YOU ?",
+   "source": {
+    "range": [
+     "$76ADE",
+     "$76AF6"
+    ],
+    "sha256": "ac4e94d41d8f8f27375acae0ae05679af2326e2a03af2f708cbd137c6792a311"
+   },
+   "length": 30,
+   "centrePad": 9,
+   "id": 44,
+   "record": "$76ADD",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD9C",
+     "$6FD9E"
+    ],
+    "sha256": "9f3d00073571233a8cbc6bb99a3abf8aa5732160f32169c93953f293c527ee9b"
+   },
+   "headerSource": {
+    "range": [
+     "$76ADD",
+     "$76ADE"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$76AF7",
+   "raw": "K A O S TAXIS AT YOUR SERVICE - WHERE TO PLEASE",
+   "parts": [
+    {
+     "text": "K A O S TAXIS AT YOUR SERVICE - WHERE TO PLEASE"
+    }
+   ],
+   "text": "K A O S TAXIS AT YOUR SERVICE - WHERE TO PLEASE",
+   "source": {
+    "range": [
+     "$76AF7",
+     "$76B1B"
+    ],
+    "sha256": "bacbcea94813b301478a9ce61d708e7666a39d6e068bdc3904375cda3ffb90de"
+   },
+   "length": 47,
+   "centrePad": 1,
+   "id": 45,
+   "record": "$76AF6",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FD9E",
+     "$6FDA0"
+    ],
+    "sha256": "f4f290bde5533633d60949f61448de7e0f7469126f195dd328c95de90ba2d3ee"
+   },
+   "headerSource": {
+    "range": [
+     "$76AF6",
+     "$76AF7"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$76B1C",
+   "raw": "SELECT A DESTINATION NOW PLEASE",
+   "parts": [
+    {
+     "text": "SELECT A DESTINATION NOW PLEASE"
+    }
+   ],
+   "text": "SELECT A DESTINATION NOW PLEASE",
+   "source": {
+    "range": [
+     "$76B1C",
+     "$76B34"
+    ],
+    "sha256": "4ba8b221e46e7d610709a9ed29f468d3a9db52ddcdad6550c2efeb3c60279e22"
+   },
+   "length": 31,
+   "centrePad": 9,
+   "id": 46,
+   "record": "$76B1B",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FDA0",
+     "$6FDA2"
+    ],
+    "sha256": "16e5e873ee08091987a16ef5f8a09f2fdf8cf266f78fbb17f5089b466e2963e2"
+   },
+   "headerSource": {
+    "range": [
+     "$76B1B",
+     "$76B1C"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$76B35",
+   "raw": "HERE WE ARE\\N GUV",
+   "parts": [
+    {
+     "text": "HERE WE ARE"
+    },
+    {
+     "token": "\\",
+     "expansion": " THE"
+    },
+    {
+     "text": "N GUV"
+    }
+   ],
+   "text": "HERE WE ARE THEN GUV",
+   "source": {
+    "range": [
+     "$76B35",
+     "$76B43"
+    ],
+    "sha256": "ecfc39f29798812806be6dc56899535578f3ec0dcd423d86efa673bbbad1b3e1"
+   },
+   "length": 20,
+   "centrePad": 14,
+   "id": 47,
+   "record": "$76B34",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FDA2",
+     "$6FDA4"
+    ],
+    "sha256": "879670d2a2e706e02507f43fe85424f60029d1392b162970e8b10e607e226df4"
+   },
+   "headerSource": {
+    "range": [
+     "$76B34",
+     "$76B35"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$76B44",
+   "raw": "YOU'VE BEEN ZAPPED",
+   "parts": [
+    {
+     "text": "YOU'VE BEEN ZAPPED"
+    }
+   ],
+   "text": "YOU'VE BEEN ZAPPED",
+   "source": {
+    "range": [
+     "$76B44",
+     "$76B53"
+    ],
+    "sha256": "e5efb1df9dd92cdcc25853412ef8faed09f89b5d3b76c4a9dd7c6fbb1acd8cd9"
+   },
+   "length": 18,
+   "centrePad": 15,
+   "id": 48,
+   "record": "$76B43",
+   "header": 0,
+   "scrollsOut": false,
+   "tableEntry": {
+    "range": [
+     "$6FDA4",
+     "$6FDA6"
+    ],
+    "sha256": "6305a8e928a9ae7178f658f6bbdb94772f81faf274c225c04264f882441614ff"
+   },
+   "headerSource": {
+    "range": [
+     "$76B43",
+     "$76B44"
+    ],
+    "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"
+   }
+  },
+  {
+   "address": "$76B54",
+   "raw": "ENEMY SHIP DESTROYED    -    ^2 LEFT",
+   "parts": [
+    {
+     "text": "ENEMY SHIP DESTROYED    -    "
+    },
+    {
+     "token": "^2",
+     "live": "sum of the 26 bytes $6E50,$6E52,...,$6E82 (mod 256), in decimal ($52964, $52978)"
+    },
+    {
+     "text": " LEFT"
+    }
+   ],
+   "text": "ENEMY SHIP DESTROYED    -    ^2 LEFT",
+   "source": {
+    "range": [
+     "$76B54",
+     "$76B70"
+    ],
+    "sha256": "93d8379b951be9c7f0637bf9a6bf94efde741e6b54dd1dd8773ec15e054ac7f7"
+   },
+   "id": 49,
+   "record": "$76B53",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FDA6",
+     "$6FDA8"
+    ],
+    "sha256": "60829ab48200bfc6d4670017abe94a381ae9cf654db1cbd44f1c826b4f29d1c1"
+   },
+   "headerSource": {
+    "range": [
+     "$76B53",
+     "$76B54"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$76B71",
+   "raw": " ",
+   "parts": [
+    {
+     "text": " "
+    }
+   ],
+   "text": " ",
+   "source": {
+    "range": [
+     "$76B71",
+     "$76B73"
+    ],
+    "sha256": "c0ba8a33ac67f44abff5984dfbb6f56c46b880ac2b86e1f23e7fa9c402c53ae7"
+   },
+   "length": 1,
+   "centrePad": 24,
+   "id": 50,
+   "record": "$76B70",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FDA8",
+     "$6FDAA"
+    ],
+    "sha256": "f24134f405aa79fa9cc4c1bbdd5561686e78d56addcd45e422693ab6212c2286"
+   },
+   "headerSource": {
+    "range": [
+     "$76B70",
+     "$76B71"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$76B74",
+   "raw": "DISK ERROR",
+   "parts": [
+    {
+     "text": "DISK ERROR"
+    }
+   ],
+   "text": "DISK ERROR",
+   "source": {
+    "range": [
+     "$76B74",
+     "$76B7D"
+    ],
+    "sha256": "38326bb300698bf1a79ec823d4eb58d8f69acd57cf65207f7e4659c0e2501a9d"
+   },
+   "length": 10,
+   "centrePad": 19,
+   "id": 51,
+   "record": "$76B73",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FDAA",
+     "$6FDAC"
+    ],
+    "sha256": "e246b8992ea2555828338ddf368f55f574c226451ca80a93ce500a59d51470c9"
+   },
+   "headerSource": {
+    "range": [
+     "$76B73",
+     "$76B74"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$76B7E",
+   "raw": "YOU'VE BEEN ZAPPED   -   ^3 SHIELDS LEFT",
+   "parts": [
+    {
+     "text": "YOU'VE BEEN ZAPPED   -   "
+    },
+    {
+     "token": "^3",
+     "live": "low nibble of byte $6ECB, one digit ($52A8C)"
+    },
+    {
+     "text": " SHIELDS LEFT"
+    }
+   ],
+   "text": "YOU'VE BEEN ZAPPED   -   ^3 SHIELDS LEFT",
+   "source": {
+    "range": [
+     "$76B7E",
+     "$76B9D"
+    ],
+    "sha256": "b1db3dfaa8fce2a492a3a9c20323cda6fd9a562454c86ed7dbeb70849a8f8b41"
+   },
+   "id": 52,
+   "record": "$76B7D",
+   "header": 1,
+   "scrollsOut": true,
+   "tableEntry": {
+    "range": [
+     "$6FDAC",
+     "$6FDAE"
+    ],
+    "sha256": "9d109e0c6a5ccedf2cd060f1437027e97d406cc9efb840b4a672deae19bade79"
+   },
+   "headerSource": {
+    "range": [
+     "$76B7D",
+     "$76B7E"
+    ],
+    "sha256": "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a"
+   }
+  },
+  {
+   "address": "$76B9E",
+   "raw": "PRESS RETURN WHEN READY",
+   "parts": [
+    {
+     "text": "PRESS RETURN WHEN READY"
+    }
+   ],
+   "text": "PRESS RETURN WHEN READY",
+   "source": {
+    "range": [
+     "$76B9E",
+     "$76BB0"
+    ],
+    "sha256": "17c2d0cd85313cd09b0110525fa2caf71dac668ae681d226b14ee4b11fde061d"
+   },
+   "length": 23,
+   "centrePad": 13,
+   "id": 53,
+   "record": "$76B9D",
+   "header": 0,
+   "scrollsOut": false,
+   "tableEntry": {
+    "range": [
+     "$6FDAE",
+     "$6FDB0"
+    ],
+    "sha256": "12ce17267f476344158249ee5d9ade0629cd78f6824d8236a8d3554b9da4dcfb"
+   },
+   "headerSource": {
+    "range": [
+     "$76B9D",
+     "$76B9E"
+    ],
+    "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"
+   }
+  },
+  {
+   "address": "$76B9E",
+   "raw": "PRESS RETURN WHEN READY",
+   "parts": [
+    {
+     "text": "PRESS RETURN WHEN READY"
+    }
+   ],
+   "text": "PRESS RETURN WHEN READY",
+   "source": {
+    "range": [
+     "$76B9E",
+     "$76BB0"
+    ],
+    "sha256": "17c2d0cd85313cd09b0110525fa2caf71dac668ae681d226b14ee4b11fde061d"
+   },
+   "length": 23,
+   "centrePad": 13,
+   "id": 54,
+   "record": "$76B9D",
+   "header": 0,
+   "scrollsOut": false,
+   "tableEntry": {
+    "range": [
+     "$6FDB0",
+     "$6FDB2"
+    ],
+    "sha256": "12ce17267f476344158249ee5d9ade0629cd78f6824d8236a8d3554b9da4dcfb"
+   },
+   "headerSource": {
+    "range": [
+     "$76B9D",
+     "$76B9E"
+    ],
+    "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"
+   }
+  },
+  {
+   "address": "$76B9E",
+   "raw": "PRESS RETURN WHEN READY",
+   "parts": [
+    {
+     "text": "PRESS RETURN WHEN READY"
+    }
+   ],
+   "text": "PRESS RETURN WHEN READY",
+   "source": {
+    "range": [
+     "$76B9E",
+     "$76BB0"
+    ],
+    "sha256": "17c2d0cd85313cd09b0110525fa2caf71dac668ae681d226b14ee4b11fde061d"
+   },
+   "length": 23,
+   "centrePad": 13,
+   "id": 55,
+   "record": "$76B9D",
+   "header": 0,
+   "scrollsOut": false,
+   "tableEntry": {
+    "range": [
+     "$6FDB2",
+     "$6FDB4"
+    ],
+    "sha256": "12ce17267f476344158249ee5d9ade0629cd78f6824d8236a8d3554b9da4dcfb"
+   },
+   "headerSource": {
+    "range": [
+     "$76B9D",
+     "$76B9E"
+    ],
+    "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"
+   }
+  },
+  {
+   "address": "$76B9E",
+   "raw": "PRESS RETURN WHEN READY",
+   "parts": [
+    {
+     "text": "PRESS RETURN WHEN READY"
+    }
+   ],
+   "text": "PRESS RETURN WHEN READY",
+   "source": {
+    "range": [
+     "$76B9E",
+     "$76BB0"
+    ],
+    "sha256": "17c2d0cd85313cd09b0110525fa2caf71dac668ae681d226b14ee4b11fde061d"
+   },
+   "length": 23,
+   "centrePad": 13,
+   "id": 56,
+   "record": "$76B9D",
+   "header": 0,
+   "scrollsOut": false,
+   "tableEntry": {
+    "range": [
+     "$6FDB4",
+     "$6FDB6"
+    ],
+    "sha256": "12ce17267f476344158249ee5d9ade0629cd78f6824d8236a8d3554b9da4dcfb"
+   },
+   "headerSource": {
+    "range": [
+     "$76B9D",
+     "$76B9E"
+    ],
+    "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"
+   }
+  },
+  {
+   "address": "$76BB1",
+   "raw": "LOAD NUMBER 0-9",
+   "parts": [
+    {
+     "text": "LOAD NUMBER 0-9"
+    }
+   ],
+   "text": "LOAD NUMBER 0-9",
+   "source": {
+    "range": [
+     "$76BB1",
+     "$76BBD"
+    ],
+    "sha256": "7124c0566cb99003388f792226ad35a826679bdcc5adf996bc673988552728a7"
+   },
+   "length": 15,
+   "centrePad": 17,
+   "id": 57,
+   "record": "$76BB0",
+   "header": 0,
+   "scrollsOut": false,
+   "tableEntry": {
+    "range": [
+     "$6FDB6",
+     "$6FDB8"
+    ],
+    "sha256": "1843653496800edfd0d30326c82f53b0338ed408468cca4a2f1b52f2f6395fc9"
+   },
+   "headerSource": {
+    "range": [
+     "$76BB0",
+     "$76BB1"
+    ],
+    "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"
+   }
+  },
+  {
+   "address": "$76BB1",
+   "raw": "LOAD NUMBER 0-9",
+   "parts": [
+    {
+     "text": "LOAD NUMBER 0-9"
+    }
+   ],
+   "text": "LOAD NUMBER 0-9",
+   "source": {
+    "range": [
+     "$76BB1",
+     "$76BBD"
+    ],
+    "sha256": "7124c0566cb99003388f792226ad35a826679bdcc5adf996bc673988552728a7"
+   },
+   "length": 15,
+   "centrePad": 17,
+   "id": 58,
+   "record": "$76BB0",
+   "header": 0,
+   "scrollsOut": false,
+   "tableEntry": {
+    "range": [
+     "$6FDB8",
+     "$6FDBA"
+    ],
+    "sha256": "1843653496800edfd0d30326c82f53b0338ed408468cca4a2f1b52f2f6395fc9"
+   },
+   "headerSource": {
+    "range": [
+     "$76BB0",
+     "$76BB1"
+    ],
+    "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"
+   }
+  },
+  {
+   "address": "$76BBE",
+   "raw": "SAVE NUMBER 0-9",
+   "parts": [
+    {
+     "text": "SAVE NUMBER 0-9"
+    }
+   ],
+   "text": "SAVE NUMBER 0-9",
+   "source": {
+    "range": [
+     "$76BBE",
+     "$76BCA"
+    ],
+    "sha256": "19afdfaefd8b90724f3320472d7f357c9ac7b61f0871dbbf8ba90db2ebe569c3"
+   },
+   "length": 15,
+   "centrePad": 17,
+   "id": 59,
+   "record": "$76BBD",
+   "header": 0,
+   "scrollsOut": false,
+   "tableEntry": {
+    "range": [
+     "$6FDBA",
+     "$6FDBC"
+    ],
+    "sha256": "1b06e2003f8420d6fa42badd8f77ec0f706b976b7a48b13c567dc5a559681683"
+   },
+   "headerSource": {
+    "range": [
+     "$76BBD",
+     "$76BBE"
+    ],
+    "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"
+   }
+  },
+  {
+   "address": "$76BCB",
+   "raw": "",
+   "parts": [],
+   "text": "",
+   "source": {
+    "range": [
+     "$76BCB",
+     "$76BCC"
+    ],
+    "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"
+   },
+   "length": 0,
+   "centrePad": 24,
+   "id": 60,
+   "record": "$76BCA",
+   "header": 0,
+   "scrollsOut": false,
+   "tableEntry": {
+    "range": [
+     "$6FDBC",
+     "$6FDBE"
+    ],
+    "sha256": "0bcfb666d3af378906e35b2735eb281130a30aedc6e70c118b6555e55e834abf"
+   },
+   "headerSource": {
+    "range": [
+     "$76BCA",
+     "$76BCB"
+    ],
+    "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"
+   }
+  },
+  {
+   "address": "$76BCB",
+   "raw": "",
+   "parts": [],
+   "text": "",
+   "source": {
+    "range": [
+     "$76BCB",
+     "$76BCC"
+    ],
+    "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"
+   },
+   "length": 0,
+   "centrePad": 24,
+   "id": 61,
+   "record": "$76BCA",
+   "header": 0,
+   "scrollsOut": false,
+   "tableEntry": {
+    "range": [
+     "$6FDBE",
+     "$6FDC0"
+    ],
+    "sha256": "0bcfb666d3af378906e35b2735eb281130a30aedc6e70c118b6555e55e834abf"
+   },
+   "headerSource": {
+    "range": [
+     "$76BCA",
+     "$76BCB"
+    ],
+    "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"
+   }
+  },
+  {
+   "address": "$76BCB",
+   "raw": "",
+   "parts": [],
+   "text": "",
+   "source": {
+    "range": [
+     "$76BCB",
+     "$76BCC"
+    ],
+    "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"
+   },
+   "length": 0,
+   "centrePad": 24,
+   "id": 62,
+   "record": "$76BCA",
+   "header": 0,
+   "scrollsOut": false,
+   "tableEntry": {
+    "range": [
+     "$6FDC0",
+     "$6FDC2"
+    ],
+    "sha256": "0bcfb666d3af378906e35b2735eb281130a30aedc6e70c118b6555e55e834abf"
+   },
+   "headerSource": {
+    "range": [
+     "$76BCA",
+     "$76BCB"
+    ],
+    "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"
+   }
+  },
+  {
+   "address": "$76BCB",
+   "raw": "",
+   "parts": [],
+   "text": "",
+   "source": {
+    "range": [
+     "$76BCB",
+     "$76BCC"
+    ],
+    "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"
+   },
+   "length": 0,
+   "centrePad": 24,
+   "id": 63,
+   "record": "$76BCA",
+   "header": 0,
+   "scrollsOut": false,
+   "tableEntry": {
+    "range": [
+     "$6FDC2",
+     "$6FDC4"
+    ],
+    "sha256": "0bcfb666d3af378906e35b2735eb281130a30aedc6e70c118b6555e55e834abf"
+   },
+   "headerSource": {
+    "range": [
+     "$76BCA",
+     "$76BCB"
+    ],
+    "sha256": "6e340b9cffb37a989ca544e6bb780a2c78901d3fb33738768511a30617afa01d"
+   }
+  }
+ ]
+}

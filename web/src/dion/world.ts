@@ -1,3 +1,4 @@
+import type { DionSource } from './documents.ts';
 import {
   address,
   bool,
@@ -265,14 +266,6 @@ export interface DionGlyph {
   }[];
 }
 
-export interface DionWorldSource {
-  readonly capture: {
-    readonly loaded: { readonly ramSha256: string; readonly vbl: number };
-    readonly opening: { readonly ramSha256: string; readonly vbl: number };
-  };
-  readonly programSha256: string;
-  readonly title: string;
-}
 
 export interface DionFramePalette {
   readonly fixed: ReadonlyMap<number, number>;
@@ -287,16 +280,28 @@ export interface DionFramePalette {
 }
 
 export interface DionOpening {
+  /// Twelve packed BCD digits, `$72DE..$72E3`.
+  readonly cash: string;
   readonly cell: number;
+  readonly clock: {
+    readonly accumulator: number;
+    readonly day: number;
+    readonly refill: number;
+    readonly seconds: number;
+    readonly step: number;
+  };
   readonly eye: readonly [number, number, number];
   readonly frameCounter: number;
+  readonly gauges: { readonly inventory: number; readonly p: number; readonly t: number };
   /// The cell-grid origin of the METIS workspace on its Body, in whole cells.
   readonly groupOrigin: readonly [number, number];
   readonly heading: number;
+  /// `$713C`: the roster entry the panel names.
+  readonly location: number;
   readonly pitch: number;
+  readonly position: readonly [number, number];
   readonly region: number;
   readonly roll: number;
-  readonly vbl: number;
 }
 
 export interface DionWorld {
@@ -329,7 +334,7 @@ export interface DionWorld {
   /// `$7E4A`: the Q15 sine table model rotation reads, 256 steps a turn and 320
   /// entries long, so the cosine at +64 never wraps.
   readonly rotationTable: readonly number[];
-  readonly source: DionWorldSource;
+  readonly source: DionSource;
   readonly structureY: number;
   /// Structure records by geometry slot, then by `"sx,sz"` scale.
   readonly structures: ReadonlyMap<number, ReadonlyMap<string, DionStructure>>;
@@ -696,7 +701,7 @@ const readGlyph = (value: unknown, path: string): DionGlyph => {
 
 export const readDionWorldBody = (
   raw: Record<string, unknown>,
-  source: DionWorldSource
+  source: DionSource
 ): DionWorld => {
   const groundsRaw = record(raw['grounds'], 'grounds');
   const grounds = new Map<number, DionGround>();
@@ -821,15 +826,41 @@ const readViewFacts = (raw: Record<string, unknown>) => {
       template: ints(palette['template'], 'framePalette.template', 17, 0, 0xffff)
     },
     opening: {
+      cash: (() => {
+        const raw = text(opening['cash'], 'opening.cash');
+        return /^\d{12}$/.test(raw) ? raw : fail('opening.cash is not twelve BCD digits');
+      })(),
       cell: byte(opening['cell'], 'opening.cell'),
+      clock: (() => {
+        const clock = record(opening['clock'], 'opening.clock');
+        return {
+          accumulator: sword(clock['accumulator'], 'opening.clock.accumulator'),
+          day: word(clock['day'], 'opening.clock.day'),
+          refill: int(clock['refill'], 'opening.clock.refill', 1, 0x7fff),
+          seconds: int(clock['seconds'], 'opening.clock.seconds', 0, 86_399),
+          step: int(clock['step'], 'opening.clock.step', 1, 0x7fff)
+        };
+      })(),
       eye: triple(opening['eye'], 'opening.eye'),
       frameCounter: word(opening['frameCounter'], 'opening.frameCounter'),
+      gauges: (() => {
+        const gauges = record(opening['gauges'], 'opening.gauges');
+        return {
+          inventory: word(gauges['inventory'], 'opening.gauges.inventory'),
+          p: word(gauges['p'], 'opening.gauges.p'),
+          t: word(gauges['t'], 'opening.gauges.t')
+        };
+      })(),
       groupOrigin: pair(opening['groupOrigin'], 'opening.groupOrigin'),
       heading: word(opening['heading'], 'opening.heading'),
+      location: word(opening['location'], 'opening.location'),
       pitch: word(opening['pitch'], 'opening.pitch'),
+      position: (() => {
+        const [a, b] = ints(opening['position'], 'opening.position', 2, 0, 0xffff);
+        return [a!, b!] as const;
+      })(),
       region: int(opening['region'], 'opening.region', 1, 64),
-      roll: word(opening['roll'], 'opening.roll'),
-      vbl: int(opening['vbl'], 'opening.vbl', 0)
+      roll: word(opening['roll'], 'opening.roll')
     },
     rotationTable: ints(
       record(raw['rotationTable'], 'rotationTable')['words'],

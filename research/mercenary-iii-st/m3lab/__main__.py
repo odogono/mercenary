@@ -19,7 +19,27 @@ from .ram import Ram
 
 SCHEMA_VERSION = 1
 LOADED_VBL = 6000
-OPENING_VBL = 5800
+# The game entry (`$6AC32`), where the panel artwork DAM6 has just been loaded and
+# no readout has yet been drawn over it.
+ENTRY = (3990, 0x6AC32, 'entry')
+# A fresh game: the first main-loop top once the prison cell is bound and the
+# opening script `$19` has started (`$59FBA`, about VBL 4734 at 60 Hz).
+START = (4770, 0x5A41A, 'start')
+
+
+def camel(value):
+    """Document keys in the payload's camelCase; addresses and tokens are kept."""
+    if isinstance(value, dict):
+        out = {}
+        for key, item in value.items():
+            if isinstance(key, str) and '_' in key and key[:1].isalpha() and key == key.lower():
+                head, *rest = key.split('_')
+                key = head + ''.join(part[:1].upper() + part[1:] for part in rest)
+            out[key] = camel(item)
+        return out
+    if isinstance(value, list):
+        return [camel(item) for item in value]
+    return value
 
 
 def source(run: Path, loaded: Ram, opening: Ram) -> dict:
@@ -38,7 +58,8 @@ def source(run: Path, loaded: Ram, opening: Ram) -> dict:
             'schedule': plan['name'],
             'inputs': plan['inputs'],
             'loaded': {'vbl': LOADED_VBL, 'ramSha256': loaded.sha256},
-            'opening': {'vbl': OPENING_VBL, 'ramSha256': opening.sha256},
+            'opening': {'pc': f'${START[1]:05X}', 'armedAtVbl': START[0],
+                        'ramSha256': opening.sha256},
         },
         'evidence': baseline['evidence'],
     }
@@ -50,20 +71,28 @@ def write(path: Path, document: dict) -> None:
 
 
 def export(run: Path, out: Path) -> None:
+    from .panel import extract_panel
+    from .scripts import extract_scripts
+    from .service import extract_service
+    from .sound import extract_sound
+    from .text import extract_messages
     from .world import extract_world
     loaded = Ram.load(run / f'v{LOADED_VBL}.ram')
-    opening = Ram.load(run / f'v{OPENING_VBL}.ram')
+    opening = Ram.load(run / f'{START[2]}.ram')
+    entry = Ram.load(run / f'{ENTRY[2]}.ram')
     header = {'schemaVersion': SCHEMA_VERSION, 'source': source(run, loaded, opening)}
-    write(out / 'world.json', {**header, 'kind': 'world', **extract_world(loaded, opening)})
-    extras = [('panel', 'extract_panel', 'panel'), ('text', 'extract_messages', 'messages'),
-              ('scripts', 'extract_scripts', 'scripts'), ('sound', 'extract_sound', 'sound'),
-              ('service', 'extract_service', 'service')]
-    for module, function, kind in extras:
-        try:
-            extractor = getattr(__import__(f'm3lab.{module}', fromlist=[function]), function)
-        except (ImportError, AttributeError):
-            continue
-        write(out / f'{kind}.json', {**header, 'kind': kind, **extractor(loaded)})
+    header['source']['capture']['entry'] = {'pc': f'${ENTRY[1]:05X}', 'ramSha256': entry.sha256}
+    documents = {
+        'world': extract_world(loaded, opening),
+        'panel': extract_panel(loaded, entry),
+        'messages': extract_messages(loaded),
+        'scripts': extract_scripts(loaded),
+        'sound': extract_sound(loaded),
+        'service': extract_service(opening),
+    }
+    for kind, body in documents.items():
+        body = {key: item for key, item in body.items() if key not in ('title',)}
+        write(out / f'{kind}.json', {**header, 'kind': kind, **camel(body)})
 
 
 def main() -> None:
@@ -77,8 +106,9 @@ def main() -> None:
     args = parser.parse_args()
     if args.command == 'capture':
         plan = boot.Plan(args.name, inputs=boot.TAXI_SPACEPORT,
-                         captures=[OPENING_VBL, LOADED_VBL, 9500, 10800, 12200, 12900,
-                                   13600, 15000, 17000, 19000, 22600])
+                         captures=[5800, LOADED_VBL, 9500, 10800, 12200, 12900,
+                                   13600, 15000, 17000, 19000, 22600],
+                         pc_captures=[ENTRY, START])
         print(boot.run(plan))
     else:
         export(args.run, args.out)

@@ -77,6 +77,8 @@ class Plan:
     # Capture at the first main-loop top (`$5A41A`) at or after each capture VBL,
     # where the displayed screen is the frame drawn from the pose RAM then holds.
     loop_top: bool = False
+    # (arm at VBL, PC, name): save `name.ram` at the first hit of PC after the VBL.
+    pc_captures: list[tuple[int, int, str]] = field(default_factory=list)
 
     def end(self) -> int:
         return max([v for v, _ in self.inputs] + self.captures) + 1
@@ -103,6 +105,10 @@ def run(plan: Plan, root: Path | None = None, timeout: int = 900) -> Path:
     for vbl, (kind, value) in plan.inputs:
         address = KEY_MAILBOX if kind == 'key' else STICK_COPY
         steps.setdefault(vbl, []).append(f'w ${address:x} ${value:02x}')
+    for vbl, pc, name in plan.pc_captures:
+        steps.setdefault(vbl, []).append(
+            f'b pc = ${pc:x} :trace :once :quiet :file {run_dir}/{name}.ini')
+        (run_dir / f'{name}.ini').write_text(f'savebin {run_dir}/{name}.ram 0 $100000\n')
     if plan.pal:
         steps.setdefault(10, []).insert(0, 'w $ff820a $02')
     ordered = sorted(steps)

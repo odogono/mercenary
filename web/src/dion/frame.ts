@@ -115,6 +115,8 @@ class FramePalette {
 
 interface Paint {
   readonly gaps: Set<string>;
+  /// `$B300`: the two characters the last `$8008` header wrote, which token `$8B` reads.
+  labelCode: number | null;
   lines: number;
   readonly models: number[];
   readonly palette: FramePalette;
@@ -365,6 +367,10 @@ const tokenString = (
   token: number
 ): number[] | null => {
   const { lettering } = view.world;
+  if (token === 0x0b) {
+    const code = view.paint.labelCode;
+    return code === null ? null : [code >> 8, code & 0xff];
+  }
   if (token === 0x09 || token === 0x1d) {
     // `$5600C..$560B0`: cells keyed from $A0 bind a set; others draw blanks.
     const set = bound?.cell.tokenSet ?? null;
@@ -418,10 +424,13 @@ const drawText = (view: View, bound: Bound | null, placement: TextPlacement): vo
     if (glyph === undefined) {
       view.paint.gaps.add(`font ${font} glyph $${code.toString(16)} is not exported`);
     } else {
+      // `$55208`: font 7 adds its points to twice the origin and halves the sum, so its
+      // glyphs stand at half scale.
+      const half = font === 7 ? 0.5 : 1;
       const point = (index: number): Vec3 => {
         const [px, py] = glyph.points[index]!;
-        const a = px * gx;
-        const b = py * gy;
+        const a = px * gx * half;
+        const b = py * gy * half;
         if (placement.flags & 0x80) {
           return [x, y + b, z + a];
         }
@@ -476,6 +485,9 @@ const drawModel = (
   const op = header?.op;
   if (op === 0x0 || op === 0x6) {
     return;
+  }
+  if (header?.op === 0x8 && header.code !== undefined) {
+    view.paint.labelCode = header.code;
   }
   let mode = 0;
   let yaw = 0;
@@ -1139,6 +1151,7 @@ export const planDionFrame = (
   const sceneHalf = bound === null ? null : world.palettes.get(bound.cell.palette);
   const paint: Paint = {
     gaps: new Set(['horizon line, stars and sky Bodies (#646)']),
+    labelCode: null,
     lines: 0,
     models: [],
     palette,

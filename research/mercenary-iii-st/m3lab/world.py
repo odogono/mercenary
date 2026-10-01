@@ -241,10 +241,22 @@ def extract_world(ram: Ram, opening: Ram) -> dict:
             continue
         models[str(entry)] = decode_model(ram, entry)
 
-    glyphs = {}
-    for font, code in [(0, 0x20), (5, 0x20), (1, 0x20)] + [(5, c) for c in range(0x40, 0x47)] + \
-                      [(1, ord('I'))]:
-        glyphs[f'{font}:{code:02X}'] = glyph(ram, font, code)
+    # Every font a slice text record names, whole: a token's live string can name any
+    # character, so the fonts are exported rather than the characters seen.
+    fonts = set()
+    for detail in details.values():
+        fonts |= {p['flags'] & 0x0F for p in detail['primitives'] if p['kind'] == 'text'}
+    for structure in structures.values():
+        for scaled in structure['scaled'].values():
+            fonts |= {t['plane'] & 0x0F for t in scaled['wallTexts']}
+    for model in models.values():
+        for form in [model] + ([model['passenger']] if 'passenger' in model else []):
+            faces = form['faces'] + [f for a in form['alternatives'] for f in a['faces']]
+            fonts |= {f['flags'] & 0x0F for f in faces if f['kind'] == 'text'}
+    if 4 in fonts:
+        fonts.add(3)  # `$55116`: font 4 falls back to font 3 on `$65B2`.
+    glyphs = {f'{font}:{code:02X}': glyph(ram, font, code)
+              for font in sorted(fonts) for code in range(0x20, 0x60)}
 
     rotation = ram.require(0x7E4A, 0x7FCA,
                            '85d7c648b0d75fcb23ebe88ce759d7221614848f3058a3edd308552fbbaf4bda',
@@ -280,11 +292,26 @@ def extract_world(ram: Ram, opening: Ram) -> dict:
         'thirdHeight': ram.sword(0x71C2),
         'blinkPhase': blink,
         'opening': {
-            'vbl': 5800, 'eye': eye, 'heading': opening.word(0x7156),
+            'eye': eye, 'heading': opening.word(0x7156),
             'cell': cell, 'region': opening.word(0x7194),
             'groupOrigin': [(eye[0] >> 16) - (cell & 15), (eye[2] >> 16) - (cell >> 4)],
             'frameCounter': opening.word(0x7180),
             'pitch': opening.word(0x7154), 'roll': opening.word(0x7152),
+            # Panel state a fresh game shows, read from the same image.
+            'location': opening.word(0x713C),
+            'position': [opening.word(0x70B4), opening.word(0x70B8)],
+            'gauges': {'t': opening.word(0x6F2E), 'p': opening.word(0x6F30),
+                       'inventory': opening.word(0x6F2C)},
+            # $53164..$531D0: each VBL takes the step from the accumulator; at or
+            # below zero a second is counted and the refill added back.
+            'clock': {'seconds': opening.long(0x6FCE), 'day': opening.word(0x6FD2),
+                      'accumulator': opening.sword(0x6F2A), 'step': opening.sword(0x6F26),
+                      'refill': opening.sword(0x6F28)},
+            'cash': opening.bytes(0x72DE, 0x72E4).hex(),
+            'provenance': [opening.slice(0x7146, 0x7158), opening.slice(0x70B4, 0x70BA),
+                           opening.slice(0x6F26, 0x6F32), opening.slice(0x6FCE, 0x6FD4), opening.slice(0x72DE, 0x72E4), opening.slice(0x713C, 0x713E),
+                           opening.slice(0x7180, 0x7182), opening.slice(0x7194, 0x7196),
+                           opening.slice(0x71F4, 0x71F6)],
         },
         'stableSlices': slices,
         'metisGroup': group,
