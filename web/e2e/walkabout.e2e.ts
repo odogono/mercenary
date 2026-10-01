@@ -29,7 +29,7 @@ const useComposition = async (
 ): Promise<void> => {
   await page.addInitScript(composition => {
     window.localStorage.setItem(
-      'mercenary.browser-shell.preferences.v1',
+      'mercenary.browser-shell.targ.preferences.v1',
       JSON.stringify({ composition, panelRendition: 'targ' })
     );
   }, composition);
@@ -114,7 +114,7 @@ test('the Benson Panel is the default composition and tracks the session', async
 
   await page.evaluate(() => {
     window.localStorage.setItem(
-      'mercenary.browser-shell.preferences.v1',
+      'mercenary.browser-shell.targ.preferences.v1',
       JSON.stringify({ composition: 'panel', panelRendition: 'damocles' })
     );
   });

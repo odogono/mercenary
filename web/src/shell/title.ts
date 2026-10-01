@@ -15,8 +15,11 @@ export interface TitleStorageKeys {
   /// Web Lock name. Targ keeps the Resume key as the lock name so existing tabs still agree.
   readonly lock: string;
   readonly ownershipChannel: string;
+  /// The player's settings for this Title, and its typeface (ADR 0063).
+  readonly preferences: string;
   readonly resume: string;
   readonly save: (slot: 1 | 2 | 3) => string;
+  readonly typeface: string;
 }
 
 export interface TitleSession<Snapshot, Resume = unknown> {
@@ -59,7 +62,8 @@ export interface TitleRuntime<
 /// Where each Title keeps its Session Resume.
 ///
 /// Targ's key predates the partition and is kept as it is, so nothing a player has in progress
-/// is lost; Damocles takes a namespaced key from the start (ADR 0041).
+/// is lost; Damocles takes a namespaced key from the start (ADR 0041). Preferences and typeface
+/// are namespaced for every Title, Targ's too (ADR 0063).
 export const titleStorageKeys = (slug: TitleSlug): TitleStorageKeys => {
   const resume =
     slug === 'targ'
@@ -71,10 +75,12 @@ export const titleStorageKeys = (slug: TitleSlug): TitleStorageKeys => {
       slug === 'targ'
         ? 'mercenary.browser-shell.session-resume.ownership.v1'
         : `${resume}.ownership`,
+    preferences: `mercenary.browser-shell.${slug}.preferences.v1`,
     resume,
     save: slot =>
       slug === 'targ'
         ? `mercenary.browser-shell.save.v1.slot-${slot}`
-        : `mercenary.browser-shell.${slug}.save.v1.slot-${slot}`
+        : `mercenary.browser-shell.${slug}.save.v1.slot-${slot}`,
+    typeface: `mercenary.browser-shell.${slug}.typeface.v1`
   };
 };

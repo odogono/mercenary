@@ -1,0 +1,9 @@
+# Present Damocles's Control Profile in Mercenary III
+
+Accepted, 2026-10-01.
+
+Mercenary III is the Damocles engine, and its player should meet the same controls. Its Controls Page was a one-line note, and its taxi keys bypassed `BINDINGS` in a handler of their own, reading `-` and `+` by character where Damocles's `-` and `=` are the throttle. Mercenary III now declares Damocles's whole action set to the shared Control Profile, and its Controls Page is drawn from the same table, group for group and row for row. Actions its port has not reached yet are inert: the key is taken and nothing happens.
+
+This supersedes, for Mercenary III only, ADR 0056's rule that the Controls Page never names a key the Title does not honour. The page names the Control Profile the Title is being ported to. Showing only the honoured subset would be accurate today, but it would make the page grow and shift as the port grows, and it would hide that the two Titles share a keyboard.
+
+The taxi actions are not new Bindings. The pinned ST baseline takes them on the same keypad scancodes Damocles reads as Head Commands (`docs/research/mercenary-iii-integration.md`): keypad Enter (`$72`) opens the TAXICARD's use panel, keypad `*` (`$66`) calls the taxi and starts the trip, and keypad `+` (`$4E`) steps the destination. So Mercenary III answers Damocles's OPEN, READ, NEXT and PREVIOUS Bindings with its card's activate, call, next and previous actions, and a laptop gives them on Enter, `P`, `.` and `,` as it does in Damocles. Keypad `−` (`$4A`) as the previous destination follows from the same dispatch but has not been traced. `B` boards as in Damocles. `L` leaves at dwell through LEAVE CRAFT, so the Control Profile reports a passenger as aboard: it reads nothing else of Occupancy, and Mercenary III's session keeps its own passenger reference.

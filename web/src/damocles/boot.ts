@@ -8,7 +8,7 @@ import '../shell/damoclesPanelElement.ts';
 import { IDLE } from '../gameCore/index.ts';
 import { DEFAULT_CAST_SHADOWS } from '../settings/index.ts';
 import { installAudioLifecycle } from '../shell/audioLifecycle.ts';
-import { installShellChrome } from '../shell/chrome.ts';
+import { PANEL_SETTINGS, installShellChrome } from '../shell/chrome.ts';
 import { FixedStepClock } from '../shell/clock.ts';
 import type { ConsoleParseContext } from '../shell/console.ts';
 import { installConsole } from '../shell/consoleView.ts';
@@ -32,7 +32,7 @@ import {
 } from '../shell/ownership.ts';
 import { installPanel, installPanelScale } from '../shell/panelView.ts';
 import { canvasPointer } from '../shell/pointer.ts';
-import { createPreferences } from '../shell/preferences.ts';
+import { createPreferences, titlePreferences } from '../shell/preferences.ts';
 import type { SessionResumePersistence } from '../shell/resume.ts';
 import { createSessionResumeNotices } from '../shell/resumeNotices.ts';
 import { routeKey, routePad, type RouterState } from '../shell/router.ts';
@@ -113,8 +113,11 @@ const surface = document.getElementById('game-surface')!;
 const chrome = installShellChrome(surface, {
   atlasLabel: 'Gamma Atlas',
   catalogueLabel: 'Damocles catalogue',
-  menuTitle: 'DAMOCLES'
+  logo: { name: 'DAMOCLES', typeface: 'damocles' },
+  menuTitle: 'DAMOCLES',
+  settings: PANEL_SETTINGS
 });
+const keys = damoclesTitle.storage;
 const status = document.getElementById('status')!;
 const failure = document.getElementById('failure')!;
 const canvas = document.getElementById('frame') as HTMLCanvasElement;
@@ -199,7 +202,10 @@ try {
       endgame: { readonly drift: number | null; readonly passed: boolean }
     ) => cometCentre(system.comet, impactTime(clock, loaded.doc.time), endgame)
   };
-  applyTypeface(document.documentElement, readTypefacePreference(storage));
+  applyTypeface(
+    document.documentElement,
+    readTypefacePreference(storage, keys.typeface)
+  );
   panelRoot.dataset['rendition'] = 'damocles';
   const identity = damoclesSaveIdentity(
     content.catalogue,
@@ -214,7 +220,6 @@ try {
   let travelToken = new URL(location.href).searchParams.get('atlasTravel');
   let atlasBusy = travelToken !== null;
   let atlasNotice = '';
-  const keys = damoclesTitle.storage;
   const keyNames = browserKeyNames();
   const notices = createSessionResumeNotices({ keyNames });
   let handleOwnershipLost = (): void => {};
@@ -261,6 +266,7 @@ try {
     readonly extendedControls: boolean;
   }): void => {};
   const preferences = createPreferences({
+    location: titlePreferences('damocles'),
     onChange: changed => {
       applyAudioPreferences(changed);
       applyControlPreferences(changed);
@@ -695,7 +701,10 @@ try {
     preferences,
     session: () => session,
     typeface: face => {
-      applyTypeface(document.documentElement, face, storage);
+      applyTypeface(document.documentElement, face, {
+        key: keys.typeface,
+        storage
+      });
     }
   };
   const shellConsole = installConsole(chrome.console, consoleHost, release, {
@@ -763,7 +772,8 @@ try {
     page: chrome.pages.settings,
     preferences,
     root: document.documentElement,
-    storage
+    storage,
+    typefaceKey: keys.typeface
   });
 
   const takeover = installSessionTakeoverChannel({

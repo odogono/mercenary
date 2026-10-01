@@ -5,7 +5,8 @@ import {
   DEFAULT_PREFERENCES,
   createPreferences,
   effectivePresentation,
-  readPreferences
+  readPreferences,
+  titlePreferences
 } from '../src/shell/preferences.ts';
 
 test('roads default independently and validate the same authored ranges', () => {
@@ -32,6 +33,7 @@ test('road choices persist independently, hand back to tuning, and Authentic ove
     setItem: (key: string, value: string) => entries.set(key, value)
   } as unknown as Storage;
   const store = createPreferences({
+    location: titlePreferences('targ'),
     storage,
     surface: { dataset: {} } as HTMLElement
   });
@@ -42,7 +44,10 @@ test('road choices persist independently, hand back to tuning, and Authentic ove
     wireframeWeight: 'heavy'
   });
   const settings = defaultSettings().presentation;
-  const selected = effectivePresentation(settings, readPreferences(storage));
+  const selected = effectivePresentation(
+    settings,
+    readPreferences(storage, titlePreferences('targ'))
+  );
   expect(selected.roads).toEqual({ glow: 0.35, thickness: 2 });
   expect(selected.wireframe).toEqual({ glow: 0.7, thickness: 3 });
   const authentic = effectivePresentation(settings, {
@@ -52,7 +57,9 @@ test('road choices persist independently, hand back to tuning, and Authentic ove
   expect(authentic.roads).toEqual({ glow: 0, thickness: 1 });
   expect(authentic.wireframe).toEqual({ glow: 0, thickness: 1 });
   store.update({ roadGlow: undefined, roadWeight: undefined });
-  expect(readPreferences(storage).roadWeight).toBeUndefined();
+  expect(
+    readPreferences(storage, titlePreferences('targ')).roadWeight
+  ).toBeUndefined();
   expect(effectivePresentation(settings, store.current()).roads).toEqual(
     settings.roads
   );

@@ -3,10 +3,11 @@ import { describe, expect, test } from 'bun:test';
 import { defaultSettings } from '../src/settings/index.ts';
 import {
   DEFAULT_PREFERENCES,
-  PREFERENCES_STORAGE_KEY,
+  SHARED_PREFERENCES_STORAGE_KEY,
   createPreferences,
   effectivePresentation,
   readPreferences,
+  titlePreferences,
   validatePreferences,
   writePreferences,
   type Preferences
@@ -39,6 +40,8 @@ const hostileStorage = (): Storage =>
     }
   }) as unknown as Storage;
 
+const TARG = titlePreferences('targ');
+
 const surface = () =>
   ({ dataset: {} as Record<string, string> }) as unknown as HTMLElement;
 
@@ -51,7 +54,7 @@ describe('browser shell preferences', () => {
       extendedControls: false,
       panelRendition: 'targ'
     });
-    expect(readPreferences(undefined)).toEqual(DEFAULT_PREFERENCES);
+    expect(readPreferences(undefined, TARG)).toEqual(DEFAULT_PREFERENCES);
   });
 
   test('round-trip through storage', () => {
@@ -67,14 +70,14 @@ describe('browser shell preferences', () => {
       wireframeGlow: 'soft',
       wireframeWeight: 'bold'
     };
-    writePreferences(storage, preferences);
-    expect(readPreferences(storage)).toEqual(preferences);
+    writePreferences(storage, TARG, preferences);
+    expect(readPreferences(storage, TARG)).toEqual(preferences);
   });
 
   test('store under one versioned key', () => {
     const { entries, storage } = memoryStorage();
-    writePreferences(storage, DEFAULT_PREFERENCES);
-    expect([...entries.keys()]).toEqual([PREFERENCES_STORAGE_KEY]);
+    writePreferences(storage, TARG, DEFAULT_PREFERENCES);
+    expect([...entries.keys()]).toEqual([TARG.key]);
   });
 
   test('fall back field by field rather than discarding everything', () => {
@@ -137,19 +140,53 @@ describe('browser shell preferences', () => {
 
   test('ignore malformed and hostile storage', () => {
     const { entries, storage } = memoryStorage();
-    entries.set(PREFERENCES_STORAGE_KEY, '{not json');
-    expect(readPreferences(storage)).toEqual(DEFAULT_PREFERENCES);
-    entries.set(PREFERENCES_STORAGE_KEY, '[]');
-    expect(readPreferences(storage)).toEqual(DEFAULT_PREFERENCES);
-    expect(readPreferences(hostileStorage())).toEqual(DEFAULT_PREFERENCES);
+    entries.set(TARG.key, '{not json');
+    expect(readPreferences(storage, TARG)).toEqual(DEFAULT_PREFERENCES);
+    entries.set(TARG.key, '[]');
+    expect(readPreferences(storage, TARG)).toEqual(DEFAULT_PREFERENCES);
+    expect(readPreferences(hostileStorage(), TARG)).toEqual(
+      DEFAULT_PREFERENCES
+    );
     expect(() =>
-      writePreferences(hostileStorage(), DEFAULT_PREFERENCES)
+      writePreferences(hostileStorage(), TARG, DEFAULT_PREFERENCES)
     ).not.toThrow();
+  });
+
+  test('keep each Title apart, each reading what it kept before until it writes its own', () => {
+    const { entries, storage } = memoryStorage();
+    entries.set(
+      SHARED_PREFERENCES_STORAGE_KEY,
+      '{"audioMuted":true,"panelRendition":"damocles"}'
+    );
+    const damocles = titlePreferences('damocles');
+    expect(readPreferences(storage, TARG).audioMuted).toBe(true);
+    expect(readPreferences(storage, damocles).panelRendition).toBe('damocles');
+    // Mercenary III never shared that record: it reads its own earlier presentation choice.
+    const dion = titlePreferences('dion');
+    expect(readPreferences(storage, dion)).toEqual(DEFAULT_PREFERENCES);
+    entries.set('mercenary.browser-shell.dion.presentation.v1', '"enhanced"');
+    expect(readPreferences(storage, dion).presentationPreset).toBe('enhanced');
+
+    createPreferences({ location: TARG, storage, surface: surface() }).update({
+      audioMuted: false
+    });
+    expect(readPreferences(storage, TARG).audioMuted).toBe(false);
+    expect(readPreferences(storage, TARG).panelRendition).toBe('damocles');
+    expect(readPreferences(storage, damocles).audioMuted).toBe(true);
+    expect(entries.get(SHARED_PREFERENCES_STORAGE_KEY)).toBe(
+      '{"audioMuted":true,"panelRendition":"damocles"}'
+    );
+    expect([TARG.key, damocles.key, dion.key]).toEqual([
+      'mercenary.browser-shell.targ.preferences.v1',
+      'mercenary.browser-shell.damocles.preferences.v1',
+      'mercenary.browser-shell.dion.preferences.v1'
+    ]);
   });
 
   test('apply to the Game Surface as data attributes', () => {
     const element = surface();
     const store = createPreferences({
+      location: TARG,
       storage: undefined,
       surface: element
     });
@@ -164,6 +201,7 @@ describe('browser shell preferences', () => {
     const { storage } = memoryStorage();
     const seen: Preferences[] = [];
     const store = createPreferences({
+      location: TARG,
       onChange: preferences => seen.push(preferences),
       storage,
       surface: surface()
@@ -171,7 +209,7 @@ describe('browser shell preferences', () => {
     store.update({ panelRendition: 'damocles' });
     expect(store.current().panelRendition).toBe('damocles');
     expect(seen).toHaveLength(1);
-    expect(readPreferences(storage).panelRendition).toBe('damocles');
+    expect(readPreferences(storage, TARG).panelRendition).toBe('damocles');
   });
 
   test('override only presentation of the tuning document', () => {
@@ -228,6 +266,7 @@ describe('browser shell preferences', () => {
     const { storage } = memoryStorage();
     const seen: Preferences[] = [];
     const store = createPreferences({
+      location: TARG,
       onChange: preferences => seen.push(preferences),
       storage,
       surface: surface()
@@ -237,7 +276,7 @@ describe('browser shell preferences', () => {
     store.update({ structureReach: 'all' });
 
     expect(seen).toHaveLength(1);
-    expect(readPreferences(storage).structureReach).toBe('all');
+    expect(readPreferences(storage, TARG).structureReach).toBe('all');
   });
 
   test('map the named wireframe levels onto the pixels they stand for', () => {

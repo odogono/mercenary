@@ -36,6 +36,31 @@
   display: flex;
 }
 
+/* The Title Logo (ADR 0063): the Title's recovered mark at its own size, or its name in its own
+   typeface until the mark is recovered. */
+.chrome-logo {
+  display: flex;
+  min-height: 24px;
+  justify-content: center;
+  color: var(--label-ink);
+  font-size: 20px;
+  letter-spacing: 0.24em;
+  line-height: 1;
+}
+
+.chrome-logo[data-typeface='mercenary'] {
+  font-family: 'Mercenary Pixel', var(--panel-font);
+}
+
+.chrome-logo[data-typeface='damocles'] {
+  font-family: 'Damocles Interface', var(--panel-font);
+}
+
+.chrome-logo img {
+  display: block;
+  image-rendering: pixelated;
+}
+
 .chrome-title {
   margin: 0;
   padding-bottom: 4px;
@@ -95,7 +120,8 @@
 .setting-row {
   display: grid;
   gap: 8px;
-  grid-template-columns: 132px 1fr;
+  /* Wide enough for PRESENTATION, the longest single word, in Targ's typeface. */
+  grid-template-columns: 148px 1fr;
   align-items: center;
 }
 

@@ -1,37 +1,31 @@
 import type { FrameDescription } from '../rendering/description.ts';
 import { FrameRenderer } from '../rendering/renderer.ts';
-import {
-  readDionPresentation,
-  writeDionPresentation,
-  type DionPresentationPreset
-} from './presentationPreference.ts';
+
+export type DionPresentationPreset = 'authentic' | 'enhanced';
 
 /// A GPU world view over the existing screen. The Title still owns its indexed panel beneath it.
+///
+/// The settings page owns the choice and the preferences store keeps it; this shows it. A graphics
+/// failure holds the view at Authentic without changing the stored choice, until the player
+/// chooses again (ADR 0062).
 export const installDionPresentation = (options: {
   readonly notice: (message: string) => void;
   readonly onRecovered: () => void;
-  readonly page: HTMLElement;
+  /// The view stopped or started showing what is stored.
+  readonly onShownChange: () => void;
   readonly redraw: () => void;
   readonly screen: HTMLCanvasElement;
-  readonly storage: Storage | undefined;
+  /// The stored choice; Mercenary III has no tuning document, so absent is Authentic (ADR 0060).
+  readonly stored: () => DionPresentationPreset;
 }) => {
-  let effective = readDionPresentation(options.storage);
-  let failed = false;
+  let held = false;
+  let retrying = false;
   let renderer: FrameRenderer | undefined;
   let gpu: HTMLCanvasElement | undefined;
-  const row = options.page
-    .querySelector<HTMLElement>('[data-setting="sky"]')!
-    .closest('.setting-row')!;
-  row.querySelector('.chrome-label')!.textContent = 'PRESENTATION';
-  const choices = row.querySelector<HTMLElement>('.setting-choices')!;
-  choices.setAttribute('role', 'group');
-  choices.setAttribute('aria-label', 'Presentation');
-  const buttons = new Map<DionPresentationPreset, HTMLButtonElement>();
+  const shown = (): DionPresentationPreset =>
+    held ? 'authentic' : options.stored();
   const refresh = (): void => {
-    options.screen.dataset['presentation'] = effective;
-    for (const [mode, button] of buttons) {
-      button.setAttribute('aria-pressed', String(mode === effective));
-    }
+    options.screen.dataset['presentation'] = shown();
   };
   const discardGpu = (): void => {
     renderer?.dispose();
@@ -40,31 +34,18 @@ export const installDionPresentation = (options: {
     gpu = undefined;
   };
   const fallback = (error: unknown): void => {
-    effective = 'authentic';
-    failed = true;
+    held = true;
+    retrying = false;
     discardGpu();
     refresh();
+    options.onShownChange();
     options.notice(
       `Enhanced unavailable. Using Authentic: ${error instanceof Error ? error.message : String(error)}`
     );
   };
-  for (const mode of ['authentic', 'enhanced'] as const) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'chrome-button';
-    button.textContent = mode.toUpperCase();
-    button.addEventListener('click', () => {
-      effective = mode;
-      writeDionPresentation(options.storage, mode);
-      refresh();
-      options.redraw();
-    });
-    buttons.set(mode, button);
-    choices.append(button);
-  }
   refresh();
   const redrawOnResize = (): void => {
-    if (effective === 'enhanced') {
+    if (shown() === 'enhanced') {
       options.redraw();
     }
   };
@@ -82,6 +63,15 @@ export const installDionPresentation = (options: {
   };
   density.addEventListener('change', densityChanged);
   return {
+    /// The player chose a preset, perhaps the one already stored: that is a retry.
+    changed(): void {
+      if (held) {
+        held = false;
+        retrying = true;
+      }
+      refresh();
+      options.redraw();
+    },
     dispose(): void {
       resize.disconnect();
       window.removeEventListener('resize', redrawOnResize);
@@ -89,7 +79,7 @@ export const installDionPresentation = (options: {
       discardGpu();
     },
     render(description: FrameDescription): void {
-      if (effective === 'authentic') {
+      if (shown() === 'authentic') {
         if (gpu !== undefined) {
           gpu.hidden = true;
         }
@@ -108,13 +98,14 @@ export const installDionPresentation = (options: {
         }
         gpu!.hidden = false;
         renderer.renderDescription(description);
-        if (failed) {
-          failed = false;
+        if (retrying) {
+          retrying = false;
           options.onRecovered();
         }
       } catch (error) {
         fallback(error);
       }
-    }
+    },
+    shown
   };
 };

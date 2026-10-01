@@ -340,3 +340,33 @@ export const panelRgba = (
     }
   }
 };
+
+/// The centre box's logo as RGBA, in the colours the panel shows it in below row 152 and with its
+/// colour 0, the box's black, left clear: Mercenary III's Title Logo (ADR 0063).
+export const dionLogoRgba = (
+  doc: DionPanelDocument
+): {
+  readonly data: Uint8ClampedArray<ArrayBuffer>;
+  readonly height: number;
+  readonly width: number;
+} => {
+  const { box, logo } = doc.centre;
+  const palette = [...doc.palette.lower];
+  palette[4] = logo.colour4;
+  palette[1] = logo.colour1From152;
+  const data = new Uint8ClampedArray(box.width * box.height * 4);
+  logo.pixels.forEach((row, y) => {
+    row.forEach((index, x) => {
+      if (index === 0) {
+        return;
+      }
+      const colour = palette[index] ?? 0;
+      const at = (y * box.width + x) * 4;
+      data[at] = gun(colour, 8);
+      data[at + 1] = gun(colour, 4);
+      data[at + 2] = gun(colour, 0);
+      data[at + 3] = 255;
+    });
+  });
+  return { data, height: box.height, width: box.width };
+};

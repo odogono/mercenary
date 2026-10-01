@@ -8,6 +8,7 @@ import {
   type PresentationSettings
 } from '../settings/index.ts';
 import type { ReadStorage, WriteStorage } from './storage.ts';
+import { titleStorageKeys, type TitleSlug } from './title.ts';
 
 /// How thick the wireframe's lines are drawn, as named levels rather than raw pixels.
 export type WireframeWeight = 'fine' | 'bold' | 'heavy';
@@ -21,7 +22,39 @@ export type PanelRendition = 'targ' | 'damocles';
 /// Which Display Composition the Game Surface presents.
 export type Composition = 'panel' | 'strip';
 
-export const PREFERENCES_STORAGE_KEY = 'mercenary.browser-shell.preferences.v1';
+/// The one record Targ and Damocles shared before preferences were kept per Title (ADR 0063).
+export const SHARED_PREFERENCES_STORAGE_KEY =
+  'mercenary.browser-shell.preferences.v1';
+
+/// Mercenary III's presentation choice, kept alone before it had a preferences record.
+const DION_PRESENTATION_STORAGE_KEY =
+  'mercenary.browser-shell.dion.presentation.v1';
+
+/// Where a Title keeps its preferences, and what it read before it had a record of its own.
+export interface PreferencesLocation {
+  /// Read only while `key` holds nothing, so no choice made before ADR 0063 is lost; the first
+  /// change writes the Title's own record.
+  readonly earlier?: (storage: ReadStorage) => unknown;
+  readonly key: string;
+}
+
+const storedJson = (storage: ReadStorage, key: string): unknown => {
+  const raw = storage.getItem(key);
+  return raw === null ? undefined : JSON.parse(raw);
+};
+
+export const titlePreferences = (slug: TitleSlug): PreferencesLocation => ({
+  earlier:
+    slug === 'dion'
+      ? storage => {
+          const preset = storedJson(storage, DION_PRESENTATION_STORAGE_KEY);
+          return preset === undefined
+            ? undefined
+            : { presentationPreset: preset };
+        }
+      : storage => storedJson(storage, SHARED_PREFERENCES_STORAGE_KEY),
+  key: titleStorageKeys(slug).preferences
+});
 
 /// The player's own presentation choices, kept beside the tracked tuning document.
 ///
@@ -132,13 +165,21 @@ export const validatePreferences = (value: unknown): Preferences => {
 };
 
 export const readPreferences = (
-  storage: ReadStorage | undefined
+  storage: ReadStorage | undefined,
+  location: PreferencesLocation
 ): Preferences => {
+  if (storage === undefined) {
+    return DEFAULT_PREFERENCES;
+  }
   try {
-    const raw = storage?.getItem(PREFERENCES_STORAGE_KEY) ?? null;
-    return raw === null
+    const raw = storage.getItem(location.key);
+    if (raw !== null) {
+      return validatePreferences(JSON.parse(raw));
+    }
+    const earlier = location.earlier?.(storage);
+    return earlier === undefined
       ? DEFAULT_PREFERENCES
-      : validatePreferences(JSON.parse(raw));
+      : validatePreferences(earlier);
   } catch {
     // Unreadable or malformed storage is not a startup failure: the shell has defaults.
     return DEFAULT_PREFERENCES;
@@ -147,10 +188,11 @@ export const readPreferences = (
 
 export const writePreferences = (
   storage: WriteStorage | undefined,
+  location: PreferencesLocation,
   preferences: Preferences
 ): void => {
   try {
-    storage?.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(preferences));
+    storage?.setItem(location.key, JSON.stringify(preferences));
   } catch {
     // Holding the choice in memory does not depend on storage being available.
   }
@@ -258,11 +300,12 @@ export interface PreferencesStore {
 
 /// Own the live preferences: one place that narrows, persists, and applies them.
 export const createPreferences = (options: {
+  readonly location: PreferencesLocation;
   readonly onChange?: (preferences: Preferences) => void;
   readonly storage: Storage | undefined;
   readonly surface: HTMLElement;
 }): PreferencesStore => {
-  let preferences = readPreferences(options.storage);
+  let preferences = readPreferences(options.storage, options.location);
   applyPreferences(options.surface, preferences);
   return {
     current: () => preferences,
@@ -288,7 +331,7 @@ export const createPreferences = (options: {
       }
       preferences = next;
       applyPreferences(options.surface, preferences);
-      writePreferences(options.storage, preferences);
+      writePreferences(options.storage, options.location, preferences);
       options.onChange?.(preferences);
       return preferences;
     }

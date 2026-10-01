@@ -171,8 +171,8 @@ One Title-planned view's ordered polygons, lines and points, with their projecti
 _Avoid_: Session Snapshot, scene graph, screen capture, Frame Planner
 
 **Presentation Preset**:
-The Browser Shell's named choice between Authentic presentation, which retains the accepted Reference Build appearance, and Enhanced presentation, which admits explicitly authored visual additions without changing Game Semantics.
-_Avoid_: Graphics mode, theme, sky toggle
+The Browser Shell's named choice between Authentic presentation, which retains the accepted Reference Build appearance, and Enhanced presentation, which admits explicitly authored visual additions without changing Game Semantics. The settings page labels it PRESENTATION in every Title.
+_Avoid_: Graphics mode, theme, sky toggle, sky preset
 
 **Targ Orrery**:
 The deterministic Enhanced-presentation model of Targ's sun, two moons, twilight and night, advancing with presentation elapsed time supplied either by a Gameplay Session or by the sessionless Flyover unless the Shell Console applies a presentation-only local-time adjustment; its twilight includes an authored horizon-to-zenith colour change that follows the world's horizon.
@@ -457,6 +457,10 @@ _Avoid_: Countdown, comet timer, deadline clock, session clock
 **System Menu**:
 The Browser Shell overlay opened with Escape that pauses stepping and owns the settings page, the Controls Page and the Save chooser; shell chrome, never part of the Game Surface.
 _Avoid_: Pause menu, options screen, main menu
+
+**Title Logo**:
+A Title's small mark at the head of every System Menu page, recovered from that Title's own release; until it is recovered, the Title's name in its own typeface stands in for it (ADR 0063).
+_Avoid_: Wordmark, title screen, branding, Destination Mark
 
 **Shell Console**:
 The Browser Shell's slide-down development command line, reaching the Gameplay Session's own actions and the stores that own each preference, Save, and adjustable presentation value rather than the state behind them; it admits development changes to play, which is why its commands are never part of a trace (ADR 0028). Atlas Travel is a separate authored exploration action (ADR 0050).
