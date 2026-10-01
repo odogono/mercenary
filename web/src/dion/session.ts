@@ -23,6 +23,7 @@ import { dionDay } from './sky.ts';
 import {
   freshSound,
   requestSound,
+  soundRegisterChanges,
   tickSound,
   type DionSoundState
 } from './sound.ts';
@@ -225,12 +226,7 @@ export class DionSession implements TitleSession<
       control,
       this.narrative.state.message
     );
-    const registers = sound.registers.flatMap((value, index) =>
-      value !== beforeSound.registers[index] ||
-      (index === 13 && beforeSound.keyClick)
-        ? [[index, value] as const]
-        : []
-    );
+    const registers = soundRegisterChanges(beforeSound, sound);
     if (registers.length > 0) {
       this.events.push({ at: tick / 50, registers });
     }
@@ -448,9 +444,7 @@ export class DionSession implements TitleSession<
     const previous = this.state.sound;
     const sound = requestSound(previous, name);
     this.state = { ...this.state, sound };
-    const registers = sound.registers.flatMap((value, index) =>
-      value !== previous.registers[index] ? [[index, value] as const] : []
-    );
+    const registers = soundRegisterChanges(previous, sound);
     if (registers.length > 0) {
       this.events.push({ at: this.state.tick / 50, registers });
     }

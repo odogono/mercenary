@@ -25,6 +25,7 @@
       "src/dion/boot.ts",
       "src/damocles/firstOfferDemo.ts",
       "src/soundboard/boot.ts",
+      "src/soundboard/dionWorklet.ts",
       "src/flyover/boot.ts",
       "src/sound/worklet.ts",
       "src/damocles/soundWorklet.ts",

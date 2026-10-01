@@ -27,6 +27,8 @@ Sound uses MIII's recovered setup registers and streams on a shared project-owne
 
 Damocles and Dion share `sound/stProgrammes.ts` for the identical reset registers, key-click envelope, door entry and playback, count/value stream evaluation, period writes and message-character selection. Dion still supplies its decoded setup registers and streams. A register-by-register cross-title test covers both door loops, interrupted stop bursts and the key click. The complete drivers cannot be substituted: Damocles scales engine volume with craft speed at a fixed period, while Dion slews taxi-engine pitch at level 10; message periods are character ×2 versus ×4, with different terminal timing; a stopped door returns to the craft engine versus METIS ambient. Dion's serializable driver state and both titles' scheduling remain local. The YM2149 model, worklet host, transport and audio lifecycle were already shared.
 
+`/sounds` includes a Mercenary III section for key clicks, prison doors, taxi set-down, lift-off, continuous engine, leave, message tones and cell-crossing cuts. A listening-board adapter runs the existing Dion sound rules and chip on the shared 50 Hz audio-worklet clock; it adds no synthesis or programme implementation. It owns no Gameplay Session or persistence. Its taxi speed class and message text are editable, and the page's volume, mute and Stop everything controls include all three Titles. Game and board share register-change and envelope-retrigger logic. Browser destination taps verify audible playback and silence after mute, zero volume and stop; keyboard and 320/768/1024/1440-pixel layouts were checked in the collaborative preview.
+
 The remaining message-tone skip is resolved by the decoded scroll mechanism: eight pixel columns per tick consume four six-pixel glyphs over three ticks. Tone fetch precedes the extra glyph read on tick 1 modulo 3, so character indices are `0,2,3,4,6,7,…`, or `ceil(4*(age−1)/3)`. Tests assert those indices directly. This is a documented behavioral fact, independently implemented; no original code was copied or translated.
 
 The sky uses #646's full fractional turn accumulator, rate `$3B0`, cached longitude/latitude and sun angle. Frames sample the rule; taxi XYZ does not refresh the caches. The exported 1,868 star records include the 268-record wrap, with the pinned colours and clip row 68. The bounded METIS horizon contains no vertices or primitives. Tests cover fractional carry, restoration immediately before sampling, and the 44/49 exposed exit-view stars.
@@ -56,19 +58,19 @@ bun run typecheck
 bun run lint
 bun run unused
 bun test
-PORT=5175 bun run test:e2e e2e/dion.e2e.ts e2e/dion-taxi.e2e.ts
+PORT=5175 bun run test:e2e e2e/dion.e2e.ts e2e/dion-taxi.e2e.ts e2e/soundboard.e2e.ts
 ```
 
 The browser fixture is served only with `MERCENARY_E2E=1`. It writes deterministic opening, reveal, boarding, selection, travel, turn, arrival, exit and later night screenshots for each route to Playwright's ignored `test-results/`. A second fresh run must reproduce every screen byte. The fixture and production page use the same title, session, panel and frame modules.
 
 ## Validation
 
-- Full browser unit/regression suite: 2,402 tests passed, including Targ and Damocles.
+- Full browser unit/regression suite: 2,404 tests passed, including Targ and Damocles.
 - MIII live-session, VM, service, sound, sky, panel and persistence controls passed.
 - The sound-sharing refactor matched the preceding commit over 20,000 mixed Damocles ticks (ordered register writes) and 10,000 mixed Dion ticks (complete driver state). Independent review found no required changes.
 - TypeScript, ESLint, Prettier and unused-file/dependency checks passed.
 - All 44 decoder tests passed against the pinned local capture; no ignored material is required by application tests.
-- All 10 browser tests passed, including both deterministic visual trajectories, all 33 persistence controls, production keyboard/slot/reload paths, content refusal and cooperative ownership.
+- All 12 browser tests passed, including two sound-board audio tests, both deterministic visual trajectories, all 33 persistence controls, production keyboard/slot/reload paths, content refusal and cooperative ownership.
 
 ## Boundaries
 

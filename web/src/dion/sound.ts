@@ -48,6 +48,19 @@ export const requestSound = (
   return { ...state, c: name, elapsed: -1 };
 };
 
+/// Register changes for the game and listening board. Writing the same envelope
+/// shape again starts a new click, even when its saved register value is unchanged.
+export const soundRegisterChanges = (
+  previous: DionSoundState,
+  next: DionSoundState
+): readonly (readonly [number, number])[] =>
+  next.registers.flatMap((value, index) =>
+    value !== previous.registers[index] ||
+    (index === 13 && previous.keyClick && !next.keyClick && next.clickAge === 0)
+      ? [[index, value] as const]
+      : []
+  );
+
 export const tickSound = (
   programmes: readonly DionSoundProgramme[],
   previous: DionSoundState,

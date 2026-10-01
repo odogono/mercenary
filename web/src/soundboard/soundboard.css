@@ -59,6 +59,10 @@ p {
   border-radius: 0.4rem;
   background: var(--surface);
 }
+.board > button {
+  align-self: start;
+  justify-self: start;
+}
 .sound h3 {
   font-size: 1rem;
   margin: 0;

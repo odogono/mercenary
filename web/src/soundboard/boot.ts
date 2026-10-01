@@ -6,15 +6,20 @@ import type {
   DamoclesSoundCommand,
   DamoclesSoundDocument
 } from '../damocles/sound.ts';
+import { dionDocumentPath, readDionHeader } from '../dion/documents.ts';
+import { readDionSound, type DionSoundProgramme } from '../dion/narrative.ts';
 import type { SoundDocument } from '../payload/documents.ts';
 import { readers } from '../payload/read.ts';
 import { assertBrowserDocument } from '../shell/documentPath.ts';
 import { bensonFrequencyHigh, type SoundCommand } from '../sound/presenter.ts';
 import { AudioWorkletTransport } from '../sound/transport.ts';
+import { button, card } from './cards.ts';
+import { installDionBoard } from './dionBoard.ts';
+import type { DionBoardCommand } from './dionProgram.ts';
 
 /// The sound board: every sound the port plays, on demand, for listening (#508).
 ///
-/// It drives the two titles' AudioWorklets directly, with the command vocabularies their
+/// It drives the titles' AudioWorklets directly, with the command vocabularies their
 /// presenters use, so what is heard here is what a Gameplay Session would play. It owns no
 /// session and reads no preference; its volume and mute are its own.
 
@@ -28,37 +33,6 @@ const VBL_HERTZ = 50;
 const VBL = 1 / VBL_HERTZ;
 
 const now = (): number => performance.now() / 1000;
-
-const card = (
-  parent: HTMLElement,
-  title: string,
-  description: string
-): HTMLElement => {
-  const element = document.createElement('article');
-  element.className = 'sound';
-  const heading = document.createElement('h3');
-  heading.textContent = title;
-  const text = document.createElement('p');
-  text.textContent = description;
-  const buttons = document.createElement('div');
-  buttons.className = 'buttons';
-  element.append(heading, text, buttons);
-  parent.append(element);
-  return buttons;
-};
-
-const button = (
-  parent: HTMLElement,
-  label: string,
-  action: () => void
-): HTMLButtonElement => {
-  const element = document.createElement('button');
-  element.type = 'button';
-  element.textContent = label;
-  element.addEventListener('click', action);
-  parent.append(element);
-  return element;
-};
 
 const slider = (
   parent: HTMLElement,
@@ -99,6 +73,14 @@ try {
   }
   const music = parseDamoclesMusic(await musicResponse.json());
 
+  const dionPath = dionDocumentPath('sound');
+  const dionResponse = await fetch(dionPath);
+  if (!dionResponse.ok) {
+    throw new Error(`${dionPath} answered HTTP ${dionResponse.status}`);
+  }
+  const dionHeader = readDionHeader(await dionResponse.json(), 'sound');
+  const dionProgrammes = readDionSound(dionHeader.body, 'sound');
+
   const failed = (reason: string): void => {
     errorLine.textContent = `Audio unavailable: ${reason}`;
   };
@@ -120,8 +102,17 @@ try {
     }
   );
 
+  const dion = new AudioWorkletTransport<
+    DionBoardCommand,
+    readonly DionSoundProgramme[]
+  >(dionProgrammes, {
+    onFailure: failed,
+    processor: 'dion-board-ym',
+    workletUrl: '/src/soundboard/dionWorklet.ts'
+  });
+
   const controls = (): void => {
-    for (const transport of [targ, damocles]) {
+    for (const transport of [targ, damocles, dion]) {
       transport.send({
         at: now(),
         commands: [
@@ -133,7 +124,11 @@ try {
   };
   let unlocked: Promise<void> | undefined;
   const unlock = (): Promise<void> => {
-    unlocked ??= Promise.all([targ.unlock(), damocles.unlock()]).then(() => {
+    unlocked ??= Promise.all([
+      targ.unlock(),
+      damocles.unlock(),
+      dion.unlock()
+    ]).then(() => {
       controls();
       status.textContent = 'Audio running.';
     });
@@ -195,10 +190,14 @@ try {
   const stopDamocles = (): void => {
     damocles.send({ at: now(), commands: [{ kind: 'reset' }] });
   };
+  const stopDion = (): void => {
+    dion.send({ at: now(), commands: [{ kind: 'reset' }] });
+  };
   document.getElementById('stop-all')!.addEventListener('click', () => {
     void unlock().then(() => {
       stopTarg();
       stopDamocles();
+      stopDion();
     });
   });
 
@@ -648,6 +647,12 @@ try {
     () => void playDamocles([[0, { kind: 'music', playing: false }]])
   );
   button(damoclesBoard, 'Stop Damocles', stopDamocles);
+
+  installDionBoard(
+    document.getElementById('dion')!,
+    commands => unlock().then(() => dion.send({ at: now(), commands })),
+    stopDion
+  );
 } catch (error) {
   errorLine.textContent =
     error instanceof Error ? error.message : String(error);
