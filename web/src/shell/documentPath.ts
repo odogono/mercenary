@@ -3,6 +3,7 @@ export type BrowserDocument =
   | 'atlas'
   | 'catalogue'
   | 'damocles'
+  | 'dion-catalogue'
   | 'dion'
   | 'first-offer'
   | 'flyover'
@@ -15,6 +16,7 @@ export type DocumentPath =
   | { readonly document: 'catalogue'; readonly kind: 'document' }
   | { readonly document: 'atlas'; readonly kind: 'document' }
   | { readonly document: 'damocles'; readonly kind: 'document' }
+  | { readonly document: 'dion-catalogue'; readonly kind: 'document' }
   | { readonly document: 'dion'; readonly kind: 'document' }
   | { readonly document: 'sounds'; readonly kind: 'document' }
   | {
@@ -37,6 +39,7 @@ const documents = new Map<string, DocumentPath>([
   ['/damocles', { document: 'damocles', kind: 'document' }],
   // Mercenary III's Title path, reserved by ADR 0041 and admitted by D1 (#638, #647): the
   // METIS opening of the taxi slice, a sibling Gameplay Session of its own.
+  ['/dion/catalogue', { document: 'dion-catalogue', kind: 'document' }],
   ['/dion', { document: 'dion', kind: 'document' }],
   ['/damocles/first-offer', { document: 'first-offer', kind: 'document' }],
   ['/catalogue', { document: 'catalogue', kind: 'document' }],
@@ -58,6 +61,8 @@ const aliases = new Map<string, string>([
   ['/index.html', '/'],
   ['/targ/', '/targ'],
   ['/damocles/', '/damocles'],
+  ['/dion/catalogue/', '/dion/catalogue'],
+  ['/dion-catalogue.html', '/dion/catalogue'],
   ['/dion/', '/dion'],
   ['/catalogue.html', '/catalogue'],
   ['/catalogue/', '/catalogue'],

@@ -52,6 +52,8 @@ const status = document.getElementById('status')!;
 const failure = document.getElementById('failure')!;
 const canvas = document.getElementById('screen') as HTMLCanvasElement;
 const chrome = installShellChrome(surface, {
+  catalogueLabel: 'CATALOGUE',
+  cataloguePath: '/dion/catalogue',
   logo: { name: 'MERCENARY III', typeface: 'damocles' },
   menuTitle: 'MERCENARY III',
   settings: ['presentation', 'extended', 'audio']

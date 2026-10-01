@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Dion · Catalogue</title>
+    <link rel="stylesheet" href="/src/catalogue/catalogue.css" />
+    <link rel="stylesheet" href="/src/dionCatalogue/catalogue.css" />
+  </head>
+  <body>
+    <header>
+      <nav aria-label="Titles">
+        <a href="/dion">← Mercenary III</a>
+        <a href="/catalogue">Damocles Catalogue</a>
+      </nav>
+      <h1>Dion <span>Catalogue</span></h1>
+      <p id="summary" role="status">Loading the validated Catalogue…</p>
+    </header>
+    <main id="catalogue" hidden>
+      <aside class="collection" aria-label="Catalogue entries">
+        <label for="search">Find an entry</label>
+        <input
+          id="search"
+          type="search"
+          placeholder="Name, app ID, slot or group:cell"
+        />
+        <div class="filters">
+          <label
+            >Entry type<select id="kind">
+              <option value="">All entries</option>
+              <option value="object">Object instances</option>
+              <option value="placement">Structure placements</option>
+              <option value="geometry">Geometry definitions</option>
+              <option value="body">Bodies</option>
+              <option value="area">Groups</option>
+              <option value="place">Named places</option>
+            </select></label
+          >
+          <label
+            >Body<select id="body">
+              <option value="">All Bodies</option>
+            </select></label
+          >
+          <label
+            >Group<select id="group">
+              <option value="">All groups</option>
+            </select></label
+          >
+          <label
+            >Named place<select id="place">
+              <option value="">All places</option>
+            </select></label
+          >
+          <label
+            >Floor filter<select id="floor-filter">
+              <option value="">All Floors</option>
+              <option value="0">G</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10">B</option>
+            </select></label
+          >
+          <button id="clear" type="button">Clear filters</button>
+        </div>
+        <p id="result-count" role="status"></p>
+        <nav id="results" aria-label="Results"></nav>
+        <button id="more" type="button" hidden>Show more results</button>
+      </aside>
+      <section class="inspection" aria-label="Entry inspection">
+        <p id="entry-kind" class="eyebrow"></p>
+        <h2 id="entry-name" tabindex="-1">Choose an entry</h2>
+        <p id="entry-id" class="muted"></p>
+        <div class="viewer">
+          <canvas
+            id="view"
+            width="320"
+            height="136"
+            tabindex="0"
+            aria-label="Authentic preview. Arrow keys orbit, plus and minus zoom, zero resets."
+          ></canvas>
+        </div>
+        <p id="preview-message" role="status"></p>
+        <button id="retry-preview" type="button" hidden>Retry preview</button>
+        <div class="toolbar" id="preview-controls">
+          <label>Geometry variant<select id="variant" disabled></select></label>
+          <label id="floor-control" hidden
+            >Inspect Floor<select id="floor"></select
+          ></label>
+          <label
+            >Region queue<select id="region" disabled>
+              <option value="0">By camera</option>
+            </select></label
+          >
+          <button id="left" type="button">Orbit left</button
+          ><button id="right" type="button">Orbit right</button>
+          <button id="zoom-in" type="button">Zoom in</button
+          ><button id="zoom-out" type="button">Zoom out</button
+          ><button id="reset" type="button">Reset view</button>
+        </div>
+        <div class="toolbar" id="logos-control" hidden>
+          <label
+            >LOGOS inspection state<select id="state">
+              <option value="initial">Initial · absent</option>
+              <option value="constructed">Constructed</option>
+            </select></label
+          >
+        </div>
+        <form id="field-control" hidden>
+          <h3>MIDAS repeat inspection</h3>
+          <p class="muted">
+            Local cells relative to the recovered origin. Period 16; physical
+            count unknown.
+          </p>
+          <label
+            >Local X<input
+              id="field-x"
+              type="number"
+              min="-4095"
+              max="4095"
+              required /></label
+          ><label
+            >Local Z<input
+              id="field-z"
+              type="number"
+              min="-4095"
+              max="4095"
+              required /></label
+          ><button type="submit">Inspect occurrence</button>
+          <p id="field-reference" class="muted"></p>
+        </form>
+        <div id="details"></div>
+      </section>
+      <aside class="evidence" aria-label="Evidence">
+        <h2>Read-only inspection</h2>
+        <p>
+          246 persistent objects · 795 authored bindings · 529 shared geometry
+          definitions.
+        </p>
+        <p>
+          These are initial residences and evidenced inspection states.
+          Reachability remains unverified.
+        </p>
+        <p>
+          No Gameplay Session, Saves or Session Resume are read or written.
+          Campaign scripts do not run.
+        </p>
+        <h3>Preview evidence</h3>
+        <p>
+          Authentic uses Mercenary III’s Frame Planner, palette allocation and
+          shared indexed renderer. The inspection camera is authored; this page
+          makes no pixel parity claim.
+        </p>
+        <p>
+          Full sky Body inventory remains an evidence gap. The preview reports
+          missing bindings and glyphs.
+        </p>
+        <div id="evidence-gaps"></div>
+        <h3>Source</h3>
+        <p id="source" class="muted"></p>
+      </aside>
+    </main>
+    <section id="failure" hidden role="alert">
+      <h2>Catalogue unavailable</h2>
+      <p id="failure-message"></p>
+      <button id="retry" type="button">Retry loading</button>
+    </section>
+    <script type="module" src="/src/dionCatalogue/boot.ts"></script>
+  </body>
+</html>

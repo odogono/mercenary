@@ -1,3 +1,13 @@
+import {
+  horizonFillVertices,
+  horizonIslandVertices
+} from '../coast/horizon.ts';
+import {
+  classifyPosition,
+  islandFillTriangles,
+  type CoastIsland,
+  type CoastSurface
+} from '../coast/islands.ts';
 import { renderAuthentic, rgbaFromIndexed } from '../rendering/authentic.ts';
 import type {
   FrameDescription,
@@ -106,6 +116,26 @@ export interface DionFrame {
   readonly stats: DionFrameStats;
 }
 
+export interface DionCoastIsland extends CoastIsland {
+  readonly id: string;
+  readonly landColour: number;
+}
+export type DionFrameWorld = Omit<DionWorld, 'source' | 'opening'> & {
+  readonly coast?: CoastSurface<DionCoastIsland>;
+  readonly floorOffset?: number;
+  readonly opening: Pick<
+    DionWorld['opening'],
+    | 'cell'
+    | 'eye'
+    | 'frameCounter'
+    | 'groupOrigin'
+    | 'heading'
+    | 'pitch'
+    | 'region'
+    | 'roll'
+  >;
+};
+
 const FREE = 0x80_00;
 const FIRST_ATTACHMENT_SLOT = 0x2_54;
 const SPACE = 0x20;
@@ -195,7 +225,7 @@ interface View {
   readonly primitives: OrderedPrimitive[];
   source: string;
   readonly state: DionFrameState;
-  readonly world: DionWorld;
+  readonly world: DionFrameWorld;
 }
 
 const withSource = (view: View, source: string, draw: () => void): void => {
@@ -260,6 +290,7 @@ const stroke = (view: View, a: Vec3, b: Vec3, colour: number): void => {
 interface Bound {
   readonly cell: DionCell;
   readonly detail: DionDetail;
+  readonly floorOffset: number;
   readonly origin: Vec3;
   readonly plan: readonly (readonly [number, number])[];
   readonly structure: DionStructure;
@@ -269,7 +300,7 @@ interface Bound {
   }[];
 }
 
-const cellBase = (world: DionWorld, cell: DionCell): [number, number] => [
+const cellBase = (world: DionFrameWorld, cell: DionCell): [number, number] => [
   (world.opening.groupOrigin[0] + cell.x) * 0x1_00_00,
   (world.opening.groupOrigin[1] + cell.z) * 0x1_00_00
 ];
@@ -358,7 +389,7 @@ const doorGeometry = (
   };
 };
 
-const bind = (world: DionWorld, state: DionFrameState): Bound | null => {
+const bind = (world: DionFrameWorld, state: DionFrameState): Bound | null => {
   const cell = world.cells.find(item => item.cell === state.cell);
   if (cell === undefined) {
     return null;
@@ -385,6 +416,7 @@ const bind = (world: DionWorld, state: DionFrameState): Bound | null => {
   return {
     cell,
     detail,
+    floorOffset: world.floorOffset ?? 0,
     origin: [bx + cell.origin[0], world.structureY, bz + cell.origin[1]],
     plan,
     structure,
@@ -440,7 +472,11 @@ const tokenString = (
   const { lettering } = view.world;
   if (token === 0x0b) {
     const code = view.paint.labelCode;
-    return code === null ? null : [code >> 8, code & 0xff];
+    return code === null
+      ? lettering.tokens?.get(0x8b)
+        ? [...lettering.tokens.get(0x8b)!]
+        : null
+      : [code >> 8, code & 0xff];
   }
   if (token === 0x09 || token === 0x1d) {
     // `$5600C..$560B0`: cells keyed from $A0 bind a set; others draw blanks.
@@ -457,7 +493,8 @@ const tokenString = (
     if (target === 0xb3_f2) {
       return [view.state.signCode];
     }
-    return null;
+    const resolved = lettering.tokens?.get(token | 0x80);
+    return resolved ? [...resolved] : null;
   }
   if (token >= 0x0d && token <= 0x16) {
     // `$5AF60`: the binder writes each door's key letter (key + $23) or a space at
@@ -468,7 +505,8 @@ const tokenString = (
     }
     return [doorKeyLetter(door, bound!.cell)];
   }
-  return null;
+  const resolved = lettering.tokens?.get(token | 0x80);
+  return resolved ? [...resolved] : null;
 };
 
 const doorKeyLetter = (door: DionAttachment, cell: DionCell): number => {
@@ -488,7 +526,7 @@ const doorKeyLetter = (door: DionAttachment, cell: DionCell): number => {
 };
 
 const glyphOf = (
-  world: DionWorld,
+  world: DionFrameWorld,
   font: number,
   code: number
 ): DionGlyph | undefined =>
@@ -924,7 +962,7 @@ const drawable = (view: View, bound: Bound | null): Placed[] => {
   return placed;
 };
 
-const cellNumberOf = (world: DionWorld, position: Vec3): number => {
+const cellNumberOf = (world: DionFrameWorld, position: Vec3): number => {
   const x = Math.floor(position[0] / 0x1_00_00) - world.opening.groupOrigin[0];
   const z = Math.floor(position[2] / 0x1_00_00) - world.opening.groupOrigin[1];
   return x >= 0 && x < 16 && z >= 0 && z < 16 ? z * 16 + x : -1;
@@ -983,7 +1021,7 @@ const drawKey = (
 
 const planPoint = (bound: Bound, ref: number, y: number): Vec3 => {
   const [x, z] = bound.plan[ref - 1]!;
-  return [bound.origin[0] + x, y, bound.origin[2] + z];
+  return [bound.origin[0] + x, bound.floorOffset + y, bound.origin[2] + z];
 };
 
 /// `$5C0CC`: one plan wall by the form its colour carries (bits 12..14).
@@ -1221,7 +1259,11 @@ const drawWallText = (view: View, bound: Bound, index: number): void => {
     colour: text.colour,
     flags: text.plane,
     glyphScale: [gx, gy],
-    origin: [bound.origin[0] + x, text.anchor[1], bound.origin[2] + z],
+    origin: [
+      bound.origin[0] + x,
+      bound.floorOffset + text.anchor[1],
+      bound.origin[2] + z
+    ],
     text: text.text
   });
 };
@@ -1263,7 +1305,7 @@ const drawDetail = (view: View, bound: Bound): void =>
       const eye = view.camera.eye;
       const viewer = [
         eye[0] - bound.origin[0],
-        eye[1],
+        eye[1] - bound.floorOffset,
         eye[2] - bound.origin[2]
       ];
       let records = group.default;
@@ -1286,7 +1328,7 @@ const drawDetail = (view: View, bound: Bound): void =>
       const mirrored = sx * sz < 0;
       const points = detail.vertices.map(([x, y, z]): Vec3 => [
         bound.origin[0] + x * sx,
-        y < 0 ? ~y : y,
+        bound.floorOffset + (y < 0 ? ~y : y),
         bound.origin[2] + z * sz
       ]);
       for (const record of records) {
@@ -1349,7 +1391,11 @@ const drawDetailText = (
     colour: record.colour,
     flags: record.flags,
     glyphScale: [gx, gy],
-    origin: [bound.origin[0] + x, record.anchor[1], bound.origin[2] + z],
+    origin: [
+      bound.origin[0] + x,
+      bound.floorOffset + record.anchor[1],
+      bound.origin[2] + z
+    ],
     text: record.text
   });
 };
@@ -1380,6 +1426,8 @@ const drawStructure = (
 
 // ---- The ground pass --------------------------------------------------------------------
 
+const signedByte = (v: number): number => (v >= 128 ? v - 256 : v);
+
 /// `$576A2..$57726`: the cell's ground record, drawn with culling off.
 const drawGround = (view: View, bound: Bound): void =>
   withSource(
@@ -1398,7 +1446,7 @@ const drawGround = (view: View, bound: Bound): void =>
         return [bx + (a & 0xff_ff), 0, bz + (b & 0xff_ff)];
       });
       // `$55DA4`: slots `$F0..$FC` stand at the centres of the cells the road runs to.
-      const vertex = (ref: number): Vec3 => {
+      const vertex = (ref: number): Vec3 | undefined => {
         const road = bound.cell.roadPoints.get(ref);
         if (ref >= 0xf0 && road !== undefined) {
           const [gx, gz] = view.world.opening.groupOrigin;
@@ -1408,21 +1456,39 @@ const drawGround = (view: View, bound: Bound): void =>
             (gz + (road >> 4)) * 0x1_00_00 + 0x80_00
           ];
         }
-        return points[(ref >> 2) - 1]!;
+        return points[(ref >> 2) - 1];
       };
       for (const primitive of ground.primitives) {
         if (primitive.kind === 'template') {
           continue;
         }
         if (primitive.kind === 'text') {
-          view.paint.gaps.add('ground text records are not drawn');
+          const bytes = primitive.header;
+          const word = (offset: number): number =>
+            (bytes[offset]! << 8) | bytes[offset + 1]!;
+          const signed = (v: number): number => (v & 0x80_00 ? v - 65_536 : v);
+          drawText(view, bound, {
+            advance: signed(word(8)),
+            colour: word(12),
+            flags: word(6),
+            glyphScale: [signedByte(bytes[10]!), signedByte(bytes[11]!)],
+            origin: [bx + word(0), signed(word(2)), bz + word(4)],
+            text: primitive.text
+          });
           continue;
         }
         const refs =
           mirrored && primitive.kind === 'polygon'
             ? [...primitive.refs].reverse()
             : primitive.refs;
-        const vertices = refs.map(vertex);
+        const resolved = refs.map(vertex);
+        if (resolved.some(v => v === undefined)) {
+          view.paint.gaps.add(
+            'ground reference requires a recovered road join binding'
+          );
+          continue;
+        }
+        const vertices = resolved as Vec3[];
         if (primitive.kind === 'line') {
           stroke(view, vertices[0]!, vertices[1]!, primitive.colour & ~0x40_00);
         } else {
@@ -1432,10 +1498,68 @@ const drawGround = (view: View, bound: Bound): void =>
     }
   );
 
+// Same recovered coast/horizon routines as Damocles; only records and palette admission are Dion's.
+const drawCoast = (view: View): number => {
+  const surface = view.world.coast!;
+  const [x, y, z] = view.state.eye;
+  const eye = { x, y, z };
+  const here = classifyPosition(surface, eye);
+  const underfoot =
+    here.kind === 'core' && y < 65_536 ? here.island : undefined;
+  const base = underfoot?.landColour ?? view.world.framePalette.land;
+  const depth = 1_000_000_000;
+  const emit = (values: readonly number[], word: number, source: string) => {
+    const index = view.paint.palette.literal(word);
+    for (let i = 0; i < values.length; i += 30) {
+      const geometry: CameraPoint[] = [0, 10, 20].map(offset => ({
+        d: values[i + offset + 2]!,
+        u: -values[i + offset]!,
+        v: -values[i + offset + 1]!
+      }));
+      const screen = screenPolygon(geometry, false, DION_PROJECTION);
+      if (screen) {
+        view.primitives.push({
+          camera: geometry,
+          colour: { index },
+          kind: 'polygon',
+          order: view.primitives.length,
+          screen,
+          source
+        });
+      }
+    }
+  };
+  emit(
+    horizonFillVertices({ x: 0, y: 1, z: 0 }, depth, [0, 0, 0]),
+    base,
+    'horizon'
+  );
+  if (underfoot === undefined) {
+    for (const island of surface.islands) {
+      const triangles = islandFillTriangles(island, surface, 0, eye);
+      emit(
+        horizonIslandVertices(
+          triangles,
+          p => {
+            const c = camera(view, [p.x, p.y, p.z]);
+            return { x: -c.u, y: -c.v, z: c.d };
+          },
+          DION_PROJECTION.near,
+          depth,
+          [0, 0, 0]
+        ),
+        island.landColour,
+        island.id
+      );
+    }
+  }
+  return base;
+};
+
 // ---- The frame ----------------------------------------------------------------------------
 
 export const planDionFrame = (
-  world: DionWorld,
+  world: DionFrameWorld,
   state: DionFrameState
 ): DionFrame => {
   const bound = bind(world, state);
@@ -1490,6 +1614,10 @@ export const planDionFrame = (
       });
     }
   }
+  let land = world.framePalette.land;
+  if (world.coast !== undefined) {
+    land = drawCoast(view);
+  }
   if (bound !== null) {
     drawGround(view, bound);
   } else {
@@ -1524,7 +1652,7 @@ export const planDionFrame = (
   const entries = palette.entries.map(entry => (entry & FREE ? 0 : entry));
   const upper = entries.map(stRgb);
   const lower = upper.slice();
-  lower[8] = stRgb(world.framePalette.land);
+  lower[8] = stRgb(land);
   const description: FrameDescription = {
     background: { index: 8 },
     paletteBands: [
@@ -1542,7 +1670,7 @@ export const planDionFrame = (
       return (indexed ??= renderAuthentic(description));
     },
     horizonRow: world.framePalette.horizonRow,
-    land: world.framePalette.land,
+    land,
     palette: entries,
     stats: {
       gaps: [...paint.gaps],
@@ -1569,7 +1697,7 @@ export const frameRgba = (
   rgbaFromIndexed(planned.description, planned.frame, target);
 };
 
-export const openingFrameState = (world: DionWorld): DionFrameState => ({
+export const openingFrameState = (world: DionFrameWorld): DionFrameState => ({
   cell: world.opening.cell,
   day: true,
   doors: new Map(),

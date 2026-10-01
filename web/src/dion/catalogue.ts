@@ -25,6 +25,7 @@ interface Source {
 interface GeometryIndex {
   readonly bodies: readonly string[];
   readonly dataVariants: readonly string[];
+  readonly entries?: readonly number[];
   readonly family: string;
   readonly id: string;
   readonly record: string;
@@ -35,12 +36,15 @@ interface Island {
   readonly geometry: string;
   readonly group: number;
   readonly id: string;
+  readonly landColour: number;
   readonly origin: readonly number[];
 }
 interface Body {
   readonly geometry: readonly string[];
   readonly id: string;
   readonly islands: readonly Island[];
+  readonly name: string;
+  readonly offset: number;
 }
 interface Placement {
   readonly body: string;
@@ -48,6 +52,7 @@ interface Placement {
   readonly cell: number;
   readonly group: number;
   readonly id: string;
+  readonly key: number;
   readonly origin: readonly number[];
   readonly slot: number;
   readonly state: string;
@@ -63,14 +68,19 @@ interface FloorBinding {
   readonly baseY: number;
   readonly floor: number;
   readonly geometry: string;
+  readonly palette: number;
   readonly variant: string;
 }
 interface Structure {
   readonly censusFloors?: readonly (readonly number[])[];
   readonly detail: string;
+  readonly detailIndex: number;
   readonly floorBindings: readonly FloorBinding[];
   readonly floors: readonly Floor[];
   readonly id: string;
+  readonly palette: number;
+  readonly pitch: number | null;
+  readonly scale: readonly [number, number];
   readonly slot: number;
 }
 interface CatalogueObject {
@@ -85,6 +95,18 @@ interface CatalogueObject {
     readonly placement?: string;
   } | null;
   readonly id: string;
+  readonly indoor?: {
+    readonly association: number;
+    readonly cell: number;
+    readonly group: number;
+    readonly localPosition: readonly number[];
+    readonly yaw: number;
+  };
+  readonly lettering?: {
+    readonly text: readonly number[];
+    readonly token: string;
+  };
+  readonly name: string | null;
   readonly position: readonly number[] | null;
   readonly residence: string;
   readonly slot: number;
@@ -93,7 +115,9 @@ interface CatalogueObject {
 /// The reader validates rather than normalizes, so no geometry or provenance is discarded.
 export interface DionCatalogue {
   readonly areas: readonly {
+    readonly area: string | null;
     readonly authoredBindings: number;
+    readonly disposition: string;
     readonly group: number;
     readonly id: string;
     readonly initialBindings: number;
@@ -113,9 +137,17 @@ export interface DionCatalogue {
     readonly physicalCount: null;
     readonly seed: string;
   };
+  readonly gaps: readonly { readonly id: string; readonly reason?: string }[];
   readonly geometryIndex: readonly GeometryIndex[];
   readonly objects: readonly CatalogueObject[];
   readonly placements: readonly Placement[];
+  readonly places: readonly {
+    readonly cell: number;
+    readonly group: number;
+    readonly id: string;
+    readonly name: string;
+    readonly placement: string | null;
+  }[];
   readonly source: Source;
   readonly structures: readonly Structure[];
   readonly surfaceCells: Readonly<Record<string, readonly Row[]>>;
@@ -123,6 +155,9 @@ export interface DionCatalogue {
 export interface CatalogueGeometry {
   readonly family: string;
   readonly id: string;
+  readonly name?: string;
+  readonly provenance: readonly unknown[];
+  readonly record: string;
   readonly variants: Readonly<Record<string, Row>>;
 }
 

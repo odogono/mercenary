@@ -178,4 +178,26 @@ Each geometry file stores the **unchanged recovery record** under `geometry`. It
 
 The browser entry is `loadDionCatalogue(read)` in `web/src/dion/catalogue.ts`, where `read` is the same path-to-JSON transport accepted by Damocles's `readCatalogue`. It admits the shared document and returns a lazy `GeometryStore` with its `catalogue`. `get`, `peek`, `size` and `prefetch` are shared with Damocles through `web/src/payload/documentStore.ts`: requests in flight are shared, successful reads are retained, failed reads can retry, and prefetch runs at most 32 reads concurrently. Damocles retains its structure/detail admission rule. The schemas, baseline pins and cross-reference policies remain title-local.
 
-The loader reconciles the census totals, unique identities, group/cell bindings, raw Floor dictionaries (including slot 46's explicit overread), indoor hosts, special states and Body dependency lists before reading geometry. Errors name the document and field or missing reference. The localhost server admits the additional `/payload/dion/catalogue/geometry/<geometry id>.json` path explicitly; other deeper paths remain refused. This handoff starts no Gameplay Session and imports no playable world loader. The Catalogue route and inspection UI still belong to #685, and preview/comparison completion still belongs to #686.
+The loader reconciles the census totals, unique identities, group/cell bindings, raw Floor dictionaries (including slot 46's explicit overread), indoor hosts, special states and Body dependency lists before reading geometry. Errors name the document and field or missing reference. The localhost server admits the additional `/payload/dion/catalogue/geometry/<geometry id>.json` path explicitly; other deeper paths remain refused. This handoff starts no Gameplay Session and imports no playable world loader.
+
+## Inspection and rendering support (#685)
+
+`web/src/dionCatalogue/` implements the sessionless route. The index includes objects, placed instances, independent geometry definitions, groups, Bodies and named places. Search and Body/group/place/Floor filters operate on the validated shared document; geometry remains lazy. Selection links preserve the bound Floor and variant, with optional MIDAS coordinates, LOGOS state and region queue in the query string. Carried and out-of-world entries retain their residence without invented physical coordinates. Missing documents, invalid bindings and empty geometry report their disposition and allow failed reads to retry.
+
+`render-support.json` supplies the Catalogue's own eight fonts, rotation and colour tables, bound Floor palettes, Body background colours and lettering bindings. Its source must match every field of the admitted Catalogue source. It is generated from the pinned census opening RAM, independently of the playable payload:
+
+```sh
+PYTHONPATH=research/mercenary-iii-st python3 -m m3lab.catalogue_render \
+  --census restricted/mercenary-iii-647/runs/location-census-334983y7
+PYTHONPATH=research/mercenary-iii-st python3 -m unittest discover \
+  -s research/mercenary-iii-st/tests -p test_catalogue_render.py
+cd web
+bun test test/dion-catalogue-inspection.test.ts test/dion-catalogue-preview.test.ts
+bunx playwright test e2e/dion-catalogue.e2e.ts
+```
+
+The generator checks the opening RAM digest before decoding and writes only the support document. The browser validates palettes, glyph identities and dependency coverage before planning. Recovered geometry feeds Mercenary III's existing Frame Planner and the shared Authentic renderer. The inspection camera and default view are authored; this is no claim of original-scene pixel parity. Ground lettering uses the existing Dion text path. Static and placement-bound tokens use recovered strings; live tokens use their evidenced opening value without executing campaign logic.
+
+`web/src/coast/` holds the pure island classifier, nearest-island selection, triangulation and horizon fill extracted from the Damocles port. Both planners call it with their own Title's records. Dion supplies only its Catalogue islands and land colours, and the 36 recovered Dion Land/Sea probes verify the adapter. The playable Metis world does not opt into the Catalogue coast context. Full sky Body inventory remains the recorded D1 evidence gap; Catalogue previews use the recovered day background and do not substitute Metis's night stars for other Bodies.
+
+Every stored geometry variant is exercised through the planner. Routing, storage isolation, host/Floor navigation, direct links, MIDAS/LOGOS states and retry diagnostics also have browser checks. The original-scene comparison matrix and milestone completion remain #686 work; free inspection does not mark ledger identities verified.

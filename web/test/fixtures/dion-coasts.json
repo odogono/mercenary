@@ -1,0 +1,258 @@
+{
+  "evidence": "docs/research/dion-surface-recovery.md#islands-and-horizon-fill-are-damocless-routines",
+  "probes": [
+    {
+      "answer": 0,
+      "body": "body-04",
+      "island": "island-04-00",
+      "relative": [0.5, 0.5],
+      "run": "coast-birmingham-island-5wi7lyh_"
+    },
+    {
+      "answer": 0,
+      "body": "body-04",
+      "island": "island-04-00",
+      "relative": [8.0, 8.0],
+      "run": "coast-birmingham-island-5wi7lyh_"
+    },
+    {
+      "answer": 1,
+      "body": "body-04",
+      "island": "island-04-00",
+      "relative": [-10.0, 0.5],
+      "run": "coast-birmingham-island-5wi7lyh_"
+    },
+    {
+      "answer": 1,
+      "body": "body-04",
+      "island": "island-04-00",
+      "relative": [-20.0, 5.0],
+      "run": "coast-birmingham-island-5wi7lyh_"
+    },
+    {
+      "answer": -1,
+      "body": "body-04",
+      "island": "island-04-00",
+      "relative": [-25.0, -10.0],
+      "run": "coast-birmingham-island-5wi7lyh_"
+    },
+    {
+      "answer": -1,
+      "body": "body-04",
+      "island": "island-04-00",
+      "relative": [-27.0, 0.0],
+      "run": "coast-birmingham-island-5wi7lyh_"
+    },
+    {
+      "answer": -1,
+      "body": "body-04",
+      "island": "island-04-00",
+      "relative": [10.0, -15.0],
+      "run": "coast-birmingham-island-5wi7lyh_"
+    },
+    {
+      "answer": -1,
+      "body": "body-04",
+      "island": "island-04-00",
+      "relative": [10.0, -17.0],
+      "run": "coast-birmingham-island-5wi7lyh_"
+    },
+    {
+      "answer": 1,
+      "body": "body-04",
+      "island": "island-04-00",
+      "relative": [30.0, -5.0],
+      "run": "coast-birmingham-island-5wi7lyh_"
+    },
+    {
+      "answer": -1,
+      "body": "body-04",
+      "island": "island-04-02",
+      "relative": [-25.0, 26.0],
+      "run": "coast-birmingham-island-5wi7lyh_"
+    },
+    {
+      "answer": -1,
+      "body": "body-04",
+      "island": "island-04-02",
+      "relative": [-23.0, 26.0],
+      "run": "coast-birmingham-island-5wi7lyh_"
+    },
+    {
+      "answer": 1,
+      "body": "body-04",
+      "island": "island-04-00",
+      "relative": [20.0, 25.0],
+      "run": "coast-birmingham-island-5wi7lyh_"
+    },
+    {
+      "answer": -1,
+      "body": "body-04",
+      "island": "island-04-00",
+      "relative": [5.0, 31.0],
+      "run": "coast-birmingham-island-5wi7lyh_"
+    },
+    {
+      "answer": -1,
+      "body": "body-04",
+      "island": "island-04-00",
+      "relative": [5.0, 33.0],
+      "run": "coast-birmingham-island-5wi7lyh_"
+    },
+    {
+      "answer": -1,
+      "body": "body-04",
+      "island": "island-04-00",
+      "relative": [-15.0, 20.0],
+      "run": "coast-birmingham-island-5wi7lyh_"
+    },
+    {
+      "answer": -1,
+      "body": "body-04",
+      "island": "island-04-00",
+      "relative": [0.0, -30.0],
+      "run": "coast-birmingham-island-5wi7lyh_"
+    },
+    {
+      "answer": -1,
+      "body": "body-04",
+      "island": "island-04-00",
+      "relative": [-26.0, 0.0],
+      "run": "coast-birmingham-island-5wi7lyh_"
+    },
+    {
+      "answer": -1,
+      "body": "body-04",
+      "island": "island-04-00",
+      "relative": [-25.899993896484375, 0.0],
+      "run": "coast-birmingham-island-5wi7lyh_"
+    },
+    {
+      "answer": -1,
+      "body": "body-04",
+      "island": "island-04-00",
+      "relative": [0.0, -16.0],
+      "run": "coast-birmingham-island-5wi7lyh_"
+    },
+    {
+      "answer": -1,
+      "body": "body-04",
+      "island": "island-04-00",
+      "relative": [0.0, -15.899993896484375],
+      "run": "coast-birmingham-island-5wi7lyh_"
+    },
+    {
+      "answer": 0,
+      "body": "body-11",
+      "island": "island-11-04",
+      "relative": [0.5, 0.5],
+      "run": "coast-key-west-ifkxmt0h"
+    },
+    {
+      "answer": -1,
+      "body": "body-11",
+      "island": "island-11-04",
+      "relative": [-31.0, 0.0],
+      "run": "coast-key-west-ifkxmt0h"
+    },
+    {
+      "answer": -1,
+      "body": "body-11",
+      "island": "island-11-04",
+      "relative": [-20.0, -50.0],
+      "run": "coast-key-west-ifkxmt0h"
+    },
+    {
+      "answer": -1,
+      "body": "body-11",
+      "island": "island-11-04",
+      "relative": [-10.0, -59.0],
+      "run": "coast-key-west-ifkxmt0h"
+    },
+    {
+      "answer": 1,
+      "body": "body-11",
+      "island": "island-11-04",
+      "relative": [10.0, -40.0],
+      "run": "coast-key-west-ifkxmt0h"
+    },
+    {
+      "answer": -1,
+      "body": "body-11",
+      "island": "island-11-04",
+      "relative": [30.0, -20.0],
+      "run": "coast-key-west-ifkxmt0h"
+    },
+    {
+      "answer": 1,
+      "body": "body-11",
+      "island": "island-11-04",
+      "relative": [47.0, 0.0],
+      "run": "coast-key-west-ifkxmt0h"
+    },
+    {
+      "answer": -1,
+      "body": "body-11",
+      "island": "island-11-04",
+      "relative": [40.0, 40.0],
+      "run": "coast-key-west-ifkxmt0h"
+    },
+    {
+      "answer": -1,
+      "body": "body-11",
+      "island": "island-11-04",
+      "relative": [20.0, 47.0],
+      "run": "coast-key-west-ifkxmt0h"
+    },
+    {
+      "answer": -1,
+      "body": "body-11",
+      "island": "island-11-04",
+      "relative": [0.0, 47.0],
+      "run": "coast-key-west-ifkxmt0h"
+    },
+    {
+      "answer": 1,
+      "body": "body-11",
+      "island": "island-11-04",
+      "relative": [-20.0, 30.0],
+      "run": "coast-key-west-ifkxmt0h"
+    },
+    {
+      "answer": -1,
+      "body": "body-11",
+      "island": "island-11-04",
+      "relative": [-30.0, 40.0],
+      "run": "coast-key-west-ifkxmt0h"
+    },
+    {
+      "answer": -1,
+      "body": "body-11",
+      "island": "island-11-04",
+      "relative": [30.0, 30.0],
+      "run": "coast-key-west-ifkxmt0h"
+    },
+    {
+      "answer": -1,
+      "body": "body-11",
+      "island": "island-11-04",
+      "relative": [25.0, -55.0],
+      "run": "coast-key-west-ifkxmt0h"
+    },
+    {
+      "answer": 1,
+      "body": "body-11",
+      "island": "island-11-04",
+      "relative": [-5.0, -30.0],
+      "run": "coast-key-west-ifkxmt0h"
+    },
+    {
+      "answer": 0,
+      "body": "body-11",
+      "island": "island-11-04",
+      "relative": [15.0, 10.0],
+      "run": "coast-key-west-ifkxmt0h"
+    }
+  ],
+  "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c"
+}
