@@ -5,6 +5,7 @@ import { readErisPresentation } from '../src/damocles/documents.ts';
 import { initialHeadCommands } from '../src/damocles/headCommands.ts';
 import {
   DAMOCLES_RESUME_STORAGE_KEY,
+  openDamoclesResume,
   readDamoclesResume,
   writeDamoclesResume,
   type ResumeStorage
@@ -374,6 +375,40 @@ describe('the Damocles Gameplay Session', () => {
     expect(readDamoclesResume(undefined, identity).kind).toBe('unavailable');
     const fresh = new DamoclesSession(loaded);
     expect(fresh.snapshot.cell).toEqual({ x: 7, z: 8 });
+  });
+
+  test('starts a new game from a record whose structure the Catalogue no longer has', async () => {
+    // A resume written while the port bound a retired Instance (#673) still decodes, but the
+    // session refuses to bind it. Boot must fall back as for an unreadable record, not stop.
+    const storage = memoryStorage();
+    const loaded = await content();
+    const identity = damoclesSaveIdentity(
+      loaded.catalogue,
+      loaded.presentationSha256
+    );
+    writeDamoclesResume(storage, identity, new DamoclesSession(loaded));
+    const record = JSON.parse(storage.map.get(DAMOCLES_RESUME_STORAGE_KEY)!);
+    expect(record.snapshot.structure.instanceId).toBe('eris-surface-87');
+    record.snapshot.structure.instanceId = 'gaea-surface-25';
+    storage.setItem(DAMOCLES_RESUME_STORAGE_KEY, JSON.stringify(record));
+
+    const read = readDamoclesResume(storage, identity);
+    expect(read.kind).toBe('restored');
+    const kept = await openDamoclesResume(read, storage, loaded, {
+      preserveInvalid: true
+    });
+    expect(kept.read).toEqual({
+      kind: 'invalid',
+      reason: 'saved structure does not match the current cell'
+    });
+    expect(storage.map.size).toBe(1);
+
+    const opened = await openDamoclesResume(read, storage, loaded);
+    expect(opened.read.kind).toBe('invalid');
+    expect(storage.map.size).toBe(0);
+    expect(opened.session.snapshot).toEqual(
+      new DamoclesSession(loaded).snapshot
+    );
   });
 
   test('teleports to an Eris cell centre without changing heading', async () => {

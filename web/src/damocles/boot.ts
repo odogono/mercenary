@@ -75,14 +75,11 @@ import {
 import { ErisRenderer } from './renderer.ts';
 import {
   createDamoclesResumePersistence,
+  openDamoclesResume,
   readDamoclesResume,
   writeDamoclesResume
 } from './resume.ts';
-import {
-  damoclesSaveIdentity,
-  damoclesWhere,
-  type DamoclesSaveSnapshot
-} from './save.ts';
+import { damoclesSaveIdentity, damoclesWhere } from './save.ts';
 import { createDamoclesSavePersistence } from './saves.ts';
 import {
   NOISE_BANDS,
@@ -231,7 +228,7 @@ try {
     onLost: () => handleOwnershipLost()
   });
   const ownershipOutcome = await ownership.claim();
-  const resumeRead =
+  const decodedResume =
     ownershipOutcome.kind === 'owned'
       ? readDamoclesResume(
           storage,
@@ -245,6 +242,10 @@ try {
           { preserveInvalid: travelToken !== null }
         )
       : ({ kind: 'empty' } as const);
+  const opened = await openDamoclesResume(decodedResume, storage, content, {
+    preserveInvalid: travelToken !== null
+  });
+  const resumeRead = opened.read;
 
   let protectResume =
     travelToken !== null &&
@@ -267,13 +268,7 @@ try {
     storage,
     surface
   });
-  if (resumeRead.kind === 'restored') {
-    await DamoclesSession.prepare(content, resumeRead.snapshot);
-  }
-  let session = new DamoclesSession(
-    content,
-    resumeRead.kind === 'restored' ? resumeRead.snapshot : undefined
-  );
+  let session = opened.session;
   const renderer = new ErisRenderer(
     canvas,
     {
@@ -494,7 +489,9 @@ try {
     menu.show('ownership');
   }
 
-  const replaceSession = (restore?: DamoclesSaveSnapshot): void => {
+  const replaceSession = (
+    next: DamoclesSession = new DamoclesSession(content)
+  ): void => {
     if (protectResume) {
       travelToken = null;
       const url = new URL(location.href);
@@ -503,7 +500,7 @@ try {
     }
     protectResume = false;
     atlasNotice = '';
-    session = new DamoclesSession(content, restore);
+    session = next;
     snapshot = session.snapshot;
     // No tone the old session started survives it.
     sound.reset(snapshot.elapsed);
@@ -522,7 +519,7 @@ try {
     release,
     restore: saved => {
       const loaded = (): void => {
-        replaceSession(saved);
+        replaceSession(new DamoclesSession(content, saved));
         snapshot = session.snapshot;
         shellConsole.write(['— LOADED SLOT —']);
         menu.show('none');
@@ -812,7 +809,7 @@ try {
     }
     if (outcome.kind === 'owned') {
       resumePersistence = makeResumePersistence();
-      const recovered = readDamoclesResume(
+      const decoded = readDamoclesResume(
         storage,
         identity,
         {
@@ -823,13 +820,16 @@ try {
         },
         { preserveInvalid: travelToken !== null }
       );
+      const reopened = await openDamoclesResume(decoded, storage, content, {
+        preserveInvalid: travelToken !== null
+      });
+      const recovered = reopened.read;
       protectResume =
         travelToken !== null &&
         (recovered.kind === 'invalid' || recovered.kind === 'unavailable');
       notices.dismiss();
       if (recovered.kind === 'restored') {
-        await DamoclesSession.prepare(content, recovered.snapshot);
-        replaceSession(recovered.snapshot);
+        replaceSession(reopened.session);
         notices.resumed();
       } else {
         if (!protectResume) {

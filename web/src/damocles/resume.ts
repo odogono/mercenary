@@ -12,7 +12,7 @@ import {
   type DamoclesSaveIdentity,
   type DamoclesSaveSnapshot
 } from './save.ts';
-import type { DamoclesSession } from './session.ts';
+import { DamoclesSession, type DamoclesContent } from './session.ts';
 
 /// Damocles's Session Resume: one record, its own key, never Targ's (ADR 0041).
 export const DAMOCLES_RESUME_STORAGE_KEY = titleStorageKeys('damocles').resume;
@@ -61,6 +61,41 @@ export const readDamoclesResume = (
       // The record is already being ignored.
     }
     return { kind: 'invalid', reason };
+  }
+};
+
+/// The session a resume read opens. A record can decode and still name what this Catalogue no
+/// longer has, such as a structure a regenerated Catalogue retired (#673). The session refuses
+/// it on restore. Such a record is then treated like an undecodable one: it is removed unless
+/// asked to be kept, the read reports it invalid, and play starts as a new game rather than
+/// stopping on a black screen.
+export const openDamoclesResume = async (
+  read: DamoclesResumeRead,
+  storage: SessionResumeStorage | undefined,
+  content: DamoclesContent,
+  options: { readonly preserveInvalid?: boolean } = {}
+): Promise<{
+  readonly read: DamoclesResumeRead;
+  readonly session: DamoclesSession;
+}> => {
+  if (read.kind !== 'restored') {
+    return { read, session: new DamoclesSession(content) };
+  }
+  try {
+    await DamoclesSession.prepare(content, read.snapshot);
+    return { read, session: new DamoclesSession(content, read.snapshot) };
+  } catch (error) {
+    try {
+      if (!options.preserveInvalid) {
+        storage?.removeItem(DAMOCLES_RESUME_STORAGE_KEY);
+      }
+    } catch {
+      // The record is already being ignored.
+    }
+    return {
+      read: { kind: 'invalid', reason: reasonOf(error) },
+      session: new DamoclesSession(content)
+    };
   }
 };
 
