@@ -16,6 +16,7 @@ source hashes leave RAM; no geometry and no original instructions are written.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib
 import json
 from collections import Counter
@@ -61,8 +62,8 @@ DECODERS = {
                'reader': '$54AEE..$54D20', 'owner': SURFACE_TICKET},
     'ground': {'module': 'm3lab.geometry', 'function': 'decode_ground',
                'reader': '$561AE..$563C4', 'owner': SURFACE_TICKET},
-    'island': {'module': None, 'function': None,
-               'reader': '$5A178..$5A1EE, $57544..$575CC', 'owner': SURFACE_TICKET},
+    'island': {'module': 'm3lab.geometry', 'function': 'decode_island',
+               'reader': '$5761A..$5769E, $571A8..$5727E', 'owner': SURFACE_TICKET},
 }
 
 # What a Geometry Identity must show before the milestone can close (#685, #686).
@@ -105,6 +106,8 @@ def _playable(repository: Path, opening: Ram) -> dict[str, set[str]]:
                       for s in world['structures'].values()},
         'detail': {ident('detail', detail_record(opening, int(index)))
                    for index in world['details']},
+        # Ground is keyed by where its geometry starts, past the record's phase header.
+        'groundStarts': set(world['grounds']),
     }
     return found
 
@@ -123,7 +126,10 @@ def _group_disposition(group: dict, bindings: int) -> str:
     return 'label-only' if group['area'] else 'outline-only'
 
 
-def build_ledger(run: Path, repository: Path = REPOSITORY) -> dict:
+def build_ledger(run: Path, repository: Path = REPOSITORY, surface: dict | None = None,
+                 comparisons: dict | None = None) -> dict:
+    """The census ledger; with a #682 surface extraction, its recovery states too, and
+    with the #682 original-scene comparisons, their results for #686 to build on."""
     opening = Ram.load(run / 'start.ram')
     inventory = read_inventory(opening)
     census = extract_objects(opening)
@@ -385,11 +391,95 @@ def build_ledger(run: Path, repository: Path = REPOSITORY) -> dict:
                      + '; confirm what the original lift path binds there.'}
             for slot, floors in sorted(unresolved.items())],
     }
+    if surface is not None:
+        apply_surface(ledger, surface, playable)
+    if comparisons is not None:
+        ledger['comparisons'] = [
+            {'id': name, 'kind': 'scene', 'binding': r['binding'], 'run': r['run'],
+             'agreement': round(r['agreement'], 4), 'plannerGaps': r['gaps'][1:]}
+            for name, r in sorted(comparisons['scenes'].items())] + [
+            {'id': name, 'kind': 'land-sea', 'run': r['run'], 'points': len(r['rows']),
+             'agree': r['agree']}
+            for name, r in sorted(comparisons['coasts'].items())]
     ledger['completion'] = completion(ledger)
     problems = validate_ledger(ledger)
     if problems:
         raise ValueError('generated ledger is invalid:\n' + '\n'.join(problems))
     return ledger
+
+
+def _drawable(family: str, body: dict) -> bool:
+    if family == 'structure':
+        return bool(body['plan'] or body['walls'])
+    if family == 'model':
+        return bool(body['vertices'] and (body['faces'] or body['alternatives']))
+    return bool(body['vertices'] and body['primitives'])
+
+
+SURFACE_RESOLUTIONS = {
+    'island-decoder': 'm3lab.geometry.decode_island reads all island records '
+                      '(docs/research/dion-surface-recovery.md#islands).',
+    'ground-inventory': 'Every placed group cell names its Drawn Record; overrides account '
+                        'for every Selected Piece it replaces (m3lab.catalogue_surface).',
+    'detail-lettering': 'Every surface text record is literal, placement-bound ($89, $9D) or '
+                        'a live token with its buffer (docs/research/dion-surface-recovery.md#lettering).',
+    'empty-road-geometry': 'Recovered as empty: the record has no plan and no walls.',
+}
+
+
+def apply_surface(ledger: dict, surface: dict, playable: dict[str, set[str]]) -> None:
+    """Fold a #682 extraction in: states, variants, hashes, and ground identities."""
+    geometry = {g['id']: g for g in ledger['geometry']}
+    references = Counter()
+    for rows in surface['cells'].values():
+        for row in rows:
+            references[row['ground']] += 1
+            for entry in row['templates']:
+                references[('entry', entry)] += 1
+    for key, record in surface['geometry'].items():
+        family = record['family']
+        entry = geometry.get(key)
+        if entry is None:
+            if family not in ('ground', 'model'):
+                raise ValueError(f'{key} is outside the census inventory')
+            count = (references[key] if family == 'ground'
+                     else sum(references[('entry', e)] for e in record['entries']))
+            starts = {v['provenance']['range'][0] for v in record['variants'].values()}
+            entry = geometry[key] = {
+                'id': key, 'family': family, 'record': record['record'], 'owner': SURFACE_TICKET,
+                'required': True, 'preview': None, 'references': count,
+                'playable': key in playable.get(family, set()) or bool(starts & playable.get('groundStarts', set()))}
+            if family == 'model':
+                entry['entries'] = record['entries']
+        if entry['owner'] != SURFACE_TICKET:
+            raise ValueError(f'{key} belongs to #{entry["owner"]}, not the surface recovery')
+        drawable = any(_drawable(family, v) for v in record['variants'].values())
+        entry['state'] = 'recovered' if drawable else 'empty'
+        names = [v for v in record['variants'] if v != 'base']
+        if family == 'detail':
+            names = [f'scale={x},{z}' for x, z in record['scales']]
+        entry['variants'] = names
+        entry['sha256'] = record['sha256']
+    ledger['geometry'] = sorted(geometry.values(), key=lambda g: g['id'])
+    ledger['totals']['surfaceCells'] = 256 * len(surface['cells'])
+    ledger['lettering'] = {token: item['kind'] for token, item in surface['lettering']['tokens'].items()}
+    ledger['source']['surface'] = {
+        'construction': surface['source']['construction'],
+        'recipe': 'research/mercenary-iii-st/m3lab/catalogue_surface.py',
+        'evidence': 'docs/research/dion-surface-recovery.md',
+        'sha256': hashlib.sha256(json.dumps(surface, sort_keys=True).encode()).hexdigest()}
+    logos = surface['logos']
+    if (logos['initial']['slot'], logos['constructed']['slot']) != (None, ledger['logos']['slot']):
+        raise ValueError('the construction capture disagrees with the LOGOS states')
+    for state in ledger['logos']['states']:
+        state['ramSha256'] = logos[state['id']]['ramSha256']
+    resolved = []
+    for gap in list(ledger['gaps']):
+        if gap['id'] in SURFACE_RESOLUTIONS:
+            ledger['gaps'].remove(gap)
+            resolved.append({'id': gap['id'], 'owner': gap['owner'],
+                             'resolution': SURFACE_RESOLUTIONS[gap['id']]})
+    ledger['resolvedGaps'] = resolved
 
 
 def completion(ledger: dict) -> dict:
@@ -534,13 +624,30 @@ def validate_ledger(ledger: dict, *, check_decoders: bool = True) -> list[str]:
         check(g['state'] in STATES, f'{key} has unknown state {g["state"]!r}')
         check(g['owner'] in (OBJECTS_TICKET, SURFACE_TICKET, INTERIOR_TICKET),
               f'{key} has no recovery owner')
-        check(referenced[key] == g['references'] > 0,
-              f'{key} reference count disagrees with the census ({referenced[key]})')
+        if g['family'] == 'ground' or 'entries' in g:
+            # Reached per cell from a ground record: counted by the surface extraction.
+            check(g['references'] > 0, f'{key} is not referenced by any cell')
+        else:
+            check(referenced[key] == g['references'] > 0,
+                  f'{key} reference count disagrees with the census ({referenced[key]})')
         check(g['state'] == 'pending' or ledger['decoders'][g['family']]['module'] is not None,
               f'{key} cannot be recovered without a decoder path')
     for gap in ledger['gaps']:
         check(gap['owner'] in (OBJECTS_TICKET, SURFACE_TICKET, INTERIOR_TICKET),
               f'gap {gap["id"]} has no recovery owner')
+    open_gaps = {gap['id'] for gap in ledger['gaps']}
+    for gap in ledger.get('resolvedGaps', []):
+        check(gap['id'] not in open_gaps, f'gap {gap["id"]} is both open and resolved')
+        check(bool(gap.get('resolution')), f'gap {gap["id"]} is resolved without evidence')
+    for item in ledger.get('comparisons', []):
+        if item['kind'] == 'scene':
+            check(item['binding'] in binding_ids, f'comparison {item["id"]} names unknown binding')
+        else:
+            check(item['agree'] <= item['points'], f'comparison {item["id"]} agrees beyond its points')
+    if 'surfaceCells' in totals:
+        grounds = sum(g['references'] for g in ledger['geometry'] if g['family'] == 'ground')
+        check(grounds == totals['surfaceCells'],
+              f'ground references cover {grounds} cells, not {totals["surfaceCells"]}')
     check(ledger['completion'] == completion(ledger), 'completion disagrees with the ledger')
 
     if check_decoders:
@@ -590,9 +697,15 @@ def load_ledger(path: Path = LEDGER_PATH) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument('--run', type=Path, required=True, help='a census_capture run directory')
+    parser.add_argument('--surface', type=Path, help='a catalogue_surface extraction (#682)')
+    parser.add_argument('--comparisons', type=Path,
+                        help='the directory holding surface_scenes scenes.json and coasts.json')
     parser.add_argument('--out', type=Path, default=LEDGER_PATH)
     args = parser.parse_args()
-    ledger = build_ledger(args.run)
+    surface = json.loads(args.surface.read_text()) if args.surface else None
+    comparisons = ({kind: json.loads((args.comparisons / f'{kind}.json').read_text())
+                    for kind in ('scenes', 'coasts')} if args.comparisons else None)
+    ledger = build_ledger(args.run, surface=surface, comparisons=comparisons)
     args.out.write_text(dumps(ledger))
     c = ledger['completion']
     print(f"Wrote {args.out}: {len(ledger['geometry'])} Geometry Identities, "

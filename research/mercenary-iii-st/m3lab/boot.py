@@ -79,6 +79,9 @@ class Plan:
     loop_top: bool = False
     # (arm at VBL, PC, name): save `name.ram` at the first hit of PC after the VBL.
     pc_captures: list[tuple[int, int, str]] = field(default_factory=list)
+    # (arm at VBL, PC, debugger commands): run them once at the first hit of PC after
+    # the VBL. Probes use this to set registers at a main-loop top, never in play.
+    pc_commands: list[tuple[int, int, list[str]]] = field(default_factory=list)
 
     def end(self) -> int:
         return max([v for v, _ in self.inputs] + self.captures) + 1
@@ -109,8 +112,16 @@ def run(plan: Plan, root: Path | None = None, timeout: int = 900) -> Path:
         steps.setdefault(vbl, []).append(
             f'b pc = ${pc:x} :trace :once :quiet :file {run_dir}/{name}.ini')
         (run_dir / f'{name}.ini').write_text(f'savebin {run_dir}/{name}.ram 0 $100000\n')
+    for index, (vbl, pc, commands) in enumerate(plan.pc_commands):
+        name = f'commands-{index}'
+        steps.setdefault(vbl, []).append(
+            f'b pc = ${pc:x} :trace :once :quiet :file {run_dir}/{name}.ini')
+        (run_dir / f'{name}.ini').write_text('\n'.join(commands) + '\n')
     if plan.pal:
         steps.setdefault(10, []).insert(0, 'w $ff820a $02')
+    # A breakpoint armed on the last step needs time to fire before the quit.
+    if plan.loop_top or plan.pc_captures or plan.pc_commands:
+        steps.setdefault(max(steps) + 100, [])
     ordered = sorted(steps)
 
     def script(name: str, lines: list[str]) -> Path:
@@ -142,7 +153,7 @@ def run(plan: Plan, root: Path | None = None, timeout: int = 900) -> Path:
     (run_dir / 'command.json').write_text(json.dumps(args, indent=2) + '\n')
     (run_dir / 'plan.json').write_text(json.dumps({
         'name': plan.name, 'inputs': plan.inputs, 'captures': plan.captures,
-        'pal': plan.pal}, indent=2) + '\n')
+        'pal': plan.pal, 'pcCommands': plan.pc_commands}, indent=2) + '\n')
     with (run_dir / 'hatari.log').open('w') as log:
         subprocess.run(args, stdout=log, stderr=log, check=True, timeout=timeout,
                        stdin=subprocess.DEVNULL,
