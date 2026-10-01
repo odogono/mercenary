@@ -729,6 +729,33 @@ describe('the door entry', () => {
     expect(placementIds(s).has(AUTHORS_HOUSE)).toBe(true);
   });
 
+  test('fetching the armed EXPLOSIVE into a keyed door takes $7A56/$7A58 as a Drop does', () => {
+    const saved = atAuthorsHouseDoor([DETONATOR]).captureResume();
+    const s = new DamoclesSession(content, {
+      ...saved,
+      residence: [
+        ...saved.residence.filter(item => item.instance !== object(75)),
+        placed(75, away().x, away().z)
+      ],
+      timedDetonator: {
+        ...initialTimedDetonator(),
+        armed: true,
+        charge: 3,
+        deadline: Math.floor(fresh().captureResume().elapsed) + 3,
+        fuse: 3,
+        slot: 75
+      }
+    });
+    expect(s.snapshot.timedDetonator.door).toBeNull();
+    expect(s.fetchObject(75).kind).toBe('fetched');
+    expect(s.snapshot.timedDetonator.door).toEqual({
+      key: 30,
+      level: 0,
+      slot: 0x3_fc
+    });
+    expect(s.snapshot.carried).toEqual([DETONATOR]);
+  });
+
   test('the door then opens without its key and says nothing', () => {
     const locked = atAuthorsHouseDoor([]);
     locked.advance(2);

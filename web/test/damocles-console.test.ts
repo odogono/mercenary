@@ -283,6 +283,40 @@ describe('get names what it took', () => {
     });
   });
 
+  test('fetch brings a remote object to the player without carrying it', async () => {
+    const session = await sessionOf();
+    // The arrival Pose stands within reach of slot 7, which will not take CASH REGISTER.
+    expect(run(session, 'fetch 94')).toBe('no room for object 94');
+    expect(session.snapshot.message).toBeNull();
+    session.teleportToCell(3, 3);
+    const before = session.snapshot.pose;
+    expect(run(session, 'fetch 94')).toBe('fetched object 94');
+    expect(session.snapshot.carried).toEqual([]);
+    expect(session.snapshot.pose).toEqual(before);
+    expect(
+      session.snapshot.residence.find(
+        item => item.instance === 'object-slot-94'
+      )?.residence
+    ).toMatchObject({ body: before.body });
+  });
+
+  test('fetch keeps only the fixed-in-place Take rule', async () => {
+    const session = await sessionOf();
+    session.teleportToCell(3, 3);
+    expect(run(session, 'fetch 156')).toBe('object 156 is fixed in place');
+    expect(run(session, 'fetch 8')).toBe('object 08 is not in the world');
+    expect(run(session, 'fetch 9')).toBe('there is no object 09');
+    expect(run(session, 'get 94')).toBe('took object 94');
+    expect(run(session, 'fetch 94')).toBe(
+      'object 94 is already carried; use drop'
+    );
+    session.advance(1);
+    expect(run(session, 'fetch 3')).toBe('fetched object 03');
+    expect(
+      executeDamoclesConsoleCommand({ kind: 'help' }, host(session)).join(' ')
+    ).toContain('fetch <object-slot>');
+  });
+
   test('drop confirms the head by slot or by name', async () => {
     const opened = await sessionOf();
     opened.teleportToCell(7, 8);

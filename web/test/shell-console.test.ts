@@ -193,6 +193,18 @@ describe('reading a console command line', () => {
     );
   });
 
+  test('reads a request to fetch one object slot', () => {
+    expect(parse('fetch 20')).toEqual({ kind: 'fetchObject', slot: 20 });
+    expect(() => parse('fetch')).toThrow('fetch takes one object slot');
+    expect(() => parse('fetch 20 21')).toThrow('fetch takes one object slot');
+    expect(() => parse('fetch 64')).toThrow(
+      'an object slot must be from 0 through 63, and is 64'
+    );
+    expect(() =>
+      parseConsoleCommand('fetch', CELLS_PER_AXIS, 256, 'selected')
+    ).toThrow('fetch takes one object slot');
+  });
+
   test('keeps where as the sole location-reporting command', () => {
     expect(parse('where')).toEqual({ kind: 'where' });
     expect(() => parse('where now')).toThrow('where takes no arguments');
@@ -343,6 +355,7 @@ describe('doing what a console command says', () => {
     expect(lines.join(' ')).toContain('goto room');
     expect(lines.join(' ')).toContain('goto object');
     expect(lines.join(' ')).toContain('get <object-slot>');
+    expect(lines.join(' ')).toContain('fetch <object-slot>');
     expect(lines.join(' ')).toContain('inventory');
     expect(lines.join(' ')).not.toContain('location');
     expect(lines.join(' ')).toContain('goto <x> <z> [height]');
@@ -483,6 +496,50 @@ describe('doing what a console command says', () => {
 
     expect(run('get 10', deps)).toEqual(['object 10 is fixed in place']);
     expect(session.snapshot.carriedStack).not.toContain(10);
+  });
+
+  test('fetches a remote object to where a Drop would put it', () => {
+    const session = createWalkabout(bundle, defaultSettings()).session;
+    const { deps } = harness({ session });
+    const { position } = session.snapshot.player;
+
+    expect(run('fetch 20', deps)).toEqual(['fetched object 20']);
+    expect(session.snapshot.carriedStack).not.toContain(20);
+    expect(session.snapshot.residence.get(20)).toEqual({
+      at: {
+        x: position.x,
+        y: Math.floor(position.y / 0x1_00) * 0x1_00,
+        z: position.z
+      },
+      kind: 'surface'
+    });
+  });
+
+  test('fetches heavy objects but refuses fixed, carried and absent ones', () => {
+    const session = createWalkabout(bundle, defaultSettings()).session;
+    const { deps } = harness({ session });
+
+    expect(run('fetch 10', deps)).toEqual(['object 10 is fixed in place']);
+    expect(run('fetch 8', deps)).toEqual(['object 08 is not in the world']);
+    expect(run('fetch 2', deps)).toEqual(['fetched object 02']);
+    session.carry(20);
+    expect(run('fetch 20', deps)).toEqual([
+      'object 20 is already carried; use drop'
+    ]);
+    expect(session.snapshot.carriedStack).toEqual([20]);
+  });
+
+  test('refuses to fetch while airborne', () => {
+    const session = createWalkabout(bundle, defaultSettings()).session;
+    const { deps } = harness({ session });
+    const before = session.snapshot.residence.get(20);
+
+    session.board(1);
+    session.placeInAir({ ...session.snapshot.player.position, y: 10_000 });
+    expect(run('fetch 20', deps)).toEqual([
+      'cannot fetch objects while airborne'
+    ]);
+    expect(session.snapshot.residence.get(20)).toEqual(before);
   });
 
   test('keeps all other take refusals and object states visible', () => {

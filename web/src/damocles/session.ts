@@ -456,6 +456,15 @@ export type DamoclesTakeObjectOutcome =
   | { readonly kind: 'missing'; readonly slot: number }
   | { readonly kind: 'busy'; readonly reason: string };
 
+export type DamoclesFetchObjectOutcome =
+  | { readonly kind: 'fetched'; readonly slot: number }
+  | { readonly kind: 'fixedInPlace'; readonly slot: number }
+  | { readonly kind: 'noRoom'; readonly slot: number }
+  | { readonly kind: 'alreadyCarried'; readonly slot: number }
+  | { readonly kind: 'gone'; readonly slot: number }
+  | { readonly kind: 'missing'; readonly slot: number }
+  | { readonly kind: 'busy'; readonly reason: string };
+
 export interface AtlasDestination {
   readonly bodyId: string;
   readonly x: number;
@@ -1590,7 +1599,10 @@ export class DamoclesSession implements TitleSession<
     return candidates;
   }
 
-  private nearestCandidate(maximum: number):
+  private nearestCandidate(
+    maximum: number,
+    exclude?: string
+  ):
     | {
         readonly distance: number;
         readonly id: string;
@@ -1613,7 +1625,7 @@ export class DamoclesSession implements TitleSession<
         }
       | undefined;
     for (const candidate of this.candidates()) {
-      if (candidate.id === 'object-slot-74') {
+      if (candidate.id === 'object-slot-74' || candidate.id === exclude) {
         continue;
       }
       const dx = candidate.position.x - this.pose.position.x;
@@ -3867,6 +3879,57 @@ export class DamoclesSession implements TitleSession<
     return this.takeInstance(id);
   }
 
+  /// Move one object slot to where a Drop would place it, leaving the Carried Stack alone.
+  ///
+  /// The Shell Console's `fetch`: a move rather than an acquisition, so of a Take's rules only
+  /// fixed in place stands — weight, capacity and the pickup triggers do not — and the Drop's
+  /// own placement decides whether there is room. Nothing scrolls, so neither does the label.
+  fetchObject(slot: number): DamoclesFetchObjectOutcome {
+    const id = `object-slot-${slot}`;
+    const instance = this.instanceFor(id);
+    if (slot === 0 || instance === undefined) {
+      return { kind: 'missing', slot };
+    }
+    const residence = this.residenceFor(id);
+    if (this.carried.includes(id) || residence?.kind === 'carried') {
+      return { kind: 'alreadyCarried', slot };
+    }
+    if (
+      residence === undefined ||
+      residence.kind === 'occupied' ||
+      this.destroyedBodies.includes(residence.body)
+    ) {
+      return { kind: 'gone', slot };
+    }
+    if (this.occupied !== null) {
+      return { kind: 'busy', reason: 'the player is aboard; leave first' };
+    }
+    if (this.death !== null) {
+      return { kind: 'busy', reason: 'the player is dead' };
+    }
+    if (this.scrollCounter !== 0) {
+      return { kind: 'busy', reason: 'the Carried Stack is still scrolling' };
+    }
+    const handling = instance.handling;
+    if (
+      this.pose.body === VOID_BODY ||
+      handling === null ||
+      handling === undefined ||
+      ((handling.byte & 0x10) !== 0 && !this.liveCarriedSlot(0))
+    ) {
+      return { kind: 'fixedInPlace', slot };
+    }
+    const placed = this.dropResidence(id, { quiet: true });
+    if (placed === undefined) {
+      return { kind: 'noRoom', slot };
+    }
+    this.placeResident(id, placed);
+    if (this.soundPermitted()) {
+      this.effects.push({ cue: 'drop', type: 'sound-request' });
+    }
+    return { kind: 'fetched', slot };
+  }
+
   /// The Take once its target is chosen, from the handling byte to the commit.
   private takeInstance(instanceId: string): DamoclesTakeObjectOutcome {
     const instance = this.instanceFor(instanceId);
@@ -4160,8 +4223,21 @@ export class DamoclesSession implements TitleSession<
     };
   }
 
-  private dropResidence(head: string): PlacedResidence | undefined {
-    const selected = this.nearestCandidate(128);
+  /// Where a Drop of `head` would place it, or undefined when there is no room.
+  ///
+  /// A console fetch passes `quiet`, so the refusal is reported in the console rather than on
+  /// the Benson Panel; its object is still placed, so it must not be its own support.
+  private dropResidence(
+    head: string,
+    { quiet = false }: { readonly quiet?: boolean } = {}
+  ): PlacedResidence | undefined {
+    const noRoom = (): undefined => {
+      if (!quiet) {
+        this.presentSystem('system-string-9');
+      }
+      return undefined;
+    };
+    const selected = this.nearestCandidate(128, head);
     const support =
       selected === undefined || selected.id === 'object-slot-74'
         ? undefined
@@ -4181,22 +4257,19 @@ export class DamoclesSession implements TitleSession<
             supportHandling.suppliedSupportRank <
               droppedHandling.requiredSupportRank))
       ) {
-        this.presentSystem('system-string-9');
-        return undefined;
+        return noRoom();
       }
       // `$0546A4`-`$0546CA` copies the support's placement: its X/Z, body, level, region
       // byte and placement class (`$0546C4`), so the dropped object takes the support's class.
       const placed = this.supportResidence(selected!);
       if (placed === undefined) {
-        this.presentSystem('system-string-9');
-        return undefined;
+        return noRoom();
       }
       if (
         placed.kind === 'structure' &&
         !validStructureResidence(this.content.catalogue, placed)
       ) {
-        this.presentSystem('system-string-9');
-        return undefined;
+        return noRoom();
       }
       return placed;
     }
@@ -4223,8 +4296,7 @@ export class DamoclesSession implements TitleSession<
       ) ||
       !validStructureResidence(this.content.catalogue, placed)
     ) {
-      this.presentSystem('system-string-9');
-      return undefined;
+      return noRoom();
     }
     return placed;
   }
@@ -4275,6 +4347,22 @@ export class DamoclesSession implements TitleSession<
     };
   }
 
+  /// The part of a Drop that follows the object rather than the Carried Stack.
+  private placeResident(id: string, residence: Residence): void {
+    this.residence.set(id, residence);
+    // `$054722`: dropping the armed EXPLOSIVE takes `$7A5A` where the player stands.
+    const detonator = this.timedDetonator;
+    if (detonator.armed && this.slotOf(id) === detonator.slot) {
+      this.timedDetonator = {
+        ...detonator,
+        door: this.doorAround(),
+        regionBlast: this.regionBlastHere(
+          residence.kind === 'structure' ? residence.insertionGroup : 0
+        )
+      };
+    }
+  }
+
   private finishDrop(head: string, residence: Residence): void {
     if (head === 'object-slot-108') {
       const remaining = this.carried.slice(1);
@@ -4286,20 +4374,9 @@ export class DamoclesSession implements TitleSession<
     } else {
       this.carried = this.carried.slice(1);
     }
-    this.residence.set(head, residence);
+    this.placeResident(head, residence);
     this.script = settleCarried(this.script, this.slotOf(head));
     this.scrollCounter = 16;
-    // `$054722`: dropping the armed EXPLOSIVE takes `$7A5A` where the player stands.
-    const detonator = this.timedDetonator;
-    if (detonator.armed && this.slotOf(head) === detonator.slot) {
-      this.timedDetonator = {
-        ...detonator,
-        door: this.doorAround(),
-        regionBlast: this.regionBlastHere(
-          residence.kind === 'structure' ? residence.insertionGroup : 0
-        )
-      };
-    }
     // `$05468E`: dropping the open object closes it and scrolls the logo back.
     if (this.slotOf(head) === this.headCommands.open?.slot) {
       this.headCommands = closeDocument(this.headCommands);

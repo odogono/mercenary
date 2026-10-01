@@ -175,6 +175,20 @@ export interface TakeObjectResult {
   readonly outcome: TakeObjectOutcome;
 }
 
+export type FetchObjectOutcome =
+  | { readonly kind: 'fetched'; readonly slot: number }
+  | { readonly kind: 'fixedInPlace'; readonly slot: number }
+  | { readonly kind: 'airborneRefused' }
+  | { readonly kind: 'alreadyCarried'; readonly slot: number }
+  | { readonly kind: 'gone'; readonly slot: number }
+  | { readonly kind: 'missing'; readonly slot: number }
+  | { readonly kind: 'unsupported' };
+
+export interface FetchObjectResult {
+  readonly events: readonly PresentationEvent[];
+  readonly outcome: FetchObjectOutcome;
+}
+
 /// What asking to fire did.
 ///
 /// The Reference Build refuses silently in all three decoded cases, so the
@@ -1292,6 +1306,37 @@ export class GameplaySession {
     }
   }
 
+  /// Move one named object to where a Drop would put it, leaving the Carried Stack alone.
+  ///
+  /// The Shell Console's `fetch`: a move rather than an acquisition, so only the fixed-in-place
+  /// rule of a Take applies — weight, the Carried Stack limit and the take script do not — and
+  /// Drop's own airborne refusal stands in for whether there is room.
+  fetchObject(slot: number): FetchObjectResult {
+    if (!this.objectsBySlot.has(slot)) {
+      return { events: [], outcome: { kind: 'missing', slot } };
+    }
+    const residence = this.residenceOf(slot);
+    if (residence.kind === 'carried') {
+      return { events: [], outcome: { kind: 'alreadyCarried', slot } };
+    }
+    if (residence.kind === 'gone') {
+      return { events: [], outcome: { kind: 'gone', slot } };
+    }
+    const interaction = this.content.interaction;
+    if (interaction === undefined || this.scripts === undefined) {
+      return { events: [], outcome: { kind: 'unsupported' } };
+    }
+    if (interaction.isFixedInPlace(slot, this.project(this.scripts.host))) {
+      return { events: [], outcome: { kind: 'fixedInPlace', slot } };
+    }
+    if (this.airborneRefusesDrop()) {
+      return { events: [], outcome: { kind: 'airborneRefused' } };
+    }
+    this.residence.set(slot, this.dropResidence());
+    this.republishHostState();
+    return { events: ['tone'], outcome: { kind: 'fetched', slot } };
+  }
+
   leaveCraft():
     | { readonly events: readonly PresentationEvent[]; readonly slot: number }
     | undefined {
@@ -1768,25 +1813,12 @@ export class GameplaySession {
     if (carriedIndex === -1) {
       throw new Error(`Cannot drop object slot ${slot} that is not carried`);
     }
-    const exemption = this.content.dropRules?.carriedExemptionSlot;
-    if (
-      this.game.mode === 'flying' &&
-      (exemption === undefined || !this.carriedStack.includes(exemption))
-    ) {
+    if (this.airborneRefusesDrop()) {
       return { events: [], outcome: { kind: 'airborneRefused' } };
     }
     const mask = this.carriedMask ?? 0;
     const flags = (this.objectFlags.get(slot) ?? 0) & ~mask & 0xff;
-    const position = this.game.player.position;
-    const at = {
-      x: position.x,
-      y: Math.floor(position.y / 0x1_00) * 0x1_00,
-      z: position.z
-    };
-    const where: Residence =
-      this.semanticLocation.kind === 'surface'
-        ? { at, kind: 'surface' }
-        : { at, id: this.semanticLocation.id, kind: 'room' };
+    const where = this.dropResidence();
     this.carriedStack = [
       ...this.carriedStack.slice(0, carriedIndex),
       ...this.carriedStack.slice(carriedIndex + 1)
@@ -1795,6 +1827,27 @@ export class GameplaySession {
     this.residence.set(slot, where);
     this.republishHostState();
     return { events: ['tone'], outcome: { kind: 'dropped', slot } };
+  }
+
+  private airborneRefusesDrop(): boolean {
+    const exemption = this.content.dropRules?.carriedExemptionSlot;
+    return (
+      this.game.mode === 'flying' &&
+      (exemption === undefined || !this.carriedStack.includes(exemption))
+    );
+  }
+
+  /// Where a Drop puts an object: at the player, on the storey they stand on.
+  private dropResidence(): Residence {
+    const position = this.game.player.position;
+    const at = {
+      x: position.x,
+      y: Math.floor(position.y / 0x1_00) * 0x1_00,
+      z: position.z
+    };
+    return this.semanticLocation.kind === 'surface'
+      ? { at, kind: 'surface' }
+      : { at, id: this.semanticLocation.id, kind: 'room' };
   }
 
   /// Fire.

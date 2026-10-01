@@ -32,6 +32,7 @@ export type ConsoleCommand =
   | { readonly kind: 'dropObject'; readonly selector?: string }
   | { readonly floor: number; readonly kind: 'floor' }
   | { readonly kind: 'getObject'; readonly slot?: number }
+  | { readonly kind: 'fetchObject'; readonly slot: number }
   | {
       readonly height?: number;
       readonly kind: 'gotoCell';
@@ -313,6 +314,14 @@ export const parseConsoleCommand = (
         kind: 'getObject',
         slot: objectSlot(rest[0]!, objectSlots)
       };
+    case 'fetch':
+      if (rest.length !== 1) {
+        throw new Error('fetch takes one object slot');
+      }
+      return {
+        kind: 'fetchObject',
+        slot: objectSlot(rest[0]!, objectSlots)
+      };
     case 'goto':
       if (rest[0] === 'object') {
         if (rest.length !== 2) {
@@ -412,7 +421,7 @@ export interface ConsoleDeps extends ConsoleParseContext, ConsoleSettingHost {
 
 const HELP = [
   'help · where · time [h]h:mm[:ss] · inventory · get <object-slot> · pads',
-  'drop <object-id|name>',
+  'drop <object-id|name> · fetch <object-slot>',
   'goto <x> <z> [height] · goto room <n> · goto object <slot>',
   'panel <targ|damocles> · set <name> <value>',
   `set names: ${SETTING_NAMES.join(', ')}`,
@@ -583,6 +592,29 @@ export const executeConsoleCommand = (
           return ['getting objects is unavailable'];
       }
       throw new Error('unknown object take outcome');
+    }
+    case 'fetchObject': {
+      const result = deps.session().fetchObject(command.slot);
+      deps.present?.(result.events);
+      const outcome = result.outcome;
+      const label = twoDigits(command.slot);
+      switch (outcome.kind) {
+        case 'fetched':
+          return [`fetched object ${label}`];
+        case 'fixedInPlace':
+          return [`object ${label} is fixed in place`];
+        case 'alreadyCarried':
+          return [`object ${label} is already carried; use drop`];
+        case 'gone':
+          return [`object ${label} is not in the world`];
+        case 'missing':
+          return [`there is no object ${label}`];
+        case 'airborneRefused':
+          return ['cannot fetch objects while airborne'];
+        case 'unsupported':
+          return ['fetching objects is unavailable'];
+      }
+      throw new Error('unknown object fetch outcome');
     }
     case 'gotoCell': {
       const session = deps.session();

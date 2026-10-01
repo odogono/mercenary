@@ -119,12 +119,12 @@ export type Composition = "panel" | "strip";
   reject reason; two-press confirm for overwrite and delete, in the chooser and as
   `save <n> confirm` in the console.
 - Console commands: `help`, `where`, `inventory`, `get <object-slot>`,
-  `drop <object-id|name>`,
+  `drop <object-id|name>`, `fetch <object-slot>`,
   `goto <x> <z> [height]`, `goto room <n>`, `goto object <slot>`,
   `set <setting> <value>`, `save <slot> [confirm]`, `load <slot>`, `panel <rendition>` (an alias
   of `set rendition`). The console reaches **three** sinks, and the distinction is worth stating:
-  the Gameplay Session's own actions (`place`, `placeInAir`, `teleport`, `takeObject`) for
-  `goto` and `get`; the preference stores for
+  the Gameplay Session's own actions (`place`, `placeInAir`, `teleport`, `takeObject`,
+  `fetchObject`) for `goto`, `get` and `fetch`; the preference stores for
   `set` — where `typeface` keeps its own key rather than living in preferences, and
   `sky document` and `structures document` hand each choice back to the tuning document; and the
   Save core for `save`/`load`. `load` is a **whole-session replacement** rather than a mutation:
@@ -150,6 +150,10 @@ export type Composition = "panel" | "strip";
 - `get <object-slot>` remotely takes one object without changing the player's Location or pose.
   It bypasses distance and Room only: fixed/heavy rules and the Carried Stack limit still apply,
   and carried or out-of-world objects are reported without changing state.
+- `fetch <object-slot>` moves one object to where a Drop would put it, without carrying it.
+  It is a move, not a take: only the fixed-in-place rule applies, so heavy objects and craft
+  can be fetched, and no take script runs. Drop's airborne refusal stands, and carried or
+  out-of-world objects are reported without changing state.
 - `inventory` prints the Carried Stack in acquisition order, one Benson object id and name per
   line. `drop` selects within that stack: a carried numeric id wins, otherwise exact names and
   whole words/phrases rank ahead of substring matches. Ambiguous or absent matches are reported
