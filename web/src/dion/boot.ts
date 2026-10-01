@@ -19,6 +19,7 @@ import type { PayloadDocument } from '../shell/title.ts';
 import { SoundLifecycle } from '../sound/lifecycle.ts';
 import { AudioWorkletTransport } from '../sound/transport.ts';
 import { frameRgba, planDionFrame } from './frame.ts';
+import { installDionPresentation } from './framePresentation.ts';
 import { PANEL_TOP, drawDionPanel, panelRgba } from './panel.ts';
 import {
   createDionResumePersistence,
@@ -49,6 +50,7 @@ const chrome = installShellChrome(surface, { menuTitle: 'MERCENARY III' });
 
 let animation: number | undefined;
 let running = true;
+let viewPresentation: ReturnType<typeof installDionPresentation> | undefined;
 
 const fail = (error: unknown): void => {
   if (!running) {
@@ -58,6 +60,7 @@ const fail = (error: unknown): void => {
   if (animation !== undefined) {
     cancelAnimationFrame(animation);
   }
+  viewPresentation?.dispose();
   canvas.hidden = true;
   status.hidden = true;
   failure.hidden = false;
@@ -165,13 +168,24 @@ try {
     menu.show('ownership');
     notice('This Mercenary III session is active in another tab.');
   };
-  pageNote(chrome.pages.settings, 'Authentic presentation');
   // This rendition has its recovered presentation; hide unsupported style choices.
   for (const row of chrome.pages.settings.querySelectorAll('.setting-row')) {
-    if (!row.querySelector('#audio-volume')) {
+    if (!row.querySelector('#audio-volume, [data-setting="sky"]')) {
       row.remove();
     }
   }
+  viewPresentation = installDionPresentation({
+    notice,
+    onRecovered: () => {
+      if (status.textContent?.startsWith('Enhanced unavailable.')) {
+        status.hidden = true;
+      }
+    },
+    page: chrome.pages.settings,
+    redraw: () => draw(),
+    screen: canvas,
+    storage
+  });
   const mute =
     chrome.pages.settings.querySelector<HTMLButtonElement>('#audio-mute')!;
   mute.addEventListener('click', () => {
@@ -248,6 +262,7 @@ try {
     );
     panelRgba(panel, image.data.subarray(PANEL_TOP * 320 * 4));
     context.putImageData(image, 0, 0);
+    viewPresentation?.render(planned.description);
     const root = canvas.dataset;
     root['cell'] = String(snapshot.cell);
     root['region'] = String(snapshot.region);

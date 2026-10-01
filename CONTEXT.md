@@ -162,6 +162,14 @@ _Avoid_: Browser hack, web tweak, responsive mode
 The browser-owned experience surrounding the Game Surface, including the page, its canvas, the Controls Page, settings, and host feedback.
 _Avoid_: Web UI, page chrome, wrapper
 
+**Frame Planner**:
+A Title's account of what one view contains and the order in which it is painted, governed by that Title's recovered visibility, geometry and palette rules.
+_Avoid_: Shared scene planner, renderer, Gameplay Session
+
+**Frame Description**:
+One Title-planned view's ordered polygons, lines and points, with their projection, colours and sources, shared by its Authentic and Enhanced presentations. It describes the view alone, independently of the Gameplay Session and the instrument panel.
+_Avoid_: Session Snapshot, scene graph, screen capture, Frame Planner
+
 **Presentation Preset**:
 The Browser Shell's named choice between Authentic presentation, which retains the accepted Reference Build appearance, and Enhanced presentation, which admits explicitly authored visual additions without changing Game Semantics.
 _Avoid_: Graphics mode, theme, sky toggle

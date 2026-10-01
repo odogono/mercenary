@@ -40,12 +40,27 @@
 
       /* The ST's low-resolution screen, 320 by 200, shown at whole-pixel scale where it fits.
          Its pixels are not square on a real monitor; the browser shows them square. */
-      #screen {
+      #dion-screen {
+        position: relative;
         width: min(100vw, 160vh);
         aspect-ratio: 320 / 200;
+      }
+
+      #screen {
+        display: block;
+        width: 100%;
+        height: 100%;
         image-rendering: pixelated;
         outline: none;
         touch-action: manipulation;
+      }
+
+      #dion-enhanced-view {
+        position: absolute;
+        inset: 0 0 auto;
+        width: 100%;
+        height: 68%;
+        pointer-events: none;
       }
 
       #status,
@@ -80,17 +95,19 @@
       data-layer="none"
       aria-label="Mercenary III Game Surface"
     >
-      <canvas
-        id="screen"
-        width="320"
-        height="200"
-        role="img"
-        aria-label="METIS, TIMEWARP PRISON"
-        tabindex="0"
-        hidden
-      >
-        Your browser cannot display the Mercenary III view.
-      </canvas>
+      <div id="dion-screen">
+        <canvas
+          id="screen"
+          width="320"
+          height="200"
+          role="img"
+          aria-label="METIS, TIMEWARP PRISON"
+          tabindex="0"
+          hidden
+        >
+          Your browser cannot display the Mercenary III view.
+        </canvas>
+      </div>
       <p id="status" role="status">Loading Mercenary III…</p>
       <p id="failure" role="alert" hidden></p>
     </section>

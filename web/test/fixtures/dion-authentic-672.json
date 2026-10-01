@@ -1,0 +1,386 @@
+{
+  "capture": "Unmodified implementation before #672 renderer extraction",
+  "checkpoints": [
+    {
+      "name": "solicitor-opening",
+      "indexed": "e60efaf31915fae7cb77419cb5f61d0a47e42038624f739e654790e0796b137b",
+      "rgba": "a90a5ac46ba21ec12e182cd45a837ad3c907151a0452b96242b9445283b37273",
+      "palette": [
+        0, 0, 0, 0, 0, 1109, 819, 1092, 853, 582, 1366, 820, 1911, 1093, 546,
+        1621
+      ],
+      "horizonRow": 68,
+      "land": 1041,
+      "stats": {
+        "gaps": ["complete sky Body inventory waived by D1"],
+        "lines": 22,
+        "models": [16, 220, 219, 181, 3, 124],
+        "polygons": 49
+      },
+      "candidate": {
+        "distance": 63,
+        "exponent": 5,
+        "slot": 10
+      }
+    },
+    {
+      "name": "solicitor-reveal",
+      "indexed": "e60efaf31915fae7cb77419cb5f61d0a47e42038624f739e654790e0796b137b",
+      "rgba": "8ed1adf3dc1ddd0580e2531cd81b60e9ff2fd450a97cad1050caf486447de5aa",
+      "palette": [
+        0, 0, 0, 0, 0, 1109, 819, 1092, 853, 582, 1366, 820, 1911, 1093, 546,
+        1621
+      ],
+      "horizonRow": 68,
+      "land": 1041,
+      "stats": {
+        "gaps": ["complete sky Body inventory waived by D1"],
+        "lines": 22,
+        "models": [16, 220, 219, 181, 3, 124],
+        "polygons": 33
+      },
+      "candidate": {
+        "distance": 63,
+        "exponent": 5,
+        "slot": 10
+      }
+    },
+    {
+      "name": "solicitor-boarding",
+      "indexed": "14cc04a40948ad6b21d3e6246a1292ad7336283beaaa96308b71017de1be1b07",
+      "rgba": "b31a03f4ce0e71b72d62fe1059aa64e3edc8e024273ba554caa3c297ce3e4358",
+      "palette": [
+        0, 0, 0, 0, 0, 0, 0, 0, 853, 582, 820, 1366, 1911, 1093, 546, 1621
+      ],
+      "horizonRow": 68,
+      "land": 1041,
+      "stats": {
+        "gaps": ["complete sky Body inventory waived by D1"],
+        "lines": 3,
+        "models": [181, 3, 124, 220, 219, 16],
+        "polygons": 14
+      },
+      "candidate": {
+        "distance": 63,
+        "exponent": 5,
+        "slot": 16
+      }
+    },
+    {
+      "name": "solicitor-selection",
+      "indexed": "14cc04a40948ad6b21d3e6246a1292ad7336283beaaa96308b71017de1be1b07",
+      "rgba": "ba47c53e6836696c7856027c2969ccbd11a93cf4a58728a23327a522e229b300",
+      "palette": [
+        0, 0, 0, 0, 0, 0, 0, 0, 853, 582, 820, 1366, 1911, 1093, 546, 1621
+      ],
+      "horizonRow": 68,
+      "land": 1041,
+      "stats": {
+        "gaps": ["complete sky Body inventory waived by D1"],
+        "lines": 3,
+        "models": [181, 3, 124, 220, 219, 16],
+        "polygons": 14
+      },
+      "candidate": {
+        "distance": 63,
+        "exponent": 5,
+        "slot": 16
+      }
+    },
+    {
+      "name": "solicitor-travel",
+      "indexed": "07bdc9e67c37b047dad904701205026374524a605c6f0b77e0b3853451a070e7",
+      "rgba": "dea2d2fb82220502ff5aa0fe56b3b27c8d7addafb6d7c4377aa61844f898c93a",
+      "palette": [
+        0, 0, 0, 0, 0, 0, 0, 582, 853, 820, 1366, 802, 1911, 1093, 546, 1621
+      ],
+      "horizonRow": 68,
+      "land": 1041,
+      "stats": {
+        "gaps": ["complete sky Body inventory waived by D1"],
+        "lines": 6,
+        "models": [254, 255, 16],
+        "polygons": 18
+      },
+      "candidate": {
+        "distance": 63,
+        "exponent": 5,
+        "slot": 16
+      }
+    },
+    {
+      "name": "solicitor-turn",
+      "indexed": "7ac0a5bb94226801b2c49e29260fd1a35c820c35f841153083f308d50820ef08",
+      "rgba": "d942c7d5b8a8141b97c71a45bf361fc3307d797f751f033ceb333ba0d41326ce",
+      "palette": [
+        0, 0, 0, 0, 0, 0, 582, 820, 853, 1366, 819, 1092, 1911, 1093, 546, 1621
+      ],
+      "horizonRow": 68,
+      "land": 1041,
+      "stats": {
+        "gaps": ["complete sky Body inventory waived by D1"],
+        "lines": 3,
+        "models": [255, 254, 16],
+        "polygons": 19
+      },
+      "candidate": {
+        "distance": 63,
+        "exponent": 5,
+        "slot": 16
+      }
+    },
+    {
+      "name": "solicitor-arrival",
+      "indexed": "ef08e00b7517e0e97ba20df588c481f88960c495ebc10862fd73602a83e5345b",
+      "rgba": "45fa485638277c62754015cf012d83d5aa86f441acda84d91abc432daa2071d5",
+      "palette": [
+        0, 0, 0, 0, 0, 0, 582, 820, 853, 1366, 819, 1092, 1911, 1093, 546, 1621
+      ],
+      "horizonRow": 68,
+      "land": 1041,
+      "stats": {
+        "gaps": ["complete sky Body inventory waived by D1"],
+        "lines": 3,
+        "models": [255, 254, 16],
+        "polygons": 18
+      },
+      "candidate": {
+        "distance": 63,
+        "exponent": 5,
+        "slot": 16
+      }
+    },
+    {
+      "name": "solicitor-exit",
+      "indexed": "9b0caf40e6f20cfd04909aff4a2e017b3bacc2c14046b9092db4b2c8fe3d891b",
+      "rgba": "ce4104755ae453a9e8a38e48f6ccac4cf4dbe4209f383090793d3ae65d2fa0d2",
+      "palette": [
+        0, 0, 0, 0, 0, 0, 0, 0, 853, 0, 819, 1092, 1911, 1093, 546, 1621
+      ],
+      "horizonRow": 68,
+      "land": 1041,
+      "stats": {
+        "gaps": ["complete sky Body inventory waived by D1"],
+        "lines": 1,
+        "models": [255, 254, 16],
+        "polygons": 8
+      },
+      "candidate": {
+        "distance": 38,
+        "exponent": 5,
+        "slot": 16
+      }
+    },
+    {
+      "name": "solicitor-night",
+      "indexed": "8d15c3eb819440ae9b6d9096d6d4d16a0ada2d5ebd0071cf6300b7170b1a8514",
+      "rgba": "7c20752cc93d06389b3975094a046965415183c8e1386116ac70584a58e5a0e2",
+      "palette": [
+        0, 0, 0, 0, 1366, 820, 819, 1092, 17, 802, 582, 1041, 1911, 1093, 546,
+        1621
+      ],
+      "horizonRow": 68,
+      "land": 1041,
+      "stats": {
+        "gaps": ["complete sky Body inventory waived by D1"],
+        "lines": 1,
+        "models": [255, 254, 16],
+        "polygons": 36
+      },
+      "candidate": {
+        "distance": 19456.03710933961,
+        "exponent": 14,
+        "slot": 16
+      }
+    },
+    {
+      "name": "spaceport-opening",
+      "indexed": "e60efaf31915fae7cb77419cb5f61d0a47e42038624f739e654790e0796b137b",
+      "rgba": "a90a5ac46ba21ec12e182cd45a837ad3c907151a0452b96242b9445283b37273",
+      "palette": [
+        0, 0, 0, 0, 0, 1109, 819, 1092, 853, 582, 1366, 820, 1911, 1093, 546,
+        1621
+      ],
+      "horizonRow": 68,
+      "land": 1041,
+      "stats": {
+        "gaps": ["complete sky Body inventory waived by D1"],
+        "lines": 22,
+        "models": [16, 220, 219, 181, 3, 124],
+        "polygons": 49
+      },
+      "candidate": {
+        "distance": 63,
+        "exponent": 5,
+        "slot": 10
+      }
+    },
+    {
+      "name": "spaceport-reveal",
+      "indexed": "e60efaf31915fae7cb77419cb5f61d0a47e42038624f739e654790e0796b137b",
+      "rgba": "8ed1adf3dc1ddd0580e2531cd81b60e9ff2fd450a97cad1050caf486447de5aa",
+      "palette": [
+        0, 0, 0, 0, 0, 1109, 819, 1092, 853, 582, 1366, 820, 1911, 1093, 546,
+        1621
+      ],
+      "horizonRow": 68,
+      "land": 1041,
+      "stats": {
+        "gaps": ["complete sky Body inventory waived by D1"],
+        "lines": 22,
+        "models": [16, 220, 219, 181, 3, 124],
+        "polygons": 33
+      },
+      "candidate": {
+        "distance": 63,
+        "exponent": 5,
+        "slot": 10
+      }
+    },
+    {
+      "name": "spaceport-boarding",
+      "indexed": "14cc04a40948ad6b21d3e6246a1292ad7336283beaaa96308b71017de1be1b07",
+      "rgba": "b31a03f4ce0e71b72d62fe1059aa64e3edc8e024273ba554caa3c297ce3e4358",
+      "palette": [
+        0, 0, 0, 0, 0, 0, 0, 0, 853, 582, 820, 1366, 1911, 1093, 546, 1621
+      ],
+      "horizonRow": 68,
+      "land": 1041,
+      "stats": {
+        "gaps": ["complete sky Body inventory waived by D1"],
+        "lines": 3,
+        "models": [181, 3, 124, 220, 219, 16],
+        "polygons": 14
+      },
+      "candidate": {
+        "distance": 63,
+        "exponent": 5,
+        "slot": 16
+      }
+    },
+    {
+      "name": "spaceport-selection",
+      "indexed": "14cc04a40948ad6b21d3e6246a1292ad7336283beaaa96308b71017de1be1b07",
+      "rgba": "30ef0f0d9dda2bf7ffc02e52c22bfb272c7176362d75edaa4f3e0124b06ae7fe",
+      "palette": [
+        0, 0, 0, 0, 0, 0, 0, 0, 853, 582, 820, 1366, 1911, 1093, 546, 1621
+      ],
+      "horizonRow": 68,
+      "land": 1041,
+      "stats": {
+        "gaps": ["complete sky Body inventory waived by D1"],
+        "lines": 3,
+        "models": [181, 3, 124, 220, 219, 16],
+        "polygons": 14
+      },
+      "candidate": {
+        "distance": 63,
+        "exponent": 5,
+        "slot": 16
+      }
+    },
+    {
+      "name": "spaceport-travel",
+      "indexed": "07bdc9e67c37b047dad904701205026374524a605c6f0b77e0b3853451a070e7",
+      "rgba": "a51d1ab0722eeeaea350b8b1ca72039668749cfc762d7b1dfc19a7560fb56805",
+      "palette": [
+        0, 0, 0, 0, 0, 0, 0, 582, 853, 820, 1366, 802, 1911, 1093, 546, 1621
+      ],
+      "horizonRow": 68,
+      "land": 1041,
+      "stats": {
+        "gaps": ["complete sky Body inventory waived by D1"],
+        "lines": 6,
+        "models": [254, 255, 16],
+        "polygons": 18
+      },
+      "candidate": {
+        "distance": 63,
+        "exponent": 5,
+        "slot": 16
+      }
+    },
+    {
+      "name": "spaceport-turn",
+      "indexed": "7ac0a5bb94226801b2c49e29260fd1a35c820c35f841153083f308d50820ef08",
+      "rgba": "4d9d2109566e1751deaee8fdd8f938bee0186f857e595844df0832277d5074b6",
+      "palette": [
+        0, 0, 0, 0, 0, 0, 582, 820, 853, 1366, 819, 1092, 1911, 1093, 546, 1621
+      ],
+      "horizonRow": 68,
+      "land": 1041,
+      "stats": {
+        "gaps": ["complete sky Body inventory waived by D1"],
+        "lines": 3,
+        "models": [255, 254, 16],
+        "polygons": 19
+      },
+      "candidate": {
+        "distance": 63,
+        "exponent": 5,
+        "slot": 16
+      }
+    },
+    {
+      "name": "spaceport-arrival",
+      "indexed": "3a3647df43aa2caf139fbbdb402159bb0f3e8466a9efa4b601bcc998dd8debda",
+      "rgba": "22e18b35b3ae6fbb022fdfdc6c760fc99ca949ae182ed70bcec9b4827e4c2996",
+      "palette": [
+        0, 0, 0, 0, 0, 0, 0, 0, 853, 582, 820, 1366, 1911, 1093, 546, 1621
+      ],
+      "horizonRow": 68,
+      "land": 1041,
+      "stats": {
+        "gaps": ["complete sky Body inventory waived by D1"],
+        "lines": 3,
+        "models": [165, 13, 16],
+        "polygons": 12
+      },
+      "candidate": {
+        "distance": 63,
+        "exponent": 5,
+        "slot": 16
+      }
+    },
+    {
+      "name": "spaceport-exit",
+      "indexed": "9b0caf40e6f20cfd04909aff4a2e017b3bacc2c14046b9092db4b2c8fe3d891b",
+      "rgba": "c9e838adf7a84b5abb209980626e2ecc0e65a39f6795b445a1044633a973c69f",
+      "palette": [0, 0, 0, 0, 0, 0, 0, 0, 853, 0, 0, 0, 1911, 1093, 546, 1621],
+      "horizonRow": 68,
+      "land": 1041,
+      "stats": {
+        "gaps": ["complete sky Body inventory waived by D1"],
+        "lines": 1,
+        "models": [165, 13, 16],
+        "polygons": 2
+      },
+      "candidate": {
+        "distance": 38,
+        "exponent": 5,
+        "slot": 16
+      }
+    },
+    {
+      "name": "spaceport-night",
+      "indexed": "e2045177d7e7538176c935223e05da8021e1bc83b93c666e8dfa481fac358035",
+      "rgba": "b5d64c528e0e108c5f049ec2b5e01da213fd46b827e0eba2f29ea841ea7f3742",
+      "palette": [
+        0, 0, 0, 0, 0, 0, 0, 0, 17, 582, 1041, 802, 1911, 1093, 546, 1621
+      ],
+      "horizonRow": 68,
+      "land": 1041,
+      "stats": {
+        "gaps": ["complete sky Body inventory waived by D1"],
+        "lines": 1,
+        "models": [165, 13],
+        "polygons": 2
+      },
+      "candidate": {
+        "distance": 2618.9381435994246,
+        "exponent": 11,
+        "slot": 13
+      }
+    }
+  ]
+}

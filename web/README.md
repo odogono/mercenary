@@ -35,6 +35,30 @@ Both halo strength and spread fade smoothly with camera distance along each line
 stays independent. The same fade applies to structures, objects, indoor wireframes and roads,
 including Arrival's moving Camera. Authentic always uses the original hairline without glow.
 
+Mercenary III’s `/dion` defaults to Authentic. Its settings page offers Enhanced flat-colour
+rendering at display resolution through the common renderer in `src/rendering/`, also used
+by Damocles. The panel stays pixel-scaled; the choice is stored for Dion alone. Unavailable
+or lost WebGL returns the current session to Authentic without overwriting that choice;
+select Enhanced again to retry, or reload to retry the stored choice.
+
+The eighteen fixed pre-extraction checkpoints in `test/fixtures/dion-authentic-672.json`
+preserve indexed pixels, palette metadata, composed RGBA output and planner results. The
+original eleven RAM-buffer comparisons can also be reproduced using the #647 loop-top
+captures and their saved `states.json` (all inputs and generated outputs stay restricted):
+
+```sh
+bun tools/dion-ram-compare.ts /path/to/loop-top-captures /path/to/states.json \
+  ../restricted/renderer-672/before
+# After the renderer change, require identical output and individual agreement counts:
+bun tools/dion-ram-compare.ts /path/to/loop-top-captures /path/to/states.json \
+  ../restricted/renderer-672/after ../restricted/renderer-672/before/comparison.json
+```
+
+The adapter reads missing pitch and roll directly from each capture and compares the buffer
+selected by `$42C01`, with the palette and horizon split, in ST-colour space. All eleven
+checkpoints were unchanged by #672 (96.87% mean agreement, the earlier report’s rounded
+96.9%). Enhanced makes no pixel-parity claim. ADRs 0060 and 0062 describe the shared contract.
+
 Re-recording a Golden Trace is the exception, and it still needs the frozen Trace Oracle out of a
 temporary worktree. `MERCENARY_PAYLOAD` points the Oracle at this checkout's canonical payload,
 so the traces are rewritten in this checkout's `/traces/` directory beside that payload, where

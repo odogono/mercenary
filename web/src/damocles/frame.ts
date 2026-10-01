@@ -27,6 +27,8 @@ import {
   type Pose
 } from './world.ts';
 
+export { FLOATS_PER_VERTEX } from '../rendering/triangles.ts';
+
 /// One frame of Eris in Filled Presentation, planned without a graphics context.
 ///
 /// Vertices are camera-relative view-space positions with a flat colour and their face's
@@ -39,7 +41,6 @@ import {
 /// corners, so faces that share a plane carry bit-identical planes (`modelPlane`) and tie
 /// exactly, and the later one in draw order wins, as a painter's stream would leave it (#545).
 /// A plane of all zeros is none, and the renderer falls back to the interpolated depth.
-export const FLOATS_PER_VERTEX = 10;
 
 export interface ErisFramePlan {
   readonly clear: readonly [number, number, number];

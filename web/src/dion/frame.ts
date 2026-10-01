@@ -1,8 +1,16 @@
+import { renderAuthentic, rgbaFromIndexed } from '../rendering/authentic.ts';
+import type {
+  FrameDescription,
+  OrderedPrimitive
+} from '../rendering/description.ts';
 import {
   IndexedFrame,
-  levelCamera,
   screenLine,
-  screenPolygon,
+  screenPolygon
+} from '../rendering/raster.ts';
+import { DION_PROJECTION } from './projection.ts';
+import {
+  levelCamera,
   toCamera,
   type CameraPoint,
   type LevelCamera
@@ -22,7 +30,7 @@ import type {
 } from './world.ts';
 
 /// One frame of the Mercenary III 3D view, planned from the world document by the
-/// original's recovered rules and painted into an indexed frame.
+/// original's recovered rules, emitted as a camera-first Frame Description.
 ///
 /// The order is the game's (#644): the frame palette starts from its template, the
 /// whole view is cleared to colour 8 (sky above the horizon row, land below, by the
@@ -34,7 +42,7 @@ import type {
 /// viewer-selected face list in authored order.
 ///
 /// What this does not draw is named in `gaps`: the road-line pass `$55D7E`, the
-/// horizon line, stars and sky Bodies (#646), and any text token whose live string
+/// horizon line, the complete sky Body inventory, and any text token whose live string
 /// the slice does not bind.
 
 export type Vec3 = readonly [number, number, number];
@@ -87,6 +95,8 @@ export interface DionCandidate {
 
 export interface DionFrame {
   readonly candidate: DionCandidate | null;
+  readonly description: FrameDescription;
+  /// Compatibility access; rasterize only when an indexed consumer asks for it.
   readonly frame: IndexedFrame;
   readonly horizonRow: number;
   readonly land: number;
@@ -181,11 +191,22 @@ const rotate = (
 
 interface View {
   readonly camera: LevelCamera;
-  readonly frame: IndexedFrame;
   readonly paint: Paint;
+  readonly primitives: OrderedPrimitive[];
+  source: string;
   readonly state: DionFrameState;
   readonly world: DionWorld;
 }
+
+const withSource = (view: View, source: string, draw: () => void): void => {
+  const previous = view.source;
+  view.source = source;
+  try {
+    draw();
+  } finally {
+    view.source = previous;
+  }
+};
 
 const camera = (view: View, point: Vec3): CameraPoint =>
   toCamera(
@@ -201,27 +222,36 @@ const fill = (
   colour: number,
   cull: boolean
 ): void => {
-  const outline = screenPolygon(
-    points.map(point => camera(view, point)),
-    cull
-  );
+  const geometry = points.map(point => camera(view, point));
+  const outline = screenPolygon(geometry, cull, DION_PROJECTION);
   if (outline === null) {
     return;
   }
-  view.frame.fillPolygon(outline, resolveColour(view.paint, colour));
+  view.primitives.push({
+    camera: geometry,
+    colour: { index: resolveColour(view.paint, colour) },
+    kind: 'polygon',
+    order: view.primitives.length,
+    screen: outline,
+    source: view.source
+  });
   view.paint.polygons += 1;
 };
 
 const stroke = (view: View, a: Vec3, b: Vec3, colour: number): void => {
-  const segment = screenLine(camera(view, a), camera(view, b));
+  const geometry = [camera(view, a), camera(view, b)] as const;
+  const segment = screenLine(geometry[0], geometry[1], DION_PROJECTION);
   if (segment === null) {
     return;
   }
-  view.frame.drawLine(
-    segment[0],
-    segment[1],
-    resolveColour(view.paint, colour)
-  );
+  view.primitives.push({
+    camera: geometry,
+    colour: { index: resolveColour(view.paint, colour) },
+    kind: 'line',
+    order: view.primitives.length,
+    screen: segment,
+    source: view.source
+  });
   view.paint.lines += 1;
 };
 
@@ -561,56 +591,57 @@ const drawModel = (
   slot: number,
   model: DionModel,
   pose: DionResidentPose
-): void => {
-  selectCandidate(view, slot, pose);
-  const header = model.header;
-  const op = header?.op;
-  if (op === 0x0 || op === 0x6) {
-    return;
-  }
-  if (op === 0x8 && header?.code !== undefined) {
-    view.paint.labelCode = header.code;
-  }
-  let mode = 0;
-  let yaw = 0;
-  let form: DionModelForm = model;
-  let rel: Vec3 = [
-    pose.position[0] - view.camera.eye[0],
-    pose.position[1] - view.camera.eye[1],
-    pose.position[2] - view.camera.eye[2]
-  ];
-  let passenger = false;
-  if (header !== undefined && (op === 0x1 || op === 0xd)) {
-    mode = header.mode ?? 0;
-    yaw = (pose.yaw + (header.yawOffset ?? 0)) & 0xff;
-    if (op === 0x1 && slot === 10) {
-      mode = 1;
+): void =>
+  withSource(view, `resident:${slot}`, () => {
+    selectCandidate(view, slot, pose);
+    const header = model.header;
+    const op = header?.op;
+    if (op === 0x0 || op === 0x6) {
+      return;
     }
-    if (op === 0xd && view.state.passenger === slot && model.passenger) {
-      // `$54444`: the passenger form, ×16, at (0, −63, 0) from the eye; slots 12..15
-      // view-fixed, the others turned with the service resident.
-      mode = (slot >= 12 && slot < 16 ? 1 : mode) | 0x20;
-      form = model.passenger;
-      rel = [0, -63, 0];
-      passenger = true;
+    if (op === 0x8 && header?.code !== undefined) {
+      view.paint.labelCode = header.code;
     }
-  }
-  // `$5532E`: a model further than its range on any axis is not drawn.
-  const range = op === 0xc ? (header?.range ?? 1) : 1;
-  if (!passenger && rel.some(value => Math.abs(value) > range * 0x1_00_00)) {
-    return;
-  }
-  view.paint.models.push(slot);
-  const turn: ModelTurn = { mode, yaw };
-  drawForm(view, bound, form, rel, turn, colourPatches(view, slot, model));
-  if (passenger) {
-    // The driver's head follows from `$6ECE`, the next entry in profile.
-    const head = view.world.models.get(view.state.driverProfile ? 264 : 263);
-    if (head !== undefined) {
-      drawForm(view, bound, head, rel, turn, new Map());
+    let mode = 0;
+    let yaw = 0;
+    let form: DionModelForm = model;
+    let rel: Vec3 = [
+      pose.position[0] - view.camera.eye[0],
+      pose.position[1] - view.camera.eye[1],
+      pose.position[2] - view.camera.eye[2]
+    ];
+    let passenger = false;
+    if (header !== undefined && (op === 0x1 || op === 0xd)) {
+      mode = header.mode ?? 0;
+      yaw = (pose.yaw + (header.yawOffset ?? 0)) & 0xff;
+      if (op === 0x1 && slot === 10) {
+        mode = 1;
+      }
+      if (op === 0xd && view.state.passenger === slot && model.passenger) {
+        // `$54444`: the passenger form, ×16, at (0, −63, 0) from the eye; slots 12..15
+        // view-fixed, the others turned with the service resident.
+        mode = (slot >= 12 && slot < 16 ? 1 : mode) | 0x20;
+        form = model.passenger;
+        rel = [0, -63, 0];
+        passenger = true;
+      }
     }
-  }
-};
+    // `$5532E`: a model further than its range on any axis is not drawn.
+    const range = op === 0xc ? (header?.range ?? 1) : 1;
+    if (!passenger && rel.some(value => Math.abs(value) > range * 0x1_00_00)) {
+      return;
+    }
+    view.paint.models.push(slot);
+    const turn: ModelTurn = { mode, yaw };
+    drawForm(view, bound, form, rel, turn, colourPatches(view, slot, model));
+    if (passenger) {
+      // The driver's head follows from `$6ECE`, the next entry in profile.
+      const head = view.world.models.get(view.state.driverProfile ? 264 : 263);
+      if (head !== undefined) {
+        drawForm(view, bound, head, rel, turn, new Map());
+      }
+    }
+  });
 
 interface ModelTurn {
   /// `$543AA`: 0 none; bit 7 articulated; bit 6 yaw; otherwise view-fixed; bit 5 ×16.
@@ -956,42 +987,43 @@ const planPoint = (bound: Bound, ref: number, y: number): Vec3 => {
 };
 
 /// `$5C0CC`: one plan wall by the form its colour carries (bits 12..14).
-const drawWall = (view: View, bound: Bound, slot: number): void => {
-  const wall = bound.walls[(slot >> 2) - 1];
-  if (wall === undefined) {
-    view.paint.gaps.add(`plan wall slot $${slot.toString(16)} is unknown`);
-    return;
-  }
-  const form = (wall.colour >> 12) & 7;
-  const colour = wall.colour & 0x8f_ff;
-  const [height, lower] = bound.structure.heights;
-  const third = 48;
-  const [a, b] = wall.refs as [number, number];
-  if (form <= 2 || form === 7) {
-    const top =
-      form === 0 ? height : form === 1 ? lower : form === 2 ? third : height;
-    const bottom = form === 7 ? lower : 0;
+const drawWall = (view: View, bound: Bound, slot: number): void =>
+  withSource(view, `structure:${bound.cell.structure}:wall:${slot}`, () => {
+    const wall = bound.walls[(slot >> 2) - 1];
+    if (wall === undefined) {
+      view.paint.gaps.add(`plan wall slot $${slot.toString(16)} is unknown`);
+      return;
+    }
+    const form = (wall.colour >> 12) & 7;
+    const colour = wall.colour & 0x8f_ff;
+    const [height, lower] = bound.structure.heights;
+    const third = 48;
+    const [a, b] = wall.refs as [number, number];
+    if (form <= 2 || form === 7) {
+      const top =
+        form === 0 ? height : form === 1 ? lower : form === 2 ? third : height;
+      const bottom = form === 7 ? lower : 0;
+      fill(
+        view,
+        [
+          planPoint(bound, a, bottom),
+          planPoint(bound, b, bottom),
+          planPoint(bound, b, top),
+          planPoint(bound, a, top)
+        ],
+        colour,
+        false
+      );
+      return;
+    }
+    const y = form === 3 ? third : form === 4 ? 0 : form === 5 ? lower : height;
     fill(
       view,
-      [
-        planPoint(bound, a, bottom),
-        planPoint(bound, b, bottom),
-        planPoint(bound, b, top),
-        planPoint(bound, a, top)
-      ],
+      wall.refs.map(ref => planPoint(bound, ref, y)),
       colour,
-      false
+      true
     );
-    return;
-  }
-  const y = form === 3 ? third : form === 4 ? 0 : form === 5 ? lower : height;
-  fill(
-    view,
-    wall.refs.map(ref => planPoint(bound, ref, y)),
-    colour,
-    true
-  );
-};
+  });
 
 /// `$5B7F6..$5B910`: a door's leaves, inner edges first while it is not shut, then the
 /// faces toward the viewer.
@@ -1209,68 +1241,79 @@ const detailSpan = (
 
 /// `$54D24` with `$54A3E`: the second group's first box holding the viewer, else
 /// its default list, drawn record by record.
-const drawDetail = (view: View, bound: Bound): void => {
-  const detail = bound.detail;
-  if (detail.vertices.length === 0) {
-    return;
-  }
-  const regionFlags =
-    bound.structure.regions[view.state.region - 1]?.flags ?? 0;
-  if (!(regionFlags & 0x80_00)) {
-    return;
-  }
-  const group = detail.groups[1];
-  if (group === undefined) {
-    return;
-  }
-  const [sx, sz] = bound.cell.scale;
-  const eye = view.camera.eye;
-  const viewer = [eye[0] - bound.origin[0], eye[1], eye[2] - bound.origin[2]];
-  let records = group.default;
-  for (const box of group.boxes) {
-    const [x0, x1] = detailSpan(box.x, sx);
-    const [y0, y1] = detailSpan(box.y, 1);
-    const [z0, z1] = detailSpan(box.z, sz);
-    if (
-      viewer[0]! > x0 &&
-      viewer[0]! <= x1 &&
-      viewer[1]! > y0 &&
-      viewer[1]! <= y1 &&
-      viewer[2]! > z0 &&
-      viewer[2]! <= z1
-    ) {
-      records = box.records;
-      break;
+const drawDetail = (view: View, bound: Bound): void =>
+  withSource(
+    view,
+    `cell:${bound.cell.cell}:detail:${bound.cell.detail}`,
+    () => {
+      const detail = bound.detail;
+      if (detail.vertices.length === 0) {
+        return;
+      }
+      const regionFlags =
+        bound.structure.regions[view.state.region - 1]?.flags ?? 0;
+      if (!(regionFlags & 0x80_00)) {
+        return;
+      }
+      const group = detail.groups[1];
+      if (group === undefined) {
+        return;
+      }
+      const [sx, sz] = bound.cell.scale;
+      const eye = view.camera.eye;
+      const viewer = [
+        eye[0] - bound.origin[0],
+        eye[1],
+        eye[2] - bound.origin[2]
+      ];
+      let records = group.default;
+      for (const box of group.boxes) {
+        const [x0, x1] = detailSpan(box.x, sx);
+        const [y0, y1] = detailSpan(box.y, 1);
+        const [z0, z1] = detailSpan(box.z, sz);
+        if (
+          viewer[0]! > x0 &&
+          viewer[0]! <= x1 &&
+          viewer[1]! > y0 &&
+          viewer[1]! <= y1 &&
+          viewer[2]! > z0 &&
+          viewer[2]! <= z1
+        ) {
+          records = box.records;
+          break;
+        }
+      }
+      const mirrored = sx * sz < 0;
+      const points = detail.vertices.map(([x, y, z]): Vec3 => [
+        bound.origin[0] + x * sx,
+        y < 0 ? ~y : y,
+        bound.origin[2] + z * sz
+      ]);
+      for (const record of records) {
+        const primitive = detail.primitives[record - 1];
+        if (primitive === undefined) {
+          view.paint.gaps.add(
+            `detail ${detail.index} record ${record} is missing`
+          );
+          continue;
+        }
+        if (primitive.kind === 'text') {
+          drawDetailText(view, bound, primitive);
+          continue;
+        }
+        const refs =
+          mirrored && primitive.kind === 'polygon'
+            ? [...primitive.refs].reverse()
+            : primitive.refs;
+        const vertices = refs.map(ref => points[(ref >> 2) - 1]!);
+        if (primitive.kind === 'line') {
+          stroke(view, vertices[0]!, vertices[1]!, primitive.colour & ~0x40_00);
+        } else {
+          fill(view, vertices, primitive.colour, true);
+        }
+      }
     }
-  }
-  const mirrored = sx * sz < 0;
-  const points = detail.vertices.map(([x, y, z]): Vec3 => [
-    bound.origin[0] + x * sx,
-    y < 0 ? ~y : y,
-    bound.origin[2] + z * sz
-  ]);
-  for (const record of records) {
-    const primitive = detail.primitives[record - 1];
-    if (primitive === undefined) {
-      view.paint.gaps.add(`detail ${detail.index} record ${record} is missing`);
-      continue;
-    }
-    if (primitive.kind === 'text') {
-      drawDetailText(view, bound, primitive);
-      continue;
-    }
-    const refs =
-      mirrored && primitive.kind === 'polygon'
-        ? [...primitive.refs].reverse()
-        : primitive.refs;
-    const vertices = refs.map(ref => points[(ref >> 2) - 1]!);
-    if (primitive.kind === 'line') {
-      stroke(view, vertices[0]!, vertices[1]!, primitive.colour & ~0x40_00);
-    } else {
-      fill(view, vertices, primitive.colour, true);
-    }
-  }
-};
+  );
 
 /// `$54FA0..$5502A`: a `$6000` record's anchor scaled with the structure and its
 /// lettering mirrored with the scale on the axis it advances along.
@@ -1338,51 +1381,56 @@ const drawStructure = (
 // ---- The ground pass --------------------------------------------------------------------
 
 /// `$576A2..$57726`: the cell's ground record, drawn with culling off.
-const drawGround = (view: View, bound: Bound): void => {
-  const ground = view.world.grounds.get(bound.cell.ground.address);
-  if (ground === undefined) {
-    return;
-  }
-  const [bx, bz] = cellBase(view.world, bound.cell);
-  const transform = bound.cell.ground.transform;
-  const mirrored = (bound.cell.ground.index & 4) !== 0;
-  const points = ground.vertices.map(([x, z]): Vec3 => {
-    const [a, b] = transformGround(transform, x, z);
-    return [bx + (a & 0xff_ff), 0, bz + (b & 0xff_ff)];
-  });
-  // `$55DA4`: slots `$F0..$FC` stand at the centres of the cells the road runs to.
-  const vertex = (ref: number): Vec3 => {
-    const road = bound.cell.roadPoints.get(ref);
-    if (ref >= 0xf0 && road !== undefined) {
-      const [gx, gz] = view.world.opening.groupOrigin;
-      return [
-        (gx + (road & 15)) * 0x1_00_00 + 0x80_00,
-        0,
-        (gz + (road >> 4)) * 0x1_00_00 + 0x80_00
-      ];
+const drawGround = (view: View, bound: Bound): void =>
+  withSource(
+    view,
+    `cell:${bound.cell.cell}:ground:${bound.cell.ground.address}`,
+    () => {
+      const ground = view.world.grounds.get(bound.cell.ground.address);
+      if (ground === undefined) {
+        return;
+      }
+      const [bx, bz] = cellBase(view.world, bound.cell);
+      const transform = bound.cell.ground.transform;
+      const mirrored = (bound.cell.ground.index & 4) !== 0;
+      const points = ground.vertices.map(([x, z]): Vec3 => {
+        const [a, b] = transformGround(transform, x, z);
+        return [bx + (a & 0xff_ff), 0, bz + (b & 0xff_ff)];
+      });
+      // `$55DA4`: slots `$F0..$FC` stand at the centres of the cells the road runs to.
+      const vertex = (ref: number): Vec3 => {
+        const road = bound.cell.roadPoints.get(ref);
+        if (ref >= 0xf0 && road !== undefined) {
+          const [gx, gz] = view.world.opening.groupOrigin;
+          return [
+            (gx + (road & 15)) * 0x1_00_00 + 0x80_00,
+            0,
+            (gz + (road >> 4)) * 0x1_00_00 + 0x80_00
+          ];
+        }
+        return points[(ref >> 2) - 1]!;
+      };
+      for (const primitive of ground.primitives) {
+        if (primitive.kind === 'template') {
+          continue;
+        }
+        if (primitive.kind === 'text') {
+          view.paint.gaps.add('ground text records are not drawn');
+          continue;
+        }
+        const refs =
+          mirrored && primitive.kind === 'polygon'
+            ? [...primitive.refs].reverse()
+            : primitive.refs;
+        const vertices = refs.map(vertex);
+        if (primitive.kind === 'line') {
+          stroke(view, vertices[0]!, vertices[1]!, primitive.colour & ~0x40_00);
+        } else {
+          fill(view, vertices, primitive.colour, false);
+        }
+      }
     }
-    return points[(ref >> 2) - 1]!;
-  };
-  for (const primitive of ground.primitives) {
-    if (primitive.kind === 'template') {
-      continue;
-    }
-    if (primitive.kind === 'text') {
-      view.paint.gaps.add('ground text records are not drawn');
-      continue;
-    }
-    const refs =
-      mirrored && primitive.kind === 'polygon'
-        ? [...primitive.refs].reverse()
-        : primitive.refs;
-    const vertices = refs.map(vertex);
-    if (primitive.kind === 'line') {
-      stroke(view, vertices[0]!, vertices[1]!, primitive.colour & ~0x40_00);
-    } else {
-      fill(view, vertices, primitive.colour, false);
-    }
-  }
-};
+  );
 
 // ---- The frame ----------------------------------------------------------------------------
 
@@ -1418,12 +1466,12 @@ export const planDionFrame = (
           ? sceneHalf.day
           : sceneHalf.night
   };
-  const frame = new IndexedFrame();
-  frame.clear(8);
+  const primitives: OrderedPrimitive[] = [];
   const view: View = {
     camera: levelCamera(state.eye, state.heading),
-    frame,
     paint,
+    primitives,
+    source: `cell:${state.cell}`,
     state,
     world
   };
@@ -1433,7 +1481,13 @@ export const planDionFrame = (
       state.heading,
       state.pitch
     )) {
-      frame.pixels[y * 320 + x] = palette.literal(colour);
+      primitives.push({
+        colour: { index: palette.literal(colour) },
+        kind: 'point',
+        order: primitives.length,
+        screen: [x, y],
+        source: 'stars'
+      });
     }
   }
   if (bound !== null) {
@@ -1467,12 +1521,29 @@ export const planDionFrame = (
     }
   };
   paintFrom(0);
+  const entries = palette.entries.map(entry => (entry & FREE ? 0 : entry));
+  const upper = entries.map(stRgb);
+  const lower = upper.slice();
+  lower[8] = stRgb(world.framePalette.land);
+  const description: FrameDescription = {
+    background: { index: 8 },
+    paletteBands: [
+      { colours: upper, fromRow: 0 },
+      { colours: lower, fromRow: world.framePalette.horizonRow }
+    ],
+    primitives,
+    projection: DION_PROJECTION
+  };
+  let indexed: IndexedFrame | undefined;
   return {
     candidate: paint.candidate,
-    frame,
+    description,
+    get frame() {
+      return (indexed ??= renderAuthentic(description));
+    },
     horizonRow: world.framePalette.horizonRow,
     land: world.framePalette.land,
-    palette: palette.entries.map(entry => (entry & FREE ? 0 : entry)),
+    palette: entries,
     stats: {
       gaps: [...paint.gaps],
       lines: paint.lines,
@@ -1495,21 +1566,7 @@ export const frameRgba = (
   planned: DionFrame,
   target: Uint8ClampedArray
 ): void => {
-  const upper = planned.palette.map(stRgb);
-  const lower = upper.slice();
-  lower[8] = stRgb(planned.land);
-  const width = 320;
-  for (let row = 0; row < 136; row += 1) {
-    const colours = row < planned.horizonRow ? upper : lower;
-    for (let column = 0; column < width; column += 1) {
-      const [r, g, b] = colours[planned.frame.pixels[row * width + column]!]!;
-      const at = (row * width + column) * 4;
-      target[at] = r;
-      target[at + 1] = g;
-      target[at + 2] = b;
-      target[at + 3] = 255;
-    }
-  }
+  rgbaFromIndexed(planned.description, planned.frame, target);
 };
 
 export const openingFrameState = (world: DionWorld): DionFrameState => ({

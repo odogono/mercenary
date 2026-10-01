@@ -929,6 +929,7 @@ const fakeContext = () => {
         `bindSampler:${unit}:${sampler.filter === 34 ? 'nearest' : 'linear'}`
       ),
     bindTexture: () => undefined,
+    BLEND: 35,
     bufferData: (_target: number, data: Float32Array) =>
       calls.push(`buffer:${data.length}`),
     checkFramebufferStatus: () => 21,
@@ -937,6 +938,8 @@ const fakeContext = () => {
     clearColor: (r: number, g: number, b: number) =>
       calls.push(`clearColor:${r.toFixed(3)},${g.toFixed(3)},${b.toFixed(3)}`),
     COLOR_BUFFER_BIT: 4,
+    colorMask: (...mask: boolean[]) =>
+      calls.push(`colorMask:${mask.join(',')}`),
     COMPARE_REF_TO_TEXTURE: 17,
     COMPILE_STATUS: 5,
     compileShader: () => {
@@ -998,7 +1001,9 @@ const fakeContext = () => {
         sampler.filter = value;
       }
     },
+    SCISSOR_TEST: 36,
     shaderSource: () => undefined,
+    STENCIL_TEST: 37,
     texParameteri: () => undefined,
     texStorage2D: (
       _target: number,
@@ -1085,6 +1090,14 @@ describe('the Eris renderer', () => {
     renderer.render(plan);
     renderer.render(plan);
     expect(fake.compiled).toBe(2);
+    expect(fake.calls.slice(1, 7)).toEqual([
+      'framebuffer:default',
+      'disable:35',
+      'disable:36',
+      'disable:37',
+      'disable:24',
+      'colorMask:true,true,true,true'
+    ]);
     expect(fake.calls).toContain('enable:9');
     expect(fake.calls).toContain('enable:6');
     expect(fake.calls).toContain('frontFace:7');

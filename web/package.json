@@ -32,6 +32,7 @@
       "tools/sound-compare.ts",
       "tools/damocles-sound-render.ts",
       "tools/dion-scene.ts",
+      "tools/dion-ram-compare.ts",
       "tools/geometry-spike/*.ts",
       "e2e/opening-loop.ts",
       "e2e/wireframe-fixture.ts",
@@ -39,7 +40,8 @@
       "e2e/*.e2e.ts",
       "test/**/*.test.ts",
       "src/dion/soundWorklet.ts",
-      "e2e/dion-fixture.ts"
+      "e2e/dion-fixture.ts",
+      "e2e/rendering-fixture.ts"
     ],
     "include": [
       "files",
