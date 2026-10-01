@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "logicalName": "Mercenary III research baseline (pinned ST STX)",
+  "title": "dion",
+  "programImage": {
+    "relativePath": "atarist/Mercenary III.STX",
+    "size": 512160,
+    "sha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c"
+  },
+  "tosImage": {
+    "relativePath": "atarist/tos/emutos206.img",
+    "size": 1048576,
+    "sha256": "154803e3ff4851f3dc358b91b16d6b6110d187a81d8132ecb665af49878939d5"
+  },
+  "emulator": {
+    "path": "/opt/homebrew/Cellar/hatari/2.6.1/Hatari.app/Contents/MacOS/hatari",
+    "version": "2.6.1",
+    "sha256": "05723606c75a1f0642395974abdce2cbbe48b0a09a747f65cdfca7ef9201e11a"
+  },
+  "evidence": "docs/research/mercenary-iii-integration.md#cold-boot-and-controlled-probes",
+  "qualification": "Facts from this laboratory belong to the Mercenary III research baseline. They are neither Damocles Working-Authority Evidence nor Authoritative Evidence."
+}
