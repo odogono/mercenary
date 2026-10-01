@@ -55,9 +55,9 @@ Each Geometry Identity has one owner. A structure geometry bound at Floor 0 anyw
 | `island` | Island records: draw lists and the Land/Sea boxes and edges | `m3lab.geometry.decode_island` | `$5761A..$5769E`, `$571A8..$574A8` | #682 |
 | `structure` above Floor 0 | Floor geometry, interior details, resident association hooks | `m3lab.geometry.decode_structure`, `m3lab.census_locations.structure_floors` | `$560F4..$5612A`, `$56D1E..$56E5C` | [#683](https://github.com/odogono/mercenary/issues/683) |
 
-The ledger lists 495 required identities: 155 object models, 38 street-furniture models, 75 structure geometries, 57 details, 153 ground records and 17 island records. The 78 floor geometry slots resolve to 75 structure geometries. The other three are Floor Table bytes of slot 46 that name further alias slots 9, 240 and 252, and they stay unresolved under `floor-table-slot-46`. #682 recovered the 317 surface identities; [its report](research/dion-surface-recovery.md) gives the evidence.
+The ledger lists 530 required identities: 190 object models, 38 street-furniture models, 75 structure geometries, 57 details, 153 ground records and 17 island records. The 78 floor geometry slots resolve to 75 structure geometries. The other three are Floor Table bytes of slot 46 that name further alias slots 9, 240 and 252, and they stay unresolved under `floor-table-slot-46`. #682 recovered the 317 surface identities; [its report](research/dion-surface-recovery.md) gives the evidence. #681 recovered the 190 object models: 155 that slots draw at the opening, 3 that run-time model-table writers bind into slots, and 32 driver heads that vehicles draw aboard. [Its report](research/dion-object-geometry.md) gives the evidence.
 
-**Variants** are the same geometry under a recovered transform or state. Variant axes are `scale` (from a structure alias), `transform` (a ground orientation 0–7), `form` (an object's header- or viewer-selected face list), `state` (a door or the LOGOS construction) and `palette` (a scene palette, which is presentation only). A `variants` value of `null` means the axis is not inventoried yet, and `[]` means the identity has none. A variant is previewed in its own right; one form never stands in for another.
+**Variants** are the same geometry under a recovered transform or state. Variant axes are `scale` (from a structure alias), `transform` (a ground orientation 0–7), `form` (an object's header- or viewer-selected face list), `state` (a door or the LOGOS construction) and `palette` (a scene palette, which is presentation only). A `variants` value of `null` means the axis is not inventoried yet, and `[]` means the identity has none. An object model's variants are `form=default` and `form=view-n` (its viewer-selected lists), prefixed by `state=…;` where a header selects between states: `intact`/`blown`, `lamp-lit`/`lamp-dark`, or `passenger`. A variant is previewed in its own right; one form never stands in for another.
 
 ## Export documents
 
@@ -77,7 +77,7 @@ Both are indented, key-sorted JSON, at their own `schemaVersion` starting at 1.
 - `places`: `id`, `name`, `area`, `cell`, and `placement` or `null` for a label-only place.
 - `placements`: the original fields, plus `body`, `bodyCell`, exact `origin`, the `slot-*` it selects, and `state`. The state is `present`, `initially-absent`, `storage` or `field-seed`.
 - `structures`: one record per selected slot, with `alias`, `scale`, `palette`, `detail`, `pitch`, and `floors`. Each floor gives `floor` (0–10), `label` (`G`, `1`…`9`, `B`) and `geometry`, or `null` under a blocking gap. A Floor label is not a height. The arrival eye is Floor × pitch + 63.
-- `objects`: `slot`, `name` (or `null`), `residence`, and for a placed object `body`, `bodyCell`, `position` and `floor`. An indoor resident also has `host`, which is `{placement}` or `{field: "midas", cell}`. Every object has `geometry` (a model ID, or `null` for no model) and an optional `initialChange`. Carried and out-of-world objects have no coordinates. Their dummy positions are never exported.
+- `objects`: `slot`, `name` (or `null`), `residence`, and for a placed object `body`, `bodyCell`, `position` and `floor`. An indoor resident also has `host`, which is `{placement}` or `{field: "midas", cell}`. Every object has `geometry` (its opening model ID, or `null` with `disposition: "null-model"`) and an optional `initialChange`. `forms` lists the further models the slot can draw, each with its `entry`, `geometry`, `role` (`model`, `driver-head`, `driver-head-profile`) and `writers`. `lettering` is the token text the slot's header writes, such as a DOOR KEY's letter. Carried and out-of-world objects have no coordinates. Their dummy positions are never exported.
 - `field`, `constructions`: the MIDAS rule and the LOGOS states (below).
 - `geometryIndex`: per identity, its `family`, `record`, `state`, `variants`, the original slots or indices that reach it, and the per-Body lists a consumer needs before reading any geometry file.
 - `coverage` and `gaps`: copied from the ledger (below).
@@ -133,13 +133,14 @@ The ledger is regenerated from the census run and validated without original cap
 ```sh
 cd research/mercenary-iii-st
 python3 -m m3lab.catalogue_ledger --run <census run> \
-  --surface <surface extraction> --comparisons <comparison results>
+  --surface <surface extraction> --comparisons <comparison results> \
+  --objects <object extraction> --object-comparisons <object comparison results>
 PYTHONPATH=.:tests python3 -m unittest tests.test_catalogue_ledger
 ```
 
-The surface extraction and comparison results come from `m3lab.catalogue_surface` and `m3lab.surface_scenes` (#682), and stay under `restricted/`.
+The surface extraction and comparison results come from `m3lab.catalogue_surface` and `m3lab.surface_scenes` (#682), the object ones from `m3lab.catalogue_objects` and `m3lab.object_scenes` (#681). All of them stay under `restricted/`.
 
-`validate_ledger` recomputes every total from the records. It checks that each reference resolves, that every family has its decoder path, that MIDAS and LOGOS hold their rules, and that the stored `completion` is the rule's result. The tests also reconcile every object row, binding and structure slot with the generated census documents. `M3_CENSUS_RUN` with `M3_SURFACE` proves that the committed file regenerates byte for byte. The ledger also records each live or placement-bound lettering token's kind, and the original-scene comparisons that #686 builds on.
+`validate_ledger` recomputes every total from the records. It checks that each reference resolves, that every family has its decoder path, that MIDAS and LOGOS hold their rules, and that the stored `completion` is the rule's result. The tests also reconcile every object row, binding and structure slot with the generated census documents. `M3_CENSUS_RUN` with `M3_SURFACE` and `M3_OBJECTS` proves that the committed file regenerates byte for byte. The ledger also records each live or placement-bound lettering token's kind, and the original-scene comparisons that #686 builds on.
 
 A Geometry Identity's `state` is one of:
 

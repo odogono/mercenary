@@ -82,6 +82,22 @@ islands, street-furniture models and lettering. It writes them only under
 path; `web/tools/dion-scene.ts` compares that frame with the browser planner.
 See [the surface report](../../docs/research/dion-surface-recovery.md).
 
+## Dion object recovery
+
+```sh
+python3 -m m3lab.catalogue_objects --census <census run> \
+  --out ../../restricted/mercenary-iii-681/objects.json
+python3 -m m3lab.object_scenes                   # original scenes against the planner
+```
+
+`catalogue_objects` decodes every object Geometry Identity: each record's
+header- and viewer-selected forms, colour patches into shared geometry, the
+articulated rest pose, and per-slot lettering. It also inventories every
+run-time model-table writer, the taxi, bus and craft services, and their driver
+heads. `object_scenes` moves one slot in front of the eye at an empty structure
+and compares the original's frame with the planner over the object's footprint.
+See [the object report](../../docs/research/dion-object-geometry.md).
+
 ## Modules
 
 | Module | Exports | Readers |
@@ -90,7 +106,8 @@ See [the surface report](../../docs/research/dion-surface-recovery.md).
 | `census_locations.py`, `census_objects.py` | All groups, Body placements, residents and names | Full location recovery note |
 | `catalogue_ledger.py` | `catalogue-ledger.json`: Dion Catalogue coverage | Census decoders above |
 | `catalogue_surface.py` | Surface Geometry Identities, cell grounds, lettering, MIDAS and LOGOS | `$4F142..$4F2A6`, `$5600C..$560B0`, readers below |
-| `scene.py`, `surface_scenes.py` | Original scenes at exact poses; the #682 comparisons | `$5A006..$5A15A` |
+| `catalogue_objects.py` | Object Geometry Identities, forms, lettering, model-table writers, services | `$545AE..$549BA`, `$543B4..$545AE`, `$55050`, writers in the report |
+| `scene.py`, `surface_scenes.py`, `object_scenes.py` | Original scenes at exact poses; the #682 and #681 comparisons | `$5A006..$5A15A` |
 | `boot.py` | Cold-boot plans and captures | Integration recipe |
 | `ram.py` | Provenance-carrying reads | — |
 | `geometry.py` | Cells, structures, regions, details, ground, islands, models | `$5600C`, `$5AD2C..$5B2D2`, `$54AEE..$54D20`, `$56204`, `$5761A`, `$571A8`, `$545AE..$549BA` |
