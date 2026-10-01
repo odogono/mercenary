@@ -8,7 +8,8 @@ Implementation and research for [#647](https://github.com/odogono/mercenary/issu
 - **Content.** Six documents in `payload/dion/` (world, panel, messages, scripts, sound, service), plus one authored document, [`web/dion/metis.json`](../../web/dion/metis.json). Each payload document names Title `dion`, the pinned program image, schema 1 and its capture run. The loader refuses a document of another Title, another program image, another schema or another run. It also refuses a malformed record and names the path where it failed.
 - **Coverage.** `metis.json` lists every required item of R2 and its successors. Each is either recovered, with a pointer the loader resolves into the payload, or a gap or waiver with the slice and ticket it gates. A gap that gates I1 refuses the Destination. None remains. The I2 gaps are listed [below](#gaps).
 - **Identity and storage, reserved.** Saves and the Session Resume live under `mercenary.browser-shell.dion.*`. A record names Title `dion`, Destination `metis`, the program SHA-256 and the content SHA-256. The MIII decoder refuses Damocles and Targ records as foreign, and those Titles' decoders refuse MIII records. No snapshot schema is admitted until I2 ([#648](https://github.com/odogono/mercenary/issues/648)).
-- **Session.** The session starts as a fresh game in the prison cell. Game time runs at fifty ticks a second with one frame every eleven ticks ([ADR 0058](../adr/0058-run-mercenary-iii-at-50-hz-with-a-confirmed-fixed-frame-cadence.md)), along with the elapsed clock's VBL rule, the frame counter and the animated sign's frame rule. The opening script, the door mover, the on-foot Mover, the TAXICARD and the taxi service are I2's. The Movement Intent is accepted but moves nothing yet. Nothing in I1 claims the journeys are playable.
+- **Session.** The session starts as a fresh game in the prison cell. Game time runs at fifty ticks a second with one frame every eleven ticks ([ADR 0058](../adr/0058-run-mercenary-iii-at-50-hz-with-a-confirmed-fixed-frame-cadence.md)), along with the elapsed clock's VBL rule, the frame counter and the animated sign's frame rule. The opening script, the door mover, the TAXICARD and the taxi service are I2's. Nothing in I1 claims the journeys are playable.
+- **Walking.** On foot, the player walks by the shared foot step and region clamp that Damocles uses ([below](#on-foot-movement-shared-with-damocles)). The prison door stays shut until the opening script hands over DOOR KEY A, which is I2's work. Until then the eye is held on the room's edge at z −840, where #645 observed the keyless player.
 - **Rendering.** An indexed 320×200 screen draws the view by the recovered projection, clip, cull and paint order, and the panel by its writers' plane rules.
 
 ## Capture points
@@ -47,6 +48,19 @@ The world's residents and the session's opening come from `start.ram`. R3's `B0`
 | Elapsed clock: each VBL takes 32 off the accumulator. At or below 0 it counts a second and refills 1600, and the count rolls at 86,400 into a day word | `$53164..$531D0` | The first second of a fresh game falls on its 21st VBL |
 
 The text and panel decoders also correct three earlier statements. Script `$33` has 16 texts and 8 blanks, 24 requests in all, not 22 texts. Op `20 26 87` sits at `$6FF5F`, not `$6FF5E`. There are six head-turn sequences, not four. The panel artwork survives only at the game entry: readouts are drawn over the copy in the screen, so no clean source remains in loaded play.
+
+## On-foot movement shared with Damocles
+
+By the user's decision, MIII walks on Damocles's on-foot code. The evidence was taken from the pinned images. The disassembly listings are compared with every address and literal masked, and only the counts are recorded here:
+
+| Routine | Damocles | MIII | Instructions aligned | Differences |
+|---|---|---|---|---|
+| Foot Mover | `$58CFE` | `$59A36` | 100 of 106 | The demo-playback record (`$7A0C`/`$70A2`) is word-wide in Damocles and byte-wide in MIII; one trailing call |
+| Region scan, queue build and eye clamp | `$5A30E..$5A65C` | `$5B2D2..$5B620` | 261 of 265 | MIII rebases attachment slots (−`$1A8`) and queue bytes from `$96`; Damocles has one four-instruction block MIII lacks |
+
+The step and turn words are equal: `$7B36` and `$71CE` both hold `$00021800`, the log-float 6.0, and `$7B3A` and `$71D2` both hold 2. MIII therefore steps 6 units and turns 2 heading units a substep, eight substeps a frame (48 units and 16 heading units). That is the `$30` forward and `$10` turn per update Damocles's #205 traces recovered.
+
+The shared code is now `web/src/onFoot/index.ts`: `walk`, and the region scan and clamp core over plain region boxes. Damocles calls it with its authored seconds-based rates and wraps the clamp in its Catalogue types; its selection and walking tests pass unchanged. MIII calls `walk` once a substep at the recovered increments. The original multiplies the step by the heading's half-step sine and cosine through its log tables and rounds each product into the pose. The shared step works in radians, so the half step is carried into the bearing and each axis's move is rounded to whole units. Positions can therefore differ from the original by under a unit at a substep. They are not claimed to be bit-exact.
 
 ## Comparisons
 

@@ -12,6 +12,7 @@ import {
   type Intent
 } from '../gameCore/index.ts';
 import type { HeadCommand } from '../interaction/index.ts';
+import { walk, type WalkRules } from '../onFoot/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import type { TitleSession } from '../shell/title.ts';
 import {
@@ -90,7 +91,6 @@ import {
 } from './headCommands.ts';
 import { classifyPosition, type LandSea } from './islands.ts';
 import { locationTrigger } from './locationTriggers.ts';
-import { walk, type WalkRules } from './mover.ts';
 import {
   poseOfArrival,
   resolvePose,
@@ -484,6 +484,10 @@ export interface DamoclesContent {
   readonly surface: ErisSurface;
 }
 
+/// Damocles walks the shared on-foot step at the authored document's seconds-based rates. The
+/// Working Authority applies quantized updates on its game loop instead: forward `$30` plain and
+/// `$50` under the latched R mode, and an initial north-facing turn of `$10` plain and `$18`
+/// under R (#205). The rates are derived averages of those.
 const rulesFor = (doc: ErisPresentationDocument): WalkRules => ({
   eyeHeight: doc.eye.heightUnits,
   runMultiplier: doc.walk.runMultiplier,

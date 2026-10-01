@@ -1,4 +1,11 @@
 import { IDLE, type Intent } from '../gameCore/index.ts';
+import {
+  clampRegionStep,
+  regionAt,
+  walk,
+  type ClampRegion,
+  type WalkRules
+} from '../onFoot/index.ts';
 import type { TitleSession } from '../shell/title.ts';
 import type { DionContent } from './content.ts';
 import type { DionDoorState, DionFrameState, Vec3 } from './frame.ts';
@@ -67,8 +74,10 @@ export class DionSession implements TitleSession<
   intent: Intent = IDLE;
   private remainder = 0;
   private state: DionSnapshot;
+  private readonly substeps: number;
   private readonly tickSeconds: number;
   private readonly ticksPerFrame: number;
+  private readonly walkRules: WalkRules;
 
   constructor(
     private readonly content: DionContent,
@@ -82,6 +91,15 @@ export class DionSession implements TitleSession<
     const { opening } = content.world;
     this.tickSeconds = 1 / content.presentation.ticksPerSecond.value;
     this.ticksPerFrame = content.presentation.ticksPerFrame.value;
+    this.substeps = content.presentation.walkingSubsteps.value;
+    // One shared step a substep at the recovered increments; MIII has no R mode.
+    this.walkRules = {
+      eyeHeight: opening.eye[1],
+      runMultiplier: 1,
+      runTurnMultiplier: 1,
+      turnRadiansPerSecond: (2 * Math.PI * opening.walk.turn) / 1024,
+      unitsPerSecond: opening.walk.step
+    };
     this.state = {
       cash: opening.cash,
       cell: opening.cell,
@@ -143,6 +161,9 @@ export class DionSession implements TitleSession<
 
   /// One simulation frame, atomic, after the tick's VBL rules.
   private frame(): void {
+    for (let substep = 0; substep < this.substeps; substep += 1) {
+      this.walkSubstep();
+    }
     const sign = this.signBound()
       ? this.advanceSign(this.state.sign)
       : this.state.sign;
@@ -152,6 +173,115 @@ export class DionSession implements TitleSession<
       frameCounter: (this.state.frameCounter + 1) & 0xff_ff,
       sign
     };
+  }
+
+  /// One substep of the on-foot loop `$5A4C2`: the shared foot Mover (`$59A36`), then the
+  /// shared region scan and eye clamp (`$5B2D2..$5B620`) in the bound structure's frame.
+  ///
+  /// The step and turn are MIII's recovered increments, one `walk` a substep. The original
+  /// multiplies the step through its log tables by the heading's half-step sine and cosine
+  /// and rounds each product into the pose; the shared step works in radians, so the half
+  /// step is carried into the bearing and each axis's move is rounded to whole units.
+  private walkSubstep(): void {
+    const { eye, heading } = this.state;
+    const bearing = (2 * Math.PI * (heading + 512.5)) / 1024;
+    const moved = walk(
+      { heading: bearing, position: { x: eye[0], y: eye[1], z: eye[2] } },
+      this.intent,
+      1,
+      this.walkRules
+    );
+    const turned = moved.heading - bearing;
+    const wrapped = turned - 2 * Math.PI * Math.round(turned / (2 * Math.PI));
+    const nextHeading =
+      (heading + Math.round((wrapped * 1024) / (2 * Math.PI))) & 0xff_ff;
+    let next: Vec3 = [
+      eye[0] + Math.round(moved.position.x - eye[0]),
+      eye[1],
+      eye[2] + Math.round(moved.position.z - eye[2])
+    ];
+    let { cell, region } = this.state;
+    const bound = this.bound(cell);
+    if (bound !== null) {
+      const step = clampRegionStep(
+        bound.regions,
+        region === 0 ? null : region - 1,
+        [next[0] - bound.origin[0], next[2] - bound.origin[1]]
+      );
+      next = [
+        bound.origin[0] + step.point[0],
+        eye[1],
+        bound.origin[1] + step.point[1]
+      ];
+      region = step.regionIndex === null ? 0 : step.regionIndex + 1;
+    }
+    // `$56002`: crossing into another cell binds it and walks its regions afresh.
+    const reached = this.cellAt(next);
+    if (reached !== cell) {
+      cell = reached;
+      const entered = this.bound(cell);
+      const found =
+        entered === null
+          ? null
+          : regionAt(entered.regions, [
+              next[0] - entered.origin[0],
+              next[2] - entered.origin[1]
+            ]);
+      region = found === null ? 0 : found + 1;
+    }
+    this.state = {
+      ...this.state,
+      cell,
+      eye: next,
+      heading: nextHeading,
+      region
+    };
+  }
+
+  /// The bound structure's regions as the shared clamp sees them, and its origin. A door
+  /// region is selectable only while its door's latch is open (`$5B320`).
+  private bound(cell: number): {
+    readonly origin: readonly [number, number];
+    readonly regions: readonly ClampRegion[];
+  } | null {
+    const { world } = this.content;
+    const entry = world.cells.find(item => item.cell === cell);
+    const structure =
+      entry &&
+      world.structures.get(entry.structure)?.get(entry.scale.join(','));
+    if (entry === undefined || structure === undefined) {
+      return null;
+    }
+    const [gx, gz] = world.opening.groupOrigin;
+    return {
+      origin: [
+        (gx + entry.x) * 0x1_00_00 + entry.origin[0],
+        (gz + entry.z) * 0x1_00_00 + entry.origin[1]
+      ],
+      regions: structure.regions.map(item => {
+        const named = item.flags & 0x03_fc;
+        const door =
+          named === 0 || named === 0x02_00
+            ? undefined
+            : structure.attachments.find(
+                attachment => attachment.slot + 0x1_a8 === named
+              );
+        return {
+          available:
+            door === undefined ||
+            this.state.doors.get(door.slot)?.openUnits === 142,
+          bounds: [item.bounds.x, item.bounds.z],
+          flags: item.flags
+        };
+      })
+    };
+  }
+
+  private cellAt(eye: Vec3): number {
+    const [gx, gz] = this.content.world.opening.groupOrigin;
+    const x = Math.floor(eye[0] / 0x1_00_00) - gx;
+    const z = Math.floor(eye[2] / 0x1_00_00) - gz;
+    return (z & 15) * 16 + (x & 15);
   }
 
   /// `$5600C..$560B0`: the cell's token set binds the animated buffer only at `(3,0)`.

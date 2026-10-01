@@ -22,6 +22,11 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
   and agrees with the game's drawn frames on 95.7–98.4% of pixels across eleven
   checkpoints. The panel is the recovered artwork, with each readout written by its
   own plane rule. Game time runs at 50 Hz with a frame every eleven ticks (ADR 0058).
+  On foot, the player walks the prison room with the normal controls, on the foot step
+  and region clamp now shared with Damocles in `web/src/onFoot/`. The shut prison door
+  holds the player in until the opening script hands over DOOR KEY A, which lands with
+  #648. ADR 0060 sets one renderer for all three Titles as the direction, with an
+  Authentic indexed mode.
   `web/dion/metis.json` accounts every required item of the slice. Saves and Session
   Resume keep their own `mercenary.browser-shell.dion.*` keys and refuse other Titles'
   records; restore arrives with the journeys in #648 (#647).

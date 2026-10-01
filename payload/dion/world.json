@@ -531,6 +531,20 @@
    "refill": 1600
   },
   "cash": "005100900000",
+  "walk": {
+   "step": 6.0,
+   "stepWord": 137216,
+   "turn": 2,
+   "provenance": [
+    {
+     "range": [
+      "$071CE",
+      "$071D4"
+     ],
+     "sha256": "0cabe9c184879c814f4f64d96c76600c4e29f014a8e292d9fe7e578d8422a453"
+    }
+   ]
+  },
   "provenance": [
    {
     "range": [

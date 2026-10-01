@@ -9,6 +9,11 @@ import type {
   WallText
 } from '../catalogue/data.ts';
 import { sameQueueEntry } from '../catalogue/regions.ts';
+import {
+  clampRegionStep,
+  regionAt,
+  type ClampRegion
+} from '../onFoot/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import type { ErisPlacement, Pose } from './world.ts';
 
@@ -173,28 +178,29 @@ const workspaceBounds = (
 export const regionIsEnclosed = (region: { readonly flags: number }): boolean =>
   (region.flags & 0x80_00) === 0;
 
+/// The structure's regions as the shared scan and clamp see them: the bind's inset box and
+/// whether the region's gate lets it be selected under these latches.
+const clampRegions = (
+  placement: ErisPlacement,
+  latches: AttachmentLatches
+): readonly ClampRegion[] =>
+  placement.selection?.structure.regions.map(region => ({
+    available: regionIsAvailable(region, latches),
+    bounds: workspaceBounds(region),
+    flags: region.flags
+  })) ?? [];
+
 export const structureRegionAt = (
   placement: ErisPlacement,
   pose: Pose,
   negateZ: boolean,
   latches: AttachmentLatches = closedLatch
 ): number | null => {
-  const selection = placement.selection;
-  if (selection === undefined) {
+  if (placement.selection === undefined) {
     return null;
   }
   const point = structureLocalPosition(placement, pose.position, negateZ);
-  const local = [point.x, point.z];
-  const index = selection.structure.regions.findIndex(region => {
-    const bounds = workspaceBounds(region);
-    return (
-      regionIsAvailable(region, latches) &&
-      bounds.every(
-        ([min, max], axis) => min <= local[axis]! && local[axis]! < max
-      )
-    );
-  });
-  return index < 0 ? null : index;
+  return regionAt(clampRegions(placement, latches), [point.x, point.z]);
 };
 
 const worldPosition = (
@@ -211,10 +217,6 @@ const worldPosition = (
     z: placement.position.z - local.x * sin + z * cos
   };
 };
-
-/** Extra clamp inset when `$7B35` is non-negative (`tst.b` / `bmi` skip). */
-const clearanceFor = (flags: number): number =>
-  (flags & 0x00_ff) < 0x80 ? EYE_CLEARANCE : 0;
 
 export interface ClampedStructureStep {
   readonly pose: Pose;
@@ -244,92 +246,38 @@ export const clampStructureStep = (
   selectedRegionIndex: number | null,
   ridePending = false
 ): ClampedStructureStep => {
-  const selection = placement.selection;
-  if (selection === undefined) {
+  if (placement.selection === undefined) {
     return { pose: to, refused: false, regionIndex: null, reselected: false };
   }
-  const regions = selection.structure.regions;
-  const currentIndex =
-    selectedRegionIndex ?? structureRegionAt(placement, from, negateZ, latches);
-  const current = currentIndex === null ? undefined : regions[currentIndex];
-  if (current === undefined) {
+  const local = structureLocalPosition(placement, to.position, negateZ);
+  const step = clampRegionStep(
+    clampRegions(placement, latches),
+    selectedRegionIndex ?? structureRegionAt(placement, from, negateZ, latches),
+    [local.x, local.z],
+    ridePending
+  );
+  if (step.point[0] === local.x && step.point[1] === local.z) {
     return {
       pose: to,
-      refused: false,
-      regionIndex: structureRegionAt(placement, to, negateZ, latches),
-      reselected: false
+      refused: step.refused,
+      regionIndex: step.regionIndex,
+      reselected: step.reselected
     };
   }
-
-  const local = structureLocalPosition(placement, to.position, negateZ);
-  const coordinates = [local.x, local.z];
-  const currentBounds = workspaceBounds(current);
-  const clearance = clearanceFor(current.flags);
-
-  const withinOwnBox = currentBounds.every(
-    ([min, max], axis) => min <= coordinates[axis]! && coordinates[axis]! < max
-  );
-  let refused = false;
-  if (withinOwnBox) {
-    const standsAtEdge = (axis: number, upper: boolean): boolean => {
-      const other = axis === 0 ? 1 : 0;
-      const edge = currentBounds[axis]![upper ? 1 : 0];
-      return regions.some((region, index) => {
-        const bounds = workspaceBounds(region);
-        return (
-          index !== currentIndex &&
-          bounds[axis]![upper ? 0 : 1] === edge &&
-          bounds[other]![0] + clearance <= coordinates[other]! &&
-          coordinates[other]! < bounds[other]![1] - clearance
-        );
-      });
-    };
-    for (const axis of [0, 1]) {
-      const min = currentBounds[axis]![0] + clearance;
-      const max = currentBounds[axis]![1] - clearance;
-      if (coordinates[axis]! < min && !standsAtEdge(axis, false)) {
-        coordinates[axis] = min;
-        refused = true;
-      } else if (coordinates[axis]! >= max && !standsAtEdge(axis, true)) {
-        coordinates[axis] = max - 1;
-        refused = true;
-      }
-    }
-  } else {
-    const selected = ridePending
-      ? null
-      : structureRegionAt(placement, to, negateZ, latches);
-    if (selected !== null) {
-      return {
-        pose: to,
-        refused: false,
-        regionIndex: selected,
-        reselected: true
-      };
-    }
-    refused = true;
-    for (const axis of [0, 1]) {
-      const [min, max] = currentBounds[axis]!;
-      coordinates[axis] = Math.min(Math.max(coordinates[axis]!, min), max - 1);
-    }
-  }
-
-  const pose = {
-    body: to.body,
-    heading: to.heading,
-    pitch: to.pitch,
-    position: worldPosition(
-      placement,
-      { x: coordinates[0]!, y: local.y, z: coordinates[1]! },
-      negateZ
-    )
-  };
   return {
-    pose,
-    refused,
-    regionIndex:
-      structureRegionAt(placement, pose, negateZ, latches) ?? currentIndex,
-    reselected: !withinOwnBox
+    pose: {
+      body: to.body,
+      heading: to.heading,
+      pitch: to.pitch,
+      position: worldPosition(
+        placement,
+        { x: step.point[0], y: local.y, z: step.point[1] },
+        negateZ
+      )
+    },
+    refused: step.refused,
+    regionIndex: step.regionIndex,
+    reselected: step.reselected
   };
 };
 

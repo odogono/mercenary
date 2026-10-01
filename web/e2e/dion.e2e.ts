@@ -102,3 +102,28 @@ test('/dion refuses a payload document from another capture', async ({
     'different capture runs'
   );
 });
+
+test('/dion walks and turns on the normal controls, held in by the shut door', async ({
+  page
+}) => {
+  await page.goto('/dion');
+  const screen = page.locator('#screen');
+  await expect(screen).toHaveAttribute('data-state', 'ready');
+  const z = Number(await screen.getAttribute('data-z'));
+  await page.keyboard.down('ArrowUp');
+  await expect
+    .poll(async () => Number(await screen.getAttribute('data-z')), {
+      timeout: 5000
+    })
+    .toBeLessThan(z - 200);
+  await page.keyboard.up('ArrowUp');
+  const heading = Number(await screen.getAttribute('data-heading'));
+  await page.keyboard.down('ArrowRight');
+  await expect
+    .poll(async () => Number(await screen.getAttribute('data-heading')), {
+      timeout: 5000
+    })
+    .toBeGreaterThan(heading);
+  await page.keyboard.up('ArrowRight');
+  await expect(screen).toHaveAttribute('data-region', '1');
+});

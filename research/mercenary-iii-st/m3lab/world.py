@@ -158,6 +158,13 @@ def text_tokens(ram: Ram) -> dict:
             for t in range(0x28)}
 
 
+def log_float(value: int) -> float:
+    """A log-float long: signed exponent word, signed mantissa word in units of `$1000`."""
+    exponent = (value >> 16) - (0x10000 if value & 0x80000000 else 0)
+    mantissa = (value & 0xFFFF) - (0x10000 if value & 0x8000 else 0)
+    return mantissa / 4096 * 2.0 ** exponent
+
+
 def road_points(ram: Ram, cell: int, transform: int) -> dict:
     """`$55C58..$55C96`: the cell's run-grid long, turned with the ground transform,
     names the four neighbouring road cells whose centres slots `$F0..$FC` project
@@ -308,6 +315,11 @@ def extract_world(ram: Ram, opening: Ram) -> dict:
                       'accumulator': opening.sword(0x6F2A), 'step': opening.sword(0x6F26),
                       'refill': opening.sword(0x6F28)},
             'cash': opening.bytes(0x72DE, 0x72E4).hex(),
+            # $59A36: each substep the foot Mover steps by the log-float `$71CE` along the
+            # heading's half-step sine and cosine, and turns by `$71D2` heading units.
+            'walk': {'step': log_float(opening.long(0x71CE)), 'stepWord': opening.long(0x71CE),
+                     'turn': opening.sword(0x71D2),
+                     'provenance': [opening.slice(0x71CE, 0x71D4)]},
             'provenance': [opening.slice(0x7146, 0x7158), opening.slice(0x70B4, 0x70BA),
                            opening.slice(0x6F26, 0x6F32), opening.slice(0x6FCE, 0x6FD4), opening.slice(0x72DE, 0x72E4), opening.slice(0x713C, 0x713E),
                            opening.slice(0x7180, 0x7182), opening.slice(0x7194, 0x7196),

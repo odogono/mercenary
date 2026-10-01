@@ -95,8 +95,8 @@ try {
   canvas.hidden = false;
   status.hidden = true;
 
-  // Held keys reach the Movement Intent through the shared Control Profile. The
-  // session accepts it and, until the on-foot Mover arrives (#648), does not move.
+  // Held keys reach the Movement Intent through the shared Control Profile, and the session
+  // walks it on the shared foot step and region clamp.
   const controls = new BrowserControlProfile({
     drop: () => {},
     leaveCraft: () => {},
@@ -142,6 +142,9 @@ try {
     const root = canvas.dataset;
     root['cell'] = String(snapshot.cell);
     root['region'] = String(snapshot.region);
+    root['x'] = String(snapshot.eye[0]);
+    root['z'] = String(snapshot.eye[2]);
+    root['heading'] = String(snapshot.heading);
     root['tick'] = String(snapshot.tick);
     root['frame'] = String(snapshot.frame);
     root['clock'] = String(snapshot.clock.seconds);

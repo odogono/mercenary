@@ -311,6 +311,8 @@ export interface DionOpening {
   readonly position: readonly [number, number];
   readonly region: number;
   readonly roll: number;
+  /// `$71CE`/`$71D2`: the foot Mover's step, in units, and turn, in heading units, a substep.
+  readonly walk: { readonly step: number; readonly turn: number };
 }
 
 export interface DionWorld {
@@ -891,7 +893,18 @@ const readViewFacts = (raw: Record<string, unknown>) => {
         return [a!, b!] as const;
       })(),
       region: int(opening['region'], 'opening.region', 1, 64),
-      roll: word(opening['roll'], 'opening.roll')
+      roll: word(opening['roll'], 'opening.roll'),
+      walk: (() => {
+        const walk = record(opening['walk'], 'opening.walk');
+        const step = walk['step'];
+        if (typeof step !== 'number' || !(step > 0 && step < 1000)) {
+          fail('opening.walk.step is not a positive step');
+        }
+        return {
+          step: step as number,
+          turn: int(walk['turn'], 'opening.walk.turn', 1, 0x40)
+        };
+      })()
     },
     rotationTable: ints(
       record(raw['rotationTable'], 'rotationTable')['words'],
