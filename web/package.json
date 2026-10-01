@@ -22,6 +22,7 @@
       "src/atlas/boot.ts",
       "src/catalogue/boot.ts",
       "src/damocles/boot.ts",
+      "src/dion/boot.ts",
       "src/damocles/firstOfferDemo.ts",
       "src/soundboard/boot.ts",
       "src/flyover/boot.ts",

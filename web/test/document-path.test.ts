@@ -23,6 +23,10 @@ describe('the Browser Shell document path', () => {
       document: 'damocles',
       kind: 'document'
     });
+    expect(resolveDocumentPath('/dion')).toEqual({
+      document: 'dion',
+      kind: 'document'
+    });
     expect(resolveDocumentPath('/sounds')).toEqual({
       document: 'sounds',
       kind: 'document'
@@ -48,6 +52,7 @@ describe('the Browser Shell document path', () => {
       ['/index.html', '/'],
       ['/targ/', '/targ'],
       ['/damocles/', '/damocles'],
+      ['/dion/', '/dion'],
       ['/catalogue.html', '/catalogue'],
       ['/catalogue/', '/catalogue'],
       ['/sounds.html', '/sounds'],
@@ -68,7 +73,7 @@ describe('the Browser Shell document path', () => {
   });
 
   test('falls unknown documents back temporarily', () => {
-    for (const path of ['/dion', '/unknown/', '/missing.html']) {
+    for (const path of ['/second-city', '/unknown/', '/missing.html']) {
       expect(resolveDocumentPath(path)).toEqual({
         kind: 'redirect',
         pathname: '/',

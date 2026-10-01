@@ -3,6 +3,7 @@ export type BrowserDocument =
   | 'atlas'
   | 'catalogue'
   | 'damocles'
+  | 'dion'
   | 'first-offer'
   | 'flyover'
   | 'gameplay'
@@ -14,6 +15,7 @@ export type DocumentPath =
   | { readonly document: 'catalogue'; readonly kind: 'document' }
   | { readonly document: 'atlas'; readonly kind: 'document' }
   | { readonly document: 'damocles'; readonly kind: 'document' }
+  | { readonly document: 'dion'; readonly kind: 'document' }
   | { readonly document: 'sounds'; readonly kind: 'document' }
   | {
       readonly document: 'flyover';
@@ -33,6 +35,9 @@ const documents = new Map<string, DocumentPath>([
   // Targ adopts the Title seam; `/damocles` is the Damocles Gameplay Session (ADR 0043).
   ['/targ', { document: 'gameplay', kind: 'document' }],
   ['/damocles', { document: 'damocles', kind: 'document' }],
+  // Mercenary III's Title path, reserved by ADR 0041 and admitted by D1 (#638, #647): the
+  // METIS opening of the taxi slice, a sibling Gameplay Session of its own.
+  ['/dion', { document: 'dion', kind: 'document' }],
   ['/damocles/first-offer', { document: 'first-offer', kind: 'document' }],
   ['/catalogue', { document: 'catalogue', kind: 'document' }],
   // Every title's sounds on demand, for listening; it holds no session.
@@ -53,6 +58,7 @@ const aliases = new Map<string, string>([
   ['/index.html', '/'],
   ['/targ/', '/targ'],
   ['/damocles/', '/damocles'],
+  ['/dion/', '/dion'],
   ['/catalogue.html', '/catalogue'],
   ['/catalogue/', '/catalogue'],
   ['/sounds.html', '/sounds'],

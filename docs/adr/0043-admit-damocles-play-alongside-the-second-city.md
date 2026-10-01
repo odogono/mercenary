@@ -28,3 +28,5 @@ The last option is taken. Keeping the gate sequences finished research behind un
 - `web/damocles/` holds authored Damocles presentation documents, outside `payload/`, with per-value provenance.
 - Publication is unchanged: the dev server is localhost-only and no deploy exists (ADR 0019, #67). Restricted Material stays ignored (ADR 0029, ADR 0039).
 - Research follow-ups for every authored placeholder are filed as children of the implementation map (#195).
+
+_(Status note, 2026-10-01: Mercenary III's on-foot movement shares the Damocles code by decision (#647). The foot Mover and the region scan and eye clamp are the same routines in both images, modulo relocation, with the same step and turn words. `walk` and the clamp core moved to `web/src/onFoot/`, and Damocles wraps the clamp in its Catalogue types. Each session and its structure records stay its own. ADR 0060 sets one shared renderer as the direction, with an Authentic indexed mode.)_

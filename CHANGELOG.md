@@ -12,6 +12,25 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Added
 
+- **`/dion` boots Mercenary III at the METIS prison opening.** It is a Title of its
+  own, with a sibling Gameplay Session that loads only `payload/dion/`. That payload is
+  six documents exported from the pinned STX by the new `research/mercenary-iii-st/`
+  laboratory: the fifteen cells the two opening taxi journeys occupy, the panel, the
+  ID messages, the bounded scripts, the PSG programmes and the taxi service. A
+  document of another Title, another program image or another capture is refused.
+  The view is drawn by the recovered projection, clipping, culling and paint order,
+  and agrees with the game's drawn frames on 95.7–98.4% of pixels across eleven
+  checkpoints. The panel is the recovered artwork, with each readout written by its
+  own plane rule. Game time runs at 50 Hz with a frame every eleven ticks (ADR 0058).
+  On foot, the player walks the prison room with the normal controls, on the foot step
+  and region clamp now shared with Damocles in `web/src/onFoot/`. The shut prison door
+  holds the player in until the opening script hands over DOOR KEY A, which lands with
+  #648. ADR 0060 sets one renderer for all three Titles as the direction, with an
+  Authentic indexed mode.
+  `web/dion/metis.json` accounts every required item of the slice. Saves and Session
+  Resume keep their own `mercenary.browser-shell.dion.*` keys and refuse other Titles'
+  records; restore arrives with the journeys in #648 (#647).
+
 - **Damocles draws the comet DAMOCLES in the surface sky.** It is two white triangles
   from its head to a tail tip a quarter further from DIALIS, drawn in its draw-list slot
   and cut at the horizon. From a surface it shows as a thin streak, as on the ST. Its

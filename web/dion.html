@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mercenary III</title>
+    <link rel="stylesheet" href="/src/shell/chrome.css" />
+    <style>
+      :root {
+        color-scheme: dark;
+        --text: #f4f7f8;
+        --muted: #b7cad2;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: #000;
+      }
+
+      body {
+        color: var(--text);
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      }
+
+      #game-surface {
+        display: grid;
+        place-items: center;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* The ST's low-resolution screen, 320 by 200, shown at whole-pixel scale where it fits.
+         Its pixels are not square on a real monitor; the browser shows them square. */
+      #screen {
+        width: min(100vw, 160vh);
+        aspect-ratio: 320 / 200;
+        image-rendering: pixelated;
+        outline: none;
+        touch-action: manipulation;
+      }
+
+      #status,
+      #failure {
+        position: absolute;
+        z-index: 2;
+        top: 1rem;
+        left: 1rem;
+        max-width: min(32rem, calc(100% - 2rem));
+        margin: 0;
+        padding: 0.75rem 1rem;
+        color: var(--muted);
+        background: #07151dec;
+        border-left: 3px solid #2d7697;
+        line-height: 1.6;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      [role='alert'] {
+        color: #ffd7d7;
+        border-left: 3px solid #c85e5e;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <section
+      id="game-surface"
+      data-layer="none"
+      aria-label="Mercenary III Game Surface"
+    >
+      <canvas
+        id="screen"
+        width="320"
+        height="200"
+        role="img"
+        aria-label="METIS, TIMEWARP PRISON"
+        tabindex="0"
+        hidden
+      >
+        Your browser cannot display the Mercenary III view.
+      </canvas>
+      <p id="status" role="status">Loading Mercenary III…</p>
+      <p id="failure" role="alert" hidden></p>
+    </section>
+    <script type="module" src="/src/dion/boot.ts"></script>
+  </body>
+</html>

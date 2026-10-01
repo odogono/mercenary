@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 
-import { walk, type WalkRules } from '../src/damocles/mover.ts';
 import { cellOf } from '../src/damocles/world.ts';
 import { IDLE, intent } from '../src/gameCore/index.ts';
+import { walk, type WalkRules } from '../src/onFoot/index.ts';
 import { ERIS_BODY } from './damocles-pose.ts';
 
 const rules: WalkRules = {
