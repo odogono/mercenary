@@ -16,6 +16,8 @@ That rule forces the Second City question. If a path starts a game, then a Desti
 
 Nothing here is Session State, and nothing here is a build. The Browser Shell's routing, the storage namespaces and the payload layout are all downstream of ADR 0021's gate, and the dev server remains localhost-only with no deployable bundle under ADR 0019. What this ADR fixes now is the shape _The Second City_ must fit: a sub-path under `/targ`, a Destination inside Targ's Saves, and no second app. The deliverables are this decision, the **Title** glossary term, and amendments to the Departure sketch.
 
+_(Status note, 2026-10-01: #647 activates `/dion` for _The Dion Crisis_ under the D1 review (#638). It starts the METIS opening of the taxi slice as a sibling Gameplay Session, loads only `payload/dion/` and its own authored document, and keeps Mercenary III Saves and Session Resume under their own `mercenary.browser-shell.dion.*` keys. Restore-complete persistence follows in #648. The carousel does not offer it yet.)_
+
 _(Status note, 2026-09-11: ADR 0043 activates `/damocles` as the first Title path that starts a game, with Damocles's own Session Resume record and per-Title payload loading. `/targ` becomes an alias of the existing gameplay document; Targ keeps its current storage keys until it adopts the Title seam.)_
 
 _(Status note, 2026-09-10: ADR 0042 implements only the orthogonal debug-route slice: canonical `/targ/debug` and `/damocles/debug`, with `/debug` redirecting to Targ. It does not activate `/targ`, `/damocles`, per-Title Resume, Save identity or payload loading. The shipped Catalogue's canonical path is `/catalogue`, with `/catalogue.html` redirecting there; its eventual `/damocles/catalogue` home remains deferred.)_

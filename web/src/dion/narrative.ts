@@ -1,13 +1,5 @@
-import {
-  address,
-  fail,
-  int,
-  ints,
-  list,
-  record,
-  text
-} from './read.ts';
 import { readSources, type DionDocumentKind } from './documents.ts';
+import { address, fail, int, ints, list, record, text } from './read.ts';
 
 /// The MIII documents I1 admits for the journeys I2 will play: ID messages, the
 /// bounded scripts, the PSG programmes and the taxi service. They are read strictly so
@@ -47,14 +39,21 @@ export interface DionSoundProgramme {
 
 export interface DionService {
   readonly descent: readonly number[];
-  readonly destinations: readonly { readonly cell: readonly [number, number]; readonly code: number }[];
+  readonly destinations: readonly {
+    readonly cell: readonly [number, number];
+    readonly code: number;
+  }[];
   readonly liftOff: readonly number[];
   readonly opening: {
     readonly carried: readonly number[];
     readonly cash: string;
     readonly elapsedSeconds: number;
   };
-  readonly route: readonly { readonly control: number; readonly x: number; readonly z: number }[];
+  readonly route: readonly {
+    readonly control: number;
+    readonly x: number;
+    readonly z: number;
+  }[];
   readonly taxiRate: number;
 }
 
@@ -84,17 +83,22 @@ export const readDionMessages = (
   kind: DionDocumentKind
 ): readonly DionMessage[] => {
   readSources(body, kind);
-  const messages = list(body['messages'], `${kind}.messages`).map((item, index) => {
-    const at = `${kind}.messages[${index}]`;
-    const raw = record(item, at);
-    return {
-      header: int(raw['header'], `${at}.header`, 0, 255),
-      id: int(raw['id'], `${at}.id`, 0, 63),
-      scrollsOut: raw['scrollsOut'] === true,
-      text: text(raw['text'], `${at}.text`)
-    };
-  });
-  if (messages.length !== 64 || messages.some((message, index) => message.id !== index)) {
+  const messages = list(body['messages'], `${kind}.messages`).map(
+    (item, index) => {
+      const at = `${kind}.messages[${index}]`;
+      const raw = record(item, at);
+      return {
+        header: int(raw['header'], `${at}.header`, 0, 255),
+        id: int(raw['id'], `${at}.id`, 0, 63),
+        scrollsOut: raw['scrollsOut'] === true,
+        text: text(raw['text'], `${at}.text`)
+      };
+    }
+  );
+  if (
+    messages.length !== 64 ||
+    messages.some((message, index) => message.id !== index)
+  ) {
     fail(`${kind}.messages should be the 64 ID messages in order`);
   }
   return messages;
@@ -112,10 +116,16 @@ export const readDionScripts = (
     fail(`${kind}.json names a branch target it does not decode`);
   }
   const entries = new Map<number, number>();
-  for (const [index, item] of list(body['entries'], `${kind}.entries`).entries()) {
+  for (const [index, item] of list(
+    body['entries'],
+    `${kind}.entries`
+  ).entries()) {
     const at = `${kind}.entries[${index}]`;
     const raw = record(item, at);
-    entries.set(hexByte(raw['script'], `${at}.script`), address(raw['address'], `${at}.address`));
+    entries.set(
+      hexByte(raw['script'], `${at}.script`),
+      address(raw['address'], `${at}.address`)
+    );
   }
   for (const script of [0x19, 0x33, 0x34]) {
     if (!entries.has(script)) {
@@ -127,8 +137,11 @@ export const readDionScripts = (
   for (const [key, value] of Object.entries(summary)) {
     texts.set(
       hexByte(key, `${kind}.summary key`),
-      list(record(value, `${kind}.summary.${key}`)['texts'], `${kind}.summary.${key}.texts`).map(
-        (item, index) => text(item, `${kind}.summary.${key}.texts[${index}]`)
+      list(
+        record(value, `${kind}.summary.${key}`)['texts'],
+        `${kind}.summary.${key}.texts`
+      ).map((item, index) =>
+        text(item, `${kind}.summary.${key}.texts[${index}]`)
       )
     );
   }
@@ -138,16 +151,24 @@ export const readDionScripts = (
       const at = `${kind}.routines[${index}]`;
       const raw = record(item, at);
       return {
-        instructions: list(raw['instructions'], `${at}.instructions`).map((entry, i) => {
-          const it = `${at}.instructions[${i}]`;
-          const instruction = record(entry, it);
-          return {
-            address: address(instruction['address'], `${it}.address`),
-            name: text(instruction['name'], `${it}.name`),
-            op: hexByte(instruction['op'], `${it}.op`),
-            text: instruction['text'] === undefined ? undefined : text(instruction['text'], `${it}.text`)
-          };
-        }),
+        instructions: list(raw['instructions'], `${at}.instructions`).map(
+          (entry, i) => {
+            const it = `${at}.instructions[${i}]`;
+            const instruction = record(entry, it);
+            return {
+              address: address(instruction['address'], `${it}.address`),
+              name: text(instruction['name'], `${it}.name`),
+              op: hexByte(instruction['op'], `${it}.op`),
+              text:
+                instruction['text'] === undefined
+                  ? undefined
+                  : text(
+                      record(instruction['text'], `${it}.text`)['text'],
+                      `${it}.text.text`
+                    )
+            };
+          }
+        ),
         name: text(raw['name'], `${at}.name`)
       };
     }),
@@ -160,15 +181,17 @@ export const readDionSound = (
   kind: DionDocumentKind
 ): readonly DionSoundProgramme[] => {
   readSources(body, kind);
-  const programmes = list(body['programmes'], `${kind}.programmes`).map((item, index) => {
-    const at = `${kind}.programmes[${index}]`;
-    const raw = record(item, at);
-    return {
-      channel: text(raw['channel'], `${at}.channel`),
-      entry: address(raw['entry'], `${at}.entry`),
-      name: text(raw['name'], `${at}.name`)
-    };
-  });
+  const programmes = list(body['programmes'], `${kind}.programmes`).map(
+    (item, index) => {
+      const at = `${kind}.programmes[${index}]`;
+      const raw = record(item, at);
+      return {
+        channel: text(raw['channel'], `${at}.channel`),
+        entry: address(raw['entry'], `${at}.entry`),
+        name: text(raw['name'], `${at}.name`)
+      };
+    }
+  );
   for (const name of DION_REQUIRED_PROGRAMMES) {
     if (!programmes.some(programme => programme.name === name)) {
       fail(`${kind}.json lacks the ${name} programme`);
@@ -183,43 +206,78 @@ export const readDionService = (
 ): DionService => {
   readSources(body, kind);
   const taxi = record(body['taxi'], `${kind}.taxi`);
-  const route = list(taxi['points'], `${kind}.taxi.points`).map((item, index) => {
-    const at = `${kind}.taxi.points[${index}]`;
-    const raw = record(item, at);
-    const cell = ints(raw['cell'], `${at}.cell`, 2, 0, 15);
-    return {
-      control: int(raw['control'], `${at}.control`, 0, 15),
-      x: cell[0]!,
-      z: cell[1]!
-    };
-  });
+  const route = list(taxi['points'], `${kind}.taxi.points`).map(
+    (item, index) => {
+      const at = `${kind}.taxi.points[${index}]`;
+      const raw = record(item, at);
+      const cell = ints(raw['cell'], `${at}.cell`, 2, 0, 15);
+      return {
+        control: int(raw['control'], `${at}.control`, 0, 15),
+        x: cell[0]!,
+        z: cell[1]!
+      };
+    }
+  );
   if (route.length === 0) {
     fail(`${kind}.taxi.points is empty`);
   }
   const heights = record(body['heights'], `${kind}.heights`);
   const opening = record(body['openingState'], `${kind}.openingState`);
   const carried = record(opening['carried'], `${kind}.openingState.carried`);
-  const cash = text(record(opening['cashBcd'], `${kind}.openingState.cashBcd`)['digits'], `${kind}.openingState.cashBcd.digits`);
+  const cash = text(
+    record(opening['cashBcd'], `${kind}.openingState.cashBcd`)['digits'],
+    `${kind}.openingState.cashBcd.digits`
+  );
   if (!/^\d{12}$/.test(cash)) {
     fail(`${kind}.openingState.cashBcd.digits is not twelve BCD digits`);
   }
   return {
-    descent: ints(record(heights['descent'], `${kind}.heights.descent`)['heights'], `${kind}.heights.descent.heights`, undefined, 0, 255),
-    destinations: list(body['destinations'], `${kind}.destinations`).map((item, index) => {
-      const at = `${kind}.destinations[${index}]`;
-      const raw = record(item, at);
-      const cell = ints(raw['cell'], `${at}.cell`, 2, 0, 15);
-      return { cell: [cell[0]!, cell[1]!] as const, code: hexByte(raw['code'], `${at}.code`) };
-    }),
-    liftOff: ints(record(heights['liftOff'], `${kind}.heights.liftOff`)['heights'], `${kind}.heights.liftOff.heights`, undefined, 0, 255),
+    descent: ints(
+      record(heights['descent'], `${kind}.heights.descent`)['heights'],
+      `${kind}.heights.descent.heights`,
+      undefined,
+      0,
+      255
+    ),
+    destinations: list(body['destinations'], `${kind}.destinations`).map(
+      (item, index) => {
+        const at = `${kind}.destinations[${index}]`;
+        const raw = record(item, at);
+        const cell = ints(raw['cell'], `${at}.cell`, 2, 0, 15);
+        return {
+          cell: [cell[0]!, cell[1]!] as const,
+          code: hexByte(raw['code'], `${at}.code`)
+        };
+      }
+    ),
+    liftOff: ints(
+      record(heights['liftOff'], `${kind}.heights.liftOff`)['heights'],
+      `${kind}.heights.liftOff.heights`,
+      undefined,
+      0,
+      255
+    ),
     opening: {
-      carried: list(carried['items'], `${kind}.openingState.carried.items`).map((item, index) =>
-        hexByte(record(item, `${kind}.openingState.carried.items[${index}]`)['object'], `${kind}.openingState.carried.items[${index}].object`)
+      carried: list(carried['items'], `${kind}.openingState.carried.items`).map(
+        (item, index) =>
+          hexByte(
+            record(item, `${kind}.openingState.carried.items[${index}]`)[
+              'object'
+            ],
+            `${kind}.openingState.carried.items[${index}].object`
+          )
       ),
       cash,
-      elapsedSeconds: int(record(opening['elapsedSeconds'], `${kind}.openingState.elapsedSeconds`)['value'], `${kind}.openingState.elapsedSeconds.value`, 0)
+      elapsedSeconds: int(
+        record(
+          opening['elapsedSeconds'],
+          `${kind}.openingState.elapsedSeconds`
+        )['value'],
+        `${kind}.openingState.elapsedSeconds.value`,
+        0
+      )
     },
     route,
-    taxiRate: int(taxi['rate'], `${kind}.taxi.rate`, -0x8000, 0x7fff)
+    taxiRate: int(taxi['rate'], `${kind}.taxi.rate`, -0x80_00, 0x7f_ff)
   };
 };

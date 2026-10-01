@@ -23,7 +23,11 @@ export interface DionPanelView {
   readonly centre: DionCentreView;
   readonly clockSeconds: number;
   readonly eyeY: number;
-  readonly gauges: { readonly inventory: number; readonly p: number; readonly t: number };
+  readonly gauges: {
+    readonly inventory: number;
+    readonly p: number;
+    readonly t: number;
+  };
   /// The eye in workspace cells, `$70C2`/`$70CA` high words.
   readonly grid: readonly [number, number];
   readonly heading: number;
@@ -35,7 +39,10 @@ export interface DionPanelView {
 }
 
 export interface DionPanelImage {
-  readonly palette: { readonly lower: readonly number[]; readonly upper: readonly number[] };
+  readonly palette: {
+    readonly lower: readonly number[];
+    readonly upper: readonly number[];
+  };
   readonly pixels: Uint8Array;
 }
 
@@ -98,15 +105,37 @@ export const drawDionPanel = (
 
   // The centre box: the inactive logo, or a card's art with its text (`$4DF34`).
   const { box } = doc.centre;
-  const art = view.centre.kind === 'card' ? doc.centre.taxicard.pixels : doc.centre.logo.pixels;
-  art.forEach((row, index) => pixels.set(row, (box.y + index - PANEL_TOP) * WIDTH + box.x));
+  const art =
+    view.centre.kind === 'card'
+      ? doc.centre.taxicard.pixels
+      : doc.centre.logo.pixels;
+  art.forEach((row, index) =>
+    pixels.set(row, (box.y + index - PANEL_TOP) * WIDTH + box.x)
+  );
   if (view.centre.kind === 'card') {
     const [first, second] = view.centre.lines;
-    writeField(planes, doc, fields.cardText, [...first], fields.cardText.lines[0]);
-    writeField(planes, doc, fields.cardText, [...second], fields.cardText.lines[1]);
+    writeField(
+      planes,
+      doc,
+      fields.cardText,
+      [...first],
+      fields.cardText.lines[0]
+    );
+    writeField(
+      planes,
+      doc,
+      fields.cardText,
+      [...second],
+      fields.cardText.lines[1]
+    );
   }
 
-  writeField(planes, doc, fields.location, [...view.location.padEnd(8).slice(0, 8)]);
+  writeField(
+    planes,
+    doc,
+    fields.location,
+    view.location.padEnd(8).slice(0, 8).split('')
+  );
 
   // `$4E8BE` frames the position readout, then `$4E95C` writes its two numbers.
   for (let y = 172; y <= 176; y += 1) {
@@ -117,59 +146,68 @@ export const drawDionPanel = (
       planes.set(x, y, 3, !(y === 174 && x >= 46 && x <= 49));
     }
   }
-  writeField(planes, doc, fields.position, [
-    ...view.position.flatMap(v => digits(Math.floor((v * 0xfa00) / 0x10000), 3))
-  ]);
+  writeField(
+    planes,
+    doc,
+    fields.position,
+    view.position.flatMap(v => digits(Math.floor((v * 0xfa_00) / 0x1_00_00), 3))
+  );
 
   // `$4E812`: each grid number shows ink by clearing plane 3, or setting plane 0 below 0.
   const digitFont = doc.fonts.get('digits');
   fields.grid.numbers.forEach((number, index) => {
     const value = view.grid[index] ?? 0;
     const magnitude = Math.min(Math.abs(value), 100);
-    const [tens, units] = magnitude < 100 ? [Math.floor(magnitude / 10), magnitude % 10] : [10, 10];
+    const [tens, units] =
+      magnitude < 100 ? [Math.floor(magnitude / 10), magnitude % 10] : [10, 10];
     for (let row = 0; row < 5; row += 1) {
       const y = fields.grid.y + row;
       for (let x = number.box[0]; x <= number.box[1]; x += 1) {
         planes.set(x, y, 0, false);
         planes.set(x, y, 3, true);
       }
-      for (const [digit, x0] of [[tens, number.tens], [units, number.units]] as const) {
-        [...(digitFont?.glyphs.get(String(digit))?.[row] ?? '')].forEach((bit, column) => {
-          if (bit === '1') {
-            if (value >= 0) {
-              planes.set(x0 + column, y, 3, false);
-            } else {
-              planes.set(x0 + column, y, 0, true);
+      for (const [digit, x0] of [
+        [tens, number.tens],
+        [units, number.units]
+      ] as const) {
+        [...(digitFont?.glyphs.get(String(digit))?.[row] ?? '')].forEach(
+          (bit, column) => {
+            if (bit === '1') {
+              if (value >= 0) {
+                planes.set(x0 + column, y, 3, false);
+              } else {
+                planes.set(x0 + column, y, 0, true);
+              }
             }
           }
-        });
+        );
       }
     }
   });
 
   // `$4E506`: height as 16.16, two whole digits then the fraction a hundredth at a time.
   const scaled = (view.eyeY >> 4) + ((view.eyeY >> 3) & 1);
-  const whole = Math.floor(scaled / 0x10000);
+  const whole = Math.floor(scaled / 0x1_00_00);
   let heightDigits: string[];
   if (whole >= 100) {
     heightDigits = Array<string>(6).fill('10');
   } else {
-    const first = (scaled & 0xffff) * 100;
-    const second = (first & 0xffff) * 100;
+    const first = (scaled & 0xff_ff) * 100;
+    const second = (first & 0xff_ff) * 100;
     heightDigits = [
       ...digits(whole, 2),
-      ...digits(Math.floor(first / 0x10000), 2),
-      ...digits(Math.floor(second / 0x10000), 2)
+      ...digits(Math.floor(first / 0x1_00_00), 2),
+      ...digits(Math.floor(second / 0x1_00_00), 2)
     ];
   }
   writeField(planes, doc, fields.height, heightDigits);
 
   // `$4E778`: eleven of the twelve BCD cash digits.
-  writeField(planes, doc, fields.cash, [...view.cash.slice(1)]);
+  writeField(planes, doc, fields.cash, view.cash.slice(1).split(''));
 
   // `$531D2`: HH-MM-SS in the clock font, planes 0 and 1 set and cleared under ink.
   const clockFont = doc.fonts.get('clock');
-  const seconds = ((view.clockSeconds % 86400) + 86400) % 86400;
+  const seconds = ((view.clockSeconds % 86_400) + 86_400) % 86_400;
   const clock = [
     ...digits(Math.floor(seconds / 3600), 2),
     ...digits(Math.floor(seconds / 60) % 60, 2),
@@ -188,7 +226,7 @@ export const drawDionPanel = (
   });
 
   // `$53A2E`: the compass strip, 64 steps of the heading.
-  const step = ((-(view.heading + 0x70)) & 0x3f0) >> 4;
+  const step = (-(view.heading + 0x70) & 0x3_f0) >> 4;
   for (let row = 0; row < fields.compass.rows; row += 1) {
     for (let x = 80; x <= 119; x += 1) {
       const inside = x >= fields.compass.x[0] && x <= fields.compass.x[1];
@@ -198,20 +236,34 @@ export const drawDionPanel = (
   }
 
   // `$53AB2`: twenty rows of the pitch strip, from the pitch's high bits.
-  const pitchRow = (view.pitch & 0x3f0) >> 4;
+  const pitchRow = (view.pitch & 0x3_f0) >> 4;
   for (let row = 0; row < 20; row += 1) {
     const strip = fields.pitch.strip[pitchRow + row];
     if (strip === undefined) {
       continue;
     }
     for (let x = 0; x < 16; x += 1) {
-      planes.set(fields.pitch.x[0] + x, fields.pitch.y + row, 1, strip[0][x] === '1');
-      planes.set(fields.pitch.x[0] + x, fields.pitch.y + row, 3, strip[1][x] === '1');
+      planes.set(
+        fields.pitch.x[0] + x,
+        fields.pitch.y + row,
+        1,
+        strip[0][x] === '1'
+      );
+      planes.set(
+        fields.pitch.x[0] + x,
+        fields.pitch.y + row,
+        3,
+        strip[1][x] === '1'
+      );
     }
   }
 
   // `$537E4`: a level L clears its planes in the bar's bottom L rows.
-  const levels = [Math.min(view.gauges.t, 48), Math.min(view.gauges.p, 48), view.gauges.inventory];
+  const levels = [
+    Math.min(view.gauges.t, 48),
+    Math.min(view.gauges.p, 48),
+    view.gauges.inventory
+  ];
   fields.gauges.forEach((bar, index) => {
     const level = levels[index] ?? 0;
     for (let row = 0; row < bar.rows; row += 1) {
@@ -221,10 +273,16 @@ export const drawDionPanel = (
     }
   });
 
-  writeField(planes, doc, fields.inventoryName, [...view.inventory.padEnd(16).slice(0, 16)]);
+  writeField(
+    planes,
+    doc,
+    fields.inventoryName,
+    view.inventory.padEnd(16).slice(0, 16).split('')
+  );
 
   // The card or logo's own two colours replace colour 4, and colour 1 from row 152.
-  const centre = view.centre.kind === 'card' ? doc.centre.taxicard : doc.centre.logo;
+  const centre =
+    view.centre.kind === 'card' ? doc.centre.taxicard : doc.centre.logo;
   const upper = [...doc.palette.upper];
   const lower = [...doc.palette.lower];
   upper[4] = centre.colour4;
@@ -233,11 +291,17 @@ export const drawDionPanel = (
   return { palette: { lower, upper }, pixels };
 };
 
+const gun = (word: number, shift: number): number =>
+  Math.round((((word >> shift) & 7) * 255) / 7);
+
 /// The panel as RGBA: an ST shows three bits a gun, so the STE's fourth is dropped.
-export const panelRgba = (image: DionPanelImage, target: Uint8ClampedArray): void => {
-  const gun = (word: number, shift: number): number => Math.round((((word >> shift) & 7) * 255) / 7);
+export const panelRgba = (
+  image: DionPanelImage,
+  target: Uint8ClampedArray
+): void => {
   for (let row = 0; row < PANEL_ROWS; row += 1) {
-    const palette = PANEL_TOP + row < 152 ? image.palette.upper : image.palette.lower;
+    const palette =
+      PANEL_TOP + row < 152 ? image.palette.upper : image.palette.lower;
     for (let x = 0; x < WIDTH; x += 1) {
       const colour = palette[image.pixels[row * WIDTH + x]!] ?? 0;
       const at = (row * WIDTH + x) * 4;

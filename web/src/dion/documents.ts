@@ -2,10 +2,10 @@ import {
   fail,
   int,
   list,
+  provenance,
   record,
   text,
-  type Provenance,
-  provenance
+  type Provenance
 } from './read.ts';
 
 /// The documents a Mercenary III Destination loads, and the identity they must share.
@@ -90,7 +90,11 @@ export const readDionHeader = (
   return {
     body: raw,
     source: {
-      capture: { entry: ram('entry'), loaded: ram('loaded'), opening: ram('opening') },
+      capture: {
+        entry: ram('entry'),
+        loaded: ram('loaded'),
+        opening: ram('opening')
+      },
       programSha256: program,
       title: 'dion',
       tosSha256: sha(source['tosSha256'], `${kind}.source.tosSha256`)

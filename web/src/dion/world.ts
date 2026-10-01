@@ -115,8 +115,8 @@ export interface DionStructure {
   readonly provenance: Provenance;
   readonly regions: readonly DionRegion[];
   readonly sceneColours: readonly [number, number];
-  readonly wallTexts: readonly DionWallText[];
   readonly walls: readonly DionWall[];
+  readonly wallTexts: readonly DionWallText[];
 }
 
 export type DionPrimitive =
@@ -196,6 +196,8 @@ export interface DionScenePalette {
 
 export type DionModelFace =
   | {
+      /// The colour byte's address, which the `$8003` and `$800A` headers patch.
+      readonly at: number;
       readonly colour: number;
       readonly kind: 'line' | 'polygon';
       readonly refs: readonly number[];
@@ -214,10 +216,14 @@ export type DionModelFace =
 
 export interface DionModelHeader {
   readonly code: number | undefined;
+  /// `$8003`: the colour byte that takes `value`; `targets` take the blink colour.
+  readonly firstTarget: number | undefined;
   readonly mode: number | undefined;
   readonly op: number;
   readonly pivot: readonly [number, number, number] | undefined;
   readonly range: number | undefined;
+  /// `$800A`: the one colour byte that takes `value`.
+  readonly target: number | undefined;
   readonly targets: readonly number[] | undefined;
   readonly value: number | undefined;
   readonly yawOffset: number | undefined;
@@ -266,7 +272,6 @@ export interface DionGlyph {
   }[];
 }
 
-
 export interface DionFramePalette {
   readonly fixed: ReadonlyMap<number, number>;
   readonly horizonRow: number;
@@ -292,7 +297,11 @@ export interface DionOpening {
   };
   readonly eye: readonly [number, number, number];
   readonly frameCounter: number;
-  readonly gauges: { readonly inventory: number; readonly p: number; readonly t: number };
+  readonly gauges: {
+    readonly inventory: number;
+    readonly p: number;
+    readonly t: number;
+  };
   /// The cell-grid origin of the METIS workspace on its Body, in whole cells.
   readonly groupOrigin: readonly [number, number];
   readonly heading: number;
@@ -307,8 +316,8 @@ export interface DionOpening {
 export interface DionWorld {
   /// Per-resident phase words the `$8003` beacon blink adds to the frame counter.
   readonly blinkPhase: ReadonlyMap<number, number>;
-  readonly cellSpacing: number;
   readonly cells: readonly DionCell[];
+  readonly cellSpacing: number;
   readonly details: ReadonlyMap<number, DionDetail>;
   readonly drawList: {
     readonly fixed: readonly number[];
@@ -335,9 +344,9 @@ export interface DionWorld {
   /// entries long, so the cosine at +64 never wraps.
   readonly rotationTable: readonly number[];
   readonly source: DionSource;
-  readonly structureY: number;
   /// Structure records by geometry slot, then by `"sx,sz"` scale.
   readonly structures: ReadonlyMap<number, ReadonlyMap<string, DionStructure>>;
+  readonly structureY: number;
 }
 
 const bounds = (value: unknown, path: string) => {
@@ -402,7 +411,7 @@ const readStructure = (value: unknown, path: string): DionStructure => {
         const axis = text(a['motionAxis'], `${at}.motionAxis`);
         return {
           box: bounds(a['box'], `${at}.box`),
-          colours: ints(a['colours'], `${at}.colours`, 3, 0, 0xffff),
+          colours: ints(a['colours'], `${at}.colours`, 3, 0, 0xff_ff),
           control: word(a['control'], `${at}.control`),
           controlColour: optional(a['controlColour'], v =>
             word(v, `${at}.controlColour`)
@@ -435,6 +444,15 @@ const readStructure = (value: unknown, path: string): DionStructure => {
       };
     }),
     sceneColours: pair(raw['sceneColours'], `${path}.sceneColours`),
+    walls: list(raw['walls'], `${path}.walls`).map((item, index) => {
+      const at = `${path}.walls[${index}]`;
+      const w = record(item, at);
+      return {
+        colour: word(w['colour'], `${at}.colour`),
+        form: int(w['form'], `${at}.form`, 0, 7),
+        refs: ints(w['refs'], `${at}.refs`, undefined, 1, 255)
+      };
+    }),
     wallTexts: list(raw['wallTexts'], `${path}.wallTexts`).map(
       (item, index) => {
         const at = `${path}.wallTexts[${index}]`;
@@ -450,16 +468,7 @@ const readStructure = (value: unknown, path: string): DionStructure => {
           text: ints(t['text'], `${at}.text`, undefined, 1, 255)
         };
       }
-    ),
-    walls: list(raw['walls'], `${path}.walls`).map((item, index) => {
-      const at = `${path}.walls[${index}]`;
-      const w = record(item, at);
-      return {
-        colour: word(w['colour'], `${at}.colour`),
-        form: int(w['form'], `${at}.form`, 0, 7),
-        refs: ints(w['refs'], `${at}.refs`, undefined, 1, 255)
-      };
-    })
+    )
   };
 };
 
@@ -580,6 +589,7 @@ const readFaces = (value: unknown, path: string): DionModelFace[] =>
     }
     if (kind === 'polygon' || kind === 'line') {
       return {
+        at: address(f['at'], `${at}.at`),
         colour: int(f['colour'], `${at}.colour`, 0, 127),
         kind,
         refs: ints(f['refs'], `${at}.refs`, undefined, 1, 255)
@@ -594,9 +604,7 @@ const readFaces = (value: unknown, path: string): DionModelFace[] =>
         kind,
         offset: triple(f['offset'], `${at}.offset`),
         pointer: optional(f['pointer'], v => int(v, `${at}.pointer`, 0)),
-        text: optional(f['text'], v =>
-          ints(v, `${at}.text`, undefined, 1, 255)
-        )
+        text: optional(f['text'], v => ints(v, `${at}.text`, undefined, 1, 255))
       };
     }
     return fail(`${at}.kind ${kind} is not a model face`);
@@ -634,11 +642,19 @@ const readModel = (value: unknown, path: string, key: number): DionModel => {
     const h = record(v, `${path}.header`);
     return {
       code: optional(h['code'], c => word(c, `${path}.header.code`)),
+      firstTarget: optional(h['firstTarget'], t =>
+        address(t, `${path}.header.firstTarget`)
+      ),
       mode: optional(h['mode'], m => byte(m, `${path}.header.mode`)),
       op: int(h['op'], `${path}.header.op`, 0, 15),
       pivot: optional(h['pivot'], p => triple(p, `${path}.header.pivot`)),
       range: optional(h['range'], r => word(r, `${path}.header.range`)),
-      targets: optional(h['targets'], t => ints(t, `${path}.header.targets`)),
+      target: optional(h['target'], t => address(t, `${path}.header.target`)),
+      targets: optional(h['targets'], t =>
+        list(t, `${path}.header.targets`).map((item, index) =>
+          address(item, `${path}.header.targets[${index}]`)
+        )
+      ),
       value: optional(h['value'], x => word(x, `${path}.header.value`)),
       yawOffset: optional(h['yawOffset'], y =>
         byte(y, `${path}.header.yawOffset`)
@@ -650,9 +666,7 @@ const readModel = (value: unknown, path: string, key: number): DionModel => {
     entry,
     header,
     name: optional(raw['name'], v => text(v, `${path}.name`)),
-    passenger: optional(raw['passenger'], v =>
-      readForm(v, `${path}.passenger`)
-    )
+    passenger: optional(raw['passenger'], v => readForm(v, `${path}.passenger`))
   };
 };
 
@@ -706,7 +720,10 @@ export const readDionWorldBody = (
   const groundsRaw = record(raw['grounds'], 'grounds');
   const grounds = new Map<number, DionGround>();
   for (const [key, item] of Object.entries(groundsRaw)) {
-    grounds.set(address(key, `grounds key ${key}`), readGround(item, `grounds.${key}`));
+    grounds.set(
+      address(key, `grounds key ${key}`),
+      readGround(item, `grounds.${key}`)
+    );
   }
   const glyphsRaw = record(raw['glyphs'], 'glyphs');
   const glyphs = new Map<string, DionGlyph>();
@@ -731,10 +748,10 @@ export const readDionWorldBody = (
     return result;
   });
   const world: DionWorld = {
-    cellSpacing: int(raw['cellSpacing'], 'cellSpacing', 1, 0x7fff),
     cells: list(raw['cells'], 'cells').map((item, index) =>
       readCell(item, `cells[${index}]`)
     ),
+    cellSpacing: int(raw['cellSpacing'], 'cellSpacing', 1, 0x7f_ff),
     details: keyed(raw['details'], 'details', readDetail),
     drawList: {
       fixed: ints(drawList['fixed'], 'drawList.fixed', undefined, 0, 255),
@@ -770,14 +787,14 @@ export const readDionWorldBody = (
       'modelColours.words',
       60,
       0,
-      0xffff
+      0xff_ff
     ),
     models: keyed(raw['models'], 'models', readModel),
     palettes: keyed(raw['palettes'], 'palettes', (item, path) => {
       const p = record(item, path);
       return {
-        day: ints(p['day'], `${path}.day`, 22, 0, 0xffff),
-        night: ints(p['night'], `${path}.night`, 22, 0, 0xffff),
+        day: ints(p['day'], `${path}.day`, 22, 0, 0xff_ff),
+        night: ints(p['night'], `${path}.night`, 22, 0, 0xff_ff),
         provenance: provenance(p['provenance'], `${path}.provenance`)
       };
     }),
@@ -823,12 +840,20 @@ const readViewFacts = (raw: Record<string, unknown>) => {
       road: word(palette['road'], 'framePalette.road'),
       skyDay: word(palette['skyDay'], 'framePalette.skyDay'),
       skyNight: word(palette['skyNight'], 'framePalette.skyNight'),
-      template: ints(palette['template'], 'framePalette.template', 17, 0, 0xffff)
+      template: ints(
+        palette['template'],
+        'framePalette.template',
+        17,
+        0,
+        0xff_ff
+      )
     },
     opening: {
       cash: (() => {
         const raw = text(opening['cash'], 'opening.cash');
-        return /^\d{12}$/.test(raw) ? raw : fail('opening.cash is not twelve BCD digits');
+        return /^\d{12}$/.test(raw)
+          ? raw
+          : fail('opening.cash is not twelve BCD digits');
       })(),
       cell: byte(opening['cell'], 'opening.cell'),
       clock: (() => {
@@ -836,9 +861,9 @@ const readViewFacts = (raw: Record<string, unknown>) => {
         return {
           accumulator: sword(clock['accumulator'], 'opening.clock.accumulator'),
           day: word(clock['day'], 'opening.clock.day'),
-          refill: int(clock['refill'], 'opening.clock.refill', 1, 0x7fff),
+          refill: int(clock['refill'], 'opening.clock.refill', 1, 0x7f_ff),
           seconds: int(clock['seconds'], 'opening.clock.seconds', 0, 86_399),
-          step: int(clock['step'], 'opening.clock.step', 1, 0x7fff)
+          step: int(clock['step'], 'opening.clock.step', 1, 0x7f_ff)
         };
       })(),
       eye: triple(opening['eye'], 'opening.eye'),
@@ -856,7 +881,13 @@ const readViewFacts = (raw: Record<string, unknown>) => {
       location: word(opening['location'], 'opening.location'),
       pitch: word(opening['pitch'], 'opening.pitch'),
       position: (() => {
-        const [a, b] = ints(opening['position'], 'opening.position', 2, 0, 0xffff);
+        const [a, b] = ints(
+          opening['position'],
+          'opening.position',
+          2,
+          0,
+          0xff_ff
+        );
         return [a!, b!] as const;
       })(),
       region: int(opening['region'], 'opening.region', 1, 64),
@@ -866,8 +897,8 @@ const readViewFacts = (raw: Record<string, unknown>) => {
       record(raw['rotationTable'], 'rotationTable')['words'],
       'rotationTable.words',
       320,
-      -0x8000,
-      0x7fff
+      -0x80_00,
+      0x7f_ff
     ),
     structureY: int(raw['structureY'], 'structureY')
   };
@@ -915,7 +946,9 @@ const checkWorld = (world: DionWorld): void => {
   }
   for (const resident of world.residents) {
     if (resident.model !== null && !world.models.has(resident.model)) {
-      fail(`resident ${resident.slot} names unexported model ${resident.model}`);
+      fail(
+        `resident ${resident.slot} names unexported model ${resident.model}`
+      );
     }
   }
 };

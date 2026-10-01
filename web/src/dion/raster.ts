@@ -40,7 +40,7 @@ export const levelCamera = (
   eye: readonly [number, number, number],
   heading: number
 ): LevelCamera => {
-  const angle = (2 * Math.PI * ((heading & 0x3ff) + 0.5)) / 1024;
+  const angle = (2 * Math.PI * ((heading & 0x3_ff) + 0.5)) / 1024;
   return { c: Math.cos(angle), eye, s: Math.sin(angle) };
 };
 
@@ -254,7 +254,11 @@ export class IndexedFrame {
       const from = Math.max(0, Math.ceil(left - 1e-9));
       const to = Math.min(VIEW_WIDTH - 1, Math.floor(right + 1e-9));
       if (to >= from) {
-        this.pixels.fill(index, row * VIEW_WIDTH + from, row * VIEW_WIDTH + to + 1);
+        this.pixels.fill(
+          index,
+          row * VIEW_WIDTH + from,
+          row * VIEW_WIDTH + to + 1
+        );
       }
     }
   }

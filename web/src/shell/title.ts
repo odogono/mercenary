@@ -7,8 +7,9 @@ import type { PanelViewModel } from './panel.ts';
 /// ask for one session type. It asks for the handful of things every Title's boot does: load
 /// the Title's own Data Payload, create or restore a session, feed it Movement Intent and time,
 /// turn a snapshot into a frame and a panel, and know where its Session Resume lives. Targ's
-/// boot predates this seam and adopts it when convenient; Damocles implements it from the start.
-export type TitleSlug = 'damocles' | 'targ';
+/// boot predates this seam and adopts it when convenient; Damocles implements it from the start,
+/// and Mercenary III's `/dion` likewise (#647).
+export type TitleSlug = 'damocles' | 'dion' | 'targ';
 
 export interface TitleStorageKeys {
   /// Web Lock name. Targ keeps the Resume key as the lock name so existing tabs still agree.
@@ -37,12 +38,20 @@ export interface PayloadDocument {
   readonly value: unknown;
 }
 
-export interface TitleRuntime<Snapshot, Content, Resume = unknown> {
+/// Each Title draws its own panel, so the view model a Title hands its panel is its own: the
+/// Benson and Damocles renditions share `PanelViewModel`, and Mercenary III's panel is drawn
+/// from its recovered artwork instead.
+export interface TitleRuntime<
+  Snapshot,
+  Content,
+  Resume = unknown,
+  Panel = PanelViewModel
+> {
   create(content: Content, restore?: Resume): TitleSession<Snapshot, Resume>;
   /// Fetch and validate the Title's Data Payload and authored documents. Called when the
   /// Title's Destination is committed, never at boot of another Title (ADR 0041).
   load(fetch: (pathname: string) => Promise<PayloadDocument>): Promise<Content>;
-  panelViewModel(snapshot: Snapshot, content: Content): PanelViewModel;
+  panelViewModel(snapshot: Snapshot, content: Content): Panel;
   readonly slug: TitleSlug;
   readonly storage: TitleStorageKeys;
 }

@@ -7,7 +7,8 @@ import type { MenuPages } from './menu.ts';
 export interface ShellChromeCopy {
   /// Set only by a Title whose System the Atlas presents; omitted, the menu has no Atlas link.
   readonly atlasLabel?: string;
-  readonly catalogueLabel: string;
+  /// The Title's catalogue link, if it has a catalogue; Mercenary III has none yet.
+  readonly catalogueLabel?: string;
   readonly menuTitle: string;
 }
 
@@ -134,11 +135,15 @@ export const installShellChrome = (
   });
 
   const menu = page('page-menu', 'System Menu', copy.menuTitle, [
-    el('a', {
-      attrs: { href: '/catalogue' },
-      className: 'chrome-button',
-      text: copy.catalogueLabel
-    }),
+    ...(copy.catalogueLabel === undefined
+      ? []
+      : [
+          el('a', {
+            attrs: { href: '/catalogue' },
+            className: 'chrome-button',
+            text: copy.catalogueLabel
+          })
+        ]),
     ...(copy.atlasLabel === undefined
       ? []
       : [

@@ -19,6 +19,7 @@ const DOCUMENT_FILES: Record<BrowserDocument, string> = {
   atlas: 'atlas.html',
   catalogue: 'catalogue.html',
   damocles: 'damocles.html',
+  dion: 'dion.html',
   'first-offer': 'first-offer.html',
   flyover: 'flyover.html',
   gameplay: 'index.html',

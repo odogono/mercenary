@@ -470,20 +470,20 @@ def _model_header(ram: Ram, c: Cursor) -> dict | None:
     elif op in (0x3,):
         header['value'] = c.word()
         header['firstOffset'] = c.sword()
-        header['firstTarget'] = c.p + header['firstOffset']
+        header['firstTarget'] = hexaddr(c.p + header['firstOffset'])
         targets = []
         while True:
             offset = c.sword()
             if offset == 0:
                 break
-            targets.append(c.p + offset)
+            targets.append(hexaddr(c.p + offset))
         header['targets'] = targets
         header['skip'] = c.p + ram.sword(c.p)
         c.p = header['skip']
     elif op == 0xA:
         header['value'] = c.word()
         offset = c.sword()
-        header['target'] = c.p + offset
+        header['target'] = hexaddr(c.p + offset)
         header['skip'] = c.p + ram.sword(c.p)
         c.p = header['skip']
     elif op == 0x8:
@@ -509,6 +509,8 @@ def _model_faces(ram: Ram, c: Cursor) -> list[dict]:
     """`$54978..$549B8`: one face list in stream order."""
     faces = []
     while True:
+        # `at` is the colour byte's address, which `$8003`/`$800A` patch.
+        at = c.p
         b = c.byte()
         if b < 0x80:
             refs = []
@@ -517,7 +519,7 @@ def _model_faces(ram: Ram, c: Cursor) -> list[dict]:
                 if r == 0:
                     break
                 refs.append(r)
-            faces.append({'kind': 'polygon', 'colour': b, 'refs': refs})
+            faces.append({'kind': 'polygon', 'colour': b, 'refs': refs, 'at': hexaddr(at)})
             continue
         if b == 0xFF:
             return faces
@@ -544,7 +546,8 @@ def _model_faces(ram: Ram, c: Cursor) -> list[dict]:
                           **({'text': text} if text is not None else {'pointer': pointer}),
                           'address': hexaddr(start)})
             continue
-        faces.append({'kind': 'line', 'colour': (0xFF - b) - 3, 'refs': [c.byte(), c.byte()]})
+        faces.append({'kind': 'line', 'colour': (0xFF - b) - 3, 'refs': [c.byte(), c.byte()],
+                      'at': hexaddr(at)})
 
 
 def decode_model_at(ram: Ram, record: int, header_allowed: bool = True) -> dict:

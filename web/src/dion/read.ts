@@ -29,8 +29,8 @@ export const text = (value: unknown, path: string): string =>
 export const int = (
   value: unknown,
   path: string,
-  min = -0x8000_0000,
-  max = 0x7fff_ffff
+  min = -0x80_00_00_00,
+  max = 0x7f_ff_ff_ff
 ): number =>
   Number.isInteger(value) &&
   (value as number) >= min &&
@@ -42,10 +42,10 @@ export const byte = (value: unknown, path: string): number =>
   int(value, path, 0, 0xff);
 
 export const word = (value: unknown, path: string): number =>
-  int(value, path, 0, 0xffff);
+  int(value, path, 0, 0xff_ff);
 
 export const sword = (value: unknown, path: string): number =>
-  int(value, path, -0x8000, 0x7fff);
+  int(value, path, -0x80_00, 0x7f_ff);
 
 export const bool = (value: unknown, path: string): boolean =>
   typeof value === 'boolean' ? value : fail(`${path} is not a boolean`);
