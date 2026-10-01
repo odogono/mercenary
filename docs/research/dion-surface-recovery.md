@@ -144,11 +144,24 @@ The remaining pixels in the structure scenes are mostly the known horizontal-edg
 
 Two of the points select DION EAST's island rather than BIRMINGHAM ISLAND's. The observations are fixed in [`tests/test_catalogue_surface.py`](../../research/mercenary-iii-st/tests/test_catalogue_surface.py).
 
+## Islands and horizon fill are Damocles's routines
+
+Coast views can reuse Damocles's port. MIII's routines are Damocles's, relocated. The two images' disassembly was compared instruction by instruction, with every address and literal masked:
+
+| MIII range | Damocles start | Role | Instructions matched |
+| --- | --- | --- | --- |
+| `$571A8..$576A2` | `$0560F2` | Land/Sea answer, nearest-island walk, island draw | 464 of 466, in order; the first 351 unbroken |
+| `$5A996..$5AB62` | `$0599D6` | Ground fill to the horizon at any height (#573) | 159 of 159 |
+
+The only difference is where the island changes. MIII calls its workspace builder there; Damocles has a branch of its own. The answer is published as 0, 1 and `$FFFF` for core, land and sea, at `$6F56` in MIII and `$78A6` in Damocles. The records have the same layout: an outer box, a core box, sea boxes, edges, and one coastless record shared by many placements (22 in MIII, 21 in Damocles).
+
+So the Dion Catalogue (#685) and any later Dion play should draw coasts with the Damocles code that already ports these routines: `web/src/damocles/islands.ts`, the horizon fill from #573, and the any-range island drawing from #578. That code moves behind a pure seam that both Titles call, as walking did under ADR 0043. It reads Dion's own island records and land colours. Damocles's data stays out of Dion: this finding shares code, not evidence, and every Dion record still comes from MIII's own image.
+
 ## Remaining limits of the browser planner
 
 These are presentation gaps in today's Metis-only planner. They are not recovery gaps. They are listed for #685 and #672.
 
-- **No sea or islands.** The planner fills every ground with land colour and draws no island polygons, which accounts for the two coast scenes. The recovered Land/Sea answer and island draw lists are what it needs.
+- **No sea or islands.** The planner fills every ground with land colour and draws no island polygons, which accounts for the two coast scenes. It needs the recovered Land/Sea answer and island draw lists, drawn by the shared Damocles routines above.
 - **Unbound tokens.** It draws no ground text records, and it leaves tokens `$89`, `$9D` and `$9E` unbound outside the Metis slice. The recovered bindings above cover them.
 - **Fixed stars.** Night skies away from METIS draw METIS's stars. The sky Body inventory remains waived under D1.
 
@@ -170,6 +183,8 @@ Ranges are half-open. Each was checked against the fresh opening image and the c
 | `$5A006..$5A15E` | Object destination path | `c9f7707e3f359333789abe8d9188da5bc4c411e029fe0b23107850c5d2b82e13` | yes |
 | `$0B230..$0B2D0` | Token table | `4c2b93ab68983572abc12ec9c2c2a761cfb67e6ee77e0cf7c42581bfa674c772` | yes |
 | `$07542..$0759A` | Placement token bindings | `0e22d0b83d80f387e1de0e1e86a7cf307444c3f486f7ca6c738dfc1d99b43399` | yes |
+| `$571A8..$576A2` | Island routines, as compared with Damocles | `0b9aee9f4f2427323162db571c01839025fbe1393e85cde29ee9a8f24ae7a7e7` | yes |
+| `$5A996..$5AB62` | Horizon fill | `7ba94d2066180dbe63cd42f8e3d4de9027be4a569f4f755c648587eb146d9384` | yes |
 | `$632F6..$639B9` | Island records | `4783407f415415eabf8f297b03b09cd3dad97e1c31bc4dedf68e31f818f1b351` | yes |
 
 ## Reproduction
