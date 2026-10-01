@@ -5,7 +5,8 @@ slots are stable identities used by the Catalogue, Saves, the Carried Stack, cra
 occupancy, and the Shell Console commands `get <object-slot>` and
 `drop <object-slot>`. Structures are catalogued separately in
 [Damocles structure locations](damocles-structure-locations.md); Targ's objects are
-in [Object locations](object-locations.md).
+in [Object locations](object-locations.md). Dion’s full original-game census is
+in [Dion object locations](dion-object-locations.md).
 
 The table records each object's **initial** residence. Objects can subsequently
 be carried, boarded, dropped, or moved by scripts.

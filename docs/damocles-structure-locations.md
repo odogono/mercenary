@@ -3,7 +3,8 @@
 This is a navigation reference for Damocles's surface structures, Body by Body
 and island by island. Object slots are catalogued separately in
 [Damocles object locations](damocles-object-locations.md); Targ's structures are
-in [Structure locations](structure-locations.md).
+in [Structure locations](structure-locations.md). Dion’s are in
+[Dion structure locations](dion-structure-locations.md).
 
 <!-- Generated from payload/damocles/catalogue.json, its model files, and payload/damocles/arrival-poses.json. -->
 
