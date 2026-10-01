@@ -554,6 +554,18 @@ _Avoid_: Wall Contact, collision system, Mover
 The read-only collection of recovered Damocles Models, Instances, Places, visual variants, and their evidence, including explicit gaps in recovery; the Damocles Gameplay Session reads it as Data Payload but it is not that session.
 _Avoid_: Gameplay Session, Damocles world, level data
 
+**Dion Catalogue**:
+The read-only, sessionless collection of Mercenary III's recovered Bodies, placements, objects, Floors and shared geometry across the whole original world, at `/dion/catalogue` (ADR 0061). It is separately versioned from the playable Dion Data Payload, which it neither reads nor extends, and it is not evidence for Damocles or from it.
+_Avoid_: Dion world payload, Damocles Catalogue (for MIII), map data
+
+**Coverage Ledger**:
+The generated, validated account of every census reference a Catalogue must represent and every Geometry Identity it requires, with each identity's owner, decoder path, recovery state and preview evidence. Required geometry that is still missing keeps the Catalogue incomplete. A ledger count is recomputed from its records, never written by hand.
+_Avoid_: Coverage report, checklist, Change Ledger
+
+**Repeating Field**:
+A structure group the original replicates across a Body by rule rather than by authored cells, as MIDAS fills its 256-cell workspace from one seed and selects cells modulo 16. Its workspace count is not a count of physical places, and its occurrences are computed for a Body Coordinate rather than listed.
+_Avoid_: 256 buildings, tiled city, Settlement
+
 **Damocles Script**:
 A program from Damocles's successor 16-bit bytecode VM Confirmed in the Working Authority, distinct from a Benson Script and from the C64 Benson encoding (ADR 0015).
 _Avoid_: Benson Script (for Damocles), game script, ST bytecode dump
