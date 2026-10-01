@@ -560,6 +560,9 @@ def model_name(ram: Ram, entry: int) -> str | None:
     return None
 
 
+NO_RECORD_GEOMETRY = (0x0, 0x4, 0x5, 0x6)
+
+
 def _pivot(c: Cursor) -> list[int]:
     # $54546: three signed bytes, or $80, an alignment byte and three words.
     first = c.sbyte()
@@ -616,7 +619,7 @@ def _model_header(ram: Ram, c: Cursor) -> dict | None:
     elif op in (0xE, 0xF):
         header['skip'] = c.p + ram.sword(c.p)
         c.p = header['skip']
-    elif op in (0x0, 0x2, 0x5, 0x6, 0x7, 0xB):
+    elif op in (0x0, 0x2, 0x4, 0x5, 0x6, 0x7, 0xB):
         pass
     else:
         raise ValueError(f'model header op ${word:04X} unsupported')
@@ -671,7 +674,9 @@ def _model_faces(ram: Ram, c: Cursor) -> list[dict]:
 def decode_model_at(ram: Ram, record: int, header_allowed: bool = True) -> dict:
     c = Cursor(ram, record)
     header = _model_header(ram, c) if header_allowed else None
-    if header and header['op'] in (0x0, 0x6):
+    # `$545AC`/`$543B2` return, `$4D3B0` draws the debris list at `$639C0` and `$549BA`
+    # one point: none of the four reads geometry from the record.
+    if header and header['op'] in NO_RECORD_GEOMETRY:
         return {'header': header, 'vertices': [], 'alternatives': [], 'faces': [],
                 'provenance': ram.slice(record, c.p)}
     vertices = []

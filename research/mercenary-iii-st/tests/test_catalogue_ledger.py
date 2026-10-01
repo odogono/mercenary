@@ -2,7 +2,8 @@
 
 These run without original captures: the ledger is checked on its own and
 reconciled with the generated census documents. Set M3_CENSUS_RUN to a
-census_capture run to also prove the committed ledger regenerates exactly.
+census_capture run, with M3_SURFACE and M3_OBJECTS, to also prove the committed
+ledger regenerates exactly.
 """
 
 import copy
@@ -184,6 +185,44 @@ class CatalogueLedgerTests(unittest.TestCase):
         self.assertTrue(any('without a decoder path' in p for p in problems))
         self.assertIn('family island has no decoder and no blocking gap', problems)
 
+    def test_object_recovery_is_accounted(self):
+        models = [g for g in self.ledger['geometry'] if g['family'] == 'model' and g['owner'] == 681]
+        self.assertEqual(len(models), 190)
+        self.assertTrue(all(g['state'] in ('recovered', 'empty') and g['sha256'] and g['variants']
+                            is not None for g in models))
+        # Slot 74's record only names the transient debris list: nothing to draw.
+        self.assertEqual([g['id'] for g in models if g['state'] == 'empty'], ['model-0317f6'])
+        self.assertEqual({g['id'] for g in self.ledger['resolvedGaps'] if g['owner'] == 681},
+                         {'model-variants', 'tourcraft-appearance'})
+        objects = {o['slot']: o for o in self.ledger['objects']}
+        self.assertEqual([s for s, o in objects.items() if o['geometry'] is None],
+                         [9, 10, 11, 97, 114, 214, 230])
+        self.assertTrue(all(o.get('disposition') == 'null-model'
+                            for o in objects.values() if o['geometry'] is None))
+        # Shared geometry keeps distinct residents: each DOOR KEY slot has its own letter.
+        self.assertEqual([objects[s]['lettering']['text'] for s in range(30, 40)],
+                         [[c] for c in range(ord('A'), ord('K'))])
+        self.assertEqual({f['geometry'] for f in objects[97]['forms']}, {'model-032822'})
+        geometry = {g['id']: g for g in models}
+        for name in ('model-031864', 'model-032822', 'model-036e00'):
+            self.assertEqual(geometry[name]['slots'], [])
+            self.assertTrue(geometry[name]['formSlots'])
+        scenes = [c for c in self.ledger['comparisons'] if c['kind'] == 'object-scene']
+        self.assertGreaterEqual(len(scenes), 18)
+        self.assertEqual({c['variant'].split(';')[0].split('=')[0] for c in scenes},
+                         {'form', 'state'})
+
+    def test_a_form_must_be_counted(self):
+        def drop_form(ledger):
+            row = next(o for o in ledger['objects'] if o['slot'] == 97)
+            row['forms'] = []
+        self.assertTrue(any('model-032822 reference count' in p for p in self.problems(drop_form)))
+
+        def unnamed(ledger):
+            row = next(o for o in ledger['objects'] if o['slot'] == 9)
+            row['disposition'] = 'mystery'
+        self.assertTrue(any('null-model' in p for p in self.problems(unnamed)))
+
     def test_surface_recovery_is_accounted(self):
         surface = [g for g in self.ledger['geometry'] if g['owner'] == 682]
         self.assertTrue(all(g['state'] in ('recovered', 'empty') and g['sha256'] for g in surface))
@@ -195,7 +234,7 @@ class CatalogueLedgerTests(unittest.TestCase):
         self.assertEqual(max((g for g in surface if g['family'] == 'ground'),
                              key=lambda g: g['references'])['id'], 'ground-01b250')
         self.assertIn('ground-01b250', empty)
-        self.assertEqual({g['id'] for g in self.ledger['resolvedGaps']},
+        self.assertEqual({g['id'] for g in self.ledger['resolvedGaps'] if g['owner'] == 682},
                          {'island-decoder', 'ground-inventory', 'detail-lettering',
                           'empty-road-geometry'})
         self.assertEqual({t for t, kind in self.ledger['lettering'].items() if kind == 'placement'},
@@ -237,13 +276,17 @@ class CatalogueLedgerTests(unittest.TestCase):
 
     def test_regenerates_from_the_census_run(self):
         run, surface = os.environ.get('M3_CENSUS_RUN'), os.environ.get('M3_SURFACE')
-        if not run or not surface:
-            self.skipTest('set M3_CENSUS_RUN and M3_SURFACE (the surface extraction directory)')
-        directory = Path(surface)
+        objects = os.environ.get('M3_OBJECTS')
+        if not run or not surface or not objects:
+            self.skipTest('set M3_CENSUS_RUN, M3_SURFACE and M3_OBJECTS (the surface and '
+                          'object extraction directories)')
+        directory, models = Path(surface), Path(objects)
         comparisons = {kind: json.loads((directory / f'{kind}.json').read_text())
                        for kind in ('scenes', 'coasts')}
+        comparisons['objects'] = json.loads((models / 'objects.scenes.json').read_text())
         ledger = build_ledger(Path(run), surface=json.loads((directory / 'surface.json').read_text()),
-                              comparisons=comparisons)
+                              comparisons=comparisons,
+                              models=json.loads((models / 'objects.json').read_text()))
         self.assertEqual(dumps(ledger), LEDGER_PATH.read_text())
 
 

@@ -9,7 +9,11 @@ import { decodePng, encodePng } from './png.ts';
 /// the original's screenshot of the same state (#682). The scene document comes from
 /// `python3 -m m3lab.scene`; both it and the screenshot are Restricted Material, so
 /// only runs under the ignored `restricted/` root are read. Writes original | planner
-/// | difference beside the scene and prints the agreement.
+/// | difference beside the scene and prints the agreement. A scene that names an
+/// `object` slot (#681) also reports agreement over that object's footprint: the
+/// pixels, within 2 of the box the planner drew the object in, where the planner's
+/// frame with the object differs from its frame without it, or where the original
+/// differs from the frame without it.
 
 const root = resolve(import.meta.dir, '../..');
 const restricted = await realpath(join(root, 'restricted'));
@@ -49,7 +53,7 @@ for (const resident of document.residents) {
     yaw: resident.yaw
   });
 }
-const planned = planDionFrame(world, {
+const state = {
   cell: scene.cell,
   day,
   doors: new Map(),
@@ -63,9 +67,37 @@ const planned = planDionFrame(world, {
   residents,
   roll: scene.roll,
   signCode: scene.signCode
-});
+};
+const planned = planDionFrame(world, state);
 const rgba = new Uint8ClampedArray(320 * 136 * 4);
 frameRgba(planned, rgba);
+const object: number | undefined = scene.object;
+const without = new Uint8ClampedArray(320 * 136 * 4);
+if (object !== undefined) {
+  const fixed = world.drawList.fixed.filter(slot => slot !== object);
+  if (fixed.length === world.drawList.fixed.length) {
+    throw new Error(`object ${object} is not in the drawn list`);
+  }
+  const bare = { ...world, drawList: { ...world.drawList, fixed } };
+  frameRgba(planDionFrame(bare, state), without);
+}
+let footprint = 0;
+let footprintSame = 0;
+const gunsDiffer = (at: number, other: Uint8ClampedArray): boolean =>
+  [0, 1, 2].some(i => gun(rgba[at + i]!) !== gun(other[at + i]!));
+const box = { x0: 320, x1: -1, y0: 136, y1: -1 };
+if (object !== undefined) {
+  for (let y = 0; y < 136; y += 1) {
+    for (let x = 0; x < 320; x += 1) {
+      if (gunsDiffer((y * 320 + x) * 4, without)) {
+        box.x0 = Math.min(box.x0, x - 2);
+        box.x1 = Math.max(box.x1, x + 2);
+        box.y0 = Math.min(box.y0, y - 2);
+        box.y1 = Math.max(box.y1, y + 2);
+      }
+    }
+  }
+}
 
 const sheet = new Uint8Array(960 * 136 * 3);
 let same = 0;
@@ -79,6 +111,17 @@ for (let y = 0; y < 136; y += 1) {
     ];
     const agrees = a.every((value, index) => gun(value) === gun(b[index]!));
     same += agrees ? 1 : 0;
+    const inBox = x >= box.x0 && x <= box.x1 && y >= box.y0 && y <= box.y1;
+    if (object !== undefined && inBox) {
+      const at = (y * 320 + x) * 4;
+      const c = [without[at]!, without[at + 1]!, without[at + 2]!];
+      const drawn = b.some((value, index) => gun(value) !== gun(c[index]!));
+      const shown = a.some((value, index) => gun(value) !== gun(c[index]!));
+      if (drawn || shown) {
+        footprint += 1;
+        footprintSame += agrees ? 1 : 0;
+      }
+    }
     sheet.set(a, (y * 960 + x) * 3);
     sheet.set(b, (y * 960 + 320 + x) * 3);
     sheet.set(agrees ? [0, 0, 0] : [255, 0, 255], (y * 960 + 640 + x) * 3);
@@ -94,7 +137,14 @@ const result = JSON.stringify({
   day,
   gaps: planned.stats.gaps,
   group: scene.group,
-  pixels: same
+  pixels: same,
+  ...(object === undefined
+    ? {}
+    : {
+        object,
+        objectAgreement: footprint === 0 ? 0 : footprintSame / footprint,
+        objectPixels: footprint
+      })
 });
 await Bun.write(join(dirname(scenePath), 'comparison.json'), result + '\n');
 process.stdout.write(result + '\n');

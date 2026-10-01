@@ -127,9 +127,10 @@ def _group_disposition(group: dict, bindings: int) -> str:
 
 
 def build_ledger(run: Path, repository: Path = REPOSITORY, surface: dict | None = None,
-                 comparisons: dict | None = None) -> dict:
-    """The census ledger; with a #682 surface extraction, its recovery states too, and
-    with the #682 original-scene comparisons, their results for #686 to build on."""
+                 comparisons: dict | None = None, models: dict | None = None) -> dict:
+    """The census ledger; with the #682 surface and #681 object extractions, their
+    recovery states too, and with their original-scene comparisons, the results for
+    #686 to build on."""
     opening = Ram.load(run / 'start.ram')
     inventory = read_inventory(opening)
     census = extract_objects(opening)
@@ -393,6 +394,8 @@ def build_ledger(run: Path, repository: Path = REPOSITORY, surface: dict | None 
     }
     if surface is not None:
         apply_surface(ledger, surface, playable)
+    if models is not None:
+        apply_objects(ledger, models, playable)
     if comparisons is not None:
         ledger['comparisons'] = [
             {'id': name, 'kind': 'scene', 'binding': r['binding'], 'run': r['run'],
@@ -400,7 +403,21 @@ def build_ledger(run: Path, repository: Path = REPOSITORY, surface: dict | None 
             for name, r in sorted(comparisons['scenes'].items())] + [
             {'id': name, 'kind': 'land-sea', 'run': r['run'], 'points': len(r['rows']),
              'agree': r['agree']}
-            for name, r in sorted(comparisons['coasts'].items())]
+            for name, r in sorted(comparisons['coasts'].items())] + [
+            {'id': name, 'kind': 'object-scene', 'object': r['object'], 'geometry': r['geometry'],
+             'variant': r['variant'], 'run': r['run'], 'agreement': round(r['agreement'], 4),
+             'objectAgreement': round(r['objectAgreement'], 4), 'plannerGaps': r['gaps'][1:]}
+            for name, r in sorted(comparisons.get('objects', {}).items())]
+        spaceport = comparisons.get('objects', {}).get('tourcraft-spaceport')
+        gap = next((g for g in ledger['gaps'] if g['id'] == 'tourcraft-appearance'), None)
+        if spaceport and gap:
+            ledger['gaps'].remove(gap)
+            ledger.setdefault('resolvedGaps', []).append({
+                'id': gap['id'], 'owner': gap['owner'],
+                'resolution': 'The original draws slot 13 at the opening spaceport with its '
+                              'decoded ground form (form=view-1); the planner draws the same '
+                              f'record there (object scene {spaceport["run"]}, '
+                              'docs/research/dion-object-geometry.md).'})
     ledger['completion'] = completion(ledger)
     problems = validate_ledger(ledger)
     if problems:
@@ -480,6 +497,67 @@ def apply_surface(ledger: dict, surface: dict, playable: dict[str, set[str]]) ->
             resolved.append({'id': gap['id'], 'owner': gap['owner'],
                              'resolution': SURFACE_RESOLUTIONS[gap['id']]})
     ledger['resolvedGaps'] = resolved
+
+
+OBJECT_RESOLUTIONS = {
+    'model-variants': 'Every object model record is decoded with its header-selected states, '
+                      'viewer-selected forms, passenger form and per-slot lettering, and every '
+                      'run-time model-table writer is inventoried (m3lab.catalogue_objects, '
+                      'docs/research/dion-object-geometry.md).',
+}
+
+
+def apply_objects(ledger: dict, objects: dict, playable: dict[str, set[str]]) -> None:
+    """Fold a #681 extraction in: model states, variants and hashes, and every further
+    model a slot can draw (run-time model-table writers, services and driver heads)."""
+    geometry = {g['id']: g for g in ledger['geometry']}
+    rows = {o['slot']: o for o in ledger['objects']}
+    reached: dict[str, set[int]] = {}
+    for slot, extracted in objects['objects'].items():
+        row = rows[int(slot)]
+        if extracted['geometry'] != row['geometry']:
+            raise ValueError(f'object {slot}: the extraction names {extracted["geometry"]}')
+        if 'disposition' in extracted:
+            row['disposition'] = extracted['disposition']
+        if 'lettering' in extracted:
+            row['lettering'] = {'token': extracted['lettering']['token'],
+                                'text': extracted['lettering']['text']}
+        if 'forms' in extracted:
+            row['forms'] = [{'entry': f['entry'], 'geometry': f['geometry'], 'role': f['role'],
+                             'writers': sorted({c['writer'] for c in f['causes']})}
+                            for f in extracted['forms']]
+            for f in extracted['forms']:
+                if f['geometry']:
+                    reached.setdefault(f['geometry'], set()).add(int(slot))
+    for key, record in objects['geometry'].items():
+        entry = geometry.get(key)
+        if entry is None:
+            entry = geometry[key] = {
+                'id': key, 'family': 'model', 'record': record['record'], 'owner': OBJECTS_TICKET,
+                'required': True, 'preview': None, 'references': 0, 'slots': [],
+                'playable': key in playable.get('model', set())}
+        if entry['owner'] != OBJECTS_TICKET:
+            raise ValueError(f'{key} belongs to #{entry["owner"]}, not the object recovery')
+        entry['state'] = 'recovered' if any(_drawable('model', {**v, 'alternatives': []})
+                                            for v in record['variants'].values()) else 'empty'
+        entry['variants'] = list(record['variants'])
+        entry['sha256'] = record['sha256']
+        entry['modelEntries'] = record['entries']
+        entry['formSlots'] = sorted(reached.get(key, set()) - set(entry['slots']))
+        entry['references'] = len(entry['slots']) + len(entry['formSlots'])
+        if 'drawsNothing' in record:
+            entry['drawsNothing'] = record['drawsNothing']
+    ledger['geometry'] = sorted(geometry.values(), key=lambda g: g['id'])
+    ledger['source']['objects'] = {
+        'recipe': 'research/mercenary-iii-st/m3lab/catalogue_objects.py',
+        'evidence': 'docs/research/dion-object-geometry.md',
+        'sha256': hashlib.sha256(json.dumps(objects, sort_keys=True).encode()).hexdigest()}
+    resolved = ledger.setdefault('resolvedGaps', [])
+    for gap in list(ledger['gaps']):
+        if gap['id'] in OBJECT_RESOLUTIONS:
+            ledger['gaps'].remove(gap)
+            resolved.append({'id': gap['id'], 'owner': gap['owner'],
+                             'resolution': OBJECT_RESOLUTIONS[gap['id']]})
 
 
 def completion(ledger: dict) -> dict:
@@ -616,6 +694,13 @@ def validate_ledger(ledger: dict, *, check_decoders: bool = True) -> list[str]:
             referenced.update(key for _, _, key in slot_map[b['slot']]['floors'] if key)
             referenced[slot_map[b['slot']]['detail']] += 1
     referenced.update(o['geometry'] for o in objects if o['geometry'])
+    for o in objects:
+        # A further model the slot can draw counts once per slot, beside its opening one.
+        referenced.update({f['geometry'] for f in o.get('forms', [])
+                           if f['geometry'] and f['geometry'] != o['geometry']})
+        if o['geometry'] is None:
+            check(o.get('disposition', 'null-model') == 'null-model',
+                  f'object {o["slot"]} has no model and no null-model disposition')
     referenced.update(i['geometry'] for body in ledger['bodies'] for i in body['islands'])
     for key, g in geometry.items():
         check(g['family'] in ledger['decoders'], f'{key} has unknown family {g["family"]}')
@@ -624,7 +709,7 @@ def validate_ledger(ledger: dict, *, check_decoders: bool = True) -> list[str]:
         check(g['state'] in STATES, f'{key} has unknown state {g["state"]!r}')
         check(g['owner'] in (OBJECTS_TICKET, SURFACE_TICKET, INTERIOR_TICKET),
               f'{key} has no recovery owner')
-        if g['family'] == 'ground' or 'entries' in g:
+        if g['family'] == 'ground' or (g['family'] == 'model' and g['owner'] == SURFACE_TICKET):
             # Reached per cell from a ground record: counted by the surface extraction.
             check(g['references'] > 0, f'{key} is not referenced by any cell')
         else:
@@ -642,6 +727,10 @@ def validate_ledger(ledger: dict, *, check_decoders: bool = True) -> list[str]:
     for item in ledger.get('comparisons', []):
         if item['kind'] == 'scene':
             check(item['binding'] in binding_ids, f'comparison {item["id"]} names unknown binding')
+        elif item['kind'] == 'object-scene':
+            check(item['geometry'] in geometry and
+                  item['variant'] in (geometry[item['geometry']]['variants'] or []),
+                  f'comparison {item["id"]} names unknown geometry or variant')
         else:
             check(item['agree'] <= item['points'], f'comparison {item["id"]} agrees beyond its points')
     if 'surfaceCells' in totals:
@@ -698,14 +787,20 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument('--run', type=Path, required=True, help='a census_capture run directory')
     parser.add_argument('--surface', type=Path, help='a catalogue_surface extraction (#682)')
+    parser.add_argument('--objects', type=Path, help='a catalogue_objects extraction (#681)')
+    parser.add_argument('--object-comparisons', type=Path,
+                        help='the object_scenes results, objects.json (#681)')
     parser.add_argument('--comparisons', type=Path,
                         help='the directory holding surface_scenes scenes.json and coasts.json')
     parser.add_argument('--out', type=Path, default=LEDGER_PATH)
     args = parser.parse_args()
     surface = json.loads(args.surface.read_text()) if args.surface else None
+    objects = json.loads(args.objects.read_text()) if args.objects else None
     comparisons = ({kind: json.loads((args.comparisons / f'{kind}.json').read_text())
                     for kind in ('scenes', 'coasts')} if args.comparisons else None)
-    ledger = build_ledger(args.run, surface=surface, comparisons=comparisons)
+    if comparisons is not None and args.object_comparisons:
+        comparisons['objects'] = json.loads(args.object_comparisons.read_text())
+    ledger = build_ledger(args.run, surface=surface, comparisons=comparisons, models=objects)
     args.out.write_text(dumps(ledger))
     c = ledger['completion']
     print(f"Wrote {args.out}: {len(ledger['geometry'])} Geometry Identities, "
