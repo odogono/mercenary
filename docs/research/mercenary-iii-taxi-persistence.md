@@ -101,6 +101,12 @@ The 3D view is repainted by +12–40 VBL. The panel band (screen y 348–444) is
 
 About 10,400 pixels stay different. At `sol` 6010, the only case still in the room with the same panel, the difference clears by +40. **Panel pixels are persistent presentation state in the original.** A restore must draw every panel element and the message bar from state.
 
+### Night context follow-up (#646)
+
+[The night/sky report](mercenary-iii-taxi-night-sky.md) extends restoration at `sol` 13730 and `sp` 17700 through night. Twelve synthetic continuations separate full METIS phase, cached angular coordinates and derived sky values. Resetting only `$70E4`, `$7324`, `$70A6` and `$42C6C` gives byte-identical RAM and screenshots to the untouched control by checkpoint +50 VBL and at 18000/19000 on both routes. Both untouched controls' full RAM at 19000 also matches the uninterrupted R3 trajectory. These values can be rebuilt before presentation from preserved context.
+
+In contrast, resetting only cached latitude `$42C70` to zero reverses the day/night result and remains wrong at 19000. Resetting the METIS accumulator to `B0` postpones night beyond 19000. Deriving coordinates from current taxi XYZ changes the solicitor longitude step from `$278` to `$277`, and the spaceport latitude from `$20C` to `$20A`. The port must preserve the actual cached-coordinate update rule, not substitute current service position. These original-engine controls establish dependencies; I2 still has to prove its portable Save/Session Resume reconstruction under the accepted eleven-tick cadence.
+
 ## Omission method
 
 Only 7,603 non-screen bytes ever differ from `B0` across all checkpoints. Walk-B adds ten more, including the countdown. They were covered by 48 address groups.
@@ -153,7 +159,8 @@ Classes:
 | `$6C5C` 1 | Taxi facing byte: slot 16 of the per-resident yaw array `$6C1C`+4·slot. Written from the placement heading, by route turns as heading word `$6D20` >> 2, and by leave from the player heading. Read by the model draw and by boarding | Derived (R3b) | Equals `($6D20 >> 2) & $FF` at all 31 checkpoints. Under exact cadence a reset is identical at all 8 checkpoints where it differs, and a wrong value before boarding is timing-only. Carry `$6D20` and rebuild it |
 | `$6BFB..$6C1B` | Resident-array bytes | V/U | Persisting only (13600+) |
 | `$51CDA` 4 | Height/dwell sequence pointer | R | Div at 10700-post, 10510, 12200, 13600; timing at 12620, 17700 |
-| `$575A..$57D9` | 32 per-body turn accumulators, +`$7AEA[i]` each VBL at `$53144` (night/sky; R2's "METIS turn accumulator") | R | Div at 10700-post onwards. Persisting only at 6010, but night timing is presentation that a trace does not capture |
+| `$575A..$57D9` | 32 **long** Body turn accumulators, +long `$7AEA[i]` each VBL at `$53144`; METIS is `$5796`, rate `$000003B0` at `$7B26` | R | Div at 10700-post onwards. Persisting only at 6010, but night timing is presentation that a trace does not capture. [#646](mercenary-iii-taxi-night-sky.md) confirms resetting METIS phase restores day where the control is night. Preserve the fractional low word, or prove reconstruction from the same phase origin and tick count |
+| `$70B4`, `$70B8`, `$42C70` words | Cached longitude and latitude steps; taxi passengers use the foot path, which refreshes sampled longitude `$42C6C` but does not refresh latitude from service XYZ | Required for sky, preserved or reconstructed | [#646](mercenary-iii-taxi-night-sky.md): resetting `$42C70` reverses the day/night result on both routes; recalculating from current taxi XYZ is not the recovered update rule. Preserve the cached coordinate context or rebuild it from its actual update history |
 
 ### Player and input
 
@@ -219,6 +226,7 @@ Classes:
 - **The pending admission window** depends on the previous frame's render-derived candidate, not the saved player position alone. A restore with a pending B or countdown must produce the same candidate before the next admission pass. Otherwise the window can expire unused.
 - **The timed-script countdown `$727E`** and the message wait counter `$7236` count VBLs, not frames. They must advance with the restored elapsed-time model, not the render rate.
 - **The panel** must be fully repainted after restore. The original draws only changes.
+- **The night context** must retain the full METIS turn phase and cached angular coordinates, with the fixed simulation phase from ADR 0058. Rebuild sampled longitude, day flag, sky colour and selected palette half before presenting the restored scene, using the recovered frame order. Fresh taxi XYZ does not reconstruct the cached coordinates. [#646](mercenary-iii-taxi-night-sky.md) records the bounded restore controls; the remaining sky/body inventory is not thereby complete.
 
 ## Decoded future-affecting bytes (R3b)
 
@@ -298,7 +306,7 @@ Nothing found invalidates the two-journey milestone. Restore-complete persistenc
    - **Ignore:** `$7292..$72A3`, `$71AE..$71BD` and the beacon colours.
 
    Nothing in these ranges needs its own Save field beyond the flags. Their natural-cadence divergence is CPU cost.
-3. *Frame-rate model.* Wait, timed-script and clock counters are per VBL; route motion and admission passes are per frame. R2's open 60 Hz versus 50 Hz decision changes restored timing as well as live timing.
+3. *Frame-rate model.* Wait, timed-script, Body turn and clock counters are per VBL; route motion and admission passes are per frame. [ADR 0058](../adr/0058-run-mercenary-iii-at-50-hz-with-a-confirmed-fixed-frame-cadence.md) settles this at 50 Hz with eleven ticks per frame. [#646](mercenary-iii-taxi-night-sky.md) adds the night context: full fractional phase, cached coordinates and sampled-frame order must be preserved or demonstrably reconstructed.
 
 **Not blocking, but recorded:**
 
@@ -310,7 +318,7 @@ Nothing found invalidates the two-journey milestone. Restore-complete persistenc
 
 1. From each case in the whole-machine-controls table, a Save followed by Resume and the same later inputs gives the same ordered transitions as uninterrupted play. That means call, admission, selection, Start, turns, destination clear, arrival message shown or refused, dwell, exit, clock seconds, narrative messages and cash. Tolerance is one main-loop frame. Endpoints must match exactly.
 2. A Save with an unconsumed B, or mid-admission window, preserves admission. A Save while descending (counter 35/34) preserves the rejection of L until settled dwell, and nothing is queued.
-3. A Save during a script wait, a timed script or a busy message bar resumes the same text and timing. On the spaceport this includes suppressing "WE'VE ARRIVED".
+3. A Save during a script wait, a timed script or a busy message bar resumes the same text and timing. On the spaceport this includes suppressing "WE'VE ARRIVED". Before, across and after the night boundary, restoration preserves the decoded day rule, sky/windows/stars and their subsequent timing using full turn phase and cached angular coordinates ([#646](mercenary-iii-taxi-night-sky.md)); assert the rule, not a universal flip VBL.
 4. After Resume, the panel is fully drawn from state: card text, destination, grid, cash and clock. The message bar is not left to incremental repaint.
 5. A Save taken mid-reveal resumes the reveal and its input refusal.
 6. **Title identity.** A Mercenary III Save names its title and pinned research baseline. It is refused by other titles and refuses their Saves. Damocles schema 18 identity is not evidence of compatibility. No schema or version is proposed here; the recorded fields above are the minimum a Mercenary III Save must reconstruct for this slice.
