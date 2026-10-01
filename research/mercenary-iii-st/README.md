@@ -48,12 +48,29 @@ It accounts for all persistent slots, authored groups and named places, includin
 MIDAS's repeat and the initially absent LOGOS construction. The exact initial
 position of a circulating service can differ between fresh boots.
 
+## Dion Catalogue coverage ledger
+
+```sh
+python3 -m m3lab.catalogue_ledger --run <census run directory>
+PYTHONPATH=.:tests python3 -m unittest tests.test_catalogue_ledger
+```
+
+This writes the tracked [`catalogue-ledger.json`](catalogue-ledger.json) from the
+census run. It holds every object slot, group, cell binding and selected
+structure slot, the Geometry Identities they require, and each identity's owner
+ticket, decoder path and recovery state. It decodes no geometry and contains no
+RAM. The tests validate the committed ledger and reconcile it with the two
+location documents without captures; with `M3_CENSUS_RUN` set they also prove
+that it regenerates exactly. Recovery tickets move identities out of `pending`;
+see [the data contract](../../docs/dion-catalogue-contract.md).
+
 ## Modules
 
 | Module | Exports | Readers |
 |---|---|---|
 | `census_capture.py` | Full original-builder census captures | `$4F0F2..$4F304` |
 | `census_locations.py`, `census_objects.py` | All groups, Body placements, residents and names | Full location recovery note |
+| `catalogue_ledger.py` | `catalogue-ledger.json`: Dion Catalogue coverage | Census decoders above |
 | `boot.py` | Cold-boot plans and captures | Integration recipe |
 | `ram.py` | Provenance-carrying reads | — |
 | `geometry.py` | Cells, structures, regions, details, ground, models | `$5600C`, `$5AD2C..$5B2D2`, `$54AEE..$54D20`, `$56204`, `$545AE..$549BA` |
