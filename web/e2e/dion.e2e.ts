@@ -29,8 +29,10 @@ test('/dion boots the METIS prison opening from its own payload', async ({
       timeout: 5000
     })
     .toBeGreaterThan(55);
-  const tick = Number(await screen.getAttribute('data-tick'));
-  const frame = Number(await screen.getAttribute('data-frame'));
+  const { frame, tick } = await screen.evaluate(element => ({
+    frame: Number((element as HTMLElement).dataset['frame']),
+    tick: Number((element as HTMLElement).dataset['tick'])
+  }));
   expect(frame).toBe(Math.floor(tick / 11));
   // Only Mercenary III's documents were fetched.
   const payload = requests.filter(path => path.startsWith('/payload/'));
@@ -126,4 +128,90 @@ test('/dion walks and turns on the normal controls, held in by the shut door', a
     .toBeGreaterThan(heading);
   await page.keyboard.up('ArrowRight');
   await expect(screen).toHaveAttribute('data-region', '1');
+});
+
+test('/dion activates and calls through keyboard controls, saves and reloads its own session', async ({
+  page
+}) => {
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'mercenary.browser-shell.damocles.session-resume.v1',
+      'damocles sentinel'
+    );
+    localStorage.setItem(
+      'mercenary.browser-shell.session-resume.v1',
+      'targ sentinel'
+    );
+  });
+  await page.goto('/dion');
+  const screen = page.locator('#screen');
+  await expect(screen).toHaveAttribute('data-state', 'ready');
+  await page.keyboard.press('Enter');
+  await expect
+    .poll(async () => Number(await screen.getAttribute('data-reveal')))
+    .toBeGreaterThan(0);
+  await expect(screen).toHaveAttribute('data-reveal', '0');
+  await page.keyboard.press('*');
+  await expect(screen).toHaveAttribute('data-call', 'true');
+  await expect(page.locator('#status')).not.toContainText('Sound unavailable');
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'SAVE / LOAD' }).click();
+  await page.locator('[data-slot="1"] [data-action="save"]').click();
+  const saved = await page.evaluate(() =>
+    JSON.parse(
+      localStorage.getItem('mercenary.browser-shell.dion.save.v1.slot-1')!
+    )
+  );
+  expect(saved.identity.title).toBe('dion');
+  expect(saved.snapshot.snapshot.taxi.call).toBe(true);
+  await page.reload();
+  await expect(screen).toHaveAttribute('data-state', 'ready');
+  await expect(screen).toHaveAttribute('data-call', 'true');
+  expect(
+    await page.evaluate(() =>
+      localStorage.getItem('mercenary.browser-shell.damocles.session-resume.v1')
+    )
+  ).toBe('damocles sentinel');
+  expect(
+    await page.evaluate(() =>
+      localStorage.getItem('mercenary.browser-shell.session-resume.v1')
+    )
+  ).toBe('targ sentinel');
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'SAVE / LOAD' }).click();
+  await page.locator('[data-slot="1"] [data-action="load"]').click();
+  await expect(page.locator('#game-surface')).toHaveAttribute(
+    'data-layer',
+    'none'
+  );
+  await expect(screen).toHaveAttribute('data-call', 'true');
+  await expect(page.locator('#failure')).toBeHidden();
+});
+
+test('/dion cooperatively hands the latest session to another tab and can reclaim it', async ({
+  context,
+  page
+}) => {
+  await page.goto('/dion');
+  await expect(page.locator('#screen')).toHaveAttribute('data-state', 'ready');
+  await page.keyboard.press('Enter');
+  const second = await context.newPage();
+  await second.goto('/dion');
+  await expect(second.locator('#screen')).toHaveAttribute(
+    'data-state',
+    'ready'
+  );
+  await expect(second.getByRole('button', { name: 'TAKE OVER' })).toBeVisible();
+  await second.getByRole('button', { name: 'TAKE OVER' }).click();
+  await expect(second.getByRole('button', { name: 'TAKE OVER' })).toBeHidden();
+  await expect(page.getByRole('button', { name: 'TAKE OVER' })).toBeVisible();
+  const oldTick = Number(
+    await page.locator('#screen').getAttribute('data-tick')
+  );
+  expect(
+    Number(await second.locator('#screen').getAttribute('data-tick'))
+  ).toBeGreaterThanOrEqual(oldTick);
+  await page.getByRole('button', { name: 'TAKE OVER' }).click();
+  await expect(page.getByRole('button', { name: 'TAKE OVER' })).toBeHidden();
+  await expect(second.getByRole('button', { name: 'TAKE OVER' })).toBeVisible();
 });

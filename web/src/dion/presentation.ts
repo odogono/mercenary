@@ -7,7 +7,7 @@ import { fail, int, list, record, text } from './read.ts';
 ///
 /// Recovered values live in `payload/dion/`. This document holds the rest: the 50 Hz
 /// eleven-tick cadence ADR 0058 adopted, the colour levels the browser shows, and the
-/// day placeholder #646 will replace. Its coverage list names, for each required item,
+/// recovered night rule from #646. Its coverage list names, for each required item,
 /// the payload record that recovers it or the gap and ticket it waits on. A gap that
 /// gates I1 refuses the Destination; gaps that gate I2 are carried as named gaps.
 
@@ -33,7 +33,7 @@ export interface DionCoverageItem {
 export interface DionPresentation {
   readonly colourLevels: DionTaggedValue<number>;
   readonly coverage: readonly DionCoverageItem[];
-  readonly nightFlip: DionTaggedValue<'day'>;
+  readonly nightFlip: DionTaggedValue<'phase-rule'>;
   readonly ticksPerFrame: DionTaggedValue<number>;
   readonly ticksPerSecond: DionTaggedValue<number>;
   readonly walkingSubsteps: DionTaggedValue<number>;
@@ -117,7 +117,9 @@ export const readDionPresentation = (value: unknown): DionPresentation => {
     colourLevels: tagged(values, 'colourLevels', (v, p) => int(v, p, 7, 7)),
     coverage,
     nightFlip: tagged(values, 'nightFlip', (v, p) =>
-      v === 'day' ? 'day' : fail(`${p} is not the day placeholder`)
+      v === 'phase-rule'
+        ? 'phase-rule'
+        : fail(`${p} is not the recovered night rule`)
     ),
     ticksPerFrame,
     ticksPerSecond,

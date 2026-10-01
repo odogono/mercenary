@@ -16,6 +16,7 @@ export type DionCentreView =
   | {
       readonly kind: 'card';
       readonly lines: readonly [string, string];
+      readonly reveal?: number;
     };
 
 export interface DionPanelView {
@@ -33,6 +34,7 @@ export interface DionPanelView {
   readonly heading: number;
   readonly inventory: string;
   readonly location: string;
+  readonly message?: readonly number[];
   readonly pitch: number;
   /// `$70B4`/`$70B8`, each shown as `(v × $FA00) >> 16`.
   readonly position: readonly [number, number];
@@ -106,13 +108,13 @@ export const drawDionPanel = (
   // The centre box: the inactive logo, or a card's art with its text (`$4DF34`).
   const { box } = doc.centre;
   const art =
-    view.centre.kind === 'card'
+    view.centre.kind === 'card' && (view.centre.reveal ?? 0) <= 32
       ? doc.centre.taxicard.pixels
       : doc.centre.logo.pixels;
   art.forEach((row, index) =>
     pixels.set(row, (box.y + index - PANEL_TOP) * WIDTH + box.x)
   );
-  if (view.centre.kind === 'card') {
+  if (view.centre.kind === 'card' && (view.centre.reveal ?? 0) === 0) {
     const [first, second] = view.centre.lines;
     writeField(
       planes,
@@ -128,6 +130,30 @@ export const drawDionPanel = (
       [...second],
       fields.cardText.lines[1]
     );
+  }
+
+  if (view.centre.kind === 'card' && (view.centre.reveal ?? 0) > 0) {
+    const remaining = view.centre.reveal!;
+    const passed = 64 - remaining;
+    const old = doc.centre.logo.pixels;
+    const fresh = doc.centre.taxicard.pixels;
+    for (let row = 0; row < box.height; row += 1) {
+      const source =
+        passed < 32 ? old[row + passed] : fresh[row - (64 - passed)];
+      pixels.set(
+        source ?? new Uint8Array(box.width),
+        (box.y + row - PANEL_TOP) * WIDTH + box.x
+      );
+    }
+  }
+  if (view.message !== undefined) {
+    for (let row = 0; row < 6; row += 1) {
+      for (let x = 0; x < 288; x += 1) {
+        const value = view.message[row * 288 + x]!;
+        planes.set(16 + x, fields.messageBar.y + row, 0, value !== 0);
+        planes.set(16 + x, fields.messageBar.y + row, 1, false);
+      }
+    }
   }
 
   writeField(
@@ -282,7 +308,9 @@ export const drawDionPanel = (
 
   // The card or logo's own two colours replace colour 4, and colour 1 from row 152.
   const centre =
-    view.centre.kind === 'card' ? doc.centre.taxicard : doc.centre.logo;
+    view.centre.kind === 'card' && (view.centre.reveal ?? 0) <= 32
+      ? doc.centre.taxicard
+      : doc.centre.logo;
   const upper = [...doc.palette.upper];
   const lower = [...doc.palette.lower];
   upper[4] = centre.colour4;

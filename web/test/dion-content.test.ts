@@ -198,14 +198,20 @@ describe('the Mercenary III content boundary', () => {
     );
   });
 
-  test('the remaining gaps gate I2 and name their tickets', async () => {
+  test('closes I2 content gaps and explicitly retains D1 visual waivers', async () => {
     const { presentation } = await dionContent();
-    const gaps = presentation.coverage.filter(item => item.status === 'gap');
-    expect(gaps.length).toBeGreaterThan(0);
-    for (const gap of gaps) {
-      expect(gap.gates).toBe('I2');
-      expect(gap.ticket).toMatch(/^#\d+$/);
-    }
+    expect(presentation.coverage.filter(item => item.status === 'gap')).toEqual(
+      []
+    );
+    expect(presentation.nightFlip).toMatchObject({
+      provenance: 'recovered',
+      value: 'phase-rule'
+    });
+    expect(
+      presentation.coverage
+        .filter(item => item.status === 'waived')
+        .map(item => item.item)
+    ).toContain('Complete sky Body inventory');
   });
 
   test('tags the eleven-tick cadence as ADR 0058 authored it', async () => {

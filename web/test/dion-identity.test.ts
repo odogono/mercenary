@@ -8,6 +8,7 @@ import {
   decodeDionRecord,
   dionRecordIdentity
 } from '../src/dion/save.ts';
+import { DionSession } from '../src/dion/session.ts';
 import { dionTitle } from '../src/dion/title.ts';
 import { decodeSave, type SaveEnvironment } from '../src/session/save.ts';
 import { titleStorageKeys } from '../src/shell/title.ts';
@@ -101,7 +102,7 @@ describe('the Mercenary III Title identity', () => {
     expect(() => decodeDionRecord('{', identity)).toThrow('not JSON');
   });
 
-  test('refuses a Mercenary III record of other content, and admits none yet', async () => {
+  test('refuses a Mercenary III record of other content or missing snapshot', async () => {
     const identity = dionRecordIdentity(await dionContent());
     expect(() =>
       decodeDionRecord(
@@ -116,7 +117,7 @@ describe('the Mercenary III Title identity', () => {
       )
     ).toThrow('other Mercenary III content');
     expect(() => decodeDionRecord(dionRecord(identity), identity)).toThrow(
-      'reserved until #648'
+      'snapshot is not a record'
     );
   });
 
@@ -135,22 +136,35 @@ describe('the Mercenary III Title identity', () => {
     expect(() => decodeSave(record, {} as SaveEnvironment)).toThrow();
   });
 
-  test('describes its slots and refuses to write them', async () => {
-    const identity = dionRecordIdentity(await dionContent());
+  test('describes its own slots, saves and restores only Mercenary III', async () => {
+    const content = await dionContent();
+    const identity = dionRecordIdentity(content);
+    let session = new DionSession(content);
     const storage = memory({
       [DION_STORAGE.save(2)]: JSON.stringify({
         identity: { title: 'damocles' }
       }),
       [titleStorageKeys('damocles').save(1)]: dionRecord(identity)
     });
-    const persistence = createDionSavePersistence({ identity, storage });
+    const persistence = createDionSavePersistence({
+      capture: () => ({ snapshot: session.captureResume(), where: 'METIS' }),
+      content,
+      identity,
+      release: () => {},
+      restore: record => {
+        session = new DionSession(content, record);
+      },
+      storage
+    });
     // A Damocles slot holding an MIII record is not an MIII slot: slot 1 here is empty.
     expect(persistence.describe(1)).toEqual({ slot: 1, state: 'empty' });
     expect(persistence.describe(2)).toMatchObject({ state: 'invalid' });
-    expect(persistence.save(1)).toEqual({
-      kind: 'failed',
-      reason: 'Mercenary III Saves arrive with #648'
-    });
-    expect(storage.getItem(DION_STORAGE.save(1))).toBeNull();
+    session.advance(1.24);
+    const saved = session.snapshot;
+    expect(persistence.save(1)).toEqual({ kind: 'done' });
+    expect(storage.getItem(DION_STORAGE.save(1))).not.toBeNull();
+    session.advance(2);
+    expect(persistence.load(1)).toEqual({ kind: 'done' });
+    expect(session.snapshot).toEqual(saved);
   });
 });

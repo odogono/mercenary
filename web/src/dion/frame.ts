@@ -7,6 +7,7 @@ import {
   type CameraPoint,
   type LevelCamera
 } from './raster.ts';
+import { dionStars } from './sky.ts';
 import type {
   DionAttachment,
   DionCell,
@@ -44,6 +45,7 @@ export interface DionResidentPose {
 }
 
 export interface DionDoorState {
+  readonly latch?: 'shut' | 'moving' | 'open';
   /// 0 shut … 142 fully open; the leaves stop eight units inside their outer edges.
   readonly openUnits: number;
 }
@@ -77,7 +79,14 @@ export interface DionFrameStats {
   readonly polygons: number;
 }
 
+export interface DionCandidate {
+  readonly distance: number;
+  readonly exponent: number;
+  readonly slot: number;
+}
+
 export interface DionFrame {
+  readonly candidate: DionCandidate | null;
   readonly frame: IndexedFrame;
   readonly horizonRow: number;
   readonly land: number;
@@ -117,6 +126,7 @@ class FramePalette {
 }
 
 interface Paint {
+  candidate: DionCandidate | null;
   readonly gaps: Set<string>;
   /// `$B300`: the two characters the last `$8008` header wrote, which token `$8B` reads.
   labelCode: number | null;
@@ -515,6 +525,29 @@ interface Drawn {
   readonly slot: number;
 }
 
+const selectCandidate = (
+  view: View,
+  slot: number,
+  pose: DionResidentPose
+): void => {
+  if (slot === 0 || slot === 74) {
+    return;
+  }
+  const distance = Math.hypot(
+    ...pose.position.map((v, axis) => v - view.camera.eye[axis]!)
+  );
+  if (
+    view.paint.candidate === null ||
+    distance <= view.paint.candidate.distance
+  ) {
+    view.paint.candidate = {
+      distance,
+      exponent: distance < 1 ? 0 : Math.floor(Math.log2(distance)),
+      slot
+    };
+  }
+};
+
 const residentPose = (view: View, resident: DionResident): DionResidentPose =>
   view.state.residents.get(resident.slot) ?? {
     position: resident.position,
@@ -529,6 +562,7 @@ const drawModel = (
   model: DionModel,
   pose: DionResidentPose
 ): void => {
+  selectCandidate(view, slot, pose);
   const header = model.header;
   const op = header?.op;
   if (op === 0x0 || op === 0x6) {
@@ -905,7 +939,8 @@ const drawKey = (
   }
   const priority = view.world.drawPriority[priorityIndex] ?? 0x7f;
   // A log-float distance: the exponent with the priority byte added to its top byte.
-  const exponent = distance <= 0 ? 0 : Math.ceil(Math.log2(distance + 1));
+  const exponent =
+    distance <= 0 ? 0 : Math.floor(Math.log2(Math.max(1, distance)));
   return (
     priority * 0x1_00_00_00 +
     (exponent + far) * 0x1_00_00 +
@@ -1100,12 +1135,15 @@ const drawHooked = (
   const items: Placed[] = [];
   for (const slot of slots) {
     const resident = view.world.residents.find(item => item.slot === slot);
-    if (resident === undefined || resident.model === null) {
+    if (resident === undefined) {
       continue;
     }
     items.push({
       cellNumber: resident.cell,
-      model: view.world.models.get(resident.model),
+      model:
+        resident.model === null
+          ? undefined
+          : view.world.models.get(resident.model),
       pose: residentPose(view, resident),
       slot
     });
@@ -1116,6 +1154,7 @@ const drawHooked = (
   }));
   keyed.sort((a, b) => b.key - a.key);
   for (const { item } of keyed) {
+    selectCandidate(view, item.slot, item.pose);
     if (item.model !== undefined) {
       drawModel(view, bound, item.slot, item.model, item.pose);
     }
@@ -1365,7 +1404,8 @@ export const planDionFrame = (
   const sceneHalf =
     bound === null ? null : world.palettes.get(bound.cell.palette);
   const paint: Paint = {
-    gaps: new Set(['horizon line, stars and sky Bodies (#646)']),
+    candidate: null,
+    gaps: new Set(['complete sky Body inventory waived by D1']),
     labelCode: null,
     lines: 0,
     models: [],
@@ -1387,6 +1427,15 @@ export const planDionFrame = (
     state,
     world
   };
+  if (!state.day) {
+    for (const [x, y, colour] of dionStars(
+      world.sky,
+      state.heading,
+      state.pitch
+    )) {
+      frame.pixels[y * 320 + x] = palette.literal(colour);
+    }
+  }
   if (bound !== null) {
     drawGround(view, bound);
   } else {
@@ -1419,6 +1468,7 @@ export const planDionFrame = (
   };
   paintFrom(0);
   return {
+    candidate: paint.candidate,
     frame,
     horizonRow: world.framePalette.horizonRow,
     land: world.framePalette.land,

@@ -1,19 +1,16 @@
-import type {
-  SavePersistence,
-  SaveSlot,
-  SlotDescription
+import {
+  createSlotPersistence,
+  type SavePersistence,
+  type SaveSlot
 } from '../shell/saves.ts';
 import { titleStorageKeys } from '../shell/title.ts';
 import type { DionContent } from './content.ts';
+import { readDionResume } from './restore.ts';
+import type { DionResumeRecord } from './session.ts';
 
-/// Mercenary III's Save and Session Resume identity, reserved by I1 (#647).
-///
-/// A Mercenary III record names its Title, its Destination, the pinned program image
-/// and the content it was written against. It keeps its own storage keys under
-/// `mercenary.browser-shell.dion.*`, never Targ's or Damocles's, and a Damocles Save
-/// identity is never evidence that a record is compatible (D1 item 7). No snapshot
-/// schema is admitted yet: restore-complete persistence is I2's (#648), so every record
-/// is refused here, a foreign one for being foreign and an MIII one for being early.
+/// Mercenary III's title-local Save and Session Resume identity (#648).
+/// Records bind the pinned program and complete content fingerprint to a validated
+/// simulation snapshot. Browser Shell storage and chooser mechanics are shared.
 
 export const DION_TITLE = 'dion' as const;
 export const DION_DESTINATION = 'metis' as const;
@@ -55,8 +52,9 @@ const objectOf = (value: unknown): Record<string, unknown> | null =>
 /// never mistaken for an early MIII one.
 export const decodeDionRecord = (
   encoded: string,
-  expected: DionRecordIdentity
-): never => {
+  expected: DionRecordIdentity,
+  content?: DionContent
+): DionSaveRecord => {
   let parsed: unknown;
   try {
     parsed = JSON.parse(encoded);
@@ -82,63 +80,69 @@ export const decodeDionRecord = (
   if (identity!['contentSha256'] !== expected.contentSha256) {
     return refuse('written against other Mercenary III content');
   }
-  return refuse(
-    'Mercenary III Saves are reserved until #648; this record cannot be restored yet'
-  );
+  if (identity!['destination'] !== expected.destination) {
+    return refuse('written for another Destination');
+  }
+  if (record['schemaVersion'] !== DION_SAVE_SCHEMA_VERSION) {
+    return refuse('unsupported Mercenary III Save schema');
+  }
+  const savedAt = record['savedAt'];
+  const where = record['where'];
+  if (
+    typeof savedAt !== 'string' ||
+    !Number.isFinite(Date.parse(savedAt)) ||
+    typeof where !== 'string'
+  ) {
+    return refuse('invalid Save description');
+  }
+  try {
+    return {
+      identity: expected,
+      savedAt,
+      schemaVersion: DION_SAVE_SCHEMA_VERSION,
+      snapshot: readDionResume(record['snapshot'], content),
+      where
+    };
+  } catch (error) {
+    return refuse(error instanceof Error ? error.message : String(error));
+  }
 };
 
-/// The System Menu's three slots for Mercenary III: described honestly, never written.
-export const createDionSavePersistence = (options: {
+export const DION_SAVE_SCHEMA_VERSION = 1;
+export interface DionSaveRecord {
   readonly identity: DionRecordIdentity;
+  readonly savedAt: string;
+  readonly schemaVersion: number;
+  readonly snapshot: DionResumeRecord;
+  readonly where: string;
+}
+export const encodeDionRecord = (record: DionSaveRecord): string =>
+  JSON.stringify(record);
+
+export const createDionSavePersistence = (options: {
+  readonly capture: () => {
+    readonly snapshot: DionResumeRecord;
+    readonly where: string;
+  };
+  readonly content: DionContent;
+  readonly identity: DionRecordIdentity;
+  readonly release: () => void;
+  readonly restore: (snapshot: DionResumeRecord, slot: SaveSlot) => void;
   readonly storage: Storage | undefined;
-}): SavePersistence => {
-  const listeners = new Set<() => void>();
-  const describe = (slot: SaveSlot): SlotDescription => {
-    if (options.storage === undefined) {
-      return {
-        reason: 'browser storage is unavailable',
-        slot,
-        state: 'unavailable'
-      };
-    }
-    let encoded: string | null;
-    try {
-      encoded = options.storage.getItem(DION_STORAGE.save(slot));
-    } catch {
-      return {
-        reason: 'browser storage is unavailable',
-        slot,
-        state: 'unavailable'
-      };
-    }
-    if (encoded === null) {
-      return { slot, state: 'empty' };
-    }
-    try {
-      return decodeDionRecord(encoded, options.identity);
-    } catch (error) {
-      return {
-        reason: error instanceof Error ? error.message : String(error),
-        slot,
-        state: 'invalid'
-      };
-    }
-  };
-  const reserved = {
-    kind: 'failed' as const,
-    reason: 'Mercenary III Saves arrive with #648'
-  };
-  return {
-    armed: () => undefined,
-    delete: () => reserved,
-    describe,
-    disarm: () => {},
-    dismiss: () => listeners.forEach(listener => listener()),
-    load: () => reserved,
-    message: text => ({ source: 'game', text }),
-    onChange: listener => {
-      listeners.add(listener);
-    },
-    save: () => reserved
-  };
-};
+}): SavePersistence =>
+  createSlotPersistence({
+    capture: options.capture,
+    decode: encoded =>
+      decodeDionRecord(encoded, options.identity, options.content),
+    encode: (captured, savedAt) =>
+      encodeDionRecord({
+        ...captured,
+        identity: options.identity,
+        savedAt,
+        schemaVersion: DION_SAVE_SCHEMA_VERSION
+      }),
+    release: options.release,
+    restore: options.restore,
+    slotKey: DION_STORAGE.save,
+    storage: options.storage
+  });

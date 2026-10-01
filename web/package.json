@@ -35,7 +35,9 @@
       "e2e/wireframe-fixture.ts",
       "e2e/damocles-fixture.ts",
       "e2e/*.e2e.ts",
-      "test/**/*.test.ts"
+      "test/**/*.test.ts",
+      "src/dion/soundWorklet.ts",
+      "e2e/dion-fixture.ts"
     ],
     "include": [
       "files",

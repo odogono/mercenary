@@ -61,5 +61,16 @@ class ServiceTests(unittest.TestCase):
         self.assertEqual(state['cash_bcd']['digits'], '005100900000')
 
 
+class InitialTaxiTests(unittest.TestCase):
+    def test_progress_and_route_cursor_carry_provenance(self):
+        from m3lab.service import opening_state
+        ram = capture()
+        taxi = opening_state(ram, None)['taxi']
+        self.assertEqual(taxi['progress'], ram.word(0x6CBE))
+        self.assertEqual(taxi['route_index'], (ram.long(0x6C8C) - 0x41F24) // 2)
+        self.assertEqual(taxi['ram_sha256'], ram.sha256)
+        self.assertEqual(len(taxi['source']), 2)
+
+
 if __name__ == '__main__':
     unittest.main()
