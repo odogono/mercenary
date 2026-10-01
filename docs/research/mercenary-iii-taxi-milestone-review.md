@@ -22,7 +22,7 @@ The bounded slice starts at the recovered METIS prison opening and covers TAXICA
 |---|---|
 | [#642 — exact cadence](https://github.com/odogono/mercenary/issues/642) | **Done** ([report](mercenary-iii-taxi-cadence.md)). Nine failed and eleven passed both outcomes, so eleven is adopted. R4 and ADR 0058 are updated, and timed acceptance is unblocked. |
 | [#643 — lettering](https://github.com/odogono/mercenary/issues/643) | Recover required token/font/placement facts, especially details 56 and 59; gates affected I1 content and I2 presentation. |
-| [#644 — projection](https://github.com/odogono/mercenary/issues/644) | Recover projection, clip, fill and face ordering; gates affected I1 adapters and I2 comparison, without exact ST rasterisation. |
+| [#644 — projection](https://github.com/odogono/mercenary/issues/644) | **Done** ([report](mercenary-iii-taxi-projection.md)). Projection, clipping, cull, fill and face/object order are recovered and checked against 13 checkpoints. Geometry is within one pixel. Raster residues (horizontal-edge rows, zero-area slivers, lines) stay waived and must not be claimed as parity. |
 | [#645 — prison door](https://github.com/odogono/mercenary/issues/645) | Recover `$406C` initialization/transitions/access and confirm or reject sound attribution; gates I2 opening, sound and restoration. |
 | [#646 — night](https://github.com/odogono/mercenary/issues/646) | Compare runtime day flag with the turn test and recover required MIII stars/horizon; gates I2 presentation and restoration. |
 | [#637 — future-affecting bytes](https://github.com/odogono/mercenary/issues/637) | Decode or prove reconstruction of required state before persistence implementation. Independent live-play development may proceed. |
