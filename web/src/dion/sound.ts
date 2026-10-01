@@ -1,3 +1,12 @@
+import {
+  ST_RESET_REGISTERS,
+  messageCharacter,
+  playKeyClick,
+  playStreams,
+  startDoor,
+  tickDoor,
+  writePeriod
+} from '../sound/stProgrammes.ts';
 import type { DionSoundProgramme } from './narrative.ts';
 import type { DionMessageState } from './script.ts';
 
@@ -16,7 +25,7 @@ export const freshSound = (): DionSoundState => ({
   elapsed: -1,
   keyClick: false,
   mixer: 0xda,
-  registers: [1, 0, 1, 0, 1, 0, 31, 0xda, 0, 16, 0, 0, 0, 0],
+  registers: [...ST_RESET_REGISTERS, 0],
   slew: 3584
 });
 export const requestSound = (
@@ -39,38 +48,6 @@ export const requestSound = (
   return { ...state, c: name, elapsed: -1 };
 };
 
-const streamValue = (
-  stream: DionSoundProgramme['streams'][number],
-  elapsed: number
-): number | null => {
-  let index = 0;
-  const loop = stream.loop;
-  const prefix = stream.pairs
-    .slice(0, loop ?? stream.pairs.length)
-    .reduce((total, [count]) => total + count, 0);
-  const cycle =
-    loop === null
-      ? 0
-      : stream.pairs.slice(loop).reduce((total, [count]) => total + count, 0);
-  let remaining =
-    loop !== null && elapsed >= prefix
-      ? prefix + ((elapsed - prefix) % cycle)
-      : elapsed;
-  // The captured streams are all finite or have a loop with positive counts.
-  while (index < stream.pairs.length) {
-    const [count, value] = stream.pairs[index]!;
-    if (remaining < count) {
-      return value;
-    }
-    remaining -= count;
-    index += 1;
-    if (index === stream.pairs.length && stream.loop !== null) {
-      index = stream.loop;
-    }
-  }
-  return null;
-};
-
 export const tickSound = (
   programmes: readonly DionSoundProgramme[],
   previous: DionSoundState,
@@ -80,13 +57,15 @@ export const tickSound = (
   let state = previous;
   const registers = [...state.registers];
   let mixer = state.mixer;
+  const sink = {
+    write: (register: number, value: number): void => {
+      registers[register] = value;
+    }
+  };
   const setup = (name: string): DionSoundProgramme =>
     programmes.find(item => item.name === name)!;
   if (state.keyClick) {
-    for (const [register, value] of setup('key_click').registers) {
-      registers[register] = value;
-    }
-    mixer = (mixer & 0xfd) | 0x10;
+    mixer = playKeyClick(sink, mixer, setup('key_click').registers);
     state = { ...state, clickAge: -1, keyClick: false };
   }
   let c = state.c;
@@ -94,30 +73,21 @@ export const tickSound = (
   let slew = state.slew;
   if (c !== null) {
     const programme = setup(c);
-    if (elapsed === 0) {
+    const door = c === 'door_moving' || c === 'door_stop';
+    if (elapsed === 0 && door) {
+      mixer = startDoor(sink, mixer, c === 'door_moving', programme.registers);
+    } else if (elapsed === 0) {
       for (const [register, value] of programme.registers) {
         registers[register] = value;
       }
-      mixer =
-        c === 'door_stop' || c === 'taxi_set_down'
-          ? (mixer & 0xdf) | 4
-          : mixer & 0xdb;
+      mixer = c === 'taxi_set_down' ? (mixer & 0xdf) | 4 : mixer & 0xdb;
       if (c === 'lift_off' || c === 'leave') {
         slew = 3584;
       }
     }
-    let ended = false;
-    for (const stream of programme.streams) {
-      const value = streamValue(stream, elapsed);
-      if (value === null) {
-        ended = true;
-        continue;
-      }
-      stream.registers.forEach(
-        (register, index) =>
-          (registers[register] = (value >> (8 * index)) & 255)
-      );
-    }
+    const ended = door
+      ? tickDoor(sink, c === 'door_moving', elapsed, programme.streams)
+      : playStreams(sink, programme.streams, elapsed);
     if (ended) {
       if (c === 'lift_off') {
         c = 'engine';
@@ -136,8 +106,7 @@ export const tickSound = (
       const target = (((control & 7) ^ 7) + 4) << 8;
       slew += Math.sign(target - slew) * Math.min(8, Math.abs(target - slew));
       const period = (slew >> 1) + 256;
-      registers[4] = period & 255;
-      registers[5] = period >> 8;
+      writePeriod(sink, 4, period);
       registers[6] = period >> 6;
       if (c === 'engine') {
         registers[10] = 10;
@@ -146,9 +115,6 @@ export const tickSound = (
     // The bounded METIS ambient input is negative ($FF001000): silent C.
     if (c === 'ambient') {
       registers[10] = 0;
-    }
-    if (c === 'door_moving') {
-      registers[6] = 0;
     }
   }
   // #648: 8 pixel columns consume 4 six-pixel characters per three ticks.
@@ -162,10 +128,9 @@ export const tickSound = (
     const character =
       message.scrollsOut && message.age >= 200
         ? ' '
-        : (source[Math.ceil((4 * (age - 1)) / 3)] ?? ' ');
+        : messageCharacter(source, age);
     const period = character.charCodeAt(0) * 4;
-    registers[0] = period & 255;
-    registers[1] = period >> 8;
+    writePeriod(sink, 0, period);
     registers[8] = character === ' ' ? 0 : 12;
   } else {
     registers[8] = 0;

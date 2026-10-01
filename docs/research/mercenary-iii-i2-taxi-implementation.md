@@ -10,10 +10,10 @@ Opening script `$19` hands over DOOR KEY A. The prison attachment moves one unit
 
 The taxi's route cursor and progress drive its motion. The current or next occurrence of a route point supplies control after a cell crossing; a cell alone is insufficient because `(4,1)` appears twice with different controls. Empty circulation makes up to sixteen calls in a frame outside the player's cell. It never binds or draws those unoccupied cells. Selection alone stays at dwell. Start arms ascent before movement. A passenger follows taxi XYZ and receives heading deltas on top of player-owned yaw. Walking aboard changes no taxi coordinate.
 
-| Journey | Start-to-destination frames after the arming frame | Descent frames | Settled player XYZ | Route heading |
-|---|---:|---:|---|---:|
-| DOOBERRY'S SOLICITORS | 112 | 22 | `09DF8080, 0000003F, 04308000` | 0 |
-| METIS SPACEPORT | 507 | 22 | `09E18000, 0000003F, 042A8080` | 768 |
+| Journey               | Start-to-destination frames after the arming frame | Descent frames | Settled player XYZ             | Route heading |
+| --------------------- | -------------------------------------------------: | -------------: | ------------------------------ | ------------: |
+| DOOBERRY'S SOLICITORS |                                                112 |             22 | `09DF8080, 0000003F, 04308000` |             0 |
+| METIS SPACEPORT       |                                                507 |             22 | `09E18000, 0000003F, 042A8080` |           768 |
 
 Turns remain instant. Start and destination clear before requesting arrival ID `$25`. Early L is discarded at ascent, travel and counters 35/34; a fresh L at counter 2 restores the call panel. The player keeps the exit pose while the empty taxi departs. The two first-trip scripts never mutate cash: tests retain the within-run BCD balance without asserting a universal fare or extrapolating the historical opening-balance discrepancy.
 
@@ -24,6 +24,8 @@ The title-local VM consumes decoded instructions, executes at most one opcode pe
 Driver animation loads the first count with profile cleared, decrements on frames, toggles at subsequent counts, and consumes the cabin selector. Repeated writes of the same selector restart a sequence. Sign, height, clock, grid, card and message presentation rebuild from state.
 
 Sound uses MIII's recovered setup registers and streams on a shared project-owned YM2149 chip model. B carries the key-click envelope, C the door, descent, lift-off/engine and leave programmes, and A the message tone. Cell crossings emit immediate B/C cuts without replacing their programmes. Door-stop continues to METIS's silent ambient case. The driver, stream age, registers, mixer and slew are saved. Audio unlock/Load/menu resume synchronizes full registers and reconstructs B's envelope age so an expired click does not replay. Analogue output and exact PCM phase are the shared chip model's approximation, not ST audio parity.
+
+Damocles and Dion share `sound/stProgrammes.ts` for the identical reset registers, key-click envelope, door entry and playback, count/value stream evaluation, period writes and message-character selection. Dion still supplies its decoded setup registers and streams. A register-by-register cross-title test covers both door loops, interrupted stop bursts and the key click. The complete drivers cannot be substituted: Damocles scales engine volume with craft speed at a fixed period, while Dion slews taxi-engine pitch at level 10; message periods are character ×2 versus ×4, with different terminal timing; a stopped door returns to the craft engine versus METIS ambient. Dion's serializable driver state and both titles' scheduling remain local. The YM2149 model, worklet host, transport and audio lifecycle were already shared.
 
 The remaining message-tone skip is resolved by the decoded scroll mechanism: eight pixel columns per tick consume four six-pixel glyphs over three ticks. Tone fetch precedes the extra glyph read on tick 1 modulo 3, so character indices are `0,2,3,4,6,7,…`, or `ceil(4*(age−1)/3)`. Tests assert those indices directly. This is a documented behavioral fact, independently implemented; no original code was copied or translated.
 
@@ -61,8 +63,9 @@ The browser fixture is served only with `MERCENARY_E2E=1`. It writes determinist
 
 ## Validation
 
-- Full browser unit/regression suite: 2,400 tests passed, including Targ and Damocles.
+- Full browser unit/regression suite: 2,402 tests passed, including Targ and Damocles.
 - MIII live-session, VM, service, sound, sky, panel and persistence controls passed.
+- The sound-sharing refactor matched the preceding commit over 20,000 mixed Damocles ticks (ordered register writes) and 10,000 mixed Dion ticks (complete driver state). Independent review found no required changes.
 - TypeScript, ESLint, Prettier and unused-file/dependency checks passed.
 - All 44 decoder tests passed against the pinned local capture; no ignored material is required by application tests.
 - All 10 browser tests passed, including both deterministic visual trajectories, all 33 persistence controls, production keyboard/slot/reload paths, content refusal and cooperative ownership.
