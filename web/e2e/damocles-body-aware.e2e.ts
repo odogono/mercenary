@@ -140,8 +140,8 @@ test('a switched Body draws its own workspace', async ({ page }) => {
   const errors = watchErrors(page);
   await bootAt(page, APPROACH_LOCAL);
   const frame = page.locator('#frame');
-  // Eris's own workspace, with the unresolved models its Catalogue records carry.
-  await expect(frame).toHaveAttribute('data-unresolved', '19');
+  // Wait for all Eris islands to stream in before reading its complete unresolved count.
+  await expect(frame).toHaveAttribute('data-unresolved', '22');
 
   expect(await run(page, 'switch dion-2-3')).toContain('switched');
   await closeConsole(page);
@@ -259,7 +259,7 @@ test('a Save taken on one Body restores onto it from another', async ({
   await expect(frame).toHaveAttribute('data-cell', '7-8');
   // The restore rebuilds the surface in the constructor rather than through a switch, so the
   // Body it lands on is read absolutely here as well (#379).
-  await expect(frame).toHaveAttribute('data-unresolved', '19');
+  await expect(frame).toHaveAttribute('data-unresolved', '22');
   await expect(inventory(page)).toHaveText('KEY- V.I.P. LIMO');
   expect(await run(page, 'where')).toContain('ERIS 07-08');
   expect(errors).toEqual([]);

@@ -18,6 +18,14 @@ const FACING_WEST = 256;
 
 const frame = (page: Page) => page.locator('#frame');
 
+type LiftChange = [
+  label: string,
+  floor: string,
+  cues: string,
+  elapsed: number,
+  previousElapsed: number
+];
+
 const floorAndY = async (page: Page) =>
   frame(page).evaluate(node => ({
     floor: node.dataset['floor'],
@@ -99,21 +107,24 @@ test('walked in through the door, 1 rides: the label steps, and the arrival is 2
   // Session time at each change of the label, the Floor and the cues, read as the page
   // publishes them.
   await frame(page).evaluate(node => {
-    const seen: [string, string, string, number][] = [];
+    const seen: LiftChange[] = [];
+    let previousElapsed = Number(node.dataset['elapsed']);
     (window as unknown as { liftSeen: typeof seen }).liftSeen = seen;
     new MutationObserver(() => {
       const last = seen.at(-1);
       const label = node.dataset['floorLabel']!;
       const floor = node.dataset['floor']!;
       const cues = node.dataset['damoclesCues']!;
+      const elapsed = Number(node.dataset['elapsed']);
       if (
         last === undefined ||
         last[0] !== label ||
         last[1] !== floor ||
         last[2] !== cues
       ) {
-        seen.push([label, floor, cues, Number(node.dataset['elapsed'])]);
+        seen.push([label, floor, cues, elapsed, previousElapsed]);
       }
+      previousElapsed = elapsed;
     }).observe(node, { attributes: true });
   });
   await page.keyboard.press('1');
@@ -130,22 +141,20 @@ test('walked in through the door, 1 rides: the label steps, and the arrival is 2
     { timeout: 10_000 }
   );
   const seen = await page.evaluate(
-    () =>
-      (window as unknown as { liftSeen: [string, string, string, number][] })
-        .liftSeen
+    () => (window as unknown as { liftSeen: LiftChange[] }).liftSeen
   );
   const at = (found: (typeof seen)[number] | undefined): number => {
     expect(found).toBeDefined();
     return found![3];
   };
-  const stepped = at(
-    seen.find(([label, floor]) => label === '1' && floor === '0')
-  );
-  const arrived = at(
-    seen.find(([label, floor]) => label === '1' && floor === '1')
-  );
-  // 25 VBLs at 50 Hz, give or take the frames the page publishes between.
-  expect(arrived - stepped).toBeCloseTo(0.5, 1);
+  const step = seen.find(([label, floor]) => label === '1' && floor === '0');
+  const arrival = seen.find(([label, floor]) => label === '1' && floor === '1');
+  const stepped = at(step);
+  const arrived = at(arrival);
+  // Each change falls between its previous published frame and its first observed frame.
+  // Those intervals must admit 25 VBLs at 50 Hz, allowing one VBL of clock quantisation.
+  expect(arrived - step![4]).toBeGreaterThanOrEqual(0.5 - 0.02);
+  expect(arrival![4] - stepped).toBeLessThanOrEqual(0.5 + 0.02);
   // The door shut before the label stepped, nothing sounded while it stepped, and the arrival's
   // request came before the new door's tone.
   const shut = at(seen.find(([, , cues]) => cues.includes('door-stop:2')));

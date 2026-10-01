@@ -7,13 +7,12 @@ import {
   messageText,
   watchErrors
 } from './damocles-play.ts';
-import { tapDestination, type SoundTapScope } from './sound-tap.ts';
 
 /// The browser listening check for Damocles sound (#508), kept apart from the cue tally.
 ///
 /// `data-damocles-cues` proves the session asked for a sound. This file listens instead, at the
-/// destination tap, so it hears exactly what the speakers are given, after mute and volume. A poll
-/// notes its RMS level beside the session time and cue tally the page publishes.
+/// destination tap, so it hears exactly what the speakers are given, after mute and volume.
+/// Audio-thread RMS blocks and scheduled commands share the audio clock, independently of rendering.
 
 const STATE_OFFICE = 'eris-surface-89';
 /// Beside the V.I.P. LIMO in the Capital Spaceport, without its key (see damocles-boarding.e2e.ts).
@@ -36,38 +35,116 @@ interface Heard {
 const frame = (page: Page) => page.locator('#frame');
 
 const listen = async (page: Page): Promise<void> => {
-  await tapDestination(page);
   await page.addInitScript(() => {
     const heard: Heard[] = [];
-    const scope = window as unknown as SoundTapScope & {
-      damoclesHeard: Heard[];
-    };
-    scope.damoclesHeard = heard;
+    (window as unknown as { damoclesHeard: Heard[] }).damoclesHeard = heard;
     const close = AudioContext.prototype.close;
     AudioContext.prototype.close = function (this: AudioContext) {
       sessionStorage.setItem('damoclesAudioClosed', 'true');
       return close.call(this);
     };
-    const samples = new Float32Array(1024);
-    const poll = (): void => {
-      const tap = scope.soundTaps.at(-1);
-      const node = document.getElementById('frame');
-      if (tap !== undefined && node !== null) {
-        tap.getFloatTimeDomainData(samples);
-        let sum = 0;
-        for (const sample of samples) {
-          sum += sample * sample;
+    // Audio keeps running when the main thread misses a frame. Record RMS on the audio thread,
+    // after mute and volume, and label each block by the commands scheduled on that same clock.
+    const changes: { at: number; cues: string; messageTones: number }[] = [];
+    const cues = new Map<string, number>();
+    let messageTones = 0;
+    const send = MessagePort.prototype.postMessage as (
+      this: MessagePort,
+      ...args: unknown[]
+    ) => void;
+    MessagePort.prototype.postMessage = function (
+      this: MessagePort,
+      ...args: unknown[]
+    ) {
+      const batch = args[0] as {
+        at?: number;
+        commands?: { cue?: string; kind?: string }[];
+      } | null;
+      if (
+        batch &&
+        typeof batch.at === 'number' &&
+        Array.isArray(batch.commands)
+      ) {
+        for (const command of batch.commands) {
+          if (command.kind === 'cue' && command.cue) {
+            cues.set(command.cue, (cues.get(command.cue) ?? 0) + 1);
+          } else if (command.kind === 'message') {
+            messageTones += 1;
+          }
         }
-        heard.push({
-          cues: node.dataset['damoclesCues'] ?? '',
-          elapsed: Number(node.dataset['elapsed']),
-          level: Math.sqrt(sum / samples.length),
-          messageTones: Number(node.dataset['damoclesMessageTones'])
+        changes.push({
+          at: batch.at,
+          cues: [...cues]
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([cue, count]) => `${cue}:${count}`)
+            .join(' '),
+          messageTones
         });
       }
-      requestAnimationFrame(poll);
-    };
-    requestAnimationFrame(poll);
+      send.apply(this, args);
+    } as typeof MessagePort.prototype.postMessage;
+    const processor = `
+      class SoundCapture extends AudioWorkletProcessor {
+        frames = 0;
+        sum = 0;
+        process(inputs) {
+          for (const sample of inputs[0]?.[0] ?? []) {
+            this.sum += sample * sample;
+            this.frames += 1;
+          }
+          if (this.frames >= sampleRate / 100) {
+            this.port.postMessage({ elapsed: currentTime, level: Math.sqrt(this.sum / this.frames) });
+            this.frames = 0;
+            this.sum = 0;
+          }
+          return true;
+        }
+      }
+      registerProcessor('damocles-test-capture', SoundCapture);
+    `;
+    const connected = new WeakSet<BaseAudioContext>();
+    const connect = AudioNode.prototype.connect as (
+      this: AudioNode,
+      ...args: unknown[]
+    ) => unknown;
+    AudioNode.prototype.connect = function (
+      this: AudioNode,
+      ...args: unknown[]
+    ) {
+      const context = this.context as AudioContext;
+      if (args[0] === context.destination && !connected.has(context)) {
+        connected.add(context);
+        const source = this;
+        const url = URL.createObjectURL(
+          new Blob([processor], { type: 'text/javascript' })
+        );
+        void context.audioWorklet.addModule(url).then(() => {
+          URL.revokeObjectURL(url);
+          const capture = new AudioWorkletNode(
+            context,
+            'damocles-test-capture'
+          );
+          capture.port.onmessage = (
+            event: MessageEvent<{ elapsed: number; level: number }>
+          ) => {
+            const sample = event.data;
+            const change = changes
+              .filter(item => item.at <= sample.elapsed)
+              .at(-1);
+            heard.push({
+              cues: change?.cues ?? '',
+              elapsed: sample.elapsed,
+              level: sample.level,
+              messageTones: change?.messageTones ?? 0
+            });
+          };
+          connect.call(source, capture);
+          // The capture's output stays silent; the original speaker connection is unchanged.
+          connect.call(capture, context.destination);
+        });
+      }
+      return connect.apply(this, args);
+    } as typeof AudioNode.prototype.connect;
   });
 };
 
@@ -95,7 +172,11 @@ const levelsBetween = (
 const walkIntoTheLift = async (page: Page): Promise<void> => {
   await bootAt(page, BEFORE_THE_DOOR, FACING_WEST, { structure: STATE_OFFICE });
   await expect(frame(page)).toHaveAttribute('data-region', '0');
-  // The walk's first key is the trusted gesture that starts audio.
+  // Unlock and start recording before walking: otherwise module loading can drop the first
+  // door request while audio is still unlocking, shifting the heard cue counts by one.
+  await page.keyboard.press('Shift');
+  await expect(frame(page)).toHaveAttribute('data-damocles-audio', 'running');
+  await expect.poll(async () => (await heard(page)).length).toBeGreaterThan(2);
   await page.keyboard.down('ArrowUp');
   await expect(frame(page)).toHaveAttribute('data-region', '4', {
     timeout: 20_000
@@ -145,9 +226,8 @@ test('a lift ride is heard: door tone and burst, silence while the label steps, 
   const arrival = when(samples, 'take:1');
   const opened = when(samples, 'door-stop:3');
   const end = samples.at(-1)!.elapsed;
-  // The frame loop holds the page to session time within a frame or two; the analyser's window
-  // is 21 ms. Margins of 0.1 s either side of an edge keep both out of the judgement. A loaded
-  // machine polls at under 10 a second, so only a few polls need fall in each stretch.
+  // Blocks and cue boundaries use the audio clock. Margins exclude the driver's VBL and
+  // the short RMS window at each edge.
   const doorTone = levelsBetween(samples, closing + 0.1, shut - 0.1);
   expect(doorTone.length).toBeGreaterThan(2);
   expect(Math.min(...doorTone)).toBeGreaterThan(AUDIBLE);
@@ -174,6 +254,8 @@ test('a refusal message is heard while it scrolls in, and silent once the text i
   // A key the Control Profile ignores is the trusted gesture that starts audio.
   await page.keyboard.press('Shift');
   await expect(frame(page)).toHaveAttribute('data-damocles-audio', 'running');
+  // Establish the silent baseline before starting the message being measured.
+  await expect.poll(async () => (await heard(page)).length).toBeGreaterThan(2);
   await page.keyboard.press('b');
   await expect(frame(page)).toHaveAttribute('data-damocles-message-tones', '1');
   // No Sound Cue: the refusal's only sound is its message's.
@@ -228,7 +310,7 @@ test('muted, the same ride asks for every cue and nothing is heard', async ({
     'data-layer',
     'none'
   );
-  const from = Number(await frame(page).getAttribute('data-elapsed'));
+  const from = (await heard(page)).at(-1)!.elapsed;
   await rideToFloor1(page);
   const levels = levelsBetween(await heard(page), from, Infinity);
   expect(levels.length).toBeGreaterThan(20);

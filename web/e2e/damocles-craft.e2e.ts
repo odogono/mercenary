@@ -1,11 +1,13 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { DAMOCLES_SAVE_SCHEMA_VERSION } from '../src/damocles/save.ts';
 import {
   DOORWAY_LINE_LOCAL,
   FACING_DOORWAY,
   bootAt,
   closeConsole,
   damoclesSaveSlot,
+  holdUntilFrame,
   inventory,
   ready,
   run,
@@ -183,20 +185,24 @@ test('EAGLE NINE S E takes off, reads its altitude, and a steep dive puts the pl
     timeout: 20_000
   });
   // Nose up: off the ground, climbing, the altitude window counting.
-  await page.keyboard.down('ArrowDown');
-  await expect
-    .poll(async () => attribute(page, 'y'), { timeout: 20_000 })
-    .toBeGreaterThan(2000);
-  await page.keyboard.up('ArrowDown');
+  await holdUntilFrame(
+    page,
+    'ArrowDown',
+    { attribute: 'y', comparison: 'above', value: 2000 },
+    20_000
+  );
   await expect(field(page, 'altitude')).not.toHaveText('000000');
   await shot(page, 'eagle-climbing', testInfo);
   // Level off with the stick's up bit, then a right turn banks it: roll four times the turn
   // rate, the horizon's right end lifting.
-  await page.keyboard.down('ArrowUp');
-  await expect
-    .poll(async () => attribute(page, 'pitch'), { timeout: 10_000 })
-    .toBeLessThan(0.15);
-  await page.keyboard.up('ArrowUp');
+  await holdUntilFrame(
+    page,
+    'ArrowUp',
+    { attribute: 'pitch', comparison: 'below', value: 0.15 },
+    10_000
+  );
+  // Releasing on the frame keeps this a level-flight Save rather than an unintended dive.
+  expect(await attribute(page, 'pitch')).toBeGreaterThan(-0.1);
   await shot(page, 'eagle-level', testInfo);
 
   // Saved in flight and loaded after a reload, it flies on from the same craft words (#557).
@@ -204,7 +210,7 @@ test('EAGLE NINE S E takes off, reads its altitude, and a steep dive puts the pl
   const flying = JSON.parse(
     (await page.evaluate(k => localStorage.getItem(k), damoclesSaveSlot(2)))!
   ) as SavedRecord;
-  expect(flying.schemaVersion).toBe(17);
+  expect(flying.schemaVersion).toBe(DAMOCLES_SAVE_SCHEMA_VERSION);
   expect(flying.snapshot.occupancy).toEqual({
     instance: EAGLE,
     kind: 'aboard'
@@ -508,7 +514,7 @@ test('EAGLE NINE S E saved in space, reloaded and loaded, flies on to its arriva
       pose: { body: string };
     };
   };
-  expect(saved.schemaVersion).toBe(17);
+  expect(saved.schemaVersion).toBe(DAMOCLES_SAVE_SCHEMA_VERSION);
   expect(saved.snapshot.pose.body).toBe('body-4');
   const space = saved.snapshot.craft.space!;
   expect(space.hold).toBeGreaterThan(0);

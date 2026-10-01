@@ -201,6 +201,62 @@ export const walkUntil = async (
   }
 };
 
+/// Stop on a published frame in the page itself. A browser round trip after a Node-side poll
+/// can carry a held control past a narrow doorway or the desired flight pitch before release.
+export const holdUntilFrame = async (
+  page: Page,
+  key: 'ArrowDown' | 'ArrowUp',
+  target: {
+    readonly attribute: 'x' | 'y' | 'z' | 'region' | 'pitch';
+    readonly comparison: 'above' | 'below' | 'equal';
+    readonly value: number;
+  },
+  timeout = 30_000
+): Promise<void> => {
+  try {
+    await page.evaluate(
+      ({ key, target, timeout }) =>
+        new Promise<void>((resolve, reject) => {
+          const frame = document.querySelector('#frame')!;
+          const deadline = performance.now() + timeout;
+          const release = () =>
+            window.dispatchEvent(
+              new KeyboardEvent('keyup', { code: key, key })
+            );
+          const tick = () => {
+            const value = Number(
+              frame.getAttribute(`data-${target.attribute}`)
+            );
+            const reached =
+              target.comparison === 'above'
+                ? value > target.value
+                : target.comparison === 'below'
+                  ? value < target.value
+                  : value === target.value;
+            if (reached) {
+              release();
+              resolve();
+            } else if (performance.now() >= deadline) {
+              release();
+              reject(
+                new Error(`control did not reach ${JSON.stringify(target)}`)
+              );
+            } else {
+              requestAnimationFrame(tick);
+            }
+          };
+          window.dispatchEvent(
+            new KeyboardEvent('keydown', { code: key, key })
+          );
+          tick();
+        }),
+      { key, target, timeout }
+    );
+  } finally {
+    await page.keyboard.up(key);
+  }
+};
+
 /// Both take and drop are refused while the inventory label is still scrolling, so the ordinary
 /// way to use them is to press again until the session accepts.
 export const pressUntilInventory = async (

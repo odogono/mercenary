@@ -11,6 +11,7 @@ import {
   damoclesSaveSlot,
   displayRow,
   held,
+  holdUntilFrame,
   inventory,
   messageText,
   pressUntilInventory,
@@ -180,12 +181,11 @@ test('the supported pickup runs the response once and parks', async ({
 
   // Walk the last stretch and take with the ordinary controls.
   const startX = Number(await frame(page).getAttribute('data-x'));
-  await walkUntil(
-    page,
-    'ArrowUp',
-    async () =>
-      Math.abs(Number(await frame(page).getAttribute('data-x')) - startX) > 300
-  );
+  await holdUntilFrame(page, 'ArrowUp', {
+    attribute: 'x',
+    comparison: 'above',
+    value: startX + 300
+  });
   await page.keyboard.press('t');
   await expect(inventory(page)).toHaveText(KEY_LABEL, { timeout: 5000 });
   // One take, one Sound Cue request.
@@ -422,7 +422,11 @@ test('a key left inside the spaceport survives leaving its region, a Save and a 
 
   // Walk out through the doorway into the next region. The key stays where it was left; it is
   // simply no longer near enough, or exposed, to be taken.
-  await walkUntil(page, 'ArrowUp', async () => (await region(page)) === '2');
+  await holdUntilFrame(page, 'ArrowUp', {
+    attribute: 'region',
+    comparison: 'equal',
+    value: 2
+  });
   expect(await run(page, 'get')).toContain('nothing is in reach');
   await closeConsole(page);
 
@@ -435,11 +439,11 @@ test('a key left inside the spaceport survives leaving its region, a Save and a 
 
   // Walk back to where it was left and pick it up again: one take Sound Cue, no second
   // response, and no duplicate of the key at its original Catalogue placement.
-  await walkUntil(
-    page,
-    'ArrowDown',
-    async () => (await localZ(page, origin)) > dropped - 100
-  );
+  await holdUntilFrame(page, 'ArrowDown', {
+    attribute: 'z',
+    comparison: 'above',
+    value: origin.z + dropped - 100
+  });
   expect(await triangles(page)).toBe(withKey);
   await pressUntilInventory(page, 't', KEY_LABEL);
   // Two takes by key and one through the console, and a drop for each of the first two. The
@@ -580,12 +584,11 @@ test('the pickup keys work on a narrow viewport', async ({ page }) => {
 
   // Walk up to the key, take it and put it down again, all on the ordinary keys.
   const startX = Number(await frame(page).getAttribute('data-x'));
-  await walkUntil(
-    page,
-    'ArrowUp',
-    async () =>
-      Math.abs(Number(await frame(page).getAttribute('data-x')) - startX) > 300
-  );
+  await holdUntilFrame(page, 'ArrowUp', {
+    attribute: 'x',
+    comparison: 'above',
+    value: startX + 300
+  });
   await page.keyboard.press('t');
   await expect(inventory(page)).toHaveText(KEY_LABEL, { timeout: 5000 });
   await pressUntilInventory(page, 'd', 'EMPTY');

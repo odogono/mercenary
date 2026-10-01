@@ -557,14 +557,14 @@ test('names Settlements from the Body Range and Places from the Settlement Range
   });
   await expect(capital.first()).toBeVisible();
   await expect(capital).toHaveCount(2);
-  // The eleven Places share CAPITAL CITY's sixteen cells, so at this band they would be eleven
-  // names on one pixel. The status line says where to find them rather than leaving a reader to
+  // The Places share CAPITAL CITY's sixteen cells, so at this band their names would crowd
+  // one pixel. The status line says where to find them rather than leaving a reader to
   // conclude there are none.
   await expect(page.locator('#body-labels a[data-kind="place"]')).toHaveCount(
     0
   );
   await expect(page.locator('#status')).toContainText(
-    '11 Damocles Places, from the Settlement Range'
+    '23 Damocles Places, from the Settlement Range'
   );
 
   // Zoomed into CAPITAL CITY's own workspace the Places appear, and the Settlement name stays:
@@ -1036,13 +1036,16 @@ test('the Street Range draws a derived footprint for each placed structure', asy
 }) => {
   await page.goto(`/damocles/atlas?${SPACEPORT_VIEW}&span=1`);
   await expect(page.locator('#system-scale')).toContainText('Street Range');
-  await expect(page.locator('#status')).toContainText('57 derived footprints', {
-    timeout: 20_000
-  });
-  // 20 of Eris's 77 placed structures recovered neither an exterior nor a plan, and nothing is
+  await expect(page.locator('#status')).toContainText(
+    '161 derived footprints',
+    {
+      timeout: 20_000
+    }
+  );
+  // 23 of Eris's 184 placed structures recovered neither an exterior nor a plan, and nothing is
   // invented to stand in for one.
   await expect(page.locator('#status')).toContainText(
-    '20 recovered no outline and are not drawn'
+    '23 recovered no outline and are not drawn'
   );
   expect(await footprintPixels(page)).toBeGreaterThan(0);
   // The road stays under them, as Capital City's Drawn Records: the bands are not a hierarchy.
@@ -1053,7 +1056,7 @@ test('the Street Range draws a derived footprint for each placed structure', asy
   await page.goto(`/damocles/atlas?${SPACEPORT_VIEW}&span=20`);
   await expect(page.locator('#system-scale')).toContainText('Settlement Range');
   await expect(page.locator('#status')).toContainText(
-    '57 derived footprints, from the Street Range',
+    '161 derived footprints, from the Street Range',
     { timeout: 20_000 }
   );
   expect(await footprintPixels(page)).toBe(0);
@@ -1064,9 +1067,12 @@ test('tapping a footprint reaches its Catalogue entry', async ({ page }) => {
   await page.goto(
     `/damocles/atlas?${SPACEPORT_VIEW}&span=1&pinBody=eris&pinX=71.2&pinZ=136.2`
   );
-  await expect(page.locator('#status')).toContainText('57 derived footprints', {
-    timeout: 20_000
-  });
+  await expect(page.locator('#status')).toContainText(
+    '161 derived footprints',
+    {
+      timeout: 20_000
+    }
+  );
   const box = (await page.locator('#range-body').boundingBox())!;
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
 
@@ -1086,7 +1092,7 @@ test('tapping a footprint reaches its Catalogue entry', async ({ page }) => {
   );
   await expect(page.locator('#panel')).toContainText('drawn as modelled');
   await expect(page.locator('#panel')).toContainText(
-    '577 of the 579 footprints'
+    'Most footprints are measured from the plan'
   );
 
   // And the hand-off reaches the Instance itself, not merely its Body.
@@ -1103,13 +1109,16 @@ test('tapping a footprint reaches its Catalogue entry', async ({ page }) => {
 test('a footprint measured from the plan says which mesh it came from', async ({
   page
 }) => {
-  // Eris surface cell 4,2 is the ordinary case: 577 of the 579 footprints on the map are the
-  // Structure Workspace plan, because two Models in 1,241 carry an exterior Mesh. Unnamed, so
+  // Eris surface cell 4,2 is the ordinary case: the footprint uses the Structure Workspace
+  // plan because the Model carries no exterior Mesh. Unnamed, so
   // no Damocles Place label stands over it — a name takes its own pointer events.
   await page.goto('/damocles/atlas?body=eris&x=68.5355&z=130.5046&span=1');
-  await expect(page.locator('#status')).toContainText('57 derived footprints', {
-    timeout: 20_000
-  });
+  await expect(page.locator('#status')).toContainText(
+    '161 derived footprints',
+    {
+      timeout: 20_000
+    }
+  );
   const box = (await page.locator('#range-body').boundingBox())!;
   await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
 
