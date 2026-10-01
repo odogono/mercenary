@@ -1,0 +1,202 @@
+{
+  "geometry": {
+    "entries": [
+      358
+    ],
+    "family": "model",
+    "id": "model-03abea",
+    "record": "$3ABEA",
+    "sha256": "fec76a93e2d17601827200dcd625b42e762ed94cab521b18670116c4a6e1db0d",
+    "variants": {
+      "base": {
+        "alternatives": [],
+        "entry": 358,
+        "faces": [
+          {
+            "at": "$3AC10",
+            "colour": 10,
+            "kind": "polygon",
+            "refs": [
+              28,
+              32,
+              44,
+              40
+            ]
+          },
+          {
+            "at": "$3AC16",
+            "colour": 10,
+            "kind": "polygon",
+            "refs": [
+              8,
+              12,
+              16
+            ]
+          },
+          {
+            "at": "$3AC1B",
+            "colour": 2,
+            "kind": "line",
+            "refs": [
+              20,
+              8
+            ]
+          },
+          {
+            "at": "$3AC1E",
+            "colour": 2,
+            "kind": "line",
+            "refs": [
+              20,
+              12
+            ]
+          },
+          {
+            "at": "$3AC21",
+            "colour": 2,
+            "kind": "line",
+            "refs": [
+              20,
+              16
+            ]
+          },
+          {
+            "at": "$3AC24",
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              4,
+              8,
+              16
+            ]
+          },
+          {
+            "at": "$3AC29",
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              8,
+              4,
+              12
+            ]
+          },
+          {
+            "at": "$3AC2E",
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              12,
+              4,
+              16
+            ]
+          },
+          {
+            "at": "$3AC33",
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              32,
+              24,
+              36,
+              44
+            ]
+          },
+          {
+            "at": "$3AC39",
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              24,
+              28,
+              40,
+              36
+            ]
+          },
+          {
+            "at": "$3AC3F",
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              24,
+              32,
+              28
+            ]
+          }
+        ],
+        "provenance": {
+          "range": [
+            "$3ABEA",
+            "$3AC45"
+          ],
+          "sha256": "025b6cc83899fe5e9123f37ab7936d2c815b16816e7326acf7d1a15f04f4df85"
+        },
+        "vertices": [
+          [
+            -4,
+            90,
+            60
+          ],
+          [
+            -10,
+            100,
+            10
+          ],
+          [
+            5,
+            90,
+            10
+          ],
+          [
+            -10,
+            80,
+            10
+          ],
+          [
+            -2,
+            90,
+            2
+          ],
+          [
+            -2,
+            100,
+            0
+          ],
+          [
+            0,
+            100,
+            2
+          ],
+          [
+            -4,
+            100,
+            2
+          ],
+          [
+            -2,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            2
+          ],
+          [
+            -4,
+            0,
+            2
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

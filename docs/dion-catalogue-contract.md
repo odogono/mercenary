@@ -154,3 +154,28 @@ A Geometry Identity's `state` is one of:
 An identity cannot leave `pending` while its family has no decoder path. Its `preview` records the evidence: the Catalogue draws it without a reported gap (#685), and the #686 matrix compares at least one identity per family and variant axis with an original-game scene.
 
 **The milestone is complete only when every required identity is recovered and previewed, and no blocking gap remains.** Recovery tickets update `state`, `variants` and `preview`, and close the gaps they own: `island-decoder`, `ground-inventory`, `model-variants`, `detail-lettering`, `association-hooks`, `interior-details` and `floor-table-slot-46`. A closed gap moves to `resolvedGaps`, with its evidence. They never edit totals by hand. Required geometry that is still missing leaves the milestone incomplete. It is not waived.
+
+## Export and loader handoff (#684)
+
+Regenerate the tracked Catalogue from the three recovery handoffs and the committed ledger, from the repository root:
+
+```sh
+PYTHONPATH=research/mercenary-iii-st python3 -m m3lab.catalogue_export \
+  --objects restricted/mercenary-iii-681/objects.json \
+  --surface restricted/mercenary-iii-682/surface.json \
+  --interiors restricted/mercenary-iii-683/interiors.json
+PYTHONPATH=research/mercenary-iii-st python3 -m unittest discover \
+  -s research/mercenary-iii-st/tests -p test_catalogue_export.py
+cd web
+bun test test/dion-catalogue.test.ts test/catalogue-stored.test.ts test/server-payload.test.ts
+```
+
+`--ledger` selects a ledger and `--out` selects a separate export directory; defaults are the committed ledger and `payload/dion/catalogue/`. The exporter checks the ledger, the complete set of identities, each child's handoff digest, overlapping geometry, and each recovered content digest before writing. A second run produces exactly the same bytes. It writes only the Catalogue directory and removes stale geometry files there. The tracked export can be checked by browser tests without the ignored recovery handoffs.
+
+Each geometry file stores the **unchanged recovery record** under `geometry`. Its `sha256`, also held in `geometryIndex`, hashes the record without its own `sha256` using sorted, compact JSON with escaped Unicode. Browser admission recomputes that hash. The file header carries the title-local source; every source field must match the shared document. `geometryIndex[].dataVariants` names the actual stored variant keys. This differs from the binding variants for details: the decoder stores one unscaled `base`, while the ledger inventories the host scales separately. No scaled duplicate replaces the recovered record.
+
+`surfaceCells` preserves all 11,264 recovered ground workspace cells, with Selected Piece, Drawn Record, orientation, joins and template entries; it does not count them as physical places or expand MIDAS into placements. `lettering`, `rebindings`, `services`, `workingSlots` and `carriedStack` preserve the recovery hooks. `placementRule` records the cell spacing derived from the evidenced interior origins and authored offsets. Placement `origin` is in the cell's local frame. Each Body's `geometry` list includes its islands, structure Floors and details, object forms, ground records and street-furniture models; the index carries the inverse `bodies` links. Carried and out-of-world models remain indexed for direct inspection even though no Body selects them.
+
+The browser entry is `loadDionCatalogue(read)` in `web/src/dion/catalogue.ts`, where `read` is the same path-to-JSON transport accepted by Damocles's `readCatalogue`. It admits the shared document and returns a lazy `GeometryStore` with its `catalogue`. `get`, `peek`, `size` and `prefetch` are shared with Damocles through `web/src/payload/documentStore.ts`: requests in flight are shared, successful reads are retained, failed reads can retry, and prefetch runs at most 32 reads concurrently. Damocles retains its structure/detail admission rule. The schemas, baseline pins and cross-reference policies remain title-local.
+
+The loader reconciles the census totals, unique identities, group/cell bindings, raw Floor dictionaries (including slot 46's explicit overread), indoor hosts, special states and Body dependency lists before reading geometry. Errors name the document and field or missing reference. The localhost server admits the additional `/payload/dion/catalogue/geometry/<geometry id>.json` path explicitly; other deeper paths remain refused. This handoff starts no Gameplay Session and imports no playable world loader. The Catalogue route and inspection UI still belong to #685, and preview/comparison completion still belongs to #686.

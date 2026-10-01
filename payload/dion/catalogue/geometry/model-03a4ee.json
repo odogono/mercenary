@@ -1,0 +1,325 @@
+{
+  "geometry": {
+    "entries": [
+      346
+    ],
+    "family": "model",
+    "id": "model-03a4ee",
+    "record": "$3A4EE",
+    "sha256": "a42491413fcb90c850cf7ad244b3a975a7b5351b4f100abe54493fc21bf89240",
+    "variants": {
+      "base": {
+        "alternatives": [],
+        "entry": 346,
+        "faces": [
+          {
+            "at": "$3A56E",
+            "colour": 6,
+            "kind": "polygon",
+            "refs": [
+              4,
+              8,
+              16
+            ]
+          },
+          {
+            "at": "$3A573",
+            "colour": 6,
+            "kind": "polygon",
+            "refs": [
+              8,
+              12,
+              16
+            ]
+          },
+          {
+            "at": "$3A578",
+            "colour": 6,
+            "kind": "polygon",
+            "refs": [
+              12,
+              4,
+              16
+            ]
+          },
+          {
+            "at": "$3A57D",
+            "colour": 50,
+            "kind": "polygon",
+            "refs": [
+              20,
+              28,
+              24
+            ]
+          },
+          {
+            "at": "$3A582",
+            "colour": 50,
+            "kind": "polygon",
+            "refs": [
+              20,
+              32,
+              28
+            ]
+          },
+          {
+            "at": "$3A587",
+            "colour": 50,
+            "kind": "polygon",
+            "refs": [
+              20,
+              36,
+              32
+            ]
+          },
+          {
+            "at": "$3A58C",
+            "colour": 50,
+            "kind": "polygon",
+            "refs": [
+              20,
+              24,
+              36
+            ]
+          },
+          {
+            "at": "$3A591",
+            "colour": 50,
+            "kind": "polygon",
+            "refs": [
+              24,
+              28,
+              44,
+              40
+            ]
+          },
+          {
+            "at": "$3A597",
+            "colour": 50,
+            "kind": "polygon",
+            "refs": [
+              28,
+              32,
+              48,
+              44
+            ]
+          },
+          {
+            "at": "$3A59D",
+            "colour": 50,
+            "kind": "polygon",
+            "refs": [
+              32,
+              36,
+              52,
+              48
+            ]
+          },
+          {
+            "at": "$3A5A3",
+            "colour": 50,
+            "kind": "polygon",
+            "refs": [
+              36,
+              24,
+              40,
+              52
+            ]
+          },
+          {
+            "at": "$3A5A9",
+            "colour": 50,
+            "kind": "polygon",
+            "refs": [
+              40,
+              44,
+              60,
+              56
+            ]
+          },
+          {
+            "at": "$3A5AF",
+            "colour": 50,
+            "kind": "polygon",
+            "refs": [
+              44,
+              48,
+              64,
+              60
+            ]
+          },
+          {
+            "at": "$3A5B5",
+            "colour": 50,
+            "kind": "polygon",
+            "refs": [
+              48,
+              52,
+              68,
+              64
+            ]
+          },
+          {
+            "at": "$3A5BB",
+            "colour": 50,
+            "kind": "polygon",
+            "refs": [
+              52,
+              40,
+              56,
+              68
+            ]
+          },
+          {
+            "at": "$3A5C1",
+            "colour": 50,
+            "kind": "polygon",
+            "refs": [
+              72,
+              56,
+              60
+            ]
+          },
+          {
+            "at": "$3A5C6",
+            "colour": 50,
+            "kind": "polygon",
+            "refs": [
+              72,
+              60,
+              64
+            ]
+          },
+          {
+            "at": "$3A5CB",
+            "colour": 50,
+            "kind": "polygon",
+            "refs": [
+              72,
+              64,
+              68
+            ]
+          },
+          {
+            "at": "$3A5D0",
+            "colour": 50,
+            "kind": "polygon",
+            "refs": [
+              72,
+              68,
+              56
+            ]
+          }
+        ],
+        "provenance": {
+          "range": [
+            "$3A4EE",
+            "$3A5D6"
+          ],
+          "sha256": "40806fb3812ee06be544560a70e276347e260e1955f7e8deb48470bc8f396f6a"
+        },
+        "vertices": [
+          [
+            0,
+            0,
+            36
+          ],
+          [
+            32,
+            0,
+            -20
+          ],
+          [
+            -32,
+            0,
+            -20
+          ],
+          [
+            0,
+            400,
+            0
+          ],
+          [
+            0,
+            120,
+            0
+          ],
+          [
+            200,
+            200,
+            0
+          ],
+          [
+            0,
+            200,
+            -200
+          ],
+          [
+            -200,
+            200,
+            0
+          ],
+          [
+            0,
+            200,
+            200
+          ],
+          [
+            250,
+            280,
+            0
+          ],
+          [
+            0,
+            280,
+            -250
+          ],
+          [
+            -250,
+            280,
+            0
+          ],
+          [
+            0,
+            280,
+            250
+          ],
+          [
+            200,
+            400,
+            0
+          ],
+          [
+            0,
+            400,
+            -200
+          ],
+          [
+            -200,
+            400,
+            0
+          ],
+          [
+            0,
+            400,
+            200
+          ],
+          [
+            0,
+            460,
+            0
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

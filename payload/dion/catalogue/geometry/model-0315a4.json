@@ -1,0 +1,200 @@
+{
+  "geometry": {
+    "entries": [
+      62
+    ],
+    "family": "model",
+    "header": {
+      "op": 10,
+      "skip": "$3161C",
+      "target": "$3166F",
+      "value": 7
+    },
+    "id": "model-0315a4",
+    "name": "TABLE",
+    "provenance": [
+      {
+        "range": [
+          "$315A4",
+          "$315AC"
+        ],
+        "sha256": "501cbc885c1f29fdac4a9d34641cb93b1a3c81a5ccad2bfa74ccff75a040ed16"
+      },
+      {
+        "range": [
+          "$3161C",
+          "$31675"
+        ],
+        "sha256": "1d0c41891210d7573072ed523da5fa8ff61e8667f2377db5fa98d8f7aa45758a"
+      }
+    ],
+    "record": "$315A4",
+    "sha256": "e0be3b8bf7ae54faccde3b525b16e96203b75153ccb29516bb7151c4ed25f8af",
+    "variants": {
+      "form=default": {
+        "faces": [
+          {
+            "colour": 2,
+            "kind": "polygon",
+            "refs": [
+              4,
+              5,
+              6
+            ],
+            "stColour": 32768
+          },
+          {
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              9,
+              8,
+              11,
+              12
+            ],
+            "stColour": 1621
+          },
+          {
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              8,
+              7,
+              10,
+              11
+            ],
+            "stColour": 1366
+          },
+          {
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              7,
+              9,
+              12,
+              10
+            ],
+            "stColour": 1093
+          },
+          {
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              3,
+              2,
+              5,
+              4
+            ],
+            "stColour": 1366
+          },
+          {
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              2,
+              1,
+              6,
+              5
+            ],
+            "stColour": 1093
+          },
+          {
+            "colour": 10,
+            "kind": "polygon",
+            "refs": [
+              1,
+              3,
+              4,
+              6
+            ],
+            "stColour": 820
+          },
+          {
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              1,
+              2,
+              3
+            ],
+            "stColour": 1621
+          }
+        ],
+        "turn": {
+          "kind": "fixed"
+        },
+        "vertices": [
+          [
+            -30,
+            40,
+            -15
+          ],
+          [
+            0,
+            40,
+            25
+          ],
+          [
+            30,
+            40,
+            -15
+          ],
+          [
+            30,
+            36,
+            -15
+          ],
+          [
+            0,
+            36,
+            25
+          ],
+          [
+            -30,
+            36,
+            -15
+          ],
+          [
+            -10,
+            36,
+            -5
+          ],
+          [
+            0,
+            36,
+            9
+          ],
+          [
+            10,
+            36,
+            -5
+          ],
+          [
+            -10,
+            0,
+            -5
+          ],
+          [
+            0,
+            0,
+            9
+          ],
+          [
+            10,
+            0,
+            -5
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

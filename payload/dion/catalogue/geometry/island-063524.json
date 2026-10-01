@@ -1,0 +1,302 @@
+{
+  "geometry": {
+    "family": "island",
+    "id": "island-063524",
+    "record": "$63524",
+    "sha256": "02b12961a7d07f4a671634f906f38e8337da800168ffd785d4f5a6a827eb6332",
+    "variants": {
+      "base": {
+        "core": {
+          "x": [
+            -5,
+            21
+          ],
+          "z": [
+            -5,
+            21
+          ]
+        },
+        "edges": [
+          {
+            "from": 14,
+            "steep": true,
+            "swap": true,
+            "to": 1
+          },
+          {
+            "from": 13,
+            "steep": false,
+            "swap": false,
+            "to": 14
+          },
+          {
+            "from": 12,
+            "steep": true,
+            "swap": true,
+            "to": 13
+          },
+          {
+            "from": 11,
+            "steep": false,
+            "swap": true,
+            "to": 12
+          },
+          {
+            "from": 10,
+            "steep": true,
+            "swap": false,
+            "to": 11
+          },
+          {
+            "from": 9,
+            "steep": false,
+            "swap": true,
+            "to": 10
+          },
+          {
+            "from": 8,
+            "steep": true,
+            "swap": true,
+            "to": 9
+          },
+          {
+            "from": 7,
+            "steep": false,
+            "swap": true,
+            "to": 8
+          },
+          {
+            "from": 6,
+            "steep": true,
+            "swap": false,
+            "to": 7
+          },
+          {
+            "from": 5,
+            "steep": true,
+            "swap": false,
+            "to": 6
+          },
+          {
+            "from": 4,
+            "steep": false,
+            "swap": false,
+            "to": 5
+          },
+          {
+            "from": 3,
+            "steep": false,
+            "swap": false,
+            "to": 4
+          },
+          {
+            "from": 2,
+            "steep": true,
+            "swap": true,
+            "to": 3
+          },
+          {
+            "from": 1,
+            "steep": true,
+            "swap": true,
+            "to": 2
+          }
+        ],
+        "outer": {
+          "x": [
+            -32,
+            48
+          ],
+          "z": [
+            -60,
+            48
+          ]
+        },
+        "primitives": [
+          {
+            "colour": 48,
+            "kind": "polygon",
+            "refs": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9
+            ]
+          },
+          {
+            "colour": 48,
+            "kind": "polygon",
+            "refs": [
+              9,
+              10,
+              14,
+              1
+            ]
+          },
+          {
+            "colour": 48,
+            "kind": "polygon",
+            "refs": [
+              10,
+              11,
+              12,
+              13,
+              14
+            ]
+          }
+        ],
+        "provenance": {
+          "range": [
+            "$634BC",
+            "$6357B"
+          ],
+          "sha256": "4bd8dba0c11b2b85dbb2fad5b82f9079821964220988256870b5cd664ac7389f"
+        },
+        "sea": [
+          {
+            "x": [
+              -32,
+              -24
+            ],
+            "z": [
+              44,
+              48
+            ]
+          },
+          {
+            "x": [
+              24,
+              48
+            ],
+            "z": [
+              32,
+              48
+            ]
+          },
+          {
+            "x": [
+              20,
+              48
+            ],
+            "z": [
+              -60,
+              -16
+            ]
+          },
+          {
+            "x": [
+              8,
+              20
+            ],
+            "z": [
+              -32,
+              -16
+            ]
+          },
+          {
+            "x": [
+              -32,
+              -24
+            ],
+            "z": [
+              -60,
+              -24
+            ]
+          },
+          {
+            "x": [
+              -32,
+              -12
+            ],
+            "z": [
+              -24,
+              4
+            ]
+          },
+          {
+            "x": [
+              -32,
+              -28
+            ],
+            "z": [
+              4,
+              16
+            ]
+          }
+        ],
+        "vertices": [
+          [
+            -12,
+            4
+          ],
+          [
+            -28,
+            16
+          ],
+          [
+            -32,
+            32
+          ],
+          [
+            -24,
+            44
+          ],
+          [
+            -8,
+            48
+          ],
+          [
+            24,
+            32
+          ],
+          [
+            48,
+            0
+          ],
+          [
+            32,
+            -16
+          ],
+          [
+            8,
+            -8
+          ],
+          [
+            4,
+            -32
+          ],
+          [
+            20,
+            -48
+          ],
+          [
+            0,
+            -60
+          ],
+          [
+            -24,
+            -32
+          ],
+          [
+            -8,
+            -24
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

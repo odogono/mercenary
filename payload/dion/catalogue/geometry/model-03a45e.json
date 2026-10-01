@@ -1,0 +1,147 @@
+{
+  "geometry": {
+    "entries": [
+      344
+    ],
+    "family": "model",
+    "id": "model-03a45e",
+    "record": "$3A45E",
+    "sha256": "77ffab049f82c657a558ca93b98fe2f3c85cd32a801a31c57e9469469f199cd3",
+    "variants": {
+      "base": {
+        "alternatives": [],
+        "entry": 344,
+        "faces": [
+          {
+            "at": "$3A484",
+            "colour": 50,
+            "kind": "polygon",
+            "refs": [
+              20,
+              28,
+              24
+            ]
+          },
+          {
+            "at": "$3A489",
+            "colour": 6,
+            "kind": "polygon",
+            "refs": [
+              4,
+              8,
+              16
+            ]
+          },
+          {
+            "at": "$3A48E",
+            "colour": 6,
+            "kind": "polygon",
+            "refs": [
+              8,
+              12,
+              16
+            ]
+          },
+          {
+            "at": "$3A493",
+            "colour": 6,
+            "kind": "polygon",
+            "refs": [
+              12,
+              4,
+              16
+            ]
+          },
+          {
+            "at": "$3A498",
+            "colour": 50,
+            "kind": "polygon",
+            "refs": [
+              20,
+              24,
+              32
+            ]
+          },
+          {
+            "at": "$3A49D",
+            "colour": 50,
+            "kind": "polygon",
+            "refs": [
+              24,
+              28,
+              32
+            ]
+          },
+          {
+            "at": "$3A4A2",
+            "colour": 50,
+            "kind": "polygon",
+            "refs": [
+              28,
+              20,
+              32
+            ]
+          }
+        ],
+        "provenance": {
+          "range": [
+            "$3A45E",
+            "$3A4A8"
+          ],
+          "sha256": "c337f873d60befc921c8e18c48cd032f6dfb3048897c01031a26931eea3f1862"
+        },
+        "vertices": [
+          [
+            0,
+            0,
+            27
+          ],
+          [
+            24,
+            0,
+            -15
+          ],
+          [
+            -24,
+            0,
+            -15
+          ],
+          [
+            0,
+            150,
+            0
+          ],
+          [
+            45,
+            80,
+            72
+          ],
+          [
+            45,
+            80,
+            -72
+          ],
+          [
+            -81,
+            80,
+            0
+          ],
+          [
+            0,
+            400,
+            0
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

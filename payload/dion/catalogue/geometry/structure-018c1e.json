@@ -1,0 +1,581 @@
+{
+  "geometry": {
+    "family": "structure",
+    "id": "structure-018c1e",
+    "record": "$18C1E",
+    "sha256": "07eec8afc6fa220bb0c048b1ea48f4b562ede45e3307a37eb30186f73229e254",
+    "variants": {
+      "scale=2,2": {
+        "associations": [
+          {
+            "hooks": [
+              [
+                2,
+                7
+              ],
+              [
+                3,
+                7
+              ],
+              [
+                4,
+                7
+              ]
+            ],
+            "id": 1
+          }
+        ],
+        "attachments": [
+          {
+            "box": {
+              "x": [
+                -100,
+                100
+              ],
+              "z": [
+                -630,
+                -160
+              ]
+            },
+            "colours": [
+              37002,
+              36994,
+              37002
+            ],
+            "control": 16896,
+            "controlColour": 36994,
+            "firstVertex": 9,
+            "firstWall": 12,
+            "key": null,
+            "leaves": [
+              -100,
+              -394,
+              100,
+              -386
+            ],
+            "motionAxis": "x",
+            "slot": 596,
+            "twoLeaves": true
+          }
+        ],
+        "entry": [
+          20,
+          20
+        ],
+        "heights": [
+          150,
+          145
+        ],
+        "plan": [
+          [
+            -200,
+            -380
+          ],
+          [
+            -200,
+            300
+          ],
+          [
+            200,
+            300
+          ],
+          [
+            200,
+            -380
+          ],
+          [
+            100,
+            -380
+          ],
+          [
+            -100,
+            -380
+          ],
+          [
+            -100,
+            -420
+          ],
+          [
+            100,
+            -420
+          ]
+        ],
+        "provenance": {
+          "range": [
+            "$18C16",
+            "$18DBF"
+          ],
+          "sha256": "b2dfb08d6cae18478fb8666b807beb98f6b79ffb0e56a9a6f2c12cabaddb727a"
+        },
+        "regions": [
+          {
+            "bounds": {
+              "x": [
+                -200,
+                200
+              ],
+              "z": [
+                -380,
+                300
+              ]
+            },
+            "flags": 32768,
+            "queue": [
+              10,
+              11,
+              1,
+              2,
+              3,
+              7,
+              6,
+              9,
+              255,
+              8,
+              4,
+              5
+            ],
+            "queueAddress": "$18CA2"
+          },
+          {
+            "bounds": {
+              "x": [
+                -89,
+                89
+              ],
+              "z": [
+                -400,
+                -380
+              ]
+            },
+            "flags": 33788,
+            "queue": [
+              10,
+              11,
+              1,
+              2,
+              3,
+              7,
+              6,
+              9,
+              255
+            ],
+            "queueAddress": "$18CBA"
+          },
+          {
+            "bounds": {
+              "x": [
+                -80,
+                90
+              ],
+              "z": [
+                -630,
+                -400
+              ]
+            },
+            "flags": 49152,
+            "queue": [
+              10,
+              11,
+              1,
+              2,
+              3,
+              7,
+              6,
+              9,
+              255
+            ],
+            "queueAddress": "$18CCE"
+          },
+          {
+            "bounds": {
+              "x": [
+                -630,
+                630
+              ],
+              "z": [
+                -2800,
+                -630
+              ]
+            },
+            "flags": 49152,
+            "queue": [
+              10,
+              11,
+              1,
+              2,
+              3,
+              7,
+              6,
+              9,
+              255
+            ],
+            "queueAddress": "$18CE2"
+          },
+          {
+            "bounds": {
+              "x": [
+                630,
+                32767
+              ],
+              "z": [
+                -630,
+                32767
+              ]
+            },
+            "flags": 49152,
+            "queue": [],
+            "queueAddress": "$18CF6"
+          },
+          {
+            "bounds": {
+              "x": [
+                -32768,
+                -630
+              ],
+              "z": [
+                -630,
+                32767
+              ]
+            },
+            "flags": 49152,
+            "queue": [],
+            "queueAddress": "$18D02"
+          },
+          {
+            "bounds": {
+              "x": [
+                -630,
+                630
+              ],
+              "z": [
+                630,
+                32767
+              ]
+            },
+            "flags": 49152,
+            "queue": [],
+            "queueAddress": "$18D0E"
+          },
+          {
+            "bounds": {
+              "x": [
+                630,
+                32767
+              ],
+              "z": [
+                -32768,
+                -630
+              ]
+            },
+            "flags": 49152,
+            "queue": [
+              6,
+              9,
+              255
+            ],
+            "queueAddress": "$18D1A"
+          },
+          {
+            "bounds": {
+              "x": [
+                -32768,
+                -630
+              ],
+              "z": [
+                -32768,
+                -630
+              ]
+            },
+            "flags": 49152,
+            "queue": [
+              7,
+              9,
+              255
+            ],
+            "queueAddress": "$18D28"
+          },
+          {
+            "bounds": {
+              "x": [
+                -630,
+                630
+              ],
+              "z": [
+                -32768,
+                -2800
+              ]
+            },
+            "flags": 49152,
+            "queue": [
+              6,
+              7,
+              9,
+              255
+            ],
+            "queueAddress": "$18D36"
+          },
+          {
+            "bounds": {
+              "x": [
+                240,
+                460
+              ],
+              "z": [
+                420,
+                630
+              ]
+            },
+            "flags": 49152,
+            "queue": [],
+            "queueAddress": "$18D46"
+          },
+          {
+            "bounds": {
+              "x": [
+                460,
+                630
+              ],
+              "z": [
+                220,
+                630
+              ]
+            },
+            "flags": 49152,
+            "queue": [],
+            "queueAddress": "$18D52"
+          },
+          {
+            "bounds": {
+              "x": [
+                -460,
+                -240
+              ],
+              "z": [
+                420,
+                630
+              ]
+            },
+            "flags": 49152,
+            "queue": [],
+            "queueAddress": "$18D5E"
+          },
+          {
+            "bounds": {
+              "x": [
+                -630,
+                -460
+              ],
+              "z": [
+                220,
+                630
+              ]
+            },
+            "flags": 49152,
+            "queue": [],
+            "queueAddress": "$18D6A"
+          },
+          {
+            "bounds": {
+              "x": [
+                220,
+                480
+              ],
+              "z": [
+                -630,
+                -520
+              ]
+            },
+            "flags": 49152,
+            "queue": [],
+            "queueAddress": "$18D76"
+          },
+          {
+            "bounds": {
+              "x": [
+                320,
+                480
+              ],
+              "z": [
+                -520,
+                -380
+              ]
+            },
+            "flags": 49152,
+            "queue": [],
+            "queueAddress": "$18D82"
+          },
+          {
+            "bounds": {
+              "x": [
+                480,
+                630
+              ],
+              "z": [
+                -630,
+                -220
+              ]
+            },
+            "flags": 49152,
+            "queue": [],
+            "queueAddress": "$18D8E"
+          },
+          {
+            "bounds": {
+              "x": [
+                -480,
+                -220
+              ],
+              "z": [
+                -630,
+                -520
+              ]
+            },
+            "flags": 49152,
+            "queue": [],
+            "queueAddress": "$18D9A"
+          },
+          {
+            "bounds": {
+              "x": [
+                -480,
+                -320
+              ],
+              "z": [
+                -520,
+                -380
+              ]
+            },
+            "flags": 49152,
+            "queue": [],
+            "queueAddress": "$18DA6"
+          },
+          {
+            "bounds": {
+              "x": [
+                -630,
+                -480
+              ],
+              "z": [
+                -630,
+                -220
+              ]
+            },
+            "flags": 49152,
+            "queue": [],
+            "queueAddress": "$18DB2"
+          }
+        ],
+        "sceneColours": [
+          32896,
+          32904
+        ],
+        "wallTexts": [],
+        "walls": [
+          {
+            "colour": 32900,
+            "form": 0,
+            "refs": [
+              1,
+              2
+            ]
+          },
+          {
+            "colour": 32898,
+            "form": 0,
+            "refs": [
+              2,
+              3
+            ]
+          },
+          {
+            "colour": 32900,
+            "form": 0,
+            "refs": [
+              3,
+              4
+            ]
+          },
+          {
+            "colour": 32898,
+            "form": 0,
+            "refs": [
+              4,
+              5
+            ]
+          },
+          {
+            "colour": 32898,
+            "form": 0,
+            "refs": [
+              6,
+              1
+            ]
+          },
+          {
+            "colour": 32902,
+            "form": 0,
+            "refs": [
+              7,
+              6
+            ]
+          },
+          {
+            "colour": 32902,
+            "form": 0,
+            "refs": [
+              5,
+              8
+            ]
+          },
+          {
+            "colour": 61570,
+            "form": 7,
+            "refs": [
+              5,
+              6
+            ]
+          },
+          {
+            "colour": 53380,
+            "form": 5,
+            "refs": [
+              7,
+              8,
+              5,
+              6
+            ]
+          },
+          {
+            "colour": 49288,
+            "form": 4,
+            "refs": [
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          {
+            "colour": 57472,
+            "form": 6,
+            "refs": [
+              4,
+              3,
+              2,
+              1
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

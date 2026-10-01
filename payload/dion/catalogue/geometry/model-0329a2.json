@@ -1,0 +1,325 @@
+{
+  "geometry": {
+    "entries": [
+      100
+    ],
+    "family": "model",
+    "header": null,
+    "id": "model-0329a2",
+    "name": "NOTICE BOARD",
+    "provenance": [
+      {
+        "range": [
+          "$329A2",
+          "$32A4B"
+        ],
+        "sha256": "e4030da15400679af6a7b4705f90b294492141c98afd69a9cb994bfa1f0d3bde"
+      }
+    ],
+    "record": "$329A2",
+    "sha256": "7364eb43bc111cb638f39d42aa4724c9aafee9046826d07a491a0d7f0118e08c",
+    "variants": {
+      "form=default": {
+        "faces": [
+          {
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              9,
+              10,
+              11,
+              12
+            ],
+            "stColour": 1366
+          },
+          {
+            "colour": 5,
+            "kind": "polygon",
+            "refs": [
+              21,
+              22,
+              23,
+              24
+            ],
+            "stColour": 582
+          },
+          {
+            "colour": 3,
+            "kind": "polygon",
+            "refs": [
+              17,
+              18,
+              19,
+              20
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "polygon",
+            "refs": [
+              25,
+              26,
+              28,
+              27
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "polygon",
+            "refs": [
+              13,
+              14,
+              15,
+              16
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 10,
+            "kind": "polygon",
+            "refs": [
+              1,
+              2,
+              10,
+              9
+            ],
+            "stColour": 820
+          },
+          {
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              10,
+              2,
+              3,
+              11
+            ],
+            "stColour": 1093
+          },
+          {
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              1,
+              9,
+              12,
+              4
+            ],
+            "stColour": 1093
+          },
+          {
+            "colour": 10,
+            "kind": "polygon",
+            "refs": [
+              12,
+              11,
+              3,
+              4
+            ],
+            "stColour": 820
+          },
+          {
+            "colour": 10,
+            "kind": "polygon",
+            "refs": [
+              2,
+              6,
+              7,
+              3
+            ],
+            "stColour": 820
+          },
+          {
+            "colour": 10,
+            "kind": "polygon",
+            "refs": [
+              5,
+              1,
+              4,
+              8
+            ],
+            "stColour": 820
+          },
+          {
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              5,
+              6,
+              2,
+              1
+            ],
+            "stColour": 1093
+          },
+          {
+            "colour": 2,
+            "kind": "polygon",
+            "refs": [
+              6,
+              5,
+              8,
+              7
+            ],
+            "stColour": 32768
+          }
+        ],
+        "turn": {
+          "kind": "fixed"
+        },
+        "vertices": [
+          [
+            -30,
+            40,
+            -4
+          ],
+          [
+            30,
+            40,
+            -4
+          ],
+          [
+            30,
+            0,
+            -4
+          ],
+          [
+            -30,
+            0,
+            -4
+          ],
+          [
+            -30,
+            40,
+            0
+          ],
+          [
+            30,
+            40,
+            0
+          ],
+          [
+            30,
+            0,
+            0
+          ],
+          [
+            -30,
+            0,
+            0
+          ],
+          [
+            -26,
+            36,
+            -2
+          ],
+          [
+            26,
+            36,
+            -2
+          ],
+          [
+            26,
+            4,
+            -2
+          ],
+          [
+            -26,
+            4,
+            -2
+          ],
+          [
+            -22,
+            32,
+            -2
+          ],
+          [
+            -10,
+            32,
+            -2
+          ],
+          [
+            -10,
+            20,
+            -2
+          ],
+          [
+            -22,
+            20,
+            -2
+          ],
+          [
+            -16,
+            14,
+            -2
+          ],
+          [
+            -6,
+            18,
+            -2
+          ],
+          [
+            -2,
+            8,
+            -2
+          ],
+          [
+            -12,
+            4,
+            -2
+          ],
+          [
+            -4,
+            20,
+            -2
+          ],
+          [
+            4,
+            20,
+            -2
+          ],
+          [
+            4,
+            6,
+            -2
+          ],
+          [
+            -4,
+            6,
+            -2
+          ],
+          [
+            10,
+            30,
+            -2
+          ],
+          [
+            20,
+            28,
+            -2
+          ],
+          [
+            6,
+            10,
+            -2
+          ],
+          [
+            16,
+            8,
+            -2
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

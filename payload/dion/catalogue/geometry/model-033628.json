@@ -1,0 +1,104 @@
+{
+  "geometry": {
+    "entries": [
+      123
+    ],
+    "family": "model",
+    "header": null,
+    "id": "model-033628",
+    "name": "BIL'S BILL",
+    "provenance": [
+      {
+        "range": [
+          "$33628",
+          "$33653"
+        ],
+        "sha256": "ab91500792def62e259d9b4ed218d45bc7cb0aaa670a23ac932d3142a0914c37"
+      }
+    ],
+    "record": "$33628",
+    "sha256": "3c16e81ab1212fee6467988c0c09176d9214590dcb43d05f7dc929cfc39713cc",
+    "variants": {
+      "form=default": {
+        "faces": [
+          {
+            "colour": 3,
+            "kind": "polygon",
+            "refs": [
+              1,
+              2,
+              4,
+              3
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 5,
+            "kind": "polygon",
+            "refs": [
+              5,
+              6,
+              7,
+              8
+            ],
+            "stColour": 582
+          }
+        ],
+        "turn": {
+          "kind": "fixed"
+        },
+        "vertices": [
+          [
+            6,
+            8,
+            16
+          ],
+          [
+            14,
+            8,
+            16
+          ],
+          [
+            6,
+            2,
+            4
+          ],
+          [
+            14,
+            2,
+            4
+          ],
+          [
+            12,
+            6,
+            12
+          ],
+          [
+            22,
+            6,
+            12
+          ],
+          [
+            22,
+            0,
+            0
+          ],
+          [
+            12,
+            0,
+            0
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

@@ -1,0 +1,104 @@
+{
+  "geometry": {
+    "family": "ground",
+    "id": "ground-01be3a",
+    "record": "$1BE3A",
+    "sha256": "ac429e8c77c5461ac60f81a8b04dd350111865d4a74a231e89b0ed2389ca0d8b",
+    "variants": {
+      "transform=0": {
+        "primitives": [
+          {
+            "colour": 32782,
+            "kind": "polygon",
+            "refs": [
+              4,
+              8,
+              12,
+              240,
+              24,
+              20,
+              16,
+              244
+            ]
+          },
+          {
+            "colour": 49166,
+            "kind": "line",
+            "refs": [
+              28,
+              244
+            ]
+          },
+          {
+            "colour": 49166,
+            "kind": "line",
+            "refs": [
+              28,
+              240
+            ]
+          },
+          {
+            "kind": "template",
+            "model": 350,
+            "word": 28815,
+            "x": -28768,
+            "z": 30968
+          },
+          {
+            "kind": "template",
+            "model": 350,
+            "word": 28672,
+            "x": 28768,
+            "z": -30968
+          }
+        ],
+        "provenance": {
+          "range": [
+            "$1BE3C",
+            "$1BE7E"
+          ],
+          "sha256": "bfe1419ff83afed0c6aed44d84b40ef9158f9a27dda162f7b09898b961880e47"
+        },
+        "vertices": [
+          [
+            1,
+            -32568
+          ],
+          [
+            -32768,
+            -32568
+          ],
+          [
+            -1,
+            -32568
+          ],
+          [
+            1,
+            32568
+          ],
+          [
+            -32768,
+            32568
+          ],
+          [
+            -1,
+            32568
+          ],
+          [
+            -32768,
+            -32768
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

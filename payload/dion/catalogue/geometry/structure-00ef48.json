@@ -1,0 +1,480 @@
+{
+  "geometry": {
+    "family": "structure",
+    "id": "structure-00ef48",
+    "record": "$0EF48",
+    "sha256": "c02001e11825d83f009d770a1138139ced879dedf757d0eb45712c824d714859",
+    "variants": {
+      "scale=3,3": {
+        "associations": [
+          {
+            "hooks": [
+              [
+                2,
+                3
+              ],
+              [
+                3,
+                3
+              ]
+            ],
+            "id": 1
+          }
+        ],
+        "attachments": [
+          {
+            "box": {
+              "x": [
+                300,
+                600
+              ],
+              "z": [
+                0,
+                450
+              ]
+            },
+            "colours": [
+              36992,
+              37000,
+              37016
+            ],
+            "control": 16896,
+            "controlColour": 37000,
+            "firstVertex": 15,
+            "firstWall": 18,
+            "key": null,
+            "leaves": [
+              390,
+              306,
+              510,
+              324
+            ],
+            "motionAxis": "x",
+            "slot": 596,
+            "twoLeaves": true
+          }
+        ],
+        "entry": [
+          450,
+          780
+        ],
+        "heights": [
+          150,
+          100
+        ],
+        "plan": [
+          [
+            300,
+            0
+          ],
+          [
+            300,
+            300
+          ],
+          [
+            390,
+            300
+          ],
+          [
+            390,
+            330
+          ],
+          [
+            -3,
+            330
+          ],
+          [
+            -3,
+            1230
+          ],
+          [
+            900,
+            1230
+          ],
+          [
+            900,
+            330
+          ],
+          [
+            510,
+            330
+          ],
+          [
+            510,
+            300
+          ],
+          [
+            600,
+            300
+          ],
+          [
+            600,
+            0
+          ],
+          [
+            300,
+            315
+          ],
+          [
+            600,
+            315
+          ]
+        ],
+        "provenance": {
+          "range": [
+            "$0EF40",
+            "$0F09F"
+          ],
+          "sha256": "e83df5aebce93f35b65124be7d70c3335e6e117aecb53bf9fc7e0a7f10ef5a88"
+        },
+        "regions": [
+          {
+            "bounds": {
+              "x": [
+                0,
+                900
+              ],
+              "z": [
+                330,
+                1230
+              ]
+            },
+            "flags": 1,
+            "queue": [
+              16,
+              17,
+              12,
+              1,
+              11,
+              3,
+              9,
+              14,
+              255,
+              4,
+              13,
+              8,
+              5,
+              6,
+              7
+            ],
+            "queueAddress": "$0F054"
+          },
+          {
+            "bounds": {
+              "x": [
+                401,
+                499
+              ],
+              "z": [
+                300,
+                330
+              ]
+            },
+            "flags": 1021,
+            "queue": [
+              16,
+              17,
+              1,
+              11,
+              12,
+              5,
+              6,
+              7,
+              3,
+              9,
+              14,
+              255
+            ],
+            "queueAddress": "$0F06E"
+          },
+          {
+            "bounds": {
+              "x": [
+                300,
+                600
+              ],
+              "z": [
+                0,
+                300
+              ]
+            },
+            "flags": 8193,
+            "queue": [
+              16,
+              17,
+              6,
+              5,
+              7,
+              3,
+              9,
+              14,
+              255,
+              2,
+              15,
+              10,
+              1,
+              12,
+              11
+            ],
+            "queueAddress": "$0F086"
+          }
+        ],
+        "sceneColours": [
+          32916,
+          32910
+        ],
+        "wallTexts": [
+          {
+            "anchor": [
+              180,
+              80,
+              100
+            ],
+            "colour": 1911,
+            "command": 6,
+            "face": 10,
+            "font": 6,
+            "glyphScale": [
+              4,
+              4
+            ],
+            "offset": 0,
+            "plane": 2,
+            "text": [
+              128
+            ]
+          },
+          {
+            "anchor": [
+              100,
+              10,
+              410
+            ],
+            "colour": 1911,
+            "command": 6,
+            "face": 6,
+            "font": 6,
+            "glyphScale": [
+              30,
+              30
+            ],
+            "offset": 0,
+            "plane": 2,
+            "text": [
+              128
+            ]
+          },
+          {
+            "anchor": [
+              133,
+              110,
+              100
+            ],
+            "colour": 1911,
+            "command": 3,
+            "face": 15,
+            "font": 3,
+            "glyphScale": [
+              4,
+              4
+            ],
+            "offset": 0,
+            "plane": 0,
+            "text": [
+              73,
+              78,
+              86,
+              69,
+              78,
+              84,
+              79,
+              82,
+              89
+            ]
+          },
+          {
+            "anchor": [
+              167,
+              120,
+              110
+            ],
+            "colour": 1911,
+            "command": 3,
+            "face": 13,
+            "font": 3,
+            "glyphScale": [
+              -4,
+              4
+            ],
+            "offset": 0,
+            "plane": 0,
+            "text": [
+              73,
+              78,
+              86,
+              69,
+              78,
+              84,
+              79,
+              82,
+              89
+            ]
+          }
+        ],
+        "walls": [
+          {
+            "colour": 32896,
+            "form": 0,
+            "refs": [
+              1,
+              2
+            ]
+          },
+          {
+            "colour": 32906,
+            "form": 0,
+            "refs": [
+              2,
+              3
+            ]
+          },
+          {
+            "colour": 32898,
+            "form": 0,
+            "refs": [
+              3,
+              4
+            ]
+          },
+          {
+            "colour": 32922,
+            "form": 0,
+            "refs": [
+              4,
+              5
+            ]
+          },
+          {
+            "colour": 32924,
+            "form": 0,
+            "refs": [
+              5,
+              6
+            ]
+          },
+          {
+            "colour": 32922,
+            "form": 0,
+            "refs": [
+              6,
+              7
+            ]
+          },
+          {
+            "colour": 32924,
+            "form": 0,
+            "refs": [
+              7,
+              8
+            ]
+          },
+          {
+            "colour": 32922,
+            "form": 0,
+            "refs": [
+              8,
+              9
+            ]
+          },
+          {
+            "colour": 32898,
+            "form": 0,
+            "refs": [
+              9,
+              10
+            ]
+          },
+          {
+            "colour": 32906,
+            "form": 0,
+            "refs": [
+              10,
+              11
+            ]
+          },
+          {
+            "colour": 32896,
+            "form": 0,
+            "refs": [
+              11,
+              12
+            ]
+          },
+          {
+            "colour": 32898,
+            "form": 0,
+            "refs": [
+              12,
+              1
+            ]
+          },
+          {
+            "colour": 61594,
+            "form": 7,
+            "refs": [
+              9,
+              4
+            ]
+          },
+          {
+            "colour": 53382,
+            "form": 5,
+            "refs": [
+              10,
+              9,
+              4,
+              3
+            ]
+          },
+          {
+            "colour": 61578,
+            "form": 7,
+            "refs": [
+              3,
+              10
+            ]
+          },
+          {
+            "colour": 57476,
+            "form": 6,
+            "refs": [
+              14,
+              13,
+              1,
+              12
+            ]
+          },
+          {
+            "colour": 49286,
+            "form": 4,
+            "refs": [
+              1,
+              13,
+              14,
+              12
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

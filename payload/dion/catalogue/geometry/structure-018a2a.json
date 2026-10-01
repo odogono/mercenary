@@ -1,0 +1,216 @@
+{
+  "geometry": {
+    "family": "structure",
+    "id": "structure-018a2a",
+    "record": "$18A2A",
+    "sha256": "8b6c6ef35460124f1f81021b7ab827b837429d13e9464044871ad4996ffe7bb9",
+    "variants": {
+      "scale=2,2": {
+        "associations": [],
+        "attachments": [
+          {
+            "box": {
+              "x": [
+                280,
+                300
+              ],
+              "z": [
+                1800,
+                1820
+              ]
+            },
+            "colours": [
+              37018,
+              37022,
+              37036
+            ],
+            "control": 33280,
+            "controlColour": 37036,
+            "firstVertex": 1,
+            "firstWall": 1,
+            "key": null,
+            "leaves": [
+              384,
+              1500,
+              400,
+              1700
+            ],
+            "motionAxis": "z",
+            "slot": 596,
+            "twoLeaves": true
+          }
+        ],
+        "entry": [
+          200,
+          1600
+        ],
+        "heights": [
+          180,
+          128
+        ],
+        "plan": [],
+        "provenance": {
+          "range": [
+            "$18A22",
+            "$18AC1"
+          ],
+          "sha256": "c147b42228e11445b58d8af345a3206e01f2f3edd72ca3095bd04e943927a5fb"
+        },
+        "regions": [
+          {
+            "bounds": {
+              "x": [
+                20,
+                380
+              ],
+              "z": [
+                1420,
+                1780
+              ]
+            },
+            "flags": 32768,
+            "queue": [],
+            "queueAddress": "$18A5C"
+          },
+          {
+            "bounds": {
+              "x": [
+                380,
+                400
+              ],
+              "z": [
+                1511,
+                1689
+              ]
+            },
+            "flags": 33788,
+            "queue": [],
+            "queueAddress": "$18A68"
+          },
+          {
+            "bounds": {
+              "x": [
+                440,
+                6000
+              ],
+              "z": [
+                800,
+                2400
+              ]
+            },
+            "flags": 49152,
+            "queue": [
+              255
+            ],
+            "queueAddress": "$18A74"
+          },
+          {
+            "bounds": {
+              "x": [
+                6000,
+                32767
+              ],
+              "z": [
+                800,
+                2400
+              ]
+            },
+            "flags": 49152,
+            "queue": [],
+            "queueAddress": "$18A80"
+          },
+          {
+            "bounds": {
+              "x": [
+                440,
+                32767
+              ],
+              "z": [
+                2400,
+                32767
+              ]
+            },
+            "flags": 49152,
+            "queue": [],
+            "queueAddress": "$18A8C"
+          },
+          {
+            "bounds": {
+              "x": [
+                440,
+                32767
+              ],
+              "z": [
+                -32768,
+                800
+              ]
+            },
+            "flags": 49152,
+            "queue": [],
+            "queueAddress": "$18A98"
+          },
+          {
+            "bounds": {
+              "x": [
+                -32768,
+                0
+              ],
+              "z": [
+                1400,
+                1800
+              ]
+            },
+            "flags": 49152,
+            "queue": [],
+            "queueAddress": "$18AA4"
+          },
+          {
+            "bounds": {
+              "x": [
+                -32768,
+                440
+              ],
+              "z": [
+                1800,
+                32767
+              ]
+            },
+            "flags": 49152,
+            "queue": [],
+            "queueAddress": "$18AB0"
+          },
+          {
+            "bounds": {
+              "x": [
+                -32768,
+                440
+              ],
+              "z": [
+                -32768,
+                1400
+              ]
+            },
+            "flags": 49152,
+            "queue": [],
+            "queueAddress": "$18ABC"
+          }
+        ],
+        "sceneColours": [
+          1092,
+          835
+        ],
+        "wallTexts": [],
+        "walls": []
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

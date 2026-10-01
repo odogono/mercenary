@@ -44,10 +44,14 @@ export const payloadResponse = async (
   }
 
   const name = pathname.slice('/payload/'.length);
-  // Lowercase hyphenated names, digits allowed, at most two directories deep: enough for
-  // `damocles/models/structure-01484e.json` (ADR 0048), and nothing a dot could escape from.
+  // Lowercase hyphenated names, digits allowed, at most two directories deep.
+  // Dion Catalogue geometry (#684) admits one additional exact path below; neither
+  // form admits a dot or an encoded separator that could escape the payload root.
   if (
     !/^(?:[\da-z]+(?:-[\da-z]+)*\/){0,2}[\da-z]+(?:-[\da-z]+)*\.json$/.test(
+      name
+    ) &&
+    !/^dion\/catalogue\/geometry\/(?:model|structure|detail|ground|island)-[\da-f]{6}\.json$/.test(
       name
     )
   ) {

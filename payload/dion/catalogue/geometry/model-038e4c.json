@@ -1,0 +1,338 @@
+{
+  "geometry": {
+    "entries": [
+      360
+    ],
+    "family": "model",
+    "id": "model-038e4c",
+    "record": "$38E4C",
+    "sha256": "96ffb8e17131e4bd1e58cba0d1e5ac59d9830c776e190a0c56386f2ffbf5dee6",
+    "variants": {
+      "base": {
+        "alternatives": [],
+        "entry": 360,
+        "faces": [
+          {
+            "at": "$38EC4",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              4,
+              8
+            ]
+          },
+          {
+            "at": "$38EC7",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              4,
+              12
+            ]
+          },
+          {
+            "at": "$38ECA",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              4,
+              16
+            ]
+          },
+          {
+            "at": "$38ECD",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              4,
+              20
+            ]
+          },
+          {
+            "at": "$38ED0",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              8,
+              12
+            ]
+          },
+          {
+            "at": "$38ED3",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              12,
+              16
+            ]
+          },
+          {
+            "at": "$38ED6",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              16,
+              20
+            ]
+          },
+          {
+            "at": "$38ED9",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              20,
+              8
+            ]
+          },
+          {
+            "at": "$38EDC",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              24,
+              28
+            ]
+          },
+          {
+            "at": "$38EDF",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              28,
+              32
+            ]
+          },
+          {
+            "at": "$38EE2",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              32,
+              36
+            ]
+          },
+          {
+            "at": "$38EE5",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              36,
+              24
+            ]
+          },
+          {
+            "at": "$38EE8",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              8,
+              24
+            ]
+          },
+          {
+            "at": "$38EEB",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              12,
+              28
+            ]
+          },
+          {
+            "at": "$38EEE",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              16,
+              32
+            ]
+          },
+          {
+            "at": "$38EF1",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              20,
+              36
+            ]
+          },
+          {
+            "at": "$38EF4",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              24,
+              40
+            ]
+          },
+          {
+            "at": "$38EF7",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              28,
+              40
+            ]
+          },
+          {
+            "at": "$38EFA",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              32,
+              40
+            ]
+          },
+          {
+            "at": "$38EFD",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              36,
+              40
+            ]
+          },
+          {
+            "at": "$38F00",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              48,
+              24
+            ]
+          },
+          {
+            "at": "$38F03",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              52,
+              28
+            ]
+          },
+          {
+            "at": "$38F06",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              56,
+              32
+            ]
+          },
+          {
+            "at": "$38F09",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              60,
+              36
+            ]
+          },
+          {
+            "at": "$38F0C",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              4,
+              44
+            ]
+          }
+        ],
+        "name": "TRANSMITTER MAST",
+        "provenance": {
+          "range": [
+            "$38E4C",
+            "$38F10"
+          ],
+          "sha256": "c94585deee839084988e9d0671426bb15d1b2312eb16660f25a1ba1e935d9afc"
+        },
+        "vertices": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            -40,
+            200,
+            -40
+          ],
+          [
+            -40,
+            200,
+            40
+          ],
+          [
+            40,
+            200,
+            40
+          ],
+          [
+            40,
+            200,
+            -40
+          ],
+          [
+            -40,
+            900,
+            -40
+          ],
+          [
+            -40,
+            900,
+            40
+          ],
+          [
+            40,
+            900,
+            40
+          ],
+          [
+            40,
+            900,
+            -40
+          ],
+          [
+            0,
+            1100,
+            0
+          ],
+          [
+            0,
+            1270,
+            0
+          ],
+          [
+            -400,
+            0,
+            -400
+          ],
+          [
+            -400,
+            0,
+            400
+          ],
+          [
+            400,
+            0,
+            400
+          ],
+          [
+            400,
+            0,
+            -400
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

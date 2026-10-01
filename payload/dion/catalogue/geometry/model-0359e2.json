@@ -1,0 +1,148 @@
+{
+  "geometry": {
+    "entries": [
+      161
+    ],
+    "family": "model",
+    "header": null,
+    "id": "model-0359e2",
+    "name": "LAB TABLE",
+    "provenance": [
+      {
+        "range": [
+          "$359E2",
+          "$35A25"
+        ],
+        "sha256": "fbd139d816dca0e5a6b5124bb4c23c6ded4f77570685eb25462fe0c8cd49764d"
+      }
+    ],
+    "record": "$359E2",
+    "sha256": "2dc956870306d40156000f639a0058b4f842d13073283e0dd3a158eb57b6eb44",
+    "variants": {
+      "form=default": {
+        "faces": [
+          {
+            "colour": 10,
+            "kind": "polygon",
+            "refs": [
+              1,
+              5,
+              8,
+              4
+            ],
+            "stColour": 820
+          },
+          {
+            "colour": 10,
+            "kind": "polygon",
+            "refs": [
+              3,
+              7,
+              6,
+              2
+            ],
+            "stColour": 820
+          },
+          {
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              2,
+              6,
+              5,
+              1
+            ],
+            "stColour": 1093
+          },
+          {
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              4,
+              8,
+              7,
+              3
+            ],
+            "stColour": 1093
+          },
+          {
+            "colour": 3,
+            "kind": "polygon",
+            "refs": [
+              5,
+              6,
+              7,
+              8
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              4,
+              3,
+              2,
+              1
+            ],
+            "stColour": 1366
+          }
+        ],
+        "turn": {
+          "kind": "fixed"
+        },
+        "vertices": [
+          [
+            -80,
+            0,
+            -80
+          ],
+          [
+            -80,
+            0,
+            80
+          ],
+          [
+            80,
+            0,
+            80
+          ],
+          [
+            80,
+            0,
+            -80
+          ],
+          [
+            -80,
+            35,
+            -80
+          ],
+          [
+            -80,
+            35,
+            80
+          ],
+          [
+            80,
+            35,
+            80
+          ],
+          [
+            80,
+            35,
+            -80
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

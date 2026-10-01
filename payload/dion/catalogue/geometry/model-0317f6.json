@@ -1,0 +1,104 @@
+{
+  "geometry": {
+    "drawsNothing": "$4D3B0 draws the debris list at $639C0",
+    "entries": [
+      74
+    ],
+    "family": "model",
+    "header": {
+      "op": 4
+    },
+    "id": "model-0317f6",
+    "nonGeometric": {
+      "colours": [
+        1911,
+        1911,
+        1911,
+        1911,
+        1911,
+        1911,
+        1910,
+        1910,
+        1910,
+        1910,
+        1909,
+        1909,
+        1909,
+        1908,
+        1908,
+        1908,
+        1907,
+        1907,
+        1907,
+        1906,
+        1906,
+        1906,
+        1906,
+        1905,
+        1905,
+        1905,
+        1905,
+        1905,
+        1904,
+        1904,
+        1904,
+        1904,
+        1888,
+        1888,
+        1872,
+        1872,
+        1872,
+        1856,
+        1856,
+        1840,
+        1840,
+        1840,
+        1840,
+        1824,
+        1824,
+        1824,
+        1808,
+        1808,
+        1792,
+        1792,
+        1536,
+        1536,
+        1536,
+        1280,
+        1280,
+        1024,
+        1024,
+        768,
+        768,
+        512,
+        512,
+        256,
+        256,
+        0
+      ],
+      "evidence": "$4D2C8 starts 64 frames of the particle list at $639C0 ($6EEE particles, random velocities); $4D3B0 draws them as points while $6EE4 > 0, fading through the 64 colours at $4D2D8",
+      "kind": "explosion-debris"
+    },
+    "provenance": [
+      {
+        "range": [
+          "$317F6",
+          "$317F8"
+        ],
+        "sha256": "057cbbfb4f5936e7b5e66856bf25d1fb46a0413143c0e7528ba137d2c2d024d1"
+      }
+    ],
+    "record": "$317F6",
+    "sha256": "4f53cea2af4800b72f8c10c0fa0b6218cbf15d777096cbdada489cc5429769bf",
+    "variants": {}
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

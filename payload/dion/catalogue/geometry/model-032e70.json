@@ -1,0 +1,243 @@
+{
+  "geometry": {
+    "entries": [
+      109
+    ],
+    "family": "model",
+    "header": null,
+    "id": "model-032e70",
+    "name": "RUBBISH BIN",
+    "provenance": [
+      {
+        "range": [
+          "$32E70",
+          "$32EE9"
+        ],
+        "sha256": "9e7e3ffda95e79401f1de49b40b4e26365f8c68c22f386cbaedc80dcf40c0afb"
+      }
+    ],
+    "record": "$32E70",
+    "sha256": "957b2c325bf14f94e51c56be1587c5f1baec8453b405fca795862695472e39d6",
+    "variants": {
+      "form=default": {
+        "faces": [
+          {
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              12,
+              11,
+              14,
+              15
+            ],
+            "stColour": 1621
+          },
+          {
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              1,
+              2,
+              3,
+              6
+            ],
+            "stColour": 1621
+          },
+          {
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              2,
+              11,
+              12,
+              3
+            ],
+            "stColour": 1366
+          },
+          {
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              14,
+              1,
+              6,
+              15
+            ],
+            "stColour": 1366
+          },
+          {
+            "colour": 10,
+            "kind": "polygon",
+            "refs": [
+              7,
+              8,
+              9,
+              10
+            ],
+            "stColour": 820
+          },
+          {
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              3,
+              12,
+              13,
+              4
+            ],
+            "stColour": 1621
+          },
+          {
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              15,
+              6,
+              5,
+              16
+            ],
+            "stColour": 1621
+          },
+          {
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              6,
+              3,
+              4,
+              5
+            ],
+            "stColour": 1093
+          },
+          {
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              12,
+              15,
+              16,
+              13
+            ],
+            "stColour": 1093
+          },
+          {
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              1,
+              14,
+              11,
+              2
+            ],
+            "stColour": 1093
+          },
+          {
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              5,
+              4,
+              13,
+              16
+            ],
+            "stColour": 1366
+          }
+        ],
+        "turn": {
+          "kind": "fixed"
+        },
+        "vertices": [
+          [
+            -7,
+            47,
+            -5
+          ],
+          [
+            7,
+            47,
+            -5
+          ],
+          [
+            12,
+            30,
+            -10
+          ],
+          [
+            7,
+            0,
+            -5
+          ],
+          [
+            -7,
+            0,
+            -5
+          ],
+          [
+            -12,
+            30,
+            -10
+          ],
+          [
+            -4,
+            45,
+            -6
+          ],
+          [
+            4,
+            45,
+            -6
+          ],
+          [
+            9,
+            30,
+            -10
+          ],
+          [
+            -9,
+            30,
+            -10
+          ],
+          [
+            7,
+            47,
+            5
+          ],
+          [
+            12,
+            30,
+            10
+          ],
+          [
+            7,
+            0,
+            5
+          ],
+          [
+            -7,
+            47,
+            5
+          ],
+          [
+            -12,
+            30,
+            10
+          ],
+          [
+            -7,
+            0,
+            5
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}
