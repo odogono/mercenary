@@ -143,7 +143,7 @@ class CatalogueLedgerTests(unittest.TestCase):
                     indices, geometry_slot = part.split(' → ')
                     for index in indices.split(','):
                         floors[int(index)] = int(geometry_slot)
-                self.assertEqual(floors, {f: g for f, g, _ in s['floors']})
+                self.assertEqual(floors, {f[0]: f[1] for f in s.get('censusFloors', s['floors'])})
 
     def test_every_family_names_its_decoder_and_owner(self):
         families = {g['family'] for g in self.ledger['geometry']}
@@ -242,7 +242,8 @@ class CatalogueLedgerTests(unittest.TestCase):
         self.assertEqual([s['ramSha256'] is not None for s in self.ledger['logos']['states']],
                          [True, True])
         self.assertIn('gap island-decoder is both open and resolved', self.problems(
-            lambda d: d['gaps'].append({**d['gaps'][0], 'id': 'island-decoder'})))
+            lambda d: d['gaps'].append({'id': 'island-decoder', 'owner': 682,
+                                      'subject': 'family:island', 'blocking': True})))
         self.assertTrue(any('ground references cover' in p for p in self.problems(
             lambda d: d['totals'].update(surfaceCells=256))))
 
@@ -272,21 +273,74 @@ class CatalogueLedgerTests(unittest.TestCase):
             lambda d: next(b for b in d['bindings'] if b['id'] == 'placement-08-32')
             .update(state='present')))
         self.assertTrue(any('unresolved without a blocking gap' in p for p in self.problems(
-            lambda d: d.update(gaps=[g for g in d['gaps'] if g['subject'] != 'structureSlot:46']))))
+            lambda d: next(s for s in d['structureSlots'] if s['slot'] == 46)['floors']
+            .append([2, 128, None]))))
+
+    def test_interior_recovery_is_accounted(self):
+        interiors = [g for g in self.ledger['geometry'] if g['owner'] == 683]
+        self.assertEqual(len(interiors), 22)
+        self.assertTrue(all(g['state'] in ('recovered', 'empty') and g['sha256'] for g in interiors))
+        self.assertEqual({g['id'] for g in self.ledger['resolvedGaps'] if g['owner'] == 683},
+                         {'association-hooks', 'interior-details', 'floor-table-slot-46'})
+        self.assertEqual((self.ledger['totals']['authoredFloorGeometrySlots'],
+                          self.ledger['totals']['floorBindings']), (74, 464))
+        evidence = self.ledger['interiorComparisons']
+        self.assertEqual((evidence['passed'], evidence['total']), (565, 565))
+        self.assertTrue(all(c['passed'] and all(c['checks'].values()) for c in evidence['cases']))
+        self.assertEqual(sum(len(c['residents'] or []) for c in evidence['cases']), 180)
+        self.assertEqual(self.slots[46]['floors'], [[0, 99, 'structure-01844a']])
+        self.assertEqual(len(self.slots[46]['censusFloors']), 8)
+        self.assertNotIn('structure-00d368', self.geometry)
+        indoor = self.ledger['objects'][29]['indoor']  # DOOR KEY A, COMPANIES HOUSE Floor4
+        self.assertEqual((indoor['geometry'], indoor['baseY'], indoor['association']),
+                         ('structure-0116b8', 600, 3))
+        self.assertEqual(indoor['reachability'], 'unverified')
+
+    def test_interior_ledger_diagnoses_placement_and_hook_corruption(self):
+        self.assertTrue(any('hooks disagree with original reader' in p for p in self.problems(
+            lambda d: d['objects'][29]['indoor'].update(hooks=[[4, 0]]))))
+        self.assertTrue(any('local placement disagrees' in p for p in self.problems(
+            lambda d: d['objects'][29]['indoor'].update(localPosition=[0, 0, 0]))))
+        self.assertTrue(any('Floor height disagrees with pitch' in p for p in self.problems(
+            lambda d: next(s for s in d['structureSlots'] if s['slot'] == 203)['floorBindings'][1]
+            .update(baseY=999))))
+        self.assertIn('interior readers must compare every initial indoor resident', self.problems(
+            lambda d: next(c for c in d['interiorComparisons']['cases'] if c['residents'])
+            .update(residents=[])))
+        self.assertTrue(any('missing or failed' in p for p in self.problems(
+            lambda d: d['interiorComparisons']['cases'][0]['checks'].update(plan=False))))
+
+    def test_reader_evidence_requires_title_source_identity_and_complete_checks(self):
+        self.assertTrue(any('comparison source disagrees' in p for p in self.problems(
+            lambda d: d['interiorComparisons']['source'].update(title='damocles'))))
+        self.assertTrue(any('comparison source disagrees' in p for p in self.problems(
+            lambda d: d['interiorComparisons']['source'].update(programSha256='f' * 64))))
+        self.assertTrue(any('comparison identity disagrees' in p for p in self.problems(
+            lambda d: d['interiorComparisons']['cases'][0].update(geometry='structure-ffffff'))))
+        self.assertTrue(any('comparison identity disagrees' in p for p in self.problems(
+            lambda d: d['interiorComparisons']['cases'][0].update(variant='scale=999,999'))))
+        self.assertTrue(any('comparison checks are incomplete' in p for p in self.problems(
+            lambda d: d['interiorComparisons']['cases'][0].update(checks={'anything': True}))))
+        self.assertTrue(any('comparison binding disagrees' in p for p in self.problems(
+            lambda d: d['structureSlots'][0]['floorBindings'][0].update(palette=9999))))
 
     def test_regenerates_from_the_census_run(self):
         run, surface = os.environ.get('M3_CENSUS_RUN'), os.environ.get('M3_SURFACE')
-        objects = os.environ.get('M3_OBJECTS')
-        if not run or not surface or not objects:
-            self.skipTest('set M3_CENSUS_RUN, M3_SURFACE and M3_OBJECTS (the surface and '
-                          'object extraction directories)')
+        objects, interiors = os.environ.get('M3_OBJECTS'), os.environ.get('M3_INTERIORS')
+        if not run or not surface or not objects or not interiors:
+            self.skipTest('set M3_CENSUS_RUN, M3_SURFACE, M3_OBJECTS and M3_INTERIORS '
+                          '(the recovery extraction directories)')
         directory, models = Path(surface), Path(objects)
         comparisons = {kind: json.loads((directory / f'{kind}.json').read_text())
                        for kind in ('scenes', 'coasts')}
         comparisons['objects'] = json.loads((models / 'objects.scenes.json').read_text())
+        interior_dir = Path(interiors)
+        comparisons['interiors'] = json.loads((interior_dir / 'readers.json').read_text())
+        comparisons['interiorScenes'] = json.loads((interior_dir / 'scenes.json').read_text())
         ledger = build_ledger(Path(run), surface=json.loads((directory / 'surface.json').read_text()),
                               comparisons=comparisons,
-                              models=json.loads((models / 'objects.json').read_text()))
+                              models=json.loads((models / 'objects.json').read_text()),
+                              interiors=json.loads((interior_dir / 'interiors.json').read_text()))
         self.assertEqual(dumps(ledger), LEDGER_PATH.read_text())
 
 
