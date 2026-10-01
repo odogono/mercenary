@@ -4,11 +4,16 @@ import {
   type Primitive
 } from '../catalogue/data.ts';
 import { triangulate } from '../catalogue/geometry.ts';
+import {
+  horizonFillVertices,
+  horizonIslandVertices
+} from '../coast/horizon.ts';
+import { islandFillTriangles } from '../coast/islands.ts';
 import { tan } from '../math/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import { Camera } from '../projection/index.ts';
 import type { ErisPresentationDocument } from './documents.ts';
-import { classifyPosition, coastlineInBodyUnits } from './islands.ts';
+import { classifyPosition } from './islands.ts';
 import type { BoundStructureSnapshot } from './save.ts';
 import {
   regionIsEnclosed,
@@ -21,7 +26,6 @@ import { starTangent, type StarPixel } from './stars.ts';
 import {
   insideCentralCellHalf,
   withinDrawBound,
-  type ErisIsland,
   type ErisPlacement,
   type ErisSurface,
   type Pose
@@ -488,42 +492,6 @@ const basePlaneTriangles = (
 /// and the corners are then read back in Body units: ear clipping a polygon whose coordinates
 /// run to nine million would work, but there is no reason to ask it to. Three of Eris's five
 /// islands are concave, so this must be a triangulation and not a fan.
-const islandFillTriangles = (
-  island: ErisIsland,
-  surface: ErisSurface,
-  dropUnits: number,
-  eye: Vector3
-): readonly WorldTriangle[] => {
-  const local = island.coastline.vertices;
-  if (local.length < 3) {
-    return [];
-  }
-  const corners = triangulate(
-    local.map(([x, z]) => [x, 0, z] as const),
-    local.map((_, index) => index)
-  );
-  const body = coastlineInBodyUnits(island, surface.grid, eye);
-  const at = (index: number): Vector3 => ({
-    x: body[index]![0],
-    y: -dropUnits,
-    z: body[index]![1]
-  });
-  const triangles: WorldTriangle[] = [];
-  for (let i = 0; i < corners.length; i += 3) {
-    const triangle: WorldTriangle = [
-      at(corners[i]!),
-      at(corners[i + 1]!),
-      at(corners[i + 2]!)
-    ];
-    if (!degenerate(triangle)) {
-      // Both faces, as the base plane under it has: an island is drawn from above on foot and
-      // from below by nothing, but the pair costs two triangles and removes a facing question.
-      triangles.push(triangle, [triangle[2], triangle[1], triangle[0]]);
-    }
-  }
-  return triangles;
-};
-
 /// `$0598CC`: the colour space is filled in, slot 8's `$001`.
 const SPACE_SKY = '#000022';
 
@@ -576,101 +544,6 @@ const lerp2 = (from: Tangent, to: Tangent, t: number): Tangent => ({
   x: from.x + (to.x - from.x) * t,
   y: from.y + (to.y - from.y) * t
 });
-
-/// How far the horizon fill's square runs either side of the view's centre, in tangents of the
-/// view angle. Well past any frustum a canvas gives; the fill is painted with the depth test
-/// off, so only its outline matters.
-const HORIZON_REACH = 16;
-
-/// The ground to the horizon, `$0599D6`'s fill (#573): a square across the view at the sky's
-/// depth, cut to the half below the line where view directions turn horizontal, and fanned.
-///
-/// Aboard, the ST's flight branch (`$059822`) draws the stars and the sky pass, then
-/// `$0599D6`, which fills the viewport below a horizon line in colour 15, the Body's base
-/// colour `$7C88`. The line comes from the roll, the pitch and the projection scale alone, so
-/// the fill reaches the horizon at any height. Hatari frames over LACHESIS at Y 25.6, 26.5
-/// and 27.7 million show the same 30 rows of `$411` below a starfield. The base plane ends at
-/// the far plane, so from much above it only this fill is there. Nearer the surface the base
-/// plane covers it in the same colour.
-const horizonFillVertices = (
-  up: Vector3,
-  depth: number,
-  colour: readonly [number, number, number]
-): number[] => {
-  const reach = depth * HORIZON_REACH;
-  const square: Vector3[] = [
-    { x: -reach, y: -reach, z: depth },
-    { x: reach, y: -reach, z: depth },
-    { x: reach, y: reach, z: depth },
-    { x: -reach, y: reach, z: depth }
-  ];
-  const below = clipPolygon(
-    square,
-    point => -(point.x * up.x + point.y * up.y + point.z * up.z),
-    lerp3
-  );
-  const values: number[] = [];
-  for (let index = 1; index + 1 < below.length; index += 1) {
-    for (const point of [below[0]!, below[index]!, below[index + 1]!]) {
-      values.push(point.x, point.y, point.z, ...colour, 0, 0, 1, -depth);
-    }
-  }
-  return values;
-};
-
-/// One island fill in the horizon layer (#578): its triangles in view space, cut at the near
-/// plane, projected, cut to the horizon fill's square and fanned at the sky's depth.
-///
-/// `$056516` draws every island of the Body each frame, in record order, after the horizon
-/// fill `$0599D6`. Each is its coastline projected through `$05668A` and filled flat by
-/// `$04F8F2`, so nothing but the view limits how far off one is drawn. The #573 frames show
-/// DION's islands from every captured height, Y 1.4 to 31 million. The port's island fills
-/// end at the far plane, as the base plane does (#221), so this second copy paints the whole
-/// island flat with the depth test off. Inside the far plane the base plane and the island
-/// fill cover it again in the same pixels.
-const horizonIslandVertices = (
-  triangles: readonly WorldTriangle[],
-  toView: (world: Vector3) => Vector3,
-  nearPlane: number,
-  depth: number,
-  colour: readonly [number, number, number]
-): number[] => {
-  const values: number[] = [];
-  for (const triangle of triangles) {
-    const front = clipPolygon(
-      triangle.map(toView),
-      point => point.z - nearPlane,
-      lerp3
-    );
-    let flat: Tangent[] = front.map(point => ({
-      x: point.x / point.z,
-      y: point.y / point.z
-    }));
-    for (const side of [
-      (point: Tangent) => HORIZON_REACH - point.x,
-      (point: Tangent) => HORIZON_REACH + point.x,
-      (point: Tangent) => HORIZON_REACH - point.y,
-      (point: Tangent) => HORIZON_REACH + point.y
-    ]) {
-      flat = clipPolygon(flat, side, lerp2);
-    }
-    for (let index = 1; index + 1 < flat.length; index += 1) {
-      for (const point of [flat[0]!, flat[index]!, flat[index + 1]!]) {
-        values.push(
-          point.x * depth,
-          point.y * depth,
-          depth,
-          ...colour,
-          0,
-          0,
-          1,
-          -depth
-        );
-      }
-    }
-  }
-  return values;
-};
 
 /// The comet's polygons, `$04F8FE`'s, in view space: cut short of the eye, projected, cut at the
 /// horizon row (the `$04FB1C` fill limit, patched to row 68 on foot), and fanned into

@@ -23,6 +23,7 @@
       "src/catalogue/boot.ts",
       "src/damocles/boot.ts",
       "src/dion/boot.ts",
+      "src/dionCatalogue/boot.ts",
       "src/damocles/firstOfferDemo.ts",
       "src/soundboard/boot.ts",
       "src/soundboard/dionWorklet.ts",

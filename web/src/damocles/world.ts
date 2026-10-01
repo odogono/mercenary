@@ -17,8 +17,11 @@ import {
   type StructureSelection
 } from '../catalogue/data.ts';
 import type { ModelLookup } from '../catalogue/modelStore.ts';
+import { nearestIsland } from '../coast/islands.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import type { ErisPresentationDocument } from './documents.ts';
+
+export { nearestIsland, islandOriginNear } from '../coast/islands.ts';
 
 /// The Eris surface as the Damocles Gameplay Session walks it: the Damocles Catalogue's
 /// recovered placements on one Body, in raw engine units, with the authored document saying
@@ -199,12 +202,6 @@ export const cellOf = (position: Vector3, grid: ErisGrid): ErisCell => ({
 const wrapSurface = (cell: number): number =>
   ((cell % SURFACE_CELLS) + SURFACE_CELLS) % SURFACE_CELLS;
 
-/// The shorter of the two ways round the surface between two cells on one axis.
-const surfaceSpan = (from: number, to: number): number => {
-  const gap = wrapSurface(from - to);
-  return Math.min(gap, SURFACE_CELLS - gap);
-};
-
 /// The same gap taken signed, which is what sign-extending to 28 bits leaves.
 ///
 /// This is the helper a consumer needs before it may treat Body Coordinates as numbers at all.
@@ -231,25 +228,6 @@ export const bodyCellOf = (position: Vector3, grid: ErisGrid): ErisCell => ({
 /// reading, so that is what this measures, on the wrapping surface rather than on a plane. It
 /// will matter where two records sit close together, as Lachesis's ten do
 /// (docs/research/damocles-eris-islands.md, "Named gaps").
-export const nearestIsland = (
-  surface: ErisSurface,
-  position: Vector3
-): ErisIsland | undefined => {
-  const here = bodyCellOf(position, surface.grid);
-  let nearest: ErisIsland | undefined;
-  let best = Number.POSITIVE_INFINITY;
-  for (const island of surface.islands) {
-    const distance =
-      surfaceSpan(here.x, island.origin.x) ** 2 +
-      surfaceSpan(here.z, island.origin.z) ** 2;
-    if (distance < best) {
-      best = distance;
-      nearest = island;
-    }
-  }
-  return nearest;
-};
-
 /// The Island-Local Cell of a position: its Body Coordinate less the island's origin, taken
 /// signed across the wrap, which is the high word `$058F88`..`$058F96` publishes to `$7A2C`.
 ///
@@ -273,25 +251,6 @@ export const islandLocalCell = (
 /// so choosing its image once keeps it whole and choosing per vertex is exactly how Snow Island
 /// tears. Everything island-local — a coastline vertex, a box bound, a local cell — is then a
 /// plain offset from what this returns.
-export const islandOriginNear = (
-  position: Vector3,
-  grid: ErisGrid,
-  island: ErisIsland
-): { readonly x: number; readonly z: number } => {
-  const here = bodyCellOf(position, grid);
-  // The shift comes off the position's *own* cell, not off its wrapped Body Coordinate: a raw
-  // position is an unbounded number and may sit at a negative cell, so taking the image from
-  // the wrapped coordinate would put the origin a whole surface away from the point it is
-  // supposed to be measured from.
-  const axis = (raw: number, origin: number, wrapped: number): number =>
-    (Math.floor(raw / grid.cellUnits) - surfaceOffset(wrapped, origin)) *
-    grid.cellUnits;
-  return {
-    x: axis(position.x, island.origin.x, here.x),
-    z: axis(position.z, island.origin.z, here.z)
-  };
-};
-
 /// Whether the Working Authority draws this placement from where the player stands (#373).
 ///
 /// Three families, three bounds. A Surface Structure is drawn only from its own Surface Cell:

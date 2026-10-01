@@ -336,6 +336,7 @@ export interface DionWorld {
     readonly bindings89: readonly number[];
     readonly bindings9D: readonly number[];
     readonly signScript: readonly number[];
+    readonly tokens?: ReadonlyMap<number, readonly number[]>;
   };
   readonly metisGroup: number;
   readonly modelColours: readonly number[];
@@ -392,7 +393,7 @@ const readCell = (value: unknown, path: string): DionCell => {
   };
 };
 
-const readStructure = (value: unknown, path: string): DionStructure => {
+export const readStructure = (value: unknown, path: string): DionStructure => {
   const raw = record(value, path);
   return {
     associations: list(raw['associations'], `${path}.associations`).map(
@@ -504,7 +505,7 @@ const readPrimitive = (
   return fail(`${path}.kind ${kind} is not a detail primitive`);
 };
 
-const readDetail = (value: unknown, path: string): DionDetail => {
+export const readDetail = (value: unknown, path: string): DionDetail => {
   const raw = record(value, path);
   const extent = raw['extent'];
   return {
@@ -546,7 +547,7 @@ const readDetail = (value: unknown, path: string): DionDetail => {
   };
 };
 
-const readGround = (value: unknown, path: string): DionGround => {
+export const readGround = (value: unknown, path: string): DionGround => {
   const raw = record(value, path);
   return {
     primitives: list(raw['primitives'], `${path}.primitives`).map(
@@ -636,7 +637,11 @@ const readForm = (value: unknown, path: string): DionModelForm => {
   };
 };
 
-const readModel = (value: unknown, path: string, key: number): DionModel => {
+export const readModel = (
+  value: unknown,
+  path: string,
+  key: number
+): DionModel => {
   const raw = record(value, path);
   const entry = int(raw['entry'], `${path}.entry`, 0, 511);
   if (entry !== key) {
@@ -690,7 +695,7 @@ const readResident = (value: unknown, path: string): DionResident => {
   };
 };
 
-const readGlyph = (value: unknown, path: string): DionGlyph => {
+export const readGlyph = (value: unknown, path: string): DionGlyph => {
   const raw = record(value, path);
   return {
     code: byte(raw['code'], `${path}.code`),

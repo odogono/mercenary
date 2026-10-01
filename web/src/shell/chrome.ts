@@ -47,8 +47,9 @@ export interface TitleLogoCopy {
 export interface ShellChromeCopy {
   /// Set only by a Title whose System the Atlas presents; omitted, the menu has no Atlas link.
   readonly atlasLabel?: string;
-  /// The Title's catalogue link, if it has a catalogue; Mercenary III has none yet.
+  /// The Title's catalogue link, if it has a catalogue; its destination is title-local.
   readonly catalogueLabel?: string;
+  readonly cataloguePath?: string;
   readonly logo: TitleLogoCopy;
   readonly menuTitle: string;
   readonly settings: readonly SettingName[];
@@ -218,7 +219,7 @@ export const installShellChrome = (
       ? []
       : [
           el('a', {
-            attrs: { href: '/catalogue' },
+            attrs: { href: copy.cataloguePath ?? '/catalogue' },
             className: 'chrome-button',
             text: copy.catalogueLabel
           })
