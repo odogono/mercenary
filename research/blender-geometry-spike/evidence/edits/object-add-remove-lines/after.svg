@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="296" viewBox="0 0 640 296">
+<rect width="100%" height="100%" fill="#0b0d10"/>
+<text x="8" y="16" fill="#9aa4ad" font-family="monospace" font-size="12">object-add-remove-lines · edited (.mgeo)</text>
+<g transform="translate(0 24)" stroke-linecap="round">
+<line x1="640.00" y1="1.68" x2="513.14" y2="51.55" stroke="#e8edf2" stroke-width="1"/>
+<line x1="513.14" y1="51.55" x2="71.68" y2="51.55" stroke="#e8edf2" stroke-width="1"/>
+<line x1="71.68" y1="51.55" x2="0.00" y2="29.63" stroke="#e8edf2" stroke-width="1"/>
+<line x1="513.14" y1="51.55" x2="510.41" y2="161.49" stroke="#e8edf2" stroke-width="1"/>
+<line x1="71.68" y1="51.55" x2="75.19" y2="161.49" stroke="#e8edf2" stroke-width="1"/>
+<line x1="640.00" y1="184.64" x2="510.41" y2="161.49" stroke="#e8edf2" stroke-width="1"/>
+<line x1="510.41" y1="161.49" x2="75.19" y2="161.49" stroke="#e8edf2" stroke-width="1"/>
+<line x1="75.19" y1="161.49" x2="0.00" y2="171.94" stroke="#e8edf2" stroke-width="1"/>
+<line x1="309.80" y1="161.49" x2="309.75" y2="120.63" stroke="#e8edf2" stroke-width="1"/>
+<line x1="309.75" y1="120.63" x2="330.25" y2="120.63" stroke="#e8edf2" stroke-width="1"/>
+<line x1="330.25" y1="120.63" x2="330.20" y2="161.49" stroke="#e8edf2" stroke-width="1"/>
+<line x1="251.46" y1="272.00" x2="250.56" y2="173.78" stroke="#e8edf2" stroke-width="1"/>
+<line x1="250.56" y1="173.78" x2="296.57" y2="80.59" stroke="#e8edf2" stroke-width="1"/>
+<line x1="296.57" y1="80.59" x2="343.43" y2="80.59" stroke="#e8edf2" stroke-width="1"/>
+<line x1="343.43" y1="80.59" x2="389.44" y2="173.78" stroke="#e8edf2" stroke-width="1"/>
+<line x1="389.44" y1="173.78" x2="388.54" y2="272.00" stroke="#e8edf2" stroke-width="1"/>
+<line x1="309.80" y1="161.49" x2="330.22" y2="147.91" stroke="#e8edf2" stroke-width="1"/>
+<line x1="316.60" y1="151.31" x2="323.40" y2="151.31" stroke="#e8edf2" stroke-width="1"/>
+<line x1="323.40" y1="151.31" x2="326.82" y2="144.51" stroke="#e8edf2" stroke-width="1"/>
+<line x1="326.82" y1="144.51" x2="326.82" y2="141.11" stroke="#e8edf2" stroke-width="1"/>
+<line x1="326.82" y1="141.11" x2="323.41" y2="137.70" stroke="#e8edf2" stroke-width="1"/>
+<line x1="323.41" y1="137.70" x2="316.59" y2="137.70" stroke="#e8edf2" stroke-width="1"/>
+<line x1="316.59" y1="137.70" x2="313.18" y2="141.11" stroke="#e8edf2" stroke-width="1"/>
+<line x1="313.18" y1="141.11" x2="313.18" y2="144.51" stroke="#e8edf2" stroke-width="1"/>
+<line x1="313.18" y1="144.51" x2="316.60" y2="151.31" stroke="#e8edf2" stroke-width="1"/>
+<line x1="316.59" y1="141.11" x2="316.59" y2="144.51" stroke="#e8edf2" stroke-width="1"/>
+<line x1="323.41" y1="141.11" x2="323.41" y2="144.51" stroke="#e8edf2" stroke-width="1"/>
+<line x1="316.59" y1="147.91" x2="323.41" y2="147.91" stroke="#e8edf2" stroke-width="1"/>
+<line x1="309.80" y1="161.49" x2="316.59" y2="147.91" stroke="#e8edf2" stroke-width="1"/>
+</g>
+</svg>

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="296" viewBox="0 0 640 296">
+<rect width="100%" height="100%" fill="#0b0d10"/>
+<text x="8" y="16" fill="#9aa4ad" font-family="monospace" font-size="12">targ-surface-cell-1 · recovered baseline</text>
+<g transform="translate(0 24)" stroke-linecap="round">
+<line x1="339.24" y1="69.49" x2="320.00" y2="83.44" stroke="#e8edf2" stroke-width="1"/>
+<line x1="339.24" y1="69.49" x2="320.00" y2="37.45" stroke="#e8edf2" stroke-width="1"/>
+<line x1="335.27" y1="54.08" x2="320.00" y2="83.44" stroke="#e8edf2" stroke-width="1"/>
+<line x1="335.27" y1="54.08" x2="320.00" y2="37.45" stroke="#e8edf2" stroke-width="1"/>
+<line x1="302.49" y1="54.99" x2="320.00" y2="83.44" stroke="#e8edf2" stroke-width="1"/>
+<line x1="302.49" y1="54.99" x2="320.00" y2="37.45" stroke="#e8edf2" stroke-width="1"/>
+<line x1="303.00" y1="70.61" x2="320.00" y2="83.44" stroke="#e8edf2" stroke-width="1"/>
+<line x1="303.00" y1="70.61" x2="320.00" y2="37.45" stroke="#e8edf2" stroke-width="1"/>
+<line x1="321.67" y1="192.75" x2="343.73" y2="171.74" stroke="#e8edf2" stroke-width="1"/>
+<line x1="343.73" y1="171.74" x2="318.55" y2="155.70" stroke="#e8edf2" stroke-width="1"/>
+<line x1="318.55" y1="155.70" x2="296.05" y2="174.14" stroke="#e8edf2" stroke-width="1"/>
+<line x1="296.05" y1="174.14" x2="321.67" y2="192.75" stroke="#e8edf2" stroke-width="1"/>
+<line x1="322.33" y1="101.76" x2="352.17" y2="82.37" stroke="#e8edf2" stroke-width="1"/>
+<line x1="352.17" y1="82.37" x2="318.07" y2="68.28" stroke="#e8edf2" stroke-width="1"/>
+<line x1="318.07" y1="68.28" x2="287.43" y2="84.53" stroke="#e8edf2" stroke-width="1"/>
+<line x1="287.43" y1="84.53" x2="322.33" y2="101.76" stroke="#e8edf2" stroke-width="1"/>
+<line x1="321.67" y1="192.75" x2="322.33" y2="101.76" stroke="#e8edf2" stroke-width="1"/>
+<line x1="343.73" y1="171.74" x2="352.17" y2="82.37" stroke="#e8edf2" stroke-width="1"/>
+<line x1="318.55" y1="155.70" x2="318.07" y2="68.28" stroke="#e8edf2" stroke-width="1"/>
+<line x1="296.05" y1="174.14" x2="287.43" y2="84.53" stroke="#e8edf2" stroke-width="1"/>
+<line x1="535.83" y1="0.00" x2="324.70" y2="228.71" stroke="#6c7884" stroke-width="1"/>
+<line x1="324.70" y1="228.71" x2="42.90" y2="0.00" stroke="#6c7884" stroke-width="1"/>
+<line x1="528.00" y1="0.00" x2="322.60" y2="203.81" stroke="#6c7884" stroke-width="1"/>
+<line x1="322.60" y1="203.81" x2="51.82" y2="0.00" stroke="#6c7884" stroke-width="1"/>
+</g>
+</svg>

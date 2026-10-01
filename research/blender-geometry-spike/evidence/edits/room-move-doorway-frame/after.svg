@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="296" viewBox="0 0 640 296">
+<rect width="100%" height="100%" fill="#0b0d10"/>
+<text x="8" y="16" fill="#9aa4ad" font-family="monospace" font-size="12">room-move-doorway-frame · edited (.mgeo)</text>
+<g transform="translate(0 24)" stroke-linecap="round">
+<line x1="320.00" y1="88.69" x2="0.00" y2="67.41" stroke="#e8edf2" stroke-width="1"/>
+<line x1="640.00" y1="67.41" x2="320.00" y2="88.69" stroke="#e8edf2" stroke-width="1"/>
+<line x1="320.00" y1="88.69" x2="320.00" y2="141.98" stroke="#e8edf2" stroke-width="1"/>
+<line x1="320.00" y1="141.98" x2="0.00" y2="186.85" stroke="#e8edf2" stroke-width="1"/>
+<line x1="640.00" y1="186.85" x2="320.00" y2="141.98" stroke="#e8edf2" stroke-width="1"/>
+<line x1="259.90" y1="150.40" x2="259.57" y2="138.36" stroke="#e8edf2" stroke-width="1"/>
+<line x1="259.57" y1="138.36" x2="264.81" y2="137.82" stroke="#e8edf2" stroke-width="1"/>
+<line x1="264.81" y1="137.82" x2="265.11" y2="149.67" stroke="#e8edf2" stroke-width="1"/>
+<line x1="372.35" y1="149.32" x2="372.64" y2="137.56" stroke="#e8edf2" stroke-width="1"/>
+<line x1="372.64" y1="137.56" x2="367.65" y2="137.05" stroke="#e8edf2" stroke-width="1"/>
+<line x1="367.65" y1="137.05" x2="367.39" y2="148.62" stroke="#e8edf2" stroke-width="1"/>
+</g>
+</svg>

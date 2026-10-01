@@ -1,0 +1,1 @@
+error: wireframe/v0: moved, but it is a rotated input whose position the runtime computes; undo the move and change its mc_input attribute instead

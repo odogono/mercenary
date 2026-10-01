@@ -1,0 +1,1 @@
+error: wireframe/v62: moved, but it is a Road Workspace endpoint placed by the road table; it cannot be moved here
