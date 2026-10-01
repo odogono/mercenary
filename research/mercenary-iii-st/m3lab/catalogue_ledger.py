@@ -24,8 +24,10 @@ from pathlib import Path
 
 from .census_locations import describe_cell, read_inventory, read_workspace, structure_floors
 from .census_objects import extract_objects
+from .catalogue_surface import digest
 from .geometry import detail_record, resolve_structure, structure_record
 from .ram import Ram, hexaddr
+from .interior_capture import READER_CHECKS
 
 SCHEMA_VERSION = 1
 LABORATORY = Path(__file__).resolve().parents[1]
@@ -127,7 +129,8 @@ def _group_disposition(group: dict, bindings: int) -> str:
 
 
 def build_ledger(run: Path, repository: Path = REPOSITORY, surface: dict | None = None,
-                 comparisons: dict | None = None, models: dict | None = None) -> dict:
+                 comparisons: dict | None = None, models: dict | None = None,
+                 interiors: dict | None = None) -> dict:
     """The census ledger; with the #682 surface and #681 object extractions, their
     recovery states too, and with their original-scene comparisons, the results for
     #686 to build on."""
@@ -178,6 +181,15 @@ def build_ledger(run: Path, repository: Path = REPOSITORY, surface: dict | None 
             'palette': resolved['palette'], 'detail': resolved['detail'],
             'pitch': structure_floors(opening, slot)['pitch'],
             'floors': [[f['floor'], f['geometrySlot']] for f in floors]}
+
+    raw_floor_slots = {g for s in slot_records.values() for _, g in s['floors']}
+    if interiors is not None:
+        for slot, record in slot_records.items():
+            extracted = interiors['structures'][str(slot)]
+            if 'nonFloorBytes' in extracted:
+                record['censusFloors'] = record['floors']
+                record['nonFloorBytes'] = extracted['nonFloorBytes']
+                record['floors'] = [[f['floor'], f['geometrySlot']] for f in extracted['floors']]
 
     geometry: dict[str, dict] = {}
 
@@ -316,7 +328,7 @@ def build_ledger(run: Path, repository: Path = REPOSITORY, surface: dict | None 
             'groups': len(groups), 'authoredBindings': len(bindings),
             'initialBindings': sum(b['state'] != 'initially-absent' for b in bindings),
             'selectedStructureSlots': len(slot_records),
-            'floorGeometrySlots': len({g for s in slot_records.values() for _, g, _ in s['floors']}),
+            'floorGeometrySlots': len(raw_floor_slots),
             'objectSlots': len(objects),
             'residence': {name: residence[name] for name in RESIDENCES},
             'places': len(places),
@@ -396,14 +408,16 @@ def build_ledger(run: Path, repository: Path = REPOSITORY, surface: dict | None 
         apply_surface(ledger, surface, playable)
     if models is not None:
         apply_objects(ledger, models, playable)
+    if interiors is not None:
+        apply_interiors(ledger, interiors)
     if comparisons is not None:
         ledger['comparisons'] = [
             {'id': name, 'kind': 'scene', 'binding': r['binding'], 'run': r['run'],
              'agreement': round(r['agreement'], 4), 'plannerGaps': r['gaps'][1:]}
-            for name, r in sorted(comparisons['scenes'].items())] + [
+            for name, r in sorted(comparisons.get('scenes', {}).items())] + [
             {'id': name, 'kind': 'land-sea', 'run': r['run'], 'points': len(r['rows']),
              'agree': r['agree']}
-            for name, r in sorted(comparisons['coasts'].items())] + [
+            for name, r in sorted(comparisons.get('coasts', {}).items())] + [
             {'id': name, 'kind': 'object-scene', 'object': r['object'], 'geometry': r['geometry'],
              'variant': r['variant'], 'run': r['run'], 'agreement': round(r['agreement'], 4),
              'objectAgreement': round(r['objectAgreement'], 4), 'plannerGaps': r['gaps'][1:]}
@@ -418,6 +432,27 @@ def build_ledger(run: Path, repository: Path = REPOSITORY, surface: dict | None 
                               'decoded ground form (form=view-1); the planner draws the same '
                               f'record there (object scene {spaceport["run"]}, '
                               'docs/research/dion-object-geometry.md).'})
+    if comparisons is not None and 'interiors' in comparisons:
+        evidence = comparisons['interiors']
+        if interiors is None:
+            raise ValueError('interior comparisons require an interior extraction')
+        for field in ('title', 'programSha256', 'openingRamSha256'):
+            if evidence.get('source', {}).get(field) != interiors['source'].get(field):
+                raise ValueError(f'interior comparison source disagrees: {field}')
+        ledger['interiorComparisons'] = {
+            'source': evidence['source'],
+            'run': evidence['run'], 'total': evidence['total'], 'passed': evidence['passed'],
+            'cases': [{k: r[k] for k in ('id', 'kind', 'group', 'cell', 'slot', 'floor', 'geometry', 'variant', 'checks',
+                                         'residents', 'binding', 'ramSha256', 'occupantRamSha256', 'passed')}
+                      for r in evidence['cases']]}
+    if comparisons is not None and 'interiorScenes' in comparisons:
+        ledger['interiorScenes'] = {}
+        for name, scene in sorted(comparisons['interiorScenes'].items()):
+            for field in ('title', 'programSha256', 'openingRamSha256'):
+                if interiors is None or scene.get('source', {}).get(field) != interiors['source'].get(field):
+                    raise ValueError(f'{name}: interior scene source disagrees: {field}')
+            ledger['interiorScenes'][name] = {**scene, 'originalScreenshot':
+                f'restricted/mercenary-iii-683/runs/{scene["run"]}/v7000.png'}
     ledger['completion'] = completion(ledger)
     problems = validate_ledger(ledger)
     if problems:
@@ -560,6 +595,77 @@ def apply_objects(ledger: dict, objects: dict, playable: dict[str, set[str]]) ->
                              'resolution': OBJECT_RESOLUTIONS[gap['id']]})
 
 
+def apply_interiors(ledger: dict, interiors: dict) -> None:
+    """Fold #683's complete Floor bindings and residents in, preserving surface hashes."""
+    if (interiors['source']['title'] != 'dion' or
+            interiors['source']['programSha256'] != ledger['source']['programSha256'] or
+            interiors['source']['openingRamSha256'] != ledger['source']['census']['openingRamSha256']):
+        raise ValueError('interior extraction source disagrees with the census')
+    geometry = {g['id']: g for g in ledger['geometry']}
+    required = {g['id'] for g in ledger['geometry'] if g['owner'] == INTERIOR_TICKET}
+    missing = required - set(interiors['geometry'])
+    if missing:
+        raise ValueError(f'interior extraction is missing required geometry: {sorted(missing)}')
+    for key, record in interiors['geometry'].items():
+        if key not in geometry or digest({k: v for k, v in record.items() if k != 'sha256'}) != record['sha256']:
+            raise ValueError(f'{key}: unknown or corrupt interior geometry')
+        entry = geometry[key]
+        if entry['owner'] != INTERIOR_TICKET:
+            if entry.get('sha256') is not None and entry['sha256'] != record['sha256']:
+                raise ValueError(f'{key}: interior and surface geometry disagree')
+            continue
+        entry['state'] = 'recovered' if any(_drawable(record['family'], v)
+                                          for v in record['variants'].values()) else 'empty'
+        entry['variants'] = list(record['variants'])
+        entry['sha256'] = record['sha256']
+    for row in ledger['structureSlots']:
+        extracted = interiors['structures'][str(row['slot'])]
+        if row['floors'] != [[f['floor'], f['geometrySlot'], f['geometry']] for f in extracted['floors']]:
+            raise ValueError(f'slot {row["slot"]}: interior Floor inventory disagrees')
+        row['floorBindings'] = [{k: f[k] for k in ('floor', 'label', 'geometry', 'variant', 'palette',
+                                                   'baseY', 'provenance')} for f in extracted['floors']]
+    residents = {r['slot']: r for r in interiors['residents']}
+    indoor = [o for o in ledger['objects'] if o['residence'] == 'structure']
+    if set(residents) != {o['slot'] for o in indoor}:
+        raise ValueError('interior extraction must bind every indoor resident exactly once')
+    for o in indoor:
+        recovered = residents[o['slot']]
+        if any(o[k] != recovered[k] for k in ('host', 'body', 'bodyCell', 'floor', 'position')):
+            raise ValueError(f'object {o["slot"]}: interior placement disagrees with the census')
+        o['indoor'] = {k: recovered[k] for k in (
+            'group', 'cell', 'structureSlot', 'geometry', 'variant', 'association', 'hooks',
+            'dormantHooks', 'localPosition', 'origin', 'baseY', 'yaw', 'reachability', 'provenance')}
+    ledger['totals']['authoredFloorGeometrySlots'] = interiors['floorInventory']['authoredSlots']
+    ledger['totals']['floorBindings'] = sum(len(s['floors']) for s in ledger['structureSlots'])
+    ledger['totals']['indoorResidents'] = len(residents)
+    ledger['source']['interiors'] = {
+        'recipe': 'research/mercenary-iii-st/m3lab/catalogue_interiors.py',
+        'evidence': 'docs/research/dion-interior-recovery.md',
+        'sha256': hashlib.sha256(json.dumps(interiors, sort_keys=True).encode()).hexdigest()}
+    resolutions = {
+        'association-hooks': 'All 180 initial indoor residents have their own-region tail and '
+                             'explicit region/queue insertions; original $53C5E comparisons '
+                             'are in interiorComparisons. Offsets are independent of hooks.',
+        'interior-details': 'Each Floor inherits its host scale and building detail, including '
+                            'the second indoor selection group; a zero alias palette selects '
+                            'the parallel per-Floor palette ($56DAA..$56E5A).',
+        'floor-table-slot-46': 'The eight-byte compact alias ends at $10696, where slot47 begins. '
+                              'Only G=99 is authored. Other raw census bytes are retained in '
+                              'censusFloors/nonFloorBytes; original floor-key refusal and '
+                              'the $C000 non-lift region are documented in the report.'}
+    for gap in list(ledger['gaps']):
+        if gap['id'] in resolutions:
+            ledger['gaps'].remove(gap)
+            ledger.setdefault('resolvedGaps', []).append({
+                'id': gap['id'], 'owner': gap['owner'], 'resolution': resolutions[gap['id']]})
+
+    if any('nonFloorBytes' in s for s in interiors['structures'].values()) and not any(
+            g['id'] == 'floor-table-slot-46' for g in ledger.get('resolvedGaps', [])):
+        ledger.setdefault('resolvedGaps', []).append({
+            'id': 'floor-table-slot-46', 'owner': INTERIOR_TICKET,
+            'resolution': resolutions['floor-table-slot-46']})
+
+
 def completion(ledger: dict) -> dict:
     """The milestone rule: every required identity recovered and previewed, no blocking gap."""
     required = [g for g in ledger['geometry'] if g['required']]
@@ -613,7 +719,7 @@ def validate_ledger(ledger: dict, *, check_decoders: bool = True) -> list[str]:
     check(len(slots) == totals['selectedStructureSlots'] and
           {s['slot'] for s in slots} == {b['slot'] for b in bindings},
           'structureSlots must be exactly the slots the bindings select')
-    floor_slots = {slot for s in slots for _, slot, _ in s['floors']}
+    floor_slots = {f[1] for s in slots for f in s.get('censusFloors', s['floors'])}
     check(len(floor_slots) == totals['floorGeometrySlots'],
           'floorGeometrySlots disagrees with the Floor Tables')
     check(sum(1 for b in ledger['bodies'] for _ in b['islands']) == totals['islandPlacements'],
@@ -737,6 +843,102 @@ def validate_ledger(ledger: dict, *, check_decoders: bool = True) -> list[str]:
         grounds = sum(g['references'] for g in ledger['geometry'] if g['family'] == 'ground')
         check(grounds == totals['surfaceCells'],
               f'ground references cover {grounds} cells, not {totals["surfaceCells"]}')
+    if 'interiors' in ledger['source']:
+        check(totals.get('authoredFloorGeometrySlots') == len({f[1] for s in slots for f in s['floors']}),
+              'authoredFloorGeometrySlots disagrees with authored Floors')
+        check(totals.get('floorBindings') == sum(len(s['floors']) for s in slots),
+              'floorBindings disagrees with authored Floors')
+        indoor = [o for o in objects if o['residence'] == 'structure']
+        check(totals.get('indoorResidents') == len(indoor), 'indoorResidents disagrees with objects')
+        for s in slots:
+            floors = s.get('floorBindings', [])
+            check([(f['floor'], f['geometry']) for f in floors] == [(f, g) for f, _, g in s['floors']],
+                  f'slot {s["slot"]}: resolved Floor bindings disagree')
+            for f in floors:
+                g = geometry.get(f['geometry'], {})
+                check(f['variant'] in (g.get('variants') or []),
+                      f'slot {s["slot"]}: Floor {f["floor"]} has unknown variant')
+                check(f['baseY'] == f['floor'] * (s['pitch'] or 0),
+                      f'slot {s["slot"]}: Floor height disagrees with pitch')
+            if 'censusFloors' in s:
+                check(s['slot'] == 46 and s['floors'] == [[0, 99, 'structure-01844a']] and
+                      s['nonFloorBytes']['disposition'] == 'next-alias-record' and
+                      s['nonFloorBytes']['range'] == ['$10696', '$1069F'] and
+                      s['nonFloorBytes']['nextSlot'] == 47,
+                      f'slot {s["slot"]}: compact alias census disposition disagrees')
+        evidence = ledger.get('interiorComparisons', {})
+        cases = evidence.get('cases', [])
+        source = evidence.get('source', {})
+        check(source.get('title') == 'dion' and source.get('programSha256') == ledger['source']['programSha256']
+              and source.get('openingRamSha256') == ledger['source']['census']['openingRamSha256'],
+              'interior comparison source disagrees with the census')
+        for c in cases:
+            s = slot_map.get(c['slot'], {})
+            floor = next((f for f in s.get('floorBindings', []) if f['floor'] == c['floor']), {})
+            check(c['geometry'] == floor.get('geometry') and c['variant'] == floor.get('variant'),
+                  f'{c["id"]}: comparison identity disagrees with host Floor')
+            check(c['kind'] in ('floor-assembly', 'resident-host') and
+                  (c['residents'] is not None) == (c['kind'] == 'resident-host'),
+                  f'{c["id"]}: comparison kind disagrees with residents')
+            expected_checks = READER_CHECKS | ({'residents'} if c['kind'] == 'resident-host' else set())
+            check(set(c['checks']) == expected_checks, f'{c["id"]}: comparison checks are incomplete')
+            check(c.get('binding') == {'scale': s.get('scale'), 'detail': s.get('detailIndex'),
+                                      'palette': floor.get('palette'), 'baseY': floor.get('baseY')},
+                  f'{c["id"]}: comparison binding disagrees with resolved Floor')
+        check(evidence.get('total') == len(cases) and
+              evidence.get('passed') == sum(c['passed'] is True for c in cases),
+              'interior reader comparison totals disagree')
+        check(bool(cases) and all(c['passed'] is True and c['checks'] and all(v is True for v in c['checks'].values())
+                                for c in cases),
+              'interior reader comparisons are missing or failed')
+        expected = {(s['slot'], f[0]) for s in slots for f in s['floors']}
+        check(len({c['id'] for c in cases}) == len(cases), 'interior comparison identities repeat')
+        assembled = {(c['slot'], c['floor']) for c in cases if c['kind'] == 'floor-assembly'}
+        contexts = {(o['indoor']['group'], o['indoor']['cell'], o['floor'])
+                    for o in indoor if o.get('indoor')}
+        actual_contexts = {(c['group'], c['cell'], c['floor']) for c in cases if c['kind'] == 'resident-host'}
+        check(actual_contexts == contexts and len(cases) == len(expected) + len(contexts),
+              'interior reader contexts disagree with authored Floors and residents')
+        check(assembled == expected, 'interior readers must compare every authored Floor')
+        observed = {}
+        for c in cases:
+            for r in c['residents'] or []:
+                row = next((o for o in indoor if o['slot'] == r['slot']), {})
+                binding = row.get('indoor', {})
+                check((binding.get('group'), binding.get('cell'), row.get('floor'), binding.get('structureSlot')) ==
+                      (c['group'], c['cell'], c['floor'], c['slot']),
+                      f'{c["id"]}: resident reader host disagrees')
+                check(r['slot'] not in observed, f'resident {r["slot"]} comparison repeats')
+                observed[r['slot']] = r['hooks']
+        check(set(observed) == {o['slot'] for o in indoor},
+              'interior readers must compare every initial indoor resident')
+        for o in indoor:
+            label, binding = f'object {o["slot"]}', o.get('indoor', {})
+            check(bool(binding), f'{label}: missing indoor binding')
+            if not binding:
+                continue
+            s = slot_map.get(binding['structureSlot'], {})
+            floor = next((f for f in s.get('floorBindings', []) if f['floor'] == o['floor']), {})
+            check(binding['geometry'] == floor.get('geometry') and binding['variant'] == floor.get('variant'),
+                  f'{label}: indoor binding disagrees with host Floor')
+            check(binding['hooks'] == observed.get(o['slot']), f'{label}: hooks disagree with original reader')
+            check(binding['hooks'] and binding['hooks'][0] == [binding['association'], 0],
+                  f'{label}: missing own-region association tail')
+            host = o['host']
+            if 'binding' in host:
+                b = next(b for b in bindings if b['id'] == host['binding'])
+                check((b['slot'], b['group'], b['cell']) ==
+                      (binding['structureSlot'], binding['group'], binding['cell']),
+                      f'{label}: indoor binding disagrees with host cell')
+            else:
+                check(binding['group'] == MIDAS_GROUP and binding['cell'] == host['cell'] and
+                      binding['structureSlot'] in ledger['midas']['workspaceSlots'],
+                      f'{label}: MIDAS indoor binding disagrees with workspace')
+            local = [((o['position'][0] - binding['origin'][0] + 32768) % 65536) - 32768,
+                     o['position'][1] - binding['baseY'],
+                     ((o['position'][2] - binding['origin'][1] + 32768) % 65536) - 32768]
+            check(binding['localPosition'] == local and binding['baseY'] == floor.get('baseY'),
+                  f'{label}: local placement disagrees with world position or Floor')
     check(ledger['completion'] == completion(ledger), 'completion disagrees with the ledger')
 
     if check_decoders:
@@ -770,8 +972,15 @@ def dumps(ledger: dict) -> str:
         elif isinstance(value, dict):
             lines.append(f'  {json.dumps(key)}: {{')
             inner = sorted(value)
-            lines.extend(f'    {json.dumps(k)}: {compact(value[k])}{"," if i < len(inner) - 1 else ""}'
-                         for i, k in enumerate(inner))
+            for i, k in enumerate(inner):
+                comma = ',' if i < len(inner) - 1 else ''
+                if key == 'interiorComparisons' and k == 'cases':
+                    lines.append('    "cases": [')
+                    lines.extend(f'      {compact(c)}{"," if j < len(value[k]) - 1 else ""}'
+                                 for j, c in enumerate(value[k]))
+                    lines.append(f'    ]{comma}')
+                else:
+                    lines.append(f'    {json.dumps(k)}: {compact(value[k])}{comma}')
             lines.append(f'  }}{tail}')
         else:
             lines.append(f'  {json.dumps(key)}: {compact(value)}{tail}')
@@ -787,6 +996,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument('--run', type=Path, required=True, help='a census_capture run directory')
     parser.add_argument('--surface', type=Path, help='a catalogue_surface extraction (#682)')
+    parser.add_argument('--interiors', type=Path, help='a catalogue_interiors extraction (#683)')
+    parser.add_argument('--interior-comparisons', type=Path, help='original interior reader comparisons')
+    parser.add_argument('--interior-scenes', type=Path, help='representative original indoor scenes')
     parser.add_argument('--objects', type=Path, help='a catalogue_objects extraction (#681)')
     parser.add_argument('--object-comparisons', type=Path,
                         help='the object_scenes results, objects.json (#681)')
@@ -800,7 +1012,15 @@ def main() -> None:
                     for kind in ('scenes', 'coasts')} if args.comparisons else None)
     if comparisons is not None and args.object_comparisons:
         comparisons['objects'] = json.loads(args.object_comparisons.read_text())
-    ledger = build_ledger(args.run, surface=surface, comparisons=comparisons, models=objects)
+    if args.interior_comparisons or args.interior_scenes:
+        comparisons = comparisons or {}
+    if args.interior_comparisons:
+        comparisons['interiors'] = json.loads(args.interior_comparisons.read_text())
+    if args.interior_scenes:
+        comparisons['interiorScenes'] = json.loads(args.interior_scenes.read_text())
+    interiors = json.loads(args.interiors.read_text()) if args.interiors else None
+    ledger = build_ledger(args.run, surface=surface, comparisons=comparisons, models=objects,
+                          interiors=interiors)
     args.out.write_text(dumps(ledger))
     c = ledger['completion']
     print(f"Wrote {args.out}: {len(ledger['geometry'])} Geometry Identities, "

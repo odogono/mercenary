@@ -98,6 +98,25 @@ heads. `object_scenes` moves one slot in front of the eye at an empty structure
 and compares the original's frame with the planner over the object's footprint.
 See [the object report](../../docs/research/dion-object-geometry.md).
 
+## Dion interior recovery
+
+```sh
+python3 -m m3lab.catalogue_interiors --census <census run> \
+  --out ../../restricted/mercenary-iii-683/interiors.json
+python3 -m m3lab.interior_capture --census <census run>
+python3 -m m3lab.interior_scenes --census <census run>
+```
+
+The extraction covers all 198 selected slots, 464 authored Floors and 180 initial
+indoor residents, with inherited scale/detail, per-Floor palettes and explicit
+association hooks. It accounts separately for slot 46's compact-alias overread:
+78 raw census selector IDs, 74 authored geometries. `interior_capture` compares
+all 565 original reader contexts; `interior_scenes` captures upper Floors,
+attachments, lettering and MIDAS's repeated selector in original frames. Use
+`--interiors`, `--interior-comparisons` and `--interior-scenes` when regenerating
+the ledger. See [the recovery report](../../docs/research/dion-interior-recovery.md)
+for capture and verification recipes. Gameplay reachability stays unverified.
+
 ## Modules
 
 | Module | Exports | Readers |
@@ -106,6 +125,7 @@ See [the object report](../../docs/research/dion-object-geometry.md).
 | `census_locations.py`, `census_objects.py` | All groups, Body placements, residents and names | Full location recovery note |
 | `catalogue_ledger.py` | `catalogue-ledger.json`: Dion Catalogue coverage | Census decoders above |
 | `catalogue_surface.py` | Surface Geometry Identities, cell grounds, lettering, MIDAS and LOGOS | `$4F142..$4F2A6`, `$5600C..$560B0`, readers below |
+| `catalogue_interiors.py`, `interior_capture.py`, `interior_scenes.py` | Authored Floors, resident bindings and original-reader/frame comparisons | `$560E2..$5617E`, `$56D98..$56E5E`, `$53C5E..$53CC4` |
 | `catalogue_objects.py` | Object Geometry Identities, forms, lettering, model-table writers, services | `$545AE..$549BA`, `$543B4..$545AE`, `$55050`, writers in the report |
 | `scene.py`, `surface_scenes.py`, `object_scenes.py` | Original scenes at exact poses; the #682 and #681 comparisons | `$5A006..$5A15A` |
 | `boot.py` | Cold-boot plans and captures | Integration recipe |
