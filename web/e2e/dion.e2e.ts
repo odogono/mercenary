@@ -34,12 +34,97 @@ test('/dion boots the METIS prison opening from its own payload', async ({
     tick: Number((element as HTMLElement).dataset['tick'])
   }));
   expect(frame).toBe(Math.floor(tick / 11));
-  // Only Mercenary III's documents were fetched.
-  const payload = requests.filter(path => path.startsWith('/payload/'));
+  // Only Mercenary III's documents were fetched, beside the System Menu's shared typeface.
+  const payload = requests.filter(
+    path => path.startsWith('/payload/') && !path.startsWith('/payload/fonts/')
+  );
   expect(payload.length).toBeGreaterThan(0);
   expect(payload.every(path => path.startsWith('/payload/dion/'))).toBe(true);
   expect(requests).toContain('/dion/metis.json');
   expect(requests).not.toContain(DAMOCLES_CATALOGUE);
+});
+
+test('/dion shares the System Menu settings page and Controls Page, under its Title Logo', async ({
+  page
+}) => {
+  await page.addInitScript(() => {
+    // Another Title's choices are not Mercenary III's (ADR 0063).
+    localStorage.setItem(
+      'mercenary.browser-shell.preferences.v1',
+      JSON.stringify({ audioMuted: true, extendedControls: true })
+    );
+  });
+  await page.goto('/dion');
+  await expect(page.locator('#screen')).toHaveAttribute('data-state', 'ready');
+  await page.keyboard.press('Escape');
+  // The recovered centre-box logo heads every page.
+  const logo = page.locator('#page-menu .chrome-logo img');
+  await expect(logo).toHaveAttribute('alt', 'MERCENARY III');
+  expect(
+    await logo.evaluate((image: HTMLImageElement) => [
+      image.naturalWidth,
+      image.naturalHeight
+    ])
+  ).toEqual([64, 32]);
+  await expect(page.locator('.chrome-logo img')).toHaveCount(5);
+
+  await page.getByRole('button', { exact: true, name: 'SETTINGS' }).click();
+  const settings = page.locator('#page-settings');
+  expect(
+    await settings.locator('.setting-row > .chrome-label').allTextContents()
+  ).toEqual(['PRESENTATION', 'EXTENDED CONTROLS', 'AUDIO']);
+  await expect(
+    settings.locator('[data-setting="presentation"] button[value="authentic"]')
+  ).toHaveAttribute('aria-pressed', 'true');
+  await expect(
+    settings.locator('[data-setting="presentation"] button')
+  ).toHaveCount(2);
+  await expect(
+    settings.locator('[data-setting="extended"] button[value="off"]')
+  ).toHaveAttribute('aria-pressed', 'true');
+  const mute = page.locator('#audio-mute');
+  await expect(mute).toHaveText('SOUND ON');
+  await mute.click();
+  await settings
+    .locator('[data-setting="extended"] button[value="on"]')
+    .click();
+  await expect(mute).toHaveText('SOUND OFF');
+  expect(
+    await page.evaluate(() =>
+      JSON.parse(
+        localStorage.getItem('mercenary.browser-shell.dion.preferences.v1')!
+      )
+    )
+  ).toMatchObject({ audioMuted: true, extendedControls: true });
+
+  await page.reload();
+  await expect(page.locator('#screen')).toHaveAttribute('data-state', 'ready');
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { exact: true, name: 'SETTINGS' }).click();
+  await expect(mute).toHaveText('SOUND OFF');
+  await expect(
+    settings.locator('[data-setting="extended"] button[value="on"]')
+  ).toHaveAttribute('aria-pressed', 'true');
+
+  // Damocles's Bindings, with the Extensions listed now Extended Controls is on (ADR 0064).
+  await page.locator('#page-settings [data-goto="menu"]').click();
+  await page.getByRole('button', { exact: true, name: 'CONTROLS' }).click();
+  const controls = page.locator('#page-controls');
+  await expect(controls.locator('.controls-group-title')).toHaveText([
+    'SHELL',
+    'POINTER',
+    'ALWAYS',
+    'ON FOOT',
+    'IN A LIFT',
+    'ABOARD'
+  ]);
+  for (const action of ['OPEN', 'READ', 'BOARD', 'LEAVE CRAFT', 'STRAFE']) {
+    await expect(
+      controls.locator('.controls-rows dd', {
+        hasText: new RegExp(`^${action}`)
+      })
+    ).not.toHaveCount(0);
+  }
 });
 
 test('/dion opens the System Menu and keeps its Saves to itself', async ({
@@ -151,7 +236,7 @@ test('/dion activates and calls through keyboard controls, saves and reloads its
     .poll(async () => Number(await screen.getAttribute('data-reveal')))
     .toBeGreaterThan(0);
   await expect(screen).toHaveAttribute('data-reveal', '0');
-  await page.keyboard.press('*');
+  await page.keyboard.press('NumpadMultiply');
   await expect(screen).toHaveAttribute('data-call', 'true');
   await expect(page.locator('#status')).not.toContainText('Sound unavailable');
   await page.keyboard.press('Escape');

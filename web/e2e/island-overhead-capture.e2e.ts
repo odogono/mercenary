@@ -28,7 +28,7 @@ import { expect, test, type Page } from '@playwright/test';
 
 const DAMOCLES_RESUME_KEY =
   'mercenary.browser-shell.damocles.session-resume.v1';
-const PREFERENCES_KEY = 'mercenary.browser-shell.preferences.v1';
+const PREFERENCES_KEY = 'mercenary.browser-shell.damocles.preferences.v1';
 
 const out = process.env['ISLAND_OVERHEAD_OUT'];
 const enabled = process.env['ISLAND_OVERHEAD_CAPTURE'] === '1';

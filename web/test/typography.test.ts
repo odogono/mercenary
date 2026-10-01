@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 
+import { titleStorageKeys } from '../src/shell/title.ts';
 import {
-  TYPEFACE_STORAGE_KEY,
+  SHARED_TYPEFACE_STORAGE_KEY,
   applyTypeface,
   loadTypography,
   readTypefacePreference,
@@ -133,34 +134,51 @@ describe('the Browser Shell typography contract', () => {
   });
 });
 
+const KEY = titleStorageKeys('damocles').typeface;
+
 describe('the persisted typeface choice', () => {
   test('defaults for missing, invalid, or inaccessible storage', () => {
-    expect(readTypefacePreference(undefined)).toBe('mercenary');
-    expect(readTypefacePreference({ getItem: () => 'invalid' })).toBe(
+    expect(readTypefacePreference(undefined, KEY)).toBe('mercenary');
+    expect(readTypefacePreference({ getItem: () => 'invalid' }, KEY)).toBe(
       'mercenary'
     );
     expect(
-      readTypefacePreference({
-        getItem: () => {
-          throw new Error('blocked');
-        }
-      })
+      readTypefacePreference(
+        {
+          getItem: () => {
+            throw new Error('blocked');
+          }
+        },
+        KEY
+      )
     ).toBe('mercenary');
   });
 
-  test('applies and persists the selected face under one versioned key', () => {
+  test('reads the shared choice until the Title writes its own', () => {
+    const entries = new Map([[SHARED_TYPEFACE_STORAGE_KEY, 'damocles']]);
+    const storage = { getItem: (key: string) => entries.get(key) ?? null };
+    expect(readTypefacePreference(storage, KEY)).toBe('damocles');
+    entries.set(KEY, 'mercenary');
+    expect(readTypefacePreference(storage, KEY)).toBe('mercenary');
+  });
+
+  test("applies and persists the selected face under the Title's key", () => {
     const writes: [string, string][] = [];
     const root = { dataset: {} } as unknown as HTMLElement;
     applyTypeface(root, 'damocles', {
-      setItem: (key, value) => writes.push([key, value])
+      key: KEY,
+      storage: { setItem: (key, value) => writes.push([key, value]) }
     });
     expect(root.dataset['fontFace']).toBe('damocles');
-    expect(writes).toEqual([[TYPEFACE_STORAGE_KEY, 'damocles']]);
+    expect(writes).toEqual([[KEY, 'damocles']]);
 
     expect(() =>
       applyTypeface(root, 'mercenary', {
-        setItem: () => {
-          throw new Error('blocked');
+        key: KEY,
+        storage: {
+          setItem: () => {
+            throw new Error('blocked');
+          }
         }
       })
     ).not.toThrow();

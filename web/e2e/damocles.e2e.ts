@@ -9,7 +9,7 @@ declare global {
 const TARG_RESUME_KEY = 'mercenary.browser-shell.session-resume.v1';
 const DAMOCLES_RESUME_KEY =
   'mercenary.browser-shell.damocles.session-resume.v1';
-const PREFERENCES_KEY = 'mercenary.browser-shell.preferences.v1';
+const PREFERENCES_KEY = 'mercenary.browser-shell.damocles.preferences.v1';
 
 test('structure faces change at the window, doorway and inside the spaceport', async ({
   page
@@ -364,7 +364,7 @@ test('Enhanced sunlight reaches the floor through the spaceport window', async (
     contentType: 'image/png'
   });
 
-  await choose('sky', 'authentic');
+  await choose('presentation', 'authentic');
   await expect.poll(contrast).toBeLessThan(1);
 });
 

@@ -1,8 +1,10 @@
 import { IDLE } from '../gameCore/index.ts';
 import { installShellChrome } from '../shell/chrome.ts';
 import { FixedStepClock } from '../shell/clock.ts';
+import { renderControlsPage } from '../shell/controlsView.ts';
 import { assertBrowserDocument } from '../shell/documentPath.ts';
 import { BrowserControlProfile } from '../shell/input.ts';
+import { browserKeyNames } from '../shell/keyNames.ts';
 import {
   createNewGameAction,
   escapeFrom,
@@ -12,15 +14,18 @@ import {
   createSessionOwnership,
   installSessionTakeoverChannel
 } from '../shell/ownership.ts';
+import { createPreferences, titlePreferences } from '../shell/preferences.ts';
 import { routeKey, type RouterState } from '../shell/router.ts';
 import { installSaveChooser } from '../shell/saveChooser.ts';
+import { installSettingsView } from '../shell/settingsView.ts';
 import { installSuspensionHandlers } from '../shell/suspension.ts';
 import type { PayloadDocument } from '../shell/title.ts';
 import { SoundLifecycle } from '../sound/lifecycle.ts';
 import { AudioWorkletTransport } from '../sound/transport.ts';
+import { dionControlActions } from './controls.ts';
 import { frameRgba, planDionFrame } from './frame.ts';
 import { installDionPresentation } from './framePresentation.ts';
-import { PANEL_TOP, drawDionPanel, panelRgba } from './panel.ts';
+import { PANEL_TOP, dionLogoRgba, drawDionPanel, panelRgba } from './panel.ts';
 import {
   createDionResumePersistence,
   dionWhere,
@@ -46,7 +51,11 @@ const surface = document.getElementById('game-surface')!;
 const status = document.getElementById('status')!;
 const failure = document.getElementById('failure')!;
 const canvas = document.getElementById('screen') as HTMLCanvasElement;
-const chrome = installShellChrome(surface, { menuTitle: 'MERCENARY III' });
+const chrome = installShellChrome(surface, {
+  logo: { name: 'MERCENARY III', typeface: 'damocles' },
+  menuTitle: 'MERCENARY III',
+  settings: ['presentation', 'extended', 'audio']
+});
 
 let animation: number | undefined;
 let running = true;
@@ -82,14 +91,6 @@ const requiredJson = async (pathname: string): Promise<PayloadDocument> => {
   }
 };
 
-/// A title-local note within the shared Browser Shell page.
-const pageNote = (page: HTMLElement, text: string): void => {
-  const note = document.createElement('p');
-  note.className = 'chrome-label';
-  note.textContent = text;
-  page.querySelector('.chrome-title')?.after(note);
-};
-
 try {
   assertBrowserDocument(location.pathname, 'dion');
   document.documentElement.dataset['title'] = dionTitle.slug;
@@ -100,6 +101,8 @@ try {
     storage = undefined;
   }
   const content = await dionTitle.load(requiredJson);
+  const logo = dionLogoRgba(content.panel);
+  chrome.showLogo(new ImageData(logo.data, logo.width, logo.height));
   const notice = (text: string): void => {
     status.hidden = false;
     status.textContent = text;
@@ -114,6 +117,19 @@ try {
       }
     )
   );
+  // Mercenary III's own preferences (ADR 0063): its presentation, its audio and Extended
+  // Controls, kept apart from Targ's and Damocles's.
+  const preferences = createPreferences({
+    location: titlePreferences(dionTitle.slug),
+    onChange: changed => {
+      audio.setMuted(changed.audioMuted);
+      audio.setVolume(changed.audioVolume);
+    },
+    storage,
+    surface
+  });
+  audio.setMuted(preferences.current().audioMuted);
+  audio.setVolume(preferences.current().audioVolume);
   let handleOwnershipLost = (): void => {};
   const ownership = createSessionOwnership({
     locks: navigator.locks,
@@ -136,22 +152,20 @@ try {
   canvas.hidden = false;
   status.hidden = true;
 
-  // Held keys reach the Movement Intent through the shared Control Profile, and the session
-  // walks it on the shared foot step and region clamp.
-  const controls = new BrowserControlProfile({
-    drop: () => {},
-    leaveCraft: () => session.press('leave'),
-    occupancy: () => ({ kind: 'onFoot' }),
-    reach: command => {
-      if (command === 'board') {
-        session.press('board');
-      }
-    },
-    shutThrottle: () => {},
-    throttleNotchStep: () => {},
-    throttleNotchValue: () => {},
-    throttleStep: () => {}
-  });
+  const act = (action: DionAction): void => {
+    session.press(action);
+    checkpoint();
+  };
+  // Damocles's Control Profile, whole (ADR 0064). Held keys reach the Movement Intent, and the
+  // session walks it on the shared foot step and region clamp.
+  const controls = new BrowserControlProfile(
+    dionControlActions({
+      act,
+      extendedControls: () => preferences.current().extendedControls,
+      passenger: () => session.snapshot.taxi.passenger
+    })
+  );
+  const keyNames = browserKeyNames();
   const clock = new FixedStepClock();
   const release = (): void => {
     controls.releaseAll();
@@ -160,7 +174,19 @@ try {
   };
   installSuspensionHandlers(window, document, release);
 
-  const menu = installSystemMenu({ pages: chrome.pages, release, surface });
+  const menu = installSystemMenu({
+    onLayer: layer => {
+      if (layer === 'controls') {
+        renderControlsPage(
+          chrome.pages.controls,
+          controls.describe(false, keyNames)
+        );
+      }
+    },
+    pages: chrome.pages,
+    release,
+    surface
+  });
   handleOwnershipLost = () => {
     release();
     audio.suspend();
@@ -168,12 +194,6 @@ try {
     menu.show('ownership');
     notice('This Mercenary III session is active in another tab.');
   };
-  // This rendition has its recovered presentation; hide unsupported style choices.
-  for (const row of chrome.pages.settings.querySelectorAll('.setting-row')) {
-    if (!row.querySelector('#audio-volume, [data-setting="sky"]')) {
-      row.remove();
-    }
-  }
   viewPresentation = installDionPresentation({
     notice,
     onRecovered: () => {
@@ -181,31 +201,21 @@ try {
         status.hidden = true;
       }
     },
-    page: chrome.pages.settings,
+    onShownChange: () => settingsView.refresh(),
     redraw: () => draw(),
     screen: canvas,
-    storage
+    stored: () => preferences.current().presentationPreset ?? 'authentic'
   });
-  const mute =
-    chrome.pages.settings.querySelector<HTMLButtonElement>('#audio-mute')!;
-  mute.addEventListener('click', () => {
-    const muted = mute.getAttribute('aria-pressed') !== 'true';
-    mute.setAttribute('aria-pressed', String(muted));
-    mute.textContent = muted ? 'SOUND OFF' : 'SOUND ON';
-    audio.setMuted(muted);
+  const presentation = viewPresentation;
+  const settingsView = installSettingsView({
+    onPresentationChange: () => presentation.changed(),
+    page: chrome.pages.settings,
+    preferences,
+    presentationShown: () => presentation.shown(),
+    root: document.documentElement,
+    storage,
+    typefaceKey: DION_STORAGE.typeface
   });
-  const volume =
-    chrome.pages.settings.querySelector<HTMLInputElement>('#audio-volume')!;
-  volume.addEventListener('input', () => {
-    audio.setVolume(Number(volume.value));
-    chrome.pages.settings.querySelector<HTMLOutputElement>(
-      '#audio-volume-value'
-    )!.value = volume.value;
-  });
-  pageNote(
-    chrome.pages.controls,
-    'ARROWS: walk / turn · ENTER: activate TAXICARD · *: call / Start · + / −: destination · B: board · L: leave at dwell'
-  );
   const resume = createDionResumePersistence({
     content,
     onFailure: reason => notice(`Session Resume unavailable: ${reason}`),
@@ -325,27 +335,6 @@ try {
     layer: menu.layer(),
     opening: 'none'
   });
-  const actionFor = (event: KeyboardEvent): DionAction | undefined => {
-    if (event.code === 'Enter' || event.code === 'NumpadEnter') {
-      return 'activate';
-    }
-    if (event.code === 'NumpadMultiply' || event.key === '*') {
-      return 'star';
-    }
-    if (event.code === 'NumpadAdd' || event.key === '+') {
-      return 'plus';
-    }
-    if (event.code === 'NumpadSubtract' || event.key === '-') {
-      return 'minus';
-    }
-    if (event.code === 'KeyB') {
-      return 'board';
-    }
-    if (event.code === 'KeyL') {
-      return 'leave';
-    }
-    return undefined;
-  };
   const unlock = (): void => {
     if (audio.phase === 'locked') {
       void audio.unlock();
@@ -371,15 +360,6 @@ try {
       case 'game':
         if (!ownership.mayAdvance()) {
           return;
-        }
-        if (!event.repeat) {
-          const action = actionFor(event);
-          if (action !== undefined) {
-            session.press(action);
-            checkpoint();
-            event.preventDefault();
-            return;
-          }
         }
         if (controls.keyDown(event)) {
           event.preventDefault();

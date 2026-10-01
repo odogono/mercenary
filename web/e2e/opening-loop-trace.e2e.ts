@@ -124,7 +124,7 @@ test('Chromium replays the recorded opening loop bit-for-bit and renders its mil
   // the test captures it through the real Save path.
   await page.addInitScript(() => {
     window.localStorage.setItem(
-      'mercenary.browser-shell.preferences.v1',
+      'mercenary.browser-shell.targ.preferences.v1',
       JSON.stringify({ composition: 'strip', panelRendition: 'targ' })
     );
     window.requestAnimationFrame = () => 1;

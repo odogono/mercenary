@@ -1,6 +1,46 @@
 import type { ConsoleElements } from './consoleView.ts';
 import { CONTROL_PROFILE_NAME } from './input.ts';
 import type { MenuPages } from './menu.ts';
+import type { TypefaceId } from './typography.ts';
+
+/// A row the settings page may carry. Each Title declares the rows it offers, in its order, and
+/// the page has no others (ADR 0063).
+export type SettingName =
+  | 'audio'
+  | 'composition'
+  | 'extended'
+  | 'glow'
+  | 'presentation'
+  | 'rendition'
+  | 'road-glow'
+  | 'road-weight'
+  | 'shadows'
+  | 'structures'
+  | 'typeface'
+  | 'weight';
+
+/// The rows of the Titles that wear the Benson Panel and read the tuning document: Targ and
+/// Damocles.
+export const PANEL_SETTINGS: readonly SettingName[] = [
+  'rendition',
+  'composition',
+  'typeface',
+  'presentation',
+  'shadows',
+  'structures',
+  'weight',
+  'glow',
+  'road-weight',
+  'road-glow',
+  'extended',
+  'audio'
+];
+
+/// The Title Logo's stand-in until the Title's own mark is recovered: its name, in its typeface.
+export interface TitleLogoCopy {
+  readonly name: string;
+  readonly typeface: TypefaceId;
+}
 
 /// Title-owned labels on otherwise shared System Menu and Shell Console chrome.
 
@@ -9,13 +49,17 @@ export interface ShellChromeCopy {
   readonly atlasLabel?: string;
   /// The Title's catalogue link, if it has a catalogue; Mercenary III has none yet.
   readonly catalogueLabel?: string;
+  readonly logo: TitleLogoCopy;
   readonly menuTitle: string;
+  readonly settings: readonly SettingName[];
 }
 
 export interface InstalledShellChrome {
   readonly console: ConsoleElements;
   readonly newGame: HTMLButtonElement;
   readonly pages: MenuPages;
+  /// Put the Title's recovered logo in place of its name on every page (ADR 0063).
+  readonly showLogo: (image: ImageData) => void;
   readonly takeOver: HTMLButtonElement;
 }
 
@@ -69,7 +113,41 @@ const settingRow = (
     className: 'setting-row'
   });
 
+const SETTING_ROWS: Readonly<
+  Record<
+    Exclude<SettingName, 'audio'>,
+    { readonly extra?: string; readonly label: string }
+  >
+> = {
+  composition: { label: 'COMPOSITION' },
+  extended: { extra: 'Extended controls', label: 'EXTENDED CONTROLS' },
+  glow: {
+    extra: 'Structure and object glow',
+    label: 'STRUCTURE / OBJECT GLOW'
+  },
+  presentation: { extra: 'Presentation', label: 'PRESENTATION' },
+  rendition: { label: 'PANEL RENDITION' },
+  'road-glow': { extra: 'Road glow', label: 'ROAD GLOW' },
+  'road-weight': { extra: 'Road weight', label: 'ROAD WEIGHT' },
+  shadows: { label: 'SHADOWS' },
+  structures: { label: 'STRUCTURES' },
+  typeface: { label: 'TYPEFACE' },
+  weight: {
+    extra: 'Structure and object weight',
+    label: 'STRUCTURE / OBJECT WEIGHT'
+  }
+};
+
+/// The Title Logo at the head of a page: the Title's name until its mark is shown.
+const titleLogo = (logo: TitleLogoCopy): HTMLElement =>
+  el('div', {
+    attrs: { 'data-typeface': logo.typeface },
+    className: 'chrome-logo',
+    text: logo.name
+  });
+
 const page = (
+  logo: TitleLogoCopy,
   id: string,
   label: string,
   title: string,
@@ -78,6 +156,7 @@ const page = (
   el('div', {
     attrs: { 'aria-label': label, id, role: 'dialog' },
     children: [
+      titleLogo(logo),
       el('p', { className: 'chrome-title', text: title }),
       ...children
     ],
@@ -86,8 +165,8 @@ const page = (
 
 /// Mount the System Menu, settings, Controls Page, save chooser, ownership page and Shell Console.
 ///
-/// Markup lives here so both Title documents share one overlay rather than copying it. Tokens
-/// and layout stay in `chrome.css`.
+/// Markup lives here so every Title document shares one overlay rather than copying it. Tokens
+/// are each Title document's own; layout stays in `chrome.css`.
 export const installShellChrome = (
   surface: HTMLElement,
   copy: ShellChromeCopy
@@ -134,7 +213,7 @@ export const installShellChrome = (
     text: 'TAKE OVER'
   });
 
-  const menu = page('page-menu', 'System Menu', copy.menuTitle, [
+  const menu = page(copy.logo, 'page-menu', 'System Menu', copy.menuTitle, [
     ...(copy.catalogueLabel === undefined
       ? []
       : [
@@ -177,6 +256,7 @@ export const installShellChrome = (
   ]);
 
   const ownership = page(
+    copy.logo,
     'page-ownership',
     'Session ownership',
     'SESSION ACTIVE IN ANOTHER TAB',
@@ -209,36 +289,26 @@ export const installShellChrome = (
     text: '100'
   });
 
-  const settings = page('page-settings', 'Settings', 'SETTINGS', [
-    settingRow('PANEL RENDITION', 'rendition'),
-    settingRow('COMPOSITION', 'composition'),
-    settingRow('TYPEFACE', 'typeface'),
-    settingRow('SKY PRESET', 'sky'),
-    settingRow('SHADOWS', 'shadows'),
-    settingRow('STRUCTURES', 'structures'),
-    settingRow(
-      'STRUCTURE / OBJECT WEIGHT',
-      'weight',
-      'Structure and object weight'
+  const audio = el('div', {
+    children: [
+      el('label', {
+        attrs: { for: 'audio-volume' },
+        className: 'chrome-label',
+        text: 'AUDIO'
+      }),
+      el('div', {
+        children: [mute, volume, volumeValue],
+        className: 'setting-choices audio-controls'
+      })
+    ],
+    className: 'setting-row'
+  });
+  const settings = page(copy.logo, 'page-settings', 'Settings', 'SETTINGS', [
+    ...copy.settings.map(name =>
+      name === 'audio'
+        ? audio
+        : settingRow(SETTING_ROWS[name].label, name, SETTING_ROWS[name].extra)
     ),
-    settingRow('STRUCTURE / OBJECT GLOW', 'glow', 'Structure and object glow'),
-    settingRow('ROAD WEIGHT', 'road-weight', 'Road weight'),
-    settingRow('ROAD GLOW', 'road-glow', 'Road glow'),
-    settingRow('EXTENDED CONTROLS', 'extended', 'Extended controls'),
-    el('div', {
-      children: [
-        el('label', {
-          attrs: { for: 'audio-volume' },
-          className: 'chrome-label',
-          text: 'AUDIO'
-        }),
-        el('div', {
-          children: [mute, volume, volumeValue],
-          className: 'setting-choices audio-controls'
-        })
-      ],
-      className: 'setting-row'
-    }),
     el('button', {
       attrs: { 'data-goto': 'menu', type: 'button' },
       className: 'chrome-button',
@@ -246,7 +316,7 @@ export const installShellChrome = (
     })
   ]);
 
-  const saves = page('page-saves', 'Save and load', 'SAVE / LOAD', [
+  const saves = page(copy.logo, 'page-saves', 'Save and load', 'SAVE / LOAD', [
     el('div', { attrs: { 'data-slot-rows': '', id: 'slot-rows' } }),
     el('button', {
       attrs: { 'data-goto': 'menu', type: 'button' },
@@ -257,6 +327,7 @@ export const installShellChrome = (
 
   // Filled from the Title's Bindings each time it opens: see `controlsView.ts`.
   const controls = page(
+    copy.logo,
     'page-controls',
     'Controls',
     `CONTROLS · ${CONTROL_PROFILE_NAME.toUpperCase()}`,
@@ -280,10 +351,31 @@ export const installShellChrome = (
     surface.dataset['layer'] = 'none';
   }
 
+  const pages = { controls, menu, ownership, saves, settings };
   return {
     console: { input, log, surface },
     newGame,
-    pages: { controls, menu, ownership, saves, settings },
+    pages,
+    showLogo: image => {
+      const canvas = document.createElement('canvas');
+      canvas.width = image.width;
+      canvas.height = image.height;
+      canvas.getContext('2d')?.putImageData(image, 0, 0);
+      const source = canvas.toDataURL();
+      for (const shown of Object.values(pages)) {
+        const slot = shown.querySelector<HTMLElement>('.chrome-logo')!;
+        slot.replaceChildren(
+          el('img', {
+            attrs: {
+              alt: copy.logo.name,
+              height: String(image.height),
+              src: source,
+              width: String(image.width)
+            }
+          })
+        );
+      }
+    },
     takeOver
   };
 };

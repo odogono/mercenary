@@ -1,15 +1,21 @@
-import { DEFAULT_CAST_SHADOWS, isCastShadowEdge } from '../settings/index.ts';
+import {
+  DEFAULT_CAST_SHADOWS,
+  isCastShadowEdge,
+  type PresentationSettings
+} from '../settings/index.ts';
+import type { SettingName } from './chrome.ts';
 import type { PreferencesStore } from './preferences.ts';
 import { applyTypeface, readTypefacePreference } from './typography.ts';
 
 /// One row of the settings page: a closed vocabulary of choices, one of them current.
 ///
 /// The page is built from these rather than from bespoke markup per setting, so adding a
-/// presentation choice is a line here rather than a new control to wire and style.
+/// presentation choice is a line here rather than a new control to wire and style. Only the rows
+/// the Title declared to the chrome are on its page, and only those are wired.
 interface SettingRow {
   readonly apply: (value: string) => void;
   readonly current: () => string;
-  readonly name: string;
+  readonly name: Exclude<SettingName, 'audio'>;
   readonly options: readonly {
     readonly label: string;
     readonly value: string;
@@ -17,11 +23,18 @@ interface SettingRow {
 }
 
 export interface SettingsViewOptions {
+  /// Called on every presentation or shadow choice, even of what is already chosen: choosing
+  /// Enhanced again is how a player retries it after a graphics failure (ADR 0062).
   readonly onPresentationChange?: () => void;
   readonly page: HTMLElement;
   readonly preferences: PreferencesStore;
+  /// Set by a Title with no tuning document: the preset it is showing, which a graphics failure
+  /// may hold at Authentic whatever is stored. Its row then offers no AS TUNED.
+  readonly presentationShown?: () => PresentationSettings['preset'];
   readonly root: HTMLElement;
   readonly storage: Storage | undefined;
+  /// The Title's typeface key (ADR 0063).
+  readonly typefaceKey: string;
 }
 
 export interface SettingsView {
@@ -34,7 +47,8 @@ export const installSettingsView = (
   options: SettingsViewOptions
 ): SettingsView => {
   const { preferences } = options;
-  let typeface = readTypefacePreference(options.storage);
+  const { presentationShown, typefaceKey } = options;
+  let typeface = readTypefacePreference(options.storage, typefaceKey);
 
   const rows: readonly SettingRow[] = [
     {
@@ -66,7 +80,10 @@ export const installSettingsView = (
     {
       apply: value => {
         typeface = value === 'damocles' ? 'damocles' : 'mercenary';
-        applyTypeface(options.root, typeface, options.storage);
+        applyTypeface(options.root, typeface, {
+          key: typefaceKey,
+          storage: options.storage
+        });
       },
       current: () => typeface,
       name: 'typeface',
@@ -75,27 +92,44 @@ export const installSettingsView = (
         { label: 'DAMOCLES', value: 'damocles' }
       ]
     },
-    {
-      // The sky belongs to the tuning document; a player may override which preset it uses and
-      // nothing else, and choosing the document's own value is itself a choice.
-      apply: value => {
-        preferences.update(
-          value === PRESET_DEFAULT
-            ? { presentationPreset: undefined }
-            : {
-                presentationPreset:
-                  value === 'authentic' ? 'authentic' : 'enhanced'
-              }
-        );
-      },
-      current: () => preferences.current().presentationPreset ?? PRESET_DEFAULT,
-      name: 'sky',
-      options: [
-        { label: 'AS TUNED', value: PRESET_DEFAULT },
-        { label: 'AUTHENTIC', value: 'authentic' },
-        { label: 'ENHANCED', value: 'enhanced' }
-      ]
-    },
+    presentationShown === undefined
+      ? {
+          // The sky belongs to the tuning document; a player may override which preset it uses
+          // and nothing else, and choosing the document's own value is itself a choice.
+          apply: value => {
+            preferences.update(
+              value === PRESET_DEFAULT
+                ? { presentationPreset: undefined }
+                : {
+                    presentationPreset:
+                      value === 'authentic' ? 'authentic' : 'enhanced'
+                  }
+            );
+          },
+          current: () =>
+            preferences.current().presentationPreset ?? PRESET_DEFAULT,
+          name: 'presentation',
+          options: [
+            { label: 'AS TUNED', value: PRESET_DEFAULT },
+            { label: 'AUTHENTIC', value: 'authentic' },
+            { label: 'ENHANCED', value: 'enhanced' }
+          ]
+        }
+      : {
+          // With no document to defer to, the choice is only ever one preset or the other.
+          apply: value => {
+            preferences.update({
+              presentationPreset:
+                value === 'enhanced' ? 'enhanced' : 'authentic'
+            });
+          },
+          current: presentationShown,
+          name: 'presentation',
+          options: [
+            { label: 'AUTHENTIC', value: 'authentic' },
+            { label: 'ENHANCED', value: 'enhanced' }
+          ]
+        },
     {
       // A Cast Shadow's edge is the player's taste, not the document's: there is no "as tuned"
       // here, only the shell's default. Authentic presentation draws no shadow whatever this says.
@@ -271,10 +305,10 @@ export const installSettingsView = (
       button.textContent = choice.label;
       button.addEventListener('click', () => {
         row.apply(choice.value);
-        refresh();
-        if (row.name === 'sky' || row.name === 'shadows') {
+        if (row.name === 'presentation' || row.name === 'shadows') {
           options.onPresentationChange?.();
         }
+        refresh();
       });
       group.append(button);
       return button;

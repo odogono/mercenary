@@ -1,6 +1,8 @@
 export type TypefaceId = 'mercenary' | 'damocles';
 
-export const TYPEFACE_STORAGE_KEY = 'mercenary.browser-shell.typeface.v1';
+/// The one typeface choice Targ and Damocles shared before it was kept per Title (ADR 0063).
+export const SHARED_TYPEFACE_STORAGE_KEY =
+  'mercenary.browser-shell.typeface.v1';
 
 const TYPEFACE_IDS = ['mercenary', 'damocles'] as const;
 const GLYPH_COUNT = 99;
@@ -206,25 +208,37 @@ export const loadTypography = async (
 const isTypeface = (value: string | null): value is TypefaceId =>
   value === 'mercenary' || value === 'damocles';
 
+/// A Title's typeface, from its own key, or while it has written none the choice it shared
+/// before (ADR 0063).
 export const readTypefacePreference = (
-  storage: ReadStorage | undefined
+  storage: ReadStorage | undefined,
+  key: string
 ): TypefaceId => {
   try {
-    const value = storage?.getItem(TYPEFACE_STORAGE_KEY) ?? null;
+    const value =
+      storage?.getItem(key) ??
+      storage?.getItem(SHARED_TYPEFACE_STORAGE_KEY) ??
+      null;
     return isTypeface(value) ? value : 'mercenary';
   } catch {
     return 'mercenary';
   }
 };
 
+/// Where a typeface choice is kept: the Title's storage and its key.
+export interface TypefaceStore {
+  readonly key: string;
+  readonly storage: WriteStorage | undefined;
+}
+
 export const applyTypeface = (
   root: HTMLElement,
   face: TypefaceId,
-  storage?: WriteStorage
+  store?: TypefaceStore
 ): void => {
   root.dataset['fontFace'] = face;
   try {
-    storage?.setItem(TYPEFACE_STORAGE_KEY, face);
+    store?.storage?.setItem(store.key, face);
   } catch {
     // Applying the in-memory choice does not depend on storage being available.
   }
@@ -233,16 +247,17 @@ export const applyTypeface = (
 export const installTypefaceSelector = (
   select: HTMLSelectElement,
   root: HTMLElement,
-  storage: Storage | undefined
+  storage: Storage | undefined,
+  key: string
 ): TypefaceId => {
-  const initial = readTypefacePreference(storage);
+  const initial = readTypefacePreference(storage, key);
   select.value = initial;
   applyTypeface(root, initial);
   select.disabled = false;
   select.addEventListener('change', () => {
     const selected = isTypeface(select.value) ? select.value : 'mercenary';
     select.value = selected;
-    applyTypeface(root, selected, storage);
+    applyTypeface(root, selected, { key, storage });
   });
   return initial;
 };

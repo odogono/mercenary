@@ -15,7 +15,7 @@ import {
   resolveScript00Milestones,
   withinOpeningScript
 } from './arrivalScript.ts';
-import { installShellChrome } from './chrome.ts';
+import { PANEL_SETTINGS, installShellChrome } from './chrome.ts';
 import { FixedStepClock } from './clock.ts';
 import { executeConsoleCommand } from './console.ts';
 import { installConsole } from './consoleView.ts';
@@ -47,7 +47,11 @@ import {
 import { objectNamesOf, panelViewModel, type PanelContext } from './panel.ts';
 import { installPanel, installPanelScale } from './panelView.ts';
 import { canvasPointer, takeTargetAt } from './pointer.ts';
-import { createPreferences, effectivePresentation } from './preferences.ts';
+import {
+  createPreferences,
+  effectivePresentation,
+  titlePreferences
+} from './preferences.ts';
 import {
   createSessionResumePersistence,
   readSessionResume,
@@ -82,8 +86,11 @@ const VIEWPORT = { height: 800, width: 1280 } as const;
 const surface = document.getElementById('game-surface')!;
 const chrome = installShellChrome(surface, {
   catalogueLabel: 'Damocles catalogue',
-  menuTitle: 'BENSON G9-ST SYSTEM'
+  logo: { name: 'MERCENARY', typeface: 'mercenary' },
+  menuTitle: 'BENSON G9-ST SYSTEM',
+  settings: PANEL_SETTINGS
 });
+const titleKeys = titleStorageKeys('targ');
 const canvas = document.getElementById('frame') as HTMLCanvasElement;
 const message = document.getElementById('message')!;
 const credits = document.getElementById('credits')!;
@@ -187,7 +194,10 @@ try {
     storage = undefined;
   }
   // The typeface is applied before anything is drawn; the settings page owns changing it.
-  applyTypeface(document.documentElement, readTypefacePreference(storage));
+  applyTypeface(
+    document.documentElement,
+    readTypefacePreference(storage, titleKeys.typeface)
+  );
   const settings = requiredSettings(settingsText);
   // Player presentation choices overlay the tracked tuning document. They never reach the
   // blocks that identify a Save, so changing one cannot make an existing Save unloadable.
@@ -200,6 +210,7 @@ try {
     readonly extendedControls: boolean;
   }): void => {};
   const preferences = createPreferences({
+    location: titlePreferences('targ'),
     onChange: changed => {
       applyAudioPreferences(changed);
       applyControlPreferences(changed);
@@ -599,7 +610,10 @@ try {
         targClock.set(session.snapshot.elapsed, secondsOfDay),
       time: () => targClock.secondsOfDay(session.snapshot.elapsed),
       typeface: face => {
-        applyTypeface(document.documentElement, face, storage);
+        applyTypeface(document.documentElement, face, {
+          key: titleKeys.typeface,
+          storage
+        });
       }
     },
     release,
@@ -612,12 +626,13 @@ try {
     page: chromePages.settings,
     preferences,
     root: document.documentElement,
-    storage
+    storage,
+    typefaceKey: titleKeys.typeface
   });
 
   const takeover = installSessionTakeoverChannel({
     mayPersist: () => ownership.mayPersist(),
-    name: titleStorageKeys('targ').ownershipChannel,
+    name: titleKeys.ownershipChannel,
     onYield: () => {
       flushResume();
       ownership.release();

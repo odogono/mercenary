@@ -6,6 +6,12 @@
     <title>Mercenary III</title>
     <link rel="stylesheet" href="/src/shell/chrome.css" />
     <style>
+      @font-face {
+        font-family: 'Damocles Interface';
+        src: url('/payload/fonts/damocles.woff2') format('woff2');
+        font-display: swap;
+      }
+
       :root {
         color-scheme: dark;
         --text: #f4f7f8;
@@ -31,11 +37,22 @@
           ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       }
 
+      /* The System Menu's tokens (ADR 0063), starting from Damocles's: the same engine's chrome. */
       #game-surface {
         display: grid;
         place-items: center;
         width: 100%;
         height: 100%;
+        --panel-face: #9aa0a0;
+        --panel-hi: #ced4d4;
+        --panel-lo: #43484a;
+        --lcd-bg: #060606;
+        --lcd-ink: #3ecf3e;
+        --cell-border: #9aa0a0;
+        --label-ink: #2c3032;
+        --lamp-on: #aaccaa;
+        --panel-font: 'Damocles Interface', 'Courier New', monospace;
+        --console-ink: #3ecf3e;
       }
 
       /* The ST's low-resolution screen, 320 by 200, shown at whole-pixel scale where it fits.

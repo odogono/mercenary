@@ -2,6 +2,8 @@
 
 Accepted, 2026-09-29, for [#600](https://github.com/odogono/mercenary/issues/600).
 
+_(Status note, 2026-10-01: ADR 0064 lets Mercenary III's Controls Page list Damocles's whole table, including Bindings its port does not honour yet.)_
+
 The browser Control Profile was a `switch` over `KeyboardEvent.code`. Its branches depended on
 Occupancy and on being in a Damocles Lift, and each Title changed it only through the callbacks
 it passed in, several of them no-ops. Nothing described the keys to a player. The one text form
