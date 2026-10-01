@@ -1,0 +1,212 @@
+{
+  "geometry": {
+    "entries": [
+      40
+    ],
+    "family": "model",
+    "header": {
+      "mode": 255,
+      "op": 1,
+      "pivot": [
+        0,
+        25,
+        28
+      ],
+      "yawOffset": 0
+    },
+    "id": "model-030676",
+    "name": "BLUE BEACON LOCR",
+    "provenance": [
+      {
+        "range": [
+          "$30676",
+          "$306D5"
+        ],
+        "sha256": "5f36d198a3603f7c809956247639f13d02de1edca0a74349986423b325eca2ac"
+      }
+    ],
+    "record": "$30676",
+    "sha256": "421a3bde2e578c766b9d31f61fbc87b9b76e4485ff00c1103bacee0abc1cb107",
+    "variants": {
+      "form=default": {
+        "articulated": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6
+        ],
+        "faces": [
+          {
+            "colour": 2,
+            "kind": "polygon",
+            "refs": [
+              6,
+              5,
+              4
+            ],
+            "stColour": 32768
+          },
+          {
+            "colour": 10,
+            "kind": "polygon",
+            "refs": [
+              8,
+              7,
+              10,
+              11
+            ],
+            "stColour": 820
+          },
+          {
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              7,
+              9,
+              12,
+              10
+            ],
+            "stColour": 1093
+          },
+          {
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              9,
+              8,
+              11,
+              12
+            ],
+            "stColour": 1366
+          },
+          {
+            "colour": 5,
+            "kind": "polygon",
+            "refs": [
+              2,
+              1,
+              4,
+              5
+            ],
+            "stColour": 582
+          },
+          {
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              1,
+              3,
+              6,
+              4
+            ],
+            "stColour": 1366
+          },
+          {
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              3,
+              2,
+              5,
+              6
+            ],
+            "stColour": 1621
+          },
+          {
+            "colour": 2,
+            "kind": "polygon",
+            "refs": [
+              1,
+              2,
+              3
+            ],
+            "stColour": 32768
+          }
+        ],
+        "turn": {
+          "angle": "$6F38",
+          "axis": "y",
+          "kind": "articulated",
+          "pivot": [
+            0,
+            25,
+            28
+          ]
+        },
+        "vertices": [
+          [
+            -10,
+            40,
+            20
+          ],
+          [
+            0,
+            40,
+            40
+          ],
+          [
+            10,
+            40,
+            20
+          ],
+          [
+            -10,
+            25,
+            20
+          ],
+          [
+            0,
+            25,
+            40
+          ],
+          [
+            10,
+            25,
+            20
+          ],
+          [
+            -2,
+            25,
+            26
+          ],
+          [
+            0,
+            25,
+            30
+          ],
+          [
+            2,
+            25,
+            26
+          ],
+          [
+            -2,
+            0,
+            26
+          ],
+          [
+            0,
+            0,
+            30
+          ],
+          [
+            2,
+            0,
+            26
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

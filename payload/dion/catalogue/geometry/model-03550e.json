@@ -1,0 +1,321 @@
+{
+  "geometry": {
+    "entries": [
+      180
+    ],
+    "family": "model",
+    "header": {
+      "code": 17479,
+      "op": 8,
+      "skip": "$3557C"
+    },
+    "id": "model-03550e",
+    "name": "KEY - DODGE",
+    "provenance": [
+      {
+        "range": [
+          "$3550E",
+          "$35514"
+        ],
+        "sha256": "6edc5c8ee3da36b1cdcb029a288b0e88cd68d9cb13c2df96dbd129bcb88a66dd"
+      },
+      {
+        "range": [
+          "$3557C",
+          "$3561F"
+        ],
+        "sha256": "33a2a9717bf8d4efdf64cabb39eb941db6541930ea315b286a0794b8c2d1c3db"
+      }
+    ],
+    "record": "$3550E",
+    "sha256": "09e0ec7891db40d9f55baa43b0046a3649e74f55dae76b1702d55c71e072399d",
+    "variants": {
+      "form=default": {
+        "faces": [
+          {
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              9,
+              10,
+              12,
+              11
+            ],
+            "stColour": 1621
+          },
+          {
+            "colour": 3,
+            "kind": "polygon",
+            "refs": [
+              3,
+              1,
+              7,
+              5
+            ],
+            "stColour": 1911
+          },
+          {
+            "advance": 9,
+            "colour": 32768,
+            "flags": 32768,
+            "glyphScale": [
+              3,
+              5
+            ],
+            "kind": "text",
+            "offset": [
+              -8,
+              24,
+              0
+            ],
+            "text": [
+              139
+            ],
+            "tokens": [
+              {
+                "kind": "live",
+                "token": "$8B"
+              }
+            ]
+          },
+          {
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              6,
+              5,
+              17,
+              18
+            ],
+            "stColour": 1093
+          },
+          {
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              18,
+              17,
+              15,
+              16
+            ],
+            "stColour": 1093
+          },
+          {
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              7,
+              8,
+              10,
+              9
+            ],
+            "stColour": 1093
+          },
+          {
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              11,
+              12,
+              14,
+              13
+            ],
+            "stColour": 1093
+          },
+          {
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              5,
+              7,
+              9,
+              17
+            ],
+            "stColour": 1366
+          },
+          {
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              17,
+              11,
+              13,
+              15
+            ],
+            "stColour": 1366
+          },
+          {
+            "colour": 10,
+            "kind": "polygon",
+            "refs": [
+              8,
+              6,
+              18,
+              10
+            ],
+            "stColour": 820
+          },
+          {
+            "colour": 10,
+            "kind": "polygon",
+            "refs": [
+              12,
+              18,
+              16,
+              14
+            ],
+            "stColour": 820
+          },
+          {
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              1,
+              2,
+              8,
+              7
+            ],
+            "stColour": 1366
+          },
+          {
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              4,
+              3,
+              5,
+              6
+            ],
+            "stColour": 1366
+          },
+          {
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              2,
+              4,
+              6,
+              8
+            ],
+            "stColour": 1093
+          },
+          {
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              3,
+              4,
+              2,
+              1
+            ],
+            "stColour": 1621
+          }
+        ],
+        "turn": {
+          "kind": "fixed"
+        },
+        "vertices": [
+          [
+            10,
+            40,
+            0
+          ],
+          [
+            10,
+            40,
+            4
+          ],
+          [
+            -10,
+            40,
+            0
+          ],
+          [
+            -10,
+            40,
+            4
+          ],
+          [
+            -10,
+            20,
+            0
+          ],
+          [
+            -10,
+            20,
+            4
+          ],
+          [
+            10,
+            20,
+            0
+          ],
+          [
+            10,
+            20,
+            4
+          ],
+          [
+            4,
+            10,
+            0
+          ],
+          [
+            4,
+            10,
+            4
+          ],
+          [
+            10,
+            10,
+            0
+          ],
+          [
+            10,
+            10,
+            4
+          ],
+          [
+            10,
+            0,
+            0
+          ],
+          [
+            10,
+            0,
+            4
+          ],
+          [
+            -4,
+            0,
+            0
+          ],
+          [
+            -4,
+            0,
+            4
+          ],
+          [
+            -4,
+            10,
+            0
+          ],
+          [
+            -4,
+            10,
+            4
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

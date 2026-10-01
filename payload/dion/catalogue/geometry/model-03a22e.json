@@ -1,0 +1,158 @@
+{
+  "geometry": {
+    "entries": [
+      338
+    ],
+    "family": "model",
+    "id": "model-03a22e",
+    "record": "$3A22E",
+    "sha256": "00194cfdfd14f792549c2d5f1ece896cb5c4ce505a01e31175b6fa7106feb6b0",
+    "variants": {
+      "base": {
+        "alternatives": [],
+        "entry": 338,
+        "faces": [
+          {
+            "at": "$3A26C",
+            "colour": 22,
+            "kind": "polygon",
+            "refs": [
+              8,
+              12,
+              20,
+              36
+            ]
+          },
+          {
+            "at": "$3A272",
+            "colour": 22,
+            "kind": "polygon",
+            "refs": [
+              4,
+              8,
+              36,
+              16
+            ]
+          },
+          {
+            "at": "$3A278",
+            "colour": 22,
+            "kind": "polygon",
+            "refs": [
+              12,
+              4,
+              16,
+              20
+            ]
+          },
+          {
+            "at": "$3A27E",
+            "colour": 23,
+            "kind": "polygon",
+            "refs": [
+              36,
+              20,
+              32,
+              28
+            ]
+          },
+          {
+            "at": "$3A284",
+            "colour": 23,
+            "kind": "polygon",
+            "refs": [
+              16,
+              36,
+              28,
+              24
+            ]
+          },
+          {
+            "at": "$3A28A",
+            "colour": 23,
+            "kind": "polygon",
+            "refs": [
+              20,
+              16,
+              24,
+              32
+            ]
+          },
+          {
+            "at": "$3A290",
+            "colour": 6,
+            "kind": "polygon",
+            "refs": [
+              24,
+              28,
+              32
+            ]
+          }
+        ],
+        "provenance": {
+          "range": [
+            "$3A22E",
+            "$3A296"
+          ],
+          "sha256": "4383c68cb18b0afaea0edcef67ad1373a28796e887f93a8374afdf1f570a8247"
+        },
+        "vertices": [
+          [
+            0,
+            0,
+            9
+          ],
+          [
+            8,
+            0,
+            -5
+          ],
+          [
+            -8,
+            0,
+            -5
+          ],
+          [
+            0,
+            260,
+            9
+          ],
+          [
+            -8,
+            260,
+            -5
+          ],
+          [
+            0,
+            320,
+            36
+          ],
+          [
+            32,
+            320,
+            -20
+          ],
+          [
+            -32,
+            320,
+            -20
+          ],
+          [
+            8,
+            260,
+            -5
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

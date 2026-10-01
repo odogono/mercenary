@@ -1,0 +1,256 @@
+{
+  "geometry": {
+    "entries": [
+      3
+    ],
+    "family": "model",
+    "header": {
+      "mode": 64,
+      "op": 1,
+      "yawOffset": 128
+    },
+    "id": "model-02f086",
+    "name": "EAGLE NINE S E",
+    "provenance": [
+      {
+        "range": [
+          "$2F086",
+          "$2F12D"
+        ],
+        "sha256": "0fdfb3ee0c1d643ecf274448a6d3b2139739fb2263b5c0b8df4f1ef73b0f162f"
+      }
+    ],
+    "record": "$2F086",
+    "sha256": "df36e502a9c1509e49ebb2ffa2ff7fecc7bc21fddc75c4c9a09607ec6589e4e5",
+    "variants": {
+      "form=default": {
+        "faces": [
+          {
+            "colour": 10,
+            "kind": "polygon",
+            "refs": [
+              2,
+              3,
+              4
+            ],
+            "stColour": 820
+          },
+          {
+            "colour": 10,
+            "kind": "polygon",
+            "refs": [
+              1,
+              7,
+              8
+            ],
+            "stColour": 820
+          },
+          {
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              2,
+              4,
+              9
+            ],
+            "stColour": 1366
+          },
+          {
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              1,
+              10,
+              7
+            ],
+            "stColour": 1366
+          },
+          {
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              14,
+              8,
+              7,
+              4,
+              3,
+              13
+            ],
+            "stColour": 1093
+          },
+          {
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              6,
+              7,
+              10
+            ],
+            "stColour": 1621
+          },
+          {
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              4,
+              5,
+              9
+            ],
+            "stColour": 1621
+          },
+          {
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              5,
+              6,
+              10,
+              9
+            ],
+            "stColour": 1366
+          },
+          {
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              1,
+              2,
+              9,
+              10
+            ],
+            "stColour": 1621
+          },
+          {
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              2,
+              12,
+              13,
+              3
+            ],
+            "stColour": 1621
+          },
+          {
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              1,
+              8,
+              14,
+              11
+            ],
+            "stColour": 1621
+          },
+          {
+            "colour": 10,
+            "kind": "polygon",
+            "refs": [
+              11,
+              14,
+              13,
+              12
+            ],
+            "stColour": 820
+          },
+          {
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              2,
+              1,
+              11,
+              12
+            ],
+            "stColour": 1621
+          }
+        ],
+        "turn": {
+          "kind": "yaw",
+          "yawOffset": 128
+        },
+        "vertices": [
+          [
+            0,
+            5,
+            300
+          ],
+          [
+            5,
+            5,
+            300
+          ],
+          [
+            160,
+            5,
+            -100
+          ],
+          [
+            50,
+            30,
+            -100
+          ],
+          [
+            5,
+            30,
+            -100
+          ],
+          [
+            0,
+            30,
+            -100
+          ],
+          [
+            -40,
+            30,
+            -100
+          ],
+          [
+            -150,
+            5,
+            -100
+          ],
+          [
+            5,
+            60,
+            -80
+          ],
+          [
+            0,
+            60,
+            -80
+          ],
+          [
+            0,
+            0,
+            300
+          ],
+          [
+            5,
+            0,
+            300
+          ],
+          [
+            160,
+            0,
+            -100
+          ],
+          [
+            -150,
+            0,
+            -100
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

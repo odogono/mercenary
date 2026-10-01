@@ -1,0 +1,148 @@
+{
+  "geometry": {
+    "family": "island",
+    "id": "island-06389e",
+    "record": "$6389E",
+    "sha256": "ce73984f46fc69d2ebb4540eb6b8e29f259c8592bf76e0fdfc424bd839b67ffb",
+    "variants": {
+      "base": {
+        "core": {
+          "x": [
+            -5,
+            13
+          ],
+          "z": [
+            -5,
+            13
+          ]
+        },
+        "edges": [
+          {
+            "from": 6,
+            "steep": false,
+            "swap": false,
+            "to": 1
+          },
+          {
+            "from": 5,
+            "steep": true,
+            "swap": true,
+            "to": 6
+          },
+          {
+            "from": 4,
+            "steep": false,
+            "swap": true,
+            "to": 5
+          },
+          {
+            "from": 3,
+            "steep": false,
+            "swap": true,
+            "to": 4
+          },
+          {
+            "from": 2,
+            "steep": true,
+            "swap": false,
+            "to": 3
+          },
+          {
+            "from": 1,
+            "steep": false,
+            "swap": false,
+            "to": 2
+          }
+        ],
+        "outer": {
+          "x": [
+            -16,
+            40
+          ],
+          "z": [
+            -16,
+            32
+          ]
+        },
+        "primitives": [
+          {
+            "colour": 1056,
+            "kind": "polygon",
+            "refs": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          }
+        ],
+        "provenance": {
+          "range": [
+            "$6386E",
+            "$638C3"
+          ],
+          "sha256": "875bc5c0320dd4ab492f661854d92fe5b6f3683f0a82e14c100e830755bac64e"
+        },
+        "sea": [
+          {
+            "x": [
+              -16,
+              0
+            ],
+            "z": [
+              24,
+              32
+            ]
+          },
+          {
+            "x": [
+              16,
+              40
+            ],
+            "z": [
+              -16,
+              -8
+            ]
+          }
+        ],
+        "vertices": [
+          [
+            0,
+            24
+          ],
+          [
+            24,
+            32
+          ],
+          [
+            40,
+            28
+          ],
+          [
+            16,
+            -8
+          ],
+          [
+            -8,
+            -16
+          ],
+          [
+            -16,
+            0
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

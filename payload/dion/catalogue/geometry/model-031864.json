@@ -1,0 +1,196 @@
+{
+  "geometry": {
+    "entries": [
+      257
+    ],
+    "family": "model",
+    "header": null,
+    "id": "model-031864",
+    "name": "EXPLOSIVE-ARMED!",
+    "provenance": [
+      {
+        "range": [
+          "$31864",
+          "$318CB"
+        ],
+        "sha256": "360ffbd8c35080e2046de099349f23d444880d280a8a5cc07e549f997dcf0b3d"
+      }
+    ],
+    "record": "$31864",
+    "sha256": "daaf15bfc59c78a8d0fceef7fc4d4e195a2311aec418832208c494b4e40d2e03",
+    "variants": {
+      "form=default": {
+        "faces": [
+          {
+            "colour": 2,
+            "kind": "polygon",
+            "refs": [
+              6,
+              7,
+              3,
+              2
+            ],
+            "stColour": 32768
+          },
+          {
+            "colour": 2,
+            "kind": "polygon",
+            "refs": [
+              8,
+              5,
+              1,
+              4
+            ],
+            "stColour": 32768
+          },
+          {
+            "advance": 18,
+            "colour": 1041,
+            "flags": 32769,
+            "glyphScale": [
+              3,
+              3
+            ],
+            "kind": "text",
+            "offset": [
+              -35,
+              10,
+              -10
+            ],
+            "text": [
+              136
+            ],
+            "tokens": [
+              {
+                "kind": "live",
+                "token": "$88"
+              }
+            ]
+          },
+          {
+            "advance": -18,
+            "colour": 1041,
+            "flags": 32769,
+            "glyphScale": [
+              -3,
+              3
+            ],
+            "kind": "text",
+            "offset": [
+              35,
+              10,
+              10
+            ],
+            "text": [
+              136
+            ],
+            "tokens": [
+              {
+                "kind": "live",
+                "token": "$88"
+              }
+            ]
+          },
+          {
+            "colour": 10,
+            "kind": "polygon",
+            "refs": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "stColour": 820
+          },
+          {
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              5,
+              6,
+              2,
+              1
+            ],
+            "stColour": 1093
+          },
+          {
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              7,
+              8,
+              4,
+              3
+            ],
+            "stColour": 1093
+          },
+          {
+            "colour": 10,
+            "kind": "polygon",
+            "refs": [
+              8,
+              7,
+              6,
+              5
+            ],
+            "stColour": 820
+          }
+        ],
+        "turn": {
+          "kind": "fixed"
+        },
+        "vertices": [
+          [
+            -40,
+            0,
+            20
+          ],
+          [
+            -40,
+            0,
+            -20
+          ],
+          [
+            40,
+            0,
+            -20
+          ],
+          [
+            40,
+            0,
+            20
+          ],
+          [
+            -40,
+            40,
+            20
+          ],
+          [
+            -40,
+            40,
+            -20
+          ],
+          [
+            40,
+            40,
+            -20
+          ],
+          [
+            40,
+            40,
+            20
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

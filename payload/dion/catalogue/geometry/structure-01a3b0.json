@@ -1,0 +1,195 @@
+{
+  "geometry": {
+    "family": "structure",
+    "id": "structure-01a3b0",
+    "record": "$1A3B0",
+    "sha256": "acbf8a0fdb3e75315b9c351c66e8615d00107f680a6140b2c586e2d80f3d99b2",
+    "variants": {
+      "scale=-3,-3": {
+        "associations": [],
+        "attachments": [],
+        "entry": [
+          -600,
+          -1650
+        ],
+        "heights": [
+          350,
+          100
+        ],
+        "plan": [],
+        "provenance": {
+          "range": [
+            "$1A3A8",
+            "$1A3F1"
+          ],
+          "sha256": "c8e91a86c260d73a113e75b5938de635cd031fc9c7f8687b5ae727d18aaeb893"
+        },
+        "regions": [
+          {
+            "bounds": {
+              "x": [
+                450,
+                32767
+              ],
+              "z": [
+                -32768,
+                32767
+              ]
+            },
+            "flags": 49152,
+            "queue": [],
+            "queueAddress": "$1A3C8"
+          },
+          {
+            "bounds": {
+              "x": [
+                -32768,
+                -450
+              ],
+              "z": [
+                -32768,
+                32767
+              ]
+            },
+            "flags": 49152,
+            "queue": [],
+            "queueAddress": "$1A3D4"
+          },
+          {
+            "bounds": {
+              "x": [
+                -450,
+                450
+              ],
+              "z": [
+                0,
+                32767
+              ]
+            },
+            "flags": 49152,
+            "queue": [],
+            "queueAddress": "$1A3E0"
+          },
+          {
+            "bounds": {
+              "x": [
+                -450,
+                450
+              ],
+              "z": [
+                -32768,
+                -1650
+              ]
+            },
+            "flags": 49152,
+            "queue": [],
+            "queueAddress": "$1A3EC"
+          }
+        ],
+        "sceneColours": [
+          1911,
+          1911
+        ],
+        "wallTexts": [],
+        "walls": []
+      },
+      "scale=3,3": {
+        "associations": [],
+        "attachments": [],
+        "entry": [
+          600,
+          1650
+        ],
+        "heights": [
+          350,
+          100
+        ],
+        "plan": [],
+        "provenance": {
+          "range": [
+            "$1A3A8",
+            "$1A3F1"
+          ],
+          "sha256": "c8e91a86c260d73a113e75b5938de635cd031fc9c7f8687b5ae727d18aaeb893"
+        },
+        "regions": [
+          {
+            "bounds": {
+              "x": [
+                -32768,
+                -450
+              ],
+              "z": [
+                -32768,
+                32767
+              ]
+            },
+            "flags": 49152,
+            "queue": [],
+            "queueAddress": "$1A3C8"
+          },
+          {
+            "bounds": {
+              "x": [
+                450,
+                32767
+              ],
+              "z": [
+                -32768,
+                32767
+              ]
+            },
+            "flags": 49152,
+            "queue": [],
+            "queueAddress": "$1A3D4"
+          },
+          {
+            "bounds": {
+              "x": [
+                -450,
+                450
+              ],
+              "z": [
+                -32768,
+                0
+              ]
+            },
+            "flags": 49152,
+            "queue": [],
+            "queueAddress": "$1A3E0"
+          },
+          {
+            "bounds": {
+              "x": [
+                -450,
+                450
+              ],
+              "z": [
+                1650,
+                32767
+              ]
+            },
+            "flags": 49152,
+            "queue": [],
+            "queueAddress": "$1A3EC"
+          }
+        ],
+        "sceneColours": [
+          1911,
+          1911
+        ],
+        "wallTexts": [],
+        "walls": []
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

@@ -1,0 +1,206 @@
+{
+  "geometry": {
+    "entries": [
+      305
+    ],
+    "family": "model",
+    "id": "model-038c52",
+    "record": "$38C52",
+    "sha256": "00fe52bd95fd96155acdac77a8ca71bc494c076201fc15d3f4fda54b793b4a47",
+    "variants": {
+      "base": {
+        "alternatives": [],
+        "entry": 305,
+        "faces": [
+          {
+            "at": "$38CB4",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              4,
+              12
+            ]
+          },
+          {
+            "at": "$38CB7",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              8,
+              16
+            ]
+          },
+          {
+            "at": "$38CBA",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              24,
+              32
+            ]
+          },
+          {
+            "at": "$38CBD",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              28,
+              36
+            ]
+          },
+          {
+            "at": "$38CC0",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              8,
+              28
+            ]
+          },
+          {
+            "at": "$38CC3",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              20,
+              40
+            ]
+          },
+          {
+            "at": "$38CC6",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              12,
+              32
+            ]
+          },
+          {
+            "at": "$38CC9",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              44,
+              52
+            ]
+          },
+          {
+            "at": "$38CCC",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              48,
+              56
+            ]
+          },
+          {
+            "at": "$38CCF",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              4,
+              24
+            ]
+          },
+          {
+            "at": "$38CD2",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              16,
+              36
+            ]
+          }
+        ],
+        "provenance": {
+          "range": [
+            "$38C52",
+            "$38CD6"
+          ],
+          "sha256": "c4f52b5b269df6277c386cd33b970d96c640de8fad1ff6ccf0d1d2c37b191f44"
+        },
+        "vertices": [
+          [
+            -20,
+            0,
+            -4000
+          ],
+          [
+            -20,
+            80,
+            -4000
+          ],
+          [
+            20,
+            80,
+            -4000
+          ],
+          [
+            20,
+            0,
+            -4000
+          ],
+          [
+            0,
+            40,
+            -4000
+          ],
+          [
+            -20,
+            0,
+            4000
+          ],
+          [
+            -20,
+            80,
+            4000
+          ],
+          [
+            20,
+            80,
+            4000
+          ],
+          [
+            20,
+            0,
+            4000
+          ],
+          [
+            0,
+            40,
+            4000
+          ],
+          [
+            -20,
+            0,
+            0
+          ],
+          [
+            -20,
+            80,
+            0
+          ],
+          [
+            20,
+            80,
+            0
+          ],
+          [
+            20,
+            0,
+            0
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

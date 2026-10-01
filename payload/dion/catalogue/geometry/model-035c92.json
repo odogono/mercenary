@@ -1,0 +1,191 @@
+{
+  "geometry": {
+    "entries": [
+      155
+    ],
+    "family": "model",
+    "header": null,
+    "id": "model-035c92",
+    "name": "TISSUES",
+    "provenance": [
+      {
+        "range": [
+          "$35C92",
+          "$35CEF"
+        ],
+        "sha256": "d3bc4d758ccec858107d522bc929bdadba21aeaa8775c2d5695781f9ac029f52"
+      }
+    ],
+    "record": "$35C92",
+    "sha256": "bf8782f21ccefedb40d180c606e001055245955e894bd81c8cc65279f8dcd3cd",
+    "variants": {
+      "form=default": {
+        "faces": [
+          {
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              1,
+              5,
+              8,
+              4
+            ],
+            "stColour": 1366
+          },
+          {
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              3,
+              7,
+              6,
+              2
+            ],
+            "stColour": 1366
+          },
+          {
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              2,
+              6,
+              5,
+              1
+            ],
+            "stColour": 1093
+          },
+          {
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              4,
+              8,
+              7,
+              3
+            ],
+            "stColour": 1093
+          },
+          {
+            "colour": 10,
+            "kind": "polygon",
+            "refs": [
+              5,
+              6,
+              7,
+              8
+            ],
+            "stColour": 820
+          },
+          {
+            "colour": 3,
+            "kind": "polygon",
+            "refs": [
+              9,
+              10,
+              11,
+              12,
+              13,
+              14
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 10,
+            "kind": "polygon",
+            "refs": [
+              4,
+              3,
+              2,
+              1
+            ],
+            "stColour": 820
+          }
+        ],
+        "turn": {
+          "kind": "fixed"
+        },
+        "vertices": [
+          [
+            -25,
+            0,
+            -15
+          ],
+          [
+            -25,
+            0,
+            15
+          ],
+          [
+            25,
+            0,
+            15
+          ],
+          [
+            25,
+            0,
+            -15
+          ],
+          [
+            -25,
+            15,
+            -15
+          ],
+          [
+            -25,
+            15,
+            15
+          ],
+          [
+            25,
+            15,
+            15
+          ],
+          [
+            25,
+            15,
+            -15
+          ],
+          [
+            -15,
+            15,
+            0
+          ],
+          [
+            -10,
+            15,
+            5
+          ],
+          [
+            10,
+            15,
+            5
+          ],
+          [
+            15,
+            15,
+            0
+          ],
+          [
+            10,
+            15,
+            -5
+          ],
+          [
+            -10,
+            15,
+            -5
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

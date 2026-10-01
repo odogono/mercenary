@@ -1,0 +1,159 @@
+{
+  "geometry": {
+    "family": "ground",
+    "id": "ground-01c3ca",
+    "record": "$1C3CA",
+    "sha256": "a7405f0dbbf1fd840de41261e341a51a4d1fef8de1674de271fe2ef0b463cab8",
+    "variants": {
+      "transform=2": {
+        "primitives": [
+          {
+            "colour": 32782,
+            "kind": "polygon",
+            "refs": [
+              4,
+              8,
+              12,
+              240,
+              24,
+              20,
+              16,
+              244
+            ]
+          },
+          {
+            "colour": 32782,
+            "kind": "polygon",
+            "refs": [
+              28,
+              20,
+              8,
+              32,
+              252
+            ]
+          },
+          {
+            "colour": 49166,
+            "kind": "line",
+            "refs": [
+              36,
+              244
+            ]
+          },
+          {
+            "colour": 49166,
+            "kind": "line",
+            "refs": [
+              36,
+              240
+            ]
+          },
+          {
+            "colour": 49166,
+            "kind": "line",
+            "refs": [
+              36,
+              252
+            ]
+          },
+          {
+            "kind": "template",
+            "model": 335,
+            "word": 28706,
+            "x": 8768,
+            "z": 32468
+          },
+          {
+            "kind": "template",
+            "model": 336,
+            "word": 28672,
+            "x": 20768,
+            "z": -32468
+          },
+          {
+            "kind": "template",
+            "model": 335,
+            "word": 28672,
+            "x": 28768,
+            "z": 32468
+          },
+          {
+            "kind": "template",
+            "model": 336,
+            "word": 28672,
+            "x": -28768,
+            "z": -32468
+          },
+          {
+            "kind": "template",
+            "model": 335,
+            "word": 28672,
+            "x": -20768,
+            "z": 32468
+          },
+          {
+            "kind": "template",
+            "model": 336,
+            "word": 28672,
+            "x": -8768,
+            "z": -32468
+          }
+        ],
+        "provenance": {
+          "range": [
+            "$1C3CC",
+            "$1C442"
+          ],
+          "sha256": "a6241d1a25b6b8d25786791ed5ff97df9030eb36e393116e5c31846b481dde73"
+        },
+        "vertices": [
+          [
+            1,
+            -32568
+          ],
+          [
+            -32568,
+            -32568
+          ],
+          [
+            -1,
+            -32568
+          ],
+          [
+            1,
+            32568
+          ],
+          [
+            32568,
+            32568
+          ],
+          [
+            -1,
+            32568
+          ],
+          [
+            32568,
+            1
+          ],
+          [
+            -32568,
+            1
+          ],
+          [
+            -32768,
+            -32768
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

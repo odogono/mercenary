@@ -1,0 +1,291 @@
+{
+  "geometry": {
+    "entries": [
+      162,
+      190
+    ],
+    "family": "model",
+    "header": null,
+    "id": "model-035348",
+    "name": "BALLOT PAPER",
+    "provenance": [
+      {
+        "range": [
+          "$35348",
+          "$353DB"
+        ],
+        "sha256": "5a4dfe98596c9f1f2584409910ae4cf15efd4bad1ca88ca8035a50910e10b568"
+      }
+    ],
+    "record": "$35348",
+    "sha256": "cb1bcccbddd78821be95294b186408f45d3dfe1eb0037afbec35511c89d68ae2",
+    "variants": {
+      "form=default": {
+        "faces": [
+          {
+            "colour": 10,
+            "kind": "polygon",
+            "refs": [
+              22,
+              21,
+              19,
+              20
+            ],
+            "stColour": 820
+          },
+          {
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              23,
+              24,
+              20,
+              19
+            ],
+            "stColour": 1093
+          },
+          {
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              24,
+              23,
+              17,
+              18
+            ],
+            "stColour": 1366
+          },
+          {
+            "colour": 3,
+            "kind": "polygon",
+            "refs": [
+              21,
+              22,
+              18,
+              17
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 2,
+            "kind": "polygon",
+            "refs": [
+              4,
+              3,
+              2,
+              1
+            ],
+            "stColour": 32768
+          },
+          {
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              8,
+              7,
+              6,
+              5
+            ],
+            "stColour": 1093
+          },
+          {
+            "colour": 5,
+            "kind": "polygon",
+            "refs": [
+              12,
+              11,
+              10,
+              9
+            ],
+            "stColour": 582
+          },
+          {
+            "colour": 4,
+            "kind": "polygon",
+            "refs": [
+              16,
+              15,
+              14,
+              13
+            ],
+            "stColour": 1041
+          },
+          {
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              22,
+              20,
+              18
+            ],
+            "stColour": 1621
+          },
+          {
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              19,
+              21,
+              17
+            ],
+            "stColour": 1621
+          },
+          {
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              20,
+              24,
+              18
+            ],
+            "stColour": 1621
+          },
+          {
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              19,
+              17,
+              23
+            ],
+            "stColour": 1621
+          }
+        ],
+        "turn": {
+          "kind": "fixed"
+        },
+        "vertices": [
+          [
+            -18,
+            28,
+            1
+          ],
+          [
+            5,
+            28,
+            1
+          ],
+          [
+            5,
+            24,
+            3
+          ],
+          [
+            -18,
+            24,
+            3
+          ],
+          [
+            -18,
+            22,
+            4
+          ],
+          [
+            5,
+            22,
+            4
+          ],
+          [
+            5,
+            18,
+            6
+          ],
+          [
+            -18,
+            18,
+            6
+          ],
+          [
+            -18,
+            16,
+            7
+          ],
+          [
+            5,
+            16,
+            7
+          ],
+          [
+            5,
+            12,
+            9
+          ],
+          [
+            -18,
+            12,
+            9
+          ],
+          [
+            -18,
+            10,
+            10
+          ],
+          [
+            5,
+            10,
+            10
+          ],
+          [
+            5,
+            6,
+            12
+          ],
+          [
+            -18,
+            6,
+            12
+          ],
+          [
+            -20,
+            30,
+            0
+          ],
+          [
+            20,
+            30,
+            0
+          ],
+          [
+            -20,
+            25,
+            0
+          ],
+          [
+            20,
+            25,
+            0
+          ],
+          [
+            -20,
+            0,
+            15
+          ],
+          [
+            20,
+            0,
+            15
+          ],
+          [
+            -20,
+            0,
+            -15
+          ],
+          [
+            20,
+            0,
+            -15
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

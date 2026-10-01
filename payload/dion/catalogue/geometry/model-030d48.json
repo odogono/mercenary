@@ -1,0 +1,220 @@
+{
+  "geometry": {
+    "entries": [
+      47
+    ],
+    "family": "model",
+    "header": null,
+    "id": "model-030d48",
+    "name": "SIGHTS",
+    "provenance": [
+      {
+        "range": [
+          "$30D48",
+          "$30D9D"
+        ],
+        "sha256": "712270093d6deae6ba59c6fa053058801e53e5e5b3029da205a1b0aeeea54aec"
+      }
+    ],
+    "record": "$30D48",
+    "sha256": "63c3d0831e38f84bcf6538da02f756f45954cf03d899025aaf930419ed06f191",
+    "variants": {
+      "form=default": {
+        "faces": [
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              1,
+              2
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              2,
+              3
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              3,
+              4
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              4,
+              5
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              5,
+              6
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              6,
+              7
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              7,
+              8
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              8,
+              9
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              9,
+              10
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              2,
+              9
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              11,
+              12
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              13,
+              14
+            ],
+            "stColour": 1911
+          }
+        ],
+        "turn": {
+          "kind": "fixed"
+        },
+        "vertices": [
+          [
+            -32,
+            0,
+            0
+          ],
+          [
+            -12,
+            34,
+            0
+          ],
+          [
+            -32,
+            54,
+            0
+          ],
+          [
+            -32,
+            74,
+            0
+          ],
+          [
+            -12,
+            94,
+            0
+          ],
+          [
+            12,
+            94,
+            0
+          ],
+          [
+            32,
+            74,
+            0
+          ],
+          [
+            32,
+            54,
+            0
+          ],
+          [
+            12,
+            34,
+            0
+          ],
+          [
+            32,
+            0,
+            0
+          ],
+          [
+            -22,
+            64,
+            0
+          ],
+          [
+            -2,
+            64,
+            0
+          ],
+          [
+            2,
+            64,
+            0
+          ],
+          [
+            22,
+            64,
+            0
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

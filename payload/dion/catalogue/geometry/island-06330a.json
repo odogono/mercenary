@@ -1,0 +1,52 @@
+{
+  "geometry": {
+    "family": "island",
+    "id": "island-06330a",
+    "record": "$6330A",
+    "sha256": "8045be6c8b7450a0ed312f8c48af8086e73f8579744b470f86e7bfdff70bcef7",
+    "variants": {
+      "base": {
+        "core": {
+          "x": [
+            -32768,
+            32767
+          ],
+          "z": [
+            -32768,
+            32767
+          ]
+        },
+        "edges": [],
+        "outer": {
+          "x": [
+            -32768,
+            32767
+          ],
+          "z": [
+            -32768,
+            32767
+          ]
+        },
+        "primitives": [],
+        "provenance": {
+          "range": [
+            "$632F6",
+            "$6330E"
+          ],
+          "sha256": "5e9f64db26d3880e0584e3c4c56008429894c5ed1eb323b5efe16b87f5be73f0"
+        },
+        "sea": [],
+        "vertices": []
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

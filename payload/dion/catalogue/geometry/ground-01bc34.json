@@ -1,0 +1,170 @@
+{
+  "geometry": {
+    "family": "ground",
+    "id": "ground-01bc34",
+    "record": "$1BC34",
+    "sha256": "b7f703b19a1e38978508bb31afa2d246bfa51f7aca6643b6149d8cf6d490c1a2",
+    "variants": {
+      "transform=0": {
+        "primitives": [
+          {
+            "colour": 802,
+            "kind": "polygon",
+            "refs": [
+              20,
+              48,
+              36,
+              8
+            ]
+          },
+          {
+            "colour": 802,
+            "kind": "polygon",
+            "refs": [
+              52,
+              40,
+              36,
+              48
+            ]
+          },
+          {
+            "colour": 802,
+            "kind": "polygon",
+            "refs": [
+              40,
+              52,
+              56,
+              44
+            ]
+          },
+          {
+            "colour": 802,
+            "kind": "polygon",
+            "refs": [
+              56,
+              60,
+              8,
+              44
+            ]
+          },
+          {
+            "colour": 32782,
+            "kind": "polygon",
+            "refs": [
+              4,
+              8,
+              20,
+              16,
+              240
+            ]
+          },
+          {
+            "colour": 32782,
+            "kind": "polygon",
+            "refs": [
+              24,
+              20,
+              28,
+              12,
+              252
+            ]
+          },
+          {
+            "colour": 49166,
+            "kind": "line",
+            "refs": [
+              32,
+              240
+            ]
+          },
+          {
+            "colour": 49166,
+            "kind": "line",
+            "refs": [
+              32,
+              252
+            ]
+          }
+        ],
+        "provenance": {
+          "range": [
+            "$1BC36",
+            "$1BCAA"
+          ],
+          "sha256": "fff95536b3b495d20a3b71ee0be62f195320870f9c9bdb48911f3ea78f87f397"
+        },
+        "vertices": [
+          [
+            -1,
+            32568
+          ],
+          [
+            -32568,
+            32568
+          ],
+          [
+            -32568,
+            1
+          ],
+          [
+            -1,
+            -32568
+          ],
+          [
+            32568,
+            -32568
+          ],
+          [
+            32568,
+            1
+          ],
+          [
+            -32568,
+            -32568
+          ],
+          [
+            -32768,
+            -32768
+          ],
+          [
+            -32668,
+            -30868
+          ],
+          [
+            28768,
+            -30868
+          ],
+          [
+            28768,
+            32668
+          ],
+          [
+            32668,
+            -31118
+          ],
+          [
+            28968,
+            -31118
+          ],
+          [
+            28968,
+            -32168
+          ],
+          [
+            32668,
+            -32168
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

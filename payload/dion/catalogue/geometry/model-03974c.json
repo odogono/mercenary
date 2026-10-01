@@ -1,0 +1,282 @@
+{
+  "geometry": {
+    "entries": [
+      322
+    ],
+    "family": "model",
+    "id": "model-03974c",
+    "record": "$3974C",
+    "sha256": "f9b62db0f204927a6b5b92a864fbedcf1efacb98e17a6676bbc1e98c83da1906",
+    "variants": {
+      "base": {
+        "alternatives": [
+          {
+            "faces": [
+              {
+                "at": "$39798",
+                "colour": 10,
+                "kind": "polygon",
+                "refs": [
+                  48,
+                  44,
+                  56,
+                  52
+                ]
+              },
+              {
+                "at": "$3979E",
+                "colour": 10,
+                "kind": "polygon",
+                "refs": [
+                  44,
+                  48,
+                  52,
+                  56
+                ]
+              },
+              {
+                "at": "$397A4",
+                "colour": 10,
+                "kind": "polygon",
+                "refs": [
+                  16,
+                  20,
+                  24,
+                  28
+                ]
+              },
+              {
+                "at": "$397AA",
+                "colour": 10,
+                "kind": "polygon",
+                "refs": [
+                  28,
+                  24,
+                  20,
+                  16
+                ]
+              },
+              {
+                "at": "$397B0",
+                "colour": 10,
+                "kind": "line",
+                "refs": [
+                  16,
+                  28
+                ]
+              },
+              {
+                "at": "$397B3",
+                "colour": 10,
+                "kind": "line",
+                "refs": [
+                  44,
+                  56
+                ]
+              },
+              {
+                "at": "$397B6",
+                "colour": 3,
+                "kind": "line",
+                "refs": [
+                  4,
+                  32
+                ]
+              },
+              {
+                "at": "$397B9",
+                "colour": 3,
+                "kind": "line",
+                "refs": [
+                  40,
+                  12
+                ]
+              },
+              {
+                "at": "$397BC",
+                "colour": 3,
+                "kind": "polygon",
+                "refs": [
+                  4,
+                  32,
+                  36,
+                  40,
+                  12,
+                  8
+                ]
+              },
+              {
+                "address": "$397C6",
+                "advance": 9,
+                "colour": 819,
+                "flags": 32768,
+                "glyphScale": [
+                  3,
+                  3
+                ],
+                "kind": "text",
+                "offset": [
+                  28,
+                  39,
+                  0
+                ],
+                "text": [
+                  77,
+                  79,
+                  83,
+                  69,
+                  76,
+                  69,
+                  89,
+                  32,
+                  82,
+                  68
+                ]
+              },
+              {
+                "at": "$397DF",
+                "colour": 3,
+                "kind": "polygon",
+                "refs": [
+                  40,
+                  36,
+                  32,
+                  4,
+                  8,
+                  12
+                ]
+              }
+            ],
+            "min": [
+              -6000,
+              -3000,
+              -6000
+            ],
+            "size": [
+              12000,
+              8391608,
+              12000
+            ]
+          }
+        ],
+        "entry": 322,
+        "faces": [
+          {
+            "at": "$397EA",
+            "colour": 3,
+            "kind": "polygon",
+            "refs": [
+              4,
+              32,
+              36,
+              40,
+              12,
+              8
+            ]
+          },
+          {
+            "at": "$397F2",
+            "colour": 3,
+            "kind": "polygon",
+            "refs": [
+              40,
+              36,
+              32,
+              4,
+              8,
+              12
+            ]
+          }
+        ],
+        "provenance": {
+          "range": [
+            "$3974C",
+            "$397FB"
+          ],
+          "sha256": "95ff606f2ba02d1f2d9a931ddcdb6f4c110818d17776428eee9b35e18264093d"
+        },
+        "vertices": [
+          [
+            20,
+            50,
+            0
+          ],
+          [
+            10,
+            42,
+            0
+          ],
+          [
+            20,
+            34,
+            0
+          ],
+          [
+            30,
+            34,
+            0
+          ],
+          [
+            36,
+            34,
+            0
+          ],
+          [
+            36,
+            0,
+            0
+          ],
+          [
+            30,
+            0,
+            0
+          ],
+          [
+            120,
+            50,
+            0
+          ],
+          [
+            130,
+            42,
+            0
+          ],
+          [
+            120,
+            34,
+            0
+          ],
+          [
+            110,
+            34,
+            0
+          ],
+          [
+            104,
+            34,
+            0
+          ],
+          [
+            104,
+            0,
+            0
+          ],
+          [
+            110,
+            0,
+            0
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

@@ -1,0 +1,271 @@
+{
+  "geometry": {
+    "entries": [
+      50,
+      51,
+      52
+    ],
+    "family": "model",
+    "header": null,
+    "id": "model-030f8e",
+    "provenance": [
+      {
+        "range": [
+          "$30F8E",
+          "$31001"
+        ],
+        "sha256": "1580c6384ab7c1662f77e7d93e6c5d9a13cf3e8d575819bc7ab12084872c4b9e"
+      }
+    ],
+    "record": "$30F8E",
+    "sha256": "90774457a5984875a4194fa2df913f66ee6a5b422e11eed6218d6635a5d6af56",
+    "variants": {
+      "form=default": {
+        "faces": [
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              10,
+              16
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              11,
+              13
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              9,
+              15
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              12,
+              14
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              17,
+              23
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              20,
+              22
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              18,
+              24
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              19,
+              21
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              2,
+              8
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              4,
+              6
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              3,
+              5
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              1,
+              7
+            ],
+            "stColour": 1911
+          }
+        ],
+        "turn": {
+          "kind": "fixed"
+        },
+        "vertices": [
+          [
+            20,
+            -40,
+            20
+          ],
+          [
+            20,
+            -40,
+            -20
+          ],
+          [
+            -20,
+            -40,
+            -20
+          ],
+          [
+            -20,
+            -40,
+            20
+          ],
+          [
+            20,
+            40,
+            20
+          ],
+          [
+            20,
+            40,
+            -20
+          ],
+          [
+            -20,
+            40,
+            -20
+          ],
+          [
+            -20,
+            40,
+            20
+          ],
+          [
+            40,
+            -20,
+            20
+          ],
+          [
+            40,
+            -20,
+            -20
+          ],
+          [
+            40,
+            20,
+            -20
+          ],
+          [
+            40,
+            20,
+            20
+          ],
+          [
+            -40,
+            -20,
+            20
+          ],
+          [
+            -40,
+            -20,
+            -20
+          ],
+          [
+            -40,
+            20,
+            -20
+          ],
+          [
+            -40,
+            20,
+            20
+          ],
+          [
+            20,
+            -20,
+            40
+          ],
+          [
+            -20,
+            -20,
+            40
+          ],
+          [
+            -20,
+            20,
+            40
+          ],
+          [
+            20,
+            20,
+            40
+          ],
+          [
+            20,
+            -20,
+            -40
+          ],
+          [
+            -20,
+            -20,
+            -40
+          ],
+          [
+            -20,
+            20,
+            -40
+          ],
+          [
+            20,
+            20,
+            -40
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

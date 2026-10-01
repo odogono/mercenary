@@ -1,0 +1,190 @@
+{
+  "geometry": {
+    "family": "island",
+    "id": "island-063720",
+    "record": "$63720",
+    "sha256": "2a46aa95e6d80d8d3598db09a8885e09e8b6144feb624fdd2fcc2e89dc37e2eb",
+    "variants": {
+      "base": {
+        "core": {
+          "x": [
+            -4,
+            16
+          ],
+          "z": [
+            -4,
+            16
+          ]
+        },
+        "edges": [
+          {
+            "from": 8,
+            "steep": true,
+            "swap": true,
+            "to": 1
+          },
+          {
+            "from": 7,
+            "steep": true,
+            "swap": true,
+            "to": 8
+          },
+          {
+            "from": 6,
+            "steep": false,
+            "swap": true,
+            "to": 7
+          },
+          {
+            "from": 5,
+            "steep": false,
+            "swap": true,
+            "to": 6
+          },
+          {
+            "from": 4,
+            "steep": true,
+            "swap": false,
+            "to": 5
+          },
+          {
+            "from": 3,
+            "steep": true,
+            "swap": false,
+            "to": 4
+          },
+          {
+            "from": 2,
+            "steep": false,
+            "swap": false,
+            "to": 3
+          },
+          {
+            "from": 1,
+            "steep": false,
+            "swap": false,
+            "to": 2
+          }
+        ],
+        "outer": {
+          "x": [
+            -14,
+            26
+          ],
+          "z": [
+            -14,
+            26
+          ]
+        },
+        "primitives": [
+          {
+            "colour": 1108,
+            "kind": "polygon",
+            "refs": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ]
+          }
+        ],
+        "provenance": {
+          "range": [
+            "$636DC",
+            "$6374F"
+          ],
+          "sha256": "4bda6644d358c1ca7b505b4cea7de86a749aa69fe1e7cc6db065fa1fd5a641c5"
+        },
+        "sea": [
+          {
+            "x": [
+              -14,
+              -8
+            ],
+            "z": [
+              -14,
+              -8
+            ]
+          },
+          {
+            "x": [
+              -14,
+              -8
+            ],
+            "z": [
+              20,
+              26
+            ]
+          },
+          {
+            "x": [
+              20,
+              26
+            ],
+            "z": [
+              20,
+              26
+            ]
+          },
+          {
+            "x": [
+              20,
+              26
+            ],
+            "z": [
+              -14,
+              -8
+            ]
+          }
+        ],
+        "vertices": [
+          [
+            -14,
+            6
+          ],
+          [
+            -8,
+            20
+          ],
+          [
+            6,
+            26
+          ],
+          [
+            20,
+            20
+          ],
+          [
+            26,
+            6
+          ],
+          [
+            20,
+            -8
+          ],
+          [
+            6,
+            -14
+          ],
+          [
+            -8,
+            -8
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

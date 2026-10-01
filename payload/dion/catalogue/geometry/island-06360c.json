@@ -1,0 +1,113 @@
+{
+  "geometry": {
+    "family": "island",
+    "id": "island-06360c",
+    "record": "$6360C",
+    "sha256": "6efa94b375437c59a9fadf7beee698a4bcb923b7913344bd0089d968ebf2965f",
+    "variants": {
+      "base": {
+        "core": {
+          "x": [
+            0,
+            0
+          ],
+          "z": [
+            0,
+            0
+          ]
+        },
+        "edges": [
+          {
+            "from": 4,
+            "steep": false,
+            "swap": true,
+            "to": 1
+          },
+          {
+            "from": 3,
+            "steep": true,
+            "swap": false,
+            "to": 4
+          },
+          {
+            "from": 2,
+            "steep": false,
+            "swap": false,
+            "to": 3
+          },
+          {
+            "from": 1,
+            "steep": true,
+            "swap": true,
+            "to": 2
+          }
+        ],
+        "outer": {
+          "x": [
+            -140,
+            140
+          ],
+          "z": [
+            -4,
+            4
+          ]
+        },
+        "primitives": [
+          {
+            "colour": 529,
+            "kind": "polygon",
+            "refs": [
+              1,
+              2,
+              3,
+              4
+            ]
+          },
+          {
+            "colour": 529,
+            "kind": "line",
+            "refs": [
+              2,
+              4
+            ]
+          }
+        ],
+        "provenance": {
+          "range": [
+            "$635F0",
+            "$6362B"
+          ],
+          "sha256": "e21ae467d18e20ec22c70304df02aa1e63c65a14c7d58e6f684932a3f7ffb040"
+        },
+        "sea": [],
+        "vertices": [
+          [
+            136,
+            -4
+          ],
+          [
+            -140,
+            0
+          ],
+          [
+            -136,
+            4
+          ],
+          [
+            140,
+            0
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

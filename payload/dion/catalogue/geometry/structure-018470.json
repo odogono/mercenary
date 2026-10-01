@@ -1,0 +1,62 @@
+{
+  "geometry": {
+    "family": "structure",
+    "id": "structure-018470",
+    "record": "$18470",
+    "sha256": "e431670b53c45dfdcd5a473ebbfe3812786428da8a7042c00cb79b3879a42370",
+    "variants": {
+      "scale=1,1": {
+        "associations": [],
+        "attachments": [],
+        "entry": [
+          10,
+          10
+        ],
+        "heights": [
+          160,
+          128
+        ],
+        "plan": [],
+        "provenance": {
+          "range": [
+            "$18468",
+            "$1848D"
+          ],
+          "sha256": "c094b6a9ca12563805fa2a4571bf17826438498b87b87b4bcd084ef83d516eaa"
+        },
+        "regions": [
+          {
+            "bounds": {
+              "x": [
+                -32768,
+                32767
+              ],
+              "z": [
+                -32768,
+                32767
+              ]
+            },
+            "flags": 49152,
+            "queue": [],
+            "queueAddress": "$18488"
+          }
+        ],
+        "sceneColours": [
+          32898,
+          32914
+        ],
+        "wallTexts": [],
+        "walls": []
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

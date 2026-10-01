@@ -1,0 +1,713 @@
+{
+  "geometry": {
+    "entries": [
+      172,
+      173,
+      174,
+      175
+    ],
+    "family": "model",
+    "header": {
+      "firstOffset": 200,
+      "firstTarget": "$354E2",
+      "op": 3,
+      "skip": "$35448",
+      "targets": [
+        "$354E7",
+        "$354ED",
+        "$354F3"
+      ],
+      "value": 5
+    },
+    "id": "model-035414",
+    "lamp": {
+      "blink": "($7180 + word $54400 + 4 * slot) & 4",
+      "dark": 1,
+      "distant": "one point in the lamp colour while lit",
+      "heldDarkUnless": "$64BE",
+      "lit": 3,
+      "value": 5
+    },
+    "name": "BLUE BEACON",
+    "provenance": [
+      {
+        "range": [
+          "$35414",
+          "$35424"
+        ],
+        "sha256": "986aea4e773acd54e58f14ad854a4d4be1d5ec723ca043f15ea93fcd94d8714b"
+      },
+      {
+        "range": [
+          "$35448",
+          "$354FA"
+        ],
+        "sha256": "44d4786759d3fcce05916a3e9916128b83c1f30615afe5ecf7375faf73b89f6c"
+      }
+    ],
+    "record": "$35414",
+    "sha256": "28bdfd586d8a6f7fbe41c8c75feafcc0f2312133ee6430e477ddea910f295197",
+    "variants": {
+      "state=lamp-dark;form=default": {
+        "faces": [
+          {
+            "colour": 2,
+            "kind": "polygon",
+            "refs": [
+              6,
+              5,
+              4
+            ],
+            "stColour": 32768
+          },
+          {
+            "colour": 2,
+            "kind": "line",
+            "refs": [
+              9,
+              13
+            ],
+            "stColour": 32768
+          },
+          {
+            "colour": 2,
+            "kind": "line",
+            "refs": [
+              8,
+              14
+            ],
+            "stColour": 32768
+          },
+          {
+            "colour": 2,
+            "kind": "line",
+            "refs": [
+              7,
+              10
+            ],
+            "stColour": 32768
+          },
+          {
+            "colour": 2,
+            "kind": "polygon",
+            "refs": [
+              9,
+              7,
+              12,
+              13
+            ],
+            "stColour": 32768
+          },
+          {
+            "colour": 2,
+            "kind": "polygon",
+            "refs": [
+              13,
+              12,
+              7,
+              9
+            ],
+            "stColour": 32768
+          },
+          {
+            "colour": 2,
+            "kind": "polygon",
+            "refs": [
+              7,
+              8,
+              11,
+              10
+            ],
+            "stColour": 32768
+          },
+          {
+            "colour": 2,
+            "kind": "polygon",
+            "refs": [
+              10,
+              11,
+              8,
+              7
+            ],
+            "stColour": 32768
+          },
+          {
+            "colour": 2,
+            "kind": "polygon",
+            "refs": [
+              8,
+              9,
+              15,
+              14
+            ],
+            "stColour": 32768
+          },
+          {
+            "colour": 2,
+            "kind": "polygon",
+            "refs": [
+              14,
+              15,
+              9,
+              8
+            ],
+            "stColour": 32768
+          },
+          {
+            "colour": 10,
+            "kind": "polygon",
+            "refs": [
+              2,
+              1,
+              4,
+              5
+            ],
+            "stColour": 820
+          },
+          {
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              1,
+              3,
+              6,
+              4
+            ],
+            "stColour": 1093
+          },
+          {
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              3,
+              2,
+              5,
+              6
+            ],
+            "stColour": 1366
+          },
+          {
+            "colour": 5,
+            "kind": "polygon",
+            "patched": true,
+            "refs": [
+              1,
+              2,
+              3
+            ],
+            "stColour": 582
+          },
+          {
+            "colour": 1,
+            "kind": "polygon",
+            "refs": [
+              18,
+              19,
+              17,
+              16
+            ],
+            "stColour": 0
+          },
+          {
+            "colour": 1,
+            "kind": "polygon",
+            "refs": [
+              26,
+              27,
+              24,
+              25
+            ],
+            "stColour": 0
+          },
+          {
+            "colour": 1,
+            "kind": "polygon",
+            "refs": [
+              21,
+              20,
+              23,
+              22
+            ],
+            "stColour": 0
+          }
+        ],
+        "turn": {
+          "kind": "fixed"
+        },
+        "vertices": [
+          [
+            -5,
+            60,
+            10
+          ],
+          [
+            0,
+            60,
+            20
+          ],
+          [
+            5,
+            60,
+            10
+          ],
+          [
+            -5,
+            45,
+            10
+          ],
+          [
+            0,
+            45,
+            20
+          ],
+          [
+            5,
+            45,
+            10
+          ],
+          [
+            -1,
+            45,
+            15
+          ],
+          [
+            0,
+            45,
+            13
+          ],
+          [
+            1,
+            45,
+            15
+          ],
+          [
+            -12,
+            0,
+            5
+          ],
+          [
+            -11,
+            0,
+            4
+          ],
+          [
+            -1,
+            0,
+            30
+          ],
+          [
+            1,
+            0,
+            30
+          ],
+          [
+            11,
+            0,
+            4
+          ],
+          [
+            12,
+            0,
+            5
+          ],
+          [
+            -1,
+            46,
+            18
+          ],
+          [
+            -4,
+            46,
+            12
+          ],
+          [
+            -1,
+            57,
+            18
+          ],
+          [
+            -4,
+            57,
+            12
+          ],
+          [
+            1,
+            57,
+            18
+          ],
+          [
+            4,
+            57,
+            12
+          ],
+          [
+            4,
+            46,
+            12
+          ],
+          [
+            1,
+            46,
+            18
+          ],
+          [
+            3,
+            46,
+            10
+          ],
+          [
+            -3,
+            46,
+            10
+          ],
+          [
+            -3,
+            57,
+            10
+          ],
+          [
+            3,
+            57,
+            10
+          ]
+        ]
+      },
+      "state=lamp-lit;form=default": {
+        "faces": [
+          {
+            "colour": 2,
+            "kind": "polygon",
+            "refs": [
+              6,
+              5,
+              4
+            ],
+            "stColour": 32768
+          },
+          {
+            "colour": 2,
+            "kind": "line",
+            "refs": [
+              9,
+              13
+            ],
+            "stColour": 32768
+          },
+          {
+            "colour": 2,
+            "kind": "line",
+            "refs": [
+              8,
+              14
+            ],
+            "stColour": 32768
+          },
+          {
+            "colour": 2,
+            "kind": "line",
+            "refs": [
+              7,
+              10
+            ],
+            "stColour": 32768
+          },
+          {
+            "colour": 2,
+            "kind": "polygon",
+            "refs": [
+              9,
+              7,
+              12,
+              13
+            ],
+            "stColour": 32768
+          },
+          {
+            "colour": 2,
+            "kind": "polygon",
+            "refs": [
+              13,
+              12,
+              7,
+              9
+            ],
+            "stColour": 32768
+          },
+          {
+            "colour": 2,
+            "kind": "polygon",
+            "refs": [
+              7,
+              8,
+              11,
+              10
+            ],
+            "stColour": 32768
+          },
+          {
+            "colour": 2,
+            "kind": "polygon",
+            "refs": [
+              10,
+              11,
+              8,
+              7
+            ],
+            "stColour": 32768
+          },
+          {
+            "colour": 2,
+            "kind": "polygon",
+            "refs": [
+              8,
+              9,
+              15,
+              14
+            ],
+            "stColour": 32768
+          },
+          {
+            "colour": 2,
+            "kind": "polygon",
+            "refs": [
+              14,
+              15,
+              9,
+              8
+            ],
+            "stColour": 32768
+          },
+          {
+            "colour": 10,
+            "kind": "polygon",
+            "refs": [
+              2,
+              1,
+              4,
+              5
+            ],
+            "stColour": 820
+          },
+          {
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              1,
+              3,
+              6,
+              4
+            ],
+            "stColour": 1093
+          },
+          {
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              3,
+              2,
+              5,
+              6
+            ],
+            "stColour": 1366
+          },
+          {
+            "colour": 5,
+            "kind": "polygon",
+            "patched": true,
+            "refs": [
+              1,
+              2,
+              3
+            ],
+            "stColour": 582
+          },
+          {
+            "colour": 3,
+            "kind": "polygon",
+            "patched": true,
+            "refs": [
+              18,
+              19,
+              17,
+              16
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "polygon",
+            "patched": true,
+            "refs": [
+              26,
+              27,
+              24,
+              25
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "polygon",
+            "patched": true,
+            "refs": [
+              21,
+              20,
+              23,
+              22
+            ],
+            "stColour": 1911
+          }
+        ],
+        "turn": {
+          "kind": "fixed"
+        },
+        "vertices": [
+          [
+            -5,
+            60,
+            10
+          ],
+          [
+            0,
+            60,
+            20
+          ],
+          [
+            5,
+            60,
+            10
+          ],
+          [
+            -5,
+            45,
+            10
+          ],
+          [
+            0,
+            45,
+            20
+          ],
+          [
+            5,
+            45,
+            10
+          ],
+          [
+            -1,
+            45,
+            15
+          ],
+          [
+            0,
+            45,
+            13
+          ],
+          [
+            1,
+            45,
+            15
+          ],
+          [
+            -12,
+            0,
+            5
+          ],
+          [
+            -11,
+            0,
+            4
+          ],
+          [
+            -1,
+            0,
+            30
+          ],
+          [
+            1,
+            0,
+            30
+          ],
+          [
+            11,
+            0,
+            4
+          ],
+          [
+            12,
+            0,
+            5
+          ],
+          [
+            -1,
+            46,
+            18
+          ],
+          [
+            -4,
+            46,
+            12
+          ],
+          [
+            -1,
+            57,
+            18
+          ],
+          [
+            -4,
+            57,
+            12
+          ],
+          [
+            1,
+            57,
+            18
+          ],
+          [
+            4,
+            57,
+            12
+          ],
+          [
+            4,
+            46,
+            12
+          ],
+          [
+            1,
+            46,
+            18
+          ],
+          [
+            3,
+            46,
+            10
+          ],
+          [
+            -3,
+            46,
+            10
+          ],
+          [
+            -3,
+            57,
+            10
+          ],
+          [
+            3,
+            57,
+            10
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

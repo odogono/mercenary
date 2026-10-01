@@ -1,0 +1,203 @@
+{
+  "geometry": {
+    "entries": [
+      4
+    ],
+    "family": "model",
+    "header": {
+      "mode": 64,
+      "op": 1,
+      "yawOffset": 128
+    },
+    "id": "model-02f142",
+    "name": "DART III",
+    "provenance": [
+      {
+        "range": [
+          "$2F142",
+          "$2F1BD"
+        ],
+        "sha256": "fce36ca5fafab380895cbac7315a86f7745415ffdd663f1630f5070938588f76"
+      }
+    ],
+    "record": "$2F142",
+    "sha256": "41115b5f4da634913afe24d56e74c5e176e4e716f2879ce8ba2a845a984643df",
+    "variants": {
+      "form=default": {
+        "faces": [
+          {
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              1,
+              4,
+              2
+            ],
+            "stColour": 1366
+          },
+          {
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              1,
+              3,
+              5
+            ],
+            "stColour": 1366
+          },
+          {
+            "colour": 2,
+            "kind": "polygon",
+            "refs": [
+              7,
+              9,
+              6
+            ],
+            "stColour": 32768
+          },
+          {
+            "colour": 2,
+            "kind": "polygon",
+            "refs": [
+              6,
+              9,
+              8
+            ],
+            "stColour": 32768
+          },
+          {
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              1,
+              9,
+              7
+            ],
+            "stColour": 1621
+          },
+          {
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              1,
+              8,
+              9
+            ],
+            "stColour": 1621
+          },
+          {
+            "colour": 10,
+            "kind": "polygon",
+            "refs": [
+              6,
+              5,
+              4
+            ],
+            "stColour": 820
+          },
+          {
+            "colour": 10,
+            "kind": "polygon",
+            "refs": [
+              2,
+              4,
+              5,
+              3
+            ],
+            "stColour": 820
+          },
+          {
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              4,
+              7,
+              6
+            ],
+            "stColour": 1093
+          },
+          {
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              5,
+              6,
+              8
+            ],
+            "stColour": 1093
+          },
+          {
+            "colour": 2,
+            "kind": "polygon",
+            "refs": [
+              1,
+              2,
+              3
+            ],
+            "stColour": 32768
+          }
+        ],
+        "turn": {
+          "kind": "yaw",
+          "yawOffset": 128
+        },
+        "vertices": [
+          [
+            0,
+            0,
+            200
+          ],
+          [
+            -150,
+            0,
+            -200
+          ],
+          [
+            150,
+            0,
+            -200
+          ],
+          [
+            -50,
+            25,
+            -200
+          ],
+          [
+            50,
+            25,
+            -200
+          ],
+          [
+            0,
+            65,
+            -160
+          ],
+          [
+            -30,
+            15,
+            -40
+          ],
+          [
+            30,
+            15,
+            -40
+          ],
+          [
+            0,
+            30,
+            -40
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

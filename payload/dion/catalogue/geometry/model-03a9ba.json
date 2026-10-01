@@ -1,0 +1,423 @@
+{
+  "geometry": {
+    "entries": [
+      353
+    ],
+    "family": "model",
+    "id": "model-03a9ba",
+    "record": "$3A9BA",
+    "sha256": "c62421e57e9849ba7e94bdbed993077389587aed634b00d8a7d35911fa323a18",
+    "variants": {
+      "base": {
+        "alternatives": [
+          {
+            "faces": [
+              {
+                "at": "$3AA1A",
+                "colour": 2,
+                "kind": "polygon",
+                "refs": [
+                  48,
+                  44,
+                  56,
+                  52
+                ]
+              },
+              {
+                "at": "$3AA20",
+                "colour": 2,
+                "kind": "polygon",
+                "refs": [
+                  16,
+                  20,
+                  24,
+                  28
+                ]
+              },
+              {
+                "at": "$3AA26",
+                "colour": 2,
+                "kind": "line",
+                "refs": [
+                  16,
+                  28
+                ]
+              },
+              {
+                "at": "$3AA29",
+                "colour": 2,
+                "kind": "line",
+                "refs": [
+                  44,
+                  56
+                ]
+              },
+              {
+                "at": "$3AA2C",
+                "colour": 5,
+                "kind": "line",
+                "refs": [
+                  4,
+                  32
+                ]
+              },
+              {
+                "at": "$3AA2F",
+                "colour": 5,
+                "kind": "line",
+                "refs": [
+                  36,
+                  32
+                ]
+              },
+              {
+                "at": "$3AA32",
+                "colour": 5,
+                "kind": "line",
+                "refs": [
+                  4,
+                  12
+                ]
+              },
+              {
+                "at": "$3AA35",
+                "colour": 5,
+                "kind": "polygon",
+                "refs": [
+                  4,
+                  32,
+                  36,
+                  40,
+                  12
+                ]
+              }
+            ],
+            "min": [
+              -16777214,
+              -4000,
+              0
+            ],
+            "size": [
+              33554430,
+              8392608,
+              16777216
+            ]
+          },
+          {
+            "faces": [
+              {
+                "at": "$3AA58",
+                "colour": 2,
+                "kind": "polygon",
+                "refs": [
+                  44,
+                  48,
+                  52,
+                  56
+                ]
+              },
+              {
+                "at": "$3AA5E",
+                "colour": 2,
+                "kind": "polygon",
+                "refs": [
+                  28,
+                  24,
+                  20,
+                  16
+                ]
+              },
+              {
+                "at": "$3AA64",
+                "colour": 2,
+                "kind": "line",
+                "refs": [
+                  16,
+                  28
+                ]
+              },
+              {
+                "at": "$3AA67",
+                "colour": 2,
+                "kind": "line",
+                "refs": [
+                  44,
+                  56
+                ]
+              },
+              {
+                "at": "$3AA6A",
+                "colour": 5,
+                "kind": "line",
+                "refs": [
+                  4,
+                  32
+                ]
+              },
+              {
+                "at": "$3AA6D",
+                "colour": 5,
+                "kind": "line",
+                "refs": [
+                  36,
+                  32
+                ]
+              },
+              {
+                "at": "$3AA70",
+                "colour": 5,
+                "kind": "line",
+                "refs": [
+                  4,
+                  12
+                ]
+              },
+              {
+                "at": "$3AA73",
+                "colour": 5,
+                "kind": "polygon",
+                "refs": [
+                  40,
+                  36,
+                  32,
+                  4,
+                  12
+                ]
+              },
+              {
+                "address": "$3AA7C",
+                "advance": -15,
+                "colour": 1911,
+                "flags": 32768,
+                "glyphScale": [
+                  -5,
+                  6
+                ],
+                "kind": "text",
+                "offset": [
+                  140,
+                  35,
+                  0
+                ],
+                "text": [
+                  49,
+                  50,
+                  32,
+                  87,
+                  69,
+                  83,
+                  84
+                ]
+              },
+              {
+                "address": "$3AA94",
+                "advance": -15,
+                "colour": 1911,
+                "flags": 32768,
+                "glyphScale": [
+                  -5,
+                  6
+                ],
+                "kind": "text",
+                "offset": [
+                  140,
+                  17,
+                  0
+                ],
+                "text": [
+                  50,
+                  57,
+                  32,
+                  69,
+                  65,
+                  83,
+                  84
+                ]
+              }
+            ],
+            "min": [
+              -2000,
+              -4000,
+              -16777214
+            ],
+            "size": [
+              4000,
+              8392608,
+              16777214
+            ]
+          }
+        ],
+        "entry": 353,
+        "faces": [
+          {
+            "at": "$3AAAE",
+            "colour": 2,
+            "kind": "polygon",
+            "refs": [
+              44,
+              48,
+              52,
+              56
+            ]
+          },
+          {
+            "at": "$3AAB4",
+            "colour": 2,
+            "kind": "polygon",
+            "refs": [
+              28,
+              24,
+              20,
+              16
+            ]
+          },
+          {
+            "at": "$3AABA",
+            "colour": 2,
+            "kind": "line",
+            "refs": [
+              16,
+              28
+            ]
+          },
+          {
+            "at": "$3AABD",
+            "colour": 2,
+            "kind": "line",
+            "refs": [
+              44,
+              56
+            ]
+          },
+          {
+            "at": "$3AAC0",
+            "colour": 5,
+            "kind": "line",
+            "refs": [
+              4,
+              32
+            ]
+          },
+          {
+            "at": "$3AAC3",
+            "colour": 5,
+            "kind": "line",
+            "refs": [
+              36,
+              32
+            ]
+          },
+          {
+            "at": "$3AAC6",
+            "colour": 5,
+            "kind": "line",
+            "refs": [
+              4,
+              12
+            ]
+          },
+          {
+            "at": "$3AAC9",
+            "colour": 5,
+            "kind": "polygon",
+            "refs": [
+              40,
+              36,
+              32,
+              4,
+              12
+            ]
+          }
+        ],
+        "provenance": {
+          "range": [
+            "$3A9BA",
+            "$3AAD1"
+          ],
+          "sha256": "3b6983075fccc3c3eb1ad4001cd9769b79deb18d00fe0178e8e5a01ab231d57f"
+        },
+        "vertices": [
+          [
+            0,
+            50,
+            0
+          ],
+          [
+            -30,
+            32,
+            0
+          ],
+          [
+            0,
+            14,
+            0
+          ],
+          [
+            10,
+            14,
+            0
+          ],
+          [
+            16,
+            14,
+            0
+          ],
+          [
+            16,
+            0,
+            0
+          ],
+          [
+            10,
+            0,
+            0
+          ],
+          [
+            140,
+            50,
+            0
+          ],
+          [
+            170,
+            32,
+            0
+          ],
+          [
+            140,
+            14,
+            0
+          ],
+          [
+            130,
+            14,
+            0
+          ],
+          [
+            124,
+            14,
+            0
+          ],
+          [
+            124,
+            0,
+            0
+          ],
+          [
+            130,
+            0,
+            0
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

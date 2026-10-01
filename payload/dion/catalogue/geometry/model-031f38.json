@@ -1,0 +1,339 @@
+{
+  "geometry": {
+    "entries": [
+      89
+    ],
+    "family": "model",
+    "header": null,
+    "id": "model-031f38",
+    "name": "CANDIDATE'S LOG",
+    "provenance": [
+      {
+        "range": [
+          "$31F38",
+          "$31FE9"
+        ],
+        "sha256": "17d0255945ce5399cb3d11d58ce73e82adcfd03e2c3e95548dabad74c6116ac3"
+      }
+    ],
+    "record": "$31F38",
+    "sha256": "b7b36b6cb87ce8372616cc8b92e9a4247af834a21b935e5208fccceabcc7e545",
+    "variants": {
+      "form=default": {
+        "faces": [
+          {
+            "colour": 10,
+            "kind": "polygon",
+            "refs": [
+              5,
+              6,
+              10,
+              9
+            ],
+            "stColour": 820
+          },
+          {
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              9,
+              10,
+              12,
+              11
+            ],
+            "stColour": 1366
+          },
+          {
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              1,
+              5,
+              9,
+              11,
+              3
+            ],
+            "stColour": 1093
+          },
+          {
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              6,
+              2,
+              4,
+              12,
+              10
+            ],
+            "stColour": 1093
+          },
+          {
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              2,
+              1,
+              3,
+              4
+            ],
+            "stColour": 1366
+          },
+          {
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              6,
+              5,
+              1,
+              2
+            ],
+            "stColour": 1621
+          },
+          {
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              17,
+              18,
+              20,
+              19
+            ],
+            "stColour": 1621
+          },
+          {
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              15,
+              17,
+              19,
+              21
+            ],
+            "stColour": 1366
+          },
+          {
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              18,
+              16,
+              22,
+              20
+            ],
+            "stColour": 1366
+          },
+          {
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              13,
+              15,
+              21,
+              23
+            ],
+            "stColour": 1621
+          },
+          {
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              16,
+              14,
+              24,
+              22
+            ],
+            "stColour": 1621
+          },
+          {
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              15,
+              16,
+              18,
+              17
+            ],
+            "stColour": 1093
+          },
+          {
+            "colour": 10,
+            "kind": "polygon",
+            "refs": [
+              13,
+              14,
+              16,
+              15
+            ],
+            "stColour": 820
+          },
+          {
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              14,
+              13,
+              23,
+              24
+            ],
+            "stColour": 1366
+          },
+          {
+            "colour": 2,
+            "kind": "polygon",
+            "refs": [
+              25,
+              26,
+              8,
+              7
+            ],
+            "stColour": 32768
+          }
+        ],
+        "turn": {
+          "kind": "fixed"
+        },
+        "vertices": [
+          [
+            -15,
+            5,
+            -15
+          ],
+          [
+            -15,
+            5,
+            15
+          ],
+          [
+            -15,
+            0,
+            -15
+          ],
+          [
+            -15,
+            0,
+            15
+          ],
+          [
+            0,
+            8,
+            -15
+          ],
+          [
+            0,
+            8,
+            15
+          ],
+          [
+            1,
+            12,
+            13
+          ],
+          [
+            1,
+            12,
+            -13
+          ],
+          [
+            30,
+            8,
+            -15
+          ],
+          [
+            30,
+            8,
+            15
+          ],
+          [
+            30,
+            0,
+            -15
+          ],
+          [
+            30,
+            0,
+            15
+          ],
+          [
+            1,
+            30,
+            -15
+          ],
+          [
+            1,
+            30,
+            15
+          ],
+          [
+            15,
+            30,
+            -15
+          ],
+          [
+            15,
+            30,
+            15
+          ],
+          [
+            30,
+            25,
+            -10
+          ],
+          [
+            30,
+            25,
+            10
+          ],
+          [
+            30,
+            10,
+            -10
+          ],
+          [
+            30,
+            10,
+            10
+          ],
+          [
+            15,
+            10,
+            -15
+          ],
+          [
+            15,
+            10,
+            15
+          ],
+          [
+            1,
+            10,
+            -15
+          ],
+          [
+            1,
+            10,
+            15
+          ],
+          [
+            1,
+            28,
+            13
+          ],
+          [
+            1,
+            28,
+            -13
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}

@@ -1,0 +1,125 @@
+{
+  "geometry": {
+    "entries": [
+      154
+    ],
+    "family": "model",
+    "header": null,
+    "id": "model-035c48",
+    "name": "PRISM",
+    "provenance": [
+      {
+        "range": [
+          "$35C48",
+          "$35C7D"
+        ],
+        "sha256": "8e6dc70ab3f679645d564ed4b20ca5a318dc7f9643b1f7fb5240679bcb359f0e"
+      }
+    ],
+    "record": "$35C48",
+    "sha256": "8fe3a80f89a31999c3fbcd21a9d91795d3992c235682763d087a30b90c95db39",
+    "variants": {
+      "form=default": {
+        "faces": [
+          {
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              2,
+              5,
+              4,
+              1
+            ],
+            "stColour": 1621
+          },
+          {
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              3,
+              6,
+              5,
+              2
+            ],
+            "stColour": 1621
+          },
+          {
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              1,
+              4,
+              6,
+              3
+            ],
+            "stColour": 1621
+          },
+          {
+            "colour": 3,
+            "kind": "polygon",
+            "refs": [
+              4,
+              5,
+              6
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "polygon",
+            "refs": [
+              3,
+              2,
+              1
+            ],
+            "stColour": 1911
+          }
+        ],
+        "turn": {
+          "kind": "fixed"
+        },
+        "vertices": [
+          [
+            -40,
+            0,
+            -30
+          ],
+          [
+            0,
+            0,
+            40
+          ],
+          [
+            40,
+            0,
+            -30
+          ],
+          [
+            -40,
+            30,
+            -30
+          ],
+          [
+            0,
+            30,
+            40
+          ],
+          [
+            40,
+            30,
+            -30
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-catalogue-geometry",
+  "schemaVersion": 1,
+  "source": {
+    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "run": "location-census-334983y7",
+    "title": "dion"
+  }
+}
