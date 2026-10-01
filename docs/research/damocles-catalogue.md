@@ -359,8 +359,8 @@ The 31 body labels at `$0081DC` include VOID; this does not imply all entries ar
 planets. The first 256 resident object slots are represented as instances; later
 model slots are not invented as placed objects. The native surface-resident
 selector and Association B place 34 resident objects across 18 bodies. Named
-places are recovered for the captured Eris workspace, Gaea Birmingham
-Island's authored area list, and the live Vesta Politburo City workspace. Slot 5's independently reviewed cell places
+places are recovered for the captured Eris workspace, the live Dion
+Birmingham Island workspace, and the live Vesta Politburo City workspace. Slot 5's independently reviewed cell places
 the V.I.P. LIMO outside Capital Spaceport. Slot 183's source association and
 world-to-structure transform place its key inside Capital Spaceport region 1.
 See [resident object associations](damocles-resident-objects.md).
@@ -850,18 +850,18 @@ code. Targeted disassembly used to establish them remains ignored at
   surface assemblies**; its seven surface objects bring that map to **84
   structure and object placements**. One hundred and twenty-three recovered ground/pad/road
   instances bring the Eris map to **207** plotted locations.
-- The authored Birmingham Island map in the same first-world place pool
+- The BIRMINGHAM ISLAND map in the same first-world place pool
   (`$23C58..$23E56`, SHA-256
-  `e85959b1b659847bb029cc57766ed77ba3822ceb1d1098938619bfa8f96397d9`) yields
-  **82** Gaea surface assemblies. Its place list (`$23E57..$23EFE`, SHA-256
-  `8bd019976d456c39896408849bd380367815a22eef78fd126dcdb9b0e98763f2`) yields
-  **7** source names. Binding that map to 99 CHEVY's resident phase plots those
-  assemblies with the five Gaea residents, **87** Gaea map pins. Cell `$17` is
-  empty in the stream. This is not a live Gaea `$ABDC` workspace; ground/pad
-  records and other Gaea islands remain unresolved except the live UR City
-  `$ABDC` overlay. See [Gaea UR City live workspace](damocles-gaea-ur-city-workspace.md).
-  Across all bodies the dataset now contains the Eris points, the Birmingham
-  Island assemblies, the live Vesta Politburo City `$ABDC` overlay, the live
+  `e85959b1b659847bb029cc57766ed77ba3822ceb1d1098938619bfa8f96397d9`) and its
+  place list (`$23E57..$23EFE`, SHA-256
+  `8bd019976d456c39896408849bd380367815a22eef78fd126dcdb9b0e98763f2`) are
+  structure group `$02`'s stream and area list. Group `$02` is Dion's island at
+  3252,1314, so the live Dion capture places that map and names its seven cells.
+  Until [#673](https://github.com/odogono/mercenary/issues/673) the extractor also plotted it on Gaea at 99 CHEVY's phase as 82
+  `gaea-surface-*` assemblies. That phase is UR City's origin, so each of those
+  assemblies stood over a UR City cell. They are no longer published, and the
+  `gaea-surface-` prefix stays retired.
+  Across all bodies the dataset now contains the Eris points, the live Vesta Politburo City `$ABDC` overlay, the live
   Gaea UR City `$ABDC` overlay, the live Dion `$ABDC` overlay, and the
   previously mapped non-Eris residents. This is resident state plus authored
   pool recovery from the pinned first-world capture plus live non-Eris
@@ -922,8 +922,7 @@ overlay. Structure and building-detail pointer tables match first-world;
 object unique addresses are unchanged. The overlay places **22** UR City
 surface assemblies (including unnamed `gaea-ur-city-surface-24` and
 `gaea-ur-city-surface-17` / HANTZENS NEW HOUSE) and **38** ground instances,
-adding **18** workspace-local ground models. Authored Birmingham
-`gaea-surface-{cell}` identities are unchanged. See
+adding **18** workspace-local ground models. See
 [Gaea UR City live workspace](damocles-gaea-ur-city-workspace.md).
 
 A Hatari GUI memstate with the player on foot on Dion (local cell 2,3,
@@ -931,8 +930,8 @@ A Hatari GUI memstate with the player on foot on Dion (local cell 2,3,
 overlay. Structure and building-detail pointer tables match first-world;
 object unique addresses are unchanged. The overlay places **140** surface
 assemblies (including unnamed `dion-surface-32`) and **249** ground instances,
-adding **31** workspace-local ground models. `$7A6C` still names first-world
-Birmingham Island; those Gaea place identities are not applied to Dion. See
+adding **31** workspace-local ground models. `$7A6C` names BIRMINGHAM ISLAND,
+group `$02`'s own area list, so its seven places name Dion cells ([#673](https://github.com/odogono/mercenary/issues/673)). See
 [Dion live workspace](damocles-dion-workspace.md).
 
 The sky and the ground band below the horizon are **excluded as rendering-only

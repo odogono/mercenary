@@ -286,10 +286,9 @@ and carry an `$F0` entrance, and those four are the keyed doors:
 | VESTA `04-06`        | VESTA PARLIAMENT   | `$22` |       34 | E      |
 | GAEA UR CITY `07-01` | HANTZENS NEW HOUSE | `$1F` |       31 | B      |
 
-The authored Birmingham Island stream repeats the two Dion cells with the same
-base and the same structure, which is the labelling question
-[#324](https://github.com/odogono/mercenary/issues/324) already holds open, not a
-second building. Two further cells install a base their structure never reads:
+The Gaea copy of the BIRMINGHAM ISLAND stream that once repeated these two
+Dion cells was Dion's own group `$02` plotted at the wrong origin, and it is no
+longer published ([#673](https://github.com/odogono/mercenary/issues/673)). Two further cells install a base their structure never reads:
 ERIS `09-08` STATE OFFICE at `$26` and ERIS `15-12` LAWSON BANK HQ at `$20`
 carry no `$F0` entrance, so the base stays a letter nothing asks for.
 

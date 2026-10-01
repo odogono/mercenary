@@ -135,16 +135,14 @@ The per-body coordinate phases are internally coherent: for all 229 ordinary
 body associations, the difference between Association B's cell nibbles and the
 integer X/Z grid nibbles is constant per body. This supports comparing raw
 coordinates within a body. Eris uses the live first-world `$ABDC` workspace and
-`$7A6C` place list. Gaea Birmingham Island uses the authored placement stream
-and place list in the same first-world pool, bound to 99 CHEVY's resident phase;
-it is not a live Gaea `$ABDC` capture. Gaea UR City uses a live `$ABDC`
+`$7A6C` place list. Gaea UR City uses a live `$ABDC`
 workspace from a Hatari memstate (body selector `$7AA8=$0020`, cell `$24`)
-with `gaea-ur-city-surface-*` identities so Birmingham IDs stay stable.
+with `gaea-ur-city-surface-*` identities.
 Vesta Politburo City uses a live
 `$ABDC` workspace from a Hatari memstate (body selector `$7AA8=$0038`). Dion
-uses a live `$ABDC` workspace (`$7AA8=$0010`, cell `$32`) without borrowing
-Gaea Birmingham place names. Other bodies still have no recovered
-surface-assembly map.
+uses a live `$ABDC` workspace (`$7AA8=$0010`, cell `$32`): group `$02`,
+BIRMINGHAM ISLAND, whose `$7A6C` area list names seven of its cells ([#673](https://github.com/odogono/mercenary/issues/673)).
+Other bodies still have no recovered surface-assembly map.
 
 ## 99 CHEVY
 
@@ -157,14 +155,10 @@ Resident slot 2 names model `$035D98` as `99 CHEVY`. Its records are:
 - heading `$00`.
 
 The browser therefore plots 99 CHEVY on Gaea without inventing a named place.
-Cell `$17` has no structure in the authored Birmingham Island map; neighbouring
-cells `$26`, `$27` and `$28` do. Those assemblies share Chevy's 16×16 origin
-`(512, 1792)` derived from the resident 16.16 coordinates. Source place names
-on that island (ELMDON SPACEPORT, LAWSON BANK, GAEA BANK, and the other four
-area-list labels) attach only to their listed cells.
-
-The other four first-world Gaea residents occupy different coordinate phases
-and are not Birmingham Island placements.
+Chevy's 16×16 origin `(512, 1792)`, derived from the resident 16.16
+coordinates, is UR City's, where cell `$17` is HANTZENS NEW HOUSE. (The
+BIRMINGHAM ISLAND stream was once bound to this phase too; it is Dion's group
+`$02` ([#673](https://github.com/odogono/mercenary/issues/673)).)
 
 Its key in slot 180 remains interior-associated on Eris: Association B
 `$2C030126` identifies body, insertion-group, level and cell selectors. The

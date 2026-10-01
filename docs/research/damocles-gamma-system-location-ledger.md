@@ -148,7 +148,7 @@ have reached that state.
 | 5 | ATROPOS | 2 | 2 | 1 | 1 | 1 | none recovered | none |
 | 6 | CLOTHO | 17 | 17 | 0 | 17 | 17 | none recovered | `clotho` |
 | 7 | LACHESIS | 0 | 0 | 0 | 0 | 0 | none recovered | none |
-| 8 | GAEA | 33 | 28 | 5 | 28 | 28 | Birmingham Island authored; UR City live `$ABDC` | `gaea-ur-city-4-2`, `gaea-transporter` |
+| 8 | GAEA | 33 | 28 | 5 | 28 | 28 | UR City live `$ABDC`; Chaldea Metropolis live | `gaea-ur-city-4-2`, `gaea-transporter` |
 | 9 | CRONUS | 2 | 2 | 2 | 0 | 0 | none recovered | none |
 | 10 | CYCLOPES | 1 | 1 | 0 | 1 | 1 | none recovered | none |
 | 11 | ERIS | 71 | 64 | 7 | 64 | 64 | first-world live `$ABDC` | `eris-spaceport-onfoot`, `eris-transporter-11-8` |
@@ -393,14 +393,10 @@ the capture implies origin `256,768` against UR City's `512,1792` — so no capt
 taken in UR City could ever have bound it. The complete slot inventory and
 the probe hashes are in [Damocles workspace selection](damocles-workspace-selection.md).
 
-Gaea's two recovered surface workspaces still share the body-local origin
-qualifier `(512, 1792)`. That value is a coordinate phase, not a map identity.
-The authored Birmingham stream is empty at cell `$17`, while live UR City has
-HANTZENS NEW HOUSE there. Surface residents use body-local coordinates and do
-not consume the interior group selector, so 99 CHEVY's Birmingham-versus-UR-City
-assignment remains **Unresolved** on the available evidence. The catalogue's
-existing Birmingham map pin is a documented binding choice, not independent
-runtime proof. See the dedicated research note for the load writes, resident
+The BIRMINGHAM ISLAND stream once plotted on Gaea at `(512, 1792)` is
+structure group `$02`, which belongs to Dion's island ([#673](https://github.com/odogono/mercenary/issues/673)). The only Gaea map
+at that phase is UR City, so 99 CHEVY stands in UR City's window, beside
+HANTZENS NEW HOUSE at cell `$17`. See the dedicated research note for the load writes, resident
 reads and the full Gaea consequence.
 
 ## Interior scene selectors still required
@@ -863,8 +859,8 @@ Additional research under #313, required by the deliveries that use it:
 
 1. **Remaining Gaea map identity and placement.** Runtime selection is decoded:
    group `$07` is tied to UR City, while group `$0F` is statically bound but has
-   no proven named Gaea workspace. Surface 99 CHEVY remains Unresolved because
-   its coordinate phase does not choose Birmingham versus UR City. Further
+   no proven named Gaea workspace. Surface 99 CHEVY is in UR City's window:
+   the Birmingham alternative was Dion's group `$02` ([#673](https://github.com/odogono/mercenary/issues/673)). Further
    islands and authored disambiguation remain #172 / out of scope.
 2. **Structure-group maps for DION and VESTA.** Delivered by
    [#325](https://github.com/odogono/mercenary/issues/325): the group-offset root

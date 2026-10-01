@@ -3928,7 +3928,7 @@ UNEXPLORED_COVERAGE = [
     'load no pinned capture performs would not appear here. Residual documented in closed investigation: '
     'https://github.com/odogono/mercenary/issues/280.',
     'Live $ABDC workspaces other than Eris first-world, Vesta Politburo City, Gaea UR City, and Dion; '
-    'Gaea islands other than authored Birmingham and live UR City, with remaining places and residences. '
+    'Gaea islands other than live UR City and Chaldea Metropolis, with remaining places and residences. '
     'Follow-up: https://github.com/odogono/mercenary/issues/172.',
     'The $6364 mission table is all zero in every pinned capture, so neither the $ABDC cell '
     'replacement at $04ED4A nor the $DF entrance-label substitution at $059F64 is exercised by an '
@@ -4121,9 +4121,18 @@ def workspace_evidence(slug: str) -> str:
     return WORKSPACE_EVIDENCE.get(slug, WORKSPACE_SWEEP_EVIDENCE)
 
 
+# Bodies whose bare `{slug}-surface-` IDs are retired. The 82 `gaea-surface-` IDs were
+# Dion's group-2 BIRMINGHAM ISLAND stream plotted over Gaea UR City at 99 CHEVY's
+# phase (#673); Dion's own capture places that map. Gaea keeps area-qualified IDs so
+# Saves naming `gaea-ur-city-` instances still resolve and a retired ID never returns
+# with another meaning.
+RETIRED_SURFACE_PREFIXES = frozenset({'gaea'})
+
+
 def live_overlay_prefix(slug: str, area_name: str | None, instances: list) -> str:
-    """Keep body-local IDs unless that body already has an authored surface map."""
-    if not any(item['id'].startswith(f'{slug}-surface-') for item in instances):
+    """Keep body-local IDs unless that body already has a surface map or retired them."""
+    if (slug not in RETIRED_SURFACE_PREFIXES
+            and not any(item['id'].startswith(f'{slug}-surface-') for item in instances)):
         return slug
     area = re.sub(r'[^a-z0-9]+', '-', (area_name or 'live').lower()).strip('-')
     return f'{slug}-{area}'
@@ -5193,67 +5202,6 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
                           'reason': 'Recovered first-world surface workspace placement; not a census of the whole body.'})
         if place:
             next(p for p in places if p['id'] == place[0])['instances'].append(identity)
-    gaea_coverage = None
-    gaea_header = data.find(b'BIRMINGHAMISLAND    ')
-    if gaea_header > 0 and data[gaea_header - 1] == 0xff:
-        gaea_area = decode_named_area(data, gaea_header)
-        gaea_cells = find_area_placements(data, gaea_header)
-        chevy_raw = [s32(data, base + 2 * 4) for base in (0x63a8, 0x67a8, 0x6ba8)]
-        gaea_origin_x = (chevy_raw[0] >> 16) - (0x17 & 15)
-        gaea_origin_z = (chevy_raw[2] >> 16) - (0x17 >> 4)
-        gaea_island = island_by_origin(islands, 8, gaea_origin_x, gaea_origin_z)
-        gaea_names = {}
-        for place in gaea_area['places']:
-            identity = f'place-{place["address"]:06x}'
-            gaea_names[place['cell']] = (identity, place['name'])
-            places.append({'id': identity, 'name': place['name'], 'body': 'body-8', 'instances': []})
-        for cell, placement in sorted(gaea_cells.items()):
-            slot = placement['slot']
-            if not slot or slot >= len(tables[1]['entries']):
-                continue
-            model_id = tables[1]['entries'][slot]
-            identity = f'gaea-surface-{cell:02x}'
-            place = gaea_names.get(cell)
-            dx, dz = placement['dx'], placement['dz']
-            instances.append({
-                'id': identity,
-                'name': place[1] if place else f'Gaea surface cell {cell & 15},{cell >> 4}',
-                'model': model_id,
-                'sourceAddress': placement['address'],
-                'association': None,
-                'handling': None,
-                'keyBase': cell_key_base(placement['word'] >> 8) or None,
-                'placementClass': None,
-                'placement': None,
-                'location': {
-                    'body': 'body-8',
-                    'place': place[0] if place else None,
-                    'position': [
-                        gaea_origin_x + (cell & 15) + 0.5 + dx * 30 / 65536,
-                        0,
-                        gaea_origin_z + (cell >> 4) + 0.5 + dz * 30 / 65536,
-                    ],
-                    'coordinateSystem': BODY_COORDINATES,
-                    'island': gaea_island['id'] if gaea_island else None,
-                    'heading': None,
-                },
-                'reason': (
-                    'Authored Birmingham Island surface-assembly map recovered from the pinned '
-                    'first-world place pool; not a live Gaea $ABDC workspace. Origin follows '
-                    'the 99 CHEVY resident phase so cell $17 shares this 16×16. A source place '
-                    'name is attached only when this cell is in the area list.'
-                ),
-            })
-            if place:
-                next(p for p in places if p['id'] == place[0])['instances'].append(identity)
-        empty_cells = 256 - len(gaea_cells)
-        gaea_coverage = (
-            f'Gaea Birmingham Island: examined the authored 16×16 placement stream ending at '
-            f'${gaea_header:05X}, recovered {len(gaea_cells)} surface assemblies and '
-            f'{len(gaea_area["places"])} named places; {empty_cells} cells have no structure '
-            '(including 99 CHEVY cell $17). Ground/pad records and Gaea islands other than this '
-            'authored Birmingham map and any attached live $ABDC overlays remain unresolved.'
-        )
     for cell, model_id in ground_cells:
         model = by_address[model_id]
         if not model['variants']:
@@ -5479,8 +5427,8 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
     # selector: the scene key is (body, structure-group, cell, level,
     # insertion-group), the group record and the rebuilt $ABDC are the runtime
     # workspace, and the $7A6C place label is corroboration rather than a body
-    # binding -- the Dion capture reads $794E=$02 with a stale BIRMINGHAM ISLAND
-    # label. So a resident's own body byte gives the body and its group byte
+    # binding -- the Dion capture reads $794E=$02 with the BIRMINGHAM ISLAND
+    # label, which is group $02's own area (#673). So a resident's own body byte gives the body and its group byte
     # gives the workspace, for every group a capture binds.
     #
     # A capture binds its group when its live $ABDC is byte-identical to the
@@ -6231,7 +6179,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
     settle_intentional_empties(models)
     coverage_notes = [
         'Resident first-world census after examining title-screen, first-world and interior-window RAM; not a claim that every packed disk file has been walked.',
-        'Scene palette binding for unplaced objects 333-338, and named places outside the captured Eris workspace, authored Gaea Birmingham Island map, live Gaea UR City overlay, and live Dion overlay remain incomplete.',
+        'Scene palette binding for unplaced objects 333-338, and named places outside the captured Eris workspace, live Gaea UR City overlay, and live Dion overlay remain incomplete.',
         'Interior residents carry a parent and a parent-local placement where their structure '
         'group is one a pinned capture binds and the live $ABDC matches the static decode: '
         'Vesta group $05 cells $64 (VESTA PARLIAMENT) and $73 (GUM STORE), and Dion group $02. '
@@ -6256,8 +6204,6 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         'Every resident slot carries boarding, what the board gate answers for it, with the gate\'s constants read from the refusal chooser and gate at $0542E0-$05434F rather than assumed. Boardable is the gate\'s two table facts, the bound at slot 23 and the model guard\'s single-Y-turn orientation command; the reach, region, Occupancy and VOID guards are live state and the key test asks the Carried Stack. Under the bound the chooser outcome, the paired slot at slot + 178 and the refusal string are published even where the model guard refuses, because the key test runs first; a paired slot with no instance is published as missing. No seated eye height is published: boarding puts the eye at the resident position plus 63 for every slot (docs/design/damocles-boarding-admission.md).',
         'The document carries craft, the craft pass as ADR 0051 runs it: all sixteen Craft Parameter Block entries at $055C80 with the routine class each entry\'s bra.w reaches, the pass\'s constants read as instruction operands with each opcode checked, the throttle key table at $0557D6, and the exponent and sine tables. The log table is checked against the rule the port regenerates it from and published only as a digest. The entries\' unread words +10 and +18 are left out (docs/research/damocles-craft-control.md). Since #566 it also carries the launch, swing, space entry and space pass constants, the landing\'s arctan byte table and octant words, and the Body table the range scan $052DB0 walks (docs/research/damocles-space-flight.md). Since #576 it also carries the noise table at $77000, which the main loop steps a word a pass and the landing scripts\' random skip reads (docs/research/damocles-landing-messages.md). Since #581 it also carries the TOLOSA encounter\'s pool constants and the first world\'s records for slots 8, 11 and 15 (docs/research/damocles-tolosa-encounter.md).',
     ]
-    if gaea_coverage:
-        coverage_notes.append(gaea_coverage)
     disk_load = list(DISK_LOAD_EXAMINED)
     for note in workspace_notes:
         coverage_notes.append(note)

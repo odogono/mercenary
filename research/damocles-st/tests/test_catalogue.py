@@ -372,7 +372,8 @@ class SourceTests(unittest.TestCase):
         self.assertEqual([m['id'] for m in first['models']], [m['id'] for m in second['models']])
         self.assertNotEqual(first['models'][0]['name'], second['models'][0]['name'])
 
-    def test_extracts_authored_gaea_places_without_inventing_names(self):
+    def test_birmingham_stream_alone_places_nothing_on_gaea(self):
+        """BIRMINGHAM ISLAND is Dion's group $02; only a capture standing there places it (#673)."""
         from damocleslab.catalogue import extract
         data = bytearray(1048576)
         struct.pack_into('>I', data, 0x4bd10, 0x35700)
@@ -393,16 +394,9 @@ class SourceTests(unittest.TestCase):
         start = 0x23c00
         data[start:start + len(block)] = block
         result = extract(bytes(data), {})
-        assemblies = [i for i in result['instances'] if i['id'].startswith('gaea-surface-')]
-        self.assertEqual({i['id'] for i in assemblies}, {'gaea-surface-26', 'gaea-surface-40'})
-        elmdon = next(p for p in result['places'] if p['name'] == 'ELMDON SPACEPORT')
-        self.assertEqual(elmdon['body'], 'body-8')
-        self.assertEqual(elmdon['instances'], ['gaea-surface-40'])
-        neighbor = next(i for i in assemblies if i['id'] == 'gaea-surface-26')
-        self.assertIsNone(neighbor['location']['place'])
-        self.assertEqual(neighbor['location']['position'][0], 512 + 0x26 % 16 + 0.5)
-        self.assertTrue(any('Gaea Birmingham Island' in note for note in result['coverage']['notes']))
-        self.assertEqual([p['name'] for p in result['places'] if p['body'] == 'body-8'], ['ELMDON SPACEPORT'])
+        self.assertFalse(any(i['id'].startswith('gaea-') for i in result['instances']))
+        self.assertFalse(any(p['name'] == 'ELMDON SPACEPORT' for p in result['places']))
+        self.assertFalse(any('Birmingham' in note for note in result['coverage']['notes']))
 
 class AssemblyTests(unittest.TestCase):
     def test_translation_places_geometry_and_its_label_anchor(self):
@@ -1279,9 +1273,6 @@ class AttachmentKeyTests(unittest.TestCase):
             'dion-surface-b2': 33,
             'vesta-surface-64': 34,
             'gaea-ur-city-surface-17': 31,
-            # The authored Birmingham stream repeats the two Dion cells (#324).
-            'gaea-surface-de': 30,
-            'gaea-surface-b2': 33,
             # Recovered by #172's live TOLOSA workspace: the currency repository
             # at cell $12 is keyed to slot 37, which resides on MIDAS. The guide
             # said Tolosa's repository needs a key found on Midas; this is that
@@ -1514,7 +1505,8 @@ class LiveWorkspaceTests(unittest.TestCase):
         self.assertEqual(placed['model'], result['tables'][1]['entries'][70])
         self.assertTrue(any(item['path'] == 'Vesta live workspace' for item in result['coverage']['diskLoad']))
 
-    def test_live_gaea_workspace_keeps_birmingham_surface_identities(self):
+    def test_live_gaea_workspace_keeps_area_qualified_identities(self):
+        """The retired `gaea-surface-` IDs stay unused, so Saves naming UR City still resolve (#673)."""
         from damocleslab.catalogue import extract
         data = bytearray(_empty_world())
         struct.pack_into('>i', data, 0x63a8 + 2 * 4, 519 << 16)
@@ -1540,19 +1532,15 @@ class LiveWorkspaceTests(unittest.TestCase):
         struct.pack_into('>Hbb', workspace, 0xABDC + 0x26 * 4, 70, 0, 0)
 
         result = extract(bytes(data), {}, bytes(workspace))
-        birmingham = next(i for i in result['instances'] if i['id'] == 'gaea-surface-26')
         live = next(i for i in result['instances'] if i['id'] == 'gaea-ur-city-surface-24')
-        self.assertIsNone(birmingham['location']['place'])
+        self.assertTrue(any(i['id'] == 'gaea-ur-city-surface-26' for i in result['instances']))
         self.assertEqual(live['location']['body'], 'body-8')
         self.assertEqual(live['location']['place'], 'place-030014')
         self.assertEqual(live['name'], 'HANTZENS NEW HOUSE')
-        self.assertFalse(any(i['id'] == 'gaea-surface-24' for i in result['instances']))
-        self.assertEqual(
-            [i['id'] for i in result['instances'] if i['id'].startswith('gaea-surface-')],
-            ['gaea-surface-26', 'gaea-surface-40'],
-        )
+        self.assertFalse(any(i['id'].startswith('gaea-surface-') for i in result['instances']))
 
-    def test_live_dion_workspace_does_not_reuse_gaea_place_names(self):
+    def test_live_dion_workspace_names_birmingham_island_places(self):
+        """Dion's group $02 is BIRMINGHAM ISLAND, so $7A6C's area list names its cells (#673)."""
         from damocleslab.catalogue import extract
         data = bytearray(_empty_world())
         struct.pack_into('>i', data, 0x63a8 + 2 * 4, 519 << 16)
@@ -1581,10 +1569,11 @@ class LiveWorkspaceTests(unittest.TestCase):
         elmdon = next(p for p in result['places'] if p['name'] == 'ELMDON SPACEPORT')
         self.assertEqual(current['location']['body'], 'body-4')
         self.assertIsNone(current['location']['place'])
-        self.assertIsNone(other['location']['place'])
-        self.assertEqual(other['name'], 'DION surface cell 0,4')
-        self.assertEqual(elmdon['body'], 'body-8')
-        self.assertEqual(elmdon['instances'], ['gaea-surface-40'])
+        self.assertEqual(other['location']['place'], elmdon['id'])
+        self.assertEqual(other['name'], 'ELMDON SPACEPORT')
+        self.assertEqual(elmdon['body'], 'body-4')
+        self.assertEqual(elmdon['instances'], ['dion-surface-40'])
+        self.assertFalse(any(i['id'].startswith('gaea-') for i in result['instances']))
 
     def test_pinned_vesta_memstate_rewrites_abdc_without_new_object_banks(self):
         from damocleslab.catalogue import extract, hatari_memstate_ram
@@ -1632,8 +1621,7 @@ class LiveWorkspaceTests(unittest.TestCase):
         self.assertEqual(current['location']['body'], 'body-8')
         self.assertIsNone(current['location']['place'])
         self.assertEqual(house['name'], 'HANTZENS NEW HOUSE')
-        self.assertTrue(any(i['id'] == 'gaea-surface-40' for i in result['instances']))
-        self.assertFalse(any(i['id'] == 'gaea-surface-24' for i in result['instances']))
+        self.assertFalse(any(i['id'].startswith('gaea-surface-') for i in result['instances']))
         self.assertEqual(
             {0x35700 + int.from_bytes(first_bytes[0x35700 + s * 4:0x35704 + s * 4], 'big') for s in range(378)},
             {0x35700 + int.from_bytes(workspace[0x35700 + s * 4:0x35704 + s * 4], 'big') for s in range(378)},
@@ -1663,7 +1651,7 @@ class LiveWorkspaceTests(unittest.TestCase):
         self.assertTrue(any(i['id'] == 'gaea-ur-city-surface-24' for i in result['instances']))
         self.assertTrue(any(i['id'] == 'dion-surface-32' for i in result['instances']))
 
-    def test_pinned_dion_memstate_places_cell_2_3_without_gaea_names(self):
+    def test_pinned_dion_memstate_names_birmingham_island(self):
         from damocleslab.catalogue import extract, hatari_memstate_ram
         root = Path(__file__).resolve().parents[1]
         first = root / 'work' / 'observe-first-world-20260818T101013Z-c5a32b7d' / 'observed.ram'
@@ -1679,15 +1667,21 @@ class LiveWorkspaceTests(unittest.TestCase):
         self.assertEqual(current['location']['body'], 'body-4')
         self.assertIsNone(current['location']['place'])
         self.assertEqual(current['name'], 'DION surface cell 2,3')
-        # The live workspace's own cells carry no Place. Dion North and East, replayed from
-        # the image, name their own ANNIES BAR records; no Gaea name reaches Dion at all.
-        self.assertFalse(any(
-            i['id'].startswith(('dion-surface-', 'dion-ground-')) and i['location']['place']
-            for i in result['instances']
-        ))
-        gaea_names = {place['name'] for place in result['places'] if place['body'] == 'body-8'}
-        self.assertFalse(any(place['name'] in gaea_names
-                             for place in result['places'] if place['body'] == 'body-4'))
+        # $794E is $02, BIRMINGHAM ISLAND, and $7A6C names that group's own area list (#673):
+        # its seven places are Dion's, and none is left on Gaea.
+        named = {i['id']: i['name'] for i in result['instances']
+                 if i['id'].startswith('dion-surface-') and i['location']['place']}
+        self.assertEqual(named, {
+            'dion-surface-40': 'ELMDON SPACEPORT',
+            'dion-surface-70': 'LAWSON BANK',
+            'dion-surface-a0': 'ERIS PO TEMP HQ',
+            'dion-surface-b1': 'GAEA BANK',
+            'dion-surface-b2': 'NOVAGEN OFFICE',
+            'dion-surface-de': 'AUTHORS HOUSE',
+            'dion-surface-e3': 'VERDANT PARTY HQ',
+        })
+        self.assertFalse(any(place['body'] == 'body-8' and place['name'] in named.values()
+                             for place in result['places']))
         self.assertEqual(
             {0x35700 + int.from_bytes(first_bytes[0x35700 + s * 4:0x35704 + s * 4], 'big') for s in range(378)},
             {0x35700 + int.from_bytes(workspace[0x35700 + s * 4:0x35704 + s * 4], 'big') for s in range(378)},
