@@ -131,8 +131,8 @@ const play = (
   const shown: string[] = [];
   let last: string | null = session.snapshot.message?.id ?? null;
   for (let frame = 0; frame < seconds * 50; frame += 1) {
-    session.advance(1 / 50);
-    const id = session.snapshot.message?.id ?? null;
+    const snapshot = session.advance(1 / 50);
+    const id = snapshot.message?.id ?? null;
     if (id !== null && id !== last) {
       shown.push(id);
     }

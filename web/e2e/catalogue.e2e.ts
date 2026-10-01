@@ -118,12 +118,12 @@ test('99 Chevy is listed on Gaea and links to its key', async ({ page }) => {
     'href',
     '/damocles/atlas?body=gaea&instance=object-slot-2&x=519.49&z=1793.49&span=1'
   );
-  // The Body's own placements stay here as a list, each reaching its own entry: 372 of them on
+  // The Body's own placements stay here as a list, each reaching its own entry: 373 of them on
   // Gaea, which is the one thing the Atlas is not for (#415).
   await expect(page.locator('#placement-note')).toContainText(
-    '372 recovered placements · Body Coordinates'
+    '373 recovered placements · Body Coordinates'
   );
-  await expect(page.locator('#locations a')).toHaveCount(372);
+  await expect(page.locator('#locations a')).toHaveCount(373);
   await expect(
     page
       .locator('#locations')
@@ -155,19 +155,17 @@ test('99 Chevy is listed on Gaea and links to its key', async ({ page }) => {
     'ERIS selectors · structure group $14 · insertion group $03 · level $01 · cell $26'
   );
   await expect(page.locator('#details')).toContainText(
-    'Inside Eris structure group $14 cell $26 · -394, 200, 1846'
+    'Inside HANTZEN SALES · -394, 200, 1846'
   );
   await expect(
-    page
-      .locator('#details')
-      .getByRole('link', { name: 'Eris structure group $14 cell $26' })
+    page.locator('#details').getByRole('link', { name: 'HANTZEN SALES' })
   ).toHaveAttribute('href', /instance=eris-structure-0251d7/);
   await expect(
     page.locator('#details').getByRole('link', { name: /99 CHEVY · slot 2/ })
   ).toBeVisible();
   await page
     .locator('#details')
-    .getByRole('link', { name: 'Eris structure group $14 cell $26' })
+    .getByRole('link', { name: 'HANTZEN SALES' })
     .click();
   await expect(page).toHaveURL(/instance=eris-structure-0251d7/);
   await expect(page.locator('#model-name')).toHaveText('Structure 145');
@@ -235,7 +233,7 @@ test('lists known placements and links a surface assembly to building detail', a
 }) => {
   await page.goto('/catalogue?instance=eris-surface-87&q=structure');
   await expect(page.locator('#details')).toContainText('CAPITAL SPACEPORT');
-  await expect(page.locator('#locations a')).toHaveCount(207);
+  await expect(page.locator('#locations a')).toHaveCount(439);
   await page
     .locator('#locations')
     .getByRole('link', { name: /^CAPITAL SPACEPORT · / })
@@ -344,6 +342,20 @@ test('an articulated detail is inspectable in every frame that places it', async
 test('unresolved records, empty filters and invalid links are explained', async ({
   page
 }) => {
+  // This resident now has a recovered placement. Remove it in the fixture to keep
+  // verifying the diagnostic for a genuinely unlocated record.
+  await page.route('**/payload/damocles/catalogue.json', async route => {
+    const catalogue = (await (await route.fetch()).json()) as {
+      instances: { id: string; placement: unknown; reason: string }[];
+    };
+    const unlocated = catalogue.instances.find(
+      instance => instance.id === 'object-slot-65'
+    )!;
+    unlocated.placement = null;
+    unlocated.reason =
+      'Unlocated resident: no parent or local placement is claimed.';
+    await route.fulfill({ json: catalogue });
+  });
   await page.goto('/catalogue?instance=object-slot-65');
   await expect(page.locator('#details')).toContainText(
     'ERIS selectors · structure group $14 · insertion group $03 · level $00 · cell $26'
@@ -351,6 +363,12 @@ test('unresolved records, empty filters and invalid links are explained', async 
   await expect(page.locator('#details')).toContainText(
     'no parent or local placement is claimed'
   );
+  await expect(
+    page.locator('#details').getByRole('link', {
+      exact: true,
+      name: 'TRANSPORTER a · slot 65 · location unknown'
+    })
+  ).toBeVisible();
   // An authored empty is decoded, so it says so rather than claiming a failure.
   await page.goto('/catalogue?model=object-035cfc');
   await expect(page.locator('#model-status')).toContainText('decoded · null');
@@ -621,9 +639,9 @@ test('a placement hands off to the Atlas at the Street Range', async ({
   // lists it, and hands the drawing to the Atlas (#415).
   await expect(page.locator('#map')).toHaveCount(0);
   await expect(page.locator('#placement-note')).toHaveText(
-    '207 recovered placements · Body Coordinates'
+    '439 recovered placements · Body Coordinates'
   );
-  await expect(page.locator('#locations a')).toHaveCount(207);
+  await expect(page.locator('#locations a')).toHaveCount(439);
   await expect(page.locator('#placement-hop-link')).toHaveAttribute(
     'href',
     '/damocles/atlas?body=eris'
@@ -696,6 +714,6 @@ test('reads only the Model it shows, never the whole Catalogue (ADR 0048)', asyn
   });
   await page.goto('/catalogue?model=object-035d12');
   await expect(page.locator('#model-name')).toHaveText('DART II');
-  await expect(page.locator('#result-count')).toContainText('1716 models');
+  await expect(page.locator('#result-count')).toContainText('1766 models');
   expect(models).toEqual(['/payload/damocles/models/object-035d12.json']);
 });

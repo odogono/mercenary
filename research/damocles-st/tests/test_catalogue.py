@@ -1235,9 +1235,10 @@ class AttachmentKeyTests(unittest.TestCase):
         )
 
         root = Path(__file__).resolve().parents[1]
-        ram = hatari_memstate_ram(
-            (root / 'snapshots' / 'vesta-parliament-4-6.sav').read_bytes()
-        )
+        snapshot = root / 'snapshots' / 'vesta-parliament-4-6.sav'
+        if not snapshot.exists():
+            self.skipTest('Working-Authority RAM captures are Restricted Material')
+        ram = hatari_memstate_ram(snapshot.read_bytes())
         cell = int.from_bytes(ram[0x7B5C:0x7B5E], 'big')
         base = cell_key_base(ram[0xABDC + cell * 4])
 
@@ -1436,10 +1437,12 @@ class AttachmentKeyTests(unittest.TestCase):
         from damocleslab.catalogue import hatari_memstate_ram
 
         root = Path(__file__).resolve().parents[1]
-        for name in ('vesta-parliament-4-6', 'gaea-ur-city-4-2', 'dion-2-3'):
-            ram = hatari_memstate_ram(
-                (root / 'snapshots' / f'{name}.sav').read_bytes()
-            )
+        names = ('vesta-parliament-4-6', 'gaea-ur-city-4-2', 'dion-2-3')
+        snapshots = [root / 'snapshots' / f'{name}.sav' for name in names]
+        if any(not snapshot.exists() for snapshot in snapshots):
+            self.skipTest('Working-Authority RAM captures are Restricted Material')
+        for name, snapshot in zip(names, snapshots):
+            ram = hatari_memstate_ram(snapshot.read_bytes())
             self.assertEqual(ram[0x6364 + 6], 0, name)
 
 

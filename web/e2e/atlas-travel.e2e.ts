@@ -93,6 +93,9 @@ test('tapping replaces the pin, positions its marker, and survives reload; dragg
   page
 }) => {
   await page.goto(pinnedVesta);
+  await expect(page.locator('#travel-here')).toBeEnabled();
+  // Finish the model-driven layout before measuring coordinates and opening its menu.
+  await expect(page.locator('#status')).toContainText('derived footprints');
   const map = page.locator('#range-body');
   const bounds = (await map.boundingBox())!;
   await map.click({
@@ -111,6 +114,8 @@ test('tapping replaces the pin, positions its marker, and survives reload; dragg
     0
   );
   await page.reload();
+  await expect(page.locator('#travel-here')).toBeEnabled();
+  await expect(page.locator('#status')).toContainText('derived footprints');
   await expect(page.locator('#atlas-pin')).toBeVisible();
   await page.mouse.move(bounds.x + 30, bounds.y + 30);
   await page.mouse.down();
@@ -135,6 +140,19 @@ test('sea travel is refused without moving the resumed player', async ({
   await ready(page);
   await expect(page.locator('#status')).toContainText('at sea');
   await expect(page.locator('#frame')).toHaveAttribute('data-x', x!);
+});
+
+test('a map resize closes the pin menu and returns keyboard focus to its marker', async ({
+  page
+}) => {
+  await page.goto(pinnedVesta);
+  await expect(page.locator('#travel-here')).toBeEnabled();
+  await page.locator('#atlas-pin').focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#pin-menu-travel')).toBeFocused();
+  await page.setViewportSize({ height: 900, width: 1120 });
+  await expect(page.locator('#pin-menu')).toBeHidden();
+  await expect(page.locator('#atlas-pin')).toBeFocused();
 });
 
 test('failed arrival persistence retains the original resume and position', async ({

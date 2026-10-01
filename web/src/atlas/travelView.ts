@@ -49,8 +49,12 @@ export const installAtlasTravel = (options: {
     }
   };
   const closeMenu = () => {
+    const focused = menu.contains(document.activeElement);
     menu.hidden = true;
     marker.setAttribute('aria-expanded', 'false');
+    if (focused) {
+      focusPin();
+    }
   };
   const openMenu = () => {
     if (marker.hidden) {
@@ -85,7 +89,6 @@ export const installAtlasTravel = (options: {
     if (event.key === 'Escape') {
       event.preventDefault();
       closeMenu();
-      focusPin();
     }
   });
   document.addEventListener('pointerdown', event => {

@@ -286,7 +286,9 @@ class PayloadOutputGuardTests(unittest.TestCase):
     def test_accepts_a_destination_under_work_storage(self) -> None:
         # The guard is about the destination, so a missing dataset must fail on
         # the dataset rather than on the path.
-        with tempfile.TemporaryDirectory(dir=LAB_ROOT / "work") as directory:
+        work = LAB_ROOT / "work"
+        work.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=work) as directory:
             with self.assertRaises(LabError) as caught:
                 export_payload(Path(directory) / "absent-dataset", Path(directory) / "payload")
             self.assertNotIn("must remain under payload/", str(caught.exception))

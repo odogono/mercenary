@@ -18,7 +18,7 @@ research/c64-reference-build/lab capture --prg /path/to/MERCENARY.PRG --checkpoi
 research/c64-reference-build/lab observe --prg /path/to/MERCENARY.PRG \
   --scenario research/c64-reference-build/scenarios/input-smoke.json
 research/c64-reference-build/lab verify --run research/c64-reference-build/work/<run-id>
-python3 -m unittest discover -s research/c64-reference-build/tests -v
+research/c64-reference-build/.venv/bin/python -m unittest discover -s research/c64-reference-build/tests -v
 ```
 
 ### Endgame mechanics

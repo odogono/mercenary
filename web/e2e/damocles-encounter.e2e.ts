@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { DAMOCLES_SAVE_SCHEMA_VERSION } from '../src/damocles/save.ts';
 import {
   DOORWAY_LINE_LOCAL,
   FACING_DOORWAY,
@@ -95,7 +96,7 @@ test('a zap runs the noise, the fade and VOID to the death message', async ({
   const record = JSON.parse(
     (await page.evaluate(k => localStorage.getItem(k), slot))!
   ) as SavedRecord;
-  expect(record.schemaVersion).toBe(17);
+  expect(record.schemaVersion).toBe(DAMOCLES_SAVE_SCHEMA_VERSION);
   const { x, y, z } = record.snapshot.pose.position;
   const camera = [x >>> 0, y >>> 0, z >>> 0];
   const idle = {
@@ -136,10 +137,18 @@ test('a zap runs the noise, the fade and VOID to the death message', async ({
   await closeConsole(page);
   await ready(page);
 
-  await expect(frame(page)).toHaveAttribute('data-screen', 'noise', {
-    timeout: 5000
-  });
-  await expect(page.locator('#frame-noise')).toBeVisible();
+  // Read this short-lived screen and its overlay together: another browser round trip can
+  // arrive after noise has already given way to the fade.
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => ({
+          noiseVisible: !document.getElementById('frame-noise')!.hidden,
+          screen: document.getElementById('frame')!.dataset['screen']
+        })),
+      { intervals: [50], timeout: 5000 }
+    )
+    .toEqual({ noiseVisible: true, screen: 'noise' });
   await shot(page, 'zap-noise', testInfo);
   await expect(frame(page)).toHaveAttribute('data-screen', /fade-[1-7]/, {
     timeout: 10_000

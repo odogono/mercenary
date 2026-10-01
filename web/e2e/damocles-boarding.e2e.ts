@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { DAMOCLES_SAVE_SCHEMA_VERSION } from '../src/damocles/save.ts';
 import { bearingFromYaw } from '../src/damocles/world.ts';
 import {
   APPROACH_LOCAL,
@@ -10,6 +11,7 @@ import {
   closeConsole,
   damoclesSaveSlot,
   displayRow,
+  holdUntilFrame,
   inventory,
   messageText,
   pressUntilInventory,
@@ -103,7 +105,7 @@ const orientation = async (page: Page) =>
 
 /// Boot on the doorway line with the limo's key in reach, take it, and walk north through the
 /// doorway until the limo is in board reach. Every step is an ordinary control.
-const walkToLimoWithKey = async (
+const holdUntilFrameLimoWithKey = async (
   page: Page,
   options: { readonly keepResume?: boolean; readonly park?: boolean } = {}
 ): Promise<void> => {
@@ -178,7 +180,7 @@ test('the limo boards by its key, seats the view on it, and leaves it drawn once
 }, testInfo) => {
   test.setTimeout(120_000);
   const errors = watchErrors(page);
-  await walkToLimoWithKey(page);
+  await holdUntilFrameLimoWithKey(page);
   const limo = await placedInstance(page, LIMO);
   const onFoot = await pose(page);
   expect(await drawnCount(page, LIMO)).toBe(1);
@@ -362,13 +364,13 @@ test('in the spaceport doorway region, beside a dropped key, B does nothing', as
   await expect(inventory(page)).toHaveText(LIMO_KEY_LABEL, { timeout: 5000 });
   await responseParks(page, await messageText(page, 'script2-inline-3'));
 
-  // Drop the key at the far edge of region 0, then step into region 1, the doorway, which is
+  // Drop the key near the far edge of region 0, then step into region 1, the doorway, which is
   // forty units deep and does not carry bit 14.
-  await walkUntil(
-    page,
-    'ArrowUp',
-    async () => Number(await attribute(page, 'z')) - origin.z < -640
-  );
+  await holdUntilFrame(page, 'ArrowUp', {
+    attribute: 'z',
+    comparison: 'below',
+    value: origin.z - 600
+  });
   await expect(frame(page)).toHaveAttribute('data-region', '0');
   await pressUntilInventory(page, 'd', 'EMPTY');
   await stepIntoDoorway(page);
@@ -462,7 +464,7 @@ test('Saves restore on foot before boarding, aboard, and on foot after leaving',
 }) => {
   test.setTimeout(120_000);
   const errors = watchErrors(page);
-  await walkToLimoWithKey(page);
+  await holdUntilFrameLimoWithKey(page);
   const before = await pose(page);
 
   expect(await run(page, 'save 1 confirm')).toContain('saved slot 1');
@@ -479,7 +481,7 @@ test('Saves restore on foot before boarding, aboard, and on foot after leaving',
   // The aboard record says so in its own terms: Occupancy names the limo, and its Object
   // Residence is occupied rather than placed.
   const stored = await savedRecord(page, 2);
-  expect(stored.schemaVersion).toBe(17);
+  expect(stored.schemaVersion).toBe(DAMOCLES_SAVE_SCHEMA_VERSION);
   expect(stored.snapshot.occupancy).toEqual({ instance: LIMO, kind: 'aboard' });
   expect(
     stored.snapshot.residence.find(item => item.instance === LIMO)?.residence
@@ -524,7 +526,7 @@ test('a schema 5 record is refused whole and changes neither the session nor the
 }) => {
   test.setTimeout(120_000);
   const errors = watchErrors(page);
-  await walkToLimoWithKey(page);
+  await holdUntilFrameLimoWithKey(page);
   await page.keyboard.press('b');
   await expect(frame(page)).toHaveAttribute('data-occupancy', LIMO);
   expect(await run(page, 'save 1 confirm')).toContain('saved slot 1');
@@ -566,7 +568,7 @@ test('a Session Resume restores on foot before boarding, aboard, and on foot aft
 }) => {
   test.setTimeout(120_000);
   const errors = watchErrors(page);
-  await walkToLimoWithKey(page, { keepResume: true });
+  await holdUntilFrameLimoWithKey(page, { keepResume: true });
   const before = await pose(page);
 
   await page.reload();

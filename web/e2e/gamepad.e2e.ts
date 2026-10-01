@@ -49,12 +49,20 @@ const setPad = (page: Page, pad: FakePad): Promise<void> =>
     window.__pad = next;
   }, pad);
 
+const padFrames = (page: Page): Promise<void> =>
+  page.evaluate(
+    () =>
+      new Promise<void>(resolve =>
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+      )
+  );
+
 /// Hold `buttons` down long enough for a frame to poll them, then let go.
 const tap = async (page: Page, ...buttons: number[]): Promise<void> => {
   await setPad(page, { axes: [0, 0, 0, 0], buttons });
-  await page.waitForTimeout(100);
+  await padFrames(page);
   await setPad(page, { axes: [0, 0, 0, 0], buttons: [] });
-  await page.waitForTimeout(100);
+  await padFrames(page);
 };
 
 const A = 0;
@@ -88,6 +96,8 @@ test('Targ: Back skips the Arrival, the left stick walks and Start opens the Sys
   await expect(surface(page)).toHaveAttribute('data-state', 'ready');
   await expect(surface(page)).toHaveAttribute('data-departure', 'carousel');
   await page.keyboard.press('Enter');
+  // Arrival is already at its title card during the Departure journey, which holds pad input.
+  await expect(surface(page)).toHaveAttribute('data-departure', 'done');
   await expect(surface(page)).toHaveAttribute('data-arrival', 'titleCard');
 
   // During the Arrival only Back reaches play: A would board.

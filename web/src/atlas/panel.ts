@@ -438,9 +438,8 @@ export const footprintProvenance = (
     'recovered; the rectangle is this map\u2019s arithmetic over them and is a bound rather ' +
     'than an outline. A true top-down exterior rendering is a later refinement (#405).',
   'Measured from the Model\u2019s exterior Mesh where it has one, and from its Structure ' +
-    'Workspace plan otherwise. Two of the 1,241 Models carry an exterior \u2014 Capital ' +
-    'Spaceport and the Glenn Spaceport sharing its record \u2014 so 577 of the 579 footprints ' +
-    'on the map are measured from the plan, which is the geometry the on-foot renderer draws ' +
+    'Workspace plan otherwise. Most footprints are measured from the plan, which is the ' +
+    'geometry the on-foot renderer draws ' +
     'the walls from and the pushback clamps against.',
   'Surface Structures alone. An object Instance is a thing standing on the ground rather than ' +
     'a building on it \u2014 a Drop rewrites where it is \u2014 and a ground record is the ' +

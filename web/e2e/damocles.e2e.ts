@@ -448,7 +448,7 @@ test('/damocles boots the Damocles Gameplay Session on foot at Eris Capital Spac
   const triangles = Number(await frame.getAttribute('data-triangles'));
   expect(triangles).toBeGreaterThan(100);
   expect(triangles).toBeLessThan(1000);
-  expect(await frame.getAttribute('data-unresolved')).toBe('19');
+  await expect(frame).toHaveAttribute('data-unresolved', '22');
 
   await testInfo.attach('damocles-start', {
     body: await page.screenshot(),

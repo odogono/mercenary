@@ -6,8 +6,8 @@ import { element, link, node } from './dom.ts';
 
 // Where one Body's recovered placements are listed, and where each of them hands over to the
 // Atlas. The Catalogue drew its own marker map here until #415; the Atlas is the map now, and
-// what stays is the list — 372 named records to full precision on Gaea, which is the one thing
-// a map is not for.
+// what stays is the list of named records to full precision, which is the one thing a map
+// is not for.
 
 // Which Atlas Body each Catalogue Body is. The Catalogue keys a Body by slot and `system.json`
 // keys it by slug, both from the same recovered source index, so this is the join and not a

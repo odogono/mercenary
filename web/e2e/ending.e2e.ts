@@ -77,22 +77,6 @@ const nextFrame = async (page: Page): Promise<void> => {
   );
 };
 
-const hurryUntil = async (page: Page, fragment: string): Promise<void> => {
-  const message = page.locator('#panel-targ [data-field="message"]');
-  await expect
-    .poll(
-      async () => {
-        const text = (await message.textContent()) ?? '';
-        if (!text.includes(fragment)) {
-          await page.keyboard.press('Space');
-        }
-        return text;
-      },
-      { intervals: [50], timeout: 60_000 }
-    )
-    .toContain(fragment);
-};
-
 test('E rides the Colony Craft lift down and back up through the Browser Shell', async ({
   page
 }) => {
@@ -140,7 +124,10 @@ test('the console-assisted recovered route reaches and matures the Escape', asyn
   await page.keyboard.press('Space');
   await page.locator('#departure-skip').click();
   await expect(surface).toHaveAttribute('data-arrival', 'done');
-  await hurryUntil(page, 'DO YOU WANT TO BUY?');
+  // Skipping while this question scrolls would erase it before the full text is visible.
+  await expect(
+    page.locator('#panel-targ [data-field="message"]')
+  ).toContainText('DO YOU WANT TO BUY?', { timeout: 60_000 });
   await expect
     .poll(
       async () => {
