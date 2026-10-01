@@ -2,8 +2,8 @@
 
 This is the complete census of Damocles's 241 catalogued object slots. Object
 slots are stable identities used by the Catalogue, Saves, the Carried Stack, craft
-occupancy, and the Shell Console commands `get <object-slot>` and
-`drop <object-slot>`. Structures are catalogued separately in
+occupancy, and the Shell Console commands `get <object-slot>`,
+`drop <object-slot>` and `fetch <object-slot>`. Structures are catalogued separately in
 [Damocles structure locations](damocles-structure-locations.md); Targ's objects are
 in [Object locations](object-locations.md). Dion’s full original-game census is
 in [Dion object locations](dion-object-locations.md).
@@ -330,6 +330,19 @@ reach, as the Take key does.
 
 `drop` drops only the head of the Carried Stack, where the player stands; its
 argument confirms the head by slot or by part of its name.
+
+## Using `fetch`
+
+`fetch <object-slot>` moves the object to where a Drop would put it, without
+carrying it. As with a Drop, an object within reach of the player is the support
+it rests on, and a support that cannot take it means there is no room; that is
+reported in the console only, not on the Benson Panel. Only fixed objects are
+refused, so heavy objects and craft can be fetched, and no pickup trigger fires.
+Fetching is refused aboard, when dead, and while the Carried Stack is scrolling.
+
+```text
+fetch 94
+```
 
 ## Finding an object
 

@@ -8,14 +8,18 @@ import { describePads, type PadDescription } from '../shell/gamepad.ts';
 import type { SavePersistence } from '../shell/saves.ts';
 import { DAMOCLES_ROW_CELLS } from './display.ts';
 import { damoclesWhere } from './save.ts';
-import type { DamoclesSession, DamoclesTakeObjectOutcome } from './session.ts';
+import type {
+  DamoclesFetchObjectOutcome,
+  DamoclesSession,
+  DamoclesTakeObjectOutcome
+} from './session.ts';
 
 const SETTING_NAMES = Object.keys(SETTING_VALUES);
 
 const HELP = [
   'help · where · inventory · atlas · pads',
   'goto <x> <z>',
-  'get [<object-slot>] · drop [<object-slot|name>]',
+  'get [<object-slot>] · drop [<object-slot|name>] · fetch <object-slot>',
   'panel <targ|damocles> · set <name> <value>',
   `set names: ${SETTING_NAMES.join(', ')}`,
   'save <slot> [confirm] · load <slot>',
@@ -77,6 +81,28 @@ const describeTake = (
       return [`there is no object ${label(outcome.slot)}`];
     case 'busy':
       return [`get refused: ${outcome.reason}`];
+  }
+};
+
+/// The console's report of a fetch, worded as Targ's `fetch` reports one.
+const describeFetch = (
+  outcome: DamoclesFetchObjectOutcome
+): readonly string[] => {
+  switch (outcome.kind) {
+    case 'fetched':
+      return [`fetched object ${label(outcome.slot)}`];
+    case 'fixedInPlace':
+      return [`object ${label(outcome.slot)} is fixed in place`];
+    case 'noRoom':
+      return [`no room for object ${label(outcome.slot)}`];
+    case 'alreadyCarried':
+      return [`object ${label(outcome.slot)} is already carried; use drop`];
+    case 'gone':
+      return [`object ${label(outcome.slot)} is not in the world`];
+    case 'missing':
+      return [`there is no object ${label(outcome.slot)}`];
+    case 'busy':
+      return [`fetch refused: ${outcome.reason}`];
   }
 };
 
@@ -165,6 +191,8 @@ export const executeDamoclesConsoleCommand = (
         ? [`took ${name ?? selection.instance}`]
         : ['take refused'];
     }
+    case 'fetchObject':
+      return describeFetch(host.session().fetchObject(command.slot));
     case 'dropObject': {
       const snapshot = host.session().snapshot;
       if (snapshot.carried.length === 0) {

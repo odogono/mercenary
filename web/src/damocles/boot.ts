@@ -712,6 +712,7 @@ try {
       snapshot = session.snapshot;
       if (
         command.kind === 'dropObject' ||
+        command.kind === 'fetchObject' ||
         command.kind === 'floor' ||
         command.kind === 'getObject' ||
         command.kind === 'gotoCell' ||

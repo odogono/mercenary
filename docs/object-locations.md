@@ -2,7 +2,8 @@
 
 This is the complete 64-slot object census for Targ. Object slots are stable
 identities used by the payload, Benson Scripts, inventory, craft occupancy, and
-the Shell Console commands `goto object <slot>` and `get <object-slot>`.
+the Shell Console commands `goto object <slot>`, `get <object-slot>` and
+`fetch <object-slot>`.
 
 The table records each object's **initial** residence. Objects can subsequently
 be carried, boarded, dropped, delivered, destroyed, or moved by scripts. The
@@ -108,6 +109,14 @@ goto object 7
 player, provided the ordinary take rules allow it. Fixed and heavy objects are
 still refused, as is a new object when the Carried Stack is full. Objects that
 are already carried or out of the world are reported without changing state.
+
+## Using `fetch`
+
+`fetch <object-slot>` moves the object to where a Drop would put it, at the
+player's feet, without carrying it. Only fixed objects are refused, so heavy
+objects and craft can be fetched, and the take script does not run. Fetching is
+refused while airborne, as a Drop is. Objects that are already carried or out of
+the world are reported without changing state.
 
 ## Naming confidence
 

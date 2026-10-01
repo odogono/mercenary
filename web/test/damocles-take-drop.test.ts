@@ -757,3 +757,128 @@ describe('ordinary Eris limo-key take and drop', () => {
     expect(refused.snapshot.message?.id).toBe('system-string-9');
   });
 });
+
+/// `session` with `instance` placed on the surface far from the player at the origin.
+const awayFrom = (
+  session: DamoclesSession,
+  instance: string
+): DamoclesSession => {
+  const saved = session.captureResume();
+  return new DamoclesSession(loaded, {
+    ...saved,
+    residence: [
+      ...saved.residence.filter(item => item.instance !== instance),
+      {
+        instance,
+        residence: {
+          body: 'body-11',
+          kind: 'surface' as const,
+          placementClass: loaded.catalogue.instances.find(
+            item => item.id === instance
+          )!.placementClass!,
+          position: { x: 0x4_00_00, y: 0, z: 0 }
+        }
+      }
+    ]
+  });
+};
+
+const residenceOf = (session: DamoclesSession, instance: string) =>
+  session.snapshot.residence.find(item => item.instance === instance)
+    ?.residence;
+
+describe('console fetch', () => {
+  test('places a far object where a Drop would, leaving the Carried Stack alone', () => {
+    const dropped = dynamicAtOrigin('object-slot-202', ['object-slot-92']);
+    // Nothing for SUNSHADE to rest on: move the origin resident away before dropping.
+    const clear = awayFrom(dropped, 'object-slot-202');
+    expect(clear.drop()).toEqual({ kind: 'dropped' });
+
+    const fetching = awayFrom(
+      dynamicAtOrigin('object-slot-92'),
+      'object-slot-92'
+    );
+    expect(fetching.fetchObject(92)).toEqual({ kind: 'fetched', slot: 92 });
+    expect(residenceOf(fetching, 'object-slot-92')).toEqual(
+      residenceOf(clear, 'object-slot-92')
+    );
+    expect(fetching.snapshot.carried).toEqual([]);
+    expect(fetching.snapshot.scrollCounter).toBe(0);
+    expect(fetching.drainEffects()).toEqual([
+      { cue: 'drop', type: 'sound-request' }
+    ]);
+  });
+
+  test('never takes the fetched object as its own support', () => {
+    const near = dynamicAtOrigin('object-slot-92');
+    const far = awayFrom(dynamicAtOrigin('object-slot-92'), 'object-slot-92');
+    expect(near.fetchObject(92).kind).toBe('fetched');
+    expect(far.fetchObject(92).kind).toBe('fetched');
+    expect(residenceOf(near, 'object-slot-92')).toEqual(
+      residenceOf(far, 'object-slot-92')
+    );
+  });
+
+  test('rests on a nearby support, or reports no room in the console only', () => {
+    const supportedWorld = awayFrom(
+      dynamicAtOrigin('object-slot-151'),
+      'object-slot-92'
+    );
+    expect(supportedWorld.fetchObject(92)).toEqual({
+      kind: 'fetched',
+      slot: 92
+    });
+    expect(residenceOf(supportedWorld, 'object-slot-92')).toEqual({
+      body: 'body-11',
+      kind: 'surface',
+      placementClass: 4,
+      position: { x: 0, y: 2, z: 0 }
+    });
+
+    const refused = awayFrom(
+      dynamicAtOrigin('object-slot-151'),
+      'object-slot-202'
+    );
+    const before = residenceOf(refused, 'object-slot-202');
+    expect(refused.fetchObject(202)).toEqual({ kind: 'noRoom', slot: 202 });
+    expect(residenceOf(refused, 'object-slot-202')).toEqual(before);
+    expect(refused.snapshot.message).toBeNull();
+    expect(refused.drainEffects()).toEqual([]);
+  });
+
+  test('moves a heavy object, but not a carried one or while the label scrolls', () => {
+    const heavy = awayFrom(dynamicAtOrigin('object-slot-3'), 'object-slot-3');
+    expect(heavy.fetchObject(3)).toEqual({ kind: 'fetched', slot: 3 });
+
+    const holding = dynamicAtOrigin('object-slot-202', ['object-slot-92']);
+    expect(holding.fetchObject(92)).toEqual({
+      kind: 'alreadyCarried',
+      slot: 92
+    });
+    expect(holding.snapshot.carried).toEqual(['object-slot-92']);
+
+    const scrolling = new DamoclesSession(loaded, {
+      ...awayFrom(
+        dynamicAtOrigin('object-slot-3'),
+        'object-slot-3'
+      ).captureResume(),
+      scrollCounter: 16
+    });
+    expect(scrolling.fetchObject(3)).toEqual({
+      kind: 'busy',
+      reason: 'the Carried Stack is still scrolling'
+    });
+  });
+
+  test('a fetched object keeps its new Residence across a Save', () => {
+    const session = awayFrom(
+      dynamicAtOrigin('object-slot-92'),
+      'object-slot-92'
+    );
+    expect(session.fetchObject(92).kind).toBe('fetched');
+    const restored = new DamoclesSession(loaded, session.captureResume());
+    expect(residenceOf(restored, 'object-slot-92')).toEqual(
+      residenceOf(session, 'object-slot-92')
+    );
+  });
+});

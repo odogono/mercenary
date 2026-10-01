@@ -106,6 +106,23 @@ export class Interaction {
     );
   }
 
+  /// Whether a Take would refuse the object as fixed in place, wherever the player stands.
+  isFixedInPlace(slot: number, host: BensonHostState): boolean {
+    const flags = host.objectFlags.get(slot) ?? 0;
+    return (
+      !host.canTakeAnything &&
+      !this.carriesSink(host) &&
+      (flags & this.fixedMask) !== 0
+    );
+  }
+
+  private carriesSink(host: BensonHostState): boolean {
+    return (
+      this.takeOverrides !== undefined &&
+      host.inventory.has(this.takeOverrides.sinkSlot)
+    );
+  }
+
   attempt(
     action: InteractionAction,
     player: Vector3,
@@ -118,17 +135,11 @@ export class Interaction {
         return { host, outcome: { kind: 'nothingInReach' } };
       }
       const flags = host.objectFlags.get(candidate.slot) ?? 0;
-      const carriesSink =
-        this.takeOverrides !== undefined &&
-        host.inventory.has(this.takeOverrides.sinkSlot);
+      const carriesSink = this.carriesSink(host);
       const carriesAntigrav =
         this.takeOverrides !== undefined &&
         host.inventory.has(this.takeOverrides.antigravSlot);
-      if (
-        !host.canTakeAnything &&
-        !carriesSink &&
-        (flags & this.fixedMask) !== 0
-      ) {
+      if (this.isFixedInPlace(candidate.slot, host)) {
         return {
           host,
           outcome: { kind: 'fixedInPlace', slot: candidate.slot }
