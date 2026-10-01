@@ -94,7 +94,7 @@ A static replay of the stream reproduces the live tables byte for byte. The stre
   | 3–5 | Street | `$D000` |
   | 6–9 | Street | `$C000` |
 
-- The prison door is attachment `$42F0`. Its latch `$406C` reads `$42FF` (open) from 5800 to 10200, `$4201` at 10400, and `$4200` (closed) by 12400.
+- The prison door is attachment `$42F0`. Its latch `$406C` reads `$42FF` (open) from 5800 to 10200, `$4201` at 10400, and `$4200` (closed) by 12400. [#645](mercenary-iii-prison-door.md) recovers the rule. The door is bound shut and opens when the opening script hands the player DOOR KEY A (object `$26`) inside its proximity box. It closes when the player walks out.
 
 **Out of scope:** the cells the camera never occupies on these journeys: (4,2), (4,3), (3,3), (2,3), (1,3), (1,4), (1,5), (5,6), and every other group. The empty taxi's approach through them is a resident moving along its route (R1). It needs route data, not their structures. Label `$65` SITE OF OLD NIC is present in the table but unused.
 
@@ -258,7 +258,7 @@ The per-VBL handler `$530FC` calls the channel-B programme vector `$4BF54`, then
 | Sound | Channel | Content | Trigger / timing |
 |---|---|---|---|
 | Key click `$4C986` | B | 1302 Hz tone, envelope `$1F00` shape 9, decays in about 1 s | `$55B6A` from 31 callers. Enter 6000, `*` 7300, `+` 11600 (11900), Start 12200, L 22000 |
-| Door moving `$4C7AA` | C | Tone alternating 125/119 Hz each VBL, plus noise; level programme 10…13…5, looping | Rising edge of door flag `$5B9C0`. Cell door 4986–5207 (before input); 10317–10517 while walking out (which door is plausible, not demonstrated) |
+| Door moving `$4C7AA` | C | Tone alternating 125/119 Hz each VBL, plus noise; level programme 10…13…5, looping | Rising edge of door flag `$5B9C0`. Both intervals are the prison door (slot `$3FC`, [#645](mercenary-iii-prison-door.md)): 4986–5207 is its opening swing once the script gives the key, and 10317–10517 its closing swing as the player leaves the box |
 | Door stop `$4C6E8` | C | Noise burst, 4 VBL | Falling edge of the same flag |
 | Taxi set-down `$4C5A8` | C | Noise (period 7), swelling then fluttering to 0 over 55 VBL | First descent step, armed at `$51E84`: 8585 pick-up, 13499 solicitor, 17694 spaceport |
 | Lift-off `$4C516` | C | Tone plus noise, level 2→13→9 over 41 VBL, then the engine | Armed at `$51E3E`, 12 VBL after the Start click |
@@ -276,10 +276,10 @@ There is no sound for the TAXICARD reveal, the call itself (beyond the click), b
 
 | Checkpoint (VBL) | Establishes | Cannot establish |
 |---|---|---|
-| Opening, 5800–6000 | Prison structure 132 in enclosed region 1 (scene colours, plan only); doorway view through region 2; logo panel; opening-script messages at traced commits; cell-door sound before input | Why the opening script starts at about 4745 |
+| Opening, 5800–6000 | Prison structure 132 in enclosed region 1 (scene colours, plan only); doorway view through region 2; logo panel; opening-script messages at traced commits; cell-door sound before input (the door opening once the key is given, [#645](mercenary-iii-prison-door.md)) | Why the opening script starts at about 4745 |
 | Activation / reveal, 6000–6072 | Enter consumed at 6008; `$53950` 64→0; band visible at 6050; card text at 6072; click on channel B | Exact per-pixel reveal frame (the back buffer flips on main-loop frames) |
 | Call and waiting taxi, 7300–10000 | Call flag; taxi arrives at (2,6); descent table from 8562 with its set-down sound; mailbox and letter in front of the taxi through the doorway | Exact rasterisation, and the approach order of other circulation |
-| Approach, 10000–10650 | Player walks through the doorway and door region (door sound at 10317) into the taxi volume, leaving a plain view; taxi remains the candidate | Which door flag fired |
+| Approach, 10000–10650 | Player walks through the doorway and door region (door sound at 10317: the prison door closing, [#645](mercenary-iii-prison-door.md)) into the taxi volume, leaving a plain view; taxi remains the candidate | — |
 | Cabin entry, 10700–10800 | Passenger form plus driver 263; WELCOME at 10706; card text switches on the same VBL; heading snaps to `$0100` | Admission geometry beyond R1 |
 | Each selected destination, 11600 / 11900 | Label pointers `$21515` / `$2152A` drawn; click | — |
 | Departure, 12200–12300 | Lift-off 12216 plus its sound, engine starting; trip script from 12210; height readout 000001 | Height readout formula (plausible only) |
@@ -411,19 +411,19 @@ Items marked **decision** need a presentation-policy choice before implementatio
 - **Frame cadence.** Main-loop frames of 10–12 VBL pace the script interpreter, the cabin animation and the service updates. The distribution depends on scene cost (R1 cadence note). A browser without an ST rasteriser cost needs an explicit **decision**: a fixed frame cadence or a measured one.
 - **Building lettering — recovered by [#643](mercenary-iii-taxi-lettering.md).** MIII token table `$B230` and vector font table `$3E000` resolve the six records in details 56/59. `$9D` is blank throughout the occupied slice; `$89` is blank except at `(3,0)`, where detail 59 draws two synchronized font-5 FLY/aircraft/KAOS signs from a 19-frame animation. The report records source hashes, signed placement rules, live pointer captures, cell mapping, a portable bounded extractor and deterministic comparison requirements. Browser implementation/comparison remains I1/I2 work; no Damocles lettering or font is borrowed.
 - **Projection and rasteriser.** Overlays match at focal about 256–281, but the projection, clip and fill rules and in-model face order are not decoded. Probe: decode `$57730`, `$4BDD4`, `$4F36A` and `$4F840`, and capture projected vertices at a `$57730` breakpoint. Exact ST rasterisation is not required for the milestone.
-- **Prison door.** Why the door starts open and later closes, and its key rule, are not established. Probe: watch writes to latch `$406C`. The "door moving" sound at 10317 is attributed to this doorway only plausibly; probe: break at `$5BA92` and log the door record.
+- **Prison door — recovered by [#645](mercenary-iii-prison-door.md).** The door is bound shut at game start. It opens over 143 substeps once script op `$20` sets DOOR KEY A's held bit while the player stands in the proximity box, and it closes over 143 substeps when they leave the box. Both door-moving sounds are this door. Without the key, the doorway region is never selectable and contact shows LOCKED.
 - **Night flip.** The formula is decoded, but the flip VBL depends on boot phase and X. Probe: capture every VBL from 17850 to 17900 against `$42C6C`. The star pass `$50B66` and the horizon/island pass `$571A8` are Damocles analogues; decode them for MIII before drawing night skies.
 - **Unknown fields.** Also unknown:
   - the meaning of `$7272` (driver-selection branch; always negative here)
   - handler side effects `$6DA0(a0)`→`$B346` and `$543B0`=2
   - the "617-511" and "+XXX" readouts (writers `$4EF38`/`$4EFC2`)
-  - script op `$20` (watch `$641E+$98`)
+  - script op `$20`: decoded by [#645](mercenary-iii-prison-door.md#binding-and-the-key). It sets or clears a bit of an object's state byte; `$641E+$98` is DOOR KEY A's
   - the message-tone character-skip rule
   - the source of cold-boot jitter.
 
   None changes what is drawn on these journeys.
 - **Unconfirmed content.** It is unconfirmed whether TOURCRAFT (slot 13) appears on screen at the spaceport. The small blue crescent in cabin frames is not a resident model; it is probably a sky body. Neither is required for the milestone; confirm both before claiming the spaceport arrival view complete.
-- **Extraction defects.** The world renders close the prison door where captures show it open (the latch state was not applied). Region index `$7194` is sometimes stale in captures taken aboard. Probe: log the region commit `$5B388` from 12200 to 18000.
+- **Extraction defects.** The world renders close the prison door where captures show it open: the latch state was not applied. Resolved by [#645](mercenary-iii-prison-door.md): drawing the leaves from the live edges (±142 at latch `$FF`) matches the capture. Region index `$7194` is sometimes stale in captures taken aboard. Probe: log the region commit `$5B388` from 12200 to 18000.
 - **Browser accommodations: decisions, not findings.** No accommodation is proposed here. Two candidates need an explicit choice: showing the refused spaceport arrival message anyway, and softening the instant 90°/180° turns. The original does neither.
 
 **No blocker requires deferring the milestone.** The frame-rate decision should be made before any timed acceptance test is written.
@@ -450,7 +450,7 @@ Observable content and presentation criteria for a later approved implementation
 - height-table pointer `$51CDA`
 - the sound programme walkers and engine slew value `$4C480`
 - the METIS turn accumulator (for night)
-- the door latch `$406C`.
+- the door latch `$406C`, with the leaf edges and the key bit `$64B6`. These are saved state in the prison cell until the close completes ([#645](mercenary-iii-prison-door.md)).
 
 Restore cases should include mid-reveal, mid-message-scroll, a script waiting while the bar is busy, mid-lift-off, and arrival while the spaceport narrative holds the bar. Whether sound state needs restoring or can restart is an R3 decision.
 
