@@ -1,0 +1,51 @@
+{
+  "asset": "damocles:object-03f774",
+  "family": "damocles-model",
+  "format": "mercenary-geometry-sidecar",
+  "record": {
+    "model": {
+      "conditions": [],
+      "evidence": [],
+      "id": "object-03f774",
+      "kind": "object",
+      "linkedInstances": [],
+      "name": "COFFIN",
+      "nameStatus": "verified",
+      "omissions": [],
+      "reason": "",
+      "recordClass": "geometry",
+      "relatedModels": [],
+      "slots": [
+        290
+      ],
+      "sourceAddress": 259956,
+      "status": "decoded",
+      "supportTop": 20,
+      "variants": [
+        {
+          "id": "record",
+          "mesh": {
+            "$mesh": "variant:record",
+            "geometryStart": 259956,
+            "sourceEnd": 260085,
+            "sourceStart": 259956
+          },
+          "name": "Recovered form"
+        }
+      ]
+    },
+    "schemaVersion": 17,
+    "source": {
+      "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+      "run": "observe-first-world-20260818T101013Z-c5a32b7d"
+    }
+  },
+  "references": [],
+  "source": {
+    "document": "damocles/models/object-03f774.json",
+    "path": "$",
+    "sha256": "6a6d71c48f0e6530fe65b7a4d840f697b7db5a36cf641c6f10ce70175fd2416b"
+  },
+  "title": "damocles",
+  "version": 1
+}

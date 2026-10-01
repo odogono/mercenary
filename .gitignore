@@ -37,3 +37,4 @@ __pycache__/
 # general output
 output
 *.sav
+/research/blender-geometry-spike/out/

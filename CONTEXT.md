@@ -642,6 +642,30 @@ _Avoid_: Background building, far model, level of detail
 A stable, Research Provenance-backed identity for an entity in the World Geometry Dataset that remains valid when its interpretation or name changes.
 _Avoid_: Object name, canonical name
 
+**Geometry Asset**:
+The editable geometry of one payload record — a Damocles Model, a Targ object model, Surface Cell or Room — as polygon loops, explicit lines and vertices that each keep a stable identity, with its drawn and walking forms held apart. It carries geometry and visual attributes only, and is linked to exactly one Asset Sidecar.
+_Avoid_: Mesh file, Blender file, model file, GLB
+
+**Asset Sidecar**:
+The reviewable record of everything about a Geometry Asset that is not geometry — placements, game rules, bounds, evidence and bindings — naming the geometry it binds by identity rather than by position.
+_Avoid_: Metadata file, manifest, Catalogue (for the sidecar)
+
+**Recovered Baseline**:
+A Geometry Asset and Asset Sidecar exactly as re-extraction from the Data Payload yields them. A fresh one is recovered beside an edited asset for comparison and never replaces it.
+_Avoid_: Original, golden copy, source asset
+
+**Recovery Correction**:
+An authored change that brings a Geometry Asset closer to Authoritative Evidence than its Recovered Baseline, recorded together with that evidence.
+_Avoid_: Fix, patch, Creative Change
+
+**Creative Change**:
+An authored change that deliberately departs from recovered geometry.
+_Avoid_: Mod, Extension, Departure, Recovery Correction
+
+**Change Ledger**:
+The per-asset record classifying every authored change, by element identity, as a Recovery Correction or a Creative Change; an authored change it does not classify fails review.
+_Avoid_: Changelog, edit history
+
 **Pose**:
 Where a Camera is and how it is turned at one moment — a position, a heading, a pitch and a roll — named on its own so a single view can be asked for, recorded and compared without a session behind it.
 _Avoid_: Position, viewpoint, snapshot, camera state

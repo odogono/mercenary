@@ -1,0 +1,5 @@
+error: structureSelection.regions[0].queue[20]: references source record 0 in plan, which no longer exists. Restore a primitive carrying it, or remap ref 20 in the sidecar to an existing target.
+error: structureSelection.regions[1].queue[18]: references source record 0 in plan, which no longer exists. Restore a primitive carrying it, or remap ref 46 in the sidecar to an existing target.
+error: structureSelection.regions[2].queue[18]: references source record 0 in plan, which no longer exists. Restore a primitive carrying it, or remap ref 70 in the sidecar to an existing target.
+error: structureSelection.regions[4].queue[18]: references source record 0 in plan, which no longer exists. Restore a primitive carrying it, or remap ref 96 in the sidecar to an existing target.
+error: structureSelection.regions[11].queue[17]: references source record 0 in plan, which no longer exists. Restore a primitive carrying it, or remap ref 166 in the sidecar to an existing target.

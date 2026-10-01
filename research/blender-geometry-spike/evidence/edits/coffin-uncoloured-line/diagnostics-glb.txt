@@ -1,0 +1,1 @@
+error: variant:record/l0: line v0–v3 has no palette colour; select it and use Mercenary ▸ Set Game Colour

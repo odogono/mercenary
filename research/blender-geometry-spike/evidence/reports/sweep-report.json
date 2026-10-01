@@ -1,0 +1,85 @@
+{
+  "damocles": {
+    "composedExactly": 1713,
+    "unsupported": {
+      "variant:object-03e2c6: mesh field 'alternates' is not modelled by the spike contract": {
+        "count": 3,
+        "examples": [
+          "object-03e2c6.json",
+          "object-03e2ea.json",
+          "object-03e30e.json"
+        ]
+      },
+      "variant:palette-113: mesh field 'articulation' is not modelled by the spike contract": {
+        "count": 1,
+        "examples": [
+          "interior-02630e.json"
+        ]
+      },
+      "variant:palette-114: mesh field 'articulation' is not modelled by the spike contract": {
+        "count": 1,
+        "examples": [
+          "interior-026556.json"
+        ]
+      },
+      "variant:palette-115: mesh field 'articulation' is not modelled by the spike contract": {
+        "count": 1,
+        "examples": [
+          "interior-0268ee.json"
+        ]
+      },
+      "variant:palette-116: mesh field 'articulation' is not modelled by the spike contract": {
+        "count": 1,
+        "examples": [
+          "interior-02dfb4.json"
+        ]
+      },
+      "variant:palette-39: mesh field 'articulation' is not modelled by the spike contract": {
+        "count": 1,
+        "examples": [
+          "interior-02e44e.json"
+        ]
+      },
+      "variant:record: mesh field 'alternates' is not modelled by the spike contract": {
+        "count": 21,
+        "examples": [
+          "object-036324.json",
+          "object-036426.json",
+          "object-038108.json"
+        ]
+      },
+      "variant:record: mesh field 'articulation' is not modelled by the spike contract": {
+        "count": 6,
+        "examples": [
+          "object-036b46.json",
+          "object-037e24.json",
+          "object-037ec6.json"
+        ]
+      },
+      "variant:record: mesh field 'texts' is not modelled by the spike contract": {
+        "count": 16,
+        "examples": [
+          "cronus-ground-01ffba-00-33.json",
+          "cyclopes-ground-01ea04-00-10.json",
+          "cyclopes-ground-01ea04-00-20.json"
+        ]
+      },
+      "variant:slot-30-record: mesh field 'alternates' is not modelled by the spike contract": {
+        "count": 1,
+        "examples": [
+          "object-036d64.json"
+        ]
+      },
+      "variant:slot-64-record: mesh field 'alternates' is not modelled by the spike contract": {
+        "count": 1,
+        "examples": [
+          "object-038820.json"
+        ]
+      }
+    }
+  },
+  "targ": {
+    "objectModels": "55/55",
+    "rooms": "192/192"
+  }
+}

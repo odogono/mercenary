@@ -1,0 +1,1 @@
+error: variant:record/e3-4: wire edge v3–v4 is not a line: Mercenary ▸ Mark Lines (then Set Game Colour) to make it one, or delete it (Delete ▸ Only Faces leaves edges behind; Delete ▸ Faces does not)
