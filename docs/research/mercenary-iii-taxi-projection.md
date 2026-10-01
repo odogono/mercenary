@@ -16,7 +16,7 @@ Research for [#644](https://github.com/odogono/mercenary/issues/644), 2026-10-01
 4. **Face order is authored order, with no depth sort inside a model.** A model draws exactly one face list, chosen by where the viewer is relative to the model's origin. It draws that list in stream order. The taxi has a single 30-face list. Models are painted far-to-near by a sorted key. The occupied structure takes its place in that order. Residents bound to the structure's regions are drawn **inside** the plan/detail pass, at hook points in its queue. In the prison, therefore, the cobweb and item 10 are drawn after the room.
 5. **Comparison with screenshots.** The logged clipped polygons were filled with the recovered rule. This colour-consistently covers 99.6–99.97% of pixels at eleven of thirteen checkpoints. The prison room scores 94.8–94.9%: its floor and ceiling rows next to horizontal edges differ, and the black horizon line is drawn separately. These residues are **raster** differences, not geometry, and D1 waives exact ST rasterisation.
 
-This closes the projection gate for the bounded slice. It does not implement or demonstrate a browser comparison. Lettering ([#643](mercenary-iii-taxi-lettering.md)), the prison latch (#645) and the sky, stars and horizon (#646) remain separate. Sky Bodies use the general matrix path and belong to #646.
+This closes the projection gate for the bounded slice. It does not implement or demonstrate a browser comparison. Lettering ([#643](mercenary-iii-taxi-lettering.md)) and the prison door ([#645](mercenary-iii-prison-door.md)) have their own reports; the sky, stars and horizon (#646) remain separate. Sky Bodies use the general matrix path and belong to #646.
 
 ## Baseline and method
 
