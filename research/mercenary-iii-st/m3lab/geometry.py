@@ -429,6 +429,124 @@ def decode_ground(ram: Ram, start: int) -> dict:
             'provenance': ram.slice(start, c.p)}
 
 
+def decode_island(ram: Ram, pointer: int) -> dict:
+    """One island record around the pointer an island descriptor names (`+4`).
+
+    `$5761A..$5769E` draws it: X/Z vertex words in Body cells from the pointer to a
+    `$8000` word, then primitive words to a zero word. Bit 14 marks a line, two
+    vertex bytes (`$5873C`); otherwise a polygon, refs to a zero byte (`$4FEA0`).
+    Both name a vertex by its offset in the projected buffer, four bytes apiece.
+    `$571A8..$5727E` reads backwards from the pointer for the Land/Sea answer: the
+    outer box, the core box, sea boxes to a `$8000` word, then edge words to zero.
+    An edge's low byte is four times its start vertex; its high byte is the end
+    vertex, with bit 15 swapping the two and bit 14 selecting the falling test.
+    """
+    def box(at: int) -> dict:
+        # Read as the tests do: X lower, X upper, Z lower, Z upper, downwards.
+        return {'x': [ram.sword(at - 2), ram.sword(at - 4)],
+                'z': [ram.sword(at - 6), ram.sword(at - 8)]}
+
+    def vertex(at: int) -> int:
+        offset = ram.byte(at)
+        if offset % 4:
+            raise ValueError(f'island vertex offset ${offset:02X} at ${at:05X} is not a vertex')
+        return offset // 4
+
+    vertices = []
+    p = pointer
+    while ram.word(p) != 0x8000:
+        vertices.append([ram.sword(p), ram.sword(p + 2)])
+        p += 4
+    p += 2
+    primitives = []
+    while (word := ram.word(p)) != 0:
+        if word & 0x4000:
+            primitives.append({'kind': 'line', 'colour': word & ~0x4000,
+                               'refs': [vertex(p + 2), vertex(p + 3)]})
+            p += 4
+            continue
+        p += 2
+        refs = []
+        while ram.byte(p):
+            refs.append(vertex(p))
+            p += 1
+        p += 1
+        primitives.append({'kind': 'polygon', 'colour': word, 'refs': refs})
+    end = p + 2
+    outer, core = box(pointer), box(pointer - 8)
+    q = pointer - 16
+    sea = []
+    while ram.word(q - 2) != 0x8000:
+        sea.append(box(q))
+        q -= 8
+    q -= 2
+    edges = []
+    while (word := ram.word(q - 2)) != 0:
+        if (word & 0xFF) % 4:
+            raise ValueError(f'island edge ${word:04X} at ${q - 2:05X} is not a vertex offset')
+        # $57284..$572A8: the low byte names the edge's start, the high byte its end.
+        edges.append({'from': (word & 0xFF) // 4, 'to': (word >> 8) & 0x3F,
+                      'swap': bool(word & 0x8000), 'steep': bool(word & 0x4000)})
+        q -= 2
+    start = q - 2
+    count = len(vertices)
+    for item in primitives:
+        if not all(1 <= r <= count for r in item['refs']):
+            raise ValueError(f'island ${pointer:05X} primitive names a missing vertex')
+    for edge in edges:
+        if not (1 <= edge['from'] <= count and 1 <= edge['to'] <= count):
+            raise ValueError(f'island ${pointer:05X} edge names a missing vertex')
+    return {'vertices': vertices, 'primitives': primitives, 'outer': outer, 'core': core,
+            'sea': sea, 'edges': edges, 'provenance': ram.slice(start, end)}
+
+
+def land_sea(island: dict, x: float, z: float) -> int:
+    """`$571E0..$574A8` over a decoded island: 0 core, 1 land, -1 sea.
+
+    `x`, `z` are in Body cells from the island's origin. Outside the outer box is
+    sea; inside the core box is core; a sea box is sea. Otherwise the one edge
+    whose bounds hold the point decides by which side of it the point lies, and
+    a swapped edge reverses that; a point no edge bounds is land. This is the
+    test that checks a decoded island against the original's `$6F56`.
+    """
+    def inside(box: dict) -> bool:
+        return box['x'][0] <= x < box['x'][1] and box['z'][0] <= z < box['z'][1]
+
+    if not inside(island['outer']):
+        return -1
+    if inside(island['core']):
+        return 0
+    if any(inside(box) for box in island['sea']):
+        return -1
+    vertices = island['vertices']
+    for edge in island['edges']:
+        (x2, z2), (x4, z4) = vertices[edge['from'] - 1], vertices[edge['to'] - 1]
+        if edge['swap']:
+            (x2, z2), (x4, z4) = (x4, z4), (x2, z2)
+        dx = x4 - x2
+        if not edge['steep']:
+            # $572B2: X in [x2, x4), Z in [z2, z4); the line rises with X.
+            if not (x2 <= x < x4 and z2 <= z < z4):
+                continue
+            dz = z4 - z2
+            if dx >= dz:
+                above = z2 + (x - x2) * dz / dx >= z  # $57316: line Z less point Z
+            else:
+                above = x2 + (z - z2) * dx / dz < x   # $57370
+        else:
+            # $57390: X in [x2, x4), Z in [z4, z2); the line falls with X.
+            if not (x2 <= x < x4 and z4 <= z < z2):
+                continue
+            dz = z2 - z4
+            if dx >= dz:
+                above = z2 - (x - x2) * dz / dx >= z  # $57402
+            else:
+                above = x2 + (z2 - z) * dx / dz > x   # $57488
+        side = 1 if above else -1
+        return -side if edge['swap'] else side
+    return 1
+
+
 def model_record(ram: Ram, entry: int) -> int:
     table = ram.long(MODEL_TABLE_POINTER)
     return table + ram.word(table + 2 * entry)

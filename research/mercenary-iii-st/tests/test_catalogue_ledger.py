@@ -6,6 +6,7 @@ census_capture run to also prove the committed ledger regenerates exactly.
 """
 
 import copy
+import json
 import os
 import re
 from pathlib import Path
@@ -145,13 +146,14 @@ class CatalogueLedgerTests(unittest.TestCase):
 
     def test_every_family_names_its_decoder_and_owner(self):
         families = {g['family'] for g in self.ledger['geometry']}
-        self.assertEqual(families, {'model', 'structure', 'detail', 'island'})
+        self.assertEqual(families, {'model', 'structure', 'detail', 'island', 'ground'})
         self.assertLessEqual(families, set(self.ledger['decoders']))
-        missing = [f for f, d in self.ledger['decoders'].items() if d['module'] is None]
-        self.assertEqual(missing, ['island'])
+        self.assertEqual([f for f, d in self.ledger['decoders'].items() if d['module'] is None], [])
         owners = {(g['family'], g['owner']) for g in self.ledger['geometry']}
-        self.assertEqual(owners, {('model', 681), ('structure', 682), ('structure', 683),
-                                  ('detail', 682), ('island', 682)})
+        # Street-furniture models reach the census only through ground templates (#682).
+        self.assertEqual(owners, {('model', 681), ('model', 682), ('structure', 682),
+                                  ('structure', 683), ('detail', 682), ('island', 682),
+                                  ('ground', 682)})
         self.assertIn('decoder m3lab.geometry.decode_nothing does not exist', self.problems(
             lambda d: d['decoders']['model'].update(function='decode_nothing')))
 
@@ -167,6 +169,7 @@ class CatalogueLedgerTests(unittest.TestCase):
             d['gaps'] = [gap for gap in d['gaps'] if not gap['blocking']]
         done = copy.deepcopy(self.ledger)
         finished(done)
+        # Recovered but unpreviewed geometry still keeps the milestone open.
         self.assertFalse(completion(done)['complete'])
         self.assertEqual(completion(done)['outstandingByOwner'], {'682': 17})
         for g in done['geometry']:
@@ -175,10 +178,44 @@ class CatalogueLedgerTests(unittest.TestCase):
         self.assertIn('completion disagrees with the ledger', validate_ledger(done))
 
     def test_recovery_needs_a_decoder_path(self):
-        def recover_island(d):
-            next(g for g in d['geometry'] if g['family'] == 'island')['state'] = 'recovered'
-            d['completion'] = completion(d)
-        self.assertTrue(any('without a decoder path' in p for p in self.problems(recover_island)))
+        def lose_decoder(d):
+            d['decoders']['island'].update(module=None, function=None)
+        problems = self.problems(lose_decoder)
+        self.assertTrue(any('without a decoder path' in p for p in problems))
+        self.assertIn('family island has no decoder and no blocking gap', problems)
+
+    def test_surface_recovery_is_accounted(self):
+        surface = [g for g in self.ledger['geometry'] if g['owner'] == 682]
+        self.assertTrue(all(g['state'] in ('recovered', 'empty') and g['sha256'] for g in surface))
+        self.assertEqual(sum(g['family'] == 'ground' for g in surface), 153)
+        self.assertEqual(self.ledger['totals']['surfaceCells'], 44 * 256)
+        # Road structure 146 and the plain ground most cells name hold nothing to draw.
+        empty = {g['id'] for g in surface if g['state'] == 'empty'}
+        self.assertIn('structure-019d0e', empty)
+        self.assertEqual(max((g for g in surface if g['family'] == 'ground'),
+                             key=lambda g: g['references'])['id'], 'ground-01b250')
+        self.assertIn('ground-01b250', empty)
+        self.assertEqual({g['id'] for g in self.ledger['resolvedGaps']},
+                         {'island-decoder', 'ground-inventory', 'detail-lettering',
+                          'empty-road-geometry'})
+        self.assertEqual({t for t, kind in self.ledger['lettering'].items() if kind == 'placement'},
+                         {'$89', '$9D'})
+        self.assertEqual([s['ramSha256'] is not None for s in self.ledger['logos']['states']],
+                         [True, True])
+        self.assertIn('gap island-decoder is both open and resolved', self.problems(
+            lambda d: d['gaps'].append({**d['gaps'][0], 'id': 'island-decoder'})))
+        self.assertTrue(any('ground references cover' in p for p in self.problems(
+            lambda d: d['totals'].update(surfaceCells=256))))
+
+    def test_original_scene_comparisons_are_recorded(self):
+        scenes = {c['id']: c for c in self.ledger['comparisons'] if c['kind'] == 'scene'}
+        # Every structure scene matches; the coasts expose the planner's missing sea fill.
+        for name in ('companies-house', 'connection-mirrored', 'olearys-farm', 'empty-slot-100',
+                     'connection-lettered', 'charlenes-disco', 'midas-field-far',
+                     'logos-initial', 'logos-constructed', 'vulcan-island'):
+            self.assertGreater(scenes[name]['agreement'], 0.97, name)
+        coasts = [c for c in self.ledger['comparisons'] if c['kind'] == 'land-sea']
+        self.assertEqual([(c['agree'], c['points']) for c in coasts], [(20, 20), (16, 16)])
 
     def test_malformed_and_foreign_ledgers_are_diagnosed(self):
         self.assertEqual(self.problems(lambda d: d.update(title='damocles')),
@@ -199,10 +236,15 @@ class CatalogueLedgerTests(unittest.TestCase):
             lambda d: d.update(gaps=[g for g in d['gaps'] if g['subject'] != 'structureSlot:46']))))
 
     def test_regenerates_from_the_census_run(self):
-        run = os.environ.get('M3_CENSUS_RUN')
-        if not run:
-            self.skipTest('set M3_CENSUS_RUN to a census_capture run directory')
-        self.assertEqual(dumps(build_ledger(Path(run))), LEDGER_PATH.read_text())
+        run, surface = os.environ.get('M3_CENSUS_RUN'), os.environ.get('M3_SURFACE')
+        if not run or not surface:
+            self.skipTest('set M3_CENSUS_RUN and M3_SURFACE (the surface extraction directory)')
+        directory = Path(surface)
+        comparisons = {kind: json.loads((directory / f'{kind}.json').read_text())
+                       for kind in ('scenes', 'coasts')}
+        ledger = build_ledger(Path(run), surface=json.loads((directory / 'surface.json').read_text()),
+                              comparisons=comparisons)
+        self.assertEqual(dumps(ledger), LEDGER_PATH.read_text())
 
 
 if __name__ == '__main__':

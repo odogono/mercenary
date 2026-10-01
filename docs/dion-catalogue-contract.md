@@ -44,18 +44,18 @@ Shared geometry is never a placement. Every COMPANIES HOUSE-type cell is its own
 
 ## Record families and ownership
 
-Each Geometry Identity has one owner. A structure geometry bound at Floor 0 anywhere belongs to #682, even if other slots bind it above Floor 0.
+Each Geometry Identity has one owner. A structure geometry bound at Floor 0 anywhere belongs to #682, even if other slots bind it above Floor 0. A street-furniture model reaches the census only through a ground template, so it belongs to #682 as well; every other model belongs to #681.
 
 | Family | What it covers | Decoder path | Original reader | Owner |
 | --- | --- | --- | --- | --- |
-| `model` | Object model-table records, including NULL-model handling and alternate forms | `m3lab.geometry.decode_model` | `$545AE..$549BA` | [#681](https://github.com/odogono/mercenary/issues/681) |
+| `model` | Object model-table records, including NULL-model handling and alternate forms | `m3lab.geometry.decode_model` | `$545AE..$549BA` | [#681](https://github.com/odogono/mercenary/issues/681); street furniture #682 |
 | `structure` at Floor 0 | Surface structure plans, walls, attachments, regions | `m3lab.geometry.decode_structure` | `$5AD2C..$5B2D2` | [#682](https://github.com/odogono/mercenary/issues/682) |
 | `detail` | Building details, lettering and live tokens | `m3lab.geometry.decode_detail` | `$54AEE..$54D20` | #682 |
-| `ground` | Ground records, road pieces, street-furniture templates | `m3lab.geometry.decode_ground` | `$561AE..$563C4` | #682 |
-| `island` | Island descriptor geometry | none yet | `$5A178..$5A1EE`, `$57544..$575CC` | #682 |
+| `ground` | Ground records, road pieces, street-furniture templates, keyed by the record a cell's ground word names | `m3lab.geometry.decode_ground` | `$561AE..$563C4` | #682 |
+| `island` | Island records: draw lists and the Land/Sea boxes and edges | `m3lab.geometry.decode_island` | `$5761A..$5769E`, `$571A8..$574A8` | #682 |
 | `structure` above Floor 0 | Floor geometry, interior details, resident association hooks | `m3lab.geometry.decode_structure`, `m3lab.census_locations.structure_floors` | `$560F4..$5612A`, `$56D1E..$56E5C` | [#683](https://github.com/odogono/mercenary/issues/683) |
 
-The ledger currently lists 304 required identities: 155 models, 75 structure geometries, 57 details and 17 island records. The 78 floor geometry slots resolve to 75 structure geometries. The other three are Floor Table bytes of slot 46 that name further alias slots 9, 240 and 252, and they stay unresolved under `floor-table-slot-46`. Ground identities are not enumerated yet. The `ground-inventory` gap holds that open until #682 lists them per group workspace.
+The ledger lists 495 required identities: 155 object models, 38 street-furniture models, 75 structure geometries, 57 details, 153 ground records and 17 island records. The 78 floor geometry slots resolve to 75 structure geometries. The other three are Floor Table bytes of slot 46 that name further alias slots 9, 240 and 252, and they stay unresolved under `floor-table-slot-46`. #682 recovered the 317 surface identities; [its report](research/dion-surface-recovery.md) gives the evidence.
 
 **Variants** are the same geometry under a recovered transform or state. Variant axes are `scale` (from a structure alias), `transform` (a ground orientation 0–7), `form` (an object's header- or viewer-selected face list), `state` (a door or the LOGOS construction) and `palette` (a scene palette, which is presentation only). A `variants` value of `null` means the axis is not inventoried yet, and `[]` means the identity has none. A variant is previewed in its own right; one form never stands in for another.
 
@@ -132,19 +132,22 @@ The ledger is regenerated from the census run and validated without original cap
 
 ```sh
 cd research/mercenary-iii-st
-python3 -m m3lab.catalogue_ledger --run <census run>
+python3 -m m3lab.catalogue_ledger --run <census run> \
+  --surface <surface extraction> --comparisons <comparison results>
 PYTHONPATH=.:tests python3 -m unittest tests.test_catalogue_ledger
 ```
 
-`validate_ledger` recomputes every total from the records. It checks that each reference resolves, that every family has its decoder path, that MIDAS and LOGOS hold their rules, and that the stored `completion` is the rule's result. The tests also reconcile every object row, binding and structure slot with the generated census documents. `M3_CENSUS_RUN` proves that the committed file regenerates byte for byte.
+The surface extraction and comparison results come from `m3lab.catalogue_surface` and `m3lab.surface_scenes` (#682), and stay under `restricted/`.
+
+`validate_ledger` recomputes every total from the records. It checks that each reference resolves, that every family has its decoder path, that MIDAS and LOGOS hold their rules, and that the stored `completion` is the rule's result. The tests also reconcile every object row, binding and structure slot with the generated census documents. `M3_CENSUS_RUN` with `M3_SURFACE` proves that the committed file regenerates byte for byte. The ledger also records each live or placement-bound lettering token's kind, and the original-scene comparisons that #686 builds on.
 
 A Geometry Identity's `state` is one of:
 
 - `pending`, which is the state of all of them now;
-- `recovered`, decoded by its family's decoder path and exported;
+- `recovered`, decoded by its family's decoder path, with the content `sha256` its export must reproduce;
 - `empty`, recovered with an evidenced absence of drawable geometry, such as road structure 146;
 - `verified`, also compared with an original scene in #686.
 
 An identity cannot leave `pending` while its family has no decoder path. Its `preview` records the evidence: the Catalogue draws it without a reported gap (#685), and the #686 matrix compares at least one identity per family and variant axis with an original-game scene.
 
-**The milestone is complete only when every required identity is recovered and previewed, and no blocking gap remains.** Recovery tickets update `state`, `variants` and `preview`, and close the gaps they own: `island-decoder`, `ground-inventory`, `model-variants`, `detail-lettering`, `association-hooks`, `interior-details` and `floor-table-slot-46`. They never edit totals by hand. Required geometry that is still missing leaves the milestone incomplete. It is not waived.
+**The milestone is complete only when every required identity is recovered and previewed, and no blocking gap remains.** Recovery tickets update `state`, `variants` and `preview`, and close the gaps they own: `island-decoder`, `ground-inventory`, `model-variants`, `detail-lettering`, `association-hooks`, `interior-details` and `floor-table-slot-46`. A closed gap moves to `resolvedGaps`, with its evidence. They never edit totals by hand. Required geometry that is still missing leaves the milestone incomplete. It is not waived.

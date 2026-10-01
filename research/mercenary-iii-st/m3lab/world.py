@@ -183,12 +183,17 @@ def road_points(ram: Ram, cell: int, transform: int) -> dict:
             'provenance': ram.slice(0x1AAC0 + 4 * cell, 0x1AAC0 + 4 * cell + 4)}
 
 
-def extract_world(ram: Ram, opening: Ram) -> dict:
-    """Decode the slice's world from a loaded image and residents from the opening one."""
-    slices = check_slices(ram)
+def extract_world(ram: Ram, opening: Ram, route: list[tuple[int, int]] = ROUTE_CELLS,
+                  pinned: bool = True) -> dict:
+    """Decode the slice's world from a loaded image and residents from the opening one.
+
+    `route` and `pinned=False` serve scene comparisons away from METIS (#682): there
+    the Metis stable slices do not hold, because working slots rebind per cell.
+    """
+    slices = check_slices(ram) if pinned else []
     group = ram.word(METIS_GROUP)
     cells, structures, details, grounds, palettes = [], {}, {}, {}, {}
-    for x, z in ROUTE_CELLS:
+    for x, z in route:
         cell = z * 16 + x
         entry = cell_entry(ram, cell)
         resolved = resolve_structure(ram, entry['slot'])
@@ -230,11 +235,11 @@ def extract_world(ram: Ram, opening: Ram) -> dict:
     while ram.byte(p) or p == FIXED_DRAWN:
         fixed.append(ram.byte(p))
         p += 1
-    route = {z * 16 + x for x, z in ROUTE_CELLS}
+    occupied = {z * 16 + x for x, z in route}
     residents = []
     for slot in range(1, 248):
         r = resident(opening, slot)
-        if slot in fixed or (r['cell'] in route and r['group'] == group and r['association']):
+        if slot in fixed or (r['cell'] in occupied and r['group'] == group and r['association']):
             residents.append(r)
     entries = {r['slot'] for r in residents} | {318, 263, 264}
     for g in grounds.values():

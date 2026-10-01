@@ -64,6 +64,24 @@ location documents without captures; with `M3_CENSUS_RUN` set they also prove
 that it regenerates exactly. Recovery tickets move identities out of `pending`;
 see [the data contract](../../docs/dion-catalogue-contract.md).
 
+## Dion surface recovery
+
+```sh
+python3 -m m3lab.catalogue_surface capture         # the LOGOS constructed workspace
+python3 -m m3lab.catalogue_surface extract --census <census run> \
+  --construction <construction run> --out ../../restricted/mercenary-iii-682/surface.json
+python3 -m m3lab.surface_scenes scenes             # original scenes against the planner
+python3 -m m3lab.surface_scenes coasts             # Land/Sea answers against islands
+```
+
+`catalogue_surface` decodes every surface Geometry Identity the Dion Catalogue
+needs: structures per alias scale, details, ground records per transform,
+islands, street-furniture models and lettering. It writes them only under
+`restricted/` and records their hashes in the ledger, which #684 exports from.
+`scene` stands the original at any pose through its own object-destination
+path; `web/tools/dion-scene.ts` compares that frame with the browser planner.
+See [the surface report](../../docs/research/dion-surface-recovery.md).
+
 ## Modules
 
 | Module | Exports | Readers |
@@ -71,9 +89,11 @@ see [the data contract](../../docs/dion-catalogue-contract.md).
 | `census_capture.py` | Full original-builder census captures | `$4F0F2..$4F304` |
 | `census_locations.py`, `census_objects.py` | All groups, Body placements, residents and names | Full location recovery note |
 | `catalogue_ledger.py` | `catalogue-ledger.json`: Dion Catalogue coverage | Census decoders above |
+| `catalogue_surface.py` | Surface Geometry Identities, cell grounds, lettering, MIDAS and LOGOS | `$4F142..$4F2A6`, `$5600C..$560B0`, readers below |
+| `scene.py`, `surface_scenes.py` | Original scenes at exact poses; the #682 comparisons | `$5A006..$5A15A` |
 | `boot.py` | Cold-boot plans and captures | Integration recipe |
 | `ram.py` | Provenance-carrying reads | — |
-| `geometry.py` | Cells, structures, regions, details, ground, models | `$5600C`, `$5AD2C..$5B2D2`, `$54AEE..$54D20`, `$56204`, `$545AE..$549BA` |
+| `geometry.py` | Cells, structures, regions, details, ground, islands, models | `$5600C`, `$5AD2C..$5B2D2`, `$54AEE..$54D20`, `$56204`, `$5761A`, `$571A8`, `$545AE..$549BA` |
 | `world.py` | `world.json`: the fifteen occupied cells, residents, palettes, glyphs, frame facts | Above, plus `$55C58`, `$5A578`, `$7CA2`, `$3E000` |
 | `sky.py` | `world.json`: METIS observer/phase, 1,868 star records, colours and empty horizon | #646, `$50B10`, `$50B66`, `$571A8` |
 | `panel.py` | `panel.json`: artwork, centre box, fonts, strings, readout fields | `$59C2C`, `$4ED8E`, `$53294`, per-field writers |
