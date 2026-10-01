@@ -10,7 +10,8 @@ console command follows the current residence, so it remains useful after those
 changes.
 
 Damocles's objects are catalogued in
-[Damocles object locations](damocles-object-locations.md).
+[Damocles object locations](damocles-object-locations.md). Dion’s full original-game
+census is in [Dion object locations](dion-object-locations.md).
 
 Surface coordinates are normalised into the unsigned 24-bit world. Room
 coordinates are local to that Room. “Out of world” is the initial parked state

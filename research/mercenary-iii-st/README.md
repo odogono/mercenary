@@ -21,10 +21,39 @@ M3_RAM=$R/v6000.ram M3_OPENING=$R/start.ram M3_ENTRY_RAM=$R/entry.ram \
 
 `export` checks every stable slice the research reports published before it decodes anything. Documents from one run share one `source` block. The browser refuses a document from another run, another Title or another program image.
 
+## Full original-game location census
+
+```sh
+python3 -m m3lab.census_capture   # prints an ignored full-location-census-* directory
+```
+
+This cold-boots the pinned inputs, saves fresh `start.ram`, and executes the
+original workspace builder for all 57 groups. Results are saved as
+`all-groups/group-00.ram` through `group-56.ram`; the separate
+`midas/group-56-uniform.ram` captures MIDAS's 256-cell repetition. Each result
+must match its claimed group and authored label pointer. `manifest.json` records
+RAM and workspace hashes, source pins and the validated 794 initial group cells
+(1,049 with MIDAS repetition, including VOID). All debugger scripts, commands
+and captures stay under `restricted/`; this command does not update the Data
+Payload. See [the recovery note](../../docs/research/dion-full-location-recovery.md).
+
+Generate the two navigation documents from that capture, from the repository root:
+
+```sh
+PYTHONPATH=research/mercenary-iii-st python3 research/mercenary-iii-st/scripts/write-location-docs.py --run <run directory>
+```
+
+This writes `docs/dion-object-locations.md` and `docs/dion-structure-locations.md`.
+It accounts for all persistent slots, authored groups and named places, including
+MIDAS's repeat and the initially absent LOGOS construction. The exact initial
+position of a circulating service can differ between fresh boots.
+
 ## Modules
 
 | Module | Exports | Readers |
 |---|---|---|
+| `census_capture.py` | Full original-builder census captures | `$4F0F2..$4F304` |
+| `census_locations.py`, `census_objects.py` | All groups, Body placements, residents and names | Full location recovery note |
 | `boot.py` | Cold-boot plans and captures | Integration recipe |
 | `ram.py` | Provenance-carrying reads | — |
 | `geometry.py` | Cells, structures, regions, details, ground, models | `$5600C`, `$5AD2C..$5B2D2`, `$54AEE..$54D20`, `$56204`, `$545AE..$549BA` |

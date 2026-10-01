@@ -4,7 +4,8 @@ This is a navigation reference for Targ's surface structures. Coordinates are
 written as `X-Z`, matching the Benson panel and the `goto` console command.
 Standalone object slots are catalogued separately in
 [Object locations](object-locations.md). Damocles's structures are in
-[Damocles structure locations](damocles-structure-locations.md).
+[Damocles structure locations](damocles-structure-locations.md). Dion’s are in
+[Dion structure locations](dion-structure-locations.md).
 
 The original surface map is 16 by 16 cells. Its structure geometry repeats every
 16 cells on each axis when travelling outside the city, so `02-11`, `18-11`, and
