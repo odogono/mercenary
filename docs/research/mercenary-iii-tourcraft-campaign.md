@@ -1,5 +1,10 @@
 # Mercenary III TOURCRAFT: connected default campaign closure
 
+> **Status** (as of `405c6e70`, 2026-10-02): Current.
+> **Holds:** The default closure is five routines (election `$759D2`, continuations `$75A16` after 1,500 ticks and `$75B5C` after 750 writing signed request `$FFDB`, mining `$75A75`, continuation `$75B24` after 750 zeroing cash), scheduled by `$5A3D0` as threshold, then signed-timer dispatch, then input and interpreter, with one overwriteable queue `$711C` and a modulo-65,536 timer `$727E` due when negative, and the passive OBSERVER programme (model 320, residents 56–58) never reaches its hostile phase under the admitted nonfiring inputs.
+> **Open:** Dion runtime has no threshold reader, availability bytes or signed timer yet; R8 restored futures and I4 browser proof remain.
+> **Evidence:** `research/mercenary-iii-st/m3lab/scripts.py`, `research/mercenary-iii-st/config/baseline.json`, `web/src/dion/script.ts`, `web/src/damocles/script.ts`, `restricted/mercenary-iii-707/`, `restricted/mercenary-iii-707-followup/` (lost).
+
 Research continuation for [#707](https://github.com/odogono/mercenary/issues/707), 2026-10-02. [D2](mercenary-iii-tourcraft-milestone-review.md) now admits the connected default election/mining effects while retaining free waiting and the accepted [atomic transition policy](mercenary-iii-tourcraft-followup.md). This handoff recovers their scripts, flags and scheduler, compares current implementation candidates, and records the bounded original-engine proof. It implements no runtime or promoted Data Payload; R7 content and R8 restored futures remain separate gates.
 
 ## Script closure and reachable flags

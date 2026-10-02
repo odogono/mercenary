@@ -1,5 +1,10 @@
 # Mercenary III TOURCRAFT: original scenes and comparison coverage (R7)
 
+> **Status** (as of `405c6e70`, 2026-10-02): Amended by [dion-tourcraft-content-contract](../dion-tourcraft-content-contract.md): I3 reruns all 30 fixtures with general camera and head 279; required checkpoints 94.80–98.62%.
+> **Holds:** The flight encounters sixteen Body/cell pairs (thirteen METIS, three TOLOSA), the original draws only the occupied cell's structure/ground plus the fixed resident list, and frames 139/140/461–463 are transition-state captures, not raster fixtures.
+> **Open:** I4/#711 production draw-phase ownership, live OBSERVER articulation and restored-frame equivalence; exact ST raster edges remain uncertified.
+> **Evidence:** `research/mercenary-iii-st/config/baseline.json`, `restricted/mercenary-iii-708/views/` (`prepare.py`, `compare.ts`, `coverage.py`, `movement.py`, `encountered-cells.json`, `comparison.json`, `movement/r7-movement-xe_b3npb/`), `restricted/mercenary-iii-708/presentation/r7-natural60-ceounh33/`, `restricted/mercenary-iii-708/presentation/exact2/`, `restricted/mercenary-iii-708/presentation/traced/r7-traced60-t7ijikuv/`, `restricted/mercenary-iii-707/runs/exact-11-14c2p26m/near.ram`.
+
 Research for [#708](https://github.com/odogono/mercenary/issues/708), 2026-10-02. The [promotion report](mercenary-iii-tourcraft-promotion.md) and [versioned promotion manifest](../../research/mercenary-iii-st/tourcraft-promotion-manifest.json) own the exact content admission. This note owns the original-scene recipes, encountered-cell accounting and deterministic comparison matrix. It uses the [R5 route](mercenary-iii-services-progression.md#natural-metis-spaceport--tolosa), the [accepted R6 schedule](mercenary-iii-tourcraft-followup.md#new-probe-results), the [connected campaign controls](mercenary-iii-tourcraft-campaign.md) and the existing [Catalogue validation](dion-catalogue-validation.md). No runtime or playable Data Payload is changed.
 
 ## Original recipes and evidence classes

@@ -2,13 +2,10 @@
 
 How the engineering skills should consume this repo’s domain documentation when exploring the codebase.
 
-## Before exploring, read these
+## Before exploring, look these up
 
-- `CONTEXT.md` at the repo root.
-- `CONTEXT-MAP.md` at the repo root if it exists; read each linked context relevant to the topic.
-- Relevant ADRs under `docs/adr/`. In multi-context repos, also check `src/<context>/docs/adr/`.
-
-If these files don’t exist, proceed silently. The `/domain-modeling` skill creates them lazily when terms or decisions are resolved.
+- **Glossary terms**: `CONTEXT.md` at the repo root is too large to read whole (about 200 terms). Look up each term you use: `rg -n -A3 '^\*\*Term' CONTEXT.md`, or `rg -n '^\*\*' CONTEXT.md` to list them all.
+- **ADRs**: find relevant ones in the `docs/adr/README.md` index, then read those in full.
 
 ## File structure
 
@@ -18,7 +15,7 @@ This repo uses the single-context layout:
 /
 ├── CONTEXT.md
 ├── docs/adr/
-└── src/
+└── web/src/
 ```
 
 ## Use the glossary’s vocabulary

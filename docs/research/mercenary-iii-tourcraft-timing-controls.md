@@ -1,5 +1,10 @@
 # Mercenary III TOURCRAFT: independent campaign timing comparison
 
+> **Status** (as of `405c6e70`, 2026-10-02): Current.
+> **Holds:** An independent tick/frame model matches all five retained campaign traces at 4,908 tops and 4,905 interpreter entries and every one of 3,124 opcode, 139 request and 170 mutating-opcode tuples, including mining's cash write at tick 34,994 both on foot (frame 3,280) and aboard (frame 228).
+> **Open:** The two queued-flight logs lack a direct timed-dispatch trap, the election-flight prefix ends with its final timer pending, and browser Save/Session Resume futures belong to R8/I4.
+> **Evidence:** `restricted/mercenary-iii-707/` (pinned R6 RAM), `restricted/mercenary-iii-707-followup/` (lost) (`campaign-timing-model.py`, `*-timing-result.json`, `runs/late-*/hatari.log`).
+
 Continuation of [#707](https://github.com/odogono/mercenary/issues/707), 2026-10-02, within the accepted [D2 transition and connected-campaign scope](mercenary-iii-tourcraft-followup.md). **An independently authored rule model now matches the five retained campaign traces at every sampled main-loop top and interpreter entry, and matches every executed opcode, request and mutating instruction's PC, frame and logical tick.** This closes the independent comparison for these finite scenarios. It is research evidence, not browser runtime, content-promotion or restored-future certification.
 
 The [campaign handoff](mercenary-iii-tourcraft-campaign.md) supplies primary script/handler hashes, the reachable default flags, the complete five-routine reduction, current reuse comparisons and encounter closure. The [early-flight strict probe](mercenary-iii-tourcraft-followup.md#new-probe-results) separately establishes the atomic schedule and accelerated clock accumulation. This report describes the independent campaign calculation and its exact comparison; it does not substitute observed campaign timings into that calculation.

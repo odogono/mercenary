@@ -1,5 +1,10 @@
 # Mercenary III TOURCRAFT: R6 follow-up and accepted D2 resolution
 
+> **Status** (as of `405c6e70`, 2026-10-02): Current.
+> **Holds:** Recovered loop reentries run as zero-tick subpasses (two interpreter invocations at frame 139) and post-wait work belongs to the next atomic frame, under which two strict atomic runs at 32 and 16 MHz match the model on all 39 requests (16/152/715/737, return 745), recorded L at frame 927 (10,197 ticks), first on-foot top 928 with identical RAM, and a 13,832-second clock gain.
+> **Open:** none within R6; R8 preserves the atomic phase and subpass state, and I4 implements the schedule.
+> **Evidence:** `research/mercenary-iii-st/config/baseline.json`, `restricted/mercenary-iii-707/` (`runs/exact-near.sav`, `runs/natural-near.sav`, `runs/exact-11-14c2p26m/hatari.log`), `restricted/mercenary-iii-707-followup/` (lost) (`atomic.py`, `campaign.py`, `runs/atomic-*`).
+
 Continuation of [#707](https://github.com/odogono/mercenary/issues/707), 2026-10-02. **The user accepted both decisions below on 2026-10-02: the transition interpretation at 50 Hz/eleven ticks, and connected default campaign research while preserving free waiting. [D2](mercenary-iii-tourcraft-milestone-review.md#accepted-r6-follow-up) and [ADR 0058](../adr/0058-run-mercenary-iii-at-50-hz-with-a-confirmed-fixed-frame-cadence.md) record acceptance. The early-flight cadence gate is closed. The subsequent [campaign recovery](mercenary-iii-tourcraft-campaign.md), [independent timing comparison](mercenary-iii-tourcraft-timing-controls.md) and [boundary controls](mercenary-iii-tourcraft-boundary-controls.md) close the connected R6 research gate; R7/R8 and runtime proof remain downstream.** The [playback report](mercenary-iii-tourcraft-playback.md) and [clock/script report](mercenary-iii-tourcraft-clock.md) establish the complete early outward flight, its used mechanisms and the two decision boundaries subsequently resolved here: atomic timing across original loop reentries, and campaign effects during free waiting or late boarding.
 
 ## Precise timing diagnosis

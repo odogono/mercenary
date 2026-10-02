@@ -1,5 +1,10 @@
 # Mercenary III: late taxi records lose campaign history
 
+> **Status** (as of `405c6e70`, 2026-10-02): Amended by [canonical-reference](mercenary-iii-tourcraft-canonical-reference.md): a third matching Start at frame 16,156 is the canonical reference.
+> **Holds:** Taxi Starts at frames 81,692 and 147,228 with a shared Leave produce identical complete source snapshots and Save bytes but different expanded VM state (PC, flags 6/13/23, queue `$77`, return stack), so no migration from the old record matches actual history and ADR 0068 accepts a documented canonical expanded history for ambiguous late records.
+> **Open:** Canonical reconstruction of every expanded owner; the scheduler model omits encounter-reader consumption, actors, audio and raster.
+> **Evidence:** `research/mercenary-iii-st/scripts/taxi-history-audit.ts`, `research/mercenary-iii-st/scripts/taxi-history-model.ts`, `research/mercenary-iii-st/scripts/taxi-source.ts`, `research/mercenary-iii-st/taxi-history-evidence.json`, `web/test/dion-history-model.test.ts`.
+
 Follow-up for [R8/#709](https://github.com/odogono/mercenary/issues/709) and [I4/#711](https://github.com/odogono/mercenary/issues/711), 2026-10-02. The user accepted [ADR 0068](../adr/0068-reconcile-known-taxi-saves-with-expanded-campaign-history.md): valid late taxi records should match expanded campaign history, allowing the required cash/script changes. This report checks the separate assumption that the old record determines that history.
 
 **Two ordinary I2 input histories produce the same complete Save Snapshot and the same validated Save bytes, while an independent application of R6's admitted scheduler rules produces different script state.** Allowing cash/script changes does not recover the missing history. Under those recovered rules, a function of the old record alone cannot match both actual uninterrupted expanded histories. This established the need for a separate reference-history decision. The user has now accepted a documented canonical expanded history for ambiguous late records under ADR 0068; the collision remains evidence of why exact actual-history equality cannot be required for that domain.

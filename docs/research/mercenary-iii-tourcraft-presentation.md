@@ -1,5 +1,10 @@
 # Mercenary III TOURCRAFT: flight presentation recovery (R7)
 
+> **Status** (as of `405c6e70`, 2026-10-02): Amended by [dion-tourcraft-content-contract](../dion-tourcraft-content-contract.md): I3 exports these dependencies and implements general camera, sky and stars under ADR 0067.
+> **Holds:** MIII's half-step view matrix V matches all 135 stored coefficients, the sky draws System records 0–29 plus DAMOCLES 29's fixed embedded tail with no moving-comet rule, and flight sound is the speed-dependent C programme `$4C1C8/$4C1F8` driven by `$700A`.
+> **Open:** I4/#711 production flight presentation, live head/face-token animation and sound tick ordering; R8/#709 restoration of phases, face indices and sound state; no waveform or exact ST raster equivalence is claimed.
+> **Evidence:** `research/mercenary-iii-st/config/baseline.json`, `research/mercenary-iii-st/m3lab/boot.py`, `research/mercenary-iii-st/m3lab/sky.py`, `research/mercenary-iii-st/m3lab/sound.py`, `research/mercenary-iii-st/m3lab/panel.py`, `research/mercenary-iii-st/m3lab/catalogue_render.py`, `research/mercenary-iii-st/m3lab/census_objects.py`, `restricted/mercenary-iii-708/presentation/` (`source-inventory.json`, `exact2/`, `r7-natural60-ceounh33/`, `traced/r7-traced60-t7ijikuv/`, `face-animation-check.py`, `face-condition-check.py`, `faces/`, `starcheck.py`, `matrixcheck.json`).
+
 Research for [#708](https://github.com/odogono/mercenary/issues/708), 2026-10-02, under [D2](mercenary-iii-tourcraft-milestone-review.md) and [ADR 0065](../adr/0065-promote-bounded-dion-catalogue-content-through-an-explicit-export.md). This report recovers the selected flight's presentation inputs and rules from **Mercenary III's own pinned ST baseline**. It extends the bounded METIS taxi sky evidence to surface flight, System space and TOLOSA; it does not extrapolate that earlier empty METIS horizon to TOLOSA. Runtime implementation, playable export and full raster/audio equivalence remain separate gates.
 
 ## Evidence and capture identity
