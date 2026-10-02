@@ -1,15 +1,26 @@
-/// `payload/targ-st/title.json`: Targ's Title Logo, recovered from the ST release (#696).
+/// `payload/targ-st/title.json` and `title.png`: Targ's Title Logo, recovered from the ST
+/// release (#696).
 ///
 /// The C64 Reference Build has no title screen (ADR 0032). The ST release's `ESCAPE.PRG`
 /// shows the NEOchrome picture `E0` while it loads, and `research/targ-st/` reads that file
 /// straight off the pinned disk. The logo is every pixel of palette index 3 there: the
-/// MERCENARY lettering and the globe it overlaps. It is presentation only (ADR 0063).
+/// MERCENARY lettering and the globe it overlaps. The PNG carries the mark; the document
+/// carries its provenance and a hash of the mark, which the decoded image must match. It
+/// is presentation only (ADR 0063).
 
 export interface TargTitleLogo {
+  /// The ST colour word of the mark.
   readonly colour: number;
+  readonly file: string;
   readonly height: number;
-  /// One row per line, `true` where the mark is drawn.
-  readonly rows: readonly (readonly boolean[])[];
+  /// SHA-256 of the mark, one bit per pixel, most significant first, rows padded to a byte.
+  readonly markSha256: string;
+  readonly width: number;
+}
+
+interface Pixels {
+  readonly data: Uint8ClampedArray;
+  readonly height: number;
   readonly width: number;
 }
 
@@ -53,25 +64,21 @@ export const readTargTitleLogo = (value: unknown): TargTitleLogo => {
   ) {
     refuse('palette.colours is not sixteen ST colour words');
   }
-  const width = size(logo['width'], 'logo.width', 320);
-  const height = size(logo['height'], 'logo.height', 200);
-  const pixels = logo['pixels'];
-  if (!Array.isArray(pixels) || pixels.length !== height) {
-    refuse(`logo.pixels is not ${height} rows`);
+  const image = record(logo['image'], 'logo.image');
+  const file = image['file'];
+  const markSha256 = image['markSha256'];
+  if (file !== 'title.png') {
+    refuse("logo.image.file is not 'title.png'");
   }
-  const mark = (index as number).toString(16);
-  const rows = (pixels as unknown[]).map((row, y) =>
-    typeof row === 'string' &&
-    row.length === width &&
-    [...row].every(c => c === '0' || c === mark)
-      ? [...row].map(c => c === mark)
-      : refuse(`logo.pixels[${y}] is not ${width} pixels of 0 or ${mark}`)
-  );
+  if (typeof markSha256 !== 'string' || !/^[\da-f]{64}$/.test(markSha256)) {
+    refuse('logo.image.markSha256 is not a SHA-256');
+  }
   return {
     colour: (colours as number[])[index as number]!,
-    height,
-    rows,
-    width
+    file: file as string,
+    height: size(logo['height'], 'logo.height', 200),
+    markSha256: markSha256 as string,
+    width: size(logo['width'], 'logo.width', 320)
   };
 };
 
@@ -79,18 +86,59 @@ export const readTargTitleLogo = (value: unknown): TargTitleLogo => {
 const gun = (word: number, shift: number): number =>
   Math.round((((word >> shift) & 7) * 255) / 7);
 
-/// The logo as RGBA, transparent outside the mark.
-export const targTitleLogoRgba = (
-  logo: TargTitleLogo
-): Uint8ClampedArray<ArrayBuffer> => {
-  const data = new Uint8ClampedArray(logo.width * logo.height * 4);
+/// Refuse a decoded image that is not the mark the document describes: the declared size,
+/// the mark's colour where drawn, transparent elsewhere, and the mark's hash.
+export const checkTargTitleLogo = async (
+  logo: TargTitleLogo,
+  image: Pixels
+): Promise<void> => {
+  const where = `payload/targ-st/${logo.file}`;
+  if (image.width !== logo.width || image.height !== logo.height) {
+    throw new Error(`${where} is not ${logo.width} by ${logo.height}`);
+  }
   const ink = [gun(logo.colour, 8), gun(logo.colour, 4), gun(logo.colour, 0)];
-  logo.rows.forEach((row, y) =>
-    row.forEach((drawn, x) => {
-      if (drawn) {
-        data.set([...ink, 255], (y * logo.width + x) * 4);
+  const span = Math.ceil(logo.width / 8);
+  const bits = new Uint8Array(span * logo.height);
+  for (let y = 0; y < logo.height; y++) {
+    for (let x = 0; x < logo.width; x++) {
+      const at = (y * logo.width + x) * 4;
+      const alpha = image.data[at + 3];
+      if (alpha === 255 && ink.every((v, i) => image.data[at + i] === v)) {
+        bits[y * span + (x >> 3)]! |= 0x80 >> (x & 7);
+      } else if (alpha !== 0) {
+        throw new Error(`${where} has a pixel at ${x},${y} outside the mark`);
       }
-    })
+    }
+  }
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bits));
+  const hex = [...digest].map(b => b.toString(16).padStart(2, '0')).join('');
+  if (hex !== logo.markSha256) {
+    throw new Error(`${where} is not the mark title.json hashes`);
+  }
+};
+
+const fetched = async (url: URL): Promise<Response> => {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`${url.pathname} answered HTTP ${response.status}`);
+  }
+  return response;
+};
+
+/// Fetch the document and its PNG, decode the PNG unconverted, and check it is the mark.
+export const loadTargTitleLogo = async (payload: URL): Promise<ImageData> => {
+  const logo = readTargTitleLogo(
+    await (await fetched(new URL('targ-st/title.json', payload))).json()
   );
-  return data;
+  const bitmap = await createImageBitmap(
+    await (await fetched(new URL(`targ-st/${logo.file}`, payload))).blob(),
+    { colorSpaceConversion: 'none', premultiplyAlpha: 'none' }
+  );
+  const context = new OffscreenCanvas(bitmap.width, bitmap.height).getContext(
+    '2d'
+  )!;
+  context.drawImage(bitmap, 0, 0);
+  const image = context.getImageData(0, 0, bitmap.width, bitmap.height);
+  await checkTargTitleLogo(logo, image);
+  return image;
 };

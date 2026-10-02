@@ -15,8 +15,8 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 - **Targ's System Menu pages show its title-screen logo.** The C64 Reference Build has
   no title screen, so the logo comes from the ST release: its loader shows the NEOchrome
   picture `E0`, and the new `research/targ-st/` tool reads it straight off the pinned STX.
-  `payload/targ-st/title.json` holds the yellow MERCENARY-and-globe mark, 304 by 116, with
-  its provenance. It replaces the Mercenary Pixel stand-in (#696).
+  `payload/targ-st/title.png` is the yellow MERCENARY-and-globe mark, 304 by 116, and
+  `title.json` its provenance and a hash the browser checks the decoded image against. It replaces the Mercenary Pixel stand-in (#696).
 - **`/dion` boots Mercenary III at the METIS prison opening.** It is a Title of its
   own, with a sibling Gameplay Session that loads only `payload/dion/`. That payload is
   six documents exported from the pinned STX by the new `research/mercenary-iii-st/`

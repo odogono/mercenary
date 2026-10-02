@@ -7,7 +7,7 @@ The pinned disk is in [`config/baseline.json`](config/baseline.json). Supply it 
 ```sh
 cd research/targ-st
 python3 -m targlab files      # the disk's GEMDOS files, read through its FAT
-python3 -m targlab export     # writes payload/targ-st/title.json
+python3 -m targlab export     # writes payload/targ-st/title.png and title.json
 python3 -m targlab confirm    # Hatari: the title on screen is E0 (needs EmuTOS 2.06 and Hatari 2.6.1)
 PYTHONPATH=. python3 -m unittest discover -s tests
 ```

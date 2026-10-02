@@ -38,9 +38,11 @@ Hatari confirms it: started with `--auto A:\ESCAPE.PRG` under the Mercenary III 
 
 ## The mark
 
-The Title Logo is every pixel of palette index 3 (`$770`, yellow): the MERCENARY lettering and the globe. They are one mark. The globe's lines join E, N, A, R and Y into one connected shape, so no box separates them, and nothing else in the picture uses index 3. Its bounds are x 6–309, y 21–136: 304 × 116 pixels. Index 0 appears nowhere in `E0`, so the export writes `0` for pixels outside the mark, and the browser draws them transparent. The other lettering is in other colours and is not part of the logo.
+The Title Logo is every pixel of palette index 3 (`$770`, yellow): the MERCENARY lettering and the globe. They are one mark. The globe's lines join E, N, A, R and Y into one connected shape, so no box separates them, and nothing else in the picture uses index 3. Its bounds are x 6–309, y 21–136: 304 × 116 pixels. Pixels outside the mark are transparent. The other lettering is in other colours and is not part of the logo.
 
-`payload/targ-st/title.json` carries the disk, picture and loader hashes, the loader steps it checked, the palette, and the mark as rows of hex nibbles. Each slice has its byte range in `E0` and its SHA-256, as `payload/dion/panel.json` does. The Browser Shell shows it at its own size on every System Menu page in place of the Mercenary Pixel stand-in.
+The mark is `payload/targ-st/title.png`, a 1-bit indexed PNG (1.6 KB): index 0 transparent, index 1 the mark in `$770`. `payload/targ-st/title.json` carries the disk, picture and loader hashes, the loader steps it checked, the palette, and the provenance of the mark's slice of `E0` (byte range and SHA-256, as `payload/dion/panel.json` does). It also carries `markSha256`, a hash of the mark itself: one bit per pixel, most significant first, each row padded to a byte. The hash is of the mark rather than the file, because the compressed bytes depend on the zlib build.
+
+The browser decodes the PNG without colour conversion. It refuses an image of the wrong size, any pixel that is neither the mark's colour nor transparent, and a mark whose hash differs. The Browser Shell then shows it at its own size on every System Menu page in place of the Mercenary Pixel stand-in. The payload server answers `/payload/targ-st/title.png` by exact path, as it does the two fonts; no other PNG is served.
 
 ## Not done
 

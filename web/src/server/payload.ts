@@ -1,8 +1,10 @@
 import { join } from 'node:path';
 
-const FONT_FILES = new Map([
-  ['/payload/fonts/mercenary.woff2', 'fonts/mercenary.woff2'],
-  ['/payload/fonts/damocles.woff2', 'fonts/damocles.woff2']
+/// The payload's only binary files, by exact path: the two typefaces and Targ's Title Logo.
+const BINARY_FILES = new Map([
+  ['/payload/fonts/mercenary.woff2', 'font/woff2'],
+  ['/payload/fonts/damocles.woff2', 'font/woff2'],
+  ['/payload/targ-st/title.png', 'image/png']
 ]);
 
 /// Whether an `Accept-Encoding` header admits gzip. A `q=0` weight is a refusal, so it
@@ -32,15 +34,13 @@ export const payloadResponse = async (
     return undefined;
   }
 
-  const font = FONT_FILES.get(pathname);
-  if (font !== undefined) {
-    const file = Bun.file(join(payload, font));
+  const binary = BINARY_FILES.get(pathname);
+  if (binary !== undefined) {
+    const file = Bun.file(join(payload, pathname.slice('/payload/'.length)));
     if (!(await file.exists())) {
       return new Response('not found', { status: 404 });
     }
-    return new Response(file, {
-      headers: { 'content-type': 'font/woff2' }
-    });
+    return new Response(file, { headers: { 'content-type': binary } });
   }
 
   const name = pathname.slice('/payload/'.length);

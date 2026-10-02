@@ -41,6 +41,27 @@ describe('the localhost Data Payload route', () => {
     }
   });
 
+  test("serves Targ's Title Logo as the one PNG", async () => {
+    const root = await mkdtemp(join(tmpdir(), 'mercenary-png-route-'));
+    try {
+      await mkdir(join(root, 'targ-st'));
+      await writeFile(join(root, 'targ-st/title.png'), 'png');
+      await writeFile(join(root, 'targ-st/other.png'), 'png');
+
+      const response = await payloadResponse(
+        '/payload/targ-st/title.png',
+        root
+      );
+      expect(response?.status).toBe(200);
+      expect(response?.headers.get('content-type')).toBe('image/png');
+      expect(
+        (await payloadResponse('/payload/targ-st/other.png', root))?.status
+      ).toBe(404);
+    } finally {
+      await rm(root, { force: true, recursive: true });
+    }
+  });
+
   test('rejects unknown font names and traversal-shaped paths', async () => {
     const root = await mkdtemp(join(tmpdir(), 'mercenary-font-route-'));
     try {

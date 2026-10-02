@@ -1,11 +1,11 @@
 """Escape from Targ ST command line.
 
     python3 -m targlab files                 list the pinned disk's GEMDOS files
-    python3 -m targlab export [--out DIR]    write payload/targ-st/title.json
+    python3 -m targlab export [--out DIR]    write payload/targ-st/title.json and title.png
     python3 -m targlab confirm               check in Hatari that the title shown is E0
 
-`export` reads only the pinned STX. It writes decoded facts and their
-provenance; the picture itself never leaves the disk image.
+`export` reads only the pinned STX. It writes the mark as a PNG and its
+provenance as JSON; the rest of the picture never leaves the disk image.
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ from pathlib import Path
 
 from .confirm import TITLE_VBL, confirm
 from .disk import REPOSITORY, pinned_floppy
-from .title import extract
+from .title import IMAGE, extract
 
 
 def main() -> None:
@@ -36,9 +36,11 @@ def main() -> None:
             print(f'{entry.name:12} {entry.size:6} attributes ${entry.attributes:02X}')
         return
     args.out.mkdir(parents=True, exist_ok=True)
-    path = args.out / 'title.json'
-    path.write_text(json.dumps(extract(floppy), indent=2) + '\n')
-    print(path)
+    document, image = extract(floppy)
+    (args.out / 'title.json').write_text(json.dumps(document, indent=2) + '\n')
+    (args.out / IMAGE).write_bytes(image)
+    print(args.out / 'title.json')
+    print(args.out / IMAGE)
 
 
 if __name__ == '__main__':

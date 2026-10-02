@@ -13,17 +13,19 @@ Hatari confirmation is in docs/research/targ-st-title-logo.md.
 
 The Title Logo is every pixel of palette index 3: the MERCENARY lettering and
 the globe it overlaps, which are drawn as one connected mark in one colour.
-No other element of the picture uses index 3, and index 0 appears nowhere in
-`E0`, so `0` marks pixels outside the mark.
+No other element of the picture uses index 3. It is exported as a 1-bit PNG,
+transparent outside the mark.
 """
 
 from __future__ import annotations
 
 import struct
 
+from . import png
 from .disk import BASELINE, Floppy, sha256
 
 PICTURE, LOADER = 'E0', 'ESCAPE.PRG'
+IMAGE = 'title.png'
 WIDTH, HEIGHT, PLANES = 320, 200, 4
 HEADER = 128
 LOGO_INDEX = 3
@@ -78,14 +80,22 @@ def bounds(rows: list[list[int]], index: int) -> tuple[int, int, int, int]:
     return min(xs), min(ys), max(xs) + 1, max(ys) + 1
 
 
-def extract(floppy: Floppy) -> dict:
+def gun(word: int, shift: int) -> int:
+    """An ST gun level (3 bits) as 8-bit, as the Browser Shell shows it."""
+    return round(((word >> shift) & 7) * 255 / 7)
+
+
+def extract(floppy: Floppy) -> tuple[dict, bytes]:
+    """The title document and the mark as a PNG."""
     picture, loader = floppy.read(PICTURE), floppy.read(LOADER)
     facts = check_loader(loader, picture)
     rows = indices(picture)
-    if any(0 in row for row in rows):
-        raise ValueError(f'{PICTURE} uses index 0; it can no longer mark pixels outside the logo')
     left, top, right, bottom = bounds(rows, LOGO_INDEX)
     span = (HEADER + top * 160, HEADER + bottom * 160)
+    mark = [[value == LOGO_INDEX for value in row[left:right]] for row in rows[top:bottom]]
+    colours = list(struct.unpack_from('>16H', picture, 4))
+    colour = colours[LOGO_INDEX]
+    image = png.write(mark, (gun(colour, 8), gun(colour, 4), gun(colour, 0)))
     return {
         'schemaVersion': 1,
         'kind': 'titleLogo',
@@ -105,16 +115,20 @@ def extract(floppy: Floppy) -> dict:
                        'facts': facts},
         },
         'palette': {
-            'colours': list(struct.unpack_from('>16H', picture, 4)),
+            'colours': colours,
             'provenance': {'file': PICTURE, 'range': [4, 36], 'sha256': sha256(picture[4:36])},
         },
         'logo': {
             'index': LOGO_INDEX,
             'what': 'the MERCENARY lettering and the globe, one connected mark in one colour',
             'x': left, 'y': top, 'width': right - left, 'height': bottom - top,
-            'pixels': [''.join(f'{value:x}' if value == LOGO_INDEX else '0'
-                               for value in row[left:right]) for row in rows[top:bottom]],
+            'image': {
+                'file': IMAGE,
+                'format': 'PNG, 1-bit indexed: 0 transparent, 1 the mark in palette colour 3',
+                'markSha256': sha256(png.mark_bits(mark)),
+                'markEncoding': 'one bit per pixel, most significant first, rows padded to a byte',
+            },
             'provenance': {'file': PICTURE, 'range': list(span),
                            'sha256': sha256(picture[span[0]:span[1]])},
         },
-    }
+    }, image

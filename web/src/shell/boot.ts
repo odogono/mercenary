@@ -75,7 +75,7 @@ import { installSettingsView } from './settingsView.ts';
 import { installStorageWatch } from './storage.ts';
 import { installSuspensionHandlers } from './suspension.ts';
 import { titleStorageKeys } from './title.ts';
-import { readTargTitleLogo, targTitleLogoRgba } from './titleLogo.ts';
+import { loadTargTitleLogo } from './titleLogo.ts';
 import {
   applyTypeface,
   loadTypography,
@@ -183,17 +183,14 @@ try {
   assertBrowserDocument(location.pathname, 'gameplay');
   // Payload, settings and typography are independent localhost reads, so none waits behind
   // another.
-  const [bundle, settingsText, , logoText] = await Promise.all([
+  const [bundle, settingsText, , logo] = await Promise.all([
     load(fetchReader(new URL('/payload/', location.href).href)),
     requiredText(new URL('/settings.json', location.href)),
     loadTypography(),
-    requiredText(new URL('/payload/targ-st/title.json', location.href))
+    // Targ's Title Logo comes from the ST release, since the Reference Build has none (#696).
+    loadTargTitleLogo(new URL('/payload/', location.href))
   ]);
-  // Targ's Title Logo comes from the ST release, since the Reference Build has none (#696).
-  const logo = readTargTitleLogo(JSON.parse(logoText));
-  chrome.showLogo(
-    new ImageData(targTitleLogoRgba(logo), logo.width, logo.height)
-  );
+  chrome.showLogo(logo);
   let storage: Storage | undefined;
   try {
     storage = window.localStorage;
