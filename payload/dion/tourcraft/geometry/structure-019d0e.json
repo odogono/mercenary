@@ -1,0 +1,56 @@
+{
+  "geometry": {
+    "family": "structure",
+    "id": "structure-019d0e",
+    "record": "$19D0E",
+    "sha256": "5a3f9d1ae798e40d28fbef1a0abc9f92bf1733388767d60d07bd8ef8792e6e60",
+    "variants": {
+      "scale=1,1": {
+        "associations": [],
+        "attachments": [],
+        "entry": [
+          10,
+          10
+        ],
+        "heights": [
+          160,
+          128
+        ],
+        "plan": [],
+        "provenance": {
+          "range": [
+            "$19D06",
+            "$19D2B"
+          ],
+          "sha256": "22b01d60bd74d19abccb81e993d71083d187b5d9ab3cb4cad7e1916fd67511dc"
+        },
+        "regions": [
+          {
+            "bounds": {
+              "x": [
+                -32768,
+                32767
+              ],
+              "z": [
+                -32768,
+                32767
+              ]
+            },
+            "flags": 49152,
+            "queue": [],
+            "queueAddress": "$19D26"
+          }
+        ],
+        "sceneColours": [
+          32898,
+          32914
+        ],
+        "wallTexts": [],
+        "walls": []
+      }
+    }
+  },
+  "kind": "dion-play-geometry",
+  "schemaVersion": 1,
+  "source": "catalogue-immutable"
+}

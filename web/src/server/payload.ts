@@ -54,6 +54,12 @@ export const payloadResponse = async (
     ) &&
     !/^dion\/catalogue\/geometry\/(?:model|structure|detail|ground|island)-[\da-f]{6}\.json$/.test(
       name
+    ) &&
+    !/^dion\/tourcraft\/geometry\/(?:(?:model|structure|detail|ground|island)-[\da-f]{6}|sky-tail-0502c0)\.json$/.test(
+      name
+    ) &&
+    !/^dion\/tourcraft\/presentation\/(?:craft|gameplay|programmes|support|system|taxi)\.json$/.test(
+      name
     )
   ) {
     return new Response('not found', { status: 404 });

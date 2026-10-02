@@ -101,7 +101,7 @@ const phaseWord = (cosPhase: number): number =>
   Math.max(-0x80_00, Math.min(0x7f_ff, Math.floor(cosPhase * 0x80_00 + 0.5)));
 
 /// `$04FD44`: the phase at the Body between the eye and DIALIS, in the System XZ plane only.
-const phaseOf = (
+export const phaseOf = (
   body: Vector3,
   eye: Vector3
 ): { readonly first: 'lit' | 'shadow'; readonly split: number } => {

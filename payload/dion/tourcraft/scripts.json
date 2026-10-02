@@ -1,0 +1,3570 @@
+{
+ "schemaVersion": 1,
+ "source": {
+  "title": "dion",
+  "baseline": "Mercenary III research baseline (pinned ST STX)",
+  "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+  "programSize": 512160,
+  "tosSha256": "154803e3ff4851f3dc358b91b16d6b6110d187a81d8132ecb665af49878939d5",
+  "emulator": {
+   "version": "2.6.1",
+   "sha256": "05723606c75a1f0642395974abdce2cbbe48b0a09a747f65cdfca7ef9201e11a"
+  },
+  "capture": {
+   "recipe": "research/mercenary-iii-st/m3lab/boot.py",
+   "schedule": "export",
+   "inputs": [
+    [
+     6000,
+     [
+      "key",
+      114
+     ]
+    ],
+    [
+     7300,
+     [
+      "key",
+      102
+     ]
+    ],
+    [
+     10000,
+     [
+      "stick",
+      1
+     ]
+    ],
+    [
+     10650,
+     [
+      "stick",
+      0
+     ]
+    ],
+    [
+     10700,
+     [
+      "key",
+      48
+     ]
+    ],
+    [
+     11600,
+     [
+      "key",
+      78
+     ]
+    ],
+    [
+     11900,
+     [
+      "key",
+      78
+     ]
+    ],
+    [
+     12200,
+     [
+      "key",
+      102
+     ]
+    ],
+    [
+     22000,
+     [
+      "key",
+      38
+     ]
+    ]
+   ],
+   "loaded": {
+    "vbl": 6000,
+    "ramSha256": "f8d49b5227c03111be717c39defaabd0974b76d675e6d095a88a420efd124299"
+   },
+   "opening": {
+    "pc": "$5A41A",
+    "armedAtVbl": 4770,
+    "ramSha256": "c1476f479b6e4585b335c65890cb93312318d6e9b7d56cbe926ecf2e2bef8766"
+   },
+   "entry": {
+    "pc": "$6AC32",
+    "ramSha256": "9619599abfb61c6af0f4e8bce905c3be66ebf032319ec74c5c5fb871b6716a4c"
+   }
+  },
+  "evidence": "docs/research/mercenary-iii-integration.md#cold-boot-and-controlled-probes"
+ },
+ "kind": "scripts",
+ "ramSha256": "f8d49b5227c03111be717c39defaabd0974b76d675e6d095a88a420efd124299",
+ "sources": [
+  {
+   "range": [
+    "$52860",
+    "$528F6"
+   ],
+   "sha256": "6da13a9efa19ed8b3d1ed9dfe7f153c8657de7949e2961b212d3de32747137e5"
+  },
+  {
+   "range": [
+    "$6FF57",
+    "$7014B"
+   ],
+   "sha256": "932993c9afa69800f23f001efbb7a76c70f4e361b65c0d7b599129e720250165"
+  },
+  {
+   "range": [
+    "$701E0",
+    "$7040D"
+   ],
+   "sha256": "a69dd0c3c32ea2803214fe15e4b8d8b6c5fe164fbee0c19e67614eb2707b51f5"
+  },
+  {
+   "range": [
+    "$766BF",
+    "$76721"
+   ],
+   "sha256": "f8f3910c3f570f74030c6da3cf6fd44ab472139e41535c89b4601e7e457a0086"
+  },
+  {
+   "range": [
+    "$55A0E",
+    "$55B9E"
+   ],
+   "sha256": "1e2943d03ce0c8a95b15fe97aa8f7b46ee3b72d1995f18184c809004b1de584a"
+  },
+  {
+   "range": [
+    "$52EF2",
+    "$52F14"
+   ],
+   "sha256": "5c94b152991064df9993b8159d6759d89f8423a52ea424f8c5ca58bb2cdd6b04"
+  },
+  {
+   "range": [
+    "$6FF54",
+    "$6FF57"
+   ],
+   "sha256": "ffb8474eaa9f59f3bd6c948bcb15dbe90328882459e0e8d9a8dc1517bdf80a96"
+  },
+  {
+   "range": [
+    "$6FD44",
+    "$6FF46"
+   ],
+   "sha256": "8f88c6edf79e5bdd36a20ba038fc43d55ea53a06860b0b912b3434bbe1becb8e"
+  }
+ ],
+ "machine": {
+  "interpreter": "$52860",
+  "dispatchTable": "$5289E",
+  "opcodeMask": "$3F",
+  "maxOpcode": "$2B",
+  "pc": "$6EDA",
+  "stack": "$56D6 (long pointer; stack of longs grows down from $56D6)",
+  "waitCounter": "$7236 (+1 per unpaused VBL, $5312C)",
+  "flags": "$7270 (n < 32), $7274 (n >= 32)",
+  "availability": "$7352+n",
+  "entryTable": "$6FDC4+2n, offsets from $6FD44",
+  "busyGate": "returns while $723A != 0",
+  "rate": "one opcode per main-loop frame",
+  "branchRule": "taken when condition XOR bit 7; bit 6 = call instead of jump; target word relative to $6FD44",
+  "idle": "$6FF54 (jump to itself)"
+ },
+ "opcodes": [
+  {
+   "op": "$00",
+   "name": "end",
+   "layout": "-",
+   "length": 1,
+   "handler": "$528F6",
+   "meaning": "PC = $6FF54 (idle loop), clear flag 6, empty the stack",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$01",
+   "name": "ascii_text",
+   "layout": "asciiz",
+   "length": "asciiz",
+   "handler": "$52B22",
+   "meaning": "message from inline zero-terminated ASCII (not centred); hold = word $6FF46; request bar",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$02",
+   "name": "reset_wait",
+   "layout": "-",
+   "length": 1,
+   "handler": "$52B40",
+   "meaning": "wait counter $7236 = 0",
+   "usedByBoundedScripts": true
+  },
+  {
+   "op": "$03",
+   "name": "jump",
+   "layout": "o",
+   "length": 3,
+   "handler": "$52B4C",
+   "meaning": "PC = $6FD44 + offset",
+   "usedByBoundedScripts": true
+  },
+  {
+   "op": "$04",
+   "name": "call",
+   "layout": "o",
+   "length": 3,
+   "handler": "$52B54",
+   "meaning": "push return PC; PC = $6FD44 + offset",
+   "usedByBoundedScripts": true
+  },
+  {
+   "op": "$05",
+   "name": "return",
+   "layout": "-",
+   "length": 1,
+   "handler": "$52B66",
+   "meaning": "pop PC",
+   "usedByBoundedScripts": true
+  },
+  {
+   "op": "$06",
+   "name": "if_cell",
+   "layout": "bbT",
+   "length": 5,
+   "handler": "$52B84",
+   "meaning": "condition: bytes $70C3 == x and $70CB == z",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$07",
+   "name": "if_wait_below",
+   "layout": "wT",
+   "length": 5,
+   "handler": "$52BB0",
+   "meaning": "condition: wait counter $7236 < N (unsigned)",
+   "usedByBoundedScripts": true
+  },
+  {
+   "op": "$08",
+   "name": "end",
+   "layout": "-",
+   "length": 1,
+   "handler": "$528F6",
+   "meaning": "as $00",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$09",
+   "name": "end",
+   "layout": "-",
+   "length": 1,
+   "handler": "$528F6",
+   "meaning": "as $00",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$0A",
+   "name": "if_random_below",
+   "layout": "bT",
+   "length": 4,
+   "handler": "$52BD2",
+   "meaning": "condition: low byte of the next random word < operand; the word at ($75A6) is rotated right one bit and $75A6 advances within $DC00..$DFFE",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$0B",
+   "name": "if_key",
+   "layout": "bT",
+   "length": 4,
+   "handler": "$52C0E",
+   "meaning": "condition: byte $71FB == operand; a match also clicks ($55B6A)",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$0C",
+   "name": "if_object_held",
+   "layout": "bT",
+   "length": 4,
+   "handler": "$52C20",
+   "meaning": "condition: bit 7 of object state byte $641E+4*o",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$0D",
+   "name": "set_account",
+   "layout": "bB6",
+   "length": 8,
+   "handler": "$52C3A",
+   "meaning": "six bytes to account $6B1E+8*n",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$0E",
+   "name": "add_account",
+   "layout": "bB6",
+   "length": 8,
+   "handler": "$52C80",
+   "meaning": "account $6B1E+8*n += six BCD bytes (n = $F8 is cash $72DE, and also clicks)",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$0F",
+   "name": "set_variable",
+   "layout": "bw",
+   "length": 4,
+   "handler": "$52CB0",
+   "meaning": "word $70DE+2*n = value",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$10",
+   "name": "set_flag",
+   "layout": "b",
+   "length": 2,
+   "handler": "$52CCA",
+   "meaning": "set flag n; for n < 6 also write $B47A to $7556+4n and $B33A to $7582+4n, and start script $10 once flags 0-5 are all set",
+   "usedByBoundedScripts": true
+  },
+  {
+   "op": "$11",
+   "name": "clear_flag",
+   "layout": "b",
+   "length": 2,
+   "handler": "$52D18",
+   "meaning": "clear flag n",
+   "usedByBoundedScripts": true
+  },
+  {
+   "op": "$12",
+   "name": "if_flag",
+   "layout": "bT",
+   "length": 4,
+   "handler": "$52D32",
+   "meaning": "condition: flag n set",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$13",
+   "name": "if_72DC_zero",
+   "layout": "T",
+   "length": 3,
+   "handler": "$52D4C",
+   "meaning": "condition: word $72DC == 0",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$14",
+   "name": "id_message",
+   "layout": "b",
+   "length": 2,
+   "handler": "$52D58",
+   "meaning": "message n from the ID table without its header (n >= $F0: message number from word $70DE+2n); hold = word $6FF46; request bar",
+   "usedByBoundedScripts": true
+  },
+  {
+   "op": "$15",
+   "name": "add_accounts",
+   "layout": "bbb",
+   "length": 4,
+   "handler": "$52D98",
+   "meaning": "account a = account b + account c (BCD; a = $F8 clicks)",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$16",
+   "name": "adjust_6EAA",
+   "layout": "b",
+   "length": 2,
+   "handler": "$52DE8",
+   "meaning": "$6EAA = BCD($6EAA + operand), at most $99 (no bit 7) or at least $01 (bit 7); $6EAB = BCD(100 - $6EAA)",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$17",
+   "name": "if_below_6EAA",
+   "layout": "bT",
+   "length": 4,
+   "handler": "$52E1E",
+   "meaning": "condition: operand < byte $6EAA",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$18",
+   "name": "if_word_equal",
+   "layout": "owT",
+   "length": 7,
+   "handler": "$52E2C",
+   "meaning": "condition: word at $6FD44 + (offset & ~1) == value",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$19",
+   "name": "store2",
+   "layout": "obb",
+   "length": 5,
+   "handler": "$52E46",
+   "meaning": "two bytes to $6FD44 + offset (script bank: $0202 hold $6FF46, $0206 cabin animation $6FF4A)",
+   "usedByBoundedScripts": true
+  },
+  {
+   "op": "$1A",
+   "name": "end",
+   "layout": "-",
+   "length": 1,
+   "handler": "$528F6",
+   "meaning": "as $00",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$1B",
+   "name": "random_message",
+   "layout": "bb",
+   "length": 3,
+   "handler": "$52E6A",
+   "meaning": "message ((next random word & mask) + base) without its header; hold = word $6FF46",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$1C",
+   "name": "set_71FA",
+   "layout": "-",
+   "length": 1,
+   "handler": "$52EB4",
+   "meaning": "word $71FA = $00FF",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$1D",
+   "name": "halt",
+   "layout": "-",
+   "length": 1,
+   "handler": "$52EC0",
+   "meaning": "returns without advancing PC, so it repeats every frame",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$1E",
+   "name": "self_copy",
+   "layout": "-",
+   "length": 1,
+   "handler": "$52EC2",
+   "meaning": "copies word $70DE+2n onto itself, n = the next byte, which is not consumed (no effect)",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$1F",
+   "name": "if_72D8_is_71F4",
+   "layout": "T",
+   "length": 3,
+   "handler": "$52EE2",
+   "meaning": "condition: low byte of word $72D8 == byte $71F4",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$20",
+   "name": "object_bit",
+   "layout": "bb",
+   "length": 3,
+   "handler": "$52EF2",
+   "meaning": "operand b negative: set bit (b & 7) of $641E+4*o; otherwise clear it",
+   "usedByBoundedScripts": true
+  },
+  {
+   "op": "$21",
+   "name": "if_object_bit",
+   "layout": "bT",
+   "length": 4,
+   "handler": "$52F14",
+   "meaning": "condition: bit (n & 7) of $641E+4*[word $72DA]",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$22",
+   "name": "if_7125",
+   "layout": "bT",
+   "length": 4,
+   "handler": "$52F30",
+   "meaning": "condition: operand == word at odd address $7125 (a 68000 address error if reached)",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$23",
+   "name": "if_account_at_least",
+   "layout": "bLwT",
+   "length": 10,
+   "handler": "$52C5A",
+   "meaning": "condition: 48-bit account $6B1E+8*n >= long:word operand",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$24",
+   "name": "set_availability",
+   "layout": "bb",
+   "length": 3,
+   "handler": "$52E56",
+   "meaning": "byte $7352+n = value",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$25",
+   "name": "packed_text",
+   "layout": "packed",
+   "length": "packed",
+   "handler": "$52AC0",
+   "meaning": "decode packed text ($52AC4), centred; hold = word $6FF46; request bar",
+   "usedByBoundedScripts": true
+  },
+  {
+   "op": "$26",
+   "name": "timed_script",
+   "layout": "ww",
+   "length": 5,
+   "handler": "$52F54",
+   "meaning": "word $727E = countdown, word $7280 = script",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$27",
+   "name": "model_swap_a",
+   "layout": "-",
+   "length": 1,
+   "handler": "$52F6A",
+   "meaning": "model table [$4BD10]: +$C2 = +$278, +$1B4 = +$27A; clear bit 4 of $679E and $65A2; $6E84 = $FFFF",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$28",
+   "name": "model_swap_b",
+   "layout": "-",
+   "length": 1,
+   "handler": "$52FC8",
+   "meaning": "model table [$4BD10]: +$C2 = +$278, +$1B4 = +$0",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$29",
+   "name": "if_6B84",
+   "layout": "T",
+   "length": 3,
+   "handler": "$52FE0",
+   "meaning": "condition: long $6B84 == $44010032",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$2A",
+   "name": "set_6FF48",
+   "layout": "b",
+   "length": 2,
+   "handler": "$52FF2",
+   "meaning": "word $6FF48 = $FF00 | operand",
+   "usedByBoundedScripts": false
+  },
+  {
+   "op": "$2B",
+   "name": "if_taxi_passenger",
+   "layout": "T",
+   "length": 3,
+   "handler": "$52F3E",
+   "meaning": "condition: bit 6 of $6EB3 set and word $6CBC negative",
+   "usedByBoundedScripts": false
+  }
+ ],
+ "entries": [
+  {
+   "script": "$19",
+   "role": "opening (prison)",
+   "slot": "$6FDF6",
+   "offset": "$0213",
+   "address": "$6FF57",
+   "source": {
+    "range": [
+     "$6FDF6",
+     "$6FDF8"
+    ],
+    "sha256": "37421fb83261f3ac6e20752a7b170a3a29ee76a7cb4d1eb6f996891431fc59c0"
+   },
+   "availabilityCaptured": "$E0"
+  },
+  {
+   "script": "$33",
+   "role": "trip prison to spaceport",
+   "slot": "$6FE2A",
+   "offset": "$049C",
+   "address": "$701E0",
+   "source": {
+    "range": [
+     "$6FE2A",
+     "$6FE2C"
+    ],
+    "sha256": "d04dc45468d7f2d896bab4cdb33e08ad54f8efcea4a87310613df027f7cc5343"
+   },
+   "availabilityCaptured": "$80"
+  },
+  {
+   "script": "$34",
+   "role": "trip prison to solicitor",
+   "slot": "$6FE2C",
+   "offset": "$0671",
+   "address": "$703B5",
+   "source": {
+    "range": [
+     "$6FE2C",
+     "$6FE2E"
+    ],
+    "sha256": "428769051e811d9f578575d53a0bb0185133679238067b2dea29fc4639f2483a"
+   },
+   "availabilityCaptured": "$80"
+  }
+ ],
+ "routines": [
+  {
+   "name": "opening script $19",
+   "range": [
+    "$6FF57",
+    "$7014B"
+   ],
+   "aligned": true,
+   "instructions": [
+    {
+     "address": "$6FF57",
+     "byte": "$19",
+     "op": "$19",
+     "name": "store2",
+     "operands": [
+      {
+       "offset": "$0202",
+       "address": "$6FF46"
+      },
+      "$00",
+      "$C8"
+     ],
+     "source": {
+      "range": [
+       "$6FF57",
+       "$6FF5C"
+      ],
+      "sha256": "626acc405a5a78048d9a838e8325f30390de30f3f5dc0f5aea3f87af57a1d135"
+     },
+     "value": "$00C8",
+     "note": "message hold = 200 VBL"
+    },
+    {
+     "address": "$6FF5C",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69A9",
+       "address": "$766ED"
+      }
+     ],
+     "source": {
+      "range": [
+       "$6FF5C",
+       "$6FF5F"
+      ],
+      "sha256": "5925a33a8712727f3530a2c2f7800c9c796c83eee16a5c25dd89b33ba35fd8ed"
+     }
+    },
+    {
+     "address": "$6FF5F",
+     "byte": "$20",
+     "op": "$20",
+     "name": "object_bit",
+     "operands": [
+      "$26",
+      "$87"
+     ],
+     "source": {
+      "range": [
+       "$6FF5F",
+       "$6FF62"
+      ],
+      "sha256": "15a6eb34544a9c88a04397f9558b966ce237702de9fcc2c707e9e5e984628a44"
+     },
+     "note": "set bit 7 of $64B6"
+    },
+    {
+     "address": "$6FF62",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69A9",
+       "address": "$766ED"
+      }
+     ],
+     "source": {
+      "range": [
+       "$6FF62",
+       "$6FF65"
+      ],
+      "sha256": "5925a33a8712727f3530a2c2f7800c9c796c83eee16a5c25dd89b33ba35fd8ed"
+     }
+    },
+    {
+     "address": "$6FF65",
+     "byte": "$25",
+     "op": "$25",
+     "name": "packed_text",
+     "text": {
+      "address": "$6FF66",
+      "raw": "MESSAGE FROM\\ CHIEF PRISON OFFICER:",
+      "parts": [
+       {
+        "text": "MESSAGE FROM"
+       },
+       {
+        "token": "\\",
+        "expansion": " THE"
+       },
+       {
+        "text": " CHIEF PRISON OFFICER:"
+       }
+      ],
+      "text": "MESSAGE FROM THE CHIEF PRISON OFFICER:",
+      "source": {
+       "range": [
+        "$6FF66",
+        "$6FF81"
+       ],
+       "sha256": "b768a8c898d677fdcbb97561cabc28efea8d3910b1230c43cda22c716fe88d9d"
+      },
+      "length": 38,
+      "centrePad": 5
+     },
+     "source": {
+      "range": [
+       "$6FF65",
+       "$6FF81"
+      ],
+      "sha256": "15bd7cd68909f8b4acc5b1d0e9d368b15c983f86b5617b29ccec5cf9657fc83b"
+     }
+    },
+    {
+     "address": "$6FF81",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69CC",
+       "address": "$76710"
+      }
+     ],
+     "source": {
+      "range": [
+       "$6FF81",
+       "$6FF84"
+      ],
+      "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+     }
+    },
+    {
+     "address": "$6FF84",
+     "byte": "$25",
+     "op": "$25",
+     "name": "packed_text",
+     "text": {
+      "address": "$6FF85",
+      "raw": "YOUR SENTENCE WAS TO WAIT HERE FOR ^6 III",
+      "parts": [
+       {
+        "text": "YOUR SENTENCE WAS TO WAIT HERE FOR "
+       },
+       {
+        "token": "^6",
+        "expansion": "MERCENARY"
+       },
+       {
+        "text": " III"
+       }
+      ],
+      "text": "YOUR SENTENCE WAS TO WAIT HERE FOR MERCENARY III",
+      "source": {
+       "range": [
+        "$6FF85",
+        "$6FFA5"
+       ],
+       "sha256": "cfdcbb0dbbf69c0103d6f8669d442abdecda26df7e38822c1ec17283b627d4a9"
+      },
+      "length": 48,
+      "centrePad": 0
+     },
+     "source": {
+      "range": [
+       "$6FF84",
+       "$6FFA5"
+      ],
+      "sha256": "40c714c9b41b9a0cb63877a0a1f18e6bc129e866761a009c03eaebdb865c997d"
+     }
+    },
+    {
+     "address": "$6FFA5",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69CC",
+       "address": "$76710"
+      }
+     ],
+     "source": {
+      "range": [
+       "$6FFA5",
+       "$6FFA8"
+      ],
+      "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+     }
+    },
+    {
+     "address": "$6FFA8",
+     "byte": "$25",
+     "op": "$25",
+     "name": "packed_text",
+     "text": {
+      "address": "$6FFA9",
+      "raw": "CONGRATULATIONS ON YOUR PATIENCE - IT'S ARRIVED!",
+      "parts": [
+       {
+        "text": "CONGRATULATIONS ON YOUR PATIENCE - IT'S ARRIVED!"
+       }
+      ],
+      "text": "CONGRATULATIONS ON YOUR PATIENCE - IT'S ARRIVED!",
+      "source": {
+       "range": [
+        "$6FFA9",
+        "$6FFCE"
+       ],
+       "sha256": "67c647649a91196bf5e73e2e5ecd523ef4e009f7cb5b576b77e8c7129599427c"
+      },
+      "length": 48,
+      "centrePad": 0
+     },
+     "source": {
+      "range": [
+       "$6FFA8",
+       "$6FFCE"
+      ],
+      "sha256": "3f1cb80a40bac2632bb63476442e9ea3eb5b84135c352d6b5756e36658366c45"
+     }
+    },
+    {
+     "address": "$6FFCE",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69CC",
+       "address": "$76710"
+      }
+     ],
+     "source": {
+      "range": [
+       "$6FFCE",
+       "$6FFD1"
+      ],
+      "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+     }
+    },
+    {
+     "address": "$6FFD1",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$699B",
+       "address": "$766DF"
+      }
+     ],
+     "source": {
+      "range": [
+       "$6FFD1",
+       "$6FFD4"
+      ],
+      "sha256": "b3ecd05b069671f596f5c3bd90eb4d441912b4cee3a6d1de03a135ed0051487a"
+     }
+    },
+    {
+     "address": "$6FFD4",
+     "byte": "$25",
+     "op": "$25",
+     "name": "packed_text",
+     "text": {
+      "address": "$6FFD5",
+      "raw": "YOU WILL NOW FIND THINGS SOMEWHAT DIFFERENT SO",
+      "parts": [
+       {
+        "text": "YOU WILL NOW FIND THINGS SOMEWHAT DIFFERENT SO"
+       }
+      ],
+      "text": "YOU WILL NOW FIND THINGS SOMEWHAT DIFFERENT SO",
+      "source": {
+       "range": [
+        "$6FFD5",
+        "$6FFF9"
+       ],
+       "sha256": "cf76a86146045abfb14d6c67ba55a26b9057c1361daaffc586afb90f7a957953"
+      },
+      "length": 46,
+      "centrePad": 1
+     },
+     "source": {
+      "range": [
+       "$6FFD4",
+       "$6FFF9"
+      ],
+      "sha256": "72bb58d116b68d4712910bbeb70d6975b5c1fa194623368f88174914cd1970bf"
+     }
+    },
+    {
+     "address": "$6FFF9",
+     "byte": "$25",
+     "op": "$25",
+     "name": "packed_text",
+     "text": {
+      "address": "$6FFFA",
+      "raw": "I HAVE ADDED TWO ITEMS TO YOUR POSSESSIONS",
+      "parts": [
+       {
+        "text": "I HAVE ADDED TWO ITEMS TO YOUR POSSESSIONS"
+       }
+      ],
+      "text": "I HAVE ADDED TWO ITEMS TO YOUR POSSESSIONS",
+      "source": {
+       "range": [
+        "$6FFFA",
+        "$7001B"
+       ],
+       "sha256": "26bebb3b34377df6d8d82fc5792dae94adbfb1e4430c7cb2c32509010d826181"
+      },
+      "length": 42,
+      "centrePad": 3
+     },
+     "source": {
+      "range": [
+       "$6FFF9",
+       "$7001B"
+      ],
+      "sha256": "b31b82f7e83d908befbad1d8eb68a4415694841e4ee2f19d0c38695b1af79e3e"
+     }
+    },
+    {
+     "address": "$7001B",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69CC",
+       "address": "$76710"
+      }
+     ],
+     "source": {
+      "range": [
+       "$7001B",
+       "$7001E"
+      ],
+      "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+     }
+    },
+    {
+     "address": "$7001E",
+     "byte": "$25",
+     "op": "$25",
+     "name": "packed_text",
+     "text": {
+      "address": "$7001F",
+      "raw": "QUITE ESSENTIAL - A BUS PASS AND A TAXICARD",
+      "parts": [
+       {
+        "text": "QUITE ESSENTIAL - A BUS PASS AND A TAXICARD"
+       }
+      ],
+      "text": "QUITE ESSENTIAL - A BUS PASS AND A TAXICARD",
+      "source": {
+       "range": [
+        "$7001F",
+        "$70040"
+       ],
+       "sha256": "745cc1dc7b03dbccc4df2302e38715a0f1b5f0549bae48ece0524d5e3e8a38e9"
+      },
+      "length": 43,
+      "centrePad": 3
+     },
+     "source": {
+      "range": [
+       "$7001E",
+       "$70040"
+      ],
+      "sha256": "911dbffa143f7a49c83a131f9d2f3e903310983a0d1398863d9476146ed3ed06"
+     }
+    },
+    {
+     "address": "$70040",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69A2",
+       "address": "$766E6"
+      }
+     ],
+     "source": {
+      "range": [
+       "$70040",
+       "$70043"
+      ],
+      "sha256": "b233caa051b1ef849703744a1177cf3fd41fb45c08e35588105943732db185d7"
+     }
+    },
+    {
+     "address": "$70043",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69CC",
+       "address": "$76710"
+      }
+     ],
+     "source": {
+      "range": [
+       "$70043",
+       "$70046"
+      ],
+      "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+     }
+    },
+    {
+     "address": "$70046",
+     "byte": "$25",
+     "op": "$25",
+     "name": "packed_text",
+     "text": {
+      "address": "$70047",
+      "raw": "THERE HAS BEEN A CALL FOR YOU TODAY",
+      "parts": [
+       {
+        "text": "THERE HAS BEEN A CALL FOR YOU TODAY"
+       }
+      ],
+      "text": "THERE HAS BEEN A CALL FOR YOU TODAY",
+      "source": {
+       "range": [
+        "$70047",
+        "$70062"
+       ],
+       "sha256": "487b2fdaa796b5cef6859084dda2e27b80a07f252c5b5226192e5b1131537a89"
+      },
+      "length": 35,
+      "centrePad": 7
+     },
+     "source": {
+      "range": [
+       "$70046",
+       "$70062"
+      ],
+      "sha256": "e7779f13978efca0b4b0dd08e5c01cbac823d2c5c7c232a082fe6a43336a968b"
+     }
+    },
+    {
+     "address": "$70062",
+     "byte": "$25",
+     "op": "$25",
+     "name": "packed_text",
+     "text": {
+      "address": "$70063",
+      "raw": "A MR ^5 INVITES YOU TO CALL ON HIM . .",
+      "parts": [
+       {
+        "text": "A MR "
+       },
+       {
+        "token": "^5",
+        "expansion": "P C BIL"
+       },
+       {
+        "text": " INVITES YOU TO CALL ON HIM . ."
+       }
+      ],
+      "text": "A MR P C BIL INVITES YOU TO CALL ON HIM . .",
+      "source": {
+       "range": [
+        "$70063",
+        "$70081"
+       ],
+       "sha256": "4f92a7f6ecaf3dc24283a41eeb3205f1e6a4284c681007180565e9312d00cdc5"
+      },
+      "length": 43,
+      "centrePad": 3
+     },
+     "source": {
+      "range": [
+       "$70062",
+       "$70081"
+      ],
+      "sha256": "1506125a4826f867dabf72f4be05221f763359a38b5974c0e0c144383511d885"
+     }
+    },
+    {
+     "address": "$70081",
+     "byte": "$25",
+     "op": "$25",
+     "name": "packed_text",
+     "text": {
+      "address": "$70082",
+      "raw": "HIS PERSONAL CRAFT AWAITS YOU AT\\ SPACEPORT",
+      "parts": [
+       {
+        "text": "HIS PERSONAL CRAFT AWAITS YOU AT"
+       },
+       {
+        "token": "\\",
+        "expansion": " THE"
+       },
+       {
+        "text": " SPACEPORT"
+       }
+      ],
+      "text": "HIS PERSONAL CRAFT AWAITS YOU AT THE SPACEPORT",
+      "source": {
+       "range": [
+        "$70082",
+        "$700A3"
+       ],
+       "sha256": "f22478995f6affc3825ba3dcc55d12b011ee59a90a2a9c16e3953bba75956080"
+      },
+      "length": 46,
+      "centrePad": 1
+     },
+     "source": {
+      "range": [
+       "$70081",
+       "$700A3"
+      ],
+      "sha256": "6d264dac04e76d1dff17dd64f6bb769daed140a76672c8750d4df97e8e688725"
+     }
+    },
+    {
+     "address": "$700A3",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$699B",
+       "address": "$766DF"
+      }
+     ],
+     "source": {
+      "range": [
+       "$700A3",
+       "$700A6"
+      ],
+      "sha256": "b3ecd05b069671f596f5c3bd90eb4d441912b4cee3a6d1de03a135ed0051487a"
+     }
+    },
+    {
+     "address": "$700A6",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69CC",
+       "address": "$76710"
+      }
+     ],
+     "source": {
+      "range": [
+       "$700A6",
+       "$700A9"
+      ],
+      "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+     }
+    },
+    {
+     "address": "$700A9",
+     "byte": "$25",
+     "op": "$25",
+     "name": "packed_text",
+     "text": {
+      "address": "$700AA",
+      "raw": "OH YES -\\ LETTER OUTSIDE ARRIVED THIS MORNING",
+      "parts": [
+       {
+        "text": "OH YES -"
+       },
+       {
+        "token": "\\",
+        "expansion": " THE"
+       },
+       {
+        "text": " LETTER OUTSIDE ARRIVED THIS MORNING"
+       }
+      ],
+      "text": "OH YES - THE LETTER OUTSIDE ARRIVED THIS MORNING",
+      "source": {
+       "range": [
+        "$700AA",
+        "$700CD"
+       ],
+       "sha256": "bd23da7e002bdbb8c003e16aca84b527cde6f9e7e1288b111e36860bd5c3752b"
+      },
+      "length": 48,
+      "centrePad": 0
+     },
+     "source": {
+      "range": [
+       "$700A9",
+       "$700CD"
+      ],
+      "sha256": "94bfe044ffa01a08b9df2b14216bab6615d417859d9bad1d5ae847f37e66d32d"
+     }
+    },
+    {
+     "address": "$700CD",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69CC",
+       "address": "$76710"
+      }
+     ],
+     "source": {
+      "range": [
+       "$700CD",
+       "$700D0"
+      ],
+      "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+     }
+    },
+    {
+     "address": "$700D0",
+     "byte": "$25",
+     "op": "$25",
+     "name": "packed_text",
+     "text": {
+      "address": "$700D1",
+      "raw": "GOOD LUCK - CALL A TAXI WHEN YOU'RE READY TO GO",
+      "parts": [
+       {
+        "text": "GOOD LUCK - CALL A TAXI WHEN YOU'RE READY TO GO"
+       }
+      ],
+      "text": "GOOD LUCK - CALL A TAXI WHEN YOU'RE READY TO GO",
+      "source": {
+       "range": [
+        "$700D1",
+        "$700F5"
+       ],
+       "sha256": "0b58dca2e0b42d4cdb2aa0d2cc65513b06f49191ead8d0c31f7d37b0c03083f6"
+      },
+      "length": 47,
+      "centrePad": 1
+     },
+     "source": {
+      "range": [
+       "$700D0",
+       "$700F5"
+      ],
+      "sha256": "804bea2d50954cdacd428e82998fc66935845b6282c5e53f35add9b78cb69b0e"
+     }
+    },
+    {
+     "address": "$700F5",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69A9",
+       "address": "$766ED"
+      }
+     ],
+     "source": {
+      "range": [
+       "$700F5",
+       "$700F8"
+      ],
+      "sha256": "5925a33a8712727f3530a2c2f7800c9c796c83eee16a5c25dd89b33ba35fd8ed"
+     }
+    },
+    {
+     "address": "$700F8",
+     "byte": "$25",
+     "op": "$25",
+     "name": "packed_text",
+     "text": {
+      "address": "$700F9",
+      "raw": "PRESS 'ENTER' KEY TO ACTIVATE YOUR TAXICARD",
+      "parts": [
+       {
+        "text": "PRESS 'ENTER' KEY TO ACTIVATE YOUR TAXICARD"
+       }
+      ],
+      "text": "PRESS 'ENTER' KEY TO ACTIVATE YOUR TAXICARD",
+      "source": {
+       "range": [
+        "$700F9",
+        "$7011A"
+       ],
+       "sha256": "c862902ba798b8f318b8bd41de9d22001c866d327c11529526578aebb367a0af"
+      },
+      "length": 43,
+      "centrePad": 3
+     },
+     "source": {
+      "range": [
+       "$700F8",
+       "$7011A"
+      ],
+      "sha256": "1b0d29b7ac72ff4ac84d607c5f16bdf3630fbf1fd40cee6d0f900ce16f9b768d"
+     }
+    },
+    {
+     "address": "$7011A",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69A9",
+       "address": "$766ED"
+      }
+     ],
+     "source": {
+      "range": [
+       "$7011A",
+       "$7011D"
+      ],
+      "sha256": "5925a33a8712727f3530a2c2f7800c9c796c83eee16a5c25dd89b33ba35fd8ed"
+     }
+    },
+    {
+     "address": "$7011D",
+     "byte": "$25",
+     "op": "$25",
+     "name": "packed_text",
+     "text": {
+      "address": "$7011E",
+      "raw": "PRESS * TO CALL TAXI - ON ARRIVAL 'B' TO BOARD",
+      "parts": [
+       {
+        "text": "PRESS * TO CALL TAXI - ON ARRIVAL 'B' TO BOARD"
+       }
+      ],
+      "text": "PRESS * TO CALL TAXI - ON ARRIVAL 'B' TO BOARD",
+      "source": {
+       "range": [
+        "$7011E",
+        "$70142"
+       ],
+       "sha256": "ce1fac6fd106c0b36e60eca520908812d3561c77da2979c17e59e1a148d936fb"
+      },
+      "length": 46,
+      "centrePad": 1
+     },
+     "source": {
+      "range": [
+       "$7011D",
+       "$70142"
+      ],
+      "sha256": "0250a692317035aef395a92d6aa9757a2ef9742d180da20923a6133c3bdd5965"
+     }
+    },
+    {
+     "address": "$70142",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69A9",
+       "address": "$766ED"
+      }
+     ],
+     "source": {
+      "range": [
+       "$70142",
+       "$70145"
+      ],
+      "sha256": "5925a33a8712727f3530a2c2f7800c9c796c83eee16a5c25dd89b33ba35fd8ed"
+     }
+    },
+    {
+     "address": "$70145",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69A9",
+       "address": "$766ED"
+      }
+     ],
+     "source": {
+      "range": [
+       "$70145",
+       "$70148"
+      ],
+      "sha256": "5925a33a8712727f3530a2c2f7800c9c796c83eee16a5c25dd89b33ba35fd8ed"
+     }
+    },
+    {
+     "address": "$70148",
+     "byte": "$03",
+     "op": "$03",
+     "name": "jump",
+     "operands": [
+      {
+       "offset": "$697B",
+       "address": "$766BF"
+      }
+     ],
+     "source": {
+      "range": [
+       "$70148",
+       "$7014B"
+      ],
+      "sha256": "05c4a4264d3db74e066c1f10f5c4a02638361d748edcb810d938fd6823ef7606"
+     }
+    }
+   ],
+   "unknownOpcodes": []
+  },
+  {
+   "name": "trip scripts $33 and $34",
+   "range": [
+    "$701E0",
+    "$7040D"
+   ],
+   "aligned": true,
+   "instructions": [
+    {
+     "address": "$701E0",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$699B",
+       "address": "$766DF"
+      }
+     ],
+     "source": {
+      "range": [
+       "$701E0",
+       "$701E3"
+      ],
+      "sha256": "b3ecd05b069671f596f5c3bd90eb4d441912b4cee3a6d1de03a135ed0051487a"
+     }
+    },
+    {
+     "address": "$701E3",
+     "byte": "$25",
+     "op": "$25",
+     "name": "packed_text",
+     "text": {
+      "address": "$701E4",
+      "raw": "THANKYOU - MR ^5 HAS PRE-PAID FOR THIS TRIP",
+      "parts": [
+       {
+        "text": "THANKYOU - MR "
+       },
+       {
+        "token": "^5",
+        "expansion": "P C BIL"
+       },
+       {
+        "text": " HAS PRE-PAID FOR THIS TRIP"
+       }
+      ],
+      "text": "THANKYOU - MR P C BIL HAS PRE-PAID FOR THIS TRIP",
+      "source": {
+       "range": [
+        "$701E4",
+        "$70205"
+       ],
+       "sha256": "0604b1d0caf325bcfce6ddd467707ac3bebfc96dce6bae198232992b36ed3680"
+      },
+      "length": 48,
+      "centrePad": 0
+     },
+     "source": {
+      "range": [
+       "$701E3",
+       "$70205"
+      ],
+      "sha256": "a9a6dfe91c0bb9f6aa3ce37c9a18655a57a46f93464c03e839a138b170592ebe"
+     }
+    },
+    {
+     "address": "$70205",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69A2",
+       "address": "$766E6"
+      }
+     ],
+     "source": {
+      "range": [
+       "$70205",
+       "$70208"
+      ],
+      "sha256": "b233caa051b1ef849703744a1177cf3fd41fb45c08e35588105943732db185d7"
+     }
+    },
+    {
+     "address": "$70208",
+     "byte": "$19",
+     "op": "$19",
+     "name": "store2",
+     "operands": [
+      {
+       "offset": "$0206",
+       "address": "$6FF4A"
+      },
+      "$04",
+      "$10"
+     ],
+     "source": {
+      "range": [
+       "$70208",
+       "$7020D"
+      ],
+      "sha256": "b5bd90b256c719af5d648e5642c03c9f11725d364d02ec6dcd4f6c476db857b0"
+     },
+     "value": "$0410",
+     "note": "cabin animation sequence at $70154"
+    },
+    {
+     "address": "$7020D",
+     "byte": "$25",
+     "op": "$25",
+     "name": "packed_text",
+     "text": {
+      "address": "$7020E",
+      "raw": "ANY TIME YOU NEED US - JUST USE\\ TAXICARD",
+      "parts": [
+       {
+        "text": "ANY TIME YOU NEED US - JUST USE"
+       },
+       {
+        "token": "\\",
+        "expansion": " THE"
+       },
+       {
+        "text": " TAXICARD"
+       }
+      ],
+      "text": "ANY TIME YOU NEED US - JUST USE THE TAXICARD",
+      "source": {
+       "range": [
+        "$7020E",
+        "$7022E"
+       ],
+       "sha256": "9c50f3cea663da50567a6707e587d55b57946f1e053c0fe0333a2dc4a87b74b4"
+      },
+      "length": 44,
+      "centrePad": 2
+     },
+     "source": {
+      "range": [
+       "$7020D",
+       "$7022E"
+      ],
+      "sha256": "3182afc8c51da9a6fbdc61fc60f2f5e4a4fbf5278379a9394358b549934899f2"
+     }
+    },
+    {
+     "address": "$7022E",
+     "byte": "$19",
+     "op": "$19",
+     "name": "store2",
+     "operands": [
+      {
+       "offset": "$0206",
+       "address": "$6FF4A"
+      },
+      "$04",
+      "$07"
+     ],
+     "source": {
+      "range": [
+       "$7022E",
+       "$70233"
+      ],
+      "sha256": "ae571bd9b81796a914789027b3ce48dadbe5e119ca2ef2b0371e921d17a16918"
+     },
+     "value": "$0407",
+     "note": "cabin animation sequence at $7014B"
+    },
+    {
+     "address": "$70233",
+     "byte": "$25",
+     "op": "$25",
+     "name": "packed_text",
+     "text": {
+      "address": "$70234",
+      "raw": "OUR RATES ARE VERY REASONABLE - USUALLY",
+      "parts": [
+       {
+        "text": "OUR RATES ARE VERY REASONABLE - USUALLY"
+       }
+      ],
+      "text": "OUR RATES ARE VERY REASONABLE - USUALLY",
+      "source": {
+       "range": [
+        "$70234",
+        "$70252"
+       ],
+       "sha256": "50d7a32c1316040264c34b3404adae7b91b3aba8e8ff62540f4158db04a692eb"
+      },
+      "length": 39,
+      "centrePad": 5
+     },
+     "source": {
+      "range": [
+       "$70233",
+       "$70252"
+      ],
+      "sha256": "ca1da4751cce41f881746f9552eb8697958809eaa1e1c97b11c5af7fb14f4663"
+     }
+    },
+    {
+     "address": "$70252",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69CC",
+       "address": "$76710"
+      }
+     ],
+     "source": {
+      "range": [
+       "$70252",
+       "$70255"
+      ],
+      "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+     }
+    },
+    {
+     "address": "$70255",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69A9",
+       "address": "$766ED"
+      }
+     ],
+     "source": {
+      "range": [
+       "$70255",
+       "$70258"
+      ],
+      "sha256": "5925a33a8712727f3530a2c2f7800c9c796c83eee16a5c25dd89b33ba35fd8ed"
+     }
+    },
+    {
+     "address": "$70258",
+     "byte": "$25",
+     "op": "$25",
+     "name": "packed_text",
+     "text": {
+      "address": "$70259",
+      "raw": "ANYWAY - YOU ARE\\ ^6 THAT SAVED ERIS",
+      "parts": [
+       {
+        "text": "ANYWAY - YOU ARE"
+       },
+       {
+        "token": "\\",
+        "expansion": " THE"
+       },
+       {
+        "text": " "
+       },
+       {
+        "token": "^6",
+        "expansion": "MERCENARY"
+       },
+       {
+        "text": " THAT SAVED ERIS"
+       }
+      ],
+      "text": "ANYWAY - YOU ARE THE MERCENARY THAT SAVED ERIS",
+      "source": {
+       "range": [
+        "$70259",
+        "$70275"
+       ],
+       "sha256": "047f13dffdaa61f83469107d7da7f71a96dc4a22de75023aadcfbec347bfbbad"
+      },
+      "length": 46,
+      "centrePad": 1
+     },
+     "source": {
+      "range": [
+       "$70258",
+       "$70275"
+      ],
+      "sha256": "2e7e5e5eb5c0ef8d07ffebcad25a3c88c98b316aac3a5727ff132b3e0c861e30"
+     }
+    },
+    {
+     "address": "$70275",
+     "byte": "$25",
+     "op": "$25",
+     "name": "packed_text",
+     "text": {
+      "address": "$70276",
+      "raw": "SO I SUPPOSE YOU CAN AFFORD MOST THINGS",
+      "parts": [
+       {
+        "text": "SO I SUPPOSE YOU CAN AFFORD MOST THINGS"
+       }
+      ],
+      "text": "SO I SUPPOSE YOU CAN AFFORD MOST THINGS",
+      "source": {
+       "range": [
+        "$70276",
+        "$70294"
+       ],
+       "sha256": "04724e61e60434b01aa9285ee3e482b1bf1331c01d9b4a8fe0c3c0e4c4e26583"
+      },
+      "length": 39,
+      "centrePad": 5
+     },
+     "source": {
+      "range": [
+       "$70275",
+       "$70294"
+      ],
+      "sha256": "923a9b9b40ce47d6c1c14a135fac9616204ef11c971893ba4aee78ee09c3ae8e"
+     }
+    },
+    {
+     "address": "$70294",
+     "byte": "$19",
+     "op": "$19",
+     "name": "store2",
+     "operands": [
+      {
+       "offset": "$0206",
+       "address": "$6FF4A"
+      },
+      "$04",
+      "$0A"
+     ],
+     "source": {
+      "range": [
+       "$70294",
+       "$70299"
+      ],
+      "sha256": "162ed693e6b5e51283b94d71ce216ba76e2be8b72aca82214818e0c8df1f0c1b"
+     },
+     "value": "$040A",
+     "note": "cabin animation sequence at $7014E"
+    },
+    {
+     "address": "$70299",
+     "byte": "$25",
+     "op": "$25",
+     "name": "packed_text",
+     "text": {
+      "address": "$7029A",
+      "raw": "EVEN TAXI FARES!",
+      "parts": [
+       {
+        "text": "EVEN TAXI FARES!"
+       }
+      ],
+      "text": "EVEN TAXI FARES!",
+      "source": {
+       "range": [
+        "$7029A",
+        "$702A7"
+       ],
+       "sha256": "c1309538fa585507ec607829681b1fd706b4f27e17b03a025c370defc5ac126d"
+      },
+      "length": 16,
+      "centrePad": 16
+     },
+     "source": {
+      "range": [
+       "$70299",
+       "$702A7"
+      ],
+      "sha256": "307f374d851c037984a493dc0bcfcd733d68ba5a1573fdd991ab6c36c3d9eed7"
+     }
+    },
+    {
+     "address": "$702A7",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69CC",
+       "address": "$76710"
+      }
+     ],
+     "source": {
+      "range": [
+       "$702A7",
+       "$702AA"
+      ],
+      "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+     }
+    },
+    {
+     "address": "$702AA",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69A9",
+       "address": "$766ED"
+      }
+     ],
+     "source": {
+      "range": [
+       "$702AA",
+       "$702AD"
+      ],
+      "sha256": "5925a33a8712727f3530a2c2f7800c9c796c83eee16a5c25dd89b33ba35fd8ed"
+     }
+    },
+    {
+     "address": "$702AD",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69A9",
+       "address": "$766ED"
+      }
+     ],
+     "source": {
+      "range": [
+       "$702AD",
+       "$702B0"
+      ],
+      "sha256": "5925a33a8712727f3530a2c2f7800c9c796c83eee16a5c25dd89b33ba35fd8ed"
+     }
+    },
+    {
+     "address": "$702B0",
+     "byte": "$19",
+     "op": "$19",
+     "name": "store2",
+     "operands": [
+      {
+       "offset": "$0206",
+       "address": "$6FF4A"
+      },
+      "$04",
+      "$07"
+     ],
+     "source": {
+      "range": [
+       "$702B0",
+       "$702B5"
+      ],
+      "sha256": "ae571bd9b81796a914789027b3ce48dadbe5e119ca2ef2b0371e921d17a16918"
+     },
+     "value": "$0407",
+     "note": "cabin animation sequence at $7014B"
+    },
+    {
+     "address": "$702B5",
+     "byte": "$25",
+     "op": "$25",
+     "name": "packed_text",
+     "text": {
+      "address": "$702B6",
+      "raw": "EXCELLENT JOB YOU DID ON DAMOCLES",
+      "parts": [
+       {
+        "text": "EXCELLENT JOB YOU DID ON DAMOCLES"
+       }
+      ],
+      "text": "EXCELLENT JOB YOU DID ON DAMOCLES",
+      "source": {
+       "range": [
+        "$702B6",
+        "$702D0"
+       ],
+       "sha256": "f92d311fb984d371cfb1777ec6e87df133460a191dec209ae85041ed81cf686a"
+      },
+      "length": 33,
+      "centrePad": 8
+     },
+     "source": {
+      "range": [
+       "$702B5",
+       "$702D0"
+      ],
+      "sha256": "369f5de205d982d33f683de0c9130377596a33397cc16fea045afe83e9bc5a91"
+     }
+    },
+    {
+     "address": "$702D0",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69CC",
+       "address": "$76710"
+      }
+     ],
+     "source": {
+      "range": [
+       "$702D0",
+       "$702D3"
+      ],
+      "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+     }
+    },
+    {
+     "address": "$702D3",
+     "byte": "$25",
+     "op": "$25",
+     "name": "packed_text",
+     "text": {
+      "address": "$702D4",
+      "raw": "THERE'S TO BE AN ^9 SOON",
+      "parts": [
+       {
+        "text": "THERE'S TO BE AN "
+       },
+       {
+        "token": "^9",
+        "expansion": "ELECTION"
+       },
+       {
+        "text": " SOON"
+       }
+      ],
+      "text": "THERE'S TO BE AN ELECTION SOON",
+      "source": {
+       "range": [
+        "$702D4",
+        "$702E7"
+       ],
+       "sha256": "1e27c63cdb34646b8348b7f289df59dfccc54fa2f33426d1191651e0bd3a2ab9"
+      },
+      "length": 30,
+      "centrePad": 9
+     },
+     "source": {
+      "range": [
+       "$702D3",
+       "$702E7"
+      ],
+      "sha256": "5171419dc45b1e17f90fb940178e3983206fbb2053fd0276bd8bdb34790cb884"
+     }
+    },
+    {
+     "address": "$702E7",
+     "byte": "$19",
+     "op": "$19",
+     "name": "store2",
+     "operands": [
+      {
+       "offset": "$0206",
+       "address": "$6FF4A"
+      },
+      "$04",
+      "$10"
+     ],
+     "source": {
+      "range": [
+       "$702E7",
+       "$702EC"
+      ],
+      "sha256": "b5bd90b256c719af5d648e5642c03c9f11725d364d02ec6dcd4f6c476db857b0"
+     },
+     "value": "$0410",
+     "note": "cabin animation sequence at $70154"
+    },
+    {
+     "address": "$702EC",
+     "byte": "$25",
+     "op": "$25",
+     "name": "packed_text",
+     "text": {
+      "address": "$702ED",
+      "raw": "YOU SHOULD BECOME ^8",
+      "parts": [
+       {
+        "text": "YOU SHOULD BECOME "
+       },
+       {
+        "token": "^8",
+        "expansion": "PRESIDENT"
+       }
+      ],
+      "text": "YOU SHOULD BECOME PRESIDENT",
+      "source": {
+       "range": [
+        "$702ED",
+        "$702FD"
+       ],
+       "sha256": "f0286542de3202e16949213f6d83f30b4def99009349f86671814c34f84eab66"
+      },
+      "length": 27,
+      "centrePad": 11
+     },
+     "source": {
+      "range": [
+       "$702EC",
+       "$702FD"
+      ],
+      "sha256": "e64fcc54c5acf5cdd0de33f6d8763c34147b0b11c06bbc06d1aa0046fbdf7626"
+     }
+    },
+    {
+     "address": "$702FD",
+     "byte": "$25",
+     "op": "$25",
+     "name": "packed_text",
+     "text": {
+      "address": "$702FE",
+      "raw": "I THINK WE NEED SOMEONE LIKE YOU",
+      "parts": [
+       {
+        "text": "I THINK WE NEED SOMEONE LIKE YOU"
+       }
+      ],
+      "text": "I THINK WE NEED SOMEONE LIKE YOU",
+      "source": {
+       "range": [
+        "$702FE",
+        "$70317"
+       ],
+       "sha256": "5735b39418c71fe350c771b5fe2a8c3415bf4d6c8171695d5ace6e07478f1555"
+      },
+      "length": 32,
+      "centrePad": 8
+     },
+     "source": {
+      "range": [
+       "$702FD",
+       "$70317"
+      ],
+      "sha256": "6423aa4525312ada5449ca85f22f8fc49afadcd34b76724c07581b5b89ef6fd6"
+     }
+    },
+    {
+     "address": "$70317",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69CC",
+       "address": "$76710"
+      }
+     ],
+     "source": {
+      "range": [
+       "$70317",
+       "$7031A"
+      ],
+      "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+     }
+    },
+    {
+     "address": "$7031A",
+     "byte": "$19",
+     "op": "$19",
+     "name": "store2",
+     "operands": [
+      {
+       "offset": "$0206",
+       "address": "$6FF4A"
+      },
+      "$04",
+      "$10"
+     ],
+     "source": {
+      "range": [
+       "$7031A",
+       "$7031F"
+      ],
+      "sha256": "b5bd90b256c719af5d648e5642c03c9f11725d364d02ec6dcd4f6c476db857b0"
+     },
+     "value": "$0410",
+     "note": "cabin animation sequence at $70154"
+    },
+    {
+     "address": "$7031F",
+     "byte": "$25",
+     "op": "$25",
+     "name": "packed_text",
+     "text": {
+      "address": "$70320",
+      "raw": "I DON'T TRUST THIS BIL CHARACTER",
+      "parts": [
+       {
+        "text": "I DON'T TRUST THIS BIL CHARACTER"
+       }
+      ],
+      "text": "I DON'T TRUST THIS BIL CHARACTER",
+      "source": {
+       "range": [
+        "$70320",
+        "$70339"
+       ],
+       "sha256": "c629d7d27051865c3fe6c54568b33650e19005764cb98b6e2af5e920c86e8d3c"
+      },
+      "length": 32,
+      "centrePad": 8
+     },
+     "source": {
+      "range": [
+       "$7031F",
+       "$70339"
+      ],
+      "sha256": "956d49424eabd71b3637a741ab6f109df2eaa6367f3e2f0844b16677abde07d3"
+     }
+    },
+    {
+     "address": "$70339",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69CC",
+       "address": "$76710"
+      }
+     ],
+     "source": {
+      "range": [
+       "$70339",
+       "$7033C"
+      ],
+      "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+     }
+    },
+    {
+     "address": "$7033C",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69A9",
+       "address": "$766ED"
+      }
+     ],
+     "source": {
+      "range": [
+       "$7033C",
+       "$7033F"
+      ],
+      "sha256": "5925a33a8712727f3530a2c2f7800c9c796c83eee16a5c25dd89b33ba35fd8ed"
+     }
+    },
+    {
+     "address": "$7033F",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69A2",
+       "address": "$766E6"
+      }
+     ],
+     "source": {
+      "range": [
+       "$7033F",
+       "$70342"
+      ],
+      "sha256": "b233caa051b1ef849703744a1177cf3fd41fb45c08e35588105943732db185d7"
+     }
+    },
+    {
+     "address": "$70342",
+     "byte": "$25",
+     "op": "$25",
+     "name": "packed_text",
+     "text": {
+      "address": "$70343",
+      "raw": "WELL HERE WE ARE",
+      "parts": [
+       {
+        "text": "WELL HERE WE ARE"
+       }
+      ],
+      "text": "WELL HERE WE ARE",
+      "source": {
+       "range": [
+        "$70343",
+        "$70350"
+       ],
+       "sha256": "ddabef88d64e6081a6e22b4c1bef248642fd04a53328842c2947d31a59bb74cc"
+      },
+      "length": 16,
+      "centrePad": 16
+     },
+     "source": {
+      "range": [
+       "$70342",
+       "$70350"
+      ],
+      "sha256": "da64858b25c327487e8ab62f6b2820b0e33d4025cfc2176c5ca916311cffdc3a"
+     }
+    },
+    {
+     "address": "$70350",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69CC",
+       "address": "$76710"
+      }
+     ],
+     "source": {
+      "range": [
+       "$70350",
+       "$70353"
+      ],
+      "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+     }
+    },
+    {
+     "address": "$70353",
+     "byte": "$25",
+     "op": "$25",
+     "name": "packed_text",
+     "text": {
+      "address": "$70354",
+      "raw": "JUST BOARD\\ CRAFT OVER\\RE",
+      "parts": [
+       {
+        "text": "JUST BOARD"
+       },
+       {
+        "token": "\\",
+        "expansion": " THE"
+       },
+       {
+        "text": " CRAFT OVER"
+       },
+       {
+        "token": "\\",
+        "expansion": " THE"
+       },
+       {
+        "text": "RE"
+       }
+      ],
+      "text": "JUST BOARD THE CRAFT OVER THERE",
+      "source": {
+       "range": [
+        "$70354",
+        "$70368"
+       ],
+       "sha256": "0b4232bbcb6ca0f9ebfc9e9e1547c8395ccd00a2458544abcc61300c907a25ae"
+      },
+      "length": 31,
+      "centrePad": 9
+     },
+     "source": {
+      "range": [
+       "$70353",
+       "$70368"
+      ],
+      "sha256": "3d605d4e62291026b9cac9567175616c928508683c94128f580144164771b711"
+     }
+    },
+    {
+     "address": "$70368",
+     "byte": "$19",
+     "op": "$19",
+     "name": "store2",
+     "operands": [
+      {
+       "offset": "$0206",
+       "address": "$6FF4A"
+      },
+      "$04",
+      "$07"
+     ],
+     "source": {
+      "range": [
+       "$70368",
+       "$7036D"
+      ],
+      "sha256": "ae571bd9b81796a914789027b3ce48dadbe5e119ca2ef2b0371e921d17a16918"
+     },
+     "value": "$0407",
+     "note": "cabin animation sequence at $7014B"
+    },
+    {
+     "address": "$7036D",
+     "byte": "$25",
+     "op": "$25",
+     "name": "packed_text",
+     "text": {
+      "address": "$7036E",
+      "raw": "BEST OF LUCK TO YOU",
+      "parts": [
+       {
+        "text": "BEST OF LUCK TO YOU"
+       }
+      ],
+      "text": "BEST OF LUCK TO YOU",
+      "source": {
+       "range": [
+        "$7036E",
+        "$7037D"
+       ],
+       "sha256": "93c8e863e0ec216741f9170f4065c996eb7743df47708428887831aa02b61ce4"
+      },
+      "length": 19,
+      "centrePad": 15
+     },
+     "source": {
+      "range": [
+       "$7036D",
+       "$7037D"
+      ],
+      "sha256": "4e030a080531742bbf1732da3b9b9755be45c0c63838cead9cfe86dc1eec7e94"
+     }
+    },
+    {
+     "address": "$7037D",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69CC",
+       "address": "$76710"
+      }
+     ],
+     "source": {
+      "range": [
+       "$7037D",
+       "$70380"
+      ],
+      "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+     }
+    },
+    {
+     "address": "$70380",
+     "byte": "$25",
+     "op": "$25",
+     "name": "packed_text",
+     "text": {
+      "address": "$70381",
+      "raw": "JUST PRESS 'L' TO LEAVE",
+      "parts": [
+       {
+        "text": "JUST PRESS 'L' TO LEAVE"
+       }
+      ],
+      "text": "JUST PRESS 'L' TO LEAVE",
+      "source": {
+       "range": [
+        "$70381",
+        "$70393"
+       ],
+       "sha256": "2241ba7792f59c0acf81d2351115317ef1ae68d3f026c4db19c756d71daf05d3"
+      },
+      "length": 23,
+      "centrePad": 13
+     },
+     "source": {
+      "range": [
+       "$70380",
+       "$70393"
+      ],
+      "sha256": "3eb16fc3ae6c15435dd38ef84b733fbe2394a7a98b0136b3a6b580f6e4b990cd"
+     }
+    },
+    {
+     "address": "$70393",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69CC",
+       "address": "$76710"
+      }
+     ],
+     "source": {
+      "range": [
+       "$70393",
+       "$70396"
+      ],
+      "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+     }
+    },
+    {
+     "address": "$70396",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69A9",
+       "address": "$766ED"
+      }
+     ],
+     "source": {
+      "range": [
+       "$70396",
+       "$70399"
+      ],
+      "sha256": "5925a33a8712727f3530a2c2f7800c9c796c83eee16a5c25dd89b33ba35fd8ed"
+     }
+    },
+    {
+     "address": "$70399",
+     "byte": "$25",
+     "op": "$25",
+     "name": "packed_text",
+     "text": {
+      "address": "$7039A",
+      "raw": "PRESS 'B' TO BOARD\\ SPACECRAFT",
+      "parts": [
+       {
+        "text": "PRESS 'B' TO BOARD"
+       },
+       {
+        "token": "\\",
+        "expansion": " THE"
+       },
+       {
+        "text": " SPACECRAFT"
+       }
+      ],
+      "text": "PRESS 'B' TO BOARD THE SPACECRAFT",
+      "source": {
+       "range": [
+        "$7039A",
+        "$703B2"
+       ],
+       "sha256": "3d6f0819557cf0b3a28aac703d8a6e75d8e4163b134c5d78e7eb0e3060f2c375"
+      },
+      "length": 33,
+      "centrePad": 8
+     },
+     "source": {
+      "range": [
+       "$70399",
+       "$703B2"
+      ],
+      "sha256": "9c5fc5e72b0e1eca46e91a2f871d78f67f0df54afedbfa5d8b5462fcbbffd642"
+     }
+    },
+    {
+     "address": "$703B2",
+     "byte": "$11",
+     "op": "$11",
+     "name": "clear_flag",
+     "operands": [
+      "$06"
+     ],
+     "source": {
+      "range": [
+       "$703B2",
+       "$703B4"
+      ],
+      "sha256": "83cc0c779806c41457a9e8768bb6fb774e4beb6d1042bb1471aae8f0e3b3ca9a"
+     }
+    },
+    {
+     "address": "$703B4",
+     "byte": "$05",
+     "op": "$05",
+     "name": "return",
+     "source": {
+      "range": [
+       "$703B4",
+       "$703B5"
+      ],
+      "sha256": "e77b9a9ae9e30b0dbdb6f510a264ef9de781501d7b6b92ae89eb059c5ab743db"
+     }
+    },
+    {
+     "address": "$703B5",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69A2",
+       "address": "$766E6"
+      }
+     ],
+     "source": {
+      "range": [
+       "$703B5",
+       "$703B8"
+      ],
+      "sha256": "b233caa051b1ef849703744a1177cf3fd41fb45c08e35588105943732db185d7"
+     }
+    },
+    {
+     "address": "$703B8",
+     "byte": "$19",
+     "op": "$19",
+     "name": "store2",
+     "operands": [
+      {
+       "offset": "$0206",
+       "address": "$6FF4A"
+      },
+      "$04",
+      "$10"
+     ],
+     "source": {
+      "range": [
+       "$703B8",
+       "$703BD"
+      ],
+      "sha256": "b5bd90b256c719af5d648e5642c03c9f11725d364d02ec6dcd4f6c476db857b0"
+     },
+     "value": "$0410",
+     "note": "cabin animation sequence at $70154"
+    },
+    {
+     "address": "$703BD",
+     "byte": "$25",
+     "op": "$25",
+     "name": "packed_text",
+     "text": {
+      "address": "$703BE",
+      "raw": "DOOBERRY'S IT IS - AND\\ GUVENOR IS PAYING",
+      "parts": [
+       {
+        "text": "DOOBERRY'S IT IS - AND"
+       },
+       {
+        "token": "\\",
+        "expansion": " THE"
+       },
+       {
+        "text": " GUVENOR IS PAYING"
+       }
+      ],
+      "text": "DOOBERRY'S IT IS - AND THE GUVENOR IS PAYING",
+      "source": {
+       "range": [
+        "$703BE",
+        "$703DE"
+       ],
+       "sha256": "8b05c5b01cba9b2a5b4322955a7a81fa604d053c9b49deafa32c0a4e55eb2edc"
+      },
+      "length": 44,
+      "centrePad": 2
+     },
+     "source": {
+      "range": [
+       "$703BD",
+       "$703DE"
+      ],
+      "sha256": "d7995157e04d234cf4afd016d07e05ed34641525ef368a572b2e49c01fd564a4"
+     }
+    },
+    {
+     "address": "$703DE",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69CC",
+       "address": "$76710"
+      }
+     ],
+     "source": {
+      "range": [
+       "$703DE",
+       "$703E1"
+      ],
+      "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+     }
+    },
+    {
+     "address": "$703E1",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69A9",
+       "address": "$766ED"
+      }
+     ],
+     "source": {
+      "range": [
+       "$703E1",
+       "$703E4"
+      ],
+      "sha256": "5925a33a8712727f3530a2c2f7800c9c796c83eee16a5c25dd89b33ba35fd8ed"
+     }
+    },
+    {
+     "address": "$703E4",
+     "byte": "$04",
+     "op": "$04",
+     "name": "call",
+     "operands": [
+      {
+       "offset": "$69A9",
+       "address": "$766ED"
+      }
+     ],
+     "source": {
+      "range": [
+       "$703E4",
+       "$703E7"
+      ],
+      "sha256": "5925a33a8712727f3530a2c2f7800c9c796c83eee16a5c25dd89b33ba35fd8ed"
+     }
+    },
+    {
+     "address": "$703E7",
+     "byte": "$19",
+     "op": "$19",
+     "name": "store2",
+     "operands": [
+      {
+       "offset": "$0206",
+       "address": "$6FF4A"
+      },
+      "$04",
+      "$07"
+     ],
+     "source": {
+      "range": [
+       "$703E7",
+       "$703EC"
+      ],
+      "sha256": "ae571bd9b81796a914789027b3ce48dadbe5e119ca2ef2b0371e921d17a16918"
+     },
+     "value": "$0407",
+     "note": "cabin animation sequence at $7014B"
+    },
+    {
+     "address": "$703EC",
+     "byte": "$25",
+     "op": "$25",
+     "name": "packed_text",
+     "text": {
+      "address": "$703ED",
+      "raw": "HERE'S WISHING YOU\\ VERY BEST OF LUCK",
+      "parts": [
+       {
+        "text": "HERE'S WISHING YOU"
+       },
+       {
+        "token": "\\",
+        "expansion": " THE"
+       },
+       {
+        "text": " VERY BEST OF LUCK"
+       }
+      ],
+      "text": "HERE'S WISHING YOU THE VERY BEST OF LUCK",
+      "source": {
+       "range": [
+        "$703ED",
+        "$7040A"
+       ],
+       "sha256": "ca9221ecedda0b86376e472bd1a98bcb049370226c08fee308d86f51b6af8449"
+      },
+      "length": 40,
+      "centrePad": 4
+     },
+     "source": {
+      "range": [
+       "$703EC",
+       "$7040A"
+      ],
+      "sha256": "92c433ae9fb410c112d4ee18e602a3343060906aa7edf0f736b3150d5ed90671"
+     }
+    },
+    {
+     "address": "$7040A",
+     "byte": "$03",
+     "op": "$03",
+     "name": "jump",
+     "operands": [
+      {
+       "offset": "$697B",
+       "address": "$766BF"
+      }
+     ],
+     "source": {
+      "range": [
+       "$7040A",
+       "$7040D"
+      ],
+      "sha256": "05c4a4264d3db74e066c1f10f5c4a02638361d748edcb810d938fd6823ef7606"
+     }
+    }
+   ],
+   "unknownOpcodes": []
+  },
+  {
+   "name": "shared waits and epilogues",
+   "range": [
+    "$766BF",
+    "$76721"
+   ],
+   "aligned": true,
+   "instructions": [
+    {
+     "address": "$766BF",
+     "byte": "$11",
+     "op": "$11",
+     "name": "clear_flag",
+     "operands": [
+      "$0D"
+     ],
+     "source": {
+      "range": [
+       "$766BF",
+       "$766C1"
+      ],
+      "sha256": "ab257c49c86dfd9404ee6a01de780fb2607c0c8d8952c0d71bd3aef7ae7d8269"
+     }
+    },
+    {
+     "address": "$766C1",
+     "byte": "$19",
+     "op": "$19",
+     "name": "store2",
+     "operands": [
+      {
+       "offset": "$0202",
+       "address": "$6FF46"
+      },
+      "$00",
+      "$32"
+     ],
+     "source": {
+      "range": [
+       "$766C1",
+       "$766C6"
+      ],
+      "sha256": "dc8fca63a3973093d40be941af63e88dfecb58d6f774d3548b983538ef79a0a7"
+     },
+     "value": "$0032",
+     "note": "message hold = 50 VBL"
+    },
+    {
+     "address": "$766C6",
+     "byte": "$14",
+     "op": "$14",
+     "name": "id_message",
+     "operands": [
+      "$32"
+     ],
+     "source": {
+      "range": [
+       "$766C6",
+       "$766C8"
+      ],
+      "sha256": "7490c982f61926caa55de198d1fcd146a036c86c32e346538a221369b639251c"
+     },
+     "messageId": 50
+    },
+    {
+     "address": "$766C8",
+     "byte": "$19",
+     "op": "$19",
+     "name": "store2",
+     "operands": [
+      {
+       "offset": "$0202",
+       "address": "$6FF46"
+      },
+      "$00",
+      "$C8"
+     ],
+     "source": {
+      "range": [
+       "$766C8",
+       "$766CD"
+      ],
+      "sha256": "626acc405a5a78048d9a838e8325f30390de30f3f5dc0f5aea3f87af57a1d135"
+     },
+     "value": "$00C8",
+     "note": "message hold = 200 VBL"
+    },
+    {
+     "address": "$766CD",
+     "byte": "$10",
+     "op": "$10",
+     "name": "set_flag",
+     "operands": [
+      "$0D"
+     ],
+     "source": {
+      "range": [
+       "$766CD",
+       "$766CF"
+      ],
+      "sha256": "a8bbf6f4735ec9f7f78372dff599cf5d7ff1d7e6d9965b34230a9798ae4dc9a1"
+     }
+    },
+    {
+     "address": "$766CF",
+     "byte": "$11",
+     "op": "$11",
+     "name": "clear_flag",
+     "operands": [
+      "$06"
+     ],
+     "source": {
+      "range": [
+       "$766CF",
+       "$766D1"
+      ],
+      "sha256": "83cc0c779806c41457a9e8768bb6fb774e4beb6d1042bb1471aae8f0e3b3ca9a"
+     }
+    },
+    {
+     "address": "$766D1",
+     "byte": "$05",
+     "op": "$05",
+     "name": "return",
+     "source": {
+      "range": [
+       "$766D1",
+       "$766D2"
+      ],
+      "sha256": "e77b9a9ae9e30b0dbdb6f510a264ef9de781501d7b6b92ae89eb059c5ab743db"
+     }
+    },
+    {
+     "address": "$766D2",
+     "byte": "$03",
+     "op": "$03",
+     "name": "jump",
+     "operands": [
+      {
+       "offset": "$698E",
+       "address": "$766D2"
+      }
+     ],
+     "source": {
+      "range": [
+       "$766D2",
+       "$766D5"
+      ],
+      "sha256": "ab226dcaaed61769fa71ad79f30ee8b5d0460848a1dbb99a973511008e7486cb"
+     }
+    },
+    {
+     "address": "$766D5",
+     "byte": "$19",
+     "op": "$19",
+     "name": "store2",
+     "operands": [
+      {
+       "offset": "$0202",
+       "address": "$6FF46"
+      },
+      "$00",
+      "$C8"
+     ],
+     "source": {
+      "range": [
+       "$766D5",
+       "$766DA"
+      ],
+      "sha256": "626acc405a5a78048d9a838e8325f30390de30f3f5dc0f5aea3f87af57a1d135"
+     },
+     "value": "$00C8",
+     "note": "message hold = 200 VBL"
+    },
+    {
+     "address": "$766DA",
+     "byte": "$14",
+     "op": "$14",
+     "name": "id_message",
+     "operands": [
+      "$32"
+     ],
+     "source": {
+      "range": [
+       "$766DA",
+       "$766DC"
+      ],
+      "sha256": "7490c982f61926caa55de198d1fcd146a036c86c32e346538a221369b639251c"
+     },
+     "messageId": 50
+    },
+    {
+     "address": "$766DC",
+     "byte": "$03",
+     "op": "$03",
+     "name": "jump",
+     "operands": [
+      {
+       "offset": "$6998",
+       "address": "$766DC"
+      }
+     ],
+     "source": {
+      "range": [
+       "$766DC",
+       "$766DF"
+      ],
+      "sha256": "8720babff7e31241354ebc1d23ee17b08a0d3bd93fda66981ec34a4df5226d1d"
+     }
+    },
+    {
+     "address": "$766DF",
+     "byte": "$02",
+     "op": "$02",
+     "name": "reset_wait",
+     "source": {
+      "range": [
+       "$766DF",
+       "$766E0"
+      ],
+      "sha256": "dbc1b4c900ffe48d575b5da5c638040125f65db0fe3e24494b76ea986457d986"
+     }
+    },
+    {
+     "address": "$766E0",
+     "byte": "$07",
+     "op": "$07",
+     "name": "if_wait_below",
+     "target": "$766E0",
+     "operands": [
+      "$0032"
+     ],
+     "branch": {
+      "invert": false,
+      "call": false
+     },
+     "source": {
+      "range": [
+       "$766E0",
+       "$766E5"
+      ],
+      "sha256": "ccd6310b5ee6292534a0273d7dead703e7c9eb22c1cc2b256963e46d0ad95963"
+     },
+     "note": "wait until counter >= 50 VBL"
+    },
+    {
+     "address": "$766E5",
+     "byte": "$05",
+     "op": "$05",
+     "name": "return",
+     "source": {
+      "range": [
+       "$766E5",
+       "$766E6"
+      ],
+      "sha256": "e77b9a9ae9e30b0dbdb6f510a264ef9de781501d7b6b92ae89eb059c5ab743db"
+     }
+    },
+    {
+     "address": "$766E6",
+     "byte": "$02",
+     "op": "$02",
+     "name": "reset_wait",
+     "source": {
+      "range": [
+       "$766E6",
+       "$766E7"
+      ],
+      "sha256": "dbc1b4c900ffe48d575b5da5c638040125f65db0fe3e24494b76ea986457d986"
+     }
+    },
+    {
+     "address": "$766E7",
+     "byte": "$07",
+     "op": "$07",
+     "name": "if_wait_below",
+     "target": "$766E7",
+     "operands": [
+      "$0064"
+     ],
+     "branch": {
+      "invert": false,
+      "call": false
+     },
+     "source": {
+      "range": [
+       "$766E7",
+       "$766EC"
+      ],
+      "sha256": "5470fbe3bd884b235240b68e292715def5bd68376116027fc2c35d634b79f725"
+     },
+     "note": "wait until counter >= 100 VBL"
+    },
+    {
+     "address": "$766EC",
+     "byte": "$05",
+     "op": "$05",
+     "name": "return",
+     "source": {
+      "range": [
+       "$766EC",
+       "$766ED"
+      ],
+      "sha256": "e77b9a9ae9e30b0dbdb6f510a264ef9de781501d7b6b92ae89eb059c5ab743db"
+     }
+    },
+    {
+     "address": "$766ED",
+     "byte": "$02",
+     "op": "$02",
+     "name": "reset_wait",
+     "source": {
+      "range": [
+       "$766ED",
+       "$766EE"
+      ],
+      "sha256": "dbc1b4c900ffe48d575b5da5c638040125f65db0fe3e24494b76ea986457d986"
+     }
+    },
+    {
+     "address": "$766EE",
+     "byte": "$07",
+     "op": "$07",
+     "name": "if_wait_below",
+     "target": "$766EE",
+     "operands": [
+      "$0096"
+     ],
+     "branch": {
+      "invert": false,
+      "call": false
+     },
+     "source": {
+      "range": [
+       "$766EE",
+       "$766F3"
+      ],
+      "sha256": "1e33aa24d8bf7d53af7a7f021cee36be784bc7e36d1b8af615868718abca3e35"
+     },
+     "note": "wait until counter >= 150 VBL"
+    },
+    {
+     "address": "$766F3",
+     "byte": "$05",
+     "op": "$05",
+     "name": "return",
+     "source": {
+      "range": [
+       "$766F3",
+       "$766F4"
+      ],
+      "sha256": "e77b9a9ae9e30b0dbdb6f510a264ef9de781501d7b6b92ae89eb059c5ab743db"
+     }
+    },
+    {
+     "address": "$766F4",
+     "byte": "$02",
+     "op": "$02",
+     "name": "reset_wait",
+     "source": {
+      "range": [
+       "$766F4",
+       "$766F5"
+      ],
+      "sha256": "dbc1b4c900ffe48d575b5da5c638040125f65db0fe3e24494b76ea986457d986"
+     }
+    },
+    {
+     "address": "$766F5",
+     "byte": "$07",
+     "op": "$07",
+     "name": "if_wait_below",
+     "target": "$766F5",
+     "operands": [
+      "$00C8"
+     ],
+     "branch": {
+      "invert": false,
+      "call": false
+     },
+     "source": {
+      "range": [
+       "$766F5",
+       "$766FA"
+      ],
+      "sha256": "9db3332ba22b5cca4176944dea48c2f9bb7e1aa31c09f31360aa8a4e4f6941d9"
+     },
+     "note": "wait until counter >= 200 VBL"
+    },
+    {
+     "address": "$766FA",
+     "byte": "$05",
+     "op": "$05",
+     "name": "return",
+     "source": {
+      "range": [
+       "$766FA",
+       "$766FB"
+      ],
+      "sha256": "e77b9a9ae9e30b0dbdb6f510a264ef9de781501d7b6b92ae89eb059c5ab743db"
+     }
+    },
+    {
+     "address": "$766FB",
+     "byte": "$02",
+     "op": "$02",
+     "name": "reset_wait",
+     "source": {
+      "range": [
+       "$766FB",
+       "$766FC"
+      ],
+      "sha256": "dbc1b4c900ffe48d575b5da5c638040125f65db0fe3e24494b76ea986457d986"
+     }
+    },
+    {
+     "address": "$766FC",
+     "byte": "$07",
+     "op": "$07",
+     "name": "if_wait_below",
+     "target": "$766FC",
+     "operands": [
+      "$00FA"
+     ],
+     "branch": {
+      "invert": false,
+      "call": false
+     },
+     "source": {
+      "range": [
+       "$766FC",
+       "$76701"
+      ],
+      "sha256": "8a25eca3996965f342640dbe89b3420f97d2f5db0aa6920448d339be8dc82caf"
+     },
+     "note": "wait until counter >= 250 VBL"
+    },
+    {
+     "address": "$76701",
+     "byte": "$05",
+     "op": "$05",
+     "name": "return",
+     "source": {
+      "range": [
+       "$76701",
+       "$76702"
+      ],
+      "sha256": "e77b9a9ae9e30b0dbdb6f510a264ef9de781501d7b6b92ae89eb059c5ab743db"
+     }
+    },
+    {
+     "address": "$76702",
+     "byte": "$02",
+     "op": "$02",
+     "name": "reset_wait",
+     "source": {
+      "range": [
+       "$76702",
+       "$76703"
+      ],
+      "sha256": "dbc1b4c900ffe48d575b5da5c638040125f65db0fe3e24494b76ea986457d986"
+     }
+    },
+    {
+     "address": "$76703",
+     "byte": "$07",
+     "op": "$07",
+     "name": "if_wait_below",
+     "target": "$76703",
+     "operands": [
+      "$01F4"
+     ],
+     "branch": {
+      "invert": false,
+      "call": false
+     },
+     "source": {
+      "range": [
+       "$76703",
+       "$76708"
+      ],
+      "sha256": "d0d17791674f8e36a4fa2423e6fa114ad55daead64813a764d2827a6a5de6468"
+     },
+     "note": "wait until counter >= 500 VBL"
+    },
+    {
+     "address": "$76708",
+     "byte": "$05",
+     "op": "$05",
+     "name": "return",
+     "source": {
+      "range": [
+       "$76708",
+       "$76709"
+      ],
+      "sha256": "e77b9a9ae9e30b0dbdb6f510a264ef9de781501d7b6b92ae89eb059c5ab743db"
+     }
+    },
+    {
+     "address": "$76709",
+     "byte": "$02",
+     "op": "$02",
+     "name": "reset_wait",
+     "source": {
+      "range": [
+       "$76709",
+       "$7670A"
+      ],
+      "sha256": "dbc1b4c900ffe48d575b5da5c638040125f65db0fe3e24494b76ea986457d986"
+     }
+    },
+    {
+     "address": "$7670A",
+     "byte": "$07",
+     "op": "$07",
+     "name": "if_wait_below",
+     "target": "$7670A",
+     "operands": [
+      "$02EE"
+     ],
+     "branch": {
+      "invert": false,
+      "call": false
+     },
+     "source": {
+      "range": [
+       "$7670A",
+       "$7670F"
+      ],
+      "sha256": "76806d05b14adc07bd6d3c32f0766cd4140005c8ee7620a60528dd04dfda3780"
+     },
+     "note": "wait until counter >= 750 VBL"
+    },
+    {
+     "address": "$7670F",
+     "byte": "$05",
+     "op": "$05",
+     "name": "return",
+     "source": {
+      "range": [
+       "$7670F",
+       "$76710"
+      ],
+      "sha256": "e77b9a9ae9e30b0dbdb6f510a264ef9de781501d7b6b92ae89eb059c5ab743db"
+     }
+    },
+    {
+     "address": "$76710",
+     "byte": "$11",
+     "op": "$11",
+     "name": "clear_flag",
+     "operands": [
+      "$0D"
+     ],
+     "source": {
+      "range": [
+       "$76710",
+       "$76712"
+      ],
+      "sha256": "ab257c49c86dfd9404ee6a01de780fb2607c0c8d8952c0d71bd3aef7ae7d8269"
+     }
+    },
+    {
+     "address": "$76712",
+     "byte": "$19",
+     "op": "$19",
+     "name": "store2",
+     "operands": [
+      {
+       "offset": "$0202",
+       "address": "$6FF46"
+      },
+      "$00",
+      "$32"
+     ],
+     "source": {
+      "range": [
+       "$76712",
+       "$76717"
+      ],
+      "sha256": "dc8fca63a3973093d40be941af63e88dfecb58d6f774d3548b983538ef79a0a7"
+     },
+     "value": "$0032",
+     "note": "message hold = 50 VBL"
+    },
+    {
+     "address": "$76717",
+     "byte": "$14",
+     "op": "$14",
+     "name": "id_message",
+     "operands": [
+      "$32"
+     ],
+     "source": {
+      "range": [
+       "$76717",
+       "$76719"
+      ],
+      "sha256": "7490c982f61926caa55de198d1fcd146a036c86c32e346538a221369b639251c"
+     },
+     "messageId": 50
+    },
+    {
+     "address": "$76719",
+     "byte": "$19",
+     "op": "$19",
+     "name": "store2",
+     "operands": [
+      {
+       "offset": "$0202",
+       "address": "$6FF46"
+      },
+      "$00",
+      "$C8"
+     ],
+     "source": {
+      "range": [
+       "$76719",
+       "$7671E"
+      ],
+      "sha256": "626acc405a5a78048d9a838e8325f30390de30f3f5dc0f5aea3f87af57a1d135"
+     },
+     "value": "$00C8",
+     "note": "message hold = 200 VBL"
+    },
+    {
+     "address": "$7671E",
+     "byte": "$10",
+     "op": "$10",
+     "name": "set_flag",
+     "operands": [
+      "$0D"
+     ],
+     "source": {
+      "range": [
+       "$7671E",
+       "$76720"
+      ],
+      "sha256": "a8bbf6f4735ec9f7f78372dff599cf5d7ff1d7e6d9965b34230a9798ae4dc9a1"
+     }
+    },
+    {
+     "address": "$76720",
+     "byte": "$05",
+     "op": "$05",
+     "name": "return",
+     "source": {
+      "range": [
+       "$76720",
+       "$76721"
+      ],
+      "sha256": "e77b9a9ae9e30b0dbdb6f510a264ef9de781501d7b6b92ae89eb059c5ab743db"
+     }
+    }
+   ],
+   "unknownOpcodes": []
+  },
+  {
+   "name": "idle loop",
+   "range": [
+    "$6FF54",
+    "$6FF57"
+   ],
+   "aligned": true,
+   "instructions": [
+    {
+     "address": "$6FF54",
+     "byte": "$03",
+     "op": "$03",
+     "name": "jump",
+     "operands": [
+      {
+       "offset": "$0210",
+       "address": "$6FF54"
+      }
+     ],
+     "source": {
+      "range": [
+       "$6FF54",
+       "$6FF57"
+      ],
+      "sha256": "ffb8474eaa9f59f3bd6c948bcb15dbe90328882459e0e8d9a8dc1517bdf80a96"
+     }
+    }
+   ],
+   "unknownOpcodes": []
+  }
+ ],
+ "sharedWaits": {
+  "$766DF": 50,
+  "$766E6": 100,
+  "$766ED": 150,
+  "$766F4": 200,
+  "$766FB": 250,
+  "$76702": 500,
+  "$76709": 750
+ },
+ "summary": {
+  "$19": {
+   "texts": [
+    "MESSAGE FROM THE CHIEF PRISON OFFICER:",
+    "YOUR SENTENCE WAS TO WAIT HERE FOR MERCENARY III",
+    "CONGRATULATIONS ON YOUR PATIENCE - IT'S ARRIVED!",
+    "YOU WILL NOW FIND THINGS SOMEWHAT DIFFERENT SO",
+    "I HAVE ADDED TWO ITEMS TO YOUR POSSESSIONS",
+    "QUITE ESSENTIAL - A BUS PASS AND A TAXICARD",
+    "THERE HAS BEEN A CALL FOR YOU TODAY",
+    "A MR P C BIL INVITES YOU TO CALL ON HIM . .",
+    "HIS PERSONAL CRAFT AWAITS YOU AT THE SPACEPORT",
+    "OH YES - THE LETTER OUTSIDE ARRIVED THIS MORNING",
+    "GOOD LUCK - CALL A TAXI WHEN YOU'RE READY TO GO",
+    "PRESS 'ENTER' KEY TO ACTIVATE YOUR TAXICARD",
+    "PRESS * TO CALL TAXI - ON ARRIVAL 'B' TO BOARD"
+   ],
+   "calls": [
+    "$766ED",
+    "$766ED",
+    "$76710",
+    "$76710",
+    "$76710",
+    "$766DF",
+    "$76710",
+    "$766E6",
+    "$76710",
+    "$766DF",
+    "$76710",
+    "$76710",
+    "$766ED",
+    "$766ED",
+    "$766ED",
+    "$766ED"
+   ],
+   "cabinAnimation": [],
+   "waitCalls": [
+    150,
+    150,
+    50,
+    100,
+    50,
+    150,
+    150,
+    150,
+    150
+   ],
+   "blankCalls": 7
+  },
+  "$33": {
+   "texts": [
+    "THANKYOU - MR P C BIL HAS PRE-PAID FOR THIS TRIP",
+    "ANY TIME YOU NEED US - JUST USE THE TAXICARD",
+    "OUR RATES ARE VERY REASONABLE - USUALLY",
+    "ANYWAY - YOU ARE THE MERCENARY THAT SAVED ERIS",
+    "SO I SUPPOSE YOU CAN AFFORD MOST THINGS",
+    "EVEN TAXI FARES!",
+    "EXCELLENT JOB YOU DID ON DAMOCLES",
+    "THERE'S TO BE AN ELECTION SOON",
+    "YOU SHOULD BECOME PRESIDENT",
+    "I THINK WE NEED SOMEONE LIKE YOU",
+    "I DON'T TRUST THIS BIL CHARACTER",
+    "WELL HERE WE ARE",
+    "JUST BOARD THE CRAFT OVER THERE",
+    "BEST OF LUCK TO YOU",
+    "JUST PRESS 'L' TO LEAVE",
+    "PRESS 'B' TO BOARD THE SPACECRAFT"
+   ],
+   "calls": [
+    "$766DF",
+    "$766E6",
+    "$76710",
+    "$766ED",
+    "$76710",
+    "$766ED",
+    "$766ED",
+    "$76710",
+    "$76710",
+    "$76710",
+    "$766ED",
+    "$766E6",
+    "$76710",
+    "$76710",
+    "$76710",
+    "$766ED"
+   ],
+   "cabinAnimation": [
+    "$0410",
+    "$0407",
+    "$040A",
+    "$0407",
+    "$0410",
+    "$0410",
+    "$0407"
+   ],
+   "waitCalls": [
+    50,
+    100,
+    150,
+    150,
+    150,
+    150,
+    100,
+    150
+   ],
+   "blankCalls": 8
+  },
+  "$34": {
+   "texts": [
+    "DOOBERRY'S IT IS - AND THE GUVENOR IS PAYING",
+    "HERE'S WISHING YOU THE VERY BEST OF LUCK"
+   ],
+   "calls": [
+    "$766E6",
+    "$76710",
+    "$766ED",
+    "$766ED"
+   ],
+   "cabinAnimation": [
+    "$0410",
+    "$0407"
+   ],
+   "waitCalls": [
+    100,
+    150,
+    150
+   ],
+   "blankCalls": 1
+  }
+ },
+ "unresolvedTargets": [],
+ "unknownOpcodes": []
+}

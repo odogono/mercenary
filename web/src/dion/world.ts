@@ -858,62 +858,7 @@ const readViewFacts = (raw: Record<string, unknown>) => {
         0xff_ff
       )
     },
-    opening: {
-      cash: (() => {
-        const raw = text(opening['cash'], 'opening.cash');
-        return /^\d{12}$/.test(raw)
-          ? raw
-          : fail('opening.cash is not twelve BCD digits');
-      })(),
-      cell: byte(opening['cell'], 'opening.cell'),
-      clock: (() => {
-        const clock = record(opening['clock'], 'opening.clock');
-        return {
-          accumulator: sword(clock['accumulator'], 'opening.clock.accumulator'),
-          day: word(clock['day'], 'opening.clock.day'),
-          refill: int(clock['refill'], 'opening.clock.refill', 1, 0x7f_ff),
-          seconds: int(clock['seconds'], 'opening.clock.seconds', 0, 86_399),
-          step: int(clock['step'], 'opening.clock.step', 1, 0x7f_ff)
-        };
-      })(),
-      eye: triple(opening['eye'], 'opening.eye'),
-      frameCounter: word(opening['frameCounter'], 'opening.frameCounter'),
-      gauges: (() => {
-        const gauges = record(opening['gauges'], 'opening.gauges');
-        return {
-          inventory: word(gauges['inventory'], 'opening.gauges.inventory'),
-          p: word(gauges['p'], 'opening.gauges.p'),
-          t: word(gauges['t'], 'opening.gauges.t')
-        };
-      })(),
-      groupOrigin: pair(opening['groupOrigin'], 'opening.groupOrigin'),
-      heading: word(opening['heading'], 'opening.heading'),
-      location: word(opening['location'], 'opening.location'),
-      pitch: word(opening['pitch'], 'opening.pitch'),
-      position: (() => {
-        const [a, b] = ints(
-          opening['position'],
-          'opening.position',
-          2,
-          0,
-          0xff_ff
-        );
-        return [a!, b!] as const;
-      })(),
-      region: int(opening['region'], 'opening.region', 1, 64),
-      roll: word(opening['roll'], 'opening.roll'),
-      walk: (() => {
-        const walk = record(opening['walk'], 'opening.walk');
-        const step = walk['step'];
-        if (typeof step !== 'number' || !(step > 0 && step < 1000)) {
-          fail('opening.walk.step is not a positive step');
-        }
-        return {
-          step: step as number,
-          turn: int(walk['turn'], 'opening.walk.turn', 1, 0x40)
-        };
-      })()
-    },
+    opening: readDionOpening(opening),
     rotationTable: ints(
       record(raw['rotationTable'], 'rotationTable')['words'],
       'rotationTable.words',
@@ -972,4 +917,65 @@ const checkWorld = (world: DionWorld): void => {
       );
     }
   }
+};
+
+/// The same coherent opening schema is used by both playable content versions.
+export const readDionOpening = (value: unknown): DionOpening => {
+  const opening = record(value, 'opening');
+  return {
+    cash: (() => {
+      const raw = text(opening['cash'], 'opening.cash');
+      return /^\d{12}$/.test(raw)
+        ? raw
+        : fail('opening.cash is not twelve BCD digits');
+    })(),
+    cell: byte(opening['cell'], 'opening.cell'),
+    clock: (() => {
+      const clock = record(opening['clock'], 'opening.clock');
+      return {
+        accumulator: sword(clock['accumulator'], 'opening.clock.accumulator'),
+        day: word(clock['day'], 'opening.clock.day'),
+        refill: int(clock['refill'], 'opening.clock.refill', 1, 0x7f_ff),
+        seconds: int(clock['seconds'], 'opening.clock.seconds', 0, 86_399),
+        step: int(clock['step'], 'opening.clock.step', 1, 0x7f_ff)
+      };
+    })(),
+    eye: triple(opening['eye'], 'opening.eye'),
+    frameCounter: word(opening['frameCounter'], 'opening.frameCounter'),
+    gauges: (() => {
+      const gauges = record(opening['gauges'], 'opening.gauges');
+      return {
+        inventory: word(gauges['inventory'], 'opening.gauges.inventory'),
+        p: word(gauges['p'], 'opening.gauges.p'),
+        t: word(gauges['t'], 'opening.gauges.t')
+      };
+    })(),
+    groupOrigin: pair(opening['groupOrigin'], 'opening.groupOrigin'),
+    heading: word(opening['heading'], 'opening.heading'),
+    location: word(opening['location'], 'opening.location'),
+    pitch: word(opening['pitch'], 'opening.pitch'),
+    position: (() => {
+      const [a, b] = ints(
+        opening['position'],
+        'opening.position',
+        2,
+        0,
+        0xff_ff
+      );
+      return [a!, b!] as const;
+    })(),
+    region: int(opening['region'], 'opening.region', 1, 64),
+    roll: word(opening['roll'], 'opening.roll'),
+    walk: (() => {
+      const walk = record(opening['walk'], 'opening.walk');
+      const step = walk['step'];
+      if (typeof step !== 'number' || !(step > 0 && step < 1000)) {
+        fail('opening.walk.step is not a positive step');
+      }
+      return {
+        step: step as number,
+        turn: int(walk['turn'], 'opening.walk.turn', 1, 0x40)
+      };
+    })()
+  };
 };

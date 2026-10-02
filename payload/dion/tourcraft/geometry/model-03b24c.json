@@ -1,0 +1,232 @@
+{
+  "geometry": {
+    "entries": [
+      370
+    ],
+    "family": "model",
+    "id": "model-03b24c",
+    "record": "$3B24C",
+    "sha256": "9679eba2c5567478d521f482205ea60840dab047a26c695cc98198693972bef7",
+    "variants": {
+      "base": {
+        "alternatives": [],
+        "entry": 370,
+        "faces": [
+          {
+            "at": "$3B2A8",
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              12,
+              16,
+              28,
+              24
+            ]
+          },
+          {
+            "at": "$3B2AE",
+            "colour": 9,
+            "kind": "polygon",
+            "refs": [
+              20,
+              12,
+              24,
+              32
+            ]
+          },
+          {
+            "at": "$3B2B4",
+            "colour": 10,
+            "kind": "polygon",
+            "refs": [
+              16,
+              20,
+              32,
+              28
+            ]
+          },
+          {
+            "at": "$3B2BA",
+            "colour": 18,
+            "kind": "polygon",
+            "refs": [
+              8,
+              4,
+              16,
+              12
+            ]
+          },
+          {
+            "at": "$3B2C0",
+            "colour": 3,
+            "kind": "polygon",
+            "refs": [
+              44,
+              40,
+              36
+            ]
+          },
+          {
+            "at": "$3B2C5",
+            "colour": 19,
+            "kind": "polygon",
+            "refs": [
+              48,
+              52,
+              56,
+              60
+            ]
+          },
+          {
+            "at": "$3B2CB",
+            "colour": 19,
+            "kind": "polygon",
+            "refs": [
+              64,
+              68,
+              72,
+              76
+            ]
+          },
+          {
+            "at": "$3B2D1",
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              8,
+              12,
+              20
+            ]
+          },
+          {
+            "at": "$3B2D6",
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              4,
+              20,
+              16
+            ]
+          },
+          {
+            "at": "$3B2DB",
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              4,
+              8,
+              20
+            ]
+          }
+        ],
+        "provenance": {
+          "range": [
+            "$3B24C",
+            "$3B2E1"
+          ],
+          "sha256": "c627908ab5480e45684cc3b6f39ea6ebdebeb63dca08519343d31c5def20ae2a"
+        },
+        "vertices": [
+          [
+            30,
+            140,
+            0
+          ],
+          [
+            -30,
+            140,
+            0
+          ],
+          [
+            -2,
+            90,
+            0
+          ],
+          [
+            2,
+            90,
+            0
+          ],
+          [
+            0,
+            90,
+            2
+          ],
+          [
+            -2,
+            0,
+            0
+          ],
+          [
+            2,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            2
+          ],
+          [
+            0,
+            92,
+            0
+          ],
+          [
+            26,
+            138,
+            0
+          ],
+          [
+            -26,
+            138,
+            0
+          ],
+          [
+            -4,
+            134,
+            0
+          ],
+          [
+            4,
+            134,
+            0
+          ],
+          [
+            2,
+            112,
+            0
+          ],
+          [
+            -2,
+            112,
+            0
+          ],
+          [
+            2,
+            108,
+            0
+          ],
+          [
+            4,
+            104,
+            0
+          ],
+          [
+            -4,
+            104,
+            0
+          ],
+          [
+            -2,
+            108,
+            0
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-play-geometry",
+  "schemaVersion": 1,
+  "source": "catalogue-immutable"
+}

@@ -1,0 +1,1935 @@
+{
+  "blinkPhase": {
+    "165": 17323,
+    "174": 20153
+  },
+  "initial": {
+    "availability": {
+      "119": 160,
+      "19": 160,
+      "25": 224,
+      "41": 192,
+      "51": 128,
+      "52": 128
+    },
+    "beaconGates": {
+      "4": false,
+      "5": false
+    },
+    "bodyPhases": [
+      0,
+      627792,
+      9947,
+      468930,
+      66758,
+      998006,
+      160834,
+      29348,
+      20010,
+      18357,
+      205929,
+      9309,
+      11107,
+      1497038,
+      367198,
+      27376,
+      112810,
+      5191,
+      1692295,
+      7134,
+      62060,
+      294872,
+      40310,
+      794339,
+      60436,
+      107213,
+      31900,
+      16472,
+      518955,
+      5394,
+      1946132,
+      0
+    ],
+    "carriedStack": [
+      104,
+      103,
+      135
+    ],
+    "faceTokens": {
+      "$A1": {
+        "alternateCursor": 0,
+        "baseCursor": 0,
+        "output": 8192
+      },
+      "$A5": {
+        "alternateCursor": 0,
+        "baseCursor": 0,
+        "output": 8192
+      }
+    },
+    "flags": [
+      32832,
+      0
+    ],
+    "liveTokens": {
+      "$80": [
+        71
+      ],
+      "$81": [
+        71
+      ],
+      "$87": [
+        48
+      ],
+      "$8B": [
+        69,
+        57
+      ],
+      "$8D": [
+        73
+      ],
+      "$9E": []
+    },
+    "opening": {
+      "cash": "005100900000",
+      "cell": 98,
+      "clock": {
+        "accumulator": 672,
+        "day": 0,
+        "refill": 1600,
+        "seconds": 0,
+        "step": 32
+      },
+      "eye": [
+        165773321,
+        63,
+        70289576
+      ],
+      "frameCounter": 1,
+      "gauges": {
+        "inventory": 6,
+        "p": 3,
+        "t": 23
+      },
+      "groupOrigin": [
+        2527,
+        1066
+      ],
+      "heading": 1024,
+      "location": 60,
+      "pitch": 511,
+      "position": [
+        632,
+        524
+      ],
+      "provenance": [
+        {
+          "range": [
+            "$07146",
+            "$07158"
+          ],
+          "sha256": "8d18f0bdf510c31e2b5d2064ed685c7d8e185ec69b5ea787a4f784fa5442b891"
+        },
+        {
+          "range": [
+            "$070B4",
+            "$070BA"
+          ],
+          "sha256": "74d69c48471016ef6108d030a385e474eb6d9fa1b32d4490ae0aa3ffe53dcf8b"
+        },
+        {
+          "range": [
+            "$06F26",
+            "$06F32"
+          ],
+          "sha256": "faaacc10ff2e255457ab83c55a4318778b05b1563d376e0a68c22c870f454244"
+        },
+        {
+          "range": [
+            "$06FCE",
+            "$06FD4"
+          ],
+          "sha256": "b0f66adc83641586656866813fd9dd0b8ebb63796075661ba45d1aa8089e1d44"
+        },
+        {
+          "range": [
+            "$072DE",
+            "$072E4"
+          ],
+          "sha256": "c90420f25889dd44deb37fa7e695fa393e53834601db6bb99b004e5ab40f4efc"
+        },
+        {
+          "range": [
+            "$0713C",
+            "$0713E"
+          ],
+          "sha256": "505114fe537172ea35e17ca1a7516edac516a89b31f983f7c6387d5d2bb462aa"
+        },
+        {
+          "range": [
+            "$07180",
+            "$07182"
+          ],
+          "sha256": "b413f47d13ee2fe6c845b2ee141af81de858df4ec549a58b7970bb96645bc8d2"
+        },
+        {
+          "range": [
+            "$07194",
+            "$07196"
+          ],
+          "sha256": "b413f47d13ee2fe6c845b2ee141af81de858df4ec549a58b7970bb96645bc8d2"
+        },
+        {
+          "range": [
+            "$071F4",
+            "$071F6"
+          ],
+          "sha256": "57eb35615d47f34ec714cacdf5fd74608a5e8e102724e80b24b287c0c27b6a31"
+        }
+      ],
+      "region": 1,
+      "roll": 0,
+      "walk": {
+        "provenance": [
+          {
+            "range": [
+              "$071CE",
+              "$071D4"
+            ],
+            "sha256": "0cabe9c184879c814f4f64d96c76600c4e29f014a8e292d9fe7e578d8422a453"
+          }
+        ],
+        "step": 6.0,
+        "stepWord": 137216,
+        "turn": 2
+      }
+    },
+    "residents": [
+      {
+        "association": 0,
+        "bodyName": "METIS",
+        "bodyOffset": 60,
+        "cell": 98,
+        "cellCoordinates": [
+          2,
+          6
+        ],
+        "floor": 0,
+        "group": 3,
+        "hasModel": true,
+        "modelRecord": "$2F086",
+        "name": "EAGLE NINE S E",
+        "position": [
+          165773187,
+          0,
+          70290566
+        ],
+        "provenance": [
+          {
+            "range": [
+              "$05828",
+              "$0582C"
+            ],
+            "sha256": "b24fe076cc3f4826c8ac2849ee511d3df3d1743b0ae12c18d158abe2c3292955"
+          },
+          {
+            "range": [
+              "$05C28",
+              "$05C2C"
+            ],
+            "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+          },
+          {
+            "range": [
+              "$06028",
+              "$0602C"
+            ],
+            "sha256": "1d094c2929c6456dd629849fdb6c6859f758c3d69fab0aa3250903f79a2ad671"
+          },
+          {
+            "range": [
+              "$06428",
+              "$0642C"
+            ],
+            "sha256": "7c4ea0c8b072b095d3156e3c1ed3d5e3b41f36e710fb55b53db2a22e7e15b264"
+          },
+          {
+            "range": [
+              "$06828",
+              "$0682C"
+            ],
+            "sha256": "985e4da2861a8fac3be2c38c69c942cc90904c14115f98b18c6c0527dbfed2f4"
+          },
+          {
+            "range": [
+              "$06C28",
+              "$06C2C"
+            ],
+            "sha256": "c0ce89a219e7539bfb93afeec42af8b690da11c50c9838c207a4e1ac52e79ac8"
+          },
+          {
+            "range": [
+              "$2EABE",
+              "$2EAC0"
+            ],
+            "sha256": "c60eeb72d7a2dd4bd7a404a2f85cf223e2cb826145940a316d63963a0fb2ab68"
+          },
+          {
+            "range": [
+              "$2F076",
+              "$2F086"
+            ],
+            "sha256": "9d50ad41966d25f7874437134b0307053903348e451c6f03b379f154a1fe4490"
+          }
+        ],
+        "residence": "surface",
+        "slot": 3,
+        "state": 32,
+        "yaw": 175,
+        "zone": 7
+      },
+      {
+        "association": 1,
+        "bodyName": "METIS",
+        "bodyOffset": 60,
+        "cell": 98,
+        "cellCoordinates": [
+          2,
+          6
+        ],
+        "floor": 0,
+        "group": 3,
+        "hasModel": false,
+        "modelRecord": "$2EDC0",
+        "name": "NULL",
+        "position": [
+          165773321,
+          0,
+          70289576
+        ],
+        "provenance": [
+          {
+            "range": [
+              "$05844",
+              "$05848"
+            ],
+            "sha256": "7d8af6cd79ec8ef5a77bac17db65013453992cdbe48224c2d0f7dfc5b0e9a573"
+          },
+          {
+            "range": [
+              "$05C44",
+              "$05C48"
+            ],
+            "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+          },
+          {
+            "range": [
+              "$06044",
+              "$06048"
+            ],
+            "sha256": "9c1f4e30aef7e87caa34441db4542045cfde019d9642ddcc11efef6a07aee5f9"
+          },
+          {
+            "range": [
+              "$06444",
+              "$06448"
+            ],
+            "sha256": "62711a8a4928dbfc928efcfd0ac2c495effe5b230074b77efba4b09b752511a5"
+          },
+          {
+            "range": [
+              "$06844",
+              "$06848"
+            ],
+            "sha256": "8679a201323e1c45ca0011d9b34e19dcf49a85508a557907ca2a1eefc942476f"
+          },
+          {
+            "range": [
+              "$06C44",
+              "$06C48"
+            ],
+            "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+          },
+          {
+            "range": [
+              "$2EACC",
+              "$2EACE"
+            ],
+            "sha256": "843aca209575764c854c7fa919321f6f6ce4afaaa24c8e4616a328ff9db86349"
+          },
+          {
+            "range": [
+              "$2EDB0",
+              "$2EDC0"
+            ],
+            "sha256": "2f61ec76eabe161860d85ad0eb0de45d59488ce973be07838f22d3ee4feadfe9"
+          }
+        ],
+        "residence": "structure",
+        "slot": 10,
+        "state": 16,
+        "yaw": 0,
+        "zone": 4
+      },
+      {
+        "association": 0,
+        "bodyName": "METIS",
+        "bodyOffset": 60,
+        "cell": 2,
+        "cellCoordinates": [
+          2,
+          0
+        ],
+        "floor": 0,
+        "group": 23,
+        "hasModel": true,
+        "modelRecord": "$3005C",
+        "name": "TOURCRAFT",
+        "position": [
+          165771620,
+          0,
+          69892274
+        ],
+        "provenance": [
+          {
+            "range": [
+              "$05850",
+              "$05854"
+            ],
+            "sha256": "f5a7e6b95b956f5acc3819beb617b7ce6d03fd5759de0772dd2712c48df1985b"
+          },
+          {
+            "range": [
+              "$05C50",
+              "$05C54"
+            ],
+            "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+          },
+          {
+            "range": [
+              "$06050",
+              "$06054"
+            ],
+            "sha256": "ed943e3b6fd02c99a852332f1fe3cad3ae9b07b7edc1532d376df2f702739096"
+          },
+          {
+            "range": [
+              "$06450",
+              "$06454"
+            ],
+            "sha256": "daa53cf047d5302adb059ace37d8538e5266aba6b9b010e8a9d6a91c206db2cb"
+          },
+          {
+            "range": [
+              "$06850",
+              "$06854"
+            ],
+            "sha256": "d177a08a1e99a10697f692df4ba8257d3d1066dd8fd6eb59ac34cffadb2c772b"
+          },
+          {
+            "range": [
+              "$06C50",
+              "$06C54"
+            ],
+            "sha256": "8d12d9fcf1bb74eb413e34f28b96439b1260da900a2c70af2440c5c7dbb43c03"
+          },
+          {
+            "range": [
+              "$2EAD2",
+              "$2EAD4"
+            ],
+            "sha256": "9b2691400ce53d19ac7a64ca30e823f042d804ecc2403eb775dbb0ba75e5e359"
+          },
+          {
+            "range": [
+              "$3004C",
+              "$3005C"
+            ],
+            "sha256": "611abae6ef2681aa23723be88dc98b28753e197ccb44ee5d8da4101f4349124a"
+          }
+        ],
+        "residence": "surface",
+        "slot": 13,
+        "state": 16,
+        "yaw": 127,
+        "zone": 0
+      },
+      {
+        "association": 0,
+        "bodyName": "METIS",
+        "bodyOffset": 60,
+        "cell": 98,
+        "cellCoordinates": [
+          2,
+          6
+        ],
+        "floor": 0,
+        "group": 0,
+        "hasModel": true,
+        "modelRecord": "$2FA60",
+        "name": "TAXI",
+        "position": [
+          165772287,
+          25,
+          70287232
+        ],
+        "provenance": [
+          {
+            "range": [
+              "$0585C",
+              "$05860"
+            ],
+            "sha256": "10859de15310a8ae33edeceb350019e71f736ee2893d598b8d1a1e5665a2c17c"
+          },
+          {
+            "range": [
+              "$05C5C",
+              "$05C60"
+            ],
+            "sha256": "282a163f3e6f52ab35cf838079369bce33cf5a1f151d2822846095a6d07e1ae2"
+          },
+          {
+            "range": [
+              "$0605C",
+              "$06060"
+            ],
+            "sha256": "bbad4c3c6c2707addbee7546a1fa1effe21001c2af1505edb01d36e2167fa4c2"
+          },
+          {
+            "range": [
+              "$0645C",
+              "$06460"
+            ],
+            "sha256": "10a4b7a1aad940d98b0ee2671d8efba2edfcf270ccc8d9f2f9b381ec279dcca4"
+          },
+          {
+            "range": [
+              "$0685C",
+              "$06860"
+            ],
+            "sha256": "985e4da2861a8fac3be2c38c69c942cc90904c14115f98b18c6c0527dbfed2f4"
+          },
+          {
+            "range": [
+              "$06C5C",
+              "$06C60"
+            ],
+            "sha256": "c31425b44a7ed682a3356bf6820141e1584a15c43b6d6793f552e5d4621586f7"
+          },
+          {
+            "range": [
+              "$2EAD8",
+              "$2EADA"
+            ],
+            "sha256": "10debb0bb897c528bc9297c1002c996fec9e1649001ef9cf26b995341230c809"
+          },
+          {
+            "range": [
+              "$2FA50",
+              "$2FA60"
+            ],
+            "sha256": "d2d91d35d9cee47a26ac0931f9b2ca6ea6ed633290d80035d74bb05439cb8354"
+          }
+        ],
+        "residence": "surface",
+        "slot": 16,
+        "state": 16,
+        "yaw": 64,
+        "zone": 0
+      },
+      {
+        "association": 0,
+        "bodyName": "DIALIS",
+        "bodyOffset": 0,
+        "cell": 0,
+        "cellCoordinates": [
+          0,
+          0
+        ],
+        "floor": 0,
+        "group": 0,
+        "hasModel": true,
+        "modelRecord": "$3108A",
+        "name": "OBSERVER",
+        "position": [
+          55983510,
+          33377200,
+          262694723
+        ],
+        "provenance": [
+          {
+            "range": [
+              "$058FC",
+              "$05900"
+            ],
+            "sha256": "50ad0f82c993de9fb102c2d53c94faaa2130f165bfa2e1d96eeacf83dd214305"
+          },
+          {
+            "range": [
+              "$05CFC",
+              "$05D00"
+            ],
+            "sha256": "08f4986b6cb4bccf48fdc49ef1f3077172e42c6c23fc49a84fd41a9491ba3dbd"
+          },
+          {
+            "range": [
+              "$060FC",
+              "$06100"
+            ],
+            "sha256": "372a7fcdbc767a388ee13b484be3f3169b65bb6d7b150459afa91fb0640dd43a"
+          },
+          {
+            "range": [
+              "$064FC",
+              "$06500"
+            ],
+            "sha256": "6e90b5d2b8ce7b775b3f74bafd0a28d18344b287eff41d0cf938f18344ea8fa2"
+          },
+          {
+            "range": [
+              "$068FC",
+              "$06900"
+            ],
+            "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+          },
+          {
+            "range": [
+              "$06CFC",
+              "$06D00"
+            ],
+            "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+          },
+          {
+            "range": [
+              "$2EB28",
+              "$2EB2A"
+            ],
+            "sha256": "215e703cd236ba252da94f2405a4f14c0e5c63590edf22e829a38b8ee16520bf"
+          },
+          {
+            "range": [
+              "$3107A",
+              "$3108A"
+            ],
+            "sha256": "d0ced0ab9d2beed50f3818b7d8499e753373c8b076c06024cca70d593adccb31"
+          }
+        ],
+        "residence": "out-of-world",
+        "slot": 56,
+        "state": 16,
+        "yaw": 0,
+        "zone": 0
+      },
+      {
+        "association": 0,
+        "bodyName": "DIALIS",
+        "bodyOffset": 0,
+        "cell": 0,
+        "cellCoordinates": [
+          0,
+          0
+        ],
+        "floor": 0,
+        "group": 0,
+        "hasModel": true,
+        "modelRecord": "$3108A",
+        "name": "OBSERVER",
+        "position": [
+          55999473,
+          33349192,
+          262717331
+        ],
+        "provenance": [
+          {
+            "range": [
+              "$05900",
+              "$05904"
+            ],
+            "sha256": "9d505f4a476cced68788903fdcaa813851d2d4190d3c19f3a1ea4c6a23c296f6"
+          },
+          {
+            "range": [
+              "$05D00",
+              "$05D04"
+            ],
+            "sha256": "fab3b2effe199f9cbeb690bc4b4ee96dd44512ab992e45c57e2afb1b2429cfef"
+          },
+          {
+            "range": [
+              "$06100",
+              "$06104"
+            ],
+            "sha256": "66961bedcf63be069cf5b32a070e713f1aa4cabab90396a9ca9e6b8a8bd9faaa"
+          },
+          {
+            "range": [
+              "$06500",
+              "$06504"
+            ],
+            "sha256": "6e90b5d2b8ce7b775b3f74bafd0a28d18344b287eff41d0cf938f18344ea8fa2"
+          },
+          {
+            "range": [
+              "$06900",
+              "$06904"
+            ],
+            "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+          },
+          {
+            "range": [
+              "$06D00",
+              "$06D04"
+            ],
+            "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+          },
+          {
+            "range": [
+              "$2EB2A",
+              "$2EB2C"
+            ],
+            "sha256": "215e703cd236ba252da94f2405a4f14c0e5c63590edf22e829a38b8ee16520bf"
+          },
+          {
+            "range": [
+              "$3107A",
+              "$3108A"
+            ],
+            "sha256": "d0ced0ab9d2beed50f3818b7d8499e753373c8b076c06024cca70d593adccb31"
+          }
+        ],
+        "residence": "out-of-world",
+        "slot": 57,
+        "state": 16,
+        "yaw": 0,
+        "zone": 0
+      },
+      {
+        "association": 0,
+        "bodyName": "DIALIS",
+        "bodyOffset": 0,
+        "cell": 0,
+        "cellCoordinates": [
+          0,
+          0
+        ],
+        "floor": 0,
+        "group": 0,
+        "hasModel": true,
+        "modelRecord": "$3108A",
+        "name": "OBSERVER",
+        "position": [
+          56346539,
+          32594871,
+          355584519
+        ],
+        "provenance": [
+          {
+            "range": [
+              "$05904",
+              "$05908"
+            ],
+            "sha256": "e75cc9be7083cb661bc009ea98514d704c3021ccb81ea5abaafc7161b2c74737"
+          },
+          {
+            "range": [
+              "$05D04",
+              "$05D08"
+            ],
+            "sha256": "66c5aebc1db686e45cab27d0c3988bdadf0d930aa033a5e136eaaa16ec75a4b1"
+          },
+          {
+            "range": [
+              "$06104",
+              "$06108"
+            ],
+            "sha256": "b38805ea374dacdd609da096a2b9199273c6e04e81ad200c827b9cac148e024a"
+          },
+          {
+            "range": [
+              "$06504",
+              "$06508"
+            ],
+            "sha256": "10a4b7a1aad940d98b0ee2671d8efba2edfcf270ccc8d9f2f9b381ec279dcca4"
+          },
+          {
+            "range": [
+              "$06904",
+              "$06908"
+            ],
+            "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+          },
+          {
+            "range": [
+              "$06D04",
+              "$06D08"
+            ],
+            "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+          },
+          {
+            "range": [
+              "$2EB2C",
+              "$2EB2E"
+            ],
+            "sha256": "215e703cd236ba252da94f2405a4f14c0e5c63590edf22e829a38b8ee16520bf"
+          },
+          {
+            "range": [
+              "$3107A",
+              "$3108A"
+            ],
+            "sha256": "d0ced0ab9d2beed50f3818b7d8499e753373c8b076c06024cca70d593adccb31"
+          }
+        ],
+        "residence": "out-of-world",
+        "slot": 58,
+        "state": 16,
+        "yaw": 0,
+        "zone": 0
+      },
+      {
+        "association": 5,
+        "bodyName": "METIS",
+        "bodyOffset": 60,
+        "cell": 96,
+        "cellCoordinates": [
+          0,
+          6
+        ],
+        "floor": 9,
+        "group": 3,
+        "hasModel": true,
+        "modelRecord": "$316F8",
+        "name": "TRANSPORTER a",
+        "position": [
+          165642659,
+          1350,
+          70289189
+        ],
+        "provenance": [
+          {
+            "range": [
+              "$05928",
+              "$0592C"
+            ],
+            "sha256": "71bb8f3663766142f73ea51a5cdb83ff903f9dfaedb41d00206e0180050ef8c7"
+          },
+          {
+            "range": [
+              "$05D28",
+              "$05D2C"
+            ],
+            "sha256": "c3d00a874db44a70e02c9ab6d11fd224748be7f3a701ae7925c30c99d4bbf155"
+          },
+          {
+            "range": [
+              "$06128",
+              "$0612C"
+            ],
+            "sha256": "fc14834488ef06b356a63889f7a1fc4dfd1d3d6e48336437b2b77554de4cf857"
+          },
+          {
+            "range": [
+              "$06528",
+              "$0652C"
+            ],
+            "sha256": "0ba76e048291f3e0ae681e1511d6a7d0f37009184c6af99143555e86615b7ea3"
+          },
+          {
+            "range": [
+              "$06928",
+              "$0692C"
+            ],
+            "sha256": "80685304d840c8b5eb9ddfc99959fd11098b4f51479e2ae6794c0590fb63359d"
+          },
+          {
+            "range": [
+              "$06D28",
+              "$06D2C"
+            ],
+            "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+          },
+          {
+            "range": [
+              "$2EB3E",
+              "$2EB40"
+            ],
+            "sha256": "714eeed02adc72f4fabe98fa57999537541c25108c6d1f32183b7d3ef8868582"
+          },
+          {
+            "range": [
+              "$316E8",
+              "$316F8"
+            ],
+            "sha256": "ab012d5db441d430a47ce24fe8754650f84435615321880f59f7ecdc16fae796"
+          }
+        ],
+        "residence": "structure",
+        "slot": 67,
+        "state": 32,
+        "yaw": 0,
+        "zone": 4
+      },
+      {
+        "association": 1,
+        "bodyName": "METIS",
+        "bodyOffset": 60,
+        "cell": 98,
+        "cellCoordinates": [
+          2,
+          6
+        ],
+        "floor": 0,
+        "group": 3,
+        "hasModel": true,
+        "modelRecord": "$38CEA",
+        "name": "COBWEB",
+        "position": [
+          165773765,
+          0,
+          70288631
+        ],
+        "provenance": [
+          {
+            "range": [
+              "$05A0C",
+              "$05A10"
+            ],
+            "sha256": "685519d53b3bdf2ed0c51c72da21435e1f9bd8b55811a0900b683f958129399c"
+          },
+          {
+            "range": [
+              "$05E0C",
+              "$05E10"
+            ],
+            "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+          },
+          {
+            "range": [
+              "$0620C",
+              "$06210"
+            ],
+            "sha256": "c50c79de097f90135bbb16f52cb2a894d4430960d2c7ea04a54959c0486cd154"
+          },
+          {
+            "range": [
+              "$0660C",
+              "$06610"
+            ],
+            "sha256": "ee6d7e127ee294dfbd71eca68ce77ad15972b7c3d76091221508c50b85d494f9"
+          },
+          {
+            "range": [
+              "$06A0C",
+              "$06A10"
+            ],
+            "sha256": "8679a201323e1c45ca0011d9b34e19dcf49a85508a557907ca2a1eefc942476f"
+          },
+          {
+            "range": [
+              "$06E0C",
+              "$06E10"
+            ],
+            "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+          },
+          {
+            "range": [
+              "$2EBB0",
+              "$2EBB2"
+            ],
+            "sha256": "d2d58350382b42b55fb5583c915424cb87c8bfbb54a719a3a3a10de3d0403de9"
+          },
+          {
+            "range": [
+              "$38CDA",
+              "$38CEA"
+            ],
+            "sha256": "e528bf72205210eef3b6fd0211ae2ee5252922baa18267a71644a6f7c64edc3f"
+          }
+        ],
+        "residence": "structure",
+        "slot": 124,
+        "state": 8,
+        "yaw": 0,
+        "zone": 4
+      },
+      {
+        "association": 0,
+        "bodyName": "METIS",
+        "bodyOffset": 60,
+        "cell": 2,
+        "cellCoordinates": [
+          2,
+          0
+        ],
+        "floor": 0,
+        "group": 3,
+        "hasModel": true,
+        "modelRecord": "$353F0",
+        "name": "BLACK BEACON",
+        "position": [
+          165771603,
+          0,
+          69898068
+        ],
+        "provenance": [
+          {
+            "range": [
+              "$05AB0",
+              "$05AB4"
+            ],
+            "sha256": "2b7ac2ab51609ab6f5b4388a3372e7137ef8f97af5b37d6a60a5fb836e7c0ca5"
+          },
+          {
+            "range": [
+              "$05EB0",
+              "$05EB4"
+            ],
+            "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+          },
+          {
+            "range": [
+              "$062B0",
+              "$062B4"
+            ],
+            "sha256": "3348017f054e32cdcbb72df6b3b98948967f5819abbfc3a399c9b6d39ff552d1"
+          },
+          {
+            "range": [
+              "$066B0",
+              "$066B4"
+            ],
+            "sha256": "f22bda3a3d913f70b09124be8df16293f3222abd22d216655da2bca25ca89aca"
+          },
+          {
+            "range": [
+              "$06AB0",
+              "$06AB4"
+            ],
+            "sha256": "d177a08a1e99a10697f692df4ba8257d3d1066dd8fd6eb59ac34cffadb2c772b"
+          },
+          {
+            "range": [
+              "$06EB0",
+              "$06EB4"
+            ],
+            "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+          },
+          {
+            "range": [
+              "$2EC02",
+              "$2EC04"
+            ],
+            "sha256": "4c1dc1f491eb4e4e3e5e34a36df4fd84932bb09a01b248edbcb1581d16ce4dba"
+          },
+          {
+            "range": [
+              "$353E0",
+              "$353F0"
+            ],
+            "sha256": "78246439ee5f0f26578e1ee5a4c2b6345c3381225a82726598701bc327a9ab4b"
+          }
+        ],
+        "residence": "surface",
+        "slot": 165,
+        "state": 4,
+        "yaw": 0,
+        "zone": 6
+      },
+      {
+        "association": 0,
+        "bodyName": "TOLOSA",
+        "bodyOffset": 100,
+        "cell": 65,
+        "cellCoordinates": [
+          1,
+          4
+        ],
+        "floor": 0,
+        "group": 23,
+        "hasModel": true,
+        "modelRecord": "$35414",
+        "name": "BLUE BEACON",
+        "position": [
+          179479173,
+          0,
+          103252793
+        ],
+        "provenance": [
+          {
+            "range": [
+              "$05AD4",
+              "$05AD8"
+            ],
+            "sha256": "64377eb227f8baefe5e4e1e2e19c43acbfb550d47cde6256e24a2a597e0a4708"
+          },
+          {
+            "range": [
+              "$05ED4",
+              "$05ED8"
+            ],
+            "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+          },
+          {
+            "range": [
+              "$062D4",
+              "$062D8"
+            ],
+            "sha256": "141f40f6cbdf165e57fb4d5e83044f8ff4180eddc9955959dad08da1af86c18e"
+          },
+          {
+            "range": [
+              "$066D4",
+              "$066D8"
+            ],
+            "sha256": "3a11db4fdcee9485fc3cfd255eea17e7c00e9bca7e058bef5a8c7f72f24faf6c"
+          },
+          {
+            "range": [
+              "$06AD4",
+              "$06AD8"
+            ],
+            "sha256": "92e603a1c0f3dbfb890728256b87ebce8e2d448dc361f153504a8aaf00c46a42"
+          },
+          {
+            "range": [
+              "$06ED4",
+              "$06ED8"
+            ],
+            "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+          },
+          {
+            "range": [
+              "$2EC14",
+              "$2EC16"
+            ],
+            "sha256": "ea547a0cf534666be3bd520bda9a36b044831c1c25bd679de3847d4b16b162ce"
+          },
+          {
+            "range": [
+              "$35404",
+              "$35414"
+            ],
+            "sha256": "3352d3027de8c3a2eadc9be917c12b2dfc71d57c6857f74e44edddedc9784e10"
+          }
+        ],
+        "residence": "surface",
+        "slot": 174,
+        "state": 4,
+        "yaw": 0,
+        "zone": 8
+      },
+      {
+        "association": 0,
+        "bodyName": "METIS",
+        "bodyOffset": 60,
+        "cell": 98,
+        "cellCoordinates": [
+          2,
+          6
+        ],
+        "floor": 0,
+        "group": 3,
+        "hasModel": true,
+        "modelRecord": "$35528",
+        "name": "KEY - EAGLE 9SE",
+        "position": [
+          165773421,
+          0,
+          70290456
+        ],
+        "provenance": [
+          {
+            "range": [
+              "$05AF0",
+              "$05AF4"
+            ],
+            "sha256": "c52a7c827eedd77e17536aa319620d8085c0868c803c12b47b0ee76d170224cc"
+          },
+          {
+            "range": [
+              "$05EF0",
+              "$05EF4"
+            ],
+            "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+          },
+          {
+            "range": [
+              "$062F0",
+              "$062F4"
+            ],
+            "sha256": "0417cd06463afa4fea3e1316506368be6f4d2c3f385710336cd301c8c0adbde0"
+          },
+          {
+            "range": [
+              "$066F0",
+              "$066F4"
+            ],
+            "sha256": "2ba379aedced05a2bc9f77f689143fd42a21a8bd38908092c064669d5995bc74"
+          },
+          {
+            "range": [
+              "$06AF0",
+              "$06AF4"
+            ],
+            "sha256": "985e4da2861a8fac3be2c38c69c942cc90904c14115f98b18c6c0527dbfed2f4"
+          },
+          {
+            "range": [
+              "$06EF0",
+              "$06EF4"
+            ],
+            "sha256": "43f546957dbb486973153fda6064f5d8df41d392daf83b14c5ac05baea644d0a"
+          },
+          {
+            "range": [
+              "$2EC22",
+              "$2EC24"
+            ],
+            "sha256": "9732c83e3e03fffde2ee65a9d826df8c4dd623c27fb92b952fe62a02f0726f87"
+          },
+          {
+            "range": [
+              "$35518",
+              "$35528"
+            ],
+            "sha256": "e6a41b26ea87c5b426710cb0b5d889de685502feff3bbb070192a298c2e9e9a4"
+          }
+        ],
+        "residence": "surface",
+        "slot": 181,
+        "state": 4,
+        "yaw": 0,
+        "zone": 7
+      },
+      {
+        "association": 3,
+        "bodyName": "METIS",
+        "bodyOffset": 60,
+        "cell": 96,
+        "cellCoordinates": [
+          0,
+          6
+        ],
+        "floor": 1,
+        "group": 3,
+        "hasModel": true,
+        "modelRecord": "$36974",
+        "name": "MAN",
+        "position": [
+          165642290,
+          150,
+          70288860
+        ],
+        "provenance": [
+          {
+            "range": [
+              "$05B50",
+              "$05B54"
+            ],
+            "sha256": "28c9ee92938c8e824c0a8a0f5ad511b2703c0578e3e9ac17e12e6adce1505ba5"
+          },
+          {
+            "range": [
+              "$05F50",
+              "$05F54"
+            ],
+            "sha256": "beec8f91648990eccf58e0c8c18eb4f65b01819129bd7ef5e837be2e9968abde"
+          },
+          {
+            "range": [
+              "$06350",
+              "$06354"
+            ],
+            "sha256": "0c3a41e0ad8ef595469c0d29142c3c324b8770d7e015f12e8ce09595c3ba3f1a"
+          },
+          {
+            "range": [
+              "$06750",
+              "$06754"
+            ],
+            "sha256": "62711a8a4928dbfc928efcfd0ac2c495effe5b230074b77efba4b09b752511a5"
+          },
+          {
+            "range": [
+              "$06B50",
+              "$06B54"
+            ],
+            "sha256": "b103558c58eb41d846d07146883d62fb26fe8d3ff5c612eb6bbe7bf1812f224d"
+          },
+          {
+            "range": [
+              "$06F50",
+              "$06F54"
+            ],
+            "sha256": "b253668f6b59f1ff28522831931e4d3c5a3de533965af22e961735437c0172cb"
+          },
+          {
+            "range": [
+              "$2EC52",
+              "$2EC54"
+            ],
+            "sha256": "a26a78c8fa2dd9b63d10e47b73a9bd28a38f7e61f7d6c9d34fdf033f46519f58"
+          },
+          {
+            "range": [
+              "$36964",
+              "$36974"
+            ],
+            "sha256": "5db720aa5c999a6329a732eea1264050843612609645c8699ef84573172b586c"
+          }
+        ],
+        "residence": "structure",
+        "slot": 205,
+        "state": 16,
+        "yaw": 0,
+        "zone": 4
+      },
+      {
+        "association": 0,
+        "bodyName": "METIS",
+        "bodyOffset": 60,
+        "cell": 98,
+        "cellCoordinates": [
+          2,
+          6
+        ],
+        "floor": 0,
+        "group": 3,
+        "hasModel": true,
+        "modelRecord": "$37304",
+        "name": "MAILBOX",
+        "position": [
+          165773339,
+          0,
+          70287623
+        ],
+        "provenance": [
+          {
+            "range": [
+              "$05B88",
+              "$05B8C"
+            ],
+            "sha256": "9c5599e79aea46550214eb9df64050ec938f2e1b421e7863f6e966800dc18c47"
+          },
+          {
+            "range": [
+              "$05F88",
+              "$05F8C"
+            ],
+            "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+          },
+          {
+            "range": [
+              "$06388",
+              "$0638C"
+            ],
+            "sha256": "05ec30a70de1014c275d2e130f99d174965fbfda0c9c625270bd780654d6ffe4"
+          },
+          {
+            "range": [
+              "$06788",
+              "$0678C"
+            ],
+            "sha256": "0d55586e052433d54437e95e487fe2c5ed1cb808ec6a369cbdcd1d76967750b5"
+          },
+          {
+            "range": [
+              "$06B88",
+              "$06B8C"
+            ],
+            "sha256": "985e4da2861a8fac3be2c38c69c942cc90904c14115f98b18c6c0527dbfed2f4"
+          },
+          {
+            "range": [
+              "$06F88",
+              "$06F8C"
+            ],
+            "sha256": "ad95131bc0b799c0b1af477fb14fcf26a6a9f76079e48bf090acb7e8367bfd0e"
+          },
+          {
+            "range": [
+              "$2EC6E",
+              "$2EC70"
+            ],
+            "sha256": "eeb7bd52ae68ed83526b01e32c83d574c61fc4d308308c20081bf6d490927e57"
+          },
+          {
+            "range": [
+              "$372F4",
+              "$37304"
+            ],
+            "sha256": "983b4ed2a777f252ca9dd3685b0cfd671f69b90ad8a52510a0b35362d1ef943b"
+          }
+        ],
+        "residence": "surface",
+        "slot": 219,
+        "state": 5,
+        "yaw": 255,
+        "zone": 1
+      },
+      {
+        "association": 0,
+        "bodyName": "METIS",
+        "bodyOffset": 60,
+        "cell": 98,
+        "cellCoordinates": [
+          2,
+          6
+        ],
+        "floor": 0,
+        "group": 3,
+        "hasModel": true,
+        "modelRecord": "$373D8",
+        "name": "MARGARETS LETTER",
+        "position": [
+          165773339,
+          60,
+          70287623
+        ],
+        "provenance": [
+          {
+            "range": [
+              "$05B8C",
+              "$05B90"
+            ],
+            "sha256": "9c5599e79aea46550214eb9df64050ec938f2e1b421e7863f6e966800dc18c47"
+          },
+          {
+            "range": [
+              "$05F8C",
+              "$05F90"
+            ],
+            "sha256": "4082763076bdaee3a85e52eb5893169d45d057397616251e0e699e6403238e66"
+          },
+          {
+            "range": [
+              "$0638C",
+              "$06390"
+            ],
+            "sha256": "05ec30a70de1014c275d2e130f99d174965fbfda0c9c625270bd780654d6ffe4"
+          },
+          {
+            "range": [
+              "$0678C",
+              "$06790"
+            ],
+            "sha256": "bddeb43795513b98ce3fc02535cf9f32ccc4d468f5aca2a399e6df0238191100"
+          },
+          {
+            "range": [
+              "$06B8C",
+              "$06B90"
+            ],
+            "sha256": "985e4da2861a8fac3be2c38c69c942cc90904c14115f98b18c6c0527dbfed2f4"
+          },
+          {
+            "range": [
+              "$06F8C",
+              "$06F90"
+            ],
+            "sha256": "ad95131bc0b799c0b1af477fb14fcf26a6a9f76079e48bf090acb7e8367bfd0e"
+          },
+          {
+            "range": [
+              "$2EC70",
+              "$2EC72"
+            ],
+            "sha256": "3a4f228e955d44e2625b7447f9b2d14cf4ba5d1186c52273464eea76af0dbdd6"
+          },
+          {
+            "range": [
+              "$373C8",
+              "$373D8"
+            ],
+            "sha256": "a6d8f3b95eadebc930c99854b2d3360cf8b25ba822177505247c16802d0a0619"
+          }
+        ],
+        "residence": "surface",
+        "slot": 220,
+        "state": 4,
+        "yaw": 255,
+        "zone": 1
+      },
+      {
+        "association": 3,
+        "bodyName": "METIS",
+        "bodyOffset": 60,
+        "cell": 96,
+        "cellCoordinates": [
+          0,
+          6
+        ],
+        "floor": 1,
+        "group": 3,
+        "hasModel": true,
+        "modelRecord": "$308F4",
+        "name": "EXECUTIVES CHAIR",
+        "position": [
+          165642146,
+          150,
+          70288817
+        ],
+        "provenance": [
+          {
+            "range": [
+              "$05BCC",
+              "$05BD0"
+            ],
+            "sha256": "25f93b2546a36adff81a3dc2b29d43eb11ccd4cd82732990de60b8de8cee1349"
+          },
+          {
+            "range": [
+              "$05FCC",
+              "$05FD0"
+            ],
+            "sha256": "beec8f91648990eccf58e0c8c18eb4f65b01819129bd7ef5e837be2e9968abde"
+          },
+          {
+            "range": [
+              "$063CC",
+              "$063D0"
+            ],
+            "sha256": "12860f7a4184fc0b6485e028d25d82a3df48c6cdcc7b79e5243426dae5e3eb20"
+          },
+          {
+            "range": [
+              "$067CC",
+              "$067D0"
+            ],
+            "sha256": "ee6d7e127ee294dfbd71eca68ce77ad15972b7c3d76091221508c50b85d494f9"
+          },
+          {
+            "range": [
+              "$06BCC",
+              "$06BD0"
+            ],
+            "sha256": "b103558c58eb41d846d07146883d62fb26fe8d3ff5c612eb6bbe7bf1812f224d"
+          },
+          {
+            "range": [
+              "$06FCC",
+              "$06FD0"
+            ],
+            "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+          },
+          {
+            "range": [
+              "$2EC90",
+              "$2EC92"
+            ],
+            "sha256": "93be6bf624c9d5619ef0b30c8970560bc873c1078a3825e2e5ebe7ff5b405325"
+          },
+          {
+            "range": [
+              "$308E4",
+              "$308F4"
+            ],
+            "sha256": "e0eeaa77d3f9c4d638a8ad0be24ba8f584cb9a2c8ccd71ef14c58c3c342eeddd"
+          }
+        ],
+        "residence": "structure",
+        "slot": 236,
+        "state": 8,
+        "yaw": 0,
+        "zone": 4
+      },
+      {
+        "association": 3,
+        "bodyName": "METIS",
+        "bodyOffset": 60,
+        "cell": 96,
+        "cellCoordinates": [
+          0,
+          6
+        ],
+        "floor": 1,
+        "group": 3,
+        "hasModel": true,
+        "modelRecord": "$30796",
+        "name": "EXECUTIVE DESK",
+        "position": [
+          165642146,
+          150,
+          70288932
+        ],
+        "provenance": [
+          {
+            "range": [
+              "$05BDC",
+              "$05BE0"
+            ],
+            "sha256": "25f93b2546a36adff81a3dc2b29d43eb11ccd4cd82732990de60b8de8cee1349"
+          },
+          {
+            "range": [
+              "$05FDC",
+              "$05FE0"
+            ],
+            "sha256": "beec8f91648990eccf58e0c8c18eb4f65b01819129bd7ef5e837be2e9968abde"
+          },
+          {
+            "range": [
+              "$063DC",
+              "$063E0"
+            ],
+            "sha256": "1c5d63cce0516f68254bcd95f2a24c7e4095c2a0fa589f2ffcf10c18637bbaca"
+          },
+          {
+            "range": [
+              "$067DC",
+              "$067E0"
+            ],
+            "sha256": "1b56acddb2665e1633ffa648d75cfc5308480a7c1f5d8457a32778ddb6a2db0c"
+          },
+          {
+            "range": [
+              "$06BDC",
+              "$06BE0"
+            ],
+            "sha256": "b103558c58eb41d846d07146883d62fb26fe8d3ff5c612eb6bbe7bf1812f224d"
+          },
+          {
+            "range": [
+              "$06FDC",
+              "$06FE0"
+            ],
+            "sha256": "7469f5f0740e90a3b34f57e0b65c9b2030f313de6b78b4ad5ee3a373af22e5f4"
+          },
+          {
+            "range": [
+              "$2EC98",
+              "$2EC9A"
+            ],
+            "sha256": "1c7f06a1f2a77dcc0524ccc122e058486b96111a44d336016baeeddcef9028af"
+          },
+          {
+            "range": [
+              "$30786",
+              "$30796"
+            ],
+            "sha256": "6c17e9f928c16fdde673675e79ed59a99c1faeed681dfeff607f1b5b8497d704"
+          }
+        ],
+        "residence": "structure",
+        "slot": 240,
+        "state": 14,
+        "yaw": 23,
+        "zone": 4
+      }
+    ],
+    "source": "gameplay-opening",
+    "view": {
+      "eye": [
+        165773321,
+        63,
+        70289576
+      ],
+      "headCount": 0,
+      "headCursor": "$00000",
+      "headProfile": 0,
+      "headSelector": 0,
+      "latitude": 524,
+      "longitude": 632,
+      "pitch": 511,
+      "roll": 0,
+      "yaw": 1024
+    },
+    "vm": {
+      "busy": 0,
+      "continuation": 0,
+      "hold": 150,
+      "pc": "$6FF57",
+      "queue": 0,
+      "timedTarget": 0,
+      "timer": 65507,
+      "wait": 29
+    }
+  },
+  "kind": "dion-play-gameplay",
+  "modelBindingSources": {
+    "124": {
+      "range": [
+        "$2EBB0",
+        "$2EBB2"
+      ],
+      "sha256": "d2d58350382b42b55fb5583c915424cb87c8bfbb54a719a3a3a10de3d0403de9"
+    },
+    "13": {
+      "range": [
+        "$2EAD2",
+        "$2EAD4"
+      ],
+      "sha256": "9b2691400ce53d19ac7a64ca30e823f042d804ecc2403eb775dbb0ba75e5e359"
+    },
+    "16": {
+      "range": [
+        "$2EAD8",
+        "$2EADA"
+      ],
+      "sha256": "10debb0bb897c528bc9297c1002c996fec9e1649001ef9cf26b995341230c809"
+    },
+    "165": {
+      "range": [
+        "$2EC02",
+        "$2EC04"
+      ],
+      "sha256": "4c1dc1f491eb4e4e3e5e34a36df4fd84932bb09a01b248edbcb1581d16ce4dba"
+    },
+    "174": {
+      "range": [
+        "$2EC14",
+        "$2EC16"
+      ],
+      "sha256": "ea547a0cf534666be3bd520bda9a36b044831c1c25bd679de3847d4b16b162ce"
+    },
+    "181": {
+      "range": [
+        "$2EC22",
+        "$2EC24"
+      ],
+      "sha256": "9732c83e3e03fffde2ee65a9d826df8c4dd623c27fb92b952fe62a02f0726f87"
+    },
+    "205": {
+      "range": [
+        "$2EC52",
+        "$2EC54"
+      ],
+      "sha256": "a26a78c8fa2dd9b63d10e47b73a9bd28a38f7e61f7d6c9d34fdf033f46519f58"
+    },
+    "219": {
+      "range": [
+        "$2EC6E",
+        "$2EC70"
+      ],
+      "sha256": "eeb7bd52ae68ed83526b01e32c83d574c61fc4d308308c20081bf6d490927e57"
+    },
+    "220": {
+      "range": [
+        "$2EC70",
+        "$2EC72"
+      ],
+      "sha256": "3a4f228e955d44e2625b7447f9b2d14cf4ba5d1186c52273464eea76af0dbdd6"
+    },
+    "236": {
+      "range": [
+        "$2EC90",
+        "$2EC92"
+      ],
+      "sha256": "93be6bf624c9d5619ef0b30c8970560bc873c1078a3825e2e5ebe7ff5b405325"
+    },
+    "240": {
+      "range": [
+        "$2EC98",
+        "$2EC9A"
+      ],
+      "sha256": "1c7f06a1f2a77dcc0524ccc122e058486b96111a44d336016baeeddcef9028af"
+    },
+    "263": {
+      "range": [
+        "$2ECC6",
+        "$2ECC8"
+      ],
+      "sha256": "590cdf6f475ec4ec81ee60ca772c77a093dd36a90bec5c8222cd1089f360bc49"
+    },
+    "264": {
+      "range": [
+        "$2ECC8",
+        "$2ECCA"
+      ],
+      "sha256": "f923baf7942b68ad0ca87b2a870b3f0b268ce4d34c566ee4817a21900b815e63"
+    },
+    "279": {
+      "range": [
+        "$2ECE6",
+        "$2ECE8"
+      ],
+      "sha256": "82847cbff0c88677d44b7a59cff5d44015f5daf3c40aed54bb610526779d79ce"
+    },
+    "280": {
+      "range": [
+        "$2ECE8",
+        "$2ECEA"
+      ],
+      "sha256": "3a45044e9a3c83edc14fcd361768139cde6498262d02744285dc266a675275de"
+    },
+    "3": {
+      "range": [
+        "$2EABE",
+        "$2EAC0"
+      ],
+      "sha256": "c60eeb72d7a2dd4bd7a404a2f85cf223e2cb826145940a316d63963a0fb2ab68"
+    },
+    "304": {
+      "range": [
+        "$2ED18",
+        "$2ED1A"
+      ],
+      "sha256": "ca42e0c2c868933abe0fa9e709869029bc0dce77c982a0d60982ef904a7a7e13"
+    },
+    "305": {
+      "range": [
+        "$2ED1A",
+        "$2ED1C"
+      ],
+      "sha256": "c824957fa81f8d86895e4e0408710018ea1c183500bd3bcdd767f741bf25d52f"
+    },
+    "309": {
+      "range": [
+        "$2ED22",
+        "$2ED24"
+      ],
+      "sha256": "7e377a79cce8787105b65bcebc8ae97f93f741be22c7bd1662ee8756bc992fc3"
+    },
+    "318": {
+      "range": [
+        "$2ED34",
+        "$2ED36"
+      ],
+      "sha256": "10debb0bb897c528bc9297c1002c996fec9e1649001ef9cf26b995341230c809"
+    },
+    "320": {
+      "range": [
+        "$2ED38",
+        "$2ED3A"
+      ],
+      "sha256": "215e703cd236ba252da94f2405a4f14c0e5c63590edf22e829a38b8ee16520bf"
+    },
+    "329": {
+      "range": [
+        "$2ED4A",
+        "$2ED4C"
+      ],
+      "sha256": "786870fbdf4d5958e536b152ecbcef58fe061baf376932e29b091db8efe5e774"
+    },
+    "330": {
+      "range": [
+        "$2ED4C",
+        "$2ED4E"
+      ],
+      "sha256": "80245e98ab1e698b648903dca4bb4c1e403f0d1b3fffd299eb0aeb257bf1b411"
+    },
+    "331": {
+      "range": [
+        "$2ED4E",
+        "$2ED50"
+      ],
+      "sha256": "336a1582144be4e9204af9e11db98d3a7b296b24253aeba13be41a54f11fb013"
+    },
+    "333": {
+      "range": [
+        "$2ED52",
+        "$2ED54"
+      ],
+      "sha256": "ccfb0a5febf932ab224c636d98a1750f918d573dc29fc63077d059c744f04c40"
+    },
+    "334": {
+      "range": [
+        "$2ED54",
+        "$2ED56"
+      ],
+      "sha256": "8c101f38e5f5dd8f475f4be3b778c5d33e17219776616d57cba02114d0a94ec7"
+    },
+    "337": {
+      "range": [
+        "$2ED5A",
+        "$2ED5C"
+      ],
+      "sha256": "23d456e89da6ba532cc6271487afcc98f744e15ea406fe18178cfbf8cf79927a"
+    },
+    "370": {
+      "range": [
+        "$2ED9C",
+        "$2ED9E"
+      ],
+      "sha256": "834fe848051dca49826cffb1802c735547ef6f29f1fd1c3a41ca0e2eeaf47bd2"
+    },
+    "371": {
+      "range": [
+        "$2ED9E",
+        "$2EDA0"
+      ],
+      "sha256": "0b661cf071f66a835e9e026c38f7255e222e55fd4d3229dc9cef214de3ced5f2"
+    },
+    "372": {
+      "range": [
+        "$2EDA0",
+        "$2EDA2"
+      ],
+      "sha256": "389b9528592a9735000a8157bb1ad0cd7555529f13ac807c37b6a3c08c790093"
+    },
+    "373": {
+      "range": [
+        "$2EDA2",
+        "$2EDA4"
+      ],
+      "sha256": "5bbecc30e3b7de3edb888d31c72671173f021e969ec3822ef789807a7399ebb0"
+    },
+    "56": {
+      "range": [
+        "$2EB28",
+        "$2EB2A"
+      ],
+      "sha256": "215e703cd236ba252da94f2405a4f14c0e5c63590edf22e829a38b8ee16520bf"
+    },
+    "57": {
+      "range": [
+        "$2EB2A",
+        "$2EB2C"
+      ],
+      "sha256": "215e703cd236ba252da94f2405a4f14c0e5c63590edf22e829a38b8ee16520bf"
+    },
+    "58": {
+      "range": [
+        "$2EB2C",
+        "$2EB2E"
+      ],
+      "sha256": "215e703cd236ba252da94f2405a4f14c0e5c63590edf22e829a38b8ee16520bf"
+    },
+    "67": {
+      "range": [
+        "$2EB3E",
+        "$2EB40"
+      ],
+      "sha256": "714eeed02adc72f4fabe98fa57999537541c25108c6d1f32183b7d3ef8868582"
+    }
+  },
+  "modelBindings": {
+    "3": "model-02f086",
+    "13": "model-03005c",
+    "16": "model-02fa60",
+    "56": "model-03108a",
+    "57": "model-03108a",
+    "58": "model-03108a",
+    "67": "model-0316f8",
+    "124": "model-038cea",
+    "165": "model-0353f0",
+    "174": "model-035414",
+    "181": "model-035528",
+    "205": "model-036974",
+    "219": "model-037304",
+    "220": "model-0373d8",
+    "236": "model-0308f4",
+    "240": "model-030796",
+    "263": "model-03772a",
+    "264": "model-0377cc",
+    "279": "model-0381de",
+    "280": "model-038282",
+    "304": "model-038bce",
+    "305": "model-038c52",
+    "309": "model-038f24",
+    "318": "model-02fa60",
+    "320": "model-03108a",
+    "329": "model-03a05e",
+    "330": "model-03a0de",
+    "331": "model-03a1c6",
+    "333": "model-039e5e",
+    "334": "model-039ede",
+    "337": "model-03a15e",
+    "370": "model-03b24c",
+    "371": "model-03b1b6",
+    "372": "model-03b2e2",
+    "373": "model-03b378"
+  },
+  "schemaVersion": 1,
+  "source": "gameplay-opening"
+}

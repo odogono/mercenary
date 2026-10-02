@@ -20,12 +20,20 @@ import {
 } from '../rendering/raster.ts';
 import { DION_PROJECTION } from './projection.ts';
 import {
+  generalCamera,
   levelCamera,
+  project,
   toCamera,
   type CameraPoint,
   type LevelCamera
 } from './raster.ts';
 import { dionStars } from './sky.ts';
+import type { TourcraftContent } from './tourcraftContent.ts';
+import {
+  tourcraftSkyPrimitives,
+  tourcraftStars,
+  type TourcraftSkyView
+} from './tourcraftSky.ts';
 import type {
   DionAttachment,
   DionCell,
@@ -69,6 +77,13 @@ export interface DionDoorState {
 }
 
 export interface DionFrameState {
+  readonly articulationAngle?: number;
+  readonly beaconGates?: ReadonlyMap<number, boolean>;
+  readonly cameraAngles?: {
+    readonly pitch: number;
+    readonly roll: number;
+    readonly yaw: number;
+  };
   readonly cell: number;
   readonly day: boolean;
   readonly doors: ReadonlyMap<number, DionDoorState>;
@@ -80,6 +95,7 @@ export interface DionFrameState {
   readonly heading: number;
   /// The resident slot the player rides as a passenger (`$6EB2` / 4), if any.
   readonly passenger: number | null;
+  readonly pilotHead?: number;
   /// The player's pitch and roll (`$7154`, `$7152`), which view-fixed models turn by.
   readonly pitch: number;
   /// The region of the occupied structure the player stands in, from 1.
@@ -88,6 +104,8 @@ export interface DionFrameState {
   readonly roll: number;
   /// The character the animated sign buffer `$B3F2` holds.
   readonly signCode: number;
+  readonly skyView?: TourcraftSkyView;
+  readonly tokens?: ReadonlyMap<number, readonly number[]>;
 }
 
 export interface DionFrameStats {
@@ -134,6 +152,22 @@ export type DionFrameWorld = Omit<DionWorld, 'source' | 'opening'> & {
     | 'region'
     | 'roll'
   >;
+  readonly tourcraft?: Pick<TourcraftContent, 'arithmetic' | 'system'> & {
+    readonly beaconGates: ReadonlyMap<number, boolean>;
+    readonly beacons: ReadonlyMap<
+      number,
+      {
+        readonly dark: DionModel;
+        readonly gate: number | undefined;
+        readonly lit: DionModel;
+      }
+    >;
+    readonly tail: {
+      readonly colour: number;
+      readonly faces: readonly (readonly number[])[];
+      readonly vertices: readonly (readonly number[])[];
+    };
+  };
 };
 
 const FREE = 0x80_00;
@@ -175,6 +209,8 @@ interface Paint {
   readonly palette: FramePalette;
   polygons: number;
   readonly scene: readonly number[];
+  /// `$B2DE`: the slot digit written by the selected `$8002` header.
+  slotDigit: number | null;
 }
 
 /// `$5513C..$55170` and the fill's colour read: a word with bit 15 clear is a literal
@@ -469,6 +505,13 @@ const tokenString = (
   bound: Bound | null,
   token: number
 ): number[] | null => {
+  if (token === 0x07 && view.paint.slotDigit !== null) {
+    return [view.paint.slotDigit];
+  }
+  const live = view.state.tokens?.get(token | 0x80);
+  if (live !== undefined) {
+    return [...live];
+  }
   const { lettering } = view.world;
   if (token === 0x0b) {
     const code = view.paint.labelCode;
@@ -632,6 +675,21 @@ const drawModel = (
 ): void =>
   withSource(view, `resident:${slot}`, () => {
     selectCandidate(view, slot, pose);
+    const beacon = view.world.tourcraft?.beacons.get(slot);
+    if (beacon) {
+      const enabled =
+        beacon.gate === undefined ||
+        (view.state.beaconGates ?? view.world.tourcraft!.beaconGates).get(
+          beacon.gate
+        ) === true;
+      model =
+        enabled &&
+        ((view.state.frameCounter + (view.world.blinkPhase.get(slot) ?? 0)) &
+          4) ===
+          0
+          ? beacon.lit
+          : beacon.dark;
+    }
     const header = model.header;
     const op = header?.op;
     if (op === 0x0 || op === 0x6) {
@@ -639,6 +697,9 @@ const drawModel = (
     }
     if (op === 0x8 && header?.code !== undefined) {
       view.paint.labelCode = header.code;
+    }
+    if (view.world.tourcraft && op === 0x2) {
+      view.paint.slotDigit = 48 + (slot & 15);
     }
     let mode = 0;
     let yaw = 0;
@@ -667,14 +728,38 @@ const drawModel = (
     // `$5532E`: a model further than its range on any axis is not drawn.
     const range = op === 0xc ? (header?.range ?? 1) : 1;
     if (!passenger && rel.some(value => Math.abs(value) > range * 0x1_00_00)) {
+      // `$545AE`: the promoted locator's far branch keeps one lit colour-3
+      // point, while its dark phase draws nothing.
+      if (beacon && model === beacon.lit) {
+        const at = toCamera(view.camera, ...rel);
+        if (at.d >= DION_PROJECTION.near) {
+          view.primitives.push({
+            colour: {
+              index: view.paint.palette.literal(view.world.modelColours[3]!)
+            },
+            kind: 'point',
+            order: view.primitives.length,
+            screen: project(at),
+            source: view.source
+          });
+          view.paint.models.push(slot);
+        }
+      }
       return;
     }
     view.paint.models.push(slot);
-    const turn: ModelTurn = { mode, yaw };
+    const turn: ModelTurn = {
+      axis: header?.yawOffset ?? 0,
+      mode,
+      pivot: header?.pivot,
+      yaw
+    };
     drawForm(view, bound, form, rel, turn, colourPatches(view, slot, model));
     if (passenger) {
       // The driver's head follows from `$6ECE`, the next entry in profile.
-      const head = view.world.models.get(view.state.driverProfile ? 264 : 263);
+      const head = view.world.models.get(
+        (view.state.pilotHead ?? 263) + (view.state.driverProfile ? 1 : 0)
+      );
       if (head !== undefined) {
         drawForm(view, bound, head, rel, turn, new Map());
       }
@@ -682,8 +767,10 @@ const drawModel = (
   });
 
 interface ModelTurn {
+  readonly axis?: number;
   /// `$543AA`: 0 none; bit 7 articulated; bit 6 yaw; otherwise view-fixed; bit 5 ×16.
   readonly mode: number;
+  readonly pivot?: Vec3 | undefined;
   /// `$543A0`: the resident's yaw byte plus the header's offset, 256 steps a turn.
   readonly yaw: number;
 }
@@ -742,9 +829,28 @@ const turnVertex = (
     // slice's models never set, so it is drawn at its rest pose.
     if (y < 0) {
       y = ~y;
-      view.paint.gaps.add(
-        'an articulated model turns by an angle the slice does not track'
-      );
+      const angle = view.state.articulationAngle;
+      if (angle === undefined) {
+        view.paint.gaps.add(
+          'an articulated model turns by an angle the slice does not track'
+        );
+      } else {
+        const [px, py, pz] = turn.pivot ?? [0, 0, 0];
+        x -= px;
+        y -= py;
+        z -= pz;
+        const step = stepOf(angle);
+        if ((turn.axis ?? 0) < 0) {
+          [z, y] = rotate(table, step, z, y);
+        } else if ((turn.axis ?? 0) > 0) {
+          [x, y] = rotate(table, step, x, y);
+        } else {
+          [x, z] = rotate(table, step, x, z);
+        }
+        x += px;
+        y += py;
+        z += pz;
+      }
     }
     return [x, y, z];
   }
@@ -1526,8 +1632,9 @@ const drawCoast = (view: View): number => {
       }
     }
   };
+  const up = toCamera(view.camera, 0, 1, 0);
   emit(
-    horizonFillVertices({ x: 0, y: 1, z: 0 }, depth, [0, 0, 0]),
+    horizonFillVertices({ x: -up.u, y: -up.v, z: up.d }, depth, [0, 0, 0]),
     base,
     'horizon'
   );
@@ -1559,14 +1666,19 @@ export const planDionFrame = (
   world: DionFrameWorld,
   state: DionFrameState
 ): DionFrame => {
-  const bound = bind(world, state);
+  const space = state.skyView?.body === null;
+  const bound = space ? null : bind(world, state);
   const template = [...world.framePalette.template];
-  const sky = state.day
-    ? world.framePalette.skyDay
-    : world.framePalette.skyNight;
+  const sky = space
+    ? world.tourcraft!.system.spacePalette.background
+    : state.day
+      ? world.framePalette.skyDay
+      : world.framePalette.skyNight;
   template[8] = sky;
   template[14] = world.framePalette.road;
-  for (const [index, colour] of world.framePalette.fixed) {
+  for (const [index, colour] of space
+    ? world.tourcraft!.system.spacePalette.fixed
+    : world.framePalette.fixed) {
     template[index] = colour;
   }
   const palette = new FramePalette(template);
@@ -1574,7 +1686,9 @@ export const planDionFrame = (
     bound === null ? null : world.palettes.get(bound.cell.palette);
   const paint: Paint = {
     candidate: null,
-    gaps: new Set(['complete sky Body inventory waived by D1']),
+    gaps: new Set(
+      world.tourcraft ? [] : ['complete sky Body inventory waived by D1']
+    ),
     labelCode: null,
     lines: 0,
     models: [],
@@ -1585,23 +1699,33 @@ export const planDionFrame = (
         ? []
         : state.day
           ? sceneHalf.day
-          : sceneHalf.night
+          : sceneHalf.night,
+    slotDigit: null
   };
   const primitives: OrderedPrimitive[] = [];
   const view: View = {
-    camera: levelCamera(state.eye, state.heading),
+    camera: state.cameraAngles
+      ? generalCamera(
+          state.eye,
+          state.cameraAngles.roll,
+          state.cameraAngles.pitch,
+          state.cameraAngles.yaw
+        )
+      : levelCamera(state.eye, state.heading),
     paint,
     primitives,
     source: `cell:${state.cell}`,
     state,
     world
   };
-  if (!state.day) {
-    for (const [x, y, colour] of dionStars(
-      world.sky,
-      state.heading,
-      state.pitch
-    )) {
+  const stars =
+    world.tourcraft && state.skyView
+      ? tourcraftStars(world.sky, world.tourcraft.arithmetic, state.skyView)
+      : state.day
+        ? []
+        : dionStars(world.sky, state.heading, state.pitch);
+  {
+    for (const [x, y, colour] of stars) {
       primitives.push({
         colour: { index: palette.literal(colour) },
         kind: 'point',
@@ -1611,13 +1735,23 @@ export const planDionFrame = (
       });
     }
   }
+  if (world.tourcraft && state.skyView) {
+    primitives.push(
+      ...tourcraftSkyPrimitives(
+        world.tourcraft.system,
+        state.skyView,
+        colour => ({ index: palette.literal(colour) }),
+        world.tourcraft.tail
+      ).map(p => ({ ...p, order: primitives.length + p.order }))
+    );
+  }
   let land = world.framePalette.land;
-  if (world.coast !== undefined) {
+  if (!space && world.coast !== undefined) {
     land = drawCoast(view);
   }
   if (bound !== null) {
     drawGround(view, bound);
-  } else {
+  } else if (!space) {
     paint.gaps.add(`cell ${state.cell} is outside the exported slice`);
   }
   const playerZone =
@@ -1652,10 +1786,12 @@ export const planDionFrame = (
   lower[8] = stRgb(land);
   const description: FrameDescription = {
     background: { index: 8 },
-    paletteBands: [
-      { colours: upper, fromRow: 0 },
-      { colours: lower, fromRow: world.framePalette.horizonRow }
-    ],
+    paletteBands: space
+      ? [{ colours: upper, fromRow: 0 }]
+      : [
+          { colours: upper, fromRow: 0 },
+          { colours: lower, fromRow: world.framePalette.horizonRow }
+        ],
     primitives,
     projection: DION_PROJECTION
   };

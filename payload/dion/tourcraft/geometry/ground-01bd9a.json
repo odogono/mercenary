@@ -1,0 +1,119 @@
+{
+  "geometry": {
+    "family": "ground",
+    "id": "ground-01bd9a",
+    "record": "$1BD9A",
+    "sha256": "7ddb440c1dacf9ccadb23b1054990c33ad2019d7463cc139406c2575e416c5cc",
+    "variants": {
+      "transform=1": {
+        "primitives": [
+          {
+            "colour": 32782,
+            "kind": "polygon",
+            "refs": [
+              4,
+              8,
+              12,
+              240,
+              24,
+              20,
+              16,
+              244
+            ]
+          },
+          {
+            "colour": 49166,
+            "kind": "line",
+            "refs": [
+              28,
+              244
+            ]
+          },
+          {
+            "colour": 49166,
+            "kind": "line",
+            "refs": [
+              28,
+              240
+            ]
+          },
+          {
+            "kind": "template",
+            "model": 305,
+            "word": 28798,
+            "x": 32268,
+            "z": -29768
+          },
+          {
+            "kind": "template",
+            "model": 304,
+            "word": 28672,
+            "x": 24248,
+            "z": 28268
+          },
+          {
+            "kind": "template",
+            "model": 304,
+            "word": 28672,
+            "x": -25248,
+            "z": 28268
+          },
+          {
+            "kind": "template",
+            "model": 305,
+            "word": 28672,
+            "x": 28268,
+            "z": 24288
+          },
+          {
+            "kind": "template",
+            "model": 305,
+            "word": 28672,
+            "x": -29268,
+            "z": 24288
+          }
+        ],
+        "provenance": {
+          "range": [
+            "$1BD9C",
+            "$1BDF6"
+          ],
+          "sha256": "970e347a2c4a2f62f2ae41139fbfd470523405812e0a24b9c0c9a3320607e1f3"
+        },
+        "vertices": [
+          [
+            1,
+            -32568
+          ],
+          [
+            -32768,
+            -32568
+          ],
+          [
+            -1,
+            -32568
+          ],
+          [
+            1,
+            32568
+          ],
+          [
+            -32768,
+            32568
+          ],
+          [
+            -1,
+            32568
+          ],
+          [
+            -32768,
+            -32768
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-play-geometry",
+  "schemaVersion": 1,
+  "source": "catalogue-immutable"
+}

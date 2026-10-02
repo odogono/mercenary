@@ -1,0 +1,319 @@
+{
+  "schemaVersion": 1,
+  "title": "dion",
+  "destination": "metis",
+  "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+  "values": {
+    "ticksPerSecond": {
+      "value": 50,
+      "provenance": "authored",
+      "evidence": "docs/adr/0058-run-mercenary-iii-at-50-hz-with-a-confirmed-fixed-frame-cadence.md: a tick is one game VBL at 50 Hz, an explicit adaptation"
+    },
+    "ticksPerFrame": {
+      "value": 11,
+      "provenance": "authored",
+      "evidence": "ADR 0058, confirmed by #642 (docs/research/mercenary-iii-taxi-cadence.md)"
+    },
+    "walkingSubsteps": {
+      "value": 8,
+      "provenance": "derived",
+      "evidence": "clamp(ticksPerFrame, 4, 8) by the recovered substep rule at $5A4C2 (R4)"
+    },
+    "colourLevels": {
+      "value": 7,
+      "provenance": "authored",
+      "evidence": "Each of the ST's three-bit guns shown as round(n * 255 / 7), as the Damocles rendition does; the pinned Hatari shows 34n"
+    },
+    "nightFlip": {
+      "value": "phase-rule",
+      "provenance": "recovered",
+      "evidence": "#646; docs/research/mercenary-iii-taxi-night-sky.md, cached observer and tick-paced phase, sampled per frame"
+    }
+  },
+  "coverage": [
+    {
+      "item": "Structure 132, TIMEWARP PRISON",
+      "in": "world.structures.132",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "R2 world table; $5AD2C..$5B2D2"
+    },
+    {
+      "item": "Structure 146, road cell",
+      "in": "world.structures.146",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "R2 world table"
+    },
+    {
+      "item": "Structure 57 by aliases 155 and 154",
+      "in": "world.structures.57",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "R2 world table; alias records $19ECA, $19EB8"
+    },
+    {
+      "item": "Structure 65 by alias 149",
+      "in": "world.structures.65",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "R2 world table; alias record $19D50"
+    },
+    {
+      "item": "Structure 150 by alias 62, METIS SPACEPORT",
+      "in": "world.structures.150",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "R2 world table; alias record $1A098"
+    },
+    {
+      "item": "Building detail 49, prison",
+      "in": "world.details.49",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "R2; $54AEE..$54D20"
+    },
+    {
+      "item": "Building detail 1, empty",
+      "in": "world.details.1",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "R2; the record holds no vertices"
+    },
+    {
+      "item": "Building detail 56 and its two lettering records",
+      "in": "world.details.56",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "#643"
+    },
+    {
+      "item": "Building detail 59 and its four lettering records",
+      "in": "world.details.59",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "#643"
+    },
+    {
+      "item": "Building detail 36, spaceport",
+      "in": "world.details.36",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "R2"
+    },
+    {
+      "item": "Ground records of the fifteen occupied cells",
+      "in": "world.grounds",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "R2; $56204..$563C4"
+    },
+    {
+      "item": "Road points at ground slots $F0..$FC",
+      "in": "world.cells",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "$55C58..$55C96 and $55DA4; checked against the live $4160..$416C table"
+    },
+    {
+      "item": "Scene palettes 58, 94, 66, 46 and 155",
+      "in": "world.palettes",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "R2; $5617E"
+    },
+    {
+      "item": "Frame palette template, sky, land and road colours",
+      "in": "world.framePalette",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "$5A578..$5A60E, $7CA2, Timer B $53294"
+    },
+    {
+      "item": "Prison door attachment $42F0 and its key letter",
+      "in": "world.structures.132",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "#645; $5AF60 writes the key letter for token $8D"
+    },
+    {
+      "item": "Prison occupants: COBWEB 124 and item 10",
+      "in": "world.residents",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "#644 occupant hooks; $53C5E"
+    },
+    {
+      "item": "TAXI 318 exterior and passenger form",
+      "in": "world.models.318",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "R2; $800D at $54444"
+    },
+    {
+      "item": "Driver heads 263 and 264",
+      "in": "world.models.263",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "R2"
+    },
+    {
+      "item": "MAILBOX 219 and MARGARETS LETTER 220",
+      "in": "world.models.219",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "R2"
+    },
+    {
+      "item": "Street furniture templates 329..373",
+      "in": "world.models.337",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "R2; template op $7xxx"
+    },
+    {
+      "item": "Fixed drawn list: KEY 181, BLACK BEACON 165, TOURCRAFT 13, EAGLE NINE S E 3",
+      "in": "world.models.165",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "R2 drawn list $7422; incidental to the journeys"
+    },
+    {
+      "item": "Vector fonts the slice lettering names",
+      "in": "world.glyphs",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "#643; $3E000"
+    },
+    {
+      "item": "Model rotation table",
+      "in": "world.rotationTable",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "#644 Q15 table $7E4A, 320 entries"
+    },
+    {
+      "item": "Panel artwork",
+      "in": "panel.panelArt",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "DAM6 at the game entry $6AC32"
+    },
+    {
+      "item": "Mercenary III logo, centre box",
+      "in": "panel.centre.logo",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "R2; $3BA10"
+    },
+    {
+      "item": "TAXICARD artwork, title and footer bands, reveal",
+      "in": "panel.centre.taxicard",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "R2; $3CE48, $59C2C, $53956"
+    },
+    {
+      "item": "Panel, message, digit and clock fonts",
+      "in": "panel.fonts",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "R2; $3B381, $3B580, $4CB8E, $53244"
+    },
+    {
+      "item": "Card strings",
+      "in": "panel.strings.card",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "R2; $4DEB4"
+    },
+    {
+      "item": "METIS destination labels",
+      "in": "panel.labels",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "R2; $214D6"
+    },
+    {
+      "item": "Panel readout fields",
+      "in": "panel.fields",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "R2 readout table; writers named per field"
+    },
+    {
+      "item": "Sixty-four ID messages",
+      "in": "messages.messages",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "R2; $6FD44"
+    },
+    {
+      "item": "Opening script $19 and trip scripts $33 and $34",
+      "in": "scripts.routines",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "R1, R2; $6FF57..$7014B, $701E0..$7040D"
+    },
+    {
+      "item": "Ten PSG programmes",
+      "in": "sound.programmes",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "R2 sound table"
+    },
+    {
+      "item": "Taxi definition, route and destinations",
+      "in": "service.taxi",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "R1; $41F18..$41F58"
+    },
+    {
+      "item": "Descent and lift-off height tables",
+      "in": "service.heights",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "R2; $51CA2"
+    },
+    {
+      "item": "Driver head-turn sequences",
+      "in": "service.headTurns",
+      "status": "recovered",
+      "gates": "I1",
+      "evidence": "R2; $70148"
+    },
+    {
+      "item": "Night stars and empty METIS horizon",
+      "status": "recovered",
+      "gates": "I2",
+      "evidence": "#646; pinned star, colour and observer records",
+      "in": "world.sky"
+    },
+    {
+      "item": "Message tone character skip",
+      "status": "recovered",
+      "gates": "I2",
+      "evidence": "#648; eight scroll columns per tick consume six-pixel glyphs, tone indices 0,2,3,4,6,7",
+      "in": "sound.programmes"
+    },
+    {
+      "item": "Exact ST rasterisation: horizontal-edge rows, zero-area slivers, lines",
+      "status": "waived",
+      "gates": "I2",
+      "evidence": "D1 item 5; #644 residues"
+    },
+    {
+      "item": "TOURCRAFT on screen at the spaceport",
+      "status": "waived",
+      "gates": "I2",
+      "evidence": "D1 item 5; the model is exported and drawn when the list reaches it"
+    },
+    {
+      "item": "Complete sky Body inventory",
+      "status": "waived",
+      "gates": "I2",
+      "evidence": "D1 item 5; #646 records the bounded night sky"
+    }
+  ]
+}

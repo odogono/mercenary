@@ -1,0 +1,24 @@
+{
+  "geometry": {
+    "family": "ground",
+    "id": "ground-01b250",
+    "record": "$1B250",
+    "sha256": "bfb688161efbfddcff8c49381b1bbaaa621c248e01b01385a0f13e53a81e8ddf",
+    "variants": {
+      "transform=0": {
+        "primitives": [],
+        "provenance": {
+          "range": [
+            "$1B252",
+            "$1B256"
+          ],
+          "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+        },
+        "vertices": []
+      }
+    }
+  },
+  "kind": "dion-play-geometry",
+  "schemaVersion": 1,
+  "source": "catalogue-immutable"
+}

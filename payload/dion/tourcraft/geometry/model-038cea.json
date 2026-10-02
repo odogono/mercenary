@@ -1,0 +1,311 @@
+{
+  "geometry": {
+    "entries": [
+      124
+    ],
+    "family": "model",
+    "header": null,
+    "id": "model-038cea",
+    "name": "COBWEB",
+    "provenance": [
+      {
+        "range": [
+          "$38CEA",
+          "$38D79"
+        ],
+        "sha256": "f405834f40aad26b13fbc0a39bf503688054848681e9c2e6f862a63ae97ac88c"
+      }
+    ],
+    "record": "$38CEA",
+    "sha256": "01baa37335eddaf26689d34b08dcd3ff962695655b6f5485356a0b5be953bb47",
+    "variants": {
+      "form=default": {
+        "faces": [
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              1,
+              4
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              5,
+              4
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              8,
+              4
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              11,
+              4
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              15,
+              4
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              18,
+              4
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              14,
+              15
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              17,
+              18
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              2,
+              6
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              6,
+              9
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              9,
+              12
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              12,
+              15
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              15,
+              18
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              18,
+              2
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              3,
+              7
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              7,
+              10
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              10,
+              13
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              13,
+              16
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              16,
+              19
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              19,
+              3
+            ],
+            "stColour": 1911
+          }
+        ],
+        "turn": {
+          "kind": "fixed"
+        },
+        "vertices": [
+          [
+            -60,
+            160,
+            0
+          ],
+          [
+            -40,
+            140,
+            0
+          ],
+          [
+            -20,
+            120,
+            0
+          ],
+          [
+            10,
+            90,
+            0
+          ],
+          [
+            50,
+            160,
+            0
+          ],
+          [
+            40,
+            140,
+            0
+          ],
+          [
+            30,
+            120,
+            0
+          ],
+          [
+            80,
+            90,
+            0
+          ],
+          [
+            70,
+            90,
+            0
+          ],
+          [
+            40,
+            90,
+            0
+          ],
+          [
+            70,
+            0,
+            0
+          ],
+          [
+            50,
+            30,
+            0
+          ],
+          [
+            30,
+            60,
+            0
+          ],
+          [
+            -60,
+            0,
+            0
+          ],
+          [
+            -40,
+            20,
+            0
+          ],
+          [
+            -10,
+            60,
+            0
+          ],
+          [
+            -80,
+            70,
+            0
+          ],
+          [
+            -70,
+            70,
+            0
+          ],
+          [
+            -30,
+            80,
+            0
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-play-geometry",
+  "schemaVersion": 1,
+  "source": "catalogue-immutable"
+}
