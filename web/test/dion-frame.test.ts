@@ -67,6 +67,63 @@ describe('the Mercenary III projection', () => {
 });
 
 describe('the Mercenary III frame', () => {
+  test('draws the shared road window outdoors and suppresses it at walking height', async () => {
+    const { world } = await dionContent();
+    const corners = Array<number>(256).fill(0);
+    corners[0x61] = 0x00_00_62_61;
+    const [gx, gz] = world.opening.groupOrigin;
+    const state = {
+      ...openingFrameState(world),
+      cell: 0x60,
+      eye: [(gx + 0.5) * 65_536, 2048, (gz + 6.5) * 65_536] as const,
+      heading: 0x3_00
+    };
+    const roadWorld = { ...world, roads: { ...world.roads, corners } };
+    const frame = planDionFrame(roadWorld, state);
+    const lines = frame.description.primitives.filter(
+      p => p.source === 'roads'
+    );
+    expect(lines.length).toBeGreaterThan(0);
+    expect(
+      lines.every(
+        p => p.kind === 'line' && 'index' in p.colour && p.colour.index === 14
+      )
+    ).toBe(true);
+    expect(
+      planDionFrame(roadWorld, {
+        ...state,
+        eye: [state.eye[0], 63, state.eye[2]]
+      }).description.primitives.some(p => p.source === 'roads')
+    ).toBe(false);
+    const prison = {
+      ...openingFrameState(world),
+      eye: [world.opening.eye[0], 2048, world.opening.eye[2]] as const,
+      heading: 0x1_00
+    };
+    const cell = world.cells.find(c => c.cell === prison.cell)!;
+    const variants = new Map(world.structures.get(cell.structure)!);
+    const key = cell.scale.join(',');
+    const structure = variants.get(key)!;
+    variants.set(key, {
+      ...structure,
+      regions: structure.regions.map(region => ({ ...region, flags: 0 }))
+    });
+    const structures = new Map(world.structures);
+    structures.set(cell.structure, variants);
+    expect(
+      planDionFrame(
+        { ...roadWorld, cells: [] },
+        prison
+      ).description.primitives.some(p => p.source === 'roads')
+    ).toBe(true);
+    expect(
+      planDionFrame(
+        { ...roadWorld, structures },
+        prison
+      ).description.primitives.some(p => p.source === 'roads')
+    ).toBe(false);
+  });
+
   test('draws the prison room with its occupants hooked into region 1', async () => {
     const content = await dionContent();
     const planned = planDionFrame(

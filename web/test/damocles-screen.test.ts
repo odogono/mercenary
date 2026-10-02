@@ -33,6 +33,8 @@ const planOf = (r: number, g: number, b: number): ErisFramePlan => {
     horizonVertices: vertex(),
     islandTriangleCount: 0,
     nearPlane: 1,
+    roadEdges: [],
+    roadVertices: vertex(),
     skippedFaces: 0,
     skyBodies: [],
     skyVertices: vertex(),
@@ -48,7 +50,8 @@ const colours = (plan: ErisFramePlan) =>
     plan.vertices,
     plan.skyVertices,
     plan.horizonVertices,
-    plan.horizonIslandVertices
+    plan.horizonIslandVertices,
+    plan.roadVertices
   ].map(list => Array.from(list.slice(3, 6)));
 
 const clear = { dead: false, fade: 0, mask: 0, noise: false, white: false };

@@ -124,6 +124,34 @@ const recoveredVertices = (plan: ErisFramePlan): Float32Array =>
   plan.vertices.slice(fillFloats(plan));
 
 describe('an Eris frame in Filled Presentation', () => {
+  test('draws selected whole road runs between the surface and ground records', async () => {
+    const { doc, surface } = await load();
+    const pose = {
+      ...startPose(doc),
+      position: { ...startPose(doc).position, y: 6144 }
+    };
+    const plan = planErisFrame(surface, pose, doc);
+    // Radius 3 selects five neighbouring runs. The sixth, the own run, waits
+    // for camera Y's high word to become nonzero, as `$54AFA` requires.
+    expect(plan.roadEdges).toEqual([0xb3_b5, 0x94_9a, 0x8a_9a, 0x89_d9, 0x14_b4]);
+    expect(plan.roadVertices.length).toBeGreaterThan(0);
+    expect(planErisFrame(surface, startPose(doc), doc).roadEdges).toEqual([]);
+    expect(
+      planErisFrame(
+        surface,
+        pose,
+        doc,
+        null,
+        [],
+        [],
+        () => false,
+        false,
+        null,
+        true
+      ).roadEdges
+    ).toEqual([]);
+  });
+
   test('draws the visible resident placements supplied by Session State', async () => {
     const { doc, surface } = await load();
     const pose = startPose(doc);

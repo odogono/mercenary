@@ -735,6 +735,35 @@ export class FrameRenderer {
     gl.depthFunc(gl.ALWAYS);
     gl.drawArrays(gl.TRIANGLES, 0, fill);
     gl.drawArrays(gl.TRIANGLES, fill, islands);
+    if (plan.roadVertices !== undefined && plan.roadVertices.length !== 0) {
+      // The recovered road pass paints over the island fill, before ground
+      // records and objects. Use flat ink in both presets and leave depth alone.
+      gl.disable(gl.DEPTH_TEST);
+      gl.depthMask(false);
+      gl.disable(gl.CULL_FACE);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.skyBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, plan.roadVertices, gl.DYNAMIC_DRAW);
+      this.bindGeometry(this.shaderProgram, this.skyBuffer, COLOUR_ATTRIBUTES);
+      this.setProjection(this.shaderProgram, plan);
+      // Road reach is the altitude window, not the authored detailed-geometry
+      // far plane. At orbital heights that plane would clip the whole network.
+      gl.uniform2f(
+        requiredUniform(gl, this.shaderProgram, 'depthRange'),
+        plan.nearPlane,
+        1_000_000_000
+      );
+      gl.uniform1f(requiredUniform(gl, this.shaderProgram, 'depthBias'), 0);
+      gl.drawArrays(
+        gl.TRIANGLES,
+        0,
+        plan.roadVertices.length / FLOATS_PER_VERTEX
+      );
+      gl.depthMask(true);
+      gl.enable(gl.DEPTH_TEST);
+      this.cullAsConfigured();
+      this.bindGeometry(shaderProgram, this.buffer, COLOUR_ATTRIBUTES);
+      this.setProjection(shaderProgram, plan);
+    }
     gl.depthFunc(gl.LEQUAL);
     gl.uniform1f(bias, LAYER_DEPTH_BIAS);
     gl.drawArrays(gl.TRIANGLES, fill + islands, ground);
