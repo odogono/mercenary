@@ -23,6 +23,8 @@ docs/research/damocles-title-logo.md.
 The Title Logo is the DAMOCLES lettering: the 8-connected run of non-zero pixels within the
 lettering's rows that the lettering reaches. That takes in the sword hilt and the glow behind
 MOC, which touch the letters, and leaves out the stars, which are single pixels on their own.
+The lettering ships as `title.png`, a 4-bit indexed PNG in the picture's palette; the
+document carries its provenance and hashes of the PNG and of its indices.
 """
 from __future__ import annotations
 
@@ -31,7 +33,10 @@ import hashlib
 import json
 from pathlib import Path
 
+from . import png
+
 EVIDENCE = 'docs/research/damocles-title-logo.md'
+IMAGE = 'title.png'
 
 DIRECTORY_SECTORS = (2, 3)
 DIRECTORY_AT = 0x068AA4
@@ -291,7 +296,13 @@ def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def extract(stx: bytes) -> dict:
+def gun(word: int, shift: int) -> int:
+    """An ST gun level (3 bits) as 8-bit, as the Browser Shell shows it."""
+    return round(((word >> shift) & 7) * 255 / 7)
+
+
+def extract(stx: bytes) -> tuple[dict, bytes]:
+    """The title document and the lettering as a PNG."""
     tracks = stx_tracks(stx)
     block, entries = directory(tracks)
     entry = next((e for e in entries if e['name'] == TITLE_FILE), None)
@@ -310,8 +321,9 @@ def extract(stx: bytes) -> dict:
     right = max(x for x, _ in mark) + 1
     top = min(y for _, y in mark)
     bottom = max(y for _, y in mark) + 1
-    rows = [''.join(f'{pixels[y][x]:x}' if (x, y) in mark else '0' for x in range(left, right))
+    rows = [[pixels[y][x] if (x, y) in mark else 0 for x in range(left, right)]
             for y in range(top, bottom)]
+    image = png.write(rows, [(gun(c, 8), gun(c, 4), gun(c, 0)) for c in palette])
     pixel_start = TITLE_LOADED_AT + NEO_HEADER
     return {
         'schemaVersion': 1,
@@ -321,7 +333,8 @@ def extract(stx: bytes) -> dict:
             'authority': 'Damocles Atari ST Working Authority',
             'evidence': EVIDENCE,
             'programSha256': sha256(stx),
-            'recipe': 'python3 -m damocleslab.title --stx <STX> --output payload/damocles/title.json',
+            'recipe': 'python3 -m damocleslab.title --stx <STX> --output payload/damocles/title.json'
+                      ' (writes title.png beside it)',
         },
         'disk': {
             'directory': {
@@ -380,7 +393,13 @@ def extract(stx: bytes) -> dict:
                 f'reached from ({LOGO_SEED[0]}, {LOGO_SEED[1]}) on the D; every other pixel, '
                 'colour 0 and the single-pixel stars among them, is clear'
             ),
-            'pixels': rows,
+            'image': {
+                'file': IMAGE,
+                'sha256': sha256(image),
+                'format': 'PNG, 4-bit indexed in the picture palette: 0 transparent, 1..15 opaque',
+                'markSha256': sha256(png.mark_nibbles(rows)),
+                'markEncoding': 'two palette indices a byte, left pixel high, rows padded to a byte',
+            },
             'provenance': {
                 'range': [hex_address(pixel_start + top * BYTES_PER_LINE),
                           hex_address(pixel_start + bottom * BYTES_PER_LINE)],
@@ -388,7 +407,7 @@ def extract(stx: bytes) -> dict:
                                      NEO_HEADER + bottom * BYTES_PER_LINE]),
             },
         },
-    }
+    }, image
 
 
 def confirm(document: dict, ram: bytes) -> None:
@@ -412,11 +431,12 @@ def main():
     pin = json.loads((Path(__file__).parents[1] / 'config/working-authority.json').read_text())
     if sha256(stx) != pin['programImage']['hashes']['sha256']:
         raise SystemExit('the STX is not the pinned Working Authority')
-    document = extract(stx)
+    document, image = extract(stx)
     if args.confirm_run is not None:
         confirm(document, (args.confirm_run / 'title-screen.ram').read_bytes())
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(document, indent=2) + '\n')
+    (args.output.parent / IMAGE).write_bytes(image)
     logo = document['logo']
     print(json.dumps({'logo': [logo['x'], logo['y'], logo['width'], logo['height']],
                       'confirmed': args.confirm_run is not None}))

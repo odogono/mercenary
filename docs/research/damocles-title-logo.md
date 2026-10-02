@@ -4,7 +4,7 @@ Working-Authority Evidence for [#695](https://github.com/odogono/mercenary/issue
 under [ADR 0063](../adr/0063-one-settings-page-across-titles-with-recovered-title-logos.md).
 The STX (SHA-256 `8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef`) is
 the only input. `damocleslab.title` reads it the way the game's own loader does, and
-writes `payload/damocles/title.json`:
+writes `payload/damocles/title.png` (the lettering) and `title.json` (its provenance):
 
 ```sh
 cd research/damocles-st
@@ -115,6 +115,19 @@ MOC, because both touch the letters. Everything else is left clear. That is colo
 `damocleslab/title.py`), not drawing, so it is part of the extraction. The document's
 `logo.provenance` covers the picture rows it is cut from, `$60080`–`$61B60`.
 
-`web/src/damocles/titleLogo.ts` reads the document, and the Damocles boot shows the mark
-through `InstalledShellChrome.showLogo` in the picture's own colours. It refuses a document
-whose program identity is not the Catalogue's.
+## The PNG
+
+`title.png` is the lettering as a 4-bit indexed PNG. Its palette is the picture's sixteen
+colours at three bits a gun, so a pixel's PNG index is its ST palette index. Index 0 is
+transparent and every other index is opaque. Rows are unfiltered. As with Targ's
+(`payload/targ-st/title.png`), the compressed bytes depend on the zlib build, so
+`logo.image` hashes both the file and the indices (`markSha256`: two indices a byte, left
+pixel high, rows padded to a byte). The lab test regenerates the document and compares
+everything except the file hash, and compares the decoded indices and palette of the two
+PNGs.
+
+`web/src/damocles/titleLogo.ts` reads the document and loads the PNG through the shared
+`loadTitleLogoPng` in `web/src/shell/titleLogo.ts`, Targ's loader too. That checks the
+PNG's bytes against the document's hash before decoding, and its size after. The Damocles
+boot refuses a document whose program identity is not the Catalogue's, and shows the
+lettering through `InstalledShellChrome.showLogo`.

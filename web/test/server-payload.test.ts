@@ -41,22 +41,24 @@ describe('the localhost Data Payload route', () => {
     }
   });
 
-  test("serves Targ's Title Logo as the one PNG", async () => {
+  test('serves each Title Logo as a PNG by its exact path', async () => {
     const root = await mkdtemp(join(tmpdir(), 'mercenary-png-route-'));
     try {
-      await mkdir(join(root, 'targ-st'));
-      await writeFile(join(root, 'targ-st/title.png'), 'png');
-      await writeFile(join(root, 'targ-st/other.png'), 'png');
+      for (const title of ['targ-st', 'damocles']) {
+        await mkdir(join(root, title));
+        await writeFile(join(root, `${title}/title.png`), 'png');
+        await writeFile(join(root, `${title}/other.png`), 'png');
 
-      const response = await payloadResponse(
-        '/payload/targ-st/title.png',
-        root
-      );
-      expect(response?.status).toBe(200);
-      expect(response?.headers.get('content-type')).toBe('image/png');
-      expect(
-        (await payloadResponse('/payload/targ-st/other.png', root))?.status
-      ).toBe(404);
+        const response = await payloadResponse(
+          `/payload/${title}/title.png`,
+          root
+        );
+        expect(response?.status).toBe(200);
+        expect(response?.headers.get('content-type')).toBe('image/png');
+        expect(
+          (await payloadResponse(`/payload/${title}/other.png`, root))?.status
+        ).toBe(404);
+      }
     } finally {
       await rm(root, { force: true, recursive: true });
     }

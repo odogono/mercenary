@@ -12,6 +12,12 @@ tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
 ### Added
 
+- **Damocles's System Menu pages show its title-screen logo.** The title picture is the
+  NEOchrome file `ETITLE.NEO` on the Damocles disk, and `damocleslab.title` reads it straight
+  off the pinned STX through the game's own directory, track format, keystreams and `OTNM`
+  packing. `payload/damocles/title.png` is the DAMOCLES lettering, 284 by 43, 4-bit indexed in
+  the picture's palette, and `title.json` its provenance and hashes of the PNG and its pixels.
+  It replaces the Damocles Interface stand-in (#695).
 - **Targ's System Menu pages show its title-screen logo.** The C64 Reference Build has
   no title screen, so the logo comes from the ST release: its loader shows the NEOchrome
   picture `E0`, and the new `research/targ-st/` tool reads it straight off the pinned STX.
