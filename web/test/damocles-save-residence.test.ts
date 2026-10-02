@@ -62,6 +62,7 @@ const record = () => ({
     angleBytes: [],
     blastCentre: null,
     bodyTurn: 0,
+    bodyTurnOrigins: null,
     briefcaseStore: [] as string[],
     carried: [] as string[],
     clockAnchor: null,

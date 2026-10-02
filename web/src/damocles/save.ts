@@ -209,10 +209,13 @@ import type { Pose } from './world.ts';
 /// Version 26 carries the structure damage table `$636A`, which the ST's Save range covers and
 /// every workspace load replays, and the keyed door `$7A56`/`$7A58` the armed EXPLOSIVE was
 /// dropped in. Schema 25 restores with an empty table and no door.
-export const DAMOCLES_SAVE_SCHEMA_VERSION = 26 as const;
+///
+/// Version 27 carries the per-Body rotation origins used by the console's rate command to
+/// preserve every Body's phase when changing speed. Older schemas use the Catalogue origins.
+export const DAMOCLES_SAVE_SCHEMA_VERSION = 27 as const;
 /// The older schemas a restore migrates rather than refuses.
 const MIGRATED_SCHEMA_VERSIONS: readonly unknown[] = [
-  11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25
+  11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26
 ];
 /// The schemas from before the landing messages (#576), which carry no landing trigger.
 const PRE_LANDING_SCHEMA_VERSIONS: readonly unknown[] = [11, 12, 13];
@@ -345,6 +348,8 @@ export interface DamoclesSaveSnapshot {
   // that omits them, so this leniency is now unreachable rather than load-bearing.
   /// The current Body's rotation accumulator (`$62EA + 4 * body`), one turn every `$04000000`.
   readonly bodyTurn: number;
+  /// Rotation origins at the last console rate change, or null for the Catalogue origins.
+  readonly bodyTurnOrigins?: readonly number[] | null;
   readonly briefcaseStore: readonly string[];
   readonly carried: readonly string[];
   /// `$7C1C`'s last change: where the impact clock stood, and when. Null at the reset's level.
@@ -1770,6 +1775,7 @@ export const decodeDamoclesSave = (
   }
   const impactRecord =
     record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION ||
+    record['schemaVersion'] === 26 ||
     record['schemaVersion'] === 25 ||
     record['schemaVersion'] === 24 ||
     record['schemaVersion'] === 23 ||
@@ -1792,6 +1798,7 @@ export const decodeDamoclesSave = (
         'snapshot.debrisPasses',
         // Schema 25 is the first whose counter can hold a pending blast, −1.
         record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION ||
+          record['schemaVersion'] === 26 ||
           record['schemaVersion'] === 25
           ? -1
           : 0,
@@ -1857,6 +1864,7 @@ export const decodeDamoclesSave = (
   }
   const wishRecord =
     record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION ||
+    record['schemaVersion'] === 26 ||
     record['schemaVersion'] === 25 ||
     record['schemaVersion'] === 24 ||
     record['schemaVersion'] === 23 ||
@@ -1898,6 +1906,7 @@ export const decodeDamoclesSave = (
     : 0;
   const computerRecord =
     record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION ||
+    record['schemaVersion'] === 26 ||
     record['schemaVersion'] === 25 ||
     record['schemaVersion'] === 24;
   const switches =
@@ -1958,6 +1967,20 @@ export const decodeDamoclesSave = (
     (bodyTurn as number) > 0xff_ff_ff_ff
   ) {
     return fail('bodyTurn is not an unsigned longword');
+  }
+  const bodyTurnOrigins =
+    record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION
+      ? (snapshot['bodyTurnOrigins'] ?? null)
+      : null;
+  if (
+    bodyTurnOrigins !== null &&
+    (!Array.isArray(bodyTurnOrigins) ||
+      bodyTurnOrigins.length !== (catalogue?.craft?.bodies.length ?? 30) ||
+      bodyTurnOrigins.some(
+        turn => !Number.isInteger(turn) || turn < 0 || turn > 0xff_ff_ff_ff
+      ))
+  ) {
+    return fail('bodyTurnOrigins is not a Body table of unsigned longwords');
   }
   const doorsMoving = snapshot['doorsMoving'];
   if (typeof doorsMoving !== 'boolean') {
@@ -2146,7 +2169,9 @@ export const decodeDamoclesSave = (
     return fail('running is not a boolean');
   }
   // Schema 26 is the first to carry the damage table and the blast's door.
-  const damageSaved = record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION;
+  const damageSaved =
+    record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION ||
+    record['schemaVersion'] === 26;
   // Schema 25 is the first to carry the TIMED DETONATOR and the safe gate.
   const timedDetonatorSaved = damageSaved || record['schemaVersion'] === 25;
   const safeGate = timedDetonatorSaved ? snapshot['safeGate'] : false;
@@ -2326,6 +2351,7 @@ export const decodeDamoclesSave = (
       angleBytes,
       blastCentre,
       bodyTurn: bodyTurn as number,
+      bodyTurnOrigins: bodyTurnOrigins as readonly number[] | null,
       briefcaseStore,
       carried,
       clockAnchor,

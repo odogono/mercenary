@@ -7,6 +7,11 @@ import {
   type WalkRules
 } from '../onFoot/index.ts';
 import type { TitleSession } from '../shell/title.ts';
+import {
+  bodyTime,
+  longitudeAtBodyTime,
+  wrapBodyLongitude
+} from '../sky/bodyTime.ts';
 import type { DionContent } from './content.ts';
 import {
   planDionFrame,
@@ -176,6 +181,42 @@ export class DionSession implements TitleSession<
       this.narrative.state = this.state.narrative;
     }
     this.selectCandidate();
+  }
+
+  /// Local solar time follows the observer's current longitude. The recovered sky's cached
+  /// latitude and frame-sampled day test stay as recovered, including aboard a taxi.
+  bodyTime(): number {
+    const sky = this.content.world.sky;
+    return bodyTime(
+      this.state.eye[0] / 0x4_00_00 + this.state.phase / 0x1_00_00,
+      sky.latitude,
+      sky.sunAngle
+    );
+  }
+
+  setBodyTime(secondsOfDay: number): void {
+    const sky = this.content.world.sky;
+    const longitude = longitudeAtBodyTime(
+      secondsOfDay,
+      sky.latitude,
+      sky.sunAngle
+    );
+    const target =
+      wrapBodyLongitude(longitude - this.state.eye[0] / 0x4_00_00) * 0x1_00_00;
+    // Retain the turns above the visible ten-bit angle and round up by at most one phase
+    // unit so a set integer second reads back as itself.
+    const phase =
+      (Math.floor(this.state.phase / 0x04_00_00_00) * 0x04_00_00_00 +
+        Math.ceil(target)) >>>
+      0;
+    this.state = { ...this.state, day: dionDay({ ...sky, phase }), phase };
+  }
+
+  setPanelClock(secondsOfDay: number): void {
+    this.state = {
+      ...this.state,
+      clock: { ...this.state.clock, seconds: secondsOfDay }
+    };
   }
 
   press(action: DionAction): void {

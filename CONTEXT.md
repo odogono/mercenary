@@ -254,6 +254,10 @@ _Avoid_: Parent, centre, star, inferred Primary, orbit, revolution
 The rate at which a Body turns about its own axis, together with the **Body Day** it implies — the time for one full turn. It is the only motion a recovered System may attribute to a Body that is not the Body moving: it turns the Body's surface frame under a System frame that stays put, so a sun or moon crossing a surface sky is the observer's own Body turning. A Body Day is a duration, not a clock the game shows.
 _Avoid_: Orbital period, revolution, day/night cycle, spin rate, phase
 
+**Body Time**:
+Local solar time at an observer on a Body, scaled to a 24-hour face whatever the Body Day's real length: 12:00 is when the sun stands over the observer's longitude, and 00:00 is opposite it. Its reading changes as the observer travels east or west.
+_Avoid_: Body Day, Impact Clock, panel clock
+
 **Island**:
 One authored landmass on a Body in the Flyover, optionally carrying one canonical surface patch; neither a Damocles Place whose recovered kind is `ISLAND` nor a recovered Damocles Island is an Island in this sense.
 _Avoid_: Continent, surface map, Damocles place, Damocles Island, level

@@ -16,6 +16,11 @@ import { walk, type WalkRules } from '../onFoot/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import type { TitleSession } from '../shell/title.ts';
 import {
+  bodyTime,
+  longitudeAtBodyTime,
+  wrapBodyLongitude
+} from '../sky/bodyTime.ts';
+import {
   DESTROY_OPTION,
   initialAuthorsComputer,
   optionEffect,
@@ -27,6 +32,7 @@ import {
 import {
   MORE_TIME_CLOCK_LEVEL,
   NEW_GAME_CLOCK_LEVEL,
+  clockLevelAtRate,
   handoverElapsed,
   impactTime,
   type ClockAnchor,
@@ -172,7 +178,12 @@ import {
   type SpaceState
 } from './space.ts';
 import { presentedText, type DamoclesStrings } from './strings.ts';
-import { advanceTurn, inDaylight, turnOnClock } from './terminator.ts';
+import {
+  advanceTurn,
+  continuousSkyAngles,
+  inDaylight,
+  turnOnClock
+} from './terminator.ts';
 import {
   ARMED_EXPLOSIVE_MODEL,
   BLAST_FLASH_WORDS,
@@ -716,9 +727,8 @@ export class DamoclesSession implements TitleSession<
     readonly under: ErisSurface;
   } | null = null;
   private briefcaseStore: string[];
-  /// The current Body's rotation accumulator, advanced by its rate every VBL (`$051E4E`). Only
-  /// the Body underfoot is kept: a switch takes the arrival Pose's own, and a landing carries
-  /// the clock every Body shares to the destination (#567).
+  /// The current Body's rotation accumulator, advanced by its rate every VBL (`$051E4E`). The
+  /// clock every Body shares is carried to each destination, on a switch or landing (#567).
   private bodyTurn: number;
   /// `$79BE` as the last landing wrote it, or null where no landing has since the session
   /// started or last switched: the terminator then reads the Body's captured or derived word.
@@ -736,6 +746,7 @@ export class DamoclesSession implements TitleSession<
   /// `$7C1C`, the clock rate level `$04D616` last set: 6 from the reset, 8 after MORE TIME. A
   /// second is `$19 << level` counter units, 32 of which go every VBL.
   private clockLevel = NEW_GAME_CLOCK_LEVEL;
+  private bodyTurnOrigins: readonly number[] | null = null;
   /// Where the impact clock stood, in level-6 seconds, when the level last changed, and the
   /// Session seconds then. Null while the level has never moved, and the clock is `elapsed`.
   private clockAnchor: ClockAnchor | null = null;
@@ -901,6 +912,8 @@ export class DamoclesSession implements TitleSession<
     this.removedResidents = new Set(restore?.removedResidents ?? []);
     this.drift = restore?.drift ?? null;
     this.impactPassed = restore?.impactPassed ?? false;
+    this.bodyTurnOrigins =
+      restore?.bodyTurnOrigins == null ? null : [...restore.bodyTurnOrigins];
     this.clockLevel = restore?.clockLevel ?? NEW_GAME_CLOCK_LEVEL;
     this.clockAnchor = restore?.clockAnchor ?? null;
     this.paletteMask = restore?.paletteMask ?? 0;
@@ -1815,12 +1828,17 @@ export class DamoclesSession implements TitleSession<
   /// The terminator for the Pose, against the sub-stellar longitude the last landing wrote, or
   /// else the one the Body's arrival Poses captured, or else `$04EA02`'s from the Body's place,
   /// which every capture's but the moving comet's matches (#567).
-  private daylight(): boolean {
-    const longitude =
+  private solarLongitude(): number | undefined {
+    return (
       this.subStellar ??
       this.content.poses.poses.find(pose => pose.body === this.pose.body)
         ?.subStellarLongitude ??
-      this.derivedSubStellar();
+      this.derivedSubStellar()
+    );
+  }
+
+  private daylight(): boolean {
+    const longitude = this.solarLongitude();
     return (
       longitude !== undefined &&
       inDaylight(longitude, this.bodyTurn, this.pose.position)
@@ -1832,6 +1850,45 @@ export class DamoclesSession implements TitleSession<
     return this.craftProgram === null || body === undefined
       ? undefined
       : subStellarLongitude(this.craftProgram.arithmetic, body);
+  }
+
+  /// The local solar reading at the observer, or no reading in System space.
+  bodyTime(): number | null {
+    const subStellar = this.solarLongitude();
+    if (this.space !== null || subStellar === undefined) {
+      return null;
+    }
+    const { latitude, longitude } = continuousSkyAngles(
+      this.bodyTurn,
+      this.pose.position
+    );
+    return bodyTime(longitude, latitude, subStellar);
+  }
+
+  /// A development action: choose an attainable turn on the shared integer VBL clock.
+  /// Elapsed, scripts and the Impact Clock stay put. Other Bodies' turns are derived through
+  /// turnOnClock from this one, so choosing its rate's congruence keeps them together.
+  setBodyTime(secondsOfDay: number): void {
+    const subStellar = this.solarLongitude();
+    if (this.space !== null || subStellar === undefined) {
+      throw new Error('time needs a Body underfoot');
+    }
+    const rate = this.rotationRate();
+    if (rate === 0) {
+      throw new Error('time needs a Body that turns');
+    }
+    const { latitude } = continuousSkyAngles(this.bodyTurn, this.pose.position);
+    const longitude = longitudeAtBodyTime(secondsOfDay, latitude, subStellar);
+    const target =
+      wrapBodyLongitude(longitude - this.pose.position.x / 0x4_00_00) *
+      0x1_00_00;
+    const index = Number(this.pose.body.slice(5));
+    const start = this.bodyTurnOrigins?.[index] ?? this.catalogueBody()!.turn;
+    // gcd(rate, 2^32) is its lowest set bit. Round up so formatting reads the requested
+    // second instead of the preceding one. The full longword is still a clock solution.
+    const stride = rate & -rate;
+    this.bodyTurn =
+      (start + Math.ceil((target - start) / stride) * stride) >>> 0;
   }
 
   private capacity(): number {
@@ -2026,6 +2083,45 @@ export class DamoclesSession implements TitleSession<
     return impactTime(this.clock(), this.content.doc.time);
   }
 
+  /// Set the signed Impact Clock directly, retaining the current MORE TIME rate.
+  /// After-impact settings latch the waypoint without replaying past consequences. A
+  /// countdown left before zero reaches tickImpact through ordinary Session advancement.
+  setImpactTime(seconds: number): void {
+    const time = this.content.doc.time;
+    this.clockAnchor = {
+      clock:
+        ((seconds + time.impactDeadlineSeconds) * time.impactVblsPerSecond) /
+        time.vblHertz,
+      elapsed: this.elapsed
+    };
+    this.impactPassed = seconds >= 0;
+  }
+
+  timeRate(): number {
+    return 2 ** (NEW_GAME_CLOCK_LEVEL - this.clockLevel);
+  }
+
+  /// A Shell Console adjustment to the recovered rate level, preserving the Impact Clock's
+  /// instant and every Body's current turn. MORE TIME and the AUTHORS COMPUTER retain their
+  /// recovered counter adjustment. The new rotation origins keep all Bodies on one VBL clock
+  /// at the changed rates, including after travel and Save restoration.
+  setTimeRate(multiplier: number): void {
+    const level = clockLevelAtRate(multiplier);
+    if (level === this.clockLevel) {
+      return;
+    }
+    this.rebaseBodyTurns();
+    this.clockAnchor = { clock: this.clock(), elapsed: this.elapsed };
+    this.clockLevel = level;
+  }
+
+  private rebaseBodyTurns(): void {
+    const from = Number(this.pose.body.slice(5));
+    this.bodyTurnOrigins = this.content.catalogue.craft!.bodies.map(
+      (_, index) => (index === from ? this.bodyTurn : this.turnOf(index))
+    );
+  }
+
   /// `$04D616`: the level sets the second's length `$7878` = `$19 << level` and the Body
   /// rotation rates. The counter `$787A`, what is left of the current second, is shifted one bit
   /// toward the new level however far it moves, so from 6 to 8 the second in progress has half
@@ -2034,6 +2130,9 @@ export class DamoclesSession implements TitleSession<
     const old = this.clockLevel;
     if (level === old) {
       return;
+    }
+    if (this.bodyTurnOrigins !== null) {
+      this.rebaseBodyTurns();
     }
     const spent = this.clock() + 1e-9;
     const whole = Math.floor(spent);
@@ -2922,6 +3021,8 @@ export class DamoclesSession implements TitleSession<
       })),
       blastCentre: this.blastCentre,
       bodyTurn: this.bodyTurn,
+      bodyTurnOrigins:
+        this.bodyTurnOrigins === null ? null : [...this.bodyTurnOrigins],
       briefcaseStore: [...this.briefcaseStore],
       carried: [...this.carried],
       clockAnchor: this.clockAnchor,
@@ -3573,10 +3674,10 @@ export class DamoclesSession implements TitleSession<
   private turnOf(index: number): number {
     const bodies = this.content.catalogue.craft!.bodies;
     const from = Number(/^body-(\d+)$/.exec(this.pose.body)?.[1] ?? -1);
-    const start = bodies[from]?.turn;
+    const start = this.bodyTurnOrigins?.[from] ?? bodies[from]?.turn;
     const to = {
       rate: this.rateOf(`body-${index}`),
-      start: bodies[index]!.turn
+      start: this.bodyTurnOrigins?.[index] ?? bodies[index]!.turn
     };
     return (
       (start === undefined
@@ -4509,10 +4610,14 @@ export class DamoclesSession implements TitleSession<
       };
     }
     // Everything that could refuse has refused. From here the commit cannot fail.
+    const turn =
+      arrival.body === this.pose.body
+        ? this.bodyTurn
+        : this.turnOf(Number(arrival.body.slice(5)));
     this.surface = surface;
     this.pose = pose;
     this.freeLookPitch = 0;
-    this.bodyTurn = arrival.bodyTurn;
+    this.bodyTurn = turn;
     this.subStellar = null;
     this.boundPlacement = null;
     this.regionIndex = null;
@@ -4627,7 +4732,7 @@ export class DamoclesSession implements TitleSession<
       }
     }
     if (this.pose.body !== pose.body) {
-      this.bodyTurn = arrival.bodyTurn;
+      this.bodyTurn = this.turnOf(Number(pose.body.slice(5)));
       this.subStellar = null;
     }
     this.surface = surface;

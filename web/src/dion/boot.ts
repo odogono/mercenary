@@ -1,6 +1,7 @@
 import { IDLE } from '../gameCore/index.ts';
 import { installShellChrome } from '../shell/chrome.ts';
 import { FixedStepClock } from '../shell/clock.ts';
+import { installConsole } from '../shell/consoleView.ts';
 import { renderControlsPage } from '../shell/controlsView.ts';
 import { assertBrowserDocument } from '../shell/documentPath.ts';
 import { BrowserControlProfile } from '../shell/input.ts';
@@ -22,6 +23,11 @@ import { installSuspensionHandlers } from '../shell/suspension.ts';
 import type { PayloadDocument } from '../shell/title.ts';
 import { SoundLifecycle } from '../sound/lifecycle.ts';
 import { AudioWorkletTransport } from '../sound/transport.ts';
+import {
+  DION_CONSOLE_BANNER,
+  executeDionConsoleCommand,
+  parseDionConsoleCommand
+} from './console.ts';
 import { dionControlActions } from './controls.ts';
 import { frameRgba, planDionFrame } from './frame.ts';
 import { installDionPresentation } from './framePresentation.ts';
@@ -192,6 +198,7 @@ try {
   handleOwnershipLost = () => {
     release();
     audio.suspend();
+    shellConsole.close();
     chrome.takeOver.hidden = false;
     menu.show('ownership');
     notice('This Mercenary III session is active in another tab.');
@@ -265,6 +272,32 @@ try {
   });
   installSaveChooser({ page: chrome.pages.saves, persistence });
 
+  const shellConsole = installConsole(
+    chrome.console,
+    { session: () => session },
+    release,
+    {
+      banner: DION_CONSOLE_BANNER,
+      execute: (command, host) => {
+        if (!ownership.mayAdvance()) {
+          return ['This session is active in another tab.'];
+        }
+        if (protectResume && command.kind !== 'help') {
+          return ['Restore a Save or choose New Game before continuing.'];
+        }
+        const lines = executeDionConsoleCommand(command, host);
+        snapshot = session.snapshot;
+        if (command.kind === 'setTime' || command.kind === 'setClock') {
+          checkpoint();
+        }
+        draw();
+        return lines;
+      },
+      parse: parseDionConsoleCommand,
+      persistence: { key: DION_STORAGE.consoleHistory, storage }
+    }
+  );
+
   const draw = (): void => {
     const planned = planDionFrame(content.world, dionFrameState(snapshot));
     frameRgba(planned, image.data);
@@ -333,7 +366,7 @@ try {
 
   const routerState = (): RouterState => ({
     chromeFocus: document.activeElement?.closest('[data-shell-chrome]') != null,
-    console: 'closed',
+    console: shellConsole.isOpen() ? 'open' : 'closed',
     layer: menu.layer(),
     opening: 'none'
   });
@@ -351,14 +384,22 @@ try {
     unlock();
     switch (routeKey(routerState(), event)) {
       case 'escape': {
-        // Mercenary III has no Shell Console yet, so Escape only steps the menu.
-        const outcome = escapeFrom(menu.layer(), 'closed');
-        if (outcome.kind === 'layer') {
+        const outcome = escapeFrom(
+          menu.layer(),
+          shellConsole.isOpen() ? 'open' : 'closed'
+        );
+        if (outcome.kind === 'closeConsole') {
+          shellConsole.close();
+        } else {
           menu.show(outcome.layer);
         }
         event.preventDefault();
         return;
       }
+      case 'console-toggle':
+        shellConsole.toggle();
+        event.preventDefault();
+        return;
       case 'game':
         if (!ownership.mayAdvance()) {
           return;
@@ -459,7 +500,7 @@ try {
               commands: [{ kind: 'reset', state: session.snapshot.sound }]
             });
           }
-          session.intent = controls.intent;
+          session.intent = shellConsole.isOpen() ? IDLE : controls.intent;
           snapshot = session.advance(seconds);
           for (const event of session.drainSound()) {
             audio.send({

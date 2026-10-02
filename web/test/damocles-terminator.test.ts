@@ -15,7 +15,11 @@ import {
   type DamoclesContent
 } from '../src/damocles/session.ts';
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
-import { advanceTurn, inDaylight } from '../src/damocles/terminator.ts';
+import {
+  advanceTurn,
+  inDaylight,
+  turnOnClock
+} from '../src/damocles/terminator.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
@@ -168,14 +172,28 @@ describe('the session keeps the Body turning', () => {
     expect(before.snapshot.daylight).toBe(true);
   });
 
-  test('a switch takes the arrival capture turn: Metis stands in daylight under $355', () => {
+  test('a switch carries the shared Body clock and binds Metis daylight from that turn', () => {
     const session = new DamoclesSession(content);
     expect(session.switchToPose('metis-transporter').kind).toBe('switched');
     const metis = content.poses.poses.find(
       pose => pose.id === 'metis-transporter'
     )!;
-    expect(session.snapshot.bodyTurn).toBe(metis.bodyTurn);
-    expect(session.snapshot.daylight).toBe(true);
+    const bodies = catalogue.craft!.bodies;
+    const rate = (index: number) =>
+      catalogue.bodies.find(body => body.id === `body-${index}`)!.bodySurface!
+        .rotationRate;
+    const turn = turnOnClock(
+      { rate: rate(11), start: bodies[11]!.turn, turn: 0 },
+      { rate: rate(15), start: bodies[15]!.turn }
+    );
+    expect(session.snapshot.bodyTurn).toBe(turn!);
+    expect(session.snapshot.daylight).toBe(
+      inDaylight(
+        metis.subStellarLongitude,
+        turn!,
+        session.snapshot.pose.position
+      )
+    );
     const { pose, structure, surface } = session.snapshot;
     const plan = (daylight: boolean) =>
       planErisFrame(
@@ -195,6 +213,7 @@ describe('the session keeps the Body turning', () => {
   test('a Save carries the turn, and refuses one that is not a longword', () => {
     const session = new DamoclesSession(content);
     expect(session.switchToPose('metis-transporter').kind).toBe('switched');
+    session.setBodyTime(43_200);
     const identity = damoclesSaveIdentity(catalogue, 'test');
     const encode = (snapshot: DamoclesSaveSnapshot) =>
       encodeDamoclesSave({

@@ -1,9 +1,4 @@
 import {
-  parseConsoleCommand,
-  type ConsoleCommand,
-  type ConsoleParseContext
-} from './console.ts';
-import {
   CONSOLE_HISTORY_LIMIT,
   readConsoleHistory,
   writeConsoleHistory
@@ -73,9 +68,10 @@ export interface ShellConsole {
   readonly write: (lines: readonly string[]) => void;
 }
 
-export interface ConsoleViewOptions<Deps extends ConsoleParseContext> {
+export interface ConsoleViewOptions<Deps, Command> {
   readonly banner?: readonly string[];
-  readonly execute: (command: ConsoleCommand, deps: Deps) => readonly string[];
+  readonly execute: (command: Command, deps: Deps) => readonly string[];
+  readonly parse: (line: string, deps: Deps) => Command | undefined;
   readonly persistence?: {
     readonly key: string;
     readonly storage: (ReadStorage & WriteStorage) | undefined;
@@ -92,11 +88,11 @@ const DEFAULT_BANNER = [
 /// It deliberately does not pause: the world runs while the console is open, so a command's effect
 /// is visible in the panel the moment it is typed. `release` empties held input, exactly as any
 /// other layer opening does.
-export const installConsole = <Deps extends ConsoleParseContext>(
+export const installConsole = <Deps, Command>(
   elements: ConsoleElements,
   deps: Deps,
   release: () => void,
-  options: ConsoleViewOptions<Deps>
+  options: ConsoleViewOptions<Deps, Command>
 ): ShellConsole => {
   const persistence = options.persistence;
   const stored =
@@ -135,12 +131,7 @@ export const installConsole = <Deps extends ConsoleParseContext>(
   const run = (line: string): void => {
     print([`] ${line}`]);
     try {
-      const command = parseConsoleCommand(
-        line,
-        deps.cellsPerAxis(),
-        deps.objectSlots(),
-        deps.objectActions?.() ?? 'named'
-      );
+      const command = options.parse(line, deps);
       if (command !== undefined) {
         print(execute(command, deps));
       }

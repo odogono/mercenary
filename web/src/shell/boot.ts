@@ -17,7 +17,7 @@ import {
 } from './arrivalScript.ts';
 import { PANEL_SETTINGS, installShellChrome } from './chrome.ts';
 import { FixedStepClock } from './clock.ts';
-import { executeConsoleCommand } from './console.ts';
+import { executeConsoleCommand, parseConsoleLine } from './console.ts';
 import { installConsole } from './consoleView.ts';
 
 import './damoclesPanelElement.ts';
@@ -623,6 +623,7 @@ try {
     release,
     {
       execute: executeConsoleCommand,
+      parse: parseConsoleLine,
       persistence: { key: titleKeys.consoleHistory, storage }
     }
   );

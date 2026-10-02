@@ -1,11 +1,14 @@
 import {
   SETTING_VALUES,
   applySetting,
+  parseConsoleCommand,
   type ConsoleCommand,
   type ConsoleSettingHost
 } from '../shell/console.ts';
 import { describePads, type PadDescription } from '../shell/gamepad.ts';
 import type { SavePersistence } from '../shell/saves.ts';
+import { formatTargTime, parseTargTime } from '../sky/time.ts';
+import { clockLevelAtRate } from './comet.ts';
 import { DAMOCLES_ROW_CELLS } from './display.ts';
 import { damoclesWhere } from './save.ts';
 import type {
@@ -14,10 +17,49 @@ import type {
   DamoclesTakeObjectOutcome
 } from './session.ts';
 
+export type DamoclesConsoleCommand =
+  | ConsoleCommand
+  | { readonly kind: 'impact' | 'rate' }
+  | { readonly kind: 'setRate'; readonly multiplier: number }
+  | { readonly kind: 'setImpact'; readonly seconds: number };
+
+export const parseDamoclesConsoleCommand = (
+  line: string,
+  cellsPerAxis: number
+): DamoclesConsoleCommand | undefined => {
+  const [verb, ...rest] = line.trim().toLowerCase().split(/\s+/);
+  if (verb === 'rate') {
+    if (rest.length === 0) {
+      return { kind: 'rate' };
+    }
+    if (rest.length !== 1 || !/^(?:\d+(?:\.\d+)?|\.\d+)$/.test(rest[0]!)) {
+      throw new Error('rate takes no value, or one speed multiplier');
+    }
+    const multiplier = Number(rest[0]);
+    clockLevelAtRate(multiplier);
+    return { kind: 'setRate', multiplier };
+  }
+  if (verb !== 'impact') {
+    return parseConsoleCommand(line, cellsPerAxis, 256, 'selected');
+  }
+  if (rest.length === 0) {
+    return { kind: 'impact' };
+  }
+  if (rest.length !== 1) {
+    throw new Error('impact takes no value, or one [+]H:MM[:SS] value');
+  }
+  const value = rest[0]!;
+  const passed = value.startsWith('+');
+  const seconds = parseTargTime(passed ? value.slice(1) : value);
+  return { kind: 'setImpact', seconds: passed ? seconds : -seconds };
+};
+
 const SETTING_NAMES = Object.keys(SETTING_VALUES);
 
 const HELP = [
   'help · where · inventory · atlas · pads',
+  'time [h]h:mm[:ss] · impact [+][h]h:mm[:ss]',
+  'rate [multiplier] · powers of two from 0.0625 to 64; 1 is normal',
   'goto <x> <z>',
   'get [<object-slot>] · drop [<object-slot|name>] · fetch <object-slot>',
   'panel <targ|damocles> · set <name> <value>',
@@ -108,7 +150,7 @@ const describeFetch = (
 
 /// Damocles command set: settings and Saves as Targ, where/goto on Eris, Targ-only verbs refused.
 export const executeDamoclesConsoleCommand = (
-  command: ConsoleCommand,
+  command: DamoclesConsoleCommand,
   host: DamoclesConsoleHost
 ): readonly string[] => {
   switch (command.kind) {
@@ -168,8 +210,35 @@ export const executeDamoclesConsoleCommand = (
         : [`load refused: ${describeOutcome(outcome)}`];
     }
     case 'time':
-    case 'setTime':
-      return ["time belongs to Targ's orrery"];
+    case 'setTime': {
+      const session = host.session();
+      if (session.bodyTime() === null) {
+        return ['time needs a Body underfoot'];
+      }
+      if (command.kind === 'setTime') {
+        session.setBodyTime(command.secondsOfDay);
+      }
+      return [`time ${formatTargTime(session.bodyTime()!)}`];
+    }
+    case 'impact':
+    case 'setImpact': {
+      const session = host.session();
+      if (command.kind === 'setImpact') {
+        session.setImpactTime(command.seconds);
+      }
+      const seconds = session.snapshot.impact.seconds;
+      return [
+        `impact ${formatTargTime(Math.abs(seconds), '-')} ${seconds < 0 ? 'to impact' : 'since impact'}`
+      ];
+    }
+    case 'rate':
+    case 'setRate': {
+      const session = host.session();
+      if (command.kind === 'setRate') {
+        session.setTimeRate(command.multiplier);
+      }
+      return [`rate ${session.timeRate()}x`];
+    }
     case 'inventory': {
       const snapshot = host.session().snapshot;
       return snapshot.carried.length === 0

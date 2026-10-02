@@ -401,6 +401,18 @@ export interface ConsoleParseContext {
   readonly objectSlots: () => number;
 }
 
+/// The shared parser bound to a Title's world limits.
+export const parseConsoleLine = (
+  line: string,
+  deps: ConsoleParseContext
+): ConsoleCommand | undefined =>
+  parseConsoleCommand(
+    line,
+    deps.cellsPerAxis(),
+    deps.objectSlots(),
+    deps.objectActions?.() ?? 'named'
+  );
+
 export interface ConsoleSettingHost {
   readonly preferences: PreferencesStore;
   readonly typeface: (face: TypefaceId) => void;
