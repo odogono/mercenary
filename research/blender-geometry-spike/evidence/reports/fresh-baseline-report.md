@@ -35,16 +35,16 @@ Authored changes with no ledger entry, or corrections without evidence. A review
 
 ## Asset files
 
-`baseline` into an asset directory: refused (error: refusing to write a baseline into /Users/alex/.t3/worktrees/mercenary/t3code-b9e12b1e/research/blender-geometry-spike/out/fresh/asset: it holds or lies inside an edited asset, and assets are never overwritten).
+`baseline` into an asset directory: refused (error: refusing to write a baseline into /Users/alex/.t3/worktrees/mercenary/t3code-3bafbab3/research/blender-geometry-spike/out/fresh/asset: it holds or lies inside an edited asset, and assets are never overwritten).
 
 Every file of the edited asset is byte-identical after re-extraction: yes.
 
 | File | SHA-256 before | after |
 | --- | --- | --- |
-| asset.blend | c99fefbc0b82e98d… | c99fefbc0b82e98d… |
-| asset.glb | 1990c5d60703cc0d… | 1990c5d60703cc0d… |
+| asset.blend | 2f008f7766e52756… | 2f008f7766e52756… |
+| asset.glb | b10091ae972f9853… | b10091ae972f9853… |
 | ledger.json | 0e5b40cec3fc12a9… | 0e5b40cec3fc12a9… |
-| recovered.contract.json | 90185c858ea50da9… | 90185c858ea50da9… |
-| sidecar.json | 269ede87a4c2214b… | 269ede87a4c2214b… |
+| recovered.contract.json | 4f796c173b6fee8f… | 4f796c173b6fee8f… |
+| sidecar.json | 976ac19d9772f5ab… | 976ac19d9772f5ab… |
 
 The edited asset's .glb and a fresh export of its .blend agree: yes.

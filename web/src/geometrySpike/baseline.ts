@@ -17,11 +17,11 @@ import {
   type PartRole,
   type Point3,
   type Reference,
-  type ReferenceTarget,
   type Sidecar,
   type Title,
   type Vertex
 } from './contract.ts';
+import { referenceSites, resolves } from './references.ts';
 
 /// Thrown where a record carries geometry this contract cannot yet represent losslessly. The
 /// corpus sweep counts these rather than silently dropping fields.
@@ -55,9 +55,12 @@ class Builder {
   readonly parts: Part[] = [];
   readonly references: Reference[] = [];
 
-  reference(site: string, target: ReferenceTarget, resolved: boolean) {
+  reference(target: Reference['target'], resolved: boolean) {
     const id = this.references.length;
-    this.references.push({ baselineResolved: resolved, id, site, target });
+    this.references.push({
+      ...(resolved ? {} : { baselineResolved: false as const }),
+      target
+    });
     return { $ref: id };
   }
 
@@ -169,33 +172,16 @@ const damoclesPart = (
   return placeholder;
 };
 
-const recordResolves = (part: Part | undefined, record: number) =>
-  part !== undefined &&
-  (part.faces.some(face => face.record === record) ||
-    part.lines.some(line => line.record === record));
-
-/// A region queue entry, wall-text or floor-label face, with its geometry index made a reference.
-const queueEntry = (builder: Builder, site: string, entry: Json): Json => {
-  if (entry['kind'] === 'face') {
-    const record = entry['index'] as number;
-    return {
-      ...entry,
-      index: builder.reference(
-        site,
-        { kind: 'record', part: 'plan', record },
-        recordResolves(builder.part('plan'), record)
-      )
-    };
-  }
+/// Only positional indices are rewritten; source records survive geometry editing.
+const queueEntry = (builder: Builder, entry: Json): Json => {
   if (entry['kind'] === 'attachmentFace') {
     const part = `attachment:${entry['slot'] as number}`;
     const index = entry['index'] as number;
     return {
       ...entry,
       index: builder.reference(
-        site,
         { id: index, kind: 'face', part },
-        (builder.part(part)?.faces.length ?? 0) > index
+        builder.part(part)?.faces.some(face => face.id === index) === true
       )
     };
   }
@@ -245,11 +231,7 @@ const damoclesRecord = (builder: Builder, model: Json): Json => {
         const fallback = text['fallback'] as Json | undefined;
         return {
           ...text,
-          face: queueEntry(
-            builder,
-            `structureSelection.wallTexts[${i}].face`,
-            text['face'] as Json
-          ),
+          face: queueEntry(builder, text['face'] as Json),
           mesh: damoclesPart(
             builder,
             `wallText:${i}`,
@@ -273,25 +255,15 @@ const damoclesRecord = (builder: Builder, model: Json): Json => {
       });
     }
     if (selection['floorLabels'] !== undefined) {
-      out['floorLabels'] = (selection['floorLabels'] as Json[]).map(
-        (label, i) => ({
-          ...label,
-          face: queueEntry(
-            builder,
-            `structureSelection.floorLabels[${i}].face`,
-            label['face'] as Json
-          )
-        })
-      );
+      out['floorLabels'] = (selection['floorLabels'] as Json[]).map(label => ({
+        ...label,
+        face: queueEntry(builder, label['face'] as Json)
+      }));
     }
-    out['regions'] = (selection['regions'] as Json[]).map((region, r) => ({
+    out['regions'] = (selection['regions'] as Json[]).map(region => ({
       ...region,
-      queue: (region['queue'] as Json[]).map((entry, q) =>
-        queueEntry(
-          builder,
-          `structureSelection.regions[${r}].queue[${q}]`,
-          entry
-        )
+      queue: (region['queue'] as Json[]).map(entry =>
+        queueEntry(builder, entry)
       )
     }));
     record['structureSelection'] = out;
@@ -312,34 +284,6 @@ const damoclesRecord = (builder: Builder, model: Json): Json => {
         )
       }))
     };
-  }
-  const groups = model['detailSelection'] as Json[] | undefined;
-  if (groups !== undefined) {
-    // A Building detail's selection names source records, which every palette variant of the
-    // detail shares; the structure that binds the detail chooses the variant (ADR 0048).
-    const displays = builder.parts.filter(part => part.role === 'display');
-    const records = (site: string, list: number[]) =>
-      list.map((value, k) =>
-        builder.reference(
-          `${site}[${k}]`,
-          { kind: 'record', part: 'variant:*', record: value },
-          displays.every(part => recordResolves(part, value))
-        )
-      );
-    record['detailSelection'] = groups.map((group, g) => ({
-      ...group,
-      boxes: (group['boxes'] as Json[]).map((box, b) => ({
-        ...box,
-        records: records(
-          `detailSelection[${g}].boxes[${b}].records`,
-          box['records'] as number[]
-        )
-      })),
-      default: records(
-        `detailSelection[${g}].default`,
-        group['default'] as number[]
-      )
-    }));
   }
   return record;
 };
@@ -492,6 +436,15 @@ const finish = (
   source: Source,
   extra: Json = {}
 ): Recovered => {
+  const unresolved: Record<string, number[]> = {};
+  for (const { target } of referenceSites(record)) {
+    if (target?.kind === 'record' && !resolves(builder.parts, target)) {
+      const records = (unresolved[target.part] ??= []);
+      if (!records.includes(target.record)) {
+        records.push(target.record);
+      }
+    }
+  }
   const sidecar: Sidecar = {
     asset,
     family,
@@ -500,7 +453,10 @@ const finish = (
     references: builder.references,
     source,
     title,
-    version: 1,
+    version: 2,
+    ...(Object.keys(unresolved).length === 0
+      ? {}
+      : { unresolvedRecords: unresolved }),
     ...extra
   };
   return {

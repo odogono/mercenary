@@ -101,28 +101,17 @@ export interface GeometryAsset {
   readonly version: typeof CONTRACT_VERSION;
 }
 
-/// One game reference into geometry, kept in the sidecar. `record` binds whichever primitives
-/// carry the source record; `face` binds one face by identity (positional references are
-/// rewritten to identities on extraction and back to positions on composition); `external`
-/// binds one Road Workspace endpoint.
+/// Record bindings stay inline; only positional face bindings need the sidecar table.
 export type ReferenceTarget =
-  | { readonly id: number; readonly kind: 'external'; readonly part: string }
   | { readonly id: number; readonly kind: 'face'; readonly part: string }
   | { readonly kind: 'record'; readonly part: string; readonly record: number };
 
 export interface Reference {
-  /// Whether the target resolved in the recovered baseline. A reference that never resolved
-  /// (a record the detail holds but draws nothing for) is a recovered fact, not a break.
-  readonly baselineResolved: boolean;
-  readonly id: number;
-  /// Where in the record the reference sits, for diagnostics.
-  readonly site: string;
-  readonly target: ReferenceTarget;
+  /// Omitted for resolved targets. False preserves an already unresolved baseline position.
+  readonly baselineResolved?: false;
+  readonly target: Extract<ReferenceTarget, { kind: 'face' }>;
 }
 
-/// Everything about an asset that is not geometry, in reviewable JSON: the payload record with
-/// each part's geometry replaced by `{ "$part": id }` and each geometry reference replaced by
-/// `{ "$ref": n }`.
 export interface Advisory {
   readonly kind: 'vertexWatch';
   readonly message: string;
@@ -131,6 +120,8 @@ export interface Advisory {
   readonly vertices: readonly number[];
 }
 
+/// Everything except geometry: meshes become placeholders, record references stay numbers,
+/// and positional attachmentFace indices become `{ "$ref": tableIndex }`.
 export interface Sidecar {
   /// Links the payload makes by coincidence of coordinates rather than by identity.
   readonly advisories?: readonly Advisory[];
@@ -146,7 +137,9 @@ export interface Sidecar {
     readonly sha256: string;
   };
   readonly title: Title;
-  readonly version: 1;
+  /// Source records that never resolved at baseline, grouped by target part (no repeated sites).
+  readonly unresolvedRecords?: Readonly<Record<string, readonly number[]>>;
+  readonly version: 2;
 }
 
 export type Family =
