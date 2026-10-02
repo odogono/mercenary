@@ -3,23 +3,40 @@ import {
   type ConsoleCommand,
   type ConsoleParseContext
 } from './console.ts';
+import {
+  CONSOLE_HISTORY_LIMIT,
+  readConsoleHistory,
+  writeConsoleHistory
+} from './consoleHistory.ts';
+import type { ReadStorage, WriteStorage } from './storage.ts';
 
 /// How much transcript the console keeps.
 ///
 /// A session left running for hours would otherwise grow the log without bound; nothing further
 /// back than this is worth the memory it costs.
-export const SCROLLBACK_LINES = 400;
+export const SCROLLBACK_LINES = CONSOLE_HISTORY_LIMIT;
 
 /// Recall of what has been typed, in the order it was typed.
 ///
-/// Held in memory only: a development tool's history is not worth a storage key, and the
-/// transcript it produced is already on screen.
+/// Restoring command recall never executes the commands again.
 export class CommandHistory {
-  private readonly lines: string[] = [];
-  private cursor = 0;
+  private readonly lines: string[];
+  private cursor: number;
+
+  constructor(lines: readonly string[] = []) {
+    this.lines = lines.slice(-CONSOLE_HISTORY_LIMIT);
+    this.cursor = this.lines.length;
+  }
+
+  get entries(): readonly string[] {
+    return this.lines;
+  }
 
   remember(line: string): void {
     this.lines.push(line);
+    if (this.lines.length > CONSOLE_HISTORY_LIMIT) {
+      this.lines.shift();
+    }
     this.cursor = this.lines.length;
   }
 
@@ -59,6 +76,10 @@ export interface ShellConsole {
 export interface ConsoleViewOptions<Deps extends ConsoleParseContext> {
   readonly banner?: readonly string[];
   readonly execute: (command: ConsoleCommand, deps: Deps) => readonly string[];
+  readonly persistence?: {
+    readonly key: string;
+    readonly storage: (ReadStorage & WriteStorage) | undefined;
+  };
 }
 
 const DEFAULT_BANNER = [
@@ -77,13 +98,23 @@ export const installConsole = <Deps extends ConsoleParseContext>(
   release: () => void,
   options: ConsoleViewOptions<Deps>
 ): ShellConsole => {
-  const history = new CommandHistory();
+  const persistence = options.persistence;
+  const stored =
+    persistence === undefined
+      ? { commands: [], scrollback: [] }
+      : readConsoleHistory(persistence.storage, persistence.key);
+  const history = new CommandHistory(stored.commands);
+  const scrollback: string[] = [];
   let open = false;
   const execute = options.execute;
   const banner = options.banner ?? DEFAULT_BANNER;
 
   const print = (lines: readonly string[]): void => {
+    if (lines.length === 0) {
+      return;
+    }
     for (const line of lines) {
+      scrollback.push(line);
       const entry = document.createElement('div');
       entry.textContent = line;
       elements.log.append(entry);
@@ -91,7 +122,14 @@ export const installConsole = <Deps extends ConsoleParseContext>(
     while (elements.log.childElementCount > SCROLLBACK_LINES) {
       elements.log.firstElementChild?.remove();
     }
+    scrollback.splice(0, Math.max(0, scrollback.length - SCROLLBACK_LINES));
     elements.log.scrollTop = elements.log.scrollHeight;
+    if (persistence !== undefined) {
+      writeConsoleHistory(persistence.storage, persistence.key, {
+        commands: history.entries,
+        scrollback
+      });
+    }
   };
 
   const run = (line: string): void => {
@@ -149,7 +187,7 @@ export const installConsole = <Deps extends ConsoleParseContext>(
     }
   });
 
-  print(banner);
+  print(stored.scrollback.length > 0 ? stored.scrollback : banner);
   show(false);
   return {
     close: () => {

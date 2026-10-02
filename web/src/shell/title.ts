@@ -12,6 +12,7 @@ import type { PanelViewModel } from './panel.ts';
 export type TitleSlug = 'damocles' | 'dion' | 'targ';
 
 export interface TitleStorageKeys {
+  readonly consoleHistory: string;
   /// Web Lock name. Targ keeps the Resume key as the lock name so existing tabs still agree.
   readonly lock: string;
   readonly ownershipChannel: string;
@@ -70,6 +71,7 @@ export const titleStorageKeys = (slug: TitleSlug): TitleStorageKeys => {
       ? 'mercenary.browser-shell.session-resume.v1'
       : `mercenary.browser-shell.${slug}.session-resume.v1`;
   return {
+    consoleHistory: `mercenary.browser-shell.${slug}.console-history.v1`,
     lock: resume,
     ownershipChannel:
       slug === 'targ'

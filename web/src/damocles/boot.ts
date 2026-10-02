@@ -761,7 +761,8 @@ try {
       }
       publish();
       return lines;
-    }
+    },
+    persistence: { key: keys.consoleHistory, storage }
   });
   writeConsole = shellConsole.write;
 
