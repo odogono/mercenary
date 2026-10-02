@@ -52,6 +52,40 @@ test('console opens the atlas and Return to Game preserves the position', async 
 const pinnedVesta =
   '/damocles/atlas?body=vesta&x=1087.1&z=313.1&span=1&pinBody=vesta&pinX=1087.1&pinZ=313.1';
 
+test('a cached game page releases ownership so Atlas travel resumes without takeover', async ({
+  context,
+  page
+}) => {
+  await page.goto('/damocles');
+  await ready(page);
+  await page.keyboard.press('Escape');
+  // Keep the old document alive, as a browser history cache can, after page exit.
+  await page.evaluate(() =>
+    window.dispatchEvent(
+      new PageTransitionEvent('pagehide', { persisted: true })
+    )
+  );
+  const atlas = await context.newPage();
+  await atlas.goto(pinnedVesta);
+  await atlas.locator('#travel-here').click();
+  await ready(atlas);
+  await expect(atlas.locator('#page-ownership')).toBeHidden();
+  await expect(atlas.locator('#frame')).toHaveAttribute('data-body', 'body-14');
+  await expect(atlas).toHaveURL('/damocles');
+  await atlas.close();
+  await Promise.all([
+    page.waitForEvent('framenavigated'),
+    page.evaluate(() =>
+      window.dispatchEvent(
+        new PageTransitionEvent('pageshow', { persisted: true })
+      )
+    )
+  ]);
+  await ready(page);
+  await expect(page.locator('#page-ownership')).toBeHidden();
+  await expect(page.locator('#frame')).toHaveAttribute('data-body', 'body-14');
+});
+
 test('a direct atlas visit starts play only when no resume exists', async ({
   page
 }) => {
@@ -354,6 +388,52 @@ test('dragging the player travels to the drop point without panning the map', as
   expect(
     Math.abs(after - (before + (20 / map.width) * cellUnits))
   ).toBeLessThan(2);
+});
+
+test('Travel Here after moving the paused player resumes immediately without takeover', async ({
+  page
+}) => {
+  await page.goto('/damocles');
+  await ready(page);
+  await page.keyboard.press('Escape');
+  await page.locator('#menu-atlas').click();
+  const player = page.locator('#atlas-player');
+  await expect(player).toBeVisible();
+  const box = (await player.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2 + 20, box.y + box.height / 2, {
+    steps: 5
+  });
+  await page.mouse.up();
+  await expect(page.locator('#pin-status')).toContainText(
+    'Player position updated'
+  );
+  const map = page.locator('#range-body');
+  const bounds = (await map.boundingBox())!;
+  await map.click({
+    position: { x: bounds.width * 0.6, y: bounds.height * 0.6 }
+  });
+  await expect(page.locator('#atlas-pin')).toBeVisible();
+  const pin = new URL(page.url()).searchParams;
+  const cellUnits = (
+    await (
+      await page.request.get('/payload/damocles/arrival-poses.json')
+    ).json()
+  ).coordinateSystem.cellUnits;
+  await page.locator('#atlas-pin').click({ button: 'right' });
+  await page.getByRole('menuitem', { name: 'Travel Here' }).click();
+  await ready(page);
+  await expect(page.locator('#page-ownership')).toBeHidden();
+  await expect(page.locator('#status')).toContainText('Arrived at Atlas pin');
+  for (const axis of ['x', 'z']) {
+    const actual = Number(
+      await page.locator('#frame').getAttribute(`data-${axis}`)
+    );
+    const target = Number(pin.get(`pin${axis.toUpperCase()}`)) * cellUnits;
+    expect(Math.abs(actual - target)).toBeLessThan(2);
+  }
+  await expect(page).toHaveURL('/damocles');
 });
 
 for (const cancellation of ['Escape', 'outside', 'pointercancel']) {

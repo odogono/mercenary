@@ -615,16 +615,17 @@ try {
       if (checkpoint.kind === 'failed' || checkpoint.kind === 'disabled') {
         throw new Error(checkpoint.reason);
       }
-      location.assign(
-        atlasHref({
-          bodyId: body.id,
-          instanceId: null,
-          islandId: null,
-          level: 'body',
-          placeId: null,
-          view: { span: STREET_SPAN, x: player.x, z: player.z }
-        })
-      );
+      const href = atlasHref({
+        bodyId: body.id,
+        instanceId: null,
+        islandId: null,
+        level: 'body',
+        placeId: null,
+        view: { span: STREET_SPAN, x: player.x, z: player.z }
+      });
+      // A departing document may survive in browser history, but must stop owning play.
+      ownership.release();
+      location.assign(href);
     } catch (error) {
       atlasBusy = false;
       atlasNotice = `Atlas could not open: ${error instanceof Error ? error.message : String(error)}`;
@@ -1121,7 +1122,14 @@ try {
   });
   window.addEventListener('pagehide', () => {
     flushResume();
+    ownership.release();
     takeover.close();
+  });
+  window.addEventListener('pageshow', event => {
+    if (event.persisted) {
+      // A cached document relinquished ownership on exit; restore the latest Resume.
+      location.reload();
+    }
   });
 
   const paintNotices = (): void => {
