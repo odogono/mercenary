@@ -89,12 +89,16 @@ Three adoption decisions, none of which reopen the evidence:
   an unused preset would be a second draw path to keep honest.
 - **Enhanced presentation draws every part of a structure aboard.** The ST draws
   only the `$C13C` group aboard and skips the plan queue, which saves time. Under
-  ADR 0034 Enhanced draws the `whole` structure instead: every detail record,
-  roof included, every plan face, door, wall text and Floor Label, at any
-  height. The depth test and back-face culling settle what shows, where the ST
+  ADR 0034 Enhanced draws the `whole` structure instead, at any height: every
+  plan face, door, wall text and Floor Label, every detail record any `$C2FE`
+  list names, and the `$C13C` records whose faces are all horizontal (the
+  roofs). The rest of `$C13C` is left out. Those records are solid stand-ins
+  for walls `$C2FE` draws open: the spaceport's side wall is record 1 with cyan
+  glass (record 2) over it aboard, and records 39–42 around a real window on
+  foot. The depth test and back-face culling settle what shows, where the ST
   picks faces by viewer position. Authentic keeps the `$C13C` draw. Nothing is
-  enclosed aboard under either preset (`StructureDraw` in
-  `web/src/damocles/selection.ts`).
+  enclosed aboard under either preset (`StructureDraw` and
+  `wholeDetailRecords` in `web/src/damocles/selection.ts`).
 - **`camera.farPlane` stays `authored`.** The Working Authority has no far
   plane in the projection sense; the browser's is a parameter of its own
   log-depth buffer (`web/src/damocles/renderer.ts`), so there is no recovered

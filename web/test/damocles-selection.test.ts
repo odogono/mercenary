@@ -212,7 +212,7 @@ test('aboard, the detail is drawn from the $C13C group alone, and nothing high u
   expect(aboard(1200, 0, 0x1_00_00)).toEqual([]);
 });
 
-test('the whole draw takes every plan face, door and detail face, wherever the eye is', () => {
+test('the whole draw takes the open walls, the roofs and the inside, wherever the eye is', () => {
   const { detail, structure } = placement.selection!;
   const whole = (x: number, z: number, y: number) =>
     structureMeshes(
@@ -226,21 +226,27 @@ test('the whole draw takes every plan face, door and detail face, wherever the e
       'whole'
     );
   const meshes = whole(1200, 0, 400);
-  const faces = meshes.reduce((sum, mesh) => sum + mesh.faces.length, 0);
-  const doors = structure.attachments.reduce(
-    (sum, attachment) => sum + attachment.mesh.faces.length,
-    0
-  );
-  const texts = (structure.wallTexts ?? []).reduce(
-    (sum, text) => sum + text.mesh.faces.length,
-    0
-  );
-  expect(faces).toBe(
-    structure.plan.faces.length + doors + texts + detail.faces.length
-  );
-  // The plan goes first and the detail, roof included, last.
+  // The plan goes first, then the door, and the detail last.
   expect(meshes[0]!.faces).toEqual(structure.plan.faces);
-  expect(meshes.at(-1)!.faces).toHaveLength(detail.faces.length);
+  expect(meshes).toHaveLength(2 + structure.attachments.length);
+  const records = new Set(meshes.at(-1)!.faces.map(face => face.sourceIndex));
+  // The hall's side wall at x 400 drawn on foot: four pieces around the window opening.
+  for (const record of [39, 40, 41, 42]) {
+    expect(records.has(record)).toBe(true);
+  }
+  // Not the aboard group's solid wall and the cyan glass over it, which would hide the inside.
+  expect(records.has(1)).toBe(false);
+  expect(records.has(2)).toBe(false);
+  // The end wall drawn on foot, around the doorway, and not its solid stand-in.
+  for (const record of [35, 36, 37]) {
+    expect(records.has(record)).toBe(true);
+  }
+  expect(records.has(31)).toBe(false);
+  // The roofs only the aboard group has: the hall's, the tower base's and the tower's.
+  for (const record of [7, 11, 28]) {
+    expect(records.has(record)).toBe(true);
+  }
+  expect(records.size).toBeLessThan(detail.faces.length);
   // Nothing depends on where the eye is, high up included.
   expect(whole(1200, 0, 0x1_00_00)).toEqual(meshes);
   expect(whole(-5000, 9000, 900)).toEqual(meshes);
