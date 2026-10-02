@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test';
 
 import {
   checkTargTitleLogo,
+  checkTargTitleLogoFile,
   readTargTitleLogo
 } from '../src/shell/titleLogo.ts';
 
@@ -53,6 +54,17 @@ const decoded = async (): Promise<{
 };
 
 describe("Targ's Title Logo from the ST title picture", () => {
+  test('validates the downloaded PNG bytes and refuses a changed file', async () => {
+    const logo = readTargTitleLogo(await tracked());
+    const bytes = await Bun.file(new URL('title.png', payload)).arrayBuffer();
+    await expect(checkTargTitleLogoFile(logo, bytes)).resolves.toBeUndefined();
+
+    new Uint8Array(bytes)[bytes.byteLength - 1]! ^= 1;
+    await expect(checkTargTitleLogoFile(logo, bytes)).rejects.toThrow(
+      'is not the PNG title.json hashes'
+    );
+  });
+
   test('reads the tracked document as the yellow MERCENARY mark', async () => {
     const logo = readTargTitleLogo(await tracked());
 

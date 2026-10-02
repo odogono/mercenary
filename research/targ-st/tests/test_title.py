@@ -45,7 +45,10 @@ class PinnedDisk(unittest.TestCase):
 
     def test_regenerates_the_tracked_documents(self):
         document, image = title.extract(self.floppy)
-        self.assertEqual(json.loads((TRACKED / 'title.json').read_text()), document)
+        tracked = json.loads((TRACKED / 'title.json').read_text())
+        self.assertEqual(document['logo']['image'].pop('sha256'), disk.sha256(image))
+        tracked['logo']['image'].pop('sha256')
+        self.assertEqual(tracked, document)
         # The mark, not the file: compressed bytes depend on the zlib build.
         self.assertEqual(png.read((TRACKED / title.IMAGE).read_bytes()), png.read(image))
 
@@ -53,7 +56,9 @@ class PinnedDisk(unittest.TestCase):
 class TrackedDocuments(unittest.TestCase):
     def test_the_png_is_the_mark_the_document_hashes(self):
         logo = json.loads((TRACKED / 'title.json').read_text())['logo']
-        mark, rgb = png.read((TRACKED / logo['image']['file']).read_bytes())
+        image = (TRACKED / logo['image']['file']).read_bytes()
+        self.assertEqual(disk.sha256(image), logo['image']['sha256'])
+        mark, rgb = png.read(image)
         self.assertEqual((len(mark[0]), len(mark)), (logo['width'], logo['height']))
         self.assertEqual(disk.sha256(png.mark_bits(mark)), logo['image']['markSha256'])
         self.assertEqual(rgb, (255, 255, 0))

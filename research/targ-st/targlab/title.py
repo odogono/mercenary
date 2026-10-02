@@ -124,6 +124,7 @@ def extract(floppy: Floppy) -> tuple[dict, bytes]:
             'x': left, 'y': top, 'width': right - left, 'height': bottom - top,
             'image': {
                 'file': IMAGE,
+                'sha256': sha256(image),
                 'format': 'PNG, 1-bit indexed: 0 transparent, 1 the mark in palette colour 3',
                 'markSha256': sha256(png.mark_bits(mark)),
                 'markEncoding': 'one bit per pixel, most significant first, rows padded to a byte',

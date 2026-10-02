@@ -5,7 +5,7 @@
 /// shows the NEOchrome picture `E0` while it loads, and `research/targ-st/` reads that file
 /// straight off the pinned disk. The logo is every pixel of palette index 3 there: the
 /// MERCENARY lettering and the globe it overlaps. The PNG carries the mark; the document
-/// carries its provenance and a hash of the mark, which the decoded image must match. It
+/// carries its provenance and hashes of the PNG and the mark. It
 /// is presentation only (ADR 0063).
 
 export interface TargTitleLogo {
@@ -15,6 +15,8 @@ export interface TargTitleLogo {
   readonly height: number;
   /// SHA-256 of the mark, one bit per pixel, most significant first, rows padded to a byte.
   readonly markSha256: string;
+  /// SHA-256 of the downloaded PNG, before browser decoding or canvas readback.
+  readonly pngSha256: string;
   readonly width: number;
 }
 
@@ -67,17 +69,22 @@ export const readTargTitleLogo = (value: unknown): TargTitleLogo => {
   const image = record(logo['image'], 'logo.image');
   const file = image['file'];
   const markSha256 = image['markSha256'];
+  const pngSha256 = image['sha256'];
   if (file !== 'title.png') {
     refuse("logo.image.file is not 'title.png'");
   }
   if (typeof markSha256 !== 'string' || !/^[\da-f]{64}$/.test(markSha256)) {
     refuse('logo.image.markSha256 is not a SHA-256');
   }
+  if (typeof pngSha256 !== 'string' || !/^[\da-f]{64}$/.test(pngSha256)) {
+    refuse('logo.image.sha256 is not a SHA-256');
+  }
   return {
     colour: (colours as number[])[index as number]!,
     file: file as string,
     height: size(logo['height'], 'logo.height', 200),
     markSha256: markSha256 as string,
+    pngSha256: pngSha256 as string,
     width: size(logo['width'], 'logo.width', 320)
   };
 };
@@ -125,20 +132,44 @@ const fetched = async (url: URL): Promise<Response> => {
   return response;
 };
 
-/// Fetch the document and its PNG, decode the PNG unconverted, and check it is the mark.
+/// Check the file before decoding: privacy browsers can alter canvas readback pixels.
+export const checkTargTitleLogoFile = async (
+  logo: TargTitleLogo,
+  bytes: ArrayBuffer
+): Promise<void> => {
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
+  const hex = [...digest].map(b => b.toString(16).padStart(2, '0')).join('');
+  if (hex !== logo.pngSha256) {
+    throw new Error(
+      `payload/targ-st/${logo.file} is not the PNG title.json hashes`
+    );
+  }
+};
+
+/// Fetch and validate the PNG bytes, then decode them for presentation.
 export const loadTargTitleLogo = async (payload: URL): Promise<ImageData> => {
   const logo = readTargTitleLogo(
     await (await fetched(new URL('targ-st/title.json', payload))).json()
   );
+  const bytes = await (
+    await fetched(new URL(`targ-st/${logo.file}`, payload))
+  ).arrayBuffer();
+  await checkTargTitleLogoFile(logo, bytes);
   const bitmap = await createImageBitmap(
-    await (await fetched(new URL(`targ-st/${logo.file}`, payload))).blob(),
+    new Blob([bytes], { type: 'image/png' }),
     { colorSpaceConversion: 'none', premultiplyAlpha: 'none' }
   );
+  if (bitmap.width !== logo.width || bitmap.height !== logo.height) {
+    bitmap.close();
+    throw new Error(
+      `payload/targ-st/${logo.file} is not ${logo.width} by ${logo.height}`
+    );
+  }
   const context = new OffscreenCanvas(bitmap.width, bitmap.height).getContext(
     '2d'
   )!;
   context.drawImage(bitmap, 0, 0);
   const image = context.getImageData(0, 0, bitmap.width, bitmap.height);
-  await checkTargTitleLogo(logo, image);
+  bitmap.close();
   return image;
 };

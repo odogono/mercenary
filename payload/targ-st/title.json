@@ -93,6 +93,7 @@
     "height": 116,
     "image": {
       "file": "title.png",
+      "sha256": "4e7cdcbe2c81e97d034ff9ee9853bf7621cd6e1ef46174ebf78c078fa5b66588",
       "format": "PNG, 1-bit indexed: 0 transparent, 1 the mark in palette colour 3",
       "markSha256": "c1839fda17eb156527a25f1998d3a24da2b752de16e165a85b32ef097b59c6ea",
       "markEncoding": "one bit per pixel, most significant first, rows padded to a byte"
