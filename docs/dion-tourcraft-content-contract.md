@@ -2,7 +2,7 @@
 
 [I3 / #710](https://github.com/odogono/mercenary/issues/710) implements the export and admission boundary in [ADR 0065](adr/0065-promote-bounded-dion-catalogue-content-through-an-explicit-export.md) from [R7's reviewed selection](research/mercenary-iii-tourcraft-promotion.md). The exported payload is `payload/dion/tourcraft/`; `loadTourcraftContent` admits it independently of the current D1 loader. It supplies `tourcraftFrameWorld` and `tourcraftOpeningFrameState` to the existing Dion Frame Planner. The comparison tool exercises later presentation inputs from actual R7 captures.
 
-The production D1 Gameplay Session still uses its historical payload and Save contract. I4/#711 owns continuous TOURCRAFT behavior, live programme updates and the versioned Save migration. D2's [late taxi-Save decision](research/mercenary-iii-tourcraft-milestone-review.md#r8-compatibility-failure-returned-for-review) remains unresolved; this export does not select a migration policy or silently admit old Saves under its new identity.
+The production D1 Gameplay Session still uses its historical payload and Save contract. I4/#711 owns continuous TOURCRAFT behavior, live programme updates and the versioned Save migration. D2's [late taxi-Save decision](research/mercenary-iii-tourcraft-milestone-review.md#r8-compatibility-failure-returned-for-review) is settled by [ADR 0068](adr/0068-reconcile-known-taxi-saves-with-expanded-campaign-history.md); this export implements no migration and does not admit old Saves under its new identity.
 
 ## Selection and sources
 
@@ -15,6 +15,25 @@ The mutable source is the fresh `exact2/start.ram` first-loop-top capture, SHA-2
 D1 can advance independently: when its current document no longer matches R7's exact file pin, regeneration reads the retained historical document in `payload/dion/tourcraft/` and verifies that same pin. The later road-grid recovery is an additive schema-1 field outside R7's selection; the historical world may omit it, while supplied road records remain strictly validated. Export checks the selected group record without that unselected road grid, preserving the reviewed playable bytes and identity.
 
 All sources pin the same Mercenary III program `4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c`. The gameplay source also pins EmuTOS `154803e3ff4851f3dc358b91b16d6b6110d187a81d8132ecb665af49878939d5` and Hatari `05723606c75a1f0642395974abdce2cbbe48b0a09a747f65cdfca7ef9201e11a`. Whole Catalogue export/ledger hashes are input audit references, excluded from served metadata. An unrelated Catalogue record, font or export timestamp therefore cannot change play identity. Selected source pins and decoded records can.
+
+## Payload files
+
+`loadTourcraftContent` in `web/src/dion/tourcraftContent.ts` validates every field it reads, so its checks are the full schema; this table gives each file's top-level fields.
+
+| File in `payload/dion/tourcraft/` | Top-level fields | Read by |
+| --- | --- | --- |
+| `manifest.json` | `title`, `destination`, `kind`, `programSha256`, `mutableSource`, `sources`, `playableDocuments` (ordered paths and hashes) | `loadTourcraftContent` |
+| `world`, `panel`, `messages`, `scripts`, `sound`, `service` `.json` | the historical D1 documents, byte-identical to their R7 pins | `readDionContent` in `web/src/dion/content.ts` |
+| `promotion.json` | `scope`, `sources`, `groups`, `surfaceCells`, `structures`, `placements`, `bodyPlacements`, `residents`, `services`, `geometry`, `legacyModels`, `skyBodies`, `skyDrawLists`, `spaceScan`, `renderSupportSelection`, `reachableScriptEntries`, and the disposition and closure inventories | `loadTourcraftContent` |
+| `geometry/<family>-<address>.json` | `geometry`: one Geometry Identity's forms; `<family>` is `detail`, `ground`, `island`, `model`, `sky-tail` or `structure` | `loadTourcraftContent` |
+| `presentation/gameplay.json` | `initial`, `modelBindings`, `modelBindingSources`, `blinkPhase` | `loadTourcraftContent` |
+| `presentation/programmes.json` | `entries`, `scripts`, `playback`, `faceSequences`, `headSequences`, `encounter`, `collisionTone`, `sharedReturn` | `loadTourcraftContent` |
+| `presentation/support.json` | `bodies`, `groups`, `palettes`, `framePalette`, `modelColours`, `glyphs`, `tokens`, `drawPriority`, `rotationTable` | `loadTourcraftContent` |
+| `presentation/system.json` | `bodies`, `drawLists`, `spacePalette`, `spaceScan`, `sine` | `loadTourcraftContent` |
+| `presentation/craft.json` | `parameters`, `tables` | `loadTourcraftContent` |
+| `presentation/taxi.json` | `title`, `destination`, `programSha256`, `values`, `coverage` | `readDionContent` |
+
+Every document also carries `schemaVersion`. All but `taxi.json` carry `kind`, and all but `manifest.json`, `promotion.json` and `taxi.json` carry `source`; those two carry `sources` instead.
 
 ## Admission and identity
 

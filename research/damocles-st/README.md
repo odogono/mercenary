@@ -13,8 +13,8 @@ Working-Authority Evidence, not Authoritative Evidence.
 
 ```sh
 brew bundle --file research/damocles-st/Brewfile
-# Restricted Material lives under /roms (gitignored). In this worktree:
-#   ln -sfn /Users/alex/work/mercenary/roms roms
+# Restricted Material lives under /roms (gitignored); in a worktree, run
+# scripts/worktree-setup.sh at the repository root to link it.
 research/damocles-st/lab doctor
 research/damocles-st/lab reproduce
 research/damocles-st/lab capture --checkpoint title-screen
@@ -47,6 +47,21 @@ Place the Working Authority STX at
 `roms/atarist/damocles_-_mercenary_ii_novagen_software_(uk).stx` and the pinned
 TOS image at `roms/atarist/tos/emutos206.img`. `doctor` fails if either hash
 does not match `config/working-authority.json`.
+
+## Modules
+
+| Path | Owns |
+| --- | --- |
+| `lab` | the entry point: runs `damocleslab` with `.venv` Python when present (`lab --help` lists commands) |
+| `damocleslab/cli.py`, `laboratory.py`, `runtime.py`, `toolchain.py`, `core.py` | commands, configuration, Hatari scripts, toolchain checks, hashing and errors |
+| `damocleslab/catalogue.py` | the geometric record decoder behind `payload/damocles/catalogue.json` (ADR 0039) |
+| `damocleslab/script.py`, `strings.py` | the Damocles Script decoder and its message text |
+| `damocleslab/documents.py`, `music.py`, `panel.py`, `system.py`, `title.py` | extractors for Head Command documents, the tune, the pitch strip, Gamma System Bodies and the Title Logo |
+| `scripts/*-probe.py`, `*-check.py` | one Hatari probe or offline check per question; each has a section below, found by its issue number |
+| `scenarios/*.json` | `lab observe` scenarios |
+| `snapshots/*.sav` | Hatari memory snapshots probes start from |
+| `tests/` | `python3 -m unittest discover -s research/damocles-st/tests -v` |
+| `work/` | ignored run output, linked to the main checkout in worktrees |
 
 ## Rehosting an off-build memstate (#331)
 

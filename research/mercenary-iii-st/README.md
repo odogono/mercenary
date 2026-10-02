@@ -4,6 +4,25 @@ The reproducible Hatari harness and MIII-only decoders behind `payload/dion/` (#
 
 Nothing here borrows the Damocles laboratory's code, catalogue or assets. Each format is read from Mercenary III's own reader, and that reader's address is cited in the decoder. Under [ADR 0002](../../docs/adr/0002-separate-rom-research-from-implementation.md), the decoders emit data with Research Provenance and translate no code. RAM, screenshots, logs and disassembly are Restricted Material, kept under the ignored `restricted/` root.
 
+Each issue's runs live in the main checkout's `restricted/mercenary-iii-<issue>/`; `scripts/worktree-setup.sh` at the repository root links that root into a worktree.
+
+## Modules
+
+| Path | Owns |
+| --- | --- |
+| `m3lab/__main__.py` | the `capture` and `export` commands; other modules run as `python3 -m m3lab.<module>` |
+| `m3lab/boot.py` | cold boot of the pinned baseline and RAM capture at chosen VBLs |
+| `m3lab/ram.py` | reading a loaded RAM image, with the source of every value |
+| `m3lab/scene.py` | standing at an exact surface pose and capturing the original's frame |
+| `m3lab/geometry.py`, `world.py`, `panel.py`, `scripts.py`, `service.py`, `sound.py`, `sky.py`, `text.py` | the METIS taxi slice decoders behind `payload/dion/*.json` |
+| `m3lab/census_capture.py`, `census_locations.py`, `census_objects.py` | the full original location and resident census |
+| `m3lab/catalogue_*.py` | the Dion Catalogue: surface, objects, interiors, ledger, render inputs, export, preview scenes |
+| `m3lab/surface_scenes.py`, `object_scenes.py`, `interior_capture.py`, `interior_scenes.py` | original-scene comparisons for the Catalogue |
+| `m3lab/tourcraft_export.py` | the bounded TOURCRAFT export into `payload/dion/tourcraft/` (ADR 0065) |
+| `scripts/taxi-*.ts` | R8 taxi Save audits, pinned by `taxi-source.ts` and run under `bun test` in `web/` |
+| `tests/` | unit tests: `PYTHONPATH=.:tests python3 -m unittest discover -s tests` |
+| `*.json` here | checked-in evidence ledgers; [the TOURCRAFT milestone index](../../docs/research/mercenary-iii-tourcraft-milestone-review.md#where-each-tickets-work-lives) says which ticket owns each |
+
 ## Quick start
 
 Supply the pinned media under a directory named by `M3_ROM_ROOT`, containing `atarist/Mercenary III.STX` and `atarist/tos/emutos206.img`. The pinned Hatari 2.6.1 binary is checked by hash. Every module uses only the Python standard library.

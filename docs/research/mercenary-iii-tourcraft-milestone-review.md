@@ -4,6 +4,18 @@ Accepted with research gates, 2026-10-02, for [#704](https://github.com/odogono/
 
 The second slice continues the existing METIS prison/taxi journey: walk from the spaceport taxi exit to resident 13's staffed TOURCRAFT, board, undergo automated launch/space flight/Body entry, and arrive automatically on foot at TOLOSA group 23, cell `01-00`. R5 reproduced that complete path twice from New Game. It uses craft Mover control playback, not the taxi's route loop or self-piloting. Its roughly 60 Hz natural captures do not confirm the browser's eleven-tick cadence.
 
+## Where each ticket's work lives
+
+Each research doc opens with a status block naming what still holds and what superseded it; read that before the body. Lab paths are under `research/mercenary-iii-st/`; tests are under `web/test/`.
+
+| Ticket | Docs (`docs/research/` unless a path is given) | Evidence, scripts and tests | Decisions |
+| --- | --- | --- | --- |
+| [R6 #707](https://github.com/odogono/mercenary/issues/707) | `mercenary-iii-tourcraft-playback.md`, `-clock.md`, `-campaign.md`, `-timing-controls.md`, `-boundary-controls.md`, `-followup.md`, `-reuse.md` | `restricted/mercenary-iii-707/` | [ADR 0058](../adr/0058-run-mercenary-iii-at-50-hz-with-a-confirmed-fixed-frame-cadence.md) |
+| [R7 #708](https://github.com/odogono/mercenary/issues/708) | `mercenary-iii-tourcraft-promotion.md`, `-presentation.md`, `-views.md` | `tourcraft-promotion-manifest.json`; `restricted/mercenary-iii-708/` | [ADR 0065](../adr/0065-promote-bounded-dion-catalogue-content-through-an-explicit-export.md) |
+| [R8 #709](https://github.com/odogono/mercenary/issues/709) | `mercenary-iii-tourcraft-persistence.md`, `-state-inventory.md`, `-taxi-migration.md`, `-history-ambiguity.md`, `-canonical-reference.md`, `-early-initialization.md`, `-early-owner-audit.md`, `-r8-audit.md` | `tourcraft-restore-evidence.json`, `taxi-early-evidence.json`, `taxi-history-evidence.json`; `scripts/taxi-*.ts`, pinned to their source revision by `scripts/taxi-source.ts` and run by `dion-migration-audit`, `dion-history-model`, `dion-canonical-reference` and `dion-early-initialization` tests; `restricted/mercenary-iii-709/` | [ADR 0068](../adr/0068-reconcile-known-taxi-saves-with-expanded-campaign-history.md) |
+| [I3 #710](https://github.com/odogono/mercenary/issues/710) | [`docs/dion-tourcraft-content-contract.md`](../dion-tourcraft-content-contract.md) | `m3lab/tourcraft_export.py` → `payload/dion/tourcraft/`, read by `web/src/dion/tourcraftContent.ts`; `tourcraft-play-comparison.json`, checked by `web/tools/dion-tourcraft-compare.ts`; `dion-tourcraft-content` tests; `restricted/mercenary-iii-710/` | ADR 0065 |
+| [I4 #711](https://github.com/odogono/mercenary/issues/711) | the I4 acceptance section below | `web/src/dion/` session, Save and Resume | ADR 0058, ADR 0068 |
+
 ## Eight decisions
 
 | Item | Accepted decision |

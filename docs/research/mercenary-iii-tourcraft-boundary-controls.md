@@ -1,5 +1,10 @@
 # Mercenary III TOURCRAFT: timer, queue and message boundary controls (R6)
 
+> **Status** (as of `405c6e70`, 2026-10-02): Current.
+> **Holds:** Timer `$727E` decrements modulo 65,536 each unpaused tick and dispatches only when negative (zero is not due; `$8000` → `$7FFF` waits 32,778 ticks for the wrap), a threshold launch precedes timed dispatch, the interpreter checks busy, then description continuation `$7230`, then queue `$711C`, launch checks availability before the active/queueable decision, and message ticks run before the `$70BC` pause guard.
+> **Open:** none within R6; I4 implements these ordering rules and R8 proves their restored futures.
+> **Evidence:** `restricted/mercenary-iii-707/runs/exact-near.sav`, `restricted/mercenary-iii-707-followup/` (lost) (`boundary.py`, `boundary-review.py`, `boundary-review.json`, `runs/boundary-*/hatari.log`), `web/src/shell/boot.ts`.
+
 Original-engine controls for [#707](https://github.com/odogono/mercenary/issues/707), following the accepted [D2 scope](mercenary-iii-tourcraft-milestone-review.md#accepted-r6-follow-up) and [connected campaign recovery](mercenary-iii-tourcraft-campaign.md). Fifteen deliberately synthetic initial-state controls confirm the recovered signed-timer, active/busy guard, threshold, queue and continuation ordering. An independent raw-log parser asserts their observed state transitions without importing the parent parser or campaign timing model. These controls supplement the connected campaign runs and exact early-flight cadence comparison; they are not natural campaign routes or an exhaustive enumeration of arbitrary states.
 
 ## Fixture and timing ownership

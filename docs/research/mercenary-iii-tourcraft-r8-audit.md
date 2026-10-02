@@ -1,5 +1,10 @@
 # Mercenary III TOURCRAFT: R8 completion audit
 
+> **Status** (as of `405c6e70`, 2026-10-02): Current.
+> **Holds:** R8 requires a documented canonical eligibility/reference rule and per-owner deterministic construction while the schema-2 codec and browser runs stay I4 work, the ten archived restore branches recheck (84 artifact hashes, 12,641 sampled records), and the shared Session Resume write-failure path still removes the previous record.
+> **Open:** Total eligibility and canonical reconstruction, the early `$A5` face-output omission proof or a D2 early policy, and source preservation across migration flush and post-commit presentation.
+> **Evidence:** `research/mercenary-iii-st/tourcraft-restore-evidence.json`, `research/mercenary-iii-st/scripts/taxi-migration-audit.ts`, `research/mercenary-iii-st/scripts/taxi-history-audit.ts`, `web/test/dion-persistence.test.ts`, `restricted/mercenary-iii-709/`.
+
 Audit for [#709](https://github.com/odogono/mercenary/issues/709), 2026-10-02, against repository `76b5e5130aae882a445967e309cfa6ec83917d76`. Read the repository domain guidance, [D2](mercenary-iii-tourcraft-milestone-review.md), [ADR 0065](../adr/0065-promote-bounded-dion-catalogue-content-through-an-explicit-export.md) and the later accepted [ADR 0068](../adr/0068-reconcile-known-taxi-saves-with-expanded-campaign-history.md). This report changes no runtime, codec or Data Payload and reports no newly executed emulator flight.
 
 The existing reports provide a substantial conservative inventory, exact historical source identity, schema proposal, finite original restore evidence and browser acceptance recipe. They do **not yet provide the actual deterministic initialization/canonical reconstruction contract** required to complete R8. ADR 0068 settles the policy choice; it does not choose a canonical input history, define its eligibility, or construct the state for it. [Persistence completion boundary](mercenary-iii-tourcraft-persistence.md#completion-boundary), [ambiguity consequence](mercenary-iii-tourcraft-history-ambiguity.md#consequence-for-d2r8), [ADR 0068](../adr/0068-reconcile-known-taxi-saves-with-expanded-campaign-history.md)

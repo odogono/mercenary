@@ -1,5 +1,10 @@
 # Mercenary III TOURCRAFT: promotion specification v1
 
+> **Status** (as of `405c6e70`, 2026-10-02): Amended by [dion-tourcraft-content-contract](../dion-tourcraft-content-contract.md): I3 exports this specification as 94 served documents under `payload/dion/tourcraft/` with `contentSha256`.
+> **Holds:** The selection is 80 Geometry Identities/110 forms (79 Catalogue plus `sky-tail-0502c0`), 39 placements, 512 cells and 18 structures in groups 3/23, the only new admitted service is resident 13/head 279/stream `$66D2A`/script `$29`, and `exact2/start.ram` is the one mutable initial source beside separately pinned immutable Catalogue records.
+> **Open:** R8/#709 restore-complete futures and taxi-Save migration proof; I4/#711 continuous flight, live programme updates and production presentation.
+> **Evidence:** `research/mercenary-iii-st/tourcraft-promotion-manifest.json`, `research/mercenary-iii-st/catalogue-ledger.json`, `research/mercenary-iii-st/m3lab/catalogue_export.py`, `research/mercenary-iii-st/m3lab/catalogue_objects.py`, `research/mercenary-iii-st/tests/test_catalogue_ledger.py`, `research/mercenary-iii-st/tests/test_catalogue_export.py`, `restricted/mercenary-iii-708/presentation/exact2/start.ram`, `restricted/mercenary-iii-707/runs/exact-11-14c2p26m/near.ram`.
+
 Research for [R7 / #708](https://github.com/odogono/mercenary/issues/708), 2026-10-02, under [D2](mercenary-iii-tourcraft-milestone-review.md) and [ADR 0065](../adr/0065-promote-bounded-dion-catalogue-content-through-an-explicit-export.md). The [versioned manifest](../../research/mercenary-iii-st/tourcraft-promotion-manifest.json) is a **promotion specification**, not a playable export. It names existing recovery records and their exact source identities; it contains no vertices, original programme bytes, dialogue, RAM, raster or audio. The [presentation report](mercenary-iii-tourcraft-presentation.md) and [view matrix](mercenary-iii-tourcraft-views.md) supply the remaining research handoff. No runtime or Data Payload changes accompany this report.
 
 ## Selection and dependency closure
