@@ -38,8 +38,8 @@ the spike.
   Asset is split into **parts**: display variants, walking geometry, plan, attachments and glyphs
   for Damocles, and one wireframe for Targ.
 - **An Asset Sidecar per asset.** It is the payload record with each part's geometry replaced
-  by `{ "$mesh": id }`, and each geometry reference replaced by `{ "$ref": n }` into a reference
-  table that names its target by identity. The geometry carries the SHA-256 of its canonical
+  by `{ "$mesh": id }`. Source-record references stay inline as numbers; only positional
+  `attachmentFace` indices become `{ "$ref": n }` into a face-identity table. The geometry carries the SHA-256 of its canonical
   sidecar.
 - **Baseline recovery and composition** (`baseline.ts`, `compose.ts`). They turn a payload record
   into a contract plus sidecar, and back into the identical record.
@@ -165,7 +165,8 @@ Issues every editor meets, found by the scripted edits and kept as findings:
 
 ## References after topology edits
 
-Geometry references live in the sidecar and name their target by identity:
+Geometry references live in the sidecar. Source records stay inline; positional references name
+their target through a face-identity table:
 
 - A **source record** is the Damocles `sourceIndex` that region queues, wall texts and detail
   selections bind. It is a record and not an array position.
@@ -175,15 +176,43 @@ Geometry references live in the sidecar and name their target by identity:
 
 | Edit | Result |
 | --- | --- |
-| Delete a plan face the region queues draw (Spaceport record 0) | Refused, naming every site, e.g. `structureSelection.regions[0].queue[20]: references source record 0 in plan, which no longer exists. Restore a primitive carrying it, or remap ref 20 in the sidecar to an existing target.` |
+| Delete a plan face the region queues draw (Spaceport record 0) | Refused, naming every site, e.g. `structureSelection.regions[0].queue[20]: references source record 0 in plan, which no longer exists. Restore a primitive carrying it, or change the inline index or record number at this site in the sidecar.` |
 | Rebuild that face with F and set its record | Accepted; every queue still draws it |
 | Remap the references in the sidecar to record 1 | Accepted; the composed queues name record 1 (test) |
 | Delete an unreferenced attachment face before a referenced one | Positional references follow their faces (test) |
 | Delete one palette variant's face for a record the detail selection names | Refused: a detail record must stay drawable in every palette variant the binding structure may choose |
 | Give a Targ surface cell more than 60 local vertices | Refused: indices 60–63 address the Road Workspace |
 
-A reference that never resolved in the Recovered Baseline is a recovered fact, not a break, and
-is not refused. An example is a record that a detail holds but never draws.
+### Asset Sidecar format (version 2)
+
+[#676](https://github.com/odogono/mercenary/issues/676) slims the spike's sidecar without changing
+production geometry, loading or extraction. It keeps **key-sorted, two-space-indented JSON with a
+trailing newline**, like the Data Payload under ADR 0048: the record remains directly reviewable
+and editable. Minification would reduce raw bytes further, but gzip already provides the delivery
+saving and keeping the authored JSON readable matters more.
+
+- `record` holds the payload file with geometry placeholders (`$mesh`, and the Targ vertex/edge
+  placeholders). Region-queue `face.index`, wall-text and floor-label `face.index`, and
+  detail-selection `records`/`default` remain their original source-record numbers. No table
+  entry or `$ref` is created for them.
+- `references` is an array containing only positional `attachmentFace` bindings. A binding is
+  `{ "target": { "id": faceIdentity, "kind": "face", "part": "attachment:slot" } }`; the
+  record's `index` is `{ "$ref": arrayPosition }`. There is no redundant entry `id` or `site`.
+  Composition finds the face identity's current position and writes that number back.
+- `baselineResolved` is omitted for resolved positional bindings. Only a position that already
+  failed to resolve at baseline carries `"baselineResolved": false`, preserving its original
+  number rather than treating it as a topology break.
+- Optional `unresolvedRecords` groups distinct source-record numbers by target part (`plan` or
+  `variant:*`) that never resolved at baseline. These rare exceptions preserve recovered facts,
+  such as records a detail holds but never draws, without a placeholder or a per-site table
+  entry. An edit to a different missing record number is still refused.
+- Validation derives every diagnostic site from the record, including every use of a shared
+  target. A detail record must resolve in **every** display variant, on a face or a line.
+  Removed records are fixed by restoring a primitive carrying the record or editing the inline
+  number at each reported site. Positional targets are remapped in the reference table.
+
+The geometry format stays at version 1; it carries the SHA-256 of the canonical version-2
+sidecar. Version-1 sidecars are refused with a request to recover the baseline again.
 
 ## Variants, attachments, display and walking, runtime geometry
 
@@ -244,42 +273,56 @@ edited, one matches an authored edit, and one conflicts with one. Result:
 ## Size and load time
 
 [measure-report](../../research/blender-geometry-spike/evidence/reports/measure-report.md),
-summarised for the 1,713 Damocles Models the contract represents:
+re-measured for [#676](https://github.com/odogono/mercenary/issues/676) across the same 1,713
+Damocles Models. The before figures are the original #671 spike; the after figures use the slim
+version-2 sidecar, keeping indented, key-sorted JSON.
 
-| | Raw | gzip -9 | Load to parsed Models |
-| --- | --- | --- | --- |
-| Payload JSON model files (today) | 38.9 MiB | **2.9 MiB** | **90 ms** |
-| MGEO + sidecar | 34.1 MiB (geometry 5.3) | 3.7 MiB (geometry 1.3) | 306 ms |
-| GLB + sidecar | 47.1 MiB (geometry 18.3) | 5.5 MiB (geometry 3.1) | 350 ms |
-| `.blend` (fixtures only) | 487 KiB – 1.3 MiB each | 84–131 KiB each | not loadable by the game |
+| | Raw, before → after | gzip -9, before → after | Load with all checks, before → after | Load after build-time validation |
+| --- | --- | --- | --- | --- |
+| Payload JSON model files (today) | 38.9 → 38.9 MiB | **2.9 → 2.9 MiB** | **90 → 75 ms** | — |
+| MGEO + sidecar | 34.1 → 16.6 MiB | 3.7 → 2.9 MiB | 306 → 195 ms | 120 ms |
+| GLB + sidecar | 47.1 → 29.6 MiB | 5.5 → 4.8 MiB | 350 → 221 ms | 145 ms |
 
-- **Geometry alone** is far smaller in binary: MGEO is 7× smaller than JSON raw. Decoding it is
-  2–3× faster than parsing the JSON and reading the Model.
-- **The sidecar outweighs that gain.** It is today's record minus its geometry, with a reference
-  table, and both candidates must ship it.
-- **Reaching the existing types costs more than it saves.** Composing back into the existing
-  record, then through `parseModelFile`, makes load about 3.5× slower than today's JSON. Part of
-  that is the spike's per-load sidecar hash and reference checks, which a production loader could
-  do at build time.
-- The `.blend` candidate would add at least 0.85 GB of sources for the corpus (at the smallest
-  fixture's 487 KiB each). They are binary, and each is mostly Blender's own file overhead.
+Geometry sizes are unchanged: MGEO is 5.3 MiB raw / 1.3 MiB gzip, GLB 18.3 MiB raw / 3.1 MiB
+gzip. The sidecar falls from **28.9 to 11.3 MiB raw** (61% smaller), and now totals **1.7 MiB
+gzip**. Source-record references stay numbers in the record; only the corpus's **18 positional
+`attachmentFace` bindings** enter the table. Independently serialized, the record totals 9.8 MiB
+raw and the table 6.8 KiB raw, including all 1,713 arrays (most empty). Those field sizes differ
+from their indentation inside a sidecar and their independently compressed sizes cannot be added.
 
-The sidecar is larger than it needs to be. Across the corpus it is 28.9 MiB: 13.1 MiB is the
-reference table and 12.7 MiB the indented record. Each reference entry takes about 190 bytes,
-where today's JSON stores a two-digit `"index"`. Most entries are redundant:
+The measurements now separate the work a production loader could perform at build time from
+composition into today's types:
 
-- Region-queue and detail references already name a source record that survives editing, so they
-  could stay inline and be checked in place. Only the 18 positional `attachmentFace` references
-  need rewriting.
-- `site` can be derived from where the reference sits.
-- `baselineResolved` is needed only for references that never resolved.
+| Isolated stage, entire corpus | Time |
+| --- | --- |
+| Sidecar JSON parse | 13 ms |
+| Canonical sidecar serialization and SHA-256 | 36 ms |
+| Inline source-record and positional reference validation | 11 ms |
+| Composition into payload records, then `parseModelFile` | 71 ms |
 
-Minified, the record alone falls to 4.8 MiB. A slimmer sidecar would narrow the binary
-candidates' size and load gap; this is estimated, not measured. It would not change the verdict.
+The isolated hash, reference and composition timings start from parsed geometry and sidecars.
+Full load includes geometry decoding, sidecar parsing, structural checks, hash and reference
+checks, composition and the existing Model reader. The prevalidated path omits structural, hash
+and reference checks on unchanged inputs. Separately timed stages need not sum to total load.
+These are in-memory reads in Bun 1.4.2's JavaScriptCore, with no disk I/O or gzip decoding;
+browser results will differ. After timings are medians after five warm-ups and at least fifteen
+samples. The original corpus timings took the faster of two warmed runs, so the timing comparison
+is indicative rather than a controlled speedup estimate. The final measurement ran after the
+test suite finished, without that workload competing for CPU.
+
+- **The size gap narrows substantially.** MGEO plus the slim sidecar now roughly matches today's
+  gzipped JSON; GLB still costs more on the wire.
+- **Composing into the existing types remains more expensive than today's JSON.** Even after
+  validation is moved to build time, the measured MGEO and GLB paths take 120 and 145 ms against
+  JSON's 75 ms. Production geometry, loading and extraction are unchanged.
+- **The `.blend` source cost is unchanged.** Fixtures remain 487 KiB–1.3 MiB each (85–131 KiB
+  gzip), implying at least 0.85 GB for the corpus at the smallest fixture's size. Most of each
+  source is Blender's own overhead.
 
 As #671 anticipated, binary is not a reason to choose either candidate.
 [ADR 0048](../adr/0048-store-each-damocles-model-as-its-own-catalogue-file.md)'s point that gzip
-already delivers most of the saving holds.
+already delivers most of the saving holds. Slimming the sidecar does not change the owner's
+choice to keep JSON canonical and edit through the add-on.
 
 ## Tooling maintenance
 
@@ -334,7 +377,7 @@ selects a format nor supersedes the ADR. A replacement ADR would have to settle 
   review happens.
 - **One Model becomes two files**: geometry and sidecar, linked by the sidecar's hash. This is in
   addition to ADR 0048's own model-file source check against the shared document. The sidecar
-  would need to be a smaller form than the spike's verbose one.
+  is now slimmed by #676; it still needs a second file and its source link.
 - **The shared document is unaffected.** The model index, the per-Body Model lists, storey
   heights and support tops stay in `catalogue.json`. So do ADR 0048's rule that a missing Model
   leaves its Instances undrawn, and its batching of reads.
@@ -368,7 +411,7 @@ unchanged. Only the extractor's overwrite and the ledger would need new decision
 1. Owner direction: keep JSON canonical and edit through the add-on (above). Of the other two
    arrangements, canonical GLB + add-on was the spike's pick between the candidates, and `.blend` +
    MGEO is not recommended.
-2. Slim the sidecar as described under size and load time. Generalise the contract for the three Mercenary III needs and the 53
+2. The sidecar slimming is complete (#676). Generalise the contract for the three Mercenary III needs and the 53
    unmodelled Models. Then decide where Recovered Baselines and Change Ledgers live, and stop the
    extractor overwriting edited geometry.
 3. Record the choice in an ADR that supersedes or amends ADR 0048.

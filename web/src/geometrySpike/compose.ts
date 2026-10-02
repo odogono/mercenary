@@ -13,6 +13,7 @@ import {
   type Reference,
   type Sidecar
 } from './contract.ts';
+import { partsMatching, referenceSites, resolves } from './references.ts';
 
 type Json = Record<string, unknown>;
 
@@ -35,43 +36,12 @@ export class RejectedAsset extends Error {
 
 const ROAD_WORKSPACE_FIRST_SLOT = 60;
 
-const partsMatching = (asset: GeometryAsset, name: string): Part[] =>
-  name === 'variant:*'
-    ? asset.parts.filter(part => part.role === 'display')
-    : asset.parts.filter(part => part.id === name);
-
-const resolves = (asset: GeometryAsset, reference: Reference): boolean => {
-  const { target } = reference;
-  const parts = partsMatching(asset, target.part);
-  if (parts.length === 0) {
-    return false;
-  }
-  return parts.every(part => {
-    if (target.kind === 'record') {
-      return (
-        part.faces.some(face => face.record === target.record) ||
-        part.lines.some(line => line.record === target.record)
-      );
-    }
-    if (target.kind === 'face') {
-      return part.faces.some(face => face.id === target.id);
-    }
-    return part.externals.some(external => external.id === target.id);
-  });
-};
-
 const referenceValue = (asset: GeometryAsset, reference: Reference): number => {
   const { target } = reference;
-  if (target.kind === 'record') {
-    return target.record;
-  }
-  const part = partsMatching(asset, target.part)[0];
-  if (target.kind === 'face') {
-    const index = part?.faces.findIndex(face => face.id === target.id) ?? -1;
-    // A reference that never resolved keeps the index the source recorded.
-    return index >= 0 ? index : target.id;
-  }
-  return target.id;
+  const part = partsMatching(asset.parts, target.part)[0];
+  const index = part?.faces.findIndex(face => face.id === target.id) ?? -1;
+  // A reference that never resolved keeps the index the source recorded.
+  return index >= 0 ? index : target.id;
 };
 
 /// Structural checks every candidate's reader runs before composing: identities are unique,
@@ -83,20 +53,20 @@ export const checkAsset = (
   const out: Diagnostic[] = [];
   const error = (site: string, message: string) =>
     out.push({ message, severity: 'error', site });
+  if (sidecar.version !== 2) {
+    error(
+      'version',
+      'needs sidecar version 2; recover the baseline again with the current tools'
+    );
+    return out;
+  }
   if (asset.asset !== sidecar.asset) {
     error(
       'asset',
       `geometry is ${asset.asset} but sidecar is ${sidecar.asset}`
     );
   }
-  const expected = sha256(canonicalJson(sidecar));
-  if (asset.sidecarSha256 !== expected) {
-    out.push({
-      message: `geometry was linked to sidecar ${asset.sidecarSha256.slice(0, 12)}…, this sidecar is ${expected.slice(0, 12)}… (re-export after editing the sidecar)`,
-      severity: 'warning',
-      site: 'sidecarSha256'
-    });
-  }
+  out.push(...checkSidecarHash(asset, sidecar));
   const seenParts = new Set<string>();
   for (const part of asset.parts) {
     const site = (s: string) => `${part.id}${s}`;
@@ -168,17 +138,71 @@ export const checkAsset = (
       colourCheck(part, line.colour, site(`/l${line.id}`), error);
     }
   }
-  for (const reference of sidecar.references) {
-    if (reference.baselineResolved && !resolves(asset, reference)) {
-      const t = reference.target;
+  out.push(...checkReferences(asset, sidecar));
+  return out;
+};
+
+export const checkSidecarHash = (
+  asset: GeometryAsset,
+  sidecar: Sidecar
+): Diagnostic[] => {
+  const out: Diagnostic[] = [];
+  const expected = sha256(canonicalJson(sidecar));
+  if (asset.sidecarSha256 !== expected) {
+    out.push({
+      message: `geometry was linked to sidecar ${asset.sidecarSha256.slice(0, 12)}…, this sidecar is ${expected.slice(0, 12)}… (re-export after editing the sidecar)`,
+      severity: 'warning',
+      site: 'sidecarSha256'
+    });
+  }
+  return out;
+};
+
+export const checkReferences = (
+  asset: GeometryAsset,
+  sidecar: Sidecar
+): Diagnostic[] => {
+  const out: Diagnostic[] = [];
+  const resolved = new Map<string, boolean>();
+  for (const binding of referenceSites(sidecar.record)) {
+    const reference =
+      binding.target === undefined &&
+      Number.isInteger(binding.reference) &&
+      binding.reference! >= 0
+        ? sidecar.references[binding.reference!]
+        : undefined;
+    const target = binding.target ?? reference?.target;
+    if (target === undefined) {
+      out.push({
+        message:
+          'attachmentFace needs a valid $ref table index; restore or remap its index in the sidecar.',
+        severity: 'error',
+        site: binding.site
+      });
+      continue;
+    }
+    const key = JSON.stringify(target);
+    const exists = resolved.get(key) ?? resolves(asset.parts, target);
+    resolved.set(key, exists);
+    const baselineUnresolved =
+      target.kind === 'record'
+        ? sidecar.unresolvedRecords?.[target.part]?.includes(target.record) ===
+          true
+        : reference?.baselineResolved === false;
+    if (!exists && !baselineUnresolved) {
       const what =
-        t.kind === 'record'
-          ? `source record ${t.record} in ${t.part}`
-          : `${t.kind} ${t.id} in ${t.part}`;
-      error(
-        reference.site,
-        `references ${what}, which no longer exists. Restore a primitive carrying it, or remap ref ${reference.id} in the sidecar to an existing target.`
-      );
+        target.kind === 'record'
+          ? `source record ${target.record} in ${target.part}`
+          : `face ${target.id} in ${target.part}`;
+      const remedy =
+        target.kind === 'record'
+          ? 'change the inline index or record number at this site in the sidecar'
+          : `remap ref ${binding.reference} in the sidecar to an existing target`;
+      out.push({
+        message: `references ${what}, which no longer exists. Restore a primitive carrying it, or ${remedy}.`,
+        severity: 'error',
+        site: binding.site
+      });
     }
   }
   return out;
@@ -345,6 +369,15 @@ export const compose = (
   if (diagnostics.some(d => d.severity === 'error')) {
     throw new RejectedAsset(diagnostics);
   }
+  return composeValidated(asset, sidecar, diagnostics);
+};
+
+/// Composition alone for the measurement tool, after build-time validation of unchanged inputs.
+export const composeValidated = (
+  asset: GeometryAsset,
+  sidecar: Sidecar,
+  diagnostics: Diagnostic[] = []
+): { diagnostics: readonly Diagnostic[]; record: unknown } => {
   const record = fill(asset, sidecar, sidecar.record, diagnostics);
   if (diagnostics.some(d => d.severity === 'error')) {
     throw new RejectedAsset(diagnostics);

@@ -3,7 +3,11 @@ import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
 import { recoverDamoclesModel } from '../src/geometrySpike/baseline.ts';
-import { checkAsset, compose } from '../src/geometrySpike/compose.ts';
+import {
+  checkAsset,
+  compose,
+  composeValidated
+} from '../src/geometrySpike/compose.ts';
 import {
   canonicalJson,
   type GeometryAsset,
@@ -63,6 +67,9 @@ describe('#671 geometry contract', () => {
       expect(canonicalJson(record)).toBe(
         canonicalJson(sourceRecord(payload, recovered))
       );
+      expect(
+        composeValidated(recovered.asset, recovered.sidecar).record
+      ).toEqual(record);
     });
   }
 
@@ -74,6 +81,47 @@ describe('#671 geometry contract', () => {
 });
 
 describe('#671 references', () => {
+  test('record references stay inline and resolved positional references carry no derived fields', async () => {
+    const { sidecar } = await fixture('damocles-structure-01484e').recover(
+      payload
+    );
+    expect(sidecar.references).toEqual([]);
+    const record = sidecar.record as {
+      model: {
+        structureSelection: { regions: { queue: { index: number }[] }[] };
+      };
+    };
+    expect(record.model.structureSelection.regions[0]!.queue[20]!.index).toBe(
+      0
+    );
+    const positional = damoclesFile('structure-00fc7e-at-3x3-detail-40');
+    expect(positional.sidecar.references.length).toBeGreaterThan(0);
+    for (const reference of positional.sidecar.references) {
+      expect(reference.target.kind).toBe('face');
+      expect(reference).not.toHaveProperty('site');
+      expect(reference).not.toHaveProperty('baselineResolved');
+    }
+  });
+
+  test('a newly edited inline record reference is checked at its site', async () => {
+    const { asset, sidecar } = await fixture(
+      'damocles-structure-01484e'
+    ).recover(payload);
+    const edited = JSON.parse(canonicalJson(sidecar)) as Sidecar;
+    const record = edited.record as {
+      model: {
+        structureSelection: { regions: { queue: { index: number }[] }[] };
+      };
+    };
+    record.model.structureSelection.regions[0]!.queue[20]!.index = 999;
+    const errors = checkAsset(asset, edited).filter(
+      d => d.severity === 'error'
+    );
+    expect(errors.map(d => d.site)).toEqual([
+      'structureSelection.regions[0].queue[20]'
+    ]);
+    expect(errors[0]!.message).toContain('source record 999 in plan');
+  });
   test('deleting a plan face the region queues draw is refused at every site', async () => {
     const { asset, sidecar } = await fixture(
       'damocles-structure-01484e'
@@ -85,18 +133,11 @@ describe('#671 references', () => {
     const errors = checkAsset(edited, sidecar).filter(
       d => d.severity === 'error'
     );
-    expect(errors.length).toBe(
-      sidecar.references.filter(
-        r =>
-          r.target.kind === 'record' &&
-          r.target.part === 'plan' &&
-          r.target.record === 0
-      ).length
-    );
+    expect(errors.length).toBe(5);
     expect(errors[0]!.site).toMatch(
       /^structureSelection\.regions\[\d+]\.queue\[\d+]$/
     );
-    expect(errors[0]!.message).toContain('remap ref');
+    expect(errors[0]!.message).toContain('change the inline index');
     expect(() => compose(edited, sidecar)).toThrow('source record 0 in plan');
   });
 
@@ -108,16 +149,21 @@ describe('#671 references', () => {
       ...part,
       faces: part.faces.filter(face => face.record !== 0)
     }));
-    const remapped: Sidecar = {
-      ...sidecar,
-      references: sidecar.references.map(r =>
-        r.target.kind === 'record' &&
-        r.target.part === 'plan' &&
-        r.target.record === 0
-          ? { ...r, target: { ...r.target, record: 1 } }
-          : r
-      )
+    const remapped = JSON.parse(canonicalJson(sidecar)) as Sidecar;
+    const model = remapped.record as {
+      model: {
+        structureSelection: {
+          regions: { queue: { index: number; kind: string }[] }[];
+        };
+      };
     };
+    for (const region of model.model.structureSelection.regions) {
+      for (const entry of region.queue) {
+        if (entry.kind === 'face' && entry.index === 0) {
+          entry.index = 1;
+        }
+      }
+    }
     const { record } = compose(edited, remapped);
     const queue = (
       record as {
@@ -169,11 +215,141 @@ describe('#671 references', () => {
     expect(queue(kept).map(e => e.index)).toEqual([0, 5]);
   });
 
-  test('a record a detail never drew is a recovered fact, not a break', () => {
-    const { sidecar } = damoclesFile('interior-0303d6');
+  test('unresolved baseline records survive but do not exempt a different missing number', () => {
+    const file = JSON.parse(
+      readFileSync(join(payload, 'damocles/models/object-03f774.json'), 'utf8')
+    );
+    file.model.variants[0].mesh.faces[0].sourceIndex = 0;
+    file.model.detailSelection = [
+      { boxes: [{ records: [999, 0] }], default: [999] }
+    ];
+    const { asset, sidecar } = recoverDamoclesModel(file, {
+      document: 'fixture',
+      path: '$',
+      sha256: ''
+    });
+    expect(sidecar.references).toEqual([]);
+    expect(sidecar.unresolvedRecords).toEqual({ 'variant:*': [999] });
+    expect(compose(asset, sidecar).record).toEqual(file);
+    const edited = JSON.parse(canonicalJson(sidecar)) as Sidecar;
+    const record = edited.record as {
+      model: { detailSelection: { default: number[] }[] };
+    };
+    record.model.detailSelection[0]!.default[0] = 998;
+    expect(() => compose(asset, edited)).toThrow(
+      'source record 998 in variant:*'
+    );
+    const deleted = withPart(asset, 'variant:record', p => ({
+      ...p,
+      faces: p.faces.filter(f => f.record !== 0),
+      lines: p.lines.filter(l => l.record !== 0)
+    }));
+    expect(() => compose(deleted, sidecar)).toThrow(
+      'source record 0 in variant:*'
+    );
+  });
+
+  test('queue, wall-text and floor-label references report every site, including a shared positional target', () => {
+    const { asset, sidecar } = damoclesFile('object-03f774');
+    const record = sidecar.record as { model: Record<string, unknown> };
+    record.model['structureSelection'] = {
+      floorLabels: [{ face: { index: 999, kind: 'face' } }],
+      regions: [
+        {
+          queue: [
+            { index: 999, kind: 'face' },
+            { index: { $ref: 0 }, kind: 'attachmentFace' },
+            { index: { $ref: 0 }, kind: 'attachmentFace' }
+          ]
+        }
+      ],
+      wallTexts: [{ face: { index: 999, kind: 'face' } }]
+    };
+    const edited: Sidecar = {
+      ...sidecar,
+      references: [{ target: { id: 0, kind: 'face', part: 'attachment:1' } }]
+    };
+    const errors = checkAsset(asset, edited).filter(
+      d => d.severity === 'error'
+    );
+    expect(errors.map(d => d.site)).toEqual([
+      'structureSelection.wallTexts[0].face',
+      'structureSelection.floorLabels[0].face',
+      'structureSelection.regions[0].queue[0]',
+      'structureSelection.regions[0].queue[1]',
+      'structureSelection.regions[0].queue[2]'
+    ]);
+    expect(errors.at(-1)!.message).toContain('remap ref 0');
+  });
+
+  test('detail source records must resolve in every display variant, including lines', () => {
+    const file = JSON.parse(
+      readFileSync(join(payload, 'damocles/models/object-03f774.json'), 'utf8')
+    );
+    file.model.variants[0].mesh.lines.push({
+      colour: '#112233',
+      sourceColour: 1,
+      sourceIndex: 999,
+      vertices: [0, 1]
+    });
+    file.model.variants.push({ ...file.model.variants[0], id: 'sibling' });
+    file.model.detailSelection = [
+      { boxes: [{ records: [999] }], default: [999] }
+    ];
+    const { asset, sidecar } = recoverDamoclesModel(file, {
+      document: 'fixture',
+      path: '$',
+      sha256: ''
+    });
     expect(
-      sidecar.references.every(r => typeof r.baselineResolved === 'boolean')
-    ).toBe(true);
+      checkAsset(asset, sidecar).filter(d => d.severity === 'error')
+    ).toEqual([]);
+    const edited = withPart(asset, 'variant:sibling', p => ({
+      ...p,
+      lines: p.lines.filter(l => l.record !== 999)
+    }));
+    expect(
+      checkAsset(edited, sidecar)
+        .filter(d => d.severity === 'error')
+        .map(d => d.site)
+    ).toEqual([
+      'detailSelection[0].boxes[0].records[0]',
+      'detailSelection[0].default[0]'
+    ]);
+  });
+
+  test('an unresolved positional baseline keeps its number without hiding other missing faces', () => {
+    const document = 'damocles/models/structure-00fc7e-at-3x3-detail-40.json';
+    const file = JSON.parse(readFileSync(join(payload, document), 'utf8'));
+    const queue = file.model.structureSelection.regions[3].queue;
+    queue.find(
+      (entry: { kind: string }) => entry.kind === 'attachmentFace'
+    ).index = 999;
+    const { asset, sidecar } = recoverDamoclesModel(file, {
+      document,
+      path: '$',
+      sha256: ''
+    });
+    expect(
+      sidecar.references.filter(r => r.baselineResolved === false)
+    ).toHaveLength(1);
+    expect(compose(asset, sidecar).record).toEqual(file);
+    const deleted = withPart(asset, 'attachment:1020', p => ({
+      ...p,
+      faces: p.faces.filter(f => f.id !== 0)
+    }));
+    expect(() => compose(deleted, sidecar)).toThrow(
+      'face 0 in attachment:1020'
+    );
+  });
+
+  test('missing positional table entries are refused at their record site', () => {
+    const { asset, sidecar } = damoclesFile(
+      'structure-00fc7e-at-3x3-detail-40'
+    );
+    expect(() => compose(asset, { ...sidecar, references: [] })).toThrow(
+      'attachmentFace needs a valid $ref table index'
+    );
   });
 });
 

@@ -67,12 +67,30 @@ class Formats(unittest.TestCase):
     def test_broken_references_are_actionable(self):
         asset = mgeo.decode(read("damocles-object-03f774.mgeo"))
         sidecar = json.loads(read("damocles-object-03f774.sidecar.json"))
-        sidecar["references"] = [
-            {"baselineResolved": True, "id": 0, "site": "demo.queue[0]", "target": {"kind": "record", "part": "variant:record", "record": 7}}
-        ]
+        sidecar["record"]["model"]["detailSelection"] = [{"boxes": [{"records": [999]}], "default": [999]}]
         errors = [d for d in contract.check_asset(asset, sidecar) if d.severity == "error"]
-        self.assertEqual([d.site for d in errors], ["demo.queue[0]"])
-        self.assertIn("remap ref 0", errors[0].message)
+        self.assertEqual([d.site for d in errors], ["detailSelection[0].boxes[0].records[0]", "detailSelection[0].default[0]"])
+        self.assertTrue(all("change the inline index" in d.message for d in errors))
+        sidecar["unresolvedRecords"] = {"variant:*": [999]}
+        self.assertEqual([d for d in contract.check_asset(asset, sidecar) if d.severity == "error"], [])
+        sidecar["record"]["model"]["detailSelection"][0]["default"][0] = 998
+        self.assertEqual([d.site for d in contract.check_asset(asset, sidecar) if d.severity == "error"], ["detailSelection[0].default[0]"])
+
+    def test_queue_text_label_and_positional_sites_are_all_named(self):
+        asset = mgeo.decode(read("damocles-object-03f774.mgeo"))
+        sidecar = json.loads(read("damocles-object-03f774.sidecar.json"))
+        sidecar["record"]["model"]["structureSelection"] = {
+            "wallTexts": [{"face": {"kind": "face", "index": 999}}],
+            "floorLabels": [{"face": {"kind": "face", "index": 999}}],
+            "regions": [{"queue": [{"kind": "face", "index": 999}, {"kind": "attachmentFace", "index": {"$ref": 0}}, {"kind": "attachmentFace", "index": {"$ref": 0}}]}],
+        }
+        sidecar["references"] = [{"target": {"kind": "face", "part": "attachment:1", "id": 0}}]
+        errors = [d for d in contract.check_asset(asset, sidecar) if d.severity == "error"]
+        self.assertEqual([d.site for d in errors], ["structureSelection.wallTexts[0].face", "structureSelection.floorLabels[0].face", "structureSelection.regions[0].queue[0]", "structureSelection.regions[0].queue[1]", "structureSelection.regions[0].queue[2]"])
+        self.assertIn("remap ref 0", errors[-1].message)
+        sidecar["references"][0]["baselineResolved"] = False
+        self.assertEqual(len([d for d in contract.check_asset(asset, sidecar) if d.severity == "error"]), 3)
+
 
 
 if __name__ == "__main__":

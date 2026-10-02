@@ -1,6 +1,6 @@
-error: detailSelection[0].boxes[0].records[0]: references source record 30 in variant:*, which no longer exists. Restore a primitive carrying it, or remap ref 0 in the sidecar to an existing target.
-error: detailSelection[0].boxes[1].records[21]: references source record 30 in variant:*, which no longer exists. Restore a primitive carrying it, or remap ref 51 in the sidecar to an existing target.
-error: detailSelection[0].default[3]: references source record 30 in variant:*, which no longer exists. Restore a primitive carrying it, or remap ref 60 in the sidecar to an existing target.
-error: detailSelection[1].boxes[2].records[3]: references source record 30 in variant:*, which no longer exists. Restore a primitive carrying it, or remap ref 87 in the sidecar to an existing target.
-error: detailSelection[1].boxes[4].records[14]: references source record 30 in variant:*, which no longer exists. Restore a primitive carrying it, or remap ref 111 in the sidecar to an existing target.
-error: detailSelection[1].default[25]: references source record 30 in variant:*, which no longer exists. Restore a primitive carrying it, or remap ref 140 in the sidecar to an existing target.
+error: detailSelection[0].boxes[0].records[0]: references source record 30 in variant:*, which no longer exists. Restore a primitive carrying it, or change the inline index or record number at this site in the sidecar.
+error: detailSelection[0].boxes[1].records[21]: references source record 30 in variant:*, which no longer exists. Restore a primitive carrying it, or change the inline index or record number at this site in the sidecar.
+error: detailSelection[0].default[3]: references source record 30 in variant:*, which no longer exists. Restore a primitive carrying it, or change the inline index or record number at this site in the sidecar.
+error: detailSelection[1].boxes[2].records[3]: references source record 30 in variant:*, which no longer exists. Restore a primitive carrying it, or change the inline index or record number at this site in the sidecar.
+error: detailSelection[1].boxes[4].records[14]: references source record 30 in variant:*, which no longer exists. Restore a primitive carrying it, or change the inline index or record number at this site in the sidecar.
+error: detailSelection[1].default[25]: references source record 30 in variant:*, which no longer exists. Restore a primitive carrying it, or change the inline index or record number at this site in the sidecar.

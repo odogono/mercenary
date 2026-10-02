@@ -15,7 +15,13 @@ import {
   parseModelFile,
   type Catalogue
 } from '../../src/catalogue/data.ts';
-import { compose } from '../../src/geometrySpike/compose.ts';
+import {
+  checkAsset,
+  checkReferences,
+  checkSidecarHash,
+  compose,
+  composeValidated
+} from '../../src/geometrySpike/compose.ts';
 import {
   canonicalJson,
   type GeometryAsset,
@@ -131,34 +137,72 @@ const corpus = names.map(name => {
   add('glb', glb);
   return { glb, json, mgeo, sidecar };
 });
-const once = (run: () => void) => {
-  run();
-  const t = performance.now();
-  run();
-  const a = performance.now() - t;
-  const u = performance.now();
-  run();
-  return Math.min(a, performance.now() - u);
-};
-const corpusJson = once(() =>
-  corpus.forEach(c => parseModelFile(JSON.parse(c.json), catalogue))
+// Timed paths use identical in-memory bytes, with no disk I/O or gzip decoding.
+const corpusJson = median(
+  () => corpus.forEach(c => parseModelFile(JSON.parse(c.json), catalogue)),
+  1000
 );
-const corpusMgeo = once(() =>
-  corpus.forEach(c =>
-    parseModelFile(
-      compose(decodeMgeo(c.mgeo), JSON.parse(c.sidecar) as Sidecar).record,
-      catalogue
-    )
-  )
+const load = (
+  decode: (bytes: Uint8Array) => GeometryAsset,
+  format: 'mgeo' | 'glb',
+  validated: boolean
+) =>
+  median(
+    () =>
+      corpus.forEach(c => {
+        const asset = decode(c[format]);
+        const sidecar = JSON.parse(c.sidecar) as Sidecar;
+        const result = validated
+          ? composeValidated(asset, sidecar)
+          : compose(asset, sidecar);
+        parseModelFile(result.record, catalogue);
+      }),
+    1000
+  );
+const prepared = corpus.map(c => ({
+  asset: decodeMgeo(c.mgeo),
+  sidecar: JSON.parse(c.sidecar) as Sidecar
+}));
+for (const { asset, sidecar } of prepared) {
+  if (checkAsset(asset, sidecar).some(d => d.severity === 'error')) {
+    throw new Error(`invalid benchmark asset ${asset.asset}`);
+  }
+}
+const corpusMgeo = load(decodeMgeo, 'mgeo', false);
+const corpusGlb = load(decodeGlb, 'glb', false);
+const validatedMgeo = load(decodeMgeo, 'mgeo', true);
+const validatedGlb = load(decodeGlb, 'glb', true);
+const sidecarParse = median(
+  () => corpus.forEach(c => JSON.parse(c.sidecar)),
+  1000
 );
-const corpusGlb = once(() =>
-  corpus.forEach(c =>
-    parseModelFile(
-      compose(decodeGlb(c.glb), JSON.parse(c.sidecar) as Sidecar).record,
-      catalogue
-    )
-  )
+const sidecarHash = median(
+  () => prepared.forEach(c => checkSidecarHash(c.asset, c.sidecar)),
+  1000
 );
+const references = median(
+  () => prepared.forEach(c => checkReferences(c.asset, c.sidecar)),
+  1000
+);
+const composition = median(
+  () =>
+    prepared.forEach(c =>
+      parseModelFile(composeValidated(c.asset, c.sidecar).record, catalogue)
+    ),
+  1000
+);
+const tableCount = prepared.reduce(
+  (sum, c) => sum + c.sidecar.references.length,
+  0
+);
+const sidecarParts = { record: [0, 0], references: [0, 0] };
+for (const { sidecar } of prepared) {
+  for (const key of ['record', 'references'] as const) {
+    const text = canonicalJson(sidecar[key]);
+    sidecarParts[key][0]! += size(text);
+    sidecarParts[key][1]! += gz(text);
+  }
+}
 const mb = ([raw, packed]: number[]) =>
   `${(raw! / 1_048_576).toFixed(1)} MiB / ${(packed! / 1_048_576).toFixed(1)} MiB`;
 const plus = (a: number[], b: number[]) => [a[0]! + b[0]!, a[1]! + b[1]!];
@@ -184,11 +228,29 @@ const report = [
   '',
   `## Damocles corpus (${names.length} Models)`,
   '',
-  '| | Raw / gzip -9 (sum of per-file sizes) | Load to parsed Models |',
-  '| --- | --- | --- |',
-  `| Payload JSON model files | ${mb(totals.json)} | ${corpusJson.toFixed(0)} ms |`,
-  `| MGEO + sidecar JSON | ${mb(plus(totals.mgeo, totals.sidecar))} (geometry ${mb(totals.mgeo)}) | ${corpusMgeo.toFixed(0)} ms |`,
-  `| GLB + sidecar JSON | ${mb(plus(totals.glb, totals.sidecar))} (geometry ${mb(totals.glb)}) | ${corpusGlb.toFixed(0)} ms |`,
+  'All times below are medians (five warm-ups, at least fifteen samples). Load includes geometry decoding, sidecar parsing, composition and the existing Model reader. Full checks also include geometry structure, the canonical sidecar hash and every reference; prevalidated load omits these checks, representing an unchanged asset checked at build time. Production loading is unchanged.',
+  '',
+  '| | Raw / gzip -9 (sum of per-file sizes) | Load, full checks | Load, prevalidated |',
+  '| --- | --- | --- | --- |',
+  `| Payload JSON model files | ${mb(totals.json)} | ${corpusJson.toFixed(0)} ms | — |`,
+  `| MGEO + sidecar JSON | ${mb(plus(totals.mgeo, totals.sidecar))} (geometry ${mb(totals.mgeo)}) | ${corpusMgeo.toFixed(0)} ms | ${validatedMgeo.toFixed(0)} ms |`,
+  `| GLB + sidecar JSON | ${mb(plus(totals.glb, totals.sidecar))} (geometry ${mb(totals.glb)}) | ${corpusGlb.toFixed(0)} ms | ${validatedGlb.toFixed(0)} ms |`,
+  '',
+  `Sidecar: ${mb(totals.sidecar)}. Only ${tableCount} positional attachmentFace references enter the table. Record and reference sizes below serialize each field independently (their indentation differs from its nesting in the complete sidecar, and their gzip sizes cannot be added).`,
+  '',
+  '| Sidecar field | Raw / gzip -9 |',
+  '| --- | --- |',
+  `| Record | ${mb(sidecarParts.record)} |`,
+  `| Positional reference table | ${kb(sidecarParts.references[0]!)} KiB / ${kb(sidecarParts.references[1]!)} KiB |`,
+  '',
+  'Isolated stages over the same corpus, starting with parsed geometry and sidecars except for the JSON parse row. Composition includes the existing Model reader; separately timed stages need not sum to total load.',
+  '',
+  '| Stage | Time |',
+  '| --- | --- |',
+  `| Sidecar JSON parse | ${sidecarParse.toFixed(0)} ms |`,
+  `| Canonical sidecar hash | ${sidecarHash.toFixed(0)} ms |`,
+  `| Inline and positional reference checks | ${references.toFixed(0)} ms |`,
+  `| Composition to parsed Models | ${composition.toFixed(0)} ms |`,
   ''
 ].join('\n');
 writeFileSync(join(OUT, 'measure-report.md'), report);
