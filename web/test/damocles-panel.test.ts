@@ -242,6 +242,23 @@ describe('the panel aboard (#551, #556)', () => {
     expect(altitudeWindow(105_000_000, 0)).toBe('******');
     expect(altitudeWindow(3233, 10)).toBe('******');
   });
+
+  test('reads the pitch gauge from the Pose, nose up positive and wrapped about level', async () => {
+    const loaded = await content();
+    const session = new DamoclesSession(loaded);
+    const snapshot = session.snapshot;
+    const elevation = (pitch: number): number =>
+      damoclesPanelViewModel(
+        { ...snapshot, pose: { ...snapshot.pose, pitch } },
+        loaded.doc
+      ).elevationDegrees;
+    expect(damoclesPanelViewModel(snapshot, loaded.doc).elevationDegrees).toBe(
+      0
+    );
+    expect(elevation(Math.PI / 6)).toBeCloseTo(30);
+    expect(elevation(-Math.PI / 4)).toBeCloseTo(-45);
+    expect(elevation((3 * Math.PI) / 2)).toBeCloseTo(-90);
+  });
 });
 
 describe('the panel in space (#551, #558)', () => {
