@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "kind": "titleLogo",
+  "source": {
+    "title": "targ",
+    "release": "Escape from Targ ST release (pinned STX)",
+    "diskSha256": "4d9e48d79433d3e1ede888a5dbc94097d569a9014357838807d0de1d3cff2cdd",
+    "diskSize": 383108,
+    "recipe": "research/targ-st/targlab/title.py",
+    "qualification": "Facts from this tool belong to the ST release of Escape from Targ, not the C64 Reference Build. They supply presentation only (ADR 0063) and carry no Game Semantics."
+  },
+  "picture": {
+    "file": "E0",
+    "size": 32128,
+    "sha256": "d68adf5f30ee8454b562f8a5462f501ba7be9a7876505c664a0397500578b695",
+    "format": "NEOchrome: 128-byte header, palette at bytes 4..35, then 4 interleaved planes",
+    "width": 320,
+    "height": 200,
+    "planes": 4,
+    "screen": "$78000",
+    "loader": {
+      "file": "ESCAPE.PRG",
+      "size": 652,
+      "sha256": "1632614b19937ef4fb5d3e730c951f0159d2f6870445dec8cb2f32ced5344ee2",
+      "facts": [
+        {
+          "offset": "$A8",
+          "bytes": "45300000",
+          "what": "filename \"E0\""
+        },
+        {
+          "offset": "$7C",
+          "bytes": "2f3c000600002f3c00007fff",
+          "what": "Fread up to $7FFF bytes to $60000"
+        },
+        {
+          "offset": "$B0",
+          "bytes": "207c00060080227c00078000",
+          "what": "copy $60080.. (the pixels after the 128-byte header) to $78000"
+        },
+        {
+          "offset": "$22E",
+          "bytes": "13fc00fc00ff8260",
+          "what": "low resolution ($FC & 3 = 0)"
+        },
+        {
+          "offset": "$236",
+          "bytes": "13fc000700ff8201",
+          "what": "screen high byte $07"
+        },
+        {
+          "offset": "$23E",
+          "bytes": "4dfa0026227c00ff8240",
+          "what": "sixteen colours from the table at $266 to $FF8240"
+        }
+      ]
+    }
+  },
+  "palette": {
+    "colours": [
+      16,
+      336,
+      1024,
+      1904,
+      1616,
+      1555,
+      1904,
+      1860,
+      290,
+      50,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1911
+    ],
+    "provenance": {
+      "file": "E0",
+      "range": [
+        4,
+        36
+      ],
+      "sha256": "e06c9aa7322b5f7a8a3f383c5459b18f65f0c4fce3a6bf62eaf5bd2dae452155"
+    }
+  },
+  "logo": {
+    "index": 3,
+    "what": "the MERCENARY lettering and the globe, one connected mark in one colour",
+    "x": 6,
+    "y": 21,
+    "width": 304,
+    "height": 116,
+    "image": {
+      "file": "title.png",
+      "format": "PNG, 1-bit indexed: 0 transparent, 1 the mark in palette colour 3",
+      "markSha256": "c1839fda17eb156527a25f1998d3a24da2b752de16e165a85b32ef097b59c6ea",
+      "markEncoding": "one bit per pixel, most significant first, rows padded to a byte"
+    },
+    "provenance": {
+      "file": "E0",
+      "range": [
+        3488,
+        22048
+      ],
+      "sha256": "abd37a7dfc281106d79c53ff9b05b80b8856abe26cf753621412ff5c2b29ab56"
+    }
+  }
+}

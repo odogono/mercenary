@@ -1076,6 +1076,24 @@ test('the System Menu pauses the session it covers', async ({ page }) => {
   await page.keyboard.up('ArrowUp');
 });
 
+test('every System Menu page shows the ST title picture logo', async ({
+  page
+}) => {
+  await page.goto('/');
+  await skipArrival(page);
+  await page.keyboard.press('Escape');
+  // Recovered from E0 on the ST release, as the Reference Build has none (#696).
+  const logo = page.locator('#page-menu .chrome-logo img');
+  await expect(logo).toHaveAttribute('alt', 'MERCENARY');
+  expect(
+    await logo.evaluate((image: HTMLImageElement) => [
+      image.naturalWidth,
+      image.naturalHeight
+    ])
+  ).toEqual([304, 116]);
+  await expect(page.locator('.chrome-logo img')).toHaveCount(5);
+});
+
 test('the settings page changes the composition it names', async ({ page }) => {
   await page.goto('/');
   const surface = page.locator('#game-surface');
