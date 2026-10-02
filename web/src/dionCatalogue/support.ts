@@ -40,6 +40,7 @@ export interface RenderSupport {
   readonly priority: readonly number[];
   readonly provenance: readonly Provenance[];
   readonly rotation: readonly number[];
+  readonly surfaceYaw: ReadonlyMap<number, number>;
   readonly template: readonly number[];
   readonly tokens: ReadonlyMap<
     number,
@@ -107,8 +108,12 @@ export const readRenderSupport = (
     }
     glyphs.set(key, glyph);
   }
-  if (glyphs.size !== 512) {
-    throw new Error(`${at}.glyphs: expected all eight fonts`);
+  for (let font = 0; font < 8; font += 1) {
+    for (let code = 0x20; code < 0x60; code += 1) {
+      if (!glyphs.has(`${font}:${code.toString(16).toUpperCase()}`)) {
+        throw new Error(`${at}.glyphs: expected all eight fonts`);
+      }
+    }
   }
   const palettes = new Map<number, DionScenePalette>();
   for (const [key, v] of Object.entries(
@@ -116,8 +121,8 @@ export const readRenderSupport = (
   )) {
     const row = record(v, `${at}.palettes.${key}`);
     palettes.set(int(Number(key), `${at}.palette key`, 0, 255), {
-      day: ints(row['day'], `${at}.palettes.${key}.day`, 22, 0, 65_535),
-      night: ints(row['night'], `${at}.palettes.${key}.night`, 22, 0, 65_535),
+      day: ints(row['day'], `${at}.palettes.${key}.day`, 64, 0, 65_535),
+      night: ints(row['night'], `${at}.palettes.${key}.night`, 64, 0, 65_535),
       provenance: provenance(
         row['provenance'],
         `${at}.palettes.${key}.provenance`
@@ -207,6 +212,22 @@ export const readRenderSupport = (
           })
     });
   }
+  const yaw = record(raw['surfaceYaw'], `${at}.surfaceYaw`);
+  provenance(yaw['provenance'], `${at}.surfaceYaw.provenance`);
+  const slots = record(yaw['slots'], `${at}.surfaceYaw.slots`);
+  const surfaceYaw = new Map<number, number>();
+  const surfaceObjects = catalogue.objects.filter(
+    o => o.residence === 'surface'
+  );
+  if (Object.keys(slots).length !== surfaceObjects.length) {
+    throw new Error(`${at}.surfaceYaw: surface inventory differs`);
+  }
+  for (const object of surfaceObjects) {
+    surfaceYaw.set(
+      object.slot,
+      int(slots[String(object.slot)], `${at}.surfaceYaw.${object.slot}`, 0, 255)
+    );
+  }
   return {
     bodies,
     colours: words('modelColours', 60),
@@ -220,6 +241,7 @@ export const readRenderSupport = (
       `${at}.framePalette.provenance`
     ).map((p, i) => provenance(p, `${at}.framePalette.provenance[${i}]`)),
     rotation: words('rotationTable', 320, -32_768),
+    surfaceYaw,
     template: ints(
       palette['template'],
       `${at}.framePalette.template`,

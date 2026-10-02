@@ -17,7 +17,7 @@
         3
       ]
     ],
-    "sha256": "8f1059d12b554ca9686a3d44d658536b6d7b79c68ea4453cf694b0e75c2284ac",
+    "sha256": "c231ef94f92cf5ac78443cff1b7787b77a78f4c4e3a7384be71108026caf8611",
     "variants": {
       "base": {
         "extent": {
@@ -328,22 +328,24 @@
           },
           {
             "address": "$2ABEB",
-            "advance": 6147,
+            "advance": 24,
             "anchor": [
-              -17920,
-              23041,
-              24192
+              -70,
+              90,
+              350
             ],
-            "colour": 30605,
+            "colour": 1911,
             "command": 24831,
-            "flags": 33024,
+            "flags": 32897,
             "glyphScale": [
-              4,
-              7
+              3,
+              4
             ],
             "kind": "text",
-            "offset": 27391,
-            "text": []
+            "offset": -150,
+            "text": [
+              141
+            ]
           }
         ],
         "provenance": {
@@ -567,7 +569,7 @@
   "kind": "dion-catalogue-geometry",
   "schemaVersion": 1,
   "source": {
-    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "ledgerSha256": "90613b0d37484d8a48b40e642040c360995a9399c5deaa3bb7baec1d88a5d890",
     "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
     "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
     "run": "location-census-334983y7",

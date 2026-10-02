@@ -1,4 +1,4 @@
-import type { CatalogueGeometry } from '../dion/catalogue.ts';
+import type { CatalogueGeometry, DionCatalogue } from '../dion/catalogue.ts';
 import { ints, list, record } from '../dion/read.ts';
 import { readModel, type DionModel } from '../dion/world.ts';
 
@@ -19,11 +19,21 @@ export const modelForm = (
   g: CatalogueGeometry,
   variant: string,
   entry: number,
-  colours: number[]
+  colours: number[],
+  lettering?: DionCatalogue['objects'][number]['lettering']
 ): DionModel => {
   const v = g.variants[variant]!;
   const faces = list(v['faces'], `${g.id}.${variant}.faces`).map((value, i) => {
     const face = record(value, `${g.id}.faces[${i}]`);
+    if (face['kind'] === 'text' && lettering) {
+      const token = Number.parseInt(lettering.token.slice(1), 16);
+      return {
+        ...face,
+        text: ints(face['text'], `${g.id}.text`).flatMap(code =>
+          code === token ? lettering.text : [code]
+        )
+      };
+    }
     if (face['kind'] === 'line' || face['kind'] === 'polygon') {
       if (face['stColour'] === undefined) {
         return face;
@@ -54,7 +64,7 @@ export const modelForm = (
   return readModel(
     {
       ...v,
-      alternatives: [],
+      alternatives: v['alternatives'] ?? [],
       entry,
       faces,
       header,

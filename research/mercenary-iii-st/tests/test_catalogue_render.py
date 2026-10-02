@@ -16,7 +16,7 @@ class CatalogueRenderTests(unittest.TestCase):
         support = json.loads(self.path.read_text())
         self.assertEqual(support['source'], self.catalogue['source'])
         self.assertEqual(set(support['bodies']), {b['id'] for b in self.catalogue['bodies']})
-        self.assertEqual(len(support['glyphs']), 512)
+        self.assertEqual(len(support['glyphs']), 513)
         self.assertEqual(len(support['rotationTable']['words']), 320)
         self.assertEqual(support['bodies']['body-15']['land'], 0x411)
 
@@ -38,3 +38,20 @@ class CatalogueRenderTests(unittest.TestCase):
         self.assertEqual(first, json.loads(self.path.read_text()))
         self.assertEqual(playable, {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
                                    for p in (REPOSITORY / 'payload/dion').glob('*.json')})
+
+    def test_support_covers_full_colour_selector_and_opening_computer_glyph(self):
+        support = json.loads(self.path.read_text())
+        self.assertTrue(all(len(p['day']) == len(p['night']) == 64
+                            for p in support['palettes'].values()))
+        self.assertIn('2:01', support['glyphs'])
+
+    def test_workspace_road_colours_are_not_copied_from_metis(self):
+        support = json.loads(self.path.read_text())
+        self.assertEqual(support['groups']['2']['road'], 0x322)
+        self.assertEqual(support['groups']['8']['road'], 0x411)
+        self.assertEqual(support['groups']['56']['road'], 0x555)
+        self.assertEqual(support['groups']['2']['land'], 0x030)
+
+    def test_live_strings_stop_at_the_first_nul_not_at_adjacent_buffers(self):
+        census = REPOSITORY / 'restricted/mercenary-iii-647/runs/location-census-334983y7'
+        self.assertEqual(render_support(self.catalogue, census)['tokens']['$80']['default'], [ord('G')])

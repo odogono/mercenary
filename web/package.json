@@ -34,6 +34,8 @@
       "tools/damocles-sound-render.ts",
       "tools/dion-scene.ts",
       "tools/dion-ram-compare.ts",
+      "tools/dion-catalogue-compare.ts",
+      "tools/dion-catalogue-coverage.ts",
       "tools/geometry-spike/*.ts",
       "e2e/opening-loop.ts",
       "e2e/wireframe-fixture.ts",

@@ -159,7 +159,10 @@ class CatalogueLedgerTests(unittest.TestCase):
             lambda d: d['decoders']['model'].update(function='decode_nothing')))
 
     def test_required_missing_geometry_keeps_the_milestone_open(self):
-        c = self.ledger['completion']
+        missing = copy.deepcopy(self.ledger)
+        for g in missing['geometry']:
+            g['preview'] = None
+        c = completion(missing)
         self.assertFalse(c['complete'])
         self.assertEqual(c['required'], len(self.ledger['geometry']))
 
@@ -168,7 +171,7 @@ class CatalogueLedgerTests(unittest.TestCase):
                 if g['family'] != 'island':
                     g.update(state='recovered', preview={'catalogue': True})
             d['gaps'] = [gap for gap in d['gaps'] if not gap['blocking']]
-        done = copy.deepcopy(self.ledger)
+        done = copy.deepcopy(missing)
         finished(done)
         # Recovered but unpreviewed geometry still keeps the milestone open.
         self.assertFalse(completion(done)['complete'])
@@ -176,6 +179,7 @@ class CatalogueLedgerTests(unittest.TestCase):
         for g in done['geometry']:
             g.update(state='recovered', preview={'catalogue': True})
         self.assertTrue(completion(done)['complete'])
+        done['completion'] = c
         self.assertIn('completion disagrees with the ledger', validate_ledger(done))
 
     def test_recovery_needs_a_decoder_path(self):
@@ -340,7 +344,8 @@ class CatalogueLedgerTests(unittest.TestCase):
         ledger = build_ledger(Path(run), surface=json.loads((directory / 'surface.json').read_text()),
                               comparisons=comparisons,
                               models=json.loads((models / 'objects.json').read_text()),
-                              interiors=json.loads((interior_dir / 'interiors.json').read_text()))
+                              interiors=json.loads((interior_dir / 'interiors.json').read_text()),
+                              previews=json.loads((REPOSITORY / 'research/mercenary-iii-st/catalogue-previews.json').read_text()))
         self.assertEqual(dumps(ledger), LEDGER_PATH.read_text())
 
 

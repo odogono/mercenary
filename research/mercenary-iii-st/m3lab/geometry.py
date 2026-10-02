@@ -338,6 +338,10 @@ def decode_detail(ram: Ram, index: int) -> dict:
             # A $6000 lettering record: 16-byte header, then inline text or a token.
             start = c.p
             command = c.word()
+            # $54FA0 clears the low address bit after the command. A preceding
+            # polygon can leave the command odd, sharing its low byte with the
+            # first header word. Rounding up corrupts the entire inscription.
+            c.p &= ~1
             offset = c.sword()
             x, y, z = c.sword(), c.sword(), c.sword()
             flags = c.word()

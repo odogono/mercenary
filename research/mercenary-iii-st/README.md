@@ -117,6 +117,18 @@ attachments, lettering and MIDAS's repeated selector in original frames. Use
 the ledger. See [the recovery report](../../docs/research/dion-interior-recovery.md)
 for capture and verification recipes. Gameplay reachability stays unverified.
 
+## Integrated Catalogue validation
+
+The [#686 matrix](../../docs/research/dion-catalogue-validation.md) records 38
+original-frame comparisons, the corrected decoder/planner defects and the
+remaining raster, static-state and reachability limits. From the repository root,
+`python3 -m m3lab.catalogue_scenes` prepares ignored exact-pose inputs; from `web/`,
+`bun tools/dion-catalogue-compare.ts` compares the drawn RAM buffer with the
+Catalogue adapter, and `bun tools/dion-catalogue-coverage.ts` regenerates portable
+evidence for all 529 identities and 791 preview checks. Pass that evidence with
+`catalogue_ledger --previews research/mercenary-iii-st/catalogue-previews.json`.
+Regenerate it after rendering changes; static coverage is not pixel parity.
+
 ## Modules
 
 | Module | Exports | Readers |

@@ -30,6 +30,7 @@ interface GeometryIndex {
   readonly id: string;
   readonly record: string;
   readonly sha256: string;
+  readonly state: 'recovered' | 'empty' | 'verified';
   readonly variants: readonly string[];
 }
 interface Island {
