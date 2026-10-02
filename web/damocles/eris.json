@@ -91,17 +91,12 @@
     "note": "The Body's own surface under everything else, drawn as rings around the eye out to the camera's far plane, standing in for the separate native surface/background path rather than geometry in the per-cell ground records (#221). Its colour is not authored here: the base plane takes the Body's recovered base colour $7C88 and each Damocles Island is filled over it in its own recovered land colour, both from the Damocles Catalogue, and while the player stands on an island's core the base plane takes that land colour instead (#394). Empty records contain no default quad and return immediately in the native ground renderer; $7000 placements are recovered while camera-dependent $F0/$F4 horizon slots stay outside static model geometry. fillDropUnits is how far below y = 0 this stand-in sits so recovered faces draw over it without z-fighting. Recovered pad and road polygons come from the Damocles Catalogue ground family (docs/research/damocles-eris-ground.md, docs/research/damocles-eris-islands.md)."
   },
   "lighting": {
-    "sunDirection": {
-      "x": -0.63,
-      "y": 0.31,
-      "z": -0.71
-    },
-    "sunColour": "#fff2d0",
-    "ambientSky": "#66809c",
-    "ambientGround": "#263322",
+    "sunColour": "#807862",
+    "ambientSky": "#ffffff",
+    "ambientGround": "#ffffff",
     "shadows": true,
     "provenance": "authored",
-    "note": "Authored Enhanced-preset sun, hemisphere ambient and shadow pass (#209, #231). Authentic faces remain flat in their catalogue colours."
+    "note": "Enhanced-preset Sunlight and shadow pass (#209, #231). Sunlight comes from DIALIS where the sky pass draws it, by day only, fading in over DIALIS's first two degrees of elevation, and never in an Enclosed Region or with DIALIS destroyed. The ambient pair is neutral, so a face Sunlight does not reach shows its recovered colour and Sunlight only brightens; sunColour is what full Sunlight adds. Authentic faces remain flat in their catalogue colours."
   },
   "rendering": {
     "cullBackFaces": true,

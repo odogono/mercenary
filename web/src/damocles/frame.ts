@@ -51,6 +51,8 @@ export interface ErisFramePlan {
   /// Every structure and object placement the plan emitted, once per emission, in draw order.
   /// Ground records are not listed. An id appearing twice is an object drawn twice.
   readonly drawnPlacements: readonly string[];
+  /// Whether the eye is in an Enclosed Region, whose frame draws none of the outdoor world.
+  readonly enclosed: boolean;
   readonly farPlane: number;
   /// Triangles of the Body's base plane, which lead the vertex list.
   readonly fillTriangleCount: number;
@@ -1228,6 +1230,7 @@ export const planErisFrame = (
               : surface.sky.night.colour)
     ),
     drawnPlacements,
+    enclosed,
     farPlane: doc.camera.farPlane,
     fillTriangleCount,
     groundTriangleCount,

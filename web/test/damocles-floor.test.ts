@@ -498,6 +498,8 @@ describe('the player stands on one Floor', () => {
         })
       );
       expect(plan.clear).toEqual(rgb(ceiling));
+      // An Enclosed Region receives no Sunlight.
+      expect(plan.enclosed).toBe(true);
       // No sky pass runs in the enclosed branch, as no sky fill does (#530).
       expect(plan.skyBodies).toEqual([]);
       expect(plan.skyVertices.length).toBe(0);
@@ -515,6 +517,7 @@ describe('the player stands on one Floor', () => {
     const plan = planErisFrame(surface, pose, content.doc, structure);
     // Eris at night, as the start capture is: its night word `$001` (#494).
     expect(plan.clear).toEqual(rgb('#000022'));
+    expect(plan.enclosed).toBe(false);
     expect(plan.drawnPlacements.length).toBeGreaterThan(1);
   });
 

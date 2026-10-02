@@ -6,7 +6,8 @@ import { expect, test, type Page } from '@playwright/test';
 /// Capture matrix for the Cast Shadow edge study (#376).
 ///
 /// Not a check: it produces the soft-against-hard frames the research note judges, at fixed
-/// Poses under the authored sun, and is skipped unless asked for. Regenerate with:
+/// Poses at one fixed Body turn, so DIALIS and its Sunlight stand in the same place in every
+/// frame, and is skipped unless asked for. Regenerate with:
 ///
 ///   CAST_SHADOW_CAPTURE=1 CAST_SHADOW_OUT=$PWD/cast-shadow-frames PORT=5185 \
 ///     bunx playwright test e2e/cast-shadow-capture.e2e.ts
@@ -30,6 +31,9 @@ const POSES = [
   { name: 'inside-north', x: 1200, yaw: 0, z: 0 }
 ] as const;
 const EDGES = ['soft', 'hard'] as const;
+
+/// DIALIS about 19 degrees up in the west over the spaceport, throwing the west window's beam.
+const WEST_SUN_TURN = 0x2_80_00_00;
 
 const run = async (page: Page, line: string): Promise<void> => {
   const input = page.locator('#console-input');
@@ -71,29 +75,30 @@ for (const dpr of [1, 2]) {
           },
           { preferences: PREFERENCES_KEY, resume: DAMOCLES_RESUME_KEY }
         );
-        if ('x' in pose) {
-          const catalogue = (await (
-            await page.request.get('/payload/damocles/catalogue.json')
-          ).json()) as {
-            instances: {
-              id: string;
-              location: { position: number[] } | null;
-            }[];
-          };
-          const origin = catalogue.instances.find(
-            item => item.id === 'eris-surface-87'
-          )!.location!.position;
-          await page.route('**/damocles/eris.json', async route => {
-            const doc = await (await route.fetch()).json();
+        const catalogue = (await (
+          await page.request.get('/payload/damocles/catalogue.json')
+        ).json()) as {
+          instances: {
+            id: string;
+            location: { position: number[] } | null;
+          }[];
+        };
+        const origin = catalogue.instances.find(
+          item => item.id === 'eris-surface-87'
+        )!.location!.position;
+        await page.route('**/damocles/eris.json', async route => {
+          const doc = await (await route.fetch()).json();
+          doc.start.bodyTurn = WEST_SUN_TURN;
+          if ('x' in pose) {
             doc.start.yaw = pose.yaw;
             doc.start.position = {
               x: origin[0]! * 65_536 + pose.x,
               y: 63,
               z: origin[2]! * 65_536 + pose.z
             };
-            await route.fulfill({ json: doc });
-          });
-        }
+          }
+          await route.fulfill({ json: doc });
+        });
         await page.goto('/damocles');
         const frame = page.locator('#frame');
         await expect(frame).toHaveAttribute('data-state', 'ready');

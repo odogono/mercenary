@@ -530,6 +530,10 @@ _Avoid_: Trigger radius, doorway bounds, collision box
 What a recovered structure region requires before it can be selected: nothing, a named attachment slot's fully-open latch, or the reserved `$0200` unconditional passage. The gate is read from the region's own flags; a passage carries no attachment and no open endpoint.
 _Avoid_: Door flag, region mask, collision layer
 
+**Enclosed Region**:
+A recovered Damocles structure region the engine marks as shut off from outside: while the player is in one, none of the outdoor world is drawn, and it receives no Sunlight. A region not so marked shows the outdoor world through its openings and is lit as outdoors is.
+_Avoid_: Interior, Room (for Damocles), windowless room
+
 **Floor Table**:
 The twelve bytes in a scaled Surface Structure's alias record naming which structure each of its levels binds, zero where a level has no floor. The level indexes it; the storey pitch in the same record gives that floor its height. Level 0's entry is the ground bind.
 _Avoid_: Storey list, floor map, level index
@@ -599,7 +603,12 @@ Damocles's filled-polygon, palette-driven world view Confirmed in Working-Author
 _Avoid_: Wireframe view, remastered graphics, Departure Record
 
 **Cast Shadow**:
-The Enhanced-presentation darkening of a Filled Presentation face standing between the authored sun and another face, drawn with either a soft or a hard edge at the player's choice; Authentic presentation never draws one.
+The Enhanced-presentation darkening of a Filled Presentation face standing between DIALIS, where the sky draws it, and another face, drawn with either a soft or a hard edge at the player's choice; Authentic presentation never draws one. Only **Sunlight** casts one, so there is none by night or with DIALIS destroyed.
+_Avoid_: Shading, ambient occlusion, lighting toggle
+
+**Sunlight**:
+The Enhanced-presentation direct light that DIALIS alone gives a Damocles Body's surface: it comes from where the sky draws DIALIS, it is present only by day and while DIALIS stands above the horizon, it fades in over DIALIS's first two degrees of elevation, and it is absent while DIALIS is a Destroyed Body and inside an Enclosed Region. No other Body gives light. A face Sunlight does not reach shows its recovered colour unchanged; Sunlight only brightens.
+_Avoid_: Sun direction, daylight (the terminator's answer), moonlight, lighting
 _Avoid_: Shading, ambient occlusion, lighting toggle
 
 **Working Authority**:

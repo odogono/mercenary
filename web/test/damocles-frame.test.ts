@@ -11,7 +11,7 @@ import {
   planErisFrame,
   type ErisFramePlan
 } from '../src/damocles/frame.ts';
-import { erisLighting } from '../src/damocles/lighting.ts';
+import { erisLighting, type Sunlight } from '../src/damocles/lighting.ts';
 import {
   ERIS_SHADOW_WINDOWS,
   ErisRenderer,
@@ -33,6 +33,11 @@ import {
 } from '../src/damocles/world.ts';
 import { ERIS_BODY } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
+
+const sun: Sunlight = {
+  direction: { x: -0.63, y: 0.31, z: -0.71 },
+  strength: 1
+};
 
 const load = async () => {
   const [catalogue, presentation] = await Promise.all([
@@ -1198,7 +1203,7 @@ describe('the Eris renderer', () => {
 
     renderer.render(plan, {
       eyeWorld: origin.position,
-      lighting: erisLighting(doc, origin),
+      lighting: erisLighting(doc, origin, sun),
       shadowEdge: 'soft',
       view: origin
     });
@@ -1208,7 +1213,7 @@ describe('the Eris renderer', () => {
     ).toHaveLength(2);
     renderer.render(plan, {
       eyeWorld: origin.position,
-      lighting: erisLighting(doc, origin),
+      lighting: erisLighting(doc, origin, sun),
       shadowEdge: 'soft',
       view: origin
     });
@@ -1245,11 +1250,7 @@ describe('the Eris renderer', () => {
       'bindSampler:0:linear',
       'bindSampler:1:linear'
     ]);
-    expect(fake.uniforms['ambientSky']).toEqual([
-      0x66 / 255,
-      0x80 / 255,
-      0x9c / 255
-    ]);
+    expect(fake.uniforms['ambientSky']).toEqual([1, 1, 1]);
 
     const spaceport = surface.placements.find(
       candidate => candidate.id === 'eris-surface-87'
@@ -1279,7 +1280,7 @@ describe('the Eris renderer', () => {
     );
     const frame = {
       eyeWorld: origin.position,
-      lighting: erisLighting(doc, origin),
+      lighting: erisLighting(doc, origin, sun),
       view: origin
     };
 

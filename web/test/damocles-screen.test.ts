@@ -25,6 +25,7 @@ const planOf = (r: number, g: number, b: number): ErisFramePlan => {
   return {
     clear: [st(r), st(g), st(b)],
     drawnPlacements: [],
+    enclosed: false,
     farPlane: 1,
     fillTriangleCount: 0,
     groundTriangleCount: 0,

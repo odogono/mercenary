@@ -42,11 +42,11 @@ describe('the authored Eris presentation document', () => {
     expect(document.orientation.pitchLevel).toBe(0x2_00);
     expect(document.start.pitch).toBe(0x2_00);
     expect(document.lighting).toMatchObject({
-      ambientGround: '#263322',
-      ambientSky: '#66809c',
+      ambientGround: '#ffffff',
+      ambientSky: '#ffffff',
       provenance: 'authored',
       shadows: true,
-      sunColour: '#fff2d0'
+      sunColour: '#807862'
     });
     expect(document.rendering.unresolvedModels).toBe('nothing');
     expect(document.camera.nearPlane).toBeLessThan(11);
