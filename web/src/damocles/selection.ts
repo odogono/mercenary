@@ -355,30 +355,13 @@ const scaledDetail = (
   return scaled;
 };
 
-/// `$539DE`: the building detail's faces from one of its two list groups, the first bounded
-/// record whose box holds the eye's model-local position, else the group's default. Group 0 is
-/// bound at `$C13C`, group 1 at `$C2FE` (docs/research/damocles-structure-draw-selection.md).
-const detailMesh = (
+/// The detail's faces and lines for a list of source records, in list order. A selection byte
+/// names a source record, which may contribute several filled glyph faces, a stroke line, or
+/// nothing at all.
+const detailRecords = (
   selection: NonNullable<ErisPlacement['selection']>,
-  groupIndex: 0 | 1,
-  local: readonly number[]
+  records: readonly number[]
 ): StructureMesh => {
-  const { groups, structure } = selection;
-  const scales = [structure.scale[0], 1, structure.scale[1]];
-  const group = groups[groupIndex]!;
-  const records =
-    group.boxes.find(box =>
-      box.bounds.every(([min, max], axis) => {
-        const scale = scales[axis]!;
-        const a =
-          min === -32_768 && axis !== 1
-            ? -2_147_483_647 * Math.sign(scale)
-            : min * scale;
-        const b =
-          max === 32_767 ? 2_147_483_647 * Math.sign(scale) : max * scale;
-        return Math.min(a, b) < local[axis]! && local[axis]! <= Math.max(a, b);
-      })
-    )?.records ?? group.default;
   const scaled = scaledDetail(selection);
   // Cache per scaled model as list identities may be shared by differently scaled aliases.
   let lists = detailLists.get(scaled);
@@ -388,8 +371,6 @@ const detailMesh = (
   }
   let selected = lists.get(records);
   if (selected === undefined) {
-    // A selection byte names a source record, which may contribute several
-    // filled glyph faces, a stroke line, or nothing at all.
     const byRecord = (primitives: readonly Primitive[]) => {
       const index = new Map<number, Primitive[]>();
       for (const primitive of primitives) {
@@ -418,6 +399,83 @@ const detailMesh = (
   return selected;
 };
 
+const wholeRecordLists = new WeakMap<object, readonly number[]>();
+/// The detail records the `whole` draw takes. These are every record the on-foot group `$C2FE`
+/// draws from anywhere, which give the walls with their real window and door openings. Added to
+/// them are the roofs that only the aboard group `$C13C` has: its records whose faces are all
+/// horizontal. The aboard group's other records are solid stand-ins for walls the on-foot group
+/// draws open, such as the spaceport's side wall with cyan glass over it. They would cover the
+/// openings, so they are left out.
+const wholeDetailRecords = (
+  selection: NonNullable<ErisPlacement['selection']>
+): readonly number[] => {
+  const cached = wholeRecordLists.get(selection);
+  if (cached !== undefined) {
+    return cached;
+  }
+  const lists = (group: (typeof selection.groups)[number]) => [
+    group.default,
+    ...group.boxes.map(box => box.records)
+  ];
+  const records: number[] = [];
+  const seen = new Set<number>();
+  const take = (record: number) => {
+    if (!seen.has(record)) {
+      seen.add(record);
+      records.push(record);
+    }
+  };
+  for (const list of lists(selection.groups[1]!)) {
+    list.forEach(take);
+  }
+  const { faces, vertices } = scaledDetail(selection);
+  const horizontal = (record: number): boolean => {
+    const own = faces.filter(face => face.sourceIndex === record);
+    return (
+      own.length > 0 &&
+      own.every(face =>
+        face.vertices.every(
+          index => vertices[index]![1] === vertices[face.vertices[0]!]![1]
+        )
+      )
+    );
+  };
+  for (const list of lists(selection.groups[0]!)) {
+    list
+      .filter(record => !seen.has(record) && horizontal(record))
+      .forEach(take);
+  }
+  wholeRecordLists.set(selection, records);
+  return records;
+};
+
+/// `$539DE`: the building detail's faces from one of its two list groups, the first bounded
+/// record whose box holds the eye's model-local position, else the group's default. Group 0 is
+/// bound at `$C13C`, group 1 at `$C2FE` (docs/research/damocles-structure-draw-selection.md).
+const detailMesh = (
+  selection: NonNullable<ErisPlacement['selection']>,
+  groupIndex: 0 | 1,
+  local: readonly number[]
+): StructureMesh => {
+  const { groups, structure } = selection;
+  const scales = [structure.scale[0], 1, structure.scale[1]];
+  const group = groups[groupIndex]!;
+  const records =
+    group.boxes.find(box =>
+      box.bounds.every(([min, max], axis) => {
+        const scale = scales[axis]!;
+        const a =
+          min === -32_768 && axis !== 1
+            ? -2_147_483_647 * Math.sign(scale)
+            : min * scale;
+        const b =
+          max === 32_767 ? 2_147_483_647 * Math.sign(scale) : max * scale;
+        return Math.min(a, b) < local[axis]! && local[axis]! <= Math.max(a, b);
+      })
+    )?.records ?? group.default;
+  return detailRecords(selection, records);
+};
+
 /// How a structure's draw components are chosen.
 ///
 /// - `onFoot` is the ST's own on-foot selection: the region's plan queue and the `$C2FE` group.
@@ -425,8 +483,9 @@ const detailMesh = (
 ///   and `$53CC2` draws the building detail from the `$C13C` group while the high word of Y
 ///   `$7A30` is 0, and nothing above that. The region and its wall texts play no part, so a
 ///   craft over a roof sees the roof.
-/// - `whole` draws everything: the whole detail, roof included, every plan face, door, wall text
-///   and Floor Label, at any height. The ST picks faces by viewer position because it has no
+/// - `whole` draws every part of the building at any height: the outside walls with their window
+///   and door openings, the roofs, and the inside, meaning every plan face, door, wall text and
+///   Floor Label (`wholeDetailRecords`). The ST picks faces by viewer position because it has no
 ///   depth buffer. Here the depth test and back-face culling settle what shows. Enhanced
 ///   presentation draws structures this way aboard.
 export type StructureDraw = 'aboard' | 'onFoot' | 'whole';
@@ -534,7 +593,7 @@ const wholeStructure = (
       const glyph = floorLabelGlyphs(floorLabelFont(label, carriedSlot));
       return glyph === undefined ? [] : [floorLabelMesh(label, glyph)];
     }),
-    scaledDetail(selection)
+    detailRecords(selection, wholeDetailRecords(selection))
   ];
 };
 

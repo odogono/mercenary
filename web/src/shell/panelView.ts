@@ -568,14 +568,55 @@ const damoclesInkWidth = (
 /// Graduations ride the tape every ten degrees, longer at twenty, as dots at both edges. The
 /// reading stays put a little below the middle, black on the tape with dashes out to the edges,
 /// so at level flight the line and the horizon coincide.
+/// A recovered pitch strip: its rows, each a pair of sixteen-bit plane words, and the rule that
+/// picks the window's first row for a pitch in degrees.
+export interface PitchStrip {
+  readonly row: (pitchDegrees: number) => number;
+  readonly rows: readonly (readonly [string, string])[];
+}
+
+/// The window of a recovered strip, one canvas pixel a pixel: the first word's plane alone is
+/// the sky, the second's alone the ground, and neither is the ink of the marks and figures.
+const drawPitchStrip = (
+  surface: Surface,
+  canvas: HTMLCanvasElement,
+  strip: PitchStrip,
+  pitchDegrees: number
+): void => {
+  const { context, height, width } = surface;
+  const colours = [
+    tokenOf(canvas, '--nav-ink'),
+    tokenOf(canvas, '--gauge-sky'),
+    tokenOf(canvas, '--gauge-ground'),
+    tokenOf(canvas, '--gauge-sky')
+  ];
+  const first = strip.row(pitchDegrees);
+  for (let y = 0; y < height; y += 1) {
+    const row = strip.rows[first + y];
+    for (let x = 0; x < width; x += 1) {
+      const sky = row?.[0][x] === '1' ? 1 : 0;
+      const ground = row?.[1][x] === '1' ? 2 : 0;
+      context.fillStyle = colours[sky + ground]!;
+      context.fillRect(x, y, 1, 1);
+    }
+  }
+};
+
+/// The Damocles horizon. Given the recovered strip it draws that (#716); without one, which is
+/// the rendition dressing Targ or the Flyover, it draws the authored tape below.
 export const drawDamoclesElevation = (
   canvas: HTMLCanvasElement,
   root: HTMLElement,
-  pitchDegrees: number
+  pitchDegrees: number,
+  strip?: PitchStrip
 ): void => {
   void root;
   const surface = surfaceOf(canvas);
   if (surface === undefined) {
+    return;
+  }
+  if (strip !== undefined) {
+    drawPitchStrip(surface, canvas, strip, pitchDegrees);
     return;
   }
   const { context, height, width } = surface;
@@ -768,7 +809,8 @@ export const installPanelScale = (
 /// Text is written only where it changed, in the same discipline the status strip uses: this runs
 /// on every frame, and a panel that rewrote every readout would churn the whole subtree.
 export const installPanel = (
-  elements: PanelElements
+  elements: PanelElements,
+  options: { readonly damoclesPitchStrip?: PitchStrip } = {}
 ): { readonly draw: (model: PanelViewModel) => void } => {
   let lastCompass: number | undefined;
   let lastCentreBox: string | undefined;
@@ -853,7 +895,8 @@ export const installPanel = (
         drawDamoclesElevation(
           elements.damoclesElevation,
           elements.root,
-          model.elevationDegrees
+          model.elevationDegrees,
+          options.damoclesPitchStrip
         );
       }
       if (restyled || model.compassDegrees !== lastCompass) {
