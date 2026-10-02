@@ -325,6 +325,36 @@ const movingAttachment = (
   };
 };
 
+/// The structure's whole detail at its scale, every record in source order.
+const scaledDetail = (
+  selection: NonNullable<ErisPlacement['selection']>
+): Mesh => {
+  const { structure } = selection;
+  let scaled = scaledDetails.get(selection);
+  if (scaled === undefined) {
+    // A scale negative on one axis mirrors the detail, which turns every face's winding over.
+    // The ST has no facing test, but the port culls back faces, so the mirrored faces are
+    // rewound to keep their fronts where the unscaled model has them.
+    const mirrored = structure.scale[0] * structure.scale[1] < 0;
+    scaled = {
+      ...selection.detail,
+      faces: mirrored
+        ? selection.detail.faces.map(face => ({
+            ...face,
+            vertices: [...face.vertices].reverse()
+          }))
+        : selection.detail.faces,
+      vertices: selection.detail.vertices.map(([x, y, z]) => [
+        x * structure.scale[0],
+        y,
+        z * structure.scale[1]
+      ])
+    };
+    scaledDetails.set(selection, scaled);
+  }
+  return scaled;
+};
+
 /// `$539DE`: the building detail's faces from one of its two list groups, the first bounded
 /// record whose box holds the eye's model-local position, else the group's default. Group 0 is
 /// bound at `$C13C`, group 1 at `$C2FE` (docs/research/damocles-structure-draw-selection.md).
@@ -349,28 +379,7 @@ const detailMesh = (
         return Math.min(a, b) < local[axis]! && local[axis]! <= Math.max(a, b);
       })
     )?.records ?? group.default;
-  let scaled = scaledDetails.get(selection);
-  if (scaled === undefined) {
-    // A scale negative on one axis mirrors the detail, which turns every face's winding over.
-    // The ST has no facing test, but the port culls back faces, so the mirrored faces are
-    // rewound to keep their fronts where the unscaled model has them.
-    const mirrored = structure.scale[0] * structure.scale[1] < 0;
-    scaled = {
-      ...selection.detail,
-      faces: mirrored
-        ? selection.detail.faces.map(face => ({
-            ...face,
-            vertices: [...face.vertices].reverse()
-          }))
-        : selection.detail.faces,
-      vertices: selection.detail.vertices.map(([x, y, z]) => [
-        x * structure.scale[0],
-        y,
-        z * structure.scale[1]
-      ])
-    };
-    scaledDetails.set(selection, scaled);
-  }
+  const scaled = scaledDetail(selection);
   // Cache per scaled model as list identities may be shared by differently scaled aliases.
   let lists = detailLists.get(scaled);
   if (lists === undefined) {
@@ -409,11 +418,20 @@ const detailMesh = (
   return selected;
 };
 
-/// Ordered draw components for a structure. Empty selections are intentional.
+/// How a structure's draw components are chosen.
 ///
-/// Aboard, `$0533D4` skips the region's plan queue `$5A744`, and `$53CC2` draws the building
-/// detail from the `$C13C` group while the high word of Y `$7A30` is 0 and nothing above it. The
-/// region and its wall texts play no part, so a craft over a roof sees the roof.
+/// - `onFoot` is the ST's own on-foot selection: the region's plan queue and the `$C2FE` group.
+/// - `aboard` is the ST's selection aboard. `$0533D4` skips the region's plan queue `$5A744`,
+///   and `$53CC2` draws the building detail from the `$C13C` group while the high word of Y
+///   `$7A30` is 0, and nothing above that. The region and its wall texts play no part, so a
+///   craft over a roof sees the roof.
+/// - `whole` draws everything: the whole detail, roof included, every plan face, door, wall text
+///   and Floor Label, at any height. The ST picks faces by viewer position because it has no
+///   depth buffer. Here the depth test and back-face culling settle what shows. Enhanced
+///   presentation draws structures this way aboard.
+export type StructureDraw = 'aboard' | 'onFoot' | 'whole';
+
+/// Ordered draw components for a structure. Empty selections are intentional.
 export const structureMeshes = (
   placement: ErisPlacement,
   pose: Pose,
@@ -422,7 +440,7 @@ export const structureMeshes = (
   selectedRegionIndex?: number | null,
   carriedSlot: CarriedSlot = nothingCarried,
   floorLabelGlyphs: FloorLabelGlyphs = noFloorLabel,
-  aboard = false
+  draw: StructureDraw = 'onFoot'
 ): readonly StructureMesh[] => {
   const fallback = () => (placement.mesh === undefined ? [] : [placement.mesh]);
   const selection = placement.selection;
@@ -430,9 +448,12 @@ export const structureMeshes = (
     return fallback();
   }
   const { structure } = selection;
+  if (draw === 'whole') {
+    return wholeStructure(selection, openUnits, carriedSlot, floorLabelGlyphs);
+  }
   const point = structureLocalPosition(placement, pose.position, negateZ);
   const local = [point.x, point.y, point.z];
-  if (aboard) {
+  if (draw === 'aboard') {
     return Math.floor(pose.position.y / 0x1_00_00) === 0
       ? [detailMesh(selection, 0, local)]
       : [];
@@ -490,6 +511,32 @@ export const structureMeshes = (
     : [...detail, ...plan];
 };
 const detailLists = new WeakMap<Mesh, WeakMap<object, StructureMesh>>();
+
+/// Every draw component of a structure, for the `whole` draw. The plan and its wall texts go
+/// first and the detail last, so where an outer plan wall lies in a detail wall's plane the
+/// detail's face wins the tie and the building keeps its outside.
+const wholeStructure = (
+  selection: NonNullable<ErisPlacement['selection']>,
+  openUnits: AttachmentUnits,
+  carriedSlot: CarriedSlot,
+  floorLabelGlyphs: FloorLabelGlyphs
+): StructureMesh[] => {
+  const { structure } = selection;
+  return [
+    structure.plan,
+    ...structure.attachments.map(attachment =>
+      movingAttachment(attachment, openUnits(attachment.slot))
+    ),
+    ...(structure.wallTexts ?? []).map(text =>
+      wallTextMesh(wallTextGlyphs(text, carriedSlot), text.plane)
+    ),
+    ...(structure.floorLabels ?? []).flatMap(label => {
+      const glyph = floorLabelGlyphs(floorLabelFont(label, carriedSlot));
+      return glyph === undefined ? [] : [floorLabelMesh(label, glyph)];
+    }),
+    scaledDetail(selection)
+  ];
+};
 
 /// A wall text's glyphs: font 4's fallback font while `$054016` finds a named slot carried.
 export const wallTextGlyphs = (

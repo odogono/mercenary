@@ -1357,7 +1357,10 @@ try {
         zoom: 2 ** (snapshot.viewExponent - NEW_GAME_VIEW_EXPONENT)
       },
       space !== null,
-      !onFoot
+      !onFoot,
+      // Enhanced presentation draws every part of a structure aboard. The ST's detail-only
+      // aboard draw was there for speed.
+      enhanced ? 'whole' : 'aboard'
     );
     const shadowEdge = castShadows ?? DEFAULT_CAST_SHADOWS;
     // A Cast Shadow is Enhanced presentation only, and the player may turn its edge off.

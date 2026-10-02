@@ -87,6 +87,14 @@ Three adoption decisions, none of which reopen the evidence:
 - **No Presentation Preset carries an every-cell draw.** ADR 0034 admits one as
   Enhanced presentation, so this stays open, but nothing asks for it today and
   an unused preset would be a second draw path to keep honest.
+- **Enhanced presentation draws every part of a structure aboard.** The ST draws
+  only the `$C13C` group aboard and skips the plan queue, which saves time. Under
+  ADR 0034 Enhanced draws the `whole` structure instead: every detail record,
+  roof included, every plan face, door, wall text and Floor Label, at any
+  height. The depth test and back-face culling settle what shows, where the ST
+  picks faces by viewer position. Authentic keeps the `$C13C` draw. Nothing is
+  enclosed aboard under either preset (`StructureDraw` in
+  `web/src/damocles/selection.ts`).
 - **`camera.farPlane` stays `authored`.** The Working Authority has no far
   plane in the projection sense; the browser's is a parameter of its own
   log-depth buffer (`web/src/damocles/renderer.ts`), so there is no recovered
