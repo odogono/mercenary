@@ -130,6 +130,53 @@ const roadWidth = (vertices: Float32Array): number =>
   );
 
 describe('an Eris frame in Filled Presentation', () => {
+  test('selects Snow Island roads after travelling from the Capital City workspace', async () => {
+    const { doc, surface } = await load();
+    // A session keeps its admitted surface anchor while travelling. The road
+    // workspace must follow the nearest island, as its classification does.
+    const pose = {
+      ...startPose(doc),
+      heading: Math.PI + 0.6,
+      pitch: -0.22,
+      // Approaching from Island-Local Cell 08-48, around the reported 008086 altitude.
+      position: { x: 40.5 * 65_536, y: 848_000, z: 1104.5 * 65_536 }
+    };
+    const plan = planErisFrame(surface, pose, doc);
+    expect(plan.roadEdges).toContain(0x26_46);
+    expect(plan.roadVertices.length).toBeGreaterThan(0);
+    expect(Array.from(plan.roadVertices.slice(3, 6))).toEqual([
+      expect.closeTo(170 / 255, 5),
+      expect.closeTo(170 / 255, 5),
+      expect.closeTo(170 / 255, 5)
+    ]);
+    const acrossWrap = planErisFrame(
+      surface,
+      {
+        ...pose,
+        position: {
+          ...pose.position,
+          x: pose.position.x + 4096 * surface.grid.cellUnits,
+          z: pose.position.z - 4096 * surface.grid.cellUnits
+        }
+      },
+      doc
+    );
+    expect(acrossWrap.roadEdges).toEqual(plan.roadEdges);
+    expect(acrossWrap.roadVertices).toEqual(plan.roadVertices);
+    const returned = planErisFrame(
+      surface,
+      {
+        ...startPose(doc),
+        position: {
+          ...startPose(doc).position,
+          y: 6144
+        }
+      },
+      doc
+    );
+    expect(returned.roadEdges).toContain(0x89_d9);
+    expect(returned.roadEdges).not.toContain(0x26_46);
+  });
   test('draws selected whole road runs between the surface and ground records', async () => {
     const { doc, surface } = await load();
     const pose = {
@@ -1175,13 +1222,14 @@ describe('the Eris renderer', () => {
     // the recovered ground records and everything else, each a layer nearer.
     const layered = [
       `draw:15:0:${fill}`,
+      `draw:15:0:${plan.horizonIslandVertices.length / FLOATS_PER_VERTEX}`,
       `draw:15:${fill}:${islands}`,
       `draw:15:${fill + islands}:${ground}`,
       `draw:15:${fill + islands + ground}:${rest}`
     ];
-    // The ground to the horizon goes first, over the sky and under everything else (#573),
-    // with the island fills flat over it (#578).
-    const horizon = `draw:15:0:${(plan.horizonVertices.length + plan.horizonIslandVertices.length) / FLOATS_PER_VERTEX}`;
+    // Paint the finite sea plane before the complete distant island fills,
+    // so it cannot overwrite land past the detailed-geometry far plane.
+    const horizon = `draw:15:0:${plan.horizonVertices.length / FLOATS_PER_VERTEX}`;
     expect(plan.horizonVertices.length).toBeGreaterThan(0);
     expect(plan.horizonIslandVertices.length).toBeGreaterThan(0);
     expect(fake.calls.filter(c => c.startsWith('draw:'))).toEqual([

@@ -696,19 +696,17 @@ export class FrameRenderer {
   /// alone, so everything drawn after covers them (#530). They are flat in both presentations;
   /// an Enhanced sky is #114's. The stars go first, as `$0503FE` runs before the sky pass
   /// (#578). The ground to the horizon follows the Bodies the same way, as `$0599D6` follows
-  /// the sky pass (#573), and the island fills follow it, as `$056516` does (#578).
+  /// the sky pass (#573). Island fills follow the finite sea plane in drawLayers (#578).
   private drawSky(plan: TriangleFrame): void {
     const gl = this.gl;
     const sky = plan.skyVertices.length;
     const horizon = plan.horizonVertices.length;
-    const islands = plan.horizonIslandVertices.length;
-    if (sky + horizon + islands === 0) {
+    if (sky + horizon === 0) {
       return;
     }
-    const vertices = new Float32Array(sky + horizon + islands);
+    const vertices = new Float32Array(sky + horizon);
     vertices.set(plan.skyVertices);
     vertices.set(plan.horizonVertices, sky);
-    vertices.set(plan.horizonIslandVertices, sky + horizon);
     gl.disable(gl.DEPTH_TEST);
     gl.depthMask(false);
     gl.disable(gl.CULL_FACE);
@@ -719,6 +717,38 @@ export class FrameRenderer {
     gl.uniform1f(requiredUniform(gl, this.shaderProgram, 'depthBias'), 0);
     gl.drawArrays(gl.TRIANGLES, 0, vertices.length / FLOATS_PER_VERTEX);
     gl.depthMask(true);
+  }
+
+  /// Paint flat ink without changing the geometry's depth, then restore the main stream.
+  private drawFlatLayer(
+    vertices: Float32Array,
+    plan: TriangleFrame,
+    shaderProgram: WebGLProgram,
+    farPlane = plan.farPlane
+  ): void {
+    if (vertices.length === 0) {
+      return;
+    }
+    const gl = this.gl;
+    gl.disable(gl.DEPTH_TEST);
+    gl.depthMask(false);
+    gl.disable(gl.CULL_FACE);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.skyBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.DYNAMIC_DRAW);
+    this.bindGeometry(this.shaderProgram, this.skyBuffer, COLOUR_ATTRIBUTES);
+    this.setProjection(this.shaderProgram, plan);
+    gl.uniform2f(
+      requiredUniform(gl, this.shaderProgram, 'depthRange'),
+      plan.nearPlane,
+      farPlane
+    );
+    gl.uniform1f(requiredUniform(gl, this.shaderProgram, 'depthBias'), 0);
+    gl.drawArrays(gl.TRIANGLES, 0, vertices.length / FLOATS_PER_VERTEX);
+    gl.depthMask(true);
+    gl.enable(gl.DEPTH_TEST);
+    this.cullAsConfigured();
+    this.bindGeometry(shaderProgram, this.buffer, COLOUR_ATTRIBUTES);
+    this.setProjection(shaderProgram, plan);
   }
 
   /// The Body's surface first, then the recovered ground records, then everything else, each
@@ -744,35 +774,17 @@ export class FrameRenderer {
     gl.uniform1f(bias, SURFACE_DEPTH_BIAS);
     gl.depthFunc(gl.ALWAYS);
     gl.drawArrays(gl.TRIANGLES, 0, fill);
+    // The finite sea plane can overlap land beyond the detailed far plane.
+    // Paint the complete island silhouettes after it, so it cannot cut holes in them.
+    this.drawFlatLayer(plan.horizonIslandVertices, plan, shaderProgram);
+    gl.uniform1f(bias, SURFACE_DEPTH_BIAS);
     gl.drawArrays(gl.TRIANGLES, fill, islands);
     if (plan.roadVertices !== undefined && plan.roadVertices.length !== 0) {
       // The recovered road pass paints over the island fill, before ground
       // records and objects. Use flat ink in both presets and leave depth alone.
-      gl.disable(gl.DEPTH_TEST);
-      gl.depthMask(false);
-      gl.disable(gl.CULL_FACE);
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.skyBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, plan.roadVertices, gl.DYNAMIC_DRAW);
-      this.bindGeometry(this.shaderProgram, this.skyBuffer, COLOUR_ATTRIBUTES);
-      this.setProjection(this.shaderProgram, plan);
       // Road reach is the altitude window, not the authored detailed-geometry
       // far plane. At orbital heights that plane would clip the whole network.
-      gl.uniform2f(
-        requiredUniform(gl, this.shaderProgram, 'depthRange'),
-        plan.nearPlane,
-        1_000_000_000
-      );
-      gl.uniform1f(requiredUniform(gl, this.shaderProgram, 'depthBias'), 0);
-      gl.drawArrays(
-        gl.TRIANGLES,
-        0,
-        plan.roadVertices.length / FLOATS_PER_VERTEX
-      );
-      gl.depthMask(true);
-      gl.enable(gl.DEPTH_TEST);
-      this.cullAsConfigured();
-      this.bindGeometry(shaderProgram, this.buffer, COLOUR_ATTRIBUTES);
-      this.setProjection(shaderProgram, plan);
+      this.drawFlatLayer(plan.roadVertices, plan, shaderProgram, 1_000_000_000);
     }
     gl.depthFunc(gl.LEQUAL);
     gl.uniform1f(bias, LAYER_DEPTH_BIAS);
