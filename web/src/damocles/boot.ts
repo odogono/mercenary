@@ -53,6 +53,8 @@ import {
   DAMOCLES_CONSOLE_BANNER,
   damoclesMessageTranscript,
   executeDamoclesConsoleCommand,
+  parseDamoclesConsoleCommand,
+  type DamoclesConsoleCommand,
   type DamoclesConsoleHost
 } from './console.ts';
 import { craftProgram } from './craft.ts';
@@ -736,7 +738,10 @@ try {
       });
     }
   };
-  const shellConsole = installConsole(chrome.console, consoleHost, release, {
+  const shellConsole = installConsole<
+    DamoclesConsoleDeps,
+    DamoclesConsoleCommand
+  >(chrome.console, consoleHost, release, {
     banner: DAMOCLES_CONSOLE_BANNER,
     execute: (command, deps) => {
       if (
@@ -756,6 +761,9 @@ try {
         command.kind === 'gotoCell' ||
         command.kind === 'load' ||
         command.kind === 'save' ||
+        command.kind === 'setTime' ||
+        command.kind === 'setImpact' ||
+        command.kind === 'setRate' ||
         command.kind === 'switchBody'
       ) {
         checkpointChangedResume();
@@ -763,6 +771,8 @@ try {
       publish();
       return lines;
     },
+    parse: (line, deps) =>
+      parseDamoclesConsoleCommand(line, deps.cellsPerAxis()),
     persistence: { key: keys.consoleHistory, storage }
   });
   writeConsole = shellConsole.write;

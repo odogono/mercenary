@@ -1,17 +1,27 @@
 import { describe, expect, test } from 'bun:test';
 
+import { cometCentre } from '../src/damocles/comet.ts';
 import {
   damoclesMessageTranscript,
-  executeDamoclesConsoleCommand
+  executeDamoclesConsoleCommand,
+  parseDamoclesConsoleCommand
 } from '../src/damocles/console.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import { catalogueResidence } from '../src/damocles/residence.ts';
+import {
+  DAMOCLES_SAVE_SCHEMA_VERSION,
+  damoclesSaveIdentity,
+  decodeDamoclesSave,
+  encodeDamoclesSave
+} from '../src/damocles/save.ts';
 import {
   DamoclesSession,
   type DamoclesContent
 } from '../src/damocles/session.ts';
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
+import { turnOnClock } from '../src/damocles/terminator.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
+import { readGammaSystem } from '../src/flyover/documents.ts';
 import { parseConsoleCommand } from '../src/shell/console.ts';
 import type { PreferencesStore } from '../src/shell/preferences.ts';
 import type { SavePersistence } from '../src/shell/saves.ts';
@@ -127,7 +137,6 @@ describe('the Damocles Shell Console', () => {
     expect(run('get')).toBe('take refused');
     expect(run('drop')).toBe('inventory is empty');
     expect(run('inventory')).toBe('inventory is empty');
-    expect(run('time')).toBe("time belongs to Targ's orrery");
     expect(run('goto 7 8 10')).toBe('goto takes two cells on Eris');
     expect(
       executeDamoclesConsoleCommand(
@@ -168,7 +177,7 @@ const standingAt = async (
 
 const run = (session: DamoclesSession, line: string): string =>
   executeDamoclesConsoleCommand(
-    parseConsoleCommand(line, 16, 256, 'selected')!,
+    parseDamoclesConsoleCommand(line, 16)!,
     host(session)
   )[0]!;
 
@@ -368,5 +377,324 @@ describe('the Damocles message transcript', () => {
 
   test('logs nothing for a blank row', () => {
     expect(damoclesMessageTranscript(' '.repeat(48))).toEqual([]);
+  });
+});
+
+describe('Damocles console clocks', () => {
+  test('sets local Body Time on the shared clock without moving impact', async () => {
+    const session = await sessionOf();
+    const content = await contentOf();
+    const before = session.captureResume();
+    const impact = session.snapshot.impact;
+    for (const value of ['0:00:00', '12:00:00', '23-59-59', '9:01:02']) {
+      expect(run(session, `time ${value}`)).toBe(
+        `time ${value.replaceAll('-', ':').padStart(8, '0')}`
+      );
+      expect(run(session, 'time')).toBe(
+        `time ${value.replaceAll('-', ':').padStart(8, '0')}`
+      );
+      expect(session.snapshot.impact).toEqual(impact);
+      const saved = session.captureResume();
+      const body = content.catalogue.craft!.bodies[11]!;
+      const rate = content.catalogue.bodies.find(body => body.id === 'body-11')!
+        .bodySurface!.rotationRate;
+      expect(
+        turnOnClock(
+          { rate, start: body.turn, turn: saved.bodyTurn },
+          { rate, start: body.turn }
+        )
+      ).toBe(saved.bodyTurn);
+      const restored = new DamoclesSession(content, saved);
+      expect(run(restored, 'time')).toBe(run(session, 'time'));
+    }
+    expect(session.captureResume().elapsed).toBe(before.elapsed);
+    session.teleportToCell(0, 0);
+    const west = session.bodyTime()!;
+    session.teleportToCell(4, 0);
+    expect((session.bodyTime()! - west + 86_400) % 86_400).toBeCloseTo(
+      86_400 / 1024,
+      4
+    );
+    const help = executeDamoclesConsoleCommand(
+      { kind: 'help' },
+      host(session)
+    ).join(' ');
+    expect(help).toContain('time');
+    expect(help).toContain('impact');
+  });
+
+  test('carries the shared Body clock through a console switch and Atlas Travel', async () => {
+    const content = await contentOf();
+    const session = new DamoclesSession(content);
+    run(session, 'time 12:00');
+    const chosen = session.captureResume();
+    const eris = content.catalogue.craft!.bodies[11]!;
+    const gaea = content.catalogue.craft!.bodies[8]!;
+    const rate = (body: string) =>
+      content.catalogue.bodies.find(item => item.id === body)!.bodySurface!
+        .rotationRate;
+    const expected = turnOnClock(
+      { rate: rate('body-11'), start: eris.turn, turn: chosen.bodyTurn },
+      { rate: rate('body-8'), start: gaea.turn }
+    );
+    expect(session.switchToPose('gaea-ur-city-4-2').kind).toBe('switched');
+    expect(session.snapshot.bodyTurn).toBe(expected!);
+    const destination = {
+      bodyId: 'body-8',
+      x: session.snapshot.pose.position.x / content.doc.grid.cellUnits,
+      z: session.snapshot.pose.position.z / content.doc.grid.cellUnits
+    };
+    await DamoclesSession.prepareAtlasTravel(content, destination);
+    expect(session.switchToPose('eris-spaceport-onfoot').kind).toBe('switched');
+    expect(run(session, 'time')).toBe('time 12:00:00');
+    expect(session.travelToAtlas(destination)).toEqual({ kind: 'travelled' });
+    expect(session.snapshot.bodyTurn).toBe(expected!);
+    expect(session.snapshot.impact).toEqual(
+      new DamoclesSession(content, chosen).snapshot.impact
+    );
+  });
+
+  test('reads and sets impact independently, retaining MORE TIME and saving the result', async () => {
+    const content = await contentOf();
+    const saved = (await sessionOf()).captureResume();
+    const session = new DamoclesSession(content, {
+      ...saved,
+      clockAnchor: { clock: saved.elapsed, elapsed: saved.elapsed },
+      clockLevel: 8
+    });
+    const turn = session.snapshot.bodyTurn;
+    expect(run(session, 'impact 1:02:03')).toBe('impact 01-02-03 to impact');
+    expect(run(session, 'impact')).toBe('impact 01-02-03 to impact');
+    expect(session.snapshot.bodyTurn).toBe(turn);
+    expect(session.captureResume().clockLevel).toBe(8);
+    session.advance(4);
+    expect(run(session, 'impact')).toBe('impact 01-02-02 to impact');
+    expect(run(session, 'impact +2-03-04')).toBe(
+      'impact 02-03-04 since impact'
+    );
+    expect(session.captureResume().impactPassed).toBe(true);
+    const restored = new DamoclesSession(content, session.captureResume());
+    expect(run(restored, 'impact')).toBe('impact 02-03-04 since impact');
+    restored.advance(4);
+    expect(run(restored, 'impact')).toBe('impact 02-03-05 since impact');
+  });
+
+  test('lets the Session run impact consequences when a set countdown crosses zero', async () => {
+    const session = await sessionOf();
+    expect(run(session, 'impact 0:00:01')).toBe('impact 00-00-01 to impact');
+    expect(session.captureResume().destroyedBodies).toEqual([]);
+    session.advance(2);
+    expect(session.captureResume().impactPassed).toBe(true);
+    expect(session.captureResume().destroyedBodies).toEqual([
+      'body-29',
+      'body-11'
+    ]);
+    expect(session.snapshot.screen.dead).toBe(true);
+  });
+
+  test('setting after impact positions the live comet directly without replaying destruction', async () => {
+    const content = await contentOf();
+    const system = readGammaSystem(
+      await Bun.file('../payload/damocles/system.json').json()
+    );
+    const session = new DamoclesSession(content);
+    expect(run(session, 'impact +0:00:02')).toBe(
+      'impact 00-00-02 since impact'
+    );
+    const saved = session.captureResume();
+    expect(saved.impactPassed).toBe(true);
+    expect(saved.destroyedBodies).toEqual([]);
+    // The sky and range scan read the clock and latch together; past zero the unlatched
+    // comet has no centre, whereas the latched one continues along its recovered path.
+    expect(
+      cometCentre(system.comet, session.snapshot.impact, {
+        drift: session.snapshot.drift,
+        passed: session.snapshot.impactPassed
+      })
+    ).not.toBeNull();
+    const restored = new DamoclesSession(content, saved);
+    expect(restored.snapshot.impact).toEqual({ fraction: 0, seconds: 2 });
+    expect(restored.snapshot.impactPassed).toBe(true);
+    session.advance(1);
+    expect(session.captureResume().destroyedBodies).toEqual([]);
+    expect(run(session, 'impact 0:00:01')).toBe('impact 00-00-01 to impact');
+    expect(session.captureResume().impactPassed).toBe(false);
+  });
+
+  test('rate changes Body rotation and impact together and survives a Save', async () => {
+    const content = await contentOf();
+    const normal = new DamoclesSession(content);
+    const changed = new DamoclesSession(content);
+    expect(run(changed, 'rate')).toBe('rate 1x');
+    expect(run(changed, 'rate 0.25')).toBe('rate 0.25x');
+    const turn = changed.snapshot.bodyTurn;
+    const impact = changed.snapshot.impact.seconds;
+    const normalTurn = normal.snapshot.bodyTurn;
+    normal.advance(4);
+    changed.advance(4);
+    expect(changed.snapshot.impact.seconds - impact).toBe(1);
+    expect((changed.snapshot.bodyTurn - turn) >>> 0).toBe(
+      Math.floor(321 / 4) * 200
+    );
+    expect(normal.snapshot.bodyTurn - normalTurn).toBe(321 * 200);
+    const restored = new DamoclesSession(content, changed.captureResume());
+    expect(run(restored, 'rate')).toBe('rate 0.25x');
+    changed.advance(4);
+    restored.advance(4);
+    expect(restored.captureResume()).toEqual(changed.captureResume());
+    expect(run(changed, 'rate 2')).toBe('rate 2x');
+    const fastTurn = changed.snapshot.bodyTurn;
+    const fastImpact = changed.snapshot.impact.seconds;
+    changed.advance(2);
+    expect((changed.snapshot.bodyTurn - fastTurn) >>> 0).toBe(321 * 2 * 100);
+    expect(changed.snapshot.impact.seconds - fastImpact).toBe(4);
+    expect(run(changed, 'rate 1')).toBe('rate 1x');
+    expect(
+      executeDamoclesConsoleCommand({ kind: 'help' }, host(changed)).join(' ')
+    ).toContain('rate');
+  });
+
+  test('rate changes preserve the clock reading and keep Body Time through travel', async () => {
+    const content = await contentOf();
+    const session = new DamoclesSession(content);
+    run(session, 'time 12:00');
+    run(session, 'rate 0.25');
+    expect(run(session, 'time')).toBe('time 12:00:00');
+    run(session, 'rate 1');
+    session.advance(0.18);
+    const impact = session.snapshot.impact;
+    const local = session.bodyTime()!;
+    for (const multiplier of [64, 0.0625, 2, 1]) {
+      run(session, `rate ${multiplier}`);
+      expect(session.snapshot.impact).toEqual(impact);
+      expect(Math.abs(session.bodyTime()! - local)).toBeLessThan(0.1);
+      expect(session.switchToPose('gaea-ur-city-4-2').kind).toBe('switched');
+      expect(session.switchToPose('eris-spaceport-onfoot').kind).toBe(
+        'switched'
+      );
+      expect(Math.abs(session.bodyTime()! - local)).toBeLessThan(0.1);
+    }
+    const before = session.captureResume();
+    expect(() => session.setTimeRate(3)).toThrow();
+    expect(session.captureResume()).toEqual(before);
+  });
+
+  test("rate preserves other Bodies' sky phases across travel and restore", async () => {
+    const content = await contentOf();
+    const source = new DamoclesSession(content);
+    run(source, 'time 12:00');
+    const saved = source.captureResume();
+    const normal = new DamoclesSession(content, saved);
+    normal.switchToPose('gaea-ur-city-4-2');
+    const expected = normal.snapshot.bodyTurn;
+    for (const multiplier of [2, 0.25, 64, 0.0625]) {
+      const changed = new DamoclesSession(content, saved);
+      run(changed, `rate ${multiplier}`);
+      const identity = damoclesSaveIdentity(
+        content.catalogue,
+        content.presentationSha256
+      );
+      const encoded = encodeDamoclesSave({
+        identity,
+        savedAt: '2026-10-02T00:00:00.000Z',
+        schemaVersion: DAMOCLES_SAVE_SCHEMA_VERSION,
+        snapshot: changed.captureResume(),
+        where: 'ERIS'
+      });
+      const decoded = decodeDamoclesSave(encoded, identity, {
+        catalogue: content.catalogue,
+        strings: content.strings
+      }).snapshot;
+      const restored = new DamoclesSession(content, decoded);
+      for (const session of [changed, restored]) {
+        expect(session.switchToPose('gaea-ur-city-4-2').kind).toBe('switched');
+        expect(session.snapshot.bodyTurn).toBe(expected);
+      }
+      changed.advance(1);
+      restored.advance(1);
+      expect(restored.captureResume()).toEqual(changed.captureResume());
+    }
+  });
+
+  test('migrates existing Saves and refuses corrupt rotation origins', async () => {
+    const content = await contentOf();
+    const session = new DamoclesSession(content);
+    const identity = damoclesSaveIdentity(
+      content.catalogue,
+      content.presentationSha256
+    );
+    const record = {
+      identity,
+      savedAt: '2026-10-02T00:00:00.000Z',
+      schemaVersion: DAMOCLES_SAVE_SCHEMA_VERSION,
+      snapshot: session.captureResume(),
+      where: 'ERIS'
+    };
+    const decode = (record: unknown) =>
+      decodeDamoclesSave(JSON.stringify(record), identity, {
+        catalogue: content.catalogue,
+        strings: content.strings
+      }).snapshot;
+    const migrated = decode({
+      ...record,
+      schemaVersion: 26,
+      snapshot: { ...record.snapshot, bodyTurnOrigins: undefined }
+    });
+    expect(migrated.bodyTurnOrigins).toBeNull();
+    expect(new DamoclesSession(content, migrated).captureResume()).toEqual(
+      session.captureResume()
+    );
+    for (const origins of [
+      [],
+      Array(30).fill(-1),
+      Array(30).fill(2 ** 32),
+      Array(30).fill(0.5),
+      Array(30).fill('0')
+    ]) {
+      expect(() =>
+        decode({
+          ...record,
+          snapshot: { ...record.snapshot, bodyTurnOrigins: origins }
+        })
+      ).toThrow('bodyTurnOrigins');
+    }
+  });
+
+  test('rate rejects unsupported values without changing play', async () => {
+    const session = await sessionOf();
+    const before = session.captureResume();
+    for (const line of [
+      'rate 0',
+      'rate -1',
+      'rate 3',
+      'rate 0.1',
+      'rate 128',
+      'rate Infinity',
+      'rate NaN',
+      'rate 2 extra'
+    ]) {
+      expect(() => parseDamoclesConsoleCommand(line, 16)).toThrow();
+    }
+    expect(session.captureResume()).toEqual(before);
+    expect(parseDamoclesConsoleCommand('RATE 0.0625', 16)).toEqual({
+      kind: 'setRate',
+      multiplier: 0.0625
+    });
+    expect(parseDamoclesConsoleCommand('rate 64', 16)).toEqual({
+      kind: 'setRate',
+      multiplier: 64
+    });
+  });
+
+  test('rejects days and malformed impact values', () => {
+    for (const line of [
+      'impact 24:00',
+      'impact +24:00',
+      'impact 1:60',
+      'impact 1:02-03',
+      'impact 1:00 extra'
+    ]) {
+      expect(() => parseDamoclesConsoleCommand(line, 16)).toThrow();
+    }
   });
 });

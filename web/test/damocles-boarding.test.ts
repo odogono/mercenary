@@ -1,6 +1,11 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
 
 import type { Catalogue } from '../src/catalogue/data.ts';
+import {
+  executeDamoclesConsoleCommand,
+  parseDamoclesConsoleCommand,
+  type DamoclesConsoleHost
+} from '../src/damocles/console.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import { planErisFrame } from '../src/damocles/frame.ts';
 import { initialHeadCommands } from '../src/damocles/headCommands.ts';
@@ -1329,6 +1334,27 @@ describe('launch and space (#566)', () => {
     cues(session);
     return session;
   };
+
+  test('Body Time refuses in space without changing the Session', () => {
+    const session = aloft();
+    session.launchCraft();
+    toSpace(session);
+    const before = session.captureResume();
+    expect(session.bodyTime()).toBeNull();
+    expect(() => session.setBodyTime(43_200)).toThrow(
+      'time needs a Body underfoot'
+    );
+    const host = { session: () => session } as DamoclesConsoleHost;
+    for (const line of ['time', 'time 12:00']) {
+      expect(
+        executeDamoclesConsoleCommand(
+          parseDamoclesConsoleCommand(line, 16)!,
+          host
+        )
+      ).toEqual(['time needs a Body underfoot']);
+    }
+    expect(session.captureResume()).toEqual(before);
+  });
 
   test('launches aloft, swings the nose down, climbs backwards into space and turns there', () => {
     const session = aloft();

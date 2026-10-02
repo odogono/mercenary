@@ -22,6 +22,16 @@ export const NEW_GAME_CLOCK_LEVEL = 6;
 /// Page 4, MORE TIME: `$04D616` with level 8, a second of 200 VBLs.
 export const MORE_TIME_CLOCK_LEVEL = 8;
 
+/// The AUTHORS COMPUTER's supported clock levels, expressed as multipliers of normal time.
+/// Its 0–10 levels give 64x down to 1/16x; the same level governs Body rotation and impact.
+export const clockLevelAtRate = (multiplier: number): number => {
+  const level = NEW_GAME_CLOCK_LEVEL - Math.log2(multiplier);
+  if (!Number.isInteger(level) || level < 0 || level > 10) {
+    throw new Error('rate must be a power of two from 0.0625 through 64');
+  }
+  return level;
+};
+
 /// The impact clock where the rate level last changed: `clock` is in level-6 seconds, the unit
 /// `impactTime` reads, at Session seconds `elapsed`.
 export interface ClockAnchor {

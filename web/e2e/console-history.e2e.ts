@@ -2,7 +2,8 @@ import { expect, test } from '@playwright/test';
 
 for (const [title, path, ready] of [
   ['Targ', '/', '#game-surface'],
-  ['Damocles', '/damocles', '#frame']
+  ['Damocles', '/damocles', '#frame'],
+  ['Dion', '/dion', '#screen']
 ] as const) {
   test(`${title} retains console commands and their output across a reload`, async ({
     page
