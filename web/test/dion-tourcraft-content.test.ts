@@ -64,6 +64,7 @@ describe('bounded TOURCRAFT content admission', () => {
     expect(content.system.bodies).toHaveLength(31);
     expect(content.contentSha256).toMatch(/^[\da-f]{64}$/);
     expect(content.legacy.world.cells).toHaveLength(15);
+    expect(content.legacy.world.roads).toBeUndefined();
   });
 
   test('uses the documented path/length golden encoding', async () => {

@@ -3133,6 +3133,18 @@ def _expand_group_stream(data: bytes, group: int) -> tuple[bytes, list[int], int
     return bytes(grid), selectors, cursor + 6
 
 
+def road_line_inputs(data: bytes, group: int) -> dict:
+    """The complete run grid and group's own index-14 colour (#724).
+
+    `$04EC0E` reads the word immediately before the selector bytes. The ground
+    edge pass `$054A64` chooses index 14, whose colour `$059644` binds from it.
+    """
+    grid, _selectors, cursor = _expand_group_stream(data, group)
+    colour = struct.unpack_from('>H', data, cursor - 8)[0]
+    return {'corners': [struct.unpack_from('>I', grid, cell * 4)[0] for cell in range(256)],
+            'roadColour': st_rgb(colour), 'sourceRoadColour': colour}
+
+
 def load_structure_workspace(data: bytes, group: int, uniform_field: bool = False) -> bytes:
     """Replay $04EB60-$04ED3C: the workspace the loader builds for one group.
 
@@ -3303,6 +3315,7 @@ def decode_road_network(data: bytes, ground_models: dict[int, str], identity: st
     return {
         'id': identity,
         'body': f'body-{body}',
+        **road_line_inputs(data, island['structureGroup'] if island else struct.unpack_from('>H', data, 0x794E)[0]),
         'cells': cells,
         'classTableAddress': ROAD_CLASS_TABLE,
         'attestation': 'capture' if live_orientations is not None else 'image',

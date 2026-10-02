@@ -9,9 +9,11 @@ import {
   horizonIslandVertices
 } from '../coast/horizon.ts';
 import { islandFillTriangles } from '../coast/islands.ts';
+import { roadEdges } from '../coast/roads.ts';
 import { tan } from '../math/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import { Camera } from '../projection/index.ts';
+import { roadStroke } from '../rendering/roadStroke.ts';
 import type { ErisPresentationDocument } from './documents.ts';
 import { classifyPosition } from './islands.ts';
 import type { BoundStructureSnapshot } from './save.ts';
@@ -25,6 +27,7 @@ import type { SkyBody, SkyComet, SkyPass } from './sky.ts';
 import { starTangent, type StarPixel } from './stars.ts';
 import {
   insideCentralCellHalf,
+  islandOriginNear,
   withinDrawBound,
   type ErisPlacement,
   type ErisSurface,
@@ -75,6 +78,10 @@ export interface ErisFramePlan {
   /// this order rather than asking the depth buffer to break a tie it cannot.
   readonly islandTriangleCount: number;
   readonly nearPlane: number;
+  readonly roadEdges: readonly number[];
+  /// Unlit one-reference-pixel strokes, painted after the surface and before
+  /// ground records, structures and objects. Kept out of the shadow casters.
+  readonly roadVertices: Float32Array;
   /// Faces the triangulator refused, drawn as nothing and counted.
   readonly skippedFaces: number;
   /// The sky Bodies (#530) and the comet (#538), in draw order, whether or not any of each is
@@ -770,7 +777,9 @@ export const planErisFrame = (
   /// How structures are drawn aboard: the ST's `$C13C` detail group, which saves it time, or
   /// `whole` under Enhanced presentation, which draws every part of every structure. Nothing is
   /// enclosed aboard either way.
-  aboardStructures: 'aboard' | 'whole' = 'aboard'
+  aboardStructures: 'aboard' | 'whole' = 'aboard',
+  /// Road strokes stay one output pixel wide where they meet perspective road polygons.
+  outputHeight = 136
 ): ErisFramePlan => {
   const camera = new Camera({
     farPlane: doc.camera.farPlane,
@@ -1049,6 +1058,47 @@ export const planErisFrame = (
   }
   const islandTriangleCount = triangleCount - fillTriangleCount;
 
+  // `$056464` binds the nearest island's workspace. The admitted surface
+  // anchor stays fixed during travel, so it cannot select this road pass.
+  const island = here.island;
+  const roads = island?.roads;
+  const roadOrigin =
+    island === undefined
+      ? { x: 0, z: 0 }
+      : islandOriginNear(pose.position, surface.grid, island);
+  const cell = {
+    x: Math.floor((pose.position.x - roadOrigin.x) / surface.grid.cellUnits),
+    z: Math.floor((pose.position.z - roadOrigin.z) / surface.grid.cellUnits)
+  };
+  const edges =
+    enclosed || inSpace || roads === undefined
+      ? []
+      : roadEdges(roads.corners, cell.x, cell.z, pose.position.y);
+  const roadValues: number[] = [];
+  const roadPoint = (corner: number): Vector3 =>
+    toView({
+      x: roadOrigin.x + ((corner & 15) + 0.5) * surface.grid.cellUnits,
+      y: 0,
+      z: roadOrigin.z + ((corner >> 4) + 0.5) * surface.grid.cellUnits
+    });
+  const roadColour = channels(roads?.roadColour ?? '#000000');
+  for (const edge of edges) {
+    const quad = roadStroke(
+      roadPoint(edge >> 8),
+      roadPoint(edge & 0xff),
+      doc.camera.nearPlane,
+      Math.tan((doc.camera.verticalFieldOfViewDegrees * Math.PI) / 360),
+      outputHeight
+    );
+    if (quad === null) {
+      continue;
+    }
+    for (const index of [0, 1, 2, 0, 2, 3]) {
+      const view = quad[index]!;
+      roadValues.push(view.x, view.y, view.z, ...roadColour, ...NO_PLANE);
+    }
+  }
+
   const openUnits = new Map(
     structure?.attachments.map(item => [item.slot, item.openUnits]) ?? []
   );
@@ -1238,6 +1288,8 @@ export const planErisFrame = (
     horizonVertices: new Float32Array(horizonValues),
     islandTriangleCount,
     nearPlane: doc.camera.nearPlane,
+    roadEdges: edges,
+    roadVertices: new Float32Array(roadValues),
     skippedFaces,
     skyBodies: skyPlacements,
     skyVertices: new Float32Array(skyValues),

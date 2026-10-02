@@ -75,6 +75,10 @@ export interface ErisIsland {
   /// The bound group's location-trigger table `[$7A68]`, in table order.
   readonly locationTable: readonly LocationEntry[];
   readonly origin: ErisCell;
+  /// The Settlement's corner grid and flat road ink, selected with this island.
+  readonly roads?:
+    | Pick<Catalogue['roadNetworks'][number], 'corners' | 'roadColour'>
+    | undefined;
   /// The record's `+6`, the structure group whose workspace it binds, 0 for none.
   readonly structureGroup: number;
 }
@@ -862,6 +866,9 @@ export const erisSurfaceFrom = (
         landColour: island.landColour,
         locationTable: island.locationTable.entries,
         origin: { x: island.origin[0], z: island.origin[1] },
+        roads: catalogue.roadNetworks.find(
+          network => network.island === island.id
+        ),
         structureGroup: island.structureGroup
       })),
     placements,

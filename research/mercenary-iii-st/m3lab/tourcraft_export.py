@@ -122,7 +122,11 @@ def select_catalogue(spec: dict, catalogue: dict, geometry: dict, support: dict)
         ('palettes', selection['palettes'], 'index', 'index'),
         ('bodies', selection['bodySupportRecords'], 'body', 'body'),
         ('groups', selection['groupSupportRecords'], 'group', 'group')]:
-        selected_support[field] = {str(r[id_key]): checked_record(support[field][str(r[record_key])],
+        # The additive road grid was recovered after R7. It is outside this
+        # reviewed selection; retain and check R7's original group record.
+        selected_support[field] = {str(r[id_key]): checked_record(
+                                  {k: v for k, v in support[field][str(r[record_key])].items() if k != 'roads'}
+                                  if field == 'groups' else support[field][str(r[record_key])],
                                   r['sourceRecordSha256'], str(r[id_key])) for r in rows}
     for r in selection['sharedTableRecords']:
         selected_support[r['name']] = checked_record(support[r['name']], r['sourceRecordSha256'], r['name'])
@@ -335,6 +339,17 @@ def craft_records(ram: Ram) -> dict:
     return {'kind': 'dion-play-craft', 'schemaVersion': 1, 'source': 'gameplay-opening', 'tables': tables, 'parameters': parameters}
 
 
+def legacy_document(root: Path, row: dict) -> bytes:
+    # D1 may advance independently. Keep the exact reviewed dependency rather
+    # than substituting the new export or changing the TOURCRAFT identity.
+    for path in (root / row['path'], root / 'payload/dion/tourcraft' / f"{row['kind']}.json"):
+        if path.is_file():
+            data = path.read_bytes()
+            if hashlib.sha256(data).hexdigest() == row['sha256']:
+                return data
+    raise ValueError(f"{row['path']}.sha256: missing or altered historical dependency")
+
+
 def build_export(root: Path, opening: Path) -> dict[str, bytes]:
     spec = json.loads((root / 'research/mercenary-iii-st/tourcraft-promotion-manifest.json').read_text())
     read = lambda p: json.loads((root / p).read_text())
@@ -347,8 +362,7 @@ def build_export(root: Path, opening: Path) -> dict[str, bytes]:
     prefix = '/payload/dion/tourcraft'
     output = {}
     for row in spec['legacyDocuments']:
-        data = (root / row['path']).read_bytes()
-        require_equal(hashlib.sha256(data).hexdigest(), row['sha256'], f"{row['path']}.sha256")
+        data = legacy_document(root, row)
         # Immutable historical dependency; retaining bytes also preserves the old Save audit.
         output[f"{prefix}/{row['kind']}.json"] = data
     output[f'{prefix}/promotion.json'] = encoded(metadata)

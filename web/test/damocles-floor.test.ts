@@ -500,6 +500,8 @@ describe('the player stands on one Floor', () => {
       expect(plan.clear).toEqual(rgb(ceiling));
       // An Enclosed Region receives no Sunlight.
       expect(plan.enclosed).toBe(true);
+      expect(plan.roadEdges).toEqual([]);
+      expect(plan.roadVertices.length).toBe(0);
       // No sky pass runs in the enclosed branch, as no sky fill does (#530).
       expect(plan.skyBodies).toEqual([]);
       expect(plan.skyVertices.length).toBe(0);

@@ -1,10 +1,12 @@
 """The reviewed selection is the only dependency between Catalogue and play."""
 import copy
+import hashlib
 import json
+import tempfile
 import unittest
 from pathlib import Path
 
-from m3lab.tourcraft_export import select_catalogue, digest, content_identity
+from m3lab.tourcraft_export import select_catalogue, digest, content_identity, legacy_document
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -37,8 +39,25 @@ class TourcraftExportTests(unittest.TestCase):
         catalogue, support = copy.deepcopy(self.catalogue), copy.deepcopy(self.support)
         catalogue['objects'][100]['name'] = 'unselected inspection change'
         support['glyphs']['3:20']['points'] = [[4, 5]]
+        support['groups']['3']['roads']['corners'][0] = 123
         after = select_catalogue(self.spec, catalogue, self.geometry, support)
         self.assertEqual(before, after)
+
+    def test_historical_dependency_survives_a_new_current_d1_export(self):
+        data = b'historical D1 dependency\n'
+        row = {'kind': 'world', 'path': 'payload/dion/world.json',
+               'sha256': hashlib.sha256(data).hexdigest()}
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            current = root / row['path']
+            retained = root / 'payload/dion/tourcraft/world.json'
+            retained.parent.mkdir(parents=True)
+            current.write_bytes(b'new D1 road export\n')
+            retained.write_bytes(data)
+            self.assertEqual(legacy_document(root, row), data)
+            retained.write_bytes(b'altered retained dependency\n')
+            with self.assertRaisesRegex(ValueError, 'world.json.*sha256'):
+                legacy_document(root, row)
 
     def test_altered_selected_record_is_refused(self):
         geometry = copy.deepcopy(self.geometry)

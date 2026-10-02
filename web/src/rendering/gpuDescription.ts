@@ -11,7 +11,11 @@ import { clipNear, screenLine } from './raster.ts';
 export const DESCRIPTION_STRIDE = 7;
 
 export const descriptionVertices = (
-  description: FrameDescription
+  description: FrameDescription,
+  output = {
+    height: description.projection.height,
+    width: description.projection.width
+  }
 ): Float32Array => {
   const values: number[] = [];
   const projection = description.projection;
@@ -66,20 +70,29 @@ export const descriptionVertices = (
         continue;
       }
       const [[ax, ay], [bx, by]] = line;
-      const length = Math.hypot(bx - ax, by - ay);
+      const sx =
+        primitive.displayPixelWidth === undefined
+          ? 1
+          : output.width / projection.width;
+      const sy =
+        primitive.displayPixelWidth === undefined
+          ? 1
+          : output.height / projection.height;
+      const halfWidth = (primitive.displayPixelWidth ?? 1) / 2;
+      const length = Math.hypot((bx - ax) * sx, (by - ay) * sy);
       if (length < 1e-9) {
         quad(
           [
-            [ax - 0.5, ay - 0.5],
-            [ax + 0.5, ay - 0.5],
-            [ax + 0.5, ay + 0.5],
-            [ax - 0.5, ay + 0.5]
+            [ax - halfWidth / sx, ay - halfWidth / sy],
+            [ax + halfWidth / sx, ay - halfWidth / sy],
+            [ax + halfWidth / sx, ay + halfWidth / sy],
+            [ax - halfWidth / sx, ay + halfWidth / sy]
           ],
           primitive.colour
         );
       } else {
-        const dx = ((by - ay) / length) * 0.5;
-        const dy = (-(bx - ax) / length) * 0.5;
+        const dx = ((((by - ay) * sy) / length) * halfWidth) / sx;
+        const dy = (((-(bx - ax) * sx) / length) * halfWidth) / sy;
         quad(
           [
             [ax + dx, ay + dy],

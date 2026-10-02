@@ -9,7 +9,9 @@ import {
 } from '../dion/read.ts';
 import {
   readGlyph,
+  readRoads,
   type DionGlyph,
+  type DionRoads,
   type DionScenePalette
 } from '../dion/world.ts';
 
@@ -32,6 +34,7 @@ export interface RenderSupport {
     {
       readonly land: number;
       readonly road: number;
+      readonly roads: DionRoads;
       readonly skyDay: number;
       readonly skyNight: number;
     }
@@ -138,7 +141,13 @@ export const readRenderSupport = (
   }
   const groups = new Map<
     number,
-    { land: number; road: number; skyDay: number; skyNight: number }
+    {
+      land: number;
+      road: number;
+      roads: DionRoads;
+      skyDay: number;
+      skyNight: number;
+    }
   >();
   for (const [key, v] of Object.entries(
     record(raw['groups'], `${at}.groups`)
@@ -150,6 +159,7 @@ export const readRenderSupport = (
     groups.set(int(Number(key), `${at}.group key`, 0, 56), {
       land: int(row['land'], `${at}.land`, 0, 65_535),
       road: int(row['road'], `${at}.road`, 0, 65_535),
+      roads: readRoads(row['roads'], `${at}.groups.${key}.roads`),
       skyDay: int(row['skyDay'], `${at}.skyDay`, 0, 65_535),
       skyNight: int(row['skyNight'], `${at}.skyNight`, 0, 65_535)
     });

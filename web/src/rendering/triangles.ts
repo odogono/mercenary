@@ -9,6 +9,7 @@ export interface TriangleFrame {
   readonly horizonVertices: Float32Array;
   readonly islandTriangleCount: number;
   readonly nearPlane: number;
+  readonly roadVertices?: Float32Array;
   readonly skyVertices: Float32Array;
   readonly triangleCount: number;
   readonly verticalFieldOfViewDegrees: number;

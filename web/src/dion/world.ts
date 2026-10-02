@@ -316,6 +316,25 @@ export interface DionOpening {
   readonly walk: { readonly step: number; readonly turn: number };
 }
 
+export interface DionRoads {
+  readonly colour: number;
+  readonly corners: readonly number[];
+  readonly height: number;
+  /// The MIII baseline table, retained as evidence. Play uses the shared
+  /// Damocles curve by explicit user decision (#724).
+  readonly radiusTable: readonly number[];
+}
+
+export const readRoads = (value: unknown, path: string): DionRoads => {
+  const raw = record(value, path);
+  return {
+    colour: word(raw['colour'], `${path}.colour`),
+    corners: ints(raw['corners'], `${path}.corners`, 256, 0, 0xff_ff_ff_ff),
+    height: int(raw['height'], `${path}.height`, 0, 0),
+    radiusTable: ints(raw['radiusTable'], `${path}.radiusTable`, 256, 0, 63)
+  };
+};
+
 export interface DionWorld {
   /// Per-resident phase words the `$8003` beacon blink adds to the frame counter.
   readonly blinkPhase: ReadonlyMap<number, number>;
@@ -344,6 +363,8 @@ export interface DionWorld {
   readonly opening: DionOpening;
   readonly palettes: ReadonlyMap<number, DionScenePalette>;
   readonly residents: readonly DionResident[];
+  /// Historical R7 dependencies predate this additive schema-1 road record.
+  readonly roads?: DionRoads | undefined;
   /// `$7E4A`: the Q15 sine table model rotation reads, 256 steps a turn and 320
   /// entries long, so the cosine at +64 never wraps.
   readonly rotationTable: readonly number[];
@@ -859,6 +880,8 @@ const readViewFacts = (raw: Record<string, unknown>) => {
       )
     },
     opening: readDionOpening(opening),
+    roads:
+      raw['roads'] === undefined ? undefined : readRoads(raw['roads'], 'roads'),
     rotationTable: ints(
       record(raw['rotationTable'], 'rotationTable')['words'],
       'rotationTable.words',

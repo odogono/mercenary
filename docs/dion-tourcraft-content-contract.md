@@ -12,6 +12,8 @@ The research specification `research/mercenary-iii-st/tourcraft-promotion-manife
 
 The mutable source is the fresh `exact2/start.ram` first-loop-top capture, SHA-256 `71b957b3b7124959b01bd40b896c921d37902c18cfca042bef1906b155ef0170`. It supplies opening state, 17 residents, flags, VM/campaign inputs, model selections, body phases, live strings and animation cursors. Immutable Catalogue records retain the census/workspace source identities and individually selected record/range digests. Historical D1 records retain their historical capture and are immutable dependencies; their incidental opening is not the expanded initial state.
 
+D1 can advance independently: when its current document no longer matches R7's exact file pin, regeneration reads the retained historical document in `payload/dion/tourcraft/` and verifies that same pin. The later road-grid recovery is an additive schema-1 field outside R7's selection; the historical world may omit it, while supplied road records remain strictly validated. Export checks the selected group record without that unselected road grid, preserving the reviewed playable bytes and identity.
+
 All sources pin the same Mercenary III program `4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c`. The gameplay source also pins EmuTOS `154803e3ff4851f3dc358b91b16d6b6110d187a81d8132ecb665af49878939d5` and Hatari `05723606c75a1f0642395974abdce2cbbe48b0a09a747f65cdfca7ef9201e11a`. Whole Catalogue export/ledger hashes are input audit references, excluded from served metadata. An unrelated Catalogue record, font or export timestamp therefore cannot change play identity. Selected source pins and decoded records can.
 
 ## Admission and identity

@@ -123,7 +123,112 @@ const fillFloats = (plan: ErisFramePlan): number =>
 const recoveredVertices = (plan: ErisFramePlan): Float32Array =>
   plan.vertices.slice(fillFloats(plan));
 
+const roadWidth = (vertices: Float32Array): number =>
+  Math.hypot(
+    vertices[0]! - vertices[5 * FLOATS_PER_VERTEX]!,
+    vertices[1]! - vertices[5 * FLOATS_PER_VERTEX + 1]!
+  );
+
 describe('an Eris frame in Filled Presentation', () => {
+  test('selects Snow Island roads after travelling from the Capital City workspace', async () => {
+    const { doc, surface } = await load();
+    // A session keeps its admitted surface anchor while travelling. The road
+    // workspace must follow the nearest island, as its classification does.
+    const pose = {
+      ...startPose(doc),
+      heading: Math.PI + 0.6,
+      pitch: -0.22,
+      // Approaching from Island-Local Cell 08-48, around the reported 008086 altitude.
+      position: { x: 40.5 * 65_536, y: 848_000, z: 1104.5 * 65_536 }
+    };
+    const plan = planErisFrame(surface, pose, doc);
+    expect(plan.roadEdges).toContain(0x26_46);
+    expect(plan.roadVertices.length).toBeGreaterThan(0);
+    expect(Array.from(plan.roadVertices.slice(3, 6))).toEqual([
+      expect.closeTo(170 / 255, 5),
+      expect.closeTo(170 / 255, 5),
+      expect.closeTo(170 / 255, 5)
+    ]);
+    const acrossWrap = planErisFrame(
+      surface,
+      {
+        ...pose,
+        position: {
+          ...pose.position,
+          x: pose.position.x + 4096 * surface.grid.cellUnits,
+          z: pose.position.z - 4096 * surface.grid.cellUnits
+        }
+      },
+      doc
+    );
+    expect(acrossWrap.roadEdges).toEqual(plan.roadEdges);
+    expect(acrossWrap.roadVertices).toEqual(plan.roadVertices);
+    const returned = planErisFrame(
+      surface,
+      {
+        ...startPose(doc),
+        position: {
+          ...startPose(doc).position,
+          y: 6144
+        }
+      },
+      doc
+    );
+    expect(returned.roadEdges).toContain(0x89_d9);
+    expect(returned.roadEdges).not.toContain(0x26_46);
+  });
+  test('draws selected whole road runs between the surface and ground records', async () => {
+    const { doc, surface } = await load();
+    const pose = {
+      ...startPose(doc),
+      position: { ...startPose(doc).position, y: 6144 }
+    };
+    const plan = planErisFrame(surface, pose, doc);
+    // Radius 3 selects five neighbouring runs. The sixth, the own run, waits
+    // for camera Y's high word to become nonzero, as `$54AFA` requires.
+    expect(plan.roadEdges).toEqual([
+      0xb3_b5, 0x94_9a, 0x8a_9a, 0x89_d9, 0x14_b4
+    ]);
+    expect(plan.roadVertices.length).toBeGreaterThan(0);
+    const display = planErisFrame(
+      surface,
+      pose,
+      doc,
+      null,
+      [],
+      [],
+      () => false,
+      false,
+      null,
+      false,
+      false,
+      'aboard',
+      1214
+    );
+    expect(display.roadEdges).toEqual(plan.roadEdges);
+    expect(display.vertices).toEqual(plan.vertices);
+    // Opposite corners of the first camera-space stroke retain its centreline
+    // and shrink its width to one output pixel, without changing road selection.
+    expect(
+      roadWidth(display.roadVertices) / roadWidth(plan.roadVertices)
+    ).toBeCloseTo(136 / 1214, 4);
+    expect(planErisFrame(surface, startPose(doc), doc).roadEdges).toEqual([]);
+    expect(
+      planErisFrame(
+        surface,
+        pose,
+        doc,
+        null,
+        [],
+        [],
+        () => false,
+        false,
+        null,
+        true
+      ).roadEdges
+    ).toEqual([]);
+  });
+
   test('draws the visible resident placements supplied by Session State', async () => {
     const { doc, surface } = await load();
     const pose = startPose(doc);
@@ -1117,13 +1222,14 @@ describe('the Eris renderer', () => {
     // the recovered ground records and everything else, each a layer nearer.
     const layered = [
       `draw:15:0:${fill}`,
+      `draw:15:0:${plan.horizonIslandVertices.length / FLOATS_PER_VERTEX}`,
       `draw:15:${fill}:${islands}`,
       `draw:15:${fill + islands}:${ground}`,
       `draw:15:${fill + islands + ground}:${rest}`
     ];
-    // The ground to the horizon goes first, over the sky and under everything else (#573),
-    // with the island fills flat over it (#578).
-    const horizon = `draw:15:0:${(plan.horizonVertices.length + plan.horizonIslandVertices.length) / FLOATS_PER_VERTEX}`;
+    // Paint the finite sea plane before the complete distant island fills,
+    // so it cannot overwrite land past the detailed-geometry far plane.
+    const horizon = `draw:15:0:${plan.horizonVertices.length / FLOATS_PER_VERTEX}`;
     expect(plan.horizonVertices.length).toBeGreaterThan(0);
     expect(plan.horizonIslandVertices.length).toBeGreaterThan(0);
     expect(fake.calls.filter(c => c.startsWith('draw:'))).toEqual([

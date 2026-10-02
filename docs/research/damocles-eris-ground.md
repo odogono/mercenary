@@ -11,6 +11,13 @@ Authoritative Evidence remains bound to the C64 Reference Build. Observations
 here are Working-Authority Evidence only. This note does not mint Damocles world
 terms in `CONTEXT.md`.
 
+**Road-line correction (#724):** the [cross-title road-line research](damocles-miii-road-lines.md)
+establishes that `$054AFA` skips the own-cell pair while camera Y's high word
+is zero, even at radius zero. The first-world list below contains six words
+but the road pass draws only its five neighbouring runs at Y = 63. `$79BA`
+is minus camera Y in log-float form; the endpoints lie at world Y = 0. The
+new note also recovers index-14 Settlement ink and the outdoor draw order.
+
 ## Land and sea are elsewhere
 
 [#391](https://github.com/odogono/mercenary/issues/391) recovered what paints

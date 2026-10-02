@@ -166,6 +166,8 @@ export interface RoadNetwork {
     readonly z: number;
   }[];
   readonly classTableAddress: number;
+  /** The unrotated per-cell run bindings, including empty and overwritten cells. */
+  readonly corners: readonly number[];
   readonly evidence: readonly Evidence[];
   readonly id: string;
   readonly island: string | null;
@@ -178,6 +180,8 @@ export interface RoadNetwork {
     readonly recordAddress: number;
   }[];
   readonly reason: string;
+  /** The Settlement's fixed palette-14 road ink, independent of day and night. */
+  readonly roadColour: string;
   /**
    * The network's lines: each authored run, deduplicated. `$05493E` hands the same four
    * bytes to the ground-extent slots and `$054AD2` draws each surviving pair as one
@@ -189,6 +193,7 @@ export interface RoadNetwork {
     readonly start: readonly [number, number];
   }[];
   readonly sourceAddress: number;
+  readonly sourceRoadColour: number;
   /** The Structure Workspace group this network belongs to. */
   readonly structureGroup: number;
 }
@@ -2570,12 +2575,26 @@ export const parseCatalogueDocument = (value: unknown): Catalogue => {
         body: string(n['body']),
         cells,
         classTableAddress: integer(n['classTableAddress']),
+        corners: (() => {
+          const corners = list(n['corners']).map(value => {
+            const word = integer(value);
+            if (word < 0 || word > 0xff_ff_ff_ff) {
+              fail('invalid road corner longword');
+            }
+            return word;
+          });
+          if (corners.length !== 256) {
+            fail('road corner grid must carry 256 cells');
+          }
+          return corners;
+        })(),
         evidence: evidenceList(n['evidence']),
         id: string(n['id']),
         island,
         origin: cellPair(n['origin']),
         pieces,
         reason: string(n['reason']),
+        roadColour: string(n['roadColour']),
         runs: list(n['runs']).map(value => {
           const run = object(value);
           return {
@@ -2585,6 +2604,7 @@ export const parseCatalogueDocument = (value: unknown): Catalogue => {
           };
         }),
         sourceAddress: integer(n['sourceAddress']),
+        sourceRoadColour: unsignedWord(n['sourceRoadColour']),
         structureGroup: byte(n['structureGroup'])
       };
     }

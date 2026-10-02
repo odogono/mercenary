@@ -159,6 +159,10 @@ export const preparePreview = async (
     support.groups.get(group) ??
     support.bodies.get(body ?? '') ??
     support.groups.get(18)!;
+  // Standalone model/detail inspection has no bound Surface Cell. Admit road
+  // metadata only when the inspection identifies its actual workspace.
+  let roadGroup =
+    context?.group ?? (placement && selection.floor === 0 ? group : undefined);
   let structure = emptyStructure();
   let detail = emptyDetail();
   const colours = [...support.colours];
@@ -369,6 +373,7 @@ export const preparePreview = async (
           Number(row['transform']) === groundTransform
       );
     if (context) {
+      roadGroup = context.group;
       groundOrientation = Number(context.row['orientation']);
       roadPoints = new Map(
         Object.entries(record(context.row['roadPoints'], 'roadPoints')).map(
@@ -432,6 +437,7 @@ export const preparePreview = async (
       b.islands.find(i => i.geometry === geometry?.id) ??
       b.islands.find(i => i.group === group) ??
       b.islands[0]!;
+    roadGroup = selectedIsland.group;
     const centre =
       repeat?.bodyCell ?? placement?.bodyCell ?? selectedIsland.origin;
     coast = await catalogueCoast(store, b.id, centre);
@@ -493,6 +499,10 @@ export const preparePreview = async (
     );
   }
   const world: DionFrameWorld = {
+    roads:
+      roadGroup === undefined
+        ? undefined
+        : support.groups.get(roadGroup)?.roads,
     ...(coast ? { coast } : {}),
     blinkPhase: new Map(),
     cells: noGeometry && !placement ? [] : [cell],
