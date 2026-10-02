@@ -35,6 +35,8 @@ export type OrderedPrimitive = Primitive &
       }
     | {
         readonly camera: readonly [CameraPoint, CameraPoint];
+        /// Enhanced width in output pixels; omitted lines retain the reference raster width.
+        readonly displayPixelWidth?: number;
         readonly kind: 'line';
         readonly screen: readonly [ScreenPoint, ScreenPoint];
       }

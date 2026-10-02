@@ -495,10 +495,17 @@ export class FrameRenderer {
     canvas.addEventListener('webglcontextlost', this.contextLost);
   }
 
+  get outputHeight(): number {
+    return Math.max(
+      1,
+      Math.round(this.canvas.clientHeight * window.devicePixelRatio)
+    );
+  }
+
   private resize(): void {
     const ratio = window.devicePixelRatio;
     const width = Math.max(1, Math.round(this.canvas.clientWidth * ratio));
-    const height = Math.max(1, Math.round(this.canvas.clientHeight * ratio));
+    const height = this.outputHeight;
     if (this.canvas.width !== width || this.canvas.height !== height) {
       this.canvas.width = width;
       this.canvas.height = height;
@@ -575,7 +582,10 @@ export class FrameRenderer {
       gl.disableVertexAttribArray(attribute);
     }
     this.enabledAttributes.clear();
-    const vertices = descriptionVertices(description);
+    const vertices = descriptionVertices(description, {
+      height: this.canvas.height,
+      width: this.canvas.width
+    });
     gl.bindBuffer(gl.ARRAY_BUFFER, resources.buffer);
     gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.DYNAMIC_DRAW);
     for (const [name, count, offset] of [

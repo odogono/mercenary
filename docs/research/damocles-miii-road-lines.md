@@ -103,8 +103,12 @@ lines keep drawing. The enclosed-region branch bypasses this whole outdoor
 pass, as [the ground note](damocles-eris-ground.md) already records.
 
 The browser's DPR policy is an authored presentation decision; an ST capture
-cannot specify device-pixel behavior on a modern display. Scaling the recovered
-320×136 viewport preserves the native visual thickness independently of DPR.
+cannot specify device-pixel behavior on a modern display. The GPU road pass
+uses one output pixel, including on displays with DPR greater than one. Scaling
+one reference pixel with the 320×136 view made a road line roughly nine pixels
+wide in a 1,214-row output, causing a visible width jump where it met a
+perspective road polygon. MIII's Authentic indexed raster retains its native
+one-pixel line, scaled together with the rest of that raster.
 
 ## Artifacts and source hashes
 
@@ -209,12 +213,15 @@ Both planners use `web/src/coast/roads.ts` for the selected words and the
 requested Damocles curve. Damocles's triangle renderer paints flat strokes
 after island fill and before ground/objects, without depth writes or shadow
 casting; MIII emits the same pass as ordered Frame Description lines. A
-reference-pixel stroke scales with the view, including DPR and resolution
-scaling. Roads bypass the detailed geometry's authored far plane.
+one-output-pixel stroke stays fine at larger resolutions and DPR. Damocles
+uses that width in both presets; MIII uses it in Enhanced and preserves its
+native Authentic raster. Other MIII lines retain their reference-pixel width.
+Roads bypass the detailed geometry's authored far plane.
 
-The full browser unit suite passed 2,498 tests before the final preview-binding
-correction; the final affected planner, Floor, renderer and preview checks
-passed 82 tests. Lint, TypeScript and `git diff --check` passed. Three new
+The full browser unit suite passed 2,501 tests after the road-width correction.
+The regression tests first demonstrated the oversized stroke in both GPU
+paths, then verified one output pixel and unchanged road selection and native
+Authentic raster. Lint, TypeScript and `git diff --check` passed. Three new
 Python recovery checks and thirteen existing recovery checks passed.
 
 The T3 collaborative browser rendered the recovered Capital City and METIS
@@ -223,3 +230,10 @@ road grids with WebGL error 0. At DPR 2 a synthetic red road at view depth
 Enhanced paths, including an Enhanced pass with zero illumination. This
 checks far reach and flat ink independently of the ordinary scene geometry;
 it does not establish the outstanding matching-pose Hatari comparison.
+
+After the width correction, a 1,200-row DPR 2 output reduced a synthetic
+horizontal road from eight physical rows to one in both Damocles render paths,
+and from nine rows to one in MIII's ordered GPU path, all with WebGL error 0.
+The recovered Capital City grid rendered with the same 37 selected runs and
+68 visible stroke triangles before and after the width change. These checks
+verify display sizing without changing the recovered selection rules.
