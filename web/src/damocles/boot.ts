@@ -96,6 +96,11 @@ import {
 } from './sound.ts';
 import { starViewOf, type StarRoutine } from './stars.ts';
 import { damoclesTitle } from './title.ts';
+import {
+  DAMOCLES_TITLE_PATH,
+  damoclesLogoRgba,
+  parseDamoclesTitle
+} from './titleLogo.ts';
 
 /// The Damocles Gameplay Session's document (ADR 0043, ADR 0044).
 ///
@@ -187,13 +192,23 @@ try {
   } catch {
     storage = undefined;
   }
-  const [loaded, system] = await Promise.all([
+  const [loaded, system, titleLogo] = await Promise.all([
     damoclesTitle.load(requiredJson),
     requiredJson('/payload/damocles/system.json').then(document =>
       readGammaSystem(document.value)
     ),
+    requiredJson(DAMOCLES_TITLE_PATH).then(document =>
+      parseDamoclesTitle(document.value)
+    ),
     loadTypography()
   ]);
+  if (titleLogo.programSha256 !== loaded.catalogue.source.programSha256) {
+    throw new Error(
+      `${DAMOCLES_TITLE_PATH}: program identity does not match the Catalogue`
+    );
+  }
+  const logo = damoclesLogoRgba(titleLogo);
+  chrome.showLogo(new ImageData(logo.data, logo.width, logo.height));
   // The range scan in space reads the comet where the impact clock has moved it (#558).
   const content = {
     ...loaded,

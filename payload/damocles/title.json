@@ -1,0 +1,152 @@
+{
+  "schemaVersion": 1,
+  "title": "Damocles",
+  "kind": "title-logo",
+  "source": {
+    "authority": "Damocles Atari ST Working Authority",
+    "evidence": "docs/research/damocles-title-logo.md",
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "recipe": "python3 -m damocleslab.title --stx <STX> --output payload/damocles/title.json"
+  },
+  "disk": {
+    "directory": {
+      "track": 0,
+      "side": 0,
+      "sectors": [
+        2,
+        3
+      ],
+      "decrypt": "$6891E",
+      "loadedAt": "$68AA4",
+      "sha256": "a45319241407645b34735c39bc0cbc021cd2213d3ce1df0a844fb0bc22e2bdc8"
+    },
+    "file": {
+      "name": "ETITLE  NEO",
+      "entry": {
+        "track": 3,
+        "offset": 4141,
+        "length": 13500
+      },
+      "tracks": [
+        3,
+        4,
+        5
+      ],
+      "side": 0,
+      "reader": "$68364",
+      "storedSha256": "66163715b57f8a52c5d8acfa20ce097bfc479f41b5b5d49a738202f436ac4290",
+      "decrypt": "$68432",
+      "packing": {
+        "tag": "OTNM",
+        "unpacker": "$68530",
+        "packedSha256": "b31256ddb37de4a38afdc6d7bc5b17f7f1c0674acd04cd0220c5ee808297cc60"
+      },
+      "format": "NEOchrome",
+      "size": 32128,
+      "loadedAt": "$60000",
+      "loader": "$6801C",
+      "provenance": {
+        "range": [
+          "$60000",
+          "$67D80"
+        ],
+        "sha256": "d90ac8d14280ba7eadd5c533b20341f64d887db7af4b15a07c48f6cf62626406"
+      }
+    }
+  },
+  "screen": {
+    "width": 320,
+    "height": 200,
+    "planes": 4,
+    "bytesPerLine": 160,
+    "base": "$78000",
+    "setUp": "$680AC: low resolution, base $78000, palette $60004 -> $FF8240",
+    "copy": "$68042: $60080..$67D80 -> $78000..$7FD00"
+  },
+  "palette": {
+    "colours": [
+      0,
+      564,
+      1110,
+      1383,
+      1655,
+      1792,
+      1908,
+      1909,
+      1910,
+      273,
+      546,
+      819,
+      1092,
+      1365,
+      1638,
+      1911
+    ],
+    "provenance": {
+      "range": [
+        "$60004",
+        "$60024"
+      ],
+      "sha256": "8a70814cb107d43b562b339c2e47eeec2a3faa009fe12f24533598d91d377516"
+    }
+  },
+  "logo": {
+    "x": 16,
+    "y": 0,
+    "width": 284,
+    "height": 43,
+    "rule": "the 8-connected non-zero pixels of rows 0..42 reached from (58, 20) on the D; every other pixel, colour 0 and the single-pixel stars among them, is clear",
+    "pixels": [
+      "efffffffffffffffffffffffffffffffffffd0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000009aaaaaaaaaaa9000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "eefffffffffffffffffffffffffffffffffdcc000000000000000000000000000000000000000000000000000000000000000000000000000000000000000009aaabcccccccccbaaa9000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "edeffffffffffffffffffffffffffffffffdccc00000000000000000000000000000000000000000000000000000000000000000000000000000000000009aaabccdeeeeeeeeedccbaaa9000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "eddddddddddddddddddddddddddddddddddccccc00000000000000000000000000000000000000000000000000000000000000000000000000000000009aabccdee88888888888eedccbaa90000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "eddcbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbcccccc00000000000000000000000000000000000000000000000000000000000000000000000000000009aabcdee88888888888888888eedcbaa900000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "edcaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbcccccc000000000000000000000000000000000000000000000000000000000000000000000000000009abcde88888888888888888888888edcba90000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "ecaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbcccccc0000000000000000000000000000000000000000000000000000000000000000000000000009acee888877777777777777777777888edca9000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "caaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbcccccc00000000000000000000000000000000000000000000000000000000000000000000000009ace8888876666666666666666666678888eca900000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "0000000000000000b0000000000000000bbbbbbcccccc000000000000000000000000000000000000000000000000000000000000000000000009ace888887666666666666666666666678888eca90000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+      "0000000000000000b00000000000000000bbbbbbcccccc0000000000000ffffffffffd0000000000000efffffffffffd00000000000ffffffffffffd8888766effffffffffffffffffe6678888eca9000ffffffffffffffffffffd000000effffffd000000000000000000000000000ffffffffffffffffffffd0000000000000ffffffffffffffffffffd000000",
+      "0000000000000000b000000000000000000bbbbbbccccb000000000000eeffffffffdcc000000000000defffffffffdcc000000000eeffffffffffdb888766eeeffffffffffffffffecc6678888eca90eeffffffffffffffffffdcc00000deffffdb00000000000000000000000000eeffffffffffffffffffdcc00000000000eeffffffffffffffffffdcc00000",
+      "0000000000000000b0000000000000000000bbbbbbcbbb00000000000eeeeffffffdcccc00000000000ddefffffffdcccc0000000eeeeffffffffdbb88766eeeeffffffffffffffffdccc667888edb9eeefffffffffffffffffdcccc0000ddeffdbb0000000000000000000000000eeefffffffffffffffffdcccc000000000eeefffffffffffffffffdcccc0000",
+      "0000000000000000b00000000000000000000bbbcccbbb0000000000eeeeecccccccccccc0000000000dddcbbbbbbcccccc00000eeeeecbbbbbbcbbb8766eeeeeccccccccccccccccccccc667888edeeeeeccccccccccccccccbccccc000dddedbbb000000000000000000000000eeeeeccccccccccccccccbccccc0000000eeeeeccccccccccccccccbccccc000",
+      "0000000000000000b000000000000000000000ccdccbbb000000000eeeeecbaaaaabcccccc000000000dddcbaaaaabcccccc000eeeeecbaaaabccbbb766eeeeecaaaaaaaaaaaaaaabcccccc667876eeeeecaaaaaaaaaaaaaaabbbbcccc00dddccbbb00000000000000000000000eeeeecaaaaaaaaaaaaaaabbbbcccc00000eeeeecaaaaaaaaaaaaaaabbbbcccc00",
+      "00000000000000004000000000000000000000dddccbbb00000000eeeeecbaaaaabbbcccccc00000000dddccbaaabbbcccccc0eeeeecbaaaabdccbbb66eeeeecaaaaaaaaaaaaaaabbbcccccc6676eeeeecaaaaaaaaaaaaaaabbbbabbbcc0dddccbbb0000000000000000000000eeeeecaaaaaaaaaaaaaaabbbbabbbcc000eeeeecaaaaaaaaaaaaaaabbbbabbbcc0",
+      "00000000000000044300000000000000000000dddccbbb0000000eeeeecbaaaaabbbbbcccccc0000000dddccbbabbbbbcccccdeeeecbaaaabddccbbb6eeeeecaaaaaaaaaaaaaaaabbbbcccccc66eeeeecaaaaaaaaaaaaaaabbbbbaaaabbbdddccbbb000000000000000000000eeeeecaaaaaaaaaaaaaaabbbbbaaaabbb0eeeeecaaaaaaaaaaaaaaabbbbbaaaabbb",
+      "00000000000000444330000000000000000000dddccbbb000000eeeeecbaaaaa0bbbbbbcccccc000000dddccbbbbbbbbbccccdeeecbaaaaadddccbbbdeeeecaaaaa888888888888bbbbbcccccbddeeecaaaaa000000000000bbbbaaaaaa0dddccbbb00000000000000000000dddeecaaaaa000000000000bbbbaaaaaa0dddeecaaaaa000000000000bbbbaaaaaa0",
+      "00000000000004444333000000000000000000dddccbbb00000eeeeecbaaaaa000bbbbbbcccccc00000dddccbbb0bbbbbbcccdeecbaaaaa0dddccbbbddeecaaaaa88888888888888bbbbbcccbbddddcaaaaa00000000000000bbbaaaa000dddccbbb00000000000000000000dddccbaaaa00000000000000bbbaaaa000dddccbaaaa00000000000000bbbaaaa000",
+      "00000000000044444333300000000000000000dddccbbb0000eeeeecbaaaaa00000bbbbbbcccccc0000dddccbbb00bbbbbbccdecbaaaaa00dddccbbbdddcbbaaa8888888888888888bbbcccbbbddddcbaaa0000000000000000bbaaa0000dddccbbb00000000000000000000dddccbbaa0000000000000000bbaa00000dddccbbaa0000000000000000bbaa00000",
+      "00000000000444444333330000000000000000dddccbbb000eeeeecbaaaaa0000000bbbbbbcccccc000dddccbbb000bbbbbbcdcbaaaaa000dddccbbbdddcbbbb888888888888888888ccdccbbbddddcbbb000000000000000000ba000000dddccbbb00000000000000000000dddccbbb000000000000000000b0000000dddccbbb000000000000000000b0000000",
+      "00000000000022222111100000000000000000dddccbbb00eeeeecbaaaaa000000000bbbbbbcccccc00dddccbbb0000bbbbbbdbaaaaa0000dddccbbbdddcbbbb888888888888888888dddccbbbddddcbbb00000000000000000000000000dddccbbb00000000000000000000dddccbbb00000000000000000000000000dddccbbb00000000000000000000000000",
+      "00000000000002222111000000000000000000dddccbbb0eeeeecbaaaaa00000000000bbbbbbcccccc0dddcccccc0000bbbbbbaaaaa0000eeddccbbbdddcbbbb888888888888888888dddccbbbddddcbbb00000000000000000000000000dddccbbb00000000000000000000dddccbbb00000000000000000000000000dddccbbcc0000000000000000000000000",
+      "0000000000000f22211c000000000000000000dddccbbbdeeeecbaaaaa0000000000000bbbbbbccccbbdddccccccc0000bbbbbaaaa0000eeeeeccbbbdddcbbbb888888888888888888dddccbbbddddcbbb00000000000000000000000000dddccbbb000000000000000000000bbbbcccc0000000000000000000000000dddccccccdffffffffffffffffffd00000",
+      "0000000000000fe221cc000000000000000000dddccbbbddeecbbbbbb000000000000000ccccccccbbbdddcccccccc0000bbbbaaa0000eeeeecccbbbdddcbbbb888888888888888888dddccbbbddddcbbb00000000000000000000000000dddccbbb0000000000000000000000bbbbcccc000000000000000000000000dccbbcccdffffffffffffffffffdcc0000",
+      "0000000000000fee2dcc000000000000000000dddccbbbddddabcccccc0000000000000eeeeedbbcbbbdddccbcccccc0000bbbaa0000eeeeecbccbbbdddcbbbb888888888888888888dddccbbbddddcbbb00000000000000000000000000dddccbbb00000000000000000000000bbbbcccc00000000000000000000000cbbbbbcdffffffffffffffffffdcccc000",
+      "0000000000000feeddcc000000000000000000dddccbbbdddcabbcccccc00000000000eeeeedbaccbbbdddccbbcccccc0000bba0000eeeeecbaccbbbdddcbbbb888888888888888888dddccbbbddddcbbb00000000000000000000000000dddccbbb000000000000000000000000bbbbcccc00000000000000000000000bbbbbbccccccccccccccccccccccccc00",
+      "0000000000000dccbbaa000000000000000000dddccbbbdddccabbcccccc000000000eeeeecbabccbbbdddccabbcccccc0000b0000eeeeecbabccbbbdddcbbbb888888888888888888dddccbbbddddcbbb00000000000000000000000000dddccbbb000000000000000000000000ccccbbbb000000000000000000000000bbbbbaaaaaaaaaaaaaaaaaabbcccccc0",
+      "0000000000000feeddcc000000000000000000dddccbbbdddccabbbcccccc0000000eeeeedbaacccbbbdddccabbbcccccc0000000eeeeecbaacccbbbdddcbbbb888888888888888888dddccbbbddddcbbb00000000000000000000000000dddccbbb00000000000000000000000eeecbaaa00000000000000000000000000bbbaaaaaaaaaaaaaaaaaabbbbcccccb",
+      "0000000000000feeddcc000000000000000000dddccbbbdddccbabbbcccccc00000eeeeedbaabdccbbbdddccbabbbcccccc00000eeeeecbaabdccbbbdddcbbbb888888888888888888dddccbbbddddcbbb00000000000000000000000000dddccbbb0000000000000000000000eeecbaaa0000000000000000000000000000baaaaaaaaaaaaaaaaaabbbbbbccbbb",
+      "0000000000000dccbbaa000000000000000000eddccbbbdddccbabbbbcccccc000eeeeedbaaacdccbbbdddccbabbbbcccccc000eeeeecbaaacdccbbbdddcbbbb888888888888888888dddccbbbddddcbbb00000000000000000000000000dddccbbb000000000000000000000eeecbaaa0000000000000000000000000000000000000000000000000bbbbbcbbbb",
+      "0000000000000feeddcc00000000000000000eeeeccbbbdddccbbabbbbcccccc0eeeeedbaaabddccbbbdddccbbabbbbcccccc0eeeeecbaaabddccbbbdddcbbbb788888888888888887dddccbbbddddcbbb00000000000000000000000000dddccbbb00000000000000000000ddddbbbb000000000000000000000000000000000000000000000000000bbccdcbbb",
+      "0000000000000feeddcc0000000000000000eeeeeccbbbdddccbbabbbbbcccccdeeeedbaaaacddccbbbdddccbbabbbbbcccccdeeeecbaaaacddccbbbdddcbbbb678888888888888876dddccbbbddddcbbb00000000000000000000000000dddccbbb00000000000000000000dddcbbbb0000000000000000000000000000000000000000000000000000cdddcbbb",
+      "0000000000000dccbbaa000000000000000eeeeecbabbbdddccbbbabbbbbccccdeeedbaaaaadddccbbbdddccbbbabbbbbccccdeeecbaaaaadddccbbbdddcbbbb667888888888888766dddccbbbddddcbbc000000000000000000da000000dddccbbb00000000000000000000dddcbbbc000000000000000000da000000000000ad000000000000000000ddddcbbb",
+      "0000000000000feeddcc00000000000000eeeeecbaaaabdddccbbb0bbbbbbcccdeedbaaaaa0dddccbbbdddccbbb0bbbbbbcccdeecbaaaaacdddccbbbdddcbbccc6677777777777766eeedccbbbddddccccc0000000000000000edcba0000dddccbbb00000000000000000000dddcbbccc0000000000000000edcba00000000acedc0000000000000000eeeddcbbb",
+      "0000000000000feeddcc0000000000000eeeeecbaaaaa0dddccbbb00bbbbbbccdedbaaaaa00dddccbbbdddccbbb00bbbbbbccdecbaaaaabcdddccbbbddcccccccc66666666666666eeeeecbbbbdddcbccccc00000000000000eedcccba00dddccbbb00000000000000000000dddcbccccc00000000000000eedcccba0000aceeedcc00000000000000eeeeecbbbb",
+      "344444444444444444444444444444443eeeecbaaaaa00dddccbbb000bbbbbbcddbaaaaa000dddccbbbdddccbbb000bbbbbbcdcbaaaaa9bcdddccbbbdcbbbcccccc666666666666eeeeecaaabbddcbbbccccc000000000000eeedcccccb0dddccbbc00000000000000000000ddcbbbccccc000000000000eeedcccccb00aeeeeedccc000000000000eeeeecaaabb",
+      "434444444444444444444444444444432feecbaaaaa000dddccbbb0000bbbbbbdbaaaaa0000dddccbbbdddccbbb0000bbbbbbdbaaaaa9abbdddccbbb8bbbbbcccccdfffffffffffeeeecaaaaa88cbbbbbccccdffffffffffeeeedccccbaadddccbcdfffffffffffffffffffc0cbbbbbccccdffffffffffeeeedccccbaacedeeeedcccdffffffffffeeeeecaaaaa0",
+      "443444444444444444444444444444322fecbaaaaa0000dddccbbb00000bbbbbbaaaaa00000dddccbbbdddccbbb00000bbbbbbaaaaa09aacdddccbbb88bbbbbcccdfffffffffffffeecaaaaa8888bbbbbbccdffffffffffffeeedcbbbaa0dddcccdfffffffffffffffffffdb00bbbbbbccdffffffffffffeeedcbbbaa00bbcddedccdffffffffffffeeecaaaaa00",
+      "444333333333333333333333333333222ccbaaaaa00000dddccbbb000000bbbbbaaaa000000dddccbbbdddccbbb000000bbbbbaaaa0099bbdddccbbb888bbbbbccdfffffffffffffecaaaaa888887bbbbbbcdfffffffffffffeebbaaaa00dddccdfffffffffffffffffffdbb000bbbbbbcdfffffffffffffeebbaaaa0000bbbcddcdfffffffffffffeecaaaaa000",
+      "444222222222222222222222222222222bbaaaaa000000dddccbbb0000000bbbbaaa0000000dddcbbbbdddccbbb0000000bbbbaaa0009aacdddcbbbb8888bbbbbccccccccccccccccaaaaa88888766bbbbbbcccccccccccccccbaaaaa000dddccccccccccccccccccccccbbb0000bbbbbbcccccccccccccccbaaaaa000000bbbbccccccccccccccccccaaaaa0000",
+      "442111111111111111111111111111222aaaaaa0000000ddcaabbb00000000bbbaa00000000ddcaabbbddcaabbb00000000bbbaa0009aabbddcaabbb88888bbbbaaaaaaaaaaaaaaaaaaaa8888887667bbbbaaaaaaaaaaaaaaaaaaaaa0000ddcbaaaaaaaaaaaaaaaaaaaaabbb00000bbbbaaaaaaaaaaaaaaaaaaaaa00000000bbbbbaaaaaaaaaaaaaaaaaaaa00000",
+      "421111111111111111111111111111122aaaaa00000000dcaaaabb000000000bba000000000dcaaaabbdcaaaabb000000000bba00000aaacdcaaaabb888888bbbaaaaaaaaaaaaaaaaaaa888888766677bbaaaaaaaaaaaaaaaaaaaaa00000dcbaaaaaaaaaaaaaaaaaaaaaaabb000000bbaaaaaaaaaaaaaaaaaaaaa0000000000bbbaaaaaaaaaaaaaaaaaaaa000000",
+      "211111111111111111111111111111112aaaa000000000caaaaaab0000000000b0000000000caaaaaabcaaaaaab0000000000b000009abbccaaaaaab8888888baaaaaaaaaaaaaaaaaaa8888887666768ebaaaaaaaaaaaaaaaaaaaa000000cbaaaaaaaaaaaaaaaaaaaaaaaaab0000000baaaaaaaaaaaaaaaaaaaa000000000000baaaaaaaaaaaaaaaaaaaa0000000"
+    ],
+    "provenance": {
+      "range": [
+        "$60080",
+        "$61B60"
+      ],
+      "sha256": "7e3af0793facd2ee586b0142fcb64830254cfd71242fe01f6db3e664a9c0bd7b"
+    }
+  }
+}

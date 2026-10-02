@@ -16,12 +16,16 @@ EmuTOS-specific mismatch.
 ## Observed path
 
 1. Hatari inserts the STX as drive A. EmuTOS 2.06 starts at `$e00000`.
-2. The first execution of `$68582` (`addx.l d2,d2`) is the title-loop entry.
-   At that first hit (around VBL 1160) the video output is still blank.
+2. The first execution of `$68582` (`addx.l d2,d2`) is the checkpoint's anchor.
+   At that first hit (around VBL 1160) the video output is still blank. `$68582`
+   is inside BOOT's `OTNM` unpacker, not a title loop: the first hit is the
+   unpacking of `ETITLE.NEO`, the title picture
+   (`docs/research/damocles-title-logo.md`).
 3. After 1400 further VBLs the title screen is painted: DAMOCLES / MERCENARY II
    / PAUL WOAKES / NOVAGEN SOFTWARE LTD / PAL VERSION.
-4. The CPU remains in the `$68400`–`$68700` title loop. A3/A4 and the exact PC
-   walk; A5–A7 and D5–D7 stay put.
+4. The CPU remains in the `$68400`–`$68700` loader, unpacking `DAM0` (D7 holds
+   its length, 244,632) behind the painted title. A3/A4 and the exact PC walk;
+   A5–A7 and D5–D7 stay put.
 5. Stable RAM windows `$3b000`–`$3c000` and `$60000`–`$6aa00` match across cold
    starts. Low TOS pages and the supervisor stack page do not.
 
