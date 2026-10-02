@@ -6,7 +6,7 @@ Mercenary III's `/dion` mounted the same System Menu markup as Targ and Damocles
 
 **Preferences are kept per Title.** ADR 0041 kept preferences and typeface global, on the grounds that they describe the player rather than the game. Once the Titles offer different rows, one shared record means a choice made in one Title silently changes another, and the row a Title lacks still steers it. Each Title now keeps its own preferences and typeface under `mercenary.browser-shell.<slug>.*` keys, as its Saves and Session Resume already are. Nothing a player chose is lost: until a Title has written its own record, Targ and Damocles each read the shared record they used before, and Mercenary III reads its earlier presentation key. This amends ADR 0041's last sentence on partitioning; the rest of it stands.
 
-**Every System Menu page carries a small Title Logo, and a Title Logo is only ever recovered from that Title's own release.** It is extracted by our own tooling from the Title's own disk, with provenance, as ADR 0029 requires of everything in the payload. It is never authored, and never taken from a screenshot or packaging scan, which are Restricted Material. Until a Title's logo is recovered, its name in its own typeface stands in for it. Mercenary III's comes first: the 64×32 centre-box logo of its recovered panel (`payload/dion/panel.json`, `$3BA10`). Damocles's and Targ's need a title-screen recovery each ([#695](https://github.com/odogono/mercenary/issues/695), [#696](https://github.com/odogono/mercenary/issues/696)), and Targ has no ST laboratory yet.
+**Every System Menu page carries a small Title Logo, and a Title Logo is only ever recovered from that Title's own release.** It is extracted by our own tooling from the Title's own disk, with provenance, as ADR 0029 requires of everything in the payload. It is never authored, and never taken from a screenshot or packaging scan, which are Restricted Material. Until a Title's logo is recovered, its name in its own typeface stands in for it. Mercenary III's comes first: the 64×32 centre-box logo of its recovered panel (`payload/dion/panel.json`, `$3BA10`). Damocles's needs a title-screen recovery ([#695](https://github.com/odogono/mercenary/issues/695)). Targ's comes from its ST release, since the C64 Reference Build has no title screen: the ST loader shows the NEOchrome picture `E0`, read straight off the pinned disk with no RAM capture ([#696](https://github.com/odogono/mercenary/issues/696), [the research note](../research/targ-st-title-logo.md)).
 
 ## Considered Options
 
@@ -17,5 +17,5 @@ Mercenary III's `/dion` mounted the same System Menu markup as Targ and Damocles
 
 ## Consequences
 
-- Targ shows its name until an ST-Targ capture exists; that is deliberate, not an oversight to fix with artwork.
+- A Title shows its name until its own release yields a mark; that is deliberate, not an oversight to fix with artwork. (Amended 2026-10-02, #696: Targ's no longer waits for an ST-Targ capture.)
 - A Title with no Shell Console still reaches its preferences through the same store, so a later console needs no second path.

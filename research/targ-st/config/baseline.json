@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "logicalName": "Escape from Targ ST release (pinned STX)",
+  "title": "targ",
+  "disk": {
+    "relativePath": "atarist/Mercenary - Escape From Targ (1986)(Novasoft).stx",
+    "size": 383108,
+    "sha256": "4d9e48d79433d3e1ede888a5dbc94097d569a9014357838807d0de1d3cff2cdd"
+  },
+  "evidence": "docs/research/targ-st-title-logo.md",
+  "qualification": "Facts from this tool belong to the ST release of Escape from Targ, not the C64 Reference Build. They supply presentation only (ADR 0063) and carry no Game Semantics.",
+  "confirmation": {
+    "tosImage": {
+      "relativePath": "atarist/tos/emutos206.img",
+      "size": 1048576,
+      "sha256": "154803e3ff4851f3dc358b91b16d6b6110d187a81d8132ecb665af49878939d5"
+    },
+    "emulator": {
+      "path": "/opt/homebrew/Cellar/hatari/2.6.1/Hatari.app/Contents/MacOS/hatari",
+      "version": "2.6.1",
+      "sha256": "05723606c75a1f0642395974abdce2cbbe48b0a09a747f65cdfca7ef9201e11a"
+    }
+  }
+}
