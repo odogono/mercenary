@@ -19,6 +19,48 @@ let store: GeometryStore;
 beforeAll(async () => {
   store = await loadDionCatalogue(read);
 });
+test('road ink follows the selected secondary island and ground workspace', async () => {
+  const support = readRenderSupport(await read(supportPath), store.catalogue);
+  // These groups happen to share ink in the baseline. Distinguish them to
+  // expose binding to the body's first island or the default inspection group.
+  const groups = new Map(support.groups);
+  for (const [group, colour] of [
+    [16, 0x1_23],
+    [23, 0x4_56]
+  ] as const) {
+    const entry = groups.get(group)!;
+    groups.set(group, { ...entry, roads: { ...entry.roads, colour } });
+  }
+  const distinguished = { ...support, groups };
+  const secondary = store.catalogue.bodies
+    .flatMap(body => body.islands)
+    .find(island => island.group === 16)!;
+  const island = await preparePreview(
+    store,
+    distinguished,
+    readSelection(new URLSearchParams({ id: secondary.geometry }))
+  );
+  expect(island.plan().palette[14]).toBe(0x1_23);
+  const matching = Object.entries(store.catalogue.surfaceCells)
+    .flatMap(([group, rows]) =>
+      rows.map(row => ({ group: Number(group), row }))
+    )
+    .find(item => item.group !== 18 && item.row['ground'] === 'ground-01b970')!;
+  const ground = await preparePreview(
+    store,
+    distinguished,
+    readSelection(
+      new URLSearchParams({
+        id: String(matching.row['ground']),
+        variant: `transform=${matching.row['transform']}`
+      })
+    )
+  );
+  expect(ground.plan().palette[14]).toBe(
+    distinguished.groups.get(matching.group)!.roads.colour
+  );
+});
+
 test('renders object forms, surface structures and upper Floors through the Dion planner', async () => {
   const support = readRenderSupport(await read(supportPath), store.catalogue);
   for (const params of [

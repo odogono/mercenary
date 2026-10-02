@@ -183,6 +183,22 @@ def road_points(ram: Ram, cell: int, transform: int) -> dict:
             'provenance': ram.slice(0x1AAC0 + 4 * cell, 0x1AAC0 + 4 * cell + 4)}
 
 
+def road_lines(ram: Ram) -> dict:
+    """`$55BA2..$55E44`: native corner grid and index-14 road pass inputs.
+
+    Keep every cell's two words; overlapping authored runs can replace only
+    part of a prior run, which a deduplicated run inventory cannot represent.
+    `$59D18..$59D2A` puts minus the scene eye Y in `$704A`, so this pass lies at
+    world Y zero. `$5A5C6` binds the group's `$7186` colour to index 14.
+    """
+    return {'ramSha256': ram.sha256,
+            'corners': [ram.long(0x1AAC0 + 4 * cell) for cell in range(256)],
+            'colour': ram.word(0x7186), 'height': 0,
+            'radiusTable': list(ram.bytes(0x7D4A, 0x7E4A)),
+            'provenance': [ram.slice(0x1AAC0, 0x1AEC0), ram.slice(0x7186, 0x7188),
+                           ram.slice(0x7D4A, 0x7E4A), ram.slice(0x55D7E, 0x55E48)]}
+
+
 def extract_world(ram: Ram, opening: Ram, route: list[tuple[int, int]] = ROUTE_CELLS,
                   pinned: bool = True) -> dict:
     """Decode the slice's world from a loaded image and residents from the opening one.
@@ -332,6 +348,7 @@ def extract_world(ram: Ram, opening: Ram, route: list[tuple[int, int]] = ROUTE_C
         },
         'stableSlices': slices,
         'metisGroup': group,
+        'roads': road_lines(ram),
         'cellSpacing': ram.sword(0x4BD14),
         'cells': cells,
         'structures': structures,

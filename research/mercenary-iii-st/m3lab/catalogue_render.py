@@ -8,7 +8,7 @@ import argparse
 import json
 from pathlib import Path
 from .ram import Ram, hexaddr
-from .world import glyph, scene_palette
+from .world import glyph, road_lines, scene_palette
 from .geometry import MODEL_COLOURS, DRAW_PRIORITY
 
 def render_support(catalogue: dict, census: Path) -> dict:
@@ -37,6 +37,7 @@ def render_support(catalogue: dict, census: Path) -> dict:
         # $4F19E reads a road colour from each group's own stream. $70B0
         # starts as the Body's sea colour; the selected core uses island land.
         groups[group] = {**environment, 'road': workspace.word(0x7186),
+                         'roads': road_lines(workspace),
                          'land': island['landColour'],
                          'provenance': [*environment['provenance'], workspace.slice(0x7186,0x7188)]}
     tokens = {}

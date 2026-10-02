@@ -74,6 +74,7 @@ export const presentScreen = (
         ],
     horizonIslandVertices: recolour3(plan.horizonIslandVertices),
     horizonVertices: recolour3(plan.horizonVertices),
+    roadVertices: recolour3(plan.roadVertices),
     skyVertices: recolour3(plan.skyVertices),
     vertices: recolour3(plan.vertices)
   };

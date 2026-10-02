@@ -8,6 +8,7 @@ import {
   type CoastIsland,
   type CoastSurface
 } from '../coast/islands.ts';
+import { roadEdges } from '../coast/roads.ts';
 import { renderAuthentic, rgbaFromIndexed } from '../rendering/authentic.ts';
 import type {
   FrameDescription,
@@ -51,7 +52,7 @@ import type {
 /// its association list hooks into the region queue. Every model draws one
 /// viewer-selected face list in authored order.
 ///
-/// What this does not draw is named in `gaps`: the road-line pass `$55D7E`, the
+/// What this does not draw is named in `gaps`: the
 /// horizon line, the complete sky Body inventory, and any text token whose live string
 /// the slice does not bind.
 
@@ -120,7 +121,7 @@ export interface DionCoastIsland extends CoastIsland {
   readonly id: string;
   readonly landColour: number;
 }
-export type DionFrameWorld = Omit<DionWorld, 'source' | 'opening'> & {
+export type DionFrameWorld = Omit<DionWorld, 'source' | 'opening' | 'roads'> & {
   readonly coast?: CoastSurface<DionCoastIsland>;
   readonly floorOffset?: number;
   readonly opening: Pick<
@@ -134,6 +135,7 @@ export type DionFrameWorld = Omit<DionWorld, 'source' | 'opening'> & {
     | 'region'
     | 'roll'
   >;
+  readonly roads?: DionWorld['roads'] | undefined;
 };
 
 const FREE = 0x80_00;
@@ -1496,6 +1498,35 @@ const drawGround = (view: View, bound: Bound): void =>
   );
 
 // Same recovered coast/horizon routines as Damocles; only records and palette admission are Dion's.
+const drawRoads = (view: View, bound: Bound | null): void => {
+  const roads = view.world.roads;
+  const flags = bound?.structure.regions[view.state.region - 1]?.flags;
+  if (
+    roads === undefined ||
+    (flags !== undefined && !(flags & 0x80_00) && view.state.passenger === null)
+  ) {
+    return;
+  }
+  const [gx, gz] = view.world.opening.groupOrigin;
+  const [x, y, z] = view.state.eye;
+  const edges = roadEdges(
+    roads.corners,
+    Math.floor(x / 65_536) - gx,
+    Math.floor(z / 65_536) - gz,
+    y
+  );
+  const point = (corner: number): Vec3 => [
+    (gx + (corner & 15) + 0.5) * 65_536,
+    roads.height,
+    (gz + (corner >> 4) + 0.5) * 65_536
+  ];
+  withSource(view, 'roads', () => {
+    for (const edge of edges) {
+      stroke(view, point(edge >> 8), point(edge & 0xff), 0x80_0e);
+    }
+  });
+};
+
 const drawCoast = (view: View): number => {
   const surface = view.world.coast!;
   const [x, y, z] = view.state.eye;
@@ -1565,7 +1596,7 @@ export const planDionFrame = (
     ? world.framePalette.skyDay
     : world.framePalette.skyNight;
   template[8] = sky;
-  template[14] = world.framePalette.road;
+  template[14] = world.roads?.colour ?? world.framePalette.road;
   for (const [index, colour] of world.framePalette.fixed) {
     template[index] = colour;
   }
@@ -1615,6 +1646,7 @@ export const planDionFrame = (
   if (world.coast !== undefined) {
     land = drawCoast(view);
   }
+  drawRoads(view, bound);
   if (bound !== null) {
     drawGround(view, bound);
   } else {
