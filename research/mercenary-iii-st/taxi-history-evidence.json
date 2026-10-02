@@ -1,6 +1,62 @@
 {
+  "canonicalReplay": {
+    "resetOffsetFrames": 484,
+    "fullStateMatchRequired": true,
+    "metadataUsedForSelection": false,
+    "laterInputTicksCompared": 6600,
+    "candidateStartFrames": [16156, 81692, 147228],
+    "rule": "Earliest Start among complete source-matching replays of the retained single-trip prefix, fixed final Leave and one-tick call schedule.",
+    "selectedStartFrame": 16156,
+    "matchesEarlierScheduler": true,
+    "limit": "Finite single-trip reference family only; no universal source eligibility, full expanded state construction or browser migration proof."
+  },
   "expandedContentSha256": "d31490d7ba44a08949f71267884f1e290074acc5885fdfae747f7aeefcfdf611",
   "histories": [
+    {
+      "launches": [
+        {
+          "entry": 459232,
+          "tick": 177727
+        },
+        {
+          "entry": 481746,
+          "tick": 1619981
+        },
+        {
+          "entry": 481814,
+          "tick": 1622104
+        },
+        {
+          "entry": 482140,
+          "tick": 1623930
+        }
+      ],
+      "scheduler": {
+        "availability": {
+          "5": 0,
+          "6": 0,
+          "19": 160,
+          "25": 224,
+          "41": 192,
+          "51": 0,
+          "52": 128,
+          "119": 32
+        },
+        "cash": "005100900000",
+        "hold": 200,
+        "lastEncounterRequest": 65499,
+        "messageRemaining": 0,
+        "pc": null,
+        "queue": 0,
+        "stack": [],
+        "target": 0,
+        "timer": 63778,
+        "wait": 2805,
+        "flagsSet": [9, 13, 15, 23]
+      },
+      "startClock": 3554,
+      "startFrame": 16156
+    },
     {
       "launches": [
         {
@@ -41,12 +97,7 @@
         "target": 0,
         "timer": 63778,
         "wait": 2805,
-        "flagsSet": [
-          9,
-          13,
-          15,
-          23
-        ]
+        "flagsSet": [9, 13, 15, 23]
       },
       "startClock": 17972,
       "startFrame": 81692
@@ -79,18 +130,11 @@
         "messageRemaining": 25,
         "pc": 481801,
         "queue": 119,
-        "stack": [
-          null,
-          459700
-        ],
+        "stack": [null, 459700],
         "target": 0,
         "timer": 12692,
         "wait": 847,
-        "flagsSet": [
-          6,
-          9,
-          15
-        ]
+        "flagsSet": [6, 9, 15]
       },
       "startClock": 32390,
       "startFrame": 147228
@@ -130,6 +174,7 @@
     "web/src/dion/session.ts": "311c69efcb87da7d10d66555e4dc922364d355402c755c94af30ede378206832",
     "web/test/dion-controls.ts": "6cfebc17d75094ce638fcc98dd5b61deab27ee8b5500d7aba8e19dce19ec9e92"
   },
+  "sourceRevision": "e4cba434069ca1fbec6e72b3a99cbf775f1663c4",
   "sourceRoundTrips": true,
   "sourceSnapshotSha256": "5669b4b1c9d5be601acf92f86ca8ccccc0a1b8073ff18f475727484e599b8e07"
 }
