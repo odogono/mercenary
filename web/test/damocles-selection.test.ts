@@ -191,7 +191,7 @@ test('aboard, the detail is drawn from the $C13C group alone, and nothing high u
       undefined,
       undefined,
       undefined,
-      true
+      'aboard'
     );
   // Over the room, inside region 1's plan box: no plan queue, no door, no wall text, and the
   // `$30678` half-space list (raw Y 0 up, Z below 400) with the doorway and window facades.
@@ -210,6 +210,40 @@ test('aboard, the detail is drawn from the $C13C group alone, and nothing high u
   );
   // `$53CC2` returns without drawing while `$7A30`, Y's high word, is not 0.
   expect(aboard(1200, 0, 0x1_00_00)).toEqual([]);
+});
+
+test('the whole draw takes every plan face, door and detail face, wherever the eye is', () => {
+  const { detail, structure } = placement.selection!;
+  const whole = (x: number, z: number, y: number) =>
+    structureMeshes(
+      placement,
+      at(x, z, y),
+      false,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      'whole'
+    );
+  const meshes = whole(1200, 0, 400);
+  const faces = meshes.reduce((sum, mesh) => sum + mesh.faces.length, 0);
+  const doors = structure.attachments.reduce(
+    (sum, attachment) => sum + attachment.mesh.faces.length,
+    0
+  );
+  const texts = (structure.wallTexts ?? []).reduce(
+    (sum, text) => sum + text.mesh.faces.length,
+    0
+  );
+  expect(faces).toBe(
+    structure.plan.faces.length + doors + texts + detail.faces.length
+  );
+  // The plan goes first and the detail, roof included, last.
+  expect(meshes[0]!.faces).toEqual(structure.plan.faces);
+  expect(meshes.at(-1)!.faces).toHaveLength(detail.faces.length);
+  // Nothing depends on where the eye is, high up included.
+  expect(whole(1200, 0, 0x1_00_00)).toEqual(meshes);
+  expect(whole(-5000, 9000, 900)).toEqual(meshes);
 });
 
 test('region pushback clamps only the blocked axis and preserves wall sliding', () => {
@@ -545,7 +579,7 @@ test('a mirroring structure scale rewinds the detail so its faces keep their fro
       undefined,
       undefined,
       undefined,
-      true
+      'aboard'
     );
     expect(mesh!.faces.length).toBeGreaterThan(0);
     for (const face of mesh!.faces) {

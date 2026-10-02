@@ -37,6 +37,11 @@ const bearingDegrees = (bearing: number): number => {
   return wrapped < 0 ? wrapped + 360 : wrapped;
 };
 
+/// A pitch in degrees, nose up positive, wrapped to a half turn either side of level so a
+/// craft looped past the vertical reads its way back rather than past 180.
+const pitchDegrees = (pitch: number): number =>
+  (((((pitch * 180) / Math.PI) % 360) + 540) % 360) - 180;
+
 /// The Cell Readout, which prints the Island-Local Cell two digits an axis.
 ///
 /// Damocles's surface is not Targ's bounded grid, so Targ's `gridReference` is not used: this
@@ -226,7 +231,9 @@ export const damoclesPanelViewModel = (
   clock: clockReadout(snapshot.impact),
   compassDegrees: bearingDegrees(snapshot.pose.heading),
   damoclesDisplay: snapshot.displayCells,
-  elevationDegrees: 0,
+  // The Pose's pitch, which aboard is the craft's attitude word and on foot is level unless
+  // Free Look tilts it.
+  elevationDegrees: pitchDegrees(snapshot.pose.pitch),
   panelMask: snapshot.panelMask,
   // `$0509F6`: lit only aboard (`$7A8E` clear) with the eye below `$28FA`, so a craft on the
   // ground lights it and the player on foot never does. In space `$7A8E` is 2.

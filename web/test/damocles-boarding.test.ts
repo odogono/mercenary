@@ -1186,6 +1186,32 @@ describe('the frame plan', () => {
     session.leave();
     expect(count(drawn(session), LIMO)).toBe(1);
   });
+
+  test('aboard, draws the detail group alone, or every part of a structure under Enhanced', () => {
+    const session = beside(LIMO, [LIMO_KEY]);
+    session.board();
+    const snapshot = session.snapshot;
+    const triangles = (aboard: boolean, draw: 'aboard' | 'whole'): number =>
+      planErisFrame(
+        snapshot.surface,
+        snapshot.pose,
+        content.doc,
+        snapshot.structure,
+        snapshot.residents,
+        [],
+        () => false,
+        false,
+        null,
+        false,
+        aboard,
+        draw
+      ).triangleCount;
+    const detailOnly = triangles(true, 'aboard');
+    const whole = triangles(true, 'whole');
+    // The whole draw adds the roof, the plan and the doors to both selections the ST makes.
+    expect(whole).toBeGreaterThan(detailOnly);
+    expect(whole).toBeGreaterThan(triangles(false, 'aboard'));
+  });
 });
 
 describe('leaving', () => {

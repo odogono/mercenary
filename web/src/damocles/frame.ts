@@ -764,7 +764,11 @@ export const planErisFrame = (
   inSpace = false,
   /// Aboard a craft on a Body: structures are drawn from their `$C13C` detail group alone, and
   /// no region's plan queue or enclosed branch is drawn (`$0533D4`, `$53CC2`).
-  aboard = false
+  aboard = false,
+  /// How structures are drawn aboard: the ST's `$C13C` detail group, which saves it time, or
+  /// `whole` under Enhanced presentation, which draws every part of every structure. Nothing is
+  /// enclosed aboard either way.
+  aboardStructures: 'aboard' | 'whole' = 'aboard'
 ): ErisFramePlan => {
   const camera = new Camera({
     farPlane: doc.camera.farPlane,
@@ -1111,7 +1115,7 @@ export const planErisFrame = (
       isBound ? structure.regionIndex : null,
       carriedSlot,
       floorLabelGlyph,
-      aboard
+      aboard ? aboardStructures : 'onFoot'
     )) {
       if (mesh.wallTextPlane !== undefined) {
         emitWallText(mesh, mesh.wallTextPlane, placement);
