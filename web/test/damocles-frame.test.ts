@@ -123,6 +123,12 @@ const fillFloats = (plan: ErisFramePlan): number =>
 const recoveredVertices = (plan: ErisFramePlan): Float32Array =>
   plan.vertices.slice(fillFloats(plan));
 
+const roadWidth = (vertices: Float32Array): number =>
+  Math.hypot(
+    vertices[0]! - vertices[5 * FLOATS_PER_VERTEX]!,
+    vertices[1]! - vertices[5 * FLOATS_PER_VERTEX + 1]!
+  );
+
 describe('an Eris frame in Filled Presentation', () => {
   test('draws selected whole road runs between the surface and ground records', async () => {
     const { doc, surface } = await load();
@@ -133,8 +139,32 @@ describe('an Eris frame in Filled Presentation', () => {
     const plan = planErisFrame(surface, pose, doc);
     // Radius 3 selects five neighbouring runs. The sixth, the own run, waits
     // for camera Y's high word to become nonzero, as `$54AFA` requires.
-    expect(plan.roadEdges).toEqual([0xb3_b5, 0x94_9a, 0x8a_9a, 0x89_d9, 0x14_b4]);
+    expect(plan.roadEdges).toEqual([
+      0xb3_b5, 0x94_9a, 0x8a_9a, 0x89_d9, 0x14_b4
+    ]);
     expect(plan.roadVertices.length).toBeGreaterThan(0);
+    const display = planErisFrame(
+      surface,
+      pose,
+      doc,
+      null,
+      [],
+      [],
+      () => false,
+      false,
+      null,
+      false,
+      false,
+      'aboard',
+      1214
+    );
+    expect(display.roadEdges).toEqual(plan.roadEdges);
+    expect(display.vertices).toEqual(plan.vertices);
+    // Opposite corners of the first camera-space stroke retain its centreline
+    // and shrink its width to one output pixel, without changing road selection.
+    expect(
+      roadWidth(display.roadVertices) / roadWidth(plan.roadVertices)
+    ).toBeCloseTo(136 / 1214, 4);
     expect(planErisFrame(surface, startPose(doc), doc).roadEdges).toEqual([]);
     expect(
       planErisFrame(

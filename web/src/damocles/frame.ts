@@ -777,7 +777,9 @@ export const planErisFrame = (
   /// How structures are drawn aboard: the ST's `$C13C` detail group, which saves it time, or
   /// `whole` under Enhanced presentation, which draws every part of every structure. Nothing is
   /// enclosed aboard either way.
-  aboardStructures: 'aboard' | 'whole' = 'aboard'
+  aboardStructures: 'aboard' | 'whole' = 'aboard',
+  /// Road strokes stay one output pixel wide where they meet perspective road polygons.
+  outputHeight = 136
 ): ErisFramePlan => {
   const camera = new Camera({
     farPlane: doc.camera.farPlane,
@@ -1074,7 +1076,8 @@ export const planErisFrame = (
       roadPoint(edge >> 8),
       roadPoint(edge & 0xff),
       doc.camera.nearPlane,
-      Math.tan((doc.camera.verticalFieldOfViewDegrees * Math.PI) / 360)
+      Math.tan((doc.camera.verticalFieldOfViewDegrees * Math.PI) / 360),
+      outputHeight
     );
     if (quad === null) {
       continue;

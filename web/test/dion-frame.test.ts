@@ -86,7 +86,11 @@ describe('the Mercenary III frame', () => {
     expect(lines.length).toBeGreaterThan(0);
     expect(
       lines.every(
-        p => p.kind === 'line' && 'index' in p.colour && p.colour.index === 14
+        p =>
+          p.kind === 'line' &&
+          p.displayPixelWidth === 1 &&
+          'index' in p.colour &&
+          p.colour.index === 14
       )
     ).toBe(true);
     expect(
