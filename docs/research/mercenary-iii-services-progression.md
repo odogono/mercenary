@@ -2,6 +2,8 @@
 
 Research for [#703](https://github.com/odogono/mercenary/issues/703), 2026-10-02. This is **R5** of the [integration report](mercenary-iii-integration.md). It informs D2; it is neither an implementation contract nor permission to promote Catalogue content into play.
 
+**Decision handoff:** [D2 / #704](mercenary-iii-tourcraft-milestone-review.md) accepts the staffed TOURCRAFT journey to on-foot TOLOSA, with research gates #707–#709 and implementation tickets #710/#711. D2 defers the solicitor shortcut and bus access rather than commissioning them as prerequisites for this flight. The ranking and recommendations below retain R5's evidence and its pre-review alternatives.
+
 ## Recommendation
 
 Rank the **METIS spaceport → TOLOSA staffed TOURCRAFT journey** first: two fresh cold boots now demonstrate approach, boarding, launch, another Body and automatic on-foot arrival. It extends the first slice's own spacecraft prompt and introduces original automated craft flight, rather than relying on a familiar craft name. Its recovery cost is greater than another taxi: scripted control playback, the craft Mover, Body changes and accelerated time all enter the path.

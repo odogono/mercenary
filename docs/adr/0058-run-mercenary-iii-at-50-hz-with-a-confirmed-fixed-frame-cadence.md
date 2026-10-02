@@ -2,6 +2,8 @@
 
 Accepted, 2026-09-30, for [D1 / #638](https://github.com/odogono/mercenary/issues/638); cadence confirmed the same day by [#642](https://github.com/odogono/mercenary/issues/642). The two opening METIS taxi journeys use 50 game ticks per second and a fixed simulation-frame cadence of **eleven ticks per frame**. This is an explicit MIII timing adaptation, not a recovered original cadence or an extension of Damocles's four-tick policy.
 
+_(Status note, 2026-10-02: [D2](../research/mercenary-iii-tourcraft-milestone-review.md) retains this policy for the selected TOURCRAFT journey, conditional on a new flight/playback/accelerated-clock confirmation gate. The taxi confirmation does not establish flight timing; a failed probe returns to review before any policy or message-rule change.)_
+
 [R4](../research/mercenary-iii-shared-mechanisms.md#cadence-options-for-d1) establishes two clocks: waits, messages and elapsed time count VBLs, while routes, admission and script execution count main-loop frames. Original frame cost varies with the scene and sound-driver work. The 60 Hz baseline runs its 50-VBL game seconds fast; 50 Hz makes game seconds equal wall seconds, although this STX's PAL lineage is not independently established. Fixed cadence preserves integer rules and deterministic restoration without reproducing ST CPU/raster cost.
 
 ## Decision and confirmation gate

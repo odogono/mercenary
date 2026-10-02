@@ -567,7 +567,7 @@ The read-only collection of recovered Damocles Models, Instances, Places, visual
 _Avoid_: Gameplay Session, Damocles world, level data
 
 **Dion Catalogue**:
-The read-only, sessionless collection of Mercenary III's recovered Bodies, placements, objects, Floors and shared geometry across the whole original world, at `/dion/catalogue` (ADR 0061). It is separately versioned from the playable Dion Data Payload, which it neither reads nor extends, and it is not evidence for Damocles or from it.
+The read-only, sessionless collection of Mercenary III's recovered Bodies, placements, objects, Floors and shared geometry across the whole original world (ADR 0061), independently versioned from playable content and never a Gameplay Session. Selected records may be promoted into the Dion Data Payload through a bounded export (ADR 0065); Catalogue coverage does not establish gameplay reachability, and Dion records are not evidence for Damocles or from it.
 _Avoid_: Dion world payload, Damocles Catalogue (for MIII), map data
 
 **Coverage Ledger**:

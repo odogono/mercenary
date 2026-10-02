@@ -2,6 +2,8 @@
 
 Accepted, 2026-10-01, for [#680](https://github.com/odogono/mercenary/issues/680) under [#679](https://github.com/odogono/mercenary/issues/679). Mercenary III gets a read-only **Dion Catalogue** of the whole original world. It sits at `/dion/catalogue` and is exported to `payload/dion/catalogue/`. It is separate from the playable Metis Data Payload and from the Damocles Catalogue at `/catalogue`. The [data contract](../dion-catalogue-contract.md) holds the identities, schemas and completion rule. The coverage ledger it governs is `research/mercenary-iii-st/catalogue-ledger.json`.
 
+_(Status note, 2026-10-02: [ADR 0065](0065-promote-bounded-dion-catalogue-content-through-an-explicit-export.md) admits bounded export-time promotion for D2. The sessionless Catalogue and playable runtime loaders remain independent; selected records enter play only through a provenance-preserving, separately validated export.)_
+
 The #678 census recovered every object slot, group and cell binding, but the browser holds only the opening Metis journeys. Inspecting the rest should not wait on gameplay, and it should not grow the playable payload either. ADR 0039 settled the same question for Damocles. This ADR follows that precedent and ADR 0041's path rule: a Title's sessionless pages hang off its own path, as `/damocles/atlas` does.
 
 ## Decision
