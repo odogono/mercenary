@@ -1,0 +1,138 @@
+# Mercenary III TOURCRAFT: known I2 taxi migration audit
+
+Research for [#709](https://github.com/odogono/mercenary/issues/709), 2026-10-02, at repository `a079efa06e9fb167860dc5dd40f4f8588fe14bf4`. This report audits the existing browser codec against [D2](mercenary-iii-tourcraft-milestone-review.md), [R6's connected campaign](mercenary-iii-tourcraft-campaign.md) and [R7's promotion boundary](mercenary-iii-tourcraft-promotion.md). It implements no runtime, codec or Data Payload change.
+
+**A universal preserving migration cannot satisfy D2's uninterrupted-expanded-play comparison for all naturally produced schema-1 sources under the current contract.** A source can wait through election and mining while I2 keeps the original cash and script flags. Expanded play must execute those effects during that same input history. This is a concrete compatibility failure to return to D2, not authorization to refuse every taxi Save, rewrite its cash/dialogue, fabricate campaign defaults or impose a boarding deadline. The early 33-control domain remains a required, separately provable migration candidate; this audit does not prove it complete.
+
+## Exact allowlisted source identity
+
+The source record tuple is:
+
+```json
+{
+  "schemaVersion": 1,
+  "identity": {
+    "title": "dion",
+    "destination": "metis",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "contentSha256": "c50b402c04c70ab74f95a938c0f867e740ea843157e514764f2bceb84a2f44ed"
+  }
+}
+```
+
+`programSha256` is the pinned STX identity named by the existing field, not a newly calculated hash of executable RAM. The [document header](../../web/src/dion/documents.ts) and [record decoder](../../web/src/dion/save.ts) own these semantics. No other schema/content/program/Destination/Title is allowlisted by this report.
+
+The complete content digest above was calculated through [`readDionContent`](../../web/src/dion/content.ts), using the same text bytes as the current loader. [`requiredJson`](../../web/src/dion/boot.ts) retains `response.text()` separately from parsed JSON. `contentIdentity` UTF-8 encodes the seven document texts joined with one NUL between consecutive texts, in the fixed `DION_DOCUMENTS` order plus presentation, without a trailing NUL. The identity is sensitive to whitespace; reserializing JSON or hashing only decoded values is incorrect. Catalogue documents and unrelated renderer source are outside this source content fingerprint.
+
+| Order / local served document                           |   Bytes | SHA-256 of file text bytes                                         |
+| ------------------------------------------------------- | ------: | ------------------------------------------------------------------ |
+| 1. `payload/dion/world.json`                            | 679,474 | `0fd1db2cd21875e61c4eee62c87748a36a29aeb8fd79187f7228ef746782abe0` |
+| 2. `payload/dion/panel.json`                            |  72,100 | `01619810d9029332383cfe71c75c8e1e8b4ff0fa4ffbcc0eba2dc01feed822a5` |
+| 3. `payload/dion/messages.json`                         |  55,277 | `a8f217e1ec55aa4507ccbc5fed9ca8ee387abee245d721b5d940419be0acf3f8` |
+| 4. `payload/dion/scripts.json`                          |  74,424 | `df27c4d401e4d3c4549ab7c3c80bd27b230455cdfbc77d13f0ed4f9bfc31c2d2` |
+| 5. `payload/dion/sound.json`                            |  17,647 | `c2540b4d17450eeadcd9b75dd412ab962f2f0f8a98f9a225e1dc438ee7151d6c` |
+| 6. `payload/dion/service.json`                          |  16,062 | `3fabaec8424e32850938759455df0b7d4ed4c545b410c417f04a53535a22c1e2` |
+| 7. `web/dion/metis.json` (served as `/dion/metis.json`) |   9,110 | `95d7c93116283131dc8b0059dfa3345ebc7c7eec59419310169308912bc6c190` |
+
+The expanded fingerprint cannot be pinned before I3 exports the complete ordered playable manifest/dependencies. [R7](mercenary-iii-tourcraft-promotion.md) defines that future served ordering. Preserve the above old source identity independently of the expanded expected identity; decoding an old record against the new fingerprint necessarily refuses it before migration.
+
+## Source validator and eligibility boundary
+
+The frozen source validator is `decodeDionRecord(encoded, oldIdentity, oldContent)` followed by the original nested `readDionResume(value, oldContent)`. Omitting `oldContent` drops the content-reference checks. Initial source checking must occur against retained old instruction/service/structure facts, before constructing an expanded Gameplay Session. Do not validate old continuations against a different expanded instruction universe.
+
+| Source code / byte SHA-256                                                                                                | Role                                                                                                                     |
+| ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| [`save.ts`](../../web/src/dion/save.ts): `d18489f0e36653a6a8b68d2fa7f0d8ecd32620c3d3a718ed5ee14df38a546832`               | JSON/envelope, Title-first refusal, program/content/Destination/schema, metadata; delegates nested validation            |
+| [`restore.ts`](../../web/src/dion/restore.ts): `0048baa6fade40f2fbd1de734a5f76a3562821907aea2dbc2bdee9c9ef146d28`         | Required nested fields/ranges, tuple sizes, frame/tick relation, taxi subset, duplicate doors and old-content references |
+| [`read.ts`](../../web/src/dion/read.ts): `9bb47e2fb7b57cee1d4262bc5298f79cedc2db2b515a5da88798c22d1fbfe3fa`               | Exact number/boolean/text/container readers; no missing-field defaults                                                   |
+| [`content.ts`](../../web/src/dion/content.ts): `0f512cfd6dc0c270f2a30b374c28eb0696e055867a9f69c754d26994feb0298a`         | Exact complete served-text identity and content admission                                                                |
+| [`session.ts`](../../web/src/dion/session.ts): `311c69efcb87da7d10d66555e4dc922364d355402c755c94af30ede378206832`         | Source transition/capture/restore semantics                                                                              |
+| [`script.ts`](../../web/src/dion/script.ts): `2122c152ee372fb40db58f171e71b02f8f3452e9fc762ac470097fe5a0dc4f6b`           | Source availability/flags/VM/timer/message semantics                                                                     |
+| [`resume.ts`](../../web/src/dion/resume.ts): `f8e1bbf84559c8b701d3b0e09119c6cac140f114719c38109053fbc8c7ad2854`           | Session Resume uses the same schema-1 record codec                                                                       |
+| [`dion-controls.ts`](../../web/test/dion-controls.ts): `6cfebc17d75094ce638fcc98dd5b61deab27ee8b5500d7aba8e19dce19ec9e92` | Existing replay-derived 33-control source generator                                                                      |
+
+The original validator is necessary but insufficient to establish the accepted reachable default campaign domain. A separate synthetic mutation audit confirmed that it accepts flag 10 or 22 set, duplicate available IDs and an altered clock seconds value unrelated to the recorded tick history. Those are **validator acceptance probes**, not evidence that ordinary I2 play produces them. It refuses PC 12 as `unknown script continuation`, taxi progress −1 with its nested range diagnostic, and a changed content digest as `written against other Mercenary III content`. It also does not enforce a complete VM/availability/state reachability proof. Unknown extra object fields are projected away by the readers rather than rejected.
+
+R6 excludes the candidacy/veto branches by proving no admitted writer sets flags 10/22. A future migration must preserve that justified source-domain restriction explicitly; it cannot assume all structurally accepted 64-bit flag vectors have the bounded campaign closure. A strengthened migration eligibility validator must be specified and tested separately from the frozen source decoder. Its treatment of structurally valid but unreachable/excluded records needs D2 resolution; it cannot silently narrow naturally produced late Saves to the 33 samples.
+
+## Independent uninterrupted source experiment
+
+Run the portable research audit from the repository root:
+
+```sh
+bun research/mercenary-iii-st/scripts/taxi-migration-audit.ts
+```
+
+The [script](../../research/mercenary-iii-st/scripts/taxi-migration-audit.ts) pins the known content and every listed decoder/session/interpreter/control hash. It generates all 33 controls, replays the actual `sp/exit-post` operation history into a new I2 session without restoring its state, asserts equality with that control, and then advances ordinary idle frames until 32,520 and 61,320 game seconds. No source clock, tick, flag, cash or snapshot is injected. These are accelerated execution of **ordinary browser simulation inputs**, not an original-engine hours-long natural run. The later synthetic validator probes are separate.
+
+At both moments it encodes a Save, runs the existing full identity/nested decoder, creates the restored session and asserts exact capture equality. It independently encodes Session Resume and uses its existing storage-reader path, requiring no failure reason and exact capture equality. It never writes browser storage. Only summary identities/state are emitted; no original RAM, bytecode, media, audio or screenshots are included.
+
+| Naturally produced I2 source                 |                                                     At 9 h + 120 s |                                                    At 17 h + 120 s |
+| -------------------------------------------- | -----------------------------------------------------------------: | -----------------------------------------------------------------: |
+| Clock seconds / day                          |                                                         32,520 / 0 |                                                         61,320 / 0 |
+| Tick / frame                                 |                                                1,625,974 / 147,815 |                                                3,065,973 / 278,724 |
+| Clock accumulator                            |                                                              1,504 |                                                              1,536 |
+| Frame counter                                |                                                             16,744 |                                                             16,581 |
+| Remainder seconds                            |                                             `4.56281540328618e-12` |                                            `8.196270051552546e-12` |
+| Sky phase                                    |                                                      1,534,959,104 |                                                      2,894,318,160 |
+| Cash                                         |                                                     `005100900000` |                                                     `005100900000` |
+| Set script flags                             |                                                                 13 |                                                                 13 |
+| PC / queue / timer                           |                                                 null / null / null |                                                 null / null / null |
+| Stack / available IDs                        |                                                      `[]` / `[52]` |                                                      `[]` / `[52]` |
+| Message serial / busy                        |                                                         46 / false |                                                         46 / false |
+| Cell / taxi passenger / pending input        |                                                   2 / false / null |                                                   2 / false / null |
+| Save / Session Resume exact round trips      |                                                        pass / pass |                                                        pass / pass |
+| SHA-256 of `JSON.stringify(captureResume())` | `96114e32b6d4b9925666328ae094222d3441d09b3660a18397b0028b82f9ecaf` | `d19f9fb71eee1c9449b150780f458422722f2a4e80629b163a2d3adc61723ae9` |
+
+Sound is not reset: channel C is null, click age 255, key click false, mixer 252, slew 2,816 and registers `[128,0,96,0,128,6,26,252,0,31,0,0,31,9]`; elapsed is respectively 1,613,840 and 3,053,839. The script emits the complete source summary and content/validator hashes for audit. It does not prove ordered future sound-event equality; the existing 33-control test separately proves its implemented state/panel futures.
+
+## Concrete incompatibility and deterministic construction limits
+
+The incompatibility follows from the actual sources above and the owning code: [`DionSession.tick`](../../web/src/dion/session.ts) advances fixed 32/1,600 clock time, while `frame` begins with input and has no election/mining reader. [`DionNarrative`](../../web/src/dion/script.ts) admits only the existing taxi availability set, and no current path arms the R6 campaign continuations. Its timer is a clamped ordinary-script approximation, not R6's modulo signed countdown/direct-offset target. Waiting is unrestricted.
+
+For the same early spaceport exit and idle suffix in an expanded session, R6 requires the threshold-before-input reader to start election at 32,400 seconds. The admitted election path sets flag 9 and later flag 23, consumes availability and produces texts/timers/encounter state. At 61,200 seconds with flag 9 set, mining eventually replaces cash with zero. The [original-engine sequential controls](mercenary-iii-tourcraft-campaign.md#original-engine-probes-and-encounter-closure) and [independent timing model](mercenary-iii-tourcraft-timing-controls.md) establish those finite rule effects; they used synthetic threshold seconds and must not be relabelled as the exact natural long-idle browser run. The below conclusion is an inference from the recovered scheduler and source behavior, not a completed expanded browser comparison. Election sets flag 9 during its initial instructions and completes many hours before the second threshold. Mining has two stages, each taking fewer than 2,000 active ticks, plus its 750-tick idle delay: fewer than 4,750 ticks, plus frame alignment. In this idle case cash clears within the 6,000-tick (120-second) margin at the second checkpoint. No exact full election-completion time is inferred from the conservative bound at the first source checkpoint.
+
+Let `O(h)` be the old source after history `h`, `E(h)` equivalent uninterrupted expanded play, and `M` the proposed migration. Requiring both preservation of the existing source cash/VM/flags and equality `M(O(h)) = E(h)` fails already on existing fields after the thresholds: old flag 9 remains false whereas expanded election sets it, and old cash remains nonzero whereas expanded mining clears it. An added-state constructor cannot cure that contradiction while leaving those source fields intact. After mining this also changes TOURCRAFT admission's nonzero-cash guard. Exact expanded numeric frames and rendered images for that long-idle suffix remain an I4 check; the existing-field mismatch does not depend on claiming them.
+
+Starting campaign scripts only after Load shifts their order relative to the saved clock, first frame, messages and later boarding. Replaying past campaign work and replacing saved flags/cash/dialogue violates source preservation. Empty encounter/queue/timer defaults discard reachable late state. Disabling thresholds, resetting/fixing time, refusing all taxi sources, inventing a deadline or declaring the old source a foreign identity is not the accepted solution. **Return this late-source conflict to D2 for an explicit compatibility decision before claiming a universal contract.** This report chooses none of those replacement rules.
+
+For early sources, these construction dispositions are the bounded requirements, not a declaration that all are proved:
+
+| Expanded category                                                           | Permitted source derivation / remaining proof                                                                                                                                                                                                                                                                                                                                                                |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Existing taxi, card, admission, pending input, pose, cash and gauges        | Preserve every validated source field. Do not rebuild from opening/arrival constants or discard a deferred B attempt.                                                                                                                                                                                                                                                                                        |
+| Existing VM/message/flags/availability/stack/queue/timer                    | Preserve actual PC/stack, pixel bar, text/busy/hold/serial, wait and pending targets. Availability translation must retain each old routine's consumed status; fresh table bytes for added entries need original-source provenance and an early-state eligibility proof. Converting a reachable legacy timer requires semantic proof; null in the 33 examples does not prove every accepted source has null. |
+| Clock, tick/frame/remainder, sky and sound                                  | Preserve saved accumulator/day/seconds, global phase and all sound state. Retained fixed step/refill are old-content facts; do not reset fraction or align to a new frame. New rate/period/latch/pause fields must derive from the proved preflight writer domain. Preserve event delivery ownership without replaying old sound writes.                                                                     |
+| Body/group/workspace/Location/Occupancy                                     | Title remains `dion`, opening Destination remains `metis`. Old play is METIS-only; prove the matching group/cell/context and derive Occupancy from validated taxi passenger state. Location's numeric field is not sufficient evidence for all Body/context/cache meanings.                                                                                                                                  |
+| Playback/craft/launch fields                                                | No old interface starts TOURCRAFT. Inactive playback may be derived only after validating this reachability invariant and obtaining the exact original inactive/header/parameter facts. Zero is not a universal inactive pointer/latch/selector value. Keep pending old input and global launch phase.                                                                                                       |
+| Mutable residences, observer programme/actors, Body rotations and animation | Use R7's coherent initial gameplay source only for fields proved unchanged throughout the eligible old history. Demonstrate every writer is inactive, or independently advance deterministic state from sufficient retained inputs. R6 late election disproves a universal empty encounter assumption; request word alone cannot reconstruct live pointers/counts.                                           |
+| Candidate, draw/context caches and first frame                              | Recompute only from complete saved state plus exact expanded content, before any tick/input. Compare the resulting prior-frame selection used by admission and the first frame/panel; expanded geometry can change selection. The current constructor's `selectCandidate()` is not proof that an expanded candidate has the same future.                                                                     |
+
+Source snapshots hold no complete input history. A history-based constructor therefore needs a sufficiency proof for the actual retained fields; tick count alone is not evidence for every queue/message/encounter interleaving. This audit proves the late preservation/equivalence conflict, not an information-theoretic impossibility of every possible differently authorized migration.
+
+## Required 33-control matrix and expanded comparison
+
+Retain each existing name exactly, with both Save and independent Session Resume paths. The primary generator is [`dion-controls.ts`](../../web/test/dion-controls.ts), and the implemented baseline future/panel check is [`dion-persistence.test.ts`](../../web/test/dion-persistence.test.ts).
+
+| Trajectory        | Exact control names                                                                                                                                                                                                                       |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sol` (15)        | `sol/mid-reveal`, `sol/called`, `sol/waiting`, `sol/mid-walk`, `sol/B-pre`, `sol/B-post`, `sol/selected`, `sol/Start-pre`, `sol/departure`, `sol/scroll`, `sol/clear-pre`, `sol/descending`, `sol/dwell`, `sol/exit-pre`, `sol/exit-post` |
+| `sol-nostart` (2) | `sol-nostart/selected`, `sol-nostart/stationary`                                                                                                                                                                                          |
+| `solwb` (3)       | `solwb/admission-first`, `solwb/admission-second`, `solwb/selected`                                                                                                                                                                       |
+| `sp` (9)          | `sp/selected`, `sp/Start-pre`, `sp/driver`, `sp/turn-pre`, `sp/turn-post`, `sp/travel`, `sp/clear`, `sp/dwell`, `sp/exit-post`                                                                                                            |
+| `sp-early` (2)    | `sp-early/L-post`, `sp-early/arrived`                                                                                                                                                                                                     |
+| `sp-nostart` (2)  | `sp-nostart/selected`, `sp-nostart/stationary`                                                                                                                                                                                            |
+
+For every control, generate the old source using actual old inputs. Separately replay that same prefix into an expanded New Game session **without restoring or migrating it**; never build the uninterrupted comparator from the migrant. Compare the migrated state with that independent expanded checkpoint, including the complete first indexed frame/Frame Description, full panel, sound latch/PSG state, Body/context and observable message identity. Set identical current live input explicitly: the old capture serializes its pending action but not `intent`, and the old test assigns identical intent before continuing.
+
+Continue the identical recorded suffix through the original taxi outcome and at least the baseline 600 frames, retaining exact snapshot/clock/phase and ordered messages/sound writes. For routes that do not initially finish at the spaceport, use a recorded legitimate taxi/foot continuation to the spaceport. Approach the actual resident 13 by normal inputs, board, follow the uninterrupted launch → space → Body entry → descent/automatic exit → on-foot TOLOSA path, and compare later on-foot frames plus programme expiry. Record an executable input continuation; an authored remote pose or teleport is not subsequent TOURCRAFT access evidence. Current I2 does not supply that added continuation automatically.
+
+Extend the source matrix beyond its 33 short controls: clocks just before/at/after election and mining, source partial ticks/remainders, queued/timed dialogue boundaries, idle after expiry, and longer/multiple-day waiting. The two genuine late sources above are required concrete D2 counterexamples, not malformed rejection fixtures. Add paired early migrated/uninterrupted sources whose later equal inputs naturally cross campaign thresholds during waiting/flight, including accepted boarding while dialogue refuses pilot start and post-mining cash refusal. Separately test excluded flags and malformed nested references without confusing synthetic states with naturally reached controls.
+
+Envelope rejection must precede active-session replacement: foreign Title, unknown schema/program/content/Destination, corrupt JSON/metadata and malformed nested state. Decode source, construct and fully validate a candidate, then commit the live-session switch. Failure leaves the active session and exact source storage bytes intact. Save slots and automatic Session Resume remain independent title-local records across Bodies; schema evolution does not itself justify renaming keys or destroying old sources. The current Session Resume boot helper catches failures and starts a fresh session; downstream runtime acceptance must explicitly satisfy D2's preservation contract rather than assume that fallback protects an already active session or a later automatic rewrite.
+
+## Validation and unproved claims
+
+Executed: existing `dion-persistence.test.ts` (2 passing tests, 50,311 assertions covering all 33 controls and nested refusals), the pinned existing codec source audit, uninterrupted I2 `sp` input replay, 3,065,973 natural simulation ticks through both late idle checkpoints, exact Save/Session Resume round trips, 33-control enumeration and synthetic source-validator acceptance/refusal probes. The aggregate served-content digest was also recomputed independently from the raw seven file byte strings with NUL separators. The script and report contain only implementation-owned summaries and facts; original Restricted Material remains ignored under ADR 0002.
+
+Not proved here: a playable expanded codec/runtime, deterministic construction for every eligible early source, original whole-machine restored futures, exact expanded long-idle frame/panel/audio results, migration storage transactions, a natural hours-long original-engine run, all numeric flight substeps or arbitrary foreign campaign state. The existing 33 taxi controls certify their I2 implementation scope; listing them does not certify expanded migration. R6 RAM/model agreement informs schema/state selection and cannot substitute for independent browser Save/Session Resume comparisons.
