@@ -64,7 +64,7 @@ import {
 import { AUTHORS_COMPUTER_SLOT } from './headCommands.ts';
 import { classifyPosition } from './islands.ts';
 import { stMakeCode } from './keys.ts';
-import { erisLighting } from './lighting.ts';
+import { erisLighting, sunlight } from './lighting.ts';
 import { damoclesPanelViewModel } from './panel.ts';
 import {
   DAMOCLES_PANEL_PATH,
@@ -1327,6 +1327,35 @@ try {
             onFoot,
             starArithmetic
           );
+    // The sky Bodies turn with the accumulator the terminator reads, and the comet moves with
+    // the impact clock, so a Save restores all three. Enhanced presentation moves the Bodies
+    // smoothly between the engine's steps.
+    const sky =
+      space === null
+        ? skyPass(system, {
+            body: snapshot.pose.body,
+            daylight: snapshot.daylight,
+            destroyedBodies: snapshot.destroyedBodies,
+            drift: snapshot.drift,
+            horizonCut,
+            impact: snapshot.impact,
+            impactPassed: snapshot.impactPassed,
+            position: snapshot.pose.position,
+            sky: snapshot.surface.sky,
+            smooth: enhanced,
+            stars,
+            turn: snapshot.bodyTurn
+          })
+        : spaceSkyPass(system, {
+            destroyedBodies: snapshot.destroyedBodies,
+            drift: snapshot.drift,
+            eye: space.position,
+            impact: snapshot.impact,
+            impactPassed: snapshot.impactPassed,
+            inScene: index =>
+              (content.catalogue.craft?.bodies[index]?.y ?? 0) >= 0,
+            stars
+          });
     // The surface comes from the Session Snapshot rather than the presentation document, so a
     // Body switch or a Save restored onto another Body draws that Body's workspace (#379).
     const plan = planErisFrame(
@@ -1343,35 +1372,8 @@ try {
       ],
       slot => session.carriesSlot(slot),
       snapshot.daylight,
-      // The sky Bodies turn with the accumulator the terminator reads, and the comet moves with
-      // the impact clock, so a Save restores all three. Enhanced presentation moves the Bodies
-      // smoothly between the engine's steps.
       {
-        ...(space === null
-          ? skyPass(system, {
-              body: snapshot.pose.body,
-              daylight: snapshot.daylight,
-              destroyedBodies: snapshot.destroyedBodies,
-              drift: snapshot.drift,
-              horizonCut,
-              impact: snapshot.impact,
-              impactPassed: snapshot.impactPassed,
-              position: snapshot.pose.position,
-              sky: snapshot.surface.sky,
-              smooth: enhanced,
-              stars,
-              turn: snapshot.bodyTurn
-            })
-          : spaceSkyPass(system, {
-              destroyedBodies: snapshot.destroyedBodies,
-              drift: snapshot.drift,
-              eye: space.position,
-              impact: snapshot.impact,
-              impactPassed: snapshot.impactPassed,
-              inScene: index =>
-                (content.catalogue.craft?.bodies[index]?.y ?? 0) >= 0,
-              stars
-            })),
+        ...sky,
         zoom: 2 ** (snapshot.viewExponent - NEW_GAME_VIEW_EXPONENT)
       },
       space !== null,
@@ -1381,20 +1383,27 @@ try {
       enhanced ? 'whole' : 'aboard'
     );
     const shadowEdge = castShadows ?? DEFAULT_CAST_SHADOWS;
-    // A Cast Shadow is Enhanced presentation only, and the player may turn its edge off.
-    const shadows =
+    // A Cast Shadow is Enhanced presentation only, and the player may turn its edge off. Only
+    // Sunlight casts one, and a frame without Sunlight draws every face in its recovered colour.
+    const sun =
       content.doc.lighting.shadows &&
       enhanced &&
       shadowEdge !== 'off' &&
-      space === null;
+      space === null
+        ? sunlight({
+            daylight: snapshot.daylight,
+            enclosed: plan.enclosed,
+            sky: sky.bodies
+          })
+        : null;
     const screen = snapshot.screen;
     paintNoise(screen.noise);
     renderer.render(
       presentScreen(plan, screen),
-      shadows
+      sun !== null && shadowEdge !== 'off'
         ? {
             eyeWorld: snapshot.pose.position,
-            lighting: erisLighting(content.doc, snapshot.pose),
+            lighting: erisLighting(content.doc, snapshot.pose, sun),
             shadowEdge,
             view: snapshot.pose
           }

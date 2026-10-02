@@ -275,10 +275,16 @@ test('Enhanced sunlight reaches the floor through the spaceport window', async (
   };
   const origin = catalogue.instances.find(i => i.id === 'eris-surface-87')!
     .location!.position;
+  // Sunlight comes from DIALIS where the sky draws it. At this Body turn DIALIS stands about
+  // 19 degrees up in the west, low enough to throw the west window's beam deep into the
+  // hall; a fresh game's turn has it setting in the east. Half a Body Day on, it is night.
+  const WEST_SUN_TURN = 0x2_80_00_00;
+  let bodyTurn = WEST_SUN_TURN;
   await page.route('**/damocles/eris.json', async route => {
     const response = await route.fetch();
     const doc = await response.json();
     doc.start.yaw = 256;
+    doc.start.bodyTurn = bodyTurn;
     doc.start.position = {
       x: origin[0]! * 65_536 + 1300,
       y: 63,
@@ -353,8 +359,8 @@ test('Enhanced sunlight reaches the floor through the spaceport window', async (
     );
   };
 
-  // Turning the Cast Shadow edge off leaves the sun and ambient light but no shadow, so the
-  // roof no longer darkens the far floor; hard brings the beam back with no reload.
+  // Turning the Cast Shadow edge off draws every face in its recovered colour, so the roof no
+  // longer darkens the far floor; hard brings the beam back with no reload.
   await choose('shadows', 'off');
   await expect.poll(contrast).toBeLessThan(1);
   await choose('shadows', 'hard');
@@ -366,6 +372,19 @@ test('Enhanced sunlight reaches the floor through the spaceport window', async (
 
   await choose('presentation', 'authentic');
   await expect.poll(contrast).toBeLessThan(1);
+
+  // By night there is no Sunlight, so no beam and no roof shadow, under Enhanced too.
+  await choose('presentation', 'enhanced');
+  await expect.poll(contrast).toBeGreaterThan(15);
+  bodyTurn = WEST_SUN_TURN + 0x2_00_00_00;
+  await page.reload();
+  await expect(frame).toHaveAttribute('data-state', 'ready');
+  await expect(frame).toHaveAttribute('data-daylight', 'false');
+  await expect.poll(contrast).toBeLessThan(1);
+  await testInfo.attach('damocles-enhanced-window-night', {
+    body: await frame.screenshot(),
+    contentType: 'image/png'
+  });
 });
 
 test.beforeEach(async ({ page }) => {

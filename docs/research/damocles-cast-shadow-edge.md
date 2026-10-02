@@ -4,7 +4,7 @@
 
 **Verdict:** the hard edge reads as a second flat polygon, which is the look the question hoped for, but at the shipped 2048² cascades its stair-stepping is far coarser than the polygon edges around it and is the first thing the eye lands on. Keep `soft` as the default. `hard` ships as the player's choice on the `SHADOWS` row, and the fallback named in the grilling now applies: if the flat two-level look is wanted by default, the route is geometric shadows or a much finer near cascade, not this sampler.
 
-Captured 2026-09-19 on branch `research/376-cast-shadow-edge` with the shipped switch and the authored Eris sun (`sunDirection` −0.63, 0.31, −0.71; no time of day, #232 is separate). Regenerate with:
+Captured 2026-09-19 on branch `research/376-cast-shadow-edge` with the shipped switch and the authored Eris sun (`sunDirection` −0.63, 0.31, −0.71; no time of day, #232 is separate). Since [ADR 0066](../adr/0066-light-damocles-enhanced-presentation-from-dialis-and-leave-enclosed-regions-unlit.md) the light is DIALIS's, and the matrix pins Body turn `$02800000`, where DIALIS stands about 19° up in the west; the committed frames predate that. Regenerate with:
 
 ```
 cd web
