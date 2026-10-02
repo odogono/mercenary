@@ -1,10 +1,11 @@
 import { join } from 'node:path';
 
-/// The payload's only binary files, by exact path: the two typefaces and Targ's Title Logo.
+/// The payload's only binary files, by exact path: the two typefaces and the Title Logos.
 const BINARY_FILES = new Map([
   ['/payload/fonts/mercenary.woff2', 'font/woff2'],
   ['/payload/fonts/damocles.woff2', 'font/woff2'],
-  ['/payload/targ-st/title.png', 'image/png']
+  ['/payload/targ-st/title.png', 'image/png'],
+  ['/payload/damocles/title.png', 'image/png']
 ]);
 
 /// Whether an `Accept-Encoding` header admits gzip. A `q=0` weight is a refusal, so it

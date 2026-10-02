@@ -70,7 +70,10 @@ consequences follow, and they are the ones #280 asked for:
   is no readable geometry hiding behind the protection, and none is claimed.
 
 What this does **not** establish is what each packed track decodes to. The
-inventory bounds the disk; it does not open it. A bank reachable only by a load no
+inventory bounds the disk; it does not open it. (#695 later opened the format:
+a directory in track 0's sectors 2 and 3, `$0F`-escaped track data, a keystream
+and `OTNM` packing, read by `damocleslab.title`; see
+[the Title Logo research](damocles-title-logo.md).) A bank reachable only by a load no
 pinned capture performs would not appear in this census, and `coverage.complete`
 stays false for that reason among others.
 

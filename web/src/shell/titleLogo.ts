@@ -89,6 +89,11 @@ export const readTargTitleLogo = (value: unknown): TargTitleLogo => {
   };
 };
 
+const hexDigest = async (bytes: ArrayBuffer): Promise<string> =>
+  [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))]
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+
 /// An ST shows three bits a gun.
 const gun = (word: number, shift: number): number =>
   Math.round((((word >> shift) & 7) * 255) / 7);
@@ -117,9 +122,7 @@ export const checkTargTitleLogo = async (
       }
     }
   }
-  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bits));
-  const hex = [...digest].map(b => b.toString(16).padStart(2, '0')).join('');
-  if (hex !== logo.markSha256) {
+  if ((await hexDigest(bits.buffer)) !== logo.markSha256) {
     throw new Error(`${where} is not the mark title.json hashes`);
   }
 };
@@ -132,38 +135,42 @@ const fetched = async (url: URL): Promise<Response> => {
   return response;
 };
 
-/// Check the file before decoding: privacy browsers can alter canvas readback pixels.
-export const checkTargTitleLogoFile = async (
-  logo: TargTitleLogo,
-  bytes: ArrayBuffer
+/// What a Title's document says its logo PNG is, for any Title (ADR 0063).
+export interface TitleLogoPng {
+  readonly height: number;
+  /// SHA-256 of the PNG as served, before browser decoding or canvas readback.
+  readonly pngSha256: string;
+  readonly width: number;
+}
+
+/// Refuse a PNG whose bytes are not the file the document hashes.
+export const checkTitleLogoFile = async (
+  logo: TitleLogoPng,
+  bytes: ArrayBuffer,
+  where: string
 ): Promise<void> => {
-  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
-  const hex = [...digest].map(b => b.toString(16).padStart(2, '0')).join('');
-  if (hex !== logo.pngSha256) {
-    throw new Error(
-      `payload/targ-st/${logo.file} is not the PNG title.json hashes`
-    );
+  if ((await hexDigest(bytes)) !== logo.pngSha256) {
+    throw new Error(`${where} is not the PNG title.json hashes`);
   }
 };
 
-/// Fetch and validate the PNG bytes, then decode them for presentation.
-export const loadTargTitleLogo = async (payload: URL): Promise<ImageData> => {
-  const logo = readTargTitleLogo(
-    await (await fetched(new URL('targ-st/title.json', payload))).json()
-  );
-  const bytes = await (
-    await fetched(new URL(`targ-st/${logo.file}`, payload))
-  ).arrayBuffer();
-  await checkTargTitleLogoFile(logo, bytes);
+/// Fetch a Title Logo PNG, check its bytes against the document, then decode it for
+/// presentation. The bytes are checked before decoding, not the decoded pixels: privacy
+/// browsers can alter canvas readback.
+export const loadTitleLogoPng = async (
+  logo: TitleLogoPng,
+  url: URL
+): Promise<ImageData> => {
+  const where = url.pathname;
+  const bytes = await (await fetched(url)).arrayBuffer();
+  await checkTitleLogoFile(logo, bytes, where);
   const bitmap = await createImageBitmap(
     new Blob([bytes], { type: 'image/png' }),
     { colorSpaceConversion: 'none', premultiplyAlpha: 'none' }
   );
   if (bitmap.width !== logo.width || bitmap.height !== logo.height) {
     bitmap.close();
-    throw new Error(
-      `payload/targ-st/${logo.file} is not ${logo.width} by ${logo.height}`
-    );
+    throw new Error(`${where} is not ${logo.width} by ${logo.height}`);
   }
   const context = new OffscreenCanvas(bitmap.width, bitmap.height).getContext(
     '2d'
@@ -172,4 +179,19 @@ export const loadTargTitleLogo = async (payload: URL): Promise<ImageData> => {
   const image = context.getImageData(0, 0, bitmap.width, bitmap.height);
   bitmap.close();
   return image;
+};
+
+/// Check Targ's PNG bytes before decoding.
+export const checkTargTitleLogoFile = (
+  logo: TargTitleLogo,
+  bytes: ArrayBuffer
+): Promise<void> =>
+  checkTitleLogoFile(logo, bytes, `payload/targ-st/${logo.file}`);
+
+/// Fetch and validate Targ's PNG, then decode it for presentation.
+export const loadTargTitleLogo = async (payload: URL): Promise<ImageData> => {
+  const logo = readTargTitleLogo(
+    await (await fetched(new URL('targ-st/title.json', payload))).json()
+  );
+  return loadTitleLogoPng(logo, new URL(`targ-st/${logo.file}`, payload));
 };

@@ -631,6 +631,16 @@ test('the System Menu, Saves, New Game and Shell Console are on /damocles', asyn
   await expect(surface).toHaveAttribute('data-layer', 'menu');
   await expect(page.getByRole('dialog', { name: 'System Menu' })).toBeVisible();
   await expect(page.locator('#page-menu .chrome-title')).toHaveText('DAMOCLES');
+  // The lettering recovered from ETITLE.NEO heads every page (#695).
+  const logo = page.locator('#page-menu .chrome-logo img');
+  await expect(logo).toHaveAttribute('alt', 'DAMOCLES');
+  expect(
+    await logo.evaluate((image: HTMLImageElement) => [
+      image.naturalWidth,
+      image.naturalHeight
+    ])
+  ).toEqual([284, 43]);
+  await expect(page.locator('.chrome-logo img')).toHaveCount(5);
   await page.locator('button[data-goto="settings"]').click();
   await expect(surface).toHaveAttribute('data-layer', 'settings');
   await page.locator('[data-setting="rendition"] button[value="targ"]').click();

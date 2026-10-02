@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "title": "Damocles",
+  "kind": "title-logo",
+  "source": {
+    "authority": "Damocles Atari ST Working Authority",
+    "evidence": "docs/research/damocles-title-logo.md",
+    "programSha256": "8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef",
+    "recipe": "python3 -m damocleslab.title --stx <STX> --output payload/damocles/title.json (writes title.png beside it)"
+  },
+  "disk": {
+    "directory": {
+      "track": 0,
+      "side": 0,
+      "sectors": [
+        2,
+        3
+      ],
+      "decrypt": "$6891E",
+      "loadedAt": "$68AA4",
+      "sha256": "a45319241407645b34735c39bc0cbc021cd2213d3ce1df0a844fb0bc22e2bdc8"
+    },
+    "file": {
+      "name": "ETITLE  NEO",
+      "entry": {
+        "track": 3,
+        "offset": 4141,
+        "length": 13500
+      },
+      "tracks": [
+        3,
+        4,
+        5
+      ],
+      "side": 0,
+      "reader": "$68364",
+      "storedSha256": "66163715b57f8a52c5d8acfa20ce097bfc479f41b5b5d49a738202f436ac4290",
+      "decrypt": "$68432",
+      "packing": {
+        "tag": "OTNM",
+        "unpacker": "$68530",
+        "packedSha256": "b31256ddb37de4a38afdc6d7bc5b17f7f1c0674acd04cd0220c5ee808297cc60"
+      },
+      "format": "NEOchrome",
+      "size": 32128,
+      "loadedAt": "$60000",
+      "loader": "$6801C",
+      "provenance": {
+        "range": [
+          "$60000",
+          "$67D80"
+        ],
+        "sha256": "d90ac8d14280ba7eadd5c533b20341f64d887db7af4b15a07c48f6cf62626406"
+      }
+    }
+  },
+  "screen": {
+    "width": 320,
+    "height": 200,
+    "planes": 4,
+    "bytesPerLine": 160,
+    "base": "$78000",
+    "setUp": "$680AC: low resolution, base $78000, palette $60004 -> $FF8240",
+    "copy": "$68042: $60080..$67D80 -> $78000..$7FD00"
+  },
+  "palette": {
+    "colours": [
+      0,
+      564,
+      1110,
+      1383,
+      1655,
+      1792,
+      1908,
+      1909,
+      1910,
+      273,
+      546,
+      819,
+      1092,
+      1365,
+      1638,
+      1911
+    ],
+    "provenance": {
+      "range": [
+        "$60004",
+        "$60024"
+      ],
+      "sha256": "8a70814cb107d43b562b339c2e47eeec2a3faa009fe12f24533598d91d377516"
+    }
+  },
+  "logo": {
+    "x": 16,
+    "y": 0,
+    "width": 284,
+    "height": 43,
+    "rule": "the 8-connected non-zero pixels of rows 0..42 reached from (58, 20) on the D; every other pixel, colour 0 and the single-pixel stars among them, is clear",
+    "image": {
+      "file": "title.png",
+      "sha256": "b799f5f191132f1c4716d4f3ca5abe9c452378716ca4de82f3278286b09b2a70",
+      "format": "PNG, 4-bit indexed in the picture palette: 0 transparent, 1..15 opaque",
+      "markSha256": "f4a563bbf77c66aef2ca3a4bdadf983e152f6fae1e5d631510e372a0bddd499f",
+      "markEncoding": "two palette indices a byte, left pixel high, rows padded to a byte"
+    },
+    "provenance": {
+      "range": [
+        "$60080",
+        "$61B60"
+      ],
+      "sha256": "7e3af0793facd2ee586b0142fcb64830254cfd71242fe01f6db3e664a9c0bd7b"
+    }
+  }
+}
