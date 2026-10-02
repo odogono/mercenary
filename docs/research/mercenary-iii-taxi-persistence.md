@@ -194,13 +194,15 @@ Classes:
 
 ### Narrative, messages and time
 
+R5 independently checked the main-loop reader: bit 1 of **byte** `$7272` is script flag **9**, not flag 1 of the big-endian long. The [progression survey](mercenary-iii-services-progression.md#coarse-campaign-state) records the reader and election-script writer that agree on that meaning. Taxi restore conclusions are unchanged.
+
 | Address / width | Meaning | Class | Evidence |
 |---|---|---|---|
 | `$6ED8..$6EDF` | Script PC `$6EDA` and neighbours | R | Div at every checkpoint from 7320 |
 | `$56CF..$56D9` | Script return stack (longs pushed down from `$56D6`) and its pointer word `$56D8` (R3b; R3 misnamed it "per-ID script availability") | R | Div at 12620, 17700, 16010 |
 | `$50F0`, `$52F0..` | Script queue candidates | V/U | Persisting only |
 | `$727C..$7287` | Timed script: `$727E` decremented per VBL at `$53130`, `$7280` queued ID; written by script op `$52F54`, dispatched from `$5A3FC` | R | Div at 6010, 12620, 13600 |
-| `$7270..$7277` (`$7272..$7273` = flags 8–15, 0–7) | The 64 script flags. Opcodes `$52CCA` set and `$52D18` clear flag n. Flag 6 = script running (set at start `$55A5C`, cleared at end `$528FE`), flag 13 is toggled by the narrative, flag 1 selects the main-loop time trigger, flag 15 the R2 driver branch | R (R3b) | A flag-6 reset diverges in both cadences: the next script never starts. Flag 6 equals "stack pointer `$56D8` ≠ `$56D6`" at all 31 checkpoints. A flag-13 reset only persists. Carry all 8 bytes |
+| `$7270..$7277` (`$7272..$7273` = flags 8–15, 0–7) | The 64 script flags. Opcodes `$52CCA` set and `$52D18` clear flag n. Flag 6 = script running (set at start `$55A5C`, cleared at end `$528FE`), flag 13 is toggled by the narrative, flag 9 selects the main-loop time trigger (R5 corrects the byte/bit interpretation), flag 15 the R2 driver branch | R (R3b) | A flag-6 reset diverges in both cadences: the next script never starts. Flag 6 equals "stack pointer `$56D8` ≠ `$56D6`" at all 31 checkpoints. A flag-13 reset only persists. Carry all 8 bytes |
 | `$7292..$72A3` | Message-bar buffer pointer `$7292` (`$7293` = screen half), MFP mask `$7296`, raster split `$7298`, Timer B phase `$729A`, PSG mixer shadow `$72A0`, PSG select shadow `$72A2` | E/V (R3b) | Under exact cadence every reset is identical or persists. The one natural-cadence divergence (`$729A` at 10700-post) is CPU cost. Not saved |
 | `$723A` 2, `$7236` 2, `$7232` 2 | Message busy; VBL wait counter (+1 per VBL at `$5312C`); centred start pointer | R | Busy div at 10700-post, 10510, 12200, 16010; wait div at 6010, 10700-post, 12200, 16010; pointer at 13600 |
 | `$5292C..$5295B`, `$533D2..$533DB` | Message text buffer (decoded by `$52AC4`); scroll/hold state | R | Div at 12620, 13600, 17700 |
@@ -419,7 +421,7 @@ From `loaded.ram` (`94a10741…a8ec`):
 | `$576A2..$576F2` | Ground point projection loop (reads $7022) | `53e3ea8f20c45c138d3046826b270575b540f99d0bc0ddbfba4cef7d80177866` |
 | `$52CCA..$52D32` | Script opcodes: set/clear flag n in $7270..$7277 | `d691f780cf9572b1df65241917ce5ac7f9653d0059d82f85c7a54f5901d9741b` |
 | `$528FE..$52910` | Script end: clear flag 6, empty stack | `24797b90784cf83ee9b8d747b6e1f12f4f6b829cd22c8cd75d0ecdc9156546f8` |
-| `$5A3D0..$5A41A` | Main loop: flag 1 time triggers, timed-script dispatch gate | `1dc78a8beaddb5fd75590489db14e619cece3db6e45b27df84af3348a3927db2` |
+| `$5A3D0..$5A41A` | Main loop: flag 9 time triggers (R5 correction), timed-script dispatch gate | `1dc78a8beaddb5fd75590489db14e619cece3db6e45b27df84af3348a3927db2` |
 | `$53098..$530FC` | VBL head: palette, Timer B arm, $729A | `3ed5a752ea467b1e208248d703ce34ba0e6805338496eb8aee89d38160e68f5b` |
 | `$53294..$53366` | Timer B handler: raster splits, $729A/$7296 | `86f177eb828e9aa9e5062df60c07c5c643c2cd9979324ed5439d637476a88bcb` |
 | `$53420..$534A0` | Message scroll: PSG blip, $7292 buffer pointer | `da33f2e6a6248648f70bc1e0833984b0d0f4b30a6c905ce64767988ed9ef3d6d` |
