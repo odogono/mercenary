@@ -237,3 +237,31 @@ and from nine rows to one in MIII's ordered GPU path, all with WebGL error 0.
 The recovered Capital City grid rendered with the same 37 selected runs and
 68 visible stroke triangles before and after the width change. These checks
 verify display sizing without changing the recovered selection rules.
+
+## Snow Island travel and distant-fill correction
+
+The Snow Island report exposed a browser binding error: `ErisSurface` held only
+the road grid at its admitted workspace origin. A session travelling from
+Capital City still carried that anchor, even though island classification and
+the Cell Readout already followed the nearest island. The road window therefore
+remained over Capital City's grid and selected no Snow Island runs. Each island
+now carries its own recovered road inputs, and the planner selects them through
+the existing nearest-island classification. Selection and endpoint placement
+share `islandOriginNear`, keeping the network whole across surface wrapping.
+
+The flight report also exposed an ordering hole. The renderer painted complete
+distant island silhouettes, then the finite sea plane, then the island geometry
+clipped at the detailed far plane. Where the sea plane overlapped land beyond
+that clip, it erased a strip that the detailed island pass did not repaint.
+Distant island fills now follow the finite sea plane, before detailed island
+geometry, roads, ground records and objects.
+
+A Capital-anchored surface approaching Snow Island from local cell 08-48 near
+the reported `008086` altitude now selects nine road runs. The regression also
+checks grey ink, return travel to Capital City and equivalent wrap images. In
+the T3 browser, a nearby view that previously contained 622 sea-coloured pixels
+inside the convex white island had none after the ordering correction. Both
+render paths drew 770 grey road pixels with WebGL error 0. A persistent browser
+fixture reproduced the hole in both flat and Enhanced paths, then verified the
+white island fill and later green foreground geometry after the fix. The full
+unit suite passed 2,502 tests; lint, TypeScript and formatting checks passed.

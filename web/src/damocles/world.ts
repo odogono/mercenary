@@ -75,6 +75,10 @@ export interface ErisIsland {
   /// The bound group's location-trigger table `[$7A68]`, in table order.
   readonly locationTable: readonly LocationEntry[];
   readonly origin: ErisCell;
+  /// The Settlement's corner grid and flat road ink, selected with this island.
+  readonly roads?:
+    | Pick<Catalogue['roadNetworks'][number], 'corners' | 'roadColour'>
+    | undefined;
   /// The record's `+6`, the structure group whose workspace it binds, 0 for none.
   readonly structureGroup: number;
 }
@@ -185,11 +189,6 @@ export interface ErisSurface {
   readonly islands: readonly ErisIsland[];
   readonly placements: readonly ErisPlacement[];
   readonly places: readonly ErisPlace[];
-  /// Only the bound workspace's road grid; other Settlements never contribute
-  /// to its window. Optional on synthetic or unbound surfaces.
-  readonly roads?:
-    | Pick<Catalogue['roadNetworks'][number], 'corners' | 'roadColour'>
-    | undefined;
   /// The Body's day and night sky words, which the terminator chooses between for `$7C86`.
   /// Null on the VOID slot, which is not a surface.
   readonly sky: BodySky | null;
@@ -867,16 +866,13 @@ export const erisSurfaceFrom = (
         landColour: island.landColour,
         locationTable: island.locationTable.entries,
         origin: { x: island.origin[0], z: island.origin[1] },
+        roads: catalogue.roadNetworks.find(
+          network => network.island === island.id
+        ),
         structureGroup: island.structureGroup
       })),
     placements,
     places,
-    roads: catalogue.roadNetworks.find(
-      network =>
-        network.body === body.id &&
-        network.origin[0] === grid.origin.x &&
-        network.origin[1] === grid.origin.z
-    ),
     sky: body.bodySurface?.sky ?? null,
     unresolvedCount: placements.filter(
       placement =>

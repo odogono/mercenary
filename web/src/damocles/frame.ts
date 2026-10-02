@@ -26,8 +26,8 @@ import {
 import type { SkyBody, SkyComet, SkyPass } from './sky.ts';
 import { starTangent, type StarPixel } from './stars.ts';
 import {
-  cellOf,
   insideCentralCellHalf,
+  islandOriginNear,
   withinDrawBound,
   type ErisPlacement,
   type ErisSurface,
@@ -1058,19 +1058,30 @@ export const planErisFrame = (
   }
   const islandTriangleCount = triangleCount - fillTriangleCount;
 
-  const cell = cellOf(pose.position, surface.grid);
+  // `$056464` binds the nearest island's workspace. The admitted surface
+  // anchor stays fixed during travel, so it cannot select this road pass.
+  const island = here.island;
+  const roads = island?.roads;
+  const roadOrigin =
+    island === undefined
+      ? { x: 0, z: 0 }
+      : islandOriginNear(pose.position, surface.grid, island);
+  const cell = {
+    x: Math.floor((pose.position.x - roadOrigin.x) / surface.grid.cellUnits),
+    z: Math.floor((pose.position.z - roadOrigin.z) / surface.grid.cellUnits)
+  };
   const edges =
-    enclosed || inSpace || surface.roads === undefined
+    enclosed || inSpace || roads === undefined
       ? []
-      : roadEdges(surface.roads.corners, cell.x, cell.z, pose.position.y);
+      : roadEdges(roads.corners, cell.x, cell.z, pose.position.y);
   const roadValues: number[] = [];
   const roadPoint = (corner: number): Vector3 =>
     toView({
-      x: (surface.grid.origin.x + (corner & 15) + 0.5) * surface.grid.cellUnits,
+      x: roadOrigin.x + ((corner & 15) + 0.5) * surface.grid.cellUnits,
       y: 0,
-      z: (surface.grid.origin.z + (corner >> 4) + 0.5) * surface.grid.cellUnits
+      z: roadOrigin.z + ((corner >> 4) + 0.5) * surface.grid.cellUnits
     });
-  const roadColour = channels(surface.roads?.roadColour ?? '#000000');
+  const roadColour = channels(roads?.roadColour ?? '#000000');
   for (const edge of edges) {
     const quad = roadStroke(
       roadPoint(edge >> 8),
