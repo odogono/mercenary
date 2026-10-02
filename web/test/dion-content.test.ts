@@ -21,7 +21,19 @@ describe('the Mercenary III content boundary', () => {
     expect(content.source.programSha256).toBe(DION_PROGRAM_SHA256);
     expect(content.contentSha256).toMatch(/^[\da-f]{64}$/);
     expect(content.world.cells).toHaveLength(15);
+    expect(content.world.roads!.corners).toHaveLength(256);
     expect(content.messages).toHaveLength(64);
+  });
+
+  test('refuses malformed road data when a world document supplies it', async () => {
+    const payload = dionPayload();
+    payload.set(
+      'world',
+      edited(payload.get('world')!, { 'roads.corners': [] })
+    );
+    await expect(
+      readDionContent(payload, dionPresentationDocument())
+    ).rejects.toThrow('roads.corners');
   });
 
   test('accounts the corrected fifteen cells over five geometry records and four details', async () => {

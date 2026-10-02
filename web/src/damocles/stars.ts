@@ -20,6 +20,14 @@ import type { Pose } from './world.ts';
 /// - `space` is `$05067C`. Rows wrap at 512 from a pitch offset of its own, and nothing gates
 ///   it by day.
 
+/// Numeric starfield input; provenance belongs to each Title's admitted documents.
+export type Starfield = Pick<
+  GammaStarfield,
+  'columnsPerTurn' | 'pitchOffsets' | 'pitchScale' | 'scrollScale' | 'stars'
+> & {
+  readonly colours: Pick<GammaStarfield['colours'], 'entries'>;
+};
+
 export type StarRoutine = 'flight' | 'onFoot' | 'space';
 
 export interface StarView {
@@ -76,11 +84,7 @@ const shearWord = (tangent: number): number =>
 
 /// The row a pitch word scrolls off the top: `((pitch & $3FF) − offset) · 4 · scale >> 16`,
 /// with the product taken as a word first, as `muls.w` sees it.
-const rowScroll = (
-  field: GammaStarfield,
-  pitch: number,
-  offset: number
-): number =>
+const rowScroll = (field: Starfield, pitch: number, offset: number): number =>
   Math.floor(
     (sx16(((pitch & 0x3_ff) - offset) * 4) * field.pitchScale) / 0x1_00_00
   );
@@ -126,7 +130,7 @@ export const starViewOf = (
 
 /// Every star pixel one frame plots, in plot order, so a later star wins a shared pixel.
 export const starPixels = (
-  field: GammaStarfield,
+  field: Starfield,
   view: StarView
 ): readonly StarPixel[] => {
   const turn = field.columnsPerTurn;

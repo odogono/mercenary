@@ -1,0 +1,73 @@
+{
+  "geometry": {
+    "family": "sky-tail",
+    "id": "sky-tail-0502c0",
+    "provenance": [
+      {
+        "range": [
+          "$502C0",
+          "$502F2"
+        ],
+        "sha256": "eb4c93691a7874bccddff0d04e9072941281897131fbb5444cfed2faa22db7a2"
+      }
+    ],
+    "record": "$502C0",
+    "variants": {
+      "base": {
+        "colour": 1911,
+        "faces": [
+          [
+            0,
+            1,
+            2
+          ],
+          [
+            0,
+            2,
+            1
+          ],
+          [
+            0,
+            3,
+            4
+          ],
+          [
+            0,
+            4,
+            3
+          ]
+        ],
+        "vertices": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            -250,
+            0
+          ],
+          [
+            0,
+            250,
+            0
+          ],
+          [
+            -250,
+            0,
+            0
+          ],
+          [
+            250,
+            0,
+            0
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-play-geometry",
+  "schemaVersion": 1,
+  "source": "gameplay-opening"
+}

@@ -1,0 +1,46 @@
+{
+  "geometry": {
+    "family": "island",
+    "id": "island-06330a",
+    "record": "$6330A",
+    "sha256": "8045be6c8b7450a0ed312f8c48af8086e73f8579744b470f86e7bfdff70bcef7",
+    "variants": {
+      "base": {
+        "core": {
+          "x": [
+            -32768,
+            32767
+          ],
+          "z": [
+            -32768,
+            32767
+          ]
+        },
+        "edges": [],
+        "outer": {
+          "x": [
+            -32768,
+            32767
+          ],
+          "z": [
+            -32768,
+            32767
+          ]
+        },
+        "primitives": [],
+        "provenance": {
+          "range": [
+            "$632F6",
+            "$6330E"
+          ],
+          "sha256": "5e9f64db26d3880e0584e3c4c56008429894c5ed1eb323b5efe16b87f5be73f0"
+        },
+        "sea": [],
+        "vertices": []
+      }
+    }
+  },
+  "kind": "dion-play-geometry",
+  "schemaVersion": 1,
+  "source": "catalogue-immutable"
+}

@@ -78,7 +78,7 @@ describe('the Mercenary III frame', () => {
       eye: [(gx + 0.5) * 65_536, 2048, (gz + 6.5) * 65_536] as const,
       heading: 0x3_00
     };
-    const roadWorld = { ...world, roads: { ...world.roads, corners } };
+    const roadWorld = { ...world, roads: { ...world.roads!, corners } };
     const frame = planDionFrame(roadWorld, state);
     const lines = frame.description.primitives.filter(
       p => p.source === 'roads'

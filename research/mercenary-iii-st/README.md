@@ -131,6 +131,8 @@ Regenerate it after rendering changes; static coverage is not pixel parity.
 
 ## Modules
 
+The bounded TOURCRAFT export is implemented by `m3lab.tourcraft_export`, with its source inputs, deterministic identity, admission boundary and comparison command documented in [the I3 content contract](../../docs/dion-tourcraft-content-contract.md). Its numeric comparison ledger is `tourcraft-play-comparison.json`; original RAM and comparison sheets stay ignored under `restricted/`.
+
 | Module | Exports | Readers |
 |---|---|---|
 | `census_capture.py` | Full original-builder census captures | `$4F0F2..$4F304` |

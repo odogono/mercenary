@@ -44,7 +44,8 @@
       "test/**/*.test.ts",
       "src/dion/soundWorklet.ts",
       "e2e/dion-fixture.ts",
-      "e2e/rendering-fixture.ts"
+      "e2e/rendering-fixture.ts",
+      "tools/dion-tourcraft-compare.ts"
     ],
     "include": [
       "files",

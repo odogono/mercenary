@@ -1,0 +1,200 @@
+{
+  "geometry": {
+    "entries": [
+      304
+    ],
+    "family": "model",
+    "id": "model-038bce",
+    "record": "$38BCE",
+    "sha256": "b0468d20761069c8347e8206c4a99540914ee4debbca037239df86032553192c",
+    "variants": {
+      "base": {
+        "alternatives": [],
+        "entry": 304,
+        "faces": [
+          {
+            "at": "$38C30",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              4,
+              12
+            ]
+          },
+          {
+            "at": "$38C33",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              8,
+              16
+            ]
+          },
+          {
+            "at": "$38C36",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              24,
+              32
+            ]
+          },
+          {
+            "at": "$38C39",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              28,
+              36
+            ]
+          },
+          {
+            "at": "$38C3C",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              8,
+              28
+            ]
+          },
+          {
+            "at": "$38C3F",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              20,
+              40
+            ]
+          },
+          {
+            "at": "$38C42",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              12,
+              32
+            ]
+          },
+          {
+            "at": "$38C45",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              44,
+              52
+            ]
+          },
+          {
+            "at": "$38C48",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              48,
+              56
+            ]
+          },
+          {
+            "at": "$38C4B",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              4,
+              24
+            ]
+          },
+          {
+            "at": "$38C4E",
+            "colour": 3,
+            "kind": "line",
+            "refs": [
+              16,
+              36
+            ]
+          }
+        ],
+        "provenance": {
+          "range": [
+            "$38BCE",
+            "$38C52"
+          ],
+          "sha256": "46882a6e9ac3770bafa3b24d0dc90830e383761e22b87cda32582c6ea62a49ab"
+        },
+        "vertices": [
+          [
+            -4000,
+            0,
+            -20
+          ],
+          [
+            -4000,
+            80,
+            -20
+          ],
+          [
+            -4000,
+            80,
+            20
+          ],
+          [
+            -4000,
+            0,
+            20
+          ],
+          [
+            -4000,
+            40,
+            0
+          ],
+          [
+            4000,
+            0,
+            -20
+          ],
+          [
+            4000,
+            80,
+            -20
+          ],
+          [
+            4000,
+            80,
+            20
+          ],
+          [
+            4000,
+            0,
+            20
+          ],
+          [
+            4000,
+            40,
+            0
+          ],
+          [
+            0,
+            0,
+            -20
+          ],
+          [
+            0,
+            80,
+            -20
+          ],
+          [
+            0,
+            80,
+            20
+          ],
+          [
+            0,
+            0,
+            20
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-play-geometry",
+  "schemaVersion": 1,
+  "source": "catalogue-immutable"
+}

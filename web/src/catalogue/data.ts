@@ -2578,12 +2578,14 @@ export const parseCatalogueDocument = (value: unknown): Catalogue => {
         corners: (() => {
           const corners = list(n['corners']).map(value => {
             const word = integer(value);
-            if (word < 0 || word > 0xff_ff_ff_ff)
-              {fail('invalid road corner longword');}
+            if (word < 0 || word > 0xff_ff_ff_ff) {
+              fail('invalid road corner longword');
+            }
             return word;
           });
-          if (corners.length !== 256)
-            {fail('road corner grid must carry 256 cells');}
+          if (corners.length !== 256) {
+            fail('road corner grid must carry 256 cells');
+          }
           return corners;
         })(),
         evidence: evidenceList(n['evidence']),

@@ -1,0 +1,97 @@
+{
+  "geometry": {
+    "entries": [
+      220
+    ],
+    "family": "model",
+    "header": null,
+    "id": "model-0373d8",
+    "name": "MARGARETS LETTER",
+    "provenance": [
+      {
+        "range": [
+          "$373D8",
+          "$37401"
+        ],
+        "sha256": "6f430e683e6eda1429cb51893032581bd9fcf1fd900df624dce7979ad1b162ee"
+      }
+    ],
+    "record": "$373D8",
+    "sha256": "8d23a2b5ed145085a390f7b44c544c451475c05b1cec02bce12e531c54f6ec32",
+    "variants": {
+      "form=default": {
+        "faces": [
+          {
+            "colour": 7,
+            "kind": "polygon",
+            "refs": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "stColour": 1621
+          },
+          {
+            "colour": 10,
+            "kind": "polygon",
+            "refs": [
+              6,
+              3,
+              4
+            ],
+            "stColour": 820
+          },
+          {
+            "colour": 8,
+            "kind": "polygon",
+            "refs": [
+              1,
+              2,
+              5
+            ],
+            "stColour": 1366
+          }
+        ],
+        "turn": {
+          "kind": "fixed"
+        },
+        "vertices": [
+          [
+            -30,
+            -11,
+            5
+          ],
+          [
+            -10,
+            -11,
+            5
+          ],
+          [
+            -10,
+            -11,
+            -5
+          ],
+          [
+            -30,
+            -11,
+            -5
+          ],
+          [
+            -20,
+            -11,
+            -2
+          ],
+          [
+            -20,
+            -11,
+            2
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-play-geometry",
+  "schemaVersion": 1,
+  "source": "catalogue-immutable"
+}

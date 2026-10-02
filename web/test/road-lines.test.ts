@@ -42,7 +42,9 @@ describe('the shared Damocles and Mercenary III road window', () => {
     corners[0x99] = 0x00_00_d9_89;
     expect(roadEdges(corners, 8, 8, 2048)).toEqual([0xd9_89, 0xb4_14]);
     // The own run is seeded into the dedup list, and only painted above Y's high-word gate.
-    expect(roadEdges(corners, 8, 8, 65_536)).toEqual([0xd9_89, 0xb4_14, 0x8b_87]);
+    expect(roadEdges(corners, 8, 8, 65_536)).toEqual([
+      0xd9_89, 0xb4_14, 0x8b_87
+    ]);
     expect(roadEdges(corners, 8, 8, 63)).toEqual([]);
   });
 

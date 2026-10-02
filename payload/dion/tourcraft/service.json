@@ -1,0 +1,988 @@
+{
+ "schemaVersion": 1,
+ "source": {
+  "title": "dion",
+  "baseline": "Mercenary III research baseline (pinned ST STX)",
+  "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+  "programSize": 512160,
+  "tosSha256": "154803e3ff4851f3dc358b91b16d6b6110d187a81d8132ecb665af49878939d5",
+  "emulator": {
+   "version": "2.6.1",
+   "sha256": "05723606c75a1f0642395974abdce2cbbe48b0a09a747f65cdfca7ef9201e11a"
+  },
+  "capture": {
+   "recipe": "research/mercenary-iii-st/m3lab/boot.py",
+   "schedule": "export",
+   "inputs": [
+    [
+     6000,
+     [
+      "key",
+      114
+     ]
+    ],
+    [
+     7300,
+     [
+      "key",
+      102
+     ]
+    ],
+    [
+     10000,
+     [
+      "stick",
+      1
+     ]
+    ],
+    [
+     10650,
+     [
+      "stick",
+      0
+     ]
+    ],
+    [
+     10700,
+     [
+      "key",
+      48
+     ]
+    ],
+    [
+     11600,
+     [
+      "key",
+      78
+     ]
+    ],
+    [
+     11900,
+     [
+      "key",
+      78
+     ]
+    ],
+    [
+     12200,
+     [
+      "key",
+      102
+     ]
+    ],
+    [
+     22000,
+     [
+      "key",
+      38
+     ]
+    ]
+   ],
+   "loaded": {
+    "vbl": 6000,
+    "ramSha256": "f8d49b5227c03111be717c39defaabd0974b76d675e6d095a88a420efd124299"
+   },
+   "opening": {
+    "pc": "$5A41A",
+    "armedAtVbl": 4770,
+    "ramSha256": "c1476f479b6e4585b335c65890cb93312318d6e9b7d56cbe926ecf2e2bef8766"
+   },
+   "entry": {
+    "pc": "$6AC32",
+    "ramSha256": "9619599abfb61c6af0f4e8bce905c3be66ebf032319ec74c5c5fb871b6716a4c"
+   }
+  },
+  "evidence": "docs/research/mercenary-iii-integration.md#cold-boot-and-controlled-probes"
+ },
+ "kind": "service",
+ "ramSha256": "c1476f479b6e4585b335c65890cb93312318d6e9b7d56cbe926ecf2e2bef8766",
+ "sources": [
+  {
+   "range": [
+    "$41F18",
+    "$41F58"
+   ],
+   "sha256": "44c095d23f33c8bcaae37bf233dcccfc9a8b655579d4a8c25e55838cfdf10c5a"
+  },
+  {
+   "range": [
+    "$214D6",
+    "$2153F"
+   ],
+   "sha256": "885c4a0455d7dd087c87c56c98accbc85ff214594ecd64e5bd333f1a26d5fe59"
+  },
+  {
+   "range": [
+    "$51CA2",
+    "$51CDA"
+   ],
+   "sha256": "43c569b9d7c990bb58f7765aa315f488e7a5119960597f0b16b8624c774e5f52"
+  },
+  {
+   "range": [
+    "$51E24",
+    "$51F02"
+   ],
+   "sha256": "9e645445261a19b119ade3841621778e5198c94037c0a7c439759a966600b24c"
+  },
+  {
+   "range": [
+    "$70148",
+    "$70164"
+   ],
+   "sha256": "178bdb298988374d42c6a83f093e3e2d9508e847b777263ac99d042e86e2b815"
+  },
+  {
+   "range": [
+    "$518AC",
+    "$518F0"
+   ],
+   "sha256": "1680cadbcf9dd50af0b9a2165fde2a1542944da0bf1edb4c6f4ef923552caa34"
+  },
+  {
+   "range": [
+    "$51F40",
+    "$52030"
+   ],
+   "sha256": "cd79fbdcb798d1f51c5b395d89a8b91dac7d7ddf28e99fa6c61dae8c59a9b419"
+  },
+  {
+   "range": [
+    "$51BEE",
+    "$51CA2"
+   ],
+   "sha256": "6a0d07f0c41995a572eb5b7962fcf14086bb5a97e79193ecaab36246527bd26a"
+  },
+  {
+   "range": [
+    "$4DB7C",
+    "$4DD3A"
+   ],
+   "sha256": "5ac18a5abd34156ed99cc95bc114abbcb18fb4c4cdd7942fbb1bc36ecda9aa70"
+  },
+  {
+   "range": [
+    "$518F0",
+    "$51A4E"
+   ],
+   "sha256": "04e26ee68941fb23279297cf0e5697671c69989069991ef42c061a20b88bb45d"
+  },
+  {
+   "range": [
+    "$4187C",
+    "$41AA5"
+   ],
+   "sha256": "907badef150741661fb5b35c3f5b8f9840cf71964df31612d9c06eee6520d049"
+  },
+  {
+   "range": [
+    "$6FD44",
+    "$6FF46"
+   ],
+   "sha256": "8f88c6edf79e5bdd36a20ba038fc43d55ea53a06860b0b912b3434bbe1becb8e"
+  }
+ ],
+ "taxi": {
+  "lookup": {
+   "location_6FDE": 3,
+   "definitions": "$41F18",
+   "matches": true,
+   "source": {
+    "range": [
+     "$41808",
+     "$4180A"
+    ],
+    "sha256": "90b2d5f2ccd3e9e445f92d77500154feebdbad74c9dc368adc67a4f79702a666"
+   }
+  },
+  "rate": -1024,
+  "unitsPerCall": 1024,
+  "metadata": "$2528020E",
+  "arrivalMessage": "$25",
+  "boardingMessage": "$28",
+  "descriptor": "$020E",
+  "narrativeKey": "$0E",
+  "secondLong": "$00000000",
+  "routeOrigin": "$41F22",
+  "terminator": "$41F56",
+  "terminatorWord": "$FFFF",
+  "points": [
+   {
+    "index": 0,
+    "address": "$41F22",
+    "cell": [
+     2,
+     6
+    ],
+    "control": 0,
+    "firstHighNibble": 0,
+    "code": "$62"
+   },
+   {
+    "index": 1,
+    "address": "$41F24",
+    "cell": [
+     1,
+     6
+    ],
+    "control": 0,
+    "firstHighNibble": 0,
+    "code": "$61"
+   },
+   {
+    "index": 2,
+    "address": "$41F26",
+    "cell": [
+     0,
+     6
+    ],
+    "control": 0,
+    "firstHighNibble": 0,
+    "code": "$60"
+   },
+   {
+    "index": 3,
+    "address": "$41F28",
+    "cell": [
+     0,
+     5
+    ],
+    "control": 3,
+    "firstHighNibble": 0,
+    "code": "$50"
+   },
+   {
+    "index": 4,
+    "address": "$41F2A",
+    "cell": [
+     0,
+     4
+    ],
+    "control": 7,
+    "firstHighNibble": 0,
+    "code": "$40"
+   },
+   {
+    "index": 5,
+    "address": "$41F2C",
+    "cell": [
+     0,
+     3
+    ],
+    "control": 7,
+    "firstHighNibble": 0,
+    "code": "$30"
+   },
+   {
+    "index": 6,
+    "address": "$41F2E",
+    "cell": [
+     0,
+     2
+    ],
+    "control": 3,
+    "firstHighNibble": 0,
+    "code": "$20"
+   },
+   {
+    "index": 7,
+    "address": "$41F30",
+    "cell": [
+     0,
+     1
+    ],
+    "control": 0,
+    "firstHighNibble": 0,
+    "code": "$10"
+   },
+   {
+    "index": 8,
+    "address": "$41F32",
+    "cell": [
+     1,
+     1
+    ],
+    "control": 1,
+    "firstHighNibble": 0,
+    "code": "$11"
+   },
+   {
+    "index": 9,
+    "address": "$41F34",
+    "cell": [
+     2,
+     1
+    ],
+    "control": 1,
+    "firstHighNibble": 0,
+    "code": "$12"
+   },
+   {
+    "index": 10,
+    "address": "$41F36",
+    "cell": [
+     3,
+     1
+    ],
+    "control": 1,
+    "firstHighNibble": 0,
+    "code": "$13"
+   },
+   {
+    "index": 11,
+    "address": "$41F38",
+    "cell": [
+     4,
+     1
+    ],
+    "control": 0,
+    "firstHighNibble": 0,
+    "code": "$14"
+   },
+   {
+    "index": 12,
+    "address": "$41F3A",
+    "cell": [
+     4,
+     0
+    ],
+    "control": 0,
+    "firstHighNibble": 0,
+    "code": "$04"
+   },
+   {
+    "index": 13,
+    "address": "$41F3C",
+    "cell": [
+     3,
+     0
+    ],
+    "control": 1,
+    "firstHighNibble": 0,
+    "code": "$03"
+   },
+   {
+    "index": 14,
+    "address": "$41F3E",
+    "cell": [
+     2,
+     0
+    ],
+    "control": 0,
+    "firstHighNibble": 0,
+    "code": "$02"
+   },
+   {
+    "index": 15,
+    "address": "$41F40",
+    "cell": [
+     3,
+     0
+    ],
+    "control": 1,
+    "firstHighNibble": 0,
+    "code": "$03"
+   },
+   {
+    "index": 16,
+    "address": "$41F42",
+    "cell": [
+     4,
+     0
+    ],
+    "control": 0,
+    "firstHighNibble": 0,
+    "code": "$04"
+   },
+   {
+    "index": 17,
+    "address": "$41F44",
+    "cell": [
+     4,
+     1
+    ],
+    "control": 1,
+    "firstHighNibble": 0,
+    "code": "$14"
+   },
+   {
+    "index": 18,
+    "address": "$41F46",
+    "cell": [
+     4,
+     2
+    ],
+    "control": 1,
+    "firstHighNibble": 0,
+    "code": "$24"
+   },
+   {
+    "index": 19,
+    "address": "$41F48",
+    "cell": [
+     4,
+     3
+    ],
+    "control": 0,
+    "firstHighNibble": 0,
+    "code": "$34"
+   },
+   {
+    "index": 20,
+    "address": "$41F4A",
+    "cell": [
+     3,
+     3
+    ],
+    "control": 1,
+    "firstHighNibble": 0,
+    "code": "$33"
+   },
+   {
+    "index": 21,
+    "address": "$41F4C",
+    "cell": [
+     2,
+     3
+    ],
+    "control": 1,
+    "firstHighNibble": 0,
+    "code": "$32"
+   },
+   {
+    "index": 22,
+    "address": "$41F4E",
+    "cell": [
+     1,
+     3
+    ],
+    "control": 0,
+    "firstHighNibble": 0,
+    "code": "$31"
+   },
+   {
+    "index": 23,
+    "address": "$41F50",
+    "cell": [
+     1,
+     4
+    ],
+    "control": 2,
+    "firstHighNibble": 0,
+    "code": "$41"
+   },
+   {
+    "index": 24,
+    "address": "$41F52",
+    "cell": [
+     1,
+     5
+    ],
+    "control": 2,
+    "firstHighNibble": 0,
+    "code": "$51"
+   },
+   {
+    "index": 25,
+    "address": "$41F54",
+    "cell": [
+     1,
+     6
+    ],
+    "control": 0,
+    "firstHighNibble": 0,
+    "code": "$61"
+   }
+  ],
+  "source": {
+   "range": [
+    "$41F18",
+    "$41F58"
+   ],
+   "sha256": "44c095d23f33c8bcaae37bf233dcccfc9a8b655579d4a8c25e55838cfdf10c5a"
+  }
+ },
+ "labels": {
+  "header": "METIS     MOONBASE  ",
+  "headerLines": [
+   "METIS",
+   "MOONBASE"
+  ],
+  "records": [
+   {
+    "code": "$65",
+    "cell": [
+     5,
+     6
+    ],
+    "text": " SITE OF   OLD NIC  ",
+    "lines": [
+     " SITE OF",
+     " OLD NIC"
+    ],
+    "source": {
+     "range": [
+      "$214EA",
+      "$214FF"
+     ],
+     "sha256": "5162fdb2c4488fabc557d34172d348ed5549b6d1f23098fc1ef6f54bd3288227"
+    }
+   },
+   {
+    "code": "$62",
+    "cell": [
+     2,
+     6
+    ],
+    "text": "TIMEWARP  PRISON    ",
+    "lines": [
+     "TIMEWARP",
+     "PRISON"
+    ],
+    "source": {
+     "range": [
+      "$214FF",
+      "$21514"
+     ],
+     "sha256": "8e6e59f18a212a3967df4b1b4b474dccb85f81e3b94f286060ad1c8432e3a0b3"
+    }
+   },
+   {
+    "code": "$60",
+    "cell": [
+     0,
+     6
+    ],
+    "text": "DOOBERRYS SOLICITORS",
+    "lines": [
+     "DOOBERRYS",
+     "SOLICITORS"
+    ],
+    "source": {
+     "range": [
+      "$21514",
+      "$21529"
+     ],
+     "sha256": "12844aa9423e55800c31d372eb01ca5f21c67fe4ecbd8e8cb2b52d86a79b25b6"
+    }
+   },
+   {
+    "code": "$02",
+    "cell": [
+     2,
+     0
+    ],
+    "text": "METIS     SPACEPORT ",
+    "lines": [
+     "METIS",
+     "SPACEPORT"
+    ],
+    "source": {
+     "range": [
+      "$21529",
+      "$2153E"
+     ],
+     "sha256": "cf599aed46b78b8133567ee2e0ef54f6d53236262e701615efeed1c930138402"
+    }
+   }
+  ],
+  "terminator": "$2153E",
+  "source": {
+   "range": [
+    "$214D6",
+    "$2153F"
+   ],
+   "sha256": "885c4a0455d7dd087c87c56c98accbc85ff214594ecd64e5bd333f1a26d5fe59"
+  }
+ },
+ "destinations": [
+  {
+   "code": "$62",
+   "routeIndex": 0,
+   "cell": [
+    2,
+    6
+   ],
+   "label": "TIMEWARP  PRISON    "
+  },
+  {
+   "code": "$60",
+   "routeIndex": 2,
+   "cell": [
+    0,
+    6
+   ],
+   "label": "DOOBERRYS SOLICITORS"
+  },
+  {
+   "code": "$02",
+   "routeIndex": 14,
+   "cell": [
+    2,
+    0
+   ],
+   "label": "METIS     SPACEPORT "
+  }
+ ],
+ "narrative": [
+  {
+   "address": "$41920",
+   "origin": "$62",
+   "destination": "$02",
+   "script": "$33",
+   "source": {
+    "range": [
+     "$41920",
+     "$41924"
+    ],
+    "sha256": "eb95db1949a7281f72f82b9c17a7239c1b9daf00fe40f7ff83576db827bb0c16"
+   }
+  },
+  {
+   "address": "$41924",
+   "origin": "$62",
+   "destination": "$60",
+   "script": "$34",
+   "source": {
+    "range": [
+     "$41924",
+     "$41928"
+    ],
+    "sha256": "527429f9cd0621df5929c524c67e4f2f510da1b10d4b590e0c8c2b6b4e02c0a1"
+   }
+  },
+  {
+   "address": "$41928",
+   "origin": "$62",
+   "destination": "$02",
+   "script": "$40",
+   "source": {
+    "range": [
+     "$41928",
+     "$4192C"
+    ],
+    "sha256": "f6f5ec651a38e10698906edcc12a71b41d3674d37634848987ae34b64061e7e2"
+   }
+  },
+  {
+   "address": "$4192C",
+   "origin": "any",
+   "destination": "$62",
+   "script": "$41",
+   "source": {
+    "range": [
+     "$4192C",
+     "$41930"
+    ],
+    "sha256": "3ddc4157639cfee616c00555ecf777810c6e42b259a6c5ad18d1017a7a919585"
+   }
+  },
+  {
+   "address": "$41930",
+   "origin": "any",
+   "destination": "any",
+   "script": "$42",
+   "source": {
+    "range": [
+     "$41930",
+     "$41934"
+    ],
+    "sha256": "4a54dbe97de0cf6d4db3e26f473298f93f4b53679696eee6d700b9bda8ac2245"
+   }
+  }
+ ],
+ "heights": {
+  "descent": {
+   "address": "$51CA2",
+   "heights": [
+    25,
+    20,
+    16,
+    13,
+    10,
+    7,
+    5,
+    3,
+    2,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "terminator": "$51CB6",
+   "terminatorByte": "$FF",
+   "source": {
+    "range": [
+     "$51CA2",
+     "$51CB7"
+    ],
+    "sha256": "65842d64ebbe2de63f0f06bae08c366c3a5df50413ab6fc526a69bd18cacba01"
+   }
+  },
+  "liftOff": {
+   "address": "$51CB7",
+   "heights": [
+    5,
+    10,
+    20,
+    35,
+    45,
+    45,
+    40,
+    30,
+    20,
+    20,
+    22,
+    26,
+    25
+   ],
+   "terminator": "$51CC4",
+   "terminatorByte": "$FF",
+   "source": {
+    "range": [
+     "$51CB7",
+     "$51CC5"
+    ],
+    "sha256": "f75f5f2a2256b2318e125b510b9fa15b40ee594eddfdc99fead59d97ae696cba"
+   }
+  },
+  "residentY": "$5C5C (12 longs, residents 16..27)"
+ },
+ "headTurns": {
+  "reader": "$518AC",
+  "selector": "$6FF4A",
+  "count": "$6EA2",
+  "profile": "$6EA4",
+  "sequences": [
+   {
+    "value": "$0407",
+    "address": "$7014B",
+    "counts": [
+     1,
+     8
+    ],
+    "usedBy": [
+     "$33",
+     "$34"
+    ],
+    "source": {
+     "range": [
+      "$7014B",
+      "$7014E"
+     ],
+     "sha256": "dad27b142e75b98552e61914d13e3e1a4673ed2eed60c07a4d159f71ebc0b788"
+    }
+   },
+   {
+    "value": "$040A",
+    "address": "$7014E",
+    "counts": [
+     3,
+     5
+    ],
+    "usedBy": [
+     "$33"
+    ],
+    "source": {
+     "range": [
+      "$7014E",
+      "$70151"
+     ],
+     "sha256": "873084c7bc7780bbed87cf2408ee28526c2b4803c30d627c76565da718c56e40"
+    }
+   },
+   {
+    "value": "$040D",
+    "address": "$70151",
+    "counts": [
+     8,
+     8
+    ],
+    "usedBy": [],
+    "source": {
+     "range": [
+      "$70151",
+      "$70154"
+     ],
+     "sha256": "6c90f9a7ebbee6e5580d3e411e44a6cb90346609f95390b2eca6a0aac63d27ce"
+    }
+   },
+   {
+    "value": "$0410",
+    "address": "$70154",
+    "counts": [
+     1,
+     7,
+     5,
+     7
+    ],
+    "usedBy": [
+     "$33",
+     "$34"
+    ],
+    "source": {
+     "range": [
+      "$70154",
+      "$70159"
+     ],
+     "sha256": "279eae6efe260c59b4805b6d0cc19b8cdb60d0d3b29fcf37ef196dc07cc14179"
+    }
+   },
+   {
+    "value": "$0415",
+    "address": "$70159",
+    "counts": [
+     5,
+     8,
+     3,
+     7
+    ],
+    "usedBy": [],
+    "source": {
+     "range": [
+      "$70159",
+      "$7015E"
+     ],
+     "sha256": "c7599bb2854b2ea88e976c954563d667c0abedfdda683ed20fa48dafe3c7cc02"
+    }
+   },
+   {
+    "value": "$041A",
+    "address": "$7015E",
+    "counts": [
+     3,
+     5,
+     5,
+     5
+    ],
+    "usedBy": [],
+    "source": {
+     "range": [
+      "$7015E",
+      "$70163"
+     ],
+     "sha256": "a047e393de2d6e05223035e002ca1efdc5d4eaecbfbfa22549b8a11863d8e2d0"
+    }
+   }
+  ]
+ },
+ "openingState": {
+  "capturedAtVbl": null,
+  "note": "runtime state from this capture, not a recovered constant",
+  "pose": {
+   "x": "$09E18009",
+   "y": "$0000003F",
+   "z": "$043088A8",
+   "heading": "$0400",
+   "source": [
+    {
+     "range": [
+      "$07146",
+      "$07152"
+     ],
+     "sha256": "b2f857a244576c30e440470457e72ad29fe378d3405b0d163673fa6a50a6ac9b"
+    },
+    {
+     "range": [
+      "$07156",
+      "$07158"
+     ],
+     "sha256": "c0ba8a33ac67f44abff5984dfbb6f56c46b880ac2b86e1f23e7fa9c402c53ae7"
+    }
+   ]
+  },
+  "cell": {
+   "x": 2,
+   "z": 6,
+   "source": [
+    {
+     "range": [
+      "$070C2",
+      "$070C4"
+     ],
+     "sha256": "fcf0a6c700dd13e274b6fba8deea8dd9b26e4eedde3495717cac8408c9c5177f"
+    },
+    {
+     "range": [
+      "$070CA",
+      "$070CC"
+     ],
+     "sha256": "40d88127d4d31a3891f41598eeed41174e5bc89b1eb9bbd66a8cbfc09956a3fd"
+    }
+   ]
+  },
+  "carried": {
+   "count": 3,
+   "headItem": "$68",
+   "items": [
+    {
+     "object": "$68",
+     "heldBit": true
+    },
+    {
+     "object": "$67",
+     "heldBit": true
+    },
+    {
+     "object": "$87",
+     "heldBit": true
+    }
+   ],
+   "source": {
+    "range": [
+     "$0563C",
+     "$05641"
+    ],
+    "sha256": "3a092c090da5b978682768a263fd47e625ffe3fd9292dc4e1b5b78964ce6c83e"
+   }
+  },
+  "cashBcd": {
+   "digits": "005100900000",
+   "source": {
+    "range": [
+     "$072DE",
+     "$072E4"
+    ],
+    "sha256": "c90420f25889dd44deb37fa7e695fa393e53834601db6bb99b004e5ab40f4efc"
+   }
+  },
+  "elapsedSeconds": {
+   "value": 0,
+   "source": {
+    "range": [
+     "$06FCE",
+     "$06FD2"
+    ],
+    "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
+   }
+  },
+  "taxi": {
+   "progress": 2048,
+   "ramSha256": "5bd00eb63ba83b68ae32992fc201af11047c985948517a4e6f16c0422d8c3aa0",
+   "source": [
+    {
+     "range": [
+      "$06CBC",
+      "$06CC0"
+     ],
+     "sha256": "86d0f132e8c458e0051c8897d93982791dc68f3ab7ae93f99346c6a97a64cd75"
+    },
+    {
+     "range": [
+      "$06C8C",
+      "$06C90"
+     ],
+     "sha256": "e63b3350c36a132a0b1ca8b1b7d7ed9ae4a56a1e6ba9606359a2f7e1c0f800cc"
+    }
+   ],
+   "routeIndex": 0
+  }
+ }
+}

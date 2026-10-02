@@ -20,4 +20,3 @@ class RoadLineRecoveryTests(unittest.TestCase):
         self.assertEqual(recovered['corners'][0x8A], 0x898D0000)
         self.assertEqual(recovered['sourceRoadColour'], 0x322)
         self.assertEqual(recovered['roadColour'], '#664444')
-

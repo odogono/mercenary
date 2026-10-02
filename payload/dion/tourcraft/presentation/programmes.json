@@ -1,0 +1,4761 @@
+{
+  "collisionTone": {
+    "channel": "B",
+    "entry": "$4C8A0",
+    "periods": [
+      4080,
+      4064,
+      4048,
+      4034,
+      4016,
+      4000,
+      3920,
+      3904,
+      65535
+    ],
+    "registers": [
+      [
+        9,
+        31
+      ],
+      [
+        11,
+        33
+      ],
+      [
+        12,
+        48
+      ],
+      [
+        13,
+        9
+      ]
+    ]
+  },
+  "encounter": {
+    "pairs": [
+      {
+        "address": "$06E50",
+        "count": 3,
+        "request": 1
+      },
+      {
+        "address": "$06E74",
+        "count": 4,
+        "request": 1
+      }
+    ],
+    "trajectories": [
+      {
+        "address": "$522BC",
+        "records": [
+          {
+            "count": 14,
+            "shift": 4,
+            "x": 500,
+            "y": 4500,
+            "z": 500
+          },
+          {
+            "count": 14,
+            "shift": 4,
+            "x": -500,
+            "y": -1500,
+            "z": 500
+          },
+          {
+            "count": 14,
+            "shift": 4,
+            "x": 1500,
+            "y": -500,
+            "z": -4500
+          },
+          {
+            "count": 14,
+            "shift": 4,
+            "x": -500,
+            "y": 500,
+            "z": -1500
+          }
+        ]
+      },
+      {
+        "address": "$522E2",
+        "records": [
+          {
+            "count": 14,
+            "shift": 4,
+            "x": -500,
+            "y": -1300,
+            "z": 500
+          },
+          {
+            "count": 29,
+            "shift": 5,
+            "x": 500,
+            "y": -500,
+            "z": -5500
+          },
+          {
+            "count": 14,
+            "shift": 4,
+            "x": -5500,
+            "y": 500,
+            "z": -1500
+          },
+          {
+            "count": 29,
+            "shift": 5,
+            "x": 500,
+            "y": 3500,
+            "z": 500
+          }
+        ]
+      },
+      {
+        "address": "$52308",
+        "records": [
+          {
+            "count": 14,
+            "shift": 4,
+            "x": 1500,
+            "y": -500,
+            "z": -500
+          },
+          {
+            "count": 56,
+            "shift": 6,
+            "x": -500,
+            "y": 500,
+            "z": -1500
+          },
+          {
+            "count": 29,
+            "shift": 5,
+            "x": 500,
+            "y": 3500,
+            "z": 1500
+          },
+          {
+            "count": 14,
+            "shift": 4,
+            "x": -6500,
+            "y": -500,
+            "z": 500
+          }
+        ]
+      }
+    ]
+  },
+  "entries": {
+    "119": "$759D2",
+    "19": "$75A75",
+    "41": "$70579"
+  },
+  "faceSequences": {
+    "$A1": {
+      "alternate": [
+        70,
+        69,
+        67,
+        71,
+        72,
+        68,
+        67,
+        67,
+        67,
+        67,
+        68,
+        67,
+        67,
+        67,
+        67,
+        67,
+        69,
+        71,
+        67,
+        69,
+        72,
+        67,
+        69,
+        72,
+        70,
+        67,
+        67,
+        67,
+        68,
+        67,
+        67,
+        67,
+        67,
+        67,
+        70,
+        69,
+        70,
+        71,
+        69,
+        67,
+        72,
+        68,
+        67,
+        67,
+        67,
+        0
+      ],
+      "base": [
+        67,
+        67,
+        67,
+        67,
+        67,
+        67,
+        67,
+        67,
+        67,
+        67,
+        68,
+        67,
+        67,
+        67,
+        67,
+        68,
+        67,
+        67,
+        67,
+        67,
+        67,
+        67,
+        67,
+        67,
+        67,
+        67,
+        67,
+        67,
+        67,
+        67,
+        68,
+        0
+      ],
+      "selector": 34
+    },
+    "$A5": {
+      "alternate": [
+        80,
+        80,
+        81,
+        82,
+        83,
+        84,
+        88,
+        80,
+        89,
+        86,
+        80,
+        82,
+        83,
+        84,
+        80,
+        80,
+        87,
+        89,
+        83,
+        82,
+        80,
+        81,
+        81,
+        79,
+        80,
+        86,
+        88,
+        89,
+        83,
+        86,
+        81,
+        0
+      ],
+      "base": [
+        80,
+        80,
+        80,
+        80,
+        79,
+        80,
+        81,
+        81,
+        80,
+        80,
+        80,
+        80,
+        79,
+        80,
+        80,
+        80,
+        81,
+        81,
+        81,
+        81,
+        79,
+        0
+      ],
+      "selector": 24
+    }
+  },
+  "headSequences": {
+    "$7014B": [
+      1,
+      8,
+      0
+    ],
+    "$7014E": [
+      3,
+      5,
+      0
+    ],
+    "$70154": [
+      1,
+      7,
+      5,
+      7,
+      0
+    ],
+    "$70159": [
+      5,
+      8,
+      3,
+      7,
+      0
+    ]
+  },
+  "kind": "dion-play-programmes",
+  "playback": {
+    "actions": [
+      {
+        "frame": 36,
+        "kind": "key",
+        "source": {
+          "range": [
+            "$66D40",
+            "$66D42"
+          ],
+          "sha256": "78089b63fdc16d88d467ebd694b7d0085e8b15cfd26b16d6795a44dc94a20664"
+        },
+        "value": 3
+      },
+      {
+        "frame": 40,
+        "kind": "key",
+        "source": {
+          "range": [
+            "$66D42",
+            "$66D44"
+          ],
+          "sha256": "9c1e459b1d369488dc315ee562d3f5f696b0fae0828af63d5e49428715a06408"
+        },
+        "value": 4
+      },
+      {
+        "frame": 45,
+        "kind": "key",
+        "source": {
+          "range": [
+            "$66D44",
+            "$66D46"
+          ],
+          "sha256": "3cabd39c77f847a2feac3ca44f96edd9950b69857cc8df1830e16b79740c9052"
+        },
+        "value": 5
+      },
+      {
+        "frame": 47,
+        "kind": "key",
+        "source": {
+          "range": [
+            "$66D46",
+            "$66D48"
+          ],
+          "sha256": "f574d5db4143f9e86848c14a1c63b1f91d001289cf3b0a29e64b7336afc642cc"
+        },
+        "value": 5
+      },
+      {
+        "frame": 50,
+        "kind": "key",
+        "source": {
+          "range": [
+            "$66D48",
+            "$66D4A"
+          ],
+          "sha256": "6d9a4eaa369e458060284d8e5ef369af20bd0b8f7dc08b84a85ead69971989f3"
+        },
+        "value": 6
+      },
+      {
+        "frame": 54,
+        "kind": "key",
+        "source": {
+          "range": [
+            "$66D4A",
+            "$66D4C"
+          ],
+          "sha256": "e1f93d42b23e28dd7f2fb851b74f561f3aa99e82ee6dbe5d7929c62c9258e915"
+        },
+        "value": 7
+      },
+      {
+        "frame": 58,
+        "kind": "key",
+        "source": {
+          "range": [
+            "$66D4C",
+            "$66D4E"
+          ],
+          "sha256": "89aabbd33f53b9fbf6370f37b504c73152cc638ffc1121e1eac30d51979f42e7"
+        },
+        "value": 8
+      },
+      {
+        "frame": 59,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66D4E",
+            "$66D50"
+          ],
+          "sha256": "7cda68b7bc3f610191501cf2de04e95c1dafcb7b8ebbbfdb8f77cf77d545986f"
+        },
+        "value": 2
+      },
+      {
+        "frame": 67,
+        "kind": "key",
+        "source": {
+          "range": [
+            "$66D50",
+            "$66D52"
+          ],
+          "sha256": "b4a46021ab474c09f3abd5c2c60c04c6d56b5938c36470de9679977dc3f67945"
+        },
+        "value": 9
+      },
+      {
+        "frame": 67,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66D52",
+            "$66D54"
+          ],
+          "sha256": "d9be16bb732e29d771ed0d18c07490e25175452423d4bde1fdd2eabc520bd47c"
+        },
+        "value": 0
+      },
+      {
+        "frame": 73,
+        "kind": "key",
+        "source": {
+          "range": [
+            "$66D54",
+            "$66D56"
+          ],
+          "sha256": "6d4007ab930c8b44cdfcb95acb219910c1d6a2738d80de7c21887f87789abe80"
+        },
+        "value": 11
+      },
+      {
+        "frame": 79,
+        "kind": "key",
+        "source": {
+          "range": [
+            "$66D56",
+            "$66D58"
+          ],
+          "sha256": "51d4598cd4b58cffdae8e6136e8807dd73d7e9f9996a1ff8754c02c4f45279a7"
+        },
+        "value": 20
+      },
+      {
+        "frame": 94,
+        "kind": "key",
+        "source": {
+          "range": [
+            "$66D58",
+            "$66D5A"
+          ],
+          "sha256": "9c6c2a3061191083cacb64b8e9fc017e9fd65df871da34a8e76d4659973a6673"
+        },
+        "value": 20
+      },
+      {
+        "frame": 124,
+        "kind": "key",
+        "source": {
+          "range": [
+            "$66D5A",
+            "$66D5C"
+          ],
+          "sha256": "b0f045e310f4ebabc3b22ded6bb6c9fe621fd2488c836636ab2fee57ef753a20"
+        },
+        "value": 20
+      },
+      {
+        "frame": 142,
+        "kind": "key",
+        "source": {
+          "range": [
+            "$66D5C",
+            "$66D5E"
+          ],
+          "sha256": "cb45a7efca6c595368c73f9f8b78f37d3915731a85c565dc0ecc2ab0fc3e22c2"
+        },
+        "value": 11
+      },
+      {
+        "frame": 145,
+        "kind": "key",
+        "source": {
+          "range": [
+            "$66D5E",
+            "$66D60"
+          ],
+          "sha256": "e393cd71c9bfc6caa0afd14531659df390e2184f8996ba570002762dc2550808"
+        },
+        "value": 11
+      },
+      {
+        "frame": 151,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66D60",
+            "$66D62"
+          ],
+          "sha256": "d761773a2c17b31f7ef61ab34574f9f9bde902cbbd17e4f710ee8cc21dba5d36"
+        },
+        "value": 4
+      },
+      {
+        "frame": 152,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66D62",
+            "$66D64"
+          ],
+          "sha256": "2e394f6d9bb41a558c7da1d161c0c8da474e5331a9802c11ccfad078d8c17497"
+        },
+        "value": 0
+      },
+      {
+        "frame": 156,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66D64",
+            "$66D66"
+          ],
+          "sha256": "de9a9f363edfcedb1a84f07f6b0ffe9c9689c709416f861b71a758fc64684d7a"
+        },
+        "value": 4
+      },
+      {
+        "frame": 171,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66D66",
+            "$66D68"
+          ],
+          "sha256": "2ed52c3f7d3d695d40c29f0df4e99f1bdfba7155658dc787aef4cd930c43f49c"
+        },
+        "value": 0
+      },
+      {
+        "frame": 185,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66D68",
+            "$66D6A"
+          ],
+          "sha256": "480b8fa132591a3d38d29c0c6a14161b6fbe76792b86ebd8c6397828844f7631"
+        },
+        "value": 4
+      },
+      {
+        "frame": 212,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66D6A",
+            "$66D6C"
+          ],
+          "sha256": "661974ee16dfde3fda0054ee65cdb90c3b045f28cee6e099cbe19ebdd48deb52"
+        },
+        "value": 0
+      },
+      {
+        "frame": 220,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66D6C",
+            "$66D6E"
+          ],
+          "sha256": "d8ac5ce5f3ddb83639362c6b3c78aa668ca0a4f73d4f34cd7e05dda943812b5d"
+        },
+        "value": 4
+      },
+      {
+        "frame": 222,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66D6E",
+            "$66D70"
+          ],
+          "sha256": "e658dad25205fa73d97e1cff0df436173061f5494ad6381ecefd1940e4d5fdb2"
+        },
+        "value": 0
+      },
+      {
+        "frame": 226,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66D70",
+            "$66D72"
+          ],
+          "sha256": "078193aba870ed86a5156ee1105ec62d7fee1e786718ebdc1bef24e654cc40e0"
+        },
+        "value": 4
+      },
+      {
+        "frame": 238,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66D72",
+            "$66D74"
+          ],
+          "sha256": "0fb294b824c6f855ab291089d3bba023c0fa4efb07fd253623bddaea18f7bf48"
+        },
+        "value": 0
+      },
+      {
+        "frame": 240,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66D74",
+            "$66D76"
+          ],
+          "sha256": "2787b2e2cd2a28e414765bef44f00e8ac1360aa59a7b06042cbdb67870299a81"
+        },
+        "value": 4
+      },
+      {
+        "frame": 243,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66D76",
+            "$66D78"
+          ],
+          "sha256": "fd878419748bef0d25061a57f7a5c972ce35535102f91841cdcf3c7dba7563c6"
+        },
+        "value": 0
+      },
+      {
+        "frame": 251,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66D78",
+            "$66D7A"
+          ],
+          "sha256": "ad554849d3f6511ebf69823531852d639c9707a415b0c48e0c6227421c9db388"
+        },
+        "value": 8
+      },
+      {
+        "frame": 254,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66D7A",
+            "$66D7C"
+          ],
+          "sha256": "a3c089c0737c6c7e7c728a1e278e2adfb260503fbbf27bb5fd36275ac21a62be"
+        },
+        "value": 0
+      },
+      {
+        "frame": 272,
+        "kind": "key",
+        "source": {
+          "range": [
+            "$66D7C",
+            "$66D7E"
+          ],
+          "sha256": "fe5cd61f2088b17ead633ff8dabb0b01566c6e3967f2672b7b7322c549d93407"
+        },
+        "value": 11
+      },
+      {
+        "frame": 284,
+        "kind": "key",
+        "source": {
+          "range": [
+            "$66D7E",
+            "$66D80"
+          ],
+          "sha256": "bb1e397b31beb957485ba39f9eba9dc6960f499df21d15b5a355e239467ec1fd"
+        },
+        "value": 20
+      },
+      {
+        "frame": 295,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66D80",
+            "$66D82"
+          ],
+          "sha256": "1042255f5ea3dfed800805b831b4d1390d4877b06535b3fa359314b2c56a481a"
+        },
+        "value": 8
+      },
+      {
+        "frame": 297,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66D82",
+            "$66D84"
+          ],
+          "sha256": "961f39deb9935322b6dd46d71cb71043473b38a2439b0f7b50c361c79d411bf9"
+        },
+        "value": 0
+      },
+      {
+        "frame": 307,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66D84",
+            "$66D86"
+          ],
+          "sha256": "db1228b5596d586915ac474ed60b822817f92517894df194b9918401c59fc297"
+        },
+        "value": 8
+      },
+      {
+        "frame": 308,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66D86",
+            "$66D88"
+          ],
+          "sha256": "365f83ac542d078a91a675fd4258355bd0d8bb6d60cf02c7659b97db9bd3edec"
+        },
+        "value": 0
+      },
+      {
+        "frame": 309,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66D88",
+            "$66D8A"
+          ],
+          "sha256": "2261c23f59f1ecb56fecf201ca6ef8b38db84e468714de0864f00aa68085b361"
+        },
+        "value": 8
+      },
+      {
+        "frame": 310,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66D8A",
+            "$66D8C"
+          ],
+          "sha256": "5f52f8dda39d9440b66fcb649ad5e099729203c76cf7f256b55179d734e6a443"
+        },
+        "value": 0
+      },
+      {
+        "frame": 336,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66D8C",
+            "$66D8E"
+          ],
+          "sha256": "6a08986bc5921d4dbb4c3ce19e45298446b315015fe6f49bdb9e9ef5ebca5ea0"
+        },
+        "value": 4
+      },
+      {
+        "frame": 338,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66D8E",
+            "$66D90"
+          ],
+          "sha256": "0306bd27822e06cc082bc3be844e3ecd9abb20d9870e5662866c142316846030"
+        },
+        "value": 0
+      },
+      {
+        "frame": 358,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66D90",
+            "$66D92"
+          ],
+          "sha256": "5b4f38a8e45fc98d0f4e5af9cf3e7064590da803f5e5043505d676d8ffc376c1"
+        },
+        "value": 2
+      },
+      {
+        "frame": 361,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66D92",
+            "$66D94"
+          ],
+          "sha256": "edff5584f6005a08d4c13fae9ede8b6a2f150ac7b6a2c564fa2f9e6f0b6c6b34"
+        },
+        "value": 0
+      },
+      {
+        "frame": 362,
+        "kind": "key",
+        "source": {
+          "range": [
+            "$66D94",
+            "$66D96"
+          ],
+          "sha256": "fd7051a9b39dc1dac575afd8cb708c29b36fd7fcca29bf24be8a2dc1a3f07c04"
+        },
+        "value": 11
+      },
+      {
+        "frame": 363,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66D96",
+            "$66D98"
+          ],
+          "sha256": "784cc0c62d6723d759befa2c60f224483100b587c9b8c25b35ef32a92831308a"
+        },
+        "value": 4
+      },
+      {
+        "frame": 368,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66D98",
+            "$66D9A"
+          ],
+          "sha256": "e394698d0a8ee5d8f68bf6a86bdc6bd6cd17210d6e4ceb5cc2dd75d70c9c4533"
+        },
+        "value": 0
+      },
+      {
+        "frame": 412,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66D9A",
+            "$66D9C"
+          ],
+          "sha256": "de9a9f363edfcedb1a84f07f6b0ffe9c9689c709416f861b71a758fc64684d7a"
+        },
+        "value": 4
+      },
+      {
+        "frame": 416,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66D9C",
+            "$66D9E"
+          ],
+          "sha256": "72f3c862fbec07af5f6dcb3fdd14a5272bc4a2099634319df288545a6d52ebc3"
+        },
+        "value": 0
+      },
+      {
+        "frame": 418,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66D9E",
+            "$66DA0"
+          ],
+          "sha256": "6fc256f9d6efb8db066efd586486fa45b7b2b5329a539d45822796b464b63e13"
+        },
+        "value": 2
+      },
+      {
+        "frame": 422,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DA0",
+            "$66DA2"
+          ],
+          "sha256": "464837051fc3c3de1fd4997c565eedf5a335492381f162bc4fb9c7bb582ee47f"
+        },
+        "value": 0
+      },
+      {
+        "frame": 429,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DA2",
+            "$66DA4"
+          ],
+          "sha256": "7007a4aaeb70e53e122c05f16bd92b2e490a3615025c2460c2c81c544887cf00"
+        },
+        "value": 2
+      },
+      {
+        "frame": 431,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DA4",
+            "$66DA6"
+          ],
+          "sha256": "080d949ea9d7c225cd20acc05be9b257a07b6f3568b07ccbd59075a741d9c66b"
+        },
+        "value": 0
+      },
+      {
+        "frame": 437,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DA6",
+            "$66DA8"
+          ],
+          "sha256": "093979195bbe2b6e2846f53fffbd9cf1a937f94f54a39e1c8aed39a1a21536aa"
+        },
+        "value": 8
+      },
+      {
+        "frame": 441,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DA8",
+            "$66DAA"
+          ],
+          "sha256": "1207ad131d912767d0a64b43dcd5b34790dbe8908f173f1b4dbd4e38c26b9315"
+        },
+        "value": 0
+      },
+      {
+        "frame": 472,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DAA",
+            "$66DAC"
+          ],
+          "sha256": "7dfc87e1b4178d1fb37962d59cc00656fb1469da6c9d9fb906e8f448fa60cc93"
+        },
+        "value": 4
+      },
+      {
+        "frame": 478,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DAC",
+            "$66DAE"
+          ],
+          "sha256": "e658dad25205fa73d97e1cff0df436173061f5494ad6381ecefd1940e4d5fdb2"
+        },
+        "value": 0
+      },
+      {
+        "frame": 483,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DAE",
+            "$66DB0"
+          ],
+          "sha256": "32b3759b686eff6ba58c397644bf1f5f8c05d303f1e6bab319a16e7d718c159c"
+        },
+        "value": 1
+      },
+      {
+        "frame": 486,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DB0",
+            "$66DB2"
+          ],
+          "sha256": "f871fad07d5d05c15d460dd7490c841490525e10b8f8682f27e210de1c71a455"
+        },
+        "value": 0
+      },
+      {
+        "frame": 490,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DB2",
+            "$66DB4"
+          ],
+          "sha256": "fc04cd6c3fdd095046b5b6f1f5ccc3677a2ae90ffad13265671a25e44dd57ab8"
+        },
+        "value": 4
+      },
+      {
+        "frame": 497,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DB4",
+            "$66DB6"
+          ],
+          "sha256": "a69b6422303d932348c525b736949d66e0e0a9f47483be72a5139f8f33f21e67"
+        },
+        "value": 0
+      },
+      {
+        "frame": 510,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DB6",
+            "$66DB8"
+          ],
+          "sha256": "bb7b6cd53ac527bef1168900d745bfd04a784a1dc04c1664a44c6786fadff51c"
+        },
+        "value": 4
+      },
+      {
+        "frame": 513,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DB8",
+            "$66DBA"
+          ],
+          "sha256": "3be90d393f91241448d7dceadad32d91c1c94f307805937b46ed01ea669c17c3"
+        },
+        "value": 0
+      },
+      {
+        "frame": 531,
+        "kind": "key",
+        "source": {
+          "range": [
+            "$66DBA",
+            "$66DBC"
+          ],
+          "sha256": "3a5a0a8d4f2711d2929c0d399253906658b7535b4fb8d8725f9a67bc0da81a06"
+        },
+        "value": 20
+      },
+      {
+        "frame": 548,
+        "kind": "key",
+        "source": {
+          "range": [
+            "$66DBC",
+            "$66DBE"
+          ],
+          "sha256": "63aff5952175badff8ca22f8e7050982ff94b86e0ee8406c03e54c2413c308ec"
+        },
+        "value": 20
+      },
+      {
+        "frame": 560,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DBE",
+            "$66DC0"
+          ],
+          "sha256": "dd49cc7d99cfbc4b41d7290e15b277769ba0d93da359175b7de4e5a30fd18cb9"
+        },
+        "value": 1
+      },
+      {
+        "frame": 561,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DC0",
+            "$66DC2"
+          ],
+          "sha256": "bfcde7a0c16c06d0c8d83b4035e83b82302daff4672d5695a5e860c9f770cf0c"
+        },
+        "value": 0
+      },
+      {
+        "frame": 594,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DC2",
+            "$66DC4"
+          ],
+          "sha256": "46d5f1147e078105bd1d15a3d47451701ab230abfb627497330348b8d1da68af"
+        },
+        "value": 1
+      },
+      {
+        "frame": 596,
+        "kind": "key",
+        "source": {
+          "range": [
+            "$66DC4",
+            "$66DC6"
+          ],
+          "sha256": "9423b3eb4f6d5e2913b3b6f5e1a0c7919a85b88d0b403eb4404884f459b05cc7"
+        },
+        "value": 11
+      },
+      {
+        "frame": 596,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DC6",
+            "$66DC8"
+          ],
+          "sha256": "635c5855173c7925f0a032cd9818f24e1dfd3a8533ba6eb4a21267fa14420476"
+        },
+        "value": 0
+      },
+      {
+        "frame": 646,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DC8",
+            "$66DCA"
+          ],
+          "sha256": "8201ae4dd202cc84bd8514aaad6cc54a0b6bdebd96fd06495304f2defe61e704"
+        },
+        "value": 1
+      },
+      {
+        "frame": 647,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DCA",
+            "$66DCC"
+          ],
+          "sha256": "df35fc0d710f63a75f24d49dbbcd7ecffc5ac3c10469fbaac271d975830eb7b9"
+        },
+        "value": 0
+      },
+      {
+        "frame": 667,
+        "kind": "key",
+        "source": {
+          "range": [
+            "$66DCC",
+            "$66DCE"
+          ],
+          "sha256": "b5acaf54f1b256dcf28117d954199146f1d70c03c02e2dece097b15169827b91"
+        },
+        "value": 10
+      },
+      {
+        "frame": 674,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DCE",
+            "$66DD0"
+          ],
+          "sha256": "6fc256f9d6efb8db066efd586486fa45b7b2b5329a539d45822796b464b63e13"
+        },
+        "value": 2
+      },
+      {
+        "frame": 678,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DD0",
+            "$66DD2"
+          ],
+          "sha256": "464837051fc3c3de1fd4997c565eedf5a335492381f162bc4fb9c7bb582ee47f"
+        },
+        "value": 0
+      },
+      {
+        "frame": 684,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DD2",
+            "$66DD4"
+          ],
+          "sha256": "31d08c5228c442841cf941c5bec2493ac3b61ca9a4028eec844e29cd8a4b1c42"
+        },
+        "value": 9
+      },
+      {
+        "frame": 685,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DD4",
+            "$66DD6"
+          ],
+          "sha256": "df4d4dfabed3d08b5bcae76001344f0559e96520f7d76316e449ef5b76b02153"
+        },
+        "value": 0
+      },
+      {
+        "frame": 704,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DD6",
+            "$66DD8"
+          ],
+          "sha256": "e805cf522599ec5db0b36b7ae76776dc6d6859c18952b7a3223b94b7bbf13f7a"
+        },
+        "value": 8
+      },
+      {
+        "frame": 706,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DD8",
+            "$66DDA"
+          ],
+          "sha256": "ea0add9a514e94de9abd0ba721eed15b15aa0b3a0f09ebee5e54a9dfae943153"
+        },
+        "value": 0
+      },
+      {
+        "frame": 715,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DDA",
+            "$66DDC"
+          ],
+          "sha256": "e3fbbbaf76cd54b06d777b8c44093b53f883594643d63f5f2b754770becbcbae"
+        },
+        "value": 4
+      },
+      {
+        "frame": 717,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DDC",
+            "$66DDE"
+          ],
+          "sha256": "480e9547ed3aec71447bb0055bf6057fe6c0fa12de8a18e89bbf4a7397dc8f8d"
+        },
+        "value": 0
+      },
+      {
+        "frame": 774,
+        "kind": "key",
+        "source": {
+          "range": [
+            "$66DDE",
+            "$66DE0"
+          ],
+          "sha256": "9fdded952da6a0b5e0b5caa90e194b5b2da46092b26a9e382c8d895c662d9b0f"
+        },
+        "value": 9
+      },
+      {
+        "frame": 780,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DE0",
+            "$66DE2"
+          ],
+          "sha256": "bd5bf9ee335f2f47a5be422e77bd931fabf8675efb845f8fdf945002bee98bf0"
+        },
+        "value": 4
+      },
+      {
+        "frame": 781,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DE2",
+            "$66DE4"
+          ],
+          "sha256": "036053b103374e82177446b4e083ccb6a22da06e0375582d622632775c8a938a"
+        },
+        "value": 0
+      },
+      {
+        "frame": 783,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DE4",
+            "$66DE6"
+          ],
+          "sha256": "0eb64b7bd48b9eb47fbb3ad72a7de6d79ed8b704073755615970d1ebf48b3109"
+        },
+        "value": 4
+      },
+      {
+        "frame": 785,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DE6",
+            "$66DE8"
+          ],
+          "sha256": "f36ceeb1b4ef3f83e0c3d853d41ddfed0a06b9b06aff0d9adeb12c901cdbfdff"
+        },
+        "value": 0
+      },
+      {
+        "frame": 788,
+        "kind": "key",
+        "source": {
+          "range": [
+            "$66DE8",
+            "$66DEA"
+          ],
+          "sha256": "8149a8dabfbcae50c4620b8a4985e25582022705495ac6d670ecf3948f8fb3a8"
+        },
+        "value": 8
+      },
+      {
+        "frame": 792,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DEA",
+            "$66DEC"
+          ],
+          "sha256": "ea8131cbfe4c74bbd860e361d7634a023fa81cc54838f7c43a6df1bc9b2c3799"
+        },
+        "value": 8
+      },
+      {
+        "frame": 796,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DEC",
+            "$66DEE"
+          ],
+          "sha256": "1cc7b5513535826a7c98e347860b94e658cceec4ee0e76e3bd4feb0d717a2fd1"
+        },
+        "value": 0
+      },
+      {
+        "frame": 797,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DEE",
+            "$66DF0"
+          ],
+          "sha256": "0e6f725b5aa4f91e8af9c828b37ee6b9c5c7c5e948f505d58fef15cc32ef2103"
+        },
+        "value": 8
+      },
+      {
+        "frame": 798,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DF0",
+            "$66DF2"
+          ],
+          "sha256": "7296573445b9fc5efac57142639f6f6cc1a34adac4bd656ced4123f7a802a519"
+        },
+        "value": 0
+      },
+      {
+        "frame": 805,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DF2",
+            "$66DF4"
+          ],
+          "sha256": "fd1cdd193de46baa318bedc9d442cdb0ef1523f5a08b969759e20318e3e45d80"
+        },
+        "value": 4
+      },
+      {
+        "frame": 806,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DF4",
+            "$66DF6"
+          ],
+          "sha256": "47a2664a0b6f897df60db9777188591ef244e324cb2a11120af4d3ec1d22b320"
+        },
+        "value": 0
+      },
+      {
+        "frame": 809,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DF6",
+            "$66DF8"
+          ],
+          "sha256": "f43165e6f36848af8ddff779bfc762edc28fc1ede4d712333ab91bc25daa446a"
+        },
+        "value": 4
+      },
+      {
+        "frame": 812,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DF8",
+            "$66DFA"
+          ],
+          "sha256": "faa361615937c8a06950a7860d98a1f2476695fab30e6c5b3960fd9d45c56f59"
+        },
+        "value": 0
+      },
+      {
+        "frame": 813,
+        "kind": "key",
+        "source": {
+          "range": [
+            "$66DFA",
+            "$66DFC"
+          ],
+          "sha256": "37baf2ac49d46fd0f3ced469e0a27b078d9424c995f2a60f7021cf71707bb863"
+        },
+        "value": 7
+      },
+      {
+        "frame": 816,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DFC",
+            "$66DFE"
+          ],
+          "sha256": "d8dda7f5bb4b635d50bd7f3686b7819f5d92c6e8c80bff7f9d3c5dfca4e11008"
+        },
+        "value": 4
+      },
+      {
+        "frame": 817,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66DFE",
+            "$66E00"
+          ],
+          "sha256": "bfcde7a0c16c06d0c8d83b4035e83b82302daff4672d5695a5e860c9f770cf0c"
+        },
+        "value": 0
+      },
+      {
+        "frame": 818,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E00",
+            "$66E02"
+          ],
+          "sha256": "2e488578470b9305fda422281e5f94d6b180a7f0b6a79e664253a4cb94a9fc54"
+        },
+        "value": 1
+      },
+      {
+        "frame": 819,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E02",
+            "$66E04"
+          ],
+          "sha256": "e7fb2b13e89aaa37c2bae2656f44a55af16d54563b40b07e82ef7a9d9761bf86"
+        },
+        "value": 0
+      },
+      {
+        "frame": 823,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E04",
+            "$66E06"
+          ],
+          "sha256": "63088dd9cde166ac2ad099fce598e87008011036d986b18da03b613f1c0d64bd"
+        },
+        "value": 8
+      },
+      {
+        "frame": 825,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E06",
+            "$66E08"
+          ],
+          "sha256": "fb0561f3c41e1334db075d4d34519b6f789216f60199fe494d6abd49c69fd0ca"
+        },
+        "value": 0
+      },
+      {
+        "frame": 826,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E08",
+            "$66E0A"
+          ],
+          "sha256": "1da08ebef0fea18c8a1b5ae7d4a1960af81943b3299a702d22f32c7ec486c6f7"
+        },
+        "value": 8
+      },
+      {
+        "frame": 828,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E0A",
+            "$66E0C"
+          ],
+          "sha256": "b6c4056a2762cb783df99d7285cacb276b4c73453168a699a89261e4e5a66bed"
+        },
+        "value": 0
+      },
+      {
+        "frame": 830,
+        "kind": "key",
+        "source": {
+          "range": [
+            "$66E0C",
+            "$66E0E"
+          ],
+          "sha256": "3391dbd77e36514596e03caf6cdb790322320c98209b654d7759236b720f5697"
+        },
+        "value": 6
+      },
+      {
+        "frame": 830,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E0E",
+            "$66E10"
+          ],
+          "sha256": "e8ab3bfeab0f28017843f34cc3a6215213e261fdf3bed7caab5d673f92caa305"
+        },
+        "value": 8
+      },
+      {
+        "frame": 832,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E10",
+            "$66E12"
+          ],
+          "sha256": "c8f60253898a317def9c45f05a4f2044f5c82b9f8cb03d61428e8b10e0ab6670"
+        },
+        "value": 4
+      },
+      {
+        "frame": 833,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E12",
+            "$66E14"
+          ],
+          "sha256": "83be7ce6ddd711af551a1b4c0cb8352f0846a4edffc406624c603b5885976792"
+        },
+        "value": 0
+      },
+      {
+        "frame": 834,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E14",
+            "$66E16"
+          ],
+          "sha256": "cdda5967fdf03b9e859b30406acb54406ee2d029797208ed7d1de8539403893c"
+        },
+        "value": 4
+      },
+      {
+        "frame": 835,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E16",
+            "$66E18"
+          ],
+          "sha256": "d9be16bb732e29d771ed0d18c07490e25175452423d4bde1fdd2eabc520bd47c"
+        },
+        "value": 0
+      },
+      {
+        "frame": 837,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E18",
+            "$66E1A"
+          ],
+          "sha256": "89cfac6758605f942e95001051b1cc23a39ad290cd6f1b2670711c8ec0c191ab"
+        },
+        "value": 4
+      },
+      {
+        "frame": 838,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E1A",
+            "$66E1C"
+          ],
+          "sha256": "84df9b3e2ddbefff7337bc0f13d7d55574e75f0f5b1426268658fda7bc0f58bf"
+        },
+        "value": 0
+      },
+      {
+        "frame": 840,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E1C",
+            "$66E1E"
+          ],
+          "sha256": "682371a01270eeed8b3772d8946dd6b019bf21f9fdd022ebf28780cdc782be84"
+        },
+        "value": 4
+      },
+      {
+        "frame": 842,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E1E",
+            "$66E20"
+          ],
+          "sha256": "b44a3545639ae7011a326102add6e9f92b8b4db059f0d2d3990cc965ad5d85d0"
+        },
+        "value": 0
+      },
+      {
+        "frame": 844,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E20",
+            "$66E22"
+          ],
+          "sha256": "32ae217cfb1614bb7d707365db1c268b5c8c8dcbf00ec457c97e300255fdd1b1"
+        },
+        "value": 8
+      },
+      {
+        "frame": 845,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E22",
+            "$66E24"
+          ],
+          "sha256": "32fb187f86373c78d91a82be010176ae12b36003c097f56a338ab05a55a70039"
+        },
+        "value": 0
+      },
+      {
+        "frame": 850,
+        "kind": "key",
+        "source": {
+          "range": [
+            "$66E24",
+            "$66E26"
+          ],
+          "sha256": "7d5da879e2bfcb709c1774a03312aab6e79c4ed53dc744c59463f91cd372d8b4"
+        },
+        "value": 5
+      },
+      {
+        "frame": 854,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E26",
+            "$66E28"
+          ],
+          "sha256": "3e4f2dddb5cd9769af683e437b3c551464b60e880c8d85015439b87bf5fb3a4a"
+        },
+        "value": 2
+      },
+      {
+        "frame": 855,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E28",
+            "$66E2A"
+          ],
+          "sha256": "c45182c2ce6fe8265bd03341fca1252b524487bda45241c01736a74faa0253b4"
+        },
+        "value": 0
+      },
+      {
+        "frame": 858,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E2A",
+            "$66E2C"
+          ],
+          "sha256": "e6f2e0f741fb52b827dbfd1559c59517d81e4794c8e6f31c6529e8eed44ac09a"
+        },
+        "value": 8
+      },
+      {
+        "frame": 859,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E2C",
+            "$66E2E"
+          ],
+          "sha256": "624c758e1b4abd7dc46ec04cf62a641844b42ba6e2e05caeeeea577b2adf7b4f"
+        },
+        "value": 0
+      },
+      {
+        "frame": 860,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E2E",
+            "$66E30"
+          ],
+          "sha256": "00d8fedc9a82553ef5348f16c6a5406f696435f0fe804466dda4cecbb761741f"
+        },
+        "value": 8
+      },
+      {
+        "frame": 861,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E30",
+            "$66E32"
+          ],
+          "sha256": "fd199a34ca5f9503ba3f302151f6dd41fa676e53a054028949cab46d0bafcf79"
+        },
+        "value": 0
+      },
+      {
+        "frame": 864,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E32",
+            "$66E34"
+          ],
+          "sha256": "e2f2a3782b4482b8ec0f43d05ec96a6b598c91f12ca06623bc88a82106bfeee0"
+        },
+        "value": 4
+      },
+      {
+        "frame": 865,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E34",
+            "$66E36"
+          ],
+          "sha256": "119792a4ff6ca25186b81fe68e4e9da6870d1d77463da46b2a7497d46dc18a70"
+        },
+        "value": 0
+      },
+      {
+        "frame": 868,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E36",
+            "$66E38"
+          ],
+          "sha256": "dff0c047227d36b6e8175c4e2e67391c525cf066a5b44ff64e003b210958424b"
+        },
+        "value": 8
+      },
+      {
+        "frame": 870,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E38",
+            "$66E3A"
+          ],
+          "sha256": "6f6ea0e1c9fe14449f3541a3690df7a88718fd958cf9da6582e142640a2b01df"
+        },
+        "value": 0
+      },
+      {
+        "frame": 872,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E3A",
+            "$66E3C"
+          ],
+          "sha256": "43b5a314cfa8e4cf3933b0809733ba33046d34267fb21dea9334fd571d5ecf5a"
+        },
+        "value": 8
+      },
+      {
+        "frame": 873,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E3C",
+            "$66E3E"
+          ],
+          "sha256": "edff5584f6005a08d4c13fae9ede8b6a2f150ac7b6a2c564fa2f9e6f0b6c6b34"
+        },
+        "value": 0
+      },
+      {
+        "frame": 876,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E3E",
+            "$66E40"
+          ],
+          "sha256": "ea86a593150c802f4cac64658c7fb670ba21f2a870608c0c2b11126aec4623c1"
+        },
+        "value": 4
+      },
+      {
+        "frame": 877,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E40",
+            "$66E42"
+          ],
+          "sha256": "ba127b51f157fac94dde80a42358a23c3c941d1ad858107681534371c5567904"
+        },
+        "value": 2
+      },
+      {
+        "frame": 880,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E42",
+            "$66E44"
+          ],
+          "sha256": "e394698d0a8ee5d8f68bf6a86bdc6bd6cd17210d6e4ceb5cc2dd75d70c9c4533"
+        },
+        "value": 0
+      },
+      {
+        "frame": 882,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E44",
+            "$66E46"
+          ],
+          "sha256": "35488083f80b61e5b2a4c4a47d13db3602659b7ccf253229c8c7236c089e570d"
+        },
+        "value": 1
+      },
+      {
+        "frame": 883,
+        "kind": "stick",
+        "source": {
+          "range": [
+            "$66E46",
+            "$66E48"
+          ],
+          "sha256": "030267359dc055907a691d7fdec9f40b0cb69b7686040c89ebfca4b1c4c08f74"
+        },
+        "value": 0
+      },
+      {
+        "frame": 911,
+        "kind": "key",
+        "source": {
+          "range": [
+            "$66E48",
+            "$66E4A"
+          ],
+          "sha256": "473acf87c77ad04d4423f15263705a8ec37d597b3b0104f5d9c9f58d3facf1a0"
+        },
+        "value": 57
+      },
+      {
+        "frame": 927,
+        "kind": "key",
+        "source": {
+          "range": [
+            "$66E4A",
+            "$66E4C"
+          ],
+          "sha256": "983a43fa43e8306b9a3e9ecec789d996c0f3cb80d1de8757b02c51e68df6d712"
+        },
+        "value": 38
+      }
+    ],
+    "header": {
+      "eyeY": 63,
+      "systemEye": [
+        240000,
+        64,
+        727200
+      ],
+      "x": 165771620,
+      "yaw": 508,
+      "z": 69892274
+    },
+    "lastConsumedFrame": 927,
+    "source": {
+      "range": [
+        "$66D2A",
+        "$66E4E"
+      ],
+      "sha256": "aba500dfa1b666e57421b4714ccd897bc780a1604c9bf33e22038c9de1f48a89"
+    }
+  },
+  "schemaVersion": 1,
+  "scripts": [
+    {
+      "aligned": true,
+      "id": "outward-script-29",
+      "instructions": [
+        {
+          "address": "$70579",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$766E6",
+              "offset": "$69A2"
+            }
+          ],
+          "source": {
+            "range": [
+              "$70579",
+              "$7057C"
+            ],
+            "sha256": "b233caa051b1ef849703744a1177cf3fd41fb45c08e35588105943732db185d7"
+          }
+        },
+        {
+          "address": "$7057C",
+          "byte": "$19",
+          "name": "store2",
+          "note": "cabin animation sequence at $7014B",
+          "op": "$19",
+          "operands": [
+            {
+              "address": "$6FF4A",
+              "offset": "$0206"
+            },
+            "$04",
+            "$07"
+          ],
+          "source": {
+            "range": [
+              "$7057C",
+              "$70581"
+            ],
+            "sha256": "ae571bd9b81796a914789027b3ce48dadbe5e119ca2ef2b0371e921d17a16918"
+          },
+          "value": "$0407"
+        },
+        {
+          "address": "$70581",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$70581",
+              "$705A6"
+            ],
+            "sha256": "c3bcae0e6fef1656561808afbe6ef7698d65c33f8bcfb7fcb89bafff5d662ba7"
+          },
+          "text": {
+            "address": "$70582",
+            "centrePad": 1,
+            "length": 46,
+            "parts": [
+              {
+                "text": "GOOD MORNING - I AM YOUR PILOT - CAPTAIN OHARA"
+              }
+            ],
+            "raw": "GOOD MORNING - I AM YOUR PILOT - CAPTAIN OHARA",
+            "source": {
+              "range": [
+                "$70582",
+                "$705A6"
+              ],
+              "sha256": "89534209b964589a7405365d02bb81630c9ac2a75679b551723f67af107f2045"
+            },
+            "text": "GOOD MORNING - I AM YOUR PILOT - CAPTAIN OHARA"
+          }
+        },
+        {
+          "address": "$705A6",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$76710",
+              "offset": "$69CC"
+            }
+          ],
+          "source": {
+            "range": [
+              "$705A6",
+              "$705A9"
+            ],
+            "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+          }
+        },
+        {
+          "address": "$705A9",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$705A9",
+              "$705C6"
+            ],
+            "sha256": "a6c8a2e544530367a2e28cb5368fde1d46ac1f4d97af0bc7e25d9c208c81692c"
+          },
+          "text": {
+            "address": "$705AA",
+            "centrePad": 6,
+            "length": 36,
+            "parts": [
+              {
+                "text": "ON BEHALF OF MR BIL - WELCOME ABOARD"
+              }
+            ],
+            "raw": "ON BEHALF OF MR BIL - WELCOME ABOARD",
+            "source": {
+              "range": [
+                "$705AA",
+                "$705C6"
+              ],
+              "sha256": "cee9421c34dae76629671a3de7d4114d491a45c1d6bf2c58e067ee2031600869"
+            },
+            "text": "ON BEHALF OF MR BIL - WELCOME ABOARD"
+          }
+        },
+        {
+          "address": "$705C6",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$76710",
+              "offset": "$69CC"
+            }
+          ],
+          "source": {
+            "range": [
+              "$705C6",
+              "$705C9"
+            ],
+            "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+          }
+        },
+        {
+          "address": "$705C9",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$705C9",
+              "$705E9"
+            ],
+            "sha256": "fc374a24f7b58a3c36890a65d5fe0a7b3e15eb17d665c8f7016592d72fb9cac7"
+          },
+          "text": {
+            "address": "$705CA",
+            "centrePad": 3,
+            "length": 43,
+            "parts": [
+              {
+                "text": "OUR DESTINATION IS"
+              },
+              {
+                "expansion": " THE",
+                "token": "\\"
+              },
+              {
+                "text": " PC BIL H Q ON TOLOSA"
+              }
+            ],
+            "raw": "OUR DESTINATION IS\\ PC BIL H Q ON TOLOSA",
+            "source": {
+              "range": [
+                "$705CA",
+                "$705E9"
+              ],
+              "sha256": "8d129875487acc71239886acaccc5aa4a1f60d6e88be721d16f36d32e56dd7b4"
+            },
+            "text": "OUR DESTINATION IS THE PC BIL H Q ON TOLOSA"
+          }
+        },
+        {
+          "address": "$705E9",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$766E6",
+              "offset": "$69A2"
+            }
+          ],
+          "source": {
+            "range": [
+              "$705E9",
+              "$705EC"
+            ],
+            "sha256": "b233caa051b1ef849703744a1177cf3fd41fb45c08e35588105943732db185d7"
+          }
+        },
+        {
+          "address": "$705EC",
+          "byte": "$19",
+          "name": "store2",
+          "note": "cabin animation sequence at $7014B",
+          "op": "$19",
+          "operands": [
+            {
+              "address": "$6FF4A",
+              "offset": "$0206"
+            },
+            "$04",
+            "$07"
+          ],
+          "source": {
+            "range": [
+              "$705EC",
+              "$705F1"
+            ],
+            "sha256": "ae571bd9b81796a914789027b3ce48dadbe5e119ca2ef2b0371e921d17a16918"
+          },
+          "value": "$0407"
+        },
+        {
+          "address": "$705F1",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$705F1",
+              "$70613"
+            ],
+            "sha256": "5f2161f97ead3c1475f78d06154d9136f7bb83fc78c5e47fc8250c8557382168"
+          },
+          "text": {
+            "address": "$705F2",
+            "centrePad": 3,
+            "length": 42,
+            "parts": [
+              {
+                "text": "OUR FLIGHT TIME WILL BE 3 HOURS 10 MINUTES"
+              }
+            ],
+            "raw": "OUR FLIGHT TIME WILL BE 3 HOURS 10 MINUTES",
+            "source": {
+              "range": [
+                "$705F2",
+                "$70613"
+              ],
+              "sha256": "367fd2e9e0b3ebb8dca60bdcf7677175e76bd0d75e46e253e30e9231367c8d53"
+            },
+            "text": "OUR FLIGHT TIME WILL BE 3 HOURS 10 MINUTES"
+          }
+        },
+        {
+          "address": "$70613",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$76710",
+              "offset": "$69CC"
+            }
+          ],
+          "source": {
+            "range": [
+              "$70613",
+              "$70616"
+            ],
+            "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+          }
+        },
+        {
+          "address": "$70616",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$766E6",
+              "offset": "$69A2"
+            }
+          ],
+          "source": {
+            "range": [
+              "$70616",
+              "$70619"
+            ],
+            "sha256": "b233caa051b1ef849703744a1177cf3fd41fb45c08e35588105943732db185d7"
+          }
+        },
+        {
+          "address": "$70619",
+          "byte": "$19",
+          "name": "store2",
+          "note": "cabin animation sequence at $70159",
+          "op": "$19",
+          "operands": [
+            {
+              "address": "$6FF4A",
+              "offset": "$0206"
+            },
+            "$04",
+            "$15"
+          ],
+          "source": {
+            "range": [
+              "$70619",
+              "$7061E"
+            ],
+            "sha256": "e58766d966418f2a245ec16513326917d024123217e5dd2b8a17246e08574561"
+          },
+          "value": "$0415"
+        },
+        {
+          "address": "$7061E",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$7061E",
+              "$7063D"
+            ],
+            "sha256": "6f05e7570fc10a85bd31113697a2aa558ac79e1ac67cc7d32a38e59eb75e724c"
+          },
+          "text": {
+            "address": "$7061F",
+            "centrePad": 5,
+            "length": 39,
+            "parts": [
+              {
+                "text": "MR BIL HAS ASKED ME TO PROVIDE YOU WITH"
+              }
+            ],
+            "raw": "MR BIL HAS ASKED ME TO PROVIDE YOU WITH",
+            "source": {
+              "range": [
+                "$7061F",
+                "$7063D"
+              ],
+              "sha256": "9eab3bc334d7b74b3517519c00cbd77bd6c194a30d751057a8177af13bc8243a"
+            },
+            "text": "MR BIL HAS ASKED ME TO PROVIDE YOU WITH"
+          }
+        },
+        {
+          "address": "$7063D",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$7063D",
+              "$7065C"
+            ],
+            "sha256": "1e17aef9e78482e9cc6ba4ad83a279f62b4df53bd2d5abf8a67458a166090a72"
+          },
+          "text": {
+            "address": "$7063E",
+            "centrePad": 5,
+            "length": 39,
+            "parts": [
+              {
+                "text": "AN INSIGHT INTO HIS FASCINATING HISTORY"
+              }
+            ],
+            "raw": "AN INSIGHT INTO HIS FASCINATING HISTORY",
+            "source": {
+              "range": [
+                "$7063E",
+                "$7065C"
+              ],
+              "sha256": "6e1d98f8a567ffdd4570aa495cd699cb88f631892dc5e895376e7eb90e361a5e"
+            },
+            "text": "AN INSIGHT INTO HIS FASCINATING HISTORY"
+          }
+        },
+        {
+          "address": "$7065C",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$76710",
+              "offset": "$69CC"
+            }
+          ],
+          "source": {
+            "range": [
+              "$7065C",
+              "$7065F"
+            ],
+            "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+          }
+        },
+        {
+          "address": "$7065F",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$7065F",
+              "$7067E"
+            ],
+            "sha256": "0fb617c0cf48d085e7068a93eaf0f3db115f6669538fa8eb98956d87329a9bb6"
+          },
+          "text": {
+            "address": "$70660",
+            "centrePad": 3,
+            "length": 42,
+            "parts": [
+              {
+                "text": "A HEROIC SURVIVOR OF"
+              },
+              {
+                "expansion": " THE",
+                "token": "\\"
+              },
+              {
+                "text": " MID-MILKAY WARS -"
+              }
+            ],
+            "raw": "A HEROIC SURVIVOR OF\\ MID-MILKAY WARS -",
+            "source": {
+              "range": [
+                "$70660",
+                "$7067E"
+              ],
+              "sha256": "f6877d22f76fdad4b600cf5fee20b0ad0b146071d96d158e2ae0029c295cb1a3"
+            },
+            "text": "A HEROIC SURVIVOR OF THE MID-MILKAY WARS -"
+          }
+        },
+        {
+          "address": "$7067E",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$7067E",
+              "$706A1"
+            ],
+            "sha256": "eddf1619cad67fc5b062285e04644e28b2401098c07244316f00b221537099e4"
+          },
+          "text": {
+            "address": "$7067F",
+            "centrePad": 2,
+            "length": 44,
+            "parts": [
+              {
+                "text": "HE INVESTED IN A MENTOR TRADING POST IN 2095"
+              }
+            ],
+            "raw": "HE INVESTED IN A MENTOR TRADING POST IN 2095",
+            "source": {
+              "range": [
+                "$7067F",
+                "$706A1"
+              ],
+              "sha256": "69b62144a44baada475678f39d1eab5ea93a61c7230321a7fd95be5cbf9d765b"
+            },
+            "text": "HE INVESTED IN A MENTOR TRADING POST IN 2095"
+          }
+        },
+        {
+          "address": "$706A1",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$76710",
+              "offset": "$69CC"
+            }
+          ],
+          "source": {
+            "range": [
+              "$706A1",
+              "$706A4"
+            ],
+            "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+          }
+        },
+        {
+          "address": "$706A4",
+          "byte": "$19",
+          "name": "store2",
+          "note": "cabin animation sequence at $7014B",
+          "op": "$19",
+          "operands": [
+            {
+              "address": "$6FF4A",
+              "offset": "$0206"
+            },
+            "$04",
+            "$07"
+          ],
+          "source": {
+            "range": [
+              "$706A4",
+              "$706A9"
+            ],
+            "sha256": "ae571bd9b81796a914789027b3ce48dadbe5e119ca2ef2b0371e921d17a16918"
+          },
+          "value": "$0407"
+        },
+        {
+          "address": "$706A9",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$706A9",
+              "$706CA"
+            ],
+            "sha256": "6b6dc917e15f7f61ec5cc4241625a785cd777e6290beb4a580fdf52c3e468064"
+          },
+          "text": {
+            "address": "$706AA",
+            "centrePad": 4,
+            "length": 41,
+            "parts": [
+              {
+                "text": "HE WAS ELECTED GOVERNOR OF MENTOR IN 2097"
+              }
+            ],
+            "raw": "HE WAS ELECTED GOVERNOR OF MENTOR IN 2097",
+            "source": {
+              "range": [
+                "$706AA",
+                "$706CA"
+              ],
+              "sha256": "8c4ae3673c414295d8680ddd2de201c5224e647246a87fa372d802824d06698e"
+            },
+            "text": "HE WAS ELECTED GOVERNOR OF MENTOR IN 2097"
+          }
+        },
+        {
+          "address": "$706CA",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$76710",
+              "offset": "$69CC"
+            }
+          ],
+          "source": {
+            "range": [
+              "$706CA",
+              "$706CD"
+            ],
+            "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+          }
+        },
+        {
+          "address": "$706CD",
+          "byte": "$19",
+          "name": "store2",
+          "note": "cabin animation sequence at $7014B",
+          "op": "$19",
+          "operands": [
+            {
+              "address": "$6FF4A",
+              "offset": "$0206"
+            },
+            "$04",
+            "$07"
+          ],
+          "source": {
+            "range": [
+              "$706CD",
+              "$706D2"
+            ],
+            "sha256": "ae571bd9b81796a914789027b3ce48dadbe5e119ca2ef2b0371e921d17a16918"
+          },
+          "value": "$0407"
+        },
+        {
+          "address": "$706D2",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$706D2",
+              "$706EF"
+            ],
+            "sha256": "1935abd1c4cabcb41350bf79cd606bcc5dcb6845f91ef911ed0c746fff2ab647"
+          },
+          "text": {
+            "address": "$706D3",
+            "centrePad": 4,
+            "length": 41,
+            "parts": [
+              {
+                "expansion": "P C BIL",
+                "token": "^5"
+              },
+              {
+                "text": " ENTERPRISES - HIS HOLDING COMPANY"
+              }
+            ],
+            "raw": "^5 ENTERPRISES - HIS HOLDING COMPANY",
+            "source": {
+              "range": [
+                "$706D3",
+                "$706EF"
+              ],
+              "sha256": "b28c5f322f84676f0af8334acc76a5136da0813d7b0bf9248dea7e5cd4cd2471"
+            },
+            "text": "P C BIL ENTERPRISES - HIS HOLDING COMPANY"
+          }
+        },
+        {
+          "address": "$706EF",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$706EF",
+              "$70714"
+            ],
+            "sha256": "8f4020e88054f5060444ee89a97adae54a5c04e24367fd60925f1be9f6a1c7a3"
+          },
+          "text": {
+            "address": "$706F0",
+            "centrePad": 1,
+            "length": 46,
+            "parts": [
+              {
+                "text": "NOW HAS INVESTMENTS IN WIDE RANGING ACTIVITIES"
+              }
+            ],
+            "raw": "NOW HAS INVESTMENTS IN WIDE RANGING ACTIVITIES",
+            "source": {
+              "range": [
+                "$706F0",
+                "$70714"
+              ],
+              "sha256": "f0b286fbff5ec27b68a62c99a83361188d6d2fa8f74e223f8e5871132894dd0e"
+            },
+            "text": "NOW HAS INVESTMENTS IN WIDE RANGING ACTIVITIES"
+          }
+        },
+        {
+          "address": "$70714",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$76710",
+              "offset": "$69CC"
+            }
+          ],
+          "source": {
+            "range": [
+              "$70714",
+              "$70717"
+            ],
+            "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+          }
+        },
+        {
+          "address": "$70717",
+          "byte": "$19",
+          "name": "store2",
+          "note": "cabin animation sequence at $70159",
+          "op": "$19",
+          "operands": [
+            {
+              "address": "$6FF4A",
+              "offset": "$0206"
+            },
+            "$04",
+            "$15"
+          ],
+          "source": {
+            "range": [
+              "$70717",
+              "$7071C"
+            ],
+            "sha256": "e58766d966418f2a245ec16513326917d024123217e5dd2b8a17246e08574561"
+          },
+          "value": "$0415"
+        },
+        {
+          "address": "$7071C",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$7071C",
+              "$7073F"
+            ],
+            "sha256": "47f523c018a2568994a71addc5ca89ec46cc0a8afff90c0b7558ea35f8cb9fe3"
+          },
+          "text": {
+            "address": "$7071D",
+            "centrePad": 1,
+            "length": 47,
+            "parts": [
+              {
+                "text": "I'M SURE YOU WOULD LIKE ME TO LIST"
+              },
+              {
+                "expansion": " THE",
+                "token": "\\"
+              },
+              {
+                "text": "M FOR YOU"
+              }
+            ],
+            "raw": "I'M SURE YOU WOULD LIKE ME TO LIST\\M FOR YOU",
+            "source": {
+              "range": [
+                "$7071D",
+                "$7073F"
+              ],
+              "sha256": "40dba0ed2d936d0054cb1fce5fa07390e4fe0c1861da214574a90e618baab1a5"
+            },
+            "text": "I'M SURE YOU WOULD LIKE ME TO LIST THEM FOR YOU"
+          }
+        },
+        {
+          "address": "$7073F",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$76710",
+              "offset": "$69CC"
+            }
+          ],
+          "source": {
+            "range": [
+              "$7073F",
+              "$70742"
+            ],
+            "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+          }
+        },
+        {
+          "address": "$70742",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$70742",
+              "$70763"
+            ],
+            "sha256": "bc28333878edd16190bfec3fe28cd11f94937d5a3f320f001ceec0f09a20c439"
+          },
+          "text": {
+            "address": "$70743",
+            "centrePad": 4,
+            "length": 41,
+            "parts": [
+              {
+                "text": "DUTY FREE TRADING POSTS AND ENTERTAINMENT"
+              }
+            ],
+            "raw": "DUTY FREE TRADING POSTS AND ENTERTAINMENT",
+            "source": {
+              "range": [
+                "$70743",
+                "$70763"
+              ],
+              "sha256": "243b07d8e77d9642ad2e12a1006387c2a593b9136039d041f2b5d10b4f887836"
+            },
+            "text": "DUTY FREE TRADING POSTS AND ENTERTAINMENT"
+          }
+        },
+        {
+          "address": "$70763",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$70763",
+              "$7077D"
+            ],
+            "sha256": "24cde2850010bdbd9a3d399883f3f4629d3e990171a13118235096d8233e2fdb"
+          },
+          "text": {
+            "address": "$70764",
+            "centrePad": 8,
+            "length": 32,
+            "parts": [
+              {
+                "text": "SINCE 2099 - GROUP 4 INVESTMENTS"
+              }
+            ],
+            "raw": "SINCE 2099 - GROUP 4 INVESTMENTS",
+            "source": {
+              "range": [
+                "$70764",
+                "$7077D"
+              ],
+              "sha256": "f5b81113ab3e3d49bb319a6c8b464051b5ebe43cf7e982836f00839685b130da"
+            },
+            "text": "SINCE 2099 - GROUP 4 INVESTMENTS"
+          }
+        },
+        {
+          "address": "$7077D",
+          "byte": "$19",
+          "name": "store2",
+          "note": "cabin animation sequence at $70154",
+          "op": "$19",
+          "operands": [
+            {
+              "address": "$6FF4A",
+              "offset": "$0206"
+            },
+            "$04",
+            "$10"
+          ],
+          "source": {
+            "range": [
+              "$7077D",
+              "$70782"
+            ],
+            "sha256": "b5bd90b256c719af5d648e5642c03c9f11725d364d02ec6dcd4f6c476db857b0"
+          },
+          "value": "$0410"
+        },
+        {
+          "address": "$70782",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$70782",
+              "$707A8"
+            ],
+            "sha256": "eb50e3e85728b6cfba38d00f6ec1b67ac8ffc964639d266d00be5fc0e4ce43ab"
+          },
+          "text": {
+            "address": "$70783",
+            "centrePad": 0,
+            "length": 48,
+            "parts": [
+              {
+                "text": "AND ACQUIRED IN 2100 BOTH ALKANE PHARMACEUTICLES"
+              }
+            ],
+            "raw": "AND ACQUIRED IN 2100 BOTH ALKANE PHARMACEUTICLES",
+            "source": {
+              "range": [
+                "$70783",
+                "$707A8"
+              ],
+              "sha256": "1029c22304248d24585a1f299ae9835ad4a994f3c5c1df1265424fc9abf22371"
+            },
+            "text": "AND ACQUIRED IN 2100 BOTH ALKANE PHARMACEUTICLES"
+          }
+        },
+        {
+          "address": "$707A8",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$76710",
+              "offset": "$69CC"
+            }
+          ],
+          "source": {
+            "range": [
+              "$707A8",
+              "$707AB"
+            ],
+            "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+          }
+        },
+        {
+          "address": "$707AB",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$707AB",
+              "$707C1"
+            ],
+            "sha256": "642f2eaa47fe5f6ce4e8dabb9be291356e479c5230b81aef223b6f5d8ffea735"
+          },
+          "text": {
+            "address": "$707AC",
+            "centrePad": 9,
+            "length": 30,
+            "parts": [
+              {
+                "text": "AND"
+              },
+              {
+                "expansion": " THE",
+                "token": "\\"
+              },
+              {
+                "text": " PAN HADES PULVIN MINES"
+              }
+            ],
+            "raw": "AND\\ PAN HADES PULVIN MINES",
+            "source": {
+              "range": [
+                "$707AC",
+                "$707C1"
+              ],
+              "sha256": "e4cbfbea4d554b3a5b2c6ae449e174ee69499dc18485f7046d922c811c188d8c"
+            },
+            "text": "AND THE PAN HADES PULVIN MINES"
+          }
+        },
+        {
+          "address": "$707C1",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$76710",
+              "offset": "$69CC"
+            }
+          ],
+          "source": {
+            "range": [
+              "$707C1",
+              "$707C4"
+            ],
+            "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+          }
+        },
+        {
+          "address": "$707C4",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$766DF",
+              "offset": "$699B"
+            }
+          ],
+          "source": {
+            "range": [
+              "$707C4",
+              "$707C7"
+            ],
+            "sha256": "b3ecd05b069671f596f5c3bd90eb4d441912b4cee3a6d1de03a135ed0051487a"
+          }
+        },
+        {
+          "address": "$707C7",
+          "byte": "$19",
+          "name": "store2",
+          "note": "cabin animation sequence at $7014E",
+          "op": "$19",
+          "operands": [
+            {
+              "address": "$6FF4A",
+              "offset": "$0206"
+            },
+            "$04",
+            "$0A"
+          ],
+          "source": {
+            "range": [
+              "$707C7",
+              "$707CC"
+            ],
+            "sha256": "162ed693e6b5e51283b94d71ce216ba76e2be8b72aca82214818e0c8df1f0c1b"
+          },
+          "value": "$040A"
+        },
+        {
+          "address": "$707CC",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$707CC",
+              "$707DC"
+            ],
+            "sha256": "cc896ec610c5f03204a4a5699cb009667694f950e56b00690997963a532c13b2"
+          },
+          "text": {
+            "address": "$707CD",
+            "centrePad": 15,
+            "length": 19,
+            "parts": [
+              {
+                "text": "THERE ARE PLANS NOW"
+              }
+            ],
+            "raw": "THERE ARE PLANS NOW",
+            "source": {
+              "range": [
+                "$707CD",
+                "$707DC"
+              ],
+              "sha256": "c3793a8023ff19582f6ffd97d20efda0e2a47382afc430da64803af9f70fdd42"
+            },
+            "text": "THERE ARE PLANS NOW"
+          }
+        },
+        {
+          "address": "$707DC",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$707DC",
+              "$707FE"
+            ],
+            "sha256": "2153e5361640598cf4f056edf9d30f382378394275e1259440590abe5d3244ca"
+          },
+          "text": {
+            "address": "$707DD",
+            "centrePad": 3,
+            "length": 42,
+            "parts": [
+              {
+                "text": "TO MINE PULVIN ON DION NORTH AND DION EAST"
+              }
+            ],
+            "raw": "TO MINE PULVIN ON DION NORTH AND DION EAST",
+            "source": {
+              "range": [
+                "$707DD",
+                "$707FE"
+              ],
+              "sha256": "c3a40f09a257fc29a2ab228ef55b906b99233e732b7457ffcd360cad29f07a28"
+            },
+            "text": "TO MINE PULVIN ON DION NORTH AND DION EAST"
+          }
+        },
+        {
+          "address": "$707FE",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$76710",
+              "offset": "$69CC"
+            }
+          ],
+          "source": {
+            "range": [
+              "$707FE",
+              "$70801"
+            ],
+            "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+          }
+        },
+        {
+          "address": "$70801",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$766DF",
+              "offset": "$699B"
+            }
+          ],
+          "source": {
+            "range": [
+              "$70801",
+              "$70804"
+            ],
+            "sha256": "b3ecd05b069671f596f5c3bd90eb4d441912b4cee3a6d1de03a135ed0051487a"
+          }
+        },
+        {
+          "address": "$70804",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$70804",
+              "$70821"
+            ],
+            "sha256": "b9f9815eb12454939e7abf9f27f19edcf99ac2eed252236fd11f24700de08635"
+          },
+          "text": {
+            "address": "$70805",
+            "centrePad": 4,
+            "length": 41,
+            "parts": [
+              {
+                "expansion": "P C BIL",
+                "token": "^5"
+              },
+              {
+                "text": " NOW WISHES TO DEVOTE HIS ENERGIES"
+              }
+            ],
+            "raw": "^5 NOW WISHES TO DEVOTE HIS ENERGIES",
+            "source": {
+              "range": [
+                "$70805",
+                "$70821"
+              ],
+              "sha256": "e0060523e713dea65aafa1d5c96e702b39d9345b978c24ee8b1b5d972095a090"
+            },
+            "text": "P C BIL NOW WISHES TO DEVOTE HIS ENERGIES"
+          }
+        },
+        {
+          "address": "$70821",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$70821",
+              "$70834"
+            ],
+            "sha256": "092ca0df0fc2c448c6a90af56a85336fa4cd7f0a7b1eeb35b92beea9d46a9821"
+          },
+          "text": {
+            "address": "$70822",
+            "centrePad": 13,
+            "length": 23,
+            "parts": [
+              {
+                "text": "TO LOYAL PUBLIC SERVICE"
+              }
+            ],
+            "raw": "TO LOYAL PUBLIC SERVICE",
+            "source": {
+              "range": [
+                "$70822",
+                "$70834"
+              ],
+              "sha256": "dbfdb60dba42631b93bca3d25b12b79ad5cec0713cfe269f0ae8fc5fbb7e8e81"
+            },
+            "text": "TO LOYAL PUBLIC SERVICE"
+          }
+        },
+        {
+          "address": "$70834",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$76710",
+              "offset": "$69CC"
+            }
+          ],
+          "source": {
+            "range": [
+              "$70834",
+              "$70837"
+            ],
+            "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+          }
+        },
+        {
+          "address": "$70837",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$766DF",
+              "offset": "$699B"
+            }
+          ],
+          "source": {
+            "range": [
+              "$70837",
+              "$7083A"
+            ],
+            "sha256": "b3ecd05b069671f596f5c3bd90eb4d441912b4cee3a6d1de03a135ed0051487a"
+          }
+        },
+        {
+          "address": "$7083A",
+          "byte": "$19",
+          "name": "store2",
+          "note": "cabin animation sequence at $70154",
+          "op": "$19",
+          "operands": [
+            {
+              "address": "$6FF4A",
+              "offset": "$0206"
+            },
+            "$04",
+            "$10"
+          ],
+          "source": {
+            "range": [
+              "$7083A",
+              "$7083F"
+            ],
+            "sha256": "b5bd90b256c719af5d648e5642c03c9f11725d364d02ec6dcd4f6c476db857b0"
+          },
+          "value": "$0410"
+        },
+        {
+          "address": "$7083F",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$7083F",
+              "$70858"
+            ],
+            "sha256": "ccf36cf29d7b8b1cae2b0f8d88b66fda1870ead054edccac0302676ac49cbcac"
+          },
+          "text": {
+            "address": "$70840",
+            "centrePad": 1,
+            "length": 46,
+            "parts": [
+              {
+                "text": "HE IS A CANDIDATE IN"
+              },
+              {
+                "expansion": " THE",
+                "token": "\\"
+              },
+              {
+                "text": " "
+              },
+              {
+                "expansion": "PRESIDENT",
+                "token": "^8"
+              },
+              {
+                "text": "IAL "
+              },
+              {
+                "expansion": "ELECTION",
+                "token": "^9"
+              }
+            ],
+            "raw": "HE IS A CANDIDATE IN\\ ^8IAL ^9",
+            "source": {
+              "range": [
+                "$70840",
+                "$70858"
+              ],
+              "sha256": "8bba67a1babe3afcef4bdc7265a86122bec59733ae6592e30b378f04283db3cb"
+            },
+            "text": "HE IS A CANDIDATE IN THE PRESIDENTIAL ELECTION"
+          }
+        },
+        {
+          "address": "$70858",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$766ED",
+              "offset": "$69A9"
+            }
+          ],
+          "source": {
+            "range": [
+              "$70858",
+              "$7085B"
+            ],
+            "sha256": "5925a33a8712727f3530a2c2f7800c9c796c83eee16a5c25dd89b33ba35fd8ed"
+          }
+        },
+        {
+          "address": "$7085B",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$766ED",
+              "offset": "$69A9"
+            }
+          ],
+          "source": {
+            "range": [
+              "$7085B",
+              "$7085E"
+            ],
+            "sha256": "5925a33a8712727f3530a2c2f7800c9c796c83eee16a5c25dd89b33ba35fd8ed"
+          }
+        },
+        {
+          "address": "$7085E",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$76710",
+              "offset": "$69CC"
+            }
+          ],
+          "source": {
+            "range": [
+              "$7085E",
+              "$70861"
+            ],
+            "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+          }
+        },
+        {
+          "address": "$70861",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$70861",
+              "$70872"
+            ],
+            "sha256": "ca0b46340f1bdbc82d1c48394d59f674fb90938385ca5c37dfe63e4657330fe1"
+          },
+          "text": {
+            "address": "$70862",
+            "centrePad": 14,
+            "length": 20,
+            "parts": [
+              {
+                "text": "WE ARE ABOUT TO LAND"
+              }
+            ],
+            "raw": "WE ARE ABOUT TO LAND",
+            "source": {
+              "range": [
+                "$70862",
+                "$70872"
+              ],
+              "sha256": "4399203e58ff8ac029d90eb564907488160543e31359b991fa6d28abf71ab0cd"
+            },
+            "text": "WE ARE ABOUT TO LAND"
+          }
+        },
+        {
+          "address": "$70872",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$70872",
+              "$70891"
+            ],
+            "sha256": "75b3b9d9985af127fc409ac8652eba4b3fce8f56df5e18044fed7ec748eb159e"
+          },
+          "text": {
+            "address": "$70873",
+            "centrePad": 3,
+            "length": 42,
+            "parts": [
+              {
+                "text": "I DO HOPE THAT YOU HAVE ENJOYED"
+              },
+              {
+                "expansion": " THE",
+                "token": "\\"
+              },
+              {
+                "text": " FLIGHT"
+              }
+            ],
+            "raw": "I DO HOPE THAT YOU HAVE ENJOYED\\ FLIGHT",
+            "source": {
+              "range": [
+                "$70873",
+                "$70891"
+              ],
+              "sha256": "94ccd08121b410905c6f829d9282e09290d2801cbb0fc9387a7e9bbc2c5e6bd7"
+            },
+            "text": "I DO HOPE THAT YOU HAVE ENJOYED THE FLIGHT"
+          }
+        },
+        {
+          "address": "$70891",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$76710",
+              "offset": "$69CC"
+            }
+          ],
+          "source": {
+            "range": [
+              "$70891",
+              "$70894"
+            ],
+            "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+          }
+        },
+        {
+          "address": "$70894",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$766ED",
+              "offset": "$69A9"
+            }
+          ],
+          "source": {
+            "range": [
+              "$70894",
+              "$70897"
+            ],
+            "sha256": "5925a33a8712727f3530a2c2f7800c9c796c83eee16a5c25dd89b33ba35fd8ed"
+          }
+        },
+        {
+          "address": "$70897",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$70897",
+              "$708BC"
+            ],
+            "sha256": "bd023d528ca3d44dbb74f62269366edc884a6e26c45b54da032ee772f25d0ee1"
+          },
+          "text": {
+            "address": "$70898",
+            "centrePad": 1,
+            "length": 46,
+            "parts": [
+              {
+                "text": "ON LEAVING - PLEASE CALL MR BIL'S TAXI SERVICE"
+              }
+            ],
+            "raw": "ON LEAVING - PLEASE CALL MR BIL'S TAXI SERVICE",
+            "source": {
+              "range": [
+                "$70898",
+                "$708BC"
+              ],
+              "sha256": "bc0d2caf3a84fbe38c870990f67add63ce9a98ca19e26640939b4566dae2ad58"
+            },
+            "text": "ON LEAVING - PLEASE CALL MR BIL'S TAXI SERVICE"
+          }
+        },
+        {
+          "address": "$708BC",
+          "byte": "$03",
+          "name": "jump",
+          "op": "$03",
+          "operands": [
+            {
+              "address": "$766BF",
+              "offset": "$697B"
+            }
+          ],
+          "source": {
+            "range": [
+              "$708BC",
+              "$708BF"
+            ],
+            "sha256": "05c4a4264d3db74e066c1f10f5c4a02638361d748edcb810d938fd6823ef7606"
+          }
+        }
+      ],
+      "range": [
+        "$70579",
+        "$708BF"
+      ],
+      "summary": {
+        "cabinAnimation": [
+          "$0407",
+          "$0407",
+          "$0415",
+          "$0407",
+          "$0407",
+          "$0415",
+          "$0410",
+          "$040A",
+          "$0410"
+        ],
+        "calls": [
+          "$766E6",
+          "$76710",
+          "$76710",
+          "$766E6",
+          "$76710",
+          "$766E6",
+          "$76710",
+          "$76710",
+          "$76710",
+          "$76710",
+          "$76710",
+          "$76710",
+          "$76710",
+          "$766DF",
+          "$76710",
+          "$766DF",
+          "$76710",
+          "$766DF",
+          "$766ED",
+          "$766ED",
+          "$76710",
+          "$76710",
+          "$766ED"
+        ],
+        "texts": [
+          "GOOD MORNING - I AM YOUR PILOT - CAPTAIN OHARA",
+          "ON BEHALF OF MR BIL - WELCOME ABOARD",
+          "OUR DESTINATION IS THE PC BIL H Q ON TOLOSA",
+          "OUR FLIGHT TIME WILL BE 3 HOURS 10 MINUTES",
+          "MR BIL HAS ASKED ME TO PROVIDE YOU WITH",
+          "AN INSIGHT INTO HIS FASCINATING HISTORY",
+          "A HEROIC SURVIVOR OF THE MID-MILKAY WARS -",
+          "HE INVESTED IN A MENTOR TRADING POST IN 2095",
+          "HE WAS ELECTED GOVERNOR OF MENTOR IN 2097",
+          "P C BIL ENTERPRISES - HIS HOLDING COMPANY",
+          "NOW HAS INVESTMENTS IN WIDE RANGING ACTIVITIES",
+          "I'M SURE YOU WOULD LIKE ME TO LIST THEM FOR YOU",
+          "DUTY FREE TRADING POSTS AND ENTERTAINMENT",
+          "SINCE 2099 - GROUP 4 INVESTMENTS",
+          "AND ACQUIRED IN 2100 BOTH ALKANE PHARMACEUTICLES",
+          "AND THE PAN HADES PULVIN MINES",
+          "THERE ARE PLANS NOW",
+          "TO MINE PULVIN ON DION NORTH AND DION EAST",
+          "P C BIL NOW WISHES TO DEVOTE HIS ENERGIES",
+          "TO LOYAL PUBLIC SERVICE",
+          "HE IS A CANDIDATE IN THE PRESIDENTIAL ELECTION",
+          "WE ARE ABOUT TO LAND",
+          "I DO HOPE THAT YOU HAVE ENJOYED THE FLIGHT",
+          "ON LEAVING - PLEASE CALL MR BIL'S TAXI SERVICE"
+        ]
+      },
+      "unknownOpcodes": []
+    },
+    {
+      "aligned": true,
+      "id": "election-77",
+      "instructions": [
+        {
+          "address": "$759D2",
+          "byte": "$24",
+          "name": "set_availability",
+          "op": "$24",
+          "operands": [
+            "$05",
+            "$00"
+          ],
+          "source": {
+            "range": [
+              "$759D2",
+              "$759D5"
+            ],
+            "sha256": "9398dcf986c2525f959289f43c2040af0d43eef726c6efc7f32a935dc3286390"
+          }
+        },
+        {
+          "address": "$759D5",
+          "byte": "$24",
+          "name": "set_availability",
+          "op": "$24",
+          "operands": [
+            "$06",
+            "$00"
+          ],
+          "source": {
+            "range": [
+              "$759D5",
+              "$759D8"
+            ],
+            "sha256": "25e7327bf99e66b254c420e8e21a7e244df4315c6768b5a691253dcc7df5c4bd"
+          }
+        },
+        {
+          "address": "$759D8",
+          "byte": "$10",
+          "name": "set_flag",
+          "op": "$10",
+          "operands": [
+            "$09"
+          ],
+          "source": {
+            "range": [
+              "$759D8",
+              "$759DA"
+            ],
+            "sha256": "7d773ae93d86b415303e01dd4c5dca00febc5c74a6e497237405668df89f7c5b"
+          }
+        },
+        {
+          "address": "$759DA",
+          "byte": "$11",
+          "name": "clear_flag",
+          "op": "$11",
+          "operands": [
+            "$0D"
+          ],
+          "source": {
+            "range": [
+              "$759DA",
+              "$759DC"
+            ],
+            "sha256": "ab257c49c86dfd9404ee6a01de780fb2607c0c8d8952c0d71bd3aef7ae7d8269"
+          }
+        },
+        {
+          "address": "$759DC",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$759DC",
+              "$759ED"
+            ],
+            "sha256": "ecb378b19b3c61166cf4a3d30e57db80374a4e47849809cc1b3ad0bcf8dbb422"
+          },
+          "text": {
+            "address": "$759DD",
+            "centrePad": 6,
+            "length": 36,
+            "parts": [
+              {
+                "expansion": "NEWSFLASH - ",
+                "token": "^4"
+              },
+              {
+                "expansion": "ELECTION",
+                "token": "^9"
+              },
+              {
+                "text": " RESULT DECLARED"
+              }
+            ],
+            "raw": "^4^9 RESULT DECLARED",
+            "source": {
+              "range": [
+                "$759DD",
+                "$759ED"
+              ],
+              "sha256": "d25a3ee9a07fa1ee4baec5743853f2e6080b6abbd54368d7ac090a4d1732fe7f"
+            },
+            "text": "NEWSFLASH - ELECTION RESULT DECLARED"
+          }
+        },
+        {
+          "address": "$759ED",
+          "branch": {
+            "call": false,
+            "invert": false
+          },
+          "byte": "$12",
+          "name": "if_flag",
+          "op": "$12",
+          "operands": [
+            "$0A"
+          ],
+          "source": {
+            "range": [
+              "$759ED",
+              "$759F1"
+            ],
+            "sha256": "87755c4742e15f5dfc7425cf3f94a148af276787c2e645a85c634253df845ef1"
+          },
+          "target": "$75BA6"
+        },
+        {
+          "address": "$759F1",
+          "branch": {
+            "call": false,
+            "invert": false
+          },
+          "byte": "$12",
+          "name": "if_flag",
+          "op": "$12",
+          "operands": [
+            "$16"
+          ],
+          "source": {
+            "range": [
+              "$759F1",
+              "$759F5"
+            ],
+            "sha256": "f69d5f1337cfa543c5df791c79e1a28b1ba9353c1297201256c11da37b43855e"
+          },
+          "target": "$75C01"
+        },
+        {
+          "address": "$759F5",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$759F5",
+              "$75A09"
+            ],
+            "sha256": "b7d427a9768cb3cd3732dd988bf2b09329cbd10c427f956271db334cb4eae353"
+          },
+          "text": {
+            "address": "$759F6",
+            "centrePad": 6,
+            "length": 36,
+            "parts": [
+              {
+                "expansion": "P C BIL",
+                "token": "^5"
+              },
+              {
+                "text": " ELECTED "
+              },
+              {
+                "expansion": "PRESIDENT",
+                "token": "^8"
+              },
+              {
+                "text": " UNOPPOSED!"
+              }
+            ],
+            "raw": "^5 ELECTED ^8 UNOPPOSED!",
+            "source": {
+              "range": [
+                "$759F6",
+                "$75A09"
+              ],
+              "sha256": "c5cc2176b4f3c9f9ab4b3cbb5f5c758f1721730d5cd3f7d2619c9e84af71910f"
+            },
+            "text": "P C BIL ELECTED PRESIDENT UNOPPOSED!"
+          }
+        },
+        {
+          "address": "$75A09",
+          "byte": "$10",
+          "name": "set_flag",
+          "op": "$10",
+          "operands": [
+            "$17"
+          ],
+          "source": {
+            "range": [
+              "$75A09",
+              "$75A0B"
+            ],
+            "sha256": "835870d4c625c7e60f9122c4b3181b233e5e68d4497b5f8ea4c3a7c2dc5efca9"
+          }
+        },
+        {
+          "address": "$75A0B",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$76710",
+              "offset": "$69CC"
+            }
+          ],
+          "source": {
+            "range": [
+              "$75A0B",
+              "$75A0E"
+            ],
+            "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+          }
+        },
+        {
+          "address": "$75A0E",
+          "byte": "$26",
+          "name": "timed_script",
+          "op": "$26",
+          "operands": [
+            "$05DC",
+            "$5CD2"
+          ],
+          "source": {
+            "range": [
+              "$75A0E",
+              "$75A13"
+            ],
+            "sha256": "ab7ebe950d872b3cf7e6adf95cac19806265c9ba1f1ab4bd8693507de0ae2326"
+          }
+        },
+        {
+          "address": "$75A13",
+          "byte": "$03",
+          "name": "jump",
+          "op": "$03",
+          "operands": [
+            {
+              "address": "$766BF",
+              "offset": "$697B"
+            }
+          ],
+          "source": {
+            "range": [
+              "$75A13",
+              "$75A16"
+            ],
+            "sha256": "05c4a4264d3db74e066c1f10f5c4a02638361d748edcb810d938fd6823ef7606"
+          }
+        }
+      ],
+      "range": [
+        "$759D2",
+        "$75A16"
+      ],
+      "summary": {
+        "cabinAnimation": [],
+        "calls": [
+          "$76710"
+        ],
+        "texts": [
+          "NEWSFLASH - ELECTION RESULT DECLARED",
+          "P C BIL ELECTED PRESIDENT UNOPPOSED!"
+        ]
+      },
+      "unknownOpcodes": []
+    },
+    {
+      "aligned": true,
+      "id": "first-election-continuation",
+      "instructions": [
+        {
+          "address": "$75A16",
+          "byte": "$11",
+          "name": "clear_flag",
+          "op": "$11",
+          "operands": [
+            "$0D"
+          ],
+          "source": {
+            "range": [
+              "$75A16",
+              "$75A18"
+            ],
+            "sha256": "ab257c49c86dfd9404ee6a01de780fb2607c0c8d8952c0d71bd3aef7ae7d8269"
+          }
+        },
+        {
+          "address": "$75A18",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$75A18",
+              "$75A2C"
+            ],
+            "sha256": "11e86656040133cfb402689f609be9447bf2d0576c655b41b8149bb75c3d2d91"
+          },
+          "text": {
+            "address": "$75A19",
+            "centrePad": 7,
+            "length": 34,
+            "parts": [
+              {
+                "expansion": "NEWSFLASH - ",
+                "token": "^4"
+              },
+              {
+                "text": "DION MINING TO PROCEED"
+              }
+            ],
+            "raw": "^4DION MINING TO PROCEED",
+            "source": {
+              "range": [
+                "$75A19",
+                "$75A2C"
+              ],
+              "sha256": "c06549fabb69087c4792b68c8b0cae73f24aaae9c4fd3e6aa485c9eeb1245a60"
+            },
+            "text": "NEWSFLASH - DION MINING TO PROCEED"
+          }
+        },
+        {
+          "address": "$75A2C",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$75A2C",
+              "$75A3F"
+            ],
+            "sha256": "512972081ca7dd6b44c6e17fe401bb5f0ff9089f7642ce94cd1b71232d01b8b3"
+          },
+          "text": {
+            "address": "$75A2D",
+            "centrePad": 9,
+            "length": 30,
+            "parts": [
+              {
+                "expansion": "PRESIDENT",
+                "token": "^8"
+              },
+              {
+                "text": " BIL ENDORSES CONSENT"
+              }
+            ],
+            "raw": "^8 BIL ENDORSES CONSENT",
+            "source": {
+              "range": [
+                "$75A2D",
+                "$75A3F"
+              ],
+              "sha256": "e2911998f78728fc72066e6ee818258e1367065567e3a500d62151797727d401"
+            },
+            "text": "PRESIDENT BIL ENDORSES CONSENT"
+          }
+        },
+        {
+          "address": "$75A3F",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$76710",
+              "offset": "$69CC"
+            }
+          ],
+          "source": {
+            "range": [
+              "$75A3F",
+              "$75A42"
+            ],
+            "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+          }
+        },
+        {
+          "address": "$75A42",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$75A42",
+              "$75A67"
+            ],
+            "sha256": "19594d14d010b76e1d1356359c7aec5176ee7b815bce1e0e526de558e2189b2a"
+          },
+          "text": {
+            "address": "$75A43",
+            "centrePad": 1,
+            "length": 46,
+            "parts": [
+              {
+                "text": "OPERATIONS TO MINE DION NORTH BEGIN IN 8 HOURS"
+              }
+            ],
+            "raw": "OPERATIONS TO MINE DION NORTH BEGIN IN 8 HOURS",
+            "source": {
+              "range": [
+                "$75A43",
+                "$75A67"
+              ],
+              "sha256": "02eff0ed73d6558d3ebe28442c544a8d18bc1041f8665d8ee916f6c64cc96346"
+            },
+            "text": "OPERATIONS TO MINE DION NORTH BEGIN IN 8 HOURS"
+          }
+        },
+        {
+          "address": "$75A67",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$766ED",
+              "offset": "$69A9"
+            }
+          ],
+          "source": {
+            "range": [
+              "$75A67",
+              "$75A6A"
+            ],
+            "sha256": "5925a33a8712727f3530a2c2f7800c9c796c83eee16a5c25dd89b33ba35fd8ed"
+          }
+        },
+        {
+          "address": "$75A6A",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$76710",
+              "offset": "$69CC"
+            }
+          ],
+          "source": {
+            "range": [
+              "$75A6A",
+              "$75A6D"
+            ],
+            "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+          }
+        },
+        {
+          "address": "$75A6D",
+          "byte": "$26",
+          "name": "timed_script",
+          "op": "$26",
+          "operands": [
+            "$02EE",
+            "$5E18"
+          ],
+          "source": {
+            "range": [
+              "$75A6D",
+              "$75A72"
+            ],
+            "sha256": "9c4a4c5bffea5e2f0902308259fbb2f176c7df7a07dc92f3168e4a82cd9814b7"
+          }
+        },
+        {
+          "address": "$75A72",
+          "byte": "$03",
+          "name": "jump",
+          "op": "$03",
+          "operands": [
+            {
+              "address": "$766BF",
+              "offset": "$697B"
+            }
+          ],
+          "source": {
+            "range": [
+              "$75A72",
+              "$75A75"
+            ],
+            "sha256": "05c4a4264d3db74e066c1f10f5c4a02638361d748edcb810d938fd6823ef7606"
+          }
+        }
+      ],
+      "range": [
+        "$75A16",
+        "$75A75"
+      ],
+      "summary": {
+        "cabinAnimation": [],
+        "calls": [
+          "$76710",
+          "$766ED",
+          "$76710"
+        ],
+        "texts": [
+          "NEWSFLASH - DION MINING TO PROCEED",
+          "PRESIDENT BIL ENDORSES CONSENT",
+          "OPERATIONS TO MINE DION NORTH BEGIN IN 8 HOURS"
+        ]
+      },
+      "unknownOpcodes": []
+    },
+    {
+      "aligned": true,
+      "id": "mining-13",
+      "instructions": [
+        {
+          "address": "$75A75",
+          "branch": {
+            "call": false,
+            "invert": false
+          },
+          "byte": "$12",
+          "name": "if_flag",
+          "op": "$12",
+          "operands": [
+            "$16"
+          ],
+          "source": {
+            "range": [
+              "$75A75",
+              "$75A79"
+            ],
+            "sha256": "7a5d0d72828acac3a3ebaa2b030c2b4829b2adc242987fdf838f0301a2006862"
+          },
+          "target": "$701DD"
+        },
+        {
+          "address": "$75A79",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$75A79",
+              "$75A8C"
+            ],
+            "sha256": "d06e577b74b84c1a96267b9f489a7d5394ef8b73cc9ee66c7c66adbc0c8e7110"
+          },
+          "text": {
+            "address": "$75A7A",
+            "centrePad": 8,
+            "length": 33,
+            "parts": [
+              {
+                "expansion": "NEWSFLASH - ",
+                "token": "^4"
+              },
+              {
+                "text": "DION MINING COMMENCED"
+              }
+            ],
+            "raw": "^4DION MINING COMMENCED",
+            "source": {
+              "range": [
+                "$75A7A",
+                "$75A8C"
+              ],
+              "sha256": "d41413a7f0c27234a906ee3222f88b82c905712be1907a4af1c02b95f81d14ea"
+            },
+            "text": "NEWSFLASH - DION MINING COMMENCED"
+          }
+        },
+        {
+          "address": "$75A8C",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$75A8C",
+              "$75AA2"
+            ],
+            "sha256": "0883c49efcbf56dcb44d826919515df12ff6f6fcd8ac13489e3c4d07e1513cb4"
+          },
+          "text": {
+            "address": "$75A8D",
+            "centrePad": 9,
+            "length": 31,
+            "parts": [
+              {
+                "expansion": "P C BIL",
+                "token": "^5"
+              },
+              {
+                "text": " BRINGS ECONOMIC MIRACLE"
+              }
+            ],
+            "raw": "^5 BRINGS ECONOMIC MIRACLE",
+            "source": {
+              "range": [
+                "$75A8D",
+                "$75AA2"
+              ],
+              "sha256": "3e6ffda86ee16171e9f52e7a03dc37d356451e65b1465057048a1e0188bf6f93"
+            },
+            "text": "P C BIL BRINGS ECONOMIC MIRACLE"
+          }
+        },
+        {
+          "address": "$75AA2",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$75AA2",
+              "$75AC5"
+            ],
+            "sha256": "7a03beb5a149ac0a7fad0b84beeef13cf3eb53561af50531feac34dcc81bbaec"
+          },
+          "text": {
+            "address": "$75AA3",
+            "centrePad": 2,
+            "length": 44,
+            "parts": [
+              {
+                "text": "SAYS CLAIMS OF DION DESECRATION ARE ALARMIST"
+              }
+            ],
+            "raw": "SAYS CLAIMS OF DION DESECRATION ARE ALARMIST",
+            "source": {
+              "range": [
+                "$75AA3",
+                "$75AC5"
+              ],
+              "sha256": "43705fd3b935483ca4e5a9870242716a5a405cfaa81f6a01b2ad6ba7e28c4f1f"
+            },
+            "text": "SAYS CLAIMS OF DION DESECRATION ARE ALARMIST"
+          }
+        },
+        {
+          "address": "$75AC5",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$76710",
+              "offset": "$69CC"
+            }
+          ],
+          "source": {
+            "range": [
+              "$75AC5",
+              "$75AC8"
+            ],
+            "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+          }
+        },
+        {
+          "address": "$75AC8",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$75AC8",
+              "$75ADA"
+            ],
+            "sha256": "6954e1519ce51491a06883dc58007bb69b8368df24edb71d6ad1f2cf245dee65"
+          },
+          "text": {
+            "address": "$75AC9",
+            "centrePad": 14,
+            "length": 21,
+            "parts": [
+              {
+                "text": "- - - CONTINUES - - -"
+              }
+            ],
+            "raw": "- - - CONTINUES - - -",
+            "source": {
+              "range": [
+                "$75AC9",
+                "$75ADA"
+              ],
+              "sha256": "a95e52e2a92940877c9380e5519f245c66662896e43c05093823615b11633c4c"
+            },
+            "text": "- - - CONTINUES - - -"
+          }
+        },
+        {
+          "address": "$75ADA",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$75ADA",
+              "$75AFF"
+            ],
+            "sha256": "de3b6a175d99990d8edaf2bd640285a4a9df135db999864e2514ac3857f78360"
+          },
+          "text": {
+            "address": "$75ADB",
+            "centrePad": 1,
+            "length": 47,
+            "parts": [
+              {
+                "text": "WE ARE PROUD TO ANNOUNCE THAT THIS NEWS AGENCY:"
+              }
+            ],
+            "raw": "WE ARE PROUD TO ANNOUNCE THAT THIS NEWS AGENCY:",
+            "source": {
+              "range": [
+                "$75ADB",
+                "$75AFF"
+              ],
+              "sha256": "8b471f931b754adba1292f2c3613bcf8e0b72fd1d22441f0f2a768933a27859b"
+            },
+            "text": "WE ARE PROUD TO ANNOUNCE THAT THIS NEWS AGENCY:"
+          }
+        },
+        {
+          "address": "$75AFF",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$75AFF",
+              "$75B1C"
+            ],
+            "sha256": "8a22a33b54fb19fde20e741a3685c8240679a70a67ad41e1ca5bd0587ca9ba4f"
+          },
+          "text": {
+            "address": "$75B00",
+            "centrePad": 3,
+            "length": 43,
+            "parts": [
+              {
+                "text": "IS NOW UNDER THE OWNERSHIP OF "
+              },
+              {
+                "expansion": "PRESIDENT",
+                "token": "^8"
+              },
+              {
+                "text": " BIL"
+              }
+            ],
+            "raw": "IS NOW UNDER THE OWNERSHIP OF ^8 BIL",
+            "source": {
+              "range": [
+                "$75B00",
+                "$75B1C"
+              ],
+              "sha256": "4615dc8993807cef3d3966a4c93ffe5f85ac087189439eaa645ba3187171e688"
+            },
+            "text": "IS NOW UNDER THE OWNERSHIP OF PRESIDENT BIL"
+          }
+        },
+        {
+          "address": "$75B1C",
+          "byte": "$26",
+          "name": "timed_script",
+          "op": "$26",
+          "operands": [
+            "$02EE",
+            "$5DE0"
+          ],
+          "source": {
+            "range": [
+              "$75B1C",
+              "$75B21"
+            ],
+            "sha256": "13b5bd141b0ccb04f79bd93504f94eca6fed929e33ecb19815a7654d73ebe8db"
+          }
+        },
+        {
+          "address": "$75B21",
+          "byte": "$03",
+          "name": "jump",
+          "op": "$03",
+          "operands": [
+            {
+              "address": "$766BF",
+              "offset": "$697B"
+            }
+          ],
+          "source": {
+            "range": [
+              "$75B21",
+              "$75B24"
+            ],
+            "sha256": "05c4a4264d3db74e066c1f10f5c4a02638361d748edcb810d938fd6823ef7606"
+          }
+        }
+      ],
+      "range": [
+        "$75A75",
+        "$75B24"
+      ],
+      "summary": {
+        "cabinAnimation": [],
+        "calls": [
+          "$76710"
+        ],
+        "texts": [
+          "NEWSFLASH - DION MINING COMMENCED",
+          "P C BIL BRINGS ECONOMIC MIRACLE",
+          "SAYS CLAIMS OF DION DESECRATION ARE ALARMIST",
+          "- - - CONTINUES - - -",
+          "WE ARE PROUD TO ANNOUNCE THAT THIS NEWS AGENCY:",
+          "IS NOW UNDER THE OWNERSHIP OF PRESIDENT BIL"
+        ]
+      },
+      "unknownOpcodes": []
+    },
+    {
+      "aligned": true,
+      "id": "mining-continuation",
+      "instructions": [
+        {
+          "address": "$75B24",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$75B24",
+              "$75B31"
+            ],
+            "sha256": "e9fb22c4e94a37d585d956493f86573458f6e20295796d99efcadd24bf3c43cd"
+          },
+          "text": {
+            "address": "$75B25",
+            "centrePad": 9,
+            "length": 31,
+            "parts": [
+              {
+                "expansion": "NEWSFLASH - ",
+                "token": "^4"
+              },
+              {
+                "expansion": "PRESIDENT",
+                "token": "^8"
+              },
+              {
+                "text": "IAL DECREE"
+              }
+            ],
+            "raw": "^4^8IAL DECREE",
+            "source": {
+              "range": [
+                "$75B25",
+                "$75B31"
+              ],
+              "sha256": "c4a2b9e807e6a8b24a65e673bf943658f62a7b00e014305f46925a5a0ee0b546"
+            },
+            "text": "NEWSFLASH - PRESIDENTIAL DECREE"
+          }
+        },
+        {
+          "address": "$75B31",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$766ED",
+              "offset": "$69A9"
+            }
+          ],
+          "source": {
+            "range": [
+              "$75B31",
+              "$75B34"
+            ],
+            "sha256": "5925a33a8712727f3530a2c2f7800c9c796c83eee16a5c25dd89b33ba35fd8ed"
+          }
+        },
+        {
+          "address": "$75B34",
+          "byte": "$0D",
+          "name": "set_account",
+          "op": "$0D",
+          "operands": [
+            "$F8",
+            "000000000000"
+          ],
+          "source": {
+            "range": [
+              "$75B34",
+              "$75B3C"
+            ],
+            "sha256": "c5b892f867d1ed9230ddb96b559a718b247771ce61a9d6298cf8d9f81f2b42c4"
+          }
+        },
+        {
+          "address": "$75B3C",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$75B3C",
+              "$75B59"
+            ],
+            "sha256": "6472b721dfb48cbf510b3f7d592c817f9dddb5b65e2a87696746b9ac8e2d9544"
+          },
+          "text": {
+            "address": "$75B3D",
+            "centrePad": 3,
+            "length": 43,
+            "parts": [
+              {
+                "text": "ASSETS OF 'ENEMY OF STATE' "
+              },
+              {
+                "expansion": "MERCENARY",
+                "token": "^6"
+              },
+              {
+                "text": " SEIZED"
+              }
+            ],
+            "raw": "ASSETS OF 'ENEMY OF STATE' ^6 SEIZED",
+            "source": {
+              "range": [
+                "$75B3D",
+                "$75B59"
+              ],
+              "sha256": "9a57934011ccf985ed56fbd2eabfd4049354cc45d516708fe998bc4a15bc7791"
+            },
+            "text": "ASSETS OF 'ENEMY OF STATE' MERCENARY SEIZED"
+          }
+        },
+        {
+          "address": "$75B59",
+          "byte": "$03",
+          "name": "jump",
+          "op": "$03",
+          "operands": [
+            {
+              "address": "$766BF",
+              "offset": "$697B"
+            }
+          ],
+          "source": {
+            "range": [
+              "$75B59",
+              "$75B5C"
+            ],
+            "sha256": "05c4a4264d3db74e066c1f10f5c4a02638361d748edcb810d938fd6823ef7606"
+          }
+        }
+      ],
+      "range": [
+        "$75B24",
+        "$75B5C"
+      ],
+      "summary": {
+        "cabinAnimation": [],
+        "calls": [
+          "$766ED"
+        ],
+        "texts": [
+          "NEWSFLASH - PRESIDENTIAL DECREE",
+          "ASSETS OF 'ENEMY OF STATE' MERCENARY SEIZED"
+        ]
+      },
+      "unknownOpcodes": []
+    },
+    {
+      "aligned": true,
+      "id": "final-election-continuation",
+      "instructions": [
+        {
+          "address": "$75B5C",
+          "byte": "$11",
+          "name": "clear_flag",
+          "op": "$11",
+          "operands": [
+            "$0D"
+          ],
+          "source": {
+            "range": [
+              "$75B5C",
+              "$75B5E"
+            ],
+            "sha256": "ab257c49c86dfd9404ee6a01de780fb2607c0c8d8952c0d71bd3aef7ae7d8269"
+          }
+        },
+        {
+          "address": "$75B5E",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$75B5E",
+              "$75B74"
+            ],
+            "sha256": "5d42b81109833952cabaf99babe98eff4065db563965fa2a0d013ea178231089"
+          },
+          "text": {
+            "address": "$75B5F",
+            "centrePad": 6,
+            "length": 37,
+            "parts": [
+              {
+                "expansion": "NEWSFLASH - ",
+                "token": "^4"
+              },
+              {
+                "text": "DAMOCLES HERO DISCREDITED"
+              }
+            ],
+            "raw": "^4DAMOCLES HERO DISCREDITED",
+            "source": {
+              "range": [
+                "$75B5F",
+                "$75B74"
+              ],
+              "sha256": "7f8fc335cd5185f90a1430783aded36185d532377945bec0043942fd3cbfb7ef"
+            },
+            "text": "NEWSFLASH - DAMOCLES HERO DISCREDITED"
+          }
+        },
+        {
+          "address": "$75B74",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$75B74",
+              "$75B87"
+            ],
+            "sha256": "b54d23c208f586987f9e2b9518a07b3de0bcde5985c047ab12f0efa7639a8524"
+          },
+          "text": {
+            "address": "$75B75",
+            "centrePad": 6,
+            "length": 36,
+            "parts": [
+              {
+                "expansion": "PRESIDENT",
+                "token": "^8"
+              },
+              {
+                "text": " BIL ISSUES "
+              },
+              {
+                "expansion": "MERCENARY",
+                "token": "^6"
+              },
+              {
+                "text": " EDICT"
+              }
+            ],
+            "raw": "^8 BIL ISSUES ^6 EDICT",
+            "source": {
+              "range": [
+                "$75B75",
+                "$75B87"
+              ],
+              "sha256": "5d9825727d4b727c18dede2ddbcf1eda1ccc95de268cfb03f8842e7234122b2e"
+            },
+            "text": "PRESIDENT BIL ISSUES MERCENARY EDICT"
+          }
+        },
+        {
+          "address": "$75B87",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$76710",
+              "offset": "$69CC"
+            }
+          ],
+          "source": {
+            "range": [
+              "$75B87",
+              "$75B8A"
+            ],
+            "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+          }
+        },
+        {
+          "address": "$75B8A",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$75B8A",
+              "$75BA1"
+            ],
+            "sha256": "daa1a301cf257d63a80010c3620e1084ab68be6de284ad30d0445d6e49f4e42c"
+          },
+          "text": {
+            "address": "$75B8B",
+            "centrePad": 7,
+            "length": 35,
+            "parts": [
+              {
+                "expansion": "MERCENARY",
+                "token": "^6"
+              },
+              {
+                "text": " DECLARED 'ENEMY OF STATE'"
+              }
+            ],
+            "raw": "^6 DECLARED 'ENEMY OF STATE'",
+            "source": {
+              "range": [
+                "$75B8B",
+                "$75BA1"
+              ],
+              "sha256": "6790df33b64892e9f333920f74f8294f2d071cc63de21b350813f54d4129fe93"
+            },
+            "text": "MERCENARY DECLARED 'ENEMY OF STATE'"
+          }
+        },
+        {
+          "address": "$75BA1",
+          "byte": "$2A",
+          "name": "set_6FF48",
+          "op": "$2A",
+          "operands": [
+            "$DB"
+          ],
+          "source": {
+            "range": [
+              "$75BA1",
+              "$75BA3"
+            ],
+            "sha256": "56e9ca86df8268b2472a9d38afc43cc0e568ba9fb79d3a9e41ba32d2ccd330c9"
+          }
+        },
+        {
+          "address": "$75BA3",
+          "byte": "$03",
+          "name": "jump",
+          "op": "$03",
+          "operands": [
+            {
+              "address": "$766BF",
+              "offset": "$697B"
+            }
+          ],
+          "source": {
+            "range": [
+              "$75BA3",
+              "$75BA6"
+            ],
+            "sha256": "05c4a4264d3db74e066c1f10f5c4a02638361d748edcb810d938fd6823ef7606"
+          }
+        }
+      ],
+      "range": [
+        "$75B5C",
+        "$75BA6"
+      ],
+      "summary": {
+        "cabinAnimation": [],
+        "calls": [
+          "$76710"
+        ],
+        "texts": [
+          "NEWSFLASH - DAMOCLES HERO DISCREDITED",
+          "PRESIDENT BIL ISSUES MERCENARY EDICT",
+          "MERCENARY DECLARED 'ENEMY OF STATE'"
+        ]
+      },
+      "unknownOpcodes": []
+    }
+  ],
+  "sharedReturn": {
+    "aligned": true,
+    "instructions": [
+      {
+        "address": "$701DD",
+        "byte": "$11",
+        "name": "clear_flag",
+        "op": "$11",
+        "operands": [
+          "$06"
+        ],
+        "source": {
+          "range": [
+            "$701DD",
+            "$701DF"
+          ],
+          "sha256": "83cc0c779806c41457a9e8768bb6fb774e4beb6d1042bb1471aae8f0e3b3ca9a"
+        }
+      },
+      {
+        "address": "$701DF",
+        "byte": "$05",
+        "name": "return",
+        "op": "$05",
+        "source": {
+          "range": [
+            "$701DF",
+            "$701E0"
+          ],
+          "sha256": "e77b9a9ae9e30b0dbdb6f510a264ef9de781501d7b6b92ae89eb059c5ab743db"
+        }
+      }
+    ],
+    "range": [
+      "$701DD",
+      "$701E0"
+    ],
+    "unknownOpcodes": []
+  },
+  "source": "gameplay-opening"
+}
