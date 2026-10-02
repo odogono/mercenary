@@ -112,6 +112,8 @@ For early sources, these construction dispositions are the bounded requirements,
 
 Source snapshots hold no complete input history. A history-based constructor therefore needs a sufficiency proof for the actual retained fields; tick count alone is not evidence for every queue/message/encounter interleaving. This audit proves the late preservation/equivalence conflict, not an information-theoretic impossibility of every possible differently authorized migration.
 
+The [early initialization experiment](mercenary-iii-tourcraft-early-initialization.md) now records all 33 finite face/rotation checkpoints and an ordinary partial-frame source collision: identical full I2 records retain different `$A5` outputs. Both outputs converge at the next frame, so this is a complete-owner equality failure with an unresolved first-reader/omission question, not a proved visible or future gameplay failure. The [owner audit](mercenary-iii-tourcraft-early-owner-audit.md) identifies exact nonzero inactive seeds and the explicit legacy rotation alignment. These results do not complete the constructor.
+
 ## Required 33-control matrix and expanded comparison
 
 Retain each existing name exactly, with both Save and independent Session Resume paths. The primary generator is [`dion-controls.ts`](../../web/test/dion-controls.ts), and the implemented baseline future/panel check is [`dion-persistence.test.ts`](../../web/test/dion-persistence.test.ts).

@@ -1,0 +1,802 @@
+{
+  "sourceRevision": "e4cba434069ca1fbec6e72b3a99cbf775f1663c4",
+  "identity": {
+    "contentSha256": "c50b402c04c70ab74f95a938c0f867e740ea843157e514764f2bceb84a2f44ed",
+    "destination": "metis",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "title": "dion"
+  },
+  "expandedContentSha256": "d31490d7ba44a08949f71267884f1e290074acc5885fdfae747f7aeefcfdf611",
+  "controls": [
+    {
+      "name": "sol/mid-reveal",
+      "tick": 22,
+      "frame": 2,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 0,
+      "faces": {
+        "$A1": {
+          "base": 2,
+          "alternate": 0,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 2,
+          "alternate": 0,
+          "output": 20480
+        }
+      }
+    },
+    {
+      "name": "sol/called",
+      "tick": 97,
+      "frame": 8,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 0,
+      "faces": {
+        "$A1": {
+          "base": 8,
+          "alternate": 0,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 8,
+          "alternate": 0,
+          "output": 20480
+        }
+      }
+    },
+    {
+      "name": "sol/waiting",
+      "tick": 5344,
+      "frame": 485,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 228,
+      "faces": {
+        "$A1": {
+          "base": 9,
+          "alternate": 3,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 5,
+          "alternate": 11,
+          "output": 20480
+        }
+      }
+    },
+    {
+      "name": "sol/mid-walk",
+      "tick": 5619,
+      "frame": 510,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 228,
+      "faces": {
+        "$A1": {
+          "base": 3,
+          "alternate": 3,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 9,
+          "alternate": 11,
+          "output": 20480
+        }
+      }
+    },
+    {
+      "name": "sol/B-pre",
+      "tick": 5619,
+      "frame": 510,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 228,
+      "faces": {
+        "$A1": {
+          "base": 3,
+          "alternate": 3,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 9,
+          "alternate": 11,
+          "output": 20480
+        }
+      }
+    },
+    {
+      "name": "sol/B-post",
+      "tick": 5619,
+      "frame": 510,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 228,
+      "faces": {
+        "$A1": {
+          "base": 3,
+          "alternate": 3,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 9,
+          "alternate": 11,
+          "output": 20480
+        }
+      }
+    },
+    {
+      "name": "sol/selected",
+      "tick": 6290,
+      "frame": 571,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 250,
+      "faces": {
+        "$A1": {
+          "base": 11,
+          "alternate": 25,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 6,
+          "alternate": 2,
+          "output": 20736
+        }
+      }
+    },
+    {
+      "name": "sol/Start-pre",
+      "tick": 6290,
+      "frame": 571,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 250,
+      "faces": {
+        "$A1": {
+          "base": 11,
+          "alternate": 25,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 6,
+          "alternate": 2,
+          "output": 20736
+        }
+      }
+    },
+    {
+      "name": "sol/departure",
+      "tick": 6312,
+      "frame": 573,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 250,
+      "faces": {
+        "$A1": {
+          "base": 13,
+          "alternate": 25,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 8,
+          "alternate": 2,
+          "output": 20480
+        }
+      }
+    },
+    {
+      "name": "sol/scroll",
+      "tick": 6455,
+      "frame": 586,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 251,
+      "faces": {
+        "$A1": {
+          "base": 25,
+          "alternate": 26,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 20,
+          "alternate": 3,
+          "output": 20992
+        }
+      }
+    },
+    {
+      "name": "sol/clear-pre",
+      "tick": 7522,
+      "frame": 683,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 288,
+      "faces": {
+        "$A1": {
+          "base": 23,
+          "alternate": 18,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 17,
+          "alternate": 9,
+          "output": 20736
+        }
+      }
+    },
+    {
+      "name": "sol/descending",
+      "tick": 7588,
+      "frame": 689,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 293,
+      "faces": {
+        "$A1": {
+          "base": 24,
+          "alternate": 23,
+          "output": 18432
+        },
+        "$A5": {
+          "base": 18,
+          "alternate": 14,
+          "output": 20480
+        }
+      }
+    },
+    {
+      "name": "sol/dwell",
+      "tick": 7775,
+      "frame": 706,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 310,
+      "faces": {
+        "$A1": {
+          "base": 24,
+          "alternate": 40,
+          "output": 18432
+        },
+        "$A5": {
+          "base": 18,
+          "alternate": 0,
+          "output": 20480
+        }
+      }
+    },
+    {
+      "name": "sol/exit-pre",
+      "tick": 7775,
+      "frame": 706,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 310,
+      "faces": {
+        "$A1": {
+          "base": 24,
+          "alternate": 40,
+          "output": 18432
+        },
+        "$A5": {
+          "base": 18,
+          "alternate": 0,
+          "output": 20480
+        }
+      }
+    },
+    {
+      "name": "sol/exit-post",
+      "tick": 7786,
+      "frame": 707,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 310,
+      "faces": {
+        "$A1": {
+          "base": 25,
+          "alternate": 40,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 19,
+          "alternate": 0,
+          "output": 20736
+        }
+      }
+    },
+    {
+      "name": "sol-nostart/selected",
+      "tick": 6290,
+      "frame": 571,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 250,
+      "faces": {
+        "$A1": {
+          "base": 11,
+          "alternate": 25,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 6,
+          "alternate": 2,
+          "output": 20736
+        }
+      }
+    },
+    {
+      "name": "sol-nostart/stationary",
+      "tick": 9589,
+      "frame": 871,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 250,
+      "faces": {
+        "$A1": {
+          "base": 1,
+          "alternate": 25,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 12,
+          "alternate": 2,
+          "output": 20224
+        }
+      }
+    },
+    {
+      "name": "solwb/admission-first",
+      "tick": 5630,
+      "frame": 511,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 228,
+      "faces": {
+        "$A1": {
+          "base": 4,
+          "alternate": 3,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 10,
+          "alternate": 11,
+          "output": 20480
+        }
+      }
+    },
+    {
+      "name": "solwb/admission-second",
+      "tick": 5641,
+      "frame": 512,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 228,
+      "faces": {
+        "$A1": {
+          "base": 5,
+          "alternate": 3,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 11,
+          "alternate": 11,
+          "output": 20480
+        }
+      }
+    },
+    {
+      "name": "solwb/selected",
+      "tick": 6290,
+      "frame": 571,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 250,
+      "faces": {
+        "$A1": {
+          "base": 11,
+          "alternate": 25,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 6,
+          "alternate": 2,
+          "output": 20736
+        }
+      }
+    },
+    {
+      "name": "sp/selected",
+      "tick": 6301,
+      "frame": 572,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 250,
+      "faces": {
+        "$A1": {
+          "base": 12,
+          "alternate": 25,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 7,
+          "alternate": 2,
+          "output": 20736
+        }
+      }
+    },
+    {
+      "name": "sp/Start-pre",
+      "tick": 6301,
+      "frame": 572,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 250,
+      "faces": {
+        "$A1": {
+          "base": 12,
+          "alternate": 25,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 7,
+          "alternate": 2,
+          "output": 20736
+        }
+      }
+    },
+    {
+      "name": "sp/driver",
+      "tick": 6400,
+      "frame": 581,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 251,
+      "faces": {
+        "$A1": {
+          "base": 20,
+          "alternate": 26,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 15,
+          "alternate": 3,
+          "output": 20992
+        }
+      }
+    },
+    {
+      "name": "sp/turn-pre",
+      "tick": 7533,
+      "frame": 684,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 311,
+      "faces": {
+        "$A1": {
+          "base": 1,
+          "alternate": 41,
+          "output": 17408
+        },
+        "$A5": {
+          "base": 16,
+          "alternate": 1,
+          "output": 20480
+        }
+      }
+    },
+    {
+      "name": "sp/turn-post",
+      "tick": 7544,
+      "frame": 685,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 312,
+      "faces": {
+        "$A1": {
+          "base": 1,
+          "alternate": 42,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 16,
+          "alternate": 2,
+          "output": 20736
+        }
+      }
+    },
+    {
+      "name": "sp/travel",
+      "tick": 9249,
+      "frame": 840,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 408,
+      "faces": {
+        "$A1": {
+          "base": 29,
+          "alternate": 3,
+          "output": 18176
+        },
+        "$A5": {
+          "base": 12,
+          "alternate": 5,
+          "output": 21504
+        }
+      }
+    },
+    {
+      "name": "sp/clear",
+      "tick": 11889,
+      "frame": 1080,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 544,
+      "faces": {
+        "$A1": {
+          "base": 9,
+          "alternate": 4,
+          "output": 18432
+        },
+        "$A5": {
+          "base": 11,
+          "alternate": 17,
+          "output": 22784
+        }
+      }
+    },
+    {
+      "name": "sp/dwell",
+      "tick": 12131,
+      "frame": 1102,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 554,
+      "faces": {
+        "$A1": {
+          "base": 21,
+          "alternate": 14,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 2,
+          "alternate": 27,
+          "output": 20480
+        }
+      }
+    },
+    {
+      "name": "sp/exit-post",
+      "tick": 12142,
+      "frame": 1103,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 554,
+      "faces": {
+        "$A1": {
+          "base": 22,
+          "alternate": 14,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 3,
+          "alternate": 27,
+          "output": 20480
+        }
+      }
+    },
+    {
+      "name": "sp-early/L-post",
+      "tick": 9260,
+      "frame": 841,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 409,
+      "faces": {
+        "$A1": {
+          "base": 29,
+          "alternate": 4,
+          "output": 18432
+        },
+        "$A5": {
+          "base": 12,
+          "alternate": 6,
+          "output": 22528
+        }
+      }
+    },
+    {
+      "name": "sp-early/arrived",
+      "tick": 12131,
+      "frame": 1102,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 554,
+      "faces": {
+        "$A1": {
+          "base": 21,
+          "alternate": 14,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 2,
+          "alternate": 27,
+          "output": 20480
+        }
+      }
+    },
+    {
+      "name": "sp-nostart/selected",
+      "tick": 6301,
+      "frame": 572,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 250,
+      "faces": {
+        "$A1": {
+          "base": 12,
+          "alternate": 25,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 7,
+          "alternate": 2,
+          "output": 20736
+        }
+      }
+    },
+    {
+      "name": "sp-nostart/stationary",
+      "tick": 9600,
+      "frame": 872,
+      "saveRoundTrip": true,
+      "resumeRoundTrip": true,
+      "metisPhasePreserved": true,
+      "bodyPhaseComparisons": 32,
+      "alternateFrames": 250,
+      "faces": {
+        "$A1": {
+          "base": 2,
+          "alternate": 25,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 13,
+          "alternate": 2,
+          "output": 20480
+        }
+      }
+    }
+  ],
+  "collision": {
+    "prefixControl": "sol/selected",
+    "prefixOperationCount": 526,
+    "prefixOperationsSha256": "f540601a8bec8fabe815da4e385c36ee15dad09e4d7fcfdb411f58437645c36e",
+    "commonIdleFrames": 2,
+    "equalCompleteSource": true,
+    "equalSaveBytes": true,
+    "equalResumeExceptTimestamp": true,
+    "sourceSnapshotSha256": "cb97dbcd35b72fac3cc05bfc3e96e15a6eda50281ec5157cd15269af0a9bd0c9",
+    "saveBytesSha256": "288418228d893c6c7995fa145d3a390765b9f22e332951fcb4113b7d22a7a374",
+    "source": {
+      "tick": 6312,
+      "frame": 573,
+      "clock": {
+        "accumulator": 288,
+        "day": 0,
+        "seconds": 126
+      },
+      "remainder": 4.2875425432242764e-14,
+      "messageAge": 250,
+      "messageBusy": false,
+      "messageSerial": 22
+    },
+    "histories": [
+      {
+        "delayFrames": 0,
+        "boardingTick": 6050,
+        "alternateFrames": 250,
+        "lastAlternate": false,
+        "faces": {
+          "$A1": {
+            "base": 13,
+            "alternate": 25,
+            "output": 17152
+          },
+          "$A5": {
+            "base": 8,
+            "alternate": 2,
+            "output": 20480
+          }
+        }
+      },
+      {
+        "delayFrames": 1,
+        "boardingTick": 6061,
+        "alternateFrames": 250,
+        "lastAlternate": true,
+        "faces": {
+          "$A1": {
+            "base": 13,
+            "alternate": 25,
+            "output": 17152
+          },
+          "$A5": {
+            "base": 8,
+            "alternate": 2,
+            "output": 20736
+          }
+        }
+      }
+    ],
+    "afterNextFrameEqual": true,
+    "equalFutureFrames": 600
+  }
+}
