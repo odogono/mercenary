@@ -270,7 +270,13 @@ const fill = (
   view.paint.polygons += 1;
 };
 
-const stroke = (view: View, a: Vec3, b: Vec3, colour: number): void => {
+const stroke = (
+  view: View,
+  a: Vec3,
+  b: Vec3,
+  colour: number,
+  displayPixelWidth?: number
+): void => {
   const geometry = [camera(view, a), camera(view, b)] as const;
   const segment = screenLine(geometry[0], geometry[1], DION_PROJECTION);
   if (segment === null) {
@@ -279,6 +285,7 @@ const stroke = (view: View, a: Vec3, b: Vec3, colour: number): void => {
   view.primitives.push({
     camera: geometry,
     colour: { index: resolveColour(view.paint, colour) },
+    ...(displayPixelWidth === undefined ? {} : { displayPixelWidth }),
     kind: 'line',
     order: view.primitives.length,
     screen: segment,
@@ -1522,7 +1529,7 @@ const drawRoads = (view: View, bound: Bound | null): void => {
   ];
   withSource(view, 'roads', () => {
     for (const edge of edges) {
-      stroke(view, point(edge >> 8), point(edge & 0xff), 0x80_0e);
+      stroke(view, point(edge >> 8), point(edge & 0xff), 0x80_0e, 1);
     }
   });
 };

@@ -104,6 +104,61 @@ test('the GPU palette texture preserves index colours independently at every ref
   ).toEqual([0, 0, 255, 255]);
 });
 
+test('road lines use one output pixel in Enhanced while Authentic retains its raster width', () => {
+  expect(
+    descriptionVertices(description, { height: 600, width: 1200 })
+  ).toEqual(descriptionVertices(description));
+  const road = {
+    ...description,
+    primitives: description.primitives
+      .filter(p => p.kind === 'line')
+      .map(p => ({
+        ...p,
+        displayPixelWidth: 1,
+        source: 'roads'
+      }))
+  };
+  for (const height of [6, 60, 120]) {
+    const vertices = descriptionVertices(road, { height, width: height * 2 });
+    // The background occupies six vertices. Camera v maps back to reference rows.
+    const a = vertices[6 * DESCRIPTION_STRIDE + 1]!;
+    const b = vertices[8 * DESCRIPTION_STRIDE + 1]!;
+    expect(
+      (Math.abs(a - b) * road.projection.focal * height) /
+        road.projection.height
+    ).toBeCloseTo(1, 5);
+  }
+  expect(renderAuthentic(road).pixels).toEqual(
+    renderAuthentic({
+      ...road,
+      primitives: description.primitives.filter(p => p.kind === 'line')
+    }).pixels
+  );
+  const diagonal = {
+    ...road,
+    primitives: road.primitives.map(p => ({
+      ...p,
+      camera: [
+        { d: 4, u: 2, v: -1 },
+        { d: 4, u: -2, v: 1 }
+      ] as const
+    }))
+  };
+  const output = { height: 120, width: 80 };
+  const vertices = descriptionVertices(diagonal, output);
+  const du =
+    vertices[6 * DESCRIPTION_STRIDE]! - vertices[11 * DESCRIPTION_STRIDE]!;
+  const dv =
+    vertices[6 * DESCRIPTION_STRIDE + 1]! -
+    vertices[11 * DESCRIPTION_STRIDE + 1]!;
+  expect(
+    Math.hypot(
+      (du * road.projection.focal * output.width) / road.projection.width,
+      (dv * road.projection.focal * output.height) / road.projection.height
+    )
+  ).toBeCloseTo(1, 5);
+});
+
 test('Dion allocates only visible star colours, first claims the descending free slot and falls back to zero when full', async () => {
   const { world } = await dionContent();
   const controlled = {
