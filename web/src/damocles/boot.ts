@@ -67,6 +67,11 @@ import { stMakeCode } from './keys.ts';
 import { erisLighting } from './lighting.ts';
 import { damoclesPanelViewModel } from './panel.ts';
 import {
+  DAMOCLES_PANEL_PATH,
+  damoclesPitchStrip,
+  readDamoclesPanel
+} from './pitchStrip.ts';
+import {
   centreBoxPage,
   computerBoxPoint,
   damoclesTakeTargetAt,
@@ -188,7 +193,7 @@ try {
   } catch {
     storage = undefined;
   }
-  const [loaded, system, titleLogo] = await Promise.all([
+  const [loaded, system, titleLogo, panelDocument] = await Promise.all([
     damoclesTitle.load(requiredJson),
     requiredJson('/payload/damocles/system.json').then(document =>
       readGammaSystem(document.value)
@@ -196,8 +201,16 @@ try {
     requiredJson(DAMOCLES_TITLE_PATH).then(document =>
       loadDamoclesTitleLogo(document.value, new URL('/payload/', location.href))
     ),
+    requiredJson(DAMOCLES_PANEL_PATH).then(document =>
+      readDamoclesPanel(document.value)
+    ),
     loadTypography()
   ]);
+  if (panelDocument.programSha256 !== loaded.catalogue.source.programSha256) {
+    throw new Error(
+      `${DAMOCLES_PANEL_PATH}: program identity does not match the Catalogue`
+    );
+  }
   if (titleLogo.logo.programSha256 !== loaded.catalogue.source.programSha256) {
     throw new Error(
       `${DAMOCLES_TITLE_PATH}: program identity does not match the Catalogue`
@@ -303,7 +316,12 @@ try {
   installPanelScale(panelSection, panelScale, (target, onResize) => {
     new ResizeObserver(onResize).observe(target);
   });
-  const panel = installPanel(panelElements);
+  const panel = installPanel(panelElements, {
+    damoclesPitchStrip: damoclesPitchStrip(
+      panelDocument,
+      content.doc.orientation
+    )
+  });
   let commitAction = (_action: () => unknown): void => {};
 
   // The transport reports a failed audio graph once and carries on in silence.
