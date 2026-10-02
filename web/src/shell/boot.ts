@@ -621,7 +621,10 @@ try {
       }
     },
     release,
-    { execute: executeConsoleCommand }
+    {
+      execute: executeConsoleCommand,
+      persistence: { key: titleKeys.consoleHistory, storage }
+    }
   );
   recordBensonMessage = () => {
     shellConsole.write(bensonTranscript.observe(snapshot.bensonMessage));
