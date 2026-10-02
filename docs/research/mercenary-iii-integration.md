@@ -222,13 +222,17 @@ No architecture choice is accepted by this report. [ADR 0021](../adr/0021-unify-
 
 This exercises on-foot movement, object-use controls, world presentation and title persistence alongside a distinct passenger service whose route is chosen by the player. It does not require a complete MIII campaign or all self-piloted craft. Pure arithmetic reuse can proceed only where the selected sequence actually uses it; isolated craft-probe success is not a reason to add unrelated flight work to this slice.
 
+The candidate table now incorporates [R5's ranked survey](mercenary-iii-services-progression.md#ranked-candidate-slices) (#703, 2026-10-02). R5 recommends a second journey for D2 to choose; it does not extend D1's implementation contract.
+
 | Candidate | Evidence / trade-off | Decision |
 |---|---|---|
-| TAXICARD, two destinations and passenger arrival | Actual opening activation, call, boarding, selected labels and divergent journeys observed | Accepted bounded sequence; remaining research gates are listed in the D1 review |
-| Bus-pass activation and next-stop exit | Original transport leaflet directly documents it; no runtime route reproduced here | Useful second service; avoid making a new world/route hunt the first milestone |
-| Bil invitation, meeting and Transporter access | Strong narrative consequence supported by manual; grant point, route and access state unobserved | Later candidate with broader multi-Body/script recovery |
-| Election and mining veto | Distinctive progression from original briefing | Too much unresolved campaign state for first slice |
-| Familiar craft flight or static scenery | Good isolated mechanism tests | Insufficient distinctive play on its own |
+| TAXICARD, two destinations and passenger arrival | Both opening journeys and on-foot exits implemented with Save and Session Resume (#647/#648) | Accepted first slice; [I2 report](mercenary-iii-i2-taxi-implementation.md) records delivery |
+| **R5 rank 1: METIS TOURCRAFT → TOLOSA, ending on foot** | Two natural fresh-game runs complete boarding, automated craft flight, another Body and automatic exit; adds playback, craft Mover and accelerated time | Recommended second-slice candidate; flight/time/cadence/persistence recovery gates remain |
+| **R5 rank 2: solicitor → upstairs Transporter → VESTA** | Natural taxi prefix, static appointment/lift/Transporter readers and earlier synthetic arrival; full natural lift route unproved | Commission a short reachability probe before D2 chooses; potentially smaller movement scope |
+| **R5 rank 3: BUS PASS and next-stop exit** | Synthetic route-42 boarding/travel/queued-L/marked-stop exit reproduced; no Call or Start; activation affects next-stop display. Natural access to a bus-served Body unproved | Useful second service conditional on natural access or an explicitly authored starting Location |
+| **R5 rank 4: Bil meeting and Transporter to BACCHUS** | Natural flight reaches TOLOSA; location-triggered dialogue is disabled by election result. No Transporter-grant test in inspected readers | Broader journey than flight arrival alone; natural meeting/lift/transfer and campaign-time gates |
+| **R5 rank 5: self-piloted craft journey** | Bounded arithmetic/parameter/admission comparisons, but no natural acquisition/flight/landing recipe in this survey | Gate the chosen Dion craft and key/hire/flight rules; staffed TOURCRAFT is a different control contract |
+| **R5 rank 6: election and mining veto** | Static campaign inventory, 9/17-hour result/mining trigger thresholds, authority/bill/Floor dependencies | Defer behind bounded transport/dialogue recovery; no natural winning/veto route yet |
 
 The [D1 review's I1/I2 acceptance](mercenary-iii-taxi-milestone-review.md#i1-acceptance-title-and-content-boundary) supersedes the original provisional criteria. In particular, approach is position-based, player-owned yaw survives taxi travel and exit, early L is dropped rather than queued, and cross-mechanism arrival outcomes require exact-cadence confirmation. Persistence uses all six refined R3 criteria, not just a selected/in-transit/arrived sample.
 
@@ -240,7 +244,7 @@ Required remaining probes are lettering (#643), projection/clip/fill/face order 
 
 R1 now has a [taxi-journey research report](mercenary-iii-taxi-journeys.md) for [#615](https://github.com/odogono/mercenary/issues/615): reproduced routes, passenger admission/exit, selection versus Start, message gates, timing/economic bounds and R2–R4 handoffs. It supplied the journey evidence reviewed by D1; the accepted review now governs the implementation tickets below. R2 has a [content and presentation report](mercenary-iii-taxi-content-presentation.md) for [#618](https://github.com/odogono/mercenary/issues/618). R3 has a [persistence report](mercenary-iii-taxi-persistence.md) for [#619](https://github.com/odogono/mercenary/issues/619). R4 has a [shared-mechanisms report](mercenary-iii-shared-mechanisms.md) for [#636](https://github.com/odogono/mercenary/issues/636): the 50 Hz rerun and cadence options for D1, a classification of the compared mechanisms, and the craft/seatable/passenger admission matrix.
 
-R1–R4 are complete and D1 has accepted the bounded milestone. The table retains the research sequence and records the commissioned implementation tickets. Evidence work remains separate from implementation; exhaustive recovery and general Damocles completion are not prerequisites.
+R1–R5 are complete as bounded research; D1 accepted the taxi milestone and I1/I2 delivered it. R5 supplies the ranked candidates and explicit gaps for D2. The table retains the research sequence and records the commissioned implementation tickets. Evidence work remains separate from implementation; exhaustive recovery and general Damocles completion are not prerequisites.
 
 | Order / ID | Work | Dependencies | Expected output and blocker |
 |---|---|---|---|
@@ -251,7 +255,8 @@ R1–R4 are complete and D1 has accepted the bounded milestone. The table retain
 | 3 / D1 | [#638: accepted review](mercenary-iii-taxi-milestone-review.md) | R1–R4 complete | Seven decisions recorded; ADR 0058 and research gates #642–#646; no runtime implementation |
 | 4 / I1 | [#647: title identity and bounded adapters](https://github.com/odogono/mercenary/issues/647) | D1 accepted; #643/#644 gate affected content/adapters | `/dion` boot/content boundary, distinct Save/Resume identity, shell integration and required bounded coverage; independent shell preparation may proceed |
 | 5 / I2 | [#648: taxi play and persistence](https://github.com/odogono/mercenary/issues/648) | #647, #643–#646 (#642 done: eleven), #637 for persistence | Both choices, passenger progression/exit, confirmed timing and full R3 Save/Session Resume acceptance; gates apply to affected work and completion, not all live-play development |
-| Later / R5 | Survey deeper progression and other services | Independent where possible; first-slice lessons inform priorities | Bus/flight/Transporter rules, dialogue, election/economy/confinement/mining/encounter/time state. Ordered by actual dependencies, not one enormous whole-game decoder |
+| Later / R5 | [#703: services and progression survey](mercenary-iii-services-progression.md) — complete | Taxi slice and completed Catalogue; same pinned baseline | Ranked six candidates, natural TOLOSA flight recipe, synthetic bus mechanism, Bil/Transporter and coarse campaign dependencies; [D2 questions and probe/waiver list](mercenary-iii-services-progression.md#d2-questions-and-probes-to-commission-or-waive). Fresh-game bus access and natural lift/Transporter routes remain explicit gaps |
+| Next / D2 | Choose the second playable journey | R5; commission or explicitly waive candidate-specific probes | Review fresh-game versus authored-start scope, content promotion, shared mechanisms, time/campaign and Save/Session Resume requirements; create the selected implementation contract |
 
 ### What this contributes to #419
 
@@ -261,7 +266,7 @@ MIII now supplies the missing third-title data point: matching arithmetic and re
 
 ## Remaining uncertainty and stopping decision
 
-No full geometry/VM/progression decode, audio capture, MIII original-save analysis, ordinary craft take-off/landing/space route, or all-release equivalence claim was attempted. These are visible gaps, with the slice-relevant ones assigned prerequisites above. The whole-title survey covers each requested area, the initial five consequential Mover probes have bounded results, and actual passenger play supports comparison of candidate milestones. Further depth belongs to the ordered recovery work rather than silently expanding this roadmap issue into full recovery.
+The initial #609 survey attempted no full geometry/VM/progression decode, audio capture, MIII original-save analysis, ordinary craft take-off/landing/space route, or all-release equivalence claim. Subsequent Catalogue research covers geometry; R5 now demonstrates one staffed TOURCRAFT launch/space/arrival path. Self-piloted flight, fresh-game bus access and natural lift/Transporter completion remain unproved; no full campaign or all-release equivalence claim follows. These are visible gaps, with the slice-relevant ones assigned prerequisites above. The whole-title survey covers each requested area, the initial five consequential Mover probes have bounded results, and actual passenger play supports comparison of candidate milestones. Further depth belongs to the ordered recovery work rather than silently expanding this roadmap issue into full recovery.
 
 The deliverable supports a **conditional integration recommendation**. It does not authorise implementation before findings review, and it does not make an unresolved service/persistence hypothesis safe merely by documenting it.
 
