@@ -1,4 +1,62 @@
+import { createHash } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
+
 import { expect, test } from '@playwright/test';
+
+import { loadDionCatalogue } from '../src/dion/catalogue.ts';
+import { frameRgba } from '../src/dion/frame.ts';
+import { readSelection } from '../src/dionCatalogue/inspection.ts';
+import {
+  preparePreview,
+  readRenderSupport,
+  supportPath
+} from '../src/dionCatalogue/preview.ts';
+
+const read = async (path: string): Promise<unknown> =>
+  JSON.parse(await readFile(new URL(`../..${path}`, import.meta.url), 'utf8'));
+test('browser canvases reproduce the audited preview composition across every geometry family', async ({
+  page
+}) => {
+  const store = await loadDionCatalogue(read);
+  const support = readRenderSupport(await read(supportPath), store.catalogue);
+  for (const query of [
+    'id=object-001',
+    'id=placement-02-29',
+    'id=placement-02-03&floor=4',
+    'id=placement-15-68&floor=9&region=5',
+    'id=placement-56-00&fieldX=393&fieldZ=2694',
+    'id=placement-08-32',
+    'id=placement-08-32&state=constructed',
+    'id=detail-02a808',
+    'id=ground-01d1bc',
+    'id=island-0633a2',
+    'id=model-0317f6'
+  ]) {
+    const preview = await preparePreview(
+      store,
+      support,
+      readSelection(new URLSearchParams(query))
+    );
+    const frame = preview.plan();
+    const rgba = new Uint8ClampedArray(320 * 136 * 4);
+    frameRgba(frame, rgba);
+    const expected = createHash('sha256').update(rgba).digest('hex');
+    await page.goto(`/dion/catalogue?${query}`);
+    await expect(page.locator('#preview-message')).toContainText(
+      preview.message
+    );
+    const actual = await page.locator('#view').evaluate(async element => {
+      const pixels = (element as HTMLCanvasElement)
+        .getContext('2d')!
+        .getImageData(0, 0, 320, 136).data;
+      const hash = await crypto.subtle.digest('SHA-256', pixels);
+      return Array.from(new Uint8Array(hash), byte =>
+        byte.toString(16).padStart(2, '0')
+      ).join('');
+    });
+    expect(actual, query).toBe(expected);
+  }
+});
 
 test('Catalogue routing, filters, previews and host Floor navigation stay sessionless', async ({
   page,

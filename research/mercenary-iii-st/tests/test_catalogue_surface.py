@@ -160,5 +160,26 @@ class CapturedSurfaceTests(unittest.TestCase):
         self.assertEqual(json.loads(json.dumps(surface))['source']['census'], Path(census).name)
 
 
+class DetailLetteringAlignmentTests(unittest.TestCase):
+    def test_odd_command_rounds_its_header_down_before_reading(self):
+        from unittest.mock import patch
+        from m3lab.geometry import decode_detail
+        # A three-byte polygon leaves the $6000 command at an odd address.
+        # $54FA0 rounds the pointer AFTER that command down to an even word.
+        body = (words(0x8000, 0x0777) + bytes([0]) + bytes([0x60])
+                + words(25, -50, 70, 580, 0x8000, -9) + bytes([3, 4])
+                + words(0x8000) + b'CLOSED\x00' + words(0, 0) + bytes([0, 0])
+                + words(0) + bytes([0]))
+        ram = image({0x1000: body})
+        with patch('m3lab.geometry.detail_record', return_value=0x1000), \
+             patch('m3lab.geometry._detail_boxes', return_value=([], [], None, 0x1000)):
+            detail = decode_detail(ram, 1)
+        text = detail['primitives'][1]
+        self.assertEqual(text['anchor'], [-50, 70, 580])
+        self.assertEqual(text['flags'], 0x8000)
+        self.assertEqual(text['glyphScale'], [3, 4])
+        self.assertEqual(text['text'], list(b'CLOSED'))
+
+
 if __name__ == '__main__':
     unittest.main()

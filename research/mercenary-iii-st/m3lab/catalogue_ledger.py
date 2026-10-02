@@ -130,7 +130,7 @@ def _group_disposition(group: dict, bindings: int) -> str:
 
 def build_ledger(run: Path, repository: Path = REPOSITORY, surface: dict | None = None,
                  comparisons: dict | None = None, models: dict | None = None,
-                 interiors: dict | None = None) -> dict:
+                 interiors: dict | None = None, previews: dict | None = None) -> dict:
     """The census ledger; with the #682 surface and #681 object extractions, their
     recovery states too, and with their original-scene comparisons, the results for
     #686 to build on."""
@@ -453,6 +453,8 @@ def build_ledger(run: Path, repository: Path = REPOSITORY, surface: dict | None 
                     raise ValueError(f'{name}: interior scene source disagrees: {field}')
             ledger['interiorScenes'][name] = {**scene, 'originalScreenshot':
                 f'restricted/mercenary-iii-683/runs/{scene["run"]}/v7000.png'}
+    if previews is not None:
+        attach_previews(ledger, previews)
     ledger['completion'] = completion(ledger)
     problems = validate_ledger(ledger)
     if problems:
@@ -664,6 +666,32 @@ def apply_interiors(ledger: dict, interiors: dict) -> None:
         ledger.setdefault('resolvedGaps', []).append({
             'id': 'floor-table-slot-46', 'owner': INTERIOR_TICKET,
             'resolution': resolutions['floor-table-slot-46']})
+
+
+def attach_previews(ledger: dict, report: dict) -> None:
+    """Admit reproducible static preview coverage, never exhaustive pixel parity."""
+    if report.get('kind') != 'dion-catalogue-preview-evidence' or report.get('schemaVersion') != 1:
+        raise ValueError('unsupported Catalogue preview evidence')
+    source = {**ledger['source'], **ledger['source']['census']}
+    for key in ('programSha256', 'openingRamSha256'):
+        if report.get(key) != source[key]:
+            raise ValueError(f'preview evidence source differs: {key}')
+    records = {r['id']: r for r in report['records']}
+    if len(records) != len(report['records']) or set(records) != {g['id'] for g in ledger['geometry']}:
+        raise ValueError('preview evidence identity inventory differs')
+    for geometry in ledger['geometry']:
+        row = records[geometry['id']]
+        unscaled = geometry['family'] in ('detail', 'island') or (geometry['family'] == 'model' and geometry['owner'] == SURFACE_TICKET)
+        expected = ['base'] if unscaled else geometry['variants'] or ['']
+        actual = [v['id'] for v in row['variants']]
+        if row['sha256'] != geometry['sha256'] or row['state'] != geometry['state'] or actual != expected:
+            raise ValueError(f"{geometry['id']}: stale or incomplete preview evidence")
+        if geometry['state'] != 'empty' and any(v['primitives'] <= 0 for v in row['variants']):
+            raise ValueError(f"{geometry['id']}: required geometry was not drawn")
+    for geometry in ledger['geometry']:
+        geometry['preview'] = {'catalogue': 'research/mercenary-iii-st/catalogue-previews.json',
+                               'original': report['comparisonMatrix'],
+                               'scope': 'static coverage; representative original-scene matrix, not exhaustive pixel parity'}
 
 
 def completion(ledger: dict) -> dict:
@@ -999,6 +1027,7 @@ def main() -> None:
     parser.add_argument('--interiors', type=Path, help='a catalogue_interiors extraction (#683)')
     parser.add_argument('--interior-comparisons', type=Path, help='original interior reader comparisons')
     parser.add_argument('--interior-scenes', type=Path, help='representative original indoor scenes')
+    parser.add_argument('--previews', type=Path, help='exported Catalogue static preview evidence (#686)')
     parser.add_argument('--objects', type=Path, help='a catalogue_objects extraction (#681)')
     parser.add_argument('--object-comparisons', type=Path,
                         help='the object_scenes results, objects.json (#681)')
@@ -1019,8 +1048,9 @@ def main() -> None:
     if args.interior_scenes:
         comparisons['interiorScenes'] = json.loads(args.interior_scenes.read_text())
     interiors = json.loads(args.interiors.read_text()) if args.interiors else None
+    previews = json.loads(args.previews.read_text()) if args.previews else None
     ledger = build_ledger(args.run, surface=surface, comparisons=comparisons, models=objects,
-                          interiors=interiors)
+                          interiors=interiors, previews=previews)
     args.out.write_text(dumps(ledger))
     c = ledger['completion']
     print(f"Wrote {args.out}: {len(ledger['geometry'])} Geometry Identities, "

@@ -1085,7 +1085,7 @@
   "kind": "dion-catalogue-geometry",
   "schemaVersion": 1,
   "source": {
-    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "ledgerSha256": "90613b0d37484d8a48b40e642040c360995a9399c5deaa3bb7baec1d88a5d890",
     "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
     "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
     "run": "location-census-334983y7",

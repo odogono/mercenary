@@ -4,6 +4,7 @@ import {
   loadDionCatalogue,
   type GeometryStore
 } from '../src/dion/catalogue.ts';
+import { frameRgba } from '../src/dion/frame.ts';
 import { readSelection } from '../src/dionCatalogue/inspection.ts';
 import {
   preparePreview,
@@ -104,7 +105,7 @@ test('LOGOS initial state draws no constructed geometry and MIDAS repeats retain
       new URLSearchParams('id=placement-56-00&fieldX=393&fieldZ=2694')
     )
   );
-  expect(repeat.residents.map(o => o.slot)).toEqual([101, 118]);
+  expect(repeat.residents.map(o => o.slot)).toEqual([101, 118, 177]);
   const other = await preparePreview(
     store,
     support,
@@ -172,4 +173,203 @@ test('shared coast classification reproduces the 36 evidenced Dion Land/Sea answ
       p.answer === 0 ? 'core' : p.answer === 1 ? 'land' : 'sea'
     );
   }
+});
+
+test('replays a selected upper Floor from an exact cell-local evidence camera', async () => {
+  const support = readRenderSupport(await read(supportPath), store.catalogue);
+  const preview = await preparePreview(
+    store,
+    support,
+    readSelection(new URLSearchParams('id=placement-02-03&floor=4'))
+  );
+  const pose = { eye: [33_211, 663, 30_889] as const, heading: 0, region: 3 };
+  const frame = preview.planAt(pose);
+  expect(frame.stats.models).toContain(30);
+  expect(
+    frame.description.primitives.some(p => p.source.startsWith('structure:'))
+  ).toBe(true);
+  expect(preview.planAt(pose).frame.pixels).toEqual(frame.frame.pixels);
+});
+
+test('LOGOS absence retains its recovered cell ground and Body day palette', async () => {
+  const support = readRenderSupport(await read(supportPath), store.catalogue);
+  const p = await preparePreview(
+    store,
+    support,
+    readSelection(new URLSearchParams('id=placement-08-32'))
+  );
+  expect(
+    p.plan().description.primitives.some(p => p.source.includes(':ground:'))
+  ).toBe(true);
+});
+
+test('ground selector 3 uses the recovered swap-and-negate transform 5', async () => {
+  const support = readRenderSupport(await read(supportPath), store.catalogue);
+  const preview = await preparePreview(
+    store,
+    support,
+    readSelection(new URLSearchParams('id=placement-08-32&state=constructed'))
+  );
+  const f = preview.planAt({
+    eye: [30_518, 63, 34_068],
+    heading: 0,
+    region: 3
+  });
+  const primitive = f.description.primitives.find(
+    p => p.source.includes(':ground:') && p.kind === 'polygon'
+  );
+  expect(primitive).toBeDefined();
+  // The original selector table $561FC maps index 3 to transform bits 5.
+  // This road polygon must span the view below the horizon in this capture.
+  const rgba = new Uint8ClampedArray(320 * 136 * 4);
+  const { frameRgba } = await import('../src/dion/frame.ts');
+  frameRgba(f, rgba);
+  expect(
+    Array.from(rgba.slice((120 * 320 + 160) * 4, (120 * 320 + 160) * 4 + 3))
+  ).toEqual([146, 36, 36]);
+});
+
+test('definition cameras expose large models, flat ground and first-group-only details', async () => {
+  const support = readRenderSupport(await read(supportPath), store.catalogue);
+  for (const id of ['model-034dd4', 'ground-01d1bc', 'detail-02a808']) {
+    const preview = await preparePreview(
+      store,
+      support,
+      readSelection(new URLSearchParams({ id }))
+    );
+    expect(
+      [0, 128, 256, 512, 768].some(
+        h => preview.plan(h).description.primitives.length > 0
+      )
+    ).toBe(true);
+  }
+});
+
+test('Connection street furniture retains the viewer-selected lettered front', async () => {
+  const support = readRenderSupport(await read(supportPath), store.catalogue);
+  const preview = await preparePreview(
+    store,
+    support,
+    readSelection(new URLSearchParams('id=placement-02-29'))
+  );
+  const frame = preview.planAt({
+    eye: [32_768, 63, 35_268],
+    heading: 0,
+    pitch: 511,
+    region: 1
+  });
+  const rgba = new Uint8ClampedArray(320 * 136 * 4);
+  frameRgba(frame, rgba);
+  // Original Connection: the alternate front is blue, beside the yellow wall.
+  expect(
+    Array.from(rgba.slice((40 * 320 + 25) * 4, (40 * 320 + 25) * 4 + 3))
+  ).toEqual([73, 146, 219]);
+});
+
+test('captured MIDAS structure camera stays independent of resident world height', async () => {
+  const support = readRenderSupport(await read(supportPath), store.catalogue);
+  const preview = await preparePreview(
+    store,
+    support,
+    readSelection(
+      new URLSearchParams('id=placement-56-00&fieldX=393&fieldZ=2694')
+    )
+  );
+  // $5A102 places the world eye at resident Y + 63; $56E2C resets $703C to 63.
+  const frame = preview.planAt({
+    eye: [32_524, 93, 33_065],
+    heading: 0,
+    pitch: 511,
+    region: 1,
+    structureEyeY: 63
+  });
+  const rgba = new Uint8ClampedArray(320 * 136 * 4);
+  frameRgba(frame, rgba);
+  expect(
+    Array.from(rgba.slice((50 * 320 + 100) * 4, (50 * 320 + 100) * 4 + 3))
+  ).toEqual([219, 73, 0]);
+});
+
+test('upper Floor detail selection uses world height rather than lift-relative wall height', async () => {
+  const support = readRenderSupport(await read(supportPath), store.catalogue);
+  const preview = await preparePreview(
+    store,
+    support,
+    readSelection(new URLSearchParams('id=placement-15-68&floor=9'))
+  );
+  const frame = preview.planAt({
+    eye: [33_089, 1413, 31_096],
+    heading: 0,
+    pitch: 511,
+    region: 5,
+    structureEyeY: 63
+  });
+  // Original $AA50 is empty: $54D62 selects detail 31's upper box at world Y1413.
+  expect(
+    frame.description.primitives.filter(p => p.source.includes(':detail:'))
+  ).toHaveLength(0);
+});
+
+test('Floor lettering uses its selected label while exact probes can retain a captured label', async () => {
+  const support = readRenderSupport(await read(supportPath), store.catalogue);
+  for (const query of [
+    'id=placement-02-03&floor=4',
+    'id=placement-18-8b&floor=10'
+  ]) {
+    const preview = await preparePreview(
+      store,
+      support,
+      readSelection(new URLSearchParams(query))
+    );
+    let differs = false;
+    for (const heading of [0, 128, 256, 512, 768]) {
+      const pose = {
+        eye: [32_768, query.includes('floor=4') ? 663 : 1563, 32_768] as const,
+        heading,
+        region: 1
+      };
+      const selected = preview.planAt(pose);
+      const opening = preview.planAt({ ...pose, floorLabel: 71 });
+      differs ||=
+        selected.description.primitives.length !==
+          opening.description.primitives.length ||
+        !selected.frame.pixels.every((v, i) => v === opening.frame.pixels[i]);
+    }
+    expect(differs, query).toBe(true);
+  }
+});
+
+test('a Floor-zero host retains the nearby surface residents that occlude its lettering', async () => {
+  const support = readRenderSupport(await read(supportPath), store.catalogue);
+  const preview = await preparePreview(
+    store,
+    support,
+    readSelection(new URLSearchParams('id=placement-03-62'))
+  );
+  const frame = preview.planAt({
+    eye: [32_777, 63, 32_868],
+    heading: 512,
+    pitch: 511,
+    region: 3
+  });
+  expect(frame.stats.models).toContain(219);
+  expect(frame.stats.models).toContain(220);
+});
+
+test('a hooked resident binds its own key letter rather than a shared opening buffer', async () => {
+  const support = readRenderSupport(await read(supportPath), store.catalogue);
+  const tokens = new Map(support.tokens);
+  tokens.delete(0x87);
+  const preview = await preparePreview(
+    store,
+    { ...support, tokens },
+    readSelection(new URLSearchParams('id=placement-50-01'))
+  );
+  const frame = preview.planAt({
+    eye: [32_993, 63, 29_856],
+    heading: 0,
+    region: 4
+  });
+  expect(frame.stats.models).toContain(31);
+  expect(frame.stats.gaps).not.toContain('text token $87 is not bound');
 });

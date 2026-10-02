@@ -9,7 +9,7 @@
         2
       ]
     ],
-    "sha256": "700e00d21bbd43bba0dc80c08f6083d769afee348d4178433d80d0d49078ff61",
+    "sha256": "7f69cf0a46ab0dd9fc4d196866ec4e1f358282ca548966c5eaac10cc4f65b46d",
     "variants": {
       "base": {
         "extent": {
@@ -754,22 +754,23 @@
           },
           {
             "address": "$2B21F",
-            "advance": -2051,
+            "advance": -9,
             "anchor": [
-              -12800,
-              17922,
-              17536
+              -50,
+              70,
+              580
             ],
-            "colour": 67,
+            "colour": 32768,
             "command": 24576,
-            "flags": 255,
+            "flags": 32768,
             "glyphScale": [
-              4,
-              -128
+              -3,
+              4
             ],
             "kind": "text",
-            "offset": 6655,
+            "offset": 25,
             "text": [
+              67,
               76,
               79,
               83,
@@ -779,22 +780,24 @@
           },
           {
             "address": "$2B237",
-            "advance": 6147,
+            "advance": 24,
             "anchor": [
-              25600,
-              20735,
-              14464
+              100,
+              80,
+              -200
             ],
-            "colour": 30605,
+            "colour": 1911,
             "command": 24831,
-            "flags": 256,
+            "flags": 32769,
             "glyphScale": [
               3,
-              7
+              3
             ],
             "kind": "text",
-            "offset": -28160,
-            "text": []
+            "offset": -110,
+            "text": [
+              141
+            ]
           }
         ],
         "provenance": {
@@ -1176,7 +1179,7 @@
   "kind": "dion-catalogue-geometry",
   "schemaVersion": 1,
   "source": {
-    "ledgerSha256": "d24bd0b1456a750e00e070bc39015710fa7e00049edccd62fc3ac87d9f63681d",
+    "ledgerSha256": "90613b0d37484d8a48b40e642040c360995a9399c5deaa3bb7baec1d88a5d890",
     "openingRamSha256": "cd697c802472a319fcd8fd5dd7193ad870cf4ff0a7f37cd6fda51893dd899fe4",
     "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
     "run": "location-census-334983y7",

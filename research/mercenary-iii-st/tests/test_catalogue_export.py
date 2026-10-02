@@ -8,6 +8,7 @@ from pathlib import Path
 
 from m3lab.boot import REPOSITORY
 from m3lab.catalogue_export import build_export, write_export
+from m3lab.catalogue_render import render_support
 
 
 class CatalogueExportTests(unittest.TestCase):
@@ -44,8 +45,16 @@ class CatalogueExportTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             output = Path(directory) / 'catalogue'
             write_export(output, document, geometry)
+            census = REPOSITORY / 'restricted/mercenary-iii-647/runs' / document['source']['run']
+            if not (census / 'start.ram').exists():
+                self.skipTest('Catalogue render support needs the pinned census RAM')
+            support = render_support(document, census)
+            (output / 'render-support.json').write_text(json.dumps(support, sort_keys=True, indent=2) + '\n')
             first = {str(p.relative_to(output)): p.read_bytes() for p in output.rglob('*.json')}
-            write_export(output, *self.build())
+            rebuilt, rebuilt_geometry = self.build()
+            write_export(output, rebuilt, rebuilt_geometry)
+            (output / 'render-support.json').write_text(
+                json.dumps(render_support(rebuilt, census), sort_keys=True, indent=2) + '\n')
             self.assertEqual(first, {str(p.relative_to(output)): p.read_bytes() for p in output.rglob('*.json')})
             tracked = REPOSITORY / 'payload/dion/catalogue'
             self.assertEqual(first, {str(p.relative_to(tracked)): p.read_bytes() for p in tracked.rglob('*.json')})

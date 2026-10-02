@@ -1305,7 +1305,8 @@ const drawDetail = (view: View, bound: Bound): void =>
       const eye = view.camera.eye;
       const viewer = [
         eye[0] - bound.origin[0],
-        eye[1] - bound.floorOffset,
+        // $54D62 uses absolute world height, independent of the lift's wall camera.
+        eye[1],
         eye[2] - bound.origin[2]
       ];
       let records = group.default;
@@ -1328,7 +1329,7 @@ const drawDetail = (view: View, bound: Bound): void =>
       const mirrored = sx * sz < 0;
       const points = detail.vertices.map(([x, y, z]): Vec3 => [
         bound.origin[0] + x * sx,
-        bound.floorOffset + (y < 0 ? ~y : y),
+        y < 0 ? ~y : y,
         bound.origin[2] + z * sz
       ]);
       for (const record of records) {
@@ -1391,11 +1392,7 @@ const drawDetailText = (
     colour: record.colour,
     flags: record.flags,
     glyphScale: [gx, gy],
-    origin: [
-      bound.origin[0] + x,
-      bound.floorOffset + record.anchor[1],
-      bound.origin[2] + z
-    ],
+    origin: [bound.origin[0] + x, record.anchor[1], bound.origin[2] + z],
     text: record.text
   });
 };

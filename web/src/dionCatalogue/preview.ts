@@ -27,6 +27,8 @@ import { type RenderSupport } from './support.ts';
 export { readRenderSupport, supportPath } from './support.ts';
 
 const emptyProvenance: Provenance = { range: [0, 1], sha256: '0'.repeat(64) };
+// $561FC: Catalogue transform variants name the selector index, not its bit mask.
+const groundTransforms = [0, 6, 3, 5, 1, 4, 2, 7] as const;
 // Inspection-only empty containers carry no recovered geometry. Camera, queue and
 // palette context are explicit authored inspection choices, never campaign state.
 const emptyStructure = (): DionStructure => ({
@@ -55,6 +57,13 @@ const emptyDetail = (): DionDetail => ({
   tagged: [],
   vertices: []
 });
+export type PreviewPose = Partial<Omit<DionFrameState, 'cell'>> &
+  Pick<DionFrameState, 'eye' | 'heading'> & {
+    /// Original destination probes can retain the opening lift-label buffer.
+    readonly floorLabel?: number;
+    /// Captured $703C; original destination selection can differ from world eye Y.
+    readonly structureEyeY?: number;
+  };
 export interface Preview {
   readonly message: string;
   plan(
@@ -62,6 +71,9 @@ export interface Preview {
     distance?: number,
     region?: number
   ): ReturnType<typeof planDionFrame>;
+  /// Cell-local camera and captured presentation state, for original-scene checks.
+  /// Geometry and Floor context still come exclusively from the Catalogue.
+  planAt(state: PreviewPose): ReturnType<typeof planDionFrame>;
   readonly regions: number;
   readonly residents: GeometryStore['catalogue']['objects'];
   readonly variant: string;
@@ -71,7 +83,13 @@ export interface Preview {
 export const preparePreview = async (
   store: GeometryStore,
   support: RenderSupport,
-  selection: Selection
+  selection: Selection,
+  /// Isolated original-object probes use an evidenced stage's palette/Body.
+  context?: {
+    readonly body: string;
+    readonly group: number;
+    readonly palette: number;
+  }
 ): Promise<Preview> => {
   const c = store.catalogue;
   const object = c.objects.find(o => o.id === selection.id);
@@ -114,11 +132,23 @@ export const preparePreview = async (
       ? chosenVariant(geometry, selection.variant || binding?.variant || '')
       : '';
   const body =
-    bodyEntry?.id ?? object?.body ?? placement?.body ?? direct?.bodies[0];
+    context?.body ??
+    bodyEntry?.id ??
+    object?.body ??
+    placement?.body ??
+    direct?.bodies[0];
+  if (
+    context &&
+    (!support.bodies.has(context.body) ||
+      !support.palettes.has(context.palette))
+  ) {
+    throw new Error('Preview context: unknown Body or palette');
+  }
   const host = object?.host?.placement
     ? c.placements.find(p => p.id === object.host!.placement)
     : undefined;
   const group =
+    context?.group ??
     placement?.group ??
     host?.group ??
     (object?.host?.field
@@ -126,8 +156,8 @@ export const preparePreview = async (
       : c.bodies.find(b => b.id === body)?.islands[0]?.group) ??
     18;
   const environment =
-    support.bodies.get(body ?? '') ??
     support.groups.get(group) ??
+    support.bodies.get(body ?? '') ??
     support.groups.get(18)!;
   let structure = emptyStructure();
   let detail = emptyDetail();
@@ -147,8 +177,10 @@ export const preparePreview = async (
     ? c.structures.find(s => s.id === host.structure)
     : undefined;
   let palette =
+    context?.palette ??
     objectHost?.floorBindings.find(f => f.floor === (object?.floor ?? 0))
-      ?.palette ?? 1;
+      ?.palette ??
+    1;
   let focus: Vec3 = [32_768, 32, 32_768];
   let radius = 150;
   let message = noGeometry
@@ -162,17 +194,21 @@ export const preparePreview = async (
       : undefined;
   const visibleResidents =
     placement && !isInitial
-      ? c.objects.filter(
-          o =>
-            o.floor === selection.floor &&
-            (repeat
-              ? o.host?.field === 'midas' &&
-                o.bodyCell?.join(',') === repeat.bodyCell.join(',')
-              : o.host?.placement === placement.id)
+      ? c.objects.filter(o =>
+          o.residence === 'surface'
+            ? selection.floor === 0 &&
+              o.body === body &&
+              o.bodyCell?.join(',') ===
+                (repeat?.bodyCell ?? placement.bodyCell).join(',')
+            : o.floor === selection.floor &&
+              (repeat
+                ? o.host?.field === 'midas' &&
+                  o.bodyCell?.join(',') === repeat.bodyCell.join(',')
+                : o.host?.placement === placement.id)
         )
       : [];
   if (geometry?.family === 'model' && !noGeometry) {
-    models.set(1, modelForm(geometry, variant, 1, colours));
+    models.set(1, modelForm(geometry, variant, 1, colours, object?.lettering));
     const vertices = models.get(1)!.vertices;
     const span = (axis: number) => [
       Math.min(0, ...vertices.map(v => v[axis]!)),
@@ -184,7 +220,10 @@ export const preparePreview = async (
       (bounds[1]![0]! + bounds[1]![1]!) / 2,
       32_768 + (bounds[2]![0]! + bounds[2]![1]!) / 2
     ];
-    radius = Math.max(12, ...bounds.map(([a, b]) => b! - a!)) * 3;
+    radius = Math.min(
+      60_000,
+      Math.max(12, ...bounds.map(([a, b]) => b! - a!)) * 3
+    );
     residents.push({
       association: 0,
       body: 0,
@@ -240,22 +279,32 @@ export const preparePreview = async (
         continue;
       }
       const g = await store.get(o.geometry);
-      models.set(o.slot, modelForm(g, chosenVariant(g, ''), o.slot, colours));
-      const indoor = o.indoor!;
+      models.set(
+        o.slot,
+        modelForm(g, chosenVariant(g, ''), o.slot, colours, o.lettering)
+      );
+      const indoor = o.indoor;
+      const position: Vec3 = indoor
+        ? [
+            origin[0] + indoor.localPosition[0]!,
+            baseY + indoor.localPosition[1]!,
+            origin[1] + indoor.localPosition[2]!
+          ]
+        : [
+            o.position![0]! - o.bodyCell![0]! * 65_536,
+            o.position![1]!,
+            o.position![2]! - o.bodyCell![1]! * 65_536
+          ];
       residents.push({
-        association: indoor.association,
+        association: indoor?.association ?? 0,
         body: 0,
         cell: 0,
         group,
         model: o.slot,
-        position: [
-          origin[0] + indoor.localPosition[0]!,
-          baseY + indoor.localPosition[1]!,
-          origin[1] + indoor.localPosition[2]!
-        ],
+        position,
         slot: o.slot,
         state: 0,
-        yaw: indoor.yaw,
+        yaw: indoor?.yaw ?? support.surfaceYaw.get(o.slot)!,
         zone: 0
       });
     }
@@ -268,8 +317,38 @@ export const preparePreview = async (
       geometry.variants[variant],
       `${geometry.id}.${variant}`
     );
-    focus = [32_768, 100, 32_768];
-    radius = 2000;
+    // A definition inspection shows all records, including first-group-only
+    // geometry. Placed structures retain their recovered selection groups.
+    const records = [
+      ...new Set(
+        detail.groups.flatMap(g => [
+          ...g.default,
+          ...g.boxes.flatMap(b => b.records)
+        ])
+      )
+    ].sort((a, b) => a - b);
+    detail = {
+      ...detail,
+      groups: [
+        { boxes: [], default: [] },
+        { boxes: [], default: records }
+      ]
+    };
+    const xs = detail.vertices.map(v => v[0]);
+    const zs = detail.vertices.map(v => v[2]);
+    focus = [
+      32_768 + (Math.min(0, ...xs) + Math.max(0, ...xs)) / 2,
+      100,
+      32_768 + (Math.min(0, ...zs) + Math.max(0, ...zs)) / 2
+    ];
+    radius =
+      Math.max(
+        200,
+        Math.max(0, ...xs) - Math.min(0, ...xs),
+        Math.max(0, ...zs) - Math.min(0, ...zs)
+      ) * 3;
+    message +=
+      ' All recovered detail records; placements retain their selection groups.';
   } else if (geometry?.family === 'ground') {
     const ground = readGround(
       geometry.variants[variant],
@@ -279,7 +358,7 @@ export const preparePreview = async (
     groundTransform = Number(variant.slice('transform='.length));
     grounds.set(groundAddress, ground);
     radius = 50_000;
-    focus = [32_768, 20_000, 32_768];
+    focus = [32_768, 8000, 32_768];
     const context = Object.entries(c.surfaceCells)
       .flatMap(([group, rows]) =>
         rows.map(row => ({ group: Number(group), row }))
@@ -309,7 +388,7 @@ export const preparePreview = async (
     message =
       'Recovered island records · shared coast and horizon routines · authored inspection camera.';
   }
-  if (placement && selection.floor === 0 && !isInitial) {
+  if (placement && selection.floor === 0) {
     const row = c.surfaceCells[String(group)]?.find(
       r => r['cell'] === (repeat?.cell ?? placement.cell)
     );
@@ -377,7 +456,7 @@ export const preparePreview = async (
     ground: {
       address: groundAddress,
       index: groundOrientation,
-      transform: groundTransform
+      transform: groundTransforms[groundTransform]!
     },
     key: placement?.key ?? host?.key ?? 0,
     keyBase:
@@ -400,6 +479,13 @@ export const preparePreview = async (
   for (const [code, item] of support.tokens) {
     tokens.set(code, item.bindings?.[cell.tokenSet ?? -1] ?? item.default);
   }
+  if (binding) {
+    const label = structureSlot!.floors
+      .find(f => f.floor === selection.floor)!
+      .label.charCodeAt(0);
+    tokens.set(0x80, [label]);
+    tokens.set(0x81, [label]);
+  }
   if (object?.lettering) {
     tokens.set(
       Number.parseInt(object.lettering.token.slice(1), 16),
@@ -409,7 +495,7 @@ export const preparePreview = async (
   const world: DionFrameWorld = {
     ...(coast ? { coast } : {}),
     blinkPhase: new Map(),
-    cells: noGeometry ? [] : [cell],
+    cells: noGeometry && !placement ? [] : [cell],
     cellSpacing: 30,
     details: new Map([[0, detail]]),
     drawList: {
@@ -424,6 +510,7 @@ export const preparePreview = async (
     floorOffset: baseY,
     framePalette: {
       ...environment,
+      ...(coast && body ? { land: support.bodies.get(body)!.land } : {}),
       fixed: support.fixed,
       horizonRow: 68,
       template: support.template
@@ -466,6 +553,25 @@ export const preparePreview = async (
     );
   }
   const state = openingFrameState(world);
+  const planAt: Preview['planAt'] = pose => {
+    const capturedTokens =
+      pose.floorLabel === undefined
+        ? tokens
+        : new Map(tokens)
+            .set(0x80, [pose.floorLabel])
+            .set(0x81, [pose.floorLabel]);
+    const capturedWorld = {
+      ...world,
+      ...(pose.structureEyeY === undefined
+        ? {}
+        : { floorOffset: pose.eye[1] - pose.structureEyeY }),
+      lettering: { ...world.lettering, tokens: capturedTokens }
+    };
+    const result = planDionFrame(capturedWorld, { ...state, ...pose });
+    return noGeometry && !placement
+      ? { ...result, stats: { ...result.stats, gaps: [] } }
+      : result;
+  };
   return {
     message,
     plan(heading = 128, distance = 1, region = selection.region) {
@@ -490,12 +596,9 @@ export const preparePreview = async (
         heading,
         region: region || inferred || 1
       };
-      const result = planDionFrame(world, frameState);
-      if (noGeometry) {
-        return { ...result, stats: { ...result.stats, gaps: [] } };
-      }
-      return result;
+      return planAt(frameState);
     },
+    planAt,
     regions: structure.regions.length,
     residents: visibleResidents,
     variant,
