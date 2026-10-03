@@ -266,7 +266,7 @@ describe('Session Resume checkpoints', () => {
     expect(persistence.checkpoint(true)).toEqual({ kind: 'clean' });
   });
 
-  test('removes stale recovery and disables retries after a write failure', () => {
+  test('preserves previous recovery and disables retries after a write failure', () => {
     const values = new Map([[SESSION_RESUME_STORAGE_KEY, 'old recovery']]);
     let writes = 0;
     const failures: string[] = [];
@@ -294,7 +294,7 @@ describe('Session Resume checkpoints', () => {
       kind: 'failed',
       reason: 'quota full'
     });
-    expect(values.has(SESSION_RESUME_STORAGE_KEY)).toBeFalse();
+    expect(values.get(SESSION_RESUME_STORAGE_KEY)).toBe('old recovery');
     expect(failures).toEqual(['quota full']);
 
     persistence.dirty();
@@ -304,4 +304,21 @@ describe('Session Resume checkpoints', () => {
     });
     expect(writes).toBe(1);
   });
+});
+
+test('preserves recovery when capture encoding fails before writing', () => {
+  const storage = new MemoryStorage();
+  storage.setItem(SESSION_RESUME_STORAGE_KEY, 'previous');
+  const persistence = createSessionResumePersistence({
+    encode: () => {
+      throw new Error('capture refused');
+    },
+    storage
+  });
+  persistence.dirty();
+  expect(persistence.checkpoint(true)).toEqual({
+    kind: 'failed',
+    reason: 'capture refused'
+  });
+  expect(storage.getItem(SESSION_RESUME_STORAGE_KEY)).toBe('previous');
 });
