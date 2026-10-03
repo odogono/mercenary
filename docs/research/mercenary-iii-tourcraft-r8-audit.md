@@ -1,5 +1,7 @@
 # Mercenary III TOURCRAFT: R8 completion audit
 
+> **Historical audit:** The [current R8 completion audit](mercenary-iii-tourcraft-r8-completion-audit.md) supersedes this report's completion assessment after ADR 0073 and the merged #737 handoff. The source discrepancies and archived comparisons below retain their dated scope; the current persistence contract owns #711's remaining implementation checks.
+
 > **Scope update, 2026-10-03:** [ADR 0073](../adr/0073-drop-pre-release-prototype-save-migration.md) retires old browser-prototype Save migration. The status and proof gates below record the earlier investigation; eligibility, canonical selection and old-source owner construction are no longer required. Recovered owner, seed, phase and restore facts remain evidence for #737 expanded-game Save/Resume. Current requirements are in the [persistence contract](mercenary-iii-tourcraft-persistence.md) and [D2 acceptance](mercenary-iii-tourcraft-milestone-review.md#i4-acceptance-continuous-flight-reuse-and-persistence).
 
 > **Status** (as of `405c6e70`, 2026-10-02): Amended by [ADR 0070](../adr/0070-use-canonical-expanded-history-for-ambiguous-early-taxi-records.md), accepted 2026-10-03: canonical history is authorized for ambiguous early as well as late sources. The historical completion audit below still identifies unproved reconstruction/browser gates.
