@@ -1,28 +1,24 @@
 import type { TitleRuntime } from '../shell/title.ts';
-import { loadDionContent, type DionContent } from './content.ts';
 import type { DionPanelView } from './panel.ts';
 import { DION_STORAGE, DION_TITLE } from './save.ts';
+import type { DionResumeRecord, DionSnapshot } from './session.ts';
 import {
-  DionSession,
-  dionPanelView,
-  type DionResumeRecord,
-  type DionSnapshot
-} from './session.ts';
+  loadTourcraftContent,
+  type TourcraftContent
+} from './tourcraftContent.ts';
+import { TourcraftSession, tourcraftPanelView } from './tourcraftSession.ts';
 
-/// Mercenary III as a Title (ADR 0041, ADR 0043, D1 #638).
-///
-/// It loads only `payload/dion/` and its own authored document, never Targ's or
-/// Damocles's, and keeps its own storage keys. Its session and panel are its own: the
-/// shell asks no more of it than of any Title.
+/// One Dion Gameplay Session from the coherent prison opening to on-foot TOLOSA.
+/// Destination and shell storage remain METIS throughout the Body change.
 export const dionTitle: TitleRuntime<
   DionSnapshot,
-  DionContent,
+  TourcraftContent,
   DionResumeRecord,
   DionPanelView
 > = {
-  create: (content, restore) => new DionSession(content, restore),
-  load: loadDionContent,
-  panelViewModel: dionPanelView,
+  create: (content, restore) => new TourcraftSession(content, restore),
+  load: loadTourcraftContent,
+  panelViewModel: tourcraftPanelView,
   slug: DION_TITLE,
   storage: DION_STORAGE
 };
