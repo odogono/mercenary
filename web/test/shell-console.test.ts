@@ -305,15 +305,19 @@ describe('reading a console command line', () => {
   test('accepts every setting the settings page offers, and only those', () => {
     for (const name of Object.keys(SETTING_VALUES) as SettingName[]) {
       for (const value of SETTING_VALUES[name]) {
-        // The vocabulary is read widened here; the parser returns it narrowed per setting.
+        // The vocabulary is read widened here; the parser returns it narrowed per setting, and
+        // a light level as the number it spells.
         expect(parse(`set ${name} ${value}`)).toEqual({
           kind: 'set',
-          setting: { name, value }
+          setting: {
+            name,
+            value: /^\d+$/.test(value) ? Number(value) : value
+          }
         } as ConsoleCommand);
       }
     }
     expect(() => parse('set volume 4')).toThrow(
-      "unknown setting 'volume': try composition, extended, glow, rendition, road-glow, road-weight, shadows, sky, structures, typeface, weight"
+      "unknown setting 'volume': try ambient, composition, extended, glow, rendition, road-glow, road-weight, shadow-depth, shadows, sky, structures, typeface, weight"
     );
     expect(() => parse('set sky purple')).toThrow(
       "sky takes document, authentic, enhanced, and not 'purple'"
@@ -732,6 +736,16 @@ describe('doing what a console command says', () => {
     expect(changes).toEqual([{ castShadows: 'off' }, { castShadows: 'on' }]);
     expect(() => parse('set shadows document')).toThrow();
     expect(() => parse('set shadows soft')).toThrow();
+  });
+
+  test('sets the ambient light and shadow depth to one of the levels', () => {
+    const { changes, deps } = harness();
+
+    expect(run('set ambient 50', deps)).toEqual(['ambient 50%']);
+    expect(run('set shadow-depth 75', deps)).toEqual(['shadow-depth 75%']);
+    expect(changes).toEqual([{ ambientLight: 50 }, { shadowDepth: 75 }]);
+    expect(() => parse('set ambient 60')).toThrow();
+    expect(() => parse('set shadow-depth document')).toThrow();
   });
 
   test('sets Structure Reach and hands it back to the tuning document', () => {

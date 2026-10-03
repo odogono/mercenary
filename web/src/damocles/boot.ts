@@ -6,7 +6,11 @@ import { readGammaSystem } from '../flyover/documents.ts';
 import '../shell/damoclesPanelElement.ts';
 
 import { IDLE } from '../gameCore/index.ts';
-import { DEFAULT_CAST_SHADOWS } from '../settings/index.ts';
+import {
+  DEFAULT_AMBIENT_LIGHT,
+  DEFAULT_CAST_SHADOWS,
+  DEFAULT_SHADOW_DEPTH
+} from '../settings/index.ts';
 import { installAudioLifecycle } from '../shell/audioLifecycle.ts';
 import { PANEL_SETTINGS, installShellChrome } from '../shell/chrome.ts';
 import { FixedStepClock } from '../shell/clock.ts';
@@ -1314,7 +1318,8 @@ try {
     );
   };
   const draw = (): void => {
-    const { castShadows, presentationPreset } = preferences.current();
+    const { ambientLight, castShadows, presentationPreset, shadowDepth } =
+      preferences.current();
     const enhanced =
       presentationPreset === undefined || presentationPreset === 'enhanced';
     const space = snapshot.craft?.space ?? null;
@@ -1421,7 +1426,12 @@ try {
       presentScreen(plan, screen),
       sun === null
         ? undefined
-        : { lighting: erisLighting(content.doc, snapshot.pose, sun) }
+        : {
+            lighting: erisLighting(content.doc, snapshot.pose, sun, {
+              ambient: (ambientLight ?? DEFAULT_AMBIENT_LIGHT) / 100,
+              shadowDepth: (shadowDepth ?? DEFAULT_SHADOW_DEPTH) / 100
+            })
+          }
     );
     panel.draw(
       damoclesPanelViewModel(snapshot, content.doc, controls.intent.running)

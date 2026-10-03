@@ -162,5 +162,17 @@ describe('Sunlight', () => {
     // A face Sunlight does not reach shows its recovered colour.
     expect(full.ambientSky).toEqual([1, 1, 1]);
     expect(full.ambientGround).toEqual([1, 1, 1]);
+    expect(full.shadowDepth).toBe(1);
+  });
+
+  test("scales the ambient pair and passes the shadow depth by the player's levels", () => {
+    const dim = erisLighting(doc, views[0]!, sun, {
+      ambient: 0.5,
+      shadowDepth: 0.75
+    });
+    expect(dim.ambientSky).toEqual([0.5, 0.5, 0.5]);
+    expect(dim.ambientGround).toEqual([0.5, 0.5, 0.5]);
+    expect(dim.shadowDepth).toBe(0.75);
+    expect(dim.sunColour).toEqual(erisLighting(doc, views[0]!, sun).sunColour);
   });
 });

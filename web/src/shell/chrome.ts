@@ -6,6 +6,7 @@ import type { TypefaceId } from './typography.ts';
 /// A row the settings page may carry. Each Title declares the rows it offers, in its order, and
 /// the page has no others (ADR 0063).
 export type SettingName =
+  | 'ambient'
   | 'audio'
   | 'composition'
   | 'extended'
@@ -14,6 +15,7 @@ export type SettingName =
   | 'rendition'
   | 'road-glow'
   | 'road-weight'
+  | 'shadow-depth'
   | 'shadows'
   | 'structures'
   | 'typeface'
@@ -27,6 +29,8 @@ export const PANEL_SETTINGS: readonly SettingName[] = [
   'typeface',
   'presentation',
   'shadows',
+  'shadow-depth',
+  'ambient',
   'structures',
   'weight',
   'glow',
@@ -120,6 +124,7 @@ const SETTING_ROWS: Readonly<
     { readonly extra?: string; readonly label: string }
   >
 > = {
+  ambient: { extra: 'Ambient light', label: 'AMBIENT LIGHT' },
   composition: { label: 'COMPOSITION' },
   extended: { extra: 'Extended controls', label: 'EXTENDED CONTROLS' },
   glow: {
@@ -130,6 +135,7 @@ const SETTING_ROWS: Readonly<
   rendition: { label: 'PANEL RENDITION' },
   'road-glow': { extra: 'Road glow', label: 'ROAD GLOW' },
   'road-weight': { extra: 'Road weight', label: 'ROAD WEIGHT' },
+  'shadow-depth': { extra: 'Shadow depth', label: 'SHADOW DEPTH' },
   shadows: { label: 'SHADOWS' },
   structures: { label: 'STRUCTURES' },
   typeface: { label: 'TYPEFACE' },

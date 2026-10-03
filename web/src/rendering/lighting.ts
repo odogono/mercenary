@@ -6,13 +6,15 @@ export type Channels = readonly [number, number, number];
 export interface FrameLighting {
   readonly ambientGround: Channels;
   readonly ambientSky: Channels;
+  /// How much of the Sunlight a Cast Shadow takes away, from 0 (none) to 1 (all of it).
+  readonly shadowDepth: number;
   readonly sunColour: Channels;
   readonly sunView: Vector3;
   readonly sunWorld: Vector3;
 }
 
 /// How the frame's camera is turned: the Pose's heading, pitch and roll. The frame plan's
-/// vertices are in this camera's view space (`planErisFrame`), so the sun and the shadow maps
+/// vertices are in this camera's view space (`planErisFrame`), so the sun and the Cast Shadows
 /// must be turned by all three, or a pitched or banked view slides the shadows over the
 /// geometry: Free Look on foot (ADR 0059), and the craft's attitude aboard.
 export interface ViewOrientation {

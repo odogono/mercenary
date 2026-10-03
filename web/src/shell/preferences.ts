@@ -1,10 +1,12 @@
 import {
   DEFAULT_WIREFRAME_GLOW,
   DEFAULT_WIREFRAME_THICKNESS,
+  isLightLevel,
   isPresentationPreset,
   isStructureReach,
   readCastShadows,
   type CastShadows,
+  type LightLevel,
   type PresentationSettings
 } from '../settings/index.ts';
 import type { ReadStorage, WriteStorage } from './storage.ts';
@@ -62,6 +64,8 @@ export const titlePreferences = (slug: TitleSlug): PreferencesLocation => ({
 /// identity, so a player who could edit them would silently make their own Saves unloadable;
 /// those stay in `settings.json` alone.
 export interface Preferences {
+  /// Absent means full ambient light; like the edge, only Enhanced presentation shows it.
+  readonly ambientLight?: LightLevel;
   readonly audioMuted: boolean;
   readonly audioVolume: number;
   /// Absent means the shell's own default edge; Authentic presentation ignores it.
@@ -75,6 +79,8 @@ export interface Preferences {
   readonly presentationPreset?: PresentationSettings['preset'];
   readonly roadGlow?: WireframeGlow;
   readonly roadWeight?: WireframeWeight;
+  /// Absent means a Cast Shadow takes all the Sunlight away.
+  readonly shadowDepth?: LightLevel;
   readonly structureReach?: PresentationSettings['structureReach'];
   readonly wireframeGlow?: WireframeGlow;
   readonly wireframeWeight?: WireframeWeight;
@@ -144,6 +150,12 @@ export const validatePreferences = (value: unknown): Preferences => {
       ? source['panelRendition']
       : DEFAULT_PREFERENCES.panelRendition,
     // Spread rather than assign: an absent choice must stay absent, not become `undefined`.
+    ...(isLightLevel(source['ambientLight'])
+      ? { ambientLight: source['ambientLight'] }
+      : {}),
+    ...(isLightLevel(source['shadowDepth'])
+      ? { shadowDepth: source['shadowDepth'] }
+      : {}),
     ...(readCastShadows(source['castShadows']) === undefined
       ? {}
       : { castShadows: readCastShadows(source['castShadows'])! }),
@@ -279,6 +291,7 @@ export const effectivePresentation = (
 /// Choices are spelled with `undefined` allowed rather than merely optional, because handing
 /// a choice back to the tuning document is itself a choice a player can make.
 export interface PreferencesChange {
+  readonly ambientLight?: LightLevel | undefined;
   readonly audioMuted?: boolean;
   readonly audioVolume?: number;
   readonly castShadows?: CastShadows | undefined;
@@ -288,6 +301,7 @@ export interface PreferencesChange {
   readonly presentationPreset?: PresentationSettings['preset'] | undefined;
   readonly roadGlow?: WireframeGlow | undefined;
   readonly roadWeight?: WireframeWeight | undefined;
+  readonly shadowDepth?: LightLevel | undefined;
   readonly structureReach?: PresentationSettings['structureReach'] | undefined;
   readonly wireframeGlow?: WireframeGlow | undefined;
   readonly wireframeWeight?: WireframeWeight | undefined;
@@ -314,6 +328,7 @@ export const createPreferences = (options: {
       // Selecting what is already selected must not pay for a synchronous write, and must not
       // announce a change that later slices answer by rebuilding the renderer.
       if (
+        next.ambientLight === preferences.ambientLight &&
         next.audioMuted === preferences.audioMuted &&
         next.audioVolume === preferences.audioVolume &&
         next.castShadows === preferences.castShadows &&
@@ -324,6 +339,7 @@ export const createPreferences = (options: {
         next.structureReach === preferences.structureReach &&
         next.roadGlow === preferences.roadGlow &&
         next.roadWeight === preferences.roadWeight &&
+        next.shadowDepth === preferences.shadowDepth &&
         next.wireframeGlow === preferences.wireframeGlow &&
         next.wireframeWeight === preferences.wireframeWeight
       ) {

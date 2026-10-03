@@ -1,8 +1,10 @@
 import type { GameplaySession, PresentationEvent } from '../session/index.ts';
-import type {
-  CastShadows,
-  PresentationPreset,
-  StructureReach
+import {
+  LIGHT_LEVELS,
+  type CastShadows,
+  type LightLevel,
+  type PresentationPreset,
+  type StructureReach
 } from '../settings/index.ts';
 import { formatTargTime, parseTargTime } from '../sky/time.ts';
 import { SURFACE, locationText, room } from '../world/index.ts';
@@ -51,12 +53,14 @@ export type ConsoleCommand =
   | { readonly kind: 'switchBody'; readonly name: string };
 
 export type SettingName =
+  | 'ambient'
   | 'composition'
   | 'extended'
   | 'glow'
   | 'road-glow'
   | 'road-weight'
   | 'rendition'
+  | 'shadow-depth'
   | 'shadows'
   | 'sky'
   | 'structures'
@@ -67,6 +71,7 @@ export type SettingName =
 ///
 /// The value is narrowed at parse time, so execution never re-asks what a string means.
 export type SettingChoice =
+  | { readonly name: 'ambient'; readonly value: LightLevel }
   | { readonly name: 'composition'; readonly value: Composition }
   | { readonly name: 'extended'; readonly value: 'off' | 'on' }
   | { readonly name: 'road-glow'; readonly value: 'document' | WireframeGlow }
@@ -76,6 +81,7 @@ export type SettingChoice =
     }
   | { readonly name: 'glow'; readonly value: 'document' | WireframeGlow }
   | { readonly name: 'rendition'; readonly value: PanelRendition }
+  | { readonly name: 'shadow-depth'; readonly value: LightLevel }
   | { readonly name: 'shadows'; readonly value: CastShadows }
   | { readonly name: 'sky'; readonly value: 'document' | PresentationPreset }
   | { readonly name: 'structures'; readonly value: 'document' | StructureReach }
@@ -92,6 +98,7 @@ const GLOWS: readonly ('document' | WireframeGlow)[] = [
 ];
 const RENDITIONS: readonly PanelRendition[] = ['targ', 'damocles'];
 const SHADOWS: readonly CastShadows[] = ['off', 'on'];
+const LEVELS: readonly string[] = LIGHT_LEVELS.map(String);
 const SKIES: readonly ('document' | PresentationPreset)[] = [
   'document',
   'authentic',
@@ -116,12 +123,14 @@ const WEIGHTS: readonly ('document' | WireframeWeight)[] = [
 /// look when a name stops working.
 export const SETTING_VALUES: Readonly<Record<SettingName, readonly string[]>> =
   {
+    ambient: LEVELS,
     composition: COMPOSITIONS,
     extended: SWITCHES,
     glow: GLOWS,
     rendition: RENDITIONS,
     'road-glow': GLOWS,
     'road-weight': WEIGHTS,
+    'shadow-depth': LEVELS,
     shadows: SHADOWS,
     sky: SKIES,
     structures: STRUCTURES,
@@ -159,6 +168,10 @@ const oneOf = <T extends string>(
 const SETTING_PARSERS: Readonly<
   Record<SettingName, (word: string) => SettingChoice>
 > = {
+  ambient: word => ({
+    name: 'ambient',
+    value: Number(oneOf(LEVELS, word, 'ambient')) as LightLevel
+  }),
   composition: word => ({
     name: 'composition',
     value: oneOf(COMPOSITIONS, word, 'composition')
@@ -179,6 +192,10 @@ const SETTING_PARSERS: Readonly<
   'road-weight': word => ({
     name: 'road-weight',
     value: oneOf(WEIGHTS, word, 'road-weight')
+  }),
+  'shadow-depth': word => ({
+    name: 'shadow-depth',
+    value: Number(oneOf(LEVELS, word, 'shadow-depth')) as LightLevel
   }),
   shadows: word => ({
     name: 'shadows',
@@ -723,6 +740,9 @@ export const applySetting = (
   deps: ConsoleSettingHost
 ): string => {
   switch (setting.name) {
+    case 'ambient':
+      deps.preferences.update({ ambientLight: setting.value });
+      return `ambient ${setting.value}%`;
     case 'composition':
       deps.preferences.update({ composition: setting.value });
       return `composition ${setting.value}`;
@@ -757,6 +777,9 @@ export const applySetting = (
       }
       deps.preferences.update({ wireframeWeight: setting.value });
       return `weight ${setting.value}`;
+    case 'shadow-depth':
+      deps.preferences.update({ shadowDepth: setting.value });
+      return `shadow-depth ${setting.value}%`;
     case 'shadows':
       // The edge is the player's alone, so there is no 'document' to hand it back to.
       deps.preferences.update({ castShadows: setting.value });

@@ -1,6 +1,10 @@
 import {
+  DEFAULT_AMBIENT_LIGHT,
   DEFAULT_CAST_SHADOWS,
+  DEFAULT_SHADOW_DEPTH,
+  LIGHT_LEVELS,
   isCastShadows,
+  isLightLevel,
   type PresentationSettings
 } from '../settings/index.ts';
 import type { SettingName } from './chrome.ts';
@@ -23,7 +27,7 @@ interface SettingRow {
 }
 
 export interface SettingsViewOptions {
-  /// Called on every presentation or shadow choice, even of what is already chosen: choosing
+  /// Called on every presentation, shadow or light choice, even of what is already chosen: choosing
   /// Enhanced again is how a player retries it after a graphics failure (ADR 0062).
   readonly onPresentationChange?: () => void;
   readonly page: HTMLElement;
@@ -42,6 +46,19 @@ export interface SettingsView {
 }
 
 const PRESET_DEFAULT = 'document';
+
+/// The rows whose choice changes the frame itself, so a paused game is drawn again.
+const REDRAWN_ROWS: ReadonlySet<SettingRow['name']> = new Set([
+  'ambient',
+  'presentation',
+  'shadow-depth',
+  'shadows'
+]);
+
+const LIGHT_LEVEL_OPTIONS = LIGHT_LEVELS.map(level => ({
+  label: `${level}%`,
+  value: String(level)
+}));
 
 export const installSettingsView = (
   options: SettingsViewOptions
@@ -144,6 +161,33 @@ export const installSettingsView = (
         { label: 'OFF', value: 'off' },
         { label: 'ON', value: 'on' }
       ]
+    },
+    {
+      // How much of the Sunlight a Cast Shadow takes away: less than all of it lightens them.
+      apply: value => {
+        const level = Number(value);
+        preferences.update({
+          shadowDepth: isLightLevel(level) ? level : DEFAULT_SHADOW_DEPTH
+        });
+      },
+      current: () =>
+        String(preferences.current().shadowDepth ?? DEFAULT_SHADOW_DEPTH),
+      name: 'shadow-depth',
+      options: LIGHT_LEVEL_OPTIONS
+    },
+    {
+      // The fill every face out of the Sunlight shows: less of it darkens Cast Shadows and the
+      // faces turned from DIALIS alike.
+      apply: value => {
+        const level = Number(value);
+        preferences.update({
+          ambientLight: isLightLevel(level) ? level : DEFAULT_AMBIENT_LIGHT
+        });
+      },
+      current: () =>
+        String(preferences.current().ambientLight ?? DEFAULT_AMBIENT_LIGHT),
+      name: 'ambient',
+      options: LIGHT_LEVEL_OPTIONS
     },
     {
       apply: value => {
@@ -302,7 +346,7 @@ export const installSettingsView = (
       button.textContent = choice.label;
       button.addEventListener('click', () => {
         row.apply(choice.value);
-        if (row.name === 'presentation' || row.name === 'shadows') {
+        if (REDRAWN_ROWS.has(row.name)) {
           options.onPresentationChange?.();
         }
         refresh();

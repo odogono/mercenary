@@ -2,6 +2,7 @@ import type { Vector3 } from '../orientation/index.ts';
 import {
   normalise,
   toViewDirection,
+  type Channels,
   type FrameLighting,
   type ViewOrientation
 } from '../rendering/lighting.ts';
@@ -66,18 +67,36 @@ export const sunlight = (inputs: SunlightInputs): Sunlight | null => {
   return strength > 0 ? { direction, strength } : null;
 };
 
+/// The player's share of the ambient pair and of the Sunlight a Cast Shadow takes away, each
+/// from 0 to 1.
+export interface LightLevels {
+  readonly ambient: number;
+  readonly shadowDepth: number;
+}
+
+export const FULL_LIGHT_LEVELS: LightLevels = { ambient: 1, shadowDepth: 1 };
+
+const scaled = (colour: string, by: number): Channels => {
+  const [r, g, b] = channels(colour);
+  return [r * by, g * by, b * by];
+};
+
 /// The frame's lighting under the given Sunlight. The ambient pair is neutral in the document,
-/// so a face Sunlight does not reach shows its recovered colour, and Sunlight only brightens.
+/// so at full levels a face Sunlight does not reach shows its recovered colour, and Sunlight
+/// only brightens. A lower ambient level darkens every face out of the Sunlight, Cast Shadows
+/// with them; a lower shadow depth lets some Sunlight through a Cast Shadow.
 export const erisLighting = (
   doc: ErisPresentationDocument,
   view: ViewOrientation,
-  sun: Sunlight
+  sun: Sunlight,
+  levels: LightLevels = FULL_LIGHT_LEVELS
 ): FrameLighting => {
   const sunWorld = normalise(sun.direction);
   const [r, g, b] = channels(doc.lighting.sunColour);
   return {
-    ambientGround: channels(doc.lighting.ambientGround),
-    ambientSky: channels(doc.lighting.ambientSky),
+    ambientGround: scaled(doc.lighting.ambientGround, levels.ambient),
+    ambientSky: scaled(doc.lighting.ambientSky, levels.ambient),
+    shadowDepth: levels.shadowDepth,
     sunColour: [r * sun.strength, g * sun.strength, b * sun.strength],
     sunView: toViewDirection(sunWorld, view),
     sunWorld

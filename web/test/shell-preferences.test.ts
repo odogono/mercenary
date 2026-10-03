@@ -123,6 +123,18 @@ describe('browser shell preferences', () => {
     expect(validatePreferences({})).not.toHaveProperty('castShadows');
   });
 
+  test('keep a light level and reject one off the steps', () => {
+    expect(validatePreferences({ ambientLight: 50 }).ambientLight).toBe(50);
+    expect(validatePreferences({ shadowDepth: 25 }).shadowDepth).toBe(25);
+    expect(validatePreferences({ ambientLight: 60 })).not.toHaveProperty(
+      'ambientLight'
+    );
+    expect(validatePreferences({ shadowDepth: '75' })).not.toHaveProperty(
+      'shadowDepth'
+    );
+    expect(validatePreferences({})).not.toHaveProperty('shadowDepth');
+  });
+
   test('reject an unrecognised Structure Reach instead of passing it through', () => {
     expect(validatePreferences({ structureReach: 'ring' })).not.toHaveProperty(
       'structureReach'

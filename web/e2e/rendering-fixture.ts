@@ -104,6 +104,7 @@ const api = {
             lighting: {
               ambientGround: [1, 1, 1],
               ambientSky: [1, 1, 1],
+              shadowDepth: 1,
               sunColour: [0, 0, 0],
               sunView: { x: 0, y: 1, z: 0 },
               sunWorld: { x: 0, y: 1, z: 0 }

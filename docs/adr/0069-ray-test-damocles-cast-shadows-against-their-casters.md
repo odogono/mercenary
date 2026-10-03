@@ -25,3 +25,4 @@ Enhanced presentation draws Cast Shadows from two 2048² shadow maps. Their edge
 - A self-shadow epsilon, with a fixed part and a part that grows with distance, replaces the maps' normal-offset and depth biases.
 - The shadow maps, their cascades, their compare samplers, the PCF blur and the bias tuning are gone, leaving one Cast Shadow path.
 - A player who preferred the softened edge loses it.
+- The player may set how much of the Sunlight a Cast Shadow takes away (`SHADOW DEPTH`) and scale the ambient pair (`AMBIENT LIGHT`). Both are preferences, at 100% by default, and neither affects a frame without Sunlight.

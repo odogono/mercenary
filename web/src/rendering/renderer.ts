@@ -185,6 +185,7 @@ uniform vec3 sunView;
 uniform vec3 sunColour;
 uniform vec3 ambientSky;
 uniform vec3 ambientGround;
+uniform float shadowDepth;
 uniform highp sampler2D casterTriangles;
 uniform highp isampler2D casterCells;
 uniform highp isampler2D casterIndices;
@@ -253,7 +254,9 @@ vec3 faceNormal() {
 void main() {
   vec3 n = faceNormal();
   float lambert = max(dot(n, sunView), 0.0);
-  float shadow = lambert > 0.0 ? castShadow(surfacePoint()) : 1.0;
+  float shadow = lambert > 0.0 && shadowDepth > 0.0
+    ? 1.0 - shadowDepth * (1.0 - castShadow(surfacePoint()))
+    : 1.0;
   vec3 ambient = mix(ambientGround, ambientSky, n.y * 0.5 + 0.5);
   gl_FragDepth = logDepth(viewPosition.z);
   pixel = vec4(faceColour * (ambient + sunColour * lambert * shadow), 1.0);
@@ -936,6 +939,10 @@ export class FrameRenderer {
     this.uniform3(program, 'sunColour', frame.lighting.sunColour);
     this.uniform3(program, 'ambientSky', frame.lighting.ambientSky);
     this.uniform3(program, 'ambientGround', frame.lighting.ambientGround);
+    gl.uniform1f(
+      requiredUniform(gl, program, 'shadowDepth'),
+      frame.lighting.shadowDepth
+    );
     this.uploadCasterGrid(
       resources,
       casterGrid(casters, frame.lighting.sunView)
