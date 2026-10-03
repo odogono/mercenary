@@ -1,6 +1,6 @@
 import type { GameplaySession, PresentationEvent } from '../session/index.ts';
 import type {
-  CastShadowEdge,
+  CastShadows,
   PresentationPreset,
   StructureReach
 } from '../settings/index.ts';
@@ -76,7 +76,7 @@ export type SettingChoice =
     }
   | { readonly name: 'glow'; readonly value: 'document' | WireframeGlow }
   | { readonly name: 'rendition'; readonly value: PanelRendition }
-  | { readonly name: 'shadows'; readonly value: CastShadowEdge }
+  | { readonly name: 'shadows'; readonly value: CastShadows }
   | { readonly name: 'sky'; readonly value: 'document' | PresentationPreset }
   | { readonly name: 'structures'; readonly value: 'document' | StructureReach }
   | { readonly name: 'typeface'; readonly value: TypefaceId }
@@ -91,14 +91,7 @@ const GLOWS: readonly ('document' | WireframeGlow)[] = [
   'bright'
 ];
 const RENDITIONS: readonly PanelRendition[] = ['targ', 'damocles'];
-const SHADOWS: readonly CastShadowEdge[] = [
-  'off',
-  'soft',
-  'hard',
-  'stepped',
-  'volume',
-  'exact'
-];
+const SHADOWS: readonly CastShadows[] = ['off', 'on'];
 const SKIES: readonly ('document' | PresentationPreset)[] = [
   'document',
   'authentic',

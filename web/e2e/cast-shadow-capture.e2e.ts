@@ -3,17 +3,17 @@ import { join } from 'node:path';
 
 import { expect, test, type Page } from '@playwright/test';
 
-/// Capture matrix for the Cast Shadow edge study (#376).
+/// Capture matrix for the Cast Shadow studies (#376, #380).
 ///
-/// Not a check: it produces the soft-against-hard frames the research note judges, at fixed
-/// Poses at one fixed Body turn, so DIALIS and its Sunlight stand in the same place in every
-/// frame, and is skipped unless asked for. Regenerate with:
+/// Not a check: it produces the frames the research notes judge, at fixed Poses at one fixed
+/// Body turn, so DIALIS and its Sunlight stand in the same place in every frame, and is
+/// skipped unless asked for. Regenerate with:
 ///
 ///   CAST_SHADOW_CAPTURE=1 CAST_SHADOW_OUT=$PWD/cast-shadow-frames PORT=5185 \
 ///     bunx playwright test e2e/cast-shadow-capture.e2e.ts
 ///
-/// The edge is chosen through the Shell Console's `set shadows` line, exactly as a player at
-/// the settings page would choose it, so the frames show the shipped switch and nothing else.
+/// Shadows are switched through the Shell Console's `set shadows` line, exactly as a player at
+/// the settings page would switch them, so the frames show the shipped switch and nothing else.
 
 const DAMOCLES_RESUME_KEY =
   'mercenary.browser-shell.damocles.session-resume.v1';
@@ -30,15 +30,8 @@ const POSES = [
   { name: 'inside-west', x: 1300, yaw: 256, z: 0 },
   { name: 'inside-north', x: 1200, yaw: 0, z: 0 }
 ] as const;
-/// #376's pair, then #380's candidates. Choose a subset with `CAST_SHADOW_EDGES=soft,exact`.
-const ALL_EDGES = [
-  'off',
-  'soft',
-  'hard',
-  'stepped',
-  'volume',
-  'exact'
-] as const;
+/// Shadows off and on (ADR 0069). Choose one with `CAST_SHADOW_EDGES=on`.
+const ALL_EDGES = ['off', 'on'] as const;
 const EDGES = (
   process.env['CAST_SHADOW_EDGES']?.split(',') ?? ALL_EDGES
 ).filter(edge => (ALL_EDGES as readonly string[]).includes(edge));

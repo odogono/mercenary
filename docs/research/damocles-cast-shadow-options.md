@@ -90,12 +90,11 @@ Flicker over eight frames (magenta: changed back and forth; green: changed once)
 - **`exact`** needs three tables uploaded each frame and five sampler units kept apart. A receiver more than 8,192 units from the eye in the light's plane is lit. That is beyond any Floor or apron reach, but a long shadow seen from the air would be cut at the window. The self-shadow epsilon has a fixed part and a part that grows with distance. It has held at every pose and at a low sun, but it is a tuning constant. A cell crowded with triangles costs its pixels directly. The worst seen here is 48.
 - **`stepped`** costs nothing, but it does not stop the stair-steps or the once-a-step jump. Anchoring the snap near the eye instead of at the world origin would turn the per-frame noise into a slow crawl (about 0.03 units per step a kilometre from the anchor). The edge would still stair-step.
 
-## Recommendation
+## Decision
 
-- Build the ray test as the production Cast Shadow, behind the existing `SHADOWS` row. The choice is whether `hard` comes to mean the ray test and `soft` stays the maps, or whether the ray test replaces both. That is the owner's to make. The flicker figures argue against keeping the maps as the default.
-- Retire stencil volumes as #380's method. They give the same picture at about twice the GPU time and with more renderer surgery.
-- ADR 0066's last consequence (shadow edges can crawl, so step the light) no longer applies to the exact edge: it slides with the sun, as the polygon edges beside it would.
-- Production slice: move `casterGrid` and the shader branch into a module of their own, and drop the `stepped` and `volume` prototypes. Pin the edge in the recording-GL tests, and extend the spaceport window e2e, which already checks that all three prototypes keep the beam.
+The owner chose to replace both maps with the ray test ([ADR 0069](../adr/0069-ray-test-damocles-cast-shadows-against-their-casters.md)). The `SHADOWS` row is now OFF / ON, and a stored `soft` or `hard` reads as ON. The maps, `lightMatrix`, and the `stepped` and `volume` prototypes have been removed. They can be read at commit `90209c76` on this branch.
+
+ADR 0066's last consequence (shadow edges can crawl, so step the light) no longer applies: an exact edge slides with the sun, as the polygon edges beside it do.
 
 ## Reproduce
 
@@ -106,4 +105,4 @@ CAST_SHADOW_CAPTURE=1 CAST_SHADOW_GPU=1 CAST_SHADOW_OUT=$PWD/cast-shadow-frames 
   bunx playwright test e2e/cast-shadow-capture.e2e.ts
 ```
 
-`CAST_SHADOW_GPU=1` asks ANGLE for the Metal GPU. Without it, headless Chromium draws with SwiftShader on the CPU, where `exact` takes seconds a frame and no GPU timer exists. `CAST_SHADOW_EDGES`, `CAST_SHADOW_DPRS` and `CAST_SHADOW_TURN` narrow the matrix. Flicker lands in `flicker.tsv` (flickered %, moved %), and GPU milliseconds land in `timing.tsv`.
+The prototypes were measured at commit `90209c76`, where `CAST_SHADOW_EDGES` accepted `soft`, `hard`, `stepped`, `volume` and `exact`. Since the decision it accepts `off` and `on`. `CAST_SHADOW_GPU=1` asks ANGLE for the Metal GPU. Without it, headless Chromium draws with SwiftShader on the CPU, where `exact` takes seconds a frame and no GPU timer exists. `CAST_SHADOW_EDGES`, `CAST_SHADOW_DPRS` and `CAST_SHADOW_TURN` narrow the matrix. Flicker lands in `flicker.tsv` (flickered %, moved %), and GPU milliseconds land in `timing.tsv`.

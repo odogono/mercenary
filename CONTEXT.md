@@ -607,7 +607,7 @@ Damocles's filled-polygon, palette-driven world view Confirmed in Working-Author
 _Avoid_: Wireframe view, remastered graphics, Departure Record
 
 **Cast Shadow**:
-The Enhanced-presentation darkening of a Filled Presentation face standing between DIALIS, where the sky draws it, and another face, drawn with either a soft or a hard edge at the player's choice; Authentic presentation never draws one. Only **Sunlight** casts one, so there is none by night or with DIALIS destroyed.
+The Enhanced-presentation darkening of a Filled Presentation face standing between DIALIS, where the sky draws it, and another face, with an edge as crisp as the polygon edges beside it, which the player may switch off; Authentic presentation never draws one. Only **Sunlight** casts one, so there is none by night or with DIALIS destroyed.
 _Avoid_: Shading, ambient occlusion, lighting toggle
 
 **Sunlight**:

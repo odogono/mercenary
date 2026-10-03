@@ -1,6 +1,6 @@
 import {
   DEFAULT_CAST_SHADOWS,
-  isCastShadowEdge,
+  isCastShadows,
   type PresentationSettings
 } from '../settings/index.ts';
 import type { SettingName } from './chrome.ts';
@@ -131,23 +131,18 @@ export const installSettingsView = (
           ]
         },
     {
-      // A Cast Shadow's edge is the player's taste, not the document's: there is no "as tuned"
-      // here, only the shell's default. Authentic presentation draws no shadow whatever this says.
+      // Cast Shadows are the player's taste, not the document's: there is no "as tuned" here,
+      // only the shell's default. Authentic presentation draws no shadow whatever this says.
       apply: value => {
         preferences.update({
-          castShadows: isCastShadowEdge(value) ? value : DEFAULT_CAST_SHADOWS
+          castShadows: isCastShadows(value) ? value : DEFAULT_CAST_SHADOWS
         });
       },
       current: () => preferences.current().castShadows ?? DEFAULT_CAST_SHADOWS,
       name: 'shadows',
       options: [
         { label: 'OFF', value: 'off' },
-        { label: 'SOFT', value: 'soft' },
-        { label: 'HARD', value: 'hard' },
-        // #380 prototypes.
-        { label: 'STEPPED', value: 'stepped' },
-        { label: 'VOLUME', value: 'volume' },
-        { label: 'EXACT', value: 'exact' }
+        { label: 'ON', value: 'on' }
       ]
     },
     {
@@ -203,8 +198,7 @@ export const installSettingsView = (
       options: [
         { label: 'AS TUNED', value: PRESET_DEFAULT },
         { label: 'OFF', value: 'off' },
-        { label: 'SOFT', value: 'soft' },
-        { label: 'BRIGHT', value: 'bright' }
+        { label: 'ON', value: 'on' }
       ]
     },
     {
@@ -241,8 +235,7 @@ export const installSettingsView = (
       options: [
         { label: 'AS TUNED', value: PRESET_DEFAULT },
         { label: 'OFF', value: 'off' },
-        { label: 'SOFT', value: 'soft' },
-        { label: 'BRIGHT', value: 'bright' }
+        { label: 'ON', value: 'on' }
       ]
     },
     {

@@ -117,11 +117,9 @@ export interface FlightSettings {
 
 export type PresentationPreset = 'authentic' | 'enhanced';
 export type StructureReach = 'all' | 'cell';
-/// How a Cast Shadow's edge is drawn under Enhanced presentation: not at all, softened, or
-/// hard. A player's choice rather than a document's, so it lives in the preferences alone.
-/// `stepped`, `volume` and `exact` are the #380 prototypes, reachable from the console only.
-export type CastShadowEdge =
-  'off' | 'soft' | 'hard' | 'stepped' | 'volume' | 'exact';
+/// Whether Enhanced presentation draws Cast Shadows. A player's choice rather than a
+/// document's, so it lives in the preferences alone.
+export type CastShadows = 'off' | 'on';
 
 /// How the wireframe itself is drawn, as the Reference Build drew it unless told otherwise.
 ///
@@ -195,7 +193,7 @@ export const DEFAULT_DEPARTURE_SNAP_SECONDS = 0.32;
 export const DEFAULT_SCRIPT_INSTRUCTION_BUDGET = 512;
 export const DEFAULT_PRESENTATION_PRESET: PresentationPreset = 'enhanced';
 export const DEFAULT_STRUCTURE_REACH: StructureReach = 'cell';
-export const DEFAULT_CAST_SHADOWS: CastShadowEdge = 'soft';
+export const DEFAULT_CAST_SHADOWS: CastShadows = 'on';
 export const DEFAULT_SKY_DAY_LENGTH_MINUTES = 24;
 export const DEFAULT_SKY_LATITUDE_DEGREES = 34;
 export const DEFAULT_SKY_OBLIQUITY_DEGREES = 21;
@@ -561,13 +559,17 @@ export const isPresentationPreset = (
 export const isStructureReach = (value: unknown): value is StructureReach =>
   value === 'cell' || value === 'all';
 
-export const isCastShadowEdge = (value: unknown): value is CastShadowEdge =>
-  value === 'off' ||
-  value === 'soft' ||
-  value === 'hard' ||
-  value === 'stepped' ||
-  value === 'volume' ||
-  value === 'exact';
+export const isCastShadows = (value: unknown): value is CastShadows =>
+  value === 'off' || value === 'on';
+
+/// A stored choice from before the edge was exact (ADR 0069): `soft` and `hard` were both
+/// shadows on.
+export const readCastShadows = (value: unknown): CastShadows | undefined =>
+  isCastShadows(value)
+    ? value
+    : value === 'soft' || value === 'hard'
+      ? 'on'
+      : undefined;
 
 const readGlowDistance = (value: unknown): GlowDistanceSettings => {
   const path = 'presentation.glowDistance';

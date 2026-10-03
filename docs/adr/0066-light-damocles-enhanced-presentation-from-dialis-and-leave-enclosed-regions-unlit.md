@@ -21,4 +21,4 @@ Accepted, 2026-10-02. Enhanced presentation's Cast Shadows used to fall from an 
 - Sunlight is derived each frame from state the Save already holds: the Body turn, the Pose and the destroyed Bodies. No Save schema changes.
 - By day, sunlit faces are brighter than the ST's palette. This is a Departure that only Enhanced presentation makes. Authentic is unchanged.
 - The spaceport window e2e and the #376 capture matrix pin a Body turn with DIALIS in the west, because a fresh game's turn has DIALIS setting in the east.
-- The light basis turns every frame, so shadow edges can crawl slowly. If that ever shows, step the light in the engine's 1/1024-turn increments. (It showed as frame-rate shimmer, not a crawl. [ADR 0069](0069-ray-test-damocles-cast-shadows-against-their-casters.md) proposes exact edges instead.)
+- The light basis turns every frame, so shadow edges can crawl slowly. If that ever shows, step the light in the engine's 1/1024-turn increments. (It showed as frame-rate shimmer, not a crawl. [ADR 0069](0069-ray-test-damocles-cast-shadows-against-their-casters.md) replaced the maps with exact edges.)

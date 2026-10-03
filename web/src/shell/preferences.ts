@@ -1,10 +1,10 @@
 import {
   DEFAULT_WIREFRAME_GLOW,
   DEFAULT_WIREFRAME_THICKNESS,
-  isCastShadowEdge,
   isPresentationPreset,
   isStructureReach,
-  type CastShadowEdge,
+  readCastShadows,
+  type CastShadows,
   type PresentationSettings
 } from '../settings/index.ts';
 import type { ReadStorage, WriteStorage } from './storage.ts';
@@ -65,7 +65,7 @@ export interface Preferences {
   readonly audioMuted: boolean;
   readonly audioVolume: number;
   /// Absent means the shell's own default edge; Authentic presentation ignores it.
-  readonly castShadows?: CastShadowEdge;
+  readonly castShadows?: CastShadows;
   readonly composition: Composition;
   /// Extended Controls: the Strafe and Free Look Extensions (ADR 0059), off by default. It is
   /// kept here and never in Session State, so turning it on or off leaves every Save as it was.
@@ -144,9 +144,9 @@ export const validatePreferences = (value: unknown): Preferences => {
       ? source['panelRendition']
       : DEFAULT_PREFERENCES.panelRendition,
     // Spread rather than assign: an absent choice must stay absent, not become `undefined`.
-    ...(isCastShadowEdge(source['castShadows'])
-      ? { castShadows: source['castShadows'] }
-      : {}),
+    ...(readCastShadows(source['castShadows']) === undefined
+      ? {}
+      : { castShadows: readCastShadows(source['castShadows'])! }),
     ...(isPresentationPreset(preset) ? { presentationPreset: preset } : {}),
     ...(isStructureReach(source['structureReach'])
       ? { structureReach: source['structureReach'] }
@@ -281,7 +281,7 @@ export const effectivePresentation = (
 export interface PreferencesChange {
   readonly audioMuted?: boolean;
   readonly audioVolume?: number;
-  readonly castShadows?: CastShadowEdge | undefined;
+  readonly castShadows?: CastShadows | undefined;
   readonly composition?: Composition;
   readonly extendedControls?: boolean;
   readonly panelRendition?: PanelRendition;

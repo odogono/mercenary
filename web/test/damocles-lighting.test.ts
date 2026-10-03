@@ -4,18 +4,16 @@ import { readErisPresentation } from '../src/damocles/documents.ts';
 import {
   SUNLIGHT_FADE_DEGREES,
   erisLighting,
-  lightMatrix,
   sunlight,
   type Sunlight,
   type ViewOrientation
 } from '../src/damocles/lighting.ts';
-import { ERIS_SHADOW_WINDOWS } from '../src/damocles/renderer.ts';
 import type { SkyItem } from '../src/damocles/sky.ts';
 import type { Vector3 } from '../src/orientation/index.ts';
 import { Camera } from '../src/projection/index.ts';
 
-/// The sun and the Cast Shadow maps are world-fixed: however the view is turned, a world point
-/// falls on the same shadow texel and a face is lit the same. The frame's vertices are in the
+/// The sun and the Cast Shadow are world-fixed: however the view is turned, a world point keeps
+/// its depth toward the sun and its place among the casters, and a face is lit the same. The frame's vertices are in the
 /// view space of the Pose's heading, pitch and roll (`planErisFrame`), so the light must be
 /// turned by all three, or tilting the view with Free Look (ADR 0059), or pitching and banking
 /// a craft, slides the shadows across the scene.
@@ -38,16 +36,6 @@ const inView = (world: Vector3, view: ViewOrientation): Vector3 =>
     roll: view.roll ?? 0
   }).viewSpace({ x: world.x, y: world.y, z: -world.z });
 
-/// Where the column-major light matrix puts a view-space point.
-const lightSpace = (matrix: Float32Array, p: Vector3): readonly number[] =>
-  [0, 1, 2].map(
-    row =>
-      matrix[row]! * p.x +
-      matrix[4 + row]! * p.y +
-      matrix[8 + row]! * p.z +
-      matrix[12 + row]!
-  );
-
 const views: readonly ViewOrientation[] = [
   { heading: 1.1, pitch: 0 },
   { heading: 1.1, pitch: Math.PI / 3 },
@@ -56,30 +44,35 @@ const views: readonly ViewOrientation[] = [
 ];
 
 describe('the Cast Shadow light through a turned view', () => {
-  test('a world point falls on the same shadow texel whatever the pitch and roll', () => {
+  test('a world point keeps its place in the light whatever the pitch and roll', () => {
     const points: readonly Vector3[] = [
       { x: eye.x + 300, y: 0, z: eye.z - 200 },
       { x: eye.x - 900, y: 150, z: eye.z + 1200 },
       { x: eye.x + 20_000, y: 40, z: eye.z + 5000 }
     ];
-    const lighting = erisLighting(doc, views[0]!, sun);
-    for (const window of ERIS_SHADOW_WINDOWS) {
-      for (const point of points) {
-        const [level, ...turned] = views.map(view =>
-          lightSpace(
-            lightMatrix(erisLighting(doc, view, sun), view, eye, window),
-            inView(point, view)
-          )
-        );
-        for (const other of turned) {
-          other.forEach((value, axis) =>
-            // Float32 matrices: a texel is 2/2048 of the unit range.
-            expect(value).toBeCloseTo(level![axis]!, 4)
-          );
-        }
-      }
+    // Depth toward the sun, and distance across the light's plane between two points: the
+    // two things the Cast Shadow's ray test compares.
+    const placed = (view: ViewOrientation): number[] => {
+      const toward = erisLighting(doc, view, sun).sunView;
+      const local = points.map(point => inView(point, view));
+      const depth = local.map(
+        p => p.x * toward.x + p.y * toward.y + p.z * toward.z
+      );
+      const across = local.slice(1).map((p, index) => {
+        const q = local[index]!;
+        const d = { x: p.x - q.x, y: p.y - q.y, z: p.z - q.z };
+        const along = d.x * toward.x + d.y * toward.y + d.z * toward.z;
+        return Math.sqrt(d.x ** 2 + d.y ** 2 + d.z ** 2 - along ** 2);
+      });
+      return [...depth, ...across];
+    };
+    const [level, ...turned] = views.map(placed);
+    for (const other of turned) {
+      other.forEach((value, index) =>
+        expect(value).toBeCloseTo(level![index]!, 3)
+      );
     }
-    expect(lighting.sunWorld).toEqual(
+    expect(erisLighting(doc, views[0]!, sun).sunWorld).toEqual(
       erisLighting(doc, views[3]!, sun).sunWorld
     );
   });

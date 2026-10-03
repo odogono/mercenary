@@ -8,12 +8,10 @@ import {
 import type { ErisPresentationDocument } from './documents.ts';
 import type { SkyItem } from './sky.ts';
 
-export { lightMatrix } from '../rendering/lighting.ts';
 export type {
   Channels,
   FrameLighting as ErisLighting,
-  ViewOrientation,
-  ShadowWindow
+  ViewOrientation
 } from '../rendering/lighting.ts';
 
 const channels = (colour: string): readonly [number, number, number] => [
@@ -66,25 +64,6 @@ export const sunlight = (inputs: SunlightInputs): Sunlight | null => {
   const elevationDegrees = (Math.asin(direction.y) * 180) / Math.PI;
   const strength = smoothstep(elevationDegrees / SUNLIGHT_FADE_DEGREES);
   return strength > 0 ? { direction, strength } : null;
-};
-
-/// One step of the engine's Body turn, 1/1024 of a turn, as an angle the sun moves through.
-const SUN_STEP_RADIANS = (2 * Math.PI) / 1024;
-
-let heldSun: Vector3 | undefined;
-
-/// #380 prototype: the Sunlight with its direction held still until DIALIS has moved a whole
-/// 1/1024-turn step, so the shadow map's texel grid stands still between steps.
-export const steppedSun = (sun: Sunlight): Sunlight => {
-  const d = sun.direction;
-  if (heldSun !== undefined) {
-    const cosine = d.x * heldSun.x + d.y * heldSun.y + d.z * heldSun.z;
-    if (Math.acos(Math.min(1, cosine)) < SUN_STEP_RADIANS) {
-      return { direction: heldSun, strength: sun.strength };
-    }
-  }
-  heldSun = d;
-  return sun;
 };
 
 /// The frame's lighting under the given Sunlight. The ambient pair is neutral in the document,

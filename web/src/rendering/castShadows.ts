@@ -1,20 +1,10 @@
 import type { Vector3 } from '../orientation/index.ts';
 import { FLOATS_PER_VERTEX } from './triangles.ts';
 
-/// Prototype geometry for the exact-edge Cast Shadow candidates of #380: stencil shadow
-/// volumes and a per-fragment ray test. Both take the deduplicated caster triangles in the
-/// frame's view space and the direction toward the sun in the same space, and neither has a
-/// texel grid, so their edges slide with the sun instead of being resampled.
-
-/// How far a caster triangle is swept away from the sun. Sunlight fades out below 2 degrees of
-/// elevation, where a 300-unit building throws an 8,600-unit shadow; this covers it.
-export const VOLUME_EXTRUSION = 16_384;
-
-const sub = (a: Vector3, b: Vector3): Vector3 => ({
-  x: a.x - b.x,
-  y: a.y - b.y,
-  z: a.z - b.z
-});
+/// The caster grid a Cast Shadow is ray-tested against (ADR 0069). It takes the deduplicated
+/// caster triangles in the frame's view space and the direction toward DIALIS in the same
+/// space. There is no texel grid in the light's plane, so an edge slides with the sun instead
+/// of being resampled, and is as crisp as the polygon edges beside it.
 
 const cross = (a: Vector3, b: Vector3): Vector3 => ({
   x: a.y * b.z - a.z * b.y,
@@ -34,96 +24,7 @@ const vertexAt = (vertices: Float32Array, index: number): Vector3 => {
   };
 };
 
-/// One closed prism per caster triangle that faces the sun or away from it, wound outward by
-/// the right-hand rule so the renderer's clockwise front faces are the outward faces toward the
-/// eye. The front cap keeps the caster's own plane, bit for bit, so a lit face ties exactly
-/// with the cap that starts on it and the depth-fail count leaves it lit.
-export const shadowVolumeVertices = (
-  casters: Float32Array,
-  sun: Vector3
-): Float32Array => {
-  const triangles = casters.length / (3 * FLOATS_PER_VERTEX);
-  // Eight triangles per prism: two caps and three two-triangle sides.
-  const out = new Float32Array(triangles * 8 * 3 * FLOATS_PER_VERTEX);
-  let written = 0;
-  const push = (p: Vector3, plane: readonly number[]): void => {
-    out[written] = p.x;
-    out[written + 1] = p.y;
-    out[written + 2] = p.z;
-    out[written + 6] = plane[0]!;
-    out[written + 7] = plane[1]!;
-    out[written + 8] = plane[2]!;
-    out[written + 9] = plane[3]!;
-    written += FLOATS_PER_VERTEX;
-  };
-  const planeOf = (a: Vector3, b: Vector3, c: Vector3): number[] => {
-    const n = cross(sub(b, a), sub(c, a));
-    const length = Math.hypot(n.x, n.y, n.z);
-    if (length === 0) {
-      return [0, 0, 0, 0];
-    }
-    const unit = { x: n.x / length, y: n.y / length, z: n.z / length };
-    return [unit.x, unit.y, unit.z, -dot(unit, a)];
-  };
-  const triangle = (a: Vector3, b: Vector3, c: Vector3): void => {
-    const plane = planeOf(a, b, c);
-    push(a, plane);
-    push(b, plane);
-    push(c, plane);
-  };
-  const away = (p: Vector3): Vector3 => ({
-    x: p.x - sun.x * VOLUME_EXTRUSION,
-    y: p.y - sun.y * VOLUME_EXTRUSION,
-    z: p.z - sun.z * VOLUME_EXTRUSION
-  });
-  for (let index = 0; index < triangles; index += 1) {
-    const first = index * 3;
-    const a = vertexAt(casters, first);
-    let b = vertexAt(casters, first + 1);
-    let c = vertexAt(casters, first + 2);
-    const normal = cross(sub(b, a), sub(c, a));
-    const length = Math.hypot(normal.x, normal.y, normal.z);
-    if (length === 0) {
-      continue;
-    }
-    const facing = dot(normal, sun) / length;
-    // Edge-on to the sun: the prism has no volume and casts nothing.
-    if (Math.abs(facing) < 1e-4) {
-      continue;
-    }
-    if (facing < 0) {
-      [b, c] = [c, b];
-    }
-    // The front cap is the caster itself, with the caster's own plane.
-    const offset = first * FLOATS_PER_VERTEX;
-    const own = [
-      casters[offset + 6]!,
-      casters[offset + 7]!,
-      casters[offset + 8]!,
-      casters[offset + 9]!
-    ];
-    const cap =
-      own[0] === 0 && own[1] === 0 && own[2] === 0 ? planeOf(a, b, c) : own;
-    push(a, cap);
-    push(b, cap);
-    push(c, cap);
-    const a2 = away(a);
-    const b2 = away(b);
-    const c2 = away(c);
-    triangle(a2, c2, b2);
-    for (const [p, q, p2, q2] of [
-      [a, b, a2, b2],
-      [b, c, b2, c2],
-      [c, a, c2, a2]
-    ] as const) {
-      triangle(p, p2, q2);
-      triangle(p, q2, q);
-    }
-  }
-  return out.subarray(0, written);
-};
-
-/// Texture rows are this many texels wide for the ray test's triangle and index tables.
+/// Texture rows are this many texels wide for the triangle and index tables.
 export const CASTER_TEXTURE_WIDTH = 2048;
 /// Cells per side of the light-space grid the ray test looks a fragment up in.
 export const CASTER_GRID_SIZE = 512;

@@ -66,7 +66,7 @@ import {
 import { AUTHORS_COMPUTER_SLOT } from './headCommands.ts';
 import { classifyPosition } from './islands.ts';
 import { stMakeCode } from './keys.ts';
-import { erisLighting, steppedSun, sunlight } from './lighting.ts';
+import { erisLighting, sunlight } from './lighting.ts';
 import { damoclesPanelViewModel } from './panel.ts';
 import {
   DAMOCLES_PANEL_PATH,
@@ -1402,13 +1402,12 @@ try {
       enhanced ? 'whole' : 'aboard',
       renderer.outputHeight
     );
-    const shadowEdge = castShadows ?? DEFAULT_CAST_SHADOWS;
-    // A Cast Shadow is Enhanced presentation only, and the player may turn its edge off. Only
+    // A Cast Shadow is Enhanced presentation only, and the player may turn it off. Only
     // Sunlight casts one, and a frame without Sunlight draws every face in its recovered colour.
     const sun =
       content.doc.lighting.shadows &&
       enhanced &&
-      shadowEdge !== 'off' &&
+      (castShadows ?? DEFAULT_CAST_SHADOWS) === 'on' &&
       space === null
         ? sunlight({
             daylight: snapshot.daylight,
@@ -1420,18 +1419,9 @@ try {
     paintNoise(screen.noise);
     renderer.render(
       presentScreen(plan, screen),
-      sun !== null && shadowEdge !== 'off'
-        ? {
-            eyeWorld: snapshot.pose.position,
-            lighting: erisLighting(
-              content.doc,
-              snapshot.pose,
-              shadowEdge === 'stepped' ? steppedSun(sun) : sun
-            ),
-            shadowEdge,
-            view: snapshot.pose
-          }
-        : undefined
+      sun === null
+        ? undefined
+        : { lighting: erisLighting(content.doc, snapshot.pose, sun) }
     );
     panel.draw(
       damoclesPanelViewModel(snapshot, content.doc, controls.intent.running)
