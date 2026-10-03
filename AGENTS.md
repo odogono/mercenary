@@ -5,6 +5,7 @@
 - `payload/`, `traces/`: the tracked Data Payload and Golden Traces (ADR 0029).
 - `docs/research/`: findings, named `<title>-<topic>.md`; `rg -l` across it before reading. Mercenary III TOURCRAFT work starts at `docs/research/mercenary-iii-tourcraft-milestone-review.md`.
 - `docs/adr/README.md`: the decision index.
+- `tools/commits/`: the commit-message and changelog-fragment checks.
 - `restricted/`, `roms/`: gitignored Restricted Material. Evidence a doc cites goes under `restricted/<title>-<issue>/` in the main checkout.
 
 ### Worktrees
@@ -20,6 +21,10 @@ Port 5173 is usually taken by a running dev server: run `PORT=<free port> bun ru
 ### Issue tracker
 
 Issues are tracked in GitHub Issues using the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Commits
+
+PR titles follow Conventional Commits, and `feat`, `fix`, `perf` and breaking changes add a changelog fragment under `changelog/unreleased/` instead of editing `CHANGELOG.md`. See `docs/agents/commits.md`.
 
 ### Triage labels
 
