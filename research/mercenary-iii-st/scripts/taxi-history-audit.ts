@@ -5,7 +5,11 @@ import { isDeepStrictEqual } from 'node:util';
 
 import type { DionSession } from '../../../web/src/dion/session.ts';
 import { loadTourcraftContent } from '../../../web/src/dion/tourcraftContent.ts';
-import { taxiCanonicalStartFrames } from './taxi-canonical-reference.ts';
+import {
+  compareTaxiDepartureSchedules,
+  taxiCanonicalStartFrames
+} from './taxi-canonical-reference.ts';
+import { readTaxiSourceCandidate } from './taxi-source-eligibility.ts';
 import { TaxiHistoryModel } from './taxi-history-model.ts';
 import {
   TAXI_SOURCE_PINS,
@@ -125,6 +129,7 @@ await withTaxiSource(
         where: 'sp/history-collision'
       });
       const decoded = codec.decodeDionRecord(encoded, identity, source);
+      readTaxiSourceCandidate(encoded, { codec, content: source });
       const restored = new SourceSession(source, decoded.snapshot);
       const resumeBytes = resume.encodeDionResume(source, session);
       const resumed = resume.readDionResume(
@@ -175,9 +180,12 @@ await withTaxiSource(
       resetOffsetFrames,
       control.record.snapshot.frame
     );
-    const histories = candidates.map(start =>
-      start === lateFrame ? primary : replay(start)
-    );
+    const histories = candidates
+      .map(start => start === lateFrame ? primary : replay(start))
+      .sort((a, b) => compareTaxiDepartureSchedules(
+        [(a.startFrame + 1) * 11],
+        [(b.startFrame + 1) * 11]
+      ));
     const [canonical, early, late] = histories;
     if (
       !canonical ||
