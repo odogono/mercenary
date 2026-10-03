@@ -96,6 +96,14 @@ The owner chose to replace both maps with the ray test ([ADR 0069](../adr/0069-r
 
 ADR 0066's last consequence (shadow edges can crawl, so step the light) no longer applies: an exact edge slides with the sun, as the polygon edges beside it do.
 
+## Light levels
+
+Two settings rows follow `SHADOWS`, each offering 25%, 50%, 75% and 100% (100% by default). They are player preferences, set through the console as `set ambient <level>` and `set shadow-depth <level>`. **AMBIENT LIGHT** scales the document's neutral ambient pair, so every face out of the Sunlight darkens with it, Cast Shadows and faces turned from DIALIS alike. **SHADOW DEPTH** is how much of the Sunlight a Cast Shadow takes away, so below 100% a shadow lets some Sunlight through and is lighter than a face turned from the sun. Darker shadows therefore come from less ambient light, and lighter ones from less depth. Neither row changes a frame without Sunlight.
+
+![Start, both levels at 100%](../frames/issue-380-start-levels-full.png)
+![Start, ambient light 50%](../frames/issue-380-start-ambient50.png)
+![Start, shadow depth 50%](../frames/issue-380-start-depth50.png)
+
 ## Reproduce
 
 ```
@@ -105,4 +113,4 @@ CAST_SHADOW_CAPTURE=1 CAST_SHADOW_GPU=1 CAST_SHADOW_OUT=$PWD/cast-shadow-frames 
   bunx playwright test e2e/cast-shadow-capture.e2e.ts
 ```
 
-The prototypes were measured at commit `90209c76`, where `CAST_SHADOW_EDGES` accepted `soft`, `hard`, `stepped`, `volume` and `exact`. Since the decision it accepts `off` and `on`. `CAST_SHADOW_GPU=1` asks ANGLE for the Metal GPU. Without it, headless Chromium draws with SwiftShader on the CPU, where `exact` takes seconds a frame and no GPU timer exists. `CAST_SHADOW_EDGES`, `CAST_SHADOW_DPRS` and `CAST_SHADOW_TURN` narrow the matrix. Flicker lands in `flicker.tsv` (flickered %, moved %), and GPU milliseconds land in `timing.tsv`.
+The prototypes were measured at commit `90209c76`, where `CAST_SHADOW_EDGES` accepted `soft`, `hard`, `stepped`, `volume` and `exact`. Since the decision it accepts `off` and `on`. `CAST_SHADOW_GPU=1` asks ANGLE for the Metal GPU. Without it, headless Chromium draws with SwiftShader on the CPU, where `exact` takes seconds a frame and no GPU timer exists. `CAST_SHADOW_EDGES`, `CAST_SHADOW_DPRS` and `CAST_SHADOW_TURN` narrow the matrix. `CAST_SHADOW_LIGHTS=50/100,100/50` also captures shadows on at those ambient/depth percentages. Flicker lands in `flicker.tsv` (flickered %, moved %), and GPU milliseconds land in `timing.tsv`.

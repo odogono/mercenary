@@ -1364,6 +1364,7 @@ describe('the Eris renderer', () => {
     expect(fake.uniforms['gridSize']).toEqual([CASTER_GRID_SIZE]);
     expect(fake.uniforms['lightBasis']).toHaveLength(9);
     expect(fake.uniforms['ambientSky']).toEqual([1, 1, 1]);
+    expect(fake.uniforms['shadowDepth']).toEqual([1]);
 
     // The grid reaches the spaceport from the start pose.
     const spaceport = surface.placements.find(

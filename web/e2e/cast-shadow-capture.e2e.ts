@@ -36,6 +36,12 @@ const EDGES = (
   process.env['CAST_SHADOW_EDGES']?.split(',') ?? ALL_EDGES
 ).filter(edge => (ALL_EDGES as readonly string[]).includes(edge));
 const DPRS = (process.env['CAST_SHADOW_DPRS'] ?? '1,2').split(',').map(Number);
+/// Extra AMBIENT LIGHT / SHADOW DEPTH pairs to capture with shadows on, as `ambient/depth`
+/// percentages: `CAST_SHADOW_LIGHTS=50/100,100/50`. Absent captures the default levels alone.
+const LIGHTS = (process.env['CAST_SHADOW_LIGHTS'] ?? '')
+  .split(',')
+  .filter(Boolean)
+  .map(pair => pair.split('/') as [string, string]);
 /// The temporal mode (#380): this many back-to-back frames per edge with the player still, so
 /// only DIALIS's motion separates them. Zero skips it.
 const TEMPORAL_FRAMES = Number(process.env['CAST_SHADOW_TEMPORAL'] ?? '0');
@@ -237,6 +243,22 @@ for (const dpr of DPRS) {
           await frame.screenshot({
             path: join(out!, `${pose.name}-${edge}-dpr${dpr}.png`)
           });
+          if (edge === 'on') {
+            for (const [ambient, depth] of LIGHTS) {
+              await run(page, `set ambient ${ambient}`);
+              await run(page, `set shadow-depth ${depth}`);
+              await frame.screenshot({
+                path: join(
+                  out!,
+                  `${pose.name}-on-ambient${ambient}-depth${depth}-dpr${dpr}.png`
+                )
+              });
+            }
+            if (LIGHTS.length > 0) {
+              await run(page, 'set ambient 100');
+              await run(page, 'set shadow-depth 100');
+            }
+          }
           if (TIMING_FRAMES > 0 && edge !== 'off') {
             const gpu = await page.evaluate(() => {
               const gl = document.createElement('canvas').getContext('webgl2');

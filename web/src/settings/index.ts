@@ -120,6 +120,11 @@ export type StructureReach = 'all' | 'cell';
 /// Whether Enhanced presentation draws Cast Shadows. A player's choice rather than a
 /// document's, so it lives in the preferences alone.
 export type CastShadows = 'off' | 'on';
+/// A share of a light, in percent, from the steps the settings page offers. AMBIENT LIGHT scales
+/// the fill every face out of Sunlight shows; SHADOW DEPTH is how much of the Sunlight a Cast
+/// Shadow takes away. Both are the player's, like the shadows themselves.
+export type LightLevel = 25 | 50 | 75 | 100;
+export const LIGHT_LEVELS: readonly LightLevel[] = [25, 50, 75, 100];
 
 /// How the wireframe itself is drawn, as the Reference Build drew it unless told otherwise.
 ///
@@ -194,6 +199,8 @@ export const DEFAULT_SCRIPT_INSTRUCTION_BUDGET = 512;
 export const DEFAULT_PRESENTATION_PRESET: PresentationPreset = 'enhanced';
 export const DEFAULT_STRUCTURE_REACH: StructureReach = 'cell';
 export const DEFAULT_CAST_SHADOWS: CastShadows = 'on';
+export const DEFAULT_AMBIENT_LIGHT: LightLevel = 100;
+export const DEFAULT_SHADOW_DEPTH: LightLevel = 100;
 export const DEFAULT_SKY_DAY_LENGTH_MINUTES = 24;
 export const DEFAULT_SKY_LATITUDE_DEGREES = 34;
 export const DEFAULT_SKY_OBLIQUITY_DEGREES = 21;
@@ -561,6 +568,9 @@ export const isStructureReach = (value: unknown): value is StructureReach =>
 
 export const isCastShadows = (value: unknown): value is CastShadows =>
   value === 'off' || value === 'on';
+
+export const isLightLevel = (value: unknown): value is LightLevel =>
+  (LIGHT_LEVELS as readonly unknown[]).includes(value);
 
 /// A stored choice from before the edge was exact (ADR 0069): `soft` and `hard` were both
 /// shadows on.
