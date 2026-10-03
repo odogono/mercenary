@@ -1,5 +1,7 @@
 # Mercenary III: source-derived canonical single-trip reference
 
+> **Scope update, 2026-10-03:** [ADR 0073](../adr/0073-drop-pre-release-prototype-save-migration.md) retires old browser-prototype Save migration. The status and proof gates below record the earlier investigation; eligibility, canonical selection and old-source owner construction are no longer required. Recovered owner, seed, phase and restore facts remain evidence for #737 expanded-game Save/Resume. Current requirements are in the [persistence contract](mercenary-iii-tourcraft-persistence.md) and [D2 acceptance](mercenary-iii-tourcraft-milestone-review.md#i4-acceptance-continuous-flight-reuse-and-persistence).
+
 > **Status** (as of `405c6e70`, 2026-10-02): Current.
 > **Holds:** For the retained single-trip recipe, `S ≡ (T − W) × 35747 − 484 (mod 65536)` enumerates Starts 16,156, 81,692 and 147,228, all three reproduce the full source, the earliest (16,156) is selected without reading `savedAt` or wall time, and its scheduler replay matches a separate uninterrupted reference for 6,600 later neutral ticks.
 > **Open:** Total eligibility and reference selection for all naturally produced early/late taxi records, construction of non-VM owners (encounter programme, actors, faces, sound, Body phases, presentation), and the I4 codec and browser checks.

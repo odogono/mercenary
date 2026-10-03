@@ -1,5 +1,7 @@
 # Mercenary III TOURCRAFT: early added-owner audit
 
+> **Scope update, 2026-10-03:** [ADR 0073](../adr/0073-drop-pre-release-prototype-save-migration.md) retires old browser-prototype Save migration. The status and proof gates below record the earlier investigation; eligibility, canonical selection and old-source owner construction are no longer required. Recovered owner, seed, phase and restore facts remain evidence for #737 expanded-game Save/Resume. Current requirements are in the [persistence contract](mercenary-iii-tourcraft-persistence.md) and [D2 acceptance](mercenary-iii-tourcraft-milestone-review.md#i4-acceptance-continuous-flight-reuse-and-persistence).
+
 > **Status** (as of `405c6e70`, 2026-10-02): Current.
 > **Holds:** All 32 Body phases equal `rate[i] × logical tick` (480 comparisons, legacy-aligned seed `(42 + tick) × rate[i]`), inactive original seeds are nonzero (playback cursor `$663B2` as semantic null, Mover slot `$FFFF`, spawn budget 5, programme cursor `$6E50`, pair 3/1), and both face cursor pairs advance every frame regardless of model visibility.
 > **Open:** A source-only face-history proof, complete actor/trajectory seeds, pilot pointer and copied-view adapters; the old I2 opening RAM `5bd00eb6…` is not located.

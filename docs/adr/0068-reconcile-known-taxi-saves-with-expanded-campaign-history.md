@@ -1,5 +1,7 @@
 # Reconcile known taxi Saves with expanded campaign history
 
+> **Superseded by [ADR 0073](0073-drop-pre-release-prototype-save-migration.md), accepted 2026-10-03:** old browser-prototype Save migration is no longer required. The following records the earlier decision.
+
 The late-only scope and unconditional exact-reference requirement for early controls below are superseded by [ADR 0070](0070-use-canonical-expanded-history-for-ambiguous-early-taxi-records.md), accepted 2026-10-03. Canonical history now also applies to ambiguous early sources; all 33 controls remain required under its exact-or-canonical reference contract. The original late campaign priority and other constraints remain in force.
 
 Accepted by the user, 2026-10-02, for [D2](../research/mercenary-iii-tourcraft-milestone-review.md) and [I4/#711](https://github.com/odogono/mercenary/issues/711). For valid late I2 taxi Saves and Session Resume, matching expanded campaign history takes priority over preserving the source cash and script state. [R8's counterexamples](../research/mercenary-iii-tourcraft-taxi-migration.md) establish that both requirements cannot hold after election/mining. Migration may change those fields where the recovered campaign requires it.

@@ -1,5 +1,7 @@
 # Mercenary III: late taxi records lose campaign history
 
+> **Scope update, 2026-10-03:** [ADR 0073](../adr/0073-drop-pre-release-prototype-save-migration.md) retires old browser-prototype Save migration. The status and proof gates below record the earlier investigation; eligibility, canonical selection and old-source owner construction are no longer required. Recovered owner, seed, phase and restore facts remain evidence for #737 expanded-game Save/Resume. Current requirements are in the [persistence contract](mercenary-iii-tourcraft-persistence.md) and [D2 acceptance](mercenary-iii-tourcraft-milestone-review.md#i4-acceptance-continuous-flight-reuse-and-persistence).
+
 > **Status** (as of `405c6e70`, 2026-10-02): Amended by [canonical-reference](mercenary-iii-tourcraft-canonical-reference.md): a third matching Start at frame 16,156 is the canonical reference.
 > **Holds:** Taxi Starts at frames 81,692 and 147,228 with a shared Leave produce identical complete source snapshots and Save bytes but different expanded VM state (PC, flags 6/13/23, queue `$77`, return stack), so no migration from the old record matches actual history and ADR 0068 accepts a documented canonical expanded history for ambiguous late records.
 > **Open:** Canonical reconstruction of every expanded owner; the scheduler model omits encounter-reader consumption, actors, audio and raster.
