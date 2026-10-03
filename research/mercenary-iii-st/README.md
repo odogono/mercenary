@@ -26,6 +26,7 @@ Each issue's runs live in the main checkout's `restricted/mercenary-iii-<issue>/
 | `scripts/taxi-request-count-audit.ts` | R8a exhaustive narrative request-count abstraction: all 33 external counts and eight face-cursor certificates; [scope and matrix](../../docs/research/mercenary-iii-tourcraft-source-eligibility.md#complete-request-count-analysis-for-the-33-controls), `taxi-request-count-evidence.json` and `web/test/dion-request-counts.test.ts` |
 | `scripts/taxi-timed-face-audit.ts`, `scripts/taxi-first-id-bound.ts` | R8a exhausted timed narrative classes, eight tagged face certificates and four additional natural sources, with a proved relaxed first-ID bound; [classification scope](../../docs/research/mercenary-iii-tourcraft-source-eligibility.md#timed-face-owner-classification-after-736), `taxi-timed-face-evidence.json` and `taxi-first-id-bound-evidence.json` |
 | `scripts/taxi-face-rebuild-audit.ts`, `scripts/taxi-face-snapshot.ts` | R8c accepted shared face-selection tag, nonadvancing output rebuild, original collision and tagged restore/future comparisons; [#736 findings](../../docs/research/mercenary-iii-tourcraft-face-rebuild.md), `taxi-face-rebuild-evidence.json` and `web/test/dion-face-rebuild.test.ts` |
+| `m3lab/snapshot_owners.py` | R8b raw unsigned owner observer, coherent opening seeds, actor slots50–63/trajectories, all32 Body phases, VM/input/view/animation and sound-driver fields; [#737 contract](../../docs/research/mercenary-iii-tourcraft-snapshot-fields.md), `tourcraft-snapshot-owner-seeds.json`, `tourcraft-snapshot-sound-seed.json` and `tourcraft-snapshot-restore-evidence.json` |
 | `tests/` | unit tests: `PYTHONPATH=.:tests python3 -m unittest discover -s tests` |
 | `*.json` here | checked-in evidence ledgers; [the TOURCRAFT milestone index](../../docs/research/mercenary-iii-tourcraft-milestone-review.md#where-each-tickets-work-lives) says which ticket owns each |
 
@@ -178,3 +179,14 @@ The bounded TOURCRAFT export is implemented by `m3lab.tourcraft_export`, with it
 | `service.py` | `service.json` | `$41F18`, `$51CA2`, `$518AC` |
 
 The findings and their comparisons are reported in [the I1 content-boundary report](../../docs/research/mercenary-iii-i1-content-boundary.md) and [the I2 implementation report](../../docs/research/mercenary-iii-i2-taxi-implementation.md).
+
+## Expanded snapshot owner observations (R8b)
+
+```sh
+cd research/mercenary-iii-st
+python3 -m m3lab.snapshot_owners ../../restricted/mercenary-iii-708/presentation/exact2/start.ram \
+  --opening --out tourcraft-snapshot-owner-seeds.json
+PYTHONPATH=.:tests python3 -m unittest discover -s tests -p test_snapshot_owners.py
+```
+
+`--opening` requires the exact pinned coherent first-top RAM hash. Without it the same observer reads progressed captures without resetting their owners. The JSON is a numeric research ledger, not a portable Save record; raw source pointers still need the contract's admitted content adapters. PSG registers come from the independent cold-boot trace, rather than absent RAM shadows. Restricted `owner_probe.py`, `scopes.json` and `compare_owners.py` retain the whole-machine continuation recipe; the tracked restore ledger records sampled ranges, hashes, outcomes and limits. These controls do not run the #711 browser codec or the expanded 33-checkpoint matrix.

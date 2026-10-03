@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "kind": "mercenary-iii-tourcraft-snapshot-sound-seed",
+  "pinnedOpeningRamSha256": "71b957b3b7124959b01bd40b896c921d37902c18cfca042bef1906b155ef0170",
+  "coldBootRamSha256": "2ad532c4304f02b780a23ff1dab711279b9245c71468557f2c0b252668ff90fe",
+  "matchedGameplayRange": {
+    "range": [
+      "$04BBC",
+      "$7FEDA"
+    ],
+    "sha256": "e5bd1352404f48b8d353aafb0f2b3b3f4e054e5dffbe3c23eebf7776bbd509c5"
+  },
+  "physicalVbl": 4764,
+  "logicalTick": 29,
+  "frameWord": 1,
+  "traceSha256": "b431e7f5c6dfc0e85439a1c7074c97b47d8fa951c314cfc3aefd96b18e324675",
+  "resetEvents": 1,
+  "dataWrites": 152,
+  "shapeWrites": 0,
+  "registers": [
+    1,
+    0,
+    1,
+    0,
+    1,
+    0,
+    31,
+    254,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "source": "https://raw.githubusercontent.com/hatari/hatari/v2.6.1/src/psg.c",
+  "limits": [
+    "Cold boot total RAM hash differs in OS/hardware workspace; the complete stated gameplay range matches the pinned opening.",
+    "Register stream seed, not waveform/oscillator/envelope-phase continuity.",
+    "The shape register zero is established by observed cold reset and Hatari reset semantics; no explicit shape write precedes this boundary."
+  ]
+}

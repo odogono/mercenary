@@ -1,0 +1,674 @@
+{
+  "schemaVersion": 1,
+  "kind": "mercenary-iii-tourcraft-snapshot-owner-restore-controls",
+  "seedRamSha256": "71b957b3b7124959b01bd40b896c921d37902c18cfca042bef1906b155ef0170",
+  "ownerGroups": [
+    "phase",
+    "clock",
+    "input",
+    "playback",
+    "numeric",
+    "taxi",
+    "world",
+    "vm",
+    "message",
+    "animation",
+    "encounter",
+    "sound",
+    "cash"
+  ],
+  "sampledRanges": {
+    "phase": [
+      [
+        340116,
+        4
+      ],
+      [
+        29056,
+        2
+      ],
+      [
+        983296,
+        2
+      ]
+    ],
+    "clock": [
+      [
+        22362,
+        128
+      ],
+      [
+        28454,
+        6
+      ],
+      [
+        28622,
+        6
+      ],
+      [
+        29368,
+        2
+      ],
+      [
+        28860,
+        2
+      ]
+    ],
+    "input": [
+      [
+        354086,
+        1
+      ],
+      [
+        28758,
+        4
+      ],
+      [
+        29144,
+        10
+      ],
+      [
+        29167,
+        13
+      ],
+      [
+        28340,
+        2
+      ]
+    ],
+    "playback": [
+      [
+        28826,
+        10
+      ],
+      [
+        370928,
+        2
+      ],
+      [
+        28336,
+        4
+      ],
+      [
+        28358,
+        12
+      ]
+    ],
+    "numeric": [
+      [
+        28672,
+        86
+      ],
+      [
+        28848,
+        36
+      ],
+      [
+        28962,
+        94
+      ],
+      [
+        29064,
+        18
+      ],
+      [
+        29132,
+        8
+      ],
+      [
+        29256,
+        4
+      ],
+      [
+        29280,
+        2
+      ],
+      [
+        28576,
+        22
+      ],
+      [
+        320944,
+        4
+      ]
+    ],
+    "taxi": [
+      [
+        28176,
+        1
+      ],
+      [
+        28310,
+        80
+      ],
+      [
+        27788,
+        4
+      ],
+      [
+        27836,
+        4
+      ],
+      [
+        27888,
+        4
+      ],
+      [
+        27936,
+        4
+      ],
+      [
+        335066,
+        4
+      ],
+      [
+        270104,
+        64
+      ]
+    ],
+    "world": [
+      [
+        22556,
+        6144
+      ],
+      [
+        22076,
+        16
+      ],
+      [
+        28638,
+        2
+      ],
+      [
+        28430,
+        8
+      ],
+      [
+        342352,
+        2
+      ],
+      [
+        5758,
+        14
+      ],
+      [
+        16492,
+        2
+      ]
+    ],
+    "vm": [
+      [
+        22198,
+        36
+      ],
+      [
+        28378,
+        4
+      ],
+      [
+        28956,
+        2
+      ],
+      [
+        29296,
+        8
+      ],
+      [
+        29310,
+        4
+      ],
+      [
+        29522,
+        128
+      ]
+    ],
+    "message": [
+      [
+        338220,
+        48
+      ],
+      [
+        340944,
+        14
+      ],
+      [
+        29232,
+        16
+      ],
+      [
+        29318,
+        2
+      ],
+      [
+        458566,
+        2
+      ]
+    ],
+    "animation": [
+      [
+        46066,
+        4
+      ],
+      [
+        46330,
+        4
+      ],
+      [
+        46366,
+        2
+      ],
+      [
+        46594,
+        4
+      ],
+      [
+        46620,
+        2
+      ],
+      [
+        28320,
+        10
+      ],
+      [
+        458570,
+        2
+      ],
+      [
+        28470,
+        4
+      ],
+      [
+        28628,
+        2
+      ],
+      [
+        29050,
+        2
+      ]
+    ],
+    "encounter": [
+      [
+        28240,
+        64
+      ],
+      [
+        21850,
+        224
+      ],
+      [
+        336800,
+        20
+      ]
+    ],
+    "sound": [
+      [
+        311070,
+        18
+      ],
+      [
+        311124,
+        8
+      ],
+      [
+        312448,
+        2
+      ],
+      [
+        31884,
+        4
+      ],
+      [
+        28944,
+        2
+      ],
+      [
+        29344,
+        10
+      ]
+    ],
+    "cash": [
+      [
+        29406,
+        6
+      ]
+    ]
+  },
+  "emptyEarlyFootSoundProof": {
+    "checkpointVbl": 34367,
+    "lastDataWriteVbl": 34355,
+    "noDataWriteAtOrAfterCheckpoint": true,
+    "ownerRepeatEqual": true,
+    "orderedPsgRepeatEqual": true,
+    "logSha256": "146d21a83da6816ce15268d8590a62bd76da40553dfef48c7155510de037a125",
+    "traceSha256": "450eadebb421a463a717106f07cf36a81617f3b3cc89ce0195712c9adaea977c",
+    "endFullRamEqual": true,
+    "endPngEqual": true
+  },
+  "endPlaybackFrameWord": 1700,
+  "results": [
+    {
+      "family": "early",
+      "checkpoint": "launch",
+      "records": 1928,
+      "contiguousSuffixStart": 4,
+      "sampledOwnerSuffixEqual": true,
+      "ownerGroupsEqual": {
+        "phase": true,
+        "clock": true,
+        "input": true,
+        "playback": true,
+        "numeric": true,
+        "taxi": true,
+        "world": true,
+        "vm": true,
+        "message": true,
+        "animation": true,
+        "encounter": true,
+        "sound": true,
+        "cash": true
+      },
+      "firstFullRamEqual": true,
+      "endFullRamEqual": true,
+      "endPngEqual": true,
+      "orderedPsgWrites": 47874,
+      "psgContiguousSuffixEqual": true,
+      "retriggerWrites": 1,
+      "source": {
+        "checkpointSha256": "fe7582c9593db935dbdcb5d975b039dca231f1a93584f04bc34fbf3dd5000038",
+        "ramSha256": "73b3d361381ebabfc89168710030aa6d02932b60ebf2f7cf06eed871ce3a1500",
+        "logSha256": "1de84d428d893af3a44bb17dd588822e72ed7da47a1de3a0eb21e18f4cde8717",
+        "traceSha256": "a3ad29452a4c2c787a0846f5c5579c03fc6ab18d5c895fa7cab5f9e0b6bfe93e"
+      }
+    },
+    {
+      "family": "early",
+      "checkpoint": "space",
+      "records": 1747,
+      "contiguousSuffixStart": 185,
+      "sampledOwnerSuffixEqual": true,
+      "ownerGroupsEqual": {
+        "phase": true,
+        "clock": true,
+        "input": true,
+        "playback": true,
+        "numeric": true,
+        "taxi": true,
+        "world": true,
+        "vm": true,
+        "message": true,
+        "animation": true,
+        "encounter": true,
+        "sound": true,
+        "cash": true
+      },
+      "firstFullRamEqual": true,
+      "endFullRamEqual": true,
+      "endPngEqual": true,
+      "orderedPsgWrites": 41703,
+      "psgContiguousSuffixEqual": true,
+      "retriggerWrites": 1,
+      "source": {
+        "checkpointSha256": "bb2d86afe27186b1ce2616a4b09886b1738be1bc38ba89249e9d674a47c09091",
+        "ramSha256": "3bee17bfda50b833fef5b22c711bd3ea7f5c6a60af32f623b6f69ab92ebdcdbe",
+        "logSha256": "6f3363e6fd4fbba2f1cb1821f276ed232afa21b09e21f82ea649d1e177ebc881",
+        "traceSha256": "8147de3adfd11790723dbf6be459cc88649b0ecd18b54f2cc17f446d0e0a8e6e"
+      }
+    },
+    {
+      "family": "early",
+      "checkpoint": "body",
+      "records": 1305,
+      "contiguousSuffixStart": 627,
+      "sampledOwnerSuffixEqual": true,
+      "ownerGroupsEqual": {
+        "phase": true,
+        "clock": true,
+        "input": true,
+        "playback": true,
+        "numeric": true,
+        "taxi": true,
+        "world": true,
+        "vm": true,
+        "message": true,
+        "animation": true,
+        "encounter": true,
+        "sound": true,
+        "cash": true
+      },
+      "firstFullRamEqual": true,
+      "endFullRamEqual": true,
+      "endPngEqual": true,
+      "orderedPsgWrites": 23057,
+      "psgContiguousSuffixEqual": true,
+      "retriggerWrites": 1,
+      "source": {
+        "checkpointSha256": "34ba7a65c9a13ed8521a697de88860df5cb64f1ea0a894f07ec87952dd8651bf",
+        "ramSha256": "2794d86cdba9c4f9501799bccf961b88d88ff66594ff523cc2bff17bb1235e19",
+        "logSha256": "8e6c47c5a9179326af2819605662dce1f867dbfa075d5b9992ce403b2c666ca6",
+        "traceSha256": "b68f8dee01f71efc1e15ef468a20984b2f8963859f865287fcbf70bc3bf5c01e"
+      }
+    },
+    {
+      "family": "early",
+      "checkpoint": "descent",
+      "records": 821,
+      "contiguousSuffixStart": 1111,
+      "sampledOwnerSuffixEqual": true,
+      "ownerGroupsEqual": {
+        "phase": true,
+        "clock": true,
+        "input": true,
+        "playback": true,
+        "numeric": true,
+        "taxi": true,
+        "world": true,
+        "vm": true,
+        "message": true,
+        "animation": true,
+        "encounter": true,
+        "sound": true,
+        "cash": true
+      },
+      "firstFullRamEqual": true,
+      "endFullRamEqual": true,
+      "endPngEqual": true,
+      "orderedPsgWrites": 1597,
+      "psgContiguousSuffixEqual": true,
+      "retriggerWrites": 1,
+      "source": {
+        "checkpointSha256": "b6bec75cc6a4829d3bc1c25abe35aba7661994beb7ce881a194022e54ae48e65",
+        "ramSha256": "c4ea424d43a85a0e3161de9d2b4986e04cdc5ce382f887eef5317d42d5b211b7",
+        "logSha256": "55e199b0a63e189195bdee9457cc66a6f177b10907d7411dd963c6dfeacfe1cb",
+        "traceSha256": "89705a8e2d1cd8aacfadf2fd6f86bf20d611c26ce2520fac4ee871e407294efd"
+      }
+    },
+    {
+      "family": "early",
+      "checkpoint": "exit",
+      "records": 774,
+      "contiguousSuffixStart": 1158,
+      "sampledOwnerSuffixEqual": true,
+      "ownerGroupsEqual": {
+        "phase": true,
+        "clock": true,
+        "input": true,
+        "playback": true,
+        "numeric": true,
+        "taxi": true,
+        "world": true,
+        "vm": true,
+        "message": true,
+        "animation": true,
+        "encounter": true,
+        "sound": true,
+        "cash": true
+      },
+      "firstFullRamEqual": true,
+      "endFullRamEqual": true,
+      "endPngEqual": true,
+      "orderedPsgWrites": 12,
+      "psgContiguousSuffixEqual": true,
+      "retriggerWrites": 1,
+      "source": {
+        "checkpointSha256": "b1e453c46a70fbcef1a2d3656ec274fb9c574eabaea0473d159e533c470d25f9",
+        "ramSha256": "0e3e1323bc4f1811c57265a92cbfac3c7b8e2898ae685bea77efd7d350808732",
+        "logSha256": "fd90f80e28483adbd08546d1fa4a63e7e33134866df4e7b7d8974cfe4ce5cf59",
+        "traceSha256": "979cf65d72776636cd34c1988a72cc2e8996e9e089674e78fe108072e51fa6bf"
+      }
+    },
+    {
+      "family": "early",
+      "checkpoint": "foot",
+      "records": 773,
+      "contiguousSuffixStart": 1159,
+      "sampledOwnerSuffixEqual": true,
+      "ownerGroupsEqual": {
+        "phase": true,
+        "clock": true,
+        "input": true,
+        "playback": true,
+        "numeric": true,
+        "taxi": true,
+        "world": true,
+        "vm": true,
+        "message": true,
+        "animation": true,
+        "encounter": true,
+        "sound": true,
+        "cash": true
+      },
+      "firstFullRamEqual": true,
+      "endFullRamEqual": true,
+      "endPngEqual": true,
+      "orderedPsgWrites": 0,
+      "psgContiguousSuffixEqual": true,
+      "retriggerWrites": 0,
+      "source": {
+        "checkpointSha256": "2723974fe3e4947a9d91342450f5cf2a099d32d251673704479215dbe00ad653",
+        "ramSha256": "eb33716a13b0dd1487e30988e9c1c3959a9b8cabd65add7a4a55b5d899b50095",
+        "logSha256": "3aaf6bfd3b1913c694951b883bd4f08e14b40d10c8e99fdfc1dc57b5ea588b92",
+        "traceSha256": "cfb8aa6f74616e1f60181ca8fb6c7a1a0013f413e8e2f17d14e9849bb5039e18"
+      }
+    },
+    {
+      "family": "late",
+      "checkpoint": "space",
+      "records": 1802,
+      "contiguousSuffixStart": 185,
+      "sampledOwnerSuffixEqual": true,
+      "ownerGroupsEqual": {
+        "phase": true,
+        "clock": true,
+        "input": true,
+        "playback": true,
+        "numeric": true,
+        "taxi": true,
+        "world": true,
+        "vm": true,
+        "message": true,
+        "animation": true,
+        "encounter": true,
+        "sound": true,
+        "cash": true
+      },
+      "firstFullRamEqual": true,
+      "endFullRamEqual": true,
+      "endPngEqual": true,
+      "orderedPsgWrites": 45069,
+      "psgContiguousSuffixEqual": true,
+      "retriggerWrites": 1,
+      "source": {
+        "checkpointSha256": "371e9c685f29e047ef31510b9200f93bfecf5ee8375ece9a70d9abd05c20d9f0",
+        "ramSha256": "31f18070f3c8ab8e0d571ce222c49af9299cbd4c9f0a4ed19062962794a6e620",
+        "logSha256": "e3797421cab16ef2449babb18c0237f68f148935fd6bed5a8a2637a3e41bd904",
+        "traceSha256": "2ad94261df578e6a978f6c92055a4da38355064e4db2016a98a27478aea515c6"
+      }
+    },
+    {
+      "family": "late",
+      "checkpoint": "body",
+      "records": 1360,
+      "contiguousSuffixStart": 627,
+      "sampledOwnerSuffixEqual": true,
+      "ownerGroupsEqual": {
+        "phase": true,
+        "clock": true,
+        "input": true,
+        "playback": true,
+        "numeric": true,
+        "taxi": true,
+        "world": true,
+        "vm": true,
+        "message": true,
+        "animation": true,
+        "encounter": true,
+        "sound": true,
+        "cash": true
+      },
+      "firstFullRamEqual": true,
+      "endFullRamEqual": true,
+      "endPngEqual": true,
+      "orderedPsgWrites": 26423,
+      "psgContiguousSuffixEqual": true,
+      "retriggerWrites": 1,
+      "source": {
+        "checkpointSha256": "367c41ca83d26fbbd305a2a5be93b632ed15f8fd025f14e1fca09686eca945f0",
+        "ramSha256": "6bbce717a0662e5994211ca6a69cf61e45952593eba5b48a68b7762570e2b8f6",
+        "logSha256": "e9f6111faffa5e43015d6031f23cc27d17c0805db0dab3eeaae550f026907688",
+        "traceSha256": "2569db97e4dbb6ab61f0a79695d29332b97bdf7881db0f0e0ecc38bc55d7606d"
+      }
+    },
+    {
+      "family": "late",
+      "checkpoint": "foot",
+      "records": 817,
+      "contiguousSuffixStart": 1170,
+      "sampledOwnerSuffixEqual": true,
+      "ownerGroupsEqual": {
+        "phase": true,
+        "clock": true,
+        "input": true,
+        "playback": true,
+        "numeric": true,
+        "taxi": true,
+        "world": true,
+        "vm": true,
+        "message": true,
+        "animation": true,
+        "encounter": true,
+        "sound": true,
+        "cash": true
+      },
+      "firstFullRamEqual": true,
+      "endFullRamEqual": true,
+      "endPngEqual": true,
+      "orderedPsgWrites": 2488,
+      "psgContiguousSuffixEqual": true,
+      "retriggerWrites": 0,
+      "source": {
+        "checkpointSha256": "144b675cf3e9e5776899a31d3cd01cd48d1bd6b5d307352c200701398941a2f1",
+        "ramSha256": "602c49b21d8e3019ecaaac7326619b4f63d49b25fa9e2c7013ba113c37e78d6f",
+        "logSha256": "b5f5a501179583a09135f3528a81be11ddf56c29c1ae15e318ef7da04006cd8c",
+        "traceSha256": "d6a1fb6d81b443c2f70cc1818aceb9a367d1262e95c98c7ce1b6c299bb7a6905"
+      }
+    }
+  ],
+  "limits": [
+    "Whole-machine restored continuation, not a portable Save Snapshot or expanded browser proof.",
+    "Owners sampled at original main-loop top and message request, not every tick.",
+    "PSG data writes are ordered; waveform and backend event transport are untested.",
+    "Late family injects election threshold seconds at frame100; not natural hours-long waiting.",
+    "Additional scalar seeds outside sampled ranges have immediate/end full-RAM checks only; they remain serialized.",
+    "Face outputs are observed original words; nonadvancing tagged browser rebuild remains the separate accepted #736 control."
+  ],
+  "provenance": {
+    "restrictedRoot": "restricted/mercenary-iii-737/",
+    "baseline": "config/baseline.json",
+    "controlRun": "runs/owners-control-n5_xihx0",
+    "lateControlRun": "runs/owners-late-control-xvau55y3",
+    "vblControlRun": "runs/owners-control-video-ouvcx5vh",
+    "recipeSha256": "6dcca287eec43773528438000051d12b5b287ea0b55ac1905f0f8d691b217ef7",
+    "comparisonRecipeSha256": "2a448c2574124769ceb3cb5d2de9b346beb2fcb67af1f1e99bd4a62660b52a3c"
+  },
+  "totalRestoredSampleRecords": 11327
+}
