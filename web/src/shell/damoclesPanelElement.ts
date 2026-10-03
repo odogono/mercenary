@@ -1,7 +1,7 @@
 const DAMOCLES_PANEL_TAG = 'damocles-panel';
 
 /// The authored Damocles Benson Panel composition for Targ and Flyover (ADR 0027).
-/// Actual Damocles gameplay uses its recovered panel element under ADR 0070.
+/// Actual Damocles gameplay uses its recovered panel element under ADR 0071.
 ///
 /// Light DOM keeps the existing renderer and token layer at the same seam: consumers supply a
 /// PanelViewModel instead of maintaining another visual imitation. The temperature, power and

@@ -7,10 +7,11 @@ import type { DionSession } from '../../../web/src/dion/session.ts';
 import { loadTourcraftContent } from '../../../web/src/dion/tourcraftContent.ts';
 import {
   compareTaxiDepartureSchedules,
+  selectTaxiCanonicalDepartureSchedule,
   taxiCanonicalStartFrames
 } from './taxi-canonical-reference.ts';
-import { readTaxiSourceCandidate } from './taxi-source-eligibility.ts';
 import { TaxiHistoryModel } from './taxi-history-model.ts';
+import { readTaxiSourceCandidate } from './taxi-source-eligibility.ts';
 import {
   TAXI_SOURCE_PINS,
   TAXI_SOURCE_REVISION,
@@ -181,11 +182,13 @@ await withTaxiSource(
       control.record.snapshot.frame
     );
     const histories = candidates
-      .map(start => start === lateFrame ? primary : replay(start))
-      .sort((a, b) => compareTaxiDepartureSchedules(
-        [(a.startFrame + 1) * 11],
-        [(b.startFrame + 1) * 11]
-      ));
+      .map(start => (start === lateFrame ? primary : replay(start)))
+      .sort((a, b) =>
+        compareTaxiDepartureSchedules(
+          [(a.startFrame + 1) * 11],
+          [(b.startFrame + 1) * 11]
+        )
+      );
     const [canonical, early, late] = histories;
     if (
       !canonical ||
@@ -224,6 +227,31 @@ await withTaxiSource(
       throw new Error(
         'A timing candidate is not a complete source-matching history'
       );
+    }
+    // This oracle is complete ONLY for the fixed replay recipe whose timing
+    // candidates were all enumerated and fully matched above. Applying the
+    // general ordering algorithm here does not widen that source-history class.
+    const selected = await selectTaxiCanonicalDepartureSchedule(
+      state.frame,
+      async query => {
+        const found = histories.some(history => {
+          const vector = [history.startFrame];
+          if (!query.prefix.every((value, i) => vector[i] === value)) {
+            return false;
+          }
+          return query.nextAtMost === undefined
+            ? vector.length === query.prefix.length
+            : vector.length > query.prefix.length &&
+                vector[query.prefix.length]! <= query.nextAtMost;
+        });
+        return found ? 'reachable' : 'unreachable';
+      }
+    );
+    if (
+      selected.kind !== 'selected' ||
+      !isDeepStrictEqual(selected.departures, [canonical.startFrame])
+    ) {
+      throw new Error('General departure selector disagrees with fixed family');
     }
     // Independently replay the selected reference again without restoration.
     // Compare reconstructed scheduler state and identical later inputs to that

@@ -6,10 +6,14 @@ import { isDeepStrictEqual } from "node:util";
 
 import { int, list, record } from "../../../web/src/dion/read.ts";
 import type { DionScriptState } from "../../../web/src/dion/script.ts";
-import type { DionSession } from "../../../web/src/dion/session.ts";
-import { loadTourcraftContent } from "../../../web/src/dion/tourcraftContent.ts";
+import type { DionSession, DionSnapshot } from "../../../web/src/dion/session.ts";
+import {
+  loadTourcraftContent,
+  type TourcraftContent,
+} from "../../../web/src/dion/tourcraftContent.ts";
 import type { DionControlOperation } from "../../../web/test/dion-controls.ts";
-import { TaxiFaceModel } from "./taxi-face-model.ts";
+import { TaxiFaceModel, type TaxiFaceState } from "./taxi-face-model.ts";
+import type { FaceSelection } from "./taxi-face-snapshot.ts";
 import { TaxiHistoryModel } from "./taxi-history-model.ts";
 import { TAXI_SOURCE_REVISION, withTaxiSource } from "./taxi-source.ts";
 
@@ -27,7 +31,18 @@ const apply = (
   session.drainSound();
 };
 
-export const auditTaxiEarlyInitialization = async () => {
+export interface CollisionFaceObservation {
+  readonly snapshot: DionSnapshot;
+  readonly faces: Record<"$A1" | "$A5", TaxiFaceState>;
+  readonly faceSelection: FaceSelection;
+}
+export const auditTaxiEarlyInitialization = async (
+  onCollisionFrame?: (
+    frame: number,
+    histories: readonly CollisionFaceObservation[],
+    content: TourcraftContent,
+  ) => void,
+) => {
   const expanded = await loadTourcraftContent(async (path) => {
     const text = readFileSync(
       join(import.meta.dir, "../../..", path.slice(1)),
@@ -231,7 +246,23 @@ export const auditTaxiEarlyInitialization = async () => {
       const snapshot = early.encoded.snapshot;
       assert.equal(snapshot.snapshot.tick - later.captured.boardingTick, 251);
       assert.equal(snapshot.snapshot.tick - early.captured.boardingTick, 262);
+      // Read-only observation of uninterrupted references; preserve the old
+      // evidence summary and source behavior when the hook is not supplied.
+      const observeCollision = (frame: number) => {
+        if (!onCollisionFrame) return;
+        onCollisionFrame(
+          frame,
+          histories.map((h) => ({
+            snapshot: structuredClone(h.session.snapshot),
+            faces: h.faces.capture(),
+            faceSelection: h.faces.faceSelection,
+          })),
+          expanded,
+        );
+      };
+      observeCollision(0);
       for (const h of histories) h.session.advance(2 / 50);
+      observeCollision(1);
       const afterNextFrameEqual = isDeepStrictEqual(
         early.faces.capture(),
         later.faces.capture(),
@@ -252,6 +283,7 @@ export const auditTaxiEarlyInitialization = async () => {
           early.session.drainSound(),
           later.session.drainSound(),
         );
+        observeCollision(frame + 2);
       }
       return {
         sourceRevision: TAXI_SOURCE_REVISION,

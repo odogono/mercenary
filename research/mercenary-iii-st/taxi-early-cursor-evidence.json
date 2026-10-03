@@ -1,0 +1,171 @@
+{
+  "sourceRevision": "e4cba434069ca1fbec6e72b3a99cbf775f1663c4",
+  "identity": {
+    "contentSha256": "c50b402c04c70ab74f95a938c0f867e740ea843157e514764f2bceb84a2f44ed",
+    "destination": "metis",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "title": "dion"
+  },
+  "expandedContentSha256": "d31490d7ba44a08949f71267884f1e290074acc5885fdfae747f7aeefcfdf611",
+  "prefixControl": "sol/selected",
+  "prefixOperationCount": 526,
+  "prefixOperationsSha256": "f540601a8bec8fabe815da4e385c36ee15dad09e4d7fcfdb411f58437645c36e",
+  "commonCaptureFrame": 2001,
+  "source": {
+    "tick": 22020,
+    "frame": 2001,
+    "clock": {
+      "accumulator": 32,
+      "day": 0,
+      "seconds": 440
+    },
+    "remainder": 8.251038741136085e-14,
+    "messageSerial": 27,
+    "messageAge": 50,
+    "messageText": " ",
+    "wait": 15057
+  },
+  "sourceSnapshotSha256": "32646c13d27bb7bb14357cdcb7847f3dfc3bd0a1de4a808853f50c2ba075ae48",
+  "saveBytesSha256": "437f94d66b08f21fbcb4c0e0fb7561e9fb5961d761e6fe01b065f6f6e66d8306",
+  "equalCompleteSource": true,
+  "equalSaveBytes": true,
+  "equalResumeExceptTimestamp": true,
+  "histories": [
+    {
+      "delayFrames": 7,
+      "startTick": 6136,
+      "acceptedIds": [
+        {
+          "id": 40,
+          "tick": 6028,
+          "alternate": true,
+          "pc": null
+        },
+        {
+          "id": 37,
+          "tick": 7359,
+          "alternate": true,
+          "pc": 485055
+        }
+      ],
+      "alternateFrames": 310,
+      "faces": {
+        "$A1": {
+          "base": 17,
+          "alternate": 40,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 11,
+          "alternate": 0,
+          "output": 20480
+        }
+      },
+      "baseRebuild": {
+        "$A1": 17152,
+        "$A5": 20480
+      },
+      "beforeLeaveSoundElapsed": 14638
+    },
+    {
+      "delayFrames": 8,
+      "startTick": 6147,
+      "acceptedIds": [
+        {
+          "id": 40,
+          "tick": 6028,
+          "alternate": true,
+          "pc": null
+        },
+        {
+          "id": 37,
+          "tick": 7370,
+          "alternate": false,
+          "pc": 485057
+        }
+      ],
+      "alternateFrames": 288,
+      "faces": {
+        "$A1": {
+          "base": 8,
+          "alternate": 18,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 12,
+          "alternate": 9,
+          "output": 20224
+        }
+      },
+      "baseRebuild": {
+        "$A1": 17152,
+        "$A5": 20224
+      },
+      "beforeLeaveSoundElapsed": 14627
+    }
+  ],
+  "drawingEffect": {
+    "model": "model-036974",
+    "token": "$A5",
+    "font": 7,
+    "drawingInputs": [
+      {
+        "code": 80,
+        "points": 30,
+        "linePrimitives": 26,
+        "glyphSha256": "47c7a617c3f616d3ccdcb87e49c3f0d54c68180a669654593ed2371ee26b1994"
+      },
+      {
+        "code": 79,
+        "points": 22,
+        "linePrimitives": 16,
+        "glyphSha256": "6863796d53a83c52fd34608f084190bda7a631dabc6b130afa016aaecda02c80"
+      }
+    ]
+  },
+  "equalFutureSourceFrames": 600,
+  "differentFutureCursorFrames": 600,
+  "differentFutureOutputFrames": 323,
+  "firstDifferentGlyphs": [
+    {
+      "frameOffset": 1,
+      "outputs": [
+        {
+          "$A1": 17152,
+          "$A5": 20224
+        },
+        {
+          "$A1": 17152,
+          "$A5": 20480
+        }
+      ]
+    },
+    {
+      "frameOffset": 2,
+      "outputs": [
+        {
+          "$A1": 17152,
+          "$A5": 20480
+        },
+        {
+          "$A1": 17408,
+          "$A5": 20480
+        }
+      ]
+    },
+    {
+      "frameOffset": 4,
+      "outputs": [
+        {
+          "$A1": 17152,
+          "$A5": 20480
+        },
+        {
+          "$A1": 17152,
+          "$A5": 20736
+        }
+      ]
+    }
+  ],
+  "limit": "Independent recovered VM/face reader comparison; no original-machine rerun, expanded browser restore or indexed scene raster comparison."
+}

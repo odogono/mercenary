@@ -16,7 +16,7 @@ import {
 import type { DamoclesSnapshot } from './session.ts';
 import type { ErisCell } from './world.ts';
 
-/// Semantic readouts for Damocles's recovered Gameplay Panel (ADR 0070),
+/// Semantic readouts for Damocles's recovered Gameplay Panel (ADR 0071),
 /// also retaining the shared attitude contract and accessible view model.
 ///
 /// Under ADR 0027 an authored rendition still dresses Targ data; here every readout that has a recovered

@@ -1,6 +1,6 @@
 # Damocles recovered panel in the browser
 
-Implementation and verification for [#741](https://github.com/odogono/mercenary/issues/741), following [the recovered artwork investigation](damocles-recovered-panel.md), [#740's writer data](damocles-panel-writer-data.md) and ADR 0070. These remain Working-Authority Evidence under ADR 0043; the code implements the understood drawing rules independently under ADR 0002.
+Implementation and verification for [#741](https://github.com/odogono/mercenary/issues/741), following [the recovered artwork investigation](damocles-recovered-panel.md), [#740's writer data](damocles-panel-writer-data.md) and ADR 0071. These remain Working-Authority Evidence under ADR 0043; the code implements the understood drawing rules independently under ADR 0002.
 
 `web/src/damocles/panelDocument.ts` validates the tracked payload. `panelWriter.ts` owns the title's raw-word readouts, centre selection/title stamps, reveal, fields, clock, lamps, gauges and mutable palette. `shell/panelPixels.ts` shares only plane, glyph, pitch, compass and colour expansion primitives. Mercenary III's recorded opening and partially revealed-card pixel hashes guard its prior output. The 64 native Damocles compass frames are exhaustively compared with the shared sliding-strip output, retaining the Damocles table's provenance hash and the phase relation recorded by #740.
 
