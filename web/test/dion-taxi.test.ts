@@ -76,7 +76,7 @@ test('uses the returning occurrence of a repeated cell and batches empty circula
     routeIndex: 17
   };
   const advanced = stepTaxi(content, returning, 0x62).taxi;
-  expect(advanced.progress).toBe(2048);
+  expect(advanced.progress).toBe(16_384);
   const outbound: DionTaxi = {
     ...base,
     cell: 0x14,
@@ -97,4 +97,16 @@ test('uses the returning occurrence of a repeated cell and batches empty circula
     }
   }
   expect(wrapped).toBe(true);
+});
+
+test('negative taxi movement complements the positive word ($51FDC/$5200A)', async () => {
+  const content = await dionContent();
+  const taxi = {
+    ...createTaxi(content),
+    heading: 256,
+    passenger: true,
+    progress: 0
+  };
+  const next = stepTaxi(content, taxi, taxi.cell).taxi;
+  expect(next.position[0] - taxi.position[0]).toBe(-1025);
 });

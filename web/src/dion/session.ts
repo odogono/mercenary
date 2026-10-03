@@ -23,7 +23,13 @@ import {
 import type { DionPanelView } from './panel.ts';
 import { readDionResume } from './restore.ts';
 import { DionNarrative, type DionScriptState } from './script.ts';
-import { createTaxi, stepTaxi, taxiControl, type DionTaxi } from './service.ts';
+import {
+  createTaxi,
+  stepTaxi,
+  taxiControl,
+  type DionTaxi,
+  type DionTaxiProfile
+} from './service.ts';
 import { dionDay } from './sky.ts';
 import {
   freshSound,
@@ -32,6 +38,7 @@ import {
   tickSound,
   type DionSoundState
 } from './sound.ts';
+import type { TourcraftState } from './tourcraftState.ts';
 
 /// The Mercenary III Gameplay Session, a sibling of Targ's and Damocles's (ADR 0043).
 ///
@@ -90,6 +97,7 @@ export interface DionSnapshot {
   readonly taxi: DionTaxi;
   /// Ticks run since the session began.
   readonly tick: number;
+  readonly tourcraft?: TourcraftState;
 }
 
 export interface DionResumeRecord {
@@ -107,20 +115,20 @@ export class DionSession implements TitleSession<
   DionResumeRecord
 > {
   intent: Intent = IDLE;
-  private remainder = 0;
-  private readonly narrative: DionNarrative;
-  private events: {
+  protected remainder = 0;
+  protected narrative: DionNarrative;
+  protected events: {
     readonly at: number;
     readonly registers: readonly (readonly [number, number])[];
   }[] = [];
-  private state: DionSnapshot;
-  private readonly substeps: number;
-  private readonly tickSeconds: number;
-  private readonly ticksPerFrame: number;
-  private readonly walkRules: WalkRules;
+  protected state: DionSnapshot;
+  protected readonly substeps: number;
+  protected readonly tickSeconds: number;
+  protected readonly ticksPerFrame: number;
+  protected readonly walkRules: WalkRules;
 
   constructor(
-    private readonly content: DionContent,
+    protected content: DionContent,
     restore?: DionResumeRecord
   ) {
     const { opening } = content.world;
@@ -180,7 +188,9 @@ export class DionSession implements TitleSession<
       this.remainder = restore.remainder;
       this.narrative.state = this.state.narrative;
     }
-    this.selectCandidate();
+    if (new.target === DionSession) {
+      this.selectCandidate();
+    }
   }
 
   /// Local solar time follows the observer's current longitude. The recovered sky's cached
@@ -239,16 +249,49 @@ export class DionSession implements TitleSession<
       this.remainder -= this.tickSeconds;
       this.tick();
     }
+    if (Math.abs(this.remainder) < 1e-12) {
+      this.remainder = 0;
+    }
     return this.state;
   }
 
+  protected taxiProfile(): DionTaxiProfile {
+    return 'd1';
+  }
+
+  protected serviceContent(): DionContent {
+    return this.content;
+  }
+
+  protected clockRate(): number {
+    return this.content.world.opening.clock.step;
+  }
+  protected tickExtra(): void {}
+  protected advanceSound(previous: DionSoundState, control: number) {
+    const sound = tickSound(
+      this.content.sound,
+      previous,
+      control,
+      this.narrative.state.message
+    );
+    return { registers: soundRegisterChanges(previous, sound), sound };
+  }
+  protected emitSound(
+    at: number,
+    registers: readonly (readonly [number, number])[]
+  ): void {
+    if (registers.length) {
+      this.events.push({ at, registers });
+    }
+  }
+
   /// One tick: the VBL rules, then the frame if this tick ends one.
-  private tick(): void {
+  protected tick(): void {
     const { opening } = this.content.world;
     // `$53164..$531D0`: the step comes off the accumulator; at or below zero a
     // second is counted and the refill added, and the day rolls at 86,400.
     let { accumulator, day, seconds } = this.state.clock;
-    accumulator -= opening.clock.step;
+    accumulator -= this.clockRate();
     while (accumulator <= 0) {
       seconds += 1;
       accumulator += opening.clock.refill;
@@ -260,17 +303,13 @@ export class DionSession implements TitleSession<
     const tick = this.state.tick + 1;
     this.narrative.tick();
     const beforeSound = this.state.sound;
-    const control = taxiControl(this.content, this.state.taxi);
-    const sound = tickSound(
-      this.content.sound,
-      beforeSound,
-      control,
-      this.narrative.state.message
+    const control = taxiControl(
+      this.content,
+      this.state.taxi,
+      this.taxiProfile()
     );
-    const registers = soundRegisterChanges(beforeSound, sound);
-    if (registers.length > 0) {
-      this.events.push({ at: tick / 50, registers });
-    }
+    const { registers, sound } = this.advanceSound(beforeSound, control);
+    this.emitSound(tick / 50, registers);
     this.state = {
       ...this.state,
       clock: { accumulator, day, seconds },
@@ -280,13 +319,14 @@ export class DionSession implements TitleSession<
       sound,
       tick
     };
+    this.tickExtra();
     if (tick % this.ticksPerFrame === 0) {
       this.frame();
     }
   }
 
   /// One simulation frame, atomic, after the tick's VBL rules.
-  private frame(): void {
+  protected frame(): void {
     this.handleInput();
     this.narrative.frame();
     this.state = { ...this.state, narrative: this.narrative.state };
@@ -294,7 +334,12 @@ export class DionSession implements TitleSession<
       this.walkSubstep();
     }
     const previousTaxi = this.state.taxi;
-    const service = stepTaxi(this.content, previousTaxi, this.state.cell);
+    const service = stepTaxi(
+      this.serviceContent(),
+      previousTaxi,
+      this.state.cell,
+      this.taxiProfile()
+    );
     this.state = { ...this.state, taxi: service.taxi };
     if (service.liftOff) {
       this.cue('lift_off');
@@ -350,7 +395,7 @@ export class DionSession implements TitleSession<
   /// multiplies the step through its log tables by the heading's half-step sine and cosine
   /// and rounds each product into the pose; the shared step works in radians, so the half
   /// step is carried into the bearing and each axis's move is rounded to whole units.
-  private walkSubstep(): void {
+  protected walkSubstep(): void {
     const { eye, heading } = this.state;
     const bearing = (2 * Math.PI * (heading + 512.5)) / 1024;
     const moved = walk(
@@ -414,7 +459,7 @@ export class DionSession implements TitleSession<
 
   /// The bound structure's regions as the shared clamp sees them, and its origin. A door
   /// region is selectable only while its door's latch is open (`$5B320`).
-  private bound(cell: number): {
+  protected bound(cell: number): {
     readonly origin: readonly [number, number];
     readonly regions: readonly ClampRegion[];
   } | null {
@@ -451,7 +496,7 @@ export class DionSession implements TitleSession<
     };
   }
 
-  private cellAt(eye: Vec3): number {
+  protected cellAt(eye: Vec3): number {
     const [gx, gz] = this.content.world.opening.groupOrigin;
     const x = Math.floor(eye[0] / 0x1_00_00) - gx;
     const z = Math.floor(eye[2] / 0x1_00_00) - gz;
@@ -459,7 +504,7 @@ export class DionSession implements TitleSession<
   }
 
   /// `$5600C..$560B0`: the cell's token set binds the animated buffer only at `(3,0)`.
-  private signBound(): boolean {
+  protected signBound(): boolean {
     const cell = this.content.world.cells.find(
       item => item.cell === this.state.cell
     );
@@ -472,7 +517,7 @@ export class DionSession implements TitleSession<
   }
 
   /// `$54F20`: the index steps once a frame, wrapping on the script's zero.
-  private advanceSign(sign: DionSnapshot['sign']): DionSnapshot['sign'] {
+  protected advanceSign(sign: DionSnapshot['sign']): DionSnapshot['sign'] {
     const script = this.content.world.lettering.signScript;
     const index = sign.index + 1;
     const code = script[index];
@@ -481,17 +526,15 @@ export class DionSession implements TitleSession<
       : { code, index };
   }
 
-  private cue(name: string): void {
+  protected cue(name: string): void {
     const previous = this.state.sound;
     const sound = requestSound(previous, name);
     this.state = { ...this.state, sound };
     const registers = soundRegisterChanges(previous, sound);
-    if (registers.length > 0) {
-      this.events.push({ at: this.state.tick / 50, registers });
-    }
+    this.emitSound(this.state.tick / 50, registers);
   }
 
-  private handleInput(): void {
+  protected handleInput(): void {
     const action = this.state.pending;
     this.state = { ...this.state, pending: null };
     if (action === null) {
@@ -563,7 +606,7 @@ export class DionSession implements TitleSession<
     }
   }
 
-  private admit(): void {
+  protected admit(): void {
     if (this.state.admission === 0) {
       return;
     }
@@ -576,16 +619,7 @@ export class DionSession implements TitleSession<
     if (candidate === null || candidate.exponent > 9) {
       return;
     }
-    const entry = this.content.world.cells.find(
-      item => item.cell === this.state.cell
-    );
-    const flags =
-      entry === undefined
-        ? 0
-        : (this.content.world.structures
-            .get(entry.structure)
-            ?.get(entry.scale.join(','))?.regions[this.state.region - 1]
-            ?.flags ?? 0);
+    const flags = this.admissionFlags();
     if (!(flags & 0x40_00)) {
       return;
     }
@@ -611,7 +645,21 @@ export class DionSession implements TitleSession<
     this.narrative.idMessage(0x28);
   }
 
-  private regionAtEye(cell: number, eye: Vec3): number {
+  protected admissionFlags(): number {
+    const entry = this.content.world.cells.find(
+      item => item.cell === this.state.cell
+    );
+    const flags =
+      entry === undefined
+        ? 0
+        : (this.content.world.structures
+            .get(entry.structure)
+            ?.get(entry.scale.join(','))?.regions[this.state.region - 1]
+            ?.flags ?? 0);
+    return flags;
+  }
+
+  protected regionAtEye(cell: number, eye: Vec3): number {
     const bound = this.bound(cell);
     if (bound === null) {
       return 0;
@@ -623,15 +671,19 @@ export class DionSession implements TitleSession<
     return index === null ? 0 : index + 1;
   }
 
-  private selectCandidate(): void {
+  protected frameState(): DionFrameState {
+    return dionFrameState(this.state);
+  }
+
+  protected selectCandidate(): void {
     const candidate = planDionFrame(
       this.content.world,
-      dionFrameState(this.state)
+      this.frameState()
     ).candidate;
     this.state = { ...this.state, candidate };
   }
 
-  private moveDoor(eye: Vec3): void {
+  protected moveDoor(eye: Vec3): void {
     if (this.state.cell !== 0x62) {
       return;
     }
@@ -675,10 +727,18 @@ export class DionSession implements TitleSession<
     }
   }
 
-  private animateDriver(): void {
+  protected canInstallDriver(): boolean {
+    return true;
+  }
+
+  protected finishDriver(): DionSnapshot['driver'] {
+    return { index: 0, profile: false, remaining: 0, selector: 0 };
+  }
+
+  protected animateDriver(): void {
     let driver = this.state.driver;
     const selector = this.narrative.state.cabin;
-    if (selector !== 0) {
+    if (selector !== 0 && this.canInstallDriver()) {
       const counts = this.content.service.headTurns.get(selector)!;
       driver = { index: 1, profile: false, remaining: counts[0]!, selector };
       this.narrative.state = { ...this.narrative.state, cabin: 0 };
@@ -691,7 +751,7 @@ export class DionSession implements TitleSession<
         ];
         driver =
           count === undefined
-            ? { index: 0, profile: false, remaining: 0, selector: 0 }
+            ? this.finishDriver()
             : {
                 ...driver,
                 index: driver.index + 1,

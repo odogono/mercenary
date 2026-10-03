@@ -85,7 +85,10 @@ const track = (
     }
   });
 
-export const dionControlCaptures = (content: DionContent) => {
+export const dionControlCaptures = (
+  content: DionContent,
+  create: () => DionSession = () => new DionSession(content)
+) => {
   const captures: {
     index: number;
     name: string;
@@ -94,7 +97,7 @@ export const dionControlCaptures = (content: DionContent) => {
   }[] = [];
   for (const [route, names] of Object.entries(checkpoints)) {
     const operations: DionControlOperation[] = [];
-    const s = track(new DionSession(content), operations);
+    const s = track(create(), operations);
     const capture = (name: string) => {
       if (names.includes(name as never)) {
         captures.push({

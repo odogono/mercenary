@@ -68,7 +68,17 @@ const nextPoint = (content: DionContent, taxi: DionTaxi): DionTaxi => {
 
 // The same cell may occur twice with different controls. Before the mid-segment
 // crossing use the current point; after crossing use this segment's next point.
-export const taxiControl = (content: DionContent, taxi: DionTaxi): number => {
+/// D1 remains the frozen research/prototype witness. The expanded runtime uses
+/// the later recovered empty-service and NOT.W movement rules.
+export type DionTaxiProfile = 'd1' | 'tourcraft';
+export const taxiControl = (
+  content: DionContent,
+  taxi: DionTaxi,
+  profile: DionTaxiProfile = 'tourcraft'
+): number => {
+  if (profile === 'tourcraft' && !taxi.passenger) {
+    return 0;
+  }
   const current = content.service.route[taxi.routeIndex]!;
   const next =
     content.service.route[
@@ -87,13 +97,14 @@ export interface DionServiceStep {
 export const stepTaxi = (
   content: DionContent,
   previous: DionTaxi,
-  playerCell: number
+  playerCell: number,
+  profile: DionTaxiProfile = 'tourcraft'
 ): DionServiceStep => {
   let taxi = previous;
   let arrived = false;
   let liftOff = false;
   let setDown = false;
-  const nibble = taxiControl(content, taxi) & 7;
+  const nibble = taxiControl(content, taxi, profile) & 7;
   const limit = nibble === 0 ? 16 : nibble + 1;
   for (let pass = 0; pass < limit; pass += 1) {
     if (taxi.counter === 2) {
@@ -136,8 +147,10 @@ export const stepTaxi = (
     } else {
       const speed = -content.service.taxiRate;
       const direction = (taxi.heading >> 8) & 3;
-      const dx = direction === 1 ? -speed : direction === 3 ? speed : 0;
-      const dz = direction === 0 ? -speed : direction === 2 ? speed : 0;
+      // The ST uses NOT.W, not NEG.W, on the positive movement word.
+      const negative = profile === 'tourcraft' ? ~speed : -speed;
+      const dx = direction === 1 ? negative : direction === 3 ? speed : 0;
+      const dz = direction === 0 ? negative : direction === 2 ? speed : 0;
       const position: Vec3 = [
         taxi.position[0] + dx,
         taxi.position[1],

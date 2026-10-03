@@ -72,6 +72,7 @@ export interface DionPanelDocument {
       readonly x: readonly [number, number];
       readonly y: number;
     };
+    readonly coordinate: DionPanelTextField;
     readonly gauges: readonly {
       readonly name: string;
       readonly planes: readonly number[];
@@ -301,6 +302,7 @@ export const readDionPanelBody = (
         x: span(compass['x'], 'fields.compass.x'),
         y: int(compass['y'], 'fields.compass.y', 136, 199)
       },
+      coordinate: textField(field('coordinate'), 'fields.coordinate'),
       gauges: list(gauges['bars'], 'fields.gauges.bars').map((item, index) => {
         const bar = record(item, `fields.gauges.bars[${index}]`);
         return {
