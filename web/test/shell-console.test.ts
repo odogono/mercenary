@@ -724,18 +724,14 @@ describe('doing what a console command says', () => {
     expect(changes).toEqual([{ presentationPreset: undefined }]);
   });
 
-  test('sets the Cast Shadow edge, which has no document to hand back to', () => {
+  test('turns Cast Shadows off and on, with no document to hand back to', () => {
     const { changes, deps } = harness();
 
-    expect(run('set shadows hard', deps)).toEqual(['shadows hard']);
     expect(run('set shadows off', deps)).toEqual(['shadows off']);
-    expect(run('set shadows soft', deps)).toEqual(['shadows soft']);
-    expect(changes).toEqual([
-      { castShadows: 'hard' },
-      { castShadows: 'off' },
-      { castShadows: 'soft' }
-    ]);
+    expect(run('set shadows on', deps)).toEqual(['shadows on']);
+    expect(changes).toEqual([{ castShadows: 'off' }, { castShadows: 'on' }]);
     expect(() => parse('set shadows document')).toThrow();
+    expect(() => parse('set shadows soft')).toThrow();
   });
 
   test('sets Structure Reach and hands it back to the tuning document', () => {

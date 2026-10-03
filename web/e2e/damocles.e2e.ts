@@ -359,16 +359,12 @@ test('Enhanced sunlight reaches the floor through the spaceport window', async (
     );
   };
 
-  // Turning the Cast Shadow edge off draws every face in its recovered colour, so the roof no
-  // longer darkens the far floor; hard brings the beam back with no reload.
+  // Turning Cast Shadows off draws every face in its recovered colour, so the roof no longer
+  // darkens the far floor; on brings the beam back with no reload.
   await choose('shadows', 'off');
   await expect.poll(contrast).toBeLessThan(1);
-  await choose('shadows', 'hard');
+  await choose('shadows', 'on');
   await expect.poll(contrast).toBeGreaterThan(15);
-  await testInfo.attach('damocles-enhanced-window-light-hard', {
-    body: await frame.screenshot(),
-    contentType: 'image/png'
-  });
 
   await choose('presentation', 'authentic');
   await expect.poll(contrast).toBeLessThan(1);

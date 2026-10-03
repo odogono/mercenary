@@ -13,7 +13,6 @@ import {
 } from '../src/damocles/frame.ts';
 import { erisLighting, type Sunlight } from '../src/damocles/lighting.ts';
 import {
-  ERIS_SHADOW_WINDOWS,
   ErisRenderer,
   shadowCasterVertices
 } from '../src/damocles/renderer.ts';
@@ -31,6 +30,11 @@ import {
   type ErisPlacement,
   type ErisSurface
 } from '../src/damocles/world.ts';
+import {
+  CASTER_GRID_HALF_EXTENT,
+  CASTER_GRID_SIZE,
+  CASTER_TEXTURE_WIDTH
+} from '../src/rendering/castShadows.ts';
 import { ERIS_BODY } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
@@ -1034,9 +1038,9 @@ const fakeContext = () => {
     bindBuffer: () => undefined,
     bindFramebuffer: (_target: number, value: { id: number } | null) =>
       calls.push(`framebuffer:${value === null ? 'default' : value.id}`),
-    bindSampler: (unit: number, sampler: { filter: number }) =>
+    bindSampler: (unit: number, sampler: { filter: number } | null) =>
       calls.push(
-        `bindSampler:${unit}:${sampler.filter === 34 ? 'nearest' : 'linear'}`
+        `bindSampler:${unit}:${sampler === null ? 'none' : sampler.filter === 34 ? 'nearest' : 'linear'}`
       ),
     bindTexture: () => undefined,
     BLEND: 35,
@@ -1114,6 +1118,13 @@ const fakeContext = () => {
     SCISSOR_TEST: 36,
     shaderSource: () => undefined,
     STENCIL_TEST: 37,
+    texImage2D: (
+      _target: number,
+      _level: number,
+      _format: number,
+      width: number,
+      height: number
+    ) => calls.push(`texImage:${width}:${height}`),
     texParameteri: () => undefined,
     texStorage2D: (
       _target: number,
@@ -1143,6 +1154,16 @@ const fakeContext = () => {
     },
     uniform3f: (name: string, a: number, b: number, c: number) => {
       uniforms[name] = [a, b, c];
+    },
+    uniform4f: (name: string, a: number, b: number, c: number, d: number) => {
+      uniforms[name] = [a, b, c, d];
+    },
+    uniformMatrix3fv: (
+      name: string,
+      _transpose: boolean,
+      value: readonly number[]
+    ) => {
+      uniforms[name] = Array.from(value);
     },
     uniformMatrix4fv: (
       name: string,
@@ -1284,7 +1305,7 @@ describe('the Eris renderer', () => {
     expect(fake.calls).not.toContain('texStorage:2048:2048');
   });
 
-  test('draws deduplicated casters into near and far soft-shadow maps', async () => {
+  test('ray-tests Cast Shadows against the structures alone, through a caster grid uploaded each frame', async () => {
     (globalThis as { window?: unknown }).window ??= { devicePixelRatio: 1 };
     const { doc, surface } = await load();
     const plan = planErisFrame(
@@ -1292,12 +1313,12 @@ describe('the Eris renderer', () => {
       origin,
       doc
     );
-    const casters = shadowCasterVertices(plan.vertices);
     expect(plan.triangleCount).toBe(plan.fillTriangleCount + 4);
-    // Every fill quad and the double-sided face collapse to one winding each.
-    expect(casters).toHaveLength(
-      (plan.fillTriangleCount / 2 + 2) * 3 * FLOATS_PER_VERTEX
-    );
+    const structureStart = plan.fillTriangleCount * 3 * FLOATS_PER_VERTEX;
+    // The double-sided face collapses to one winding; the Body's surface casts nothing.
+    expect(
+      shadowCasterVertices(plan.vertices.subarray(structureStart))
+    ).toHaveLength(2 * 3 * FLOATS_PER_VERTEX);
 
     const fake = fakeContext();
     const renderer = new ErisRenderer(
@@ -1306,32 +1327,17 @@ describe('the Eris renderer', () => {
       () => undefined
     );
     expect(fake.compiled).toBe(2);
+    const frame = { lighting: erisLighting(doc, origin, sun) };
+    renderer.render(plan, frame);
+    renderer.render(plan, frame);
+    // One lit program; no shadow map, depth pass or stencil.
+    expect(fake.compiled).toBe(4);
+    expect(fake.calls).not.toContain('texStorage:2048:2048');
 
-    renderer.render(plan, {
-      eyeWorld: origin.position,
-      lighting: erisLighting(doc, origin, sun),
-      shadowEdge: 'soft',
-      view: origin
-    });
-    expect(fake.compiled).toBe(6);
-    expect(
-      fake.calls.filter(call => call === 'texStorage:2048:2048')
-    ).toHaveLength(2);
-    renderer.render(plan, {
-      eyeWorld: origin.position,
-      lighting: erisLighting(doc, origin, sun),
-      shadowEdge: 'soft',
-      view: origin
-    });
-
-    const casterDraw = `draw:15:0:${casters.length / FLOATS_PER_VERTEX}`;
     const fill = plan.fillTriangleCount * 3;
-    // Two shadow maps of deduplicated casters, the ground to the horizon, then the four
-    // colour layers: this surface carries no island records and no ground records, so those
-    // two layers are empty.
+    // The ground to the horizon, then the four colour layers: this surface carries no island
+    // records and no ground records, so those two layers are empty.
     const once = [
-      casterDraw,
-      casterDraw,
       `draw:15:0:${plan.horizonVertices.length / FLOATS_PER_VERTEX}`,
       `draw:15:0:${fill}`,
       `draw:15:${fill}:0`,
@@ -1342,22 +1348,24 @@ describe('the Eris renderer', () => {
       ...once,
       ...once
     ]);
-    expect(fake.calls).toContain('disableAttribute:1');
-    expect(fake.calls).toContain('polygonOffset:1:2');
-    expect(fake.uniforms['nearLightMatrix']).toHaveLength(16);
-    expect(fake.uniforms['farLightMatrix']).toHaveLength(16);
-    expect(fake.uniforms['nearShadowMap']).toEqual([0]);
-    expect(fake.uniforms['farShadowMap']).toEqual([1]);
-    // A soft Cast Shadow reads both maps through the LINEAR compare sampler and averages.
-    expect(fake.uniforms['hardEdge']).toEqual([0]);
-    expect(fake.calls.filter(call => call.startsWith('bindSampler:'))).toEqual([
-      'bindSampler:0:linear',
-      'bindSampler:1:linear',
-      'bindSampler:0:linear',
-      'bindSampler:1:linear'
+    // Each frame uploads the two casters' corners, the grid's cells and its index list.
+    const upload = [
+      `texImage:${CASTER_TEXTURE_WIDTH}:1`,
+      `texImage:${CASTER_GRID_SIZE}:${CASTER_GRID_SIZE}`,
+      `texImage:${CASTER_TEXTURE_WIDTH}:1`
+    ];
+    expect(fake.calls.filter(call => call.startsWith('texImage:'))).toEqual([
+      ...upload,
+      ...upload
     ]);
+    expect(fake.uniforms['casterTriangles']).toEqual([0]);
+    expect(fake.uniforms['casterCells']).toEqual([1]);
+    expect(fake.uniforms['casterIndices']).toEqual([2]);
+    expect(fake.uniforms['gridSize']).toEqual([CASTER_GRID_SIZE]);
+    expect(fake.uniforms['lightBasis']).toHaveLength(9);
     expect(fake.uniforms['ambientSky']).toEqual([1, 1, 1]);
 
+    // The grid reaches the spaceport from the start pose.
     const spaceport = surface.placements.find(
       candidate => candidate.id === 'eris-surface-87'
     )!;
@@ -1365,49 +1373,6 @@ describe('the Eris renderer', () => {
       doc.start.position.x - spaceport.position.x,
       doc.start.position.z - spaceport.position.z
     );
-    expect(ERIS_SHADOW_WINDOWS).toHaveLength(2);
-    expect(ERIS_SHADOW_WINDOWS[0].depthHalfRange).toBeGreaterThan(16_384);
-    expect(ERIS_SHADOW_WINDOWS[1].halfExtent).toBeGreaterThan(startDistance);
-  });
-
-  test('draws a hard Cast Shadow through the NEAREST sampler with the same maps', async () => {
-    (globalThis as { window?: unknown }).window ??= { devicePixelRatio: 1 };
-    const { doc } = await load();
-    const plan = planErisFrame(
-      surfaceOf([placement(square(true))]),
-      origin,
-      doc
-    );
-    const fake = fakeContext();
-    const renderer = new ErisRenderer(
-      fake.canvas,
-      { cullBackFaces: true, lighting: true },
-      () => undefined
-    );
-    const frame = {
-      eyeWorld: origin.position,
-      lighting: erisLighting(doc, origin, sun),
-      view: origin
-    };
-
-    renderer.render(plan, { ...frame, shadowEdge: 'hard' });
-    // Same programs, same 2048² maps: only the sampler and the lookup change.
-    expect(fake.compiled).toBe(6);
-    expect(
-      fake.calls.filter(call => call === 'texStorage:2048:2048')
-    ).toHaveLength(2);
-    expect(fake.uniforms['hardEdge']).toEqual([1]);
-    expect(fake.calls.filter(call => call.startsWith('bindSampler:'))).toEqual([
-      'bindSampler:0:nearest',
-      'bindSampler:1:nearest'
-    ]);
-
-    // Switching edge between frames rebinds without reallocating.
-    renderer.render(plan, { ...frame, shadowEdge: 'soft' });
-    expect(fake.compiled).toBe(6);
-    expect(fake.uniforms['hardEdge']).toEqual([0]);
-    expect(
-      fake.calls.filter(call => call.startsWith('bindSampler:')).slice(2)
-    ).toEqual(['bindSampler:0:linear', 'bindSampler:1:linear']);
+    expect(CASTER_GRID_HALF_EXTENT).toBeGreaterThan(startDistance);
   });
 });

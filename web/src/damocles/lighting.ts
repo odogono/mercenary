@@ -8,12 +8,10 @@ import {
 import type { ErisPresentationDocument } from './documents.ts';
 import type { SkyItem } from './sky.ts';
 
-export { lightMatrix } from '../rendering/lighting.ts';
 export type {
   Channels,
   FrameLighting as ErisLighting,
-  ViewOrientation,
-  ShadowWindow
+  ViewOrientation
 } from '../rendering/lighting.ts';
 
 const channels = (colour: string): readonly [number, number, number] => [

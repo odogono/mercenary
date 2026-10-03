@@ -101,16 +101,13 @@ const api = {
       plan,
       enhanced
         ? {
-            eyeWorld: { x: 0, y: 0, z: 0 },
             lighting: {
               ambientGround: [1, 1, 1],
               ambientSky: [1, 1, 1],
               sunColour: [0, 0, 0],
               sunView: { x: 0, y: 1, z: 0 },
               sunWorld: { x: 0, y: 1, z: 0 }
-            },
-            shadowEdge: 'soft',
-            view: { heading: 0, pitch: 0 }
+            }
           }
         : undefined
     );

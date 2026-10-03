@@ -112,11 +112,11 @@ describe('browser shell preferences', () => {
     ).not.toHaveProperty('presentationPreset');
   });
 
-  test('keep a Cast Shadow edge and reject an unrecognised one', () => {
-    expect(validatePreferences({ castShadows: 'hard' }).castShadows).toBe(
-      'hard'
-    );
+  test('keep the Cast Shadows switch, read an old edge as on, and reject anything else', () => {
+    expect(validatePreferences({ castShadows: 'on' }).castShadows).toBe('on');
     expect(validatePreferences({ castShadows: 'off' }).castShadows).toBe('off');
+    expect(validatePreferences({ castShadows: 'hard' }).castShadows).toBe('on');
+    expect(validatePreferences({ castShadows: 'soft' }).castShadows).toBe('on');
     expect(validatePreferences({ castShadows: 'blurry' })).not.toHaveProperty(
       'castShadows'
     );

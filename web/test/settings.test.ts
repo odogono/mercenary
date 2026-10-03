@@ -26,8 +26,9 @@ import {
   defaultSettings,
   flightLimits,
   flightModel,
-  isCastShadowEdge,
+  isCastShadows,
   loadSettings,
+  readCastShadows,
   type FlightSettings
 } from '../src/settings/index.ts';
 import { parseTraceHeader, type TraceObject } from '../src/trace/index.ts';
@@ -132,18 +133,25 @@ describe('a document that names only what it changes', () => {
   });
 });
 
-describe('the Cast Shadow edge vocabulary', () => {
-  test('defaults to the softened edge the shipped shadows already have', () => {
-    expect(DEFAULT_CAST_SHADOWS).toBe('soft');
+describe('the Cast Shadows switch', () => {
+  test('defaults to shadows on', () => {
+    expect(DEFAULT_CAST_SHADOWS).toBe('on');
   });
 
-  test('accepts each named edge and refuses anything else', () => {
-    for (const edge of ['off', 'soft', 'hard']) {
-      expect(isCastShadowEdge(edge)).toBe(true);
+  test('accepts off and on and refuses anything else', () => {
+    for (const choice of ['off', 'on']) {
+      expect(isCastShadows(choice)).toBe(true);
     }
-    expect(isCastShadowEdge('blurry')).toBe(false);
-    expect(isCastShadowEdge(true)).toBe(false);
-    expect(isCastShadowEdge(undefined)).toBe(false);
+    for (const other of ['soft', 'hard', 'blurry', true, undefined]) {
+      expect(isCastShadows(other)).toBe(false);
+    }
+  });
+
+  test('reads a stored soft or hard edge as shadows on (ADR 0069)', () => {
+    expect(readCastShadows('soft')).toBe('on');
+    expect(readCastShadows('hard')).toBe('on');
+    expect(readCastShadows('off')).toBe('off');
+    expect(readCastShadows('blurry')).toBeUndefined();
   });
 });
 
