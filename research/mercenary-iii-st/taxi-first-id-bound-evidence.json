@@ -1,0 +1,249 @@
+{
+  "sourceRevision": "e4cba434069ca1fbec6e72b3a99cbf775f1663c4",
+  "identity": {
+    "contentSha256": "c50b402c04c70ab74f95a938c0f867e740ea843157e514764f2bceb84a2f44ed",
+    "destination": "metis",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "title": "dion"
+  },
+  "archivedServiceSha256": "2f878d2fb8c19c7db67b170d95fabc66b07ee3dafbaaeebd8895c4ae9103f1af",
+  "abstraction": {
+    "playerCells": 256,
+    "callValues": [false, true],
+    "scope": "All pre-first-boarding taxi states; card, call and physical guards relaxed. Each layer fully exhausted, including the first boardable layer.",
+    "completeness": "Before boarding only call can change by input; passenger/start/destination remain false/false/0. Each natural frame uses one cell in 0..255 and one call value. Genuine restores preserve every taxi field; zero-tick inputs do not advance service."
+  },
+  "earliestBoardableFrame": 19,
+  "earliestBoardableTick": 209,
+  "layers": [
+    {
+      "frame": 1,
+      "inputStates": 1,
+      "transitions": 512,
+      "states": 4,
+      "boardableStates": 0
+    },
+    {
+      "frame": 2,
+      "inputStates": 4,
+      "transitions": 2048,
+      "states": 8,
+      "boardableStates": 0
+    },
+    {
+      "frame": 3,
+      "inputStates": 8,
+      "transitions": 4096,
+      "states": 14,
+      "boardableStates": 0
+    },
+    {
+      "frame": 4,
+      "inputStates": 14,
+      "transitions": 7168,
+      "states": 22,
+      "boardableStates": 0
+    },
+    {
+      "frame": 5,
+      "inputStates": 22,
+      "transitions": 11264,
+      "states": 32,
+      "boardableStates": 0
+    },
+    {
+      "frame": 6,
+      "inputStates": 32,
+      "transitions": 16384,
+      "states": 44,
+      "boardableStates": 0
+    },
+    {
+      "frame": 7,
+      "inputStates": 44,
+      "transitions": 22528,
+      "states": 58,
+      "boardableStates": 0
+    },
+    {
+      "frame": 8,
+      "inputStates": 58,
+      "transitions": 29696,
+      "states": 74,
+      "boardableStates": 0
+    },
+    {
+      "frame": 9,
+      "inputStates": 74,
+      "transitions": 37888,
+      "states": 92,
+      "boardableStates": 0
+    },
+    {
+      "frame": 10,
+      "inputStates": 92,
+      "transitions": 47104,
+      "states": 112,
+      "boardableStates": 0
+    },
+    {
+      "frame": 11,
+      "inputStates": 112,
+      "transitions": 57344,
+      "states": 134,
+      "boardableStates": 0
+    },
+    {
+      "frame": 12,
+      "inputStates": 134,
+      "transitions": 68608,
+      "states": 158,
+      "boardableStates": 0
+    },
+    {
+      "frame": 13,
+      "inputStates": 158,
+      "transitions": 80896,
+      "states": 182,
+      "boardableStates": 0
+    },
+    {
+      "frame": 14,
+      "inputStates": 182,
+      "transitions": 93184,
+      "states": 206,
+      "boardableStates": 0
+    },
+    {
+      "frame": 15,
+      "inputStates": 206,
+      "transitions": 105472,
+      "states": 230,
+      "boardableStates": 0
+    },
+    {
+      "frame": 16,
+      "inputStates": 230,
+      "transitions": 117760,
+      "states": 252,
+      "boardableStates": 0
+    },
+    {
+      "frame": 17,
+      "inputStates": 252,
+      "transitions": 129024,
+      "states": 275,
+      "boardableStates": 0
+    },
+    {
+      "frame": 18,
+      "inputStates": 275,
+      "transitions": 140800,
+      "states": 300,
+      "boardableStates": 0
+    },
+    {
+      "frame": 19,
+      "inputStates": 300,
+      "transitions": 153600,
+      "states": 325,
+      "boardableStates": 1
+    }
+  ],
+  "relaxedWitness": {
+    "taxi": {
+      "call": true,
+      "cell": 97,
+      "counter": 2,
+      "destination": 0,
+      "heading": 256,
+      "heightIndex": 0,
+      "passenger": false,
+      "position": [165707776, 0, 70287232],
+      "progress": 0,
+      "routeIndex": 1,
+      "start": false
+    },
+    "inputs": [
+      {
+        "call": false,
+        "playerCell": 0
+      },
+      {
+        "call": false,
+        "playerCell": 0
+      },
+      {
+        "call": false,
+        "playerCell": 0
+      },
+      {
+        "call": false,
+        "playerCell": 97
+      },
+      {
+        "call": false,
+        "playerCell": 97
+      },
+      {
+        "call": false,
+        "playerCell": 97
+      },
+      {
+        "call": false,
+        "playerCell": 97
+      },
+      {
+        "call": false,
+        "playerCell": 97
+      },
+      {
+        "call": false,
+        "playerCell": 97
+      },
+      {
+        "call": false,
+        "playerCell": 97
+      },
+      {
+        "call": false,
+        "playerCell": 97
+      },
+      {
+        "call": false,
+        "playerCell": 97
+      },
+      {
+        "call": false,
+        "playerCell": 97
+      },
+      {
+        "call": false,
+        "playerCell": 97
+      },
+      {
+        "call": false,
+        "playerCell": 97
+      },
+      {
+        "call": false,
+        "playerCell": 97
+      },
+      {
+        "call": true,
+        "playerCell": 97
+      },
+      {
+        "call": false,
+        "playerCell": 0
+      },
+      {
+        "call": true,
+        "playerCell": 0
+      }
+    ]
+  },
+  "restorePreservesNaturalTaxi": true,
+  "naturalRestoreObservations": 20,
+  "limit": "No accepted external ID can precede this bound: boarding ID needs post-service counter 2 and arrival ID needs a prior passenger. The relaxed witness is not a natural full-source history; message/pose/card guards may delay acceptance further."
+}
