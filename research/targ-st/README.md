@@ -13,3 +13,5 @@ PYTHONPATH=. python3 -m unittest discover -s tests
 ```
 
 `export` reads the STX directly: no emulator, no RAM. It checks the `ESCAPE.PRG` loader steps that show `E0` before it decodes anything. `confirm` keeps its RAM and screenshot under the ignored `restricted/targ-st/`. See [the research note](../../docs/research/targ-st-title-logo.md).
+
+The [ST panel investigation](../../docs/research/targ-st-recovered-panel.md) also uses this disk reader to locate panel artwork and inspect its writers. Its probe and captures remain Restricted Material; the commands above still export only the Title Logo. Panel adoption would require a separate presentation decision under ADR 0027.
