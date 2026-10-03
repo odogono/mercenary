@@ -16,9 +16,10 @@ import {
 import type { DamoclesSnapshot } from './session.ts';
 import type { ErisCell } from './world.ts';
 
-/// The Damocles Panel Rendition fed by Damocles's own Session State (ADR 0043).
+/// Semantic readouts for Damocles's recovered Gameplay Panel (ADR 0070),
+/// also retaining the shared attitude contract and accessible view model.
 ///
-/// Under ADR 0027 the same chrome dressed Targ data; here every readout that has a recovered
+/// Under ADR 0027 an authored rendition still dresses Targ data; here every readout that has a recovered
 /// meaning shows it, and every readout that does not is a static placeholder named as one.
 /// The credit readout has no economy behind it yet. The speed field and the altitude window
 /// read the craft Mover's words aboard (#556). The second lamp is the encounter gate `$070104`,

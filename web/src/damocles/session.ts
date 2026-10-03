@@ -593,6 +593,7 @@ const documentPanel = (
           : `${timedDetonator.charge} ${fuseText(timedDetonator.fuse)}`,
       kind: 'timedDetonator',
       parameter: null,
+      slot,
       title: 'TIMED DETONATOR'
     };
   }
@@ -604,6 +605,7 @@ const documentPanel = (
         item === null ? null : String(optionValue(computer)).padStart(3, '0'),
       kind: 'computer',
       parameter: item === null ? null : computer.option,
+      slot,
       title: COMPUTER_ROW.title
     };
   }
@@ -616,6 +618,7 @@ const documentPanel = (
         item === null ? null : (switches >> switchBit(row)) & 1 ? 'ON' : 'OFF',
       kind: 'switch',
       parameter: null,
+      slot: row.slot,
       title: row.title
     };
   }
@@ -634,6 +637,7 @@ const documentPanel = (
     item: item === null ? null : document.items[item]!.name.trimEnd(),
     kind: 'document',
     parameter: null,
+    slot: document.slot,
     title:
       modelSummaryById(content.catalogue, instance?.model)?.name ??
       `OBJECT ${document.slot}`

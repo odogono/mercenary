@@ -11,6 +11,7 @@ import {
   printedAltitude,
   speedField
 } from '../src/damocles/panel.ts';
+import { damoclesRecoveredPanelView } from '../src/damocles/panelWriter.ts';
 import { DamoclesSession } from '../src/damocles/session.ts';
 import { spaceAltitude } from '../src/damocles/space.ts';
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
@@ -223,6 +224,57 @@ describe('the Damocles Panel Rendition on Damocles Session State', () => {
 });
 
 describe('the panel aboard (#551, #556)', () => {
+  test('the recovered-panel adapter preserves #715 attitude words across turns and loops', async () => {
+    const loaded = await content();
+    const snapshot = new DamoclesSession(loaded).snapshot;
+    const view = (heading: number, pitch: number) =>
+      damoclesRecoveredPanelView(
+        { ...snapshot, pose: { ...snapshot.pose, heading, pitch } },
+        loaded.doc
+      );
+    for (const [radians, word] of [
+      [0, 0],
+      [Math.PI / 2, 256],
+      [-Math.PI / 2, 768],
+      [2 * Math.PI, 0],
+      [(5 * Math.PI) / 2, 256]
+    ]) {
+      expect(view(radians!, 0).heading).toBe(word!);
+    }
+    for (const [radians, word] of [
+      [0, 512],
+      [Math.PI / 2, 256],
+      [-Math.PI / 2, 768],
+      [Math.PI, 0],
+      [(3 * Math.PI) / 2, 768]
+    ]) {
+      expect(view(0, radians!).pitch).toBe(word!);
+    }
+    expect(view(Math.PI / 2, Math.PI / 4).heading).toBe(
+      view(Math.PI / 2, 0).heading
+    );
+    expect(view(Math.PI / 2, Math.PI / 4).pitch).toBe(
+      view(0, Math.PI / 4).pitch
+    );
+  });
+
+  test('inventory fullness scales the count by the recovered carrying capacity', async () => {
+    const loaded = await content();
+    const snapshot = new DamoclesSession(loaded).snapshot;
+    const carried = ['object-slot-111', 'object-slot-151', 'object-slot-108'];
+    expect(
+      damoclesRecoveredPanelView(
+        { ...snapshot, capacity: 10, carried },
+        loaded.doc
+      ).gauges.inventory
+    ).toBe(6);
+    expect(
+      damoclesRecoveredPanelView(
+        { ...snapshot, capacity: 20, carried },
+        loaded.doc
+      ).gauges.inventory
+    ).toBe(3);
+  });
   test('prints the speed field from `$4DFEC` as 4.28 digits, signed by the speed float', () => {
     // The traced readings of docs/research/damocles-panel-aboard.md.
     expect(speedField(34, 0x00_05_10_ce)).toBe('+ 000 000 012');

@@ -6,6 +6,7 @@ One directory per concern. Pages load a `boot.ts` (`web/*.html` names which). Ea
 
 - `shell/`: the Targ Browser Shell (`index.html`): boot, routing, menus, the Shell Console and its history, Saves, Session Resume, Arrival, input, gamepad, settings and controls views.
 - `damocles/`: Damocles play (`damocles.html`). `session.ts` (about 5,000 lines) owns the Gameplay Session; separate files hold Save (`save.ts`), the sky (`sky.ts`), the comet (`comet.ts`), craft and space (`craft.ts`, `space.ts`), documents, the encounter, the detonator and sound.
+  `panelDocument.ts` validates the recovered panel payload, `panelWriter.ts` owns Damocles's composer and raw-word adapters, and `panelView.ts`/`panelElement.ts` retain accessible readouts and controls. The authored Targ/Flyover rendition remains in `shell/` (ADR 0070).
 - `dion/`: Mercenary III on Dion (`dion.html`): session, frame, panel, taxi and TOURCRAFT (`tourcraft*.ts`), Save and Resume.
 - `session/`: the Targ Gameplay Session (ADR 0018), its Save and lift journeys.
 - `benson/`: the Benson Script interpreter and the Benson Display.

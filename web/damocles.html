@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <link rel="stylesheet" href="/src/damocles/panel.css" />
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Damocles</title>
@@ -88,7 +89,7 @@
 
       #panel {
         width: 100%;
-        aspect-ratio: 1280 / 244;
+        aspect-ratio: 320 / 64;
         overflow: hidden;
         background: #101010;
       }
@@ -137,11 +138,11 @@
       <canvas id="frame-noise" aria-hidden="true" hidden></canvas>
       <section id="panel" role="region" aria-label="Damocles panel" hidden>
         <div id="panel-scale">
-          <damocles-panel
+          <damocles-game-panel
             id="panel-damocles"
             data-title="DAMOCLES"
             data-head-controls
-          ></damocles-panel>
+          ></damocles-game-panel>
         </div>
       </section>
       <p id="status" role="status">Loading Damocles…</p>

@@ -1,4 +1,15 @@
+import {
+  PANEL_ROWS,
+  PANEL_TOP,
+  PanelPlanes as Planes,
+  slidingCompassFrame,
+  writePanelCompass,
+  writePanelField,
+  writePanelPitch
+} from '../shell/panelPixels.ts';
 import type { DionPanelDocument, DionPanelTextField } from './panelDocument.ts';
+
+export { PANEL_TOP, PANEL_ROWS, panelRgba } from '../shell/panelPixels.ts';
 
 /// The Mercenary III panel, drawn as its writers draw it (rows 136..199).
 ///
@@ -7,8 +18,6 @@ import type { DionPanelDocument, DionPanelTextField } from './panelDocument.ts';
 /// palette the raster interrupt loads at row 136 (and the card colour it changes at
 /// row 152). Only the values come from the session.
 
-export const PANEL_TOP = 136;
-export const PANEL_ROWS = 64;
 const WIDTH = 320;
 
 export type DionCentreView =
@@ -48,50 +57,14 @@ export interface DionPanelImage {
   readonly pixels: Uint8Array;
 }
 
-class Planes {
-  constructor(readonly pixels: Uint8Array) {}
-
-  set(x: number, y: number, plane: number, on: boolean): void {
-    const at = (y - PANEL_TOP) * WIDTH + x;
-    const value = this.pixels[at]!;
-    this.pixels[at] = on ? value | (1 << plane) : value & ~(1 << plane);
-  }
-}
-
-/// `$4ED8E`/`$4ED96`: set the field's plane across its box, then clear it under ink.
+/// The title-owned document supplies the font bank to the shared plane drawer.
 const writeField = (
   planes: Planes,
   doc: DionPanelDocument,
   field: DionPanelTextField,
   characters: readonly string[],
   y = field.y
-): void => {
-  const font = doc.fonts.get(field.font);
-  if (font === undefined) {
-    return;
-  }
-  for (let row = 0; row < field.rows; row += 1) {
-    for (const [from, to] of field.box) {
-      for (let x = from; x <= to; x += 1) {
-        planes.set(x, y + row, field.plane, true);
-      }
-    }
-  }
-  characters.forEach((character, index) => {
-    const glyph = font.glyphs.get(character);
-    const cell = field.cells[index];
-    if (glyph === undefined || cell === undefined) {
-      return;
-    }
-    for (let row = 0; row < field.rows; row += 1) {
-      [...glyph[row]!].forEach((bit, column) => {
-        if (bit === '1') {
-          planes.set(cell + column, y + row, field.plane, false);
-        }
-      });
-    }
-  });
-};
+): void => writePanelField(planes, doc.fonts, field, characters, y);
 
 const digits = (value: number, count: number): string[] =>
   String(value).padStart(count, '0').slice(-count).split('');
@@ -252,37 +225,21 @@ export const drawDionPanel = (
   });
 
   // `$53A2E`: the compass strip, 64 steps of the heading.
-  const step = (-(view.heading + 0x70) & 0x3_f0) >> 4;
-  for (let row = 0; row < fields.compass.rows; row += 1) {
-    for (let x = 80; x <= 119; x += 1) {
-      const inside = x >= fields.compass.x[0] && x <= fields.compass.x[1];
-      const bit = fields.compass.strip[row]?.[step + 1 + (x - 80)];
-      planes.set(x, fields.compass.y + row, 3, inside ? bit === '1' : true);
-    }
-  }
+  writePanelCompass(
+    planes,
+    slidingCompassFrame(fields.compass.strip, view.heading, fields.compass.x),
+    80,
+    fields.compass.y
+  );
 
   // `$53AB2`: twenty rows of the pitch strip, from the pitch's high bits.
-  const pitchRow = (view.pitch & 0x3_f0) >> 4;
-  for (let row = 0; row < 20; row += 1) {
-    const strip = fields.pitch.strip[pitchRow + row];
-    if (strip === undefined) {
-      continue;
-    }
-    for (let x = 0; x < 16; x += 1) {
-      planes.set(
-        fields.pitch.x[0] + x,
-        fields.pitch.y + row,
-        1,
-        strip[0][x] === '1'
-      );
-      planes.set(
-        fields.pitch.x[0] + x,
-        fields.pitch.y + row,
-        3,
-        strip[1][x] === '1'
-      );
-    }
-  }
+  writePanelPitch(
+    planes,
+    fields.pitch.strip,
+    view.pitch,
+    fields.pitch.x[0],
+    fields.pitch.y
+  );
 
   // `$537E4`: a level L clears its planes in the bar's bottom L rows.
   const levels = [
@@ -321,25 +278,6 @@ export const drawDionPanel = (
 
 const gun = (word: number, shift: number): number =>
   Math.round((((word >> shift) & 7) * 255) / 7);
-
-/// The panel as RGBA: an ST shows three bits a gun, so the STE's fourth is dropped.
-export const panelRgba = (
-  image: DionPanelImage,
-  target: Uint8ClampedArray
-): void => {
-  for (let row = 0; row < PANEL_ROWS; row += 1) {
-    const palette =
-      PANEL_TOP + row < 152 ? image.palette.upper : image.palette.lower;
-    for (let x = 0; x < WIDTH; x += 1) {
-      const colour = palette[image.pixels[row * WIDTH + x]!] ?? 0;
-      const at = (row * WIDTH + x) * 4;
-      target[at] = gun(colour, 8);
-      target[at + 1] = gun(colour, 4);
-      target[at + 2] = gun(colour, 0);
-      target[at + 3] = 255;
-    }
-  }
-};
 
 /// The centre box's logo as RGBA, in the colours the panel shows it in below row 152 and with its
 /// colour 0, the box's black, left clear: Mercenary III's Title Logo (ADR 0063).
