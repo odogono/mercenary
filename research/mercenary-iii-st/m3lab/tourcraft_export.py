@@ -20,6 +20,7 @@ from .world import extract_world, log_float
 from .census_objects import extract_objects
 from .scripts import decode_range, BASE, ENTRY_TABLE, _summarise
 from .text import static_strings
+from .snapshot_owners import observe, FIELDS
 from .__main__ import camel
 
 KINDS = ('world', 'panel', 'messages', 'scripts', 'sound', 'service')
@@ -236,6 +237,12 @@ def gameplay_records(spec: dict, ram: Ram, selected: dict) -> dict:
                               for key, a, b in [('$A1', 0xB4FA, 0xB51E), ('$A5', 0xB602, 0xB61C)]},
                'liveTokens': {t['token']: cstring(ram, int(t['pointer'][1:], 16))
                               for t in spec['renderSupportSelection']['tokens'] if t['kind'] == 'live'}}
+    # R8b supplies the coherent mutable-owner seed, including inactive carries.
+    # It is exported from this already pinned RAM, not copied from a later flight.
+    initial['owners'] = observe(ram)
+    initial['ownerWidths'] = {group: {name: width for name, (_, width) in fields.items()}
+                              for group, fields in FIELDS.items()}
+    initial['soundRegisters'] = [1, 0, 1, 0, 1, 0, 31, 254, 0, 0, 0, 0, 0, 0]
     initial['beaconGates'] = {str(value): bool(ram.byte(at) & 128) for value, at in [(5, 0x64BE), (4, 0x64C2)]}
     return {'initial': initial, 'modelBindings': bindings,
             'modelBindingSources': {str(e): ram.slice(ram.long(0x4BD10)+2*e, ram.long(0x4BD10)+2*e+2) for e in sorted(bindings)},

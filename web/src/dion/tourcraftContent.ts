@@ -18,6 +18,7 @@ import {
   tourcraftFrameWorld,
   tourcraftOpeningFrameState
 } from './tourcraftFrame.ts';
+import { TOURCRAFT_OWNER_WIDTHS } from './tourcraftOwnerWidths.ts';
 import {
   readDetail,
   readDionOpening,
@@ -640,6 +641,28 @@ export const loadTourcraftContent = async (
         readStructure(v, at);
       } else if (g['family'] === 'detail') {
         readDetail(v, at);
+        // These lists also feed the numeric craft pass; the render decoder
+        // intentionally does not consume them, so validate at this boundary.
+        for (const name of ['supports', 'walls']) {
+          for (const value of list(v[name], `${at}.${name}`)) {
+            const box = record(value, `${at}.${name}.box`);
+            for (const axis of ['x', 'y', 'z']) {
+              const range = ints(
+                box[axis],
+                `${at}.${name}.${axis}`,
+                2,
+                -32_768,
+                32_767
+              );
+              if (range[0]! > range[1]!) {
+                fail(`${at}.${name}.${axis}: reversed box`);
+              }
+            }
+            if (name === 'supports') {
+              int(box['tag'], `${at}.support.tag`, 0, 65_535);
+            }
+          }
+        }
       } else if (g['family'] === 'ground') {
         readGround(v, at);
       } else {
@@ -1219,6 +1242,24 @@ const validateProgrammes = (
 
 const validateInitial = (initial: Row): void => {
   readDionOpening(initial['opening']);
+  same(
+    initial['ownerWidths'],
+    TOURCRAFT_OWNER_WIDTHS,
+    'gameplay.initial.ownerWidths'
+  );
+  const owners = record(initial['owners'], 'gameplay.initial.owners');
+  for (const [group, fields] of Object.entries(TOURCRAFT_OWNER_WIDTHS)) {
+    const values = record(owners[group], `owners.${group}`);
+    for (const [name, width] of Object.entries(fields)) {
+      int(
+        values[name],
+        `owners.${group}.${name}`,
+        0,
+        width === 1 ? 255 : width === 2 ? 65_535 : 0xff_ff_ff_ff
+      );
+    }
+  }
+  ints(initial['soundRegisters'], 'soundRegisters', 14, 0, 255);
   const gates = record(initial['beaconGates'], 'gameplay.initial.beaconGates');
   same(
     Object.keys(gates).sort(),
