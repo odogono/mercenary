@@ -1,0 +1,292 @@
+{
+  "sourceRevision": "e4cba434069ca1fbec6e72b3a99cbf775f1663c4",
+  "expandedContentSha256": "d31490d7ba44a08949f71267884f1e290074acc5885fdfae747f7aeefcfdf611",
+  "naturalSources": [
+    {
+      "name": "fresh",
+      "operationRuns": 0,
+      "operationsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "sourceSnapshotSha256": "81eb68263c8888467f3560c378e8931805a4a9a2d7923b4b3a945b60f3bfe12c",
+      "tick": 0,
+      "early": true,
+      "pending": null,
+      "remainder": 0,
+      "departures": [],
+      "faces": {
+        "$A1": {
+          "base": 0,
+          "alternate": 0,
+          "output": 8192
+        },
+        "$A5": {
+          "base": 0,
+          "alternate": 0,
+          "output": 8192
+        }
+      },
+      "schedulerSha256": "74635ccb9f5449f4e45f4092812c3611b9ed31bcc9069e592679e27ab183cd40",
+      "matchingFutureFrames": 600,
+      "limit": "Separate uninterrupted executions of the research VM/face models; no inverse search, full expanded owners, restore or browser comparison."
+    },
+    {
+      "name": "fresh/pending-B",
+      "operationRuns": 1,
+      "operationsSha256": "348dbcb81952a9f6b21819eba450b148fde032c52c449248974e8e6ea59157b6",
+      "sourceSnapshotSha256": "0d57d1d71a87621ea6a75f543c15e79707720de7653def0f0f9d8d90095fa397",
+      "tick": 0,
+      "early": true,
+      "pending": "board",
+      "remainder": 0,
+      "departures": [],
+      "faces": {
+        "$A1": {
+          "base": 0,
+          "alternate": 0,
+          "output": 8192
+        },
+        "$A5": {
+          "base": 0,
+          "alternate": 0,
+          "output": 8192
+        }
+      },
+      "schedulerSha256": "74635ccb9f5449f4e45f4092812c3611b9ed31bcc9069e592679e27ab183cd40",
+      "matchingFutureFrames": 600,
+      "limit": "Separate uninterrupted executions of the research VM/face models; no inverse search, full expanded owners, restore or browser comparison."
+    },
+    {
+      "name": "shell-step/partial",
+      "operationRuns": 1,
+      "operationsSha256": "f8ab018c5c478539f88c956a80e2027fc8a82fc8a37e7c14a78007ec7134e3b8",
+      "sourceSnapshotSha256": "14decfc0475c3be633dd9767fef6e8ac12090d3280928571b411487932e41676",
+      "tick": 25,
+      "early": true,
+      "pending": null,
+      "remainder": 0.016666666666666656,
+      "departures": [],
+      "faces": {
+        "$A1": {
+          "base": 2,
+          "alternate": 0,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 2,
+          "alternate": 0,
+          "output": 20480
+        }
+      },
+      "schedulerSha256": "a3c08d5b48be81e069b32f9ad62466bfc1a26799d2238943f7b778cb68b0a763",
+      "matchingFutureFrames": 600,
+      "limit": "Separate uninterrupted executions of the research VM/face models; no inverse search, full expanded owners, restore or browser comparison."
+    },
+    {
+      "name": "early/analog-walk",
+      "operationRuns": 2,
+      "operationsSha256": "e501d3fef15323d8d55fdf346b29350a9c9d19c781cefd457b5a867609d95da3",
+      "sourceSnapshotSha256": "72a071567d245080ab95e2b621299e50dd3e6e43914002b6c2bbe4f7d5dc1cdc",
+      "tick": 83,
+      "early": true,
+      "pending": null,
+      "remainder": 0.0066666666666666576,
+      "departures": [],
+      "faces": {
+        "$A1": {
+          "base": 7,
+          "alternate": 0,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 7,
+          "alternate": 0,
+          "output": 20736
+        }
+      },
+      "schedulerSha256": "c88b5a99394f73605ed66e06a39990a951f69b01e31b65c83202bf355904d50c",
+      "matchingFutureFrames": 600,
+      "limit": "Separate uninterrupted executions of the research VM/face models; no inverse search, full expanded owners, restore or browser comparison."
+    },
+    {
+      "name": "early/selected-plus-partial",
+      "operationRuns": 553,
+      "operationsSha256": "b103e6f09ef62e4f65f7bdecb80762cad78328d58d627480229f909bc797dd1c",
+      "sourceSnapshotSha256": "bd7b9b16ba2b113c403e787b24977f23f8afafe1086c6654da5e08accb7a0b27",
+      "tick": 6293,
+      "early": true,
+      "pending": null,
+      "remainder": 4.2819914281011506e-14,
+      "departures": [],
+      "faces": {
+        "$A1": {
+          "base": 12,
+          "alternate": 25,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 7,
+          "alternate": 2,
+          "output": 20736
+        }
+      },
+      "schedulerSha256": "302ee644e758623708a8a609709f347c9bdba390e821cd074fde15b139ac250c",
+      "matchingFutureFrames": 600,
+      "limit": "Separate uninterrupted executions of the research VM/face models; no inverse search, full expanded owners, restore or browser comparison."
+    },
+    {
+      "name": "early/noStart-wait",
+      "operationRuns": 555,
+      "operationsSha256": "da7ec2ecba4868875b99bcbfd7cf0f8e8ead185874666c15d5eb1724aacccac2",
+      "sourceSnapshotSha256": "c7ec91029f877ea66aea867947b44892a47ec2ace7ee683479694275efc2d7c1",
+      "tick": 50301,
+      "early": true,
+      "pending": null,
+      "remainder": 1.538699723191428e-13,
+      "departures": [],
+      "faces": {
+        "$A1": {
+          "base": 13,
+          "alternate": 25,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 17,
+          "alternate": 2,
+          "output": 20736
+        }
+      },
+      "schedulerSha256": "74c192043452216321a843650f31abce775e99f8b3fefff39af7ea1a579f0718",
+      "matchingFutureFrames": 600,
+      "limit": "Separate uninterrupted executions of the research VM/face models; no inverse search, full expanded owners, restore or browser comparison."
+    },
+    {
+      "name": "late/no-departure",
+      "operationRuns": 1,
+      "operationsSha256": "ad3e105f9726b22a96b54ca57edd8d77409f432371a3f10219d9fef1b357bd1a",
+      "sourceSnapshotSha256": "8363eed241b2413ac49cb4ae787fbd5bfc91864cb7dc09bb4684a84c4071f281",
+      "tick": 1620003,
+      "early": false,
+      "pending": null,
+      "remainder": 0,
+      "departures": [],
+      "faces": {
+        "$A1": {
+          "base": 12,
+          "alternate": 3,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 3,
+          "alternate": 11,
+          "output": 20480
+        }
+      },
+      "schedulerSha256": "943154c29366aafd4c2902ee1ac75c65ae7be2cdf868e6b21a5ac4c2e930b6a7",
+      "matchingFutureFrames": 600,
+      "limit": "Separate uninterrupted executions of the research VM/face models; no inverse search, full expanded owners, restore or browser comparison."
+    },
+    {
+      "name": "late/seated-pending-Start",
+      "operationRuns": 556,
+      "operationsSha256": "d0ef261a388411c19570e2b711c336375ceac981452bf3b4e0156cdf6fc50e39",
+      "sourceSnapshotSha256": "b73dad3a90229422d434a8e7b952165aabcd927520b80cd2334f7b0f8077d979",
+      "tick": 1634301,
+      "early": false,
+      "pending": "star",
+      "remainder": 4.150672860969706e-12,
+      "departures": [],
+      "faces": {
+        "$A1": {
+          "base": 11,
+          "alternate": 18,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 3,
+          "alternate": 9,
+          "output": 20480
+        }
+      },
+      "schedulerSha256": "24456008212b611206830ada5d80774a235a3862362ef1cc6ba5161097b7e8ea",
+      "matchingFutureFrames": 600,
+      "limit": "Separate uninterrupted executions of the research VM/face models; no inverse search, full expanded owners, restore or browser comparison."
+    },
+    {
+      "name": "late/second-threshold",
+      "operationRuns": 1,
+      "operationsSha256": "53a20cf07c88db569fb4d3afd35015c03c760b009944a113ab4f6eae315957a1",
+      "sourceSnapshotSha256": "1004a42a8db54b0001e5fb8a1bfa2df8713f5addb044bc1936c41040913ba682",
+      "tick": 1914000,
+      "early": false,
+      "pending": null,
+      "remainder": 4.829463218225527e-12,
+      "departures": [],
+      "faces": {
+        "$A1": {
+          "base": 10,
+          "alternate": 41,
+          "output": 17408
+        },
+        "$A5": {
+          "base": 1,
+          "alternate": 18,
+          "output": 20480
+        }
+      },
+      "schedulerSha256": "a16aabab5ca25e991cdb9ebedd5a0d25408bbad6b4a3c1ff4a022efdfc952bad",
+      "matchingFutureFrames": 600,
+      "limit": "Separate uninterrupted executions of the research VM/face models; no inverse search, full expanded owners, restore or browser comparison."
+    },
+    {
+      "name": "late/2-trips",
+      "operationRuns": 937,
+      "operationsSha256": "13f8be2f7f9bcd76ce56e9ba7c3b69c829619aa842e0293bfa62b747f54b9a56",
+      "sourceSnapshotSha256": "e7ac378063392fe0e2236407a65e2bc62ac82db113ee6e26b395e946598e9ffe",
+      "tick": 1646511,
+      "early": false,
+      "pending": null,
+      "remainder": 4.614635062960559e-12,
+      "departures": [6303, 1640837],
+      "faces": {
+        "$A1": {
+          "base": 29,
+          "alternate": 6,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 9,
+          "alternate": 16,
+          "output": 20480
+        }
+      },
+      "schedulerSha256": "0c56284fae03ce7c0d06f5271b444f67c26d3aa9856df008a0ac628b0dc99946",
+      "matchingFutureFrames": 600,
+      "limit": "Separate uninterrupted executions of the research VM/face models; no inverse search, full expanded owners, restore or browser comparison."
+    },
+    {
+      "name": "late/3-trips",
+      "operationRuns": 949,
+      "operationsSha256": "fcbadec0c70aefac52ca6f7f16aaa9859c547ea75da28de2bc1270168051b47d",
+      "sourceSnapshotSha256": "c6bfd2b86dfc1959a0a01937bf3b0a501ac9d31dd0b239f5f4c6aaa89e075c07",
+      "tick": 1653386,
+      "early": false,
+      "pending": null,
+      "remainder": 4.631982297720327e-12,
+      "departures": [6303, 1640837, 1651892],
+      "faces": {
+        "$A1": {
+          "base": 5,
+          "alternate": 21,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 7,
+          "alternate": 14,
+          "output": 20736
+        }
+      },
+      "schedulerSha256": "4b000fb438af03014b7ebbd235c2f45be3b81eb867dc4f52a2b17e700d3c7a50",
+      "matchingFutureFrames": 600,
+      "limit": "Separate uninterrupted executions of the research VM/face models; no inverse search, full expanded owners, restore or browser comparison."
+    }
+  ]
+}

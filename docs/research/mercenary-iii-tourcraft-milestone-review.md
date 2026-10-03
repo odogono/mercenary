@@ -18,6 +18,8 @@ Each research doc opens with a status block naming what still holds and what sup
 
 ## Eight decisions
 
+R8a/#735 now has a [source eligibility and reference-selection note](mercenary-iii-tourcraft-source-eligibility.md), necessary consistency checks and 11 additional ordinary input witnesses. Its full inverse-history search, universal early sufficiency and globally selected references for the additional late sources remain unproved; #735 and R8 stay open.
+
 | Item | Accepted decision |
 | --- | --- |
 | 1. Which slice and access | Choose METIS spaceport → TOLOSA staffed TOURCRAFT, ending on foot. Continue from New Game/current taxi play; no authored remote start. Bus access remains unproved: neither TOLOSA nor VESTA is bus-served. Defer bus play and the solicitor/Transporter alternative rather than make their access research a prerequisite for this flight. |

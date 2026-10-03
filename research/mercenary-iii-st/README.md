@@ -20,6 +20,7 @@ Each issue's runs live in the main checkout's `restricted/mercenary-iii-<issue>/
 | `m3lab/surface_scenes.py`, `object_scenes.py`, `interior_capture.py`, `interior_scenes.py` | original-scene comparisons for the Catalogue |
 | `m3lab/tourcraft_export.py` | the bounded TOURCRAFT export into `payload/dion/tourcraft/` (ADR 0065) |
 | `scripts/taxi-*.ts` | R8 taxi Save audits, pinned by `taxi-source.ts` and run under `bun test` in `web/` |
+| `scripts/taxi-source-eligibility.ts`, `scripts/taxi-eligibility-audit.ts` | R8a necessary source checks and 11 additional ordinary input witnesses; [source eligibility/reference rule](../../docs/research/mercenary-iii-tourcraft-source-eligibility.md), with universal proof gaps retained |
 | `tests/` | unit tests: `PYTHONPATH=.:tests python3 -m unittest discover -s tests` |
 | `*.json` here | checked-in evidence ledgers; [the TOURCRAFT milestone index](../../docs/research/mercenary-iii-tourcraft-milestone-review.md#where-each-tickets-work-lives) says which ticket owns each |
 
