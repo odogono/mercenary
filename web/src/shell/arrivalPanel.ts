@@ -1,5 +1,6 @@
 import type { ArrivalCameraPose } from './arrivalCamera.ts';
-import { compassDegrees, gridReference, type PanelViewModel } from './panel.ts';
+import { panelAttitude } from './attitude.ts';
+import { gridReference, type PanelViewModel } from './panel.ts';
 
 /// What the Benson Panel shows while the Arrival is presenting.
 ///
@@ -42,8 +43,7 @@ export const arrivalPanelViewModel = (
   ...base,
   // The gauges are live throughout, space included: they are the ship's own instruments, and
   // the original's drums move from the first frame.
-  compassDegrees: compassDegrees(state.pose.heading),
-  elevationDegrees: (state.pose.pitch * 180) / Math.PI,
+  ...panelAttitude(state.pose, 'targ'),
   ...(state.narration === undefined ? {} : { message: state.narration }),
   ...(state.unmeasured
     ? {

@@ -4,7 +4,6 @@ import { playerState } from '../src/gameCore/index.ts';
 import { GameplaySession, type SessionSnapshot } from '../src/session/index.ts';
 import {
   carriedNames,
-  compassDegrees,
   gridReference,
   objectNamesOf,
   panelViewModel,
@@ -100,14 +99,6 @@ describe('the Benson Panel view model', () => {
       context()
     );
     expect(airborneCraft.altitude).toBe('00001');
-  });
-
-  test('wraps the compass into one turn, whichever way the player faced', () => {
-    expect(compassDegrees(0)).toBe(180);
-    expect(compassDegrees(Math.PI)).toBeCloseTo(0);
-    // Headings accumulate in both directions, but a compass only reads 0-360.
-    expect(compassDegrees(-Math.PI / 2)).toBeCloseTo(90);
-    expect(compassDegrees(3 * Math.PI)).toBeCloseTo(0);
   });
 
   test('reports elevation in degrees, signed nose up', () => {

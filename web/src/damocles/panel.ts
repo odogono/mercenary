@@ -1,4 +1,5 @@
 import type { Vector3 } from '../orientation/index.ts';
+import { panelAttitude } from '../shell/attitude.ts';
 import type {
   CentreBoxPanel,
   CentreBoxView,
@@ -30,17 +31,6 @@ const digits = (value: number): string => {
   const magnitude = Math.abs(value);
   return magnitude > 99 ? '**' : String(magnitude).padStart(2, '0');
 };
-
-/// A bearing clockwise from north in degrees, which is what the recovered compass tape counts.
-const bearingDegrees = (bearing: number): number => {
-  const wrapped = ((bearing * 180) / Math.PI) % 360;
-  return wrapped < 0 ? wrapped + 360 : wrapped;
-};
-
-/// A pitch in degrees, nose up positive, wrapped to a half turn either side of level so a
-/// craft looped past the vertical reads its way back rather than past 180.
-const pitchDegrees = (pitch: number): number =>
-  (((((pitch * 180) / Math.PI) % 360) + 540) % 360) - 180;
 
 /// The Cell Readout, which prints the Island-Local Cell two digits an axis.
 ///
@@ -229,11 +219,10 @@ export const damoclesPanelViewModel = (
   cash: cashReadout(snapshot.balance),
   centreBox: centreBoxView(snapshot.centreBox),
   clock: clockReadout(snapshot.impact),
-  compassDegrees: bearingDegrees(snapshot.pose.heading),
-  damoclesDisplay: snapshot.displayCells,
   // The Pose's pitch, which aboard is the craft's attitude word and on foot is level unless
   // Free Look tilts it.
-  elevationDegrees: pitchDegrees(snapshot.pose.pitch),
+  ...panelAttitude(snapshot.pose, 'bearing'),
+  damoclesDisplay: snapshot.displayCells,
   panelMask: snapshot.panelMask,
   // `$0509F6`: lit only aboard (`$7A8E` clear) with the eye below `$28FA`, so a craft on the
   // ground lights it and the player on foot never does. In space `$7A8E` is 2.
