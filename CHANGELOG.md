@@ -1,14 +1,18 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
+
+Unreleased changes are fragments under `changelog/unreleased/`; `bun run
+changelog` in `web/` prints them, and a release writes them in here. See
+[the fragment format](changelog/README.md).
 
 Each released version is tagged `v<version>` and carries a compare link at the
 foot of this file. Link references start at 0.20.0; earlier versions were never
 tagged, so 0.20.0 compares against the 0.19.9 release commit rather than a tag.
 
-## [Unreleased]
+## [0.21.0] - 2026-10-03
 
 ### Added
 
@@ -2788,5 +2792,5 @@ validate`; add Execution Environment to the shared language and record ADR
 - Ignore supplied ROM inputs and generated research artifacts so no PRG, RAM
   dump, snapshot, screenshot, or reconstructed payload is published.
 
-[Unreleased]: https://github.com/odogono/mercenary/compare/v0.20.0...main
+[0.21.0]: https://github.com/odogono/mercenary/compare/v0.20.0...v0.21.0
 [0.20.0]: https://github.com/odogono/mercenary/compare/c2c6afd...v0.20.0

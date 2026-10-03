@@ -18,5 +18,13 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src", "test", "e2e", "tools", "playwright.config.ts", "serve.ts"]
+  "include": [
+    "src",
+    "test",
+    "e2e",
+    "tools",
+    "../tools",
+    "playwright.config.ts",
+    "serve.ts"
+  ]
 }

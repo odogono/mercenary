@@ -1,0 +1,4 @@
+#!/bin/sh
+# Checks the commit message's format. See docs/agents/commits.md.
+# Installed by scripts/worktree-setup.sh through core.hooksPath.
+exec bun "$(git rev-parse --show-toplevel)/tools/commits/check.ts" message "$1"
