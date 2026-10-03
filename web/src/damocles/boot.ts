@@ -3,7 +3,7 @@ import { atlasHref } from '../atlas/state.ts';
 import { browserAtlasHandoff } from '../atlas/travel.ts';
 import { readGammaSystem } from '../flyover/documents.ts';
 
-import '../shell/damoclesPanelElement.ts';
+import './panelElement.ts';
 
 import { IDLE } from '../gameCore/index.ts';
 import {
@@ -34,7 +34,7 @@ import {
   installSessionTakeoverChannel,
   type BrowserLockManager
 } from '../shell/ownership.ts';
-import { installPanel, installPanelScale } from '../shell/panelView.ts';
+import { installPanelScale } from '../shell/panelView.ts';
 import { canvasPointer } from '../shell/pointer.ts';
 import { createPreferences, titlePreferences } from '../shell/preferences.ts';
 import type { SessionResumePersistence } from '../shell/resume.ts';
@@ -72,11 +72,10 @@ import { classifyPosition } from './islands.ts';
 import { stMakeCode } from './keys.ts';
 import { erisLighting, sunlight } from './lighting.ts';
 import { damoclesPanelViewModel } from './panel.ts';
-import {
-  DAMOCLES_PANEL_PATH,
-  damoclesPitchStrip,
-  readDamoclesPanel
-} from './pitchStrip.ts';
+import { readDamoclesPanelDocument } from './panelDocument.ts';
+import { installRecoveredDamoclesPanel } from './panelView.ts';
+import { damoclesRecoveredPanelView } from './panelWriter.ts';
+import { DAMOCLES_PANEL_PATH } from './pitchStrip.ts';
 import {
   centreBoxPage,
   computerBoxPoint,
@@ -141,17 +140,6 @@ const panelElements = {
   damoclesCentreBox: document.getElementById(
     'damocles-centre-canvas'
   ) as HTMLCanvasElement,
-  damoclesCompass: document.getElementById(
-    'damocles-compass-canvas'
-  ) as HTMLCanvasElement,
-  damoclesElevation: document.getElementById(
-    'damocles-elevation-canvas'
-  ) as HTMLCanvasElement,
-  damoclesMessage: document.getElementById(
-    'damocles-message-canvas'
-  ) as HTMLCanvasElement,
-  fields: panelRoot.querySelectorAll<HTMLElement>('[data-field]'),
-  lamps: panelRoot.querySelectorAll<HTMLElement>('[data-lamp]'),
   root: panelRoot
 };
 
@@ -208,7 +196,7 @@ try {
       loadDamoclesTitleLogo(document.value, new URL('/payload/', location.href))
     ),
     requiredJson(DAMOCLES_PANEL_PATH).then(document =>
-      readDamoclesPanel(document.value)
+      readDamoclesPanelDocument(document.value)
     ),
     loadTypography()
   ]);
@@ -322,12 +310,7 @@ try {
   installPanelScale(panelSection, panelScale, (target, onResize) => {
     new ResizeObserver(onResize).observe(target);
   });
-  const panel = installPanel(panelElements, {
-    damoclesPitchStrip: damoclesPitchStrip(
-      panelDocument,
-      content.doc.orientation
-    )
-  });
+  const panel = installRecoveredDamoclesPanel(panelRoot, panelDocument);
   let commitAction = (_action: () => unknown): void => {};
 
   // The transport reports a failed audio graph once and carries on in silence.
@@ -1004,6 +987,20 @@ try {
   const centreClose = panelRoot.querySelector<HTMLButtonElement>(
     '#damocles-centre-close'
   )!;
+  // Native buttons remain reachable by Tab. Their keys belong to the control
+  // rather than also reaching the gameplay dispatcher. Escape keeps its normal
+  // document-close/menu routing.
+  panelRoot.addEventListener('keydown', event => {
+    if (
+      event.code !== 'Escape' &&
+      (event.target as HTMLElement | null)?.tagName === 'BUTTON'
+    ) {
+      event.stopPropagation();
+    }
+  });
+  inventoryWindow.addEventListener('mousedown', event =>
+    event.preventDefault()
+  );
   inventoryWindow.addEventListener('click', event => {
     if (event.button === 0 && pointerMayAct()) {
       commitAction(() => session.headCommand('open'));
@@ -1050,6 +1047,32 @@ try {
     }
     commitAction(() => session.headCommand(centreBoxPage(point, bounds)));
   });
+  centreCanvas.addEventListener('keydown', event => {
+    if (event.code === 'Escape') {
+      return;
+    }
+    event.stopPropagation();
+    if ((event.code === 'Enter' || event.code === 'Space') && pointerMayAct()) {
+      event.preventDefault();
+      commitAction(() => session.headCommand('read'));
+    }
+  });
+  for (const button of panelRoot.querySelectorAll<HTMLButtonElement>(
+    '[data-command]'
+  )) {
+    button.addEventListener('mousedown', event => event.preventDefault());
+    button.addEventListener('click', () => {
+      if (!pointerMayAct()) {
+        return;
+      }
+      const command = button.dataset['command'];
+      commitAction(() =>
+        command === 'parameter'
+          ? session.keypadDigit((session.snapshot.computer.option + 1) % 5)
+          : session.headCommand(command as 'next' | 'previous' | 'read')
+      );
+    });
+  }
   let wheelTravel = 0;
   const pageByWheel = (event: WheelEvent): void => {
     if (!session.documentOpen || !pointerMayAct()) {
@@ -1434,6 +1457,11 @@ try {
           }
     );
     panel.draw(
+      damoclesRecoveredPanelView(
+        snapshot,
+        content.doc,
+        controls.intent.running
+      ),
       damoclesPanelViewModel(snapshot, content.doc, controls.intent.running)
     );
     drawHeadControls();

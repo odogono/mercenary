@@ -44,6 +44,8 @@ export interface DocumentPanel {
   readonly kind: 'computer' | 'document' | 'switch' | 'timedDetonator';
   /// The AUTHORS COMPUTER's option, `PARAMETER No`, once drawn; null on every other panel.
   readonly parameter: number | null;
+  /// The activation-table item identity, also needed by the recovered panel art selector.
+  readonly slot: number;
   readonly title: string;
 }
 

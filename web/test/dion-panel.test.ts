@@ -17,7 +17,27 @@ const differingRows = (a: Uint8Array, b: Uint8Array): number[] => {
   return [...rows].sort((x, y) => x - y);
 };
 
+const pixelHash = (pixels: Uint8Array): string =>
+  new Bun.CryptoHasher('sha256').update(pixels).digest('hex');
+
 describe('the Mercenary III panel', () => {
+  test('preserves pixels across the shared writer extraction (#741)', async () => {
+    const content = await dionContent();
+    const view = dionPanelView(new DionSession(content).snapshot, content);
+    expect(pixelHash(drawDionPanel(content.panel, view).pixels)).toBe(
+      '7c38dfb0cc9c4d35383ee02f88a1a677c1c9c750256229334e18f88799d8506b'
+    );
+    expect(
+      pixelHash(
+        drawDionPanel(content.panel, {
+          ...view,
+          centre: { kind: 'card', lines: ['PRESS *', 'TO CALL'], reveal: 16 },
+          heading: 0x2_f0,
+          pitch: 0x2_90
+        }).pixels
+      )
+    ).toBe('7baf10eb34f90b1bbf654e9048a94142bad9575ba412baf968377e8042a29536');
+  });
   test('names METIS, the grid cell and the opening cash', async () => {
     const content = await dionContent();
     const view = dionPanelView(new DionSession(content).snapshot, content);

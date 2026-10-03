@@ -427,11 +427,11 @@ A validated arrangement of the world view, status information, and prompts withi
 _Avoid_: Layout mode, aspect mode
 
 **Benson Panel**:
-The authored instrument-panel Display Composition drawn under the world view, presenting the Session Snapshot and the Targ Orrery's authored local time without changing play; hand-recreated presentation rather than recovered behaviour (ADR 0027).
+The instrument-panel Display Composition beneath the world view, presenting the Gameplay Session's readouts without changing play. Targ's is authored presentation with the Targ Orrery's local time (ADR 0027); the actual Damocles Gameplay Session uses recovered artwork and title-specific writers, with remaining authored or unsupported readouts identified (ADR 0071).
 _Avoid_: HUD, status bar, dashboard, cockpit
 
 **Panel Rendition**:
-Which visual treatment the Benson Panel wears — Targ or Damocles — changing chrome and typography only, never the gameplay data beneath; the Damocles treatment stays inside ADR 0021's presentation-only exception.
+Which visual treatment the Benson Panel wears — Targ or Damocles — changing chrome and typography without changing the gameplay data beneath. The authored Damocles treatment dressing Targ and Flyover's fallback remain presentation-only choices; the actual Damocles Gameplay Session's recovered panel is governed separately by ADR 0071.
 _Avoid_: Skin, theme, variant, panel mode
 
 **Navigation Readout**:

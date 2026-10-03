@@ -184,3 +184,54 @@ test('opens, pages and closes the DAMOCLES FILE with the pointer', async ({
   await expect(close).toBeHidden();
   expect(errors).toEqual([]);
 });
+
+test('keeps recovered-panel controls accessible by keyboard', async ({
+  page
+}) => {
+  const errors = watchErrors(page);
+  await bootAt(page, BESIDE_THE_TABLE, FACING_EAST, {
+    structure: STATE_OFFICE
+  });
+  await fileAtTheHead(page);
+  const head = page.locator('#inventory-window');
+  await head.focus();
+  await expect(head).toBeFocused();
+  await expect(head).toHaveAccessibleName(
+    'Open the carried head: DAMOCLES FILE'
+  );
+  await head.press('Enter');
+  await expect(frame(page)).toHaveAttribute('data-centre-box-steps', '0', {
+    timeout: 5000
+  });
+  await expect(centreBox(page)).toHaveAccessibleName(/DAMOCLES FILE: PROBLEM/);
+  const next = page.getByRole('button', {
+    name: 'Next item or increase value'
+  });
+  await next.focus();
+  await next.press('Enter');
+  await expect(centreBox(page)).toHaveAttribute('data-item', 'HISTORY');
+  const previous = page.getByRole('button', {
+    name: 'Previous item or decrease value'
+  });
+  await previous.focus();
+  await previous.press('Space');
+  await expect(centreBox(page)).toHaveAttribute('data-item', 'PROBLEM');
+  const rotate = page.getByRole('button', {
+    name: 'Rotate the Carried Stack forward'
+  });
+  await rotate.focus();
+  await rotate.press('Enter');
+  await expect(inventory(page)).toHaveText(TABLE, { timeout: 5000 });
+  const close = page.getByRole('button', {
+    exact: true,
+    name: 'Close the document'
+  });
+  await close.focus();
+  await close.press('Enter');
+  await expect(frame(page)).toHaveAttribute('data-document', '');
+  await expect(page.locator('#game-surface')).toHaveAttribute(
+    'data-layer',
+    'none'
+  );
+  expect(errors).toEqual([]);
+});

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Deterministic Damocles panel</title>
+    <style>
+      body {
+        margin: 0;
+        color: white;
+        background: #202020;
+        font: 16px monospace;
+      }
+      h1 {
+        margin: 12px;
+        font-size: 16px;
+      }
+      canvas {
+        display: block;
+        width: 1280px;
+        height: 256px;
+        image-rendering: pixelated;
+      }
+      p {
+        margin: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1 id="state">Loading panel…</h1>
+    <canvas
+      id="panel"
+      width="320"
+      height="64"
+      role="img"
+      aria-label="Deterministic Damocles panel"
+    ></canvas>
+    <p>
+      Working-Authority artwork and writers. Grid font, T/P levels and dynamic
+      non-document centre layouts remain authored; the space navigation
+      composite is unsupported.
+    </p>
+    <script type="module" src="/e2e/damocles-panel-fixture.ts"></script>
+  </body>
+</html>
