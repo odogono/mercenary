@@ -15,7 +15,10 @@ composition is not Damocles. Both attitude displays can produce identical pixels
 Titles, despite the compass's different storage format. The evidence below establishes that
 comparison for all 64 compass positions, not just a similar-looking screenshot.
 
-Retain the authored Targ rendition, Damocles-dressed Targ and Flyover choices. A narrow ADR
+Retain the authored Targ rendition, Damocles-dressed Targ and Flyover choices during the
+Damocles port. [The separate ST Targ investigation](targ-st-recovered-panel.md) examines
+recovering Targ's own panel artwork; that adoption would need its own presentation-only
+decision, preserving the C64 Reference Build's authority. A narrow ADR
 should supersede ADR 0027 only for the actual Damocles Session, within ADR 0043's recovered
 Damocles scope; this research does not itself change either decision. Preserve the shared
 attitude contract from #715 and the existing recovered pitch implementation from #718.

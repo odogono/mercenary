@@ -46,4 +46,4 @@ The browser decodes the PNG without colour conversion. It refuses an image of th
 
 ## Not done
 
-- The ST Benson panel is now one `--auto` boot away. ADR 0027 recreated it by eye because no ST-Targ capture existed. Recovering it would be its own ticket.
+- Panel extraction is investigated separately in [the ST Targ panel research](targ-st-recovered-panel.md). ADR 0027's authored rendition remains in use; the research does not itself admit ST Game Semantics or replace the browser panel.
