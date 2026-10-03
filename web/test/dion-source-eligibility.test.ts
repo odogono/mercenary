@@ -160,3 +160,42 @@ test('decoder-valid synthetic inconsistencies are refused with a path without mu
     }
   });
 });
+
+test('negative zero in raw numeric fields is refused at its path rather than normalized into writer output', async () => {
+  await withTaxiSource(async source => {
+    const record = {
+      identity: source.codec.dionRecordIdentity(source.content),
+      savedAt: '2026-10-03T00:00:00Z',
+      schemaVersion: 1 as const,
+      snapshot: new source.SourceSession(source.content).captureResume(),
+      where: 'synthetic negative-zero boundary'
+    };
+    for (const [field, path] of [
+      ['tick', 'snapshot.snapshot.tick'],
+      ['remainder', 'snapshot.remainder']
+    ]) {
+      // JSON.stringify cannot create this probe: it turns -0 into 0, exactly
+      // why these raw literals cannot be produced by the archived writer.
+      const encoded = source.codec
+        .encodeDionRecord(record)
+        .replace(`"${field}":0`, `"${field}":-0`);
+      const decoded = source.codec.decodeDionRecord(
+        encoded,
+        record.identity,
+        source.content
+      );
+      const value =
+        field === 'tick'
+          ? decoded.snapshot.snapshot.tick
+          : decoded.snapshot.remainder;
+      expect(Object.is(value, -0)).toBe(true);
+      expect(() => readTaxiSourceCandidate(encoded, source)).toThrow(
+        `${path}: historical JSON writer cannot emit negative zero`
+      );
+      const raw = JSON.parse(encoded);
+      const retained =
+        field === 'tick' ? raw.snapshot.snapshot.tick : raw.snapshot.remainder;
+      expect(Object.is(retained, -0)).toBe(true);
+    }
+  });
+});

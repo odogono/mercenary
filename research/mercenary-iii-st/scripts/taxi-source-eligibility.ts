@@ -45,6 +45,8 @@ const checkProjection = (
     }
     return;
   }
+  if (typeof raw === "number" && Object.is(raw, -0))
+    refuse(path, "historical JSON writer cannot emit negative zero");
   if (raw !== decoded) refuse(path, "reader changed the source value");
 };
 
