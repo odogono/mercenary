@@ -1,3 +1,4 @@
+import { panelAttitude } from '../shell/attitude.ts';
 import type { SystemId } from '../shell/documentPath.ts';
 import type { PanelViewModel } from '../shell/panel.ts';
 import { speedForNotch, type FlyoverCameraState } from './camera.ts';
@@ -10,13 +11,6 @@ const scientific = (value: number, signed = false): string => {
     return magnitude;
   }
   return `${value < 0 ? '-' : '+'}${magnitude}`;
-};
-
-const degrees = (radians: number): number => (radians * 180) / Math.PI;
-
-const wrappedDegrees = (radians: number): number => {
-  const value = degrees(radians) % 360;
-  return value < 0 ? value + 360 : value;
 };
 
 export const flyoverPanelViewModel = (values: {
@@ -37,8 +31,7 @@ export const flyoverPanelViewModel = (values: {
     bodyCoordinates: `X${scientific(position.x - centre.x, true)}`,
     cash: '',
     clock: '',
-    compassDegrees: wrappedDegrees(values.camera.pose.heading),
-    elevationDegrees: degrees(values.camera.pose.pitch),
+    ...panelAttitude(values.camera.pose, 'bearing'),
     groundLamp: false,
     inventory: '',
     inventoryFill: 0,

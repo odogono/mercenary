@@ -9,7 +9,7 @@ import {
 } from '../src/gameCore/index.ts';
 import { apply } from '../src/orientation/index.ts';
 import { Camera } from '../src/projection/index.ts';
-import { compassDegrees } from '../src/shell/panel.ts';
+import { panelAttitude } from '../src/shell/attitude.ts';
 import { World, craftHeading } from '../src/world/index.ts';
 import { loadPayload } from './replay/artifacts.ts';
 
@@ -201,6 +201,9 @@ describe('Reference Build coordinate handedness', () => {
     }
   });
 });
+
+const compassDegrees = (heading: number): number =>
+  panelAttitude({ heading, pitch: 0 }, 'targ').compassDegrees;
 
 describe('displayed bearings across the heading correction', () => {
   test('retains the opening bearing and a migrated Save bearing', () => {

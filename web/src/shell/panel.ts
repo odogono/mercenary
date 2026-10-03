@@ -1,6 +1,7 @@
 import type { SessionSnapshot } from '../session/index.ts';
 import { locationText } from '../world/index.ts';
 import { surfaceCellCoordinate } from '../world/surfaceCoordinates.ts';
+import { panelAttitude } from './attitude.ts';
 
 /// What the Benson Panel needs beyond a Session Snapshot.
 ///
@@ -95,23 +96,12 @@ export interface PanelViewModel {
 const digits = (value: number, width: number): string =>
   String(Math.abs(Math.trunc(value))).padStart(width, '0');
 
-const degrees = (radians: number): number => (radians * 180) / Math.PI;
-
 /// Credits as the Damocles readout prints them: nine digits in thousands, to the cent.
 ///
 /// Targ credits are whole numbers, so the cents are always nought; they are there because the
 /// readout being dressed always shows them.
 const cashReadout = (credits: number): string =>
   `${digits(credits, 9).replaceAll(/(\d{3})(?=\d)/g, '$1,')}.00`;
-
-/// Keep the Browser Shell's displayed bearings while the simulation uses raw
-/// Reference Build yaw. The original opening yaw is a half turn; it remains
-/// displayed as zero, as do schema-11 Saves after their half-turn migration.
-/// This full-turn numbering is presentation, not the C64's coloured half-turn tape.
-export const compassDegrees = (heading: number): number => {
-  const wrapped = (degrees(heading) + 180) % 360;
-  return wrapped < 0 ? wrapped + 360 : wrapped;
-};
 
 /// The panel's own grid reference, two digits per axis.
 export const gridReference = (
@@ -163,8 +153,7 @@ export const panelViewModel = (
     bodyCoordinates: '000-000',
     cash: cashReadout(snapshot.credits),
     clock: context.clock,
-    compassDegrees: compassDegrees(player.heading),
-    elevationDegrees: degrees(player.pitch),
+    ...panelAttitude(player, 'targ'),
     // The Reference Build's ground proximity warning has no equivalent here, so this reports the
     // one thing that is equivalent: a craft close enough to the ground to be landing on it.
     groundLamp: aboard && snapshot.mode === 'flying' && player.position.y < 40,
