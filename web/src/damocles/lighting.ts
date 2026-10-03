@@ -68,6 +68,25 @@ export const sunlight = (inputs: SunlightInputs): Sunlight | null => {
   return strength > 0 ? { direction, strength } : null;
 };
 
+/// One step of the engine's Body turn, 1/1024 of a turn, as an angle the sun moves through.
+const SUN_STEP_RADIANS = (2 * Math.PI) / 1024;
+
+let heldSun: Vector3 | undefined;
+
+/// #380 prototype: the Sunlight with its direction held still until DIALIS has moved a whole
+/// 1/1024-turn step, so the shadow map's texel grid stands still between steps.
+export const steppedSun = (sun: Sunlight): Sunlight => {
+  const d = sun.direction;
+  if (heldSun !== undefined) {
+    const cosine = d.x * heldSun.x + d.y * heldSun.y + d.z * heldSun.z;
+    if (Math.acos(Math.min(1, cosine)) < SUN_STEP_RADIANS) {
+      return { direction: heldSun, strength: sun.strength };
+    }
+  }
+  heldSun = d;
+  return sun;
+};
+
 /// The frame's lighting under the given Sunlight. The ambient pair is neutral in the document,
 /// so a face Sunlight does not reach shows its recovered colour, and Sunlight only brightens.
 export const erisLighting = (

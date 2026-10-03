@@ -369,6 +369,11 @@ test('Enhanced sunlight reaches the floor through the spaceport window', async (
     body: await frame.screenshot(),
     contentType: 'image/png'
   });
+  // The #380 prototypes keep the beam and the roof shadow too.
+  for (const candidate of ['stepped', 'volume', 'exact']) {
+    await choose('shadows', candidate);
+    await expect.poll(contrast).toBeGreaterThan(15);
+  }
 
   await choose('presentation', 'authentic');
   await expect.poll(contrast).toBeLessThan(1);

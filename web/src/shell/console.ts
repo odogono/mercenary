@@ -91,7 +91,14 @@ const GLOWS: readonly ('document' | WireframeGlow)[] = [
   'bright'
 ];
 const RENDITIONS: readonly PanelRendition[] = ['targ', 'damocles'];
-const SHADOWS: readonly CastShadowEdge[] = ['off', 'soft', 'hard'];
+const SHADOWS: readonly CastShadowEdge[] = [
+  'off',
+  'soft',
+  'hard',
+  'stepped',
+  'volume',
+  'exact'
+];
 const SKIES: readonly ('document' | PresentationPreset)[] = [
   'document',
   'authentic',

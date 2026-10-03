@@ -1114,6 +1114,7 @@ const fakeContext = () => {
     SCISSOR_TEST: 36,
     shaderSource: () => undefined,
     STENCIL_TEST: 37,
+    texImage2D: () => undefined,
     texParameteri: () => undefined,
     texStorage2D: (
       _target: number,
@@ -1313,7 +1314,8 @@ describe('the Eris renderer', () => {
       shadowEdge: 'soft',
       view: origin
     });
-    expect(fake.compiled).toBe(6);
+    // Two more for the #380 shadow volume program.
+    expect(fake.compiled).toBe(8);
     expect(
       fake.calls.filter(call => call === 'texStorage:2048:2048')
     ).toHaveLength(2);
@@ -1392,7 +1394,8 @@ describe('the Eris renderer', () => {
 
     renderer.render(plan, { ...frame, shadowEdge: 'hard' });
     // Same programs, same 2048² maps: only the sampler and the lookup change.
-    expect(fake.compiled).toBe(6);
+    // Two more for the #380 shadow volume program.
+    expect(fake.compiled).toBe(8);
     expect(
       fake.calls.filter(call => call === 'texStorage:2048:2048')
     ).toHaveLength(2);
@@ -1404,7 +1407,8 @@ describe('the Eris renderer', () => {
 
     // Switching edge between frames rebinds without reallocating.
     renderer.render(plan, { ...frame, shadowEdge: 'soft' });
-    expect(fake.compiled).toBe(6);
+    // Two more for the #380 shadow volume program.
+    expect(fake.compiled).toBe(8);
     expect(fake.uniforms['hardEdge']).toEqual([0]);
     expect(
       fake.calls.filter(call => call.startsWith('bindSampler:')).slice(2)

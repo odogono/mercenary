@@ -1,6 +1,12 @@
 import type { Vector3 } from '../orientation/index.ts';
 import type { FrameDescription } from './description.ts';
 import {
+  CASTER_GRID_SIZE,
+  CASTER_TEXTURE_WIDTH,
+  casterGrid,
+  shadowVolumeVertices
+} from './exactShadows.ts';
+import {
   DESCRIPTION_STRIDE,
   descriptionPalette,
   descriptionVertices
@@ -192,6 +198,15 @@ uniform vec2 farShadowBias;
 uniform sampler2DShadow nearShadowMap;
 uniform sampler2DShadow farShadowMap;
 uniform bool hardEdge;
+// 0 samples the shadow maps; 1 draws ambient only and 2 full Sunlight, the two colour passes
+// around a stencil volume pass; 3 ray-tests the caster grid (#380 prototypes).
+uniform int shadowMode;
+uniform highp sampler2D casterTriangles;
+uniform highp isampler2D casterCells;
+uniform highp isampler2D casterIndices;
+uniform mat3 lightBasis;
+uniform vec4 gridBounds;
+uniform int gridSize;
 out vec4 pixel;
 
 bool insideShadow(vec3 uvz) {
@@ -235,6 +250,52 @@ float shadowAt(vec3 p, vec3 n, float ndl) {
   return 1.0;
 }
 
+ivec2 tableAt(int index) {
+  return ivec2(index % ${CASTER_TEXTURE_WIDTH}, index / ${CASTER_TEXTURE_WIDTH});
+}
+
+// The receiver point where the pixel's ray meets the face's plane, as the depth is found.
+vec3 surfacePoint() {
+  vec2 ndc = gl_FragCoord.xy / viewport * 2.0 - 1.0;
+  vec3 ray = vec3(ndc.x * aspect * tangent, ndc.y * tangent, 1.0);
+  return ray * planeDepth(viewPosition.z);
+}
+
+// Under an orthographic sun the ray from p toward it is one point of the light's plane, so
+// every triangle that could block it is in that point's grid cell. Corners on a shared edge
+// count for both triangles, so no pinhole opens along the seams.
+float exactShadow(vec3 p) {
+  vec3 l = p * lightBasis;
+  ivec2 cell = ivec2(floor((l.xy - gridBounds.xy) * gridBounds.zw));
+  if (any(lessThan(cell, ivec2(0))) || any(greaterThanEqual(cell, ivec2(gridSize)))) {
+    return 1.0;
+  }
+  ivec2 range = texelFetch(casterCells, cell, 0).xy;
+  float epsilon = 0.05 + length(p) * 2e-5;
+  for (int i = 0; i < range.y; i++) {
+    int triangle = texelFetch(casterIndices, tableAt(range.x + i), 0).x;
+    vec3 a = texelFetch(casterTriangles, tableAt(triangle * 3), 0).xyz;
+    vec3 b = texelFetch(casterTriangles, tableAt(triangle * 3 + 1), 0).xyz;
+    vec3 c = texelFetch(casterTriangles, tableAt(triangle * 3 + 2), 0).xyz;
+    vec2 e0 = b.xy - a.xy;
+    vec2 e1 = c.xy - a.xy;
+    vec2 d = l.xy - a.xy;
+    float area = e0.x * e1.y - e1.x * e0.y;
+    if (abs(area) < 1e-9) {
+      continue;
+    }
+    float u = (d.x * e1.y - e1.x * d.y) / area;
+    float v = (e0.x * d.y - d.x * e0.y) / area;
+    if (u >= -1e-6 && v >= -1e-6 && u + v <= 1.0 + 1e-6) {
+      float z = a.z + u * (b.z - a.z) + v * (c.z - a.z);
+      if (z > l.z + epsilon) {
+        return 0.0;
+      }
+    }
+  }
+  return 1.0;
+}
+
 // The face's own normal, turned toward the eye as the screen-space one was: the eye is at the
 // origin, so it is on the side the plane's offset is positive.
 vec3 faceNormal() {
@@ -247,7 +308,16 @@ vec3 faceNormal() {
 void main() {
   vec3 n = faceNormal();
   float lambert = max(dot(n, sunView), 0.0);
-  float shadow = lambert > 0.0 ? shadowAt(viewPosition, n, lambert) : 1.0;
+  float shadow = 1.0;
+  if (lambert > 0.0) {
+    if (shadowMode == 0) {
+      shadow = shadowAt(viewPosition, n, lambert);
+    } else if (shadowMode == 1) {
+      shadow = 0.0;
+    } else if (shadowMode == 3) {
+      shadow = exactShadow(surfacePoint());
+    }
+  }
   vec3 ambient = mix(ambientGround, ambientSky, n.y * 0.5 + 0.5);
   gl_FragDepth = logDepth(viewPosition.z);
   pixel = vec4(faceColour * (ambient + sunColour * lambert * shadow), 1.0);
@@ -257,6 +327,30 @@ const DEPTH_VERTEX = `#version 300 es
 in vec3 view;
 uniform mat4 lightMatrix;
 void main() { gl_Position = lightMatrix * vec4(view, 1.0); }`;
+
+/// A shadow volume is clipped at the near plane only: depth-fail counting needs every back cap,
+/// however far, and the fragment's own log depth (clamped to the far plane) is what is tested.
+const VOLUME_VERTEX = `#version 300 es
+in vec3 view;
+in vec3 colour;
+in vec4 plane;
+uniform float aspect;
+uniform float tangent;
+uniform vec2 depthRange;
+out vec3 faceColour;
+out float viewDepth;
+flat out vec4 facePlane;
+void main() {
+  faceColour = colour;
+  viewDepth = view.z;
+  facePlane = plane;
+  gl_Position = vec4(
+    view.x / (aspect * tangent),
+    view.y / tangent,
+    view.z - 2.0 * depthRange.x,
+    view.z
+  );
+}`;
 
 const DEPTH_FRAGMENT = `#version 300 es
 precision highp float;
@@ -343,17 +437,28 @@ interface ShadowMap {
   readonly texture: WebGLTexture;
 }
 
-/// Which edge a Cast Shadow is drawn with; `off` never reaches the renderer.
-export type ShadowEdge = 'soft' | 'hard';
+/// Which edge a Cast Shadow is drawn with; `off` never reaches the renderer. `stepped`,
+/// `volume` and `exact` are the #380 prototypes: a hard map under a sun held still between
+/// 1/1024-turn steps, stencil shadow volumes, and a per-fragment ray test.
+export type ShadowEdge = 'soft' | 'hard' | 'stepped' | 'volume' | 'exact';
+
+interface CasterTextures {
+  readonly cells: WebGLTexture;
+  readonly indices: WebGLTexture;
+  readonly triangles: WebGLTexture;
+}
 
 interface EnhancedResources {
   readonly casterBuffer: WebGLBuffer;
+  readonly casterTextures: CasterTextures;
   readonly colourProgram: WebGLProgram;
   readonly depthProgram: WebGLProgram;
   readonly maps: readonly [ShadowMap, ShadowMap];
   /// The compare samplers the maps are read through, one per edge. The texture keeps LINEAR
   /// parameters of its own; whichever sampler is bound overrides them.
-  readonly samplers: Readonly<Record<ShadowEdge, WebGLSampler>>;
+  readonly samplers: Readonly<Record<'hard' | 'soft', WebGLSampler>>;
+  readonly volumeBuffer: WebGLBuffer;
+  readonly volumeProgram: WebGLProgram;
 }
 
 /// The frame keeps reversed copies for double-sided colour faces. A shadow caster only needs
@@ -465,7 +570,11 @@ export class FrameRenderer {
     private readonly options: FrameRendererOptions,
     onContextLost: () => void
   ) {
-    const gl = canvas.getContext('webgl2', { alpha: false, antialias: false });
+    const gl = canvas.getContext('webgl2', {
+      alpha: false,
+      antialias: false,
+      stencil: true
+    });
     if (gl === null) {
       throw new Error(
         'WebGL2 is unavailable. Enable hardware acceleration to use Enhanced presentation.'
@@ -524,7 +633,9 @@ export class FrameRenderer {
     this.resetState();
     if (enhanced !== undefined && this.options.lighting === true) {
       this.enhanced ??= this.createEnhanced(gl);
+      const query = this.beginTiming();
       this.renderEnhanced(plan, enhanced, this.enhanced);
+      this.endTiming(query);
       return;
     }
     gl.clearColor(plan.clear[0], plan.clear[1], plan.clear[2], 1);
@@ -658,6 +769,11 @@ export class FrameRenderer {
     }
     if (this.enhanced !== undefined) {
       gl.deleteBuffer(this.enhanced.casterBuffer);
+      gl.deleteBuffer(this.enhanced.volumeBuffer);
+      gl.deleteProgram(this.enhanced.volumeProgram);
+      for (const texture of Object.values(this.enhanced.casterTextures)) {
+        gl.deleteTexture(texture);
+      }
       gl.deleteProgram(this.enhanced.colourProgram);
       gl.deleteProgram(this.enhanced.depthProgram);
       for (const map of this.enhanced.maps) {
@@ -764,15 +880,23 @@ export class FrameRenderer {
   /// costs nothing, needs no constant, and is what the original's own surface stream does.
   /// Depth writes stay on, so the ground records and the structures that follow order against
   /// the surface normally.
-  private drawLayers(shaderProgram: WebGLProgram, plan: TriangleFrame): void {
+  private drawLayers(
+    shaderProgram: WebGLProgram,
+    plan: TriangleFrame,
+    /// A repeat of a drawn frame tests every depth against itself (the sunlit pass over a
+    /// stencil volume count); the painter's order is otherwise unchanged.
+    repeat = false
+  ): void {
     const gl = this.gl;
+    const depthFunc = (value: number): void =>
+      gl.depthFunc(repeat ? gl.EQUAL : value);
     const bias = requiredUniform(gl, shaderProgram, 'depthBias');
     const fill = plan.fillTriangleCount * 3;
     const islands = plan.islandTriangleCount * 3;
     const ground = plan.groundTriangleCount * 3;
     const rest = plan.triangleCount * 3 - fill - islands - ground;
     gl.uniform1f(bias, SURFACE_DEPTH_BIAS);
-    gl.depthFunc(gl.ALWAYS);
+    depthFunc(gl.ALWAYS);
     gl.drawArrays(gl.TRIANGLES, 0, fill);
     // The finite sea plane can overlap land beyond the detailed far plane.
     // Paint the complete island silhouettes after it, so it cannot cut holes in them.
@@ -786,7 +910,7 @@ export class FrameRenderer {
       // far plane. At orbital heights that plane would clip the whole network.
       this.drawFlatLayer(plan.roadVertices, plan, shaderProgram, 1_000_000_000);
     }
-    gl.depthFunc(gl.LEQUAL);
+    depthFunc(gl.LEQUAL);
     gl.uniform1f(bias, LAYER_DEPTH_BIAS);
     gl.drawArrays(gl.TRIANGLES, fill + islands, ground);
     gl.uniform1f(bias, 0);
@@ -858,15 +982,89 @@ export class FrameRenderer {
       gl.samplerParameteri(sampler, gl.TEXTURE_COMPARE_FUNC, gl.LEQUAL);
       return sampler;
     };
+    const volumeBuffer = gl.createBuffer();
+    if (volumeBuffer === null) {
+      throw new Error('Could not allocate the view shadow volume buffer.');
+    }
+    const createTable = (): WebGLTexture => {
+      const texture = gl.createTexture();
+      if (texture === null) {
+        throw new Error('Could not allocate a view caster table.');
+      }
+      gl.bindTexture(gl.TEXTURE_2D, texture);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      return texture;
+    };
+    const casterTextures = {
+      cells: createTable(),
+      indices: createTable(),
+      triangles: createTable()
+    };
+    gl.bindTexture(gl.TEXTURE_2D, casterTextures.triangles);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA32F,
+      1,
+      1,
+      0,
+      gl.RGBA,
+      gl.FLOAT,
+      new Float32Array(4)
+    );
+    gl.bindTexture(gl.TEXTURE_2D, casterTextures.cells);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RG32I,
+      1,
+      1,
+      0,
+      gl.RG_INTEGER,
+      gl.INT,
+      new Int32Array(2)
+    );
+    gl.bindTexture(gl.TEXTURE_2D, casterTextures.indices);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.R32I,
+      1,
+      1,
+      0,
+      gl.RED_INTEGER,
+      gl.INT,
+      new Int32Array(1)
+    );
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    const colourProgram = program(gl, LIT_VERTEX, LIT_FRAGMENT);
+    gl.useProgram(colourProgram);
+    // Every sampler keeps a unit of its own, so a shadow sampler and an integer one never
+    // share a unit whichever mode draws.
+    for (const [name, unit] of [
+      ['nearShadowMap', 0],
+      ['farShadowMap', 1],
+      ['casterTriangles', 2],
+      ['casterCells', 3],
+      ['casterIndices', 4]
+    ] as const) {
+      gl.uniform1i(requiredUniform(gl, colourProgram, name), unit);
+    }
     return {
       casterBuffer,
-      colourProgram: program(gl, LIT_VERTEX, LIT_FRAGMENT),
+      casterTextures,
+      colourProgram,
       depthProgram: program(gl, DEPTH_VERTEX, DEPTH_FRAGMENT),
       maps,
       samplers: {
         hard: createSampler(gl.NEAREST),
         soft: createSampler(gl.LINEAR)
-      }
+      },
+      volumeBuffer,
+      volumeProgram: program(gl, VOLUME_VERTEX, FRAGMENT)
     };
   }
 
@@ -934,46 +1132,114 @@ export class FrameRenderer {
     }
   }
 
+  private readonly pendingTimings: WebGLQuery[] = [];
+
+  /// #380 prototype instrumentation: when a page sets `__shadowTiming` to an array, each
+  /// Enhanced frame's GPU time in milliseconds is pushed onto it once the GPU reports it.
+  private beginTiming(): WebGLQuery | undefined {
+    const gl = this.gl;
+    const sink = (globalThis as Record<string, unknown>)['__shadowTiming'];
+    const extension = Array.isArray(sink)
+      ? (gl.getExtension('EXT_disjoint_timer_query_webgl2') as {
+          readonly GPU_DISJOINT_EXT: number;
+          readonly TIME_ELAPSED_EXT: number;
+        } | null)
+      : null;
+    if (!Array.isArray(sink) || extension === null) {
+      return undefined;
+    }
+    while (this.pendingTimings.length > 0) {
+      const oldest = this.pendingTimings[0]!;
+      if (!gl.getQueryParameter(oldest, gl.QUERY_RESULT_AVAILABLE)) {
+        break;
+      }
+      this.pendingTimings.shift();
+      if (!gl.getParameter(extension.GPU_DISJOINT_EXT)) {
+        sink.push(gl.getQueryParameter(oldest, gl.QUERY_RESULT) / 1e6);
+      }
+      gl.deleteQuery(oldest);
+    }
+    const query = gl.createQuery();
+    if (query === null) {
+      return undefined;
+    }
+    gl.beginQuery(extension.TIME_ELAPSED_EXT, query);
+    return query;
+  }
+
+  private endTiming(query: WebGLQuery | undefined): void {
+    if (query === undefined) {
+      return;
+    }
+    const gl = this.gl;
+    const extension = gl.getExtension('EXT_disjoint_timer_query_webgl2') as {
+      readonly TIME_ELAPSED_EXT: number;
+    };
+    gl.endQuery(extension.TIME_ELAPSED_EXT);
+    this.pendingTimings.push(query);
+  }
+
   private renderEnhanced(
     plan: TriangleFrame,
     frame: LightingRender,
     resources: EnhancedResources
   ): void {
     const gl = this.gl;
+    const edge = frame.shadowEdge;
+    const usesMaps = edge === 'soft' || edge === 'hard' || edge === 'stepped';
     const matrices = SHADOW_WINDOWS.map(window =>
       lightMatrix(frame.lighting, frame.view, frame.eyeWorld, window)
     );
-    const casters = shadowCasterVertices(plan.vertices);
-    const casterCount = casters.length / FLOATS_PER_VERTEX;
+    // The Body's surface and the ground records under the structures are flat on the ground
+    // and cast nothing; the exact candidates leave them out (the maps keep them, as shipped).
+    const structureStart =
+      (plan.fillTriangleCount +
+        plan.islandTriangleCount +
+        plan.groundTriangleCount) *
+      3 *
+      FLOATS_PER_VERTEX;
+    const casters = shadowCasterVertices(
+      usesMaps ? plan.vertices : plan.vertices.subarray(structureStart)
+    );
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, resources.casterBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, casters, gl.DYNAMIC_DRAW);
-    gl.enable(gl.DEPTH_TEST);
-    gl.depthFunc(gl.LEQUAL);
-    gl.depthMask(true);
-    gl.disable(gl.CULL_FACE);
-    gl.enable(gl.POLYGON_OFFSET_FILL);
-    gl.polygonOffset(...SHADOW_POLYGON_OFFSET);
-    this.bindGeometry(resources.depthProgram, resources.casterBuffer, [
-      ['view', 0, 3]
-    ]);
-    for (let index = 0; index < resources.maps.length; index += 1) {
-      gl.bindFramebuffer(gl.FRAMEBUFFER, resources.maps[index]!.framebuffer);
-      gl.viewport(0, 0, SHADOW_RESOLUTION, SHADOW_RESOLUTION);
-      gl.clear(gl.DEPTH_BUFFER_BIT);
-      gl.uniformMatrix4fv(
-        requiredUniform(gl, resources.depthProgram, 'lightMatrix'),
-        false,
-        matrices[index]!
-      );
-      gl.drawArrays(gl.TRIANGLES, 0, casterCount);
+    if (usesMaps) {
+      const casterCount = casters.length / FLOATS_PER_VERTEX;
+      gl.bindBuffer(gl.ARRAY_BUFFER, resources.casterBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, casters, gl.DYNAMIC_DRAW);
+      gl.enable(gl.DEPTH_TEST);
+      gl.depthFunc(gl.LEQUAL);
+      gl.depthMask(true);
+      gl.disable(gl.CULL_FACE);
+      gl.enable(gl.POLYGON_OFFSET_FILL);
+      gl.polygonOffset(...SHADOW_POLYGON_OFFSET);
+      this.bindGeometry(resources.depthProgram, resources.casterBuffer, [
+        ['view', 0, 3]
+      ]);
+      for (let index = 0; index < resources.maps.length; index += 1) {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, resources.maps[index]!.framebuffer);
+        gl.viewport(0, 0, SHADOW_RESOLUTION, SHADOW_RESOLUTION);
+        gl.clear(gl.DEPTH_BUFFER_BIT);
+        gl.uniformMatrix4fv(
+          requiredUniform(gl, resources.depthProgram, 'lightMatrix'),
+          false,
+          matrices[index]!
+        );
+        gl.drawArrays(gl.TRIANGLES, 0, casterCount);
+      }
+      gl.disable(gl.POLYGON_OFFSET_FILL);
     }
-    gl.disable(gl.POLYGON_OFFSET_FILL);
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     gl.clearColor(plan.clear[0], plan.clear[1], plan.clear[2], 1);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    if (edge === 'volume') {
+      gl.clearStencil(0);
+      gl.clear(
+        gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT
+      );
+    } else {
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    }
     this.drawSky(plan);
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
@@ -981,6 +1247,71 @@ export class FrameRenderer {
     gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
     gl.bufferData(gl.ARRAY_BUFFER, plan.vertices, gl.DYNAMIC_DRAW);
     this.bindGeometry(resources.colourProgram, this.buffer, COLOUR_ATTRIBUTES);
+    this.setLitUniforms(plan, frame, resources, matrices);
+
+    const mode = requiredUniform(gl, resources.colourProgram, 'shadowMode');
+    if (edge === 'exact') {
+      this.uploadCasterGrid(
+        resources,
+        casterGrid(casters, frame.lighting.sunView)
+      );
+      gl.uniform1i(mode, 3);
+      this.drawLayers(resources.colourProgram, plan);
+      return;
+    }
+    if (edge !== 'volume') {
+      gl.uniform1i(mode, 0);
+      this.drawLayers(resources.colourProgram, plan);
+      return;
+    }
+
+    // Stencil shadow volumes, depth-fail: ambient everywhere, count each pixel's volumes behind
+    // it, then full Sunlight where the count is zero.
+    gl.uniform1i(mode, 1);
+    this.drawLayers(resources.colourProgram, plan);
+
+    const volumes = shadowVolumeVertices(casters, frame.lighting.sunView);
+    gl.bindBuffer(gl.ARRAY_BUFFER, resources.volumeBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, volumes, gl.DYNAMIC_DRAW);
+    this.bindGeometry(
+      resources.volumeProgram,
+      resources.volumeBuffer,
+      COLOUR_ATTRIBUTES
+    );
+    this.setProjection(resources.volumeProgram, plan);
+    gl.uniform1f(requiredUniform(gl, resources.volumeProgram, 'depthBias'), 0);
+    gl.colorMask(false, false, false, false);
+    gl.depthMask(false);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LESS);
+    gl.disable(gl.CULL_FACE);
+    gl.frontFace(gl.CW);
+    gl.enable(gl.STENCIL_TEST);
+    gl.stencilMask(0xff);
+    gl.stencilFunc(gl.ALWAYS, 0, 0xff);
+    gl.stencilOpSeparate(gl.BACK, gl.KEEP, gl.INCR_WRAP, gl.KEEP);
+    gl.stencilOpSeparate(gl.FRONT, gl.KEEP, gl.DECR_WRAP, gl.KEEP);
+    gl.drawArrays(gl.TRIANGLES, 0, volumes.length / FLOATS_PER_VERTEX);
+
+    gl.colorMask(true, true, true, true);
+    gl.stencilFunc(gl.EQUAL, 0, 0xff);
+    gl.stencilOp(gl.KEEP, gl.KEEP, gl.KEEP);
+    this.cullAsConfigured();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+    this.bindGeometry(resources.colourProgram, this.buffer, COLOUR_ATTRIBUTES);
+    gl.uniform1i(mode, 2);
+    this.drawLayers(resources.colourProgram, plan, true);
+    gl.depthMask(true);
+    gl.disable(gl.STENCIL_TEST);
+  }
+
+  private setLitUniforms(
+    plan: TriangleFrame,
+    frame: LightingRender,
+    resources: EnhancedResources,
+    matrices: readonly Float32Array[]
+  ): void {
+    const gl = this.gl;
     this.setProjection(resources.colourProgram, plan);
     this.uniform3(resources.colourProgram, 'sunView', frame.lighting.sunView);
     this.uniform3(
@@ -998,9 +1329,10 @@ export class FrameRenderer {
       'ambientGround',
       frame.lighting.ambientGround
     );
+    const sampler = frame.shadowEdge === 'soft' ? 'soft' : 'hard';
     gl.uniform1i(
       requiredUniform(gl, resources.colourProgram, 'hardEdge'),
-      frame.shadowEdge === 'hard' ? 1 : 0
+      sampler === 'hard' ? 1 : 0
     );
 
     for (let index = 0; index < resources.maps.length; index += 1) {
@@ -1019,12 +1351,71 @@ export class FrameRenderer {
       );
       gl.activeTexture(index === 0 ? gl.TEXTURE0 : gl.TEXTURE1);
       gl.bindTexture(gl.TEXTURE_2D, resources.maps[index]!.texture);
-      gl.bindSampler(index, resources.samplers[frame.shadowEdge]);
-      gl.uniform1i(
-        requiredUniform(gl, resources.colourProgram, `${prefix}ShadowMap`),
-        index
-      );
+      gl.bindSampler(index, resources.samplers[sampler]);
     }
-    this.drawLayers(resources.colourProgram, plan);
+  }
+
+  private uploadCasterGrid(
+    resources: EnhancedResources,
+    grid: ReturnType<typeof casterGrid>
+  ): void {
+    const gl = this.gl;
+    const program = resources.colourProgram;
+    for (const unit of [2, 3, 4]) {
+      gl.bindSampler(unit, null);
+    }
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, resources.casterTextures.triangles);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA32F,
+      CASTER_TEXTURE_WIDTH,
+      grid.triangleRows,
+      0,
+      gl.RGBA,
+      gl.FLOAT,
+      grid.triangles
+    );
+    gl.activeTexture(gl.TEXTURE3);
+    gl.bindTexture(gl.TEXTURE_2D, resources.casterTextures.cells);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RG32I,
+      CASTER_GRID_SIZE,
+      CASTER_GRID_SIZE,
+      0,
+      gl.RG_INTEGER,
+      gl.INT,
+      grid.cells
+    );
+    gl.activeTexture(gl.TEXTURE4);
+    gl.bindTexture(gl.TEXTURE_2D, resources.casterTextures.indices);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.R32I,
+      CASTER_TEXTURE_WIDTH,
+      grid.indexRows,
+      0,
+      gl.RED_INTEGER,
+      gl.INT,
+      grid.indices
+    );
+    const [lx, ly, lz] = grid.basis;
+    gl.uniformMatrix3fv(requiredUniform(gl, program, 'lightBasis'), false, [
+      lx.x,
+      lx.y,
+      lx.z,
+      ly.x,
+      ly.y,
+      ly.z,
+      lz.x,
+      lz.y,
+      lz.z
+    ]);
+    gl.uniform4f(requiredUniform(gl, program, 'gridBounds'), ...grid.bounds);
+    gl.uniform1i(requiredUniform(gl, program, 'gridSize'), CASTER_GRID_SIZE);
   }
 }

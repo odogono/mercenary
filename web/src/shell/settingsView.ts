@@ -143,7 +143,11 @@ export const installSettingsView = (
       options: [
         { label: 'OFF', value: 'off' },
         { label: 'SOFT', value: 'soft' },
-        { label: 'HARD', value: 'hard' }
+        { label: 'HARD', value: 'hard' },
+        // #380 prototypes.
+        { label: 'STEPPED', value: 'stepped' },
+        { label: 'VOLUME', value: 'volume' },
+        { label: 'EXACT', value: 'exact' }
       ]
     },
     {

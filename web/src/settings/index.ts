@@ -119,7 +119,9 @@ export type PresentationPreset = 'authentic' | 'enhanced';
 export type StructureReach = 'all' | 'cell';
 /// How a Cast Shadow's edge is drawn under Enhanced presentation: not at all, softened, or
 /// hard. A player's choice rather than a document's, so it lives in the preferences alone.
-export type CastShadowEdge = 'off' | 'soft' | 'hard';
+/// `stepped`, `volume` and `exact` are the #380 prototypes, reachable from the console only.
+export type CastShadowEdge =
+  'off' | 'soft' | 'hard' | 'stepped' | 'volume' | 'exact';
 
 /// How the wireframe itself is drawn, as the Reference Build drew it unless told otherwise.
 ///
@@ -560,7 +562,12 @@ export const isStructureReach = (value: unknown): value is StructureReach =>
   value === 'cell' || value === 'all';
 
 export const isCastShadowEdge = (value: unknown): value is CastShadowEdge =>
-  value === 'off' || value === 'soft' || value === 'hard';
+  value === 'off' ||
+  value === 'soft' ||
+  value === 'hard' ||
+  value === 'stepped' ||
+  value === 'volume' ||
+  value === 'exact';
 
 const readGlowDistance = (value: unknown): GlowDistanceSettings => {
   const path = 'presentation.glowDistance';

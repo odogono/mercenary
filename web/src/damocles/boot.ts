@@ -66,7 +66,7 @@ import {
 import { AUTHORS_COMPUTER_SLOT } from './headCommands.ts';
 import { classifyPosition } from './islands.ts';
 import { stMakeCode } from './keys.ts';
-import { erisLighting, sunlight } from './lighting.ts';
+import { erisLighting, steppedSun, sunlight } from './lighting.ts';
 import { damoclesPanelViewModel } from './panel.ts';
 import {
   DAMOCLES_PANEL_PATH,
@@ -1423,7 +1423,11 @@ try {
       sun !== null && shadowEdge !== 'off'
         ? {
             eyeWorld: snapshot.pose.position,
-            lighting: erisLighting(content.doc, snapshot.pose, sun),
+            lighting: erisLighting(
+              content.doc,
+              snapshot.pose,
+              shadowEdge === 'stepped' ? steppedSun(sun) : sun
+            ),
             shadowEdge,
             view: snapshot.pose
           }
