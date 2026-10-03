@@ -1,0 +1,76 @@
+{
+  "sourceRevision": "e4cba434069ca1fbec6e72b3a99cbf775f1663c4",
+  "identity": {
+    "contentSha256": "c50b402c04c70ab74f95a938c0f867e740ea843157e514764f2bceb84a2f44ed",
+    "destination": "metis",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "title": "dion"
+  },
+  "expandedContentSha256": "d31490d7ba44a08949f71267884f1e290074acc5885fdfae747f7aeefcfdf611",
+  "programmesSha256": "1881d582f28aa5cd7fb5aad2348d357a8c976b822c3430010a43dcd41b1d1954",
+  "disposition": "D2 accepted shared initial/base/alternate faceSelection; derived outputs rebuild before first reader",
+  "taggedRestore": {
+    "evidenceClass": "Research-only tagged restoration against uninterrupted pinned-I2 face references and promoted METIS frame planner",
+    "initialTags": ["base", "alternate"],
+    "framesPerHistory": 602,
+    "matchingFaceStates": 1204,
+    "matchingFrameDescriptions": 1204,
+    "serializedOutputs": false,
+    "scope": "Four face cursors/tag only; non-face inputs supplied by uninterrupted source; no schema-2 codec, total migration constructor or original raster claim"
+  },
+  "collision": {
+    "evidenceClass": "Ordinary pinned-I2 input replay with independent documented face writer",
+    "sourceSnapshotSha256": "cb97dbcd35b72fac3cc05bfc3e96e15a6eda50281ec5157cd15269af0a9bd0c9",
+    "saveBytesSha256": "288418228d893c6c7995fa145d3a390765b9f22e332951fcb4113b7d22a7a374",
+    "prefixOperationsSha256": "f540601a8bec8fabe815da4e385c36ee15dad09e4d7fcfdb411f58437645c36e",
+    "tick": 6312,
+    "frame": 573,
+    "messageBusy": false,
+    "equalProposedInputs": true,
+    "cursors": {
+      "$A1": {
+        "alternate": 25,
+        "base": 13
+      },
+      "$A5": {
+        "alternate": 2,
+        "base": 8
+      }
+    },
+    "lastSelections": [false, true],
+    "retainedOutputs": [
+      {
+        "$A1": 17152,
+        "$A5": 20480
+      },
+      {
+        "$A1": 17152,
+        "$A5": 20736
+      }
+    ],
+    "rebuilt": {
+      "$A1": 17152,
+      "$A5": 20480
+    },
+    "matchesRetained": [true, false],
+    "lastSelectionRebuildMatches": [true, true],
+    "visibleFirstFrameMismatchProved": false,
+    "afterNextFrameEqual": true,
+    "equalFutureFrames": 600,
+    "futureComparison": "Uninterrupted references after their next animation writer; not a restore omission proof"
+  },
+  "a1OrderWitness": {
+    "evidenceClass": "Synthetic independent writer-order control",
+    "equalCursors": true,
+    "base": 1,
+    "alternate": 0,
+    "outputs": [17152, 17920]
+  },
+  "opening": {
+    "evidenceClass": "Synthetic independent base-wrap control against coherent opening",
+    "baseUpdates": 651,
+    "sameCursorsAfterWrap": true,
+    "outputs": [8192, 17152],
+    "a5Outputs": [8192, 20480]
+  }
+}

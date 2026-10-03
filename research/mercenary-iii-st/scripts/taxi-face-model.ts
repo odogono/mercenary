@@ -1,4 +1,5 @@
 import { int, list, record } from "../../../web/src/dion/read.ts";
+import type { FaceSelection } from "./taxi-face-snapshot.ts";
 
 export interface TaxiFaceState {
   alternate: number;
@@ -13,6 +14,7 @@ type Token = (typeof tokens)[number];
 export class TaxiFaceModel {
   alternateFrames = 0;
   lastAlternate = false;
+  private selection: FaceSelection = "initial";
   private readonly sequences: Record<
     Token,
     Record<"base" | "alternate", number[]>
@@ -71,6 +73,11 @@ export class TaxiFaceModel {
       state[selected] = sequence[next] === 0 ? 0 : next;
       state.output = sequence[state[selected]]! << 8;
     }
+    this.selection = selected;
+  }
+
+  get faceSelection(): FaceSelection {
+    return this.selection;
   }
 
   capture(): Record<Token, TaxiFaceState> {
