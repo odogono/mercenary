@@ -74,6 +74,8 @@ import {
 import { installSettingsView } from './settingsView.ts';
 import { installStorageWatch } from './storage.ts';
 import { installSuspensionHandlers } from './suspension.ts';
+import { readTargPanelDocument } from './targPanelDocument.ts';
+import { installTargPanel } from './targPanelView.ts';
 import { titleStorageKeys } from './title.ts';
 import { loadTargTitleLogo } from './titleLogo.ts';
 import {
@@ -117,13 +119,7 @@ const panelElements = {
   ) as HTMLCanvasElement,
   fields: panelRoot.querySelectorAll<HTMLElement>('[data-field]'),
   lamps: panelRoot.querySelectorAll<HTMLElement>('[data-lamp]'),
-  root: surface,
-  targCompass: document.getElementById(
-    'targ-compass-canvas'
-  ) as HTMLCanvasElement,
-  targElevation: document.getElementById(
-    'targ-elevation-canvas'
-  ) as HTMLCanvasElement
+  root: surface
 };
 
 canvas.width = VIEWPORT.width;
@@ -183,12 +179,15 @@ try {
   assertBrowserDocument(location.pathname, 'gameplay');
   // Payload, settings and typography are independent localhost reads, so none waits behind
   // another.
-  const [bundle, settingsText, , logo] = await Promise.all([
+  const [bundle, settingsText, , logo, targPanelDocument] = await Promise.all([
     load(fetchReader(new URL('/payload/', location.href).href)),
     requiredText(new URL('/settings.json', location.href)),
     loadTypography(),
     // Targ's Title Logo comes from the ST release, since the Reference Build has none (#696).
-    loadTargTitleLogo(new URL('/payload/', location.href))
+    loadTargTitleLogo(new URL('/payload/', location.href)),
+    requiredText(new URL('/payload/targ-st/panel.json', location.href)).then(
+      text => readTargPanelDocument(JSON.parse(text))
+    )
   ]);
   chrome.showLogo(logo);
   let storage: Storage | undefined;
@@ -816,7 +815,12 @@ try {
   installPanelScale(panelRoot, panelScale, (target, onResize) => {
     new ResizeObserver(onResize).observe(target);
   });
-  const panel = installPanel(panelElements);
+  const panel = installPanel(panelElements, {
+    targ: installTargPanel(
+      document.getElementById('targ-panel-canvas') as HTMLCanvasElement,
+      targPanelDocument
+    )
+  });
   const departureView = installDepartureView({
     destinations: DESTINATIONS,
     elements: departureElements,

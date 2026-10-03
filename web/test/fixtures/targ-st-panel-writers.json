@@ -1,0 +1,226 @@
+{
+  "qualification": "Hashes of bounded native writer planes, not full-screen or Game Semantics parity.",
+  "recipe": "python3 -m targlab confirm-panel && python3 -m targlab export-panel-proofs",
+  "samples": [
+    {
+      "capture": "in-play.ram",
+      "captureSha256": "2c41f71d7b2746296a492003b6f0ca067fcff9178546381195376820a0bdcdd2",
+      "regions": [
+        {
+          "box": [72, 13, 112, 18],
+          "mask": 5,
+          "sha256": "e3004b5033095df53c4a9b3cfebd85ff7cb1458488fb7f4dae85b4488f347928"
+        },
+        {
+          "box": [144, 13, 184, 18],
+          "mask": 4,
+          "sha256": "ac40aaa6c19c624bf22424f6776dee71424150a49f4e11aa1063d0fc0425995b"
+        },
+        {
+          "box": [216, 13, 256, 18],
+          "mask": 4,
+          "sha256": "8582dd6ce54d4ff9b23e503dbf21d3a8d45d9c6bb1bf95cc6f4c751708b652ba"
+        },
+        {
+          "box": [272, 29, 304, 45],
+          "mask": 8,
+          "sha256": "80e488fb3c0c49489dde5e7a88713f0adf75c0b6fe43caceb6d84c8ffca353e9"
+        },
+        {
+          "box": [16, 13, 32, 45],
+          "mask": 12,
+          "sha256": "c36212ddefc3db7e599a5527a12512600b5ad81480172c2476e831c8255caafb"
+        },
+        {
+          "box": [64, 39, 248, 46],
+          "mask": 1,
+          "sha256": "e899b22d07b1ace440e35a20e3a3e15b28f68012f9a16925153b2cbc1a9abd21"
+        }
+      ],
+      "view": {
+        "altitude": "00000",
+        "headingWord": 256,
+        "lamps": {
+          "altitude": 15,
+          "location": 15,
+          "speed": 15
+        },
+        "location": "08-08",
+        "message": "    AIRCRAFT ON PAD     ",
+        "pitchWord": 512,
+        "speed": "+0000"
+      }
+    },
+    {
+      "capture": "positive/numbers.ram",
+      "captureSha256": "de44080b6fd22572505620f540cbab8d50f2522eb3a67673d3b8cd94949c4eef",
+      "regions": [
+        {
+          "box": [72, 13, 112, 18],
+          "mask": 5,
+          "sha256": "566f52d5bdcc56a29864511d1fdd85e149b1b796f9e48131853289e70e098f07"
+        },
+        {
+          "box": [144, 13, 184, 18],
+          "mask": 4,
+          "sha256": "03fbf7ed22e55097d3d563c7f1526942bb844b1e80d9175b2b42f6de38e4fc46"
+        },
+        {
+          "box": [216, 13, 256, 18],
+          "mask": 4,
+          "sha256": "bdb4937c6a23219fcb30bf3dccdde4d9a7699f3af0cd454b39bc5fcb0d763a63"
+        }
+      ],
+      "view": {
+        "altitude": "18204",
+        "headingWord": 0,
+        "lamps": {
+          "altitude": 15,
+          "location": 15,
+          "speed": 15
+        },
+        "location": "12-34",
+        "locationNegative": [false, false],
+        "message": "    AIRCRAFT ON PAD     ",
+        "pitchWord": 427,
+        "speed": "+0001"
+      }
+    },
+    {
+      "capture": "positive/compass.ram",
+      "captureSha256": "128fe6c19ffa90521cfbcf5ea35929b1bf406a91f5437a31e63e94524aa32eaa",
+      "regions": [
+        {
+          "box": [272, 29, 304, 45],
+          "mask": 8,
+          "sha256": "a91ff2c6402fb9ef33e12f92304ee98cdc6b66a1618460f980d11d6c25517b53"
+        }
+      ],
+      "view": {
+        "altitude": "18204",
+        "headingWord": 0,
+        "lamps": {
+          "altitude": 15,
+          "location": 15,
+          "speed": 15
+        },
+        "location": "12-34",
+        "locationNegative": [false, false],
+        "message": "    AIRCRAFT ON PAD     ",
+        "pitchWord": 427,
+        "speed": "+0001"
+      }
+    },
+    {
+      "capture": "positive/pitch.ram",
+      "captureSha256": "4f28d86a6dbd63e2b3433a409b930645ee892cf828058a2839a3a8441a1b3114",
+      "regions": [
+        {
+          "box": [16, 13, 32, 45],
+          "mask": 12,
+          "sha256": "83e4564f9c9180777ce59f723e694091944e4131fbd8223c064ea6575c74d73a"
+        }
+      ],
+      "view": {
+        "altitude": "18204",
+        "headingWord": 0,
+        "lamps": {
+          "altitude": 15,
+          "location": 15,
+          "speed": 15
+        },
+        "location": "12-34",
+        "locationNegative": [false, false],
+        "message": "    AIRCRAFT ON PAD     ",
+        "pitchWord": 427,
+        "speed": "+0001"
+      }
+    },
+    {
+      "capture": "reverse/numbers.ram",
+      "captureSha256": "598e5e273a8295c455dc832a04936e335246ac0fb8402521a404a8975b8a134c",
+      "regions": [
+        {
+          "box": [72, 13, 112, 18],
+          "mask": 5,
+          "sha256": "83f887c6590858637f8d963c93bd24f036033b6e2b80f9fa00cfc28a1bee6031"
+        },
+        {
+          "box": [144, 13, 184, 18],
+          "mask": 4,
+          "sha256": "67b13ae66267d1241f67717568e5c64fe324b4d8f396ed96dc97abf0ea510ff1"
+        },
+        {
+          "box": [216, 13, 256, 18],
+          "mask": 4,
+          "sha256": "3e13b5a68c0d9998213b975505b19757b021c560f7c35b4a74f87bde3141bfc2"
+        }
+      ],
+      "view": {
+        "altitude": "00999",
+        "headingWord": 768,
+        "lamps": {
+          "altitude": 15,
+          "location": 15,
+          "speed": 15
+        },
+        "location": "12-34",
+        "locationNegative": [true, true],
+        "message": "    AIRCRAFT ON PAD     ",
+        "pitchWord": 597,
+        "speed": "-0001"
+      }
+    },
+    {
+      "capture": "reverse/compass.ram",
+      "captureSha256": "847307835635176d5fe35607c173e028bd0bae8290ace372307d455e5c730058",
+      "regions": [
+        {
+          "box": [272, 29, 304, 45],
+          "mask": 8,
+          "sha256": "a4d12fb9db31a0da532f03f5750a69ff36de39bc27b3a93bc9168cb165484d35"
+        }
+      ],
+      "view": {
+        "altitude": "00999",
+        "headingWord": 768,
+        "lamps": {
+          "altitude": 15,
+          "location": 15,
+          "speed": 15
+        },
+        "location": "12-34",
+        "locationNegative": [true, true],
+        "message": "    AIRCRAFT ON PAD     ",
+        "pitchWord": 597,
+        "speed": "-0001"
+      }
+    },
+    {
+      "capture": "reverse/pitch.ram",
+      "captureSha256": "6d8b6684ecd90029eedf4e9ae15f9235c43c340d3559c01e330bc3790ac8e5fe",
+      "regions": [
+        {
+          "box": [16, 13, 32, 45],
+          "mask": 12,
+          "sha256": "7526452f90b042d3935e593d2c1b0b698e1ed7bd7aa135daf34254eb8a93f6a8"
+        }
+      ],
+      "view": {
+        "altitude": "00999",
+        "headingWord": 768,
+        "lamps": {
+          "altitude": 15,
+          "location": 15,
+          "speed": 15
+        },
+        "location": "12-34",
+        "locationNegative": [true, true],
+        "message": "    AIRCRAFT ON PAD     ",
+        "pitchWord": 597,
+        "speed": "-0001"
+      }
+    }
+  ],
+  "schemaVersion": 1
+}

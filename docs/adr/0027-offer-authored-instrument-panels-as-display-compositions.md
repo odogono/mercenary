@@ -1,6 +1,6 @@
 # Offer authored instrument panels as Display Compositions
 
-_(Status note, 2026-10-03: ADR 0071 supersedes the authored-only account for the actual Damocles Gameplay Session. Targ's Benson Panel, the Damocles rendition dressing Targ and Flyover's fallback retain this decision.)_
+_(Status note, 2026-10-03: ADR 0071 supersedes the authored-only account for the actual Damocles Gameplay Session. ADR 0072 also supersedes the authored-only Targ artwork account, admitting recovered ST presentation over C64 state. The Damocles rendition dressing Targ and Flyover's fallback retain this decision.)_
 
 The Browser Shell gains a Benson Panel — the Atari ST _Escape from Targ_ instrument panel, hand-recreated by eye under the world view — as authored presentation rather than recovered behaviour: it presents what the Session Snapshot already carries together with the Targ Orrery's authored local time, never changes play, and is recreated rather than extracted because original artwork and screenshots are Restricted Material and no ST-Targ laboratory exists. The choice is named honestly as a Display Composition setting — the Benson Panel is the product default and the classic strip preserves the prior bare frame — kept orthogonal to the Presentation Preset so panel and sky are chosen independently, and judged by maintainer side-by-side review (ADR 0011) rather than a fidelity claim.
 

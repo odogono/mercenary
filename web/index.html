@@ -63,10 +63,10 @@
          edges: the two border lines above and below the Game Surface. */
       #frame-stack {
         display: grid;
-        width: min(100%, calc((100dvh - 2px) * 1280 / 970));
+        width: min(100%, calc((100dvh - 2px) * 1280 / 1056));
         margin-inline: auto;
-        aspect-ratio: 1280 / 970;
-        grid-template-rows: 800fr 170fr;
+        aspect-ratio: 1280 / 1056;
+        grid-template-rows: 800fr 256fr;
       }
 
       /* The Damocles rendition keeps the ST panel's own proportions: 61 rows under a 320-column
@@ -265,6 +265,20 @@
         }
       }
 
+      #damocles-message.benson-cells {
+        display: grid;
+        box-sizing: border-box;
+        grid-template-columns: repeat(23, 1ch);
+        justify-content: center;
+        letter-spacing: 0;
+        white-space: pre;
+        column-gap: 0.14em;
+      }
+      .benson-cell {
+        min-width: 0;
+        text-align: center;
+      }
+
       /* ---------------------------------------------------------------------
          BENSON PANEL — authored instrument panel (ADR 0027). Tokens first:
          base values are the Targ rendition, [data-rendition='damocles']
@@ -348,185 +362,27 @@
         scale: var(--panel-scale, 1);
       }
 
-      .bezel {
-        background: var(--panel-face);
-        border-radius: 8px;
-        box-shadow:
-          inset 3px 3px 0 var(--panel-hi),
-          inset -3px -3px 0 var(--panel-lo);
-      }
-
-      .inset {
-        background: var(--panel-face-dark);
-        border-radius: 7px;
-        box-shadow:
-          inset 3px 3px 0 var(--panel-lo),
-          inset -3px -3px 0 var(--panel-hi);
-      }
-
-      .lcd {
-        display: flex;
-        gap: 3px;
-        align-items: center;
-        justify-content: center;
-        padding: 4px 6px;
-        background: var(--lcd-bg);
-        border-radius: 4px;
-        color: var(--lcd-ink);
-        font-size: 20px;
-        letter-spacing: 0.14em;
-      }
-
-      .lamp {
-        width: 17px;
-        height: 17px;
-        background: var(--lamp-off);
-        border-radius: 3px;
-        box-shadow: inset 2px 2px 0 rgb(0 0 0 / 60%);
-      }
-
-      .lamp.on {
-        background: var(--lamp-on);
-        box-shadow: 0 0 8px var(--lamp-on);
-      }
-
-      .lamp[data-lamp='altitudeLamp'].on {
-        background: var(--altitude-lamp-on);
-        box-shadow: 0 0 8px var(--altitude-lamp-on);
-      }
-
-      .plabel {
-        color: var(--label-ink);
-        font-size: 13px;
-        letter-spacing: 0.08em;
-        text-align: center;
-        font-variant-ligatures: none;
-        white-space: pre;
-      }
-
       .instrument-canvas {
-        display: block;
-        width: 100%;
-        height: 100%;
         image-rendering: pixelated;
       }
-
-      /* --- Targ rendition ------------------------------------------------- */
       #panel-targ {
-        display: grid;
-        height: 170px;
-        padding: 8px 12px 10px;
-        gap: 8px;
-        grid-template-columns: 118px 1fr 142px;
+        position: relative;
+        height: 256px;
       }
-
-      #panel-targ .column {
-        display: flex;
-        flex-direction: column;
-        gap: 3px;
-        align-items: center;
-        padding: 6px;
+      #targ-panel-canvas {
+        width: 1280px;
+        height: 256px;
+        image-rendering: pixelated;
       }
-
-      /* Each instrument is named on the floor of its own bezel, as the panel names them. */
-      #panel-targ .column .plabel {
-        margin-top: auto;
-        font-size: 12px;
-      }
-
-      #targ-elevation {
-        width: 54px;
-        height: 108px;
+      #targ-panel-readouts {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1px;
+        height: 1px;
         overflow: hidden;
-        border-radius: 5px;
-      }
-
-      #panel-targ .instruments {
-        display: grid;
-        gap: 10px;
-        grid-template-columns: repeat(3, 1fr);
-      }
-
-      #panel-targ .instrument {
-        display: flex;
-        flex-direction: column;
-        gap: 3px;
-        align-items: center;
-        padding: 7px;
-      }
-
-      #panel-targ .instrument .row {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-      }
-
-      /* The caption is printed on the panel's floor, so the message box takes the slack rather
-         than leaving a gap beneath the label. */
-      #panel-targ .middle {
-        display: flex;
-        height: 100%;
-        flex-direction: column;
-        gap: 8px;
-      }
-
-      #panel-targ .middle .caption {
-        margin-top: auto;
-      }
-
-      /* The message box is part of the panel's face, so it holds its height in silence rather
-         than collapsing between things Benson has to say. */
-      #panel-message {
-        display: flex;
-        height: 40px;
-        overflow: hidden;
-        align-items: center;
-        justify-content: center;
-        padding: 2px 6px 0;
-        margin-inline: 8px;
-        background: var(--msg-bg);
-        border-radius: 5px;
-        color: var(--msg-ink);
-        font-size: 24px;
-        letter-spacing: 0.1em;
-        text-align: center;
+        clip-path: inset(50%);
         white-space: nowrap;
-      }
-
-      #panel-message.benson-cells,
-      #damocles-message.benson-cells {
-        display: grid;
-        box-sizing: border-box;
-        grid-template-columns: repeat(23, 1ch);
-        justify-content: center;
-        letter-spacing: 0;
-        white-space: pre;
-      }
-
-      #panel-message.benson-cells {
-        column-gap: 0.1em;
-      }
-
-      #damocles-message.benson-cells {
-        column-gap: 0.14em;
-      }
-
-      .benson-cell {
-        min-width: 0;
-        text-align: center;
-      }
-
-      #targ-compass-slot {
-        width: 108px;
-        height: 13px;
-        margin-bottom: 4px;
-      }
-
-      #targ-compass {
-        width: 116px;
-        height: 78px;
-        overflow: hidden;
-        border-radius: 5px;
       }
 
       /* ---------------------------------------------------------------------
@@ -542,7 +398,7 @@
         position: absolute;
         z-index: 1;
         inset: 0 0 auto;
-        height: calc(800 / 970 * 100%);
+        height: calc(800 / 1056 * 100%);
         color: var(--text);
         font-family: var(--panel-font);
         letter-spacing: 0.08em;
@@ -669,58 +525,34 @@
           </section>
           <div id="benson-panel" aria-label="Benson Panel">
             <div id="panel-scale">
-              <section id="panel-targ" class="rendition-targ bezel">
-                <div class="column bezel">
-                  <div id="targ-elevation">
-                    <canvas
-                      id="targ-elevation-canvas"
-                      class="instrument-canvas"
-                      width="54"
-                      height="108"
-                    ></canvas>
-                  </div>
-                  <div class="plabel">ELEVATION</div>
-                </div>
-
-                <div class="middle">
-                  <div class="instruments">
-                    <div class="instrument bezel">
-                      <div class="row">
-                        <span class="lamp" data-lamp="groundLamp"></span>
-                        <span class="lcd" data-field="locationLabel"></span>
-                      </div>
-                      <div class="plabel">LOCATION</div>
-                    </div>
-                    <div class="instrument bezel">
-                      <div class="row">
-                        <span class="lamp" data-lamp="altitudeLamp"></span>
-                        <span class="lcd" data-field="altitude"></span>
-                      </div>
-                      <div class="plabel">ALTITUDE</div>
-                    </div>
-                    <div class="instrument bezel">
-                      <div class="row">
-                        <span class="lamp" data-lamp="runLamp"></span>
-                        <span class="lcd" data-field="speed"></span>
-                      </div>
-                      <div class="plabel">SPEED</div>
-                    </div>
-                  </div>
-                  <div id="panel-message" data-field="message"></div>
-                  <div class="plabel caption">BENSON G9-ST</div>
-                </div>
-
-                <div class="column bezel">
-                  <div id="targ-compass-slot" class="inset"></div>
-                  <div id="targ-compass">
-                    <canvas
-                      id="targ-compass-canvas"
-                      class="instrument-canvas"
-                      width="116"
-                      height="78"
-                    ></canvas>
-                  </div>
-                  <div class="plabel">COMPASS</div>
+              <section
+                id="panel-targ"
+                class="rendition-targ"
+                aria-label="Benson G9-ST"
+              >
+                <canvas
+                  id="targ-panel-canvas"
+                  width="320"
+                  height="64"
+                  aria-hidden="true"
+                ></canvas>
+                <div id="targ-panel-readouts">
+                  BENSON G9-ST. Location
+                  <span data-field="locationLabel"></span>. Altitude
+                  <span data-field="altitude"></span>. Speed
+                  <span data-field="speed"></span>. Elevation
+                  <span data-field="elevationDegrees"></span> degrees. Compass
+                  <span data-field="compassDegrees"></span> degrees. Ground
+                  warning
+                  <span data-field="groundLamp" data-lamp="groundLamp"></span>.
+                  Aboard
+                  <span
+                    data-field="altitudeLamp"
+                    data-lamp="altitudeLamp"
+                  ></span
+                  >. Running
+                  <span data-field="runLamp" data-lamp="runLamp"></span>. Benson
+                  <span id="panel-message" data-field="message"></span>.
                 </div>
               </section>
 
