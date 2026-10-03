@@ -56,7 +56,7 @@ does not match `config/working-authority.json`.
 | `damocleslab/cli.py`, `laboratory.py`, `runtime.py`, `toolchain.py`, `core.py` | commands, configuration, Hatari scripts, toolchain checks, hashing and errors |
 | `damocleslab/catalogue.py` | the geometric record decoder behind `payload/damocles/catalogue.json` (ADR 0039) |
 | `damocleslab/script.py`, `strings.py` | the Damocles Script decoder and its message text |
-| `damocleslab/documents.py`, `music.py`, `panel.py`, `system.py`, `title.py` | extractors for Head Command documents, the tune, the pitch strip, Gamma System Bodies and the Title Logo |
+| `damocleslab/documents.py`, `music.py`, `panel.py`, `panel_writers.py`, `system.py`, `title.py` | extractors for Head Command documents, the tune, panel artwork and writer data, Gamma System Bodies and the Title Logo |
 | `scripts/*-probe.py`, `*-check.py` | one Hatari probe or offline check per question; each has a section below, found by its issue number |
 | `scenarios/*.json` | `lab observe` scenarios |
 | `snapshots/*.sav` | Hatari memory snapshots probes start from |
@@ -764,6 +764,30 @@ game's). It fails closed on voices of different lengths, a jump off an op or ent
 or a table the pointer tables do not hold, and `tests/test_music.py` checks the tracked
 payload reproduces byte for byte from the pinned capture. See
 [every sound programme](../../docs/research/damocles-sound-programmes.md#the-music-player).
+
+## Panel extraction (#718, #740)
+
+```sh
+PYTHONPATH=research/damocles-st python3 -m damocleslab.panel \
+  --stx 'roms/atarist/damocles_-_mercenary_ii_novagen_software_(uk).stx' \
+  --run research/damocles-st/work/observe-first-world-20260818T101013Z-c5a32b7d \
+  --output payload/damocles/panel.json
+python3 -m unittest discover -s research/damocles-st/tests -p test_panel.py
+```
+
+Reuses the Title Logo's independent STX loader to recover DAM1's pristine panel head,
+the native 64 × 54-byte compass frames, the existing pitch strip, five fonts, centre
+art and title bands, activation definitions and field layouts. It verifies the run's
+manifest, pinned media and exact first-world RAM identity. Each extracted source
+range carries a hash; captured palette state is accompanied by its mutation rules.
+The schema stays at version 1 and the `pitch` member retains #718's contract.
+
+Tests exhaust all compass headings and compare both buffers of the on-foot,
+boarded-limo and airborne captures, including non-level pitch and recovered speed,
+altitude and clock readouts. Restricted captures remain optional on machines without
+the Working Authority; tracked payload shape and compass equivalence tests always run.
+Unsupported fields and centre content remain explicit `gaps`. This extraction does
+not replace the browser panel; see [the writer-data note](../../docs/research/damocles-panel-writer-data.md).
 
 ## Document extraction (#598)
 
