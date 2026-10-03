@@ -31,20 +31,13 @@ def pinned(entry: dict, path: Path) -> Path:
     return path
 
 
-def confirm() -> Path:
+def machine_args(run: Path) -> list[str]:
+    """Pinned machine for title and panel presentation comparisons."""
     pins = BASELINE['confirmation']
     disk = disk_path()
     tos = pinned(pins['tosImage'], disk.parents[1] / pins['tosImage']['relativePath'])
     hatari = pinned(pins['emulator'], Path(os.environ.get('TARG_HATARI', pins['emulator']['path'])))
-    base = REPOSITORY / 'restricted' / 'targ-st'
-    base.mkdir(parents=True, exist_ok=True)
-    run = Path(tempfile.mkdtemp(prefix='confirm-', dir=base))
-    (run / 'title.ini').write_text(f'savebin {run}/title.ram 0 $100000\n'
-                                   f'screenshot {run}/title.png\nquit\n')
-    (run / 'boot.ini').write_text(
-        f'b VBL = {TITLE_VBL} :trace :once :quiet :file {run}/title.ini\nc\n')
-    (run / 'empty.cfg').write_text('')
-    args = [str(hatari), '--configfile', str(run / 'empty.cfg'), '--tos', str(tos),
+    return [str(hatari), '--configfile', str(run / 'empty.cfg'), '--tos', str(tos),
             '--machine', 'st', '--memsize', '1', '--cpulevel', '0', '--cpuclock', '8',
             '--compatible', 'true', '--cpu-exact', 'true', '--addr24', 'true',
             '--fpu', 'none', '--blitter', 'false', '--monitor', 'rgb',
@@ -55,6 +48,18 @@ def confirm() -> Path:
             '--screenshot-format', 'png', '--fast-forward', 'true',
             '--confirm-quit', 'false', '--alert-level', 'fatal', '--log-level', 'warn',
             '--auto', 'A:\\ESCAPE.PRG', '--parse', str(run / 'boot.ini')]
+
+
+def confirm() -> Path:
+    base = REPOSITORY / 'restricted' / 'targ-st'
+    base.mkdir(parents=True, exist_ok=True)
+    run = Path(tempfile.mkdtemp(prefix='confirm-', dir=base))
+    (run / 'title.ini').write_text(f'savebin {run}/title.ram 0 $100000\n'
+                                   f'screenshot {run}/title.png\nquit\n')
+    (run / 'boot.ini').write_text(
+        f'b VBL = {TITLE_VBL} :trace :once :quiet :file {run}/title.ini\nc\n')
+    (run / 'empty.cfg').write_text('')
+    args = machine_args(run)
     with (run / 'hatari.log').open('w') as log:
         subprocess.run(args, stdout=log, stderr=log, check=True, timeout=300,
                        stdin=subprocess.DEVNULL,

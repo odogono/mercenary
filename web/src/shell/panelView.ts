@@ -810,7 +810,10 @@ export const installPanelScale = (
 /// on every frame, and a panel that rewrote every readout would churn the whole subtree.
 export const installPanel = (
   elements: PanelElements,
-  options: { readonly damoclesPitchStrip?: PitchStrip } = {}
+  options: {
+    readonly damoclesPitchStrip?: PitchStrip;
+    readonly targ?: { readonly draw: (model: PanelViewModel) => void };
+  } = {}
 ): { readonly draw: (model: PanelViewModel) => void } => {
   let lastCompass: number | undefined;
   let lastCentreBox: string | undefined;
@@ -819,6 +822,9 @@ export const installPanel = (
   let lastRendition: string | undefined;
   return {
     draw: model => {
+      if (elements.root.dataset['rendition'] === 'targ') {
+        options.targ?.draw(model);
+      }
       const messageCanvas = elements.damoclesMessage;
       for (const element of elements.fields) {
         const name = element.dataset['field'] as keyof PanelViewModel;

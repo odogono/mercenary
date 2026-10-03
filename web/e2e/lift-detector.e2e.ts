@@ -48,6 +48,33 @@ test('Metal Detector recolours every Benson surface together', async ({
     elements.map(element => getComputedStyle(element).color)
   );
   expect(new Set(colours).size).toBe(1);
+  // The visible recovered canvas must carry the same C64 colour signal as
+  // the semantic fields; CSS on a clipped field alone cannot prove this.
+  await expect
+    .poll(async () =>
+      page.locator('#targ-panel-canvas').evaluate(node => {
+        const canvas = node as HTMLCanvasElement;
+        const colour = getComputedStyle(
+          document.querySelector('#panel-message')!
+        ).color;
+        const rgb = colour.match(/\d+/g)!.slice(0, 3).map(Number);
+        const pixels = canvas
+          .getContext('2d')!
+          .getImageData(64, 39, 184, 7).data;
+        let coloured = 0;
+        for (let at = 0; at < pixels.length; at += 4) {
+          if (
+            pixels[at] === rgb[0] &&
+            pixels[at + 1] === rgb[1] &&
+            pixels[at + 2] === rgb[2]
+          ) {
+            coloured++;
+          }
+        }
+        return coloured;
+      })
+    )
+    .toBeGreaterThan(0);
   await testInfo.attach('metal-detector-benson-display', {
     body: await page.locator('#benson-panel').screenshot(),
     contentType: 'image/png'

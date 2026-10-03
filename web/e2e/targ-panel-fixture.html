@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Targ panel review</title>
+    <style>
+      body {
+        margin: 24px;
+        background: #111;
+        color: #eee;
+        font: 16px monospace;
+      }
+      canvas {
+        width: 960px;
+        height: 192px;
+        image-rendering: pixelated;
+      }
+    </style>
+  </head>
+  <body>
+    <p id="state"></p>
+    <canvas
+      id="panel"
+      width="320"
+      height="64"
+      aria-label="Targ Benson Panel"
+    ></canvas>
+    <script type="module" src="/e2e/targ-panel-fixture.ts"></script>
+  </body>
+</html>
