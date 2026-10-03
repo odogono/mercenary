@@ -1,4 +1,3 @@
-import type { CraftBody, CraftSlot } from '../catalogue/data.ts';
 import {
   STICK_DOWN,
   STICK_LEFT,
@@ -16,7 +15,8 @@ import {
   type CraftArithmetic,
   type CraftProgram,
   type CraftState
-} from './craft.ts';
+} from './pass.ts';
+import type { CraftBody, CraftSlot } from './types.ts';
 
 /// Space, the craft Mover's third Occupancy (#558, ADR 0051): the space entry `$055868`, the
 /// space pass `$05872E` over slot 0's Craft Parameter Block, and the frame's range and
@@ -499,21 +499,4 @@ export const land = (
     };
   }
   return { ...placed, contact: 0, supported: 0, supportLevel: 0 };
-};
-
-/// The Damocles Script trigger a landing on the Body at `offset` queues (`$054770`), `body +
-/// $1F`; ERIS (`$2C`) and DAMOCLES, the comet (`$74`), have none.
-export const landingTrigger = (offset: number): number | null =>
-  offset === 0x2c || offset === 0x74 ? null : offset / 4 + 0x1f;
-
-/// Whether a landing can reach the Body `bodyId`: one in the range scan's table but DIALIS,
-/// offset 0, which `$052FDA` never arrives at.
-export const landsOn = (
-  catalogue: {
-    readonly craft: { readonly bodies: readonly CraftBody[] } | null;
-  },
-  bodyId: string
-): boolean => {
-  const index = Number(/^body-(\d+)$/.exec(bodyId)?.[1] ?? -1);
-  return index >= 1 && index < (catalogue.craft?.bodies.length ?? 0);
 };

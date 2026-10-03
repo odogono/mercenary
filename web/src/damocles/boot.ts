@@ -61,7 +61,7 @@ import {
   type DamoclesConsoleCommand,
   type DamoclesConsoleHost
 } from './console.ts';
-import { craftProgram } from './craft.ts';
+import { craftProgram } from './craftProgram.ts';
 import {
   FLOATS_PER_VERTEX,
   planErisFrame,

@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
 
-import { craftProgram, type CraftArithmetic } from '../src/damocles/craft.ts';
+import { type CraftArithmetic } from '../src/craft/pass.ts';
+import { craftProgram } from '../src/damocles/craftProgram.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import {
   rollTangent,

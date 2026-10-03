@@ -1,11 +1,10 @@
+import { craftLog } from './tables.ts';
 import type {
-  Craft,
   CraftConstant,
   CraftParameters,
   CraftSlot,
   DetailBoxes
-} from '../catalogue/data.ts';
-import { craftLog } from './craftTables.ts';
+} from './types.ts';
 
 /// The craft Mover (ADR 0051): the pass `$057F46`–`$0583E8`, the wheeled tail `$057DE6`, the
 /// landing handler `$057CF2` and the aboard frame path `$05970E`–`$05976A`, run in the program's
@@ -221,25 +220,11 @@ export interface CraftProgram {
   readonly constants: CraftConstants;
   readonly slots: readonly CraftSlot[];
   /// The table at `$0557D6`, by ST scancode.
-  readonly throttleKeys: Craft['throttleKeys']['keys'];
+  readonly throttleKeys: readonly {
+    readonly entry: number;
+    readonly scancode: number;
+  }[];
 }
-
-export const craftProgram = (craft: Craft): CraftProgram => ({
-  arithmetic: {
-    arctan: craft.arithmetic.arctan.bytes,
-    exp: craft.arithmetic.exp.words,
-    octants: craft.arithmetic.octants,
-    sine: craft.arithmetic.sine.longs
-  },
-  constants: Object.fromEntries(
-    Object.entries(craft.constants).map(([name, value]) => [
-      name,
-      value.operand
-    ])
-  ) as CraftConstants,
-  slots: craft.slots,
-  throttleKeys: craft.throttleKeys.keys
-});
 
 /// The craft words the session holds aboard (ADR 0051 decision 4), in the program's units.
 ///

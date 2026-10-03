@@ -6,6 +6,34 @@ import {
 } from '../catalogue/data.ts';
 import type { ModelStore } from '../catalogue/modelStore.ts';
 import {
+  NO_BOXES,
+  STICK_DOWN,
+  STICK_LEFT,
+  STICK_RIGHT,
+  STICK_UP,
+  bindBoxes,
+  craftFrame,
+  launch,
+  throttleDown,
+  throttleForEntry,
+  throttleNotchKey,
+  throttleUp,
+  type BoundBoxes,
+  type CraftProgram,
+  type CraftState
+} from '../craft/pass.ts';
+import {
+  enterSpace,
+  land,
+  landingPoint,
+  spaceAltitude,
+  spaceFrame,
+  subStellarLongitude,
+  type SpaceFrame,
+  type SpaceMemory,
+  type SpaceState
+} from '../craft/space.ts';
+import {
   IDLE,
   MAXIMUM_STEP,
   freeLook,
@@ -38,24 +66,7 @@ import {
   type ClockAnchor,
   type ImpactTime
 } from './comet.ts';
-import {
-  NO_BOXES,
-  STICK_DOWN,
-  STICK_LEFT,
-  STICK_RIGHT,
-  STICK_UP,
-  bindBoxes,
-  craftFrame,
-  craftProgram,
-  launch,
-  throttleDown,
-  throttleForEntry,
-  throttleNotchKey,
-  throttleUp,
-  type BoundBoxes,
-  type CraftProgram,
-  type CraftState
-} from './craft.ts';
+import { craftProgram } from './craftProgram.ts';
 import {
   displayCells,
   documentMessageId,
@@ -164,19 +175,7 @@ import {
   type AttachmentLatch,
   type AttachmentState
 } from './selection.ts';
-import {
-  enterSpace,
-  land,
-  landingPoint,
-  landingTrigger,
-  landsOn,
-  spaceAltitude,
-  spaceFrame,
-  subStellarLongitude,
-  type SpaceFrame,
-  type SpaceMemory,
-  type SpaceState
-} from './space.ts';
+import { landingTrigger, landsOn } from './spacePolicy.ts';
 import { presentedText, type DamoclesStrings } from './strings.ts';
 import {
   advanceTurn,

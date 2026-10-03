@@ -4,7 +4,7 @@ import {
   craftFixed,
   craftMultiply,
   type CraftArithmetic
-} from './craft.ts';
+} from '../craft/pass.ts';
 
 /// The TOLOSA encounter (#581, ADR 0055): the moving-object pool's three routines as the aboard
 /// frame path calls them at `$05987A`, the fire launcher `$050B96`, the stepper `$050ABC` and the

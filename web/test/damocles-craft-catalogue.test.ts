@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { expect, it } from 'bun:test';
 
 import { CRAFT_CONSTANTS, parseCatalogue } from '../src/catalogue/data.ts';
-import { craftLog } from '../src/damocles/craftTables.ts';
+import { craftLog } from '../src/craft/tables.ts';
 import { loadCatalogue, readRawCatalogue } from './fixtures/catalogue.ts';
 
 const digest = (bytes: Uint8Array): string =>

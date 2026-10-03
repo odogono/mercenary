@@ -6,11 +6,11 @@ import {
   craftFloat,
   craftFrame,
   craftPass,
-  craftProgram,
   type BoundBoxes,
   type CraftProgram,
   type CraftState
-} from '../src/damocles/craft.ts';
+} from '../src/craft/pass.ts';
+import { craftProgram } from '../src/damocles/craftProgram.ts';
 import { loadCatalogue } from './fixtures/catalogue.ts';
 
 /// The craft Mover against the traced passes of #549 and the refused moves of #550 (ADR 0051:

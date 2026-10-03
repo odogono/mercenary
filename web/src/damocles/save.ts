@@ -1,11 +1,11 @@
 import type { Catalogue } from '../catalogue/data.ts';
+import { craftPanelSpeed } from '../craft/pass.ts';
 import {
   OPTION_MAXIMA,
   initialAuthorsComputer,
   type AuthorsComputer
 } from './authorsComputer.ts';
 import { NEW_GAME_CLOCK_LEVEL, type ClockAnchor } from './comet.ts';
-import { craftPanelSpeed } from './craft.ts';
 import {
   DAMOCLES_ROW_CELLS,
   LANDING_MESSAGE_IDS,
@@ -73,7 +73,7 @@ import {
   type Step
 } from './scripts.ts';
 import type { AttachmentLatch } from './selection.ts';
-import { landsOn } from './space.ts';
+import { landsOn } from './spacePolicy.ts';
 import { presentedText, type DamoclesStrings } from './strings.ts';
 import {
   EXPLOSIVE_FIRST_SLOT,
