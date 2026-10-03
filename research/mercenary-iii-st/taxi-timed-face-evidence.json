@@ -1,0 +1,1200 @@
+{
+  "sourceRevision": "e4cba434069ca1fbec6e72b3a99cbf775f1663c4",
+  "identity": {
+    "contentSha256": "c50b402c04c70ab74f95a938c0f867e740ea843157e514764f2bceb84a2f44ed",
+    "destination": "metis",
+    "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
+    "title": "dion"
+  },
+  "expandedContentSha256": "d31490d7ba44a08949f71267884f1e290074acc5885fdfae747f7aeefcfdf611",
+  "maxStates": 100000,
+  "scope": "Complete timed narrative overapproximation before the first 16-bit wait wrap; no external ID before the proved relaxed-service frame 19. Other physical guards and terminal message pixels omitted. Singleton selections certify cumulative face updates and last selection, not all expanded owners. Divergent selections are not natural collision witnesses.",
+  "minimumExternalFrame": 19,
+  "controls": [
+    {
+      "name": "sol/mid-reveal",
+      "tick": 22,
+      "frame": 2,
+      "sourceSnapshotSha256": "1cae784bc4556184b7ca53fcfd54ed61ba1113bda95610f0591a1b0062671cd4",
+      "externalRequests": 0,
+      "analysisComplete": true,
+      "states": 3,
+      "peakStates": 1,
+      "observed": {
+        "alternateFrames": 0,
+        "faceSelection": "base"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 0,
+          "faceSelection": "base"
+        }
+      ],
+      "faceOwnerCertificate": {
+        "alternateFrames": 0,
+        "faceSelection": "base"
+      },
+      "restoredFaces": {
+        "$A1": {
+          "base": 2,
+          "alternate": 0,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 2,
+          "alternate": 0,
+          "output": 20480
+        }
+      },
+      "futureFaceMatches": 600
+    },
+    {
+      "name": "sol/called",
+      "tick": 97,
+      "frame": 8,
+      "sourceSnapshotSha256": "76e6578491680ddfd8deaefabab71ab3f68788f218452d99aebe6dc45aed71da",
+      "externalRequests": 0,
+      "analysisComplete": true,
+      "states": 9,
+      "peakStates": 1,
+      "observed": {
+        "alternateFrames": 0,
+        "faceSelection": "base"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 0,
+          "faceSelection": "base"
+        }
+      ],
+      "faceOwnerCertificate": {
+        "alternateFrames": 0,
+        "faceSelection": "base"
+      },
+      "restoredFaces": {
+        "$A1": {
+          "base": 8,
+          "alternate": 0,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 8,
+          "alternate": 0,
+          "output": 20480
+        }
+      },
+      "futureFaceMatches": 600
+    },
+    {
+      "name": "sol/waiting",
+      "tick": 5344,
+      "frame": 485,
+      "sourceSnapshotSha256": "5a00324b3bb53b69b533f863bd020a2da0520b6e563a8fe538bb467d4563a5ef",
+      "externalRequests": 0,
+      "analysisComplete": true,
+      "states": 486,
+      "peakStates": 1,
+      "observed": {
+        "alternateFrames": 228,
+        "faceSelection": "base"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 228,
+          "faceSelection": "base"
+        }
+      ],
+      "faceOwnerCertificate": {
+        "alternateFrames": 228,
+        "faceSelection": "base"
+      },
+      "restoredFaces": {
+        "$A1": {
+          "base": 9,
+          "alternate": 3,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 5,
+          "alternate": 11,
+          "output": 20480
+        }
+      },
+      "futureFaceMatches": 600
+    },
+    {
+      "name": "sol/mid-walk",
+      "tick": 5619,
+      "frame": 510,
+      "sourceSnapshotSha256": "e8e13c826a1713dd3a038b4c30bb6a821bbdc3b7fc8154e162cbc32269023138",
+      "externalRequests": 0,
+      "analysisComplete": true,
+      "states": 511,
+      "peakStates": 1,
+      "observed": {
+        "alternateFrames": 228,
+        "faceSelection": "base"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 228,
+          "faceSelection": "base"
+        }
+      ],
+      "faceOwnerCertificate": {
+        "alternateFrames": 228,
+        "faceSelection": "base"
+      },
+      "restoredFaces": {
+        "$A1": {
+          "base": 3,
+          "alternate": 3,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 9,
+          "alternate": 11,
+          "output": 20480
+        }
+      },
+      "futureFaceMatches": 600
+    },
+    {
+      "name": "sol/B-pre",
+      "tick": 5619,
+      "frame": 510,
+      "sourceSnapshotSha256": "e8e13c826a1713dd3a038b4c30bb6a821bbdc3b7fc8154e162cbc32269023138",
+      "externalRequests": 0,
+      "analysisComplete": true,
+      "states": 511,
+      "peakStates": 1,
+      "observed": {
+        "alternateFrames": 228,
+        "faceSelection": "base"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 228,
+          "faceSelection": "base"
+        }
+      ],
+      "faceOwnerCertificate": {
+        "alternateFrames": 228,
+        "faceSelection": "base"
+      },
+      "restoredFaces": {
+        "$A1": {
+          "base": 3,
+          "alternate": 3,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 9,
+          "alternate": 11,
+          "output": 20480
+        }
+      },
+      "futureFaceMatches": 600
+    },
+    {
+      "name": "sol/B-post",
+      "tick": 5619,
+      "frame": 510,
+      "sourceSnapshotSha256": "12c2e798fe504018347aebbd2131a60b5b69859c7fcf3767cc6c33e68d9887e7",
+      "externalRequests": 0,
+      "analysisComplete": true,
+      "states": 511,
+      "peakStates": 1,
+      "observed": {
+        "alternateFrames": 228,
+        "faceSelection": "base"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 228,
+          "faceSelection": "base"
+        }
+      ],
+      "faceOwnerCertificate": {
+        "alternateFrames": 228,
+        "faceSelection": "base"
+      },
+      "restoredFaces": {
+        "$A1": {
+          "base": 3,
+          "alternate": 3,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 9,
+          "alternate": 11,
+          "output": 20480
+        }
+      },
+      "futureFaceMatches": 600
+    },
+    {
+      "name": "sol/selected",
+      "tick": 6290,
+      "frame": 571,
+      "sourceSnapshotSha256": "c3e3fa493e3dce6099785c83ecb37f52905ebcdca0de01d42f937a6d608fbea7",
+      "externalRequests": 1,
+      "analysisComplete": true,
+      "states": 22852,
+      "peakStates": 71,
+      "observed": {
+        "alternateFrames": 250,
+        "faceSelection": "base"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 228,
+          "faceSelection": "base"
+        },
+        {
+          "alternateFrames": 250,
+          "faceSelection": "alternate"
+        },
+        {
+          "alternateFrames": 250,
+          "faceSelection": "base"
+        }
+      ],
+      "faceOwnerCertificate": null,
+      "restoredFaces": null,
+      "futureFaceMatches": 0
+    },
+    {
+      "name": "sol/Start-pre",
+      "tick": 6290,
+      "frame": 571,
+      "sourceSnapshotSha256": "c3e3fa493e3dce6099785c83ecb37f52905ebcdca0de01d42f937a6d608fbea7",
+      "externalRequests": 1,
+      "analysisComplete": true,
+      "states": 22852,
+      "peakStates": 71,
+      "observed": {
+        "alternateFrames": 250,
+        "faceSelection": "base"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 228,
+          "faceSelection": "base"
+        },
+        {
+          "alternateFrames": 250,
+          "faceSelection": "alternate"
+        },
+        {
+          "alternateFrames": 250,
+          "faceSelection": "base"
+        }
+      ],
+      "faceOwnerCertificate": null,
+      "restoredFaces": null,
+      "futureFaceMatches": 0
+    },
+    {
+      "name": "sol/departure",
+      "tick": 6312,
+      "frame": 573,
+      "sourceSnapshotSha256": "913a19c5941672664351c323c4d535113a552daa8d11d46dd7760f0d5e85e93e",
+      "externalRequests": 1,
+      "analysisComplete": true,
+      "states": 104625,
+      "peakStates": 979,
+      "observed": {
+        "alternateFrames": 250,
+        "faceSelection": "base"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 228,
+          "faceSelection": "base"
+        },
+        {
+          "alternateFrames": 250,
+          "faceSelection": "base"
+        }
+      ],
+      "faceOwnerCertificate": null,
+      "restoredFaces": null,
+      "futureFaceMatches": 0
+    },
+    {
+      "name": "sol/scroll",
+      "tick": 6455,
+      "frame": 586,
+      "sourceSnapshotSha256": "25160f5397d75ae345bbcd0485bdc09deb0bb5a6b3f32105b51d64a1c84450a2",
+      "externalRequests": 1,
+      "analysisComplete": true,
+      "states": 132707,
+      "peakStates": 1428,
+      "observed": {
+        "alternateFrames": 251,
+        "faceSelection": "alternate"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 229,
+          "faceSelection": "alternate"
+        },
+        {
+          "alternateFrames": 251,
+          "faceSelection": "alternate"
+        }
+      ],
+      "faceOwnerCertificate": null,
+      "restoredFaces": null,
+      "futureFaceMatches": 0
+    },
+    {
+      "name": "sol/clear-pre",
+      "tick": 7522,
+      "frame": 683,
+      "sourceSnapshotSha256": "2ba629ed194ffba3bd18b766ff4d4cf71b63cb8c924d964a6d917dd04d4cee04",
+      "externalRequests": 1,
+      "analysisComplete": true,
+      "states": 535721,
+      "peakStates": 6855,
+      "observed": {
+        "alternateFrames": 288,
+        "faceSelection": "base"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 266,
+          "faceSelection": "base"
+        },
+        {
+          "alternateFrames": 288,
+          "faceSelection": "base"
+        }
+      ],
+      "faceOwnerCertificate": null,
+      "restoredFaces": null,
+      "futureFaceMatches": 0
+    },
+    {
+      "name": "sol/descending",
+      "tick": 7588,
+      "frame": 689,
+      "sourceSnapshotSha256": "9bab6a2c8da06340cfa77eef8844e6903e8b5268ecce821fadc014201596fdca",
+      "externalRequests": 2,
+      "analysisComplete": true,
+      "states": 3361542,
+      "peakStates": 38119,
+      "observed": {
+        "alternateFrames": 293,
+        "faceSelection": "alternate"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 271,
+          "faceSelection": "alternate"
+        },
+        {
+          "alternateFrames": 293,
+          "faceSelection": "alternate"
+        }
+      ],
+      "faceOwnerCertificate": null,
+      "restoredFaces": null,
+      "futureFaceMatches": 0
+    },
+    {
+      "name": "sol/dwell",
+      "tick": 7775,
+      "frame": 706,
+      "sourceSnapshotSha256": "7392d07c7850b5599784d70cbedaa1a59e7c90c2f35c31cd85a1fd58adc98c5f",
+      "externalRequests": 2,
+      "analysisComplete": true,
+      "states": 3369730,
+      "peakStates": 38119,
+      "observed": {
+        "alternateFrames": 310,
+        "faceSelection": "alternate"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 266,
+          "faceSelection": "base"
+        },
+        {
+          "alternateFrames": 288,
+          "faceSelection": "alternate"
+        },
+        {
+          "alternateFrames": 288,
+          "faceSelection": "base"
+        },
+        {
+          "alternateFrames": 310,
+          "faceSelection": "alternate"
+        },
+        {
+          "alternateFrames": 310,
+          "faceSelection": "base"
+        }
+      ],
+      "faceOwnerCertificate": null,
+      "restoredFaces": null,
+      "futureFaceMatches": 0
+    },
+    {
+      "name": "sol/exit-pre",
+      "tick": 7775,
+      "frame": 706,
+      "sourceSnapshotSha256": "7392d07c7850b5599784d70cbedaa1a59e7c90c2f35c31cd85a1fd58adc98c5f",
+      "externalRequests": 2,
+      "analysisComplete": true,
+      "states": 3369730,
+      "peakStates": 38119,
+      "observed": {
+        "alternateFrames": 310,
+        "faceSelection": "alternate"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 266,
+          "faceSelection": "base"
+        },
+        {
+          "alternateFrames": 288,
+          "faceSelection": "alternate"
+        },
+        {
+          "alternateFrames": 288,
+          "faceSelection": "base"
+        },
+        {
+          "alternateFrames": 310,
+          "faceSelection": "alternate"
+        },
+        {
+          "alternateFrames": 310,
+          "faceSelection": "base"
+        }
+      ],
+      "faceOwnerCertificate": null,
+      "restoredFaces": null,
+      "futureFaceMatches": 0
+    },
+    {
+      "name": "sol/exit-post",
+      "tick": 7786,
+      "frame": 707,
+      "sourceSnapshotSha256": "e461bad2edf6e184c001a11b17a316eee02c97b3cf953f75219fa8304c50dd7b",
+      "externalRequests": 2,
+      "analysisComplete": true,
+      "states": 3370194,
+      "peakStates": 38119,
+      "observed": {
+        "alternateFrames": 310,
+        "faceSelection": "base"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 266,
+          "faceSelection": "base"
+        },
+        {
+          "alternateFrames": 288,
+          "faceSelection": "alternate"
+        },
+        {
+          "alternateFrames": 288,
+          "faceSelection": "base"
+        },
+        {
+          "alternateFrames": 310,
+          "faceSelection": "alternate"
+        },
+        {
+          "alternateFrames": 310,
+          "faceSelection": "base"
+        }
+      ],
+      "faceOwnerCertificate": null,
+      "restoredFaces": null,
+      "futureFaceMatches": 0
+    },
+    {
+      "name": "sol-nostart/selected",
+      "tick": 6290,
+      "frame": 571,
+      "sourceSnapshotSha256": "c3e3fa493e3dce6099785c83ecb37f52905ebcdca0de01d42f937a6d608fbea7",
+      "externalRequests": 1,
+      "analysisComplete": true,
+      "states": 22852,
+      "peakStates": 71,
+      "observed": {
+        "alternateFrames": 250,
+        "faceSelection": "base"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 228,
+          "faceSelection": "base"
+        },
+        {
+          "alternateFrames": 250,
+          "faceSelection": "alternate"
+        },
+        {
+          "alternateFrames": 250,
+          "faceSelection": "base"
+        }
+      ],
+      "faceOwnerCertificate": null,
+      "restoredFaces": null,
+      "futureFaceMatches": 0
+    },
+    {
+      "name": "sol-nostart/stationary",
+      "tick": 9589,
+      "frame": 871,
+      "sourceSnapshotSha256": "a48cc4a47ef2a273c293c31f49e9f5eeed07bca9ef7e76de93e79a32da6c48f5",
+      "externalRequests": 1,
+      "analysisComplete": true,
+      "states": 38752,
+      "peakStates": 71,
+      "observed": {
+        "alternateFrames": 250,
+        "faceSelection": "base"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 228,
+          "faceSelection": "base"
+        },
+        {
+          "alternateFrames": 250,
+          "faceSelection": "base"
+        }
+      ],
+      "faceOwnerCertificate": null,
+      "restoredFaces": null,
+      "futureFaceMatches": 0
+    },
+    {
+      "name": "solwb/admission-first",
+      "tick": 5630,
+      "frame": 511,
+      "sourceSnapshotSha256": "28dd2b4d6e0ca49b91e196f17b5e9263ae9d7f84ed37a3a64698ba8753312392",
+      "externalRequests": 0,
+      "analysisComplete": true,
+      "states": 512,
+      "peakStates": 1,
+      "observed": {
+        "alternateFrames": 228,
+        "faceSelection": "base"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 228,
+          "faceSelection": "base"
+        }
+      ],
+      "faceOwnerCertificate": {
+        "alternateFrames": 228,
+        "faceSelection": "base"
+      },
+      "restoredFaces": {
+        "$A1": {
+          "base": 4,
+          "alternate": 3,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 10,
+          "alternate": 11,
+          "output": 20480
+        }
+      },
+      "futureFaceMatches": 600
+    },
+    {
+      "name": "solwb/admission-second",
+      "tick": 5641,
+      "frame": 512,
+      "sourceSnapshotSha256": "e03eefd78f933ba3781936dcf13251712a4ff14103a4d9bc2011c6e19607bba4",
+      "externalRequests": 0,
+      "analysisComplete": true,
+      "states": 513,
+      "peakStates": 1,
+      "observed": {
+        "alternateFrames": 228,
+        "faceSelection": "base"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 228,
+          "faceSelection": "base"
+        }
+      ],
+      "faceOwnerCertificate": {
+        "alternateFrames": 228,
+        "faceSelection": "base"
+      },
+      "restoredFaces": {
+        "$A1": {
+          "base": 5,
+          "alternate": 3,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 11,
+          "alternate": 11,
+          "output": 20480
+        }
+      },
+      "futureFaceMatches": 600
+    },
+    {
+      "name": "solwb/selected",
+      "tick": 6290,
+      "frame": 571,
+      "sourceSnapshotSha256": "c3e3fa493e3dce6099785c83ecb37f52905ebcdca0de01d42f937a6d608fbea7",
+      "externalRequests": 1,
+      "analysisComplete": true,
+      "states": 22852,
+      "peakStates": 71,
+      "observed": {
+        "alternateFrames": 250,
+        "faceSelection": "base"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 228,
+          "faceSelection": "base"
+        },
+        {
+          "alternateFrames": 250,
+          "faceSelection": "alternate"
+        },
+        {
+          "alternateFrames": 250,
+          "faceSelection": "base"
+        }
+      ],
+      "faceOwnerCertificate": null,
+      "restoredFaces": null,
+      "futureFaceMatches": 0
+    },
+    {
+      "name": "sp/selected",
+      "tick": 6301,
+      "frame": 572,
+      "sourceSnapshotSha256": "6d48b9a481269b4d0e7c9205109df4ee9f84b2d104e43ebfec30a084c4ae3c8d",
+      "externalRequests": 1,
+      "analysisComplete": true,
+      "states": 22905,
+      "peakStates": 71,
+      "observed": {
+        "alternateFrames": 250,
+        "faceSelection": "base"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 228,
+          "faceSelection": "base"
+        },
+        {
+          "alternateFrames": 250,
+          "faceSelection": "alternate"
+        },
+        {
+          "alternateFrames": 250,
+          "faceSelection": "base"
+        }
+      ],
+      "faceOwnerCertificate": null,
+      "restoredFaces": null,
+      "futureFaceMatches": 0
+    },
+    {
+      "name": "sp/Start-pre",
+      "tick": 6301,
+      "frame": 572,
+      "sourceSnapshotSha256": "6d48b9a481269b4d0e7c9205109df4ee9f84b2d104e43ebfec30a084c4ae3c8d",
+      "externalRequests": 1,
+      "analysisComplete": true,
+      "states": 22905,
+      "peakStates": 71,
+      "observed": {
+        "alternateFrames": 250,
+        "faceSelection": "base"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 228,
+          "faceSelection": "base"
+        },
+        {
+          "alternateFrames": 250,
+          "faceSelection": "alternate"
+        },
+        {
+          "alternateFrames": 250,
+          "faceSelection": "base"
+        }
+      ],
+      "faceOwnerCertificate": null,
+      "restoredFaces": null,
+      "futureFaceMatches": 0
+    },
+    {
+      "name": "sp/driver",
+      "tick": 6400,
+      "frame": 581,
+      "sourceSnapshotSha256": "f2f1b2aad03a5d417dc59d0a0c45b6e48913a58912dc970f2d229e43d47f1a35",
+      "externalRequests": 1,
+      "analysisComplete": true,
+      "states": 133830,
+      "peakStates": 1548,
+      "observed": {
+        "alternateFrames": 251,
+        "faceSelection": "alternate"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 229,
+          "faceSelection": "alternate"
+        },
+        {
+          "alternateFrames": 251,
+          "faceSelection": "alternate"
+        }
+      ],
+      "faceOwnerCertificate": null,
+      "restoredFaces": null,
+      "futureFaceMatches": 0
+    },
+    {
+      "name": "sp/turn-pre",
+      "tick": 7533,
+      "frame": 684,
+      "sourceSnapshotSha256": "1271eace54af4ebe478075ce12aff6ced0ff6c27e84f5b33c721b502b474db12",
+      "externalRequests": 1,
+      "analysisComplete": true,
+      "states": 489530,
+      "peakStates": 3832,
+      "observed": {
+        "alternateFrames": 311,
+        "faceSelection": "alternate"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 289,
+          "faceSelection": "alternate"
+        },
+        {
+          "alternateFrames": 311,
+          "faceSelection": "alternate"
+        }
+      ],
+      "faceOwnerCertificate": null,
+      "restoredFaces": null,
+      "futureFaceMatches": 0
+    },
+    {
+      "name": "sp/turn-post",
+      "tick": 7544,
+      "frame": 685,
+      "sourceSnapshotSha256": "fda3b1174578e1c2d94ecb0e34fcc5a883d440e28fb03b65248f0720653720f7",
+      "externalRequests": 1,
+      "analysisComplete": true,
+      "states": 489611,
+      "peakStates": 3832,
+      "observed": {
+        "alternateFrames": 312,
+        "faceSelection": "alternate"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 290,
+          "faceSelection": "alternate"
+        },
+        {
+          "alternateFrames": 312,
+          "faceSelection": "alternate"
+        }
+      ],
+      "faceOwnerCertificate": null,
+      "restoredFaces": null,
+      "futureFaceMatches": 0
+    },
+    {
+      "name": "sp/travel",
+      "tick": 9249,
+      "frame": 840,
+      "sourceSnapshotSha256": "b43242575bf524a46df115c52d0d801b70f96d37e3afe7606c0552a027457c79",
+      "externalRequests": 1,
+      "analysisComplete": true,
+      "states": 1297534,
+      "peakStates": 8607,
+      "observed": {
+        "alternateFrames": 408,
+        "faceSelection": "alternate"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 386,
+          "faceSelection": "alternate"
+        },
+        {
+          "alternateFrames": 408,
+          "faceSelection": "alternate"
+        }
+      ],
+      "faceOwnerCertificate": null,
+      "restoredFaces": null,
+      "futureFaceMatches": 0
+    },
+    {
+      "name": "sp/clear",
+      "tick": 11889,
+      "frame": 1080,
+      "sourceSnapshotSha256": "f1aed8aac7dffdf4a2cfeed0aa597091aa47e682e163c849232af80d826ca621",
+      "externalRequests": 1,
+      "analysisComplete": true,
+      "states": 5138814,
+      "peakStates": 18737,
+      "observed": {
+        "alternateFrames": 544,
+        "faceSelection": "alternate"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 522,
+          "faceSelection": "alternate"
+        },
+        {
+          "alternateFrames": 544,
+          "faceSelection": "alternate"
+        }
+      ],
+      "faceOwnerCertificate": null,
+      "restoredFaces": null,
+      "futureFaceMatches": 0
+    },
+    {
+      "name": "sp/dwell",
+      "tick": 12131,
+      "frame": 1102,
+      "sourceSnapshotSha256": "799a680ed451ea4baa1e3784fdbfd21cc527f80fa2002e2545d89ea659572865",
+      "externalRequests": 1,
+      "analysisComplete": true,
+      "states": 5142303,
+      "peakStates": 18737,
+      "observed": {
+        "alternateFrames": 554,
+        "faceSelection": "base"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 532,
+          "faceSelection": "base"
+        },
+        {
+          "alternateFrames": 554,
+          "faceSelection": "base"
+        }
+      ],
+      "faceOwnerCertificate": null,
+      "restoredFaces": null,
+      "futureFaceMatches": 0
+    },
+    {
+      "name": "sp/exit-post",
+      "tick": 12142,
+      "frame": 1103,
+      "sourceSnapshotSha256": "4f09d0876dfbcd255d52100104c406ead6ac44b432904464f066d6895aaefb59",
+      "externalRequests": 1,
+      "analysisComplete": true,
+      "states": 5142433,
+      "peakStates": 18737,
+      "observed": {
+        "alternateFrames": 554,
+        "faceSelection": "base"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 532,
+          "faceSelection": "base"
+        },
+        {
+          "alternateFrames": 554,
+          "faceSelection": "base"
+        }
+      ],
+      "faceOwnerCertificate": null,
+      "restoredFaces": null,
+      "futureFaceMatches": 0
+    },
+    {
+      "name": "sp-early/L-post",
+      "tick": 9260,
+      "frame": 841,
+      "sourceSnapshotSha256": "f8b288c31e3cf11546e82d9756a8cd68ceaf62b5a1f2bd917cafc4c340562fd0",
+      "externalRequests": 1,
+      "analysisComplete": true,
+      "states": 1297597,
+      "peakStates": 8607,
+      "observed": {
+        "alternateFrames": 409,
+        "faceSelection": "alternate"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 387,
+          "faceSelection": "alternate"
+        },
+        {
+          "alternateFrames": 409,
+          "faceSelection": "alternate"
+        }
+      ],
+      "faceOwnerCertificate": null,
+      "restoredFaces": null,
+      "futureFaceMatches": 0
+    },
+    {
+      "name": "sp-early/arrived",
+      "tick": 12131,
+      "frame": 1102,
+      "sourceSnapshotSha256": "799a680ed451ea4baa1e3784fdbfd21cc527f80fa2002e2545d89ea659572865",
+      "externalRequests": 1,
+      "analysisComplete": true,
+      "states": 5142303,
+      "peakStates": 18737,
+      "observed": {
+        "alternateFrames": 554,
+        "faceSelection": "base"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 532,
+          "faceSelection": "base"
+        },
+        {
+          "alternateFrames": 554,
+          "faceSelection": "base"
+        }
+      ],
+      "faceOwnerCertificate": null,
+      "restoredFaces": null,
+      "futureFaceMatches": 0
+    },
+    {
+      "name": "sp-nostart/selected",
+      "tick": 6301,
+      "frame": 572,
+      "sourceSnapshotSha256": "6d48b9a481269b4d0e7c9205109df4ee9f84b2d104e43ebfec30a084c4ae3c8d",
+      "externalRequests": 1,
+      "analysisComplete": true,
+      "states": 22905,
+      "peakStates": 71,
+      "observed": {
+        "alternateFrames": 250,
+        "faceSelection": "base"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 228,
+          "faceSelection": "base"
+        },
+        {
+          "alternateFrames": 250,
+          "faceSelection": "alternate"
+        },
+        {
+          "alternateFrames": 250,
+          "faceSelection": "base"
+        }
+      ],
+      "faceOwnerCertificate": null,
+      "restoredFaces": null,
+      "futureFaceMatches": 0
+    },
+    {
+      "name": "sp-nostart/stationary",
+      "tick": 9600,
+      "frame": 872,
+      "sourceSnapshotSha256": "fbca24e1886361eee115aadc53d2d32202ca874af3e3e5aa1ec313bae626a683",
+      "externalRequests": 1,
+      "analysisComplete": true,
+      "states": 38805,
+      "peakStates": 71,
+      "observed": {
+        "alternateFrames": 250,
+        "faceSelection": "base"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 228,
+          "faceSelection": "base"
+        },
+        {
+          "alternateFrames": 250,
+          "faceSelection": "base"
+        }
+      ],
+      "faceOwnerCertificate": null,
+      "restoredFaces": null,
+      "futureFaceMatches": 0
+    }
+  ],
+  "additionalSources": [
+    {
+      "name": "no-input/tick-0",
+      "tick": 0,
+      "frame": 0,
+      "sourceSnapshotSha256": "81eb68263c8888467f3560c378e8931805a4a9a2d7923b4b3a945b60f3bfe12c",
+      "externalRequests": 0,
+      "analysisComplete": true,
+      "states": 1,
+      "peakStates": 1,
+      "observed": {
+        "alternateFrames": 0,
+        "faceSelection": "initial"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 0,
+          "faceSelection": "initial"
+        }
+      ],
+      "faceOwnerCertificate": {
+        "alternateFrames": 0,
+        "faceSelection": "initial"
+      },
+      "restoredFaces": {
+        "$A1": {
+          "base": 0,
+          "alternate": 0,
+          "output": 8192
+        },
+        "$A5": {
+          "base": 0,
+          "alternate": 0,
+          "output": 8192
+        }
+      },
+      "futureFaceMatches": 600
+    },
+    {
+      "name": "no-input/tick-10",
+      "tick": 10,
+      "frame": 0,
+      "sourceSnapshotSha256": "e60f7cbe8d926e3c0a17c16c0e9e0631ff5d09e3131ad38cee044668945ba8a5",
+      "externalRequests": 0,
+      "analysisComplete": true,
+      "states": 1,
+      "peakStates": 1,
+      "observed": {
+        "alternateFrames": 0,
+        "faceSelection": "initial"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 0,
+          "faceSelection": "initial"
+        }
+      ],
+      "faceOwnerCertificate": {
+        "alternateFrames": 0,
+        "faceSelection": "initial"
+      },
+      "restoredFaces": {
+        "$A1": {
+          "base": 0,
+          "alternate": 0,
+          "output": 8192
+        },
+        "$A5": {
+          "base": 0,
+          "alternate": 0,
+          "output": 8192
+        }
+      },
+      "futureFaceMatches": 600
+    },
+    {
+      "name": "no-input/tick-1107",
+      "tick": 1107,
+      "frame": 100,
+      "sourceSnapshotSha256": "3d2ee9311820c6e4cac06c0f219d7774bc53b36bd68c846a0cc2753cd4744766",
+      "externalRequests": 0,
+      "analysisComplete": true,
+      "states": 101,
+      "peakStates": 1,
+      "observed": {
+        "alternateFrames": 23,
+        "faceSelection": "alternate"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 23,
+          "faceSelection": "alternate"
+        }
+      ],
+      "faceOwnerCertificate": {
+        "alternateFrames": 23,
+        "faceSelection": "alternate"
+      },
+      "restoredFaces": {
+        "$A1": {
+          "base": 15,
+          "alternate": 23,
+          "output": 18432
+        },
+        "$A5": {
+          "base": 14,
+          "alternate": 23,
+          "output": 20224
+        }
+      },
+      "futureFaceMatches": 600
+    },
+    {
+      "name": "no-input/tick-6003",
+      "tick": 6003,
+      "frame": 545,
+      "sourceSnapshotSha256": "b944c3c2dba224cfde4faa313b55edf8742f466497915e486ffaaf9e7f190af1",
+      "externalRequests": 0,
+      "analysisComplete": true,
+      "states": 546,
+      "peakStates": 1,
+      "observed": {
+        "alternateFrames": 228,
+        "faceSelection": "base"
+      },
+      "faceCandidates": [
+        {
+          "alternateFrames": 228,
+          "faceSelection": "base"
+        }
+      ],
+      "faceOwnerCertificate": {
+        "alternateFrames": 228,
+        "faceSelection": "base"
+      },
+      "restoredFaces": {
+        "$A1": {
+          "base": 7,
+          "alternate": 3,
+          "output": 17152
+        },
+        "$A5": {
+          "base": 2,
+          "alternate": 11,
+          "output": 20480
+        }
+      },
+      "futureFaceMatches": 600
+    }
+  ]
+}
