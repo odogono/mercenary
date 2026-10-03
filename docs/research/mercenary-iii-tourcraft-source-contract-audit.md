@@ -1,5 +1,7 @@
 # Mercenary III TOURCRAFT: source-contract audit
 
+> **Scope update, 2026-10-03:** [ADR 0073](../adr/0073-drop-pre-release-prototype-save-migration.md) retires old browser-prototype Save migration. The status and proof gates below record the earlier investigation; eligibility, canonical selection and old-source owner construction are no longer required. Recovered owner, seed, phase and restore facts remain evidence for #737 expanded-game Save/Resume. Current requirements are in the [persistence contract](mercenary-iii-tourcraft-persistence.md) and [D2 acceptance](mercenary-iii-tourcraft-milestone-review.md#i4-acceptance-continuous-flight-reuse-and-persistence).
+
 > **Status** (2026-10-03): Independent R8a/[#735](https://github.com/odogono/mercenary/issues/735) audit of the existing source predicate, early classification and reference ordering. The stale #736 interpretation is corrected in the source contract; the universal execution and classification proofs remain open.
 > **Evidence:** Archived I2 revision `e4cba434069ca1fbec6e72b3a99cbf775f1663c4`, loaded through [taxi-source.ts](../../research/mercenary-iii-st/scripts/taxi-source.ts); [ADR 0070](../adr/0070-use-canonical-expanded-history-for-ambiguous-early-taxi-records.md); the accepted [#736 tagged rebuild contract](mercenary-iii-tourcraft-face-rebuild.md).
 

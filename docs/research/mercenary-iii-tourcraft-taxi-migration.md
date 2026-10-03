@@ -1,5 +1,7 @@
 # Mercenary III TOURCRAFT: known I2 taxi migration audit
 
+> **Scope update, 2026-10-03:** [ADR 0073](../adr/0073-drop-pre-release-prototype-save-migration.md) retires old browser-prototype Save migration. The status and proof gates below record the earlier investigation; eligibility, canonical selection and old-source owner construction are no longer required. Recovered owner, seed, phase and restore facts remain evidence for #737 expanded-game Save/Resume. Current requirements are in the [persistence contract](mercenary-iii-tourcraft-persistence.md) and [D2 acceptance](mercenary-iii-tourcraft-milestone-review.md#i4-acceptance-continuous-flight-reuse-and-persistence).
+
 > **Status** (as of `405c6e70`, 2026-10-02): Amended by [history-ambiguity](mercenary-iii-tourcraft-history-ambiguity.md): ADR 0068 resolves the late conflict; [ADR 0070](../adr/0070-use-canonical-expanded-history-for-ambiguous-early-taxi-records.md) extends canonical history to ambiguous early records and requires exact-or-canonical classification of all 33 control sources.
 > **Holds:** The only migration source is schema 1 with content `c50b402c…` validated by the frozen `e4cba434` decoder, ordinary idle I2 sources at 32,520 s and 61,320 s keep cash `005100900000` and flag 9 clear where expanded election/mining change both, and the 33 named controls form the required early comparison matrix.
 > **Open:** A strengthened eligibility validator, deterministic construction of added owners for early and late sources, and the expanded 33-control browser comparison.
