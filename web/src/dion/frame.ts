@@ -982,7 +982,11 @@ const drawForm = (
 
 /// `$59F08`: a cell-local position against the bound detail's extent rectangle, in
 /// three columns by three rows.
-const zoneOf = (bound: Bound, x: number, z: number): number => {
+export const zoneOf = (
+  bound: Pick<Bound, 'cell' | 'detail'>,
+  x: number,
+  z: number
+): number => {
   const extent = bound.detail.extent;
   if (extent === null || extent.y < 0) {
     return 0;

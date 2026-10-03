@@ -1076,6 +1076,7 @@
         "wait": 29
       }
     },
+    "playerZone": 4,
     "residents": [
       {
         "association": 0,

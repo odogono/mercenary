@@ -2,11 +2,12 @@ import { IDLE } from '../gameCore/index.ts';
 import type { DionContent } from './content.ts';
 import {
   planDionFrame,
+  zoneOf,
   type DionFrameState,
   type DionFrameWorld
 } from './frame.ts';
 import { list, record } from './read.ts';
-import { stepTaxi } from './service.ts';
+import { initializeBodyTaxi, stepTaxi } from './service.ts';
 import {
   DionSession,
   dionFrameState,
@@ -40,6 +41,7 @@ import {
   faceOutputs,
   initialTourcraftOwners,
   initialTourcraftPhases,
+  initialTourcraftResidents,
   type TourcraftState
 } from './tourcraftState.ts';
 import { tourcraftView } from './tourcraftView.ts';
@@ -50,9 +52,22 @@ const gameplayContent = (
   group: 3 | 23
 ): DionContent => {
   const world = tourcraftFrameWorld(promoted, group);
+  const narrative = tourcraftNarrativeContent(promoted);
   return {
-    ...tourcraftNarrativeContent(promoted),
+    ...narrative,
     contentSha256: promoted.contentSha256,
+    service:
+      group === 23
+        ? {
+            ...narrative.service,
+            route: list(
+              record(promoted.programmes['ambientTaxi'], 'ambientTaxi')[
+                'route'
+              ],
+              'route'
+            ) as DionContent['service']['route']
+          }
+        : narrative.service,
     world: {
       ...promoted.legacy.world,
       ...world,
@@ -126,9 +141,8 @@ export class TourcraftSession extends DionSession {
         liveIntent: IDLE,
         owners,
         phases: initialTourcraftPhases(promoted),
-        residents: content.world.residents.filter(
-          r => r.slot < 50 || r.slot > 63
-        )
+        playerZone: Number(promoted.gameplay.initial['playerZone']),
+        residents: initialTourcraftResidents(promoted)
       }
     };
     if (restore) {
@@ -160,7 +174,7 @@ export class TourcraftSession extends DionSession {
   }
 
   protected override serviceContent(): DionContent {
-    return this.metisContent;
+    return this.state.location === 100 ? this.content : this.metisContent;
   }
   protected override clockRate(): number {
     return this.expanded.flight?.mode === 'space'
@@ -370,6 +384,15 @@ export class TourcraftSession extends DionSession {
     };
   }
   protected override handleInput(): void {
+    // The TOLOSA service is admitted only as an ambient resident. Its onward
+    // passenger programmes are outside the promoted gameplay closure.
+    if (
+      this.state.location === 100 &&
+      (this.state.pending === 'star' || this.state.pending === 'board')
+    ) {
+      this.state = { ...this.state, pending: null };
+      return;
+    }
     const candidate = this.state.candidate;
     if (
       this.state.pending === 'board' &&
@@ -499,15 +522,37 @@ export class TourcraftSession extends DionSession {
         (this.intent.walk > 0 ? 1 : this.intent.walk < 0 ? 2 : 0) |
         (this.intent.turn < 0 ? 4 : this.intent.turn > 0 ? 8 : 0);
       const enteringBody = flight.state.arrival !== null;
+      const bodyYaw = enteringBody
+        ? (Number(
+            record(
+              this.promoted.programmes['arrivalResidence'],
+              'arrivalResidence'
+            )['heading']
+          ) >>>
+            2) &
+          255
+        : undefined;
+      if (enteringBody) {
+        this.content = gameplayContent(this.promoted, 23);
+        this.state = {
+          ...this.state,
+          cell: 0,
+          doors: new Map(),
+          location: 100,
+          region: 0,
+          taxi: initializeBodyTaxi(this.content)
+        };
+      }
       flight.frame(
         stick,
         () => {
           const service = stepTaxi(
-            this.metisContent,
+            this.serviceContent(),
             this.state.taxi,
             this.state.cell
           );
           this.state = { ...this.state, taxi: service.taxi };
+          this.publishTaxi(flight.state.body, this.state.cell);
           if (service.liftOff) {
             this.cue('lift_off');
           }
@@ -556,10 +601,28 @@ export class TourcraftSession extends DionSession {
         this.cue('cut');
         this.cue('key_click');
       }
-      this.publishFlight();
+      this.publishFlight(bodyYaw);
     } else {
       const priorPose = this.state.eye;
+      const priorCell = this.state.cell;
       super.frame();
+      // Passenger `$51966..$51982` binds and samples after the taxi copy;
+      // an empty service samples against the preceding player binding.
+      const sampledCell = this.state.taxi.passenger
+        ? this.state.cell
+        : priorCell;
+      this.state = {
+        ...this.state,
+        tourcraft: {
+          ...this.expanded,
+          playerZone: this.zoneAt(
+            this.state.eye,
+            this.state.location,
+            sampledCell
+          )
+        }
+      };
+      this.publishTaxi(this.state.location, sampledCell);
       this.state = {
         ...this.state,
         tourcraft: {
@@ -628,7 +691,7 @@ export class TourcraftSession extends DionSession {
       )
     };
   }
-  private publishFlight(): void {
+  private publishFlight(bodyYaw?: number): void {
     const e = this.expanded;
     const f = e.flight!;
     const c = f.craft;
@@ -656,11 +719,21 @@ export class TourcraftSession extends DionSession {
       r.slot === 13
         ? {
             ...r,
-            body: 0,
+            bodyOffset: location & 255,
             cell,
-            group: f.body === 100 ? 23 : 3,
-            position: [c.x, c.y + 56, c.z] as const,
-            yaw: c.yaw >>> 2
+            position: [
+              c.x,
+              (f.mode === 'foot' ? c.y - 63 : c.y + 56) >>> 0,
+              c.z
+            ] as const,
+            yaw:
+              f.mode === 'foot'
+                ? (((c.yaw - f.cabinOffset) & 65_535) >>> 2) & 255
+                : (bodyYaw ?? r.yaw),
+            zone:
+              f.mode === 'space'
+                ? this.expanded.playerZone
+                : this.zoneAt([c.x, c.y, c.z], f.body, this.state.cell)
           }
         : r
     );
@@ -672,8 +745,53 @@ export class TourcraftSession extends DionSession {
       location,
       pitch: copied.pitch,
       region: f.mode === 'foot' ? this.regionAtEye(cell, [c.x, 63, c.z]) : 0,
-      tourcraft: { ...e, residents }
+      tourcraft: {
+        ...e,
+        playerZone: residents.find(r => r.slot === 13)!.zone,
+        residents
+      }
     };
+  }
+  private publishTaxi(body: number, playerCell: number): void {
+    const taxi = this.state.taxi;
+    this.state = {
+      ...this.state,
+      tourcraft: {
+        ...this.expanded,
+        residents: this.expanded.residents.map(r =>
+          r.slot === 16
+            ? {
+                ...r,
+                bodyOffset: body,
+                cell: taxi.cell,
+                position: taxi.position,
+                yaw: (taxi.heading >>> 2) & 255,
+                zone:
+                  taxi.cell === playerCell
+                    ? this.zoneAt(taxi.position, body, playerCell)
+                    : 0
+              }
+            : r
+        )
+      }
+    };
+  }
+  private zoneAt(
+    eye: readonly [number, number, number],
+    body: number,
+    at: number
+  ): number {
+    const world = this.worlds.get(body === 100 ? 100 : 60)!;
+    const cell = world.cells.find(c => c.cell === at);
+    const detail = cell && world.details.get(cell.detail);
+    return cell && detail ? zoneOf({ cell, detail }, eye[0], eye[2]) : 0;
+  }
+  protected override cellAt(eye: readonly [number, number, number]): number {
+    const [gx, gz] = this.content.world.opening.groupOrigin;
+    const x = Math.floor(eye[0] / 65_536) - gx;
+    const z = Math.floor(eye[2] / 65_536) - gz;
+    // `$55E90..$55EC0`: the admitted Bodies have `$70C0=0`.
+    return x >= 0 && x < 16 && z >= 0 && z < 16 ? z * 16 + x : 0;
   }
   protected override frameState(): DionFrameState {
     return this.expandedFrameState();
@@ -706,6 +824,18 @@ export class TourcraftSession extends DionSession {
         f && f.mode !== 'foot' ? 13 : this.state.taxi.passenger ? 16 : null,
       pilotHead: f && f.mode !== 'foot' ? 279 : 263,
       pitch,
+      residents: new Map([
+        [
+          16,
+          {
+            position: this.state.taxi.position,
+            yaw: this.state.taxi.heading >>> 2
+          }
+        ],
+        ...this.drawnResidents()
+          .filter(r => r.slot !== 16)
+          .map(r => [r.slot, { position: r.position, yaw: r.yaw }] as const)
+      ]),
       roll,
       skyView: {
         body: space ? null : surface,
@@ -725,25 +855,14 @@ export class TourcraftSession extends DionSession {
           : [body.centre[0], 64, body.centre[2]],
         yaw
       },
-      tokens: faceOutputs(this.promoted, e),
-      // The ordinary taxi remains at its METIS residence across the Body change.
-      residents: new Map([
-        [
-          16,
-          {
-            position: this.state.taxi.position,
-            yaw: this.state.taxi.heading >>> 2
-          }
-        ],
-        ...this.drawnResidents()
-          .filter(r => r.slot !== 16)
-          .map(r => [r.slot, { position: r.position, yaw: r.yaw }] as const)
-      ])
+      tokens: faceOutputs(this.promoted, e)
     };
   }
   private drawnResidents() {
     return [
-      ...this.expanded.residents,
+      ...this.expanded.residents.filter(
+        r => r.bodyOffset === (this.state.location & 255)
+      ),
       ...this.expanded.encounter.actors
         .filter(
           a =>

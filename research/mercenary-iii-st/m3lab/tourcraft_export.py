@@ -239,6 +239,7 @@ def gameplay_records(spec: dict, ram: Ram, selected: dict) -> dict:
                               for t in spec['renderSupportSelection']['tokens'] if t['kind'] == 'live'}}
     # R8b supplies the coherent mutable-owner seed, including inactive carries.
     # It is exported from this already pinned RAM, not copied from a later flight.
+    initial['playerZone'] = ram.word(0x70CE)
     initial['owners'] = observe(ram)
     initial['ownerWidths'] = {group: {name: width for name, (_, width) in fields.items()}
                               for group, fields in FIELDS.items()}
@@ -277,7 +278,14 @@ def programme_records(spec: dict, ram: Ram) -> dict:
                         'value': control & 127, 'source': ram.slice(at, at+2)})
         previous = low
     require_equal(len(actions), 134, 'playback.actions.length')
-    return {'scripts': scripts,
+    return {'arrivalResidence': {'source': ram.slice(0x66E4E, 0x66E58),
+                                 'heading': ram.word(0x66E56)},
+            'ambientTaxi': {'source': ram.slice(0x42AC8, 0x42AF2), 'group': 23,
+                            'rate': ram.sword(0x42AC8), 'metadata': ram.long(0x42ACA),
+                            'price': ram.long(0x42ACE),
+                            'route': [{'x': ram.byte(a)&15, 'z': ram.byte(a+1)&15,
+                                       'control': ram.byte(a+1)>>4} for a in range(0x42AD2, 0x42AEE, 2)]},
+            'scripts': scripts,
             'entries': {str(i): hexaddr(BASE + ram.word(ENTRY_TABLE+2*i)) for i in (41, 119, 19)},
             'playback': {'source': ram.slice(0x66D2A, 0x66E4E),
                          'header': {'x': ram.slong(0x66D2A), 'z': ram.slong(0x66D2E), 'yaw': ram.word(0x66D32),

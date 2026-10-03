@@ -269,6 +269,8 @@ export class TourcraftFlight {
           },
           mode: 'foot'
         };
+        // The recorded Leave joins `$5A506`'s foot service pass before wait.
+        service();
         return;
       }
     }

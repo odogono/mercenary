@@ -66,6 +66,18 @@ const nextPoint = (content: DionContent, taxi: DionTaxi): DionTaxi => {
   };
 };
 
+/// `$5A1F0`: install the first service point when a surface Body is bound.
+/// The cell remains cleared until the following service movement binds it.
+export const initializeBodyTaxi = (content: DionContent): DionTaxi => ({
+  ...nextPoint(content, {
+    ...createTaxi(content),
+    position: [0, 25, 0],
+    routeIndex: content.service.route.length - 1
+  }),
+  cell: 0,
+  counter: 35
+});
+
 // The same cell may occur twice with different controls. Before the mid-segment
 // crossing use the current point; after crossing use this segment's next point.
 /// D1 remains the frozen research/prototype witness. The expanded runtime uses
@@ -107,6 +119,19 @@ export const stepTaxi = (
   const nibble = taxiControl(content, taxi, profile) & 7;
   const limit = nibble === 0 ? 16 : nibble + 1;
   for (let pass = 0; pass < limit; pass += 1) {
+    if (
+      profile === 'tourcraft' &&
+      !taxi.passenger &&
+      !taxi.call &&
+      taxi.counter !== 0
+    ) {
+      taxi = {
+        ...taxi,
+        counter: 0,
+        heightIndex: 0,
+        position: [taxi.position[0], 25, taxi.position[2]]
+      };
+    }
     if (taxi.counter === 2) {
       if (taxi.passenger && taxi.start) {
         taxi = { ...taxi, counter: 1, heightIndex: -1 };

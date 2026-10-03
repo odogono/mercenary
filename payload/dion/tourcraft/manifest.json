@@ -29,7 +29,7 @@
     },
     {
       "path": "/payload/dion/tourcraft/promotion.json",
-      "sha256": "71712747cc0cb68374ee93a8787357aeff78ce74447b9bb6bf4176dd1ce2942c"
+      "sha256": "d726ae8e0fda5527ec48aa10e03de30cc19689719cda407dcc90b252848089a5"
     },
     {
       "path": "/payload/dion/tourcraft/geometry/detail-023d0e.json",
@@ -357,11 +357,11 @@
     },
     {
       "path": "/payload/dion/tourcraft/presentation/gameplay.json",
-      "sha256": "49125fa08072db7d0a65c3cc5a8f476e0d6c63dda557dcd134c97c61130f51a8"
+      "sha256": "0bc89b49f8336f5d5966b3d1f3f6304712b0b70d6a925c779537345a4728783e"
     },
     {
       "path": "/payload/dion/tourcraft/presentation/programmes.json",
-      "sha256": "1881d582f28aa5cd7fb5aad2348d357a8c976b822c3430010a43dcd41b1d1954"
+      "sha256": "66a572dc242ace37b9f90565eba4585afc46e4cc991ffd94f13df359ea4641ee"
     },
     {
       "path": "/payload/dion/tourcraft/presentation/support.json",

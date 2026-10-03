@@ -1005,6 +1005,36 @@ const validateProgrammes = (
   legacy: DionContent,
   scripts: Row
 ): void => {
+  const arrival = record(raw['arrivalResidence'], 'arrivalResidence');
+  same(arrival['heading'], 0xfd_7a, 'arrivalResidence.heading');
+  same(
+    arrival['source'],
+    {
+      range: ['$66E4E', '$66E58'],
+      sha256: '975395b8df892b6f7dc85e8d1720f5e3f6c3af76465d5d8bd7e38a6419f05b74'
+    },
+    'arrivalResidence.source'
+  );
+  const ambient = record(raw['ambientTaxi'], 'ambientTaxi');
+  same(ambient['group'], 23, 'ambientTaxi.group');
+  same(ambient['rate'], -1024, 'ambientTaxi.rate');
+  same(ambient['metadata'], 0x00_28_02_12, 'ambientTaxi.metadata');
+  same(ambient['price'], 0, 'ambientTaxi.price');
+  same(
+    ambient['source'],
+    {
+      range: ['$42AC8', '$42AF2'],
+      sha256: 'ebb757cb91680769ca2af1d0c42ff9a4cea8a33f442334487ecba8dcda9f5f82'
+    },
+    'ambientTaxi.source'
+  );
+  const route = rows(ambient['route'], 'ambientTaxi.route');
+  same(route.length, 14, 'ambientTaxi.route.length');
+  for (const point of route) {
+    int(point['x'], 'ambientTaxi.x', 0, 15);
+    int(point['z'], 'ambientTaxi.z', 0, 15);
+    int(point['control'], 'ambientTaxi.control', 0, 7);
+  }
   const opcodes = new Map(
     rows(scripts['opcodes'], 'scripts.opcodes').map(r => [r['op'], r['name']])
   );
@@ -1242,6 +1272,7 @@ const validateProgrammes = (
 
 const validateInitial = (initial: Row): void => {
   readDionOpening(initial['opening']);
+  int(initial['playerZone'], 'gameplay.initial.playerZone', 0, 8);
   same(
     initial['ownerWidths'],
     TOURCRAFT_OWNER_WIDTHS,
