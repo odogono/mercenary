@@ -1,0 +1,2850 @@
+{
+  "schemaVersion": 1,
+  "issue": 770,
+  "qualification": "Original execution from synthetic fixtures; no runtime or playable admission. Empty-stale-controlled remains inconclusive. R1 remains open.",
+  "source": {
+    "baseline": "config/baseline.json",
+    "seedRamSha256": "332934dbcd0f667d66d8959d3496859e9171757dc6228e4bf5b23b44bc6d64a5",
+    "seedSnapshotSha256": "97e1360769a96ef15aa3fbc4ee8774252acc04141569b3a9c45ecade5a4d5d76",
+    "programRange": {
+      "start": "55354",
+      "endExclusive": "55458",
+      "sha256": "fd9e62379d54931ed6bc5b4078031fa497b128fc177c781dc69d35a3464db061"
+    },
+    "probeSha256": "7708d29fecd05e355229304b94a5e3295a8014ca520ec692ab90f37392faaa85",
+    "verifierSha256": "e2b0bec594f04ada08c52554a3fc1535ec35c5a0489bb2b57bb4446907106c75",
+    "harnessSha256": "2d4597d6572d84c0e3f26236f131fecb866c64ef31c8d4d71038190be7cf4069",
+    "fixtureHelpersSha256": "8e6ff650b80dc4fe048145e7128bbb340c846882311f133fb39de3b5848423bd",
+    "observerSha256": "e9d66162dd50eeebe888cad8c31f7a1d73c17470afc76358a8c71a1508e0ac47",
+    "distanceReplayScriptSha256": "62d975165b72983d5e356f5f63852981e8025a08761169431921f7ead66869cd"
+  },
+  "assertions": 260,
+  "families": 31,
+  "cadenceGaps": 247,
+  "inFrameTickChecks": 1011,
+  "maskedRegisterChecks": 764,
+  "numericReplay": {
+    "baseRevision": "bad56910e4a1e9bdd773c1236464811161393d24",
+    "kind": "Read-only replay of 13 prior variable-cadence and nine accepted-cadence synthetic captures",
+    "observations": [
+      {
+        "run": "opening-drop-retake-ue0uz10c",
+        "file": "v6400.ram",
+        "sha256": "20aeaa8e96fb96e99f124b65f0613ac18ae081362c266764a2b82d593d9130a4",
+        "slot": 10,
+        "origin": [
+          165773321,
+          63,
+          70289576
+        ],
+        "position": [
+          165773321,
+          0,
+          70289576
+        ],
+        "delta": [
+          0,
+          -63,
+          0
+        ],
+        "calculatedKey": 335742,
+        "storedKey": 335742,
+        "matches": true,
+        "rawDistance": 63,
+        "rawExponent": 5,
+        "nativeExponent": 5
+      },
+      {
+        "run": "opening-drop-retake-ue0uz10c",
+        "file": "v6600.ram",
+        "sha256": "c99b52f4b03f8ab2eca79f08de5aed51ebe9f889aef9566fa3fdf52be9abcbb9",
+        "slot": 10,
+        "origin": [
+          165773321,
+          63,
+          70289576
+        ],
+        "position": [
+          165773321,
+          0,
+          70289576
+        ],
+        "delta": [
+          0,
+          -63,
+          0
+        ],
+        "calculatedKey": 335742,
+        "storedKey": 335742,
+        "matches": true,
+        "rawDistance": 63,
+        "rawExponent": 5,
+        "nativeExponent": 5
+      },
+      {
+        "run": "opening-drop-retake-ue0uz10c",
+        "file": "v7100.ram",
+        "sha256": "bcbc61187d382dade8e104ad3d74b2cffefee3c576f9d668da1f4186b4922362",
+        "slot": 10,
+        "origin": [
+          165773321,
+          63,
+          70289576
+        ],
+        "position": [
+          165773321,
+          0,
+          70289576
+        ],
+        "delta": [
+          0,
+          -63,
+          0
+        ],
+        "calculatedKey": 335742,
+        "storedKey": 335742,
+        "matches": true,
+        "rawDistance": 63,
+        "rawExponent": 5,
+        "nativeExponent": 5
+      },
+      {
+        "run": "opening-drop-retake-ue0uz10c",
+        "file": "v7600.ram",
+        "sha256": "66f6d3a5ad79e96d607a705b939d2a86dd4ad387f1e88ce411dbe8f383f3ccd9",
+        "slot": 10,
+        "origin": [
+          165773321,
+          63,
+          70289576
+        ],
+        "position": [
+          165773321,
+          0,
+          70289576
+        ],
+        "delta": [
+          0,
+          -63,
+          0
+        ],
+        "calculatedKey": 335742,
+        "storedKey": 335742,
+        "matches": true,
+        "rawDistance": 63,
+        "rawExponent": 5,
+        "nativeExponent": 5
+      },
+      {
+        "run": "opening-drop-retake-ue0uz10c",
+        "file": "v8100.ram",
+        "sha256": "1a2ccb7304b9b18e9208a69e2bc8d048e0a975dbbcbfa986b179e539c8ac8351",
+        "slot": 10,
+        "origin": [
+          165773321,
+          63,
+          70289576
+        ],
+        "position": [
+          165773321,
+          0,
+          70289576
+        ],
+        "delta": [
+          0,
+          -63,
+          0
+        ],
+        "calculatedKey": 335742,
+        "storedKey": 335742,
+        "matches": true,
+        "rawDistance": 63,
+        "rawExponent": 5,
+        "nativeExponent": 5
+      },
+      {
+        "run": "opening-drop-retake-ue0uz10c",
+        "file": "v8600.ram",
+        "sha256": "0063b6975a842626cecb1f9c004a82494e6e815d3c81dc818d8137970acd60f7",
+        "slot": 10,
+        "origin": [
+          165773321,
+          63,
+          70289576
+        ],
+        "position": [
+          165773321,
+          0,
+          70289576
+        ],
+        "delta": [
+          0,
+          -63,
+          0
+        ],
+        "calculatedKey": 335742,
+        "storedKey": 335742,
+        "matches": true,
+        "rawDistance": 63,
+        "rawExponent": 5,
+        "nativeExponent": 5
+      },
+      {
+        "run": "outdoors-drop-retake-u6oroc4h",
+        "file": "v7200.ram",
+        "sha256": "87555e4804b35ecdafffaa72cee0a85b2e35bb0ba44dde889b31a431ad721a4f",
+        "slot": 220,
+        "origin": [
+          165773321,
+          63,
+          70287350
+        ],
+        "position": [
+          165773339,
+          60,
+          70287623
+        ],
+        "delta": [
+          18,
+          -3,
+          273
+        ],
+        "calculatedKey": 528664,
+        "storedKey": 528664,
+        "matches": true,
+        "rawDistance": 273.6092103712885,
+        "rawExponent": 8,
+        "nativeExponent": 8
+      },
+      {
+        "run": "outdoors-drop-retake-u6oroc4h",
+        "file": "v7400.ram",
+        "sha256": "c2008a6b1d683a155d66d0e24b2cbbb4dc1b1e43be4999a681fe4b3ac173f063",
+        "slot": 104,
+        "origin": [
+          165773321,
+          63,
+          70287350
+        ],
+        "position": [
+          165773321,
+          0,
+          70287350
+        ],
+        "delta": [
+          0,
+          -63,
+          0
+        ],
+        "calculatedKey": 335742,
+        "storedKey": 335742,
+        "matches": true,
+        "rawDistance": 63,
+        "rawExponent": 5,
+        "nativeExponent": 5
+      },
+      {
+        "run": "outdoors-drop-retake-u6oroc4h",
+        "file": "v7900.ram",
+        "sha256": "1eed822457531c928df25c36d1446e00eb792edad30ae3080fc881ab94d0c5e7",
+        "slot": 220,
+        "origin": [
+          165773321,
+          63,
+          70287350
+        ],
+        "position": [
+          165773339,
+          60,
+          70287623
+        ],
+        "delta": [
+          18,
+          -3,
+          273
+        ],
+        "calculatedKey": 528664,
+        "storedKey": 528664,
+        "matches": true,
+        "rawDistance": 273.6092103712885,
+        "rawExponent": 8,
+        "nativeExponent": 8
+      },
+      {
+        "run": "outdoors-drop-retake-u6oroc4h",
+        "file": "v8400.ram",
+        "sha256": "e403829561fb0f63adc92d759bb507938186dc87b40fbc5a9817ea4ffdd15928",
+        "slot": 220,
+        "origin": [
+          165773321,
+          63,
+          70287350
+        ],
+        "position": [
+          165773339,
+          60,
+          70287623
+        ],
+        "delta": [
+          18,
+          -3,
+          273
+        ],
+        "calculatedKey": 528664,
+        "storedKey": 528664,
+        "matches": true,
+        "rawDistance": 273.6092103712885,
+        "rawExponent": 8,
+        "nativeExponent": 8
+      },
+      {
+        "run": "outdoors-drop-retake-u6oroc4h",
+        "file": "v8900.ram",
+        "sha256": "e9da5c3ec9f2ab42ba4d78a6fad26ff9f684885e0acc027911501430cafb3cde",
+        "slot": 103,
+        "origin": [
+          165773321,
+          63,
+          70287350
+        ],
+        "position": [
+          165773321,
+          0,
+          70287350
+        ],
+        "delta": [
+          0,
+          -63,
+          0
+        ],
+        "calculatedKey": 335742,
+        "storedKey": 335742,
+        "matches": true,
+        "rawDistance": 63,
+        "rawExponent": 5,
+        "nativeExponent": 5
+      },
+      {
+        "run": "outdoors-drop-retake-u6oroc4h",
+        "file": "v9400.ram",
+        "sha256": "7097b2c23ad7372eef89fc10d6ca9c4e0f8d85f600228db5a624236e5f72856b",
+        "slot": 220,
+        "origin": [
+          165773321,
+          63,
+          70287350
+        ],
+        "position": [
+          165773339,
+          60,
+          70287623
+        ],
+        "delta": [
+          18,
+          -3,
+          273
+        ],
+        "calculatedKey": 528664,
+        "storedKey": 528664,
+        "matches": true,
+        "rawDistance": 273.6092103712885,
+        "rawExponent": 8,
+        "nativeExponent": 8
+      },
+      {
+        "run": "outdoors-drop-retake-u6oroc4h",
+        "file": "v9900.ram",
+        "sha256": "7c5c31dfadbb5a95b5b96d4691e87dc66f75b3737d9fa11467eec8bbd4cc534a",
+        "slot": 220,
+        "origin": [
+          165773321,
+          63,
+          70287350
+        ],
+        "position": [
+          165773339,
+          60,
+          70287623
+        ],
+        "delta": [
+          18,
+          -3,
+          273
+        ],
+        "calculatedKey": 528664,
+        "storedKey": 528664,
+        "matches": true,
+        "rawDistance": 273.6092103712885,
+        "rawExponent": 8,
+        "nativeExponent": 8
+      },
+      {
+        "run": "behind-controlled",
+        "file": "f2.ram",
+        "sha256": "c493de93dad01e1b405a930d0c6bf9a9f9c850dbf3d5474ecea519a2c356997d",
+        "slot": 181,
+        "origin": [
+          165773321,
+          63,
+          70287464
+        ],
+        "position": [
+          165773321,
+          63,
+          70287764
+        ],
+        "delta": [
+          0,
+          0,
+          300
+        ],
+        "calculatedKey": 529086,
+        "storedKey": 529086,
+        "matches": true,
+        "rawDistance": 300,
+        "rawExponent": 8,
+        "nativeExponent": 8
+      },
+      {
+        "run": "front-controlled",
+        "file": "f2.ram",
+        "sha256": "a2f1924876cfac991b82e8f42818ff669abd0edbb803c9a7c4431fb0331e779b",
+        "slot": 181,
+        "origin": [
+          165773321,
+          63,
+          70287464
+        ],
+        "position": [
+          165773321,
+          63,
+          70287164
+        ],
+        "delta": [
+          0,
+          0,
+          -300
+        ],
+        "calculatedKey": 529086,
+        "storedKey": 529086,
+        "matches": true,
+        "rawDistance": 300,
+        "rawExponent": 8,
+        "nativeExponent": 8
+      },
+      {
+        "run": "side-controlled",
+        "file": "f2.ram",
+        "sha256": "bc1b853bee34d7c6340f218e7823aa583c8abcad42a2d5581fb83bc860e79758",
+        "slot": 181,
+        "origin": [
+          165773321,
+          63,
+          70287464
+        ],
+        "position": [
+          165773621,
+          63,
+          70287464
+        ],
+        "delta": [
+          300,
+          0,
+          0
+        ],
+        "calculatedKey": 529086,
+        "storedKey": 529086,
+        "matches": true,
+        "rawDistance": 300,
+        "rawExponent": 8,
+        "nativeExponent": 8
+      },
+      {
+        "run": "take-diagonal-inside",
+        "file": "f2.ram",
+        "sha256": "b33e3028c50cd0f67c557fae369d3d576684db20d775826d5df4a04765128230",
+        "slot": 181,
+        "origin": [
+          165773321,
+          63,
+          70287464
+        ],
+        "position": [
+          165773682,
+          63,
+          70287825
+        ],
+        "delta": [
+          361,
+          0,
+          361
+        ],
+        "calculatedKey": 532456,
+        "storedKey": 532456,
+        "matches": true,
+        "rawDistance": 510.5310960166873,
+        "rawExponent": 8,
+        "nativeExponent": 8
+      },
+      {
+        "run": "take-diagonal-outside",
+        "file": "f2.ram",
+        "sha256": "1d250c8e2eea57b6fe514bbf5f6cb623a326815883c33fb9c0e8536aecf9f4fc",
+        "slot": 181,
+        "origin": [
+          165773321,
+          63,
+          70287464
+        ],
+        "position": [
+          165773683,
+          63,
+          70287826
+        ],
+        "delta": [
+          362,
+          0,
+          362
+        ],
+        "calculatedKey": 532478,
+        "storedKey": 532478,
+        "matches": true,
+        "rawDistance": 511.9453095790604,
+        "rawExponent": 8,
+        "nativeExponent": 8
+      },
+      {
+        "run": "take-diagonal-363",
+        "file": "f2.ram",
+        "sha256": "09b31fa7bb48f436a352881a38703c21cdb5361309906456ea5201912e279164",
+        "slot": 181,
+        "origin": [
+          165773321,
+          63,
+          70287464
+        ],
+        "position": [
+          165773684,
+          63,
+          70287827
+        ],
+        "delta": [
+          363,
+          0,
+          363
+        ],
+        "calculatedKey": 593932,
+        "storedKey": 593932,
+        "matches": true,
+        "rawDistance": 513.3595231414336,
+        "rawExponent": 9,
+        "nativeExponent": 9
+      },
+      {
+        "run": "exclude74-nearer",
+        "file": "f2.ram",
+        "sha256": "e4bd75e80dc670cb6d69cd308d33178deae853d608b3531e046ae98caa3bca27",
+        "slot": 181,
+        "origin": [
+          165773321,
+          63,
+          70287464
+        ],
+        "position": [
+          165773621,
+          63,
+          70287464
+        ],
+        "delta": [
+          300,
+          0,
+          0
+        ],
+        "calculatedKey": 529086,
+        "storedKey": 529086,
+        "matches": true,
+        "rawDistance": 300,
+        "rawExponent": 8,
+        "nativeExponent": 8
+      },
+      {
+        "run": "take-native-rounding-511-32",
+        "file": "f2.ram",
+        "sha256": "84ff5be5b491dd5dcf1e7a50e7281ee5fdf3b6221a88a41bb8483fd2f9d82d8f",
+        "slot": 181,
+        "origin": [
+          165773321,
+          63,
+          70287464
+        ],
+        "position": [
+          165773832,
+          63,
+          70287496
+        ],
+        "delta": [
+          511,
+          0,
+          32
+        ],
+        "calculatedKey": 532478,
+        "storedKey": 532478,
+        "matches": true,
+        "rawDistance": 512.0009765615687,
+        "rawExponent": 9,
+        "nativeExponent": 8
+      },
+      {
+        "run": "take-native-rounding-511-33",
+        "file": "f2.ram",
+        "sha256": "eb4aaa792e869a6843368c79fca633ffcbb2f3d895a73e2cfe4ffab9973ec6a5",
+        "slot": 181,
+        "origin": [
+          165773321,
+          63,
+          70287464
+        ],
+        "position": [
+          165773832,
+          63,
+          70287497
+        ],
+        "delta": [
+          511,
+          0,
+          33
+        ],
+        "calculatedKey": 593920,
+        "storedKey": 593920,
+        "matches": true,
+        "rawDistance": 512.0644490686694,
+        "rawExponent": 9,
+        "nativeExponent": 9
+      }
+    ],
+    "matches": 22,
+    "total": 22
+  },
+  "projection": {
+    "behind-controlled": [
+      {
+        "vertexCount": 18,
+        "flagCounts": {
+          "80": 18
+        }
+      },
+      {
+        "vertexCount": 18,
+        "flagCounts": {
+          "80": 18
+        }
+      }
+    ],
+    "front-controlled": [
+      {
+        "vertexCount": 18,
+        "flagCounts": {
+          "00": 18
+        }
+      },
+      {
+        "vertexCount": 18,
+        "flagCounts": {
+          "00": 18
+        }
+      }
+    ],
+    "side-controlled": [
+      {
+        "vertexCount": 18,
+        "flagCounts": {
+          "80": 18
+        }
+      },
+      {
+        "vertexCount": 18,
+        "flagCounts": {
+          "80": 18
+        }
+      }
+    ]
+  },
+  "runs": {
+    "behind-controlled": {
+      "manifestSha256": "f98540167afa64091a272aafe0c1dcb48ea8e94cab9dd5199eded7265038eecc",
+      "logSha256": "276e6a794acacc7e8aea38ec6493451920be0947b876bb5358b18d57a9b9dc97",
+      "cadence": {
+        "topRecords": 7,
+        "gaps": 6,
+        "allEleven": true,
+        "inFrameTickChecks": 61,
+        "maskedRegisterChecks": 55
+      },
+      "captures": {
+        "f6": {
+          "ramSha256": "d7a1b92e77794b58553ff41d53dee1729a4ad0c012ab6ede8c6e67d837848d71",
+          "frame": 147,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            181,
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 8
+        },
+        "f1": {
+          "ramSha256": "0aca20f9ac9ef5463f085c5007303785e77fa6b574f664e388561c1dbce7c5b1",
+          "frame": 142,
+          "distanceBits": "000812BE",
+          "selectedSlot": 181,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f3": {
+          "ramSha256": "49bf634f85bc015a5a798ac751832b416096f7cea5bc627d279efa825919caa6",
+          "frame": 144,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            181,
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 8
+        },
+        "f2": {
+          "ramSha256": "c493de93dad01e1b405a930d0c6bf9a9f9c850dbf3d5474ecea519a2c356997d",
+          "frame": 143,
+          "distanceBits": "000812BE",
+          "selectedSlot": 181,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        }
+      }
+    },
+    "briefcase-cycle-eleven": {
+      "manifestSha256": "801e7643995a99e44b9b20d0324f8936955e2505338863d9c39eb3f0d5fbfaec",
+      "logSha256": "8a46d9baa09ac20d9d00895105bbd5d00f003f2ddeae43289850fc33ec736e6a",
+      "cadence": {
+        "topRecords": 26,
+        "gaps": 25,
+        "allEleven": true,
+        "inFrameTickChecks": 57,
+        "maskedRegisterChecks": 32
+      },
+      "captures": {
+        "f20": {
+          "ramSha256": "18ea00a60f6457dd938c8bdb7648f57da020af08b909cb1637c5905fc9002fc2",
+          "frame": 161,
+          "distanceBits": "00051F7E",
+          "selectedSlot": 108,
+          "stack": [
+            103,
+            104,
+            135,
+            40,
+            41,
+            43,
+            44,
+            45,
+            48
+          ],
+          "capacity": 10,
+          "storedCountSigned": 1,
+          "gauge": 18
+        },
+        "f22": {
+          "ramSha256": "832d30fc20e9436bac088361e9d594c6f08f45cfb7bf464ef0d5b4e7a82e229d",
+          "frame": 163,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            108,
+            103,
+            104,
+            135,
+            40,
+            41,
+            43,
+            44,
+            45,
+            48,
+            49
+          ],
+          "capacity": 20,
+          "storedCountSigned": 1,
+          "gauge": 11
+        },
+        "f1": {
+          "ramSha256": "2800a2c1db3202f47b69d4b1f08de933f63517170a9ccd5c18ce5bd41dd97bb9",
+          "frame": 142,
+          "distanceBits": "00071000",
+          "selectedSlot": 181,
+          "stack": [
+            108,
+            103,
+            104,
+            135,
+            40,
+            41,
+            43,
+            44,
+            45,
+            48,
+            49
+          ],
+          "capacity": 20,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f25": {
+          "ramSha256": "80e9ad57c1e2c76ea1e1834b89b4d99c2d618e39840b7e962e3e95b2ca6af1fc",
+          "frame": 166,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            108,
+            103,
+            104,
+            135,
+            40,
+            41,
+            43,
+            44,
+            45,
+            48,
+            49
+          ],
+          "capacity": 20,
+          "storedCountSigned": 1,
+          "gauge": 11
+        },
+        "f2": {
+          "ramSha256": "31556570e0fab9bcaaf52b883db46513370796962e449c063990beeb94cb3461",
+          "frame": 143,
+          "distanceBits": "00051F7E",
+          "selectedSlot": 108,
+          "stack": [
+            103,
+            104,
+            135,
+            40,
+            41,
+            43,
+            44,
+            45,
+            48
+          ],
+          "capacity": 10,
+          "storedCountSigned": 1,
+          "gauge": 18
+        }
+      }
+    },
+    "briefcase-cycle-one": {
+      "manifestSha256": "51285b9b8429b6ecbe858faf61fa4c8bde4ec12a5d07162e0a47b6f4c3f6e802",
+      "logSha256": "ee270492df511cf31b83b1ef5d4f1ff93b3221d0b1d843c739a256ff4caf4ca5",
+      "cadence": {
+        "topRecords": 26,
+        "gaps": 25,
+        "allEleven": true,
+        "inFrameTickChecks": 58,
+        "maskedRegisterChecks": 33
+      },
+      "captures": {
+        "f20": {
+          "ramSha256": "89bdf3260bf90b0a409f451af068e3567d03e9814d319b0cc5f7d70f84985c17",
+          "frame": 161,
+          "distanceBits": "00051F7E",
+          "selectedSlot": 108,
+          "stack": [],
+          "capacity": 10,
+          "storedCountSigned": -9,
+          "gauge": 0
+        },
+        "f22": {
+          "ramSha256": "085825926901dab60b1c29aef3e9a5701343e09ed6bbb7d7590bab1bc4a44c03",
+          "frame": 163,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            108
+          ],
+          "capacity": 20,
+          "storedCountSigned": -9,
+          "gauge": 1
+        },
+        "f1": {
+          "ramSha256": "a9f5ff234e162cb05692aa0f60eea3836e5f3db7f8083ca3e3ee361a27fa8eac",
+          "frame": 142,
+          "distanceBits": "00071000",
+          "selectedSlot": 181,
+          "stack": [
+            108
+          ],
+          "capacity": 20,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f25": {
+          "ramSha256": "0b05e6bc4166b4481fe1c3631b661a4bdb5c8d3a520a43c8bf5a13e559cb585a",
+          "frame": 166,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            108
+          ],
+          "capacity": 20,
+          "storedCountSigned": -9,
+          "gauge": 1
+        },
+        "f2": {
+          "ramSha256": "19d5d11b6ae8af1809781e9f9926922d334107ba7aba0628de804d009c76680a",
+          "frame": 143,
+          "distanceBits": "00051F7E",
+          "selectedSlot": 108,
+          "stack": [],
+          "capacity": 10,
+          "storedCountSigned": -9,
+          "gauge": 0
+        }
+      }
+    },
+    "briefcase-cycle-ten": {
+      "manifestSha256": "f18e71707ccc807e8f2e1de0f3a579bf6d8b22b30a2e0a7a27e36a5cc579cd65",
+      "logSha256": "e24a8e113dbd5e951325f1ebdb7a2714158dd34fdd76686efeb7fbfdb716a819",
+      "cadence": {
+        "topRecords": 26,
+        "gaps": 25,
+        "allEleven": true,
+        "inFrameTickChecks": 56,
+        "maskedRegisterChecks": 31
+      },
+      "captures": {
+        "f20": {
+          "ramSha256": "61e31aa9ed8636109ef47cabc996b53f919bc04289b4d95de772ff47143751cb",
+          "frame": 161,
+          "distanceBits": "00051F7E",
+          "selectedSlot": 108,
+          "stack": [
+            103,
+            104,
+            135,
+            40,
+            41,
+            43,
+            44,
+            45,
+            48
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 18
+        },
+        "f22": {
+          "ramSha256": "cebd586b791acb65bc63d6e9ab54bf90bd6fcbbf94878405bc30f6ac157b340f",
+          "frame": 163,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            108,
+            103,
+            104,
+            135,
+            40,
+            41,
+            43,
+            44,
+            45,
+            48
+          ],
+          "capacity": 20,
+          "storedCountSigned": 0,
+          "gauge": 10
+        },
+        "f1": {
+          "ramSha256": "173e7ee49e4350188bf635e9df54995bc9cd8bd1797896933323e07c461f1df7",
+          "frame": 142,
+          "distanceBits": "00071000",
+          "selectedSlot": 181,
+          "stack": [
+            108,
+            103,
+            104,
+            135,
+            40,
+            41,
+            43,
+            44,
+            45,
+            48
+          ],
+          "capacity": 20,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f25": {
+          "ramSha256": "5bcf18119bfd18192303a9ba158f2e2849e8a30511573969470cf17109c36b3c",
+          "frame": 166,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            108,
+            103,
+            104,
+            135,
+            40,
+            41,
+            43,
+            44,
+            45,
+            48
+          ],
+          "capacity": 20,
+          "storedCountSigned": 0,
+          "gauge": 10
+        },
+        "f2": {
+          "ramSha256": "94a3b1f6170894d3ea7eee58cef273e7ec40bcad9399a0fedc3072dbcba816c9",
+          "frame": 143,
+          "distanceBits": "00051F7E",
+          "selectedSlot": 108,
+          "stack": [
+            103,
+            104,
+            135,
+            40,
+            41,
+            43,
+            44,
+            45,
+            48
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 18
+        }
+      }
+    },
+    "briefcase-drop-eleven": {
+      "manifestSha256": "eac968dfc9c40179b3fe5fe82b5cf804b0bf6fc2953ea949ca25fccae15774a6",
+      "logSha256": "60a9d4cc010bc63ce6063415ab1af08acc595dd9f3c74e3825b459f371cfb37d",
+      "cadence": {
+        "topRecords": 6,
+        "gaps": 5,
+        "allEleven": true,
+        "inFrameTickChecks": 15,
+        "maskedRegisterChecks": 10
+      },
+      "captures": {
+        "f5": {
+          "ramSha256": "032708d79cd4d54d8fd000b7ab07a15c435f1c8fa325edb7ca383594f3dc8c3c",
+          "frame": 146,
+          "distanceBits": "00051F7E",
+          "selectedSlot": 108,
+          "stack": [
+            103,
+            104,
+            135,
+            40,
+            41,
+            43,
+            44,
+            45,
+            48
+          ],
+          "capacity": 10,
+          "storedCountSigned": 1,
+          "gauge": 18
+        },
+        "f1": {
+          "ramSha256": "2800a2c1db3202f47b69d4b1f08de933f63517170a9ccd5c18ce5bd41dd97bb9",
+          "frame": 142,
+          "distanceBits": "00071000",
+          "selectedSlot": 181,
+          "stack": [
+            108,
+            103,
+            104,
+            135,
+            40,
+            41,
+            43,
+            44,
+            45,
+            48,
+            49
+          ],
+          "capacity": 20,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f2": {
+          "ramSha256": "31556570e0fab9bcaaf52b883db46513370796962e449c063990beeb94cb3461",
+          "frame": 143,
+          "distanceBits": "00051F7E",
+          "selectedSlot": 108,
+          "stack": [
+            103,
+            104,
+            135,
+            40,
+            41,
+            43,
+            44,
+            45,
+            48
+          ],
+          "capacity": 10,
+          "storedCountSigned": 1,
+          "gauge": 18
+        }
+      }
+    },
+    "briefcase-drop-one": {
+      "manifestSha256": "f27d0de6286958fed3f91dbc46018c55e1630a940af492c10fa7b82e06e02a1f",
+      "logSha256": "55cbca67ded438a84844caec5435dbd5f84cd179d1758d94b60c790504238e20",
+      "cadence": {
+        "topRecords": 6,
+        "gaps": 5,
+        "allEleven": true,
+        "inFrameTickChecks": 15,
+        "maskedRegisterChecks": 10
+      },
+      "captures": {
+        "f5": {
+          "ramSha256": "25c6ed8972f4510a15ff96d762931a0ccd665d7bc63c6322d863821435e3cb9b",
+          "frame": 146,
+          "distanceBits": "00051F7E",
+          "selectedSlot": 108,
+          "stack": [],
+          "capacity": 10,
+          "storedCountSigned": -9,
+          "gauge": 0
+        },
+        "f1": {
+          "ramSha256": "a9f5ff234e162cb05692aa0f60eea3836e5f3db7f8083ca3e3ee361a27fa8eac",
+          "frame": 142,
+          "distanceBits": "00071000",
+          "selectedSlot": 181,
+          "stack": [
+            108
+          ],
+          "capacity": 20,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f2": {
+          "ramSha256": "19d5d11b6ae8af1809781e9f9926922d334107ba7aba0628de804d009c76680a",
+          "frame": 143,
+          "distanceBits": "00051F7E",
+          "selectedSlot": 108,
+          "stack": [],
+          "capacity": 10,
+          "storedCountSigned": -9,
+          "gauge": 0
+        }
+      }
+    },
+    "briefcase-drop-ten": {
+      "manifestSha256": "54890236efac5df7f52576747bd27d4054db176b59b3e6fb4094bc1381ce20fe",
+      "logSha256": "990336b7cc1cb406c3ed6169c16cd53bb0db40b146051f08efeca795f17c53c7",
+      "cadence": {
+        "topRecords": 6,
+        "gaps": 5,
+        "allEleven": true,
+        "inFrameTickChecks": 14,
+        "maskedRegisterChecks": 9
+      },
+      "captures": {
+        "f5": {
+          "ramSha256": "4b52667983671e1694f3f50dff5d34006044aa6884f14995ac5a4f0fbba1472d",
+          "frame": 146,
+          "distanceBits": "00051F7E",
+          "selectedSlot": 108,
+          "stack": [
+            103,
+            104,
+            135,
+            40,
+            41,
+            43,
+            44,
+            45,
+            48
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 18
+        },
+        "f1": {
+          "ramSha256": "173e7ee49e4350188bf635e9df54995bc9cd8bd1797896933323e07c461f1df7",
+          "frame": 142,
+          "distanceBits": "00071000",
+          "selectedSlot": 181,
+          "stack": [
+            108,
+            103,
+            104,
+            135,
+            40,
+            41,
+            43,
+            44,
+            45,
+            48
+          ],
+          "capacity": 20,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f2": {
+          "ramSha256": "94a3b1f6170894d3ea7eee58cef273e7ec40bcad9399a0fedc3072dbcba816c9",
+          "frame": 143,
+          "distanceBits": "00051F7E",
+          "selectedSlot": 108,
+          "stack": [
+            103,
+            104,
+            135,
+            40,
+            41,
+            43,
+            44,
+            45,
+            48
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 18
+        }
+      }
+    },
+    "capacity-over-twenty-one": {
+      "manifestSha256": "c6037120d2df1f0429ed7e26d2ea5128489a7c458b8947cd91fa024628c7561d",
+      "logSha256": "a7d56503af97ea85ff801f52a7cbda55b3eb4ebbfc662676b6948b0bede33781",
+      "cadence": {
+        "topRecords": 6,
+        "gaps": 5,
+        "allEleven": true,
+        "inFrameTickChecks": 13,
+        "maskedRegisterChecks": 8
+      },
+      "captures": {
+        "f5": {
+          "ramSha256": "ae984d01fc4ec1e00b53a388c6ed92f2e99e517e3e1cae11945098213624be23",
+          "frame": 146,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            181,
+            108,
+            103,
+            104,
+            135,
+            40,
+            41,
+            43,
+            44,
+            45,
+            48,
+            49,
+            60,
+            87,
+            89,
+            91,
+            92,
+            94,
+            99,
+            100,
+            101,
+            105
+          ],
+          "capacity": 20,
+          "storedCountSigned": 0,
+          "gauge": 22
+        },
+        "f1": {
+          "ramSha256": "2bf2067d611022babae10092d06c9bb53f64ee3453bb5ddecc6bc4e320d4564b",
+          "frame": 142,
+          "distanceBits": "00081000",
+          "selectedSlot": 181,
+          "stack": [
+            108,
+            103,
+            104,
+            135,
+            40,
+            41,
+            43,
+            44,
+            45,
+            48,
+            49,
+            60,
+            87,
+            89,
+            91,
+            92,
+            94,
+            99,
+            100,
+            101,
+            105
+          ],
+          "capacity": 20,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f2": {
+          "ramSha256": "4817a69217cda486e7935940dc07843a6d85f63b87b145c5368f8c2a5b9e325c",
+          "frame": 143,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            181,
+            108,
+            103,
+            104,
+            135,
+            40,
+            41,
+            43,
+            44,
+            45,
+            48,
+            49,
+            60,
+            87,
+            89,
+            91,
+            92,
+            94,
+            99,
+            100,
+            101,
+            105
+          ],
+          "capacity": 20,
+          "storedCountSigned": 0,
+          "gauge": 22
+        }
+      }
+    },
+    "drop-scroll-negative": {
+      "manifestSha256": "7c002d7b4a1a5e026cd1557cd881c2443bfe3ad62329d97cc031014be6351d91",
+      "logSha256": "aede184d17ce2a5f901c908c457dadd88fee419244b88e1dd4a3eade9b795317",
+      "cadence": {
+        "topRecords": 6,
+        "gaps": 5,
+        "allEleven": true,
+        "inFrameTickChecks": 13,
+        "maskedRegisterChecks": 8
+      },
+      "captures": {
+        "f5": {
+          "ramSha256": "86f1021c55d728553280fcd8511226d6421e825e200a9783f0ebefc6e5cc6cc8",
+          "frame": 146,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            103,
+            104,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f1": {
+          "ramSha256": "b0a65b497fe1c5e230e78f2a2430e744a7f3a52a89ec651c79f2a854174d290d",
+          "frame": 142,
+          "distanceBits": "00081000",
+          "selectedSlot": 181,
+          "stack": [
+            103,
+            104,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f2": {
+          "ramSha256": "c5a38e291d1b1b782b1710d9ed4fb40d4d2ffce25fd8f7cb9295e890db63285f",
+          "frame": 143,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            103,
+            104,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        }
+      }
+    },
+    "drop-void": {
+      "manifestSha256": "4f6d024f51d8cfc5ed9d140993b202b99cff91e2d3bca1870c3270feeacfee46",
+      "logSha256": "8e9f728edf1098ca91495a1f1110ee9db9a487a5d9bc237a341c204bfc58a7c9",
+      "cadence": {
+        "topRecords": 6,
+        "gaps": 5,
+        "allEleven": true,
+        "inFrameTickChecks": 13,
+        "maskedRegisterChecks": 8
+      },
+      "captures": {
+        "f5": {
+          "ramSha256": "3bfb4b4a9d567b77a985ee2625f58cdf98634626482223db40a5844b22a6c2d5",
+          "frame": 146,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            103,
+            104,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f1": {
+          "ramSha256": "9340a6e5f8bc0eb495e9dce54cd1f3ae781625d064ab02d8d572c5f23cff8435",
+          "frame": 142,
+          "distanceBits": "00081000",
+          "selectedSlot": 181,
+          "stack": [
+            103,
+            104,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f2": {
+          "ramSha256": "1eda4d1d5640053d20a6d051fd077aeb993770b5a93b35ab0954be3bc47cbdff",
+          "frame": 143,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            103,
+            104,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        }
+      }
+    },
+    "empty-queue-controlled": {
+      "manifestSha256": "1312abd9d300cf4fbefba41bc5a35eafb5f1109a23c94ca2fedaf97d53d43a19",
+      "logSha256": "eb52aaecc30d275e57d057b847387a86cb2730c7ef62f9000e8257206ff028a5",
+      "cadence": {
+        "topRecords": 7,
+        "gaps": 6,
+        "allEleven": true,
+        "inFrameTickChecks": 24,
+        "maskedRegisterChecks": 18
+      },
+      "captures": {
+        "f6": {
+          "ramSha256": "2d77281b26417482f8d7e8570c4cfb6fd94e45ec7d4c439d3d1f8f1dcbad5c13",
+          "frame": 147,
+          "distanceBits": "000A1388",
+          "selectedSlot": 124,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f1": {
+          "ramSha256": "31de940eb1525e1926a0f4efa3bfd39734c47e7ef65e89fb80d65eaf00cb5d51",
+          "frame": 142,
+          "distanceBits": "7FFF1777",
+          "selectedSlot": 181,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f3": {
+          "ramSha256": "9e678d0bcb1c5d454a712ae23098ecd0f779fa71278ff63da3e44b8dd3787390",
+          "frame": 144,
+          "distanceBits": "000A1388",
+          "selectedSlot": 124,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f2": {
+          "ramSha256": "99378b6625d7b12935973644696cb7c1461849fe3ce18b24f9bea5f2c3687a2e",
+          "frame": 143,
+          "distanceBits": "7FFF1777",
+          "selectedSlot": 181,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        }
+      }
+    },
+    "empty-stale-controlled": {
+      "manifestSha256": "6d8b1d1be113bfbf03460ccb343c3d7966cba54019bfc2b13a2c4587fa7ea6f6",
+      "logSha256": "695cf7544d74c27ab2484b13b388d749a2913361ff2f77dbca19f4eb20864bc8",
+      "cadence": {
+        "topRecords": 7,
+        "gaps": 6,
+        "allEleven": true,
+        "inFrameTickChecks": 28,
+        "maskedRegisterChecks": 22
+      },
+      "captures": {
+        "f6": {
+          "ramSha256": "894afd1f87064ae677a7f1874f2152380285120aaeb1b58dc0d43ae6aa73caa2",
+          "frame": 147,
+          "distanceBits": "000A1388",
+          "selectedSlot": 124,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f1": {
+          "ramSha256": "3a280ae9a1e7dab247dd97e0783c6b31d7e034f3f7494425f9fd1d3a7084c584",
+          "frame": 142,
+          "distanceBits": "000A1388",
+          "selectedSlot": 124,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f3": {
+          "ramSha256": "ffe451693620c8ba1143a17a5f09dc4e5bad8755f445ae07da3266c28aa7befa",
+          "frame": 144,
+          "distanceBits": "000A1388",
+          "selectedSlot": 124,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f2": {
+          "ramSha256": "71ddb73c9493225ef321fd5e76927acde36c761ca680c3cd811035639d25d188",
+          "frame": 143,
+          "distanceBits": "000A1388",
+          "selectedSlot": 124,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        }
+      }
+    },
+    "exclude74-nearer": {
+      "manifestSha256": "367fbd7c1af3ef8480674f7e11ff0656784101b3f4c16f378861f69447d3c611",
+      "logSha256": "52049ec0ebce1608c296e05b36b1f4d69c67c43848b6e70dfabd17a214e4f5df",
+      "cadence": {
+        "topRecords": 7,
+        "gaps": 6,
+        "allEleven": true,
+        "inFrameTickChecks": 68,
+        "maskedRegisterChecks": 62
+      },
+      "captures": {
+        "f6": {
+          "ramSha256": "9fb8200ef2c9eff480c70f65b6ac07741fff1df0099d96dcdd514630f0a397d4",
+          "frame": 147,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            181,
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 8
+        },
+        "f1": {
+          "ramSha256": "3241f13ae78cd9749a140bbee434256c8bde9960929e9d629a7b7c433fe87af3",
+          "frame": 142,
+          "distanceBits": "000812BE",
+          "selectedSlot": 181,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f3": {
+          "ramSha256": "2d9172eb56e3e77c89d9293564f785913a44cc9a20c0eedac302045249999049",
+          "frame": 144,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            181,
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 8
+        },
+        "f2": {
+          "ramSha256": "e4bd75e80dc670cb6d69cd308d33178deae853d608b3531e046ae98caa3bca27",
+          "frame": 143,
+          "distanceBits": "000812BE",
+          "selectedSlot": 181,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        }
+      }
+    },
+    "exclude74-only": {
+      "manifestSha256": "ce8de147f3bfcc010f1057f8d1fc7f8ea1e5c0c6cc4a6730f06df52c11787d71",
+      "logSha256": "9a727d51f816f396856acacb5dacb0034d13301477589c60c9f04391938bb9fa",
+      "cadence": {
+        "topRecords": 7,
+        "gaps": 6,
+        "allEleven": true,
+        "inFrameTickChecks": 35,
+        "maskedRegisterChecks": 29
+      },
+      "captures": {
+        "f6": {
+          "ramSha256": "18f1a7cc2334999a66d270cb40c855b0a8e67b13217896f6f303cc0b2de5fcb4",
+          "frame": 147,
+          "distanceBits": "000A1388",
+          "selectedSlot": 124,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f1": {
+          "ramSha256": "1ce609ab3063d09b94ae9c066bd8b2aaf164e1cae51c3df64f8e6e22104b4c0f",
+          "frame": 142,
+          "distanceBits": "000A1388",
+          "selectedSlot": 124,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f3": {
+          "ramSha256": "bc57bc0f63cfa344c6b2d9e5b3394a17586760543985f74418847e6161fbb1cd",
+          "frame": 144,
+          "distanceBits": "000A1388",
+          "selectedSlot": 124,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f2": {
+          "ramSha256": "716ff76bc911b1e5a1e6a387040f08ae3d25410407dc121a8749dd23d1255262",
+          "frame": 143,
+          "distanceBits": "000A1388",
+          "selectedSlot": 124,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        }
+      }
+    },
+    "front-controlled": {
+      "manifestSha256": "b8cf4525a109f16a35f9837f4d895b5d1120068eedd5d6440c58005dfdbaa5fa",
+      "logSha256": "3581f340e50220880bc9b74517a602ba5002d1fd017f45461daf4f4678c9941c",
+      "cadence": {
+        "topRecords": 7,
+        "gaps": 6,
+        "allEleven": true,
+        "inFrameTickChecks": 61,
+        "maskedRegisterChecks": 55
+      },
+      "captures": {
+        "f6": {
+          "ramSha256": "bbcf6b7a4c965c3dd11e285b3f7995bfcbb5e4cd95ab60cd011dbbddde4e31c2",
+          "frame": 147,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            181,
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 8
+        },
+        "f1": {
+          "ramSha256": "25a38c5cdc442dabb5ae1967133fbd0aa8796a6ed87a0f819aafe87412f63841",
+          "frame": 142,
+          "distanceBits": "000812BE",
+          "selectedSlot": 181,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f3": {
+          "ramSha256": "5420298ad5c97647f15340598a4aacf39aaab42db6411619e47bec1f34024b0c",
+          "frame": 144,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            181,
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 8
+        },
+        "f2": {
+          "ramSha256": "a2f1924876cfac991b82e8f42818ff669abd0edbb803c9a7c4431fb0331e779b",
+          "frame": 143,
+          "distanceBits": "000812BE",
+          "selectedSlot": 181,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        }
+      }
+    },
+    "handling-both-bits": {
+      "manifestSha256": "40493f6f372d6890a0ede513449f4b5c4919c1681e984e7db42f3490788a21e1",
+      "logSha256": "363a7a94ea5895dd020e8d66b6308b235f8c04e1a403182ba8daace9476cf376",
+      "cadence": {
+        "topRecords": 6,
+        "gaps": 5,
+        "allEleven": true,
+        "inFrameTickChecks": 12,
+        "maskedRegisterChecks": 7
+      },
+      "captures": {
+        "f5": {
+          "ramSha256": "40c63ae5fc656508f0c9622e661b8319aac074584ba4643c0c7df78b337a37b4",
+          "frame": 146,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            103,
+            104,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f1": {
+          "ramSha256": "89c3c5d5955b498ab7c2ac06eafe60c2bc855e7d29d52a7e843b604b609c0ea5",
+          "frame": 142,
+          "distanceBits": "00081000",
+          "selectedSlot": 181,
+          "stack": [
+            103,
+            104,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f2": {
+          "ramSha256": "510a8d45cfb7ba0e85ca27c0db158b75dcaca14bd42927c7e37963c488874602",
+          "frame": 143,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            103,
+            104,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        }
+      }
+    },
+    "handling-both-glove": {
+      "manifestSha256": "e7755a5fff0a4b88e547b65cc2c15ab553f532f1c32bc62ad8d6b41597e170c8",
+      "logSha256": "16bbb54a7fa91ab762cd3b7c282e3a4067ce67237ff6334de541cad867fac955",
+      "cadence": {
+        "topRecords": 6,
+        "gaps": 5,
+        "allEleven": true,
+        "inFrameTickChecks": 12,
+        "maskedRegisterChecks": 7
+      },
+      "captures": {
+        "f5": {
+          "ramSha256": "7ff4c544313f737dbebd38c93623b3a389ee937b7ce77183f38f86d2c00c5a73",
+          "frame": 146,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            103,
+            104,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f1": {
+          "ramSha256": "fe53c0af98a5e0e0be0678b81c845b9cb40b55b79ddf7915e7bc0c0c2e05b285",
+          "frame": 142,
+          "distanceBits": "00081000",
+          "selectedSlot": 181,
+          "stack": [
+            103,
+            104,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f2": {
+          "ramSha256": "1d07f38611e8e1419d113f3efddbd6f4d3ecf36f2faad6bd29bedc3dbaaf7c37",
+          "frame": 143,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            103,
+            104,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        }
+      }
+    },
+    "handling-fixed-full": {
+      "manifestSha256": "80db25896f670cbd86fea9eb49fbbd38fd2140af3656258b5636f458376db813",
+      "logSha256": "34e256f3f3e102a08565f003b8bc98579248694c3cd379d314b9a32fd71af59c",
+      "cadence": {
+        "topRecords": 6,
+        "gaps": 5,
+        "allEleven": true,
+        "inFrameTickChecks": 12,
+        "maskedRegisterChecks": 7
+      },
+      "captures": {
+        "f5": {
+          "ramSha256": "f3d13e5592773860c668b7adfb0a9a4bf32ddeae509754e5a227819ceecf1976",
+          "frame": 146,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            103,
+            104,
+            135,
+            40,
+            41,
+            43,
+            44,
+            45,
+            48,
+            49
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f1": {
+          "ramSha256": "57a4b1a8ae0fc9508b410849c84553c2bd85cf8e89f1a0ee9a6db4f4d6fddc86",
+          "frame": 142,
+          "distanceBits": "00081000",
+          "selectedSlot": 13,
+          "stack": [
+            103,
+            104,
+            135,
+            40,
+            41,
+            43,
+            44,
+            45,
+            48,
+            49
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f2": {
+          "ramSha256": "144af1dfc71366c12818b9871cc01be71d10d7f37ecdd67193d4d29d149d2b73",
+          "frame": 143,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            103,
+            104,
+            135,
+            40,
+            41,
+            43,
+            44,
+            45,
+            48,
+            49
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        }
+      }
+    },
+    "handling-heavy-full": {
+      "manifestSha256": "8c7f53f600e50ccf240c7cd1e8e9d1f76e017379612bee35b52ea895cea6dc42",
+      "logSha256": "3dd609d464e8c57a366c9144c78d95f79f97340836d5352494fe0ff32cdc5874",
+      "cadence": {
+        "topRecords": 6,
+        "gaps": 5,
+        "allEleven": true,
+        "inFrameTickChecks": 13,
+        "maskedRegisterChecks": 8
+      },
+      "captures": {
+        "f5": {
+          "ramSha256": "f3d13e5592773860c668b7adfb0a9a4bf32ddeae509754e5a227819ceecf1976",
+          "frame": 146,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            103,
+            104,
+            135,
+            40,
+            41,
+            43,
+            44,
+            45,
+            48,
+            49
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f1": {
+          "ramSha256": "9cc302d1dc7a6261555838725a4447d9fffd93c5cf826e04cff3a40bd65c2a9a",
+          "frame": 142,
+          "distanceBits": "00081000",
+          "selectedSlot": 67,
+          "stack": [
+            103,
+            104,
+            135,
+            40,
+            41,
+            43,
+            44,
+            45,
+            48,
+            49
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f2": {
+          "ramSha256": "144af1dfc71366c12818b9871cc01be71d10d7f37ecdd67193d4d29d149d2b73",
+          "frame": 143,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            103,
+            104,
+            135,
+            40,
+            41,
+            43,
+            44,
+            45,
+            48,
+            49
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        }
+      }
+    },
+    "handling-heavy-full-glove": {
+      "manifestSha256": "f846686354743a13255c08d4c98cc0cc9335c9d862b2f019b16bf68f480b57e8",
+      "logSha256": "87fa223e00ac6a0b7498cc5290ad28ad2bd10cd187f217ceaf0c1809bd160cf1",
+      "cadence": {
+        "topRecords": 6,
+        "gaps": 5,
+        "allEleven": true,
+        "inFrameTickChecks": 12,
+        "maskedRegisterChecks": 7
+      },
+      "captures": {
+        "f5": {
+          "ramSha256": "771b57bd34cd5ab97ca2d686bb6d06568e0a00a038bbed340c0cd5af6aea53aa",
+          "frame": 146,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            103,
+            104,
+            135,
+            40,
+            41,
+            43,
+            44,
+            45,
+            48,
+            49
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f1": {
+          "ramSha256": "7249c3a4c0c164551c7ab56a7b66f168890cc6a445ef2be2d2d0d93747031c91",
+          "frame": 142,
+          "distanceBits": "00081000",
+          "selectedSlot": 67,
+          "stack": [
+            103,
+            104,
+            135,
+            40,
+            41,
+            43,
+            44,
+            45,
+            48,
+            49
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f2": {
+          "ramSha256": "b35311727d914f888ed4a823d4f3c159d9c5f3b10dae51336d9f3dfe4d8081b4",
+          "frame": 143,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            103,
+            104,
+            135,
+            40,
+            41,
+            43,
+            44,
+            45,
+            48,
+            49
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        }
+      }
+    },
+    "rotate-empty-right": {
+      "manifestSha256": "d922fa5a35d3cf7df4e9edfb8583977788d494f0b4eaa360aa7dba4cb184ecf1",
+      "logSha256": "d3e94ce7cea32cb5b30c03e511f1547e37230cfaf5fcb1ee0ac141f012e55ce2",
+      "cadence": {
+        "topRecords": 6,
+        "gaps": 5,
+        "allEleven": true,
+        "inFrameTickChecks": 12,
+        "maskedRegisterChecks": 7
+      },
+      "captures": {
+        "f5": {
+          "ramSha256": "91e553574cdbea58bb02d3769fb895cc006d10484cc4404ad8ba3fc924e19c77",
+          "frame": 146,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f1": {
+          "ramSha256": "165022c97f1492033adb7d15db57f09e04cf3e7b5a9e65c0b2e29cc55d91d924",
+          "frame": 142,
+          "distanceBits": "00081000",
+          "selectedSlot": 181,
+          "stack": [],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f2": {
+          "ramSha256": "32589288d51563bbdfe36e9c031d13c336b44ceb08e4e92b5b2ae2b4ca10d9aa",
+          "frame": 143,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        }
+      }
+    },
+    "rotate-one-negative-scroll": {
+      "manifestSha256": "d925a5d1fc36cc6cf3bd930f3d50dcd2c09af120f5c142195513648c3e0a7289",
+      "logSha256": "9993de5a1f6b9b42005be13187ce05c8eafa6db0a45707498e5bd2f0f351ad88",
+      "cadence": {
+        "topRecords": 6,
+        "gaps": 5,
+        "allEleven": true,
+        "inFrameTickChecks": 12,
+        "maskedRegisterChecks": 7
+      },
+      "captures": {
+        "f5": {
+          "ramSha256": "6d3661509cb815cfe3f43cc02529c006af6f93782648b89cfcc4b851715d810c",
+          "frame": 146,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            103
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f1": {
+          "ramSha256": "33052c8dfa92c0ca158afa5c50dbb27a7d36024fbd735295ecc132d28ce720ee",
+          "frame": 142,
+          "distanceBits": "00081000",
+          "selectedSlot": 181,
+          "stack": [
+            103
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f2": {
+          "ramSha256": "a741043752483a82abf222a3300813823c9b53a6429ce95d69cb99bfa58969cc",
+          "frame": 143,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            103
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        }
+      }
+    },
+    "rotate-one-positive-scroll": {
+      "manifestSha256": "85b7308830c8db690def30595049de6899078181dce3609a1e568a4395dbddd7",
+      "logSha256": "834c5700641a195527050ed6eeb476c11092600e00f3484a4af4d54c85684927",
+      "cadence": {
+        "topRecords": 6,
+        "gaps": 5,
+        "allEleven": true,
+        "inFrameTickChecks": 12,
+        "maskedRegisterChecks": 7
+      },
+      "captures": {
+        "f5": {
+          "ramSha256": "525fac2527236af248a58f2bb4d3518a99ce3963417e292301f063ef0fe1b593",
+          "frame": 146,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            103
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f1": {
+          "ramSha256": "1561a4239dbdbf283e9e87128cdf65d56e4d5ee24e0c112d6e2710cdbfb99302",
+          "frame": 142,
+          "distanceBits": "00081000",
+          "selectedSlot": 181,
+          "stack": [
+            103
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f2": {
+          "ramSha256": "eaba70c4fec1aa9ac1cacf8de1495a8a4b838ffefb67c34ca2147697e92720a5",
+          "frame": 143,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            103
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        }
+      }
+    },
+    "side-controlled": {
+      "manifestSha256": "7b1ef8efad035660e5c6385ba851180c4f725b225d65a86b0e24fd8a041f7609",
+      "logSha256": "2f13d9068588c08e98b4dff4e80c733988325864e28a2cc98e5aa2cc55c0fc0f",
+      "cadence": {
+        "topRecords": 7,
+        "gaps": 6,
+        "allEleven": true,
+        "inFrameTickChecks": 61,
+        "maskedRegisterChecks": 55
+      },
+      "captures": {
+        "f6": {
+          "ramSha256": "f0a7b3c96acc41846e94fa52cad1de2a89f1f30ed3665a16ee5761ecd54fe223",
+          "frame": 147,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            181,
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 8
+        },
+        "f1": {
+          "ramSha256": "91d902c904eddd597be5dd880b2b45319898edb4227698f148a0ce88fcb79b7b",
+          "frame": 142,
+          "distanceBits": "000812BE",
+          "selectedSlot": 181,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f3": {
+          "ramSha256": "e1e2a562cd63f4354827cb4808436ed089575dc747ef3fe34ff336a7e873112e",
+          "frame": 144,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            181,
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 8
+        },
+        "f2": {
+          "ramSha256": "bc1b853bee34d7c6340f218e7823aa583c8abcad42a2d5581fb83bc860e79758",
+          "frame": 143,
+          "distanceBits": "000812BE",
+          "selectedSlot": 181,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        }
+      }
+    },
+    "support-repick": {
+      "manifestSha256": "32d0936d8dc15c1cbb43cfc8d3f9e6beca22da19fcbf1f322a0b696ab1d45658",
+      "logSha256": "d59ea9c2c50b821884d910afd4e645f900a8b9be5b183ec68ff89911dbf43da8",
+      "cadence": {
+        "topRecords": 26,
+        "gaps": 25,
+        "allEleven": true,
+        "inFrameTickChecks": 57,
+        "maskedRegisterChecks": 32
+      },
+      "captures": {
+        "f20": {
+          "ramSha256": "078075313412694e2177b1a8bad8dc4764f6f22cca5ca345958080b67fcf310c",
+          "frame": 161,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 4
+        },
+        "f22": {
+          "ramSha256": "ed222899037cbeb12d4951c5d124d76d51796c0539e41b2f57a06632699861a2",
+          "frame": 163,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f1": {
+          "ramSha256": "02aa718107e84327723d71fabec546ccd028c0176b46ac1bf433556f28617fda",
+          "frame": 142,
+          "distanceBits": "00061000",
+          "selectedSlot": 240,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f25": {
+          "ramSha256": "f5661cc97b485ef6a41608c4e5183718e53d0bb459ea27bbe372ad13ca751865",
+          "frame": 166,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f2": {
+          "ramSha256": "95c7c402c14665d7c4bcbc9344c7fd198d680be98aabfefbf892251fb156b917",
+          "frame": 143,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 4
+        }
+      }
+    },
+    "take-diagonal-363": {
+      "manifestSha256": "312b5be3a91167f61068e36f44e504526dea79cdd23b6b11c3c3993f01223812",
+      "logSha256": "2042adbf468ce3816e9e8c1c2fdb7b51c34a1d69fe4db13a024c30dbb9cf9420",
+      "cadence": {
+        "topRecords": 7,
+        "gaps": 6,
+        "allEleven": true,
+        "inFrameTickChecks": 35,
+        "maskedRegisterChecks": 29
+      },
+      "captures": {
+        "f6": {
+          "ramSha256": "bd8959f484e9a9bf6b4e876055a4738220847df1ce338a0bad59caf1883e7185",
+          "frame": 147,
+          "distanceBits": "0009100C",
+          "selectedSlot": 181,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f1": {
+          "ramSha256": "827c937d8ce1522f424be219879fd5a27600c0ba66bb3479636ba8cff07a63ea",
+          "frame": 142,
+          "distanceBits": "0009100C",
+          "selectedSlot": 181,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f3": {
+          "ramSha256": "c3cff8ac3c4c4991ec59a4c927f241c152080c9e9c04d41fa1a3a65770b71680",
+          "frame": 144,
+          "distanceBits": "0009100C",
+          "selectedSlot": 181,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f2": {
+          "ramSha256": "09b31fa7bb48f436a352881a38703c21cdb5361309906456ea5201912e279164",
+          "frame": 143,
+          "distanceBits": "0009100C",
+          "selectedSlot": 181,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        }
+      }
+    },
+    "take-diagonal-inside": {
+      "manifestSha256": "8f467ad87b41bff78a8ea20bd9b58a770e9bc1ed8ef4fea2ffd2d0a80aade151",
+      "logSha256": "886f6dba844ef97153372d1f959bb976264f67b983f49bf65a1cbb227f1252a2",
+      "cadence": {
+        "topRecords": 7,
+        "gaps": 6,
+        "allEleven": true,
+        "inFrameTickChecks": 61,
+        "maskedRegisterChecks": 55
+      },
+      "captures": {
+        "f6": {
+          "ramSha256": "4344534be6ca0d5804314346de937978792d104ce7e140d67db39c5812662bc2",
+          "frame": 147,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            181,
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 8
+        },
+        "f1": {
+          "ramSha256": "cc3c0458acf29e005432c5a327000ef9d642b276bee4a1e19d3e5f6e02444225",
+          "frame": 142,
+          "distanceBits": "00081FE8",
+          "selectedSlot": 181,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f3": {
+          "ramSha256": "5d99753990dca7beaf0a4445d3b93dee0c845ba055d11065cd6be4c37678b43c",
+          "frame": 144,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            181,
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 8
+        },
+        "f2": {
+          "ramSha256": "b33e3028c50cd0f67c557fae369d3d576684db20d775826d5df4a04765128230",
+          "frame": 143,
+          "distanceBits": "00081FE8",
+          "selectedSlot": 181,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        }
+      }
+    },
+    "take-diagonal-outside": {
+      "manifestSha256": "6a7aef1bf4a7a31cf247e2f3f2879dd38d7d32fe6020966dce97ea60f9c107ce",
+      "logSha256": "9c5637f710c16257c9a3b79f7fc18b57ba799ec7a3a35f4e034df6bf4f23913e",
+      "cadence": {
+        "topRecords": 7,
+        "gaps": 6,
+        "allEleven": true,
+        "inFrameTickChecks": 61,
+        "maskedRegisterChecks": 55
+      },
+      "captures": {
+        "f6": {
+          "ramSha256": "359b24b3341fea26d50e028940d4b113f26bc98cfaab8811fc09bf303198e6b6",
+          "frame": 147,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            181,
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 8
+        },
+        "f1": {
+          "ramSha256": "a7ace2d67ca757ab39240d46f45f7fa07e698ae3558d0c2391e6f17fe933d639",
+          "frame": 142,
+          "distanceBits": "00081FFE",
+          "selectedSlot": 181,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f3": {
+          "ramSha256": "af6332ab47394a07c1fd43ab4ccdeb0acd84107f7d8ab9b9e8425e85367e7e98",
+          "frame": 144,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            181,
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 8
+        },
+        "f2": {
+          "ramSha256": "1d250c8e2eea57b6fe514bbf5f6cb623a326815883c33fb9c0e8536aecf9f4fc",
+          "frame": 143,
+          "distanceBits": "00081FFE",
+          "selectedSlot": 181,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        }
+      }
+    },
+    "take-native-rounding-511-32": {
+      "manifestSha256": "af439e7b2d74f9e4d6b499a250d016466c5565743eed7da99e0f89b7326fb826",
+      "logSha256": "aff15aaabeeb159676fafd1395d86f6aa60ec9d0374b34777e965e82ec08cb9c",
+      "cadence": {
+        "topRecords": 7,
+        "gaps": 6,
+        "allEleven": true,
+        "inFrameTickChecks": 61,
+        "maskedRegisterChecks": 55
+      },
+      "captures": {
+        "f6": {
+          "ramSha256": "3d46cb819d399d5ecfb837ddba22e0e2d07b3664907c44197a43507386f9c9ba",
+          "frame": 147,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            181,
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 8
+        },
+        "f1": {
+          "ramSha256": "a5018f61eb6e91bc37eff10913d6f72e3c2f992ecffa11af32e73a29dd6aeda4",
+          "frame": 142,
+          "distanceBits": "00081FFE",
+          "selectedSlot": 181,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f3": {
+          "ramSha256": "1c4e4da023df0b6386072a920bdbd537065278e2815da968aa7b8245eee7603b",
+          "frame": 144,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            181,
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 8
+        },
+        "f2": {
+          "ramSha256": "84ff5be5b491dd5dcf1e7a50e7281ee5fdf3b6221a88a41bb8483fd2f9d82d8f",
+          "frame": 143,
+          "distanceBits": "00081FFE",
+          "selectedSlot": 181,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        }
+      }
+    },
+    "take-native-rounding-511-33": {
+      "manifestSha256": "6ad013fa1f2626a2afd990de4c8399fe35cdec22b5c8ce78361e91a5d18774d3",
+      "logSha256": "e014a557e79fde3b23aab867ab7d603db9d498ad37f30f232d8e62723b025aef",
+      "cadence": {
+        "topRecords": 7,
+        "gaps": 6,
+        "allEleven": true,
+        "inFrameTickChecks": 35,
+        "maskedRegisterChecks": 29
+      },
+      "captures": {
+        "f6": {
+          "ramSha256": "7932a1f3abf29002c2b255d48d3058970473f1f4d0f995abdb906740a2db9f7a",
+          "frame": 147,
+          "distanceBits": "00091000",
+          "selectedSlot": 181,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f1": {
+          "ramSha256": "8e59741478f61984d2ecdaa06cd29e8f9f528f7838e4004261ed7519c5ede49b",
+          "frame": 142,
+          "distanceBits": "00091000",
+          "selectedSlot": 181,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f3": {
+          "ramSha256": "dfec4a0c1302b45aaec3258afde174381fba4a5032249dcc4d343e2459977f8b",
+          "frame": 144,
+          "distanceBits": "00091000",
+          "selectedSlot": 181,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f2": {
+          "ramSha256": "eb4aaa792e869a6843368c79fca633ffcbb2f3d895a73e2cfe4ffab9973ec6a5",
+          "frame": 143,
+          "distanceBits": "00091000",
+          "selectedSlot": 181,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        }
+      }
+    },
+    "take-void": {
+      "manifestSha256": "4ef85a976acb476b42ca70861da72e2941aa20ebb9105048795733c6d2fbd345",
+      "logSha256": "51bee899017ec5c66f7e323e543c57938b022ab24059dc17737613f5f7fa7c89",
+      "cadence": {
+        "topRecords": 6,
+        "gaps": 5,
+        "allEleven": true,
+        "inFrameTickChecks": 12,
+        "maskedRegisterChecks": 7
+      },
+      "captures": {
+        "f5": {
+          "ramSha256": "e107a9e0b048a7df61e26edd344ae350d0e0bd1a750b255bb1f7fe0587e56a74",
+          "frame": 146,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            103,
+            104,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f1": {
+          "ramSha256": "598f3c6b4effae3f6c9d5f2d31751793bff08246b903654ee23e1e60249f1d26",
+          "frame": 142,
+          "distanceBits": "00081000",
+          "selectedSlot": 181,
+          "stack": [
+            103,
+            104,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        },
+        "f2": {
+          "ramSha256": "d3c2d0303519c03cf6fc7677addccf57927909706948bdd108c61fb8c3a799a7",
+          "frame": 143,
+          "distanceBits": "00071402",
+          "selectedSlot": 220,
+          "stack": [
+            103,
+            104,
+            135
+          ],
+          "capacity": 10,
+          "storedCountSigned": 0,
+          "gauge": 6
+        }
+      }
+    }
+  }
+}

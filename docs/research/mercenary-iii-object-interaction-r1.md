@@ -4,6 +4,8 @@ Research handoff for [R1/#770](https://github.com/odogono/mercenary/issues/770),
 
 The cold-opening route drops/re-picks TAXICARD104 and BUS PASS103, rotates both ways, and then acquires the originally resident MARGARETS LETTER220. The route agrees at 16 and 32 MHz. Separate synthetic controls execute capacity, handling, staging, rotation, contact, support, distance and visit-order rules. They establish mechanism behavior, not ordinary access to the injected objects or placements. No runtime, Data Payload or Golden Trace change is made.
 
+The subsequent [selection and boundary follow-up](mercenary-iii-object-interaction-r1-followup.md) adds controlled empty-queue/clipping/native-rounding and competing-refusal/BRIEFCASE executions; the [acceptance audit](mercenary-iii-object-interaction-r1-audit.md) reviews this first handoff and current reuse boundaries. Those notes qualify the remaining gates below without accepting a bounded exclusion.
+
 ## Method and authority
 
 The original engine is the primary source. [ADR 0002](../adr/0002-separate-rom-research-from-implementation.md) separates this research from an independent implementation. The existing [strict atomic follow-up](mercenary-iii-tourcraft-followup.md) establishes the accepted timing adaptation; this probe retains its masked-frame/eleven-original-tick wait, recovered from the retained R8 instrumentation. It does not claim that natural ST rendering takes eleven VBLs.
