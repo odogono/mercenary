@@ -139,3 +139,9 @@ Before the final R3 review:
 Read-only route verification passes 110 explicit assertions across fifteen selected families. A fresh complete exterior key-route replay reproduces all eleven original 1 MiB RAM capture hashes exactly; the ledger retains this finite reproduction comparison. The inventory regenerates exactly as parsed JSON. Repository documentation and full-check results are recorded below. This handoff claims no production browser Take/Drop/pointer, Save/Resume equivalence, physical keyboard, original audible output or full original raster fidelity.
 
 Repository validation: `cd web && bun run check` passed: application/research types, lint, format, documentation checks, **2,690 application tests / 2,603,871 assertions** and **14 tooling tests / 52 assertions**, with zero failures. Final report links, both parsed ledger regenerations, selected-source refusal and `git diff --check` also pass.
+
+## Approved EAGLE follow-up (2026-10-04)
+
+After this handoff merged in [#777](https://github.com/odogono/mercenary/pull/777), the user approved including native EAGLE access in the separate #756 programme. [R4/#778](https://github.com/odogono/mercenary/issues/778) commissions original flight, landing/crash and resulting content/effect research; the [EAGLE handoff](mercenary-iii-eagle-flight.md) records that work. The scope proposal above is the dated pre-decision handoff: its self-piloting exclusion no longer describes the selected programme. D2's earlier boundary remains historical to D2.
+
+This approval does not freeze the complete delivery set. BLUE BEACON reachability, complete placement/effect closure and R4's resulting world/script/persistence dependencies still precede final R3 selection and I1. The native EAGLE addition preserves original key access; it does not approve every further location or effect without evidence and review.
