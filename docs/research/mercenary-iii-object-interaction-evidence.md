@@ -123,6 +123,8 @@ Required follow-up controls before implementation admits a rule:
 
 These controls are acceptance gates, not a claim that all original objects must be enabled. The proposed first delivery must identify and review its bounded object/effect set before broad Catalogue promotion.
 
+The subsequent [R2 handoff](mercenary-iii-object-interaction-r2.md) supplies the three finite response graphs, selected synthetic queue/timed controls, and ordinary eleven-tick letter/card/device owner controls. It confirms that an active letter stream survives dropping its open object and that ACME Drop/re-pick changes the live low-pressure warning. Its explicit unexecuted boundaries and R3 scope dependency qualify those results; they do not retroactively certify this note's earlier variable-cadence probes.
+
 ## Reproduction and evidence identities
 
 From the repository root, with the existing pinned captures/media installed by worktree setup:
