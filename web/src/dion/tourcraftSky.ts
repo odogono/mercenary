@@ -1,4 +1,4 @@
-import type { CraftArithmetic } from '../damocles/craft.ts';
+import type { CraftArithmetic } from '../craft/pass.ts';
 import { celestialRotation, phaseOf } from '../damocles/sky.ts';
 import {
   rollTangent,

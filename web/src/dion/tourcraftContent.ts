@@ -1,4 +1,4 @@
-import type { CraftArithmetic } from '../damocles/craft.ts';
+import type { CraftArithmetic } from '../craft/pass.ts';
 import type { PayloadDocument } from '../shell/title.ts';
 import type { CatalogueGeometry } from './catalogue.ts';
 import { readDionContent, type DionContent } from './content.ts';

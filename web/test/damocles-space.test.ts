@@ -5,22 +5,22 @@ import {
   NO_BOXES,
   craftFloat,
   craftFrame,
-  craftProgram,
   launch,
   throttleForEntry,
   type CraftProgram,
   type CraftState
-} from '../src/damocles/craft.ts';
+} from '../src/craft/pass.ts';
 import {
   enterSpace,
   land,
   landingPoint,
-  landingTrigger,
   spaceAltitude,
   spaceFrame,
   subStellarLongitude,
   type SpaceState
-} from '../src/damocles/space.ts';
+} from '../src/craft/space.ts';
+import { craftProgram } from '../src/damocles/craftProgram.ts';
+import { landingTrigger } from '../src/damocles/spacePolicy.ts';
 import { turnOnClock } from '../src/damocles/terminator.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue } from './fixtures/catalogue.ts';

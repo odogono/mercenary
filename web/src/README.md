@@ -5,7 +5,7 @@ One directory per concern. Pages load a `boot.ts` (`web/*.html` names which). Ea
 ## Titles
 
 - `shell/`: the Targ Browser Shell (`index.html`): boot, routing, menus, the Shell Console and its history, Saves, Session Resume, Arrival, input, gamepad, settings and controls views. `targPanelDocument.ts`, `targPanelWriter.ts` and `targPanelView.ts` recover the ST panel presentation over explicit C64 readout adapters (ADR 0072).
-- `damocles/`: Damocles play (`damocles.html`). `session.ts` (about 5,000 lines) owns the Gameplay Session; separate files hold Save (`save.ts`), the sky (`sky.ts`), the comet (`comet.ts`), craft and space (`craft.ts`, `space.ts`), documents, the encounter, the detonator and sound.
+- `damocles/`: Damocles play (`damocles.html`). `session.ts` (about 5,000 lines) owns the Gameplay Session; separate files hold Save (`save.ts`), the sky (`sky.ts`), the comet (`comet.ts`), craft data binding (`craftProgram.ts`), landing policy (`spacePolicy.ts`), documents, the encounter, the detonator and sound.
   `panelDocument.ts` validates the recovered panel payload, `panelWriter.ts` owns Damocles's composer and raw-word adapters, and `panelView.ts`/`panelElement.ts` retain accessible readouts and controls. The authored Targ/Flyover rendition remains in `shell/` (ADR 0071).
 - `dion/`: Mercenary III on Dion (`dion.html`): session, frame, panel, taxi and TOURCRAFT (`tourcraft*.ts`), Save and Resume.
 - `session/`: the Targ Gameplay Session (ADR 0018), its Save and lift journeys.
@@ -15,6 +15,7 @@ One directory per concern. Pages load a `boot.ts` (`web/*.html` names which). Ea
 
 - `gameCore/`: the pure simulation step (state, intent, elapsed time).
 - `flight/`: the craft Mover. `onFoot/`: the on-foot Mover shared by Damocles and Mercenary III.
+- `craft/`: the evidenced Damocles/Mercenary III numeric craft and space passes, arithmetic tables and structural inputs. Each Title owns orchestration and effects (ADR 0074).
 - `navigation/`: Room walls and Doorways. `interaction/`: take, board and the Damocles head commands.
 - `orientation/`, `projection/`, `math/` (the governed elementary functions, ADR 0022).
 - `world/`: the render-ready world built from the payload. `coast/`: horizon fill, islands and roads.

@@ -1,6 +1,10 @@
+import {
+  craftDivide,
+  craftFixed,
+  type CraftArithmetic
+} from '../craft/pass.ts';
 import type { GammaStarfield } from '../flyover/documents.ts';
 import { tan } from '../math/index.ts';
-import { craftDivide, craftFixed, type CraftArithmetic } from './craft.ts';
 import type { ErisPresentationDocument } from './documents.ts';
 import type { Pose } from './world.ts';
 

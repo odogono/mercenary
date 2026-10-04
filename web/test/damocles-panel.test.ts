@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
-import { craftProgram } from '../src/damocles/craft.ts';
+import { spaceAltitude } from '../src/craft/space.ts';
+import { craftProgram } from '../src/damocles/craftProgram.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import {
   altitudeWindow,
@@ -13,7 +14,6 @@ import {
 } from '../src/damocles/panel.ts';
 import { damoclesRecoveredPanelView } from '../src/damocles/panelWriter.ts';
 import { DamoclesSession } from '../src/damocles/session.ts';
-import { spaceAltitude } from '../src/damocles/space.ts';
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { damoclesTitle } from '../src/damocles/title.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
