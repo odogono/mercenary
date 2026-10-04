@@ -22,8 +22,8 @@ test('restores partial ticks and first views at every flight phase and low-byte 
   boardOpeningTaxi(control);
   control.drainSound();
   const checkpoints = new Set([
-    0, 2, 16, 138, 139, 140, 255, 256, 257, 461, 462, 463, 511, 512, 767, 768,
-    882, 883, 884, 911, 926, 927, 928
+    0, 2, 16, 138, 139, 140, 200, 255, 256, 257, 461, 462, 463, 511, 512, 767,
+    768, 882, 883, 884, 911, 926, 927, 928
   ]);
   const seen = new Set<number>();
   const requests: number[] = [];

@@ -15,7 +15,8 @@ import {
 import { updateTourcraftOwners } from './tourcraftOwners.ts';
 import {
   initialTourcraftOwners,
-  initialTourcraftPhases
+  initialTourcraftPhases,
+  initialTourcraftResidents
 } from './tourcraftState.ts';
 import { tourcraftView } from './tourcraftView.ts';
 import { readDionOpening } from './world.ts';
@@ -293,11 +294,13 @@ export const readTourcraftResume = (
       'liveIntent',
       'owners',
       'phases',
+      'playerZone',
       'residents'
     ],
     'tourcraft'
   );
   bool(e['armed'], 'armed');
+  unsigned(e['playerZone'], 'playerZone', 8);
   const collision = keys(
     e['collision'],
     ['routine', 'nextPeriod'],
@@ -394,6 +397,7 @@ export const readTourcraftResume = (
     ) as number[];
     if (
       state.location !== opening.location ||
+      e['playerZone'] !== content.gameplay.initial['playerZone'] ||
       state.cell !== opening.cell ||
       state.region !== opening.region ||
       state.heading !== opening.heading ||
@@ -556,20 +560,79 @@ export const readTourcraftResume = (
   }
   prior.forEach(v => unsigned(v, 'priorEye'));
   const residents = list(e['residents'], 'residents');
-  const seedResidents = tourcraftFrameWorld(content, 3).residents.filter(
-    r => r.slot < 50 || r.slot > 63
-  );
+  const seedResidents = initialTourcraftResidents(content);
+  if (base.snapshot.location === 100) {
+    const taxi = base.snapshot.taxi;
+    const route = list(
+      record(content.programmes['ambientTaxi'], 'ambientTaxi')['route'],
+      'route'
+    );
+    if (
+      taxi.routeIndex >= route.length ||
+      taxi.passenger ||
+      taxi.call ||
+      taxi.start ||
+      taxi.destination !== 0
+    ) {
+      throw new Error('Excluded TOLOSA passenger service');
+    }
+  }
   if (residents.length !== seedResidents.length) {
     throw new Error('Incomplete residents');
   }
   residents.forEach((r, i) => {
     shape(r, seedResidents[i], 'resident');
     const a = record(r, 'resident');
+    for (const name of [
+      'association',
+      'body',
+      'bodyOffset',
+      'cell',
+      'group',
+      'slot',
+      'state',
+      'yaw',
+      'zone'
+    ]) {
+      unsigned(a[name], `resident.${name}`, 255);
+    }
     if (
       a['slot'] !== seedResidents[i]!.slot ||
       a['model'] !== seedResidents[i]!.model
     ) {
       throw new Error('Wrong resident binding');
+    }
+    const seedResident = seedResidents[i]!;
+    for (const name of ['association', 'body', 'group', 'state'] as const) {
+      if (a[name] !== seedResident[name]) {
+        throw new Error(`Wrong resident.${name} binding`);
+      }
+    }
+    if (a['slot'] === 13) {
+      if (a['bodyOffset'] !== (base.snapshot.location & 255)) {
+        throw new Error('Wrong TOURCRAFT Body');
+      }
+    } else if (a['slot'] === 16) {
+      const taxi = base.snapshot.taxi;
+      if (
+        a['bodyOffset'] !== (base.snapshot.location === 100 ? 100 : 60) ||
+        a['cell'] !== taxi.cell ||
+        a['yaw'] !== ((taxi.heading >>> 2) & 255) ||
+        JSON.stringify(a['position']) !== JSON.stringify(taxi.position)
+      ) {
+        throw new Error('Wrong ambient taxi residence');
+      }
+    } else {
+      // No admitted non-pool writer changes these residences. Their object
+      // bits, including KEY A, are separately owned by the semantic VM.
+      for (const name of Object.keys(seedResident)) {
+        if (
+          JSON.stringify(a[name]) !==
+          JSON.stringify(seedResident[name as keyof typeof seedResident])
+        ) {
+          throw new Error('Changed static residence');
+        }
+      }
     }
   });
   if (e['flight'] !== null) {
@@ -891,6 +954,40 @@ export const readTourcraftResume = (
       matches('view', name, value);
     }
     const flight = candidateState.tourcraft!.flight;
+    const resident = candidateState.tourcraft!.residents.find(
+      r => r.slot === 13
+    )!;
+    if (flight) {
+      const terminal = flightPath(content).get(927)!;
+      const craft = flight.mode === 'foot' ? terminal.craft : flight.craft;
+      const position = [
+        craft.x,
+        (craft.y + (flight.mode === 'foot' ? -63 : 56)) >>> 0,
+        craft.z
+      ];
+      const yaw =
+        flight.mode === 'foot'
+          ? (terminal.craft.yaw >>> 2) & 255
+          : flight.body === 100
+            ? (Number(
+                record(
+                  content.programmes['arrivalResidence'],
+                  'arrivalResidence'
+                )['heading']
+              ) >>>
+                2) &
+              255
+            : seedResidents.find(r => r.slot === 13)!.yaw;
+      if (
+        resident.position.some((v, i) => v !== position[i]) ||
+        resident.yaw !== yaw ||
+        (flight.mode !== 'foot' &&
+          (resident.cell !== candidateState.cell ||
+            resident.zone !== candidateState.tourcraft!.playerZone))
+      ) {
+        throw new Error('Contradictory TOURCRAFT residence');
+      }
+    }
     const copied =
       flight && flight.mode !== 'foot'
         ? tourcraftView(

@@ -45,6 +45,9 @@ test('ordinary cabin turns preserve physical playback and restore the copied fir
       checked = true;
       session.intent = IDLE;
       expect(f.cabinOffset).toBe(256);
+      expect(
+        session.snapshot.tourcraft!.residents.find(r => r.slot === 13)!.yaw
+      ).toBe(127);
       const view = session.snapshot.tourcraft!.owners['view']!;
       expect(view['roll']).not.toBe(f.craft.roll);
       expect(view['packedHeight']).toBe(craftFloat(-f.craft.y));
@@ -72,4 +75,7 @@ test('ordinary cabin turns preserve physical playback and restore the copied fir
     }
   });
   expect(checked).toBe(true);
+  expect(
+    session.snapshot.tourcraft!.residents.find(r => r.slot === 13)!.yaw
+  ).toBe(94);
 });

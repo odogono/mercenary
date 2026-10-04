@@ -1,4 +1,99 @@
 {
+  "ambientTaxi": {
+    "group": 23,
+    "metadata": 2621970,
+    "price": 0,
+    "rate": -1024,
+    "route": [
+      {
+        "control": 0,
+        "x": 1,
+        "z": 0
+      },
+      {
+        "control": 1,
+        "x": 2,
+        "z": 0
+      },
+      {
+        "control": 1,
+        "x": 3,
+        "z": 0
+      },
+      {
+        "control": 0,
+        "x": 4,
+        "z": 0
+      },
+      {
+        "control": 0,
+        "x": 4,
+        "z": 1
+      },
+      {
+        "control": 2,
+        "x": 3,
+        "z": 1
+      },
+      {
+        "control": 0,
+        "x": 2,
+        "z": 1
+      },
+      {
+        "control": 2,
+        "x": 2,
+        "z": 2
+      },
+      {
+        "control": 3,
+        "x": 2,
+        "z": 3
+      },
+      {
+        "control": 1,
+        "x": 2,
+        "z": 4
+      },
+      {
+        "control": 1,
+        "x": 1,
+        "z": 4
+      },
+      {
+        "control": 3,
+        "x": 1,
+        "z": 3
+      },
+      {
+        "control": 3,
+        "x": 1,
+        "z": 2
+      },
+      {
+        "control": 3,
+        "x": 1,
+        "z": 1
+      }
+    ],
+    "source": {
+      "range": [
+        "$42AC8",
+        "$42AF2"
+      ],
+      "sha256": "ebb757cb91680769ca2af1d0c42ff9a4cea8a33f442334487ecba8dcda9f5f82"
+    }
+  },
+  "arrivalResidence": {
+    "heading": 64890,
+    "source": {
+      "range": [
+        "$66E4E",
+        "$66E58"
+      ],
+      "sha256": "975395b8df892b6f7dc85e8d1720f5e3f6c3af76465d5d8bd7e38a6419f05b74"
+    }
+  },
   "collisionTone": {
     "channel": "B",
     "entry": "$4C8A0",

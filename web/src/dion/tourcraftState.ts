@@ -1,8 +1,9 @@
-import { ints, record } from './read.ts';
+import { ints, list, record } from './read.ts';
 import type { TourcraftContent } from './tourcraftContent.ts';
 import type { TourcraftEncounter } from './tourcraftEncounter.ts';
 import type { TourcraftEvents } from './tourcraftEvents.ts';
 import type { TourcraftFlightState } from './tourcraftFlight.ts';
+import { tourcraftFrameWorld } from './tourcraftFrame.ts';
 import type { DionResident } from './world.ts';
 
 export interface TourcraftState {
@@ -22,7 +23,10 @@ export interface TourcraftState {
   readonly liveIntent: import('../gameCore/index.ts').Intent;
   readonly owners: Readonly<Record<string, Readonly<Record<string, number>>>>;
   readonly phases: readonly number[];
-  readonly residents: readonly DionResident[];
+  readonly playerZone: number;
+  readonly residents: readonly (DionResident & {
+    readonly bodyOffset: number;
+  })[];
 }
 
 // Keep independently sampled owners. All other captured fields have a sole
@@ -201,3 +205,20 @@ export const advanceFaces = (
     faceSelection: selected
   };
 };
+
+export const initialTourcraftResidents = (
+  content: TourcraftContent
+): TourcraftState['residents'] =>
+  tourcraftFrameWorld(content, 3)
+    .residents.filter(r => r.slot < 50 || r.slot > 63)
+    .map(r => ({
+      ...r,
+      bodyOffset: Number(
+        record(
+          list(content.gameplay.initial['residents'], 'residents').find(
+            v => record(v, 'resident')['slot'] === r.slot
+          ),
+          'resident'
+        )['bodyOffset']
+      )
+    }));

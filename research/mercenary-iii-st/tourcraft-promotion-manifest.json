@@ -2205,6 +2205,36 @@
         ],
         "sha256": "595bae2a2c23de5338686b2797481873a9ba429824de68a62d7039e7c2dcdbaf"
       }
+    },
+    {
+      "disposition": "recovered",
+      "evidence": "docs/research/mercenary-iii-tourcraft-implementation.md",
+      "id": "tolosa-ambient-taxi",
+      "source": "gameplay-opening",
+      "sourceRange": {
+        "range": [
+          "$42AC8",
+          "$42AF2"
+        ],
+        "sha256": "ebb757cb91680769ca2af1d0c42ff9a4cea8a33f442334487ecba8dcda9f5f82"
+      },
+      "usage": "ordinary resident16 circulation after TOLOSA Body setup; no onward passenger service admitted"
+    },
+    {
+      "disposition": "recovered",
+      "evidence": [
+        "docs/research/mercenary-iii-tourcraft-implementation.md"
+      ],
+      "id": "tolosa-residence-placement",
+      "source": "gameplay-opening",
+      "sourceRange": {
+        "range": [
+          "$66E4E",
+          "$66E58"
+        ],
+        "sha256": "975395b8df892b6f7dc85e8d1720f5e3f6c3af76465d5d8bd7e38a6419f05b74"
+      },
+      "usage": "TOLOSA service context placement heading only; return playback excluded"
     }
   ],
   "placements": [
