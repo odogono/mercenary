@@ -73,6 +73,8 @@ The [current-function matrix](mercenary-iii-object-interaction-r1-audit.md#curre
 
 The earlier read-only verifier still passes 55 families/265 assertions. A fresh numeric replay loads this checkout’s shared arithmetic with Dion tables and reproduces **22/22 selected keys**: 13 older variable-cadence observations plus nine new synthetic accepted-cadence captures, including the diagonal rounding controls. The ignored `followup_distance.ts` pins each RAM input and records the computed/stored key; it does not select candidates or execute actions. The new controls do not silently upgrade those older variable-cadence captures into accepted-cadence routes.
 
+The subsequent [placement-owner follow-up](mercenary-iii-object-interaction-r1-placement.md) executes synthetic support re-pick without another selection injection and retains placement zone through direct re-pick. Those observations qualify the support/metadata gaps below; ordinary support access and full effect transactions remain open. The [original Save/Load operand report](mercenary-iii-object-interaction-r1-operand.md) adds a finite restored reader witness and identifies the imported executable-prefix boundary; it does not establish a general writer exclusion.
+
 R1 still needs the exact first-delivery set and reviewed exclusions from [R3/#772](https://github.com/odogono/mercenary/issues/772), and coordination with [R2/#771](https://github.com/odogono/mercenary/issues/771). Specifically unresolved:
 
 - Natural empty-list membership, foreground occlusion, partial clipping and additional needed priority/order/rounding cases.
