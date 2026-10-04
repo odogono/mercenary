@@ -47,6 +47,7 @@ export interface DionPanelView {
   readonly pitch: number;
   /// `$70B4`/`$70B8`, each shown as `(v × $FA00) >> 16`.
   readonly position: readonly [number, number];
+  readonly speed?: { readonly reverse: boolean; readonly value: number };
 }
 
 export interface DionPanelImage {
@@ -200,6 +201,16 @@ export const drawDionPanel = (
     ];
   }
   writeField(planes, doc, fields.height, heightDigits);
+
+  if (view.speed) {
+    let fraction = view.speed.value >>> 0;
+    const readout = [view.speed.reverse ? '12' : '11'];
+    for (let digit = 0; digit < 9; digit++) {
+      readout.push(String(fraction >>> 28));
+      fraction = ((fraction & 0x0f_ff_ff_ff) * 10) >>> 0;
+    }
+    writeField(planes, doc, fields.coordinate, readout);
+  }
 
   // `$4E778`: eleven of the twelve BCD cash digits.
   writeField(planes, doc, fields.cash, view.cash.slice(1).split(''));
