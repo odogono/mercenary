@@ -40,7 +40,8 @@ const nullableInt = (value: unknown, path: string) =>
 
 export const readDionResume = (
   value: unknown,
-  content?: DionContent
+  content?: DionContent,
+  driverIndexMax = 4
 ): DionResumeRecord => {
   const raw = record(value, 'snapshot');
   const s = record(raw['snapshot'], 'snapshot.state');
@@ -123,7 +124,7 @@ export const readDionResume = (
       ] as const;
     }),
     driver: {
-      index: int(driver['index'], 'driver.index', 0, 4),
+      index: int(driver['index'], 'driver.index', 0, driverIndexMax),
       profile: bool(driver['profile'], 'driver.profile'),
       remaining: int(driver['remaining'], 'driver.remaining', 0, 255),
       selector: int(driver['selector'], 'driver.selector', 0, 65_535)
