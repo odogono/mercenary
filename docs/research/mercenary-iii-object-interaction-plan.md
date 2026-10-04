@@ -1,0 +1,90 @@
+# Mercenary III: pickup, drop and Carried Stack programme
+
+Research and proposed implementation plan for [#756](https://github.com/odogono/mercenary/issues/756), 2026-10-04. The user selected **research and plan first**. This document implements no gameplay, expands no playable admission and commissions no GitHub child tickets. The companion [ROM evidence report](mercenary-iii-object-interaction-evidence.md) distinguishes recovered source facts from observed play and lists its remaining probes.
+
+## Proposed scope
+
+Treat #756 as a separate programme following the merged [I4 implementation](mercenary-iii-tourcraft-implementation.md), retaining the METIS opening, both taxi destinations and the outward TOURCRAFT journey. D2's [promotion contract](mercenary-iii-tourcraft-promotion.md#drawing-and-admitted-state-are-separate) explicitly excludes Pick Up admissions even where geometry is drawable. Enabling them needs a reviewed scope addition; it is not an unfinished D2 requirement.
+
+The proposed first delivery adds evidenced Take, Drop and stack rotation to the already playable locations, through the existing keys and equivalent pointer controls. It preserves silent refusals, source ordering, messages, sounds, residence changes and object-conditioned effects. It adds no remote start, new interior access, self-piloting or onward service merely to obtain a test object. If pickup makes an excluded route or programme inseparable from current play, return to scope review with that evidence.
+
+Keep Dion Session State and content local to its Title. Assess reuse against Dion evidence at the level of numeric selection, handling and placement helpers. [ADR 0074](../adr/0074-share-evidenced-craft-passes-with-title-owned-orchestration.md) establishes the existing craft boundary; a consequential additional shared boundary needs its own decision. Damocles behavior is a comparison target, not authority for a Dion rule.
+
+## Current implementation findings
+
+These facts were checked against source at `97583f13`, the branch's starting revision; older R7/D2 status blocks are historical where the merged I4 report supersedes them.
+
+| Concern                    | Existing owner and required extension                                                                                                                                                                                                                                                                                                                                                                                            |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Keyboard                   | [`dion/controls.ts`](../../web/src/dion/controls.ts) consumes Take while dispatching only Board; Drop and rotation are inert under [ADR 0064](../adr/0064-present-damocles-control-profile-in-mercenary-iii.md). Extend these adapters after semantic actions exist.                                                                                                                                                             |
+| Action delivery            | [`dion/session.ts`](../../web/src/dion/session.ts) has six actions and a single pending mailbox. [`tourcraftSession.ts`](../../web/src/dion/tourcraftSession.ts) owns production dispatch, candidate sampling, service/flight and frame ordering. Preserve the evidenced action boundary and pending input across Save/Resume.                                                                                                   |
+| Initial stack              | [`gameplay.json`](../../payload/dion/tourcraft/presentation/gameplay.json) supplies `carriedStack: [104, 103, 135]`; [`tourcraftContent.ts`](../../web/src/dion/tourcraftContent.ts) validates it. Production [`TourcraftState`](../../web/src/dion/tourcraftState.ts) has no mutable Carried Stack owner. Held identities also need admitted metadata; these three slots are not among the 17 drawable resident records.        |
+| Object bits and prison key | [`script.ts`](../../web/src/dion/script.ts) implements the opening object-bit write as semantic `keyA`; [`session.ts`](../../web/src/dion/session.ts) reads it to open the prison door. The ROM report establishes that scripted held bits and stack membership are distinct owners. Do not rebuild the stack by scanning held bits or add KEY A to it without an original writer.                                               |
+| Mutable residence          | Production state retains 17 non-pool residents, while [`tourcraftRestore.ts`](../../web/src/dion/tourcraftRestore.ts) fixes ordinary residences and state to their seed. Replace those exclusions with specific admitted mutations and validation; retain taxi, TOURCRAFT and moving-pool aliases. The renderer's `body` means Floor; `bodyOffset` is the actual Body.                                                           |
+| Panel and card             | [`session.ts`](../../web/src/dion/session.ts) supplies a fixed inventory string and opens TAXICARD without consulting a stack head. Stack selection requires a live head label and a review of Head Command/card ownership, existing reveal timing and description/message state.                                                                                                                                                |
+| Pointer                    | [`dion/boot.ts`](../../web/src/dion/boot.ts) has no object-take handler. [`DION_PROJECTION`](../../web/src/dion/projection.ts) uses focal 256 and a 320×136 view centred at `[160, 68]`. Use Dion's planned/drawn geometry, view phase, pitch/roll and clipping; [`canvasPointer`](../../web/src/shell/pointer.ts) can supply CSS-to-canvas conversion. Generic `Camera.project` is not evidence that hit geometry matches Dion. |
+| Persistence                | Production [`tourcraftSave.ts`](../../web/src/dion/tourcraftSave.ts) is schema 2. New future-affecting state needs a versioned, direct-restoration contract and transactional admission. [ADR 0073](../adr/0073-drop-pre-release-prototype-save-migration.md) requires refusal of incompatible prototypes, preserving records until successful Load or explicit New Game.                                                        |
+
+The companion audit makes three distinctions material to this plan:
+
+- KEY A's held bit changes during the opening while its residence and the three-item stack remain unchanged in retained original captures. The snapshot contract must preserve this exception to the first-top seed's held-bit/stack agreement.
+- Dion slots 157/158 are POWERGLOVE/ANTIGRAV. Their bypass applies to the bit-5 handling refusal; TOURCRAFT and taxis retain a separate bit-4 refusal. Shared handling must not import Damocles's object identities or craft policy.
+- The source pickup-response table names CHILD 216, PCB SEATED 218 and PULVIN ORE 127. Those entries have no promoted gameplay model binding today. The first delivery still needs all ordinary description/head/message readers, but it need not invent a trigger for KEY - EAGLE 9SE or MARGARETS LETTER from Damocles's table.
+- New cold-boot debugger-input controls walk outside the prison, Drop and re-pick TAXICARD and BUS PASS, and rotate in both directions. These give a concrete route for direct placement and staging. They do not yet confirm accepted eleven-tick timing, initially resident acquisition, physical keyboard delivery, panel/audio or future card/service behavior.
+
+I4's [owner ledger](mercenary-iii-tourcraft-implementation.md) omits inventory paragraph continuation and constrains object-bit writers to KEY A. It also justifies omitted random-sound priority through object 149 being unacquirable. Audit each bounded omission against the proposed acquired-object set; do not carry its proof into a widened input model unchanged.
+
+## Candidate witnesses and reachability gate
+
+The current coherent opening contains the following potential witnesses. This is a content inventory, **not proof of natural reachability or takeability**. State bytes require the ROM handling interpretation before classifying refusals.
+
+|            Slot | Resident                             | Initial context                                | Research purpose                                                                                                          |
+| --------------: | ------------------------------------ | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+|             181 | KEY - EAGLE 9SE                      | METIS, group 3, Floor 0, cell `02-06`, surface | Candidate ordinary acquire/drop/re-pick witness; inspect any response and craft-key reader.                               |
+|             220 | MARGARETS LETTER                     | METIS, group 3, Floor 0, cell `02-06`, surface | Candidate mailbox-area pickup and response/paragraph witness.                                                             |
+|             219 | MAILBOX                              | Same cell, surface                             | Potential refusal/support/occlusion comparison; neither support nor refusal is assumed.                                   |
+|       165 / 174 | BLACK / BLUE BEACON                  | METIS `02-00` / TOLOSA `01-04`, surface        | Check handling and script closure before permitting pickup of drawable scenery.                                           |
+|             124 | COBWEB                               | METIS prison cell, Floor 0, association 1      | Candidate interior handling witness if the original draws/selects it in the reachable region.                             |
+| 104 / 103 / 135 | TAXICARD / BUS PASS / ACME UNIVERSAL | Initial Carried Stack                          | Rotation, head naming, Drop admission/refusal and head/card dispatch. Their handling/content must be explicitly promoted. |
+|              38 | DOOR KEY A                           | Scripted held-bit owner                        | Preserve the prison door's live condition without inventing stack insertion or a droppable head.                          |
+
+Use ordinary input from New Game, preserving the complete prefix, action timings and frame/candidate observations. A synthetic pose or handler invocation can isolate a rule but cannot certify that the player reaches it. Upper-Floor MAN, EXECUTIVES CHAIR/DESK and TRANSPORTER are present in selected content without evidence of currently admitted access; they are not default delivery witnesses.
+
+## Proposed task sequence
+
+These are briefs for future child tickets. Dependencies are explicit so implementation starts only after its rules and scope have been established.
+
+1. **R1 — Close take, drop and stack mechanism evidence.** Extend the companion static audit with pinned original execution probes: selection ties and range boundary; full-stack equality and overflow; fixed/heavy/refusal ordering; stack rotation/staging; ground/contact and support placement; re-pick after Drop. Record register/state/message/sound changes and source/capture hashes. Compare exact Dion routines with the current Damocles functions, then publish a reuse matrix. Separate naturally reached, synthetic and static-only cases. Acceptance: every rule needed by the first delivery has an executed witness or a specifically reviewed bounded exclusion.
+2. **R2 — Close pickup effects, held-bit exceptions and Head Commands.** Decode every pickup-response entry and its reachable calls/messages/object writes. Exercise idle, busy, queued, unavailable and competing timed/default campaign conditions at the accepted eleven-tick cadence. Establish stack-head versus open-card ownership, label/reveal/description continuation and Drop behavior for the three initial items. Confirm KEY A's script-only held state. Acceptance: the acquired-object set has a finite admitted effect closure, coherent owners and first-frame/ordered-future witnesses.
+3. **R3 — Prove routes and review scope/content.** Freeze ordinary New Game routes to actual witnesses in METIS and, where relevant, after TOURCRAFT arrival. Enumerate all naturally selectable residents, required handling/label/model/message/script/support records and resulting routes/effects. Revisit I4's omissions for that set. Acceptance: a reviewed separate #756 scope and exact promotion selection, with no inferred admission from Catalogue coverage. Depends on R1/R2; route work may begin alongside them.
+4. **I1 — Promote interaction content.** Extend the title-local exporter/loader and content contract with the reviewed handling, identity, response and presentation dependencies, including initial carried items and coherent object bits. Preserve immutable pins and the single mutable initial source. Acceptance: deterministic regeneration, complete reference admission, malformed/mixed-source refusal, selected-content identity changes and independence from unselected Catalogue records. Depends on R3.
+5. **I2 — Implement semantic object state and actions.** Add the Carried Stack and evidenced object-bit/residence/handling owners to the production session; implement Take, Drop and both rotations at the original action/frame boundary. Route object scripts, door readers, rendering and panel head/card/description through those owners. Reuse only the helpers R1's comparison supports. Acceptance: ROM-derived transitions/refusals and action ordering match, held-bit exceptions remain legal, ordinary take/drop/re-pick works and taxi/TOURCRAFT/door semantics remain coherent. Depends on I1/R1/R2.
+6. **I3 — Extend Save and Session Resume.** Version the expanded snapshot and admit only reviewed mutable residence/model/bit combinations; serialize stack order, relevant display/script owners and pending action/target. Restore isolated state and reconstruct presentation before publication without executing acquisition scripts again. Acceptance: first frame/panel and ordered later state/events match uninterrupted play before/after Take, rotation, Drop, re-pick, partial ticks and taxi/flight transitions; incompatible/malformed records and write failures preserve previous records/session. Depends on I2; complete before exposing actions in production.
+7. **I4 — Connect keys and pointer Accommodation.** Enable existing Bindings and add stack controls/object targeting through the same session actions. Base targets on Dion's rendered projection, with a reviewed rule for overlap, occlusion and current semantic candidate; a clicked label or wireframe must not bypass Take gates. Apply the shared route/console/menu/ownership gates and checkpoint behavior. Acceptance: key and pointer routes produce equivalent semantic outcomes; canvas scaling, touch slop, pitch/roll, clipped/hidden objects and stale targets are covered. Depends on I2/I3.
+8. **V1 — Verify the whole programme.** Replay frozen ordinary routes in production, with key/pointer Take, both rotations, Drop/re-pick, head/card behavior, slot Save/Load and reload Resume. Retain both taxi destinations, all 33 expanded taxi continuation controls, TOURCRAFT flight/arrival, campaign boundary checks, KEY A/door and affected Damocles/shared regressions. Acceptance: required checks pass and remaining original raster/audio/synthetic-probe limits are stated. Depends on I4.
+
+## Verification commands and current results
+
+From `web/`, the initial read-only baseline check passed: **22 tests, 4,715 assertions** across controls, opening session, TOURCRAFT session and identity.
+
+```sh
+bun run test:quiet test/dion-controls.test.ts test/dion-session.test.ts test/dion-tourcraft-session.test.ts test/dion-identity.test.ts
+```
+
+For implementation, write meaningful ROM-derived regression tests before changing behavior. Run focused interaction/Save/frame tests while developing; before a PR, run the repository-required checks and production browser coverage:
+
+```sh
+cd web
+bun run check
+PORT=<free port> bun run test:e2e
+```
+
+Original execution recipes, pins and current evidence limits belong in the companion report, including the successful ordinary-route debugger-input Drop/re-pick controls. No initially resident acquisition route, browser interaction implementation, restored pickup future or full-suite result is claimed by this plan.
+
+## Decisions still needed after the research gates
+
+- Confirm the exact first delivery's reachable object/effect set and whether any resulting access needs a scope addition beyond interaction itself.
+- Review any consequential shared helper boundary after instruction/rule comparison.
+- Choose the pointer targeting policy that preserves the semantic selection rule while making the visible target predictable.
+
+The next implementation decision is made against R1–R3's evidence, rather than choosing guessed capacity, special-item or script behavior now.
