@@ -29,6 +29,8 @@ Each issue's runs live in the main checkout's `restricted/mercenary-iii-<issue>/
 | `m3lab/snapshot_owners.py` | R8b raw unsigned owner observer, coherent opening seeds, actor slots50–63/trajectories, all32 Body phases, VM/input/view/animation and sound-driver fields; [#737 contract](../../docs/research/mercenary-iii-tourcraft-snapshot-fields.md), `tourcraft-snapshot-owner-seeds.json`, `tourcraft-snapshot-sound-seed.json` and `tourcraft-snapshot-restore-evidence.json` |
 | `tests/` | unit tests: `PYTHONPATH=.:tests python3 -m unittest discover -s tests` |
 | `object-interaction-r1-followup.json` | R1 synthetic selection/clipping/native-key, refusal and BRIEFCASE boundary assertions with selected capture hashes; [follow-up and reproduction](../../docs/research/mercenary-iii-object-interaction-r1-followup.md), [prior acceptance audit](../../docs/research/mercenary-iii-object-interaction-r1-audit.md); R1 remains open |
+| `object-interaction-r1-placement.json` | R1 synthetic support/direct Drop with native selection/re-pick, refusal placement-owner preservation and retained zone; [report and reproduction](../../docs/research/mercenary-iii-object-interaction-r1-placement.md); R1 remains open |
+| `object-interaction-r1-operand.json` | R1 original disk Save/Load, imported prefix and reached Take operand reader; [report and reproduction](../../docs/research/mercenary-iii-object-interaction-r1-operand.md); general writer policy remains open |
 | `*.json` here | checked-in evidence ledgers; [the TOURCRAFT milestone index](../../docs/research/mercenary-iii-tourcraft-milestone-review.md#where-each-tickets-work-lives) says which ticket owns each |
 
 ## Quick start
