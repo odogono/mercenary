@@ -1,6 +1,6 @@
 # Mercenary III: pickup, drop and Carried Stack programme
 
-Research and proposed implementation plan for [#756](https://github.com/odogono/mercenary/issues/756), 2026-10-04. The user selected **research and plan first**. This document implements no gameplay, expands no playable admission and commissions no GitHub child tickets. The companion [ROM evidence report](mercenary-iii-object-interaction-evidence.md) distinguishes recovered source facts from observed play and lists its remaining probes.
+Research and proposed implementation plan for [#756](https://github.com/odogono/mercenary/issues/756), 2026-10-04. The user selected **research and plan first**. Initial evidence and this plan merged in [#769](https://github.com/odogono/mercenary/pull/769). The user subsequently commissioned R1–R3 and starting R1: [R1/#770](https://github.com/odogono/mercenary/issues/770), [R2/#771](https://github.com/odogono/mercenary/issues/771) and [R3/#772](https://github.com/odogono/mercenary/issues/772). R3's final review depends on R1/R2. This document implements no gameplay and expands no playable admission. The companion [ROM evidence report](mercenary-iii-object-interaction-evidence.md) distinguishes recovered source facts from observed play and lists its remaining probes.
 
 ## Proposed scope
 
@@ -25,7 +25,7 @@ These facts were checked against source at `97583f13`, the branch's starting rev
 | Pointer                    | [`dion/boot.ts`](../../web/src/dion/boot.ts) has no object-take handler. [`DION_PROJECTION`](../../web/src/dion/projection.ts) uses focal 256 and a 320×136 view centred at `[160, 68]`. Use Dion's planned/drawn geometry, view phase, pitch/roll and clipping; [`canvasPointer`](../../web/src/shell/pointer.ts) can supply CSS-to-canvas conversion. Generic `Camera.project` is not evidence that hit geometry matches Dion. |
 | Persistence                | Production [`tourcraftSave.ts`](../../web/src/dion/tourcraftSave.ts) is schema 2. New future-affecting state needs a versioned, direct-restoration contract and transactional admission. [ADR 0073](../adr/0073-drop-pre-release-prototype-save-migration.md) requires refusal of incompatible prototypes, preserving records until successful Load or explicit New Game.                                                        |
 
-The companion audit makes three distinctions material to this plan:
+The companion audit makes four distinctions material to this plan:
 
 - KEY A's held bit changes during the opening while its residence and the three-item stack remain unchanged in retained original captures. The snapshot contract must preserve this exception to the first-top seed's held-bit/stack agreement.
 - Dion slots 157/158 are POWERGLOVE/ANTIGRAV. Their bypass applies to the bit-5 handling refusal; TOURCRAFT and taxis retain a separate bit-4 refusal. Shared handling must not import Damocles's object identities or craft policy.
@@ -52,7 +52,7 @@ Use ordinary input from New Game, preserving the complete prefix, action timings
 
 ## Proposed task sequence
 
-These are briefs for future child tickets. Dependencies are explicit so implementation starts only after its rules and scope have been established.
+R1–R3 are commissioned child tickets; I1–V1 remain briefs for future tickets after the research/scope gates. Dependencies are explicit so implementation starts only after its rules and scope have been established.
 
 1. **R1 — Close take, drop and stack mechanism evidence.** Extend the companion static audit with pinned original execution probes: selection ties and range boundary; full-stack equality and overflow; fixed/heavy/refusal ordering; stack rotation/staging; ground/contact and support placement; re-pick after Drop. Record register/state/message/sound changes and source/capture hashes. Compare exact Dion routines with the current Damocles functions, then publish a reuse matrix. Separate naturally reached, synthetic and static-only cases. Acceptance: every rule needed by the first delivery has an executed witness or a specifically reviewed bounded exclusion.
 2. **R2 — Close pickup effects, held-bit exceptions and Head Commands.** Decode every pickup-response entry and its reachable calls/messages/object writes. Exercise idle, busy, queued, unavailable and competing timed/default campaign conditions at the accepted eleven-tick cadence. Establish stack-head versus open-card ownership, label/reveal/description continuation and Drop behavior for the three initial items. Confirm KEY A's script-only held state. Acceptance: the acquired-object set has a finite admitted effect closure, coherent owners and first-frame/ordered-future witnesses.
@@ -79,7 +79,7 @@ bun run check
 PORT=<free port> bun run test:e2e
 ```
 
-Original execution recipes, pins and current evidence limits belong in the companion report, including the successful ordinary-route debugger-input Drop/re-pick controls. No initially resident acquisition route, browser interaction implementation, restored pickup future or full-suite result is claimed by this plan.
+The initial companion report retains its variable-cadence debugger-input Drop/re-pick controls. The commissioned [R1 execution and reuse handoff](mercenary-iii-object-interaction-r1.md) adds the accepted eleven-tick New Game route, initially resident letter acquisition, synthetic mechanism controls and a current Damocles reuse matrix. It records the remaining R1 gates explicitly; R2/R3 and implementation remain outstanding. Neither report establishes a browser interaction implementation or a restored pickup future.
 
 ## Decisions still needed after the research gates
 
