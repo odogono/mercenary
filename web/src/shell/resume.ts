@@ -111,13 +111,6 @@ export const createSessionResumePersistence = (
     disabledReason = reason;
     options.onFailure?.(reason);
   };
-  const removeStale = (): void => {
-    try {
-      options.storage?.removeItem(storageKey);
-    } catch {
-      // The original write failure is the actionable reason and recovery is already disabled.
-    }
-  };
   const encoded = (): string => {
     if (options.encode !== undefined) {
       return options.encode();
@@ -155,7 +148,6 @@ export const createSessionResumePersistence = (
         return { kind: 'written' };
       } catch (error) {
         const reason = reasonOf(error);
-        removeStale();
         disable(reason);
         return { kind: 'failed', reason };
       }
