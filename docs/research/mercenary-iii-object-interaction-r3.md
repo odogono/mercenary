@@ -62,6 +62,8 @@ The two keys share a label/model but have distinct residences and semantics. The
 
 The first natural BLACK BEACON approach stops short at eye `[165772633,63,69894942]`, while its coherent source position is `[165771603,0,69898068]`. The retained continuation walks around that obstruction and acquires165. This makes the earlier failure a route-control result, not an exclusion or permission to omit its mutable beacon records.
 
+The subsequent [R2 owner follow-up](mercenary-iii-object-interaction-r2-owners.md) executes BLACK BEACON Drop/re-pick at that reached spaceport pose, plus Head Commands on all four newer acquired identities. It observes placed BLACK's two lamp outcomes and independently retained TAXICARD ownership, with four full-RAM restored-future matches. BLUE's lamp reads locator40 rather than held174; its acquisition and locator branch remain unexecuted. This closes that one BLACK placement/presentation control, not every newly admitted world/script reader or the final promotion review.
+
 ## Exact proposed promotion selection and reference closure
 
 The [numeric inventory](../../research/mercenary-iii-st/object-interaction-r3-inventory.json) is a research selection, not an I1 export manifest or a complete admission certificate. It preserves 26 numeric records: the existing 17 residents, three initial carried items and six predicate-only identities. Seventeen object-model identities cover the drawable subset of that record list: fifteen already in D2 plus **three proposed additions**. The full existing exterior/sky/presentation/service dependency set stays selected through D2's own manifest; the ledger does not reclassify it as newly reachable inventory.

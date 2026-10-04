@@ -1,0 +1,5409 @@
+{
+  "issue": 771,
+  "evidenceClass": "synthetic-original-program",
+  "sourceSha256": "71b957b3b7124959b01bd40b896c921d37902c18cfca042bef1906b155ef0170",
+  "staticLedgerSha256": "ed5aa5ebfab747659c4c31ae33643698e2b67fde92637a29cd93ca8340e5ff39",
+  "helperSha256": {
+    "observe.py": "0ad6f1bd126aae4a35b1143b66dc943c2c70af6bd4a2fbfb66543de64e80fb40",
+    "controls.py": "5ddb28f3dc65d6fd0124520facb95a6a23d32b7bd32f2399a9b23aafdb1da405",
+    "read_results.py": "0ec9b54199e1031f5d61e02eea5f266f3abf8b4e0905f6ff66711017c04ee712"
+  },
+  "families": 18,
+  "tops": 4886,
+  "elevenTickGaps": 4868,
+  "graphs": {
+    "1c": {
+      "object": 216,
+      "sites": 28,
+      "availability": 160,
+      "noObjectBitWriter": true,
+      "ranges": [
+        {
+          "range": [
+            "$75467",
+            "$754CE"
+          ],
+          "sha256": "baa2956d90cca7523a63891123d565a395cf585f1f3ba0db3f4bed33d28d5ad2"
+        },
+        {
+          "range": [
+            "$766BF",
+            "$766D2"
+          ],
+          "sha256": "9162583c44236ee8afb512164dc413ec3ad5895aa1ccc08483e69fdabad96acf"
+        },
+        {
+          "range": [
+            "$76702",
+            "$76709"
+          ],
+          "sha256": "433ce160a4f0cd7293b3dd1292117184c566f06149777f965ca6b59eb7d89e81"
+        }
+      ]
+    },
+    "73": {
+      "object": 218,
+      "sites": 28,
+      "availability": 160,
+      "noObjectBitWriter": true,
+      "ranges": [
+        {
+          "range": [
+            "$701DD",
+            "$701E0"
+          ],
+          "sha256": "58136dac559c7748f0a902c65b68cc36cbe4834fb7e08ece70a53bbf0c346837"
+        },
+        {
+          "range": [
+            "$7468B",
+            "$74727"
+          ],
+          "sha256": "493a9f09011c8c7a4b25038f970201a00dbb3a31da59b1b1af3a2434d6dd4598"
+        },
+        {
+          "range": [
+            "$766BF",
+            "$766D2"
+          ],
+          "sha256": "9162583c44236ee8afb512164dc413ec3ad5895aa1ccc08483e69fdabad96acf"
+        }
+      ]
+    },
+    "18": {
+      "object": 127,
+      "sites": 68,
+      "availability": 160,
+      "noObjectBitWriter": true,
+      "ranges": [
+        {
+          "range": [
+            "$75C53",
+            "$75D25"
+          ],
+          "sha256": "68750ba6f6490369583d8d6ce61a7edd7a856d8f03ecfc71045d62e4e90ac776"
+        },
+        {
+          "range": [
+            "$75EE8",
+            "$75FA1"
+          ],
+          "sha256": "34730a9a20cf08cec857df25049b3f76139b60cc0e1d8c88e969e1b3a9d98d00"
+        },
+        {
+          "range": [
+            "$76243",
+            "$762C2"
+          ],
+          "sha256": "da35a53f0682bd603e4eb383dcbeb5ad8302bb6b4b81c02746a542e5ad9d6703"
+        },
+        {
+          "range": [
+            "$766BF",
+            "$766D2"
+          ],
+          "sha256": "9162583c44236ee8afb512164dc413ec3ad5895aa1ccc08483e69fdabad96acf"
+        },
+        {
+          "range": [
+            "$766E6",
+            "$766F4"
+          ],
+          "sha256": "dc5094e0cb95cfecf87cdca14de613951265febc0640fd0f0a2d5e0ddc4623a8"
+        },
+        {
+          "range": [
+            "$76710",
+            "$76721"
+          ],
+          "sha256": "bdc6d5239a07dc27fa650210576afc72e3a68f9fa1d67ad65f7c90b016f28a63"
+        }
+      ]
+    }
+  },
+  "runs": {
+    "child-idle": {
+      "manifestSha256": "b9e8895c642bee80a628896871a8dd48fd29ec8b6750ca39d54638841ec24c50",
+      "sourceRamSha256": "332934dbcd0f667d66d8959d3496859e9171757dc6228e4bf5b23b44bc6d64a5",
+      "sourceSavSha256": "97e1360769a96ef15aa3fbc4ee8774252acc04141569b3a9c45ecade5a4d5d76",
+      "waitSha256": "9f0f02ea22a98b4fe4556da86129ad571daa1805ae73e98cdf397b9e55d670eb",
+      "logSha256": "e5df36719e2aab4b1c2e96d4ce3aacc03db61790dc7c4fa019001d115481679c",
+      "tops": 651,
+      "gaps": 650,
+      "captures": {
+        "f1": {
+          "sha256": "be47f6415fea3c78bc1e3ea4defbe415334fd81b9b7676bd8719154b85cd885b",
+          "frame": 142,
+          "ticks": 1576,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 0,
+          "timerBits": 63960,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f2": {
+          "sha256": "6c37adfae0d6a200d90b385d0af9fc429dad09ced7c95118ad68689e5002590c",
+          "frame": 143,
+          "ticks": 1587,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 485055,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "flags": 41024,
+          "queue": 0,
+          "timerBits": 63949,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f70": {
+          "sha256": "ca29262e30f9ccdb5eff8043b5a007f153b34b586cc51045a802796b0b7bfcbf",
+          "frame": 211,
+          "ticks": 2335,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 0,
+          "timerBits": 63201,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f200": {
+          "sha256": "616a582009ec4a960a6052b2f467b15919a56cafa9ab1c951f5d8e2087dcf842",
+          "frame": 341,
+          "ticks": 3765,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 0,
+          "timerBits": 61771,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f400": {
+          "sha256": "7f5d831520c32362d2e4f6bc08e4b6c4a15cc895d0697538da902e7e21ce827d",
+          "frame": 541,
+          "ticks": 5965,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 0,
+          "timerBits": 59571,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f650": {
+          "sha256": "97ae3354010d3ad790cda22bd2c22ba9af270fd091b8baaddd56418b1f4e11a7",
+          "frame": 791,
+          "ticks": 8715,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 0,
+          "timerBits": 56821,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        }
+      },
+      "requests": [
+        {
+          "frame": 145,
+          "site": 485062,
+          "kind": "id",
+          "messageId": 50
+        }
+      ],
+      "launches": [
+        {
+          "label": "START",
+          "frame": 142,
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "queue": 0,
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          }
+        }
+      ],
+      "timerArms": []
+    },
+    "child-candidacy": {
+      "manifestSha256": "3fe80b438e8597e9bdf7635c21a3ad3599b7e6d62e3c7eed6ff823488920d117",
+      "sourceRamSha256": "332934dbcd0f667d66d8959d3496859e9171757dc6228e4bf5b23b44bc6d64a5",
+      "sourceSavSha256": "97e1360769a96ef15aa3fbc4ee8774252acc04141569b3a9c45ecade5a4d5d76",
+      "waitSha256": "9f0f02ea22a98b4fe4556da86129ad571daa1805ae73e98cdf397b9e55d670eb",
+      "logSha256": "f2c19e96b6b8d5cb728acf3c7dcf12762cde399563c73e408b538c5c3ae67aea",
+      "tops": 651,
+      "gaps": 650,
+      "captures": {
+        "f1": {
+          "sha256": "b54c991100da6b3763b84dfee157a1074082adab38504262667da153411a6f68",
+          "frame": 142,
+          "ticks": 1576,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 41984,
+          "queue": 0,
+          "timerBits": 63960,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f2": {
+          "sha256": "b6642bcc7ffaad9dc0ce2fa83c87c5c1e1b5be1761f06ccbad3044b320be4905",
+          "frame": 143,
+          "ticks": 1587,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 480363,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "flags": 42048,
+          "queue": 0,
+          "timerBits": 63949,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f70": {
+          "sha256": "bca196ff5848a184ce62047fcec83357536d80dc7aaa55d97d372ef49979f1f7",
+          "frame": 211,
+          "ticks": 2335,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 480383,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "flags": 33856,
+          "queue": 0,
+          "timerBits": 63201,
+          "target": 0,
+          "busy": 65535,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f200": {
+          "sha256": "bcd33a1a885b9eb1a6c4c2de1b4dc5f81199ce3f26b2d2a4e9da129595406f77",
+          "frame": 341,
+          "ticks": 3765,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 41984,
+          "queue": 0,
+          "timerBits": 510,
+          "target": 22362,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            49,
+            105
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f400": {
+          "sha256": "995e7287b2e7eeb5f0877712dcf3bd50ff89f8a2739136c02a0457cad3ce1fb0",
+          "frame": 541,
+          "ticks": 5965,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 41984,
+          "queue": 0,
+          "timerBits": 1768,
+          "target": 22405,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            22,
+            132
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f650": {
+          "sha256": "445c5c3e7a174b2420784b54b9affdd3dba62ff937ad3a9e8f55c313492a6b21",
+          "frame": 791,
+          "ticks": 8715,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 41984,
+          "queue": 0,
+          "timerBits": 64554,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            22,
+            132
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        }
+      },
+      "requests": [
+        {
+          "frame": 193,
+          "site": 480368,
+          "kind": "packed"
+        },
+        {
+          "frame": 212,
+          "site": 480383,
+          "kind": "packed"
+        },
+        {
+          "frame": 232,
+          "site": 480404,
+          "kind": "id",
+          "messageId": 7
+        },
+        {
+          "frame": 255,
+          "site": 485062,
+          "kind": "id",
+          "messageId": 50
+        },
+        {
+          "frame": 390,
+          "site": 480420,
+          "kind": "packed"
+        },
+        {
+          "frame": 409,
+          "site": 480435,
+          "kind": "packed"
+        },
+        {
+          "frame": 433,
+          "site": 485062,
+          "kind": "id",
+          "messageId": 50
+        },
+        {
+          "frame": 702,
+          "site": 480457,
+          "kind": "id",
+          "messageId": 7
+        },
+        {
+          "frame": 724,
+          "site": 485062,
+          "kind": "id",
+          "messageId": 50
+        }
+      ],
+      "launches": [
+        {
+          "label": "START",
+          "frame": 142,
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "queue": 0,
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          }
+        },
+        {
+          "label": "DIRECT",
+          "frame": 388,
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "queue": 0,
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          }
+        },
+        {
+          "label": "DIRECT",
+          "frame": 702,
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "queue": 0,
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          }
+        }
+      ],
+      "timerArms": [
+        {
+          "frame": 251,
+          "delay": 1500,
+          "target": 22362,
+          "nextFrameCountdown": 1489
+        },
+        {
+          "frame": 429,
+          "delay": 3000,
+          "target": 22405,
+          "nextFrameCountdown": 2989
+        }
+      ]
+    },
+    "child-active": {
+      "manifestSha256": "1e6b165646daf561e6e70edd06732cedc59b1196c7117d0dc50e6a056ac48aab",
+      "sourceRamSha256": "332934dbcd0f667d66d8959d3496859e9171757dc6228e4bf5b23b44bc6d64a5",
+      "sourceSavSha256": "97e1360769a96ef15aa3fbc4ee8774252acc04141569b3a9c45ecade5a4d5d76",
+      "waitSha256": "9f0f02ea22a98b4fe4556da86129ad571daa1805ae73e98cdf397b9e55d670eb",
+      "logSha256": "feca533c702446132d060ba6df30000042e11643e5edc8f85d713f204ba6d91b",
+      "tops": 9,
+      "gaps": 8,
+      "captures": {
+        "f1": {
+          "sha256": "e0216cc0aaa5cc26f2cdf5ec1e98a123ca14dba809b38be7330045a9c0507582",
+          "frame": 142,
+          "ticks": 1576,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 41024,
+          "queue": 0,
+          "timerBits": 63960,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f2": {
+          "sha256": "7e3f693c9d47b9eedad86e97a56035dcf2efbe79cefc3ae35318cdc687c7f913",
+          "frame": 143,
+          "ticks": 1587,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 41024,
+          "queue": 28,
+          "timerBits": 63949,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f8": {
+          "sha256": "ac148a0527c4927e51d6fe66225c194167acb99af1c72748bd19219d501f3a8e",
+          "frame": 149,
+          "ticks": 1653,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 41024,
+          "queue": 28,
+          "timerBits": 63883,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        }
+      },
+      "requests": [],
+      "launches": [
+        {
+          "label": "START",
+          "frame": 142,
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "queue": 0,
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          }
+        }
+      ],
+      "timerArms": []
+    },
+    "child-unavailable": {
+      "manifestSha256": "9294640ac794e6ced9ca03dedb8d010b21e2da6d9486b7c029e21cb9287e7c35",
+      "sourceRamSha256": "332934dbcd0f667d66d8959d3496859e9171757dc6228e4bf5b23b44bc6d64a5",
+      "sourceSavSha256": "97e1360769a96ef15aa3fbc4ee8774252acc04141569b3a9c45ecade5a4d5d76",
+      "waitSha256": "9f0f02ea22a98b4fe4556da86129ad571daa1805ae73e98cdf397b9e55d670eb",
+      "logSha256": "9a9ca7d155b4a53516591fc1c9a59dcb5a9cb1f6368129babcf8a264967db716",
+      "tops": 9,
+      "gaps": 8,
+      "captures": {
+        "f1": {
+          "sha256": "4ca1c46a6bb9f0ec4cbc037d3ee0d6b42d0eec70e39bb137d21e92934070bafc",
+          "frame": 142,
+          "ticks": 1576,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 0,
+          "timerBits": 63960,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f2": {
+          "sha256": "995164e99176407b790618560f5a57eea79529b80d9b21cae90b0cf9f475e728",
+          "frame": 143,
+          "ticks": 1587,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 0,
+          "timerBits": 63949,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f8": {
+          "sha256": "7c61642b4718b11fbc1eb54bfe5f04713f44c7e628a2bd2d81b4efaae126f973",
+          "frame": 149,
+          "ticks": 1653,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 0,
+          "timerBits": 63883,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        }
+      },
+      "requests": [],
+      "launches": [
+        {
+          "label": "START",
+          "frame": 142,
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "queue": 0,
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          }
+        }
+      ],
+      "timerArms": []
+    },
+    "child-unavailable-active": {
+      "manifestSha256": "69de898fa155584367d311306a4f2e0bd10a7d45d63f86ccc7dbcc307c6b8eda",
+      "sourceRamSha256": "332934dbcd0f667d66d8959d3496859e9171757dc6228e4bf5b23b44bc6d64a5",
+      "sourceSavSha256": "97e1360769a96ef15aa3fbc4ee8774252acc04141569b3a9c45ecade5a4d5d76",
+      "waitSha256": "9f0f02ea22a98b4fe4556da86129ad571daa1805ae73e98cdf397b9e55d670eb",
+      "logSha256": "8087b20236489706f876a0e14275863800b1c1246177fb2c2479eff5867d76ae",
+      "tops": 9,
+      "gaps": 8,
+      "captures": {
+        "f1": {
+          "sha256": "4eb2d9d09351eb7f57837b10161aa9649c1f7dcf7a76baa1f87179f05a3fcb96",
+          "frame": 142,
+          "ticks": 1576,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 41024,
+          "queue": 0,
+          "timerBits": 63960,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f2": {
+          "sha256": "65858673d17a925d986b6def48504f94c656163060b37ce854b26ad0923c95c2",
+          "frame": 143,
+          "ticks": 1587,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 41024,
+          "queue": 0,
+          "timerBits": 63949,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f4": {
+          "sha256": "d8e5b807ee1f442c0ddd031b235e6869b0b5245d9f96646d1ae7138d6b6f5780",
+          "frame": 145,
+          "ticks": 1609,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 41024,
+          "queue": 0,
+          "timerBits": 63927,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f8": {
+          "sha256": "d30c89be343f685966a6d72f715cbbc1533c8c4837dbd09e46e078c98af5dcea",
+          "frame": 149,
+          "ticks": 1653,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 41024,
+          "queue": 0,
+          "timerBits": 63883,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        }
+      },
+      "requests": [],
+      "launches": [
+        {
+          "label": "START",
+          "frame": 142,
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "queue": 0,
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          }
+        }
+      ],
+      "timerArms": []
+    },
+    "child-busy": {
+      "manifestSha256": "aa33836d0920de4359c2d00e5e11fcd327d0d1f61d80df06c64429508fe58a00",
+      "sourceRamSha256": "332934dbcd0f667d66d8959d3496859e9171757dc6228e4bf5b23b44bc6d64a5",
+      "sourceSavSha256": "97e1360769a96ef15aa3fbc4ee8774252acc04141569b3a9c45ecade5a4d5d76",
+      "waitSha256": "9f0f02ea22a98b4fe4556da86129ad571daa1805ae73e98cdf397b9e55d670eb",
+      "logSha256": "513653db803e920713d9f5c0db22da6f5f2eac78aa3cc059ad2051c5d5e54aa6",
+      "tops": 201,
+      "gaps": 200,
+      "captures": {
+        "f1": {
+          "sha256": "86afcaff8395f9f0a31422a46303896198aed09a1a0a390191dcc106f98c1f76",
+          "frame": 142,
+          "ticks": 1576,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 0,
+          "timerBits": 63960,
+          "target": 0,
+          "busy": 1,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f2": {
+          "sha256": "54892a066e07d5c3c60511f15b23e95dc4d6b1bba5330d20caee784ab648daff",
+          "frame": 143,
+          "ticks": 1587,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 480359,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "flags": 41024,
+          "queue": 0,
+          "timerBits": 63949,
+          "target": 0,
+          "busy": 65535,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f30": {
+          "sha256": "ccca950d5916ae0f804ed43a46033c9ab01f9dd843f17f42b71a5037dc9df55c",
+          "frame": 171,
+          "ticks": 1895,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 480359,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "flags": 41024,
+          "queue": 0,
+          "timerBits": 63641,
+          "target": 0,
+          "busy": 65535,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f100": {
+          "sha256": "1f185e88b42180683592534ca93b85c0370361eaa263d7cf73cdb9b61a444af1",
+          "frame": 241,
+          "ticks": 2665,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 0,
+          "timerBits": 62871,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f200": {
+          "sha256": "131ceb71b026180418355c6526325d9c7e9f3d1027eb1cfe9d31a433657d7961",
+          "frame": 341,
+          "ticks": 3765,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 0,
+          "timerBits": 61771,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        }
+      },
+      "requests": [
+        {
+          "frame": 191,
+          "site": 485062,
+          "kind": "id",
+          "messageId": 50
+        }
+      ],
+      "launches": [
+        {
+          "label": "START",
+          "frame": 142,
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "queue": 0,
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          }
+        }
+      ],
+      "timerArms": []
+    },
+    "queue-busy": {
+      "manifestSha256": "6ba6a25500435c39751ccd3b71799cc9f30080fb0f3ea9d3dbb4bbc214b250be",
+      "sourceRamSha256": "332934dbcd0f667d66d8959d3496859e9171757dc6228e4bf5b23b44bc6d64a5",
+      "sourceSavSha256": "97e1360769a96ef15aa3fbc4ee8774252acc04141569b3a9c45ecade5a4d5d76",
+      "waitSha256": "9f0f02ea22a98b4fe4556da86129ad571daa1805ae73e98cdf397b9e55d670eb",
+      "logSha256": "2af32ac24e32730e8a7fd73cc8035747f7bbf4d9d45fced7fd648a345c791a20",
+      "tops": 9,
+      "gaps": 8,
+      "captures": {
+        "f1": {
+          "sha256": "e0216cc0aaa5cc26f2cdf5ec1e98a123ca14dba809b38be7330045a9c0507582",
+          "frame": 142,
+          "ticks": 1576,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 41024,
+          "queue": 0,
+          "timerBits": 63960,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f2": {
+          "sha256": "7e3f693c9d47b9eedad86e97a56035dcf2efbe79cefc3ae35318cdc687c7f913",
+          "frame": 143,
+          "ticks": 1587,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 41024,
+          "queue": 28,
+          "timerBits": 63949,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f4": {
+          "sha256": "dbdf0701214c15ae5026f090ff751340d31c9f72d90715b07f92b39919932cf9",
+          "frame": 145,
+          "ticks": 1609,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 28,
+          "timerBits": 63927,
+          "target": 0,
+          "busy": 65535,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f8": {
+          "sha256": "7182201197ee949a706e088fdd4cf2f5d31a3e63ea9a819efa065108106f34f8",
+          "frame": 149,
+          "ticks": 1653,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 28,
+          "timerBits": 63883,
+          "target": 0,
+          "busy": 65535,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        }
+      },
+      "requests": [],
+      "launches": [
+        {
+          "label": "START",
+          "frame": 142,
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "queue": 0,
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          }
+        }
+      ],
+      "timerArms": []
+    },
+    "queue-continuation": {
+      "manifestSha256": "90b83106b9a6a9c5a8ffebbdc76d4ab7933adc00b7e60514aac899ea596199c1",
+      "sourceRamSha256": "332934dbcd0f667d66d8959d3496859e9171757dc6228e4bf5b23b44bc6d64a5",
+      "sourceSavSha256": "97e1360769a96ef15aa3fbc4ee8774252acc04141569b3a9c45ecade5a4d5d76",
+      "waitSha256": "9f0f02ea22a98b4fe4556da86129ad571daa1805ae73e98cdf397b9e55d670eb",
+      "logSha256": "e997f49f4da154865c111a2acc21560d42d24c18cab779fc70246993e4927ad6",
+      "tops": 9,
+      "gaps": 8,
+      "captures": {
+        "f1": {
+          "sha256": "e0216cc0aaa5cc26f2cdf5ec1e98a123ca14dba809b38be7330045a9c0507582",
+          "frame": 142,
+          "ticks": 1576,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 41024,
+          "queue": 0,
+          "timerBits": 63960,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f2": {
+          "sha256": "7e3f693c9d47b9eedad86e97a56035dcf2efbe79cefc3ae35318cdc687c7f913",
+          "frame": 143,
+          "ticks": 1587,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 41024,
+          "queue": 28,
+          "timerBits": 63949,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f4": {
+          "sha256": "a3980e3a1e8f1f3ec301695f2ce8597829637341b5fbdd598db4cee42a5a67c6",
+          "frame": 145,
+          "ticks": 1609,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 28,
+          "timerBits": 63927,
+          "target": 0,
+          "busy": 65535,
+          "continuationBits": 1,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f8": {
+          "sha256": "d336436c60e75ec40c57d3094cd3e81f0ecdcbc012b5fd39bfbae5d7f0025062",
+          "frame": 149,
+          "ticks": 1653,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 28,
+          "timerBits": 63883,
+          "target": 0,
+          "busy": 65535,
+          "continuationBits": 1,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        }
+      },
+      "requests": [],
+      "launches": [
+        {
+          "label": "START",
+          "frame": 142,
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "queue": 0,
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          }
+        }
+      ],
+      "timerArms": []
+    },
+    "queue-overwrite": {
+      "manifestSha256": "684131ab7335cb420a3b79648ce64b460cb57bae4e2eb2bba358bd2735388b6c",
+      "sourceRamSha256": "332934dbcd0f667d66d8959d3496859e9171757dc6228e4bf5b23b44bc6d64a5",
+      "sourceSavSha256": "97e1360769a96ef15aa3fbc4ee8774252acc04141569b3a9c45ecade5a4d5d76",
+      "waitSha256": "9f0f02ea22a98b4fe4556da86129ad571daa1805ae73e98cdf397b9e55d670eb",
+      "logSha256": "e141a4c0e66de2bc8d3962b8744d22a09a424077f3d7ca7cb637bb5908409161",
+      "tops": 301,
+      "gaps": 300,
+      "captures": {
+        "f1": {
+          "sha256": "e0216cc0aaa5cc26f2cdf5ec1e98a123ca14dba809b38be7330045a9c0507582",
+          "frame": 142,
+          "ticks": 1576,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 41024,
+          "queue": 0,
+          "timerBits": 63960,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f2": {
+          "sha256": "7e3f693c9d47b9eedad86e97a56035dcf2efbe79cefc3ae35318cdc687c7f913",
+          "frame": 143,
+          "ticks": 1587,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 41024,
+          "queue": 28,
+          "timerBits": 63949,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f4": {
+          "sha256": "bc0a06259acd0233dc43a1933b6f6e21797c5beb910c0a2ab31c4e89a23f85a0",
+          "frame": 145,
+          "ticks": 1609,
+          "stack": [
+            127,
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 41024,
+          "queue": 24,
+          "timerBits": 63927,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 132,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f6": {
+          "sha256": "c71b5ec46e7bb502c56fc83411df5351e0e1be2099e5f8028062801ce57ae2a7",
+          "frame": 147,
+          "ticks": 1631,
+          "stack": [
+            127,
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 483909,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "flags": 32832,
+          "queue": 0,
+          "timerBits": 63905,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 32,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 132,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f100": {
+          "sha256": "bff4c44e3709a3579d21f6bd43369451750446607d14ef516d7ee1fbc27a7505",
+          "frame": 241,
+          "ticks": 2665,
+          "stack": [
+            127,
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 484023,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "flags": 41024,
+          "queue": 0,
+          "timerBits": 62871,
+          "target": 0,
+          "busy": 65535,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 32,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 132,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f300": {
+          "sha256": "e3041744b9d20ca646b5cb397ea7929b35d64617b8d3710777cd709af23f6a76",
+          "frame": 441,
+          "ticks": 4865,
+          "stack": [
+            127,
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 6332416,
+          "queue": 0,
+          "timerBits": 60671,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 0,
+            "6": 0,
+            "28": 160,
+            "115": 160,
+            "24": 32,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 132,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 15722,
+            "436": 776,
+            "632": 15722
+          }
+        }
+      },
+      "requests": [
+        {
+          "frame": 147,
+          "site": 483909,
+          "kind": "packed"
+        },
+        {
+          "frame": 166,
+          "site": 483927,
+          "kind": "packed"
+        },
+        {
+          "frame": 188,
+          "site": 485143,
+          "kind": "id",
+          "messageId": 50
+        },
+        {
+          "frame": 196,
+          "site": 483949,
+          "kind": "packed"
+        },
+        {
+          "frame": 218,
+          "site": 485143,
+          "kind": "id",
+          "messageId": 50
+        },
+        {
+          "frame": 226,
+          "site": 483986,
+          "kind": "packed"
+        },
+        {
+          "frame": 265,
+          "site": 485143,
+          "kind": "id",
+          "messageId": 50
+        },
+        {
+          "frame": 279,
+          "site": 483094,
+          "kind": "packed"
+        },
+        {
+          "frame": 302,
+          "site": 485143,
+          "kind": "id",
+          "messageId": 50
+        },
+        {
+          "frame": 313,
+          "site": 483130,
+          "kind": "packed"
+        },
+        {
+          "frame": 333,
+          "site": 483151,
+          "kind": "packed"
+        },
+        {
+          "frame": 365,
+          "site": 483173,
+          "kind": "packed"
+        },
+        {
+          "frame": 404,
+          "site": 485062,
+          "kind": "id",
+          "messageId": 50
+        }
+      ],
+      "launches": [
+        {
+          "label": "START",
+          "frame": 142,
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "queue": 0,
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          }
+        },
+        {
+          "label": "START",
+          "frame": 144,
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "queue": 28,
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          }
+        },
+        {
+          "label": "START",
+          "frame": 146,
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "queue": 0,
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          }
+        }
+      ],
+      "timerArms": []
+    },
+    "queue-stale": {
+      "manifestSha256": "b0d45981dd502abe1ed25e6ad871410d13a03e6277d14a6e684da20fd8f35cf0",
+      "sourceRamSha256": "332934dbcd0f667d66d8959d3496859e9171757dc6228e4bf5b23b44bc6d64a5",
+      "sourceSavSha256": "97e1360769a96ef15aa3fbc4ee8774252acc04141569b3a9c45ecade5a4d5d76",
+      "waitSha256": "9f0f02ea22a98b4fe4556da86129ad571daa1805ae73e98cdf397b9e55d670eb",
+      "logSha256": "af6773d2ceb21ea44280428a8cc028eb9c107807ac5e6d7bb76d31a216d75fb1",
+      "tops": 9,
+      "gaps": 8,
+      "captures": {
+        "f1": {
+          "sha256": "e0216cc0aaa5cc26f2cdf5ec1e98a123ca14dba809b38be7330045a9c0507582",
+          "frame": 142,
+          "ticks": 1576,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 41024,
+          "queue": 0,
+          "timerBits": 63960,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f2": {
+          "sha256": "7e3f693c9d47b9eedad86e97a56035dcf2efbe79cefc3ae35318cdc687c7f913",
+          "frame": 143,
+          "ticks": 1587,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 41024,
+          "queue": 28,
+          "timerBits": 63949,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f4": {
+          "sha256": "c92cb667047bfb06646faca5a6c7eb7649ce8ebb0d533031c94ae2617f83de9b",
+          "frame": 145,
+          "ticks": 1609,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 0,
+          "timerBits": 63927,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f8": {
+          "sha256": "7c61642b4718b11fbc1eb54bfe5f04713f44c7e628a2bd2d81b4efaae126f973",
+          "frame": 149,
+          "ticks": 1653,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 0,
+          "timerBits": 63883,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        }
+      },
+      "requests": [],
+      "launches": [
+        {
+          "label": "START",
+          "frame": 142,
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "queue": 0,
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          }
+        },
+        {
+          "label": "START",
+          "frame": 144,
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "queue": 0,
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          }
+        }
+      ],
+      "timerArms": []
+    },
+    "threshold-first": {
+      "manifestSha256": "92a28a8a2b274fdd34b6ebdf816cf3a1a53dd5293e3f3febc2d55e0361b35ac9",
+      "sourceRamSha256": "332934dbcd0f667d66d8959d3496859e9171757dc6228e4bf5b23b44bc6d64a5",
+      "sourceSavSha256": "97e1360769a96ef15aa3fbc4ee8774252acc04141569b3a9c45ecade5a4d5d76",
+      "waitSha256": "9f0f02ea22a98b4fe4556da86129ad571daa1805ae73e98cdf397b9e55d670eb",
+      "logSha256": "d2614a5ca41fe148dca4849dea43cf9dd8e6d4161ef1d65c715f8a91550c726d",
+      "tops": 601,
+      "gaps": 600,
+      "captures": {
+        "f1": {
+          "sha256": "fb54fa319161e6414afce52723b0a4f73fd8b5d64267537ee73d6551cc30961b",
+          "frame": 142,
+          "ticks": 1576,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 0,
+          "timerBits": 63960,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f2": {
+          "sha256": "aca62d67e872566d62bf380e4bd9ccce28e1de2b0aeda861806a750333f6f900",
+          "frame": 143,
+          "ticks": 1587,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "pc": 481749,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "flags": 41024,
+          "queue": 0,
+          "timerBits": 63949,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 0,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 32
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f3": {
+          "sha256": "507687cd6baace873f6669473d946c8381779e1c4e2e849754956e7a57999cd3",
+          "frame": 144,
+          "ticks": 1598,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 481752,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "flags": 41024,
+          "queue": 28,
+          "timerBits": 63938,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 0,
+            "6": 0,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 32
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f80": {
+          "sha256": "80b17d90cea9f1857de73b8c0ca413e54621fc9db2b61c44d3373551b455447c",
+          "frame": 221,
+          "ticks": 2445,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 485073,
+          "stackPointer": 22222,
+          "returnStack": [
+            485073,
+            458580
+          ],
+          "flags": 8430080,
+          "queue": 0,
+          "timerBits": 1247,
+          "target": 23762,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 0,
+            "6": 0,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 32
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f300": {
+          "sha256": "b8137f2f122b32ca19b5f59c927e20a396fc303113badcab3c0ea6a4e81e6b12",
+          "frame": 441,
+          "ticks": 4865,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 485064,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "flags": 8421952,
+          "queue": 0,
+          "timerBits": 651,
+          "target": 24088,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 0,
+            "6": 0,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 32
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f600": {
+          "sha256": "440433767aeaeaa1ea3300fdf2fd06f437078298a5f9df48b494e924e2e61920",
+          "frame": 741,
+          "ticks": 8165,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 8430080,
+          "queue": 0,
+          "timerBits": 62887,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 0,
+            "6": 0,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 32
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        }
+      },
+      "requests": [
+        {
+          "frame": 146,
+          "site": 481756,
+          "kind": "packed"
+        },
+        {
+          "frame": 167,
+          "site": 481781,
+          "kind": "packed"
+        },
+        {
+          "frame": 190,
+          "site": 485143,
+          "kind": "id",
+          "messageId": 50
+        },
+        {
+          "frame": 202,
+          "site": 485062,
+          "kind": "id",
+          "messageId": 50
+        },
+        {
+          "frame": 213,
+          "site": 485062,
+          "kind": "id",
+          "messageId": 50
+        },
+        {
+          "frame": 336,
+          "site": 481816,
+          "kind": "packed"
+        },
+        {
+          "frame": 355,
+          "site": 481836,
+          "kind": "packed"
+        },
+        {
+          "frame": 377,
+          "site": 485143,
+          "kind": "id",
+          "messageId": 50
+        },
+        {
+          "frame": 385,
+          "site": 481858,
+          "kind": "packed"
+        },
+        {
+          "frame": 424,
+          "site": 485143,
+          "kind": "id",
+          "messageId": 50
+        },
+        {
+          "frame": 436,
+          "site": 485062,
+          "kind": "id",
+          "messageId": 50
+        },
+        {
+          "frame": 502,
+          "site": 482142,
+          "kind": "packed"
+        },
+        {
+          "frame": 521,
+          "site": 482164,
+          "kind": "packed"
+        },
+        {
+          "frame": 543,
+          "site": 485143,
+          "kind": "id",
+          "messageId": 50
+        },
+        {
+          "frame": 551,
+          "site": 482186,
+          "kind": "packed"
+        },
+        {
+          "frame": 574,
+          "site": 485062,
+          "kind": "id",
+          "messageId": 50
+        }
+      ],
+      "launches": [
+        {
+          "label": "START",
+          "frame": 142,
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "queue": 0,
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          }
+        },
+        {
+          "label": "START",
+          "frame": 143,
+          "pc": 481749,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "queue": 0,
+          "availability": {
+            "5": 0,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 32
+          }
+        },
+        {
+          "label": "START",
+          "frame": 143,
+          "pc": 481749,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "queue": 0,
+          "availability": {
+            "5": 0,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 32
+          }
+        },
+        {
+          "label": "START",
+          "frame": 144,
+          "pc": 481752,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "queue": 28,
+          "availability": {
+            "5": 0,
+            "6": 0,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 32
+          }
+        },
+        {
+          "label": "START",
+          "frame": 210,
+          "pc": 485073,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "queue": 0,
+          "availability": {
+            "5": 0,
+            "6": 0,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 32
+          }
+        },
+        {
+          "label": "DIRECT",
+          "frame": 335,
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "queue": 0,
+          "availability": {
+            "5": 0,
+            "6": 0,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 32
+          }
+        },
+        {
+          "label": "DIRECT",
+          "frame": 501,
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "queue": 0,
+          "availability": {
+            "5": 0,
+            "6": 0,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 32
+          }
+        }
+      ],
+      "timerArms": [
+        {
+          "frame": 198,
+          "delay": 1500,
+          "target": 23762,
+          "nextFrameCountdown": 1489
+        },
+        {
+          "frame": 432,
+          "delay": 750,
+          "target": 24088,
+          "nextFrameCountdown": 739
+        }
+      ]
+    },
+    "threshold-and-timer": {
+      "manifestSha256": "25ba1ece2aeefab6685c012fffcb4777b14df4ccaf22736ff0970a4430588c39",
+      "sourceRamSha256": "332934dbcd0f667d66d8959d3496859e9171757dc6228e4bf5b23b44bc6d64a5",
+      "sourceSavSha256": "97e1360769a96ef15aa3fbc4ee8774252acc04141569b3a9c45ecade5a4d5d76",
+      "waitSha256": "9f0f02ea22a98b4fe4556da86129ad571daa1805ae73e98cdf397b9e55d670eb",
+      "logSha256": "99955a8babc46255f5abe82a64d0374a80a5767e3a1fb495fd4623ae3540eb49",
+      "tops": 221,
+      "gaps": 220,
+      "captures": {
+        "f1": {
+          "sha256": "4bb58a353b3a1e7cf4637b6fcf6a810976a29b6970badc922dd8f94416246c31",
+          "frame": 142,
+          "ticks": 1576,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 0,
+          "timerBits": 65535,
+          "target": 22405,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f2": {
+          "sha256": "d03476fcf77649e794ce93015d3b07bbfbc8ef65860934db8b87b224e935654e",
+          "frame": 143,
+          "ticks": 1587,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "pc": 481749,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "flags": 41024,
+          "queue": 0,
+          "timerBits": 65524,
+          "target": 22405,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 0,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 32
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f3": {
+          "sha256": "49434f72dee77b6ae7f5453115fef38908481c17e23208ae9c1e82d8ad2f0517",
+          "frame": 144,
+          "ticks": 1598,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 481752,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "flags": 41024,
+          "queue": 28,
+          "timerBits": 65513,
+          "target": 22405,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 0,
+            "6": 0,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 32
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f80": {
+          "sha256": "80b17d90cea9f1857de73b8c0ca413e54621fc9db2b61c44d3373551b455447c",
+          "frame": 221,
+          "ticks": 2445,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 485073,
+          "stackPointer": 22222,
+          "returnStack": [
+            485073,
+            458580
+          ],
+          "flags": 8430080,
+          "queue": 0,
+          "timerBits": 1247,
+          "target": 23762,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 0,
+            "6": 0,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 32
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f220": {
+          "sha256": "5412d293489c2d25617412400dada0ca9e03368b3dc287d8b5a4c7179b3b6e0e",
+          "frame": 361,
+          "ticks": 3985,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 481855,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "flags": 8421952,
+          "queue": 0,
+          "timerBits": 65243,
+          "target": 0,
+          "busy": 65535,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 0,
+            "6": 0,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 32
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        }
+      },
+      "requests": [
+        {
+          "frame": 146,
+          "site": 481756,
+          "kind": "packed"
+        },
+        {
+          "frame": 167,
+          "site": 481781,
+          "kind": "packed"
+        },
+        {
+          "frame": 190,
+          "site": 485143,
+          "kind": "id",
+          "messageId": 50
+        },
+        {
+          "frame": 202,
+          "site": 485062,
+          "kind": "id",
+          "messageId": 50
+        },
+        {
+          "frame": 213,
+          "site": 485062,
+          "kind": "id",
+          "messageId": 50
+        },
+        {
+          "frame": 336,
+          "site": 481816,
+          "kind": "packed"
+        },
+        {
+          "frame": 355,
+          "site": 481836,
+          "kind": "packed"
+        }
+      ],
+      "launches": [
+        {
+          "label": "START",
+          "frame": 142,
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "queue": 0,
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          }
+        },
+        {
+          "label": "START",
+          "frame": 143,
+          "pc": 481749,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "queue": 0,
+          "availability": {
+            "5": 0,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 32
+          }
+        },
+        {
+          "label": "START",
+          "frame": 143,
+          "pc": 481749,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "queue": 0,
+          "availability": {
+            "5": 0,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 32
+          }
+        },
+        {
+          "label": "START",
+          "frame": 144,
+          "pc": 481752,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "queue": 28,
+          "availability": {
+            "5": 0,
+            "6": 0,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 32
+          }
+        },
+        {
+          "label": "START",
+          "frame": 210,
+          "pc": 485073,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "queue": 0,
+          "availability": {
+            "5": 0,
+            "6": 0,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 32
+          }
+        },
+        {
+          "label": "DIRECT",
+          "frame": 335,
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "queue": 0,
+          "availability": {
+            "5": 0,
+            "6": 0,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 32
+          }
+        }
+      ],
+      "timerArms": [
+        {
+          "frame": 198,
+          "delay": 1500,
+          "target": 23762,
+          "nextFrameCountdown": 1489
+        }
+      ]
+    },
+    "timer-first": {
+      "manifestSha256": "3299137b6dc78e83a93788e90de775ce37aedca712aa1844b280d780130767c8",
+      "sourceRamSha256": "332934dbcd0f667d66d8959d3496859e9171757dc6228e4bf5b23b44bc6d64a5",
+      "sourceSavSha256": "97e1360769a96ef15aa3fbc4ee8774252acc04141569b3a9c45ecade5a4d5d76",
+      "waitSha256": "9f0f02ea22a98b4fe4556da86129ad571daa1805ae73e98cdf397b9e55d670eb",
+      "logSha256": "9a9ded52b5129a2bf648f76bad5412959e65a7d62b9127000d1ad4656b0a560f",
+      "tops": 301,
+      "gaps": 300,
+      "captures": {
+        "f1": {
+          "sha256": "6c8d4e08f6bb0f55907fe069aaa07af60e7b033aad6c92d20fca87443fe73882",
+          "frame": 142,
+          "ticks": 1576,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 0,
+          "timerBits": 65535,
+          "target": 22362,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f2": {
+          "sha256": "f146270ff5b694f4a5029ff3a1c80a063aafc3de608196cca67fb6f88cd5d1f5",
+          "frame": 143,
+          "ticks": 1587,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "pc": 485055,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "flags": 41024,
+          "queue": 0,
+          "timerBits": 65524,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f3": {
+          "sha256": "24342255c9b4a9f8f6e626bbb40d2be752327764f939b70cddd220a5a8ea0aff",
+          "frame": 144,
+          "ticks": 1598,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 485057,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "flags": 32832,
+          "queue": 28,
+          "timerBits": 65513,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f100": {
+          "sha256": "59358c39473c694bab269b38cf7114d87b5e42c4004db03179743513a540dbf5",
+          "frame": 241,
+          "ticks": 2665,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 0,
+          "timerBits": 64446,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f300": {
+          "sha256": "bce3366d0b989daad48e6936aafb286ab50e3e767e547132dcbc8664067a6106",
+          "frame": 441,
+          "ticks": 4865,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 0,
+          "timerBits": 62246,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        }
+      },
+      "requests": [
+        {
+          "frame": 145,
+          "site": 485062,
+          "kind": "id",
+          "messageId": 50
+        },
+        {
+          "frame": 156,
+          "site": 485062,
+          "kind": "id",
+          "messageId": 50
+        }
+      ],
+      "launches": [
+        {
+          "label": "DIRECT",
+          "frame": 142,
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "queue": 0,
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          }
+        },
+        {
+          "label": "START",
+          "frame": 143,
+          "pc": 485055,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "queue": 0,
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          }
+        },
+        {
+          "label": "START",
+          "frame": 153,
+          "pc": 485073,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "queue": 0,
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          }
+        }
+      ],
+      "timerArms": []
+    },
+    "child-candidacy-drop": {
+      "manifestSha256": "955edb7540381d6fba4be7a9c64546d7ad48f9fce1cb139193d908904cc5de82",
+      "sourceRamSha256": "332934dbcd0f667d66d8959d3496859e9171757dc6228e4bf5b23b44bc6d64a5",
+      "sourceSavSha256": "97e1360769a96ef15aa3fbc4ee8774252acc04141569b3a9c45ecade5a4d5d76",
+      "waitSha256": "9f0f02ea22a98b4fe4556da86129ad571daa1805ae73e98cdf397b9e55d670eb",
+      "logSha256": "3becc763167ab188aabca2c88273d35c5fa198e25a9a30fb59ef47db75b58847",
+      "tops": 301,
+      "gaps": 300,
+      "captures": {
+        "f1": {
+          "sha256": "b54c991100da6b3763b84dfee157a1074082adab38504262667da153411a6f68",
+          "frame": 142,
+          "ticks": 1576,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 41984,
+          "queue": 0,
+          "timerBits": 63960,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f2": {
+          "sha256": "b6642bcc7ffaad9dc0ce2fa83c87c5c1e1b5be1761f06ccbad3044b320be4905",
+          "frame": 143,
+          "ticks": 1587,
+          "stack": [
+            216,
+            104,
+            103,
+            135
+          ],
+          "pc": 480363,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "flags": 42048,
+          "queue": 0,
+          "timerBits": 63949,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 132,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f131": {
+          "sha256": "4bc0a9cdd7d0a05977bfb722a20097e74b0e90885da4e380e430150df3bcfb45",
+          "frame": 272,
+          "ticks": 3006,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 41984,
+          "queue": 0,
+          "timerBits": 1269,
+          "target": 22362,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            49,
+            105
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f200": {
+          "sha256": "632b3b64822a384951585354324f1a71fa7b774c5a76034268315129de97a166",
+          "frame": 341,
+          "ticks": 3765,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 41984,
+          "queue": 0,
+          "timerBits": 510,
+          "target": 22362,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            49,
+            105
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f300": {
+          "sha256": "c6dd4bd9ca0467cf83cdcc6829fa4f04e6d19b385b1db273b987a01c1d405585",
+          "frame": 441,
+          "ticks": 4865,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 41984,
+          "queue": 0,
+          "timerBits": 64946,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            49,
+            105
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        }
+      },
+      "requests": [
+        {
+          "frame": 193,
+          "site": 480368,
+          "kind": "packed"
+        },
+        {
+          "frame": 212,
+          "site": 480383,
+          "kind": "packed"
+        },
+        {
+          "frame": 232,
+          "site": 480404,
+          "kind": "id",
+          "messageId": 7
+        },
+        {
+          "frame": 255,
+          "site": 485062,
+          "kind": "id",
+          "messageId": 50
+        },
+        {
+          "frame": 391,
+          "site": 485062,
+          "kind": "id",
+          "messageId": 50
+        }
+      ],
+      "launches": [
+        {
+          "label": "START",
+          "frame": 142,
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "queue": 0,
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          }
+        },
+        {
+          "label": "DIRECT",
+          "frame": 388,
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "queue": 0,
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 32,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          }
+        }
+      ],
+      "timerArms": [
+        {
+          "frame": 251,
+          "delay": 1500,
+          "target": 22362,
+          "nextFrameCountdown": 1489
+        }
+      ]
+    },
+    "pcb-idle": {
+      "manifestSha256": "b0fc5dbdaa0559940292090f00fa38cc1887b9c91d7e31e41ba8383e9cacf781",
+      "sourceRamSha256": "332934dbcd0f667d66d8959d3496859e9171757dc6228e4bf5b23b44bc6d64a5",
+      "sourceSavSha256": "97e1360769a96ef15aa3fbc4ee8774252acc04141569b3a9c45ecade5a4d5d76",
+      "waitSha256": "9f0f02ea22a98b4fe4556da86129ad571daa1805ae73e98cdf397b9e55d670eb",
+      "logSha256": "22f65ea669fad62f913b5cfc93f262b689a504a20f215a9cb81c073bac8b3c03",
+      "tops": 701,
+      "gaps": 700,
+      "captures": {
+        "f1": {
+          "sha256": "edae606da00bfc294ad419a980ea68a5f0973d6830d6dce44e8d82e178e8a633",
+          "frame": 142,
+          "ticks": 1576,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 0,
+          "timerBits": 63960,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f2": {
+          "sha256": "dc51f832eeceb990abe71637f235b7515cd17d922848c68e8a22f375bfc4bf8e",
+          "frame": 143,
+          "ticks": 1587,
+          "stack": [
+            218,
+            104,
+            103,
+            135
+          ],
+          "pc": 476813,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "flags": 32832,
+          "queue": 0,
+          "timerBits": 63949,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 32,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 132
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f100": {
+          "sha256": "9d87877bb8952188e151ed8468da98f849d5dcf311198474de51f61395a20e14",
+          "frame": 241,
+          "ticks": 2665,
+          "stack": [
+            218,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 0,
+          "timerBits": 631,
+          "target": 18791,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 32,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 132
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f200": {
+          "sha256": "1dec077f592e4c0e7fbb6778c0bfacd15484c28f6d95b61f1967ec6ead1b511e",
+          "frame": 341,
+          "ticks": 3765,
+          "stack": [
+            218,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 0,
+          "timerBits": 769,
+          "target": 18833,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 32,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 132
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f400": {
+          "sha256": "10379d3179332759d2ff238b731afca7973763badf5da46804bfbd7de7197504",
+          "frame": 541,
+          "ticks": 5965,
+          "stack": [
+            218,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 0,
+          "timerBits": 301,
+          "target": 18877,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 32,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 132
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f700": {
+          "sha256": "697b03f81f3fb26ded06a10df93eee9235faf921217f997696053fe95f8bea40",
+          "frame": 841,
+          "ticks": 9265,
+          "stack": [
+            218,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 0,
+          "timerBits": 239,
+          "target": 18877,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 32,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 132
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        }
+      },
+      "requests": [
+        {
+          "frame": 143,
+          "site": 476813,
+          "kind": "packed"
+        },
+        {
+          "frame": 166,
+          "site": 485062,
+          "kind": "id",
+          "messageId": 50
+        },
+        {
+          "frame": 301,
+          "site": 476849,
+          "kind": "packed"
+        },
+        {
+          "frame": 324,
+          "site": 485062,
+          "kind": "id",
+          "messageId": 50
+        },
+        {
+          "frame": 413,
+          "site": 476891,
+          "kind": "packed"
+        },
+        {
+          "frame": 436,
+          "site": 485062,
+          "kind": "id",
+          "messageId": 50
+        },
+        {
+          "frame": 571,
+          "site": 476935,
+          "kind": "packed"
+        },
+        {
+          "frame": 594,
+          "site": 485062,
+          "kind": "id",
+          "messageId": 50
+        }
+      ],
+      "launches": [
+        {
+          "label": "START",
+          "frame": 142,
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "queue": 0,
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          }
+        },
+        {
+          "label": "DIRECT",
+          "frame": 299,
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "queue": 0,
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 32,
+            "24": 160,
+            "119": 160
+          }
+        },
+        {
+          "label": "DIRECT",
+          "frame": 411,
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "queue": 0,
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 32,
+            "24": 160,
+            "119": 160
+          }
+        },
+        {
+          "label": "DIRECT",
+          "frame": 569,
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "queue": 0,
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 32,
+            "24": 160,
+            "119": 160
+          }
+        }
+      ],
+      "timerArms": [
+        {
+          "frame": 162,
+          "delay": 1500,
+          "target": 18791,
+          "nextFrameCountdown": 1489
+        },
+        {
+          "frame": 320,
+          "delay": 1000,
+          "target": 18833,
+          "nextFrameCountdown": 989
+        },
+        {
+          "frame": 432,
+          "delay": 1500,
+          "target": 18877,
+          "nextFrameCountdown": 1489
+        },
+        {
+          "frame": 590,
+          "delay": 3000,
+          "target": 18877,
+          "nextFrameCountdown": 2989
+        }
+      ]
+    },
+    "pcb-repeat": {
+      "manifestSha256": "ec262eff92974b6e4c0a7791ebc4c6a7eebe7da3707ae4468671a9f98a631581",
+      "sourceRamSha256": "697b03f81f3fb26ded06a10df93eee9235faf921217f997696053fe95f8bea40",
+      "sourceSavSha256": "003bd360e8bb0aa6553b5339d1a4ac5658f942a464f2b0aacbe2625736297a1c",
+      "waitSha256": "9f0f02ea22a98b4fe4556da86129ad571daa1805ae73e98cdf397b9e55d670eb",
+      "logSha256": "a67d31231476df825ede0612432cde013e7025939a042d149f45dbb4c522a219",
+      "tops": 201,
+      "gaps": 200,
+      "captures": {
+        "f1": {
+          "sha256": "80a455118cc3f4fcc8b579f2822507583d79e09905387600ea28436864980801",
+          "frame": 842,
+          "ticks": 9276,
+          "stack": [
+            218,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 0,
+          "timerBits": 228,
+          "target": 18877,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 32,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 132
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f30": {
+          "sha256": "b136404507c27565cf0fccabb70bc1a807893976c93bf72e3aaa095716878483",
+          "frame": 871,
+          "ticks": 9595,
+          "stack": [
+            218,
+            104,
+            103,
+            135
+          ],
+          "pc": 476959,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "flags": 32832,
+          "queue": 0,
+          "timerBits": 65445,
+          "target": 0,
+          "busy": 65535,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 32,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 132
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f70": {
+          "sha256": "dcdda1656e9c353931114273629a4d18161225b0d567d64a9f47059de2005394",
+          "frame": 911,
+          "ticks": 10035,
+          "stack": [
+            218,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 0,
+          "timerBits": 2703,
+          "target": 18877,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 32,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 132
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f200": {
+          "sha256": "5572e9b629e67905bdc85e5e113676eacd8483773800099b3e4da704ac089589",
+          "frame": 1041,
+          "ticks": 11465,
+          "stack": [
+            218,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 0,
+          "timerBits": 1273,
+          "target": 18877,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 32,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 132
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        }
+      },
+      "requests": [
+        {
+          "frame": 865,
+          "site": 476935,
+          "kind": "packed"
+        },
+        {
+          "frame": 888,
+          "site": 485062,
+          "kind": "id",
+          "messageId": 50
+        }
+      ],
+      "launches": [
+        {
+          "label": "DIRECT",
+          "frame": 863,
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "queue": 0,
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 32,
+            "24": 160,
+            "119": 160
+          }
+        }
+      ],
+      "timerArms": [
+        {
+          "frame": 884,
+          "delay": 3000,
+          "target": 18877,
+          "nextFrameCountdown": 2989
+        }
+      ]
+    },
+    "pcb-drop-before-timer": {
+      "manifestSha256": "e224e93260cc031f5d6d5d8d53d29b8470d9364ed3cf712881c713166ec81572",
+      "sourceRamSha256": "332934dbcd0f667d66d8959d3496859e9171757dc6228e4bf5b23b44bc6d64a5",
+      "sourceSavSha256": "97e1360769a96ef15aa3fbc4ee8774252acc04141569b3a9c45ecade5a4d5d76",
+      "waitSha256": "9f0f02ea22a98b4fe4556da86129ad571daa1805ae73e98cdf397b9e55d670eb",
+      "logSha256": "39c2d1f8fc91b41a0a1e6e69ddbabd7c48b83a6d820ce340d8970ea0bdcb50bb",
+      "tops": 301,
+      "gaps": 300,
+      "captures": {
+        "f1": {
+          "sha256": "edae606da00bfc294ad419a980ea68a5f0973d6830d6dce44e8d82e178e8a633",
+          "frame": 142,
+          "ticks": 1576,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 0,
+          "timerBits": 63960,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f2": {
+          "sha256": "dc51f832eeceb990abe71637f235b7515cd17d922848c68e8a22f375bfc4bf8e",
+          "frame": 143,
+          "ticks": 1587,
+          "stack": [
+            218,
+            104,
+            103,
+            135
+          ],
+          "pc": 476813,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "flags": 32832,
+          "queue": 0,
+          "timerBits": 63949,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 32,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 132
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f51": {
+          "sha256": "fbec6d296c60982f2fbb952d8d5fe2e340ad019b91846ed62b7f1ac1b78e881f",
+          "frame": 192,
+          "ticks": 2126,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 0,
+          "timerBits": 1170,
+          "target": 18791,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 32,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f200": {
+          "sha256": "c6f2511eb330bd8744cc9b237b9ec52c4d92f84d7e972edca791d41fe005f8ab",
+          "frame": 341,
+          "ticks": 3765,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 32768,
+          "queue": 0,
+          "timerBits": 65067,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 32,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f300": {
+          "sha256": "41e9f18033c73ac34d121fcbb123deb8d70015021efb3de74e8d2e5e648a4761",
+          "frame": 441,
+          "ticks": 4865,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 32768,
+          "queue": 0,
+          "timerBits": 63967,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 32,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        }
+      },
+      "requests": [
+        {
+          "frame": 143,
+          "site": 476813,
+          "kind": "packed"
+        },
+        {
+          "frame": 166,
+          "site": 485062,
+          "kind": "id",
+          "messageId": 50
+        }
+      ],
+      "launches": [
+        {
+          "label": "START",
+          "frame": 142,
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "queue": 0,
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          }
+        },
+        {
+          "label": "DIRECT",
+          "frame": 299,
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "queue": 0,
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 32,
+            "24": 160,
+            "119": 160
+          }
+        }
+      ],
+      "timerArms": [
+        {
+          "frame": 162,
+          "delay": 1500,
+          "target": 18791,
+          "nextFrameCountdown": 1489
+        }
+      ]
+    },
+    "ore-idle": {
+      "manifestSha256": "a7212232ee4053b97ba77e90019d49750397aa4dc00d401860e0cbe33ec51d4d",
+      "sourceRamSha256": "332934dbcd0f667d66d8959d3496859e9171757dc6228e4bf5b23b44bc6d64a5",
+      "sourceSavSha256": "97e1360769a96ef15aa3fbc4ee8774252acc04141569b3a9c45ecade5a4d5d76",
+      "waitSha256": "9f0f02ea22a98b4fe4556da86129ad571daa1805ae73e98cdf397b9e55d670eb",
+      "logSha256": "9a1f0e764d81a714610142c2e9dbc46df0c2bc6aa40ff053cf75b309f841a47b",
+      "tops": 401,
+      "gaps": 400,
+      "captures": {
+        "f1": {
+          "sha256": "98720d111e26c2864e52d234faf7e3d21aec2a5d69e498ceb04d7abba90b493b",
+          "frame": 142,
+          "ticks": 1576,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 40960,
+          "queue": 0,
+          "timerBits": 63960,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 4,
+            "216": 4,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f2": {
+          "sha256": "909f9b549e75791409ee15af565e342a627798deef2ca6206e8a2427edd8c06c",
+          "frame": 143,
+          "ticks": 1587,
+          "stack": [
+            127,
+            104,
+            103,
+            135
+          ],
+          "pc": 483909,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "flags": 32832,
+          "queue": 0,
+          "timerBits": 63949,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 32,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 132,
+            "216": 4,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f100": {
+          "sha256": "ac2fd362ab05cfcaa46e44a655d17d137672edf99c3a7bfa54efc99913cdbd3f",
+          "frame": 241,
+          "ticks": 2665,
+          "stack": [
+            127,
+            104,
+            103,
+            135
+          ],
+          "pc": 484023,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "flags": 41024,
+          "queue": 0,
+          "timerBits": 62871,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 32,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 132,
+            "216": 4,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 776,
+            "436": 34068,
+            "632": 15722
+          }
+        },
+        "f200": {
+          "sha256": "40bcf9e22d72b7b2f841f0b2d38958d637de6ccfc1220f5dcee59ec348eaeba2",
+          "frame": 341,
+          "ticks": 3765,
+          "stack": [
+            127,
+            104,
+            103,
+            135
+          ],
+          "pc": 483170,
+          "stackPointer": 22226,
+          "returnStack": [
+            458580
+          ],
+          "flags": 6324288,
+          "queue": 0,
+          "timerBits": 61771,
+          "target": 0,
+          "busy": 65535,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 0,
+            "6": 0,
+            "28": 160,
+            "115": 160,
+            "24": 32,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 132,
+            "216": 4,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 15722,
+            "436": 776,
+            "632": 15722
+          }
+        },
+        "f400": {
+          "sha256": "c944947b354599badaba16035704fc20c0c0c8ad0728290cf12988b28420d8de",
+          "frame": 541,
+          "ticks": 5965,
+          "stack": [
+            127,
+            104,
+            103,
+            135
+          ],
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "flags": 6332416,
+          "queue": 0,
+          "timerBits": 59571,
+          "target": 0,
+          "busy": 0,
+          "continuationBits": 0,
+          "poll": [
+            39,
+            115
+          ],
+          "availability": {
+            "5": 0,
+            "6": 0,
+            "28": 160,
+            "115": 160,
+            "24": 32,
+            "119": 160
+          },
+          "objectBits": {
+            "38": 133,
+            "127": 132,
+            "216": 4,
+            "218": 4
+          },
+          "modelWords": {
+            "0": 776,
+            "194": 15722,
+            "436": 776,
+            "632": 15722
+          }
+        }
+      },
+      "requests": [
+        {
+          "frame": 143,
+          "site": 483909,
+          "kind": "packed"
+        },
+        {
+          "frame": 162,
+          "site": 483927,
+          "kind": "packed"
+        },
+        {
+          "frame": 184,
+          "site": 485143,
+          "kind": "id",
+          "messageId": 50
+        },
+        {
+          "frame": 192,
+          "site": 483949,
+          "kind": "packed"
+        },
+        {
+          "frame": 214,
+          "site": 485143,
+          "kind": "id",
+          "messageId": 50
+        },
+        {
+          "frame": 222,
+          "site": 483986,
+          "kind": "packed"
+        },
+        {
+          "frame": 261,
+          "site": 485143,
+          "kind": "id",
+          "messageId": 50
+        },
+        {
+          "frame": 275,
+          "site": 483094,
+          "kind": "packed"
+        },
+        {
+          "frame": 298,
+          "site": 485143,
+          "kind": "id",
+          "messageId": 50
+        },
+        {
+          "frame": 309,
+          "site": 483130,
+          "kind": "packed"
+        },
+        {
+          "frame": 329,
+          "site": 483151,
+          "kind": "packed"
+        },
+        {
+          "frame": 361,
+          "site": 483173,
+          "kind": "packed"
+        },
+        {
+          "frame": 400,
+          "site": 485062,
+          "kind": "id",
+          "messageId": 50
+        }
+      ],
+      "launches": [
+        {
+          "label": "START",
+          "frame": 142,
+          "pc": 458580,
+          "stackPointer": 22230,
+          "returnStack": [],
+          "queue": 0,
+          "availability": {
+            "5": 160,
+            "6": 160,
+            "28": 160,
+            "115": 160,
+            "24": 160,
+            "119": 160
+          }
+        }
+      ],
+      "timerArms": []
+    }
+  }
+}
