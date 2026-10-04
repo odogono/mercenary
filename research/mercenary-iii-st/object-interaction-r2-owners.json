@@ -1,0 +1,3962 @@
+{
+  "issue": 771,
+  "kind": "dion-r2-acquired-owner-evidence",
+  "sourceSha256": "71b957b3b7124959b01bd40b896c921d37902c18cfca042bef1906b155ef0170",
+  "instrumentation": {
+    "harnessSha256": "2d4597d6572d84c0e3f26236f131fecb866c64ef31c8d4d71038190be7cf4069",
+    "waitSha256": "9f0f02ea22a98b4fe4556da86129ad571daa1805ae73e98cdf397b9e55d670eb",
+    "patchSha256": "1ccd3989761d9bf69ad107d8f5a981714719fc232526c7b5246a0737cbfe705f"
+  },
+  "scope": "source and original-input owner controls; no playable admission or browser codec",
+  "pins": [
+    {
+      "role": "lamp",
+      "range": [
+        "$543DE",
+        "$5442A"
+      ],
+      "sha256": "c89fe178c2877bc189d7a5fa9f10ff67241d11a58e2abd8bd2143054dae40b68"
+    },
+    {
+      "role": "response lookup",
+      "range": [
+        "$555D4",
+        "$555F6"
+      ],
+      "sha256": "2c988d652654cbc0289fe4c6422471c6700876aed3f5a9bee279a90a95905ff8"
+    },
+    {
+      "role": "Open",
+      "range": [
+        "$4D63C",
+        "$4D6EA"
+      ],
+      "sha256": "ffd9c9d2603fca36771ff5545732fab032ec2f667b1660c235f57d8217212462"
+    },
+    {
+      "role": "definitions",
+      "range": [
+        "$4D6EA",
+        "$4D80A"
+      ],
+      "sha256": "9ce30410810ee51f44eb36be6d515ab26f0c7da066248c73041824d4bde6c70c"
+    },
+    {
+      "role": "Take",
+      "range": [
+        "$55402",
+        "$5544C"
+      ],
+      "sha256": "e9ff402eed442fbea772549cb94ad7eaaeca12db51680deaf131b3cc3167cf34"
+    },
+    {
+      "role": "Drop",
+      "range": [
+        "$558F6",
+        "$559E8"
+      ],
+      "sha256": "4000c08c9fff60ec32d9b17b68a58ad882eff5d5cabca138acfc2d1572a013e2"
+    },
+    {
+      "role": "taxi commands",
+      "range": [
+        "$4DB7C",
+        "$4DBF4"
+      ],
+      "sha256": "4cd12899e8ecc708ccf00f2a7a06831def57a6af031d6b2e3a4ff19b2dba9a93"
+    },
+    {
+      "role": "bus label reader",
+      "range": [
+        "$4DC3E",
+        "$4DC9C"
+      ],
+      "sha256": "2fa348dd9b728bccda45442f4564c5a81410bfc1b6debdf43f8f83b030911c16"
+    },
+    {
+      "role": "service card label dispatch",
+      "range": [
+        "$4DF04",
+        "$4DF46"
+      ],
+      "sha256": "06fbf7ff447bc9cc61afcf146f31f127c873029b90407430236deecf0bb4d7a6"
+    },
+    {
+      "role": "taxi call future",
+      "range": [
+        "$51EAC",
+        "$51F02"
+      ],
+      "sha256": "2491d41ff16a36694783ec133db1b51936ccef4663dcb1d4cb6ae102d299147e"
+    },
+    {
+      "role": "detector random sound gate",
+      "range": [
+        "$4CC46",
+        "$4CD10"
+      ],
+      "sha256": "ece9b5804950ebe41e11fadade6f52f7a49bce4d3078dc7e20cfadeedcf35e1a"
+    },
+    {
+      "role": "black lamp phase word",
+      "range": [
+        "$54694",
+        "$54696"
+      ],
+      "sha256": "49b66198c61930b96ddd6163a87885af9013ae44e3414b8f2c4cdc0abb752c7c"
+    },
+    {
+      "role": "blue lamp phase word",
+      "range": [
+        "$546B8",
+        "$546BA"
+      ],
+      "sha256": "76a957b0dbd26a7a283c6af7d57f9ab0ccf066decb624191d86205569e024b39"
+    }
+  ],
+  "probeSha256": "259c9980b77bd3268bd0856834ef817bc13a7788247631fc7fc1a9fa3ab1d8e8",
+  "actualAcquiredSet": [
+    103,
+    104,
+    124,
+    135,
+    165,
+    181,
+    219,
+    220
+  ],
+  "staticCandidateOnly": [
+    174
+  ],
+  "items": {
+    "103": {
+      "response": null,
+      "card": [
+        103,
+        5,
+        8,
+        0
+      ],
+      "label": {
+        "address": 240714,
+        "length": 16,
+        "sha256": "0012e2f1a3639d93d258cb81aa143b40cd67a6b07066b681882a5cc51ce01bc0"
+      },
+      "modelRecordAddress": 240730,
+      "header": 62976
+    },
+    "104": {
+      "response": null,
+      "card": [
+        104,
+        5,
+        4,
+        0
+      ],
+      "label": {
+        "address": 240992,
+        "length": 16,
+        "sha256": "8ba7a027b63229384c6013fa03553b5b4d836c2ffd00ce552fad75ad82c8c624"
+      },
+      "modelRecordAddress": 241008,
+      "header": 58394
+    },
+    "124": {
+      "response": null,
+      "card": null,
+      "label": {
+        "address": 232666,
+        "length": 16,
+        "sha256": "e528bf72205210eef3b6fd0211ae2ee5252922baa18267a71644a6f7c64edc3f"
+      },
+      "modelRecordAddress": 232682,
+      "header": 33023
+    },
+    "135": {
+      "response": null,
+      "card": null,
+      "label": {
+        "address": 212434,
+        "length": 16,
+        "sha256": "e1c6234c1d08605e08b6c22d9da824b5d00b52cb3bf7fe301ec60b3114777254"
+      },
+      "modelRecordAddress": 212450,
+      "header": 70
+    },
+    "165": {
+      "response": null,
+      "card": null,
+      "label": {
+        "address": 218080,
+        "length": 16,
+        "sha256": "78246439ee5f0f26578e1ee5a4c2b6345c3381225a82726598701bc327a9ab4b"
+      },
+      "modelRecordAddress": 218096,
+      "header": 32771,
+      "lampPhaseWord": 17323,
+      "lampPhaseSource": {
+        "range": [
+          "$54694",
+          "$54696"
+        ],
+        "sha256": "49b66198c61930b96ddd6163a87885af9013ae44e3414b8f2c4cdc0abb752c7c"
+      }
+    },
+    "181": {
+      "response": null,
+      "card": null,
+      "label": {
+        "address": 218392,
+        "length": 16,
+        "sha256": "e6a41b26ea87c5b426710cb0b5d889de685502feff3bbb070192a298c2e9e9a4"
+      },
+      "modelRecordAddress": 218408,
+      "header": 32776
+    },
+    "219": {
+      "response": null,
+      "card": null,
+      "label": {
+        "address": 226036,
+        "length": 16,
+        "sha256": "983b4ed2a777f252ca9dd3685b0cfd671f69b90ad8a52510a0b35362d1ef943b"
+      },
+      "modelRecordAddress": 226052,
+      "header": 62976
+    },
+    "220": {
+      "response": null,
+      "card": [
+        220,
+        2,
+        42,
+        0
+      ],
+      "label": {
+        "address": 226248,
+        "length": 16,
+        "sha256": "a6d8f3b95eadebc930c99854b2d3360cf8b25ba822177505247c16802d0a0619"
+      },
+      "modelRecordAddress": 226264,
+      "header": 58101
+    },
+    "174": {
+      "response": null,
+      "card": null,
+      "label": {
+        "address": 218116,
+        "length": 16,
+        "sha256": "3352d3027de8c3a2eadc9be917c12b2dfc71d57c6857f74e44edddedc9784e10"
+      },
+      "modelRecordAddress": 218132,
+      "header": 32771,
+      "lampPhaseWord": 20153,
+      "lampPhaseSource": {
+        "range": [
+          "$546B8",
+          "$546BA"
+        ],
+        "sha256": "76a957b0dbd26a7a283c6af7d57f9ab0ccf066decb624191d86205569e024b39"
+      }
+    }
+  },
+  "assertions": [
+    "coherent source",
+    "pinned R1 harness",
+    "Dion response entries",
+    "no response for candidate 103",
+    "no response for candidate 104",
+    "no response for candidate 124",
+    "no response for candidate 135",
+    "no response for candidate 165",
+    "no response for candidate 181",
+    "no response for candidate 219",
+    "no response for candidate 220",
+    "no response for candidate 174",
+    "only selected cards/document have definitions",
+    "black and blue lamp colours",
+    "blue lamp gate is slot40",
+    "colour4 lamp gate is slot41",
+    "black source RAM",
+    "black source checkpoint",
+    "black accepted wait instrumentation",
+    "black source frame and ticks",
+    "black input-only prefix",
+    "black eleven-tick top gaps",
+    "black within-frame ticks",
+    "black masked frame",
+    "black requested positive captures complete",
+    "black capture frame and tick boundaries",
+    "black key38 independent of stack",
+    "black detector not held",
+    "black random-sound gate remains clear",
+    "black retained taxi card",
+    "black acquired head",
+    "black unmatched Open has no card/sound event",
+    "black Read reaches retained taxi card",
+    "mailbox source RAM",
+    "mailbox source checkpoint",
+    "mailbox accepted wait instrumentation",
+    "mailbox source frame and ticks",
+    "mailbox input-only prefix",
+    "mailbox eleven-tick top gaps",
+    "mailbox within-frame ticks",
+    "mailbox masked frame",
+    "mailbox requested positive captures complete",
+    "mailbox capture frame and tick boundaries",
+    "mailbox key38 independent of stack",
+    "mailbox detector not held",
+    "mailbox random-sound gate remains clear",
+    "mailbox retained taxi card",
+    "mailbox acquired head",
+    "mailbox unmatched Open has no card/sound event",
+    "mailbox Read reaches retained taxi card",
+    "cobweb source RAM",
+    "cobweb source checkpoint",
+    "cobweb accepted wait instrumentation",
+    "cobweb source frame and ticks",
+    "cobweb input-only prefix",
+    "cobweb eleven-tick top gaps",
+    "cobweb within-frame ticks",
+    "cobweb masked frame",
+    "cobweb requested positive captures complete",
+    "cobweb capture frame and tick boundaries",
+    "cobweb key38 independent of stack",
+    "cobweb detector not held",
+    "cobweb random-sound gate remains clear",
+    "cobweb retained taxi card",
+    "cobweb acquired head",
+    "cobweb unmatched Open has no card/sound event",
+    "cobweb Read reaches retained taxi card",
+    "key source RAM",
+    "key source checkpoint",
+    "key accepted wait instrumentation",
+    "key source frame and ticks",
+    "key input-only prefix",
+    "key eleven-tick top gaps",
+    "key within-frame ticks",
+    "key masked frame",
+    "key requested positive captures complete",
+    "key capture frame and tick boundaries",
+    "key key38 independent of stack",
+    "key detector not held",
+    "key random-sound gate remains clear",
+    "key retained taxi card",
+    "key acquired head",
+    "key unmatched Open has no card/sound event",
+    "key Read reaches retained taxi card",
+    "black-replay source RAM",
+    "black-replay source checkpoint",
+    "black-replay accepted wait instrumentation",
+    "black-replay source frame and ticks",
+    "black-replay input-only prefix",
+    "black-replay eleven-tick top gaps",
+    "black-replay within-frame ticks",
+    "black-replay masked frame",
+    "black-replay requested positive captures complete",
+    "black-replay capture frame and tick boundaries",
+    "black-replay key38 independent of stack",
+    "black-replay detector not held",
+    "black-replay random-sound gate remains clear",
+    "black-replay retained taxi card",
+    "black Drop clears held and places actual Body/cell",
+    "black re-pick restores stack and independent held state",
+    "black partial forward/reverse label scroll",
+    "Drop sound requests follow committed stack removal",
+    "Take sound/table/sound ordering",
+    "placed black executes both lamp outcomes",
+    "black lamp outcomes match source slot phase and retained frame",
+    "lamp reader sees placed black before re-pick action",
+    "black restored full RAM f139",
+    "black restored full RAM f140",
+    "black restored full RAM f141",
+    "black restored full RAM f150"
+  ],
+  "families": {
+    "black": {
+      "sourcePath": "restricted/mercenary-iii-772/black-detour/f371",
+      "sourceRamSha256": "b9c66cfda7bc54d7e56e144f3699408b9c7df4a9c23817db841582fe58dd2533",
+      "sourceSavSha256": "a7dc641484ddca028a305bed62eb13dea2e6aa5e000dd72bb9db332af2d912e6",
+      "manifestSha256": "0708a94f067ddde18458b87e4c8536cb9dce80d8ef8729da81ef8f870d342455",
+      "logSha256": "7038b91020f3b439399b330743d875d4acc8ba665e921e2c19f0e16e85c7a3c6",
+      "events": [
+        [
+          20,
+          [
+            "w $56726 $72"
+          ]
+        ],
+        [
+          40,
+          [
+            "w $56726 $66"
+          ]
+        ],
+        [
+          60,
+          [
+            "w $56726 $4e"
+          ]
+        ],
+        [
+          80,
+          [
+            "w $56726 $4a"
+          ]
+        ],
+        [
+          100,
+          [
+            "w $56726 $50"
+          ]
+        ],
+        [
+          140,
+          [
+            "w $56726 $48"
+          ]
+        ]
+      ],
+      "baseFrame": 2501,
+      "topCount": 151,
+      "elevenTickGaps": 150,
+      "inFrameTickSamples": 397,
+      "maskedSamples": 247,
+      "captures": {
+        "f100": {
+          "sha256": "3fc542bffaf164268998742601d1d8b277f1673096c10a4f3ca04a3cc57baf61",
+          "frame": 2601,
+          "ticks": 24341,
+          "stack": [
+            165,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            165
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "78246439ee5f0f26578e1ee5a4c2b6345c3381225a82726598701bc327a9ab4b",
+          "eye": [
+            165771529,
+            63,
+            69898542
+          ],
+          "body": 60,
+          "cell": 2,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 132,
+            "group": 49,
+            "zone": 6,
+            "xyz": [
+              33237,
+              0,
+              99100
+            ],
+            "residence": [
+              120,
+              1,
+              0,
+              16
+            ]
+          }
+        },
+        "f101": {
+          "sha256": "b58a603c4e2718f76d0c07ffcd30df59339e0066a8e3b505c1b9189c791080ae",
+          "frame": 2602,
+          "ticks": 24352,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 5,
+          "labelSha256": "32e848b060815622a5748eaee08cf0212c0cbde70986b6af65f9d9480ef83bca",
+          "eye": [
+            165771529,
+            63,
+            69898542
+          ],
+          "body": 60,
+          "cell": 2,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771529,
+              0,
+              69898542
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f105": {
+          "sha256": "bd7ee45583d151a4077e1f686d77e2a6df210eff1a023e8ed1cfbdfeb8e2a243",
+          "frame": 2606,
+          "ticks": 24396,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "8ba7a027b63229384c6013fa03553b5b4d836c2ffd00ce552fad75ad82c8c624",
+          "eye": [
+            165771529,
+            63,
+            69898542
+          ],
+          "body": 60,
+          "cell": 2,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771529,
+              0,
+              69898542
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f139": {
+          "sha256": "84ac5a15bce7d38e5faf32584a00db0b4ccab1edafe93833ab646ee58c27b3de",
+          "frame": 2640,
+          "ticks": 24770,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "8ba7a027b63229384c6013fa03553b5b4d836c2ffd00ce552fad75ad82c8c624",
+          "eye": [
+            165771529,
+            63,
+            69898542
+          ],
+          "body": 60,
+          "cell": 2,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771529,
+              0,
+              69898542
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f140": {
+          "sha256": "d1813464113415c934d16515a8c5f05624053e93963b045e56c484eede9dfad6",
+          "frame": 2641,
+          "ticks": 24781,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "8ba7a027b63229384c6013fa03553b5b4d836c2ffd00ce552fad75ad82c8c624",
+          "eye": [
+            165771529,
+            63,
+            69898542
+          ],
+          "body": 60,
+          "cell": 2,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771529,
+              0,
+              69898542
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f141": {
+          "sha256": "4589533b675430cbcca835420edf5bc662093e14a9a1e77943314a9dc973831e",
+          "frame": 2642,
+          "ticks": 24792,
+          "stack": [
+            165,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            165
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": -5,
+          "labelSha256": "49c4fe9d39827b7ab1b9b686a1de66ff092a376b14799f3c491fa92a177d57d4",
+          "eye": [
+            165771529,
+            63,
+            69898542
+          ],
+          "body": 60,
+          "cell": 2,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 132,
+            "group": 49,
+            "zone": 6,
+            "xyz": [
+              33237,
+              0,
+              99100
+            ],
+            "residence": [
+              120,
+              1,
+              0,
+              16
+            ]
+          }
+        },
+        "f150": {
+          "sha256": "b30656aeb198afd213dea5b9f07ac9781bd81d8aed2a56719f77950707517856",
+          "frame": 2651,
+          "ticks": 24891,
+          "stack": [
+            165,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            165
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "78246439ee5f0f26578e1ee5a4c2b6345c3381225a82726598701bc327a9ab4b",
+          "eye": [
+            165771529,
+            63,
+            69898542
+          ],
+          "body": 60,
+          "cell": 2,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 132,
+            "group": 49,
+            "zone": 6,
+            "xyz": [
+              33237,
+              0,
+              99100
+            ],
+            "residence": [
+              120,
+              1,
+              0,
+              16
+            ]
+          }
+        },
+        "f19": {
+          "sha256": "39f93dd7f3ad865b317cc69271f030747e394fe18a1e09d15b7fe8a4c048a3df",
+          "frame": 2520,
+          "ticks": 23450,
+          "stack": [
+            165,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            165
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 0,
+          "scroll": 0,
+          "labelSha256": "78246439ee5f0f26578e1ee5a4c2b6345c3381225a82726598701bc327a9ab4b",
+          "eye": [
+            165771529,
+            63,
+            69898542
+          ],
+          "body": 60,
+          "cell": 2,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 132,
+            "group": 49,
+            "zone": 6,
+            "xyz": [
+              33237,
+              0,
+              99100
+            ],
+            "residence": [
+              120,
+              1,
+              0,
+              16
+            ]
+          }
+        },
+        "f20": {
+          "sha256": "f8dc45e967866594d2fe9c3e6b882c574c78df1c03cf134f7b094766ec0117c2",
+          "frame": 2521,
+          "ticks": 23461,
+          "stack": [
+            165,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            165
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 0,
+          "scroll": 0,
+          "labelSha256": "78246439ee5f0f26578e1ee5a4c2b6345c3381225a82726598701bc327a9ab4b",
+          "eye": [
+            165771529,
+            63,
+            69898542
+          ],
+          "body": 60,
+          "cell": 2,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 132,
+            "group": 49,
+            "zone": 6,
+            "xyz": [
+              33237,
+              0,
+              99100
+            ],
+            "residence": [
+              120,
+              1,
+              0,
+              16
+            ]
+          }
+        },
+        "f21": {
+          "sha256": "f3932f4bdd3c8ddd07e5c280db533f23fae3f7605e2800078a8126b1d8de4d32",
+          "frame": 2522,
+          "ticks": 23472,
+          "stack": [
+            165,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            165
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 0,
+          "scroll": 0,
+          "labelSha256": "78246439ee5f0f26578e1ee5a4c2b6345c3381225a82726598701bc327a9ab4b",
+          "eye": [
+            165771529,
+            63,
+            69898542
+          ],
+          "body": 60,
+          "cell": 2,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 132,
+            "group": 49,
+            "zone": 6,
+            "xyz": [
+              33237,
+              0,
+              99100
+            ],
+            "residence": [
+              120,
+              1,
+              0,
+              16
+            ]
+          }
+        },
+        "f40": {
+          "sha256": "c44a2efdf7b5ea50b8d7d8bc68a978f51d3c0969b03ff712ee1202a8787d4656",
+          "frame": 2541,
+          "ticks": 23681,
+          "stack": [
+            165,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            165
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 0,
+          "scroll": 0,
+          "labelSha256": "78246439ee5f0f26578e1ee5a4c2b6345c3381225a82726598701bc327a9ab4b",
+          "eye": [
+            165771529,
+            63,
+            69898542
+          ],
+          "body": 60,
+          "cell": 2,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 132,
+            "group": 49,
+            "zone": 6,
+            "xyz": [
+              33237,
+              0,
+              99100
+            ],
+            "residence": [
+              120,
+              1,
+              0,
+              16
+            ]
+          }
+        },
+        "f41": {
+          "sha256": "0b6551230319e713d18c0c2d68075e9a15223d20bd4fb37e7e766b49677d22a4",
+          "frame": 2542,
+          "ticks": 23692,
+          "stack": [
+            165,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            165
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "78246439ee5f0f26578e1ee5a4c2b6345c3381225a82726598701bc327a9ab4b",
+          "eye": [
+            165771529,
+            63,
+            69898542
+          ],
+          "body": 60,
+          "cell": 2,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 132,
+            "group": 49,
+            "zone": 6,
+            "xyz": [
+              33237,
+              0,
+              99100
+            ],
+            "residence": [
+              120,
+              1,
+              0,
+              16
+            ]
+          }
+        },
+        "f60": {
+          "sha256": "d5c9d284b3f779620e331d8c3bdb132ce19f9deb19d69025ee9bbc80597449b5",
+          "frame": 2561,
+          "ticks": 23901,
+          "stack": [
+            165,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            165
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "78246439ee5f0f26578e1ee5a4c2b6345c3381225a82726598701bc327a9ab4b",
+          "eye": [
+            165771529,
+            63,
+            69898542
+          ],
+          "body": 60,
+          "cell": 2,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 132,
+            "group": 49,
+            "zone": 6,
+            "xyz": [
+              33237,
+              0,
+              99100
+            ],
+            "residence": [
+              120,
+              1,
+              0,
+              16
+            ]
+          }
+        },
+        "f61": {
+          "sha256": "d7b353428900a6c2a40dff76877566190e544f707e26462382ea7c717402199d",
+          "frame": 2562,
+          "ticks": 23912,
+          "stack": [
+            165,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            165
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "78246439ee5f0f26578e1ee5a4c2b6345c3381225a82726598701bc327a9ab4b",
+          "eye": [
+            165771529,
+            63,
+            69898542
+          ],
+          "body": 60,
+          "cell": 2,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 132,
+            "group": 49,
+            "zone": 6,
+            "xyz": [
+              33237,
+              0,
+              99100
+            ],
+            "residence": [
+              120,
+              1,
+              0,
+              16
+            ]
+          }
+        },
+        "f80": {
+          "sha256": "4739f6ce6183c5a281d73e6f7f0a0eb75bf5db5ec1f7ad1cf5043a627ab2d4a9",
+          "frame": 2581,
+          "ticks": 24121,
+          "stack": [
+            165,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            165
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "78246439ee5f0f26578e1ee5a4c2b6345c3381225a82726598701bc327a9ab4b",
+          "eye": [
+            165771529,
+            63,
+            69898542
+          ],
+          "body": 60,
+          "cell": 2,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 132,
+            "group": 49,
+            "zone": 6,
+            "xyz": [
+              33237,
+              0,
+              99100
+            ],
+            "residence": [
+              120,
+              1,
+              0,
+              16
+            ]
+          }
+        },
+        "f81": {
+          "sha256": "eac7a23eee3a7c97926bcfed3917ba6d3ea66e03b1df10117d844cf9d5ec203c",
+          "frame": 2582,
+          "ticks": 24132,
+          "stack": [
+            165,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            165
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "78246439ee5f0f26578e1ee5a4c2b6345c3381225a82726598701bc327a9ab4b",
+          "eye": [
+            165771529,
+            63,
+            69898542
+          ],
+          "body": 60,
+          "cell": 2,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 132,
+            "group": 49,
+            "zone": 6,
+            "xyz": [
+              33237,
+              0,
+              99100
+            ],
+            "residence": [
+              120,
+              1,
+              0,
+              16
+            ]
+          }
+        },
+        "f99": {
+          "sha256": "4fe338a2f80e54f767a821ccbbe30d0e61c5181b779637a9017e69612e4a96d3",
+          "frame": 2600,
+          "ticks": 24330,
+          "stack": [
+            165,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            165
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "78246439ee5f0f26578e1ee5a4c2b6345c3381225a82726598701bc327a9ab4b",
+          "eye": [
+            165771529,
+            63,
+            69898542
+          ],
+          "body": 60,
+          "cell": 2,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 132,
+            "group": 49,
+            "zone": 6,
+            "xyz": [
+              33237,
+              0,
+              99100
+            ],
+            "residence": [
+              120,
+              1,
+              0,
+              16
+            ]
+          }
+        }
+      },
+      "actionOrder": [
+        {
+          "frame": 2521,
+          "label": "PANEL_KEY",
+          "stack": [
+            165,
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 2521,
+          "label": "OPEN",
+          "stack": [
+            165,
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 2541,
+          "label": "PANEL_KEY",
+          "stack": [
+            165,
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 2541,
+          "label": "SOUND",
+          "stack": [
+            165,
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 2561,
+          "label": "PANEL_KEY",
+          "stack": [
+            165,
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 2581,
+          "label": "PANEL_KEY",
+          "stack": [
+            165,
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 2601,
+          "label": "DROP",
+          "stack": [
+            165,
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 2601,
+          "label": "DROP_ACCEPT",
+          "stack": [
+            165,
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 2601,
+          "label": "SOUND",
+          "stack": [
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 2601,
+          "label": "SOUND",
+          "stack": [
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 2641,
+          "label": "TAKE",
+          "stack": [
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 2641,
+          "label": "TAKE_ACCEPT",
+          "stack": [
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 2641,
+          "label": "SOUND",
+          "stack": [
+            165,
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 2641,
+          "label": "RESPONSE_TABLE",
+          "stack": [
+            165,
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 2641,
+          "label": "SOUND",
+          "stack": [
+            165,
+            104,
+            103,
+            135
+          ]
+        }
+      ],
+      "lampOutcomes": [
+        {
+          "frame": 2602,
+          "value": 1
+        },
+        {
+          "frame": 2603,
+          "value": 1
+        },
+        {
+          "frame": 2604,
+          "value": 1
+        },
+        {
+          "frame": 2605,
+          "value": 3
+        },
+        {
+          "frame": 2606,
+          "value": 3
+        },
+        {
+          "frame": 2607,
+          "value": 3
+        },
+        {
+          "frame": 2608,
+          "value": 3
+        },
+        {
+          "frame": 2609,
+          "value": 1
+        },
+        {
+          "frame": 2610,
+          "value": 1
+        },
+        {
+          "frame": 2611,
+          "value": 1
+        },
+        {
+          "frame": 2612,
+          "value": 1
+        },
+        {
+          "frame": 2613,
+          "value": 3
+        },
+        {
+          "frame": 2614,
+          "value": 3
+        },
+        {
+          "frame": 2615,
+          "value": 3
+        },
+        {
+          "frame": 2616,
+          "value": 3
+        },
+        {
+          "frame": 2617,
+          "value": 1
+        },
+        {
+          "frame": 2618,
+          "value": 1
+        },
+        {
+          "frame": 2619,
+          "value": 1
+        },
+        {
+          "frame": 2620,
+          "value": 1
+        },
+        {
+          "frame": 2621,
+          "value": 3
+        },
+        {
+          "frame": 2622,
+          "value": 3
+        },
+        {
+          "frame": 2623,
+          "value": 3
+        },
+        {
+          "frame": 2624,
+          "value": 3
+        },
+        {
+          "frame": 2625,
+          "value": 1
+        },
+        {
+          "frame": 2626,
+          "value": 1
+        },
+        {
+          "frame": 2627,
+          "value": 1
+        },
+        {
+          "frame": 2628,
+          "value": 1
+        },
+        {
+          "frame": 2629,
+          "value": 3
+        },
+        {
+          "frame": 2630,
+          "value": 3
+        },
+        {
+          "frame": 2631,
+          "value": 3
+        },
+        {
+          "frame": 2632,
+          "value": 3
+        },
+        {
+          "frame": 2633,
+          "value": 1
+        },
+        {
+          "frame": 2634,
+          "value": 1
+        },
+        {
+          "frame": 2635,
+          "value": 1
+        },
+        {
+          "frame": 2636,
+          "value": 1
+        },
+        {
+          "frame": 2637,
+          "value": 3
+        },
+        {
+          "frame": 2638,
+          "value": 3
+        },
+        {
+          "frame": 2639,
+          "value": 3
+        },
+        {
+          "frame": 2640,
+          "value": 3
+        },
+        {
+          "frame": 2641,
+          "value": 1
+        }
+      ]
+    },
+    "mailbox": {
+      "sourcePath": "restricted/mercenary-iii-772/metis-mailbox/f11",
+      "sourceRamSha256": "864a7af2a25526bc26c4802a52a60b5681cfb6161a94c63e3da9e548824f5a40",
+      "sourceSavSha256": "9dd9500d9c3eecc19319a6c4635a08a947bae452787b973ab475863eb6215a68",
+      "manifestSha256": "3d1b0dec7f8a1430017e66d4389810a42e3192992e819aa6bc2e9c5dcf0cc351",
+      "logSha256": "4806d1b29e16dd87fcf493c4fdb0cc0bc7a3c90f6da36a4094b90e151b1681d4",
+      "events": [
+        [
+          20,
+          [
+            "w $56726 $72"
+          ]
+        ],
+        [
+          40,
+          [
+            "w $56726 $66"
+          ]
+        ],
+        [
+          60,
+          [
+            "w $56726 $4e"
+          ]
+        ],
+        [
+          80,
+          [
+            "w $56726 $4a"
+          ]
+        ]
+      ],
+      "baseFrame": 168,
+      "topCount": 91,
+      "elevenTickGaps": 90,
+      "inFrameTickSamples": 369,
+      "maskedSamples": 279,
+      "captures": {
+        "f19": {
+          "sha256": "6ffb4a38e7fdc8a94ad9283c967a9429a5b96202a4ffc4a96544cbb12acc88e2",
+          "frame": 187,
+          "ticks": 2071,
+          "stack": [
+            219,
+            220,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            219,
+            220
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 0,
+          "scroll": 0,
+          "labelSha256": "983b4ed2a777f252ca9dd3685b0cfd671f69b90ad8a52510a0b35362d1ef943b",
+          "eye": [
+            165773321,
+            63,
+            70287464
+          ],
+          "body": 60,
+          "cell": 98,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771603,
+              0,
+              69898068
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f20": {
+          "sha256": "95cadd160afc8251d22a1af34f0290acc7c78e370ea43df0fb97d600807f505d",
+          "frame": 188,
+          "ticks": 2082,
+          "stack": [
+            219,
+            220,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            219,
+            220
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 0,
+          "scroll": 0,
+          "labelSha256": "983b4ed2a777f252ca9dd3685b0cfd671f69b90ad8a52510a0b35362d1ef943b",
+          "eye": [
+            165773321,
+            63,
+            70287464
+          ],
+          "body": 60,
+          "cell": 98,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771603,
+              0,
+              69898068
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f21": {
+          "sha256": "c38f8e8eaa463d10df787c85c36eacae42ef5664aabcaa7e3fa45ea392ded312",
+          "frame": 189,
+          "ticks": 2093,
+          "stack": [
+            219,
+            220,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            219,
+            220
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 0,
+          "scroll": 0,
+          "labelSha256": "983b4ed2a777f252ca9dd3685b0cfd671f69b90ad8a52510a0b35362d1ef943b",
+          "eye": [
+            165773321,
+            63,
+            70287464
+          ],
+          "body": 60,
+          "cell": 98,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771603,
+              0,
+              69898068
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f40": {
+          "sha256": "e41e574c4d3b93d18a589e7979c91c0eb540fca2bee72d355db8535728e03801",
+          "frame": 208,
+          "ticks": 2302,
+          "stack": [
+            219,
+            220,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            219,
+            220
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 0,
+          "scroll": 0,
+          "labelSha256": "983b4ed2a777f252ca9dd3685b0cfd671f69b90ad8a52510a0b35362d1ef943b",
+          "eye": [
+            165773321,
+            63,
+            70287464
+          ],
+          "body": 60,
+          "cell": 98,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771603,
+              0,
+              69898068
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f41": {
+          "sha256": "7d5f7e120451633f98b3249d164d537cf44de166aa227f1b513b767db8d74697",
+          "frame": 209,
+          "ticks": 2313,
+          "stack": [
+            219,
+            220,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            219,
+            220
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "983b4ed2a777f252ca9dd3685b0cfd671f69b90ad8a52510a0b35362d1ef943b",
+          "eye": [
+            165773321,
+            63,
+            70287464
+          ],
+          "body": 60,
+          "cell": 98,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771603,
+              0,
+              69898068
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f60": {
+          "sha256": "5a33c780e334c64538690a04677fddc37b06b88ae85e4aae0190b374a06134cd",
+          "frame": 228,
+          "ticks": 2522,
+          "stack": [
+            219,
+            220,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            219,
+            220
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "983b4ed2a777f252ca9dd3685b0cfd671f69b90ad8a52510a0b35362d1ef943b",
+          "eye": [
+            165773321,
+            63,
+            70287464
+          ],
+          "body": 60,
+          "cell": 98,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771603,
+              0,
+              69898068
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f61": {
+          "sha256": "3b11a4423fe771a9619e452244073bd8447a4207692f1364bd784bb7ee5a358e",
+          "frame": 229,
+          "ticks": 2533,
+          "stack": [
+            219,
+            220,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            219,
+            220
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "983b4ed2a777f252ca9dd3685b0cfd671f69b90ad8a52510a0b35362d1ef943b",
+          "eye": [
+            165773321,
+            63,
+            70287464
+          ],
+          "body": 60,
+          "cell": 98,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771603,
+              0,
+              69898068
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f80": {
+          "sha256": "ae1d48243bb64cff6bbaead757d40831035f34a92f80ea20b5714c2f76fe1754",
+          "frame": 248,
+          "ticks": 2742,
+          "stack": [
+            219,
+            220,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            219,
+            220
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "983b4ed2a777f252ca9dd3685b0cfd671f69b90ad8a52510a0b35362d1ef943b",
+          "eye": [
+            165773321,
+            63,
+            70287464
+          ],
+          "body": 60,
+          "cell": 98,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771603,
+              0,
+              69898068
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f81": {
+          "sha256": "863eb313550b17c6b3aa1b0ef2a33bfe49e65bc4d662794dd9c42b2ee1ff84c1",
+          "frame": 249,
+          "ticks": 2753,
+          "stack": [
+            219,
+            220,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            219,
+            220
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "983b4ed2a777f252ca9dd3685b0cfd671f69b90ad8a52510a0b35362d1ef943b",
+          "eye": [
+            165773321,
+            63,
+            70287464
+          ],
+          "body": 60,
+          "cell": 98,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771603,
+              0,
+              69898068
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f90": {
+          "sha256": "5b728651e238e6469051bc47eee3a1141d6395de82348f8f29e8a612858ebbe7",
+          "frame": 258,
+          "ticks": 2852,
+          "stack": [
+            219,
+            220,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            219,
+            220
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "983b4ed2a777f252ca9dd3685b0cfd671f69b90ad8a52510a0b35362d1ef943b",
+          "eye": [
+            165773321,
+            63,
+            70287464
+          ],
+          "body": 60,
+          "cell": 98,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771603,
+              0,
+              69898068
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        }
+      },
+      "actionOrder": [
+        {
+          "frame": 188,
+          "label": "PANEL_KEY",
+          "stack": [
+            219,
+            220,
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 188,
+          "label": "OPEN",
+          "stack": [
+            219,
+            220,
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 208,
+          "label": "PANEL_KEY",
+          "stack": [
+            219,
+            220,
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 208,
+          "label": "SOUND",
+          "stack": [
+            219,
+            220,
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 228,
+          "label": "PANEL_KEY",
+          "stack": [
+            219,
+            220,
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 248,
+          "label": "PANEL_KEY",
+          "stack": [
+            219,
+            220,
+            104,
+            103,
+            135
+          ]
+        }
+      ]
+    },
+    "cobweb": {
+      "sourcePath": "restricted/mercenary-iii-772/cobweb/f111",
+      "sourceRamSha256": "c0555561ec5b3b21a8778fb81e74fa999566be9e1623df85aa1bba610f4a3582",
+      "sourceSavSha256": "32f0467459d2163e97548789d3dd812e9ecd51243d005abf14ef3d855820d7fd",
+      "manifestSha256": "61a8ce55b11a9b1979b19f89ab1a69394100127b6fb798772847dc3590feadc1",
+      "logSha256": "8a68d072b3116b1d40e4754f2c8010fa0909c51dadd82b4292b444f76d17f033",
+      "events": [
+        [
+          20,
+          [
+            "w $56726 $72"
+          ]
+        ],
+        [
+          40,
+          [
+            "w $56726 $66"
+          ]
+        ],
+        [
+          60,
+          [
+            "w $56726 $4e"
+          ]
+        ],
+        [
+          80,
+          [
+            "w $56726 $4a"
+          ]
+        ]
+      ],
+      "baseFrame": 112,
+      "topCount": 91,
+      "elevenTickGaps": 90,
+      "inFrameTickSamples": 369,
+      "maskedSamples": 279,
+      "captures": {
+        "f19": {
+          "sha256": "bb582881665a01e1a2f5743333840f2e05ac58624c43db62a29ddab182c4e719",
+          "frame": 131,
+          "ticks": 1455,
+          "stack": [
+            124,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            124,
+            135
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 0,
+          "scroll": 0,
+          "labelSha256": "e528bf72205210eef3b6fd0211ae2ee5252922baa18267a71644a6f7c64edc3f",
+          "eye": [
+            165773321,
+            63,
+            70288616
+          ],
+          "body": 60,
+          "cell": 98,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771603,
+              0,
+              69898068
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f20": {
+          "sha256": "3f887f5e94b25dac4cc98c41b01c09024fb9c1f5c58a93235aa2b6b2e5974a14",
+          "frame": 132,
+          "ticks": 1466,
+          "stack": [
+            124,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            124,
+            135
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 0,
+          "scroll": 0,
+          "labelSha256": "e528bf72205210eef3b6fd0211ae2ee5252922baa18267a71644a6f7c64edc3f",
+          "eye": [
+            165773321,
+            63,
+            70288616
+          ],
+          "body": 60,
+          "cell": 98,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771603,
+              0,
+              69898068
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f21": {
+          "sha256": "bacfb88641d7f1b3ddbba83ea50bb74d74fc25652bfeb934dc9c00c0e0bac4e7",
+          "frame": 133,
+          "ticks": 1477,
+          "stack": [
+            124,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            124,
+            135
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 0,
+          "scroll": 0,
+          "labelSha256": "e528bf72205210eef3b6fd0211ae2ee5252922baa18267a71644a6f7c64edc3f",
+          "eye": [
+            165773321,
+            63,
+            70288616
+          ],
+          "body": 60,
+          "cell": 98,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771603,
+              0,
+              69898068
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f40": {
+          "sha256": "a1a91e327f80465034a1376103e0e921c542c66ea344dd4f81457fa5a8eb005a",
+          "frame": 152,
+          "ticks": 1686,
+          "stack": [
+            124,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            124,
+            135
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 0,
+          "scroll": 0,
+          "labelSha256": "e528bf72205210eef3b6fd0211ae2ee5252922baa18267a71644a6f7c64edc3f",
+          "eye": [
+            165773321,
+            63,
+            70288616
+          ],
+          "body": 60,
+          "cell": 98,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771603,
+              0,
+              69898068
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f41": {
+          "sha256": "571ff5a0d5b948949d34ccc750430229ad8c81f4ea9bc93a01cf7417560039be",
+          "frame": 153,
+          "ticks": 1697,
+          "stack": [
+            124,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            124,
+            135
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "e528bf72205210eef3b6fd0211ae2ee5252922baa18267a71644a6f7c64edc3f",
+          "eye": [
+            165773321,
+            63,
+            70288616
+          ],
+          "body": 60,
+          "cell": 98,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771603,
+              0,
+              69898068
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f60": {
+          "sha256": "1e13ce7d1c6aa4203128c1c6b887123666f991526aa1cd90eb6800e42f187135",
+          "frame": 172,
+          "ticks": 1906,
+          "stack": [
+            124,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            124,
+            135
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "e528bf72205210eef3b6fd0211ae2ee5252922baa18267a71644a6f7c64edc3f",
+          "eye": [
+            165773321,
+            63,
+            70288616
+          ],
+          "body": 60,
+          "cell": 98,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771603,
+              0,
+              69898068
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f61": {
+          "sha256": "1837d510e1717e3043366c399b094e9afa35b672fbc65da4b149fe36b2e0a982",
+          "frame": 173,
+          "ticks": 1917,
+          "stack": [
+            124,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            124,
+            135
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "e528bf72205210eef3b6fd0211ae2ee5252922baa18267a71644a6f7c64edc3f",
+          "eye": [
+            165773321,
+            63,
+            70288616
+          ],
+          "body": 60,
+          "cell": 98,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771603,
+              0,
+              69898068
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f80": {
+          "sha256": "d407e5cdef92f3c45970185aa489dee84eda10adcfc085a3f0ee6801c28cfc85",
+          "frame": 192,
+          "ticks": 2126,
+          "stack": [
+            124,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            124,
+            135
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "e528bf72205210eef3b6fd0211ae2ee5252922baa18267a71644a6f7c64edc3f",
+          "eye": [
+            165773321,
+            63,
+            70288616
+          ],
+          "body": 60,
+          "cell": 98,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771603,
+              0,
+              69898068
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f81": {
+          "sha256": "621d28abf4e44fee8822ff1395fd7497a491e7f8fd9cf8455e3a68985c9bc431",
+          "frame": 193,
+          "ticks": 2137,
+          "stack": [
+            124,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            124,
+            135
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "e528bf72205210eef3b6fd0211ae2ee5252922baa18267a71644a6f7c64edc3f",
+          "eye": [
+            165773321,
+            63,
+            70288616
+          ],
+          "body": 60,
+          "cell": 98,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771603,
+              0,
+              69898068
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f90": {
+          "sha256": "e871266e769000ba13100ed7917aa8de3706610c1e6ee1c40a18c7018a7bebe7",
+          "frame": 202,
+          "ticks": 2236,
+          "stack": [
+            124,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            124,
+            135
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "e528bf72205210eef3b6fd0211ae2ee5252922baa18267a71644a6f7c64edc3f",
+          "eye": [
+            165773321,
+            63,
+            70288616
+          ],
+          "body": 60,
+          "cell": 98,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771603,
+              0,
+              69898068
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        }
+      },
+      "actionOrder": [
+        {
+          "frame": 132,
+          "label": "PANEL_KEY",
+          "stack": [
+            124,
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 132,
+          "label": "OPEN",
+          "stack": [
+            124,
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 152,
+          "label": "PANEL_KEY",
+          "stack": [
+            124,
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 152,
+          "label": "SOUND",
+          "stack": [
+            124,
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 172,
+          "label": "PANEL_KEY",
+          "stack": [
+            124,
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 192,
+          "label": "PANEL_KEY",
+          "stack": [
+            124,
+            104,
+            103,
+            135
+          ]
+        }
+      ]
+    },
+    "key": {
+      "sourcePath": "restricted/mercenary-iii-772/key-back/f111",
+      "sourceRamSha256": "b1f5abef6fb4deb93e172980460118bd0148a58ec0a79378b1677f3acff1fd8d",
+      "sourceSavSha256": "9e533b72827307b40b4f83deaeab6d6f27e327a0d04db0ce773034ee1d267f71",
+      "manifestSha256": "aa74bb072a8bdb5e1f87f11fb2515659ce1a7292fbc2cc96e541772505aad5ce",
+      "logSha256": "9c749ef704503b9f13c2c01602de88e74990472f04bd008a46d19e29b8a710c9",
+      "events": [
+        [
+          20,
+          [
+            "w $56726 $72"
+          ]
+        ],
+        [
+          40,
+          [
+            "w $56726 $66"
+          ]
+        ],
+        [
+          60,
+          [
+            "w $56726 $4e"
+          ]
+        ],
+        [
+          80,
+          [
+            "w $56726 $4a"
+          ]
+        ]
+      ],
+      "baseFrame": 112,
+      "topCount": 91,
+      "elevenTickGaps": 90,
+      "inFrameTickSamples": 369,
+      "maskedSamples": 279,
+      "captures": {
+        "f19": {
+          "sha256": "b7b46791d95e022492e7c15b39b4ca34191e89e30b3d2a7646ebb0b73bfa55fd",
+          "frame": 131,
+          "ticks": 1455,
+          "stack": [
+            181,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            181
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 0,
+          "scroll": 0,
+          "labelSha256": "e6a41b26ea87c5b426710cb0b5d889de685502feff3bbb070192a298c2e9e9a4",
+          "eye": [
+            165773321,
+            63,
+            70290288
+          ],
+          "body": 60,
+          "cell": 98,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771603,
+              0,
+              69898068
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f20": {
+          "sha256": "4275fb5a38479548dc4b5e443f35778eb96fa2c560e5e73fb8a2b3dbf8e2c971",
+          "frame": 132,
+          "ticks": 1466,
+          "stack": [
+            181,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            181
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 0,
+          "scroll": 0,
+          "labelSha256": "e6a41b26ea87c5b426710cb0b5d889de685502feff3bbb070192a298c2e9e9a4",
+          "eye": [
+            165773321,
+            63,
+            70290288
+          ],
+          "body": 60,
+          "cell": 98,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771603,
+              0,
+              69898068
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f21": {
+          "sha256": "9691ab8454d1357242a5f0ce953d51a636271bed5277e2263d9b8c34a154ba9d",
+          "frame": 133,
+          "ticks": 1477,
+          "stack": [
+            181,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            181
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 0,
+          "scroll": 0,
+          "labelSha256": "e6a41b26ea87c5b426710cb0b5d889de685502feff3bbb070192a298c2e9e9a4",
+          "eye": [
+            165773321,
+            63,
+            70290288
+          ],
+          "body": 60,
+          "cell": 98,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771603,
+              0,
+              69898068
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f40": {
+          "sha256": "270747f2bd7a53af3f4c719716310fdd55e2de833cfffa0d9bb6858e4cc04fdc",
+          "frame": 152,
+          "ticks": 1686,
+          "stack": [
+            181,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            181
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 0,
+          "scroll": 0,
+          "labelSha256": "e6a41b26ea87c5b426710cb0b5d889de685502feff3bbb070192a298c2e9e9a4",
+          "eye": [
+            165773321,
+            63,
+            70290288
+          ],
+          "body": 60,
+          "cell": 98,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771603,
+              0,
+              69898068
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f41": {
+          "sha256": "870a5f4269be58a57406cf0b5445eed83e4f34f57a180b63852f77f5a69c9dbb",
+          "frame": 153,
+          "ticks": 1697,
+          "stack": [
+            181,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            181
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "e6a41b26ea87c5b426710cb0b5d889de685502feff3bbb070192a298c2e9e9a4",
+          "eye": [
+            165773321,
+            63,
+            70290288
+          ],
+          "body": 60,
+          "cell": 98,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771603,
+              0,
+              69898068
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f60": {
+          "sha256": "1ff33b4481b82374aaae9653cbd6c7f83ce071ccff0dbc474212360e36633490",
+          "frame": 172,
+          "ticks": 1906,
+          "stack": [
+            181,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            181
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "e6a41b26ea87c5b426710cb0b5d889de685502feff3bbb070192a298c2e9e9a4",
+          "eye": [
+            165773321,
+            63,
+            70290288
+          ],
+          "body": 60,
+          "cell": 98,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771603,
+              0,
+              69898068
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f61": {
+          "sha256": "5f14125b7aed51ff9072d45ec8fede7754188ec5228134d940b4b5750922b5ec",
+          "frame": 173,
+          "ticks": 1917,
+          "stack": [
+            181,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            181
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "e6a41b26ea87c5b426710cb0b5d889de685502feff3bbb070192a298c2e9e9a4",
+          "eye": [
+            165773321,
+            63,
+            70290288
+          ],
+          "body": 60,
+          "cell": 98,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771603,
+              0,
+              69898068
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f80": {
+          "sha256": "7bf9875be193424464273426a4699abf56b067f339042a674a618723bb2e97c0",
+          "frame": 192,
+          "ticks": 2126,
+          "stack": [
+            181,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            181
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "e6a41b26ea87c5b426710cb0b5d889de685502feff3bbb070192a298c2e9e9a4",
+          "eye": [
+            165773321,
+            63,
+            70290288
+          ],
+          "body": 60,
+          "cell": 98,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771603,
+              0,
+              69898068
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f81": {
+          "sha256": "37abc046cfaddf3fd725f2089b316865bf30c33cf736492ed297b88082591190",
+          "frame": 193,
+          "ticks": 2137,
+          "stack": [
+            181,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            181
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "e6a41b26ea87c5b426710cb0b5d889de685502feff3bbb070192a298c2e9e9a4",
+          "eye": [
+            165773321,
+            63,
+            70290288
+          ],
+          "body": 60,
+          "cell": 98,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771603,
+              0,
+              69898068
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f90": {
+          "sha256": "aa2190c799607674b0963c2004e7b7b4886321829eb57ae82ccbe5ba56b8deb9",
+          "frame": 202,
+          "ticks": 2236,
+          "stack": [
+            181,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            181
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "e6a41b26ea87c5b426710cb0b5d889de685502feff3bbb070192a298c2e9e9a4",
+          "eye": [
+            165773321,
+            63,
+            70290288
+          ],
+          "body": 60,
+          "cell": 98,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771603,
+              0,
+              69898068
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        }
+      },
+      "actionOrder": [
+        {
+          "frame": 132,
+          "label": "PANEL_KEY",
+          "stack": [
+            181,
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 132,
+          "label": "OPEN",
+          "stack": [
+            181,
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 152,
+          "label": "PANEL_KEY",
+          "stack": [
+            181,
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 152,
+          "label": "SOUND",
+          "stack": [
+            181,
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 172,
+          "label": "PANEL_KEY",
+          "stack": [
+            181,
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 192,
+          "label": "PANEL_KEY",
+          "stack": [
+            181,
+            104,
+            103,
+            135
+          ]
+        }
+      ]
+    },
+    "black-replay": {
+      "sourcePath": "restricted/mercenary-iii-771/owners/black/f105",
+      "sourceRamSha256": "bd7ee45583d151a4077e1f686d77e2a6df210eff1a023e8ed1cfbdfeb8e2a243",
+      "sourceSavSha256": "7559085a5789fab8520f74f538f59f3830a3ed124bad175d829b92bbe1863298",
+      "manifestSha256": "12858aadf7d83ace60ea5db8a978d80a54138df6df3e0f630b73048cfd4609e1",
+      "logSha256": "b6c212afcf979ca1c1b3f0c825475acc66c613897e6ba2a9717fe5e06619c56e",
+      "events": [
+        [
+          35,
+          [
+            "w $56726 $48"
+          ]
+        ]
+      ],
+      "baseFrame": 2606,
+      "topCount": 46,
+      "elevenTickGaps": 45,
+      "inFrameTickSamples": 166,
+      "maskedSamples": 121,
+      "captures": {
+        "f34": {
+          "sha256": "84ac5a15bce7d38e5faf32584a00db0b4ccab1edafe93833ab646ee58c27b3de",
+          "frame": 2640,
+          "ticks": 24770,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "8ba7a027b63229384c6013fa03553b5b4d836c2ffd00ce552fad75ad82c8c624",
+          "eye": [
+            165771529,
+            63,
+            69898542
+          ],
+          "body": 60,
+          "cell": 2,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771529,
+              0,
+              69898542
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f35": {
+          "sha256": "d1813464113415c934d16515a8c5f05624053e93963b045e56c484eede9dfad6",
+          "frame": 2641,
+          "ticks": 24781,
+          "stack": [
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "8ba7a027b63229384c6013fa03553b5b4d836c2ffd00ce552fad75ad82c8c624",
+          "eye": [
+            165771529,
+            63,
+            69898542
+          ],
+          "body": 60,
+          "cell": 2,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 4,
+            "group": 3,
+            "zone": 6,
+            "xyz": [
+              165771529,
+              0,
+              69898542
+            ],
+            "residence": [
+              60,
+              0,
+              0,
+              2
+            ]
+          }
+        },
+        "f36": {
+          "sha256": "4589533b675430cbcca835420edf5bc662093e14a9a1e77943314a9dc973831e",
+          "frame": 2642,
+          "ticks": 24792,
+          "stack": [
+            165,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            165
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": -5,
+          "labelSha256": "49c4fe9d39827b7ab1b9b686a1de66ff092a376b14799f3c491fa92a177d57d4",
+          "eye": [
+            165771529,
+            63,
+            69898542
+          ],
+          "body": 60,
+          "cell": 2,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 132,
+            "group": 49,
+            "zone": 6,
+            "xyz": [
+              33237,
+              0,
+              99100
+            ],
+            "residence": [
+              120,
+              1,
+              0,
+              16
+            ]
+          }
+        },
+        "f45": {
+          "sha256": "b30656aeb198afd213dea5b9f07ac9781bd81d8aed2a56719f77950707517856",
+          "frame": 2651,
+          "ticks": 24891,
+          "stack": [
+            165,
+            104,
+            103,
+            135
+          ],
+          "held": [
+            38,
+            103,
+            104,
+            135,
+            165
+          ],
+          "card": [
+            104,
+            5,
+            4,
+            0
+          ],
+          "reveal": 0,
+          "descriptionObject": 0,
+          "continuation": 0,
+          "taxiCall": 1,
+          "scroll": 0,
+          "labelSha256": "78246439ee5f0f26578e1ee5a4c2b6345c3381225a82726598701bc327a9ab4b",
+          "eye": [
+            165771529,
+            63,
+            69898542
+          ],
+          "body": 60,
+          "cell": 2,
+          "detectorSignedState": 4,
+          "randomSoundRate": 0,
+          "resident165": {
+            "state": 132,
+            "group": 49,
+            "zone": 6,
+            "xyz": [
+              33237,
+              0,
+              99100
+            ],
+            "residence": [
+              120,
+              1,
+              0,
+              16
+            ]
+          }
+        }
+      },
+      "actionOrder": [
+        {
+          "frame": 2641,
+          "label": "TAKE",
+          "stack": [
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 2641,
+          "label": "TAKE_ACCEPT",
+          "stack": [
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 2641,
+          "label": "SOUND",
+          "stack": [
+            165,
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 2641,
+          "label": "RESPONSE_TABLE",
+          "stack": [
+            165,
+            104,
+            103,
+            135
+          ]
+        },
+        {
+          "frame": 2641,
+          "label": "SOUND",
+          "stack": [
+            165,
+            104,
+            103,
+            135
+          ]
+        }
+      ]
+    }
+  },
+  "restore": [
+    {
+      "original": 139,
+      "restored": 34,
+      "sha256": "84ac5a15bce7d38e5faf32584a00db0b4ccab1edafe93833ab646ee58c27b3de",
+      "fullRamEqual": true
+    },
+    {
+      "original": 140,
+      "restored": 35,
+      "sha256": "d1813464113415c934d16515a8c5f05624053e93963b045e56c484eede9dfad6",
+      "fullRamEqual": true
+    },
+    {
+      "original": 141,
+      "restored": 36,
+      "sha256": "4589533b675430cbcca835420edf5bc662093e14a9a1e77943314a9dc973831e",
+      "fullRamEqual": true
+    },
+    {
+      "original": 150,
+      "restored": 45,
+      "sha256": "b30656aeb198afd213dea5b9f07ac9781bd81d8aed2a56719f77950707517856",
+      "fullRamEqual": true
+    }
+  ]
+}
