@@ -54,7 +54,7 @@ export class DionNarrative {
   state: DionScriptState;
   private readonly instructions: ReadonlyMap<number, DionInstruction>;
   constructor(
-    private readonly content: DionContent,
+    protected readonly content: DionContent,
     restore = emptyNarrative()
   ) {
     this.state = restore;
