@@ -1,3 +1,4 @@
+import { loadDionContent } from '../src/dion/content.ts';
 import { frameRgba, planDionFrame } from '../src/dion/frame.ts';
 import { PANEL_TOP, drawDionPanel, panelRgba } from '../src/dion/panel.ts';
 import { encodeDionResume, readDionResume } from '../src/dion/resume.ts';
@@ -11,7 +12,6 @@ import {
   dionFrameState,
   dionPanelView
 } from '../src/dion/session.ts';
-import { dionTitle } from '../src/dion/title.ts';
 import {
   applyDionControl,
   dionControlCaptures
@@ -23,7 +23,7 @@ import {
   until
 } from '../test/dion-journey.ts';
 
-const content = await dionTitle.load(async pathname => {
+const content = await loadDionContent(async pathname => {
   const response = await fetch(pathname);
   const text = await response.text();
   return { text, value: JSON.parse(text) };

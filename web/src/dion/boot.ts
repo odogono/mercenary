@@ -29,22 +29,20 @@ import {
   parseDionConsoleCommand
 } from './console.ts';
 import { dionControlActions } from './controls.ts';
-import { frameRgba, planDionFrame } from './frame.ts';
 import { installDionPresentation } from './framePresentation.ts';
-import { PANEL_TOP, dionLogoRgba, drawDionPanel, panelRgba } from './panel.ts';
-import {
-  createDionResumePersistence,
-  dionWhere,
-  readDionResume
-} from './resume.ts';
-import {
-  DION_STORAGE,
-  createDionSavePersistence,
-  dionRecordIdentity
-} from './save.ts';
-import { DionSession, dionFrameState, type DionAction } from './session.ts';
+import { dionLogoRgba } from './panel.ts';
+import { DION_STORAGE } from './save.ts';
+import type { DionAction } from './session.ts';
 import type { DionSoundCommand } from './soundChip.ts';
 import { dionTitle } from './title.ts';
+import { prepareTourcraftFrame } from './tourcraftPresentation.ts';
+import {
+  createTourcraftResumePersistence,
+  createTourcraftSavePersistence,
+  readTourcraftSession,
+  tourcraftWhere
+} from './tourcraftSave.ts';
+import { TourcraftSession } from './tourcraftSession.ts';
 
 /// The Mercenary III Gameplay Session's document, `/dion` (#647).
 ///
@@ -108,7 +106,8 @@ try {
   } catch {
     storage = undefined;
   }
-  const content = await dionTitle.load(requiredJson);
+  const promoted = await dionTitle.load(requiredJson);
+  const content = promoted.legacy;
   const logo = dionLogoRgba(content.panel);
   chrome.showLogo(new ImageData(logo.data, logo.width, logo.height));
   const notice = (text: string): void => {
@@ -145,10 +144,11 @@ try {
     onLost: () => handleOwnershipLost()
   });
   await ownership.claim();
-  const opened = readDionResume(storage, content);
+  const opened = readTourcraftSession(storage, promoted);
   let protectResume = opened.reason !== null;
   let session = opened.session;
   let snapshot = session.snapshot;
+  const initialFrame = prepareTourcraftFrame(session);
 
   const context = canvas.getContext('2d');
   if (context === null) {
@@ -225,8 +225,8 @@ try {
     storage,
     typefaceKey: DION_STORAGE.typeface
   });
-  const resume = createDionResumePersistence({
-    content,
+  const resume = createTourcraftResumePersistence({
+    content: promoted,
     onFailure: reason => notice(`Session Resume unavailable: ${reason}`),
     session: () => session,
     storage
@@ -242,31 +242,42 @@ try {
       resume.checkpoint(true);
     }
   };
-  const persistence = createDionSavePersistence({
+  const persistence = createTourcraftSavePersistence({
     capture: () => {
       if (!ownership.mayPersist()) {
         throw new Error('This session is active in another tab');
       }
-      return { snapshot: session.captureResume(), where: dionWhere(session) };
+      return {
+        snapshot: session.captureResume(),
+        where: tourcraftWhere(session)
+      };
     },
-    content,
-    identity: dionRecordIdentity(content),
+    content: promoted,
     release,
     restore: record => {
       if (!ownership.mayPersist()) {
         throw new Error('This session is active in another tab');
       }
-      const candidate = new DionSession(content, record);
+      const candidate = new TourcraftSession(promoted, record);
+      const prepared = prepareTourcraftFrame(candidate);
       session = candidate;
       snapshot = session.snapshot;
       protectResume = false;
       audio.send({
         at: snapshot.tick / 50,
-        commands: [{ kind: 'reset', state: snapshot.sound }]
+        commands: [
+          {
+            kind: 'reset',
+            state: {
+              ...snapshot.sound,
+              registers: session.snapshot.tourcraft!.events.deliveredRegisters
+            }
+          }
+        ]
       });
       checkpoint();
       menu.show('none');
-      draw();
+      draw(prepared);
     },
     storage
   });
@@ -298,14 +309,9 @@ try {
     }
   );
 
-  const draw = (): void => {
-    const planned = planDionFrame(content.world, dionFrameState(snapshot));
-    frameRgba(planned, image.data);
-    const panel = drawDionPanel(
-      content.panel,
-      dionTitle.panelViewModel(snapshot, content)
-    );
-    panelRgba(panel, image.data.subarray(PANEL_TOP * 320 * 4));
+  const draw = (prepared = prepareTourcraftFrame(session)): void => {
+    const { planned } = prepared;
+    image.data.set(prepared.rgba);
     context.putImageData(image, 0, 0);
     viewPresentation?.render(planned.description);
     const root = canvas.dataset;
@@ -321,7 +327,10 @@ try {
     root['lines'] = String(planned.stats.lines);
     root['models'] = planned.stats.models.join(' ');
     root['gaps'] = planned.stats.gaps.join('; ');
-    root['content'] = content.contentSha256;
+    root['content'] = promoted.contentSha256;
+    root['location'] = String(snapshot.location);
+    root['playback'] = String(snapshot.tourcraft!.flight?.mode ?? 'inactive');
+    root['playbackFrame'] = String(snapshot.tourcraft!.flight?.frameWord ?? 0);
     root['passenger'] = String(snapshot.taxi.passenger);
     root['counter'] = String(snapshot.taxi.counter);
     root['destination'] = String(snapshot.taxi.destination);
@@ -339,15 +348,28 @@ try {
       notice('This session is active in another tab.');
       return;
     }
+    const candidate = new TourcraftSession(promoted);
+    const prepared = prepareTourcraftFrame(candidate);
     protectResume = false;
     resume.clear();
-    session = dionTitle.create(content) as DionSession;
+    session = candidate;
     snapshot = session.snapshot;
-    audio.send({ at: 0, commands: [{ kind: 'reset', state: snapshot.sound }] });
+    audio.send({
+      at: 0,
+      commands: [
+        {
+          kind: 'reset',
+          state: {
+            ...snapshot.sound,
+            registers: session.snapshot.tourcraft!.events.deliveredRegisters
+          }
+        }
+      ]
+    });
     checkpoint();
     menu.show('none');
     status.hidden = true;
-    draw();
+    draw(prepared);
   });
   const refreshNewGame = (): void => {
     chrome.newGame.textContent = newGame.armed()
@@ -375,7 +397,15 @@ try {
       void audio.unlock();
       audio.send({
         at: session.snapshot.tick / 50,
-        commands: [{ kind: 'reset', state: session.snapshot.sound }]
+        commands: [
+          {
+            kind: 'reset',
+            state: {
+              ...session.snapshot.sound,
+              registers: session.snapshot.tourcraft!.events.deliveredRegisters
+            }
+          }
+        ]
       });
     }
   };
@@ -439,7 +469,13 @@ try {
     }
     if (outcome.kind === 'owned') {
       release();
-      const read = readDionResume(storage, content);
+      const read = readTourcraftSession(storage, promoted);
+      if (read.reason !== null) {
+        notice(`Could not resume: ${read.reason}`);
+        chrome.takeOver.disabled = false;
+        return;
+      }
+      const prepared = prepareTourcraftFrame(read.session);
       session = read.session;
       snapshot = session.snapshot;
       protectResume = read.reason !== null;
@@ -448,9 +484,17 @@ try {
       menu.show(protectResume ? 'menu' : 'none');
       audio.send({
         at: snapshot.tick / 50,
-        commands: [{ kind: 'reset', state: snapshot.sound }]
+        commands: [
+          {
+            kind: 'reset',
+            state: {
+              ...snapshot.sound,
+              registers: session.snapshot.tourcraft!.events.deliveredRegisters
+            }
+          }
+        ]
       });
-      draw();
+      draw(prepared);
     }
     chrome.takeOver.disabled = false;
   });
@@ -470,7 +514,7 @@ try {
       audio.suspend();
     }
   });
-  draw();
+  draw(initialFrame);
   if (opened.reason !== null) {
     notice(
       `Could not resume: ${opened.reason}. New Game or Load starts a session.`
@@ -497,17 +541,40 @@ try {
             audio.resume();
             audio.send({
               at: session.snapshot.tick / 50,
-              commands: [{ kind: 'reset', state: session.snapshot.sound }]
+              commands: [
+                {
+                  kind: 'reset',
+                  state: {
+                    ...session.snapshot.sound,
+                    registers:
+                      session.snapshot.tourcraft!.events.deliveredRegisters
+                  }
+                }
+              ]
             });
           }
           session.intent = shellConsole.isOpen() ? IDLE : controls.intent;
           snapshot = session.advance(seconds);
-          for (const event of session.drainSound()) {
+          session.deliverEvents(event => {
+            if (audio.phase !== 'unlocked') {
+              // Locked/failed output accepts silence. Unlock resets from this
+              // delivered image; it must not replay minutes of old PSG writes.
+              return true;
+            }
             audio.send({
-              at: event.at,
-              commands: [{ kind: 'registers', registers: event.registers }]
+              at: event.tick / 50,
+              commands: [
+                {
+                  kind: 'registers',
+                  registers: event.writes.map(
+                    w => [w.register, w.value] as const
+                  )
+                }
+              ]
             });
-          }
+            return true;
+          });
+          snapshot = session.snapshot;
           if (ownership.mayPersist()) {
             resume.dirty();
             resume.checkpoint();

@@ -40,7 +40,7 @@ test('/dion boots the METIS prison opening from its own payload', async ({
   );
   expect(payload.length).toBeGreaterThan(0);
   expect(payload.every(path => path.startsWith('/payload/dion/'))).toBe(true);
-  expect(requests).toContain('/dion/metis.json');
+  expect(requests).toContain('/payload/dion/tourcraft/manifest.json');
   expect(requests).not.toContain(DAMOCLES_CATALOGUE);
 });
 
@@ -160,17 +160,17 @@ test('/dion opens the System Menu and keeps its Saves to itself', async ({
 test('/dion refuses a payload that is not the pinned Mercenary III baseline', async ({
   page
 }) => {
-  await page.route('**/payload/dion/world.json', async route => {
+  await page.route('**/payload/dion/tourcraft/manifest.json', async route => {
     const response = await route.fetch();
     const doc = await response.json();
-    doc.source.programSha256 =
+    doc.programSha256 =
       '8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef';
     await route.fulfill({ json: doc });
   });
   await page.goto('/dion');
   await expect(page.locator('#failure')).toBeVisible();
   await expect(page.locator('#failure')).toContainText(
-    'not the pinned Mercenary III baseline'
+    'programSha256: disagrees with its admitted binding'
   );
   await expect(page.locator('#screen')).toBeHidden();
 });
@@ -178,15 +178,15 @@ test('/dion refuses a payload that is not the pinned Mercenary III baseline', as
 test('/dion refuses a payload document from another capture', async ({
   page
 }) => {
-  await page.route('**/payload/dion/panel.json', async route => {
+  await page.route('**/payload/dion/tourcraft/manifest.json', async route => {
     const response = await route.fetch();
     const doc = await response.json();
-    doc.source.capture.loaded.ramSha256 = '0'.repeat(64);
+    doc.sources['gameplay-opening'].ramSha256 = '0'.repeat(64);
     await route.fulfill({ json: doc });
   });
   await page.goto('/dion');
   await expect(page.locator('#failure')).toContainText(
-    'different capture runs'
+    'disagrees with its admitted binding'
   );
 });
 
