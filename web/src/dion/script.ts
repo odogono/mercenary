@@ -90,6 +90,10 @@ export class DionNarrative {
       this.request(message.text, 200, message.scrollsOut)
     );
   }
+  /// `$52860`: one row of a document a Read hands to the message bar, held as an ID message is.
+  present(text: string, scrollsOut: boolean): boolean {
+    return this.request(text, 200, scrollsOut);
+  }
   private request(text: string, hold: number, scrollsOut = false): boolean {
     if (this.state.message.busy) {
       return false;

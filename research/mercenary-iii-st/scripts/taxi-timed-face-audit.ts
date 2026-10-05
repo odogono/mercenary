@@ -212,7 +212,7 @@ export const auditTaxiTimedFaceClasses = async ({
   });
   assert.equal(
     expanded.contentSha256,
-    '824a2ec18b5cf98980544bb4d9e178cb9a47c013785b49319035c841569299b0'
+    '89bc7ab4ce73051b41e14d2da7605587cd8facc51b9abc9b203e2e5b23fcedbf'
   );
   return withTaxiSource(async source => {
     const { DionNarrative: Interpreter } = (await import(

@@ -18,6 +18,7 @@ from .ram import Ram, hexaddr
 from .geometry import model_record, resolve_structure
 from .world import extract_world, log_float
 from .census_objects import extract_objects
+from .head import extract_head
 from .scripts import decode_range, BASE, ENTRY_TABLE, _summarise
 from .text import static_strings
 from .snapshot_owners import observe, FIELDS
@@ -446,6 +447,7 @@ def build_export(root: Path, opening: Path) -> dict[str, bytes]:
     extras = {'craft': craft_records(ram),
               'gameplay': {'kind': 'dion-play-gameplay', 'schemaVersion': 1, 'source': 'gameplay-opening', **camel(gameplay)},
               'programmes': {'kind': 'dion-play-programmes', 'schemaVersion': 1, 'source': 'gameplay-opening', **camel(programmes)},
+              'head': {'kind': 'dion-play-head', 'schemaVersion': 1, 'source': 'gameplay-opening', **extract_head(ram)},
               'support': support, 'system': system_records(spec, ram)}
     for key in sorted(extras):
         output[f'{prefix}/presentation/{key}.json'] = encoded(extras[key])

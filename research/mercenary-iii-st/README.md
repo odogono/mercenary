@@ -19,6 +19,7 @@ Each issue's runs live in the main checkout's `restricted/mercenary-iii-<issue>/
 | `m3lab/catalogue_*.py` | the Dion Catalogue: surface, objects, interiors, ledger, render inputs, export, preview scenes |
 | `m3lab/surface_scenes.py`, `object_scenes.py`, `interior_capture.py`, `interior_scenes.py` | original-scene comparisons for the Catalogue |
 | `m3lab/tourcraft_export.py` | the bounded TOURCRAFT export into `payload/dion/tourcraft/` (ADR 0065) |
+| `m3lab/head.py` | the Open table, document bank and centre art the Head Commands read, into `presentation/head.json` (ADR 0076) |
 | `scripts/taxi-*.ts` | R8 taxi Save audits, pinned by `taxi-source.ts` and run under `bun test` in `web/` |
 | `scripts/taxi-source-eligibility.ts`, `scripts/taxi-eligibility-audit.ts` | R8a necessary source checks and 11 additional ordinary input witnesses; [source eligibility/reference rule](../../docs/research/mercenary-iii-tourcraft-source-eligibility.md), with universal proof gaps retained |
 | `scripts/taxi-early-cursor-audit.ts` | R8a ordinary early full-record collision with different retained face cursors; [accepted early canonical policy and witness](../../docs/research/mercenary-iii-tourcraft-source-eligibility.md#ordinary-early-cursor-collision-returned-to-d2), `taxi-early-cursor-evidence.json` and `web/test/dion-early-cursor-ambiguity.test.ts` |

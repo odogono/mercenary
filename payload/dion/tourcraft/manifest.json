@@ -392,6 +392,10 @@
       "sha256": "62fdbb33ac5ab566fb16359eb8e627c11fa67543ae40de9b73ad4574b287dcdd"
     },
     {
+      "path": "/payload/dion/tourcraft/presentation/head.json",
+      "sha256": "95811d70d18b9b2d9fae58ff0471a5e804b91ec634a0a2cf1e8a3d766dc3485d"
+    },
+    {
       "path": "/payload/dion/tourcraft/presentation/programmes.json",
       "sha256": "66a572dc242ace37b9f90565eba4585afc46e4cc991ffd94f13df359ea4641ee"
     },

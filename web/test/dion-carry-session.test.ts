@@ -148,3 +148,89 @@ test('a press on the drawn candidate is a Take target, and nowhere else is', () 
   );
   expect(dionTakeTargetAt(description, undefined, { x, y }, 1)).toBe(false);
 });
+
+const openLetter = () => {
+  const session = new TourcraftSession(content);
+  r1Route(session);
+  // The label settles, then Open scrolls the letter's panel on over 64 VBLs.
+  frames(session, 4);
+  session.press('activate');
+  frames(session, 8);
+  session.drainSound();
+  return session;
+};
+
+test('Open shows the head document on the centre box, and the keypad pages it', () => {
+  const session = openLetter();
+  const head = () => session.snapshot.tourcraft!.head;
+  expect(head().open).toEqual({ index: 0, item: 0, slot: 220 });
+  expect(head().box.steps).toBe(0);
+  expect(session.snapshot.card).toBe(false);
+  const centre = session.panelView().centre;
+  expect(centre.kind === 'panel' && centre.item?.name).toBe('FROM    ');
+  session.press('plus');
+  frames(session);
+  expect(head().open?.item).toBe(1);
+  session.press('minus');
+  frames(session);
+  session.press('minus');
+  frames(session);
+  // A backward wrap lands on the last item, PPS.
+  expect(head().open?.item).toBe(3);
+});
+
+test('Read shows the item rows one after another; the last scrolls out', () => {
+  const session = openLetter();
+  session.press('plus');
+  frames(session);
+  session.press('star');
+  frames(session);
+  const shown: string[] = [];
+  let serial = session.snapshot.narrative.message.serial;
+  for (let i = 0; i < 400 && shown.length < 7; i += 1) {
+    frames(session);
+    session.drainSound();
+    const message = session.snapshot.narrative.message;
+    if (message.serial !== serial) {
+      serial = message.serial;
+      shown.push(message.text);
+    }
+  }
+  expect(shown).toHaveLength(7);
+  expect(shown[0]).toBe('MY DEAR MERCENARY         -');
+  expect(session.snapshot.tourcraft!.head.lastRead).toEqual({
+    index: 1,
+    slot: 220
+  });
+});
+
+test('dropping the open document closes it, and an open panel survives a Save', () => {
+  const session = openLetter();
+  session.press('star');
+  frames(session);
+  const record = decodeTourcraftRecord(
+    encodeTourcraftRecord(content, session.captureResume(), 'METIS'),
+    content
+  );
+  const restored = new TourcraftSession(content, record.snapshot);
+  expect(restored.snapshot.tourcraft!.head).toEqual(
+    session.snapshot.tourcraft!.head
+  );
+  expect(restored.snapshot.tourcraft!.reading).toEqual(
+    session.snapshot.tourcraft!.reading
+  );
+  session.press('drop');
+  frames(session);
+  expect(session.snapshot.tourcraft!.head.open).toBeNull();
+  expect(session.snapshot.tourcraft!.head.box.to).toBeNull();
+});
+
+test('the TAXICARD still opens its own card', () => {
+  const session = new TourcraftSession(content);
+  frames(session, 6);
+  session.press('activate');
+  frames(session, 8);
+  expect(session.snapshot.card).toBe(true);
+  expect(session.snapshot.tourcraft!.head.open?.slot).toBe(104);
+  expect(session.panelView().centre.kind).toBe('card');
+});

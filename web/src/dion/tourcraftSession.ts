@@ -1,5 +1,12 @@
 import { IDLE } from '../gameCore/index.ts';
 import {
+  closePanel,
+  initialHeadCommands,
+  runHeadCommand,
+  tickCentreBox,
+  type HeadCommandState
+} from '../interaction/headCommands.ts';
+import {
   drop,
   inventoryGauge,
   rotate,
@@ -15,6 +22,8 @@ import {
   type DionFrameState,
   type DionFrameWorld
 } from './frame.ts';
+import { dionHeadTable, documentItems, openRow, panelArt } from './head.ts';
+import type { DionCentreArt, DionCentreView } from './panel.ts';
 import { list, record } from './read.ts';
 import { initializeBodyTaxi, stepTaxi } from './service.ts';
 import {
@@ -154,11 +163,16 @@ export class TourcraftSession extends DionSession {
         },
         faceSelection: 'initial',
         flight: null,
+        // The opening's logo reveal (`reveal` 49) stays the taxi code's: the port has always
+        // taken Enter during it, though `$4D848` refuses the keypad until it ends.
+        head: initialHeadCommands(),
         liveIntent: IDLE,
         owners,
         phases: initialTourcraftPhases(promoted),
         playerZone: Number(promoted.gameplay.initial['playerZone']),
-        residents: initialTourcraftResidents(promoted)
+        reading: null,
+        residents: initialTourcraftResidents(promoted),
+        switches: 0
       }
     };
     if (restore) {
@@ -382,6 +396,7 @@ export class TourcraftSession extends DionSession {
     }
   }
   protected override tickExtra(): void {
+    this.presentReading();
     const e = this.expanded;
     const animation = {
       ...e.owners['animation'],
@@ -392,6 +407,7 @@ export class TourcraftSession extends DionSession {
       tourcraft: {
         ...e,
         carry: stepCarriedLabel(e.carry),
+        head: tickCentreBox(e.head),
         owners: { ...e.owners, animation },
         phases: e.phases.map(
           (phase, i) =>
@@ -411,12 +427,6 @@ export class TourcraftSession extends DionSession {
   private handleCarry(): boolean {
     const action = this.state.pending;
     const e = this.expanded;
-    const head = e.carry.stack[0];
-    if (action === 'activate' && !this.state.card && head !== 104) {
-      this.state = { ...this.state, pending: null };
-      this.notes.push(`Open of slot ${head ?? 'none'}`);
-      return true;
-    }
     if (
       action !== 'take' &&
       action !== 'drop' &&
@@ -456,16 +466,16 @@ export class TourcraftSession extends DionSession {
     }
     this.state = {
       ...this.state,
-      // `$5592A`: dropping the open object closes it.
-      ...(outcome.closes === 104 && this.state.card
-        ? { card: false, reveal: 0 }
-        : {}),
       gauges: {
         ...this.state.gauges,
         inventory: inventoryGauge(outcome.carry)
       },
       tourcraft: { ...e, carry: outcome.carry, residents: outcome.residents }
     };
+    // `$5592A`: dropping the open object closes it and scrolls the logo back.
+    if (outcome.closes !== undefined && outcome.closes === e.head.open?.slot) {
+      this.setHead(closePanel(e.head));
+    }
     this.cue('key_click');
     return true;
   }
@@ -504,8 +514,123 @@ export class TourcraftSession extends DionSession {
     };
   }
 
+  /// The open panel's state, with the card fields the taxi code reads kept in step: the card is
+  /// open while the TAXICARD's panel is, and `reveal` is the centre box's transition.
+  private setHead(head: HeadCommandState): void {
+    this.state = {
+      ...this.state,
+      card: head.open?.slot === 104,
+      reveal: head.box.steps,
+      tourcraft: { ...this.expanded, head }
+    };
+  }
+
+  /// Open and the keypad on the open panel (`$4D63C`, `$4D830`), through the Head Commands
+  /// shared with Damocles. The TAXICARD's keys stay with the taxi code.
+  private handleHead(): boolean {
+    const action = this.state.pending;
+    const command =
+      action === 'activate'
+        ? 'open'
+        : action === 'plus'
+          ? 'next'
+          : action === 'minus'
+            ? 'previous'
+            : action === 'star'
+              ? 'read'
+              : undefined;
+    const e = this.expanded;
+    if (
+      command === undefined ||
+      (command !== 'open' && e.head.open?.slot === 104)
+    ) {
+      return false;
+    }
+    this.state = { ...this.state, pending: null };
+    const head = e.carry.stack[0];
+    const outcome = runHeadCommand(
+      e.head,
+      command,
+      head,
+      dionHeadTable(this.promoted.head, this.narrative.state.flags),
+      { backwardWrapIndex: last => last, reopen: 'ignore' },
+      e.reading !== null
+    );
+    switch (outcome.kind) {
+      case 'ignored':
+        if (
+          command === 'open' &&
+          e.head.box.steps === 0 &&
+          (head === 101 || head === 102)
+        ) {
+          this.notes.push(`Open of slot ${head}: its gate is not ported`);
+        }
+        return true;
+      case 'key':
+        this.notes.push(
+          `${outcome.panel} key ${outcome.key} on slot ${outcome.slot}`
+        );
+        return true;
+      case 'switch': {
+        const row = openRow(this.promoted.head, outcome.slot)!;
+        const bit = 1 << (row.index >> 1);
+        const switches = outcome.on ? e.switches | bit : e.switches & ~bit;
+        if (switches !== e.switches) {
+          this.state = {
+            ...this.state,
+            tourcraft: { ...this.expanded, switches }
+          };
+          this.notes.push(
+            `switch ${outcome.slot} ${outcome.on ? 'on' : 'off'} drives nothing yet`
+          );
+          this.cue('key_click');
+        }
+        return true;
+      }
+      case 'read':
+        this.setHead(outcome.state);
+        this.state = {
+          ...this.state,
+          tourcraft: {
+            ...this.expanded,
+            reading: { item: outcome.item, row: 0, slot: outcome.slot }
+          }
+        };
+        this.cue('key_click');
+        return true;
+      default:
+        this.setHead(outcome.state);
+        this.cue('key_click');
+        return true;
+    }
+  }
+
+  /// `$52860`, once a VBL: a Read shows its rows one after another as the bar frees, and the
+  /// last one scrolls out. Reading a BALLOT PAPER then casts a vote (`$55AD8`), not ported.
+  private presentReading(): void {
+    const reading = this.expanded.reading;
+    if (reading === null || this.narrative.state.message.busy) {
+      return;
+    }
+    const rows =
+      documentItems(this.promoted.head, reading.slot)[reading.item]?.rows ?? [];
+    const last = reading.row >= rows.length - 1;
+    this.narrative.present(rows[reading.row] ?? '', last);
+    this.state = {
+      ...this.state,
+      narrative: this.narrative.state,
+      tourcraft: {
+        ...this.expanded,
+        reading: last ? null : { ...reading, row: reading.row + 1 }
+      }
+    };
+    if (last && (reading.slot === 162 || reading.slot === 190)) {
+      this.notes.push(`ballot vote script ${reading.item === 0 ? 2 : 3}`);
+    }
+  }
+
   protected override handleInput(): void {
-    if (this.handleCarry()) {
+    if (this.handleCarry() || this.handleHead()) {
       return;
     }
     // The TOLOSA service is admitted only as an ambient resident. Its onward
@@ -1110,6 +1235,7 @@ export const tourcraftPanelView = (
     .islands.find(i => i.group === (state.location === 100 ? 23 : 3))!;
   return {
     ...view,
+    centre: tourcraftCentre(state, content) ?? view.centre,
     grid: [
       Math.floor(state.eye[0] / 65_536) - home.origin[0],
       Math.floor(state.eye[2] / 65_536) - home.origin[1]
@@ -1126,5 +1252,43 @@ export const tourcraftPanelView = (
           }
         }
       : {})
+  };
+};
+
+/// The centre box while a transition runs or a panel other than the TAXICARD's is open. The
+/// TAXICARD at rest keeps its own card view, which writes the destination text.
+const tourcraftCentre = (
+  state: import('./session.ts').DionSnapshot,
+  content: TourcraftContent
+): DionCentreView | undefined => {
+  const { box, open } = state.tourcraft!.head;
+  if (box.steps === 0 && (open === null || open.slot === 104)) {
+    return undefined;
+  }
+  const { logo, taxicard } = content.legacy.panel.centre;
+  const art = (slot: number | null): DionCentreArt => {
+    const row = slot === null ? undefined : openRow(content.head, slot);
+    return slot === 104 || row === undefined
+      ? slot === 104
+        ? taxicard
+        : logo
+      : {
+          colour1From152: row.colour1From152,
+          colour4: row.colour4,
+          pixels: panelArt(content.head, row)
+        };
+  };
+  const name =
+    open === null
+      ? undefined
+      : documentItems(content.head, open.slot)[open.item]?.name;
+  return {
+    from: art(box.steps === 0 ? box.to : box.from),
+    ...(name === undefined
+      ? {}
+      : { item: { field: content.head.itemField, name } }),
+    kind: 'panel',
+    reveal: box.steps,
+    to: art(box.to)
   };
 };

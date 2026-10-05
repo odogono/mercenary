@@ -3,6 +3,7 @@ import type { PayloadDocument } from '../shell/title.ts';
 import type { CatalogueGeometry } from './catalogue.ts';
 import { readDionContent, type DionContent } from './content.ts';
 import { DION_DOCUMENTS, DION_PROGRAM_SHA256 } from './documents.ts';
+import { readDionHead, type DionHead } from './head.ts';
 import { modelForm, playableModel } from './modelForms.ts';
 import {
   address,
@@ -35,6 +36,7 @@ const PROMOTION = `${TOURCRAFT_ROOT}/promotion.json`;
 const PRESENTATION = [
   'craft',
   'gameplay',
+  'head',
   'programmes',
   'support',
   'system',
@@ -135,6 +137,7 @@ export interface TourcraftContent {
   readonly craft: Row;
   readonly gameplay: TourcraftGameplay;
   readonly geometry: ReadonlyMap<string, PromotedGeometry>;
+  readonly head: DionHead;
   readonly legacy: DionContent;
   readonly programmes: Row;
   readonly promotion: TourcraftPromotion;
@@ -725,6 +728,8 @@ export const loadTourcraftContent = async (
     'legacy.source.capture.opening'
   );
   const support = get(`${TOURCRAFT_ROOT}/presentation/support.json`);
+  const headRaw = get(`${TOURCRAFT_ROOT}/presentation/head.json`);
+  header(headRaw, 'head', 'dion-play-head', 'gameplay-opening');
   header(support, 'support', 'dion-play-support', 'catalogue-immutable');
   const selection = record(
     promotionRaw['renderSupportSelection'],
@@ -1005,6 +1010,7 @@ export const loadTourcraftContent = async (
       raw: gameplayRaw
     },
     geometry,
+    head: readDionHead(headRaw),
     legacy,
     programmes,
     promotion,
