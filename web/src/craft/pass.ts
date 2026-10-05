@@ -566,24 +566,23 @@ const landingHandler = (
   };
 };
 
-/// One frame aboard: `$05970E`–`$05976A`. The pass runs; a landing goes to the handler; the
-/// box test then either lets the move stand or refuses it. A refusal restores the position,
-/// negates the throttle's and the speed's mantissas, runs the pass again untested from the
-/// restored position with the same sines, and drops the throttle's exponent to `$FFF0`.
-export const craftFrame = (
+/// The numeric pass, launch swing and hard touchdown, before Title-owned service/collision work.
+/// A frame can retain its initial swing controls for a collision retry through `controlState`.
+export const craftMotionPass = (
   program: CraftProgram,
   slot: CraftSlot,
   state: CraftState,
   stick: number,
-  boxes: BoundBoxes
+  boxes: BoundBoxes,
+  controlState: CraftState = state
 ): CraftFrame => {
   const k = program.constants;
   // `$057F46`: while `$7B0C` is set the pass goes to `$057F18` instead. It swings the pitch
   // towards `$280` and ends, until `(pitch + $80) & $3FF` passes `$300`; after that the pass
   // runs on with the stick read as nought.
-  const swung = (state.pitch + k.swingBias) & k.swingMask;
-  const swinging = state.swing && swung <= k.swingHigh;
-  const read = state.swing ? 0 : stick;
+  const swung = (controlState.pitch + k.swingBias) & k.swingMask;
+  const swinging = controlState.swing && swung <= k.swingHigh;
+  const read = controlState.swing ? 0 : stick;
   const run = (from: CraftState): CraftFrame => {
     if (swinging) {
       const step = swung > k.swingLow ? k.swingStep : -k.swingStep;
@@ -597,6 +596,23 @@ export const craftFrame = (
       ? landingHandler(program, pass.state, boxes)
       : { outcome: 'moved', state: pass.state };
   };
+  return run(state);
+};
+
+/// One frame aboard: `$05970E`–`$05976A`. The pass runs; a landing goes to the handler; the
+/// box test then either lets the move stand or refuses it. A refusal restores the position,
+/// negates the throttle's and the speed's mantissas, runs the pass again untested from the
+/// restored position with the same sines, and drops the throttle's exponent to `$FFF0`.
+export const craftFrame = (
+  program: CraftProgram,
+  slot: CraftSlot,
+  state: CraftState,
+  stick: number,
+  boxes: BoundBoxes
+): CraftFrame => {
+  const k = program.constants;
+  const run = (from: CraftState) =>
+    craftMotionPass(program, slot, from, stick, boxes, state);
   let frame = run(state);
   if (frame.outcome === 'moved' && insideBox(boxes, frame.state)) {
     const again = run({

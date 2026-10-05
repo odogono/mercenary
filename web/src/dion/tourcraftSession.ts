@@ -64,7 +64,7 @@ import {
   tourcraftCarryWorld,
   type TourcraftState
 } from './tourcraftState.ts';
-import { tourcraftView } from './tourcraftView.ts';
+import { dionFlightEye, dionFlightView } from './tourcraftView.ts';
 import { readDionOpening } from './world.ts';
 
 const gameplayContent = (
@@ -629,8 +629,132 @@ export class TourcraftSession extends DionSession {
     }
   }
 
+  /// Manual craft inputs use the current words, never the playback cursor.
+  private manualFlight(change: (flight: TourcraftFlight) => void): void {
+    const saved = this.expanded.flight;
+    if (!saved || saved.pilot !== 'eagle' || saved.mode === 'foot') {
+      return;
+    }
+    const flight = new TourcraftFlight(this.promoted, saved);
+    change(flight);
+    const owners = this.expanded.owners;
+    this.state = {
+      ...this.state,
+      tourcraft: {
+        ...this.expanded,
+        flight: flight.state,
+        owners: {
+          ...owners,
+          craft: {
+            ...owners['craft'],
+            panelSpeed: flight.state.craft.panelSpeed,
+            speed: flight.state.craft.speed,
+            swing: flight.state.craft.swing ? 65_535 : 0,
+            throttle: flight.state.craft.throttle
+          }
+        }
+      }
+    };
+  }
+  throttleKey(key: number): void {
+    this.manualFlight(f => f.throttleKey(key));
+  }
+  throttleScale(direction: -1 | 1): void {
+    this.manualFlight(f => f.throttleScale(direction));
+  }
+  throttleNotchStep(direction: -1 | 1): void {
+    this.manualFlight(f => f.throttleNotch(direction));
+  }
+  launchCraft(): void {
+    this.manualFlight(f => f.launchEagle());
+  }
+  private firing = false;
+  fire(held = true): void {
+    const firing =
+      held &&
+      this.expanded.flight?.pilot === 'eagle' &&
+      this.expanded.flight.mode !== 'foot';
+    if (firing && !this.firing) {
+      this.notes.push('EAGLE firing');
+    }
+    this.firing = firing;
+  }
+  get aboard(): boolean {
+    return (
+      this.state.taxi.passenger ||
+      (!!this.expanded.flight && this.expanded.flight.mode !== 'foot')
+    );
+  }
+
+  private handleEagle(): boolean {
+    const action = this.state.pending,
+      e = this.expanded,
+      saved = e.flight;
+    if (
+      action === 'leave' &&
+      saved?.pilot === 'eagle' &&
+      saved.mode !== 'foot'
+    ) {
+      this.state = { ...this.state, pending: null };
+      this.manualFlight(f => {
+        f.leaveEagle();
+      });
+      return true;
+    }
+    if (action !== 'board' || this.state.candidate?.slot !== 3) {
+      return false;
+    }
+    this.state = { ...this.state, admission: 10, pending: null };
+    const candidate = this.state.candidate!;
+    const resident = e.residents.find(r => r.slot === 3)!;
+    const header = this.content.world.models.get(resident.model ?? -1)?.header;
+    if (
+      this.aboard ||
+      !(e.owners['candidate']!['regionFlags']! & 0x40_00) ||
+      candidate.exponent > 9 ||
+      resident.bodyOffset !== this.state.location ||
+      ![1, 13].includes(header?.op ?? 0) ||
+      header?.mode !== 64
+    ) {
+      return true;
+    }
+    // `$554B0`: read the paired key's held bit, without consuming it.
+    if (!e.residents.some(r => r.slot === 181 && (r.state & 0x80) !== 0)) {
+      this.narrative.idMessage(3);
+      return true;
+    }
+    const flight = new TourcraftFlight(this.promoted);
+    flight.boardEagle(this.state.location, resident.position, resident.yaw * 4);
+    this.state = {
+      ...this.state,
+      admission: 0,
+      tourcraft: {
+        ...e,
+        flight: flight.state,
+        residents: e.residents.map(r =>
+          r.slot === 3
+            ? { ...r, association: 0, body: 0, bodyOffset: 120, group: 0 }
+            : r
+        )
+      }
+    };
+    this.cue('key_click');
+    this.notes.push('EAGLE hostile encounters');
+    return true;
+  }
+
+  protected override admit(): void {
+    super.admit();
+    if (this.state.taxi.passenger && this.expanded.flight?.mode === 'foot') {
+      this.state = {
+        ...this.state,
+        tourcraft: { ...this.expanded, flight: null }
+      };
+    }
+  }
+
   protected override handleInput(): void {
-    if (this.handleCarry() || this.handleHead()) {
+    if (this.handleEagle() || this.handleCarry() || this.handleHead()) {
       return;
     }
     // The TOLOSA service is admitted only as an ambient resident. Its onward
@@ -672,7 +796,7 @@ export class TourcraftSession extends DionSession {
       this.state = {
         ...this.state,
         admission: 0,
-        tourcraft: { ...this.expanded, armed: true }
+        tourcraft: { ...this.expanded, armed: true, flight: null }
       };
       return;
     }
@@ -694,27 +818,31 @@ export class TourcraftSession extends DionSession {
         ...this.state,
         tourcraft: {
           ...this.expanded,
-          encounter: encounterTail(
-            this.promoted,
-            previous.encounter,
-            previous.flight
-              ? [
-                  previous.flight.craft.x,
-                  previous.flight.craft.y,
-                  previous.flight.craft.z
-                ]
-              : this.state.eye,
-            previous.flight?.craft.trig.pitch ?? this.state.pitch,
-            previous.flight?.craft.trig.yaw ?? this.state.heading,
-            this.state.location,
-            this.state.location === 100 ? 23 : 3,
-            previous.flight?.mode === 'space',
-            [
-              previous.owners['view']!['eyeX']!,
-              previous.owners['view']!['relativeY']!,
-              previous.owners['view']!['eyeZ']!
-            ]
-          )
+          encounter:
+            previous.flight?.pilot === 'eagle' &&
+            previous.flight.mode !== 'foot'
+              ? previous.encounter
+              : encounterTail(
+                  this.promoted,
+                  previous.encounter,
+                  previous.flight
+                    ? [
+                        previous.flight.craft.x,
+                        previous.flight.craft.y,
+                        previous.flight.craft.z
+                      ]
+                    : this.state.eye,
+                  previous.flight?.craft.trig.pitch ?? this.state.pitch,
+                  previous.flight?.craft.trig.yaw ?? this.state.heading,
+                  this.state.location,
+                  this.state.location === 100 ? 23 : 3,
+                  previous.flight?.mode === 'space',
+                  [
+                    previous.owners['view']!['eyeX']!,
+                    previous.owners['view']!['relativeY']!,
+                    previous.owners['view']!['eyeZ']!
+                  ]
+                )
         }
       };
     }
@@ -735,6 +863,29 @@ export class TourcraftSession extends DionSession {
         this.animateDriver();
         this.animateFaces();
         this.selectCandidate();
+        return;
+      }
+    }
+
+    if (
+      !this.aboard &&
+      this.state.pending === 'board' &&
+      this.state.candidate?.slot === 3
+    ) {
+      this.handleInput();
+      if (
+        this.expanded.flight?.pilot === 'eagle' &&
+        this.expanded.flight.mode === 'surface'
+      ) {
+        this.state = {
+          ...this.state,
+          frame: this.state.frame + 1,
+          frameCounter: 0
+        };
+        this.publishFlight();
+        this.animateFaces();
+        this.selectCandidate();
+        this.state = { ...this.state, narrative: this.narrative.state };
         return;
       }
     }
@@ -764,6 +915,23 @@ export class TourcraftSession extends DionSession {
     if (e.flight !== null && e.flight.mode !== 'foot') {
       const flight = new TourcraftFlight(this.promoted, e.flight);
       const before = flight.state.mode;
+      if (flight.state.pilot === 'eagle') {
+        this.handleInput();
+        flight.state = this.expanded.flight!;
+        if (
+          flight.state.arrival !== null &&
+          ![60, 100].includes(flight.state.arrival)
+        ) {
+          this.notes.push(
+            `Body ${flight.state.arrival} has no promoted content`
+          );
+          flight.state = {
+            ...flight.state,
+            arrival: null,
+            space: { ...flight.state.space, hold: 50 }
+          };
+        }
+      }
       if (flight.state.frameWord >= 2) {
         this.narrative.frame();
       }
@@ -782,12 +950,15 @@ export class TourcraftSession extends DionSession {
           255
         : undefined;
       if (enteringBody) {
-        this.content = gameplayContent(this.promoted, 23);
+        this.content = gameplayContent(
+          this.promoted,
+          flight.state.arrival === 100 ? 23 : 3
+        );
         this.state = {
           ...this.state,
           cell: 0,
           doors: new Map(),
-          location: 100,
+          location: flight.state.arrival!,
           region: 0,
           taxi: initializeBodyTaxi(this.content)
         };
@@ -812,7 +983,8 @@ export class TourcraftSession extends DionSession {
             this.narrative.idMessage(0x25);
           }
         },
-        () => this.cue('collision')
+        () => this.cue('collision'),
+        enteringBody ? this.expanded.phases[flight.state.arrival! / 4]! : 0
       );
       if (enteringBody) {
         this.state = {
@@ -846,7 +1018,7 @@ export class TourcraftSession extends DionSession {
         this.animateDriver();
         this.animateFaces();
       }
-      if (flight.state.mode === 'foot') {
+      if (flight.state.mode === 'foot' && before !== 'foot') {
         this.cue('cut');
         this.cue('key_click');
       }
@@ -944,59 +1116,68 @@ export class TourcraftSession extends DionSession {
     const e = this.expanded;
     const f = e.flight!;
     const c = f.craft;
-    const copied =
-      f.mode === 'foot'
-        ? { pitch: c.pitch, roll: c.roll, yaw: c.yaw }
-        : tourcraftView(
-            this.content.world.rotationTable,
-            c,
-            f.cabinOffset,
-            f.mode === 'space'
-          );
-    if (f.body === 100 && this.content.world.metisGroup !== 23) {
-      this.content = gameplayContent(this.promoted, 23);
+    const copied = dionFlightView(this.content.world.rotationTable, f);
+    if (
+      f.mode !== 'space' &&
+      this.content.world.metisGroup !== (f.body === 100 ? 23 : 3)
+    ) {
+      this.content = gameplayContent(this.promoted, f.body === 100 ? 23 : 3);
       this.state = { ...this.state, doors: new Map(), region: 0 };
     }
-    const eye = [
-      c.x >>> 0,
-      (c.y + (f.mode === 'surface' ? 64 : 0)) >>> 0,
-      c.z >>> 0
-    ] as const;
+    const eye = dionFlightEye(f);
+    const footEye = f.pilot === 'eagle' ? eye : ([c.x, 63, c.z] as const);
     const location = f.mode === 'space' ? 65_535 : f.body;
     const cell = f.mode === 'space' ? this.state.cell : this.cellAt(eye);
     const residents = e.residents.map(r =>
-      r.slot === 13
-        ? {
-            ...r,
-            bodyOffset: location & 255,
-            cell,
-            position: [
-              c.x,
-              (f.mode === 'foot' ? c.y - 63 : c.y + 56) >>> 0,
-              c.z
-            ] as const,
-            yaw:
-              f.mode === 'foot'
-                ? (((c.yaw - f.cabinOffset) & 65_535) >>> 2) & 255
-                : (bodyYaw ?? r.yaw),
-            zone:
-              f.mode === 'space'
-                ? this.expanded.playerZone
-                : this.zoneAt([c.x, c.y, c.z], f.body, this.state.cell)
-          }
-        : r
+      f.pilot === 'eagle' && r.slot === 3
+        ? f.mode === 'foot'
+          ? {
+              ...r,
+              association: 0,
+              body: 0,
+              bodyOffset: f.body,
+              cell,
+              group: f.body === 100 ? 23 : 3,
+              position: [c.x, c.y - 63, c.z] as const,
+              yaw: (c.yaw >>> 2) & 255,
+              zone: this.zoneAt([c.x, c.y, c.z], f.body, cell)
+            }
+          : { ...r, association: 0, body: 0, bodyOffset: 120, group: 0 }
+        : f.pilot === 'tourcraft' && r.slot === 13
+          ? {
+              ...r,
+              bodyOffset: location & 255,
+              cell,
+              position: [
+                c.x,
+                (f.mode === 'foot' ? c.y - 63 : c.y + 56) >>> 0,
+                c.z
+              ] as const,
+              yaw:
+                f.mode === 'foot'
+                  ? (((c.yaw - f.cabinOffset) & 65_535) >>> 2) & 255
+                  : (bodyYaw ?? r.yaw),
+              zone:
+                f.mode === 'space'
+                  ? this.expanded.playerZone
+                  : this.zoneAt([c.x, c.y, c.z], f.body, this.state.cell)
+            }
+          : r
     );
     this.state = {
       ...this.state,
       cell,
-      eye: f.mode === 'foot' ? [c.x, 63, c.z] : eye,
+      eye: f.mode === 'foot' ? footEye : eye,
       heading: copied.yaw,
       location,
       pitch: copied.pitch,
-      region: f.mode === 'foot' ? this.regionAtEye(cell, [c.x, 63, c.z]) : 0,
+      region: f.mode === 'foot' ? this.regionAtEye(cell, footEye) : 0,
       tourcraft: {
         ...e,
-        playerZone: residents.find(r => r.slot === 13)!.zone,
+        playerZone:
+          f.pilot === 'eagle'
+            ? this.zoneAt([c.x, c.y, c.z], f.body, cell)
+            : residents.find(r => r.slot === 13)!.zone,
         residents
       }
     };
@@ -1070,7 +1251,13 @@ export class TourcraftSession extends DionSession {
       eye: [v['eyeX']!, v['eyeY']!, v['eyeZ']!] as const,
       heading: yaw,
       passenger:
-        f && f.mode !== 'foot' ? 13 : this.state.taxi.passenger ? 16 : null,
+        f && f.mode !== 'foot'
+          ? f.pilot === 'eagle'
+            ? 3
+            : 13
+          : this.state.taxi.passenger
+            ? 16
+            : null,
       pilotHead: f && f.mode !== 'foot' ? 279 : 263,
       pitch,
       residents: new Map([

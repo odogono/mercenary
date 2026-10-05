@@ -1,3 +1,5 @@
+import type { TourcraftFlightState } from './tourcraftFlight.ts';
+
 const signed = (value: number) => (value << 16) >> 16;
 
 /// `$59D34..$59D94`: rotate signed scaled physical tilt into the live cabin
@@ -27,3 +29,31 @@ export const tourcraftView = (
     yaw: (physical.yaw + offset) & 65_535
   };
 };
+
+/// `$59CF0`: manual flight copies the physical pose; playback adds the cabin view.
+export const dionFlightView = (
+  table: readonly number[],
+  flight: TourcraftFlightState
+) =>
+  flight.pilot === 'eagle' || flight.mode === 'foot'
+    ? {
+        pitch: flight.craft.pitch,
+        roll: flight.craft.roll,
+        yaw: flight.craft.yaw
+      }
+    : tourcraftView(
+        table,
+        flight.craft,
+        flight.cabinOffset,
+        flight.mode === 'space'
+      );
+
+export const dionFlightEye = (
+  flight: TourcraftFlightState
+): readonly [number, number, number] => [
+  flight.craft.x >>> 0,
+  (flight.craft.y +
+    (flight.pilot === 'tourcraft' && flight.mode === 'surface' ? 64 : 0)) >>>
+    0,
+  flight.craft.z >>> 0
+];

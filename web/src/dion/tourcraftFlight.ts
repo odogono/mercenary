@@ -1,13 +1,18 @@
 import {
   craftAdd,
   craftLongFloat,
+  craftMotionPass,
   craftNegate,
   craftPass,
   craftSqrt,
   craftSquare,
   insideBox,
+  launch,
   stopPreset,
+  throttleDown,
   throttleForEntry,
+  throttleNotchKey,
+  throttleUp,
   type CraftConstants,
   type CraftProgram,
   type CraftState
@@ -101,6 +106,7 @@ export interface TourcraftFlightState {
   readonly heldControl: number;
   readonly mode: 'surface' | 'space' | 'foot';
   readonly nextAction: number;
+  readonly pilot: 'tourcraft' | 'eagle';
   readonly priorPose: readonly [number, number, number];
   readonly rate: number;
   readonly space: SpaceState;
@@ -150,6 +156,8 @@ export class TourcraftFlight {
       slots,
       throttleKeys: []
     };
+    // R4: EAGLE slot3's parameter tail equals slot1 ($56F3A..$56F56).
+    slots.push({ ...slots[1]!, slot: 3 });
     const playback = record(content.programmes['playback'], 'playback');
     this.actions = list(playback['actions'], 'actions').map(v => {
       const a = record(v, 'action');
@@ -187,6 +195,7 @@ export class TourcraftFlight {
       heldControl: 0,
       mode: 'surface',
       nextAction: 0,
+      pilot: 'tourcraft',
       priorPose: [int(h['x'], 'header.x'), 63, int(h['z'], 'header.z')],
       rate: 32,
       space: {
@@ -202,7 +211,124 @@ export class TourcraftFlight {
     };
   }
 
+  /// Board uses the resident's current placement, with the same stop preset as Leave.
+  boardEagle(body: number, position: readonly number[], yaw: number): void {
+    const craft = stopPreset(
+      {
+        ...this.state.craft,
+        contact: 63,
+        pitch: 511,
+        roll: 0,
+        supported: 0,
+        supportLevel: 0,
+        trig: { pitch: 511, yaw },
+        x: position[0]!,
+        y: position[1]! + 63,
+        yaw,
+        z: position[2]!
+      },
+      CONSTANTS
+    );
+    this.state = {
+      ...this.state,
+      arrival: null,
+      body,
+      cabinOffset: 0,
+      craft,
+      frameWord: 0,
+      heldControl: 0,
+      mode: 'surface',
+      nextAction: 0,
+      pilot: 'eagle',
+      priorPose: [craft.x, craft.y, craft.z]
+    };
+  }
+
+  leaveEagle(): boolean {
+    if (
+      this.state.pilot !== 'eagle' ||
+      this.state.mode !== 'surface' ||
+      this.state.craft.contact === 0
+    ) {
+      return false;
+    }
+    this.state = {
+      ...this.state,
+      craft: stopPreset(
+        { ...this.state.craft, pitch: 511, roll: 0 },
+        CONSTANTS
+      ),
+      mode: 'foot'
+    };
+    return true;
+  }
+
+  throttleKey(key: number): void {
+    const entry =
+      key >= 2 && key <= 11
+        ? 8 + (key - 2) * 2
+        : key >= 59 && key <= 68
+          ? 9 + (key - 59) * 2
+          : key === 57
+            ? 128
+            : undefined;
+    if (entry === undefined) {
+      return;
+    }
+    const throttle = throttleForEntry(this.state.craft, entry, CONSTANTS);
+    if (throttle !== undefined) {
+      this.state = {
+        ...this.state,
+        craft: { ...this.state.craft, swing: false, throttle }
+      };
+    }
+  }
+  throttleScale(direction: -1 | 1): void {
+    const craft =
+      direction < 0
+        ? throttleDown(this.program, this.state.craft)
+        : throttleUp(this.program, this.state.craft);
+    if (craft) {
+      this.state = { ...this.state, craft: { ...craft, swing: false } };
+    }
+  }
+  throttleNotch(direction: -1 | 1): void {
+    const key = throttleNotchKey(
+      {
+        ...this.program,
+        throttleKeys: [
+          ...Array.from({ length: 10 }, (_, i) => ({
+            entry: 8 + i * 2,
+            scancode: i + 2
+          })),
+          ...Array.from({ length: 10 }, (_, i) => ({
+            entry: 9 + i * 2,
+            scancode: i + 59
+          })),
+          { entry: 128, scancode: 57 }
+        ]
+      },
+      this.state.craft,
+      direction
+    );
+    if (key !== undefined) {
+      this.throttleKey(key);
+    }
+  }
+  launchEagle(): void {
+    const result = launch(
+      this.program,
+      this.program.slots.find(s => s.slot === 3)!,
+      this.state.craft,
+      this.state.mode !== 'surface'
+    );
+    this.state = { ...this.state, craft: result.state };
+  }
+
   private consume(kind: string): number | null {
+    if (this.state.pilot === 'eagle') {
+      return null;
+    }
     const a = this.actions[this.state.nextAction];
     if (
       !a ||
@@ -220,7 +346,8 @@ export class TourcraftFlight {
   frame(
     liveStick: number,
     service: () => void = () => {},
-    collision: () => void = () => {}
+    collision: () => void = () => {},
+    bodyRotation = 0
   ): void {
     if (this.state.mode === 'foot') {
       return;
@@ -233,7 +360,7 @@ export class TourcraftFlight {
         this.program.arithmetic,
         this.state.space,
         bodyForPass(b),
-        0
+        this.state.pilot === 'eagle' ? bodyRotation : 0
       );
       this.state = {
         ...this.state,
@@ -274,21 +401,28 @@ export class TourcraftFlight {
         return;
       }
     }
-    if (liveStick & 8) {
+    if (this.state.pilot === 'tourcraft' && liveStick & 8) {
       cabinOffset = (cabinOffset + 16) & 65_535;
-    } else if (liveStick & 4) {
+    } else if (this.state.pilot === 'tourcraft' && liveStick & 4) {
       cabinOffset = (cabinOffset - 16) & 65_535;
     }
     this.state = { ...this.state, cabinOffset, craft };
-    this.pass(service, collision);
+    this.pass(service, collision, liveStick);
     this.state = {
       ...this.state,
       frameWord: (this.state.frameWord + 1) & 65_535
     };
   }
 
-  private pass(service: () => void, collision: () => void): void {
-    const held = this.consume('stick') ?? this.state.heldControl;
+  private pass(
+    service: () => void,
+    collision: () => void,
+    liveStick = 0
+  ): void {
+    const held =
+      this.state.pilot === 'eagle'
+        ? liveStick
+        : (this.consume('stick') ?? this.state.heldControl);
     const { body } = this.state;
     let { craft, mode, space } = this.state;
     let rate = 32;
@@ -297,28 +431,39 @@ export class TourcraftFlight {
       const prior = craft;
       const priorY = craft.y;
       const boxes = tourcraftBoxes(this.content, body, craft);
-      const moved = craftPass(
-        this.program,
-        this.program.slots[1]!,
-        craft,
-        held,
-        boxes
-      );
+      const slot = this.program.slots.find(
+        s => s.slot === (this.state.pilot === 'eagle' ? 3 : 1)
+      )!;
+      const run =
+        this.state.pilot === 'eagle'
+          ? craftMotionPass
+          : (
+              program: CraftProgram,
+              slot: CraftSlot,
+              from: CraftState,
+              stick: number,
+              boxes: import('../craft/pass.ts').BoundBoxes
+            ) => {
+              const moved = craftPass(program, slot, from, stick, boxes);
+              if (moved.landing) {
+                throw new Error('Unsupported playback touchdown');
+              }
+              return { outcome: 'moved', state: moved.state };
+            };
+      const moved = run(this.program, slot, craft, held, boxes);
       craft = {
         ...moved.state,
         x: moved.state.x & 0x0f_ff_ff_ff,
         z: moved.state.z & 0x0f_ff_ff_ff
       };
-      if (moved.landing) {
-        throw new Error(
-          'Unsupported hard touchdown outside the admitted playback route'
-        );
+      if (moved.outcome === 'landed') {
+        mode = 'foot';
       }
       service();
-      if (insideBox(boxes, craft)) {
-        const retry = craftPass(
+      if (mode !== 'foot' && insideBox(boxes, craft)) {
+        const retry = run(
           this.program,
-          this.program.slots[1]!,
+          slot,
           {
             ...craft,
             speed: craftNegate(craft.speed),
@@ -330,10 +475,8 @@ export class TourcraftFlight {
           held,
           boxes
         );
-        if (retry.landing) {
-          throw new Error(
-            'Unsupported retry touchdown outside the admitted playback route'
-          );
+        if (retry.outcome === 'landed') {
+          mode = 'foot';
         }
         const retried = retry.state;
         craft = {
@@ -347,7 +490,7 @@ export class TourcraftFlight {
         };
         collision();
       }
-      if (priorY >>> 16 >= CONSTANTS.spaceEntry) {
+      if (mode !== 'foot' && priorY >>> 16 >= CONSTANTS.spaceEntry) {
         const entered = enterSpace(
           this.program,
           craft,
@@ -367,7 +510,7 @@ export class TourcraftFlight {
           space
         };
         // Recovered zero-tick loop reentry, with no new live input delivery.
-        this.pass(service, collision);
+        this.pass(service, collision, liveStick);
         return;
       }
     } else {

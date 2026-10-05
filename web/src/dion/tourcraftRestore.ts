@@ -19,7 +19,7 @@ import {
   initialTourcraftPhases,
   initialTourcraftResidents
 } from './tourcraftState.ts';
-import { tourcraftView } from './tourcraftView.ts';
+import { dionFlightEye, dionFlightView } from './tourcraftView.ts';
 import { readDionOpening } from './world.ts';
 
 // The admitted playback exclusively owns physical flight. Live cabin yaw and
@@ -304,6 +304,8 @@ export const readTourcraftResume = (
     ],
     'tourcraft'
   );
+  const manual =
+    e['flight'] !== null && record(e['flight'], 'flight')['pilot'] === 'eagle';
   bool(e['armed'], 'armed');
   unsigned(e['playerZone'], 'playerZone', 8);
   const collision = keys(
@@ -725,7 +727,7 @@ export const readTourcraftResume = (
         }
       }
     }
-    if (a['slot'] === 13) {
+    if (a['slot'] === 13 && !manual) {
       if (a['bodyOffset'] !== (base.snapshot.location & 255)) {
         throw new Error('Wrong TOURCRAFT Body');
       }
@@ -762,7 +764,15 @@ export const readTourcraftResume = (
         name === 'nextAction' ? 134 : name === 'heldControl' ? 127 : 65_535
       );
     }
-    if (f['arrival'] !== null && f['arrival'] !== 100) {
+    if (f['pilot'] !== 'eagle' && f['pilot'] !== 'tourcraft') {
+      throw new Error('Unknown pilot');
+    }
+    if (
+      f['arrival'] !== null &&
+      !(manual ? content.system.bodies.map(b => b.offset) : [100]).includes(
+        int(f['arrival'], 'flight.arrival', 0, 124)
+      )
+    ) {
       throw new Error('Unknown Body arrival');
     }
     const craft = record(f['craft'], 'craft');
@@ -796,13 +806,33 @@ export const readTourcraftResume = (
     ) {
       throw new Error('Flight Location disagrees');
     }
-    if (f['mode'] === 'foot' && f['nextAction'] !== 134) {
+    if (!manual && f['mode'] === 'foot' && f['nextAction'] !== 134) {
       throw new Error('Premature playback exit');
     }
     if (base.snapshot.taxi.passenger) {
       throw new Error('Conflicting passenger custody');
     }
-    if (f['mode'] !== 'foot') {
+    if (manual) {
+      if (
+        f['nextAction'] !== 0 ||
+        f['cabinOffset'] !== 0 ||
+        (f['mode'] !== 'foot' && base.snapshot.frameCounter !== f['frameWord'])
+      ) {
+        throw new Error('Invalid manual flight counters');
+      }
+      const occupied = record(
+        residents.find(r => record(r, 'resident')['slot'] === 3),
+        'EAGLE'
+      );
+      if (
+        f['mode'] !== 'foot' &&
+        (occupied['bodyOffset'] !== 120 ||
+          occupied['association'] !== 0 ||
+          occupied['group'] !== 0)
+      ) {
+        throw new Error('Occupied EAGLE outside VOID');
+      }
+    } else if (f['mode'] !== 'foot') {
       const expected = flightPath(content).get(Number(f['frameWord']));
       if (!expected || base.snapshot.frameCounter !== f['frameWord']) {
         throw new Error('Flight counter disagrees');
@@ -1063,7 +1093,7 @@ export const readTourcraftResume = (
     const resident = candidateState.tourcraft!.residents.find(
       r => r.slot === 13
     )!;
-    if (flight) {
+    if (flight && flight.pilot === 'tourcraft') {
       const terminal = flightPath(content).get(927)!;
       const craft = flight.mode === 'foot' ? terminal.craft : flight.craft;
       const position = [
@@ -1096,23 +1126,17 @@ export const readTourcraftResume = (
     }
     const copied =
       flight && flight.mode !== 'foot'
-        ? tourcraftView(
+        ? dionFlightView(
             tourcraftFrameWorld(
               content,
               candidateState.location === 100 ? 23 : 3
             ).rotationTable,
-            flight.craft,
-            flight.cabinOffset,
-            flight.mode === 'space'
+            flight
           )
         : { pitch: candidateState.pitch, roll: 0, yaw: candidateState.heading };
     matches('view', 'roll', copied.roll);
     if (flight && flight.mode !== 'foot') {
-      const expectedEye = [
-        flight.craft.x,
-        (flight.craft.y + (flight.mode === 'surface' ? 64 : 0)) >>> 0,
-        flight.craft.z
-      ];
+      const expectedEye = dionFlightEye(flight);
       if (
         candidateState.eye.some((v, i) => v !== expectedEye[i]) ||
         candidateState.pitch !== copied.pitch ||

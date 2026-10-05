@@ -6,7 +6,7 @@ import type { DionSnapshot } from './session.ts';
 import type { TourcraftContent } from './tourcraftContent.ts';
 import type { TourcraftScriptState } from './tourcraftNarrative.ts';
 import { numericCarries, type TourcraftState } from './tourcraftState.ts';
-import { tourcraftView } from './tourcraftView.ts';
+import { dionFlightView } from './tourcraftView.ts';
 
 const word = (yes: boolean) => (yes ? 65_535 : 0);
 
@@ -43,14 +43,12 @@ export const updateTourcraftOwners = (
   const sampled = s.frame !== previous.frame;
   const copiedRoll =
     f && f.mode !== 'foot'
-      ? tourcraftView(
+      ? dionFlightView(
           list(
             record(content.support['rotationTable'], 'rotationTable')['words'],
             'rotationTable.words'
           ) as number[],
-          f.craft,
-          f.cabinOffset,
-          f.mode === 'space'
+          f
         ).roll
       : 0;
   // Surface refresh is in the deferred tail AFTER the accepted wait boundary.
@@ -96,7 +94,13 @@ export const updateTourcraftOwners = (
               occupancyWord: f.mode === 'foot' ? 63 : 0,
               panelSpeed: f.craft.panelSpeed >>> 0,
               parameterSlot:
-                f.mode === 'space' ? 0 : f.mode === 'foot' ? 65_535 : 1,
+                f.mode === 'space'
+                  ? 0
+                  : f.mode === 'foot'
+                    ? 65_535
+                    : f.pilot === 'eagle'
+                      ? 3
+                      : 1,
               pitch: f.craft.pitch,
               pitchRate: f.space.pitchRate,
               priorX: f.priorPose[0],

@@ -19,7 +19,7 @@ import {
 } from './tourcraftRestore.ts';
 import { TourcraftSession } from './tourcraftSession.ts';
 
-export const TOURCRAFT_SAVE_SCHEMA_VERSION = 3;
+export const TOURCRAFT_SAVE_SCHEMA_VERSION = 4;
 const MAX_BYTES = 262_144;
 const limit = (encoded: string) => {
   if (new TextEncoder().encode(encoded).length > MAX_BYTES) {
@@ -30,7 +30,7 @@ export const tourcraftWhere = (session: TourcraftSession) => {
   const s = session.snapshot;
   const name =
     s.location === 65_535 ? 'SPACE' : s.location === 100 ? 'TOLOSA' : 'METIS';
-  return `${name} ${s.cell & 15}-${s.cell >> 4}${s.tourcraft?.flight?.mode !== 'foot' && s.tourcraft?.flight ? ' · TOURCRAFT' : s.taxi.passenger ? ' · TAXI' : ''}`;
+  return `${name} ${s.cell & 15}-${s.cell >> 4}${s.tourcraft?.flight?.mode !== 'foot' && s.tourcraft?.flight ? (s.tourcraft.flight.pilot === 'eagle' ? ' · EAGLE' : ' · TOURCRAFT') : s.taxi.passenger ? ' · TAXI' : ''}`;
 };
 export const encodeTourcraftRecord = (
   content: TourcraftContent,
