@@ -108,3 +108,41 @@ describe("Mercenary III's Control Profile (ADR 0064)", () => {
     expect(riding.acted).toEqual(['leave']);
   });
 });
+
+test('manual craft bindings send forward/reverse throttle, stop, scaling and launch', () => {
+  const calls: (number | string)[] = [];
+  const profile = new BrowserControlProfile(
+    dionControlActions({
+      act: action => calls.push(action),
+      extendedControls: () => true,
+      launch: () => calls.push('launch'),
+      passenger: () => true,
+      throttleKey: value => calls.push(value),
+      throttleScale: value => calls.push(`scale ${value}`)
+    })
+  );
+  for (const code of [
+    'Digit1',
+    'Digit0',
+    'F1',
+    'F10',
+    'Space',
+    'Minus',
+    'Equal',
+    'Backspace',
+    'KeyL'
+  ]) {
+    profile.keyDown(key(code));
+  }
+  expect(calls).toEqual([
+    2,
+    11,
+    59,
+    68,
+    57,
+    'scale -1',
+    'scale 1',
+    'launch',
+    'leave'
+  ]);
+});

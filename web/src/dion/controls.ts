@@ -19,13 +19,17 @@ const inert = (): void => {};
 export const dionControlActions = (options: {
   readonly act: (action: DionAction) => void;
   readonly extendedControls: () => boolean;
+  readonly launch?: () => void;
   readonly passenger: () => boolean;
+  readonly throttleKey?: (key: number) => void;
+  readonly throttleNotchStep?: (direction: -1 | 1) => void;
+  readonly throttleScale?: (direction: -1 | 1) => void;
 }): ControlProfileActions => ({
   drop: () => options.act('drop'),
   extendedControls: options.extendedControls,
   headCommand: command => options.act(CARD_ACTIONS[command]),
   keypadDigit: inert,
-  launch: inert,
+  launch: options.launch ?? inert,
   leaveCraft: () => options.act('leave'),
   liftKey: () => false,
   // The shared profile reads only whether the player is aboard, and a passenger leaves by LEAVE
@@ -39,9 +43,13 @@ export const dionControlActions = (options: {
   },
   recentreLook: inert,
   rotateStack: direction => options.act(direction),
-  shutThrottle: inert,
-  throttleNotchStep: inert,
-  throttleNotchValue: inert,
-  throttleReverseNotch: inert,
-  throttleStep: inert
+  shutThrottle: () => options.throttleKey?.(57),
+  throttleNotchStep: options.throttleNotchStep ?? inert,
+  throttleNotchValue: notch => options.throttleKey?.(notch + 1),
+  throttleReverseNotch: notch => options.throttleKey?.(notch + 58),
+  throttleStep: delta => {
+    if (delta !== 0) {
+      options.throttleScale?.(delta < 0 ? -1 : 1);
+    }
+  }
 });

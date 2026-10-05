@@ -172,7 +172,23 @@ try {
     dionControlActions({
       act,
       extendedControls: () => preferences.current().extendedControls,
-      passenger: () => session.snapshot.taxi.passenger
+      launch: () => {
+        session.launchCraft();
+        checkpoint();
+      },
+      passenger: () => session.aboard,
+      throttleKey: key => {
+        session.throttleKey(key);
+        checkpoint();
+      },
+      throttleNotchStep: direction => {
+        session.throttleNotchStep(direction);
+        checkpoint();
+      },
+      throttleScale: direction => {
+        session.throttleScale(direction);
+        checkpoint();
+      }
     })
   );
   const keyNames = browserKeyNames();
@@ -582,6 +598,7 @@ try {
             });
           }
           session.intent = shellConsole.isOpen() ? IDLE : controls.intent;
+          session.fire(!shellConsole.isOpen() && controls.firing);
           snapshot = session.advance(seconds);
           const notes = session.drainNotes();
           if (notes.length > 0) {
