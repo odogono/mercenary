@@ -1,5 +1,7 @@
 # Mercenary III: native EAGLE flight research
 
+The #756 research ledgers, scripts and tests this report cites were removed when the programme was rescoped ([#756](https://github.com/odogono/mercenary/issues/756)). They remain in git history at `ab0d6ddf`.
+
 Research handoff for [R4/#778](https://github.com/odogono/mercenary/issues/778), commissioned by [#756](https://github.com/odogono/mercenary/issues/756) after [R3/#772](https://github.com/odogono/mercenary/issues/772). On 2026-10-04 the programme accepted native EAGLE access as a scope expansion: naturally acquiring KEY181 and boarding EAGLE3 must retain their resulting native craft access. This does not admit every reachable Body, object, encounter or campaign outcome. Those dependencies return to the programme's delivery-set review.
 
 Ordinary original-input continuations now establish manual surface flight, braking while airborne, refused airborne Leave, safe airborne landing/Leave/re-board, native space departure, manual turning, KEY Drop aboard and player firing, plus a reached hard-touchdown branch with automatic disembarkation. Static inspection independently confirms that EAGLE3 selects the already studied surface numeric core with its own parameter identity, exposes manual throttle/pitch/yaw, permits airborne space launch and removes the staffed-service firing refusal. The prior D2 passive encounter exclusion therefore cannot be carried forward unchanged. Flight, landing, contact, placement, timing and resulting effect evidence are separate gates from proving Board acceptance.

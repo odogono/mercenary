@@ -1,5 +1,7 @@
 # Mercenary III R3: ordinary TOLOSA HQ access and key31 barrier
 
+The #756 research ledgers, scripts and tests this report cites were removed when the programme was rescoped ([#756](https://github.com/odogono/mercenary/issues/756)). They remain in git history at `ab0d6ddf`.
+
 Research continuation for [#772](https://github.com/odogono/mercenary/issues/772), 2026-10-05, following the [R3 scope review](mercenary-iii-object-interaction-r3-scope-review.md). **Ordinary input reaches TOLOSA HQ's keyless entrance, lift and B/Floor10, launching reception5 and meeting6. The retained corridor approach reaches the original absent-key31 branch and cannot cross its shut door. PCB218 remains unacquired.** A separate east-hall Take targets fixed table224, not PCB. These finite observations add building and script dependencies; they do not authorize content promotion, runtime implementation or closure of #772/#771.
 
 The companion [source report](mercenary-iii-tolosa-hq-source.md) pins the host, floor geometry, resolved keys and dialogue/pickup graphs. The [numeric ledger](../../research/mercenary-iii-st/tolosa-hq-evidence.json) and [read-only observer](../../research/mercenary-iii-st/scripts/tolosa-hq-evidence.py) own the new execution and restore claims. Raw RAM, whole-machine checkpoints, logs, generated debugger files, recipes and screenshots remain ignored under `restricted/mercenary-iii-772/tolosa-hq/` in the main checkout.

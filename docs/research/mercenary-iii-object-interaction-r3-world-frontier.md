@@ -1,5 +1,7 @@
 # Mercenary III R3: native destination and world frontier
 
+The #756 research ledgers, scripts and tests this report cites were removed when the programme was rescoped ([#756](https://github.com/odogono/mercenary/issues/756)). They remain in git history at `ab0d6ddf`.
+
 Primary-source scope review for [R3/#772](https://github.com/odogono/mercenary/issues/772), 2026-10-05, after R2/#784. **Proposed dependency frontier; no additional gameplay or content is admitted.** The already approved native EAGLE consequence cannot be closed by a METIS/TOLOSA/JUNO destination list or the nine acquired item identities. The original scan has 29 nonzero initially eligible destinations, whose authored placements bind 43 distinct groups. A delivery retaining its native arrival and generic Take/Drop readers must account for that frontier, or document an original gate for each omitted edge. Existing ordinary routes establish only their named executions. They do not establish every destination, acquisition, building or campaign future.
 
 ## Primary evidence and method

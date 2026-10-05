@@ -1,5 +1,7 @@
 # Mercenary III: native EAGLE arrival and natural encounters
 
+The #756 research ledgers, scripts and tests this report cites were removed when the programme was rescoped ([#756](https://github.com/odogono/mercenary/issues/756)). They remain in git history at `ab0d6ddf`.
+
 Research follow-up for [R4/#778](https://github.com/odogono/mercenary/issues/778), [R3/#772](https://github.com/odogono/mercenary/issues/772) and [R2/#771](https://github.com/odogono/mercenary/issues/771), part of [#756](https://github.com/odogono/mercenary/issues/756), 2026-10-04. Ordinary EAGLE flight now enters TOLOSA, kills all three passive OBSERVERs, advances to the hostile programme and reaches unshielded failure after an incoming hit. A straight approach also naturally enters JUNO. **Final destination/content/effect/Save admission remains open.** This supersedes those specific natural execution gates in the [R3 follow-up](mercenary-iii-object-interaction-r3-followup.md); its synthetic shield/candidacy/global-fleet controls retain their separate classification.
 
 No runtime, Data Payload, Golden Trace or Save schema changes accompany this report. Original material stays ignored under [ADR 0002](../adr/0002-separate-rom-research-from-implementation.md); immutable recovery does not imply playable admission under [ADR 0065](../adr/0065-promote-bounded-dion-catalogue-content-through-an-explicit-export.md). Approved EAGLE access is retained without inventing a METIS/TOLOSA destination restriction.

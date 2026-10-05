@@ -1,5 +1,7 @@
 # Mercenary III: R1 selection and boundary follow-up
 
+The #756 research ledgers, scripts and tests this report cites were removed when the programme was rescoped ([#756](https://github.com/odogono/mercenary/issues/756)). They remain in git history at `ab0d6ddf`.
+
 Executed follow-up for [R1/#770](https://github.com/odogono/mercenary/issues/770), 2026-10-04, extending the [first handoff](mercenary-iii-object-interaction-r1.md). **R1 remains open.** These controls add original execution for stale selection, clipping, native distance rounding, competing handling/capacity gates and BRIEFCASE boundary continuations. They accept no bounded exclusion and change no runtime, playable scope, Data Payload or Golden Trace.
 
 The [acceptance audit](mercenary-iii-object-interaction-r1-audit.md) records what the preceding handoff established and compares current Damocles functions. The [numeric follow-up ledger](../../research/mercenary-iii-st/object-interaction-r1-followup.json) pins this run's source, selected family manifests, logs and capture hashes. Original RAM, snapshots, debugger scripts and projection buffers remain in the main checkout's ignored `restricted/mercenary-iii-770/followup/`, under [ADR 0002](../adr/0002-separate-rom-research-from-implementation.md).

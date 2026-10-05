@@ -1,5 +1,7 @@
 # Mercenary III: R2 pickup-effect acceptance audit
 
+The #756 research ledgers, scripts and tests this report cites were removed when the programme was rescoped ([#756](https://github.com/odogono/mercenary/issues/756)). They remain in git history at `ab0d6ddf`.
+
 Read-only research audit for [#771](https://github.com/odogono/mercenary/issues/771), 2026-10-04. This note audits the pickup-response part of the [R2 handoff](mercenary-iii-object-interaction-r2.md) and [effect report](mercenary-iii-object-interaction-r2-effects.md). It changes no gameplay, Data Payload, Golden Trace or playable admission. The Head Command, description, sound and actual acquired-set reader audit remains a separate part of R2 acceptance.
 
 The retained source and original execution support the bounded pickup mechanisms claimed by R2. A new [tracked read-only observer](../../research/mercenary-iii-st/scripts/object-interaction-r2-effects-audit.py) reproduces a [portable numeric ledger](../../research/mercenary-iii-st/object-interaction-r2-effects-audit.json) directly from the ignored RAM, source ledger, manifests and original debugger logs. It strengthens availability, Return nesting, timer writes and ordered message-request assertions beyond the earlier restricted replay. All eighteen selected families pass: **4,886 tops, 4,868 consecutive eleven-tick gaps, 86 captured states, 79 ordered message requests, twelve native timer arms and 41 launcher/direct-start entries**. Launcher entries include refusals and queued requests, so 41 is not a count of successfully started scripts.
