@@ -56,7 +56,7 @@ All 34 reception sites and 46 meeting sites, including shared waits and closing 
 
 Successful PCB Take matches response115 (`$73`) in `$555EE` via helper `$555D4`. The separately verified 28-site [R2 effect graph](mercenary-iii-object-interaction-r2-effects.md) starts at `$7468B`; it arms1500, then held-gated continuations arm1000 and1500, followed by a phase that re-arms3000 repeatedly while218 remains held. False held tests return through `$701DD`. These are game-tick countdowns, not fixed wall-clock or frame durations. The graph clears message flag13, uses packed requests and shared closing helpers, and writes no object bits, accounts, model swap or encounter request.
 
-Model selection is nevertheless mutable through independent campaign families: swap-A `$52F6A` binds chair slot97 to entry316 and PCB218 to standing entry317, clears relevant fixed bits and writes chair state `$6E84=$FFFF`; swap-B `$52FC8` binds97 to316 and218 to NULL entry0. Their callers are not admitted by establishing a Take alone. A natural acquisition would add the repeating timed future, held predicate, scheduler/queue/return-stack state, presentation dependencies and restore futures to R2 closure.
+Model selection is nevertheless mutable through independent campaign families: swap-A `$52F6A` binds chair slot97 to entry316 and PCB218 to standing entry317, clears fixed bits on chair97/table224 and writes the independent model latch `$6E84=$FFFF`; swap-B `$52FC8` binds97 to316 and218 to NULL entry0. Their callers are not admitted by establishing a Take alone. A natural acquisition would add the repeating timed future, held predicate, scheduler/queue/return-stack state, presentation dependencies and restore futures to R2 closure.
 
 ## Reader pins and disposition
 
