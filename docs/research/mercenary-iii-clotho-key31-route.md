@@ -14,7 +14,7 @@ A retained TOP cut precedes that frame's consumed input. Arrival can re-enter TO
 
 ## Incidental arrival and the accepted CLOTHO branch
 
-The first `clotho-cruise` attempt does not reach CLOTHO. Its native scanner arms Body48/LACHESIS at frame1306/ticks14380, System `[238654,54,722195]`, and executes `BODY_ENTER`. This is an ordinary unintended arrival, retained as an explored branch. The onward CLOTHO route starts again from the earlier complete `orient-north/f120` checkpoint through `east-orient`; it does not turn a LACHESIS pose into a supplied CLOTHO arrival.
+The first `clotho-cruise` attempt does not reach CLOTHO. Its native scanner arms Body48/SOLON at frame1306/ticks14380, System `[238654,54,722195]`, and executes `BODY_ENTER`. This is an ordinary unintended arrival, retained as an explored branch. The onward CLOTHO route starts again from the earlier complete `orient-north/f120` checkpoint through `east-orient`; it does not turn a SOLON pose into a supplied CLOTHO arrival.
 
 The accepted flight uses the retained east-clear and north-cruise families, then original turn, pitch, throttle and braking inputs in the final approach/intercept/entry families. `plans.json` and each manifest retain their complete schedules and parent cuts. Intermediate misses remain observations, not proof of an inaccessible Body. The nearest-Body scanner and packed arrival guard at `$53D6A..$53F70` choose the actual destination; no input names CLOTHO24.
 
