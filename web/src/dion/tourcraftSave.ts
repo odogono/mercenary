@@ -19,7 +19,7 @@ import {
 } from './tourcraftRestore.ts';
 import { TourcraftSession } from './tourcraftSession.ts';
 
-export const TOURCRAFT_SAVE_SCHEMA_VERSION = 2;
+export const TOURCRAFT_SAVE_SCHEMA_VERSION = 3;
 const MAX_BYTES = 262_144;
 const limit = (encoded: string) => {
   if (new TextEncoder().encode(encoded).length > MAX_BYTES) {
@@ -47,7 +47,7 @@ export const encodeTourcraftRecord = (
       contentSha256: content.contentSha256
     }),
     savedAt,
-    schemaVersion: 2,
+    schemaVersion: TOURCRAFT_SAVE_SCHEMA_VERSION,
     snapshot: {
       ...snapshot,
       snapshot: {
@@ -78,7 +78,7 @@ export const decodeTourcraftRecord = (
         `a ${String(identity['title'])} record, not Mercenary III`
       );
     }
-    if (r['schemaVersion'] !== 2) {
+    if (r['schemaVersion'] !== TOURCRAFT_SAVE_SCHEMA_VERSION) {
       throw new Error('Incompatible prototype Save. Start a New Game.');
     }
     const expected = dionRecordIdentity({
@@ -140,7 +140,7 @@ export const decodeTourcraftRecord = (
     return {
       identity: expected,
       savedAt: r['savedAt'],
-      schemaVersion: 2,
+      schemaVersion: TOURCRAFT_SAVE_SCHEMA_VERSION,
       snapshot,
       where: r['where']
     };

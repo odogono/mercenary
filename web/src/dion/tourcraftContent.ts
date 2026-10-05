@@ -565,7 +565,7 @@ export const loadTourcraftContent = async (
   header(promotionRaw, PROMOTION, 'dion-play-promotion');
   same(promotionRaw['sources'], sourcePins, `${PROMOTION}.sources`);
   const selected = rows(promotionRaw['geometry'], `${PROMOTION}.geometry`);
-  same(selected.length, 79, `${PROMOTION}.geometry.length`);
+  same(selected.length, 87, `${PROMOTION}.geometry.length`);
   unique(selected, 'id', `${PROMOTION}.geometry`);
   const geometry = new Map<string, PromotedGeometry>();
   for (const s of [
@@ -693,7 +693,7 @@ export const loadTourcraftContent = async (
     }
     geometry.set(id, g as unknown as PromotedGeometry);
   }
-  same(geometry.size, 80, `${PROMOTION}.geometry.closure`);
+  same(geometry.size, 88, `${PROMOTION}.geometry.closure`);
   const expectedPaths = [
     ...DION_DOCUMENTS.map(kind => `${TOURCRAFT_ROOT}/${kind}.json`),
     PROMOTION,
@@ -854,11 +854,29 @@ export const loadTourcraftContent = async (
     promotionRaw['residents'],
     'promotion.residents'
   );
+  // Every resident record is exported whole (#756); the reviewed ones keep their pins.
   same(
     initialResidents.map(r => r['slot']),
-    requiredResidents.map(r => r['slot']),
+    Array.from({ length: 246 }, (_, i) => i + 1),
     'gameplay.initial.residents.selection'
   );
+  for (const r of rows(
+    promotionRaw['residentModels'],
+    'promotion.residentModels'
+  )) {
+    const slot = int(r['slot'], 'residentModels.slot', 1, 246);
+    expectedEntries.add(slot);
+    same(
+      modelBindings.get(slot),
+      r['geometry'],
+      `gameplay.modelBindings.${slot}`
+    );
+    same(
+      initialResidents.find(a => a['slot'] === slot)!['hasModel'],
+      true,
+      `gameplay.initial.residents.${slot}.hasModel`
+    );
+  }
   for (const r of requiredResidents) {
     const slot = int(r['slot'], 'residents.slot', 0, 511);
     if (r['geometry'] !== null) {
@@ -1354,7 +1372,19 @@ const validateInitial = (initial: Row): void => {
     }
   }
   const residents = rows(initial['residents'], 'gameplay.initial.residents');
-  same(residents.length, 17, 'gameplay.initial.residents.length');
+  same(residents.length, 246, 'gameplay.initial.residents.length');
+  const carry = record(initial['carry'], 'gameplay.initial.carry');
+  for (const k of ['capacity', 'store', 'scroll']) {
+    int(carry[k], `gameplay.initial.carry.${k}`, 0, 65_535);
+  }
+  for (const [k, v] of Object.entries(
+    record(initial['labels'], 'gameplay.initial.labels')
+  )) {
+    int(Number(k), `gameplay.initial.labels.${k}`, 1, 246);
+    if (!/^[ -~]{16}$/.test(text(v, `gameplay.initial.labels.${k}`))) {
+      fail(`gameplay.initial.labels.${k}: not sixteen printable characters`);
+    }
+  }
   unique(residents, 'slot', 'gameplay.initial.residents');
   for (const r of residents) {
     if (typeof r['hasModel'] !== 'boolean') {

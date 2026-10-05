@@ -284,6 +284,7 @@ export const readTourcraftResume = (
     raw['tourcraft'],
     [
       'armed',
+      'carry',
       'collision',
       'encounter',
       'events',
@@ -580,6 +581,40 @@ export const readTourcraftResume = (
   if (residents.length !== seedResidents.length) {
     throw new Error('Incomplete residents');
   }
+  const carry = keys(
+    e['carry'],
+    ['capacity', 'incoming', 'label', 'scroll', 'stack', 'stored'],
+    'carry'
+  );
+  for (const name of ['incoming', 'label']) {
+    if (typeof carry[name] !== 'string' || !/^[ -~]{16}$/.test(carry[name])) {
+      throw new Error(`carry.${name}: not sixteen characters`);
+    }
+  }
+  int(carry['scroll'], 'carry.scroll', -16, 16);
+  const stack = list(carry['stack'], 'carry.stack').map(v =>
+    int(v, 'carry.stack', 1, 246)
+  );
+  const stored = list(carry['stored'], 'carry.stored').map(v =>
+    int(v, 'carry.stored', 1, 246)
+  );
+  const carried = new Set([...stack, ...stored]);
+  if (carried.size !== stack.length + stored.length) {
+    throw new Error('An object carried twice');
+  }
+  // `$7098` is 20 exactly while the BRIEFCASE is carried, and its store is empty then.
+  if (
+    carry['capacity'] !== (stack.includes(108) ? 20 : 10) ||
+    (stack.includes(108) && stored.length > 0)
+  ) {
+    throw new Error('Wrong Carried Stack capacity');
+  }
+  if (
+    base.snapshot.gauges.inventory !==
+    (stack.includes(108) ? stack.length : stack.length * 2)
+  ) {
+    throw new Error('Wrong inventory gauge');
+  }
   residents.forEach((r, i) => {
     shape(r, seedResidents[i], 'resident');
     const a = record(r, 'resident');
@@ -603,9 +638,26 @@ export const readTourcraftResume = (
       throw new Error('Wrong resident binding');
     }
     const seedResident = seedResidents[i]!;
-    for (const name of ['association', 'body', 'group', 'state'] as const) {
-      if (a[name] !== seedResident[name]) {
-        throw new Error(`Wrong resident.${name} binding`);
+    // Take and Drop move any other object (#756). Only its held bit changes its state, and
+    // an object is held exactly while it is carried or in the BRIEFCASE.
+    const state = Number(a['state']);
+    if ((state & 0x7f) !== (seedResident.state & 0x7f)) {
+      throw new Error('Wrong resident.state binding');
+    }
+    if (state >= 0x80 !== carried.has(seedResident.slot)) {
+      throw new Error('Held bit disagrees with the Carried Stack');
+    }
+    if (stack.includes(seedResident.slot) && a['bodyOffset'] !== 0x78) {
+      throw new Error('Carried object outside VOID');
+    }
+    list(a['position'], 'resident.position').forEach(v =>
+      unsigned(v, 'resident.position')
+    );
+    if (a['slot'] === 13 || a['slot'] === 16) {
+      for (const name of ['association', 'body', 'group'] as const) {
+        if (a[name] !== seedResident[name]) {
+          throw new Error(`Wrong resident.${name} binding`);
+        }
       }
     }
     if (a['slot'] === 13) {
@@ -621,17 +673,6 @@ export const readTourcraftResume = (
         JSON.stringify(a['position']) !== JSON.stringify(taxi.position)
       ) {
         throw new Error('Wrong ambient taxi residence');
-      }
-    } else {
-      // No admitted non-pool writer changes these residences. Their object
-      // bits, including KEY A, are separately owned by the semantic VM.
-      for (const name of Object.keys(seedResident)) {
-        if (
-          JSON.stringify(a[name]) !==
-          JSON.stringify(seedResident[name as keyof typeof seedResident])
-        ) {
-          throw new Error('Changed static residence');
-        }
       }
     }
   });

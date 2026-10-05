@@ -2201,6 +2201,201 @@
       "variants": [
         "scale=-4,-2"
       ]
+    },
+    {
+      "catalogueRecordSha256": "8d07b9ab31a1c4425475bfa88e916c06bcfbe4930f7faf63c70da2401a3fc6e5",
+      "disposition": "recovered",
+      "family": "model",
+      "id": "model-0325f6",
+      "record": "$325F6",
+      "selectedVariantsSha256": "5b804e3b3357ba47f2684af0780220af928c2cecef1ea651343f29d49838e35b",
+      "selectionReasons": [
+        "resident 96 model"
+      ],
+      "source": "catalogue-immutable",
+      "sourceRanges": [
+        {
+          "range": [
+            "$325F6",
+            "$3280D"
+          ],
+          "sha256": "c3bae820bdf5defb389d431a16e14a40b6f09bdb3f9c4f839cd5d6a285b2302b"
+        }
+      ],
+      "variants": [
+        "form=default"
+      ]
+    },
+    {
+      "catalogueRecordSha256": "e2902e986447c4fafe24a48847d0af9f1ab3d9068a1165a852a8c353a5988351",
+      "disposition": "recovered",
+      "family": "model",
+      "id": "model-03293e",
+      "record": "$3293E",
+      "selectedVariantsSha256": "61b5b84f7f1bebbbabba5e2cf8ad4b6bd94a91f946f3ffc07e824b20940aa63a",
+      "selectionReasons": [
+        "resident 99 model"
+      ],
+      "source": "catalogue-immutable",
+      "sourceRanges": [
+        {
+          "range": [
+            "$3293E",
+            "$3298D"
+          ],
+          "sha256": "abf711a30f8e29feb5dadbdd439efaf50882349c73709e68864e6e8519fd95c1"
+        }
+      ],
+      "variants": [
+        "form=default"
+      ]
+    },
+    {
+      "catalogueRecordSha256": "fdbe95060ba66d3794c8db72e95fab7e6d660f4b151d6abc324d17f20debd7dd",
+      "disposition": "recovered",
+      "family": "model",
+      "id": "model-03ac5a",
+      "record": "$3AC5A",
+      "selectedVariantsSha256": "b9e87d78406fb48b3250c1d689ed3cabe6d08b5fcdbe61891afd26c0ab90e868",
+      "selectionReasons": [
+        "resident 103 model"
+      ],
+      "source": "catalogue-immutable",
+      "sourceRanges": [
+        {
+          "range": [
+            "$3AC5A",
+            "$3AD5B"
+          ],
+          "sha256": "555e93bc61fb6ae0d409f88367467d3b8c2fabcb23ccc422c94cd125408810c0"
+        }
+      ],
+      "variants": [
+        "form=default"
+      ]
+    },
+    {
+      "catalogueRecordSha256": "622a72cb39b45058cac010c53ed39ddcd26dd5c01ca5bafc7f2454dc7770cfa2",
+      "disposition": "recovered",
+      "family": "model",
+      "id": "model-03ad70",
+      "record": "$3AD70",
+      "selectedVariantsSha256": "d0e7ec2e8566ca33e07e2b7ca38c37c748b126ebee1f23a43cd8774b6b7144b8",
+      "selectionReasons": [
+        "resident 104 model"
+      ],
+      "source": "catalogue-immutable",
+      "sourceRanges": [
+        {
+          "range": [
+            "$3AD70",
+            "$3AE23"
+          ],
+          "sha256": "58593d0ee20291e86e47c9ea91e2540ee5a0efc9f5e53944b35c9c168d61d7f3"
+        }
+      ],
+      "variants": [
+        "form=default"
+      ]
+    },
+    {
+      "catalogueRecordSha256": "4b4f45d308fc92753e3d9298b0d95dfa9283c0f8cd12f3068cd3b7ef12d08091",
+      "disposition": "recovered",
+      "family": "model",
+      "id": "model-033de2",
+      "record": "$33DE2",
+      "selectedVariantsSha256": "a5005c2ac79d5e56af82aa929b174f2b32d91f73a4d130122bdda658197e95c3",
+      "selectionReasons": [
+        "resident 135 model"
+      ],
+      "source": "catalogue-immutable",
+      "sourceRanges": [
+        {
+          "range": [
+            "$33DE2",
+            "$34111"
+          ],
+          "sha256": "337d45d001cb4380d619c523f76d895b6a5102ff5c893b799ba7dac9baeff15e"
+        }
+      ],
+      "variants": [
+        "form=default",
+        "form=view-1",
+        "form=view-2",
+        "form=view-3"
+      ]
+    },
+    {
+      "catalogueRecordSha256": "61e6226b90ba9756e1d651f222c02d92b703de993b895a74db4c57e5941412a7",
+      "disposition": "recovered",
+      "family": "model",
+      "id": "model-032066",
+      "record": "$32066",
+      "selectedVariantsSha256": "3307fc4e271bcfe6b16c3c32069404d4b6d45ea53abc5bee3547ebd19977cf6c",
+      "selectionReasons": [
+        "resident 187 model"
+      ],
+      "source": "catalogue-immutable",
+      "sourceRanges": [
+        {
+          "range": [
+            "$32066",
+            "$320A7"
+          ],
+          "sha256": "29892cf7c29e9026bb4a035ae9362311d0b016d608ef1d18864a97d774508d3b"
+        }
+      ],
+      "variants": [
+        "form=default"
+      ]
+    },
+    {
+      "catalogueRecordSha256": "78148233615011a899e4e8ad38569fa45a37cc08058a60946c5cf6c9bca3c9ac",
+      "disposition": "recovered",
+      "family": "model",
+      "id": "model-036fcc",
+      "record": "$36FCC",
+      "selectedVariantsSha256": "d34b001d5d3379ae18646b1c6f364ac2124d63cd7ae080feff36860c36c05204",
+      "selectionReasons": [
+        "resident 218 model"
+      ],
+      "source": "catalogue-immutable",
+      "sourceRanges": [
+        {
+          "range": [
+            "$36FCC",
+            "$372F0"
+          ],
+          "sha256": "58f21360bdb2b16aa2977be8ce255a54bb2dd166b75e6a4a6d9a1dde99cc17a7"
+        }
+      ],
+      "variants": [
+        "form=default"
+      ]
+    },
+    {
+      "catalogueRecordSha256": "9af93baf905c4fc0fb3b8eb8468fbe54cb19923770bb5ab921d9360ff2a7a14a",
+      "disposition": "recovered",
+      "family": "model",
+      "id": "model-039256",
+      "record": "$39256",
+      "selectedVariantsSha256": "9039ee8bbebe3024e801407b43cb1cbcf5aafd5abfd34209ec87402a42ba30af",
+      "selectionReasons": [
+        "resident 224 model"
+      ],
+      "source": "catalogue-immutable",
+      "sourceRanges": [
+        {
+          "range": [
+            "$39256",
+            "$39359"
+          ],
+          "sha256": "24e4b5e46fa20445b5aee50f7cdfb6493dc62939d88fd834ec6694e0737f5b54"
+        }
+      ],
+      "variants": [
+        "form=default"
+      ]
     }
   ],
   "groups": [
@@ -11524,6 +11719,44 @@
       }
     ]
   },
+  "residentModels": [
+    {
+      "geometry": "model-0316f8",
+      "slot": 64
+    },
+    {
+      "geometry": "model-0325f6",
+      "slot": 96
+    },
+    {
+      "geometry": "model-03293e",
+      "slot": 99
+    },
+    {
+      "geometry": "model-03ac5a",
+      "slot": 103
+    },
+    {
+      "geometry": "model-03ad70",
+      "slot": 104
+    },
+    {
+      "geometry": "model-033de2",
+      "slot": 135
+    },
+    {
+      "geometry": "model-032066",
+      "slot": 187
+    },
+    {
+      "geometry": "model-036fcc",
+      "slot": 218
+    },
+    {
+      "geometry": "model-039256",
+      "slot": 224
+    }
+  ],
   "residents": [
     {
       "bodyOffset": 60,

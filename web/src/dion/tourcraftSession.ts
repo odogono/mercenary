@@ -1,4 +1,13 @@
 import { IDLE } from '../gameCore/index.ts';
+import {
+  drop,
+  inventoryGauge,
+  rotate,
+  stepCarriedLabel,
+  take,
+  type CarryOutcome,
+  type CarryWorld
+} from './carry.ts';
 import type { DionContent } from './content.ts';
 import {
   planDionFrame,
@@ -39,9 +48,11 @@ import { readTourcraftResume } from './tourcraftRestore.ts';
 import {
   advanceFaces,
   faceOutputs,
+  initialTourcraftCarry,
   initialTourcraftOwners,
   initialTourcraftPhases,
   initialTourcraftResidents,
+  tourcraftCarryWorld,
   type TourcraftState
 } from './tourcraftState.ts';
 import { tourcraftView } from './tourcraftView.ts';
@@ -83,6 +94,9 @@ const gameplayContent = (
 /// machine; flight, Body binding, campaign and atomic reentry are Dion-owned.
 export class TourcraftSession extends DionSession {
   declare protected narrative: TourcraftNarrative;
+  private readonly carryWorld: CarryWorld;
+  /// Effects the port has not reached yet, for the console (ADR 0064).
+  private notes: string[] = [];
   private readonly metisContent: DionContent;
   private readonly worlds: ReadonlyMap<number, DionFrameWorld>;
   constructor(
@@ -94,6 +108,7 @@ export class TourcraftSession extends DionSession {
       restore = readTourcraftResume(restore, promoted);
     }
     super(content);
+    this.carryWorld = tourcraftCarryWorld(promoted);
     this.metisContent = content;
     this.worlds = new Map([
       [60, tourcraftFrameWorld(promoted, 3)],
@@ -123,6 +138,7 @@ export class TourcraftSession extends DionSession {
       },
       tourcraft: {
         armed: false,
+        carry: initialTourcraftCarry(promoted, this.carryWorld),
         collision: { nextPeriod: null, routine: 'idle' },
         encounter: initialEncounter(promoted, this.state.eye),
         events: freshEvents(
@@ -375,6 +391,7 @@ export class TourcraftSession extends DionSession {
       ...this.state,
       tourcraft: {
         ...e,
+        carry: stepCarriedLabel(e.carry),
         owners: { ...e.owners, animation },
         phases: e.phases.map(
           (phase, i) =>
@@ -383,7 +400,114 @@ export class TourcraftSession extends DionSession {
       }
     };
   }
+  /// Unported effects since the last call, oldest first.
+  drainNotes(): string[] {
+    const notes = this.notes;
+    this.notes = [];
+    return notes;
+  }
+
+  /// Take, Drop and rotation (#756), and Open, which reads the head object.
+  private handleCarry(): boolean {
+    const action = this.state.pending;
+    const e = this.expanded;
+    const head = e.carry.stack[0];
+    if (action === 'activate' && !this.state.card && head !== 104) {
+      this.state = { ...this.state, pending: null };
+      this.notes.push(`Open of slot ${head ?? 'none'}`);
+      return true;
+    }
+    if (
+      action !== 'take' &&
+      action !== 'drop' &&
+      action !== 'forward' &&
+      action !== 'backward'
+    ) {
+      return false;
+    }
+    this.state = { ...this.state, pending: null };
+    const body = this.state.location === 65_535 ? 0x78 : this.state.location;
+    const outcome: CarryOutcome =
+      action === 'take'
+        ? take(
+            e.carry,
+            e.residents,
+            this.carryWorld,
+            this.state.candidate,
+            body
+          )
+        : action === 'drop'
+          ? drop(
+              e.carry,
+              e.residents,
+              this.carryWorld,
+              this.state.candidate,
+              this.carryPlace(body)
+            )
+          : rotate(e.carry, e.residents, this.carryWorld, action);
+    if (outcome.message !== undefined) {
+      this.narrative.idMessage(outcome.message);
+    }
+    if (outcome.kind === 'refused') {
+      return true;
+    }
+    if (outcome.unported !== undefined) {
+      this.notes.push(outcome.unported);
+    }
+    this.state = {
+      ...this.state,
+      // `$5592A`: dropping the open object closes it.
+      ...(outcome.closes === 104 && this.state.card
+        ? { card: false, reveal: 0 }
+        : {}),
+      gauges: {
+        ...this.state.gauges,
+        inventory: inventoryGauge(outcome.carry)
+      },
+      tourcraft: { ...e, carry: outcome.carry, residents: outcome.residents }
+    };
+    this.cue('key_click');
+    return true;
+  }
+
+  /// What the Drop handler reads of where the player stands.
+  private carryPlace(body: number) {
+    const f = this.expanded.flight;
+    const aboard = f !== null && f.mode !== 'foot';
+    const { cell, eye, region } = this.state;
+    const entry = this.content.world.cells.find(item => item.cell === cell);
+    const structure =
+      entry &&
+      this.content.world.structures
+        .get(entry.structure)
+        ?.get(entry.scale.join(','));
+    // `$557AE`: on foot in a region that is not exterior, the Drop is into the structure.
+    const interior =
+      !aboard &&
+      !this.state.taxi.passenger &&
+      (this.admissionFlags() & 0x40_00) === 0
+        ? {
+            associations: structure?.associations.map(a => a.id) ?? [],
+            region
+          }
+        : null;
+    return {
+      body,
+      cell,
+      // Authored: no capture shows a passenger's Drop; the taxi refuses it.
+      contact: aboard ? f.craft.contact !== 0 : !this.state.taxi.passenger,
+      eye,
+      floor: this.expanded.owners['location']!['floor']!,
+      group: this.state.location === 100 ? 23 : 3,
+      interior,
+      zone: this.zoneAt(eye, body, cell)
+    };
+  }
+
   protected override handleInput(): void {
+    if (this.handleCarry()) {
+      return;
+    }
     // The TOLOSA service is admitted only as an ambient resident. Its onward
     // passenger programmes are outside the promoted gameplay closure.
     if (
@@ -890,24 +1014,27 @@ export class TourcraftSession extends DionSession {
   }
   planFrame() {
     const world = this.worlds.get(this.state.location === 100 ? 100 : 60)!;
+    const floor = this.expanded.owners['location']!['floor']!;
+    // `$53C7C..$53C8C`: an interior resident joins its region's queue only on the current Floor.
+    const residents = this.drawnResidents().filter(
+      r => r.association === 0 || r.body === floor
+    );
     return planDionFrame(
       {
         ...world,
         drawList: {
           ...world.drawList,
+          // `$53C2A`, run every frame: slot 0, then every resident of the current Body with
+          // association 0, from slot 255 down.
           fixed: [
-            ...world.drawList.fixed,
-            ...this.drawnResidents()
-              .filter(
-                r =>
-                  r.slot >= 56 &&
-                  r.slot <= 58 &&
-                  !world.drawList.fixed.includes(r.slot)
-              )
+            0,
+            ...residents
+              .filter(r => r.association === 0)
               .map(r => r.slot)
+              .sort((a, b) => b - a)
           ]
         },
-        residents: this.drawnResidents()
+        residents
       },
       this.expandedFrameState()
     );
@@ -987,6 +1114,8 @@ export const tourcraftPanelView = (
       Math.floor(state.eye[0] / 65_536) - home.origin[0],
       Math.floor(state.eye[2] / 65_536) - home.origin[1]
     ] as const,
+    // `$4E446`: the head object's name, as far as its scroll has come.
+    inventory: state.tourcraft!.carry.label,
     location:
       content.system.bodies.find(b => b.offset === body)?.name ?? view.location,
     ...(flight && flight.mode !== 'foot'

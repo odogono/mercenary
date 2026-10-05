@@ -15,6 +15,7 @@ import {
   createSessionOwnership,
   installSessionTakeoverChannel
 } from '../shell/ownership.ts';
+import { canvasPointer } from '../shell/pointer.ts';
 import { createPreferences, titlePreferences } from '../shell/preferences.ts';
 import { routeKey, type RouterState } from '../shell/router.ts';
 import { installSaveChooser } from '../shell/saveChooser.ts';
@@ -31,6 +32,7 @@ import {
 import { dionControlActions } from './controls.ts';
 import { installDionPresentation } from './framePresentation.ts';
 import { dionLogoRgba } from './panel.ts';
+import { dionTakeTargetAt } from './pointer.ts';
 import { DION_STORAGE } from './save.ts';
 import type { DionAction } from './session.ts';
 import type { DionSoundCommand } from './soundChip.ts';
@@ -410,6 +412,32 @@ try {
     }
   };
   window.addEventListener('pointerdown', unlock);
+  // A press on the drawn take candidate takes it, as `T` does (#756).
+  canvas.parentElement!.addEventListener('click', event => {
+    const pointer = canvasPointer(canvas, {
+      x: event.clientX,
+      y: event.clientY
+    });
+    const state = routerState();
+    if (
+      event.button !== 0 ||
+      pointer === undefined ||
+      state.chromeFocus ||
+      state.console !== 'closed' ||
+      state.layer !== 'none' ||
+      !ownership.mayAdvance() ||
+      !dionTakeTargetAt(
+        session.planFrame().description,
+        session.snapshot.candidate?.slot,
+        pointer.point,
+        pointer.hitSlop
+      )
+    ) {
+      return;
+    }
+    act('take');
+    event.preventDefault();
+  });
   window.addEventListener('keydown', event => {
     unlock();
     switch (routeKey(routerState(), event)) {
@@ -555,6 +583,11 @@ try {
           }
           session.intent = shellConsole.isOpen() ? IDLE : controls.intent;
           snapshot = session.advance(seconds);
+          const notes = session.drainNotes();
+          if (notes.length > 0) {
+            // Unported effects take their input and do nothing (ADR 0064); say which.
+            shellConsole.write(notes.map(note => `not ported yet: ${note}`));
+          }
           session.deliverEvents(event => {
             if (audio.phase !== 'unlocked') {
               // Locked/failed output accepts silence. Unlock resets from this

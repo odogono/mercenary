@@ -54,7 +54,16 @@ export interface DionClock {
 }
 
 export type DionAction =
-  'activate' | 'star' | 'plus' | 'minus' | 'board' | 'leave';
+  | 'activate'
+  | 'star'
+  | 'plus'
+  | 'minus'
+  | 'board'
+  | 'leave'
+  | 'take'
+  | 'drop'
+  | 'forward'
+  | 'backward';
 
 export interface DionSnapshot {
   readonly admission: number;
@@ -537,7 +546,14 @@ export class DionSession implements TitleSession<
   protected handleInput(): void {
     const action = this.state.pending;
     this.state = { ...this.state, pending: null };
-    if (action === null) {
+    // The Carried Stack is the expanded session's; this one does not reach it.
+    if (
+      action === null ||
+      action === 'take' ||
+      action === 'drop' ||
+      action === 'forward' ||
+      action === 'backward'
+    ) {
       return;
     }
     const taxi = this.state.taxi;

@@ -37,7 +37,7 @@ export const auditTaxiEligibility = async ({ includeLate = true } = {}) => {
   });
   assert.equal(
     expanded.contentSha256,
-    "746a1327ea70cfb137d37157519418520145d0b20d13fddf781a2ba86eedc498",
+    "824a2ec18b5cf98980544bb4d9e178cb9a47c013785b49319035c841569299b0",
   );
   return withTaxiSource(async (source) => {
     const controls = source.dionControlCaptures(source.content);

@@ -39,6 +39,12 @@ import {
   freeLook,
   type Intent
 } from '../gameCore/index.ts';
+import {
+  briefcaseDrop,
+  rotateBackward,
+  rotateForward,
+  takeRefusal
+} from '../interaction/carriedStack.ts';
 import type { HeadCommand } from '../interaction/index.ts';
 import { walk, type WalkRules } from '../onFoot/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
@@ -4052,20 +4058,20 @@ export class DamoclesSession implements TitleSession<
     if (this.scrollCounter !== 0) {
       return { kind: 'busy', reason: 'the Carried Stack is still scrolling' };
     }
-    if ((handling.byte & 0x10) !== 0 && !this.liveCarriedSlot(0)) {
-      return { kind: 'fixedInPlace', slot };
-    }
-    if (
-      (handling.byte & 0x20) !== 0 &&
-      !this.liveCarriedSlot(0) &&
-      !this.liveCarriedSlot(157) &&
-      !this.liveCarriedSlot(158)
-    ) {
+    const refusal = takeRefusal(
+      handling.byte,
+      held => this.liveCarriedSlot(held),
+      this.carried.length,
+      this.capacity()
+    );
+    if (refusal === 'tooHeavy') {
       this.presentSystem('system-string-2');
-      return { kind: 'tooHeavy', slot };
     }
-    if (this.carried.length === this.capacity()) {
+    if (refusal === 'handsFull') {
       return { kind: 'handsFull' };
+    }
+    if (refusal !== null) {
+      return { kind: refusal, slot };
     }
     const previous = this.residenceFor(instanceId);
     const carriedResidence: Residence = {
@@ -4112,8 +4118,7 @@ export class DamoclesSession implements TitleSession<
     ) {
       return { kind: 'refused' };
     }
-    const [head, ...rest] = this.carried;
-    this.carried = [...rest, head!];
+    this.carried = rotateForward(this.carried);
     this.scrollCounter = 16;
     if (this.soundPermitted()) {
       this.effects.push({ cue: 'take', type: 'sound-request' });
@@ -4129,8 +4134,7 @@ export class DamoclesSession implements TitleSession<
     ) {
       return { kind: 'refused' };
     }
-    const tail = this.carried.at(-1)!;
-    this.carried = [tail, ...this.carried.slice(0, -1)];
+    this.carried = rotateBackward(this.carried);
     this.scrollCounter = -16;
     if (this.soundPermitted()) {
       this.effects.push({ cue: 'take', type: 'sound-request' });
@@ -4469,9 +4473,9 @@ export class DamoclesSession implements TitleSession<
 
   private finishDrop(head: string, residence: Residence): void {
     if (head === 'object-slot-108') {
-      const remaining = this.carried.slice(1);
-      this.carried = remaining.slice(0, 9);
-      this.briefcaseStore = remaining.slice(9);
+      const { carried, stored } = briefcaseDrop(this.carried);
+      this.carried = carried;
+      this.briefcaseStore = stored;
       for (const stored of this.briefcaseStore) {
         this.residence.delete(stored);
       }
