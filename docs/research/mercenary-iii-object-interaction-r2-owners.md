@@ -1,5 +1,7 @@
 # Mercenary III: R2 acquired-object owner follow-up
 
+The #756 research ledgers, scripts and tests this report cites were removed when the programme was rescoped ([#756](https://github.com/odogono/mercenary/issues/756)). They remain in git history at `ab0d6ddf`.
+
 Research for [#771](https://github.com/odogono/mercenary/issues/771), 2026-10-04. The [R2 handoff](mercenary-iii-object-interaction-r2.md) established card, letter and ACME owners before [R3](mercenary-iii-object-interaction-r3.md) proved acquisition of COBWEB124, MAILBOX219, KEY181 and BLACK BEACON165. This follow-up executes Head Commands on those four acquired identities, adds ordinary BLACK BEACON Drop/re-pick and a restored continuation, and revisits I4 against that actual acquired set. The companion [pickup-effect acceptance audit](mercenary-iii-object-interaction-r2-audit.md) strengthens the three remote response controls. Neither report changes gameplay or playable admission.
 
 ## Finite acquired-set contract

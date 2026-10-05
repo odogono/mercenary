@@ -1,5 +1,7 @@
 # Mercenary III: both-key HQ Model-A continuation
 
+The #756 research ledgers, scripts and tests this report cites were removed when the programme was rescoped ([#756](https://github.com/odogono/mercenary/issues/756)). They remain in git history at `ab0d6ddf`.
+
 Ordinary-input research for [R3/#772](https://github.com/odogono/mercenary/issues/772), following the [DION/key32/PCB continuation](mercenary-iii-dion-key32-route.md). This branch starts earlier, with key31 held and HQ programme117 unused, so it can acquire key32 before the first HQ corridor launch. The [independent source audit](mercenary-iii-hq-model-swap-source.md) identifies the model, handling and rebuild readers. This is finite original-engine evidence; final R2/R3 content admission, runtime, Data Payload and browser Save remain separate gates.
 
 ## Ordinary prefix and DION approach

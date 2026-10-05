@@ -1,5 +1,7 @@
 # Mercenary III R3: scope review after native EAGLE
 
+The #756 research ledgers, scripts and tests this report cites were removed when the programme was rescoped ([#756](https://github.com/odogono/mercenary/issues/756)). They remain in git history at `ab0d6ddf`.
+
 Research review for [#772](https://github.com/odogono/mercenary/issues/772) and the separate [#756 programme](https://github.com/odogono/mercenary/issues/756), 2026-10-05. **The exact interaction promotion set cannot yet be finalized.** Approved native EAGLE access exposes an original 30-entry scan with 29 nonzero initially eligible destinations. The ordinary carried-identity and native-arrival witnesses are evidence subsets, not complete admission lists. This review publishes the exact initial dependency candidates and a concrete closure order. R3/R2 final admission and I1 remain blocked; no runtime or Data Payload changes are included.
 
 ## Separate programme scope disposition proposed for review

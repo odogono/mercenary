@@ -1,5 +1,7 @@
 # Mercenary III: R3 native scope follow-up
 
+The #756 research ledgers, scripts and tests this report cites were removed when the programme was rescoped ([#756](https://github.com/odogono/mercenary/issues/756)). They remain in git history at `ab0d6ddf`.
+
 Research follow-up for [R3/#772](https://github.com/odogono/mercenary/issues/772), part of [#756](https://github.com/odogono/mercenary/issues/756), 2026-10-04. It reopens the delivery-set review after approved native EAGLE access, using independently inspected original source. **R3 remains open; this is not an I1 admission manifest.** The [earlier R3 proposal](mercenary-iii-object-interaction-r3.md), [EAGLE flight handoff](mercenary-iii-eagle-flight.md) and [R2 native-owner audit](mercenary-iii-object-interaction-r2-scheduler-native.md) retain their finite execution boundaries.
 
 No runtime, Data Payload, Save schema or Golden Trace changes accompany this report. Original source and execution remain Restricted Material under [ADR 0002](../adr/0002-separate-rom-research-from-implementation.md); selected immutable content and coherent mutable initialization remain separate under [ADR 0065](../adr/0065-promote-bounded-dion-catalogue-content-through-an-explicit-export.md).

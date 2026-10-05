@@ -1,5 +1,7 @@
 # Mercenary III: R2 response scheduling and native item owners
 
+The #756 research ledgers, scripts and tests this report cites were removed when the programme was rescoped ([#756](https://github.com/odogono/mercenary/issues/756)). They remain in git history at `ab0d6ddf`.
+
 Research for [#771](https://github.com/odogono/mercenary/issues/771), part of [#756](https://github.com/odogono/mercenary/issues/756), 2026-10-04. This extends the merged [effect audit](mercenary-iii-object-interaction-r2-audit.md) and [acquired-owner handoff](mercenary-iii-object-interaction-r2-owners.md) with object-specific scheduler controls and an independent item/panel/sound audit of [R4's native EAGLE evidence](mercenary-iii-eagle-flight.md). It changes no gameplay, playable admission, Data Payload or Save schema.
 
 The primary source remains coherent first-top `restricted/mercenary-iii-708/presentation/exact2/start.ram`, SHA-256 `71b957b3b7124959b01bd40b896c921d37902c18cfca042bef1906b155ef0170`. New original execution and generated debugger scripts are retained in the main checkout's ignored `restricted/mercenary-iii-771/effects-matrix/`. The two tracked read-only observers publish numerical owners, source spans and hashes, excluding dialogue and original instructions. These are Mercenary III research-baseline facts under [ADR 0002](../adr/0002-separate-rom-research-from-implementation.md), with [ADR 0065](../adr/0065-promote-bounded-dion-catalogue-content-through-an-explicit-export.md)'s separate promotion gate.

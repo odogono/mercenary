@@ -1,5 +1,7 @@
 # Mercenary III: R2 pickup effects and Head Command owners
 
+The #756 research ledgers, scripts and tests this report cites were removed when the programme was rescoped ([#756](https://github.com/odogono/mercenary/issues/756)). They remain in git history at `ab0d6ddf`.
+
 Research for [#771](https://github.com/odogono/mercenary/issues/771), part of [#756](https://github.com/odogono/mercenary/issues/756), 2026-10-04. This handoff extends the [baseline evidence](mercenary-iii-object-interaction-evidence.md) and [R1 mechanism controls](mercenary-iii-object-interaction-r1.md). It changes no gameplay, Data Payload or playable admission. R3 still owns the ordinary reachable-object set and progression scope decision.
 
 The primary source is the coherent first-top RAM `restricted/mercenary-iii-708/presentation/exact2/start.ram`, SHA-256 `71b957b3b7124959b01bd40b896c921d37902c18cfca042bef1906b155ef0170`. New raw evidence, observer scripts, original debugger logs, RAM and whole-machine checkpoints live in the main checkout's ignored `restricted/mercenary-iii-771/`. These are Mercenary III research-baseline facts under [ADR 0002](../adr/0002-separate-rom-research-from-implementation.md); no Damocles response table or document rule supplies a Dion fact. Numeric owners and understood rules below are a future Title-local implementation contract, not a translated engine or a guessed Save codec.
