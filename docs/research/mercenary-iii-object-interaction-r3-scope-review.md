@@ -63,6 +63,8 @@ These are review gates, not newly commissioned implementation tickets. Each clos
 
 The proposed next research target is **gate2's TOLOSA HQ/PCB218 access**, using the already complete outward TOURCRAFT→TOLOSA foot prefix. It tests a concrete building/Floor/response edge inside an already witnessed Body and returns a definite inclusion or original-gate disposition. Follow with the remote predicates required by already exposed native/lamp/sound readers. This sequence reduces uncertainty without claiming that the other native destinations have disappeared.
 
+Follow-up, 2026-10-05: the [ordinary HQ probe](mercenary-iii-tolosa-hq-route.md) now reaches the keyless entrance, B/Floor10 and original reception5/meeting6 requests. The east hall's Take selects fixed table224; the centred western corridor executes the absent-key31 branch and stays behind its shut door. PCB218 acquisition/response115 remains unproved. The [source review](mercenary-iii-tolosa-hq-source.md) resolves placeholders to remote keys31 (CLOTHO) and32 (DION); ordinary key31 acquisition and return is the next focused route. The second throat and all possible PCB paths remain unclosed, so this finite barrier does not exclude PCB globally or finalize admission.
+
 ## Verification and acceptance status
 
 The independent source review retained instruction/data pins in ignored `restricted/mercenary-iii-772/world-frontier/`; the coherent first-top and media/emulator pins remain those of R1/D2. No new original-engine execution is claimed by the frontier observer. It rereads retained evidence and compatible immutable records; ordinary/synthetic route classes remain in their owning ledgers.
