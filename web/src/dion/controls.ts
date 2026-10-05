@@ -21,7 +21,7 @@ export const dionControlActions = (options: {
   readonly extendedControls: () => boolean;
   readonly passenger: () => boolean;
 }): ControlProfileActions => ({
-  drop: inert,
+  drop: () => options.act('drop'),
   extendedControls: options.extendedControls,
   headCommand: command => options.act(CARD_ACTIONS[command]),
   keypadDigit: inert,
@@ -33,12 +33,12 @@ export const dionControlActions = (options: {
   occupancy: () =>
     options.passenger() ? { kind: 'aboard', slot: 0 } : { kind: 'onFoot' },
   reach: action => {
-    if (action === 'board') {
-      options.act('board');
+    if (action === 'board' || action === 'take') {
+      options.act(action);
     }
   },
   recentreLook: inert,
-  rotateStack: inert,
+  rotateStack: direction => options.act(direction),
   shutThrottle: inert,
   throttleNotchStep: inert,
   throttleNotchValue: inert,

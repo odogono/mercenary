@@ -1,0 +1,169 @@
+{
+  "geometry": {
+    "entries": [
+      99
+    ],
+    "family": "model",
+    "header": null,
+    "id": "model-03293e",
+    "name": "POST-IT NOTE",
+    "provenance": [
+      {
+        "range": [
+          "$3293E",
+          "$3298D"
+        ],
+        "sha256": "abf711a30f8e29feb5dadbdd439efaf50882349c73709e68864e6e8519fd95c1"
+      }
+    ],
+    "record": "$3293E",
+    "sha256": "e2902e986447c4fafe24a48847d0af9f1ab3d9068a1165a852a8c353a5988351",
+    "variants": {
+      "form=default": {
+        "faces": [
+          {
+            "colour": 2,
+            "kind": "polygon",
+            "refs": [
+              6,
+              3,
+              12,
+              11
+            ],
+            "stColour": 32768
+          },
+          {
+            "colour": 3,
+            "kind": "polygon",
+            "refs": [
+              1,
+              2,
+              3,
+              6
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 3,
+            "kind": "polygon",
+            "refs": [
+              6,
+              3,
+              4,
+              5
+            ],
+            "stColour": 1911
+          },
+          {
+            "colour": 2,
+            "kind": "line",
+            "refs": [
+              7,
+              8
+            ],
+            "stColour": 32768
+          },
+          {
+            "colour": 2,
+            "kind": "line",
+            "refs": [
+              9,
+              10
+            ],
+            "stColour": 32768
+          },
+          {
+            "colour": 6,
+            "kind": "polygon",
+            "refs": [
+              3,
+              6,
+              5,
+              4
+            ],
+            "stColour": 802
+          },
+          {
+            "colour": 3,
+            "kind": "polygon",
+            "refs": [
+              2,
+              1,
+              6,
+              3
+            ],
+            "stColour": 1911
+          }
+        ],
+        "turn": {
+          "kind": "fixed"
+        },
+        "vertices": [
+          [
+            -10,
+            22,
+            0
+          ],
+          [
+            10,
+            22,
+            0
+          ],
+          [
+            10,
+            16,
+            0
+          ],
+          [
+            10,
+            2,
+            -6
+          ],
+          [
+            -10,
+            2,
+            -6
+          ],
+          [
+            -10,
+            16,
+            0
+          ],
+          [
+            -8,
+            20,
+            0
+          ],
+          [
+            8,
+            20,
+            0
+          ],
+          [
+            -8,
+            18,
+            0
+          ],
+          [
+            8,
+            18,
+            0
+          ],
+          [
+            -10,
+            0,
+            0
+          ],
+          [
+            10,
+            0,
+            0
+          ]
+        ]
+      }
+    }
+  },
+  "kind": "dion-play-geometry",
+  "schemaVersion": 1,
+  "source": "catalogue-immutable"
+}

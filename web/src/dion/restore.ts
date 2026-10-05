@@ -77,7 +77,11 @@ export const readDionResume = (
           'plus',
           'minus',
           'board',
-          'leave'
+          'leave',
+          'take',
+          'drop',
+          'forward',
+          'backward'
         ]);
   const bar = ints(message['bar'], 'message.bar', 288 * 6, 0, 1);
   const snapshot: DionResumeRecord['snapshot'] = {

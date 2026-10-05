@@ -158,6 +158,8 @@ def select_catalogue(spec: dict, catalogue: dict, geometry: dict, support: dict)
             'skyBodies', 'skyDrawLists', 'spaceScan', 'renderSupportSelection', 'fieldDispositions', 'dispositionRules')
     metadata = {'kind': 'dion-play-promotion', 'schemaVersion': 1,
                 **{k: copy.deepcopy(spec[k]) for k in keys},
+                # Set by resident_models from the gameplay RAM; empty without it.
+                'residentModels': copy.deepcopy(spec.get('residentModels', [])),
                 'sources': {k: source_pin(v) for k, v in spec['sources'].items() if k != 'presentationInventory'},
                 'geometry': [{k: copy.deepcopy(v) for k, v in g.items() if k != 'catalogueFileSha256'} for g in spec['geometry']]}
     for slot in metadata['structures']:
@@ -196,15 +198,20 @@ def gameplay_records(spec: dict, ram: Ram, selected: dict) -> dict:
                 require_equal(hexaddr(actual['record']), selected[p['geometry']]['geometry']['record'],
                               f"structures.{s['slot']}.record")
     census = extract_objects(ram)
-    by_slot = {r['slot']: r for r in census['objects']}
+    reviewed = {r['slot']: r for r in spec['residents']}
+    # Take and Drop can move any object into play, so every resident record is exported
+    # whole (#756). The reviewed ones keep their record pins.
     residents = []
-    for r in spec['residents']:
-        actual = by_slot[r['slot']]
-        checked_record(actual, r['initialRecordSha256'], f"residents.{r['slot']}.initial")
-        require_equal(actual['modelRecord'], r['initialModelRecord'], f"residents.{r['slot']}.modelRecord")
+    for actual in census['objects']:
+        r = reviewed.get(actual['slot'])
+        if r is not None:
+            checked_record(actual, r['initialRecordSha256'], f"residents.{r['slot']}.initial")
+            require_equal(actual['modelRecord'], r['initialModelRecord'], f"residents.{r['slot']}.modelRecord")
         residents.append(actual)
+    require_equal(sorted(set(reviewed) - {r['slot'] for r in residents}), [], 'residents.reviewed')
     bindings = {r['entry']: r['geometry'] for r in spec['legacyModels']}
     bindings.update({r['slot']: r['geometry'] for r in spec['residents'] if r['geometry'] is not None})
+    bindings.update({r['slot']: r['geometry'] for r in spec['residentModels']})
     for cell in spec['surfaceCells']:
         for entry in cell['templates']:
             matching = [g['geometry']['id'] for g in selected.values()
@@ -221,7 +228,9 @@ def gameplay_records(spec: dict, ram: Ram, selected: dict) -> dict:
     # All mutable fields below read this RAM, never the inspection capture.
     initial_world = extract_world(ram, ram, pinned=False)
     initial = {'source': 'gameplay-opening', 'opening': initial_world['opening'], 'residents': residents,
-               'carriedStack': census['carriedStack'],
+               'carriedStack': census['carriedStack'], 'carry': carry_records(ram),
+               'labels': {str(o['slot']): label for o in census['objects']
+                          if (label := object_label(ram, o['slot'])) is not None},
                'bodyPhases': [ram.long(0x575A + 4*i) for i in range(32)],
                'flags': [ram.long(0x7270), ram.long(0x7274)],
                'availability': {str(i): ram.byte(0x7352+i) for i in spec['reachableScriptEntries']['ordinary']},
@@ -249,6 +258,48 @@ def gameplay_records(spec: dict, ram: Ram, selected: dict) -> dict:
             'modelBindingSources': {str(e): ram.slice(ram.long(0x4BD10)+2*e, ram.long(0x4BD10)+2*e+2) for e in sorted(bindings)},
             'blinkPhase': {entry: ram.word(0x54400 + 4*int(entry)) for entry, key in bindings.items()
                            if (selected[key]['geometry'].get('header') or {}).get('op') == 3}}
+
+
+def object_label(ram: Ram, slot: int) -> str | None:
+    """The sixteen characters before a model record, which the panel shows for the head object."""
+    record = model_record(ram, slot)
+    name = ram.bytes(record - 16, record)
+    return name.decode('ascii') if all(32 <= b < 127 for b in name) else None
+
+
+def carry_records(ram: Ram) -> dict:
+    """The Carried Stack's other owners: capacity `$7098`, the BRIEFCASE store count `$563A`
+    and the label scroll `$4E394`."""
+    return {'capacity': ram.word(0x7098), 'store': ram.word(0x563A), 'scroll': ram.word(0x4E394)}
+
+
+def resident_models(spec: dict, ram: Ram, catalogue: dict, load) -> None:
+    """Bind the opening model of every object resident on an admitted Body, and of every carried
+    object, since Take and Drop can bring any of them into view (#756). The Catalogue record's
+    own digest and its source ranges in the pinned RAM stand in for a reviewed row."""
+    bodies = {b['offset'] for b in spec['bodyPlacements']}
+    bound = {r['slot'] for r in spec['residents'] if r['geometry'] is not None}
+    objects = {o['slot']: o for o in catalogue['objects']}
+    selected = {g['id'] for g in spec['geometry']}
+    rows = []
+    for o in extract_objects(ram)['objects']:
+        if not o['hasModel'] or o['slot'] in bound:
+            continue
+        if o['bodyOffset'] not in bodies and o['residence'] != 'carried':
+            continue
+        key = objects[o['slot']]['geometry']
+        row = load(key)['geometry']
+        require_equal(row['record'], o['modelRecord'], f"residentModels.{o['slot']}.record")
+        rows.append({'slot': o['slot'], 'geometry': key})
+        if key in selected:
+            continue
+        selected.add(key)
+        spec['geometry'].append({
+            'catalogueRecordSha256': row['sha256'], 'disposition': 'recovered', 'family': row['family'],
+            'id': key, 'record': row['record'], 'selectedVariantsSha256': digest(row['variants']),
+            'selectionReasons': [f"resident {o['slot']} model"], 'source': 'catalogue-immutable',
+            'sourceRanges': copy.deepcopy(row['provenance']), 'variants': sorted(row['variants'])})
+    spec['residentModels'] = rows
 
 
 def cstring(ram: Ram, at: int) -> list[int]:
@@ -368,10 +419,11 @@ def legacy_document(root: Path, row: dict) -> bytes:
 def build_export(root: Path, opening: Path) -> dict[str, bytes]:
     spec = json.loads((root / 'research/mercenary-iii-st/tourcraft-promotion-manifest.json').read_text())
     read = lambda p: json.loads((root / p).read_text())
-    geometry = {g['id']: read(f"payload/dion/catalogue/geometry/{g['id']}.json") for g in spec['geometry']}
-    metadata, selected, support = select_catalogue(spec, read('payload/dion/catalogue/catalogue.json'),
-                                                  geometry, read(spec['renderSupport']['path']))
+    catalogue = read('payload/dion/catalogue/catalogue.json')
     ram = Ram.load(opening)
+    resident_models(spec, ram, catalogue, lambda key: read(f'payload/dion/catalogue/geometry/{key}.json'))
+    geometry = {g['id']: read(f"payload/dion/catalogue/geometry/{g['id']}.json") for g in spec['geometry']}
+    metadata, selected, support = select_catalogue(spec, catalogue, geometry, read(spec['renderSupport']['path']))
     gameplay = gameplay_records(spec, ram, selected)
     programmes = programme_records(spec, ram)
     prefix = '/payload/dion/tourcraft'

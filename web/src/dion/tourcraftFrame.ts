@@ -209,7 +209,9 @@ export const tourcraftFrameWorld = (
       body: int(r['floor'], 'resident.floor'),
       cell: int(r['cell'], 'resident.cell'),
       group: int(r['group'], 'resident.group'),
-      model: r['hasModel'] ? slot : null,
+      // A resident whose model no admitted Body binds is never drawn (#756).
+      model:
+        r['hasModel'] && content.gameplay.modelBindings.has(slot) ? slot : null,
       position: triple(r['position'], 'resident.position'),
       slot,
       state: int(r['state'], 'resident.state'),

@@ -29,7 +29,7 @@
     },
     {
       "path": "/payload/dion/tourcraft/promotion.json",
-      "sha256": "d726ae8e0fda5527ec48aa10e03de30cc19689719cda407dcc90b252848089a5"
+      "sha256": "cf9016e3ac42a0598b3093ebaf9e27c0637e49b8a320b33f411222142f0d10fa"
     },
     {
       "path": "/payload/dion/tourcraft/geometry/detail-023d0e.json",
@@ -200,6 +200,22 @@
       "sha256": "81f56542d01b41943f49c1da92a824dd89875cef815194e5d07a62a8059cbad4"
     },
     {
+      "path": "/payload/dion/tourcraft/geometry/model-032066.json",
+      "sha256": "6cba2dd25e31e53ae4ecb0457c88691cf6b13c51f9310cc8206e2890b8d8b921"
+    },
+    {
+      "path": "/payload/dion/tourcraft/geometry/model-0325f6.json",
+      "sha256": "c540ed0949a26041198902ed4d7c68c34f8893381ff919ff01a640f67d79d21b"
+    },
+    {
+      "path": "/payload/dion/tourcraft/geometry/model-03293e.json",
+      "sha256": "824d1696d8896ce72eaaf67603e8cd51c0c52294c82c4da503edc8cee038851f"
+    },
+    {
+      "path": "/payload/dion/tourcraft/geometry/model-033de2.json",
+      "sha256": "6f20550ca07457b16a16818dfa1647fbf8b40886251a8edd736a93819ba042d5"
+    },
+    {
       "path": "/payload/dion/tourcraft/geometry/model-0353f0.json",
       "sha256": "fb1c7d5779531e2a3a5a0fa2cad29246b4abc9378d84f4053a96ce98653a618f"
     },
@@ -214,6 +230,10 @@
     {
       "path": "/payload/dion/tourcraft/geometry/model-036974.json",
       "sha256": "85f902650acb13c514feaf30d8f9d9e464bd183de5eb903a53de7c96ff40c415"
+    },
+    {
+      "path": "/payload/dion/tourcraft/geometry/model-036fcc.json",
+      "sha256": "dba34ef7272a2ab266866cd8b01c4e389c2d984b57935d20dd19cb0e5444888c"
     },
     {
       "path": "/payload/dion/tourcraft/geometry/model-037304.json",
@@ -256,6 +276,10 @@
       "sha256": "4e41b97495796276ac123b1df6633116edbff4ed44bd44ebb99967a24b442061"
     },
     {
+      "path": "/payload/dion/tourcraft/geometry/model-039256.json",
+      "sha256": "840938d9773bc45d272ef50c65a092ae99de6d33a73c614eb0e04181c7607d8f"
+    },
+    {
       "path": "/payload/dion/tourcraft/geometry/model-039e5e.json",
       "sha256": "fbe9b6e102a2e1fc78854a152460b630e0480057db7f64f6eea0034ff12abfc7"
     },
@@ -278,6 +302,14 @@
     {
       "path": "/payload/dion/tourcraft/geometry/model-03a1c6.json",
       "sha256": "685c9332d2b9d4eba613c59134bddc76945689a554b898ecb287e16d39e9cf2f"
+    },
+    {
+      "path": "/payload/dion/tourcraft/geometry/model-03ac5a.json",
+      "sha256": "9e582e3bfd75e90d80d62b4cf86207f79b13ff3c1493538e966cf36f4989ffb2"
+    },
+    {
+      "path": "/payload/dion/tourcraft/geometry/model-03ad70.json",
+      "sha256": "9885a187feb774e4573d908595fca813429d58517413ce05cc4c9fcb32c2f54a"
     },
     {
       "path": "/payload/dion/tourcraft/geometry/model-03b1b6.json",
@@ -357,7 +389,7 @@
     },
     {
       "path": "/payload/dion/tourcraft/presentation/gameplay.json",
-      "sha256": "0bc89b49f8336f5d5966b3d1f3f6304712b0b70d6a925c779537345a4728783e"
+      "sha256": "62fdbb33ac5ab566fb16359eb8e627c11fa67543ae40de9b73ad4574b287dcdd"
     },
     {
       "path": "/payload/dion/tourcraft/presentation/programmes.json",
