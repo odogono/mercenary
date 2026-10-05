@@ -56,7 +56,7 @@ test('a natural partial busy script message certifies its actual face updates ra
     return { text, value: JSON.parse(text) };
   });
   expect(expanded.contentSha256).toBe(
-    '824a2ec18b5cf98980544bb4d9e178cb9a47c013785b49319035c841569299b0'
+    '89bc7ab4ce73051b41e14d2da7605587cd8facc51b9abc9b203e2e5b23fcedbf'
   );
   const programmes = expanded.programmes as unknown as {
     faceSequences: Record<string, { alternate: number[]; base: number[] }>;

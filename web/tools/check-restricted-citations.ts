@@ -27,7 +27,12 @@ const lost = new Set([
   'mercenary-iii-644',
   'mercenary-iii-645',
   'mercenary-iii-646',
-  'mercenary-iii-707-followup'
+  'mercenary-iii-707-followup',
+  // Deleted with the #756 rescope; the reports note it.
+  'mercenary-iii-770',
+  'mercenary-iii-771',
+  'mercenary-iii-772',
+  'mercenary-iii-778'
 ]);
 
 if (!existsSync(restricted)) {

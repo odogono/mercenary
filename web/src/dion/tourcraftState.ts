@@ -1,3 +1,4 @@
+import type { HeadCommandState } from '../interaction/headCommands.ts';
 import { carriedLabel, type CarryWorld, type DionCarry } from './carry.ts';
 import { int, ints, list, record, text } from './read.ts';
 import type { TourcraftContent } from './tourcraftContent.ts';
@@ -22,13 +23,23 @@ export interface TourcraftState {
   >;
   readonly faceSelection: 'initial' | 'base' | 'alternate';
   readonly flight: TourcraftFlightState | null;
+  /// The open panel and the centre box (`$6F0E`, `$6F04`, `$53950`), shared with Damocles.
+  readonly head: HeadCommandState;
   readonly liveIntent: import('../gameCore/index.ts').Intent;
   readonly owners: Readonly<Record<string, Readonly<Record<string, number>>>>;
   readonly phases: readonly number[];
   readonly playerZone: number;
+  /// A Read still presenting its rows (`$722C`, `$7230`): the next row to show.
+  readonly reading: {
+    readonly item: number;
+    readonly row: number;
+    readonly slot: number;
+  } | null;
   readonly residents: readonly (DionResident & {
     readonly bodyOffset: number;
   })[];
+  /// `$6F22`: the switches' bits, by row index halved.
+  readonly switches: number;
 }
 
 // Keep independently sampled owners. All other captured fields have a sole

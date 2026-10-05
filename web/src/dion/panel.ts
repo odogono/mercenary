@@ -20,12 +20,33 @@ export { PANEL_TOP, PANEL_ROWS, panelRgba } from '../shell/panelPixels.ts';
 
 const WIDTH = 320;
 
+/// A panel's art on the centre box and the two colours it brings (`$59C2C`).
+export interface DionCentreArt {
+  readonly colour1From152: number;
+  readonly colour4: number;
+  readonly pixels: readonly Uint8Array[];
+}
+
 export type DionCentreView =
   | { readonly kind: 'logo' }
   | {
       readonly kind: 'card';
       readonly lines: readonly [string, string];
       readonly reveal?: number;
+    }
+  | {
+      /// Any other panel, or a transition between two (`$53956`): `from` scrolls up and out over
+      /// the first 32 VBLs, then `to` scrolls in, its colours taking over at 32.
+      readonly from: DionCentreArt;
+      /// A document's current item name and its field, drawn once the panel has arrived
+      /// (`$4E17A`).
+      readonly item?: {
+        readonly field: DionPanelTextField;
+        readonly name: string;
+      };
+      readonly kind: 'panel';
+      readonly reveal: number;
+      readonly to: DionCentreArt;
     };
 
 export interface DionPanelView {
@@ -106,6 +127,24 @@ export const drawDionPanel = (
     );
   }
 
+  if (view.centre.kind === 'panel') {
+    const { from, reveal, to } = view.centre;
+    const passed = 64 - reveal;
+    for (let row = 0; row < box.height; row += 1) {
+      const source =
+        passed < 32
+          ? from.pixels[row + passed]
+          : to.pixels[row - (64 - passed)];
+      pixels.set(
+        source ?? new Uint8Array(box.width),
+        (box.y + row - PANEL_TOP) * WIDTH + box.x
+      );
+    }
+    const item = view.centre.item;
+    if (reveal === 0 && item !== undefined) {
+      writeField(planes, doc, item.field, [...item.name]);
+    }
+  }
   if (view.centre.kind === 'card' && (view.centre.reveal ?? 0) > 0) {
     const remaining = view.centre.reveal!;
     const passed = 64 - remaining;
@@ -276,9 +315,13 @@ export const drawDionPanel = (
 
   // The card or logo's own two colours replace colour 4, and colour 1 from row 152.
   const centre =
-    view.centre.kind === 'card' && (view.centre.reveal ?? 0) <= 32
-      ? doc.centre.taxicard
-      : doc.centre.logo;
+    view.centre.kind === 'panel'
+      ? view.centre.reveal <= 32
+        ? view.centre.to
+        : view.centre.from
+      : view.centre.kind === 'card' && (view.centre.reveal ?? 0) <= 32
+        ? doc.centre.taxicard
+        : doc.centre.logo;
   const upper = [...doc.palette.upper];
   const lower = [...doc.palette.lower];
   upper[4] = centre.colour4;

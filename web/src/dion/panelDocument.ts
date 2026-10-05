@@ -145,7 +145,7 @@ const span = (value: unknown, path: string): [number, number] => {
   return [a!, b!];
 };
 
-const textField = (
+export const textField = (
   raw: Record<string, unknown>,
   path: string
 ): DionPanelTextField => ({
@@ -189,7 +189,7 @@ const font = (value: unknown, path: string): DionPanelFont => {
   return { glyphs, height, width };
 };
 
-const centreArt = (value: unknown, path: string): Uint8Array[] => {
+export const centreArt = (value: unknown, path: string): Uint8Array[] => {
   const rows = list(value, path);
   if (rows.length !== 32) {
     fail(`${path} should have 32 rows`);

@@ -58,7 +58,7 @@ export const payloadResponse = async (
     !/^dion\/tourcraft\/geometry\/(?:(?:model|structure|detail|ground|island)-[\da-f]{6}|sky-tail-0502c0)\.json$/.test(
       name
     ) &&
-    !/^dion\/tourcraft\/presentation\/(?:craft|gameplay|programmes|support|system|taxi)\.json$/.test(
+    !/^dion\/tourcraft\/presentation\/(?:craft|gameplay|head|programmes|support|system|taxi)\.json$/.test(
       name
     )
   ) {

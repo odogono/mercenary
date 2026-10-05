@@ -1,3 +1,4 @@
+import { documentItems, openRow } from './head.ts';
 import { bool, int, list, record } from './read.ts';
 import { readDionResume } from './restore.ts';
 import { createTaxi } from './service.ts';
@@ -285,6 +286,9 @@ export const readTourcraftResume = (
     [
       'armed',
       'carry',
+      'head',
+      'reading',
+      'switches',
       'collision',
       'encounter',
       'events',
@@ -580,6 +584,67 @@ export const readTourcraftResume = (
   }
   if (residents.length !== seedResidents.length) {
     throw new Error('Incomplete residents');
+  }
+  unsigned(e['switches'], 'switches');
+  const headState = keys(e['head'], ['box', 'lastRead', 'open'], 'head');
+  const box = keys(
+    headState['box'],
+    ['from', 'fromItem', 'steps', 'to'],
+    'head.box'
+  );
+  const panelSlot = (value: unknown, path: string) => {
+    if (value === null) {
+      return null;
+    }
+    const slot = int(value, path, 1, 246);
+    if (openRow(content.head, slot) === undefined) {
+      throw new Error(`${path}: no Open table row`);
+    }
+    return slot;
+  };
+  panelSlot(box['from'], 'head.box.from');
+  const to = panelSlot(box['to'], 'head.box.to');
+  if (box['fromItem'] !== null) {
+    unsigned(box['fromItem'], 'head.box.fromItem', 255);
+  }
+  int(box['steps'], 'head.box.steps', 0, 64);
+  let openSlot: number | null = null;
+  if (headState['open'] !== null) {
+    const open = keys(
+      headState['open'],
+      ['index', 'item', 'slot'],
+      'head.open'
+    );
+    openSlot = panelSlot(open['slot'], 'head.open.slot');
+    unsigned(open['index'], 'head.open.index', 65_535);
+    const item = unsigned(open['item'], 'head.open.item', 255);
+    const items = documentItems(content.head, openSlot!).length;
+    if (item >= Math.max(1, items)) {
+      throw new Error('head.open.item: past the document');
+    }
+  }
+  if (headState['lastRead'] !== null) {
+    const last = keys(
+      headState['lastRead'],
+      ['index', 'slot'],
+      'head.lastRead'
+    );
+    panelSlot(last['slot'], 'head.lastRead.slot');
+    unsigned(last['index'], 'head.lastRead.index', 255);
+  }
+  // The box arrives at, or is scrolling to, the open panel; the taxi code's card follows it.
+  if (to !== openSlot || base.snapshot.card !== (openSlot === 104)) {
+    throw new Error('Centre box disagrees with the open panel');
+  }
+  if (e['reading'] !== null) {
+    const reading = keys(e['reading'], ['item', 'row', 'slot'], 'reading');
+    const rows =
+      documentItems(content.head, panelSlot(reading['slot'], 'reading.slot')!)[
+        unsigned(reading['item'], 'reading.item', 255)
+      ]?.rows ?? [];
+    if (unsigned(reading['row'], 'reading.row', 255) >= rows.length) {
+      throw new Error('reading: past the item');
+    }
   }
   const carry = keys(
     e['carry'],

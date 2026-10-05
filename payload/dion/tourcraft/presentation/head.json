@@ -1,0 +1,2351 @@
+{
+  "art": {
+    "2": {
+      "address": "$3BE10",
+      "pixels": [
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "111f11f1ffff1f111f1ffff1ffff1ffff1f11f111111ffff1f11f1111ffff111",
+        "111ff1f1f11f1f111f1f11f1f1111f1111ff1f111111f1111f11f1111f111111",
+        "111f1ff1f11f1f111f1ffff1f1ff1fff11f1ff111111fff11f11f1111fff1111",
+        "111f11f1f11f11f1f11f11f1f11f1f1111f11f111111f1111f11f1111f111111",
+        "111f11f1ffff111f111f11f1ffff1ffff1f11f111111f1111f11ffff1ffff111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "111111aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1111111",
+        "111111f4444444444444444444444444444444444444444444444444a1111111",
+        "111111f4444444444444444444444444444444444444444444444444a111f111",
+        "111111f4444444444444444444444444444444444444444444444444a111f111",
+        "1ffff1f4444444444444444444444444444444444444444444444444a1fffff1",
+        "111111f4444444444444444444444444444444444444444444444444a111f111",
+        "111111f4444444444444444444444444444444444444444444444444a111f111",
+        "111111f4444444444444444444444444444444444444444444444444a1111111",
+        "111111ffffffffffffffffffffffffffffffffffffffffffffffffffa1111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111f1f11f1ff11fff1f1f111111111111111111111111",
+        "1111111111111111111111f1ff1f1f1f1f111f1f111111111111111111111111",
+        "1111111111111111111111f1f1ff1f1f1ff111f1111111111111111111111111",
+        "1111111111111111111111f1f11f1f1f1f111f1f111111111111111111111111",
+        "1111111111111111111111f1f11f1ff11fff1f1f111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "111fff1fff1fff11ff11ff1111f1f1f1111fff1fff1111f1f1f1fff1f111f111",
+        "111f1f1f1f1f111f111f1111111fff111111f11f1f1111f1f1f1f111f111f111",
+        "111fff1ff11ff111f111f1111fffffff1111f11f1f1111f1f1f1ff11f1f1f111",
+        "111f111f1f1f11111f111f11111fff111111f11f1f11111f11f1f111ff1ff111",
+        "111f111f1f1fff1ff11ff11111f1f1f11111f11fff11111f11f1fff1f111f111",
+        "1111111111111111111111111111111111111111111111111111111111111111"
+      ],
+      "provenance": {
+        "range": [
+          "$3BE10",
+          "$3C210"
+        ],
+        "sha256": "54a1664be695f427f6f44c3c6d264bbbf0f195907b2c6a2086bcbf39ca59a2ed"
+      }
+    },
+    "3": {
+      "address": "$3C648",
+      "pixels": [
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1133313131113133313311111133113331333133313113133313331333133311",
+        "1113113133133131113131111131313111131131313313131311311313131311",
+        "1113113131313133113131111131313311131131313133133311311313133111",
+        "1113113131113131113131111131313111131131313113131311311313131311",
+        "1113113131113133313311111133113331131133313113131311311333131311",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "111111aaaaaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111aaaaaaaaa11",
+        "111111f4444444444444444444444444a11111111111111111111f4444444a11",
+        "111111f4444444440044444444444444a11131111113113111111f4444444a11",
+        "111111f4444444440044444444444444a11131111113313111111f4444444a11",
+        "133331f4444444444444444444444444a13333311113133133311f4444444a11",
+        "111111f4444444440044444444444444a11131111113113131311f4444444a11",
+        "111111f4444444440044444444444444a11131111113113133311f4444444a11",
+        "111111f4444444444444444444444444a11111111111111111111f4444444a11",
+        "111111ffffffffffffffffffffffffffa11111111111111111111ffffffffa11",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111113331313111313331111111111111333133313111313331333111",
+        "1111111111111311313313313111111111111111313131313111313111313111",
+        "1111111111111311313131313311111111111111333131313131313311331111",
+        "1111111111111311313111313111111111111111311131313313313111313111",
+        "1111111111111311313111313331111111111111311133313111313331313111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111333133313331133113311113131311113331333111133313331311131111",
+        "1111313131313111311131111111333111111311313111131313131331331111",
+        "1111333133113311131113111133333331111311313111133313311313131111",
+        "1111311131313111113111311111333111111311313111131313131311131111",
+        "1111311131313331331133111113131311111311333111131313131311131111",
+        "1111111111111111111111111111111111111111111111111111111111111111"
+      ],
+      "provenance": {
+        "range": [
+          "$3C648",
+          "$3CA48"
+        ],
+        "sha256": "99530e9ef40a4135ad4b7cc16bcb69283f57377dfd556a749a9997a20b01cb05"
+      }
+    },
+    "4": {
+      "address": "$3CA48",
+      "pixels": [
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1aaa1a1a1aaa1a1a1aaa1aaa1aaa11aaa1aaa1a111a1aaa1a1a1aaa1aaa1aaa1",
+        "1a1a1a1a11a11a1a1a1a1a1a1a1111a111a1a1aa1aa1a1a1a1a11a11a111a1a1",
+        "1aaa1a1a11a11aaa1a1a1aa11aaa11a111a1a1a1a1a1aaa1a1a11a11aa11aa11",
+        "1a1a1a1a11a11a1a1a1a1a1a111a11a111a1a1a111a1a111a1a11a11a111a1a1",
+        "1a1a1aaa11a11a1a1aaa1a1a1aaa11aaa1aaa1a111a1a111aaa11a11aaa1a1a1",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "111111111111111111111111111111111111111111111111111111aaaaaaaaa1",
+        "111111111111111111111111111111111111111111111111111111f4444444a1",
+        "1aaa1aaa1aaa1aaa1a111a1aaa1aaa1aaa1aaa111111a11a111111f4444444a1",
+        "1a1a1a1a1a1a1a1a1aa1aa1a1111a11a111a1a111111aa1a111111f4444444a1",
+        "1aaa1aaa1aa11aaa1a1a1a1aa111a11aa11aa1111111a1aa1aaa11f4444444a1",
+        "1a111a1a1a1a1a1a1a111a1a1111a11a111a1a111111a11a1a1a11f4444444a1",
+        "1a111a1a1a1a1a1a1a111a1aaa11a11aaa1a1a111111a11a1aaa11f4444444a1",
+        "111111111111111111111111111111111111111111111111111111f4444444a1",
+        "111111111111111111111111111111111111111111111111111111ffffffffa1",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "111111111111111111111111111111111aaaaaaaaaaaaaaaaaaaaa1111111111",
+        "111111111111111111111111111111111f4444444444444444444a1111111111",
+        "111111a1a1aaa1a111a1a1aaa11111111f4444444444444444444a111a111111",
+        "111111a1a1a1a1a111a1a1a1111111111f4444444444444444444a111a111111",
+        "111111a1a1aaa1a111a1a1aa1111aaaa1f4444444444444444444a1aaaaa1111",
+        "1111111a11a1a1a111a1a1a1111111111f4444444444444444444a111a111111",
+        "1111111a11a1a1aaa1aaa1aaa11111111f4444444444444444444a111a111111",
+        "111111111111111111111111111111111f4444444444444444444a1111111111",
+        "111111111111111111111111111111111ffffffffffffffffffffa1111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111"
+      ],
+      "provenance": {
+        "range": [
+          "$3CA48",
+          "$3CE48"
+        ],
+        "sha256": "5446524c2ff48cb72bdb0c35585b91df2660c01e261c04f5a486519318189dc0"
+      }
+    },
+    "5": {
+      "address": "$3CE48",
+      "pixels": [
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1eeee111111111eeee1111eeee1eeee1e111e1eeee1e11e1eeeee1eeee1eeee1",
+        "1e11e1eee1eee111e11111e1111e11e1ee1ee1e11e1e11e111e111e1111e11e1",
+        "1eeee11e11e1e11e111111e1111e11e1e1e1e1eeee1e11e111e111eee11eeee1",
+        "1e11e11e11eee1e1111111e1111e11e1e111e1e1111e11e111e111e1111e1e11",
+        "1e11e111111111eeee1111eeee1eeee1e111e1e1111eeee111e111eeee1e11e1",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1",
+        "1f444444444444444444444444444444444444444444444444444444444444a1",
+        "1f444444444444444444444444444444444444444444444444444444444444a1",
+        "1f444444444444444444444444444444444444444444444444444444444444a1",
+        "1f444444444444444444444444444444444444444444444444444444444444a1",
+        "1f444444444444444444444444444444444444444444444444444444444444a1",
+        "1f444444444444444444444444444444444444444444444444444444444444a1",
+        "1f444444444444444444444444444444444444444444444444444444444444a1",
+        "1f444444444444444444444444444444444444444444444444444444444444a1",
+        "1f444444444444444444444444444444444444444444444444444444444444a1",
+        "1f444444444444444444444444444444444444444444444444444444444444a1",
+        "1f444444444444444444444444444444444444444444444444444444444444a1",
+        "1f444444444444444444444444444444444444444444444444444444444444a1",
+        "1f444444444444444444444444444444444444444444444444444444444444a1",
+        "1f444444444444444444444444444444444444444444444444444444444444a1",
+        "1fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa1",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "111111111111111e111eeee1eeee1eeee1eee1e1eeee1e11e111111111111111",
+        "111111111111111e111e11e1e1111e11e11e11e1e11e1ee1e111111111111111",
+        "111111111111111e111e11e1e1111eeee11e11e1e11e1e1ee111111111111111",
+        "111111111111111eee1eeee1eeee1e11e11e11e1eeee1e11e111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111"
+      ],
+      "provenance": {
+        "range": [
+          "$3CE48",
+          "$3D248"
+        ],
+        "sha256": "893a119f09dd1000bc5f61857b3d6e80fbf04296f559d3ee00cb69a69d295ecd"
+      }
+    },
+    "6": {
+      "address": "$3D338",
+      "pixels": [
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111fffff1fffff11f1111fffff1f111f11f11fffff11f11fffff1f111f11111",
+        "111111f111f111111f1111f11111f111f11f11f111111f11f111f1ff11f11111",
+        "111111f111ffff111f1111ffff11f111f11f11fffff11f11f111f1f1f1f11111",
+        "111111f111f111111f1111f111111f1f111f111111f11f11f111f1f11ff11111",
+        "111111f111fffff11ffff1fffff111f1111f11fffff11f11fffff1f111f11111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "11111111111111111111aaaaaaaaaaaaaaaaaaaaaaaa11111111111111111111",
+        "11111111111111111111f4444444444444444444444a11111111111111111111",
+        "11111111111111111111f4444444444444444444444a111f1111111111111111",
+        "11111111111111111111f4444444444444444444444a111f1111111111111111",
+        "111111111111111ffff1f4444444444444444444444a1fffff11111111111111",
+        "11111111111111111111f4444444444444444444444a111f1111111111111111",
+        "11111111111111111111f4444444444444444444444a111f1111111111111111",
+        "11111111111111111111f4444444444444444444444a11111111111111111111",
+        "11111111111111111111fffffffffffffffffffffffa11111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111"
+      ],
+      "provenance": {
+        "range": [
+          "$3D338",
+          "$3D738"
+        ],
+        "sha256": "b5eb9663fa7f0ee351a4d678f0be7f2a0ca410dc46defb9966c6647accc2c94e"
+      }
+    },
+    "7": {
+      "address": "$3D788",
+      "pixels": [
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1fff1fff1fff1f1fff1fff1fff1fff1fff1f1fff1f11f111fff1fff1fff1ff11",
+        "1f1f1f111f111f1f1111f11f1f1f1f11f11f1f1f1ff1f111f111f1f1f1f1f1f1",
+        "1ff11ff11f1f1f1fff11f11ff11fff11f11f1f1f1f1ff111f111fff1ff11f1f1",
+        "1f1f1f111f1f1f111f11f11f1f1f1f11f11f1f1f1f11f111f111f1f1f1f1f1f1",
+        "1f1f1fff1fff1f1fff11f11f1f1f1f11f11f1fff1f11f111fff1f1f1f1f1ff11",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1",
+        "1f444444444444444444444444444444444444444444444444444444444444a1",
+        "1f444444444444444444444444444444444444444444444444444444444444a1",
+        "1f444444444444444444444444444444444444444444444444444444444444a1",
+        "1f444444444444444444444444444444444444444444444444444444444444a1",
+        "1f444444444444444444444444444444444444444444444444444444444444a1",
+        "1f444444444444444444444444444444444444444444444444444444444444a1",
+        "1f444444444444444444444444444444444444444444444444444444444444a1",
+        "1fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa1",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111fff1f11f1fff1fff1fff11111f11f1fff1f111f1fff11111111111",
+        "1111111111f111ff1f11f11f111f1f11111ff1f1f1f1ff1ff1f1111111111111",
+        "1111111111ff11f1ff11f11ff11fff11111f1ff1fff1f1f1f1ff111111111111",
+        "1111111111f111f11f11f11f111ff111111f11f1f1f1f111f1f1111111111111",
+        "1111111111fff1f11f11f11fff1f1f11111f11f1f1f1f111f1fff11111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111",
+        "1111111111111111111111111111111111111111111111111111111111111111"
+      ],
+      "provenance": {
+        "range": [
+          "$3D788",
+          "$3DB88"
+        ],
+        "sha256": "123bad3041066cdd25c2902f15a5689c79955376c7e5a41601ec8b7198d97624"
+      }
+    }
+  },
+  "documents": [
+    {
+      "index": 0,
+      "items": [
+        {
+          "name": "ECONOMY ",
+          "provenance": {
+            "range": [
+              "$76C37",
+              "$76C85"
+            ],
+            "sha256": "0b600b7309be9b65489450dbf75e30bf1985b1901d9fc4ffc60609a921c3803b"
+          },
+          "rows": [
+            "MEMO TO PAUL",
+            "WE'VE SAVED 3K BY LEAVING THIS FILE EMPTY",
+            "ALL USEFUL INFO. IS IN THE SAFE   - BJ"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "items": [
+        {
+          "name": "OFFER   ",
+          "provenance": {
+            "range": [
+              "$76C86",
+              "$76CAB"
+            ],
+            "sha256": "19c9b7abb68723e5ce61a50d2d6f1259a72eeccece881cdb1b854f00fab8622a"
+          },
+          "rows": [
+            "SIGNIFICANT CASH TO WORK ON CONSOLES"
+          ]
+        },
+        {
+          "name": "ITEM    ",
+          "provenance": {
+            "range": [
+              "$76CAC",
+              "$76CC0"
+            ],
+            "sha256": "47929a88e40ad2629bad68f2202973302432004ae93aa2534ff92488fe0cff88"
+          },
+          "rows": [
+            "8-BIT CONSOLE"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "items": [
+        {
+          "name": "OUTLINE ",
+          "provenance": {
+            "range": [
+              "$76CC1",
+              "$76D12"
+            ],
+            "sha256": "21d54c1a5af2723392d6643966f8fcd81e179e0ff4cde065b9a4e0763c5caae8"
+          },
+          "rows": [
+            "WRITER SUGGESTS STORY ON WIPING OUT BIL'S FLEET",
+            "SAY'S WITH POWER BASE GONE BIL WILL FLEE GALAXY"
+          ]
+        },
+        {
+          "name": "REJECT  ",
+          "provenance": {
+            "range": [
+              "$76D13",
+              "$76D3E"
+            ],
+            "sha256": "a6957c5d20daa4a6ada5f1645f00e2b022b1557222fffc5e0be14ba59ac69973"
+          },
+          "rows": [
+            "IMPOSSIBLE: NO-ONE CAN WIPE OUT NINETY CRAFT"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "items": [
+        {
+          "name": "TITLE   ",
+          "provenance": {
+            "range": [
+              "$76D3F",
+              "$76D8E"
+            ],
+            "sha256": "ae4647c43d775921c2148fbc1cd52ba506815e7d303049d28d83ab7ac659a6c4"
+          },
+          "rows": [
+            "LAND AT LOGOS 02:03 VESTED IN OWNER OF THIS DEED",
+            "SUBJECT TO REGISTRATION WITH THE LAND REGISTRY"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "items": [
+        {
+          "name": "LETTER  ",
+          "provenance": {
+            "range": [
+              "$76D8F",
+              "$76DDA"
+            ],
+            "sha256": "2f5082b30712b0ed7fb46562902149d41272a7898b3be823c04fc86f9d4206d6"
+          },
+          "rows": [
+            "TO EX-PRESIDENT MARGARET",
+            "I ENCLOSE YOUR LATEST HOROSCOPE AS REQUESTED",
+            "YOURS FONDLY - OLD JOAN"
+          ]
+        },
+        {
+          "name": "FORCAST ",
+          "provenance": {
+            "range": [
+              "$76DDB",
+              "$76E21"
+            ],
+            "sha256": "8f2386c3f85803df9153cbdb18a1abfe212732a6e22504ab9a266243faefac45"
+          },
+          "rows": [
+            "AFTER A PERIOD OF UNUSUAL INACTIVITY YOU WILL",
+            "ENJOY FOLLOWING THE EXPLOITS OF A MERCENARY"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "items": [
+        {
+          "name": "INTRO   ",
+          "provenance": {
+            "range": [
+              "$76E22",
+              "$76E97"
+            ],
+            "sha256": "34b3c39780db5f6dcd4547bbd6158ad1599aebc5cfe134b2eddd49887844d64e"
+          },
+          "rows": [
+            "PAUL INSISTED THAT THE FOLLOWING WERE OMITTED:",
+            "FROM THE SOLUTION BRIEFINGS - WHICH IN ANY EVENT",
+            "HE DIDN'T LIKE US PUTTING IN THE BOX",
+            "SIGNED - A FRIEND"
+          ]
+        },
+        {
+          "name": "BRIEF 1 ",
+          "provenance": {
+            "range": [
+              "$76E98",
+              "$76EC4"
+            ],
+            "sha256": "13ed930a9aff953c807ea5cc58388cccfc1f37bc091f37f02d0fe6ac8588808c"
+          },
+          "rows": [
+            "THE PEOPLE AT GALAXY SPACEPORT SHOULD BE SEEN"
+          ]
+        },
+        {
+          "name": "BRIEF 2 ",
+          "provenance": {
+            "range": [
+              "$76EC5",
+              "$76EEF"
+            ],
+            "sha256": "199e0a9ed4524d26cba382ed3f54e430e010d8149f2dc25d25f602cd9673888a"
+          },
+          "rows": [
+            "CHECK OUT THE EQUIPMENT AT AMPLIN ELECTRONICS"
+          ]
+        },
+        {
+          "name": "BRIEF 3 ",
+          "provenance": {
+            "range": [
+              "$76EF0",
+              "$76F1A"
+            ],
+            "sha256": "34122035e37a7077a0292d50161d4f85d01d30e2e1789154dca8faf41b1eaa99"
+          },
+          "rows": [
+            "OF BENEFIT IF YOU CAN CUT OUT ALL THE RED TAPE"
+          ]
+        },
+        {
+          "name": "BRIEF 4 ",
+          "provenance": {
+            "range": [
+              "$76F1B",
+              "$76F47"
+            ],
+            "sha256": "768ee95e8325a9c18874a4a1ed89206837f4873badb829b0f30bbf2bc6c510d6"
+          },
+          "rows": [
+            "IT CAN HELP IF YOU GO INCOGNITO ON THIS ROUTE"
+          ]
+        },
+        {
+          "name": "BRIEF 5 ",
+          "provenance": {
+            "range": [
+              "$76F48",
+              "$76F74"
+            ],
+            "sha256": "b6b3373d86cc47258bb812c94d43e00c37712bc7607ee378c100f0a78afd937d"
+          },
+          "rows": [
+            "MORE CHANCE IF YOU USE PLAY-TESTERS EQUIPMENT"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 12,
+      "items": [
+        {
+          "name": "APOLOGY ",
+          "provenance": {
+            "range": [
+              "$7700D",
+              "$77037"
+            ],
+            "sha256": "0faf94945936c72de3b27be846de1fd8b3907c6c5c185578ecf8cbd924d5c5bd"
+          },
+          "rows": [
+            "WE REGRET FOR ECONOMY THE MUSEUM IS NOW CLOSED"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 14,
+      "items": [
+        {
+          "name": "CLUE    ",
+          "provenance": {
+            "range": [
+              "$76F75",
+              "$76FDF"
+            ],
+            "sha256": "f6df6de7cf57b221a700377018aacaa59c422329a33a1b114bcc51de54b6a6ba"
+          },
+          "rows": [
+            "COULD IT BE THAT WHATEVER OFFERS BIL THE BEST",
+            "PROSPECTS FOR FUTURE RICHES AND WEALTH COULD",
+            "AS AN ALTERNATIVE PROVIDE THE SAME FOR YOU"
+          ]
+        },
+        {
+          "name": "CLEVER  ",
+          "provenance": {
+            "range": [
+              "$76FE0",
+              "$7700C"
+            ],
+            "sha256": "85e64a54c7159cf6c0724b88092d5c484aa12dd86a409890842977c39f7be766"
+          },
+          "rows": [
+            "WE DO KNOW YOU DON'T HAVE TO PAY TO READ THIS"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 16,
+      "items": [
+        {
+          "name": "PROPERTY",
+          "provenance": {
+            "range": [
+              "$77038",
+              "$77065"
+            ],
+            "sha256": "05b2f8231517eac8577d268c5977e695485840a829231f01a1ef1e90e0c2a36f"
+          },
+          "rows": [
+            "DESIRABLY LOCATED BUILDING SITE AT LOGOS 02:03"
+          ]
+        },
+        {
+          "name": "DESIGN  ",
+          "provenance": {
+            "range": [
+              "$77066",
+              "$77092"
+            ],
+            "sha256": "f1488d29af24d4b577a0ffdd1344840641f708841d5efd35ca00fd10ea2d8af6"
+          },
+          "rows": [
+            "INSTANT ARCHITECTS HAVE PROPSED BUILDING PLAN"
+          ]
+        },
+        {
+          "name": "PLANNING",
+          "provenance": {
+            "range": [
+              "$77093",
+              "$770BD"
+            ],
+            "sha256": "29e469c6cc997eb7728414057259504709c490d050950bc25bfb6fbb5d75b568"
+          },
+          "rows": [
+            "OUTLINE PERMISSION FOR HIGH SECURITY PRISON"
+          ]
+        },
+        {
+          "name": "AGENTS  ",
+          "provenance": {
+            "range": [
+              "$770BE",
+              "$770DD"
+            ],
+            "sha256": "615d6ebcddd1aa76558cba7876e22f86feebb351471f7bd083da603c5f0e31a3"
+          },
+          "rows": [
+            "C. ROOKE SALES - LOGOS 08:03"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 18,
+      "items": [
+        {
+          "name": "P C BIL ",
+          "provenance": {
+            "range": [
+              "$770DE",
+              "$7715E"
+            ],
+            "sha256": "8b1e60dd5a17d6c3ab1e048905f0c4a852b9e7873ab5e38dd78b6cc01583cada"
+          },
+          "rows": [
+            "JENNY - ON THE P C BIL REQUEST FOR INSURANCE",
+            "FOR 6 MINING MACHINES - TOTAL VALUE 480 MILLION",
+            "THE PREMIUM IS 80 MILLION - BUT",
+            "INSURANCE IS DECLINED FOR CREDIT CONTROL REASONS"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 20,
+      "items": [
+        {
+          "name": "MEMO    ",
+          "provenance": {
+            "range": [
+              "$77EE9",
+              "$77F71"
+            ],
+            "sha256": "448c686f07419b4f6e29362d4c6838ad45ae7eb87db6be6a8e3795431af504ca"
+          },
+          "rows": [
+            "URGENT - TO P C BIL FROM CASINO MANAGER:",
+            "CONFIRM WE HAVE PAID YOUR BANKERS AS ORDERED",
+            "WE NOW HAVE INSUFFICIENT FUNDS TO DEAL WITH",
+            "ANY PAYOUT IN EXCESS OF 150 MILLION CREDITS"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 22,
+      "items": [
+        {
+          "name": "ENTRY   ",
+          "provenance": {
+            "range": [
+              "$7715F",
+              "$7718C"
+            ],
+            "sha256": "a602478246308863d854415d2fd1c0080265f2866ae7e15e8c30866a4b8b8358"
+          },
+          "rows": [
+            "BEST RIDE I'VE EVER EXPERIENCED - GOOD OLD JOAN"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 24,
+      "items": [
+        {
+          "name": "MINING  ",
+          "provenance": {
+            "range": [
+              "$7718D",
+              "$771BA"
+            ],
+            "sha256": "c7f89a0433d808f57521524e2706ddd7c4b5ff0dd12f5a75bb8ee239e57b29b4"
+          },
+          "rows": [
+            "HERO BIL HAS ^1 MACHINES IN PLACE ON DION NORTH"
+          ]
+        },
+        {
+          "name": "FORCES  ",
+          "provenance": {
+            "range": [
+              "$771BB",
+              "$771E8"
+            ],
+            "sha256": "1bbb1faa8ee7dd51d58b50c6253638ac1173b2c571e3a5116102a8d50dc81d9e"
+          },
+          "rows": [
+            "MAGNIFICENT BIL'S DEFENSIVE FLEET NOW ^2 STRONG"
+          ]
+        },
+        {
+          "name": "COMMENT ",
+          "provenance": {
+            "range": [
+              "$771E9",
+              "$77232"
+            ],
+            "sha256": "faa5a30a018eafa1a2c1448505dfb634ac4f03c94bb7cfcd2339b37affa1980c"
+          },
+          "rows": [
+            "THE PROPRIETORS OF YOUR DAILY COMET ENDORSE",
+            "THE ECONOMIC MIRACLE TO BE WROUGHT BY P C BIL"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 26,
+      "items": [
+        {
+          "name": "PROPOSAL",
+          "provenance": {
+            "range": [
+              "$77233",
+              "$77278"
+            ],
+            "sha256": "06e9160e4ed71ba5df0a89fe307afffa628fe117f43350a894b7841503c1d7d5"
+          },
+          "rows": [
+            "THE PRESIDENT'S CONSENT IS SOUGHT TO ADOPT",
+            "LEGISLATION FOR PULVIN MINING ON DION NORTH"
+          ]
+        },
+        {
+          "name": "BILL    ",
+          "provenance": {
+            "range": [
+              "$77279",
+              "$772C7"
+            ],
+            "sha256": "8898f4b4a67518888850efd1ebef1fe471dae007a413b03a3e4921c999ba972d"
+          },
+          "rows": [
+            "THIS BILL GRANTS P C BIL OPEN CAST MINING RIGHTS",
+            "TO FULLY EXPLOIT HIS LAND ON DION NORTH ISLAND"
+          ]
+        },
+        {
+          "name": "ADOPTION",
+          "provenance": {
+            "range": [
+              "$772C8",
+              "$772F2"
+            ],
+            "sha256": "2caf3ae5ab5c89b416553310d93fbdd2804fe36941151638228589e5deacf951"
+          },
+          "rows": [
+            "PLEASE CARRY TO AYE'S LOBBY - SECOND FLOOR"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 28,
+      "items": [
+        {
+          "name": "ANSWER  ",
+          "provenance": {
+            "range": [
+              "$772F3",
+              "$77364"
+            ],
+            "sha256": "71cc81c32cf37f3cf5ed479d20b17f9ef092bbe51b3c4925b0d7300c102a5b8a"
+          },
+          "rows": [
+            "HELLO - THIS IS RISS-KEY BUILDERS ON LOGOS",
+            "WE ARE BUSY RIGHT NOW WITH DOUBLE GLAZING WORK",
+            "SO ON YOUR JOB: WE SUGGEST YOU DO-IT-YOURSELF"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 30,
+      "items": [
+        {
+          "name": "COPY    ",
+          "provenance": {
+            "range": [
+              "$77365",
+              "$773C7"
+            ],
+            "sha256": "b31ea583d611247dbe2f6bb2a79116893d95e3f86929dd443173ef4122a8e65f"
+          },
+          "rows": [
+            "TO NOVAGEN SOFTWARE LTD",
+            "WE CONFIRM YOUR REGISTRATION: ERIS CAPITAL 09:02",
+            "FOR YOUR DECLARED USE AS PLAY-TESTERS STORES"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 32,
+      "items": [
+        {
+          "name": "DEMAND  ",
+          "provenance": {
+            "range": [
+              "$773C8",
+              "$7740D"
+            ],
+            "sha256": "a9e0950f7b64c305f2504b8df6a0bba4cc41508d3ade98b15cc2aee320a28d09"
+          },
+          "rows": [
+            "TO P C BIL - PLEASE DELIVER IMMEDIATELY",
+            "THE PROMISED SECURITY ON YOUR LOAN OF 57 MILLION"
+          ]
+        },
+        {
+          "name": "THREAT  ",
+          "provenance": {
+            "range": [
+              "$7740E",
+              "$7743B"
+            ],
+            "sha256": "9307621d89a01c287eafc2a27d0747749a88ab174660853f8b0bdf3e3f015305"
+          },
+          "rows": [
+            "IF NOT - WE SHALL NOTIFY YOUR OTHER 43 BANKERS"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 34,
+      "items": [
+        {
+          "name": "MESSAGE ",
+          "provenance": {
+            "range": [
+              "$776B0",
+              "$77739"
+            ],
+            "sha256": "d310d8fbe4a88c0e6cc4d12ef046c0ed8a6c4ec882338e3a7bf4eac27ae1ed9e"
+          },
+          "rows": [
+            "FROM THE GOVERNOR OF TIME-WARP PRISON",
+            "I FORGOT TO TELL YOU THAT YOUR BELONGINGS HAD",
+            "BEEN PLACED FOR YOU AT THE REAR OF THE PRISON",
+            "I HOPE THIS HAS NOT INCONVENIENCED YOU TOO MUCH"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 36,
+      "items": [
+        {
+          "name": "ELECTION",
+          "provenance": {
+            "range": [
+              "$7743C",
+              "$7745D"
+            ],
+            "sha256": "79fe38b9e8b5a2ad4beb15d3e60f02077ed996661190fc40003144529ea75bf9"
+          },
+          "rows": [
+            "RULES FOR GAMMA SYSTEM PRESIDENTIAL ELECTION"
+          ]
+        },
+        {
+          "name": "RULE 1  ",
+          "provenance": {
+            "range": [
+              "$7745E",
+              "$7748C"
+            ],
+            "sha256": "f28eaaef91021389f2c675d8915c8512dff65a00a35bc744dd6bede45fb43baf"
+          },
+          "rows": [
+            "CANDIDATE MUST HAVE BEEN RESIDENT FOR 1 YEAR MIN"
+          ]
+        },
+        {
+          "name": "RULE 2  ",
+          "provenance": {
+            "range": [
+              "$7748D",
+              "$774B3"
+            ],
+            "sha256": "79620a89b0364cae74fee8b81a98199eb55181044e66fec606a5a1021d95a8b1"
+          },
+          "rows": [
+            "CANDIDATE SHOULD HAVE ASSETS OF 20 MILLION"
+          ]
+        },
+        {
+          "name": "RULE 3  ",
+          "provenance": {
+            "range": [
+              "$774B4",
+              "$774E1"
+            ],
+            "sha256": "27e8c2c2bbd0a0093486cf4c6317e5511732c22d4bc882ec76610173c529641f"
+          },
+          "rows": [
+            "CANDIDATE MUST LOG ON WITH ELECTORAL REGISTRAR"
+          ]
+        },
+        {
+          "name": "RULE 4  ",
+          "provenance": {
+            "range": [
+              "$774E2",
+              "$7750C"
+            ],
+            "sha256": "fa5bf1e6506a7d5487059a4cc3b18a7eaa4a442a51e05f4a12f224b6ff9b6d2e"
+          },
+          "rows": [
+            "CANDIDATES MAXIMUM PROMOTIONAL SPEND 40 MILLION"
+          ]
+        },
+        {
+          "name": "RULE 5  ",
+          "provenance": {
+            "range": [
+              "$7750D",
+              "$77529"
+            ],
+            "sha256": "33110801f319a05f6043247cebd18a2f98cfedebc81b14f83598526884612b2f"
+          },
+          "rows": [
+            "THERE SHALL BE NO RULE 5"
+          ]
+        },
+        {
+          "name": "RULE 6  ",
+          "provenance": {
+            "range": [
+              "$7752A",
+              "$7754A"
+            ],
+            "sha256": "5f96a3656b50435f45b2d18374d765d659fddf90f47112854b960dace307850e"
+          },
+          "rows": [
+            "CANDIDATE HAS ONE VOTE IN THE ELECTION"
+          ]
+        },
+        {
+          "name": "RULE 7  ",
+          "provenance": {
+            "range": [
+              "$7754B",
+              "$77575"
+            ],
+            "sha256": "97eabed7167c0ac2013c73bed7d864e505b07f7d6cabb09bb3e7cfaadec51d74"
+          },
+          "rows": [
+            "TO BE ELECTED CANDIDATE MUST REMAIN SOLVENT"
+          ]
+        },
+        {
+          "name": "RULE 8  ",
+          "provenance": {
+            "range": [
+              "$77576",
+              "$775C8"
+            ],
+            "sha256": "b3c71555b922464c142bfd486a6ed3148bb926751a97262adc8ecb6232754ad7"
+          },
+          "rows": [
+            "IF ELECTED CANDIDATE MUST BE FREE AND AVAILABLE:",
+            "TO TAKE OFFICE AT VESTA PARLIAMENT IMMEDIATELY"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 38,
+      "items": [
+        {
+          "name": "SECURITY",
+          "provenance": {
+            "range": [
+              "$775C9",
+              "$775EF"
+            ],
+            "sha256": "3b72c6e081a81ce8cc6d7eecc3debe336210f13d4c01bc26f40538cbe9853e2c"
+          },
+          "rows": [
+            "FOR P C BIL LOAN 200 MILLION - BACCHUS CASINO'S"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 40,
+      "items": [
+        {
+          "name": "SCHEDULE",
+          "provenance": {
+            "range": [
+              "$775F0",
+              "$7765F"
+            ],
+            "sha256": "7ed88f40508142c955fc6760f463513ae65e08b921616d2ddfd1ab3b36760223"
+          },
+          "rows": [
+            "PLEASE CHECK YOUR TRANSPORT SCHEDULE FOR",
+            "INTEGRATED KAOS SPACE AND INTER-CITY FLIGHTS",
+            "PIRATE COPY PLAYERS CAN AS USUAL GO AND GENTLY.."
+          ]
+        },
+        {
+          "name": "SELF-FLY",
+          "provenance": {
+            "range": [
+              "$77660",
+              "$776AF"
+            ],
+            "sha256": "592e79f0a0e62c38c5a9a93d859004b3ce567cef019056d9714232de72174192"
+          },
+          "rows": [
+            "IN RESPONSE TO COMPETITION OF BRUCE'S AIRLINE",
+            "KAOS ARE SOON TO INTRODUCE A SELF-FLY SERVICE"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 42,
+      "items": [
+        {
+          "name": "FROM    ",
+          "provenance": {
+            "range": [
+              "$7773A",
+              "$77761"
+            ],
+            "sha256": "10ae14ee4a8616da1a95fd882c023759bfa4708c1c1104f6a23b9690ceff81f0"
+          },
+          "rows": [
+            "STATE PRESIDENT MARGARET WITH KINDEST REGARDS"
+          ]
+        },
+        {
+          "name": "CONTENT ",
+          "provenance": {
+            "range": [
+              "$77762",
+              "$77819"
+            ],
+            "sha256": "41986f35632f8295aa060a1632eba6e031166edcf4ba6a71c51fbdc92e6c3950"
+          },
+          "rows": [
+            "MY DEAR MERCENARY         -",
+            "WE WERE SO SORRY TO HEAR YOU'VE BEEN LOCKED IN",
+            "WHAT A DREADFUL MISTAKE",
+            "PARAGRAPH",
+            "WE HAVE TO RETIRE YOU KNOW - IT'S SO UNFAIR!",
+            "THEY SAY WE'VE SERVED OR FULL TERM",
+            "AND - DO YOU KNOW - WE COULD GO ON AND ON AND"
+          ]
+        },
+        {
+          "name": "PS      ",
+          "provenance": {
+            "range": [
+              "$7781A",
+              "$778D6"
+            ],
+            "sha256": "c4205475abebe8903f1b8db8320817c004fd69f47be826d1aafb12530181a13f"
+          },
+          "rows": [
+            "WE'RE SO SORRY BUT WE'VE HAD TO CUT OUR COSTS",
+            "WE CAN NO LONGER GIVE A FREE CRAFT ON QUITTING",
+            "PARAGRAPH",
+            "BUT THEN YOU NEVER WERE A QUITTER      -",
+            "BESIDES - WE'VE REALLY LEFT YOU QUITE WELL OFF",
+            "SO NOW YOU CAN PAY FOR ALL YOUR OWN SERVICES!"
+          ]
+        },
+        {
+          "name": "PPS     ",
+          "provenance": {
+            "range": [
+              "$778D7",
+              "$778FE"
+            ],
+            "sha256": "0ec7aba490e7fe28dcfbfe7f411f79a79f95b1f1398dcbe4d041fa026dc98585"
+          },
+          "rows": [
+            "THEY'RE TO HAVE AN ELECTION - AND WITHOUT ME!"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 44,
+      "items": [
+        {
+          "name": "CHOICE 1",
+          "provenance": {
+            "range": [
+              "$778FF",
+              "$77923"
+            ],
+            "sha256": "e60cc4c379831216390431321a3a657d3f5a8dd923701f971a0461f3e7a820a9"
+          },
+          "rows": [
+            "I VOTE FOR - P C BIL - ENTERPRISE PARTY"
+          ]
+        },
+        {
+          "name": "CHOICE 2",
+          "provenance": {
+            "range": [
+              "$77924",
+              "$77943"
+            ],
+            "sha256": "c531fd92711c427b5dfec2f92857d7edfc77c405935071bd8a59379f0481b704"
+          },
+          "rows": [
+            "I VOTE FOR - ] - INDEPENDANT"
+          ]
+        },
+        {
+          "name": "CHOICE 3",
+          "provenance": {
+            "range": [
+              "$77944",
+              "$77968"
+            ],
+            "sha256": "dac2bfdb8ba6743b686528ce69f29a8b59b85c4fa5cf5308818d24b37c435278"
+          },
+          "rows": [
+            "I VOTE FOR - DAVID SUTCH - M R L P"
+          ]
+        },
+        {
+          "name": "CHOICE 4",
+          "provenance": {
+            "range": [
+              "$77969",
+              "$7798D"
+            ],
+            "sha256": "695376fac4e132358528a8ca19a912e8e911a2c31bf69fe25712121357e6eb8a"
+          },
+          "rows": [
+            "I VOTE FOR - A BEAN - VERDANT PARTY"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 46,
+      "items": [
+        {
+          "name": "LATEST  ",
+          "provenance": {
+            "range": [
+              "$7798E",
+              "$779A2"
+            ],
+            "sha256": "5773e0575c4840aa7fd010d922d266d0f93ec953ac3f63c455e503f06d77b076"
+          },
+          "rows": [
+            "P C BIL ^0% - ] [%"
+          ]
+        },
+        {
+          "name": "SAMPLE  ",
+          "provenance": {
+            "range": [
+              "$779A3",
+              "$779CB"
+            ],
+            "sha256": "e7e92d3705803c4700f7ffbec728d6876aa7751fcfb9cecbcf5577ad8ac27307"
+          },
+          "rows": [
+            "A WELL INFORMED TAXI DRIVER - JEFF SMITH"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 48,
+      "items": [
+        {
+          "name": "TITLE   ",
+          "provenance": {
+            "range": [
+              "$779CC",
+              "$779EF"
+            ],
+            "sha256": "d32f57310086263b809735ec7311650d1ca3235a962b735b7f8c3f4e8ac3edea"
+          },
+          "rows": [
+            "P C BIL ENTERPRISES",
+            "A COMPANY PROFILE"
+          ]
+        },
+        {
+          "name": "INTRO   ",
+          "provenance": {
+            "range": [
+              "$779F0",
+              "$77A54"
+            ],
+            "sha256": "09887e95ee73dabce9fa48d6159a103539ca75cc3de22a416431f27675a7b79a"
+          },
+          "rows": [
+            "IN JUST A FEW YEARS THIS DYNAMIC CORPORATON HAS",
+            "DEVELOPED INTERESTS SPANNING THE GAMMA SYSTEM",
+            "UNDER THE FIRM LEADERSHIP OF P C BIL"
+          ]
+        },
+        {
+          "name": "P C BIL ",
+          "provenance": {
+            "range": [
+              "$77A55",
+              "$77AE4"
+            ],
+            "sha256": "a8e16435c78fa81d95317d85d7489e050c7631340a83e0c3818650a016775cb5"
+          },
+          "rows": [
+            "A HEROIC SURVIVOR OF THE MID MILKAY WARS  -",
+            "HE INVESTED IN A MENTOR TRADING POST IN 2095",
+            "ELECTED GOVENOR OF MENTOR IN 2097 HE APPLIED",
+            "HIS LEGENDARY DYNAMISM TO BUSINESS AQUISITION"
+          ]
+        },
+        {
+          "name": "GROUP   ",
+          "provenance": {
+            "range": [
+              "$77AE5",
+              "$77B65"
+            ],
+            "sha256": "87b7ff326a8765374c0fa30464f932f840f567ceb2faede38e3f7426dd002279"
+          },
+          "rows": [
+            "DUTY FREE TRADING POSTS AND ENTERTAINMENT",
+            "GROUP 4 INVESTMENTS (ACQUIRED 2099)",
+            "ALCANE PHARMACEUTICLES (ACQUIRED 2100)",
+            "PAN HADES PULVIN MINES (ACQUIRED 2100)"
+          ]
+        },
+        {
+          "name": "PLANS   ",
+          "provenance": {
+            "range": [
+              "$77B66",
+              "$77BD5"
+            ],
+            "sha256": "3b0b3c90e0bdc52084930198cc64b8ef0973edac449a5637f90d8b007c0a728f"
+          },
+          "rows": [
+            "WITH PAN PULVIN DEPOSITS VIRTUALLY EXHAUSTED",
+            "THERE ARE PLANS TO MINE ON DION NORTH AND EAST",
+            "VAST DEPOSITS THERE OFFER A NEW ECONOMIC AGE"
+          ]
+        },
+        {
+          "name": "AMBITION",
+          "provenance": {
+            "range": [
+              "$77BD6",
+              "$77C31"
+            ],
+            "sha256": "93576858025c9761fb3078d325bfdae1721cece124ebc7d8a2554087718d1bc3"
+          },
+          "rows": [
+            "P C BIL NOW WISHES TO DEVOTE HIS ENERGIES",
+            "AND COMPASSION TO LOYAL PUBLIC SERVICE",
+            "HE IS A CANDIDATE IN THE PRESIDENTIAL ELECTIONS"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 50,
+      "items": [
+        {
+          "name": "TITLE   ",
+          "provenance": {
+            "range": [
+              "$77C32",
+              "$77C68"
+            ],
+            "sha256": "9a2cb7bf908dcff3e7b9dbdd97d4a7c3064aa92390e03cb30771266c14adfad6"
+          },
+          "rows": [
+            "P C BIL ENTERPRISES",
+            "INVESTIGATION REPORT - HIGHLY CONFIDENTIAL"
+          ]
+        },
+        {
+          "name": "INTRO   ",
+          "provenance": {
+            "range": [
+              "$77C69",
+              "$77CBA"
+            ],
+            "sha256": "4eeb832f4c7d2c2382f1ea7a5aac4e9c30dbf72e89eaff72ad87676596df6aca"
+          },
+          "rows": [
+            "THE METEORIC RISE OF THIS MAN AND HIS OPERATIONS",
+            "GIVE MUCH CAUSE FOR CONCERN ON HIS LEGITAMACY"
+          ]
+        },
+        {
+          "name": "P C BIL ",
+          "provenance": {
+            "range": [
+              "$77CBB",
+              "$77D4D"
+            ],
+            "sha256": "05af23b163b214d2e8312f1ad740322716b966788f04200d3ad2b5c63521d3b7"
+          },
+          "rows": [
+            "A HIGHLY SUSPECT REFUGEE OF THE MID MILKAY WARS",
+            "NOTHING KNOWN OF HIM PRIOR TO ARRIVAL ON MENTOR",
+            "IN 2 YEARS HE OWNED ALL 19 TRADING POSTS THERE",
+            "THEN ALL GAMBLING AND HOSPITALITY ON BACCHUS"
+          ]
+        },
+        {
+          "name": "GROUP   ",
+          "provenance": {
+            "range": [
+              "$77D4E",
+              "$77DE2"
+            ],
+            "sha256": "5070d5c7e444db8c60ed332224cdbca1a09acd81ec3ca6de658d4c86595e6a9e"
+          },
+          "rows": [
+            "ILLICIT FUNDS ARE LAUNDERED THROUGH THE CASINOS",
+            "GROUP 4 IS THE LEGITIMATE FRONT FOR ACTIVITIES",
+            "ALCANE PHARMACY HAVE SOME QUESTIONABLE PRODUCTS",
+            "MINING SET FOR MEGABUCKS FROM DION DESECRATION"
+          ]
+        },
+        {
+          "name": "PLANS   ",
+          "provenance": {
+            "range": [
+              "$77DE3",
+              "$77E4D"
+            ],
+            "sha256": "bfd16e985acb2e734e8fb54df00907d475cb7c4507f92d37bba8ab081ec91d51"
+          },
+          "rows": [
+            "BIL HAS A PLANNING APPLICATION IN FOR DION MINES",
+            "THIS WILL NOT BE CLEARED BY DEPARTING PRESIDENT",
+            "HENCE THE MAIN REASON FOR BIL WANTING ELECTION"
+          ]
+        },
+        {
+          "name": "AMBITION",
+          "provenance": {
+            "range": [
+              "$77E4E",
+              "$77EBA"
+            ],
+            "sha256": "486daaeebde39ea8fcf41f9e2b4e8a65b3302bd580a5ddd056302444c51e69d7"
+          },
+          "rows": [
+            "THIS MANS POLITICS ARE EXTREMELY RIGHT WING",
+            "WITH AMBITIONS TO SERVE ONLY HIS OWN INTERESTS",
+            "THERE IS - AS YET - NO STRONG CONTENDER"
+          ]
+        },
+        {
+          "name": "APPENDIX",
+          "provenance": {
+            "range": [
+              "$77EBB",
+              "$77EE8"
+            ],
+            "sha256": "6202fafd4ac933614802e110bbfb1ce55909777774ca4eefa98cce16b95d56a9"
+          },
+          "rows": [
+            "20 SHEETS OF FIRM EVIDENCE OF BIL EVADING TAXES"
+          ]
+        }
+      ]
+    },
+    {
+      "index": 52,
+      "items": [
+        {
+          "name": "MEMO    ",
+          "provenance": {
+            "range": [
+              "$77F72",
+              "$77FE2"
+            ],
+            "sha256": "066ee1653961d4d6c12af1d515c9da43a33e5a2f0768a58e604c4deb2960fc63"
+          },
+          "rows": [
+            "MEMO TO EXPLOSIVES DIVISION",
+            "DEMAND FOR PRODUCT RUNNING HIGH",
+            "ADDITIONAL TO PYROTECH DISTRIBUTORS",
+            "POWERGEN AND BIL INDUSTRIES REQUIRE MORE"
+          ]
+        }
+      ]
+    }
+  ],
+  "itemField": {
+    "box": [
+      [
+        136,
+        183
+      ]
+    ],
+    "cells": [
+      136,
+      142,
+      148,
+      154,
+      160,
+      166,
+      172,
+      178
+    ],
+    "font": "panel",
+    "layoutTable": "$4E0E8",
+    "plane": 2,
+    "rows": 5,
+    "writer": "$4E17A",
+    "y": 170
+  },
+  "kind": "dion-play-head",
+  "openTable": {
+    "provenance": {
+      "range": [
+        "$4D6EA",
+        "$4D80B"
+      ],
+      "sha256": "a11f4d9e96393d8a9bbc533e28486bc939a2d2107ad8b1fa4aaba2943d35a158"
+    },
+    "rows": [
+      {
+        "colour1From152": 819,
+        "colour4": 1365,
+        "index": 0,
+        "mode": 2,
+        "slot": 111
+      },
+      {
+        "colour1From152": 1075,
+        "colour4": 1604,
+        "index": 2,
+        "mode": 2,
+        "slot": 109
+      },
+      {
+        "colour1From152": 1076,
+        "colour4": 1606,
+        "index": 4,
+        "mode": 2,
+        "slot": 119
+      },
+      {
+        "colour1From152": 820,
+        "colour4": 1094,
+        "index": 6,
+        "mode": 2,
+        "slot": 138
+      },
+      {
+        "colour1From152": 1074,
+        "colour4": 1891,
+        "index": 8,
+        "mode": 2,
+        "slot": 139
+      },
+      {
+        "colour1From152": 1539,
+        "colour4": 1829,
+        "index": 10,
+        "mode": 2,
+        "slot": 102
+      },
+      {
+        "colour1From152": 4,
+        "colour4": 551,
+        "index": 12,
+        "mode": 2,
+        "slot": 112
+      },
+      {
+        "colour1From152": 54,
+        "colour4": 599,
+        "index": 14,
+        "mode": 2,
+        "slot": 88
+      },
+      {
+        "colour1From152": 774,
+        "colour4": 1319,
+        "index": 16,
+        "mode": 2,
+        "slot": 90
+      },
+      {
+        "colour1From152": 320,
+        "colour4": 1121,
+        "index": 18,
+        "mode": 2,
+        "slot": 91
+      },
+      {
+        "colour1From152": 1584,
+        "colour4": 1874,
+        "index": 20,
+        "mode": 2,
+        "slot": 99
+      },
+      {
+        "colour1From152": 1347,
+        "colour4": 1893,
+        "index": 22,
+        "mode": 2,
+        "slot": 107
+      },
+      {
+        "colour1From152": 1094,
+        "colour4": 821,
+        "index": 24,
+        "mode": 2,
+        "slot": 134
+      },
+      {
+        "colour1From152": 274,
+        "colour4": 1366,
+        "index": 26,
+        "mode": 2,
+        "slot": 123
+      },
+      {
+        "colour1From152": 48,
+        "colour4": 96,
+        "index": 28,
+        "mode": 2,
+        "slot": 148
+      },
+      {
+        "colour1From152": 51,
+        "colour4": 119,
+        "index": 30,
+        "mode": 2,
+        "slot": 142
+      },
+      {
+        "colour1From152": 816,
+        "colour4": 1904,
+        "index": 32,
+        "mode": 2,
+        "slot": 141
+      },
+      {
+        "colour1From152": 771,
+        "colour4": 1799,
+        "index": 34,
+        "mode": 2,
+        "slot": 106
+      },
+      {
+        "colour1From152": 1073,
+        "colour4": 1857,
+        "index": 36,
+        "mode": 2,
+        "slot": 100
+      },
+      {
+        "colour1From152": 1876,
+        "colour4": 1893,
+        "index": 38,
+        "mode": 2,
+        "slot": 140
+      },
+      {
+        "colour1From152": 1028,
+        "colour4": 1847,
+        "index": 40,
+        "mode": 2,
+        "slot": 144
+      },
+      {
+        "colour1From152": 1536,
+        "colour4": 1877,
+        "index": 42,
+        "mode": 2,
+        "slot": 220
+      },
+      {
+        "colour1From152": 96,
+        "colour4": 1909,
+        "index": 44,
+        "mode": 2,
+        "slot": 162
+      },
+      {
+        "colour1From152": 96,
+        "colour4": 1909,
+        "index": 44,
+        "mode": 2,
+        "slot": 190
+      },
+      {
+        "colour1From152": 1542,
+        "colour4": 1879,
+        "index": 46,
+        "mode": 2,
+        "slot": 92
+      },
+      {
+        "colour1From152": 68,
+        "colour4": 887,
+        "index": 48,
+        "mode": 2,
+        "slot": 187
+      },
+      {
+        "colour1From152": 1632,
+        "colour4": 1909,
+        "index": 50,
+        "mode": 2,
+        "slot": 188
+      },
+      {
+        "colour1From152": 102,
+        "colour4": 1399,
+        "index": 52,
+        "mode": 2,
+        "slot": 143
+      },
+      {
+        "colour1From152": 1536,
+        "colour4": 1877,
+        "index": 0,
+        "mode": 3,
+        "slot": 145
+      },
+      {
+        "colour1From152": 1638,
+        "colour4": 1092,
+        "index": 0,
+        "mode": 4,
+        "slot": 101
+      },
+      {
+        "colour1From152": 54,
+        "colour4": 599,
+        "index": 0,
+        "mode": 5,
+        "slot": 46
+      },
+      {
+        "colour1From152": 1600,
+        "colour4": 1888,
+        "index": 4,
+        "mode": 5,
+        "slot": 104
+      },
+      {
+        "colour1From152": 1024,
+        "colour4": 1536,
+        "index": 8,
+        "mode": 5,
+        "slot": 103
+      },
+      {
+        "colour1From152": 1092,
+        "colour4": 1638,
+        "index": 0,
+        "mode": 7,
+        "slot": 89
+      },
+      {
+        "colour1From152": 1060,
+        "colour4": 1574,
+        "index": 0,
+        "mode": 6,
+        "slot": 131
+      },
+      {
+        "colour1From152": 1600,
+        "colour4": 1888,
+        "index": 2,
+        "mode": 6,
+        "slot": 149
+      }
+    ]
+  },
+  "schemaVersion": 1,
+  "source": "gameplay-opening",
+  "strips": {
+    "2:0": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3C210",
+            "$3C238"
+          ],
+          "sha256": "a03ea821a47fc5bdfd20bf0c572887b795490d0fc22b6a0e43423ad4cf67b09a"
+        },
+        "rows": [
+          "0001001011110100010111101111011110100100000011110100100001111000",
+          "0001101010010100010100101000010000110100000010000100100001000000",
+          "0001011010010100010111101011011100101100000011100100100001110000",
+          "0001001010010010100100101001010000100100000010000100100001000000",
+          "0001001011110001000100101111011110100100000010000100111101111000"
+        ]
+      }
+    ],
+    "2:10": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3C2D8",
+            "$3C300"
+          ],
+          "sha256": "fa028db57717a277b9dab15a406f2dfeabaa5a4e8b70d9a1e215fd97f0241184"
+        },
+        "rows": [
+          "0010010111101000101111011110111101001000000111101111011110111100",
+          "0011010100101000101001010000100001101000000100001001010000100000",
+          "0010110100101000101111010110111001011000000111101111011100111000",
+          "0010010100100101001001010010100001001000000000101001010000100000",
+          "0010010111100010001001011110111101001000000111101001010000111100"
+        ]
+      }
+    ],
+    "2:12": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3C300",
+            "$3C328"
+          ],
+          "sha256": "3f41f4be5b1f790fc0865996e76941cc0709798bd5f29fa166a76d3ecb32cf8d"
+        },
+        "rows": [
+          "0010001010010111101111010010100010000001111010010010011100111100",
+          "0011011010010100001000010010110110000001000010010010010010100000",
+          "0010101010010111101110010010101010000001011010010010010010111000",
+          "0010001010010000101000010010100010000001001010010010010010100000",
+          "0010001011110111101111011110100010000001111011110010011100111100"
+        ]
+      }
+    ],
+    "2:14": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3C328",
+            "$3C350"
+          ],
+          "sha256": "6deb70fcfbebd797d7124d28678a5f077281818ed2ead0ec619f7e759bd29fa3"
+        },
+        "rows": [
+          "0000000010001001001000101111100000111100111110111110100100000000",
+          "0000000010001001001100100010000000100010100010100010101000000000",
+          "0000000011111001001010100010000000111100100010100010110000000000",
+          "0000000010001001001001100010000000100010100010100010101000000000",
+          "0000000010001001001000100010000000111100111110111110100100000000"
+        ]
+      }
+    ],
+    "2:16": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3C350",
+            "$3C378"
+          ],
+          "sha256": "4d3bb21d2c444ca8a40b4d0e6e807debfa125b45529b371c12d8a6de403dbf4b"
+        },
+        "rows": [
+          "0111011101010111010111011100000110011101110111010101010111101110",
+          "0010010101010101010100001000000101010101010100010101010100101000",
+          "0010010101010111010111001000000110011101010100011101010111101100",
+          "0010010101010110010001001000000101011001010100010101010101001000",
+          "0010011101110101010111001000000110010101110111010101110100101110"
+        ]
+      }
+    ],
+    "2:18": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3C378",
+            "$3C3A0"
+          ],
+          "sha256": "7db1eb938f2837b8b3d97a22214e3daf2f3664fe54af76a8b9461c8f37a4da66"
+        },
+        "rows": [
+          "0110011101110101010001011101001011100001010010001110111011101010",
+          "0101010101000101011011010001101001000001011010000100101010101010",
+          "0101010101000101010101011001011001000001010110110100111011100100",
+          "0101010101000101010001010001001001000001010010000100110010100100",
+          "0110011101110111010001011101001001000001010010000100101010100100"
+        ]
+      }
+    ],
+    "2:2": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3C238",
+            "$3C260"
+          ],
+          "sha256": "4904e5517a1a00a29bc2ee677b082748143b9c632ad246d1c4f318a0417f82c7"
+        },
+        "rows": [
+          "0000000000000001111100111110011111001111100100010000000000000000",
+          "0000000000000000010000100010010001001000000100010000000000000000",
+          "0000000000000000010000111100011111001111100111110000000000000000",
+          "0000000000000000010000100100010001000000100100010000000000000000",
+          "0000000000000000010000100010010001001111100100010000000000000000"
+        ]
+      }
+    ],
+    "2:20": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3C3A0",
+            "$3C3C8"
+          ],
+          "sha256": "91522cbc6a480dd1887401a3784597afe3250a4fbf4cc300c50a7a81cda13af4"
+        },
+        "rows": [
+          "0000111101111011110111000000101111100000100101111011111011110000",
+          "0000100101001010000010000000100010000000110101001000100010000000",
+          "0000111101001011110010011100100010000000101101001000100011100000",
+          "0000100001001000010010000000100010000000100101001000100010000000",
+          "0000100001111011110010000000100010000000100101111000100011110000"
+        ]
+      }
+    ],
+    "2:22": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3C3C8",
+            "$3C3F0"
+          ],
+          "sha256": "85c76968ac21a6463114fd95c8c834e65429f8809fb3cd797de1a615af8fe84d"
+        },
+        "rows": [
+          "0001111011110111101111101111001001001011110000010000111101111000",
+          "0001000010010100100010001001001001101010000000010000100101000000",
+          "0001000011110111100010001111001001011011110000010000100101011000",
+          "0001000010010100000010001001001001001000010000010000100101001000",
+          "0001111010010100000010001001001001001011110000011110111101111000"
+        ]
+      }
+    ],
+    "2:24": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3C3F0",
+            "$3C418"
+          ],
+          "sha256": "3dbb69ea8abcb0e2bdfae290d962829f3e993b40d4f631e2f5703ffa1fd30b22"
+        },
+        "rows": [
+          "0000011100111100100100010001000001111011110100010111101111100000",
+          "0000010010100100100100001010000001000010010110110100000010000000",
+          "0000010010111100100100000100000001000010010101010111000010000000",
+          "0000010010100100100100000100000001000010010100010100000010000000",
+          "0000011100100100100111100100000001111011110100010111100010000000"
+        ]
+      }
+    ],
+    "2:26": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3C418",
+            "$3C440"
+          ],
+          "sha256": "531ae078237e1da93aee4d1d874c658807121e9bcb7534a9dfd75e13256c0f5e"
+        },
+        "rows": [
+          "0000000001110001001000010011110000000111000100100001000000000000",
+          "0000000001001001001000010010000000000100100100100001000000000000",
+          "0000000001110001001000000011110000000111000100100001000000000000",
+          "0000000001001001001000000000010000000100100100100001000000000000",
+          "0000000001110001001111000011110000000111000100111101111000000000"
+        ]
+      }
+    ],
+    "2:28": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3C440",
+            "$3C468"
+          ],
+          "sha256": "65122a811026af3899881db219fde628c65b54d764fea6e59520d5756d3aa3b4"
+        },
+        "rows": [
+          "0000000011111010001011111011111011111011111010001011111000000000",
+          "0000000010001011001010000010001010000010001011001010000000000000",
+          "0000000011111010101011111011111011100010001010101011100000000000",
+          "0000000010001010011000001010001010000010001010011010000000000000",
+          "0000000010001010001011111010001010000011111010001011111000000000"
+        ]
+      }
+    ],
+    "2:30": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3C468",
+            "$3C490"
+          ],
+          "sha256": "a7673686ee5049dc965b96f93b38c19dfc4ccd7df138669bd6fe7dc5546d64ce"
+        },
+        "rows": [
+          "0000011110100101111011111011110111101111011110010011110111100000",
+          "0000010010100101001000100010010100001001010010010010000100100000",
+          "0000011110111101001000100010010100001001011110010011100111100000",
+          "0000010000100101001000100010010100001001010000010010000101000000",
+          "0000010000100101111000100011110111101111010000010011110100100000"
+        ]
+      }
+    ],
+    "2:32": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3C490",
+            "$3C4B8"
+          ],
+          "sha256": "089f379b6d4d68e1d0711106600ae53cad96b74bf3ee419382da395db8bdfe37"
+        },
+        "rows": [
+          "0111110111110100010000001000101111101111101000100100100010111110",
+          "0100000100010010100000001101101000101000001000100100110010100000",
+          "0111000111110001000000001010101111101000001111100100101010111000",
+          "0100000100010010100000001000101000101000001000100100100110100000",
+          "0100000100010100010000001000101000101111101000100100100010111110"
+        ]
+      }
+    ],
+    "2:34": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3C4B8",
+            "$3C4E0"
+          ],
+          "sha256": "668eda595cf482b93150c04050065e16a118230c8828027cd2c19c607eaea10c"
+        },
+        "rows": [
+          "0001000101111101000001000000000011111010001011111010001011111000",
+          "0001000101000101000001000000000010001010001010001011001010000000",
+          "0001010101111101000001000000000011111011111010001010101011100000",
+          "0001101101000101000001000000000010000010001010001010011010000000",
+          "0001000101000101111101111100000010000010001011111010001011111000"
+        ]
+      }
+    ],
+    "2:36": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3C4E0",
+            "$3C508"
+          ],
+          "sha256": "a94f27a30b2c56d9690e458b95ae78a74481e29e3cc33dfa326a71cba900fa8b"
+        },
+        "rows": [
+          "0001001011110111110100111101111000000111001111011110111101110000",
+          "0001101010010001000100100001000000000100101001010010100101001000",
+          "0001011010010001000100100001110000000111001001011110111101001000",
+          "0001001010010001000100100001000000000100101001010010101001001000",
+          "0001001011110001000100111101111000000111001111010010100101110000"
+        ]
+      }
+    ],
+    "2:38": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3C508",
+            "$3C530"
+          ],
+          "sha256": "a5fcdd93b5d509baf596d762f9fc876ac3f3b50dcab89e8d733903423c38eb7f"
+        },
+        "rows": [
+          "0000000111101111011110111101111000000111001111011110111110000000",
+          "0000000100101001010010100001001000000100101001010010001000000000",
+          "0000000111101111011110111001111000000100101111011110001000000000",
+          "0000000100001001010000100001010000000100101001010100001000000000",
+          "0000000100001001010000111101001000000111001001010010001000000000"
+        ]
+      }
+    ],
+    "2:4": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3C260",
+            "$3C288"
+          ],
+          "sha256": "cec5bc8d9cdaa80223c355792ac964e0f15f3c55edec1b48ddf27003a189f1b5"
+        },
+        "rows": [
+          "0000000000000000000111100011111001111100100100000000000000000000",
+          "0000000000000000000100010010001001000100101000000000000000000000",
+          "0000000000000000000111100010001001000100110000000000000000000000",
+          "0000000000000000000100010010001001000100101000000000000000000000",
+          "0000000000000000000111100011111001111100100100000000000000000000"
+        ]
+      }
+    ],
+    "2:40": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3C530",
+            "$3C558"
+          ],
+          "sha256": "7fd9408ee0864c2f66d52c23afb2219155562877a792d40db797ce4b3064c6b7"
+        },
+        "rows": [
+          "0001110100010111010101110000001110111010101110110010101000111000",
+          "0001000100010100010100100000001000100010101000101010101000100000",
+          "0001110100010101011100100000001110100011101100101010101000110000",
+          "0001000100010101010100100000000010100010101000101010101000100000",
+          "0001000111010111010100100000001110111010101110110011101110111000"
+        ]
+      }
+    ],
+    "2:42": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3C558",
+            "$3C580"
+          ],
+          "sha256": "a9f29231847050f669198d127a954f520dae77606084245b3f755cdbe3706273"
+        },
+        "rows": [
+          "0100010111011101110111011101101110101110000100110111011101101110",
+          "0110110101010101000101010101000100101000000100100010001001001010",
+          "0101010111011101010111011101100100001110000100110010001001101110",
+          "0100010101011001010101011001000100000010000100100010001001001100",
+          "0100010101010101110101010101100100001110000110110010001001101010"
+        ]
+      }
+    ],
+    "2:44": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3C580",
+            "$3C5A8"
+          ],
+          "sha256": "b3214e89c2e51e6bcad71d64bd5758fd075d15aaa577320704b4e31b32d4fc3c"
+        },
+        "rows": [
+          "0011100111101000010000111101111100000011110111101111011110111100",
+          "0010010100101000010000100100010000000010010100101001010000100100",
+          "0011100111101000010000100100010000000011110111101111011100111100",
+          "0010010100101000010000100100010000000010000100101000010000101000",
+          "0011100100101111011110111100010000000010000100101000011110100100"
+        ]
+      }
+    ],
+    "2:46": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3C5A8",
+            "$3C5D0"
+          ],
+          "sha256": "28bd57028ea54fff67a2da3ecea6b94ebaa35c7997e09358713b6c56354e047d"
+        },
+        "rows": [
+          "0001111011110010010010010011110100100000001111011110100001000000",
+          "0001001010010010011010010010010110100000001001010010100001000000",
+          "0001001011110010010110010010010101100000001111010010100001000000",
+          "0001001010000010010010010010010100100000001000010010100001000000",
+          "0001111010000010010010010011110100100000001000011110111101111000"
+        ]
+      }
+    ],
+    "2:48": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3C5D0",
+            "$3C5F8"
+          ],
+          "sha256": "af32d3412499c9312aa3c1ff0d4d18a044e491d4855b78ecb34b3b53dc8a093c"
+        },
+        "rows": [
+          "0000000000000000111101111011110111101001000011110000000000000000",
+          "0000000000000000100101001010010100001001000010000000000000000000",
+          "0000000000000000111101111010010111001001000011100000000000000000",
+          "0000000000000000100001010010010100001001000010000000000000000000",
+          "0000000000000000100001001011110100001001111011110000000000000000"
+        ]
+      }
+    ],
+    "2:50": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3C5F8",
+            "$3C620"
+          ],
+          "sha256": "5ad0ba129dbcae7c9efa2e30de7459dc82dc32b373056bdea0c01a088acc6c55"
+        },
+        "rows": [
+          "0000000000000000011110111101111011110111101111100000000000000000",
+          "0000000000000000010010100001001010010100100010000000000000000000",
+          "0000000000000000011110111001111010010111100010000000000000000000",
+          "0000000000000000010100100001000010010101000010000000000000000000",
+          "0000000000000000010010111101000011110100100010000000000000000000"
+        ]
+      }
+    ],
+    "2:52": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3C620",
+            "$3C648"
+          ],
+          "sha256": "d1833cb2d90e3d3c10d13e67a766ce081fa6a96fc71efccd54029bac6c208beb"
+        },
+        "rows": [
+          "0000000000011110100001001111011100111101111011110111000000000000",
+          "0000000000010000100001001001010010100101001010010100100000000000",
+          "0000000000010000100001001111011100100101111011110100100000000000",
+          "0000000000010000100001001000010010100101001010100100100000000000",
+          "0000000000011110111101001000011100111101001010010111000000000000"
+        ]
+      }
+    ],
+    "2:6": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3C288",
+            "$3C2B0"
+          ],
+          "sha256": "ba4a6f441168963a262af488672795615716341224b41ccb44a9d33ffd1cd5e9"
+        },
+        "rows": [
+          "0000001000001111101000101111000000011110011111011111011110000000",
+          "0000001000001000101100101000100000010001010000010000010001000000",
+          "0000001000001111101010101000100000010001011110011110010001000000",
+          "0000001000001000101001101000100000010001010000010000010001000000",
+          "0000001111101000101000101111000000011110011111011111011110000000"
+        ]
+      }
+    ],
+    "2:8": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3C2B0",
+            "$3C2D8"
+          ],
+          "sha256": "15792d56ffaaad65562186bf88bffc99a8d87e635c03da57e040d6682fb90408"
+        },
+        "rows": [
+          "0000001000011110111011101111011110000001111011110111101001000000",
+          "0000001000010000010001001000010010000001001010010100001010000000",
+          "0000001000011100010001001110011110000001111011110100001100000000",
+          "0000001000010000010001001000010100000001010010010100001010000000",
+          "0000001111011110010001001111010010000001001010010111101001000000"
+        ]
+      }
+    ],
+    "5:0": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3D248",
+            "$3D270"
+          ],
+          "sha256": "846d1fe7687275e50403f08cc405c1a8793df24c0cb56ef247df58a9b6c42e2b"
+        },
+        "rows": [
+          "0111100000000011110000111101111010001011110100101111101111011110",
+          "0100101110111000100000100001001011011010010100100010001000010010",
+          "0111100100101001000000100001001010101011110100100010001110011110",
+          "0100100100111010000000100001001010001010000100100010001000010100",
+          "0100100000000011110000111101111010001010000111100010001111010010"
+        ]
+      },
+      {
+        "line": 26,
+        "provenance": {
+          "range": [
+            "$3D270",
+            "$3D298"
+          ],
+          "sha256": "0c7a7dc43221b8389fd142d699b1eeb16a5506ab3457110cb37d3fd03e7ddc6b"
+        },
+        "rows": [
+          "0000000000000001000111101111011110111010111101001000000000000000",
+          "0000000000000001000100101000010010010010100101101000000000000000",
+          "0000000000000001000100101000011110010010100101011000000000000000",
+          "0000000000000001110111101111010010010010111101001000000000000000",
+          "0000000000000000000000000000000000000000000000000000000000000000"
+        ]
+      }
+    ],
+    "5:4": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3D298",
+            "$3D2C0"
+          ],
+          "sha256": "8ab94dfd3f2e1463b128d471a2a22e3adb92e940fb0f03dd2a4cfa86155965ac"
+        },
+        "rows": [
+          "0000001111101111101000100100000000111110111110111110111100000000",
+          "0000000010001000100101000100000000100000100010100010100010000000",
+          "0000000010001111100010000100000000100000111110111100100010000000",
+          "0000000010001000100101000100000000100000100010100100100010000000",
+          "0000000010001000101000100100000000111110100010100010111100000000"
+        ]
+      },
+      {
+        "line": 26,
+        "provenance": {
+          "range": [
+            "$3D2C0",
+            "$3D2E8"
+          ],
+          "sha256": "ccf393c20949462968c2ce47101afaff05a9edf40b27c0b966523473cf727cd6"
+        },
+        "rows": [
+          "0000000000110011101110111010100101111011101011110100100000100000",
+          "0000000000101010001000010010110101001001001010010110100000100000",
+          "0001111000101011001110010010101101111001001010010101100011111000",
+          "0000000000101010000010010010100101001001001010010100100000100000",
+          "0000000000110011101110010010100101001001001011110100100000100000"
+        ]
+      }
+    ],
+    "5:8": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3D2E8",
+            "$3D310"
+          ],
+          "sha256": "92bebf21a5d7ab3db271214a189cb73cc7ddeab1330c46ed7d7e07a11fa789bb"
+        },
+        "rows": [
+          "0000000001111001000101111100000001111101111101111101111100000000",
+          "0000000001000101000101000000000001000101000101000001000000000000",
+          "0000000001111001000101111100000001111101111101111101111100000000",
+          "0000000001000101000100000100000001000001000100000100000100000000",
+          "0000000001111001111101111100000001000001000101111101111100000000"
+        ]
+      },
+      {
+        "line": 26,
+        "provenance": {
+          "range": [
+            "$3D310",
+            "$3D338"
+          ],
+          "sha256": "419524458bb996b423f88e7af1b4cacf53b77c38eed0ddf0a67674244c21f275"
+        },
+        "rows": [
+          "0000001000101111101000101111100000001111101111101111101111100000",
+          "0000001100101000000101000010000000001000000010001000101000100000",
+          "0000001010101110000010000010000000001111100010001000101111100000",
+          "0000001001101000000101000010000000000000100010001000101000000000",
+          "0000001000101111101000100010000000001111100010001111101000000000"
+        ]
+      }
+    ],
+    "6:0": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3D738",
+            "$3D760"
+          ],
+          "sha256": "1770bdb3a52881443f0c5ce2427a286f91e71bfbd45f4808733709c9536b1423"
+        },
+        "rows": [
+          "0111101000111101111011101111011110100010111101111010010111101110",
+          "0100001000100001000001001001010010110110100101000011010100000100",
+          "0111001000111001000001001111010010101010111101011010110111000100",
+          "0100001000100001000001001010010010100010100101001010010100000100",
+          "0111101110111101111001001001011110100010100101111010010111100100"
+        ]
+      }
+    ],
+    "6:2": [
+      {
+        "line": 1,
+        "provenance": {
+          "range": [
+            "$3D760",
+            "$3D788"
+          ],
+          "sha256": "e7bbdba60b899487199b6e9b149064ec20f280f66c9cbb9c58b74285bd30cbc8"
+        },
+        "rows": [
+          "0001110101010001010101001000001100111011101110111011101110111000",
+          "0001010101010001010101101000001010100001001000100001001010101000",
+          "0001110101010001010101011000001010110001001100100001001010111000",
+          "0001000101010000100101001000001010100001001000100001001010110000",
+          "0001000111011100100101001000001100111001001110111001001110101000"
+        ]
+      }
+    ]
+  }
+}
