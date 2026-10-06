@@ -44,9 +44,10 @@ export interface DocumentPanel {
 
 /// A mode-6 row of the Open table at `$04D2C4`: a switch, whose index halved is its bit of the
 /// long `$7872` (`$04D420`). The port opens the four disguised detonators, bits 3 to 6, whose
-/// title strips read NOVA TRIGGER 1 to 4 in the #626 captures. The TV CONTROL, the GHETTOBLASTER
-/// and the GEIGER COUNTER share the mode, but what their bits drive is not ported, so they have
-/// no row here yet.
+/// title strips read NOVA TRIGGER 1 to 4 in the #626 captures, and the TV CONTROL, bit 0, which
+/// `$053440` reads as `$7875` bit 0 to fade the TELEVISION's screen in and out (#816). Its title
+/// strip is its model's name, `   TV CONTROL   ` at `$039921`. The GHETTOBLASTER and the GEIGER
+/// COUNTER share the mode, but what their bits drive is not ported, so they have no row yet.
 export interface SwitchRow {
   readonly colour15: number;
   readonly colour3: number;
@@ -56,6 +57,13 @@ export interface SwitchRow {
 }
 
 export const SWITCH_ROWS: readonly SwitchRow[] = [
+  {
+    colour15: 0x0_44,
+    colour3: 0x3_77,
+    index: 0x00,
+    slot: 93,
+    title: 'TV CONTROL'
+  },
   {
     colour15: 0x6_00,
     colour3: 0x7_55,
@@ -112,6 +120,12 @@ export const pagesNoItems = (slot: number): boolean =>
 /// Bits 3 to 6 of `$7872`, the four disguised detonators, all of which the NOVABOMB waits on
 /// (`$04D44E`).
 export const DETONATOR_BITS = 0x78;
+
+/// The bits of `$7872` a ported switch sets: the TV CONTROL's and the four detonators'.
+export const PORTED_SWITCH_BITS = SWITCH_ROWS.reduce(
+  (bits, row) => bits | (1 << (row.index >> 1)),
+  0
+);
 
 /// The bit of `$7872` a switch sets and clears: `$7860`, the row's index, shifted right once.
 export const switchBit = (row: SwitchRow): number => row.index >> 1;

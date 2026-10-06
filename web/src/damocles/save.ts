@@ -24,8 +24,8 @@ import {
   type DamoclesDocuments
 } from './documentBank.ts';
 import {
-  DETONATOR_BITS,
   NOVAGEN_SAFE_SLOT,
+  PORTED_SWITCH_BITS,
   TRANSITION_VBLS,
   initialHeadCommands,
   pagesNoItems,
@@ -426,7 +426,8 @@ export interface DamoclesSaveSnapshot {
   readonly structure: BoundStructureSnapshot | null;
   /// `$636A`, the structure damage table, as a migrated record resumes with it empty.
   readonly structureDamage?: readonly StructureDamage[];
-  /// `$7872`, the switch bits: only the four detonators', bits 3 to 6, are ported.
+  /// `$7872`, the switch bits: only the TV CONTROL's, bit 0, and the four detonators', bits 3 to
+  /// 6, are ported.
   readonly switches?: number;
   /// The TIMED DETONATOR's charge and fuse and the EXPLOSIVE it armed, as a migrated record
   /// resumes with the reset's.
@@ -1968,8 +1969,8 @@ export const decodeDamoclesSave = (
   const unravelCursor = computerRecord
     ? integer(snapshot['unravelCursor'], 'snapshot.unravelCursor', -1, 29)
     : 29;
-  // Only the four detonators are ported switches.
-  if ((switches & ~DETONATOR_BITS) !== 0) {
+  // Only the TV CONTROL and the four detonators are ported switches.
+  if ((switches & ~PORTED_SWITCH_BITS) !== 0) {
     return fail('switch bits name a switch the port does not open');
   }
   const carried = array(snapshot['carried'], 'snapshot.carried').map(value =>
