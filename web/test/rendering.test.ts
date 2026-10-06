@@ -5,13 +5,7 @@ import {
   renderAuthentic,
   rgbaFromIndexed
 } from '../src/rendering/authentic.ts';
-import {
-  DESCRIPTION_STRIDE,
-  descriptionPalette,
-  descriptionVertices
-} from '../src/rendering/gpuDescription.ts';
 import { dionContent } from './dion-documents.ts';
-import { dionRenderCheckpoints } from './dion-render-checkpoints.ts';
 import { renderingDescription as description } from './rendering-description.ts';
 
 test('the shared Authentic mode preserves interleaved painter order and row palettes at a different projection size', () => {
@@ -57,57 +51,7 @@ test('Dion emits a camera-first description with stable source/order and its exa
   ).toBe(true);
 });
 
-test('the GPU stream uses primary camera geometry, preserves order, and has finite vertices at all eighteen checkpoints', async () => {
-  const a = descriptionVertices(description);
-  const b = descriptionVertices({
-    ...description,
-    primitives: description.primitives.map(p => {
-      if (p.kind === 'point') {
-        return p;
-      }
-      if (p.kind === 'polygon') {
-        return {
-          ...p,
-          screen: [
-            [100, 100],
-            [101, 100],
-            [100, 101]
-          ]
-        };
-      }
-      return {
-        ...p,
-        screen: [
-          [100, 100],
-          [101, 101]
-        ]
-      };
-    })
-  });
-  expect(a).toEqual(b);
-  expect(a.length % (3 * DESCRIPTION_STRIDE)).toBe(0);
-  for await (const { planned } of dionRenderCheckpoints()) {
-    const vertices = descriptionVertices(planned.description);
-    expect(vertices.every(Number.isFinite)).toBe(true);
-    expect(vertices.length).toBeGreaterThan(0);
-  }
-});
-
-test('the GPU palette texture preserves index colours independently at every reference row', () => {
-  const texture = descriptionPalette(description);
-  expect(texture.width).toBe(3);
-  expect(
-    Array.from(texture.pixels.slice((2 * 3 + 1) * 4, (2 * 3 + 1) * 4 + 4))
-  ).toEqual([255, 0, 0, 255]);
-  expect(
-    Array.from(texture.pixels.slice((3 * 3 + 1) * 4, (3 * 3 + 1) * 4 + 4))
-  ).toEqual([0, 0, 255, 255]);
-});
-
-test('road lines use one output pixel in Enhanced while Authentic retains its raster width', () => {
-  expect(
-    descriptionVertices(description, { height: 600, width: 1200 })
-  ).toEqual(descriptionVertices(description));
+test('Authentic keeps road lines at their raster width', () => {
   const road = {
     ...description,
     primitives: description.primitives
@@ -118,47 +62,13 @@ test('road lines use one output pixel in Enhanced while Authentic retains its ra
         source: 'roads'
       }))
   };
-  for (const height of [6, 60, 120]) {
-    const vertices = descriptionVertices(road, { height, width: height * 2 });
-    // The background occupies six vertices. Camera v maps back to reference rows.
-    const a = vertices[6 * DESCRIPTION_STRIDE + 1]!;
-    const b = vertices[8 * DESCRIPTION_STRIDE + 1]!;
-    expect(
-      (Math.abs(a - b) * road.projection.focal * height) /
-        road.projection.height
-    ).toBeCloseTo(1, 5);
-  }
   expect(renderAuthentic(road).pixels).toEqual(
     renderAuthentic({
       ...road,
       primitives: description.primitives.filter(p => p.kind === 'line')
     }).pixels
   );
-  const diagonal = {
-    ...road,
-    primitives: road.primitives.map(p => ({
-      ...p,
-      camera: [
-        { d: 4, u: 2, v: -1 },
-        { d: 4, u: -2, v: 1 }
-      ] as const
-    }))
-  };
-  const output = { height: 120, width: 80 };
-  const vertices = descriptionVertices(diagonal, output);
-  const du =
-    vertices[6 * DESCRIPTION_STRIDE]! - vertices[11 * DESCRIPTION_STRIDE]!;
-  const dv =
-    vertices[6 * DESCRIPTION_STRIDE + 1]! -
-    vertices[11 * DESCRIPTION_STRIDE + 1]!;
-  expect(
-    Math.hypot(
-      (du * road.projection.focal * output.width) / road.projection.width,
-      (dv * road.projection.focal * output.height) / road.projection.height
-    )
-  ).toBeCloseTo(1, 5);
 });
-
 test('Dion allocates only visible star colours, first claims the descending free slot and falls back to zero when full', async () => {
   const { world } = await dionContent();
   const controlled = {

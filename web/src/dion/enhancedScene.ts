@@ -65,7 +65,11 @@ export interface DionEnhancedScene {
   readonly residents: readonly ScenePlacement[];
   readonly sky: SkyPass | null;
   readonly structure: BoundStructure | null;
+  /// The sky item that gives Sunlight: the System's first Body, the one always drawn lit.
+  readonly sun: string | null;
   readonly surface: EnhancedSurface;
+  /// The cab about the eye and the driver's head, drawn over the world (#807).
+  readonly viewFixed: readonly ScenePlacement[];
 }
 
 const FREE = 0x80_00;
@@ -579,9 +583,12 @@ export const dionEnhancedScene = (
       regionIndex: state.region >= 1 ? state.region - 1 : null
     };
   }
-  const residents = parts.residents.map(resident =>
-    residentPlacement(resident, palettes)
-  );
+  const residents = parts.residents
+    .filter(resident => !resident.viewFixed)
+    .map(resident => residentPlacement(resident, palettes));
+  const viewFixed = parts.residents
+    .filter(resident => resident.viewFixed)
+    .map(resident => residentPlacement(resident, palettes));
   const nightSky = hex(world.framePalette.skyNight);
   const daySky = hex(world.framePalette.skyDay);
   const surface: EnhancedSurface = {
@@ -640,7 +647,9 @@ export const dionEnhancedScene = (
     residents,
     sky,
     structure,
-    surface
+    sun: world.tourcraft?.system.bodies[0]?.id ?? null,
+    surface,
+    viewFixed
   };
 };
 
@@ -662,5 +671,7 @@ export const planDionEnhancedFrame = (
     scene.inSpace,
     scene.aboard,
     'whole',
-    outputHeight
+    outputHeight,
+    null,
+    scene.viewFixed
   );

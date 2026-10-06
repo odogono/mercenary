@@ -730,30 +730,19 @@ const drawModel = (
     if (view.world.tourcraft && op === 0x2) {
       view.paint.slotDigit = 48 + (slot & 15);
     }
-    let mode = 0;
-    let yaw = 0;
-    let form: DionModelForm = model;
-    let rel: Vec3 = [
-      pose.position[0] - view.camera.eye[0],
-      pose.position[1] - view.camera.eye[1],
-      pose.position[2] - view.camera.eye[2]
-    ];
-    let passenger = false;
-    if (header !== undefined && (op === 0x1 || op === 0xd)) {
-      mode = header.mode ?? 0;
-      yaw = (pose.yaw + (header.yawOffset ?? 0)) & 0xff;
-      if (op === 0x1 && slot === 10) {
-        mode = 1;
-      }
-      if (op === 0xd && view.state.passenger === slot && model.passenger) {
-        // `$54444`: the passenger form, ×16, at (0, −63, 0) from the eye; slots 12..15
-        // view-fixed, the others turned with the service resident.
-        mode = (slot >= 12 && slot < 16 ? 1 : mode) | 0x20;
-        form = model.passenger;
-        rel = [0, -63, 0];
-        passenger = true;
-      }
-    }
+    const { mode, passenger } = modelMode(view.state, slot, model);
+    const yaw =
+      header !== undefined && (op === 0x1 || op === 0xd)
+        ? (pose.yaw + (header.yawOffset ?? 0)) & 0xff
+        : 0;
+    const form: DionModelForm = passenger ? model.passenger! : model;
+    const rel: Vec3 = passenger
+      ? [0, -63, 0]
+      : [
+          pose.position[0] - view.camera.eye[0],
+          pose.position[1] - view.camera.eye[1],
+          pose.position[2] - view.camera.eye[2]
+        ];
     // `$5532E`: a model further than its range on any axis is not drawn.
     const range = op === 0xc ? (header?.range ?? 1) : 1;
     // The Enhanced scene draws objects from anywhere, as the Damocles port does.
@@ -799,6 +788,32 @@ const drawModel = (
       }
     }
   });
+
+/// `$543AA` and `$54444`: how a resident's model is turned, and whether it is the passenger
+/// form, ×16 at (0, −63, 0) from the eye; slots 12..15 view-fixed, the others turned with the
+/// service resident.
+const modelMode = (
+  state: DionFrameState,
+  slot: number,
+  model: DionModel
+): { readonly mode: number; readonly passenger: boolean } => {
+  const header = model.header;
+  const op = header?.op;
+  if (header === undefined || (op !== 0x1 && op !== 0xd)) {
+    return { mode: 0, passenger: false };
+  }
+  let mode = header.mode ?? 0;
+  if (op === 0x1 && slot === 10) {
+    mode = 1;
+  }
+  if (op === 0xd && state.passenger === slot && model.passenger) {
+    return {
+      mode: (slot >= 12 && slot < 16 ? 1 : mode) | 0x20,
+      passenger: true
+    };
+  }
+  return { mode, passenger: false };
+};
 
 interface ModelTurn {
   readonly axis?: number;
@@ -1941,6 +1956,9 @@ export interface DionParts {
     readonly position: Vec3;
     readonly primitives: readonly DionCaptured[];
     readonly slot: number;
+    /// Drawn about the eye rather than in the world: the passenger's cab and the driver's
+    /// head, or a model the view's own turn turns (`$5470A`'s view-fixed path).
+    readonly viewFixed: boolean;
   }[];
   /// The scene palette half each colour word with bit 7 reads, by day and by night.
   readonly scene: {
@@ -2102,12 +2120,14 @@ export const captureDionParts = (
     }
     seen.add(item.slot);
     const model = item.model;
+    const { mode, passenger } = modelMode(state, item.slot, model);
     residents.push({
-      position: item.pose.position,
+      position: passenger ? state.eye : item.pose.position,
       primitives: capturing(view =>
         drawModel(view, bound, item.slot, model, item.pose)
       ),
-      slot: item.slot
+      slot: item.slot,
+      viewFixed: passenger || (mode !== 0 && (mode & 0xc0) === 0)
     });
   }
   return {

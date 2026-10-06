@@ -40,6 +40,7 @@
       /* The System Menu's tokens (ADR 0063), starting from Damocles's: the same engine's chrome. */
       #game-surface {
         display: grid;
+        grid-template-rows: minmax(0, 100%);
         place-items: center;
         width: 100%;
         height: 100%;
@@ -72,12 +73,40 @@
         touch-action: manipulation;
       }
 
+      /* Enhanced: Damocles's viewer (ADR 0077). The view fills the surface above the panel,
+         whose ST pixels have a canvas of their own below it. */
+      #dion-screen[data-presentation='enhanced'] {
+        display: grid;
+        grid-template-rows: minmax(0, 1fr) auto;
+        width: min(100%, 1280px);
+        height: 100%;
+        aspect-ratio: auto;
+      }
+
+      #dion-screen[data-presentation='enhanced'] #screen {
+        display: none;
+      }
+
       #dion-enhanced-view {
-        position: absolute;
-        inset: 0 0 auto;
+        display: block;
         width: 100%;
-        height: 68%;
+        height: 100%;
+        min-height: 0;
+        outline: none;
+        touch-action: manipulation;
+      }
+
+      #dion-panel {
+        display: block;
+        width: 100%;
+        aspect-ratio: 320 / 64;
+        image-rendering: pixelated;
         pointer-events: none;
+      }
+
+      #dion-screen:not([data-presentation='enhanced']) #dion-enhanced-view,
+      #dion-screen:not([data-presentation='enhanced']) #dion-panel {
+        display: none;
       }
 
       #status,

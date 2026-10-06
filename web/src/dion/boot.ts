@@ -31,7 +31,7 @@ import {
 } from './console.ts';
 import { dionControlActions } from './controls.ts';
 import { installDionPresentation } from './framePresentation.ts';
-import { dionLogoRgba } from './panel.ts';
+import { PANEL_TOP, dionLogoRgba } from './panel.ts';
 import { dionTakeTargetAt } from './pointer.ts';
 import { DION_STORAGE } from './save.ts';
 import type { DionAction } from './session.ts';
@@ -62,8 +62,18 @@ const chrome = installShellChrome(surface, {
   cataloguePath: '/dion/catalogue',
   logo: { name: 'MERCENARY III', typeface: 'damocles' },
   menuTitle: 'MERCENARY III',
-  settings: ['presentation', 'extended', 'audio']
+  settings: [
+    'presentation',
+    'shadows',
+    'shadow-depth',
+    'ambient',
+    'extended',
+    'audio'
+  ]
 });
+
+/// The pointer's slack around the candidate in the Enhanced view, in CSS pixels, as Damocles's.
+const ENHANCED_HIT_SLOP = 12;
 
 let animation: number | undefined;
 let running = true;
@@ -222,6 +232,7 @@ try {
     notice('This Mercenary III session is active in another tab.');
   };
   viewPresentation = installDionPresentation({
+    light: () => preferences.current(),
     notice,
     onRecovered: () => {
       if (status.textContent?.startsWith('Enhanced unavailable.')) {
@@ -231,7 +242,7 @@ try {
     onShownChange: () => settingsView.refresh(),
     redraw: () => draw(),
     screen: canvas,
-    stored: () => preferences.current().presentationPreset ?? 'authentic'
+    stored: () => preferences.current().presentationPreset ?? 'enhanced'
   });
   const presentation = viewPresentation;
   const settingsView = installSettingsView({
@@ -331,7 +342,10 @@ try {
     const { planned } = prepared;
     image.data.set(prepared.rgba);
     context.putImageData(image, 0, 0);
-    viewPresentation?.render(planned.description);
+    viewPresentation?.render(
+      () => session.enhancedScene(),
+      prepared.rgba.subarray(PANEL_TOP * 320 * 4)
+    );
     const root = canvas.dataset;
     root['cell'] = String(snapshot.cell);
     root['region'] = String(snapshot.region);
@@ -430,24 +444,39 @@ try {
   window.addEventListener('pointerdown', unlock);
   // A press on the drawn take candidate takes it, as `T` does (#756).
   canvas.parentElement!.addEventListener('click', event => {
-    const pointer = canvasPointer(canvas, {
-      x: event.clientX,
-      y: event.clientY
-    });
     const state = routerState();
+    const slot = session.snapshot.candidate?.slot;
+    const target = (): boolean => {
+      // The Enhanced view hits the candidate where it draws it, as Damocles's pointer does.
+      const enhanced = viewPresentation?.targetAt(
+        { x: event.clientX, y: event.clientY },
+        slot,
+        ENHANCED_HIT_SLOP
+      );
+      if (enhanced !== undefined) {
+        return enhanced;
+      }
+      const pointer = canvasPointer(canvas, {
+        x: event.clientX,
+        y: event.clientY
+      });
+      return (
+        pointer !== undefined &&
+        dionTakeTargetAt(
+          session.planFrame().description,
+          slot,
+          pointer.point,
+          pointer.hitSlop
+        )
+      );
+    };
     if (
       event.button !== 0 ||
-      pointer === undefined ||
       state.chromeFocus ||
       state.console !== 'closed' ||
       state.layer !== 'none' ||
       !ownership.mayAdvance() ||
-      !dionTakeTargetAt(
-        session.planFrame().description,
-        session.snapshot.candidate?.slot,
-        pointer.point,
-        pointer.hitSlop
-      )
+      !target()
     ) {
       return;
     }

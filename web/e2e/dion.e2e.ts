@@ -72,9 +72,17 @@ test('/dion shares the System Menu settings page and Controls Page, under its Ti
   const settings = page.locator('#page-settings');
   expect(
     await settings.locator('.setting-row > .chrome-label').allTextContents()
-  ).toEqual(['PRESENTATION', 'EXTENDED CONTROLS', 'AUDIO']);
+  ).toEqual([
+    'PRESENTATION',
+    'SHADOWS',
+    'SHADOW DEPTH',
+    'AMBIENT LIGHT',
+    'EXTENDED CONTROLS',
+    'AUDIO'
+  ]);
+  // Unset is Enhanced, as it is for Damocles (ADR 0077).
   await expect(
-    settings.locator('[data-setting="presentation"] button[value="authentic"]')
+    settings.locator('[data-setting="presentation"] button[value="enhanced"]')
   ).toHaveAttribute('aria-pressed', 'true');
   await expect(
     settings.locator('[data-setting="presentation"] button')

@@ -17,6 +17,7 @@ test("every Title's Enhanced camera and light are Damocles's", async () => {
       ambientSky: doc.lighting.ambientSky,
       sunColour: doc.lighting.sunColour
     },
-    orientation: { modelZ: doc.orientation.modelZ }
+    orientation: { modelZ: doc.orientation.modelZ },
+    rendering: { cullBackFaces: doc.rendering.cullBackFaces }
   }).toEqual(ENHANCED_PRESENTATION);
 });

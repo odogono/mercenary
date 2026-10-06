@@ -6,6 +6,7 @@ import type { EnhancedPresentation } from './scene.ts';
 /// which a test holds equal to that document.
 export const ENHANCED_PRESENTATION: EnhancedPresentation & {
   readonly lighting: LightingColours;
+  readonly rendering: { readonly cullBackFaces: boolean };
 } = {
   camera: {
     farPlane: 3_000_000,
@@ -18,5 +19,6 @@ export const ENHANCED_PRESENTATION: EnhancedPresentation & {
     ambientSky: '#ffffff',
     sunColour: '#807862'
   },
-  orientation: { modelZ: 'keep' }
+  orientation: { modelZ: 'keep' },
+  rendering: { cullBackFaces: true }
 };

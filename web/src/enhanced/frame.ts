@@ -106,6 +106,7 @@ export interface EnhancedFramePlan {
   readonly triangleCount: number;
   readonly verticalFieldOfViewDegrees: number;
   readonly vertices: Float32Array;
+  readonly viewFixedVertices?: Float32Array;
 }
 
 const channels = (colour: string): readonly [number, number, number] => [
@@ -594,7 +595,10 @@ export const planEnhancedFrame = (
   /// Road strokes stay one output pixel wide where they meet perspective road polygons.
   outputHeight = 136,
   /// The frame's form counters (#805). Absent, every placement draws its own form.
-  clock: FormClock | null = null
+  clock: FormClock | null = null,
+  /// Models fixed to the view, painted over the world (#807): Mercenary III's cab and its
+  /// driver's head. Damocles has none.
+  viewFixed: readonly ScenePlacement[] = []
 ): EnhancedFramePlan => {
   const camera = new Camera({
     farPlane: doc.camera.farPlane,
@@ -605,7 +609,8 @@ export const planEnhancedFrame = (
     roll: pose.roll ?? 0
   });
   const negateZ = doc.orientation.modelZ === 'negate';
-  const values: number[] = [];
+  const worldValues: number[] = [];
+  let values = worldValues;
   let triangleCount = 0;
   let skippedFaces = 0;
   const emit = (
@@ -1152,6 +1157,17 @@ export const planEnhancedFrame = (
     drawnPlacements.push(resident.id);
   }
 
+  const viewFixedValues: number[] = [];
+  if (viewFixed.length > 0) {
+    const worldTriangles = triangleCount;
+    values = viewFixedValues;
+    for (const placement of viewFixed) {
+      emitPlacement(placement);
+    }
+    values = worldValues;
+    triangleCount = worldTriangles;
+  }
+
   return {
     // Outside an enclosed region `$059638` fills the sky with `$7C86`, the Body's day or night
     // word (#494). In space `$0598CC` loads slot 8 with `$001` and `$059CE2` fills the view in
@@ -1184,6 +1200,9 @@ export const planEnhancedFrame = (
     starCount: stars.length,
     triangleCount,
     verticalFieldOfViewDegrees: doc.camera.verticalFieldOfViewDegrees,
-    vertices: new Float32Array(values)
+    vertices: new Float32Array(worldValues),
+    ...(viewFixedValues.length === 0
+      ? {}
+      : { viewFixedVertices: new Float32Array(viewFixedValues) })
   };
 };

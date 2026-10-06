@@ -1,4 +1,5 @@
-import { Camera, type Point, type Size } from '../projection/index.ts';
+import { placementUnderPointer } from '../enhanced/pointer.ts';
+import type { Point, Size } from '../projection/index.ts';
 import type { Selection } from './session.ts';
 import type { ErisPlacement, Pose } from './world.ts';
 
@@ -15,27 +16,6 @@ interface PointerPresentation {
   readonly nearPlane: number;
   readonly verticalFieldOfViewDegrees: number;
 }
-
-const toCameraSpace = (point: {
-  readonly x: number;
-  readonly y: number;
-  readonly z: number;
-}) => ({ x: point.x, y: point.y, z: -point.z });
-
-const placed = (
-  vertex: readonly [number, number, number],
-  placement: ErisPlacement,
-  negateZ: boolean
-) => {
-  const z = negateZ ? -vertex[2] : vertex[2];
-  const sin = Math.sin(placement.heading);
-  const cos = Math.cos(placement.heading);
-  return {
-    x: placement.position.x + vertex[0] * cos + z * sin,
-    y: placement.position.y + vertex[1],
-    z: placement.position.z - vertex[0] * sin + z * cos
-  };
-};
 
 /// Select the ordinary take candidate when its projected model contains the pointer.
 ///
@@ -59,80 +39,15 @@ export const damoclesTakeTargetAt = (
   if (resident?.mesh === undefined) {
     return undefined;
   }
-  const camera = new Camera({
-    farPlane: presentation.farPlane,
-    heading: -snapshot.pose.heading,
-    nearPlane: presentation.nearPlane,
-    // The frame is drawn through the Pose's pitch and roll (`planEnhancedFrame`), so the object is
-    // hit where it is seen when the view looks down at a table or banks aboard.
-    pitch: snapshot.pose.pitch,
-    position: toCameraSpace(snapshot.pose.position),
-    roll: snapshot.pose.roll ?? 0,
-    verticalFieldOfView:
-      (presentation.verticalFieldOfViewDegrees * Math.PI) / 180
-  });
-  const segments: {
-    readonly a: readonly [number, number, number];
-    readonly b: readonly [number, number, number];
-  }[] = [];
-  for (const primitive of [...resident.mesh.faces, ...resident.mesh.lines]) {
-    for (let index = 0; index < primitive.vertices.length; index += 1) {
-      if (primitive.vertices.length === 2 && index === 1) {
-        break;
-      }
-      segments.push({
-        a: resident.mesh.vertices[primitive.vertices[index]!]!,
-        b: resident.mesh.vertices[
-          primitive.vertices[(index + 1) % primitive.vertices.length]!
-        ]!
-      });
-    }
-  }
-  // The Damocles renderer fills the canvas with the vertical field of view (`VERTEX` in
-  // `renderer.ts`): one focal length, half the canvas height over the half-angle's tangent, on
-  // both axes. `Camera.project` is Targ's Reference Viewport, whose narrower frustum put the hit
-  // area between the object and the middle of the view.
-  const focal =
-    size.height /
-    2 /
-    Math.tan((presentation.verticalFieldOfViewDegrees * Math.PI) / 360);
-  const drawn = (view: {
-    readonly x: number;
-    readonly y: number;
-    readonly z: number;
-  }) => ({
-    x: size.width / 2 + (view.x * focal) / view.z,
-    y: size.height / 2 - (view.y * focal) / view.z
-  });
-  const lines = segments
-    .map(segment => {
-      const a = camera.viewSpace(
-        toCameraSpace(placed(segment.a, resident, negateModelZ))
-      );
-      const b = camera.viewSpace(
-        toCameraSpace(placed(segment.b, resident, negateModelZ))
-      );
-      if (a.z > presentation.farPlane && b.z > presentation.farPlane) {
-        return undefined;
-      }
-      const clipped = camera.clipToNearPlane(a, b);
-      if (clipped === undefined) {
-        return undefined;
-      }
-      const first = drawn(clipped[0]);
-      const second = drawn(clipped[1]);
-      return { x1: first.x, x2: second.x, y1: first.y, y2: second.y };
-    })
-    .filter(line => line !== undefined);
-  if (lines.length === 0) {
-    return undefined;
-  }
-  const xs = lines.flatMap(line => [line.x1, line.x2]);
-  const ys = lines.flatMap(line => [line.y1, line.y2]);
-  return pointer.x >= Math.min(...xs) - hitSlop &&
-    pointer.x <= Math.max(...xs) + hitSlop &&
-    pointer.y >= Math.min(...ys) - hitSlop &&
-    pointer.y <= Math.max(...ys) + hitSlop
+  return placementUnderPointer(
+    snapshot.pose,
+    { ...resident, mesh: resident.mesh },
+    presentation,
+    size,
+    pointer,
+    hitSlop,
+    negateModelZ
+  )
     ? resident.id
     : undefined;
 };
