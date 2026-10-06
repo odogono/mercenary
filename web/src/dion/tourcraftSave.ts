@@ -19,7 +19,7 @@ import {
 } from './tourcraftRestore.ts';
 import { TourcraftSession } from './tourcraftSession.ts';
 
-export const TOURCRAFT_SAVE_SCHEMA_VERSION = 4;
+export const TOURCRAFT_SAVE_SCHEMA_VERSION = 5;
 const MAX_BYTES = 262_144;
 const limit = (encoded: string) => {
   if (new TextEncoder().encode(encoded).length > MAX_BYTES) {

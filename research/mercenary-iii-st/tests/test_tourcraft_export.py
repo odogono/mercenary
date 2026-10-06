@@ -6,7 +6,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from m3lab.tourcraft_export import select_catalogue, digest, content_identity, legacy_document
+from m3lab.tourcraft_export import select_catalogue, digest, content_identity, legacy_document, pickup_scripts
+
+from m3lab.ram import Ram, RAM_SIZE
+from m3lab.scripts import BASE, ENTRY_TABLE
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -19,6 +22,30 @@ class TourcraftExportTests(unittest.TestCase):
         cls.support = json.loads((ROOT / 'payload/dion/catalogue/render-support.json').read_text())
         cls.geometry = {g['id']: json.loads((ROOT / f"payload/dion/catalogue/geometry/{g['id']}.json").read_text())
                         for g in cls.spec['geometry']}
+
+    def test_pickup_graph_keeps_both_branches_calls_and_repeating_timed_edges(self):
+        data = bytearray(RAM_SIZE)
+        def put(at, value):
+            data[at:at+len(value)] = value
+        for script, offset in ((28, 0x100), (115, 0x120), (24, 0x140)):
+            put(ENTRY_TABLE + 2*script, offset.to_bytes(2, 'big'))
+        # CHILD has an inverted branch with both return successors.
+        put(BASE + 0x100, bytes([0x92, 10, 1, 0x60, 5]))
+        put(BASE + 0x160, bytes([5]))
+        # PCB's timed continuation points to itself; ORE calls CHILD's target.
+        put(BASE + 0x120, bytes([0x26, 0x0B, 0xB8, 1, 0x20, 5]))
+        put(BASE + 0x140, bytes([4, 1, 0x60, 5]))
+        put(0x75C01, bytes([5]))
+        routine = pickup_scripts(Ram(bytes(data)), {})
+        sites = {i['address']: i for i in routine['instructions']}
+        self.assertEqual(len(sites), 8)
+        self.assertEqual(sites[f'${BASE+0x100:05X}']['branch'], {'invert': True, 'call': False})
+        self.assertIn(f'${BASE+0x104:05X}', sites)
+        self.assertIn(f'${BASE+0x160:05X}', sites)
+        self.assertIn(f'${BASE+0x125:05X}', sites)
+        put(BASE + 0x140, bytes([0x2C]))
+        with self.assertRaisesRegex(ValueError, 'unknown instruction'):
+            pickup_scripts(Ram(bytes(data)), {})
 
     def test_exact_reviewed_forms_and_complete_workspaces(self):
         unchanged = copy.deepcopy(self.catalogue)

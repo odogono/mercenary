@@ -244,7 +244,7 @@ export const auditTaxiRequestCounts = async ({ maxStates = 100_000 } = {}) => {
   });
   assert.equal(
     expanded.contentSha256,
-    '89bc7ab4ce73051b41e14d2da7605587cd8facc51b9abc9b203e2e5b23fcedbf'
+    '5a75345df63a88282ac08b9a679020b26a8053542fc268bd64c25798ef062a19'
   );
   const sequences = record(
     record(expanded.programmes, 'programmes')['faceSequences'],

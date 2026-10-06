@@ -19,7 +19,7 @@ from .geometry import model_record, resolve_structure
 from .world import extract_world, log_float
 from .census_objects import extract_objects
 from .head import extract_head
-from .scripts import decode_range, BASE, ENTRY_TABLE, _summarise
+from .scripts import decode_range, decode_instruction, BASE, ENTRY_TABLE, _summarise
 from .text import static_strings
 from .snapshot_owners import observe, FIELDS
 from .__main__ import camel
@@ -220,6 +220,7 @@ def gameplay_records(spec: dict, ram: Ram, selected: dict) -> dict:
             if len(matching) != 1:
                 raise ValueError(f'template entry {entry}: missing or ambiguous Geometry Identity')
             bindings[entry] = matching[0]
+    bindings[316] = 'model-032822'
     bindings.update({279: 'model-0381de', 280: 'model-038282', 320: 'model-03108a'})
     for entry, geometry in bindings.items():
         selection_row = next(g for g in spec['geometry'] if g['id'] == geometry)
@@ -300,6 +301,14 @@ def resident_models(spec: dict, ram: Ram, catalogue: dict, load) -> None:
             'id': key, 'record': row['record'], 'selectedVariantsSha256': digest(row['variants']),
             'selectionReasons': [f"resident {o['slot']} model"], 'source': 'catalogue-immutable',
             'sourceRanges': copy.deepcopy(row['provenance']), 'variants': sorted(row['variants'])})
+    key = 'model-032822'
+    if key not in selected:
+        row = load(key)['geometry']
+        spec['geometry'].append({
+            'catalogueRecordSha256': row['sha256'], 'disposition': 'recovered', 'family': row['family'],
+            'id': key, 'record': row['record'], 'selectedVariantsSha256': digest(row['variants']),
+            'selectionReasons': ['pickup model-swap-B replacement 316'], 'source': 'catalogue-immutable',
+            'sourceRanges': copy.deepcopy(row['provenance']), 'variants': sorted(row['variants'])})
     spec['residentModels'] = rows
 
 
@@ -308,6 +317,39 @@ def cstring(ram: Ram, at: int) -> list[int]:
     if end - at > 256:
         raise ValueError(f'{hexaddr(at)}: invalid selected token length')
     return list(ram.bytes(at, end))
+
+
+def pickup_scripts(ram: Ram, statics: dict) -> dict:
+    """Close pickup graphs over calls, both branches and direct timed continuations (#794).
+
+    ORE sets flag22, admitting the previously excluded mining continuation as well.
+    Each site is decoded once, including PCB's repeating timed edge.
+    """
+    pending = [BASE + ram.word(ENTRY_TABLE + 2*i) for i in (28, 115, 24)] + [0x75C01]
+    instructions = {}
+    while pending:
+        at = pending.pop()
+        if at in instructions:
+            continue
+        ins = decode_instruction(ram, at, statics)
+        if ins.get('unknown'):
+            raise ValueError(f'pickup script: unknown instruction at {hexaddr(at)}')
+        instructions[at] = ins
+        op = int(ins['op'][1:], 16)
+        if op not in (0, 3, 5, 8, 9, 0x1A):
+            pending.append(ins['end'])
+        if op in (3, 4):
+            pending.append(int(ins['operands'][0]['address'][1:], 16))
+        if 'target' in ins:
+            pending.append(int(ins['target'][1:], 16))
+        if op == 0x26:
+            pending.append(BASE + int(ins['operands'][1][1:], 16))
+    ordered = []
+    for at, ins in sorted(instructions.items()):
+        ins.pop('end')
+        ordered.append(ins)
+    return {'id': 'pickup-responses', 'aligned': True, 'unknown_opcodes': [],
+            'instructions': ordered}
 
 
 def programme_records(spec: dict, ram: Ram) -> dict:
@@ -321,6 +363,7 @@ def programme_records(spec: dict, ram: Ram) -> dict:
             if not routine['aligned'] or routine['unknown_opcodes']:
                 raise ValueError(f"{row['id']}: malformed script region")
             scripts.append({'id': row['id'], **routine, 'summary': _summarise(routine)})
+    scripts.append(pickup_scripts(ram, statics))
     actions, epoch, previous = [], 0, 0
     for at in range(0x66D40, 0x66E4C, 2):
         low, control = ram.byte(at), ram.byte(at+1)
@@ -338,7 +381,8 @@ def programme_records(spec: dict, ram: Ram) -> dict:
                             'route': [{'x': ram.byte(a)&15, 'z': ram.byte(a+1)&15,
                                        'control': ram.byte(a+1)>>4} for a in range(0x42AD2, 0x42AEE, 2)]},
             'scripts': scripts,
-            'entries': {str(i): hexaddr(BASE + ram.word(ENTRY_TABLE+2*i)) for i in (41, 119, 19)},
+            'poll': {'bytes': [ram.byte(0x6EAA), ram.byte(0x6EAB)], 'source': ram.slice(0x6EAA, 0x6EAC)},
+            'entries': {str(i): hexaddr(BASE + ram.word(ENTRY_TABLE+2*i)) for i in (41, 119, 19, 28, 115, 24)},
             'playback': {'source': ram.slice(0x66D2A, 0x66E4E),
                          'header': {'x': ram.slong(0x66D2A), 'z': ram.slong(0x66D2E), 'yaw': ram.word(0x66D32),
                                     'systemEye': [ram.slong(a) for a in (0x66D34, 0x66D38, 0x66D3C)], 'eyeY': 63},

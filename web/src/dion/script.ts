@@ -94,7 +94,7 @@ export class DionNarrative {
   present(text: string, scrollsOut: boolean): boolean {
     return this.request(text, 200, scrollsOut);
   }
-  private request(text: string, hold: number, scrollsOut = false): boolean {
+  protected request(text: string, hold: number, scrollsOut = false): boolean {
     if (this.state.message.busy) {
       return false;
     }

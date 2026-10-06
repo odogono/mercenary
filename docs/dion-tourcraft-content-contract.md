@@ -27,7 +27,7 @@ All sources pin the same Mercenary III program `4e8b74122910bcaa109b944eebb6f0ec
 | `promotion.json` | `scope`, `sources`, `groups`, `surfaceCells`, `structures`, `placements`, `bodyPlacements`, `residents`, `residentModels`, `services`, `geometry`, `legacyModels`, `skyBodies`, `skyDrawLists`, `spaceScan`, `renderSupportSelection`, `reachableScriptEntries`, and the disposition and closure inventories | `loadTourcraftContent` |
 | `geometry/<family>-<address>.json` | `geometry`: one Geometry Identity's forms; `<family>` is `detail`, `ground`, `island`, `model`, `sky-tail` or `structure` | `loadTourcraftContent` |
 | `presentation/gameplay.json` | `initial`, `modelBindings`, `modelBindingSources`, `blinkPhase` | `loadTourcraftContent` |
-| `presentation/programmes.json` | `entries`, `scripts`, `playback`, `faceSequences`, `headSequences`, `encounter`, `collisionTone`, `sharedReturn` | `loadTourcraftContent` |
+| `presentation/programmes.json` | `entries`, `scripts`, `poll`, `playback`, `faceSequences`, `headSequences`, `encounter`, `collisionTone`, `sharedReturn` | `loadTourcraftContent` |
 | `presentation/head.json` | `openTable`, `documents`, `art`, `strips`, `itemField` | `loadTourcraftContent` (`readDionHead`) |
 | `presentation/support.json` | `bodies`, `groups`, `palettes`, `framePalette`, `modelColours`, `glyphs`, `tokens`, `drawPriority`, `rotationTable` | `loadTourcraftContent` |
 | `presentation/system.json` | `bodies`, `drawLists`, `spacePalette`, `spaceScan`, `sine` | `loadTourcraftContent` |
@@ -46,7 +46,7 @@ The loader fetches and verifies every enumerated document before returning conte
 2. For each document: unsigned 32-bit big-endian UTF-8 path byte length, path bytes, unsigned 64-bit big-endian document byte length, exact document bytes.
 3. Document order: `world`, `panel`, `messages`, `scripts`, `sound`, `service`; `promotion`; geometry paths sorted by byte order; presentation paths sorted by byte order; `manifest` last. Paths include `/payload/dion/tourcraft/`.
 
-The manifest contains the ordered document hashes and has no self-referential `contentSha256` field. It is included exactly as served. Python and browser golden fixtures agree: records `('a','bc'),('d','e')` produce `adfbc36f7a52dbc748b6832a1c449671d1513fe055dbd799cd15a265f91b9565`. Selected-record pins use sorted compact ASCII-escaped JSON, also covered by a Unicode cross-language fixture. The checked-in payload identity is `d31490d7ba44a08949f71267884f1e290074acc5885fdfae747f7aeefcfdf611`.
+The manifest contains the ordered document hashes and has no self-referential `contentSha256` field. It is included exactly as served. Python and browser golden fixtures agree: records `('a','bc'),('d','e')` produce `adfbc36f7a52dbc748b6832a1c449671d1513fe055dbd799cd15a265f91b9565`. Selected-record pins use sorted compact ASCII-escaped JSON, also covered by a Unicode cross-language fixture. The checked-in payload identity is `5a75345df63a88282ac08b9a679020b26a8053542fc268bd64c25798ef062a19`.
 
 ## Rendering and reuse dispositions
 
@@ -61,7 +61,7 @@ The manifest contains the ordered document hashes and has no self-referential `c
 | Ground/islands/TOLOSA              | Existing Coast helpers and Dion structure/detail/ground readers; exact selected workspace and Body/group bindings.                                                                                                                                                                          |
 | Cabin/pilot/OBSERVER               | Existing Dion model grammar, viewer boxes and passenger scale; real head 279/profile 280, live articulated angle and selected passive model 320.                                                                                                                                            |
 | Tokens/beacons                     | Pure model adaptation shared by Catalogue and play; play preserves original colour indices and mutable tokens. `$8002` writes the numbered slot digit. Both beacon forms follow phase/state gates, with the recovered lit far point.                                                        |
-| Programmes/sound                   | Retain D1 script/message/sound records and export six required routines, control stream, animation sequences, collision programme and passive trajectories. Execution, sound tick ownership and restoration belong to I4.                                                                   |
+| Programmes/sound                   | Retain D1 script/message/sound records and export the six TOURCRAFT routines and the pickup-response graph, control stream, animation sequences, collision programme and passive trajectories. Execution, sound tick ownership and restoration belong to I4.                                                                   |
 | Storage                            | Existing shell/Title storage contracts; Catalogue remains sessionless. No new Save writer or migration.                                                                                                                                                                                     |
 
 The consequential shared numeric boundary is recorded in [ADR 0067](adr/0067-share-numeric-sky-helpers-with-dion-owned-presentation-data.md).
@@ -98,3 +98,25 @@ The tool pins whole RAM and scene metadata, reads live view/colours/residents/fa
 R7 defines no global percentage threshold and explicitly limits exact ST raster rows/packed projection and preceding-buffer phase equivalence. All 65 exposed star samples in the nine applicable flight/space observations match the original. Other fixtures retain foreground occlusion and cannot use that mask to establish star completeness. `v31000/v32000` retain 87.46%/88.77% agreement; contact `f884` retains 66.78%. Those mismatches remain visible in the ledger rather than being treated as missing-geometry waivers. Original loop-top buffers can precede post-wait state changes; `f139/f140/f461/f462/f463` are preserved as transition-state observations, not raster parity evidence, as R7 specifies. Production draw-phase ownership, full live animation and restored-frame equivalence remain I4 checks.
 
 Validation covers adversarial admission, deterministic export/identity, general camera and dynamic tokens/beacons, all existing browser unit regressions, and D1/Catalogue browser Save/Load/Resume/storage flows. The expanded payload also admits through the browser with 94 playable requests and zero Catalogue reads. This establishes I3's content/presentation boundary; it does not certify the expanded production journey before I4's behavior and persistence delivery.
+
+## Pickup response scripts (#794)
+
+Accepted Take requests CHILD216→`$1C`, PCB SEATED218→`$73` and PULVIN ORE127→`$18`
+through Dion's ordinary availability/queue launcher. Each seed byte is `$A0`.
+The exporter closes the three graphs over both conditional successors, calls,
+shared epilogues and direct timed targets; repeating PCB continuations remain in
+that finite graph. The source is the same whole-RAM-pinned gameplay opening,
+with per-instruction provenance. See [the recovered effects](research/mercenary-iii-object-interaction-r2-effects.md).
+
+PCB reads the live held bit at every continuation. CHILD's candidacy branch
+retains both BCD poll bytes and their message substitutions. No admitted gameplay
+writer sets candidacy flag10, so its ordinary election alternatives remain excluded;
+the branch is exercised by synthetic VM controls. ORE sets flag22, admits mining's
+`$75C01` alternative and copies model316 into resident97's model selection while
+replacing resident218's model with NULL. The replacement chair is an explicit
+playable model binding; Residence and Carried Stack are preserved.
+
+Save schema5 retains the response availability/queue, poll bytes, direct timed
+continuations and admitted model replacements. Synthetic browser/session controls
+verify these launches and future equivalence; they do not establish ordinary
+routes to the remote objects.

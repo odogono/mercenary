@@ -8,14 +8,18 @@ import {
 } from './script.ts';
 import type { TourcraftContent } from './tourcraftContent.ts';
 
+const pollDecimal = (v: number) => (v >> 4) * 10 + (v & 15);
+
 export interface TourcraftScriptState extends DionScriptState {
   readonly availabilityBytes: readonly (readonly [number, number])[];
+  readonly poll: readonly [number, number];
   readonly timedTarget: number | null;
   readonly timerBits: number;
 }
 export type TourcraftScriptEffect =
   | { readonly kind: 'cash'; readonly value: string }
-  | { readonly kind: 'encounter'; readonly request: number };
+  | { readonly kind: 'encounter'; readonly request: number }
+  | { readonly kind: 'modelSwapB' };
 
 /// The recovered one-opcode scheduler, kept title-local. Damocles's run-to-block
 /// interpreter and frame-counted waits cannot implement Dion's VBL-owned timer.
@@ -43,14 +47,21 @@ export const tourcraftNarrativeContent = (
         );
         return {
           address: address(i['address'], 'address'),
+          ...(i['branch'] === undefined
+            ? {}
+            : {
+                branch: {
+                  call: record(i['branch'], 'branch')['call'] === true,
+                  invert: record(i['branch'], 'branch')['invert'] === true
+                }
+              }),
           name: String(i['name']),
           next,
           op: address(i['op'], 'op'),
           operands,
-          target:
-            i['target'] === undefined
-              ? undefined
-              : address(i['target'], 'target'),
+          ...(i['target'] === undefined
+            ? {}
+            : { target: address(i['target'], 'target') }),
           text:
             i['text'] === undefined
               ? undefined
@@ -93,11 +104,13 @@ export const tourcraftNarrativeContent = (
 export class TourcraftNarrative extends DionNarrative {
   declare state: TourcraftScriptState;
   private effects: TourcraftScriptEffect[] = [];
-  private readonly expandedInstructions: ReadonlyMap<
-    number,
-    DionInstruction & { target?: number }
-  >;
-  constructor(content: DionContent, restore?: TourcraftScriptState) {
+  private readonly expandedInstructions: ReadonlyMap<number, DionInstruction>;
+  constructor(
+    content: DionContent,
+    restore?: TourcraftScriptState,
+    private readonly held: (slot: number) => boolean = () => false,
+    poll: readonly [number, number] = [0x27, 0x73]
+  ) {
     super(content);
     this.expandedInstructions = new Map(
       content.scripts.routines.flatMap(r =>
@@ -113,21 +126,38 @@ export class TourcraftNarrative extends DionNarrative {
         [5, 160],
         [6, 160],
         [19, 160],
+        [24, 160],
+        [28, 160],
+        [115, 160],
         [25, 224],
         [41, 192],
         [51, 128],
         [52, 128],
         [119, 160]
       ],
-      available: [5, 6, 0x19, 0x29, 0x33, 0x34, 0x13, 0x77],
+      available: [5, 6, 0x19, 0x29, 0x33, 0x34, 0x13, 0x77, 0x18, 0x1c, 0x73],
       flags,
       hold: 150,
       pc: 0x6_ff_57,
+      poll,
       stack: [0x7_66_d5],
       timedTarget: null,
       timerBits: 65_507,
       wait: 29
     };
+  }
+  protected override request(
+    text: string,
+    hold: number,
+    scrollsOut = false
+  ): boolean {
+    return super.request(
+      text
+        .replaceAll('[', String(pollDecimal(this.state.poll[0])))
+        .replaceAll('^0', String(pollDecimal(this.state.poll[1]))),
+      hold,
+      scrollsOut
+    );
   }
   override start(id: number): boolean {
     const bytes = new Map(this.state.availabilityBytes);
@@ -218,13 +248,32 @@ export class TourcraftNarrative extends DionNarrative {
         }
         this.effects.push({ kind: 'cash', value: '000000000000' });
         break;
-      case 0x12:
-        if (this.state.flags[op[0]!]) {
+      case 0x0c:
+      case 0x12: {
+        const condition =
+          i.op === 0x0c ? this.held(op[0]!) : Boolean(this.state.flags[op[0]!]);
+        if (condition !== Boolean(i.branch?.invert)) {
           if (!this.expandedInstructions.has(i.target!)) {
             throw new Error('Excluded Dion campaign branch');
           }
+          if (i.branch?.call) {
+            this.state = { ...this.state, stack: [...this.state.stack, next] };
+          }
           next = i.target!;
         }
+        break;
+      }
+      case 0x16: {
+        // $52DE8: ABCD uses the full operand byte, including bit7.
+        const sum = pollDecimal(this.state.poll[0]) + pollDecimal(op[0]!);
+        const value =
+          op[0]! & 128 ? (sum <= 100 ? 1 : sum - 100) : Math.min(sum, 99);
+        const bcd = (v: number) => (Math.floor(v / 10) << 4) | (v % 10);
+        this.state = { ...this.state, poll: [bcd(value), bcd(100 - value)] };
+        break;
+      }
+      case 0x28:
+        this.effects.push({ kind: 'modelSwapB' });
         break;
       case 0x24: {
         const bytes = new Map(this.state.availabilityBytes);

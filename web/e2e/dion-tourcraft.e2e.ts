@@ -227,7 +227,7 @@ test('production keyboard journey, flight Save/Load and reload Resume through au
             localStorage.getItem('mercenary.browser-shell.dion.save.v1.slot-1')!
           )
         );
-        expect(saved.schemaVersion).toBe(4);
+        expect(saved.schemaVersion).toBe(5);
         expect(saved.snapshot.snapshot.tourcraft.flight.frameWord).toBe(256);
         await page.locator('[data-slot="1"] [data-action="load"]').click();
         await expect(screen).toHaveAttribute('data-tick', String(target));
@@ -312,5 +312,5 @@ test('prototype Resume refusal preserves its record until explicit New Game', as
         localStorage.getItem('mercenary.browser-shell.dion.session-resume.v1')
       ))!
     ).schemaVersion
-  ).toBe(4);
+  ).toBe(5);
 });

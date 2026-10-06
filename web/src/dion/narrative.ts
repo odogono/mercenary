@@ -13,10 +13,12 @@ export interface DionMessage {
 
 export interface DionInstruction {
   readonly address: number;
+  readonly branch?: { readonly call: boolean; readonly invert: boolean };
   readonly name: string;
   readonly next: number;
   readonly op: number;
   readonly operands: readonly number[];
+  readonly target?: number;
   readonly text: string | undefined;
 }
 

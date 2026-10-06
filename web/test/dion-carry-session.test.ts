@@ -9,6 +9,7 @@ import {
   encodeTourcraftRecord
 } from '../src/dion/tourcraftSave.ts';
 import { TourcraftSession } from '../src/dion/tourcraftSession.ts';
+import { tourcraftCarryWorld } from '../src/dion/tourcraftState.ts';
 import { IDLE } from '../src/gameCore/index.ts';
 import { frames } from './dion-journey.ts';
 
@@ -233,4 +234,141 @@ test('the TAXICARD still opens its own card', () => {
   expect(session.snapshot.card).toBe(true);
   expect(session.snapshot.tourcraft!.head.open?.slot).toBe(104);
   expect(session.panelView().centre.kind).toBe('card');
+});
+
+// Synthetic selection controls exercise the real Take/VM boundary. They do not claim
+// an ordinary route to these remote objects (R2's original controls use the same boundary).
+class PickupSession extends TourcraftSession {
+  target(slot: number, exponent = 0) {
+    this.state = { ...this.state, candidate: { distance: 0, exponent, slot } };
+  }
+  idle() {
+    const flags = [...this.narrative.state.flags];
+    flags[6] = false;
+    this.narrative.state = {
+      ...this.narrative.state,
+      flags,
+      message: { ...this.narrative.state.message, busy: false },
+      pc: 0x6_ff_54,
+      stack: []
+    };
+    this.state = { ...this.state, narrative: this.narrative.state };
+  }
+}
+
+for (const [slot, script] of [
+  [216, 0x1c],
+  [218, 0x73],
+  [127, 0x18]
+] as const) {
+  test(`successful Take of ${slot} launches ${script} and restores the same future`, () => {
+    const session = new PickupSession(content);
+    frames(session, 2);
+    session.idle();
+    session.target(slot);
+    session.press('take');
+    frames(session);
+    expect(stack(session)[0]).toBe(slot);
+    expect(resident(session, slot).state & 0x80).toBe(0x80);
+    expect(session.snapshot.narrative.available.includes(script)).toBe(false);
+    expect(session.drainNotes()).toEqual([]);
+    session.drainSound();
+    const restored = new TourcraftSession(
+      content,
+      decodeTourcraftRecord(
+        encodeTourcraftRecord(content, session.captureResume(), 'pickup'),
+        content
+      ).snapshot
+    );
+    for (let i = 0; i < 450; i++) {
+      frames(session);
+      frames(restored);
+      session.drainSound();
+      restored.drainSound();
+    }
+    expect(restored.captureResume()).toEqual(session.captureResume());
+    const continued = decodeTourcraftRecord(
+      encodeTourcraftRecord(content, session.captureResume(), 'continued'),
+      content
+    );
+    expect(
+      new TourcraftSession(content, continued.snapshot).captureResume()
+    ).toEqual(session.captureResume());
+    if (slot === 218) {
+      expect(
+        (
+          session.snapshot
+            .narrative as import('../src/dion/tourcraftNarrative.ts').TourcraftScriptState
+        ).timedTarget
+      ).not.toBeNull();
+    }
+    if (slot === 127) {
+      expect(resident(session, 97).model).toBe(316);
+      expect(resident(session, 218).model).toBeNull();
+      const completed = decodeTourcraftRecord(
+        encodeTourcraftRecord(content, session.captureResume(), 'ore'),
+        content
+      );
+      expect(
+        new TourcraftSession(content, completed.snapshot).captureResume()
+      ).toEqual(session.captureResume());
+    }
+  });
+}
+
+test('Take queues its response during the opening script and refused Take does not', () => {
+  const session = new PickupSession(content);
+  frames(session, 2);
+  session.target(216, 9);
+  session.press('take');
+  frames(session);
+  expect(session.snapshot.narrative.queued).toBeNull();
+  expect(stack(session)).not.toContain(216);
+  session.target(216);
+  session.press('take');
+  frames(session);
+  expect(session.snapshot.narrative.queued).toBe(0x1c);
+  expect(stack(session)[0]).toBe(216);
+  session.drainSound();
+  const restored = new TourcraftSession(
+    content,
+    decodeTourcraftRecord(
+      encodeTourcraftRecord(content, session.captureResume(), 'queued'),
+      content
+    ).snapshot
+  );
+  expect(restored.snapshot.narrative.queued).toBe(0x1c);
+});
+
+test('an unavailable response leaves a successful Take held without queuing or restarting it', () => {
+  const session = new PickupSession(content);
+  frames(session, 2);
+  session.idle();
+  session.target(216);
+  session.press('take');
+  frames(session, 40);
+  session.target(74);
+  session.press('drop');
+  frames(session, 3);
+  expect(stack(session)).not.toContain(216);
+  session.target(216);
+  session.press('take');
+  frames(session);
+  expect(stack(session)[0]).toBe(216);
+  expect(session.snapshot.narrative.available).not.toContain(0x1c);
+  expect(session.snapshot.narrative.queued).toBeNull();
+  expect(session.snapshot.narrative.flags[6]).toBe(false);
+});
+
+test('model-swap-B changes future carried labels and removes the NULL model as a support', () => {
+  let swapped = false;
+  const world = tourcraftCarryWorld(content, slot =>
+    swapped && slot === 97 ? 316 : swapped && slot === 218 ? null : slot
+  );
+  expect(world.labels.get(218)).toBe('   PCB SEATED   ');
+  expect(world.supportTop(218)).toBeDefined();
+  swapped = true;
+  expect(world.labels.get(97)).toBe("  BIL'S CHAIR   ");
+  expect(world.labels.get(218)).toBe('      NULL      ');
+  expect(world.supportTop(218)).toBeUndefined();
 });
