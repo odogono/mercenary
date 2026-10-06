@@ -1,6 +1,6 @@
 # Derive Session State from committed transitions
 
-**Superseded by ADR 0018.** This was a verification-era decision serving the
+**Superseded by [ADR 0018](0018-make-one-gameplay-session-the-authority.md).** This was a verification-era decision serving the
 apparatus ADR 0014 froze, and it was never implemented. Session State is owned
 directly by one Gameplay Session, with the Host Callout's variables projected from
 it rather than derived from a log.

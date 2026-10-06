@@ -1,5 +1,7 @@
 # Mercenary III ST laboratory
 
+For production Dion changes, use [the implementation and payload map](../../docs/agents/dion.md). The `capture`/`export` quick start below produces the older D1 slice; production uses `m3lab.tourcraft_export`. R8 taxi audits retain historical source via `taxi-source.ts`; they are reference investigations, not prototype migration requirements (ADR 0073).
+
 The reproducible Hatari harness and MIII-only decoders behind `payload/dion/` (#647, #648). Facts from it belong to the **Mercenary III research baseline** pinned in [`config/baseline.json`](config/baseline.json). They are neither Damocles Working-Authority Evidence nor Authoritative Evidence.
 
 Nothing here borrows the Damocles laboratory's code, catalogue or assets. Each format is read from Mercenary III's own reader, and that reader's address is cited in the decoder. Under [ADR 0002](../../docs/adr/0002-separate-rom-research-from-implementation.md), the decoders emit data with Research Provenance and translate no code. RAM, screenshots, logs and disassembly are Restricted Material, kept under the ignored `restricted/` root.

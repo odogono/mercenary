@@ -1,5 +1,7 @@
 # Share evidenced craft passes with title-owned orchestration
 
+The shared boundary is extended by [ADR 0075](0075-port-dion-object-interaction-by-rule-not-by-admitted-object.md) for the Carried Stack and [ADR 0076](0076-share-head-commands-through-title-open-tables.md) for Head Commands. [ADR 0077](0077-share-one-enhanced-planner-across-damocles-and-mercenary-iii.md) shares the Enhanced planner; Title-owned gameplay orchestration remains.
+
 Extract the numeric craft passes, log arithmetic, tables, support/box predicates and numeric space/placement helpers into `web/src/craft/`, using structural inputs without a Catalogue dependency. R6 establishes instruction correspondence and identical arithmetic tables for Damocles and Mercenary III; each Gameplay Session supplies its own evidenced parameters and Data Payload. Keep Damocles's Catalogue adapter and landing-script policy in `damocles/`, and Dion's playback, service-before-collision order, unrotated nearest-Body scan, accelerated clock and Body effects in `dion/`. Reusing Damocles's whole frame/session would erase those consequential differences; copying the numeric cores would create two authorities for the same recovered mechanism. This boundary does not impose #419 convergence or change Targ's Mover.
 
 See the [R6 evidence and reuse assessment](../research/mercenary-iii-tourcraft-reuse.md). Existing Damocles numeric and session regressions remain required alongside independent Dion witnesses.

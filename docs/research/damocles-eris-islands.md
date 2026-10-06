@@ -555,7 +555,7 @@ presentation replaces it in four pieces, in this order.
 2. **Island fills over the base plane.** For each island record on the body,
    project its coastline polygon in body coordinates and fill it with
    `landColour`. Depth: these sit **below** the ground records and structures
-   that [the coplanar depth work](damocles-coplanar-depth-layers.md) already
+   that the coplanar depth work (#545) already
    orders, and they replace the role the workspace fill ring currently plays for
    sea. The existing Capital Spaceport structures, roads and ground polygons are
    placed in body coordinates at origin 64,128 and are unaffected — the island

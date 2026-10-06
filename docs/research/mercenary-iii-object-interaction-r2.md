@@ -1,6 +1,6 @@
 # Mercenary III: R2 pickup effects and Head Command owners
 
-The #756 research ledgers, scripts and tests this report cites were removed when the programme was rescoped ([#756](https://github.com/odogono/mercenary/issues/756)). They remain in git history at `ab0d6ddf`.
+Historical #756 research: [ADR 0075](../adr/0075-port-dion-object-interaction-by-rule-not-by-admitted-object.md) closed per-object admission gates; use [the current Dion map](../agents/dion.md) for implementation. The cited research ledgers, scripts and tests were removed and are linked to git history at `ab0d6ddf`. The private R1–R4 runs were deleted; reproduction commands below describe their original environment.
 
 Research for [#771](https://github.com/odogono/mercenary/issues/771), part of [#756](https://github.com/odogono/mercenary/issues/756), 2026-10-04. This handoff extends the [baseline evidence](mercenary-iii-object-interaction-evidence.md) and [R1 mechanism controls](mercenary-iii-object-interaction-r1.md). It changes no gameplay, Data Payload or playable admission. R3 still owns the ordinary reachable-object set and progression scope decision.
 
@@ -98,7 +98,7 @@ The decoder comparison checks **22 returned packed row cursors**: all 15 unique 
 
 A separate original-machine restore control starts at `route-cards/f121`, with a partial label and active letter stream. It replays the remaining Read/Drop/re-pick inputs over90 frames. At **six corresponding cuts**, the complete gameplay range `$04BBC..$7FEDA` and both 32,000-byte screen buffers match uninterrupted play; the full RAM hashes also happen to match for these six samples. This verifies that the retained whole-machine checkpoint continues the observed owners. It does not identify a minimal Save codec or prove any browser reconstruction.
 
-The three presentation families verify **1,340 consecutive eleven-tick gaps, 2,858 in-frame tick samples and 1,518 masked-register samples**. The [portable numeric ledger](../../research/mercenary-iii-st/object-interaction-r2-presentation.json) retains selected capture hashes/owners, source-region hashes, assertions and restore comparisons; the complete rows, expression-bearing buffers, scripts and logs remain ignored. An earlier card run hit the harness timeout; it remains retained as an unaccepted partial exploration. The cited final manifests select the completed run.
+The three presentation families verify **1,340 consecutive eleven-tick gaps, 2,858 in-frame tick samples and 1,518 masked-register samples**. The [portable numeric ledger](https://github.com/odogono/mercenary/blob/ab0d6ddfbfe742202e7f6403af7a76672029780f/research/mercenary-iii-st/object-interaction-r2-presentation.json) retains selected capture hashes/owners, source-region hashes, assertions and restore comparisons; the complete rows, expression-bearing buffers, scripts and logs remain ignored. An earlier card run hit the harness timeout; it remains retained as an unaccepted partial exploration. The cited final manifests select the completed run.
 
 ## Pins, reproduction and remaining boundaries
 

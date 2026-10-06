@@ -5,6 +5,19 @@ on:
     types: [opened, edited, synchronize, reopened]
 
 jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+      - run: bun install --frozen-lockfile
+        working-directory: web
+      - run: bun run check:docs:portable
+        working-directory: web
+      - run: bun test test/agent-tools.test.ts
+        working-directory: web
   conventions:
     runs-on: ubuntu-latest
     steps:

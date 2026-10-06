@@ -1,5 +1,7 @@
 # Mercenary III: pickup, drop and Carried Stack programme
 
+Historical plan at `97583f13`. [ADR 0075](../adr/0075-port-dion-object-interaction-by-rule-not-by-admitted-object.md) replaced per-object reachability/admission gates with shared rules; #756 and its research tickets are closed. Use [the current Dion map](../agents/dion.md) for implementation. The proposal and implementation inventory below describe that earlier revision.
+
 Research and proposed implementation plan for [#756](https://github.com/odogono/mercenary/issues/756), 2026-10-04. The user selected **research and plan first**. Initial evidence and this plan merged in [#769](https://github.com/odogono/mercenary/pull/769). The user subsequently commissioned R1–R3 and starting R1: [R1/#770](https://github.com/odogono/mercenary/issues/770), [R2/#771](https://github.com/odogono/mercenary/issues/771) and [R3/#772](https://github.com/odogono/mercenary/issues/772). R3's final review depends on R1/R2 and the subsequently commissioned [R4/#778](https://github.com/odogono/mercenary/issues/778) native EAGLE closure. This document implements no gameplay and expands no playable admission. The companion [ROM evidence report](mercenary-iii-object-interaction-evidence.md) distinguishes recovered source facts from observed play and lists its remaining probes.
 
 ## Proposed scope
