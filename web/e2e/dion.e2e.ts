@@ -231,6 +231,7 @@ test('/dion activates and calls through keyboard controls, saves and reloads its
   await page.goto('/dion');
   const screen = page.locator('#screen');
   await expect(screen).toHaveAttribute('data-state', 'ready');
+  await expect(screen).toHaveAttribute('data-reveal', '0');
   await page.keyboard.press('Enter');
   await expect
     .poll(async () => Number(await screen.getAttribute('data-reveal')))
@@ -279,6 +280,7 @@ test('/dion cooperatively hands the latest session to another tab and can reclai
 }) => {
   await page.goto('/dion');
   await expect(page.locator('#screen')).toHaveAttribute('data-state', 'ready');
+  await expect(page.locator('#screen')).toHaveAttribute('data-reveal', '0');
   await page.keyboard.press('Enter');
   const second = await context.newPage();
   await second.goto('/dion');

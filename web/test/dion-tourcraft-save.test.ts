@@ -100,6 +100,27 @@ test('expanded opening round trips without refreshing its saved candidate or VM'
     expect(restored.planFrame()).toEqual(control.planFrame());
   }
 });
+test('a Save during the opening reveal keeps refusing Enter until the logo arrives', () => {
+  const control = new TourcraftSession(content);
+  control.advance(22 / 50);
+  const restored = new TourcraftSession(
+    content,
+    decodeTourcraftRecord(
+      encodeTourcraftRecord(content, control.captureResume(), 'METIS'),
+      content
+    ).snapshot
+  );
+  for (const opens of [false, false, true]) {
+    for (const session of [control, restored]) {
+      session.press('activate');
+      session.advance(11 / 50);
+      expect(session.snapshot.card).toBe(opens);
+    }
+    expect(restored.captureResume()).toEqual(control.captureResume());
+    expect(restored.panelView()).toEqual(control.panelView());
+  }
+});
+
 test('refuses prototype, foreign references, extension keys and phase inconsistency', () => {
   const session = new TourcraftSession(content);
   const encoded = encodeTourcraftRecord(

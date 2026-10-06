@@ -30,6 +30,30 @@ test('starts from the coherent expanded opening without relaunching the prison V
   ]);
 });
 
+test('refuses Enter through the opening logo reveal, then opens the TAXICARD', () => {
+  const session = new TourcraftSession(content);
+  for (let frame = 0; frame < 4; frame++) {
+    session.press('activate');
+    session.advance(11 / 50);
+    expect(session.snapshot.card).toBe(false);
+    expect(session.snapshot.tourcraft!.head.open).toBeNull();
+    expect(session.snapshot.pending).toBeNull();
+    expect(session.snapshot.reveal).toBe(49 - session.snapshot.tick);
+  }
+  session.advance(4 / 50);
+  expect(session.snapshot.reveal).toBe(1);
+  expect(session.snapshot.tourcraft!.head.box.steps).toBe(1);
+  session.advance(1 / 50);
+  expect(session.snapshot.reveal).toBe(0);
+  expect(session.snapshot.tourcraft!.head.box.steps).toBe(0);
+  expect(session.snapshot.card).toBe(false);
+  session.press('activate');
+  session.advance(6 / 50);
+  expect(session.snapshot.card).toBe(true);
+  expect(session.snapshot.tourcraft!.head.open?.slot).toBe(104);
+  expect(session.snapshot.reveal).toBe(64);
+});
+
 test('samples the passenger zone after each refreshed METIS cell binding', () => {
   const session = new TourcraftSession(content);
   boardOpeningTaxi(session);

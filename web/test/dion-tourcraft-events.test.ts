@@ -7,6 +7,7 @@ import {
   encodeTourcraftRecord
 } from '../src/dion/tourcraftSave.ts';
 import { TourcraftSession } from '../src/dion/tourcraftSession.ts';
+import { until } from './dion-journey.ts';
 
 const content = await loadTourcraftContent(async path => {
   const text = readFileSync(new URL(`../..${path}`, import.meta.url), 'utf8');
@@ -14,6 +15,7 @@ const content = await loadTourcraftContent(async path => {
 });
 test('a declined ordered delivery survives Save and repeated R13 retriggers retain identity', () => {
   const control = new TourcraftSession(content);
+  until(control, () => control.snapshot.reveal === 0);
   control.press('activate');
   control.advance(11 / 50);
   control.advance(64 / 50);
