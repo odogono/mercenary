@@ -3,6 +3,7 @@ import {
   closePanel,
   initialHeadCommands,
   runHeadCommand,
+  switchValue,
   tickCentreBox,
   type HeadCommandState
 } from '../interaction/headCommands.ts';
@@ -16,6 +17,15 @@ import {
   type CarryWorld
 } from './carry.ts';
 import type { DionContent } from './content.ts';
+import {
+  detectorRate,
+  electromagnet,
+  initialDevices,
+  locationCardLines,
+  startFruitMachine,
+  stepDetector,
+  stepFruitMachine
+} from './devices.ts';
 import {
   planDionFrame,
   zoneOf,
@@ -167,6 +177,7 @@ export class TourcraftSession extends DionSession {
         armed: false,
         carry: initialTourcraftCarry(promoted, this.carryWorld),
         collision: { nextPeriod: null, routine: 'idle' },
+        devices: initialDevices(promoted.head),
         encounter: initialEncounter(promoted, this.state.eye),
         events: freshEvents(
           list(
@@ -291,7 +302,8 @@ export class TourcraftSession extends DionSession {
           collision: {
             ...this.expanded.collision,
             routine: 'start'
-          }
+          },
+          devices: { ...this.expanded.devices, priority: 3 }
         }
       };
       return;
@@ -304,7 +316,8 @@ export class TourcraftSession extends DionSession {
           collision: {
             ...this.expanded.collision,
             routine: 'idle'
-          }
+          },
+          devices: { ...this.expanded.devices, priority: 3 }
         }
       };
     }
@@ -367,6 +380,30 @@ export class TourcraftSession extends DionSession {
         write(3, period >>> 8);
         collision = { ...collision, nextPeriod: collision.nextPeriod! + 1 };
       }
+    }
+    const detector = stepDetector(
+      this.expanded.devices,
+      detectorRate(
+        this.promoted.arithmetic,
+        this.expanded.residents,
+        this.expanded.switches,
+        this.state.location === 65_535 ? 120 : this.state.location,
+        this.state.eye
+      )
+    );
+    this.state = {
+      ...this.state,
+      tourcraft: { ...this.expanded, devices: detector.state }
+    };
+    if (detector.beep) {
+      collision = { ...collision, routine: 'idle' };
+      write(11, 64);
+      write(12, 0);
+      write(2, 48);
+      write(3, 0);
+      write(7, (input.mixer & 0xfd) | 0x10);
+      write(9, 31);
+      write(13, 9);
     }
     this.state = { ...this.state, tourcraft: { ...this.expanded, collision } };
     const sound = tickSound(
@@ -588,22 +625,33 @@ export class TourcraftSession extends DionSession {
         }
         return true;
       case 'key':
+        // `$4D830` has no mode-5 branch: only TAXICARD is handled ahead of it.
+        if (outcome.panel === 'card') {
+          return true;
+        }
         this.notes.push(
           `${outcome.panel} key ${outcome.key} on slot ${outcome.slot}`
         );
         return true;
       case 'switch': {
+        if (outcome.slot === 131 && outcome.on) {
+          const devices = electromagnet(e.devices);
+          if (devices !== e.devices) {
+            this.state = {
+              ...this.state,
+              tourcraft: { ...this.expanded, devices }
+            };
+            this.cue('key_click');
+          }
+          return true;
+        }
         const row = openRow(this.promoted.head, outcome.slot)!;
-        const bit = 1 << (row.index >> 1);
-        const switches = outcome.on ? e.switches | bit : e.switches & ~bit;
+        const switches = switchValue(e.switches, row.index, outcome.on);
         if (switches !== e.switches) {
           this.state = {
             ...this.state,
             tourcraft: { ...this.expanded, switches }
           };
-          this.notes.push(
-            `switch ${outcome.slot} ${outcome.on ? 'on' : 'off'} drives nothing yet`
-          );
           this.cue('key_click');
         }
         return true;
@@ -678,6 +726,29 @@ export class TourcraftSession extends DionSession {
     };
   }
   throttleKey(key: number): void {
+    // `$56894`: Space on foot, selected FRUIT MACHINE146 within exponent9.
+    if (
+      key === 57 &&
+      !this.aboard &&
+      this.state.location !== 65_535 &&
+      this.state.candidate?.slot === 146 &&
+      this.state.candidate.exponent < 9
+    ) {
+      if (BigInt(this.state.cash) < 100_000_000n) {
+        this.narrative.idMessage(12);
+        return;
+      }
+      this.state = {
+        ...this.state,
+        cash: String(BigInt(this.state.cash) - 100_000_000n).padStart(12, '0'),
+        tourcraft: {
+          ...this.expanded,
+          devices: startFruitMachine(this.expanded.devices)
+        }
+      };
+      this.cue('key_click');
+      return;
+    }
     this.manualFlight(f => f.throttleKey(key));
   }
   throttleScale(direction: -1 | 1): void {
@@ -824,6 +895,37 @@ export class TourcraftSession extends DionSession {
     super.handleInput();
   }
   protected override frame(): void {
+    this.deviceFrame();
+    this.worldFrame();
+  }
+  private deviceFrame(): void {
+    const outcome = stepFruitMachine(this.expanded.devices);
+    this.state = {
+      ...this.state,
+      tourcraft: {
+        ...this.expanded,
+        devices: {
+          ...outcome.state,
+          // `$5A426`: the main frame advances the shared cursor even without a device draw.
+          randomCursor: (outcome.state.randomCursor + 1) & 511
+        }
+      },
+      ...(outcome.pays
+        ? {
+            cash: String(
+              (BigInt(this.state.cash) + 100_000_000n) % 1_000_000_000_000n
+            ).padStart(12, '0')
+          }
+        : {})
+    };
+    if (outcome.pays) {
+      this.cue('key_click');
+    }
+    if (outcome.bankrupt) {
+      this.notes.push('fruit-machine bankruptcy script $76 is not ported');
+    }
+  }
+  private worldFrame(): void {
     const previous = this.expanded;
     if (this.state.frame > 0) {
       this.state = {
@@ -1328,7 +1430,10 @@ export class TourcraftSession extends DionSession {
           : [body.centre[0], 64, body.centre[2]],
         yaw
       },
-      tokens: faceOutputs(this.promoted, e)
+      tokens: new Map([
+        ...faceOutputs(this.promoted, e),
+        [0x99, e.devices.machine.reels]
+      ])
     };
   }
   private drawnResidents() {
@@ -1490,7 +1595,7 @@ const tourcraftCentre = (
     return undefined;
   }
   const { logo, taxicard } = content.legacy.panel.centre;
-  const art = (slot: number | null): DionCentreArt => {
+  const art = (slot: number | null, field: boolean): DionCentreArt => {
     const row = slot === null ? undefined : openRow(content.head, slot);
     return slot === 104 || row === undefined
       ? slot === 104
@@ -1499,7 +1604,7 @@ const tourcraftCentre = (
       : {
           colour1From152: row.colour1From152,
           colour4: row.colour4,
-          pixels: panelArt(content.head, row)
+          pixels: panelArt(content.head, row, state.tourcraft!.switches, field)
         };
   };
   const name =
@@ -1507,12 +1612,26 @@ const tourcraftCentre = (
       ? undefined
       : documentItems(content.head, open.slot)[open.item]?.name;
   return {
-    from: art(box.steps === 0 ? box.to : box.from),
+    from: art(
+      box.steps === 0 ? box.to : box.from,
+      box.steps === 0 || box.fromItem !== null
+    ),
     ...(name === undefined
       ? {}
       : { item: { field: content.head.itemField, name } }),
     kind: 'panel',
+    ...(open?.slot === 103
+      ? { lines: content.legacy.panel.strings.card.get('busPass')! }
+      : open?.slot === 46
+        ? {
+            lines: locationCardLines(
+              content.head,
+              state.location === 65_535 ? 49 : state.location === 100 ? 23 : 3,
+              state.cell
+            )
+          }
+        : {}),
     reveal: box.steps,
-    to: art(box.to)
+    to: art(box.to, box.steps === 0)
   };
 };

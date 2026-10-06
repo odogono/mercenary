@@ -28,7 +28,7 @@ All sources pin the same Mercenary III program `4e8b74122910bcaa109b944eebb6f0ec
 | `geometry/<family>-<address>.json` | `geometry`: one Geometry Identity's forms; `<family>` is `detail`, `ground`, `island`, `model`, `sky-tail` or `structure` | `loadTourcraftContent` |
 | `presentation/gameplay.json` | `initial`, `modelBindings`, `modelBindingSources`, `blinkPhase` | `loadTourcraftContent` |
 | `presentation/programmes.json` | `entries`, `scripts`, `poll`, `playback`, `faceSequences`, `headSequences`, `encounter`, `collisionTone`, `sharedReturn` | `loadTourcraftContent` |
-| `presentation/head.json` | `openTable`, `documents`, `art`, `strips`, `itemField` | `loadTourcraftContent` (`readDionHead`) |
+| `presentation/head.json` | `openTable`, `documents`, `art`, `strips`, `itemField`, `switchField`, `locationLabels`, `random`, `fruitReels` | `loadTourcraftContent` (`readDionHead`) |
 | `presentation/support.json` | `bodies`, `groups`, `palettes`, `framePalette`, `modelColours`, `glyphs`, `tokens`, `drawPriority`, `rotationTable` | `loadTourcraftContent` |
 | `presentation/system.json` | `bodies`, `drawLists`, `spacePalette`, `spaceScan`, `sine` | `loadTourcraftContent` |
 | `presentation/craft.json` | `parameters`, `tables` | `loadTourcraftContent` |
@@ -46,7 +46,7 @@ The loader fetches and verifies every enumerated document before returning conte
 2. For each document: unsigned 32-bit big-endian UTF-8 path byte length, path bytes, unsigned 64-bit big-endian document byte length, exact document bytes.
 3. Document order: `world`, `panel`, `messages`, `scripts`, `sound`, `service`; `promotion`; geometry paths sorted by byte order; presentation paths sorted by byte order; `manifest` last. Paths include `/payload/dion/tourcraft/`.
 
-The manifest contains the ordered document hashes and has no self-referential `contentSha256` field. It is included exactly as served. Python and browser golden fixtures agree: records `('a','bc'),('d','e')` produce `adfbc36f7a52dbc748b6832a1c449671d1513fe055dbd799cd15a265f91b9565`. Selected-record pins use sorted compact ASCII-escaped JSON, also covered by a Unicode cross-language fixture. The checked-in payload identity is `5a75345df63a88282ac08b9a679020b26a8053542fc268bd64c25798ef062a19`.
+The manifest contains the ordered document hashes and has no self-referential `contentSha256` field. It is included exactly as served. Python and browser golden fixtures agree: records `('a','bc'),('d','e')` produce `adfbc36f7a52dbc748b6832a1c449671d1513fe055dbd799cd15a265f91b9565`. Selected-record pins use sorted compact ASCII-escaped JSON, also covered by a Unicode cross-language fixture. The checked-in payload identity is `2cd1a94771b22339e9d86d8d1a3e46becdceaf829f3c0efd710a7c1f8aee0836`.
 
 ## Rendering and reuse dispositions
 
@@ -120,3 +120,18 @@ Save schema5 retains the response availability/queue, poll bytes, direct timed
 continuations and admitted model replacements. Synthetic browser/session controls
 verify these launches and future equivalence; they do not establish ordinary
 routes to the remote objects.
+
+## Cards and switches (#795)
+
+`presentation/head.json` also carries the two original switch-field bitmaps,
+the 57 groups' raw two-line location labels, the rotating random table and the
+initial fruit-machine reel codes. BUS PASS displays its recovered default;
+A TO Z follows the current location. Their keypad keys are ignored by the
+original dispatcher. PULVIN DETECTOR's ore/distance gate drives its random
+B-channel sound, and ELECTROMAGNET advances an active fruit machine without
+setting bit0. See [the source and implementation note](research/mercenary-iii-cards-and-switches.md)
+for the bus-service and bankruptcy-script limits.
+
+Save schema6 additionally retains the device random/counter/priority and
+fruit-machine owners. Earlier prototype schemas and content identities are
+refused, with no migration (ADR 0073).

@@ -1,5 +1,6 @@
 import type { HeadCommandState } from '../interaction/headCommands.ts';
 import { carriedLabel, type CarryWorld, type DionCarry } from './carry.ts';
+import type { DionDevices } from './devices.ts';
 import { int, ints, list, record, text } from './read.ts';
 import type { TourcraftContent } from './tourcraftContent.ts';
 import type { TourcraftEncounter } from './tourcraftEncounter.ts';
@@ -15,6 +16,7 @@ export interface TourcraftState {
     readonly nextPeriod: number | null;
     readonly routine: 'idle' | 'start' | 'running';
   };
+  readonly devices: DionDevices;
   readonly encounter: TourcraftEncounter;
   readonly events: TourcraftEvents;
   readonly faceInvocations: number;

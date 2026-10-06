@@ -4,7 +4,7 @@ import {
   textField,
   type DionPanelTextField
 } from './panelDocument.ts';
-import { fail, int, list, record, text } from './read.ts';
+import { fail, int, ints, list, record, text } from './read.ts';
 
 /// Mercenary III's Open table, documents and centre-box art, exported by `m3lab.head` into
 /// `presentation/head.json` (#756). The Head Commands themselves are shared with Damocles
@@ -29,13 +29,23 @@ export interface DionHead {
   readonly art: ReadonlyMap<number, readonly Uint8Array[]>;
   /// Documents by their bank index.
   readonly documents: ReadonlyMap<number, readonly DionDocumentItem[]>;
+  readonly fruitReels: readonly number[];
   readonly itemField: DionPanelTextField;
+  readonly locationLabels: ReadonlyMap<
+    number,
+    {
+      readonly header: string;
+      readonly records: ReadonlyMap<number, string>;
+    }
+  >;
+  readonly random: readonly number[];
   readonly rows: readonly DionOpenRow[];
   /// Title and footer strips by `mode:index`: five rows of 64 bits, stamped at `line`.
   readonly strips: ReadonlyMap<
     string,
     readonly { readonly line: number; readonly rows: readonly string[] }[]
   >;
+  readonly switchField: Readonly<Record<'off' | 'on', readonly string[]>>;
 }
 
 const KINDS: Readonly<Record<number, PanelKind>> = {
@@ -109,15 +119,71 @@ export const readDionHead = (raw: Record<string, unknown>): DionHead => {
       })
     ])
   );
+  const switchRows = (key: 'off' | 'on'): readonly string[] => {
+    const rows = list(
+      record(raw['switchField'], 'head.switchField')[key],
+      `switchField.${key}`
+    ).map(value => {
+      const bits = text(value, 'switchField.row');
+      if (!/^[01]{32}$/.test(bits)) {
+        fail('switchField.row: not 32 bits');
+      }
+      return bits;
+    });
+    if (rows.length !== 5) {
+      fail('switchField: expected five rows');
+    }
+    return rows;
+  };
   return {
     art,
     documents,
+    fruitReels: ints(
+      record(raw['fruitReels'], 'head.fruitReels')['values'],
+      'head.fruitReels.values',
+      3,
+      34,
+      39
+    ),
     itemField: textField(
       record(raw['itemField'], 'head.itemField'),
       'head.itemField'
     ),
+    locationLabels: new Map(
+      list(raw['locationLabels'], 'head.locationLabels').map(value => {
+        const group = record(value, 'locationLabels.group');
+        const header = text(group['header'], 'label.header');
+        if (header.length !== 0 && header.length !== 20) {
+          fail('label.header: not twenty characters');
+        }
+        return [
+          int(group['group'], 'label.group', 0, 56),
+          {
+            header,
+            records: new Map(
+              list(group['records'], 'label.records').map(value => {
+                const r = record(value, 'label.record');
+                const name = text(r['text'], 'label.text');
+                if (name.length !== 20) {
+                  fail('label.text: not twenty characters');
+                }
+                return [int(r['cell'], 'label.cell', 1, 255), name];
+              })
+            )
+          }
+        ];
+      })
+    ),
+    random: ints(
+      record(raw['random'], 'head.random')['words'],
+      'head.random.words',
+      512,
+      0,
+      65_535
+    ),
     rows,
-    strips
+    strips,
+    switchField: { off: switchRows('off'), on: switchRows('on') }
   };
 };
 
@@ -157,7 +223,12 @@ export const dionHeadTable = (
 
 /// `$59C2C`: the mode's art with the row's title strip, and a card's footer, stamped in. A strip
 /// sets plane 0 and gives planes 1 to 3 its bit, so its ink is colour 15 on colour 1.
-export const panelArt = (head: DionHead, row: DionOpenRow): Uint8Array[] => {
+export const panelArt = (
+  head: DionHead,
+  row: DionOpenRow,
+  switches = 0,
+  field = true
+): Uint8Array[] => {
   const art = (head.art.get(row.mode) ?? []).map(line => line.slice());
   for (const strip of head.strips.get(`${row.mode}:${row.index}`) ?? []) {
     strip.rows.forEach((bits, r) => {
@@ -167,6 +238,15 @@ export const panelArt = (head: DionHead, row: DionOpenRow): Uint8Array[] => {
           line[x] = bits[x] === '1' ? 15 : 1;
         }
       }
+    });
+  }
+  if (row.mode === 6 && field) {
+    const on = (switches & (1 << (row.index >> 1))) !== 0;
+    head.switchField[on ? 'on' : 'off'].forEach((bits, y) => {
+      [...bits].forEach((bit, x) => {
+        art[15 + y]![16 + x] =
+          (art[15 + y]![16 + x]! & ~4) | (bit === '1' ? 4 : 0);
+      });
     });
   }
   return art;

@@ -27,7 +27,7 @@ export const auditTaxiEarlyCursorAmbiguity = async () => {
   });
   assert.equal(
     expanded.contentSha256,
-    '5a75345df63a88282ac08b9a679020b26a8053542fc268bd64c25798ef062a19'
+    '2cd1a94771b22339e9d86d8d1a3e46becdceaf829f3c0efd710a7c1f8aee0836'
   );
   return withTaxiSource(async source => {
     const controls = source.dionControlCaptures(source.content);

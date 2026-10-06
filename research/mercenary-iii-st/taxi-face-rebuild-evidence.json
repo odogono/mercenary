@@ -6,7 +6,7 @@
     "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
     "title": "dion"
   },
-  "expandedContentSha256": "5a75345df63a88282ac08b9a679020b26a8053542fc268bd64c25798ef062a19",
+  "expandedContentSha256": "2cd1a94771b22339e9d86d8d1a3e46becdceaf829f3c0efd710a7c1f8aee0836",
   "programmesSha256": "2ff7a20c019db8c3e92d42223a38554633e9e7ea10831fb494aac6e9e17da31f",
   "disposition": "D2 accepted shared initial/base/alternate faceSelection; derived outputs rebuild before first reader",
   "taggedRestore": {

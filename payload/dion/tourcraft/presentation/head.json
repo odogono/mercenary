@@ -1397,6 +1397,20 @@
       ]
     }
   ],
+  "fruitReels": {
+    "provenance": {
+      "range": [
+        "$0B330",
+        "$0B333"
+      ],
+      "sha256": "dcd7e04a948d2c164ed22aeae7def03e9be0f7b97ce98f7beda313d73ccd4e75"
+    },
+    "values": [
+      36,
+      38,
+      37
+    ]
+  },
   "itemField": {
     "box": [
       [
@@ -1422,6 +1436,1402 @@
     "y": 170
   },
   "kind": "dion-play-head",
+  "locationLabels": [
+    {
+      "group": 0,
+      "header": "",
+      "provenance": {
+        "range": [
+          "$20D30",
+          "$20D3D"
+        ],
+        "sha256": "8206607cbe03c931dbbdd15bca47f20c7db9fce0d89fcc0a769d4a2026e72026"
+      },
+      "records": []
+    },
+    {
+      "group": 1,
+      "header": "",
+      "provenance": {
+        "range": [
+          "$20D3E",
+          "$20D4B"
+        ],
+        "sha256": "8206607cbe03c931dbbdd15bca47f20c7db9fce0d89fcc0a769d4a2026e72026"
+      },
+      "records": []
+    },
+    {
+      "group": 2,
+      "header": "BIRMINGHAMISLAND    ",
+      "provenance": {
+        "range": [
+          "$20D4C",
+          "$213F7"
+        ],
+        "sha256": "917a921f2f10242ffa1a4f0bd89638d3cff48393c14a1767f8ac85f6d3a0eaba"
+      },
+      "records": [
+        {
+          "cell": 64,
+          "text": "DION      SPACEPORT "
+        },
+        {
+          "cell": 112,
+          "text": "LAWSON    BANK      "
+        },
+        {
+          "cell": 171,
+          "text": "BIL'S     COTTAGE   "
+        },
+        {
+          "cell": 157,
+          "text": "BIL'S     FARM      "
+        },
+        {
+          "cell": 205,
+          "text": "BIL'S FARMPRODUCE   "
+        },
+        {
+          "cell": 178,
+          "text": "NOVAGEN   OFFICE    "
+        },
+        {
+          "cell": 227,
+          "text": "VERDANT   PARTY HQ  "
+        },
+        {
+          "cell": 233,
+          "text": "BIL'S FARMMACHINERY "
+        },
+        {
+          "cell": 238,
+          "text": "AUTHORS   DRIVE     "
+        },
+        {
+          "cell": 239,
+          "text": "LAND      REGISTRY  "
+        },
+        {
+          "cell": 15,
+          "text": "LICENCE   CENTRE    "
+        },
+        {
+          "cell": 9,
+          "text": "BIL'S     DRAPERY   "
+        },
+        {
+          "cell": 3,
+          "text": "COMPANIES HOUSE     "
+        },
+        {
+          "cell": 167,
+          "text": "ISLE LINK AIRSTRIP  "
+        },
+        {
+          "cell": 149,
+          "text": "VILLAGE   SCHOOL    "
+        },
+        {
+          "cell": 197,
+          "text": "MEADOW    FARM      "
+        },
+        {
+          "cell": 177,
+          "text": "GAEA      BANK      "
+        },
+        {
+          "cell": 37,
+          "text": "OLEARY'S  FARM      "
+        },
+        {
+          "cell": 85,
+          "text": "BRUCE'S   PLACE     "
+        },
+        {
+          "cell": 71,
+          "text": "PRIVATE   AIRSTRIP  "
+        },
+        {
+          "cell": 45,
+          "text": "MACDONALDSFARM      "
+        },
+        {
+          "cell": 93,
+          "text": "THATCHER  FARM      "
+        },
+        {
+          "cell": 75,
+          "text": "DUNROMIN  VILLA     "
+        },
+        {
+          "cell": 98,
+          "text": "CONNECTION  9 11 47 "
+        },
+        {
+          "cell": 114,
+          "text": "CONNECTION 11 30 34 "
+        },
+        {
+          "cell": 130,
+          "text": "CONNECTION  9 11 47 "
+        },
+        {
+          "cell": 35,
+          "text": "CONNECTION 11 23 47 "
+        },
+        {
+          "cell": 115,
+          "text": "CONNECTION9 30 34 47"
+        },
+        {
+          "cell": 195,
+          "text": "CONNECTION 9 11 23  "
+        },
+        {
+          "cell": 41,
+          "text": "CONNECTION  23  34  "
+        },
+        {
+          "cell": 201,
+          "text": "CONNECTION  23  30  "
+        },
+        {
+          "cell": 127,
+          "text": "CONNECTION  11  47  "
+        },
+        {
+          "cell": 222,
+          "text": "AUTHORS   HOUSE     "
+        }
+      ]
+    },
+    {
+      "group": 3,
+      "header": "METIS     MOONBASE  ",
+      "provenance": {
+        "range": [
+          "$21410",
+          "$2153F"
+        ],
+        "sha256": "f766786ad26a070ae9536b5c9c9305f1ada093e32091167eea28d3d19b0b7c37"
+      },
+      "records": [
+        {
+          "cell": 101,
+          "text": " SITE OF   OLD NIC  "
+        },
+        {
+          "cell": 98,
+          "text": "TIMEWARP  PRISON    "
+        },
+        {
+          "cell": 96,
+          "text": "DOOBERRYS SOLICITORS"
+        },
+        {
+          "cell": 2,
+          "text": "METIS     SPACEPORT "
+        }
+      ]
+    },
+    {
+      "group": 4,
+      "header": "SOLON     BASE      ",
+      "provenance": {
+        "range": [
+          "$21544",
+          "$21580"
+        ],
+        "sha256": "95df2653e0be82ddd9767d9ccc479b74968ee0a0e33a6f03d5c3db6f3bf90f73"
+      },
+      "records": [
+        {
+          "cell": 17,
+          "text": "P C BIL   STATUE    "
+        }
+      ]
+    },
+    {
+      "group": 5,
+      "header": "POLITBURO CITY      ",
+      "provenance": {
+        "range": [
+          "$21581",
+          "$216DD"
+        ],
+        "sha256": "6180ceb97a24242ad174f06aac84bd356b0e3e239749d7f5fefc9feeb20e6b90"
+      },
+      "records": [
+        {
+          "cell": 64,
+          "text": "GALAXY    SPACEPORT "
+        },
+        {
+          "cell": 100,
+          "text": "VESTA     PARLIAMENT"
+        },
+        {
+          "cell": 19,
+          "text": "GAEA      BANK      "
+        },
+        {
+          "cell": 115,
+          "text": "GUM       STORE     "
+        },
+        {
+          "cell": 4,
+          "text": "ERIS LINK SPACEPORT "
+        },
+        {
+          "cell": 69,
+          "text": "ELECTION  REGISTRAR "
+        },
+        {
+          "cell": 70,
+          "text": "LAWSON    BANK      "
+        },
+        {
+          "cell": 55,
+          "text": "GAEA LINK SPACEPORT "
+        }
+      ]
+    },
+    {
+      "group": 6,
+      "header": "ACHERON   RETREAT   ",
+      "provenance": {
+        "range": [
+          "$21702",
+          "$21891"
+        ],
+        "sha256": "bd32d47019b40a2cd88bd832c2a626d7678b4940c4799ddb21088e378c801758"
+      },
+      "records": [
+        {
+          "cell": 99,
+          "text": "TANIS     SPHYNX    "
+        },
+        {
+          "cell": 3,
+          "text": "OSIRIS    SHYNX     "
+        },
+        {
+          "cell": 48,
+          "text": "KING      BURDOCK   "
+        },
+        {
+          "cell": 54,
+          "text": "KING      BURDOCK   "
+        },
+        {
+          "cell": 17,
+          "text": "THE TOMB  OF SETH   "
+        },
+        {
+          "cell": 81,
+          "text": "THE TOMB  OF HORUS  "
+        },
+        {
+          "cell": 85,
+          "text": "THE TOMB  OF MAAT   "
+        },
+        {
+          "cell": 21,
+          "text": "THE TOMB  OF NEITH  "
+        }
+      ]
+    },
+    {
+      "group": 7,
+      "header": "UR        CITY      ",
+      "provenance": {
+        "range": [
+          "$21892",
+          "$219D3"
+        ],
+        "sha256": "43c4bd25764375feec67a47242282198a17ce5104c2c2561c4c6491441c6acee"
+      },
+      "records": [
+        {
+          "cell": 16,
+          "text": "HERTZ     AIRPORT   "
+        },
+        {
+          "cell": 57,
+          "text": "STELLAR   FACTORS   "
+        },
+        {
+          "cell": 49,
+          "text": "B. QUEUE  LOCKSMITHS"
+        }
+      ]
+    },
+    {
+      "group": 8,
+      "header": "LOGOS     CITY      ",
+      "provenance": {
+        "range": [
+          "$219D8",
+          "$21B3A"
+        ],
+        "sha256": "be28f21a8269182e23e142f5086778f8e212d6c508588a6b7173fc634d371f02"
+      },
+      "records": [
+        {
+          "cell": 6,
+          "text": "LOGOS     SPACEPORT "
+        },
+        {
+          "cell": 54,
+          "text": "CHARLENES DISCO     "
+        },
+        {
+          "cell": 56,
+          "text": "C ROOKE   ESTATES   "
+        },
+        {
+          "cell": 52,
+          "text": "RISS-KEY  BUILDERS  "
+        },
+        {
+          "cell": 50,
+          "text": "BUILDING  SITE      "
+        },
+        {
+          "cell": 82,
+          "text": "B.I.C.C.  OF GAEA   "
+        },
+        {
+          "cell": 36,
+          "text": "D.H.S.S.  HOUSE     "
+        }
+      ]
+    },
+    {
+      "group": 9,
+      "header": "THEON     BASE      ",
+      "provenance": {
+        "range": [
+          "$21B47",
+          "$21BEF"
+        ],
+        "sha256": "d29fa221e7b021c6dc702ebc5a69565848f9ef3d248ef05323a743497e562a66"
+      },
+      "records": [
+        {
+          "cell": 50,
+          "text": "BURDOCK   MEDIA LINK"
+        },
+        {
+          "cell": 35,
+          "text": "SKY-DISNEYMEDIA LINK"
+        },
+        {
+          "cell": 19,
+          "text": "ERIS TV   MEDIA LINK"
+        }
+      ]
+    },
+    {
+      "group": 10,
+      "header": "",
+      "provenance": {
+        "range": [
+          "$20D3E",
+          "$20D4B"
+        ],
+        "sha256": "8206607cbe03c931dbbdd15bca47f20c7db9fce0d89fcc0a769d4a2026e72026"
+      },
+      "records": []
+    },
+    {
+      "group": 11,
+      "header": "THALIA    BASE CAMP ",
+      "provenance": {
+        "range": [
+          "$21BF0",
+          "$21C74"
+        ],
+        "sha256": "08c7886004f2ebb9c02ec1169d7b438ff97e972e834b938f4cac3e9df9142552"
+      },
+      "records": []
+    },
+    {
+      "group": 12,
+      "header": "PAN HADES LABOURCAMP",
+      "provenance": {
+        "range": [
+          "$21C75",
+          "$21D41"
+        ],
+        "sha256": "6bfefb3e63e093991e5a893d28270cdd0142e0a1a402a7a3a0ef48b419cf2491"
+      },
+      "records": [
+        {
+          "cell": 20,
+          "text": "PAN HADES ADMIN DEPT"
+        }
+      ]
+    },
+    {
+      "group": 13,
+      "header": "",
+      "provenance": {
+        "range": [
+          "$20D3E",
+          "$20D4B"
+        ],
+        "sha256": "8206607cbe03c931dbbdd15bca47f20c7db9fce0d89fcc0a769d4a2026e72026"
+      },
+      "records": []
+    },
+    {
+      "group": 14,
+      "header": "VULCAN    ISLAND    ",
+      "provenance": {
+        "range": [
+          "$21D42",
+          "$21D69"
+        ],
+        "sha256": "32459c5065b610192d668e5f790f3a656c1bf16fb33a0c0b43afab5d9fa902ec"
+      },
+      "records": []
+    },
+    {
+      "group": 15,
+      "header": "CHALDEA   METROPOLIS",
+      "provenance": {
+        "range": [
+          "$21D6E",
+          "$22182"
+        ],
+        "sha256": "f58eddd988e5f64568fe54e56bc73cd1acd0cbf65dea27d0b1b85a5803caaba9"
+      },
+      "records": [
+        {
+          "cell": 102,
+          "text": "BANK OF   GAEA HQ   "
+        },
+        {
+          "cell": 136,
+          "text": "TRADE     COMMISSION"
+        },
+        {
+          "cell": 134,
+          "text": "C ROOKE   AGENCIES  "
+        },
+        {
+          "cell": 104,
+          "text": "PEGASUS   INSURANCE "
+        },
+        {
+          "cell": 112,
+          "text": "VESTA LINKSPACEPORT "
+        },
+        {
+          "cell": 7,
+          "text": "DION LINK SPACEPORT "
+        },
+        {
+          "cell": 126,
+          "text": "LOGOS LINKSPACEPORT "
+        },
+        {
+          "cell": 231,
+          "text": "UR INTER- CITY LINK "
+        },
+        {
+          "cell": 179,
+          "text": "PYROTECH  SUPPLIES 1"
+        },
+        {
+          "cell": 59,
+          "text": "PYROTECH  SUPPLIES 2"
+        }
+      ]
+    },
+    {
+      "group": 16,
+      "header": "SNOW      ISLAND    ",
+      "provenance": {
+        "range": [
+          "$22197",
+          "$22287"
+        ],
+        "sha256": "53366b56e73ff0fc82a589778cd3df28430fd6b6e36776e7aed6744a7e6d0414"
+      },
+      "records": [
+        {
+          "cell": 71,
+          "text": "SCOTT     AIRPORT   "
+        },
+        {
+          "cell": 70,
+          "text": "HATHAWAYS WINE BAR  "
+        }
+      ]
+    },
+    {
+      "group": 17,
+      "header": "VELOS     CITY      ",
+      "provenance": {
+        "range": [
+          "$22288",
+          "$22456"
+        ],
+        "sha256": "98e11cb26db9d395d5298811a9ceb8470b28054907d93cfd0a1b5f245b0ba410"
+      },
+      "records": [
+        {
+          "cell": 4,
+          "text": "VELOS     AIRPORT   "
+        },
+        {
+          "cell": 20,
+          "text": "ERIS      TELEVISION"
+        },
+        {
+          "cell": 35,
+          "text": "WRITERS   GUILD     "
+        },
+        {
+          "cell": 51,
+          "text": "BACKLOT   AREA      "
+        },
+        {
+          "cell": 67,
+          "text": "GRADE     APARTMENTS"
+        },
+        {
+          "cell": 100,
+          "text": "THEATRICALCOSTUMIER "
+        },
+        {
+          "cell": 84,
+          "text": "EKMPV     AD AGENCY "
+        },
+        {
+          "cell": 69,
+          "text": "THE BENSONHOUSE     "
+        },
+        {
+          "cell": 70,
+          "text": "THE BIRT  RESIDENCE "
+        },
+        {
+          "cell": 54,
+          "text": "BURBANK   AREA      "
+        },
+        {
+          "cell": 53,
+          "text": "CHECKLAND RETREAT   "
+        },
+        {
+          "cell": 17,
+          "text": "THE WENDY HOUSE     "
+        }
+      ]
+    },
+    {
+      "group": 18,
+      "header": "CAPITAL   CITY      ",
+      "provenance": {
+        "range": [
+          "$22467",
+          "$22980"
+        ],
+        "sha256": "24d810a104128093de89c50c9b1f40fab06c5d29cea5d16480e6578abd4f9b23"
+      },
+      "records": [
+        {
+          "cell": 137,
+          "text": "BUS       STATION   "
+        },
+        {
+          "cell": 233,
+          "text": "WILMOT    AD AGENCY "
+        },
+        {
+          "cell": 236,
+          "text": "ERIS POST OFFICE HQ "
+        },
+        {
+          "cell": 255,
+          "text": "MINERAL   TRADING   "
+        },
+        {
+          "cell": 207,
+          "text": "LAWSON    BANK HQ   "
+        },
+        {
+          "cell": 190,
+          "text": "INSTANT   ARCHITECTS"
+        },
+        {
+          "cell": 135,
+          "text": "CAPITAL   SPACEPORT "
+        },
+        {
+          "cell": 56,
+          "text": "E.T.A.    HOUSE     "
+        },
+        {
+          "cell": 54,
+          "text": "MARGARET'SRETREAT   "
+        },
+        {
+          "cell": 49,
+          "text": "EXCHEQUER DISTRICT B"
+        },
+        {
+          "cell": 17,
+          "text": "EXCHEQUER DISTRICT A"
+        },
+        {
+          "cell": 18,
+          "text": "ELMDON    AIRPORT   "
+        },
+        {
+          "cell": 68,
+          "text": "FOUNDERS  MONUMENT  "
+        },
+        {
+          "cell": 148,
+          "text": "WALKERS   HEATH     "
+        },
+        {
+          "cell": 108,
+          "text": "HICKSTOWN AREA      "
+        },
+        {
+          "cell": 60,
+          "text": "BARGAIN   TRADERS   "
+        },
+        {
+          "cell": 63,
+          "text": "CATALOGUE STORES    "
+        },
+        {
+          "cell": 94,
+          "text": "ERIS POWERGENERATION"
+        },
+        {
+          "cell": 153,
+          "text": "MOORBY SCHOF FLYING "
+        },
+        {
+          "cell": 180,
+          "text": "GUM       STORE     "
+        },
+        {
+          "cell": 41,
+          "text": "PLAYTESTERSTORES    "
+        },
+        {
+          "cell": 225,
+          "text": "PLAYTESTERSTORES    "
+        }
+      ]
+    },
+    {
+      "group": 19,
+      "header": "",
+      "provenance": {
+        "range": [
+          "$20D3E",
+          "$20D4B"
+        ],
+        "sha256": "8206607cbe03c931dbbdd15bca47f20c7db9fce0d89fcc0a769d4a2026e72026"
+      },
+      "records": []
+    },
+    {
+      "group": 20,
+      "header": "BARE      ISLAND    ",
+      "provenance": {
+        "range": [
+          "$229BD",
+          "$22B40"
+        ],
+        "sha256": "90f432a74a284372ccbd5b0088ba91c35da0ca346a1421fe0b6c5d4e0250b222"
+      },
+      "records": [
+        {
+          "cell": 66,
+          "text": "HANTZEN   AIRPORT   "
+        },
+        {
+          "cell": 71,
+          "text": "HANTZEN   ADMIN     "
+        },
+        {
+          "cell": 38,
+          "text": "HANTZEN   SALES     "
+        },
+        {
+          "cell": 86,
+          "text": "HANTZEN   LABORATORY"
+        },
+        {
+          "cell": 102,
+          "text": "GUM STORE DRAPERY   "
+        },
+        {
+          "cell": 22,
+          "text": "DATA      CORRECTED "
+        }
+      ]
+    },
+    {
+      "group": 21,
+      "header": "KEY       WEST      ",
+      "provenance": {
+        "range": [
+          "$22B49",
+          "$22D80"
+        ],
+        "sha256": "bb3f75e699f18979851916d92a2a015e3b39eb369ef5b2ccd31bedb24426caee"
+      },
+      "records": [
+        {
+          "cell": 112,
+          "text": "KEY WEST  AIRPORT   "
+        },
+        {
+          "cell": 114,
+          "text": "FUTURE    PUBLISHING"
+        },
+        {
+          "cell": 137,
+          "text": "LAWSON    BANK      "
+        },
+        {
+          "cell": 133,
+          "text": "EUROPRESS PUBLISHING"
+        },
+        {
+          "cell": 132,
+          "text": "NEWS INTERGALACTIC  "
+        },
+        {
+          "cell": 130,
+          "text": "WIMBLEDON COMMON    "
+        },
+        {
+          "cell": 119,
+          "text": "NEWTON LTDRESEARCH  "
+        },
+        {
+          "cell": 38,
+          "text": "WAPPING   EAST AREA "
+        },
+        {
+          "cell": 21,
+          "text": "WAPPING   WEST AREA "
+        }
+      ]
+    },
+    {
+      "group": 22,
+      "header": "ALKANE    BASE      ",
+      "provenance": {
+        "range": [
+          "$22D9D",
+          "$22E5A"
+        ],
+        "sha256": "856d1ed5593e2178b97bcbfe1c7682652b52c8f88c3796eeb0589718cd96d913"
+      },
+      "records": [
+        {
+          "cell": 37,
+          "text": "RESEARCH  LABORATORY"
+        },
+        {
+          "cell": 20,
+          "text": "EMERGENCY FACILITY  "
+        },
+        {
+          "cell": 100,
+          "text": "EMERGENCY FACILITY  "
+        }
+      ]
+    },
+    {
+      "group": 23,
+      "header": "ENTERPRISEBASE      ",
+      "provenance": {
+        "range": [
+          "$22E5B",
+          "$22F0C"
+        ],
+        "sha256": "2ee9de62046b51a8a70085d99a6498c625c6d98f93f1489f60d47178b6ecdc59"
+      },
+      "records": [
+        {
+          "cell": 1,
+          "text": "TOLOSA    SPACEPORT "
+        },
+        {
+          "cell": 18,
+          "text": "P C BIL HQ BUILDING "
+        }
+      ]
+    },
+    {
+      "group": 24,
+      "header": "BACCHUS   WAYSTATION",
+      "provenance": {
+        "range": [
+          "$22F1D",
+          "$2303D"
+        ],
+        "sha256": "8fcf8b4bd2c33976edd10f97e7c9416cb65006586d850b0fb4635204a65a1475"
+      },
+      "records": [
+        {
+          "cell": 129,
+          "text": "EAST STRIPSPACEPORT "
+        },
+        {
+          "cell": 49,
+          "text": "UNCLES    CASINO    "
+        },
+        {
+          "cell": 48,
+          "text": "BOSHERS   BAR       "
+        },
+        {
+          "cell": 16,
+          "text": "GABRIELS  PLACE     "
+        },
+        {
+          "cell": 18,
+          "text": "MOTHER    MERCURYS  "
+        },
+        {
+          "cell": 130,
+          "text": "WESTSIDE  SPACEPORT "
+        }
+      ]
+    },
+    {
+      "group": 25,
+      "header": "",
+      "provenance": {
+        "range": [
+          "$20D3E",
+          "$20D4B"
+        ],
+        "sha256": "8206607cbe03c931dbbdd15bca47f20c7db9fce0d89fcc0a769d4a2026e72026"
+      },
+      "records": []
+    },
+    {
+      "group": 26,
+      "header": "MENTOR    WAYSTATION",
+      "provenance": {
+        "range": [
+          "$2304A",
+          "$2311F"
+        ],
+        "sha256": "a3dda233ae406647d8faad6b8feeec0921afc8db917be8b9b88c11f67a12121f"
+      },
+      "records": []
+    },
+    {
+      "group": 27,
+      "header": "DION      NORTH     ",
+      "provenance": {
+        "range": [
+          "$23120",
+          "$232E8"
+        ],
+        "sha256": "4c735b559a9a95746943938e8d9db34993042f6a3e8e407cd3348effa2425580"
+      },
+      "records": [
+        {
+          "cell": 39,
+          "text": "DION NORTHAIRSTRIP  "
+        },
+        {
+          "cell": 23,
+          "text": "BIL'S     BAR       "
+        },
+        {
+          "cell": 21,
+          "text": "OLD JOAN'SCOTTAGE   "
+        },
+        {
+          "cell": 37,
+          "text": "COMPANY   STORE     "
+        },
+        {
+          "cell": 52,
+          "text": "BIL'S MINESITE NO 1 "
+        },
+        {
+          "cell": 83,
+          "text": "BIL'S MINESITE NO 2 "
+        },
+        {
+          "cell": 82,
+          "text": "COMPANY   STORE     "
+        },
+        {
+          "cell": 98,
+          "text": "BIL'S MINESITE NO 3 "
+        },
+        {
+          "cell": 69,
+          "text": "BIL'S MINESITE NO 4 "
+        },
+        {
+          "cell": 70,
+          "text": "BIL'S MINESITE NO 5 "
+        },
+        {
+          "cell": 38,
+          "text": "BIL'S MINESITE NO 6 "
+        }
+      ]
+    },
+    {
+      "group": 28,
+      "header": "DION      EAST      ",
+      "provenance": {
+        "range": [
+          "$232E9",
+          "$234DB"
+        ],
+        "sha256": "af1444689a5ee05630beb914cb5355cde921a83ffc16da2ed91dfa345123ec48"
+      },
+      "records": [
+        {
+          "cell": 39,
+          "text": "DION EAST AIRSTRIP  "
+        },
+        {
+          "cell": 23,
+          "text": "ANNIES    BAR       "
+        },
+        {
+          "cell": 21,
+          "text": "ARTHUR'S  COTTAGE   "
+        },
+        {
+          "cell": 37,
+          "text": "HARDWARE  STORES    "
+        },
+        {
+          "cell": 53,
+          "text": "JONAH'S   SMITHY    "
+        },
+        {
+          "cell": 51,
+          "text": "HARRIS    WEAVERS   "
+        },
+        {
+          "cell": 82,
+          "text": "GENERAL   STORES    "
+        },
+        {
+          "cell": 100,
+          "text": "FERN      COTTAGE   "
+        },
+        {
+          "cell": 68,
+          "text": "BIL'S     MOTHERS   "
+        },
+        {
+          "cell": 83,
+          "text": "AQUIRED   FOR CLIENT"
+        },
+        {
+          "cell": 98,
+          "text": "AQUIRED   FOR CLIENT"
+        },
+        {
+          "cell": 70,
+          "text": "AQUIRED   FOR CLIENT"
+        },
+        {
+          "cell": 38,
+          "text": "AQUIRED   FOR CLIENT"
+        }
+      ]
+    },
+    {
+      "group": 29,
+      "header": "",
+      "provenance": {
+        "range": [
+          "$234E0",
+          "$23505"
+        ],
+        "sha256": "37980e0af3030de3c530957ed814bfbb9e1587f464e5651e44f19c9fa10d91d6"
+      },
+      "records": []
+    },
+    {
+      "group": 30,
+      "header": "",
+      "provenance": {
+        "range": [
+          "$23506",
+          "$23555"
+        ],
+        "sha256": "2b25b6ec776c6b2686198e91a71b14c66f847880e231e4dab664e3f1616bb357"
+      },
+      "records": []
+    },
+    {
+      "group": 31,
+      "header": "",
+      "provenance": {
+        "range": [
+          "$23556",
+          "$2356F"
+        ],
+        "sha256": "90c57d6812415d19d89e656845d747cca93c473d802d0fd0a902c325b33d20f7"
+      },
+      "records": []
+    },
+    {
+      "group": 32,
+      "header": "",
+      "provenance": {
+        "range": [
+          "$23570",
+          "$235B9"
+        ],
+        "sha256": "516259902b7f87a77dadd46c165b8c82ad97ae969e32b3f5c4238ade54743ee8"
+      },
+      "records": []
+    },
+    {
+      "group": 33,
+      "header": "",
+      "provenance": {
+        "range": [
+          "$235BA",
+          "$235EE"
+        ],
+        "sha256": "1aafcd33ca55320be2fb02032b57d05a1b6a29800be0b680e1d24ae77eca2930"
+      },
+      "records": []
+    },
+    {
+      "group": 34,
+      "header": "",
+      "provenance": {
+        "range": [
+          "$235EF",
+          "$23620"
+        ],
+        "sha256": "b1ba2b660d8cc87242ef0fe8606d58ebdfc207c131e4041d9247259d5c7e33fe"
+      },
+      "records": []
+    },
+    {
+      "group": 35,
+      "header": "",
+      "provenance": {
+        "range": [
+          "$23621",
+          "$23640"
+        ],
+        "sha256": "6d8517c47a0e3078be34d1d661c1010edbc130b3114008da568cbb1559fd7855"
+      },
+      "records": []
+    },
+    {
+      "group": 36,
+      "header": "",
+      "provenance": {
+        "range": [
+          "$23641",
+          "$2366C"
+        ],
+        "sha256": "9848c8118092db7bba387a9a0c354e1e2904f4b5454e171b970df23302c0210c"
+      },
+      "records": []
+    },
+    {
+      "group": 37,
+      "header": "",
+      "provenance": {
+        "range": [
+          "$2366D",
+          "$23689"
+        ],
+        "sha256": "7c6079e3639300fb8c40f1711729d28e64bacdb1b3ff8d606feec0ffdfb48bbb"
+      },
+      "records": []
+    },
+    {
+      "group": 38,
+      "header": "",
+      "provenance": {
+        "range": [
+          "$2368A",
+          "$236D3"
+        ],
+        "sha256": "eac310e5d2a02fea214e5a540407fabc94b484bd4cb8fd8630256b93534fee08"
+      },
+      "records": []
+    },
+    {
+      "group": 39,
+      "header": "",
+      "provenance": {
+        "range": [
+          "$236D4",
+          "$23711"
+        ],
+        "sha256": "d21064a0f25a55aa2951d676f812f62abbf683aa9ae0ab52916540f32b517b9a"
+      },
+      "records": []
+    },
+    {
+      "group": 40,
+      "header": "",
+      "provenance": {
+        "range": [
+          "$23712",
+          "$2374C"
+        ],
+        "sha256": "4bd80bdcbd820033731364df8c9a060a806ae8bcd7f5b9465e721a9b777f6aea"
+      },
+      "records": []
+    },
+    {
+      "group": 41,
+      "header": "",
+      "provenance": {
+        "range": [
+          "$20D3E",
+          "$20D4B"
+        ],
+        "sha256": "8206607cbe03c931dbbdd15bca47f20c7db9fce0d89fcc0a769d4a2026e72026"
+      },
+      "records": []
+    },
+    {
+      "group": 42,
+      "header": "",
+      "provenance": {
+        "range": [
+          "$20D3E",
+          "$20D4B"
+        ],
+        "sha256": "8206607cbe03c931dbbdd15bca47f20c7db9fce0d89fcc0a769d4a2026e72026"
+      },
+      "records": []
+    },
+    {
+      "group": 43,
+      "header": "",
+      "provenance": {
+        "range": [
+          "$20D3E",
+          "$20D4B"
+        ],
+        "sha256": "8206607cbe03c931dbbdd15bca47f20c7db9fce0d89fcc0a769d4a2026e72026"
+      },
+      "records": []
+    },
+    {
+      "group": 44,
+      "header": "",
+      "provenance": {
+        "range": [
+          "$20D3E",
+          "$20D4B"
+        ],
+        "sha256": "8206607cbe03c931dbbdd15bca47f20c7db9fce0d89fcc0a769d4a2026e72026"
+      },
+      "records": []
+    },
+    {
+      "group": 45,
+      "header": "",
+      "provenance": {
+        "range": [
+          "$20D3E",
+          "$20D4B"
+        ],
+        "sha256": "8206607cbe03c931dbbdd15bca47f20c7db9fce0d89fcc0a769d4a2026e72026"
+      },
+      "records": []
+    },
+    {
+      "group": 46,
+      "header": "",
+      "provenance": {
+        "range": [
+          "$20D3E",
+          "$20D4B"
+        ],
+        "sha256": "8206607cbe03c931dbbdd15bca47f20c7db9fce0d89fcc0a769d4a2026e72026"
+      },
+      "records": []
+    },
+    {
+      "group": 47,
+      "header": "",
+      "provenance": {
+        "range": [
+          "$20D3E",
+          "$20D4B"
+        ],
+        "sha256": "8206607cbe03c931dbbdd15bca47f20c7db9fce0d89fcc0a769d4a2026e72026"
+      },
+      "records": []
+    },
+    {
+      "group": 48,
+      "header": "",
+      "provenance": {
+        "range": [
+          "$20D3E",
+          "$20D4B"
+        ],
+        "sha256": "8206607cbe03c931dbbdd15bca47f20c7db9fce0d89fcc0a769d4a2026e72026"
+      },
+      "records": []
+    },
+    {
+      "group": 49,
+      "header": "",
+      "provenance": {
+        "range": [
+          "$2374D",
+          "$23766"
+        ],
+        "sha256": "4cb0aee53775047344b85d83fbbad9c25932c2d3e0a35b56f364570a4576693d"
+      },
+      "records": []
+    },
+    {
+      "group": 50,
+      "header": "CLOTHO    NEW TOWN  ",
+      "provenance": {
+        "range": [
+          "$23767",
+          "$238B7"
+        ],
+        "sha256": "1efaf68bd27e39b98a7f396e6cd1333d85d2e7969ba094e6a58f88180e5c5184"
+      },
+      "records": [
+        {
+          "cell": 115,
+          "text": "CLOTHO    SPACEPORT "
+        },
+        {
+          "cell": 103,
+          "text": "BUSINESS  PARK EAST "
+        },
+        {
+          "cell": 86,
+          "text": "AMPLIN    ELECTONICS"
+        },
+        {
+          "cell": 51,
+          "text": "BUSINESS  PARK WEST "
+        },
+        {
+          "cell": 18,
+          "text": "ACTIVE    MARKETING "
+        },
+        {
+          "cell": 17,
+          "text": "PCB       POWERGEN  "
+        },
+        {
+          "cell": 1,
+          "text": "BIL       INDUSTRIES"
+        }
+      ]
+    },
+    {
+      "group": 51,
+      "header": "TAKOUSHI  BASE      ",
+      "provenance": {
+        "range": [
+          "$238BC",
+          "$2390A"
+        ],
+        "sha256": "dceeab6248d7ea1360811f6425009fb13e01360c3a54ce863a2ad79a7ed3b5ac"
+      },
+      "records": []
+    },
+    {
+      "group": 52,
+      "header": "PULVIN    MINES     ",
+      "provenance": {
+        "range": [
+          "$2390B",
+          "$23959"
+        ],
+        "sha256": "f8cc3337cbef5852e3f953e0d6b18a62cd5e098d56e94c90f7a9c11e473d81f3"
+      },
+      "records": []
+    },
+    {
+      "group": 53,
+      "header": "IDI       CENTRE    ",
+      "provenance": {
+        "range": [
+          "$2395A",
+          "$23A05"
+        ],
+        "sha256": "496f17cc3a6510eb838460f28e70d470420b786d9d0ffa4c9cb8aea5c0f27dd4"
+      },
+      "records": [
+        {
+          "cell": 34,
+          "text": "IDI PALACEOF FUN    "
+        }
+      ]
+    },
+    {
+      "group": 54,
+      "header": "CRONUS    MUSEUM    ",
+      "provenance": {
+        "range": [
+          "$23A06",
+          "$23A39"
+        ],
+        "sha256": "703034bb65b05cefd8364d97e5ab8b7b7eb8e366f58cc289b7eab7bee646ac92"
+      },
+      "records": []
+    },
+    {
+      "group": 55,
+      "header": "ATROPOS   WAYSTATION",
+      "provenance": {
+        "range": [
+          "$23A3A",
+          "$23A94"
+        ],
+        "sha256": "1ed74524db4ca3694555ceb8cd3601be9f6d6d523544069ae75e67c688fd358d"
+      },
+      "records": []
+    },
+    {
+      "group": 56,
+      "header": "THE MIDAS PROJECT   ",
+      "provenance": {
+        "range": [
+          "$23A95",
+          "$23ABC"
+        ],
+        "sha256": "147048cce28409530cfd157de09c2b4b20179223042e95d82f59f5bbae1f086b"
+      },
+      "records": []
+    }
+  ],
   "openTable": {
     "provenance": {
       "range": [
@@ -1683,6 +3093,529 @@
         "mode": 6,
         "slot": 149
       }
+    ]
+  },
+  "random": {
+    "provenance": {
+      "range": [
+        "$3DC00",
+        "$3E000"
+      ],
+      "sha256": "5c84adb3e5b2c7b228bb285540e562e9d49b94423b96c6fdcfa5caa09c3f39e4"
+    },
+    "words": [
+      58684,
+      22361,
+      51028,
+      61803,
+      23433,
+      19785,
+      59097,
+      19588,
+      64638,
+      31030,
+      38988,
+      59624,
+      16406,
+      23148,
+      33801,
+      1731,
+      62990,
+      23799,
+      28716,
+      41216,
+      16866,
+      9634,
+      40080,
+      39244,
+      22222,
+      40442,
+      57042,
+      42003,
+      62414,
+      49227,
+      32334,
+      62593,
+      40861,
+      9120,
+      53280,
+      43137,
+      42168,
+      18375,
+      37667,
+      62656,
+      52571,
+      41290,
+      3060,
+      4266,
+      57217,
+      25974,
+      57583,
+      57963,
+      55527,
+      5718,
+      46640,
+      27374,
+      60169,
+      52919,
+      35218,
+      61921,
+      14115,
+      20005,
+      52914,
+      61869,
+      18992,
+      50412,
+      19180,
+      50049,
+      22766,
+      24600,
+      45403,
+      2888,
+      15319,
+      38260,
+      65245,
+      58285,
+      11047,
+      12173,
+      38412,
+      51741,
+      15068,
+      6575,
+      6981,
+      19139,
+      38576,
+      60389,
+      4259,
+      27789,
+      32288,
+      14077,
+      12804,
+      56613,
+      104,
+      36993,
+      37122,
+      56568,
+      30851,
+      24254,
+      28922,
+      60210,
+      51503,
+      25791,
+      58119,
+      12734,
+      22758,
+      3665,
+      8711,
+      45385,
+      52708,
+      31744,
+      44692,
+      11583,
+      35367,
+      20248,
+      11019,
+      55244,
+      59241,
+      13733,
+      63367,
+      48603,
+      13095,
+      13938,
+      36326,
+      62233,
+      27293,
+      48396,
+      40386,
+      32242,
+      46790,
+      26047,
+      59512,
+      914,
+      43103,
+      35223,
+      56611,
+      13284,
+      13284,
+      35423,
+      62625,
+      62869,
+      28049,
+      56996,
+      52620,
+      21009,
+      1378,
+      56754,
+      2113,
+      8580,
+      33554,
+      19348,
+      58075,
+      30426,
+      16926,
+      42264,
+      38200,
+      52158,
+      11714,
+      11208,
+      27890,
+      60573,
+      15609,
+      45552,
+      43365,
+      42146,
+      44672,
+      9886,
+      6063,
+      10683,
+      1235,
+      57756,
+      28330,
+      18578,
+      49710,
+      44919,
+      27380,
+      20628,
+      58509,
+      40315,
+      43750,
+      49132,
+      8619,
+      34228,
+      19103,
+      44936,
+      58117,
+      23277,
+      16377,
+      65298,
+      470,
+      13491,
+      30353,
+      16631,
+      17180,
+      6994,
+      43971,
+      26211,
+      37777,
+      37845,
+      2731,
+      11073,
+      946,
+      60426,
+      34852,
+      16958,
+      33723,
+      18043,
+      65227,
+      16582,
+      24487,
+      26228,
+      2812,
+      19205,
+      31540,
+      15363,
+      42707,
+      32742,
+      19932,
+      12274,
+      34347,
+      9494,
+      40667,
+      12238,
+      12961,
+      37633,
+      303,
+      31203,
+      59281,
+      57555,
+      3986,
+      10557,
+      11799,
+      20599,
+      26753,
+      33191,
+      14606,
+      31387,
+      27192,
+      64430,
+      275,
+      15017,
+      44722,
+      4254,
+      8322,
+      23245,
+      18348,
+      50818,
+      28535,
+      65525,
+      47778,
+      64552,
+      24525,
+      54731,
+      48336,
+      29978,
+      6433,
+      64188,
+      44850,
+      42404,
+      21711,
+      44019,
+      55939,
+      16084,
+      63987,
+      45406,
+      27456,
+      31348,
+      31080,
+      35239,
+      11685,
+      10001,
+      59851,
+      22075,
+      2477,
+      29687,
+      58232,
+      34630,
+      16149,
+      32050,
+      7307,
+      18355,
+      24921,
+      38797,
+      50399,
+      43311,
+      5045,
+      23701,
+      41489,
+      36902,
+      34085,
+      30358,
+      60285,
+      24516,
+      44132,
+      11419,
+      58943,
+      26100,
+      17391,
+      44658,
+      16690,
+      1891,
+      34306,
+      8357,
+      12531,
+      43901,
+      43160,
+      26753,
+      19422,
+      26734,
+      6510,
+      47121,
+      9743,
+      28449,
+      31232,
+      55842,
+      44385,
+      14148,
+      23434,
+      15936,
+      17777,
+      27456,
+      47879,
+      50359,
+      41883,
+      37956,
+      15669,
+      19091,
+      27386,
+      34363,
+      10894,
+      62879,
+      34924,
+      35792,
+      11086,
+      16488,
+      20107,
+      21104,
+      50035,
+      50746,
+      20916,
+      38470,
+      36535,
+      53024,
+      1026,
+      36416,
+      15511,
+      39912,
+      4435,
+      6152,
+      19535,
+      29212,
+      31553,
+      41995,
+      35034,
+      26633,
+      29993,
+      57717,
+      17654,
+      61626,
+      38,
+      10801,
+      22301,
+      10236,
+      18198,
+      44780,
+      54667,
+      56923,
+      47763,
+      25362,
+      37438,
+      25891,
+      60666,
+      43215,
+      22256,
+      6752,
+      11878,
+      48398,
+      57630,
+      46301,
+      59573,
+      58236,
+      40452,
+      20519,
+      48001,
+      21125,
+      9885,
+      14474,
+      22567,
+      57173,
+      31654,
+      30482,
+      7618,
+      27095,
+      411,
+      7562,
+      30000,
+      2232,
+      15544,
+      21119,
+      60683,
+      62820,
+      19705,
+      7485,
+      5552,
+      14343,
+      10777,
+      61903,
+      7482,
+      5005,
+      40853,
+      64771,
+      11143,
+      12705,
+      2217,
+      12387,
+      32305,
+      36528,
+      52304,
+      3643,
+      17556,
+      9701,
+      39239,
+      13721,
+      15310,
+      23854,
+      25098,
+      44615,
+      2745,
+      12597,
+      6357,
+      62674,
+      24051,
+      8551,
+      11172,
+      50822,
+      50133,
+      56303,
+      49202,
+      44399,
+      18558,
+      43451,
+      45052,
+      19544,
+      53704,
+      39541,
+      17469,
+      27342,
+      15184,
+      28810,
+      45555,
+      49437,
+      12914,
+      19750,
+      21976,
+      33872,
+      53834,
+      7220,
+      45161,
+      45621,
+      65459,
+      49249,
+      8674,
+      7510,
+      34122,
+      65305,
+      26174,
+      14591,
+      61291,
+      11400,
+      53563,
+      42302,
+      10290,
+      38809,
+      19027,
+      31453,
+      54138,
+      46585,
+      2242,
+      22377,
+      27360,
+      4116,
+      3974,
+      10542,
+      6592,
+      60694,
+      26969,
+      47928,
+      22838,
+      48874,
+      9400,
+      338,
+      19485,
+      20030,
+      4063,
+      9225,
+      56082,
+      42620,
+      13513,
+      19625,
+      36977,
+      49616,
+      5427,
+      12605,
+      13398,
+      62760,
+      42649,
+      24723,
+      10396,
+      7214,
+      3639,
+      20021,
+      34016,
+      34127,
+      7433,
+      7791,
+      62078,
+      40374
     ]
   },
   "schemaVersion": 1,
@@ -2347,5 +4280,28 @@
         ]
       }
     ]
+  },
+  "switchField": {
+    "off": [
+      "00001100000011000001100000100001",
+      "00001100110011001111100111100001",
+      "11101100110011000011100001100111",
+      "00001100110011001111100111100001",
+      "00001100000011001111100111100001"
+    ],
+    "on": [
+      "00001111100000011001100111100001",
+      "00001111100110011000100111100001",
+      "11101111100110011000000111100111",
+      "00001111100110011001000111100001",
+      "00001111100000011001100111100001"
+    ],
+    "provenance": {
+      "range": [
+        "$4DE2C",
+        "$4DE54"
+      ],
+      "sha256": "a08c54d72179ce4be59ab9cb55f4d22042188ae0e9e59ed4cb4bf5699c424b3e"
+    }
   }
 }

@@ -45,6 +45,7 @@ export type DionCentreView =
         readonly name: string;
       };
       readonly kind: 'panel';
+      readonly lines?: readonly [string, string];
       readonly reveal: number;
       readonly to: DionCentreArt;
     };
@@ -143,6 +144,17 @@ export const drawDionPanel = (
     const item = view.centre.item;
     if (reveal === 0 && item !== undefined) {
       writeField(planes, doc, item.field, [...item.name]);
+    }
+    if (reveal === 0 && view.centre.lines !== undefined) {
+      view.centre.lines.forEach((line, i) =>
+        writeField(
+          planes,
+          doc,
+          fields.cardText,
+          [...line],
+          fields.cardText.lines[i]
+        )
+      );
     }
   }
   if (view.centre.kind === 'card' && (view.centre.reveal ?? 0) > 0) {
