@@ -16,6 +16,10 @@ import { AudioWorkletTransport } from '../sound/transport.ts';
 import { button, card } from './cards.ts';
 import { installDionBoard } from './dionBoard.ts';
 import type { DionBoardCommand } from './dionProgram.ts';
+import type {
+  GhettoblasterCommand,
+  GhettoblasterDocument
+} from './ghettoblasterProgram.ts';
 
 /// The sound board: every sound the port plays, on demand, for listening (#508).
 ///
@@ -111,8 +115,24 @@ try {
     workletUrl: '/src/soundboard/dionWorklet.ts'
   });
 
+  /// The board's own whole SID, for arrangements beyond what Targ's synth plays.
+  const sidBoard = new AudioWorkletTransport<
+    GhettoblasterCommand,
+    GhettoblasterDocument
+  >(
+    {
+      clockHz: targDocument.sid.clockHz,
+      music: { ...music, addressZero: music.addressZero.bytes }
+    },
+    {
+      onFailure: failed,
+      processor: 'board-sid',
+      workletUrl: '/src/soundboard/ghettoblasterWorklet.ts'
+    }
+  );
+
   const controls = (): void => {
-    for (const transport of [targ, damocles, dion]) {
+    for (const transport of [targ, sidBoard, damocles, dion]) {
       transport.send({
         at: now(),
         commands: [
@@ -126,6 +146,7 @@ try {
   const unlock = (): Promise<void> => {
     unlocked ??= Promise.all([
       targ.unlock(),
+      sidBoard.unlock(),
       damocles.unlock(),
       dion.unlock()
     ]).then(() => {
@@ -181,7 +202,11 @@ try {
       }
     });
 
+  const stopSidBoard = (): void => {
+    sidBoard.send({ at: now(), commands: [{ kind: 'reset' }] });
+  };
   const stopTarg = (): void => {
+    stopSidBoard();
     targ.send({
       at: now(),
       commands: [{ kind: 'reset', registers: targDocument.initialRegisters }]
@@ -381,6 +406,20 @@ try {
       }
     });
   });
+  const sidTune = card(
+    targBoard,
+    'GHETTOBLASTER on the SID',
+    `Damocles's tune arranged for the SID: its pitches, bends and rests from the ST player, every note retriggering its voice's gate. A noise hi-hat, a sweeping pulse bass through the resonant low-pass and a sawtooth lead, each envelope fitted to the YM volume table it replaces. The board's own SID plays it, with the waveforms and filter Targ never uses. It loops every ${music.loopVbls} VBLs; the C64 never played it.`
+  );
+  button(
+    sidTune,
+    'Play',
+    () =>
+      void unlock().then(() =>
+        sidBoard.send({ at: now(), commands: [{ kind: 'play' }] })
+      )
+  );
+  button(sidTune, 'Stop', stopSidBoard);
   button(targBoard, 'Stop Targ', stopTarg);
 
   // --- Damocles --------------------------------------------------------------
