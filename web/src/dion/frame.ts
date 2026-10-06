@@ -257,8 +257,20 @@ const rotate = (
   return [q15(a * cos + b * sin), q15(b * cos - a * sin)];
 };
 
+/// One primitive a drawing routine emits, in world space with its colour word unresolved: what
+/// the Enhanced scene builds its meshes from (#806).
+export interface DionCaptured {
+  readonly colour: number;
+  /// Whether the routine asked for back faces culled; the ground record is drawn without.
+  readonly cull: boolean;
+  readonly kind: 'line' | 'polygon';
+  readonly points: readonly Vec3[];
+}
+
 interface View {
   readonly camera: LevelCamera;
+  /// Set, the drawing routines record their primitives here and project nothing.
+  readonly capture?: DionCaptured[];
   readonly paint: Paint;
   readonly primitives: OrderedPrimitive[];
   source: string;
@@ -290,6 +302,10 @@ const fill = (
   colour: number,
   cull: boolean
 ): void => {
+  if (view.capture !== undefined) {
+    view.capture.push({ colour, cull, kind: 'polygon', points });
+    return;
+  }
   const geometry = points.map(point => camera(view, point));
   const outline = screenPolygon(geometry, cull, DION_PROJECTION);
   if (outline === null) {
@@ -313,6 +329,10 @@ const stroke = (
   colour: number,
   displayPixelWidth?: number
 ): void => {
+  if (view.capture !== undefined) {
+    view.capture.push({ colour, cull: false, kind: 'line', points: [a, b] });
+    return;
+  }
   const geometry = [camera(view, a), camera(view, b)] as const;
   const segment = screenLine(geometry[0], geometry[1], DION_PROJECTION);
   if (segment === null) {
@@ -736,7 +756,12 @@ const drawModel = (
     }
     // `$5532E`: a model further than its range on any axis is not drawn.
     const range = op === 0xc ? (header?.range ?? 1) : 1;
-    if (!passenger && rel.some(value => Math.abs(value) > range * 0x1_00_00)) {
+    // The Enhanced scene draws objects from anywhere, as the Damocles port does.
+    if (
+      view.capture === undefined &&
+      !passenger &&
+      rel.some(value => Math.abs(value) > range * 0x1_00_00)
+    ) {
       // `$545AE`: the promoted locator's far branch keeps one lit colour-3
       // point, while its dark phase draws nothing.
       if (beacon && model === beacon.lit) {
@@ -1445,37 +1470,49 @@ const drawDetail = (view: View, bound: Bound): void =>
           break;
         }
       }
-      const mirrored = sx * sz < 0;
-      const points = detail.vertices.map(([x, y, z]): Vec3 => [
-        bound.origin[0] + x * sx,
-        y < 0 ? ~y : y,
-        bound.origin[2] + z * sz
-      ]);
       for (const record of records) {
-        const primitive = detail.primitives[record - 1];
-        if (primitive === undefined) {
-          view.paint.gaps.add(
-            `detail ${detail.index} record ${record} is missing`
-          );
-          continue;
-        }
-        if (primitive.kind === 'text') {
-          drawDetailText(view, bound, primitive);
-          continue;
-        }
-        const refs =
-          mirrored && primitive.kind === 'polygon'
-            ? [...primitive.refs].reverse()
-            : primitive.refs;
-        const vertices = refs.map(ref => points[(ref >> 2) - 1]!);
-        if (primitive.kind === 'line') {
-          stroke(view, vertices[0]!, vertices[1]!, primitive.colour & ~0x40_00);
-        } else {
-          fill(view, vertices, primitive.colour, true);
-        }
+        drawDetailRecord(view, bound, record);
       }
     }
   );
+
+const detailPoints = new WeakMap<Bound, Vec3[]>();
+
+/// One building-detail record: a polygon, a line or a `$6000` text, scaled with the structure.
+/// A mirroring scale turns every polygon's winding over.
+const drawDetailRecord = (view: View, bound: Bound, record: number): void => {
+  const detail = bound.detail;
+  const [sx, sz] = bound.cell.scale;
+  const mirrored = sx * sz < 0;
+  let points = detailPoints.get(bound);
+  if (points === undefined) {
+    points = detail.vertices.map(([x, y, z]): Vec3 => [
+      bound.origin[0] + x * sx,
+      y < 0 ? ~y : y,
+      bound.origin[2] + z * sz
+    ]);
+    detailPoints.set(bound, points);
+  }
+  const primitive = detail.primitives[record - 1];
+  if (primitive === undefined) {
+    view.paint.gaps.add(`detail ${detail.index} record ${record} is missing`);
+    return;
+  }
+  if (primitive.kind === 'text') {
+    drawDetailText(view, bound, primitive);
+    return;
+  }
+  const refs =
+    mirrored && primitive.kind === 'polygon'
+      ? [...primitive.refs].reverse()
+      : primitive.refs;
+  const vertices = refs.map(ref => points[(ref >> 2) - 1]!);
+  if (primitive.kind === 'line') {
+    stroke(view, vertices[0]!, vertices[1]!, primitive.colour & ~0x40_00);
+  } else {
+    fill(view, vertices, primitive.colour, true);
+  }
+};
 
 /// `$54FA0..$5502A`: a `$6000` record's anchor scaled with the structure and its
 /// lettering mirrored with the scale on the axis it advances along.
@@ -1892,3 +1929,193 @@ export const openingFrameState = (world: DionFrameWorld): DionFrameState => ({
 });
 
 export type { DionCell };
+
+// ---- The parts the Enhanced scene places ---------------------------------------------------
+
+/// A Dion frame's parts as the shared Enhanced planner takes them (#806), each captured from
+/// this planner's own routines in world space. The planner decides nothing here about what is
+/// drawn: the plan's every wall, each door with every face, every wall text, every detail
+/// record and the cell's ground record, so that the shared planner's rules can choose.
+export interface DionParts {
+  readonly residents: readonly {
+    readonly position: Vec3;
+    readonly primitives: readonly DionCaptured[];
+    readonly slot: number;
+  }[];
+  /// The scene palette half each colour word with bit 7 reads, by day and by night.
+  readonly scene: {
+    readonly day: readonly number[];
+    readonly night: readonly number[];
+  };
+  readonly structure: {
+    readonly cell: DionCell;
+    readonly detail: DionDetail;
+    readonly details: ReadonlyMap<number, readonly DionCaptured[]>;
+    readonly doors: readonly {
+      readonly door: DionAttachment;
+      readonly primitives: readonly DionCaptured[];
+    }[];
+    readonly ground: readonly DionCaptured[];
+    /// The structure's origin, the cell base plus its cell-local origin, at height 0.
+    readonly origin: Vec3;
+    readonly structure: DionStructure;
+    readonly walls: ReadonlyMap<number, readonly DionCaptured[]>;
+    readonly wallTexts: readonly {
+      readonly face: number;
+      readonly plane: number;
+      readonly primitives: readonly DionCaptured[];
+    }[];
+  } | null;
+}
+
+export const captureDionParts = (
+  world: DionFrameWorld,
+  state: DionFrameState
+): DionParts => {
+  const space = state.skyView?.body === null;
+  const bound = space ? null : bind(world, state);
+  const sceneHalf =
+    bound === null ? undefined : world.palettes.get(bound.cell.palette);
+  const paint: Paint = {
+    candidate: null,
+    gaps: new Set(),
+    labelCode: null,
+    lines: 0,
+    models: [],
+    palette: new FramePalette(world.framePalette.template),
+    polygons: 0,
+    scene: [],
+    slotDigit: null
+  };
+  const camera = state.cameraAngles
+    ? generalCamera(
+        state.eye,
+        state.cameraAngles.roll,
+        state.cameraAngles.pitch,
+        state.cameraAngles.yaw
+      )
+    : levelCamera(state.eye, state.heading);
+  const capturing = (draw: (view: View) => void): DionCaptured[] => {
+    const capture: DionCaptured[] = [];
+    draw({
+      camera,
+      capture,
+      paint,
+      primitives: [],
+      source: `cell:${state.cell}`,
+      state,
+      world
+    });
+    return capture;
+  };
+  let structure: DionParts['structure'] = null;
+  if (bound !== null) {
+    const walls = new Map<number, DionCaptured[]>();
+    for (let wall = 1; wall <= bound.structure.walls.length; wall += 1) {
+      walls.set(
+        wall,
+        capturing(view => drawWall(view, bound, wall * 4))
+      );
+    }
+    const doors = bound.structure.attachments.map(door => {
+      const first = door.firstWall * 4;
+      const open = (state.doors.get(door.slot)?.openUnits ?? 0) > 0;
+      const faces = door.twoLeaves
+        ? [first, first + 8, first + 12, first + 20]
+        : [first, first + 8];
+      const edges = !open
+        ? []
+        : door.twoLeaves
+          ? [first + 4, first + 16]
+          : [first + 4];
+      return {
+        door,
+        primitives: capturing(view => {
+          for (const slot of [...edges, ...faces]) {
+            drawWall(view, bound, slot);
+          }
+        })
+      };
+    });
+    const wallTexts = bound.structure.wallTexts.map((text, index) => ({
+      face: text.face,
+      plane: text.plane,
+      primitives: capturing(view => drawWallText(view, bound, index))
+    }));
+    const details = new Map<number, DionCaptured[]>();
+    for (
+      let record = 1;
+      record <= bound.detail.primitives.length;
+      record += 1
+    ) {
+      details.set(
+        record,
+        capturing(view => drawDetailRecord(view, bound, record))
+      );
+    }
+    structure = {
+      cell: bound.cell,
+      detail: bound.detail,
+      details,
+      doors,
+      ground: capturing(view => drawGround(view, bound)),
+      origin: [bound.origin[0], 0, bound.origin[2]],
+      structure: bound.structure,
+      walls,
+      wallTexts
+    };
+  }
+  const residents: DionParts['residents'][number][] = [];
+  const view: View = {
+    camera,
+    paint,
+    primitives: [],
+    source: `cell:${state.cell}`,
+    state,
+    world
+  };
+  // The residents a region queue hooks in (`$5B3A6`) are drawn with the rest: depth, not the
+  // queue, decides which of them shows.
+  const hooked: Placed[] =
+    bound === null
+      ? []
+      : world.residents
+          .filter(
+            resident =>
+              resident.cell === bound.cell.cell &&
+              resident.group === world.metisGroup &&
+              resident.association !== 0
+          )
+          .map(resident => ({
+            cellNumber: resident.cell,
+            model:
+              resident.model === null
+                ? undefined
+                : world.models.get(resident.model),
+            pose: residentPose(view, resident),
+            slot: resident.slot
+          }));
+  const seen = new Set<number>();
+  for (const item of [...drawable(view, bound), ...hooked]) {
+    if (item.slot === 0 || item.model === undefined || seen.has(item.slot)) {
+      continue;
+    }
+    seen.add(item.slot);
+    const model = item.model;
+    residents.push({
+      position: item.pose.position,
+      primitives: capturing(view =>
+        drawModel(view, bound, item.slot, model, item.pose)
+      ),
+      slot: item.slot
+    });
+  }
+  return {
+    residents,
+    scene: {
+      day: sceneHalf?.day ?? [],
+      night: sceneHalf?.night ?? []
+    },
+    structure
+  };
+};

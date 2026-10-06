@@ -27,6 +27,7 @@ import {
   stepDetector,
   stepFruitMachine
 } from './devices.ts';
+import { dionEnhancedScene, type DionEnhancedScene } from './enhancedScene.ts';
 import {
   planDionFrame,
   zoneOf,
@@ -1514,14 +1515,16 @@ export class TourcraftSession extends DionSession {
   panelView() {
     return tourcraftPanelView(this.state, this.promoted);
   }
-  planFrame() {
+  /// The world and state one frame is planned from, which the Authentic planner and the
+  /// Enhanced scene both take.
+  private frameInputs(): readonly [DionFrameWorld, DionFrameState] {
     const world = this.worlds.get(this.state.location === 100 ? 100 : 60)!;
     const floor = this.expanded.owners['location']!['floor']!;
     // `$53C7C..$53C8C`: an interior resident joins its region's queue only on the current Floor.
     const residents = this.drawnResidents().filter(
       r => r.association === 0 || r.body === floor
     );
-    return planDionFrame(
+    return [
       {
         ...world,
         drawList: {
@@ -1539,7 +1542,14 @@ export class TourcraftSession extends DionSession {
         residents
       },
       this.expandedFrameState()
-    );
+    ];
+  }
+  planFrame() {
+    return planDionFrame(...this.frameInputs());
+  }
+  /// The frame as the shared Enhanced planner takes it (ADR 0077).
+  enhancedScene(): DionEnhancedScene {
+    return dionEnhancedScene(...this.frameInputs());
   }
   protected override admissionFlags(): number {
     return this.state.tourcraft

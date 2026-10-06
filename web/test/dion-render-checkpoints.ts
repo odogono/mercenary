@@ -51,10 +51,8 @@ export const dionRenderCheckpoints = async function* () {
       } else if (name === 'night') {
         until(session, () => !session.snapshot.day);
       }
-      const planned = planDionFrame(
-        content.world,
-        dionFrameState(session.snapshot)
-      );
+      const state = dionFrameState(session.snapshot);
+      const planned = planDionFrame(content.world, state);
       const rgba = new Uint8ClampedArray(320 * 200 * 4);
       frameRgba(planned, rgba);
       panelRgba(
@@ -64,7 +62,9 @@ export const dionRenderCheckpoints = async function* () {
       yield {
         name: `${spaceport ? 'spaceport' : 'solicitor'}-${name}`,
         planned,
-        rgba
+        rgba,
+        state,
+        world: content.world
       };
     }
   }
