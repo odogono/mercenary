@@ -14,6 +14,7 @@ import {
   stepCarriedLabel,
   take,
   type CarryOutcome,
+  type CarryPlace,
   type CarryWorld
 } from './carry.ts';
 import type { DionContent } from './content.ts';
@@ -34,13 +35,15 @@ import {
 } from './frame.ts';
 import { dionHeadTable, documentItems, openRow, panelArt } from './head.ts';
 import type { DionCentreArt, DionCentreView } from './panel.ts';
+import { repricePawn } from './pawn.ts';
 import { list, record } from './read.ts';
 import { initializeBodyTaxi, stepTaxi } from './service.ts';
 import {
   DionSession,
   dionFrameState,
   dionPanelView,
-  type DionResumeRecord
+  type DionResumeRecord,
+  type DionSnapshot
 } from './session.ts';
 import { requestSound, tickSound, type DionSoundState } from './sound.ts';
 import type { TourcraftContent } from './tourcraftContent.ts';
@@ -197,6 +200,7 @@ export class TourcraftSession extends DionSession {
         head: initialHeadCommands(),
         liveIntent: IDLE,
         owners,
+        pawn: { ...promoted.head.pawn.initial },
         phases: initialTourcraftPhases(promoted),
         playerZone: Number(promoted.gameplay.initial['playerZone']),
         reading: null,
@@ -426,6 +430,7 @@ export class TourcraftSession extends DionSession {
       ...this.state,
       tourcraft: updateTourcraftOwners(this.promoted, this.state, previous)
     };
+    this.refreshPawn(previous);
     if (
       this.narrative.state.message.serial !== previous.narrative.message.serial
     ) {
@@ -481,7 +486,6 @@ export class TourcraftSession extends DionSession {
   /// Take, Drop and rotation (#756), and Open, which reads the head object.
   private handleCarry(): boolean {
     const action = this.state.pending;
-    const e = this.expanded;
     if (
       action !== 'take' &&
       action !== 'drop' &&
@@ -490,6 +494,8 @@ export class TourcraftSession extends DionSession {
     ) {
       return false;
     }
+    this.refreshPawn();
+    const e = this.expanded;
     this.state = { ...this.state, pending: null };
     const body = this.state.location === 65_535 ? 0x78 : this.state.location;
     const outcome: CarryOutcome =
@@ -499,7 +505,9 @@ export class TourcraftSession extends DionSession {
             e.residents,
             this.carryWorld,
             this.state.candidate,
-            body
+            body,
+            { cash: this.state.cash, pawn: e.pawn },
+            this.state.region
           )
         : action === 'drop'
           ? drop(
@@ -507,11 +515,19 @@ export class TourcraftSession extends DionSession {
               e.residents,
               this.carryWorld,
               this.state.candidate,
-              this.carryPlace(body)
+              this.carryPlace(body),
+              { cash: this.state.cash, pawn: e.pawn }
             )
           : rotate(e.carry, e.residents, this.carryWorld, action);
     if (outcome.message !== undefined) {
       this.narrative.idMessage(outcome.message);
+    }
+    if (outcome.economy) {
+      this.state = {
+        ...this.state,
+        cash: outcome.economy.cash,
+        tourcraft: { ...this.expanded, pawn: outcome.economy.pawn }
+      };
     }
     if (outcome.kind === 'refused') {
       return true;
@@ -525,7 +541,11 @@ export class TourcraftSession extends DionSession {
         ...this.state.gauges,
         inventory: inventoryGauge(outcome.carry)
       },
-      tourcraft: { ...e, carry: outcome.carry, residents: outcome.residents }
+      tourcraft: {
+        ...this.expanded,
+        carry: outcome.carry,
+        residents: outcome.residents
+      }
     };
     if (outcome.script !== undefined) {
       this.narrative.start(outcome.script);
@@ -539,7 +559,7 @@ export class TourcraftSession extends DionSession {
   }
 
   /// What the Drop handler reads of where the player stands.
-  private carryPlace(body: number) {
+  protected carryPlace(body: number): CarryPlace {
     const f = this.expanded.flight;
     const aboard = f !== null && f.mode !== 'foot';
     const { cell, eye, region } = this.state;
@@ -568,8 +588,34 @@ export class TourcraftSession extends DionSession {
       floor: this.expanded.owners['location']!['floor']!,
       group: this.state.location === 100 ? 23 : 3,
       interior,
+      structure: entry?.structure ?? 0,
       zone: this.zoneAt(eye, body, cell)
     };
+  }
+
+  /// `$56286` reloads the shop's offered resident; `$4E61E` prices the head
+  /// while the counter is empty. Preserve the cached price while an offer is live.
+  private refreshPawn(previous?: DionSnapshot): void {
+    const place = this.carryPlace(this.state.location);
+    if (place.structure !== 0x52) {
+      return;
+    }
+    const e = this.expanded;
+    const reload =
+      previous !== undefined &&
+      (previous.cell !== this.state.cell ||
+        previous.location !== this.state.location ||
+        previous.tourcraft!.owners['location']!['floor'] !==
+          e.owners['location']!['floor']);
+    const pawn = repricePawn(
+      e.pawn,
+      e.residents,
+      e.carry.stack[0] ?? 0,
+      this.promoted.head.pawn,
+      place,
+      reload
+    );
+    this.state = { ...this.state, tourcraft: { ...e, pawn } };
   }
 
   /// The open panel's state, with the card fields the taxi code reads kept in step: the card is

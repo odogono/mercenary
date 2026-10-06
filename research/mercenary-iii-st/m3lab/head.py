@@ -24,6 +24,7 @@ from __future__ import annotations
 
 from .panel import _nibble_rows
 from .census_locations import read_inventory
+from .geometry import model_record, model_name
 from .ram import Ram, hexaddr
 from .text import decode_packed, describe, static_strings
 
@@ -32,6 +33,35 @@ OPEN_ROW = 8
 DOCUMENT_BANK = 0x76C00
 ART_TABLE = 0x3BA00
 STRIPPED_MODES = (2, 5, 6)
+
+
+def pawn_prices(ram: Ram) -> dict:
+    """`$4E61E/$562C8`: the four BCD bytes before each named model's label.
+
+    Interior/driver-only model entries have no label/price header. They are
+    not price records. Include BIL'S CHAIR's model-swap entry as well.
+    """
+    prices = {}
+    for entry in [*range(247), 316]:
+        if model_name(ram, entry) is None:
+            continue
+        address = model_record(ram, entry) - 20
+        raw = ram.bytes(address, address + 4)
+        if any(b >> 4 > 9 or b & 15 > 9 for b in raw):
+            raise ValueError(f'model {entry}: invalid pawn price BCD')
+        digits = raw.hex()
+        row = prices.setdefault(address, {'entries': [], 'digits': digits,
+                                         'provenance': ram.slice(address, address + 4)})
+        row['entries'].append(entry)
+    return {
+        'buyMultiplier': ram.word(0x6FF0),
+        'sellMultiplier': ram.word(0x6FF2),
+        'initial': {'previous': ram.word(0x6FEE),
+                    'price': ram.bytes(0x6FE6, 0x6FEC).hex(),
+                    'slot': ram.word(0x6FEC)},
+        'provenance': ram.slice(0x6FE6, 0x6FF4),
+        'prices': list(prices.values()),
+    }
 
 
 def open_rows(ram: Ram) -> list[dict]:
@@ -98,6 +128,7 @@ def extract_head(ram: Ram) -> dict:
             lines = (1, 26) if row['mode'] == 5 else (1,)
             strips[f"{row['mode']}:{row['index']}"] = [strip(ram, row['mode'], row['index'], line) for line in lines]
     return {
+        'pawn': pawn_prices(ram),
         'fruitReels': {'values': [ram.byte(0xB330 + i) for i in range(3)],
                        'provenance': ram.slice(0xB330, 0xB333)},
         # `$4DE54` copies two words into plane 2 at x144..175, y175..179.

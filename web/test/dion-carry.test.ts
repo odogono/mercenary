@@ -72,6 +72,7 @@ const place: CarryPlace = {
   floor: 0,
   group: 3,
   interior: null,
+  structure: 0,
   zone: 4
 };
 

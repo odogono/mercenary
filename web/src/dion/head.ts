@@ -1,4 +1,5 @@
 import type { HeadTable, PanelKind } from '../interaction/headCommands.ts';
+import type { DionPawn } from './carry.ts';
 import {
   centreArt,
   textField,
@@ -38,6 +39,12 @@ export interface DionHead {
       readonly records: ReadonlyMap<number, string>;
     }
   >;
+  readonly pawn: {
+    readonly buyMultiplier: number;
+    readonly initial: DionPawn;
+    readonly prices: ReadonlyMap<number, string>;
+    readonly sellMultiplier: number;
+  };
   readonly random: readonly number[];
   readonly rows: readonly DionOpenRow[];
   /// Title and footer strips by `mode:index`: five rows of 64 bits, stamped at `line`.
@@ -55,6 +62,14 @@ const KINDS: Readonly<Record<number, PanelKind>> = {
   5: 'card',
   6: 'switch',
   7: 'log'
+};
+
+const pawnBcd = (value: unknown, width: number): string => {
+  const digits = text(value, 'head.pawn.price');
+  if (!new RegExp(`^[0-9]{${width}}$`).test(digits)) {
+    fail('head.pawn.price: invalid BCD digits');
+  }
+  return digits;
 };
 
 export const readDionHead = (raw: Record<string, unknown>): DionHead => {
@@ -135,6 +150,25 @@ export const readDionHead = (raw: Record<string, unknown>): DionHead => {
     }
     return rows;
   };
+  const pawn = record(raw['pawn'], 'head.pawn');
+  const initial = record(pawn['initial'], 'head.pawn.initial');
+  const prices = new Map<number, string>();
+  for (const value of list(pawn['prices'], 'head.pawn.prices')) {
+    const row = record(value, 'head.pawn.price');
+    const digits = pawnBcd(row['digits'], 8);
+    for (const entry of ints(
+      row['entries'],
+      'head.pawn.entries',
+      undefined,
+      0,
+      387
+    )) {
+      if (prices.has(entry)) {
+        fail('head.pawn.entries: duplicate entry');
+      }
+      prices.set(entry, digits);
+    }
+  }
   return {
     art,
     documents,
@@ -174,6 +208,26 @@ export const readDionHead = (raw: Record<string, unknown>): DionHead => {
         ];
       })
     ),
+    pawn: {
+      buyMultiplier: int(
+        pawn['buyMultiplier'],
+        'head.pawn.buyMultiplier',
+        1,
+        65_535
+      ),
+      initial: {
+        previous: int(initial['previous'], 'head.pawn.previous', 0, 246),
+        price: pawnBcd(initial['price'], 12),
+        slot: int(initial['slot'], 'head.pawn.slot', 0, 246)
+      },
+      prices,
+      sellMultiplier: int(
+        pawn['sellMultiplier'],
+        'head.pawn.sellMultiplier',
+        1,
+        65_535
+      )
+    },
     random: ints(
       record(raw['random'], 'head.random')['words'],
       'head.random.words',
