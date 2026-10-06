@@ -34,15 +34,62 @@ export interface Primitive {
   readonly vertices: readonly number[];
 }
 export interface Mesh {
+  /**
+   * `$8001` with mode bit 7: the vertices `$0537B0` turns about `pivot` by the angle at
+   * `$7888`, in the plane `axis` names. The listed vertices are stored complemented, as the
+   * record holds them.
+   */
+  readonly articulation?: MeshArticulation;
   readonly displayCode?: string;
   readonly faces: readonly Primitive[];
   readonly labelAnchor?: Point;
   readonly lines: readonly Primitive[];
   /** Source primitive records this detail holds, drawn or not. */
   readonly recordCount?: number;
+  /** Vector texts whose last character a `$CCA0` frame script steps (`$053EBE`). */
+  readonly textAnimations?: readonly TextAnimation[];
   /** Records that name a shared vertex slot this list never fills. */
   readonly unreferencedRecords?: readonly number[];
   readonly vertices: readonly Point[];
+  /**
+   * `$0538F4`'s groups, in test order: group `n`, the `view-n` form, is drawn while the
+   * object's position less the eye's lies in its box. Raw units, half-open per axis.
+   */
+  readonly viewGroups?: readonly ViewGroup[];
+}
+export interface MeshArticulation {
+  readonly axis: number;
+  readonly pivot: Point;
+  readonly vertices: readonly number[];
+}
+export interface ViewGroup {
+  readonly bounds: readonly [
+    readonly [number, number],
+    readonly [number, number],
+    readonly [number, number]
+  ];
+}
+/**
+ * One frame-animated vector text: where its stepped glyph lies in this mesh, and how the
+ * extractor placed it, so another character of `script` can be laid in its place.
+ */
+export interface TextAnimation {
+  readonly advance: number;
+  readonly anchor: Point;
+  readonly characterIndex: number;
+  readonly colour: string;
+  readonly dayColour?: string;
+  readonly font: number;
+  /** The glyph's flags bits 6 and 7, which put its axes in the record's plane. */
+  readonly plane: number;
+  readonly range: {
+    readonly faces: readonly [number, number];
+    readonly lines: readonly [number, number];
+    readonly vertices: readonly [number, number];
+  };
+  readonly scale: readonly [number, number];
+  readonly script: string;
+  readonly sourceColour: number;
 }
 export const RECORD_CLASSES = [
   'geometry',
@@ -238,6 +285,14 @@ export interface Model {
    * record carries none, which the bind publishes as `$8000`; absent on other kinds.
    */
   readonly extent?: DetailExtent | null;
+  /**
+   * `$8003`, a beacon: lit while bit 2 of the frame counter `$7AE8` plus its slot's phase
+   * word is clear, and, where `gateSlot` names a locator, only while that slot is carried.
+   */
+  readonly flash?: {
+    readonly gateSlot: number | null;
+    readonly phases: Readonly<Record<string, number>>;
+  };
   readonly id: string;
   /**
    * The record's `$8001` orientation command: how the draw path turns every instance of
@@ -850,6 +905,11 @@ export interface BodySky {
   readonly night: { readonly colour: string; readonly sourceColour: number };
 }
 export interface Catalogue {
+  /**
+   * `$925A`, the words `$0537B0` turns an articulated object by; absent in a synthetic
+   * document without it.
+   */
+  readonly articulationTable?: readonly number[];
   readonly bodies: readonly {
     /**
      * The body's own surface: the colour `$7C88` draws it in wherever no island is
@@ -924,6 +984,10 @@ export interface Catalogue {
     readonly extentEvidence: string;
     readonly kind: Kind;
   }[];
+  /** Every glyph a frame-animated vector text can draw, by font and character (#805). */
+  readonly textFrameGlyphs: Readonly<
+    Record<string, Readonly<Record<string, FloorLabelGlyph>>>
+  >;
 }
 
 const fail = (message: string): never => {
@@ -1311,7 +1375,67 @@ const mesh = (value: unknown, allowEmpty = false): Mesh => {
   if (displayCode !== undefined && !/^[\u0020-\u007e]{2}$/.test(displayCode)) {
     fail('invalid key display code');
   }
+  const pair = (value: unknown): readonly [number, number] => {
+    const p = list(value).map(signedInteger);
+    return p.length === 2 ? [p[0]!, p[1]!] : fail('expected a pair');
+  };
+  const viewGroups =
+    record['viewGroups'] === undefined
+      ? undefined
+      : list(record['viewGroups']).map(item => {
+          const b = list(object(item)['bounds']).map(pair);
+          return b.length === 3
+            ? { bounds: [b[0]!, b[1]!, b[2]!] as const }
+            : fail('a view group bounds three axes');
+        });
+  const articulation =
+    record['articulation'] === undefined
+      ? undefined
+      : (() => {
+          const a = object(record['articulation']);
+          return {
+            axis: signedInteger(a['axis']),
+            pivot: point(a['pivot']),
+            vertices: list(a['vertices']).map(index =>
+              integer(index) < vertices.length
+                ? integer(index)
+                : fail('invalid articulated vertex')
+            )
+          };
+        })();
+  const textAnimations =
+    record['texts'] === undefined
+      ? []
+      : list(record['texts']).flatMap(item => {
+          const text = object(item);
+          if (text['animation'] === undefined) {
+            return [];
+          }
+          const a = object(text['animation']);
+          const range = object(a['range']);
+          const dayColour = optionalDayColour(a['dayColour']);
+          return [
+            {
+              advance: signedInteger(a['advance']),
+              anchor: point(text['anchor']),
+              characterIndex: integer(a['characterIndex']),
+              colour: string(a['colour']),
+              ...(dayColour === undefined ? {} : { dayColour }),
+              font: integer(text['font']),
+              plane: integer(text['plane']),
+              range: {
+                faces: pair(range['faces']),
+                lines: pair(range['lines']),
+                vertices: pair(range['vertices'])
+              },
+              scale: pair(a['scale']),
+              script: string(a['script']),
+              sourceColour: integer(a['sourceColour'])
+            }
+          ];
+        });
   return {
+    ...(articulation === undefined ? {} : { articulation }),
     ...(displayCode === undefined ? {} : { displayCode }),
     faces: primitives(record['faces'], 3),
     ...(labelAnchor === undefined ? {} : { labelAnchor }),
@@ -1319,11 +1443,13 @@ const mesh = (value: unknown, allowEmpty = false): Mesh => {
     ...(record['recordCount'] === undefined
       ? {}
       : { recordCount: integer(record['recordCount']) }),
+    ...(textAnimations.length === 0 ? {} : { textAnimations }),
     ...(record['unreferencedRecords'] === undefined
       ? {}
       : {
           unreferencedRecords: list(record['unreferencedRecords']).map(integer)
         }),
+    ...(viewGroups === undefined ? {} : { viewGroups }),
     vertices
   };
 };
@@ -1712,6 +1838,22 @@ const modelRecord = (item: unknown): Model => {
   return {
     ...(m['boxes'] === undefined ? {} : { boxes: detailBoxes(m['boxes']) }),
     conditions: m['conditions'] === undefined ? [] : strings(m['conditions']),
+    ...(m['flash'] === undefined
+      ? {}
+      : {
+          flash: (() => {
+            const f = object(m['flash']);
+            return {
+              gateSlot: f['gateSlot'] === null ? null : integer(f['gateSlot']),
+              phases: Object.fromEntries(
+                Object.entries(object(f['phases'])).map(([slot, phase]) => [
+                  slot,
+                  integer(phase)
+                ])
+              )
+            };
+          })()
+        }),
     ...(m['sceneColours'] === undefined
       ? {}
       : {
@@ -1787,12 +1929,46 @@ const glyphIndex = (value: unknown, count: number): number => {
   const index = integer(value);
   return index < count ? index : fail('invalid glyph point reference');
 };
+/// One `$31700` glyph as the extractor publishes it.
+const fontGlyph = (value: unknown): FloorLabelGlyph => {
+  const g = fields(value, ['faces', 'lines', 'points']);
+  const points = list(g['points']).map(value => {
+    const xy = list(value).map(number);
+    if (xy.length !== 2 || xy.some(n => !Number.isInteger(n))) {
+      fail('invalid glyph point');
+    }
+    return [xy[0]!, xy[1]!] as const;
+  });
+  if ((g['faces'] === undefined) === (g['lines'] === undefined)) {
+    fail('a glyph is either filled or stroked');
+  }
+  return g['faces'] === undefined
+    ? {
+        lines: list(g['lines']).map(value => {
+          const pair = list(value).map(v => glyphIndex(v, points.length));
+          if (pair.length !== 2) {
+            fail('invalid glyph stroke');
+          }
+          return [pair[0]!, pair[1]!] as const;
+        }),
+        points
+      }
+    : {
+        faces: list(g['faces']).map(value => {
+          const refs = list(value).map(v => glyphIndex(v, points.length));
+          if (refs.length < 3) {
+            fail('invalid glyph fill');
+          }
+          return refs;
+        }),
+        points
+      };
+};
+const glyphFont = (font: string): string =>
+  /^\d+$/.test(font) ? font : fail('invalid glyph font');
 const floorLabelGlyphs = (value: unknown): Catalogue['floorLabelGlyphs'] =>
   Object.fromEntries(
     Object.entries(object(value)).map(([font, characters]) => {
-      if (!/^\d+$/.test(font)) {
-        fail('invalid floor label font');
-      }
       const table = object(characters);
       if (
         Object.keys(table).length !== FLOOR_LABEL_CHARACTERS.length ||
@@ -1801,52 +1977,41 @@ const floorLabelGlyphs = (value: unknown): Catalogue['floorLabelGlyphs'] =>
         fail('floor label font does not carry every Floor Label character');
       }
       return [
-        font,
+        glyphFont(font),
         Object.fromEntries(
-          FLOOR_LABEL_CHARACTERS.map(character => {
-            const g = fields(table[character], ['faces', 'lines', 'points']);
-            const points = list(g['points']).map(value => {
-              const xy = list(value).map(number);
-              if (xy.length !== 2 || xy.some(n => !Number.isInteger(n))) {
-                fail('invalid glyph point');
-              }
-              return [xy[0]!, xy[1]!] as const;
-            });
-            if ((g['faces'] === undefined) === (g['lines'] === undefined)) {
-              fail('a glyph is either filled or stroked');
-            }
-            const glyph: FloorLabelGlyph =
-              g['faces'] === undefined
-                ? {
-                    lines: list(g['lines']).map(value => {
-                      const pair = list(value).map(v =>
-                        glyphIndex(v, points.length)
-                      );
-                      if (pair.length !== 2) {
-                        fail('invalid glyph stroke');
-                      }
-                      return [pair[0]!, pair[1]!] as const;
-                    }),
-                    points
-                  }
-                : {
-                    faces: list(g['faces']).map(value => {
-                      const refs = list(value).map(v =>
-                        glyphIndex(v, points.length)
-                      );
-                      if (refs.length < 3) {
-                        fail('invalid glyph fill');
-                      }
-                      return refs;
-                    }),
-                    points
-                  };
-            return [character, glyph];
-          })
+          FLOOR_LABEL_CHARACTERS.map(character => [
+            character,
+            fontGlyph(table[character])
+          ])
         )
       ];
     })
   );
+const textFrameGlyphs = (value: unknown): Catalogue['textFrameGlyphs'] =>
+  Object.fromEntries(
+    Object.entries(object(value)).map(([font, characters]) => [
+      glyphFont(font),
+      Object.fromEntries(
+        Object.entries(object(characters)).map(([character, glyph]) => {
+          if (character.length !== 1) {
+            fail('a text frame glyph is one character');
+          }
+          return [character, fontGlyph(glyph)];
+        })
+      )
+    ])
+  );
+/// `$925A`: 320 signed words, the sine of `a × 360/256` at word `a` and its cosine 64 on.
+const articulationTable = (value: unknown): readonly number[] => {
+  const words = list(value).map(signedInteger);
+  if (
+    words.length !== 320 ||
+    words.some(word => word < -0x80_00 || word > 0x7f_ff)
+  ) {
+    fail('the articulation table is 320 signed words');
+  }
+  return words;
+};
 
 const sha256 = (value: unknown): string => {
   const hash = string(value);
@@ -2731,6 +2896,9 @@ export const parseCatalogueDocument = (value: unknown): Catalogue => {
     },
     craft: r['craft'] === undefined ? null : craft(r['craft']),
     floorLabelGlyphs: floorLabelGlyphs(r['floorLabelGlyphs'] ?? {}),
+    ...(r['articulationTable'] === undefined
+      ? {}
+      : { articulationTable: articulationTable(r['articulationTable']) }),
     instances,
     islands,
     modelIndex,
@@ -2738,7 +2906,8 @@ export const parseCatalogueDocument = (value: unknown): Catalogue => {
     roadNetworks,
     schemaVersion: 17,
     source,
-    tables
+    tables,
+    textFrameGlyphs: textFrameGlyphs(r['textFrameGlyphs'] ?? {})
   };
 };
 

@@ -4,6 +4,19 @@
       "flashTimer"
     ],
     "evidence": [],
+    "flash": {
+      "gateSlot": null,
+      "phases": {
+        "164": 52692,
+        "165": 53228,
+        "166": 40582,
+        "167": 56903,
+        "168": 53204,
+        "169": 128,
+        "170": 18499,
+        "171": 24576
+      }
+    },
     "id": "object-03e2c6",
     "kind": "object",
     "linkedInstances": [],
