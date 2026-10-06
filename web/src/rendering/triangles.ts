@@ -14,4 +14,7 @@ export interface TriangleFrame {
   readonly triangleCount: number;
   readonly verticalFieldOfViewDegrees: number;
   readonly vertices: Float32Array;
+  /// Models fixed to the view, a cab about the eye, painted after the world over a cleared
+  /// depth buffer, as the ST paints them last (#807).
+  readonly viewFixedVertices?: Float32Array;
 }

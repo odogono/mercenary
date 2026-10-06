@@ -1,5 +1,4 @@
 import { FrameRenderer } from '../src/rendering/renderer.ts';
-import { renderingDescription } from '../test/rendering-description.ts';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#frame')!;
 const renderer = new FrameRenderer(
@@ -51,30 +50,6 @@ const quad = (
   );
 };
 const api = {
-  render: (resolved = false) => {
-    const description = resolved
-      ? {
-          ...renderingDescription,
-          primitives: renderingDescription.primitives.map(p =>
-            p.kind === 'point'
-              ? { ...p, colour: { rgb: [12, 180, 7] as const } }
-              : p
-          )
-        }
-      : renderingDescription;
-    renderer.renderDescription(description);
-    return {
-      background: sample(0, 0),
-      error: canvas.getContext('webgl2')!.getError(),
-      height: canvas.height,
-      line: sample(3, 3),
-      lower: sample(4, 4),
-      point: sample(4, 3),
-      ratio: devicePixelRatio,
-      upper: sample(4, 2),
-      width: canvas.width
-    };
-  },
   renderDistantIsland: (enhanced = false) => {
     // A finite blue sea plane overlaps a distant white island silhouette.
     // It must not erase the land, while later foreground geometry still covers it.
@@ -117,6 +92,45 @@ const api = {
       error: canvas.getContext('webgl2')!.getError(),
       foreground: sample(2, 2)
     };
+  },
+  renderViewFixed: (enhanced = false) => {
+    // A red wall nearer than a green cab: the cab is fixed to the view, so it paints over
+    // the wall where they overlap, and the wall still covers the clear elsewhere.
+    const empty = new Float32Array();
+    renderer.render(
+      {
+        clear: [0, 0, 0],
+        farPlane: 1000,
+        fillTriangleCount: 0,
+        groundTriangleCount: 0,
+        horizonIslandVertices: empty,
+        horizonVertices: empty,
+        islandTriangleCount: 0,
+        nearPlane: 1,
+        skyVertices: empty,
+        triangleCount: 2,
+        verticalFieldOfViewDegrees: 45,
+        vertices: quad(30, 30, 20, [1, 0, 0]),
+        viewFixedVertices: quad(2, 2, 50, [0, 1, 0], [-10, 3.5])
+      },
+      enhanced
+        ? {
+            lighting: {
+              ambientGround: [1, 1, 1],
+              ambientSky: [1, 1, 1],
+              shadowDepth: 1,
+              sunColour: [0, 0, 0],
+              sunView: { x: 0, y: 1, z: 0 },
+              sunWorld: { x: 0, y: 1, z: 0 }
+            }
+          }
+        : undefined
+    );
+    return {
+      cab: sample(2, 2),
+      error: canvas.getContext('webgl2')!.getError(),
+      wall: sample(4, 3)
+    };
   }
 };
 declare global {
@@ -125,5 +139,5 @@ declare global {
   }
 }
 window.renderingFixture = api;
-api.render();
+api.renderViewFixed();
 document.getElementById('result')!.textContent = 'ready';

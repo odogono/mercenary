@@ -5,12 +5,6 @@ import {
   casterGrid,
   type CasterGrid
 } from './castShadows.ts';
-import type { FrameDescription } from './description.ts';
-import {
-  DESCRIPTION_STRIDE,
-  descriptionPalette,
-  descriptionVertices
-} from './gpuDescription.ts';
 import type { FrameLighting } from './lighting.ts';
 import { FLOATS_PER_VERTEX, type TriangleFrame } from './triangles.ts';
 
@@ -25,37 +19,6 @@ import { FLOATS_PER_VERTEX, type TriangleFrame } from './triangles.ts';
 /// Authority shows outdoors (ADR 0043).
 /// The shape follows the Flyover renderer rather than Targ's line-list `Renderer`, whose
 /// batches are pixel-space lines under the C64 Reference Viewport.
-const ORDERED_VERTEX = `#version 300 es
-in vec3 camera;
-in vec3 colour;
-in float paletteIndex;
-uniform vec2 referenceSize;
-uniform vec2 centre;
-uniform float focal;
-out vec3 resolvedColour;
-flat out int colourIndex;
-void main() {
-  float d = camera.z;
-  vec2 screen = centre + vec2(-camera.x, camera.y) * focal / d;
-  vec2 ndc = (screen + 0.5) / referenceSize * 2.0 - 1.0;
-  gl_Position = vec4(ndc.x * d, -ndc.y * d, 0.0, d);
-  resolvedColour = colour;
-  colourIndex = int(paletteIndex);
-}`;
-const ORDERED_FRAGMENT = `#version 300 es
-precision highp float;
-precision highp int;
-in vec3 resolvedColour;
-flat in int colourIndex;
-uniform sampler2D palette;
-uniform vec2 referenceSize;
-uniform vec2 outputSize;
-out vec4 pixel;
-void main() {
-  int row = clamp(int((outputSize.y - gl_FragCoord.y) * referenceSize.y / outputSize.y), 0, int(referenceSize.y) - 1);
-  pixel = colourIndex < 0 ? vec4(resolvedColour, 1.0) : texelFetch(palette, ivec2(colourIndex, row), 0);
-}`;
-
 const VERTEX = `#version 300 es
 in vec3 view;
 in vec3 colour;
@@ -430,13 +393,6 @@ export class FrameRenderer {
   private enhanced: EnhancedResources | undefined;
   private readonly gl: WebGL2RenderingContext;
   private readonly shaderProgram: WebGLProgram;
-  private ordered:
-    | {
-        readonly buffer: WebGLBuffer;
-        readonly palette: WebGLTexture;
-        readonly program: WebGLProgram;
-      }
-    | undefined;
   private readonly contextLost: (event: Event) => void;
 
   constructor(
@@ -521,122 +477,12 @@ export class FrameRenderer {
     this.drawLayers(this.shaderProgram, plan);
   }
 
-  /// The ordered, camera-first contract; the legacy triangle entry point above remains unchanged.
-  renderDescription(description: FrameDescription): void {
-    const gl = this.gl;
-    if (gl.isContextLost()) {
-      throw new Error('The graphics context was lost.');
-    }
-    this.resize();
-    if (this.ordered === undefined) {
-      const buffer = gl.createBuffer();
-      const palette = gl.createTexture();
-      if (buffer === null || palette === null) {
-        if (buffer !== null) {
-          gl.deleteBuffer(buffer);
-        }
-        if (palette !== null) {
-          gl.deleteTexture(palette);
-        }
-        throw new Error('Could not allocate the ordered frame resources.');
-      }
-      try {
-        this.ordered = {
-          buffer,
-          palette,
-          program: program(gl, ORDERED_VERTEX, ORDERED_FRAGMENT)
-        };
-      } catch (error) {
-        gl.deleteBuffer(buffer);
-        gl.deleteTexture(palette);
-        throw error;
-      }
-    }
-    const resources = this.ordered;
-    this.resetState();
-    gl.disable(gl.DEPTH_TEST);
-    gl.disable(gl.CULL_FACE);
-    gl.clearColor(0, 0, 0, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    gl.useProgram(resources.program);
-    for (const attribute of this.enabledAttributes) {
-      gl.disableVertexAttribArray(attribute);
-    }
-    this.enabledAttributes.clear();
-    const vertices = descriptionVertices(description, {
-      height: this.canvas.height,
-      width: this.canvas.width
-    });
-    gl.bindBuffer(gl.ARRAY_BUFFER, resources.buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.DYNAMIC_DRAW);
-    for (const [name, count, offset] of [
-      ['camera', 3, 0],
-      ['colour', 3, 3],
-      ['paletteIndex', 1, 6]
-    ] as const) {
-      const attribute = gl.getAttribLocation(resources.program, name);
-      gl.enableVertexAttribArray(attribute);
-      gl.vertexAttribPointer(
-        attribute,
-        count,
-        gl.FLOAT,
-        false,
-        DESCRIPTION_STRIDE * 4,
-        offset * 4
-      );
-      this.enabledAttributes.add(attribute);
-    }
-    const { centre, focal, height, width } = description.projection;
-    gl.uniform2f(
-      requiredUniform(gl, resources.program, 'referenceSize'),
-      width,
-      height
-    );
-    gl.uniform2f(
-      requiredUniform(gl, resources.program, 'centre'),
-      centre[0],
-      centre[1]
-    );
-    gl.uniform1f(requiredUniform(gl, resources.program, 'focal'), focal);
-    gl.uniform2f(
-      requiredUniform(gl, resources.program, 'outputSize'),
-      this.canvas.width,
-      this.canvas.height
-    );
-    const texture = descriptionPalette(description);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindSampler(0, null);
-    gl.bindTexture(gl.TEXTURE_2D, resources.palette);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      0,
-      gl.RGBA,
-      texture.width,
-      height,
-      0,
-      gl.RGBA,
-      gl.UNSIGNED_BYTE,
-      texture.pixels
-    );
-    gl.uniform1i(requiredUniform(gl, resources.program, 'palette'), 0);
-    gl.drawArrays(gl.TRIANGLES, 0, vertices.length / DESCRIPTION_STRIDE);
-  }
-
   dispose(): void {
     const gl = this.gl;
     this.canvas.removeEventListener('webglcontextlost', this.contextLost);
     gl.deleteBuffer(this.buffer);
     gl.deleteBuffer(this.skyBuffer);
     gl.deleteProgram(this.shaderProgram);
-    if (this.ordered !== undefined) {
-      gl.deleteBuffer(this.ordered.buffer);
-      gl.deleteTexture(this.ordered.palette);
-      gl.deleteProgram(this.ordered.program);
-    }
     if (this.enhanced !== undefined) {
       gl.deleteProgram(this.enhanced.colourProgram);
       for (const texture of Object.values(this.enhanced.casterTextures)) {
@@ -766,6 +612,29 @@ export class FrameRenderer {
     gl.drawArrays(gl.TRIANGLES, fill + islands, ground);
     gl.uniform1f(bias, 0);
     gl.drawArrays(gl.TRIANGLES, fill + islands + ground, rest);
+    this.drawViewFixed(plan);
+  }
+
+  /// The models fixed to the view, over everything: the depth buffer is cleared first, so
+  /// they order only among themselves and nothing in the world cuts into them. They are drawn
+  /// in their recovered colours in either preset: no Sunlight reaches inside a cab, and nothing
+  /// in the world shades it.
+  private drawViewFixed(plan: TriangleFrame): void {
+    const vertices = plan.viewFixedVertices;
+    if (vertices === undefined || vertices.length === 0) {
+      return;
+    }
+    const gl = this.gl;
+    gl.clear(gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL);
+    this.cullAsConfigured();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.skyBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.DYNAMIC_DRAW);
+    this.bindGeometry(this.shaderProgram, this.skyBuffer, COLOUR_ATTRIBUTES);
+    this.setProjection(this.shaderProgram, plan);
+    gl.uniform1f(requiredUniform(gl, this.shaderProgram, 'depthBias'), 0);
+    gl.drawArrays(gl.TRIANGLES, 0, vertices.length / FLOATS_PER_VERTEX);
   }
 
   private createEnhanced(gl: WebGL2RenderingContext): EnhancedResources {

@@ -114,7 +114,9 @@ describe('the Dion Enhanced scene', () => {
       const plan = planDionEnhancedFrame(scene, 720);
       expect(finite(plan)).toBe(true);
       expect(plan.triangleCount).toBeGreaterThan(0);
-      const ids = new Set(scene.residents.map(r => r.id));
+      const ids = new Set(
+        [...scene.residents, ...scene.viewFixed].map(r => r.id)
+      );
       for (const slot of authentic.stats.models) {
         expect(ids.has(`object-slot-${slot}`)).toBe(true);
       }
@@ -142,7 +144,9 @@ describe('the Dion Enhanced scene', () => {
       plan.triangleCount * 3 * FLOATS_PER_VERTEX
     );
     const authentic = session.planFrame();
-    const drawnSlots = new Set(scene.residents.map(r => r.id));
+    const drawnSlots = new Set(
+      [...scene.residents, ...scene.viewFixed].map(r => r.id)
+    );
     for (const slot of authentic.stats.models) {
       expect(drawnSlots.has(`object-slot-${slot}`)).toBe(true);
     }
@@ -158,9 +162,12 @@ describe('view-fixed models', () => {
       }
       riding += 1;
       const scene = dionEnhancedScene(world, state);
-      const cab = scene.residents.find(
+      const cab = scene.viewFixed.find(
         r => r.id === `object-slot-${state.passenger}`
       )!;
+      expect(scene.residents.some(r => r.id === cab.id)).toBe(false);
+      const plan = planDionEnhancedFrame(scene, 720);
+      expect(plan.viewFixedVertices?.length ?? 0).toBeGreaterThan(0);
       // `$54444`: the passenger form, ×16, at (0, −63, 0) from the eye, with the driver's head.
       const near = cab.mesh!.vertices.filter(([x, y, z]) => {
         const dx = cab.position.x + x - state.eye[0];
