@@ -299,6 +299,7 @@ export const readTourcraftResume = (
     [
       'armed',
       'carry',
+      'devices',
       'head',
       'reading',
       'switches',
@@ -601,6 +602,34 @@ export const readTourcraftResume = (
     throw new Error('Incomplete residents');
   }
   unsigned(e['switches'], 'switches');
+  const devices = keys(
+    e['devices'],
+    ['counter', 'priority', 'randomCursor', 'randomWords', 'machine'],
+    'devices'
+  );
+  unsigned(devices['counter'], 'devices.counter', 65_535);
+  unsigned(devices['priority'], 'devices.priority', 65_535);
+  unsigned(devices['randomCursor'], 'devices.randomCursor', 511);
+  const randomWords = list(devices['randomWords'], 'devices.randomWords');
+  if (randomWords.length !== 512) {
+    throw new Error('Wrong random table extent');
+  }
+  randomWords.forEach(v => unsigned(v, 'random word', 65_535));
+  const machine = keys(
+    devices['machine'],
+    ['stage', 'delay', 'count', 'payout', 'credit', 'reels'],
+    'devices.machine'
+  );
+  unsigned(machine['stage'], 'machine.stage', 5);
+  unsigned(machine['delay'], 'machine.delay', 255);
+  for (const key of ['count', 'payout', 'credit']) {
+    unsigned(machine[key], `machine.${key}`, 65_535);
+  }
+  const reels = list(machine['reels'], 'machine.reels');
+  if (reels.length !== 3) {
+    throw new Error('Need three fruit-machine reels');
+  }
+  reels.forEach(v => int(v, 'machine.reel', 34, 39));
   const headState = keys(e['head'], ['box', 'lastRead', 'open'], 'head');
   const box = keys(
     headState['box'],

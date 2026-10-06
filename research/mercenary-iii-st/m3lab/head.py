@@ -23,6 +23,7 @@ is drawn by `$4E17A` at `$7EA84` through layout `$4E0E8`.
 from __future__ import annotations
 
 from .panel import _nibble_rows
+from .census_locations import read_inventory
 from .ram import Ram, hexaddr
 from .text import decode_packed, describe, static_strings
 
@@ -97,6 +98,23 @@ def extract_head(ram: Ram) -> dict:
             lines = (1, 26) if row['mode'] == 5 else (1,)
             strips[f"{row['mode']}:{row['index']}"] = [strip(ram, row['mode'], row['index'], line) for line in lines]
     return {
+        'fruitReels': {'values': [ram.byte(0xB330 + i) for i in range(3)],
+                       'provenance': ram.slice(0xB330, 0xB333)},
+        # `$4DE54` copies two words into plane 2 at x144..175, y175..179.
+        'switchField': {
+            'off': [format(ram.long(0x4DE2C + 4 * i), '032b') for i in range(5)],
+            'on': [format(ram.long(0x4DE40 + 4 * i), '032b') for i in range(5)],
+            'provenance': ram.slice(0x4DE2C, 0x4DE54)},
+        'locationLabels': [
+            {'group': g['id'],
+             'header': ram.bytes(int(g['labelAddress'][1:], 16), int(g['labelAddress'][1:], 16) + 20).decode('ascii') if g['area'] else '',
+             'records': [{'cell': label['cell'],
+                          'text': ram.bytes(int(label['address'][1:], 16) + 1, int(label['address'][1:], 16) + 21).decode('ascii')}
+                         for label in g['labels']],
+             'provenance': g['provenance']}
+            for g in read_inventory(ram)['groups']],
+        'random': {'words': [ram.word(0x3DC00 + 2 * i) for i in range(512)],
+                   'provenance': ram.slice(0x3DC00, 0x3E000)},
         'openTable': {'rows': rows, 'provenance': ram.slice(OPEN_TABLE, OPEN_TABLE + OPEN_ROW * len(rows) + 1)},
         'documents': documents,
         'art': {str(mode): art(ram, mode) for mode in sorted({row['mode'] for row in rows})},

@@ -45,6 +45,7 @@ import {
   rotateForward,
   takeRefusal
 } from '../interaction/carriedStack.ts';
+import { switchValue } from '../interaction/headCommands.ts';
 import type { HeadCommand } from '../interaction/index.ts';
 import { walk, type WalkRules } from '../onFoot/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
@@ -2717,11 +2718,11 @@ export class DamoclesSession implements TitleSession<
   /// (`$054848`); the click is left out while the GHETTOBLASTER plays, which the port does not
   /// start.
   private throwSwitch(bit: number, on: boolean): 'ignored' | 'switched' {
-    const mask = 1 << bit;
-    if (((this.switches & mask) !== 0) === on) {
+    const switches = switchValue(this.switches, bit * 2, on);
+    if (switches === this.switches) {
       return 'ignored';
     }
-    this.switches = on ? this.switches | mask : this.switches & ~mask;
+    this.switches = switches;
     this.detonationTest();
     this.click();
     return 'switched';

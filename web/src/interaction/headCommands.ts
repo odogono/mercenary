@@ -99,6 +99,17 @@ export type HeadOutcome =
 
 const IGNORED = { kind: 'ignored' } as const;
 
+/// Both dispatchers halve the Open row index and set/clear that bit. A repeated
+/// setting leaves the value unchanged, so callers suppress its sound and effects.
+export const switchValue = (
+  switches: number,
+  index: number,
+  on: boolean
+): number => {
+  const mask = 1 << (index >> 1);
+  return (on ? switches | mask : switches & ~mask) >>> 0;
+};
+
 /// Start the transition toward `to`. A transition already running is restarted from what the
 /// box shows at that moment, which is the panel scrolling in once the old one is gone. Only a
 /// panel that has arrived has had its item's name drawn.
