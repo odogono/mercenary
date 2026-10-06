@@ -54,7 +54,7 @@ export const auditTaxiEarlyInitialization = async (
     async ({ SourceSession, content, codec, resume, dionControlCaptures }) => {
       assert.equal(
         expanded.contentSha256,
-        "2cd1a94771b22339e9d86d8d1a3e46becdceaf829f3c0efd710a7c1f8aee0836",
+        "edd524b6dd37a99bddcfecb10cc9cf8b1c3d39c92645e37f2777301626713e21",
       );
       const identity = codec.dionRecordIdentity(content);
       const controls = dionControlCaptures(content);

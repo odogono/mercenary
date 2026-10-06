@@ -12,8 +12,7 @@ import type { DionResident } from './world.ts';
 /// `interaction/carriedStack.ts`; this file owns Mercenary III's resident records, Residence and
 /// effects.
 ///
-/// Effects the port has not reached are reported as `unported` rather than run: the pawn
-/// at structure `$52` region 9 (`$557D6`) and the slot-213 flag (`$5591E`).
+/// The slot-213 flag (`$5591E`) remains `unported`.
 
 export type CarriedResident = DionResident & { readonly bodyOffset: number };
 
@@ -53,6 +52,7 @@ export interface CarryPlace {
     readonly associations: readonly number[];
     readonly region: number;
   } | null;
+  readonly structure: number;
   readonly zone: number;
 }
 
@@ -61,7 +61,21 @@ export interface CarryCandidate {
   readonly slot: number;
 }
 
-export type CarryOutcome =
+export interface DionPawn {
+  /// `$6FEE`: the object found when the shop's workspace was loaded.
+  readonly previous: number;
+  /// `$6FE6`: six BCD bytes, represented as twelve decimal digits like cash.
+  readonly price: string;
+  /// `$6FEC`: the offered object, or zero while the counter is empty.
+  readonly slot: number;
+}
+
+export interface CarryEconomy {
+  readonly cash: string;
+  readonly pawn: DionPawn;
+}
+
+export type CarryOutcome = { readonly economy?: CarryEconomy } & (
   | { readonly kind: 'refused'; readonly message?: number }
   | {
       readonly carry: DionCarry;
@@ -71,11 +85,13 @@ export type CarryOutcome =
       readonly residents: readonly CarriedResident[];
       readonly script?: number;
       readonly unported?: string;
-    };
+    }
+);
 
 const VOID = 0x78;
 const BLANK = ' '.repeat(16);
 const BRIEFCASE = 108;
+const CASH_MODULUS = 1_000_000_000_000n;
 
 /// `$4E328`: the TRANSPORTERs (64–73) and KEYs A–J (30–39) show their own digit or letter.
 export const carriedLabel = (world: CarryWorld, slot: number): string => {
@@ -165,7 +181,9 @@ export const take = (
   residents: readonly CarriedResident[],
   world: CarryWorld,
   candidate: CarryCandidate | null,
-  body: number
+  body: number,
+  economy?: CarryEconomy,
+  region = 0
 ): CarryOutcome => {
   if (
     candidate === null ||
@@ -191,6 +209,24 @@ export const take = (
     return refusal === 'tooHeavy'
       ? { kind: 'refused', message: 2 }
       : { kind: 'refused' };
+  }
+  let transaction: CarryEconomy | undefined;
+  if (economy?.pawn.slot === slot) {
+    if (region !== 9) {
+      return { kind: 'refused' };
+    }
+    const cash =
+      (BigInt(economy.cash) - BigInt(economy.pawn.price) + CASH_MODULUS) %
+      CASH_MODULUS;
+    // `$4E732` tests the high BCD byte's sign (digits 8/9), not the borrow.
+    // `$4E71C` restores cash on failure; `$5544C` requests message 12.
+    if (cash >= 800_000_000_000n) {
+      return { kind: 'refused', message: 12 };
+    }
+    transaction = {
+      cash: String(cash).padStart(12, '0'),
+      pawn: { ...economy.pawn, slot: 0 }
+    };
   }
   let { capacity, stack, stored } = carry;
   if (slot === BRIEFCASE) {
@@ -218,6 +254,7 @@ export const take = (
     },
     kind: 'done',
     residents: staged(taken, stack),
+    ...(transaction === undefined ? {} : { economy: transaction }),
     ...(response === undefined ? {} : { script: response })
   };
 };
@@ -229,7 +266,8 @@ export const drop = (
   residents: readonly CarriedResident[],
   world: CarryWorld,
   candidate: CarryCandidate | null,
-  place: CarryPlace
+  place: CarryPlace,
+  economy?: CarryEconomy
 ): CarryOutcome => {
   const head = carry.stack[0];
   if (place.body === VOID || carry.scroll !== 0 || head === undefined) {
@@ -241,6 +279,21 @@ export const drop = (
   ) {
     return { kind: 'refused', message: 9 };
   }
+  let transaction: CarryEconomy | undefined;
+  if (economy && place.structure === 0x52 && place.interior?.region === 9) {
+    if (economy.pawn.slot !== 0) {
+      return { kind: 'refused', message: 11 };
+    }
+    // `$557EA` pays before checking the support or ground placement. A later
+    // refusal still owns the credit and offered slot; it cannot pay again.
+    transaction = {
+      cash: String(
+        (BigInt(economy.cash) + BigInt(economy.pawn.price)) % CASH_MODULUS
+      ).padStart(12, '0'),
+      pawn: { ...economy.pawn, slot: head }
+    };
+  }
+  const trade = transaction === undefined ? {} : { economy: transaction };
   let placed: (r: CarriedResident) => CarriedResident;
   // A candidate within exponent 6 is the support; any other Drop is direct.
   if (candidate !== null && candidate.exponent <= 6 && candidate.slot !== 74) {
@@ -251,16 +304,16 @@ export const drop = (
       const demand = headState & 0x0c;
       const supply = (support?.state ?? 0) & 0x03;
       if (demand === 0 || supply === 0 || supply * 4 < demand) {
-        return { kind: 'refused', message: 9 };
+        return { kind: 'refused', message: 9, ...trade };
       }
     }
     const top = support && world.supportTop(support.slot);
     if (support === undefined || top === undefined) {
-      return { kind: 'refused', message: 9 };
+      return { kind: 'refused', message: 9, ...trade };
     }
     const y = top + support.position[1];
     if (y > place.eye[1]) {
-      return { kind: 'refused', message: 9 };
+      return { kind: 'refused', message: 9, ...trade };
     }
     placed = r => ({
       ...r,
@@ -274,7 +327,7 @@ export const drop = (
     });
   } else {
     if (!place.contact) {
-      return { kind: 'refused' };
+      return { kind: 'refused', ...trade };
     }
     placed = r => ({
       ...r,
@@ -311,6 +364,7 @@ export const drop = (
     kind: 'done',
     ...(message === undefined ? {} : { message }),
     residents: staged(dropped, stack),
+    ...trade,
     ...(head === 213 ? { unported: 'slot 213 drop flag $6EDE' } : {})
   };
 };

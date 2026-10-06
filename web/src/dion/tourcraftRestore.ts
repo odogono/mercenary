@@ -312,6 +312,7 @@ export const readTourcraftResume = (
       'flight',
       'liveIntent',
       'owners',
+      'pawn',
       'phases',
       'playerZone',
       'residents'
@@ -320,6 +321,20 @@ export const readTourcraftResume = (
   );
   const manual =
     e['flight'] !== null && record(e['flight'], 'flight')['pilot'] === 'eagle';
+  const pawn = keys(e['pawn'], ['previous', 'price', 'slot'], 'pawn');
+  unsigned(pawn['previous'], 'pawn.previous', 246);
+  unsigned(pawn['slot'], 'pawn.slot', 246);
+  for (const name of ['previous', 'slot']) {
+    if (
+      pawn[name] !== 0 &&
+      !initialTourcraftResidents(content).some(r => r.slot === pawn[name])
+    ) {
+      throw new Error(`pawn.${name}: unknown resident`);
+    }
+  }
+  if (typeof pawn['price'] !== 'string' || !/^\d{12}$/.test(pawn['price'])) {
+    throw new Error('pawn.price: not twelve BCD digits');
+  }
   bool(e['armed'], 'armed');
   unsigned(e['playerZone'], 'playerZone', 8);
   const collision = keys(
@@ -393,7 +408,10 @@ export const readTourcraftResume = (
       base.snapshot.frame !== 0 ||
       base.snapshot.tick > 10 ||
       e['armed'] ||
-      e['flight'] !== null
+      e['flight'] !== null ||
+      pawn['previous'] !== content.head.pawn.initial.previous ||
+      pawn['slot'] !== content.head.pawn.initial.slot ||
+      pawn['price'] !== content.head.pawn.initial.price
     ) {
       throw new Error('Invalid opening face phase');
     }
