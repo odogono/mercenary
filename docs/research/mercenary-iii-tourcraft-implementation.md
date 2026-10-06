@@ -1,5 +1,7 @@
 # Mercenary III TOURCRAFT implementation
 
+Dated I4 delivery report. Later interaction, manual EAGLE, devices, pawn and Enhanced changes extend the owners and invalidate some omission arguments below. Use [the current Dion map](../agents/dion.md) for active code and tests.
+
 This implements #711's accepted [D2 contract](mercenary-iii-tourcraft-milestone-review.md) under [ADR 0073](../adr/0073-drop-pre-release-prototype-save-migration.md). The bounded journey begins with ordinary expanded New Game prison/taxi inputs, approaches resident 13 at the spaceport, and continues through the 134-action playback to automatic on-foot TOLOSA arrival. There is no remote start, added boarding menu, skip or victory. Both original taxi destinations remain available.
 
 The data boundary remains [ADR 0065](../adr/0065-promote-bounded-dion-catalogue-content-through-an-explicit-export.md). `tourcraft_export.py` now exports the complete numeric opening owner inventory and its source widths, plus the coherent PSG image, from the pinned `gameplay-opening` capture (`71b957b3b7124959b01bd40b896c921d37902c18cfca042bef1906b155ef0170`). Programme, TOS, emulator, record ranges and capture pins remain in the manifest and documents. No executable RAM pointer is serialized into browser Saves. The raw owner inventory is provenance; the runtime retains independently sampled carries and replaces other words with explicit semantic owners.

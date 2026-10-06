@@ -7,7 +7,7 @@ One directory per concern. Pages load a `boot.ts` (`web/*.html` names which). Ea
 - `shell/`: the Targ Browser Shell (`index.html`): boot, routing, menus, the Shell Console and its history, Saves, Session Resume, Arrival, input, gamepad, settings and controls views. `targPanelDocument.ts`, `targPanelWriter.ts` and `targPanelView.ts` recover the ST panel presentation over explicit C64 readout adapters (ADR 0072).
 - `damocles/`: Damocles play (`damocles.html`). `session.ts` (about 5,000 lines) owns the Gameplay Session; separate files hold Save (`save.ts`), the sky (`sky.ts`), the comet (`comet.ts`), craft data binding (`craftProgram.ts`), landing policy (`spacePolicy.ts`), documents, the encounter, the detonator and sound.
   `panelDocument.ts` validates the recovered panel payload, `panelWriter.ts` owns Damocles's composer and raw-word adapters, and `panelView.ts`/`panelElement.ts` retain accessible readouts and controls. The authored Targ/Flyover rendition remains in `shell/` (ADR 0071).
-- `dion/`: Mercenary III on Dion (`dion.html`): session, frame, panel, taxi and TOURCRAFT (`tourcraft*.ts`), Save and Resume.
+- `dion/`: Mercenary III (`dion.html`). `boot.ts` runs `TourcraftSession` from `tourcraftSession.ts`, with expanded content, manual EAGLE flight, taxi/TOURCRAFT, interactions and Save/Resume. `TourcraftSession` extends the D1 `DionSession` in `session.ts`, which still supplies shared foot/taxi behavior and historical test/research fixtures. For feature owners, exporters and focused tests, use [the Dion map](../../docs/agents/dion.md).
 - `session/`: the Targ Gameplay Session (ADR 0018), its Save and lift journeys.
 - `benson/`: the Benson Script interpreter and the Benson Display.
 
@@ -16,11 +16,11 @@ One directory per concern. Pages load a `boot.ts` (`web/*.html` names which). Ea
 - `gameCore/`: the pure simulation step (state, intent, elapsed time).
 - `flight/`: the craft Mover. `onFoot/`: the on-foot Mover shared by Damocles and Mercenary III.
 - `craft/`: the evidenced Damocles/Mercenary III numeric craft and space passes, arithmetic tables and structural inputs. Each Title owns orchestration and effects (ADR 0074).
-- `navigation/`: Room walls and Doorways. `interaction/`: take, board and the Damocles head commands.
+- `navigation/`: Room walls and Doorways. `interaction/`: shared Carried Stack rules and Head Commands; each Title owns resident state, tables and effects (ADRs 0075/0076).
 - `orientation/`, `projection/`, `math/` (the governed elementary functions, ADR 0022).
 - `world/`: the render-ready world built from the payload. `coast/`: horizon fill, islands and roads.
 - `sky/`: the Orrery and Body Time. `text/`: composing decoded messages.
-- `sound/`: the YM2149 synth, worklet and presenter.
+- `sound/`: Targ’s bounded SID synth, worklet and presenter. Damocles and Dion use the YM2149 core in `damocles/psg.ts` with their own sound drivers. `soundboard/` owns the listening page and arrangements.
 - `scene/`: frame colours. `rendering/`: the WebGL2 Filled Presentation renderer shared by Damocles and Dion.
 - `enhanced/`: the one Enhanced planner Damocles and Dion share (ADR 0077): the scene a Title supplies, the frame, the sky triangles and Sunlight. `structure/`: structure selection, regions and entrance attachments.
 - `settings/`: tuned values kept as data.

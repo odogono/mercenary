@@ -1,12 +1,14 @@
 # Bounded TOURCRAFT playable content
 
-[I3 / #710](https://github.com/odogono/mercenary/issues/710) implements the export and admission boundary in [ADR 0065](adr/0065-promote-bounded-dion-catalogue-content-through-an-explicit-export.md) from [R7's reviewed selection](research/mercenary-iii-tourcraft-promotion.md). The exported payload is `payload/dion/tourcraft/`; `loadTourcraftContent` admits it independently of the current D1 loader. It supplies `tourcraftFrameWorld` and `tourcraftOpeningFrameState` to the existing Dion Frame Planner. The comparison tool exercises later presentation inputs from actual R7 captures.
+The production browser loads `payload/dion/tourcraft/` with `loadTourcraftContent` and runs `TourcraftSession`. The older D1 payload remains an independent dependency and research/test fixture. [The Dion map](agents/dion.md) names current runtime owners and the payload-update recipe.
 
-The production D1 Gameplay Session still uses its historical payload and Save contract. I4/#711 owns continuous TOURCRAFT behavior, live programme updates and the versioned Save migration. D2's [late taxi-Save decision](research/mercenary-iii-tourcraft-milestone-review.md#r8-compatibility-failure-returned-for-review) is settled by [ADR 0068](adr/0068-reconcile-known-taxi-saves-with-expanded-campaign-history.md); this export implements no migration and does not admit old Saves under its new identity.
+The export boundary began in [I3 / #710](https://github.com/odogono/mercenary/issues/710) under [ADR 0065](adr/0065-promote-bounded-dion-catalogue-content-through-an-explicit-export.md). [ADR 0075](adr/0075-port-dion-object-interaction-by-rule-not-by-admitted-object.md) adds every resident record and rule-based interaction; [ADR 0076](adr/0076-share-head-commands-through-title-open-tables.md) shares Head Commands; [ADR 0077](adr/0077-share-one-enhanced-planner-across-damocles-and-mercenary-iii.md) shares Enhanced planning. [ADR 0073](adr/0073-drop-pre-release-prototype-save-migration.md) refuses incompatible prototype Saves rather than migrating them.
+
+The [manifest](../payload/dion/tourcraft/manifest.json) is the document inventory; `loadTourcraftContent` is the field schema. Compute current identity with `bun run dion:identity` in `web/`. The Save codec’s `TOURCRAFT_SAVE_SCHEMA_VERSION` is authoritative. I3 comparison results below are dated evidence of the original export, not current runtime acceptance.
 
 ## Selection and sources
 
-The research specification `research/mercenary-iii-st/tourcraft-promotion-manifest.json` is an export input, distinct from the served promotion and manifest. The export checks selected records/forms, source ranges and original model/structure references. It writes 103 documents: six byte-identical historical D1 dependencies, one promotion document, 88 geometry documents, seven presentation documents and the manifest. The 88 identities are 87 Catalogue identities plus the independently recovered System tail. Eight of the Catalogue identities are not in the reviewed manifest: they are the opening models of residents of METIS and TOLOSA and of the carried objects, which the export binds automatically (`residentModels`, [ADR 0075](adr/0075-port-dion-object-interaction-by-rule-not-by-admitted-object.md)). Each is checked against its Catalogue record digest and its source ranges in the gameplay RAM. Selection covers 39 exterior placements, 18 structure slots, all 512 cells in groups 3/23, 385 glyphs, 13 full palettes and ten lettering tokens. Empty cells retain their recovered workspace bindings; no substitute silhouette is authored.
+The research specification `research/mercenary-iii-st/tourcraft-promotion-manifest.json` is an export input, distinct from the served promotion and manifest. The export checks selected records/forms, source ranges and original model/structure references. It writes the historical D1 dependencies, promotion, geometry, presentation and manifest documents enumerated by the manifest. Geometry includes Catalogue identities and the independently recovered System tail. Eight of the Catalogue identities are not in the reviewed manifest: they are the opening models of residents of METIS and TOLOSA and of the carried objects, which the export binds automatically (`residentModels`, [ADR 0075](adr/0075-port-dion-object-interaction-by-rule-not-by-admitted-object.md)). Each is checked against its Catalogue record digest and its source ranges in the gameplay RAM. Selection covers 39 exterior placements, 18 structure slots, all 512 cells in groups 3/23, 385 glyphs, 13 full palettes and ten lettering tokens. Empty cells retain their recovered workspace bindings; no substitute silhouette is authored.
 
 `promotion.json` enumerates Floor-zero bindings, transforms, variants, templates, residents, service scope and dependency/source inventories. Drawing availability does not confer service or script availability. Take and Drop are the exception: they apply to every object, by the original rules ([ADR 0075](adr/0075-port-dion-object-interaction-by-rule-not-by-admitted-object.md)). The admitted service remains the bounded outward TOURCRAFT/pilot path; Bil, interiors, onward services, hostile encounter alternatives and universal boarding stay outside the selected interaction scope.
 
@@ -46,9 +48,9 @@ The loader fetches and verifies every enumerated document before returning conte
 2. For each document: unsigned 32-bit big-endian UTF-8 path byte length, path bytes, unsigned 64-bit big-endian document byte length, exact document bytes.
 3. Document order: `world`, `panel`, `messages`, `scripts`, `sound`, `service`; `promotion`; geometry paths sorted by byte order; presentation paths sorted by byte order; `manifest` last. Paths include `/payload/dion/tourcraft/`.
 
-The manifest contains the ordered document hashes and has no self-referential `contentSha256` field. It is included exactly as served. Python and browser golden fixtures agree: records `('a','bc'),('d','e')` produce `adfbc36f7a52dbc748b6832a1c449671d1513fe055dbd799cd15a265f91b9565`. Selected-record pins use sorted compact ASCII-escaped JSON, also covered by a Unicode cross-language fixture. The checked-in payload identity is `2cd1a94771b22339e9d86d8d1a3e46becdceaf829f3c0efd710a7c1f8aee0836`.
+The manifest contains the ordered document hashes and has no self-referential `contentSha256` field. It is included exactly as served. Python and browser golden fixtures agree: records `('a','bc'),('d','e')` produce `adfbc36f7a52dbc748b6832a1c449671d1513fe055dbd799cd15a265f91b9565`. Selected-record pins use sorted compact ASCII-escaped JSON, also covered by a Unicode cross-language fixture. The identity is derived from the served bytes; use the identity command above.
 
-## Rendering and reuse dispositions
+## I3 rendering and reuse dispositions (historical)
 
 | Mechanism                          | Disposition and Dion evidence                                                                                                                                                                                                                                                               |
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -74,7 +76,7 @@ Original RAM/media/screenshots remain under ignored `restricted/` paths under AD
 PYTHONPATH=research/mercenary-iii-st python3 -m m3lab.tourcraft_export --opening restricted/mercenary-iii-708/presentation/exact2/start.ram
 ```
 
-Two builds reproduced every checked-in byte and the identity above. The export does not modify Catalogue or historical D1 files. Export tests also change unselected Catalogue objects/glyphs and prove identical selected output; changed selected records and decoded placement strings are refused.
+The I3 delivery’s two builds reproduced every then-checked-in byte and its identity. The export does not modify Catalogue or historical D1 files. Export tests also change unselected Catalogue objects/glyphs and prove identical selected output; changed selected records and decoded placement strings are refused.
 
 From `web/`, regenerate the 30 comparison sheets and assert the complete output ledger:
 
@@ -116,7 +118,7 @@ the branch is exercised by synthetic VM controls. ORE sets flag22, admits mining
 replacing resident218's model with NULL. The replacement chair is an explicit
 playable model binding; Residence and Carried Stack are preserved.
 
-Save schema5 retains the response availability/queue, poll bytes, direct timed
+The pickup delivery added Save fields retaining the response availability/queue, poll bytes, direct timed
 continuations and admitted model replacements. Synthetic browser/session controls
 verify these launches and future equivalence; they do not establish ordinary
 routes to the remote objects.
@@ -132,6 +134,6 @@ B-channel sound, and ELECTROMAGNET advances an active fruit machine without
 setting bit0. See [the source and implementation note](research/mercenary-iii-cards-and-switches.md)
 for the bus-service and bankruptcy-script limits.
 
-Save schema6 additionally retains the device random/counter/priority and
+The devices delivery added Save fields retaining the device random/counter/priority and
 fruit-machine owners. Earlier prototype schemas and content identities are
 refused, with no migration (ADR 0073).

@@ -1,10 +1,10 @@
 # Mercenary III: R1 selection and boundary follow-up
 
-The #756 research ledgers, scripts and tests this report cites were removed when the programme was rescoped ([#756](https://github.com/odogono/mercenary/issues/756)). They remain in git history at `ab0d6ddf`.
+Historical #756 research: [ADR 0075](../adr/0075-port-dion-object-interaction-by-rule-not-by-admitted-object.md) closed per-object admission gates; use [the current Dion map](../agents/dion.md) for implementation. The cited research ledgers, scripts and tests were removed and are linked to git history at `ab0d6ddf`. The private R1–R4 runs were deleted; reproduction commands below describe their original environment.
 
 Executed follow-up for [R1/#770](https://github.com/odogono/mercenary/issues/770), 2026-10-04, extending the [first handoff](mercenary-iii-object-interaction-r1.md). **R1 remains open.** These controls add original execution for stale selection, clipping, native distance rounding, competing handling/capacity gates and BRIEFCASE boundary continuations. They accept no bounded exclusion and change no runtime, playable scope, Data Payload or Golden Trace.
 
-The [acceptance audit](mercenary-iii-object-interaction-r1-audit.md) records what the preceding handoff established and compares current Damocles functions. The [numeric follow-up ledger](../../research/mercenary-iii-st/object-interaction-r1-followup.json) pins this run's source, selected family manifests, logs and capture hashes. Original RAM, snapshots, debugger scripts and projection buffers remain in the main checkout's ignored `restricted/mercenary-iii-770/followup/`, under [ADR 0002](../adr/0002-separate-rom-research-from-implementation.md).
+The [acceptance audit](mercenary-iii-object-interaction-r1-audit.md) records what the preceding handoff established and compares current Damocles functions. The [numeric follow-up ledger](https://github.com/odogono/mercenary/blob/ab0d6ddfbfe742202e7f6403af7a76672029780f/research/mercenary-iii-st/object-interaction-r1-followup.json) pins this run's source, selected family manifests, logs and capture hashes. Original RAM, snapshots, debugger scripts and projection buffers remain in the main checkout's ignored `restricted/mercenary-iii-770/followup/`, under [ADR 0002](../adr/0002-separate-rom-research-from-implementation.md).
 
 ## Method and executed assertions
 

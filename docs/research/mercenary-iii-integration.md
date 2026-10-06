@@ -103,7 +103,7 @@ The enclosing `$60000`–`$66000` region differs in the gap `$63002`–`$64000`,
 
 The complete float-add routine `$4BD34`–`$4BDBE` is byte-identical: SHA-256 `f608e622840c587f07f0338e9c1e37255e17b86ca703373ba91d4fa1a571244f`. Its inputs are D1 and D2, its result D2; it clobbers D1/D6/D7 and has no table or other memory input. This is inspected original program material, not code admitted to the app.
 
-An isolated runtime probe cold-boots MIII to VBL 6000, supplies the following packed operands, executes that original routine, and compares D2 to the existing independent [`craftAdd`](../../web/src/damocles/craft.ts). The probe changes registers and a synthetic return stack; it is an arithmetic test, not a natural gameplay trace.
+An isolated runtime probe cold-boots MIII to VBL 6000, supplies the following packed operands, executes that original routine, and compares D2 to the existing independent [`craftAdd`](https://github.com/odogono/mercenary/blob/476fd9aea7c82426ab23315c8bcdc576c913df00/web/src/damocles/craft.ts). The probe changes registers and a synthetic return stack; it is an arithmetic test, not a natural gameplay trace.
 
 | Case | D1 | D2 input | Original result = current Damocles result |
 |---|---|---|---|
@@ -275,7 +275,7 @@ R1–R5 are complete as bounded research; D1 accepted the taxi milestone and I1/
 
 ### What this contributes to #419
 
-[#419](https://github.com/odogono/mercenary/issues/419) says Damocles has no Craft Parameter Blocks and seven boarding guards. That account is stale: [`craft.ts`](../../web/src/damocles/craft.ts) consumes recovered `CraftParameters`, and [`session.ts`](../../web/src/damocles/session.ts) documents eight ordered boarding checks plus a death refusal. Current space/launch work and Save schema 18 also postdate historical scope descriptions.
+[#419](https://github.com/odogono/mercenary/issues/419) says Damocles has no Craft Parameter Blocks and seven boarding guards. That account is stale: [`craft.ts`](https://github.com/odogono/mercenary/blob/476fd9aea7c82426ab23315c8bcdc576c913df00/web/src/damocles/craft.ts) consumes recovered `CraftParameters`, and [`session.ts`](../../web/src/damocles/session.ts) documents eight ordered boarding checks plus a death refusal. Current space/launch work and Save schema 18 also postdate historical scope descriptions.
 
 MIII now supplies the missing third-title data point: matching arithmetic and recurring parameters support investigating selected pure reuse. Natural taxi entry simultaneously shows why a common boarding function cannot be inferred from craft similarity. #419 should compare self-piloted craft, seatable objects and passenger services separately, including keys/access, refusal order, pose ownership and leave behaviour. Its Targ trace protection and explicit convergence decision remain necessary. No boarding convergence is performed here. The R4 [admission matrix](mercenary-iii-shared-mechanisms.md#3-admission-and-boarding-matrix) now makes that comparison and brings #419's account up to date.
 

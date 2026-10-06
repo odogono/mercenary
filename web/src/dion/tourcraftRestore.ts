@@ -22,9 +22,9 @@ import {
 import { dionFlightEye, dionFlightView } from './tourcraftView.ts';
 import { readDionOpening } from './world.ts';
 
-// The admitted playback exclusively owns physical flight. Live cabin yaw and
-// campaign waiting cannot change its numeric path, including zero-rotation
-// placement. Cache the finite path per admitted content for safe Save binding.
+// Automated TOURCRAFT playback owns this finite path. Manual EAGLE state is
+// validated separately below. Cabin yaw and campaign waiting leave the playback
+// path unchanged; cache it per admitted content for Save binding.
 const flightPaths = new WeakMap<
   TourcraftContent,
   ReadonlyMap<number, TourcraftFlightState>

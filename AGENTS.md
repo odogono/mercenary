@@ -3,7 +3,7 @@
 - `web/`: the browser app, its tests and tools; run `bun` commands here. `web/src/README.md` maps the source; `web/README.md` and `web/package.json` hold the commands. Run `bun run check` before a PR, and `bun run test:quiet` for test output that shows only failures.
 - `research/<lab>/`: ROM research labs. Each lab's `README.md` lists its modules and probe recipes.
 - `payload/`, `traces/`: the tracked Data Payload and Golden Traces (ADR 0029).
-- `docs/research/`: findings, named `<title>-<topic>.md`; `rg -l` across it before reading. Mercenary III TOURCRAFT work starts at `docs/research/mercenary-iii-tourcraft-milestone-review.md`.
+- `docs/research/`: findings, named `<title>-<topic>.md`; `rg -l` across it before reading. Dion implementation and payload changes start at `docs/agents/dion.md`; research reports retain their dated scope.
 - `docs/adr/README.md`: the decision index.
 - `tools/commits/`: the commit-message and changelog-fragment checks.
 - `restricted/`, `roms/`: gitignored Restricted Material. Evidence a doc cites goes under `restricted/<title>-<issue>/` in the main checkout.

@@ -1,5 +1,7 @@
 # Promote bounded Dion Catalogue content through an explicit export
 
+Superseded in part by [ADR 0073](0073-drop-pre-release-prototype-save-migration.md) for prototype Save migration and [ADR 0075](0075-port-dion-object-interaction-by-rule-not-by-admitted-object.md) for resident/object admission. The explicit export and runtime Catalogue separation still hold.
+
 Accepted, 2026-10-02, for [D2 / #704](https://github.com/odogono/mercenary/issues/704). Play receives a reviewed, explicitly exported subset of the Dion Catalogue through the playable Data Payload. It does not load Catalogue documents at runtime. This preserves the independent inspection boundary in [ADR 0061](0061-admit-a-sessionless-dion-catalogue-under-the-dion-path.md) while allowing recovered content to support the [accepted TOURCRAFT slice](../research/mercenary-iii-tourcraft-milestone-review.md).
 
 ## Decision

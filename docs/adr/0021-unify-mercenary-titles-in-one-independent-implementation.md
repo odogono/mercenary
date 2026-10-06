@@ -4,7 +4,7 @@ Working-Authority Evidence from the Damocles ST programme (#79–#81, #85–#86)
 
 ## Status
 
-The early implementation restriction is partially superseded by [ADR 0039](0039-admit-the-damocles-catalogue-before-playable-integration.md), which admits the read-only Damocles Catalogue and its separate extracted data now, and by [ADR 0042](0042-fly-a-system-without-play.md), which admits the shell-owned Flyover's read-only Gamma System inspection. Playable integration retained the sequencing below until ADR 0043 removed it.
+The early implementation restriction is partially superseded by [ADR 0039](0039-admit-the-damocles-catalogue-before-playable-integration.md), which admits the read-only Damocles Catalogue and its separate extracted data now, and by [ADR 0042](0042-fly-a-system-without-play.md), which admits the shell-owned Flyover's read-only Gamma System inspection. Playable integration retained the sequencing below until [ADR 0043](0043-admit-damocles-play-alongside-the-second-city.md) removed it.
 
 _(Status note, 2026-09-11: [ADR 0043](0043-admit-damocles-play-alongside-the-second-city.md) supersedes the sequencing below. Damocles play is admitted now, with no ordering relative to *The Second City*; the one-implementation decision, ADR 0002 and the Working-Authority stance stand.)_
 

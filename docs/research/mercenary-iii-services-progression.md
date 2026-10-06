@@ -25,7 +25,7 @@ RAM, original media, screenshots, scans, logs and disassembly stay under ignored
 
 ## Ranked candidate slices
 
-The shipping [Dion session](../../web/src/dion/session.ts) and [taxi service](../../web/src/dion/service.ts) provide the bounded taxi passenger path; the [shared foot Mover](../../web/src/onFoot/index.ts) and [Damocles craft Mover](../../web/src/damocles/craft.ts) are comparison/reuse targets. [#563](https://github.com/odogono/mercenary/issues/563) owns craft work and [#419](https://github.com/odogono/mercenary/issues/419) owns boarding convergence. The table names impacts on those mechanisms; it does not generalise their interfaces or give Damocles data Dion identity.
+The shipping [Dion session](../../web/src/dion/session.ts) and [taxi service](../../web/src/dion/service.ts) provide the bounded taxi passenger path; the [shared foot Mover](../../web/src/onFoot/index.ts) and [Damocles craft Mover](https://github.com/odogono/mercenary/blob/476fd9aea7c82426ab23315c8bcdc576c913df00/web/src/damocles/craft.ts) are comparison/reuse targets. [#563](https://github.com/odogono/mercenary/issues/563) owns craft work and [#419](https://github.com/odogono/mercenary/issues/419) owns boarding convergence. The table names impacts on those mechanisms; it does not generalise their interfaces or give Damocles data Dion identity.
 
 Ranking weighs a demonstrable fresh-game journey, a useful player consequence, and bounded recovery. It is a recommendation for review, not six implementation commitments.
 

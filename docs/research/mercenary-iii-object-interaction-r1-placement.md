@@ -1,10 +1,10 @@
 # Mercenary III: R1 placement-owner and native re-pick follow-up
 
-The #756 research ledgers, scripts and tests this report cites were removed when the programme was rescoped ([#756](https://github.com/odogono/mercenary/issues/756)). They remain in git history at `ab0d6ddf`.
+Historical #756 research: [ADR 0075](../adr/0075-port-dion-object-interaction-by-rule-not-by-admitted-object.md) closed per-object admission gates; use [the current Dion map](../agents/dion.md) for implementation. The cited research ledgers, scripts and tests were removed and are linked to git history at `ab0d6ddf`. The private R1–R4 runs were deleted; reproduction commands below describe their original environment.
 
 Executed research for [R1/#770](https://github.com/odogono/mercenary/issues/770), 2026-10-04, following the [execution handoff](mercenary-iii-object-interaction-r1.md), [acceptance audit](mercenary-iii-object-interaction-r1-audit.md) and [selection/boundary follow-up](mercenary-iii-object-interaction-r1-followup.md). **R1 remains open.** This handoff adds synthetic support Drop followed by original selection and unpatched re-pick, complete sampled placement-owner checks on six refusals, and a retained placement-zone distinction after Take. It accepts no bounded exclusion or runtime/content admission.
 
-The primary sources are the original engine and its retained captures/logs under the main checkout's ignored `restricted/mercenary-iii-770/placement/`. The [numeric ledger](../../research/mercenary-iii-st/object-interaction-r1-placement.json) pins the selected family manifests, logs, captures and tools. Under [ADR 0002](../adr/0002-separate-rom-research-from-implementation.md), that ledger exports independently interpreted state and hashes; original programme bytes, snapshots, RAM, debugger scripts and screenshots remain Restricted Material.
+The primary sources are the original engine and its retained captures/logs under the main checkout's ignored `restricted/mercenary-iii-770/placement/`. The [numeric ledger](https://github.com/odogono/mercenary/blob/ab0d6ddfbfe742202e7f6403af7a76672029780f/research/mercenary-iii-st/object-interaction-r1-placement.json) pins the selected family manifests, logs, captures and tools. Under [ADR 0002](../adr/0002-separate-rom-research-from-implementation.md), that ledger exports independently interpreted state and hashes; original programme bytes, snapshots, RAM, debugger scripts and screenshots remain Restricted Material.
 
 ## Method and assertions
 

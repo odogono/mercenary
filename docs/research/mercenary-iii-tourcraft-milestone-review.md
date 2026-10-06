@@ -1,5 +1,7 @@
 # Mercenary III: accepted TOURCRAFT milestone review (D2)
 
+Historical D2 commissioning and research index. #711 shipped in [the I4 implementation](mercenary-iii-tourcraft-implementation.md); later interaction, EAGLE and Enhanced changes are indexed in [the current Dion map](../agents/dion.md). [ADR 0073](../adr/0073-drop-pre-release-prototype-save-migration.md) retired prototype migration, and #791 removed the long 33-journey controls test. Commissioning requirements below record their dated scope.
+
 Accepted with research gates, 2026-10-02, for [#704](https://github.com/odogono/mercenary/issues/704). The user accepted the decisions below after reviewing [R5](mercenary-iii-services-progression.md), [D1](mercenary-iii-taxi-milestone-review.md), the [I2 implementation](mercenary-iii-i2-taxi-implementation.md) and the [Dion Catalogue contract](../dion-catalogue-contract.md). This review records and commissions work; it implements no runtime and claims no unperformed probe has passed.
 
 **Accepted scope amendment, 2026-10-03:** [ADR 0073](../adr/0073-drop-pre-release-prototype-save-migration.md) retires old browser-prototype Save migration. Expanded-game Save/Session Resume, all 33 taxi checkpoints and full flight/campaign continuity remain required. #735 is retired; #737 supplies field-level state, coherent New Game seeds and same-schema restoration. The compatibility investigations below are historical, not completion gates.
