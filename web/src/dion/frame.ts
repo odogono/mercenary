@@ -1965,6 +1965,9 @@ export interface DionParts {
     readonly forms?: DionResidentForms;
     readonly position: Vec3;
     readonly primitives: readonly DionCaptured[];
+    /// `$5532E` (#817): the range in cells past which the model is not drawn, and the colour
+    /// word of the one point a promoted beacon is drawn as there while lit (`$545AE`).
+    readonly reach?: { readonly cells: number; readonly point?: number };
     readonly slot: number;
     /// Drawn about the eye rather than in the world: the passenger's cab and the driver's
     /// head, or a model the view's own turn turns (`$5470A`'s view-fixed path).
@@ -2216,6 +2219,10 @@ export const captureDionParts = (
             },
             position: pose.position,
             primitives: formOf('default', false, state.articulationAngle),
+            reach: {
+              cells: model.header?.op === 0xc ? (model.header.range ?? 1) : 1,
+              ...(beacon === undefined ? {} : { point: world.modelColours[3]! })
+            },
             slot,
             viewFixed
           }

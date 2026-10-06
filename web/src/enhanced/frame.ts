@@ -24,7 +24,7 @@ import {
   type CarriedSlot,
   type FloorLabelGlyphs
 } from '../structure/selection.ts';
-import { formMesh, type FormClock } from './forms.ts';
+import { beaconLit, formMesh, type FormClock } from './forms.ts';
 import {
   insideCentralCellHalf,
   withinDrawBound,
@@ -1121,6 +1121,58 @@ export const planEnhancedFrame = (
       }
     }
   };
+  /// `$053674`: an object is drawn only while no axis of its position less the eye's, shifted
+  /// left four, exceeds its range in cells shifted the same way, compared unsigned as the
+  /// 68000's `cmp.l` and `bcs` do. Past it, an object with a far point (`$053688`) is drawn as
+  /// that one ST pixel, and a beacon only while it is lit. Whether the placement is drawn whole.
+  const withinReach = (placement: ScenePlacement): boolean => {
+    const reach = placement.reach;
+    if (reach === undefined) {
+      return true;
+    }
+    const limit = ((reach.cells << 16) << 4) >>> 0;
+    const far = [
+      placement.position.x - pose.position.x,
+      placement.position.y - pose.position.y,
+      placement.position.z - pose.position.z
+    ].some(value => {
+      const shifted = Math.trunc(value) << 4;
+      return limit < (shifted < 0 ? -shifted : shifted) >>> 0;
+    });
+    if (!far) {
+      return true;
+    }
+    const flash = placement.forms?.flash;
+    const lit =
+      flash === undefined ||
+      clock === null ||
+      beaconLit(flash, clock.frame, carriedSlot);
+    if (reach.point !== undefined && lit) {
+      const centre = toView(placement.position);
+      if (centre.z > doc.camera.nearPlane) {
+        // One ST pixel, 1/256 of a unit tangent on a side, as a star is.
+        const half = centre.z / 512;
+        const corner = (dx: number, dy: number): Vector3 => ({
+          x: centre.x + dx * half,
+          y: centre.y + dy * half,
+          z: centre.z
+        });
+        const quad = [
+          corner(-1, -1),
+          corner(1, -1),
+          corner(1, 1),
+          corner(-1, 1)
+        ];
+        const colour = channels(reach.point.colour);
+        for (const index of [0, 1, 2, 0, 2, 3, 2, 1, 0, 3, 2, 0]) {
+          emitView(quad[index]!, colour, NO_PLANE);
+        }
+        triangleCount += 4;
+        drawnPlacements.push(placement.id);
+      }
+    }
+    return false;
+  };
   // The recovered draw bound (#370, #373): the Working Authority draws a cell's ground
   // records and its Surface Structure from that cell alone, and its objects from anywhere on
   // the Body. At the Eris arrival Pose that is 4 of the workspace's 207 placements.
@@ -1147,14 +1199,16 @@ export const planEnhancedFrame = (
     if (hidden.has(placement.id)) {
       continue;
     }
-    if (placement.kind !== 'ground') {
+    if (placement.kind !== 'ground' && withinReach(placement)) {
       emitPlacement(placement);
       drawnPlacements.push(placement.id);
     }
   }
   for (const resident of inSpace ? [] : residents) {
-    emitPlacement(resident);
-    drawnPlacements.push(resident.id);
+    if (withinReach(resident)) {
+      emitPlacement(resident);
+      drawnPlacements.push(resident.id);
+    }
   }
 
   const viewFixedValues: number[] = [];

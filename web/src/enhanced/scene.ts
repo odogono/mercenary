@@ -64,6 +64,12 @@ export interface ScenePlacement {
   readonly modelId: string;
   readonly name: string;
   readonly position: Vector3;
+  /// An object's reach (#817): past `cells` on any axis it is not drawn, or, where it has a
+  /// point, drawn as that one point. Absent, the placement is drawn at any range.
+  readonly reach?: {
+    readonly cells: number;
+    readonly point?: { readonly colour: string };
+  };
   readonly selection?: {
     /// The structure record's two scene colours (`$059DA2`–`$059DC6`): what the frame loop
     /// fills above and below the horizon while the player stands in one of its enclosed regions.

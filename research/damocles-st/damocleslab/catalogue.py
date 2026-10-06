@@ -292,6 +292,7 @@ TELEVISION_FRAMES = 6
 BEACON_LIT = 0x777
 BEACON_DARK = 0x8000
 BEACON_GATES = {0x246: '$707E', 0x411: '$7082'}
+FAR_MARKER_COLOUR = 0x654
 
 
 # $053512 ($8007) and $05358A ($8002) derive one character from the object's
@@ -729,9 +730,13 @@ def decode_mesh(data: bytes, start: int, kind: str, palette: list[int] | None = 
                 alternates['slotLabel'] = SLOT_LABEL_RULES[command][0]
                 break
             if command == 0x800b:
-                break  # far-distance marker, no local vertex change
+                # $053492: the far-distance marker. Past its range the object is one point
+                # in $654 ($053688), as a lit beacon is one in $777.
+                alternates['farPoint'] = FAR_MARKER_COLOUR
+                break  # no local vertex change
             if command == 0x800c:
-                reader.word()  # visibility distance only
+                # $0534A6: the range, in cells, $053674 tests every axis against.
+                alternates['drawRange'] = reader.word()
                 break
             if command == 0x8008:
                 display_code = reader.take(2).decode('ascii')
@@ -6270,6 +6275,7 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         for font in (label['font'], *([label['fallback']['font']] if 'fallback' in label else []))
     }
     bind_beacon_phases(models, data)
+    bind_draw_ranges(models, hardware)
     return {'schemaVersion': SCHEMA_VERSION, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
             'bodies': bodies, 'islands': islands, 'places': places, 'tables': tables,
             'roadNetworks': road_networks,
@@ -6307,6 +6313,32 @@ def bind_beacon_phases(models: list, data: bytes) -> None:
                 data[BEACON_PHASE_TABLE + slot * 4:BEACON_PHASE_TABLE + slot * 4 + 2], 'big')
                 for slot in model['slots']},
         }
+
+
+def bind_draw_ranges(models: list, hardware: list[int] | None) -> None:
+    """Give each object model its range and far point, where its header sets either.
+
+    `$0535A8` resets the range to one cell before each object's header runs, and `$800C` sets
+    it (`$0534A6`). `$053674` then shifts it and each axis of the object less the eye left four
+    and draws the model only where no axis is out of range. Past it, an `$8003` beacon while lit
+    (`$777`) and an `$800B` far marker (`$654`) draw one point (`$053688`), and anything else
+    nothing.
+    """
+    for model in models:
+        if model.get('kind') != 'object':
+            continue
+        variants = model.get('variants', [])
+        own = next((variant for variant in variants if variant['id'] == model['id']),
+                   variants[0] if variants else None)
+        if own is None:
+            continue
+        alternates = own['mesh'].get('alternates', {})
+        if 'drawRange' in alternates:
+            model['drawRange'] = alternates['drawRange']
+        colour = BEACON_LIT if 'flash' in alternates else alternates.get('farPoint')
+        if colour is not None:
+            model['farPoint'] = {'colour': colour_value(colour, None, hardware),
+                                 'sourceColour': colour}
 
 
 def text_frame_glyphs(data: bytes, models: list) -> dict:

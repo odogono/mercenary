@@ -569,6 +569,20 @@ const residentPlacement = (
     modelId: `dion-resident-${resident.slot}`,
     name: `Slot ${resident.slot}`,
     position: { x: position[0], y: position[1], z: position[2] },
+    ...(resident.reach === undefined
+      ? {}
+      : {
+          reach: {
+            cells: resident.reach.cells,
+            ...(resident.reach.point === undefined
+              ? {}
+              : {
+                  point: {
+                    colour: halves(palettes, resident.reach.point).colour
+                  }
+                })
+          }
+        }),
     status: 'decoded'
   };
 };

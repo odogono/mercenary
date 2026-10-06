@@ -4,6 +4,10 @@
       "flashTimer gated by $707E"
     ],
     "evidence": [],
+    "farPoint": {
+      "colour": "#eeeeee",
+      "sourceColour": 1911
+    },
     "flash": {
       "gateSlot": 53,
       "phases": {

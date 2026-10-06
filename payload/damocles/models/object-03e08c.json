@@ -3,6 +3,7 @@
     "conditions": [
       "viewerPosition"
     ],
+    "drawRange": 40,
     "evidence": [],
     "id": "object-03e08c",
     "kind": "object",
@@ -24,6 +25,7 @@
         "id": "record",
         "mesh": {
           "alternates": {
+            "drawRange": 40,
             "viewGroup": 1
           },
           "faces": [
@@ -453,6 +455,7 @@
         "id": "view-0",
         "mesh": {
           "alternates": {
+            "drawRange": 40,
             "viewGroup": 1
           },
           "faces": [
