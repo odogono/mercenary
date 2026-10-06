@@ -9,6 +9,7 @@ import type {
   WallText
 } from '../catalogue/data.ts';
 import { islandOriginNear } from '../coast/islands.ts';
+import type { FormClock, PlacementForms } from '../enhanced/forms.ts';
 import {
   planEnhancedFrame,
   type EnhancedFramePlan
@@ -30,6 +31,7 @@ import {
   type DionFrameState,
   type DionFrameWorld,
   type DionParts,
+  type DionResidentForms,
   type Vec3
 } from './frame.ts';
 import { generalCamera, levelCamera, toCamera } from './raster.ts';
@@ -57,6 +59,9 @@ import { tourcraftSkyPass, tourcraftStarPixels } from './tourcraftSky.ts';
 export interface DionEnhancedScene {
   readonly aboard: boolean;
   readonly carriedSlot: CarriedSlot;
+  /// The counters the shared chooser picks residents' forms by (#815): Dion's frame counter
+  /// and its articulation angle in 256 steps.
+  readonly clock: FormClock;
   readonly daylight: boolean;
   /// Gaps this frame's scene names rather than guesses (ADR 0014).
   readonly gaps: readonly string[];
@@ -440,19 +445,122 @@ export const dionPose = (state: DionFrameState): Pose => {
   };
 };
 
-const residentPlacement = (
-  resident: DionParts['residents'][number],
-  palettes: Palettes
-): ScenePlacement => {
-  const position = resident.position;
-  const mesh = meshOf(
-    palettes,
-    [[resident.primitives, undefined]],
-    position,
-    `slot:${resident.slot}`
+/// A form's id as the shared chooser names it: the default list or an alternative, lit or dark.
+const formId = (faceList: number | 'default', dark: boolean): string =>
+  faceList === 'default'
+    ? dark
+      ? 'flash-dark'
+      : 'record'
+    : `view-${faceList}${dark ? '-flash-dark' : ''}`;
+
+const withViewGroups = new WeakMap<Mesh, Mesh>();
+
+/// A Dion resident's forms for the shared chooser (#815): every face list, lit and dark where
+/// it flashes, captured by Dion's routines; the chooser picks one by the frame's counters and
+/// the eye's box, and turns an articulated one through Dion's own turn.
+const residentForms = (
+  forms: DionResidentForms,
+  position: Vec3,
+  slot: number,
+  palettes: Palettes,
+  articulationAngle: number | undefined
+): { readonly forms: PlacementForms; readonly own: Mesh } => {
+  const mesh = (
+    faceList: number | 'default',
+    dark: boolean,
+    angle: number | undefined
+  ): Mesh =>
+    meshOf(
+      palettes,
+      [[forms.formOf(faceList, dark, angle), undefined]],
+      position,
+      `slot:${slot}`
+    );
+  const lists: (number | 'default')[] = [
+    'default',
+    ...forms.alternatives.map((_, index) => index)
+  ];
+  const variants = lists.flatMap(faceList =>
+    (forms.flash === undefined ? [false] : [false, true]).map(dark => ({
+      id: formId(faceList, dark),
+      mesh: mesh(faceList, dark, undefined)
+    }))
+  );
+  const base = variants[0]!.mesh;
+  let own = withViewGroups.get(base);
+  if (own === undefined) {
+    own =
+      forms.alternatives.length === 0
+        ? base
+        : {
+            ...base,
+            viewGroups: forms.alternatives.map(({ max, min }) => ({
+              bounds: [
+                [min[0], max[0]],
+                [min[1], max[1]],
+                [min[2], max[2]]
+              ] as const
+            }))
+          };
+    withViewGroups.set(base, own);
+  }
+  variants[0] = { id: 'record', mesh: own };
+  const byId = new Map(
+    lists.flatMap(faceList =>
+      [false, true].map(dark => [formId(faceList, dark), { dark, faceList }])
+    )
   );
   return {
+    forms: {
+      // Dion turns an articulated model by its own table, in 1024ths; where the slice carries
+      // no angle it draws the model at rest, untouched.
+      ...(forms.articulated && articulationAngle !== undefined
+        ? {
+            articulate: (id: string, angle: number) => {
+              const form = byId.get(id) ?? { dark: false, faceList: 'default' };
+              return mesh(form.faceList, form.dark, angle << 2);
+            }
+          }
+        : {}),
+      ...(forms.flash === undefined
+        ? {}
+        : {
+            flash: { gateSlot: forms.flash.gate, phase: forms.flash.phase }
+          }),
+      own: 'record',
+      variants
+    },
+    own
+  };
+};
+
+const residentPlacement = (
+  resident: DionParts['residents'][number],
+  palettes: Palettes,
+  articulationAngle: number | undefined
+): ScenePlacement => {
+  const position = resident.position;
+  const chosen =
+    resident.forms === undefined
+      ? undefined
+      : residentForms(
+          resident.forms,
+          position,
+          resident.slot,
+          palettes,
+          articulationAngle
+        );
+  const mesh =
+    chosen?.own ??
+    meshOf(
+      palettes,
+      [[resident.primitives, undefined]],
+      position,
+      `slot:${resident.slot}`
+    );
+  return {
     faceCount: mesh.faces.length,
+    ...(chosen === undefined ? {} : { forms: chosen.forms }),
     heading: 0,
     id: `object-slot-${resident.slot}`,
     keyBase: null,
@@ -585,10 +693,12 @@ export const dionEnhancedScene = (
   }
   const residents = parts.residents
     .filter(resident => !resident.viewFixed)
-    .map(resident => residentPlacement(resident, palettes));
+    .map(resident =>
+      residentPlacement(resident, palettes, state.articulationAngle)
+    );
   const viewFixed = parts.residents
     .filter(resident => resident.viewFixed)
-    .map(resident => residentPlacement(resident, palettes));
+    .map(resident => residentPlacement(resident, palettes, undefined));
   const nightSky = hex(world.framePalette.skyNight);
   const daySky = hex(world.framePalette.skyDay);
   const surface: EnhancedSurface = {
@@ -640,6 +750,12 @@ export const dionEnhancedScene = (
   return {
     aboard: state.passenger !== null,
     carriedSlot: slot => gates?.get(slot) === true,
+    clock: {
+      angle: ((state.articulationAngle ?? 0) >> 2) & 0xff,
+      frame: state.frameCounter & 0xff_ff,
+      television: 0,
+      textStep: 0
+    },
     daylight: state.day,
     gaps: [...gaps],
     inSpace: space,
@@ -672,6 +788,6 @@ export const planDionEnhancedFrame = (
     scene.aboard,
     'whole',
     outputHeight,
-    null,
+    scene.clock,
     scene.viewFixed
   );

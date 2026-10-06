@@ -33,6 +33,9 @@ export interface FormClock {
 /// What a placement's model offers the chooser: its decoded forms and, for a beacon, its
 /// slot's phase and its gate.
 export interface PlacementForms {
+  /// A Title's own articulation turn: the form `id` at `angle`, 256 steps a turn. Absent, the
+  /// chooser turns the form's tagged vertices as `$0537B0` does (Damocles's).
+  readonly articulate?: (id: string, angle: number) => Mesh;
   readonly flash?: { readonly gateSlot: number | null; readonly phase: number };
   /// The form the Session would draw with no clock: the model's own, or its slot's.
   readonly own: string;
@@ -225,10 +228,9 @@ export const formMesh = (
     return undefined;
   }
   let id = forms.own;
-  if (
-    forms.flash !== undefined &&
-    !beaconLit(forms.flash, clock.frame, carried)
-  ) {
+  const dark =
+    forms.flash !== undefined && !beaconLit(forms.flash, clock.frame, carried);
+  if (dark) {
     id = 'flash-dark';
   } else if (clock.television > 0 && byId(`frame-${clock.television}`)) {
     id = `frame-${clock.television}`;
@@ -239,15 +241,20 @@ export const formMesh = (
       ? forms.own.slice(0, -'record'.length)
       : '';
     // A group with no faces of its own is drawn as nothing: the extractor offers no form.
-    id = `${stem}view-${group}`;
+    // A dark beacon in a group takes the group's dark form where the model offers one.
+    const view = `${stem}view-${group}`;
+    id = dark && byId(`${view}-flash-dark`) ? `${view}-flash-dark` : view;
   }
   const chosen = byId(id);
   if (chosen === undefined) {
     return group === null ? own : { faces: [], lines: [], vertices: [] };
   }
-  const angle = own.articulation === undefined ? 0 : clock.angle & 0xff;
+  const turned =
+    forms.articulate !== undefined || own.articulation !== undefined;
+  const angle = turned ? clock.angle & 0xff : 0;
   const texts = chosen.textAnimations ?? [];
-  if (angle === 0 && texts.length === 0) {
+  // A Title's own turn is applied at every angle: Dion's is not the identity at 0.
+  if (angle === 0 && texts.length === 0 && forms.articulate === undefined) {
     return chosen;
   }
   const characters = texts
@@ -261,13 +268,13 @@ export const formMesh = (
   }
   let mesh = cache.get(key);
   if (mesh === undefined) {
-    mesh = withTextFrame(
-      tables.articulation === undefined
-        ? chosen
-        : articulated(chosen, angle, tables.articulation),
-      clock.textStep,
-      tables.glyphs
-    );
+    const at =
+      forms.articulate !== undefined
+        ? forms.articulate(id, angle)
+        : tables.articulation === undefined
+          ? chosen
+          : articulated(chosen, angle, tables.articulation);
+    mesh = withTextFrame(at, clock.textStep, tables.glyphs);
     cache.set(key, mesh);
   }
   return mesh;
