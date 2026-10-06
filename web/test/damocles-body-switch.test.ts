@@ -446,7 +446,7 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
       islandTriangles: 0,
       placements: 439,
       pose: 'eris-spaceport-onfoot',
-      triangles: 721
+      triangles: 745
     },
     {
       body: 'body-11',
@@ -465,7 +465,7 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
       islandTriangles: 0,
       placements: 952,
       pose: 'dion-2-3',
-      triangles: 406
+      triangles: 414
     },
     {
       body: 'body-4',
@@ -474,7 +474,7 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
       placements: 952,
       pose: 'dion-transporter',
       // Includes TRANSPORTER a (slot 66), placed on Floor 1 against the structure it binds.
-      triangles: 526
+      triangles: 534
     },
     {
       body: 'body-8',
@@ -484,7 +484,7 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
       islandTriangles: 0,
       placements: 291,
       pose: 'gaea-ur-city-4-2',
-      triangles: 495
+      triangles: 507
     },
     {
       body: 'body-14',
@@ -492,7 +492,7 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
       islandTriangles: 0,
       placements: 44,
       pose: 'vesta-parliament-4-6',
-      triangles: 392
+      triangles: 396
     },
     {
       body: 'body-14',
@@ -506,6 +506,7 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
     }
   ] as const;
 
+  // Counts include the line records' strokes, four triangles a segment (#806).
   for (const arrival of arrivals) {
     test(`${arrival.pose} draws its own Body's workspace`, () => {
       const session = new DamoclesSession(content);
@@ -588,7 +589,7 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
         restored.structure,
         restored.residents
       ).triangleCount
-    ).toBe(406);
+    ).toBe(414);
   });
 });
 

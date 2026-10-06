@@ -189,5 +189,5 @@ export interface EnhancedPresentation {
     readonly verticalFieldOfViewDegrees: number;
   };
   readonly ground: { readonly fillDropUnits: number };
-  readonly orientation: { readonly modelZ: string };
+  readonly orientation: { readonly modelZ: 'keep' | 'negate' };
 }

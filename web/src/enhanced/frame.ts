@@ -311,6 +311,43 @@ const facePlaneOf = (mesh: Mesh, face: Primitive): FacePlane | null => {
   return plane;
 };
 
+const linePlanes = new WeakMap<object, WeakMap<object, FacePlane | null>>();
+
+/// The plane of the first face in `mesh` both of a line's ends lie in, or null for a line in
+/// none of them. Cached per vertex list and line, as the face planes are.
+const linePlaneOf = (mesh: Mesh, line: Primitive): FacePlane | null => {
+  let byLine = linePlanes.get(mesh.vertices);
+  if (byLine === undefined) {
+    byLine = new WeakMap();
+    linePlanes.set(mesh.vertices, byLine);
+  }
+  let plane = byLine.get(line);
+  if (plane === undefined) {
+    plane = null;
+    const ends = line.vertices.map(index => mesh.vertices[index]!);
+    for (const face of mesh.faces) {
+      const candidate = facePlaneOf(mesh, face);
+      if (
+        candidate !== null &&
+        ends.every(
+          ([x, y, z]) =>
+            Math.abs(
+              candidate[0] * x +
+                candidate[1] * y +
+                candidate[2] * z +
+                candidate[3]
+            ) < 1e-6
+        )
+      ) {
+        plane = candidate;
+        break;
+      }
+    }
+    byLine.set(line, plane);
+  }
+  return plane;
+};
+
 /// A model plane placed as `placed` places its corners, with its offset taken from `eye`
 /// rather than from Eris's origin, so it keeps its low bits nine million units out. A
 /// horizontal plane comes out the same for every placement at one height: its turned normal
@@ -577,6 +614,21 @@ export const planEnhancedFrame = (
     plane: FacePlane
   ) => {
     const view = camera.viewSpace(toCameraSpace(world));
+    values.push(
+      view.x,
+      view.y,
+      view.z,
+      colour[0],
+      colour[1],
+      colour[2],
+      ...plane
+    );
+  };
+  const emitView = (
+    view: Vector3,
+    colour: readonly [number, number, number],
+    plane: FacePlane
+  ) => {
     values.push(
       view.x,
       view.y,
@@ -935,6 +987,43 @@ export const planEnhancedFrame = (
     }
   };
   const floorLabelGlyph = floorLabelGlyphsOf(surface, structure);
+  const strokeTangent = Math.tan(
+    (doc.camera.verticalFieldOfViewDegrees * Math.PI) / 360
+  );
+  /// A mesh's line records as strokes one output pixel wide, after its faces. A line lying in
+  /// one of the mesh's face planes takes that plane, so it ties the face exactly and wins by
+  /// coming after it in draw order (#545), as the ST's painter draws it over the face. Any
+  /// other line takes its own interpolated depth.
+  const emitLines = (mesh: Mesh, placement: ScenePlacement): void => {
+    for (const line of mesh.lines) {
+      const colour = channels(litColour(line, daylight));
+      const plane = placementPlane(linePlaneOf(mesh, line), placement);
+      for (let index = 0; index < line.vertices.length - 1; index += 1) {
+        const quad = roadStroke(
+          toView(
+            placed(mesh.vertices[line.vertices[index]!]!, placement, negateZ)
+          ),
+          toView(
+            placed(
+              mesh.vertices[line.vertices[index + 1]!]!,
+              placement,
+              negateZ
+            )
+          ),
+          doc.camera.nearPlane,
+          strokeTangent,
+          outputHeight
+        );
+        if (quad === null) {
+          continue;
+        }
+        for (const corner of [0, 1, 2, 0, 2, 3, 2, 1, 0, 3, 2, 0]) {
+          emitView(quad[corner]!, colour, plane);
+        }
+        triangleCount += 4;
+      }
+    }
+  };
   const formTables = surface.formTables ?? { glyphs: {} };
   const shownForm = (placement: ScenePlacement): ScenePlacement => {
     if (clock === null || placement.forms === undefined) {
@@ -1022,6 +1111,8 @@ export const planEnhancedFrame = (
             }
           }
         }
+      } else {
+        emitLines(mesh, placement);
       }
     }
   };
