@@ -6,13 +6,17 @@ import {
   dionPose,
   planDionEnhancedFrame
 } from '../src/dion/enhancedScene.ts';
+import { captureDionParts } from '../src/dion/frame.ts';
 import { generalCamera, levelCamera, toCamera } from '../src/dion/raster.ts';
 import { dionFrameState } from '../src/dion/session.ts';
 import { loadTourcraftContent } from '../src/dion/tourcraftContent.ts';
 import { TourcraftSession } from '../src/dion/tourcraftSession.ts';
+import { formMesh } from '../src/enhanced/forms.ts';
 import { FLOATS_PER_VERTEX } from '../src/enhanced/frame.ts';
 import { Camera } from '../src/projection/index.ts';
+import { boardOpeningTaxi } from './dion-journey.ts';
 import { dionRenderCheckpoints } from './dion-render-checkpoints.ts';
+import { continueTourcraft } from './tourcraft-journey.ts';
 
 /// Mercenary III through the shared Enhanced planner (#806).
 
@@ -182,5 +186,113 @@ describe('view-fixed models', () => {
       );
     }
     expect(riding).toBeGreaterThan(0);
+  });
+});
+
+/// A form's polygons and lines as world points, so a mesh and Dion's capture compare by
+/// what they draw.
+const shape = (
+  primitives: readonly { readonly points: readonly (readonly number[])[] }[]
+) =>
+  primitives
+    .map(p => p.points.map(point => point.map(Math.round).join(',')).join(' '))
+    .sort();
+const meshShape = (
+  mesh: import('../src/catalogue/data.ts').Mesh,
+  at: { readonly x: number; readonly y: number; readonly z: number }
+) =>
+  shape(
+    [...mesh.faces, ...mesh.lines].map(p => ({
+      points: p.vertices.map(i => {
+        const [x, y, z] = mesh.vertices[i]!;
+        return [at.x + x, at.y + y, at.z + z];
+      })
+    }))
+  );
+
+describe('Dion residents through the shared chooser', () => {
+  test('picks the form Dion’s own rules draw, frame by frame', async () => {
+    let compared = 0;
+    let flashing = 0;
+    for await (const { state, world } of dionRenderCheckpoints()) {
+      for (let frame = 0; frame < 8; frame += 1) {
+        const at = { ...state, frameCounter: state.frameCounter + frame };
+        const parts = captureDionParts(world, at);
+        const scene = dionEnhancedScene(world, at);
+        for (const resident of parts.residents) {
+          if (resident.forms === undefined) {
+            continue;
+          }
+          const placement = scene.residents.find(
+            r => r.id === `object-slot-${resident.slot}`
+          )!;
+          const chosen = formMesh(
+            placement.forms!,
+            {
+              x: placement.position.x - at.eye[0],
+              y: placement.position.y - at.eye[1],
+              z: placement.position.z - at.eye[2]
+            },
+            scene.clock,
+            scene.carriedSlot,
+            { glyphs: {} }
+          )!;
+          expect(meshShape(chosen, placement.position)).toEqual(
+            shape(resident.forms.drawn())
+          );
+          compared += 1;
+          flashing += resident.forms.flash === undefined ? 0 : 1;
+        }
+      }
+    }
+    expect(compared).toBeGreaterThan(0);
+    expect(flashing).toBeGreaterThan(0);
+  });
+
+  test('picks the form Dion’s own rules draw along the TOURCRAFT journey', () => {
+    const session = new TourcraftSession(tourcraft);
+    let compared = 0;
+    let articulated = 0;
+    const check = () => {
+      session.drainSound();
+      const [world, state] = session.frameInputs();
+      const parts = captureDionParts(world, state);
+      const scene = dionEnhancedScene(world, state);
+      for (const resident of parts.residents) {
+        if (resident.forms === undefined) {
+          continue;
+        }
+        const placement = scene.residents.find(
+          r => r.id === `object-slot-${resident.slot}`
+        )!;
+        const chosen = formMesh(
+          placement.forms!,
+          {
+            x: placement.position.x - state.eye[0],
+            y: placement.position.y - state.eye[1],
+            z: placement.position.z - state.eye[2]
+          },
+          scene.clock,
+          scene.carriedSlot,
+          { glyphs: {} }
+        )!;
+        expect(meshShape(chosen, placement.position)).toEqual(
+          shape(resident.forms.drawn())
+        );
+        compared += 1;
+        articulated += resident.forms.articulated ? 1 : 0;
+      }
+    };
+    check();
+    boardOpeningTaxi(session as never);
+    let n = 0;
+    continueTourcraft(session, () => {
+      n += 1;
+      if (n % 150 === 0) {
+        check();
+      }
+    });
+    expect(compared).toBeGreaterThan(0);
+    expect(articulated).toBeGreaterThan(0);
   });
 });

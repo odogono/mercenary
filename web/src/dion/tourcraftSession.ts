@@ -1517,7 +1517,7 @@ export class TourcraftSession extends DionSession {
   }
   /// The world and state one frame is planned from, which the Authentic planner and the
   /// Enhanced scene both take.
-  private frameInputs(): readonly [DionFrameWorld, DionFrameState] {
+  frameInputs(): readonly [DionFrameWorld, DionFrameState] {
     const world = this.worlds.get(this.state.location === 100 ? 100 : 60)!;
     const floor = this.expanded.owners['location']!['floor']!;
     // `$53C7C..$53C8C`: an interior resident joins its region's queue only on the current Floor.

@@ -271,6 +271,9 @@ interface View {
   readonly camera: LevelCamera;
   /// Set, the drawing routines record their primitives here and project nothing.
   readonly capture?: DionCaptured[];
+  /// Capturing a form for the shared chooser: the face list to draw, an alternative's index
+  /// or the default list, in place of the one the eye's box selects (`$54952`).
+  readonly faceList?: number | 'default';
   readonly paint: Paint;
   readonly primitives: OrderedPrimitive[];
   source: string;
@@ -972,8 +975,13 @@ const drawForm = (
   const points = form.vertices.map(place);
   // `$54952`: the first alternative whose box holds the model's origin seen from the
   // eye, else the default list.
-  let faces: readonly DionModelFace[] = form.faces;
-  for (const alternative of form.alternatives) {
+  let faces: readonly DionModelFace[] =
+    typeof view.faceList === 'number'
+      ? (form.alternatives[view.faceList]?.faces ?? form.faces)
+      : form.faces;
+  for (const alternative of view.faceList === undefined
+    ? form.alternatives
+    : []) {
     const inside = [0, 1, 2].every(axis => {
       const offset = (rel[axis]! - alternative.min[axis]!) >>> 0;
       return offset < alternative.size[axis]! >>> 0;
@@ -1953,6 +1961,8 @@ export type { DionCell };
 /// record and the cell's ground record, so that the shared planner's rules can choose.
 export interface DionParts {
   readonly residents: readonly {
+    /// The resident's forms for the shared chooser (#815): absent on a view-fixed model.
+    readonly forms?: DionResidentForms;
     readonly position: Vec3;
     readonly primitives: readonly DionCaptured[];
     readonly slot: number;
@@ -1986,6 +1996,24 @@ export interface DionParts {
   } | null;
 }
 
+/// What the shared chooser picks a Dion resident's form from (#815): its face lists' boxes
+/// (object less eye, as `$54952` tests), whether it flashes and on what phase and gate, and
+/// whether it is articulated. `formOf` captures one form in Dion's own routines, so a face
+/// list, a lamp and an articulation angle in 1024ths are all drawn as Dion draws them.
+export interface DionResidentForms {
+  readonly alternatives: readonly { readonly max: Vec3; readonly min: Vec3 }[];
+  readonly articulated: boolean;
+  /// The form Dion's own rules draw this frame, which the shared chooser must match.
+  readonly drawn: () => DionCaptured[];
+  readonly flash?: { readonly gate: number | null; readonly phase: number };
+  /// One form; an undefined angle draws an articulated model at rest, untouched.
+  readonly formOf: (
+    faceList: number | 'default',
+    dark: boolean,
+    articulationAngle: number | undefined
+  ) => DionCaptured[];
+}
+
 export const captureDionParts = (
   world: DionFrameWorld,
   state: DionFrameState
@@ -2013,15 +2041,22 @@ export const captureDionParts = (
         state.cameraAngles.yaw
       )
     : levelCamera(state.eye, state.heading);
-  const capturing = (draw: (view: View) => void): DionCaptured[] => {
+  const capturing = (
+    draw: (view: View) => void,
+    form: {
+      readonly faceList?: number | 'default';
+      readonly state?: DionFrameState;
+    } = {}
+  ): DionCaptured[] => {
     const capture: DionCaptured[] = [];
     draw({
       camera,
       capture,
+      ...(form.faceList === undefined ? {} : { faceList: form.faceList }),
       paint,
       primitives: [],
       source: `cell:${state.cell}`,
-      state,
+      state: form.state ?? state,
       world
     });
     return capture;
@@ -2121,14 +2156,70 @@ export const captureDionParts = (
     seen.add(item.slot);
     const model = item.model;
     const { mode, passenger } = modelMode(state, item.slot, model);
-    residents.push({
-      position: passenger ? state.eye : item.pose.position,
-      primitives: capturing(view =>
-        drawModel(view, bound, item.slot, model, item.pose)
-      ),
-      slot: item.slot,
-      viewFixed: passenger || (mode !== 0 && (mode & 0xc0) === 0)
-    });
+    const viewFixed = passenger || (mode !== 0 && (mode & 0xc0) === 0);
+    const pose = item.pose;
+    const slot = item.slot;
+    const beacon = world.tourcraft?.beacons.get(slot);
+    // `$8003`: a promoted beacon swaps its lit and dark models, any other lamp patch its lamp
+    // colours, on the frame counter plus the slot's phase word.
+    const flashes =
+      beacon !== undefined ||
+      (model.header?.op === 0x3 && (model.header.targets?.length ?? 0) > 0);
+    const phase = world.blinkPhase.get(slot) ?? 0;
+    const alternatives = viewFixed ? [] : model.alternatives;
+    const { articulationAngle: _angle, ...withoutAngle } = state;
+    // One form of the resident: a face list, lit or dark, at an articulation angle in Dion's
+    // own 1024ths. The gates stand open, so `$8003`'s own test is what the frame decides.
+    const formOf = (
+      faceList: number | 'default',
+      dark: boolean,
+      articulationAngle: number | undefined
+    ): DionCaptured[] =>
+      capturing(view => drawModel(view, bound, slot, model, pose), {
+        faceList,
+        state: {
+          ...withoutAngle,
+          ...(articulationAngle === undefined ? {} : { articulationAngle }),
+          beaconGates: new Map(
+            beacon?.gate === undefined ? [] : [[beacon.gate, true]]
+          ),
+          frameCounter: (dark ? 4 - phase : -phase) & 0xff_ff
+        }
+      });
+    residents.push(
+      viewFixed
+        ? {
+            position: passenger ? state.eye : pose.position,
+            primitives: capturing(view =>
+              drawModel(view, bound, slot, model, pose)
+            ),
+            slot,
+            viewFixed
+          }
+        : {
+            forms: {
+              alternatives: alternatives.map(alternative => ({
+                max: [
+                  alternative.min[0] + alternative.size[0],
+                  alternative.min[1] + alternative.size[1],
+                  alternative.min[2] + alternative.size[2]
+                ],
+                min: alternative.min
+              })),
+              articulated: (mode & 0x80) !== 0,
+              drawn: () =>
+                capturing(view => drawModel(view, bound, slot, model, pose)),
+              ...(flashes
+                ? { flash: { gate: beacon?.gate ?? null, phase } }
+                : {}),
+              formOf
+            },
+            position: pose.position,
+            primitives: formOf('default', false, state.articulationAngle),
+            slot,
+            viewFixed
+          }
+    );
   }
   return {
     residents,
