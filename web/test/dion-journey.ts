@@ -21,6 +21,7 @@ export const until = (
   }
 };
 export const boardOpeningTaxi = (session: DionSession): void => {
+  until(session, () => session.snapshot.reveal === 0);
   press(session, 'activate');
   session.advance(64 / 50);
   press(session, 'star');

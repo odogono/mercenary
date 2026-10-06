@@ -195,9 +195,11 @@ export class TourcraftSession extends DionSession {
         },
         faceSelection: 'initial',
         flight: null,
-        // The opening's logo reveal (`reveal` 49) stays the taxi code's: the port has always
-        // taken Enter during it, though `$4D848` refuses the keypad until it ends.
-        head: initialHeadCommands(),
+        // `$4D848` refuses the keypad during the opening's 49-VBL logo reveal too.
+        head: {
+          ...initialHeadCommands(),
+          box: { from: null, fromItem: null, steps: 49, to: null }
+        },
         liveIntent: IDLE,
         owners,
         pawn: { ...promoted.head.pawn.initial },

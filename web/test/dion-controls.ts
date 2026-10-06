@@ -1,7 +1,7 @@
 import type { DionContent } from '../src/dion/content.ts';
 import { DionSession, type DionAction } from '../src/dion/session.ts';
 import { IDLE } from '../src/gameCore/index.ts';
-import { frames, press } from './dion-journey.ts';
+import { frames, press, until } from './dion-journey.ts';
 
 // R3's 33 controls on six trajectories, expressed by semantic checkpoints at the
 // accepted cadence rather than importing original-engine VBL/CPU timing.
@@ -108,6 +108,7 @@ export const dionControlCaptures = (
         });
       }
     };
+    until(s, () => s.snapshot.reveal === 0);
     press(s, 'activate');
     s.advance(11 / 50);
     capture('mid-reveal');

@@ -148,6 +148,8 @@ test('production keyboard journey, flight Save/Load and reload Resume through au
   const screen = page.locator('#screen');
   await expect(screen).toHaveAttribute('data-state', 'ready');
   await page.evaluate(() => window.dionClock.step(0));
+  await expect(screen).toHaveAttribute('data-reveal', '49');
+  await page.keyboard.press('Enter');
   let target = await tick(page),
     restored = false,
     loaded = false;
@@ -173,6 +175,9 @@ test('production keyboard journey, flight Save/Load and reload Resume through au
   }
   for (const op of browserOperations) {
     if (op.kind === 'press') {
+      if (op.action === 'activate') {
+        await expect(screen).toHaveAttribute('data-reveal', '0');
+      }
       await page.keyboard.press(keyFor[op.action]);
     } else if (op.kind === 'intent') {
       const wanted = new Set<string>();
