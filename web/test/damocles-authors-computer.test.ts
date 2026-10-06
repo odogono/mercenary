@@ -9,7 +9,6 @@ import {
   stepOption
 } from '../src/damocles/authorsComputer.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
-import { zoomedFieldOfView } from '../src/damocles/frame.ts';
 import {
   AUTHORS_COMPUTER_SLOT,
   TRANSITION_VBLS
@@ -30,6 +29,7 @@ import {
 } from '../src/damocles/session.ts';
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
+import { zoomedFieldOfView } from '../src/enhanced/frame.ts';
 import { maskedColour } from '../src/shell/panelView.ts';
 import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';

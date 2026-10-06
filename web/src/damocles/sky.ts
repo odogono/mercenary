@@ -1,9 +1,15 @@
 import type { BodySky } from '../catalogue/data.ts';
+import type { SkyComet, SkyItem, SkyPass } from '../enhanced/sky.ts';
 import type { GammaSystemDocument } from '../flyover/documents.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import { cometCentre, type ImpactTime } from './comet.ts';
-import { starPixels, type StarPixel, type StarView } from './stars.ts';
+import { starPixels, type StarView } from './stars.ts';
 import { continuousSkyAngles, skyAngles } from './terminator.ts';
+
+export type { SkyBody, SkyComet, SkyItem, SkyPass } from '../enhanced/sky.ts';
+
+/// The Body that gives Sunlight: `$00` in a draw list, the sky pass's `dialis`.
+export const DAMOCLES_SUN = 'dialis';
 
 /// The other Bodies of a cluster in a Body's sky (#530), to the closed form #528 recovered
 /// (docs/research/damocles-sky-bodies.md).
@@ -44,53 +50,6 @@ export const celestialRotation = (
     [sl * cp, sp, cl * cp]
   ];
 };
-
-/// One listed Body as the sky pass sees it this frame.
-export interface SkyBody {
-  /// The lit side's colour: the low word of `$0060C0 + sel`, as `system.json` expands it.
-  readonly colour: string;
-  /// Which colour the first span takes. `$0459CE` swaps the pair when the XZ cross product at
-  /// the Body is non-negative.
-  readonly first: 'lit' | 'shadow';
-  readonly id: string;
-  readonly kind: 'disc';
-  /// The Body's centre less the eye, in the current Body's surface frame.
-  readonly offset: Vector3;
-  /// The unlit side's colour: the sky by day on a Body with an atmosphere, `$000` otherwise.
-  readonly shadow: string;
-  /// `$006040`'s decode: the disc's pixel radius is `size / depth`.
-  readonly size: number;
-  /// Where the terminator crosses each row, as a fraction of the row's half-width from the
-  /// centre: the first span, `[−w, split·w)`, is drawn in `first`, the rest in the other colour.
-  /// DIALIS's is 1, a full disc.
-  readonly split: number;
-}
-
-/// The comet as the sky pass sees it this frame. Every offset is from the eye, in the current
-/// Body's surface frame, as a disc's is.
-export interface SkyComet {
-  /// The polygons `$04F8FE` draws, in order, each naming `points` by index.
-  readonly faces: readonly {
-    readonly colour: string;
-    readonly points: readonly number[];
-  }[];
-  /// The disc `$04FCE6` draws over the head once the polygons are down, where the head is in
-  /// front of the eye. `$042C04 = $7FFF0000` puts its split at the rim, so it is one colour:
-  /// palette slot 0, which the surface pass holds at `$000`. It is under a pixel from every
-  /// surface at every clock a Session reaches before the impact, so no frame has shown it.
-  readonly head: {
-    readonly colour: string;
-    readonly size: number;
-  } | null;
-  readonly id: string;
-  readonly kind: 'comet';
-  /// The comet's centre.
-  readonly offset: Vector3;
-  /// The tail tip, then the head points, in the slots `$04FBF6` projects them into.
-  readonly points: readonly Vector3[];
-}
-
-export type SkyItem = SkyBody | SkyComet;
 
 /// The colours a palette slot holds in the surface pass, as far as the sky reads them.
 /// `$0597E2` loads slot 8 with the sky; slot 0 is `$000`.
@@ -140,29 +99,6 @@ export interface SkyInputs {
   readonly stars?: StarView | null;
   /// The Body's rotation accumulator (`$62EA + 4 * body`).
   readonly turn: number;
-}
-
-/// One frame's sky pass: its Bodies, and the two static facts the frame measures them by.
-export interface SkyPass {
-  /// Every Body the current Body's draw list names, in the list's order, which is the order the
-  /// engine draws them in with no depth sort. DAMOCLES is its comet, and is gone once the
-  /// impact clock reaches zero.
-  readonly bodies: readonly SkyItem[];
-  /// `$045A0C`: a disc narrower than this many pixels at its widest row has no row at all.
-  readonly halfWidthDivisor: number;
-  /// `$05309A`'s clip row `$042C74`: `$44`, the view's centre row, in ground contact over land
-  /// (`$7AAA ≠ 0`, `$78A6 ≥ 0`), where no Body or comet row is drawn below it. Otherwise `$88`,
-  /// the view's last row, and aboard the ground fill covers what lies below the horizon.
-  readonly horizonCut: boolean;
-  /// `$7964`: the projection scale a disc's `size / depth` pixel radius is measured against.
-  readonly projectionScale: number;
-  /// The starfield's pixels, in the ST's screen pixels, in plot order (#578). The stars are
-  /// drawn before the sky pass, so every Body covers them.
-  readonly stars: readonly StarPixel[];
-  /// `2^(exponent - 8)` for the scale exponent the AUTHORS COMPUTER's option 2 writes into
-  /// `$7964` (#628): the ST pixels a unit tangent spans grow with it, so a disc's pixel tests and
-  /// the starfield, which does not read `$7964`, measure by it. Absent is 1.
-  readonly zoom?: number;
 }
 
 /// Whether the Body has an atmosphere: `$794D`, non-zero exactly where its day and night sky

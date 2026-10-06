@@ -3,10 +3,13 @@ import {
   craftFixed,
   type CraftArithmetic
 } from '../craft/pass.ts';
+import type { StarPixel } from '../enhanced/sky.ts';
 import type { GammaStarfield } from '../flyover/documents.ts';
 import { tan } from '../math/index.ts';
 import type { ErisPresentationDocument } from './documents.ts';
 import type { Pose } from './world.ts';
+
+export { starTangent, type StarPixel } from '../enhanced/sky.ts';
 
 /// The Damocles starfields (#578), in the ST's own screen pixels
 /// (docs/research/damocles-starfield.md).
@@ -45,14 +48,6 @@ export interface StarView {
   readonly routine: StarRoutine;
   /// The yaw word `$7AA2`.
   readonly yaw: number;
-}
-
-export interface StarPixel {
-  readonly colour: string;
-  /// ST columns from the view's left edge, 0 to 319 inside it.
-  readonly column: number;
-  /// ST rows from the view's top edge, 0 to 135 inside it.
-  readonly row: number;
 }
 
 /// How far past the ST's view the port plots, in ST pixels. The port's Camera is 45° tall
@@ -245,14 +240,3 @@ export const starPixels = (
   }
   return out;
 };
-
-/// Where an ST pixel's top-left corner is in the port's view, as tangents: the ST projects at
-/// 256 pixels a unit tangent about column 160 and row 68 (#528), up positive.
-export const starTangent = (
-  column: number,
-  row: number,
-  projectionScale: number
-): { readonly x: number; readonly y: number } => ({
-  x: (column - CENTRE_COLUMN) / projectionScale,
-  y: (CENTRE_ROW - row) / projectionScale
-});

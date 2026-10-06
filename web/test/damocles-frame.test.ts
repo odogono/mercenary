@@ -6,20 +6,9 @@ import {
   type ErisPresentationDocument
 } from '../src/damocles/documents.ts';
 import {
-  FLOATS_PER_VERTEX,
-  modelPlane,
-  planErisFrame,
-  type ErisFramePlan
-} from '../src/damocles/frame.ts';
-import { erisLighting, type Sunlight } from '../src/damocles/lighting.ts';
-import {
   ErisRenderer,
   shadowCasterVertices
 } from '../src/damocles/renderer.ts';
-import {
-  structureMeshes,
-  structureRegionAt
-} from '../src/damocles/selection.ts';
 import {
   bearingFromYaw,
   cellOf,
@@ -31,10 +20,21 @@ import {
   type ErisSurface
 } from '../src/damocles/world.ts';
 import {
+  FLOATS_PER_VERTEX,
+  modelPlane,
+  planEnhancedFrame,
+  type EnhancedFramePlan
+} from '../src/enhanced/frame.ts';
+import { sceneLighting, type Sunlight } from '../src/enhanced/lighting.ts';
+import {
   CASTER_GRID_HALF_EXTENT,
   CASTER_GRID_SIZE,
   CASTER_TEXTURE_WIDTH
 } from '../src/rendering/castShadows.ts';
+import {
+  structureMeshes,
+  structureRegionAt
+} from '../src/structure/selection.ts';
 import { ERIS_BODY } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
@@ -119,12 +119,12 @@ const origin = {
 
 /// The Body's base plane and the Damocles Island fills over it lead every plan; both counts
 /// depend on where the eye stands, so read them back from the plan.
-const fillFloats = (plan: ErisFramePlan): number =>
+const fillFloats = (plan: EnhancedFramePlan): number =>
   (plan.fillTriangleCount + plan.islandTriangleCount) * 3 * FLOATS_PER_VERTEX;
 
 /// Everything a plan draws above the base plane and the island fills: the recovered geometry,
 /// which the land-and-sea layers sit beneath rather than move.
-const recoveredVertices = (plan: ErisFramePlan): Float32Array =>
+const recoveredVertices = (plan: EnhancedFramePlan): Float32Array =>
   plan.vertices.slice(fillFloats(plan));
 
 const roadWidth = (vertices: Float32Array): number =>
@@ -145,7 +145,7 @@ describe('an Eris frame in Filled Presentation', () => {
       // Approaching from Island-Local Cell 08-48, around the reported 008086 altitude.
       position: { x: 40.5 * 65_536, y: 848_000, z: 1104.5 * 65_536 }
     };
-    const plan = planErisFrame(surface, pose, doc);
+    const plan = planEnhancedFrame(surface, pose, doc);
     expect(plan.roadEdges).toContain(0x26_46);
     expect(plan.roadVertices.length).toBeGreaterThan(0);
     expect(Array.from(plan.roadVertices.slice(3, 6))).toEqual([
@@ -153,7 +153,7 @@ describe('an Eris frame in Filled Presentation', () => {
       expect.closeTo(170 / 255, 5),
       expect.closeTo(170 / 255, 5)
     ]);
-    const acrossWrap = planErisFrame(
+    const acrossWrap = planEnhancedFrame(
       surface,
       {
         ...pose,
@@ -167,7 +167,7 @@ describe('an Eris frame in Filled Presentation', () => {
     );
     expect(acrossWrap.roadEdges).toEqual(plan.roadEdges);
     expect(acrossWrap.roadVertices).toEqual(plan.roadVertices);
-    const returned = planErisFrame(
+    const returned = planEnhancedFrame(
       surface,
       {
         ...startPose(doc),
@@ -187,14 +187,14 @@ describe('an Eris frame in Filled Presentation', () => {
       ...startPose(doc),
       position: { ...startPose(doc).position, y: 6144 }
     };
-    const plan = planErisFrame(surface, pose, doc);
+    const plan = planEnhancedFrame(surface, pose, doc);
     // Radius 3 selects five neighbouring runs. The sixth, the own run, waits
     // for camera Y's high word to become nonzero, as `$54AFA` requires.
     expect(plan.roadEdges).toEqual([
       0xb3_b5, 0x94_9a, 0x8a_9a, 0x89_d9, 0x14_b4
     ]);
     expect(plan.roadVertices.length).toBeGreaterThan(0);
-    const display = planErisFrame(
+    const display = planEnhancedFrame(
       surface,
       pose,
       doc,
@@ -216,9 +216,11 @@ describe('an Eris frame in Filled Presentation', () => {
     expect(
       roadWidth(display.roadVertices) / roadWidth(plan.roadVertices)
     ).toBeCloseTo(136 / 1214, 4);
-    expect(planErisFrame(surface, startPose(doc), doc).roadEdges).toEqual([]);
+    expect(planEnhancedFrame(surface, startPose(doc), doc).roadEdges).toEqual(
+      []
+    );
     expect(
-      planErisFrame(
+      planEnhancedFrame(
         surface,
         pose,
         doc,
@@ -236,13 +238,15 @@ describe('an Eris frame in Filled Presentation', () => {
   test('draws the visible resident placements supplied by Session State', async () => {
     const { doc, surface } = await load();
     const pose = startPose(doc);
-    const without = planErisFrame(surface, pose, doc);
+    const without = planEnhancedFrame(surface, pose, doc);
     const resident = placement(square(), {
       x: pose.position.x,
       y: 0,
       z: pose.position.z + 100
     });
-    const withResident = planErisFrame(surface, pose, doc, null, [resident]);
+    const withResident = planEnhancedFrame(surface, pose, doc, null, [
+      resident
+    ]);
     expect(withResident.triangleCount).toBe(without.triangleCount + 2);
   });
 
@@ -266,17 +270,17 @@ describe('an Eris frame in Filled Presentation', () => {
       y: 0,
       z: pose.position.z + 100
     });
-    const unlabelled = planErisFrame(surface, pose, doc, null, [
+    const unlabelled = planEnhancedFrame(surface, pose, doc, null, [
       { ...resident, mesh: { ...labelled, lines: [] } }
     ]);
-    const withLabel = planErisFrame(surface, pose, doc, null, [resident]);
+    const withLabel = planEnhancedFrame(surface, pose, doc, null, [resident]);
     expect(withLabel.triangleCount).toBe(unlabelled.triangleCount + 4);
   });
 
   test('emits the ground and every decoded face it draws, and nothing for the unrecovered', async () => {
     const { doc, surface } = await load();
     const pose = startPose(doc);
-    const plan = planErisFrame(surface, pose, doc);
+    const plan = planEnhancedFrame(surface, pose, doc);
     // Only the placements within the recovered draw bound contribute faces (#373).
     const decodedFaces = surface.placements
       .filter(item => withinDrawBound(item, pose.position, surface.grid))
@@ -289,16 +293,17 @@ describe('an Eris frame in Filled Presentation', () => {
       plan.triangleCount * 3 * FLOATS_PER_VERTEX
     );
     expect(plan.skippedFaces).toBe(0);
-    // Outside a structure the sky is the Body's own word; `planErisFrame` defaults to night,
+    // Outside a structure the sky is the Body's own word; `planEnhancedFrame` defaults to night,
     // Eris's `$001` (#494).
     expect(plan.clear).toEqual([0, 0, 0x22 / 255]);
     expect(
-      planErisFrame(surface, pose, doc, null, [], [], () => false, true).clear
+      planEnhancedFrame(surface, pose, doc, null, [], [], () => false, true)
+        .clear
     ).toEqual([0x66 / 255, 0xaa / 255, 0xee / 255]);
     const withoutMeshes = surfaceOf(
       surface.placements.filter(p => p.mesh === undefined)
     );
-    const empty = planErisFrame(withoutMeshes, startPose(doc), doc);
+    const empty = planEnhancedFrame(withoutMeshes, startPose(doc), doc);
     expect(empty.triangleCount).toBe(empty.fillTriangleCount);
   });
 
@@ -316,8 +321,8 @@ describe('an Eris frame in Filled Presentation', () => {
     expect(surface.placements).toHaveLength(439);
     expect(here).toHaveLength(4);
     expect(objects).toHaveLength(7);
-    const plan = planErisFrame(surface, pose, doc);
-    const drawnOnly = planErisFrame(
+    const plan = planEnhancedFrame(surface, pose, doc);
+    const drawnOnly = planEnhancedFrame(
       surfaceOf([...new Set([...here, ...objects])]),
       pose,
       doc
@@ -333,12 +338,12 @@ describe('an Eris frame in Filled Presentation', () => {
 
     // An object in a distant cell stays in the draw; a ground record there does not.
     const far = { x: pose.position.x + 6 * 65_536, y: 0, z: pose.position.z };
-    const withObject = planErisFrame(
+    const withObject = planEnhancedFrame(
       surfaceOf([placement(square(), far)]),
       pose,
       doc
     );
-    const withGround = planErisFrame(
+    const withGround = planEnhancedFrame(
       surfaceOf([{ ...placement(square(), far), kind: 'ground' }]),
       pose,
       doc
@@ -349,7 +354,11 @@ describe('an Eris frame in Filled Presentation', () => {
 
   test('puts a face straight ahead at positive view depth in its own colour', async () => {
     const { doc } = await load();
-    const plan = planErisFrame(surfaceOf([placement(square())]), origin, doc);
+    const plan = planEnhancedFrame(
+      surfaceOf([placement(square())]),
+      origin,
+      doc
+    );
     expect(plan.triangleCount).toBe(plan.fillTriangleCount + 2);
     for (
       let corner = fillFloats(plan);
@@ -373,8 +382,12 @@ describe('an Eris frame in Filled Presentation', () => {
 
   test('draws a double-sided face twice, reversed', async () => {
     const { doc } = await load();
-    const single = planErisFrame(surfaceOf([placement(square())]), origin, doc);
-    const double = planErisFrame(
+    const single = planEnhancedFrame(
+      surfaceOf([placement(square())]),
+      origin,
+      doc
+    );
+    const double = planEnhancedFrame(
       surfaceOf([placement(square(true))]),
       origin,
       doc
@@ -406,7 +419,7 @@ describe('an Eris frame in Filled Presentation', () => {
       ]
     };
     const seen = (at: { x: number; z: number }, heading: number) => {
-      const plan = planErisFrame(
+      const plan = planEnhancedFrame(
         surfaceOf([placement(mesh, { x: at.x, y: 0, z: at.z })]),
         { ...origin, heading },
         doc
@@ -439,7 +452,7 @@ describe('an Eris frame in Filled Presentation', () => {
       ]
     };
     const at = (document: ErisPresentationDocument, heading: number) => {
-      const plan = planErisFrame(
+      const plan = planEnhancedFrame(
         surfaceOf([{ ...placement(mesh, { x: 0, y: 0, z: 0 }), heading }]),
         origin,
         document
@@ -469,14 +482,18 @@ describe('an Eris frame in Filled Presentation', () => {
         [10, 0, 0]
       ]
     };
-    const plan = planErisFrame(surfaceOf([placement(degenerate)]), origin, doc);
+    const plan = planEnhancedFrame(
+      surfaceOf([placement(degenerate)]),
+      origin,
+      doc
+    );
     expect(plan.triangleCount).toBe(plan.fillTriangleCount);
     expect(plan.skippedFaces).toBe(0);
   });
 
   test('lays the base plane under the walk, below the recovered faces', async () => {
     const { doc, surface } = await load();
-    const plan = planErisFrame(surface, startPose(doc), doc);
+    const plan = planEnhancedFrame(surface, startPose(doc), doc);
     const base = Array.from(
       plan.vertices.slice(0, plan.fillTriangleCount * 3 * FLOATS_PER_VERTEX)
     );
@@ -525,11 +542,11 @@ describe('an Eris frame in Filled Presentation', () => {
     const { doc, surface } = await load();
     // Off the core, where the islands are drawn: on it no island is (#578).
     const pose = offCore(doc, surface);
-    const plan = planErisFrame(surface, pose, doc);
+    const plan = planEnhancedFrame(surface, pose, doc);
     // The island fill is a new layer beneath the recovered geometry, not a change to its
     // transform: the structures, roads and ground polygons placed in Body Coordinates at
     // origin 64,128 draw vertex for vertex as they did before land and sea existed (#394).
-    const withoutIslands = planErisFrame(
+    const withoutIslands = planEnhancedFrame(
       { ...surface, islands: [] },
       pose,
       doc
@@ -556,7 +573,7 @@ describe('an Eris frame in Filled Presentation', () => {
     const { doc } = await load();
     // ADR 0043: nothing unrecovered is drawn. The VOID slot is the space-as-place sentinel
     // and carries no surface, so it gets no invented one.
-    const plan = planErisFrame(
+    const plan = planEnhancedFrame(
       { ...surfaceOf([placement(square())]), baseColour: null },
       origin,
       doc
@@ -573,7 +590,7 @@ describe('an Eris frame in Filled Presentation', () => {
       ...pose,
       position: { ...pose.position, x: (64 - 40) * surface.grid.cellUnits }
     };
-    const plan = planErisFrame(surface, offshore, doc);
+    const plan = planEnhancedFrame(surface, offshore, doc);
     expect(plan.vertices[3]).toBe(0);
     expect(plan.vertices[4]).toBe(0);
     expect(plan.vertices[5]).toBeCloseTo(0x66 / 255, 6);
@@ -590,7 +607,7 @@ describe('an Eris frame in Filled Presentation', () => {
 
   test('ties every ground record face at y = 0 to one plane, bit for bit', async () => {
     const { doc, surface } = await load();
-    const plan = planErisFrame(surface, startPose(doc), doc);
+    const plan = planEnhancedFrame(surface, startPose(doc), doc);
     const fill = fillFloats(plan);
     const groundEnd = fill + plan.groundTriangleCount * 3 * FLOATS_PER_VERTEX;
     // Pads, aprons and the white strips over them all lie in y = 0. However each face was
@@ -629,9 +646,8 @@ describe('an Eris frame in Filled Presentation', () => {
     expect(onWall('#eeeeee').length).toBeGreaterThanOrEqual(4);
 
     // The frame selects the detail list only for the structure a session has bound.
-    const plan = planErisFrame(surface, pose, doc, {
+    const plan = planEnhancedFrame(surface, pose, doc, {
       attachments: [],
-      doorway: null,
       floor: 0,
       instanceId: building.id,
       regionIndex: structureRegionAt(building, pose, false),
@@ -693,7 +709,7 @@ const aloft = (doc: ErisPresentationDocument) => {
 describe('the ground to the horizon', () => {
   test('reaches the horizon from Y $1800000, where the base plane is past the far plane', async () => {
     const { doc, surface } = await load();
-    const plan = planErisFrame(surface, aloft(doc), doc);
+    const plan = planEnhancedFrame(surface, aloft(doc), doc);
     // Every base plane vertex is past the far plane: from this height it draws nothing (#573).
     const base = verticesOf(
       plan.vertices.slice(0, plan.fillTriangleCount * 3 * FLOATS_PER_VERTEX)
@@ -739,14 +755,14 @@ describe('the ground to the horizon', () => {
       ...high,
       position: { ...high.position, y: 0x1_a7_4b_20 }
     };
-    expect(planErisFrame(surface, higher, doc).horizonVertices).toEqual(
-      planErisFrame(surface, high, doc).horizonVertices
+    expect(planEnhancedFrame(surface, higher, doc).horizonVertices).toEqual(
+      planEnhancedFrame(surface, high, doc).horizonVertices
     );
   });
 
   test('takes the island colour underfoot on the ground, as the base plane does', async () => {
     const { doc, surface } = await load();
-    const plan = planErisFrame(surface, startPose(doc), doc);
+    const plan = planEnhancedFrame(surface, startPose(doc), doc);
     expect(plan.horizonVertices.length).toBeGreaterThan(0);
     expect(Array.from(plan.horizonVertices.slice(3, 6))).toEqual(
       Array.from(plan.vertices.slice(3, 6))
@@ -765,7 +781,7 @@ describe('the ground to the horizon', () => {
 
   test('is not drawn in space or on a Body with no surface colour', async () => {
     const { doc, surface } = await load();
-    const space = planErisFrame(
+    const space = planEnhancedFrame(
       surface,
       aloft(doc),
       doc,
@@ -781,7 +797,7 @@ describe('the ground to the horizon', () => {
     expect(space.horizonIslandVertices.length).toBe(0);
     // Space is filled in `$001`, slot 8 as `$0598CC` loads it (#578).
     expect(space.clear).toEqual([0, 0, 0x22 / 0xff]);
-    const bare = planErisFrame(
+    const bare = planEnhancedFrame(
       { ...surfaceOf([]), baseColour: null },
       origin,
       doc
@@ -845,7 +861,7 @@ describe('the islands from altitude', () => {
       pitch: pitchFromWord(655, doc.orientation),
       position: { x: 214_399_288, y: 5_117_470, z: 88_304_370 }
     };
-    const plan = planErisFrame(surface, pose, doc);
+    const plan = planEnhancedFrame(surface, pose, doc);
     const flat = verticesOf(plan.horizonIslandVertices);
     expect(flat.length).toBeGreaterThan(0);
     for (const { view } of flat) {
@@ -890,12 +906,12 @@ describe('the islands from altitude', () => {
 
   test('are not drawn on an island core on the ground, as `$0560F2` returns first', async () => {
     const { doc, surface } = await load();
-    const plan = planErisFrame(surface, startPose(doc), doc);
+    const plan = planEnhancedFrame(surface, startPose(doc), doc);
     expect(plan.islandTriangleCount).toBe(0);
     expect(plan.horizonIslandVertices.length).toBe(0);
     // One unit above Y's high word, the core no longer holds and every island is drawn.
     const lifted = startPose(doc);
-    const aloft = planErisFrame(
+    const aloft = planEnhancedFrame(
       surface,
       { ...lifted, position: { ...lifted.position, y: 0x1_00_00 } },
       doc
@@ -918,7 +934,7 @@ describe('the stars in the frame plan', () => {
         { colour: '#4488cc', column: -300, row: 150 }
       ]
     };
-    const plan = planErisFrame(
+    const plan = planEnhancedFrame(
       surface,
       startPose(doc),
       doc,
@@ -1004,7 +1020,7 @@ describe('a face plane', () => {
 });
 
 /// Each vertex's plane between two float offsets of a plan's vertices.
-const planesOf = (plan: ErisFramePlan, from: number, to: number) => {
+const planesOf = (plan: EnhancedFramePlan, from: number, to: number) => {
   const planes: number[][] = [];
   for (let at = from; at < to; at += FLOATS_PER_VERTEX) {
     planes.push(Array.from(plan.vertices.slice(at + 6, at + 10)));
@@ -1013,7 +1029,7 @@ const planesOf = (plan: ErisFramePlan, from: number, to: number) => {
 };
 
 /// Each triangle's colour and plane from a float offset on, in draw order.
-const trianglesOf = (plan: ErisFramePlan, from: number) => {
+const trianglesOf = (plan: EnhancedFramePlan, from: number) => {
   const triangles: { colour: number[]; plane: number[] }[] = [];
   for (let at = from; at < plan.vertices.length; at += 3 * FLOATS_PER_VERTEX) {
     triangles.push({
@@ -1210,7 +1226,7 @@ describe('the Eris renderer', () => {
         )
       }))
     };
-    const plan = planErisFrame(coreless, startPose(doc), doc);
+    const plan = planEnhancedFrame(coreless, startPose(doc), doc);
     const fake = fakeContext();
     const renderer = new ErisRenderer(
       fake.canvas,
@@ -1288,7 +1304,7 @@ describe('the Eris renderer', () => {
   test('keeps the Authentic draw path lazy when lighting is available', async () => {
     (globalThis as { window?: unknown }).window ??= { devicePixelRatio: 1 };
     const { doc, surface } = await load();
-    const plan = planErisFrame(surface, startPose(doc), doc);
+    const plan = planEnhancedFrame(surface, startPose(doc), doc);
     const fake = fakeContext();
     const renderer = new ErisRenderer(
       fake.canvas,
@@ -1308,7 +1324,7 @@ describe('the Eris renderer', () => {
   test('ray-tests Cast Shadows against the structures alone, through a caster grid uploaded each frame', async () => {
     (globalThis as { window?: unknown }).window ??= { devicePixelRatio: 1 };
     const { doc, surface } = await load();
-    const plan = planErisFrame(
+    const plan = planEnhancedFrame(
       surfaceOf([placement(square(true))]),
       origin,
       doc
@@ -1327,7 +1343,7 @@ describe('the Eris renderer', () => {
       () => undefined
     );
     expect(fake.compiled).toBe(2);
-    const frame = { lighting: erisLighting(doc, origin, sun) };
+    const frame = { lighting: sceneLighting(doc.lighting, origin, sun) };
     renderer.render(plan, frame);
     renderer.render(plan, frame);
     // One lit program; no shadow map, depth pass or stencil.

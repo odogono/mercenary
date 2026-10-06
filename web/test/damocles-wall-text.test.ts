@@ -8,14 +8,14 @@ import {
   type StructureSelection
 } from '../src/catalogue/data.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
+import type { BoundStructureSnapshot } from '../src/damocles/save.ts';
+import type { ErisPlacement, ErisSurface } from '../src/damocles/world.ts';
 import {
   FLOATS_PER_VERTEX,
   floorLabelGlyphsOf,
-  planErisFrame
-} from '../src/damocles/frame.ts';
-import type { BoundStructureSnapshot } from '../src/damocles/save.ts';
-import { structureMeshes } from '../src/damocles/selection.ts';
-import type { ErisPlacement, ErisSurface } from '../src/damocles/world.ts';
+  planEnhancedFrame
+} from '../src/enhanced/frame.ts';
+import { structureMeshes } from '../src/structure/selection.ts';
 import { ERIS_BODY } from './damocles-pose.ts';
 
 const doc = readErisPresentation(
@@ -168,7 +168,15 @@ test('font 4 draws its font-3 fallback while slot 49 or 91 is carried', () => {
 /// Each recovered triangle's colour, in draw order, and whether it shares the first one's
 /// plane to the bit.
 const orders = (carriedSlot?: (slot: number) => boolean) => {
-  const plan = planErisFrame(surface, pose, doc, bound, [], [], carriedSlot);
+  const plan = planEnhancedFrame(
+    surface,
+    pose,
+    doc,
+    bound,
+    [],
+    [],
+    carriedSlot
+  );
   const recovered = plan.vertices.slice(
     (plan.fillTriangleCount + plan.islandTriangleCount) * 3 * FLOATS_PER_VERTEX
   );
@@ -384,7 +392,7 @@ test('no label is drawn without a Floor Label record or its glyph', () => {
 });
 
 test('the frame draws the label over its wall, from both sides', () => {
-  const plan = planErisFrame(labelSurface, pose, doc, {
+  const plan = planEnhancedFrame(labelSurface, pose, doc, {
     ...bound,
     floor: 1
   });

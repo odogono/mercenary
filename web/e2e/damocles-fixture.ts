@@ -1,6 +1,6 @@
-import { planErisFrame } from '../src/damocles/frame.ts';
 import { damoclesPanelViewModel } from '../src/damocles/panel.ts';
 import { damoclesTitle } from '../src/damocles/title.ts';
+import { planEnhancedFrame } from '../src/enhanced/frame.ts';
 import { intent } from '../src/gameCore/index.ts';
 import type { PayloadDocument } from '../src/shell/title.ts';
 
@@ -21,7 +21,7 @@ try {
   const content = await damoclesTitle.load(requiredJson);
   const session = damoclesTitle.create(content);
   const triangles = (): number =>
-    planErisFrame(
+    planEnhancedFrame(
       session.snapshot.surface,
       session.snapshot.pose,
       content.doc,

@@ -2,7 +2,6 @@ import { beforeAll, describe, expect, test } from 'bun:test';
 
 import { type Catalogue } from '../src/catalogue/data.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
-import { planErisFrame } from '../src/damocles/frame.ts';
 import {
   admittedPoses,
   resolvePose,
@@ -21,6 +20,7 @@ import {
 } from '../src/damocles/session.ts';
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
+import { planEnhancedFrame } from '../src/enhanced/frame.ts';
 import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
@@ -517,7 +517,7 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
       expect(snapshot.surface.placements.length).toBe(arrival.placements);
       expect(snapshot.cell).toEqual(arrival.cell);
 
-      const plan = planErisFrame(
+      const plan = planEnhancedFrame(
         snapshot.surface,
         snapshot.pose,
         content.doc,
@@ -537,7 +537,7 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
       // draws no island (#578). One unit above Y's high word every island of the Body is
       // filled, and only that Body's.
       expect(plan.islandTriangleCount).toBe(arrival.islandTriangles);
-      const aloft = planErisFrame(
+      const aloft = planEnhancedFrame(
         snapshot.surface,
         {
           ...snapshot.pose,
@@ -581,7 +581,7 @@ describe('the Session Snapshot publishes the workspace it stands on', () => {
       away.snapshot.surface.grid.origin
     );
     expect(
-      planErisFrame(
+      planEnhancedFrame(
         restored.surface,
         restored.pose,
         content.doc,

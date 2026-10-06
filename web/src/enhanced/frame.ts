@@ -8,35 +8,44 @@ import {
   horizonFillVertices,
   horizonIslandVertices
 } from '../coast/horizon.ts';
-import { islandFillTriangles } from '../coast/islands.ts';
+import {
+  classifyPosition,
+  islandFillTriangles,
+  islandOriginNear
+} from '../coast/islands.ts';
 import { roadEdges } from '../coast/roads.ts';
 import { tan } from '../math/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import { Camera } from '../projection/index.ts';
 import { roadStroke } from '../rendering/roadStroke.ts';
-import type { ErisPresentationDocument } from './documents.ts';
-import { classifyPosition } from './islands.ts';
-import type { BoundStructureSnapshot } from './save.ts';
 import {
   regionIsEnclosed,
   structureMeshes,
   type CarriedSlot,
   type FloorLabelGlyphs
-} from './selection.ts';
-import type { SkyBody, SkyComet, SkyPass } from './sky.ts';
-import { starTangent, type StarPixel } from './stars.ts';
+} from '../structure/selection.ts';
 import {
   insideCentralCellHalf,
-  islandOriginNear,
   withinDrawBound,
-  type ErisPlacement,
-  type ErisSurface,
-  type Pose
-} from './world.ts';
+  type BoundStructure,
+  type EnhancedPresentation,
+  type EnhancedSurface,
+  type Pose,
+  type ScenePlacement
+} from './scene.ts';
+import {
+  skyCometTriangles,
+  skyDiscTriangles,
+  skyStarTriangles,
+  type SkyBodyPlacement,
+  type SkyPass
+} from './sky.ts';
 
 export { FLOATS_PER_VERTEX } from '../rendering/triangles.ts';
 
-/// One frame of Eris in Filled Presentation, planned without a graphics context.
+/// One frame of Enhanced presentation, planned without a graphics context, for every Title the
+/// Damocles engine runs (#803). Each Title's adapter supplies the scene (`scene.ts`); the rules
+/// for what is drawn are the ones the Damocles port recovered, and Eris is their reference.
 ///
 /// Vertices are camera-relative view-space positions with a flat colour and their face's
 /// plane, ten floats each (`FLOATS_PER_VERTEX`), so
@@ -49,7 +58,7 @@ export { FLOATS_PER_VERTEX } from '../rendering/triangles.ts';
 /// exactly, and the later one in draw order wins, as a painter's stream would leave it (#545).
 /// A plane of all zeros is none, and the renderer falls back to the interpolated depth.
 
-export interface ErisFramePlan {
+export interface EnhancedFramePlan {
   readonly clear: readonly [number, number, number];
   /// Every structure and object placement the plan emitted, once per emission, in draw order.
   /// Ground records are not listed. An id appearing twice is an object drawn twice.
@@ -96,20 +105,6 @@ export interface ErisFramePlan {
   readonly triangleCount: number;
   readonly verticalFieldOfViewDegrees: number;
   readonly vertices: Float32Array;
-}
-
-/// Where a sky Body's disc lies in the view, as tangents: `x` right and `y` up from the view's
-/// centre, and `radius` the disc's `size / depth` pixels over the projection scale. A Body at
-/// `(x, y)` is where #528's closed form puts it at `160 + scale·x`, `68 − scale·y`. The comet's
-/// is its head's, and all zero where the head is behind the eye.
-export interface SkyBodyPlacement {
-  /// Whether any of the disc is drawn: in front of the eye, at least one row wide, and above
-  /// the horizon row somewhere. For the comet, whether any of its tail or head is.
-  readonly drawn: boolean;
-  readonly id: string;
-  readonly radius: number;
-  readonly x: number;
-  readonly y: number;
 }
 
 const channels = (colour: string): readonly [number, number, number] => [
@@ -214,7 +209,7 @@ const toCameraSpace = (world: Vector3): Vector3 => ({
 /// (clockwise from north seen from above), then the placement's position.
 const placed = (
   vertex: readonly [number, number, number],
-  placement: ErisPlacement,
+  placement: ScenePlacement,
   negateZ: boolean
 ): Vector3 => {
   const x = vertex[0];
@@ -321,7 +316,7 @@ const facePlaneOf = (mesh: Mesh, face: Primitive): FacePlane | null => {
 /// has exact zeros across, so a structure's base and the ground record under it tie exactly.
 const placedPlane = (
   plane: FacePlane,
-  placement: ErisPlacement,
+  placement: ScenePlacement,
   negateZ: boolean,
   eye: Vector3
 ): FacePlane => {
@@ -507,236 +502,16 @@ const SPACE_SKY = '#000022';
 /// The ST screen's centre column, about which `$05668A` places a Body at `160 − F·u/d`.
 const SKY_CENTRE_COLUMN = 160;
 
-/// Rows of a disc between the horizon and its top: the angles a circle is sampled at.
-const SKY_DISC_SLABS = 32;
-
 /// How far out along its direction a sky Body's disc is placed. The discs are painted with the
 /// depth test off and write no depth, so this only has to lie inside the frustum.
-const skyDepth = (doc: ErisPresentationDocument): number =>
-  doc.camera.farPlane / 2;
-
-/// Where the comet's polygons are cut short of the eye, in view depth. They are projected
-/// before they are drawn, so this only has to keep the divide away from zero.
-const SKY_NEAR_DEPTH = 1e-6;
-
-type Tangent = { readonly x: number; readonly y: number };
-
-/// Sutherland–Hodgman against one half-space: keep where `side` is not negative.
-const clipPolygon = <T extends Tangent>(
-  polygon: readonly T[],
-  side: (point: T) => number,
-  between: (from: T, to: T, t: number) => T
-): T[] => {
-  const result: T[] = [];
-  for (let index = 0; index < polygon.length; index += 1) {
-    const from = polygon[index]!;
-    const to = polygon[(index + 1) % polygon.length]!;
-    const a = side(from);
-    const b = side(to);
-    if (a >= 0) {
-      result.push(from);
-    }
-    if (a >= 0 !== b >= 0) {
-      result.push(between(from, to, a / (a - b)));
-    }
-  }
-  return result;
-};
-
-const lerp3 = (from: Vector3, to: Vector3, t: number): Vector3 => ({
-  x: from.x + (to.x - from.x) * t,
-  y: from.y + (to.y - from.y) * t,
-  z: from.z + (to.z - from.z) * t
-});
-
-const lerp2 = (from: Tangent, to: Tangent, t: number): Tangent => ({
-  x: from.x + (to.x - from.x) * t,
-  y: from.y + (to.y - from.y) * t
-});
-
-/// The comet's polygons, `$04F8FE`'s, in view space: cut short of the eye, projected, cut at the
-/// horizon row (the `$04FB1C` fill limit, patched to row 68 on foot), and fanned into
-/// triangles at the sky's depth. Returns whether any of it is left.
-///
-/// From a surface the head is a few hundred units across at a quarter of a million away, so
-/// the triangles are under a pixel wide. The ST's scan fill still paints every row they
-/// cross, and #528's frames show the comet as a streak a pixel or more wide all the way to the
-/// tip. The port's pixels are finer than the ST's, so it adds that floor as a quad one ST
-/// pixel wide from the head to the tip.
-const skyCometTriangles = (
-  comet: SkyComet,
-  view: readonly Vector3[],
-  pixel: number,
-  depth: number,
-  emit: (view: Vector3, colour: readonly [number, number, number]) => void,
-  horizonRow = 0
-): boolean => {
-  let drawn = false;
-  const fill = (
-    polygon: readonly Tangent[],
-    colour: readonly [number, number, number]
-  ): void => {
-    const cut = Number.isFinite(horizonRow)
-      ? clipPolygon(polygon, point => point.y - horizonRow, lerp2)
-      : polygon;
-    for (let index = 1; index + 1 < cut.length; index += 1) {
-      for (const point of [cut[0]!, cut[index]!, cut[index + 1]!]) {
-        emit({ x: point.x * depth, y: point.y * depth, z: depth }, colour);
-      }
-      drawn = true;
-    }
-  };
-  const project = (point: Vector3): Tangent => ({
-    x: point.x / point.z,
-    y: point.y / point.z
-  });
-  for (const face of comet.faces) {
-    const front = clipPolygon(
-      face.points.map(index => view[index]!),
-      point => point.z - SKY_NEAR_DEPTH,
-      lerp3
-    );
-    fill(front.map(project), channels(face.colour));
-  }
-  const [tip, ...heads] = view;
-  const colour = comet.faces[0]?.colour;
-  if (tip === undefined || heads.length === 0 || colour === undefined) {
-    return drawn;
-  }
-  const head = {
-    x: heads.reduce((sum, point) => sum + point.x, 0) / heads.length,
-    y: heads.reduce((sum, point) => sum + point.y, 0) / heads.length,
-    z: heads.reduce((sum, point) => sum + point.z, 0) / heads.length
-  };
-  const segment = clipPolygon(
-    [head, tip],
-    point => point.z - SKY_NEAR_DEPTH,
-    lerp3
-  );
-  if (segment.length >= 2) {
-    const [from, to] = [project(segment[0]!), project(segment[1]!)];
-    const length = Math.hypot(to.x - from.x, to.y - from.y);
-    if (length > 0) {
-      const nx = (-(to.y - from.y) / length) * (pixel / 2);
-      const ny = ((to.x - from.x) / length) * (pixel / 2);
-      fill(
-        [
-          { x: from.x - nx, y: from.y - ny },
-          { x: to.x - nx, y: to.y - ny },
-          { x: to.x + nx, y: to.y + ny },
-          { x: from.x + nx, y: from.y + ny }
-        ],
-        channels(colour)
-      );
-    }
-  }
-  return drawn;
-};
-
-/// The star pixels as squares one ST pixel on a side, at the sky's depth.
-const skyStarTriangles = (
-  stars: readonly StarPixel[],
-  projectionScale: number,
-  depth: number,
-  emit: (view: Vector3, colour: readonly [number, number, number]) => void
-): void => {
-  const step = 1 / projectionScale;
-  const at = (x: number, y: number): Vector3 => ({
-    x: x * depth,
-    y: y * depth,
-    z: depth
-  });
-  for (const star of stars) {
-    const corner = starTangent(star.column, star.row, projectionScale);
-    const colour = channels(star.colour);
-    const quad = [
-      at(corner.x, corner.y),
-      at(corner.x + step, corner.y),
-      at(corner.x + step, corner.y - step),
-      at(corner.x, corner.y - step)
-    ];
-    for (const index of [0, 1, 2, 0, 2, 3]) {
-      emit(quad[index]!, colour);
-    }
-  }
-};
-
-/// One sky Body as horizontal slabs, `$045916`'s rows made continuous: each row from `−w` to
-/// `+w` about the centre, split at `split·w`, and cut at the horizon row. On foot this is the
-/// view's centre row (`$042C74 = $44`, row 68 of 136), shifted by Free Look. The disc is round
-/// here where the ST's is widened by `1/0.84375`: that widening makes it round on the ST's
-/// non-square pixels, and the port's pixels are square. In flight and in space (`$042C74 = $88`,
-/// the view's last row) nothing is cut.
-const skyDiscTriangles = (
-  body: Pick<SkyBody, 'colour' | 'first' | 'shadow' | 'split'>,
-  placement: SkyBodyPlacement,
-  depth: number,
-  emit: (view: Vector3, colour: readonly [number, number, number]) => void,
-  horizonRow = 0
-): void => {
-  const lit = channels(body.colour);
-  const shadow = channels(body.shadow);
-  const [first, second] = body.first === 'lit' ? [lit, shadow] : [shadow, lit];
-  const { radius, x, y } = placement;
-  const rows: {
-    readonly left: number;
-    readonly right: number;
-    readonly split: number;
-    readonly y: number;
-  }[] = [];
-  for (let slab = 0; slab <= SKY_DISC_SLABS; slab += 1) {
-    const edge = y - radius * Math.cos((slab * Math.PI) / SKY_DISC_SLABS);
-    const row = Math.max(horizonRow, edge);
-    const dy = row - y;
-    const w = Math.sqrt(Math.max(0, radius * radius - dy * dy));
-    rows.push({ left: x - w, right: x + w, split: x + body.split * w, y: row });
-  }
-  const at = (u: number, v: number): Vector3 => ({
-    x: u * depth,
-    y: v * depth,
-    z: depth
-  });
-  const quad = (
-    corners: readonly [Vector3, Vector3, Vector3, Vector3],
-    colour: readonly [number, number, number]
-  ): void => {
-    for (const index of [0, 1, 2, 0, 2, 3]) {
-      emit(corners[index]!, colour);
-    }
-  };
-  for (let index = 0; index < SKY_DISC_SLABS; index += 1) {
-    const low = rows[index]!;
-    const high = rows[index + 1]!;
-    if (high.y <= low.y) {
-      continue;
-    }
-    quad(
-      [
-        at(low.left, low.y),
-        at(low.split, low.y),
-        at(high.split, high.y),
-        at(high.left, high.y)
-      ],
-      first
-    );
-    quad(
-      [
-        at(low.split, low.y),
-        at(low.right, low.y),
-        at(high.right, high.y),
-        at(high.split, high.y)
-      ],
-      second
-    );
-  }
-};
+const skyDepth = (doc: EnhancedPresentation): number => doc.camera.farPlane / 2;
 
 /// The glyphs every Floor Label draws this frame. `$CD04` is one byte for the whole workspace,
 /// so each label shows the Floor the lift's label stands at: during a ride it steps through the
 /// Floors passed, before the destination binds (#473). Floor 0 outside any structure.
 export const floorLabelGlyphsOf = (
-  surface: ErisSurface,
-  structure: BoundStructureSnapshot | null
+  surface: EnhancedSurface,
+  structure: BoundStructure | null
 ): FloorLabelGlyphs => {
   const character =
     FLOOR_LABEL_CHARACTERS[structure?.ride?.label ?? structure?.floor ?? 0]!;
@@ -755,12 +530,12 @@ export const zoomedFieldOfView = (degrees: number, exponent: number): number =>
 /// `$7964`'s high word at the reset.
 const VIEW_EXPONENT = 8;
 
-export const planErisFrame = (
-  surface: ErisSurface,
+export const planEnhancedFrame = (
+  surface: EnhancedSurface,
   pose: Pose,
-  doc: ErisPresentationDocument,
-  structure: BoundStructureSnapshot | null = null,
-  residents: readonly ErisPlacement[] = [],
+  doc: EnhancedPresentation,
+  structure: BoundStructure | null = null,
+  residents: readonly ScenePlacement[] = [],
   hiddenResidents: readonly string[] = [],
   carriedSlot: CarriedSlot = () => false,
   /// The terminator's answer for the Pose (`$050562`): which half of the scene palette every
@@ -780,7 +555,7 @@ export const planErisFrame = (
   aboardStructures: 'aboard' | 'whole' = 'aboard',
   /// Road strokes stay one output pixel wide where they meet perspective road polygons.
   outputHeight = 136
-): ErisFramePlan => {
+): EnhancedFramePlan => {
   const camera = new Camera({
     farPlane: doc.camera.farPlane,
     heading: -pose.heading,
@@ -818,14 +593,14 @@ export const planErisFrame = (
   };
   const placementPlane = (
     plane: FacePlane | null,
-    placement: ErisPlacement
+    placement: ScenePlacement
   ): FacePlane =>
     plane === null
       ? NO_PLANE
       : viewPlane(placedPlane(plane, placement, negateZ, pose.position));
   const quadPlane = (
     quad: readonly (readonly [number, number, number])[],
-    placement: ErisPlacement
+    placement: ScenePlacement
   ): FacePlane => placementPlane(modelPlane(quad, [0, 1, 2, 3]), placement);
 
   const active =
@@ -1108,7 +883,7 @@ export const planErisFrame = (
   const emitWallText = (
     mesh: Mesh,
     plane: 0 | 128,
-    placement: ErisPlacement
+    placement: ScenePlacement
   ): void => {
     const triangles = trianglesOf(mesh, daylight);
     skippedFaces += triangles.skipped;
@@ -1157,7 +932,7 @@ export const planErisFrame = (
     }
   };
   const floorLabelGlyph = floorLabelGlyphsOf(surface, structure);
-  const emitPlacement = (placement: ErisPlacement): void => {
+  const emitPlacement = (placement: ScenePlacement): void => {
     const isBound = active && placement.id === structure?.instanceId;
     for (const mesh of structureMeshes(
       placement,

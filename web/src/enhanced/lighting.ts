@@ -6,12 +6,13 @@ import {
   type FrameLighting,
   type ViewOrientation
 } from '../rendering/lighting.ts';
-import type { ErisPresentationDocument } from './documents.ts';
 import type { SkyItem } from './sky.ts';
+
+/// Sunlight and its Cast Shadows for every Title the Enhanced planner draws (ADR 0066, #803).
 
 export type {
   Channels,
-  FrameLighting as ErisLighting,
+  FrameLighting as SceneLighting,
   ViewOrientation
 } from '../rendering/lighting.ts';
 
@@ -21,13 +22,10 @@ const channels = (colour: string): readonly [number, number, number] => [
   Number.parseInt(colour.slice(5, 7), 16) / 255
 ];
 
-/// The Body that gives Sunlight: `$00` in a draw list, the sky pass's `dialis`.
-const SUN_ID = 'dialis';
-
-/// The elevation over which Sunlight fades in as DIALIS rises, and out as it sets.
+/// The elevation over which Sunlight fades in as the sun rises, and out as it sets.
 export const SUNLIGHT_FADE_DEGREES = 2;
 
-/// The Sunlight of one frame: the direction toward DIALIS in the Body's surface frame, x east,
+/// The Sunlight of one frame: the direction toward the sun in the Body's surface frame, x east,
 /// y up and z north as the sky offsets are, and how strong it is from 0 to 1.
 export interface Sunlight {
   readonly direction: Vector3;
@@ -39,9 +37,11 @@ export interface SunlightInputs {
   readonly daylight: boolean;
   /// Whether the eye is in an Enclosed Region, where none of the outdoor world is drawn.
   readonly enclosed: boolean;
-  /// The sky pass's Bodies, where DIALIS is placed exactly as the sky draws it. A Destroyed
-  /// DIALIS is absent from them.
+  /// The sky pass's Bodies, where the sun is placed exactly as the sky draws it. A Destroyed
+  /// sun is absent from them.
   readonly sky: readonly SkyItem[];
+  /// The sky item that gives Sunlight: Damocles's DIALIS, `$00` in a draw list.
+  readonly sun: string;
 }
 
 const smoothstep = (value: number): number => {
@@ -49,15 +49,15 @@ const smoothstep = (value: number): number => {
   return t * t * (3 - 2 * t);
 };
 
-/// DIALIS's light for the frame, or null where there is none: by night, inside an Enclosed
-/// Region, while DIALIS is destroyed, and while it stands below the horizon. The terminator
-/// switches a few seconds after DIALIS crosses the horizon, so the two together keep the sun
+/// The sun's light for the frame, or null where there is none: by night, inside an Enclosed
+/// Region, while the sun is destroyed, and while it stands below the horizon. The terminator
+/// switches a few seconds after the sun crosses the horizon, so the two together keep the sun
 /// from ever lighting a night palette or lighting from below the ground.
 export const sunlight = (inputs: SunlightInputs): Sunlight | null => {
   if (!inputs.daylight || inputs.enclosed) {
     return null;
   }
-  const sun = inputs.sky.find(item => item.id === SUN_ID);
+  const sun = inputs.sky.find(item => item.id === inputs.sun);
   if (sun === undefined) {
     return null;
   }
@@ -74,6 +74,13 @@ export interface LightLevels {
   readonly shadowDepth: number;
 }
 
+/// The presentation's light colours: the Sunlight at full strength and the neutral ambient pair.
+export interface LightingColours {
+  readonly ambientGround: string;
+  readonly ambientSky: string;
+  readonly sunColour: string;
+}
+
 export const FULL_LIGHT_LEVELS: LightLevels = { ambient: 1, shadowDepth: 1 };
 
 const scaled = (colour: string, by: number): Channels => {
@@ -85,17 +92,17 @@ const scaled = (colour: string, by: number): Channels => {
 /// so at full levels a face Sunlight does not reach shows its recovered colour, and Sunlight
 /// only brightens. A lower ambient level darkens every face out of the Sunlight, Cast Shadows
 /// with them; a lower shadow depth lets some Sunlight through a Cast Shadow.
-export const erisLighting = (
-  doc: ErisPresentationDocument,
+export const sceneLighting = (
+  colours: LightingColours,
   view: ViewOrientation,
   sun: Sunlight,
   levels: LightLevels = FULL_LIGHT_LEVELS
 ): FrameLighting => {
   const sunWorld = normalise(sun.direction);
-  const [r, g, b] = channels(doc.lighting.sunColour);
+  const [r, g, b] = channels(colours.sunColour);
   return {
-    ambientGround: scaled(doc.lighting.ambientGround, levels.ambient),
-    ambientSky: scaled(doc.lighting.ambientSky, levels.ambient),
+    ambientGround: scaled(colours.ambientGround, levels.ambient),
+    ambientSky: scaled(colours.ambientSky, levels.ambient),
     shadowDepth: levels.shadowDepth,
     sunColour: [r * sun.strength, g * sun.strength, b * sun.strength],
     sunView: toViewDirection(sunWorld, view),

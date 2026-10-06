@@ -6,23 +6,12 @@ import { impactTime } from '../src/damocles/comet.ts';
 import { executeDamoclesConsoleCommand } from '../src/damocles/console.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import {
-  FLOATS_PER_VERTEX,
-  floorLabelGlyphsOf,
-  planErisFrame,
-  type ErisFramePlan
-} from '../src/damocles/frame.ts';
-import {
   DAMOCLES_SAVE_SCHEMA_VERSION,
   damoclesSaveIdentity,
   decodeDamoclesSave,
   encodeDamoclesSave,
   type DamoclesSaveSnapshot
 } from '../src/damocles/save.ts';
-import {
-  structureLocalPosition,
-  structureMeshes,
-  structureRegionAt
-} from '../src/damocles/selection.ts';
 import {
   DamoclesSession,
   type DamoclesContent
@@ -31,10 +20,21 @@ import { skyPass } from '../src/damocles/sky.ts';
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { cellOf, erisSurfaceFrom } from '../src/damocles/world.ts';
 import {
+  FLOATS_PER_VERTEX,
+  floorLabelGlyphsOf,
+  planEnhancedFrame,
+  type EnhancedFramePlan
+} from '../src/enhanced/frame.ts';
+import {
   readGammaSystem,
   type GammaSystemDocument
 } from '../src/flyover/documents.ts';
 import { parseConsoleCommand } from '../src/shell/console.ts';
+import {
+  structureLocalPosition,
+  structureMeshes,
+  structureRegionAt
+} from '../src/structure/selection.ts';
 import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import {
@@ -127,7 +127,7 @@ const rgb = (colour: string): readonly [number, number, number] => [
 ];
 
 /// The colours of the base plane's triangles, which lead the vertex list.
-const fillColours = (plan: ErisFramePlan): Set<string> => {
+const fillColours = (plan: EnhancedFramePlan): Set<string> => {
   const colours = new Set<string>();
   for (let vertex = 0; vertex < plan.fillTriangleCount * 3; vertex += 1) {
     const at = vertex * FLOATS_PER_VERTEX + 3;
@@ -479,7 +479,7 @@ describe('the player stands on one Floor', () => {
     ] as const) {
       const { bodyTurn, daylight, pose, structure, surface } =
         inRegionZero(floor).snapshot;
-      const plan = planErisFrame(
+      const plan = planEnhancedFrame(
         surface,
         pose,
         content.doc,
@@ -516,7 +516,7 @@ describe('the player stands on one Floor', () => {
   test('a region with flag bit 15 set keeps the sky and the Body around it', () => {
     const { pose, structure, surface } = inRegionZero(0).snapshot;
     // Floor 0's region 0 is `$8000`, the lobby.
-    const plan = planErisFrame(surface, pose, content.doc, structure);
+    const plan = planEnhancedFrame(surface, pose, content.doc, structure);
     // Eris at night, as the start capture is: its night word `$001` (#494).
     expect(plan.clear).toEqual(rgb('#000022'));
     expect(plan.enclosed).toBe(false);
@@ -548,7 +548,7 @@ describe('the player stands on one Floor', () => {
     };
     const drawn = (session: DamoclesSession): readonly string[] => {
       const { pose, residents, structure, surface } = session.snapshot;
-      return planErisFrame(surface, pose, content.doc, structure, residents)
+      return planEnhancedFrame(surface, pose, content.doc, structure, residents)
         .drawnPlacements;
     };
     // The lobby's region 0 is `$8000`, which draws the object stream.

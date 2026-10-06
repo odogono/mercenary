@@ -4,7 +4,6 @@ import type { AssembledCatalogue } from '../src/catalogue/data.ts';
 import { ModelStore } from '../src/catalogue/modelStore.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import type { DamoclesCue } from '../src/damocles/psg.ts';
-import { attachmentOpenLimit } from '../src/damocles/selection.ts';
 import {
   DamoclesSession,
   type DamoclesContent
@@ -20,6 +19,7 @@ import {
   FREE_LOOK_RATE,
   intent
 } from '../src/gameCore/index.ts';
+import { attachmentOpenLimit } from '../src/structure/selection.ts';
 import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import { damoclesProcessor, vblLevels } from './damocles-sound-processor.ts';

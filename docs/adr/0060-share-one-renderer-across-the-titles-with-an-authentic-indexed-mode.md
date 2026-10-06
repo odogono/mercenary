@@ -1,5 +1,7 @@
 # Share one renderer across the Titles, with an Authentic indexed mode
 
+Superseded in part by [ADR 0077](0077-share-one-enhanced-planner-across-damocles-and-mercenary-iii.md): Enhanced shares one planner across Damocles and Mercenary III, which starts in Enhanced.
+
 Accepted, 2026-10-01. The direction is that Targ, Damocles and Mercenary III draw through **one shared renderer**. Each Title keeps its own **frame planner**: its own rules for what a frame contains and the order it is painted in. Planners hand the renderer a title-neutral frame description, and the renderer has two modes.
 
 - **Authentic** paints that description into an indexed screen, in the order given, with the Title's palette rules: allocation, raster splits, panel palettes. It shows the result at whole-pixel scale. There is no depth buffer. Each Title's original paints far to near in an order its engine decides, and fidelity comparisons against the original's own frame buffers are made in this mode.

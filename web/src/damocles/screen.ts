@@ -1,4 +1,7 @@
-import { FLOATS_PER_VERTEX, type ErisFramePlan } from './frame.ts';
+import {
+  FLOATS_PER_VERTEX,
+  type EnhancedFramePlan
+} from '../enhanced/frame.ts';
 import type { DamoclesScreen } from './session.ts';
 
 /// The TOLOSA encounter's screen effects on a planned frame (#581, ADR 0055).
@@ -38,9 +41,9 @@ const masked = (value: number, bits: number): number =>
   channel(level(value) ^ bits);
 
 export const presentScreen = (
-  plan: ErisFramePlan,
+  plan: EnhancedFramePlan,
   screen: DamoclesScreen
-): ErisFramePlan => {
+): EnhancedFramePlan => {
   if (!screen.white && screen.fade === 0 && screen.mask === 0) {
     return plan;
   }
