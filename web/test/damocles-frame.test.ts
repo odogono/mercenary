@@ -210,7 +210,8 @@ describe('an Eris frame in Filled Presentation', () => {
       1214
     );
     expect(display.roadEdges).toEqual(plan.roadEdges);
-    expect(display.vertices).toEqual(plan.vertices);
+    // Line records are strokes one output pixel wide, so only their width follows the output.
+    expect(display.triangleCount).toBe(plan.triangleCount);
     // Opposite corners of the first camera-space stroke retain its centreline
     // and shrink its width to one output pixel, without changing road selection.
     expect(
