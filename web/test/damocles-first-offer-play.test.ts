@@ -31,7 +31,6 @@ import {
   OFFER_KEY_SLOT,
   SCRIPTS
 } from '../src/damocles/scripts.ts';
-import { structureRegionAt } from '../src/damocles/selection.ts';
 import {
   DamoclesSession,
   type DamoclesContent
@@ -39,6 +38,7 @@ import {
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { cellOf, erisSurfaceFrom } from '../src/damocles/world.ts';
 import { intent } from '../src/gameCore/index.ts';
+import { structureRegionAt } from '../src/structure/selection.ts';
 import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';

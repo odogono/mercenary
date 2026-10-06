@@ -2,7 +2,6 @@ import { beforeAll, describe, expect, test } from 'bun:test';
 
 import type { AssembledCatalogue, Mesh } from '../src/catalogue/data.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
-import { FLOATS_PER_VERTEX, planErisFrame } from '../src/damocles/frame.ts';
 import {
   DAMOCLES_SAVE_SCHEMA_VERSION,
   damoclesSaveIdentity,
@@ -21,6 +20,7 @@ import {
   turnOnClock
 } from '../src/damocles/terminator.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
+import { FLOATS_PER_VERTEX, planEnhancedFrame } from '../src/enhanced/frame.ts';
 import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
@@ -138,7 +138,7 @@ describe('the session keeps the Body turning', () => {
     expect(session.snapshot.bodyTurn).toBe(0);
     expect(session.snapshot.daylight).toBe(true);
     const { pose, structure, surface } = session.snapshot;
-    const plan = planErisFrame(
+    const plan = planEnhancedFrame(
       surface,
       pose,
       content.doc,
@@ -196,7 +196,7 @@ describe('the session keeps the Body turning', () => {
     );
     const { pose, structure, surface } = session.snapshot;
     const plan = (daylight: boolean) =>
-      planErisFrame(
+      planEnhancedFrame(
         surface,
         pose,
         content.doc,
@@ -262,7 +262,7 @@ describe('the frame reads the half the terminator binds', () => {
     expect(faces.length).toBeGreaterThan(0);
     const plan = (daylight: boolean) =>
       vertexColours(
-        planErisFrame(
+        planEnhancedFrame(
           surface,
           pose,
           content.doc,

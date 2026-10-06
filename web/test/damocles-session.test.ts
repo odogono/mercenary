@@ -15,10 +15,6 @@ import {
   initialDamoclesSaveScript
 } from '../src/damocles/save.ts';
 import {
-  attachmentOpenLimit,
-  type AttachmentLatch
-} from '../src/damocles/selection.ts';
-import {
   DamoclesSession,
   type DamoclesContent
 } from '../src/damocles/session.ts';
@@ -26,6 +22,10 @@ import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { intent } from '../src/gameCore/index.ts';
 import { titleStorageKeys } from '../src/shell/title.ts';
+import {
+  attachmentOpenLimit,
+  type AttachmentLatch
+} from '../src/structure/selection.ts';
 import { damoclesDocuments } from './damocles-documents.ts';
 import { ERIS_BODY, arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';

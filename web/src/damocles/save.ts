@@ -1,5 +1,6 @@
 import type { Catalogue } from '../catalogue/data.ts';
 import { craftPanelSpeed } from '../craft/pass.ts';
+import type { AttachmentLatch } from '../structure/selection.ts';
 import {
   OPTION_MAXIMA,
   initialAuthorsComputer,
@@ -72,7 +73,6 @@ import {
   type ScriptId,
   type Step
 } from './scripts.ts';
-import type { AttachmentLatch } from './selection.ts';
 import { landsOn } from './spacePolicy.ts';
 import { presentedText, type DamoclesStrings } from './strings.ts';
 import {

@@ -8,11 +8,6 @@ import {
 } from '../src/damocles/comet.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import {
-  FLOATS_PER_VERTEX,
-  planErisFrame,
-  type ErisFramePlan
-} from '../src/damocles/frame.ts';
-import {
   DAMOCLES_SAVE_SCHEMA_VERSION,
   damoclesSaveIdentity,
   decodeDamoclesSave,
@@ -31,6 +26,11 @@ import {
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { continuousSkyAngles, skyAngles } from '../src/damocles/terminator.ts';
 import { bearingFromYaw, erisSurfaceFrom } from '../src/damocles/world.ts';
+import {
+  FLOATS_PER_VERTEX,
+  planEnhancedFrame,
+  type EnhancedFramePlan
+} from '../src/enhanced/frame.ts';
 import {
   readGammaSystem,
   type GammaSystemDocument
@@ -311,9 +311,12 @@ const colours = (vertices: Float32Array): Set<string> => {
   return found;
 };
 
-const planOf = (session: DamoclesSession, horizonCut = true): ErisFramePlan => {
+const planOf = (
+  session: DamoclesSession,
+  horizonCut = true
+): EnhancedFramePlan => {
   const snapshot = session.snapshot;
-  return planErisFrame(
+  return planEnhancedFrame(
     snapshot.surface,
     snapshot.pose,
     content.doc,
@@ -344,7 +347,7 @@ const onMetis = (longitude: number): DamoclesSession => {
 };
 
 /// A placement in the #528 frame's pixels: 256 pixels a unit tangent about (160, 68).
-const pixels = (plan: ErisFramePlan, id: string) => {
+const pixels = (plan: EnhancedFramePlan, id: string) => {
   const placement = plan.skyBodies.find(body => body.id === id)!;
   return {
     drawn: placement.drawn,
@@ -657,9 +660,9 @@ const midasPlan = (
   longitude: number,
   time: ImpactTime,
   only?: string
-): ErisFramePlan => {
+): EnhancedFramePlan => {
   const pass = passAt('midas', turnFor('midas', longitude), true, time);
-  return planErisFrame(
+  return planEnhancedFrame(
     content.surface,
     // `poseOfArrival`'s standing Pose, which it builds only for an admitted Pose.
     {
@@ -689,7 +692,7 @@ const onMetisAt = (longitude: number, time: ImpactTime): DamoclesSession =>
   });
 
 /// The comet's emitted vertices in the #528 frame's pixels.
-const cometPixels = (plan: ErisFramePlan) => {
+const cometPixels = (plan: EnhancedFramePlan) => {
   const found: { x: number; y: number }[] = [];
   for (let i = 0; i < plan.skyVertices.length; i += FLOATS_PER_VERTEX) {
     const colour = hex([

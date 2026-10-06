@@ -1,20 +1,20 @@
 import { describe, expect, test } from 'bun:test';
 
 import { readErisPresentation } from '../src/damocles/documents.ts';
+import { DAMOCLES_SUN, type SkyItem } from '../src/damocles/sky.ts';
 import {
   SUNLIGHT_FADE_DEGREES,
-  erisLighting,
+  sceneLighting,
   sunlight,
   type Sunlight,
   type ViewOrientation
-} from '../src/damocles/lighting.ts';
-import type { SkyItem } from '../src/damocles/sky.ts';
+} from '../src/enhanced/lighting.ts';
 import type { Vector3 } from '../src/orientation/index.ts';
 import { Camera } from '../src/projection/index.ts';
 
 /// The sun and the Cast Shadow are world-fixed: however the view is turned, a world point keeps
 /// its depth toward the sun and its place among the casters, and a face is lit the same. The frame's vertices are in the
-/// view space of the Pose's heading, pitch and roll (`planErisFrame`), so the light must be
+/// view space of the Pose's heading, pitch and roll (`planEnhancedFrame`), so the light must be
 /// turned by all three, or tilting the view with Free Look (ADR 0059), or pitching and banking
 /// a craft, slides the shadows across the scene.
 
@@ -53,7 +53,7 @@ describe('the Cast Shadow light through a turned view', () => {
     // Depth toward the sun, and distance across the light's plane between two points: the
     // two things the Cast Shadow's ray test compares.
     const placed = (view: ViewOrientation): number[] => {
-      const toward = erisLighting(doc, view, sun).sunView;
+      const toward = sceneLighting(doc.lighting, view, sun).sunView;
       const local = points.map(point => inView(point, view));
       const depth = local.map(
         p => p.x * toward.x + p.y * toward.y + p.z * toward.z
@@ -72,15 +72,15 @@ describe('the Cast Shadow light through a turned view', () => {
         expect(value).toBeCloseTo(level![index]!, 3)
       );
     }
-    expect(erisLighting(doc, views[0]!, sun).sunWorld).toEqual(
-      erisLighting(doc, views[3]!, sun).sunWorld
+    expect(sceneLighting(doc.lighting, views[0]!, sun).sunWorld).toEqual(
+      sceneLighting(doc.lighting, views[3]!, sun).sunWorld
     );
   });
 
   test('the sun lights a face the same whatever the pitch and roll', () => {
     const normal = { x: 0.6, y: 0.8, z: 0 };
     const lambert = (view: ViewOrientation): number => {
-      const toward = erisLighting(doc, view, sun).sunView;
+      const toward = sceneLighting(doc.lighting, view, sun).sunView;
       const n = inView(
         { x: eye.x + normal.x, y: eye.y + normal.y, z: eye.z + normal.z },
         view
@@ -118,7 +118,7 @@ const moonAt = (degrees: number): SkyItem => ({
 });
 
 describe('Sunlight', () => {
-  const day = { daylight: true, enclosed: false };
+  const day = { daylight: true, enclosed: false, sun: DAMOCLES_SUN };
 
   test('comes from DIALIS where the sky pass draws it', () => {
     const light = sunlight({ ...day, sky: [moonAt(60), dialisAt(30)] });
@@ -154,8 +154,8 @@ describe('Sunlight', () => {
 
   test('scales the sun colour by its strength and leaves the ambient neutral', () => {
     const view = views[0]!;
-    const full = erisLighting(doc, view, sun);
-    const faint = erisLighting(doc, view, { ...sun, strength: 0.25 });
+    const full = sceneLighting(doc.lighting, view, sun);
+    const faint = sceneLighting(doc.lighting, view, { ...sun, strength: 0.25 });
     full.sunColour.forEach((channel, index) =>
       expect(faint.sunColour[index]).toBeCloseTo(channel * 0.25, 9)
     );
@@ -166,13 +166,15 @@ describe('Sunlight', () => {
   });
 
   test("scales the ambient pair and passes the shadow depth by the player's levels", () => {
-    const dim = erisLighting(doc, views[0]!, sun, {
+    const dim = sceneLighting(doc.lighting, views[0]!, sun, {
       ambient: 0.5,
       shadowDepth: 0.75
     });
     expect(dim.ambientSky).toEqual([0.5, 0.5, 0.5]);
     expect(dim.ambientGround).toEqual([0.5, 0.5, 0.5]);
     expect(dim.shadowDepth).toBe(0.75);
-    expect(dim.sunColour).toEqual(erisLighting(doc, views[0]!, sun).sunColour);
+    expect(dim.sunColour).toEqual(
+      sceneLighting(doc.lighting, views[0]!, sun).sunColour
+    );
   });
 });

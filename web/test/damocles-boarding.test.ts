@@ -7,7 +7,6 @@ import {
   type DamoclesConsoleHost
 } from '../src/damocles/console.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
-import { planErisFrame } from '../src/damocles/frame.ts';
 import { initialHeadCommands } from '../src/damocles/headCommands.ts';
 import { damoclesPanelViewModel } from '../src/damocles/panel.ts';
 import { catalogueResidence } from '../src/damocles/residence.ts';
@@ -31,7 +30,6 @@ import {
   ENDING_TRIGGERS,
   TRIGGER_FOR_RESIDENT
 } from '../src/damocles/scripts.ts';
-import { structureRegionAt } from '../src/damocles/selection.ts';
 import {
   DamoclesSession,
   type DamoclesContent
@@ -47,8 +45,10 @@ import {
   structureInCell,
   type ErisSurface
 } from '../src/damocles/world.ts';
+import { planEnhancedFrame } from '../src/enhanced/frame.ts';
 import { intent } from '../src/gameCore/index.ts';
 import { titleStorageKeys } from '../src/shell/title.ts';
+import { structureRegionAt } from '../src/structure/selection.ts';
 import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
@@ -1166,7 +1166,7 @@ describe('the craft words across a Save and a Session Resume (#557)', () => {
 /// Catalogue placement, and the residents drawn at a departure are passed in.
 const drawn = (session: DamoclesSession): readonly string[] => {
   const snapshot = session.snapshot;
-  return planErisFrame(
+  return planEnhancedFrame(
     snapshot.surface,
     snapshot.pose,
     content.doc,
@@ -1197,7 +1197,7 @@ describe('the frame plan', () => {
     session.board();
     const snapshot = session.snapshot;
     const triangles = (aboard: boolean, draw: 'aboard' | 'whole'): number =>
-      planErisFrame(
+      planEnhancedFrame(
         snapshot.surface,
         snapshot.pose,
         content.doc,
@@ -1393,7 +1393,7 @@ describe('launch and space (#566)', () => {
     session.launchCraft();
     expect(cues(session)).toEqual([]);
     // The frame draws the sky alone.
-    const plan = planErisFrame(
+    const plan = planEnhancedFrame(
       flying.surface,
       flying.pose,
       content.doc,

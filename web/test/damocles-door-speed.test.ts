@@ -6,16 +6,16 @@ import type {
 } from '../src/catalogue/data.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import {
-  attachmentOpenLimit,
-  stepAttachment,
-  type AttachmentState
-} from '../src/damocles/selection.ts';
-import {
   DamoclesSession,
   type DamoclesContent
 } from '../src/damocles/session.ts';
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { cellOf, erisSurfaceFrom } from '../src/damocles/world.ts';
+import {
+  attachmentOpenLimit,
+  stepAttachment,
+  type AttachmentState
+} from '../src/structure/selection.ts';
 import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';

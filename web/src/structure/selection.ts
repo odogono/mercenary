@@ -9,13 +9,16 @@ import type {
   WallText
 } from '../catalogue/data.ts';
 import { sameQueueEntry } from '../catalogue/regions.ts';
+import type {
+  ScenePlacement as ErisPlacement,
+  Pose
+} from '../enhanced/scene.ts';
 import {
   clampRegionStep,
   regionAt,
   type ClampRegion
 } from '../onFoot/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
-import type { ErisPlacement, Pose } from './world.ts';
 
 const EYE_CLEARANCE = 11;
 const LEAF_ENDPOINT_INSET = 8;

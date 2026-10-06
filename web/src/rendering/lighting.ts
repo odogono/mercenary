@@ -14,7 +14,7 @@ export interface FrameLighting {
 }
 
 /// How the frame's camera is turned: the Pose's heading, pitch and roll. The frame plan's
-/// vertices are in this camera's view space (`planErisFrame`), so the sun and the Cast Shadows
+/// vertices are in this camera's view space (`planEnhancedFrame`), so the sun and the Cast Shadows
 /// must be turned by all three, or a pitched or banked view slides the shadows over the
 /// geometry: Free Look on foot (ADR 0059), and the craft's attitude aboard.
 export interface ViewOrientation {

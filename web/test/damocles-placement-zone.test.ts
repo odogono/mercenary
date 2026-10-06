@@ -4,13 +4,13 @@ import { readErisPresentation } from '../src/damocles/documents.ts';
 import { initialHeadCommands } from '../src/damocles/headCommands.ts';
 import { placementZone } from '../src/damocles/residence.ts';
 import { initialDamoclesSaveScript } from '../src/damocles/save.ts';
-import { structureRegionAt } from '../src/damocles/selection.ts';
 import {
   DamoclesSession,
   type DamoclesContent
 } from '../src/damocles/session.ts';
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { erisSurfaceFrom, type ErisPlacement } from '../src/damocles/world.ts';
+import { structureRegionAt } from '../src/structure/selection.ts';
 import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';

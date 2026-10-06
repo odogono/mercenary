@@ -3,40 +3,46 @@ import {
   modelSummaryById,
   type BodySky,
   type Catalogue,
-  type DetailBoxes,
-  type DetailExtent,
-  type DetailGroup,
   type FloorPalette,
   type IslandBoxKind,
-  type Kind,
   type LocationEntry,
   type Mesh,
   type Model,
   type Primitive,
-  type Recovery,
   type StructureSelection
 } from '../catalogue/data.ts';
 import type { ModelLookup } from '../catalogue/modelStore.ts';
 import { nearestIsland } from '../coast/islands.ts';
+import {
+  cellOf,
+  type EnhancedSurface,
+  type Pose,
+  type SceneBackground,
+  type SceneCell,
+  type SceneGrid,
+  type SceneIsland,
+  type ScenePlacement
+} from '../enhanced/scene.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import type { ErisPresentationDocument } from './documents.ts';
 
 export { nearestIsland, islandOriginNear } from '../coast/islands.ts';
+export {
+  cellOf,
+  insideCentralCellHalf,
+  withinDrawBound,
+  type Pose,
+  type SceneBackground
+} from '../enhanced/scene.ts';
+
+/// Eris's names for the shared scene's grid, cell and placement.
+export type ErisGrid = SceneGrid;
+export type ErisCell = SceneCell;
+export type ErisPlacement = ScenePlacement;
 
 /// The Eris surface as the Damocles Gameplay Session walks it: the Damocles Catalogue's
 /// recovered placements on one Body, in raw engine units, with the authored document saying
 /// how cells, headings and gaps are read (ADR 0043).
-
-export interface ErisGrid {
-  readonly cellsPerAxis: number;
-  readonly cellUnits: number;
-  readonly origin: { readonly x: number; readonly z: number };
-}
-
-export interface ErisCell {
-  readonly x: number;
-  readonly z: number;
-}
 
 /// A Body's surface is this many Surface Cells an axis and wraps on both: `$058F64` masks the
 /// body position's high word to twelve bits before anything is measured from it, so no Body
@@ -53,7 +59,7 @@ export const SURFACE_CELLS = 0x10_00;
 ///
 /// A record carries no name of its own; `areaName` is the name of the area the workspace it
 /// binds publishes, and is null where it binds none (docs/research/damocles-eris-islands.md).
-export interface ErisIsland {
+export interface ErisIsland extends SceneIsland {
   readonly areaName: string | null;
   /// The backwards box list `$0560F2` reads, in its own order: box 0 the extent, box 1 the
   /// core, the rest exclusions. Bounds are island-local and half-open.
@@ -83,68 +89,10 @@ export interface ErisIsland {
   readonly structureGroup: number;
 }
 
-/// Where the player stands and faces on one Body: raw engine units with north at +z and east
-/// at +x, and a bearing in radians clockwise from north (#204).
-///
-/// The Body is part of the Pose rather than a peer of it, so a standing position can never be
-/// applied to the wrong Body by losing track of which one it came from. It was `ErisPose`
-/// until #344; the rename carries no behaviour change.
-export interface Pose {
-  readonly body: string; // Catalogue Body id
-  readonly heading: number;
-  /// Radians the view is tilted, negative looking down, level at zero. `$7AC0` on the Working
-  /// Authority, where an overhead view is a pitch poke rather than a different capture. On foot
-  /// nothing moves it, so it is level for all of play and the Save Snapshot does not carry it;
-  /// the validation views of #394 are what tilt it.
-  readonly pitch: number;
-  readonly position: Vector3;
-  /// Radians the view is banked about the direction of travel, positive banking right. Only a
-  /// flying craft's roll word `$7ABE` sets it (#556); absent or nought otherwise.
-  readonly roll?: number;
-}
-
-export interface ErisPlacement {
-  readonly faceCount: number;
-  readonly heading: number;
-  readonly id: string;
-  /// The cell's `$7AFB` door-key base, or null where the entry byte installs none.
-  readonly keyBase: number | null;
-  readonly kind: Kind;
-  /// Static geometry for ordinary placements; authored fallback for recovered selectors.
-  readonly mesh: Mesh | undefined;
-  readonly modelId: string;
-  readonly name: string;
-  readonly position: Vector3;
-  readonly selection?: {
-    /// The structure record's two scene colours (`$059DA2`–`$059DC6`): what the frame loop
-    /// fills above and below the horizon while the player stands in one of its enclosed regions.
-    /// `day` is the pair through the palette's day half, where that differs (#497). Absent where
-    /// the Catalogue has not resolved both.
-    readonly background?: SceneBackground;
-    /// The Building detail's support and wall boxes, unbound (#556): the craft Mover binds
-    /// them at the structure's scale about its intra-cell origin, as `$053AF0` does.
-    readonly boxes: DetailBoxes;
-    readonly detail: Mesh;
-    /// The Building detail's extent rectangle in raw units, or null where it carries none
-    /// (#356). A Floor keeps the instance's detail and scale, so this is the cell's rectangle
-    /// on every Floor, as the bind that publishes `[$7910]` runs for the cell alone.
-    readonly extent: DetailExtent | null;
-    readonly groups: readonly DetailGroup[];
-    readonly structure: StructureSelection;
-  };
-  readonly status: Recovery;
-}
-
 export interface ErisPlace {
   readonly cell: ErisCell;
   readonly id: string;
   readonly name: string;
-}
-
-export interface SceneBackground {
-  readonly ceiling: string;
-  readonly day?: { readonly ceiling: string; readonly floor: string };
-  readonly floor: string;
 }
 
 /// A colour word's two halves: `colour` through the palette `$050562` binds while the Body is
@@ -174,7 +122,7 @@ const sceneBackground = (
         floor: floor.colour
       };
 
-export interface ErisSurface {
+export interface ErisSurface extends EnhancedSurface<ErisIsland> {
   /// The colour `$7C88` draws this Body's surface in wherever no island is painted over it:
   /// its sea, on a Body that has one. Null on the VOID slot, which is not a surface.
   readonly baseColour: string | null;
@@ -196,12 +144,6 @@ export interface ErisSurface {
   /// (ADR 0043).
   readonly unresolvedCount: number;
 }
-
-/// The local cell a raw-unit position falls in, counted from the bound workspace's origin.
-export const cellOf = (position: Vector3, grid: ErisGrid): ErisCell => ({
-  x: Math.floor(position.x / grid.cellUnits) - grid.origin.x,
-  z: Math.floor(position.z / grid.cellUnits) - grid.origin.z
-});
 
 const wrapSurface = (cell: number): number =>
   ((cell % SURFACE_CELLS) + SURFACE_CELLS) % SURFACE_CELLS;
@@ -247,48 +189,6 @@ export const islandLocalCell = (
     x: surfaceOffset(here.x, island.origin.x),
     z: surfaceOffset(here.z, island.origin.z)
   };
-};
-
-/// The island's origin in raw units, on whichever of its wrap images lies nearest `position`.
-///
-/// One shift for the whole record, never one a vertex: an island is a rigid shape on the torus,
-/// so choosing its image once keeps it whole and choosing per vertex is exactly how Snow Island
-/// tears. Everything island-local — a coastline vertex, a box bound, a local cell — is then a
-/// plain offset from what this returns.
-/// Whether the Working Authority draws this placement from where the player stands (#373).
-///
-/// Three families, three bounds. A Surface Structure is drawn only from its own Surface Cell:
-/// the plan and detail renderers have five call sites between them and all five sit in the
-/// bound-workspace dispatch at `$0533D4..$053418`, which is the Reference Build's Structure
-/// Reach (ADR 0034). A ground record follows an altitude-indexed cell window whose entry for
-/// the on-foot altitude is zero, so on foot it is the occupied cell as well — a Session that
-/// ever flies needs the window itself, not this. An object has no distance test at all:
-/// `$052C9C` keeps every resident of the Body however far away it stands.
-export const withinDrawBound = (
-  placement: ErisPlacement,
-  position: Vector3,
-  grid: ErisGrid
-): boolean => {
-  if (placement.kind === 'object') {
-    return true;
-  }
-  const here = cellOf(position, grid);
-  const there = cellOf(placement.position, grid);
-  return here.x === there.x && here.z === there.z;
-};
-
-/** `$7AF6 >= 0`: both unsigned cell fractions are in `[0.25, 0.75)`. */
-export const insideCentralCellHalf = (
-  position: Vector3,
-  grid: ErisGrid
-): boolean => {
-  const fraction = (value: number): number => {
-    const cells = value / grid.cellUnits;
-    return cells - Math.floor(cells);
-  };
-  const x = fraction(position.x);
-  const z = fraction(position.z);
-  return x >= 0.25 && x < 0.75 && z >= 0.25 && z < 0.75;
 };
 
 /** The one structure workspace selected by the current surface cell. */

@@ -1,22 +1,22 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
-  FLOATS_PER_VERTEX,
-  type ErisFramePlan
-} from '../src/damocles/frame.ts';
-import {
   NOISE_BANDS,
   NOISE_ROWS,
   noiseBands,
   presentScreen
 } from '../src/damocles/screen.ts';
+import {
+  FLOATS_PER_VERTEX,
+  type EnhancedFramePlan
+} from '../src/enhanced/frame.ts';
 
 /// The TOLOSA encounter's screen effects (#581, ADR 0055) on a planned frame.
 
 const st = (level: number): number => Math.round((level * 255) / 7) / 255;
 
 /// A plan with one vertex in each colour list, coloured the ST word `r g b`.
-const planOf = (r: number, g: number, b: number): ErisFramePlan => {
+const planOf = (r: number, g: number, b: number): EnhancedFramePlan => {
   const vertex = (): Float32Array => {
     const out = new Float32Array(FLOATS_PER_VERTEX);
     out.set([st(r), st(g), st(b)], 3);
@@ -45,7 +45,7 @@ const planOf = (r: number, g: number, b: number): ErisFramePlan => {
   };
 };
 
-const colours = (plan: ErisFramePlan) =>
+const colours = (plan: EnhancedFramePlan) =>
   [
     plan.vertices,
     plan.skyVertices,

@@ -5,6 +5,12 @@ import { readGammaSystem } from '../flyover/documents.ts';
 
 import './panelElement.ts';
 
+import {
+  FLOATS_PER_VERTEX,
+  planEnhancedFrame,
+  zoomedFieldOfView
+} from '../enhanced/frame.ts';
+import { sceneLighting, sunlight } from '../enhanced/lighting.ts';
 import { IDLE } from '../gameCore/index.ts';
 import {
   DEFAULT_AMBIENT_LIGHT,
@@ -62,15 +68,9 @@ import {
   type DamoclesConsoleHost
 } from './console.ts';
 import { craftProgram } from './craftProgram.ts';
-import {
-  FLOATS_PER_VERTEX,
-  planErisFrame,
-  zoomedFieldOfView
-} from './frame.ts';
 import { AUTHORS_COMPUTER_SLOT } from './headCommands.ts';
 import { classifyPosition } from './islands.ts';
 import { stMakeCode } from './keys.ts';
-import { erisLighting, sunlight } from './lighting.ts';
 import { damoclesPanelViewModel } from './panel.ts';
 import { readDamoclesPanelDocument } from './panelDocument.ts';
 import { installRecoveredDamoclesPanel } from './panelView.ts';
@@ -98,7 +98,7 @@ import {
   presentScreen
 } from './screen.ts';
 import { DamoclesSession, NEW_GAME_VIEW_EXPONENT } from './session.ts';
-import { skyPass, spaceSkyPass } from './sky.ts';
+import { DAMOCLES_SUN, skyPass, spaceSkyPass } from './sky.ts';
 import {
   DamoclesSoundPresenter,
   type DamoclesSoundCommand,
@@ -1405,7 +1405,7 @@ try {
           });
     // The surface comes from the Session Snapshot rather than the presentation document, so a
     // Body switch or a Save restored onto another Body draws that Body's workspace (#379).
-    const plan = planErisFrame(
+    const plan = planEnhancedFrame(
       snapshot.surface,
       snapshot.pose,
       zoomedDoc(snapshot.viewExponent),
@@ -1440,7 +1440,8 @@ try {
         ? sunlight({
             daylight: snapshot.daylight,
             enclosed: plan.enclosed,
-            sky: sky.bodies
+            sky: sky.bodies,
+            sun: DAMOCLES_SUN
           })
         : null;
     const screen = snapshot.screen;
@@ -1450,7 +1451,7 @@ try {
       sun === null
         ? undefined
         : {
-            lighting: erisLighting(content.doc, snapshot.pose, sun, {
+            lighting: sceneLighting(content.doc.lighting, snapshot.pose, sun, {
               ambient: (ambientLight ?? DEFAULT_AMBIENT_LIGHT) / 100,
               shadowDepth: (shadowDepth ?? DEFAULT_SHADOW_DEPTH) / 100
             })

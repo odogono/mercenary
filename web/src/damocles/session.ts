@@ -56,6 +56,17 @@ import {
   wrapBodyLongitude
 } from '../sky/bodyTime.ts';
 import {
+  attachmentOpenLimit,
+  clampStructureStep,
+  insideLocalBox,
+  regionIsEnclosed,
+  stepAttachment,
+  structureLocalPosition,
+  structureRegionAt,
+  type AttachmentLatch,
+  type AttachmentState
+} from '../structure/selection.ts';
+import {
   DESTROY_OPTION,
   initialAuthorsComputer,
   optionEffect,
@@ -171,17 +182,6 @@ import {
   UNRAVELLING_TRIGGER,
   WISH_DRIFT
 } from './scripts.ts';
-import {
-  attachmentOpenLimit,
-  clampStructureStep,
-  insideLocalBox,
-  regionIsEnclosed,
-  stepAttachment,
-  structureLocalPosition,
-  structureRegionAt,
-  type AttachmentLatch,
-  type AttachmentState
-} from './selection.ts';
 import { landingTrigger, landsOn } from './spacePolicy.ts';
 import { presentedText, type DamoclesStrings } from './strings.ts';
 import {

@@ -2,14 +2,14 @@ import { expect, test } from 'bun:test';
 
 import { parseCatalogue } from '../src/catalogue/data.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
+import { erisSurfaceFrom, startPose } from '../src/damocles/world.ts';
 import {
   attachmentOpenLimit,
   clampStructureStep,
   structureMeshes,
   structureRegionAt,
   type AttachmentLatch
-} from '../src/damocles/selection.ts';
-import { erisSurfaceFrom, startPose } from '../src/damocles/world.ts';
+} from '../src/structure/selection.ts';
 import { ERIS_BODY } from './damocles-pose.ts';
 import { modelsOf, readRawCatalogue } from './fixtures/catalogue.ts';
 

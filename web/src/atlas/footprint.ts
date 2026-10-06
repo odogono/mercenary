@@ -96,13 +96,13 @@ export const drawnAngleByte = (model: Model, instance: Instance): number =>
 /// The rectangle is the mesh's x and z extents, turned about the Instance's own position by the
 /// angle the draw path turns it with and converted from engine units into Surface Cells. The
 /// turn is the draw path's own, `$0533F4`'s composition of the record and the Instance
-/// (`web/src/damocles/frame.ts`): x forward by the cosine and z by the sine, with **no z
+/// (`web/src/enhanced/frame.ts`): x forward by the cosine and z by the sine, with **no z
 /// mirror** — the mirror in the renderer belongs to the camera's handedness and not to where a
 /// building stands, and applying it here would reflect every footprint about its own north-south
 /// axis (memory: no z mirror in the draw path).
 ///
 /// Nothing is scaled. A scaled alias record scales its *building detail* ($05A7F6 and
-/// `damocles/selection.ts`), never its plan, so the plan's own extents are already the extents
+/// `structure/selection.ts`), never its plan, so the plan's own extents are already the extents
 /// the renderer draws the walls at.
 export const footprintOf = (
   model: Model,

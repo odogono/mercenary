@@ -22,6 +22,7 @@ One directory per concern. Pages load a `boot.ts` (`web/*.html` names which). Ea
 - `sky/`: the Orrery and Body Time. `text/`: composing decoded messages.
 - `sound/`: the YM2149 synth, worklet and presenter.
 - `scene/`: frame colours. `rendering/`: the WebGL2 Filled Presentation renderer shared by Damocles and Dion.
+- `enhanced/`: the one Enhanced planner Damocles and Dion share (ADR 0077): the scene a Title supplies, the frame, the sky triangles and Sunlight. `structure/`: structure selection, regions and entrance attachments.
 - `settings/`: tuned values kept as data.
 
 ## Data and tooling
