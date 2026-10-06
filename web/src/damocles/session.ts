@@ -33,6 +33,7 @@ import {
   type SpaceMemory,
   type SpaceState
 } from '../craft/space.ts';
+import type { FormClock } from '../enhanced/forms.ts';
 import {
   IDLE,
   MAXIMUM_STEP,
@@ -145,6 +146,7 @@ import {
 } from './residence.ts';
 import {
   LIFT_STEP_TICKS,
+  NEW_GAME_FORM_CLOCK,
   validateOccupancy,
   type BoundStructureSnapshot,
   type DamoclesSaveCraft,
@@ -224,7 +226,9 @@ import {
   nearestIsland,
   pitchFromWord,
   placementById,
+  placementForms,
   placementHeading,
+  residentSlot,
   startPose,
   structureInCell,
   withFieldAt,
@@ -278,6 +282,8 @@ export interface DamoclesSnapshot {
   /// Bank word `$070104`, the encounter gate TOLOSA's landing script arms (#576). The panel's
   /// second lamp `$050A5C` reads it.
   readonly encounter: number;
+  /// The counters the Enhanced planner chooses each model's form by (#805).
+  readonly formClock: FormClock;
   readonly frameAccumulator: number;
   /// The open document and the centre box's transition (#598).
   readonly headCommands: HeadCommandState;
@@ -765,6 +771,10 @@ export class DamoclesSession implements TitleSession<
   /// `$7872`, the switch bits `+` and `-` set and clear on an open switch (`$04D420`). They
   /// belong to no carried object: a detonator switched on and put down stays on.
   private switches = 0;
+  /// `$7886`'s high byte: one a VBL (`$051E30` adds `$7944`, `$0100` in every capture).
+  private vbls: number;
+  /// The form counters each main-loop pass publishes (#805).
+  private formClock: FormClock;
   /// The AUTHORS COMPUTER's option `$786C` and its records at `$7C8C` (#628).
   private computer: AuthorsComputer = initialAuthorsComputer();
   /// The TIMED DETONATOR's charge `$7866` and fuse `$786A`, and the EXPLOSIVE it armed (#635).
@@ -947,6 +957,9 @@ export class DamoclesSession implements TitleSession<
     this.carried = [...(restore?.carried ?? [])];
     this.doorsMoving = restore?.doorsMoving ?? false;
     this.frameAccumulator = restore?.frameAccumulator ?? 0;
+    const { vbls, ...formClock } = restore?.formClock ?? NEW_GAME_FORM_CLOCK;
+    this.vbls = vbls;
+    this.formClock = formClock;
     this.scrollCounter = restore?.scrollCounter ?? 0;
     this.footTicks = restore?.footTicks ?? 0;
     this.runMode = restore?.running ?? false;
@@ -1762,7 +1775,12 @@ export class DamoclesSession implements TitleSession<
     const base = this.surface.placements.find(
       placement => placement.id === instance.id
     );
+    const forms =
+      form === undefined || model.kind !== 'object'
+        ? undefined
+        : placementForms(model, form.id, residentSlot(instance.id));
     return {
+      ...(forms === undefined ? {} : { forms }),
       faceCount: form?.mesh.faces.length ?? 0,
       // A structure resident has no surface placement; it turns by its own instance angle
       // byte in the parent's frame, which structures never rotate (#361).
@@ -2042,6 +2060,7 @@ export class DamoclesSession implements TitleSession<
       drift: this.drift,
       elapsed: this.elapsed,
       encounter: this.script.encounter,
+      formClock: this.formClock,
       frameAccumulator: this.frameAccumulator,
       headCommands: this.headCommands,
       impact: this.impact(),
@@ -2704,12 +2723,31 @@ export class DamoclesSession implements TitleSession<
   /// runs the unravelling.
   private mainLoopPass(): void {
     this.script = stepNoise(this.script);
+    this.stepFormClock();
     if (this.debrisPasses < 0) {
       this.detonate();
     } else {
       this.debrisPasses = Math.max(0, this.debrisPasses - 1);
     }
     this.tickUnravelling();
+  }
+
+  /// The frame join latches `$7886` into `$7888` (`$0594EC`) and steps every frame script
+  /// (`$053EBE`), and the frame's end counts it in `$7AE8` (`$0599A0`). `$053440` moves the
+  /// television's colour entry `$5343E` a step toward full while switch bit 0 (`$7875` bit 0) is
+  /// on and toward dark while it is off; it runs once per television drawn, which the port
+  /// takes as once a pass.
+  private stepFormClock(): void {
+    const clock = this.formClock;
+    const on = (this.switches & 1) !== 0;
+    this.formClock = {
+      angle: this.vbls & 0xff,
+      frame: (clock.frame + 1) & 0xff_ff,
+      television: on
+        ? Math.min(5, clock.television + 1)
+        : Math.max(0, clock.television - 1),
+      textStep: clock.textStep + 1
+    };
   }
 
   /// `$04D420`: `+` sets the open switch's bit of `$7872` and `-` clears it. A key that finds the
@@ -2984,6 +3022,7 @@ export class DamoclesSession implements TitleSession<
       this.frameAccumulator = Math.max(0, this.frameAccumulator - frames);
       this.bodyTurn = advanceTurn(this.bodyTurn, this.rotationRate(), frames);
       for (let frame = 0; frame < frames; frame += 1) {
+        this.vbls = (this.vbls + 1) & 0xff;
         this.scrollCounter +=
           this.scrollCounter < 0 ? 1 : this.scrollCounter > 0 ? -1 : 0;
         const transition = runFrame(this.script, this.scriptRules);
@@ -3049,6 +3088,7 @@ export class DamoclesSession implements TitleSession<
           ? null
           : { dead: this.death !== null, pool: this.pool },
       footTicks: this.footTicks,
+      formClock: { ...this.formClock, vbls: this.vbls },
       frameAccumulator: this.frameAccumulator,
       headCommands: this.headCommands,
       impactPassed: this.impactPassed,

@@ -534,6 +534,16 @@ code. Targeted disassembly used to establish them remains ignored at
   DOOR KEY A's ten slots draw the labels A to J on the key head, and
   TRANSPORTER's ten draw 0 to 9. Each slot is offered as its own form, crossed
   with any view-conditioned groups the record also has.
+- **Frame animations, stepped.** `$053EBE`, called from the frame join at
+  `$059500`, walks the null-terminated pointer list at `$CD64` (`$CE6C`, `$CDD0`,
+  `$CD9E` in every memstate): each index word gains one, the descriptor's
+  character becomes the script's character at the index, and a NUL there resets
+  the index to 0 and takes the script's first character. A Hatari change watch
+  on `$CE6C` and `$CDD0` from the Eris spaceport memstate saw one step a frame,
+  every 11 VBLs there. Across the 29 memstates the TELEVISION index runs 95 to 99
+  passes ahead of `$7AE8` modulo its 697 frames, so where the index starts is not
+  recovered. The catalogue publishes each animated text's `script`, where its
+  stepped glyph lies, and every glyph the scripts draw (`textFrameGlyphs`) (#805).
 - **Frame animations.** `$CD9C` (`$89`), `$CDCE` (`$8C`) and `$CE6A` (`$82`) are
   descriptors `[character][NUL][index word][NUL-terminated frame script]`. In all
   ten independent captures the script is byte-identical and the displayed
@@ -564,7 +574,10 @@ code. Targeted disassembly used to establish them remains ignored at
   `$7888` is a free-running byte: it differs between two cold boots of the same
   scene and in every other capture, so no frame is canonical. It indexes the
   256-entry sine table at `$925A`, where `T[a]` is the sine and `T[a + 64]` the
-  cosine of `a × 360/256`. `$0537B0` translates a tagged vertex to the pivot,
+  cosine of `a × 360/256` (the catalogue's `articulationTable`). `$051E30` adds
+  `$7944` (`$0100` in every memstate) to `$7886` each VBL and `$0594EC` copies it
+  to `$7888` at each frame join, so the angle is the VBL count's low byte,
+  latched once a frame (#805). `$0537B0` translates a tagged vertex to the pivot,
   applies `x·cos − y·sin` and `x·sin + y·cos` keeping only each product's high
   word doubled, and translates back; the axis byte picks the plane and
   which of its two coordinates leads: negative Y before Z, zero Z before X, and
@@ -578,9 +591,22 @@ code. Targeted disassembly used to establish them remains ignored at
   `$8000` while dark from the `$7AE8` timer, then a relative jump to shared
   geometry. Records whose first patch is `$246` or `$411` also consult `$707E`
   or `$7082`. BLACK, BLUE and RED BEACON share one body and offer `flash-dark`.
+  The lit test is `$0534E4`–`$0534F0`: the frame counter `$7AE8` plus the word at
+  `$53500 + 4 × slot` (`add.w $53500(pc,d0.w)` with d0 the slot times four from
+  `$0535B6`), lit while bit 2 of the sum is clear. The catalogue publishes each
+  slot's phase word as the model's `flash.phases`. `$707E` and `$7082` are the
+  handling bytes of slots 53 and 54 (`$6FAA + 4 × slot`), BLUE BEACON LOCR and RED
+  BEACON LOCTR: a BLUE or RED BEACON stays dark (`bpl` to the `$8000` path) unless
+  bit 7, the carried flag, is set, so it flashes only while its locator is carried.
+  Every memstate holds `$04` in both. `$7AE8` steps once a rendered frame at
+  `$0599A0` and is cleared at New Game (`$051156`) (#805).
 - `$8006` (`$053440`) cycles one colour word through the six-entry table at
   `$53432` (`$8000`, `$321`, `$432`, `$543`, `$654`, `$777`) while bit 0 of
   `$7875` is set; TELEVISION offers frames 0–5.
+  `$7875` is the low byte of the switch long `$7872` that `+` and `-` set on an
+  open switch (`$04D420`), so the screen follows switch bit 0. The entry
+  `$5343E` steps two bytes toward `$A` while the bit is set and back toward 0
+  while it is clear, each time the header runs: once per television drawn (#805).
 - `$8009` (`$05355A`) jumps by the following word when `$7A60` is nonzero;
   NOVAGEN SAFE offers the `open` form.
 - `$8004` (`$04CFA4`) never returns to the record parser: it projects the

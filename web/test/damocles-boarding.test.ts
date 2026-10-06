@@ -16,6 +16,7 @@ import {
 } from '../src/damocles/resume.ts';
 import {
   DAMOCLES_SAVE_SCHEMA_VERSION,
+  NEW_GAME_FORM_CLOCK,
   damoclesSaveIdentity,
   decodeDamoclesSave,
   encodeDamoclesSave,
@@ -53,6 +54,14 @@ import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
+/// A Save Snapshot without its form counters, which a record older than #805 does not carry.
+const withoutFormClock = ({
+  formClock,
+  ...rest
+}: DamoclesSaveSnapshot): Omit<DamoclesSaveSnapshot, 'formClock'> => {
+  void formClock;
+  return rest;
+};
 /// The endings a record older than schema 22 does not carry.
 const OLDER_ENDINGS = [
   ...ENDING_TRIGGERS,
@@ -1085,8 +1094,10 @@ describe('the craft words across a Save and a Session Resume (#557)', () => {
     const current = session.captureResume();
     const migrated = decoded(schema11(current));
     // The drive stepped the noise pointer, which a migrated record restarts from New Game's.
-    expect(migrated).toEqual({
-      ...current,
+    // An older record carries no form counters (#805).
+    expect(migrated.formClock).toBeUndefined();
+    expect(withoutFormClock(migrated)).toEqual({
+      ...withoutFormClock(current),
       angleBytes: [],
       encounter: null,
       script: { ...current.script, noise: NEW_GAME_NOISE },
@@ -1668,9 +1679,11 @@ describe('a Save in space and during the launch swing (#568)', () => {
     );
     expect(ground.craft).toMatchObject({ space: null, swing: false });
     const onGround = new DamoclesSession(content, ground);
-    // The flight stepped the noise pointer, which a migrated record restarts from New Game's.
+    // The flight stepped the noise pointer, which a migrated record restarts from New Game's,
+    // and the form counters start again (#805).
     expect(onGround.captureResume()).toEqual({
       ...aboard,
+      formClock: NEW_GAME_FORM_CLOCK,
       script: { ...aboard.script, noise: NEW_GAME_NOISE },
       spaceMemory: {
         nearest: content.catalogue.craft!.boot.nearest.value,
@@ -1966,7 +1979,12 @@ describe('the noise pointer on foot and at New Game (#582)', () => {
         }
       })
     );
-    expect(migrated).toEqual({ ...current, encounter: null, footTicks: 0 });
+    expect(migrated.formClock).toBeUndefined();
+    expect(withoutFormClock(migrated)).toEqual({
+      ...withoutFormClock(current),
+      encounter: null,
+      footTicks: 0
+    });
   });
 });
 

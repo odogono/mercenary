@@ -13,6 +13,7 @@ import {
 } from '../catalogue/data.ts';
 import type { ModelLookup } from '../catalogue/modelStore.ts';
 import { nearestIsland } from '../coast/islands.ts';
+import type { PlacementForms } from '../enhanced/forms.ts';
 import {
   cellOf,
   type EnhancedSurface,
@@ -587,6 +588,42 @@ export const floorPlacement = (
 };
 
 /// One located Instance as the surface places it, or undefined while its Model is not in hand.
+/// The forms a model offers the Enhanced planner's per-frame chooser, or undefined where it
+/// draws one form whatever the frame (#805). `own` is the form drawn with no clock; `slot` is
+/// the resident slot a beacon's phase word is read for.
+export const placementForms = (
+  model: Model,
+  own: string,
+  slot: number | null
+): PlacementForms | undefined => {
+  const mesh =
+    model.variants.find(variant => variant.id === own)?.mesh ??
+    model.variants[0]?.mesh;
+  const phase = slot === null ? undefined : model.flash?.phases[String(slot)];
+  const offers =
+    phase !== undefined ||
+    model.variants.some(variant => /^frame-\d+$/.test(variant.id)) ||
+    mesh?.viewGroups !== undefined ||
+    mesh?.articulation !== undefined ||
+    mesh?.textAnimations !== undefined;
+  if (!offers) {
+    return undefined;
+  }
+  return {
+    ...(phase === undefined || model.flash === undefined
+      ? {}
+      : { flash: { gateSlot: model.flash.gateSlot, phase } }),
+    own,
+    variants: model.variants
+  };
+};
+
+/// A resident instance's slot, `object-slot-<n>`, or null for any other instance.
+export const residentSlot = (instance: string): number | null => {
+  const match = /^object-slot-(\d+)$/.exec(instance);
+  return match === null ? null : Number(match[1]);
+};
+
 const placementOf = (
   instance: Catalogue['instances'][number],
   models: ModelLookup,
@@ -609,8 +646,14 @@ const placementOf = (
           Math.floor(location.position[2])
         );
   const selection = placementSelection(model, models);
+  const own = model.variants.find(variant => variant.mesh === drawn)?.id;
+  const forms =
+    model.kind !== 'object' || own === undefined
+      ? undefined
+      : placementForms(model, own, residentSlot(instance.id));
   return {
     ...(selection === undefined ? {} : { selection }),
+    ...(forms === undefined ? {} : { forms }),
     faceCount: mesh?.faces.length ?? 0,
     heading: placementHeading(model, location.heading),
     id: instance.id,
@@ -748,6 +791,12 @@ export const erisSurfaceFrom = (
     body: { id: body.id, name: body.name },
     ...(fieldAt === undefined ? {} : { field: fieldAt }),
     floorLabelGlyphs: catalogue.floorLabelGlyphs,
+    formTables: {
+      ...(catalogue.articulationTable === undefined
+        ? {}
+        : { articulation: catalogue.articulationTable }),
+      glyphs: catalogue.textFrameGlyphs
+    },
     grid,
     islands: catalogue.islands
       .filter(island => island.body === body.id)

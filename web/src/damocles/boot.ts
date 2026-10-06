@@ -1428,7 +1428,8 @@ try {
       // Enhanced presentation draws every part of a structure aboard. The ST's detail-only
       // aboard draw was there for speed.
       enhanced ? 'whole' : 'aboard',
-      renderer.outputHeight
+      renderer.outputHeight,
+      snapshot.formClock
     );
     // A Cast Shadow is Enhanced presentation only, and the player may turn it off. Only
     // Sunlight casts one, and a frame without Sunlight draws every face in its recovered colour.

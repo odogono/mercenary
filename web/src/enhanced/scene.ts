@@ -11,6 +11,7 @@ import type {
 } from '../catalogue/data.ts';
 import type { CoastIsland } from '../coast/islands.ts';
 import type { Vector3 } from '../orientation/index.ts';
+import type { FormTables, PlacementForms } from './forms.ts';
 
 /// What the Enhanced planner draws a frame from, whichever Title supplies it: a Body's surface
 /// of placements in raw engine units, the Pose the eye stands at, the bound structure, and the
@@ -50,12 +51,15 @@ export interface Pose {
 
 export interface ScenePlacement {
   readonly faceCount: number;
+  /// Static geometry for ordinary placements; authored fallback for recovered selectors.
+  /// The forms the model offers, for a planner given a frame's clock (#805). Absent where the
+  /// model has one form, or for a planner drawing every placement in `mesh`.
+  readonly forms?: PlacementForms;
   readonly heading: number;
   readonly id: string;
   /// The cell's `$7AFB` door-key base, or null where the entry byte installs none.
   readonly keyBase: number | null;
   readonly kind: Kind;
-  /// Static geometry for ordinary placements; authored fallback for recovered selectors.
   readonly mesh: Mesh | undefined;
   readonly modelId: string;
   readonly name: string;
@@ -154,6 +158,8 @@ export interface EnhancedSurface<I extends SceneIsland = SceneIsland> {
   /// Floor Label glyphs by font, which every Floor Label record draws from. Empty where the
   /// Title has none.
   readonly floorLabelGlyphs: SceneFloorLabelGlyphs;
+  /// The tables per-frame forms are composed from; absent where no placement offers forms.
+  readonly formTables?: FormTables;
   readonly grid: SceneGrid;
   /// The Body's island records, in list order.
   readonly islands: readonly I[];

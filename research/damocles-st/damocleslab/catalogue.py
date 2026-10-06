@@ -401,6 +401,62 @@ def decode_ground_lettering(data: bytes, reader: Reader, vertices: list, faces: 
     )
 
 
+def append_glyph(data: bytes, font: int, character: str, character_index: int,
+                 anchor: list[int], plane: int, advance: int, scale_x: int, scale_y: int,
+                 rgb: str, day: dict, colour: int, vertices: list, faces: list,
+                 lines: list) -> None:
+    """One `$31700` font glyph, placed at its character position in a text record."""
+    glyph_index = ord(character) + font * 64 - 32
+    pointer_address = 0x31700 + glyph_index * 2
+    if glyph_index < 0 or pointer_address + 2 > len(data):
+        raise ValueError('vector-text glyph outside source font')
+    pointer = Reader(data, pointer_address).signed()
+    glyph = Reader(data, 0x31700 + pointer)
+    offset = len(vertices)
+    for _ in range(63):
+        x = int.from_bytes(glyph.take(1), 'big', signed=True)
+        if x in (-128, -127):
+            filled = x == -128
+            break
+        y = int.from_bytes(glyph.take(1), 'big', signed=True)
+        vertices.append(object_text_anchor(
+            anchor, plane, character_index * advance + x * scale_x, y * scale_y
+        ))
+    else:
+        raise ValueError('vector-text glyph vertex terminator missing')
+    if filled:
+        for _ in range(256):
+            first = glyph.take(1)[0]
+            if first == 0:
+                break
+            refs = [first]
+            for _ in range(255):
+                ref = glyph.take(1)[0]
+                if ref == 0:
+                    break
+                refs.append(ref)
+            else:
+                raise ValueError('filled vector-text polygon terminator missing')
+            if any(ref % 4 or ref // 4 > len(vertices) - offset for ref in refs):
+                raise ValueError('invalid filled vector-text glyph reference')
+            faces.append({'vertices': [offset + ref // 4 - 1 for ref in refs],
+                          'colour': rgb, **day, 'sourceColour': colour})
+        else:
+            raise ValueError('filled vector-text glyph terminator missing')
+        return
+    for _ in range(256):
+        a = glyph.take(1)[0]
+        if a == 0:
+            break
+        b = glyph.take(1)[0]
+        if any(ref == 0 or ref % 4 or ref // 4 > len(vertices) - offset for ref in (a, b)):
+            raise ValueError('invalid vector-text glyph reference')
+        lines.append({'vertices': [offset + a // 4 - 1, offset + b // 4 - 1],
+                      'colour': rgb, **day, 'sourceColour': colour})
+    else:
+        raise ValueError('vector-text glyph line terminator missing')
+
+
 def decode_placed_lettering(data: bytes, reader: Reader, anchor: list[int],
                             vertices: list, faces: list, lines: list,
                             palette: list[int] | None, hardware: list[int] | None,
@@ -443,7 +499,7 @@ def decode_placed_lettering(data: bytes, reader: Reader, anchor: list[int],
             elif pointer in TEXT_ANIMATION_TARGETS:
                 script = text_animation_script(data, pointer)
                 characters.append(text_animation_frame(script, frame))
-                animation = {'target': pointer, 'frames': len(script)}
+                animation = {'target': pointer, 'frames': len(script), 'script': script}
                 token = None
             elif pointer == EXPLOSIVE_COUNTDOWN_TARGET:
                 characters.append(EXPLOSIVE_COUNTDOWN_DISARMED)
@@ -458,56 +514,25 @@ def decode_placed_lettering(data: bytes, reader: Reader, anchor: list[int],
     text = ''.join(characters)
     rgb = colour_value(colour, palette, hardware)
     day = day_colour(colour, palette, hardware)
+    animated_index = None
+    if animation is not None:
+        # The token is the record's last character: the frame the descriptor's index names.
+        animated_index = len(text) - 1
     for character_index, character in enumerate(text):
-        glyph_index = ord(character) + font * 64 - 32
-        pointer_address = 0x31700 + glyph_index * 2
-        if glyph_index < 0 or pointer_address + 2 > len(data):
-            raise ValueError('vector-text glyph outside source font')
-        pointer = Reader(data, pointer_address).signed()
-        glyph = Reader(data, 0x31700 + pointer)
-        offset = len(vertices)
-        for _ in range(63):
-            x = int.from_bytes(glyph.take(1), 'big', signed=True)
-            if x in (-128, -127):
-                filled = x == -128
-                break
-            y = int.from_bytes(glyph.take(1), 'big', signed=True)
-            vertices.append(object_text_anchor(
-                anchor, plane, character_index * advance + x * scale_x, y * scale_y
-            ))
-        else:
-            raise ValueError('vector-text glyph vertex terminator missing')
-        if filled:
-            for _ in range(256):
-                first = glyph.take(1)[0]
-                if first == 0:
-                    break
-                refs = [first]
-                for _ in range(255):
-                    ref = glyph.take(1)[0]
-                    if ref == 0:
-                        break
-                    refs.append(ref)
-                else:
-                    raise ValueError('filled vector-text polygon terminator missing')
-                if any(ref % 4 or ref // 4 > len(vertices) - offset for ref in refs):
-                    raise ValueError('invalid filled vector-text glyph reference')
-                faces.append({'vertices': [offset + ref // 4 - 1 for ref in refs],
-                              'colour': rgb, **day, 'sourceColour': colour})
-            else:
-                raise ValueError('filled vector-text glyph terminator missing')
-            continue
-        for _ in range(256):
-            a = glyph.take(1)[0]
-            if a == 0:
-                break
-            b = glyph.take(1)[0]
-            if any(ref == 0 or ref % 4 or ref // 4 > len(vertices) - offset for ref in (a, b)):
-                raise ValueError('invalid vector-text glyph reference')
-            lines.append({'vertices': [offset + a // 4 - 1, offset + b // 4 - 1],
-                          'colour': rgb, **day, 'sourceColour': colour})
-        else:
-            raise ValueError('vector-text glyph line terminator missing')
+        start = (len(vertices), len(faces), len(lines))
+        append_glyph(data, font, character, character_index, anchor, plane, advance,
+                     scale_x, scale_y, rgb, day, colour, vertices, faces, lines)
+        if character_index == animated_index:
+            # `$053EBE` steps the index once a main-loop pass, and the draw reads the character
+            # the index names, so each frame is this record with this one glyph swapped for
+            # the script's next. The glyphs themselves are the catalogue's `textFrameGlyphs`.
+            animation = {**animation, 'script': animation['script'].decode('ascii'),
+                         'characterIndex': character_index, 'advance': advance,
+                         'scale': [scale_x, scale_y], 'colour': rgb, **day,
+                         'sourceColour': colour,
+                         'range': {'vertices': [start[0], len(vertices)],
+                                   'faces': [start[1], len(faces)],
+                                   'lines': [start[2], len(lines)]}}
     return {'anchor': anchor, 'text': text, 'font': font, 'plane': plane,
             **({'liveToken': token} if token is not None else {}),
             **({'animation': animation} if animation is not None else {}),
@@ -6244,12 +6269,62 @@ def extract(data: bytes, source: dict, workspace: bytes | list[bytes] | None = N
         for label in (model.get('structureSelection') or {}).get('floorLabels', [])
         for font in (label['font'], *([label['fallback']['font']] if 'fallback' in label else []))
     }
+    bind_beacon_phases(models, data)
     return {'schemaVersion': SCHEMA_VERSION, 'title': 'Damocles', 'source': source, 'models': models, 'instances': instances,
             'bodies': bodies, 'islands': islands, 'places': places, 'tables': tables,
             'roadNetworks': road_networks,
             'floorLabelGlyphs': floor_label_glyphs(data, label_fonts),
+            'textFrameGlyphs': text_frame_glyphs(data, models),
+            'articulationTable': articulation_table(data),
             'craft': decode_craft(data),
             'coverage': coverage_ledger(models, tables, coverage_notes, disk_load, road_networks)}
+
+
+# $0534E8 adds a word to the frame counter before testing its bit 2: `add.w $53500(pc,d0.w)`
+# with d0 the resident slot times four (`$0535B6`), so each slot's phase is the code word at
+# $53500 + 4 * slot. $0534CA/$0534DA keep a gated beacon dark unless bit 7 of its gate byte is
+# set; the gate bytes are the handling bytes of the BLUE and RED BEACON locators, slots 53 and
+# 54 (`$6FAA + 4 * slot`), whose bit 7 is the carried flag.
+BEACON_PHASE_TABLE = 0x53500
+HANDLING_BYTES = 0x6FAA
+
+
+def bind_beacon_phases(models: list, data: bytes) -> None:
+    """Give each flashing model its gate's slot and each of its slots' phase word."""
+    for model in models:
+        # BLACK, BLUE and RED BEACON share one body and offer each other's forms; a model's own
+        # form is the variant named after it.
+        variants = model.get('variants', [])
+        own = next((variant for variant in variants if variant['id'] == model['id']),
+                   variants[0] if variants else None)
+        flash = None if own is None else own['mesh'].get('alternates', {}).get('flash')
+        if flash is None:
+            continue
+        gate = flash['gate']
+        model['flash'] = {
+            'gateSlot': None if gate is None else (int(gate[1:], 16) - HANDLING_BYTES) // 4,
+            'phases': {str(slot): int.from_bytes(
+                data[BEACON_PHASE_TABLE + slot * 4:BEACON_PHASE_TABLE + slot * 4 + 2], 'big')
+                for slot in model['slots']},
+        }
+
+
+def text_frame_glyphs(data: bytes, models: list) -> dict:
+    """Every glyph a `$CCA0` frame animation's script can draw, by font and character."""
+    wanted: dict[int, set[str]] = {}
+    for model in models:
+        for variant in model.get('variants', []):
+            for text in variant['mesh'].get('texts', []):
+                if 'animation' in text:
+                    wanted.setdefault(text['font'], set()).update(text['animation']['script'])
+    return {str(font): {character: read_glyph(data, font, character)
+                        for character in sorted(characters)}
+            for font, characters in sorted(wanted.items())}
+
+
+def articulation_table(data: bytes) -> list[int]:
+    """The signed words `$053D84` and `$0537B0` turn by: sine at 2a, cosine at 2a + $80."""
+    return list(struct.unpack_from('>320h', data, TRIG_TABLE))
 
 
 SCHEMA_VERSION = 17

@@ -24,6 +24,7 @@ import {
   type CarriedSlot,
   type FloorLabelGlyphs
 } from '../structure/selection.ts';
+import { formMesh, type FormClock } from './forms.ts';
 import {
   insideCentralCellHalf,
   withinDrawBound,
@@ -554,7 +555,9 @@ export const planEnhancedFrame = (
   /// enclosed aboard either way.
   aboardStructures: 'aboard' | 'whole' = 'aboard',
   /// Road strokes stay one output pixel wide where they meet perspective road polygons.
-  outputHeight = 136
+  outputHeight = 136,
+  /// The frame's form counters (#805). Absent, every placement draws its own form.
+  clock: FormClock | null = null
 ): EnhancedFramePlan => {
   const camera = new Camera({
     farPlane: doc.camera.farPlane,
@@ -932,7 +935,26 @@ export const planEnhancedFrame = (
     }
   };
   const floorLabelGlyph = floorLabelGlyphsOf(surface, structure);
-  const emitPlacement = (placement: ScenePlacement): void => {
+  const formTables = surface.formTables ?? { glyphs: {} };
+  const shownForm = (placement: ScenePlacement): ScenePlacement => {
+    if (clock === null || placement.forms === undefined) {
+      return placement;
+    }
+    const mesh = formMesh(
+      placement.forms,
+      {
+        x: placement.position.x - pose.position.x,
+        y: placement.position.y - pose.position.y,
+        z: placement.position.z - pose.position.z
+      },
+      clock,
+      carriedSlot,
+      formTables
+    );
+    return mesh === placement.mesh ? placement : { ...placement, mesh };
+  };
+  const emitPlacement = (drawn: ScenePlacement): void => {
+    const placement = shownForm(drawn);
     const isBound = active && placement.id === structure?.instanceId;
     for (const mesh of structureMeshes(
       placement,

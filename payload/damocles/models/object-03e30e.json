@@ -4,6 +4,15 @@
       "flashTimer gated by $7082"
     ],
     "evidence": [],
+    "flash": {
+      "gateSlot": 54,
+      "phases": {
+        "176": 26436,
+        "177": 64608,
+        "178": 64606,
+        "179": 7738
+      }
+    },
     "id": "object-03e30e",
     "kind": "object",
     "linkedInstances": [],

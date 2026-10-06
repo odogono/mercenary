@@ -221,7 +221,30 @@
                 0
               ],
               "animation": {
+                "advance": 6,
+                "characterIndex": 0,
+                "colour": "#882222",
                 "frames": 12,
+                "range": {
+                  "faces": [
+                    6,
+                    7
+                  ],
+                  "lines": [
+                    1,
+                    1
+                  ],
+                  "vertices": [
+                    26,
+                    30
+                  ]
+                },
+                "scale": [
+                  1,
+                  1
+                ],
+                "script": "IPQRQPIMNONM",
+                "sourceColour": 1041,
                 "target": 52686
               },
               "font": 2,
@@ -585,7 +608,30 @@
                 0
               ],
               "animation": {
+                "advance": 6,
+                "characterIndex": 0,
+                "colour": "#882222",
                 "frames": 12,
+                "range": {
+                  "faces": [
+                    6,
+                    7
+                  ],
+                  "lines": [
+                    1,
+                    1
+                  ],
+                  "vertices": [
+                    26,
+                    30
+                  ]
+                },
+                "scale": [
+                  1,
+                  1
+                ],
+                "script": "IPQRQPIMNONM",
+                "sourceColour": 1041,
                 "target": 52686
               },
               "font": 2,
@@ -949,7 +995,30 @@
                 0
               ],
               "animation": {
+                "advance": 6,
+                "characterIndex": 0,
+                "colour": "#882222",
                 "frames": 12,
+                "range": {
+                  "faces": [
+                    6,
+                    7
+                  ],
+                  "lines": [
+                    1,
+                    1
+                  ],
+                  "vertices": [
+                    26,
+                    30
+                  ]
+                },
+                "scale": [
+                  1,
+                  1
+                ],
+                "script": "IPQRQPIMNONM",
+                "sourceColour": 1041,
                 "target": 52686
               },
               "font": 2,
@@ -1313,7 +1382,30 @@
                 0
               ],
               "animation": {
+                "advance": 6,
+                "characterIndex": 0,
+                "colour": "#882222",
                 "frames": 12,
+                "range": {
+                  "faces": [
+                    6,
+                    7
+                  ],
+                  "lines": [
+                    1,
+                    1
+                  ],
+                  "vertices": [
+                    26,
+                    30
+                  ]
+                },
+                "scale": [
+                  1,
+                  1
+                ],
+                "script": "IPQRQPIMNONM",
+                "sourceColour": 1041,
                 "target": 52686
               },
               "font": 2,
@@ -1677,7 +1769,30 @@
                 0
               ],
               "animation": {
+                "advance": 6,
+                "characterIndex": 0,
+                "colour": "#882222",
                 "frames": 12,
+                "range": {
+                  "faces": [
+                    6,
+                    7
+                  ],
+                  "lines": [
+                    1,
+                    1
+                  ],
+                  "vertices": [
+                    26,
+                    30
+                  ]
+                },
+                "scale": [
+                  1,
+                  1
+                ],
+                "script": "IPQRQPIMNONM",
+                "sourceColour": 1041,
                 "target": 52686
               },
               "font": 2,
@@ -2041,7 +2156,30 @@
                 0
               ],
               "animation": {
+                "advance": 6,
+                "characterIndex": 0,
+                "colour": "#882222",
                 "frames": 12,
+                "range": {
+                  "faces": [
+                    6,
+                    7
+                  ],
+                  "lines": [
+                    1,
+                    1
+                  ],
+                  "vertices": [
+                    26,
+                    30
+                  ]
+                },
+                "scale": [
+                  1,
+                  1
+                ],
+                "script": "IPQRQPIMNONM",
+                "sourceColour": 1041,
                 "target": 52686
               },
               "font": 2,
@@ -2405,7 +2543,30 @@
                 0
               ],
               "animation": {
+                "advance": 6,
+                "characterIndex": 0,
+                "colour": "#882222",
                 "frames": 12,
+                "range": {
+                  "faces": [
+                    6,
+                    7
+                  ],
+                  "lines": [
+                    1,
+                    1
+                  ],
+                  "vertices": [
+                    26,
+                    30
+                  ]
+                },
+                "scale": [
+                  1,
+                  1
+                ],
+                "script": "IPQRQPIMNONM",
+                "sourceColour": 1041,
                 "target": 52686
               },
               "font": 2,
@@ -2769,7 +2930,30 @@
                 0
               ],
               "animation": {
+                "advance": 6,
+                "characterIndex": 0,
+                "colour": "#882222",
                 "frames": 12,
+                "range": {
+                  "faces": [
+                    6,
+                    7
+                  ],
+                  "lines": [
+                    1,
+                    1
+                  ],
+                  "vertices": [
+                    26,
+                    30
+                  ]
+                },
+                "scale": [
+                  1,
+                  1
+                ],
+                "script": "IPQRQPIMNONM",
+                "sourceColour": 1041,
                 "target": 52686
               },
               "font": 2,

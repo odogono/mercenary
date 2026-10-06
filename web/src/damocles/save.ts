@@ -212,7 +212,26 @@ import type { Pose } from './world.ts';
 ///
 /// Version 27 carries the per-Body rotation origins used by the console's rate command to
 /// preserve every Body's phase when changing speed. Older schemas use the Catalogue origins.
+/// A version-27 record may also carry the form counters (#805): the frame counter `$7AE8`, the
+/// VBL count's low byte and the latched angle `$7888`, the frame scripts' step and the
+/// television's colour entry. One without them restores with them all at zero.
 export const DAMOCLES_SAVE_SCHEMA_VERSION = 27 as const;
+/// The counters the Enhanced planner chooses each model's form by, and the VBL count's low byte
+/// the angle is latched from.
+export interface SavedFormClock {
+  readonly angle: number;
+  readonly frame: number;
+  readonly television: number;
+  readonly textStep: number;
+  readonly vbls: number;
+}
+export const NEW_GAME_FORM_CLOCK: SavedFormClock = {
+  angle: 0,
+  frame: 0,
+  television: 0,
+  textStep: 0,
+  vbls: 0
+};
 /// The older schemas a restore migrates rather than refuses.
 const MIGRATED_SCHEMA_VERSIONS: readonly unknown[] = [
   11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26
@@ -375,6 +394,8 @@ export interface DamoclesSaveSnapshot {
   readonly encounter: DamoclesSaveEncounter | null;
   /// On foot, ticks since the last main-loop pass, below `time.ticksPerPassOnFoot` (ADR 0054).
   readonly footTicks: number;
+  /// The form counters (#805), as a migrated record resumes with them at zero.
+  readonly formClock?: SavedFormClock;
   readonly frameAccumulator: number;
   /// The open document and the centre box, as a migrated record resumes with none open.
   readonly headCommands: HeadCommandState;
@@ -1972,6 +1993,35 @@ export const decodeDamoclesSave = (
     record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION
       ? (snapshot['bodyTurnOrigins'] ?? null)
       : null;
+  const formClock =
+    record['schemaVersion'] === DAMOCLES_SAVE_SCHEMA_VERSION &&
+    snapshot['formClock'] !== undefined
+      ? (() => {
+          const raw = object(snapshot['formClock'], 'snapshot.formClock');
+          return {
+            angle: integer(raw['angle'], 'snapshot.formClock.angle', 0, 0xff),
+            frame: integer(
+              raw['frame'],
+              'snapshot.formClock.frame',
+              0,
+              0xff_ff
+            ),
+            television: integer(
+              raw['television'],
+              'snapshot.formClock.television',
+              0,
+              5
+            ),
+            textStep: integer(
+              raw['textStep'],
+              'snapshot.formClock.textStep',
+              0,
+              Number.MAX_SAFE_INTEGER
+            ),
+            vbls: integer(raw['vbls'], 'snapshot.formClock.vbls', 0, 0xff)
+          };
+        })()
+      : undefined;
   if (
     bodyTurnOrigins !== null &&
     (!Array.isArray(bodyTurnOrigins) ||
@@ -2365,6 +2415,7 @@ export const decodeDamoclesSave = (
       elapsed: snapshot['elapsed'],
       encounter,
       footTicks,
+      ...(formClock === undefined ? {} : { formClock }),
       frameAccumulator,
       headCommands,
       impactPassed,

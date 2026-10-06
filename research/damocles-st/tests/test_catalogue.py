@@ -4004,3 +4004,45 @@ class LocationTableTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class PerFrameFormInputTests(unittest.TestCase):
+    """What the Enhanced planner chooses a model's form from each frame (#805)."""
+
+    @staticmethod
+    def _catalogue() -> dict:
+        root = Path(__file__).resolve().parents[3]
+        return read_catalogue(root / 'payload' / 'damocles' / 'catalogue.json')
+
+    def test_beacon_gates_are_the_locators_handling_bytes(self):
+        from damocleslab.catalogue import bind_beacon_phases
+
+        data = bytearray(0x60000)
+        data[0x53500 + 172 * 4:0x53500 + 172 * 4 + 2] = (0x4A44).to_bytes(2, 'big')
+        model = {'id': 'blue', 'slots': [172], 'variants': [
+            {'id': 'blue', 'mesh': {'alternates': {'flash': {'offsets': 2, 'gate': '$707E'}}}},
+        ]}
+        bind_beacon_phases([model], bytes(data))
+        self.assertEqual(model['flash'], {'gateSlot': 53, 'phases': {'172': 0x4A44}})
+
+    def test_animated_texts_carry_their_script_and_every_glyph_it_draws(self):
+        catalogue = self._catalogue()
+        glyphs = catalogue['textFrameGlyphs']
+        for model in catalogue['models']:
+            for variant in model['variants']:
+                for text in variant['mesh'].get('texts', []):
+                    animation = text.get('animation')
+                    if animation is None:
+                        continue
+                    self.assertEqual(len(animation['script']), animation['frames'])
+                    self.assertTrue(set(animation['script']) <= set(glyphs[str(text['font'])]))
+                    start, end = animation['range']['vertices']
+                    self.assertLessEqual(end, len(variant['mesh']['vertices']))
+                    self.assertLessEqual(start, end)
+
+    def test_articulation_table_is_the_native_sine_quarter_offset(self):
+        table = self._catalogue()['articulationTable']
+        self.assertEqual(len(table), 320)
+        self.assertEqual(table[0], 0)
+        # Entry 64 is a quarter turn: the sine's peak, which the cosine reads at entry 0 + 64.
+        self.assertEqual(table[64], max(table))
