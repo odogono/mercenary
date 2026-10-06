@@ -616,6 +616,12 @@ const sceneIslands = (
 ): readonly SceneIsland[] => {
   const coast = world.coast;
   if (coast === undefined) {
+    // The shared planner draws a Settlement's roads with the island record they belong to
+    // (`$056464`). The D1 slice carries roads but no island records, so they are not drawn;
+    // the TOURCRAFT worlds the page plays carry island records and no road network (#818).
+    if (world.roads !== undefined) {
+      gaps.add('the road network has no island record to be drawn with');
+    }
     return [];
   }
   const [gx, gz] = world.opening.groupOrigin;

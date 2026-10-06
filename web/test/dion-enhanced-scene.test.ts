@@ -296,3 +296,39 @@ describe('Dion residents through the shared chooser', () => {
     expect(articulated).toBeGreaterThan(0);
   });
 });
+
+describe('the Dion Enhanced scene’s named gaps (#818)', () => {
+  test('no TOURCRAFT frame along the journey names a gap', () => {
+    const session = new TourcraftSession(tourcraft);
+    const gaps = new Set<string>();
+    const look = () => {
+      session.drainSound();
+      for (const gap of session.enhancedScene().gaps) {
+        gaps.add(gap);
+      }
+    };
+    look();
+    boardOpeningTaxi(session as never);
+    look();
+    let n = 0;
+    continueTourcraft(session, () => {
+      n += 1;
+      if (n % 150 === 0) {
+        look();
+      }
+    });
+    expect([...gaps]).toEqual([]);
+  });
+
+  test('the D1 slice names its undrawn roads, and nothing else', async () => {
+    const gaps = new Set<string>();
+    for await (const { state, world } of dionRenderCheckpoints()) {
+      for (const gap of dionEnhancedScene(world, state).gaps) {
+        gaps.add(gap);
+      }
+    }
+    expect([...gaps]).toEqual([
+      'the road network has no island record to be drawn with'
+    ]);
+  });
+});
