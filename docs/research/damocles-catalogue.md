@@ -600,6 +600,14 @@ code. Targeted disassembly used to establish them remains ignored at
   bit 7, the carried flag, is set, so it flashes only while its locator is carried.
   Every memstate holds `$04` in both. `$7AE8` steps once a rendered frame at
   `$0599A0` and is cleared at New Game (`$051156`) (#805).
+- **Range (#817).** `$0535A8` resets the range word `$5342C` to one cell before each object's
+  header runs, and `$800C` sets it (`$0534A6`). `$053674` then shifts the range and each axis of
+  the object's position less the eye's left four and compares them unsigned. The model is drawn
+  only where no axis is out of range. Past it, `$053688` draws one point when the header was
+  `$8003` with its lamps lit (`$53430` is `$777`) or `$800B`, which stands in as command 3 with
+  `$654` (`$053492`). Every other far object is drawn as nothing. Two objects set a range,
+  Object 332 (2) and Object 156 (40); the catalogue publishes it as `drawRange`, and the point
+  as `farPoint`. `$8005` objects skip the test (`$053658`).
 - `$8006` (`$053440`) cycles one colour word through the six-entry table at
   `$53432` (`$8000`, `$321`, `$432`, `$543`, `$654`, `$777`) while bit 0 of
   `$7875` is set; TELEVISION offers frames 0–5.

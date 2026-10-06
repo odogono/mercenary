@@ -224,6 +224,7 @@ import {
   islandLocalCell,
   modelWaves,
   nearestIsland,
+  objectReach,
   pitchFromWord,
   placementById,
   placementForms,
@@ -1781,6 +1782,7 @@ export class DamoclesSession implements TitleSession<
         : placementForms(model, form.id, residentSlot(instance.id));
     return {
       ...(forms === undefined ? {} : { forms }),
+      ...(model.kind === 'object' ? { reach: objectReach(model) } : {}),
       faceCount: form?.mesh.faces.length ?? 0,
       // A structure resident has no surface placement; it turns by its own instance angle
       // byte in the parent's frame, which structures never rotate (#361).

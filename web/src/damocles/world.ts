@@ -618,6 +618,17 @@ export const placementForms = (
   };
 };
 
+/// An object's reach (#817): one cell, or its `$800C` range, and the point it is drawn as past
+/// it, where it has one.
+export const objectReach = (
+  model: Model
+): NonNullable<ErisPlacement['reach']> => ({
+  cells: model.drawRange ?? 1,
+  ...(model.farPoint === undefined
+    ? {}
+    : { point: { colour: model.farPoint.colour } })
+});
+
 /// A resident instance's slot, `object-slot-<n>`, or null for any other instance.
 export const residentSlot = (instance: string): number | null => {
   const match = /^object-slot-(\d+)$/.exec(instance);
@@ -654,6 +665,7 @@ const placementOf = (
   return {
     ...(selection === undefined ? {} : { selection }),
     ...(forms === undefined ? {} : { forms }),
+    ...(model.kind === 'object' ? { reach: objectReach(model) } : {}),
     faceCount: mesh?.faces.length ?? 0,
     heading: placementHeading(model, location.heading),
     id: instance.id,

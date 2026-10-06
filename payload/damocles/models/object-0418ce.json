@@ -1,6 +1,7 @@
 {
   "model": {
     "conditions": [],
+    "drawRange": 2,
     "evidence": [],
     "id": "object-0418ce",
     "kind": "object",
@@ -21,6 +22,9 @@
       {
         "id": "record",
         "mesh": {
+          "alternates": {
+            "drawRange": 2
+          },
           "faces": [
             {
               "colour": "#ee6600",

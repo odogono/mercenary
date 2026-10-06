@@ -4,6 +4,10 @@
       "flashTimer"
     ],
     "evidence": [],
+    "farPoint": {
+      "colour": "#eeeeee",
+      "sourceColour": 1911
+    },
     "flash": {
       "gateSlot": null,
       "phases": {

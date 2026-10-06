@@ -277,6 +277,11 @@ export interface Model {
   readonly cellNumber?: CellNumber;
   readonly conditions: readonly string[];
   readonly detailSelection?: readonly DetailGroup[];
+  /**
+   * `$800C`'s range in cells (`$0534A6`), where the header sets one: past it on any axis the
+   * object is not drawn (`$053674`). Absent is the reset's one cell (`$0535A8`).
+   */
+  readonly drawRange?: number;
   readonly evidence: readonly Evidence[];
   /**
    * A Building detail's extent rectangle, the words its record carries below its entry that
@@ -285,6 +290,14 @@ export interface Model {
    * record carries none, which the bind publishes as `$8000`; absent on other kinds.
    */
   readonly extent?: DetailExtent | null;
+  /**
+   * The point an object is drawn as past its range (`$053688`): `$777` for a beacon while it is
+   * lit, `$654` for an `$800B` far marker. Absent, a far object is not drawn.
+   */
+  readonly farPoint?: {
+    readonly colour: string;
+    readonly sourceColour: number;
+  };
   /**
    * `$8003`, a beacon: lit while bit 2 of the frame counter `$7AE8` plus its slot's phase
    * word is clear, and, where `gateSlot` names a locator, only while that slot is carried.
@@ -1838,6 +1851,20 @@ const modelRecord = (item: unknown): Model => {
   return {
     ...(m['boxes'] === undefined ? {} : { boxes: detailBoxes(m['boxes']) }),
     conditions: m['conditions'] === undefined ? [] : strings(m['conditions']),
+    ...(m['drawRange'] === undefined
+      ? {}
+      : { drawRange: integer(m['drawRange']) }),
+    ...(m['farPoint'] === undefined
+      ? {}
+      : {
+          farPoint: (() => {
+            const f = object(m['farPoint']);
+            return {
+              colour: string(f['colour']),
+              sourceColour: integer(f['sourceColour'])
+            };
+          })()
+        }),
     ...(m['flash'] === undefined
       ? {}
       : {

@@ -520,7 +520,10 @@ describe('the player stands on one Floor', () => {
     // Eris at night, as the start capture is: its night word `$001` (#494).
     expect(plan.clear).toEqual(rgb('#000022'));
     expect(plan.enclosed).toBe(false);
-    expect(plan.drawnPlacements.length).toBeGreaterThan(1);
+    // The outdoor branch fills the Body to the horizon. The objects outside lie past their
+    // one-cell reach (#817), so only the structure is listed.
+    expect(plan.horizonVertices.length).toBeGreaterThan(0);
+    expect(plan.drawnPlacements).toEqual([STATE_OFFICE]);
   });
 
   test('a craft left in the lobby is not drawn from an enclosed upper Floor', () => {

@@ -4,6 +4,10 @@
       "viewerPosition"
     ],
     "evidence": [],
+    "farPoint": {
+      "colour": "#ccaa88",
+      "sourceColour": 1620
+    },
     "id": "object-036426",
     "kind": "object",
     "linkedInstances": [],
@@ -24,6 +28,7 @@
         "id": "record",
         "mesh": {
           "alternates": {
+            "farPoint": 1620,
             "viewGroup": 1
           },
           "faces": [
@@ -572,6 +577,7 @@
         "id": "view-0",
         "mesh": {
           "alternates": {
+            "farPoint": 1620,
             "viewGroup": 1
           },
           "faces": [

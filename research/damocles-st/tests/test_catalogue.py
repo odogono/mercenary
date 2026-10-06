@@ -4046,3 +4046,27 @@ class PerFrameFormInputTests(unittest.TestCase):
         self.assertEqual(table[0], 0)
         # Entry 64 is a quarter turn: the sine's peak, which the cosine reads at entry 0 + 64.
         self.assertEqual(table[64], max(table))
+
+
+class DrawRangeTests(unittest.TestCase):
+    """An object's range and far point (#817): $0534A6, $053492, $053674 and $053688."""
+
+    def test_range_and_far_point_come_from_the_own_form_header(self):
+        from damocleslab.catalogue import bind_draw_ranges
+
+        models = [
+            {'id': 'craft', 'kind': 'object', 'variants': [
+                {'id': 'craft', 'mesh': {'alternates': {'drawRange': 40}}}]},
+            {'id': 'marker', 'kind': 'object', 'variants': [
+                {'id': 'record', 'mesh': {'alternates': {'farPoint': 0x654}}}]},
+            {'id': 'beacon', 'kind': 'object', 'variants': [
+                {'id': 'beacon', 'mesh': {'alternates': {'flash': {'gate': None}}}}]},
+            {'id': 'plain', 'kind': 'object', 'variants': [
+                {'id': 'record', 'mesh': {}}]},
+        ]
+        bind_draw_ranges(models, [0] * 16)
+        self.assertEqual(models[0]['drawRange'], 40)
+        self.assertEqual(models[1]['farPoint']['sourceColour'], 0x654)
+        self.assertEqual(models[2]['farPoint']['sourceColour'], 0x777)
+        self.assertNotIn('drawRange', models[3])
+        self.assertNotIn('farPoint', models[3])

@@ -150,12 +150,13 @@ test('a switched Body draws its own workspace', async ({ page }) => {
   // underfoot. Eris's surface at this Pose would draw no ground at all, every Eris placement
   // being millions of units away (#394). The Pose is on BIRMINGHAM ISLAND's core, where no
   // island is filled (#578).
-  await expect(frame).toHaveAttribute('data-triangles', '406');
+  // Line strokes are counted (#806), and objects past their reach are not (#817).
+  await expect(frame).toHaveAttribute('data-triangles', '378');
   await expect(frame).toHaveAttribute('data-unresolved', '46');
 
   expect(await run(page, 'switch gaea-ur-city-4-2')).toContain('switched');
   await closeConsole(page);
-  await expect(frame).toHaveAttribute('data-triangles', '495');
+  await expect(frame).toHaveAttribute('data-triangles', '351');
   await expect(frame).toHaveAttribute('data-unresolved', '0');
 
   // MIDAS stores no copy where its Pose stands: the pyramid bound there is the uniform
