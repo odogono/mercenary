@@ -243,8 +243,11 @@
     ]
   },
   "entries": {
+    "115": "$7468B",
     "119": "$759D2",
     "19": "$75A75",
+    "24": "$76243",
+    "28": "$75467",
     "41": "$70579"
   },
   "faceSequences": {
@@ -2051,6 +2054,19 @@
         "$66E4E"
       ],
       "sha256": "aba500dfa1b666e57421b4714ccd897bc780a1604c9bf33e22038c9de1f48a89"
+    }
+  },
+  "poll": {
+    "bytes": [
+      39,
+      115
+    ],
+    "source": {
+      "range": [
+        "$06EAA",
+        "$06EAC"
+      ],
+      "sha256": "edc00d4db80ddc3e91783b63ae5fbcdfd204de983c650e9587785a40271c8f3c"
     }
   },
   "schemaVersion": 1,
@@ -4810,6 +4826,2450 @@
           "MERCENARY DECLARED 'ENEMY OF STATE'"
         ]
       },
+      "unknownOpcodes": []
+    },
+    {
+      "aligned": true,
+      "id": "pickup-responses",
+      "instructions": [
+        {
+          "address": "$701DD",
+          "byte": "$11",
+          "name": "clear_flag",
+          "op": "$11",
+          "operands": [
+            "$06"
+          ],
+          "source": {
+            "range": [
+              "$701DD",
+              "$701DF"
+            ],
+            "sha256": "83cc0c779806c41457a9e8768bb6fb774e4beb6d1042bb1471aae8f0e3b3ca9a"
+          }
+        },
+        {
+          "address": "$701DF",
+          "byte": "$05",
+          "name": "return",
+          "op": "$05",
+          "source": {
+            "range": [
+              "$701DF",
+              "$701E0"
+            ],
+            "sha256": "e77b9a9ae9e30b0dbdb6f510a264ef9de781501d7b6b92ae89eb059c5ab743db"
+          }
+        },
+        {
+          "address": "$7468B",
+          "byte": "$11",
+          "name": "clear_flag",
+          "op": "$11",
+          "operands": [
+            "$0D"
+          ],
+          "source": {
+            "range": [
+              "$7468B",
+              "$7468D"
+            ],
+            "sha256": "ab257c49c86dfd9404ee6a01de780fb2607c0c8d8952c0d71bd3aef7ae7d8269"
+          }
+        },
+        {
+          "address": "$7468D",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$7468D",
+              "$746A3"
+            ],
+            "sha256": "6925c7866716639161e266365bccf8892cb835e134069f6aefd64ab514573958"
+          },
+          "text": {
+            "address": "$7468E",
+            "centrePad": 11,
+            "length": 26,
+            "parts": [
+              {
+                "text": "PUT ME DOWN - THIS INSTANT"
+              }
+            ],
+            "raw": "PUT ME DOWN - THIS INSTANT",
+            "source": {
+              "range": [
+                "$7468E",
+                "$746A3"
+              ],
+              "sha256": "e8e009a16972e76cb82a7232db77bbcc1679c93dbcef7d491d17a0f5fbd86c83"
+            },
+            "text": "PUT ME DOWN - THIS INSTANT"
+          }
+        },
+        {
+          "address": "$746A3",
+          "byte": "$26",
+          "name": "timed_script",
+          "op": "$26",
+          "operands": [
+            "$05DC",
+            "$4967"
+          ],
+          "source": {
+            "range": [
+              "$746A3",
+              "$746A8"
+            ],
+            "sha256": "89068c1811842c50ac2c78bfa6d3d81ffed5b00f49943ba55cdf6d2113c6cbe8"
+          }
+        },
+        {
+          "address": "$746A8",
+          "byte": "$03",
+          "name": "jump",
+          "op": "$03",
+          "operands": [
+            {
+              "address": "$766BF",
+              "offset": "$697B"
+            }
+          ],
+          "source": {
+            "range": [
+              "$746A8",
+              "$746AB"
+            ],
+            "sha256": "05c4a4264d3db74e066c1f10f5c4a02638361d748edcb810d938fd6823ef7606"
+          }
+        },
+        {
+          "address": "$746AB",
+          "byte": "$11",
+          "name": "clear_flag",
+          "op": "$11",
+          "operands": [
+            "$0D"
+          ],
+          "source": {
+            "range": [
+              "$746AB",
+              "$746AD"
+            ],
+            "sha256": "ab257c49c86dfd9404ee6a01de780fb2607c0c8d8952c0d71bd3aef7ae7d8269"
+          }
+        },
+        {
+          "address": "$746AD",
+          "branch": {
+            "call": false,
+            "invert": true
+          },
+          "byte": "$8C",
+          "name": "if_object_held",
+          "op": "$0C",
+          "operands": [
+            "$DA"
+          ],
+          "source": {
+            "range": [
+              "$746AD",
+              "$746B1"
+            ],
+            "sha256": "f4b2ac43614bd94fe3d43b0620a0122d56e79535a00e1b38416c048670eafa8c"
+          },
+          "target": "$701DD"
+        },
+        {
+          "address": "$746B1",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$746B1",
+              "$746CD"
+            ],
+            "sha256": "b55819ed718070f163c6a77f24b4db10d573c58ee0a11841cc8eea3f9ab774b5"
+          },
+          "text": {
+            "address": "$746B2",
+            "centrePad": 4,
+            "length": 40,
+            "parts": [
+              {
+                "text": "I'M "
+              },
+              {
+                "expansion": "P C BIL",
+                "token": "^5"
+              },
+              {
+                "text": " - YOU'VE NO RIGHT TO DO THIS"
+              }
+            ],
+            "raw": "I'M ^5 - YOU'VE NO RIGHT TO DO THIS",
+            "source": {
+              "range": [
+                "$746B2",
+                "$746CD"
+              ],
+              "sha256": "9e21c4518e43f9ba7e6b4d749cb56c9171279adb68142d7f6fe0516ab8cd69e2"
+            },
+            "text": "I'M P C BIL - YOU'VE NO RIGHT TO DO THIS"
+          }
+        },
+        {
+          "address": "$746CD",
+          "byte": "$26",
+          "name": "timed_script",
+          "op": "$26",
+          "operands": [
+            "$03E8",
+            "$4991"
+          ],
+          "source": {
+            "range": [
+              "$746CD",
+              "$746D2"
+            ],
+            "sha256": "fb9ca6494a6d568ce7f0dda1ac99b1b475e3ef4832ebb03d262e602d4b267c6c"
+          }
+        },
+        {
+          "address": "$746D2",
+          "byte": "$03",
+          "name": "jump",
+          "op": "$03",
+          "operands": [
+            {
+              "address": "$766BF",
+              "offset": "$697B"
+            }
+          ],
+          "source": {
+            "range": [
+              "$746D2",
+              "$746D5"
+            ],
+            "sha256": "05c4a4264d3db74e066c1f10f5c4a02638361d748edcb810d938fd6823ef7606"
+          }
+        },
+        {
+          "address": "$746D5",
+          "byte": "$11",
+          "name": "clear_flag",
+          "op": "$11",
+          "operands": [
+            "$0D"
+          ],
+          "source": {
+            "range": [
+              "$746D5",
+              "$746D7"
+            ],
+            "sha256": "ab257c49c86dfd9404ee6a01de780fb2607c0c8d8952c0d71bd3aef7ae7d8269"
+          }
+        },
+        {
+          "address": "$746D7",
+          "branch": {
+            "call": false,
+            "invert": true
+          },
+          "byte": "$8C",
+          "name": "if_object_held",
+          "op": "$0C",
+          "operands": [
+            "$DA"
+          ],
+          "source": {
+            "range": [
+              "$746D7",
+              "$746DB"
+            ],
+            "sha256": "f4b2ac43614bd94fe3d43b0620a0122d56e79535a00e1b38416c048670eafa8c"
+          },
+          "target": "$701DD"
+        },
+        {
+          "address": "$746DB",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$746DB",
+              "$746F9"
+            ],
+            "sha256": "14d0ac6196bb9320b0219a04762c01310816625e6bba74c165d1bb71e50e856a"
+          },
+          "text": {
+            "address": "$746DC",
+            "centrePad": 6,
+            "length": 37,
+            "parts": [
+              {
+                "text": "I DEMAND TO SEE MY LAWYER IMMEDIATELY"
+              }
+            ],
+            "raw": "I DEMAND TO SEE MY LAWYER IMMEDIATELY",
+            "source": {
+              "range": [
+                "$746DC",
+                "$746F9"
+              ],
+              "sha256": "d4f23d35fbb25aa3a6e42f1f2d7dc9895e6ba7a01c9105b266ae13b58b23e1b8"
+            },
+            "text": "I DEMAND TO SEE MY LAWYER IMMEDIATELY"
+          }
+        },
+        {
+          "address": "$746F9",
+          "byte": "$26",
+          "name": "timed_script",
+          "op": "$26",
+          "operands": [
+            "$05DC",
+            "$49BD"
+          ],
+          "source": {
+            "range": [
+              "$746F9",
+              "$746FE"
+            ],
+            "sha256": "2bfbb5da39c61ae7dfb7865f09bd45d8aef071e494becb21865eb0d01b277397"
+          }
+        },
+        {
+          "address": "$746FE",
+          "byte": "$03",
+          "name": "jump",
+          "op": "$03",
+          "operands": [
+            {
+              "address": "$766BF",
+              "offset": "$697B"
+            }
+          ],
+          "source": {
+            "range": [
+              "$746FE",
+              "$74701"
+            ],
+            "sha256": "05c4a4264d3db74e066c1f10f5c4a02638361d748edcb810d938fd6823ef7606"
+          }
+        },
+        {
+          "address": "$74701",
+          "branch": {
+            "call": false,
+            "invert": true
+          },
+          "byte": "$8C",
+          "name": "if_object_held",
+          "op": "$0C",
+          "operands": [
+            "$DA"
+          ],
+          "source": {
+            "range": [
+              "$74701",
+              "$74705"
+            ],
+            "sha256": "f4b2ac43614bd94fe3d43b0620a0122d56e79535a00e1b38416c048670eafa8c"
+          },
+          "target": "$701DD"
+        },
+        {
+          "address": "$74705",
+          "byte": "$11",
+          "name": "clear_flag",
+          "op": "$11",
+          "operands": [
+            "$0D"
+          ],
+          "source": {
+            "range": [
+              "$74705",
+              "$74707"
+            ],
+            "sha256": "ab257c49c86dfd9404ee6a01de780fb2607c0c8d8952c0d71bd3aef7ae7d8269"
+          }
+        },
+        {
+          "address": "$74707",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$74707",
+              "$7471F"
+            ],
+            "sha256": "09027556ae52af866821d554c72e1911d17e201b568ced1d5aa50de888286b08"
+          },
+          "text": {
+            "address": "$74708",
+            "centrePad": 10,
+            "length": 29,
+            "parts": [
+              {
+                "text": "- - - - - - HELP! - - - - - -"
+              }
+            ],
+            "raw": "- - - - - - HELP! - - - - - -",
+            "source": {
+              "range": [
+                "$74708",
+                "$7471F"
+              ],
+              "sha256": "8937f67217e5953f1eee33357e6fe6fc9d54bf071ac01b8ba4115848f8174af9"
+            },
+            "text": "- - - - - - HELP! - - - - - -"
+          }
+        },
+        {
+          "address": "$7471F",
+          "byte": "$26",
+          "name": "timed_script",
+          "op": "$26",
+          "operands": [
+            "$0BB8",
+            "$49BD"
+          ],
+          "source": {
+            "range": [
+              "$7471F",
+              "$74724"
+            ],
+            "sha256": "88e50636022fb67d0ac01ba92827d2ee3a296e699e6cf40280fc18f4804a4b25"
+          }
+        },
+        {
+          "address": "$74724",
+          "byte": "$03",
+          "name": "jump",
+          "op": "$03",
+          "operands": [
+            {
+              "address": "$766BF",
+              "offset": "$697B"
+            }
+          ],
+          "source": {
+            "range": [
+              "$74724",
+              "$74727"
+            ],
+            "sha256": "05c4a4264d3db74e066c1f10f5c4a02638361d748edcb810d938fd6823ef7606"
+          }
+        },
+        {
+          "address": "$75467",
+          "branch": {
+            "call": false,
+            "invert": true
+          },
+          "byte": "$92",
+          "name": "if_flag",
+          "op": "$12",
+          "operands": [
+            "$0A"
+          ],
+          "source": {
+            "range": [
+              "$75467",
+              "$7546B"
+            ],
+            "sha256": "6923679c39a4c26794e8f6bc54bf26828ddaf11618abf291c6ccb7d444aafed8"
+          },
+          "target": "$766BF"
+        },
+        {
+          "address": "$7546B",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$76702",
+              "offset": "$69BE"
+            }
+          ],
+          "source": {
+            "range": [
+              "$7546B",
+              "$7546E"
+            ],
+            "sha256": "89ba49347ec64dc6900230639e362270b8950821cd7c2fda0e2319ee05f8510b"
+          }
+        },
+        {
+          "address": "$7546E",
+          "byte": "$11",
+          "name": "clear_flag",
+          "op": "$11",
+          "operands": [
+            "$0D"
+          ],
+          "source": {
+            "range": [
+              "$7546E",
+              "$75470"
+            ],
+            "sha256": "ab257c49c86dfd9404ee6a01de780fb2607c0c8d8952c0d71bd3aef7ae7d8269"
+          }
+        },
+        {
+          "address": "$75470",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$75470",
+              "$7547F"
+            ],
+            "sha256": "64d1d65b3474467a1a2d002cdc4d7b7a6ce9fea47d3f9acc69d22a46baaf62ff"
+          },
+          "text": {
+            "address": "$75471",
+            "parts": [
+              {
+                "expansion": "NEWSFLASH - ",
+                "token": "^4"
+              },
+              {
+                "text": "ACCOLADES FOR "
+              },
+              {
+                "live": "player name $759A, 10 characters, leading/trailing spaces trimmed ($529CC)",
+                "token": "]"
+              }
+            ],
+            "raw": "^4ACCOLADES FOR ]",
+            "source": {
+              "range": [
+                "$75471",
+                "$7547F"
+              ],
+              "sha256": "86a097050c154e1fec300b88081f15b0e3efeeb9d307bae73aabdf88f76f1931"
+            },
+            "text": "NEWSFLASH - ACCOLADES FOR ]"
+          }
+        },
+        {
+          "address": "$7547F",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$7547F",
+              "$75492"
+            ],
+            "sha256": "07d207601814bc23c2a3b2718dd29e888bac8b3d6024bb358bb888b4f67885e1"
+          },
+          "text": {
+            "address": "$75480",
+            "centrePad": 13,
+            "length": 22,
+            "parts": [
+              {
+                "text": "WINS OVER YOUNG VOTERS"
+              }
+            ],
+            "raw": "WINS OVER YOUNG VOTERS",
+            "source": {
+              "range": [
+                "$75480",
+                "$75492"
+              ],
+              "sha256": "bc7661229c5335c642863f31f34191328320041f448c332543104f20bdb51e29"
+            },
+            "text": "WINS OVER YOUNG VOTERS"
+          }
+        },
+        {
+          "address": "$75492",
+          "byte": "$16",
+          "name": "adjust_6EAA",
+          "op": "$16",
+          "operands": [
+            "$04"
+          ],
+          "source": {
+            "range": [
+              "$75492",
+              "$75494"
+            ],
+            "sha256": "9c85ae29c8bdc4831e0bebe9b5b2bed87c12499240509f4b3d43458f57670888"
+          }
+        },
+        {
+          "address": "$75494",
+          "byte": "$14",
+          "messageId": 7,
+          "name": "id_message",
+          "op": "$14",
+          "operands": [
+            "$07"
+          ],
+          "source": {
+            "range": [
+              "$75494",
+              "$75496"
+            ],
+            "sha256": "f028317dba283095d41cf2111a171d02946ee64d4d0da4521ce348c2f38176f2"
+          }
+        },
+        {
+          "address": "$75496",
+          "byte": "$26",
+          "name": "timed_script",
+          "op": "$26",
+          "operands": [
+            "$05DC",
+            "$575A"
+          ],
+          "source": {
+            "range": [
+              "$75496",
+              "$7549B"
+            ],
+            "sha256": "cab0e03ea8ba37c85d67a853cef9e9c554baa90eee933bb72cc90693bf5733d8"
+          }
+        },
+        {
+          "address": "$7549B",
+          "byte": "$03",
+          "name": "jump",
+          "op": "$03",
+          "operands": [
+            {
+              "address": "$766BF",
+              "offset": "$697B"
+            }
+          ],
+          "source": {
+            "range": [
+              "$7549B",
+              "$7549E"
+            ],
+            "sha256": "05c4a4264d3db74e066c1f10f5c4a02638361d748edcb810d938fd6823ef7606"
+          }
+        },
+        {
+          "address": "$7549E",
+          "branch": {
+            "call": false,
+            "invert": true
+          },
+          "byte": "$8C",
+          "name": "if_object_held",
+          "op": "$0C",
+          "operands": [
+            "$D8"
+          ],
+          "source": {
+            "range": [
+              "$7549E",
+              "$754A2"
+            ],
+            "sha256": "b20d8aab57477a1bc5a515fc915e47c2264bcdda161da28e6603e451eea73702"
+          },
+          "target": "$766BF"
+        },
+        {
+          "address": "$754A2",
+          "byte": "$11",
+          "name": "clear_flag",
+          "op": "$11",
+          "operands": [
+            "$0D"
+          ],
+          "source": {
+            "range": [
+              "$754A2",
+              "$754A4"
+            ],
+            "sha256": "ab257c49c86dfd9404ee6a01de780fb2607c0c8d8952c0d71bd3aef7ae7d8269"
+          }
+        },
+        {
+          "address": "$754A4",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$754A4",
+              "$754B3"
+            ],
+            "sha256": "3d348abcb70f2c5bd3c8737c38cf46b3582910ba0858581c7d11965a4117903a"
+          },
+          "text": {
+            "address": "$754A5",
+            "centrePad": 11,
+            "length": 27,
+            "parts": [
+              {
+                "expansion": "NEWSFLASH - ",
+                "token": "^4"
+              },
+              {
+                "text": "CHILD KIDNAPPED"
+              }
+            ],
+            "raw": "^4CHILD KIDNAPPED",
+            "source": {
+              "range": [
+                "$754A5",
+                "$754B3"
+              ],
+              "sha256": "acef9a286e42037d48739bc932ea8281374e694692a1a4fd82006f583a62150f"
+            },
+            "text": "NEWSFLASH - CHILD KIDNAPPED"
+          }
+        },
+        {
+          "address": "$754B3",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$754B3",
+              "$754BF"
+            ],
+            "sha256": "0c89b8476c5a1618114ca4f02567ee2ca5c3dd66896c0e31a4169cd0b808f52d"
+          },
+          "text": {
+            "address": "$754B4",
+            "parts": [
+              {
+                "text": "BIL ACCUSES "
+              },
+              {
+                "live": "player name $759A, 10 characters, leading/trailing spaces trimmed ($529CC)",
+                "token": "]"
+              }
+            ],
+            "raw": "BIL ACCUSES ]",
+            "source": {
+              "range": [
+                "$754B4",
+                "$754BF"
+              ],
+              "sha256": "4c6fdbc058161fae279c18e0b99e9517645a96edec0e05da48abee47ebc8ba0e"
+            },
+            "text": "BIL ACCUSES ]"
+          }
+        },
+        {
+          "address": "$754BF",
+          "byte": "$16",
+          "name": "adjust_6EAA",
+          "op": "$16",
+          "operands": [
+            "$85"
+          ],
+          "source": {
+            "range": [
+              "$754BF",
+              "$754C1"
+            ],
+            "sha256": "1d707427e164d319868946fb3244df66ffd907cd4c2b35883e534a299a5df4fb"
+          }
+        },
+        {
+          "address": "$754C1",
+          "byte": "$26",
+          "name": "timed_script",
+          "op": "$26",
+          "operands": [
+            "$0BB8",
+            "$5785"
+          ],
+          "source": {
+            "range": [
+              "$754C1",
+              "$754C6"
+            ],
+            "sha256": "3008e862f95e8ef3b3fb1125c4111b5f62f3e078a1632d48a1c1618f4c29a453"
+          }
+        },
+        {
+          "address": "$754C6",
+          "byte": "$03",
+          "name": "jump",
+          "op": "$03",
+          "operands": [
+            {
+              "address": "$766BF",
+              "offset": "$697B"
+            }
+          ],
+          "source": {
+            "range": [
+              "$754C6",
+              "$754C9"
+            ],
+            "sha256": "05c4a4264d3db74e066c1f10f5c4a02638361d748edcb810d938fd6823ef7606"
+          }
+        },
+        {
+          "address": "$754C9",
+          "byte": "$14",
+          "messageId": 7,
+          "name": "id_message",
+          "op": "$14",
+          "operands": [
+            "$07"
+          ],
+          "source": {
+            "range": [
+              "$754C9",
+              "$754CB"
+            ],
+            "sha256": "f028317dba283095d41cf2111a171d02946ee64d4d0da4521ce348c2f38176f2"
+          }
+        },
+        {
+          "address": "$754CB",
+          "byte": "$03",
+          "name": "jump",
+          "op": "$03",
+          "operands": [
+            {
+              "address": "$766BF",
+              "offset": "$697B"
+            }
+          ],
+          "source": {
+            "range": [
+              "$754CB",
+              "$754CE"
+            ],
+            "sha256": "05c4a4264d3db74e066c1f10f5c4a02638361d748edcb810d938fd6823ef7606"
+          }
+        },
+        {
+          "address": "$75C01",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$75C01",
+              "$75C1D"
+            ],
+            "sha256": "a916355271c2581093a4441e2184f0272ed2cb6e342d2ee456d499e19c3b216a"
+          },
+          "text": {
+            "address": "$75C02",
+            "centrePad": 4,
+            "length": 41,
+            "parts": [
+              {
+                "text": "DAVID SUTCH - M R L P - ELECTED "
+              },
+              {
+                "expansion": "PRESIDENT",
+                "token": "^8"
+              }
+            ],
+            "raw": "DAVID SUTCH - M R L P - ELECTED ^8",
+            "source": {
+              "range": [
+                "$75C02",
+                "$75C1D"
+              ],
+              "sha256": "4339e5cb299eb5a28b932cbbf8cd3f2e23ee6cbe166207335ad5f73afab39f90"
+            },
+            "text": "DAVID SUTCH - M R L P - ELECTED PRESIDENT"
+          }
+        },
+        {
+          "address": "$75C1D",
+          "byte": "$03",
+          "name": "jump",
+          "op": "$03",
+          "operands": [
+            {
+              "address": "$766BF",
+              "offset": "$697B"
+            }
+          ],
+          "source": {
+            "range": [
+              "$75C1D",
+              "$75C20"
+            ],
+            "sha256": "05c4a4264d3db74e066c1f10f5c4a02638361d748edcb810d938fd6823ef7606"
+          }
+        },
+        {
+          "address": "$75C53",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$75C53",
+              "$75C71"
+            ],
+            "sha256": "1bc42d8ac32d93002cd8278170dbd5e23efd4aada294a23c2c408dadfb804c01"
+          },
+          "text": {
+            "address": "$75C54",
+            "centrePad": 2,
+            "length": 44,
+            "parts": [
+              {
+                "text": "MESSAGE RECEIVED FROM EX "
+              },
+              {
+                "expansion": "PRESIDENT",
+                "token": "^8"
+              },
+              {
+                "text": " MARGARET:"
+              }
+            ],
+            "raw": "MESSAGE RECEIVED FROM EX ^8 MARGARET:",
+            "source": {
+              "range": [
+                "$75C54",
+                "$75C71"
+              ],
+              "sha256": "2ea9dcffb8e529d3ac1a5820df50bce7178b66390850b53fa38168572a1f5db7"
+            },
+            "text": "MESSAGE RECEIVED FROM EX PRESIDENT MARGARET:"
+          }
+        },
+        {
+          "address": "$75C71",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$76710",
+              "offset": "$69CC"
+            }
+          ],
+          "source": {
+            "range": [
+              "$75C71",
+              "$75C74"
+            ],
+            "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+          }
+        },
+        {
+          "address": "$75C74",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$75C74",
+              "$75C8B"
+            ],
+            "sha256": "f46ef400e57a90e41914bf1dbc5aac82bfa03ec2dfc8f5c8e4ad40b299e897d7"
+          },
+          "text": {
+            "address": "$75C75",
+            "centrePad": 7,
+            "length": 35,
+            "parts": [
+              {
+                "text": "MY DEAR "
+              },
+              {
+                "expansion": "MERCENARY",
+                "token": "^6"
+              },
+              {
+                "text": " - CONGRATULATIONS"
+              }
+            ],
+            "raw": "MY DEAR ^6 - CONGRATULATIONS",
+            "source": {
+              "range": [
+                "$75C75",
+                "$75C8B"
+              ],
+              "sha256": "4d4c8a837843d04417f94f2417cdf512c7a745163f8b700c1a1e71fcb35cdd61"
+            },
+            "text": "MY DEAR MERCENARY - CONGRATULATIONS"
+          }
+        },
+        {
+          "address": "$75C8B",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$75C8B",
+              "$75C9F"
+            ],
+            "sha256": "07fd58804987061affdd3fd25bb45c18a6edbd03eb8ac03b40d29c27e73563c2"
+          },
+          "text": {
+            "address": "$75C8C",
+            "centrePad": 12,
+            "length": 24,
+            "parts": [
+              {
+                "text": "WE KNEW YOU COULD DO IT!"
+              }
+            ],
+            "raw": "WE KNEW YOU COULD DO IT!",
+            "source": {
+              "range": [
+                "$75C8C",
+                "$75C9F"
+              ],
+              "sha256": "5db0624e0e96defbd1f03de28523ce75e16f41503a773ce55368e6e2f670a842"
+            },
+            "text": "WE KNEW YOU COULD DO IT!"
+          }
+        },
+        {
+          "address": "$75C9F",
+          "branch": {
+            "call": false,
+            "invert": true
+          },
+          "byte": "$92",
+          "name": "if_flag",
+          "op": "$12",
+          "operands": [
+            "$16"
+          ],
+          "source": {
+            "range": [
+              "$75C9F",
+              "$75CA3"
+            ],
+            "sha256": "f44ab75830e1d8aa09a88972ddb9c03bdd06c04bbc0daf29e97617af4107c43b"
+          },
+          "target": "$75CE2"
+        },
+        {
+          "address": "$75CA3",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$75CA3",
+              "$75CC5"
+            ],
+            "sha256": "51106348ddfd2bcda46f82cb58786fbcdb2c371eed1358611c2e130ec052f8d7"
+          },
+          "text": {
+            "address": "$75CA4",
+            "centrePad": 3,
+            "length": 43,
+            "parts": [
+              {
+                "text": "DO REMEMBER - WE SHALL BE KEENLY INTERESTED"
+              }
+            ],
+            "raw": "DO REMEMBER - WE SHALL BE KEENLY INTERESTED",
+            "source": {
+              "range": [
+                "$75CA4",
+                "$75CC5"
+              ],
+              "sha256": "b1799ae626c742c1cce922a22a284ef4883a6682cfe63b5f1c8b72483af14882"
+            },
+            "text": "DO REMEMBER - WE SHALL BE KEENLY INTERESTED"
+          }
+        },
+        {
+          "address": "$75CC5",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$75CC5",
+              "$75CDF"
+            ],
+            "sha256": "b589c960e493773e9ceca9d45022b90d2afb8bfe9ba0a273d0b5543bf4e3803b"
+          },
+          "text": {
+            "address": "$75CC6",
+            "centrePad": 8,
+            "length": 32,
+            "parts": [
+              {
+                "text": "IN EVERYTHING YOU DO FROM NOW ON"
+              }
+            ],
+            "raw": "IN EVERYTHING YOU DO FROM NOW ON",
+            "source": {
+              "range": [
+                "$75CC6",
+                "$75CDF"
+              ],
+              "sha256": "52781a418dddb8b556ddf3b0e05927c1647ec2b82c7335c588ff8203b0484b00"
+            },
+            "text": "IN EVERYTHING YOU DO FROM NOW ON"
+          }
+        },
+        {
+          "address": "$75CDF",
+          "byte": "$03",
+          "name": "jump",
+          "op": "$03",
+          "operands": [
+            {
+              "address": "$766BF",
+              "offset": "$697B"
+            }
+          ],
+          "source": {
+            "range": [
+              "$75CDF",
+              "$75CE2"
+            ],
+            "sha256": "05c4a4264d3db74e066c1f10f5c4a02638361d748edcb810d938fd6823ef7606"
+          }
+        },
+        {
+          "address": "$75CE2",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$76710",
+              "offset": "$69CC"
+            }
+          ],
+          "source": {
+            "range": [
+              "$75CE2",
+              "$75CE5"
+            ],
+            "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+          }
+        },
+        {
+          "address": "$75CE5",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$75CE5",
+              "$75D01"
+            ],
+            "sha256": "74ed9a32a2038b5badc3b8ccb853fec5404174379a3ff15fbb716d41cb500e48"
+          },
+          "text": {
+            "address": "$75CE6",
+            "centrePad": 3,
+            "length": 42,
+            "parts": [
+              {
+                "text": "NOW YOU HAVE TO FOIL"
+              },
+              {
+                "expansion": " THE",
+                "token": "\\"
+              },
+              {
+                "text": " PLANS OF "
+              },
+              {
+                "expansion": "P C BIL",
+                "token": "^5"
+              },
+              {
+                "text": ":"
+              }
+            ],
+            "raw": "NOW YOU HAVE TO FOIL\\ PLANS OF ^5:",
+            "source": {
+              "range": [
+                "$75CE6",
+                "$75D01"
+              ],
+              "sha256": "a210d21bff56441ef4b755f59f0e5477304ccdc91578fd4c73a3cada98cd9f77"
+            },
+            "text": "NOW YOU HAVE TO FOIL THE PLANS OF P C BIL:"
+          }
+        },
+        {
+          "address": "$75D01",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$766ED",
+              "offset": "$69A9"
+            }
+          ],
+          "source": {
+            "range": [
+              "$75D01",
+              "$75D04"
+            ],
+            "sha256": "5925a33a8712727f3530a2c2f7800c9c796c83eee16a5c25dd89b33ba35fd8ed"
+          }
+        },
+        {
+          "address": "$75D04",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$75D04",
+              "$75D22"
+            ],
+            "sha256": "6cffee69be0d2f44bbeb88fccc75e63b9134e7a003c89605fea6f2f75cff58db"
+          },
+          "text": {
+            "address": "$75D05",
+            "centrePad": 6,
+            "length": 37,
+            "parts": [
+              {
+                "text": "THAT AWFUL OUTSIDER - SUCH A BOUNDER!"
+              }
+            ],
+            "raw": "THAT AWFUL OUTSIDER - SUCH A BOUNDER!",
+            "source": {
+              "range": [
+                "$75D05",
+                "$75D22"
+              ],
+              "sha256": "6926187352427a62e3f72528f4180ed9628dbe023e963e36af16793dea0c0ac9"
+            },
+            "text": "THAT AWFUL OUTSIDER - SUCH A BOUNDER!"
+          }
+        },
+        {
+          "address": "$75D22",
+          "byte": "$03",
+          "name": "jump",
+          "op": "$03",
+          "operands": [
+            {
+              "address": "$75CA3",
+              "offset": "$5F5F"
+            }
+          ],
+          "source": {
+            "range": [
+              "$75D22",
+              "$75D25"
+            ],
+            "sha256": "99d6e7d2b1fb58abe8772c6e35268e26401b8b084cc75281ae95db892922fba4"
+          }
+        },
+        {
+          "address": "$75EE8",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$75EE8",
+              "$75F03"
+            ],
+            "sha256": "12332815371bd6bc5af1e777b4d536055ff355221a3bfce0ef54ffa77c6640e3"
+          },
+          "text": {
+            "address": "$75EE9",
+            "centrePad": 4,
+            "length": 40,
+            "parts": [
+              {
+                "expansion": "PRESIDENT",
+                "token": "^8"
+              },
+              {
+                "text": " BIL FLEES AS CREDITORS MOVE IN"
+              }
+            ],
+            "raw": "^8 BIL FLEES AS CREDITORS MOVE IN",
+            "source": {
+              "range": [
+                "$75EE9",
+                "$75F03"
+              ],
+              "sha256": "23f24675155e53b86c4db3226e383f32d8f9d27dbb36cab7ec6c9475252ffbd8"
+            },
+            "text": "PRESIDENT BIL FLEES AS CREDITORS MOVE IN"
+          }
+        },
+        {
+          "address": "$75F03",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$76710",
+              "offset": "$69CC"
+            }
+          ],
+          "source": {
+            "range": [
+              "$75F03",
+              "$75F06"
+            ],
+            "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+          }
+        },
+        {
+          "address": "$75F06",
+          "byte": "$28",
+          "name": "model_swap_b",
+          "op": "$28",
+          "source": {
+            "range": [
+              "$75F06",
+              "$75F07"
+            ],
+            "sha256": "32ebb1abcc1c601ceb9c4e3c4faba0caa5b85bb98c4f1e6612c40faa528a91c9"
+          }
+        },
+        {
+          "address": "$75F07",
+          "byte": "$03",
+          "name": "jump",
+          "op": "$03",
+          "operands": [
+            {
+              "address": "$75F32",
+              "offset": "$61EE"
+            }
+          ],
+          "source": {
+            "range": [
+              "$75F07",
+              "$75F0A"
+            ],
+            "sha256": "83b7bde2b60a9e3858c352dc6b1001d33854c0a71323982c957f508942c70862"
+          }
+        },
+        {
+          "address": "$75F0A",
+          "byte": "$24",
+          "name": "set_availability",
+          "op": "$24",
+          "operands": [
+            "$05",
+            "$00"
+          ],
+          "source": {
+            "range": [
+              "$75F0A",
+              "$75F0D"
+            ],
+            "sha256": "9398dcf986c2525f959289f43c2040af0d43eef726c6efc7f32a935dc3286390"
+          }
+        },
+        {
+          "address": "$75F0D",
+          "byte": "$24",
+          "name": "set_availability",
+          "op": "$24",
+          "operands": [
+            "$06",
+            "$00"
+          ],
+          "source": {
+            "range": [
+              "$75F0D",
+              "$75F10"
+            ],
+            "sha256": "25e7327bf99e66b254c420e8e21a7e244df4315c6768b5a691253dcc7df5c4bd"
+          }
+        },
+        {
+          "address": "$75F10",
+          "byte": "$10",
+          "name": "set_flag",
+          "op": "$10",
+          "operands": [
+            "$16"
+          ],
+          "source": {
+            "range": [
+              "$75F10",
+              "$75F12"
+            ],
+            "sha256": "f62e12b82c17828ae60d1f4560ec21b478eddf0b9e4bfa7b1b7b1d68a3ab6f55"
+          }
+        },
+        {
+          "address": "$75F12",
+          "branch": {
+            "call": false,
+            "invert": false
+          },
+          "byte": "$12",
+          "name": "if_flag",
+          "op": "$12",
+          "operands": [
+            "$17"
+          ],
+          "source": {
+            "range": [
+              "$75F12",
+              "$75F16"
+            ],
+            "sha256": "cf3fd11795a5928e30da8241b6fe8a62b67d71311eed2a4d019bfbf74be66b1e"
+          },
+          "target": "$75EE8"
+        },
+        {
+          "address": "$75F16",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$75F16",
+              "$75F2E"
+            ],
+            "sha256": "b4987cc31ec7b1a68de0285627dd08d2773de9dd4370faad4465648e8e589ed2"
+          },
+          "text": {
+            "address": "$75F17",
+            "centrePad": 7,
+            "length": 34,
+            "parts": [
+              {
+                "expansion": "P C BIL",
+                "token": "^5"
+              },
+              {
+                "text": " FLEES AS CREDITORS MOVE IN"
+              }
+            ],
+            "raw": "^5 FLEES AS CREDITORS MOVE IN",
+            "source": {
+              "range": [
+                "$75F17",
+                "$75F2E"
+              ],
+              "sha256": "0099c0736ed389d2e63f7d0626a612fb49732ceea2fe500882b5e7de712429ad"
+            },
+            "text": "P C BIL FLEES AS CREDITORS MOVE IN"
+          }
+        },
+        {
+          "address": "$75F2E",
+          "byte": "$28",
+          "name": "model_swap_b",
+          "op": "$28",
+          "source": {
+            "range": [
+              "$75F2E",
+              "$75F2F"
+            ],
+            "sha256": "32ebb1abcc1c601ceb9c4e3c4faba0caa5b85bb98c4f1e6612c40faa528a91c9"
+          }
+        },
+        {
+          "address": "$75F2F",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$76710",
+              "offset": "$69CC"
+            }
+          ],
+          "source": {
+            "range": [
+              "$75F2F",
+              "$75F32"
+            ],
+            "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+          }
+        },
+        {
+          "address": "$75F32",
+          "byte": "$24",
+          "name": "set_availability",
+          "op": "$24",
+          "operands": [
+            "$05",
+            "$00"
+          ],
+          "source": {
+            "range": [
+              "$75F32",
+              "$75F35"
+            ],
+            "sha256": "9398dcf986c2525f959289f43c2040af0d43eef726c6efc7f32a935dc3286390"
+          }
+        },
+        {
+          "address": "$75F35",
+          "byte": "$24",
+          "name": "set_availability",
+          "op": "$24",
+          "operands": [
+            "$06",
+            "$00"
+          ],
+          "source": {
+            "range": [
+              "$75F35",
+              "$75F38"
+            ],
+            "sha256": "25e7327bf99e66b254c420e8e21a7e244df4315c6768b5a691253dcc7df5c4bd"
+          }
+        },
+        {
+          "address": "$75F38",
+          "byte": "$11",
+          "name": "clear_flag",
+          "op": "$11",
+          "operands": [
+            "$0D"
+          ],
+          "source": {
+            "range": [
+              "$75F38",
+              "$75F3A"
+            ],
+            "sha256": "ab257c49c86dfd9404ee6a01de780fb2607c0c8d8952c0d71bd3aef7ae7d8269"
+          }
+        },
+        {
+          "address": "$75F3A",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$75F3A",
+              "$75F4B"
+            ],
+            "sha256": "e82f224bbca4434ce5992580949abbbf98b475e01aa670c355fe7a42ffd5bbc6"
+          },
+          "text": {
+            "address": "$75F3B",
+            "centrePad": 14,
+            "length": 20,
+            "parts": [
+              {
+                "text": "NEWSFLASH CONTINUES:"
+              }
+            ],
+            "raw": "NEWSFLASH CONTINUES:",
+            "source": {
+              "range": [
+                "$75F3B",
+                "$75F4B"
+              ],
+              "sha256": "b35dac7a760a74e1dd5386021c5dd0d87fb51236ed856d8eced17f6d3376de20"
+            },
+            "text": "NEWSFLASH CONTINUES:"
+          }
+        },
+        {
+          "address": "$75F4B",
+          "branch": {
+            "call": false,
+            "invert": false
+          },
+          "byte": "$12",
+          "name": "if_flag",
+          "op": "$12",
+          "operands": [
+            "$0A"
+          ],
+          "source": {
+            "range": [
+              "$75F4B",
+              "$75F4F"
+            ],
+            "sha256": "dbfb555b0deca0709bd38243cab6aecfcb3a76e537223b0bf97864f0b383a65f"
+          },
+          "target": "$75F84"
+        },
+        {
+          "address": "$75F4F",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$75F4F",
+              "$75F62"
+            ],
+            "sha256": "991e0d0dbc8aeac133c3853336418b372be8c750c4f5eb920feaf5d1f888caa1"
+          },
+          "text": {
+            "address": "$75F50",
+            "centrePad": 10,
+            "length": 29,
+            "parts": [
+              {
+                "expansion": "MERCENARY",
+                "token": "^6"
+              },
+              {
+                "text": " DECLARED STATE HERO"
+              }
+            ],
+            "raw": "^6 DECLARED STATE HERO",
+            "source": {
+              "range": [
+                "$75F50",
+                "$75F62"
+              ],
+              "sha256": "958a7a20bfdbc2cb75974397408cb490ed7973ad69b22874cf2b0dd7cc3d14e5"
+            },
+            "text": "MERCENARY DECLARED STATE HERO"
+          }
+        },
+        {
+          "address": "$75F62",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$766E6",
+              "offset": "$69A2"
+            }
+          ],
+          "source": {
+            "range": [
+              "$75F62",
+              "$75F65"
+            ],
+            "sha256": "b233caa051b1ef849703744a1177cf3fd41fb45c08e35588105943732db185d7"
+          }
+        },
+        {
+          "address": "$75F65",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$75F65",
+              "$75F7E"
+            ],
+            "sha256": "bad4588300cae6d35bd86e1b94fa482eec9ca8bc5cb4d55ed70ce82d19e127c0"
+          },
+          "text": {
+            "address": "$75F66",
+            "centrePad": 5,
+            "length": 38,
+            "parts": [
+              {
+                "expansion": "MERCENARY",
+                "token": "^6"
+              },
+              {
+                "text": " WINS FREEDOM OF GAMMA SYSTEM"
+              }
+            ],
+            "raw": "^6 WINS FREEDOM OF GAMMA SYSTEM",
+            "source": {
+              "range": [
+                "$75F66",
+                "$75F7E"
+              ],
+              "sha256": "f3ca7bdee8ec61272ddf4640b1b80d4d7c373bbd03b54ec8cd60e5480656ab57"
+            },
+            "text": "MERCENARY WINS FREEDOM OF GAMMA SYSTEM"
+          }
+        },
+        {
+          "address": "$75F7E",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$766ED",
+              "offset": "$69A9"
+            }
+          ],
+          "source": {
+            "range": [
+              "$75F7E",
+              "$75F81"
+            ],
+            "sha256": "5925a33a8712727f3530a2c2f7800c9c796c83eee16a5c25dd89b33ba35fd8ed"
+          }
+        },
+        {
+          "address": "$75F81",
+          "byte": "$03",
+          "name": "jump",
+          "op": "$03",
+          "operands": [
+            {
+              "address": "$766BF",
+              "offset": "$697B"
+            }
+          ],
+          "source": {
+            "range": [
+              "$75F81",
+              "$75F84"
+            ],
+            "sha256": "05c4a4264d3db74e066c1f10f5c4a02638361d748edcb810d938fd6823ef7606"
+          }
+        },
+        {
+          "address": "$75F84",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$75F84",
+              "$75F9A"
+            ],
+            "sha256": "cd94ab4df0b858404eaeead06b8554f093d1d7c8d18db022a5478f40eb1fe6cb"
+          },
+          "text": {
+            "address": "$75F85",
+            "parts": [
+              {
+                "live": "player name $759A, 10 characters, leading/trailing spaces trimmed ($529CC)",
+                "token": "]"
+              },
+              {
+                "text": " WINS "
+              },
+              {
+                "expansion": "ELECTION",
+                "token": "^9"
+              },
+              {
+                "text": " ON BIL'S DEFAULT"
+              }
+            ],
+            "raw": "] WINS ^9 ON BIL'S DEFAULT",
+            "source": {
+              "range": [
+                "$75F85",
+                "$75F9A"
+              ],
+              "sha256": "df9a5a8e750dc32070e834afb9799879b38ac36d380c7f3e55b69e3d7210adc5"
+            },
+            "text": "] WINS ELECTION ON BIL'S DEFAULT"
+          }
+        },
+        {
+          "address": "$75F9A",
+          "byte": "$11",
+          "name": "clear_flag",
+          "op": "$11",
+          "operands": [
+            "$0A"
+          ],
+          "source": {
+            "range": [
+              "$75F9A",
+              "$75F9C"
+            ],
+            "sha256": "3e60aa79a49adc360cb6fd1b43cdeb4991832ab4216b3f2745dccbffa950fd17"
+          }
+        },
+        {
+          "address": "$75F9C",
+          "byte": "$10",
+          "name": "set_flag",
+          "op": "$10",
+          "operands": [
+            "$09"
+          ],
+          "source": {
+            "range": [
+              "$75F9C",
+              "$75F9E"
+            ],
+            "sha256": "7d773ae93d86b415303e01dd4c5dca00febc5c74a6e497237405668df89f7c5b"
+          }
+        },
+        {
+          "address": "$75F9E",
+          "byte": "$03",
+          "name": "jump",
+          "op": "$03",
+          "operands": [
+            {
+              "address": "$75C53",
+              "offset": "$5F0F"
+            }
+          ],
+          "source": {
+            "range": [
+              "$75F9E",
+              "$75FA1"
+            ],
+            "sha256": "62e17da801277aaff78abf19b4f8dfd8865add91c9bb71d198924322c26f4a47"
+          }
+        },
+        {
+          "address": "$76243",
+          "byte": "$11",
+          "name": "clear_flag",
+          "op": "$11",
+          "operands": [
+            "$0D"
+          ],
+          "source": {
+            "range": [
+              "$76243",
+              "$76245"
+            ],
+            "sha256": "ab257c49c86dfd9404ee6a01de780fb2607c0c8d8952c0d71bd3aef7ae7d8269"
+          }
+        },
+        {
+          "address": "$76245",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$76245",
+              "$76257"
+            ],
+            "sha256": "584b0a822b1d2df5e8b477b329b741c11f89912262bc3d80d83e4da39f465c8f"
+          },
+          "text": {
+            "address": "$76246",
+            "centrePad": 9,
+            "length": 31,
+            "parts": [
+              {
+                "expansion": "NEWSFLASH - ",
+                "token": "^4"
+              },
+              {
+                "text": "MASSIVE PULVIN FIND"
+              }
+            ],
+            "raw": "^4MASSIVE PULVIN FIND",
+            "source": {
+              "range": [
+                "$76246",
+                "$76257"
+              ],
+              "sha256": "d1863fc7ebd591444c2ef8fd8433a402eb676a55ec2fb19e3d6ff2e3eb6cdae4"
+            },
+            "text": "NEWSFLASH - MASSIVE PULVIN FIND"
+          }
+        },
+        {
+          "address": "$76257",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$76257",
+              "$7626A"
+            ],
+            "sha256": "f4ca46649640a6095f7140161aa96843116d8c20efe6ebadfe23ea5ed91cdd1e"
+          },
+          "text": {
+            "address": "$76258",
+            "centrePad": 9,
+            "length": 30,
+            "parts": [
+              {
+                "expansion": "MERCENARY",
+                "token": "^6"
+              },
+              {
+                "text": " PROSPECTING PAYS OFF"
+              }
+            ],
+            "raw": "^6 PROSPECTING PAYS OFF",
+            "source": {
+              "range": [
+                "$76258",
+                "$7626A"
+              ],
+              "sha256": "42dc93b71e4803b9a4a7c0350634731069ef873f1f682d32c165f47b7b32e760"
+            },
+            "text": "MERCENARY PROSPECTING PAYS OFF"
+          }
+        },
+        {
+          "address": "$7626A",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$76710",
+              "offset": "$69CC"
+            }
+          ],
+          "source": {
+            "range": [
+              "$7626A",
+              "$7626D"
+            ],
+            "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+          }
+        },
+        {
+          "address": "$7626D",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$7626D",
+              "$7628F"
+            ],
+            "sha256": "f68aaede24669f81699e7dae52af5d9782be44eae23c643de5bd28094cf0f68f"
+          },
+          "text": {
+            "address": "$7626E",
+            "centrePad": 3,
+            "length": 43,
+            "parts": [
+              {
+                "text": "PULVIN-RICH ORE DISCOVERY PULVERISES MARKET"
+              }
+            ],
+            "raw": "PULVIN-RICH ORE DISCOVERY PULVERISES MARKET",
+            "source": {
+              "range": [
+                "$7626E",
+                "$7628F"
+              ],
+              "sha256": "3e0d6aed1fd14101e57da7b0e49f1a4ac14306321762503d1b8b2a6f4bd1f6b3"
+            },
+            "text": "PULVIN-RICH ORE DISCOVERY PULVERISES MARKET"
+          }
+        },
+        {
+          "address": "$7628F",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$76710",
+              "offset": "$69CC"
+            }
+          ],
+          "source": {
+            "range": [
+              "$7628F",
+              "$76292"
+            ],
+            "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+          }
+        },
+        {
+          "address": "$76292",
+          "byte": "$25",
+          "name": "packed_text",
+          "op": "$25",
+          "source": {
+            "range": [
+              "$76292",
+              "$762B7"
+            ],
+            "sha256": "49788eb70c68872d614f07f2ad601224bb17d2d1c40fd711ff8c0369680ffc3e"
+          },
+          "text": {
+            "address": "$76293",
+            "centrePad": 1,
+            "length": 47,
+            "parts": [
+              {
+                "text": "BIL'S DION NORTH PLANS NOW TOTALLY UNECONOMICAL"
+              }
+            ],
+            "raw": "BIL'S DION NORTH PLANS NOW TOTALLY UNECONOMICAL",
+            "source": {
+              "range": [
+                "$76293",
+                "$762B7"
+              ],
+              "sha256": "39111bad69d3fa1f0ff5f61a1bbaeadc4d8235ac93a5f277766a865c0cb94dea"
+            },
+            "text": "BIL'S DION NORTH PLANS NOW TOTALLY UNECONOMICAL"
+          }
+        },
+        {
+          "address": "$762B7",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$766ED",
+              "offset": "$69A9"
+            }
+          ],
+          "source": {
+            "range": [
+              "$762B7",
+              "$762BA"
+            ],
+            "sha256": "5925a33a8712727f3530a2c2f7800c9c796c83eee16a5c25dd89b33ba35fd8ed"
+          }
+        },
+        {
+          "address": "$762BA",
+          "byte": "$04",
+          "name": "call",
+          "op": "$04",
+          "operands": [
+            {
+              "address": "$76710",
+              "offset": "$69CC"
+            }
+          ],
+          "source": {
+            "range": [
+              "$762BA",
+              "$762BD"
+            ],
+            "sha256": "2a8afc7eaeaf3df8d83092c830a43f2098f133092681e14e4da6f0536d1122dd"
+          }
+        },
+        {
+          "address": "$762BD",
+          "byte": "$10",
+          "name": "set_flag",
+          "op": "$10",
+          "operands": [
+            "$15"
+          ],
+          "source": {
+            "range": [
+              "$762BD",
+              "$762BF"
+            ],
+            "sha256": "1b9182302d3fd5a06d908f10cc62003deec8196f124c2850ddf9f6583117e671"
+          }
+        },
+        {
+          "address": "$762BF",
+          "byte": "$03",
+          "name": "jump",
+          "op": "$03",
+          "operands": [
+            {
+              "address": "$75F0A",
+              "offset": "$61C6"
+            }
+          ],
+          "source": {
+            "range": [
+              "$762BF",
+              "$762C2"
+            ],
+            "sha256": "bdcce0e9932649a09dc47d17be37d5774031260dc35e904cfc2c21f2946a2051"
+          }
+        },
+        {
+          "address": "$766BF",
+          "byte": "$11",
+          "name": "clear_flag",
+          "op": "$11",
+          "operands": [
+            "$0D"
+          ],
+          "source": {
+            "range": [
+              "$766BF",
+              "$766C1"
+            ],
+            "sha256": "ab257c49c86dfd9404ee6a01de780fb2607c0c8d8952c0d71bd3aef7ae7d8269"
+          }
+        },
+        {
+          "address": "$766C1",
+          "byte": "$19",
+          "name": "store2",
+          "note": "message hold = 50 VBL",
+          "op": "$19",
+          "operands": [
+            {
+              "address": "$6FF46",
+              "offset": "$0202"
+            },
+            "$00",
+            "$32"
+          ],
+          "source": {
+            "range": [
+              "$766C1",
+              "$766C6"
+            ],
+            "sha256": "dc8fca63a3973093d40be941af63e88dfecb58d6f774d3548b983538ef79a0a7"
+          },
+          "value": "$0032"
+        },
+        {
+          "address": "$766C6",
+          "byte": "$14",
+          "messageId": 50,
+          "name": "id_message",
+          "op": "$14",
+          "operands": [
+            "$32"
+          ],
+          "source": {
+            "range": [
+              "$766C6",
+              "$766C8"
+            ],
+            "sha256": "7490c982f61926caa55de198d1fcd146a036c86c32e346538a221369b639251c"
+          }
+        },
+        {
+          "address": "$766C8",
+          "byte": "$19",
+          "name": "store2",
+          "note": "message hold = 200 VBL",
+          "op": "$19",
+          "operands": [
+            {
+              "address": "$6FF46",
+              "offset": "$0202"
+            },
+            "$00",
+            "$C8"
+          ],
+          "source": {
+            "range": [
+              "$766C8",
+              "$766CD"
+            ],
+            "sha256": "626acc405a5a78048d9a838e8325f30390de30f3f5dc0f5aea3f87af57a1d135"
+          },
+          "value": "$00C8"
+        },
+        {
+          "address": "$766CD",
+          "byte": "$10",
+          "name": "set_flag",
+          "op": "$10",
+          "operands": [
+            "$0D"
+          ],
+          "source": {
+            "range": [
+              "$766CD",
+              "$766CF"
+            ],
+            "sha256": "a8bbf6f4735ec9f7f78372dff599cf5d7ff1d7e6d9965b34230a9798ae4dc9a1"
+          }
+        },
+        {
+          "address": "$766CF",
+          "byte": "$11",
+          "name": "clear_flag",
+          "op": "$11",
+          "operands": [
+            "$06"
+          ],
+          "source": {
+            "range": [
+              "$766CF",
+              "$766D1"
+            ],
+            "sha256": "83cc0c779806c41457a9e8768bb6fb774e4beb6d1042bb1471aae8f0e3b3ca9a"
+          }
+        },
+        {
+          "address": "$766D1",
+          "byte": "$05",
+          "name": "return",
+          "op": "$05",
+          "source": {
+            "range": [
+              "$766D1",
+              "$766D2"
+            ],
+            "sha256": "e77b9a9ae9e30b0dbdb6f510a264ef9de781501d7b6b92ae89eb059c5ab743db"
+          }
+        },
+        {
+          "address": "$766E6",
+          "byte": "$02",
+          "name": "reset_wait",
+          "op": "$02",
+          "source": {
+            "range": [
+              "$766E6",
+              "$766E7"
+            ],
+            "sha256": "dbc1b4c900ffe48d575b5da5c638040125f65db0fe3e24494b76ea986457d986"
+          }
+        },
+        {
+          "address": "$766E7",
+          "branch": {
+            "call": false,
+            "invert": false
+          },
+          "byte": "$07",
+          "name": "if_wait_below",
+          "note": "wait until counter >= 100 VBL",
+          "op": "$07",
+          "operands": [
+            "$0064"
+          ],
+          "source": {
+            "range": [
+              "$766E7",
+              "$766EC"
+            ],
+            "sha256": "5470fbe3bd884b235240b68e292715def5bd68376116027fc2c35d634b79f725"
+          },
+          "target": "$766E7"
+        },
+        {
+          "address": "$766EC",
+          "byte": "$05",
+          "name": "return",
+          "op": "$05",
+          "source": {
+            "range": [
+              "$766EC",
+              "$766ED"
+            ],
+            "sha256": "e77b9a9ae9e30b0dbdb6f510a264ef9de781501d7b6b92ae89eb059c5ab743db"
+          }
+        },
+        {
+          "address": "$766ED",
+          "byte": "$02",
+          "name": "reset_wait",
+          "op": "$02",
+          "source": {
+            "range": [
+              "$766ED",
+              "$766EE"
+            ],
+            "sha256": "dbc1b4c900ffe48d575b5da5c638040125f65db0fe3e24494b76ea986457d986"
+          }
+        },
+        {
+          "address": "$766EE",
+          "branch": {
+            "call": false,
+            "invert": false
+          },
+          "byte": "$07",
+          "name": "if_wait_below",
+          "note": "wait until counter >= 150 VBL",
+          "op": "$07",
+          "operands": [
+            "$0096"
+          ],
+          "source": {
+            "range": [
+              "$766EE",
+              "$766F3"
+            ],
+            "sha256": "1e33aa24d8bf7d53af7a7f021cee36be784bc7e36d1b8af615868718abca3e35"
+          },
+          "target": "$766EE"
+        },
+        {
+          "address": "$766F3",
+          "byte": "$05",
+          "name": "return",
+          "op": "$05",
+          "source": {
+            "range": [
+              "$766F3",
+              "$766F4"
+            ],
+            "sha256": "e77b9a9ae9e30b0dbdb6f510a264ef9de781501d7b6b92ae89eb059c5ab743db"
+          }
+        },
+        {
+          "address": "$76702",
+          "byte": "$02",
+          "name": "reset_wait",
+          "op": "$02",
+          "source": {
+            "range": [
+              "$76702",
+              "$76703"
+            ],
+            "sha256": "dbc1b4c900ffe48d575b5da5c638040125f65db0fe3e24494b76ea986457d986"
+          }
+        },
+        {
+          "address": "$76703",
+          "branch": {
+            "call": false,
+            "invert": false
+          },
+          "byte": "$07",
+          "name": "if_wait_below",
+          "note": "wait until counter >= 500 VBL",
+          "op": "$07",
+          "operands": [
+            "$01F4"
+          ],
+          "source": {
+            "range": [
+              "$76703",
+              "$76708"
+            ],
+            "sha256": "d0d17791674f8e36a4fa2423e6fa114ad55daead64813a764d2827a6a5de6468"
+          },
+          "target": "$76703"
+        },
+        {
+          "address": "$76708",
+          "byte": "$05",
+          "name": "return",
+          "op": "$05",
+          "source": {
+            "range": [
+              "$76708",
+              "$76709"
+            ],
+            "sha256": "e77b9a9ae9e30b0dbdb6f510a264ef9de781501d7b6b92ae89eb059c5ab743db"
+          }
+        },
+        {
+          "address": "$76710",
+          "byte": "$11",
+          "name": "clear_flag",
+          "op": "$11",
+          "operands": [
+            "$0D"
+          ],
+          "source": {
+            "range": [
+              "$76710",
+              "$76712"
+            ],
+            "sha256": "ab257c49c86dfd9404ee6a01de780fb2607c0c8d8952c0d71bd3aef7ae7d8269"
+          }
+        },
+        {
+          "address": "$76712",
+          "byte": "$19",
+          "name": "store2",
+          "note": "message hold = 50 VBL",
+          "op": "$19",
+          "operands": [
+            {
+              "address": "$6FF46",
+              "offset": "$0202"
+            },
+            "$00",
+            "$32"
+          ],
+          "source": {
+            "range": [
+              "$76712",
+              "$76717"
+            ],
+            "sha256": "dc8fca63a3973093d40be941af63e88dfecb58d6f774d3548b983538ef79a0a7"
+          },
+          "value": "$0032"
+        },
+        {
+          "address": "$76717",
+          "byte": "$14",
+          "messageId": 50,
+          "name": "id_message",
+          "op": "$14",
+          "operands": [
+            "$32"
+          ],
+          "source": {
+            "range": [
+              "$76717",
+              "$76719"
+            ],
+            "sha256": "7490c982f61926caa55de198d1fcd146a036c86c32e346538a221369b639251c"
+          }
+        },
+        {
+          "address": "$76719",
+          "byte": "$19",
+          "name": "store2",
+          "note": "message hold = 200 VBL",
+          "op": "$19",
+          "operands": [
+            {
+              "address": "$6FF46",
+              "offset": "$0202"
+            },
+            "$00",
+            "$C8"
+          ],
+          "source": {
+            "range": [
+              "$76719",
+              "$7671E"
+            ],
+            "sha256": "626acc405a5a78048d9a838e8325f30390de30f3f5dc0f5aea3f87af57a1d135"
+          },
+          "value": "$00C8"
+        },
+        {
+          "address": "$7671E",
+          "byte": "$10",
+          "name": "set_flag",
+          "op": "$10",
+          "operands": [
+            "$0D"
+          ],
+          "source": {
+            "range": [
+              "$7671E",
+              "$76720"
+            ],
+            "sha256": "a8bbf6f4735ec9f7f78372dff599cf5d7ff1d7e6d9965b34230a9798ae4dc9a1"
+          }
+        },
+        {
+          "address": "$76720",
+          "byte": "$05",
+          "name": "return",
+          "op": "$05",
+          "source": {
+            "range": [
+              "$76720",
+              "$76721"
+            ],
+            "sha256": "e77b9a9ae9e30b0dbdb6f510a264ef9de781501d7b6b92ae89eb059c5ab743db"
+          }
+        }
+      ],
       "unknownOpcodes": []
     }
   ],

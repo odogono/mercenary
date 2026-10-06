@@ -383,3 +383,18 @@ test('KEYs and TRANSPORTERs show their own letter or digit', () => {
   expect(carriedLabel(world, 38)).toBe('   DOOR KEY I   ');
   expect(carriedLabel(world, 64)).toBe(' TRANSPORTER 0  ');
 });
+
+for (const [slot, script] of [
+  [216, 0x1c],
+  [218, 0x73],
+  [127, 0x18]
+] as const) {
+  test(`Take slot ${slot} requests pickup script $${script.toString(16)}`, () => {
+    const outcome = take(carry([]), [resident(slot, 4)], world, near(slot), 60);
+    expect(outcome).toMatchObject({ kind: 'done', script });
+    expect(outcome).not.toHaveProperty('unported');
+    expect(
+      take(carry([]), [resident(slot, 4)], world, near(slot, 9), 60)
+    ).toEqual({ kind: 'refused' });
+  });
+}

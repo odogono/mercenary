@@ -152,6 +152,7 @@ export const readTourcraftResume = (
       'timed',
       'wait',
       'availabilityBytes',
+      'poll',
       'timerBits',
       'timedTarget'
     ],
@@ -203,7 +204,7 @@ export const readTourcraftResume = (
     }
   }
   const availability = list(n['availabilityBytes'], 'availability');
-  const ids = [5, 6, 19, 25, 41, 51, 52, 119];
+  const ids = [5, 6, 19, 24, 25, 28, 41, 51, 52, 115, 119];
   if (availability.length !== ids.length) {
     throw new Error('Incomplete availability table');
   }
@@ -234,7 +235,7 @@ export const readTourcraftResume = (
   ) {
     throw new Error('Availability views disagree');
   }
-  if (base.snapshot.narrative.flags[10] || base.snapshot.narrative.flags[22]) {
+  if (base.snapshot.narrative.flags[10]) {
     throw new Error('Excluded campaign flags');
   }
   for (const id of [base.snapshot.narrative.queued]) {
@@ -268,16 +269,28 @@ export const readTourcraftResume = (
       : unsigned(n['timedTarget'], 'timedTarget');
   if (
     timedTarget !== null &&
-    ![0x7_5a_16, 0x7_5b_24, 0x7_5b_5c].includes(timedTarget)
+    ![
+      0x7_5a_16, 0x7_5b_24, 0x7_5b_5c, 0x7_54_9e, 0x7_54_c9, 0x7_46_ab,
+      0x7_46_d5, 0x7_47_01
+    ].includes(timedTarget)
   ) {
     throw new Error('Unknown timed continuation');
   }
   if (n['timed'] !== null) {
     throw new Error('Prototype timer is excluded');
   }
+  const poll = list(n['poll'], 'poll').map(v => unsigned(v, 'poll byte', 255));
+  if (
+    poll.length !== 2 ||
+    poll.some(v => (v & 15) > 9 || v >> 4 > 9) ||
+    poll.reduce((sum, v) => sum + (v >> 4) * 10 + (v & 15), 0) !== 100
+  ) {
+    throw new Error('Invalid poll BCD owners');
+  }
   const narrative: TourcraftScriptState = {
     ...base.snapshot.narrative,
     availabilityBytes: bytes,
+    poll: poll as [number, number],
     timedTarget,
     timerBits: unsigned(n['timerBits'], 'timerBits', 65_535)
   };
@@ -683,8 +696,12 @@ export const readTourcraftResume = (
     throw new Error('Wrong inventory gauge');
   }
   residents.forEach((r, i) => {
-    shape(r, seedResidents[i], 'resident');
     const a = record(r, 'resident');
+    shape(
+      { ...a, model: seedResidents[i]!.model },
+      seedResidents[i],
+      'resident'
+    );
     for (const name of [
       'association',
       'body',
@@ -700,7 +717,12 @@ export const readTourcraftResume = (
     }
     if (
       a['slot'] !== seedResidents[i]!.slot ||
-      a['model'] !== seedResidents[i]!.model
+      (a['model'] !== seedResidents[i]!.model &&
+        !(
+          narrative.flags[22] &&
+          ((a['slot'] === 97 && a['model'] === 316) ||
+            (a['slot'] === 218 && a['model'] === null))
+        ))
     ) {
       throw new Error('Wrong resident binding');
     }

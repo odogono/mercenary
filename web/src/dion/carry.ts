@@ -12,9 +12,8 @@ import type { DionResident } from './world.ts';
 /// `interaction/carriedStack.ts`; this file owns Mercenary III's resident records, Residence and
 /// effects.
 ///
-/// Effects the port has not reached are reported as `unported` rather than run: the pickup
-/// responses (`$555D4`), the pawn at structure `$52` region 9 (`$557D6`) and the slot-213 flag
-/// (`$5591E`).
+/// Effects the port has not reached are reported as `unported` rather than run: the pawn
+/// at structure `$52` region 9 (`$557D6`) and the slot-213 flag (`$5591E`).
 
 export type CarriedResident = DionResident & { readonly bodyOffset: number };
 
@@ -70,6 +69,7 @@ export type CarryOutcome =
       readonly kind: 'done';
       readonly message?: number;
       readonly residents: readonly CarriedResident[];
+      readonly script?: number;
       readonly unported?: string;
     };
 
@@ -218,11 +218,7 @@ export const take = (
     },
     kind: 'done',
     residents: staged(taken, stack),
-    ...(response === undefined
-      ? {}
-      : {
-          unported: `pickup response $${response.toString(16).toUpperCase()}`
-        })
+    ...(response === undefined ? {} : { script: response })
   };
 };
 

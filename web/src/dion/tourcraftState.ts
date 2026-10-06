@@ -237,7 +237,10 @@ export const initialTourcraftResidents = (
     }));
 
 /// The labels, and the support heights `$55848` reads, of every object the payload binds.
-export const tourcraftCarryWorld = (content: TourcraftContent): CarryWorld => {
+export const tourcraftCarryWorld = (
+  content: TourcraftContent,
+  model: (slot: number) => number | null = slot => slot
+): CarryWorld => {
   const labels = new Map(
     Object.entries(
       record(content.gameplay.initial['labels'], 'initial.labels')
@@ -266,7 +269,32 @@ export const tourcraftCarryWorld = (content: TourcraftContent): CarryWorld => {
         : Math.max(...vertices.map(v => ints(v, `${id}.vertex`, 3)[1]!))
     );
   }
-  return { labels, supportTop: slot => tops.get(slot) };
+  return {
+    get labels() {
+      const live = new Map(labels);
+      for (const [slot, label] of labels) {
+        const entry = model(slot);
+        if (entry === slot) {
+          continue;
+        }
+        const name =
+          entry === null
+            ? 'NULL'
+            : content.geometry.get(content.gameplay.modelBindings.get(entry)!)
+                ?.name;
+        if (name !== undefined) {
+          live.set(
+            slot,
+            name.padStart(Math.floor((16 + name.length) / 2)).padEnd(16)
+          );
+        } else {
+          live.set(slot, label);
+        }
+      }
+      return live;
+    },
+    supportTop: slot => tops.get(model(slot) ?? 0)
+  };
 };
 
 export const initialTourcraftCarry = (

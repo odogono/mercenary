@@ -57,6 +57,7 @@ const TOS = '154803e3ff4851f3dc358b91b16d6b6110d187a81d8132ecb665af49878939d5';
 export interface PromotedGeometry {
   readonly family: string;
   readonly id: string;
+  readonly name?: string;
   readonly provenance?: readonly unknown[];
   readonly record: string;
   readonly variants: Readonly<Record<string, Row>>;
@@ -568,7 +569,7 @@ export const loadTourcraftContent = async (
   header(promotionRaw, PROMOTION, 'dion-play-promotion');
   same(promotionRaw['sources'], sourcePins, `${PROMOTION}.sources`);
   const selected = rows(promotionRaw['geometry'], `${PROMOTION}.geometry`);
-  same(selected.length, 87, `${PROMOTION}.geometry.length`);
+  same(selected.length, 88, `${PROMOTION}.geometry.length`);
   unique(selected, 'id', `${PROMOTION}.geometry`);
   const geometry = new Map<string, PromotedGeometry>();
   for (const s of [
@@ -696,7 +697,7 @@ export const loadTourcraftContent = async (
     }
     geometry.set(id, g as unknown as PromotedGeometry);
   }
-  same(geometry.size, 88, `${PROMOTION}.geometry.closure`);
+  same(geometry.size, 89, `${PROMOTION}.geometry.closure`);
   const expectedPaths = [
     ...DION_DOCUMENTS.map(kind => `${TOURCRAFT_ROOT}/${kind}.json`),
     PROMOTION,
@@ -804,7 +805,7 @@ export const loadTourcraftContent = async (
     modelBindings.set(key, g.id);
   }
   const models = new Map<number, DionModel>();
-  const expectedEntries = new Set([13, 279, 280, 320]);
+  const expectedEntries = new Set([13, 279, 280, 316, 320]);
   const colours = ints(
     record(support['modelColours'], 'support.modelColours')['words'],
     'support.modelColours.words',
@@ -835,7 +836,8 @@ export const loadTourcraftContent = async (
     [13, 'model-03005c'],
     [279, 'model-0381de'],
     [280, 'model-038282'],
-    [320, 'model-03108a']
+    [320, 'model-03108a'],
+    [316, 'model-032822']
   ] as const) {
     same(modelBindings.get(e), id, `gameplay.modelBindings.${e}`);
   }
@@ -1079,7 +1081,8 @@ const validateProgrammes = (
           'final-election-continuation'
         ].includes(String(r['id']))
       )
-      .map(r => r['id']),
+      .map(r => r['id'])
+      .concat('pickup-responses'),
     'programmes.scripts.closure'
   );
   for (const r of routines) {
@@ -1109,13 +1112,13 @@ const validateProgrammes = (
     'reachableScriptEntries'
   );
   same(
-    excluded['defaultFlag10And22MustRemainUnreachable'],
+    excluded['defaultFlag10MustRemainUnreachable'],
     true,
-    'reachableScriptEntries.defaultFlag10And22MustRemainUnreachable'
+    'reachableScriptEntries.defaultFlag10MustRemainUnreachable'
   );
   same(
     excluded['excludedBranchTargets'],
-    ['$75BA6', '$75C01'],
+    ['$75BA6'],
     'reachableScriptEntries.excludedBranchTargets'
   );
   for (const ins of instructions) {
@@ -1137,8 +1140,8 @@ const validateProgrammes = (
         const flag = list(ins['operands'] ?? [], 'operands')[0];
         if (
           ins['name'] !== 'if_flag' ||
-          (flag !== '$0A' && flag !== '$16') ||
-          !['$75BA6', '$75C01'].includes(String(t))
+          flag !== '$0A' ||
+          !['$75BA6'].includes(String(t))
         ) {
           fail(`programmes.${ins['address']}.target: missing dependency ${t}`);
         }
@@ -1147,7 +1150,7 @@ const validateProgrammes = (
   }
   same(
     Object.keys(record(raw['entries'], 'programmes.entries')).sort(),
-    ['119', '19', '41'],
+    ['115', '119', '19', '24', '28', '41'],
     'programmes.entries.closure'
   );
   for (const [entry, target] of Object.entries(
@@ -1157,6 +1160,9 @@ const validateProgrammes = (
       fail(`programmes.entries.${entry}: missing instruction`);
     }
   }
+  const poll = record(raw['poll'], 'programmes.poll');
+  ints(poll['bytes'], 'programmes.poll.bytes', 2, 0, 255);
+  provenance(poll['source'], 'programmes.poll.source');
   const playback = record(raw['playback'], 'programmes.playback');
   const h = record(playback['header'], 'programmes.playback.header');
   for (const k of ['x', 'z', 'eyeY']) {

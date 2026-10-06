@@ -4221,12 +4221,11 @@
   },
   "programSha256": "4e8b74122910bcaa109b944eebb6f0ec18fdeb1175c34eea3c932d0e1b18b62c",
   "reachableScriptEntries": {
-    "defaultFlag10And22MustRemainUnreachable": true,
+    "defaultFlag10MustRemainUnreachable": true,
     "disposition": "derived",
     "evidence": "docs/research/mercenary-iii-tourcraft-campaign.md",
     "excludedBranchTargets": [
-      "$75BA6",
-      "$75C01"
+      "$75BA6"
     ],
     "ordinary": [
       25,
@@ -4234,13 +4233,21 @@
       52,
       41,
       119,
-      19
+      19,
+      28,
+      115,
+      24
     ],
     "sharedReturnTarget": "$701DD",
     "timedBankOffsets": [
       "$5CD2",
       "$5DE0",
-      "$5E18"
+      "$5E18",
+      "$575A",
+      "$5785",
+      "$4967",
+      "$4991",
+      "$49BD"
     ]
   },
   "renderSupport": {

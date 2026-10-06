@@ -117,13 +117,31 @@ export class TourcraftSession extends DionSession {
       restore = readTourcraftResume(restore, promoted);
     }
     super(content);
-    this.carryWorld = tourcraftCarryWorld(promoted);
+    this.carryWorld = tourcraftCarryWorld(promoted, slot => {
+      const resident = this.state.tourcraft?.residents.find(
+        r => r.slot === slot
+      );
+      return slot === 97 && resident?.model === 316
+        ? 316
+        : slot === 218 && resident?.model === null
+          ? null
+          : slot;
+    });
     this.metisContent = content;
     this.worlds = new Map([
       [60, tourcraftFrameWorld(promoted, 3)],
       [100, tourcraftFrameWorld(promoted, 23)]
     ]);
-    this.narrative = new TourcraftNarrative(content);
+    this.narrative = new TourcraftNarrative(
+      content,
+      undefined,
+      slot =>
+        (this.expanded.residents.find(r => r.slot === slot)?.state ?? 0) >= 128,
+      list(
+        record(promoted.programmes['poll'], 'poll')['bytes'],
+        'poll.bytes'
+      ) as [number, number]
+    );
     const owners = initialTourcraftOwners(promoted);
     this.state = {
       ...this.state,
@@ -472,6 +490,9 @@ export class TourcraftSession extends DionSession {
       },
       tourcraft: { ...e, carry: outcome.carry, residents: outcome.residents }
     };
+    if (outcome.script !== undefined) {
+      this.narrative.start(outcome.script);
+    }
     // `$5592A`: dropping the open object closes it and scrolls the logo back.
     if (outcome.closes !== undefined && outcome.closes === e.head.open?.slot) {
       this.setHead(closePanel(e.head));
@@ -1076,6 +1097,22 @@ export class TourcraftSession extends DionSession {
       this.animateFaces();
     }
     for (const effect of this.narrative.drainEffects()) {
+      if (effect.kind === 'modelSwapB') {
+        this.state = {
+          ...this.state,
+          tourcraft: {
+            ...this.expanded,
+            residents: this.expanded.residents.map(r =>
+              r.slot === 97
+                ? { ...r, model: 316 }
+                : r.slot === 218
+                  ? { ...r, model: null }
+                  : r
+            )
+          }
+        };
+        continue;
+      }
       this.state =
         effect.kind === 'cash'
           ? { ...this.state, cash: effect.value }

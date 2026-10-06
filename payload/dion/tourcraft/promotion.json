@@ -2396,6 +2396,30 @@
       "variants": [
         "form=default"
       ]
+    },
+    {
+      "catalogueRecordSha256": "e2063e7001fb645b2cf1f6ca08ce66ca447de6f62a958df9cb984f9e4616191c",
+      "disposition": "recovered",
+      "family": "model",
+      "id": "model-032822",
+      "record": "$32822",
+      "selectedVariantsSha256": "5b5782e1e5aceaa095e3a7285f9862f463f842da619a43ad32ff0b4290c66946",
+      "selectionReasons": [
+        "pickup model-swap-B replacement 316"
+      ],
+      "source": "catalogue-immutable",
+      "sourceRanges": [
+        {
+          "range": [
+            "$32822",
+            "$328D7"
+          ],
+          "sha256": "24710ba680237a36d14320e2a559ff2c66fa1324568e0d4159afaa9aba6190c8"
+        }
+      ],
+      "variants": [
+        "form=default"
+      ]
     }
   ],
   "groups": [
@@ -4853,12 +4877,11 @@
     ]
   },
   "reachableScriptEntries": {
-    "defaultFlag10And22MustRemainUnreachable": true,
+    "defaultFlag10MustRemainUnreachable": true,
     "disposition": "derived",
     "evidence": "docs/research/mercenary-iii-tourcraft-campaign.md",
     "excludedBranchTargets": [
-      "$75BA6",
-      "$75C01"
+      "$75BA6"
     ],
     "ordinary": [
       25,
@@ -4866,13 +4889,21 @@
       52,
       41,
       119,
-      19
+      19,
+      28,
+      115,
+      24
     ],
     "sharedReturnTarget": "$701DD",
     "timedBankOffsets": [
       "$5CD2",
       "$5DE0",
-      "$5E18"
+      "$5E18",
+      "$575A",
+      "$5785",
+      "$4967",
+      "$4991",
+      "$49BD"
     ]
   },
   "renderSupportSelection": {
