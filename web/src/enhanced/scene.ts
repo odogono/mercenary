@@ -50,6 +50,9 @@ export interface Pose {
 }
 
 export interface ScenePlacement {
+  /// A model fixed to the view that turns with a bearing of its own rather than the eye's, as
+  /// Mercenary III's cab turns with its taxi: that bearing, in radians as a Pose's heading.
+  readonly bearing?: number;
   readonly faceCount: number;
   /// Static geometry for ordinary placements; authored fallback for recovered selectors.
   /// The forms the model offers, for a planner given a frame's clock (#805). Absent where the

@@ -178,6 +178,13 @@ describe('the view interpolator', () => {
   });
 });
 
+/// A passenger's cab about an eye at x = 1000, turned with its taxi's bearing.
+const cab = (bearing: number): ScenePlacement =>
+  placement('cab', 1000, {
+    bearing,
+    position: { x: 1000, y: -63, z: CELL / 2 }
+  });
+
 describe('models fixed to the view', () => {
   test('stay where the view holds them as the drawn eye lags', () => {
     const captured = pose(1000, Math.PI / 2);
@@ -192,6 +199,27 @@ describe('models fixed to the view', () => {
     expect(carried!.position.y).toBe(10);
     expect(carried!.position.z).toBeCloseTo(CELL / 2 + 50, 9);
     expect(carried!.heading).toBeCloseTo(-Math.PI / 2, 12);
+  });
+
+  test('a cab with its own bearing holds still as the passenger looks round', () => {
+    const views = new ViewInterpolator<TestView>(always);
+    views.view(view('from', pose(1000, 0), [], { viewFixed: [cab(0)] }), {
+      fraction: 0,
+      pass: 1
+    });
+    // The eye looks a quarter turn round while the taxi holds its bearing.
+    const looked = views.view(
+      view('to', pose(1000, Math.PI / 2), [], { viewFixed: [cab(0)] }),
+      { fraction: 0.5, pass: 2 }
+    );
+    expect(looked.pose.heading).toBeCloseTo(Math.PI / 4, 12);
+    expect(looked.viewFixed[0]!.heading).toBe(0);
+    // The taxi turns: the cab turns half way with it, whatever the look.
+    const turned = views.view(
+      view('to', pose(1000, Math.PI / 2), [], { viewFixed: [cab(0.2)] }),
+      { fraction: 0.5, pass: 2 }
+    );
+    expect(turned.viewFixed[0]!.heading).toBeCloseTo(-0.1, 12);
   });
 });
 

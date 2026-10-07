@@ -170,6 +170,8 @@ describe('view-fixed models', () => {
         r => r.id === `object-slot-${state.passenger}`
       )!;
       expect(scene.residents.some(r => r.id === cab.id)).toBe(false);
+      // `$543AA` bit 6: the cab turns with its taxi, not with the passenger's look.
+      expect(cab.bearing).toBeDefined();
       const plan = planDionEnhancedFrame(scene, 720);
       expect(plan.viewFixedVertices?.length ?? 0).toBeGreaterThan(0);
       // `$54444`: the passenger form, ×16, at (0, −63, 0) from the eye, with the driver's head.
