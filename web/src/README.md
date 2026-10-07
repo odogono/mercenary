@@ -22,7 +22,7 @@ One directory per concern. Pages load a `boot.ts` (`web/*.html` names which). Ea
 - `sky/`: the Orrery and Body Time. `text/`: composing decoded messages.
 - `sound/`: Targ’s bounded SID synth, worklet and presenter. Damocles and Dion use the YM2149 core in `damocles/psg.ts` with their own sound drivers. `soundboard/` owns the listening page and arrangements.
 - `scene/`: frame colours. `rendering/`: the WebGL2 Filled Presentation renderer shared by Damocles and Dion.
-- `enhanced/`: the one Enhanced planner Damocles and Dion share (ADR 0077): the scene a Title supplies, the frame, the sky triangles and Sunlight. `structure/`: structure selection, regions and entrance attachments.
+- `enhanced/`: the one Enhanced planner Damocles and Dion share (ADR 0077): the scene a Title supplies, the frame, the sky triangles, Sunlight, and the interpolation that draws the view between simulation passes (ADR 0078). `structure/`: structure selection, regions and entrance attachments.
 - `settings/`: tuned values kept as data.
 
 ## Data and tooling

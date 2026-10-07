@@ -1,3 +1,4 @@
+import { ViewInterpolator } from '../enhanced/interpolation.ts';
 import { IDLE } from '../gameCore/index.ts';
 import { installShellChrome } from '../shell/chrome.ts';
 import { FixedStepClock } from '../shell/clock.ts';
@@ -30,6 +31,7 @@ import {
   parseDionConsoleCommand
 } from './console.ts';
 import { dionControlActions } from './controls.ts';
+import { dionViewContinues, type DionEnhancedScene } from './enhancedScene.ts';
 import { installDionPresentation } from './framePresentation.ts';
 import { PANEL_TOP, dionLogoRgba } from './panel.ts';
 import { dionTakeTargetAt } from './pointer.ts';
@@ -203,6 +205,8 @@ try {
   );
   const keyNames = browserKeyNames();
   const clock = new FixedStepClock();
+  // The Enhanced view, drawn between frames (ADR 0078).
+  const views = new ViewInterpolator<DionEnhancedScene>(dionViewContinues);
   const release = (): void => {
     controls.releaseAll();
     clock.reset();
@@ -306,6 +310,7 @@ try {
       });
       checkpoint();
       menu.show('none');
+      views.reset();
       draw(prepared);
     },
     storage
@@ -330,6 +335,7 @@ try {
         if (command.kind === 'setTime' || command.kind === 'setClock') {
           checkpoint();
         }
+        views.reset();
         draw();
         return lines;
       },
@@ -338,14 +344,27 @@ try {
     }
   );
 
+  let panelPixels: Uint8ClampedArray<ArrayBuffer> | undefined;
+  // The scene last drawn, kept for the frames between the session's steps.
+  let built: DionEnhancedScene | undefined;
+  const currentScene = (): DionEnhancedScene =>
+    (built ??= session.enhancedScene());
+  /// The Enhanced view alone, between the frames the session runs (ADR 0078).
+  const drawView = (): void => {
+    if (panelPixels !== undefined) {
+      viewPresentation?.render(
+        () => views.view(currentScene(), session.passPhase(clock.leftover)),
+        panelPixels
+      );
+    }
+  };
   const draw = (prepared = prepareTourcraftFrame(session)): void => {
     const { planned } = prepared;
     image.data.set(prepared.rgba);
     context.putImageData(image, 0, 0);
-    viewPresentation?.render(
-      () => session.enhancedScene(),
-      prepared.rgba.subarray(PANEL_TOP * 320 * 4)
-    );
+    panelPixels = prepared.rgba.subarray(PANEL_TOP * 320 * 4);
+    built = undefined;
+    drawView();
     const root = canvas.dataset;
     root['cell'] = String(snapshot.cell);
     root['region'] = String(snapshot.region);
@@ -401,6 +420,7 @@ try {
     checkpoint();
     menu.show('none');
     status.hidden = true;
+    views.reset();
     draw(prepared);
   });
   const refreshNewGame = (): void => {
@@ -567,6 +587,7 @@ try {
           }
         ]
       });
+      views.reset();
       draw(prepared);
     }
     chrome.takeOver.disabled = false;
@@ -666,6 +687,8 @@ try {
       }
       if (steps > 0) {
         draw();
+      } else if (views.blending) {
+        drawView();
       }
       animation = requestAnimationFrame(frame);
     } catch (error) {

@@ -11,6 +11,13 @@ export class FixedStepClock {
   private accumulator = 0;
   private lastTimestamp: number | undefined;
 
+  /// Display time received but not yet stepped, in seconds: less than one step. The Enhanced
+  /// view counts it toward the next pass so it does not stand still on a frame with no step
+  /// (ADR 0078).
+  get leftover(): number {
+    return this.accumulator;
+  }
+
   reset(): void {
     this.accumulator = 0;
     this.lastTimestamp = undefined;

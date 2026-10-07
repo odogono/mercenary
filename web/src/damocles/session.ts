@@ -34,6 +34,7 @@ import {
   type SpaceState
 } from '../craft/space.ts';
 import type { FormClock } from '../enhanced/forms.ts';
+import type { PassPhase } from '../enhanced/interpolation.ts';
 import {
   IDLE,
   MAXIMUM_STEP,
@@ -806,6 +807,9 @@ export class DamoclesSession implements TitleSession<
   private craftSlot = 0;
   /// Ticks since the last pass; a pass runs on every `time.ticksPerPass`-th.
   private craftTicks = 0;
+  /// Craft passes run since the session opened: which pass the Enhanced view is drawing
+  /// toward (ADR 0078). Only the view reads it, and a Save does not carry it.
+  private craftPasses = 0;
   /// On foot, ticks since the last main-loop pass; one runs on every
   /// `time.ticksPerPassOnFoot`-th, and all it steps is the noise pointer (ADR 0054).
   private footTicks = 0;
@@ -3195,6 +3199,23 @@ export class DamoclesSession implements TitleSession<
   }
 
   /// What the player is inside. Cheap, for a Control Profile that asks on every key.
+  /// Aboard, how far the clock has run toward the next craft pass, with `ahead` seconds the
+  /// display has given but the session not yet taken, for the Enhanced view to draw between
+  /// passes (ADR 0078). Null on foot, where the Pose moves every step, and while no pass runs.
+  passPhase(ahead = 0): PassPhase | null {
+    if (this.craft === null || this.craftHeld !== null || this.death !== null) {
+      return null;
+    }
+    return {
+      fraction:
+        (this.craftTicks +
+          this.frameAccumulator +
+          ahead * this.content.doc.time.vblHertz) /
+        this.content.doc.time.ticksPerPass,
+      pass: this.craftPasses
+    };
+  }
+
   get occupancy(): DamoclesOccupancy {
     return this.occupied === null
       ? { kind: 'onFoot' }
@@ -3460,6 +3481,7 @@ export class DamoclesSession implements TitleSession<
       return;
     }
     this.craftTicks = 0;
+    this.craftPasses += 1;
     // `$05948C` steps the noise pointer as the pass's frame joins the main loop, before the pass
     // itself: the traced landing drew the word after it (#576).
     this.mainLoopPass();

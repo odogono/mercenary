@@ -1,3 +1,4 @@
+import type { PassPhase } from '../enhanced/interpolation.ts';
 import { IDLE, type Intent } from '../gameCore/index.ts';
 import {
   clampRegionStep,
@@ -250,6 +251,20 @@ export class DionSession implements TitleSession<
 
   get snapshot(): DionSnapshot {
     return this.state;
+  }
+
+  /// How far the clock has run toward the next frame, with `ahead` seconds the display has
+  /// given but the session not yet taken, for the Enhanced view to draw between frames
+  /// (ADR 0078). Read only: nothing here is state.
+  passPhase(ahead = 0): PassPhase {
+    const tick = this.state.tick;
+    return {
+      fraction:
+        ((tick % this.ticksPerFrame) +
+          (this.remainder + ahead) / this.tickSeconds) /
+        this.ticksPerFrame,
+      pass: Math.floor(tick / this.ticksPerFrame)
+    };
   }
 
   advance(seconds: number): DionSnapshot {

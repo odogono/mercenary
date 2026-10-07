@@ -811,3 +811,13 @@ export const planDionEnhancedFrame = (
     scene.clock,
     scene.viewFixed
   );
+
+/// Whether one frame's view follows on from the last, for the Enhanced view to draw between
+/// them (ADR 0078). Boarding or leaving the cab, and entering or leaving a Body, cut the view.
+export const dionViewContinues = (
+  from: DionEnhancedScene,
+  to: DionEnhancedScene
+): boolean =>
+  from.pose.body === to.pose.body &&
+  from.aboard === to.aboard &&
+  from.inSpace === to.inSpace;
