@@ -886,6 +886,11 @@ export class BrowserControlProfile {
     });
   }
 
+  /// The run key's toggle without the key: the panel's run lamp, which latches running as R does.
+  toggleRunning(): void {
+    this.mode.toggleRunning();
+  }
+
   /// Whether fire is held, by key or by pad. A Title whose fire is the joystick button's level,
   /// as Damocles's launcher `$050B96` reads it (#581), asks this; one whose fire is a press takes
   /// `fire` alone.

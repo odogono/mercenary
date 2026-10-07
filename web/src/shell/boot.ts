@@ -45,6 +45,7 @@ import {
   type BrowserLockManager
 } from './ownership.ts';
 import { objectNamesOf, panelViewModel, type PanelContext } from './panel.ts';
+import { TARG_PANEL_LAYOUT, installPanelControls } from './panelControls.ts';
 import { installPanel, installPanelScale } from './panelView.ts';
 import { canvasPointer, takeTargetAt } from './pointer.ts';
 import {
@@ -821,6 +822,27 @@ try {
       targPanelDocument
     )
   });
+  // The run lamp toggles running, as R does: the one panel control Targ's panel has (#599).
+  const panelControls = installPanelControls(
+    document.getElementById('panel-targ')!,
+    TARG_PANEL_LAYOUT,
+    {
+      mayAct: () => {
+        const state = routerState();
+        return (
+          !state.chromeFocus &&
+          state.console === 'closed' &&
+          state.layer === 'none' &&
+          state.opening === 'none' &&
+          ownership.mayAdvance()
+        );
+      },
+      toggleRunning: () => {
+        controls.toggleRunning();
+        publish();
+      }
+    }
+  );
   const departureView = installDepartureView({
     destinations: DESTINATIONS,
     elements: departureElements,
@@ -889,6 +911,7 @@ try {
       // path resets to `IDLE` while the toggle itself stays latched.
       controls.intent.running
     );
+    panelControls.update({ running: controls.intent.running });
     panel.draw(
       departing || arriving
         ? arrivalPanelViewModel(

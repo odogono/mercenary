@@ -92,7 +92,8 @@ const holding = async (page: Page, placed = false): Promise<void> => {
   });
 };
 
-const centreBox = (page: Page) => page.locator('#damocles-centre-canvas');
+const centreBox = (page: Page) =>
+  page.locator('#panel-damocles [data-panel-control=centre]');
 
 /// Charge 1 and a 5 s fuse from the keypad, then `p` (keypad `*`) arms the head.
 const arm = async (page: Page): Promise<void> => {

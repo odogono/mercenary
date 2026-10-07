@@ -1,11 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
 import type { Mesh } from '../src/catalogue/data.ts';
-import {
-  centreBoxPage,
-  damoclesTakeTargetAt,
-  wheelPage
-} from '../src/damocles/pointer.ts';
+import { damoclesTakeTargetAt } from '../src/damocles/pointer.ts';
 import type { Selection } from '../src/damocles/session.ts';
 import type { ErisPlacement, Pose } from '../src/damocles/world.ts';
 import { FREE_LOOK_LIMIT } from '../src/gameCore/index.ts';
@@ -165,53 +161,5 @@ describe('the pointer through Free Look (ADR 0059)', () => {
     expect(drawnAt(high, middle, size).y).toBeGreaterThan(size.height);
     expect(target(reachable, drawn, down, size)).toBe('object-slot-183');
     expect(target(reachable, drawn, high, size)).toBeUndefined();
-  });
-});
-
-describe('the pointer’s document paging (#599)', () => {
-  test('pages the way the centre box’s − or + stands', () => {
-    const size = { height: 32, width: 64 };
-    expect(centreBoxPage({ x: 0, y: 12 }, size)).toBe('previous');
-    expect(centreBoxPage({ x: 31.9, y: 4 }, size)).toBe('previous');
-    expect(centreBoxPage({ x: 32, y: 24 }, size)).toBe('next');
-    expect(centreBoxPage({ x: 60, y: 12 }, size)).toBe('next');
-  });
-
-  test('reads the item whose name is clicked, as * does', () => {
-    // Scaled up, as the panel draws the box.
-    const size = { height: 128, width: 256 };
-    expect(centreBoxPage({ x: 24, y: 32 }, size)).toBe('read');
-    expect(centreBoxPage({ x: 128, y: 48 }, size)).toBe('read');
-    expect(centreBoxPage({ x: 227, y: 67 }, size)).toBe('read');
-    expect(centreBoxPage({ x: 20, y: 48 }, size)).toBe('previous');
-    expect(centreBoxPage({ x: 232, y: 48 }, size)).toBe('next');
-    expect(centreBoxPage({ x: 128, y: 70 }, size)).toBe('next');
-  });
-
-  test('turns a mouse notch into one page, down on and up back', () => {
-    expect(wheelPage(0, 100, 0)).toEqual({ gathered: 0, page: 'next' });
-    expect(wheelPage(0, -100, 0)).toEqual({ gathered: 0, page: 'previous' });
-    // A line or page delta is a notch however small.
-    expect(wheelPage(0, 3, 1)).toEqual({ gathered: 0, page: 'next' });
-    expect(wheelPage(0, -1, 2)).toEqual({ gathered: 0, page: 'previous' });
-  });
-
-  test('gathers a trackpad’s small deltas to one page at a time', () => {
-    let gathered = 0;
-    const pages: (string | undefined)[] = [];
-    for (let event = 0; event < 12; event += 1) {
-      const turned = wheelPage(gathered, 10, 0);
-      gathered = turned.gathered;
-      pages.push(turned.page);
-    }
-    expect(pages.filter(page => page === 'next')).toHaveLength(2);
-    expect(gathered).toBe(20);
-  });
-
-  test('starts afresh when the travel turns, and ignores a sideways scroll', () => {
-    expect(wheelPage(40, -10, 0)).toEqual({ gathered: -10, page: undefined });
-    expect(wheelPage(40, 0, 0)).toEqual({ gathered: 40, page: undefined });
-    // One event turns one page, however hard the flick.
-    expect(wheelPage(0, 400, 0)).toEqual({ gathered: 0, page: 'next' });
   });
 });

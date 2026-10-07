@@ -1,32 +1,60 @@
 import type { PanelViewModel } from '../shell/panel.ts';
+import {
+  installPanelControls,
+  recoveredPanelLayout,
+  type PanelControlActions
+} from '../shell/panelControls.ts';
 import { panelRgba } from '../shell/panelPixels.ts';
 import type { DamoclesPanelDocument } from './panelDocument.ts';
 import { drawDamoclesPanel, type DamoclesPanelView } from './panelWriter.ts';
 
+/// What the controls show that the panel's view does not carry.
+export interface DamoclesPanelCues {
+  readonly open: boolean;
+  readonly opens: boolean;
+  readonly parameter: boolean;
+  readonly running: boolean;
+}
+
 /// Present the recovered panel once, with semantic readouts beside the canvas.
-/// No authored chrome is painted by this path; pointer hit regions overlay the
-/// recovered inventory and centre windows in their native 320-by-64 geometry.
+/// No authored chrome is painted by this path; the shared panel controls overlay the
+/// recovered inventory, centre and run windows in their native 320-by-64 geometry.
 export const installRecoveredDamoclesPanel = (
   root: HTMLElement,
-  doc: DamoclesPanelDocument
-): { draw(view: DamoclesPanelView, accessible: PanelViewModel): void } => {
+  doc: DamoclesPanelDocument,
+  actions: PanelControlActions,
+  wheel: readonly HTMLElement[] = []
+): {
+  draw(
+    view: DamoclesPanelView,
+    accessible: PanelViewModel,
+    cues: DamoclesPanelCues
+  ): void;
+} => {
   const canvas = root.querySelector<HTMLCanvasElement>(
     '#damocles-panel-canvas'
   )!;
   const context = canvas.getContext('2d')!;
   const image = context.createImageData(320, 64);
-  const centre = root.querySelector<HTMLCanvasElement>(
-    '#damocles-centre-canvas'
-  )!;
   const fields = root.querySelectorAll<HTMLElement>('[data-field]');
   const lamps = root.querySelectorAll<HTMLElement>('[data-lamp]');
-  const actions = root.querySelector<HTMLElement>('#damocles-centre-actions')!;
-  const parameter = root.querySelector<HTMLButtonElement>(
-    '[data-command=parameter]'
-  )!;
+  const inventory = doc.fields.get('inventoryName')!;
+  const controls = installPanelControls(
+    root,
+    recoveredPanelLayout({
+      centre: doc.centre.box,
+      inventory,
+      runLamp: { rows: doc.lamps.rows, x: doc.lamps.x[2]!, y: doc.lamps.y }
+    }),
+    actions,
+    wheel
+  );
+  root
+    .querySelector('[data-panel-control=inventory]')
+    ?.setAttribute('aria-describedby', 'damocles-panel-limits');
   root.dataset['provenance'] = 'recovered-artwork-title-specific-writers';
   return {
-    draw(view, accessible): void {
+    draw(view, accessible, cues): void {
       panelRgba(drawDamoclesPanel(doc, view), image.data);
       context.putImageData(image, 0, 0);
       for (const element of fields) {
@@ -35,12 +63,6 @@ export const installRecoveredDamoclesPanel = (
           name === 'message'
             ? view.message.cells.trimEnd()
             : String(accessible[name] ?? '');
-        if (name === 'inventory') {
-          element.setAttribute(
-            'aria-label',
-            `Open the carried head: ${accessible.inventory}`
-          );
-        }
         if (name === 'locationLabel' && accessible.locationAxes !== undefined) {
           const key = JSON.stringify(accessible.locationAxes);
           if (element.dataset['axes'] !== key) {
@@ -77,22 +99,26 @@ export const installRecoveredDamoclesPanel = (
         }
       }
       const panel = accessible.centreBox?.panel;
-      const resting = view.centre.steps === 0 && view.centre.from === null;
-      centre.hidden = resting;
+      controls.update({
+        centre: {
+          label:
+            panel == null
+              ? 'Damocles logo'
+              : `${panel.title}: ${panel.item ?? 'opening'}. Read or activate item`,
+          open: cues.open,
+          parameter: cues.parameter,
+          resting: view.centre.steps === 0 && view.centre.from === null
+        },
+        head: { inventory: accessible.inventory, opens: cues.opens },
+        running: cues.running
+      });
+      const centre = controls.centre!;
       centre.dataset['panel'] = panel?.title ?? '';
       centre.dataset['item'] = panel?.item ?? '';
       centre.dataset['provenance'] =
         panel?.kind === 'document' || panel == null
           ? 'recovered'
           : 'recovered-art-authored-content-layout';
-      centre.setAttribute(
-        'aria-label',
-        panel == null
-          ? 'Damocles logo'
-          : `${panel.title}: ${panel.item ?? 'opening'}. Read or activate item`
-      );
-      actions.hidden = resting;
-      parameter.hidden = panel?.kind !== 'computer';
       root.dataset['navigationProvenance'] = 'body-derived-space-placeholder';
       root.dataset['gaugeProvenance'] = 'authored-temperature-power';
       root.dataset['gridFontProvenance'] = 'authored';

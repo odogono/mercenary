@@ -450,7 +450,9 @@ test('/damocles boots the Damocles Gameplay Session on foot at Eris Capital Spac
     'locationLabel',
     'altitude'
   ]);
-  await expect(panel.locator('[data-field=inventory]')).toHaveText('EMPTY');
+  await expect(panel.locator('[data-panel-control=inventory]')).toHaveText(
+    'EMPTY'
+  );
   await expect(panel.locator('[data-field=speedLabel]')).toHaveText(
     '+ 000 000 000'
   );
@@ -611,6 +613,20 @@ test('R latches running, which lights the lamp and lengthens the step', async ({
   await page.keyboard.press('KeyR');
   await expect(lamp).not.toHaveClass(/on/);
   expect(await leg()).toBeLessThan(ran * 0.75);
+});
+
+test('a tap on the run lamp latches running, as R does', async ({ page }) => {
+  await page.goto('/damocles');
+  await expect(page.locator('#frame')).toHaveAttribute('data-state', 'ready');
+  const lamp = page.locator('#panel-damocles [data-lamp=runLamp]');
+  const run = page.locator('#panel-damocles [data-panel-control=run]');
+  await expect(run).toHaveAttribute('aria-pressed', 'false');
+  await run.click();
+  await expect(lamp).toHaveClass(/on/);
+  await expect(run).toHaveAttribute('aria-pressed', 'true');
+  await page.keyboard.press('KeyR');
+  await expect(lamp).not.toHaveClass(/on/);
+  await expect(run).toHaveAttribute('aria-pressed', 'false');
 });
 
 test('a long walk crosses into the neighbouring cell', async ({ page }) => {

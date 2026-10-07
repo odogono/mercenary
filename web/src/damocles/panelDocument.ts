@@ -23,6 +23,12 @@ export interface DamoclesPanelDocument {
   readonly centre: {
     readonly art: ReadonlyMap<number, readonly Uint8Array[]>;
     readonly bands: ReadonlyMap<number, readonly (readonly string[])[]>;
+    readonly box: {
+      readonly height: 32;
+      readonly width: 64;
+      readonly x: 128;
+      readonly y: 160;
+    };
     readonly definitions: ReadonlyMap<number, CentreDefinition>;
   };
   readonly clock: {
@@ -302,7 +308,12 @@ export const readDamoclesPanelDocument = (
   return {
     ...pitch,
     art: pixels(art['pixels'], 'panelArt.pixels', 320, 64),
-    centre: { art: centreArt, bands, definitions: records },
+    centre: {
+      art: centreArt,
+      bands,
+      box: { height: 32, width: 64, x: 128, y: 160 },
+      definitions: records
+    },
     clock: {
       cells: numbers(clock['cells'], 'fields.clock.cells', 0, 312, 6),
       planes: numbers(clock['planes'], 'fields.clock.planes', 0, 3, 2),

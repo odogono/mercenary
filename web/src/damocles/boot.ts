@@ -44,6 +44,7 @@ import {
   installSessionTakeoverChannel,
   type BrowserLockManager
 } from '../shell/ownership.ts';
+import { centreBoxPage } from '../shell/panelControls.ts';
 import { installPanelScale } from '../shell/panelView.ts';
 import { canvasPointer } from '../shell/pointer.ts';
 import { createPreferences, titlePreferences } from '../shell/preferences.ts';
@@ -80,12 +81,7 @@ import { readDamoclesPanelDocument } from './panelDocument.ts';
 import { installRecoveredDamoclesPanel } from './panelView.ts';
 import { damoclesRecoveredPanelView } from './panelWriter.ts';
 import { DAMOCLES_PANEL_PATH } from './pitchStrip.ts';
-import {
-  centreBoxPage,
-  computerBoxPoint,
-  damoclesTakeTargetAt,
-  wheelPage
-} from './pointer.ts';
+import { computerBoxPoint, damoclesTakeTargetAt } from './pointer.ts';
 import { ErisRenderer } from './renderer.ts';
 import {
   createDamoclesResumePersistence,
@@ -140,12 +136,6 @@ const noiseCanvas = document.getElementById('frame-noise') as HTMLCanvasElement;
 const panelSection = document.getElementById('panel')!;
 const panelScale = document.getElementById('panel-scale')!;
 const panelRoot = document.getElementById('panel-damocles')!;
-const panelElements = {
-  damoclesCentreBox: document.getElementById(
-    'damocles-centre-canvas'
-  ) as HTMLCanvasElement,
-  root: panelRoot
-};
 
 const requiredJson = async (pathname: string): Promise<PayloadDocument> => {
   const response = await fetch(pathname);
@@ -314,7 +304,6 @@ try {
   installPanelScale(panelSection, panelScale, (target, onResize) => {
     new ResizeObserver(onResize).observe(target);
   });
-  const panel = installRecoveredDamoclesPanel(panelRoot, panelDocument);
   let commitAction = (_action: () => unknown): void => {};
 
   // The transport reports a failed audio graph once and carries on in silence.
@@ -990,132 +979,36 @@ try {
     event.preventDefault();
   });
 
-  // The pointer Accommodation for the Carried Stack and its documents (#599). Each is a Semantic
-  // Action a key already gives: the head's name is Enter, ‹ and › are `[` and `]`, the centre
-  // box's halves and the wheel are `,` and `.`, and ✕ is Escape.
-  const centreCanvas = panelElements.damoclesCentreBox;
-  const inventoryWindow =
-    panelRoot.querySelector<HTMLElement>('#inventory-window')!;
-  const centreClose = panelRoot.querySelector<HTMLButtonElement>(
-    '#damocles-centre-close'
-  )!;
-  // Native buttons remain reachable by Tab. Their keys belong to the control
-  // rather than also reaching the gameplay dispatcher. Escape keeps its normal
-  // document-close/menu routing.
-  panelRoot.addEventListener('keydown', event => {
-    if (
-      event.code !== 'Escape' &&
-      (event.target as HTMLElement | null)?.tagName === 'BUTTON'
-    ) {
-      event.stopPropagation();
-    }
-  });
-  inventoryWindow.addEventListener('mousedown', event =>
-    event.preventDefault()
-  );
-  inventoryWindow.addEventListener('click', event => {
-    if (event.button === 0 && pointerMayAct()) {
-      commitAction(() => session.headCommand('open'));
-    }
-  });
-  for (const button of panelRoot.querySelectorAll<HTMLButtonElement>(
-    '.stack-rotate'
-  )) {
-    // A pressed button would keep the focus, and Enter or Space would then press it again.
-    button.addEventListener('mousedown', event => event.preventDefault());
-    button.addEventListener('click', () => {
-      if (pointerMayAct()) {
+  // The pointer Accommodation for the Carried Stack and its documents (#599), shared with the
+  // other Titles' panels. Each is a Semantic Action a key already gives.
+  const panel = installRecoveredDamoclesPanel(
+    panelRoot,
+    panelDocument,
+    {
+      // The AUTHORS COMPUTER's field steps its parameter, and the rest of it steps the value.
+      centreAt: (point, size) =>
+        session.snapshot.headCommands.open?.slot === AUTHORS_COMPUTER_SLOT
+          ? computerBoxPoint(point, size)
+          : centreBoxPage(point, size),
+      close: () => commitAction(() => session.closeDocument()),
+      command: command =>
         commitAction(() =>
-          button.dataset['rotate'] === 'forward'
+          command === 'parameter'
+            ? session.keypadDigit((session.snapshot.computer.option + 1) % 5)
+            : session.headCommand(command)
+        ),
+      mayAct: pointerMayAct,
+      open: () => commitAction(() => session.headCommand('open')),
+      rotate: direction =>
+        commitAction(() =>
+          direction === 'forward'
             ? session.rotateForward()
             : session.rotateBackward()
-        );
-      }
-    });
-  }
-  centreClose.addEventListener('mousedown', event => event.preventDefault());
-  centreClose.addEventListener('click', () => {
-    if (pointerMayAct()) {
-      commitAction(() => session.closeDocument());
-    }
-  });
-  centreCanvas.addEventListener('click', event => {
-    if (event.button !== 0 || !session.documentOpen || !pointerMayAct()) {
-      return;
-    }
-    const bounds = centreCanvas.getBoundingClientRect();
-    const point = {
-      x: event.clientX - bounds.left,
-      y: event.clientY - bounds.top
-    };
-    if (session.snapshot.headCommands.open?.slot === AUTHORS_COMPUTER_SLOT) {
-      const target = computerBoxPoint(point, bounds);
-      commitAction(() =>
-        target === 'parameter'
-          ? session.keypadDigit((session.snapshot.computer.option + 1) % 5)
-          : session.headCommand(target)
-      );
-      return;
-    }
-    commitAction(() => session.headCommand(centreBoxPage(point, bounds)));
-  });
-  centreCanvas.addEventListener('keydown', event => {
-    if (event.code === 'Escape') {
-      return;
-    }
-    event.stopPropagation();
-    if ((event.code === 'Enter' || event.code === 'Space') && pointerMayAct()) {
-      event.preventDefault();
-      commitAction(() => session.headCommand('read'));
-    }
-  });
-  for (const button of panelRoot.querySelectorAll<HTMLButtonElement>(
-    '[data-command]'
-  )) {
-    button.addEventListener('mousedown', event => event.preventDefault());
-    button.addEventListener('click', () => {
-      if (!pointerMayAct()) {
-        return;
-      }
-      const command = button.dataset['command'];
-      commitAction(() =>
-        command === 'parameter'
-          ? session.keypadDigit((session.snapshot.computer.option + 1) % 5)
-          : session.headCommand(command as 'next' | 'previous' | 'read')
-      );
-    });
-  }
-  let wheelTravel = 0;
-  const pageByWheel = (event: WheelEvent): void => {
-    if (!session.documentOpen || !pointerMayAct()) {
-      wheelTravel = 0;
-      return;
-    }
-    event.preventDefault();
-    const turned = wheelPage(wheelTravel, event.deltaY, event.deltaMode);
-    wheelTravel = turned.gathered;
-    if (turned.page !== undefined) {
-      const page = turned.page;
-      commitAction(() => session.headCommand(page));
-    }
-  };
-  canvas.addEventListener('wheel', pageByWheel, { passive: false });
-  centreCanvas.addEventListener('wheel', pageByWheel, { passive: false });
-  /// The cues: the head's name is outlined under the pointer when Open acts on it, and ✕ shows
-  /// only while a document is open.
-  const drawHeadControls = (): void => {
-    const opens = String(session.headOpens);
-    if (inventoryWindow.dataset['opens'] !== opens) {
-      inventoryWindow.dataset['opens'] = opens;
-    }
-    const open = session.documentOpen;
-    if (centreClose.hidden === open) {
-      centreClose.hidden = !open;
-    }
-    if (centreCanvas.dataset['open'] !== String(open)) {
-      centreCanvas.dataset['open'] = String(open);
-    }
-  };
+        ),
+      toggleRunning: () => controls.toggleRunning()
+    },
+    [canvas]
+  );
 
   window.addEventListener('keydown', event => {
     switch (routeKey(routerState(), event)) {
@@ -1493,9 +1386,14 @@ try {
         content.doc,
         controls.intent.running
       ),
-      damoclesPanelViewModel(snapshot, content.doc, controls.intent.running)
+      damoclesPanelViewModel(snapshot, content.doc, controls.intent.running),
+      {
+        open: session.documentOpen,
+        opens: session.headOpens,
+        parameter: snapshot.headCommands.open?.slot === AUTHORS_COMPUTER_SLOT,
+        running: controls.intent.running
+      }
     );
-    drawHeadControls();
     expose(
       plan.triangleCount,
       plan.drawnPlacements,

@@ -224,6 +224,7 @@ export class TourcraftSession extends DionSession {
       this.narrative.state = this.state.narrative as TourcraftScriptState;
 
       this.intent = this.state.tourcraft!.liveIntent;
+      this.runMode = this.intent.running;
       if (this.state.location === 100) {
         this.content = gameplayContent(promoted, 23);
       }
@@ -821,6 +822,28 @@ export class TourcraftSession extends DionSession {
     }
     this.firing = firing;
   }
+  /// Whether a panel is open on the centre box, so the keypad acts on it.
+  get documentOpen(): boolean {
+    return this.expanded.head.open !== null;
+  }
+
+  /// The open document's item name, if it has items.
+  get openItemName(): string | undefined {
+    const open = this.expanded.head.open;
+    return open === null
+      ? undefined
+      : documentItems(this.promoted.head, open.slot)[open.item]?.name.trim();
+  }
+
+  /// Whether Open would act on the Carried Stack's head, which is the pointer's hover cue.
+  get headOpens(): boolean {
+    const head = this.expanded.carry.stack[0];
+    const table = dionHeadTable(this.promoted.head, this.narrative.state.flags);
+    return (
+      head !== undefined && table.kind(head) !== undefined && table.opens(head)
+    );
+  }
+
   get aboard(): boolean {
     return (
       this.state.taxi.passenger ||
@@ -1525,7 +1548,7 @@ export class TourcraftSession extends DionSession {
     ];
   }
   panelView() {
-    return tourcraftPanelView(this.state, this.promoted);
+    return tourcraftPanelView(this.state, this.promoted, this.runMode);
   }
   /// The world and state one frame is planned from, which the Authentic planner and the
   /// Enhanced scene both take.
@@ -1621,7 +1644,10 @@ export class TourcraftSession extends DionSession {
       ...record,
       snapshot: {
         ...record.snapshot,
-        tourcraft: { ...this.expanded, liveIntent: this.intent }
+        tourcraft: {
+          ...this.expanded,
+          liveIntent: { ...this.intent, running: this.runMode }
+        }
       }
     };
   }
@@ -1629,7 +1655,8 @@ export class TourcraftSession extends DionSession {
 
 export const tourcraftPanelView = (
   state: import('./session.ts').DionSnapshot,
-  content: TourcraftContent
+  content: TourcraftContent,
+  running = false
 ) => {
   const view = dionPanelView(state, content.legacy);
   const flight = state.tourcraft!.flight;
@@ -1648,6 +1675,7 @@ export const tourcraftPanelView = (
     inventory: state.tourcraft!.carry.label,
     location:
       content.system.bodies.find(b => b.offset === body)?.name ?? view.location,
+    running,
     ...(flight && flight.mode !== 'foot'
       ? {
           speed: {

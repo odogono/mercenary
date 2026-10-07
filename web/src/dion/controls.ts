@@ -4,7 +4,7 @@ import type { DionAction } from './session.ts';
 
 /// The TAXICARD's actions on the keypad keys Damocles reads as Head Commands: the same ST
 /// scancodes, keypad Enter `$72`, `*` `$66` and `+` `$4E` (ADR 0064).
-const CARD_ACTIONS: Readonly<Record<HeadCommand, DionAction>> = {
+export const CARD_ACTIONS: Readonly<Record<HeadCommand, DionAction>> = {
   next: 'plus',
   open: 'activate',
   previous: 'minus',

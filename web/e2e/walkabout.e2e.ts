@@ -626,6 +626,22 @@ test('R latches running, which lights the lamp and lengthens the on-foot step', 
   expect(await leg()).toBeLessThan(ran * 0.6);
 });
 
+test('a tap on the Benson Panel’s run lamp latches running, as R does', async ({
+  page
+}) => {
+  await page.goto('/');
+  await skipArrival(page);
+  const lamp = page.locator('#panel-targ [data-lamp=runLamp]');
+  const run = page.locator('#panel-targ [data-panel-control=run]');
+  await expect(lamp).not.toHaveClass(/on/);
+  await run.click();
+  await expect(lamp).toHaveClass(/on/);
+  await expect(run).toHaveAttribute('aria-pressed', 'true');
+  await page.keyboard.press('KeyR');
+  await expect(lamp).not.toHaveClass(/on/);
+  await expect(run).toHaveAttribute('aria-pressed', 'false');
+});
+
 test('Session Resume survives reload and New Game preserves Saves', async ({
   page
 }) => {

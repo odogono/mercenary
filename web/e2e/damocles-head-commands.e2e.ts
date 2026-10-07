@@ -17,7 +17,8 @@ const FILE = 'DAMOCLES FILE';
 const TABLE = 'COFFEE TABLE';
 
 const frame = (page: Page) => page.locator('#frame');
-const centreBox = (page: Page) => page.locator('#damocles-centre-canvas');
+const centreBox = (page: Page) =>
+  page.locator('#panel-damocles [data-panel-control=centre]');
 
 /// Take both objects and rotate until the file is the head.
 const fileAtTheHead = async (page: Page): Promise<void> => {
@@ -114,8 +115,8 @@ test('opens, pages and closes the DAMOCLES FILE with the pointer', async ({
   await bootAt(page, BESIDE_THE_TABLE, FACING_EAST, {
     structure: STATE_OFFICE
   });
-  const head = page.locator('#inventory-window');
-  const close = page.locator('#damocles-centre-close');
+  const head = page.locator('#panel-damocles [data-panel-control=inventory]');
+  const close = page.locator('#panel-damocles [data-panel-control=close]');
   await page.keyboard.press('t');
   await expect(inventory(page)).not.toHaveText('EMPTY', { timeout: 5000 });
   await page.waitForTimeout(500);
@@ -128,7 +129,7 @@ test('opens, pages and closes the DAMOCLES FILE with the pointer', async ({
   await head.hover();
   await page.waitForTimeout(500);
   if ((await inventory(page).textContent())!.trim() !== FILE) {
-    await page.locator('.stack-rotate[data-rotate="forward"]').click();
+    await page.locator('#panel-damocles [data-rotate="forward"]').click();
     await expect(inventory(page)).toHaveText(FILE, { timeout: 5000 });
   }
   await expect(head).toHaveAttribute('data-opens', 'true');
@@ -193,7 +194,7 @@ test('keeps recovered-panel controls accessible by keyboard', async ({
     structure: STATE_OFFICE
   });
   await fileAtTheHead(page);
-  const head = page.locator('#inventory-window');
+  const head = page.locator('#panel-damocles [data-panel-control=inventory]');
   await head.focus();
   await expect(head).toBeFocused();
   await expect(head).toHaveAccessibleName(

@@ -84,7 +84,8 @@ const primed = async (page: Page): Promise<void> => {
 };
 
 const cash = (page: Page) => page.locator('#panel-damocles [data-field=cash]');
-const centreBox = (page: Page) => page.locator('#damocles-centre-canvas');
+const centreBox = (page: Page) =>
+  page.locator('#panel-damocles [data-panel-control=centre]');
 
 test('the fourth NOVA TRIGGER detonates the bomb on DAMOCLES and saves ERIS', async ({
   page
