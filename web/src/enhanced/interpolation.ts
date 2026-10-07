@@ -34,6 +34,10 @@ export interface BlendableView {
   readonly pose: Pose;
   readonly residents: readonly ScenePlacement[];
   readonly sky: SkyPass | null;
+  /// The sky's Bodies seen from any eye, where a Title can place them so: they are placed for
+  /// the drawn eye at the session's own time rather than blended, as Damocles's Bodies turn
+  /// with the whole accumulator between its steps. Absent, the Bodies are blended.
+  readonly skyBodiesAt?: (pose: Pose) => readonly SkyItem[];
   readonly surface: { readonly grid: SceneGrid };
   readonly viewFixed: readonly ScenePlacement[];
 }
@@ -234,6 +238,11 @@ export const blendView = <V extends BlendableView>(
     return to;
   }
   const base = !sameCell(pose, to) && sameCell(pose, from) ? from : to;
+  const sky = blendSky(from.sky, to.sky, t, {
+    drawn: pose,
+    from: from.pose,
+    to: to.pose
+  });
   return {
     ...base,
     ...(from.eye != null && to.eye != null
@@ -241,11 +250,10 @@ export const blendView = <V extends BlendableView>(
       : {}),
     pose,
     residents: blendPlacements(from.residents, to.residents, t),
-    sky: blendSky(from.sky, to.sky, t, {
-      drawn: pose,
-      from: from.pose,
-      to: to.pose
-    }),
+    sky:
+      sky === null || to.skyBodiesAt === undefined
+        ? sky
+        : { ...sky, bodies: to.skyBodiesAt(pose) },
     viewFixed: followView(base.viewFixed, base.pose, pose)
   };
 };
@@ -256,8 +264,13 @@ export class ViewInterpolator<V extends BlendableView> {
   private current: { readonly pass: number; readonly view: V } | undefined;
 
   /// `continues` says whether one pass's view follows on from the previous pass's, or is cut
-  /// from it, as boarding cuts the view from foot to cab.
-  constructor(private readonly continues: (from: V, to: V) => boolean) {}
+  /// from it, as boarding cuts the view from foot to cab. `settle`, where given, redraws the
+  /// current pass's view for what the Title moves itself between passes, such as a door's
+  /// opening, `t` of the way from the previous pass's.
+  constructor(
+    private readonly continues: (from: V, to: V) => boolean,
+    private readonly settle?: (from: V, to: V, t: number) => V
+  ) {}
 
   /// Forget both passes, as after a restored Save: the next view is drawn as it is published.
   reset(): void {
@@ -290,12 +303,14 @@ export class ViewInterpolator<V extends BlendableView> {
     if (this.previous !== undefined && !this.continues(this.previous, view)) {
       this.previous = undefined;
     }
-    return this.previous === undefined
-      ? view
-      : blendView(
-          this.previous,
-          view,
-          Math.min(1, Math.max(0, phase.fraction))
-        );
+    if (this.previous === undefined) {
+      return view;
+    }
+    const t = Math.min(1, Math.max(0, phase.fraction));
+    return blendView(
+      this.previous,
+      this.settle?.(this.previous, view, t) ?? view,
+      t
+    );
   }
 }
