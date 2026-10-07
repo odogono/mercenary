@@ -31,7 +31,11 @@ import {
   parseDionConsoleCommand
 } from './console.ts';
 import { dionControlActions } from './controls.ts';
-import { dionViewContinues, type DionEnhancedScene } from './enhancedScene.ts';
+import {
+  dionDoorsBetween,
+  dionViewContinues,
+  type DionEnhancedScene
+} from './enhancedScene.ts';
 import { installDionPresentation } from './framePresentation.ts';
 import { PANEL_TOP, dionLogoRgba } from './panel.ts';
 import { dionTakeTargetAt } from './pointer.ts';
@@ -206,7 +210,14 @@ try {
   const keyNames = browserKeyNames();
   const clock = new FixedStepClock();
   // The Enhanced view, drawn between frames (ADR 0078).
-  const views = new ViewInterpolator<DionEnhancedScene>(dionViewContinues);
+  const views = new ViewInterpolator<DionEnhancedScene>(
+    dionViewContinues,
+    // A door the frame moved is drawn part way, as the view's eye is.
+    (from, to, t) => {
+      const doors = dionDoorsBetween(from, to, t);
+      return doors === null ? to : session.enhancedScene(doors);
+    }
+  );
   const release = (): void => {
     controls.releaseAll();
     clock.reset();

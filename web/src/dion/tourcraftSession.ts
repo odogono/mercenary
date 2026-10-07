@@ -31,6 +31,7 @@ import { dionEnhancedScene, type DionEnhancedScene } from './enhancedScene.ts';
 import {
   planDionFrame,
   zoneOf,
+  type DionDoorState,
   type DionFrameState,
   type DionFrameWorld
 } from './frame.ts';
@@ -1428,6 +1429,7 @@ export class TourcraftSession extends DionSession {
     const pitch = v['pitch']!;
     const roll = v['roll']!;
     const body = this.promoted.system.bodies.find(b => b.offset === surface)!;
+    const phase = e.phases[this.state.location / 4];
     return {
       ...dionFrameState(this.state),
       articulationAngle: e.owners['animation']!['sampledAngle']!,
@@ -1477,6 +1479,16 @@ export class TourcraftSession extends DionSession {
         systemEye: f
           ? [f.space.x, f.space.y, f.space.z]
           : [body.centre[0], 64, body.centre[2]],
+        ...(space || phase === undefined
+          ? {}
+          : {
+              turn: {
+                held: this.state.taxi.passenger
+                  ? { latitude: v['latitude']!, longitude: v['longitude']! }
+                  : null,
+                phase
+              }
+            }),
         yaw
       },
       tokens: new Map([
@@ -1547,9 +1559,14 @@ export class TourcraftSession extends DionSession {
   planFrame() {
     return planDionFrame(...this.frameInputs());
   }
-  /// The frame as the shared Enhanced planner takes it (ADR 0077).
-  enhancedScene(): DionEnhancedScene {
-    return dionEnhancedScene(...this.frameInputs());
+  /// The frame as the shared Enhanced planner takes it (ADR 0077), with `doors` opened as the
+  /// Enhanced view draws them between frames where given (ADR 0078).
+  enhancedScene(doors?: ReadonlyMap<number, DionDoorState>): DionEnhancedScene {
+    const [world, state] = this.frameInputs();
+    return dionEnhancedScene(
+      world,
+      doors === undefined ? state : { ...state, doors }
+    );
   }
   protected override admissionFlags(): number {
     return this.state.tourcraft

@@ -31,8 +31,42 @@ export interface TourcraftSkyView {
   readonly roll: number;
   readonly routine: StarRoutine;
   readonly systemEye: readonly [number, number, number];
+  /// On a Body, what the sampled `longitude` and `latitude` are taken from, for the Enhanced
+  /// view to turn the sky smoothly where the frame holds it (ADR 0078): the Body's whole phase
+  /// accumulator, and the angles a taxi passenger's view keeps, or null where they follow the
+  /// eye. Absent in space.
+  readonly turn?: {
+    readonly held: {
+      readonly latitude: number;
+      readonly longitude: number;
+    } | null;
+    readonly phase: number;
+  };
   readonly yaw: number;
 }
+
+const wrapAngle = (angle: number): number => ((angle % 1024) + 1024) % 1024;
+
+/// The sky angles without the frame's sampling: the whole phase accumulator over `$10000`,
+/// and the eye between angle steps. They agree with the sampled angles where the accumulator's
+/// low word and the eye's step fractions are zero. Enhanced presentation only, as Damocles's
+/// `continuousSkyAngles` is.
+export const continuousSkyView = (
+  view: TourcraftSkyView,
+  eye: { readonly x: number; readonly z: number }
+): TourcraftSkyView => {
+  const turn = view.turn;
+  if (turn === undefined || view.body === null) {
+    return view;
+  }
+  const longitude = turn.held?.longitude ?? eye.x / 0x4_00_00;
+  const latitude = turn.held?.latitude ?? eye.z / 0x4_00_00 + 256;
+  return {
+    ...view,
+    latitude: wrapAngle(latitude),
+    longitude: wrapAngle(longitude + turn.phase / 0x1_00_00)
+  };
+};
 const hexColour = (word: number): string =>
   `#${[8, 4, 0]
     .map(s =>

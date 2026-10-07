@@ -22,12 +22,13 @@ import type {
   SceneIsland,
   ScenePlacement
 } from '../enhanced/scene.ts';
-import type { SkyPass, StarPixel } from '../enhanced/sky.ts';
+import type { SkyItem, SkyPass, StarPixel } from '../enhanced/sky.ts';
 import type { CarriedSlot } from '../structure/selection.ts';
 import {
   captureDionParts,
   stRgb,
   type DionCaptured,
+  type DionDoorState,
   type DionFrameState,
   type DionFrameWorld,
   type DionParts,
@@ -36,7 +37,11 @@ import {
 } from './frame.ts';
 import { generalCamera, levelCamera, toCamera } from './raster.ts';
 import { dionStars } from './sky.ts';
-import { tourcraftSkyPass, tourcraftStarPixels } from './tourcraftSky.ts';
+import {
+  continuousSkyView,
+  tourcraftSkyPass,
+  tourcraftStarPixels
+} from './tourcraftSky.ts';
 
 /// Mercenary III as the shared Enhanced planner draws it (ADR 0077, #806).
 ///
@@ -63,12 +68,17 @@ export interface DionEnhancedScene {
   /// and its articulation angle in 256 steps.
   readonly clock: FormClock;
   readonly daylight: boolean;
+  /// The doors as this scene draws them, by slot, for the Enhanced view to open them smoothly
+  /// between frames (ADR 0078).
+  readonly doors: ReadonlyMap<number, DionDoorState>;
   /// Gaps this frame's scene names rather than guesses (ADR 0014).
   readonly gaps: readonly string[];
   readonly inSpace: boolean;
   readonly pose: Pose;
   readonly residents: readonly ScenePlacement[];
   readonly sky: SkyPass | null;
+  /// On a Body, its sky's Bodies for any drawn eye at this frame's phase (ADR 0078).
+  readonly skyBodiesAt?: (pose: Pose) => readonly SkyItem[];
   readonly structure: BoundStructure | null;
   /// The sky item that gives Sunlight: the System's first Body, the one always drawn lit.
   readonly sun: string | null;
@@ -751,14 +761,27 @@ export const dionEnhancedScene = (
         : dionStars(world.sky, state.heading, state.pitch).map(
             ([column, row, colour]) => ({ colour: hex(colour), column, row })
           );
+  // The Enhanced sky turns with the Body's whole phase, where the frame holds a sampled step,
+  // as Damocles's does (ADR 0078).
+  const pose = dionPose(state);
+  const tourcraft = world.tourcraft;
+  const skyView = state.skyView;
+  const skyBodiesAt =
+    tourcraft && skyView?.turn !== undefined && skyView.body !== null
+      ? (pose: Pose): readonly SkyItem[] =>
+          tourcraftSkyPass(
+            tourcraft.system,
+            continuousSkyView(skyView, pose.position),
+            tourcraft.tail,
+            []
+          ).bodies
+      : undefined;
   const sky: SkyPass | null =
-    world.tourcraft && state.skyView
-      ? tourcraftSkyPass(
-          world.tourcraft.system,
-          state.skyView,
-          world.tourcraft.tail,
-          stars
-        )
+    tourcraft && skyView
+      ? {
+          ...tourcraftSkyPass(tourcraft.system, skyView, tourcraft.tail, stars),
+          ...(skyBodiesAt === undefined ? {} : { bodies: skyBodiesAt(pose) })
+        }
       : {
           bodies: [],
           halfWidthDivisor: 0.843_75,
@@ -777,11 +800,13 @@ export const dionEnhancedScene = (
       textStep: 0
     },
     daylight: state.day,
+    doors: state.doors,
     gaps: [...gaps],
     inSpace: space,
-    pose: dionPose(state),
+    pose,
     residents,
     sky,
+    ...(skyBodiesAt === undefined ? {} : { skyBodiesAt }),
     structure,
     sun: world.tourcraft?.system.bodies[0]?.id ?? null,
     surface,
@@ -821,3 +846,24 @@ export const dionViewContinues = (
   from.pose.body === to.pose.body &&
   from.aboard === to.aboard &&
   from.inSpace === to.inSpace;
+
+/// The doors `t` of the way from one frame's openings to the next's, or null where none moved.
+export const dionDoorsBetween = (
+  from: DionEnhancedScene,
+  to: DionEnhancedScene,
+  t: number
+): ReadonlyMap<number, DionDoorState> | null => {
+  let moved = false;
+  const doors = new Map(to.doors);
+  for (const [slot, door] of to.doors) {
+    const was = from.doors.get(slot)?.openUnits ?? 0;
+    if (was !== door.openUnits) {
+      moved = true;
+      doors.set(slot, {
+        ...door,
+        openUnits: was + (door.openUnits - was) * t
+      });
+    }
+  }
+  return moved ? doors : null;
+};
