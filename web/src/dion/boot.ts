@@ -16,6 +16,10 @@ import {
   createSessionOwnership,
   installSessionTakeoverChannel
 } from '../shell/ownership.ts';
+import {
+  installPanelControls,
+  recoveredPanelLayout
+} from '../shell/panelControls.ts';
 import { canvasPointer } from '../shell/pointer.ts';
 import { createPreferences, titlePreferences } from '../shell/preferences.ts';
 import { routeKey, type RouterState } from '../shell/router.ts';
@@ -30,7 +34,7 @@ import {
   executeDionConsoleCommand,
   parseDionConsoleCommand
 } from './console.ts';
-import { dionControlActions } from './controls.ts';
+import { CARD_ACTIONS, dionControlActions } from './controls.ts';
 import {
   dionDoorsBetween,
   dionViewContinues,
@@ -205,7 +209,15 @@ try {
         session.throttleScale(direction);
         checkpoint();
       }
-    })
+    }),
+    // The run mode is Session State, as Damocles's is, so a Save and a reload keep it.
+    {
+      running: () => session.running,
+      toggleRunning: () => {
+        session.toggleRunning();
+        checkpoint();
+      }
+    }
   );
   const keyNames = browserKeyNames();
   const clock = new FixedStepClock();
@@ -356,6 +368,8 @@ try {
   );
 
   let panelPixels: Uint8ClampedArray<ArrayBuffer> | undefined;
+  // The panel's controls, laid once the session's actions exist.
+  let drawPanelControls = (): void => {};
   // The scene last drawn, kept for the frames between the session's steps.
   let built: DionEnhancedScene | undefined;
   const currentScene = (): DionEnhancedScene =>
@@ -402,6 +416,7 @@ try {
     root['day'] = String(snapshot.day);
     root['message'] = snapshot.narrative.message.text;
     root['scriptActive'] = String(snapshot.narrative.flags[6]);
+    drawPanelControls();
   };
 
   const newGame = createNewGameAction(() => {
@@ -473,6 +488,62 @@ try {
     }
   };
   window.addEventListener('pointerdown', unlock);
+  const pointerMayAct = (): boolean => {
+    const state = routerState();
+    return (
+      !state.chromeFocus &&
+      state.console === 'closed' &&
+      state.layer === 'none' &&
+      ownership.mayAdvance()
+    );
+  };
+  // The pointer Accommodation for the Carried Stack, its panels and the run mode (#599), shared
+  // with Damocles's panel. Each is a Semantic Action a key already gives.
+  const panel = content.panel;
+  const panelControls = installPanelControls(
+    document.getElementById('dion-panel-controls')!,
+    recoveredPanelLayout({
+      centre: panel.centre.box,
+      inventory: panel.fields.inventoryName,
+      runLamp: {
+        rows: panel.fields.lamps.rows,
+        x: panel.fields.lamps.x[2]!,
+        y: panel.fields.lamps.y
+      }
+    }),
+    {
+      command: command => {
+        if (command !== 'parameter') {
+          act(CARD_ACTIONS[command]);
+        }
+      },
+      mayAct: pointerMayAct,
+      open: () => act(CARD_ACTIONS.open),
+      rotate: direction => act(direction),
+      toggleRunning: () => controls.toggleRunning()
+    },
+    [canvas.parentElement!]
+  );
+  drawPanelControls = (): void => {
+    const { box } = snapshot.tourcraft!.head;
+    const name = session.openItemName;
+    panelControls.update({
+      centre: {
+        label: session.documentOpen
+          ? `${name ?? 'Open panel'}. Read or activate item`
+          : 'Mercenary III logo',
+        open: session.documentOpen,
+        parameter: false,
+        resting: box.steps === 0 && box.from === null
+      },
+      head: {
+        inventory: snapshot.tourcraft!.carry.label.trim(),
+        opens: session.headOpens
+      },
+      running: session.running
+    });
+  };
+  drawPanelControls();
   // A press on the drawn take candidate takes it, as `T` does (#756).
   canvas.parentElement!.addEventListener('click', event => {
     const state = routerState();

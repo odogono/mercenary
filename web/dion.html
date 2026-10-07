@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Mercenary III</title>
     <link rel="stylesheet" href="/src/shell/chrome.css" />
+    <link rel="stylesheet" href="/src/shell/panelControls.css" />
     <style>
       @font-face {
         font-family: 'Damocles Interface';
@@ -104,6 +105,16 @@
         pointer-events: none;
       }
 
+      /* The panel's controls cover its 64 rows, the bottom of the screen in either presentation. */
+      #dion-panel-controls {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 100%;
+        aspect-ratio: 320 / 64;
+        pointer-events: none;
+      }
+
       #dion-screen:not([data-presentation='enhanced']) #dion-enhanced-view,
       #dion-screen:not([data-presentation='enhanced']) #dion-panel {
         display: none;
@@ -153,6 +164,7 @@
         >
           Your browser cannot display the Mercenary III view.
         </canvas>
+        <div id="dion-panel-controls"></div>
       </div>
       <p id="status" role="status">Loading Mercenary III…</p>
       <p id="failure" role="alert" hidden></p>

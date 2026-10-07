@@ -130,7 +130,7 @@ export const closeConsole = async (page: Page): Promise<void> => {
 };
 
 export const inventory = (page: Page) =>
-  page.locator('#panel-damocles [data-field=inventory]');
+  page.locator('#panel-damocles [data-panel-control=inventory]');
 
 /// The Damocles Display's 48-cell row, published by the boot because the row is painted on a
 /// canvas and has no readable text of its own.

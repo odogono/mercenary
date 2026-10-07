@@ -91,7 +91,8 @@ const seated = async (page: Page): Promise<void> => {
   });
 };
 
-const centreBox = (page: Page) => page.locator('#damocles-centre-canvas');
+const centreBox = (page: Page) =>
+  page.locator('#panel-damocles [data-panel-control=centre]');
 
 test('the computer recolours the panel and destroys DAMOCLES from option 4', async ({
   page

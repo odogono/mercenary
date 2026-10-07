@@ -10,6 +10,7 @@ Runtime paths are relative to `web/src/`; lab modules to `research/mercenary-iii
 | --- | --- | --- | --- |
 | Take, Drop, rotation, pointer Take | `dion/carry.ts`, `interaction/carriedStack.ts`, `dion/pointer.ts` | `m3lab/tourcraft_export.py`, `presentation/gameplay.json` | `dion-carry.test.ts`, `dion-carry-session.test.ts` |
 | Open, Read, reveal, paging | `interaction/headCommands.ts`, `dion/head.ts`, `dion/tourcraftSession.ts` | `m3lab/head.py`, `presentation/head.json` | `dion-carry-session.test.ts`, `dion-tourcraft-session.test.ts` |
+| Panel pointer controls, run mode | `shell/panelControls.ts`, `dion/boot.ts`, `dion/session.ts` (`$50F22`) | `m3lab/panel.py`, `panel.json` `fields.lamps` | `panel-controls.test.ts`, `dion-run.test.ts`, `dion-panel-controls.e2e.ts` |
 | Pickup scripts and model replacement | `dion/tourcraftNarrative.ts`, `dion/script.ts`, `dion/tourcraftSession.ts` | `m3lab/tourcraft_export.py`, `m3lab/scripts.py`, `presentation/programmes.json` | `dion-carry-session.test.ts`, `dion-tourcraft-narrative.test.ts` |
 | Cards, detector, fruit machine | `dion/devices.ts`, `dion/tourcraftSession.ts` | `m3lab/head.py`, `presentation/head.json` | `dion-devices.test.ts` |
 | Pawn transactions | `dion/pawn.ts`, `dion/carry.ts` | `m3lab/head.py`, `presentation/head.json` | `dion-pawn.test.ts` |

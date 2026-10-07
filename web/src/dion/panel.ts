@@ -69,6 +69,8 @@ export interface DionPanelView {
   readonly pitch: number;
   /// `$70B4`/`$70B8`, each shown as `(v × $FA00) >> 16`.
   readonly position: readonly [number, number];
+  /// `$71D2` = 3: the run toggle is on.
+  readonly running?: boolean;
   readonly speed?: { readonly reverse: boolean; readonly value: number };
 }
 
@@ -317,6 +319,14 @@ export const drawDionPanel = (
       }
     }
   });
+
+  // `$50F56`: the run lamp, plane 1 set while walking (`$71D2` = 2) and clear while running.
+  const [runLeft, runRight] = fields.lamps.x[2]!;
+  for (let y = fields.lamps.y; y < fields.lamps.y + fields.lamps.rows; y += 1) {
+    for (let x = runLeft; x <= runRight; x += 1) {
+      planes.set(x, y, 1, view.running !== true);
+    }
+  }
 
   writeField(
     planes,

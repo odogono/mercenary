@@ -118,6 +118,11 @@ export interface DionResumeRecord {
 }
 
 const SPACE = 0x20;
+/// `$50F22`, the R key's toggle (`$568C4`, scancode `$13`): running latches the walk step `$71CE`
+/// to `$31400`, the log-float 10.0 against the opening's `$21800` (6.0), and the turn `$71D2` to 3
+/// against 2. Walking puts both back. The ratios are Damocles's recovered 5/3 and 3/2.
+const RUN_STEP = 10;
+const RUN_TURN = 3;
 const SIGN_BUFFER = 0xb3_f2;
 
 export class DionSession implements TitleSession<
@@ -125,6 +130,9 @@ export class DionSession implements TitleSession<
   DionResumeRecord
 > {
   intent: Intent = IDLE;
+  /// `$71D2`: the run toggle, which the R key latches and the run lamp shows. It is Session State
+  /// rather than the Control Profile's, so a Save and a reload keep it, as Damocles's do.
+  protected runMode = false;
   protected remainder = 0;
   protected narrative: DionNarrative;
   protected events: {
@@ -145,11 +153,11 @@ export class DionSession implements TitleSession<
     this.tickSeconds = 1 / content.presentation.ticksPerSecond.value;
     this.ticksPerFrame = content.presentation.ticksPerFrame.value;
     this.substeps = content.presentation.walkingSubsteps.value;
-    // One shared step a substep at the recovered increments; MIII has no R mode.
+    // One shared step a substep at the recovered increments, which the R mode raises.
     this.walkRules = {
       eyeHeight: opening.eye[1],
-      runMultiplier: 1,
-      runTurnMultiplier: 1,
+      runMultiplier: RUN_STEP / opening.walk.step,
+      runTurnMultiplier: RUN_TURN / opening.walk.turn,
       turnRadiansPerSecond: (2 * Math.PI * opening.walk.turn) / 1024,
       unitsPerSecond: opening.walk.step
     };
@@ -241,6 +249,16 @@ export class DionSession implements TitleSession<
 
   press(action: DionAction): void {
     this.state = { ...this.state, pending: action };
+  }
+
+  /// Whether the run toggle is on.
+  get running(): boolean {
+    return this.runMode;
+  }
+
+  /// The run key: latch running on, or off again.
+  toggleRunning(): void {
+    this.runMode = !this.runMode;
   }
 
   drainSound(): typeof this.events {

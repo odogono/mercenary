@@ -90,6 +90,13 @@ export interface DionPanelDocument {
     };
     readonly height: DionPanelTextField;
     readonly inventoryName: DionPanelTextField;
+    /// The three lamps' columns on their shared rows: ground (`$50F9C`), attack (`$51002`) and
+    /// run (`$50F22`).
+    readonly lamps: {
+      readonly rows: number;
+      readonly x: readonly (readonly [number, number])[];
+      readonly y: number;
+    };
     readonly location: DionPanelTextField;
     readonly messageBar: {
       readonly cells: readonly number[];
@@ -238,6 +245,7 @@ export const readDionPanelBody = (
   const grid = field('grid');
   const gauges = record(field('gauges'), 'fields.gauges');
   const messageBar = field('messageBar');
+  const lamps = field('lamps');
   const cardText = field('cardText');
   const palette = record(raw['palette'], 'palette');
   const strings = record(raw['strings'], 'strings');
@@ -344,6 +352,22 @@ export const readDionPanelBody = (
       },
       height: textField(field('height'), 'fields.height'),
       inventoryName: textField(field('inventoryName'), 'fields.inventoryName'),
+      lamps: {
+        rows: int(lamps['rows'], 'fields.lamps.rows', 1, 16),
+        x: (() => {
+          const entries = list(lamps['list'], 'fields.lamps.list');
+          if (entries.length !== 3) {
+            fail('fields.lamps.list does not hold three lamps');
+          }
+          return entries.map((entry, index) =>
+            span(
+              record(entry, `fields.lamps.list[${index}]`)['x'],
+              `fields.lamps.list[${index}].x`
+            )
+          );
+        })(),
+        y: int(lamps['y'], 'fields.lamps.y', 136, 199)
+      },
       location: textField(field('location'), 'fields.location'),
       messageBar: {
         cells: ints(messageBar['cells'], 'fields.messageBar.cells', 48, 0, 319),
