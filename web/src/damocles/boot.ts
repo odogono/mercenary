@@ -10,6 +10,10 @@ import {
   planEnhancedFrame,
   zoomedFieldOfView
 } from '../enhanced/frame.ts';
+import {
+  ViewInterpolator,
+  type BlendableView
+} from '../enhanced/interpolation.ts';
 import { sceneLighting, sunlight } from '../enhanced/lighting.ts';
 import { IDLE } from '../gameCore/index.ts';
 import {
@@ -437,6 +441,13 @@ try {
     toggleRunning: () => commitAction(() => session.toggleRunning())
   });
   const clock = new FixedStepClock();
+  // The Enhanced view aboard, drawn between craft passes (ADR 0078). Leaving or reaching a
+  // Body cuts it.
+  const views = new ViewInterpolator<BlendableView>(
+    (from, to) =>
+      from.pose.body === to.pose.body && (from.eye == null) === (to.eye == null)
+  );
+  let viewSession = session;
   const release = (): void => {
     controls.releaseAll();
     clock.reset();
@@ -740,6 +751,7 @@ try {
       const lines = executeDamoclesConsoleCommand(command, deps);
       drainEffects();
       snapshot = session.snapshot;
+      views.reset();
       if (
         command.kind === 'dropObject' ||
         command.kind === 'fetchObject' ||
@@ -1346,6 +1358,23 @@ try {
     const enhanced =
       presentationPreset === undefined || presentationPreset === 'enhanced';
     const space = snapshot.craft?.space ?? null;
+    // Aboard, the Enhanced view is drawn between craft passes (ADR 0078).
+    if (viewSession !== session) {
+      views.reset();
+      viewSession = session;
+    }
+    const view = views.view(
+      {
+        eye: space?.position ?? null,
+        pose: snapshot.pose,
+        residents: snapshot.residents,
+        sky: null,
+        surface: snapshot.surface,
+        viewFixed: []
+      },
+      enhanced ? session.passPhase(clock.leftover) : null
+    );
+    const { pose } = view;
     // Which starfield the frame loop takes (#578): space's, `$0505B8` on foot on an island's
     // core, where `$78A6` is 0 and `$7AAA` is not, and the flight branch's anywhere else.
     const onFoot = snapshot.occupancy.kind === 'onFoot';
@@ -1368,7 +1397,7 @@ try {
       starArithmetic === null
         ? null
         : starViewOf(
-            snapshot.pose,
+            pose,
             content.doc.orientation,
             routine,
             onFoot,
@@ -1387,7 +1416,7 @@ try {
             horizonCut,
             impact: snapshot.impact,
             impactPassed: snapshot.impactPassed,
-            position: snapshot.pose.position,
+            position: pose.position,
             sky: snapshot.surface.sky,
             smooth: enhanced,
             stars,
@@ -1396,7 +1425,7 @@ try {
         : spaceSkyPass(system, {
             destroyedBodies: snapshot.destroyedBodies,
             drift: snapshot.drift,
-            eye: space.position,
+            eye: view.eye ?? space.position,
             impact: snapshot.impact,
             impactPassed: snapshot.impactPassed,
             inScene: index =>
@@ -1407,10 +1436,10 @@ try {
     // Body switch or a Save restored onto another Body draws that Body's workspace (#379).
     const plan = planEnhancedFrame(
       snapshot.surface,
-      snapshot.pose,
+      pose,
       zoomedDoc(snapshot.viewExponent),
       snapshot.structure,
-      snapshot.residents,
+      view.residents,
       [
         ...snapshot.carried,
         ...snapshot.briefcaseStore,
@@ -1452,7 +1481,7 @@ try {
       sun === null
         ? undefined
         : {
-            lighting: sceneLighting(content.doc.lighting, snapshot.pose, sun, {
+            lighting: sceneLighting(content.doc.lighting, pose, sun, {
               ambient: (ambientLight ?? DEFAULT_AMBIENT_LIGHT) / 100,
               shadowDepth: (shadowDepth ?? DEFAULT_SHADOW_DEPTH) / 100
             })
@@ -1507,7 +1536,7 @@ try {
           resumePersistence.dirty();
         }
       });
-      if (steps > 0) {
+      if (steps > 0 || views.blending) {
         draw();
       } else {
         paintNotices();
