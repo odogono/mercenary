@@ -1972,6 +1972,9 @@ export interface DionParts {
     /// Drawn about the eye rather than in the world: the passenger's cab and the driver's
     /// head, or a model the view's own turn turns (`$5470A`'s view-fixed path).
     readonly viewFixed: boolean;
+    /// A view-fixed model's own yaw byte, 256 steps a turn, where it turns by that rather than
+    /// with the view: the passenger's cab turns with its taxi (`$543AA` bit 6).
+    readonly yaw?: number;
   }[];
   /// The scene palette half each colour word with bit 7 reads, by day and by night.
   readonly scene: {
@@ -2197,7 +2200,8 @@ export const captureDionParts = (
               drawModel(view, bound, slot, model, pose)
             ),
             slot,
-            viewFixed
+            viewFixed,
+            ...((mode & 0xc0) === 0x40 ? { yaw: pose.yaw } : {})
           }
         : {
             forms: {

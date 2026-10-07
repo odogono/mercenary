@@ -569,6 +569,10 @@ const residentPlacement = (
       `slot:${resident.slot}`
     );
   return {
+    // A Pose's heading rises with Dion's, a 1024th a step, and a yaw byte is a 256th.
+    ...(resident.yaw === undefined
+      ? {}
+      : { bearing: (resident.yaw * 2 * Math.PI) / 256 }),
     faceCount: mesh.faces.length,
     ...(chosen === undefined ? {} : { forms: chosen.forms }),
     heading: 0,

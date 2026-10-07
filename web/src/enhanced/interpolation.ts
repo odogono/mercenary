@@ -106,20 +106,26 @@ export const blendPlacements = (
 };
 
 /// Models fixed to the view, captured about the current pass's eye, carried to the drawn eye:
-/// turned about it by the bearing between the two and moved with it, so they stay where the
-/// view holds them.
+/// moved with it, and turned about it by the bearing between the two, so they stay where the
+/// view holds them. A model with a bearing of its own, as a cab turns with its taxi rather
+/// than with the passenger's look, turns instead from that bearing to `bearingOf`'s.
 export const followView = (
   viewFixed: readonly ScenePlacement[],
   captured: Pose,
-  drawn: Pose
+  drawn: Pose,
+  bearingOf: (placement: ScenePlacement) => number | undefined = () => undefined
 ): readonly ScenePlacement[] => {
   if (viewFixed.length === 0 || captured === drawn) {
     return viewFixed;
   }
-  const turn = arc(captured.heading, drawn.heading);
-  const sin = Math.sin(turn);
-  const cos = Math.cos(turn);
+  const look = arc(captured.heading, drawn.heading);
   return viewFixed.map(placement => {
+    const turn =
+      placement.bearing === undefined
+        ? look
+        : arc(placement.bearing, bearingOf(placement) ?? placement.bearing);
+    const sin = Math.sin(turn);
+    const cos = Math.cos(turn);
     const x = placement.position.x - captured.position.x;
     const z = placement.position.z - captured.position.z;
     return {
@@ -133,6 +139,18 @@ export const followView = (
     };
   });
 };
+
+/// The bearing `t` of the way between two passes' models fixed to the view, by id, for those
+/// with a bearing of their own in both.
+const bearingsBetween =
+  (from: readonly ScenePlacement[], to: readonly ScenePlacement[], t: number) =>
+  (placement: ScenePlacement): number | undefined => {
+    const was = from.find(item => item.id === placement.id)?.bearing;
+    const is = to.find(item => item.id === placement.id)?.bearing;
+    return was === undefined || is === undefined
+      ? undefined
+      : lerpAngle(was, is, t);
+  };
 
 const blendSkyItem = (from: SkyItem, to: SkyItem, t: number): SkyItem => {
   if (from.kind === 'disc' && to.kind === 'disc') {
@@ -254,7 +272,12 @@ export const blendView = <V extends BlendableView>(
       sky === null || to.skyBodiesAt === undefined
         ? sky
         : { ...sky, bodies: to.skyBodiesAt(pose) },
-    viewFixed: followView(base.viewFixed, base.pose, pose)
+    viewFixed: followView(
+      base.viewFixed,
+      base.pose,
+      pose,
+      bearingsBetween(from.viewFixed, to.viewFixed, t)
+    )
   };
 };
 
