@@ -1,4 +1,5 @@
-import { IDLE } from '../gameCore/index.ts';
+import { craftDivide } from '../craft/pass.ts';
+import { IDLE, freeLook } from '../gameCore/index.ts';
 import {
   closePanel,
   initialHeadCommands,
@@ -123,6 +124,9 @@ export class TourcraftSession extends DionSession {
   private notes: string[] = [];
   private readonly metisContent: DionContent;
   private readonly worlds: ReadonlyMap<number, DionFrameWorld>;
+  /// Free Look is an unsaved on-foot Extension (ADR 0059), measured in radians.
+  private lookPitch = 0;
+  private levelPitch = 0;
   constructor(
     readonly promoted: TourcraftContent,
     restore?: DionResumeRecord
@@ -973,8 +977,82 @@ export class TourcraftSession extends DionSession {
     super.handleInput();
   }
   protected override frame(): void {
+    const previous = this.state;
+    const wasAboard = this.aboard;
+    // The recovered simulation and physical craft keep their own pitch. Apply the
+    // Extension after their pass, before drawing and selecting through that view.
+    this.state = this.levelView();
     this.deviceFrame();
     this.worldFrame();
+    this.lookPitch =
+      this.aboard ||
+      wasAboard ||
+      previous.location !== this.state.location ||
+      previous.cell !== this.state.cell ||
+      previous.region !== this.state.region
+        ? 0
+        : freeLook(
+            this.lookPitch,
+            this.intent.look,
+            this.ticksPerFrame * this.tickSeconds
+          );
+    this.levelPitch = this.state.pitch;
+    if (this.lookPitch !== 0) {
+      this.state = {
+        ...this.state,
+        pitch:
+          (this.levelPitch -
+            Math.round((this.lookPitch * 1024) / (2 * Math.PI))) &
+          65_535
+      };
+      this.selectCandidate();
+    }
+  }
+
+  /// Restore the recovered view and its numeric caches without changing the live tilt.
+  private levelView(): DionSnapshot {
+    if (this.lookPitch === 0) {
+      return this.state;
+    }
+    const e = this.expanded;
+    return {
+      ...this.state,
+      pitch: this.levelPitch,
+      tourcraft: {
+        ...e,
+        owners: {
+          ...e.owners,
+          craft: e.flight
+            ? e.owners['craft']!
+            : {
+                ...e.owners['craft'],
+                cosPitch:
+                  this.promoted.arithmetic.sine[
+                    (this.levelPitch + 256) & 1023
+                  ]!,
+                pitch: this.levelPitch,
+                sinPitch: this.promoted.arithmetic.sine[this.levelPitch & 1023]!
+              },
+          view: {
+            ...e.owners['view'],
+            pitch: this.levelPitch,
+            pitchTangent: craftDivide(
+              this.promoted.arithmetic,
+              this.promoted.arithmetic.sine[this.levelPitch & 1023]!,
+              this.promoted.arithmetic.sine[(this.levelPitch + 256) & 1023]!
+            )
+          }
+        }
+      }
+    };
+  }
+
+  recentreLook(): void {
+    if (this.lookPitch !== 0) {
+      this.state = this.levelView();
+      this.lookPitch = 0;
+      this.selectCandidate();
+    }
   }
   private deviceFrame(): void {
     const outcome = stepFruitMachine(this.expanded.devices);
@@ -1137,7 +1215,7 @@ export class TourcraftSession extends DionSession {
         this.narrative.frame();
       }
       const stick =
-        (this.intent.walk > 0 ? 1 : this.intent.walk < 0 ? 2 : 0) |
+        (this.intent.pitch < 0 ? 1 : this.intent.pitch > 0 ? 2 : 0) |
         (this.intent.turn < 0 ? 4 : this.intent.turn > 0 ? 8 : 0);
       const enteringBody = flight.state.arrival !== null;
       const bodyYaw = enteringBody
@@ -1645,13 +1723,26 @@ export class TourcraftSession extends DionSession {
   }
   override captureResume(): DionResumeRecord {
     const record = super.captureResume();
+    const level = this.levelView();
+    const [world, view] = this.frameInputs();
+    const candidate =
+      this.lookPitch === 0
+        ? record.snapshot.candidate
+        : planDionFrame(world, {
+            ...view,
+            cameraAngles: { ...view.cameraAngles!, pitch: level.pitch },
+            pitch: level.pitch,
+            skyView: { ...view.skyView!, pitch: level.pitch }
+          }).candidate;
     return {
       ...record,
       snapshot: {
         ...record.snapshot,
+        candidate,
+        pitch: level.pitch,
         tourcraft: {
-          ...this.expanded,
-          liveIntent: { ...this.intent, running: this.runMode }
+          ...level.tourcraft!,
+          liveIntent: { ...this.intent, look: 0, running: this.runMode }
         }
       }
     };

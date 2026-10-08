@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from 'bun:test';
 
+import { dionControlActions } from '../src/dion/controls.ts';
 import { loadTourcraftContent } from '../src/dion/tourcraftContent.ts';
 import {
   decodeTourcraftRecord,
@@ -8,6 +9,7 @@ import {
 } from '../src/dion/tourcraftSave.ts';
 import { TourcraftSession } from '../src/dion/tourcraftSession.ts';
 import { IDLE } from '../src/gameCore/index.ts';
+import { BrowserControlProfile } from '../src/shell/input.ts';
 import { frames, press } from './dion-journey.ts';
 
 const content = await loadTourcraftContent(async path => {
@@ -107,6 +109,53 @@ const eagle = (key = true) => {
 const flight = (s: TourcraftSession) => s.snapshot.tourcraft!.flight;
 const resident = (s: TourcraftSession) =>
   s.snapshot.tourcraft!.residents.find(r => r.slot === 3)!;
+test('boarding centers Free Look and a tilted view after leaving never tilts the parked craft', () => {
+  const s = new EagleSession(content);
+  s.target(181);
+  press(s, 'take');
+  s.intent = { ...IDLE, look: 1 };
+  frames(s, 2);
+  expect(s.snapshot.pitch).not.toBe(511);
+  s.target(3);
+  press(s, 'board');
+  expect(s.snapshot.pitch).toBe(flight(s)!.craft.pitch);
+  frames(s);
+  expect(s.snapshot.pitch).toBe(flight(s)!.craft.pitch);
+  press(s, 'leave');
+  const parked = flight(s)!.craft;
+  frames(s, 2);
+  expect(s.snapshot.pitch).not.toBe(parked.pitch);
+  expect(flight(s)!.craft.pitch).toBe(parked.pitch);
+  expect(flight(s)!.craft.trig.pitch).toBe(parked.pitch);
+  const restored = new TourcraftSession(content, s.captureResume());
+  expect(restored.snapshot.pitch).toBe(parked.pitch);
+  expect(restored.expandedFrameState().pitch).toBe(parked.pitch);
+});
+test('the right stick pitches EAGLE through the browser Control Profile', () => {
+  const s = eagle();
+  const controls = new BrowserControlProfile(
+    dionControlActions({
+      act: action => s.press(action),
+      extendedControls: () => false,
+      passenger: () => s.aboard
+    })
+  );
+  const before = flight(s)!.craft.pitch;
+  controls.pollPads([{ axes: [0, 0, 0, 1], buttons: [], mapping: 'standard' }]);
+  s.intent = controls.intent;
+  expect(s.intent.pitch).toBe(1);
+  expect(s.intent.walk).toBe(0);
+  s.throttleKey(11);
+  frames(s, 12);
+  expect(flight(s)!.craft.pitch).not.toBe(before);
+  controls.pollPads([
+    { axes: [0, 0, 0, -1], buttons: [], mapping: 'standard' }
+  ]);
+  s.intent = controls.intent;
+  const raised = flight(s)!.craft.pitch;
+  frames(s, 2);
+  expect(flight(s)!.craft.pitch).toBeGreaterThan(raised);
+});
 test('Board requires KEY181 and stages EAGLE in VOID without consuming the key', () => {
   expect(flight(eagle(false))).toBeNull();
   const s = eagle();
@@ -136,7 +185,7 @@ test('manual throttle, pitch and yaw fly EAGLE; airborne Leave refuses', () => {
   const s = eagle(),
     before = flight(s)!.craft;
   s.throttleKey(11);
-  s.intent = { ...IDLE, turn: 1, walk: -1 };
+  s.intent = { ...IDLE, pitch: 1, turn: 1 };
   frames(s, 12);
   expect(flight(s)!.craft.pitch).not.toBe(before.pitch);
   expect(flight(s)!.craft.yaw).not.toBe(before.yaw);
@@ -158,7 +207,7 @@ test('hard touchdown stops and disembarks EAGLE', () => {
 test('midflight Save retains raw craft words and produces the same future', () => {
   const s = eagle();
   s.throttleKey(10);
-  s.intent = { ...IDLE, turn: -1, walk: -1 };
+  s.intent = { ...IDLE, pitch: 1, turn: -1 };
   frames(s, 10);
   const saved = decodeTourcraftRecord(
     encodeTourcraftRecord(content, s.captureResume(), 'METIS · EAGLE'),
@@ -185,7 +234,7 @@ test('ground launch is inert; airborne launch reaches space and preserves a save
   s.launchCraft();
   expect(flight(s)!.craft.swing).toBe(false);
   s.throttleKey(11);
-  s.intent = { ...IDLE, walk: -1 };
+  s.intent = { ...IDLE, pitch: 1 };
   frames(s, 10);
   s.intent = IDLE;
   s.launchCraft();
@@ -207,7 +256,7 @@ test('ground launch is inert; airborne launch reaches space and preserves a save
 test('manual arrival binds promoted Bodies and refuses unpromoted content with a note', () => {
   const s = eagle();
   s.throttleKey(11);
-  s.intent = { ...IDLE, walk: -1 };
+  s.intent = { ...IDLE, pitch: 1 };
   frames(s, 10);
   s.intent = IDLE;
   s.launchCraft();
@@ -293,7 +342,7 @@ test('refused Board while piloting keeps the flight counter and Save valid', () 
 test('manual arrival subtracts the destination Body Rotation', () => {
   const s = eagle();
   s.throttleKey(11);
-  s.intent = { ...IDLE, walk: -1 };
+  s.intent = { ...IDLE, pitch: 1 };
   frames(s, 10);
   s.intent = IDLE;
   s.launchCraft();
