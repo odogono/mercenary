@@ -52,7 +52,8 @@ const HELP = [
   'get · drop [<object-slot|name>]',
   'set <name> <value>',
   `set names: ${Object.keys(SETTING_VALUES).join(', ')}`,
-  'save <slot> [confirm] · load <slot>'
+  'save <slot> [confirm] · load <slot>',
+  'floor <n>'
 ];
 
 /// The transcript line for one message the message bar has started to show, as Damocles's and
@@ -153,8 +154,12 @@ export const executeDionConsoleCommand = (
     case 'gotoObject':
     case 'gotoRoom':
       return ['goto is not ported to Mercenary III yet'];
-    case 'floor':
-      return ['floor is not ported to Mercenary III yet'];
+    case 'floor': {
+      const outcome = session.changeFloor(command.floor);
+      return outcome.kind === 'refused'
+        ? [`floor refused: ${outcome.reason}`]
+        : [`moved to Floor ${command.floor}`];
+    }
     case 'switchBody':
       return ['switch is not ported to Mercenary III yet'];
     case 'atlas':

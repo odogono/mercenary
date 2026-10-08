@@ -57,7 +57,7 @@ const replace = (
 describe('bounded TOURCRAFT content admission', () => {
   test('admits all dependencies without any Catalogue reads', async () => {
     const content = await load(documents());
-    expect(content.geometry.size).toBe(89);
+    expect(content.geometry.size).toBe(96);
     expect(content.promotion.placements).toHaveLength(39);
     expect(content.promotion.surfaceCells).toHaveLength(512);
     expect(content.gameplay.initial.source).toBe('gameplay-opening');

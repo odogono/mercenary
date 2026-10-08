@@ -555,7 +555,7 @@ Vector text a Surface Structure's own record places on one of its faces. The gam
 _Avoid_: Sign, decal, building-detail text
 
 **Damocles Lift**:
-A structure region whose flags mark it as a lift, where a player on foot changes Floor by key. It reaches only the Floors its Floor Table binds, and refuses every other Floor and the one its Floor Label already shows. It rides in the order B, G, 1 … 9, so Floor 10 lies just below Floor 0 on the ride, though it is the highest Floor in the structure's coordinates.
+A structure region whose flags mark it as a lift, where a player on foot changes Floor by key. It reaches only the Floors its Floor Table binds, and refuses every other Floor and the one its Floor Label already shows. It rides in the order B, G, 1 … 9, so Floor 10 lies just below Floor 0 on the ride, though it is the highest Floor in the structure's coordinates. Mercenary III's lift is the same mechanism, and the two Titles share its rules.
 _Avoid_: Elevator, Lift Journey, lift object, lift attachment
 
 **Structure Workspace**:

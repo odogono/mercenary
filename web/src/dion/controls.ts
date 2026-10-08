@@ -20,6 +20,8 @@ export const dionControlActions = (options: {
   readonly act: (action: DionAction) => void;
   readonly extendedControls: () => boolean;
   readonly launch?: () => void;
+  /// A Floor key: whether the lift took it (#835). Outside a lift it keeps its other meaning.
+  readonly liftKey?: (floor: number) => boolean;
   readonly passenger: () => boolean;
   readonly recentreLook?: () => void;
   readonly throttleKey?: (key: number) => void;
@@ -32,7 +34,7 @@ export const dionControlActions = (options: {
   keypadDigit: inert,
   launch: options.launch ?? inert,
   leaveCraft: () => options.act('leave'),
-  liftKey: () => false,
+  liftKey: options.liftKey ?? (() => false),
   // The shared profile reads only whether the player is aboard, and a passenger leaves by LEAVE
   // CRAFT; the session keeps its own passenger reference.
   occupancy: () =>

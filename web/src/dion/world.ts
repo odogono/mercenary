@@ -34,6 +34,9 @@ export interface DionCell {
   readonly alias: number | null;
   readonly cell: number;
   readonly detail: number;
+  /// The Floor Table (`$560F4..$5614C`): each Floor above 0 the lift can bind, by Floor.
+  /// Absent where a document carries Floor 0 alone, as the D1 slice does.
+  readonly floors?: ReadonlyMap<number, DionFloor>;
   readonly ground: {
     readonly address: number;
     readonly index: number;
@@ -56,6 +59,25 @@ export interface DionCell {
   readonly x: number;
   readonly z: number;
 }
+
+/// A Floor above 0: the structure the arrival binds (`$56DAA`), in the cell's scale, the
+/// palette it binds when the alias record has none of its own (`$56DB4`), and the height of
+/// the Floor above Floor 0, the Floor times the storey pitch `$7198`.
+export interface DionFloor {
+  readonly baseY: number;
+  readonly palette: number;
+  readonly structure: DionStructure;
+}
+
+/// The structure `cell` binds on `floor`, Floor 0's being the cell's own.
+export const dionCellStructure = (
+  world: Pick<DionWorld, 'structures'>,
+  cell: DionCell,
+  floor = 0
+): DionStructure | undefined =>
+  floor === 0
+    ? world.structures.get(cell.structure)?.get(cell.scale.join(','))
+    : cell.floors?.get(floor)?.structure;
 
 export interface DionWall {
   readonly colour: number;

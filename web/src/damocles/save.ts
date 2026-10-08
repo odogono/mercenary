@@ -1,5 +1,10 @@
 import type { Catalogue } from '../catalogue/data.ts';
 import { craftPanelSpeed } from '../craft/pass.ts';
+import {
+  HIGHEST_FLOOR,
+  LIFT_STEP_TICKS,
+  type LiftRide
+} from '../structure/lift.ts';
 import type { AttachmentLatch } from '../structure/selection.ts';
 import {
   OPTION_MAXIMA,
@@ -270,25 +275,8 @@ export interface BoundStructureSnapshot {
   readonly instanceId: string;
   readonly regionIndex: number | null;
   /// A Damocles Lift ride in progress, or null when none is pending (`$788A` = `$FFFF`).
-  readonly ride: LiftRideSnapshot | null;
+  readonly ride: LiftRide | null;
 }
-
-/// A Damocles Lift ride between admission and arrival (docs/research/damocles-lift-ride.md).
-/// The region stays frozen for the whole ride, so the player is still in the lift it began in.
-export interface LiftRideSnapshot {
-  /// `$788E`: ticks until the next step, 1 to 25. It runs only while the pinned door is shut.
-  readonly countdown: number;
-  /// `$788A`: the Floor asked for. A later admitted key replaces it.
-  readonly destination: number;
-  /// `$7AC4`: the Floor the Floor Label shows, stepped one Floor at a time along B, G, 1 … 9.
-  readonly label: number;
-}
-
-/// `$788C`: the lift's step period in ticks, a constant 25.
-export const LIFT_STEP_TICKS = 25;
-
-/// The highest Floor: the Floor Table's level 10, which the lift labels `B`.
-export const HIGHEST_FLOOR = 10;
 
 /// The craft Mover's words aboard (ADR 0051 decision 4), in the program's units. The position
 /// is the Pose's, which aboard is the craft's X, Y and Z.
@@ -2365,7 +2353,7 @@ export const decodeDamoclesSave = (
         slot
       };
     });
-    let ride: LiftRideSnapshot | null = null;
+    let ride: LiftRide | null = null;
     if (bound['ride'] !== null) {
       const saved = object(bound['ride'], 'snapshot.structure.ride');
       const { countdown, destination, label } = saved;
