@@ -14,7 +14,7 @@ One directory per concern. Pages load a `boot.ts` (`web/*.html` names which). Ea
 ## Engine shared by titles
 
 - `gameCore/`: the pure simulation step (state, intent, elapsed time).
-- `flight/`: the craft Mover. `onFoot/`: the on-foot Mover shared by Damocles and Mercenary III.
+- `flight/`: Targ's craft Mover, the Reference Build's filters; Damocles and Mercenary III fly with `craft/pass.ts`. `onFoot/`: the on-foot Mover shared by Damocles and Mercenary III.
 - `craft/`: the evidenced Damocles/Mercenary III numeric craft and space passes, arithmetic tables and structural inputs. Each Title owns orchestration and effects (ADR 0074).
 - `navigation/`: Room walls and Doorways. `interaction/`: shared Carried Stack rules and Head Commands; each Title owns resident state, tables and effects (ADRs 0075/0076).
 - `orientation/`, `projection/`, `math/` (the governed elementary functions, ADR 0022).
@@ -22,7 +22,7 @@ One directory per concern. Pages load a `boot.ts` (`web/*.html` names which). Ea
 - `sky/`: the Orrery and Body Time. `text/`: composing decoded messages.
 - `sound/`: Targ’s bounded SID synth, worklet and presenter. Damocles and Dion use the YM2149 core in `damocles/psg.ts` with their own sound drivers. `soundboard/` owns the listening page and arrangements.
 - `scene/`: frame colours. `rendering/`: the WebGL2 Filled Presentation renderer shared by Damocles and Dion.
-- `enhanced/`: the one Enhanced planner Damocles and Dion share (ADR 0077): the scene a Title supplies, the frame, the sky triangles, Sunlight, and the interpolation that draws the view between simulation passes (ADR 0078). `structure/`: structure selection, regions and entrance attachments.
+- `enhanced/`: the one Enhanced planner Damocles and Dion share (ADR 0077): the scene a Title supplies, the frame, the sky triangles, Sunlight, and the interpolation that draws the view between simulation passes (ADR 0078). `structure/`: structure selection, regions, entrance attachments and their doors (`selection.ts`), and the Lift both Titles share (`lift.ts`, ADR 0079).
 - `settings/`: tuned values kept as data.
 
 ## Data and tooling
@@ -34,7 +34,7 @@ One directory per concern. Pages load a `boot.ts` (`web/*.html` names which). Ea
 
 ## Large files
 
-To outline a large class such as `damocles/session.ts`, `dion/session.ts` or `dion/frame.ts`, list its members and read the `///` comment above the one you need:
+To outline a large class such as `damocles/session.ts`, `dion/tourcraftSession.ts` or `dion/frame.ts`, list its members and read the `///` comment above the one you need:
 
 ```sh
 rg -n '^  (static |get |set |private )*#?\w+\(' src/damocles/session.ts

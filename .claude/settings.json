@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && if [ ! -d web/node_modules ]; then scripts/worktree-setup.sh >/dev/null 2>&1 && echo \"Ran scripts/worktree-setup.sh for this new worktree.\" || echo \"scripts/worktree-setup.sh failed; run it by hand.\"; fi",
+            "timeout": 300
+          }
+        ]
+      }
+    ]
+  }
+}

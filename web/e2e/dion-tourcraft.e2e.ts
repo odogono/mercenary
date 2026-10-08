@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 
 import { loadTourcraftContent } from '../src/dion/tourcraftContent.ts';
+import { TOURCRAFT_SAVE_SCHEMA_VERSION } from '../src/dion/tourcraftSave.ts';
 import { TourcraftSession } from '../src/dion/tourcraftSession.ts';
 import type { DionControlOperation } from '../test/dion-controls.ts';
 import { boardOpeningTaxi } from '../test/dion-journey.ts';
@@ -232,7 +233,7 @@ test('production keyboard journey, flight Save/Load and reload Resume through au
             localStorage.getItem('mercenary.browser-shell.dion.save.v1.slot-1')!
           )
         );
-        expect(saved.schemaVersion).toBe(8);
+        expect(saved.schemaVersion).toBe(TOURCRAFT_SAVE_SCHEMA_VERSION);
         expect(saved.snapshot.snapshot.tourcraft.flight.frameWord).toBe(256);
         await page.locator('[data-slot="1"] [data-action="load"]').click();
         await expect(screen).toHaveAttribute('data-tick', String(target));
@@ -317,5 +318,5 @@ test('prototype Resume refusal preserves its record until explicit New Game', as
         localStorage.getItem('mercenary.browser-shell.dion.session-resume.v1')
       ))!
     ).schemaVersion
-  ).toBe(8);
+  ).toBe(TOURCRAFT_SAVE_SCHEMA_VERSION);
 });
