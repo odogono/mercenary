@@ -153,11 +153,15 @@ try {
   );
   // Mercenary III's own preferences (ADR 0063): its presentation, its audio and Extended
   // Controls, kept apart from Targ's and Damocles's.
+  let applyControlPreferences = (_changed: {
+    readonly extendedControls: boolean;
+  }): void => {};
   const preferences = createPreferences({
     location: titlePreferences(dionTitle.slug),
     onChange: changed => {
       audio.setMuted(changed.audioMuted);
       audio.setVolume(changed.audioVolume);
+      applyControlPreferences(changed);
     },
     storage,
     surface
@@ -174,6 +178,11 @@ try {
   const opened = readTourcraftSession(storage, promoted);
   let protectResume = opened.reason !== null;
   let session = opened.session;
+  applyControlPreferences = changed => {
+    if (!changed.extendedControls) {
+      session.recentreLook();
+    }
+  };
   let snapshot = session.snapshot;
   const initialFrame = prepareTourcraftFrame(session);
 
@@ -202,6 +211,7 @@ try {
         checkpoint();
       },
       passenger: () => session.aboard,
+      recentreLook: () => session.recentreLook(),
       throttleKey: key => {
         session.throttleKey(key);
         checkpoint();
@@ -417,6 +427,7 @@ try {
     root['x'] = String(snapshot.eye[0]);
     root['z'] = String(snapshot.eye[2]);
     root['heading'] = String(snapshot.heading);
+    root['pitch'] = String(snapshot.pitch);
     root['tick'] = String(snapshot.tick);
     root['frame'] = String(snapshot.frame);
     root['clock'] = String(snapshot.clock.seconds);

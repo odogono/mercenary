@@ -21,6 +21,7 @@ export const dionControlActions = (options: {
   readonly extendedControls: () => boolean;
   readonly launch?: () => void;
   readonly passenger: () => boolean;
+  readonly recentreLook?: () => void;
   readonly throttleKey?: (key: number) => void;
   readonly throttleNotchStep?: (direction: -1 | 1) => void;
   readonly throttleScale?: (direction: -1 | 1) => void;
@@ -41,7 +42,7 @@ export const dionControlActions = (options: {
       options.act(action);
     }
   },
-  recentreLook: inert,
+  recentreLook: options.recentreLook ?? inert,
   rotateStack: direction => options.act(direction),
   shutThrottle: () => options.throttleKey?.(57),
   throttleNotchStep: options.throttleNotchStep ?? inert,
