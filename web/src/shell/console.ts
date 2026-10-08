@@ -701,32 +701,10 @@ export const executeConsoleCommand = (
     }
     case 'set':
       return [applySetting(command.setting, deps)];
-    case 'save': {
-      const outcome = deps.persistence.save(command.slot);
-      if (outcome.kind === 'failed') {
-        return [`save refused: ${describeOutcome(outcome)}`];
-      }
-      if (outcome.kind === 'done') {
-        return [`saved slot ${command.slot}`];
-      }
-      if (!command.confirm) {
-        // Arming is left cleared, so a press in the chooser cannot finish what was typed here.
-        deps.persistence.disarm();
-        return [
-          `slot ${command.slot} holds a Save: 'save ${command.slot} confirm' to overwrite`
-        ];
-      }
-      const confirmed = deps.persistence.save(command.slot);
-      return confirmed.kind === 'done'
-        ? [`saved slot ${command.slot}`]
-        : [`save refused: ${describeOutcome(confirmed)}`];
-    }
-    case 'load': {
-      const outcome = deps.persistence.load(command.slot);
-      return outcome.kind === 'done'
-        ? [`restored slot ${command.slot}`]
-        : [`load refused: ${describeOutcome(outcome)}`];
-    }
+    case 'save':
+      return saveToSlot(deps.persistence, command.slot, command.confirm);
+    case 'load':
+      return loadFromSlot(deps.persistence, command.slot);
   }
 };
 
@@ -734,6 +712,42 @@ const describeOutcome = (outcome: {
   readonly kind: string;
   readonly reason?: string;
 }): string => outcome.reason ?? outcome.kind;
+
+/// `save <slot> [confirm]`, as every Title's console reports it. A slot that holds a Save is
+/// written only with `confirm`.
+export const saveToSlot = (
+  persistence: SavePersistence,
+  slot: SaveSlot,
+  confirm: boolean
+): readonly string[] => {
+  const outcome = persistence.save(slot);
+  if (outcome.kind === 'failed') {
+    return [`save refused: ${describeOutcome(outcome)}`];
+  }
+  if (outcome.kind === 'done') {
+    return [`saved slot ${slot}`];
+  }
+  if (!confirm) {
+    // Arming is left cleared, so a press in the chooser cannot finish what was typed here.
+    persistence.disarm();
+    return [`slot ${slot} holds a Save: 'save ${slot} confirm' to overwrite`];
+  }
+  const confirmed = persistence.save(slot);
+  return confirmed.kind === 'done'
+    ? [`saved slot ${slot}`]
+    : [`save refused: ${describeOutcome(confirmed)}`];
+};
+
+/// `load <slot>`, as every Title's console reports it.
+export const loadFromSlot = (
+  persistence: SavePersistence,
+  slot: SaveSlot
+): readonly string[] => {
+  const outcome = persistence.load(slot);
+  return outcome.kind === 'done'
+    ? [`restored slot ${slot}`]
+    : [`load refused: ${describeOutcome(outcome)}`];
+};
 
 export const applySetting = (
   setting: SettingChoice,
