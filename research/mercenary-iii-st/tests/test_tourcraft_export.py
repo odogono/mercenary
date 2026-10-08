@@ -6,7 +6,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from m3lab.tourcraft_export import select_catalogue, digest, content_identity, legacy_document, pickup_scripts
+from m3lab.tourcraft_export import (select_catalogue, digest, content_identity, legacy_document, pickup_scripts,
+                                   floor_tables)
 
 from m3lab.ram import Ram, RAM_SIZE
 from m3lab.scripts import BASE, ENTRY_TABLE
@@ -20,6 +21,8 @@ class TourcraftExportTests(unittest.TestCase):
         cls.spec = json.loads((ROOT / 'research/mercenary-iii-st/tourcraft-promotion-manifest.json').read_text())
         cls.catalogue = json.loads((ROOT / 'payload/dion/catalogue/catalogue.json').read_text())
         cls.support = json.loads((ROOT / 'payload/dion/catalogue/render-support.json').read_text())
+        floor_tables(cls.spec, cls.catalogue, cls.support, lambda key: json.loads(
+            (ROOT / f'payload/dion/catalogue/geometry/{key}.json').read_text()))
         cls.geometry = {g['id']: json.loads((ROOT / f"payload/dion/catalogue/geometry/{g['id']}.json").read_text())
                         for g in cls.spec['geometry']}
 
@@ -50,16 +53,31 @@ class TourcraftExportTests(unittest.TestCase):
     def test_exact_reviewed_forms_and_complete_workspaces(self):
         unchanged = copy.deepcopy(self.catalogue)
         metadata, geometry, support = select_catalogue(self.spec, self.catalogue, self.geometry, self.support)
-        self.assertEqual(len(geometry), 79)
-        self.assertEqual(sum(len(g['geometry']['variants']) for g in geometry.values()), 109)
+        self.assertEqual(len(geometry), 86)
+        self.assertEqual(sum(len(g['geometry']['variants']) for g in geometry.values()), 119)
         self.assertEqual(len(metadata['surfaceCells']), 512)
         self.assertEqual(len(metadata['placements']), 39)
         self.assertEqual(len(support['glyphs']), 385)
-        self.assertEqual(len(support['palettes']), 13)
+        self.assertEqual(len(support['palettes']), 14)
         self.assertNotIn('ledgerSha256', metadata['sources']['catalogue-immutable'])
         self.assertNotIn('catalogueFileSha256', metadata['geometry'][0])
         self.assertNotIn('surfaceYaw', support)
         self.assertEqual(self.catalogue, unchanged)
+
+    def test_every_floor_a_lift_reaches_is_selected(self):
+        metadata, geometry, support = select_catalogue(self.spec, self.catalogue, self.geometry, self.support)
+        slot = next(s for s in metadata['structures'] if s['slot'] == 154)
+        self.assertEqual([f['floor'] for f in slot['floors']], list(range(10)))
+        self.assertEqual([f['baseY'] for f in slot['floors']], [150 * n for n in range(10)])
+        self.assertEqual({f['geometry'] for f in slot['floors'][1:]}, {'structure-0116b8'})
+        for s in metadata['structures']:
+            for f in s['floors']:
+                self.assertIn(f['variant'], geometry[f['geometry']]['geometry']['variants'])
+                self.assertIn(str(f['palette']), support['palettes'])
+        spec = copy.deepcopy(self.spec)
+        spec['geometry'] = [g for g in spec['geometry'] if g['id'] != 'structure-0116b8']
+        with self.assertRaises(KeyError):
+            select_catalogue(spec, self.catalogue, self.geometry, self.support)
 
     def test_unused_catalogue_records_and_tables_do_not_change_output(self):
         before = select_catalogue(self.spec, self.catalogue, self.geometry, self.support)

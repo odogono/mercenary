@@ -14,6 +14,7 @@ Runtime paths are relative to `web/src/`; lab modules to `research/mercenary-iii
 | Pickup scripts and model replacement | `dion/tourcraftNarrative.ts`, `dion/script.ts`, `dion/tourcraftSession.ts` | `m3lab/tourcraft_export.py`, `m3lab/scripts.py`, `presentation/programmes.json` | `dion-carry-session.test.ts`, `dion-tourcraft-narrative.test.ts` |
 | Cards, detector, fruit machine | `dion/devices.ts`, `dion/tourcraftSession.ts` | `m3lab/head.py`, `presentation/head.json` | `dion-devices.test.ts` |
 | Pawn transactions | `dion/pawn.ts`, `dion/carry.ts` | `m3lab/head.py`, `presentation/head.json` | `dion-pawn.test.ts` |
+| Lifts and Floors | `structure/lift.ts` (shared, ADR 0079), `dion/tourcraftSession.ts`, `dion/frame.ts` (`bind`) | `m3lab/tourcraft_export.py` (`floor_tables`), `promotion.json` `structures[].floors`; probe `m3lab/lift.py` | `dion-lift.test.ts`, `structure-lift.test.ts`, `damocles-lift.test.ts` |
 | EAGLE and TOURCRAFT flight | `dion/tourcraftFlight.ts`, `dion/tourcraftSession.ts`, `craft/` | `m3lab/tourcraft_export.py`, `presentation/craft.json` | `dion-eagle.test.ts`, `dion-tourcraft-flight.test.ts` |
 | Enhanced scene and viewer | `dion/enhancedScene.ts`, `dion/tourcraftPresentation.ts`, `enhanced/`, `rendering/` | playable geometry and presentation documents | `dion-enhanced-scene.test.ts`, `dion-authentic-preservation.test.ts` |
 | Authentic frame and panel | `dion/frame.ts`, `dion/tourcraftFrame.ts`, `dion/panel.ts` | `m3lab/tourcraft_export.py`, `m3lab/head.py` | `dion-tourcraft-frame.test.ts`, `dion-carry-session.test.ts` |

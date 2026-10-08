@@ -1,4 +1,5 @@
 import type { HeadCommandState } from '../interaction/headCommands.ts';
+import type { LiftRide } from '../structure/lift.ts';
 import {
   carriedLabel,
   type CarryWorld,
@@ -32,6 +33,14 @@ export interface TourcraftState {
   readonly flight: TourcraftFlightState | null;
   /// The open panel and the centre box (`$6F0E`, `$6F04`, `$53950`), shared with Damocles.
   readonly head: HeadCommandState;
+  /// The lift (#835): the Floor whose structure the cell binds, a ride between the request
+  /// and the arrival (`$6F3A`, `$6F3E`, `$7158`), and the attachment slot of the last door
+  /// region the region scan reached (`$717E`), whose door a ride pins shut.
+  readonly lift: {
+    readonly doorway: number | null;
+    readonly floor: number;
+    readonly ride: LiftRide | null;
+  };
   readonly liveIntent: import('../gameCore/index.ts').Intent;
   readonly owners: Readonly<Record<string, Readonly<Record<string, number>>>>;
   readonly pawn: DionPawn;

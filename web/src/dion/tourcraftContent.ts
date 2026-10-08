@@ -75,6 +75,15 @@ export interface PromotedPlacement {
   readonly slot: number;
   readonly variant: string;
 }
+/// One row of a structure's Floor Table (`$560F4..$5614C`): the structure the lift binds
+/// on that Floor, in the placement's scale, its palette and its height above Floor 0.
+export interface PromotedFloor {
+  readonly baseY: number;
+  readonly floor: number;
+  readonly geometry: string;
+  readonly palette: number;
+  readonly variant: string;
+}
 export interface PromotedCell {
   readonly cell: number;
   readonly ground: string;
@@ -97,6 +106,8 @@ export interface TourcraftPromotion {
     }[];
     readonly offset: number;
   }[];
+  /// Each promoted structure slot's bound Floors, in Floor order, Floor 0 first.
+  readonly floors: ReadonlyMap<number, readonly PromotedFloor[]>;
   readonly placements: readonly PromotedPlacement[];
   readonly raw: Row;
   readonly surfaceCells: readonly PromotedCell[];
@@ -301,6 +312,39 @@ const readPromotion = (
     `${PROMOTION}.structures`
   );
   same(structures.size, 18, `${PROMOTION}.structures.length`);
+  const floors = new Map<number, readonly PromotedFloor[]>();
+  for (const [slot, s] of structures) {
+    const at = `${PROMOTION}.structures.${slot}.floors`;
+    const table = rows(s['floors'], at).map((f, i) => {
+      const floor = int(f['floor'], `${at}[${i}].floor`, 0, 10);
+      const form = selectedForm(geometry, f['geometry'], f['variant'], at);
+      readStructure(form, `${at}[${i}]`);
+      if (
+        record(support['palettes'], 'support.palettes')[
+          String(f['palette'])
+        ] === undefined
+      ) {
+        fail(`${at}[${i}].palette: missing dependency`);
+      }
+      return {
+        baseY: int(f['baseY'], `${at}[${i}].baseY`, 0, 32_767),
+        floor,
+        geometry: text(f['geometry'], `${at}[${i}].geometry`),
+        palette: int(f['palette'], `${at}[${i}].palette`, 0, 255),
+        variant: text(f['variant'], `${at}[${i}].variant`)
+      };
+    });
+    if (
+      table[0]?.floor !== 0 ||
+      table[0].baseY !== 0 ||
+      table[0].geometry !== s['geometry'] ||
+      table[0].variant !== s['variant'] ||
+      table.some((f, i) => i > 0 && f.floor <= table[i - 1]!.floor)
+    ) {
+      fail(`${at}: not a Floor Table bound from Floor 0`);
+    }
+    floors.set(Number(slot), table);
+  }
   for (const p of placements) {
     const at = `${PROMOTION}.placements.${p['id']}`;
     const slot = int(p['slot'], `${at}.slot`, 0, 255);
@@ -408,6 +452,7 @@ const readPromotion = (
   same(scope['workspaceGroups'], [3, 23], `${PROMOTION}.scope.workspaceGroups`);
   return {
     bodyPlacements: bodies as unknown as TourcraftPromotion['bodyPlacements'],
+    floors,
     placements: placements as unknown as readonly PromotedPlacement[],
     raw,
     surfaceCells: cells as unknown as readonly PromotedCell[]
@@ -569,7 +614,7 @@ export const loadTourcraftContent = async (
   header(promotionRaw, PROMOTION, 'dion-play-promotion');
   same(promotionRaw['sources'], sourcePins, `${PROMOTION}.sources`);
   const selected = rows(promotionRaw['geometry'], `${PROMOTION}.geometry`);
-  same(selected.length, 88, `${PROMOTION}.geometry.length`);
+  same(selected.length, 95, `${PROMOTION}.geometry.length`);
   unique(selected, 'id', `${PROMOTION}.geometry`);
   const geometry = new Map<string, PromotedGeometry>();
   for (const s of [
@@ -697,7 +742,7 @@ export const loadTourcraftContent = async (
     }
     geometry.set(id, g as unknown as PromotedGeometry);
   }
-  same(geometry.size, 89, `${PROMOTION}.geometry.closure`);
+  same(geometry.size, 96, `${PROMOTION}.geometry.closure`);
   const expectedPaths = [
     ...DION_DOCUMENTS.map(kind => `${TOURCRAFT_ROOT}/${kind}.json`),
     PROMOTION,

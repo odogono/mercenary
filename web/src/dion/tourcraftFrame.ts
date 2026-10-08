@@ -21,6 +21,7 @@ import {
   readStructure,
   type DionCell,
   type DionDetail,
+  type DionFloor,
   type DionResident,
   type DionStructure
 } from './world.ts';
@@ -122,10 +123,24 @@ export const tourcraftFrameWorld = (
       readGround(ground.variants[`transform=${c.transform}`], ground.id)
     );
     const key = placement?.key ?? 0;
+    const floors = new Map<number, DionFloor>();
+    for (const f of placement
+      ? (content.promotion.floors.get(placement.slot) ?? [])
+      : []) {
+      if (f.floor !== 0) {
+        const g = content.geometry.get(f.geometry)!;
+        floors.set(f.floor, {
+          baseY: f.baseY,
+          palette: f.palette,
+          structure: readStructure(g.variants[f.variant], g.id)
+        });
+      }
+    }
     cells.push({
       alias: null,
       cell: c.cell,
       detail: detailId,
+      ...(floors.size === 0 ? {} : { floors }),
       ground: {
         address: groundAddress,
         index: c.orientation,

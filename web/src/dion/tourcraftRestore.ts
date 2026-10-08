@@ -1,3 +1,8 @@
+import {
+  HIGHEST_FLOOR,
+  LIFT_REGION,
+  LIFT_STEP_TICKS
+} from '../structure/lift.ts';
 import { dionDoorTravel } from './frame.ts';
 import { documentItems, openRow } from './head.ts';
 import { bool, int, list, record } from './read.ts';
@@ -21,7 +26,7 @@ import {
   initialTourcraftResidents
 } from './tourcraftState.ts';
 import { dionFlightEye, dionFlightView } from './tourcraftView.ts';
-import { readDionOpening } from './world.ts';
+import { dionCellStructure, readDionOpening } from './world.ts';
 
 // Automated TOURCRAFT playback owns this finite path. Manual EAGLE state is
 // validated separately below. Cabin yaw and campaign waiting leave the playback
@@ -311,6 +316,7 @@ export const readTourcraftResume = (
       'faceSelection',
       'faces',
       'flight',
+      'lift',
       'liveIntent',
       'owners',
       'pawn',
@@ -938,13 +944,49 @@ export const readTourcraftResume = (
     base.snapshot.location === 100 ? 23 : 3
   );
   const cell = world.cells.find(c => c.cell === base.snapshot.cell);
-  const structure =
-    cell && world.structures.get(cell.structure)?.get(cell.scale.join(','));
+  const lift = keys(e['lift'], ['doorway', 'floor', 'ride'], 'lift');
+  const floor = unsigned(lift['floor'], 'lift.floor', HIGHEST_FLOOR);
+  const structure = cell && dionCellStructure(world, cell, floor);
+  if (floor !== 0 && structure === undefined) {
+    throw new Error('lift.floor: the cell binds no such Floor');
+  }
   if (
     base.snapshot.region > 0 &&
     (!structure || base.snapshot.region > structure.regions.length)
   ) {
     throw new Error('Unknown region');
+  }
+  // `$717E` outlives the cell it was set in, as it does in the original; a slot the bound
+  // structure has no door for pins nothing.
+  if (
+    lift['doorway'] !== null &&
+    (unsigned(lift['doorway'], 'lift.doorway', 0x03_fc - 0x01_a8) === 0 ||
+      (lift['doorway'] as number) % 4 !== 0)
+  ) {
+    throw new Error('lift.doorway: not an attachment slot');
+  }
+  if (lift['ride'] !== null) {
+    // `$56D66` admits only a bound Floor, and the region stays the lift car until arrival.
+    const ride = keys(
+      lift['ride'],
+      ['countdown', 'destination', 'label'],
+      'lift.ride'
+    );
+    const destination = unsigned(
+      ride['destination'],
+      'ride.destination',
+      HIGHEST_FLOOR
+    );
+    unsigned(ride['label'], 'ride.label', HIGHEST_FLOOR);
+    if (
+      unsigned(ride['countdown'], 'ride.countdown', LIFT_STEP_TICKS) === 0 ||
+      (destination !== 0 && !cell?.floors?.has(destination)) ||
+      ((structure?.regions[base.snapshot.region - 1]?.flags ?? 0) &
+        LIFT_REGION) ===
+        0
+    ) {
+      throw new Error('lift.ride: not a ride the bound lift can make');
+    }
   }
   for (const [slot, door] of base.snapshot.doors) {
     keys(
@@ -1161,6 +1203,8 @@ export const readTourcraftResume = (
     })) {
       matches('view', name, value);
     }
+    const { lift } = candidateState.tourcraft!;
+    matches('location', 'floor', lift.ride?.label ?? lift.floor);
     const flight = candidateState.tourcraft!.flight;
     const resident = candidateState.tourcraft!.residents.find(
       r => r.slot === 13

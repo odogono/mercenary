@@ -168,7 +168,14 @@ def select_catalogue(spec: dict, catalogue: dict, geometry: dict, support: dict)
         binding = next(b for b in original['floorBindings'] if b['floor'] == 0)
         slot.update({'geometry': binding['geometry'], 'variant': binding['variant'],
                      'resolvedRecord': exported[binding['geometry']]['geometry']['record'],
-                     'sourceRecordSha256': digest(original)})
+                     'sourceRecordSha256': digest(original),
+                     # `$560F4..$5614C`: the Floor Table the lift steps through, by Floor.
+                     'floors': [{k: copy.deepcopy(b[k]) for k in
+                                 ('floor', 'geometry', 'variant', 'palette', 'baseY', 'provenance')}
+                                for b in original['floorBindings']]})
+        for b in original['floorBindings']:
+            if b['variant'] not in exported[b['geometry']]['geometry']['variants']:
+                raise ValueError(f"slot {slot['slot']} Floor {b['floor']}: missing required form")
     return metadata, exported, selected_support
 
 
@@ -310,6 +317,40 @@ def resident_models(spec: dict, ram: Ram, catalogue: dict, load) -> None:
             'selectionReasons': ['pickup model-swap-B replacement 316'], 'source': 'catalogue-immutable',
             'sourceRanges': copy.deepcopy(row['provenance']), 'variants': sorted(row['variants'])})
     spec['residentModels'] = rows
+
+
+def floor_tables(spec: dict, catalogue: dict, support: dict, load) -> None:
+    """Select every Floor each promoted structure's Floor Table binds, since a lift can carry
+    the player to any of them (#835): the Floor's structure in its bound scale, and its palette
+    when the alias record leaves its own palette zero (`$56DB4`)."""
+    slots = {s['slot'] for s in spec['structures']}
+    variants: dict[str, set[str]] = {}
+    palettes = set()
+    for s in catalogue['structures']:
+        if s['slot'] in slots:
+            for b in s['floorBindings']:
+                variants.setdefault(b['geometry'], set()).add(b['variant'])
+                palettes.add(b['palette'])
+    for g in spec['geometry']:
+        if g['id'] in variants and not variants.pop(g['id']) <= set(g['variants']):
+            raise ValueError(f"{g['id']}: a Floor needs a variant the selection lacks")
+    for key, names in sorted(variants.items()):
+        row = load(key)['geometry']
+        spec['geometry'].append({
+            'catalogueRecordSha256': row['sha256'], 'disposition': 'recovered', 'family': row['family'],
+            'id': key, 'record': row['record'],
+            'selectedVariantsSha256': digest({v: row['variants'][v] for v in sorted(names)}),
+            'selectionReasons': ['Floor above 0'], 'source': 'catalogue-immutable',
+            'sourceRanges': [json.loads(r) for r in sorted({json.dumps(row['variants'][v]['provenance'],
+                                                                    sort_keys=True) for v in names})],
+            'variants': sorted(names)})
+    selected = {r['index'] for r in spec['renderSupportSelection']['palettes']}
+    for index in sorted(palettes - selected):
+        record = support['palettes'][str(index)]
+        spec['renderSupportSelection']['palettes'].append({
+            'address': record['address'], 'disposition': 'recovered', 'entries': len(record['day']),
+            'index': index, 'source': 'catalogue-immutable', 'sourceRange': copy.deepcopy(record['provenance']),
+            'sourceRecordSha256': digest(record)})
 
 
 def cstring(ram: Ram, at: int) -> list[int]:
@@ -466,7 +507,9 @@ def build_export(root: Path, opening: Path) -> dict[str, bytes]:
     read = lambda p: json.loads((root / p).read_text())
     catalogue = read('payload/dion/catalogue/catalogue.json')
     ram = Ram.load(opening)
-    resident_models(spec, ram, catalogue, lambda key: read(f'payload/dion/catalogue/geometry/{key}.json'))
+    load = lambda key: read(f'payload/dion/catalogue/geometry/{key}.json')
+    resident_models(spec, ram, catalogue, load)
+    floor_tables(spec, catalogue, read(spec['renderSupport']['path']), load)
     geometry = {g['id']: read(f"payload/dion/catalogue/geometry/{g['id']}.json") for g in spec['geometry']}
     metadata, selected, support = select_catalogue(spec, catalogue, geometry, read(spec['renderSupport']['path']))
     gameplay = gameplay_records(spec, ram, selected)

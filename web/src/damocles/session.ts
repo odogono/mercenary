@@ -58,6 +58,13 @@ import {
   wrapBodyLongitude
 } from '../sky/bodyTime.ts';
 import {
+  ARRIVAL_PITCH_WORD,
+  LIFT_REGION,
+  requestLift,
+  stepLift,
+  type LiftRide
+} from '../structure/lift.ts';
+import {
   attachmentOpenLimit,
   clampStructureStep,
   insideLocalBox,
@@ -146,15 +153,13 @@ import {
   type ResidenceDeparture
 } from './residence.ts';
 import {
-  LIFT_STEP_TICKS,
   NEW_GAME_FORM_CLOCK,
   validateOccupancy,
   type BoundStructureSnapshot,
   type DamoclesSaveCraft,
   type DamoclesSaveOccupancy,
   type DamoclesSaveScript,
-  type DamoclesSaveSnapshot,
-  type LiftRideSnapshot
+  type DamoclesSaveSnapshot
 } from './save.ts';
 import {
   fireTrigger,
@@ -553,23 +558,6 @@ const shutAttachments = (
     ]) ?? []
   );
 
-/// A region whose flags have bit 13 is a Damocles Lift (docs/research/damocles-lift-control.md).
-const LIFT_REGION = 0x20_00;
-
-/// The pitch word `$055BA6` writes on arrival at a Floor.
-const ARRIVAL_PITCH_WORD = 0x01_ff;
-
-/// The Floor the label shows after one step towards `destination`: `$055A88`–`$055AB2`. The
-/// lift walks B, G, 1, … 9, so Floor 10 is below Floor 0 and is always reached going down.
-const nextLabel = (label: number, destination: number): number =>
-  destination < label || destination === 10
-    ? label === 10
-      ? 0
-      : label === 0
-        ? 10
-        : label - 1
-    : label + 1;
-
 /// `busy`, and each trigger's script, queue bit and sticky bit, are recomputed rather than
 /// stored: they are content, and the recovered program has no writer that could move them.
 const scriptFromSave = (saved: DamoclesSaveScript): ScriptState => ({
@@ -723,7 +711,7 @@ export class DamoclesSession implements TitleSession<
   /// bound structure, or null before one has been crossed there. A ride pins its door shut.
   private doorway: number | null = null;
   /// A Damocles Lift ride between admission and arrival, or null when none is pending.
-  private ride: LiftRideSnapshot | null = null;
+  private ride: LiftRide | null = null;
   /// The bound structure as it stands on `floor`: the surface's own placement on Floor 0, and
   /// otherwise that placement carrying the selector of the structure the Floor binds.
   private boundPlacement: ErisPlacement | null = null;
@@ -4902,18 +4890,16 @@ export class DamoclesSession implements TitleSession<
       return { kind: 'refused' };
     }
     const ground = this.groundPlacement();
-    if (
-      floor === this.labelFloor ||
-      ground === undefined ||
-      !this.floorBound(ground, floor)
-    ) {
+    if (ground === undefined) {
       return { kind: 'refused' };
     }
-    this.ride = {
-      countdown: this.ride?.countdown ?? LIFT_STEP_TICKS,
-      destination: floor,
-      label: this.labelFloor
-    };
+    const ride = requestLift(this.ride, this.labelFloor, floor, f =>
+      this.floorBound(ground, f)
+    );
+    if (ride === null) {
+      return { kind: 'refused' };
+    }
+    this.ride = ride;
     // `$055B0A` sets the doorway's latch moving, even where its door is already shut, so the
     // countdown waits for the next pass to clear it.
     const door =
@@ -5007,20 +4993,12 @@ export class DamoclesSession implements TitleSession<
   /// clock stands in for.
   private stepRide(doorShut: boolean): void {
     const ride = this.ride;
-    // `$055A76`: nothing counts while the pinned door is still moving.
-    if (ride === null || !doorShut) {
+    if (ride === null) {
       return;
     }
-    if (ride.countdown > 1) {
-      this.ride = { ...ride, countdown: ride.countdown - 1 };
-      return;
-    }
-    if (ride.label !== ride.destination) {
-      this.ride = {
-        countdown: LIFT_STEP_TICKS,
-        destination: ride.destination,
-        label: nextLabel(ride.label, ride.destination)
-      };
+    const step = stepLift(ride, doorShut);
+    if (step.kind === 'ride') {
+      this.ride = step.ride;
       return;
     }
     // `$055B12`–`$055B88`: the arrival. The Floor's structure is bound, Y set and the pitch

@@ -35,17 +35,18 @@ import {
   tourcraftStars,
   type TourcraftSkyView
 } from './tourcraftSky.ts';
-import type {
-  DionAttachment,
-  DionCell,
-  DionDetail,
-  DionGlyph,
-  DionModel,
-  DionModelFace,
-  DionModelForm,
-  DionResident,
-  DionStructure,
-  DionWorld
+import {
+  dionCellStructure,
+  type DionAttachment,
+  type DionCell,
+  type DionDetail,
+  type DionGlyph,
+  type DionModel,
+  type DionModelFace,
+  type DionModelForm,
+  type DionResident,
+  type DionStructure,
+  type DionWorld
 } from './world.ts';
 
 /// One frame of the Mercenary III 3D view, planned from the world document by the
@@ -92,6 +93,8 @@ export interface DionFrameState {
   /// The driver's head shows its profile (`$6EA4`, or the message state).
   readonly driverProfile: boolean;
   readonly eye: Vec3;
+  /// The Floor whose structure the cell binds (#835), 0 where absent.
+  readonly floor?: number;
   readonly frameCounter: number;
   /// The view yaw, 1024ths of a turn (`$7136`).
   readonly heading: number;
@@ -361,6 +364,8 @@ interface Bound {
   readonly detail: DionDetail;
   readonly floorOffset: number;
   readonly origin: Vec3;
+  /// The scene palette: the cell's own on Floor 0, the Floor's above it.
+  readonly palette: number;
   readonly plan: readonly (readonly [number, number])[];
   readonly structure: DionStructure;
   readonly walls: readonly {
@@ -489,9 +494,10 @@ const bind = (world: DionFrameWorld, state: DionFrameState): Bound | null => {
   if (cell === undefined) {
     return null;
   }
-  const structure = world.structures
-    .get(cell.structure)
-    ?.get(cell.scale.join(','));
+  // `$56D98..$56E5A`: above Floor 0 the Floor's own structure is bound, and drawn the
+  // Floor's height above the placement, since the structure-local eye stays 63 (`$56E2C`).
+  const floor = cell.floors?.get(state.floor ?? 0);
+  const structure = dionCellStructure(world, cell, state.floor);
   const detail = world.details.get(cell.detail);
   if (structure === undefined || detail === undefined) {
     return null;
@@ -511,8 +517,9 @@ const bind = (world: DionFrameWorld, state: DionFrameState): Bound | null => {
   return {
     cell,
     detail,
-    floorOffset: world.floorOffset ?? 0,
+    floorOffset: (world.floorOffset ?? 0) + (floor?.baseY ?? 0),
     origin: [bx + cell.origin[0], world.structureY, bz + cell.origin[1]],
+    palette: floor?.palette ?? cell.palette,
     plan,
     structure,
     walls
@@ -1800,8 +1807,7 @@ export const planDionFrame = (
     template[index] = colour;
   }
   const palette = new FramePalette(template);
-  const sceneHalf =
-    bound === null ? null : world.palettes.get(bound.cell.palette);
+  const sceneHalf = bound === null ? null : world.palettes.get(bound.palette);
   const paint: Paint = {
     candidate: null,
     gaps: new Set(
@@ -2043,7 +2049,7 @@ export const captureDionParts = (
   const space = state.skyView?.body === null;
   const bound = space ? null : bind(world, state);
   const sceneHalf =
-    bound === null ? undefined : world.palettes.get(bound.cell.palette);
+    bound === null ? undefined : world.palettes.get(bound.palette);
   const paint: Paint = {
     candidate: null,
     gaps: new Set(),

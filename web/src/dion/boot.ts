@@ -210,6 +210,15 @@ try {
         session.launchCraft();
         checkpoint();
       },
+      // On foot in a lift the Floor keys are the lift's, as Damocles's are.
+      liftKey: floor => {
+        if (!session.inLift) {
+          return false;
+        }
+        session.rideLift(floor);
+        checkpoint();
+        return true;
+      },
       passenger: () => session.aboard,
       recentreLook: () => session.recentreLook(),
       throttleKey: key => {
@@ -257,7 +266,7 @@ try {
       if (layer === 'controls') {
         renderControlsPage(
           chrome.pages.controls,
-          controls.describe(false, keyNames)
+          controls.describe(session.inLift, keyNames)
         );
       }
     },
@@ -386,7 +395,11 @@ try {
         }
         const lines = executeDionConsoleCommand(command, host);
         snapshot = session.snapshot;
-        if (command.kind === 'setTime' || command.kind === 'setClock') {
+        if (
+          command.kind === 'setTime' ||
+          command.kind === 'setClock' ||
+          command.kind === 'floor'
+        ) {
           checkpoint();
         }
         views.reset();
@@ -448,6 +461,10 @@ try {
     root['day'] = String(snapshot.day);
     root['message'] = snapshot.narrative.message.text;
     root['scriptActive'] = String(snapshot.narrative.flags[6]);
+    const lift = snapshot.tourcraft!.lift;
+    root['floor'] = String(lift.floor);
+    root['floorLabel'] = String(lift.ride?.label ?? lift.floor);
+    root['y'] = String(snapshot.eye[1]);
     drawPanelControls();
   };
 

@@ -9,6 +9,13 @@ import {
   type HeadCommandState
 } from '../interaction/headCommands.ts';
 import {
+  ARRIVAL_PITCH_WORD,
+  LIFT_REGION,
+  floorLabelCode,
+  requestLift,
+  stepLift
+} from '../structure/lift.ts';
+import {
   drop,
   inventoryGauge,
   rotate,
@@ -81,7 +88,7 @@ import {
   type TourcraftState
 } from './tourcraftState.ts';
 import { dionFlightEye, dionFlightView } from './tourcraftView.ts';
-import { readDionOpening } from './world.ts';
+import { dionCellStructure, readDionOpening } from './world.ts';
 
 const gameplayContent = (
   promoted: TourcraftContent,
@@ -206,6 +213,7 @@ export class TourcraftSession extends DionSession {
           ...initialHeadCommands(),
           box: { from: null, fromItem: null, steps: 49, to: null }
         },
+        lift: { doorway: null, floor: 0, ride: null },
         liveIntent: IDLE,
         owners,
         pawn: { ...promoted.head.pawn.initial },
@@ -574,10 +582,7 @@ export class TourcraftSession extends DionSession {
     const { cell, eye, region } = this.state;
     const entry = this.content.world.cells.find(item => item.cell === cell);
     const structure =
-      entry &&
-      this.content.world.structures
-        .get(entry.structure)
-        ?.get(entry.scale.join(','));
+      entry && dionCellStructure(this.content.world, entry, this.floor);
     // `$557AE`: on foot in a region that is not exterior, the Drop is into the structure.
     const interior =
       !aboard &&
@@ -851,6 +856,204 @@ export class TourcraftSession extends DionSession {
     return (
       head !== undefined && table.kind(head) !== undefined && table.opens(head)
     );
+  }
+
+  protected override get floor(): number {
+    return this.state.tourcraft?.lift.floor ?? 0;
+  }
+  protected override pinnedDoor(): number | null {
+    const { doorway, ride } = this.expanded.lift;
+    return ride === null ? null : doorway;
+  }
+  protected override ridePending(): boolean {
+    return this.expanded.lift.ride !== null;
+  }
+
+  /// One substep of the on-foot loop: `$5A4E2` steps a pending ride before the walk, the
+  /// doors and the region scan, which remembers the slot of the last door region it reaches
+  /// (`$5B33A`) until it reaches another, even in another cell. Crossing into another cell
+  /// binds it at Floor 0 (`$56E14`).
+  protected override walkSubstep(): void {
+    if (this.expanded.lift.ride !== null) {
+      this.stepRide();
+    }
+    const cell = this.state.cell;
+    super.walkSubstep();
+    const lift = this.expanded.lift;
+    if (this.state.cell !== cell) {
+      this.setLift({ ...lift, floor: 0, ride: null });
+      return;
+    }
+    const named = this.aboard ? 0 : this.regionFlags() & 0x03_fc;
+    if (named !== 0 && named !== 0x02_00 && named - 0x1_a8 !== lift.doorway) {
+      this.setLift({ ...lift, doorway: named - 0x1_a8 });
+    }
+  }
+
+  private setLift(lift: TourcraftState['lift']): void {
+    this.state = { ...this.state, tourcraft: { ...this.expanded, lift } };
+  }
+
+  private regionFlags(): number {
+    const entry = this.content.world.cells.find(
+      c => c.cell === this.state.cell
+    );
+    return (
+      (entry &&
+        dionCellStructure(this.content.world, entry, this.floor)?.regions[
+          this.state.region - 1
+        ]?.flags) ??
+      0
+    );
+  }
+
+  /// `$5684C..$56884`: on foot in a region whose flags have bit 13, a Floor key is the lift's.
+  get inLift(): boolean {
+    return !this.aboard && (this.regionFlags() & LIFT_REGION) !== 0;
+  }
+
+  /// `$7158`: the Floor the Floor Label shows. It is the player's Floor except during a ride,
+  /// when it steps through each Floor passed.
+  get labelFloor(): number {
+    return this.expanded.lift.ride?.label ?? this.expanded.lift.floor;
+  }
+
+  /// A lift key asking for `floor`: `$56D66`. Outside a lift the key is not the lift's. In one,
+  /// the Floor the label shows, or one the Floor Table leaves zero, is refused and changes
+  /// nothing. An admitted key starts the ride, or replaces its destination, and pins the
+  /// doorway's door shut, setting its latch moving even where it is shut already (`$56D8A`).
+  rideLift(floor: number): {
+    readonly kind: 'admitted' | 'noLift' | 'refused';
+  } {
+    if (!this.inLift) {
+      return { kind: 'noLift' };
+    }
+    const lift = this.expanded.lift;
+    const entry = this.content.world.cells.find(
+      c => c.cell === this.state.cell
+    );
+    const ride = requestLift(
+      lift.ride,
+      this.labelFloor,
+      floor,
+      f => f === 0 || entry?.floors?.has(f) === true
+    );
+    if (ride === null) {
+      return { kind: 'refused' };
+    }
+    this.setLift({ ...lift, ride });
+    const pinned = this.pinnedDoor();
+    if (pinned !== null && this.boundDoor(pinned)) {
+      const door = this.state.doors.get(pinned) ?? {
+        latch: 'shut',
+        openUnits: 0
+      };
+      if (door.latch !== 'moving') {
+        // `$5B9D6` arms door-moving on the pass the latch starts moving.
+        this.cue('door_moving');
+      }
+      this.state = {
+        ...this.state,
+        doors: new Map(this.state.doors).set(pinned, {
+          ...door,
+          latch: 'moving'
+        })
+      };
+    }
+    return { kind: 'admitted' };
+  }
+
+  private boundDoor(slot: number): boolean {
+    const entry = this.content.world.cells.find(
+      c => c.cell === this.state.cell
+    );
+    return (
+      entry !== undefined &&
+      dionCellStructure(
+        this.content.world,
+        entry,
+        this.floor
+      )?.attachments.some(d => d.slot === slot) === true
+    );
+  }
+
+  /// `$56CF4`: one tick of the pending ride. The countdown waits for the pinned door's latch to
+  /// read shut. On arrival (`$56D98..$56E0E`) the Floor is bound, the view levelled, B and C cut
+  /// (`$56E86`) and the key click requested (`$55B6A`).
+  private stepRide(): void {
+    const { doorway, ride } = this.expanded.lift;
+    const door = doorway === null ? undefined : this.state.doors.get(doorway);
+    const shut =
+      doorway === null ||
+      !this.boundDoor(doorway) ||
+      door === undefined ||
+      door.latch === 'shut';
+    const step = stepLift(ride!, shut);
+    if (step.kind === 'ride') {
+      this.setLift({ ...this.expanded.lift, ride: step.ride });
+      return;
+    }
+    this.bindFloor(ride!.destination);
+    this.state = { ...this.state, pitch: ARRIVAL_PITCH_WORD };
+    this.cue('cut');
+    this.cue('key_click');
+  }
+
+  /// Stand on another Floor of the bound structure, as the development console's `floor N`.
+  /// It is the arrival's rebind without the ride, and the next frame's candidate follows it.
+  changeFloor(
+    floor: number
+  ):
+    | { readonly kind: 'moved' }
+    | { readonly kind: 'refused'; readonly reason: string } {
+    const outcome = this.bindFloor(floor);
+    if (outcome.kind === 'moved') {
+      this.selectCandidate();
+    }
+    return outcome;
+  }
+
+  /// Where the Floor Table binds `floor`, bind that Floor's structure with its doors shut,
+  /// set Y to the Floor's height plus the eye's 63, take the region afresh and end any ride.
+  /// X, Z and the heading stay, and Free Look is recentred.
+  private bindFloor(
+    floor: number
+  ):
+    | { readonly kind: 'moved' }
+    | { readonly kind: 'refused'; readonly reason: string } {
+    if (this.aboard) {
+      return { kind: 'refused', reason: 'the player is aboard; leave first' };
+    }
+    const entry = this.content.world.cells.find(
+      c => c.cell === this.state.cell
+    );
+    if (entry === undefined || entry.structure === 0) {
+      return { kind: 'refused', reason: 'not inside a structure' };
+    }
+    const baseY = floor === 0 ? 0 : entry.floors?.get(floor)?.baseY;
+    if (baseY === undefined) {
+      return {
+        kind: 'refused',
+        reason: `structure ${entry.structure} binds no Floor ${floor}`
+      };
+    }
+    if (this.lookPitch !== 0) {
+      this.state = this.levelView();
+      this.lookPitch = 0;
+    }
+    this.setLift({ ...this.expanded.lift, floor, ride: null });
+    const eye = [
+      this.state.eye[0],
+      baseY + this.content.world.opening.eye[1],
+      this.state.eye[2]
+    ] as const;
+    this.state = {
+      ...this.state,
+      doors: new Map(),
+      eye,
+      region: this.regionAtEye(this.state.cell, eye)
+    };
+    return { kind: 'moved' };
   }
 
   get aboard(): boolean {
@@ -1556,6 +1759,7 @@ export class TourcraftSession extends DionSession {
         : this.narrative.state.message.busy &&
           e.owners['message']!['selectedGlyph'] !== 0,
       eye: [v['eyeX']!, v['eyeY']!, v['eyeZ']!] as const,
+      floor: e.lift.floor,
       heading: yaw,
       passenger:
         f && f.mode !== 'foot'
@@ -1610,7 +1814,11 @@ export class TourcraftSession extends DionSession {
       },
       tokens: new Map([
         ...faceOutputs(this.promoted, e),
-        [0x99, e.devices.machine.reels]
+        [0x99, e.devices.machine.reels],
+        // Tokens `$80` and `$81` both name `$B2D0`, the Floor Label's buffer, which every
+        // step and arrival rewrites.
+        [0x80, [floorLabelCode(this.labelFloor)]],
+        [0x81, [floorLabelCode(this.labelFloor)]]
       ])
     };
   }

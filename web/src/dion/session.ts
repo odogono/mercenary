@@ -42,6 +42,7 @@ import {
   type DionSoundState
 } from './sound.ts';
 import type { TourcraftState } from './tourcraftState.ts';
+import { dionCellStructure } from './world.ts';
 
 /// The Mercenary III Gameplay Session, a sibling of Targ's and Damocles's (ADR 0043).
 ///
@@ -468,7 +469,8 @@ export class DionSession implements TitleSession<
       const step = clampRegionStep(
         bound.regions,
         region === 0 ? null : region - 1,
-        [next[0] - bound.origin[0], next[2] - bound.origin[1]]
+        [next[0] - bound.origin[0], next[2] - bound.origin[1]],
+        this.ridePending()
       );
       next = [
         bound.origin[0] + step.point[0],
@@ -509,9 +511,7 @@ export class DionSession implements TitleSession<
   } | null {
     const { world } = this.content;
     const entry = world.cells.find(item => item.cell === cell);
-    const structure =
-      entry &&
-      world.structures.get(entry.structure)?.get(entry.scale.join(','));
+    const structure = entry && dionCellStructure(world, entry, this.floor);
     if (entry === undefined || structure === undefined) {
       return null;
     }
@@ -703,10 +703,9 @@ export class DionSession implements TitleSession<
     const flags =
       entry === undefined
         ? 0
-        : (this.content.world.structures
-            .get(entry.structure)
-            ?.get(entry.scale.join(','))?.regions[this.state.region - 1]
-            ?.flags ?? 0);
+        : (dionCellStructure(this.content.world, entry, this.floor)?.regions[
+            this.state.region - 1
+          ]?.flags ?? 0);
     return flags;
   }
 
@@ -740,6 +739,21 @@ export class DionSession implements TitleSession<
     return key === 0x26 && this.narrative.state.keyA;
   }
 
+  /// The Floor whose structure the cell binds; the D1 slice has only Floor 0.
+  protected get floor(): number {
+    return 0;
+  }
+
+  /// The door a lift ride pins shut, if any.
+  protected pinnedDoor(): number | null {
+    return null;
+  }
+
+  /// Whether a lift ride is pending, which freezes the region (`$5B320`).
+  protected ridePending(): boolean {
+    return false;
+  }
+
   /// `$5BA24`: one pass over each door of the bound cell. A door opens a unit a substep
   /// while the eye is inside its box and it is keyless or its key is held, and closes
   /// otherwise. Its latch settles a substep after the leaves arrive, or on arrival where
@@ -750,13 +764,11 @@ export class DionSession implements TitleSession<
       item => item.cell === this.state.cell
     );
     const structure =
-      entry &&
-      this.content.world.structures
-        .get(entry.structure)
-        ?.get(entry.scale.join(','));
+      entry && dionCellStructure(this.content.world, entry, this.floor);
     if (entry === undefined || !structure?.attachments.length) {
       return;
     }
+    const pinned = this.pinnedDoor();
     const [gx, gz] = this.content.world.opening.groupOrigin;
     const x = eye[0] - ((gx + entry.x) * 65_536 + entry.origin[0]);
     const z = eye[2] - ((gz + entry.z) * 65_536 + entry.origin[1]);
@@ -770,7 +782,10 @@ export class DionSession implements TitleSession<
       };
       wasMoving ||= previous.latch === 'moving';
       const key = dionDoorKey(door, entry);
+      // `$5BA24`: a key word negative with bit 14 clear, as a ride's pin (`$56D8A`), closes
+      // the door wherever the player stands.
       const opening =
+        door.slot !== pinned &&
         x >= door.box.x[0] &&
         x < door.box.x[1] &&
         z >= door.box.z[0] &&

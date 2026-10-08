@@ -157,7 +157,7 @@ describe('Dion console clocks', () => {
 
   test('answers verbs it has not ported, rather than doing something adjacent', () => {
     const session = new TourcraftSession(tourcraft);
-    for (const line of ['goto 1 2', 'fetch 3', 'floor 1', 'switch metis']) {
+    for (const line of ['goto 1 2', 'fetch 3', 'switch metis']) {
       expect(run(session, line)).toMatch(/not ported to Mercenary III/);
     }
     expect(run(session, 'get 104')).toMatch(/only what is in reach/);

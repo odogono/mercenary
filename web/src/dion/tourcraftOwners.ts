@@ -143,6 +143,8 @@ export const updateTourcraftOwners = (
   let location = update('location', {
     bodyOffset: s.location,
     cell: s.cell,
+    // `$7138` copies the Floor the label shows, `$7158`, once a frame.
+    floor: e.lift.ride?.label ?? e.lift.floor,
     region: s.region,
     regionIndex: s.region
   });
