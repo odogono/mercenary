@@ -123,7 +123,7 @@ export const readDionResume = (
             'moving',
             'open'
           ]),
-          openUnits: int(door['openUnits'], 'door.openUnits', 0, 142)
+          openUnits: int(door['openUnits'], 'door.openUnits', 0, 32_767)
         }
       ] as const;
     }),

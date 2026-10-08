@@ -1391,6 +1391,17 @@ export class TourcraftSession extends DionSession {
     return this.state.driver.remaining === 0;
   }
 
+  /// The resident's held bit, or DOOR KEY A as the opening script's op `$20` hands it
+  /// over (still recorded as `keyA`, not on the resident).
+  protected override holdsKey(key: number): boolean {
+    return (
+      super.holdsKey(key) ||
+      this.expanded.residents.some(
+        r => r.slot === key && (r.state & 0x80) !== 0
+      )
+    );
+  }
+
   protected override finishDriver() {
     return { ...this.state.driver, profile: false, remaining: 0 };
   }
