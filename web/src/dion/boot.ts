@@ -28,12 +28,16 @@ import { installSaveChooser } from '../shell/saveChooser.ts';
 import { installSettingsView } from '../shell/settingsView.ts';
 import { installSuspensionHandlers } from '../shell/suspension.ts';
 import type { PayloadDocument } from '../shell/title.ts';
+import { applyTypeface } from '../shell/typography.ts';
 import { SoundLifecycle } from '../sound/lifecycle.ts';
 import { AudioWorkletTransport } from '../sound/transport.ts';
 import {
   DION_CONSOLE_BANNER,
+  dionMessageTranscript,
   executeDionConsoleCommand,
-  parseDionConsoleCommand
+  parseDionConsoleCommand,
+  type DionConsoleCommand,
+  type DionConsoleHost
 } from './console.ts';
 import { CARD_ACTIONS, dionControlActions } from './controls.ts';
 import {
@@ -341,9 +345,20 @@ try {
   });
   installSaveChooser({ page: chrome.pages.saves, persistence });
 
-  const shellConsole = installConsole(
+  const shellConsole = installConsole<DionConsoleHost, DionConsoleCommand>(
     chrome.console,
-    { pads: () => navigator.getGamepads?.() ?? [], session: () => session },
+    {
+      pads: () => navigator.getGamepads?.() ?? [],
+      persistence,
+      preferences,
+      session: () => session,
+      typeface: face => {
+        applyTypeface(document.documentElement, face, {
+          key: DION_STORAGE.typeface,
+          storage
+        });
+      }
+    },
     release,
     {
       banner: DION_CONSOLE_BANNER,
@@ -354,6 +369,7 @@ try {
         if (
           protectResume &&
           command.kind !== 'help' &&
+          command.kind !== 'load' &&
           command.kind !== 'pads'
         ) {
           return ['Restore a Save or choose New Game before continuing.'];
@@ -747,7 +763,14 @@ try {
           }
           session.intent = shellConsole.isOpen() ? IDLE : controls.intent;
           session.fire(!shellConsole.isOpen() && controls.firing);
+          const message = session.snapshot.narrative.message.serial;
           snapshot = session.advance(seconds);
+          // Every message the bar starts to show is logged to the Shell Console, as Damocles's are.
+          if (snapshot.narrative.message.serial !== message) {
+            shellConsole.write(
+              dionMessageTranscript(snapshot.narrative.message.text)
+            );
+          }
           const notes = session.drainNotes();
           if (notes.length > 0) {
             // Unported effects take their input and do nothing (ADR 0064); say which.

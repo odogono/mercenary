@@ -1,7 +1,9 @@
 import {
   SETTING_VALUES,
   applySetting,
+  loadFromSlot,
   parseConsoleCommand,
+  saveToSlot,
   type ConsoleCommand,
   type ConsoleSettingHost
 } from '../shell/console.ts';
@@ -94,11 +96,6 @@ export interface DamoclesConsoleHost extends ConsoleSettingHost {
   readonly session: () => DamoclesSession;
 }
 
-const describeOutcome = (outcome: {
-  readonly kind: string;
-  readonly reason?: string;
-}): string => outcome.reason ?? outcome.kind;
-
 /// A slot as Targ's console writes one: two digits at least.
 const label = (slot: number): string => String(slot).padStart(2, '0');
 
@@ -184,31 +181,10 @@ export const executeDamoclesConsoleCommand = (
     }
     case 'set':
       return [applySetting(command.setting, host)];
-    case 'save': {
-      const outcome = host.persistence.save(command.slot);
-      if (outcome.kind === 'failed') {
-        return [`save refused: ${describeOutcome(outcome)}`];
-      }
-      if (outcome.kind === 'done') {
-        return [`saved slot ${command.slot}`];
-      }
-      if (!command.confirm) {
-        host.persistence.disarm();
-        return [
-          `slot ${command.slot} holds a Save: 'save ${command.slot} confirm' to overwrite`
-        ];
-      }
-      const confirmed = host.persistence.save(command.slot);
-      return confirmed.kind === 'done'
-        ? [`saved slot ${command.slot}`]
-        : [`save refused: ${describeOutcome(confirmed)}`];
-    }
-    case 'load': {
-      const outcome = host.persistence.load(command.slot);
-      return outcome.kind === 'done'
-        ? [`restored slot ${command.slot}`]
-        : [`load refused: ${describeOutcome(outcome)}`];
-    }
+    case 'save':
+      return saveToSlot(host.persistence, command.slot, command.confirm);
+    case 'load':
+      return loadFromSlot(host.persistence, command.slot);
     case 'time':
     case 'setTime': {
       const session = host.session();

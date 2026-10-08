@@ -835,6 +835,11 @@ export class TourcraftSession extends DionSession {
       : documentItems(this.promoted.head, open.slot)[open.item]?.name.trim();
   }
 
+  /// An object's sixteen-character label, trimmed, as the Carried Stack shows it.
+  objectName(slot: number): string | undefined {
+    return this.carryWorld.labels.get(slot)?.trim();
+  }
+
   /// Whether Open would act on the Carried Stack's head, which is the pointer's hover cue.
   get headOpens(): boolean {
     const head = this.expanded.carry.stack[0];
