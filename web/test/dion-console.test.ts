@@ -67,7 +67,29 @@ describe('Dion console clocks', () => {
     expect(restored.snapshot.clock.day).toBe(before.clock.day + 1);
   });
 
-  test('admits only help, time and clock with the shared syntax', () => {
+  test('reports the pads the browser lists', async () => {
+    const session = new DionSession(await dionContent());
+    const pad = {
+      axes: [0, 0, 0, 0],
+      buttons: Array.from({ length: 16 }, (_, index) => ({
+        pressed: index === 0,
+        value: index === 0 ? 1 : 0
+      })),
+      connected: true,
+      id: 'Test Pad',
+      index: 0,
+      mapping: 'standard'
+    };
+    const lines = executeDionConsoleCommand(parseDionConsoleCommand('pads')!, {
+      pads: () => [pad],
+      session: () => session
+    });
+    expect(lines[0]).toBe('pad 0 · Test Pad');
+    expect(lines).toContain('  held: A');
+    expect(() => parseDionConsoleCommand('pads 1')).toThrow();
+  });
+
+  test('admits only help, pads, time and clock with the shared syntax', () => {
     expect(parseDionConsoleCommand('  TIME 9-01-02 ')).toEqual({
       kind: 'setTime',
       secondsOfDay: 32_462

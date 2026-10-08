@@ -5,6 +5,7 @@ import { FixedStepClock } from '../shell/clock.ts';
 import { installConsole } from '../shell/consoleView.ts';
 import { renderControlsPage } from '../shell/controlsView.ts';
 import { assertBrowserDocument } from '../shell/documentPath.ts';
+import { connectedPads } from '../shell/gamepad.ts';
 import { BrowserControlProfile } from '../shell/input.ts';
 import { browserKeyNames } from '../shell/keyNames.ts';
 import {
@@ -22,7 +23,7 @@ import {
 } from '../shell/panelControls.ts';
 import { canvasPointer } from '../shell/pointer.ts';
 import { createPreferences, titlePreferences } from '../shell/preferences.ts';
-import { routeKey, type RouterState } from '../shell/router.ts';
+import { routeKey, routePad, type RouterState } from '../shell/router.ts';
 import { installSaveChooser } from '../shell/saveChooser.ts';
 import { installSettingsView } from '../shell/settingsView.ts';
 import { installSuspensionHandlers } from '../shell/suspension.ts';
@@ -342,7 +343,7 @@ try {
 
   const shellConsole = installConsole(
     chrome.console,
-    { session: () => session },
+    { pads: () => navigator.getGamepads?.() ?? [], session: () => session },
     release,
     {
       banner: DION_CONSOLE_BANNER,
@@ -350,7 +351,11 @@ try {
         if (!ownership.mayAdvance()) {
           return ['This session is active in another tab.'];
         }
-        if (protectResume && command.kind !== 'help') {
+        if (
+          protectResume &&
+          command.kind !== 'help' &&
+          command.kind !== 'pads'
+        ) {
           return ['Restore a Save or choose New Game before continuing.'];
         }
         const lines = executeDionConsoleCommand(command, host);
@@ -706,6 +711,17 @@ try {
       return;
     }
     try {
+      // The pads are read before the steps, as a key event arrives before them, and Start is
+      // Escape from play, as it is in Damocles: the pad has no other way to the System Menu.
+      // A pad acts in play only while a key would.
+      if (
+        controls.pollPads(
+          connectedPads(navigator),
+          ownership.mayAdvance() ? routePad(routerState()) : 'held'
+        )
+      ) {
+        menu.show('menu');
+      }
       const steps = clock.frame(timestamp, seconds => {
         if (
           menu.layer() === 'none' &&
