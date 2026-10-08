@@ -3,6 +3,7 @@ import { expect, test } from 'bun:test';
 
 import { dionControlActions } from '../src/dion/controls.ts';
 import { loadTourcraftContent } from '../src/dion/tourcraftContent.ts';
+import { TourcraftFlight } from '../src/dion/tourcraftFlight.ts';
 import {
   decodeTourcraftRecord,
   encodeTourcraftRecord
@@ -10,7 +11,7 @@ import {
 import { TourcraftSession } from '../src/dion/tourcraftSession.ts';
 import { IDLE } from '../src/gameCore/index.ts';
 import { BrowserControlProfile } from '../src/shell/input.ts';
-import { frames, press } from './dion-journey.ts';
+import { frames, press, until } from './dion-journey.ts';
 
 const content = await loadTourcraftContent(async path => {
   const text = readFileSync(new URL(`../..${path}`, import.meta.url), 'utf8');
@@ -397,6 +398,9 @@ test('manual Save refuses unknown pilots, malformed arrivals and contradictory c
 
 test('dropping KEY181 aboard on the ground makes the next Board refuse', () => {
   const s = eagle();
+  // `$55794` refuses a Drop while the Take's label still scrolls, a tick-counted rule that
+  // outlasts the EAGLE's four-tick frames.
+  until(s, () => s.snapshot.tourcraft!.carry.scroll === 0);
   press(s, 'drop');
   press(s, 'leave');
   expect(s.snapshot.tourcraft!.carry.stack).not.toContain(181);
@@ -414,4 +418,81 @@ test('fire held before boarding is noted when EAGLE becomes occupied', () => {
   press(s, 'board');
   s.fire();
   expect(s.drainNotes()).toContain('EAGLE firing');
+});
+
+test('EAGLE flight runs a frame every four ticks, and on foot every eleven (ADR 0058)', () => {
+  const s = eagle();
+  expect(s.snapshot.tourcraft!.frameTicks).toBe(0);
+  let frame = s.snapshot.frame;
+  s.advance(1);
+  expect(s.snapshot.frame - frame).toBe(12);
+  expect(s.snapshot.tourcraft!.frameTicks).toBe(2);
+  // Leave ends the next four-tick frame; the frames after it are eleven.
+  s.press('leave');
+  s.advance(2 / 50);
+  expect(flight(s)!.mode).toBe('foot');
+  frame = s.snapshot.frame;
+  s.advance(1);
+  expect(s.snapshot.frame - frame).toBe(4);
+  expect(s.snapshot.tourcraft!.frameTicks).toBe(6);
+});
+
+test('a second of held stick aboard EAGLE is twelve craft passes', () => {
+  const s = eagle();
+  s.throttleKey(11);
+  s.intent = { ...IDLE, pitch: 1, turn: 1 };
+  const passes = new TourcraftFlight(content, flight(s)!);
+  s.advance(1);
+  for (let pass = 0; pass < 12; pass += 1) {
+    passes.frame(2 | 8);
+  }
+  expect(flight(s)!.craft).toEqual(passes.state.craft);
+});
+
+test('a Save between EAGLE frames keeps the phase and the same future', () => {
+  const s = eagle();
+  s.throttleKey(10);
+  s.intent = { ...IDLE, turn: -1 };
+  s.advance(7 / 50);
+  expect(s.snapshot.tourcraft!.frameTicks).toBe(3);
+  const restored = restore(s);
+  restored.intent = s.intent;
+  expect(restored.snapshot.tourcraft!.frameTicks).toBe(3);
+  for (const session of [s, restored]) {
+    session.advance(1 / 50);
+    session.press('leave');
+    session.advance(1);
+  }
+  expect(restored.captureResume()).toEqual(s.captureResume());
+});
+
+test('a record from before the EAGLE cadence restores at eleven ticks a frame', () => {
+  const s = new EagleSession(content);
+  frames(s, 3);
+  s.advance(5 / 50);
+  const record = structuredClone(s.captureResume());
+  delete (record.snapshot.tourcraft as { frameTicks?: number }).frameTicks;
+  const restored = new TourcraftSession(content, record);
+  expect(restored.snapshot.tourcraft!.frameTicks).toBe(5);
+  expect(restored.captureResume()).toEqual(s.captureResume());
+});
+
+test('a Save refuses a phase its cadence or frame count contradicts', () => {
+  const s = eagle();
+  s.advance(6 / 50);
+  for (const mutate of [
+    (v: ReturnType<typeof s.captureResume>) => {
+      Object.assign(v.snapshot.tourcraft!, { frameTicks: 4 });
+    },
+    (v: ReturnType<typeof s.captureResume>) => {
+      Object.assign(v.snapshot, { frame: v.snapshot.frame + 1 });
+    },
+    (v: ReturnType<typeof s.captureResume>) => {
+      delete (v.snapshot.tourcraft as { frameTicks?: number }).frameTicks;
+    }
+  ]) {
+    const record = structuredClone(s.captureResume());
+    mutate(record);
+    expect(() => new TourcraftSession(content, record)).toThrow();
+  }
 });
