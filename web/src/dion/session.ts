@@ -15,6 +15,8 @@ import {
 } from '../sky/bodyTime.ts';
 import type { DionContent } from './content.ts';
 import {
+  dionDoorKey,
+  dionDoorTravel,
   planDionFrame,
   type DionCandidate,
   type DionDoorState,
@@ -732,46 +734,72 @@ export class DionSession implements TitleSession<
     this.state = { ...this.state, candidate };
   }
 
+  /// Whether the player holds object `key`: bit 7 of its state byte (`$641E`+4·key).
+  /// The D1 slice holds only DOOR KEY A `$26`, which the opening script hands over.
+  protected holdsKey(key: number): boolean {
+    return key === 0x26 && this.narrative.state.keyA;
+  }
+
+  /// `$5BA24`: one pass over each door of the bound cell. A door opens a unit a substep
+  /// while the eye is inside its box and it is keyless or its key is held, and closes
+  /// otherwise. Its latch settles a substep after the leaves arrive, or on arrival where
+  /// a single leaf's edge falls toward its endpoint (as Damocles's `$05AA3C` does). The
+  /// first pass to move a door arms door-moving and the last arms door-stop (`$5B9D6`).
   protected moveDoor(eye: Vec3): void {
-    if (this.state.cell !== 0x62) {
+    const entry = this.content.world.cells.find(
+      item => item.cell === this.state.cell
+    );
+    const structure =
+      entry &&
+      this.content.world.structures
+        .get(entry.structure)
+        ?.get(entry.scale.join(','));
+    if (entry === undefined || !structure?.attachments.length) {
       return;
     }
-    const entry = this.content.world.cells.find(item => item.cell === 0x62)!;
-    const structure = this.content.world.structures
-      .get(entry.structure)!
-      .get(entry.scale.join(','))!;
-    const door = structure.attachments[0]!;
     const [gx, gz] = this.content.world.opening.groupOrigin;
     const x = eye[0] - ((gx + entry.x) * 65_536 + entry.origin[0]);
     const z = eye[2] - ((gz + entry.z) * 65_536 + entry.origin[1]);
-    const opening =
-      this.narrative.state.keyA &&
-      x >= -150 &&
-      x < 150 &&
-      z >= -1200 &&
-      z < 300;
-    const previous = this.state.doors.get(door.slot) ?? {
-      latch: 'shut',
-      openUnits: 0
-    };
-    if (
-      (opening && previous.latch === 'open') ||
-      (!opening && previous.latch === 'shut')
-    ) {
-      return;
-    }
-    const proposed = previous.openUnits + (opening ? 1 : -1);
-    const latch = proposed > 142 ? 'open' : proposed < 0 ? 'shut' : 'moving';
     const doors = new Map(this.state.doors);
-    doors.set(door.slot, {
-      latch,
-      openUnits: Math.max(0, Math.min(142, proposed))
-    });
+    let wasMoving = false;
+    let moved = false;
+    for (const door of structure.attachments) {
+      const previous = doors.get(door.slot) ?? {
+        latch: 'shut',
+        openUnits: 0
+      };
+      wasMoving ||= previous.latch === 'moving';
+      const key = dionDoorKey(door, entry);
+      const opening =
+        x >= door.box.x[0] &&
+        x < door.box.x[1] &&
+        z >= door.box.z[0] &&
+        z < door.box.z[1] &&
+        (key === 0 || this.holdsKey(key));
+      if (previous.latch === (opening ? 'open' : 'shut')) {
+        continue;
+      }
+      const travel = dionDoorTravel(door);
+      const proposed = previous.openUnits + (opening ? 1 : -1);
+      const beyond = opening ? proposed - travel : -proposed;
+      const falling = (door.control & 0x01_00) === 0 ? opening : !opening;
+      const latch =
+        beyond > 0 || (beyond === 0 && !door.twoLeaves && falling)
+          ? opening
+            ? 'open'
+            : 'shut'
+          : 'moving';
+      doors.set(door.slot, {
+        latch,
+        openUnits: Math.max(0, Math.min(travel, proposed))
+      });
+      moved ||= latch === 'moving';
+    }
     this.state = { ...this.state, doors };
-    if (previous.latch !== 'moving' && latch === 'moving') {
+    if (!wasMoving && moved) {
       this.cue('door_moving');
     }
-    if (previous.latch === 'moving' && latch !== 'moving') {
+    if (wasMoving && !moved) {
       this.cue('door_stop');
     }
   }

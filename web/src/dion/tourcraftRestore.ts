@@ -1,3 +1,4 @@
+import { dionDoorTravel } from './frame.ts';
 import { documentItems, openRow } from './head.ts';
 import { bool, int, list, record } from './read.ts';
 import { readDionResume } from './restore.ts';
@@ -954,10 +955,12 @@ export const readTourcraftResume = (
       ['latch', 'openUnits'],
       'door'
     );
+    const bound = structure?.attachments.find(d => d.slot === slot);
     if (
-      !structure?.attachments.some(d => d.slot === slot) ||
+      bound === undefined ||
+      door.openUnits > dionDoorTravel(bound) ||
       (door.latch === 'shut' && door.openUnits !== 0) ||
-      (door.latch === 'open' && door.openUnits !== 142)
+      (door.latch === 'open' && door.openUnits !== dionDoorTravel(bound))
     ) {
       throw new Error('Invalid bound door');
     }

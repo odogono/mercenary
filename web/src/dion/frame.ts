@@ -73,7 +73,8 @@ export interface DionResidentPose {
 
 export interface DionDoorState {
   readonly latch?: 'shut' | 'moving' | 'open';
-  /// 0 shut … 142 fully open; the leaves stop eight units inside their outer edges.
+  /// 0 shut … `dionDoorTravel` fully open; the leaves stop eight units inside their outer
+  /// edges.
   readonly openUnits: number;
 }
 
@@ -373,6 +374,29 @@ const cellBase = (world: DionFrameWorld, cell: DionCell): [number, number] => [
   (world.opening.groupOrigin[1] + cell.z) * 0x1_00_00
 ];
 
+/// How far a door's inner edges move from shut to open: each leaf's width less the
+/// 8-unit inset (`$5BBE4`), so 142 for the prison's two 150-unit leaves.
+export const dionDoorTravel = (door: DionAttachment): number => {
+  const [x0, z0, x1, z1] = door.leaves;
+  const span = door.motionAxis === 'x' ? x1 - x0 : z1 - z0;
+  return (door.twoLeaves ? span >> 1 : span) - 8;
+};
+
+/// `$5AE4E..$5AF8E`: the object whose held bit opens a door, or 0 for a keyless door.
+/// A signed low byte from −16 adds the cell's key base (`$5AF10`), and with no base the
+/// door is keyless.
+export const dionDoorKey = (door: DionAttachment, cell: DionCell): number => {
+  const low = door.key ?? 0;
+  if (low === 0) {
+    return 0;
+  }
+  const signed = low >= 0x80 ? low - 0x1_00 : low;
+  if (signed < -16) {
+    return low;
+  }
+  return cell.keyBase === 0 ? 0 : cell.keyBase + (low & 0x0f);
+};
+
 /// `$5AF8E..$5B212`: the plan vertices and walls a door adds, with its inner leaf
 /// edges where the mover has left them.
 const doorGeometry = (
@@ -385,8 +409,8 @@ const doorGeometry = (
   const [x0, z0, x1, z1] = door.leaves;
   const n = door.firstVertex;
   const [c0, c1, c2] = door.colours as [number, number, number];
+  const open = Math.max(0, Math.min(dionDoorTravel(door), openUnits));
   if (door.twoLeaves) {
-    const open = Math.max(0, Math.min(142, openUnits));
     if (door.motionAxis === 'x') {
       const mid = (x0 + x1) >> 1;
       return {
@@ -432,21 +456,24 @@ const doorGeometry = (
       ]
     };
   }
+  // Bit 8 moves the low edge toward the high one; otherwise the high edge moves.
+  const low = (door.control & 0x01_00) !== 0;
+  const [l, h] = low ? [open, 0] : [0, -open];
   const vertices: (readonly [number, number])[] =
     door.motionAxis === 'x'
       ? [
-          [x0, z0],
-          [x0, z1],
-          [x1, z1],
-          [x1, z0]
+          [x0 + l, z0],
+          [x0 + l, z1],
+          [x1 + h, z1],
+          [x1 + h, z0]
         ]
       : [
-          [x0, z0],
-          [x1, z0],
-          [x1, z1],
-          [x0, z1]
+          [x0, z0 + l],
+          [x1, z0 + l],
+          [x1, z1 + h],
+          [x0, z1 + h]
         ];
-  const edge = door.control & 0x01_00 ? [n, n + 1] : [n + 2, n + 3];
+  const edge = low ? [n, n + 1] : [n + 2, n + 3];
   return {
     vertices,
     walls: [
@@ -585,18 +612,7 @@ const tokenString = (
 };
 
 const doorKeyLetter = (door: DionAttachment, cell: DionCell): number => {
-  const low = door.key ?? 0;
-  if (low === 0) {
-    return SPACE;
-  }
-  // Signed byte compare at $5AF10: $F0..$FF and $10..$7F add the cell's key base.
-  const signed = low >= 0x80 ? low - 0x1_00 : low;
-  const key =
-    signed >= -16
-      ? cell.keyBase === 0
-        ? 0
-        : cell.keyBase + (low & 0x0f)
-      : low;
+  const key = dionDoorKey(door, cell);
   return key === 0 ? SPACE : (key + 0x23) & 0xff;
 };
 
