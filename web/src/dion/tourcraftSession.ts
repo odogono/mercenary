@@ -90,6 +90,10 @@ import {
 import { dionFlightEye, dionFlightView } from './tourcraftView.ts';
 import { dionCellStructure, readDionOpening } from './world.ts';
 
+/// Ticks a frame takes while the EAGLE is flown (ADR 0058, #837): the #609 airborne slot-1
+/// probe's four VBLs a frame, the same as Damocles's pass (ADR 0051).
+const EAGLE_TICKS_PER_FRAME = 4;
+
 const gameplayContent = (
   promoted: TourcraftContent,
   group: 3 | 23
@@ -208,6 +212,7 @@ export class TourcraftSession extends DionSession {
         },
         faceSelection: 'initial',
         flight: null,
+        frameTicks: 0,
         // `$4D848` refuses the keypad during the opening's 49-VBL logo reveal too.
         head: {
           ...initialHeadCommands(),
@@ -248,6 +253,26 @@ export class TourcraftSession extends DionSession {
   }
   private get expanded(): TourcraftState {
     return this.state.tourcraft!;
+  }
+  /// ADR 0058 (#837): a frame is four ticks while the EAGLE is flown, as the airborne slot-1
+  /// probe ran (docs/research/mercenary-iii-integration.md), and eleven otherwise.
+  private frameCadence(): number {
+    const flight = this.expanded.flight;
+    return flight?.pilot === 'eagle' && flight.mode !== 'foot'
+      ? EAGLE_TICKS_PER_FRAME
+      : this.ticksPerFrame;
+  }
+  protected override framePhase() {
+    return { cadence: this.frameCadence(), ticks: this.expanded.frameTicks };
+  }
+  protected override countFrameTick(): boolean {
+    const ticks = this.expanded.frameTicks + 1;
+    const due = ticks >= this.frameCadence();
+    this.state = {
+      ...this.state,
+      tourcraft: { ...this.expanded, frameTicks: due ? 0 : ticks }
+    };
+    return due;
   }
   protected override taxiProfile() {
     return 'tourcraft' as const;

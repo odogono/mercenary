@@ -278,14 +278,24 @@ export class DionSession implements TitleSession<
   /// given but the session not yet taken, for the Enhanced view to draw between frames
   /// (ADR 0078). Read only: nothing here is state.
   passPhase(ahead = 0): PassPhase {
-    const tick = this.state.tick;
+    const { cadence, ticks } = this.framePhase();
     return {
-      fraction:
-        ((tick % this.ticksPerFrame) +
-          (this.remainder + ahead) / this.tickSeconds) /
-        this.ticksPerFrame,
-      pass: Math.floor(tick / this.ticksPerFrame)
+      fraction: (ticks + (this.remainder + ahead) / this.tickSeconds) / cadence,
+      pass: this.state.frame
     };
+  }
+
+  /// The ticks the next frame takes, and the ticks run toward it (ADR 0058).
+  protected framePhase(): { readonly cadence: number; readonly ticks: number } {
+    return {
+      cadence: this.ticksPerFrame,
+      ticks: this.state.tick % this.ticksPerFrame
+    };
+  }
+
+  /// Counts the tick just run toward the next frame, and says whether it ends one.
+  protected countFrameTick(): boolean {
+    return this.state.tick % this.ticksPerFrame === 0;
   }
 
   advance(seconds: number): DionSnapshot {
@@ -365,7 +375,7 @@ export class DionSession implements TitleSession<
       tick
     };
     this.tickExtra();
-    if (tick % this.ticksPerFrame === 0) {
+    if (this.countFrameTick()) {
       this.frame();
     }
   }

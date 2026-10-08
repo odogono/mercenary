@@ -31,6 +31,9 @@ export interface TourcraftState {
   >;
   readonly faceSelection: 'initial' | 'base' | 'alternate';
   readonly flight: TourcraftFlightState | null;
+  /// Ticks run toward the next frame: a frame is four ticks while the EAGLE is flown and
+  /// eleven otherwise (ADR 0058, #837).
+  readonly frameTicks: number;
   /// The open panel and the centre box (`$6F0E`, `$6F04`, `$53950`), shared with Damocles.
   readonly head: HeadCommandState;
   /// The lift (#835): the Floor whose structure the cell binds, a ride between the request

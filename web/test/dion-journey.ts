@@ -1,8 +1,14 @@
 import { DionSession, type DionAction } from '../src/dion/session.ts';
 import { IDLE } from '../src/gameCore/index.ts';
 
+/// Advances `count` frames' worth of ticks: eleven a frame, or four while the EAGLE is flown
+/// (ADR 0058).
 export const frames = (session: DionSession, count = 1): void => {
-  session.advance((count * 11) / 50);
+  for (let frame = 0; frame < count; frame += 1) {
+    const flight = session.snapshot.tourcraft?.flight;
+    const flown = flight?.pilot === 'eagle' && flight.mode !== 'foot';
+    session.advance((flown ? 4 : 11) / 50);
+  }
 };
 export const press = (session: DionSession, action: DionAction): void => {
   session.press(action);

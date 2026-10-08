@@ -41,7 +41,9 @@ const nullableInt = (value: unknown, path: string) =>
 export const readDionResume = (
   value: unknown,
   content?: DionContent,
-  driverIndexMax = 4
+  driverIndexMax = 4,
+  /// Whether every frame is `ticksPerFrame` ticks, as D1's are; the TOURCRAFT reader checks its own.
+  fixedCadence = true
 ): DionResumeRecord => {
   const raw = record(value, 'snapshot');
   const s = record(raw['snapshot'], 'snapshot.state');
@@ -237,7 +239,7 @@ export const readDionResume = (
     },
     tick: int(s['tick'], 'tick', 0, Number.MAX_SAFE_INTEGER)
   };
-  if (snapshot.frame !== Math.floor(snapshot.tick / 11)) {
+  if (fixedCadence && snapshot.frame !== Math.floor(snapshot.tick / 11)) {
     throw new Error('simulation phase disagrees with frame');
   }
   if (![0, 1, 2, 34, 35].includes(snapshot.taxi.counter)) {

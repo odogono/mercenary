@@ -179,7 +179,7 @@ export const readTourcraftResume = (
     ],
     'sound'
   );
-  const base = readDionResume(value, undefined, 5);
+  const base = readDionResume(value, undefined, 5, false);
   // The inherited decoder supplies exact base shapes/ranges. Reject fields it
   // would otherwise ignore, before assigning the expanded owners.
   keys(raw, [...Object.keys(base.snapshot), 'tourcraft'], 'state');
@@ -300,34 +300,58 @@ export const readTourcraftResume = (
     timedTarget,
     timerBits: unsigned(n['timerBits'], 'timerBits', 65_535)
   };
-  const e = keys(
-    raw['tourcraft'],
-    [
-      'armed',
-      'carry',
-      'devices',
-      'head',
-      'reading',
-      'switches',
-      'collision',
-      'encounter',
-      'events',
-      'faceInvocations',
-      'faceSelection',
-      'faces',
-      'flight',
-      'lift',
-      'liveIntent',
-      'owners',
-      'pawn',
-      'phases',
-      'playerZone',
-      'residents'
-    ],
-    'tourcraft'
-  );
+  // A copy: the restored phase is written into it below.
+  const e = {
+    ...keys(
+      raw['tourcraft'],
+      [
+        ...('frameTicks' in record(raw['tourcraft'], 'tourcraft')
+          ? ['frameTicks']
+          : []),
+        'armed',
+        'carry',
+        'devices',
+        'head',
+        'reading',
+        'switches',
+        'collision',
+        'encounter',
+        'events',
+        'faceInvocations',
+        'faceSelection',
+        'faces',
+        'flight',
+        'lift',
+        'liveIntent',
+        'owners',
+        'pawn',
+        'phases',
+        'playerZone',
+        'residents'
+      ],
+      'tourcraft'
+    )
+  };
   const manual =
     e['flight'] !== null && record(e['flight'], 'flight')['pilot'] === 'eagle';
+  // ADR 0058 (#837): a frame is four ticks while the EAGLE is flown and eleven otherwise, so
+  // the ticks run are four for some frames and eleven for the rest. A record from before the
+  // EAGLE's cadence ran every frame at eleven.
+  const fixedPhase = e['frameTicks'] === undefined;
+  const cadence =
+    manual && record(e['flight'], 'flight')['mode'] !== 'foot' ? 4 : 11;
+  const frameTicks = fixedPhase
+    ? base.snapshot.tick % 11
+    : unsigned(e['frameTicks'], 'frameTicks', cadence - 1);
+  const framed = base.snapshot.tick - frameTicks - 4 * base.snapshot.frame;
+  if (
+    fixedPhase
+      ? base.snapshot.frame !== Math.floor(base.snapshot.tick / 11)
+      : framed < 0 || framed > 7 * base.snapshot.frame || framed % 7 !== 0
+  ) {
+    throw new Error('Simulation phase disagrees with frame');
+  }
+  e['frameTicks'] = frameTicks;
   const pawn = keys(e['pawn'], ['previous', 'price', 'slot'], 'pawn');
   unsigned(pawn['previous'], 'pawn.previous', 246);
   unsigned(pawn['slot'], 'pawn.slot', 246);
