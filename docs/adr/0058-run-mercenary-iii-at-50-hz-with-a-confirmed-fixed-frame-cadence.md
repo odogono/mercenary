@@ -4,6 +4,17 @@ Accepted, 2026-09-30, for [D1 / #638](https://github.com/odogono/mercenary/issue
 
 **Accepted amendment, 2026-10-02:** the user accepted [D2’s transition clarification](../research/mercenary-iii-tourcraft-milestone-review.md#accepted-r6-follow-up). [R6’s strict atomic probes](../research/mercenary-iii-tourcraft-followup.md#new-probe-results) confirm the early TOURCRAFT flight at eleven logical ticks per frame, including playback, dialogue, accelerated clock and automatic exit. Original zero-tick reentries and post-wait ownership are admitted as specified below. The subsequent [campaign recovery](../research/mercenary-iii-tourcraft-campaign.md), [independent timing comparison](../research/mercenary-iii-tourcraft-timing-controls.md) and [boundary controls](../research/mercenary-iii-tourcraft-boundary-controls.md) complete connected R6 research. This amendment does not certify runtime or restored futures.
 
+**Accepted amendment, 2026-10-08, for [#837](https://github.com/odogono/mercenary/issues/837): the EAGLE runs at four ticks per frame.**
+
+- **Which frames.** While the player pilots the EAGLE, on the surface or in space, an atomic frame is four ticks. Eleven still governs everything else: on foot, as a taxi passenger, and in TOURCRAFT playback, including its launch, space entry and Body entry.
+- **What it covers.** Every frame-counted rule runs at the EAGLE's rate during EAGLE flight: the craft pass, the interpreter's one opcode, the narrative frame, the taxi service and the encounter. Tick rules stay per tick.
+- **Switching cadence.** The cadence in effect when a frame starts governs that frame. Boarding and leaving change the cadence from the next frame.
+- **The phase.** The phase becomes the ticks since the last frame, not `tick % 11`. Save and Session Resume must preserve it or reconstruct it.
+- **Evidence.** Four comes from Mercenary III's own evidence. The [#609 airborne slot-1 probe](../research/mercenary-iii-integration.md#4-aboard-cadence-runtime-evidence-not-a-fixed-rate-contract) recorded one pass per frame at four VBLs, in all 64 frames. It is not carried over from ADR 0051, although it matches it.
+- **Why.** The EAGLE's Craft Parameter Block equals the Damocles Eagle's. At eleven ticks per frame it turned, pitched and flew about 2.75× slower than both the probe and Damocles. Its stick was also read only every 220 ms.
+- **Limits.** The probe covers one scene, and scene cost varies frame length in the original. Four is therefore a fixed cadence evidenced for open flight, not a recovered constant. No recorded playback runs in EAGLE frames. A message race during EAGLE flight would be decided at four, as the probe's scene was.
+- **What stays.** The eleven-tick rules, assertions and consequences below stand for every frame outside EAGLE flight. Walking substeps stay `clamp(11, 4, 8)`.
+
 [R4](../research/mercenary-iii-shared-mechanisms.md#cadence-options-for-d1) establishes two clocks: waits, messages and elapsed time count VBLs, while routes, admission and script execution count main-loop frames. Original frame cost varies with the scene and sound-driver work. The 60 Hz baseline runs its 50-VBL game seconds fast; 50 Hz makes game seconds equal wall seconds, although this STX's PAL lineage is not independently established. Fixed cadence preserves integer rules and deterministic restoration without reproducing ST CPU/raster cost.
 
 ## Decision and confirmation gate
