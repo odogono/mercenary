@@ -10,7 +10,9 @@
 
 ### Worktrees
 
-In a new worktree, run `scripts/worktree-setup.sh` first: it links Restricted Material and lab artifacts to the main checkout and installs dependencies.
+In a new worktree, run `scripts/worktree-setup.sh` first (Claude Code's SessionStart hook runs it when `web/node_modules` is missing): it links Restricted Material and lab artifacts to the main checkout and installs dependencies and Playwright's Chromium.
+
+The shell is zsh on macOS: there is no `timeout`, and globs such as `--include=*.ts` must be quoted.
 
 ### End-to-end tests
 

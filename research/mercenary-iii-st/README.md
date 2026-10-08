@@ -23,6 +23,7 @@ Each issue's runs live in the main checkout's `restricted/mercenary-iii-<issue>/
 | `m3lab/tourcraft_export.py` | the bounded TOURCRAFT export into `payload/dion/tourcraft/` (ADR 0065) |
 | `m3lab/head.py` | the Open table, document bank and centre art the Head Commands read, into `presentation/head.json` (ADR 0076) |
 | `m3lab/lift.py` | the lift's code checks and a live METIS ride traced under Hatari ([#835](../../docs/research/mercenary-iii-lift.md)) |
+| `scripts/m68dis.py` | 68000 disassembly of RAM windows, for comparing a Mercenary III routine with its Damocles counterpart; needs capstone (recipe in its docstring) |
 | `scripts/taxi-*.ts` | R8 taxi Save audits, pinned by `taxi-source.ts` and run under `bun test` in `web/` |
 | `scripts/taxi-source-eligibility.ts`, `scripts/taxi-eligibility-audit.ts` | R8a necessary source checks and 11 additional ordinary input witnesses; [source eligibility/reference rule](../../docs/research/mercenary-iii-tourcraft-source-eligibility.md), with universal proof gaps retained |
 | `scripts/taxi-early-cursor-audit.ts` | R8a ordinary early full-record collision with different retained face cursors; [accepted early canonical policy and witness](../../docs/research/mercenary-iii-tourcraft-source-eligibility.md#ordinary-early-cursor-collision-returned-to-d2), `taxi-early-cursor-evidence.json` and `web/test/dion-early-cursor-ambiguity.test.ts` |
@@ -37,7 +38,7 @@ Each issue's runs live in the main checkout's `restricted/mercenary-iii-<issue>/
 
 ## Quick start
 
-Supply the pinned media under a directory named by `M3_ROM_ROOT`, containing `atarist/Mercenary III.STX` and `atarist/tos/emutos206.img`. The pinned Hatari 2.6.1 binary is checked by hash. Every module uses only the Python standard library.
+Supply the pinned media under a directory named by `M3_ROM_ROOT`, containing `atarist/Mercenary III.STX` and `atarist/tos/emutos206.img`. The pinned Hatari 2.6.1 binary is checked by hash. Where that build is unavailable, `M3_HATARI` names another binary, and `m3lab.lift live --hatari-sha256` accepts its hash ([the deviation](../../docs/research/mercenary-iii-lift.md)). Every module except `scripts/m68dis.py` uses only the Python standard library.
 
 ```sh
 cd research/mercenary-iii-st

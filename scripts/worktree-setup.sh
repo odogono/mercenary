@@ -58,4 +58,8 @@ if [ "$top" != "$main" ]; then
 fi
 
 git config core.hooksPath .githooks
-(cd web && bun install)
+(cd web && bun install && bunx playwright install chromium)
+
+# Prettier under Bun misreads the import-sort plugin and flags untouched files,
+# so format:check, and the pre-commit hook that runs it, need Node.
+command -v node >/dev/null || warn "node is not on PATH; format:check will report false failures"
