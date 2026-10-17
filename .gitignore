@@ -28,8 +28,6 @@ __pycache__/
 # (ADR 0019).
 /web/dist/
 /web/node_modules/
-/web/spike/*/node_modules/
-/web/spike/*/bun.lock
 /web/.eslintcache
 /web/playwright-report/
 /web/test-results/

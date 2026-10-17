@@ -1,43 +1,39 @@
 -- The Escape: launching the Interstellar Ship and the end of the game.
 -- Rewritten from Benson Script 7 (payload/benson.json, instructions 411-460).
--- Boarding the ship starts it once the opening has armed object 7.
 
-constant ship = 7
+use show, report from benson
 
-on begin
+on boarded craft where craft = "ship", replacing
   show "INTERSTELLAR SHIP" and wait
-  repeat forever
-    -- Wait for the ship to stand on the surface, for as long as the player stays aboard.
-    repeat while aboard() and not onSurface()
-      wait 1 s
-    end repeat
-    if not aboard() then return
-    wait 1 s
-    if not canLaunch() then
-      show "NOVADRIVE REQUIRED" and wait
+  -- A World Event isn't buffered: one that arrived while the message played
+  -- is gone, so check the world before waiting for it to change.
+  if not aboard() then return
+  ask world to here
+  if it is not "surface" then
+    wait for
+      when entered room where room = "surface" then
+      when left craft where craft = "ship" then
+        return
+    end wait
+  end if
+  if not canLaunch() then
+    show "NOVADRIVE REQUIRED" and wait
+    return
+  end if
+  show "PRESS Y TO LAUNCH" and wait
+  if not aboard() then return
+  wait for
+    when pressed key where key = "Y" then
+    when left craft where craft = "ship" then
       return
-    end if
-    show "PRESS Y TO LAUNCH" and wait
-    awaitLaunch and wait
-    if it is false then return
-    if onSurface() and canLaunch() then exit repeat
-  end repeat
+  end wait
   ask world to advertIntact
   if it then
     escape and wait
   else
     report ["THE AUTHOR WON'T LET", "YOU LEAVE UNTIL YOU", "FIX HIS ADVERT"] and wait
   end if
-end begin
-
--- True once the player presses Y; false if they leave the ship first.
-on awaitLaunch
-  repeat forever
-    ask keys to awaitKey "Y", 1 and wait
-    if it then return true
-    if not aboard() then return false
-  end repeat
-end awaitLaunch
+end boarded
 
 on escape
   ask world to escape
@@ -60,13 +56,8 @@ end escape
 
 function aboard
   ask world to boarded
-  return it = ship
+  return it = "ship"
 end aboard
-
-function onSurface
-  ask world to onSurface
-  return it
-end onSurface
 
 -- The ship needs a Novadrive, unless it was hired with one.
 function canLaunch
@@ -75,13 +66,3 @@ function canLaunch
   ask world to carries "novadrive"
   return it
 end canLaunch
-
-on show line
-  ask display to show line and wait
-end show
-
-on report lines
-  repeat for each line in lines
-    show line and wait
-  end repeat
-end report
