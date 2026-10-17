@@ -1,0 +1,11 @@
+-- Shared by every Talk Script: Benson's voice on the Benson Display.
+
+on show line
+  ask display to show line and wait
+end show
+
+on report lines
+  repeat for each line in lines
+    show line and wait
+  end repeat
+end report

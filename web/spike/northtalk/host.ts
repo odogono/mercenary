@@ -1,5 +1,6 @@
-/// The Talk Script host for the NorthTalk spike: the Host Callout of
-/// `web/src/benson/host.ts`, offered to NorthTalk as four Capabilities.
+/// The Talk Script host for the NorthTalk spike: the Host Callout offered to
+/// NorthTalk as three Capabilities, World Events delivered as Broadcasts, and
+/// messages shown on the session's own Benson Display.
 ///
 /// Throwaway. It shows what a Talk Script host has to own, not how the
 /// Gameplay Session should own it (docs/research/targ-talk-scripts.md).
@@ -9,17 +10,36 @@ import {
   nothing,
   num,
   shape,
+  text,
   type Call,
   type Group,
-  type PumpResult,
+  type Library,
   type Report,
   type Value
 } from '@northtalk/ts';
 
-import { BensonHostState, type BensonEffect } from '../../src/benson/host.ts';
+import { BensonHostState } from '../../src/benson/host.ts';
+import type { BensonSession } from '../../src/benson/session.ts';
+import { objectName, objectSlot, roomName } from './names.ts';
 
-/// The Talk Scripts this spike loads, by the name the host starts them under.
-export type TalkScriptName = 'opening' | 'escape';
+/// A NorthTalk Core: the TS Core by default, or the WASM Core from `@northtalk/ts/wasm`.
+export type TalkCore = Pick<
+  ReturnType<typeof createCore>,
+  'compileLibrary' | 'defineCapability' | 'newGroup' | 'restore'
+>;
+
+/// A change in play, as the Talk Scripts receive it: a Broadcast message.
+export type WorldEvent =
+  | { readonly kind: 'begin' }
+  | { readonly kind: 'entered'; readonly room: string }
+  | { readonly craft: string; readonly kind: 'boarded' | 'left' }
+  | { readonly kind: 'took' | 'dropped'; readonly object: string }
+  | {
+      readonly faction: string;
+      readonly kind: 'destroyed';
+      readonly site: string;
+    }
+  | { readonly key: string; readonly kind: 'pressed' };
 
 /// Engine flags a Talk Script may name, by their bit in `engineFlags`
 /// (notes/decode/endgame.md, "Engine flags").
@@ -29,58 +49,20 @@ const FLAGS = {
   shipHired: 4
 } as const;
 
-/// The Talk Script an armed object starts. Only the Escape is rewritten here.
-const ARMED_SCRIPTS: Readonly<Record<number, TalkScriptName>> = {
-  7: 'escape'
-};
-
 const CREDITS = 8;
-const NOVADRIVE = 25;
 const ADVERT_BLOCK = 50;
-const SCRIPT_ARMED = 4;
 const MICROS = 1_000_000;
 
-/// A NorthTalk Core: the TS Core by default, or the WASM Core from `@northtalk/ts/wasm`.
-export type TalkCore = Pick<
-  ReturnType<typeof createCore>,
-  'defineCapability' | 'newGroup' | 'restore'
->;
-
 export interface TalkHostOptions {
-  /// Seconds each character of a message adds to its playing time. The
-  /// default fits the script-0 traces: Benson Messages start about
-  /// 0.09 s per character plus a 3 s hold apart.
-  readonly cellSeconds?: number;
   /// The Core to run on. Both Cores share the embedding API.
   readonly core?: TalkCore;
-  /// Seconds a message holds once it has scrolled in.
-  readonly holdSeconds?: number;
-  /// The next random byte. The host owns randomness so saves stay replayable.
+  /// The next random byte. The host owns randomness so tests can choose outcomes.
   readonly random?: () => number;
-}
-
-interface Queued {
-  readonly call: Call<unknown> | undefined;
-  readonly text: string;
-}
-
-interface Playing extends Queued {
-  readonly until: number;
-}
-
-interface KeyWait {
-  readonly call: Call<unknown>;
-  /// A key name, or `undefined` for any input.
-  readonly key: string | undefined;
-  readonly until: number;
 }
 
 /// The host-side state a save must carry beside the Group's own bytes.
 export interface TalkHostSave {
-  readonly armed: readonly number[];
   readonly group: Uint8Array;
-  readonly heard: boolean;
-  readonly host: BensonHostState;
   readonly now: number;
 }
 
@@ -94,139 +76,101 @@ const flag = (name: Value): number => {
 
 const whole = (value: Value): number => Number(value.asDecimal()!.toBigInt());
 
-/// One Group of Talk Scripts sharing a Benson Display, a key stream and a host state.
+const message = (event: WorldEvent): { args: Value[]; name: string } => {
+  switch (event.kind) {
+    case 'begin':
+      return { args: [], name: 'begin' };
+    case 'entered':
+      return { args: [text(event.room)], name: 'entered' };
+    case 'boarded':
+    case 'left':
+      return { args: [text(event.craft)], name: event.kind };
+    case 'took':
+    case 'dropped':
+      return { args: [text(event.object)], name: event.kind };
+    case 'destroyed':
+      return {
+        args: [text(event.site), text(event.faction)],
+        name: 'destroyed:by:'
+      };
+    case 'pressed':
+      return { args: [text(event.key)], name: 'pressed' };
+  }
+};
+
+/// One Group of Talk Scripts, alive for a whole Gameplay Session, sharing its
+/// Benson Display and its Benson host state.
 export class TalkHost {
   readonly core: TalkCore;
-  readonly effects: BensonEffect[] = [];
-  /// Each message as it began to play, with the host clock in seconds.
+  /// Every World Event delivered, in order, with the host clock in seconds.
+  readonly delivered: { readonly at: number; readonly event: WorldEvent }[] =
+    [];
+  /// Each Talk Script message as it began to play, with the host clock in seconds.
   readonly played: { readonly at: number; readonly text: string }[] = [];
   readonly reports: Report[] = [];
-  host: BensonHostState;
+  /// Voices a Talk Script silenced.
+  readonly silenced: string[] = [];
   group: Group;
   now = 0;
+  readonly scripts: Readonly<Record<string, string>>;
 
-  private readonly cellSeconds: number;
-  private readonly holdSeconds: number;
-  private readonly random: () => number;
-  private readonly sources: Readonly<Record<TalkScriptName, string>>;
-  private armed = new Set<number>();
-  private heard = false;
-  private playing: Playing | undefined;
-  private readonly queue: Queued[] = [];
-  private keyWaits: KeyWait[] = [];
+  private readonly benson: BensonSession;
   private readonly capabilities;
+  private readonly library: Library;
+  private playing: { readonly call: Call<unknown> } | undefined;
+  private readonly queue: { call: Call<unknown>; text: string }[] = [];
+  private readonly random: () => number;
 
   constructor(
-    sources: Readonly<Record<TalkScriptName, string>>,
-    host: BensonHostState,
+    scripts: Readonly<Record<string, string>>,
+    library: { readonly name: string; readonly source: string },
+    benson: BensonSession,
     options: TalkHostOptions = {}
   ) {
     this.core = options.core ?? createCore();
-    this.sources = sources;
-    this.host = host;
-    this.cellSeconds = options.cellSeconds ?? 0.09;
-    this.holdSeconds = options.holdSeconds ?? 3;
+    this.scripts = scripts;
+    this.benson = benson;
     this.random = options.random ?? (() => 0);
     this.capabilities = this.defineCapabilities();
-    this.group = this.core.newGroup({ name: 'targ' });
-    for (const name of Object.keys(sources) as TalkScriptName[]) {
-      this.group.load({
-        grants: this.grants(),
-        limits: { maxWaitMs: 2_147_483_647 },
-        name,
-        source: sources[name]
-      });
-    }
+    this.library = this.core.compileLibrary({ ...library, version: '1' }, [], {
+      display: { show: { args: [shape.text], mode: 'suspending' } }
+    });
+    this.group = this.newGroup();
   }
 
-  /// Starts a Talk Script. Several may run at once; they share the display queue.
-  start(name: TalkScriptName): void {
-    this.group.script(name)?.deliver({ name: 'begin' });
-    this.pump();
-  }
-
-  /// The player boards a craft. An armed object starts its Talk Script, as
-  /// Benson's object bit 4 starts the script numbered by the slot.
-  board(craft: number): void {
-    this.host = this.host.with({ boardedCraft: craft });
-    const script = ARMED_SCRIPTS[craft];
-    if (script !== undefined && this.armed.has(craft)) {
-      this.start(script);
-    }
-  }
-
-  leaveCraft(): void {
-    this.host = this.host.with({ boardedCraft: BensonHostState.onFoot });
-  }
-
-  /// A key press reaches every Talk Script waiting for it, and counts as input heard.
-  press(key: string): void {
-    this.heard = true;
-    const waits = this.keyWaits;
-    this.keyWaits = [];
-    for (const wait of waits) {
-      if (wait.key === undefined || wait.key === key) {
-        wait.call.answer(bool(true));
-      } else {
-        this.keyWaits.push(wait);
-      }
+  /// Delivers World Events as Broadcasts, in order, then lets the Talk Scripts run.
+  deliver(events: readonly WorldEvent[]): void {
+    for (const event of events) {
+      this.delivered.push({ at: this.now, event });
+      this.group.broadcast(message(event));
     }
     this.pump();
   }
 
-  /// Advances the host clock, settling display and key deadlines as it passes them.
+  /// Moves the host clock on by one frame, after the session has advanced it.
   advance(seconds: number): void {
-    const target = this.now + seconds;
-    for (;;) {
-      this.settleDue();
-      const result = this.pump();
-      const pumped =
-        result.nextDeadline === undefined
-          ? Number.POSITIVE_INFINITY
-          : Number(result.nextDeadline) / MICROS;
-      const next = Math.min(pumped, this.nextHostDeadline());
-      if (next > target) {
-        this.now = target;
-        this.settleDue();
-        this.pump();
-        return;
-      }
-      this.now = Math.max(next, this.now + 1 / MICROS);
-    }
+    this.now += seconds;
+    this.pump();
   }
 
   get messages(): string[] {
-    return this.effects.flatMap(effect =>
-      typeof effect === 'object' && 'playMessage' in effect
-        ? [effect.playMessage]
-        : []
-    );
+    return this.played.map(entry => entry.text);
   }
 
   save(): TalkHostSave {
-    return {
-      armed: [...this.armed],
-      group: this.group.save(),
-      heard: this.heard,
-      host: this.host,
-      now: this.now
-    };
+    return { group: this.group.save(), now: this.now };
   }
 
-  /// Restores a save into this host's fresh Core. Calls the save left
-  /// pending are reissued: a message replays, a key wait restarts its window.
+  /// Restores a save into this host's fresh Core. Calls the save left pending
+  /// are reissued: a message that was playing plays again from its start.
   restore(save: TalkHostSave): void {
-    this.armed = new Set(save.armed);
-    this.heard = save.heard;
-    this.host = save.host;
     this.now = save.now;
     this.queue.length = 0;
     this.playing = undefined;
-    this.keyWaits = [];
+    const grants = this.grants();
     const { group, result } = this.core.restore(save.group, {
-      grants: (_script, name) =>
-        this.grants()[name as keyof ReturnType<TalkHost['grants']>],
-      libraries: [],
+      grants: (_script, name) => grants[name as keyof typeof grants],
+      libraries: [this.library],
       name: 'targ',
       onMismatch: 'reject',
       resolve: () => undefined
@@ -239,60 +183,66 @@ export class TalkHost {
     this.pump();
   }
 
-  private pump(): PumpResult {
-    const result = this.group.pump(BigInt(Math.round(this.now * MICROS)));
-    this.reports.push(...result.reports);
-    return result;
-  }
-
-  private nextHostDeadline(): number {
-    return Math.min(
-      this.playing?.until ?? Number.POSITIVE_INFINITY,
-      ...this.keyWaits.map(wait => wait.until)
-    );
-  }
-
-  private settleDue(): void {
-    if (this.playing !== undefined && this.playing.until <= this.now) {
-      this.playing.call?.answer(nothing);
-      this.playing = undefined;
-      this.host = this.host.with({ messagePlaying: false });
+  private newGroup(): Group {
+    const group = this.core.newGroup({ name: 'targ' });
+    group.addLibrary(this.library);
+    for (const [name, source] of Object.entries(this.scripts)) {
+      group.load({
+        grants: this.grants(),
+        limits: { maxWaitMs: 2_147_483_647 },
+        name,
+        source
+      });
     }
-    this.playNext();
-    const waits = this.keyWaits;
-    this.keyWaits = [];
-    for (const wait of waits) {
-      if (wait.until <= this.now) {
-        wait.call.answer(bool(false));
-      } else {
-        this.keyWaits.push(wait);
+    return group;
+  }
+
+  /// Pumps until the display settles: answering a message that has played can
+  /// let a Talk Script show the next one in the same frame.
+  private pump(): void {
+    for (;;) {
+      const result = this.group.pump(BigInt(Math.round(this.now * MICROS)));
+      this.reports.push(...result.reports);
+      if (!this.settleDisplay()) {
+        return;
       }
     }
   }
 
-  private playNext(): void {
-    if (this.playing !== undefined) {
-      return;
+  /// Answers the message that finished and starts the next one the Benson
+  /// Display is free for. Messages the engine shows itself take their turn:
+  /// a Talk Script message waits while one is playing. True if a call was answered.
+  private settleDisplay(): boolean {
+    let answered = false;
+    if (this.playing !== undefined && !this.benson.host.messagePlaying) {
+      this.playing.call.answer(nothing);
+      this.playing = undefined;
+      answered = true;
     }
-    const next = this.queue.shift();
-    if (next === undefined) {
-      return;
+    if (this.playing === undefined && !this.benson.host.messagePlaying) {
+      const next = this.queue.shift();
+      if (next !== undefined) {
+        this.benson.showText(next.text);
+        this.playing = next;
+        this.played.push({ at: this.now, text: next.text });
+      }
     }
-    const seconds = next.text.length * this.cellSeconds + this.holdSeconds;
-    this.playing = { ...next, until: this.now + seconds };
-    this.host = this.host.with({ messagePlaying: true });
-    this.effects.push({ displaySource: 'talk', playMessage: next.text });
-    this.played.push({ at: this.now, text: next.text });
+    return answered;
   }
 
   private grants() {
-    const { display, keys, sound, world } = this.capabilities;
+    const { display, sound, world } = this.capabilities;
     return {
       display: display.grant('all', undefined),
-      keys: keys.grant('all', undefined),
       sound: sound.grant('all', undefined),
       world: world.grant('all', undefined)
     };
+  }
+
+  /// Writes Benson host state the session reads back after the frame.
+  private write(patch: Parameters<BensonSession['host']['with']>[0]): Value {
+    this.benson.host = this.benson.host.with(patch);
+    return nothing;
   }
 
   private defineCapabilities() {
@@ -300,85 +250,65 @@ export class TalkHost {
       advertIntact: {
         cost: { fuel: 1 },
         description: "Whether the author's advert on block 50 still stands.",
-        do: () => bool(!this.host.destroyedBlocks.has(ADVERT_BLOCK)),
+        do: () => bool(!this.benson.host.destroyedBlocks.has(ADVERT_BLOCK)),
         mode: 'immediate',
         result: shape.bool
-      },
-      arm: {
-        args: [shape.number],
-        cost: { fuel: 1 },
-        description: 'Boarding or taking this object starts its Talk Script.',
-        do: (_call, object) => {
-          const slot = whole(object);
-          this.armed.add(slot);
-          this.host = this.host.withObjectFlag(
-            slot,
-            (this.host.objectFlags.get(slot) ?? 0) | SCRIPT_ARMED
-          );
-          return nothing;
-        },
-        mode: 'immediate'
       },
       boarded: {
         cost: { fuel: 1 },
         description: 'The craft the player is in, or nothing on foot.',
-        do: () =>
-          this.host.boardedCraft === BensonHostState.onFoot
+        do: () => {
+          const craft = this.benson.host.boardedCraft;
+          return craft === BensonHostState.onFoot
             ? nothing
-            : num(this.host.boardedCraft),
+            : text(objectName(craft));
+        },
         mode: 'immediate',
-        result: shape.optional(shape.number)
+        result: shape.optional(shape.text)
       },
       carries: {
         args: [shape.text],
         cost: { fuel: 1 },
-        do: (_call, item) => {
-          if (item.asText() !== 'novadrive') {
-            throw new Error(`unknown item ${item.toString()}`);
-          }
-          return bool(this.host.inventory.has(NOVADRIVE));
-        },
+        do: (_call, item) =>
+          bool(this.benson.host.inventory.has(objectSlot(item.asText()!))),
         mode: 'immediate',
         result: shape.bool
       },
       clearFlag: {
         args: [shape.text],
         cost: { fuel: 1 },
-        do: (_call, name) => {
-          this.host = this.host.with({
-            engineFlags: this.host.engineFlags & ~flag(name) & 0xff
-          });
-          return nothing;
-        },
+        do: (_call, name) =>
+          this.write({
+            engineFlags: this.benson.host.engineFlags & ~flag(name) & 0xff
+          }),
         mode: 'immediate'
       },
       credits: {
         cost: { fuel: 1 },
-        do: () => num(this.host.decimal(CREDITS)),
+        do: () => num(this.benson.host.decimal(CREDITS)),
         mode: 'immediate',
         result: shape.number
       },
       escape: {
         cost: { fuel: 1 },
         description: 'Accepts the Escape: the Ending phase becomes 1.',
-        do: () => {
-          this.host = this.host.with({ endingPhase: 1 });
-          return nothing;
-        },
+        do: () => this.write({ endingPhase: 1 }),
         mode: 'immediate'
       },
       flag: {
         args: [shape.text],
         cost: { fuel: 1 },
-        do: (_call, name) => bool((this.host.engineFlags & flag(name)) !== 0),
+        do: (_call, name) =>
+          bool((this.benson.host.engineFlags & flag(name)) !== 0),
         mode: 'immediate',
         result: shape.bool
       },
-      onSurface: {
+      here: {
         cost: { fuel: 1 },
-        do: () => bool(this.host.currentRoom === 0),
+        description: 'The name of the Room the player is in.',
+        do: () => text(roomName(this.benson.host.currentRoom)),
         mode: 'immediate',
-        result: shape.bool
+        result: shape.text
       },
       roll: {
         args: [shape.number],
@@ -388,31 +318,35 @@ export class TalkHost {
         mode: 'immediate',
         result: shape.number
       },
+      sendAttacker: {
+        cost: { fuel: 1 },
+        description: 'Sends a hostile ship after the player.',
+        do: () => this.write({ attackingShip: true }),
+        mode: 'immediate'
+      },
       setFlag: {
         args: [shape.text],
         cost: { fuel: 1 },
-        do: (_call, name) => {
-          this.host = this.host.with({
-            engineFlags: (this.host.engineFlags | flag(name)) & 0xff
-          });
-          return nothing;
-        },
+        do: (_call, name) =>
+          this.write({
+            engineFlags: (this.benson.host.engineFlags | flag(name)) & 0xff
+          }),
         mode: 'immediate'
       },
       setMessageInterval: {
         args: [shape.number],
         cost: { fuel: 1 },
-        do: (_call, frames) => {
-          this.host = this.host.with({ messageInterval: whole(frames) });
-          return nothing;
-        },
+        do: (_call, frames) => this.write({ messageInterval: whole(frames) }),
         mode: 'immediate'
       },
       spend: {
         args: [shape.number],
         cost: { fuel: 1 },
         do: (_call, amount) => {
-          this.host = this.host.addDecimal(CREDITS, -whole(amount));
+          this.benson.host = this.benson.host.addDecimal(
+            CREDITS,
+            -whole(amount)
+          );
           return nothing;
         },
         mode: 'immediate'
@@ -424,59 +358,12 @@ export class TalkHost {
         args: [shape.text],
         cost: { fuel: 1 },
         description:
-          'Queues a message on the Benson Display; answers once it has played.',
+          'Queues a message for the Benson Display; answers once it has played.',
         mode: 'suspending',
-        start: (call, message) => {
-          this.queue.push({ call, text: message.asText()! });
-          this.playNext();
+        start: (call, line) => {
+          this.queue.push({ call, text: line.asText()! });
+          this.settleDisplay();
         }
-      }
-    });
-
-    const keys = this.core.defineCapability<void>('keys', {
-      awaitAny: {
-        args: [shape.number],
-        cost: { fuel: 1 },
-        description: 'True when any key arrives within the given seconds.',
-        mode: 'suspending',
-        result: shape.bool,
-        start: (call, seconds) => {
-          this.keyWaits.push({
-            call,
-            key: undefined,
-            until: this.now + whole(seconds)
-          });
-        }
-      },
-      awaitKey: {
-        args: [shape.text, shape.number],
-        cost: { fuel: 1 },
-        description: 'True when the key arrives within the given seconds.',
-        mode: 'suspending',
-        result: shape.bool,
-        start: (call, key, seconds) => {
-          this.keyWaits.push({
-            call,
-            key: key.asText()!,
-            until: this.now + whole(seconds)
-          });
-        }
-      },
-      forget: {
-        cost: { fuel: 1 },
-        description: 'Forgets any input heard so far.',
-        do: () => {
-          this.heard = false;
-          return nothing;
-        },
-        mode: 'immediate'
-      },
-      heard: {
-        cost: { fuel: 1 },
-        description: 'Whether any key arrived since the last forget.',
-        do: () => bool(this.heard),
-        mode: 'immediate',
-        result: shape.bool
       }
     });
 
@@ -485,14 +372,12 @@ export class TalkHost {
         args: [shape.text],
         cost: { fuel: 1 },
         fire: (_call, voice) => {
-          this.effects.push({
-            sound: { symbol: `${voice.asText()!}.control`, value: 0 }
-          });
+          this.silenced.push(voice.asText()!);
         },
         mode: 'fire-and-forget'
       }
     });
 
-    return { display, keys, sound, world };
+    return { display, sound, world };
   }
 }

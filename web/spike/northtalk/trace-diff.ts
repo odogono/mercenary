@@ -2,11 +2,13 @@
 /// Script and prints where the message sequences diverge. A diff baseline,
 /// not a gate: the Talk Script is a free rewrite.
 ///
-///   bun trace-diff.ts [trace id …]   (default: script-0-parked script-0-answered)
+///   bun spike/northtalk/trace-diff.ts [trace id …]   (default: script-0-parked script-0-answered)
 import { readFileSync } from 'node:fs';
 
-import { TalkHost } from './host.ts';
-import { seededHost, talkSources } from './sources.ts';
+import { parseBensonKey } from '../../src/benson/index.ts';
+import { openTalkSession } from './session.ts';
+
+const STEP = 1 / 50;
 
 interface Played {
   readonly at: number;
@@ -41,16 +43,21 @@ const talkMessages = async (
   presses: readonly { at: number; key: string }[],
   seconds: number
 ) => {
-  const host = new TalkHost(talkSources, await seededHost(), {
-    random: () => 2
+  const session = await openTalkSession({
+    random: () => 2,
+    scripts: ['opening']
   });
-  host.start('opening');
+  const advanceTo = (at: number) => {
+    while (session.talk.now < at - 1e-9) {
+      session.advance(Math.min(STEP, at - session.talk.now));
+    }
+  };
   for (const press of presses) {
-    host.advance(press.at - host.now);
-    host.press(press.key.toUpperCase());
+    advanceTo(press.at);
+    session.press(parseBensonKey(`key${press.key.toUpperCase()}`));
   }
-  host.advance(seconds - host.now);
-  return host.played;
+  advanceTo(seconds);
+  return session.talk.played;
 };
 
 /// Longest-common-subsequence alignment of two message sequences.

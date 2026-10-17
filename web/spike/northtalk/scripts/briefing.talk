@@ -1,0 +1,17 @@
+-- The Mechanoid briefing: what the Mechanoids will pay for.
+-- Rewritten from Benson Script 13, which entering Room 102 starts.
+
+use show, report from benson
+
+constant room = "mechanoid briefing"
+
+-- Walking back in while the briefing plays doesn't start it again.
+on entered place where place = room, dropping
+  report ["MECHANOID BRIEFING ROOM", "WE WILL PAY", "FOR PALYAR REQUIREMENTS",
+    "WHEN DELIVERED TO OUR", "CONTROL IN THIS COMPLEX"] and wait
+  -- The rest is only for a player who stayed to hear it.
+  ask world to here
+  if it is not room then return
+  report ["WE MAY ALSO PAY FOR", "DESTRUCTION OF SELECTED",
+    "PALYAR INSTALLATIONS", "BRIEFING ENDS"] and wait
+end entered

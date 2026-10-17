@@ -1,16 +1,16 @@
 -- The opening: Benson's crash report and the Dominion Dart sales pitch.
 -- Rewritten from Benson Script 0 (payload/benson.json, instructions 3-76).
--- It ends when the pitch is over; boarding the Dart is a later Talk Script.
+
+use show, report from benson
 
 constant price = 5000
 constant verdicts = ["WHERE AM I", "YOU CRASHED", "GOOD LANDING,", "OUCH,"]
 constant nags = ["I THINK YOU SHOULD BUY", "IS THIS SENSIBLE", "YOU PLAN TO WALK", "YOU MUST BE CRAZY"]
 
+-- Whether the player has pressed anything since the pitch last began.
+script variable heard = false
+
 on begin
-  -- Boarding the Dart, the Interstellar Ship or the Colony Craft starts their Talk Scripts.
-  ask world to arm 1
-  ask world to arm 7
-  ask world to arm 12
   wait 4 s
   show "CRASH IMMINENT," and wait
   wait 2 s
@@ -23,10 +23,14 @@ on begin
   pitch and wait
 end begin
 
+on pressed key
+  put true into heard
+end pressed
+
 -- The status report and the sale, repeated until the player buys or speaks up.
 on pitch
   repeat forever
-    ask keys to forget
+    put false into heard
     report statusReport() and wait
     repeat for each nag in nags
       offerDart and wait
@@ -36,8 +40,7 @@ on pitch
       end if
       show nag and wait
     end repeat
-    ask keys to heard
-    if it then
+    if heard then
       show "IT WILL BE A LONG WALK" and wait
       return
     end if
@@ -61,8 +64,12 @@ end creditsLine
 -- True when the player answers Y within five seconds of being asked.
 on offerDart
   show "DO YOU WANT TO BUY?" and wait
-  ask keys to awaitKey "Y", 5 and wait
-  return it
+  wait for
+    when pressed key where key = "Y" then
+      return true
+    after 5 s then
+      return false
+  end wait
 end offerDart
 
 on buyDart
@@ -74,17 +81,15 @@ end buyDart
 on callOut
   repeat for each line in ["IS ANYBODY THERE", "AM I TALKING TO MYSELF", "ARE YOU STILL ALIVE"]
     show line and wait
-    ask keys to awaitAny 15 and wait
-    if it then
-      welcomeBack and wait
-      return
-    end if
+    wait for
+      when pressed key then
+        welcomeBack and wait
+        return
+      after 15 s then
+    end wait
   end repeat
   show "WHERE ARE YOU" and wait
-  repeat forever
-    ask keys to awaitAny 15 and wait
-    if it then exit repeat
-  end repeat
+  wait for pressed key
   welcomeBack and wait
 end callOut
 
@@ -92,13 +97,3 @@ on welcomeBack
   show "AH, YOU ARE BACK" and wait
   wait 2 s
 end welcomeBack
-
-on show line
-  ask display to show line and wait
-end show
-
-on report lines
-  repeat for each line in lines
-    show line and wait
-  end repeat
-end report
