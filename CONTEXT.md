@@ -14,6 +14,10 @@ _Avoid_: Asset folder, resources, ROM data
 An original game-logic program from the Reference Build's in-game interpreter, re-extracted into the Data Payload in a structurally preserved re-encoding of its bytecode, and executed by this project's own interpreter through the Host Callout.
 _Avoid_: Game script, event code, AI logic, bytecode dump
 
+**Talk Script**:
+A game-logic program written by this project in NorthTalk, driving play through the Host Callout. It is maintained source rather than a re-extraction: a Talk Script may replace a Benson Script's role without reproducing its behaviour, and the Benson Script remains the reference it was written against.
+_Avoid_: NorthTalk script, Benson Script (for a rewrite), mod
+
 **Benson Message**:
 One complete occurrence of text composed by Benson-governed play, retained whole for occurrence tracking and the transcript independently of which of its characters currently occupy the Benson Display. Repeated identical text is a distinct occurrence; shell notices and visible cell fragments are not Benson Messages.
 _Avoid_: Shell notice, message fragment, console output
