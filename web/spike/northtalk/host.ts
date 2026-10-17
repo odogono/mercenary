@@ -14,7 +14,7 @@ import {
   type PumpResult,
   type Report,
   type Value
-} from '@odgn/northtalk';
+} from '@northtalk/ts';
 
 import { BensonHostState, type BensonEffect } from '../../src/benson/host.ts';
 
@@ -40,11 +40,19 @@ const ADVERT_BLOCK = 50;
 const SCRIPT_ARMED = 4;
 const MICROS = 1_000_000;
 
+/// A NorthTalk Core: the TS Core by default, or the WASM Core from `@northtalk/ts/wasm`.
+export type TalkCore = Pick<
+  ReturnType<typeof createCore>,
+  'defineCapability' | 'newGroup' | 'restore'
+>;
+
 export interface TalkHostOptions {
   /// Seconds each character of a message adds to its playing time. The
   /// default fits the script-0 traces: Benson Messages start about
   /// 0.09 s per character plus a 3 s hold apart.
   readonly cellSeconds?: number;
+  /// The Core to run on. Both Cores share the embedding API.
+  readonly core?: TalkCore;
   /// Seconds a message holds once it has scrolled in.
   readonly holdSeconds?: number;
   /// The next random byte. The host owns randomness so saves stay replayable.
@@ -76,9 +84,19 @@ export interface TalkHostSave {
   readonly now: number;
 }
 
+const flag = (name: Value): number => {
+  const bit = FLAGS[name.asText() as keyof typeof FLAGS];
+  if (bit === undefined) {
+    throw new Error(`unknown flag ${name.toString()}`);
+  }
+  return bit;
+};
+
+const whole = (value: Value): number => Number(value.asDecimal()!.toBigInt());
+
 /// One Group of Talk Scripts sharing a Benson Display, a key stream and a host state.
 export class TalkHost {
-  readonly core = createCore();
+  readonly core: TalkCore;
   readonly effects: BensonEffect[] = [];
   /// Each message as it began to play, with the host clock in seconds.
   readonly played: { readonly at: number; readonly text: string }[] = [];
@@ -103,6 +121,7 @@ export class TalkHost {
     host: BensonHostState,
     options: TalkHostOptions = {}
   ) {
+    this.core = options.core ?? createCore();
     this.sources = sources;
     this.host = host;
     this.cellSeconds = options.cellSeconds ?? 0.09;
@@ -205,7 +224,8 @@ export class TalkHost {
     this.playing = undefined;
     this.keyWaits = [];
     const { group, result } = this.core.restore(save.group, {
-      grants: (_script, name) => this.grants()[name],
+      grants: (_script, name) =>
+        this.grants()[name as keyof ReturnType<TalkHost['grants']>],
       libraries: [],
       name: 'targ',
       onMismatch: 'reject',
@@ -276,17 +296,14 @@ export class TalkHost {
   }
 
   private defineCapabilities() {
-    const flag = (name: Value): number => {
-      const bit = FLAGS[name.asText() as keyof typeof FLAGS];
-      if (bit === undefined) {
-        throw new Error(`unknown flag ${name.toString()}`);
-      }
-      return bit;
-    };
-    const whole = (value: Value): number =>
-      Number(value.asDecimal()!.toBigInt());
-
     const world = this.core.defineCapability<void>('world', {
+      advertIntact: {
+        cost: { fuel: 1 },
+        description: "Whether the author's advert on block 50 still stands.",
+        do: () => bool(!this.host.destroyedBlocks.has(ADVERT_BLOCK)),
+        mode: 'immediate',
+        result: shape.bool
+      },
       arm: {
         args: [shape.number],
         cost: { fuel: 1 },
@@ -341,17 +358,19 @@ export class TalkHost {
         mode: 'immediate',
         result: shape.number
       },
+      escape: {
+        cost: { fuel: 1 },
+        description: 'Accepts the Escape: the Ending phase becomes 1.',
+        do: () => {
+          this.host = this.host.with({ endingPhase: 1 });
+          return nothing;
+        },
+        mode: 'immediate'
+      },
       flag: {
         args: [shape.text],
         cost: { fuel: 1 },
         do: (_call, name) => bool((this.host.engineFlags & flag(name)) !== 0),
-        mode: 'immediate',
-        result: shape.bool
-      },
-      advertIntact: {
-        cost: { fuel: 1 },
-        description: "Whether the author's advert on block 50 still stands.",
-        do: () => bool(!this.host.destroyedBlocks.has(ADVERT_BLOCK)),
         mode: 'immediate',
         result: shape.bool
       },
@@ -360,6 +379,14 @@ export class TalkHost {
         do: () => bool(this.host.currentRoom === 0),
         mode: 'immediate',
         result: shape.bool
+      },
+      roll: {
+        args: [shape.number],
+        cost: { fuel: 1 },
+        description: 'A random whole number from 1 to the given count.',
+        do: (_call, count) => num((this.random() % whole(count)) + 1),
+        mode: 'immediate',
+        result: shape.number
       },
       setFlag: {
         args: [shape.text],
@@ -371,23 +398,6 @@ export class TalkHost {
           return nothing;
         },
         mode: 'immediate'
-      },
-      escape: {
-        cost: { fuel: 1 },
-        description: 'Accepts the Escape: the Ending phase becomes 1.',
-        do: () => {
-          this.host = this.host.with({ endingPhase: 1 });
-          return nothing;
-        },
-        mode: 'immediate'
-      },
-      roll: {
-        args: [shape.number],
-        cost: { fuel: 1 },
-        description: 'A random whole number from 1 to the given count.',
-        do: (_call, count) => num((this.random() % whole(count)) + 1),
-        mode: 'immediate',
-        result: shape.number
       },
       setMessageInterval: {
         args: [shape.number],

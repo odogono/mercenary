@@ -8,9 +8,7 @@ export default [
       '**/dist/*',
       '**/coverage/*',
       '**/playwright-report/*',
-      '**/test-results/*',
-      // Throwaway spikes resolve dependencies the app doesn't install.
-      'spike/**'
+      '**/test-results/*'
     ]
   },
   ...nkzw,
@@ -35,7 +33,7 @@ export default [
     }
   },
   {
-    files: ['serve.ts', 'e2e/opening-loop.ts'],
+    files: ['serve.ts', 'e2e/opening-loop.ts', 'spike/northtalk/trace-diff.ts'],
     rules: {
       'no-console': 'off'
     }

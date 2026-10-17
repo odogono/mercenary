@@ -18,6 +18,10 @@ _Avoid_: Game script, event code, AI logic, bytecode dump
 A game-logic program written by this project in NorthTalk, driving play through the Host Callout. It is maintained source rather than a re-extraction: a Talk Script may replace a Benson Script's role without reproducing its behaviour, and the Benson Script remains the reference it was written against.
 _Avoid_: NorthTalk script, Benson Script (for a rewrite), mod
 
+**World Event**:
+A change in play — entering a Room, boarding or leaving a craft, taking or dropping an object, a Site's destruction — that the Gameplay Session announces to every Talk Script, naming its subjects by name. A Talk Script learns of change only through World Events and never waits by re-checking the world.
+_Avoid_: PresentationEvent (that drives presentation, not logic), trigger, notification
+
 **Benson Message**:
 One complete occurrence of text composed by Benson-governed play, retained whole for occurrence tracking and the transcript independently of which of its characters currently occupy the Benson Display. Repeated identical text is a distinct occurrence; shell notices and visible cell fragments are not Benson Messages.
 _Avoid_: Shell notice, message fragment, console output

@@ -1,9 +1,12 @@
-/// Outcome tests for the Targ Talk Scripts. Run from this directory with
-/// `bun test ./talk.spike.ts`; the name keeps them out of the app's `bun test`.
+/// Outcome tests for the Targ Talk Scripts. They run on the TS Core, or on
+/// the WASM Core when NORTHTALK_WASM names a `talk.wasm` reactor.
+import { readFileSync } from 'node:fs';
 import { describe, expect, test } from 'bun:test';
 
-import { BensonHostState } from '../../src/benson/host.ts';
-import { TalkHost } from './host.ts';
+import { createCore as createWasmCore } from '@northtalk/ts/wasm';
+
+import type { BensonHostFields } from '../../src/benson/host.ts';
+import { TalkHost, type TalkCore } from './host.ts';
 import { seededHost, talkSources } from './sources.ts';
 
 const STATUS_REPORT = [
@@ -32,11 +35,25 @@ const NAGS = [
   'YOU MUST BE CRAZY'
 ];
 
+const wasm = process.env.NORTHTALK_WASM;
+
+/// A fresh Core per host, so a restore lands in a Core that never ran the save.
+const newCore = async (): Promise<TalkCore | undefined> =>
+  wasm === undefined
+    ? undefined
+    : // WasmGroup has the Group methods the host calls but isn't typed as a Group.
+      ((await createWasmCore({
+        wasm: readFileSync(wasm)
+      })) as unknown as TalkCore);
+
 /// Random byte 2 picks the third verdict, GOOD LANDING, as both script-0 traces do.
-const newHost = async (patch: Partial<BensonHostState> = {}) =>
-  new TalkHost(talkSources, (await seededHost()).with(patch), {
+const newHost = async (patch: Partial<BensonHostFields> = {}) => {
+  const core = await newCore();
+  return new TalkHost(talkSources, (await seededHost()).with(patch), {
+    ...(core && { core }),
     random: () => 2
   });
+};
 
 /// Advances in half-second steps until the predicate holds or the limit passes.
 const advanceUntil = (
@@ -241,26 +258,28 @@ describe('concurrent Talk Scripts', () => {
   });
 });
 
+/// Plays the Escape to its end, optionally restoring into a fresh Core while it waits on Y.
+const playEscape = async (restoreMidway: boolean) => {
+  const host = await newHost({ ...aboardShip(), inventory: new Set([25]) });
+  host.start('escape');
+  afterMessage(host, 'PRESS Y TO LAUNCH');
+  host.advance(0.25);
+  let live = host;
+  if (restoreMidway) {
+    const saved = host.save();
+    live = await newHost();
+    live.restore(saved);
+    live.effects.push(...host.effects);
+  }
+  live.press('Y');
+  live.advance(90);
+  return live;
+};
+
 describe('saves', () => {
   test('a save while the Escape waits on Y restores into a fresh Core and finishes the same', async () => {
-    const play = async (restoreMidway: boolean) => {
-      const host = await newHost({ ...aboardShip(), inventory: new Set([25]) });
-      host.start('escape');
-      afterMessage(host, 'PRESS Y TO LAUNCH');
-      host.advance(0.25);
-      let live = host;
-      if (restoreMidway) {
-        const saved = host.save();
-        live = await newHost();
-        live.restore(saved);
-        live.effects.push(...host.effects);
-      }
-      live.press('Y');
-      live.advance(90);
-      return live;
-    };
-    const control = await play(false);
-    const restored = await play(true);
+    const control = await playEscape(false);
+    const restored = await playEscape(true);
     expect(restored.messages).toEqual(control.messages);
     expect(restored.host.endingPhase).toBe(1);
     expect(errors(restored)).toEqual([]);
