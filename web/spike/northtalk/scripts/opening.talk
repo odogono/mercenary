@@ -1,0 +1,104 @@
+-- The opening: Benson's crash report and the Dominion Dart sales pitch.
+-- Rewritten from Benson Script 0 (payload/benson.json, instructions 3-76).
+-- It ends when the pitch is over; boarding the Dart is a later Talk Script.
+
+constant price = 5000
+constant verdicts = ["WHERE AM I", "YOU CRASHED", "GOOD LANDING,", "OUCH,"]
+constant nags = ["I THINK YOU SHOULD BUY", "IS THIS SENSIBLE", "YOU PLAN TO WALK", "YOU MUST BE CRAZY"]
+
+on begin
+  -- Boarding the Dart, the Interstellar Ship or the Colony Craft starts their Talk Scripts.
+  ask world to arm 1
+  ask world to arm 7
+  ask world to arm 12
+  wait 4 s
+  show "CRASH IMMINENT," and wait
+  wait 2 s
+  show "RETURNING TO - - -" and wait
+  show "MANUAL CONTROL" and wait
+  tell sound to silence "voice1"
+  wait 2 s
+  ask world to roll the length of verdicts
+  show item it of verdicts and wait
+  pitch and wait
+end begin
+
+-- The status report and the sale, repeated until the player buys or speaks up.
+on pitch
+  repeat forever
+    ask keys to forget
+    report statusReport() and wait
+    repeat for each nag in nags
+      offerDart and wait
+      if it then
+        buyDart and wait
+        return
+      end if
+      show nag and wait
+    end repeat
+    ask keys to heard
+    if it then
+      show "IT WILL BE A LONG WALK" and wait
+      return
+    end if
+    callOut and wait
+    report ["NOW YOU ARE HERE - - -", "I WILL START AGAIN"] and wait
+  end repeat
+end pitch
+
+function statusReport
+  return ["STATUS REPORT", "CRASH LANDED ON TARG", "PRESTINIUM DESTROYED",
+    "STATE OF WAR BETWEEN", "PALYARS AND MECHANOIDS", "LOCATION NEAR AIRBASE",
+    "AIRCRAFT ON PAD", "TYPE - DOMINION DART", "MESSAGE RECEIVED",
+    "CRAFT FOR SALE", "PRICE " & price & " CREDITS", creditsLine()]
+end statusReport
+
+function creditsLine
+  ask world to credits
+  return "YOU HAVE " & it & " CREDITS"
+end creditsLine
+
+-- True when the player answers Y within five seconds of being asked.
+on offerDart
+  show "DO YOU WANT TO BUY?" and wait
+  ask keys to awaitKey "Y", 5 and wait
+  return it
+end offerDart
+
+on buyDart
+  ask world to spend price
+  report ["TRANSACTION COMPLETED", creditsLine()] and wait
+end buyDart
+
+-- Silence from the player: Benson calls out until any key answers.
+on callOut
+  repeat for each line in ["IS ANYBODY THERE", "AM I TALKING TO MYSELF", "ARE YOU STILL ALIVE"]
+    show line and wait
+    ask keys to awaitAny 15 and wait
+    if it then
+      welcomeBack and wait
+      return
+    end if
+  end repeat
+  show "WHERE ARE YOU" and wait
+  repeat forever
+    ask keys to awaitAny 15 and wait
+    if it then exit repeat
+  end repeat
+  welcomeBack and wait
+end callOut
+
+on welcomeBack
+  show "AH, YOU ARE BACK" and wait
+  wait 2 s
+end welcomeBack
+
+on show line
+  ask display to show line and wait
+end show
+
+on report lines
+  repeat for each line in lines
+    show line and wait
+  end repeat
+end report

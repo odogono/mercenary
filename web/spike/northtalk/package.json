@@ -1,0 +1,8 @@
+{
+  "name": "mercenary-northtalk-spike",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@odgn/northtalk": "link:@odgn/northtalk"
+  }
+}

@@ -8,7 +8,9 @@ export default [
       '**/dist/*',
       '**/coverage/*',
       '**/playwright-report/*',
-      '**/test-results/*'
+      '**/test-results/*',
+      // Throwaway spikes resolve dependencies the app doesn't install.
+      'spike/**'
     ]
   },
   ...nkzw,
