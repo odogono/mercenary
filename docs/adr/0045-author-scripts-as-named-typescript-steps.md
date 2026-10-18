@@ -1,5 +1,7 @@
 # Author scripts as named TypeScript steps
 
+Superseded for Targ by [ADR 0080](0080-run-targs-scripts-as-talk-scripts.md), which runs Targ's scripts as NorthTalk Talk Scripts and decides Targ's production save policy. It still governs Damocles. The original decision follows.
+
 Accepted for the isolated Damocles first-offer prototype in [#286](https://github.com/odogono/mercenary/issues/286). Maintain scripts directly as ordinary TypeScript functions with named execution steps and explicit serializable state. Preserve recovered behaviour through evidence-linked transitions and deterministic tests, while making the maintained source readable and editable without regenerating an instruction-shaped program. The [first-offer design](../design/damocles-first-offer-script.md) specifies the bounded contract established by [#288](https://github.com/odogono/mercenary/issues/288).
 
 The named **Host Callout** remains the boundary for state and effects. Execution and host values follow [ADR 0023](0023-make-the-host-callout-a-persistent-value.md): each change returns a new value, with no shared mutable state or hidden closure locals. Damocles gets its own bounded interface; this is not a common scripting framework for Damocles and Targ. The original programs remain research evidence and comparison baselines, and their glossary names remain unchanged.
