@@ -1,7 +1,7 @@
 -- The Escape: launching the Interstellar Ship and the end of the game.
 -- Rewritten from Benson Script 7 (payload/benson.json, instructions 411-460).
 
-use show, report from benson
+use show, report, prompt from benson
 
 on boarded craft where craft = "ship", replacing
   show "INTERSTELLAR SHIP" and wait
@@ -20,7 +20,9 @@ on boarded craft where craft = "ship", replacing
     show "NOVADRIVE REQUIRED" and wait
     return
   end if
-  show "PRESS Y TO LAUNCH" and wait
+  -- The prompt holds Player Input until this Run ends, so no other Talk
+  -- Script hears the Y.
+  prompt "PRESS Y TO LAUNCH" and wait
   if not aboard() then return
   wait for
     when pressed key where key = "Y" then

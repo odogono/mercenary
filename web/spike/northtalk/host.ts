@@ -1,6 +1,7 @@
 /// The Talk Script host for the NorthTalk spike: the Host Callout offered to
-/// NorthTalk as three Capabilities, World Events delivered as Broadcasts, and
-/// messages shown on the session's own Benson Display.
+/// NorthTalk as three Capabilities, World Events delivered as Broadcasts,
+/// Player Input delivered to its Input Owner, and messages shown on the
+/// session's own Benson Display, a report at a time.
 ///
 /// Throwaway. It shows what a Talk Script host has to own, not how the
 /// Gameplay Session should own it (docs/research/targ-talk-scripts.md).
@@ -38,8 +39,13 @@ export type WorldEvent =
       readonly faction: string;
       readonly kind: 'destroyed';
       readonly site: string;
-    }
-  | { readonly key: string; readonly kind: 'pressed' };
+    };
+
+/// A Talk Script's claim on Player Input: the Run whose prompt took it.
+export interface InputClaim {
+  readonly run: string;
+  readonly script: string;
+}
 
 /// Engine flags a Talk Script may name, by their bit in `engineFlags`
 /// (notes/decode/endgame.md, "Engine flags").
@@ -62,8 +68,18 @@ export interface TalkHostOptions {
 
 /// The host-side state a save must carry beside the Group's own bytes.
 export interface TalkHostSave {
+  readonly claims: readonly InputClaim[];
   readonly group: Uint8Array;
   readonly now: number;
+}
+
+/// Lines that play back to back: one `show`, one `prompt`, or a whole
+/// `report`. Another Talk Script's lines wait until the block ends.
+interface Block {
+  readonly call: Call<unknown>;
+  /// Set for a prompt: the claim its line takes once it shows.
+  readonly claim?: InputClaim;
+  readonly lines: string[];
 }
 
 const flag = (name: Value): number => {
@@ -93,18 +109,20 @@ const message = (event: WorldEvent): { args: Value[]; name: string } => {
         args: [text(event.site), text(event.faction)],
         name: 'destroyed:by:'
       };
-    case 'pressed':
-      return { args: [text(event.key)], name: 'pressed' };
   }
 };
 
 /// One Group of Talk Scripts, alive for a whole Gameplay Session, sharing its
 /// Benson Display and its Benson host state.
 export class TalkHost {
+  /// Prompts holding Player Input, oldest first: the last is the Input Owner.
+  claims: InputClaim[] = [];
   readonly core: TalkCore;
   /// Every World Event delivered, in order, with the host clock in seconds.
   readonly delivered: { readonly at: number; readonly event: WorldEvent }[] =
     [];
+  /// Each key press, with the script it went to, or every script when unowned.
+  readonly heard: { readonly key: string; readonly to: string | 'all' }[] = [];
   /// Each Talk Script message as it began to play, with the host clock in seconds.
   readonly played: { readonly at: number; readonly text: string }[] = [];
   readonly reports: Report[] = [];
@@ -117,8 +135,14 @@ export class TalkHost {
   private readonly benson: BensonSession;
   private readonly capabilities;
   private readonly library: Library;
-  private playing: { readonly call: Call<unknown> } | undefined;
-  private readonly queue: { call: Call<unknown>; text: string }[] = [];
+  /// A key the Input Owner pressed while its prompt was still playing, held
+  /// for the `wait for` after it, as Benson's key latch holds a key until a
+  /// script tests it. Ready once the prompt has been answered.
+  private latched:
+    | { readonly key: string; ready: boolean; readonly script: string }
+    | undefined;
+  private playing: Block | undefined;
+  private readonly queue: Block[] = [];
   private readonly random: () => number;
 
   constructor(
@@ -133,7 +157,11 @@ export class TalkHost {
     this.random = options.random ?? (() => 0);
     this.capabilities = this.defineCapabilities();
     this.library = this.core.compileLibrary({ ...library, version: '1' }, [], {
-      display: { show: { args: [shape.text], mode: 'suspending' } }
+      display: {
+        prompt: { args: [shape.text], mode: 'suspending' },
+        report: { args: [shape.listOf(shape.text)], mode: 'suspending' },
+        show: { args: [shape.text], mode: 'suspending' }
+      }
     });
     this.group = this.newGroup();
   }
@@ -147,6 +175,28 @@ export class TalkHost {
     this.pump();
   }
 
+  /// Delivers a key press as Player Input: to the Input Owner alone, or to
+  /// every Talk Script when no prompt holds it.
+  input(key: string): void {
+    const owner = this.claims.at(-1);
+    this.heard.push({ key, to: owner?.script ?? 'all' });
+    if (owner !== undefined && this.playing?.claim?.run === owner.run) {
+      this.latched = { key, ready: false, script: owner.script };
+      return;
+    }
+    this.send(key, owner?.script);
+    this.pump();
+  }
+
+  private send(key: string, script: string | undefined): void {
+    const message = { args: [text(key)], name: 'pressed' };
+    if (script === undefined) {
+      this.group.broadcast(message);
+    } else {
+      this.group.script(script)!.deliver(message);
+    }
+  }
+
   /// Moves the host clock on by one frame, after the session has advanced it.
   advance(seconds: number): void {
     this.now += seconds;
@@ -158,13 +208,18 @@ export class TalkHost {
   }
 
   save(): TalkHostSave {
-    return { group: this.group.save(), now: this.now };
+    return {
+      claims: [...this.claims],
+      group: this.group.save(),
+      now: this.now
+    };
   }
 
   /// Restores a save into this host's fresh Core. Calls the save left pending
   /// are reissued: a message that was playing plays again from its start.
   restore(save: TalkHostSave): void {
     this.now = save.now;
+    this.claims = [...save.claims];
     this.queue.length = 0;
     this.playing = undefined;
     const grants = this.grants();
@@ -176,7 +231,7 @@ export class TalkHost {
       resolve: () => undefined
     });
     this.group = group;
-    this.reports.push(...result.reports);
+    this.record(result.reports);
     for (const call of result.pending) {
       this.group.settle(call.id, { reissue: true });
     }
@@ -198,36 +253,74 @@ export class TalkHost {
   }
 
   /// Pumps until the display settles: answering a message that has played can
-  /// let a Talk Script show the next one in the same frame.
+  /// let a Talk Script show the next one in the same frame. A latched key goes
+  /// in once its prompt's Run has reached what follows the prompt.
   private pump(): void {
     for (;;) {
       const result = this.group.pump(BigInt(Math.round(this.now * MICROS)));
-      this.reports.push(...result.reports);
+      this.record(result.reports);
+      if (this.latched?.ready) {
+        this.send(this.latched.key, this.latched.script);
+        this.latched = undefined;
+        continue;
+      }
       if (!this.settleDisplay()) {
         return;
       }
     }
   }
 
-  /// Answers the message that finished and starts the next one the Benson
-  /// Display is free for. Messages the engine shows itself take their turn:
-  /// a Talk Script message waits while one is playing. True if a call was answered.
+  /// Keeps the reports and lets go of every claim whose Run has ended.
+  private record(reports: readonly Report[]): void {
+    this.reports.push(...reports);
+    for (const report of reports) {
+      if (report.kind === 'run end') {
+        this.claims = this.claims.filter(claim => claim.run !== report.run);
+      }
+    }
+  }
+
+  /// Plays the next line of the block on the Benson Display once it is free,
+  /// answering the block after its last line. The engine's own messages cut
+  /// in whenever it shows them: the block carries on with its next line. A
+  /// Benson Script still running holds the display, so no Talk Script line
+  /// starts until it ends. True if a call was answered.
   private settleDisplay(): boolean {
+    if (this.benson.host.messagePlaying) {
+      return false;
+    }
     let answered = false;
-    if (this.playing !== undefined && !this.benson.host.messagePlaying) {
+    if (this.playing?.lines.length === 0) {
       this.playing.call.answer(nothing);
+      if (this.playing.claim !== undefined && this.latched !== undefined) {
+        this.latched.ready = true;
+      }
       this.playing = undefined;
       answered = true;
     }
-    if (this.playing === undefined && !this.benson.host.messagePlaying) {
-      const next = this.queue.shift();
-      if (next !== undefined) {
-        this.benson.showText(next.text);
-        this.playing = next;
-        this.played.push({ at: this.now, text: next.text });
+    if (this.benson.host.isScriptRunning) {
+      return answered;
+    }
+    this.playing ??= this.queue.shift();
+    const line = this.playing?.lines.shift();
+    if (line !== undefined) {
+      const claim = this.playing!.claim;
+      if (claim !== undefined) {
+        // A prompt reissued after a restore claims again: keep one claim.
+        this.claims = [
+          ...this.claims.filter(held => held.run !== claim.run),
+          claim
+        ];
       }
+      this.benson.showText(line);
+      this.played.push({ at: this.now, text: line });
     }
     return answered;
+  }
+
+  private enqueue(block: Block): void {
+    this.queue.push(block);
+    this.settleDisplay();
   }
 
   private grants() {
@@ -354,6 +447,36 @@ export class TalkHost {
     });
 
     const display = this.core.defineCapability<void>('display', {
+      prompt: {
+        args: [shape.text],
+        cost: { fuel: 1 },
+        description:
+          'Shows a message asking for a key; once it shows, Player Input goes to this Run until it ends.',
+        mode: 'suspending',
+        start: (call, line) => {
+          this.enqueue({
+            call,
+            claim: { run: call.runId, script: call.scriptName },
+            lines: [line.asText()!]
+          });
+        }
+      },
+      report: {
+        args: [shape.listOf(shape.text)],
+        cost: { fuel: 1 },
+        description:
+          "Shows messages back to back, with no other Talk Script's between them; answers after the last.",
+        mode: 'suspending',
+        start: (call, lines) => {
+          this.enqueue({
+            call,
+            // Lists count from 1.
+            lines: Array.from({ length: lines.length }, (_, i) =>
+              lines.index(i + 1).asText()!
+            )
+          });
+        }
+      },
       show: {
         args: [shape.text],
         cost: { fuel: 1 },
@@ -361,8 +484,7 @@ export class TalkHost {
           'Queues a message for the Benson Display; answers once it has played.',
         mode: 'suspending',
         start: (call, line) => {
-          this.queue.push({ call, text: line.asText()! });
-          this.settleDisplay();
+          this.enqueue({ call, lines: [line.asText()!] });
         }
       }
     });

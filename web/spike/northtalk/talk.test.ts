@@ -1,5 +1,5 @@
 /// Outcome tests for the Targ Talk Scripts, run in a real Gameplay Session
-/// with every Benson Script refused. They run on the TS Core, or on the WASM
+/// with the Benson Scripts they replace refused. They run on the TS Core, or on the WASM
 /// Core when NORTHTALK_WASM names a `talk.wasm` reactor.
 import { readFileSync } from 'node:fs';
 import { describe, expect, test } from 'bun:test';
@@ -7,6 +7,7 @@ import { describe, expect, test } from 'bun:test';
 import { createCore as createWasmCore } from '@northtalk/ts/wasm';
 
 import { BensonHostState } from '../../src/benson/host.ts';
+import { BrowserControlProfile } from '../../src/shell/input.ts';
 import { SURFACE, room } from '../../src/world/index.ts';
 import { LegalRoute } from '../../test/legalCheckpoint.ts';
 import { loadPayload } from '../../test/replay/artifacts.ts';
@@ -24,6 +25,8 @@ const NOVADRIVE = 25;
 const HANGAR = 5;
 const BRIEFING = 102;
 const CELL = 0x1_00_00;
+/// A message the engine shows itself, as an object too heavy to take does.
+const TOO_HEAVY = 2;
 
 const rules = (await loadPayload()).endgame.combat.siteDestruction;
 
@@ -104,9 +107,98 @@ const credits = (session: TalkSession): number =>
 const events = (session: TalkSession) =>
   session.talk.delivered.map(entry => entry.event);
 
+/// Advances until `done`, collecting each message the Benson Display shows,
+/// whoever showed it.
+const displayed = (
+  session: TalkSession,
+  done: () => boolean,
+  limit = 900
+): string[] => {
+  const seen: string[] = [];
+  advanceUntil(
+    session,
+    () => {
+      const line = session.snapshot.bensonMessage?.completedText;
+      if (line !== undefined && line !== seen.at(-1)) {
+        seen.push(line);
+      }
+      return done();
+    },
+    limit
+  );
+  return seen;
+};
+
+/// The messages the Benson Display shows over the next `seconds`.
+const displayedFor = (session: TalkSession, seconds: number): string[] => {
+  const until = session.talk.now + seconds;
+  return displayed(session, () => session.talk.now >= until, seconds + 1);
+};
+
+/// Whether the lines appear in order and next to each other.
+const together = (all: readonly string[], lines: readonly string[]): boolean =>
+  all.some((_, at) => lines.every((line, i) => all[at + i] === line));
+
+/// The keyboard as Targ's Browser Shell wires it, so a key reaches the Talk
+/// Scripts only when no Binding takes it.
+const none = (): void => undefined;
+
+const keyboard = (session: TalkSession): ((code: string) => void) => {
+  const controls = new BrowserControlProfile({
+    drop: () => session.drop(),
+    keyMake: code => session.keyMake(code),
+    leaveCraft: () => session.leaveCraft(),
+    occupancy: () => session.occupancy,
+    press: key => session.press(key),
+    reach: action => session.reach(action),
+    rideLift: () => session.rideLift(),
+    shutThrottle: none,
+    throttleNotchStep: none,
+    throttleNotchValue: none,
+    throttleStep: none
+  });
+  return code => {
+    const key = {
+      altKey: false,
+      code,
+      ctrlKey: false,
+      metaKey: false,
+      repeat: false
+    };
+    controls.keyDown(key);
+    controls.keyUp(key);
+  };
+};
+
+const STATUS_REPORT = [
+  'STATUS REPORT',
+  'CRASH LANDED ON TARG',
+  'PRESTINIUM DESTROYED',
+  'STATE OF WAR BETWEEN',
+  'PALYARS AND MECHANOIDS',
+  'LOCATION NEAR AIRBASE',
+  'AIRCRAFT ON PAD',
+  'TYPE - DOMINION DART',
+  'MESSAGE RECEIVED',
+  'CRAFT FOR SALE',
+  'PRICE 5000 CREDITS',
+  'YOU HAVE 9000 CREDITS'
+];
+
+const BRIEFING_LINES = [
+  'MECHANOID BRIEFING ROOM',
+  'WE WILL PAY',
+  'FOR PALYAR REQUIREMENTS',
+  'WHEN DELIVERED TO OUR',
+  'CONTROL IN THIS COMPLEX'
+];
+
 /// In the hangar aboard the recovered ship, as `test/escape.test.ts` starts.
-const aboardInTheHangar = async (novadrive = true): Promise<TalkSession> => {
-  const session = await open({ scripts: ['escape'] });
+const aboardInTheHangar = async (
+  novadrive = true,
+  scripts = ['escape']
+): Promise<TalkSession> => {
+  const session = await open({ scripts });
   if (novadrive) {
     session.carry(NOVADRIVE);
   }
@@ -162,6 +254,26 @@ const installation = (faction: 'mechanoid' | 'palyar'): number =>
       (byte & rules.lowIdMask) === (faction === 'palyar' ? 2 : 3)
   );
 
+/// Benson Script 0 running unported beside the other Talk Scripts, as the
+/// shell starts it, until its first offer; perhaps entering the briefing room
+/// on the way. Returns what the Benson Display showed.
+const scriptZero = async (enterBriefing: boolean) => {
+  const session = await open({ scripts: ['briefing', 'escape', 'reaction'] });
+  session.start(0);
+  const seen = displayedFor(session, 10);
+  if (enterBriefing) {
+    session.teleport(room(BRIEFING));
+  }
+  seen.push(
+    ...displayed(
+      session,
+      () =>
+        session.snapshot.bensonMessage?.completedText === 'DO YOU WANT TO BUY?'
+    )
+  );
+  return { seen, session };
+};
+
 describe('the opening', () => {
   test('plays the crash and the status report on the Benson Display', async () => {
     const session = await open({ scripts: ['opening'] });
@@ -195,6 +307,15 @@ describe('the opening', () => {
       'TRANSACTION COMPLETED',
       'YOU HAVE 4000 CREDITS'
     ]);
+  });
+
+  test('Y while the offer is still scrolling in counts, as Benson’s key latch does', async () => {
+    const session = await open({ scripts: ['opening'] });
+    untilShown(session, 'DO YOU WANT TO BUY?');
+    expect(session.benson.host.messagePlaying).toBe(true);
+    session.press('keyY');
+    afterMessage(session, 'YOU HAVE 4000 CREDITS');
+    expect(credits(session)).toBe(4000);
   });
 
   test('a key pressed outside the offers means a long walk', async () => {
@@ -330,15 +451,119 @@ describe('Faction Reactions', () => {
 });
 
 describe('Talk Scripts together', () => {
-  test('the briefing and the opening share the display a line at a time', async () => {
-    const session = await open();
+  test('a report holds the display: the briefing waits for the status report', async () => {
+    const session = await open({ scripts: ['opening', 'briefing'] });
     untilShown(session, 'STATUS REPORT');
     session.teleport(room(BRIEFING));
     afterMessage(session, 'BRIEFING ENDS');
     const lines = session.talk.messages;
-    expect(lines).toContain('CONTROL IN THIS COMPLEX');
-    expect(lines).toContain('PRICE 5000 CREDITS');
+    expect(together(lines, STATUS_REPORT)).toBe(true);
+    expect(together(lines, BRIEFING_LINES)).toBe(true);
+    expect(lines.indexOf('MECHANOID BRIEFING ROOM')).toBe(
+      lines.indexOf('YOU HAVE 9000 CREDITS') + 1
+    );
     expect(errors(session)).toEqual([]);
+  });
+
+  test('the engine’s own message cuts into a report, which carries on', async () => {
+    const session = await open({ scripts: ['briefing'] });
+    session.teleport(room(BRIEFING));
+    untilShown(session, 'WE WILL PAY');
+    session.show(TOO_HEAVY);
+    let alone: number | undefined;
+    advanceUntil(session, () => {
+      if (session.snapshot.bensonMessage?.displayText.trim() === 'TOO HEAVY') {
+        alone ??= session.talk.now;
+      }
+      return session.talk.messages.includes('BRIEFING ENDS');
+    });
+    // TOO HEAVY replaced WE WILL PAY at once and played out; the report went
+    // on with its next line only then.
+    const next = session.talk.played.find(
+      line => line.text === 'FOR PALYAR REQUIREMENTS'
+    )!;
+    expect(alone).toBeDefined();
+    expect(next.at).toBeGreaterThan(alone!);
+    expect(session.talk.messages).toContain('BRIEFING ENDS');
+  });
+
+  test('a Y goes to the latest prompt alone, then to the one before', async () => {
+    const session = await aboardInTheHangar(true, ['opening', 'escape']);
+    rideLift(session);
+    untilShown(session, 'PRESS Y TO LAUNCH');
+    // A prompt takes input as soon as it shows.
+    untilShown(session, 'DO YOU WANT TO BUY?');
+    // Both prompts are open, and both wait for a Y: the offer is the later,
+    // and the Y is latched until it has played.
+    expect(session.talk.claims.map(claim => claim.script)).toEqual([
+      'escape',
+      'opening'
+    ]);
+    session.press('keyY');
+    afterMessage(session, 'YOU HAVE 4000 CREDITS');
+    expect(credits(session)).toBe(4000);
+    expect(session.benson.host.endingPhase).toBe(0);
+    // The opening's Run has ended, so the launch prompt has input back.
+    expect(session.talk.claims.map(claim => claim.script)).toEqual(['escape']);
+    session.press('keyY');
+    afterMessage(session, 'SEE YOU IN MERCENARY II');
+    expect(session.ending.kind).toBe('escape');
+    expect(session.talk.heard).toEqual([
+      { key: 'Y', to: 'opening' },
+      { key: 'Y', to: 'escape' }
+    ]);
+    expect(errors(session)).toEqual([]);
+  });
+
+  test('the prompt lets go of input when its Run ends', async () => {
+    const session = await aboardInTheHangar();
+    rideLift(session);
+    afterMessage(session, 'PRESS Y TO LAUNCH');
+    expect(session.talk.claims.map(claim => claim.script)).toEqual(['escape']);
+    session.leaveCraft();
+    advance(session, 1);
+    expect(session.talk.claims).toEqual([]);
+    session.press('keyY');
+    expect(session.talk.heard).toEqual([{ key: 'Y', to: 'all' }]);
+  });
+
+  test('only keys no Binding takes reach the Talk Scripts, by name', async () => {
+    const session = await open({ scripts: ['opening'] });
+    const type = keyboard(session);
+    // On foot, E rides the lift and D drops: Bindings take them.
+    type('KeyE');
+    type('KeyD');
+    type('KeyQ');
+    type('Digit7');
+    type('KeyY');
+    expect(session.talk.heard.map(press => press.key)).toEqual(['Q', '7', 'Y']);
+  });
+});
+
+describe('migration', () => {
+  test('a Benson Script still running holds the display', async () => {
+    // The opening isn't ported here.
+    const alone = await scriptZero(false);
+    const beside = await scriptZero(true);
+    // Script 0's own lines are untouched, and no Talk Script line comes between them.
+    expect(beside.seen).toEqual(alone.seen);
+    expect(beside.session.talk.messages).toEqual([]);
+    expect(beside.session.benson.refused).toContain(13);
+    // After the sale script 0 spins, waiting for the Dart, and still holds
+    // the display: the briefing waits until the player boards.
+    const { session } = beside;
+    session.press('keyY');
+    advance(session, 30);
+    expect(session.benson.host.isScriptRunning).toBe(true);
+    expect(session.talk.messages).toEqual([]);
+    session.teleport(SURFACE);
+    session.board(1);
+    advanceUntil(session, () => !session.benson.host.isScriptRunning, 5);
+    // The briefing's first part plays though the player has long left the
+    // Room, and its check then cuts the rest.
+    afterMessage(session, 'CONTROL IN THIS COMPLEX');
+    expect(session.talk.messages).toEqual(BRIEFING_LINES);
+    expect(errors(beside.session)).toEqual([]);
   });
 });
 
@@ -353,6 +578,10 @@ describe('saves', () => {
       if (restoreMidway) {
         const core = await newCore();
         session.restoreTalk(session.talk.save(), core && { core });
+        // The prompt's Run keeps Player Input across the restore.
+        expect(session.talk.claims.map(claim => claim.script)).toEqual([
+          'escape'
+        ]);
       }
       session.press('keyY');
       afterMessage(session, 'SEE YOU IN MERCENARY II');
@@ -361,5 +590,16 @@ describe('saves', () => {
       return session.talk.messages.slice(restoreMidway ? 0 : before);
     };
     expect(await play(true)).toEqual(await play(false));
+  });
+
+  test('a restored prompt lets go of input when its Run ends', async () => {
+    const session = await aboardInTheHangar();
+    rideLift(session);
+    afterMessage(session, 'PRESS Y TO LAUNCH');
+    const core = await newCore();
+    session.restoreTalk(session.talk.save(), core && { core });
+    session.leaveCraft();
+    advance(session, 1);
+    expect(session.talk.claims).toEqual([]);
   });
 });

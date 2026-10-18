@@ -4,8 +4,13 @@ on show line
   ask display to show line and wait
 end show
 
+-- A report's lines play back to back: no other Talk Script's line comes between.
 on report lines
-  repeat for each line in lines
-    show line and wait
-  end repeat
+  ask display to report lines and wait
 end report
+
+-- A line that asks for a key: Player Input then comes to this Run alone
+-- until it ends.
+on prompt line
+  ask display to prompt line and wait
+end prompt

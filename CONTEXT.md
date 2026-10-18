@@ -22,6 +22,14 @@ _Avoid_: NorthTalk script, Benson Script (for a rewrite), mod
 A change in play — entering a Room, boarding or leaving a craft, taking or dropping an object, a Site's destruction — that the Gameplay Session announces to every Talk Script, naming its subjects by name. A Talk Script learns of change only through World Events and never waits by re-checking the world.
 _Avoid_: PresentationEvent (that drives presentation, not logic), trigger, notification
 
+**Player Input**:
+A key press no Binding takes, passed to Talk Scripts by name (`"Y"`, `"Q"`) as a message. Controls never reach a Talk Script. Player Input goes to the Input Owner, or to every Talk Script when there is none. It is not a World Event: it isn't a change in play.
+_Avoid_: key event, keystroke, World Event (for a key press)
+
+**Input Owner**:
+The Talk Script Run whose prompt is the latest one showing or shown and whose Run hasn't ended. It alone receives Player Input; when its Run ends, the input passes back to the prompt before it.
+_Avoid_: focus, key owner
+
 **Benson Message**:
 One complete occurrence of text composed by Benson-governed play, retained whole for occurrence tracking and the transcript independently of which of its characters currently occupy the Benson Display. Repeated identical text is a distinct occurrence; shell notices and visible cell fragments are not Benson Messages.
 _Avoid_: Shell notice, message fragment, console output

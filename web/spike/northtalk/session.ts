@@ -1,8 +1,9 @@
-/// A real Gameplay Session run by Talk Scripts instead of Benson Scripts.
+/// A real Gameplay Session with Talk Scripts beside Benson Scripts, as a
+/// migration would run them.
 ///
 /// Benson stays in place for what the Host Callout does for the engine
-/// (taking, boarding, leaving, the Benson Display), but refuses to start any
-/// Benson Script. The Talk Scripts learn what happened from World Events,
+/// (taking, boarding, leaving, the Benson Display) and runs every Benson
+/// Script no Talk Script replaces; it refuses the ported ones. The Talk Scripts learn what happened from World Events,
 /// derived here by comparing the session before and after each frame: the
 /// spike leaves `web/src` untouched, so the Gameplay Session doesn't emit them
 /// itself (docs/research/targ-talk-scripts.md).
@@ -42,16 +43,34 @@ import { talkLibrary, talkScripts } from './sources.ts';
 
 type SiteRules = EndgameCombat['siteDestruction'];
 
-/// Benson with every Benson Script refused. `refused` records what Benson
-/// would have started, so a test can check a World Event stands in for it.
+/// The Benson Scripts each Talk Script replaces.
+export const PORTED: Readonly<Record<string, readonly number[]>> = {
+  briefing: [13],
+  escape: [7],
+  opening: [0],
+  reaction: [34, 35]
+};
+
+/// Benson refusing the Benson Scripts a Talk Script replaces and running the
+/// rest. `refused` records what Benson would have started, so a test can
+/// check a World Event stands in for it.
 export class QuietBenson extends BensonSession {
   readonly refused: number[] = [];
+  refusing: ReadonlySet<number> = new Set();
 
   override start(script: number): boolean {
-    this.refused.push(script);
-    return false;
+    if (this.refusing.has(script)) {
+      this.refused.push(script);
+      return false;
+    }
+    return super.start(script);
   }
 }
+
+/// The name a Talk Script gives a key: `KeyY` and Benson's `keyY` are `Y`,
+/// `Digit1` is `1`, and any other code stands as it is.
+export const keyName = (code: string): string =>
+  code.replace(/^(?:[Kk]ey|Digit)(?=.)/, '');
 
 /// What a frame is compared on to find its World Events.
 interface Seen {
@@ -83,6 +102,8 @@ export interface TalkSessionOptions extends TalkHostOptions {
 export class TalkSession extends GameplaySession {
   talk: TalkHost;
   private lastSeen: Seen;
+  /// The code of the key last pressed, before any Binding took it.
+  private made: string | undefined;
   private readonly siteRules: SiteRules;
 
   constructor(
@@ -98,16 +119,16 @@ export class TalkSession extends GameplaySession {
       DEFAULT_SESSION_SEED
     );
     this.siteRules = sites;
-    this.talk = new TalkHost(
+    const scripts =
       options.scripts === undefined
         ? talkScripts
         : Object.fromEntries(
             options.scripts.map(name => [name, talkScripts[name]!])
-          ),
-      talkLibrary,
-      benson,
-      options
+          );
+    benson.refusing = new Set(
+      Object.keys(scripts).flatMap(name => PORTED[name] ?? [])
     );
+    this.talk = new TalkHost(scripts, talkLibrary, benson, options);
     this.lastSeen = this.lookForEvents();
     this.talk.deliver([{ kind: 'begin' }]);
   }
@@ -133,10 +154,20 @@ export class TalkSession extends GameplaySession {
     return result;
   }
 
+  /// Every key the player presses, before any Binding takes it.
+  keyMake(code: string): void {
+    this.made = code;
+  }
+
+  /// A key no Binding took: Benson's answer, and Player Input named by the
+  /// key's code. The shell would pass the code itself once Talk Scripts are
+  /// accepted; here `keyMake` remembers it.
   override press(key: BensonKey | undefined): void {
     super.press(key);
-    if (key !== undefined) {
-      this.talk.deliver([{ key: key.replace(/^key/, ''), kind: 'pressed' }]);
+    const code = this.made ?? key;
+    this.made = undefined;
+    if (code !== undefined) {
+      this.talk.input(keyName(code));
     }
   }
 
