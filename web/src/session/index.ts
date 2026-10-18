@@ -93,6 +93,13 @@ import {
   type ShipFieldPoint
 } from './shipField.ts';
 import { SiteLedger } from './sites.ts';
+import {
+  changesBetween,
+  type WorldEvent,
+  type WorldSeen
+} from './worldEvents.ts';
+
+export type { WorldEvent } from './worldEvents.ts';
 
 /// The Gameplay Session: the one owner of a play session's Session State (ADR 0018).
 ///
@@ -710,6 +717,10 @@ export class GameplaySession {
   private approachFrames = 0;
   private ownRandomState: bigint;
   private readonly objectsBySlot: ReadonlyMap<number, ObjectPlacement>;
+  /// World Events raised during play since the last frame was told.
+  private worldRaised: WorldEvent[] = [];
+  /// What the last frame left, for the next one's World Events to compare.
+  private worldSeen: WorldSeen;
 
   constructor(
     content: SessionContent,
@@ -764,6 +775,7 @@ export class GameplaySession {
     if (this.scripts !== undefined) {
       this.scripts.host = this.project(this.scripts.host);
     }
+    this.worldSeen = this.seeWorld();
   }
 
   captureSaveSnapshot(): SaveSnapshot {
@@ -928,6 +940,8 @@ export class GameplaySession {
             };
     }
     session.republishHostState();
+    // A Save is where play resumes, not a change in it.
+    session.worldSeen = session.seeWorld();
     return session;
   }
 
@@ -1989,7 +2003,34 @@ export class GameplaySession {
     this.scripts?.describe(description);
   }
 
+  /// One frame of play. Its World Events are what was raised during it, or
+  /// done to the session since the last frame, then what changed in place.
   advance(seconds: number): {
+    readonly events: readonly PresentationEvent[];
+    readonly snapshot: SessionSnapshot;
+    readonly worldEvents: readonly WorldEvent[];
+  } {
+    const { events, snapshot } = this.advanceFrame(seconds);
+    const seen = this.seeWorld();
+    const worldEvents = [
+      ...this.worldRaised,
+      ...changesBetween(this.worldSeen, seen)
+    ];
+    this.worldRaised = [];
+    this.worldSeen = seen;
+    return { events, snapshot, worldEvents };
+  }
+
+  private seeWorld(): WorldSeen {
+    const occupancy = this.occupancy;
+    return {
+      carried: [...this.carriedStack],
+      craft: occupancy.kind === 'aboard' ? occupancy.slot : undefined,
+      location: this.location
+    };
+  }
+
+  private advanceFrame(seconds: number): {
     readonly events: readonly PresentationEvent[];
     readonly snapshot: SessionSnapshot;
   } {
@@ -2261,6 +2302,20 @@ export class GameplaySession {
         this.removeShot();
         this.impact = { cell, framesLeft: sites.impactFrames };
         events.push({ impact: { sound: sites.impactSound } });
+        if (struck.kind === 'destroyed' || struck.kind === 'gratitude') {
+          this.worldRaised.push({
+            cell,
+            faction: struck.faction,
+            kind: 'destroyed',
+            site: struck.site
+          });
+        }
+        if (struck.kind === 'gratitude') {
+          this.worldRaised.push({
+            faction: struck.grateful,
+            kind: 'gratitude'
+          });
+        }
         if (struck.kind === 'destroyed' && struck.reaction !== undefined) {
           this.start(struck.reaction);
         } else if (struck.kind === 'gratitude') {
@@ -2477,6 +2532,10 @@ export class GameplaySession {
     }
     // The hit. A craft is lost and said to be lost; on foot there is nothing to
     // lose and nothing to say. Either way the encounter ends and play does not.
+    this.worldRaised.push({
+      aboard: this.occupancy.kind === 'aboard',
+      kind: 'hit'
+    });
     if (this.occupancy.kind === 'aboard') {
       this.show(rules.shipDestroyedMessage);
       this.game = { ...this.game, mover: rules.captureMover };

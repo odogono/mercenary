@@ -11,6 +11,8 @@ import type { EndgameCombat } from '../payload/documents.ts';
 
 type SiteRules = EndgameCombat['siteDestruction'];
 
+export type Faction = 'mechanoid' | 'palyar';
+
 /// What a strike committed, and what the session owes the scripts because of it.
 export type SiteStrike =
   /// The Site was already destroyed. The impact still happened; nothing else did.
@@ -18,13 +20,25 @@ export type SiteStrike =
   /// A neutral Site: destroyed, but counted by neither faction and reacted to
   /// by neither.
   | { readonly kind: 'neutral' }
-  /// Destroyed and counted. `reaction` is the Benson Script the Site had left,
+  /// Destroyed and counted for `faction`, the Site's owner. `site` is its low
+  /// id, which names it. `reaction` is the Benson Script the Site had left,
   /// which is absent once it has been spent.
-  | { readonly kind: 'destroyed'; readonly reaction: number | undefined }
+  | {
+      readonly faction: Faction;
+      readonly kind: 'destroyed';
+      readonly reaction: number | undefined;
+      readonly site: number;
+    }
   /// Destroyed and counted, and the lead it created reached the Gratitude
-  /// Threshold. The thanking script replaces the Site's own reaction, which is
-  /// left unspent.
-  | { readonly kind: 'gratitude'; readonly reaction: number }
+  /// Threshold: `grateful` is the faction the player has helped. The thanking
+  /// script replaces the Site's own reaction, which is left unspent.
+  | {
+      readonly faction: Faction;
+      readonly grateful: Faction;
+      readonly kind: 'gratitude';
+      readonly reaction: number;
+      readonly site: number;
+    }
   /// The Anti Time Bomb put the Site back. Nothing was counted, in either
   /// direction, and no reaction was spent.
   | { readonly kind: 'restored' }
@@ -123,11 +137,14 @@ export class SiteLedger {
       return { kind: 'neutral' };
     }
 
-    if ((byte & rules.mechanoidMask) !== 0) {
+    const faction: Faction =
+      (byte & rules.mechanoidMask) !== 0 ? 'mechanoid' : 'palyar';
+    if (faction === 'mechanoid') {
       this.mechanoid = (this.mechanoid + 1) & BYTE;
     } else {
       this.palyar = (this.palyar + 1) & BYTE;
     }
+    const site = byte & rules.lowIdMask;
 
     // The lead is one byte wide and the negative arm complements it before
     // comparing, so the two factions reach their thresholds one apart.
@@ -137,20 +154,24 @@ export class SiteLedger {
     const lead = trailing ? difference ^ BYTE : difference;
     if (lead >= objective.threshold) {
       return {
+        faction,
+        grateful: trailing ? 'mechanoid' : 'palyar',
         kind: 'gratitude',
-        reaction: trailing ? objective.mechanoidScript : objective.palyarScript
+        reaction: trailing ? objective.mechanoidScript : objective.palyarScript,
+        site
       };
     }
 
-    const lowId = byte & rules.lowIdMask;
-    if (lowId === 0) {
-      return { kind: 'destroyed', reaction: undefined };
+    if (site === 0) {
+      return { faction, kind: 'destroyed', reaction: undefined, site };
     }
     // A dispatched reaction is spent: the Site keeps everything but its id.
     this.table[cell] = byte & rules.reactionWipeMask;
     return {
+      faction,
       kind: 'destroyed',
-      reaction: rules.reactionDispatchBase | lowId
+      reaction: rules.reactionDispatchBase | site,
+      site
     };
   }
 }
