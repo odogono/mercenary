@@ -90,7 +90,8 @@ import { observationsOf, type SemanticObservations } from './observations.ts';
 import {
   decodeRandomState,
   encodeRandomState,
-  type SaveSnapshot
+  type SaveSnapshot,
+  type TalkSaveSnapshot
 } from './save.ts';
 import {
   InterstellarShipField,
@@ -848,14 +849,21 @@ export class GameplaySession {
       objectFlags: [...this.objectFlags.entries()].sort(([a], [b]) => a - b),
       randomState: encodeRandomState(this.ownRandomState),
       residence: [...this.residence.entries()].sort(([a], [b]) => a - b),
-      rewired: [...this.rewired.entries()].sort(([a], [b]) => a - b)
+      rewired: [...this.rewired.entries()].sort(([a], [b]) => a - b),
+      talk: this.talk?.captureSaveSnapshot() ?? null
     };
   }
 
+  /// A session as the Save left it. Given Talk Scripts, it restores theirs
+  /// beside Benson, or loads them fresh where the Save has none.
   static restore(
     content: SessionContent,
     scripts: BensonSession | undefined,
-    snapshot: SaveSnapshot
+    snapshot: SaveSnapshot,
+    talk?: {
+      readonly options?: TalkHostOptions;
+      readonly scripts: readonly TalkScript[];
+    }
   ): GameplaySession {
     validateSnapshotReferences(content, snapshot);
     if ((scripts === undefined) !== (snapshot.benson === null)) {
@@ -949,6 +957,13 @@ export class GameplaySession {
     session.republishHostState();
     // A Save is where play resumes, not a change in it.
     session.worldSeen = session.seeWorld();
+    if (talk !== undefined) {
+      session.useTalkScripts(
+        talk.scripts,
+        talk.options,
+        snapshot.talk ?? undefined
+      );
+    }
     return session;
   }
 
@@ -1994,18 +2009,24 @@ export class GameplaySession {
     this.scripts?.press(key);
   }
 
-  /// Loads Talk Scripts beside Benson, which from now on refuses the Benson
-  /// Scripts they replace. They hear this session's World Events and Player
+  /// Loads Talk Scripts beside Benson, or restores them from a save, and
+  /// Benson from now on refuses the Benson Scripts they replace, stopping one
+  /// already running. They hear this session's World Events and Player
   /// Input, and share its Benson Display.
   useTalkScripts(
     scripts: readonly TalkScript[],
-    options: TalkHostOptions = {}
+    options: TalkHostOptions = {},
+    saved?: TalkSaveSnapshot
   ): TalkHost {
     if (this.scripts === undefined) {
       throw new Error('Talk Scripts need the Benson Display and host state');
     }
-    this.talk = new TalkHost(scripts, this.scripts, options);
+    this.talk = new TalkHost(scripts, this.scripts, options, saved);
     this.scripts.refusing = this.talk.replaces;
+    const running = this.scripts.running;
+    if (running !== undefined && this.talk.replaces.has(running)) {
+      this.scripts.stop();
+    }
     return this.talk;
   }
 

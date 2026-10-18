@@ -8,6 +8,13 @@ import {
   type PresentationEvent
 } from '../src/session/index.ts';
 import {
+  SAVE_SCHEMA_VERSION,
+  SAVE_TALK_CODE_UNIT_LIMIT,
+  decodeSave,
+  encodeSave,
+  type SaveEnvelope
+} from '../src/session/save.ts';
+import {
   bensonTunables,
   flightModel,
   loadSettings
@@ -16,6 +23,7 @@ import { BrowserControlProfile } from '../src/shell/input.ts';
 import type { TalkHostOptions, TalkScript } from '../src/talk/host.ts';
 import { TextTable } from '../src/text/index.ts';
 import { World, room } from '../src/world/index.ts';
+import { environment } from './fixtures/save.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
 
 const bundle = await loadPayload();
@@ -50,12 +58,16 @@ const script = (
   replaces: readonly number[] = []
 ): TalkScript => ({ name, replaces, source });
 
-/// A session on foot with the given Talk Scripts, after the opening frame.
-const withScripts = (
-  scripts: readonly TalkScript[],
-  options: TalkHostOptions = {}
-): GameplaySession => {
-  const session = new GameplaySession(
+const benson = (): BensonSession =>
+  new BensonSession(
+    program,
+    new TextTable(bundle.text!),
+    bensonTunables(settings, program.framesPerTick)
+  );
+
+/// A session on foot, with no Talk Scripts yet.
+const onFoot = (): GameplaySession =>
+  new GameplaySession(
     content,
     {
       heading: 0,
@@ -65,15 +77,39 @@ const withScripts = (
       speed: 0,
       yawVelocity: 0
     },
-    new BensonSession(
-      program,
-      new TextTable(bundle.text!),
-      bensonTunables(settings, program.framesPerTick)
-    )
+    benson()
   );
+
+/// A session on foot with the given Talk Scripts.
+const withScripts = (
+  scripts: readonly TalkScript[],
+  options: TalkHostOptions = {}
+): GameplaySession => {
+  const session = onFoot();
   session.useTalkScripts(scripts, options);
   return session;
 };
+
+const envelope = (session: GameplaySession): SaveEnvelope => ({
+  environment,
+  location: { kind: 'surface' },
+  savedAt: '2026-10-18T12:00:00.000Z',
+  schemaVersion: SAVE_SCHEMA_VERSION,
+  snapshot: session.captureSaveSnapshot()
+});
+
+/// The session saved, written out, read back and restored with the given
+/// Talk Scripts.
+const saveAndRestore = (
+  session: GameplaySession,
+  scripts: readonly TalkScript[]
+): GameplaySession =>
+  GameplaySession.restore(
+    content,
+    benson(),
+    decodeSave(encodeSave(envelope(session)), environment).snapshot,
+    { scripts }
+  );
 
 const shown = (session: GameplaySession): readonly string[] =>
   session.talk!.shown;
@@ -229,11 +265,10 @@ end pressed
   );
 
 /// Two Talk Scripts that each prompt for a Y: one at the start, one on boarding.
-const prompts = (): GameplaySession =>
-  withScripts([
-    script(
-      'first',
-      `use show, prompt from benson
+const promptScripts: readonly TalkScript[] = [
+  script(
+    'first',
+    `use show, prompt from benson
 on begin
 prompt "FIRST?" and wait
 wait for
@@ -242,10 +277,10 @@ end wait
 show "FIRST HEARD" and wait
 end begin
 `
-    ),
-    script(
-      'second',
-      `use show, prompt from benson
+  ),
+  script(
+    'second',
+    `use show, prompt from benson
 on boarded craft
 prompt "SECOND?" and wait
 wait for
@@ -254,8 +289,10 @@ end wait
 show "SECOND HEARD" and wait
 end boarded
 `
-    )
-  ]);
+  )
+];
+
+const prompts = (): GameplaySession => withScripts(promptScripts);
 
 describe('Player Input', () => {
   test('goes to the latest prompt, then back to the one before', () => {
@@ -360,5 +397,151 @@ end begin
     advance(session, 20);
     expect(session.scripts!.host.isScriptRunning).toBe(true);
     expect(shown(session)).toEqual([]);
+  });
+});
+
+describe('a Save', () => {
+  test('restored mid-report plays the report again from its start', () => {
+    const scripts = [
+      script(
+        'report',
+        `use show, report from benson
+on begin
+  report ["L1", "L2", "L3"] and wait
+  show "AFTER" and wait
+end begin
+`
+      )
+    ];
+    const session = withScripts(scripts);
+    session.talk!.begin();
+    untilShown(session, 'L2');
+    const restored = saveAndRestore(session, scripts);
+    afterLine(restored, 'AFTER');
+    expect(shown(restored)).toEqual(['L1', 'L2', 'L3', 'AFTER']);
+    expect(failures(restored)).toEqual([]);
+  });
+
+  test('keeps a prompt’s hold on Player Input', () => {
+    const session = prompts();
+    session.talk!.begin();
+    afterLine(session, 'FIRST?');
+    const restored = saveAndRestore(session, promptScripts);
+    expect(restored.talk!.claims.map(claim => claim.script)).toEqual(['first']);
+    restored.input('KeyY');
+    afterLine(restored, 'FIRST HEARD');
+    expect(restored.talk!.claims).toEqual([]);
+  });
+
+  test('reloads an edited Talk Script with its Script Variables, ending its Runs', () => {
+    const counter = (says: string): TalkScript =>
+      script(
+        'counter',
+        `use show from benson
+script variable count = 0
+on begin
+  wait 10 s
+  show "${says} WAITED" and wait
+end begin
+on pressed key
+  put count + 1 into count
+  show "${says} " & count and wait
+end pressed
+`
+      );
+    const waiter = script(
+      'waiter',
+      `use show from benson
+on begin
+  wait 10 s
+  show "WAITED" and wait
+end begin
+`
+    );
+    const session = withScripts([counter('COUNT'), waiter]);
+    session.talk!.begin();
+    session.input('KeyQ');
+    afterLine(session, 'COUNT 1');
+
+    const restored = saveAndRestore(session, [counter('NOW'), waiter]);
+    afterLine(restored, 'WAITED');
+    restored.input('KeyQ');
+    afterLine(restored, 'NOW 2');
+    expect(shown(restored)).toEqual(['WAITED', 'NOW 2']);
+    expect(
+      restored
+        .talk!.reports.filter(report => report.kind === 'run discarded')
+        .map(report => report.script)
+    ).toEqual(['counter']);
+  });
+
+  test('drops a Talk Script no longer built, and loads a new one with no begin', () => {
+    const session = withScripts([listener('one')]);
+    const restored = saveAndRestore(session, [
+      listener('two'),
+      script(
+        'new',
+        `use show from benson
+on begin
+  show "BEGUN" and wait
+end begin
+`
+      )
+    ]);
+    restored.input('KeyQ');
+    afterLine(restored, 'two Q');
+    advance(restored, 5);
+    expect(shown(restored)).toEqual(['two Q']);
+  });
+
+  test('from before schema 14 loads Talk Scripts fresh and stops a ported Benson Script', () => {
+    const session = onFoot();
+    session.start(0);
+    advance(session, 1);
+    const current = JSON.parse(encodeSave(envelope(session)));
+    expect(current.snapshot.benson.script).toBe(0);
+    delete current.snapshot.talk;
+    delete current.snapshot.benson.script;
+    const old = decodeSave(
+      JSON.stringify({ ...current, schemaVersion: 13 }),
+      environment
+    ).snapshot;
+    expect(old.talk).toBeNull();
+
+    // The script is told by where it is, without Talk Scripts to stop it.
+    const unported = GameplaySession.restore(content, benson(), old);
+    expect(unported.scripts!.running).toBe(0);
+
+    const ported = GameplaySession.restore(content, benson(), old, {
+      scripts: [
+        script(
+          'opening',
+          `use show from benson
+on begin
+  show "BEGUN" and wait
+end begin
+`,
+          [0]
+        ),
+        listener('one')
+      ]
+    });
+    expect(ported.scripts!.host.isScriptRunning).toBe(false);
+    ported.input('KeyQ');
+    afterLine(ported, 'one Q');
+    expect(shown(ported)).toEqual(['one Q']);
+  });
+
+  test('bounds the Talk Script save on its own, and refuses one not in base64', () => {
+    const save = envelope(withScripts([listener('one')]));
+    const withGroup = (group: string): SaveEnvelope => ({
+      ...save,
+      snapshot: { ...save.snapshot, talk: { ...save.snapshot.talk!, group } }
+    });
+    expect(() =>
+      encodeSave(withGroup('A'.repeat(SAVE_TALK_CODE_UNIT_LIMIT + 4)))
+    ).toThrow('Talk Script save limit');
+    expect(() => encodeSave(withGroup('not base64!'))).toThrow('base64');
+    expect(decodeSave(encodeSave(save), environment)).toEqual(save);
   });
 });

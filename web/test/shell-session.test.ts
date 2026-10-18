@@ -57,6 +57,7 @@ describe('the live browser Gameplay Session', () => {
       benson: {
         ...captured.benson!,
         host: { ...captured.benson!.host, engineFlags: 0 },
+        script: null,
         state: { ...captured.benson!.state, pc: null }
       }
     };
