@@ -129,6 +129,14 @@ const server = Bun.serve({
             headers: { 'content-type': 'text/javascript; charset=utf-8' }
           });
         }
+        // A Talk Script is imported as text, which no browser does: stripping the types drops
+        // the import's `type: 'text'`, and the file goes out as a module of its text.
+        if (candidate.endsWith('.talk')) {
+          return new Response(
+            `export default ${JSON.stringify(await file.text())};\n`,
+            { headers: { 'content-type': 'text/javascript; charset=utf-8' } }
+          );
+        }
         return new Response(file);
       }
     }
