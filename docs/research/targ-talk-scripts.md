@@ -12,7 +12,7 @@ Both judge the Talk Scripts by player-visible outcome tests rather than Golden T
 
 ## Recommendation
 
-**Continue, and draft an ADR superseding ADR 0045 for Targ.** One decision from the third spike needs revisiting first ([a running Benson Script holds the display](#findings-1)); production save policy, the last open item, belongs in the ADR draft. The second spike ran Talk Scripts inside a real Gameplay Session on World Events, and they drove the engine's own Benson Display, Ending and hostile encounter. NorthTalk removes the reason ADR 0045 gave for named steps: a Talk Script's suspended state is a serializable continuation. Scripts read as linear dialogue, saves are taken mid-wait, and a save restored into a fresh Core finished exactly like an uninterrupted run. The costs are a ~144 KB (brotli) runtime and a pre-1.0 dependency. The save-growth defect the spike found is fixed in `@northtalk/ts` 0.1.0, and the same tests pass on the WASM Core.
+**Accepted as [ADR 0080](../adr/0080-run-targs-scripts-as-talk-scripts.md), which supersedes ADR 0045 for Targ.** The second spike ran Talk Scripts inside a real Gameplay Session on World Events, and they drove the engine's own Benson Display, Ending and hostile encounter. NorthTalk removes the reason ADR 0045 gave for named steps: a Talk Script's suspended state is a serializable continuation. Scripts read as linear dialogue, saves are taken mid-wait, and a save restored into a fresh Core finished exactly like an uninterrupted run. The costs are a ~144 KB (brotli) runtime and a pre-1.0 dependency.
 
 ## Decisions the spike worked under
 
@@ -101,7 +101,7 @@ The host owns the clock (session seconds become epoch microseconds for `pump`), 
 
 ## Decisions for the ADR
 
-Decided after the spikes, for the ADR that would supersede ADR 0045. They only matter if Talk Scripts are accepted, so they aren't an ADR of their own.
+Decided after the spikes and recorded, with the save policy, in [ADR 0080](../adr/0080-run-targs-scripts-as-talk-scripts.md).
 
 **Distribution.** `@northtalk/ts` is an exact-pinned devDependency of `web/` (`"0.1.0"`, upgraded deliberately in its own commit; `bun.lock` records the tarball hash). Only tests and spikes import it: nothing under `web/src` does until the ADR is accepted, when it becomes a runtime dependency. The spike's tests run in `bun run check`.
 
@@ -127,7 +127,7 @@ Decided after the spikes, for the ADR that would supersede ADR 0045. They only m
 - **A report is one block.** `report lines` plays its lines back to back, and no other Talk Script's line comes between them. Single `show` lines queue first in, first out between blocks. A reaction triggered during the briefing waits for it instead of being lost, which is a deliberate change from Benson's refusal of every start while a script runs.
 - **The engine's messages cut in.** A Room or object message the engine shows replaces the current line at once, as it does for Benson Scripts, and the report carries on with its next line. A report is uninterruptible only by other Talk Scripts.
 
-**The Gameplay Session seam.** Talk Scripts replace Benson Scripts one at a time, beside `BensonSession`. Benson refuses the Benson Scripts a Talk Script replaces and runs the rest, so the Golden Traces keep checking the unported ones and each port is its own PR. `BensonSession` goes when nothing is left for it to run. The World Event emitter goes into `GameplaySession` itself, not a subclass. While both run, no Talk Script line starts while a Benson Script is running; the third spike found this too strong (see its [findings](#findings-1)).
+**The Gameplay Session seam.** Talk Scripts replace Benson Scripts one at a time, beside `BensonSession`. Benson refuses the Benson Scripts a Talk Script replaces and runs the rest, so the Golden Traces keep checking the unported ones and each port is its own PR. `BensonSession` goes when nothing is left for it to run. The World Event emitter goes into `GameplaySession` itself, not a subclass. While both run, no Talk Script line starts while a Benson Script is running. The third spike found that a spinning Benson Script holds the display for minutes (see its [findings](#findings-1)), so ports go in order of how long each script holds the display, Benson Script 0 first.
 
 The second and third spikes tested these in a real Gameplay Session; see the next sections.
 
@@ -214,7 +214,7 @@ The save test also checks that the Escape keeps the input across a restore.
 
 ### Findings
 
-- **A running Benson Script holds the display for too long.** Benson Scripts spin while they wait. After the sale, script 0 falls through into Benson Script 1's code and waits for the player to board the Dart, so under the agreed rule no Talk Script line can play until then: 30 s in the test, and as long as the player likes in play. Benson would have refused the briefing outright in that state, so the player hears no less than before, but the rule is stronger than intended. Two ways out: hold the display only while a Benson Script's own message plays (Talk lines then interleave with a Benson Script's line by line, during migration only), or port script 0 first, since it is the long-running one. This needs a decision before the ADR.
+- **A running Benson Script holds the display for too long.** Benson Scripts spin while they wait. After the sale, script 0 falls through into Benson Script 1's code and waits for the player to board the Dart, so under the agreed rule no Talk Script line can play until then: 30 s in the test, and as long as the player likes in play. Benson would have refused the briefing outright in that state, so the player hears no less than before, but the rule is stronger than intended. Two ways out: hold the display only while a Benson Script's own message plays (Talk lines then interleave with a Benson Script's line by line, during migration only), or port script 0 first, since it is the long-running one. ADR 0080 keeps the rule and ports script 0 first.
 - **Queued lines go stale.** The briefing, held back by script 0, played its first part after the player had long left the room; its own check cut the rest. A line can wait for the display much longer than its moment lasts. The authoring rule from the second spike extends to speaking: check the world before a report as well as before a `wait for`.
 - **Prompts need a key latch.** A Run inside `prompt … and wait` isn't yet waiting for a key, so a Y pressed while the prompt scrolls in would be lost. Answering the prompt as soon as it shows fixes that but starts the five-second window early: the opening ran 6 s ahead of the script-0 traces by its fifth offer. Instead the host holds the Input Owner's key while its prompt plays and delivers it once the Run has reached its `wait for`, as Benson's key latch holds a key until a script tests it. The trace diff stays within about 9 s. The latch isn't saved; a save in that moment loses the key.
 - **Input Ownership needs nothing from NorthTalk.** Call records carry `runId` and `scriptName`, `run end` reports carry the Run, and Run ids survive a restore, so the host keeps the claims itself.
@@ -228,14 +228,14 @@ The save test also checks that the Escape keeps the input across a restore.
 | One key press, to the Input Owner / broadcast to four Talk Scripts | ~9 µs / ~13 µs     |
 | Save of the four Talk Scripts after 600 s                          | 29 KB              |
 
-## Open items before an ADR
+## Open items
 
 1. ~~**Upstream**~~: settled. Save growth is fixed and the WASM Core runs the same tests (see [Saves](#saves) and [Cost](#cost)).
 2. ~~**Distribution**~~: settled (see [Decisions for the ADR](#decisions-for-the-adr)).
 3. ~~**Event model**~~: settled, and the second spike confirms it in a real Gameplay Session. Key presses are Player Input, not World Events.
-4. **Production save policy**: Talk Script revision identity, compatibility checks, and migration or rejection. ADR 0045 left these open for Targ; reissue semantics, the Input Owner claims and the key latch now join them. To be settled in the ADR draft.
+4. ~~**Production save policy**~~: settled in [ADR 0080](../adr/0080-run-targs-scripts-as-talk-scripts.md): revision by `codeIdentity`, changed scripts reloaded with their variables, pending display calls reissued, schema-13 Saves migrated.
 5. ~~**Concurrency rules**~~: settled, and the third spike confirms them: a report holds the display, a prompt owns the input.
-6. ~~**Gameplay Session seam**~~: settled: one script at a time beside `BensonSession`. How a still-running Benson Script shares the display needs revisiting ([findings](#findings-1)).
+6. ~~**Gameplay Session seam**~~: settled: one script at a time beside `BensonSession`, Benson Script 0 first.
 
 ## Appendix: what the Benson originals do
 
