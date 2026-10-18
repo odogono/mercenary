@@ -1,4 +1,4 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["../research/*/scripts/**/*.ts"]
+  "include": ["../research/*/scripts/**/*.ts", "src/talk/talk.d.ts"]
 }
