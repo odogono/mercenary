@@ -72,11 +72,15 @@ interface Block {
 /// Engine flags a Talk Script may name, by their bit in `engineFlags`.
 const FLAGS = {
   commanderAnnoyed: 32,
+  dartBought: 1,
   gratitudeGiven: 2,
   shipHired: 4
 } as const;
 
 const CREDITS = BensonHostState.firstNumberDecimal;
+/// An object's description bit that makes boarding or taking it start the
+/// Benson Script of its slot.
+const STARTS_SCRIPT = 4;
 const ADVERT_BLOCK = 50;
 const MICROS = 1_000_000;
 /// No Talk Script wait is bounded by a deadline of its own.
@@ -205,6 +209,11 @@ export class TalkHost {
     this.group =
       (saved && this.restore(core, scripts, saved)) ??
       this.newGroup(core, scripts);
+    if (saved !== undefined) {
+      // Reissued lines queue for the display at once, so a restored session
+      // can tell who was speaking.
+      this.pump();
+    }
   }
 
   captureSaveSnapshot(): TalkSaveSnapshot {
@@ -295,6 +304,11 @@ export class TalkHost {
       }
     }
     return group;
+  }
+
+  /// The Talk Script whose line plays or waits first for the display.
+  get speaker(): string | undefined {
+    return (this.playing ?? this.queue[0])?.call.scriptName;
   }
 
   /// A new game has begun.
@@ -445,6 +459,21 @@ export class TalkHost {
         do: () => bool(!this.benson.host.destroyedBlocks.has(ADVERT_BLOCK)),
         mode: 'immediate',
         result: shape.bool
+      },
+      arm: {
+        args: [shape.text],
+        cost: { fuel: 1 },
+        description:
+          'Makes boarding or taking the object start its own Benson Script.',
+        do: (_call, item) => {
+          const slot = objectSlot(item.asText()!);
+          this.benson.host = this.benson.host.withObjectFlag(
+            slot,
+            (this.benson.host.objectFlags.get(slot) ?? 0) | STARTS_SCRIPT
+          );
+          return nothing;
+        },
+        mode: 'immediate'
       },
       boarded: {
         cost: { fuel: 1 },

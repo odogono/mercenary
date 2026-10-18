@@ -197,7 +197,7 @@ end begin
 `
       )
     ]);
-    session.talk!.begin();
+    session.begin();
     afterLine(session, 'B2');
     expect(shown(session)).toEqual(['A1', 'A2', 'A3', 'B1', 'B2']);
   });
@@ -213,7 +213,7 @@ end begin
 `
       )
     ]);
-    session.talk!.begin();
+    session.begin();
     untilShown(session, 'L1');
     session.show(TOO_HEAVY);
     let heavyPlayed = false;
@@ -244,7 +244,7 @@ end begin
       ],
       { random: () => 2 }
     );
-    session.talk!.begin();
+    session.begin();
     const { events } = session.advance(FRAME);
     expect(session.scripts!.host.attackingShip).toBe(true);
     expect(events).toContainEqual({
@@ -297,7 +297,7 @@ const prompts = (): GameplaySession => withScripts(promptScripts);
 describe('Player Input', () => {
   test('goes to the latest prompt, then back to the one before', () => {
     const session = prompts();
-    session.talk!.begin();
+    session.begin();
     afterLine(session, 'FIRST?');
     session.board(DART);
     afterLine(session, 'SECOND?');
@@ -318,7 +318,7 @@ describe('Player Input', () => {
 
   test('a key pressed while the prompt plays is latched for it', () => {
     const session = prompts();
-    session.talk!.begin();
+    session.begin();
     untilShown(session, 'FIRST?');
     expect(session.scripts!.host.messagePlaying).toBe(true);
     session.input('KeyY');
@@ -393,7 +393,7 @@ end begin
       )
     ]);
     session.start(0);
-    session.talk!.begin();
+    session.begin();
     advance(session, 20);
     expect(session.scripts!.host.isScriptRunning).toBe(true);
     expect(shown(session)).toEqual([]);
@@ -414,7 +414,7 @@ end begin
       )
     ];
     const session = withScripts(scripts);
-    session.talk!.begin();
+    session.begin();
     untilShown(session, 'L2');
     const restored = saveAndRestore(session, scripts);
     afterLine(restored, 'AFTER');
@@ -424,7 +424,7 @@ end begin
 
   test('keeps a prompt’s hold on Player Input', () => {
     const session = prompts();
-    session.talk!.begin();
+    session.begin();
     afterLine(session, 'FIRST?');
     const restored = saveAndRestore(session, promptScripts);
     expect(restored.talk!.claims.map(claim => claim.script)).toEqual(['first']);
@@ -459,7 +459,7 @@ end begin
 `
     );
     const session = withScripts([counter('COUNT'), waiter]);
-    session.talk!.begin();
+    session.begin();
     session.input('KeyQ');
     afterLine(session, 'COUNT 1');
 

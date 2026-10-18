@@ -1,5 +1,5 @@
 import type { SessionContent } from '../../src/session/index.ts';
-import type { SaveEnvironment } from '../../src/session/save.ts';
+import type { SaveEnvironment, SaveSnapshot } from '../../src/session/save.ts';
 
 /// One Save identity for tests that do not care which payload they came from.
 ///
@@ -42,4 +42,11 @@ export const emptyContent = (): SessionContent => ({
   objects: [],
   rooms: new Map(),
   underground: undefined
+});
+
+/// A snapshot without the NorthTalk save's own bytes, which number each save
+/// the Group writes and so never repeat (ADR 0080).
+export const comparable = (snapshot: SaveSnapshot): SaveSnapshot => ({
+  ...snapshot,
+  talk: snapshot.talk && { ...snapshot.talk, group: '' }
 });

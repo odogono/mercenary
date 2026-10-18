@@ -53,12 +53,14 @@ try {
   const trace = parseTrace(traceText, 'session', TRACE_ID);
   const expected = foldStates(trace);
   const settings = requiredSettings(settingsText);
+  // Benson Script 0 plays the opening, as the trace recorded it.
   const initial = createWalkabout(
     bundle,
     settings,
     undefined,
     'legacyOracle',
-    'traceOracle'
+    'traceOracle',
+    []
   );
   let session = initial.session;
   enableInstantLiftOracle(session);
@@ -93,7 +95,8 @@ try {
       settings,
       before,
       'legacyOracle',
-      'traceOracle'
+      'traceOracle',
+      []
     ).session;
     enableInstantLiftOracle(session);
     const restored = encodeSave({

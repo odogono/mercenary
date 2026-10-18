@@ -2,6 +2,7 @@ import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
 import { BensonProgram } from '../src/benson/index.ts';
+import type { SaveSnapshot } from '../src/session/save.ts';
 import {
   arrivalTunables,
   bensonTunables,
@@ -26,6 +27,7 @@ import {
 import { createWalkabout, requiredSettings } from '../src/shell/session.ts';
 import { createTargOrrery, skyStateAt } from '../src/sky/index.ts';
 import { TextTable } from '../src/text/index.ts';
+import { comparable } from './fixtures/save.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
 
 const bundle = await loadPayload();
@@ -349,7 +351,7 @@ describe('the Departure composed with the Arrival', () => {
     readonly advances: () => number;
     readonly arrival: ArrivalDirector;
     readonly departure: DepartureDirector;
-    readonly snapshot: () => unknown;
+    readonly snapshot: () => SaveSnapshot;
   }
 
   const harness = (from: Settings = settings): Harness => {
@@ -407,7 +409,7 @@ describe('the Departure composed with the Arrival', () => {
     }
 
     expect(live.advances()).toBe(0);
-    expect(live.snapshot()).toEqual(before);
+    expect(comparable(live.snapshot())).toEqual(comparable(before));
     expect(live.arrival.current().kind).toBe('titleCard');
   });
 

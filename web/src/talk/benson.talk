@@ -4,6 +4,11 @@ on show line
   ask display to show line and wait
 end show
 
+-- Benson's blank line, message 50: ten spaces scroll the display clear.
+on clear
+  ask display to show "          " and wait
+end clear
+
 -- A report's lines play back to back: no other Talk Script's line comes between.
 on report lines
   ask display to report lines and wait

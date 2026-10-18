@@ -18,6 +18,8 @@ import {
   loadSettings,
   type Settings
 } from '../settings/index.ts';
+import type { TalkScript } from '../talk/host.ts';
+import { TALK_SCRIPTS } from '../talk/scripts.ts';
 import { TextTable } from '../text/index.ts';
 import { World } from '../world/index.ts';
 
@@ -69,7 +71,8 @@ export const createWalkabout = (
   settings: Settings,
   restore?: SaveSnapshot,
   messageMode: BensonMessageMode = 'authentic',
-  headingConvention: HeadingConvention = 'reference'
+  headingConvention: HeadingConvention = 'reference',
+  talkScripts: readonly TalkScript[] = TALK_SCRIPTS
 ): Walkabout => {
   if (bundle.flight === undefined) {
     throw new Error('flight.json is required by the browser walkabout');
@@ -109,12 +112,24 @@ export const createWalkabout = (
           },
           scripts
         )
-      : GameplaySession.restore(content, scripts, restore);
-  // The opening script is started here even when the Arrival is about to present, so that a
-  // Save taken during the opening restores a game with a script to run. The Arrival holds the
-  // script by not advancing the session rather than by leaving it unstarted (ADR 0032).
-  if (restore === undefined && !session.start(0)) {
-    throw new Error('the opening Benson Script could not start');
+      : GameplaySession.restore(
+          content,
+          scripts,
+          restore,
+          talkScripts.length === 0 ? undefined : { scripts: talkScripts }
+        );
+  if (restore === undefined && talkScripts.length > 0) {
+    session.useTalkScripts(talkScripts);
+  }
+  // The opening is started here even when the Arrival is about to present, so that a Save
+  // taken during the opening restores a game with an opening to play. The Arrival holds it by
+  // not advancing the session rather than by leaving it unstarted (ADR 0032). It is a Talk
+  // Script (ADR 0080), unless the caller runs Benson Script 0 as the Golden Traces recorded it.
+  if (restore === undefined) {
+    session.begin();
+    if (!session.talk?.replaces.has(0) && !session.start(0)) {
+      throw new Error('the opening Benson Script could not start');
+    }
   }
   return { session, world };
 };
