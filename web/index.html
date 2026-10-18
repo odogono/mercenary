@@ -589,6 +589,10 @@
       </section>
       <p id="failure" role="alert" hidden></p>
     </main>
+    <!-- The one package the browser imports by name: its own ES modules, served from disk. -->
+    <script type="importmap">
+      { "imports": { "@northtalk/ts": "/node_modules/@northtalk/ts/index.js" } }
+    </script>
     <script type="module" src="/src/shell/boot.ts"></script>
   </body>
 </html>
