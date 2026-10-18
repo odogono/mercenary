@@ -737,6 +737,13 @@ test('an incompatible Save is not offered for loading', async ({ page }) => {
   await expect(slotButton(page, 2, 'delete')).toBeEnabled();
 });
 
+/// A snapshot without the Talk Scripts' NorthTalk save, which numbers each save it writes, so its
+/// bytes never repeat.
+const withoutTalkBytes = (snapshot: { talk: object | null }): unknown => ({
+  ...snapshot,
+  talk: snapshot.talk && { ...snapshot.talk, group: '' }
+});
+
 test('an abnormal page termination loses less than one checkpoint interval', async ({
   context,
   page
@@ -810,9 +817,11 @@ test('an abnormal page termination loses less than one checkpoint interval', asy
     if (encoded === null) {
       throw new Error('the restored session could not be captured');
     }
-    return JSON.parse(encoded) as { snapshot: unknown };
+    return JSON.parse(encoded) as { snapshot: { talk: object | null } };
   });
-  expect(restored.snapshot).toEqual(checkpoint.snapshot);
+  expect(withoutTalkBytes(restored.snapshot)).toEqual(
+    withoutTalkBytes(checkpoint.snapshot as { talk: object | null })
+  );
 });
 
 test('one page owns the Session Resume and a second page can take over', async ({

@@ -2021,7 +2021,10 @@ export class GameplaySession {
     if (this.scripts === undefined) {
       throw new Error('Talk Scripts need the Benson Display and host state');
     }
-    this.talk = new TalkHost(scripts, this.scripts, options, saved);
+    const benson = this.scripts;
+    this.talk = this.talking(
+      () => new TalkHost(scripts, benson, options, saved)
+    );
     this.scripts.refusing = this.talk.replaces;
     const running = this.scripts.running;
     if (running !== undefined && this.talk.replaces.has(running)) {
@@ -2030,9 +2033,26 @@ export class GameplaySession {
     return this.talk;
   }
 
+  /// A new game has begun: the Talk Scripts hear `begin`.
+  begin(): void {
+    this.talking(() => this.talk?.begin());
+  }
+
   /// A key no Binding took, by its code: Player Input for the Talk Scripts.
   input(code: string): void {
-    this.talk?.input(code);
+    this.talking(() => this.talk?.input(code));
+  }
+
+  /// Talk Scripts read and write the world through Benson's host state, so
+  /// they run across the Host Callout as a Benson Script does.
+  private talking<T>(act: () => T): T {
+    if (this.scripts === undefined) {
+      return act();
+    }
+    this.scripts.host = this.project(this.scripts.host);
+    const result = act();
+    this.reconcile(this.scripts.host);
+    return result;
   }
 
   skipMessage(): void {
@@ -2071,8 +2091,11 @@ export class GameplaySession {
     }
     // The frame's events go before the Talk Scripts' clock moves on, so a
     // Handler's queries see the world exactly as the frame left it.
-    this.talk.deliver(worldEvents);
-    this.talk.advance(seconds);
+    const talk = this.talk;
+    this.talking(() => {
+      talk.deliver(worldEvents);
+      talk.advance(seconds);
+    });
     return {
       events: [
         ...frame.events,

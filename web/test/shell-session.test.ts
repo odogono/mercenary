@@ -7,6 +7,7 @@ import {
   requiredSettings,
   saveEnvironment
 } from '../src/shell/session.ts';
+import { comparable } from './fixtures/save.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
 
 const bundle = await loadPayload();
@@ -15,12 +16,14 @@ const settingsText = await Bun.file(
 ).text();
 
 describe('the live browser Gameplay Session', () => {
-  test('starts the opening script on foot at the captured surface Pose', () => {
+  test('starts the opening on foot at the captured surface Pose', () => {
     const walkabout = createWalkabout(bundle, requiredSettings(settingsText));
 
     expect(walkabout.session.snapshot.location).toEqual({ kind: 'surface' });
     expect(walkabout.session.snapshot.occupancy).toEqual({ kind: 'onFoot' });
-    expect(walkabout.session.snapshot.isScriptRunning).toBeTrue();
+    // The opening is a Talk Script; Benson Script 0 no longer runs.
+    expect(walkabout.session.talk!.replaces.has(0)).toBeTrue();
+    expect(walkabout.session.snapshot.isScriptRunning).toBeFalse();
     expect(walkabout.session.snapshot.player.position).toEqual({
       x: 559_104,
       y: 128,
@@ -65,7 +68,9 @@ describe('the live browser Gameplay Session', () => {
     const restored = createWalkabout(bundle, settings, stopped).session;
 
     expect(restored.snapshot.isScriptRunning).toBeFalse();
-    expect(restored.captureSaveSnapshot()).toEqual(stopped);
+    expect(comparable(restored.captureSaveSnapshot())).toEqual(
+      comparable(stopped)
+    );
   });
 
   test('save compatibility excludes presentation but includes gameplay tuning', () => {
@@ -127,7 +132,9 @@ describe('the live browser Gameplay Session', () => {
 
     const restored = createWalkabout(bundle, settings, captured).session;
 
-    expect(restored.captureSaveSnapshot()).toEqual(captured);
+    expect(comparable(restored.captureSaveSnapshot())).toEqual(
+      comparable(captured)
+    );
     expect(restored.snapshot.mode).toBe('flying');
     expect(restored.snapshot.occupancy).toEqual({ kind: 'aboard', slot: 1 });
   });
@@ -143,7 +150,9 @@ describe('the live browser Gameplay Session', () => {
     const restored = createWalkabout(bundle, settings, captured).session;
     const room = original.content.rooms.get(114)!;
 
-    expect(restored.captureSaveSnapshot()).toEqual(captured);
+    expect(comparable(restored.captureSaveSnapshot())).toEqual(
+      comparable(captured)
+    );
     expect(restored.residenceOf(slot)).toEqual({ kind: 'carried' });
     expect(restored.doorwaysOf(room)).toEqual(original.doorwaysOf(room));
     expect(restored.scripts!.nextRandomByte()).toBe(

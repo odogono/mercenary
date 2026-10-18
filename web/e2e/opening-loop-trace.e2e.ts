@@ -7,10 +7,48 @@ const saveKey = (slot: number): string =>
 interface StoredSave {
   readonly snapshot: {
     readonly benson: null | {
-      readonly host: { endingPhase: number };
+      readonly host: { endingPhase: number; readonly engineFlags: number };
+      readonly script: number | null;
+      readonly state: object;
     };
+    readonly talk: object | null;
   };
 }
+
+const SCRIPT_RUNNING = 0x40;
+
+/// What the game restores from a Save the opening loop made with Benson Script 0, which is a
+/// Talk Script now (ADR 0080): that script stops, and the Talk Scripts load beside Benson.
+const asRestored = (snapshot: StoredSave['snapshot']): unknown => {
+  const benson = snapshot.benson;
+  return {
+    ...snapshot,
+    benson:
+      benson?.script === 0
+        ? {
+            ...benson,
+            host: {
+              ...benson.host,
+              engineFlags: benson.host.engineFlags & ~SCRIPT_RUNNING
+            },
+            script: null,
+            state: {
+              ...benson.state,
+              callStack: [],
+              pc: null,
+              resumeAfterTick: null
+            }
+          }
+        : benson,
+    talk: null
+  };
+};
+
+/// A Save the game made, without its Talk Scripts' part, whose bytes number each save.
+const withoutTalk = (save: StoredSave): unknown => {
+  expect(save.snapshot.talk).not.toBeNull();
+  return { ...save.snapshot, talk: null };
+};
 
 const installResumeFromSlot = async (
   page: Page,
@@ -137,35 +175,39 @@ test('Chromium replays the recorded opening loop bit-for-bit and renders its mil
     'ready'
   );
   await expect(page.locator('#status')).toContainText('FLYING');
-  expect((await saveCurrentSnapshot(page)).snapshot).toEqual(airborne.snapshot);
+  expect(withoutTalk(await saveCurrentSnapshot(page))).toEqual(
+    asRestored(airborne.snapshot)
+  );
   await page.reload();
   await expect(page.locator('#game-surface')).toHaveAttribute(
     'data-state',
     'ready'
   );
   await expect(page.locator('#status')).toContainText('FLYING');
-  expect((await saveCurrentSnapshot(page, true)).snapshot).toEqual(
-    airborne.snapshot
+  expect(withoutTalk(await saveCurrentSnapshot(page, true))).toEqual(
+    asRestored(airborne.snapshot)
   );
 
   const underground = await installResumeFromSlot(page, 3);
   await page.reload();
   await expect(page.locator('#status')).toContainText('ROOM 01');
-  expect((await saveCurrentSnapshot(page)).snapshot).toEqual(
-    underground.snapshot
+  expect(withoutTalk(await saveCurrentSnapshot(page))).toEqual(
+    asRestored(underground.snapshot)
   );
   await page.reload();
   await expect(page.locator('#status')).toContainText('ROOM 01');
-  expect((await saveCurrentSnapshot(page, true)).snapshot).toEqual(
-    underground.snapshot
+  expect(withoutTalk(await saveCurrentSnapshot(page, true))).toEqual(
+    asRestored(underground.snapshot)
   );
 
   const ending = await installResumeFromSlot(page, 2, true);
   await page.reload();
-  expect((await saveCurrentSnapshot(page)).snapshot).toEqual(ending.snapshot);
+  expect(withoutTalk(await saveCurrentSnapshot(page))).toEqual(
+    asRestored(ending.snapshot)
+  );
   await page.reload();
-  expect((await saveCurrentSnapshot(page, true)).snapshot).toEqual(
-    ending.snapshot
+  expect(withoutTalk(await saveCurrentSnapshot(page, true))).toEqual(
+    asRestored(ending.snapshot)
   );
 
   // An Ending is resumable, but NEW GAME remains available and replaces it immediately.

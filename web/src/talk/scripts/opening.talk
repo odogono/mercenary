@@ -1,0 +1,113 @@
+-- The opening: Benson's crash report and the Dominion Dart sales pitch.
+-- Ported from Benson Script 0 (payload/benson.json, instructions 3-76).
+
+use show, clear, report, prompt from benson
+
+constant price = 5000
+constant verdicts = ["WHERE AM I", "YOU CRASHED", "GOOD LANDING,", "OUCH,"]
+constant nags = ["I THINK YOU SHOULD BUY", "IS THIS SENSIBLE", "YOU PLAN TO WALK", "YOU MUST BE CRAZY"]
+
+-- Whether the player has pressed anything since the pitch last began. A key
+-- another Talk Script's prompt holds never reaches it.
+script variable heard = false
+
+on begin
+  -- Boarding or taking these starts their own Benson Scripts: the Dart's
+  -- owner, the ship's launch, and the colony craft's protest.
+  ask world to arm "dart"
+  ask world to arm "ship"
+  ask world to arm "colony craft"
+  wait 4 s
+  show "CRASH IMMINENT," and wait
+  clear and wait
+  wait 1 s
+  show "RETURNING TO - - -" and wait
+  show "MANUAL CONTROL" and wait
+  tell sound to silence "voice1"
+  wait 1 s
+  ask world to roll the length of verdicts
+  show item it of verdicts and wait
+  clear and wait
+  pitch and wait
+end begin
+
+on pressed key
+  put true into heard
+end pressed
+
+-- The status report and the sale, repeated until the player buys or speaks up.
+on pitch
+  repeat forever
+    put false into heard
+    report statusReport() and wait
+    repeat for each nag in nags
+      offerDart and wait
+      if it then
+        buyDart and wait
+        return
+      end if
+      show nag and wait
+    end repeat
+    if heard then
+      show "IT WILL BE A LONG WALK" and wait
+      clear and wait
+      return
+    end if
+    clear and wait
+    callOut and wait
+    report ["NOW YOU ARE HERE - - -", "I WILL START AGAIN"] and wait
+  end repeat
+end pitch
+
+-- The price is written with the letter O, as the original has it.
+function statusReport
+  return ["STATUS REPORT", "CRASH LANDED ON TARG", "PRESTINIUM DESTROYED",
+    "STATE OF WAR BETWEEN", "PALYARS AND MECHANOIDS", "LOCATION NEAR AIRBASE",
+    "AIRCRAFT ON PAD", "TYPE - DOMINION DART", "MESSAGE RECEIVED",
+    "CRAFT FOR SALE", "PRICE 5OOO CREDITS", creditsLine()]
+end statusReport
+
+function creditsLine
+  ask world to credits
+  return "YOU HAVE " & it & " CREDITS"
+end creditsLine
+
+-- True when the player answers Y within five seconds of being asked.
+on offerDart
+  prompt "DO YOU WANT TO BUY?" and wait
+  wait for
+    when pressed key where key = "Y" then
+      return true
+    after 5 s then
+      return false
+  end wait
+end offerDart
+
+-- The Dart's Benson Script tells a buyer whose the Dart was.
+on buyDart
+  ask world to setFlag "dartBought"
+  ask world to spend price
+  report ["TRANSACTION COMPLETED", creditsLine()] and wait
+  clear and wait
+end buyDart
+
+-- Silence from the player: Benson calls out until any key answers.
+on callOut
+  repeat for each line in ["IS ANYBODY THERE", "AM I TALKING TO MYSELF", "ARE YOU STILL ALIVE"]
+    prompt line and wait
+    wait for
+      when pressed key then
+        welcomeBack and wait
+        return
+      after 15 s then
+    end wait
+  end repeat
+  prompt "WHERE ARE YOU" and wait
+  wait for pressed key
+  welcomeBack and wait
+end callOut
+
+on welcomeBack
+  show "AH, YOU ARE BACK" and wait
+  wait 2 s
+end welcomeBack

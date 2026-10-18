@@ -18,6 +18,7 @@ import { ARRIVAL_NARRATION } from '../src/shell/arrivalNarration.ts';
 import { resolveScript00Milestones } from '../src/shell/arrivalScript.ts';
 import { createWalkabout, requiredSettings } from '../src/shell/session.ts';
 import { TextTable } from '../src/text/index.ts';
+import { comparable } from './fixtures/save.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
 
 const bundle = await loadPayload();
@@ -124,13 +125,14 @@ describe('the Arrival', () => {
     expect(run.seconds).toBeLessThan(85);
   });
 
-  test('holds the opening script unadvanced until the handover', () => {
-    // The script is started with the session, as it always was, and simply given no time. A
+  test('holds the opening unadvanced until the handover', () => {
+    // The opening is begun with the session, as it always was, and simply given no time. A
     // Save taken while the field is still up therefore restores a game that still has its
     // opening report to deliver.
     const live = harness();
 
-    expect(live.session.snapshot.isScriptRunning).toBeTrue();
+    expect(live.session.talk!.replaces.has(0)).toBeTrue();
+    expect(live.session.talk!.shown).toEqual([]);
     const idleDisplay = live.session.snapshot.bensonMessage;
     expect(idleDisplay?.displayText).toBe(' '.repeat(23));
     expect(idleDisplay?.completedText).toBeUndefined();
@@ -144,7 +146,7 @@ describe('the Arrival', () => {
     expect(live.session.snapshot.bensonMessage?.occurrence).toBe(
       idleDisplay?.occurrence
     );
-    expect(live.session.captureSaveSnapshot().benson?.state.pc).not.toBeNull();
+    expect(live.session.talk!.shown).toEqual([]);
   });
 
   test('runs the script tail at its own pace and hands the game back at the join', () => {
@@ -316,7 +318,9 @@ describe('the Arrival', () => {
     const settled = live.session.captureSaveSnapshot();
     live.director.skipToJoin();
 
-    expect(live.session.captureSaveSnapshot()).toEqual(settled);
+    expect(comparable(live.session.captureSaveSnapshot())).toEqual(
+      comparable(settled)
+    );
   });
 
   test('tracks the pacing settings rather than a fixed duration', () => {

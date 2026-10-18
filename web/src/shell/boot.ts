@@ -6,6 +6,7 @@ import { createTargOrrery, skyStateAt, targOrreryFor } from '../sky/index.ts';
 import { TargPresentationClock, formatTargTime } from '../sky/time.ts';
 import { SoundPresenter } from '../sound/presenter.ts';
 import { AudioWorkletTransport } from '../sound/transport.ts';
+import { OPENING } from '../talk/scripts.ts';
 import { locationText } from '../world/index.ts';
 import { SURFACE_AXIS_MODULUS } from '../world/surfaceCoordinates.ts';
 import { ArrivalDirector, type ArrivalEntry } from './arrival.ts';
@@ -304,7 +305,9 @@ try {
     return ArrivalDirector.entryFor(
       milestones,
       scripts.activeMessageText,
-      withinOpeningScript(scripts.program, scripts.state.pc)
+      session.talk?.replaces.has(0)
+        ? session.talk.speaker === OPENING
+        : withinOpeningScript(scripts.program, scripts.state.pc)
     );
   };
   const makeArrival = (fresh: boolean): ArrivalDirector =>
