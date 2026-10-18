@@ -263,6 +263,22 @@ export class BensonProgram {
   entry(script: number): number | undefined {
     return this.entries[script];
   }
+
+  /// The script whose code holds an address: the one with the latest entry at
+  /// or before it, the lowest id where entries are shared. Only a guess where
+  /// a script's code isn't laid out after its entry.
+  scriptAt(address: number): number | undefined {
+    let found: number | undefined;
+    for (const [script, entry] of this.entries.entries()) {
+      if (
+        entry <= address &&
+        (found === undefined || entry > this.entries[found]!)
+      ) {
+        found = script;
+      }
+    }
+    return found;
+  }
 }
 
 const decode = (

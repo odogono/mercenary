@@ -52,6 +52,8 @@ export class BensonSession {
   private readonly idleDisplayOccurrence = {};
   private messageOccurrence: object | undefined;
   private completeMessage: string | undefined;
+  /// The Benson Script last started, which is the one running while any is.
+  private started: number | undefined;
 
   constructor(
     program: BensonProgram,
@@ -98,7 +100,28 @@ export class BensonSession {
     }
     this.state = started.state;
     this.host = started.host;
+    this.started = script;
     return true;
+  }
+
+  /// The Benson Script running, by id.
+  get running(): number | undefined {
+    return this.isRunning ? this.started : undefined;
+  }
+
+  /// Ends the running Benson Script where it stands. A line it is showing
+  /// plays on.
+  stop(): void {
+    this.state = new BensonState({
+      callStack: [],
+      pc: undefined,
+      randomState: this.state.randomState,
+      registers: this.state.registers,
+      resumeAfterTick: undefined
+    });
+    this.host = this.host.with({
+      engineFlags: this.host.engineFlags & ~BensonHostState.scriptRunning & 0xff
+    });
   }
 
   press(key: BensonKey | undefined): void {
@@ -319,6 +342,7 @@ export class BensonSession {
         signedRegister: this.host.signedRegister,
         tickCounter: this.host.tickCounter
       },
+      script: this.running ?? null,
       state: {
         callStack: [...this.state.callStack],
         pc: this.state.pc ?? null,
@@ -405,6 +429,13 @@ export class BensonSession {
       registers: snapshot.state.registers,
       resumeAfterTick: snapshot.state.resumeAfterTick ?? undefined
     });
+    // A Save from before schema 14 didn't say which script runs: the one
+    // whose code holds the outermost call is the one that was started.
+    session.started =
+      snapshot.script ??
+      (snapshot.state.pc === null
+        ? undefined
+        : program.scriptAt(snapshot.state.callStack[0] ?? snapshot.state.pc));
     // The Site Ledger is the session's, and it republishes it after restoring,
     // so the host starts with nothing destroyed rather than a second copy.
     session.host = new BensonHostState({

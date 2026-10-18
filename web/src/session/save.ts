@@ -12,11 +12,13 @@ import type {
 import type { Location, Residence } from '../world/index.ts';
 import type { ShipFieldPoint, ShipFieldSaveSnapshot } from './shipField.ts';
 
-export const SAVE_SCHEMA_VERSION = 13 as const;
+export const SAVE_SCHEMA_VERSION = 14 as const;
 export const SAVE_JSON_CODE_UNIT_LIMIT = 1_000_000;
 
 const SAVE_COLLECTION_LIMIT = 1024;
 const SAVE_STRING_CODE_UNIT_LIMIT = 65_536;
+/// The NorthTalk save, held apart from the general string limit (ADR 0080).
+export const SAVE_TALK_CODE_UNIT_LIMIT = 262_144;
 
 export interface SavePayloadIdentity {
   readonly bensonSchemaVersion: number;
@@ -76,7 +78,24 @@ export interface BensonSaveSnapshot {
   readonly display: BensonDisplaySaveSnapshot;
   readonly frames: number;
   readonly host: BensonHostSaveSnapshot;
+  /// The Benson Script running, by id: null when none runs, or when a Save
+  /// from before schema 14 didn't say which.
+  readonly script: number | null;
   readonly state: BensonStateSaveSnapshot;
+}
+
+/// The Talk Scripts' part (ADR 0080).
+export interface TalkSaveSnapshot {
+  /// The prompts holding Player Input, oldest first.
+  readonly claims: readonly { readonly run: string; readonly script: string }[];
+  /// The NorthTalk Group's save, in base64.
+  readonly group: string;
+  /// The `codeIdentity` of the Library every Talk Script shares.
+  readonly library: string;
+  /// The host clock, in seconds.
+  readonly now: number;
+  /// Each Talk Script's `codeIdentity`, by name, in load order.
+  readonly scripts: readonly (readonly [string, string])[];
 }
 
 export interface GameSaveSnapshot extends Omit<
@@ -155,6 +174,8 @@ export interface SaveSnapshot {
   readonly randomState: string;
   readonly residence: readonly (readonly [number, Residence])[];
   readonly rewired: readonly (readonly [number, Alternate])[];
+  /// Absent when the session runs no Talk Scripts.
+  readonly talk: TalkSaveSnapshot | null;
 }
 
 export interface SaveEnvelope {
@@ -751,6 +772,7 @@ const benson = (value: unknown, at: string): BensonSaveSnapshot => {
     'display',
     'frames',
     'host',
+    'script',
     'state'
   ]);
   const activeMessageText =
@@ -769,7 +791,64 @@ const benson = (value: unknown, at: string): BensonSaveSnapshot => {
     display: displaySnapshot,
     frames: nonNegative(out['frames'], `${at}.frames`),
     host: bensonHost(out['host'], `${at}.host`),
+    script: nullableNonNegativeInteger(out['script'], `${at}.script`),
     state: bensonState(out['state'], `${at}.state`)
+  };
+};
+
+const BASE64 = /^[\d+/A-Za-z]*={0,2}$/;
+const IDENTITY = /^[\da-f]{64}$/;
+
+const identity = (value: unknown, at: string): string => {
+  const out = string(value, at);
+  if (!IDENTITY.test(out)) {
+    fail(`${at} must be a code identity`);
+  }
+  return out;
+};
+
+const talk = (value: unknown, at: string): TalkSaveSnapshot => {
+  const out = exact(value, at, [
+    'claims',
+    'group',
+    'library',
+    'now',
+    'scripts'
+  ]);
+  const group = out['group'];
+  if (typeof group !== 'string') {
+    return fail(`${at}.group must be a string`);
+  }
+  if (group.length > SAVE_TALK_CODE_UNIT_LIMIT) {
+    return fail(`${at}.group exceeds the Talk Script save limit`);
+  }
+  if (group.length % 4 !== 0 || !BASE64.test(group)) {
+    return fail(`${at}.group must be base64`);
+  }
+  const scripts = array(out['scripts'], `${at}.scripts`, (entry, path) => {
+    if (!Array.isArray(entry) || entry.length !== 2) {
+      return fail(`${path} must be a name and an identity`);
+    }
+    return [
+      string(entry[0], `${path}[0]`),
+      identity(entry[1], `${path}[1]`)
+    ] as const;
+  });
+  if (new Set(scripts.map(([name]) => name)).size !== scripts.length) {
+    fail(`${at}.scripts names must be unique`);
+  }
+  return {
+    claims: array(out['claims'], `${at}.claims`, (entry, path) => {
+      const claim = exact(entry, path, ['run', 'script']);
+      return {
+        run: string(claim['run'], `${path}.run`),
+        script: string(claim['script'], `${path}.script`)
+      };
+    }),
+    group,
+    library: identity(out['library'], `${at}.library`),
+    now: nonNegative(out['now'], `${at}.now`),
+    scripts
   };
 };
 
@@ -951,7 +1030,8 @@ const snapshot = (value: unknown, at: string): SaveSnapshot => {
     'objectFlags',
     'randomState',
     'residence',
-    'rewired'
+    'rewired',
+    'talk'
   ]);
   const carriedStack = byteArray(out['carriedStack'], `${at}.carriedStack`);
   if (new Set(carriedStack).size !== carriedStack.length) {
@@ -1053,7 +1133,8 @@ const snapshot = (value: unknown, at: string): SaveSnapshot => {
     objectFlags: mapEntries(out['objectFlags'], `${at}.objectFlags`),
     randomState: randomState(out['randomState'], `${at}.randomState`),
     residence: residenceEntries(out['residence'], `${at}.residence`),
-    rewired: rewiredEntries(out['rewired'], `${at}.rewired`)
+    rewired: rewiredEntries(out['rewired'], `${at}.rewired`),
+    talk: out['talk'] === null ? null : talk(out['talk'], `${at}.talk`)
   };
 };
 
@@ -1285,7 +1366,10 @@ const decodeEnvelope = (text: string): SaveEnvelope => {
     schemaVersion: SAVE_SCHEMA_VERSION,
     snapshot: migrateHeadingConvention(
       snapshot(
-        migrateDisplayRest(out['snapshot'], schemaVersion),
+        migrateTalkScripts(
+          migrateDisplayRest(out['snapshot'], schemaVersion),
+          schemaVersion
+        ),
         '$.snapshot'
       ),
       schemaVersion
@@ -1319,6 +1403,25 @@ const migrateDisplayRest = (value: unknown, schemaVersion: number): unknown => {
         restedIntact: false
       }
     }
+  };
+};
+
+/// Schema 14 adds the Talk Scripts' part and names the Benson Script running
+/// (ADR 0080). An earlier Save had no Talk Scripts, so they load fresh, and
+/// the Benson Script it was running is told by where it is.
+const migrateTalkScripts = (value: unknown, schemaVersion: number): unknown => {
+  if (schemaVersion >= 14) {
+    return value;
+  }
+  const raw = record(value, '$.snapshot');
+  const benson = raw['benson'];
+  return {
+    ...raw,
+    benson:
+      benson === null || benson === undefined
+        ? benson
+        : { ...record(benson, '$.snapshot.benson'), script: null },
+    talk: null
   };
 };
 

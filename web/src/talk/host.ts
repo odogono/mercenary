@@ -4,17 +4,25 @@
 /// Player Input to its Input Owner, and shows lines on the session's Benson
 /// Display a block at a time.
 ///
+/// A save is the Group's own, beside the host's clock and claims. Restored,
+/// it keeps each Talk Script whose code is unchanged as it stood, pending
+/// lines and all; one whose code changed is reloaded with its Script
+/// Variables carried over, and its Runs end.
+///
 /// Until no Benson Script is left to run, Benson's host state is where Talk
 /// Scripts read and write the world, as Benson Scripts do, and the Benson
 /// Display is the display both share.
 import {
+  LoadError,
   bool,
+  codeIdentity,
   createCore,
   nothing,
   num,
   shape,
   text,
   type Call,
+  type Grant,
   type Group,
   type Library,
   type Report,
@@ -23,8 +31,9 @@ import {
 
 import { BensonHostState, type BensonEffect } from '../benson/host.ts';
 import type { BensonSession } from '../benson/session.ts';
+import type { TalkSaveSnapshot } from '../session/save.ts';
 import type { WorldEvent } from '../session/worldEvents.ts';
-import library from './benson.talk' with { type: 'text' };
+import librarySource from './benson.talk' with { type: 'text' };
 import {
   locationName,
   objectName,
@@ -81,7 +90,24 @@ const flag = (name: Value): number => {
   return bit;
 };
 
+/// The Library's `codeIdentity`, which every Talk Script's counts in.
+const LIBRARY_IDENTITY = codeIdentity('library', 'benson', librarySource);
+
 const whole = (value: Value): number => Number(value.asDecimal()!.toBigInt());
+
+/// `btoa` takes a string of bytes, and a spread argument list has a limit.
+const BASE64_CHUNK = 0x80_00;
+
+const toBase64 = (bytes: Uint8Array): string => {
+  let binary = '';
+  for (let at = 0; at < bytes.length; at += BASE64_CHUNK) {
+    binary += String.fromCharCode(...bytes.subarray(at, at + BASE64_CHUNK));
+  }
+  return btoa(binary);
+};
+
+const fromBase64 = (encoded: string): Uint8Array =>
+  Uint8Array.from(atob(encoded), char => char.charCodeAt(0));
 
 /// The name a Talk Script gives a key: `KeyY` is `Y`, `Digit1` is `1`, and
 /// any other code stands as it is.
@@ -124,7 +150,11 @@ export class TalkHost {
   private readonly benson: BensonSession;
   /// Sound a Talk Script made since the session last took it.
   private effects: BensonEffect[] = [];
+  private readonly grants: Readonly<Record<string, Grant<void>>>;
   private readonly group: Group;
+  /// Each Talk Script's `codeIdentity`, the Library's counted in, by name.
+  private readonly identities: ReadonlyMap<string, string>;
+  private readonly library: Library;
   /// A key the Input Owner pressed while its prompt was still playing, held
   /// for the `wait for` after it, as Benson's key latch holds a key until a
   /// script tests it. Ready once the prompt has been answered.
@@ -138,23 +168,25 @@ export class TalkHost {
   /// The Benson Scripts the loaded Talk Scripts replace.
   readonly replaces: ReadonlySet<number>;
 
+  /// Loads the Talk Scripts, or restores them from a save.
   constructor(
     scripts: readonly TalkScript[],
     benson: BensonSession,
-    options: TalkHostOptions = {}
+    options: TalkHostOptions = {},
+    saved?: TalkSaveSnapshot
   ) {
     this.benson = benson;
     this.random = options.random ?? (() => benson.nextRandomByte());
     this.replaces = new Set(scripts.flatMap(script => script.replaces));
     const core = createCore();
     const capabilities = this.defineCapabilities(core);
-    const grants = {
+    this.grants = {
       display: capabilities.display.grant('all', undefined),
       sound: capabilities.sound.grant('all', undefined),
       world: capabilities.world.grant('all', undefined)
     };
-    const bensonLibrary: Library = core.compileLibrary(
-      { name: 'benson', source: library, version: '1' },
+    this.library = core.compileLibrary(
+      { name: 'benson', source: librarySource, version: '1' },
       [],
       {
         display: {
@@ -164,16 +196,105 @@ export class TalkHost {
         }
       }
     );
-    this.group = core.newGroup({ name: 'targ' });
-    this.group.addLibrary(bensonLibrary);
+    this.identities = new Map(
+      scripts.map(script => [
+        script.name,
+        codeIdentity('script', script.name, script.source, [LIBRARY_IDENTITY])
+      ])
+    );
+    this.group =
+      (saved && this.restore(core, scripts, saved)) ??
+      this.newGroup(core, scripts);
+  }
+
+  captureSaveSnapshot(): TalkSaveSnapshot {
+    return {
+      claims: this.claims.map(claim => ({ ...claim })),
+      group: toBase64(this.group.save()),
+      library: LIBRARY_IDENTITY,
+      now: this.now,
+      scripts: [...this.identities]
+    };
+  }
+
+  private newGroup(
+    core: ReturnType<typeof createCore>,
+    scripts: readonly TalkScript[]
+  ): Group {
+    const group = core.newGroup({ name: 'targ' });
+    group.addLibrary(this.library);
     for (const script of scripts) {
-      this.group.load({
-        grants,
-        limits: { maxWaitMs: LONGEST_WAIT_MS },
-        name: script.name,
-        source: script.source
-      });
+      this.load(group, script);
     }
+    return group;
+  }
+
+  private load(group: Group, script: TalkScript): void {
+    group.load({
+      grants: this.grants,
+      limits: { maxWaitMs: LONGEST_WAIT_MS },
+      name: script.name,
+      source: script.source
+    });
+  }
+
+  /// The saved Group, brought up to the current Talk Scripts, or undefined
+  /// if a saved Talk Script no longer loads beside the current Library.
+  ///
+  /// A changed Library or Capability ends every Run, the Core restoring only
+  /// Script Variables. A Talk Script no longer in the build is emptied, as no
+  /// Core can unload one, and a new one loads with no `begin`. Display calls
+  /// left pending are reissued, so their lines play again from the start.
+  private restore(
+    core: ReturnType<typeof createCore>,
+    scripts: readonly TalkScript[],
+    saved: TalkSaveSnapshot
+  ): Group | undefined {
+    let restored: ReturnType<typeof core.restore>;
+    try {
+      restored = core.restore(fromBase64(saved.group), {
+        grants: (_script, name) => this.grants[name],
+        libraries: [this.library],
+        name: 'targ',
+        onMismatch: 'variables only',
+        resolve: () => undefined
+      });
+    } catch (error) {
+      if (error instanceof LoadError) {
+        return undefined;
+      }
+      throw error;
+    }
+    const { group, result } = restored;
+    this.now = saved.now;
+    const ended = new Set(result.discardedRuns);
+    this.claims = saved.claims.filter(claim => !ended.has(claim.run));
+    this.record(result.reports);
+    const was = new Map(saved.scripts);
+    const current = new Map(scripts.map(script => [script.name, script]));
+    const reloaded = new Set<string>();
+    for (const name of group.scriptNames()) {
+      const script = current.get(name);
+      if (script === undefined) {
+        this.record(group.reload(name, '', 'reset variables'));
+        reloaded.add(name);
+      } else if (was.get(name) !== this.identities.get(name)) {
+        this.record(group.reload(name, script.source, 'carry variables'));
+        reloaded.add(name);
+      }
+    }
+    for (const call of result.pending) {
+      if (!reloaded.has(call.script)) {
+        group.settle(call.id, { reissue: true });
+      }
+    }
+    const loaded = new Set(group.scriptNames());
+    for (const script of scripts) {
+      if (!loaded.has(script.name)) {
+        this.load(group, script);
+      }
+    }
+    return group;
   }
 
   /// A new game has begun.
@@ -249,15 +370,16 @@ export class TalkHost {
   /// Keeps the reports and lets go of every claim whose Run has ended.
   private record(reports: readonly Report[]): void {
     for (const report of reports) {
-      if (report.kind === 'run end') {
+      if (report.kind === 'run end' || report.kind === 'run discarded') {
         this.claims = this.claims.filter(claim => claim.run !== report.run);
-        if (report.outcome === 'unhandled') {
+        if (report.kind === 'run end' && report.outcome === 'unhandled') {
           // A World Event whose Guard didn't match: the commonest Run there is.
           continue;
         }
       }
       if (
         report.kind === 'run end' ||
+        report.kind === 'run discarded' ||
         report.kind === 'call failed' ||
         report.kind === 'host error'
       ) {
