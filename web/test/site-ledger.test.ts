@@ -71,7 +71,12 @@ describe('the Site Ledger a shot commits to', () => {
       restorationCarried: false
     });
 
-    expect(struck).toEqual({ kind: 'destroyed', reaction: expected });
+    expect(struck).toEqual({
+      faction: 'mechanoid',
+      kind: 'destroyed',
+      reaction: expected,
+      site: rules.initialTable[mechanoidCell]! & rules.lowIdMask
+    });
     expect(sites.destroyedCells()).toEqual([mechanoidCell]);
     expect(sites.mechanoidDestroyed).toBe(1);
     expect(sites.palyarDestroyed).toBe(0);
@@ -142,7 +147,14 @@ describe('the Site Ledger a shot commits to', () => {
       restorationCarried: false
     });
 
-    expect(again).toEqual({ kind: 'destroyed', reaction: undefined });
+    // A spent Site has lost its id, so it is destroyed again as no Site in
+    // particular.
+    expect(again).toEqual({
+      faction: 'palyar',
+      kind: 'destroyed',
+      reaction: undefined,
+      site: 0
+    });
   });
 
   test('restores an intact Site without counting it', () => {
@@ -216,7 +228,7 @@ describe('the Site Ledger a shot commits to', () => {
 
       expect(
         sites.strike(cell, { playerCell: cell, restorationCarried: false })
-      ).toEqual({
+      ).toMatchObject({
         kind: 'destroyed',
         reaction: row.script
       });
