@@ -1,13 +1,14 @@
 -- The opening: Benson's crash report and the Dominion Dart sales pitch.
 -- Rewritten from Benson Script 0 (payload/benson.json, instructions 3-76).
 
-use show, report from benson
+use show, report, prompt from benson
 
 constant price = 5000
 constant verdicts = ["WHERE AM I", "YOU CRASHED", "GOOD LANDING,", "OUCH,"]
 constant nags = ["I THINK YOU SHOULD BUY", "IS THIS SENSIBLE", "YOU PLAN TO WALK", "YOU MUST BE CRAZY"]
 
--- Whether the player has pressed anything since the pitch last began.
+-- Whether the player has pressed anything since the pitch last began. A key
+-- another Talk Script's prompt holds never reaches it.
 script variable heard = false
 
 on begin
@@ -63,7 +64,7 @@ end creditsLine
 
 -- True when the player answers Y within five seconds of being asked.
 on offerDart
-  show "DO YOU WANT TO BUY?" and wait
+  prompt "DO YOU WANT TO BUY?" and wait
   wait for
     when pressed key where key = "Y" then
       return true
@@ -80,7 +81,7 @@ end buyDart
 -- Silence from the player: Benson calls out until any key answers.
 on callOut
   repeat for each line in ["IS ANYBODY THERE", "AM I TALKING TO MYSELF", "ARE YOU STILL ALIVE"]
-    show line and wait
+    prompt line and wait
     wait for
       when pressed key then
         welcomeBack and wait
@@ -88,7 +89,7 @@ on callOut
       after 15 s then
     end wait
   end repeat
-  show "WHERE ARE YOU" and wait
+  prompt "WHERE ARE YOU" and wait
   wait for pressed key
   welcomeBack and wait
 end callOut

@@ -2,16 +2,17 @@
 
 Spike report, 2026-10-17. Tests whether [NorthTalk](https://github.com/odogono/odgn-talk) (then `@odgn/northtalk`, language 1.0-rc.3, TS Core; now [`@northtalk/ts`](https://www.npmjs.com/package/@northtalk/ts) 0.1.0) can replace Benson Scripts with **Talk Scripts**: maintained, editable source that drives Targ through the Host Callout. It is the evidence for challenging [ADR 0045](../adr/0045-author-scripts-as-named-typescript-steps.md)'s named TypeScript steps. Nothing here changes the Gameplay Session, the Data Payload, Saves or Session Resume.
 
-The spike lives in [`web/spike/northtalk/`](../../web/spike/northtalk/README.md) and ran twice:
+The spike lives in [`web/spike/northtalk/`](../../web/spike/northtalk/README.md) and ran three times:
 
 - **The first spike** rewrote Benson Script 0 (the opening) and Benson Script 7 (the Escape) as Talk Scripts and ran them through a stand-in host over `BensonHostState`. The sections from [Authoring](#authoring) to [Cost](#cost) record it; its code was replaced by the second spike's and is in the history of commit `d3f82630`.
-- **The second spike** ran the opening, the Escape, the Mechanoid briefing (Benson Script 13) and the Faction Reactions (34 and 35) in a real Gameplay Session, driven by [World Events](#distribution-and-world-events) with every Benson Script refused. [World Events in a Gameplay Session](#world-events-in-a-gameplay-session) records it.
+- **The second spike** ran the opening, the Escape, the Mechanoid briefing (Benson Script 13) and the Faction Reactions (34 and 35) in a real Gameplay Session, driven by [World Events](#decisions-for-the-adr) with every Benson Script refused. [World Events in a Gameplay Session](#world-events-in-a-gameplay-session) records it.
+- **The third spike** tested the concurrency rules and the migration seam: reports that hold the display, prompts that own Player Input, and Talk Scripts running beside the Benson Scripts they don't replace. [Concurrency and the migration seam](#concurrency-and-the-migration-seam) records it.
 
 Both judge the Talk Scripts by player-visible outcome tests rather than Golden Traces.
 
 ## Recommendation
 
-**Continue, and draft an ADR superseding ADR 0045 for Targ once the open items below are settled.** The second spike ran Talk Scripts inside a real Gameplay Session on World Events, and they drove the engine's own Benson Display, Ending and hostile encounter. NorthTalk removes the reason ADR 0045 gave for named steps: a Talk Script's suspended state is a serializable continuation. Scripts read as linear dialogue, saves are taken mid-wait, and a save restored into a fresh Core finished exactly like an uninterrupted run. The costs are a ~144 KB (brotli) runtime and a pre-1.0 dependency. The save-growth defect the spike found is fixed in `@northtalk/ts` 0.1.0, and the same tests pass on the WASM Core.
+**Continue, and draft an ADR superseding ADR 0045 for Targ.** One decision from the third spike needs revisiting first ([a running Benson Script holds the display](#findings-1)); production save policy, the last open item, belongs in the ADR draft. The second spike ran Talk Scripts inside a real Gameplay Session on World Events, and they drove the engine's own Benson Display, Ending and hostile encounter. NorthTalk removes the reason ADR 0045 gave for named steps: a Talk Script's suspended state is a serializable continuation. Scripts read as linear dialogue, saves are taken mid-wait, and a save restored into a fresh Core finished exactly like an uninterrupted run. The costs are a ~144 KB (brotli) runtime and a pre-1.0 dependency. The save-growth defect the spike found is fixed in `@northtalk/ts` 0.1.0, and the same tests pass on the WASM Core.
 
 ## Decisions the spike worked under
 
@@ -98,9 +99,9 @@ The host owns the clock (session seconds become epoch microseconds for `pump`), 
 
 `@northtalk/ts/wasm` exposes the TS Core's embedding API ([odgn-talk#1121](https://github.com/odogono/odgn-talk/issues/1121)). With the host taking its Core as an option, all 12 outcome, concurrency and save tests pass unchanged on both Cores (`NORTHTALK_WASM=… bun test`). That ran under Bun, not yet in a browser. The WASM path costs about five times the TS Core's download, so the TS Core stays the default unless speed or memory under real script load says otherwise.
 
-## Distribution and World Events
+## Decisions for the ADR
 
-Decided after the spike, for the ADR that would supersede ADR 0045. Routing only matters if Talk Scripts are accepted, so these aren't an ADR of their own.
+Decided after the spikes, for the ADR that would supersede ADR 0045. They only matter if Talk Scripts are accepted, so they aren't an ADR of their own.
 
 **Distribution.** `@northtalk/ts` is an exact-pinned devDependency of `web/` (`"0.1.0"`, upgraded deliberately in its own commit; `bun.lock` records the tarball hash). Only tests and spikes import it: nothing under `web/src` does until the ADR is accepted, when it becomes a runtime dependency. The spike's tests run in `bun run check`.
 
@@ -115,7 +116,20 @@ Decided after the spike, for the ADR that would supersede ADR 0045. Routing only
 - **Talk Scripts live for the session.** Each is loaded at Gameplay Session start and saved with it; nothing starts or ends a Talk Script per trigger.
 - **Derived until the ADR.** The next spike derives World Events by comparing session state across each frame; emitting them from the Gameplay Session is part of the ADR.
 
-The second spike tested this in a real Gameplay Session; see the next section.
+**Player Input.** A key press is [Player Input](../../CONTEXT.md), not a World Event: it isn't a change in play, and it is routed differently.
+
+- **Messages, because `wait for` races only messages.** A key arrives as `pressed key`, so a prompt can wait for "Y, or the player leaves the ship" as one race. A `keys` Capability couldn't take part in that race.
+- **Only keys no Binding takes, by name.** Player Input is the shell's fall-through, the keys `holdAndPress` sees now, named `"Y"`, `"Q"`, `"7"`. Controls never reach a Talk Script.
+- **A prompt owns the input.** `prompt line` shows a line like `show` and makes its Run the [Input Owner](../../CONTEXT.md) from the moment the line shows until the Run ends, however it ends. Presses go to the Input Owner's script alone; with no owner, they go to every Talk Script. The most recent prompt wins, and when its Run ends, the input goes back to the prompt before it if that Run is still live.
+
+**The display.**
+
+- **A report is one block.** `report lines` plays its lines back to back, and no other Talk Script's line comes between them. Single `show` lines queue first in, first out between blocks. A reaction triggered during the briefing waits for it instead of being lost, which is a deliberate change from Benson's refusal of every start while a script runs.
+- **The engine's messages cut in.** A Room or object message the engine shows replaces the current line at once, as it does for Benson Scripts, and the report carries on with its next line. A report is uninterruptible only by other Talk Scripts.
+
+**The Gameplay Session seam.** Talk Scripts replace Benson Scripts one at a time, beside `BensonSession`. Benson refuses the Benson Scripts a Talk Script replaces and runs the rest, so the Golden Traces keep checking the unported ones and each port is its own PR. `BensonSession` goes when nothing is left for it to run. The World Event emitter goes into `GameplaySession` itself, not a subclass. While both run, no Talk Script line starts while a Benson Script is running; the third spike found this too strong (see its [findings](#findings-1)).
+
+The second and third spikes tested these in a real Gameplay Session; see the next sections.
 
 ## World Events in a Gameplay Session
 
@@ -129,7 +143,7 @@ The second spike runs every Talk Script in one Group for a whole headless Gamepl
 
 ### Key presses are messages too
 
-Beyond the agreed event set, the spike delivers key presses as a Broadcast, `pressed key`, and drops the `keys` Capability. NorthTalk's `wait for` block then states each prompt as the race it is:
+Beyond the agreed event set, the spike delivers key presses as a Broadcast, `pressed key`, and drops the `keys` Capability. NorthTalk's `wait for` block then states each prompt as the race it is (the third spike turns the `show` into a `prompt`):
 
 ```talk
 show "PRESS Y TO LAUNCH" and wait
@@ -141,7 +155,7 @@ wait for
 end wait
 ```
 
-The opening's five-second offer becomes `when pressed key where key = "Y" then return true` with `after 5 s then return false`, and "heard anything" becomes a Script Variable set by an `on pressed key` Handler. This needs confirming as a decision: input isn't a change in play, so it stretches the definition of a World Event.
+The opening's five-second offer becomes `when pressed key where key = "Y" then return true` with `after 5 s then return false`, and "heard anything" becomes a Script Variable set by an `on pressed key` Handler. This was later settled as [Player Input](#decisions-for-the-adr), routed to the Input Owner rather than broadcast.
 
 ### Outcomes
 
@@ -162,8 +176,8 @@ Two more: the opening and the briefing playing together, and a save while the Es
 - **World Events aren't buffered.** A Run that is inside `show … and wait` when the player leaves the ship never sees `left craft`. Code between Suspension Points runs without interruption, so checking the world just before `wait for` is race-free: `if not aboard() then return`. That is the authoring rule: check, then wait for the change.
 - **A Guard that fails still starts a Run.** Each World Event starts a Run in every Talk Script with a Handler for its Selector. A Run whose Guard doesn't match ends `unhandled`, at about 12 fuel. That is cheap, but it grows with the number of Talk Scripts listening to common events such as `entered room`.
 - **Queueing Policies fit room scripts.** `, dropping` on the briefing's Handler is the whole of "don't start again while it plays". Benson got the same effect by refusing every start while any script ran.
-- **First-in-first-out interleaves monologues.** Entering the briefing room during the opening alternates the two scripts a line at a time ("STATUS REPORT", "MECHANOID BRIEFING ROOM", "CRASH LANDED ON TARG", "WE WILL PAY", …), which nobody could read. A `report` needs to hold the display for all of its lines. This is open item 5's question, now answered: plain first-in-first-out isn't enough.
-- **Every listener hears every key.** The opening's offer and the Escape's prompt both wait for `pressed key "Y"`. If both were open at once, one press would buy the Dart and launch the ship. Input needs an owner, which also belongs to open item 5.
+- **First-in-first-out interleaves monologues.** Entering the briefing room during the opening alternates the two scripts a line at a time ("STATUS REPORT", "MECHANOID BRIEFING ROOM", "CRASH LANDED ON TARG", "WE WILL PAY", …), which nobody could read. A `report` needs to hold the display for all of its lines; the third spike does that.
+- **Every listener hears every key.** The opening's offer and the Escape's prompt both wait for `pressed key "Y"`. If both were open at once, one press would buy the Dart and launch the ship. Input needs an owner; the third spike gives it one.
 - **The real Benson Display moves the trace diff closer.** On the session's display the opening's lines land within about 9 s of the script-0 traces, some ahead and some behind, against 8–20 s behind on the first spike's stand-in. It now differs only where the Talk Script deliberately waits longer.
 - **Subclassing `GameplaySession` is fragile.** Two of the adapter's private names (`sites`, `look`) collided with the session's own, and one shadowed a field at run time. Emitting World Events from the Gameplay Session itself, as the ADR would, avoids that.
 - **Not covered.** `took object` and `dropped object` are derived but no Talk Script listens to them yet. Gratitude and `ship hit` aren't derived. A Site restored by the Anti Time Bomb and destroyed again raises the event again, whereas Benson had spent that Site's reaction, so a Talk Script that cares must remember.
@@ -173,14 +187,55 @@ Two more: the opening and the briefing playing together, and a save while the Es
 | Added to 600 s of play at 50 frames per second, four Talk Scripts | ~100 ms (about 3 µs a frame) | ~410 ms (about 14 µs a frame) |
 | Save of the four Talk Scripts after 600 s                         | 28 KB                        | 14 KB                         |
 
+## Concurrency and the migration seam
+
+The third spike puts the [decisions](#decisions-for-the-adr) on concurrency and the seam into the same harness.
+
+- **Display blocks.** `display` gains `report`, which takes the whole list, and `prompt`. The host plays a block's lines in turn on the Benson Display and answers after the last. `benson.talk`'s `report` and `prompt` wrap them.
+- **Input Ownership.** The host keeps the open prompts' claims, each a script and a Run, and drops a claim when its Run's `run end` report arrives. `TalkHost.input` sends a press to the latest claim's script with `group.script(name).deliver`, or broadcasts it when there are no claims. The claims are saved beside the Group.
+- **Key names.** `TalkSession.keyMake` records each key's code before any Binding sees it, and `press`, which the shell calls only for keys no Binding took, sends Player Input under that name. The tests drive Targ's `BrowserControlProfile`, so a bound key is turned away by the shell's own Bindings.
+- **Benson beside Talk Scripts.** `QuietBenson` refuses only the Benson Scripts the loaded Talk Scripts replace (`PORTED` in [`session.ts`](../../web/spike/northtalk/session.ts)) and runs every other one. A Talk Script line starts only while no Benson Script runs.
+
+### Outcomes
+
+`bun test ./spike/northtalk/talk.test.ts` from `web/`: 22 tests, all passing on the TS Core and on the WASM Core. What the new ones show:
+
+| Rule                        | Tested                                                                                                                                                      |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A report holds the display  | The briefing, entered during the status report, starts only after its last line, and both play unbroken.                                                    |
+| Engine messages cut in      | TOO HEAVY, shown mid-briefing, replaces WE WILL PAY at once and plays out; the briefing then carries on with its next line.                                 |
+| The latest prompt wins      | With the launch prompt and the offer both open, Y buys the Dart and doesn't launch; when the opening's Run ends, the next Y goes back to the launch prompt. |
+| Ownership ends with the Run | Leaving the ship ends the Escape's Run, and the next key is broadcast. The same holds after a restore into a fresh Core: Run ids survive it on both Cores.  |
+| A key latches               | Y pressed while the offer is still scrolling in still buys the Dart.                                                                                        |
+| Only unbound keys, named    | Through Targ's Bindings on foot, E and D are taken as controls; Q, 7 and Y reach the Talk Scripts as `"Q"`, `"7"`, `"Y"`.                                   |
+| Benson beside Talk Scripts  | Unported Benson Script 0 shows exactly the same lines with or without the briefing room entered; the briefing waits, and plays once script 0 ends.          |
+
+The save test also checks that the Escape keeps the input across a restore.
+
+### Findings
+
+- **A running Benson Script holds the display for too long.** Benson Scripts spin while they wait. After the sale, script 0 falls through into Benson Script 1's code and waits for the player to board the Dart, so under the agreed rule no Talk Script line can play until then: 30 s in the test, and as long as the player likes in play. Benson would have refused the briefing outright in that state, so the player hears no less than before, but the rule is stronger than intended. Two ways out: hold the display only while a Benson Script's own message plays (Talk lines then interleave with a Benson Script's line by line, during migration only), or port script 0 first, since it is the long-running one. This needs a decision before the ADR.
+- **Queued lines go stale.** The briefing, held back by script 0, played its first part after the player had long left the room; its own check cut the rest. A line can wait for the display much longer than its moment lasts. The authoring rule from the second spike extends to speaking: check the world before a report as well as before a `wait for`.
+- **Prompts need a key latch.** A Run inside `prompt … and wait` isn't yet waiting for a key, so a Y pressed while the prompt scrolls in would be lost. Answering the prompt as soon as it shows fixes that but starts the five-second window early: the opening ran 6 s ahead of the script-0 traces by its fifth offer. Instead the host holds the Input Owner's key while its prompt plays and delivers it once the Run has reached its `wait for`, as Benson's key latch holds a key until a script tests it. The trace diff stays within about 9 s. The latch isn't saved; a save in that moment loses the key.
+- **Input Ownership needs nothing from NorthTalk.** Call records carry `runId` and `scriptName`, `run end` reports carry the Run, and Run ids survive a restore, so the host keeps the claims itself.
+- **Host-side lists count from 1.** `Value.index(0)` answers a value whose `asText()` is `undefined`, not an error, so an off-by-one dropped a report's first line silently.
+- **The engine's cut is a lost line.** A Talk Script line the engine overwrites counts as played and isn't shown again, as with a Benson Script's. That suits Room messages but means an important line can be missed; nothing in the spike needs more.
+- **The shell has to pass the key.** Targ's `press` takes a `BensonKey`, which knows only Y. The spike recovers the code with `keyMake`, which Damocles uses but Targ's shell doesn't; once Talk Scripts are accepted, `press` should take the code.
+
+| Measure                                                            | TS Core            |
+| ------------------------------------------------------------------ | ------------------ |
+| Added to 600 s of play at 50 frames per second, four Talk Scripts  | under 1 µs a frame |
+| One key press, to the Input Owner / broadcast to four Talk Scripts | ~9 µs / ~13 µs     |
+| Save of the four Talk Scripts after 600 s                          | 29 KB              |
+
 ## Open items before an ADR
 
 1. ~~**Upstream**~~: settled. Save growth is fixed and the WASM Core runs the same tests (see [Saves](#saves) and [Cost](#cost)).
-2. ~~**Distribution**~~: settled (see [Distribution and World Events](#distribution-and-world-events)).
-3. ~~**Event model**~~: settled, and the second spike confirms it in a real Gameplay Session. Whether key presses are World Events still needs confirming ([Key presses are messages too](#key-presses-are-messages-too)).
-4. **Production save policy**: Talk Script revision identity, compatibility checks, and migration or rejection. ADR 0045 left these open for Targ, and reissue semantics now join them.
-5. **Concurrency rules**: which Talk Scripts may overlap. The second spike showed that a first-in-first-out queue interleaves monologues line by line, and that every Talk Script waiting for a key hears it. A report must hold the display, and input needs an owner.
-6. **Gameplay Session seam**: whether Talk Scripts replace `BensonSession` wholesale or run beside it per script during migration.
+2. ~~**Distribution**~~: settled (see [Decisions for the ADR](#decisions-for-the-adr)).
+3. ~~**Event model**~~: settled, and the second spike confirms it in a real Gameplay Session. Key presses are Player Input, not World Events.
+4. **Production save policy**: Talk Script revision identity, compatibility checks, and migration or rejection. ADR 0045 left these open for Targ; reissue semantics, the Input Owner claims and the key latch now join them. To be settled in the ADR draft.
+5. ~~**Concurrency rules**~~: settled, and the third spike confirms them: a report holds the display, a prompt owns the input.
+6. ~~**Gameplay Session seam**~~: settled: one script at a time beside `BensonSession`. How a still-running Benson Script shares the display needs revisiting ([findings](#findings-1)).
 
 ## Appendix: what the Benson originals do
 
