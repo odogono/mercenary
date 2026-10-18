@@ -53,7 +53,7 @@ export const PORTED: Readonly<Record<string, readonly number[]>> = {
 /// check a World Event stands in for it.
 export class QuietBenson extends BensonSession {
   readonly refused: number[] = [];
-  refusing: ReadonlySet<number> = new Set();
+  override refusing: ReadonlySet<number> = new Set();
 
   override start(script: number): boolean {
     if (this.refusing.has(script)) {
@@ -104,7 +104,7 @@ export interface TalkSessionOptions extends TalkHostOptions {
 }
 
 export class TalkSession extends GameplaySession {
-  talk: TalkHost;
+  northtalk: TalkHost;
   /// The code of the key last pressed, before any Binding took it.
   private made: string | undefined;
 
@@ -128,16 +128,16 @@ export class TalkSession extends GameplaySession {
     benson.refusing = new Set(
       Object.keys(scripts).flatMap(name => PORTED[name] ?? [])
     );
-    this.talk = new TalkHost(scripts, talkLibrary, benson, options);
-    this.talk.deliver([{ kind: 'begin' }]);
+    this.northtalk = new TalkHost(scripts, talkLibrary, benson, options);
+    this.northtalk.deliver([{ kind: 'begin' }]);
   }
 
   /// Replaces the Talk Scripts with a save restored into a new host, on its
   /// own Core, while the session itself carries on.
   restoreTalk(save: TalkHostSave, options: TalkHostOptions = {}): void {
-    const scripts = this.talk.scripts;
-    this.talk = new TalkHost(scripts, talkLibrary, this.benson, options);
-    this.talk.restore(save);
+    const scripts = this.northtalk.scripts;
+    this.northtalk = new TalkHost(scripts, talkLibrary, this.benson, options);
+    this.northtalk.restore(save);
   }
 
   get benson(): QuietBenson {
@@ -148,12 +148,12 @@ export class TalkSession extends GameplaySession {
     const result = super.advance(seconds);
     // The frame's events go before the clock moves on, so a Handler's
     // queries see the world exactly as the frame left it.
-    this.talk.deliver(
+    this.northtalk.deliver(
       result.worldEvents
         .map(named)
         .filter((event): event is WorldEvent => event !== undefined)
     );
-    this.talk.advance(seconds);
+    this.northtalk.advance(seconds);
     return result;
   }
 
@@ -170,7 +170,7 @@ export class TalkSession extends GameplaySession {
     const code = this.made ?? key;
     this.made = undefined;
     if (code !== undefined) {
-      this.talk.input(keyName(code));
+      this.northtalk.input(keyName(code));
     }
   }
 }

@@ -79,7 +79,14 @@ export class BensonSession {
     return rolled.byte;
   }
 
+  /// Benson Scripts a Talk Script replaces (ADR 0080): asked to start, Benson
+  /// refuses them as it refuses a start while a script runs.
+  refusing: ReadonlySet<number> = new Set();
+
   start(script: number): boolean {
+    if (this.refusing.has(script)) {
+      return false;
+    }
     const started = BensonMachine.start(
       script,
       this.program,

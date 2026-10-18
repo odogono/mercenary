@@ -48,8 +48,8 @@ const talkMessages = async (
     scripts: ['opening']
   });
   const advanceTo = (at: number) => {
-    while (session.talk.now < at - 1e-9) {
-      session.advance(Math.min(STEP, at - session.talk.now));
+    while (session.northtalk.now < at - 1e-9) {
+      session.advance(Math.min(STEP, at - session.northtalk.now));
     }
   };
   for (const press of presses) {
@@ -57,7 +57,7 @@ const talkMessages = async (
     session.press(parseBensonKey(`key${press.key.toUpperCase()}`));
   }
   advanceTo(seconds);
-  return session.talk.played;
+  return session.northtalk.played;
 };
 
 /// Longest-common-subsequence alignment of two message sequences.

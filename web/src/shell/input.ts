@@ -52,6 +52,9 @@ export interface ControlProfileActions {
   readonly occupancy: () => Occupancy;
   /// Page the message line, for a Title with a pager and no Carried Stack to rotate.
   readonly page?: (delta: number) => void;
+  /// A key no Binding took, by its physical code: Player Input for Talk
+  /// Scripts (ADR 0080). A Title with no Talk Scripts leaves it out.
+  readonly playerInput?: (code: string) => void;
   /// Answer a script. A Title whose scripts never ask leaves it out.
   readonly press?: (key: BensonKeyValue | undefined) => void;
   readonly reach: (action: InteractionAction) => void;
@@ -933,6 +936,7 @@ export class BrowserControlProfile {
       return false;
     }
     this.holdAndPress(key.code);
+    this.actions.playerInput?.(key.code);
     return true;
   }
 

@@ -59,6 +59,11 @@ import type {
 } from '../payload/documents.ts';
 import { indoorScene, type IndoorScene } from '../scene/index.ts';
 import {
+  TalkHost,
+  type TalkHostOptions,
+  type TalkScript
+} from '../talk/host.ts';
+import {
   craftHeading,
   displacement,
   hostRoom,
@@ -687,6 +692,8 @@ export class GameplaySession {
   private objectFlags = new Map<number, number>();
   private carriedStack: number[] = [];
   scripts: BensonSession | undefined;
+  /// The Talk Scripts, once `useTalkScripts` has loaded them (ADR 0080).
+  talk: TalkHost | undefined;
   private rewired = new Map<number, Alternate>();
   /// The Site Ledger, owned here and projected across the Host Callout for the
   /// scripts to read (ADR 0018). Absent when the content carries no Sites.
@@ -1987,6 +1994,26 @@ export class GameplaySession {
     this.scripts?.press(key);
   }
 
+  /// Loads Talk Scripts beside Benson, which from now on refuses the Benson
+  /// Scripts they replace. They hear this session's World Events and Player
+  /// Input, and share its Benson Display.
+  useTalkScripts(
+    scripts: readonly TalkScript[],
+    options: TalkHostOptions = {}
+  ): TalkHost {
+    if (this.scripts === undefined) {
+      throw new Error('Talk Scripts need the Benson Display and host state');
+    }
+    this.talk = new TalkHost(scripts, this.scripts, options);
+    this.scripts.refusing = this.talk.replaces;
+    return this.talk;
+  }
+
+  /// A key no Binding took, by its code: Player Input for the Talk Scripts.
+  input(code: string): void {
+    this.talk?.input(code);
+  }
+
   skipMessage(): void {
     this.scripts?.skipMessage();
   }
@@ -2010,7 +2037,7 @@ export class GameplaySession {
     readonly snapshot: SessionSnapshot;
     readonly worldEvents: readonly WorldEvent[];
   } {
-    const { events, snapshot } = this.advanceFrame(seconds);
+    const frame = this.advanceFrame(seconds);
     const seen = this.seeWorld();
     const worldEvents = [
       ...this.worldRaised,
@@ -2018,7 +2045,21 @@ export class GameplaySession {
     ];
     this.worldRaised = [];
     this.worldSeen = seen;
-    return { events, snapshot, worldEvents };
+    if (this.talk === undefined) {
+      return { ...frame, worldEvents };
+    }
+    // The frame's events go before the Talk Scripts' clock moves on, so a
+    // Handler's queries see the world exactly as the frame left it.
+    this.talk.deliver(worldEvents);
+    this.talk.advance(seconds);
+    return {
+      events: [
+        ...frame.events,
+        ...this.talk.takeEffects().map(effect => ({ script: effect }))
+      ],
+      snapshot: this.snapshot,
+      worldEvents
+    };
   }
 
   private seeWorld(): WorldSeen {

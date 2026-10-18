@@ -61,7 +61,7 @@ const advanceUntil = (
   for (let left = limit; !done(); left -= STEP) {
     if (left <= 0) {
       throw new Error(
-        `not reached in ${limit} s: ${session.talk.messages.join(' / ')}`
+        `not reached in ${limit} s: ${session.northtalk.messages.join(' / ')}`
       );
     }
     session.advance(STEP);
@@ -76,7 +76,7 @@ const advance = (session: TalkSession, seconds: number): void => {
 
 /// Advances until the message has begun to play.
 const untilShown = (session: TalkSession, message: string): void =>
-  advanceUntil(session, () => session.talk.messages.includes(message));
+  advanceUntil(session, () => session.northtalk.messages.includes(message));
 
 /// Advances until the message has played and the display has gone quiet, so
 /// the wait that follows it has begun. With nothing waiting after it, that is
@@ -85,7 +85,7 @@ const afterMessage = (session: TalkSession, message: string): void =>
   advanceUntil(
     session,
     () =>
-      session.talk.messages.includes(message) &&
+      session.northtalk.messages.includes(message) &&
       !session.benson.host.messagePlaying
   );
 
@@ -93,7 +93,7 @@ const afterMessage = (session: TalkSession, message: string): void =>
 /// `unhandled`, and a Queueing Policy can end one as `dropped`: both are the
 /// Talk Scripts choosing not to act, not failures.
 const errors = (session: TalkSession) =>
-  session.talk.reports.filter(
+  session.northtalk.reports.filter(
     report =>
       (report.kind === 'run end' &&
         !['completed', 'dropped', 'unhandled'].includes(report.outcome)) ||
@@ -105,7 +105,7 @@ const credits = (session: TalkSession): number =>
   session.benson.host.decimal(CREDITS);
 
 const events = (session: TalkSession) =>
-  session.talk.delivered.map(entry => entry.event);
+  session.northtalk.delivered.map(entry => entry.event);
 
 /// Advances until `done`, collecting each message the Benson Display shows,
 /// whoever showed it.
@@ -131,8 +131,8 @@ const displayed = (
 
 /// The messages the Benson Display shows over the next `seconds`.
 const displayedFor = (session: TalkSession, seconds: number): string[] => {
-  const until = session.talk.now + seconds;
-  return displayed(session, () => session.talk.now >= until, seconds + 1);
+  const until = session.northtalk.now + seconds;
+  return displayed(session, () => session.northtalk.now >= until, seconds + 1);
 };
 
 /// Whether the lines appear in order and next to each other.
@@ -278,7 +278,7 @@ describe('the opening', () => {
   test('plays the crash and the status report on the Benson Display', async () => {
     const session = await open({ scripts: ['opening'] });
     untilShown(session, 'YOU HAVE 9000 CREDITS');
-    expect(session.talk.messages.slice(0, 6)).toEqual([
+    expect(session.northtalk.messages.slice(0, 6)).toEqual([
       'CRASH IMMINENT,',
       'RETURNING TO - - -',
       'MANUAL CONTROL',
@@ -303,7 +303,7 @@ describe('the opening', () => {
     session.press('keyY');
     afterMessage(session, 'YOU HAVE 4000 CREDITS');
     expect(credits(session)).toBe(4000);
-    expect(session.talk.messages.slice(-2)).toEqual([
+    expect(session.northtalk.messages.slice(-2)).toEqual([
       'TRANSACTION COMPLETED',
       'YOU HAVE 4000 CREDITS'
     ]);
@@ -329,7 +329,7 @@ describe('the opening', () => {
   test('silence brings Benson calling out', async () => {
     const session = await open({ scripts: ['opening'] });
     afterMessage(session, 'IS ANYBODY THERE');
-    expect(session.talk.messages).not.toContain('IT WILL BE A LONG WALK');
+    expect(session.northtalk.messages).not.toContain('IT WILL BE A LONG WALK');
   });
 });
 
@@ -350,7 +350,7 @@ describe('the Escape', () => {
     afterMessage(session, 'SEE YOU IN MERCENARY II');
     // The Talk Script writes phase 1; the engine's Ending field then moves it on.
     expect(session.ending.kind).toBe('escape');
-    expect(session.talk.messages).toContain('ESCAPE FROM TARG');
+    expect(session.northtalk.messages).toContain('ESCAPE FROM TARG');
     expect(errors(session)).toEqual([]);
   });
 
@@ -358,7 +358,7 @@ describe('the Escape', () => {
     const session = await aboardInTheHangar(false);
     rideLift(session);
     afterMessage(session, 'NOVADRIVE REQUIRED');
-    expect(session.talk.messages).not.toContain('PRESS Y TO LAUNCH');
+    expect(session.northtalk.messages).not.toContain('PRESS Y TO LAUNCH');
     expect(session.benson.host.endingPhase).toBe(0);
   });
 
@@ -381,7 +381,7 @@ describe('the Mechanoid briefing', () => {
     session.teleport(room(BRIEFING));
     afterMessage(session, 'BRIEFING ENDS');
     expect(session.benson.refused).toContain(13);
-    expect(session.talk.messages).toEqual([
+    expect(session.northtalk.messages).toEqual([
       'MECHANOID BRIEFING ROOM',
       'WE WILL PAY',
       'FOR PALYAR REQUIREMENTS',
@@ -400,7 +400,7 @@ describe('the Mechanoid briefing', () => {
     untilShown(session, 'WE WILL PAY');
     session.teleport(SURFACE);
     advance(session, 60);
-    expect(session.talk.messages.at(-1)).toBe('CONTROL IN THIS COMPLEX');
+    expect(session.northtalk.messages.at(-1)).toBe('CONTROL IN THIS COMPLEX');
   });
 
   test('walking back in while it plays doesn’t start it again', async () => {
@@ -412,12 +412,14 @@ describe('the Mechanoid briefing', () => {
     session.teleport(room(BRIEFING));
     advance(session, 120);
     expect(
-      session.talk.messages.filter(line => line === 'MECHANOID BRIEFING ROOM')
+      session.northtalk.messages.filter(
+        line => line === 'MECHANOID BRIEFING ROOM'
+      )
     ).toHaveLength(1);
-    expect(session.talk.reports).toContainEqual(
+    expect(session.northtalk.reports).toContainEqual(
       expect.objectContaining({ kind: 'run end', outcome: 'dropped' })
     );
-    expect(session.talk.messages.at(-1)).toBe('BRIEFING ENDS');
+    expect(session.northtalk.messages.at(-1)).toBe('BRIEFING ENDS');
   });
 });
 
@@ -445,7 +447,7 @@ describe('Faction Reactions', () => {
       kind: 'destroyed',
       site: 'installation'
     });
-    expect(session.talk.messages).toEqual([]);
+    expect(session.northtalk.messages).toEqual([]);
     expect(session.benson.host.attackingShip).toBe(false);
   });
 });
@@ -456,7 +458,7 @@ describe('Talk Scripts together', () => {
     untilShown(session, 'STATUS REPORT');
     session.teleport(room(BRIEFING));
     afterMessage(session, 'BRIEFING ENDS');
-    const lines = session.talk.messages;
+    const lines = session.northtalk.messages;
     expect(together(lines, STATUS_REPORT)).toBe(true);
     expect(together(lines, BRIEFING_LINES)).toBe(true);
     expect(lines.indexOf('MECHANOID BRIEFING ROOM')).toBe(
@@ -473,18 +475,18 @@ describe('Talk Scripts together', () => {
     let alone: number | undefined;
     advanceUntil(session, () => {
       if (session.snapshot.bensonMessage?.displayText.trim() === 'TOO HEAVY') {
-        alone ??= session.talk.now;
+        alone ??= session.northtalk.now;
       }
-      return session.talk.messages.includes('BRIEFING ENDS');
+      return session.northtalk.messages.includes('BRIEFING ENDS');
     });
     // TOO HEAVY replaced WE WILL PAY at once and played out; the report went
     // on with its next line only then.
-    const next = session.talk.played.find(
+    const next = session.northtalk.played.find(
       line => line.text === 'FOR PALYAR REQUIREMENTS'
     )!;
     expect(alone).toBeDefined();
     expect(next.at).toBeGreaterThan(alone!);
-    expect(session.talk.messages).toContain('BRIEFING ENDS');
+    expect(session.northtalk.messages).toContain('BRIEFING ENDS');
   });
 
   test('a Y goes to the latest prompt alone, then to the one before', async () => {
@@ -495,7 +497,7 @@ describe('Talk Scripts together', () => {
     untilShown(session, 'DO YOU WANT TO BUY?');
     // Both prompts are open, and both wait for a Y: the offer is the later,
     // and the Y is latched until it has played.
-    expect(session.talk.claims.map(claim => claim.script)).toEqual([
+    expect(session.northtalk.claims.map(claim => claim.script)).toEqual([
       'escape',
       'opening'
     ]);
@@ -504,11 +506,13 @@ describe('Talk Scripts together', () => {
     expect(credits(session)).toBe(4000);
     expect(session.benson.host.endingPhase).toBe(0);
     // The opening's Run has ended, so the launch prompt has input back.
-    expect(session.talk.claims.map(claim => claim.script)).toEqual(['escape']);
+    expect(session.northtalk.claims.map(claim => claim.script)).toEqual([
+      'escape'
+    ]);
     session.press('keyY');
     afterMessage(session, 'SEE YOU IN MERCENARY II');
     expect(session.ending.kind).toBe('escape');
-    expect(session.talk.heard).toEqual([
+    expect(session.northtalk.heard).toEqual([
       { key: 'Y', to: 'opening' },
       { key: 'Y', to: 'escape' }
     ]);
@@ -519,12 +523,14 @@ describe('Talk Scripts together', () => {
     const session = await aboardInTheHangar();
     rideLift(session);
     afterMessage(session, 'PRESS Y TO LAUNCH');
-    expect(session.talk.claims.map(claim => claim.script)).toEqual(['escape']);
+    expect(session.northtalk.claims.map(claim => claim.script)).toEqual([
+      'escape'
+    ]);
     session.leaveCraft();
     advance(session, 1);
-    expect(session.talk.claims).toEqual([]);
+    expect(session.northtalk.claims).toEqual([]);
     session.press('keyY');
-    expect(session.talk.heard).toEqual([{ key: 'Y', to: 'all' }]);
+    expect(session.northtalk.heard).toEqual([{ key: 'Y', to: 'all' }]);
   });
 
   test('only keys no Binding takes reach the Talk Scripts, by name', async () => {
@@ -536,7 +542,11 @@ describe('Talk Scripts together', () => {
     type('KeyQ');
     type('Digit7');
     type('KeyY');
-    expect(session.talk.heard.map(press => press.key)).toEqual(['Q', '7', 'Y']);
+    expect(session.northtalk.heard.map(press => press.key)).toEqual([
+      'Q',
+      '7',
+      'Y'
+    ]);
   });
 });
 
@@ -547,7 +557,7 @@ describe('migration', () => {
     const beside = await scriptZero(true);
     // Script 0's own lines are untouched, and no Talk Script line comes between them.
     expect(beside.seen).toEqual(alone.seen);
-    expect(beside.session.talk.messages).toEqual([]);
+    expect(beside.session.northtalk.messages).toEqual([]);
     expect(beside.session.benson.refused).toContain(13);
     // After the sale script 0 spins, waiting for the Dart, and still holds
     // the display: the briefing waits until the player boards.
@@ -555,14 +565,14 @@ describe('migration', () => {
     session.press('keyY');
     advance(session, 30);
     expect(session.benson.host.isScriptRunning).toBe(true);
-    expect(session.talk.messages).toEqual([]);
+    expect(session.northtalk.messages).toEqual([]);
     session.teleport(SURFACE);
     session.board(1);
     advanceUntil(session, () => !session.benson.host.isScriptRunning, 5);
     // The briefing's first part plays though the player has long left the
     // Room, and its check then cuts the rest.
     afterMessage(session, 'CONTROL IN THIS COMPLEX');
-    expect(session.talk.messages).toEqual(BRIEFING_LINES);
+    expect(session.northtalk.messages).toEqual(BRIEFING_LINES);
     expect(errors(beside.session)).toEqual([]);
   });
 });
@@ -574,12 +584,12 @@ describe('saves', () => {
       rideLift(session);
       afterMessage(session, 'PRESS Y TO LAUNCH');
       advance(session, 0.5);
-      const before = session.talk.messages.length;
+      const before = session.northtalk.messages.length;
       if (restoreMidway) {
         const core = await newCore();
-        session.restoreTalk(session.talk.save(), core && { core });
+        session.restoreTalk(session.northtalk.save(), core && { core });
         // The prompt's Run keeps Player Input across the restore.
-        expect(session.talk.claims.map(claim => claim.script)).toEqual([
+        expect(session.northtalk.claims.map(claim => claim.script)).toEqual([
           'escape'
         ]);
       }
@@ -587,7 +597,7 @@ describe('saves', () => {
       afterMessage(session, 'SEE YOU IN MERCENARY II');
       expect(session.ending.kind).toBe('escape');
       expect(errors(session)).toEqual([]);
-      return session.talk.messages.slice(restoreMidway ? 0 : before);
+      return session.northtalk.messages.slice(restoreMidway ? 0 : before);
     };
     expect(await play(true)).toEqual(await play(false));
   });
@@ -597,9 +607,9 @@ describe('saves', () => {
     rideLift(session);
     afterMessage(session, 'PRESS Y TO LAUNCH');
     const core = await newCore();
-    session.restoreTalk(session.talk.save(), core && { core });
+    session.restoreTalk(session.northtalk.save(), core && { core });
     session.leaveCraft();
     advance(session, 1);
-    expect(session.talk.claims).toEqual([]);
+    expect(session.northtalk.claims).toEqual([]);
   });
 });
