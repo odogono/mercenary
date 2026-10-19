@@ -3,6 +3,7 @@ import commerce from './scripts/commerce.talk' with { type: 'text' };
 import deliveries from './scripts/deliveries.talk' with { type: 'text' };
 import escape from './scripts/escape.talk' with { type: 'text' };
 import opening from './scripts/opening.talk' with { type: 'text' };
+import reactions from './scripts/reactions.talk' with { type: 'text' };
 import rooms from './scripts/rooms.talk' with { type: 'text' };
 
 /// The Talk Script that plays the opening, by name.
@@ -16,6 +17,8 @@ export const ROOMS = 'rooms';
 export const COMMERCE = 'commerce';
 /// The Talk Script that pays for deliveries, by name.
 export const DELIVERIES = 'deliveries';
+/// The Talk Script for Faction Reactions and gratitude, by name.
+export const REACTIONS = 'reactions';
 
 /// Every Talk Script the game loads, and the Benson Scripts each replaces.
 export const TALK_SCRIPTS: readonly TalkScript[] = [
@@ -27,5 +30,13 @@ export const TALK_SCRIPTS: readonly TalkScript[] = [
     source: deliveries
   },
   { name: ROOMS, replaces: [8, 11, 13, 28, 29], source: rooms },
-  { name: COMMERCE, replaces: [1, 2, 12], source: commerce }
+  { name: COMMERCE, replaces: [1, 2, 12], source: commerce },
+  {
+    name: REACTIONS,
+    replaces: [
+      10, 26, 27, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48,
+      49, 50
+    ],
+    source: reactions
+  }
 ];

@@ -39,6 +39,7 @@ import {
   locationName,
   objectName,
   objectSlot,
+  roomId,
   roomName,
   siteName
 } from './names.ts';
@@ -72,6 +73,7 @@ interface Block {
 
 /// Engine flags a Talk Script may name, by their bit in `engineFlags`.
 const FLAGS = {
+  advertDestroyed: 8,
   commanderAnnoyed: 32,
   dartBought: 1,
   gratitudeGiven: 2,
@@ -138,11 +140,16 @@ const message = (
       return { args: [text(objectName(event.craft))], name: event.kind };
     case 'took':
     case 'dropped':
+    case 'struck':
       return { args: [text(objectName(event.object))], name: event.kind };
     case 'destroyed':
       return {
-        args: [text(siteName(event.site)), text(event.faction)],
-        name: 'destroyed:by:'
+        args: [
+          text(siteName(event.site)),
+          text(event.faction),
+          bool(event.reacting)
+        ],
+        name: 'destroyed:by:reacting:'
       };
     case 'gratitude':
       return { args: [text(event.faction)], name: 'gratitude' };
@@ -611,6 +618,23 @@ export class TalkHost {
         },
         mode: 'immediate',
         result: shape.optional(shape.text)
+      },
+      move: {
+        args: [shape.text, shape.text],
+        cost: { fuel: 1 },
+        description: 'Moves a loose object to the named Room.',
+        do: (_call, item, destination) => {
+          const slot = objectSlot(item.asText()!);
+          if (this.benson.host.inventory.has(slot)) {
+            throw new Error('cannot move a carried object');
+          }
+          this.benson.host = this.benson.host.withObjectRoom(
+            slot,
+            roomId(destination.asText()!)
+          );
+          return nothing;
+        },
+        mode: 'immediate'
       },
       pay: {
         args: [shape.number],

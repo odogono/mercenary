@@ -1,0 +1,102 @@
+-- Faction Reactions and gratitude, from Benson Scripts 34-50, 10, 26 and 27
+-- (payload/benson.json, instructions 138-217 and 461-493).
+-- A Benson tick is 1/6 s at scripts.timeScale 6: the short pause is 167 ms.
+
+use show, clear, report from benson
+
+constant sites = [
+  {site: "novabill", messages: ["NOVABILL - WELL DONE,"], attacker: "", flag: ""},
+  {site: "authors advert", messages: ["THE AUTHORS ADVERT", "THINGS ARE GOING TO BE", "TOUGH FROM NOW ON"], attacker: "palyar", flag: "advertDestroyed"},
+  {site: "sabins cube", messages: ["SABINS CUBE"], attacker: "mechanoid", flag: ""},
+  {site: "walton monument", messages: ["THE WALTON MONUMENT", "TO THE FAMOUS ARCHITECT"], attacker: "palyar", flag: ""},
+  {site: "st stallards", messages: ["ST. STALLARDS"], attacker: "palyar", flag: ""},
+  {site: "moorby arch", messages: ["THE MOORBY ARCH"], attacker: "mechanoid", flag: ""},
+  {site: "tyler point", messages: ["TYLER POINT"], attacker: "mechanoid", flag: ""},
+  {site: "bosher stadium", messages: ["BOSHER STADIUM"], attacker: "palyar", flag: ""},
+  {site: "jordan airport", messages: ["JORDAN AIRPORT"], attacker: "palyar", flag: ""},
+  {site: "vector henge", messages: ["VECTOR HENGE"], attacker: "mechanoid", flag: ""},
+  {site: "brother-in-law house", messages: ["THE PALYAR COMMANDER'S", "BROTHER-IN-LAWS HOUSE"], attacker: "palyar", flag: "commanderAnnoyed"},
+  {site: "mechanoid fort", messages: ["THE MECHANOID FORT"], attacker: "mechanoid", flag: ""},
+  {site: "coach and horses", messages: ["THE COACH AND HORSES", "YOU WILL NOT BE POPULAR"], attacker: "palyar", flag: ""}
+]
+
+-- Gratitude replaces the Site's reaction; a spent Site also has none. Both
+-- still announce their destruction to other Talk Scripts.
+on destroyed site by faction reacting allowed where allowed
+  if site = "installation" then
+    -- rand 80 includes zero: 81 of the 256 possible bytes send a ship.
+    ask world to roll 256
+    if it <= 81 then attack faction and wait
+    return
+  end if
+  if site = "traitor site" or site = "good show site" then
+    wait 167 ms
+    if site = "traitor site" then
+      show "TRAITOR," and wait
+    else
+      show "GOOD SHOW," and wait
+    end if
+    clear and wait
+    return
+  end if
+  repeat for each reaction in sites
+    if the site of reaction = site then
+      put the messages of reaction into lines
+      report ["YOU HAVE JUST DESTROYED", ...lines] and wait
+      if the flag of reaction is not "" then ask world to setFlag the flag of reaction
+      if the attacker of reaction is not "" then
+        attack the attacker of reaction and wait
+      else
+        clear and wait
+      end if
+      return
+    end if
+  end repeat
+end destroyed
+
+on struck item where item = "brother-in-law ship"
+  report ["YOU HAVE JUST DESTROYED", "THE PALYAR COMMANDER'S", "BROTHER-IN-LAWS", "NEW SHIP"] and wait
+  ask world to setFlag "commanderAnnoyed"
+  attack "palyar" and wait
+end struck
+
+on attack faction
+  if faction = "palyar" then
+    show "PALYAR SHIP ATTACKING" and wait
+  else
+    show "MECHANOID SHIP ATTACK" and wait
+  end if
+  ask world to sendAttacker
+  clear and wait
+end attack
+
+on gratitude faction
+  wait 167 ms
+  ask world to flag "gratitudeGiven"
+  if it then return
+  -- Claim before suspending, so two concurrent Runs cannot thank or pay twice.
+  ask world to setFlag "gratitudeGiven"
+  if faction = "palyar" then
+    put "MESSAGE FROM PALYARS" into heading
+  else
+    put "MESSAGE FROM MECHANOIDS" into heading
+  end if
+  report [heading, "WE ARE MOST PLEASED", "YOU HAVE DESTROYED ALL", "KEY OPPOSITION SITES"] and wait
+  if faction = "palyar" then
+    ask world to lies "pass"
+    if it = "pass store" then
+      report ["YOU WILL FIND A REWARD", "INSIDE THE RED HANGER"] and wait
+      -- The player may have taken it while the hint was playing.
+      ask world to lies "pass"
+      if it = "pass store" then ask world to move "pass", "red hangar"
+      show "MESSAGE ENDS" and wait
+      return
+    end if
+    ask world to pay 500000
+    ask world to credits
+    report ["500000 CREDITS PAID", "YOU HAVE " & it & " CREDITS"] and wait
+  else
+    show "MESSAGE ENDS" and wait
+  end if
+  clear and wait
+end gratitude

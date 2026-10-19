@@ -2392,6 +2392,8 @@ export class GameplaySession {
             cell,
             faction: struck.faction,
             kind: 'destroyed',
+            reacting:
+              struck.kind === 'destroyed' && struck.reaction !== undefined,
             site: struck.site
           });
         }
@@ -2422,6 +2424,7 @@ export class GameplaySession {
       }
       this.residence.set(slot, { kind: 'gone' });
       this.removeShot();
+      this.worldRaised.push({ kind: 'struck', object: slot });
       // The first target announces itself; the second starts a script.
       if (index === 0) {
         this.show(hits.firstTargetMessage);
