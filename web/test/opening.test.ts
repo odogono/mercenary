@@ -36,7 +36,7 @@ const FRAME = 1 / 20;
 const CREDITS = 8;
 const DART = 1;
 const SHIP = 7;
-const COLONY_CRAFT = 12;
+const CAPTURED_MECHANOID = 12;
 const STARTS_SCRIPT = 4;
 const DART_BOUGHT = 1;
 const COMMANDER_ANNOYED = 32;
@@ -122,11 +122,11 @@ describe('the opening', () => {
     expect(milestones.verdicts).toContain(verdict!);
   });
 
-  test('arms the Dart, the ship and the colony craft to start their own Benson Scripts', () => {
+  test('arms the Dart, the ship and the captured Mechanoid to start their own Benson Scripts', () => {
     const session = newGame();
     session.advance(FRAME);
     const flags = new Map(session.captureSaveSnapshot().objectFlags);
-    for (const slot of [DART, SHIP, COLONY_CRAFT]) {
+    for (const slot of [DART, SHIP, CAPTURED_MECHANOID]) {
       expect(flags.get(slot)! & STARTS_SCRIPT).toBe(STARTS_SCRIPT);
     }
   });
