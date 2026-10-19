@@ -31,6 +31,7 @@ import {
 
 import { BensonHostState, type BensonEffect } from '../benson/host.ts';
 import type { BensonSession } from '../benson/session.ts';
+import { OUT_OF_THE_WORLD } from '../interaction/index.ts';
 import type { TalkSaveSnapshot } from '../session/save.ts';
 import type { WorldEvent } from '../session/worldEvents.ts';
 import librarySource from './benson.talk' with { type: 'text' };
@@ -81,6 +82,9 @@ const CREDITS = BensonHostState.firstNumberDecimal;
 /// An object's description bit that makes boarding or taking it start the
 /// Benson Script of its slot.
 const STARTS_SCRIPT = 4;
+/// An object's flag bits a delivery sets: paid for, and fixed where it lies.
+const DELIVERED = 1;
+const FIXED = 16;
 const ADVERT_BLOCK = 50;
 const MICROS = 1_000_000;
 /// No Talk Script wait is bounded by a deadline of its own.
@@ -508,6 +512,35 @@ export class TalkHost {
         mode: 'immediate',
         result: shape.number
       },
+      deliver: {
+        args: [shape.text],
+        cost: { fuel: 1 },
+        description:
+          'Marks the object delivered: paid for, and fixed where it lies.',
+        do: (_call, item) => {
+          const slot = objectSlot(item.asText()!);
+          this.benson.host = this.benson.host.withObjectFlag(
+            slot,
+            (this.benson.host.objectFlags.get(slot) ?? 0) | DELIVERED | FIXED
+          );
+          return nothing;
+        },
+        mode: 'immediate'
+      },
+      delivered: {
+        args: [shape.text],
+        cost: { fuel: 1 },
+        description: 'Whether the object has been paid for.',
+        do: (_call, item) =>
+          bool(
+            ((this.benson.host.objectFlags.get(objectSlot(item.asText()!)) ??
+              0) &
+              DELIVERED) !==
+              0
+          ),
+        mode: 'immediate',
+        result: shape.bool
+      },
       escape: {
         cost: { fuel: 1 },
         description: 'Accepts the Escape: the Ending phase becomes 1.',
@@ -528,6 +561,35 @@ export class TalkHost {
         do: () => text(roomName(this.benson.host.currentRoom)),
         mode: 'immediate',
         result: shape.text
+      },
+      lies: {
+        args: [shape.text],
+        cost: { fuel: 1 },
+        description:
+          'The name of the Room the object lies in, or nothing while carried or gone.',
+        do: (_call, item) => {
+          const room = this.benson.host.objectRooms.get(
+            objectSlot(item.asText()!)
+          );
+          return room === undefined || room === OUT_OF_THE_WORLD
+            ? nothing
+            : text(roomName(room));
+        },
+        mode: 'immediate',
+        result: shape.optional(shape.text)
+      },
+      pay: {
+        args: [shape.number],
+        cost: { fuel: 1 },
+        description: 'Adds to the credits.',
+        do: (_call, amount) => {
+          this.benson.host = this.benson.host.addDecimal(
+            CREDITS,
+            whole(amount)
+          );
+          return nothing;
+        },
+        mode: 'immediate'
       },
       roll: {
         args: [shape.number],

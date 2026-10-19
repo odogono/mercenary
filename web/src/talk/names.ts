@@ -12,7 +12,24 @@ const ROOMS: Readonly<Record<number, string>> = {
   102: 'mechanoid briefing',
   16: 'ship rental',
   41: 'palyar briefing',
-  5: 'hangar'
+  5: 'hangar',
+  // Where the factions take deliveries.
+  136: 'engine room',
+  144: 'laboratory',
+  146: 'armoury',
+  147: 'stores',
+  154: 'interview room',
+  155: 'conference room',
+  162: 'exchequer',
+  163: 'kitchen',
+  165: 'infirmary',
+  170: 'control room',
+  173: 'power room',
+  18: 'mechanoid laboratory',
+  34: 'mechanoid armoury',
+  48: 'mechanoid stores',
+  50: 'mechanoid power room',
+  70: 'mechanoid fuel stores'
 };
 
 const OBJECTS: Readonly<Record<number, string>> = {
@@ -21,7 +38,18 @@ const OBJECTS: Readonly<Record<number, string>> = {
   25: 'novadrive',
   30: 'antenna',
   46: 'pass',
-  7: 'ship'
+  7: 'ship',
+  // What the factions pay for.
+  29: 'neutron fuel',
+  31: 'energy crystal',
+  34: 'large box',
+  35: 'useful armament',
+  38: 'gold',
+  41: 'medical supplies',
+  42: 'essential supply',
+  43: 'winchester',
+  44: 'catering provisions',
+  45: 'databank'
 };
 
 /// A Site's low id as the Site Ledger keeps it. The generic installations of

@@ -1,9 +1,16 @@
 import { describe, expect, test } from 'bun:test';
 
 import { GameplaySession } from '../src/session/index.ts';
-import { ESCAPE, TALK_SCRIPTS } from '../src/talk/scripts.ts';
+import { ESCAPE } from '../src/talk/scripts.ts';
 import { room } from '../src/world/index.ts';
 import { LegalRoute } from './legalCheckpoint.ts';
+import {
+  ENGINES,
+  Lines,
+  openRoute,
+  talkScript,
+  type Engine
+} from './talkParity.ts';
 
 /// The Escape as a Talk Script (ADR 0080), against Benson Script 7 as the
 /// oracle: each route is played twice, once by each, and both must show the
@@ -17,54 +24,8 @@ const ADVERT_CELL = 0x32;
 const CELL = 0x1_00_00;
 const COMMANDER_ANNOYED = 0x20;
 
-type Engine = 'benson' | 'talk';
-const ENGINES: readonly Engine[] = ['benson', 'talk'];
-
-const escapeScript = TALK_SCRIPTS.filter(script => script.name === ESCAPE);
-
-const open = async (engine: Engine): Promise<LegalRoute> => {
-  const route = await LegalRoute.open();
-  if (engine === 'talk') {
-    route.session.useTalkScripts(escapeScript);
-  }
-  return route;
-};
-
-/// Each Benson Message as it completes, blank lines included.
-class Lines {
-  readonly lines: string[] = [];
-  private recorded: object | undefined;
-
-  constructor(readonly route: LegalRoute) {}
-
-  advance(seconds: number): this {
-    for (let quarter = 0; quarter < seconds * 4; quarter++) {
-      this.route.advance(0.25);
-      const message = this.route.session.snapshot.bensonMessage;
-      if (
-        message?.completedText !== undefined &&
-        message.occurrence !== this.recorded
-      ) {
-        this.lines.push(message.completedText.trim());
-        this.recorded = message.occurrence;
-      }
-    }
-    return this;
-  }
-
-  /// Advances until the line has completed.
-  until(line: string, limit = 120): this {
-    for (let left = limit; !this.lines.includes(line); left -= 0.25) {
-      if (left <= 0) {
-        throw new Error(
-          `no '${line}' in ${limit} s: ${this.lines.join(' / ')}`
-        );
-      }
-      this.advance(0.25);
-    }
-    return this;
-  }
-}
+const escapeScript = talkScript(ESCAPE);
+const open = (engine: Engine): Promise<LegalRoute> => openRoute(engine, ESCAPE);
 
 const phase = (session: GameplaySession): number =>
   session.observations().observations['endingPhase'] as number;
