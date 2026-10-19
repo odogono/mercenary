@@ -12,10 +12,7 @@ import { SURFACE_AXIS_MODULUS } from '../world/surfaceCoordinates.ts';
 import { ArrivalDirector, type ArrivalEntry } from './arrival.ts';
 import { arrivalFramePlan } from './arrivalField.ts';
 import { arrivalPanelViewModel, arrivalStripText } from './arrivalPanel.ts';
-import {
-  resolveScript00Milestones,
-  withinOpeningScript
-} from './arrivalScript.ts';
+import { OPENING_MILESTONES } from './arrivalScript.ts';
 import { PANEL_SETTINGS, installShellChrome } from './chrome.ts';
 import { FixedStepClock } from './clock.ts';
 import { executeConsoleCommand, parseConsoleLine } from './console.ts';
@@ -280,12 +277,8 @@ try {
     }
     return scripts;
   };
-  // Resolved once from the payload the session is running, so a re-export that renumbers a word
-  // still produces the text the interpreter will produce.
-  const milestones = resolveScript00Milestones(
-    scriptsOf().program,
-    scriptsOf().text
-  );
+  // The authored opening shares this presentation contract with the Arrival.
+  const milestones = OPENING_MILESTONES;
   const arrivalPacing = {
     charactersPerSecond:
       settings.arrival.charactersPerSecond * settings.arrival.timeScale,
@@ -305,9 +298,7 @@ try {
     return ArrivalDirector.entryFor(
       milestones,
       scripts.activeMessageText,
-      session.talk?.replaces.has(0)
-        ? session.talk.speaker === OPENING
-        : withinOpeningScript(scripts.program, scripts.state.pc)
+      session.talk?.speaker === OPENING
     );
   };
   const makeArrival = (fresh: boolean): ArrivalDirector =>
@@ -324,8 +315,8 @@ try {
         setPacing: choice => {
           scriptsOf().tunables =
             choice === 'arrival'
-              ? arrivalTunables(settings, scriptsOf().program.framesPerTick)
-              : bensonTunables(settings, scriptsOf().program.framesPerTick);
+              ? arrivalTunables(settings, 50)
+              : bensonTunables(settings, 50);
         }
       },
       entry: arrivalEntryFor(fresh),

@@ -15,27 +15,29 @@ interface StoredSave {
   };
 }
 
-const SCRIPT_RUNNING = 0x40;
+const INTERPRETER_FLAGS = 0xc0;
 
 /// What the game restores from a Save the opening loop made with Benson Script 0, which is a
-/// Talk Script now (ADR 0080): that script stops, and the Talk Scripts load beside Benson.
+/// Talk Script now (ADR 0080): the interpreter continuation is retired, and
+/// Talk Scripts load without replaying begin. World state and randomness survive.
 const asRestored = (snapshot: StoredSave['snapshot']): unknown => {
   const benson = snapshot.benson;
   return {
     ...snapshot,
     benson:
-      benson?.script === 0
+      benson !== null
         ? {
             ...benson,
             host: {
               ...benson.host,
-              engineFlags: benson.host.engineFlags & ~SCRIPT_RUNNING
+              engineFlags: benson.host.engineFlags & ~INTERPRETER_FLAGS
             },
             script: null,
             state: {
               ...benson.state,
               callStack: [],
               pc: null,
+              registers: Array.from({ length: 16 }, () => 0),
               resumeAfterTick: null
             }
           }

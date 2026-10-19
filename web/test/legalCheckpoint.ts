@@ -1,16 +1,11 @@
 import { join } from 'node:path';
 
 import {
-  BensonProgram,
-  BensonSession,
-  DEFAULT_SESSION_SEED
-} from '../src/benson/index.ts';
-import {
   REFERENCE_WALKING_EYE_ALTITUDE,
   intent
 } from '../src/gameCore/index.ts';
 import { Containment, DoorwayPredicate } from '../src/navigation/index.ts';
-import type { Bundle, Doorway } from '../src/payload/documents.ts';
+import type { Doorway } from '../src/payload/documents.ts';
 import {
   GameplaySession,
   openingPlayer,
@@ -30,6 +25,11 @@ import {
   type SessionScenarioLeg
 } from '../src/trace/session.ts';
 import { World } from '../src/world/index.ts';
+import {
+  BensonProgram,
+  BensonSession,
+  DEFAULT_SESSION_SEED
+} from './oracle/index.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
 
 /// Drives a Gameplay Session the way a player would and reports what it observed.
@@ -58,7 +58,7 @@ export class LegalRoute {
     readonly script?: number;
     readonly timeScale?: number;
   }): Promise<LegalRoute> {
-    const bundle: Bundle = await loadPayload();
+    const bundle = await loadPayload();
     const settings = loadSettings(
       await Bun.file(join(repositoryRoot, 'settings.json')).text()
     );

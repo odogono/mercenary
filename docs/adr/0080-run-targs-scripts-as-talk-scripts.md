@@ -14,6 +14,10 @@ Accepted, 2026-10-18. Targ's game logic moves from Benson Scripts to **Talk Scri
 
 **Migration.** Talk Scripts replace Benson Scripts one at a time, beside `BensonSession`. Benson refuses the Benson Scripts that a Talk Script replaces and runs the rest, so the Golden Traces keep checking the unported ones under [ADR 0015](0015-re-encode-benson-scripts-at-export.md). No Talk Script line starts while a Benson Script runs. Benson Scripts spin while they wait, so ports go in order of how long each script holds the display: Benson Script 0, the opening, first. `BensonSession` and ADR 0015's program representation for Targ go when no Benson Script is left to run.
 
+The migration completed on 2026-10-19. The live `BensonChannel` owns the Benson Display, Host Callout and shared random stream, with no program loader or instruction execution. The interpreter and its program document live under `web/test/oracle/`, used by the Golden Traces and parity tests through an optional comparison adapter. They are not served during ordinary play. Scripts 21 and 30–33 were unreachable and were not ported. The payload exporter no longer emits `benson.json`.
+
+The schema-14 Save wire layout stays compatible: its old continuation fields are empty in new live Saves, and an older Save's Benson continuation is discarded while its world state, display and random stream survive. The reserved `bensonSchemaVersion` identity remains 1 so existing Saves are not refused merely because the document was retired. Talk continuations and code identities keep the policy below.
+
 **Saves.** [ADR 0026](0026-store-explicit-save-snapshots-as-bounded-json.md) and [ADR 0030](0030-keep-one-browser-session-resumable.md) stay in force; the Save Snapshot gains a part for Talk Scripts.
 
 - `SaveSnapshot.talk` holds the NorthTalk save as base64, each Talk Script's and the Library's `codeIdentity`, the Input Owner claims and the host clock, at schema 14. The base64 string has its own bound of 256K characters, exempt from the general string limit, and a test holds a save with every Talk Script loaded under it.

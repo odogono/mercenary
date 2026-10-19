@@ -239,7 +239,7 @@ The save test also checks that the Escape keeps the input across a restore.
 
 ## Appendix: what the Benson originals do
 
-Decoded from `payload/benson.json` with [`machine.ts`](../../web/src/benson/machine.ts) semantics:
+Decoded from `payload/benson.json` with [`machine.ts`](../../web/test/oracle/machine.ts) semantics:
 
 - **Test ops jump when the negative answer matches `branchOn`.** `tstc N` answers "craft N not boarded"; `tstf` answers "flag clear".
 - **Only `msg`, `msgi` and `msgr` suspend** until the Benson Display releases. `wfr` waits for a tick. Spin loops built from `tstc`/`jmp` spend the 512-instruction budget every frame.

@@ -1,30 +1,16 @@
+import type { BensonSymbol } from '../../src/benson/host.ts';
+import { BensonKey, parseBensonKey } from '../../src/benson/key.ts';
+import type { Token } from '../../src/payload/documents.ts';
 import type {
   BensonDocument,
-  BensonInstruction as RawInstruction,
-  Token
-} from '../payload/documents.ts';
+  BensonInstruction as RawInstruction
+} from './documents.ts';
 
-/// A key a Benson Script can test for. The Reference Build's prompts only ever offer a yes
-/// key and time out otherwise.
-export const BensonKey = {
-  y: 'keyY'
-} as const;
-
-export type BensonKey = (typeof BensonKey)[keyof typeof BensonKey];
-
-export const bensonKeyCode = (key: BensonKey): number => {
-  switch (key) {
-    case BensonKey.y:
-      return 0x19;
-  }
-};
-
-export const parseBensonKey = (name: string): BensonKey | undefined => {
-  if (name === BensonKey.y) {
-    return BensonKey.y;
-  }
-  return undefined;
-};
+export {
+  BensonKey,
+  bensonKeyCode,
+  parseBensonKey
+} from '../../src/benson/key.ts';
 
 export type Branch = { readonly jump: number } | { readonly call: number };
 
@@ -38,21 +24,7 @@ export type MessageSource =
 
 export type MaskMode = 'and' | 'or';
 
-export type BensonSymbol =
-  | {
-      readonly decimalByte: { readonly byte: number; readonly decimal: number };
-    }
-  | { readonly objectRoom: number }
-  | { readonly objectFlags: number }
-  | 'engineFlags'
-  | 'currentRoom'
-  | 'boardedCraft'
-  | 'inputKey'
-  | 'signedRegister'
-  | 'messageInterval'
-  | 'attackingShip'
-  | 'gameComplete'
-  | 'shipInbound';
+export type { BensonSymbol } from '../../src/benson/host.ts';
 
 export type Instruction =
   | { readonly op: 'msg'; readonly tokens: readonly Token[] }

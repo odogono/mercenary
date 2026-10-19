@@ -4,7 +4,13 @@ import { dirname, join, resolve } from 'node:path';
 import type { Bundle } from '../../src/payload/documents.ts';
 import { load } from '../../src/payload/load.ts';
 import type { Trace, TraceObject } from '../../src/trace/index.ts';
+import { readOracleDocument } from '../oracle/document.ts';
+import type { BensonDocument } from '../oracle/documents.ts';
 import { describeDifference, firstDifference } from './compare.ts';
+
+export interface OracleBundle extends Bundle {
+  readonly benson: BensonDocument;
+}
 
 /// Finding the two things a Replay Gate needs.
 ///
@@ -94,16 +100,21 @@ export const readPayloadFile = async (name: string): Promise<string> => {
 /// cannot have changed, and `expectRecordedPayload` already makes every gate assert it graded
 /// against the same extraction. The promise is cached rather than the value so that concurrent
 /// callers share one read instead of racing to start their own.
-let payload: Promise<Bundle> | undefined;
+let payload: Promise<OracleBundle> | undefined;
 
-export const loadPayload = (): Promise<Bundle> => {
+export const loadPayload = (): Promise<OracleBundle> => {
   payload ??= load(async name => {
     try {
       return await readPayloadFile(name);
     } catch {
       return undefined;
     }
-  });
+  }).then(async bundle => ({
+    ...bundle,
+    benson: readOracleDocument(
+      await Bun.file(join(import.meta.dir, '../oracle/benson.json')).text()
+    )
+  }));
   return payload;
 };
 

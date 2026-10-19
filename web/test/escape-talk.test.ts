@@ -242,7 +242,7 @@ describe('the Escape as a Talk Script', () => {
       session.captureSaveSnapshot(),
       { scripts: escapeScript }
     );
-    expect(restored.scripts!.running).toBeUndefined();
+    expect(restored.scripts!.reference?.running).toBeUndefined();
     // Benson Script 7 is stopped, so the prompt is gone. The Escape starts
     // again when the ship is boarded again: off, a moment on foot, back on.
     const route = LegalRoute.resume(restored);

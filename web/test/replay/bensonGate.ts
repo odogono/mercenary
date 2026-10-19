@@ -1,8 +1,6 @@
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
-import { BensonProgram } from '../../src/benson/index.ts';
-import type { Bundle } from '../../src/payload/documents.ts';
 import {
   bensonTunables,
   loadSettings,
@@ -15,6 +13,7 @@ import {
   type TraceObject,
   type TraceValue
 } from '../../src/trace/index.ts';
+import { BensonProgram } from '../oracle/index.ts';
 import {
   expectRecordedPayload,
   loadPayload,
@@ -64,7 +63,7 @@ export interface BensonGate {
 }
 
 export const bensonGate = async (gate: BensonGate): Promise<void> => {
-  const bundle: Bundle = await loadPayload();
+  const bundle = await loadPayload();
   const settings = loadSettings(
     await Bun.file(join(repositoryRoot, 'settings.json')).text()
   );

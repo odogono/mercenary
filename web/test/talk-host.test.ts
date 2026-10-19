@@ -1,7 +1,6 @@
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
-import { BensonProgram, BensonSession } from '../src/benson/index.ts';
 import {
   GameplaySession,
   sessionContent,
@@ -24,6 +23,7 @@ import type { TalkHostOptions, TalkScript } from '../src/talk/host.ts';
 import { TextTable } from '../src/text/index.ts';
 import { World, room } from '../src/world/index.ts';
 import { environment } from './fixtures/save.ts';
+import { BensonProgram, BensonSession } from './oracle/index.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
 
 const bundle = await loadPayload();
@@ -510,7 +510,7 @@ end begin
 
     // The script is told by where it is, without Talk Scripts to stop it.
     const unported = GameplaySession.restore(content, benson(), old);
-    expect(unported.scripts!.running).toBe(0);
+    expect(unported.scripts!.reference?.running).toBe(0);
 
     const ported = GameplaySession.restore(content, benson(), old, {
       scripts: [

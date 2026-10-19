@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
-import { BensonDisplay, BensonProgram } from '../src/benson/index.ts';
 import { TextTable } from '../src/text/index.ts';
+import { BensonDisplay, BensonProgram } from './oracle/index.ts';
 import { loadPayload } from './replay/artifacts.ts';
 
 const shifted = (text: string): string => text.padStart(BensonDisplay.width);

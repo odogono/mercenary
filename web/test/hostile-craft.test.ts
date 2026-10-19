@@ -1,7 +1,6 @@
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
-import { BensonProgram, BensonSession } from '../src/benson/index.ts';
 import { GameplaySession, sessionContent } from '../src/session/index.ts';
 import {
   bensonTunables,
@@ -10,6 +9,7 @@ import {
 } from '../src/settings/index.ts';
 import { TextTable } from '../src/text/index.ts';
 import { World } from '../src/world/index.ts';
+import { BensonProgram, BensonSession } from './oracle/index.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
 
 const bundle = await loadPayload();

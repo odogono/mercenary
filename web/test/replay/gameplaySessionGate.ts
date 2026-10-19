@@ -2,12 +2,6 @@ import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
 import {
-  BensonProgram,
-  BensonSession,
-  DEFAULT_SESSION_SEED
-} from '../../src/benson/index.ts';
-import type { Bundle } from '../../src/payload/documents.ts';
-import {
   GameplaySession,
   openingPlayer,
   sessionContent
@@ -27,6 +21,11 @@ import {
   type TraceValue
 } from '../../src/trace/index.ts';
 import { World } from '../../src/world/index.ts';
+import {
+  BensonProgram,
+  BensonSession,
+  DEFAULT_SESSION_SEED
+} from '../oracle/index.ts';
 import {
   expectRecordedPayload,
   loadPayload,
@@ -87,7 +86,7 @@ const recordedSettings = (resolved: Settings) => ({
 export const gameplaySessionGate = async (
   gate: GameplaySessionGate
 ): Promise<void> => {
-  const bundle: Bundle = await loadPayload();
+  const bundle = await loadPayload();
   const settings = loadSettings(
     await Bun.file(join(repositoryRoot, 'settings.json')).text()
   );

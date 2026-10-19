@@ -121,7 +121,7 @@ frame, and is stopped through `$D40B` only on completion.
 ## Benson-driven effects
 
 The decoded Benson payload is the executable evidence for this section
-([`payload/benson.json:1`](../../payload/benson.json#L1)). Its instruction indices
+([`payload/benson.json:1`](../../web/test/oracle/benson.json#L1)). Its instruction indices
 are stable within schema version 1. The decoder pins the object Room/flag tables
 and the 64-slot bound ([`c64lab/benson.py:170-178`](../../research/c64-reference-build/c64lab/benson.py#L170-L178)),
 names every indexed access rather than leaking an address
@@ -129,7 +129,7 @@ names every indexed access rather than leaking an address
 and rejects any newly used, unmodelled opcode
 ([`c64lab/benson.py:335-352`](../../research/c64-reference-build/c64lab/benson.py#L335-L352)).
 The browser implements `tsti` (not carried) and `inrm` (not in selected Room) in
-the Benson machine ([`web/src/benson/machine.ts:390-407`](../../web/src/benson/machine.ts#L390-L407)).
+the Benson machine ([`web/src/benson/machine.ts:390-407`](../../web/test/oracle/machine.ts#L390-L407)).
 
 | Object(s) | Residence predicate | Observable behavior and decoded source | Browser disposition and verification |
 | --- | --- | --- | --- |

@@ -1,10 +1,4 @@
-import {
-  BensonProgram,
-  BensonSession,
-  DEFAULT_SESSION_SEED,
-  type BensonMessageMode
-} from '../benson/index.ts';
-import type { HeadingConvention } from '../orientation/index.ts';
+import { BensonChannel, DEFAULT_SESSION_SEED } from '../benson/index.ts';
 import type { Bundle } from '../payload/documents.ts';
 import {
   GameplaySession,
@@ -40,7 +34,8 @@ export const saveEnvironment = (
   settings: Settings
 ): SaveEnvironment => ({
   payload: {
-    bensonSchemaVersion: bundle.benson?.schemaVersion ?? 0,
+    // Reserved schema-14 identity: retiring the document must not refuse old Saves.
+    bensonSchemaVersion: 1,
     decoderVersion: bundle.manifest.decoderVersion,
     endgameSchemaVersion: bundle.endgame.schemaVersion,
     flightSchemaVersion: bundle.flight?.schemaVersion ?? 0,
@@ -70,8 +65,6 @@ export const createWalkabout = (
   bundle: Bundle,
   settings: Settings,
   restore?: SaveSnapshot,
-  messageMode: BensonMessageMode = 'authentic',
-  headingConvention: HeadingConvention = 'reference',
   talkScripts: readonly TalkScript[] = TALK_SCRIPTS
 ): Walkabout => {
   if (bundle.flight === undefined) {
@@ -80,38 +73,26 @@ export const createWalkabout = (
   if (bundle.text === undefined) {
     throw new Error('text.json is required by the browser walkabout');
   }
-  if (bundle.benson === undefined) {
-    throw new Error('benson.json is required by the browser walkabout');
-  }
   if (bundle.interaction === undefined) {
     throw new Error('interaction.json is required by the browser walkabout');
   }
 
   const world = new World(bundle);
-  const program = BensonProgram.fromDocument(bundle.benson);
   const text = new TextTable(bundle.text);
-  const scripts = new BensonSession(
-    program,
+  const scripts = new BensonChannel(
     text,
-    bensonTunables(settings, program.framesPerTick),
-    DEFAULT_SESSION_SEED,
-    messageMode
+    bensonTunables(settings, 50),
+    DEFAULT_SESSION_SEED
   );
-  const flight = {
-    ...flightModel(settings.flight, bundle.flight, world.groundExtent),
-    headingConvention
-  };
+  const flight = flightModel(
+    settings.flight,
+    bundle.flight,
+    world.groundExtent
+  );
   const content = sessionContent(world, bundle, flight);
   const session =
     restore === undefined
-      ? new GameplaySession(
-          content,
-          {
-            ...openingPlayer(),
-            ...(headingConvention === 'traceOracle' ? { heading: 0 } : {})
-          },
-          scripts
-        )
+      ? new GameplaySession(content, openingPlayer(), scripts)
       : GameplaySession.restore(
           content,
           scripts,
@@ -124,12 +105,9 @@ export const createWalkabout = (
   // The opening is started here even when the Arrival is about to present, so that a Save
   // taken during the opening restores a game with an opening to play. The Arrival holds it by
   // not advancing the session rather than by leaving it unstarted (ADR 0032). It is a Talk
-  // Script (ADR 0080), unless the caller runs Benson Script 0 as the Golden Traces recorded it.
+  // Script (ADR 0080); the historical Replay Gate assembles its own oracle.
   if (restore === undefined) {
     session.begin();
-    if (!session.talk?.replaces.has(0) && !session.start(0)) {
-      throw new Error('the opening Benson Script could not start');
-    }
   }
   return { session, world };
 };

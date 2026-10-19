@@ -1,10 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 
-import { BensonProgram, BensonSession } from '../src/benson/index.ts';
 import { playerState } from '../src/gameCore/index.ts';
 import { Interaction } from '../src/interaction/index.ts';
 import { IDENTITY } from '../src/orientation/index.ts';
-import type { BensonInstruction } from '../src/payload/documents.ts';
 import { GameplaySession, type SessionContent } from '../src/session/index.ts';
 import {
   SAVE_JSON_CODE_UNIT_LIMIT,
@@ -18,6 +16,8 @@ import {
 import { TextTable } from '../src/text/index.ts';
 import type { ObjectPlacement } from '../src/world/index.ts';
 import { emptyContent, environment } from './fixtures/save.ts';
+import type { BensonInstruction } from './oracle/documents.ts';
+import { BensonProgram, BensonSession } from './oracle/index.ts';
 
 const content = emptyContent();
 
@@ -312,7 +312,7 @@ describe('a Save Snapshot', () => {
       }),
       scripts()
     );
-    original.scripts!.start(0);
+    original.scripts!.reference!.start(0);
     original.scripts!.showText('A MESSAGE IN PROGRESS');
     original.advance(0.375);
 

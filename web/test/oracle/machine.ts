@@ -1,27 +1,19 @@
+import { BensonHostState, type BensonEffect } from '../../src/benson/host.ts';
+import {
+  defaultTunables,
+  type BensonTunables
+} from '../../src/benson/tuning.ts';
 import {
   NO_SUBSTITUTIONS,
   type Substitutions,
   type TextTable
-} from '../text/index.ts';
-import { BensonHostState, type BensonEffect } from './host.ts';
+} from '../../src/text/index.ts';
 import type { BensonProgram, Condition, Instruction } from './program.ts';
 
-/// Pacing for the Benson interpreter.
-export interface BensonTunables {
-  framesPerSecond: number;
-  framesPerTick: number;
-  instructionBudget: number;
-  messageHoldSeconds: number;
-  timeScale: number;
-}
-
-export const defaultTunables = (framesPerTick = 50): BensonTunables => ({
-  framesPerSecond: 50,
-  framesPerTick,
-  instructionBudget: 512,
-  messageHoldSeconds: 3,
-  timeScale: 1
-});
+export {
+  defaultTunables,
+  type BensonTunables
+} from '../../src/benson/tuning.ts';
 
 export interface BensonStateFields {
   readonly callStack: readonly number[];

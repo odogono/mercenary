@@ -1,5 +1,5 @@
+import type { BensonPort } from '../benson/channel.ts';
 import { BensonHostState } from '../benson/host.ts';
-import type { BensonSession } from '../benson/session.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import { hostRoom, type Location, type Residence } from '../world/index.ts';
 import type { Occupancy } from './index.ts';
@@ -51,7 +51,7 @@ export interface ObservationSources {
   /// emulator's three-byte fields hold integers.
   readonly position: Vector3;
   readonly residence: ReadonlyMap<number, Residence>;
-  readonly scripts: BensonSession | undefined;
+  readonly scripts: BensonPort | undefined;
 }
 
 const NO_SCRIPT_PC = -1;
@@ -81,7 +81,7 @@ export const observationsOf = (
   sources: ObservationSources
 ): SemanticObservations => {
   const host = sources.scripts?.host;
-  const state = sources.scripts?.state;
+  const state = sources.scripts?.reference?.state;
   const observations: Record<string, ObservationValue> = {
     attackingShip: host?.attackingShip ?? false,
     carriedStack: sources.carriedStack.join(','),

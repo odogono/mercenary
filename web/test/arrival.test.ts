@@ -1,7 +1,6 @@
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
-import { BensonProgram } from '../src/benson/index.ts';
 import type { GameplaySession } from '../src/session/index.ts';
 import {
   arrivalTunables,
@@ -15,9 +14,8 @@ import {
   type ArrivalSessionBridge
 } from '../src/shell/arrival.ts';
 import { ARRIVAL_NARRATION } from '../src/shell/arrivalNarration.ts';
-import { resolveScript00Milestones } from '../src/shell/arrivalScript.ts';
+import { OPENING_MILESTONES } from '../src/shell/arrivalScript.ts';
 import { createWalkabout, requiredSettings } from '../src/shell/session.ts';
-import { TextTable } from '../src/text/index.ts';
 import { comparable } from './fixtures/save.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
 
@@ -26,11 +24,7 @@ const settingsText = await Bun.file(
   join(repositoryRoot, 'settings.json')
 ).text();
 const settings = requiredSettings(settingsText);
-const program = BensonProgram.fromDocument(bundle.benson!);
-const milestones = resolveScript00Milestones(
-  program,
-  new TextTable(bundle.text!)
-);
+const milestones = OPENING_MILESTONES;
 
 const STEP = 1 / 60;
 
@@ -61,8 +55,8 @@ const harness = (from: Settings = settings): Harness => {
       pacingChoices.push(choice);
       session.scripts!.tunables =
         choice === 'arrival'
-          ? arrivalTunables(from, program.framesPerTick)
-          : bensonTunables(from, program.framesPerTick);
+          ? arrivalTunables(from, 50)
+          : bensonTunables(from, 50);
     }
   };
   return {

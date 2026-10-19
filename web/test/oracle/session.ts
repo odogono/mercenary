@@ -1,12 +1,13 @@
-import type { Description as InteractionDescription } from '../interaction/index.ts';
+import { BensonDisplay } from '../../src/benson/display.ts';
+import { BensonHostState, type BensonEffect } from '../../src/benson/host.ts';
+import { MessageTicker, codePointCount } from '../../src/benson/ticker.ts';
+import type { Description as InteractionDescription } from '../../src/interaction/index.ts';
 import {
   decodeRandomState,
   encodeRandomState,
   type BensonSaveSnapshot
-} from '../session/save.ts';
-import type { TextTable } from '../text/index.ts';
-import { BensonDisplay } from './display.ts';
-import { BensonHostState, type BensonEffect } from './host.ts';
+} from '../../src/session/save.ts';
+import type { TextTable } from '../../src/text/index.ts';
 import {
   BensonMachine,
   BensonState,
@@ -17,7 +18,6 @@ import {
   type BensonTunables
 } from './machine.ts';
 import type { BensonKey, BensonProgram } from './program.ts';
-import { MessageTicker, codePointCount } from './ticker.ts';
 
 /// Session construction uses this seed. A bare `BensonState` uses `BensonState.defaultSeed`.
 export const DEFAULT_SESSION_SEED = 0x2c_69_2e_d8_1b_7f_0a_31n;
@@ -39,7 +39,7 @@ export interface BensonMessagePresentation {
 export type BensonMessageMode = 'authentic' | 'legacyOracle';
 
 /// One running Benson Script, its host state, and the message line it drives.
-export class BensonSession {
+export class BensonOracle {
   readonly program: BensonProgram;
   readonly text: TextTable;
   tunables: BensonTunables;
@@ -72,6 +72,23 @@ export class BensonSession {
       this.tunables.framesPerSecond,
       this.tunables.timeScale,
       this.tunables.messageHoldSeconds
+    );
+  }
+
+  readonly reference = this;
+  get randomState(): bigint {
+    return this.state.randomState;
+  }
+  set randomState(value: bigint) {
+    this.state = this.state.with({ randomState: value });
+  }
+  restore(snapshot: BensonSaveSnapshot): BensonOracle {
+    return BensonOracle.restore(
+      this.program,
+      this.text,
+      this.tunables,
+      snapshot,
+      this.messageMode
     );
   }
 
@@ -392,7 +409,7 @@ export class BensonSession {
     tunables: BensonTunables,
     snapshot: BensonSaveSnapshot,
     messageMode: BensonMessageMode = 'authentic'
-  ): BensonSession {
+  ): BensonOracle {
     const instructionCount = program.instructions.length;
     if (
       snapshot.state.pc !== null &&
@@ -415,7 +432,7 @@ export class BensonSession {
         `Save Snapshot fractional script timing ${snapshot.frames} is outside its tick`
       );
     }
-    const session = new BensonSession(
+    const session = new BensonOracle(
       program,
       text,
       tunables,
@@ -470,3 +487,5 @@ export class BensonSession {
     return session;
   }
 }
+
+export { BensonOracle as BensonSession };

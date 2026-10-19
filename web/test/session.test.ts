@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 
-import { BensonProgram, BensonSession } from '../src/benson/index.ts';
 import { playerState } from '../src/gameCore/index.ts';
-import type { BensonInstruction } from '../src/payload/documents.ts';
 import { GameplaySession, type SessionContent } from '../src/session/index.ts';
 import { TextTable } from '../src/text/index.ts';
 import { foldStates, type TraceObject } from '../src/trace/index.ts';
+import type { BensonInstruction } from './oracle/documents.ts';
+import { BensonProgram, BensonSession } from './oracle/index.ts';
 import { sessionGate } from './replay/sessionGate.ts';
 
 const IDS = ['opening', 'opening-loop', 'opening-walk-to-craft'] as const;

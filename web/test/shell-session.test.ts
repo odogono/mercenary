@@ -2,13 +2,18 @@ import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
 import type { Bundle } from '../src/payload/documents.ts';
+import { load } from '../src/payload/load.ts';
 import {
   createWalkabout,
   requiredSettings,
   saveEnvironment
 } from '../src/shell/session.ts';
 import { comparable } from './fixtures/save.ts';
-import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
+import {
+  loadPayload,
+  readPayloadFile,
+  repositoryRoot
+} from './replay/artifacts.ts';
 
 const bundle = await loadPayload();
 const settingsText = await Bun.file(
@@ -16,6 +21,54 @@ const settingsText = await Bun.file(
 ).text();
 
 describe('the live browser Gameplay Session', () => {
+  test('loads and plays without asking for the retired Benson program', async () => {
+    const requested: string[] = [];
+    const live = await load(async name => {
+      requested.push(name);
+      return readPayloadFile(name).catch(() => undefined);
+    });
+    expect(requested).not.toContain('benson.json');
+    const session = createWalkabout(
+      live,
+      requiredSettings(settingsText)
+    ).session;
+    expect(session.scripts!.reference).toBeUndefined();
+    expect('program' in session.scripts!).toBe(false);
+    expect(session.start(21)).toBe(false);
+    expect(session.start(30)).toBe(false);
+    for (let seconds = 0; seconds < 20; seconds += 0.02) {
+      session.advance(0.02);
+    }
+    expect(session.talk!.shown).toContain('CRASH IMMINENT,');
+  });
+
+  test('retires an old Benson continuation while keeping its world and random stream', () => {
+    const settings = requiredSettings(settingsText);
+    const original = createWalkabout(bundle, settings).session;
+    const captured = original.captureSaveSnapshot();
+    const saved = {
+      ...captured,
+      benson: {
+        ...captured.benson!,
+        host: { ...captured.benson!.host, engineFlags: 0xc1 },
+        script: 21,
+        state: { ...captured.benson!.state, callStack: [999_999], pc: 999_999 }
+      },
+      talk: null
+    };
+    const restored = createWalkabout(bundle, settings, saved).session;
+    expect(restored.scripts!.host.engineFlags).toBe(1);
+    expect(restored.scripts!.credits).toBe(original.scripts!.credits);
+    expect(restored.scripts!.nextRandomByte()).toBe(
+      original.scripts!.nextRandomByte()
+    );
+    const current = restored.captureSaveSnapshot();
+    expect(current.benson!.state.pc).toBeNull();
+    expect(current.benson!.state.callStack).toEqual([]);
+    expect(current.benson!.script).toBeNull();
+    expect(restored.talk!.shown).toEqual([]);
+  });
+
   test('starts the opening on foot at the captured surface Pose', () => {
     const walkabout = createWalkabout(bundle, requiredSettings(settingsText));
 
@@ -31,7 +84,7 @@ describe('the live browser Gameplay Session', () => {
     });
   });
 
-  for (const document of ['flight', 'text', 'benson', 'interaction'] as const) {
+  for (const document of ['flight', 'text', 'interaction'] as const) {
     test(`refuses a Data Payload without its ${document} document`, () => {
       const incomplete = { ...bundle, [document]: undefined } as Bundle;
 
@@ -185,17 +238,5 @@ describe('the live browser Gameplay Session', () => {
         residence: [[999, { kind: 'carried' }]]
       })
     ).toThrow('object slot 999');
-    expect(() =>
-      createWalkabout(bundle, settings, {
-        ...captured,
-        benson: {
-          ...captured.benson!,
-          state: {
-            ...captured.benson!.state,
-            pc: 999_999
-          }
-        }
-      })
-    ).toThrow('program counter');
   });
 });

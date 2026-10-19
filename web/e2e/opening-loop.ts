@@ -2,11 +2,7 @@ import { fetchReader, load } from '../src/payload/load.ts';
 import { SAVE_SCHEMA_VERSION, encodeSave } from '../src/session/save.ts';
 import { Renderer } from '../src/shell/frame.ts';
 import { SaveSlots, type SaveSlot } from '../src/shell/saves.ts';
-import {
-  createWalkabout,
-  requiredSettings,
-  saveEnvironment
-} from '../src/shell/session.ts';
+import { requiredSettings, saveEnvironment } from '../src/shell/session.ts';
 import { targOrreryFor } from '../src/sky/index.ts';
 import {
   foldStates,
@@ -14,6 +10,8 @@ import {
   type TraceObject
 } from '../src/trace/index.ts';
 import { applySessionTraceCommand } from '../src/trace/session.ts';
+import { readOracleDocument } from '../test/oracle/document.ts';
+import { createOracleWalkabout } from '../test/oracle/walkabout.ts';
 import { expectIdentical } from '../test/replay/compare.ts';
 import {
   eventValue,
@@ -50,18 +48,14 @@ try {
     requiredText('/settings.json'),
     requiredText('/__e2e__/session/opening-loop.jsonl')
   ]);
+  const document = readOracleDocument(
+    await requiredText('/test/oracle/benson.json')
+  );
   const trace = parseTrace(traceText, 'session', TRACE_ID);
   const expected = foldStates(trace);
   const settings = requiredSettings(settingsText);
   // Benson Script 0 plays the opening, as the trace recorded it.
-  const initial = createWalkabout(
-    bundle,
-    settings,
-    undefined,
-    'legacyOracle',
-    'traceOracle',
-    []
-  );
+  const initial = createOracleWalkabout(bundle, settings, document);
   let session = initial.session;
   enableInstantLiftOracle(session);
   const legacyRoom255Slots = traceOracleRoom255Slots(session.content.objects);
@@ -90,14 +84,7 @@ try {
       snapshot: before
     });
     slots.write(slot, encoded);
-    session = createWalkabout(
-      bundle,
-      settings,
-      before,
-      'legacyOracle',
-      'traceOracle',
-      []
-    ).session;
+    session = createOracleWalkabout(bundle, settings, document, before).session;
     enableInstantLiftOracle(session);
     const restored = encodeSave({
       environment,

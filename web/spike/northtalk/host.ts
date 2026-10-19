@@ -20,7 +20,7 @@ import {
 } from '@northtalk/ts';
 
 import { BensonHostState } from '../../src/benson/host.ts';
-import type { BensonSession } from '../../src/benson/session.ts';
+import type { BensonSession } from '../../test/oracle/session.ts';
 import { objectName, objectSlot, roomName } from './names.ts';
 
 /// A NorthTalk Core: the TS Core by default, or the WASM Core from `@northtalk/ts/wasm`.
