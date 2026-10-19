@@ -29,14 +29,15 @@ jobs:
       - run: bun run format:check
       - run: bun run test:tools
   # The few tests that assert Apple's libm bit-for-bit (ADR 0022) skip here;
-  # see test/replay/platform.ts. Four shards, balanced by test-timings.json,
-  # keep each job to a few minutes.
+  # see test/replay/platform.ts. Six shards, balanced by test-timings.json,
+  # keep each job to a few minutes. Each runs its files one at a time: two
+  # workers on a two-core runner time tests out.
   unit:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5, 6]
     defaults:
       run:
         working-directory: web
@@ -49,4 +50,4 @@ jobs:
         with:
           bun-version: 1.4.3
       - run: bun install --frozen-lockfile
-      - run: bun run test:quiet --shard=${{ matrix.shard }}/4
+      - run: bun test --only-failures --timings=test-timings.json --shard=${{ matrix.shard }}/6
