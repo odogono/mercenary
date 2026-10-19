@@ -188,8 +188,7 @@ describe('the opening', () => {
     // Benson Script 0 would have held Benson until the player boarded the
     // Dart, refusing the briefing.
     session.teleport(room(BRIEFING));
-    session.advance(FRAME);
-    expect(session.scripts!.host.isScriptRunning).toBe(true);
+    afterLine(session, 'MECHANOID BRIEFING ROOM');
   });
 
   test('restored mid-beat, is still the opening speaking', () => {
