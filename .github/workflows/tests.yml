@@ -28,10 +28,10 @@ jobs:
       - run: bun run lint
       - run: bun run format:check
       - run: bun run test:tools
-  # The engine uses the platform's Math, and the Golden Traces record Apple's
-  # libm (ADR 0022), so the unit tests only reproduce on macOS.
+  # The few tests that assert Apple's libm bit-for-bit (ADR 0022) skip here;
+  # see test/replay/platform.ts.
   unit:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: web

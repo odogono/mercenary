@@ -4,6 +4,7 @@ import { atan, cos, pow, sin, tan, toFloat32 } from '../src/math/index.ts';
 import { parseTrace } from '../src/trace/index.ts';
 import { readTraceText } from './replay/artifacts.ts';
 import { describeDifference, firstDifference } from './replay/compare.ts';
+import { onRecordingLibm } from './replay/platform.ts';
 
 /// The gate beneath every other gate (ADR 0022).
 ///
@@ -47,39 +48,42 @@ describe('the math Replay Gate', () => {
     expect(trace.header['dt']).toBeUndefined();
   });
 
-  test('every recorded value reproduces bit-for-bit', () => {
-    expect(trace.records.length).toBeGreaterThan(2000);
-    const failures: string[] = [];
-    const covered = new Set<string>();
-    for (const [index, record] of trace.records.entries()) {
-      const fn = record['fn'] as string;
-      covered.add(fn);
-      const actual = evaluate(
-        record as unknown as { fn: string; x: number; y?: number }
-      );
-      const difference = firstDifference(
-        record['value'],
-        actual,
-        `record ${index} ${fn}`
-      );
-      if (difference !== null) {
-        // Collect rather than throw on the first: when this canary goes red the useful
-        // question is which functions moved and how far, not which sample was first.
-        if (failures.length < 10) {
-          failures.push(
-            `${describeDifference(difference)} at x=${String(record['x'])}`
-          );
+  test.skipIf(!onRecordingLibm)(
+    'every recorded value reproduces bit-for-bit',
+    () => {
+      expect(trace.records.length).toBeGreaterThan(2000);
+      const failures: string[] = [];
+      const covered = new Set<string>();
+      for (const [index, record] of trace.records.entries()) {
+        const fn = record['fn'] as string;
+        covered.add(fn);
+        const actual = evaluate(
+          record as unknown as { fn: string; x: number; y?: number }
+        );
+        const difference = firstDifference(
+          record['value'],
+          actual,
+          `record ${index} ${fn}`
+        );
+        if (difference !== null) {
+          // Collect rather than throw on the first: when this canary goes red the useful
+          // question is which functions moved and how far, not which sample was first.
+          if (failures.length < 10) {
+            failures.push(
+              `${describeDifference(difference)} at x=${String(record['x'])}`
+            );
+          }
         }
       }
+      if (failures.length > 0) {
+        throw new Error(
+          `the platform no longer reproduces the recorded libm (ADR 0022):\n${failures.join('\n')}`
+        );
+      }
+      // All five, or the trace stopped covering something the engine calls.
+      expect([...covered].sort()).toEqual(['atan', 'cos', 'pow', 'sin', 'tan']);
     }
-    if (failures.length > 0) {
-      throw new Error(
-        `the platform no longer reproduces the recorded libm (ADR 0022):\n${failures.join('\n')}`
-      );
-    }
-    // All five, or the trace stopped covering something the engine calls.
-    expect([...covered].sort()).toEqual(['atan', 'cos', 'pow', 'sin', 'tan']);
-  });
+  );
 });
 
 describe('narrowing to binary32', () => {

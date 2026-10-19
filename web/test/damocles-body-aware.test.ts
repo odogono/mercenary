@@ -320,7 +320,7 @@ describe('body-aware Object Residence', () => {
       }
     }
     // 195 placed residents on 22 Bodies: about 12 s alone on a laptop, and
-    // about 200 s on CI's macOS runner.
+    // minutes on a two-core CI runner.
   }, 400_000);
 });
 
