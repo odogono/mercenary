@@ -1,0 +1,56 @@
+-- What the briefing rooms, the banks and the prison say to a player who
+-- comes in. Ported from Benson Scripts 8, 11, 13, 28 and 29
+-- (payload/benson.json, instructions 132-137, 218-260 and 377-380).
+--
+-- Each first waits a Benson tick: 1/6 s at scripts.timeScale 6.
+
+use show, clear, report from benson
+
+on entered room where room = "bank"
+  wait 167 ms
+  ask world to credits
+  report ["BANK", "YOU HAVE " & it & " CREDITS"] and wait
+  clear and wait
+end entered
+
+-- No blank line follows, as in the original.
+on entered room where room = "prison"
+  wait 167 ms
+  show "PRISON" and wait
+end entered
+
+-- A briefing stops between paragraphs once the player has gone.
+on entered room where room = "mechanoid briefing"
+  wait 167 ms
+  show "MECHANOID BRIEFING ROOM" and wait
+  clear and wait
+  report ["WE WILL PAY", "FOR PALYAR REQUIREMENTS", "WHEN DELIVERED TO OUR", "CONTROL IN THIS COMPLEX"] and wait
+  clear and wait
+  if not stillIn(room) then return
+  report ["WE MAY ALSO PAY FOR", "DESTRUCTION OF SELECTED", "PALYAR INSTALLATIONS"] and wait
+  clear and wait
+  show "BRIEFING ENDS" and wait
+  clear and wait
+end entered
+
+on entered room where room = "palyar briefing"
+  wait 167 ms
+  show "PALYAR BRIEFING ROOM" and wait
+  clear and wait
+  if not stillIn(room) then return
+  report ["WE WILL REWARD", "DELIVERY OF OUR NEEDS", "TO APPROPRIATE ROOMS IN", "THE PALYAR COLONY CRAFT"] and wait
+  clear and wait
+  if not stillIn(room) then return
+  report ["THERE IS A BIG FEE FOR", "A CAPTURED MECHANOID"] and wait
+  clear and wait
+  if not stillIn(room) then return
+  report ["ONLY WHEN YOU KNOW HOW", "TO CHOOSE THEM FROM US", "DESTROY ALL MECHANOID", "OCCUPIED LOCATIONS FOR", "VERY SPECIAL GRATITUDE"] and wait
+  clear and wait
+  show "BRIEFING ENDS" and wait
+  clear and wait
+end entered
+
+function stillIn place
+  ask world to here
+  return it = place
+end stillIn

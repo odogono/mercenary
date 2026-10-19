@@ -13,6 +13,11 @@ const ROOMS: Readonly<Record<number, string>> = {
   16: 'ship rental',
   41: 'palyar briefing',
   5: 'hangar',
+  // Where Benson speaks on arrival.
+  159: 'bank',
+  42: 'bank',
+  79: 'bank',
+  81: 'prison',
   // Where the factions take deliveries.
   136: 'engine room',
   144: 'laboratory',
