@@ -110,7 +110,9 @@ test('E rides the Colony Craft lift down and back up through the Browser Shell',
 test('the console-assisted recovered route reaches and matures the Escape', async ({
   page
 }) => {
-  test.setTimeout(90_000);
+  // Leaving the surface brings the Dart's job offer, which plays out before
+  // the Escape's first line: Benson Script 7 used to cut it off.
+  test.setTimeout(150_000);
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/');

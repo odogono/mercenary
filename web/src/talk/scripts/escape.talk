@@ -1,0 +1,92 @@
+-- The Escape: launching the Interstellar Ship, and the end of the game.
+-- Ported from Benson Script 7 (payload/benson.json, instructions 411-460).
+--
+-- Waits keep today's pace: a Benson tick is 1/6 s at scripts.timeScale 6, so
+-- the original's 1, 2 and 15 ticks are 167 ms, 333 ms and 2.5 s.
+
+use show, clear, report, prompt from benson
+
+on boarded craft where craft = "ship"
+  show "INTERSTELLAR SHIP" and wait
+  -- Benson rechecks everything after Y, and anything missing sends it back
+  -- here to wait again, without the first line.
+  repeat forever
+    if not aboard() then
+      clear and wait
+      return
+    end if
+    -- A World Event isn't buffered, so look at the world before waiting on it.
+    ask world to here
+    if it is not "surface" then
+      wait for
+        when entered room where room = "surface" then
+        when left craft where craft = "ship" then
+          clear and wait
+          return
+      end wait
+    end if
+    wait 167 ms
+    if not canLaunch() then
+      show "NOVADRIVE REQUIRED" and wait
+      clear and wait
+      return
+    end if
+    -- The prompt holds Player Input until this Run ends, so no other Talk
+    -- Script hears the Y.
+    prompt "PRESS Y TO LAUNCH" and wait
+    if not aboard() then
+      clear and wait
+      return
+    end if
+    wait for
+      when pressed key where key = "Y" then
+      when left craft where craft = "ship" then
+        clear and wait
+        return
+    end wait
+    ask world to here
+    if it is "surface" and canLaunch() then exit repeat
+  end repeat
+  ask world to advertIntact
+  if not it then
+    report ["THE AUTHOR WON'T LET", "YOU LEAVE UNTIL YOU", "FIX HIS ADVERT"] and wait
+    clear and wait
+    return
+  end if
+  escape and wait
+end boarded
+
+on escape
+  ask world to escape
+  wait 333 ms
+  ask world to setMessageInterval 150
+  report ["THE AUTHOR SENDS YOU", "CONGRATULATIONS ON YOUR", "ESCAPE FROM TARG"] and wait
+  clear and wait
+  ask world to flag "commanderAnnoyed"
+  if it then
+    -- The comma is the original's.
+    report ["THE PALYAR COMMANDER'S", "BROTHER-IN-LAW", "IS PLEASED YOU,VE GONE"] and wait
+    clear and wait
+  end if
+  report ["SAVE OUT THE STATUS AND", "SEE YOU IN MERCENARY II"] and wait
+  wait 2500 ms
+  repeat forever
+    wait 2500 ms
+    show "GAME OVER" and wait
+    tell sound to silence "voice1"
+    tell sound to silence "voice2"
+  end repeat
+end escape
+
+function aboard
+  ask world to boarded
+  return it = "ship"
+end aboard
+
+-- The ship needs a Novadrive, unless it was hired with one.
+function canLaunch
+  ask world to flag "shipHired"
+  if it then return true
+  ask world to carries "novadrive"
+  return it
+end canLaunch
