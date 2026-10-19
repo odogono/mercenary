@@ -1,11 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 
-import { BensonProgram, BensonSession } from '../src/benson/index.ts';
 import { playerState } from '../src/gameCore/index.ts';
 import { Interaction } from '../src/interaction/index.ts';
 import { IDENTITY } from '../src/orientation/index.ts';
 import type {
-  BensonInstruction,
   EndgameDropRules,
   InteractionDocument
 } from '../src/payload/documents.ts';
@@ -16,6 +14,8 @@ import {
 } from '../src/session/observations.ts';
 import { TextTable } from '../src/text/index.ts';
 import type { ObjectPlacement } from '../src/world/index.ts';
+import type { BensonInstruction } from './oracle/documents.ts';
+import { BensonProgram, BensonSession } from './oracle/index.ts';
 
 const interactionDocument: InteractionDocument = {
   boardKey: 0x1c,

@@ -30,7 +30,6 @@ from c64lab.payload import (
     require_current_geometry_decoder,
 )
 from c64lab.geometry import DECODER_VERSION
-from c64lab.benson import BENSON_SCHEMA_VERSION
 from c64lab.flight import FLIGHT_SCHEMA_VERSION
 from c64lab.interaction import INTERACTION_SCHEMA_VERSION
 from c64lab.text import TEXT_SCHEMA_VERSION
@@ -815,7 +814,6 @@ class BrowserConsumerParityTests(unittest.TestCase):
     def test_the_browser_expects_each_capture_documents_own_schema(self) -> None:
         for name, version in (
             ("SUPPORTED_TEXT_SCHEMA_VERSION", TEXT_SCHEMA_VERSION),
-            ("SUPPORTED_BENSON_SCHEMA_VERSION", BENSON_SCHEMA_VERSION),
             ("SUPPORTED_INTERACTION_SCHEMA_VERSION", INTERACTION_SCHEMA_VERSION),
             ("SUPPORTED_FLIGHT_SCHEMA_VERSION", FLIGHT_SCHEMA_VERSION),
             ("SUPPORTED_UNDERGROUND_SCHEMA_VERSION", UNDERGROUND_SCHEMA_VERSION),

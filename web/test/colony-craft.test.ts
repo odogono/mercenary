@@ -1,7 +1,6 @@
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
-import { BensonProgram, BensonSession } from '../src/benson/index.ts';
 import { intent } from '../src/gameCore/index.ts';
 import { GameplaySession, sessionContent } from '../src/session/index.ts';
 import {
@@ -16,6 +15,7 @@ import {
   movedTo,
   placedAtResidence
 } from '../src/world/index.ts';
+import { BensonProgram, BensonSession } from './oracle/index.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
 
 /// The Colony Craft transition, from both of its decoded directions: the one

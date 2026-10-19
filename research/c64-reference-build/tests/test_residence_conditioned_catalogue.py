@@ -44,7 +44,7 @@ class ResidenceConditionedCatalogueTests(unittest.TestCase):
         ]:
             raw = bytes.fromhex(shape)
             ram[address : address + len(raw)] = raw
-        benson = json.loads((LAB_ROOT.parents[1] / "payload" / "benson.json").read_text(encoding="utf-8"))
+        benson = json.loads((LAB_ROOT.parents[1] / "web" / "test" / "oracle" / "benson.json").read_text(encoding="utf-8"))
 
         census = decode_residence_effect_census(bytes(ram), benson)
 

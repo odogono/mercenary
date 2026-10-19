@@ -14,8 +14,7 @@ import { readers } from './read.ts';
 /// version, while endgame.json, sound.json, and object-effects.json are independently required;
 /// the geometry decoder's version is checked against the manifest; then five optional documents,
 /// each present-or-absent and each carrying a version of its own, because their formats change
-/// on their own schedules. `benson.json` without `text.json` is refused,
-/// since a script cannot render its messages without the word table.
+/// on their own schedules. Talk Scripts are maintained source, so the historical Benson program is not loaded.
 ///
 /// **A stale schema is refused rather than tolerated.** That is not a new rule — the kit
 /// already does it — but it is the rule most worth keeping through a port, because a payload
@@ -27,7 +26,6 @@ export type ReadDocument = (name: string) => Promise<string | undefined>;
 export const SUPPORTED_SCHEMA_VERSION = 8;
 export const SUPPORTED_DECODER_VERSION = 9;
 export const SUPPORTED_TEXT_SCHEMA_VERSION = 1;
-export const SUPPORTED_BENSON_SCHEMA_VERSION = 1;
 export const SUPPORTED_INTERACTION_SCHEMA_VERSION = 1;
 export const SUPPORTED_FLIGHT_SCHEMA_VERSION = 3;
 export const SUPPORTED_UNDERGROUND_SCHEMA_VERSION = 3;
@@ -112,7 +110,6 @@ export const load = async (read: ReadDocument): Promise<Bundle> => {
     rooms,
     endgame,
     text,
-    benson,
     interaction,
     flight,
     underground,
@@ -126,7 +123,6 @@ export const load = async (read: ReadDocument): Promise<Bundle> => {
     required(read, 'rooms.json', readers.rooms),
     required(read, 'endgame.json', readers.endgame),
     present(read, 'text.json', readers.text),
-    present(read, 'benson.json', readers.benson),
     present(read, 'interaction.json', readers.interaction),
     present(read, 'flight.json', readers.flight),
     present(read, 'underground.json', readers.underground),
@@ -156,16 +152,6 @@ export const load = async (read: ReadDocument): Promise<Bundle> => {
 
   if (text !== undefined) {
     check('text.json', text.schemaVersion, SUPPORTED_TEXT_SCHEMA_VERSION);
-  }
-
-  if (benson !== undefined) {
-    check('benson.json', benson.schemaVersion, SUPPORTED_BENSON_SCHEMA_VERSION);
-    if (text === undefined) {
-      fail({
-        kind: 'missingFile',
-        name: 'text.json, which benson.json needs to render its messages'
-      });
-    }
   }
 
   if (interaction !== undefined) {
@@ -276,7 +262,6 @@ export const load = async (read: ReadDocument): Promise<Bundle> => {
     world,
     ...(text !== undefined ? { text } : {}),
     ...(flight !== undefined ? { flight } : {}),
-    ...(benson !== undefined ? { benson } : {}),
     ...(interaction !== undefined ? { interaction } : {}),
     ...(underground !== undefined ? { underground } : {})
   };

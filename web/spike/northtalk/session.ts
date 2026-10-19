@@ -8,13 +8,6 @@
 /// here by name (docs/research/targ-talk-scripts.md).
 import { join } from 'node:path';
 
-import {
-  BensonProgram,
-  BensonSession,
-  DEFAULT_SESSION_SEED,
-  type BensonKey,
-  type BensonTunables
-} from '../../src/benson/index.ts';
 import type { PlayerState } from '../../src/gameCore/index.ts';
 import {
   GameplaySession,
@@ -30,6 +23,13 @@ import {
 } from '../../src/settings/index.ts';
 import { TextTable } from '../../src/text/index.ts';
 import { World } from '../../src/world/index.ts';
+import {
+  BensonProgram,
+  BensonSession,
+  DEFAULT_SESSION_SEED,
+  type BensonKey,
+  type BensonTunables
+} from '../../test/oracle/index.ts';
 import { loadPayload, repositoryRoot } from '../../test/replay/artifacts.ts';
 import {
   TalkHost,

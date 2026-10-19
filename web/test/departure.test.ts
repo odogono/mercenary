@@ -1,7 +1,6 @@
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
-import { BensonProgram } from '../src/benson/index.ts';
 import type { SaveSnapshot } from '../src/session/save.ts';
 import {
   arrivalTunables,
@@ -12,7 +11,7 @@ import {
 } from '../src/settings/index.ts';
 import { ArrivalDirector } from '../src/shell/arrival.ts';
 import { arrivalFieldPlan } from '../src/shell/arrivalField.ts';
-import { resolveScript00Milestones } from '../src/shell/arrivalScript.ts';
+import { OPENING_MILESTONES } from '../src/shell/arrivalScript.ts';
 import {
   DESTINATIONS,
   DepartureDirector,
@@ -26,7 +25,6 @@ import {
 } from '../src/shell/departure.ts';
 import { createWalkabout, requiredSettings } from '../src/shell/session.ts';
 import { createTargOrrery, skyStateAt } from '../src/sky/index.ts';
-import { TextTable } from '../src/text/index.ts';
 import { comparable } from './fixtures/save.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
 
@@ -35,11 +33,7 @@ const settingsText = await Bun.file(
   join(repositoryRoot, 'settings.json')
 ).text();
 const settings = requiredSettings(settingsText);
-const program = BensonProgram.fromDocument(bundle.benson!);
-const milestones = resolveScript00Milestones(
-  program,
-  new TextTable(bundle.text!)
-);
+const milestones = OPENING_MILESTONES;
 
 const STEP = 1 / 60;
 const SIZE = { height: 800, width: 1280 } as const;
@@ -368,8 +362,8 @@ describe('the Departure composed with the Arrival', () => {
         setPacing: choice => {
           session.scripts!.tunables =
             choice === 'arrival'
-              ? arrivalTunables(from, program.framesPerTick)
-              : bensonTunables(from, program.framesPerTick);
+              ? arrivalTunables(from, 50)
+              : bensonTunables(from, 50);
         }
       },
       entry: { kind: 'fresh' },

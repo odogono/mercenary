@@ -1,14 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 
-import {
-  BensonHostState,
-  BensonState,
-  nextRandom
-} from '../src/benson/index.ts';
 import { GameplaySession, type WorldEvent } from '../src/session/index.ts';
 import type { Faction } from '../src/session/sites.ts';
 import { REACTIONS } from '../src/talk/scripts.ts';
 import { LegalRoute } from './legalCheckpoint.ts';
+import { BensonHostState, BensonState, nextRandom } from './oracle/index.ts';
 import { loadPayload } from './replay/artifacts.ts';
 import { ENGINES, Lines, talkScript, type Engine } from './talkParity.ts';
 
@@ -137,7 +133,7 @@ describe('Faction Reactions as a Talk Script', () => {
             seed++;
           }
           const scripts = route.session.scripts!;
-          scripts.state = scripts.state.with({ randomState: seed });
+          scripts.randomState = seed;
           bomb(route);
           return new Lines(route).advance(20);
         });

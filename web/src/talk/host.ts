@@ -29,8 +29,8 @@ import {
   type Value
 } from '@northtalk/ts';
 
+import type { BensonPort } from '../benson/channel.ts';
 import { BensonHostState, type BensonEffect } from '../benson/host.ts';
-import type { BensonSession } from '../benson/session.ts';
 import { OUT_OF_THE_WORLD } from '../interaction/index.ts';
 import type { TalkSaveSnapshot } from '../session/save.ts';
 import type { WorldEvent } from '../session/worldEvents.ts';
@@ -166,7 +166,7 @@ export class TalkHost {
   /// Each line a Talk Script showed, as it began to play.
   readonly shown: string[] = [];
 
-  private readonly benson: BensonSession;
+  private readonly benson: BensonPort;
   /// Sound a Talk Script made since the session last took it.
   private effects: BensonEffect[] = [];
   private readonly grants: Readonly<Record<string, Grant<void>>>;
@@ -190,7 +190,7 @@ export class TalkHost {
   /// Loads the Talk Scripts, or restores them from a save.
   constructor(
     scripts: readonly TalkScript[],
-    benson: BensonSession,
+    benson: BensonPort,
     options: TalkHostOptions = {},
     saved?: TalkSaveSnapshot
   ) {

@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
+import type { BensonDocument, BensonInstruction } from './oracle/documents.ts';
 import {
   BensonError,
   BensonHostState,
@@ -11,11 +12,10 @@ import {
   codePointCount,
   nextRandom,
   type Instruction
-} from '../src/benson/index.ts';
-import type {
-  BensonDocument,
-  BensonInstruction
-} from '../src/payload/documents.ts';
+} from './oracle/index.ts';
+
+import type {} from '../src/payload/documents.ts';
+
 import { TextTable } from '../src/text/index.ts';
 import type { Trace } from '../src/trace/index.ts';
 import { bensonGate } from './replay/bensonGate.ts';

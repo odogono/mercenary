@@ -1,6 +1,5 @@
 import type { BensonHostFields } from '../benson/host.ts';
-import type { BensonStateFields } from '../benson/machine.ts';
-import type { BensonKey } from '../benson/program.ts';
+import type { BensonKey } from '../benson/key.ts';
 import type { GameState } from '../gameCore/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import type { Alternate } from '../payload/documents.ts';
@@ -64,12 +63,13 @@ export interface BensonHostSaveSnapshot extends Omit<
   readonly pendingKey: BensonKey | null;
 }
 
-export interface BensonStateSaveSnapshot extends Omit<
-  BensonStateFields,
-  'pc' | 'randomState' | 'resumeAfterTick'
-> {
+/// Legacy continuation fields remain in schema 14 for Save compatibility. Live
+/// Talk play writes no program counter, call stack or registers here.
+export interface BensonStateSaveSnapshot {
+  readonly callStack: readonly number[];
   readonly pc: number | null;
   readonly randomState: string;
+  readonly registers: readonly number[];
   readonly resumeAfterTick: number | null;
 }
 

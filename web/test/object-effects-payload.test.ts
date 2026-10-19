@@ -88,7 +88,6 @@ describe('object-effects payload', () => {
       'rooms.json',
       'endgame.json',
       'text.json',
-      'benson.json',
       'interaction.json',
       'flight.json',
       'underground.json',

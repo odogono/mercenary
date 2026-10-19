@@ -1,7 +1,6 @@
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
-import { BensonProgram } from '../src/benson/index.ts';
 import type { GameplaySession } from '../src/session/index.ts';
 import {
   SAVE_SCHEMA_VERSION,
@@ -9,14 +8,13 @@ import {
   decodeSave,
   encodeSave
 } from '../src/session/save.ts';
-import { resolveScript00Milestones } from '../src/shell/arrivalScript.ts';
+import { OPENING_MILESTONES } from '../src/shell/arrivalScript.ts';
 import {
   createWalkabout,
   requiredSettings,
   saveEnvironment
 } from '../src/shell/session.ts';
 import { OPENING } from '../src/talk/scripts.ts';
-import { TextTable } from '../src/text/index.ts';
 import { room } from '../src/world/index.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
 
@@ -26,11 +24,7 @@ const bundle = await loadPayload();
 const settings = requiredSettings(
   await Bun.file(join(repositoryRoot, 'settings.json')).text()
 );
-const program = BensonProgram.fromDocument(bundle.benson!);
-const milestones = resolveScript00Milestones(
-  program,
-  new TextTable(bundle.text!)
-);
+const milestones = OPENING_MILESTONES;
 
 const FRAME = 1 / 20;
 const CREDITS = 8;

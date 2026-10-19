@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 
-import { BensonProgram } from '../src/benson/index.ts';
+import { TextTable } from '../src/text/index.ts';
 import {
   resolveScript00Milestones,
   script00BeatOf
-} from '../src/shell/arrivalScript.ts';
-import { TextTable } from '../src/text/index.ts';
+} from './oracle/arrivalScript.ts';
+import { BensonProgram } from './oracle/index.ts';
 import { loadPayload } from './replay/artifacts.ts';
 
 const bundle = await loadPayload();

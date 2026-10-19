@@ -23,7 +23,7 @@ import type { FlightDocument } from '../payload/documents.ts';
 ///
 /// The three ported kit blocks remain joined by one presentation block owned by the Browser
 /// Shell. `bensonTunables(framesPerTick)` assembles `message` and `scripts` into the shape the
-/// interpreter takes; presentation never crosses that boundary.
+/// display takes; presentation never crosses that boundary.
 
 export const SETTINGS_FILE_NAME = 'settings.json';
 

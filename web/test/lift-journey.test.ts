@@ -1,7 +1,6 @@
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
-import { BensonProgram, BensonSession } from '../src/benson/index.ts';
 import type { UndergroundLift } from '../src/payload/documents.ts';
 import {
   GameplaySession,
@@ -21,6 +20,7 @@ import {
 import { panelViewModel } from '../src/shell/panel.ts';
 import { TextTable } from '../src/text/index.ts';
 import { World } from '../src/world/index.ts';
+import { BensonProgram, BensonSession } from './oracle/index.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
 
 const lift: UndergroundLift = {

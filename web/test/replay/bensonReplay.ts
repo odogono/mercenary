@@ -1,3 +1,9 @@
+import type { TextTable } from '../../src/text/index.ts';
+import {
+  changes,
+  type TraceObject,
+  type TraceValue
+} from '../../src/trace/index.ts';
 import {
   BensonHostState,
   BensonSession,
@@ -10,13 +16,7 @@ import {
   type BensonStep,
   type BensonTunables,
   type Instruction
-} from '../../src/benson/index.ts';
-import type { TextTable } from '../../src/text/index.ts';
-import {
-  changes,
-  type TraceObject,
-  type TraceValue
-} from '../../src/trace/index.ts';
+} from '../oracle/index.ts';
 
 /// Reconstruct the interpreter snapshot a benson Golden Trace records.
 export const sessionSnapshot = (session: BensonSession): TraceValue => ({

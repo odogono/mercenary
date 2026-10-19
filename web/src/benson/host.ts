@@ -1,9 +1,20 @@
-import {
-  bensonKeyCode,
-  type BensonKey,
-  type BensonProgram,
-  type BensonSymbol
-} from './program.ts';
+import { bensonKeyCode, type BensonKey } from './key.ts';
+
+export type BensonSymbol =
+  | {
+      readonly decimalByte: { readonly byte: number; readonly decimal: number };
+    }
+  | { readonly objectRoom: number }
+  | { readonly objectFlags: number }
+  | 'engineFlags'
+  | 'currentRoom'
+  | 'boardedCraft'
+  | 'inputKey'
+  | 'signedRegister'
+  | 'messageInterval'
+  | 'attackingShip'
+  | 'gameComplete'
+  | 'shipInbound';
 
 /// Something a Benson Script asks the host to do, which is not just a change to host state.
 export type BensonEffect =
@@ -109,7 +120,9 @@ export class BensonHostState implements BensonHostFields {
 
   /// Seeds are applied by slot index, not Map insertion order — Swift's dictionary
   /// walk is unspecified, and a JS `Map` would hide a real dependency.
-  static seeding(program: BensonProgram): BensonHostState {
+  static seeding(program: {
+    readonly decimalSeeds: Readonly<Record<string, number>>;
+  }): BensonHostState {
     const decimals = Array.from(
       { length: BensonHostState.decimalCount },
       () => 0

@@ -88,7 +88,7 @@ browser gate, because only the page loads it.
 A Replay Gate whose Golden Trace or payload file is absent **fails**. It does not skip: a
 module without a passing replay is not ported, and a gate that quietly passes when its
 evidence is missing is worse than no gate. The page also fails visibly rather than presenting
-a partial walkabout when its required flight, text, Benson, interaction, or settings document
+a partial walkabout when its required flight, text, interaction, or settings document
 is absent.
 
 ## What is here
@@ -133,20 +133,15 @@ is absent.
 - `src/interaction/` — document-backed reach, candidates, outcomes, and object-conditioned
   predicates. `attempt` / `leave` return `{ host, outcome }` rather than mutating a shared
   Host Callout.
-- `src/benson/` — the Benson interpreter: the program, the machine, the Host Callout, the
-  session that clocks it, and the message line. `BensonHostState` and `BensonState` are
-  persistent (each write a new value; ADR 0023). `BensonSession` is still a mutable owner that
-  replaces those values. The `benson` Replay Gate grades it against nine traces, including two
-  that end because the instruction limit tripped rather than because the script did. No world.
+- `src/benson/` — the live Benson Display, persistent Host Callout and shared random stream.
+  `src/talk/` runs Targ's maintained Talk Scripts (ADR 0080). The historical instruction
+  document and interpreter are kept under `test/oracle/` for Golden Trace and parity
+  comparisons; ordinary play neither loads nor serves them.
 - `src/session/` — the Gameplay Session: occupancy, the Host Callout projection, Semantic
-  Actions, `advance`, and PresentationEvents. A mutable class, like `BensonSession`. With
-  scripts, `nextRandom` comes off persistent `BensonState`; without, a session-owned stream
-  with the same seeds as Swift. The `session` Replay Gate keeps `session/opening` and
-  `session/opening-walk-to-craft` as localized diagnostics and grades the full route with
-  `session/opening-loop`: purchase, authentic reach-to-board, flight, touchdown, leaving the
-  Dart, the surface lift action, and arrival in Room 1. The focused `navigation` adapter uses
-  the same Gameplay Session replay protocol for underground setup and walking. Reach-to-board
-  is retried from the recorded Movement Intents; it is never a command the replay injects.
+  Actions, `advance`, World Events and PresentationEvents. Talk Scripts read and write through
+  its Host Callout and share its random stream with native world choices. The historical
+  `session` and `navigation` Replay Gates inject the test oracle; their recorded outcomes
+  remain comparison baselines, while Talk Scripts have player-visible outcome tests.
 - `src/shell/` — the live Browser Shell: required payload/settings composition, the browser
   Control Profile, a bounded 60 Hz fixed-step clock, and the owned WebGL2 renderer. It starts
   the opening Benson Script on the captured surface Pose, consumes only Session Snapshots for

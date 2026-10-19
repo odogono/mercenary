@@ -394,80 +394,6 @@ const token = (r: Reader, value: unknown, at: string): Doc.Token => {
   };
 };
 
-const branch = (r: Reader, value: unknown, at: string): Doc.BensonBranch => {
-  const o = asObject(r, value, at);
-  return {
-    kind: asString(r, o['kind'], `${at}.kind`),
-    target: asInt(r, o['target'], `${at}.target`)
-  };
-};
-
-const bensonInstruction = (
-  r: Reader,
-  value: unknown,
-  at: string
-): Doc.BensonInstruction => {
-  const o = asObject(r, value, at);
-  const field = <K extends keyof Doc.BensonInstruction>(
-    name: K,
-    read: (value: unknown) => NonNullable<Doc.BensonInstruction[K]>
-  ): Partial<Doc.BensonInstruction> => {
-    const parsed = optional(o[name as string], read);
-    return parsed === undefined ? {} : { [name]: parsed };
-  };
-  return {
-    op: asString(r, o['op'], `${at}.op`),
-    ...field('a', v => asInt(r, v, `${at}.a`)),
-    ...field('b', v => asInt(r, v, `${at}.b`)),
-    ...field('base', v => asInt(r, v, `${at}.base`)),
-    ...field('branchOn', v => asBool(r, v, `${at}.branchOn`)),
-    ...field('byte', v => asInt(r, v, `${at}.byte`)),
-    ...field('craft', v => asInt(r, v, `${at}.craft`)),
-    ...field('decimal', v => asInt(r, v, `${at}.decimal`)),
-    ...field('from', v => asInt(r, v, `${at}.from`)),
-    ...field('index', v => asInt(r, v, `${at}.index`)),
-    ...field('into', v => asInt(r, v, `${at}.into`)),
-    ...field('key', v => asString(r, v, `${at}.key`)),
-    ...field('mask', v => asInt(r, v, `${at}.mask`)),
-    ...field('mode', v => asString(r, v, `${at}.mode`)),
-    ...field('onTaken', v => branch(r, v, `${at}.onTaken`)),
-    ...field('register', v => asInt(r, v, `${at}.register`)),
-    ...field('slot', v => asInt(r, v, `${at}.slot`)),
-    ...field('source', v => asString(r, v, `${at}.source`)),
-    ...field('symbol', v => asString(r, v, `${at}.symbol`)),
-    ...field('target', v => asInt(r, v, `${at}.target`)),
-    ...field('ticks', v => asInt(r, v, `${at}.ticks`)),
-    ...field('to', v => asInt(r, v, `${at}.to`)),
-    ...field('tokens', v =>
-      asArray(r, v, `${at}.tokens`).map((item, i) =>
-        token(r, item, `${at}.tokens[${i}]`)
-      )
-    ),
-    ...field('value', v => asInt(r, v, `${at}.value`))
-  };
-};
-
-const benson = (r: Reader, value: unknown): Doc.BensonDocument => {
-  const o = asObject(r, value, '$');
-  return {
-    counts: intMap(r, o['counts'], 'counts'),
-    decimalSeeds: intMap(r, o['decimalSeeds'], 'decimalSeeds'),
-    framesPerTick: asInt(r, o['framesPerTick'], 'framesPerTick'),
-    instructions: asArray(r, o['instructions'], 'instructions').map((item, i) =>
-      bensonInstruction(r, item, `instructions[${i}]`)
-    ),
-    schemaVersion: asInt(r, o['schemaVersion'], 'schemaVersion'),
-    scripts: asArray(r, o['scripts'], 'scripts').map((item, i) => {
-      const at = `scripts[${i}]`;
-      const s = asObject(r, item, at);
-      return {
-        entry: asInt(r, s['entry'], `${at}.entry`),
-        id: asInt(r, s['id'], `${at}.id`)
-      };
-    })
-  };
-};
-
 const text = (r: Reader, value: unknown): Doc.TextDocument => {
   const o = asObject(r, value, '$');
   return {
@@ -2005,7 +1931,6 @@ const objectEffects = (
 };
 
 export const readers = {
-  benson,
   endgame,
   flight,
   interaction,

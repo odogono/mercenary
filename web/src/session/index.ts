@@ -1,12 +1,11 @@
 import type { BensonEffect } from '../benson/host.ts';
 import {
   BensonHostState,
-  BensonSession,
-  BensonState,
   DEFAULT_SESSION_SEED,
-  nextRandom,
+  randomByte,
   type BensonKey,
-  type BensonMessagePresentation
+  type BensonMessagePresentation,
+  type BensonPort
 } from '../benson/index.ts';
 import { blockFor, type Touchdown } from '../flight/index.ts';
 import {
@@ -692,7 +691,7 @@ export class GameplaySession {
   private residence = new Map<number, Residence>();
   private objectFlags = new Map<number, number>();
   private carriedStack: number[] = [];
-  scripts: BensonSession | undefined;
+  scripts: BensonPort | undefined;
   /// The Talk Scripts, once `useTalkScripts` has loaded them (ADR 0080).
   talk: TalkHost | undefined;
   private rewired = new Map<number, Alternate>();
@@ -733,7 +732,7 @@ export class GameplaySession {
   constructor(
     content: SessionContent,
     player: PlayerState,
-    scripts?: BensonSession,
+    scripts?: BensonPort,
     randomSeed: bigint = DEFAULT_SESSION_SEED
   ) {
     this.content = content;
@@ -858,7 +857,7 @@ export class GameplaySession {
   /// beside Benson, or loads them fresh where the Save has none.
   static restore(
     content: SessionContent,
-    scripts: BensonSession | undefined,
+    scripts: BensonPort | undefined,
     snapshot: SaveSnapshot,
     talk?: {
       readonly options?: TalkHostOptions;
@@ -874,13 +873,7 @@ export class GameplaySession {
     const restoredScripts =
       scripts === undefined || snapshot.benson === null
         ? undefined
-        : BensonSession.restore(
-            scripts.program,
-            scripts.text,
-            scripts.tunables,
-            snapshot.benson,
-            scripts.messageMode
-          );
+        : scripts.restore(snapshot.benson);
     const session = new GameplaySession(
       content,
       snapshot.game.player,
@@ -2006,13 +1999,12 @@ export class GameplaySession {
   }
 
   press(key: BensonKey | undefined): void {
-    this.scripts?.press(key);
+    this.scripts?.reference?.press(key);
   }
 
-  /// Loads Talk Scripts beside Benson, or restores them from a save, and
-  /// Benson from now on refuses the Benson Scripts they replace, stopping one
-  /// already running. They hear this session's World Events and Player
-  /// Input, and share its Benson Display.
+  /// Loads or restores the session's Talk Scripts. They hear World Events
+  /// and Player Input and share its Benson Display. A comparison oracle, when
+  /// supplied by tests, refuses the original scripts these replace.
   useTalkScripts(
     scripts: readonly TalkScript[],
     options: TalkHostOptions = {},
@@ -2025,10 +2017,12 @@ export class GameplaySession {
     this.talk = this.talking(
       () => new TalkHost(scripts, benson, options, saved)
     );
-    this.scripts.refusing = this.talk.replaces;
-    const running = this.scripts.running;
+    if (this.scripts.reference !== undefined) {
+      this.scripts.reference.refusing = this.talk.replaces;
+    }
+    const running = this.scripts.reference?.running;
     if (running !== undefined && this.talk.replaces.has(running)) {
-      this.scripts.stop();
+      this.scripts.reference?.stop();
     }
     return this.talk;
   }
@@ -2059,8 +2053,10 @@ export class GameplaySession {
     this.scripts?.skipMessage();
   }
 
+  /// Only an injected historical comparison adapter handles legacy script ids.
+  /// Live game logic is delivered through World Events.
   start(script: number): boolean {
-    return this.scripts?.start(script) ?? false;
+    return this.scripts?.reference?.start(script) ?? false;
   }
 
   show(index: number): void {
@@ -2068,7 +2064,11 @@ export class GameplaySession {
   }
 
   describe(description: Description): void {
-    this.scripts?.describe(description);
+    if (description.kind === 'message') {
+      this.show(description.index);
+    } else if (description.kind === 'script') {
+      this.start(description.id);
+    }
   }
 
   /// One frame of play. Its World Events are what was raised during it, or
@@ -2295,13 +2295,7 @@ export class GameplaySession {
           events.push({ script: effect });
         }
       } catch (error) {
-        this.scripts = BensonSession.restore(
-          this.scripts.program,
-          this.scripts.text,
-          this.scripts.tunables,
-          before,
-          this.scripts.messageMode
-        );
+        this.scripts = this.scripts.restore(before);
         this.republishHostState();
         throw error;
       }
@@ -2769,7 +2763,7 @@ export class GameplaySession {
   ///
   /// The Reference Build's loop is raster-locked at 50 a second, which is not
   /// the browser's step, so whole loops are taken out of an accumulator and the
-  /// remainder is carried — the same shape `BensonSession.advance` uses for its
+  /// remainder is carried — the same shape the display clock uses for its
   /// own frames, and for the same reason: the decoded delays are counted in
   /// loops, so running them on the browser's rate would arrive early.
   ///
@@ -2807,7 +2801,7 @@ export class GameplaySession {
   /// seed to reproduce. What matters is that the same session always reaches the
   /// same field, which taking the bytes from the scripts' own random state gives.
   private endingFieldSeed(): { state: number; value: number } {
-    const random = this.scripts?.state.randomState ?? 0n;
+    const random = this.scripts?.randomState ?? 0n;
     return {
       state: Number((random >> 8n) & 0xffn),
       value: Number(random & 0xffn)
@@ -2963,7 +2957,7 @@ export class GameplaySession {
             }
           }),
       indoor: this.indoor,
-      isScriptRunning: this.scripts?.isRunning ?? false,
+      isScriptRunning: this.scripts?.reference?.isRunning ?? false,
       location: this.location,
       ...(journey === undefined || lift === undefined || liftIndex === undefined
         ? {}
@@ -3072,8 +3066,8 @@ export class GameplaySession {
     if (this.scripts !== undefined) {
       return this.scripts.nextRandomByte() % count;
     }
-    const stepped = nextRandom(new BensonState(this.ownRandomState));
-    this.ownRandomState = stepped.state.randomState;
+    const stepped = randomByte(this.ownRandomState);
+    this.ownRandomState = stepped.state;
     return stepped.byte % count;
   }
 }

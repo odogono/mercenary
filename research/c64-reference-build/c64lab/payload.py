@@ -860,10 +860,15 @@ def export_payload(dataset: Path, output: Path, run: Path | None = None) -> dict
         "objects.json": build_objects(objects),
         "rooms.json": build_rooms(underground),
     }
+    retired_script_counts: dict[str, int] = {}
     if run is not None:
         ram, _ = load_geometry_source(run)
         documents["text.json"] = decode_text(ram)
-        documents["benson.json"] = decode_benson(ram)
+        # Keep the frozen decode trace's source census. ADR 0080 retires the
+        # program document from the live payload, not the research evidence.
+        retired_script_counts = {
+            f"benson.{key}": value for key, value in decode_benson(ram)["counts"].items()
+        }
         documents["interaction.json"] = decode_interaction(ram)
         documents["flight.json"] = decode_flight(ram)
         documents["underground.json"] = decode_underground(ram)
@@ -900,6 +905,7 @@ def export_payload(dataset: Path, output: Path, run: Path | None = None) -> dict
         "roomEdges": sum(len(room["edges"]) for room in documents["rooms.json"]["rooms"]),
         **links,
         **capture_counts(documents),
+        **retired_script_counts,
     }
     payload_manifest = {
         "schemaVersion": PAYLOAD_SCHEMA_VERSION,

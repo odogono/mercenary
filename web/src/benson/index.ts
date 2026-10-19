@@ -1,32 +1,12 @@
-export {
-  BensonError,
-  BensonKey,
-  BensonProgram,
-  bensonKeyCode,
-  parseBensonKey,
-  type BensonSymbol,
-  type Branch,
-  type Condition,
-  type Instruction,
-  type MaskMode,
-  type MessageSource
-} from './program.ts';
+export { BensonKey, bensonKeyCode, parseBensonKey } from './key.ts';
 export { BensonHostState, type BensonEffect } from './host.ts';
+export { defaultTunables, type BensonTunables } from './tuning.ts';
+export { DEFAULT_SESSION_SEED, randomByte } from './random.ts';
 export {
-  BensonMachine,
-  BensonState,
-  defaultTunables,
-  nextRandom,
-  type Advance,
-  type BensonObserver,
-  type BensonStep,
-  type BensonTunables
-} from './machine.ts';
-export {
-  BensonSession,
-  DEFAULT_SESSION_SEED,
+  BensonChannel,
+  type BensonPort,
   type BensonMessagePresentation,
   type BensonMessageMode
-} from './session.ts';
+} from './channel.ts';
 export { MessageTicker, codePointCount } from './ticker.ts';
 export { BensonDisplay, type BensonDisplayPhase } from './display.ts';
