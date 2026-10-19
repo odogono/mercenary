@@ -154,6 +154,7 @@ describe('World Events', () => {
         cell,
         faction: 'mechanoid',
         kind: 'destroyed',
+        reacting: true,
         site: sites.initialTable[cell]! & sites.lowIdMask
       }
     ]);
@@ -190,6 +191,7 @@ describe('World Events', () => {
         cell,
         faction: 'palyar',
         kind: 'destroyed',
+        reacting: false,
         site: sites.initialTable[cell]! & sites.lowIdMask
       },
       // Destroying Palyar Sites puts the Mechanoids in the player's debt.

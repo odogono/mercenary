@@ -16,11 +16,15 @@ export type WorldEvent =
       readonly cell: number;
       readonly faction: Faction;
       readonly kind: 'destroyed';
+      /// False when gratitude replaces the Faction Reaction, or it is spent.
+      readonly reacting: boolean;
       readonly site: number;
     }
   /// A faction's lead reached the Gratitude Threshold: `faction` is the one
   /// the player has helped.
   | { readonly faction: Faction; readonly kind: 'gratitude' }
+  /// The Player Projectile struck an object and put it out of the world.
+  | { readonly kind: 'struck'; readonly object: number }
   /// The hostile craft's shot reached the player.
   | { readonly aboard: boolean; readonly kind: 'hit' };
 

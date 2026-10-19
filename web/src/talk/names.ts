@@ -9,10 +9,12 @@ import type { Location } from '../world/index.ts';
 
 const ROOMS: Readonly<Record<number, string>> = {
   0: 'surface',
+  1: 'red hangar',
   102: 'mechanoid briefing',
   16: 'ship rental',
   41: 'palyar briefing',
   5: 'hangar',
+  80: 'pass store',
   // Where Benson speaks on arrival.
   159: 'bank',
   42: 'bank',
@@ -38,6 +40,7 @@ const ROOMS: Readonly<Record<number, string>> = {
 };
 
 const OBJECTS: Readonly<Record<number, string>> = {
+  0: 'brother-in-law ship',
   1: 'dart',
   12: 'captured mechanoid',
   25: 'novadrive',
@@ -60,8 +63,23 @@ const OBJECTS: Readonly<Record<number, string>> = {
 /// A Site's low id as the Site Ledger keeps it. The generic installations of
 /// each faction share one; every named Site has its own.
 const SITES: Readonly<Record<number, string>> = {
+  10: 'tyler point',
+  11: 'bosher stadium',
+  12: 'jordan airport',
+  13: 'vector henge',
+  14: 'brother-in-law house',
+  15: 'mechanoid fort',
+  16: 'coach and horses',
+  17: 'traitor site',
+  18: 'good show site',
   2: 'installation',
-  3: 'installation'
+  3: 'installation',
+  4: 'novabill',
+  5: 'authors advert',
+  6: 'sabins cube',
+  7: 'walton monument',
+  8: 'st stallards',
+  9: 'moorby arch'
 };
 
 const nameOf = (
@@ -88,6 +106,7 @@ const idOf = (
 };
 
 export const roomName = (room: number): string => nameOf(ROOMS, 'room', room);
+export const roomId = (name: string): number => idOf(ROOMS, 'room', name);
 export const locationName = (location: Location): string =>
   roomName(location.kind === 'room' ? location.id : 0);
 export const objectName = (slot: number): string =>
