@@ -319,8 +319,9 @@ describe('body-aware Object Residence', () => {
         });
       }
     }
-    // 195 placed residents on 22 Bodies: about 5 s alone, three times that in a full run.
-  }, 60_000);
+    // 195 placed residents on 22 Bodies: about 12 s alone on a laptop, and
+    // about 200 s on CI's macOS runner.
+  }, 400_000);
 });
 
 describe('a resident is exposed by its own insertion pairs', () => {
