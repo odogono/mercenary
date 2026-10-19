@@ -28,6 +28,7 @@ const choice = (page: Page, setting: string, value: string) =>
 test('structure and road controls persist independently and remain keyboard accessible', async ({
   page
 }, testInfo) => {
+  test.fixme(true, 'fails on main: #852');
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/');

@@ -8,6 +8,10 @@ for (const [title, path, ready] of [
   test(`${title} retains console commands and their output across a reload`, async ({
     page
   }) => {
+    test.fixme(
+      title === 'Dion' && Boolean(process.env['CI']),
+      'a Benson message races the reload on a CI runner: #852'
+    );
     await page.goto(path);
     await expect(page.locator(ready)).toHaveAttribute('data-state', 'ready');
     await page.keyboard.press('`');

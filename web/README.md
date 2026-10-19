@@ -7,7 +7,8 @@ been retired; its final accepted state is frozen at the annotated
 ```sh
 bun install
 bunx playwright install chromium # once, for the browser gate
-bun test                       # every ported module's Replay Gate and shell unit tests
+bun run test                   # every ported module's Replay Gate and shell unit tests, in parallel
+bun run test:timings           # refresh test-timings.json, which balances CI's unit-test shards
 bun run test:e2e               # live localhost walkabout in Chromium
 bun run typecheck              # strict checks for source, Bun tests and Playwright
 bun run dev                    # http://localhost:5173

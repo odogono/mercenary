@@ -21,6 +21,7 @@ import {
 import { damoclesDocuments } from './damocles-documents.ts';
 import { arrivalPoses } from './damocles-pose.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
+import { onRecordingLibm } from './replay/platform.ts';
 
 /// The Damocles Enhanced frame at every switchable arrival Pose, by day and by night, on foot
 /// and with whole structures aboard, pinned by digest. A change to the shared Enhanced planner
@@ -130,12 +131,15 @@ const frames = (): Record<string, string> => {
 };
 
 describe('the Damocles Enhanced frame', () => {
-  test('is unchanged at every arrival Pose', async () => {
-    const found = frames();
-    expect(Object.keys(found).length).toBeGreaterThan(0);
-    if (process.env['UPDATE_ENHANCED_SNAPSHOT'] === '1') {
-      await Bun.write(FIXTURE, `${JSON.stringify(found, null, 2)}\n`);
+  test.skipIf(!onRecordingLibm)(
+    'is unchanged at every arrival Pose',
+    async () => {
+      const found = frames();
+      expect(Object.keys(found).length).toBeGreaterThan(0);
+      if (process.env['UPDATE_ENHANCED_SNAPSHOT'] === '1') {
+        await Bun.write(FIXTURE, `${JSON.stringify(found, null, 2)}\n`);
+      }
+      expect(found).toEqual(await Bun.file(FIXTURE).json());
     }
-    expect(found).toEqual(await Bun.file(FIXTURE).json());
-  });
+  );
 });

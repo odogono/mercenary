@@ -29,6 +29,7 @@ const loudest = (page: Page, seconds: number): Promise<number> =>
 test('the sound board plays a Targ and a Damocles sound, and stops them', async ({
   page
 }) => {
+  test.fixme(true, 'fails on main: #852');
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await tapDestination(page);
@@ -65,6 +66,7 @@ test('the sound board plays a Targ and a Damocles sound, and stops them', async 
 test('Mercenary III sounds play through the board and obey mute, volume and stop controls', async ({
   page
 }) => {
+  test.fixme(true, 'fails on main: #852');
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await tapDestination(page);

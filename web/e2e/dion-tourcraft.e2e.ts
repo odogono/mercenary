@@ -115,6 +115,7 @@ test('production keyboard journey, flight Save/Load and reload Resume through au
   page
 }, info) => {
   test.setTimeout(180_000);
+  test.fixme(Boolean(process.env['CI']), 'too slow on a CI runner: #852');
   await page.addInitScript(() => {
     let time = 0,
       next = 0;

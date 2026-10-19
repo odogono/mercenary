@@ -1,0 +1,39 @@
+name: E2E
+
+# Nightly rather than on every PR: the suite takes over half an hour on a
+# two-core runner. Run it locally with `PORT=<free port> bun run test:e2e`,
+# or start this workflow by hand.
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  # A runner has two cores, so Playwright runs one worker: four shards keep
+  # each under the timeout.
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.3
+      - run: bun install --frozen-lockfile
+      - run: bunx playwright install --with-deps chromium
+      - run: bun run test:e2e --shard=${{ matrix.shard }}/4
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.shard }}
+          path: |
+            web/playwright-report
+            web/test-results
+          retention-days: 7
