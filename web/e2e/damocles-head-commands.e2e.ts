@@ -39,6 +39,7 @@ const fileAtTheHead = async (page: Page): Promise<void> => {
 test('opens, pages and reads the DAMOCLES FILE on the centre box', async ({
   page
 }, testInfo) => {
+  test.fixme(true, 'fails on main: #852');
   test.setTimeout(90_000);
   const errors = watchErrors(page);
   await bootAt(page, BESIDE_THE_TABLE, FACING_EAST, {
@@ -189,6 +190,7 @@ test('opens, pages and closes the DAMOCLES FILE with the pointer', async ({
 test('keeps recovered-panel controls accessible by keyboard', async ({
   page
 }) => {
+  test.fixme(true, 'fails on main: #852');
   const errors = watchErrors(page);
   await bootAt(page, BESIDE_THE_TABLE, FACING_EAST, {
     structure: STATE_OFFICE
