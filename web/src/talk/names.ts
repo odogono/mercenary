@@ -17,7 +17,7 @@ const ROOMS: Readonly<Record<number, string>> = {
 
 const OBJECTS: Readonly<Record<number, string>> = {
   1: 'dart',
-  12: 'colony craft',
+  12: 'captured mechanoid',
   25: 'novadrive',
   30: 'antenna',
   46: 'pass',

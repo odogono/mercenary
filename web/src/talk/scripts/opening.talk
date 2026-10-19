@@ -13,10 +13,10 @@ script variable heard = false
 
 on begin
   -- Boarding or taking these starts their own Benson Scripts: the Dart's
-  -- owner, the ship's launch, and the colony craft's protest.
+  -- owner, the ship's launch, and the captured Mechanoid's protest.
   ask world to arm "dart"
   ask world to arm "ship"
-  ask world to arm "colony craft"
+  ask world to arm "captured mechanoid"
   wait 4 s
   show "CRASH IMMINENT," and wait
   clear and wait
