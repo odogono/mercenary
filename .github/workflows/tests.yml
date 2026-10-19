@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: true
 
 # Neither job needs Restricted Material: the tests read the tracked Data
-# Payload and Golden Traces.
+# Payload and Golden Traces. The e2e tests run nightly, in e2e.yml.
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -45,31 +45,3 @@ jobs:
           bun-version: 1.4.2
       - run: bun install --frozen-lockfile
       - run: bun run test:quiet
-  # A runner has two cores, so Playwright runs one worker: four shards keep
-  # each under the timeout.
-  e2e:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [1, 2, 3, 4]
-    defaults:
-      run:
-        working-directory: web
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.4.2
-      - run: bun install --frozen-lockfile
-      - run: bunx playwright install --with-deps chromium
-      - run: bun run test:e2e --shard=${{ matrix.shard }}/4
-      - if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report-${{ matrix.shard }}
-          path: |
-            web/playwright-report
-            web/test-results
-          retention-days: 7
