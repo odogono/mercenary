@@ -1,0 +1,85 @@
+-- Commerce: hiring the ship, the Dart's owner, and the captured Mechanoid.
+-- Ported from Benson Scripts 1, 2 and 12 (payload/benson.json, instructions
+-- 77-94, 110-131 and 261-296).
+--
+-- Waits keep today's pace: a Benson tick is 1/6 s at scripts.timeScale 6.
+
+use show, clear, report, prompt from benson
+
+constant fee = 999999
+
+-- Benson Script 2: the ship rental's communication room. The antenna has to
+-- be here, set up or carried in.
+on entered room where room = "ship rental"
+  show "COMMUNICATION ROOM" and wait
+  if not antennaHere() then
+    show "NOT WORKING" and wait
+    clear and wait
+    return
+  end if
+  report ["MESSAGE FROM", "HERTZ SPACESHIP RENTAL", "SHIP FOR HIRE 999999 CR"] and wait
+  -- Five Benson ticks to answer. The original kept the answer in engine flag
+  -- 1, which is also the opening's "bought the Dart"; this one keeps it here.
+  prompt "DO YOU WANT TO HIRE?" and wait
+  wait for
+    when pressed key where key = "Y" then
+    after 833 ms then
+      report ["OK PLEASE CALL AGAIN", "MESSAGE ENDS"] and wait
+      clear and wait
+      return
+  end wait
+  -- The original asks for a million, though the ship costs 999999.
+  ask world to credits
+  if it < 1000000 then
+    report ["INSUFFICIENT FUNDS", "YOU HAVE " & it & " CREDITS", "MESSAGE ENDS"] and wait
+    clear and wait
+    return
+  end if
+  ask world to spend fee
+  report ["SHIP DESPATCHED", "IT WILL LAND", "AT LOC 8-8 IN 2 MINS"] and wait
+  ask world to sendShip
+  ask world to setFlag "shipHired"
+end entered
+
+function antennaHere
+  ask world to lies "antenna"
+  if it is "ship rental" then return true
+  ask world to carries "antenna"
+  return it
+end antennaHere
+
+-- Benson Script 1: the Dart's first boarding. A buyer gets a job offer once
+-- they leave the surface, or sooner by chance; a thief gets the owner.
+on boarded craft where craft = "dart"
+  ask world to armed "dart"
+  if not it then return
+  ask world to disarm "dart"
+  ask world to flag "dartBought"
+  if not it then
+    report ["THIS CRAFT BELONGED TO", "THE PALYAR COMMANDER'S", "BROTHER-IN-LAW", "HE IS NOT TOO PLEASED"] and wait
+    ask world to setFlag "commanderAnnoyed"
+    show "PALYAR SHIP ATTACKING" and wait
+    ask world to sendAttacker
+    clear and wait
+    return
+  end if
+  -- Every 15 ticks, an 81 in 256 chance; leaving the surface makes it certain.
+  repeat forever
+    wait 2500 ms
+    ask world to roll 256
+    if it <= 81 then exit repeat
+    ask world to here
+    if it is not "surface" then exit repeat
+  end repeat
+  report ["MESSAGE FROM PALYARS", "- - - JOB OFFER - - -", "FOR MORE INFORMATION", "GO TO THE BRIEFING ROOM", "IN COMPLEX AT LOC O9-O6", "MESSAGE ENDS"] and wait
+  clear and wait
+end boarded
+
+-- Benson Script 12: at every taking of the captured Mechanoid.
+on took item where item = "captured mechanoid"
+  ask world to armed item
+  if not it then return
+  wait 167 ms
+  report ["MECHANOID", "THE MECHANOID DEMANDS", "THAT YOU PUT HIM DOWN"] and wait
+  clear and wait
+end took

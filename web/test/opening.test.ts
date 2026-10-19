@@ -211,6 +211,7 @@ describe('the opening', () => {
 
   test('saves under the Talk Script bound after ten minutes of calling out', () => {
     const session = newGame();
+    const fresh = session.captureSaveSnapshot().talk!.group.length;
     afterLine(session, 'WHERE ARE YOU');
     advance(session, 600);
     const environment = saveEnvironment(bundle, settings);
@@ -222,6 +223,9 @@ describe('the opening', () => {
       snapshot: session.captureSaveSnapshot()
     });
     const talk = decodeSave(saved, environment).snapshot.talk!;
-    expect(talk.group.length).toBeLessThan(SAVE_TALK_CODE_UNIT_LIMIT / 4);
+    // A Save carries every Talk Script's code, so its size is mostly what is
+    // loaded; waiting adds little to it.
+    expect(talk.group.length - fresh).toBeLessThan(4096);
+    expect(talk.group.length).toBeLessThan(SAVE_TALK_CODE_UNIT_LIMIT / 2);
   });
 });

@@ -84,6 +84,10 @@ const CREDITS = BensonHostState.firstNumberDecimal;
 const STARTS_SCRIPT = 4;
 /// An object's flag bits a delivery sets: paid for, and fixed where it lies.
 const DELIVERED = 1;
+/// The bits the Dart's Benson Script clears on its object at first boarding.
+const DISARMED = STARTS_SCRIPT | 8;
+/// What Benson Script 2 writes to start the Ship Delivery.
+const SHIP_INBOUND = 0xff;
 const FIXED = 16;
 const ADVERT_BLOCK = 50;
 const MICROS = 1_000_000;
@@ -479,6 +483,21 @@ export class TalkHost {
         },
         mode: 'immediate'
       },
+      armed: {
+        args: [shape.text],
+        cost: { fuel: 1 },
+        description:
+          'Whether boarding or taking the object starts its own Benson Script.',
+        do: (_call, item) =>
+          bool(
+            ((this.benson.host.objectFlags.get(objectSlot(item.asText()!)) ??
+              0) &
+              STARTS_SCRIPT) !==
+              0
+          ),
+        mode: 'immediate',
+        result: shape.bool
+      },
       boarded: {
         cost: { fuel: 1 },
         description: 'The craft the player is in, or nothing on foot.',
@@ -540,6 +559,21 @@ export class TalkHost {
           ),
         mode: 'immediate',
         result: shape.bool
+      },
+      disarm: {
+        args: [shape.text],
+        cost: { fuel: 1 },
+        description:
+          "Clears the object's bits 4 and 8, as the Dart's Benson Script does: boarding it starts nothing more.",
+        do: (_call, item) => {
+          const slot = objectSlot(item.asText()!);
+          this.benson.host = this.benson.host.withObjectFlag(
+            slot,
+            (this.benson.host.objectFlags.get(slot) ?? 0) & ~DISARMED & 0xff
+          );
+          return nothing;
+        },
+        mode: 'immediate'
       },
       escape: {
         cost: { fuel: 1 },
@@ -603,6 +637,12 @@ export class TalkHost {
         cost: { fuel: 1 },
         description: 'Sends a hostile ship after the player.',
         do: () => this.write({ attackingShip: true }),
+        mode: 'immediate'
+      },
+      sendShip: {
+        cost: { fuel: 1 },
+        description: 'Starts the Ship Delivery: the hired ship lands at 8-8.',
+        do: () => this.write({ shipInbound: SHIP_INBOUND }),
         mode: 'immediate'
       },
       setFlag: {
