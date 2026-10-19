@@ -1,0 +1,86 @@
+-- Deliveries: the Palyars and the Mechanoids pay for what the player brings
+-- to their Rooms. Ported from Benson Scripts 3-6, 9, 14-20 and 22-25
+-- (payload/benson.json, instructions 327-410), one row each.
+
+use show, clear, report from benson
+
+-- Each Room, what it wants, and what it pays. The headings and titles are the
+-- lines Benson shows. The Mechanoids take nothing while their captured leader
+-- is away from the briefing room.
+constant deliveries = [
+  {room: "engine room", heading: "ENGINE ROOM", item: "neutron fuel", title: "NEUTRON FUEL", reward: 200000, mechanoids: false},
+  {room: "conference room", heading: "CONFERENCE ROOM", item: "essential supply", title: "ESSENTIAL 12939 SUPPLY", reward: 50000, mechanoids: false},
+  {room: "exchequer", heading: "EXCHEQUER", item: "gold", title: "GOLD", reward: 100000, mechanoids: false},
+  {room: "kitchen", heading: "KITCHEN", item: "catering provisions", title: "CATERING PROVISIONS", reward: 60000, mechanoids: false},
+  {room: "infirmary", heading: "INFIRMARY", item: "medical supplies", title: "MEDICAL SUPPLIES", reward: 40000, mechanoids: false},
+  {room: "power room", heading: "POWER ROOM", item: "energy crystal", title: "ENERGY CRYSTAL", reward: 100000, mechanoids: false},
+  {room: "stores", heading: "STORES", item: "large box", title: "LARGE BOX", reward: 35000, mechanoids: false},
+  {room: "armoury", heading: "ARMOURY", item: "useful armament", title: "USEFUL ARMAMENT", reward: 65000, mechanoids: false},
+  {room: "laboratory", heading: "LABORATORY", item: "winchester", title: "WINCHESTER", reward: 100000, mechanoids: false},
+  {room: "control room", heading: "CONTROL ROOM", item: "databank", title: "DATABANK", reward: 100000, mechanoids: false},
+  {room: "interview room", heading: "INTERVIEW ROOM", item: "captured mechanoid", title: "MECHANOID", reward: 250000, mechanoids: false},
+  {room: "mechanoid fuel stores", heading: "MECHANOID FUEL STORES", item: "neutron fuel", title: "NEUTRON FUEL", reward: 250000, mechanoids: true},
+  {room: "mechanoid power room", heading: "MECHANOID POWER ROOM", item: "energy crystal", title: "ENERGY CRYSTAL", reward: 100000, mechanoids: true},
+  {room: "mechanoid stores", heading: "MECHANOID STORES", item: "large box", title: "LARGE BOX", reward: 80000, mechanoids: true},
+  {room: "mechanoid armoury", heading: "MECHANOID ARMOURY", item: "useful armament", title: "USEFUL ARMAMENT", reward: 120000, mechanoids: true},
+  {room: "mechanoid laboratory", heading: "MECHANOID LABORATORY", item: "winchester", title: "WINCHESTER", reward: 250000, mechanoids: true}
+]
+
+on entered room
+  repeat for each delivery in deliveries
+    if the room of delivery = room then
+      receive delivery and wait
+      return
+    end if
+  end repeat
+end entered
+
+on receive delivery
+  put the room of delivery into room
+  put the item of delivery into item
+  put the reward of delivery into reward
+  show the heading of delivery and wait
+  if the mechanoids of delivery then
+    ask world to lies "captured mechanoid"
+    if it is not "mechanoid briefing" then
+      report ["THE MECHANOIDS SAY", "PUT BACK OUR LEADER"] and wait
+      clear and wait
+      return
+    end if
+  end if
+  -- An object is paid for once, to whichever faction has it first.
+  ask world to delivered item
+  if it then
+    clear and wait
+    return
+  end if
+  ask world to carries item
+  put it into carried
+  ask world to lies item
+  if not carried and it is not room then
+    clear and wait
+    return
+  end if
+  report ["PLEASE LEAVE", the title of delivery, "HERE FOR " & reward & " REWARD"] and wait
+  -- Benson waits for the object to lie here, or for the player to go.
+  repeat forever
+    ask world to lies item
+    if it is room then
+      ask world to deliver item
+      ask world to pay reward
+      ask world to credits
+      report [reward & " CREDITS PAID", "YOU HAVE " & it & " CREDITS"] and wait
+      clear and wait
+      return
+    end if
+    ask world to here
+    if it is not room then
+      clear and wait
+      return
+    end if
+    wait for
+      when dropped thing then
+      when entered place then
+    end wait
+  end repeat
+end receive
