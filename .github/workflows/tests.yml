@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 1.4.2
+          bun-version: 1.4.3
       - run: bun install --frozen-lockfile
       - run: bun run typecheck
       - run: bun run typecheck:research
@@ -29,9 +29,14 @@ jobs:
       - run: bun run format:check
       - run: bun run test:tools
   # The few tests that assert Apple's libm bit-for-bit (ADR 0022) skip here;
-  # see test/replay/platform.ts.
+  # see test/replay/platform.ts. Four shards, balanced by test-timings.json,
+  # keep each job to a few minutes.
   unit:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     defaults:
       run:
         working-directory: web
@@ -42,6 +47,6 @@ jobs:
           fetch-depth: 0
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: 1.4.2
+          bun-version: 1.4.3
       - run: bun install --frozen-lockfile
-      - run: bun run test:quiet
+      - run: bun run test:quiet --shard=${{ matrix.shard }}/4
