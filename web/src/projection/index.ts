@@ -9,6 +9,7 @@ import {
   objectSegments,
   placedAtResidence,
   room,
+  type Polygon,
   type Residence,
   type RoadWorkspace,
   type Segment,
@@ -535,12 +536,13 @@ const append = <T>(into: T[], source: readonly T[]): void => {
   }
 };
 
-/// What the renderer should draw this frame: line segments plus any objects reduced to a
+/// What the renderer should draw this frame: faces, line segments and objects reduced to a
 /// single point by the detail rule.
 export interface Visible {
   readonly detailedObjects: number;
   /// Surface Structure segments outside the occupied Surface Cell, drawn as distance.
   readonly distant: readonly DistantSegment[];
+  readonly faces?: readonly Polygon[];
   /// Origins of objects outside the detail cube, drawn as points.
   readonly points: readonly Vector3[];
   /// Map Lines and the ground-level black road edges embedded in Surface Structures.
@@ -638,6 +640,7 @@ export const visible = (
   const distant: DistantSegment[] = [];
   const segments: Segment[] = [];
   const points: Vector3[] = [];
+  const faces: Polygon[] = [];
   let detailedObjects = 0;
 
   // Underground the Reference Build draws one room and nothing else: no cell ring, no roads,
@@ -666,6 +669,7 @@ export const visible = (
           : placedAtResidence(world, object, where, location);
       if (isDetailed(placed, position)) {
         append(segments, objectSegments(placed));
+        append(faces, placed.faces ?? []);
         detailedObjects += 1;
       } else if (
         placed.drawsFarAsPoint &&
@@ -688,7 +692,13 @@ export const visible = (
       append(segments, here.segments);
     }
     appendObjects(room(options.room));
-    return { detailedObjects, distant, points, segments };
+    return {
+      detailedObjects,
+      distant,
+      ...(faces.length === 0 ? {} : { faces }),
+      points,
+      segments
+    };
   }
 
   const roadSegments = new Set<Segment>();
@@ -747,6 +757,13 @@ export const visible = (
         const selected = cell
           .segments(elapsed, workspace)
           .map(segment => translateSegment(segment, dx, dz));
+        append(
+          faces,
+          cell.faces(elapsed).map(face => ({
+            ...face,
+            vertices: face.vertices.map(point => translatePoint(point, dx, dz))
+          }))
+        );
         if (rules.reach === 'all' && !isOccupied) {
           const distance = Math.hypot(
             cell.centre.x + dx - position.x,
@@ -786,7 +803,14 @@ export const visible = (
   append(segments, roads);
   appendObjects(SURFACE);
 
-  return { detailedObjects, distant, points, roadSegments, segments };
+  return {
+    detailedObjects,
+    distant,
+    ...(faces.length === 0 ? {} : { faces }),
+    points,
+    roadSegments,
+    segments
+  };
 };
 
 /// Everything one Pose resolves to: near and distant lines, in pipeline order, and Far Points.

@@ -1,3 +1,4 @@
+import type { Colour, GeometryAsset, Vertex } from '../geometry/contract.ts';
 import { composeObjects, composeSurface } from '../geometry/targ.ts';
 import { OUT_OF_THE_WORLD, SURFACE_ROOM } from '../interaction/index.ts';
 import { cos, sin, toFloat32 } from '../math/index.ts';
@@ -37,6 +38,39 @@ export interface Segment {
   readonly b: Vector3;
   readonly ink: Ink;
 }
+
+/// A Geometry Asset face in world space. Explicit lines remain a separate drawing pass.
+export interface Polygon {
+  readonly colour?: Colour;
+  readonly doubleSided?: true;
+  readonly vertices: readonly Vector3[];
+}
+
+/// Resolve stable identities within each drawable part; walking geometry never enters the view.
+const assetFaces = (
+  asset: GeometryAsset,
+  transform: (vertex: Vertex) => Vector3
+): Polygon[] =>
+  asset.parts
+    .filter(part => part.role !== 'walk' && part.faces.length > 0)
+    .flatMap(part => {
+      const points = new Map(
+        part.vertices.map(vertex => [vertex.id, transform(vertex)])
+      );
+      return part.faces.map(face => ({
+        ...(face.colour === undefined ? {} : { colour: face.colour }),
+        ...(face.doubleSided === undefined
+          ? {}
+          : { doubleSided: face.doubleSided }),
+        vertices: face.loop.map(id => points.get(id)!)
+      }));
+    });
+
+const mapFaces = (
+  faces: readonly Polygon[],
+  transform: (point: Vector3) => Vector3
+): Polygon[] =>
+  faces.map(face => ({ ...face, vertices: face.vertices.map(transform) }));
 
 /// The occupied Surface Cell's two road runs in the four point slots the Reference Build
 /// reserves for them: road 0's end and start, then road 1's end and start.
@@ -134,6 +168,7 @@ export interface ObjectPlacement {
   readonly detailCube: number;
   readonly drawsFarAsPoint: boolean;
   readonly edges: readonly (readonly [number, number])[];
+  readonly faces?: readonly Polygon[];
   readonly id: string;
   readonly model: string;
   readonly orientation: Orientation;
@@ -236,6 +271,13 @@ export const movedTo = (
   return {
     ...object,
     origin: destination,
+    ...(object.faces === undefined
+      ? {}
+      : {
+          faces: mapFaces(object.faces, v =>
+            vector(v.x + dx, v.y + dy, v.z + dz)
+          )
+        }),
     vertices: object.vertices.map(v => vector(v.x + dx, v.y + dy, v.z + dz))
   };
 };
@@ -255,17 +297,21 @@ const turnedToHeading = (
   const angle = heading - craftHeading(object);
   const sine = sin(angle);
   const cosine = cos(angle);
+  const turn = (vertex: Vector3): Vector3 => {
+    const x = vertex.x - object.origin.x;
+    const z = vertex.z - object.origin.z;
+    return vector(
+      object.origin.x + z * sine + x * cosine,
+      vertex.y,
+      object.origin.z + z * cosine - x * sine
+    );
+  };
   return {
     ...object,
-    vertices: object.vertices.map(vertex => {
-      const x = vertex.x - object.origin.x;
-      const z = vertex.z - object.origin.z;
-      return vector(
-        object.origin.x + z * sine + x * cosine,
-        vertex.y,
-        object.origin.z + z * cosine - x * sine
-      );
-    })
+    ...(object.faces === undefined
+      ? {}
+      : { faces: mapFaces(object.faces, turn) }),
+    vertices: object.vertices.map(turn)
   };
 };
 
@@ -359,8 +405,10 @@ export class WorldCell {
   private readonly vertices: readonly SurfaceVertex[];
   private readonly edges: readonly SurfaceEdge[];
   private readonly rotation: SurfaceRotation | undefined;
+  private readonly asset: GeometryAsset | undefined;
 
   constructor(fields: {
+    asset?: GeometryAsset;
     centre: Vector3;
     column: number;
     edges: readonly SurfaceEdge[];
@@ -370,6 +418,7 @@ export class WorldCell {
     structure: string | undefined;
     vertices: readonly SurfaceVertex[];
   }) {
+    this.asset = fields.asset;
     this.index = fields.index;
     this.column = fields.column;
     this.row = fields.row;
@@ -396,6 +445,19 @@ export class WorldCell {
         this.vertices[edge.start] === undefined ||
         this.vertices[edge.end] === undefined
     ).length;
+  }
+
+  /// Faces use the same live rotation as the cell's lines, with no Road Workspace index limit.
+  faces(elapsed: number): Polygon[] {
+    return this.asset === undefined
+      ? []
+      : assetFaces(this.asset, vertex =>
+          vertex.runtime === undefined
+            ? point(vertex.co)
+            : this.rotation === undefined
+              ? ZERO
+              : resolveRotation(this.rotation, vertex.runtime.input, elapsed)
+        );
   }
 
   /// Resolve runtime-rotated and Road Workspace points and return the cell's wireframe.
@@ -515,9 +577,11 @@ const placements = (
   groundExtent: number
 ): ObjectPlacement[] => {
   const models = new Map<string, Doc.Model>();
+  const assets = new Map<string, GeometryAsset>();
   const document = composeObjects(bundle.objects);
-  for (const model of document.models) {
+  for (const [i, model] of document.models.entries()) {
     models.set(model.id, model);
+    assets.set(model.id, bundle.objects.models[i]!.asset);
   }
 
   const out: ObjectPlacement[] = [];
@@ -564,7 +628,16 @@ const placements = (
       }
     }
 
+    const faces = assetFaces(assets.get(model.id)!, vertex => {
+      const v = apply(orientation, point(vertex.co));
+      return vector(
+        v.x + origin.x,
+        v.y - groundingOffset + origin.y,
+        v.z + origin.z
+      );
+    });
     out.push({
+      ...(faces.length === 0 ? {} : { faces }),
       detailCube: toFloat32(instance.visibility.detailCubePerAxis),
       drawsFarAsPoint: instance.visibility.farRepresentation === 'point',
       edges,
@@ -625,7 +698,7 @@ export class World {
     const cells: WorldCell[] = [];
     const byGrid = new Map<number, number>();
     const surface = composeSurface(bundle.surface);
-    for (const cell of surface.cells) {
+    for (const [i, cell] of surface.cells.entries()) {
       const { column, row } = cellGrid(cell, cellsPerAxis);
       const vertices: SurfaceVertex[] = cell.vertices.map(vertex => {
         if (vertex.kind === 'world-point' && vertex.position !== undefined) {
@@ -649,6 +722,7 @@ export class World {
       byGrid.set(row * cellsPerAxis + column, cells.length);
       cells.push(
         new WorldCell({
+          asset: bundle.surface.cells[i]!.asset,
           centre: vector((column + 0.5) * cellSize, 0, (row + 0.5) * cellSize),
           column,
           edges,

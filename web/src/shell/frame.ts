@@ -4,6 +4,7 @@ import {
   ReferenceViewport,
   leanTransform,
   projectFrame,
+  referenceViewportBounds,
   transformed,
   viewportCentre,
   viewportScale,
@@ -36,6 +37,7 @@ import {
 } from '../sky/frame.ts';
 import { skyStateAt, type TargOrrery } from '../sky/index.ts';
 import { Ink, type World } from '../world/index.ts';
+import { faceBatches } from './faces.ts';
 
 /// The owned WebGL2 renderer has no scene graph, engine or runtime dependency (ADR 0019).
 ///
@@ -459,7 +461,7 @@ const stripVertices = (size: Size, parity: 0 | 1): Float32Array => {
   return new Float32Array(vertices);
 };
 
-type DrawMode = 'lines' | 'points' | 'triangles';
+type DrawMode = 'faces' | 'lines' | 'points' | 'triangles';
 
 /// How thickly to draw wireframe lines, and how much halo they carry.
 ///
@@ -814,6 +816,7 @@ export const planFrame = (
   // entering a cell changes which side of its wireframe the roads are drawn on.
   addLineBatch(batches, roadBlackInk, ScenePalette.blackInk, 'roads');
   addLineBatch(batches, roadWhiteInk, ScenePalette.whiteInk, 'roads');
+  batches.push(...faceBatches(seen.faces ?? [], camera, size));
   for (const [channel, lines] of [...distantWhiteInk].sort(
     ([left], [right]) => left - right
   )) {
@@ -891,6 +894,13 @@ export class Renderer {
   private readonly gl: WebGL2RenderingContext;
   private readonly ink: WebGLUniformLocation | null;
   private inkPass: InkPipeline | undefined;
+  private facePass:
+    | {
+        readonly ink: WebGLUniformLocation | null;
+        readonly program: WebGLProgram;
+        readonly vertex: number;
+      }
+    | undefined;
   /// The orrery this renderer was built with, readable so a caller planning its own frame plans
   /// it against the same sky (ADR 0025).
   readonly orrery: TargOrrery | undefined;
@@ -929,6 +939,7 @@ export class Renderer {
 
   private pass(batch: DrawBatch): void {
     const modes: Record<DrawMode, number> = {
+      faces: this.gl.TRIANGLES,
       lines: this.gl.LINES,
       points: this.gl.POINTS,
       triangles: this.gl.TRIANGLES
@@ -943,6 +954,51 @@ export class Renderer {
       this.gl.STREAM_DRAW
     );
     this.gl.drawArrays(modes[batch.mode], 0, batch.vertices.length / 2);
+  }
+
+  /// Filled faces share one depth buffer. Explicit wireframe lines are painted over the fill.
+  private faces(batch: DrawBatch, size: Size): void {
+    const gl = this.gl;
+    if (this.facePass === undefined) {
+      const program = linked(
+        gl,
+        `#version 300 es
+in vec4 vertex;
+void main() { gl_Position = vertex; }`,
+        FRAGMENT_SHADER
+      );
+      this.facePass = {
+        ink: gl.getUniformLocation(program, 'ink'),
+        program,
+        vertex: gl.getAttribLocation(program, 'vertex')
+      };
+    }
+    const pass = this.facePass;
+    const bounds = referenceViewportBounds(size);
+    const sx = this.canvas.width / size.width;
+    const sy = this.canvas.height / size.height;
+    gl.enable(gl.SCISSOR_TEST);
+    gl.scissor(
+      Math.round(bounds.x * sx),
+      Math.round((size.height - bounds.y - bounds.height) * sy),
+      Math.round(bounds.width * sx),
+      Math.round(bounds.height * sy)
+    );
+    gl.useProgram(pass.program);
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthFunc(gl.LEQUAL);
+    gl.uniform3f(pass.ink, ...channels(batch.colour));
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.sceneBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, batch.vertices, gl.STREAM_DRAW);
+    gl.enableVertexAttribArray(pass.vertex);
+    gl.vertexAttribPointer(pass.vertex, 4, gl.FLOAT, false, 0, 0);
+    gl.drawArrays(gl.TRIANGLES, 0, batch.vertices.length / 4);
+    gl.disableVertexAttribArray(pass.vertex);
+    gl.disable(gl.DEPTH_TEST);
+    gl.disable(gl.SCISSOR_TEST);
+    gl.useProgram(this.program);
+    gl.enableVertexAttribArray(this.pixel);
+    gl.vertexAttribPointer(this.pixel, 2, gl.FLOAT, false, 0, 0);
   }
 
   /// Draw one line batch through the expanded-quad pipeline.
@@ -1185,7 +1241,7 @@ export class Renderer {
     gl.lineWidth(1);
 
     gl.clearColor(...channels(plan.clear), 1);
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     if (plan.sky !== undefined) {
       this.skyPass(plan.sky, plan.size);
       gl.uniform2f(this.viewport, plan.size.width, plan.size.height);
@@ -1202,7 +1258,11 @@ export class Renderer {
           plan.glowDistance ?? DEFAULT_GLOW_DISTANCE
         );
       } else {
-        this.pass(batch);
+        if (batch.mode === 'faces') {
+          this.faces(batch, plan.size);
+        } else {
+          this.pass(batch);
+        }
       }
     }
     // Hardware-style overlays are deliberately outside both scene and Enhanced
