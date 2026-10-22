@@ -25,8 +25,9 @@ import {
 } from 'node:fs';
 import { join } from 'node:path';
 
-import { canonicalJson, sha256 } from '../../src/geometrySpike/contract.ts';
+import { canonicalJson } from '../../src/geometry/contract.ts';
 import { compare } from '../../src/geometrySpike/diff.ts';
+import { sha256 } from '../../src/hash/index.ts';
 import { ASSETS, OUT, ROOT, readGeometry, say } from './paths.ts';
 import { runBlender } from './roundtrip.ts';
 
@@ -108,13 +109,18 @@ mesh.vertices[6] = [-60, 30, -10]; // what the asset authored: converged
 mesh.faces[0] = { ...mesh.faces[0], colour: '#aa8866', sourceColour: 1347 }; // the asset chose otherwise: conflict
 writeFileSync(modelPath, `${JSON.stringify(file, null, 2)}\n`);
 
-const hashes = () =>
+const hashes = async () =>
   Object.fromEntries(
-    readdirSync(asset)
-      .sort()
-      .map(name => [name, sha256(readFileSync(join(asset, name)))])
+    await Promise.all(
+      readdirSync(asset)
+        .sort()
+        .map(async name => [
+          name,
+          await sha256(readFileSync(join(asset, name)))
+        ])
+    )
   );
-const before = hashes();
+const before = await hashes();
 const cli = (...args: string[]) =>
   Bun.spawnSync(['bun', join(import.meta.dir, 'cli.ts'), ...args], {
     stderr: 'pipe',
@@ -137,7 +143,7 @@ const baseline = cli(
 if (baseline.exitCode !== 0) {
   throw new Error(baseline.stderr.toString());
 }
-const after = hashes();
+const after = await hashes();
 const untouched = canonicalJson(before) === canonicalJson(after);
 
 // The edited asset is the .blend; export it again rather than trusting an earlier export.

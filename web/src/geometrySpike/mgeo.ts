@@ -15,7 +15,7 @@ import {
   type PartRole,
   type Title,
   type Vertex
-} from './contract.ts';
+} from '../geometry/contract.ts';
 
 const ROLES: readonly PartRole[] = [
   'attachment',

@@ -1,6 +1,6 @@
 """The #671 geometry contract in Python: canonical JSON, hashing and structural validation.
 
-Mirrors web/src/geometrySpike/contract.ts and compose.ts `checkAsset`. Pure Python, no bpy, so
+Mirrors web/src/geometry/contract.ts and compose.ts `checkAsset`. Pure Python, no bpy, so
 the same checks run inside Blender and from a plain interpreter.
 """
 

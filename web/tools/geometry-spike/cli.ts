@@ -25,10 +25,11 @@ import {
   recoverDamoclesModel,
   recoverTargObjectModel,
   recoverTargRoom
-} from '../../src/geometrySpike/baseline.ts';
-import { compose } from '../../src/geometrySpike/compose.ts';
-import { canonicalJson, sha256 } from '../../src/geometrySpike/contract.ts';
+} from '../../src/geometry/baseline.ts';
+import { checkSidecarHash, compose } from '../../src/geometry/compose.ts';
+import { canonicalJson } from '../../src/geometry/contract.ts';
 import { compare, semanticDiff } from '../../src/geometrySpike/diff.ts';
+import { sha256 } from '../../src/hash/index.ts';
 import { FIXTURES } from './fixtures.ts';
 import {
   ASSETS,
@@ -101,7 +102,7 @@ const adopt = (args: string[]) => {
   say(`adopted ${slug} into ${relative(ROOT, to)}`);
 };
 
-const sweep = () => {
+const sweep = async () => {
   const failures = new Map<string, string[]>();
   let ok = 0;
   const directory = join(ROOT, 'payload/damocles/models');
@@ -111,10 +112,10 @@ const sweep = () => {
     const text = readFileSync(join(directory, name), 'utf8');
     const source = JSON.parse(text) as Record<string, unknown>;
     try {
-      const recovered = recoverDamoclesModel(source, {
+      const recovered = await recoverDamoclesModel(source, {
         document,
         path: '$',
-        sha256: sha256(text)
+        sha256: await sha256(text)
       });
       const { record } = compose(recovered.asset, recovered.sidecar);
       if (canonicalJson(record) !== canonicalJson(source)) {
@@ -146,7 +147,7 @@ const sweep = () => {
     readFileSync(join(ROOT, 'payload/objects.json'), 'utf8')
   ) as { models: Record<string, unknown>[] };
   for (const model of objects.models) {
-    const r = recoverTargObjectModel(model, {
+    const r = await recoverTargObjectModel(model, {
       document: 'objects.json',
       path: '',
       sha256: ''
@@ -161,7 +162,7 @@ const sweep = () => {
     readFileSync(join(ROOT, 'payload/rooms.json'), 'utf8')
   ) as { rooms: Record<string, unknown>[] };
   for (const room of rooms.rooms) {
-    const r = recoverTargRoom(room, {
+    const r = await recoverTargRoom(room, {
       document: 'rooms.json',
       path: '',
       sha256: ''
@@ -203,11 +204,13 @@ const main = async ([command, ...args]: string[]) => {
       process.stdout.write(canonicalJson(readGeometry(resolve(args[0]!))));
       break;
     case 'compose': {
-      const { diagnostics, record } = compose(
-        readGeometry(resolve(args[0]!)),
-        readSidecar(resolve(args[1]!))
-      );
-      for (const d of diagnostics) {
+      const asset = readGeometry(resolve(args[0]!));
+      const sidecar = readSidecar(resolve(args[1]!));
+      const { diagnostics, record } = compose(asset, sidecar);
+      for (const d of [
+        ...diagnostics,
+        ...(await checkSidecarHash(asset, sidecar))
+      ]) {
         complain(`${d.severity}: ${d.site}: ${d.message}`);
       }
       process.stdout.write(canonicalJson(record));
@@ -243,7 +246,7 @@ const main = async ([command, ...args]: string[]) => {
       break;
     }
     case 'sweep':
-      sweep();
+      await sweep();
       break;
     default:
       complain(

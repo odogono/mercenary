@@ -2,18 +2,18 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
-import { recoverDamoclesModel } from '../src/geometrySpike/baseline.ts';
+import { recoverDamoclesModel } from '../src/geometry/baseline.ts';
 import {
   checkAsset,
   compose,
   composeValidated
-} from '../src/geometrySpike/compose.ts';
+} from '../src/geometry/compose.ts';
 import {
   canonicalJson,
   type GeometryAsset,
   type Part,
   type Sidecar
-} from '../src/geometrySpike/contract.ts';
+} from '../src/geometry/contract.ts';
 import {
   compare,
   loopChange,
@@ -51,7 +51,7 @@ const move = (a: GeometryAsset, id: number, y: number) =>
     )
   }));
 
-const damoclesFile = (id: string) => {
+const damoclesFile = async (id: string) => {
   const document = `damocles/models/${id}.json`;
   return recoverDamoclesModel(
     JSON.parse(readFileSync(join(payload, document), 'utf8')),
@@ -94,7 +94,7 @@ describe('#671 references', () => {
     expect(record.model.structureSelection.regions[0]!.queue[20]!.index).toBe(
       0
     );
-    const positional = damoclesFile('structure-00fc7e-at-3x3-detail-40');
+    const positional = await damoclesFile('structure-00fc7e-at-3x3-detail-40');
     expect(positional.sidecar.references.length).toBeGreaterThan(0);
     for (const reference of positional.sidecar.references) {
       expect(reference.target.kind).toBe('face');
@@ -180,8 +180,8 @@ describe('#671 references', () => {
     );
   });
 
-  test('a positional attachment-face reference follows its face, and refuses its deletion', () => {
-    const { asset, sidecar } = damoclesFile(
+  test('a positional attachment-face reference follows its face, and refuses its deletion', async () => {
+    const { asset, sidecar } = await damoclesFile(
       'structure-00fc7e-at-3x3-detail-40'
     );
     const queue = (asset: GeometryAsset) =>
@@ -215,7 +215,7 @@ describe('#671 references', () => {
     expect(queue(kept).map(e => e.index)).toEqual([0, 5]);
   });
 
-  test('unresolved baseline records survive but do not exempt a different missing number', () => {
+  test('unresolved baseline records survive but do not exempt a different missing number', async () => {
     const file = JSON.parse(
       readFileSync(join(payload, 'damocles/models/object-03f774.json'), 'utf8')
     );
@@ -223,7 +223,7 @@ describe('#671 references', () => {
     file.model.detailSelection = [
       { boxes: [{ records: [999, 0] }], default: [999] }
     ];
-    const { asset, sidecar } = recoverDamoclesModel(file, {
+    const { asset, sidecar } = await recoverDamoclesModel(file, {
       document: 'fixture',
       path: '$',
       sha256: ''
@@ -249,8 +249,8 @@ describe('#671 references', () => {
     );
   });
 
-  test('queue, wall-text and floor-label references report every site, including a shared positional target', () => {
-    const { asset, sidecar } = damoclesFile('object-03f774');
+  test('queue, wall-text and floor-label references report every site, including a shared positional target', async () => {
+    const { asset, sidecar } = await damoclesFile('object-03f774');
     const record = sidecar.record as { model: Record<string, unknown> };
     record.model['structureSelection'] = {
       floorLabels: [{ face: { index: 999, kind: 'face' } }],
@@ -282,7 +282,7 @@ describe('#671 references', () => {
     expect(errors.at(-1)!.message).toContain('remap ref 0');
   });
 
-  test('detail source records must resolve in every display variant, including lines', () => {
+  test('detail source records must resolve in every display variant, including lines', async () => {
     const file = JSON.parse(
       readFileSync(join(payload, 'damocles/models/object-03f774.json'), 'utf8')
     );
@@ -296,7 +296,7 @@ describe('#671 references', () => {
     file.model.detailSelection = [
       { boxes: [{ records: [999] }], default: [999] }
     ];
-    const { asset, sidecar } = recoverDamoclesModel(file, {
+    const { asset, sidecar } = await recoverDamoclesModel(file, {
       document: 'fixture',
       path: '$',
       sha256: ''
@@ -318,14 +318,14 @@ describe('#671 references', () => {
     ]);
   });
 
-  test('an unresolved positional baseline keeps its number without hiding other missing faces', () => {
+  test('an unresolved positional baseline keeps its number without hiding other missing faces', async () => {
     const document = 'damocles/models/structure-00fc7e-at-3x3-detail-40.json';
     const file = JSON.parse(readFileSync(join(payload, document), 'utf8'));
     const queue = file.model.structureSelection.regions[3].queue;
     queue.find(
       (entry: { kind: string }) => entry.kind === 'attachmentFace'
     ).index = 999;
-    const { asset, sidecar } = recoverDamoclesModel(file, {
+    const { asset, sidecar } = await recoverDamoclesModel(file, {
       document,
       path: '$',
       sha256: ''
@@ -343,8 +343,8 @@ describe('#671 references', () => {
     );
   });
 
-  test('missing positional table entries are refused at their record site', () => {
-    const { asset, sidecar } = damoclesFile(
+  test('missing positional table entries are refused at their record site', async () => {
+    const { asset, sidecar } = await damoclesFile(
       'structure-00fc7e-at-3x3-detail-40'
     );
     expect(() => compose(asset, { ...sidecar, references: [] })).toThrow(

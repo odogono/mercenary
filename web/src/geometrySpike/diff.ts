@@ -9,7 +9,7 @@ import {
   type Line,
   type Part,
   type Sidecar
-} from './contract.ts';
+} from '../geometry/contract.ts';
 
 const colourText = (colour: Colour | undefined) =>
   colour === undefined

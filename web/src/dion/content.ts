@@ -1,3 +1,4 @@
+import { sha256 } from '../hash/index.ts';
 import type { PayloadDocument } from '../shell/title.ts';
 import {
   DION_DOCUMENTS,
@@ -54,15 +55,7 @@ const labelled = <T>(pathname: string, read: () => T): T => {
 
 export const contentIdentity = async (
   texts: readonly string[]
-): Promise<string> => {
-  const digest = await crypto.subtle.digest(
-    'SHA-256',
-    new TextEncoder().encode(texts.join('\u0000'))
-  );
-  return Array.from(new Uint8Array(digest), b =>
-    b.toString(16).padStart(2, '0')
-  ).join('');
-};
+): Promise<string> => sha256(texts.join('\u0000'));
 
 /// Read the six payload documents and the authored presentation, refusing any that
 /// belong to another Title or baseline, or that came from a different capture.

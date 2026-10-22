@@ -11,7 +11,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import type { Model } from '../../src/catalogue/data.ts';
-import { canonicalJson } from '../../src/geometrySpike/contract.ts';
+import { canonicalJson } from '../../src/geometry/contract.ts';
 import { semanticDiff } from '../../src/geometrySpike/diff.ts';
 import { ASSETS, OUT, readGeometry, readSidecar, say } from './paths.ts';
 import {

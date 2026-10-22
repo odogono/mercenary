@@ -18,15 +18,14 @@ import {
 import {
   checkAsset,
   checkReferences,
-  checkSidecarHash,
   compose,
   composeValidated
-} from '../../src/geometrySpike/compose.ts';
+} from '../../src/geometry/compose.ts';
 import {
   canonicalJson,
   type GeometryAsset,
   type Sidecar
-} from '../../src/geometrySpike/contract.ts';
+} from '../../src/geometry/contract.ts';
 import { decodeGlb } from '../../src/geometrySpike/glb.ts';
 import { decodeMgeo } from '../../src/geometrySpike/mgeo.ts';
 import { FIXTURES, sourceRecord } from './fixtures.ts';
@@ -177,7 +176,14 @@ const sidecarParse = median(
   1000
 );
 const sidecarHash = median(
-  () => prepared.forEach(c => checkSidecarHash(c.asset, c.sidecar)),
+  // Bun's synchronous hasher, so the median times the canonical digest and not the event loop.
+  () =>
+    prepared.forEach(
+      c =>
+        new Bun.CryptoHasher('sha256')
+          .update(canonicalJson(c.sidecar))
+          .digest('hex') === c.asset.sidecarSha256
+    ),
   1000
 );
 const references = median(

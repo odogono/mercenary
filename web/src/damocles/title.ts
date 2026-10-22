@@ -1,5 +1,6 @@
 import { CATALOGUE_PATH, parseCatalogueDocument } from '../catalogue/data.ts';
 import { ModelStore } from '../catalogue/modelStore.ts';
+import { sha256 } from '../hash/index.ts';
 import type { PanelViewModel } from '../shell/panel.ts';
 import { titleStorageKeys, type TitleRuntime } from '../shell/title.ts';
 import { parseDamoclesDocuments } from './documentBank.ts';
@@ -28,15 +29,7 @@ export const ERIS_PRESENTATION_PATH = '/damocles/eris.json';
 /// one such document; the array is the seam along which the others join (#344).
 export const presentationIdentity = async (
   texts: readonly string[]
-): Promise<string> => {
-  const digest = await crypto.subtle.digest(
-    'SHA-256',
-    new TextEncoder().encode(texts.join('\u0000'))
-  );
-  return Array.from(new Uint8Array(digest), byte =>
-    byte.toString(16).padStart(2, '0')
-  ).join('');
-};
+): Promise<string> => sha256(texts.join('\u0000'));
 
 const labelled = <T>(pathname: string, read: () => T): T => {
   try {

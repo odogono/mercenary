@@ -1,8 +1,4 @@
-/// The logical contract both #671 candidates carry: what a geometry asset must hold so that an
-/// untouched round trip through Blender is exact and an edit stays reviewable.
-///
-/// Spike-only. Nothing in the live Gameplay Session, the Catalogue reader or the extractor imports
-/// this module (#671 keeps the spike isolated from production loading).
+/// The shared Geometry Asset and Asset Sidecar schema (ADR 0081).
 ///
 /// Coordinates are the payload's own integer game units in the payload's own axes. Identities are
 /// integers, unique within a part and per element kind; vertices and external endpoints share one
@@ -145,7 +141,7 @@ export interface Sidecar {
 export type Family =
   'damocles-model' | 'targ-object-model' | 'targ-room' | 'targ-surface-cell';
 
-/// Deterministic JSON: sorted keys, two-space indent, trailing newline. The form every spike
+/// Deterministic JSON: sorted keys, two-space indent, trailing newline. The form every canonical
 /// artifact is written in and every hash is taken over.
 export const canonicalJson = (value: unknown): string =>
   `${JSON.stringify(sortKeys(value), null, 2)}\n`;
@@ -163,6 +159,3 @@ const sortKeys = (value: unknown): unknown => {
   }
   return value;
 };
-
-export const sha256 = (text: string | Uint8Array): string =>
-  new Bun.CryptoHasher('sha256').update(text).digest('hex');

@@ -10,8 +10,9 @@ import {
   recoverTargSurfaceCell,
   type Recovered,
   type SurfaceDisplay
-} from '../../src/geometrySpike/baseline.ts';
-import { sha256, type Point3 } from '../../src/geometrySpike/contract.ts';
+} from '../../src/geometry/baseline.ts';
+import type { Point3 } from '../../src/geometry/contract.ts';
+import { sha256 } from '../../src/hash/index.ts';
 import { load } from '../../src/payload/load.ts';
 import { Ink, World, WorldCell } from '../../src/world/index.ts';
 
@@ -26,16 +27,16 @@ export interface Fixture {
   readonly slug: string;
 }
 
-const read = (payload: string, document: string) => {
+const read = async (payload: string, document: string) => {
   const text = readFileSync(join(payload, document), 'utf8');
-  return { json: JSON.parse(text) as Json, sha256: sha256(text) };
+  return { json: JSON.parse(text) as Json, sha256: await sha256(text) };
 };
 
 const damocles = (slug: string, id: string, coverage: string): Fixture => ({
   coverage,
-  recover: payload => {
+  recover: async payload => {
     const document = `damocles/models/${id}.json`;
-    const { json, sha256: hash } = read(payload, document);
+    const { json, sha256: hash } = await read(payload, document);
     return recoverDamoclesModel(json, { document, path: '$', sha256: hash });
   },
   slug
@@ -86,8 +87,8 @@ const surfaceDisplay = async (
 export const FIXTURES: readonly Fixture[] = [
   {
     coverage: 'Wireframe object and loose edges',
-    recover: payload => {
-      const { json, sha256: hash } = read(payload, 'objects.json');
+    recover: async payload => {
+      const { json, sha256: hash } = await read(payload, 'objects.json');
       const models = json['models'] as Json[];
       const index = models.findIndex(m => m['id'] === 'object-model:1700');
       return recoverTargObjectModel(models[index]!, {
@@ -101,7 +102,7 @@ export const FIXTURES: readonly Fixture[] = [
   {
     coverage: 'Structure, runtime rotation, external endpoint references',
     recover: async payload => {
-      const { json, sha256: hash } = read(payload, 'surface.json');
+      const { json, sha256: hash } = await read(payload, 'surface.json');
       const cells = json['cells'] as Json[];
       const index = cells.findIndex(c => c['cell'] === 1);
       return recoverTargSurfaceCell(
@@ -114,8 +115,8 @@ export const FIXTURES: readonly Fixture[] = [
   },
   {
     coverage: 'Room wireframe alongside doorway metadata',
-    recover: payload => {
-      const { json, sha256: hash } = read(payload, 'rooms.json');
+    recover: async payload => {
+      const { json, sha256: hash } = await read(payload, 'rooms.json');
       const rooms = json['rooms'] as Json[];
       const index = rooms.findIndex(r => r['room'] === 0);
       return recoverTargRoom(rooms[index]!, {
@@ -159,7 +160,9 @@ export const sourceRecord = (
   recovered: Recovered
 ): unknown => {
   const { document, path } = recovered.sidecar.source;
-  let value: unknown = read(payload, document).json;
+  let value: unknown = JSON.parse(
+    readFileSync(join(payload, document), 'utf8')
+  );
   for (const [, key, index] of path.matchAll(/\.(\w+)\[(\d+)]/g)) {
     value = (value as Json)[key!] as unknown[];
     value = (value as unknown[])[Number(index)];

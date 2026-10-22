@@ -9,7 +9,7 @@ import type {
   GeometryAsset,
   Line,
   Part
-} from './contract.ts';
+} from '../geometry/contract.ts';
 import { MalformedGeometry } from './mgeo.ts';
 
 export const EXTENSION = 'MERCENARY_geometry';

@@ -6,13 +6,13 @@ import {
   type Catalogue,
   type Model
 } from '../catalogue/data.ts';
-import type * as Doc from '../payload/documents.ts';
-import { compose } from './compose.ts';
+import { compose } from '../geometry/compose.ts';
 import {
   CONTRACT_FORMAT,
   type GeometryAsset,
   type Sidecar
-} from './contract.ts';
+} from '../geometry/contract.ts';
+import type * as Doc from '../payload/documents.ts';
 import { decodeGlb } from './glb.ts';
 import { MalformedGeometry, decodeMgeo } from './mgeo.ts';
 
@@ -48,12 +48,6 @@ export const damoclesModel = (
   sidecar: Sidecar,
   catalogue: Catalogue
 ): Model => parseModelFile(compose(asset, sidecar).record, catalogue);
-
-export const targObjectModel = (asset: GeometryAsset, sidecar: Sidecar) =>
-  compose(asset, sidecar).record as Doc.Model;
-
-export const targSurfaceCell = (asset: GeometryAsset, sidecar: Sidecar) =>
-  compose(asset, sidecar).record as Doc.SurfaceCell;
 
 export const targRoom = (asset: GeometryAsset, sidecar: Sidecar) =>
   compose(asset, sidecar).record as Doc.RoomDocument;

@@ -3,14 +3,11 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
+import type { GeometryAsset, Sidecar } from '../../src/geometry/contract.ts';
 import {
   candidateOf,
   decodeCandidate
 } from '../../src/geometrySpike/adapter.ts';
-import type {
-  GeometryAsset,
-  Sidecar
-} from '../../src/geometrySpike/contract.ts';
 
 const findRoot = (): string => {
   let directory = import.meta.dir;

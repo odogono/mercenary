@@ -8,6 +8,8 @@
 /// carries its provenance and hashes of the PNG and the mark. It
 /// is presentation only (ADR 0063).
 
+import { sha256 } from '../hash/index.ts';
+
 export interface TargTitleLogo {
   /// The ST colour word of the mark.
   readonly colour: number;
@@ -89,11 +91,6 @@ export const readTargTitleLogo = (value: unknown): TargTitleLogo => {
   };
 };
 
-const hexDigest = async (bytes: ArrayBuffer): Promise<string> =>
-  [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))]
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
-
 /// An ST shows three bits a gun.
 const gun = (word: number, shift: number): number =>
   Math.round((((word >> shift) & 7) * 255) / 7);
@@ -122,7 +119,7 @@ export const checkTargTitleLogo = async (
       }
     }
   }
-  if ((await hexDigest(bits.buffer)) !== logo.markSha256) {
+  if ((await sha256(bits.buffer)) !== logo.markSha256) {
     throw new Error(`${where} is not the mark title.json hashes`);
   }
 };
@@ -149,7 +146,7 @@ export const checkTitleLogoFile = async (
   bytes: ArrayBuffer,
   where: string
 ): Promise<void> => {
-  if ((await hexDigest(bytes)) !== logo.pngSha256) {
+  if ((await sha256(bytes)) !== logo.pngSha256) {
     throw new Error(`${where} is not the PNG title.json hashes`);
   }
 };

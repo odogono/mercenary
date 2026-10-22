@@ -1,12 +1,11 @@
-/// Recover a geometry asset and its sidecar from one payload record: the "fresh recovered
-/// baseline" #671 compares an edited asset against. It reads the payload as the extractor left it
+/// Recover a Geometry Asset and Asset Sidecar from one payload record (ADR 0081). It reads the payload as the extractor left it
 /// and writes nowhere; the caller chooses where the baseline lands, and never over an asset.
 
+import { sha256 } from '../hash/index.ts';
 import {
   CONTRACT_FORMAT,
   CONTRACT_VERSION,
   canonicalJson,
-  sha256,
   type Colour,
   type External,
   type Face,
@@ -103,7 +102,7 @@ const damoclesPart = (
     }
     if (!MESH_PASSTHROUGH.has(key)) {
       throw new UnsupportedGeometry(
-        `${id}: mesh field '${key}' is not modelled by the spike contract`
+        `${id}: mesh field '${key}' is not modelled by the Geometry Asset contract`
       );
     }
     placeholder[key] = value;
@@ -427,7 +426,7 @@ export interface Source {
   readonly sha256: string;
 }
 
-const finish = (
+const finish = async (
   builder: Builder,
   asset: string,
   title: Title,
@@ -435,7 +434,7 @@ const finish = (
   record: unknown,
   source: Source,
   extra: Json = {}
-): Recovered => {
+): Promise<Recovered> => {
   const unresolved: Record<string, number[]> = {};
   for (const { target } of referenceSites(record)) {
     if (target?.kind === 'record' && !resolves(builder.parts, target)) {
@@ -464,7 +463,7 @@ const finish = (
       asset,
       format: CONTRACT_FORMAT,
       parts: builder.parts,
-      sidecarSha256: sha256(canonicalJson(sidecar)),
+      sidecarSha256: await sha256(canonicalJson(sidecar)),
       title,
       version: CONTRACT_VERSION
     },
@@ -472,7 +471,10 @@ const finish = (
   };
 };
 
-export const recoverDamoclesModel = (file: Json, source: Source): Recovered => {
+export const recoverDamoclesModel = (
+  file: Json,
+  source: Source
+): Promise<Recovered> => {
   const builder = new Builder();
   const model = file['model'] as Json;
   const record = { ...file, model: damoclesRecord(builder, model) };
@@ -489,7 +491,7 @@ export const recoverDamoclesModel = (file: Json, source: Source): Recovered => {
 export const recoverTargObjectModel = (
   model: Json,
   source: Source
-): Recovered => {
+): Promise<Recovered> => {
   const builder = new Builder();
   targWireframe(
     builder,
@@ -510,7 +512,10 @@ export const recoverTargObjectModel = (
   );
 };
 
-export const recoverTargRoom = (room: Json, source: Source): Recovered => {
+export const recoverTargRoom = (
+  room: Json,
+  source: Source
+): Promise<Recovered> => {
   const builder = new Builder();
   targWireframe(
     builder,
@@ -536,7 +541,7 @@ export const recoverTargSurfaceCell = (
   cell: Json,
   source: Source,
   display: SurfaceDisplay
-): Recovered => {
+): Promise<Recovered> => {
   const builder = new Builder();
   targSurfaceCell(builder, cell, display);
   return finish(

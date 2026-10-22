@@ -1,3 +1,4 @@
+import { sha256 } from '../hash/index.ts';
 import { DocumentStore, atDocument } from '../payload/documentStore.ts';
 import { DION_PROGRAM_SHA256 } from './documents.ts';
 import {
@@ -856,13 +857,7 @@ export const readGeometryFile = async (
   const content = Object.fromEntries(
     Object.entries(g).filter(([k]) => k !== 'sha256')
   );
-  const hash = new Uint8Array(
-    await crypto.subtle.digest(
-      'SHA-256',
-      new TextEncoder().encode(canonical(content))
-    )
-  );
-  const digest = [...hash].map(v => v.toString(16).padStart(2, '0')).join('');
+  const digest = await sha256(canonical(content));
   same(digest, expected.sha256, `${path}.geometry.sha256`);
   return g as unknown as CatalogueGeometry;
 };
