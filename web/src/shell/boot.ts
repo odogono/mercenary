@@ -87,6 +87,7 @@ const VIEWPORT = { height: 800, width: 1280 } as const;
 
 const surface = document.getElementById('game-surface')!;
 const chrome = installShellChrome(surface, {
+  assetsLabel: 'Asset browser',
   catalogueLabel: 'Damocles catalogue',
   logo: { name: 'MERCENARY', typeface: 'mercenary' },
   menuTitle: 'BENSON G9-ST SYSTEM',

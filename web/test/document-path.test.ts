@@ -35,6 +35,10 @@ describe('the Browser Shell document path', () => {
       document: 'atlas',
       kind: 'document'
     });
+    expect(resolveDocumentPath('/targ/assets')).toEqual({
+      document: 'targ-assets',
+      kind: 'document'
+    });
     expect(resolveDocumentPath('/targ/debug')).toEqual({
       document: 'flyover',
       kind: 'document',
@@ -51,6 +55,8 @@ describe('the Browser Shell document path', () => {
     for (const [path, pathname] of [
       ['/index.html', '/'],
       ['/targ/', '/targ'],
+      ['/targ/assets/', '/targ/assets'],
+      ['/targ-assets.html', '/targ/assets'],
       ['/damocles/', '/damocles'],
       ['/dion/', '/dion'],
       ['/catalogue.html', '/catalogue'],

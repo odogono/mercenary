@@ -13,7 +13,8 @@ import {
   type Point,
   type Rect,
   type ScreenLine,
-  type Size
+  type Size,
+  type Visible
 } from '../projection/index.ts';
 import {
   IndoorBackdrop,
@@ -903,6 +904,43 @@ export const planFrame = (
     points: projected.points.length,
     size,
     ...(sky === undefined ? {} : { sky })
+  };
+};
+
+/// One model's faces and lines from an inspection camera, with no world, sky or ground: what the
+/// Targ Asset Browser previews, through the same projection, fill and ink passes as play.
+export const planInspection = (
+  camera: Camera,
+  seen: Pick<Visible, 'faces' | 'segments'>,
+  size: Size
+): FramePlan => {
+  const projected = projectFrame(
+    camera,
+    { ...seen, detailedObjects: 0, distant: [], points: [] },
+    size
+  );
+  const batches: DrawBatch[] = [];
+  const faceFill = faceBatch(seen.faces, camera, size);
+  addLineBatch(
+    batches,
+    projected.lines.filter(line => line.ink === Ink.black),
+    ScenePalette.blackInk
+  );
+  addLineBatch(
+    batches,
+    projected.lines.filter(line => line.ink !== Ink.black),
+    ScenePalette.whiteInk
+  );
+  return {
+    batches,
+    clear: ScenePalette.sky,
+    ...(faceFill === undefined
+      ? {}
+      : { faces: { batch: faceFill, before: 0 } }),
+    lines: projected.lines.length,
+    overlays: [],
+    points: 0,
+    size
   };
 };
 

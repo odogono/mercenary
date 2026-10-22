@@ -719,6 +719,10 @@ _Avoid_: Mod, Extension, Departure, Recovery Correction
 A Geometry Asset with no Recovered Baseline, created for the modern port rather than recovered from a game; everything in it is a Creative Change.
 _Avoid_: Custom model, new model, mod
 
+**Targ Asset Browser**:
+The sessionless page that lists every Targ object model and structure as the game draws it (recovered, edited or authored) with its Geometry Identity and placements, so an author can find what to edit. It is not a Catalogue: it carries no Coverage Ledger or evidence.
+_Avoid_: Targ Catalogue, model list
+
 **Change Ledger**:
 The per-asset record classifying every authored change, by element identity, as a Recovery Correction or a Creative Change; an authored change it does not classify fails review.
 _Avoid_: Changelog, edit history
