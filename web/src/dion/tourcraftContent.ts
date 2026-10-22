@@ -1,4 +1,5 @@
 import type { CraftArithmetic } from '../craft/pass.ts';
+import { sha256 } from '../hash/index.ts';
 import type { PayloadDocument } from '../shell/title.ts';
 import type { CatalogueGeometry } from './catalogue.ts';
 import { readDionContent, type DionContent } from './content.ts';
@@ -187,15 +188,8 @@ const canonical = (value: unknown): string => {
     c => String.raw`\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`
   );
 };
-const digest = async (data: Uint8Array): Promise<string> => {
-  const result = await crypto.subtle.digest('SHA-256', new Uint8Array(data));
-  return [...new Uint8Array(result)]
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('');
-};
 const utf8 = (text: string): Uint8Array => new TextEncoder().encode(text);
-const recordDigest = (v: unknown): Promise<string> =>
-  digest(utf8(canonical(v)));
+const recordDigest = (v: unknown): Promise<string> => sha256(canonical(v));
 
 /// Cross-language golden encoding: domain, then u32be path length/path,
 /// u64be exact UTF-8 document length/bytes for each path in the manifest's order.
@@ -219,7 +213,7 @@ export const tourcraftContentIdentity = async (
     data.set(chunk, offset);
     offset += chunk.length;
   }
-  return digest(data);
+  return sha256(data);
 };
 
 const parse = (d: PayloadDocument, at: string): Row => {
@@ -598,7 +592,7 @@ export const loadTourcraftContent = async (
       }
       const document = await fetch(path);
       same(
-        await digest(utf8(document.text)),
+        await sha256(document.text),
         sha(entry['sha256'], `${path}.sha256`),
         `${path}.sha256`
       );

@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import { load } from '../src/payload/load.ts';
 import { readers } from '../src/payload/read.ts';
-import { loadPayload } from './replay/artifacts.ts';
+import { loadPayload, readPayloadFile } from './replay/artifacts.ts';
 
 describe('object-effects payload', () => {
   test('is required, independently versioned, and names the functional Sights slot', async () => {
@@ -95,13 +95,7 @@ describe('object-effects payload', () => {
       'object-effects.json'
     ];
     for (const name of names) {
-      const key = name
-        .replace('.json', '')
-        .replace('-effects', 'Effects') as keyof typeof payload;
-      const value = name === 'manifest.json' ? payload.manifest : payload[key];
-      if (value !== undefined) {
-        bodies.set(name, JSON.stringify(value));
-      }
+      bodies.set(name, await readPayloadFile(name));
     }
     await expect(
       load(async name =>

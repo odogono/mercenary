@@ -2,9 +2,9 @@
 /// renderers take. An untouched asset composes to its source record exactly; an edited one
 /// composes only once every reference that resolved at baseline still resolves.
 
+import { sha256 } from '../hash/index.ts';
 import {
   canonicalJson,
-  sha256,
   type Colour,
   type Face,
   type GeometryAsset,
@@ -45,7 +45,7 @@ const referenceValue = (asset: GeometryAsset, reference: Reference): number => {
 };
 
 /// Structural checks every candidate's reader runs before composing: identities are unique,
-/// primitives name elements that exist, and the sidecar is the one the geometry was linked to.
+/// primitives name elements that exist, and the sidecar names the same asset.
 export const checkAsset = (
   asset: GeometryAsset,
   sidecar: Sidecar
@@ -66,7 +66,6 @@ export const checkAsset = (
       `geometry is ${asset.asset} but sidecar is ${sidecar.asset}`
     );
   }
-  out.push(...checkSidecarHash(asset, sidecar));
   const seenParts = new Set<string>();
   for (const part of asset.parts) {
     const site = (s: string) => `${part.id}${s}`;
@@ -139,22 +138,6 @@ export const checkAsset = (
     }
   }
   out.push(...checkReferences(asset, sidecar));
-  return out;
-};
-
-export const checkSidecarHash = (
-  asset: GeometryAsset,
-  sidecar: Sidecar
-): Diagnostic[] => {
-  const out: Diagnostic[] = [];
-  const expected = sha256(canonicalJson(sidecar));
-  if (asset.sidecarSha256 !== expected) {
-    out.push({
-      message: `geometry was linked to sidecar ${asset.sidecarSha256.slice(0, 12)}…, this sidecar is ${expected.slice(0, 12)}… (re-export after editing the sidecar)`,
-      severity: 'warning',
-      site: 'sidecarSha256'
-    });
-  }
   return out;
 };
 
@@ -358,6 +341,23 @@ const fill = (
       fill(asset, sidecar, item, diagnostics)
     ])
   );
+};
+
+/// A warning when the asset was exported against a different sidecar than the one beside it.
+export const checkSidecarHash = async (
+  asset: GeometryAsset,
+  sidecar: Sidecar
+): Promise<Diagnostic[]> => {
+  const expected = await sha256(canonicalJson(sidecar));
+  return asset.sidecarSha256 === expected
+    ? []
+    : [
+        {
+          message: `geometry was linked to sidecar ${asset.sidecarSha256.slice(0, 12)}…, this sidecar is ${expected.slice(0, 12)}… (re-export after editing the sidecar)`,
+          severity: 'warning',
+          site: 'sidecarSha256'
+        }
+      ];
 };
 
 /// The payload record, or a rejection listing every actionable error.

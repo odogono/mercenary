@@ -1,3 +1,4 @@
+import { composeObjects, composeSurface } from '../geometry/targ.ts';
 import { OUT_OF_THE_WORLD, SURFACE_ROOM } from '../interaction/index.ts';
 import { cos, sin, toFloat32 } from '../math/index.ts';
 import {
@@ -10,6 +11,13 @@ import {
 } from '../orientation/index.ts';
 import type * as Doc from '../payload/documents.ts';
 import { wrapSurfaceAxis } from './surfaceCoordinates.ts';
+import {
+  cellGrid,
+  resolveRotation,
+  surfaceRotation,
+  vector,
+  type SurfaceRotation
+} from './surfaceGeometry.ts';
 
 /// The render-ready world, derived from a payload Bundle.
 ///
@@ -113,12 +121,6 @@ export const locationFromHost = (value: number): Location =>
 export const sameLocation = (a: Location, b: Location): boolean =>
   a.kind === b.kind &&
   (a.kind !== 'room' || b.kind !== 'room' || a.id === b.id);
-
-const vector = (x: number, y: number, z: number): Vector3 => ({
-  x: toFloat32(x),
-  y: toFloat32(y),
-  z: toFloat32(z)
-});
 
 const ZERO: Vector3 = { x: 0, y: 0, z: 0 };
 
@@ -344,49 +346,6 @@ interface SurfaceEdge {
   readonly start: number;
 }
 
-/// The Reference Build advances a structure's phase once per completed geometry frame, which at
-/// cell 8:8 is approximately every ten PAL frames.
-const REFERENCE_FRAMES_PER_SECOND = 5;
-/// Its sine routine uses the low byte within a quadrant and the low two bits of the high byte to
-/// select the four quadrants: one turn is therefore `$0400`.
-const ANGLE_UNITS_PER_TURN = 1024;
-
-const signedByte = (value: number): number =>
-  (value & 0x80) === 0 ? value & 0xff : (value & 0xff) - 0x1_00;
-
-interface SurfaceRotation {
-  readonly centre: { readonly x: number; readonly y: number };
-  readonly descriptor: number;
-}
-
-const resolveRotation = (
-  rotation: SurfaceRotation,
-  input: readonly [number, number, number],
-  elapsed: number
-): Vector3 => {
-  const step = (rotation.descriptor & 0xf0) >> 1;
-  // The original advanced the phase in whole steps once per geometry frame, about five times a
-  // second, which at sixty frames a second reads as a stutter rather than a spin. The rate is
-  // the decoded one; letting the phase run continuously between its steps is a presentation
-  // adaptation that keeps the recovered motion smooth at the browser's display rate.
-  const phase = Math.max(0, elapsed) * REFERENCE_FRAMES_PER_SECOND;
-  const angle = ((phase * step) / ANGLE_UNITS_PER_TURN) * (2 * Math.PI);
-  // SETUP_STRUCTURE_POINTERS passes the source byte to `BIT24_TO_FP` as the high byte of a
-  // twenty-four bit value, so the float it gets back is the byte shifted left sixteen; it then
-  // subtracts $28 from the exponent byte, which is ten powers of two. That leaves a signed ×64
-  // displacement, a quarter of the middle-byte unit the surface's own points are placed in. Only
-  // the independently stored Y byte is in that middle-byte (×256) unit itself.
-  const localX = signedByte(input[0]) << 6;
-  const localZ = signedByte(input[2]) << 6;
-  const cosine = cos(angle);
-  const sine = sin(angle);
-  return vector(
-    rotation.centre.x + localX * cosine - localZ * sine,
-    input[1] << 8,
-    rotation.centre.y + localX * sine + localZ * cosine
-  );
-};
-
 /// One grid cell's drawable content, kept together so the renderer can cull by cell before
 /// touching individual segments.
 export class WorldCell {
@@ -556,7 +515,8 @@ const placements = (
   groundExtent: number
 ): ObjectPlacement[] => {
   const models = new Map<string, Doc.Model>();
-  for (const model of bundle.objects.models) {
+  const document = composeObjects(bundle.objects);
+  for (const model of document.models) {
     models.set(model.id, model);
   }
 
@@ -664,13 +624,9 @@ export class World {
 
     const cells: WorldCell[] = [];
     const byGrid = new Map<number, number>();
-    for (const cell of bundle.surface.cells) {
-      const column =
-        cell.grid.length === 2 ? cell.grid[0]! : cell.cell % cellsPerAxis;
-      const row =
-        cell.grid.length === 2
-          ? cell.grid[1]!
-          : Math.floor(cell.cell / cellsPerAxis);
+    const surface = composeSurface(bundle.surface);
+    for (const cell of surface.cells) {
+      const { column, row } = cellGrid(cell, cellsPerAxis);
       const vertices: SurfaceVertex[] = cell.vertices.map(vertex => {
         if (vertex.kind === 'world-point' && vertex.position !== undefined) {
           return { kind: 'world', point: point(vertex.position) };
@@ -689,16 +645,7 @@ export class World {
         const ink: Ink = edge[2] === Ink.black ? Ink.black : Ink.white;
         edges.push({ end: edge[1]!, ink, start: edge[0]! });
       }
-      const rotation =
-        cell.rotation !== undefined && cell.rotation.center.length === 2
-          ? {
-              centre: {
-                x: (column << 16) + (cell.rotation.center[0]! << 8),
-                y: (row << 16) + (cell.rotation.center[1]! << 8)
-              },
-              descriptor: cell.rotation.descriptor
-            }
-          : undefined;
+      const rotation = surfaceRotation(cell, cellsPerAxis);
       byGrid.set(row * cellsPerAxis + column, cells.length);
       cells.push(
         new WorldCell({

@@ -1,3 +1,5 @@
+import { sha256 } from '../hash/index.ts';
+
 export type TypefaceId = 'mercenary' | 'damocles';
 
 /// The one typeface choice Targ and Damocles shared before it was kept per Title (ADR 0063).
@@ -139,13 +141,6 @@ export const validateTypography = (value: unknown): TypographyDocument => {
   };
 };
 
-const hexDigest = async (bytes: ArrayBuffer): Promise<string> => {
-  const digest = await crypto.subtle.digest('SHA-256', bytes);
-  return [...new Uint8Array(digest)]
-    .map(byte => byte.toString(16).padStart(2, '0'))
-    .join('');
-};
-
 const response = async (
   fetcher: (input: string | URL) => Promise<Response>,
   url: URL
@@ -178,7 +173,7 @@ export const loadTypography = async (
     })
   );
   for (const asset of assets) {
-    const actual = await hexDigest(asset.bytes);
+    const actual = await sha256(asset.bytes);
     if (actual !== asset.face.sha256) {
       throw new Error(
         `${asset.face.path} sha256 mismatch: expected ${asset.face.sha256}, got ${actual}`

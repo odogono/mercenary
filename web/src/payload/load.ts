@@ -1,4 +1,5 @@
-import type { Bundle } from './documents.ts';
+import { recoverTargGeometry } from '../geometry/targ.ts';
+import type { Bundle, Source } from './documents.ts';
 import { fail } from './errors.ts';
 import { readers } from './read.ts';
 
@@ -41,28 +42,34 @@ const parse = (name: string, body: string): unknown => {
   }
 };
 
+const source = <T>(
+  name: string,
+  body: string,
+  onto: (reader: { name: string }, value: unknown) => T
+): Source<T> => {
+  const value = parse(name, body);
+  return { body, document: onto({ name }, value), value };
+};
+
 const required = async <T>(
   read: ReadDocument,
   name: string,
   onto: (reader: { name: string }, value: unknown) => T
-): Promise<T> => {
+): Promise<Source<T>> => {
   const body = await read(name);
   if (body === undefined) {
     return fail({ kind: 'missingFile', name });
   }
-  return onto({ name }, parse(name, body));
+  return source(name, body, onto);
 };
 
 const present = async <T>(
   read: ReadDocument,
   name: string,
   onto: (reader: { name: string }, value: unknown) => T
-): Promise<T | undefined> => {
+): Promise<Partial<Source<T>>> => {
   const body = await read(name);
-  if (body === undefined) {
-    return undefined;
-  }
-  return onto({ name }, parse(name, body));
+  return body === undefined ? {} : source(name, body, onto);
 };
 
 /// Await every read, then re-raise the first failure by position rather than by finishing time.
@@ -103,18 +110,18 @@ export const load = async (read: ReadDocument): Promise<Bundle> => {
   // version reported — the earliest document in this list that could not be read — whatever
   // order the reads happen to finish in.
   const [
-    manifest,
-    world,
-    surface,
-    objects,
-    rooms,
-    endgame,
-    text,
-    interaction,
-    flight,
-    underground,
-    sound,
-    objectEffects
+    { document: manifest },
+    { document: world },
+    surfaceSource,
+    objectsSource,
+    { document: rooms },
+    { document: endgame },
+    { document: text },
+    { document: interaction },
+    { document: flight },
+    { document: underground },
+    { document: sound },
+    { document: objectEffects }
   ] = await inOrder([
     required(read, 'manifest.json', readers.manifest),
     required(read, 'world.json', readers.world),
@@ -129,6 +136,8 @@ export const load = async (read: ReadDocument): Promise<Bundle> => {
     present(read, 'sound.json', readers.sound),
     required(read, 'object-effects.json', readers.objectEffects)
   ]);
+  const surface = surfaceSource.document;
+  const objects = objectsSource.document;
 
   // The five geometry documents share one version, because they are one extraction.
   check('manifest.json', manifest.schemaVersion, SUPPORTED_SCHEMA_VERSION);
@@ -251,14 +260,20 @@ export const load = async (read: ReadDocument): Promise<Bundle> => {
     });
   }
 
+  const geometry = await recoverTargGeometry(
+    objectsSource,
+    surfaceSource,
+    world
+  );
+
   return {
     endgame,
     manifest,
     objectEffects,
-    objects,
+    objects: { ...objects, models: geometry.objects },
     rooms,
     sound: soundDocument,
-    surface,
+    surface: { ...surface, cells: geometry.structures },
     world,
     ...(text !== undefined ? { text } : {}),
     ...(flight !== undefined ? { flight } : {}),

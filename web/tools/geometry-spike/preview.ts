@@ -16,16 +16,8 @@ import {
   type Model
 } from '../../src/catalogue/data.ts';
 import { regionForms } from '../../src/catalogue/regions.ts';
-import {
-  damoclesModel,
-  targObjectModel,
-  targRoom,
-  targSurfaceCell
-} from '../../src/geometrySpike/adapter.ts';
-import type {
-  GeometryAsset,
-  Sidecar
-} from '../../src/geometrySpike/contract.ts';
+import type { GeometryAsset, Sidecar } from '../../src/geometry/contract.ts';
+import { damoclesModel, targRoom } from '../../src/geometrySpike/adapter.ts';
 import type * as Doc from '../../src/payload/documents.ts';
 import { load } from '../../src/payload/load.ts';
 import { Camera, projectFrame, visible } from '../../src/projection/index.ts';
@@ -108,12 +100,13 @@ export const targPreview = async (
   const pose = TARG_POSES[asset.asset]!;
   let substituted: Doc.Bundle;
   if (sidecar.family === 'targ-object-model') {
-    const model = targObjectModel(asset, sidecar);
     substituted = {
       ...base,
       objects: {
         ...base.objects,
-        models: base.objects.models.map(m => (m.id === model.id ? model : m))
+        models: base.objects.models.map(m =>
+          m.asset.asset === asset.asset ? { asset, sidecar } : m
+        )
       }
     };
   } else if (sidecar.family === 'targ-room') {
@@ -126,12 +119,13 @@ export const targPreview = async (
       }
     };
   } else {
-    const cell = targSurfaceCell(asset, sidecar);
     substituted = {
       ...base,
       surface: {
         ...base.surface,
-        cells: base.surface.cells.map(c => (c.cell === cell.cell ? cell : c))
+        cells: base.surface.cells.map(c =>
+          c.asset.asset === asset.asset ? { asset, sidecar } : c
+        )
       }
     };
   }

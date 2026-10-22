@@ -1,3 +1,5 @@
+import type { Recovered } from '../geometry/baseline.ts';
+
 /// The Data Payload's documents, as the port reads them.
 ///
 /// One interface per document, mirroring the kit's nested `Payload.*Document` types. Field
@@ -858,16 +860,30 @@ export interface ObjectEffectsDocument {
   readonly sights: SightsEffect;
 }
 
+/// A document as read: its exact bytes, the parsed value before the reader normalised it, and
+/// the reader's document. Recovery hashes the bytes and keeps the fields the readers drop.
+export interface Source<T> {
+  readonly body: string;
+  readonly document: T;
+  readonly value: unknown;
+}
+
+/// Validated payload plus recovered geometry. Raw document types above describe extractor
+/// output; models and Surface Cells become Geometry Assets with Asset Sidecars when loaded.
 export interface Bundle {
   readonly endgame: EndgameDocument;
   readonly flight?: FlightDocument;
   readonly interaction?: InteractionDocument;
   readonly manifest: Manifest;
   readonly objectEffects: ObjectEffectsDocument;
-  readonly objects: ObjectsDocument;
+  readonly objects: Omit<ObjectsDocument, 'models'> & {
+    readonly models: readonly Recovered[];
+  };
   readonly rooms: RoomsDocument;
   readonly sound: SoundDocument;
-  readonly surface: SurfaceDocument;
+  readonly surface: Omit<SurfaceDocument, 'cells'> & {
+    readonly cells: readonly Recovered[];
+  };
   readonly text?: TextDocument;
   readonly underground?: UndergroundDocument;
   readonly world: WorldDocument;

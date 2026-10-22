@@ -10,11 +10,8 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { compose } from '../../src/geometrySpike/compose.ts';
-import {
-  canonicalJson,
-  type Sidecar
-} from '../../src/geometrySpike/contract.ts';
+import { compose } from '../../src/geometry/compose.ts';
+import { canonicalJson, type Sidecar } from '../../src/geometry/contract.ts';
 import { FIXTURES, sourceRecord } from './fixtures.ts';
 import {
   ASSETS,
