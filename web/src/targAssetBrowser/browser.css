@@ -1,0 +1,44 @@
+main {
+  grid-template-columns: 300px minmax(360px, 1fr) 260px;
+}
+.viewer canvas {
+  width: 100%;
+  height: 100%;
+}
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0 20px;
+}
+.badge[data-status='edited'] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.badge[data-status='authored'] {
+  border-color: #e0b84f;
+  color: #e0b84f;
+}
+.drift {
+  color: #ff8a73;
+}
+.command {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.command code {
+  flex: 1;
+  padding: 8px 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  overflow-x: auto;
+  white-space: nowrap;
+}
+#details ul {
+  margin: 0 0 12px;
+  padding-left: 18px;
+  max-height: 240px;
+  overflow: auto;
+}

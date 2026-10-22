@@ -24,7 +24,8 @@ const DOCUMENT_FILES: Record<BrowserDocument, string> = {
   'first-offer': 'first-offer.html',
   flyover: 'flyover.html',
   gameplay: 'index.html',
-  sounds: 'sounds.html'
+  sounds: 'sounds.html',
+  'targ-assets': 'targ-assets.html'
 };
 
 export const documentResponse = async (

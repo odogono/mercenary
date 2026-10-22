@@ -49,6 +49,8 @@ export interface TitleLogoCopy {
 /// Title-owned labels on otherwise shared System Menu and Shell Console chrome.
 
 export interface ShellChromeCopy {
+  /// Set only by Targ, whose models the Targ Asset Browser lists.
+  readonly assetsLabel?: string;
   /// Set only by a Title whose System the Atlas presents; omitted, the menu has no Atlas link.
   readonly atlasLabel?: string;
   /// The Title's catalogue link, if it has a catalogue; its destination is title-local.
@@ -237,6 +239,15 @@ export const installShellChrome = (
             attrs: { href: '/damocles/atlas', id: 'menu-atlas' },
             className: 'chrome-button',
             text: copy.atlasLabel
+          })
+        ]),
+    ...(copy.assetsLabel === undefined
+      ? []
+      : [
+          el('a', {
+            attrs: { href: '/targ/assets', id: 'menu-assets' },
+            className: 'chrome-button',
+            text: copy.assetsLabel
           })
         ]),
     el('button', {

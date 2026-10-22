@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Targ · Asset Browser</title>
+    <link rel="stylesheet" href="/src/catalogue/catalogue.css" />
+    <link rel="stylesheet" href="/src/targAssetBrowser/browser.css" />
+  </head>
+  <body>
+    <header>
+      <nav aria-label="Titles">
+        <a href="/targ">← Mercenary</a>
+      </nav>
+      <h1>Targ <span>Asset Browser</span></h1>
+      <p id="summary" role="status">Loading the Data Payload and assets…</p>
+    </header>
+    <main id="browser" hidden>
+      <aside class="collection" aria-label="Models and structures">
+        <label for="search">Find a model</label>
+        <input
+          id="search"
+          type="search"
+          placeholder="Identity, structure, instance or cell"
+        />
+        <div class="filters">
+          <label
+            >Kind<select id="kind">
+              <option value="">All</option>
+              <option value="objects">Object models</option>
+              <option value="structures">Structures</option>
+            </select></label
+          >
+          <label
+            >Status<select id="status">
+              <option value="">All</option>
+              <option value="recovered">Recovered</option>
+              <option value="edited">Edited</option>
+              <option value="authored">Authored</option>
+            </select></label
+          >
+        </div>
+        <p id="result-count" role="status"></p>
+        <nav id="results" aria-label="Results"></nav>
+      </aside>
+      <section class="inspection" aria-label="Model inspection">
+        <p id="entry-kind" class="eyebrow"></p>
+        <div class="title-row">
+          <h2 id="entry-name" tabindex="-1">Choose a model</h2>
+          <span id="entry-status" class="badge" hidden></span>
+        </div>
+        <p id="entry-drift" class="drift" role="alert" hidden>
+          Its Recovered Baseline changed since its Change Ledger was reviewed.
+        </p>
+        <div class="viewer">
+          <canvas
+            id="view"
+            tabindex="0"
+            aria-label="Preview. Arrow keys orbit, plus and minus zoom, zero resets."
+          ></canvas>
+        </div>
+        <div class="toolbar">
+          <button id="left" type="button">Orbit left</button
+          ><button id="right" type="button">Orbit right</button
+          ><button id="up" type="button">Orbit up</button
+          ><button id="down" type="button">Orbit down</button
+          ><button id="zoom-in" type="button">Zoom in</button
+          ><button id="zoom-out" type="button">Zoom out</button
+          ><button id="reset" type="button">Reset view</button>
+        </div>
+        <h3>Edit it</h3>
+        <div id="commands"></div>
+        <div id="details"></div>
+      </section>
+      <aside class="evidence" aria-label="About">
+        <h2>Finding what to edit</h2>
+        <p>
+          Every Targ object model and Surface Cell structure, as the game draws
+          it: the edit in <code>assets/targ/</code> where there is one,
+          otherwise the Recovered Baseline.
+        </p>
+        <p>
+          Adopt a recovered model to start an edit, then open its file in
+          Blender. Both commands run from <code>web/</code>. This page never
+          writes files.
+        </p>
+        <p>
+          Surface Cells that share a structure are edited one cell at a time.
+        </p>
+        <p>No Gameplay Session, Saves or Session Resume are read or written.</p>
+      </aside>
+    </main>
+    <section id="failure" hidden role="alert">
+      <h2>Assets unavailable</h2>
+      <p id="failure-message"></p>
+    </section>
+    <script type="module" src="/src/targAssetBrowser/boot.ts"></script>
+  </body>
+</html>
