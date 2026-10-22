@@ -1,9 +1,11 @@
 import type { GameplaySession, PresentationEvent } from '../session/index.ts';
 import {
   LIGHT_LEVELS,
+  SHADOW_DEPTHS,
   type CastShadows,
   type LightLevel,
   type PresentationPreset,
+  type ShadowDepth,
   type StructureReach
 } from '../settings/index.ts';
 import { formatTargTime, parseTargTime } from '../sky/time.ts';
@@ -81,7 +83,7 @@ export type SettingChoice =
     }
   | { readonly name: 'glow'; readonly value: 'document' | WireframeGlow }
   | { readonly name: 'rendition'; readonly value: PanelRendition }
-  | { readonly name: 'shadow-depth'; readonly value: LightLevel }
+  | { readonly name: 'shadow-depth'; readonly value: ShadowDepth }
   | { readonly name: 'shadows'; readonly value: CastShadows }
   | { readonly name: 'sky'; readonly value: 'document' | PresentationPreset }
   | { readonly name: 'structures'; readonly value: 'document' | StructureReach }
@@ -99,6 +101,7 @@ const GLOWS: readonly ('document' | WireframeGlow)[] = [
 const RENDITIONS: readonly PanelRendition[] = ['targ', 'damocles'];
 const SHADOWS: readonly CastShadows[] = ['off', 'on'];
 const LEVELS: readonly string[] = LIGHT_LEVELS.map(String);
+const DEPTHS: readonly string[] = SHADOW_DEPTHS.map(String);
 const SKIES: readonly ('document' | PresentationPreset)[] = [
   'document',
   'authentic',
@@ -195,7 +198,7 @@ const SETTING_PARSERS: Readonly<
   }),
   'shadow-depth': word => ({
     name: 'shadow-depth',
-    value: Number(oneOf(LEVELS, word, 'shadow-depth')) as LightLevel
+    value: Number(oneOf(DEPTHS, word, 'shadow-depth')) as ShadowDepth
   }),
   shadows: word => ({
     name: 'shadows',

@@ -68,7 +68,7 @@ export const sunlight = (inputs: SunlightInputs): Sunlight | null => {
 };
 
 /// The player's share of the ambient pair and of the Sunlight a Cast Shadow takes away, each
-/// from 0 to 1.
+/// from 0 to 1; a shadow depth past 1 takes that share of the ambient fill from a Cast Shadow too.
 export interface LightLevels {
   readonly ambient: number;
   readonly shadowDepth: number;
