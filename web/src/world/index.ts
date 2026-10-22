@@ -1,3 +1,10 @@
+import { triangulate } from '../catalogue/geometry.ts';
+import type {
+  Colour,
+  Face,
+  GeometryAsset,
+  Vertex
+} from '../geometry/contract.ts';
 import { composeObjects, composeSurface } from '../geometry/targ.ts';
 import { OUT_OF_THE_WORLD, SURFACE_ROOM } from '../interaction/index.ts';
 import { cos, sin, toFloat32 } from '../math/index.ts';
@@ -10,6 +17,7 @@ import {
   type Vector3
 } from '../orientation/index.ts';
 import type * as Doc from '../payload/documents.ts';
+import type { RGB8 } from '../scene/index.ts';
 import { wrapSurfaceAxis } from './surfaceCoordinates.ts';
 import {
   cellGrid,
@@ -37,6 +45,68 @@ export interface Segment {
   readonly b: Vector3;
   readonly ink: Ink;
 }
+
+/// A Geometry Asset face in world space. Explicit lines remain a separate drawing pass.
+///
+/// Colour and triangulation are resolved once when the face is loaded: every later transform is
+/// rigid, so the triangles stay valid as the face moves, turns or spins.
+export interface Polygon {
+  readonly colour: RGB8;
+  readonly doubleSided: boolean;
+  /// Indices into `vertices`, three per triangle, ear-clipped so concave outlines keep notches.
+  readonly triangles: readonly number[];
+  readonly vertices: readonly Vector3[];
+}
+
+const BLACK: RGB8 = { blue: 0, green: 0, red: 0 };
+const WHITE: RGB8 = { blue: 255, green: 255, red: 255 };
+
+const faceColour = (colour: Colour | undefined): RGB8 => {
+  if (colour?.kind === 'palette') {
+    const rgb = Number.parseInt(colour.colour.slice(1), 16);
+    return { blue: rgb & 255, green: (rgb >> 8) & 255, red: rgb >> 16 };
+  }
+  return colour?.kind === 'ink' && colour.ink === 1 ? BLACK : WHITE;
+};
+
+/// Each drawable face's loop resolved to the part's vertices; walking geometry never enters
+/// the view.
+const assetFaces = <T>(
+  asset: GeometryAsset,
+  resolve: (vertex: Vertex) => T
+): { readonly face: Face; readonly loop: readonly T[] }[] =>
+  asset.parts
+    .filter(part => part.role !== 'walk' && part.faces.length > 0)
+    .flatMap(part => {
+      const byId = new Map(
+        part.vertices.map(vertex => [vertex.id, resolve(vertex)])
+      );
+      return part.faces.map(face => ({
+        face,
+        loop: face.loop.map(id => byId.get(id)!)
+      }));
+    });
+
+/// A face ready to draw, from its source colour and sidedness and its world-space loop.
+export const facePolygon = (
+  face: Pick<Face, 'colour' | 'doubleSided'>,
+  vertices: readonly Vector3[]
+): Polygon => ({
+  colour: faceColour(face.colour),
+  doubleSided: face.doubleSided === true,
+  triangles: triangulate(
+    vertices.map(v => [v.x, v.y, v.z] as const),
+    vertices.map((_, i) => i)
+  ),
+  vertices
+});
+
+/// The same faces with every vertex carried by a rigid transform.
+export const mapFaces = (
+  faces: readonly Polygon[],
+  transform: (point: Vector3) => Vector3
+): Polygon[] =>
+  faces.map(face => ({ ...face, vertices: face.vertices.map(transform) }));
 
 /// The occupied Surface Cell's two road runs in the four point slots the Reference Build
 /// reserves for them: road 0's end and start, then road 1's end and start.
@@ -134,6 +204,7 @@ export interface ObjectPlacement {
   readonly detailCube: number;
   readonly drawsFarAsPoint: boolean;
   readonly edges: readonly (readonly [number, number])[];
+  readonly faces: readonly Polygon[];
   readonly id: string;
   readonly model: string;
   readonly orientation: Orientation;
@@ -224,6 +295,18 @@ export const isDetailed = (
   );
 };
 
+/// Carry everything an object draws, wireframe and faces alike, through one transform.
+const transformed = (
+  object: ObjectPlacement,
+  origin: Vector3,
+  transform: (point: Vector3) => Vector3
+): ObjectPlacement => ({
+  ...object,
+  faces: mapFaces(object.faces, transform),
+  origin,
+  vertices: object.vertices.map(transform)
+});
+
 /// This instance at a live full position rather than its immutable payload position.
 export const movedTo = (
   object: ObjectPlacement,
@@ -233,11 +316,9 @@ export const movedTo = (
   const dx = toFloat32(destination.x - object.origin.x);
   const dy = toFloat32(destination.y - object.origin.y);
   const dz = toFloat32(destination.z - object.origin.z);
-  return {
-    ...object,
-    origin: destination,
-    vertices: object.vertices.map(v => vector(v.x + dx, v.y + dy, v.z + dz))
-  };
+  return transformed(object, destination, v =>
+    vector(v.x + dx, v.y + dy, v.z + dz)
+  );
 };
 
 /// Turn an already placed craft from its payload heading to a live heading.
@@ -255,18 +336,16 @@ const turnedToHeading = (
   const angle = heading - craftHeading(object);
   const sine = sin(angle);
   const cosine = cos(angle);
-  return {
-    ...object,
-    vertices: object.vertices.map(vertex => {
-      const x = vertex.x - object.origin.x;
-      const z = vertex.z - object.origin.z;
-      return vector(
-        object.origin.x + z * sine + x * cosine,
-        vertex.y,
-        object.origin.z + z * cosine - x * sine
-      );
-    })
+  const turn = (vertex: Vector3): Vector3 => {
+    const x = vertex.x - object.origin.x;
+    const z = vertex.z - object.origin.z;
+    return vector(
+      object.origin.x + z * sine + x * cosine,
+      vertex.y,
+      object.origin.z + z * cosine - x * sine
+    );
   };
+  return transformed(object, object.origin, turn);
 };
 
 /// Resolve a live Object Residence into the placement presentation draws.
@@ -359,8 +438,16 @@ export class WorldCell {
   private readonly vertices: readonly SurfaceVertex[];
   private readonly edges: readonly SurfaceEdge[];
   private readonly rotation: SurfaceRotation | undefined;
+  /// Each face's loop as surface vertices, beside its triangulation at rest.
+  private readonly faceSources: readonly {
+    readonly loop: readonly SurfaceVertex[];
+    readonly polygon: Polygon;
+  }[];
+  /// The faces themselves when none of their vertices spin.
+  private readonly restingFaces: readonly Polygon[] | undefined;
 
   constructor(fields: {
+    asset?: GeometryAsset;
     centre: Vector3;
     column: number;
     edges: readonly SurfaceEdge[];
@@ -378,6 +465,33 @@ export class WorldCell {
     this.vertices = fields.vertices;
     this.edges = fields.edges;
     this.rotation = fields.rotation;
+    this.faceSources =
+      fields.asset === undefined
+        ? []
+        : assetFaces(fields.asset, (vertex): SurfaceVertex =>
+            vertex.runtime === undefined
+              ? { kind: 'world', point: point(vertex.co) }
+              : { input: vertex.runtime.input, kind: 'rotated' }
+          ).map(({ face, loop }) => ({
+            loop,
+            polygon: facePolygon(
+              face,
+              loop.map(vertex => this.resolve(vertex, 0))
+            )
+          }));
+    this.restingFaces = this.faceSources.every(({ loop }) =>
+      loop.every(vertex => vertex.kind === 'world')
+    )
+      ? this.faceSources.map(({ polygon }) => polygon)
+      : undefined;
+  }
+
+  private resolve(vertex: SurfaceVertex, elapsed: number): Vector3 {
+    return vertex.kind === 'world'
+      ? vertex.point
+      : this.rotation === undefined
+        ? ZERO
+        : resolveRotation(this.rotation, vertex.input, elapsed);
   }
 
   get vertexCount(): number {
@@ -398,15 +512,20 @@ export class WorldCell {
     ).length;
   }
 
+  /// Faces use the same live rotation as the cell's lines, with no Road Workspace index limit.
+  faces(elapsed: number): readonly Polygon[] {
+    return (
+      this.restingFaces ??
+      this.faceSources.map(({ loop, polygon }) => ({
+        ...polygon,
+        vertices: loop.map(vertex => this.resolve(vertex, elapsed))
+      }))
+    );
+  }
+
   /// Resolve runtime-rotated and Road Workspace points and return the cell's wireframe.
   segments(elapsed: number, workspace?: RoadWorkspace): Segment[] {
-    const points = this.vertices.map(vertex =>
-      vertex.kind === 'world'
-        ? vertex.point
-        : this.rotation === undefined
-          ? ZERO
-          : resolveRotation(this.rotation, vertex.input, elapsed)
-    );
+    const points = this.vertices.map(vertex => this.resolve(vertex, elapsed));
     const out: Segment[] = [];
     for (const edge of this.edges) {
       const a = resolvedPoint(points, workspace, edge.start);
@@ -514,18 +633,22 @@ const placements = (
   bundle: Doc.Bundle,
   groundExtent: number
 ): ObjectPlacement[] => {
-  const models = new Map<string, Doc.Model>();
-  const document = composeObjects(bundle.objects);
-  for (const model of document.models) {
-    models.set(model.id, model);
-  }
+  // Composition maps each Geometry Asset to its model record in order, so the pair stays
+  // together: the record draws the wireframe and the asset draws the faces.
+  const models = new Map(
+    composeObjects(bundle.objects).models.map((model, i) => [
+      model.id,
+      { asset: bundle.objects.models[i]!.asset, model }
+    ])
+  );
 
   const out: ObjectPlacement[] = [];
   for (const instance of bundle.objects.instances) {
-    const model = models.get(instance.model);
-    if (model === undefined || instance.position.length !== 3) {
+    const source = models.get(instance.model);
+    if (source === undefined || instance.position.length !== 3) {
       continue;
     }
+    const { asset, model } = source;
     const origin = point(instance.position);
     const withinWorld =
       origin.x >= 0 &&
@@ -564,10 +687,19 @@ const placements = (
       }
     }
 
+    const faces = assetFaces(asset, vertex => {
+      const v = apply(orientation, point(vertex.co));
+      return vector(
+        v.x + origin.x,
+        v.y - groundingOffset + origin.y,
+        v.z + origin.z
+      );
+    }).map(({ face, loop }) => facePolygon(face, loop));
     out.push({
       detailCube: toFloat32(instance.visibility.detailCubePerAxis),
       drawsFarAsPoint: instance.visibility.farRepresentation === 'point',
       edges,
+      faces,
       id: instance.id,
       model: instance.model,
       orientation,
@@ -625,7 +757,7 @@ export class World {
     const cells: WorldCell[] = [];
     const byGrid = new Map<number, number>();
     const surface = composeSurface(bundle.surface);
-    for (const cell of surface.cells) {
+    for (const [i, cell] of surface.cells.entries()) {
       const { column, row } = cellGrid(cell, cellsPerAxis);
       const vertices: SurfaceVertex[] = cell.vertices.map(vertex => {
         if (vertex.kind === 'world-point' && vertex.position !== undefined) {
@@ -649,6 +781,7 @@ export class World {
       byGrid.set(row * cellsPerAxis + column, cells.length);
       cells.push(
         new WorldCell({
+          asset: bundle.surface.cells[i]!.asset,
           centre: vector((column + 0.5) * cellSize, 0, (row + 0.5) * cellSize),
           column,
           edges,

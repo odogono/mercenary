@@ -6,9 +6,11 @@ import {
   atUnsignedSurfacePosition,
   isDetailed,
   isDrawable,
+  mapFaces,
   objectSegments,
   placedAtResidence,
   room,
+  type Polygon,
   type Residence,
   type RoadWorkspace,
   type Segment,
@@ -321,6 +323,29 @@ export class Camera {
     };
   }
 
+  /// WebGL clip space for a view of `size`: the same projection as `project`, kept homogeneous
+  /// so the GPU can clip triangles that cross the eye and depth-test them.
+  clipSpace(size: Size): (world: Vector3) => [number, number, number, number] {
+    const centre = viewportCentre(size);
+    const focalX = horizontalFocalLength(size);
+    const focalY = this.verticalFocalLength(size);
+    const near = this.nearPlane;
+    const far = this.farPlane;
+    const depthScale = Number.isFinite(far) ? (far + near) / (far - near) : 1;
+    const depthOffset = Number.isFinite(far)
+      ? (2 * far * near) / (far - near)
+      : 2 * near;
+    return world => {
+      const v = this.viewSpace(world);
+      return [
+        (2 * (centre.x * v.z + focalX * v.x)) / size.width - v.z,
+        v.z - (2 * (centre.y * v.z - focalY * v.y)) / size.height,
+        depthScale * v.z - depthOffset,
+        v.z
+      ];
+    };
+  }
+
   /// Project a clipped view-space point into pixels for a view of `size`.
   ///
   /// The frustum comes from the reference viewport, so the projection keeps the original's
@@ -535,12 +560,13 @@ const append = <T>(into: T[], source: readonly T[]): void => {
   }
 };
 
-/// What the renderer should draw this frame: line segments plus any objects reduced to a
+/// What the renderer should draw this frame: faces, line segments and objects reduced to a
 /// single point by the detail rule.
 export interface Visible {
   readonly detailedObjects: number;
   /// Surface Structure segments outside the occupied Surface Cell, drawn as distance.
   readonly distant: readonly DistantSegment[];
+  readonly faces: readonly Polygon[];
   /// Origins of objects outside the detail cube, drawn as points.
   readonly points: readonly Vector3[];
   /// Map Lines and the ground-level black road edges embedded in Surface Structures.
@@ -638,6 +664,7 @@ export const visible = (
   const distant: DistantSegment[] = [];
   const segments: Segment[] = [];
   const points: Vector3[] = [];
+  const faces: Polygon[] = [];
   let detailedObjects = 0;
 
   // Underground the Reference Build draws one room and nothing else: no cell ring, no roads,
@@ -666,6 +693,7 @@ export const visible = (
           : placedAtResidence(world, object, where, location);
       if (isDetailed(placed, position)) {
         append(segments, objectSegments(placed));
+        append(faces, placed.faces);
         detailedObjects += 1;
       } else if (
         placed.drawsFarAsPoint &&
@@ -688,7 +716,13 @@ export const visible = (
       append(segments, here.segments);
     }
     appendObjects(room(options.room));
-    return { detailedObjects, distant, points, segments };
+    return {
+      detailedObjects,
+      distant,
+      faces,
+      points,
+      segments
+    };
   }
 
   const roadSegments = new Set<Segment>();
@@ -747,6 +781,13 @@ export const visible = (
         const selected = cell
           .segments(elapsed, workspace)
           .map(segment => translateSegment(segment, dx, dz));
+        const cellFaces = cell.faces(elapsed);
+        append(
+          faces,
+          dx === 0 && dz === 0
+            ? cellFaces
+            : mapFaces(cellFaces, point => translatePoint(point, dx, dz))
+        );
         if (rules.reach === 'all' && !isOccupied) {
           const distance = Math.hypot(
             cell.centre.x + dx - position.x,
@@ -786,7 +827,14 @@ export const visible = (
   append(segments, roads);
   appendObjects(SURFACE);
 
-  return { detailedObjects, distant, points, roadSegments, segments };
+  return {
+    detailedObjects,
+    distant,
+    faces,
+    points,
+    roadSegments,
+    segments
+  };
 };
 
 /// Everything one Pose resolves to: near and distant lines, in pipeline order, and Far Points.

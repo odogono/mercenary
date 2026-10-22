@@ -36,6 +36,12 @@ Both halo strength and spread fade smoothly with camera distance along each line
 stays independent. The same fade applies to structures, objects, indoor wireframes and roads,
 including Arrival's moving Camera. Authentic always uses the original hairline without glow.
 
+Targ Geometry Assets may also carry polygon faces. Authentic and Enhanced use the same
+flat colours and depth-tested fills, with explicit wireframe lines drawn over them. Faces keep
+concave outlines and single/double-sided winding, follow object placement and live structure
+rotation, and disappear with their object's detail representation. Additional display parts
+can carry coloured faces without the recovered wireframe's Road Workspace index limits (ADR 0081).
+
 Mercenary III’s `/dion` defaults to Authentic. Its settings page offers Enhanced flat-colour
 rendering at display resolution through the common renderer in `src/rendering/`, also used
 by Damocles. The panel stays pixel-scaled; the choice is stored for Dion alone. Unavailable

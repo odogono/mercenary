@@ -79,7 +79,8 @@ describe('Targ rendering through shared Geometry Assets', () => {
           withoutRoads: cell.segments(elapsed),
           withRoads: cell.segments(elapsed, world.roadWorkspace(cell))
         })),
-        objects: world.objects
+        // Faces are new with #863; the pre-migration World had none to compare.
+        objects: world.objects.map(({ faces, ...object }) => object)
       };
       expect(await sha256(canonicalJson(value))).toBe(hash);
     });
