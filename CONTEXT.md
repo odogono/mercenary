@@ -715,6 +715,10 @@ _Avoid_: Fix, patch, Creative Change
 An authored change that deliberately departs from recovered geometry.
 _Avoid_: Mod, Extension, Departure, Recovery Correction
 
+**Authored Asset**:
+A Geometry Asset with no Recovered Baseline, created for the modern port rather than recovered from a game; everything in it is a Creative Change.
+_Avoid_: Custom model, new model, mod
+
 **Change Ledger**:
 The per-asset record classifying every authored change, by element identity, as a Recovery Correction or a Creative Change; an authored change it does not classify fails review.
 _Avoid_: Changelog, edit history
