@@ -9,7 +9,10 @@ carries along. Identities are stored plus one, so the zero Blender gives new ele
 
 Axes: game (x, y, z) is shown as Blender (x, z, y) — Y up becomes Z up, with the same mirror the
 catalogue viewer applies, so a model reads the same way round in both. The swap is its own
-inverse. Mesh coordinates stay in game units; object transforms must stay identity.
+inverse. Mesh coordinates stay in game units, so what is exported is exactly what is edited. Every
+part object instead carries its asset's display transform: scaled by DISPLAY_SCALE and centred on
+the asset, so a model opens at a workable size near the origin rather than hundreds of thousands
+of units away. A part must keep that transform; geometry is edited in Edit Mode.
 
 Attributes (all INT unless noted):
     point  mc_vid      vertex or external identity + 1
@@ -43,6 +46,9 @@ EDGE_INT = ["mc_lid", "mc_lstart", "mc_lrecord", "mc_lscene", "mc_lcolour"]
 COORD_TOLERANCE = 1e-3
 DISTANT = "distant"
 DISTANT_COLLECTION = "Distant Structure"
+# A Targ object (100–500 game units) opens about a Blender unit across; a Surface Cell (65,536)
+# about 256.
+DISPLAY_SCALE = 1 / 256
 
 
 def swap(co):
@@ -101,6 +107,7 @@ def import_asset(value, relative):
     collection["mc_title"] = asset["title"]
     collection["mc_path"] = relative
     collection["mc_parts"] = json.dumps([p["id"] for p in asset["parts"] if p["role"] != DISTANT])
+    collection["mc_centre"], collection["mc_extent"] = _bounds(asset)
     distant = None
     if T.kind_of(relative) == "structures":
         distant = bpy.data.collections.new(DISTANT_COLLECTION)
@@ -108,11 +115,46 @@ def import_asset(value, relative):
         collection.children.link(distant)
     first_display = next((p["id"] for p in asset["parts"] if p["role"] in ("display", "wireframe")), None)
     for part in asset["parts"]:
-        obj = _import_part(part)
+        obj = _import_part(part, collection["mc_centre"])
+        obj.matrix_world = display_matrix(collection)
         (distant if part["role"] == DISTANT else collection).objects.link(obj)
         if part["id"] != first_display:
             obj.hide_set(True)
     return collection
+
+
+def _bounds(asset):
+    """The middle of the asset's ground plan in whole game units, which the view centres on, and
+    its largest extent. Only its own vertices count: a road endpoint may lie cells away."""
+    points = [v["co"] for p in asset["parts"] for v in p["vertices"]]
+    if not points:
+        return [0, 0], 0
+    low = [min(p[k] for p in points) for k in range(3)]
+    high = [max(p[k] for p in points) for k in range(3)]
+    return [round((low[k] + high[k]) / 2) for k in (0, 2)], max(h - l for h, l in zip(high, low))
+
+
+def display_matrix(collection):
+    """Game-unit mesh coordinates → the scaled, centred view of this asset."""
+    x, z = collection.get("mc_centre", [0, 0])
+    return Matrix.Scale(DISPLAY_SCALE, 4) @ Matrix.Translation((-x, -z, 0))
+
+
+def has_display_transform(obj, collection):
+    expected = display_matrix(collection)
+    return all(abs(a - b) <= 1e-5 * max(1.0, abs(b)) for row_a, row_b in zip(obj.matrix_world, expected) for a, b in zip(row_a, row_b))
+
+
+def _bake(obj, matrix):
+    """Apply `matrix` to the mesh itself, in Edit Mode or out of it."""
+    if obj.mode == "EDIT":
+        import bmesh
+
+        mesh = bmesh.from_edit_mesh(obj.data)
+        mesh.transform(matrix)
+        bmesh.update_edit_mesh(obj.data)
+    else:
+        obj.data.transform(matrix)
 
 
 def prepare_part(obj, pid, role, colour_model):
@@ -140,16 +182,24 @@ def prepare_distant(obj):
     if not any(c.get("mc_distant") for c in obj.users_collection):
         return False
     if obj.type == "MESH" and (obj.get("mc_part") != DISTANT or obj.get("mc_role") != DISTANT):
+        collection = asset_collection(obj)
+        if obj.get("mc_part") is None and collection is not None:
+            # A fresh mesh is taken as drawn: bake its transform into game units.
+            display = display_matrix(collection)
+            _bake(obj, display.inverted() @ obj.matrix_world)
+            obj.matrix_world = display
         prepare_part(obj, DISTANT, DISTANT, "ink")
     return True
 
 
-def _import_part(part):
+def _import_part(part, centre):
     vertices, externals = part["vertices"], part["externals"]
     index = {v["id"]: k for k, v in enumerate(vertices)}
     for k, x in enumerate(externals):
         index[x["id"]] = len(vertices) + k
-    coords = [swap(v["co"]) for v in vertices] + [swap(x["display"] or (0, 0, 0)) for x in externals]
+    # An endpoint with no position on this cell waits at the asset's centre: it only ends lines.
+    parked = (centre[0], 0, centre[1])
+    coords = [swap(v["co"]) for v in vertices] + [swap(x["display"] or parked) for x in externals]
     faces = [[index[i] for i in f["loop"]] for f in part["faces"]]
     edges = [[index[e] for e in l["ends"]] for l in part["lines"]]
     mesh = bpy.data.meshes.new(part["id"])
@@ -302,7 +352,7 @@ def export_parts(collection):
         if obj is None:
             error(pid, "part object is missing; restore it (only the Distant Structure may be removed)")
             continue
-        parts.append(_export_part(obj, error, warning))
+        parts.append(_export_part(obj, collection, error, warning))
     distant = distant_collection(collection)
     if distant is not None:
         found = list(distant.all_objects)
@@ -316,7 +366,7 @@ def export_parts(collection):
                 error(obj.name, "shares its mesh with another object; Object ▸ Relations ▸ Make Single User ▸ Object & Data")
             else:
                 prepare_distant(obj)
-                parts.append(_export_part(obj, error, warning))
+                parts.append(_export_part(obj, collection, error, warning))
     return parts, diagnostics
 
 
@@ -342,11 +392,11 @@ def _fresh(ids_in_order, used):
     return out
 
 
-def _export_part(obj, error, warning):
+def _export_part(obj, collection, error, warning):
     pid = obj["mc_part"]
     mesh = obj.data
-    if any(abs(a - b) > 1e-6 for row_a, row_b in zip(obj.matrix_world, Matrix.Identity(4)) for a, b in zip(row_a, row_b)):
-        error(pid, "object transform is not identity; geometry is edited in Edit Mode only (Object ▸ Clear ▸ All Transforms, then re-apply your edit to the mesh)")
+    if not has_display_transform(obj, collection):
+        error(pid, "object was moved, rotated or scaled in Object Mode; undo that, or use Mercenary ▸ Reset Display Transform, and edit geometry in Edit Mode")
     if obj.modifiers:
         warning(pid, "modifiers are ignored on export; apply them to change geometry")
     colour_model = obj["mc_colour_model"]
