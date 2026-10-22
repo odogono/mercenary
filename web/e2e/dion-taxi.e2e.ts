@@ -4,7 +4,8 @@ for (const spaceport of [false, true]) {
   test(`METIS ${spaceport ? 'spaceport' : 'solicitor'} deterministic visual journey`, async ({
     page
   }, testInfo) => {
-    test.fixme(!spaceport, 'fails on main: #852');
+    // Two complete render/pixel comparisons include the wait until nightfall.
+    test.slow();
     await page.goto('/e2e/dion-fixture.html');
     await expect(page.locator('#screen')).toHaveAttribute(
       'data-state',

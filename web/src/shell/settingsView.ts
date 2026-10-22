@@ -245,7 +245,8 @@ export const installSettingsView = (
       options: [
         { label: 'AS TUNED', value: PRESET_DEFAULT },
         { label: 'OFF', value: 'off' },
-        { label: 'ON', value: 'on' }
+        { label: 'SOFT', value: 'soft' },
+        { label: 'BRIGHT', value: 'bright' }
       ]
     },
     {
@@ -282,7 +283,8 @@ export const installSettingsView = (
       options: [
         { label: 'AS TUNED', value: PRESET_DEFAULT },
         { label: 'OFF', value: 'off' },
-        { label: 'ON', value: 'on' }
+        { label: 'SOFT', value: 'soft' },
+        { label: 'BRIGHT', value: 'bright' }
       ]
     },
     {

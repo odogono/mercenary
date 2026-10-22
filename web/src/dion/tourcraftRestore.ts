@@ -491,7 +491,6 @@ export const readTourcraftResume = (
       state.reveal !== 49 - state.tick ||
       state.frameCounter !== opening.frameCounter ||
       state.clock.day !== opening.clock.day ||
-      state.clock.seconds !== 0 ||
       state.clock.accumulator !== opening.clock.accumulator - 32 * state.tick ||
       narrative.timedTarget !== null ||
       narrative.queued !== null ||
@@ -521,13 +520,17 @@ export const readTourcraftResume = (
       }
     }
     const seeds = initialTourcraftPhases(content);
+    const current = state.location / 4;
     phases.forEach((v, i) => {
-      if (
-        v !==
+      // The console may edit the current Body's time during the reveal, retaining both aliases.
+      if (i === current && v === state.phase) {
+        return;
+      }
+      const seeded =
         (seeds[i]! +
           base.snapshot.tick * (content.system.bodies[i]?.rate ?? 0)) >>>
-          0
-      ) {
+        0;
+      if (v !== seeded) {
         throw new Error('Invalid opening Body phase');
       }
     });

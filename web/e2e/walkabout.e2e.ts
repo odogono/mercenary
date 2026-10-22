@@ -645,10 +645,12 @@ test('a tap on the Benson Panel’s run lamp latches running, as R does', async 
 test('Session Resume survives reload and New Game preserves Saves', async ({
   page
 }) => {
-  test.fixme(true, 'fails on main: #852');
   await useComposition(page, 'strip');
   await page.goto('/');
   await skipArrival(page);
+  const now = new Date();
+  await page.clock.install({ time: now });
+  await page.clock.pauseAt(now);
   const canvas = page.locator('#frame');
   const position = async (): Promise<{
     x: string | null;
@@ -660,6 +662,7 @@ test('Session Resume survives reload and New Game preserves Saves', async ({
   const opening = await position();
 
   await page.keyboard.down('ArrowUp');
+  await page.clock.runFor(100);
   await expect.poll(async () => (await position()).z).not.toBe(opening.z);
   await page.keyboard.up('ArrowUp');
   const saved = await position();
@@ -690,6 +693,14 @@ test('Session Resume survives reload and New Game preserves Saves', async ({
   await newGame.click();
   await expect(newGame).toHaveText('CONFIRM NEW GAME');
   await newGame.click();
+  await page.clock.runFor(20);
+  await page.keyboard.press('Space');
+  await page.locator('#departure-skip').click();
+  await page.clock.runFor(20);
+  await expect(page.locator('#game-surface')).toHaveAttribute(
+    'data-arrival',
+    'done'
+  );
   await expect(page.locator('#game-surface')).toHaveAttribute(
     'data-layer',
     'none'

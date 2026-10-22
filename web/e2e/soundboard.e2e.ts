@@ -29,7 +29,6 @@ const loudest = (page: Page, seconds: number): Promise<number> =>
 test('the sound board plays a Targ and a Damocles sound, and stops them', async ({
   page
 }) => {
-  test.fixme(true, 'fails on main: #852');
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await tapDestination(page);
@@ -52,7 +51,12 @@ test('the sound board plays a Targ and a Damocles sound, and stops them', async 
     .getByRole('button', { name: 'Play' })
     .click();
   expect(await loudest(page, 0.5)).toBeGreaterThan(1e-3);
-  await card(/^GHETTOBLASTER/)
+  await page
+    .locator('#damocles')
+    .locator('article.sound')
+    .filter({
+      has: page.getByRole('heading', { name: /^GHETTOBLASTER/ })
+    })
     .getByRole('button', { name: 'Play' })
     .click();
   expect(await loudest(page, 1)).toBeGreaterThan(1e-3);
@@ -66,7 +70,6 @@ test('the sound board plays a Targ and a Damocles sound, and stops them', async 
 test('Mercenary III sounds play through the board and obey mute, volume and stop controls', async ({
   page
 }) => {
-  test.fixme(true, 'fails on main: #852');
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await tapDestination(page);

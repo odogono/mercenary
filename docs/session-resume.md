@@ -11,7 +11,7 @@ The related transcript extension records complete Benson Messages in the Shell C
 ## Session Resume contract
 
 - The Browser Shell keeps one Session Resume, separate from all Save slots and presentation preferences. It survives reload, tab closure, and browser restart in the same browser storage until New Game replaces it.
-- Startup restores it automatically without a choice screen. An Ending remains resumable. Restored play begins with idle input and the System Menu and Shell Console closed; no Browser Shell focus, overlay, command history, or transcript state is restored.
+- Startup restores it automatically without a choice screen. An Ending remains resumable. Restored play begins with idle input and the System Menu and Shell Console closed; no Browser Shell focus or overlay state is restored. The Shell Console keeps its own command history and transcript across reloads, independently of Session Resume (#721).
 - Session Resume reuses the bounded JSON Save Snapshot representation and exact Data Payload and gameplay-setting identity used by Saves. Version 1 has no migration, partial restore, or best-effort compatibility.
 - An invalid or incompatible Session Resume is removed, a fresh opening session starts, and `COULD NOT RESUME — <reason>` is reported. Player Saves and preferences are untouched.
 - If storage is unavailable or a write fails, play and manual Saves remain independent. Session Resume is disabled for that page after the failure and `SESSION RESUME UNAVAILABLE — <reason>` is reported rather than repeatedly retrying every second.
@@ -48,8 +48,8 @@ The related transcript extension records complete Benson Messages in the Shell C
 - The Shell Console appends `BENSON · <complete text>` once a Benson Message is fully revealed or skipped. Character-by-character prefixes are never logged, and opening the console cannot reveal the completed text early.
 - Equal text spoken on separate occasions produces separate entries; frames belonging to one occurrence do not.
 - Shell notices, including Save and Session Resume notices, do not enter the transcript.
-- A Benson Message restored partway through its reveal enters the new transcript once it later completes or is skipped. Messages completed before reload are not backfilled.
-- The existing in-memory 400-line limit remains. Reload clears the transcript. New Game and Save restore keep the current page's transcript and append `— NEW GAME —` or `— LOADED SLOT <n> —` respectively.
+- A Benson Message restored partway through its reveal enters the new transcript once it later completes or is skipped. Messages completed before reload remain in the retained transcript.
+- The transcript and command history are each retained per Title, bounded to 400 lines, and survive reload. New Game and Save restore keep the current page's transcript and append `— NEW GAME —` or `— LOADED SLOT <n> —` respectively.
 
 ## Verification
 

@@ -20,26 +20,39 @@ const frame = (page: Page) => page.locator('#frame');
 const centreBox = (page: Page) =>
   page.locator('#panel-damocles [data-panel-control=centre]');
 
+// A complete name can appear before the 16-VBL label scroll has fully ended.
+const finishInventoryScroll = async (page: Page): Promise<void> => {
+  const elapsed = Number(await frame(page).getAttribute('data-elapsed'));
+  await expect
+    .poll(async () => Number(await frame(page).getAttribute('data-elapsed')))
+    .toBeGreaterThanOrEqual(elapsed + 16 / 50);
+};
+
 /// Take both objects and rotate until the file is the head.
 const fileAtTheHead = async (page: Page): Promise<void> => {
   await page.keyboard.press('t');
-  await expect(inventory(page)).not.toHaveText('EMPTY', { timeout: 5000 });
+  await expect(inventory(page)).toHaveText(
+    /^(DAMOCLES FILE|COFFEE TABLE)\s*$/,
+    {
+      timeout: 5000
+    }
+  );
   const first = (await inventory(page).textContent())!.trim();
+  await finishInventoryScroll(page);
   await page.keyboard.press('t');
   const second = first === FILE ? TABLE : FILE;
   await expect(inventory(page)).toHaveText(second, { timeout: 5000 });
+  await finishInventoryScroll(page);
   if (second !== FILE) {
-    // A rotation is refused while the head's name is still scrolling, 16 frames at 50 Hz.
-    await page.waitForTimeout(500);
     await page.keyboard.press('[');
     await expect(inventory(page)).toHaveText(FILE, { timeout: 5000 });
+    await finishInventoryScroll(page);
   }
 };
 
 test('opens, pages and reads the DAMOCLES FILE on the centre box', async ({
   page
 }, testInfo) => {
-  test.fixme(true, 'fails on main: #852');
   test.setTimeout(90_000);
   const errors = watchErrors(page);
   await bootAt(page, BESIDE_THE_TABLE, FACING_EAST, {
@@ -190,7 +203,6 @@ test('opens, pages and closes the DAMOCLES FILE with the pointer', async ({
 test('keeps recovered-panel controls accessible by keyboard', async ({
   page
 }) => {
-  test.fixme(true, 'fails on main: #852');
   const errors = watchErrors(page);
   await bootAt(page, BESIDE_THE_TABLE, FACING_EAST, {
     structure: STATE_OFFICE
