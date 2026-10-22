@@ -25,7 +25,8 @@ import { FIXTURES, sourceRecord } from '../tools/geometry-spike/fixtures.ts';
 import { payloadDirectory, repositoryRoot } from './replay/artifacts.ts';
 
 /// #671 spike: the contract, its composition back to payload records, both candidates' readers
-/// and the review tools. The Blender side runs in research/blender-geometry-spike.
+/// and the review tools. The spike's Blender side is frozen at commit c2223304: the add-on moved
+/// to tools/blender/ without MGEO and GLB (#865), so these goldens are a fixed record.
 
 const payload = payloadDirectory();
 const golden = join(
@@ -420,7 +421,8 @@ describe('#671 candidate readers', () => {
       const { asset } = await fixture(slug).recover(payload);
       const expected = canonicalJson(asset);
       // A mismatch after a payload change means the goldens are stale: regenerate them with
-      // research/blender-geometry-spike's roundtrip and copy them into evidence/golden.
+      // research/blender-geometry-spike's roundtrip, checked out at commit c2223304, and copy them
+      // into evidence/golden.
       expect(
         canonicalJson(
           decodeMgeo(new Uint8Array(readFileSync(join(golden, `${slug}.mgeo`))))

@@ -6,6 +6,7 @@
 - `docs/research/`: findings, named `<title>-<topic>.md`; `rg -l` across it before reading. Dion implementation and payload changes start at `docs/agents/dion.md`; research reports retain their dated scope.
 - `docs/adr/README.md`: the decision index.
 - `tools/commits/`: the commit-message and changelog-fragment checks.
+- `tools/blender/`: the Blender add-on that edits and authors the Targ Geometry Assets in `assets/targ/`; its `README.md` has the workflow.
 - `restricted/`, `roms/`: gitignored Restricted Material. Evidence a doc cites goes under `restricted/<title>-<issue>/` in the main checkout.
 
 ### Worktrees

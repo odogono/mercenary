@@ -1,6 +1,7 @@
 /// Reads the GLB candidate (#671): the `MERCENARY_geometry` extension is the source of truth, and
 /// a GLB without it is refused. Triangles and line primitives are display for standard viewers
-/// and are not read back. The writer is research/blender-geometry-spike/mercenary_geometry/glb.py.
+/// and are not read back. The writer is research/blender-geometry-spike/mercenary_geometry/glb.py at
+/// commit c2223304; the add-on moved to tools/blender/ without it (#865).
 
 import type {
   Colour,
