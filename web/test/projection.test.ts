@@ -182,6 +182,7 @@ describe('Reference Viewport line clipping', () => {
         {
           detailedObjects: 0,
           distant: [first, second],
+          faces: [],
           points: [],
           segments: []
         },

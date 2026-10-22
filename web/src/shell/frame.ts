@@ -37,7 +37,7 @@ import {
 } from '../sky/frame.ts';
 import { skyStateAt, type TargOrrery } from '../sky/index.ts';
 import { Ink, type World } from '../world/index.ts';
-import { faceBatches } from './faces.ts';
+import { FACE_STRIDE, faceBatch, type FaceBatch } from './faces.ts';
 
 /// The owned WebGL2 renderer has no scene graph, engine or runtime dependency (ADR 0019).
 ///
@@ -56,6 +56,24 @@ void main() {
   );
   gl_Position = vec4(clip, 0.0, 1.0);
   gl_PointSize = pointSize;
+}`;
+
+/// Filled faces carry their colour per vertex so every face draws in one call.
+const FACE_VERTEX_SHADER = `#version 300 es
+in vec4 vertex;
+in vec3 colour;
+flat out vec3 ink;
+void main() {
+  gl_Position = vertex;
+  ink = colour;
+}`;
+
+const FACE_FRAGMENT_SHADER = `#version 300 es
+precision highp float;
+flat in vec3 ink;
+out vec4 colour;
+void main() {
+  colour = vec4(ink, 1.0);
 }`;
 
 const FRAGMENT_SHADER = `#version 300 es
@@ -461,7 +479,7 @@ const stripVertices = (size: Size, parity: 0 | 1): Float32Array => {
   return new Float32Array(vertices);
 };
 
-type DrawMode = 'faces' | 'lines' | 'points' | 'triangles';
+type DrawMode = 'lines' | 'points' | 'triangles';
 
 /// How thickly to draw wireframe lines, and how much halo they carry.
 ///
@@ -494,6 +512,8 @@ export interface FramePresentation {
 export interface FramePlan {
   readonly batches: readonly DrawBatch[];
   readonly clear: RGB8;
+  /// Every visible face in one draw, made just before `batches[before]` so roads stay behind.
+  readonly faces?: { readonly batch: FaceBatch; readonly before: number };
   readonly glowDistance?: GlowDistanceSettings;
   readonly liftWipe?: {
     readonly lineColour: RGB8;
@@ -816,7 +836,11 @@ export const planFrame = (
   // entering a cell changes which side of its wireframe the roads are drawn on.
   addLineBatch(batches, roadBlackInk, ScenePalette.blackInk, 'roads');
   addLineBatch(batches, roadWhiteInk, ScenePalette.whiteInk, 'roads');
-  batches.push(...faceBatches(seen.faces ?? [], camera, size));
+  const faceFill = faceBatch(seen.faces, camera, size);
+  const faces =
+    faceFill === undefined
+      ? undefined
+      : { batch: faceFill, before: batches.length };
   for (const [channel, lines] of [...distantWhiteInk].sort(
     ([left], [right]) => left - right
   )) {
@@ -871,6 +895,7 @@ export const planFrame = (
         : presentation.preset === 'enhanced'
           ? (atariSTColour(indoor.foreground) ?? ScenePalette.blackInk)
           : ScenePalette.blackInk),
+    ...(faces === undefined ? {} : { faces }),
     glowDistance: presentation.glowDistance ?? DEFAULT_GLOW_DISTANCE,
     lines: projected.distant.length + projected.lines.length,
     ...(liftWipe === undefined ? {} : { liftWipe }),
@@ -896,7 +921,7 @@ export class Renderer {
   private inkPass: InkPipeline | undefined;
   private facePass:
     | {
-        readonly ink: WebGLUniformLocation | null;
+        readonly colour: number;
         readonly program: WebGLProgram;
         readonly vertex: number;
       }
@@ -939,7 +964,6 @@ export class Renderer {
 
   private pass(batch: DrawBatch): void {
     const modes: Record<DrawMode, number> = {
-      faces: this.gl.TRIANGLES,
       lines: this.gl.LINES,
       points: this.gl.POINTS,
       triangles: this.gl.TRIANGLES
@@ -957,18 +981,14 @@ export class Renderer {
   }
 
   /// Filled faces share one depth buffer. Explicit wireframe lines are painted over the fill.
-  private faces(batch: DrawBatch, size: Size): void {
+  private faces(batch: FaceBatch, size: Size): void {
     const gl = this.gl;
+    // Compiled the first frame with faces, like the enhanced pipeline: views without Geometry
+    // Asset faces never pay for it.
     if (this.facePass === undefined) {
-      const program = linked(
-        gl,
-        `#version 300 es
-in vec4 vertex;
-void main() { gl_Position = vertex; }`,
-        FRAGMENT_SHADER
-      );
+      const program = linked(gl, FACE_VERTEX_SHADER, FACE_FRAGMENT_SHADER);
       this.facePass = {
-        ink: gl.getUniformLocation(program, 'ink'),
+        colour: gl.getAttribLocation(program, 'colour'),
         program,
         vertex: gl.getAttribLocation(program, 'vertex')
       };
@@ -987,13 +1007,23 @@ void main() { gl_Position = vertex; }`,
     gl.useProgram(pass.program);
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
-    gl.uniform3f(pass.ink, ...channels(batch.colour));
     gl.bindBuffer(gl.ARRAY_BUFFER, this.sceneBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, batch.vertices, gl.STREAM_DRAW);
+    const stride = FACE_STRIDE * Float32Array.BYTES_PER_ELEMENT;
     gl.enableVertexAttribArray(pass.vertex);
-    gl.vertexAttribPointer(pass.vertex, 4, gl.FLOAT, false, 0, 0);
-    gl.drawArrays(gl.TRIANGLES, 0, batch.vertices.length / 4);
+    gl.enableVertexAttribArray(pass.colour);
+    gl.vertexAttribPointer(pass.vertex, 4, gl.FLOAT, false, stride, 0);
+    gl.vertexAttribPointer(
+      pass.colour,
+      3,
+      gl.FLOAT,
+      false,
+      stride,
+      4 * Float32Array.BYTES_PER_ELEMENT
+    );
+    gl.drawArrays(gl.TRIANGLES, 0, batch.vertices.length / FACE_STRIDE);
     gl.disableVertexAttribArray(pass.vertex);
+    gl.disableVertexAttribArray(pass.colour);
     gl.disable(gl.DEPTH_TEST);
     gl.disable(gl.SCISSOR_TEST);
     gl.useProgram(this.program);
@@ -1246,7 +1276,10 @@ void main() { gl_Position = vertex; }`,
       this.skyPass(plan.sky, plan.size);
       gl.uniform2f(this.viewport, plan.size.width, plan.size.height);
     }
-    for (const batch of plan.batches) {
+    for (const [index, batch] of plan.batches.entries()) {
+      if (index === plan.faces?.before) {
+        this.faces(plan.faces.batch, plan.size);
+      }
       const options = batch.style === 'roads' ? roadOptions : inkOptions;
       const enhanced =
         options.thickness > DEFAULT_INK.thickness || options.glow > 0;
@@ -1258,12 +1291,11 @@ void main() { gl_Position = vertex; }`,
           plan.glowDistance ?? DEFAULT_GLOW_DISTANCE
         );
       } else {
-        if (batch.mode === 'faces') {
-          this.faces(batch, plan.size);
-        } else {
-          this.pass(batch);
-        }
+        this.pass(batch);
       }
+    }
+    if (plan.faces?.before === plan.batches.length) {
+      this.faces(plan.faces.batch, plan.size);
     }
     // Hardware-style overlays are deliberately outside both scene and Enhanced
     // Ink composition: they are fixed-screen pixels in either preset.

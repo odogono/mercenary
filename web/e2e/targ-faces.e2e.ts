@@ -8,7 +8,8 @@ test('Targ draws coloured concave faces with depth and clipping through both pre
   await expect(page.locator('#result')).toHaveAttribute('data-state', 'ready');
   const result = await page.evaluate(async () => {
     const { Camera } = await import('../src/projection/index.ts');
-    const { faceBatches } = await import('../src/shell/faces.ts');
+    const { faceBatch } = await import('../src/shell/faces.ts');
+    const { facePolygon } = await import('../src/world/index.ts');
     const { Renderer } = await import('../src/shell/frame.ts');
     const canvas = document.createElement('canvas');
     canvas.width = 1280;
@@ -24,11 +25,11 @@ test('Targ draws coloured concave faces with depth and clipping through both pre
     const face = (
       points: readonly (readonly [number, number, number])[],
       colour: string
-    ) => ({
-      colour: { colour, kind: 'palette' as const, source: 0 },
-      doubleSided: true as const,
-      vertices: points.map(([x, y, z]) => ({ x, y, z }))
-    });
+    ) =>
+      facePolygon(
+        { colour: { colour, kind: 'palette', source: 0 }, doubleSided: true },
+        points.map(([x, y, z]) => ({ x, y, z }))
+      );
     const red = face(
       [
         [-200, -200, -1000],
@@ -50,8 +51,9 @@ test('Targ draws coloured concave faces with depth and clipping through both pre
     const draw = (faces: readonly (typeof red)[], enhanced = false) => {
       renderer.render(
         {
-          batches: faceBatches(faces, camera, size),
+          batches: [],
           clear: { blue: 0, green: 0, red: 0 },
+          faces: { batch: faceBatch(faces, camera, size)!, before: 0 },
           lines: 0,
           overlays: [],
           points: 0,

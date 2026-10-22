@@ -50,6 +50,7 @@ const object = (
   detailCube: 1024,
   drawsFarAsPoint: true,
   edges: [],
+  faces: [],
   id: `object-${slot}`,
   model: 'test',
   orientation: IDENTITY,

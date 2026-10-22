@@ -8,9 +8,14 @@ import {
   openingPlayer,
   sessionContent
 } from '../src/session/index.ts';
-import { faceBatches } from '../src/shell/faces.ts';
+import { FACE_STRIDE, faceBatch } from '../src/shell/faces.ts';
 import { planFrame } from '../src/shell/frame.ts';
-import { World, movedTo, placedAtResidence } from '../src/world/index.ts';
+import {
+  World,
+  facePolygon,
+  movedTo,
+  placedAtResidence
+} from '../src/world/index.ts';
 import {
   resolveRotation,
   surfaceRotation
@@ -95,15 +100,15 @@ const cell = world.cells.find(
 describe('Targ Geometry Asset faces', () => {
   test('stable vertex identities resolve per part; walking faces stay out of presentation', () => {
     expect(object.faces).toHaveLength(1);
-    expect(object.faces![0]!.vertices).toHaveLength(3);
-    expect(object.faces![0]!.colour).toEqual(part().faces[0]!.colour);
+    expect(object.faces[0]!.vertices).toHaveLength(3);
+    expect(object.faces[0]!.colour).toEqual({ blue: 128, green: 64, red: 192 });
     const moved = movedTo(object, {
       x: object.origin.x + 2000,
       y: object.origin.y + 300,
       z: object.origin.z - 1000
     });
-    expect(moved.faces![0]!.vertices).toEqual(
-      object.faces![0]!.vertices.map(v => ({
+    expect(moved.faces[0]!.vertices).toEqual(
+      object.faces[0]!.vertices.map(v => ({
         x: v.x + 2000,
         y: v.y + 300,
         z: v.z - 1000
@@ -160,7 +165,7 @@ describe('Targ Geometry Asset faces', () => {
     // Add a face using the wireframe's own placed corners to compare exactly after residence.
     const withFace = {
       ...object,
-      faces: [{ vertices: object.vertices.slice(0, 3) }]
+      faces: [facePolygon({}, object.vertices.slice(0, 3))]
     };
     const where = {
       at: { x: 100_000, y: 2048, z: 200_000 },
@@ -173,7 +178,7 @@ describe('Targ Geometry Asset faces', () => {
     const expected = placedAtResidence(world, reference, where, {
       kind: 'surface'
     });
-    expect(placed.faces![0]!.vertices).toEqual(expected.vertices.slice(0, 3));
+    expect(placed.faces[0]!.vertices).toEqual(expected.vertices.slice(0, 3));
   });
 
   test('object faces obey detail, carried, gone and room visibility', () => {
@@ -190,14 +195,14 @@ describe('Targ Geometry Asset faces', () => {
       roomOptions('gone'),
       roomOptions('room', 4)
     ]) {
-      expect(visible(world, position, options).faces ?? []).toHaveLength(0);
+      expect(visible(world, position, options).faces).toHaveLength(0);
     }
     expect(
       visible(
         world,
         { ...position, x: position.x + object.detailCube * 2 },
         roomOptions('room')
-      ).faces ?? []
+      ).faces
     ).toHaveLength(0);
   });
 
@@ -219,11 +224,11 @@ describe('Targ Geometry Asset faces', () => {
       );
     }
     const position = { ...cell.centre, y: 1000 };
-    const normal = visible(world, position).faces![0]!;
+    const normal = visible(world, position).faces[0]!;
     const repeated = visible(world, {
       ...position,
       x: position.x + world.groundExtent
-    }).faces![0]!;
+    }).faces[0]!;
     expect(repeated.vertices).toEqual(
       normal.vertices.map(v => ({ ...v, x: v.x + world.groundExtent }))
     );
@@ -244,15 +249,18 @@ describe('Targ Geometry Asset faces', () => {
         ]
       ])
     };
-    const plans = (['authentic', 'enhanced'] as const).map(preset =>
-      planFrame(world, snapshot, size, undefined, {
-        preset,
-        structureReach: 'cell'
-      }).batches.filter(batch => batch.mode === 'faces')
+    const plans = (['authentic', 'enhanced'] as const).map(
+      preset =>
+        planFrame(world, snapshot, size, undefined, {
+          preset,
+          structureReach: 'cell'
+        }).faces
     );
-    expect(plans[0]).toHaveLength(1);
-    expect(plans[0]).toEqual(plans[1]);
-    expect(plans[0]![0]!.colour).toEqual({ blue: 128, green: 64, red: 192 });
+    expect(plans[0]).toBeDefined();
+    expect(plans[0]!.batch).toEqual(plans[1]!.batch);
+    expect(Array.from(plans[0]!.batch.vertices.subarray(4, 7))).toEqual(
+      [192, 64, 128].map(channel => Math.fround(channel / 255))
+    );
   });
 
   test('concave faces triangulate without filling the notch and respect winding and mirrors', () => {
@@ -269,30 +277,25 @@ describe('Targ Geometry Asset faces', () => {
       pitch: 0,
       position: { x: 0, y: 0, z: 0 }
     });
-    const batches = faceBatches([{ vertices }], camera, size);
-    expect(batches).toHaveLength(1);
-    expect(batches[0]!.vertices).toHaveLength(4 * 3 * 4);
+    const draw = (
+      polygon: Parameters<typeof facePolygon>[0],
+      points: typeof vertices,
+      view = camera
+    ) => faceBatch([facePolygon(polygon, points)], view, size);
+    expect(draw({}, vertices)!.vertices).toHaveLength(4 * 3 * FACE_STRIDE);
+    expect(draw({}, [...vertices].reverse())).toBeUndefined();
+    expect(draw({ doubleSided: true }, [...vertices].reverse())).toBeDefined();
     expect(
-      faceBatches([{ vertices: [...vertices].reverse() }], camera, size)
-    ).toHaveLength(0);
-    expect(
-      faceBatches(
-        [{ doubleSided: true, vertices: [...vertices].reverse() }],
-        camera,
-        size
-      )
-    ).toHaveLength(1);
-    expect(
-      faceBatches(
-        [{ vertices }],
+      draw(
+        {},
+        vertices,
         new Camera({
           heading: 0,
           mirrored: true,
           pitch: 0,
           position: camera.position
-        }),
-        size
+        })
       )
-    ).toHaveLength(1);
+    ).toBeDefined();
   });
 });

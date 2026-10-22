@@ -49,6 +49,7 @@ const placedObject: ObjectPlacement = {
   detailCube: 1024,
   drawsFarAsPoint: true,
   edges: [],
+  faces: [],
   id: 'parcel',
   model: 'test',
   orientation: IDENTITY,
