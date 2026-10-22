@@ -7,7 +7,8 @@ import {
   DEFAULT_CAST_SHADOWS,
   DEFAULT_SHADOW_DEPTH,
   type CastShadows,
-  type LightLevel
+  type LightLevel,
+  type ShadowDepth
 } from '../settings/index.ts';
 import {
   planDionEnhancedFrame,
@@ -19,7 +20,7 @@ export type DionPresentationPreset = 'authentic' | 'enhanced';
 export interface DionLightPreferences {
   readonly ambientLight?: LightLevel | undefined;
   readonly castShadows?: CastShadows | undefined;
-  readonly shadowDepth?: LightLevel | undefined;
+  readonly shadowDepth?: ShadowDepth | undefined;
 }
 
 /// The Enhanced viewer Damocles shows, for Mercenary III (ADR 0077): the shared planner's

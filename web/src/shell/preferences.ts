@@ -3,11 +3,13 @@ import {
   DEFAULT_WIREFRAME_THICKNESS,
   isLightLevel,
   isPresentationPreset,
+  isShadowDepth,
   isStructureReach,
   readCastShadows,
   type CastShadows,
   type LightLevel,
-  type PresentationSettings
+  type PresentationSettings,
+  type ShadowDepth
 } from '../settings/index.ts';
 import type { ReadStorage, WriteStorage } from './storage.ts';
 import { titleStorageKeys, type TitleSlug } from './title.ts';
@@ -80,7 +82,7 @@ export interface Preferences {
   readonly roadGlow?: WireframeGlow;
   readonly roadWeight?: WireframeWeight;
   /// Absent means a Cast Shadow takes all the Sunlight away.
-  readonly shadowDepth?: LightLevel;
+  readonly shadowDepth?: ShadowDepth;
   readonly structureReach?: PresentationSettings['structureReach'];
   readonly wireframeGlow?: WireframeGlow;
   readonly wireframeWeight?: WireframeWeight;
@@ -153,7 +155,7 @@ export const validatePreferences = (value: unknown): Preferences => {
     ...(isLightLevel(source['ambientLight'])
       ? { ambientLight: source['ambientLight'] }
       : {}),
-    ...(isLightLevel(source['shadowDepth'])
+    ...(isShadowDepth(source['shadowDepth'])
       ? { shadowDepth: source['shadowDepth'] }
       : {}),
     ...(readCastShadows(source['castShadows']) === undefined
@@ -301,7 +303,7 @@ export interface PreferencesChange {
   readonly presentationPreset?: PresentationSettings['preset'] | undefined;
   readonly roadGlow?: WireframeGlow | undefined;
   readonly roadWeight?: WireframeWeight | undefined;
-  readonly shadowDepth?: LightLevel | undefined;
+  readonly shadowDepth?: ShadowDepth | undefined;
   readonly structureReach?: PresentationSettings['structureReach'] | undefined;
   readonly wireframeGlow?: WireframeGlow | undefined;
   readonly wireframeWeight?: WireframeWeight | undefined;

@@ -3,8 +3,10 @@ import {
   DEFAULT_CAST_SHADOWS,
   DEFAULT_SHADOW_DEPTH,
   LIGHT_LEVELS,
+  SHADOW_DEPTHS,
   isCastShadows,
   isLightLevel,
+  isShadowDepth,
   type PresentationSettings
 } from '../settings/index.ts';
 import type { SettingName } from './chrome.ts';
@@ -55,10 +57,10 @@ const REDRAWN_ROWS: ReadonlySet<SettingRow['name']> = new Set([
   'shadows'
 ]);
 
-const LIGHT_LEVEL_OPTIONS = LIGHT_LEVELS.map(level => ({
-  label: `${level}%`,
-  value: String(level)
-}));
+const levelOptions = (levels: readonly number[]) =>
+  levels.map(level => ({ label: `${level}%`, value: String(level) }));
+const LIGHT_LEVEL_OPTIONS = levelOptions(LIGHT_LEVELS);
+const SHADOW_DEPTH_OPTIONS = levelOptions(SHADOW_DEPTHS);
 
 export const installSettingsView = (
   options: SettingsViewOptions
@@ -163,17 +165,18 @@ export const installSettingsView = (
       ]
     },
     {
-      // How much of the Sunlight a Cast Shadow takes away: less than all of it lightens them.
+      // How much of the Sunlight a Cast Shadow takes away: less than all of it lightens them,
+      // and past 100% they take some of the ambient fill too.
       apply: value => {
         const level = Number(value);
         preferences.update({
-          shadowDepth: isLightLevel(level) ? level : DEFAULT_SHADOW_DEPTH
+          shadowDepth: isShadowDepth(level) ? level : DEFAULT_SHADOW_DEPTH
         });
       },
       current: () =>
         String(preferences.current().shadowDepth ?? DEFAULT_SHADOW_DEPTH),
       name: 'shadow-depth',
-      options: LIGHT_LEVEL_OPTIONS
+      options: SHADOW_DEPTH_OPTIONS
     },
     {
       // The fill every face out of the Sunlight shows: less of it darkens Cast Shadows and the

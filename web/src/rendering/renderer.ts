@@ -217,10 +217,13 @@ vec3 faceNormal() {
 void main() {
   vec3 n = faceNormal();
   float lambert = max(dot(n, sunView), 0.0);
-  float shadow = lambert > 0.0 && shadowDepth > 0.0
-    ? 1.0 - shadowDepth * (1.0 - castShadow(surfacePoint()))
-    : 1.0;
-  vec3 ambient = mix(ambientGround, ambientSky, n.y * 0.5 + 0.5);
+  float shaded = lambert > 0.0 && shadowDepth > 0.0
+    ? 1.0 - castShadow(surfacePoint())
+    : 0.0;
+  // Up to 1 the depth takes away Sunlight; past it, the same share of the ambient fill.
+  float shadow = 1.0 - min(shadowDepth, 1.0) * shaded;
+  float fill = 1.0 - max(shadowDepth - 1.0, 0.0) * shaded;
+  vec3 ambient = mix(ambientGround, ambientSky, n.y * 0.5 + 0.5) * fill;
   gl_FragDepth = logDepth(viewPosition.z);
   pixel = vec4(faceColour * (ambient + sunColour * lambert * shadow), 1.0);
 }`;
