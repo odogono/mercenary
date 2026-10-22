@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
+import { assetsResponse } from './src/server/assets.ts';
 import {
   documentResponse,
   unsupportedMethodResponse
@@ -103,6 +104,14 @@ const server = Bun.serve({
     );
     if (payloadAsset !== undefined) {
       return payloadAsset;
+    }
+
+    const targAssets = await assetsResponse(
+      url.pathname,
+      join(root, 'assets/targ')
+    );
+    if (targAssets !== undefined) {
+      return targAssets;
     }
 
     if (url.pathname === '/settings.json') {

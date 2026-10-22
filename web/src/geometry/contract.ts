@@ -11,9 +11,17 @@ export const CONTRACT_VERSION = 1;
 export type Title = 'damocles' | 'targ';
 
 /// What a part is for. Display geometry is what is drawn; walk geometry is what a structure's
-/// walking rules read; plan, attachment and detail are the structure selector's own drawn lists.
+/// walking rules read; plan, attachment and detail are the structure selector's own drawn lists;
+/// distant is what a Targ Surface Structure draws as a Distant Structure instead of its wireframe.
 export type PartRole =
-  'attachment' | 'detail' | 'display' | 'glyph' | 'plan' | 'walk' | 'wireframe';
+  | 'attachment'
+  | 'detail'
+  | 'display'
+  | 'distant'
+  | 'glyph'
+  | 'plan'
+  | 'walk'
+  | 'wireframe';
 
 /// `palette` primitives carry a Damocles colour word; `ink` lines carry a Targ Ink; `none`
 /// carries no colour at all (Targ objects and Rooms, whose colour is a Room-level palette).
@@ -124,10 +132,17 @@ export interface Sidecar {
   readonly asset: string;
   readonly family: Family;
   readonly format: 'mercenary-geometry-sidecar';
+  /// Where an Authored Asset is placed: Targ object instances without their `model`, or the
+  /// Surface Cells an authored structure occupies. Recovered assets are placed by the payload.
+  readonly placements?: readonly unknown[];
+  /// A Surface Structure's own Structure Reach: `cell` keeps it out of the Distant Structures
+  /// even when the player's Structure Reach is `all`. Absent means `all`.
+  readonly reach?: 'all' | 'cell';
   readonly record: unknown;
   readonly references: readonly Reference[];
   /// The payload document and JSON path the record was recovered from, and that document's hash.
-  readonly source: {
+  /// An Authored Asset has no Recovered Baseline and so no source.
+  readonly source?: {
     readonly document: string;
     readonly path: string;
     readonly sha256: string;

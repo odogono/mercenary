@@ -30,7 +30,7 @@ One directory per concern. Pages load a `boot.ts` (`web/*.html` names which). Ea
 - `payload/`: loading and validating the Data Payload. `server/`: what `serve.ts` serves.
 - `trace/`: reading Golden Traces, used by Replay Gates and the trace tooling.
 - `atlas/`, `catalogue/`, `dionCatalogue/`, `flyover/`, `soundboard/`: inspection pages (`atlas.html`, `catalogue.html`, `dion-catalogue.html`, `flyover.html`, `sounds.html`).
-- `geometry/`: the shared Geometry Asset and Asset Sidecar contract, recovery and composition (ADR 0081). Targ loads its object models and Surface Cells as Recovered Baselines; the World composes them through the payload readers.
+- `geometry/`: the shared Geometry Asset and Asset Sidecar contract, recovery and composition (ADR 0081). Targ loads its object models and Surface Cells as Recovered Baselines, lays the edited and Authored Assets in `assets/targ/` over them (`targAssets.ts`; `tools/targ-assets.ts` adopts, reviews and freshness-checks them), and the World composes them through the payload readers.
 - `geometrySpike/`: the #671 Blender geometry round-trip spike.
 - `hash/`: SHA-256 as hex, shared by every payload and asset identity check.
 
