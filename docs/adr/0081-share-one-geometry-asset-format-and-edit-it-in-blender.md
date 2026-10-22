@@ -1,10 +1,10 @@
 # Share one Geometry Asset format across the games and edit it in Blender
 
-Proposed, 2026-10-22. Targ, Damocles and Mercenary III will share one model format: the Geometry
-Asset contract from the Blender spike (#671), stored as canonical, key-sorted JSON with an Asset
-Sidecar. The contract has polygon loops, explicit lines, stable vertex, face and line identities,
-colours and parts. A project add-on in `tools/blender/` imports and exports it. Following the owner
-direction recorded in
+Accepted, 2026-10-22, for [#861](https://github.com/odogono/mercenary/issues/861). Targ, Damocles
+and Mercenary III will share one model format: the Geometry Asset contract from the Blender spike
+(#671), stored as canonical, key-sorted JSON with an Asset Sidecar. The contract has polygon loops,
+explicit lines, stable vertex, face and line identities, colours and parts. A project add-on in
+`tools/blender/` imports and exports it. Following the owner direction recorded in
 [blender-geometry-workflows](../research/blender-geometry-workflows.md), GLB and `.blend` are
 exchange and preview forms only, never canonical.
 
