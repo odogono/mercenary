@@ -126,12 +126,12 @@ export type CastShadows = 'off' | 'on';
 export type LightLevel = 25 | 50 | 75 | 100;
 export const LIGHT_LEVELS: readonly LightLevel[] = [25, 50, 75, 100];
 /// SHADOW DEPTH goes past 100%: beyond all of the Sunlight, a Cast Shadow takes away that
-/// much of the ambient fill as well, so 150% leaves a shadow half the fill.
-export type ShadowDepth = LightLevel | 125 | 150;
+/// much of the ambient fill as well, so 120% leaves a shadow four-fifths of the fill.
+export type ShadowDepth = LightLevel | 110 | 120;
 export const SHADOW_DEPTHS: readonly ShadowDepth[] = [
   ...LIGHT_LEVELS,
-  125,
-  150
+  110,
+  120
 ];
 
 /// How the wireframe itself is drawn, as the Reference Build drew it unless told otherwise.
