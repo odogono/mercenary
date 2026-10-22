@@ -254,6 +254,22 @@ export class TourcraftSession extends DionSession {
   private get expanded(): TourcraftState {
     return this.state.tourcraft!;
   }
+
+  override setBodyTime(secondsOfDay: number): void {
+    if (this.state.location === 65_535) {
+      throw new Error('Body Time is unavailable in space');
+    }
+    super.setBodyTime(secondsOfDay);
+    const phases = [...this.expanded.phases];
+    phases[this.state.location / 4] = this.state.phase;
+    const next = { ...this.state, tourcraft: { ...this.expanded, phases } };
+    const tourcraft = updateTourcraftOwners(this.promoted, next, next, true);
+    this.state = {
+      ...next,
+      day: tourcraft.owners['sky']!['dayBits'] !== 0,
+      tourcraft
+    };
+  }
   /// ADR 0058 (#837): a frame is four ticks while the EAGLE is flown, as the airborne slot-1
   /// probe ran (docs/research/mercenary-iii-integration.md), and eleven otherwise.
   private frameCadence(): number {

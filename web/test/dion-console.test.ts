@@ -9,6 +9,10 @@ import {
 } from '../src/dion/console.ts';
 import { DionSession, type DionAction } from '../src/dion/session.ts';
 import { loadTourcraftContent } from '../src/dion/tourcraftContent.ts';
+import {
+  decodeTourcraftRecord,
+  encodeTourcraftRecord
+} from '../src/dion/tourcraftSave.ts';
 import { TourcraftSession } from '../src/dion/tourcraftSession.ts';
 import { IDLE } from '../src/gameCore/index.ts';
 import type { PreferencesStore } from '../src/shell/preferences.ts';
@@ -46,6 +50,36 @@ const run = (session: DionSession | TourcraftSession, line: string) =>
   )[0];
 
 describe('Dion console clocks', () => {
+  test('the playable session keeps console clocks through Save/Resume and the next frame', () => {
+    for (const [elapsed, time] of [
+      [0, '12:00:00'],
+      [0, '00:00:00'],
+      [1, '12:00:00'],
+      [1, '00:00:00']
+    ] as const) {
+      const session = new TourcraftSession(tourcraft);
+      session.advance(elapsed);
+      run(session, `time ${time}`);
+      run(session, 'clock 9-01-02');
+      const restored = new TourcraftSession(
+        tourcraft,
+        decodeTourcraftRecord(
+          encodeTourcraftRecord(tourcraft, session.captureResume(), 'METIS'),
+          tourcraft
+        ).snapshot
+      );
+      expect(run(restored, 'clock')).toBe('clock 09:01:02');
+      expect(run(restored, 'time')).toBe(`time ${time}`);
+      for (const current of [session, restored]) {
+        current.advance(11 / 50);
+      }
+      expect(restored.snapshot).toEqual(session.snapshot);
+      expect(run(restored, 'time')!.slice(0, 11)).toBe(
+        `time ${time.slice(0, 6)}`
+      );
+    }
+  });
+
   test('sets Body Time and daylight while leaving the panel clock independent', async () => {
     const content = await dionContent();
     const session = new DionSession(content);

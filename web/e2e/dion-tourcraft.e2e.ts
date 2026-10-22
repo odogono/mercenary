@@ -114,8 +114,9 @@ const keyFor = {
 test('production keyboard journey, flight Save/Load and reload Resume through automatic exit', async ({
   page
 }, info) => {
-  test.setTimeout(180_000);
-  test.fixme(Boolean(process.env['CI']), 'too slow on a CI runner: #852');
+  // The complete keyboard witness renders thousands of production frames. Software WebGL
+  // on the two-core CI runner needs more time than a local GPU for the same tick sequence.
+  test.setTimeout(540_000);
   await page.addInitScript(() => {
     let time = 0,
       next = 0;

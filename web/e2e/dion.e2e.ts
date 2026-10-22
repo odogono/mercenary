@@ -47,7 +47,8 @@ test('/dion boots the METIS prison opening from its own payload', async ({
 test('/dion shares the System Menu settings page and Controls Page, under its Title Logo', async ({
   page
 }) => {
-  test.fixme(Boolean(process.env['CI']), 'too slow on a CI runner: #852');
+  // This boots Enhanced twice; shader compilation on CI uses software WebGL.
+  test.slow();
   await page.addInitScript(() => {
     // Another Title's choices are not Mercenary III's (ADR 0063).
     localStorage.setItem(

@@ -21,7 +21,10 @@ for (const [title, path, ready, command, response, key] of [
   test(`${title} console sets its clocks, checkpoints while paused and closes before the menu`, async ({
     page
   }) => {
-    test.fixme(title === 'Dion', 'fails on main: #852');
+    // Reload resumes play. Hold browser time so the readback checks the saved clock exactly.
+    const now = new Date();
+    await page.clock.install({ time: now });
+    await page.clock.pauseAt(now);
     const errors: string[] = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(path);

@@ -137,7 +137,6 @@ test('the console body switch moves Body, Pose and cell together', async ({
 /// the geometry of the Body stood on catches that, so this reads it absolutely. The counts are
 /// the ones `damocles-body-switch.test.ts` pins at each admitted arrival Pose.
 test('a switched Body draws its own workspace', async ({ page }) => {
-  test.fixme(true, 'fails on main: #852');
   const errors = watchErrors(page);
   await bootAt(page, APPROACH_LOCAL);
   const frame = page.locator('#frame');
@@ -158,7 +157,9 @@ test('a switched Body draws its own workspace', async ({ page }) => {
   expect(await run(page, 'switch gaea-ur-city-4-2')).toContain('switched');
   await closeConsole(page);
   await expect(frame).toHaveAttribute('data-triangles', '351');
-  await expect(frame).toHaveAttribute('data-unresolved', '0');
+  // Once both Gaea islands have streamed in, cell 8,8's decoded structure has no mesh.
+  // Zero was a transient count before that Model arrived, not the complete workspace.
+  await expect(frame).toHaveAttribute('data-unresolved', '1');
 
   // MIDAS stores no copy where its Pose stands: the pyramid bound there is the uniform
   // field's, built for the cell (#172).
