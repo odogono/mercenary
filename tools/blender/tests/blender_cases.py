@@ -9,6 +9,7 @@ the MERCENARY_ROOT checkout the test prepares:
     authored             create authored:probe and authored:probe-tower, draw a line in each
     distant-add PATH     draw a Distant Structure for a structure
     distant-remove PATH  delete a structure's Distant Structure
+    transform PATH       move a part in Object Mode, export, reset it, export again
 
 The last line printed is `RESULT <json>`.
 """
@@ -159,6 +160,21 @@ def case_distant_remove(relative):
     return {"result": export(collection)}
 
 
+def case_transform(relative):
+    empty_scene()
+    collection = addon.open_asset(relative)
+    obj = collection.objects["wireframe"]
+    shown = obj.matrix_world.to_scale()[0]
+    obj.location.x += 1
+    try:
+        refused = export(collection)
+    except RuntimeError as problem:  # background mode raises an operator's error report
+        refused = ["CANCELLED"] if "Reset Display Transform" in str(problem) else [str(problem)]
+    activate(obj)
+    bpy.ops.mercenary.reset_display_transform()
+    return {"refused": refused, "reset": export(collection), "scale": shown}
+
+
 CASES = {
     "unit": case_unit,
     "roundtrip": case_roundtrip,
@@ -166,6 +182,7 @@ CASES = {
     "authored": case_authored,
     "distant-add": case_distant_add,
     "distant-remove": case_distant_remove,
+    "transform": case_transform,
 }
 
 arguments = sys.argv[sys.argv.index("--") + 1 :]

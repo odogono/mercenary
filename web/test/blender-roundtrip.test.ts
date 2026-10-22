@@ -187,6 +187,24 @@ describe.skipIf('skip' in blender)('Blender add-on', () => {
   );
 
   test(
+    'a part opens scaled down and keeps that transform; an Object Mode move is refused until reset',
+    async () => {
+      const root = await scratch();
+      const path = structurePath(occupied);
+      const before = (await assets(root)).find(f => f.path === path)!.body;
+      expect(run(root, 'transform', path)).toEqual({
+        refused: ['CANCELLED'],
+        reset: ['FINISHED'],
+        scale: 1 / 256
+      });
+      expect((await assets(root)).find(f => f.path === path)!.body).toBe(
+        before
+      );
+    },
+    TIMEOUT
+  );
+
+  test(
     'a new Authored Asset loads once its placements are written by hand',
     async () => {
       const root = mkdtempSync(join(tmpdir(), 'mercenary-blender-'));

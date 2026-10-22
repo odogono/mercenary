@@ -25,8 +25,29 @@ def _report(operator, diagnostics):
 
 
 def open_asset(relative):
-    """Import an `assets/targ/` file by its path relative to that directory."""
-    return blender_io.import_asset(targ_asset.read(relative), relative)
+    """Import an `assets/targ/` file by its path relative to that directory, select its visible
+    part and frame it in every 3D view."""
+    collection = blender_io.import_asset(targ_asset.read(relative), relative)
+    shown = [o for o in collection.all_objects if o.visible_get()]
+    for obj in bpy.context.view_layer.objects:
+        obj.select_set(obj in shown)
+    if shown:
+        bpy.context.view_layer.objects.active = shown[0]
+    frame(collection)
+    return collection
+
+
+def frame(collection):
+    """Look at the asset's own geometry in every 3D view; nothing to do in background mode."""
+    size = max(collection.get("mc_extent", 0), 256) * blender_io.DISPLAY_SCALE
+    for window in bpy.context.window_manager.windows:
+        for area in window.screen.areas:
+            if area.type != "VIEW_3D":
+                continue
+            view = area.spaces.active
+            view.clip_start, view.clip_end = size / 1000, size * 100
+            view.region_3d.view_location = (0, 0, 0)
+            view.region_3d.view_distance = size * 2
 
 
 class MERCENARY_OT_import(bpy.types.Operator, ImportHelper):
@@ -125,6 +146,21 @@ def _edit_part(context):
     becomes the distant part the first time it is marked or coloured."""
     blender_io.prepare_distant(context.object)
     return context.object
+
+
+class MERCENARY_OT_reset_transform(bpy.types.Operator, _AssetOperator):
+    """Put the selected parts back where the asset shows them, undoing any Object Mode move"""
+
+    bl_idname = "mercenary.reset_display_transform"
+    bl_label = "Reset Display Transform"
+    bl_options = {"REGISTER", "UNDO"}
+
+    def execute(self, context):
+        for obj in context.selected_objects or [context.object]:
+            collection = blender_io.asset_collection(obj)
+            if collection is not None and obj.get("mc_part") is not None:
+                obj.matrix_world = blender_io.display_matrix(collection)
+        return {"FINISHED"}
 
 
 class MERCENARY_OT_snap(bpy.types.Operator, _AssetOperator):
@@ -240,6 +276,7 @@ class MERCENARY_PT_panel(bpy.types.Panel):
         layout.operator(MERCENARY_OT_validate.bl_idname, icon="CHECKMARK")
         column = layout.column(align=True)
         column.operator(MERCENARY_OT_snap.bl_idname)
+        column.operator(MERCENARY_OT_reset_transform.bl_idname)
         column.operator(MERCENARY_OT_set_colour.bl_idname)
         row = column.row(align=True)
         row.operator(MERCENARY_OT_mark_lines.bl_idname, text="Mark Lines").clear = False
@@ -252,6 +289,7 @@ CLASSES = (
     MERCENARY_OT_new_authored,
     MERCENARY_OT_validate,
     MERCENARY_OT_export,
+    MERCENARY_OT_reset_transform,
     MERCENARY_OT_snap,
     MERCENARY_OT_set_colour,
     MERCENARY_OT_mark_lines,

@@ -39,13 +39,23 @@ const steps = [
   'import mercenary_geometry',
   'mercenary_geometry.register()'
 ];
-if (path !== undefined) {
-  const absolute = resolve(process.cwd(), path);
-  steps.push(
-    'from mercenary_geometry import addon, targ_asset',
-    `addon.open_asset(targ_asset.relative_path(${JSON.stringify(absolute)}))`
-  );
-}
+// Once the window is up: drop the startup scene (keeping preferences), then open the asset.
+// Framing waits one more tick, for the reloaded screen to have a 3D view to frame in.
+const open =
+  path === undefined
+    ? []
+    : [
+        'from mercenary_geometry import addon, targ_asset',
+        `collection = addon.open_asset(targ_asset.relative_path(${JSON.stringify(resolve(process.cwd(), path))}))`,
+        'bpy.app.timers.register(lambda: addon.frame(collection), first_interval=0.2)'
+      ];
+steps.push(
+  'import bpy',
+  'def start():',
+  '    bpy.ops.wm.read_homefile(use_empty=True)',
+  ...open.map(line => `    ${line}`),
+  'bpy.app.timers.register(start, first_interval=0.1)'
+);
 
 const child = Bun.spawn([blender, '--python-expr', steps.join('\n')], {
   env: { ...process.env, MERCENARY_ROOT: ROOT },

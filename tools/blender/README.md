@@ -24,8 +24,13 @@ bun run blender                                         # the add-on, ready to i
 bun run blender ../assets/targ/objects/<name>.json      # and that asset, imported
 ```
 
-The command runs Blender from `BLENDER`, or `blender` on `PATH`. Assets are read from and written to
-the checkout the command was run in.
+The command runs Blender from `BLENDER`, or `blender` on `PATH`. It opens an empty scene (your
+preferences are kept) and frames the asset. Assets are read from and written to the checkout the
+command was run in.
+
+A model is shown at 1/256 of its game size and centred on the origin. A Targ object comes out
+about a Blender unit across, and a Surface Cell about 256. The mesh itself stays in game units, so
+a vertex's local coordinates are its game coordinates and _Snap to Game Units_ rounds them.
 
 To install the add-on by hand instead, zip `mercenary_geometry/` and choose _Edit ▸ Preferences ▸
 Add-ons ▸ Install from Disk_. Then set `MERCENARY_ROOT` to the checkout before starting Blender. It
@@ -49,8 +54,10 @@ is not packaged as a Blender extension, because an extension manifest must decla
    Ledger from disk, so any hand edits to them are kept.
 6. Classify every change in the Change Ledger, then run `bun run check`.
 
-The panel shows only for the part objects of an imported asset. Object transforms must stay
-identity: edit in Edit Mode. Points whose positions the runtime computes refuse to move:
+The panel shows only for the part objects of an imported asset. Edit in Edit Mode: a part must
+keep the transform it opened with, and export refuses one that was moved, rotated or scaled in
+Object Mode. _Reset Display Transform_ puts it back. Points whose positions the runtime computes
+refuse to move:
 
 - **Rotated inputs.** Change their `mc_input` attribute instead.
 - **Road Workspace endpoints.** The road table places them.
