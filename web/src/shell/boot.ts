@@ -1,5 +1,5 @@
 import { IDLE } from '../gameCore/index.ts';
-import { fetchReader, load } from '../payload/load.ts';
+import { fetchAssets, fetchReader, load } from '../payload/load.ts';
 import type { PresentationEvent, SessionSnapshot } from '../session/index.ts';
 import { arrivalTunables, bensonTunables } from '../settings/index.ts';
 import { createTargOrrery, skyStateAt, targOrreryFor } from '../sky/index.ts';
@@ -179,7 +179,10 @@ try {
   // Payload, settings and typography are independent localhost reads, so none waits behind
   // another.
   const [bundle, settingsText, , logo, targPanelDocument] = await Promise.all([
-    load(fetchReader(new URL('/payload/', location.href).href)),
+    load(
+      fetchReader(new URL('/payload/', location.href).href),
+      fetchAssets(new URL('/assets/targ.json', location.href).href)
+    ),
     requiredText(new URL('/settings.json', location.href)),
     loadTypography(),
     // Targ's Title Logo comes from the ST release, since the Reference Build has none (#696).

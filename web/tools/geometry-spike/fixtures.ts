@@ -159,7 +159,13 @@ export const sourceRecord = (
   payload: string,
   recovered: Recovered
 ): unknown => {
-  const { document, path } = recovered.sidecar.source;
+  const source = recovered.sidecar.source;
+  if (source === undefined) {
+    throw new Error(
+      `${recovered.sidecar.asset} was not recovered from a payload`
+    );
+  }
+  const { document, path } = source;
   let value: unknown = JSON.parse(
     readFileSync(join(payload, document), 'utf8')
   );

@@ -5,7 +5,11 @@ import type {
   GeometryAsset,
   Vertex
 } from '../geometry/contract.ts';
-import { composeObjects, composeSurface } from '../geometry/targ.ts';
+import {
+  composeObjects,
+  composeSurface,
+  structurePresentation
+} from '../geometry/targ.ts';
 import { OUT_OF_THE_WORLD, SURFACE_ROOM } from '../interaction/index.ts';
 import { cos, sin, toFloat32 } from '../math/index.ts';
 import {
@@ -425,6 +429,33 @@ interface SurfaceEdge {
   readonly start: number;
 }
 
+interface SurfaceShape {
+  readonly edges: readonly SurfaceEdge[];
+  readonly vertices: readonly SurfaceVertex[];
+}
+
+const surfaceShape = (cell: Doc.SurfaceCell): SurfaceShape => {
+  const vertices: SurfaceVertex[] = cell.vertices.map(vertex => {
+    if (vertex.kind === 'world-point' && vertex.position !== undefined) {
+      return { kind: 'world', point: point(vertex.position) };
+    }
+    const raw = vertex.rotationInput ?? [];
+    return {
+      input: raw.length === 3 ? [raw[0]!, raw[1]!, raw[2]!] : [0, 0, 0],
+      kind: 'rotated'
+    };
+  });
+  const edges: SurfaceEdge[] = [];
+  for (const edge of cell.edges) {
+    if (edge.length !== 3) {
+      continue;
+    }
+    const ink: Ink = edge[2] === Ink.black ? Ink.black : Ink.white;
+    edges.push({ end: edge[1]!, ink, start: edge[0]! });
+  }
+  return { edges, vertices };
+};
+
 /// One grid cell's drawable content, kept together so the renderer can cull by cell before
 /// touching individual segments.
 export class WorldCell {
@@ -435,8 +466,11 @@ export class WorldCell {
   readonly structure: string | undefined;
   /// Centre of the cell on the ground plane, for distance culling.
   readonly centre: Vector3;
+  /// The structure's own Structure Reach: `cell` never draws it as a Distant Structure.
+  readonly reach: 'all' | 'cell';
   private readonly vertices: readonly SurfaceVertex[];
   private readonly edges: readonly SurfaceEdge[];
+  private readonly distant: SurfaceShape | undefined;
   private readonly rotation: SurfaceRotation | undefined;
   /// Each face's loop as surface vertices, beside its triangulation at rest.
   private readonly faceSources: readonly {
@@ -450,8 +484,10 @@ export class WorldCell {
     asset?: GeometryAsset;
     centre: Vector3;
     column: number;
+    distant?: SurfaceShape;
     edges: readonly SurfaceEdge[];
     index: number;
+    reach?: 'all' | 'cell';
     rotation: SurfaceRotation | undefined;
     row: number;
     structure: string | undefined;
@@ -464,6 +500,8 @@ export class WorldCell {
     this.centre = fields.centre;
     this.vertices = fields.vertices;
     this.edges = fields.edges;
+    this.distant = fields.distant;
+    this.reach = fields.reach ?? 'all';
     this.rotation = fields.rotation;
     this.faceSources =
       fields.asset === undefined
@@ -525,9 +563,31 @@ export class WorldCell {
 
   /// Resolve runtime-rotated and Road Workspace points and return the cell's wireframe.
   segments(elapsed: number, workspace?: RoadWorkspace): Segment[] {
-    const points = this.vertices.map(vertex => this.resolve(vertex, elapsed));
+    return this.resolveShape(this.wireframe, elapsed, workspace);
+  }
+
+  /// What the cell draws as a Distant Structure: its own distant part when its Geometry Asset
+  /// has one, otherwise its wireframe. A Distant Structure has no Road Workspace.
+  distantSegments(elapsed: number): Segment[] {
+    return this.resolveShape(
+      this.distant ?? this.wireframe,
+      elapsed,
+      undefined
+    );
+  }
+
+  private get wireframe(): SurfaceShape {
+    return { edges: this.edges, vertices: this.vertices };
+  }
+
+  private resolveShape(
+    { edges, vertices }: SurfaceShape,
+    elapsed: number,
+    workspace: RoadWorkspace | undefined
+  ): Segment[] {
+    const points = vertices.map(vertex => this.resolve(vertex, elapsed));
     const out: Segment[] = [];
-    for (const edge of this.edges) {
+    for (const edge of edges) {
       const a = resolvedPoint(points, workspace, edge.start);
       const b = resolvedPoint(points, workspace, edge.end);
       if (a === undefined || b === undefined) {
@@ -759,24 +819,8 @@ export class World {
     const surface = composeSurface(bundle.surface);
     for (const [i, cell] of surface.cells.entries()) {
       const { column, row } = cellGrid(cell, cellsPerAxis);
-      const vertices: SurfaceVertex[] = cell.vertices.map(vertex => {
-        if (vertex.kind === 'world-point' && vertex.position !== undefined) {
-          return { kind: 'world', point: point(vertex.position) };
-        }
-        const raw = vertex.rotationInput ?? [];
-        return {
-          input: raw.length === 3 ? [raw[0]!, raw[1]!, raw[2]!] : [0, 0, 0],
-          kind: 'rotated'
-        };
-      });
-      const edges: SurfaceEdge[] = [];
-      for (const edge of cell.edges) {
-        if (edge.length !== 3) {
-          continue;
-        }
-        const ink: Ink = edge[2] === Ink.black ? Ink.black : Ink.white;
-        edges.push({ end: edge[1]!, ink, start: edge[0]! });
-      }
+      const { edges, vertices } = surfaceShape(cell);
+      const presentation = structurePresentation(bundle.surface.cells[i]!);
       const rotation = surfaceRotation(cell, cellsPerAxis);
       byGrid.set(row * cellsPerAxis + column, cells.length);
       cells.push(
@@ -784,8 +828,12 @@ export class World {
           asset: bundle.surface.cells[i]!.asset,
           centre: vector((column + 0.5) * cellSize, 0, (row + 0.5) * cellSize),
           column,
+          ...(presentation.distant === undefined
+            ? {}
+            : { distant: surfaceShape(presentation.distant) }),
           edges,
           index: cell.cell,
+          reach: presentation.reach,
           rotation,
           row,
           structure: cell.structure,

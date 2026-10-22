@@ -1,4 +1,9 @@
 import { recoverTargGeometry } from '../geometry/targ.ts';
+import {
+  applyTargAssets,
+  parseAssetFile,
+  type AssetFile
+} from '../geometry/targAssets.ts';
 import type { Bundle, Source } from './documents.ts';
 import { fail } from './errors.ts';
 import { readers } from './read.ts';
@@ -23,6 +28,10 @@ import { readers } from './read.ts';
 
 /// The bytes of one payload document, or `undefined` when it is absent.
 export type ReadDocument = (name: string) => Promise<string | undefined>;
+
+/// Every file under `assets/targ/`. Edited and Authored Assets are not payload: a loader given
+/// none plays the Recovered Baselines alone, which is what the Golden Trace gates compare.
+export type ReadAssets = () => Promise<readonly AssetFile[]>;
 
 export const SUPPORTED_SCHEMA_VERSION = 8;
 export const SUPPORTED_DECODER_VERSION = 9;
@@ -97,7 +106,10 @@ const check = (name: string, version: number, supported: number): void => {
   }
 };
 
-export const load = async (read: ReadDocument): Promise<Bundle> => {
+export const load = async (
+  read: ReadDocument,
+  readAssets?: ReadAssets
+): Promise<Bundle> => {
   // All thirteen documents are asked for at once and then checked in order.
   //
   // The read seam is a `fetch` in the browser (ADR 0011), so awaiting each document before
@@ -260,17 +272,28 @@ export const load = async (read: ReadDocument): Promise<Bundle> => {
     });
   }
 
-  const geometry = await recoverTargGeometry(
+  const recovered = await recoverTargGeometry(
     objectsSource,
     surfaceSource,
     world
+  );
+  const files = [...((await readAssets?.()) ?? [])].sort((a, b) =>
+    a.path < b.path ? -1 : a.path > b.path ? 1 : 0
+  );
+  const geometry = await applyTargAssets(
+    { ...recovered, instances: objects.instances },
+    await Promise.all(files.map(parseAssetFile))
   );
 
   return {
     endgame,
     manifest,
     objectEffects,
-    objects: { ...objects, models: geometry.objects },
+    objects: {
+      ...objects,
+      instances: geometry.instances,
+      models: geometry.objects
+    },
     rooms,
     sound: soundDocument,
     surface: { ...surface, cells: geometry.structures },
@@ -302,4 +325,19 @@ export const fetchReader =
       });
     }
     return await response.text();
+  };
+
+/// Fetch every Targ asset file from the dev server, which lists `assets/targ/` as one document.
+export const fetchAssets =
+  (url: string): ReadAssets =>
+  async () => {
+    const response = await fetch(url);
+    if (!response.ok) {
+      return fail({
+        kind: 'unreadable',
+        name: 'assets/targ',
+        reason: `HTTP ${response.status}`
+      });
+    }
+    return (await response.json()) as AssetFile[];
   };

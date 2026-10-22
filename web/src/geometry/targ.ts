@@ -126,3 +126,37 @@ export const composeSurface = (surface: Bundle['surface']): SurfaceDocument =>
       )
     }
   );
+
+/// A Surface Structure's presentation beyond its wireframe, from its Sidecar and parts: its own
+/// Structure Reach, and the separate part it draws as a Distant Structure, if it has one.
+export interface StructurePresentation {
+  readonly distant: SurfaceCell | undefined;
+  readonly reach: 'all' | 'cell';
+}
+
+export const structurePresentation = ({
+  asset,
+  sidecar
+}: Bundle['surface']['cells'][number]): StructurePresentation => {
+  const part = asset.parts.find(p => p.role === 'distant');
+  const distant =
+    part === undefined
+      ? undefined
+      : readers.surface(
+          { name: `${asset.asset} Distant Structure` },
+          {
+            cells: [
+              compose(asset, {
+                ...sidecar,
+                record: {
+                  ...(sidecar.record as Record<string, unknown>),
+                  edges: { $surfaceEdges: part.id },
+                  vertices: { $surfaceVertices: part.id }
+                }
+              }).record
+            ],
+            schemaVersion: 0
+          }
+        ).cells[0];
+  return { distant, reach: sidecar.reach ?? 'all' };
+};

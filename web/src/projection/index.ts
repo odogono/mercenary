@@ -771,16 +771,23 @@ export const visible = (
         ? positiveRemainder(selectedRow, world.cellsPerAxis)
         : selectedRow;
       const cell = world.cell(sourceColumn, sourceRow);
-      if (cell !== undefined && cell.index !== 0) {
-        const isOccupied = selectedColumn === column && selectedRow === row;
+      const isOccupied = selectedColumn === column && selectedRow === row;
+      const isDistant = rules.reach === 'all' && !isOccupied;
+      if (
+        cell !== undefined &&
+        cell.index !== 0 &&
+        !(isDistant && cell.reach === 'cell')
+      ) {
         const dx = (selectedColumn - sourceColumn) * world.cellSize;
         const dz = (selectedRow - sourceRow) * world.cellSize;
         const workspace = isOccupied
           ? translateWorkspace(world.roadWorkspace(cell), dx, dz)
           : undefined;
-        const selected = cell
-          .segments(elapsed, workspace)
-          .map(segment => translateSegment(segment, dx, dz));
+        const selected = (
+          isDistant
+            ? cell.distantSegments(elapsed)
+            : cell.segments(elapsed, workspace)
+        ).map(segment => translateSegment(segment, dx, dz));
         const cellFaces = cell.faces(elapsed);
         append(
           faces,
@@ -788,7 +795,7 @@ export const visible = (
             ? cellFaces
             : mapFaces(cellFaces, point => translatePoint(point, dx, dz))
         );
-        if (rules.reach === 'all' && !isOccupied) {
+        if (isDistant) {
           const distance = Math.hypot(
             cell.centre.x + dx - position.x,
             cell.centre.z + dz - position.z
