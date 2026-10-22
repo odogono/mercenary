@@ -1,20 +1,15 @@
 """The add-on's operators and sidebar panel. Imported only inside Blender."""
 
-import json
 import os
 
 import bmesh
 import bpy
-from bpy.props import IntProperty, StringProperty
-from bpy_extras.io_utils import ExportHelper, ImportHelper
+from bpy.props import EnumProperty, IntProperty, StringProperty
+from bpy_extras.io_utils import ImportHelper
 
-from . import blender_io, contract, glb, mgeo
+from . import blender_io, contract, targ_asset
 
 DIAGNOSTICS_TEXT = "Mercenary diagnostics"
-
-
-def _blend_directory():
-    return os.path.dirname(bpy.data.filepath) if bpy.data.filepath else os.getcwd()
 
 
 def _report(operator, diagnostics):
@@ -29,40 +24,54 @@ def _report(operator, diagnostics):
     return errors
 
 
-def read_geometry(path):
-    with open(path, "rb") as handle:
-        data = handle.read()
-    if path.endswith(".glb"):
-        return glb.decode(data)
-    if path.endswith(".mgeo"):
-        return mgeo.decode(data)
-    return json.loads(data)
-
-
-def export_checked(collection, sidecar):
-    """The contract, or Rejected with every error: the one gate both exporters go through."""
-    asset, diagnostics = blender_io.validate(collection, sidecar)
-    if any(d.severity == "error" for d in diagnostics):
-        raise contract.Rejected(diagnostics)
-    return asset, diagnostics
+def open_asset(relative):
+    """Import an `assets/targ/` file by its path relative to that directory."""
+    return blender_io.import_asset(targ_asset.read(relative), relative)
 
 
 class MERCENARY_OT_import(bpy.types.Operator, ImportHelper):
-    """Import a Mercenary geometry asset (.glb, .mgeo or contract .json) with its sidecar"""
+    """Import a Targ Geometry Asset from assets/targ/objects or assets/targ/structures"""
 
     bl_idname = "mercenary.import_asset"
     bl_label = "Import Mercenary Asset"
-    filter_glob: StringProperty(default="*.glb;*.mgeo;*.json", options={"HIDDEN"})
-    sidecar: StringProperty(name="Sidecar", description="Sidecar JSON; defaults to sidecar.json beside the file", default="")
+    filter_glob: StringProperty(default="*.json", options={"HIDDEN"})
+
+    def invoke(self, context, event):
+        try:
+            self.filepath = os.path.join(targ_asset.repository_root(), targ_asset.ASSETS, "")
+        except contract.Rejected:
+            pass
+        context.window_manager.fileselect_add(self)
+        return {"RUNNING_MODAL"}
 
     def execute(self, context):
         try:
-            asset = read_geometry(self.filepath)
+            open_asset(targ_asset.relative_path(self.filepath))
         except contract.Rejected as rejected:
             _report(self, rejected.diagnostics)
             return {"CANCELLED"}
-        sidecar = self.sidecar or os.path.join(os.path.dirname(self.filepath), "sidecar.json")
-        blender_io.import_asset(asset, os.path.abspath(sidecar) if os.path.exists(sidecar) else None)
+        return {"FINISHED"}
+
+
+class MERCENARY_OT_new_authored(bpy.types.Operator):
+    """Create an Authored Asset in assets/targ with an empty wireframe, and open it"""
+
+    bl_idname = "mercenary.new_authored"
+    bl_label = "New Authored Asset"
+    kind: EnumProperty(name="Kind", items=(("objects", "Object", "A Targ object model"), ("structures", "Structure", "A Surface Structure")))
+    slug: StringProperty(name="Slug", description="Lowercase and hyphenated: the asset is authored:<slug>", default="")
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
+
+    def execute(self, context):
+        try:
+            relative = targ_asset.new_authored(self.kind, self.slug)
+            open_asset(relative)
+        except contract.Rejected as rejected:
+            _report(self, rejected.diagnostics)
+            return {"CANCELLED"}
+        self.report({"INFO"}, f"wrote assets/targ/{relative}; write its placements in the sidecar by hand")
         return {"FINISHED"}
 
 
@@ -71,66 +80,51 @@ class _AssetOperator:
     def poll(cls, context):
         return blender_io.asset_collection(context.object) is not None
 
-    def sidecar(self, collection):
-        try:
-            return blender_io.load_sidecar(collection, _blend_directory())
-        except OSError as error:
-            self.report({"WARNING"}, f"sidecar not readable ({error}); references are not checked")
-            return None
-
 
 class MERCENARY_OT_validate(bpy.types.Operator, _AssetOperator):
-    """Report everything a game reader would refuse, without exporting"""
+    """Report everything that stops this asset being exported, without writing it"""
 
     bl_idname = "mercenary.validate"
     bl_label = "Validate"
 
     def execute(self, context):
         collection = blender_io.asset_collection(context.object)
-        _, diagnostics = blender_io.validate(collection, self.sidecar(collection))
+        try:
+            _, diagnostics = blender_io.validate(collection)
+        except (contract.Rejected, OSError) as problem:
+            diagnostics = problem.diagnostics if isinstance(problem, contract.Rejected) else [contract.Diagnostic("error", collection["mc_path"], str(problem))]
         errors = _report(self, diagnostics)
         if not errors:
             self.report({"INFO"}, f"{collection['mc_asset']}: valid")
         return {"FINISHED"}
 
 
-class _Exporter(_AssetOperator, ExportHelper):
+class MERCENARY_OT_export(bpy.types.Operator, _AssetOperator):
+    """Write the geometry back to the assets/targ file it came from; the sidecar and ledger are kept"""
+
+    bl_idname = "mercenary.export_asset"
+    bl_label = "Export"
+
     def execute(self, context):
         collection = blender_io.asset_collection(context.object)
         try:
-            asset, diagnostics = export_checked(collection, self.sidecar(collection))
+            path, diagnostics = blender_io.export(collection)
         except contract.Rejected as rejected:
             _report(self, rejected.diagnostics)
             return {"CANCELLED"}
-        with open(self.filepath, "wb") as handle:
-            handle.write(self.encode(asset))
+        except OSError as problem:
+            self.report({"ERROR"}, str(problem))
+            return {"CANCELLED"}
         _report(self, diagnostics)
-        self.report({"INFO"}, f"wrote {self.filepath}")
+        self.report({"INFO"}, f"wrote {path}")
         return {"FINISHED"}
 
 
-class MERCENARY_OT_export_mgeo(bpy.types.Operator, _Exporter):
-    """Export the game binary (.mgeo) for the .blend candidate"""
-
-    bl_idname = "mercenary.export_mgeo"
-    bl_label = "Export Game Binary (.mgeo)"
-    filename_ext = ".mgeo"
-    filter_glob: StringProperty(default="*.mgeo", options={"HIDDEN"})
-
-    def encode(self, asset):
-        return mgeo.encode(asset)
-
-
-class MERCENARY_OT_export_glb(bpy.types.Operator, _Exporter):
-    """Export the canonical GLB with the MERCENARY_geometry extension"""
-
-    bl_idname = "mercenary.export_glb"
-    bl_label = "Export Canonical GLB"
-    filename_ext = ".glb"
-    filter_glob: StringProperty(default="*.glb", options={"HIDDEN"})
-
-    def encode(self, asset):
-        return glb.encode(asset)
+def _edit_part(context):
+    """The active part, its attributes in place: a mesh in the Distant Structure collection
+    becomes the distant part the first time it is marked or coloured."""
+    blender_io.prepare_distant(context.object)
+    return context.object
 
 
 class MERCENARY_OT_snap(bpy.types.Operator, _AssetOperator):
@@ -164,7 +158,7 @@ class MERCENARY_OT_set_colour(bpy.types.Operator, _AssetOperator):
         return context.window_manager.invoke_props_dialog(self)
 
     def execute(self, context):
-        obj = context.object
+        obj = _edit_part(context)
         model = obj.get("mc_colour_model")
         if model == "none":
             self.report({"ERROR"}, "this part carries no colours")
@@ -209,7 +203,7 @@ class MERCENARY_OT_mark_lines(bpy.types.Operator, _AssetOperator):
     clear: bpy.props.BoolProperty(name="Clear", default=False)
 
     def execute(self, context):
-        obj = context.object
+        obj = _edit_part(context)
         mesh = bmesh.from_edit_mesh(obj.data)
         lid = mesh.edges.layers.int.get("mc_lid")
         used = {e[lid] for e in mesh.edges if e[lid] > 0}
@@ -236,6 +230,7 @@ class MERCENARY_PT_panel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         layout.operator(MERCENARY_OT_import.bl_idname, icon="IMPORT")
+        layout.operator(MERCENARY_OT_new_authored.bl_idname, icon="ADD")
         collection = blender_io.asset_collection(context.object)
         if collection is None:
             layout.label(text="Select a part of an imported asset")
@@ -249,16 +244,14 @@ class MERCENARY_PT_panel(bpy.types.Panel):
         row = column.row(align=True)
         row.operator(MERCENARY_OT_mark_lines.bl_idname, text="Mark Lines").clear = False
         row.operator(MERCENARY_OT_mark_lines.bl_idname, text="Clear Lines").clear = True
-        column = layout.column(align=True)
-        column.operator(MERCENARY_OT_export_mgeo.bl_idname, icon="EXPORT")
-        column.operator(MERCENARY_OT_export_glb.bl_idname, icon="EXPORT")
+        layout.operator(MERCENARY_OT_export.bl_idname, icon="EXPORT")
 
 
 CLASSES = (
     MERCENARY_OT_import,
+    MERCENARY_OT_new_authored,
     MERCENARY_OT_validate,
-    MERCENARY_OT_export_mgeo,
-    MERCENARY_OT_export_glb,
+    MERCENARY_OT_export,
     MERCENARY_OT_snap,
     MERCENARY_OT_set_colour,
     MERCENARY_OT_mark_lines,

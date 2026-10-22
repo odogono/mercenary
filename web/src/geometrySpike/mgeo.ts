@@ -1,5 +1,6 @@
 /// Reads MGEO v1, the `.blend` candidate's generated game binary (#671). The layout is documented
-/// beside its writer, research/blender-geometry-spike/mercenary_geometry/mgeo.py. Anything
+/// beside its writer, research/blender-geometry-spike/mercenary_geometry/mgeo.py at commit
+/// c2223304; the add-on moved to tools/blender/ without it (#865). Anything
 /// truncated, trailing or out of range is refused, never patched up.
 
 import {

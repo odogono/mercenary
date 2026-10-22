@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "blender": "bun tools/blender.ts",
     "changelog": "bun ../tools/commits/changelog.ts",
     "changelog:release": "bun ../tools/commits/changelog.ts release",
     "check": "bun run typecheck && bun run typecheck:research && bun run lint && bun run format:check && bun run check:docs && bun run check:assets && bun run test:quiet && bun run test:tools",

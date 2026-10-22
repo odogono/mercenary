@@ -11,6 +11,12 @@ recommendation are in [docs/research/blender-geometry-workflows.md](../../docs/r
 Both carry the same contract, and both link to the same reviewable sidecar JSON. Nothing here is
 imported by the live game, the Catalogue reader or the extractor.
 
+**Frozen.** ADR 0081 chose canonical JSON, and the add-on moved to
+[`tools/blender/`](../../tools/blender/README.md) without MGEO or GLB (#865). This directory is the
+record of the spike: `run-all.sh`, the scripts and the Python format tests last ran at commit
+`c2223304`, and need that commit checked out. The goldens in `evidence/golden` are still read by
+`web/test/geometry-spike.test.ts`.
+
 Recorded with **Blender 5.2.2 LTS** (hash `d13f752e3b9c`, built 2026-09-15) and Bun 1.4.2 on macOS
 arm64.
 

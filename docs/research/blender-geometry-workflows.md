@@ -25,6 +25,9 @@ Recorded 2026-10-01 with Blender 5.2.2 LTS (hash `d13f752e3b9c`) and Bun 1.4.2. 
 [research/blender-geometry-spike/README.md](../../research/blender-geometry-spike/README.md).
 `run-all.sh` regenerates every number below from the tracked payload in about three minutes.
 The evidence is in [`research/blender-geometry-spike/evidence/`](../../research/blender-geometry-spike/evidence/).
+The spike last ran at commit `c2223304`; the add-on has since moved to
+[`tools/blender/`](../../tools/blender/README.md) without MGEO or GLB (#865), so `run-all.sh` needs
+that commit checked out.
 The live game, the Catalogue reader and the extractor are unchanged, and nothing in them imports
 the spike.
 
@@ -43,7 +46,8 @@ the spike.
   sidecar.
 - **Baseline recovery and composition** (`baseline.ts`, `compose.ts`). They turn a payload record
   into a contract plus sidecar, and back into the identical record.
-- **A Blender add-on** (`research/blender-geometry-spike/mercenary_geometry/`). It provides
+- **A Blender add-on** (`research/blender-geometry-spike/mercenary_geometry/`, now
+  `tools/blender/mercenary_geometry/`). It provides
   Import, Validate, Export Game Binary (`.mgeo`) and Export Canonical GLB. It also provides
   three small helpers: Snap to Game Units, Set Game Colour, and Mark/Clear Lines. Editing
   itself uses ordinary Blender tools. Both candidates use the same scene representation: one

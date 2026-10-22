@@ -1,6 +1,7 @@
-"""Contract ⇄ Blender scene, shared by both #671 candidates.
+"""`assets/targ/` file ⇄ Blender scene.
 
-One collection per asset; one mesh object per part. Polygons are Blender faces with their source
+One collection per asset; one mesh object per part; a structure's distant part sits in its
+`Distant Structure` child collection. Polygons are Blender faces with their source
 loop order, explicit lines are edges marked with a line identity (a line may lie on a face edge),
 and every identity and attribute rides in a named mesh attribute that ordinary Blender editing
 carries along. Identities are stored plus one, so the zero Blender gives new elements reads as
@@ -31,6 +32,7 @@ import bpy
 from mathutils import Matrix
 
 from . import contract as C
+from . import targ_asset as T
 
 KIND_VERTEX, KIND_ROTATED, KIND_EXTERNAL, KIND_EXTERNAL_HIDDEN = 0, 1, 2, 3
 POINT_INT = ["mc_vid", "mc_kind"]
@@ -39,6 +41,8 @@ FACE_INT = ["mc_fid", "mc_record", "mc_scene"]
 FACE_BOOL = ["mc_double", "mc_close"]
 EDGE_INT = ["mc_lid", "mc_lstart", "mc_lrecord", "mc_lscene", "mc_lcolour"]
 COORD_TOLERANCE = 1e-3
+DISTANT = "distant"
+DISTANT_COLLECTION = "Distant Structure"
 
 
 def swap(co):
@@ -83,25 +87,61 @@ def colour_of(material):
     return C.colour_from_key(tuple(json.loads(key)))
 
 
-def import_asset(asset, sidecar_path=None, collection_name=None):
-    """Build the asset's collection. Returns it. Never calls Mesh.validate, which would merge the
-    coincident faces and drop the closing repeats the contract preserves."""
+def import_asset(value, relative):
+    """Build the collection for an `assets/targ/` file. Returns it. Never calls Mesh.validate,
+    which would merge the coincident faces and drop the closing repeats the contract preserves.
+
+    A structure's collection always holds a `Distant Structure` child collection: a mesh in it
+    is the part the structure draws as a Distant Structure, and an empty one means it has none."""
+    asset = value["asset"]
     C.require_valid(asset)
-    collection = bpy.data.collections.new(collection_name or f"MC {asset['asset']}")
+    collection = bpy.data.collections.new(f"MC {asset['asset']}")
     bpy.context.scene.collection.children.link(collection)
     collection["mc_asset"] = asset["asset"]
     collection["mc_title"] = asset["title"]
-    collection["mc_sidecar_sha256"] = asset["sidecarSha256"]
-    collection["mc_parts"] = json.dumps([p["id"] for p in asset["parts"]])
-    if sidecar_path:
-        collection["mc_sidecar"] = sidecar_path
+    collection["mc_path"] = relative
+    collection["mc_parts"] = json.dumps([p["id"] for p in asset["parts"] if p["role"] != DISTANT])
+    distant = None
+    if T.kind_of(relative) == "structures":
+        distant = bpy.data.collections.new(DISTANT_COLLECTION)
+        distant["mc_distant"] = True
+        collection.children.link(distant)
     first_display = next((p["id"] for p in asset["parts"] if p["role"] in ("display", "wireframe")), None)
     for part in asset["parts"]:
         obj = _import_part(part)
-        collection.objects.link(obj)
+        (distant if part["role"] == DISTANT else collection).objects.link(obj)
         if part["id"] != first_display:
             obj.hide_set(True)
     return collection
+
+
+def prepare_part(obj, pid, role, colour_model):
+    """Make an ordinary mesh object a part: add every missing `mc_*` attribute, zero, so all of
+    its elements read as new."""
+    mesh = obj.data
+    for names, kind, domain in ((POINT_INT, "INT", "POINT"), (POINT_VEC, "FLOAT_VECTOR", "POINT"), (FACE_INT, "INT", "FACE"), (FACE_BOOL, "BOOLEAN", "FACE"), (EDGE_INT, "INT", "EDGE")):
+        for name in names:
+            if mesh.attributes.get(name) is None:
+                mesh.attributes.new(name, kind, domain)
+    obj["mc_part"] = pid
+    obj["mc_role"] = role
+    obj["mc_colour_model"] = colour_model
+    if "mc_scene_sets" not in obj:
+        obj["mc_scene_sets"] = "[]"
+
+
+def distant_collection(collection):
+    return next((c for c in collection.children if c.get("mc_distant")), None)
+
+
+def prepare_distant(obj):
+    """An object in a `Distant Structure` collection is the distant part, however it got there:
+    a fresh mesh, or a copy of the wireframe moved in with M."""
+    if not any(c.get("mc_distant") for c in obj.users_collection):
+        return False
+    if obj.type == "MESH" and (obj.get("mc_part") != DISTANT or obj.get("mc_role") != DISTANT):
+        prepare_part(obj, DISTANT, DISTANT, "ink")
+    return True
 
 
 def _import_part(part):
@@ -179,10 +219,13 @@ def _import_part(part):
     if part["faces"]:
         mesh.polygons.foreach_set("material_index", material_index)
 
-    by_pair = {frozenset(e.vertices): e.index for e in mesh.edges}
+    # A record may draw the same edge twice; each copy keeps its own Blender edge and line.
+    by_pair = {}
+    for e in mesh.edges:
+        by_pair.setdefault(frozenset(e.vertices), []).append(e.index)
     columns = {name: [0] * len(mesh.edges) for name in EDGE_INT}
     for l in part["lines"]:
-        e = by_pair[frozenset(index[i] for i in l["ends"])]
+        e = by_pair[frozenset(index[i] for i in l["ends"])].pop(0)
         columns["mc_lid"][e] = l["id"] + 1
         columns["mc_lstart"][e] = l["ends"][0] + 1
         columns["mc_lrecord"][e] = l["record"] + 1 if l.get("record") is not None else 0
@@ -207,6 +250,10 @@ def asset_collection(obj_or_collection=None):
         for collection in obj_or_collection.users_collection:
             if "mc_asset" in collection:
                 return collection
+            if collection.get("mc_distant"):
+                for parent in bpy.data.collections:
+                    if "mc_asset" in parent and collection.name in parent.children:
+                        return parent
     found = [c for c in bpy.data.collections if "mc_asset" in c]
     return found[0] if len(found) == 1 else None
 
@@ -222,9 +269,9 @@ def _values(mesh, name, domain_size, default=0, vector=False):
     return list(values)
 
 
-def export_asset(collection):
-    """The contract the collection holds now, and every diagnostic found on the way. Refuses
-    nothing itself; callers decide (a Validate shows, an export raises)."""
+def export_parts(collection):
+    """The parts the collection holds now, and every diagnostic found on the way. Refuses
+    nothing itself; callers decide (a Validate shows, an export refuses)."""
     if bpy.context.object is not None and bpy.context.object.mode != "OBJECT":
         bpy.ops.object.mode_set(mode="OBJECT")
     diagnostics = []
@@ -237,31 +284,40 @@ def export_asset(collection):
 
     order = json.loads(collection["mc_parts"])
     objects = {}
-    for obj in collection.all_objects:
+    for obj in collection.objects:
         pid = obj.get("mc_part")
-        if pid is None:
-            warning(obj.name, "object is not a part of this asset and is ignored (parts are fixed by the asset)")
+        if pid is None or pid not in order:
+            error(obj.name, "is not a part of this asset; delete it, or move it into the Distant Structure collection")
             continue
         if pid in objects:
             error(pid, f"two objects claim this part ({objects[pid].name}, {obj.name}); delete the copy")
             continue
         objects[pid] = obj
+    for child in collection.children:
+        if not child.get("mc_distant"):
+            error(child.name, "is not part of this asset; only the Distant Structure collection belongs here")
     parts = []
     for pid in order:
         obj = objects.get(pid)
         if obj is None:
-            error(pid, "part object is missing; restore it (parts cannot be deleted in the spike)")
+            error(pid, "part object is missing; restore it (only the Distant Structure may be removed)")
             continue
         parts.append(_export_part(obj, error, warning))
-    asset = {
-        "asset": collection["mc_asset"],
-        "format": C.CONTRACT_FORMAT,
-        "parts": parts,
-        "sidecarSha256": collection["mc_sidecar_sha256"],
-        "title": collection["mc_title"],
-        "version": C.CONTRACT_VERSION,
-    }
-    return asset, diagnostics
+    distant = distant_collection(collection)
+    if distant is not None:
+        found = list(distant.all_objects)
+        if len(found) > 1:
+            error(DISTANT_COLLECTION, f"holds {len(found)} objects; join them into one (Ctrl J) or delete the extras")
+        elif found:
+            obj = found[0]
+            if obj.type != "MESH":
+                error(obj.name, "the Distant Structure is a mesh")
+            elif obj.data.users > 1:
+                error(obj.name, "shares its mesh with another object; Object ▸ Relations ▸ Make Single User ▸ Object & Data")
+            else:
+                prepare_distant(obj)
+                parts.append(_export_part(obj, error, warning))
+    return parts, diagnostics
 
 
 def _fresh(ids_in_order, used):
@@ -420,20 +476,19 @@ def _export_part(obj, error, warning):
     }
 
 
-def validate(collection, sidecar=None):
-    asset, diagnostics = export_asset(collection)
-    if not any(d.severity == "error" for d in diagnostics):
-        diagnostics += C.check_asset(asset, sidecar)
-    return asset, diagnostics
+def validate(collection):
+    """The file the collection would export, and every diagnostic, without writing it."""
+    parts, diagnostics = export_parts(collection)
+    if any(d.severity == "error" for d in diagnostics):
+        return None, diagnostics
+    value, file_diagnostics = T.with_parts(collection["mc_path"], parts, collection["mc_asset"])
+    return value, diagnostics + file_diagnostics
 
 
-def load_sidecar(collection, base_directory):
-    import os
-
-    path = collection.get("mc_sidecar")
-    if not path:
-        return None
-    if not os.path.isabs(path):
-        path = os.path.join(base_directory, path)
-    with open(path, encoding="utf-8") as handle:
-        return json.load(handle)
+def export(collection):
+    """Write the collection's geometry back to the file it came from. Raises Rejected with every
+    error, and writes nothing, when the file would not load."""
+    value, diagnostics = validate(collection)
+    if any(d.severity == "error" for d in diagnostics):
+        raise C.Rejected(diagnostics)
+    return T.write(collection["mc_path"], value), diagnostics
