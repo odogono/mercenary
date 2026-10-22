@@ -100,6 +100,55 @@ canvas.addEventListener('keydown', event => {
     controls[action]!();
   }
 });
+
+const DRAG_RADIANS_PER_PIXEL = 0.01;
+const WHEEL_ZOOM_PER_PIXEL = 0.001;
+const WHEEL_LINE_PIXELS = 16;
+
+// Pointer capture keeps the drag outside the canvas; the browser releases it
+// on pointerup or pointercancel, which ends the drag.
+let drag: { id: number; x: number; y: number } | undefined;
+canvas.addEventListener('pointerdown', event => {
+  if (event.button !== 0 || drag !== undefined) {
+    return;
+  }
+  event.preventDefault();
+  canvas.focus({ preventScroll: true });
+  drag = { id: event.pointerId, x: event.clientX, y: event.clientY };
+  canvas.setPointerCapture(event.pointerId);
+  canvas.classList.add('dragging');
+});
+canvas.addEventListener('pointermove', event => {
+  if (drag?.id !== event.pointerId) {
+    return;
+  }
+  turn(
+    -(event.clientX - drag.x) * DRAG_RADIANS_PER_PIXEL,
+    -(event.clientY - drag.y) * DRAG_RADIANS_PER_PIXEL
+  );
+  drag.x = event.clientX;
+  drag.y = event.clientY;
+});
+canvas.addEventListener('lostpointercapture', event => {
+  if (drag?.id === event.pointerId) {
+    drag = undefined;
+    canvas.classList.remove('dragging');
+  }
+});
+canvas.addEventListener(
+  'wheel',
+  event => {
+    event.preventDefault();
+    const unit =
+      event.deltaMode === WheelEvent.DOM_DELTA_LINE
+        ? WHEEL_LINE_PIXELS
+        : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+          ? canvas.clientHeight
+          : 1;
+    turn(0, 0, Math.exp(event.deltaY * unit * WHEEL_ZOOM_PER_PIXEL));
+  },
+  { passive: false }
+);
 new ResizeObserver(draw).observe(canvas);
 
 const command = (label: string, text: string): HTMLElement => {
