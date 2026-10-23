@@ -398,7 +398,14 @@ try {
         if (
           command.kind === 'setTime' ||
           command.kind === 'setClock' ||
-          command.kind === 'floor'
+          command.kind === 'dropObject' ||
+          command.kind === 'fetchObject' ||
+          command.kind === 'floor' ||
+          command.kind === 'getObject' ||
+          command.kind === 'gotoCell' ||
+          command.kind === 'gotoObject' ||
+          command.kind === 'gotoRoom' ||
+          command.kind === 'switchBody'
         ) {
           checkpoint();
         }
