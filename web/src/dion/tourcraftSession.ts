@@ -1,5 +1,6 @@
 import { craftDivide } from '../craft/pass.ts';
 import { IDLE, freeLook } from '../gameCore/index.ts';
+import { takeRefusal } from '../interaction/carriedStack.ts';
 import {
   closePanel,
   initialHeadCommands,
@@ -93,6 +94,57 @@ import { dionCellStructure, readDionOpening } from './world.ts';
 /// Ticks a frame takes while the EAGLE is flown (ADR 0058, #837): the #609 airborne slot-1
 /// probe's four VBLs a frame, the same as Damocles's pass (ADR 0051).
 const EAGLE_TICKS_PER_FRAME = 4;
+
+/// The Body byte carried objects and unplaced residents hold (`$78`).
+const VOID_BODY = 0x78;
+
+/// A remote Take's outcome, as Damocles's `takeObject` reports one.
+export type TourcraftTakeObjectOutcome =
+  | { readonly kind: 'handsFull' }
+  | { readonly kind: 'busy'; readonly reason: string }
+  | {
+      readonly kind:
+        | 'alreadyCarried'
+        | 'fixedInPlace'
+        | 'gone'
+        | 'missing'
+        | 'took'
+        | 'tooHeavy';
+      readonly slot: number;
+    };
+
+/// A fetch's outcome, as Damocles's `fetchObject` reports one.
+export type TourcraftFetchObjectOutcome =
+  | { readonly kind: 'busy'; readonly reason: string }
+  | {
+      readonly kind:
+        | 'alreadyCarried'
+        | 'fetched'
+        | 'fixedInPlace'
+        | 'gone'
+        | 'missing'
+        | 'noRoom';
+      readonly slot: number;
+    };
+
+/// A console placement's outcome: a cell, a region, or a Body switch refused whole.
+export type TourcraftPlaceOutcome =
+  | { readonly kind: 'moved' }
+  | { readonly kind: 'refused'; readonly reason: string };
+
+/// Going to an object's outcome, as Targ's `placeAtObject` reports one.
+export type TourcraftGotoObjectOutcome =
+  | { readonly body: string; readonly kind: 'placed'; readonly slot: number }
+  | { readonly kind: 'busy'; readonly reason: string; readonly slot: number }
+  | {
+      readonly kind: 'carried' | 'gone' | 'missing';
+      readonly slot: number;
+    };
+
+/// A Body switch's outcome, as Damocles's `switchToPose` reports one.
+export type TourcraftSwitchOutcome =
+  | { readonly body: string; readonly kind: 'switched' }
+  | { readonly kind: 'declined'; readonly reason: string };
 
 const gameplayContent = (
   promoted: TourcraftContent,
@@ -577,6 +629,16 @@ export class TourcraftSession extends DionSession {
               { cash: this.state.cash, pawn: e.pawn }
             )
           : rotate(e.carry, e.residents, this.carryWorld, action);
+    this.settleCarry(outcome);
+    return true;
+  }
+
+  /// What a settled Take, Drop or rotation writes back: its message, its pawn
+  /// transaction, the stack and its gauge, its script, and the open panel a
+  /// Drop closes. The narrative is mirrored into the snapshot at once, so a
+  /// console Take checkpointed before the next frame saves the script it started.
+  private settleCarry(outcome: CarryOutcome): void {
+    const openSlot = this.expanded.head.open?.slot;
     if (outcome.message !== undefined) {
       this.narrative.idMessage(outcome.message);
     }
@@ -588,7 +650,8 @@ export class TourcraftSession extends DionSession {
       };
     }
     if (outcome.kind === 'refused') {
-      return true;
+      this.state = { ...this.state, narrative: this.narrative.state };
+      return;
     }
     if (outcome.unported !== undefined) {
       this.notes.push(outcome.unported);
@@ -609,11 +672,11 @@ export class TourcraftSession extends DionSession {
       this.narrative.start(outcome.script);
     }
     // `$5592A`: dropping the open object closes it and scrolls the logo back.
-    if (outcome.closes !== undefined && outcome.closes === e.head.open?.slot) {
-      this.setHead(closePanel(e.head));
+    if (outcome.closes !== undefined && outcome.closes === openSlot) {
+      this.setHead(closePanel(this.expanded.head));
     }
+    this.state = { ...this.state, narrative: this.narrative.state };
     this.cue('key_click');
-    return true;
   }
 
   /// What the Drop handler reads of where the player stands.
@@ -1102,6 +1165,460 @@ export class TourcraftSession extends DionSession {
       this.state.taxi.passenger ||
       (!!this.expanded.flight && this.expanded.flight.mode !== 'foot')
     );
+  }
+
+  /// Why a console shortcut cannot act now, or null where it can. Aboard a
+  /// taxi, the TOURCRAFT or the EAGLE the player is not standing anywhere a
+  /// shortcut could move or reach from; in space there is no Body underfoot.
+  private consoleBusy(): string | null {
+    if (this.aboard || this.expanded.armed) {
+      return 'the player is aboard; leave first';
+    }
+    if (this.state.location === 65_535) {
+      return 'the player is in space';
+    }
+    return null;
+  }
+
+  /// A move before the first frame would leave the opening's owners
+  /// incoherent in a Save, which the strict restore refuses whole.
+  private openingUnrun(): boolean {
+    return this.expanded.faceSelection === 'initial';
+  }
+
+  private resident(slot: number) {
+    return this.expanded.residents.find(r => r.slot === slot);
+  }
+
+  private carried(slot: number): boolean {
+    const { stack, stored } = this.expanded.carry;
+    return stack.includes(slot) || stored.includes(slot);
+  }
+
+  /// Stand at `eye` on `floor` of the current Body: bind its cell with the
+  /// doors shut, take the region, zone and encounter eye afresh, end any
+  /// ride, recentre Free Look, and refresh the candidate the next step reads.
+  /// A landed craft's foot state follows the eye, as a frame's does.
+  private placeOnFoot(
+    eye: readonly [number, number, number],
+    floor = 0,
+    region?: number
+  ): void {
+    if (this.lookPitch !== 0) {
+      this.state = this.levelView();
+      this.lookPitch = 0;
+    }
+    const priorEye = this.state.eye;
+    const cell = this.cellAt(eye);
+    this.setLift({ ...this.expanded.lift, floor, ride: null });
+    this.state = { ...this.state, cell, doors: new Map(), eye, region: 0 };
+    this.state = {
+      ...this.state,
+      region: region ?? this.regionAtEye(cell, eye),
+      tourcraft: {
+        ...this.expanded,
+        encounter: { ...this.expanded.encounter, priorEye: eye },
+        playerZone: this.zoneAt(eye, this.state.location, cell)
+      }
+    };
+    const flight = this.expanded.flight;
+    if (flight?.mode === 'foot') {
+      this.state = {
+        ...this.state,
+        tourcraft: {
+          ...this.expanded,
+          flight: {
+            ...flight,
+            craft: {
+              ...flight.craft,
+              pitch: this.state.pitch,
+              trig: { pitch: this.state.pitch, yaw: this.state.heading },
+              x: eye[0],
+              y: eye[1],
+              yaw: this.state.heading,
+              z: eye[2]
+            },
+            priorPose: priorEye
+          }
+        }
+      };
+    }
+    this.selectCandidate();
+  }
+
+  /// Land at a cell's centre on the current Body, at the walk eye height or
+  /// at `height`, keeping heading. The Shell Console's `goto <x> <z>`.
+  teleportToCell(x: number, z: number, height?: number): TourcraftPlaceOutcome {
+    const busy = this.consoleBusy();
+    if (busy !== null) {
+      return { kind: 'refused', reason: busy };
+    }
+    if (this.openingUnrun()) {
+      return {
+        kind: 'refused',
+        reason: 'the opening has not run its first frame yet'
+      };
+    }
+    if (
+      !Number.isInteger(x) ||
+      !Number.isInteger(z) ||
+      x < 0 ||
+      z < 0 ||
+      x >= 16 ||
+      z >= 16
+    ) {
+      return {
+        kind: 'refused',
+        reason: `cell ${x}-${z} is not on this Body (0 through 15)`
+      };
+    }
+    const { opening } = this.content.world;
+    const [gx, gz] = opening.groupOrigin;
+    this.placeOnFoot([
+      (gx + x) * 65_536 + 32_768,
+      height ?? opening.eye[1],
+      (gz + z) * 65_536 + 32_768
+    ]);
+    return { kind: 'moved' };
+  }
+
+  /// Stand in region `region` of the bound structure, Mercenary III's room:
+  /// its bounds' centre, on the current Floor. The console's `goto room <n>`.
+  gotoRegion(region: number): TourcraftPlaceOutcome {
+    const busy = this.consoleBusy();
+    if (busy !== null) {
+      return { kind: 'refused', reason: busy };
+    }
+    if (this.openingUnrun()) {
+      return {
+        kind: 'refused',
+        reason: 'the opening has not run its first frame yet'
+      };
+    }
+    const { world } = this.content;
+    const entry = world.cells.find(c => c.cell === this.state.cell);
+    const structure = entry && dionCellStructure(world, entry, this.floor);
+    const bounds = structure?.regions[region - 1]?.bounds;
+    if (entry === undefined || bounds === undefined) {
+      return {
+        kind: 'refused',
+        reason: `there is no region ${region} in cell ${this.state.cell & 15}-${this.state.cell >> 4}`
+      };
+    }
+    const [gx, gz] = world.opening.groupOrigin;
+    const eye = [
+      (gx + entry.x) * 65_536 +
+        entry.origin[0] +
+        Math.trunc((bounds.x[0] + bounds.x[1]) / 2),
+      this.state.eye[1],
+      (gz + entry.z) * 65_536 +
+        entry.origin[1] +
+        Math.trunc((bounds.z[0] + bounds.z[1]) / 2)
+    ] as const;
+    if (this.cellAt(eye) !== this.state.cell) {
+      return {
+        kind: 'refused',
+        reason: `region ${region} has no standing place in this cell`
+      };
+    }
+    this.placeOnFoot(eye, this.floor, region);
+    return { kind: 'moved' };
+  }
+
+  /// Stand where a resident lies, on its Floor where it is an interior
+  /// resident, switching Body first where it lies on the other promoted
+  /// Body. The console's `goto object <slot>`.
+  placeAtObject(slot: number): TourcraftGotoObjectOutcome {
+    let resident = this.resident(slot);
+    if (slot === 0 || resident === undefined) {
+      return { kind: 'missing', slot };
+    }
+    if (this.carried(slot)) {
+      return { kind: 'carried', slot };
+    }
+    if (resident.bodyOffset === VOID_BODY) {
+      return { kind: 'gone', slot };
+    }
+    const busy = this.consoleBusy();
+    if (busy !== null) {
+      return { kind: 'busy', reason: busy, slot };
+    }
+    if (this.openingUnrun()) {
+      return {
+        kind: 'busy',
+        reason: 'the opening has not run its first frame yet',
+        slot
+      };
+    }
+    if (resident.bodyOffset !== this.state.location) {
+      if (resident.bodyOffset !== 60 && resident.bodyOffset !== 100) {
+        return {
+          kind: 'busy',
+          reason: 'it lies on a Body with no promoted content',
+          slot
+        };
+      }
+      this.enterBody(resident.bodyOffset);
+      resident = this.resident(slot)!;
+    }
+    const floor = resident.association === 0 ? 0 : resident.body;
+    const entry = this.content.world.cells.find(c => c.cell === resident!.cell);
+    const baseY = floor === 0 ? 0 : entry?.floors?.get(floor)?.baseY;
+    if (baseY === undefined) {
+      return {
+        kind: 'busy',
+        reason: `its cell binds no Floor ${floor}`,
+        slot
+      };
+    }
+    this.placeOnFoot(
+      [
+        resident.position[0],
+        baseY + this.content.world.opening.eye[1],
+        resident.position[2]
+      ],
+      floor
+    );
+    return {
+      body: this.state.location === 100 ? 'TOLOSA' : 'METIS',
+      kind: 'placed',
+      slot
+    };
+  }
+
+  /// Switch to another promoted Body, by name. One commit: the Body, its
+  /// workspace, its taxi service and its phase move together, and the
+  /// player stands at that Body's arrival — the opening on METIS, the
+  /// TOURCRAFT's set-down on TOLOSA. Space has no on-foot arrival.
+  switchToBody(name: string): TourcraftSwitchOutcome {
+    const busy = this.consoleBusy();
+    if (busy !== null) {
+      return { kind: 'declined', reason: busy };
+    }
+    if (this.openingUnrun()) {
+      return {
+        kind: 'declined',
+        reason: 'the opening has not run its first frame yet'
+      };
+    }
+    const key = name.trim().toLowerCase();
+    if (key === 'space') {
+      return {
+        kind: 'declined',
+        reason: 'space has no on-foot arrival; fly there'
+      };
+    }
+    const offset = key === 'metis' ? 60 : key === 'tolosa' ? 100 : undefined;
+    if (offset === undefined) {
+      return {
+        kind: 'declined',
+        reason: `no Body or Pose named '${name}'`
+      };
+    }
+    this.enterBody(offset);
+    return {
+      body: offset === 100 ? 'TOLOSA' : 'METIS',
+      kind: 'switched'
+    };
+  }
+
+  /// Bind a promoted Body and stand at its arrival, as entering it in play
+  /// does: its content and service, a fresh encounter where the Body
+  /// changed, and the TOURCRAFT resident the restore holds to this Body.
+  private enterBody(offset: number): void {
+    const changed = this.state.location !== offset;
+    if (offset === 100) {
+      // The completed playback is the only on-foot TOLOSA state the strict
+      // restore admits, so the arrival is its terminal frame, run whole.
+      const flight = new TourcraftFlight(this.promoted);
+      for (let pass = 0; flight.state.mode !== 'foot' && pass < 2000; pass++) {
+        flight.frame(0);
+      }
+      this.content = gameplayContent(this.promoted, 23);
+      this.state = {
+        ...this.state,
+        doors: new Map(),
+        location: 100,
+        phase: this.expanded.phases[100 / 4]!,
+        taxi: initializeBodyTaxi(this.content),
+        tourcraft: {
+          ...this.expanded,
+          armed: false,
+          flight: flight.state,
+          lift: { ...this.expanded.lift, floor: 0, ride: null }
+        }
+      };
+      this.publishFlight();
+    } else {
+      this.content = this.metisContent;
+      const { opening } = this.content.world;
+      const home = initialTourcraftResidents(this.promoted).find(
+        r => r.slot === 13
+      )!;
+      this.state = {
+        ...this.state,
+        doors: new Map(),
+        heading: opening.heading,
+        location: 60,
+        phase: this.expanded.phases[60 / 4]!,
+        pitch: opening.pitch,
+        taxi: initializeBodyTaxi(this.content),
+        tourcraft: {
+          ...this.expanded,
+          armed: false,
+          flight: null,
+          residents: this.expanded.residents.map(r =>
+            r.slot === 13 ? home : r
+          )
+        }
+      };
+      this.placeOnFoot(opening.eye);
+    }
+    if (changed) {
+      this.state = {
+        ...this.state,
+        tourcraft: {
+          ...this.expanded,
+          encounter: {
+            ...resetEncounter(this.expanded.encounter),
+            priorEye: this.state.eye
+          }
+        }
+      };
+    }
+    this.publishTaxi(offset, this.state.cell);
+    this.selectCandidate();
+  }
+
+  /// Take one object slot without requiring it to be selected or in reach.
+  /// The Shell Console's remote equivalent of reaching, as Damocles's
+  /// `takeObject` is: it skips only the selection and its range, while the
+  /// handling byte, the Carried Stack limit and the Take's own pawn and
+  /// script effects still apply.
+  takeObject(slot: number): TourcraftTakeObjectOutcome {
+    const resident = this.resident(slot);
+    if (slot === 0 || resident === undefined) {
+      return { kind: 'missing', slot };
+    }
+    if (this.carried(slot)) {
+      return { kind: 'alreadyCarried', slot };
+    }
+    if (resident.bodyOffset === VOID_BODY) {
+      return { kind: 'gone', slot };
+    }
+    const busy = this.consoleBusy();
+    if (busy !== null) {
+      return { kind: 'busy', reason: busy };
+    }
+    const carry = this.expanded.carry;
+    if (carry.scroll !== 0) {
+      return {
+        kind: 'busy',
+        reason: 'the Carried Stack is still scrolling'
+      };
+    }
+    const refusal = takeRefusal(
+      resident.state,
+      s => s !== 0 && (this.resident(s)?.state ?? 0) >= 0x80,
+      carry.stack.length,
+      carry.capacity
+    );
+    if (refusal === 'tooHeavy') {
+      this.narrative.idMessage(2);
+      this.state = { ...this.state, narrative: this.narrative.state };
+    }
+    if (refusal === 'handsFull') {
+      return { kind: 'handsFull' };
+    }
+    if (refusal !== null) {
+      return { kind: refusal, slot };
+    }
+    this.refreshPawn();
+    const outcome = take(
+      this.expanded.carry,
+      this.expanded.residents,
+      this.carryWorld,
+      { exponent: 0, slot },
+      this.state.location,
+      { cash: this.state.cash, pawn: this.expanded.pawn },
+      this.state.region
+    );
+    this.settleCarry(outcome);
+    if (outcome.kind === 'refused') {
+      return {
+        kind: 'busy',
+        reason:
+          outcome.message === 12
+            ? 'the player cannot pay for it'
+            : 'it cannot be taken from here'
+      };
+    }
+    this.selectCandidate();
+    return { kind: 'took', slot };
+  }
+
+  /// Move one object slot to where a direct Drop would place it, leaving
+  /// the Carried Stack alone. The Shell Console's `fetch`: a move rather
+  /// than an acquisition, so of a Take's rules only fixed in place stands.
+  fetchObject(slot: number): TourcraftFetchObjectOutcome {
+    const resident = this.resident(slot);
+    if (slot === 0 || resident === undefined) {
+      return { kind: 'missing', slot };
+    }
+    if (this.carried(slot)) {
+      return { kind: 'alreadyCarried', slot };
+    }
+    if (resident.bodyOffset === VOID_BODY) {
+      return { kind: 'gone', slot };
+    }
+    const busy = this.consoleBusy();
+    if (busy !== null) {
+      return { kind: 'busy', reason: busy };
+    }
+    if (this.expanded.carry.scroll !== 0) {
+      return {
+        kind: 'busy',
+        reason: 'the Carried Stack is still scrolling'
+      };
+    }
+    if ((resident.state & 0x10) !== 0) {
+      return { kind: 'fixedInPlace', slot };
+    }
+    const place = this.carryPlace(this.state.location);
+    if (
+      !place.contact ||
+      (place.interior !== null &&
+        !place.interior.associations.includes(place.interior.region))
+    ) {
+      return { kind: 'noRoom', slot };
+    }
+    this.state = {
+      ...this.state,
+      tourcraft: {
+        ...this.expanded,
+        residents: this.expanded.residents.map(r =>
+          r.slot === slot
+            ? {
+                ...r,
+                association: place.interior?.region ?? 0,
+                body: place.floor,
+                bodyOffset: place.body,
+                cell: place.cell,
+                group: place.group,
+                position: [
+                  place.eye[0],
+                  place.eye[1] - 63,
+                  place.eye[2]
+                ] as const,
+                zone: place.zone
+              }
+            : r
+        )
+      }
+    };
+    this.cue('key_click');
+    this.selectCandidate();
+    return { kind: 'fetched', slot };
   }
 
   private handleEagle(): boolean {
