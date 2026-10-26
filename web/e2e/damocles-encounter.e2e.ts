@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { DAMOCLES_SAVE_SCHEMA_VERSION } from '../src/damocles/save.ts';
+import { pauseClock } from './clock.ts';
 import {
   DOORWAY_LINE_LOCAL,
   FACING_DOORWAY,
@@ -46,16 +47,31 @@ const shot = async (
   });
 };
 
-const aboardLimo = async (page: Page): Promise<void> => {
+const aboardLimo = async (
+  page: Page,
+  controlledClock = false
+): Promise<void> => {
   await bootAt(page, DOORWAY_LINE_LOCAL, FACING_DOORWAY);
   const origin = await spaceportWorld(page);
   await page.keyboard.press('t');
+  if (controlledClock) {
+    await page.clock.runFor(400);
+  }
   await expect(inventory(page)).toHaveText(LIMO_KEY_LABEL, { timeout: 5000 });
-  await walkUntil(
-    page,
-    'ArrowUp',
-    async () => (await attribute(page, 'z')) - origin.z < -3000
-  );
+  const reached = async () => (await attribute(page, 'z')) - origin.z < -3000;
+  if (controlledClock) {
+    await page.keyboard.down('ArrowUp');
+    try {
+      for (let steps = 0; steps < 100 && !(await reached()); steps += 1) {
+        await page.clock.runFor(200);
+      }
+      expect(await reached()).toBe(true);
+    } finally {
+      await page.keyboard.up('ArrowUp');
+    }
+  } else {
+    await walkUntil(page, 'ArrowUp', reached);
+  }
   await page.keyboard.press('b');
   await expect(frame(page)).toHaveAttribute('data-occupancy', LIMO);
 };
@@ -90,7 +106,8 @@ test('a zap runs the noise, the fade and VOID to the death message', async ({
 }, testInfo) => {
   test.setTimeout(120_000);
   const errors = watchErrors(page);
-  await aboardLimo(page);
+  await pauseClock(page);
+  await aboardLimo(page, true);
   expect(await run(page, 'save 1')).toContain('saved');
   const slot = damoclesSaveSlot(1);
   const record = JSON.parse(
@@ -137,35 +154,31 @@ test('a zap runs the noise, the fade and VOID to the death message', async ({
   await closeConsole(page);
   await ready(page);
 
-  // Read this short-lived screen and its overlay together: another browser round trip can
-  // arrive after noise has already given way to the fade.
-  await expect
-    .poll(
-      () =>
-        page.evaluate(() => ({
-          noiseVisible: !document.getElementById('frame-noise')!.hidden,
-          screen: document.getElementById('frame')!.dataset['screen']
-        })),
-      { intervals: [50], timeout: 5000 }
-    )
-    .toEqual({ noiseVisible: true, screen: 'noise' });
+  // Keep each short-lived screen still while the browser captures and inspects it.
+  await page.clock.runFor(200);
+  await expect(frame(page)).toHaveAttribute('data-screen', 'noise');
+  await expect(page.locator('#frame-noise')).toBeVisible();
   await shot(page, 'zap-noise', testInfo);
+  // The noise lasts 98 ticks; the fade then waits eight ticks before its first level.
+  await page.clock.runFor(2400);
   await expect(frame(page)).toHaveAttribute('data-screen', /fade-[1-7]/, {
     timeout: 10_000
   });
   await expect(page.locator('#frame-noise')).toBeHidden();
   await shot(page, 'zap-fading', testInfo);
+  await page.clock.runFor(2000);
   await expect(frame(page)).toHaveAttribute('data-screen', 'dead', {
     timeout: 10_000
   });
   await expect(field(page, 'locationName')).toHaveText('VOID');
+  await page.clock.runFor(20_000);
   await rowReaches(page, "YOU'RE A BIT DEAD");
   await shot(page, 'dead', testInfo);
   expect(await soundCues(page)).toContain('zap:');
   // Nothing moves the dead player.
   const before = await attribute(page, 'x');
   await page.keyboard.press('4');
-  await page.waitForTimeout(500);
+  await page.clock.runFor(500);
   expect(await attribute(page, 'x')).toBe(before);
   expect(errors).toEqual([]);
 });

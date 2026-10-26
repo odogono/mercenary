@@ -1,5 +1,29 @@
 import { expect, test } from '@playwright/test';
 
+import { CONSOLE_HISTORY_LIMIT } from '../src/shell/consoleHistory.ts';
+import { APPROACH_LOCAL, bootAt, run } from './damocles-play.ts';
+
+test('Damocles console commands complete after the transcript reaches its limit', async ({
+  page
+}) => {
+  await page.addInitScript(limit => {
+    localStorage.setItem(
+      'mercenary.browser-shell.damocles.console-history.v1',
+      JSON.stringify({
+        commands: [],
+        scrollback: Array.from({ length: limit }, (_, i) => `old line ${i}`)
+      })
+    );
+  }, CONSOLE_HISTORY_LIMIT);
+  await bootAt(page, APPROACH_LOCAL);
+  expect(await run(page, 'where')).toContain('ERIS 07-08');
+  expect(await run(page, 'save 1')).toContain('saved slot 1');
+  expect(await run(page, 'save 1 confirm')).toContain('saved slot 1');
+  await expect(page.locator('#console-log > *')).toHaveCount(
+    CONSOLE_HISTORY_LIMIT
+  );
+});
+
 for (const [title, path, ready] of [
   ['Targ', '/', '#game-surface'],
   ['Damocles', '/damocles', '#frame'],
