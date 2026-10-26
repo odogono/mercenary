@@ -102,18 +102,33 @@ export const ready = async (page: Page): Promise<void> => {
 
 /// Run one console line and return everything the console printed for it.
 export const run = async (page: Page, line: string): Promise<string> => {
-  const log = page.locator('#console-log');
-  const before = await log.locator('> *').count();
   const input = page.locator('#console-input');
   if (!(await input.evaluate(node => node === document.activeElement))) {
     await page.keyboard.press('`');
     await expect(input).toBeFocused();
   }
   await input.fill(line);
-  await input.press('Enter');
-  await expect(log.locator('> *')).not.toHaveCount(before);
-  const lines = await log.locator('> *').allTextContents();
-  return lines.slice(before).join(' | ');
+  // Console commands execute synchronously. Read the appended nodes in the same browser
+  // turn: the bounded transcript stops growing at 400 rows, and old rows are removed.
+  const lines = await input.evaluate(field => {
+    const log = document.getElementById('console-log')!;
+    const before = log.lastElementChild;
+    field.dispatchEvent(
+      new KeyboardEvent('keydown', { bubbles: true, key: 'Enter' })
+    );
+    const lines: string[] = [];
+    for (
+      let node =
+        before === null ? log.firstElementChild : before.nextElementSibling;
+      node !== null;
+      node = node.nextElementSibling
+    ) {
+      lines.push(node.textContent ?? '');
+    }
+    return lines;
+  });
+  expect(lines[0]).toBe(`] ${line}`);
+  return lines.join(' | ');
 };
 
 export const closeConsole = async (page: Page): Promise<void> => {
@@ -288,17 +303,50 @@ export const responseParks = async (
   await expect.poll(async () => displayRow(page), { timeout: 30_000 }).toBe('');
 };
 
-/// Step from the spaceport's region 0 into the doorway, native region 1, with short taps. The
-/// doorway is forty units deep, which a walk at full speed crosses in six frames, so a tap that
-/// lands in region 2 beyond it steps back rather than failing the route.
+/// Stop in the spaceport doorway, native region 1. It is only forty units deep: release or
+/// reverse in the page's frame callback so browser command latency cannot carry a tap past it.
 export const stepIntoDoorway = async (page: Page): Promise<void> => {
-  const region = async () =>
-    (await page.locator('#frame').getAttribute('data-region')) ?? '';
-  for (let step = 0; step < 80 && (await region()) !== '1'; step += 1) {
-    const key = (await region()) === '2' ? 'ArrowDown' : 'ArrowUp';
-    await page.keyboard.down(key);
-    await page.waitForTimeout(25);
-    await page.keyboard.up(key);
+  try {
+    await page.evaluate(
+      () =>
+        new Promise<void>((resolve, reject) => {
+          const frame = document.querySelector<HTMLElement>('#frame')!;
+          const deadline = performance.now() + 30_000;
+          let held: 'ArrowDown' | 'ArrowUp' | undefined;
+          const release = () => {
+            if (held !== undefined) {
+              window.dispatchEvent(
+                new KeyboardEvent('keyup', { code: held, key: held })
+              );
+              held = undefined;
+            }
+          };
+          const tick = () => {
+            const region = frame.dataset['region'];
+            if (region === '1') {
+              release();
+              resolve();
+            } else if (performance.now() >= deadline) {
+              release();
+              reject(new Error('walk did not reach the spaceport doorway'));
+            } else {
+              const key = region === '2' ? 'ArrowDown' : 'ArrowUp';
+              if (key !== held) {
+                release();
+                held = key;
+                window.dispatchEvent(
+                  new KeyboardEvent('keydown', { code: key, key })
+                );
+              }
+              requestAnimationFrame(tick);
+            }
+          };
+          tick();
+        })
+    );
+  } finally {
+    await page.keyboard.up('ArrowUp');
+    await page.keyboard.up('ArrowDown');
   }
-  expect(await region()).toBe('1');
+  await expect(page.locator('#frame')).toHaveAttribute('data-region', '1');
 };

@@ -8,6 +8,7 @@ import {
   closeConsole,
   damoclesSaveSlot,
   displayRow,
+  holdUntilFrame,
   inventory,
   rowReaches,
   run,
@@ -26,12 +27,13 @@ const SAVE_SLOT_1 = damoclesSaveSlot(1);
 test('the limo key is taken by walking up to it and pressing take', async ({
   page
 }, testInfo) => {
+  test.setTimeout(120_000);
   const errors = watchErrors(page);
   await bootAt(page, WALK_FROM_LOCAL, FACING_EAST);
   const frame = page.locator('#frame');
   await expect(frame).toHaveAttribute('data-structure-instance', /./);
   await expect(inventory(page)).toHaveText('EMPTY');
-  const beforeTriangles = Number(await frame.getAttribute('data-triangles'));
+  await expect(frame).toHaveAttribute('data-drawn', /\bobject-slot-183\b/);
 
   // Out of reach to begin with: the take control does nothing until the player walks up.
   await page.keyboard.press('t');
@@ -39,13 +41,11 @@ test('the limo key is taken by walking up to it and pressing take', async ({
 
   // Walk the last stretch with the ordinary control, then take with the ordinary control.
   const startX = Number(await frame.getAttribute('data-x'));
-  await page.keyboard.down('ArrowUp');
-  await expect
-    .poll(async () =>
-      Math.abs(Number(await frame.getAttribute('data-x')) - startX)
-    )
-    .toBeGreaterThan(300);
-  await page.keyboard.up('ArrowUp');
+  await holdUntilFrame(page, 'ArrowUp', {
+    attribute: 'x',
+    comparison: 'above',
+    value: startX + 300
+  });
   await page.keyboard.press('t');
 
   // The inventory window scrolls the label in over 16 frames, so poll rather than read once.
@@ -53,9 +53,7 @@ test('the limo key is taken by walking up to it and pressing take', async ({
     timeout: 5000
   });
   // Taking it removes it from the drawn world.
-  expect(Number(await frame.getAttribute('data-triangles'))).toBeLessThan(
-    beforeTriangles
-  );
+  await expect(frame).not.toHaveAttribute('data-drawn', /\bobject-slot-183\b/);
 
   // Trigger 2's response presents its three inline records on the Damocles Display, in order.
   await rowReaches(page, 'PROCEED BY CAR');

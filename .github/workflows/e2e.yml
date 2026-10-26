@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  # A runner has two cores, so Playwright runs one worker: four shards keep
+  # Playwright explicitly runs one worker on CI: six shards keep
   # each under the timeout.
   e2e:
     runs-on: ubuntu-latest
@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5, 6]
     defaults:
       run:
         working-directory: web
@@ -28,7 +28,7 @@ jobs:
           bun-version: 1.4.3
       - run: bun install --frozen-lockfile
       - run: bunx playwright install --with-deps chromium
-      - run: bun run test:e2e --shard=${{ matrix.shard }}/4
+      - run: bun run test:e2e --shard=${{ matrix.shard }}/6
       - if: failure()
         uses: actions/upload-artifact@v4
         with:

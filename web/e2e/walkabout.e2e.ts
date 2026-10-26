@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { pauseClock } from './clock.ts';
+
 const waitForFrames = async (page: Page, count: number): Promise<void> => {
   await page.evaluate(
     count =>
@@ -648,9 +650,7 @@ test('Session Resume survives reload and New Game preserves Saves', async ({
   await useComposition(page, 'strip');
   await page.goto('/');
   await skipArrival(page);
-  const now = new Date();
-  await page.clock.install({ time: now });
-  await page.clock.pauseAt(now);
+  await pauseClock(page);
   const canvas = page.locator('#frame');
   const position = async (): Promise<{
     x: string | null;

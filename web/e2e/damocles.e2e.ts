@@ -482,7 +482,8 @@ test('the arrow keys walk the player and the Session Resume is Damocles-only', a
   const startX = Number(await frame.getAttribute('data-x'));
   const startZ = Number(await frame.getAttribute('data-z'));
   const startHeading = Number(await frame.getAttribute('data-heading'));
-  const triangles = await frame.getAttribute('data-triangles');
+  const drawn = await frame.getAttribute('data-drawn');
+  const cell = await frame.getAttribute('data-cell');
 
   await page.keyboard.down('ArrowUp');
   await expect
@@ -491,16 +492,17 @@ test('the arrow keys walk the player and the Session Resume is Damocles-only', a
       const z = Number(await frame.getAttribute('data-z'));
       return Math.hypot(x - startX, z - startZ);
     })
-    .toBeGreaterThan(100);
+    .toBeGreaterThan(300);
   await page.keyboard.up('ArrowUp');
   await page.keyboard.down('ArrowRight');
   await expect
     .poll(async () => Number(await frame.getAttribute('data-heading')))
     .not.toBeCloseTo(startHeading, 3);
   await page.keyboard.up('ArrowRight');
-  // The recovered bound is the occupied Surface Cell, not a distance: walking within one
-  // cell changes nothing about what is drawn (#373).
-  expect(await frame.getAttribute('data-triangles')).toBe(triangles);
+  // The same placements remain in this cell. Their view-dependent forms can change the
+  // triangle count as the eye moves, even when scene membership is unchanged.
+  expect(await frame.getAttribute('data-cell')).toBe(cell);
+  expect(await frame.getAttribute('data-drawn')).toBe(drawn);
 
   // Blur suspends and writes the resume; a reload lands where the player stood.
   const walkedX = Number(await frame.getAttribute('data-x'));

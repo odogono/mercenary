@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { pauseClock } from './clock.ts';
 import {
   APPROACH_LOCAL,
   DOORWAY_LINE_LOCAL,
@@ -95,76 +96,6 @@ const rewriteRecord = async (
   );
 };
 
-/// Save repeatedly until the stored record was taken in the phase the test is about. A Save is
-/// a console line, so which phase it lands in cannot be chosen in advance: a record is arriving
-/// for 36 frames of every 200, and the wait is 200 frames of every 1000.
-///
-/// The retries run against a deadline rather than a count: a quick browser can spend 25 saves
-/// inside the 200 frames before a wait begins. `save` is how one attempt is made, so a phase
-/// too short to hit by typing can bring its own.
-const saveDuring = async (
-  page: Page,
-  slot: 1 | 2 | 3,
-  phase: (record: SavedRecord) => boolean,
-  save: () => Promise<void> = async () => {
-    expect(await run(page, `save ${slot} confirm`)).toContain(
-      `saved slot ${slot}`
-    );
-  }
-): Promise<SavedRecord> => {
-  const deadline = Date.now() + 40_000;
-  while (Date.now() < deadline) {
-    await save();
-    const record = await savedRecord(page, slot);
-    if (phase(record)) {
-      return record;
-    }
-  }
-  throw new Error('no Save landed in the expected phase within 40 seconds');
-};
-
-/// Save on the first frame a record is seen arriving over the row. Typing the line and waiting
-/// for the page to answer takes longer than the 36-frame arrival under load, so the line is
-/// typed into the console first and submitted from the page, on that frame, with the same
-/// `Enter` the console reads.
-const saveOnArrival = (page: Page, slot: 1 | 2 | 3) => async () => {
-  const input = page.locator('#console-input');
-  if (!(await input.evaluate(node => node === document.activeElement))) {
-    await page.keyboard.press('`');
-    await expect(input).toBeFocused();
-  }
-  await input.fill(`save ${slot} confirm`);
-  const log = page.locator('#console-log > *');
-  const before = await log.count();
-  await page.evaluate(
-    () =>
-      new Promise<void>((resolve, reject) => {
-        const frame = document.querySelector<HTMLElement>('#frame')!;
-        const field =
-          document.querySelector<HTMLInputElement>('#console-input')!;
-        const deadline = performance.now() + 20_000;
-        const tick = () => {
-          const pixels = Number(frame.dataset['damoclesScroll']);
-          if (pixels > 0 && pixels <= 64) {
-            field.dispatchEvent(
-              new KeyboardEvent('keydown', { bubbles: true, key: 'Enter' })
-            );
-            resolve();
-          } else if (performance.now() > deadline) {
-            reject(new Error('no record arrived within 20 seconds'));
-          } else {
-            requestAnimationFrame(tick);
-          }
-        };
-        tick();
-      })
-  );
-  await expect(log).not.toHaveCount(before);
-  expect((await log.allTextContents()).slice(before).join(' | ')).toContain(
-    `saved slot ${slot}`
-  );
-};
-
 test('the supported pickup runs the response once and parks', async ({
   page
 }, testInfo) => {
@@ -230,47 +161,24 @@ test('a record arrives over its predecessor at eight pixels a frame', async ({
 }) => {
   test.setTimeout(120_000);
   const errors = watchErrors(page);
+  await pauseClock(page);
   await bootAt(page, APPROACH_LOCAL);
-  const [first, second, third] = await Promise.all([
-    messageText(page, 'script2-inline-1'),
-    messageText(page, 'script2-inline-2'),
-    messageText(page, 'script2-inline-3')
-  ]);
+  const first = await messageText(page, 'script2-inline-1');
 
   await page.keyboard.press('t');
+  await page.clock.runFor(400);
   await expect(inventory(page)).toHaveText(KEY_LABEL);
 
-  // Catch one frame of one record arriving. Row and pixel count are read together, because they
-  // only describe the same frame if they came from it. Which of the four arrivals is caught
-  // depends on how fast the browser answers -- each is 36 frames of the response's 1000 -- so
-  // the row is compared against every one of them.
-  let partial: { pixels: number; row: string } | undefined;
-  const deadline = Date.now() + 25_000;
-  while (partial === undefined && Date.now() < deadline) {
-    const seen = await frame(page).evaluate(node => ({
-      pixels: Number(node.dataset['damoclesScroll']),
-      row: node.dataset['damoclesRow'] ?? ''
-    }));
-    if (seen.pixels > 0) {
-      partial = seen;
-    }
-  }
-  expect(partial).toBeDefined();
-  expect(partial!.pixels % 8).toBe(0);
-  expect(partial!.pixels).toBeLessThan(288);
-  const arrivals = [
-    [BLANK_ROW, first],
-    [first, second],
-    [second, third],
-    // The response's own clearing line is a record of spaces.
-    [third, BLANK_ROW]
-  ];
-  expect(
-    arrivals.map(([beneath, text]) =>
-      revealedRow(beneath!, text!, partial!.pixels)
-    ),
-    `row ${JSON.stringify(partial!.row)} at ${partial!.pixels} pixels`
-  ).toContain(partial!.row);
+  // Stop part way through the first 36-frame arrival, rather than racing a browser round
+  // trip against it. Row and pixel count must describe the same frame.
+  const partial = await frame(page).evaluate(node => ({
+    pixels: Number(node.dataset['damoclesScroll']),
+    row: node.dataset['damoclesRow'] ?? ''
+  }));
+  expect(partial.pixels).toBeGreaterThan(0);
+  expect(partial.pixels % 8).toBe(0);
+  expect(partial.pixels).toBeLessThan(288);
+  expect(partial.row).toBe(revealedRow(BLANK_ROW, first, partial.pixels));
   expect(errors).toEqual([]);
 });
 
@@ -310,37 +218,33 @@ test('a Save round-trips the response at each of its phases', async ({
 }) => {
   test.setTimeout(180_000);
   const errors = watchErrors(page);
+  await pauseClock(page);
   await bootAt(page, APPROACH_LOCAL);
   const third = await messageText(page, 'script2-inline-3');
 
   await page.keyboard.press('t');
+  await page.clock.runFor(400);
   await expect(inventory(page)).toHaveText(KEY_LABEL);
 
   // A Save taken while a record is part way into the row.
-  const scrolling = await saveDuring(
-    page,
-    1,
-    record => record.snapshot.script.display.kind === 'scrolling',
-    saveOnArrival(page, 1)
-  );
+  expect(await run(page, 'save 1')).toContain('saved slot 1');
+  const scrolling = await savedRecord(page, 1);
+  expect(scrolling.snapshot.script.display.kind).toBe('scrolling');
   expect(scrolling.snapshot.script.message).not.toBeNull();
   expect(await run(page, 'load 1')).toContain('restored slot 1');
   await closeConsole(page);
   // Restoring emits nothing of its own.
   expect(await soundCues(page)).toBe('take:1');
   // The restored session finishes the response it was in the middle of.
-  await expect
-    .poll(async () => displayRow(page), { timeout: 30_000 })
-    .toBe(held(third));
-
-  // A Save taken during the wait, when no message holds the display but the row still reads.
-  const waiting = await saveDuring(
-    page,
-    2,
-    record =>
-      record.snapshot.script.message === null &&
-      record.snapshot.script.execution !== null
-  );
+  // Each record lasts 200 frames (four seconds). Nine seconds into the response the third
+  // is held; four seconds later its message gate is clear and its row remains through the wait.
+  await page.clock.runFor(8600);
+  expect(await displayRow(page)).toBe(held(third));
+  await page.clock.runFor(4000);
+  expect(await run(page, 'save 2')).toContain('saved slot 2');
+  const waiting = await savedRecord(page, 2);
+  expect(waiting.snapshot.script.message).toBeNull();
+  expect(waiting.snapshot.script.execution).not.toBeNull();
   // The row the record carries is the third record, held, even though the message gate is null:
   // the display outlives the message that put it there. Asserting it on the stored record rather
   // than on the live row is what makes this a claim about the Save rather than about how long
@@ -349,8 +253,9 @@ test('a Save round-trips the response at each of its phases', async ({
   expect(waiting.snapshot.script.display.cells?.trim()).toBe(held(third));
   expect(await run(page, 'load 2')).toContain('restored slot 2');
   await closeConsole(page);
-  await expect.poll(async () => displayRow(page), { timeout: 20_000 }).toBe('');
-  await page.waitForTimeout(3000);
+  await page.clock.runFor(8000);
+  expect(await displayRow(page)).toBe('');
+  await page.clock.runFor(3000);
   expect(await displayRow(page)).toBe('');
 
   // And one after the response has parked: the row stays blank and nothing runs again.
@@ -358,7 +263,7 @@ test('a Save round-trips the response at each of its phases', async ({
   expect(await run(page, 'load 3')).toContain('restored slot 3');
   await closeConsole(page);
   await expect(inventory(page)).toHaveText(KEY_LABEL);
-  await page.waitForTimeout(4000);
+  await page.clock.runFor(4000);
   expect(await displayRow(page)).toBe('');
   expect(await soundCues(page)).toBe('take:1');
   expect(errors).toEqual([]);
@@ -536,17 +441,16 @@ test('an unreachable stored response is refused and live play carries on', async
 }) => {
   test.setTimeout(120_000);
   const errors = watchErrors(page);
+  await pauseClock(page);
   await bootAt(page, APPROACH_LOCAL);
 
   await page.keyboard.press('t');
+  await page.clock.runFor(13_000);
   await expect(inventory(page)).toHaveText(KEY_LABEL);
-  await saveDuring(
-    page,
-    1,
-    record =>
-      record.snapshot.script.message === null &&
-      record.snapshot.script.execution !== null
-  );
+  expect(await run(page, 'save 1')).toContain('saved slot 1');
+  const waiting = await savedRecord(page, 1);
+  expect(waiting.snapshot.script.message).toBeNull();
+  expect(waiting.snapshot.script.execution).not.toBeNull();
   await closeConsole(page);
 
   // Two records the codec must refuse whole: an execution stopped where the interpreter never
@@ -568,7 +472,9 @@ test('an unreachable stored response is refused and live play carries on', async
   // Both refusals left the session they declined to replace exactly where it was: still
   // carrying the key, and still running the one response, which ends on its own.
   await expect(inventory(page)).toHaveText(KEY_LABEL);
-  await expect.poll(async () => displayRow(page), { timeout: 30_000 }).toBe('');
+  await page.clock.runFor(8000);
+  expect(await displayRow(page)).toBe('');
+  await page.clock.resume();
   // Play is live rather than merely intact: the label gate between a drop and the next take
   // only clears as frames advance.
   await pressUntilInventory(page, 'd', 'EMPTY');

@@ -3,10 +3,13 @@ import { defineConfig } from '@playwright/test';
 const port = Number(process.env['PORT'] ?? 5173);
 
 export default defineConfig({
+  expect: { timeout: process.env['CI'] ? 15_000 : 5000 },
   fullyParallel: false,
   reporter: [['list'], ['html', { open: 'never' }]],
   testDir: './e2e',
   testMatch: '**/*.e2e.ts',
+  // Leave time for complete menu journeys on CI's software renderer.
+  timeout: process.env['CI'] ? 120_000 : 30_000,
   use: {
     baseURL: `http://127.0.0.1:${port}`,
     trace: 'retain-on-failure',
@@ -19,5 +22,7 @@ export default defineConfig({
     stderr: 'pipe',
     stdout: 'pipe',
     url: `http://127.0.0.1:${port}`
-  }
+  },
+  // fullyParallel: false still allows separate files to compete for the renderer.
+  workers: process.env['CI'] ? 1 : '50%'
 });

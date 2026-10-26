@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test';
 
+import { pauseClock } from './clock.ts';
+
 for (const [title, path, ready, command, response, key] of [
   [
     'Damocles',
@@ -22,9 +24,7 @@ for (const [title, path, ready, command, response, key] of [
     page
   }) => {
     // Reload resumes play. Hold browser time so the readback checks the saved clock exactly.
-    const now = new Date();
-    await page.clock.install({ time: now });
-    await page.clock.pauseAt(now);
+    await pauseClock(page);
     const errors: string[] = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(path);
