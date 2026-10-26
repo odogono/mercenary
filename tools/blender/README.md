@@ -48,6 +48,8 @@ is not packaged as a Blender extension, because an extension manifest must decla
    - _Snap to Game Units_: after a free move.
    - _Mark Lines_ and _Clear Lines_: set whether a selected edge is a line.
    - _Set Game Colour_: inks a structure's selected lines.
+     On an object it gives the selected faces and lines a fixed `#rrggbb` colour.
+   - _Clear Game Colour_: takes an object's selected faces and lines back to uncoloured, drawn in the scene's Line Colour.
 4. _Validate_ lists everything that would stop the export. All of it is also written to the
    _Mercenary diagnostics_ text.
 5. _Export_ writes the geometry back to the file it came from. It re-reads the Sidecar and Change

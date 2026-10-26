@@ -47,6 +47,8 @@ export type Ink = (typeof Ink)[keyof typeof Ink];
 export interface Segment {
   readonly a: Vector3;
   readonly b: Vector3;
+  /// An authored colour, drawn in place of the ink's; only Targ object lines carry one.
+  readonly colour?: RGB8;
   readonly ink: Ink;
 }
 
@@ -63,15 +65,24 @@ export interface Polygon {
 }
 
 const BLACK: RGB8 = { blue: 0, green: 0, red: 0 };
-const WHITE: RGB8 = { blue: 255, green: 255, red: 255 };
+/// Line Colour, the colour uncoloured Targ primitives draw in: white ink, as the wireframe is.
+const LINE_COLOUR: RGB8 = { blue: 255, green: 255, red: 255 };
+
+const paletteRGB = (colour: string): RGB8 => {
+  const rgb = Number.parseInt(colour.slice(1), 16);
+  return { blue: rgb & 255, green: (rgb >> 8) & 255, red: rgb >> 16 };
+};
 
 const faceColour = (colour: Colour | undefined): RGB8 => {
   if (colour?.kind === 'palette') {
-    const rgb = Number.parseInt(colour.colour.slice(1), 16);
-    return { blue: rgb & 255, green: (rgb >> 8) & 255, red: rgb >> 16 };
+    return paletteRGB(colour.colour);
   }
-  return colour?.kind === 'ink' && colour.ink === 1 ? BLACK : WHITE;
+  return colour?.kind === 'ink' && colour.ink === 1 ? BLACK : LINE_COLOUR;
 };
+
+/// A line's authored colour, or undefined for one that draws in its ink.
+export const lineColour = (colour: Colour | undefined): RGB8 | undefined =>
+  colour?.kind === 'palette' ? paletteRGB(colour.colour) : undefined;
 
 /// Each drawable face's loop resolved to the part's vertices; walking geometry never enters
 /// the view.
@@ -207,6 +218,8 @@ export interface ObjectPlacement {
   /// Beyond this per-axis distance the object collapses to a point.
   readonly detailCube: number;
   readonly drawsFarAsPoint: boolean;
+  /// Each edge's authored colour, by edge index; absent or undefined draws in Line Colour.
+  readonly edgeColours?: readonly (RGB8 | undefined)[];
   readonly edges: readonly (readonly [number, number])[];
   readonly faces: readonly Polygon[];
   readonly id: string;
@@ -244,13 +257,18 @@ export const craftHeading = (
 /// The object's own line segments, for when it is inside the detail cube.
 export const objectSegments = (object: ObjectPlacement): Segment[] => {
   const out: Segment[] = [];
-  for (const [start, end] of object.edges) {
+  for (const [index, [start, end]] of object.edges.entries()) {
     const a = object.vertices[start];
     const b = object.vertices[end];
     if (a === undefined || b === undefined) {
       continue;
     }
-    out.push({ a, b, ink: Ink.white });
+    const colour = object.edgeColours?.[index];
+    out.push(
+      colour === undefined
+        ? { a, b, ink: Ink.white }
+        : { a, b, colour, ink: Ink.white }
+    );
   }
   return out;
 };
@@ -740,10 +758,14 @@ const placements = (
     const placed = local.map(v =>
       vector(v.x + origin.x, v.y - groundingOffset + origin.y, v.z + origin.z)
     );
+    // The record's edges are the wireframe part's lines in order, so a line's colour is its edge's.
+    const lines = asset.parts.find(part => part.role === 'wireframe')?.lines;
     const edges: [number, number][] = [];
-    for (const edge of model.edges) {
+    const edgeColours: (RGB8 | undefined)[] = [];
+    for (const [index, edge] of model.edges.entries()) {
       if (edge.length === 2) {
         edges.push([edge[0]!, edge[1]!]);
+        edgeColours.push(lineColour(lines?.[index]?.colour));
       }
     }
 
@@ -758,6 +780,9 @@ const placements = (
     out.push({
       detailCube: toFloat32(instance.visibility.detailCubePerAxis),
       drawsFarAsPoint: instance.visibility.farRepresentation === 'point',
+      ...(edgeColours.some(colour => colour !== undefined)
+        ? { edgeColours }
+        : {}),
       edges,
       faces,
       id: instance.id,

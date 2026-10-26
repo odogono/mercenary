@@ -182,7 +182,7 @@ def new_authored(kind, slug, root=None):
     asset = {
         "asset": identity,
         "format": C.CONTRACT_FORMAT,
-        "parts": [wireframe("none" if kind == "objects" else "ink")],
+        "parts": [wireframe("palette" if kind == "objects" else "ink")],
         "sidecarSha256": C.sidecar_sha256(sidecar),
         "title": "targ",
         "version": C.CONTRACT_VERSION,

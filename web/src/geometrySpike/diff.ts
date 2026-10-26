@@ -16,7 +16,7 @@ const colourText = (colour: Colour | undefined) =>
     ? 'none'
     : colour.kind === 'ink'
       ? `ink ${colour.ink}`
-      : `${colour.colour} ($${colour.source.toString(16).toUpperCase()}${colour.day === undefined ? '' : `, day ${colour.day}`})`;
+      : `${colour.colour} (${colour.source === undefined ? 'fixed' : `$${colour.source.toString(16).toUpperCase()}`}${colour.day === undefined ? '' : `, day ${colour.day}`})`;
 
 /// Key order is not meaning: readers of the two candidates build objects in different orders.
 const same = (a: unknown, b: unknown) =>

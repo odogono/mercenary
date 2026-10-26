@@ -64,8 +64,21 @@ def _rgba(hex_colour):
     return [_linear(int(hex_colour[k : k + 2], 16)) for k in (1, 3, 5)] + [1.0]
 
 
+LINE_COLOUR = "Line Colour"
+
+
 def material_for(colour):
-    """The one material standing for a game colour, created on first use and shared thereafter."""
+    """The one material standing for a game colour, created on first use and shared thereafter.
+    No colour is the Line Colour material, which carries no game colour: a face given it is
+    uncoloured and draws in the scene's Line Colour."""
+    if colour is None:
+        for material in bpy.data.materials:
+            if material.get("mc_line_colour"):
+                return material
+        material = bpy.data.materials.new(LINE_COLOUR)
+        material["mc_line_colour"] = True
+        material.diffuse_color = _rgba("#ffffff")
+        return material
     key = json.dumps(list(C.colour_key(colour)))
     for material in bpy.data.materials:
         if material.get("mc_key") == key:
@@ -73,7 +86,8 @@ def material_for(colour):
     if colour["kind"] == "ink":
         name, display = f"ink {colour['ink']}", ("#ffffff" if colour["ink"] == 0 else "#202020")
     else:
-        name = f"{colour['colour']} ${colour['source']:04X}" + (f" day {colour['day']}" if colour.get("day") else "")
+        word = f" ${colour['source']:04X}" if colour.get("source") is not None else ""
+        name = f"{colour['colour']}{word}" + (f" day {colour['day']}" if colour.get("day") else "")
         display = colour["colour"]
     material = bpy.data.materials.new(name)
     material["mc_key"] = key
@@ -207,8 +221,8 @@ def _import_part(part, centre):
 
     materials = []
 
-    def slot(colour):
-        if colour is None:
+    def slot(colour, uncoloured=-1):
+        if colour is None and uncoloured == -1:
             return -1
         material = material_for(colour)
         if material.name not in [m.name for m in materials]:
@@ -260,7 +274,9 @@ def _import_part(part, centre):
         double.append(bool(f.get("doubleSided")))
         close.append(bool(f.get("closingRepeat")))
         fscene.append(scene(f.get("sceneSlots")))
-        material_index.append(max(slot(f.get("colour")), 0))
+        # Beside coloured faces, an uncoloured one needs a slot of its own to stay uncoloured.
+        mixed = any(g.get("colour") is not None for g in part["faces"])
+        material_index.append(max(slot(f.get("colour"), uncoloured=0 if mixed else -1), 0))
     mesh.attributes["mc_fid"].data.foreach_set("value", fid)
     mesh.attributes["mc_record"].data.foreach_set("value", record)
     mesh.attributes["mc_double"].data.foreach_set("value", double)
@@ -400,6 +416,7 @@ def _export_part(obj, collection, error, warning):
     if obj.modifiers:
         warning(pid, "modifiers are ignored on export; apply them to change geometry")
     colour_model = obj["mc_colour_model"]
+    optional = C.colour_optional(collection.get("mc_title"), colour_model)
     scene_sets = json.loads(obj.get("mc_scene_sets", "[]"))
     nv, nf, ne = len(mesh.vertices), len(mesh.polygons), len(mesh.edges)
     columns = {}
@@ -456,7 +473,9 @@ def _export_part(obj, collection, error, warning):
         if colour_model != "none":
             material = mesh.materials[polygon.material_index] if polygon.material_index < len(mesh.materials) else None
             colour = colour_of(material)
-            if colour is None or colour["kind"] != colour_model:
+            if colour is None and optional:
+                pass
+            elif colour is None or colour["kind"] != colour_model:
                 error(site, f"material '{material.name if material else '(none)'}' carries no {colour_model} colour; use Mercenary ▸ Set Game Colour")
             else:
                 face["colour"] = colour
@@ -498,7 +517,9 @@ def _export_part(obj, collection, error, warning):
         if colour_model != "none":
             slot = int(columns["mc_lcolour"][k]) - 1
             colour = colour_of(mesh.materials[slot]) if 0 <= slot < len(mesh.materials) else None
-            if colour is None or colour["kind"] != colour_model:
+            if colour is None and optional:
+                pass
+            elif colour is None or colour["kind"] != colour_model:
                 error(site, f"line v{a}–v{b} has no {colour_model} colour; select it and use Mercenary ▸ Set Game Colour")
             else:
                 line["colour"] = colour

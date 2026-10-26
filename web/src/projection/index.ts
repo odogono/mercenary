@@ -1,5 +1,6 @@
 import { atan, cos, sin, tan, toFloat32 } from '../math/index.ts';
 import type { HeadingConvention, Vector3 } from '../orientation/index.ts';
+import type { RGB8 } from '../scene/index.ts';
 import {
   Ink,
   SURFACE,
@@ -87,6 +88,8 @@ export const transformed = (
 
 /// A projected line ready to stroke, in view pixels. Its coordinates are binary32.
 export interface ScreenLine {
+  /// An authored colour, drawn in place of the ink's.
+  readonly colour?: RGB8;
   readonly ink: Ink;
   /// Optional camera-view endpoints for distance-aware presentation, after near/screen clipping.
   readonly viewEndpoints?: readonly [Vector3, Vector3];
@@ -489,6 +492,7 @@ export class Camera {
     };
     // The one narrowing. `ScreenLine` is `Float` in the kit, and this is where it becomes one.
     return {
+      ...(segment.colour === undefined ? {} : { colour: segment.colour }),
       ink: segment.ink,
       ...(includeViewEndpoints
         ? { viewEndpoints: [viewAt(first), viewAt(second)] as const }

@@ -133,7 +133,7 @@ def check_asset(asset, sidecar=None):
             for vid in f["loop"]:
                 if points.get(vid) != "vertex":
                     error(site, f"names v{vid}, which is not a vertex of this part")
-            _colour_check(part, f.get("colour"), site, error)
+            _colour_check(asset, part, f.get("colour"), site, error)
         ids = set()
         for l in part["lines"]:
             site = f"{pid}/l{l['id']}"
@@ -145,7 +145,7 @@ def check_asset(asset, sidecar=None):
             for vid in l["ends"]:
                 if vid not in points:
                     error(site, f"names {vid}, which is neither a vertex nor an external endpoint")
-            _colour_check(part, l.get("colour"), site, error)
+            _colour_check(asset, part, l.get("colour"), site, error)
     if sidecar is not None:
         if sidecar.get("version") != 2:
             error("version", "needs sidecar version 2; recover the baseline again with the current tools")
@@ -177,17 +177,28 @@ def check_asset(asset, sidecar=None):
     return out
 
 
-def _colour_check(part, colour, site, error):
+def colour_optional(title, model):
+    """A Targ palette part may leave a primitive uncoloured, to draw in Line Colour."""
+    return model == "palette" and title == "targ"
+
+
+def _colour_check(asset, part, colour, site, error):
     model = part["colourModel"]
     if model == "none":
         if colour is not None:
             error(site, "this part carries no colours")
         return
+    if colour is None and colour_optional(asset.get("title"), model):
+        return
     if colour is None or colour.get("kind") != model:
         error(site, f"needs a {model} colour")
         return
-    if model == "palette" and not COLOUR_PATTERN.match(colour["colour"]):
+    if model != "palette":
+        return
+    if not COLOUR_PATTERN.match(colour["colour"]):
         error(site, f"colour {colour['colour']} is not #rrggbb")
+    if asset.get("title") == "damocles" and colour.get("source") is None:
+        error(site, "needs a colour word; Damocles records store one")
 
 
 def require_valid(asset, sidecar=None):
@@ -203,7 +214,7 @@ def colour_key(colour):
         return ("none",)
     if colour["kind"] == "ink":
         return ("ink", colour["ink"])
-    return ("palette", colour["source"], colour["colour"], colour.get("day") or "")
+    return ("palette", colour.get("source"), colour["colour"], colour.get("day") or "")
 
 
 def colour_from_key(key):
@@ -211,7 +222,9 @@ def colour_from_key(key):
         return None
     if key[0] == "ink":
         return {"ink": key[1], "kind": "ink"}
-    colour = {"colour": key[2], "kind": "palette", "source": key[1]}
+    colour = {"colour": key[2], "kind": "palette"}
+    if key[1] is not None:
+        colour["source"] = key[1]
     if key[3]:
         colour["day"] = key[3]
     return colour

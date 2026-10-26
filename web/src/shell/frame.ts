@@ -556,6 +556,25 @@ const addBatch = (
   }
 };
 
+/// Lines carrying an authored colour, one batch per colour, in the white-ink position: after
+/// black ink, so they win where the two overlap.
+const addColouredLines = (
+  batches: DrawBatch[],
+  lines: readonly ScreenLine[]
+): void => {
+  const byColour = new Map<string, ScreenLine[]>();
+  for (const line of lines) {
+    const { blue, green, red } = line.colour!;
+    const key = `${red},${green},${blue}`;
+    const group = byColour.get(key) ?? [];
+    group.push(line);
+    byColour.set(key, group);
+  }
+  for (const group of byColour.values()) {
+    addLineBatch(batches, group, group[0]!.colour!);
+  }
+};
+
 const addLineBatch = (
   batches: DrawBatch[],
   lines: readonly ScreenLine[],
@@ -812,9 +831,12 @@ export const planFrame = (
       distantWhiteInk.set(colour.red, lines);
     }
   }
+  const coloured: ScreenLine[] = [];
   for (const line of projected.lines) {
     if (presentation.preset === 'enhanced' && projected.roads.has(line)) {
       (line.ink === Ink.black ? roadBlackInk : roadWhiteInk).push(line);
+    } else if (line.colour !== undefined) {
+      coloured.push(line);
     } else {
       (line.ink === Ink.black ? blackInk : whiteInk).push(line);
     }
@@ -854,6 +876,7 @@ export const planFrame = (
   const allBlackInk = [...distantBlackInk, ...blackInk];
   addLineBatch(batches, allBlackInk, ScenePalette.blackInk);
   addLineBatch(batches, whiteInk, ScenePalette.whiteInk);
+  addColouredLines(batches, coloured);
   addBatch(
     batches,
     'points',
@@ -928,8 +951,14 @@ export const planInspection = (
   );
   addLineBatch(
     batches,
-    projected.lines.filter(line => line.ink !== Ink.black),
+    projected.lines.filter(
+      line => line.ink !== Ink.black && line.colour === undefined
+    ),
     ScenePalette.whiteInk
+  );
+  addColouredLines(
+    batches,
+    projected.lines.filter(line => line.colour !== undefined)
   );
   return {
     batches,
