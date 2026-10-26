@@ -287,14 +287,16 @@ const damoclesRecord = (builder: Builder, model: Json): Json => {
   return record;
 };
 
-/// A Targ wireframe: integer vertices and two-index edges, no colour.
+/// A Targ wireframe: integer vertices and two-index edges, uncoloured. An object's part takes
+/// authored colours (`palette`); a Room's takes none.
 const targWireframe = (
   builder: Builder,
   vertices: unknown[],
-  edges: unknown[]
+  edges: unknown[],
+  colourModel: 'none' | 'palette'
 ) => {
   const part: Part = {
-    colourModel: 'none',
+    colourModel,
     externals: [],
     faces: [],
     id: 'wireframe',
@@ -496,7 +498,8 @@ export const recoverTargObjectModel = (
   targWireframe(
     builder,
     model['vertices'] as unknown[],
-    model['edges'] as unknown[]
+    model['edges'] as unknown[],
+    'palette'
   );
   return finish(
     builder,
@@ -520,7 +523,8 @@ export const recoverTargRoom = (
   targWireframe(
     builder,
     room['vertices'] as unknown[],
-    room['edges'] as unknown[]
+    room['edges'] as unknown[],
+    'none'
   );
   return finish(
     builder,

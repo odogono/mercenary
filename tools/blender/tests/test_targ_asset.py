@@ -105,6 +105,23 @@ class TargAssetFiles(unittest.TestCase):
         self.assertEqual(written["asset"]["parts"], [part])
         self.assertEqual(written["asset"]["sidecarSha256"], C.sidecar_sha256(value["sidecar"]))
 
+    def test_an_object_mixes_fixed_colours_with_uncoloured_primitives(self):
+        value = self.read(self.object)
+        part = value["asset"]["parts"][0]
+        self.assertEqual(part["colourModel"], "palette")
+        part["vertices"] = [{"co": [0, 0, 0], "id": 0}, {"co": [0, 512, 0], "id": 1}, {"co": [512, 0, 0], "id": 2}]
+        part["lines"] = [{"colour": {"colour": "#ff0000", "kind": "palette"}, "ends": [0, 1], "id": 0}, {"ends": [1, 2], "id": 1}]
+        part["faces"] = [{"id": 0, "loop": [0, 1, 2]}]
+        self.assertEqual(errors(self.object, value), [])
+        part["colourModel"] = "none"
+        self.assertIn("this part carries no colours", errors(self.object, value))
+
+    def test_a_fixed_colour_keys_without_a_colour_word(self):
+        colour = {"colour": "#ff0000", "kind": "palette"}
+        self.assertEqual(C.colour_from_key(C.colour_key(colour)), colour)
+        self.assertFalse(C.colour_optional("damocles", "palette"))
+        self.assertFalse(C.colour_optional("targ", "ink"))
+
     def test_an_export_refuses_a_file_that_now_holds_another_asset(self):
         with self.assertRaises(C.Rejected):
             T.with_parts(self.object, [], "authored:tower", self.root)

@@ -23,14 +23,17 @@ export type PartRole =
   | 'walk'
   | 'wireframe';
 
-/// `palette` primitives carry a Damocles colour word; `ink` lines carry a Targ Ink; `none`
-/// carries no colour at all (Targ objects and Rooms, whose colour is a Room-level palette).
+/// `palette` primitives carry a colour; `ink` lines carry a Targ Ink; `none` carries no colour
+/// at all (Targ Rooms, drawn in Line Colour). On a Targ object's `palette` part a primitive may
+/// leave its colour out and draw in Line Colour; every Damocles primitive carries one.
 export type ColourModel = 'ink' | 'none' | 'palette';
 
+/// `source` is the original's colour word, which a Floor palette may rebind and export writes
+/// back. Without one the colour is fixed: nothing rebinds it, as with an authored Targ colour.
 export interface PaletteColour {
   readonly colour: string;
   readonly day?: string;
-  readonly source: number;
+  readonly source?: number;
 }
 
 export type Colour =

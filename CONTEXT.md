@@ -130,6 +130,10 @@ _Avoid_: Elevator animation, Room Transition, instant teleport
 How the Room the player is in looks at this moment — its two backdrop colours, the colour its wireframe is drawn in, and whether it is dark — which depends on play rather than on the Room alone.
 _Avoid_: Room palette, lighting, theme
 
+**Line Colour**:
+The colour a scene draws a Targ object's uncoloured lines and faces in: the Indoor Scene's wireframe colour in a Room, white Ink on the surface. A Targ object may also carry authored colours, which replace it primitive by primitive.
+_Avoid_: Room palette, default colour, object palette
+
 **PresentationEvent**:
 Something that happened in a Gameplay Session which only presentation should answer — a tone, a script effect, a touchdown, an arrival, Wall Contact, or a world flip — while Session State remains the session's own.
 _Avoid_: sound event, UI notification, side effect

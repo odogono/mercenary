@@ -10,6 +10,7 @@ import { Camera } from '../projection/index.ts';
 import {
   Ink,
   facePolygon,
+  lineColour,
   type Polygon,
   type Segment
 } from '../world/index.ts';
@@ -48,7 +49,10 @@ export const previewGeometry = (asset: GeometryAsset): PreviewGeometry => {
         line.colour?.kind === 'ink' && line.colour.ink === Ink.black
           ? Ink.black
           : Ink.white;
-      segments.push({ a, b, ink });
+      const colour = lineColour(line.colour);
+      segments.push(
+        colour === undefined ? { a, b, ink } : { a, b, colour, ink }
+      );
       (ink === Ink.black ? ground : points).push(a, b);
     }
     for (const face of part.faces) {

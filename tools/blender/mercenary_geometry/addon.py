@@ -199,35 +199,77 @@ class MERCENARY_OT_set_colour(bpy.types.Operator, _AssetOperator):
         if model == "none":
             self.report({"ERROR"}, "this part carries no colours")
             return {"CANCELLED"}
-        colour = (
-            {"ink": self.ink, "kind": "ink"}
-            if model == "ink"
-            else {"colour": self.colour.lower(), "kind": "palette", "source": self.source, **({"day": self.day.lower()} if self.day else {})}
-        )
+        fixed = contract.colour_optional(blender_io.asset_collection(obj).get("mc_title"), model)
+        if model == "ink":
+            colour = {"ink": self.ink, "kind": "ink"}
+        elif fixed:
+            # A Targ colour is fixed: no colour word for a Floor to rebind, and no day half.
+            colour = {"colour": self.colour.lower(), "kind": "palette"}
+        else:
+            colour = {"colour": self.colour.lower(), "kind": "palette", "source": self.source, **({"day": self.day.lower()} if self.day else {})}
         if model == "palette" and not contract.COLOUR_PATTERN.match(colour["colour"]):
             self.report({"ERROR"}, "colour must be #rrggbb")
             return {"CANCELLED"}
-        material = blender_io.material_for(colour)
-        if material.name not in obj.data.materials:
-            obj.data.materials.append(material)
-        slot = list(obj.data.materials).index(material)
-        mesh = bmesh.from_edit_mesh(obj.data)
-        lcolour = mesh.edges.layers.int.get("mc_lcolour")
-        lid = mesh.edges.layers.int.get("mc_lid")
-        for face in mesh.faces:
-            if face.select:
-                face.material_index = slot
-        following = max((e[lid] for e in mesh.edges), default=0) + 1
-        for edge in mesh.edges:
-            if not edge.select or not (edge[lid] > 0 or edge.is_wire):
-                continue
-            if edge[lid] == 0:
-                # Colouring a wire edge says it is a line.
-                edge[lid] = following
-                following += 1
-            edge[lcolour] = slot + 1
-        bmesh.update_edit_mesh(obj.data)
+        _apply_colour(obj, colour)
         return {"FINISHED"}
+
+    def draw(self, context):
+        obj = context.object
+        model = obj.get("mc_colour_model")
+        layout = self.layout
+        if model == "ink":
+            layout.prop(self, "ink")
+            return
+        layout.prop(self, "colour")
+        if not contract.colour_optional(blender_io.asset_collection(obj).get("mc_title"), model):
+            layout.prop(self, "source")
+            layout.prop(self, "day")
+
+
+class MERCENARY_OT_clear_colour(bpy.types.Operator, _AssetOperator):
+    """Take the selected faces and lines back to uncoloured, drawn in the scene's Line Colour"""
+
+    bl_idname = "mercenary.clear_colour"
+    bl_label = "Clear Game Colour"
+    bl_options = {"REGISTER", "UNDO"}
+
+    def execute(self, context):
+        obj = _edit_part(context)
+        model = obj.get("mc_colour_model")
+        if not contract.colour_optional(blender_io.asset_collection(obj).get("mc_title"), model):
+            self.report({"ERROR"}, "every primitive of this part carries a colour")
+            return {"CANCELLED"}
+        _apply_colour(obj, None)
+        return {"FINISHED"}
+
+
+def _apply_colour(obj, colour):
+    """Give the selected faces, and selected edges marked as lines, one colour; None uncolours
+    them. Colouring a wire edge marks it as a line; uncolouring one leaves it unmarked."""
+    material = blender_io.material_for(colour)
+    if material.name not in obj.data.materials:
+        obj.data.materials.append(material)
+    slot = list(obj.data.materials).index(material)
+    mesh = bmesh.from_edit_mesh(obj.data)
+    lcolour = mesh.edges.layers.int.get("mc_lcolour")
+    lid = mesh.edges.layers.int.get("mc_lid")
+    for face in mesh.faces:
+        if face.select:
+            face.material_index = slot
+    following = max((e[lid] for e in mesh.edges), default=0) + 1
+    for edge in mesh.edges:
+        if colour is None:
+            if edge.select and edge[lid] > 0:
+                edge[lcolour] = 0
+            continue
+        if not edge.select or not (edge[lid] > 0 or edge.is_wire):
+            continue
+        if edge[lid] == 0:
+            # Colouring a wire edge says it is a line.
+            edge[lid] = following
+            following += 1
+        edge[lcolour] = slot + 1
+    bmesh.update_edit_mesh(obj.data)
 
 
 class MERCENARY_OT_mark_lines(bpy.types.Operator, _AssetOperator):
@@ -278,6 +320,7 @@ class MERCENARY_PT_panel(bpy.types.Panel):
         column.operator(MERCENARY_OT_snap.bl_idname)
         column.operator(MERCENARY_OT_reset_transform.bl_idname)
         column.operator(MERCENARY_OT_set_colour.bl_idname)
+        column.operator(MERCENARY_OT_clear_colour.bl_idname)
         row = column.row(align=True)
         row.operator(MERCENARY_OT_mark_lines.bl_idname, text="Mark Lines").clear = False
         row.operator(MERCENARY_OT_mark_lines.bl_idname, text="Clear Lines").clear = True
@@ -292,6 +335,7 @@ CLASSES = (
     MERCENARY_OT_reset_transform,
     MERCENARY_OT_snap,
     MERCENARY_OT_set_colour,
+    MERCENARY_OT_clear_colour,
     MERCENARY_OT_mark_lines,
     MERCENARY_PT_panel,
 )

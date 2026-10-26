@@ -115,7 +115,7 @@ export const checkAsset = (
           );
         }
       }
-      colourCheck(part, face.colour, site(`/f${face.id}`), error);
+      colourCheck(asset, part, face.colour, site(`/f${face.id}`), error);
     }
     const lineIds = new Set<number>();
     for (const line of part.lines) {
@@ -134,7 +134,7 @@ export const checkAsset = (
           );
         }
       }
-      colourCheck(part, line.colour, site(`/l${line.id}`), error);
+      colourCheck(asset, part, line.colour, site(`/l${line.id}`), error);
     }
   }
   out.push(...checkReferences(asset, sidecar));
@@ -191,7 +191,10 @@ export const checkReferences = (
   return out;
 };
 
+/// A Targ palette part may leave a primitive uncoloured, to draw in Line Colour; a Damocles one
+/// colours every primitive, through the colour word its payload record stores.
 const colourCheck = (
+  asset: GeometryAsset,
   part: Part,
   colour: Colour | undefined,
   site: string,
@@ -203,12 +206,25 @@ const colourCheck = (
     }
     return;
   }
+  if (
+    colour === undefined &&
+    part.colourModel === 'palette' &&
+    asset.title === 'targ'
+  ) {
+    return;
+  }
   if (colour?.kind !== part.colourModel) {
     error(site, `needs a ${part.colourModel} colour`);
     return;
   }
-  if (colour.kind === 'palette' && !/^#[\da-f]{6}$/.test(colour.colour)) {
+  if (colour.kind !== 'palette') {
+    return;
+  }
+  if (!/^#[\da-f]{6}$/.test(colour.colour)) {
     error(site, `colour ${colour.colour} is not #rrggbb`);
+  }
+  if (asset.title === 'damocles' && colour.source === undefined) {
+    error(site, 'needs a colour word; Damocles records store one');
   }
 };
 
