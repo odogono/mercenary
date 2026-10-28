@@ -4,6 +4,13 @@ The canonical codebase for the Faithful Remake (ADR 0019). The live macOS implem
 been retired; its final accepted state is frozen at the annotated
 `trace-oracle-last-good` tag for regenerating Golden Traces.
 
+Use Bun for the app and tests, and Node 24.10 or later for Node-based tools such as Prettier.
+
+The NorthTalk runtime uses `^0.3.0`, with the resolved version recorded in `bun.lock`.
+Save schema 15 uses its new snapshot format. Older saves retain their game state, but
+Talk Scripts load fresh: their variables, pending dialogue and input claims are discarded,
+and the opening sequence is not replayed.
+
 ```sh
 bun install
 bunx playwright install chromium # once, for the browser gate

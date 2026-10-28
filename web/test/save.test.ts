@@ -110,7 +110,7 @@ describe('a Save Snapshot', () => {
     );
     const snapshot = gameplay.captureSaveSnapshot();
 
-    expect(SAVE_SCHEMA_VERSION).toBe(14);
+    expect(SAVE_SCHEMA_VERSION).toBe(15);
     expect(snapshot).toHaveProperty('carriedStack');
     expect(snapshot).toHaveProperty('deliveryFrames');
     expect(snapshot).toHaveProperty('objectFlags');
@@ -209,7 +209,7 @@ describe('a Save Snapshot', () => {
       JSON.stringify({ ...current, schemaVersion: 11, snapshot }),
       environment
     );
-    expect(migrated.schemaVersion).toBe(14);
+    expect(migrated.schemaVersion).toBe(15);
     expect(migrated.snapshot.game.player).toEqual({
       ...snapshot.game.player,
       heading: Math.PI / 2,

@@ -22,6 +22,7 @@ import {
   shape,
   text,
   type Call,
+  type Decimal,
   type Grant,
   type Group,
   type Library,
@@ -96,8 +97,8 @@ const MICROS = 1_000_000;
 /// No Talk Script wait is bounded by a deadline of its own.
 const LONGEST_WAIT_MS = 2_147_483_647;
 
-const flag = (name: Value): number => {
-  const bit = FLAGS[name.asText() as keyof typeof FLAGS];
+const flag = (name: string): number => {
+  const bit = FLAGS[name as keyof typeof FLAGS];
   if (bit === undefined) {
     throw new Error(`unknown flag ${name.toString()}`);
   }
@@ -107,7 +108,7 @@ const flag = (name: Value): number => {
 /// The Library's `codeIdentity`, which every Talk Script's counts in.
 const LIBRARY_IDENTITY = codeIdentity('library', 'benson', librarySource);
 
-const whole = (value: Value): number => Number(value.asDecimal()!.toBigInt());
+const whole = (value: Decimal): number => Number(value.toBigInt());
 
 /// `btoa` takes a string of bytes, and a spread argument list has a limit.
 const BASE64_CHUNK = 0x80_00;
@@ -467,7 +468,7 @@ export class TalkHost {
   }
 
   private defineCapabilities(core: ReturnType<typeof createCore>) {
-    const world = core.defineCapability<void>('world', {
+    const world = core.defineCapability('world', {
       advertIntact: {
         cost: { fuel: 1 },
         description: "Whether the author's advert on block 50 still stands.",
@@ -481,7 +482,7 @@ export class TalkHost {
         description:
           'Makes boarding or taking the object start its own Benson Script.',
         do: (_call, item) => {
-          const slot = objectSlot(item.asText()!);
+          const slot = objectSlot(item);
           this.benson.host = this.benson.host.withObjectFlag(
             slot,
             (this.benson.host.objectFlags.get(slot) ?? 0) | STARTS_SCRIPT
@@ -497,8 +498,7 @@ export class TalkHost {
           'Whether boarding or taking the object starts its own Benson Script.',
         do: (_call, item) =>
           bool(
-            ((this.benson.host.objectFlags.get(objectSlot(item.asText()!)) ??
-              0) &
+            ((this.benson.host.objectFlags.get(objectSlot(item)) ?? 0) &
               STARTS_SCRIPT) !==
               0
           ),
@@ -519,7 +519,7 @@ export class TalkHost {
         args: [shape.text],
         cost: { fuel: 1 },
         do: (_call, item) =>
-          bool(this.benson.host.inventory.has(objectSlot(item.asText()!))),
+          bool(this.benson.host.inventory.has(objectSlot(item))),
         mode: 'immediate',
         result: shape.bool
       },
@@ -544,7 +544,7 @@ export class TalkHost {
         description:
           'Marks the object delivered: paid for, and fixed where it lies.',
         do: (_call, item) => {
-          const slot = objectSlot(item.asText()!);
+          const slot = objectSlot(item);
           this.benson.host = this.benson.host.withObjectFlag(
             slot,
             (this.benson.host.objectFlags.get(slot) ?? 0) | DELIVERED | FIXED
@@ -559,8 +559,7 @@ export class TalkHost {
         description: 'Whether the object has been paid for.',
         do: (_call, item) =>
           bool(
-            ((this.benson.host.objectFlags.get(objectSlot(item.asText()!)) ??
-              0) &
+            ((this.benson.host.objectFlags.get(objectSlot(item)) ?? 0) &
               DELIVERED) !==
               0
           ),
@@ -573,7 +572,7 @@ export class TalkHost {
         description:
           "Clears the object's bits 4 and 8, as the Dart's Benson Script does: boarding it starts nothing more.",
         do: (_call, item) => {
-          const slot = objectSlot(item.asText()!);
+          const slot = objectSlot(item);
           this.benson.host = this.benson.host.withObjectFlag(
             slot,
             (this.benson.host.objectFlags.get(slot) ?? 0) & ~DISARMED & 0xff
@@ -609,9 +608,7 @@ export class TalkHost {
         description:
           'The name of the Room the object lies in, or nothing while carried or gone.',
         do: (_call, item) => {
-          const room = this.benson.host.objectRooms.get(
-            objectSlot(item.asText()!)
-          );
+          const room = this.benson.host.objectRooms.get(objectSlot(item));
           return room === undefined || room === OUT_OF_THE_WORLD
             ? nothing
             : text(roomName(room));
@@ -624,13 +621,13 @@ export class TalkHost {
         cost: { fuel: 1 },
         description: 'Moves a loose object to the named Room.',
         do: (_call, item, destination) => {
-          const slot = objectSlot(item.asText()!);
+          const slot = objectSlot(item);
           if (this.benson.host.inventory.has(slot)) {
             throw new Error('cannot move a carried object');
           }
           this.benson.host = this.benson.host.withObjectRoom(
             slot,
-            roomId(destination.asText()!)
+            roomId(destination)
           );
           return nothing;
         },
@@ -698,7 +695,7 @@ export class TalkHost {
       }
     });
 
-    const display = core.defineCapability<void>('display', {
+    const display = core.defineCapability('display', {
       prompt: {
         args: [shape.text],
         cost: { fuel: 1 },
@@ -709,7 +706,7 @@ export class TalkHost {
           this.enqueue({
             call,
             claim: { run: call.runId, script: call.scriptName },
-            lines: [line.asText()!]
+            lines: [line]
           });
         }
       },
@@ -736,19 +733,19 @@ export class TalkHost {
           'Queues a line for the Benson Display; answers once it has played.',
         mode: 'suspending',
         start: (call, line) => {
-          this.enqueue({ call, lines: [line.asText()!] });
+          this.enqueue({ call, lines: [line] });
         }
       }
     });
 
-    const sound = core.defineCapability<void>('sound', {
+    const sound = core.defineCapability('sound', {
       silence: {
         args: [shape.text],
         cost: { fuel: 1 },
         description: 'Silences a voice, as a Benson Script writes 0 to it.',
         fire: (_call, voice) => {
           this.effects.push({
-            sound: { symbol: `${voice.asText()!}.control`, value: 0 }
+            sound: { symbol: `${voice}.control`, value: 0 }
           });
         },
         mode: 'fire-and-forget'
