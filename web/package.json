@@ -3,6 +3,9 @@
   "version": "0.21.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=24.10.0"
+  },
   "scripts": {
     "blender": "bun tools/blender.ts",
     "changelog": "bun ../tools/commits/changelog.ts",
@@ -68,7 +71,7 @@
     ]
   },
   "dependencies": {
-    "@northtalk/ts": "0.1.0"
+    "@northtalk/ts": "^0.3.0"
   },
   "devDependencies": {
     "@ianvs/prettier-plugin-sort-imports": "^4.7.1",

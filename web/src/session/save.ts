@@ -11,7 +11,7 @@ import type {
 import type { Location, Residence } from '../world/index.ts';
 import type { ShipFieldPoint, ShipFieldSaveSnapshot } from './shipField.ts';
 
-export const SAVE_SCHEMA_VERSION = 14 as const;
+export const SAVE_SCHEMA_VERSION = 15 as const;
 export const SAVE_JSON_CODE_UNIT_LIMIT = 1_000_000;
 
 const SAVE_COLLECTION_LIMIT = 1024;
@@ -1410,10 +1410,15 @@ const migrateDisplayRest = (value: unknown, schemaVersion: number): unknown => {
 /// (ADR 0080). An earlier Save had no Talk Scripts, so they load fresh, and
 /// the Benson Script it was running is told by where it is.
 const migrateTalkScripts = (value: unknown, schemaVersion: number): unknown => {
-  if (schemaVersion >= 14) {
+  if (schemaVersion >= 15) {
     return value;
   }
   const raw = record(value, '$.snapshot');
+  // Schema 14 used NorthTalk 0.1's format-9 bytes, which 0.3 cannot read.
+  // Keep the game state, but load Talk Scripts fresh without replaying begin.
+  if (schemaVersion === 14) {
+    return { ...raw, talk: null };
+  }
   const benson = raw['benson'];
   return {
     ...raw,

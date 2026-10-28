@@ -13,6 +13,7 @@ import {
   shape,
   text,
   type Call,
+  type Decimal,
   type Group,
   type Library,
   type Report,
@@ -82,15 +83,15 @@ interface Block {
   readonly lines: string[];
 }
 
-const flag = (name: Value): number => {
-  const bit = FLAGS[name.asText() as keyof typeof FLAGS];
+const flag = (name: string): number => {
+  const bit = FLAGS[name as keyof typeof FLAGS];
   if (bit === undefined) {
     throw new Error(`unknown flag ${name.toString()}`);
   }
   return bit;
 };
 
-const whole = (value: Value): number => Number(value.asDecimal()!.toBigInt());
+const whole = (value: Decimal): number => Number(value.toBigInt());
 
 const message = (event: WorldEvent): { args: Value[]; name: string } => {
   switch (event.kind) {
@@ -339,7 +340,7 @@ export class TalkHost {
   }
 
   private defineCapabilities() {
-    const world = this.core.defineCapability<void>('world', {
+    const world = this.core.defineCapability('world', {
       advertIntact: {
         cost: { fuel: 1 },
         description: "Whether the author's advert on block 50 still stands.",
@@ -363,7 +364,7 @@ export class TalkHost {
         args: [shape.text],
         cost: { fuel: 1 },
         do: (_call, item) =>
-          bool(this.benson.host.inventory.has(objectSlot(item.asText()!))),
+          bool(this.benson.host.inventory.has(objectSlot(item))),
         mode: 'immediate',
         result: shape.bool
       },
@@ -446,7 +447,7 @@ export class TalkHost {
       }
     });
 
-    const display = this.core.defineCapability<void>('display', {
+    const display = this.core.defineCapability('display', {
       prompt: {
         args: [shape.text],
         cost: { fuel: 1 },
@@ -457,7 +458,7 @@ export class TalkHost {
           this.enqueue({
             call,
             claim: { run: call.runId, script: call.scriptName },
-            lines: [line.asText()!]
+            lines: [line]
           });
         }
       },
@@ -470,9 +471,9 @@ export class TalkHost {
         start: (call, lines) => {
           this.enqueue({
             call,
-            // Lists count from 1.
-            lines: Array.from({ length: lines.length }, (_, i) =>
-              lines.index(i + 1).asText()!
+            // NorthTalk lists count from 1.
+            lines: Array.from({ length: lines.length }, (_, at) =>
+              lines.index(at + 1).asText()!
             )
           });
         }
@@ -484,17 +485,17 @@ export class TalkHost {
           'Queues a message for the Benson Display; answers once it has played.',
         mode: 'suspending',
         start: (call, line) => {
-          this.enqueue({ call, lines: [line.asText()!] });
+          this.enqueue({ call, lines: [line] });
         }
       }
     });
 
-    const sound = this.core.defineCapability<void>('sound', {
+    const sound = this.core.defineCapability('sound', {
       silence: {
         args: [shape.text],
         cost: { fuel: 1 },
         fire: (_call, voice) => {
-          this.silenced.push(voice.asText()!);
+          this.silenced.push(voice);
         },
         mode: 'fire-and-forget'
       }

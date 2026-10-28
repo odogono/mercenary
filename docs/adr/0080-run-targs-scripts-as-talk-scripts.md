@@ -4,7 +4,7 @@ Accepted, 2026-10-18. Targ's game logic moves from Benson Scripts to **Talk Scri
 
 ## Decision
 
-**Runtime.** `@northtalk/ts` becomes an exact-pinned runtime dependency of `web/`, upgraded deliberately in its own commit. Targ uses the TS Core. A save restores only into the Core family that made it, so this is also a save-format choice: moving to the WASM Core would need a save migration.
+**Runtime.** `@northtalk/ts` is a runtime dependency of `web/`. As of 2026-10-28 it uses the requested `^0.3.0` range, superseding the original exact-pin policy; `bun.lock` records the tested resolution, and upgrades remain deliberate. Targ uses the TS Core. A save restores only into the Core family that made it, so this is also a save-format choice: moving to the WASM Core would need a save migration.
 
 **World Events.** The Gameplay Session emits World Events itself: `entered room`, `boarded craft`, `left craft`, `took object`, `dropped object`, `destroyed site by faction`, `site gratitude` and `ship hit`. The set grows only when a Talk Script needs more. Each event is broadcast to every Talk Script and narrowed by Guards. Subjects are named, not numbered, through one adapter table. A frame's events are delivered in order, after the frame and before the pump. The `world` Capability offers immediate queries and commands, and no Talk Script waits by polling. A Room or object that only shows a message keeps it in the engine's data. Every Talk Script is loaded at Gameplay Session start and lives as long as the session.
 
@@ -24,6 +24,7 @@ The schema-14 Save wire layout stays compatible: its old continuation fields are
 - A Talk Script's revision is its `codeIdentity`, a Library's change counting against every script that uses it. Identities stay out of `SavePayloadIdentity`, whose exact match would refuse every save after any script edit.
 - On restore, a Talk Script whose identity differs is reloaded from the current source with its Script Variables carried over (`reload … 'carry variables'`). Its in-flight Runs end; unchanged scripts keep theirs. A script no longer in the build is dropped, and a new one loads fresh.
 - Display calls left pending are reissued: a line, report or prompt plays again from its start, and a prompt takes the input again. The key latch is not saved.
+- Schema 15, introduced with NorthTalk 0.3.0, uses its format-10 snapshots. NorthTalk no longer reads the format-9 snapshots in schema-14 Saves: those Saves retain their game state but discard the Talk Script part, including Script Variables, pending Runs and input claims. Talk Scripts load fresh without `begin`. Current schema-15 Saves retain the continuation policy above.
 - A schema-13 Save is migrated, not refused. Its Talk Scripts load fresh, with no `begin`, and a saved Benson Script that has since been ported is stopped.
 
 **Authoring rules.**

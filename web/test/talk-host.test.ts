@@ -532,6 +532,34 @@ end begin
     expect(shown(ported)).toEqual(['one Q']);
   });
 
+  test('schema 14 keeps the game state and loads Talk Scripts fresh without begin', () => {
+    const session = prompts();
+    session.begin();
+    afterLine(session, 'FIRST?');
+    const current = envelope(session);
+    expect(current.snapshot.talk!.claims).not.toEqual([]);
+    const migrated = decodeSave(
+      JSON.stringify({ ...current, schemaVersion: 14 }),
+      environment
+    );
+    expect(migrated.schemaVersion).toBe(SAVE_SCHEMA_VERSION);
+    expect(migrated.snapshot).toEqual({ ...current.snapshot, talk: null });
+
+    const restored = GameplaySession.restore(
+      content,
+      benson(),
+      migrated.snapshot,
+      {
+        scripts: [...promptScripts, listener('fresh')]
+      }
+    );
+    expect(restored.talk!.claims).toEqual([]);
+    restored.input('KeyQ');
+    afterLine(restored, 'fresh Q');
+    expect(shown(restored)).toEqual(['fresh Q']);
+    expect(failures(restored)).toEqual([]);
+  });
+
   test('bounds the Talk Script save on its own, and refuses one not in base64', () => {
     const save = envelope(withScripts([listener('one')]));
     const withGroup = (group: string): SaveEnvelope => ({

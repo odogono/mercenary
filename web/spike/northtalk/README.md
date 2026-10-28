@@ -1,6 +1,6 @@
 # NorthTalk spike: Targ Talk Scripts
 
-Throwaway. Rewrites Benson Scripts 0, 7, 13, 34 and 35 as Talk Scripts and runs them in a real Gameplay Session on NorthTalk (`@northtalk/ts`, pinned exactly in `web/package.json`), beside Benson running the Benson Scripts they don't replace. Findings and the recommendation are in [the report](../../../docs/research/targ-talk-scripts.md).
+Throwaway. Rewrites Benson Scripts 0, 7, 13, 34 and 35 as Talk Scripts and runs them in a real Gameplay Session on NorthTalk (`@northtalk/ts`, resolved in `web/bun.lock`), beside Benson running the Benson Scripts they don't replace. Findings and the recommendation are in [the report](../../../docs/research/targ-talk-scripts.md).
 
 NorthTalk is a devDependency: only this spike imports it, and nothing under `web/src` does until an ADR accepts Talk Scripts.
 
