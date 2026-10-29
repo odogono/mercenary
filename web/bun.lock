@@ -5,7 +5,7 @@
     "": {
       "name": "mercenary-web",
       "dependencies": {
-        "@northtalk/ts": "^0.3.0",
+        "@northtalk/ts": "^0.4.0",
       },
       "devDependencies": {
         "@ianvs/prettier-plugin-sort-imports": "^4.7.1",
@@ -102,7 +102,7 @@
 
     "@nkzw/eslint-plugin": ["@nkzw/eslint-plugin@2.0.0", "", { "peerDependencies": { "eslint": ">= 9" } }, "sha512-IoU8kOqHfnf7se2dGxMD/7RPm6WVjzjOjWSo7FulRx3lJzuZvXioSkT5Nd82l66DH3Pl2whw74lPT1di3KMwFA=="],
 
-    "@northtalk/ts": ["@northtalk/ts@0.3.0", "", {}, "sha512-gZJq0dZZ4aNMKlhsJPlOqUJkrzKny0MIabTPXA14JGFqTS71DMWlojt0Toug+YRnKlUPY8BdLphVEQsZU9Lsmw=="],
+    "@northtalk/ts": ["@northtalk/ts@0.4.0", "", {}, "sha512-a7g7qbnRuWz6CqhSyKx/Zpbl1p9iecprw75pk4PWwBKIdU6iH4zoi5VDF1lEDAw7IVfWtgyp7q5Ahrru3zs2gg=="],
 
     "@oxc-parser/binding-android-arm-eabi": ["@oxc-parser/binding-android-arm-eabi@0.143.0", "", { "os": "android", "cpu": "arm" }, "sha512-n9uozULWflPqBtdmI8lAabLqGKNgLVNN0ZH8HfgCwpKGNtzRzauB76jTiW/3YLkcA7N1zskpi9GdVnZuu1SAvg=="],
 

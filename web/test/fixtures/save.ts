@@ -1,3 +1,5 @@
+import { createCore } from '@northtalk/ts';
+
 import type { SessionContent } from '../../src/session/index.ts';
 import type { SaveEnvironment, SaveSnapshot } from '../../src/session/save.ts';
 
@@ -44,9 +46,16 @@ export const emptyContent = (): SessionContent => ({
   underground: undefined
 });
 
-/// A snapshot without the NorthTalk save's own bytes, which number each save
-/// the Group writes and so never repeat (ADR 0080).
+/// A snapshot whose NorthTalk save is replaced by its State Fingerprint (ADR 0142). Each save's
+/// bytes carry the Group's save counter and so never repeat (ADR 0080); the fingerprint leaves
+/// out only that counter, so two snapshots of one Talk state compare equal and any other
+/// difference in Talk Script state still fails the comparison.
 export const comparable = (snapshot: SaveSnapshot): SaveSnapshot => ({
   ...snapshot,
-  talk: snapshot.talk && { ...snapshot.talk, group: '' }
+  talk: snapshot.talk && {
+    ...snapshot.talk,
+    group: Buffer.from(
+      createCore().stateFingerprint(Buffer.from(snapshot.talk.group, 'base64'))
+    ).toString('hex')
+  }
 });
