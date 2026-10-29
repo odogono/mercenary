@@ -433,6 +433,33 @@ end begin
     expect(restored.talk!.claims).toEqual([]);
   });
 
+  test('restores a Save that carries its Talk Scripts’ sources', () => {
+    const waiter = script(
+      'waiter',
+      `use show from benson
+on begin
+  wait 10 s
+  show "WAITED" and wait
+end begin
+`
+    );
+    const session = withScripts([waiter]);
+    session.begin();
+    const snapshot = session.captureSaveSnapshot();
+    // Saves written before the sources were left out embed them.
+    const embedded = Buffer.from(session.talk!['group'].save()).toString(
+      'base64'
+    );
+    const restored = GameplaySession.restore(
+      content,
+      benson(),
+      { ...snapshot, talk: { ...snapshot.talk!, group: embedded } },
+      { scripts: [waiter] }
+    );
+    afterLine(restored, 'WAITED');
+    expect(shown(restored)).toEqual(['WAITED']);
+  });
+
   test('reloads an edited Talk Script with its Script Variables, ending its Runs', () => {
     const counter = (says: string): TalkScript =>
       script(
