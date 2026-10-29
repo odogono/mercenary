@@ -24,9 +24,9 @@ import {
   type Call,
   type Decimal,
   type Grant,
-  type Group,
   type Library,
   type Report,
+  type TsGroup,
   type Value
 } from '@northtalk/ts';
 
@@ -171,7 +171,7 @@ export class TalkHost {
   /// Sound a Talk Script made since the session last took it.
   private effects: BensonEffect[] = [];
   private readonly grants: Readonly<Record<string, Grant<void>>>;
-  private readonly group: Group;
+  private readonly group: TsGroup;
   /// Each Talk Script's `codeIdentity`, the Library's counted in, by name.
   private readonly identities: ReadonlyMap<string, string>;
   private readonly library: Library;
@@ -235,7 +235,9 @@ export class TalkHost {
   captureSaveSnapshot(): TalkSaveSnapshot {
     return {
       claims: this.claims.map(claim => ({ ...claim })),
-      group: toBase64(this.group.save()),
+      // The build carries every Talk Script's source, so the Save leaves it
+      // out and restore asks for it back.
+      group: toBase64(this.group.save({ sources: 'external' })),
       library: LIBRARY_IDENTITY,
       now: this.now,
       scripts: [...this.identities]
@@ -245,7 +247,7 @@ export class TalkHost {
   private newGroup(
     core: ReturnType<typeof createCore>,
     scripts: readonly TalkScript[]
-  ): Group {
+  ): TsGroup {
     const group = core.newGroup({ name: 'targ' });
     group.addLibrary(this.library);
     for (const script of scripts) {
@@ -254,7 +256,7 @@ export class TalkHost {
     return group;
   }
 
-  private load(group: Group, script: TalkScript): void {
+  private load(group: TsGroup, script: TalkScript): void {
     group.load({
       grants: this.grants,
       limits: { maxWaitMs: LONGEST_WAIT_MS },
@@ -274,15 +276,20 @@ export class TalkHost {
     core: ReturnType<typeof createCore>,
     scripts: readonly TalkScript[],
     saved: TalkSaveSnapshot
-  ): Group | undefined {
+  ): TsGroup | undefined {
     let restored: ReturnType<typeof core.restore>;
     try {
       restored = core.restore(fromBase64(saved.group), {
         grants: (_script, name) => this.grants[name],
         libraries: [this.library],
         name: 'targ',
-        onMismatch: 'variables only',
-        resolve: () => undefined
+        onMismatch: 'reload changed',
+        resolve: () => undefined,
+        // This build's source: a Talk Script changed since the Save reloads
+        // with its Script Variables, and the rest restore as they were.
+        scriptSources: ({ name }) => ({
+          source: scripts.find(script => script.name === name)?.source ?? ''
+        })
       });
     } catch (error) {
       if (error instanceof LoadError) {
@@ -295,16 +302,11 @@ export class TalkHost {
     const ended = new Set(result.discardedRuns);
     this.claims = saved.claims.filter(claim => !ended.has(claim.run));
     this.record(result.reports);
-    const was = new Map(saved.scripts);
-    const current = new Map(scripts.map(script => [script.name, script]));
-    const reloaded = new Set<string>();
+    const current = new Set(scripts.map(script => script.name));
+    const reloaded = new Set(result.reloaded);
     for (const name of group.scriptNames()) {
-      const script = current.get(name);
-      if (script === undefined) {
+      if (!current.has(name)) {
         this.record(group.reload(name, '', 'reset variables'));
-        reloaded.add(name);
-      } else if (was.get(name) !== this.identities.get(name)) {
-        this.record(group.reload(name, script.source, 'carry variables'));
         reloaded.add(name);
       }
     }
