@@ -50,7 +50,7 @@ No TypeScript engine code in `web/src` reads or writes any of the five story bit
 | --- | --- |
 | `gratitudeGiven` | **Move** into reactions.talk as `script variable gratitudeGiven`. Single script, no engine reader. Script Variable writes are immediate within a Run, so the lock is kept. |
 | `advertDestroyed` | **Move** into reactions.talk, or **drop**. It has no reader. Keeping it as a Script Variable preserves the fact for a future reader at no cost. |
-| `shipHired` | **Move** into commerce.talk; escape.talk needs the answer from another script. See open question 1. |
+| `shipHired` | **Move** into commerce.talk; escape.talk gets it from commerce with `send`. See open question 1. |
 | `dartBought` | **Move** into commerce.talk, the reader; the opening has to tell commerce. Moving it into the opening would leave commerce asking. See open question 1. |
 | `commanderAnnoyed` | **Move** last, into escape.talk (the one reader) or a story script, after the cross-script mechanism is proven on the two-script flags. Three writers in two scripts. |
 | 64, 128 | **Keep as-is** in the engine: display arbitration and the oracle's comparison adapter. |
@@ -130,7 +130,7 @@ Each batch is one PR. They share three needs.
 
 1. **Reactions' own flags: `gratitudeGiven` and `advertDestroyed`.** Single script, no engine reader. Proves the lazy seed and the restore test. Tests: reactions-talk.test.ts:302 (seeds gratitude through `engineFlags`), site-destruction.test.ts:240.
 2. **The delivered mark (object bit 1) into deliveries.talk.** A Script Variable list of delivered item names. Split `deliver` into the engine's fixing (bit 16 stays) and the script's record. The lazy seed reads the old bit per item (`takeLegacyDelivered item`). Tests: deliveries-talk.test.ts, deliveries.test.ts; Observations `objectFlags.<slot>` lose bit 1.
-3. **A cross-script query, then `shipHired`.** First settle how one Talk Script asks another (open question 1). Then move `shipHired` into commerce.talk and have escape.talk ask commerce. Tests: escape.test.ts (seeds `HIRED` through `engineFlags` in several places), hire.test.ts, commerce-talk.test.ts.
+3. **`shipHired`, sent between scripts.** Move `shipHired` into commerce.talk, and have commerce and escape.talk exchange it with `send` (open question 1). Tests: escape.test.ts (seeds `HIRED` through `engineFlags` in several places), hire.test.ts, commerce-talk.test.ts.
 4. **`dartBought`.** Into commerce.talk; the opening tells commerce on purchase by the same mechanism. Tests: opening.test.ts:135, commerce-talk.test.ts (`setEngineFlags`, 74–79).
 5. **`commanderAnnoyed`.** Owner chosen by open question 2. Three writers tell the owner; escape.talk reads it. Tests: escape.test.ts:594, escape-talk.test.ts:143, opening.test.ts:143–153, commerce-talk.test.ts.
 6. **Optional: the Dart's first boarding (object bit 4 on slot 1).** Replace `armed "dart"`/`disarm "dart"` with a commerce variable. Keep the payload bit for the engine's description selector.
@@ -139,7 +139,7 @@ After batch 5, `engineFlags` holds only the vestigial bits 64 and 128. A follow-
 
 ## Open questions
 
-1. **How does one Talk Script ask or tell another?** Scripts today hear only host Broadcasts (`group.broadcast`, host.ts:334–378) and talk to the world. NorthTalk has `send(to, message, args, reply)` in its engine declarations, but whether a Talk Script can address another Script in the Group, and whether a reply can be awaited, is **unverified**. The alternatives are a host-mediated query (the host reads the owner's variable: needs a read API, also unverified), or merging coupled scripts. If none works, the cross-script flags stay as named engine flags and only batches 1–2 go ahead.
+1. **How should scripts exchange a fact with `send`?** Talk Scripts message each other with `send`, not `ask` or `tell`, which address Capabilities such as `world`. Scripts today hear only host Broadcasts (`group.broadcast`, host.ts:334–378), so nothing uses `send` yet. Still to settle: does the reader send a request and wait for a message back, or does the owner send the fact to its readers whenever it changes? The second keeps a copy in each reader, and that copy needs seeding after a restore.
 2. **Who owns `commanderAnnoyed`?** The Escape, its only reader, or a dedicated story script that owns every cross-script fact (`dartBought`, `shipHired` and it)? A story script makes the batches 3–5 one mechanism, but it is a script with no behaviour of its own.
 3. **The lab comparison.** Observations report `engineFlags` and `objectFlags.<slot>` for comparison with the C64 emulator (`c64lab/benson.py`). Should moved bits be projected back into the observation from the variables, or masked out on both sides? Projection needs a host read of Script Variables.
 4. **Retiring the legacy seed.** Is the `takeLegacyFlag` query permanent, or does a later schema refuse Saves older than the move? ADR 0026/0030 favour migrating over refusing.
