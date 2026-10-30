@@ -6,11 +6,11 @@ import { LegalRoute } from './legalCheckpoint.ts';
 /// economy tests that lean on it are standing on a route rather than on setup.
 describe('a route walked through the real world', () => {
   test('buys the Dart, walks to it and boards it', async () => {
-    const route = await LegalRoute.open({ script: 0 });
+    const route = await LegalRoute.open({ opening: true });
     route.observe('crash-site');
 
-    // The opening poll wants Y inside its five-second window.
-    route.advance(76);
+    // The opening offer wants Y once it has asked.
+    route.waitForMessage('DO YOU WANT TO BUY?', 120);
     route.run({ command: { key: 'y', kind: 'press' }, kind: 'command' });
     route.advance(4);
     route.observe('bought');

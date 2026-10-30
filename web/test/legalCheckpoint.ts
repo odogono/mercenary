@@ -1,5 +1,6 @@
 import { join } from 'node:path';
 
+import { BensonChannel, type BensonPort } from '../src/benson/channel.ts';
 import {
   REFERENCE_WALKING_EYE_ALTITUDE,
   intent
@@ -12,7 +13,13 @@ import {
   sessionContent
 } from '../src/session/index.ts';
 import type { SemanticObservations } from '../src/session/observations.ts';
-import { flightModel, loadSettings } from '../src/settings/index.ts';
+import {
+  bensonPacing,
+  flightModel,
+  loadSettings
+} from '../src/settings/index.ts';
+import type { TalkScript } from '../src/talk/host.ts';
+import { TALK_SCRIPTS } from '../src/talk/scripts.ts';
 import { TextTable } from '../src/text/index.ts';
 import type { TraceValue } from '../src/trace/index.ts';
 import {
@@ -51,9 +58,14 @@ export interface LegalRun {
 const STEP = 1 / 50;
 
 export class LegalRoute {
+  /// A fresh route wired as live play is: the Benson Display and the Talk
+  /// Scripts, all of them unless named. `engine: 'benson'` plays the original
+  /// Benson Scripts on the test oracle instead, for the parity tests alone.
   static async open(options?: {
-    readonly script?: number;
-    readonly timeScale?: number;
+    readonly engine?: 'benson' | 'talk';
+    /// Whether the new game begins, as live play does, and plays the opening.
+    readonly opening?: boolean;
+    readonly talk?: readonly TalkScript[];
   }): Promise<LegalRoute> {
     const bundle = await loadPayload();
     const settings = loadSettings(
@@ -67,16 +79,19 @@ export class LegalRoute {
     ) {
       throw new Error('the Data Payload is incomplete');
     }
-    const program = BensonProgram.fromDocument(bundle.benson);
-    const tunables = bensonTunables(settings, program.framesPerTick);
-    const scripts = new BensonSession(
-      program,
-      new TextTable(bundle.text),
-      options?.timeScale === undefined
-        ? tunables
-        : { ...tunables, timeScale: options.timeScale },
-      DEFAULT_SESSION_SEED
-    );
+    const text = new TextTable(bundle.text);
+    let scripts: BensonPort;
+    if (options?.engine === 'benson') {
+      const program = BensonProgram.fromDocument(bundle.benson);
+      scripts = new BensonSession(
+        program,
+        text,
+        bensonTunables(settings, program.framesPerTick),
+        DEFAULT_SESSION_SEED
+      );
+    } else {
+      scripts = new BensonChannel(text, bensonPacing(settings));
+    }
     const session = new GameplaySession(
       sessionContent(
         world,
@@ -87,8 +102,11 @@ export class LegalRoute {
       scripts,
       DEFAULT_SESSION_SEED
     );
-    if (options?.script !== undefined && !session.start(options.script)) {
-      throw new Error(`script ${options.script} would not start`);
+    if (options?.engine !== 'benson') {
+      session.useTalkScripts(options?.talk ?? TALK_SCRIPTS);
+      if (options?.opening === true) {
+        session.begin();
+      }
     }
     return new LegalRoute(session);
   }
@@ -133,6 +151,9 @@ export class LegalRoute {
         applySessionTraceCommand(this.session, this.encode(leg.command));
         if (leg.command.kind === 'rideLift') {
           this.advance(7);
+          this.advance(STEP);
+        } else if (leg.command.kind === 'leaveCraft') {
+          // A frame on foot, as a player has, so boarding again is heard.
           this.advance(STEP);
         }
         break;
@@ -355,14 +376,19 @@ export class LegalRoute {
     );
   }
 
-  /// Advances until no script is running.
+  /// Advances until no script is running and the Talk Scripts are quiet.
   ///
   /// A Room's entry script will not start while another is still going, so
   /// anything that walks out of one Room and into the next has to let the first
   /// one finish -- exactly as a player would by standing there reading.
   settle(maxSeconds = 240): this {
+    // At least one step, so the World Events of whatever led here are heard.
+    this.advance(STEP);
     for (let left = maxSeconds; left > 0; left -= 0.5) {
-      if (this.session.observations().observations['scriptPc'] === -1) {
+      if (
+        this.session.observations().observations['scriptPc'] === -1 &&
+        (this.session.talk?.isQuiet ?? true)
+      ) {
         return this;
       }
       this.advance(0.5);

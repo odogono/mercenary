@@ -1,15 +1,13 @@
 import { describe, expect, test } from 'bun:test';
 
-import { BensonHostState } from '../src/benson/index.ts';
 import { GameplaySession } from '../src/session/index.ts';
 import { room } from '../src/world/index.ts';
 import { LegalRoute } from './legalCheckpoint.ts';
 
-const CREDITS = BensonHostState.firstNumberDecimal;
 const SHIP = 7;
 const SURFACE = 0;
 
-/// Hires the ship for real, through script 2, and stops in the step it sets
+/// Hires the ship for real, through the commerce Talk Script, and stops in the step it sets
 /// off (ADR 0083: a hired ship starts down at once, in seconds).
 const justHired = async (): Promise<LegalRoute> => {
   const route = await LegalRoute.open();
@@ -20,7 +18,8 @@ const justHired = async (): Promise<LegalRoute> => {
   route.run({ command: { key: 'y', kind: 'press' }, kind: 'command' });
   for (let step = 0; step < 6000; step++) {
     route.advance(1 / 100);
-    if (route.session.observations().observations['shipInbound'] !== 0) {
+    // Accepted (255) the step the hire lands; descending (127) from the next.
+    if (route.session.observations().observations['shipInbound'] === 127) {
       return route;
     }
   }

@@ -39,7 +39,7 @@ const fresh = async (
   engine: Engine,
   scripts = talkScript(REACTIONS, ESCAPE)
 ): Promise<LegalRoute> => {
-  const base = await LegalRoute.open();
+  const base = await LegalRoute.open({ engine: 'benson' });
   const content = { ...base.session.content };
   delete content.hostile;
   const session = new GameplaySession(

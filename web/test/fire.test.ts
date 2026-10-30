@@ -21,8 +21,8 @@ const expectSamePlace = (a: Residence, b: Residence): void => {
 /// Buys the Dart and boards it, which is the only legal way to be somewhere
 /// firing is allowed at all.
 const aboardTheDart = async (): Promise<LegalRoute> => {
-  const route = await LegalRoute.open({ script: 0 });
-  route.advance(74);
+  const route = await LegalRoute.open({ opening: true });
+  route.waitForMessage('DO YOU WANT TO BUY?', 120);
   route.run({ command: { key: 'y', kind: 'press' }, kind: 'command' });
   route.advance(4);
   route.run({ action: 'board', kind: 'reach', slot: 1 }, 240);
@@ -34,7 +34,7 @@ const shotLifecycle = (route: LegalRoute): number =>
 
 describe('firing from a craft', () => {
   test('is refused on foot, and leaves nothing behind', async () => {
-    const route = await LegalRoute.open({ script: 0 });
+    const route = await LegalRoute.open({ opening: true });
     const before = route.session.observations().observations;
 
     expect(route.session.fire().outcome).toEqual({ kind: 'onFootRefused' });
