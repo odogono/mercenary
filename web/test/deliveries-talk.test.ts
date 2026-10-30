@@ -1,6 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 
-import { GameplaySession } from '../src/session/index.ts';
+import {
+  GameplaySession,
+  comparableObservations
+} from '../src/session/index.ts';
 import { DELIVERIES } from '../src/talk/scripts.ts';
 import { room } from '../src/world/index.ts';
 import { LegalRoute } from './legalCheckpoint.ts';
@@ -44,7 +47,6 @@ const NEUTRON_FUEL = 29;
 /// A Room with nothing to say, to leave a delivery Room for.
 const ELSEWHERE = 1;
 /// The object flag Benson marks a paid-for object with.
-const PAID = 1;
 
 interface Outcome {
   readonly credits: number;
@@ -54,11 +56,13 @@ interface Outcome {
 }
 
 const outcome = (lines: Lines, slot: number): Outcome => {
-  const observed = lines.route.session.observations().observations;
+  const observed = comparableObservations(
+    lines.route.session.observations().observations
+  );
   return {
     credits: observed['credits'] as number,
-    // The paid-for mark is the Talk Script's own now, so only Benson sets it.
-    flags: (observed[`objectFlags.${slot}`] as number) & ~PAID,
+    // Only Benson sets the paid-for mark the Talk Script keeps itself.
+    flags: observed[`objectFlags.${slot}`] as number,
     lies: observed[`objectRoom.${slot}`] as number,
     lines: lines.lines
   };

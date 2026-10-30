@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 
-import { GameplaySession, type WorldEvent } from '../src/session/index.ts';
+import {
+  GameplaySession,
+  TALK_KEPT_ENGINE_FLAGS,
+  type WorldEvent
+} from '../src/session/index.ts';
 import type { Faction } from '../src/session/sites.ts';
 import { ESCAPE, REACTIONS } from '../src/talk/scripts.ts';
 import { LegalRoute } from './legalCheckpoint.ts';
@@ -22,8 +26,6 @@ const bundle = await loadPayload();
 const rules = bundle.endgame.combat.siteDestruction;
 const CREDITS = BensonHostState.firstNumberDecimal;
 const GRATITUDE = 2;
-const ADVERT_DESTROYED = 8;
-const COMMANDER_ANNOYED = 32;
 const PASS = 46;
 const CELL = 0x1_00_00;
 const FRAME = 1 / 20;
@@ -85,12 +87,8 @@ const outcome = (lines: Lines) => {
   return {
     attacking: host.attackingShip,
     credits: host.decimal(CREDITS),
-    // Gratitude, the advert's destruction and the commander's annoyance are
-    // Talk Scripts' own now, so only Benson sets their engine flags.
-    flags:
-      host.engineFlags &
-      ~0xc0 &
-      ~(GRATITUDE | ADVERT_DESTROYED | COMMANDER_ANNOYED),
+    // Only Benson sets the story flags the Talk Scripts keep themselves.
+    flags: host.engineFlags & ~0xc0 & ~TALK_KEPT_ENGINE_FLAGS,
     lines: lines.lines,
     pass: session.residenceOf(PASS),
     passFlags: session.snapshot.objectFlags.get(PASS)

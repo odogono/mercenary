@@ -54,6 +54,33 @@ export interface ObservationSources {
   readonly scripts: BensonPort | undefined;
 }
 
+/// The engine flags the original keeps its story in, which Targ's Talk Scripts
+/// now keep as Script Variables instead (ADR 0080): bought the Dart (1),
+/// thanked (2), hired the ship (4), the advert destroyed (8) and the
+/// commander annoyed (32). Live play never changes them.
+export const TALK_KEPT_ENGINE_FLAGS = 1 | 2 | 4 | 8 | 32;
+
+/// The object flag the original marks an object paid for with, which the
+/// deliveries Talk Script now keeps itself.
+export const TALK_KEPT_OBJECT_FLAGS = 1;
+
+/// Observations with the Talk-kept bits cleared, to compare against a run of
+/// the original or the Benson oracle: those bits always differ, so the story
+/// is compared through what it shows instead.
+export const comparableObservations = (
+  observations: Readonly<Record<string, ObservationValue>>
+): Record<string, ObservationValue> =>
+  Object.fromEntries(
+    Object.entries(observations).map(([key, value]) => [
+      key,
+      key === 'engineFlags'
+        ? (value as number) & ~TALK_KEPT_ENGINE_FLAGS
+        : key.startsWith('objectFlags.')
+          ? (value as number) & ~TALK_KEPT_OBJECT_FLAGS
+          : value
+    ])
+  );
+
 const NO_SCRIPT_PC = -1;
 
 /// No installed mover reads as an absence rather than block zero, which is a

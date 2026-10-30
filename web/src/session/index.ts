@@ -104,6 +104,12 @@ import {
   type WorldSeen
 } from './worldEvents.ts';
 
+export {
+  comparableObservations,
+  TALK_KEPT_ENGINE_FLAGS,
+  TALK_KEPT_OBJECT_FLAGS
+} from './observations.ts';
+
 export type { WorldEvent } from './worldEvents.ts';
 
 /// The Gameplay Session: the one owner of a play session's Session State (ADR 0018).

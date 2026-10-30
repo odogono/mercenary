@@ -7,7 +7,11 @@ import type {
   EndgameDropRules,
   InteractionDocument
 } from '../src/payload/documents.ts';
-import { GameplaySession, type SessionContent } from '../src/session/index.ts';
+import {
+  GameplaySession,
+  comparableObservations,
+  type SessionContent
+} from '../src/session/index.ts';
 import {
   SEMANTIC_OBSERVATION_SCHEMA_VERSION,
   type ObservationValue
@@ -246,6 +250,24 @@ describe('the semantic observations a Gameplay Session answers with', () => {
   // for the Host Callout's own state.
   test('reaches the Session Snapshot only as a projected Ending', () => {
     expect(session().snapshot.ending).toEqual({ kind: 'activePlay' });
+  });
+});
+
+describe('comparable observations', () => {
+  test('clear only the story bits the Talk Scripts keep', () => {
+    expect(
+      comparableObservations({
+        credits: 9000,
+        engineFlags: 0xff,
+        'objectFlags.3': 0x1f,
+        'objectRoom.3': 1
+      })
+    ).toEqual({
+      credits: 9000,
+      engineFlags: 0xd0,
+      'objectFlags.3': 0x1e,
+      'objectRoom.3': 1
+    });
   });
 });
 
