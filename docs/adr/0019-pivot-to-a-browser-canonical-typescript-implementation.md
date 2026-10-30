@@ -66,7 +66,7 @@ Two consequences of ADR 0017 are worth making explicit, since this decision puts
 the canonical codebase inside a repository that is permanently private. Serving a
 built bundle is an application distribution and remains available under the
 existing qualified-review gate, so a public URL is not foreclosed; publishing the
-engine's *source* is a different act, and ADR 0017 forecloses it for this history.
+engine's _source_ is a different act, and ADR 0017 forecloses it for this history.
 The canonical implementation is therefore private source that may yield a public
 artifact — the same shape the Mac application already had, and the reason the
 provenance rule in the first paragraph is worth keeping even though nothing

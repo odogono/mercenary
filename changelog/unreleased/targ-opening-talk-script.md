@@ -3,6 +3,7 @@ type: feat
 scope: targ
 section: changed
 ---
+
 **Targ's opening is now a Talk Script.** Benson's crash report and the
 Dominion Dart sales pitch say the same lines in the same order. The pauses
 between them run on their own clock, and each offer gives the player five

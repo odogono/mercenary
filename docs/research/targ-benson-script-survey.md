@@ -182,18 +182,18 @@ Started when the Player Projectile hits `objectHits.targetSlots[1]`, slot 0. Hit
 
 ## The spike's drafts
 
-The [spike](../../web/spike/northtalk/scripts/) drafted three of these. Each reads as its script but differs from the code. Like the opening's draft, none of them plays Benson's blank lines (message 50), which the ported opening restored as `clear`.
+The [spike](https://github.com/odogono/mercenary/blob/187a09345fe535d9a9e7377d94150f20c4b6af9e/web/spike/northtalk/scripts/) drafted three of these. Each reads as its script but differs from the code. Like the opening's draft, none of them plays Benson's blank lines (message 50), which the ported opening restored as `clear`.
 
-- **[`escape.talk`](../../web/spike/northtalk/scripts/escape.talk)** (script 7):
+- **[`escape.talk`](https://github.com/odogono/mercenary/blob/187a09345fe535d9a9e7377d94150f20c4b6af9e/web/spike/northtalk/scripts/escape.talk)** (script 7):
   - Misses the five blank lines.
   - Misses the 1-tick pause before the checks.
   - Doesn't recheck the surface and the Novadrive after Y. Benson loops back and waits again; the draft escapes.
   - Corrects `YOU,VE` to `YOU'VE`. The opening port kept the original's `5OOO`.
   - Waits 15 s and 2 s, the Reference Build's clock. Today the player gets 2.5 s and 1/3 s at `scripts.timeScale` 6.
-- **[`briefing.talk`](../../web/spike/northtalk/scripts/briefing.talk)** (script 13):
+- **[`briefing.talk`](https://github.com/odogono/mercenary/blob/187a09345fe535d9a9e7377d94150f20c4b6af9e/web/spike/northtalk/scripts/briefing.talk)** (script 13):
   - Misses four blank lines and the 1-tick pause.
   - Otherwise matches, including the single Room check.
-- **[`reaction.talk`](../../web/spike/northtalk/scripts/reaction.talk)** (34 and 35):
+- **[`reaction.talk`](https://github.com/odogono/mercenary/blob/187a09345fe535d9a9e7377d94150f20c4b6af9e/web/spike/northtalk/scripts/reaction.talk)** (34 and 35):
   - Misses the blank line after the attack line.
   - Covers only low ids 2 and 3. The named Sites' reactions 36–50 aren't drafted.
   - The odds match.

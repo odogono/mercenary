@@ -15,7 +15,7 @@ An original game-logic program from the Reference Build's in-game interpreter, r
 _Avoid_: Game script, event code, AI logic, bytecode dump
 
 **Talk Script**:
-A game-logic program written by this project in NorthTalk, driving play through the Host Callout. It is maintained source rather than a re-extraction: a Talk Script may replace a Benson Script's role without reproducing its behaviour, and the Benson Script remains the reference it was written against.
+A game-logic program written by this project in NorthTalk, driving play through the World Port. It is maintained source rather than a re-extraction: a Talk Script may replace a Benson Script's role without reproducing its behaviour, and the Benson Script remains the reference it was written against.
 _Avoid_: NorthTalk script, Benson Script (for a rewrite), mod
 
 **World Event**:
@@ -51,7 +51,7 @@ One of the two movement routines the Reference Build has, selected by Occupancy:
 _Avoid_: Movement system, physics, character controller, integrator
 
 **Gameplay Session**:
-The single owner of one play session's Session State, through which every change to it passes; it presents the Host Callout's view of that state rather than keeping a second copy, and hands out a Session Snapshot for anything that draws.
+The single owner of one play session's Session State, through which every change to it passes; it implements the World Port on that state rather than keeping a second copy, and hands out a Session Snapshot for anything that draws.
 _Avoid_: Game manager, world state, controller, store
 
 **Location**:
@@ -147,7 +147,7 @@ The state in which the world is mirrored left for right, entered and left by arr
 _Avoid_: Inverted, reversed room, mirror mode
 
 **Host Callout**:
-The explicit seam through which a Benson Script reaches the engine, comprising the named engine state it may read and write and the effects it may ask the host to perform; it is the only path between game logic and the rest of the app, and the boundary an eventual scripting layer replaces.
+The explicit seam through which a Benson Script reaches the engine, comprising the named engine state it may read and write and the effects it may ask the host to perform. Live play no longer has one: Talk Scripts use the World Port, and only the test oracle keeps a Host Callout, for its interpreter tests (#924).
 _Avoid_: Script API, engine hooks, bridge
 
 **World Port**:

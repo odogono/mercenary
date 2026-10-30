@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 
-import { BensonHostState } from '../src/benson/index.ts';
 import { room } from '../src/world/index.ts';
 import { LegalRoute } from './legalCheckpoint.ts';
+import { BensonHostState } from './oracle/host.ts';
 
 const CREDITS = BensonHostState.firstNumberDecimal;
 

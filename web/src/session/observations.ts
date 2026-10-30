@@ -1,5 +1,4 @@
 import type { BensonPort } from '../benson/channel.ts';
-import { BensonHostState } from '../benson/host.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import { hostRoom, type Location, type Residence } from '../world/index.ts';
 import type { Occupancy } from './index.ts';
@@ -87,6 +86,9 @@ export const comparableObservations = (
 
 const NO_SCRIPT_PC = -1;
 
+/// The original's occupancy byte on foot. Slot 0 is a real ship.
+const ON_FOOT = 0x80;
+
 /// No installed mover reads as an absence rather than block zero, which is a
 /// real block a craft can fly on.
 const NO_MOVER = -1;
@@ -111,8 +113,6 @@ const bySlot = (slots: Iterable<number>): number[] =>
 export const observationsOf = (
   sources: ObservationSources
 ): SemanticObservations => {
-  const host = sources.scripts?.host;
-  const state = sources.scripts?.reference?.state;
   const observations: Record<string, ObservationValue> = {
     attackingShip: sources.attackingShip,
     carriedStack: sources.carriedStack.join(','),
@@ -120,22 +120,22 @@ export const observationsOf = (
     credits: sources.credits,
     destroyedCells: asCellList(sources.combat?.destroyedCells ?? []),
     endingPhase: sources.endingPhase,
-    engineFlags: host?.engineFlags ?? 0,
+    // Talk Scripts keep the original's story flags themselves (ADR 0080).
+    engineFlags: 0,
     mechanoidDestroyed: sources.combat?.mechanoidDestroyed ?? 0,
-    messagePlaying: host?.messagePlaying ?? false,
+    messagePlaying: sources.scripts?.messagePlaying ?? false,
     messageText: sources.scripts?.messageText ?? '',
     mover: sources.combat?.mover ?? NO_MOVER,
     occupancy:
-      sources.occupancy.kind === 'onFoot'
-        ? BensonHostState.onFoot
-        : sources.occupancy.slot,
+      sources.occupancy.kind === 'onFoot' ? ON_FOOT : sources.occupancy.slot,
     palyarDestroyed: sources.combat?.palyarDestroyed ?? 0,
     playerX: Math.trunc(sources.position.x),
     playerY: Math.trunc(sources.position.y),
     playerZ: Math.trunc(sources.position.z),
     room: sources.location.kind === 'room' ? sources.location.id : 0,
-    scriptPc: state?.pc ?? NO_SCRIPT_PC,
-    scriptStack: (state?.callStack ?? []).join(','),
+    // No Benson Script runs (ADR 0080).
+    scriptPc: NO_SCRIPT_PC,
+    scriptStack: '',
     shipInbound: sources.shipInbound
   };
   for (const slot of OBSERVED_EFFECT_SLOTS) {

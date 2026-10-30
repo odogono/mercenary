@@ -18,7 +18,7 @@ Nothing here is Session State, and nothing here is a build. The Browser Shell's 
 
 _(Status note, 2026-10-01: ADR 0063 partitions preferences and typeface per Title too, revising "Preferences and typeface stay global" above; each Title reads the shared record it used before until it writes its own.)_
 
-_(Status note, 2026-10-01: #647 activates `/dion` for _The Dion Crisis_ under the D1 review (#638). It starts the METIS opening of the taxi slice as a sibling Gameplay Session, loads only `payload/dion/` and its own authored document, and keeps Mercenary III Saves and Session Resume under their own `mercenary.browser-shell.dion.*` keys. Restore-complete persistence follows in #648. The carousel does not offer it yet.)_
+_(Status note, 2026-10-01: #647 activates `/dion` for *The Dion Crisis* under the D1 review (#638). It starts the METIS opening of the taxi slice as a sibling Gameplay Session, loads only `payload/dion/` and its own authored document, and keeps Mercenary III Saves and Session Resume under their own `mercenary.browser-shell.dion.*` keys. Restore-complete persistence follows in #648. The carousel does not offer it yet.)_
 
 _(Status note, 2026-09-11: ADR 0043 activates `/damocles` as the first Title path that starts a game, with Damocles's own Session Resume record and per-Title payload loading. `/targ` becomes an alias of the existing gameplay document; Targ keeps its current storage keys until it adopts the Title seam.)_
 

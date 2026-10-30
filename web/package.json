@@ -56,7 +56,6 @@
       "e2e/damocles-fixture.ts",
       "e2e/*.e2e.ts",
       "test/**/*.test.ts",
-      "spike/northtalk/trace-diff.ts",
       "src/dion/soundWorklet.ts",
       "e2e/dion-fixture.ts",
       "e2e/rendering-fixture.ts",

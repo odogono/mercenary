@@ -65,7 +65,7 @@ const advance = (session: GameplaySession, seconds: number): void => {
 const afterLine = (session: GameplaySession, line: string): void => {
   advanceUntil(
     session,
-    () => shown(session).includes(line) && !session.scripts!.host.messagePlaying
+    () => shown(session).includes(line) && !session.scripts!.messagePlaying
   );
 };
 
@@ -170,7 +170,6 @@ describe('the opening', () => {
     atOffer(session);
     session.input('KeyY');
     afterLine(session, 'TRANSACTION COMPLETED');
-    expect(session.scripts!.host.isScriptRunning).toBe(false);
     // Benson Script 0 would have held Benson until the player boarded the
     // Dart, refusing the briefing.
     session.teleport(room(BRIEFING));
@@ -183,7 +182,7 @@ describe('the opening', () => {
       session,
       () =>
         session.scripts!.activeMessageText === milestones.crashImminent &&
-        session.scripts!.host.messagePlaying
+        session.scripts!.messagePlaying
     );
     const restored = createWalkabout(
       bundle,

@@ -4,7 +4,7 @@ Survey, 2026-10-29. [ADR 0080](../adr/0080-run-targs-scripts-as-talk-scripts.md)
 
 ## Method
 
-- **Storage.** Read from `SaveSnapshot` and the types it embeds in [`session/save.ts`](../../web/src/session/save.ts) (schema 15), [`benson/host.ts`](../../web/src/benson/host.ts) and [`benson/channel.ts`](../../web/src/benson/channel.ts).
+- **Storage.** Read from `SaveSnapshot` and the types it embeds in [`session/save.ts`](../../web/src/session/save.ts) (schema 15), [`benson/host.ts`](https://github.com/odogono/mercenary/blob/187a09345fe535d9a9e7377d94150f20c4b6af9e/web/src/benson/host.ts) and [`benson/channel.ts`](../../web/src/benson/channel.ts).
 - **Talk readers and writers.** Every `ask world to …` in [`web/src/talk/scripts/`](../../web/src/talk/scripts/), found with `rg`, and the world operation it calls in `talk/host.ts` `defineCapabilities` (474–697).
 - **Engine readers and writers.** `rg` over `web/src` with tests excluded, then each hit read. Tests are listed separately, as what a move has to update.
 - **Payload facts.** Initial object flags from [`payload/objects.json`](../../payload/objects.json) `instances[].stateFlags`; masks from [`payload/interaction.json`](../../payload/interaction.json) (`carriedMask` 128, `descriptionMask` 12, `fixedMask` 16, `heavyMask` 32); engine message indices from `rooms.json`, `underground.json`, `endgame.json` and `interaction.json`.

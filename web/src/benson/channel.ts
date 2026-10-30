@@ -1,11 +1,10 @@
-/// The live Benson Display and Host Callout. Talk Scripts own game logic, and
+/// The live Benson Display. Talk Scripts own game logic, and
 /// the Gameplay Session owns the random stream; the display is paced in
 /// seconds (ADR 0083). This module loads no Benson program.
 import type { BensonSaveSnapshot } from '../session/save.ts';
 import { NO_SUBSTITUTIONS, type TextTable } from '../text/index.ts';
 import { BensonDisplay, type BensonPacing } from './display.ts';
-import { BensonHostState, type BensonEffect } from './host.ts';
-import type { BensonKey } from './key.ts';
+import type { BensonEffect } from './effect.ts';
 
 /// The game's pacing when settings name none.
 export const DEFAULT_PACING: BensonPacing = {
@@ -21,30 +20,12 @@ export interface BensonMessagePresentation {
   readonly soundCharacter?: string;
 }
 
-export type BensonMessageMode = 'authentic' | 'legacyOracle';
-
-/// Only a historical comparison adapter supplies this seam. Live play has no
-/// interpreter and never handles the payload's old script ids.
-export interface BensonReference {
-  readonly isRunning: boolean;
-  press(key: BensonKey | undefined): void;
-  refusing: ReadonlySet<number>;
-  readonly running: number | undefined;
-  start(script: number): boolean;
-  readonly state: {
-    readonly callStack: readonly number[];
-    readonly pc: number | undefined;
-  };
-  stop(): void;
-}
-
-/// Both the live channel and the test oracle supply the same display and host.
-export type BensonPort = Pick<BensonChannel, keyof BensonChannel>;
+/// The Benson Display as the Gameplay Session and Talk Scripts see it.
+export type BensonPort = BensonChannel;
 
 export class BensonChannel {
-  readonly reference?: BensonReference;
-  readonly messageMode: BensonMessageMode = 'authentic';
-  host: BensonHostState;
+  /// Whether a message holds the display, until its reading hold is over.
+  messagePlaying = false;
   display: BensonDisplay;
   /// The wait a Talk Script set for the messages that follow, if any.
   messageWaitSeconds: number | undefined;
@@ -56,11 +37,6 @@ export class BensonChannel {
     readonly text: TextTable,
     readonly pacing: BensonPacing = DEFAULT_PACING
   ) {
-    // The credits a new game opens with, which the Gameplay Session takes over.
-    this.host = new BensonHostState().withDecimal(
-      BensonHostState.firstNumberDecimal,
-      9000
-    );
     this.display = new BensonDisplay(pacing.holdSeconds);
   }
 
@@ -111,7 +87,7 @@ export class BensonChannel {
     if (this.messageOccurrence !== undefined) {
       this.display.advance(seconds);
       if (this.display.isReleased) {
-        this.host = this.host.with({ messagePlaying: false });
+        this.messagePlaying = false;
       }
     }
     return [];
@@ -124,7 +100,7 @@ export class BensonChannel {
       this.messageWaitSeconds ?? this.pacing.waitSeconds
     );
     this.messageOccurrence = {};
-    this.host = this.host.with({ messagePlaying: true });
+    this.messagePlaying = true;
   }
 
   /// Composes a message whose first number is the session's credits; no other
@@ -144,28 +120,21 @@ export class BensonChannel {
   }
 
   captureSaveSnapshot(): BensonSaveSnapshot {
-    const { host } = this;
     return {
       activeMessageText:
         this.messageOccurrence === undefined
           ? null
           : (this.completeMessage ?? null),
       display: this.display.captureSaveSnapshot(),
-      host: {
-        boardedCraft: host.boardedCraft,
-        currentRoom: host.currentRoom,
-        messageInterval: host.messageInterval,
-        messagePlaying: host.messagePlaying
-      },
+      messagePlaying: this.messagePlaying,
       messageWaitSeconds: this.messageWaitSeconds ?? null
     };
   }
 
-  restore(snapshot: BensonSaveSnapshot): BensonPort {
+  restore(snapshot: BensonSaveSnapshot): BensonChannel {
     const channel = new BensonChannel(this.text, this.pacing);
-    // Credits, the Ending and the ships are the session's, and it projects
-    // them back; Talk's own continuation is restored separately.
-    channel.host = new BensonHostState(snapshot.host);
+    // Talk's own continuation is restored separately.
+    channel.messagePlaying = snapshot.messagePlaying;
     channel.messageWaitSeconds = snapshot.messageWaitSeconds ?? undefined;
     channel.display = BensonDisplay.restore(
       snapshot.display,

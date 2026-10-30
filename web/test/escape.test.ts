@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'bun:test';
 
-import { BensonHostState } from '../src/benson/index.ts';
 import { intent } from '../src/gameCore/index.ts';
 import { GameplaySession } from '../src/session/index.ts';
 import type { TalkScript } from '../src/talk/host.ts';
@@ -15,6 +14,8 @@ import { presetting } from './talkParity.ts';
 /// 0 -> 1 is the one terminal write the Reference Build has; nothing here may
 /// invent another.
 
+/// The occupancy byte on foot.
+const ON_FOOT = 0x80;
 const SHIP = 7;
 const NOVADRIVE = 25;
 const ANTENNA = 30;
@@ -288,7 +289,7 @@ describe('the refusals, each of which resumes', () => {
     route.run({ command: { kind: 'leaveCraft' }, kind: 'command' });
     expect(refused(route)).toBe(0);
     expect(route.session.observations().observations['occupancy']).toBe(
-      BensonHostState.onFoot
+      ON_FOOT
     );
 
     route.run({ action: 'board', kind: 'reach', slot: SHIP }, 60);
@@ -338,7 +339,7 @@ describe('the refusals, each of which resumes', () => {
       expect(route.session.talk!.shown).not.toContain('INTERSTELLAR SHIP');
       expect(phase(route)).toBe(0);
       expect(route.session.observations().observations['occupancy']).toBe(
-        aboard ? 1 : BensonHostState.onFoot
+        aboard ? 1 : ON_FOOT
       );
     }
   }, 240_000);

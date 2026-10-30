@@ -16,10 +16,7 @@ import {
   SEMANTIC_OBSERVATION_SCHEMA_VERSION,
   type ObservationValue
 } from '../src/session/observations.ts';
-import { TextTable } from '../src/text/index.ts';
 import type { ObjectPlacement } from '../src/world/index.ts';
-import type { BensonInstruction } from './oracle/documents.ts';
-import { BensonProgram, BensonSession } from './oracle/index.ts';
 
 const interactionDocument: InteractionDocument = {
   boardKey: 0x1c,
@@ -85,33 +82,6 @@ const content = (): SessionContent => ({
   rooms: new Map([[3, { id: 3 } as never]]),
   underground: undefined
 });
-
-const raw = (
-  op: string,
-  fields: Partial<BensonInstruction> = {}
-): BensonInstruction => ({ op, ...fields });
-
-const scripts = (
-  instructions: readonly BensonInstruction[],
-  decimalSeeds: Record<string, number> = {}
-): BensonSession =>
-  new BensonSession(
-    BensonProgram.fromDocument({
-      counts: {},
-      decimalSeeds,
-      framesPerTick: 1,
-      instructions,
-      schemaVersion: 1,
-      scripts: [{ entry: 0, id: 0 }]
-    }),
-    new TextTable({
-      counts: {},
-      messages: [],
-      schemaVersion: 1,
-      unresolvedCodes: [],
-      words: []
-    })
-  );
 
 const session = (): GameplaySession =>
   new GameplaySession(
@@ -200,25 +170,6 @@ describe('the semantic observations a Gameplay Session answers with', () => {
     const gameplay = session();
     gameplay.adjust({ credits: 9000 });
     expect(gameplay.observations().observations['credits']).toBe(9000);
-  });
-
-  test('reports the script program counter and call stack while running', () => {
-    const gameplay = session();
-    gameplay.scripts = scripts([
-      raw('call', { target: 2 }),
-      raw('ret'),
-      raw('wfr', {
-        branchOn: false,
-        onTaken: { kind: 'jmp', target: 2 },
-        ticks: 60
-      }),
-      raw('ret')
-    ]);
-    gameplay.start(0);
-    gameplay.advance(0.1);
-    const { observations } = gameplay.observations();
-    expect(observations['scriptPc']).toBe(2);
-    expect(observations['scriptStack']).toBe('1');
   });
 
   test('is deterministic and leaves the session alone', () => {

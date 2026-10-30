@@ -1,9 +1,10 @@
 import { BensonDisplay, type BensonPacing } from '../../src/benson/display.ts';
-import { BensonHostState, type BensonEffect } from '../../src/benson/host.ts';
-import { MessageTicker, codePointCount } from '../../src/benson/ticker.ts';
+import type { BensonEffect } from '../../src/benson/effect.ts';
+import { codePointCount } from '../../src/benson/text.ts';
 import type { Description as InteractionDescription } from '../../src/interaction/index.ts';
 import { type BensonSaveSnapshot } from '../../src/session/save.ts';
 import type { TextTable } from '../../src/text/index.ts';
+import { BensonHostState } from './host.ts';
 import {
   BensonMachine,
   BensonState,
@@ -14,6 +15,7 @@ import {
   type BensonTunables
 } from './machine.ts';
 import type { BensonKey, BensonProgram } from './program.ts';
+import { MessageTicker } from './ticker.ts';
 import { waitSecondsFor } from './tuning.ts';
 
 /// Session construction uses this seed. A bare `BensonState` uses `BensonState.defaultSeed`.
@@ -353,12 +355,7 @@ export class BensonOracle {
           : (this.completeMessage ?? null),
       display:
         this.legacyDisplaySnapshot() ?? this.display.captureSaveSnapshot(),
-      host: {
-        boardedCraft: this.host.boardedCraft,
-        currentRoom: this.host.currentRoom,
-        messageInterval: this.host.messageInterval,
-        messagePlaying: this.host.messagePlaying
-      },
+      messagePlaying: this.host.messagePlaying,
       // A Save holds no Benson Script continuation or random state: a running
       // script is lost, and the interpreter's stream starts again from its seed.
       messageWaitSeconds: null
@@ -418,9 +415,9 @@ export class BensonOracle {
     );
     // The Site Ledger is the session's, and it republishes it after restoring,
     // so the host starts with nothing destroyed rather than a second copy.
-    session.host = (FULL_HOSTS.get(snapshot) ?? session.host).with(
-      snapshot.host
-    );
+    session.host = (FULL_HOSTS.get(snapshot) ?? session.host).with({
+      messagePlaying: snapshot.messagePlaying
+    });
     session.display = BensonDisplay.restore(
       snapshot.display,
       tunables.messageHoldSeconds
@@ -434,7 +431,7 @@ export class BensonOracle {
     ) {
       session.ticker = new MessageTicker(
         snapshot.display.activeSourceText,
-        MessageTicker.rate(snapshot.host.messageInterval) * tunables.timeScale,
+        MessageTicker.rate(session.host.messageInterval) * tunables.timeScale,
         tunables.messageHoldSeconds
       );
       session.ticker.restoreProgress(

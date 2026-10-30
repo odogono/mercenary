@@ -56,7 +56,7 @@ held at `$AA/$AB` and turns by a fixed number of angle units held at `$AC`. Ther
 no velocity, no damping, no throttle, and no vertical term at all.
 
 So the block after the eight craft is not the on-foot walk. It is the block
-touchdown installs so that a *landed craft taxis* differently from one in the air,
+touchdown installs so that a _landed craft taxis_ differently from one in the air,
 which is a real and useful thing, and it is why the touchdown copy exists. It is
 named `grounded` now rather than `walking`.
 

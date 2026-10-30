@@ -52,6 +52,7 @@ zap sets `$7A64` to 1, and the death loop then waits for Load or Quit. The pool,
      New Game stands in for the original's HELP menu.
 
    The fade and the flash are exact in palette space. The noise's look is authored.
+
 8. **Save schema 16** carries `encounter` (the three records and `dead`) and `script.zaps`, the
    turned table words. A Save made while dead restores dead, as the original's F1 does. A null
    `encounter` is the first world's pool, alive. Schemas 11 to 15 migrate that way, with no turned

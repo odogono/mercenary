@@ -3,6 +3,7 @@ type: feat
 scope: targ
 section: changed
 ---
+
 **Targ's ship hire, the Dart's owner and the captured Mechanoid are now a
 Talk Script.** They say the same lines and charge the same fee. Letting the
 hire prompt lapse no longer makes Benson forget that you bought the Dart, so

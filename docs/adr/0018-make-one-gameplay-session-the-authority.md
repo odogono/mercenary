@@ -3,7 +3,7 @@
 One `GameplaySession` owns every mutable value a play session has: the player's
 pose, which room they are in and what they are aboard, where each object is, the
 running Benson Script and its host state, and the message line. This supersedes ADR
-0008, which decided that Session State would be *derived* from an authoritative
+0008, which decided that Session State would be _derived_ from an authoritative
 Transition Log of committed outcomes. That decision belonged to the verification era
 and served the apparatus ADR 0014 froze — a log bought replay, audit, and bounded
 saves, which mattered while Conformance Reports were the deliverable. Nothing ever
@@ -16,7 +16,7 @@ The trade-off worth recording is not whether state should have one owner. It is
 direct mutable ownership with transactional projection at the Host Callout, against
 derivation from a log. The Host Callout is what decides it. A Benson Script sees
 byte-wide engine variables — a current room, a boarded craft, a room-membership
-table, a carried bit — and those are a *different shape* from the typed values the
+table, a carried bit — and those are a _different shape_ from the typed values the
 rest of the game reasons about. Something has to translate between the two on every
 crossing, and the translation has to be atomic, because a script observing a room
 the player is not in produces wrong answers rather than late ones. Under a log the

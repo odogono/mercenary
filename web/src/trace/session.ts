@@ -187,10 +187,8 @@ export const applySessionTraceCommand = (
   const command = decodeSessionTraceCommand(value);
   switch (command.kind) {
     case 'press': {
-      // As the shell does: the key answers a Benson Script and is Player
-      // Input for the Talk Scripts.
+      // As the shell does: the key is Player Input for the Talk Scripts.
       const key = commandKey(command.key);
-      session.press(key);
       if (key !== undefined) {
         session.input(`K${key.slice(1)}`);
       }

@@ -3,7 +3,7 @@
 Superseded for Targ by [ADR 0080](0080-run-targs-scripts-as-talk-scripts.md). The historical program and interpreter remain only as test oracles under `web/test/oracle/`; the live browser loads maintained Talk Scripts. The original decision follows.
 
 ADR 0014 said game logic would ship as the original Benson Scripts under a small
-native interpreter. It ships as the original *programs*, structurally preserved,
+native interpreter. It ships as the original _programs_, structurally preserved,
 but not as the original bytes: the export verb fully decodes each script and
 writes our own instruction format into the Data Payload — mnemonic operations,
 branch targets as indices into one flat instruction list, inline message text

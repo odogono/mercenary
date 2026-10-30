@@ -1,6 +1,7 @@
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
+import { BensonChannel } from '../src/benson/channel.ts';
 import { intent } from '../src/gameCore/index.ts';
 import { GameplaySession, sessionContent } from '../src/session/index.ts';
 import { flightModel, loadSettings } from '../src/settings/index.ts';
@@ -11,11 +12,6 @@ import {
   movedTo,
   placedAtResidence
 } from '../src/world/index.ts';
-import {
-  BensonProgram,
-  BensonSession,
-  bensonTunables
-} from './oracle/index.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
 
 /// The Colony Craft transition, from both of its decoded directions: the one
@@ -38,12 +34,7 @@ const session = (): GameplaySession => {
   ) {
     throw new Error('the Data Payload is incomplete');
   }
-  const program = BensonProgram.fromDocument(bundle.benson);
-  const scripts = new BensonSession(
-    program,
-    new TextTable(bundle.text),
-    bensonTunables(settings, program.framesPerTick)
-  );
+  const scripts = new BensonChannel(new TextTable(bundle.text));
   return new GameplaySession(
     sessionContent(
       world,

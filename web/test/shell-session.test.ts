@@ -32,10 +32,7 @@ describe('the live browser Gameplay Session', () => {
       live,
       requiredSettings(settingsText)
     ).session;
-    expect(session.scripts!.reference).toBeUndefined();
     expect('program' in session.scripts!).toBe(false);
-    expect(session.start(21)).toBe(false);
-    expect(session.start(30)).toBe(false);
     for (let seconds = 0; seconds < 20; seconds += 0.02) {
       session.advance(0.02);
     }

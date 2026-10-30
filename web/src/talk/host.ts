@@ -30,7 +30,7 @@ import {
 } from '@northtalk/ts';
 
 import type { BensonPort } from '../benson/channel.ts';
-import type { BensonEffect } from '../benson/host.ts';
+import type { BensonEffect } from '../benson/effect.ts';
 import type { TalkSaveSnapshot } from '../session/save.ts';
 import type { WorldEvent } from '../session/worldEvents.ts';
 import { SURFACE, room, type Location } from '../world/index.ts';
@@ -324,7 +324,7 @@ export class TalkHost {
       this.playing === undefined &&
       this.queue.length === 0 &&
       this.claims.length === 0 &&
-      !this.benson.host.messagePlaying
+      !this.benson.messagePlaying
     );
   }
 
@@ -422,10 +422,9 @@ export class TalkHost {
   /// Plays the next line of the block on the Benson Display once it is free,
   /// answering the block after its last line. The engine's own messages cut
   /// in whenever it shows them, and the block carries on with its next line.
-  /// A Benson Script still running holds the display. True if a call was
-  /// answered.
+  /// True if a call was answered.
   private settleDisplay(): boolean {
-    if (this.benson.host.messagePlaying) {
+    if (this.benson.messagePlaying) {
       return false;
     }
     let answered = false;
@@ -436,9 +435,6 @@ export class TalkHost {
       }
       this.playing = undefined;
       answered = true;
-    }
-    if (this.benson.host.isScriptRunning) {
-      return answered;
     }
     this.playing ??= this.queue.shift();
     const line = this.playing?.lines.shift();

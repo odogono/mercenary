@@ -1,16 +1,13 @@
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
+import { BensonChannel } from '../src/benson/channel.ts';
 import { intent } from '../src/gameCore/index.ts';
 import { GameplaySession, sessionContent } from '../src/session/index.ts';
 import { flightModel, loadSettings } from '../src/settings/index.ts';
+import { TALK_SCRIPTS } from '../src/talk/scripts.ts';
 import { TextTable } from '../src/text/index.ts';
 import { World } from '../src/world/index.ts';
-import {
-  BensonProgram,
-  BensonSession,
-  bensonTunables
-} from './oracle/index.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
 import { withoutScript } from './saveCheckpoint.ts';
 
@@ -33,13 +30,8 @@ const CELL = 0x1_00_00;
 if (bundle.benson === undefined || bundle.text === undefined) {
   throw new Error('the Data Payload is incomplete');
 }
-const program = BensonProgram.fromDocument(bundle.benson);
-const scripts = (): BensonSession =>
-  new BensonSession(
-    program,
-    new TextTable(bundle.text!),
-    bensonTunables(settings, program.framesPerTick)
-  );
+const scripts = (): BensonChannel =>
+  new BensonChannel(new TextTable(bundle.text!));
 
 /// A craft sitting over one cell, low enough and near enough the middle of it
 /// that a shot fired north crosses the band that carries the cell's Site.
@@ -60,6 +52,8 @@ const overCell = (cell: number, altitude?: number): GameplaySession => {
     { heading: Math.PI, pitch: 0, position, roll: 0, speed: 0, yawVelocity: 0 },
     scripts()
   );
+  // The Talk Scripts answer what the shots do, as in live play.
+  session.useTalkScripts(TALK_SCRIPTS);
   session.board(1);
   // The constructor puts a craft on the ground, so an altitude under test has
   // to be set after it rather than asked for.
@@ -110,16 +104,16 @@ describe('a shot that reaches the city', () => {
 
   test('starts the Faction Reaction the Site carries', () => {
     const session = overCell(mechanoidCell);
-    const expected =
-      rules.reactionDispatchBase |
-      (rules.initialTable[mechanoidCell]! & rules.lowIdMask);
+    session.fire();
+    const { worldEvents } = session.advance(1 / 20);
 
-    bomb(session);
-
-    expect(session.observations().observations['scriptPc']).not.toBe(-1);
-    expect(
-      bundle.benson!.scripts.find(script => script.id === expected)
-    ).toBeDefined();
+    expect(worldEvents).toContainEqual(
+      expect.objectContaining({
+        cell: mechanoidCell,
+        kind: 'destroyed',
+        reacting: true
+      })
+    );
   });
 
   test('will not fire again while the impact is still playing', () => {
@@ -349,6 +343,7 @@ describe('a shot that reaches the object it can start a script on', () => {
       },
       scripts()
     );
+    session.useTalkScripts(TALK_SCRIPTS);
     session.board(1);
     session.game = {
       ...session.game,
@@ -365,14 +360,15 @@ describe('a shot that reaches the object it can start a script on', () => {
     session.adjust({ attackingShip: true });
 
     session.fire();
-    const events = session.advance(1 / 20).events;
+    const { events, worldEvents } = session.advance(1 / 20);
     const observed = session.observations().observations;
 
     expect(events).toContainEqual({ impact: { sound: hits.sound } });
     expect(observed[`objectRoom.${target}`]).toBe(0xff);
     // Any object hit calls off the attack, whichever object it was.
     expect(observed['attackingShip']).toBeFalse();
-    expect(observed['scriptPc']).not.toBe(-1);
+    // The Talk Scripts hear which object it was.
+    expect(worldEvents).toContainEqual({ kind: 'struck', object: target });
     // And the shot is spent.
     expect(session.residenceOf(rules.projectileSlot).kind).toBe('gone');
   });

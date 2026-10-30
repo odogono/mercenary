@@ -1,5 +1,5 @@
 import type { BensonDisplaySaveSnapshot } from '../session/save.ts';
-import { codePointCount } from './ticker.ts';
+import { codePointCount } from './text.ts';
 
 export type BensonDisplayPhase = 'feeding' | 'waiting' | 'holding' | 'finished';
 

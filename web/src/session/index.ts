@@ -1,9 +1,7 @@
-import type { BensonEffect } from '../benson/host.ts';
+import type { BensonEffect } from '../benson/effect.ts';
 import {
-  BensonHostState,
   DEFAULT_SESSION_SEED,
   randomByte,
-  type BensonKey,
   type BensonMessagePresentation,
   type BensonPort
 } from '../benson/index.ts';
@@ -32,6 +30,7 @@ import {
 } from '../gameCore/index.ts';
 import {
   Interaction,
+  OUT_OF_THE_WORLD,
   SURFACE_ROOM,
   type Description,
   type InteractionAction,
@@ -68,7 +67,6 @@ import {
   SURFACE,
   craftHeading,
   displacement,
-  hostRoom,
   isCarried,
   isDrawable,
   locationFromHost,
@@ -133,17 +131,9 @@ export type { WorldEvent } from './worldEvents.ts';
 /// convention here rather than something the type enforces; tightening that is worth doing when
 /// the shell lands a second caller (#95).
 ///
-/// **The Host Callout is projected, not stored.** Talk Scripts and reaching work on this
-/// module's typed Location, Occupancy and Object Residence through the World Port (ADR 0083).
-/// Only the test oracle's Benson Scripts still read a flat `BensonHostState` of bytes: `project`
-/// writes the typed state down into it before they run, and `reconcile` reads their writes back
-/// up after. There is deliberately no second copy: the bytes are derived on the way in and
-/// consumed on the way out, so a script and the session cannot hold divergent ideas of where the
-/// player is.
-///
-/// What a script may change is therefore narrower than what it can write, and `reconcile` is
-/// where that is decided — a byte the session owns outright is read back, one it does not is
-/// dropped.
+/// **One owner for the world.** Talk Scripts and reaching work on this module's typed
+/// Location, Occupancy, Object Residence, credits and Ending through the World Port (ADR 0083).
+/// No Benson Script runs in a session, so there is no byte-level copy of any of it (#924).
 ///
 /// The two Movers are `gameCore`'s and are not re-implemented here: `advance` hands them the
 /// intent and the Room's walls, then turns what came back — a touchdown, wall contact, a Doorway
@@ -187,18 +177,21 @@ const DISARMED = STARTS_TALK | 8;
 const FIXED = 16;
 /// What starts the Ship Delivery, as Benson Script 2 wrote it.
 const SHIP_INBOUND = 0xff;
-const CREDITS = BensonHostState.firstNumberDecimal;
+/// What a new game's player holds.
+const STARTING_CREDITS = 9000;
+/// Credits wrap at eight digits, as the original's decimal does.
+const CREDITS_LIMIT = 100_000_000;
+/// The original's occupancy byte on foot. Slot 0 is a real ship.
+const ON_FOOT = 0x80;
 
 /// The longest stretch combat moves in one go (ADR 0083).
 const MAX_COMBAT_SUBSTEP = 1 / 60;
 
 const occupancyHostValue = (occupancy: Occupancy): number =>
-  occupancy.kind === 'onFoot' ? BensonHostState.onFoot : occupancy.slot;
+  occupancy.kind === 'onFoot' ? ON_FOOT : occupancy.slot;
 
 const occupancyFromHost = (value: number): Occupancy =>
-  value === BensonHostState.onFoot
-    ? { kind: 'onFoot' }
-    : { kind: 'aboard', slot: value };
+  value === ON_FOOT ? { kind: 'onFoot' } : { kind: 'aboard', slot: value };
 
 export type PresentationEvent =
   | 'tone'
@@ -303,7 +296,7 @@ export interface SessionSnapshot {
   readonly elapsed: number;
   /// Which Ending this moment belongs to, and how far its presentation has got.
   /// `activePlay` throughout ordinary play; what draws an Ending reads this
-  /// rather than the Host Callout's own byte.
+  /// rather than the phase byte.
   readonly ending: EndingState;
   /// What the Escape's terminal presentation is showing at this moment: the
   /// colour pair in force and the 21 points, already projected. Present only
@@ -708,7 +701,6 @@ export class GameplaySession {
   /// The fraction of a frame left over from the last ship-delivery step.
   /// Seconds since a hired ship began its descent, while it descends.
   private deliverySeconds: number | undefined;
-  private readonly liftMode: 'instantOracle' | 'reference' = 'reference';
   private liftJourney: LiftJourneyState | undefined;
   private liftBensonColour: number | undefined;
   private residence = new Map<number, Residence>();
@@ -718,8 +710,7 @@ export class GameplaySession {
   /// The Talk Scripts, once `useTalkScripts` has loaded them (ADR 0080).
   talk: TalkHost | undefined;
   private rewired = new Map<number, Alternate>();
-  /// The Site Ledger, owned here and projected across the Host Callout for the
-  /// scripts to read (ADR 0018). Absent when the content carries no Sites.
+  /// The Site Ledger, owned here (ADR 0018). Absent when the content carries no Sites.
   private sites: SiteLedger | undefined;
   /// The part of a combat frame that had not elapsed yet.
   /// The Escape's terminal presentation, once the Ending has produced it.
@@ -745,8 +736,7 @@ export class GameplaySession {
   /// time to close rather than shooting the instant it is aimed.
   private approachSeconds = 0;
   private ownRandomState: bigint;
-  /// The player's credits, owned here and projected across the Host Callout
-  /// as decimal 8 for the scripts that read it (#906).
+  /// The player's credits (#906).
   private credits = 0;
   /// The Ending phase byte: 0 in active play, 1 once the Escape is accepted,
   /// 255 in the mature terminal presentation. A byte rather than a Boolean
@@ -800,7 +790,7 @@ export class GameplaySession {
         if (carriedMask !== undefined && (flags & carriedMask) !== 0) {
           this.residence.set(object.slot, { kind: 'carried' });
           this.carriedStack.push(object.slot);
-        } else if (object.room === BensonHostState.outOfTheWorld) {
+        } else if (object.room === OUT_OF_THE_WORLD) {
           this.residence.set(object.slot, { kind: 'gone' });
         } else if (
           object.placement === 'surface' ||
@@ -815,13 +805,7 @@ export class GameplaySession {
     this.carriedStack.sort((a, b) => a - b);
     this.objectsBySlot = objectsBySlot;
     if (this.scripts !== undefined) {
-      // The session opens with whatever the scripts were seeded with, and owns it from here.
-      const { host } = this.scripts;
-      this.credits = host.decimal(CREDITS);
-      this.endingPhase = host.endingPhase;
-      this.attackingShip = host.attackingShip;
-      this.shipInbound = host.shipInbound;
-      this.scripts.host = this.project(this.scripts.host);
+      this.credits = STARTING_CREDITS;
     }
     this.worldSeen = this.seeWorld();
   }
@@ -987,7 +971,6 @@ export class GameplaySession {
               velocity: { ...snapshot.combat.playerShot.velocity }
             };
     }
-    session.republishHostState();
     // A Save is where play resumes, not a change in it.
     session.worldSeen = session.seeWorld();
     if (talk !== undefined) {
@@ -1102,7 +1085,7 @@ export class GameplaySession {
   }
 
   get occupancy(): Occupancy {
-    return occupancyFromHost(this.game.craft ?? BensonHostState.onFoot);
+    return occupancyFromHost(this.game.craft ?? ON_FOOT);
   }
 
   residenceOf(slot: number): Residence {
@@ -1122,121 +1105,6 @@ export class GameplaySession {
       this.content.interaction?.carriedMask ??
       this.content.dropRules?.carriedMask
     );
-  }
-
-  private project(host: BensonHostState): BensonHostState {
-    const objectRooms = new Map<number, number>();
-    for (const [slot, where] of this.residence) {
-      objectRooms.set(slot, hostRoom(where));
-    }
-    return host.withDecimal(CREDITS, this.credits).with({
-      attackingShip: this.attackingShip,
-      boardedCraft: occupancyHostValue(this.occupancy),
-      currentRoom: locationHostValue(this.semanticLocation),
-      destroyedBlocks: new Set(this.sites?.destroyedCells() ?? []),
-      endingPhase: this.endingPhase,
-      inventory: new Set(this.carriedStack),
-      objectFlags: new Map(this.objectFlags),
-      objectRooms,
-      shipInbound: this.shipInbound
-    });
-  }
-
-  private reconcile(host: BensonHostState): void {
-    const nextLocation = locationFromHost(host.currentRoom);
-    const nextResidence = new Map<number, Residence>();
-    const nextFlags = new Map<number, number>();
-    const inventory = new Set(host.inventory);
-    const knownSlots = new Set(this.objectsBySlot.keys());
-    if (
-      host.objectFlags.size !== knownSlots.size ||
-      host.objectRooms.size !== knownSlots.size
-    ) {
-      throw new Error('Host Callout has an incomplete or extra object census');
-    }
-    for (const slot of host.objectFlags.keys()) {
-      if (!knownSlots.has(slot)) {
-        throw new Error(`Host Callout refers to missing object slot ${slot}`);
-      }
-    }
-    for (const slot of host.objectRooms.keys()) {
-      if (!knownSlots.has(slot)) {
-        throw new Error(`Host Callout refers to missing object slot ${slot}`);
-      }
-    }
-    for (const slot of inventory) {
-      if (!knownSlots.has(slot)) {
-        throw new Error(`Host Callout carries missing object slot ${slot}`);
-      }
-    }
-    for (const slot of knownSlots) {
-      const written = host.objectRooms.get(slot);
-      const flags = host.objectFlags.get(slot);
-      if (written === undefined || flags === undefined) {
-        throw new Error(
-          `Host Callout has an incomplete object census at slot ${slot}`
-        );
-      }
-      const current = this.residenceOf(slot);
-      const carried = host.inventory.has(slot);
-      const carriedBit =
-        this.carriedMask === undefined
-          ? carried
-          : (flags & this.carriedMask) !== 0;
-      if (
-        carried !== carriedBit ||
-        (carried && written !== BensonHostState.outOfTheWorld)
-      ) {
-        throw new Error(
-          `Host Callout carrying representations disagree at slot ${slot}`
-        );
-      }
-      nextFlags.set(slot, flags);
-      if (carried) {
-        nextResidence.set(slot, { kind: 'carried' });
-      } else if (written === BensonHostState.outOfTheWorld) {
-        nextResidence.set(slot, { kind: 'gone' });
-      } else if (written === SURFACE_ROOM) {
-        nextResidence.set(
-          slot,
-          current.kind === 'surface' ? current : { kind: 'surface' }
-        );
-      } else {
-        if (!this.content.rooms.has(written)) {
-          throw new Error(`Host Callout refers to missing Room ${written}`);
-        }
-        nextResidence.set(
-          slot,
-          current.kind === 'room' && current.id === written
-            ? current
-            : { id: written, kind: 'room' }
-        );
-      }
-    }
-    const retained = this.carriedStack.filter(slot => inventory.has(slot));
-    const retainedSet = new Set(retained);
-    const introduced = [...inventory]
-      .filter(slot => !retainedSet.has(slot))
-      .sort((a, b) => a - b);
-    const occupancy = occupancyFromHost(host.boardedCraft);
-    const nextGame = {
-      ...this.game,
-      craft: occupancy.kind === 'onFoot' ? undefined : occupancy.slot,
-      room:
-        this.liftJourney === undefined
-          ? nextLocation.kind === 'surface'
-            ? undefined
-            : nextLocation.id
-          : this.game.room
-    };
-    this.game = nextGame;
-    this.residence = nextResidence;
-    this.objectFlags = nextFlags;
-    this.carriedStack = [...retained, ...introduced];
-    this.credits = host.decimal(CREDITS);
-    this.endingPhase = host.endingPhase;
-    this.attackingShip = host.attackingShip;
-    this.shipInbound = host.shipInbound;
   }
 
   /// What reaching sees of the world (#907).
@@ -1265,14 +1133,6 @@ export class GameplaySession {
     } else {
       return;
     }
-    this.republishHostState();
-  }
-
-  private republishHostState(): void {
-    if (this.scripts === undefined) {
-      return;
-    }
-    this.scripts.host = this.project(this.scripts.host);
   }
 
   reach(
@@ -1316,8 +1176,7 @@ export class GameplaySession {
       if (outcome.kind === 'boarded' && this.content.flight !== undefined) {
         const craft = this.objectsBySlot.get(outcome.slot);
         if (craft !== undefined) {
-          // The Host Callout has already changed the boarded craft's Residence
-          // to `gone`. Keep the candidate position selected before that write,
+          // Boarding has already changed the craft's Residence to `gone`. Keep the candidate position selected before that write,
           // otherwise a moved craft falls back to its Data Payload origin.
           const at =
             candidates.find(candidate => candidate.slot === outcome.slot)
@@ -1418,7 +1277,6 @@ export class GameplaySession {
       return { events: [], outcome: { kind: 'airborneRefused' } };
     }
     this.residence.set(slot, this.dropResidence());
-    this.republishHostState();
     return { events: ['tone'], outcome: { kind: 'fetched', slot } };
   }
 
@@ -1465,7 +1323,6 @@ export class GameplaySession {
         : { at, heading: this.game.player.heading, kind: 'surface' }
     );
     this.game = leaveCraftCore(this.game, this.content.flight);
-    this.republishHostState();
     return { events: ['tone'], slot };
   }
 
@@ -1539,24 +1396,6 @@ export class GameplaySession {
     }
     // The ride leaves this Location, which levels Free Look.
     this.recentreLook();
-    if (this.liftMode === 'instantOracle') {
-      const previousRoom = locationHostValue(this.location);
-      this.game =
-        direction === 'down'
-          ? enter(this.game, entrance, underground.lift, flight)
-          : surface(
-              this.game,
-              entrance,
-              underground.lift,
-              this.content.cellSize,
-              this.content.endgame?.colonyCraft
-            );
-      return [
-        { lift: direction },
-        { arrived: this.location },
-        ...this.settleIntoTheRoom(previousRoom)
-      ];
-    }
     this.liftBensonColour = this.bensonColour;
     this.liftJourney = startLiftJourney(
       direction,
@@ -1564,7 +1403,6 @@ export class GameplaySession {
       underground.lift,
       this.game.player.position.y
     );
-    this.republishHostState();
     return [{ lift: direction }];
   }
 
@@ -1709,7 +1547,6 @@ export class GameplaySession {
   }
 
   private settleIntoTheRoom(previousRoom: number): PresentationEvent[] {
-    this.republishHostState();
     const events =
       this.content.doorwayRules === undefined
         ? []
@@ -1773,11 +1610,8 @@ export class GameplaySession {
     let pending: number | undefined = this.indoor?.dark
       ? rules.darkMessage
       : undefined;
-    if (room.entry !== undefined && 'script' in room.entry) {
-      // A script that is already running is not restarted, as the Reference Build's own
-      // starter refuses.
-      this.start(room.entry.script);
-    } else if (room.entry !== undefined && 'message' in room.entry) {
+    // A Room whose entry is a script is the Talk Scripts' to answer, from its World Event.
+    if (room.entry !== undefined && 'message' in room.entry) {
       pending = room.entry.message;
     }
     if (pending !== undefined) {
@@ -1884,7 +1718,6 @@ export class GameplaySession {
     if (mask !== undefined) {
       this.objectFlags.set(slot, (this.objectFlags.get(slot) ?? 0) | mask);
     }
-    this.republishHostState();
   }
 
   drop(selectedSlot?: number): DropResult {
@@ -1908,7 +1741,6 @@ export class GameplaySession {
     ];
     this.objectFlags.set(slot, flags);
     this.residence.set(slot, where);
-    this.republishHostState();
     return { events: ['tone'], outcome: { kind: 'dropped', slot } };
   }
 
@@ -1973,7 +1805,6 @@ export class GameplaySession {
       at: { ...this.game.player.position },
       kind: 'surface'
     });
-    this.republishHostState();
     return {
       events: [{ fire: { sound: rules.sound } }],
       outcome: { kind: 'fired' }
@@ -1986,7 +1817,6 @@ export class GameplaySession {
     this.residence.set(slot, { kind: 'gone' });
     if (this.content.flight === undefined) {
       this.game = { ...this.game, craft: slot };
-      this.republishHostState();
       return;
     }
     this.game = boardCraft(
@@ -1996,7 +1826,6 @@ export class GameplaySession {
       this.game.player.heading,
       this.content.flight
     );
-    this.republishHostState();
   }
 
   /// Level the view Free Look tilted: the recentre control, and turning Extended Controls off.
@@ -2053,13 +1882,8 @@ export class GameplaySession {
     this.game = { ...this.game, throttle: 0 };
   }
 
-  press(key: BensonKey | undefined): void {
-    this.scripts?.reference?.press(key);
-  }
-
   /// Loads or restores the session's Talk Scripts. They hear World Events
-  /// and Player Input and share its Benson Display. A comparison oracle, when
-  /// supplied by tests, refuses the original scripts these replace.
+  /// and Player Input and share its Benson Display.
   useTalkScripts(
     scripts: readonly TalkScript[],
     options: TalkHostOptions = {},
@@ -2070,13 +1894,6 @@ export class GameplaySession {
     }
     const benson = this.scripts;
     this.talk = new TalkHost(scripts, benson, this.worldPort(), options, saved);
-    if (this.scripts.reference !== undefined) {
-      this.scripts.reference.refusing = this.talk.replaces;
-    }
-    const running = this.scripts.reference?.running;
-    if (running !== undefined && this.talk.replaces.has(running)) {
-      this.scripts.reference?.stop();
-    }
     return this.talk;
   }
 
@@ -2110,11 +1927,10 @@ export class GameplaySession {
   }): void {
     this.attackingShip = patch.attackingShip ?? this.attackingShip;
     this.credits = patch.credits ?? this.credits;
-    this.republishHostState();
   }
 
   private addCredits(amount: number): void {
-    const limit = BensonHostState.decimalLimit;
+    const limit = CREDITS_LIMIT;
     this.credits = (((this.credits + amount) % limit) + limit) % limit;
   }
 
@@ -2178,21 +1994,15 @@ export class GameplaySession {
     this.scripts?.skipMessage();
   }
 
-  /// Only an injected historical comparison adapter handles legacy script ids.
-  /// Live game logic is delivered through World Events.
-  start(script: number): boolean {
-    return this.scripts?.reference?.start(script) ?? false;
-  }
-
   show(index: number): void {
     this.scripts?.showMessage(index, this.credits);
   }
 
+  /// An object's message, if it has one. One whose description is a script is
+  /// the Talk Scripts' to answer, from the Take or Boarding's World Event.
   describe(description: Description): void {
     if (description.kind === 'message') {
       this.show(description.index);
-    } else if (description.kind === 'script') {
-      this.start(description.id);
     }
   }
 
@@ -2326,18 +2136,8 @@ export class GameplaySession {
       }
     }
     if (this.scripts !== undefined && seconds > 0) {
-      const before = this.scripts.captureSaveSnapshot();
-      try {
-        this.scripts.host = this.project(this.scripts.host);
-        const effects = this.scripts.advance(seconds);
-        this.reconcile(this.scripts.host);
-        for (const effect of effects) {
-          events.push({ script: effect });
-        }
-      } catch (error) {
-        this.scripts = this.scripts.restore(before);
-        this.republishHostState();
-        throw error;
+      for (const effect of this.scripts.advance(seconds)) {
+        events.push({ script: effect });
       }
     }
     if (terminal) {
@@ -2533,11 +2333,6 @@ export class GameplaySession {
             kind: 'gratitude'
           });
         }
-        if (struck.kind === 'destroyed' && struck.reaction !== undefined) {
-          this.start(struck.reaction);
-        } else if (struck.kind === 'gratitude') {
-          this.start(struck.reaction);
-        }
         return events;
       }
     }
@@ -2555,11 +2350,10 @@ export class GameplaySession {
       this.residence.set(slot, { kind: 'gone' });
       this.removeShot();
       this.worldRaised.push({ kind: 'struck', object: slot });
-      // The first target announces itself; the second starts a script.
+      // The first target announces itself; the Talk Scripts answer the
+      // second, from its World Event.
       if (index === 0) {
         this.show(hits.firstTargetMessage);
-      } else {
-        this.start(hits.secondTargetScript);
       }
       return events;
     }
@@ -2856,28 +2650,20 @@ export class GameplaySession {
     // hit nor leaves a craft placed and unmoved for the whole of it.
     const substeps = Math.ceil(seconds / MAX_COMBAT_SUBSTEP - 1e-9);
     const each = seconds / substeps;
-    let moved = false;
     for (let substep = 0; substep < substeps; substep += 1) {
-      if (this.stepSurfaceFlyby(each)) {
-        moved = true;
-      }
+      this.stepSurfaceFlyby(each);
       if (this.impact !== undefined) {
         const secondsLeft = this.impact.secondsLeft - each;
         this.impact =
           secondsLeft > 1e-9 ? { ...this.impact, secondsLeft } : undefined;
       }
-      if (rules !== undefined && this.stepPlayerShot(each, rules, events)) {
-        moved = true;
+      if (rules !== undefined) {
+        this.stepPlayerShot(each, rules, events);
       }
-      if (this.driftHostileEffects(each, pauseAttacker)) {
-        moved = true;
-      }
+      this.driftHostileEffects(each, pauseAttacker);
       if (!pauseAttacker) {
         events.push(...this.advanceHostile(each));
       }
-    }
-    if (moved) {
-      this.republishHostState();
     }
     return events;
   }
@@ -2980,7 +2766,6 @@ export class GameplaySession {
       this.shipInbound = rules.inactiveValue;
       this.deliverySeconds = undefined;
     }
-    this.republishHostState();
   }
 
   /// This session as flat scalars, for comparison against the Reference Build.
@@ -3066,7 +2851,7 @@ export class GameplaySession {
             }
           }),
       indoor: this.indoor,
-      isScriptRunning: this.scripts?.reference?.isRunning ?? false,
+      isScriptRunning: false,
       location: this.location,
       ...(journey === undefined || lift === undefined || liftIndex === undefined
         ? {}

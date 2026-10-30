@@ -1,17 +1,14 @@
 import { join } from 'node:path';
 
+import { BensonChannel } from '../src/benson/channel.ts';
 import { intent } from '../src/gameCore/index.ts';
 import type { Bundle } from '../src/payload/documents.ts';
 import { GameplaySession, sessionContent } from '../src/session/index.ts';
 import type { SemanticObservations } from '../src/session/observations.ts';
 import { flightModel, loadSettings } from '../src/settings/index.ts';
+import { TALK_SCRIPTS } from '../src/talk/scripts.ts';
 import { TextTable } from '../src/text/index.ts';
 import { World } from '../src/world/index.ts';
-import {
-  BensonProgram,
-  BensonSession,
-  bensonTunables
-} from './oracle/index.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
 
 /// A craft flown over the city, bombing the Sites it is told to.
@@ -48,7 +45,6 @@ export class CityRun {
     ) {
       throw new Error('the Data Payload is incomplete');
     }
-    const program = BensonProgram.fromDocument(bundle.benson);
     const session = new GameplaySession(
       sessionContent(
         world,
@@ -63,12 +59,9 @@ export class CityRun {
         speed: 0,
         yawVelocity: 0
       },
-      new BensonSession(
-        program,
-        new TextTable(bundle.text),
-        bensonTunables(settings, program.framesPerTick)
-      )
+      new BensonChannel(new TextTable(bundle.text))
     );
+    session.useTalkScripts(TALK_SCRIPTS);
     session.board(1);
     return new CityRun(bundle, session);
   }

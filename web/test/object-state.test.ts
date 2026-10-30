@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
+import { BensonChannel } from '../src/benson/channel.ts';
 import { playerState } from '../src/gameCore/index.ts';
 import { Interaction } from '../src/interaction/index.ts';
 import { IDENTITY } from '../src/orientation/index.ts';
@@ -10,8 +11,6 @@ import type {
 import { GameplaySession, type SessionContent } from '../src/session/index.ts';
 import { TextTable } from '../src/text/index.ts';
 import type { ObjectPlacement } from '../src/world/index.ts';
-import type { BensonInstruction } from './oracle/documents.ts';
-import { BensonProgram, BensonSession } from './oracle/index.ts';
 
 const interactionDocument: InteractionDocument = {
   boardKey: 0x1c,
@@ -79,21 +78,8 @@ const content = (): SessionContent => ({
   underground: undefined
 });
 
-const raw = (
-  op: string,
-  fields: Partial<BensonInstruction> = {}
-): BensonInstruction => ({ op, ...fields });
-
-const scripts = (instructions: readonly BensonInstruction[]): BensonSession =>
-  new BensonSession(
-    BensonProgram.fromDocument({
-      counts: {},
-      decimalSeeds: {},
-      framesPerTick: 1,
-      instructions,
-      schemaVersion: 1,
-      scripts: [{ entry: 0, id: 0 }]
-    }),
+const scripts = (): BensonChannel =>
+  new BensonChannel(
     new TextTable({
       counts: {},
       messages: [],
@@ -136,52 +122,6 @@ describe('complete mutable object state', () => {
     expect(gameplay.snapshot.carriedStack).toEqual([21, 20]);
     expect(gameplay.snapshot.residence.get(21)).toEqual({ kind: 'carried' });
     expect(gameplay.snapshot.objectFlags.get(21)! & 0x80).toBe(0x80);
-  });
-
-  test('retains valid Benson flag and Residence writes across crossings', () => {
-    const benson = scripts([
-      raw('stor', { slot: 20, symbol: 'objectFlags', value: 0x14 }),
-      raw('stor', { slot: 20, symbol: 'objectRoom', value: 3 }),
-      raw('ret')
-    ]);
-    const gameplay = new GameplaySession(
-      content(),
-      playerState({ position: { x: 0, y: 0, z: 0 } }),
-      benson
-    );
-    gameplay.start(0);
-
-    gameplay.advance(1 / 60);
-    expect(gameplay.snapshot.objectFlags.get(20)).toBe(0x14);
-    expect(gameplay.snapshot.residence.get(20)).toEqual({
-      id: 3,
-      kind: 'room'
-    });
-    gameplay.advance(1 / 60);
-    expect(gameplay.snapshot.objectFlags.get(20)).toBe(0x14);
-    expect(gameplay.snapshot.residence.get(20)).toEqual({
-      id: 3,
-      kind: 'room'
-    });
-  });
-
-  test('rejects a Benson carrying disagreement transactionally', () => {
-    const benson = scripts([
-      raw('stor', { slot: 20, symbol: 'objectFlags', value: 0x84 }),
-      raw('ret')
-    ]);
-    const gameplay = new GameplaySession(
-      content(),
-      playerState({ position: { x: 0, y: 0, z: 0 } }),
-      benson
-    );
-    gameplay.start(0);
-    const before = gameplay.captureSaveSnapshot();
-
-    expect(() => gameplay.advance(1 / 60)).toThrow(
-      'carrying representations disagree'
-    );
-    expect(gameplay.captureSaveSnapshot()).toEqual(before);
   });
 });
 
@@ -248,7 +188,7 @@ describe('Drop', () => {
     const gameplay = new GameplaySession(
       content(),
       playerState({ position: { x: 9000, y: 64, z: 8000 } }),
-      scripts([raw('ret')])
+      scripts()
     );
     gameplay.carry(20);
     gameplay.drop();
