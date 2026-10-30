@@ -34,7 +34,7 @@ export const saveEnvironment = (
   settings: Settings
 ): SaveEnvironment => ({
   payload: {
-    // Reserved schema-14 identity: retiring the document must not refuse old Saves.
+    // The retired Benson Script document's identity, which every Save still carries.
     bensonSchemaVersion: 1,
     decoderVersion: bundle.manifest.decoderVersion,
     endgameSchemaVersion: bundle.endgame.schemaVersion,
