@@ -57,34 +57,6 @@ const server = Bun.serve({
       return unsupportedMethod;
     }
 
-    if (e2e && url.pathname === '/__e2e__/opening-loop') {
-      return new Response(
-        Bun.file(join(import.meta.dir, 'e2e/opening-loop.html')),
-        {
-          headers: { 'content-type': 'text/html; charset=utf-8' }
-        }
-      );
-    }
-
-    if (e2e && url.pathname === '/__e2e__/opening-loop.ts') {
-      const file = Bun.file(join(import.meta.dir, 'e2e/opening-loop.ts'));
-      return new Response(transpiler.transformSync(await file.text()), {
-        headers: { 'content-type': 'text/javascript; charset=utf-8' }
-      });
-    }
-
-    if (e2e && url.pathname === '/__e2e__/session/opening-loop.jsonl') {
-      const file = Bun.file(join(root, 'traces/session/opening-loop.jsonl'));
-      if (!(await file.exists())) {
-        return new Response('opening-loop trace is required\n', {
-          status: 404
-        });
-      }
-      return new Response(file, {
-        headers: { 'content-type': 'application/x-ndjson; charset=utf-8' }
-      });
-    }
-
     if (
       !e2e &&
       (url.pathname.startsWith('/e2e/') || url.pathname.startsWith('/test/'))

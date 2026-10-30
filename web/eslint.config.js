@@ -33,7 +33,7 @@ export default [
     }
   },
   {
-    files: ['serve.ts', 'e2e/opening-loop.ts', 'spike/northtalk/trace-diff.ts'],
+    files: ['serve.ts', 'spike/northtalk/trace-diff.ts'],
     rules: {
       'no-console': 'off'
     }

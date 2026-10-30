@@ -1,5 +1,3 @@
-import { BensonHostState } from '../../src/benson/index.ts';
-import type { Intent } from '../../src/gameCore/index.ts';
 import {
   type Occupancy,
   type PresentationEvent,
@@ -115,53 +113,3 @@ export const snapshotValue = (snapshot: SessionSnapshot): TraceValue => {
     worldFlipped: snapshot.worldFlipped
   };
 };
-
-/// Project only the fields the frozen Trace Oracle can emit.
-///
-/// M7.1 made the browser Gameplay Session authoritative for complete object flags and carried
-/// order after the Swift implementation was frozen. Those fields remain part of the complete
-/// browser Session Snapshot, but cannot be invented on the oracle side of a Replay Gate.
-/// The same boundary applies to the Reference Build's slot-0 flyby: the frozen
-/// Oracle left that craft at its payload origin, so its changing coordinates
-/// are covered by the focused Reference-Build-derived test instead.
-export const traceOracleSnapshotValue = (
-  snapshot: SessionSnapshot,
-  legacyRoom255Slots: ReadonlySet<number>,
-  legacyStaticSurfaceSlot?: number
-): TraceValue => {
-  const value = snapshotValue(snapshot) as TraceObject;
-  const residence: TraceObject = {};
-  for (const [slot, where] of snapshot.residence) {
-    residence[String(slot)] =
-      where.kind === 'gone' && legacyRoom255Slots.has(slot)
-        ? { room: 255 }
-        : where.kind === 'surface' && slot === legacyStaticSurfaceSlot
-          ? 'surface'
-          : where.kind === 'room'
-            ? { room: where.id }
-            : residenceValue(where);
-  }
-  delete value['carriedStack'];
-  delete value['objectFlags'];
-  value['residence'] = residence;
-  return value;
-};
-
-export const traceOracleRoom255Slots = (
-  objects: readonly { readonly room: number; readonly slot: number }[]
-): ReadonlySet<number> =>
-  new Set(
-    objects
-      .filter(object => object.room === BensonHostState.outOfTheWorld)
-      .map(object => object.slot)
-  );
-
-/// A recorded Intent. Traces are faithful play, so they carry neither Extension.
-export const intentFromRecord = (input: TraceObject): Intent => ({
-  look: 0,
-  pitch: input['pitch'] as number,
-  running: input['running'] as boolean,
-  strafe: 0,
-  turn: input['turn'] as number,
-  walk: input['walk'] as number
-});

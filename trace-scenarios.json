@@ -260,160 +260,12 @@
       "script": 1,
       "seconds": 120,
       "note": "A script that draws a random byte, branches on it, and then ends on a jump to itself. The self-jump is why traces need an instruction limit: the interpreter spends its whole budget on that one jump every step, so this trace stops at its limit and says so in its last record."
-    },
-    {
-      "emitter": "session",
-      "id": "opening",
-      "note": "The opening status report and purchase conversation, with the player answering the question it asks. This localized trace deliberately stops before walking or boarding.",
-      "script": 0,
-      "seconds": 120,
-      "presses": [
-        {
-          "key": "y",
-          "at": 74
-        }
-      ]
-    },
-    {
-      "emitter": "session",
-      "id": "opening-walk-to-craft",
-      "note": "Boarding by walking to the Dart and reaching for it, rather than by boarding from outside. This localized trace stops aboard the grounded craft.",
-      "script": 0,
-      "seconds": 120,
-      "walkTo": 1
-    },
-    {
-      "emitter": "session",
-      "id": "opening-loop",
-      "note": "The parity bar end to end: accept the 5,000-credit Dart purchase, walk and reach to board it, take off, fly to lift site 1 at grid 09:06, land, leave, walk onto the lift pad and descend into Room 1.",
-      "script": 0,
-      "seconds": 360,
-      "presses": [
-        {
-          "key": "y",
-          "at": 74
-        }
-      ],
-      "walkTo": 1,
-      "openingLoop": {
-        "liftSite": 1,
-        "notch": 10
-      }
-    },
-    {
-      "emitter": "navigation",
-      "id": "world-flip-from-144",
-      "note": "Walking into Room 127 from Room 144, which mirrors the world left for right. The trace shows the arrival and the flip on the same step.",
-      "room": 144,
-      "at": {
-        "x": 640,
-        "z": 384
-      },
-      "legs": [
-        {
-          "heading": 270,
-          "seconds": 3
-        }
-      ]
-    },
-    {
-      "emitter": "navigation",
-      "id": "world-flip-from-86",
-      "note": "The same Room entered from the other of its two ways in, and the world does not flip. Both of Room 127's stored alternates name Room 86, so arriving from 86 rewrites nothing \u2014 and the flip sits inside the branch that skips with it. That is PQ-0003, and since Room 127 has exactly two ways in it is half of that Room's observable behaviour.",
-      "room": 86,
-      "at": {
-        "x": 1024,
-        "z": 384
-      },
-      "legs": [
-        {
-          "heading": 270,
-          "seconds": 3
-        }
-      ]
-    },
-    {
-      "emitter": "navigation",
-      "id": "dark-room-5",
-      "note": "A dark Room, whose header shows all three colours zeroed and nothing drawable (PQ-0004). The walk leaves it through the one Doorway that leads somewhere lit (Room 111) and comes back, so darkness is pinned turning off and on again rather than only at the start. Room 5's other two Doorways lead to Rooms 80 and 73, which are dark as well.",
-      "room": 5,
-      "at": {
-        "x": 872,
-        "z": 300
-      },
-      "legs": [
-        {
-          "heading": 0,
-          "seconds": 4
-        },
-        {
-          "heading": 180,
-          "seconds": 4
-        }
-      ]
-    },
-    {
-      "emitter": "navigation",
-      "id": "locked-room-2-refused",
-      "note": "Walking into a locked Doorway empty-handed. The wall sounds and the player stays in Room 2: no arrival anywhere in this trace, which is the refusal.",
-      "room": 2,
-      "at": {
-        "x": 512,
-        "z": 1664
-      },
-      "legs": [
-        {
-          "heading": 270,
-          "seconds": 3
-        }
-      ]
-    },
-    {
-      "emitter": "navigation",
-      "id": "locked-room-2-opened",
-      "note": "The same Doorway carrying object 17, which is what it asks for. The Doorway opens and the walk carries on into Room 74 and beyond.",
-      "room": 2,
-      "at": {
-        "x": 512,
-        "z": 1664
-      },
-      "carrying": [
-        17
-      ],
-      "legs": [
-        {
-          "heading": 270,
-          "seconds": 3
-        }
-      ]
-    },
-    {
-      "emitter": "navigation",
-      "id": "random-room-114",
-      "note": "The Room that rewrites its own first Doorway by picking at random from eight destinations. On the default seed it picks Room 46; the seed is recorded in the header, so a different pick is a different scenario rather than a flaky trace.",
-      "room": 114,
-      "at": {
-        "x": 360,
-        "z": 300
-      },
-      "legs": [
-        {
-          "heading": 0,
-          "seconds": 3
-        },
-        {
-          "heading": 180,
-          "seconds": 3
-        }
-      ]
     }
   ],
   "retired": [
     {
       "emitter": "flight",
-      "ids": [
-        "craft-7-slot7"
-      ],
+      "ids": ["craft-7-slot7"],
       "on": "2026-08-24",
       "reason": "Retired in #133. The Trace Oracle flew craft slot 7 through the standard control loop, integrating 47 frames of pitch input to altitude 8330 and landing it. The Reference Build's slot-7 handler at $AA62 does no such thing: at gameComplete 0 it writes $01 into the pitch high byte and returns, so the Interstellar Ship sits pinned a quarter turn nose-up and cannot be flown at all. The oracle is frozen and cannot re-emit this, so it is retired rather than re-recorded: Authoritative Evidence outranks it where the two disagree. The pinned handler is covered by web/test/mover.test.ts, which pins the attitude and proves it follows the decoded byte, and by the Escape route tests in web/test/escape.test.ts.",
       "evidence": "notes/decode/endgame.md, section \"Ending phases and post-Ending behavior\""
@@ -430,6 +282,27 @@
       "on": "2026-08-22",
       "reason": "Retired in #131. These six traces exercised script 3's hand-in protocol through the `tsti` test, and the Trace Oracle emitted them with that opcode's polarity inverted: it answered \"carried\" where the Reference Build answers \"not carried\". The five listed here recorded the wrong branch and could not be reproduced by a correct interpreter. `script-3-flagged` is unaffected, because its `tsto` test exits before `tsti` runs, and it remains a live scenario. The oracle is frozen and cannot re-emit these, so they are retired rather than re-recorded: Authoritative Evidence outranks it where the two disagree. The predicate order they pinned is now covered by web/test/deliveries.test.ts.",
       "evidence": "notes/decode/endgame.md, section \"`tsti` tests absence, not presence\""
+    },
+    {
+      "emitter": "session",
+      "ids": ["opening", "opening-walk-to-craft", "opening-loop"],
+      "on": "2026-10-30",
+      "reason": "Retired in #924. These traces replayed the opening through a Gameplay Session running the frozen Benson oracle, frame for frame at the Reference Build's 50 a second. ADR 0083 steps Targ's simulation in seconds and ADR 0080 moved its game logic to Talk Scripts, so the session no longer runs Benson Scripts and cannot be graded against them. The oracle is frozen and cannot re-emit them for the live session. The opening's lines, purchase and boarding are covered by web/test/opening.test.ts, web/test/economy.test.ts and web/test/legal-route.test.ts, on the Talk Scripts.",
+      "evidence": "docs/adr/0083-step-targs-simulation-in-seconds.md"
+    },
+    {
+      "emitter": "navigation",
+      "ids": [
+        "world-flip-from-144",
+        "world-flip-from-86",
+        "dark-room-5",
+        "locked-room-2-refused",
+        "locked-room-2-opened",
+        "random-room-114"
+      ],
+      "on": "2026-10-30",
+      "reason": "Retired in #924. These traces replayed Doorways, world flips, dark Rooms and locked Rooms through a Gameplay Session running the frozen Benson oracle, frame for frame at the Reference Build's 50 a second. ADR 0083 steps Targ's simulation in seconds and the session no longer runs Benson Scripts, so it cannot be graded against them. The oracle is frozen and cannot re-emit them for the live session. Doorways and the locked Doorway stay covered by web/test/doorway.test.ts. World flips, dark Rooms and Room 114's random exit had no other end-to-end test.",
+      "evidence": "docs/adr/0083-step-targs-simulation-in-seconds.md"
     }
   ]
 }
