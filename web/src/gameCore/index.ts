@@ -213,8 +213,9 @@ export interface ControlLimits {
   readonly groundAltitude: number | undefined;
   readonly groundExtent: number;
   readonly pitchScale: number;
-  /// Frames per second the decoded parameters were written for. The loop solves its filters for
-  /// any timestep, so this sets the pace without setting the simulation's step.
+  /// Frames per second the decoded per-frame rules are played at: a chosen pace, not a recovered
+  /// rate. The loop solves its filters for any timestep, so this sets the pace without setting
+  /// the simulation's step (ADR 0083).
   readonly referenceFrameRate: number;
   /// How much faster a held run key walks. The Reference Build had no run, so this is a Mac
   /// Adaptation on a decoded step rather than anything it did.
@@ -851,11 +852,13 @@ const walk = (
 const tumble = (
   state: GameState,
   block: Block,
+  dt: number,
   flight: FlightModel
 ): GameState => {
   const rates = block.tumble;
-  const frames = 1;
-  if (rates === undefined) {
+  // Its steps are per frame, like every decoded rate (ADR 0083).
+  const frames = dt * flight.limits.referenceFrameRate;
+  if (rates === undefined || !(frames > 0)) {
     return state;
   }
   const player = state.player;
@@ -868,7 +871,7 @@ const tumble = (
     units * frames * flight.radiansPerUnit;
   const spun: GameState = {
     ...state,
-    elapsed: state.elapsed,
+    elapsed: state.elapsed + dt,
     player: {
       ...player,
       heading: wrap(player.heading + step(rates.yawStep)),
@@ -886,7 +889,8 @@ const tumble = (
   // which is why a walker who fell off the Colony Craft does not fall again.
   return transition(
     { ...spun, colonyCraftFlag: 0, mover: undefined },
-    fall / Math.max(frames, 1),
+    // The verdict reads the rate of descent per frame.
+    fall,
     flight
   );
 };
@@ -947,7 +951,7 @@ const integrate = (
   const player = counted.player;
   const block = blockFor(flight.document, installed);
   if (block.handler === 'tumble') {
-    return tumble(counted, block, flight);
+    return tumble(counted, block, dt, flight);
   }
   if (block.handler === 'slot7') {
     // The Interstellar Ship's handler pins pitch nose-up and returns

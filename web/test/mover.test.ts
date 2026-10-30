@@ -1120,6 +1120,27 @@ describe('the crash tumble the engine installs over a craft', () => {
     );
   });
 
+  test('falls and spins as far in a second whatever the step (ADR 0083)', () => {
+    const [twenties, sixties] = ([20, 60] as const).map(steps => {
+      let state = aloft();
+      for (let at = 0; at < steps; at += 1) {
+        state = step(state, intent({}), 1 / steps, flight);
+      }
+      return state;
+    }) as [GameState, GameState];
+
+    // Twenty of the original's frames a second, whatever the browser's rate.
+    expect(sixties.player.position.y).toBeCloseTo(
+      twenties.player.position.y,
+      6
+    );
+    expect(sixties.player.heading).toBeCloseTo(twenties.player.heading, 9);
+    expect(400_000 - twenties.player.position.y).toBeCloseTo(
+      20 * 47 * 0x1_00,
+      6
+    );
+  });
+
   test('reaches the ground, gives a verdict, and puts the block away', () => {
     let state: GameState = {
       ...aloft(),
