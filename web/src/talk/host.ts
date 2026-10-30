@@ -74,13 +74,13 @@ interface Block {
 
 /// Engine flags a Talk Script may name, by their bit in `engineFlags`.
 const FLAGS = {
-  commanderAnnoyed: 32,
-  dartBought: 1
+  commanderAnnoyed: 32
 } as const;
 
 /// Engine flags a Talk Script now keeps itself, which a Save from before then
 /// still holds: the script takes each one over once.
 const LEGACY_FLAGS = {
+  dartBought: 1,
   gratitudeGiven: 2,
   shipHired: 4
 } as const;

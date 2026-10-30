@@ -32,7 +32,6 @@ const DART = 1;
 const SHIP = 7;
 const CAPTURED_MECHANOID = 12;
 const STARTS_SCRIPT = 4;
-const DART_BOUGHT = 1;
 const COMMANDER_ANNOYED = 32;
 const BRIEFING = 102;
 
@@ -132,7 +131,6 @@ describe('the opening', () => {
     session.input('KeyY');
     afterLine(session, 'TRANSACTION COMPLETED');
     expect(credits(session)).toBe(before - 5000);
-    expect(session.scripts!.host.engineFlags & DART_BOUGHT).toBe(DART_BOUGHT);
     expect(shown(session)).toContain(`YOU HAVE ${before - 5000} CREDITS`);
     expect(session.talk!.reports).toContainEqual(
       expect.objectContaining({ kind: 'run end', outcome: 'completed' })

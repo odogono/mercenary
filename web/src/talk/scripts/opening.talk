@@ -85,7 +85,7 @@ end offerDart
 
 -- The Dart's Benson Script tells a buyer whose the Dart was.
 on buyDart
-  ask world to setFlag "dartBought"
+  send dartSold to commerce
   ask world to spend price
   report ["TRANSACTION COMPLETED", creditsLine()] and wait
   clear and wait
