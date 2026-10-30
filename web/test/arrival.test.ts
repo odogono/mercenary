@@ -2,15 +2,10 @@ import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
 import type { GameplaySession } from '../src/session/index.ts';
-import {
-  arrivalTunables,
-  bensonTunables,
-  type Settings
-} from '../src/settings/index.ts';
+import { type Settings } from '../src/settings/index.ts';
 import {
   ArrivalDirector,
   type ArrivalPacing,
-  type ArrivalPacingChoice,
   type ArrivalSessionBridge
 } from '../src/shell/arrival.ts';
 import { ARRIVAL_NARRATION } from '../src/shell/arrivalNarration.ts';
@@ -38,26 +33,17 @@ const pacingOf = (from: Settings): ArrivalPacing => ({
 
 interface Harness {
   readonly director: ArrivalDirector;
-  readonly pacingChoices: readonly ArrivalPacingChoice[];
   readonly session: GameplaySession;
 }
 
 const harness = (from: Settings = settings): Harness => {
   const walkabout = createWalkabout(bundle, from);
   const session = walkabout.session;
-  const pacingChoices: ArrivalPacingChoice[] = [];
   const bridge: ArrivalSessionBridge = {
     advance: seconds => {
       session.advance(seconds);
     },
-    playingMessage: () => session.scripts?.activeMessageText,
-    setPacing: choice => {
-      pacingChoices.push(choice);
-      session.scripts!.tunables =
-        choice === 'arrival'
-          ? arrivalTunables(from, 50)
-          : bensonTunables(from, 50);
-    }
+    playingMessage: () => session.scripts?.activeMessageText
   };
   return {
     director: new ArrivalDirector({
@@ -66,7 +52,6 @@ const harness = (from: Settings = settings): Harness => {
       milestones,
       pacing: pacingOf(from)
     }),
-    pacingChoices,
     session
   };
 };
@@ -146,7 +131,7 @@ describe('the Arrival', () => {
   test('runs the script tail at its own pace and hands the game back at the join', () => {
     const run = watched();
 
-    expect(run.harness.pacingChoices).toEqual(['arrival', 'game']);
+    expect(run.harness.director.current().kind).toBe('done');
   });
 
   test('holds the player’s keys until the join, ground view included', () => {
@@ -284,7 +269,7 @@ describe('the Arrival', () => {
     const skipped = harness();
     skipped.director.skipToJoin();
 
-    expect(skipped.pacingChoices).toEqual(['arrival', 'game']);
+    expect(skipped.director.current().kind).toBe('done');
   });
 
   test('leaves a skipped session standing where the game begins', () => {
@@ -369,8 +354,7 @@ describe('an Arrival entered from a restored session', () => {
         advance: seconds => {
           session.advance(seconds);
         },
-        playingMessage: () => session.scripts?.activeMessageText,
-        setPacing: () => {}
+        playingMessage: () => session.scripts?.activeMessageText
       },
       entry: { beat: 'crashImminent', kind: 'resumed' },
       milestones,
@@ -391,8 +375,7 @@ describe('an Arrival entered from a restored session', () => {
     const director = new ArrivalDirector({
       bridge: {
         advance: () => {},
-        playingMessage: () => undefined,
-        setPacing: () => {}
+        playingMessage: () => undefined
       },
       entry: { beat: 'verdict', kind: 'resumed' },
       milestones,

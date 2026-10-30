@@ -6,14 +6,14 @@ import {
   sessionContent,
   type WorldEvent
 } from '../src/session/index.ts';
-import {
-  bensonTunables,
-  flightModel,
-  loadSettings
-} from '../src/settings/index.ts';
+import { flightModel, loadSettings } from '../src/settings/index.ts';
 import { TextTable } from '../src/text/index.ts';
 import { SURFACE, World, room } from '../src/world/index.ts';
-import { BensonProgram, BensonSession } from './oracle/index.ts';
+import {
+  BensonProgram,
+  BensonSession,
+  bensonTunables
+} from './oracle/index.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
 
 const bundle = await loadPayload();

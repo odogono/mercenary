@@ -574,15 +574,14 @@ export class TalkHost {
         do: () => done(() => world.sendShip()),
         mode: 'immediate'
       },
-      setMessageInterval: {
+      setMessageWait: {
         args: [shape.number],
         cost: { fuel: 1 },
-        description: "The Benson Display's message cycle, in frames.",
-        do: (_call, frames) =>
+        description:
+          "The Benson Display's silent wait between bursts, in milliseconds, for the messages that follow.",
+        do: (_call, ms) =>
           done(() => {
-            this.benson.host = this.benson.host.with({
-              messageInterval: whole(frames)
-            });
+            this.benson.messageWaitSeconds = whole(ms) / 1000;
           }),
         mode: 'immediate'
       },

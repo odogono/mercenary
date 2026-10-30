@@ -16,17 +16,14 @@ import {
   type SessionContent,
   type WorldEvent as SessionWorldEvent
 } from '../../src/session/index.ts';
-import {
-  bensonTunables,
-  flightModel,
-  loadSettings
-} from '../../src/settings/index.ts';
+import { flightModel, loadSettings } from '../../src/settings/index.ts';
 import { TextTable } from '../../src/text/index.ts';
 import { World } from '../../src/world/index.ts';
 import {
   BensonProgram,
   BensonSession,
   DEFAULT_SESSION_SEED,
+  bensonTunables,
   type BensonKey,
   type BensonTunables
 } from '../../test/oracle/index.ts';

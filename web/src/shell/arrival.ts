@@ -47,9 +47,6 @@ export type ArrivalPhaseKind =
 
 export type ArrivalPhase = { readonly kind: ArrivalPhaseKind };
 
-/// Which clock the opening script should be running on.
-export type ArrivalPacingChoice = 'arrival' | 'game';
-
 /// Where an Arrival is starting from.
 ///
 /// A fresh session gets the whole sequence. A restored one gets whatever is left of it: the
@@ -83,7 +80,6 @@ export interface ArrivalSessionBridge {
   readonly advance: (seconds: number) => void;
   /// The whole composed text of the message playing now, or undefined for none.
   readonly playingMessage: () => string | undefined;
-  readonly setPacing: (pacing: ArrivalPacingChoice) => void;
 }
 
 export interface ArrivalOptions {
@@ -146,7 +142,7 @@ export class ArrivalDirector {
     this.milestones = options.milestones;
     this.narration = options.narration ?? ARRIVAL_NARRATION;
     this.pacing = options.pacing;
-    this.display = new BensonDisplay(50, this.pacing.timeScale, 0, false);
+    this.display = new BensonDisplay(0, { clearsAfterHold: false });
     switch (options.entry.kind) {
       case 'done':
         this.phase = 'done';
@@ -160,7 +156,6 @@ export class ArrivalDirector {
         this.handedOver = true;
         this.beat = options.entry.beat;
         this.altitude = altitudeAt(options.entry.beat) ?? this.altitude;
-        this.bridge.setPacing('arrival');
         break;
     }
   }
@@ -267,27 +262,20 @@ export class ArrivalDirector {
     return this.pacing.holdSeconds * (item?.holdScale ?? 1);
   }
 
-  /// Preserve the authored line duration by putting any time beyond the authentic half-second
-  /// scanout into the same silent interval the in-game display uses.
-  private intervalFor(item: NarrationItem): number {
+  /// Preserve the authored line duration by putting any time beyond the half-second burst into
+  /// the silent wait the in-game display uses.
+  private waitFor(item: NarrationItem): number {
     const desired =
       [...item.text].length / Math.max(0.001, this.pacing.charactersPerSecond);
-    const active = BensonDisplay.activeFrames / 50;
-    const waiting = Math.max(0, desired - active);
-    return Math.max(
-      26,
-      BensonDisplay.activeFrames +
-        Math.round(waiting * 50 * Math.max(0, this.pacing.timeScale))
-    );
+    return Math.max(0, desired - this.burstSeconds);
   }
 
   private displaySecondsFor(item: NarrationItem): number {
-    const interval = this.intervalFor(item);
-    return (
-      BensonDisplay.activeFrames / 50 +
-      (interval - BensonDisplay.activeFrames) /
-        (50 * Math.max(0.001, this.pacing.timeScale))
-    );
+    return this.burstSeconds + this.waitFor(item);
+  }
+
+  private get burstSeconds(): number {
+    return BensonDisplay.burstShifts * this.display.shiftSeconds;
   }
 
   private beginLine(index: number): void {
@@ -297,7 +285,7 @@ export class ArrivalDirector {
       this.handOver();
       return;
     }
-    this.display.start(arrivalDisplaySource(item.text), this.intervalFor(item));
+    this.display.start(arrivalDisplaySource(item.text), this.waitFor(item));
     this.heldSeconds = 0;
     this.lineElapsed = 0;
     this.phase =
@@ -311,10 +299,6 @@ export class ArrivalDirector {
   private handOver(): void {
     this.handedOver = true;
     this.phase = 'descent';
-    // The opening script has been waiting since the session was built, unadvanced. Its clock is
-    // chosen before it gets its first step, so its first line reveals at the Arrival's rhythm
-    // rather than at the game's.
-    this.bridge.setPacing('arrival');
   }
 
   /// One fixed step of the Arrival.
@@ -377,8 +361,7 @@ export class ArrivalDirector {
     }
     this.beat = heard;
     if (heard === 'statusReport') {
-      // The join. The game is the player's from here, at the game's own pace.
-      this.bridge.setPacing('game');
+      // The join. The game is the player's from here.
       this.phase = 'done';
       return 'join';
     }

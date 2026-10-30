@@ -1,11 +1,7 @@
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
-import {
-  bensonTunables,
-  loadSettings,
-  type Settings
-} from '../../src/settings/index.ts';
+import { loadSettings, type Settings } from '../../src/settings/index.ts';
 import { TextTable } from '../../src/text/index.ts';
 import {
   parseTrace,
@@ -13,7 +9,11 @@ import {
   type TraceObject,
   type TraceValue
 } from '../../src/trace/index.ts';
-import { BensonProgram } from '../oracle/index.ts';
+import {
+  BensonProgram,
+  ORACLE_TIME_SCALE,
+  bensonTunables
+} from '../oracle/index.ts';
 import {
   expectRecordedPayload,
   loadPayload,
@@ -35,7 +35,7 @@ export const scriptSettingsValue = (resolved: Settings) => ({
   },
   scripts: {
     instructionBudget: resolved.scripts.instructionBudget,
-    timeScale: resolved.scripts.timeScale
+    timeScale: ORACLE_TIME_SCALE
   }
 });
 

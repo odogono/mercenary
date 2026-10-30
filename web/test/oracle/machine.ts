@@ -1,19 +1,19 @@
 import { BensonHostState, type BensonEffect } from '../../src/benson/host.ts';
 import {
-  defaultTunables,
-  type BensonTunables
-} from '../../src/benson/tuning.ts';
-import {
   NO_SUBSTITUTIONS,
   type Substitutions,
   type TextTable
 } from '../../src/text/index.ts';
 import type { BensonProgram, Condition, Instruction } from './program.ts';
+import { defaultTunables, type BensonTunables } from './tuning.ts';
 
 export {
+  bensonTunables,
   defaultTunables,
+  ORACLE_TIME_SCALE,
+  waitSecondsFor,
   type BensonTunables
-} from '../../src/benson/tuning.ts';
+} from './tuning.ts';
 
 export interface BensonStateFields {
   readonly callStack: readonly number[];

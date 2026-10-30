@@ -12,11 +12,7 @@ import {
   sessionContent
 } from '../src/session/index.ts';
 import type { SemanticObservations } from '../src/session/observations.ts';
-import {
-  bensonTunables,
-  flightModel,
-  loadSettings
-} from '../src/settings/index.ts';
+import { flightModel, loadSettings } from '../src/settings/index.ts';
 import { TextTable } from '../src/text/index.ts';
 import type { TraceValue } from '../src/trace/index.ts';
 import {
@@ -28,7 +24,8 @@ import { World } from '../src/world/index.ts';
 import {
   BensonProgram,
   BensonSession,
-  DEFAULT_SESSION_SEED
+  DEFAULT_SESSION_SEED,
+  bensonTunables
 } from './oracle/index.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
 

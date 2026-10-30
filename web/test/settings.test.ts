@@ -9,9 +9,9 @@ import {
   DEFAULT_DEPARTURE_REDUCED_MOTION_JOURNEY_SECONDS,
   DEFAULT_DEPARTURE_SNAP_SECONDS,
   DEFAULT_MESSAGE_HOLD_SECONDS,
+  DEFAULT_MESSAGE_WAIT_SECONDS,
   DEFAULT_PRESENTATION_PRESET,
   DEFAULT_SCRIPT_INSTRUCTION_BUDGET,
-  DEFAULT_SCRIPT_TIME_SCALE,
   DEFAULT_SKY_DAY_LENGTH_MINUTES,
   DEFAULT_SKY_LATITUDE_DEGREES,
   DEFAULT_SKY_OBLIQUITY_DEGREES,
@@ -61,11 +61,11 @@ describe('settings that are not there', () => {
   test("the message block's default is a reading pause", () => {
     const { message } = defaultSettings();
     expect(message.holdSeconds).toBe(DEFAULT_MESSAGE_HOLD_SECONDS);
+    expect(message.waitSeconds).toBe(DEFAULT_MESSAGE_WAIT_SECONDS);
   });
 
-  test("the scripts block's defaults are the chosen pace and one advance's budget", () => {
+  test("the scripts block's default is one advance's budget", () => {
     const { scripts } = defaultSettings();
-    expect(scripts.timeScale).toBe(DEFAULT_SCRIPT_TIME_SCALE);
     expect(scripts.instructionBudget).toBe(DEFAULT_SCRIPT_INSTRUCTION_BUDGET);
   });
 
@@ -102,11 +102,9 @@ describe('a document that names only what it changes', () => {
   });
 
   test('takes the defaults for every field it omits within a block it names', () => {
-    const settings = loadSettings('{"scripts": {"timeScale": 1.5}}');
-    expect(settings.scripts.timeScale).toBe(1.5);
-    expect(settings.scripts.instructionBudget).toBe(
-      DEFAULT_SCRIPT_INSTRUCTION_BUDGET
-    );
+    const settings = loadSettings('{"message": {"waitSeconds": 1.5}}');
+    expect(settings.message.waitSeconds).toBe(1.5);
+    expect(settings.message.holdSeconds).toBe(DEFAULT_MESSAGE_HOLD_SECONDS);
   });
 
   test('merges each named block independently of the others', () => {
@@ -115,7 +113,7 @@ describe('a document that names only what it changes', () => {
     );
     expect(settings.message.holdSeconds).toBe(4);
     expect(settings.scripts.instructionBudget).toBe(64);
-    expect(settings.scripts.timeScale).toBe(DEFAULT_SCRIPT_TIME_SCALE);
+    expect(settings.message.waitSeconds).toBe(DEFAULT_MESSAGE_WAIT_SECONDS);
   });
 
   test('reads a null field as absent, as an omitted one', () => {

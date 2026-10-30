@@ -1,4 +1,4 @@
-import { BensonDisplay } from '../../src/benson/display.ts';
+import { BensonDisplay, type BensonPacing } from '../../src/benson/display.ts';
 import { BensonHostState, type BensonEffect } from '../../src/benson/host.ts';
 import { MessageTicker, codePointCount } from '../../src/benson/ticker.ts';
 import type { Description as InteractionDescription } from '../../src/interaction/index.ts';
@@ -14,6 +14,7 @@ import {
   type BensonTunables
 } from './machine.ts';
 import type { BensonKey, BensonProgram } from './program.ts';
+import { waitSecondsFor } from './tuning.ts';
 
 /// Session construction uses this seed. A bare `BensonState` uses `BensonState.defaultSeed`.
 export const DEFAULT_SESSION_SEED = 0x2c_69_2e_d8_1b_7f_0a_31n;
@@ -44,6 +45,8 @@ export class BensonOracle {
   host: BensonHostState;
   ticker: MessageTicker | undefined;
   display: BensonDisplay;
+  /// Live play's: the oracle paces its display from the message interval.
+  messageWaitSeconds: number | undefined;
   private frames = 0;
   private readonly idleDisplayOccurrence = {};
   private messageOccurrence: object | undefined;
@@ -64,11 +67,15 @@ export class BensonOracle {
     this.messageMode = messageMode;
     this.state = new BensonState(randomSeed);
     this.host = BensonHostState.seeding(program);
-    this.display = new BensonDisplay(
-      this.tunables.framesPerSecond,
-      this.tunables.timeScale,
-      this.tunables.messageHoldSeconds
-    );
+    this.display = new BensonDisplay(this.tunables.messageHoldSeconds);
+  }
+
+  /// The live channel's pacing, as the oracle's frame tunables give it.
+  get pacing(): BensonPacing {
+    return {
+      holdSeconds: this.tunables.messageHoldSeconds,
+      waitSeconds: waitSecondsFor(this.host.messageInterval, this.tunables)
+    };
   }
 
   readonly reference = this;
@@ -295,7 +302,10 @@ export class BensonOracle {
       );
     } else {
       this.ticker = undefined;
-      this.display.start(displaySource, this.host.messageInterval);
+      this.display.start(
+        displaySource,
+        waitSecondsFor(this.host.messageInterval, this.tunables)
+      );
     }
     this.messageOccurrence = {};
   }
@@ -338,7 +348,6 @@ export class BensonOracle {
           : (this.completeMessage ?? null),
       display:
         this.legacyDisplaySnapshot() ?? this.display.captureSaveSnapshot(),
-      frames: this.frames,
       host: {
         attackingShip: this.host.attackingShip,
         boardedCraft: this.host.boardedCraft,
@@ -354,9 +363,10 @@ export class BensonOracle {
         shipInbound: this.host.shipInbound,
         signedRegister: this.host.signedRegister,
         tickCounter: this.host.tickCounter
-      }
+      },
       // A Save holds no Benson Script continuation or random state: a running
       // script is lost, and the interpreter's stream starts again from its seed.
+      messageWaitSeconds: null
     };
   }
 
@@ -369,7 +379,6 @@ export class BensonOracle {
       codePointCount(this.ticker.text),
       this.ticker.revealed
     );
-    const messageInterval = Math.max(26, this.host.messageInterval);
     return {
       activeSourceText: this.ticker.text,
       cells: Array.from(
@@ -382,14 +391,16 @@ export class BensonOracle {
         : this.ticker.isRevealed
           ? 'readingHold'
           : 'source',
-      cyclePosition: this.ticker.isRevealed
-        ? messageInterval
-        : Math.min(messageInterval - 1, Math.trunc(revealed)),
-      fractionalFrameRemainder: revealed - Math.trunc(revealed),
-      messageInterval,
+      phaseSeconds: this.ticker.isRevealed
+        ? 0
+        : revealed - Math.trunc(revealed),
       readingHoldProgress: this.ticker.holdProgress,
       restedIntact: false,
-      sourceIndex: Math.trunc(revealed)
+      shifts: this.ticker.isRevealed
+        ? BensonDisplay.burstShifts
+        : Math.min(BensonDisplay.burstShifts - 1, Math.trunc(revealed)),
+      sourceIndex: Math.trunc(revealed),
+      waitSeconds: waitSecondsFor(this.host.messageInterval, this.tunables)
     };
   }
 
@@ -400,12 +411,7 @@ export class BensonOracle {
     snapshot: BensonSaveSnapshot,
     messageMode: BensonMessageMode = 'authentic'
   ): BensonOracle {
-    const framesPerTick = Math.max(1, tunables.framesPerTick);
-    if (snapshot.frames >= framesPerTick) {
-      throw new Error(
-        `Save Snapshot fractional script timing ${snapshot.frames} is outside its tick`
-      );
-    }
+    // A Save holds no tick remainder: the oracle's clock starts its tick again.
     const session = new BensonOracle(
       program,
       text,
@@ -419,11 +425,8 @@ export class BensonOracle {
       ...snapshot.host,
       pendingKey: snapshot.host.pendingKey ?? undefined
     });
-    session.frames = snapshot.frames;
     session.display = BensonDisplay.restore(
       snapshot.display,
-      tunables.framesPerSecond,
-      tunables.timeScale,
       tunables.messageHoldSeconds
     );
     session.messageOccurrence =
@@ -439,8 +442,7 @@ export class BensonOracle {
         tunables.messageHoldSeconds
       );
       session.ticker.restoreProgress(
-        snapshot.display.sourceIndex +
-          snapshot.display.fractionalFrameRemainder,
+        snapshot.display.sourceIndex + snapshot.display.phaseSeconds,
         snapshot.display.readingHoldProgress
       );
     }

@@ -116,9 +116,9 @@ describe('the live browser Gameplay Session', () => {
     expect(
       saveEnvironment(bundle, {
         ...settings,
-        scripts: {
-          ...settings.scripts,
-          timeScale: settings.scripts.timeScale + 1
+        message: {
+          ...settings.message,
+          waitSeconds: settings.message.waitSeconds + 1
         }
       })
     ).not.toEqual(baseline);

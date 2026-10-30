@@ -1,12 +1,17 @@
 /// The live Benson Display and Host Callout. Talk Scripts own game logic, and
-/// the Gameplay Session owns the random stream (ADR 0083); this module loads
-/// no Benson program.
+/// the Gameplay Session owns the random stream; the display is paced in
+/// seconds (ADR 0083). This module loads no Benson program.
 import type { BensonSaveSnapshot } from '../session/save.ts';
 import { NO_SUBSTITUTIONS, type TextTable } from '../text/index.ts';
-import { BensonDisplay } from './display.ts';
+import { BensonDisplay, type BensonPacing } from './display.ts';
 import { BensonHostState, type BensonEffect } from './host.ts';
 import type { BensonKey } from './key.ts';
-import { defaultTunables, type BensonTunables } from './tuning.ts';
+
+/// The game's pacing when settings name none.
+export const DEFAULT_PACING: BensonPacing = {
+  holdSeconds: 3,
+  waitSeconds: 1 / 3
+};
 
 export interface BensonMessagePresentation {
   readonly completedText?: string;
@@ -41,24 +46,21 @@ export class BensonChannel {
   readonly messageMode: BensonMessageMode = 'authentic';
   host: BensonHostState;
   display: BensonDisplay;
-  private frames = 0;
+  /// The wait a Talk Script set for the messages that follow, if any.
+  messageWaitSeconds: number | undefined;
   private readonly idleDisplayOccurrence = {};
   private messageOccurrence: object | undefined;
   private completeMessage: string | undefined;
 
   constructor(
     readonly text: TextTable,
-    public tunables: BensonTunables = defaultTunables()
+    readonly pacing: BensonPacing = DEFAULT_PACING
   ) {
     this.host = new BensonHostState().withDecimal(
       BensonHostState.firstNumberDecimal,
       9000
     );
-    this.display = new BensonDisplay(
-      tunables.framesPerSecond,
-      tunables.timeScale,
-      tunables.messageHoldSeconds
-    );
+    this.display = new BensonDisplay(pacing.holdSeconds);
   }
 
   get credits(): number {
@@ -114,19 +116,15 @@ export class BensonChannel {
         this.host = this.host.with({ messagePlaying: false });
       }
     }
-    // The fraction of a tick left over is saved, so the clock runs on after a restore.
-    this.frames +=
-      seconds * this.tunables.framesPerSecond * this.tunables.timeScale;
-    const framesPerTick = Math.max(1, this.tunables.framesPerTick);
-    const ticks = Math.floor(this.frames / framesPerTick);
-    this.frames -= ticks * framesPerTick;
-    this.host = this.host.with({ tickCounter: this.host.tickCounter + ticks });
     return [];
   }
 
   showText(composed: string, source = composed): void {
     this.completeMessage = composed;
-    this.display.start(source, this.host.messageInterval);
+    this.display.start(
+      source,
+      this.messageWaitSeconds ?? this.pacing.waitSeconds
+    );
     this.messageOccurrence = {};
     this.host = this.host.with({ messagePlaying: true });
   }
@@ -153,7 +151,6 @@ export class BensonChannel {
           ? null
           : (this.completeMessage ?? null),
       display: this.display.captureSaveSnapshot(),
-      frames: this.frames,
       host: {
         attackingShip: host.attackingShip,
         boardedCraft: host.boardedCraft,
@@ -169,17 +166,13 @@ export class BensonChannel {
         shipInbound: host.shipInbound,
         signedRegister: host.signedRegister,
         tickCounter: host.tickCounter
-      }
+      },
+      messageWaitSeconds: this.messageWaitSeconds ?? null
     };
   }
 
   restore(snapshot: BensonSaveSnapshot): BensonPort {
-    if (snapshot.frames >= Math.max(1, this.tunables.framesPerTick)) {
-      throw new Error(
-        `Save Snapshot fractional script timing ${snapshot.frames} is outside its tick`
-      );
-    }
-    const channel = new BensonChannel(this.text, this.tunables);
+    const channel = new BensonChannel(this.text, this.pacing);
     // Old interpreter continuations are retired. World flags, credits and the
     // display survive; Talk's own continuation is restored separately.
     channel.host = new BensonHostState({
@@ -187,12 +180,10 @@ export class BensonChannel {
       engineFlags: snapshot.host.engineFlags & ~0xc0,
       pendingKey: undefined
     });
-    channel.frames = snapshot.frames;
+    channel.messageWaitSeconds = snapshot.messageWaitSeconds ?? undefined;
     channel.display = BensonDisplay.restore(
       snapshot.display,
-      this.tunables.framesPerSecond,
-      this.tunables.timeScale,
-      this.tunables.messageHoldSeconds
+      this.pacing.holdSeconds
     );
     channel.messageOccurrence =
       snapshot.display.activeSourceText === null ? undefined : {};

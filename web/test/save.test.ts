@@ -109,7 +109,7 @@ describe('a Save Snapshot', () => {
     );
     const snapshot = gameplay.captureSaveSnapshot();
 
-    expect(SAVE_SCHEMA_VERSION).toBe(18);
+    expect(SAVE_SCHEMA_VERSION).toBe(19);
     expect(snapshot).toHaveProperty('carriedStack');
     expect(snapshot).toHaveProperty('deliveryFrames');
     expect(snapshot).toHaveProperty('objectFlags');

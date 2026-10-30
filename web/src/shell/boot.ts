@@ -1,7 +1,6 @@
 import { IDLE } from '../gameCore/index.ts';
 import { fetchAssets, fetchReader, load } from '../payload/load.ts';
 import type { PresentationEvent, SessionSnapshot } from '../session/index.ts';
-import { arrivalTunables, bensonTunables } from '../settings/index.ts';
 import { createTargOrrery, skyStateAt, targOrreryFor } from '../sky/index.ts';
 import { TargPresentationClock, formatTargTime } from '../sky/time.ts';
 import { SoundPresenter } from '../sound/presenter.ts';
@@ -315,13 +314,7 @@ try {
           snapshot = session.advance(seconds).snapshot;
           checkpointChangedResume(false);
         },
-        playingMessage: () => session.scripts?.activeMessageText,
-        setPacing: choice => {
-          scriptsOf().tunables =
-            choice === 'arrival'
-              ? arrivalTunables(settings, 50)
-              : bensonTunables(settings, 50);
-        }
+        playingMessage: () => session.scripts?.activeMessageText
       },
       entry: arrivalEntryFor(fresh),
       milestones,

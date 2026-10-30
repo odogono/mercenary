@@ -5,21 +5,29 @@ export type BensonDisplayPhase = 'feeding' | 'waiting' | 'holding' | 'finished';
 
 const blankCell = (): string => ' ';
 
+/// How long the Benson Display pauses, in seconds (ADR 0083): the silent wait
+/// between bursts, and the reading hold once a message has arrived.
+export interface BensonPacing {
+  readonly holdSeconds: number;
+  readonly waitSeconds: number;
+}
+
 /// The Reference Build's session-persistent 23-cell communications display.
 ///
 /// A message's display source, padding words included, enters from the right in 25-shift
-/// bursts separated by the silent `$E1` wait. At the first boundary after the last printable
+/// bursts separated by a silent wait. At the first boundary after the last printable
 /// character has arrived the row rests through its reading hold; the message is then released,
 /// and the remaining padding and the emitter's trailing spaces carry the row off the left edge
 /// while the script continues. `clearsAfterHold` keeps that departure; the shell's Arrival
 /// Narration turns it off because it paces its own holds over a still row.
+///
+/// The row moves one character a shift, `shiftsPerSecond` a second; everything else is in
+/// seconds.
 export class BensonDisplay {
-  static readonly activeFrames = 25;
-  static readonly maximumActiveTimeScale = 1;
+  static readonly burstShifts = 25;
   static readonly width = 23;
 
-  readonly framesPerSecond: number;
-  readonly timeScale: number;
+  readonly shiftSeconds: number;
   readonly holdSeconds: number;
   readonly clearsAfterHold: boolean;
   private cells: string[] = Array.from(
@@ -32,9 +40,11 @@ export class BensonDisplay {
   /// One past the last printable source point; the reading hold waits for this much.
   private printableEnd = 0;
   private sourceIndex = 0;
-  private cyclePosition = 0;
-  private cycleFrames = 26;
-  private frameRemainder = 0;
+  /// Shifts taken in the current burst; a full burst is waiting.
+  private shifts = 0;
+  /// Seconds into the current shift or wait.
+  private phaseSeconds = 0;
+  private waitSeconds = 0;
   private holdProgress = 0;
   private phase: BensonDisplayPhase = 'finished';
   private exhausted = false;
@@ -44,26 +54,30 @@ export class BensonDisplay {
   private restedIntact = false;
 
   constructor(
-    framesPerSecond = 50,
-    timeScale = 1,
     holdSeconds = 3,
-    clearsAfterHold = true
+    {
+      clearsAfterHold = true,
+      shiftsPerSecond = 50
+    }: {
+      readonly clearsAfterHold?: boolean;
+      readonly shiftsPerSecond?: number;
+    } = {}
   ) {
-    this.framesPerSecond = Math.max(1, framesPerSecond);
-    this.timeScale = Math.max(0, timeScale);
+    this.shiftSeconds = 1 / Math.max(1, shiftsPerSecond);
     this.holdSeconds = Math.max(0, holdSeconds);
     this.clearsAfterHold = clearsAfterHold;
   }
 
-  start(text: string, messageInterval: number): void {
+  /// Starts a message whose bursts are `waitSeconds` apart.
+  start(text: string, waitSeconds: number): void {
     this.source = text;
     this.hasOccurrence = true;
     this.sourcePoints = [...text];
     this.printableEnd = BensonDisplay.printableEndOf(this.sourcePoints);
     this.sourceIndex = 0;
-    this.cyclePosition = 0;
-    this.cycleFrames = Math.max(26, Math.trunc(messageInterval));
-    this.frameRemainder = 0;
+    this.shifts = 0;
+    this.phaseSeconds = 0;
+    this.waitSeconds = Math.max(0, waitSeconds);
     this.holdProgress = 0;
     this.phase = 'feeding';
     this.exhausted = false;
@@ -80,11 +94,8 @@ export class BensonDisplay {
   }
 
   advance(seconds: number): void {
-    if (seconds <= 0 || this.phase === 'finished') {
-      return;
-    }
     let remaining = seconds;
-    while (remaining > 0 && (this.phase as BensonDisplayPhase) !== 'finished') {
+    while (remaining > 0 && this.phase !== 'finished') {
       if (this.phase === 'holding') {
         const used = Math.min(remaining, this.holdSeconds - this.holdProgress);
         this.advanceHold(used);
@@ -94,58 +105,23 @@ export class BensonDisplay {
         }
         continue;
       }
-      // Scaling the silent interval preserves the browser's script pacing. Scanout itself is
-      // capped at the recovered 50 Hz: the gameplay scale of six otherwise turns a whole
-      // message into an imperceptible four- or five-render-frame flash.
-      const phaseScale =
-        this.phase === 'feeding'
-          ? Math.min(BensonDisplay.maximumActiveTimeScale, this.timeScale)
-          : this.timeScale;
-      const rate = this.framesPerSecond * phaseScale;
-      if (rate <= 0) {
+      const needed =
+        (this.phase === 'feeding' ? this.shiftSeconds : this.waitSeconds) -
+        this.phaseSeconds;
+      // A step's float sum may fall a hair short of a boundary it reaches.
+      if (remaining < needed - 1e-9) {
+        this.phaseSeconds += remaining;
         return;
       }
-      const initialRemainder = this.frameRemainder;
-      const available = initialRemainder + remaining * rate;
-      const frames = Math.floor(
-        available + Number.EPSILON * Math.max(1, available) * 16
-      );
-      if (frames === 0) {
-        this.frameRemainder = available;
-        return;
-      }
-      const phaseBoundary =
-        this.phase === 'feeding'
-          ? BensonDisplay.activeFrames - this.cyclePosition
-          : this.cycleFrames - this.cyclePosition;
-      let processed = 0;
-      while (processed < Math.min(frames, phaseBoundary)) {
-        this.advanceFrame();
-        processed += 1;
-        if ((this.phase as BensonDisplayPhase) === 'finished') {
-          break;
-        }
-      }
-      const consumed = Math.max(0, (processed - initialRemainder) / rate);
-      remaining = Math.max(0, remaining - consumed);
-      if ((this.phase as BensonDisplayPhase) === 'finished') {
-        this.frameRemainder = 0;
-        return;
-      }
-      if (processed < phaseBoundary) {
-        this.frameRemainder = Math.max(0, available - processed);
-        return;
-      }
-      this.frameRemainder = 0;
+      remaining = Math.max(0, remaining - Math.max(0, needed));
+      this.phaseSeconds = 0;
+      this.step();
     }
   }
 
-  private advanceFrame(): void {
+  /// Ends the current shift or wait.
+  private step(): void {
     if (this.phase === 'waiting') {
-      this.cyclePosition += 1;
-      if (this.cyclePosition < this.cycleFrames) {
-        return;
-      }
       if (!this.released && this.sourceIndex >= this.printableEnd) {
         this.phase = 'holding';
         if (this.holdSeconds === 0) {
@@ -153,15 +129,16 @@ export class BensonDisplay {
         }
         return;
       }
-      this.cyclePosition = 0;
+      // The wait's end is the next burst's first shift.
+      this.shifts = 0;
       this.phase = 'feeding';
     }
     this.shift();
     if ((this.phase as BensonDisplayPhase) === 'finished') {
       return;
     }
-    this.cyclePosition += 1;
-    if (this.cyclePosition === BensonDisplay.activeFrames) {
+    this.shifts += 1;
+    if (this.shifts === BensonDisplay.burstShifts) {
       this.phase = 'waiting';
       if (this.cells.join('').trim() === this.source.trim()) {
         this.restedIntact = true;
@@ -204,8 +181,8 @@ export class BensonDisplay {
     }
     this.cells = [...this.readingCells()];
     this.released = true;
-    this.cyclePosition = 0;
-    this.frameRemainder = 0;
+    this.shifts = 0;
+    this.phaseSeconds = 0;
     this.phase = 'feeding';
     if (this.exhausted && this.isBlank) {
       this.settle();
@@ -214,14 +191,14 @@ export class BensonDisplay {
 
   /// The row has left; rest at the interval boundary like any finished message.
   private settle(): void {
-    this.cyclePosition = this.cycleFrames;
-    this.frameRemainder = 0;
+    this.shifts = BensonDisplay.burstShifts;
+    this.phaseSeconds = 0;
     this.phase = 'finished';
   }
 
   finish(): void {
     while (this.phase === 'feeding' || this.phase === 'waiting') {
-      this.advanceFrame();
+      this.step();
     }
     this.holdProgress = this.holdSeconds;
     if (this.phase === 'holding') {
@@ -231,10 +208,10 @@ export class BensonDisplay {
       (this.phase as BensonDisplayPhase) === 'feeding' ||
       (this.phase as BensonDisplayPhase) === 'waiting'
     ) {
-      this.advanceFrame();
+      this.step();
     }
     this.phase = 'finished';
-    this.frameRemainder = 0;
+    this.phaseSeconds = 0;
   }
 
   get displayText(): string {
@@ -293,7 +270,7 @@ export class BensonDisplay {
   }
 
   get soundCharacter(): string | undefined {
-    return this.phase === 'feeding' && this.cyclePosition > 0
+    return this.phase === 'feeding' && this.shifts > 0
       ? this.cells.at(-1)
       : undefined;
   }
@@ -325,28 +302,24 @@ export class BensonDisplay {
               : this.exhausted
                 ? 'blankFeed'
                 : 'source',
-      cyclePosition: this.cyclePosition,
-      fractionalFrameRemainder: this.frameRemainder,
-      messageInterval: this.cycleFrames,
+      phaseSeconds: this.phaseSeconds,
       readingHoldProgress: this.holdProgress,
       restedIntact: this.restedIntact,
-      sourceIndex: this.sourceIndex
+      shifts: this.shifts,
+      sourceIndex: this.sourceIndex,
+      waitSeconds: this.waitSeconds
     };
   }
 
   static restore(
     snapshot: BensonDisplaySaveSnapshot,
-    framesPerSecond: number,
-    timeScale: number,
     holdSeconds: number,
-    clearsAfterHold = true
+    options?: {
+      readonly clearsAfterHold?: boolean;
+      readonly shiftsPerSecond?: number;
+    }
   ): BensonDisplay {
-    const display = new BensonDisplay(
-      framesPerSecond,
-      timeScale,
-      holdSeconds,
-      clearsAfterHold
-    );
+    const display = new BensonDisplay(holdSeconds, options);
     if (snapshot.readingHoldProgress > display.holdSeconds) {
       throw new Error(
         'Save Snapshot Benson reading-hold progress exceeds its configured hold'
@@ -376,9 +349,9 @@ export class BensonDisplay {
     display.sourcePoints = [...display.source];
     display.printableEnd = BensonDisplay.printableEndOf(display.sourcePoints);
     display.sourceIndex = snapshot.sourceIndex;
-    display.cyclePosition = snapshot.cyclePosition;
-    display.cycleFrames = snapshot.messageInterval;
-    display.frameRemainder = snapshot.fractionalFrameRemainder;
+    display.shifts = snapshot.shifts;
+    display.waitSeconds = snapshot.waitSeconds;
+    display.phaseSeconds = snapshot.phaseSeconds;
     display.holdProgress = snapshot.readingHoldProgress;
     display.restedIntact = snapshot.restedIntact;
     display.exhausted =
@@ -395,7 +368,7 @@ export class BensonDisplay {
         ? 'finished'
         : snapshot.completionPhase === 'readingHold'
           ? 'holding'
-          : snapshot.cyclePosition < BensonDisplay.activeFrames
+          : snapshot.shifts < BensonDisplay.burstShifts
             ? 'feeding'
             : 'waiting';
     return display;
