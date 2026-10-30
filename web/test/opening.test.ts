@@ -32,7 +32,6 @@ const DART = 1;
 const SHIP = 7;
 const CAPTURED_MECHANOID = 12;
 const STARTS_SCRIPT = 4;
-const COMMANDER_ANNOYED = 32;
 const BRIEFING = 102;
 
 const newGame = (): GameplaySession =>
@@ -138,18 +137,13 @@ describe('the opening', () => {
 
     boardDart(session);
     untilBenson(session, 'MESSAGE FROM PALYARS');
-    expect(session.scripts!.host.engineFlags & COMMANDER_ANNOYED).toBe(0);
   });
 
   test('lets the Dart’s own script scold a player who takes it unpaid', () => {
     const session = newGame();
     atOffer(session);
     boardDart(session);
-    untilBenson(session, 'THIS CRAFT BELONGED TO');
-    advanceUntil(
-      session,
-      () => (session.scripts!.host.engineFlags & COMMANDER_ANNOYED) !== 0
-    );
+    untilBenson(session, 'PALYAR SHIP ATTACKING');
   });
 
   test('tells a player who spoke up but didn’t buy that it will be a long walk', () => {

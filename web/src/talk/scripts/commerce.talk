@@ -69,7 +69,7 @@ on boarded craft where craft = "dart"
   end if
   if not bought then
     report ["THIS CRAFT BELONGED TO", "THE PALYAR COMMANDER'S", "BROTHER-IN-LAW", "HE IS NOT TOO PLEASED"] and wait
-    ask world to setFlag "commanderAnnoyed"
+    send commanderAnnoyed to escape
     show "PALYAR SHIP ATTACKING" and wait
     ask world to sendAttacker
     clear and wait
