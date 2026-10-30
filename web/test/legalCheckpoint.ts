@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 
-import { BensonChannel, type BensonPort } from '../src/benson/channel.ts';
+import { BensonChannel } from '../src/benson/channel.ts';
 import {
   REFERENCE_WALKING_EYE_ALTITUDE,
   intent
@@ -28,12 +28,7 @@ import {
   type SessionScenarioLeg
 } from '../src/trace/session.ts';
 import { World } from '../src/world/index.ts';
-import {
-  BensonProgram,
-  BensonSession,
-  DEFAULT_SESSION_SEED,
-  bensonTunables
-} from './oracle/index.ts';
+import { DEFAULT_SESSION_SEED } from './oracle/index.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
 
 /// Drives a Gameplay Session the way a player would and reports what it observed.
@@ -59,10 +54,8 @@ const STEP = 1 / 50;
 
 export class LegalRoute {
   /// A fresh route wired as live play is: the Benson Display and the Talk
-  /// Scripts, all of them unless named. `engine: 'benson'` plays the original
-  /// Benson Scripts on the test oracle instead, for the parity tests alone.
+  /// Scripts, all of them unless named.
   static async open(options?: {
-    readonly engine?: 'benson' | 'talk';
     /// Whether the new game begins, as live play does, and plays the opening.
     readonly opening?: boolean;
     readonly talk?: readonly TalkScript[];
@@ -72,26 +65,13 @@ export class LegalRoute {
       await Bun.file(join(repositoryRoot, 'settings.json')).text()
     );
     const world = new World(bundle);
-    if (
-      bundle.benson === undefined ||
-      bundle.text === undefined ||
-      bundle.flight === undefined
-    ) {
+    if (bundle.text === undefined || bundle.flight === undefined) {
       throw new Error('the Data Payload is incomplete');
     }
-    const text = new TextTable(bundle.text);
-    let scripts: BensonPort;
-    if (options?.engine === 'benson') {
-      const program = BensonProgram.fromDocument(bundle.benson);
-      scripts = new BensonSession(
-        program,
-        text,
-        bensonTunables(settings, program.framesPerTick),
-        DEFAULT_SESSION_SEED
-      );
-    } else {
-      scripts = new BensonChannel(text, bensonPacing(settings));
-    }
+    const scripts = new BensonChannel(
+      new TextTable(bundle.text),
+      bensonPacing(settings)
+    );
     const session = new GameplaySession(
       sessionContent(
         world,
@@ -102,11 +82,9 @@ export class LegalRoute {
       scripts,
       DEFAULT_SESSION_SEED
     );
-    if (options?.engine !== 'benson') {
-      session.useTalkScripts(options?.talk ?? TALK_SCRIPTS);
-      if (options?.opening === true) {
-        session.begin();
-      }
+    session.useTalkScripts(options?.talk ?? TALK_SCRIPTS);
+    if (options?.opening === true) {
+      session.begin();
     }
     return new LegalRoute(session);
   }

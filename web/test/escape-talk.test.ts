@@ -5,59 +5,45 @@ import { COMMERCE, ESCAPE } from '../src/talk/scripts.ts';
 import { room } from '../src/world/index.ts';
 import { LegalRoute } from './legalCheckpoint.ts';
 import {
-  ENGINES,
   Lines,
   openRoute,
   openRouteWith,
   presetting,
-  talkScript,
-  type Engine
+  talkScript
 } from './talkParity.ts';
 
-/// The Escape as a Talk Script (ADR 0080), against Benson Script 7 as the
-/// oracle: each route is played twice, once by each, and both must show the
-/// same lines and leave the same Ending phase. `escape.test.ts` covers the
-/// routes themselves against Benson Script 7 alone.
+/// The Escape as a Talk Script (ADR 0080), ported from Benson Script 7: each
+/// route must show the lines Benson showed and leave the same Ending phase,
+/// which the snapshot keeps. `escape.test.ts` covers the routes themselves.
 
 const SHIP = 7;
 const NOVADRIVE = 25;
 const HANGAR_ROOM = 5;
 const ADVERT_CELL = 0x32;
 const CELL = 0x1_00_00;
-const COMMANDER_ANNOYED = 0x20;
 
 /// The Escape asks commerce whether the ship was hired.
 const escapeScript = talkScript(ESCAPE, COMMERCE);
-const open = (engine: Engine, annoyed = false): Promise<LegalRoute> =>
+const open = (annoyed = false): Promise<LegalRoute> =>
   annoyed
     ? openRouteWith(
-        engine,
         presetting(talkScript(ESCAPE, COMMERCE), ESCAPE, 'annoyed', 'true')
       )
-    : openRoute(engine, ESCAPE, COMMERCE);
+    : openRoute(ESCAPE, COMMERCE);
 
 const phase = (session: GameplaySession): number =>
   session.observations().observations['endingPhase'] as number;
 
-/// Y, as the shell sends it: to Benson, and to the Talk Scripts.
 const pressY = (route: LegalRoute): void => {
   route.run({ command: { key: 'y', kind: 'press' }, kind: 'command' });
-  route.session.input('KeyY');
 };
 
 /// Aboard the recovered ship in the hangar, the Escape just started.
 const aboardInTheHangar = async (
-  engine: Engine,
   novadrive = true,
   annoyed = false
 ): Promise<Lines> => {
-  const route = await open(engine, annoyed);
-  if (annoyed && engine === 'benson') {
-    const scripts = route.session.scripts!;
-    scripts.host = scripts.host.with({
-      engineFlags: scripts.host.engineFlags | COMMANDER_ANNOYED
-    });
-  }
+  const route = await open(annoyed);
   if (novadrive) {
     route.session.carry(NOVADRIVE);
   }
@@ -107,30 +93,24 @@ const strikeTheAdvert = (route: LegalRoute): void => {
   route.advance(30);
 };
 
-/// Plays a route by both engines and returns each one's lines and phase.
-const both = async (
-  play: (engine: Engine) => Promise<Lines>
-): Promise<Record<Engine, { lines: string[]; phase: number }>> => {
-  const result = {} as Record<Engine, { lines: string[]; phase: number }>;
-  for (const engine of ENGINES) {
-    const lines = await play(engine);
-    result[engine] = {
-      lines: lines.lines,
-      phase: phase(lines.route.session)
-    };
-  }
+/// Plays a route on Talk, checking its lines and phase against Benson's.
+const onTalk = async (
+  play: () => Promise<Lines>
+): Promise<{ lines: string[]; phase: number }> => {
+  const lines = await play();
+  const result = { lines: lines.lines, phase: phase(lines.route.session) };
+  expect(result).toMatchSnapshot();
   return result;
 };
 
 describe('the Escape as a Talk Script', () => {
   test('launches with a Novadrive as Benson Script 7 does', async () => {
-    const played = await both(async engine =>
-      launch(await aboardInTheHangar(engine)).until('SEE YOU IN MERCENARY II')
+    const played = await onTalk(async () =>
+      launch(await aboardInTheHangar()).until('SEE YOU IN MERCENARY II')
     );
-    expect(played.talk).toEqual(played.benson);
     // The Escape writes 1, and the Ending carries the phase on from there.
-    expect(played.talk.phase).toBeGreaterThan(0);
-    expect(played.talk.lines).toEqual([
+    expect(played.phase).toBeGreaterThan(0);
+    expect(played.lines).toEqual([
       'INTERSTELLAR SHIP',
       'PRESS Y TO LAUNCH',
       'THE AUTHOR SENDS YOU',
@@ -143,30 +123,27 @@ describe('the Escape as a Talk Script', () => {
   }, 120_000);
 
   test('repeats GAME OVER every 15 ticks, silencing both voices', async () => {
-    const played = await both(async engine =>
-      launch(await aboardInTheHangar(engine))
+    const played = await onTalk(async () =>
+      launch(await aboardInTheHangar())
         .until('SEE YOU IN MERCENARY II')
         .advance(20)
     );
-    const gameOvers = played.talk.lines.filter(line => line === 'GAME OVER');
+    const gameOvers = played.lines.filter(line => line === 'GAME OVER');
     expect(gameOvers.length).toBeGreaterThan(1);
-    expect(played.talk).toEqual(played.benson);
   }, 120_000);
 
   test('tells of the commander’s brother-in-law when he is annoyed', async () => {
-    const played = await both(async engine => {
-      const lines = await aboardInTheHangar(engine, true, true);
+    const played = await onTalk(async () => {
+      const lines = await aboardInTheHangar(true, true);
       return launch(lines).until('SEE YOU IN MERCENARY II');
     });
-    expect(played.talk).toEqual(played.benson);
-    expect(played.talk.lines).toContain('IS PLEASED YOU,VE GONE');
+    expect(played.lines).toContain('IS PLEASED YOU,VE GONE');
   }, 120_000);
 
   test('hears from commerce that the Dart was taken unpaid', async () => {
-    const route = await open('talk');
-    // Commerce scolds the thief, and tells the Escape. The Benson oracle
-    // starts no Benson Script for a Dart boarded this way, so there is
-    // nothing to compare.
+    const route = await open();
+    // Commerce scolds the thief, and tells the Escape. Benson started no
+    // Benson Script for a Dart boarded this way, so there is no record.
     route.session.board(1);
     route.advance(1 / 20);
     route.session.leaveCraft();
@@ -180,53 +157,48 @@ describe('the Escape as a Talk Script', () => {
   }, 120_000);
 
   test('without a Novadrive, refuses on the surface', async () => {
-    const played = await both(async engine =>
-      surfaceAboard(
-        (await aboardInTheHangar(engine, false)).until('INTERSTELLAR SHIP')
-      )
+    const played = await onTalk(async () =>
+      surfaceAboard((await aboardInTheHangar(false)).until('INTERSTELLAR SHIP'))
         .until('NOVADRIVE REQUIRED')
         .advance(5)
     );
-    expect(played.talk).toEqual(played.benson);
-    expect(played.talk.lines).toEqual([
+    expect(played.lines).toEqual([
       'INTERSTELLAR SHIP',
       'NOVADRIVE REQUIRED',
       ''
     ]);
-    expect(played.talk.phase).toBe(0);
+    expect(played.phase).toBe(0);
   }, 120_000);
 
   test('leaving the ship at the prompt ends with a blank line', async () => {
-    const played = await both(async engine => {
+    const played = await onTalk(async () => {
       const lines = surfaceAboard(
-        (await aboardInTheHangar(engine)).until('INTERSTELLAR SHIP')
+        (await aboardInTheHangar()).until('INTERSTELLAR SHIP')
       ).until('PRESS Y TO LAUNCH');
       lines.route.run({ command: { kind: 'leaveCraft' }, kind: 'command' });
       lines.advance(2);
       pressY(lines.route);
       return lines.advance(5);
     });
-    expect(played.talk).toEqual(played.benson);
-    expect(played.talk.lines.at(-1)).toBe('');
-    expect(played.talk.phase).toBe(0);
+    expect(played.lines.at(-1)).toBe('');
+    expect(played.phase).toBe(0);
   }, 120_000);
 
   test('a Novadrive dropped before Y sends it back to refuse', async () => {
-    const played = await both(async engine => {
+    const played = await onTalk(async () => {
       const lines = surfaceAboard(
-        (await aboardInTheHangar(engine)).until('INTERSTELLAR SHIP')
+        (await aboardInTheHangar()).until('INTERSTELLAR SHIP')
       ).until('PRESS Y TO LAUNCH');
       expect(lines.route.session.drop(NOVADRIVE).outcome.kind).toBe('dropped');
       pressY(lines.route);
       return lines.until('NOVADRIVE REQUIRED').advance(5);
     });
-    expect(played.talk).toEqual(played.benson);
-    expect(played.talk.phase).toBe(0);
+    expect(played.phase).toBe(0);
   }, 120_000);
 
   test('a destroyed advert keeps the player on Targ', async () => {
-    const played = await both(async engine => {
-      const route = await open(engine);
+    const played = await onTalk(async () => {
+      const route = await open();
       strikeTheAdvert(route);
       route.session.carry(NOVADRIVE);
       route.session.teleport(room(HANGAR_ROOM));
@@ -234,19 +206,18 @@ describe('the Escape as a Talk Script', () => {
       route.run({ action: 'board', kind: 'reach', slot: SHIP }, 60);
       return launch(new Lines(route)).until('FIX HIS ADVERT').advance(5);
     });
-    expect(played.talk).toEqual(played.benson);
-    expect(played.talk.lines.slice(-4)).toEqual([
+    expect(played.lines.slice(-4)).toEqual([
       "THE AUTHOR WON'T LET",
       'YOU LEAVE UNTIL YOU',
       'FIX HIS ADVERT',
       ''
     ]);
-    expect(played.talk.phase).toBe(0);
+    expect(played.phase).toBe(0);
   }, 120_000);
 
   test('a Save at the prompt restores and still escapes', async () => {
     const lines = surfaceAboard(
-      (await aboardInTheHangar('talk')).until('INTERSTELLAR SHIP')
+      (await aboardInTheHangar()).until('INTERSTELLAR SHIP')
     ).until('PRESS Y TO LAUNCH');
     const session = lines.route.session;
     const restored = GameplaySession.restore(

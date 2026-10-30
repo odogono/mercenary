@@ -1,45 +1,27 @@
 import { describe, expect, test } from 'bun:test';
 
-import {
-  GameplaySession,
-  TALK_KEPT_ENGINE_FLAGS,
-  type WorldEvent
-} from '../src/session/index.ts';
+import { GameplaySession, type WorldEvent } from '../src/session/index.ts';
 import type { Faction } from '../src/session/sites.ts';
 import { ESCAPE, REACTIONS } from '../src/talk/scripts.ts';
 import { LegalRoute } from './legalCheckpoint.ts';
-import {
-  BensonHostState,
-  BensonSession,
-  BensonState,
-  nextRandom
-} from './oracle/index.ts';
+import { BensonState, nextRandom } from './oracle/index.ts';
 import { loadPayload } from './replay/artifacts.ts';
-import {
-  ENGINES,
-  Lines,
-  presetting,
-  talkScript,
-  type Engine
-} from './talkParity.ts';
+import { Lines, presetting, talkScript } from './talkParity.ts';
 
-/// Real shots dispatch each ported reaction, compared with Benson's lines and
-/// world writes. Hostile craft movement is omitted here so a later combat hit
+/// Real shots dispatch each ported reaction, which must show the lines and
+/// make the world writes Benson did, as the snapshot keeps them. Hostile craft movement is omitted here so a later combat hit
 /// cannot interrupt the dialogue being compared; site-destruction.test.ts
 /// separately follows that encounter through to its end.
 const bundle = await loadPayload();
 const rules = bundle.endgame.combat.siteDestruction;
-const CREDITS = BensonHostState.firstNumberDecimal;
-const GRATITUDE = 2;
 const PASS = 46;
 const CELL = 0x1_00_00;
 const FRAME = 1 / 20;
 
 const fresh = async (
-  engine: Engine,
   scripts = talkScript(REACTIONS, ESCAPE)
 ): Promise<LegalRoute> => {
-  const base = await LegalRoute.open({ engine: 'benson' });
+  const base = await LegalRoute.open({ talk: [] });
   const content = { ...base.session.content };
   delete content.hostile;
   const session = new GameplaySession(
@@ -47,9 +29,7 @@ const fresh = async (
     base.session.game.player,
     base.session.scripts
   );
-  if (engine === 'talk') {
-    session.useTalkScripts(scripts);
-  }
+  session.useTalkScripts(scripts);
   return LegalRoute.resume(session);
 };
 
@@ -81,7 +61,6 @@ const bomb = (route: LegalRoute): readonly WorldEvent[] => {
 
 const outcome = (lines: Lines) => {
   const session = lines.route.session;
-  const host = session.scripts!.host;
   if (session.talk !== undefined) {
     expect(
       session.talk.reports.filter(
@@ -92,19 +71,17 @@ const outcome = (lines: Lines) => {
   return {
     attacking: session.observations().observations['attackingShip'],
     credits: session.observations().observations['credits'],
-    // Only Benson sets the story flags the Talk Scripts keep themselves.
-    flags: host.engineFlags & ~0xc0 & ~TALK_KEPT_ENGINE_FLAGS,
     lines: lines.lines,
     pass: session.residenceOf(PASS),
     passFlags: session.snapshot.objectFlags.get(PASS)
   };
 };
 
-const both = async (play: (engine: Engine) => Promise<Lines>) => {
-  const benson = outcome(await play('benson'));
-  const talk = outcome(await play('talk'));
-  expect(talk).toEqual(benson);
-  return talk;
+/// Plays a scenario on Talk, checking what it left against Benson's.
+const onTalk = async (play: () => Promise<Lines>) => {
+  const result = outcome(await play());
+  expect(result).toMatchSnapshot();
+  return result;
 };
 
 describe('Faction Reactions as a Talk Script', () => {
@@ -126,8 +103,8 @@ describe('Faction Reactions as a Talk Script', () => {
     [18, 'GOOD SHOW,']
   ] as const) {
     test(`matches Benson for ${name}`, async () => {
-      const result = await both(async engine => {
-        const route = await fresh(engine);
+      const result = await onTalk(async () => {
+        const route = await fresh();
         over(route, cellFor(id));
         bomb(route);
         return new Lines(route).advance(60);
@@ -141,20 +118,15 @@ describe('Faction Reactions as a Talk Script', () => {
   for (const id of [2, 3]) {
     for (const byte of [0, 80, 81, 255]) {
       test(`generic Site ${id} rolls byte ${byte}`, async () => {
-        const result = await both(async engine => {
-          const route = await fresh(engine);
+        const result = await onTalk(async () => {
+          const route = await fresh();
           over(route, cellFor(id));
-          // Each runtime draws the same next byte: the oracle from its own
-          // stream, Talk from the session's.
+          // The session's stream draws this byte next.
           let seed = 0n;
           while (nextRandom(new BensonState(seed)).byte !== byte) {
             seed++;
           }
-          if (engine === 'benson') {
-            (route.session.scripts as BensonSession).randomState = seed;
-          } else {
-            route.session.seedRandom(seed);
-          }
+          route.session.seedRandom(seed);
           bomb(route);
           return new Lines(route).advance(20);
         });
@@ -169,8 +141,8 @@ describe('Faction Reactions as a Talk Script', () => {
   }
 
   test('hitting the brother-in-law’s ship announces it and sends an attacker', async () => {
-    const result = await both(async engine => {
-      const route = await fresh(engine);
+    const result = await onTalk(async () => {
+      const route = await fresh();
       const session = route.session;
       const at = session.content.objects.find(
         object => object.slot === 0
@@ -200,23 +172,8 @@ describe('Faction Reactions as a Talk Script', () => {
     expect(result.attacking).toBe(true);
   });
 
-  test('a busy Benson Script loses the original reaction, while Talk queues it', async () => {
-    for (const engine of ENGINES) {
-      const route = await fresh(engine);
-      over(route, cellFor(4));
-      expect(route.session.start(13)).toBe(true);
-      route.advance(1);
-      bomb(route);
-      const lines = new Lines(route).advance(90);
-      expect(lines.lines).toContain('MECHANOID BRIEFING ROOM');
-      expect(lines.lines.includes('NOVABILL - WELL DONE,')).toBe(
-        engine === 'talk'
-      );
-    }
-  });
-
   test('hitting the hostile craft keeps its engine message and starts no reaction', async () => {
-    const base = await fresh('talk');
+    const base = await fresh();
     const target = bundle.endgame.combat.objectHits.targetSlots[0]!;
     // Place the attacker clear of the city, whose Sites claim a shot first.
     const at = { x: 2_000_000, y: 0, z: 2_000_000 };
@@ -253,7 +210,7 @@ describe('Faction Reactions as a Talk Script', () => {
   });
 
   test('a Save keeps two reactions queued while the display is busy', async () => {
-    const route = await fresh('talk');
+    const route = await fresh();
     over(route, cellFor(4));
     bomb(route);
     over(route, cellFor(7));
@@ -273,7 +230,7 @@ describe('Faction Reactions as a Talk Script', () => {
   });
 
   test('restoring and destroying a spent Site does not repeat its reaction', async () => {
-    const route = await fresh('talk');
+    const route = await fresh();
     const cell = cellFor(4);
     over(route, cell);
     bomb(route);
@@ -299,24 +256,20 @@ describe('Faction Reactions as a Talk Script', () => {
 
 /// One shot short of the faction's thanks, using the real threshold logic.
 const grateful = async (
-  engine: Engine,
   faction: Faction,
   passCarried = false,
   already = false
 ): Promise<LegalRoute> => {
-  // Thanked, as Benson keeps it in an engine flag.
+  // Thanked already, as either faction's gratitude leaves it.
   const scripts = already
     ? presetting(talkScript(REACTIONS, ESCAPE), REACTIONS, 'thanked', 'true')
     : talkScript(REACTIONS, ESCAPE);
-  const route = await fresh(engine, scripts);
+  const route = await fresh(scripts);
   const cell = cellFor(faction === 'palyar' ? 6 : 7);
   over(route, cell);
   if (passCarried) {
     route.session.carry(PASS);
   }
-  route.session.scripts!.host = route.session.scripts!.host.with({
-    engineFlags: already ? GRATITUDE : 0
-  });
   const saved = route.session.captureSaveSnapshot();
   return LegalRoute.resume(
     GameplaySession.restore(
@@ -332,15 +285,15 @@ const grateful = async (
             faction === 'mechanoid' ? rules.factionObjective.threshold : 0
         }
       },
-      engine === 'talk' ? { scripts } : undefined
+      { scripts }
     )
   );
 };
 
 describe('gratitude as a Talk Script', () => {
   test('the Palyars move the Pass and give the red hangar hint', async () => {
-    const result = await both(async engine => {
-      const route = await grateful(engine, 'palyar');
+    const result = await onTalk(async () => {
+      const route = await grateful('palyar');
       bomb(route);
       return new Lines(route).advance(90);
     });
@@ -359,8 +312,8 @@ describe('gratitude as a Talk Script', () => {
   });
 
   test('the Palyars pay immediately when the Pass is already carried', async () => {
-    const result = await both(async engine => {
-      const route = await grateful(engine, 'palyar', true);
+    const result = await onTalk(async () => {
+      const route = await grateful('palyar', true);
       bomb(route);
       return new Lines(route).advance(90);
     });
@@ -374,8 +327,8 @@ describe('gratitude as a Talk Script', () => {
   });
 
   test('the Mechanoids thank the player without a reward', async () => {
-    const result = await both(async engine => {
-      const route = await grateful(engine, 'mechanoid');
+    const result = await onTalk(async () => {
+      const route = await grateful('mechanoid');
       bomb(route);
       return new Lines(route).advance(90);
     });
@@ -393,8 +346,8 @@ describe('gratitude as a Talk Script', () => {
 
   for (const faction of ['palyar', 'mechanoid'] as const) {
     test(`${faction} gratitude is silent when either faction has already thanked the player`, async () => {
-      const result = await both(async engine => {
-        const route = await grateful(engine, faction, false, true);
+      const result = await onTalk(async () => {
+        const route = await grateful(faction, false, true);
         bomb(route);
         return new Lines(route).advance(30);
       });
@@ -404,7 +357,7 @@ describe('gratitude as a Talk Script', () => {
   }
 
   test('concurrent gratitude pays once, and a mid-report Save keeps that promise', async () => {
-    const route = await grateful('talk', 'palyar', true);
+    const route = await grateful('palyar', true);
     bomb(route);
     new Lines(route).until('WE ARE MOST PLEASED');
     route.session.talk!.deliver([
@@ -426,7 +379,7 @@ describe('gratitude as a Talk Script', () => {
   });
 
   test('taking the Pass while the hint plays keeps it carried', async () => {
-    const route = await grateful('talk', 'palyar');
+    const route = await grateful('palyar');
     bomb(route);
     new Lines(route).until('YOU WILL FIND A REWARD');
     route.session.carry(PASS);
