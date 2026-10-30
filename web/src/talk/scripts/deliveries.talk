@@ -4,6 +4,11 @@
 
 use show, clear, report from benson
 
+-- The items paid for, to whichever faction had them first. A Save from before
+-- this script kept them marks each on its object instead, which the script
+-- takes over the first time it asks about that item.
+script variable paid = []
+
 -- Each Room, what it wants, and what it pays. The headings and titles are the
 -- lines Benson shows. The Mechanoids take nothing while their captured leader
 -- is away from the briefing room.
@@ -49,8 +54,7 @@ on receive delivery
     end if
   end if
   -- An object is paid for once, to whichever faction has it first.
-  ask world to delivered item
-  if it then
+  if alreadyPaid(item) then
     clear and wait
     return
   end if
@@ -66,7 +70,8 @@ on receive delivery
   repeat forever
     ask world to lies item
     if it is room then
-      ask world to deliver item
+      put [...paid, item] into paid
+      ask world to fix item
       ask world to pay reward
       ask world to credits
       report [reward & " CREDITS PAID", "YOU HAVE " & it & " CREDITS"] and wait
@@ -84,3 +89,10 @@ on receive delivery
     end wait
   end repeat
 end receive
+
+function alreadyPaid item
+  if item is in paid then return true
+  ask world to takeLegacyDelivered item
+  if it then put [...paid, item] into paid
+  return it
+end alreadyPaid
