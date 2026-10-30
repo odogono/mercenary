@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import { BensonHostState } from '../src/benson/index.ts';
 import { GameplaySession } from '../src/session/index.ts';
-import { COMMERCE } from '../src/talk/scripts.ts';
+import { COMMERCE, ESCAPE } from '../src/talk/scripts.ts';
 import { room } from '../src/world/index.ts';
 import { LegalRoute } from './legalCheckpoint.ts';
 import {
@@ -45,9 +45,12 @@ const outcome = (lines: Lines): Outcome => {
   return {
     attacking: host.attackingShip,
     credits: host.decimal(CREDITS),
-    // The hire and the Dart's sale are commerce's own now, so only Benson
-    // sets their engine flags.
-    flags: host.engineFlags & ~0xc0 & ~(SHIP_HIRED | DART_BOUGHT),
+    // The hire, the Dart's sale and the commander's annoyance are Talk
+    // Scripts' own now, so only Benson sets their engine flags.
+    flags:
+      host.engineFlags &
+      ~0xc0 &
+      ~(SHIP_HIRED | DART_BOUGHT | COMMANDER_ANNOYED),
     lines: lines.lines,
     shipInbound: host.shipInbound
   };
@@ -57,7 +60,7 @@ const outcome = (lines: Lines): Outcome => {
 /// as the opening leaves it: armed through a Save, which is how the flag
 /// reaches the session rather than the host it projects.
 const armed = async (engine: Engine, slot: number): Promise<LegalRoute> => {
-  const route = await openRoute(engine, COMMERCE);
+  const route = await openRoute(engine, COMMERCE, ESCAPE);
   const snapshot = route.session.captureSaveSnapshot();
   const restored = GameplaySession.restore(
     route.session.content,
@@ -68,7 +71,7 @@ const armed = async (engine: Engine, slot: number): Promise<LegalRoute> => {
         at === slot ? [at, flags | STARTS_SCRIPT] : [at, flags]
       )
     },
-    engine === 'talk' ? { scripts: talkScript(COMMERCE) } : undefined
+    engine === 'talk' ? { scripts: talkScript(COMMERCE, ESCAPE) } : undefined
   );
   return LegalRoute.resume(restored);
 };
@@ -103,7 +106,7 @@ const both = async (
 
 /// At the hire's prompt, the antenna in hand.
 const atTheHire = async (engine: Engine, credits: number): Promise<Lines> => {
-  const route = await openRoute(engine, COMMERCE);
+  const route = await openRoute(engine, COMMERCE, ESCAPE);
   setCredits(route, credits);
   route.session.carry(ANTENNA);
   route.session.teleport(room(SHIP_RENTAL));
@@ -170,7 +173,7 @@ describe('commerce as a Talk Script', () => {
 
   test('the rental is not working without the antenna', async () => {
     const played = await both(async engine => {
-      const route = await openRoute(engine, COMMERCE);
+      const route = await openRoute(engine, COMMERCE, ESCAPE);
       route.session.teleport(room(SHIP_RENTAL));
       return new Lines(route).advance(10);
     });
@@ -190,7 +193,6 @@ describe('commerce as a Talk Script', () => {
     });
     expect(played.talk).toEqual(played.benson);
     expect(played.talk.lines).toContain('HE IS NOT TOO PLEASED');
-    expect(played.talk.flags & COMMANDER_ANNOYED).toBe(COMMANDER_ANNOYED);
   }, 120_000);
 
   test('a buyer gets the job offer once off the surface', async () => {

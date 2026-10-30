@@ -72,14 +72,10 @@ interface Block {
   readonly lines: string[];
 }
 
-/// Engine flags a Talk Script may name, by their bit in `engineFlags`.
-const FLAGS = {
-  commanderAnnoyed: 32
-} as const;
-
 /// Engine flags a Talk Script now keeps itself, which a Save from before then
 /// still holds: the script takes each one over once.
 const LEGACY_FLAGS = {
+  commanderAnnoyed: 32,
   dartBought: 1,
   gratitudeGiven: 2,
   shipHired: 4
@@ -106,14 +102,6 @@ const legacyFlag = (name: string): number => {
   const bit = LEGACY_FLAGS[name as keyof typeof LEGACY_FLAGS];
   if (bit === undefined) {
     throw new Error(`unknown legacy flag ${name.toString()}`);
-  }
-  return bit;
-};
-
-const flag = (name: string): number => {
-  const bit = FLAGS[name as keyof typeof FLAGS];
-  if (bit === undefined) {
-    throw new Error(`unknown flag ${name.toString()}`);
   }
   return bit;
 };
@@ -538,15 +526,6 @@ export class TalkHost {
         mode: 'immediate',
         result: shape.bool
       },
-      clearFlag: {
-        args: [shape.text],
-        cost: { fuel: 1 },
-        do: (_call, name) =>
-          this.write({
-            engineFlags: this.benson.host.engineFlags & ~flag(name) & 0xff
-          }),
-        mode: 'immediate'
-      },
       credits: {
         cost: { fuel: 1 },
         do: () => num(this.benson.host.decimal(CREDITS)),
@@ -587,14 +566,6 @@ export class TalkHost {
           return nothing;
         },
         mode: 'immediate'
-      },
-      flag: {
-        args: [shape.text],
-        cost: { fuel: 1 },
-        do: (_call, name) =>
-          bool((this.benson.host.engineFlags & flag(name)) !== 0),
-        mode: 'immediate',
-        result: shape.bool
       },
       here: {
         cost: { fuel: 1 },
@@ -665,15 +636,6 @@ export class TalkHost {
         cost: { fuel: 1 },
         description: 'Starts the Ship Delivery: the hired ship lands at 8-8.',
         do: () => this.write({ shipInbound: SHIP_INBOUND }),
-        mode: 'immediate'
-      },
-      setFlag: {
-        args: [shape.text],
-        cost: { fuel: 1 },
-        do: (_call, name) =>
-          this.write({
-            engineFlags: (this.benson.host.engineFlags | flag(name)) & 0xff
-          }),
         mode: 'immediate'
       },
       setMessageInterval: {

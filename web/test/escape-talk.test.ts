@@ -153,6 +153,23 @@ describe('the Escape as a Talk Script', () => {
     expect(played.talk.lines).toContain('IS PLEASED YOU,VE GONE');
   }, 120_000);
 
+  test('hears from commerce that the Dart was taken unpaid', async () => {
+    const route = await open('talk');
+    // Commerce scolds the thief, and tells the Escape. The Benson oracle
+    // starts no Benson Script for a Dart boarded this way, so there is
+    // nothing to compare.
+    route.session.board(1);
+    route.advance(1 / 20);
+    route.session.leaveCraft();
+    route.advance(30);
+    route.session.carry(NOVADRIVE);
+    route.session.teleport(room(HANGAR_ROOM));
+    route.settle();
+    route.run({ action: 'board', kind: 'reach', slot: SHIP }, 60);
+    const lines = launch(new Lines(route)).until('SEE YOU IN MERCENARY II');
+    expect(lines.lines).toContain('IS PLEASED YOU,VE GONE');
+  }, 120_000);
+
   test('without a Novadrive, refuses on the surface', async () => {
     const played = await both(async engine =>
       surfaceAboard(

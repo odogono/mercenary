@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import { GameplaySession, type WorldEvent } from '../src/session/index.ts';
 import type { Faction } from '../src/session/sites.ts';
-import { REACTIONS } from '../src/talk/scripts.ts';
+import { ESCAPE, REACTIONS } from '../src/talk/scripts.ts';
 import { LegalRoute } from './legalCheckpoint.ts';
 import { BensonHostState, BensonState, nextRandom } from './oracle/index.ts';
 import { loadPayload } from './replay/artifacts.ts';
@@ -17,6 +17,7 @@ const rules = bundle.endgame.combat.siteDestruction;
 const CREDITS = BensonHostState.firstNumberDecimal;
 const GRATITUDE = 2;
 const ADVERT_DESTROYED = 8;
+const COMMANDER_ANNOYED = 32;
 const PASS = 46;
 const CELL = 0x1_00_00;
 const FRAME = 1 / 20;
@@ -31,7 +32,7 @@ const fresh = async (engine: Engine): Promise<LegalRoute> => {
     base.session.scripts
   );
   if (engine === 'talk') {
-    session.useTalkScripts(talkScript(REACTIONS));
+    session.useTalkScripts(talkScript(REACTIONS, ESCAPE));
   }
   return LegalRoute.resume(session);
 };
@@ -75,9 +76,12 @@ const outcome = (lines: Lines) => {
   return {
     attacking: host.attackingShip,
     credits: host.decimal(CREDITS),
-    // Gratitude and the advert's destruction are the Talk Script's own now,
-    // so only Benson sets their engine flags.
-    flags: host.engineFlags & ~0xc0 & ~(GRATITUDE | ADVERT_DESTROYED),
+    // Gratitude, the advert's destruction and the commander's annoyance are
+    // Talk Scripts' own now, so only Benson sets their engine flags.
+    flags:
+      host.engineFlags &
+      ~0xc0 &
+      ~(GRATITUDE | ADVERT_DESTROYED | COMMANDER_ANNOYED),
     lines: lines.lines,
     pass: session.residenceOf(PASS),
     passFlags: session.snapshot.objectFlags.get(PASS)
@@ -119,7 +123,6 @@ describe('Faction Reactions as a Talk Script', () => {
       expect(result.lines.length).toBeGreaterThan(1);
       expect(result.lines.at(-1)).toBe('');
       expect(result.attacking).toBe(id >= 5 && id <= 16);
-      expect(result.flags & 32).toBe(id === 14 ? 32 : 0);
     });
   }
 
@@ -178,7 +181,6 @@ describe('Faction Reactions as a Talk Script', () => {
       'PALYAR SHIP ATTACKING',
       ''
     ]);
-    expect(result.flags & 32).toBe(32);
     expect(result.attacking).toBe(true);
   });
 
@@ -213,7 +215,7 @@ describe('Faction Reactions as a Talk Script', () => {
           slot === target ? { at, kind: 'surface' } : where
         ])
       },
-      { scripts: talkScript(REACTIONS) }
+      { scripts: talkScript(REACTIONS, ESCAPE) }
     );
     const route = LegalRoute.resume(session);
     session.board(1);
@@ -245,7 +247,7 @@ describe('Faction Reactions as a Talk Script', () => {
       route.session.content,
       route.session.scripts,
       route.session.captureSaveSnapshot(),
-      { scripts: talkScript(REACTIONS) }
+      { scripts: talkScript(REACTIONS, ESCAPE) }
     );
     const lines = new Lines(LegalRoute.resume(restored)).advance(90);
     const result = outcome(lines);
@@ -311,7 +313,7 @@ const grateful = async (
             faction === 'mechanoid' ? rules.factionObjective.threshold : 0
         }
       },
-      engine === 'talk' ? { scripts: talkScript(REACTIONS) } : undefined
+      engine === 'talk' ? { scripts: talkScript(REACTIONS, ESCAPE) } : undefined
     )
   );
 };
@@ -396,7 +398,7 @@ describe('gratitude as a Talk Script', () => {
       route.session.content,
       route.session.scripts,
       route.session.captureSaveSnapshot(),
-      { scripts: talkScript(REACTIONS) }
+      { scripts: talkScript(REACTIONS, ESCAPE) }
     );
     const lines = new Lines(LegalRoute.resume(restored)).advance(90);
     expect(outcome(lines).credits).toBe(509_000);
