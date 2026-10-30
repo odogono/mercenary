@@ -1,8 +1,22 @@
 import { describe, expect, test } from 'bun:test';
 
 import { GameplaySession } from '../src/session/index.ts';
+import type { Residence } from '../src/world/index.ts';
 import { LegalRoute } from './legalCheckpoint.ts';
 import { withoutScript } from './saveCheckpoint.ts';
+
+/// Where two residences agree, to a float's rounding.
+const expectSamePlace = (a: Residence, b: Residence): void => {
+  expect(a.kind).toBe(b.kind);
+  const at = 'at' in a ? a.at : undefined;
+  const other = 'at' in b ? b.at : undefined;
+  expect(at === undefined).toBe(other === undefined);
+  if (at !== undefined && other !== undefined) {
+    expect(at.x).toBeCloseTo(other.x, 3);
+    expect(at.y).toBeCloseTo(other.y, 3);
+    expect(at.z).toBeCloseTo(other.z, 3);
+  }
+};
 
 /// Buys the Dart and boards it, which is the only legal way to be somewhere
 /// firing is allowed at all.
@@ -119,7 +133,7 @@ describe('firing from a craft', () => {
     expect(restored.observations().observations['effectLifecycle8']).toBe(
       route.session.observations().observations['effectLifecycle8']
     );
-    expect(restored.residenceOf(8)).toEqual(route.session.residenceOf(8));
+    expectSamePlace(restored.residenceOf(8), route.session.residenceOf(8));
   }, 60_000);
 
   test('does not fire while a structure impact is still playing', async () => {

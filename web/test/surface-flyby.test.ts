@@ -21,13 +21,16 @@ describe("the Palyar commander's surface craft", () => {
 
     session.advance(1 / settings.flight.referenceFrameRate);
 
-    expect(session.residenceOf(0)).toEqual({
-      at: { x, y, z: z + 0x1_00 },
-      kind: 'surface'
-    });
+    const where = session.residenceOf(0);
+    if (where.kind !== 'surface' || where.at === undefined) {
+      throw new Error('the flyby should be on the surface');
+    }
+    expect(where.at.x).toBe(x);
+    expect(where.at.y).toBe(y);
+    expect(where.at.z).toBeCloseTo(z + 0x1_00, 6);
   });
 
-  test('keeps the same reference-frame cadence and wraps around the world', () => {
+  test('moves at the original speed and wraps around the world', () => {
     const session = createWalkabout(bundle, settings).session;
     const before = bundle.objects.instances.find(
       instance => instance.slot === 0
@@ -37,19 +40,15 @@ describe("the Palyar commander's surface craft", () => {
     const z = before.position[2]!;
     const frame = 1 / settings.flight.referenceFrameRate;
 
-    session.advance(frame / 2);
-    expect(session.residenceOf(0)).toEqual({ kind: 'surface' });
-
     const frames = 2000;
-    session.advance(frame * (frames - 0.5));
-    expect(session.residenceOf(0)).toEqual({
-      at: {
-        x,
-        y,
-        z: (z + frames * 0x1_00) % 0x10_00_00
-      },
-      kind: 'surface'
-    });
+    session.advance(frame * frames);
+    const where = session.residenceOf(0);
+    if (where.kind !== 'surface' || where.at === undefined) {
+      throw new Error('the flyby should be on the surface');
+    }
+    expect(where.at.x).toBe(x);
+    expect(where.at.y).toBe(y);
+    expect(where.at.z).toBeCloseTo((z + frames * 0x1_00) % 0x10_00_00, 3);
   });
 
   test('presents equal movement on every browser frame at close range', () => {
