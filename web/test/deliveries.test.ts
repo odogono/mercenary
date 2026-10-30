@@ -1,6 +1,5 @@
 import { describe, expect, test } from 'bun:test';
 
-import { GameplaySession } from '../src/session/index.ts';
 import { room } from '../src/world/index.ts';
 import { LegalRoute } from './legalCheckpoint.ts';
 
@@ -335,37 +334,4 @@ describe('the faction briefings', () => {
       59_000 + 250_000
     );
   }, 30_000);
-});
-
-describe('a hand-in interrupted by a Save', () => {
-  test('resumes at the prompt and still pays exactly once', async () => {
-    const row = ROWS[0]!;
-    const route = await LegalRoute.open();
-    route.session.carry(row.slot);
-    route.session.teleport(room(row.room));
-    // Mid-transaction: the script has asked and is waiting to see the goods.
-    route.advance(20);
-    expect(route.session.observations().observations['credits']).toBe(9000);
-
-    const resumed = GameplaySession.restore(
-      route.session.content,
-      route.session.scripts,
-      route.session.captureSaveSnapshot()
-    );
-
-    // The saved moment carries the script mid-flight, not merely the balance.
-    expect(resumed.observations()).toEqual(route.session.observations());
-    expect(resumed.observations().observations['scriptPc']).toBeGreaterThan(-1);
-
-    resumed.drop();
-    for (let step = 0; step < 1000; step++) {
-      resumed.advance(1 / 50);
-    }
-    expect(resumed.observations().observations['credits']).toBe(
-      9000 + row.credits
-    );
-
-    // And the session it was restored from is untouched by any of that.
-    expect(route.session.observations().observations['credits']).toBe(9000);
-  }, 60_000);
 });

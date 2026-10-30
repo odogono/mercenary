@@ -184,14 +184,7 @@ export class BensonChannel {
         signedRegister: host.signedRegister,
         tickCounter: host.tickCounter
       },
-      script: null,
-      state: {
-        callStack: [],
-        pc: null,
-        randomState: encodeRandomState(this.randomState),
-        registers: Array.from({ length: 16 }, () => 0),
-        resumeAfterTick: null
-      }
+      state: { randomState: encodeRandomState(this.randomState) }
     };
   }
 

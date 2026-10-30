@@ -12,6 +12,7 @@ import { TextTable } from '../src/text/index.ts';
 import { World } from '../src/world/index.ts';
 import { BensonProgram, BensonSession } from './oracle/index.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
+import { withoutScript } from './saveCheckpoint.ts';
 
 const bundle = await loadPayload();
 const world = new World(bundle);
@@ -306,16 +307,24 @@ describe('a Save taken while a Site is still coming apart', () => {
       session.captureSaveSnapshot()
     );
 
-    expect(restored.observations().observations).toEqual(before);
+    expect(withoutScript(restored.observations().observations)).toEqual(
+      withoutScript(before)
+    );
     // Including the refusal the impact is still causing.
     expect(restored.fire().outcome).toEqual({ kind: 'impactActiveRefused' });
 
     // And it comes apart on the same frame it would have.
     restored.advance(rules.impactFrames / 20);
     session.advance(rules.impactFrames / 20);
-    expect(restored.observations().observations).toEqual(
+    // The reaction's Benson Script, lost at the Save, sets its engine flag
+    // only in the session that kept running.
+    const { engineFlags: _restored, ...after } = withoutScript(
+      restored.observations().observations
+    );
+    const { engineFlags: _kept, ...expected } = withoutScript(
       session.observations().observations
     );
+    expect(after).toEqual(expected);
     expect(restored.fire().outcome).toEqual({ kind: 'fired' });
   });
 });

@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import { GameplaySession } from '../src/session/index.ts';
 import { CityRun } from './cityRun.ts';
 import { loadPayload } from './replay/artifacts.ts';
+import { withoutScript } from './saveCheckpoint.ts';
 
 const bundle = await loadPayload();
 const objective = bundle.endgame.combat.siteDestruction.factionObjective;
@@ -125,12 +126,14 @@ describe('a Save taken on the way to a threshold', () => {
       run.session.captureSaveSnapshot()
     );
 
-    expect(restored.observations().observations).toEqual(before);
+    expect(withoutScript(restored.observations().observations)).toEqual(
+      withoutScript(before)
+    );
     // And the two go on agreeing rather than merely starting equal.
     restored.advance(2);
     run.session.advance(2);
-    expect(restored.observations().observations).toEqual(
-      run.session.observations().observations
+    expect(withoutScript(restored.observations().observations)).toEqual(
+      withoutScript(run.session.observations().observations)
     );
   }, 120_000);
 });

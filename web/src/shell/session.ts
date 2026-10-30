@@ -34,8 +34,6 @@ export const saveEnvironment = (
   settings: Settings
 ): SaveEnvironment => ({
   payload: {
-    // The retired Benson Script document's identity, which every Save still carries.
-    bensonSchemaVersion: 1,
     decoderVersion: bundle.manifest.decoderVersion,
     endgameSchemaVersion: bundle.endgame.schemaVersion,
     flightSchemaVersion: bundle.flight?.schemaVersion ?? 0,
@@ -52,7 +50,7 @@ export const saveEnvironment = (
       groundAltitude: settings.flight.groundAltitude ?? null
     },
     message: { ...settings.message },
-    scripts: { ...settings.scripts }
+    scripts: { timeScale: settings.scripts.timeScale }
   }
 });
 

@@ -359,14 +359,8 @@ export class BensonOracle {
         signedRegister: this.host.signedRegister,
         tickCounter: this.host.tickCounter
       },
-      script: this.running ?? null,
-      state: {
-        callStack: [...this.state.callStack],
-        pc: this.state.pc ?? null,
-        randomState: encodeRandomState(this.state.randomState),
-        registers: [...this.state.registers],
-        resumeAfterTick: this.state.resumeAfterTick ?? null
-      }
+      // A Save holds no Benson Script continuation: one running is lost.
+      state: { randomState: encodeRandomState(this.state.randomState) }
     };
   }
 
@@ -410,22 +404,6 @@ export class BensonOracle {
     snapshot: BensonSaveSnapshot,
     messageMode: BensonMessageMode = 'authentic'
   ): BensonOracle {
-    const instructionCount = program.instructions.length;
-    if (
-      snapshot.state.pc !== null &&
-      (snapshot.state.pc < 0 || snapshot.state.pc >= instructionCount)
-    ) {
-      throw new Error(
-        `Save Snapshot program counter ${snapshot.state.pc} is outside the Benson program`
-      );
-    }
-    for (const address of snapshot.state.callStack) {
-      if (address < 0 || address > instructionCount) {
-        throw new Error(
-          `Save Snapshot call-stack address ${address} is outside the Benson program`
-        );
-      }
-    }
     const framesPerTick = Math.max(1, tunables.framesPerTick);
     if (snapshot.frames >= framesPerTick) {
       throw new Error(
@@ -440,19 +418,8 @@ export class BensonOracle {
       messageMode
     );
     session.state = new BensonState({
-      callStack: snapshot.state.callStack,
-      pc: snapshot.state.pc ?? undefined,
-      randomState: decodeRandomState(snapshot.state.randomState),
-      registers: snapshot.state.registers,
-      resumeAfterTick: snapshot.state.resumeAfterTick ?? undefined
+      randomState: decodeRandomState(snapshot.state.randomState)
     });
-    // A Save from before schema 14 didn't say which script runs: the one
-    // whose code holds the outermost call is the one that was started.
-    session.started =
-      snapshot.script ??
-      (snapshot.state.pc === null
-        ? undefined
-        : program.scriptAt(snapshot.state.callStack[0] ?? snapshot.state.pc));
     // The Site Ledger is the session's, and it republishes it after restoring,
     // so the host starts with nothing destroyed rather than a second copy.
     session.host = new BensonHostState({

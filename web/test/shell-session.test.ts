@@ -42,33 +42,6 @@ describe('the live browser Gameplay Session', () => {
     expect(session.talk!.shown).toContain('CRASH IMMINENT,');
   });
 
-  test('retires an old Benson continuation while keeping its world and random stream', () => {
-    const settings = requiredSettings(settingsText);
-    const original = createWalkabout(bundle, settings).session;
-    const captured = original.captureSaveSnapshot();
-    const saved = {
-      ...captured,
-      benson: {
-        ...captured.benson!,
-        host: { ...captured.benson!.host, engineFlags: 0xc1 },
-        script: 21,
-        state: { ...captured.benson!.state, callStack: [999_999], pc: 999_999 }
-      },
-      talk: null
-    };
-    const restored = createWalkabout(bundle, settings, saved).session;
-    expect(restored.scripts!.host.engineFlags).toBe(1);
-    expect(restored.scripts!.credits).toBe(original.scripts!.credits);
-    expect(restored.scripts!.nextRandomByte()).toBe(
-      original.scripts!.nextRandomByte()
-    );
-    const current = restored.captureSaveSnapshot();
-    expect(current.benson!.state.pc).toBeNull();
-    expect(current.benson!.state.callStack).toEqual([]);
-    expect(current.benson!.script).toBeNull();
-    expect(restored.talk!.shown).toEqual([]);
-  });
-
   test('starts the opening on foot at the captured surface Pose', () => {
     const walkabout = createWalkabout(bundle, requiredSettings(settingsText));
 
@@ -112,9 +85,7 @@ describe('the live browser Gameplay Session', () => {
       ...captured,
       benson: {
         ...captured.benson!,
-        host: { ...captured.benson!.host, engineFlags: 0 },
-        script: null,
-        state: { ...captured.benson!.state, pc: null }
+        host: { ...captured.benson!.host, engineFlags: 0 }
       }
     };
 

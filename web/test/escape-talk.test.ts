@@ -261,32 +261,4 @@ describe('the Escape as a Talk Script', () => {
     resumed.until('SEE YOU IN MERCENARY II');
     expect(phase(restored)).toBeGreaterThan(0);
   }, 120_000);
-
-  test('a Save from Benson Script 7 at the prompt resumes once the ship is boarded again', async () => {
-    const lines = surfaceAboard(
-      (await aboardInTheHangar('benson')).until('INTERSTELLAR SHIP')
-    ).until('PRESS Y TO LAUNCH');
-    const session = lines.route.session;
-    const restored = GameplaySession.restore(
-      session.content,
-      session.scripts,
-      session.captureSaveSnapshot(),
-      { scripts: escapeScript }
-    );
-    expect(restored.scripts!.reference?.running).toBeUndefined();
-    // Benson Script 7 is stopped, so the prompt is gone. The Escape starts
-    // again when the ship is boarded again: off, a moment on foot, back on.
-    const route = LegalRoute.resume(restored);
-    route.run({ command: { kind: 'leaveCraft' }, kind: 'command' });
-    route.advance(1);
-    route.run({ action: 'board', kind: 'reach', slot: SHIP }, 60);
-    const resumed = new Lines(route).until('PRESS Y TO LAUNCH').advance(5);
-    expect(resumed.lines.slice(0, 2)).toEqual([
-      'INTERSTELLAR SHIP',
-      'PRESS Y TO LAUNCH'
-    ]);
-    pressY(route);
-    resumed.until('SEE YOU IN MERCENARY II');
-    expect(phase(restored)).toBeGreaterThan(0);
-  }, 120_000);
 });
