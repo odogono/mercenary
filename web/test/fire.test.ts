@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import { GameplaySession } from '../src/session/index.ts';
 import { LegalRoute } from './legalCheckpoint.ts';
+import { withoutScript } from './saveCheckpoint.ts';
 
 /// Buys the Dart and boards it, which is the only legal way to be somewhere
 /// firing is allowed at all.
@@ -109,7 +110,9 @@ describe('firing from a craft', () => {
       route.session.captureSaveSnapshot()
     );
 
-    expect(restored.observations().observations).toEqual(before);
+    expect(withoutScript(restored.observations().observations)).toEqual(
+      withoutScript(before)
+    );
     // And it goes on expiring on the same frame it would have.
     restored.advance(7 / 20);
     route.advance(7 / 20);

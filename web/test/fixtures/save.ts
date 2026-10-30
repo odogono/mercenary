@@ -9,7 +9,6 @@ import type { SaveEnvironment, SaveSnapshot } from '../../src/session/save.ts';
 /// two copies of this literal could quietly disagree about what compatibility means.
 export const environment: SaveEnvironment = {
   payload: {
-    bensonSchemaVersion: 1,
     decoderVersion: 9,
     endgameSchemaVersion: 2,
     flightSchemaVersion: 3,
@@ -31,7 +30,7 @@ export const environment: SaveEnvironment = {
       turnScale: 1
     },
     message: { holdSeconds: 3 },
-    scripts: { instructionBudget: 512, timeScale: 6 }
+    scripts: { timeScale: 6 }
   }
 };
 

@@ -11,7 +11,7 @@ import type {
 import type { Location, Residence } from '../world/index.ts';
 import type { ShipFieldPoint, ShipFieldSaveSnapshot } from './shipField.ts';
 
-export const SAVE_SCHEMA_VERSION = 16 as const;
+export const SAVE_SCHEMA_VERSION = 17 as const;
 export const SAVE_JSON_CODE_UNIT_LIMIT = 1_000_000;
 
 const SAVE_COLLECTION_LIMIT = 1024;
@@ -20,7 +20,6 @@ const SAVE_STRING_CODE_UNIT_LIMIT = 65_536;
 export const SAVE_TALK_CODE_UNIT_LIMIT = 262_144;
 
 export interface SavePayloadIdentity {
-  readonly bensonSchemaVersion: number;
   readonly decoderVersion: number;
   readonly endgameSchemaVersion: number;
   readonly flightSchemaVersion: number;
@@ -39,7 +38,7 @@ export interface SaveEnvironment {
       readonly groundAltitude: number | null;
     };
     readonly message: MessageSettings;
-    readonly scripts: ScriptSettings;
+    readonly scripts: Pick<ScriptSettings, 'timeScale'>;
   };
 }
 
@@ -63,14 +62,8 @@ export interface BensonHostSaveSnapshot extends Omit<
   readonly pendingKey: BensonKey | null;
 }
 
-/// The Benson interpreter's continuation fields, which the wire layout keeps.
-/// Live Talk play writes no program counter, call stack or registers here.
 export interface BensonStateSaveSnapshot {
-  readonly callStack: readonly number[];
-  readonly pc: number | null;
   readonly randomState: string;
-  readonly registers: readonly number[];
-  readonly resumeAfterTick: number | null;
 }
 
 export interface BensonSaveSnapshot {
@@ -78,8 +71,6 @@ export interface BensonSaveSnapshot {
   readonly display: BensonDisplaySaveSnapshot;
   readonly frames: number;
   readonly host: BensonHostSaveSnapshot;
-  /// The Benson Script running, by id: null when none runs, as in live play.
-  readonly script: number | null;
   readonly state: BensonStateSaveSnapshot;
 }
 
@@ -694,28 +685,9 @@ const display = (value: unknown, at: string): BensonDisplaySaveSnapshot => {
 };
 
 const bensonState = (value: unknown, at: string): BensonStateSaveSnapshot => {
-  const out = exact(value, at, [
-    'callStack',
-    'pc',
-    'randomState',
-    'registers',
-    'resumeAfterTick'
-  ]);
-  const registers = integerArray(out['registers'], `${at}.registers`);
-  if (registers.length !== 16) {
-    fail(`${at}.registers must contain 16 integers`);
-  }
+  const out = exact(value, at, ['randomState']);
   return {
-    callStack: array(out['callStack'], `${at}.callStack`, nonNegativeInteger),
-    pc: nullableNonNegativeInteger(out['pc'], `${at}.pc`),
-    randomState: randomState(out['randomState'], `${at}.randomState`),
-    registers: registers.map((value, index) =>
-      byte(value, `${at}.registers[${index}]`)
-    ),
-    resumeAfterTick: nullableNonNegativeInteger(
-      out['resumeAfterTick'],
-      `${at}.resumeAfterTick`
-    )
+    randomState: randomState(out['randomState'], `${at}.randomState`)
   };
 };
 
@@ -771,7 +743,6 @@ const benson = (value: unknown, at: string): BensonSaveSnapshot => {
     'display',
     'frames',
     'host',
-    'script',
     'state'
   ]);
   const activeMessageText =
@@ -790,7 +761,6 @@ const benson = (value: unknown, at: string): BensonSaveSnapshot => {
     display: displaySnapshot,
     frames: nonNegative(out['frames'], `${at}.frames`),
     host: bensonHost(out['host'], `${at}.host`),
-    script: nullableNonNegativeInteger(out['script'], `${at}.script`),
     state: bensonState(out['state'], `${at}.state`)
   };
 };
@@ -1173,7 +1143,6 @@ const flightSettings = (
 const environment = (value: unknown, at: string): SaveEnvironment => {
   const out = exact(value, at, ['payload', 'settings']);
   const payload = exact(out['payload'], `${at}.payload`, [
-    'bensonSchemaVersion',
     'decoderVersion',
     'endgameSchemaVersion',
     'flightSchemaVersion',
@@ -1193,15 +1162,10 @@ const environment = (value: unknown, at: string): SaveEnvironment => {
     'holdSeconds'
   ]);
   const scripts = exact(settings['scripts'], `${at}.settings.scripts`, [
-    'instructionBudget',
     'timeScale'
   ]);
   return {
     payload: {
-      bensonSchemaVersion: integer(
-        payload['bensonSchemaVersion'],
-        `${at}.payload.bensonSchemaVersion`
-      ),
       decoderVersion: integer(
         payload['decoderVersion'],
         `${at}.payload.decoderVersion`
@@ -1251,10 +1215,6 @@ const environment = (value: unknown, at: string): SaveEnvironment => {
         )
       },
       scripts: {
-        instructionBudget: integer(
-          scripts['instructionBudget'],
-          `${at}.settings.scripts.instructionBudget`
-        ),
         timeScale: finite(
           scripts['timeScale'],
           `${at}.settings.scripts.timeScale`

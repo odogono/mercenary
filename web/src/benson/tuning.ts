@@ -1,4 +1,4 @@
-/// Display timing; the instruction budget remains a legacy Save identity field.
+/// Display timing, and the instruction budget the test oracle's interpreter runs to.
 export interface BensonTunables {
   framesPerSecond: number;
   framesPerTick: number;

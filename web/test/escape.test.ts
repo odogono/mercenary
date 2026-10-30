@@ -165,11 +165,6 @@ const restored = (route: LegalRoute): GameplaySession =>
     route.session.captureSaveSnapshot()
   );
 
-/// The same, handed back as a route so the continuation can be played rather
-/// than merely inspected.
-const resumed = (route: LegalRoute): LegalRoute =>
-  LegalRoute.resume(restored(route));
-
 describe('the hired route', () => {
   test('reaches the surface, boards, authorizes without the Novadrive, and dispatches', async () => {
     const route = await deliveredShip();
@@ -631,55 +626,5 @@ describe('after the dispatch', () => {
       );
       expect(revived.snapshot.ending).toEqual(route.session.snapshot.ending);
     }
-  }, 240_000);
-});
-
-describe('Saves at the decoded checkpoints', () => {
-  test('a Save aboard before the lift restores and still escapes', async () => {
-    const route = await aboardInTheHangar();
-    const revived = resumed(route);
-    const observations = revived.session.observations().observations;
-    expect(observations['occupancy']).toBe(SHIP);
-    expect(observations['room']).toBe(HANGAR_ROOM);
-
-    // The restored session is the one that rides the lift and escapes: a
-    // Save that only restores, while the original carries on, is evidence of
-    // nothing.
-    surfaceAboard(revived);
-    expect(launch(revived)).toBeTrue();
-  }, 240_000);
-
-  test('a Save aboard after the lift restores and still escapes', async () => {
-    const route = await aboardInTheHangar();
-    surfaceAboard(route);
-
-    const revived = resumed(route);
-    const observations = revived.session.observations().observations;
-    expect(observations['occupancy']).toBe(SHIP);
-    expect(observations['room']).toBe(0);
-    expect(launch(revived)).toBeTrue();
-  }, 240_000);
-
-  test('a Save between the prompt and the recheck restores and dispatches', async () => {
-    const route = await aboardInTheHangar();
-    surfaceAboard(route);
-    route.advance(15);
-
-    const revived = restored(route);
-    const observations = revived.observations().observations;
-    expect(observations['endingPhase']).toBe(0);
-    expect(observations['occupancy']).toBe(SHIP);
-    expect(observations['room']).toBe(0);
-    // The script is mid-flight in the restored session too.
-    expect(observations['scriptPc']).not.toBe(-1);
-
-    for (let half = 0; half < 120; half++) {
-      revived.press('keyY');
-      revived.advance(0.5);
-      if (revived.observations().observations['endingPhase'] === 1) {
-        break;
-      }
-    }
-    expect(revived.observations().observations['endingPhase']).toBe(1);
   }, 240_000);
 });

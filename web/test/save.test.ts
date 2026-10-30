@@ -109,7 +109,7 @@ describe('a Save Snapshot', () => {
     );
     const snapshot = gameplay.captureSaveSnapshot();
 
-    expect(SAVE_SCHEMA_VERSION).toBe(16);
+    expect(SAVE_SCHEMA_VERSION).toBe(17);
     expect(snapshot).toHaveProperty('carriedStack');
     expect(snapshot).toHaveProperty('deliveryFrames');
     expect(snapshot).toHaveProperty('objectFlags');
@@ -152,7 +152,7 @@ describe('a Save Snapshot', () => {
     expect(decoded.snapshot.ending).toBeNull();
   });
 
-  test('refuses a Save written before schema 16', () => {
+  test('refuses a Save written before schema 17', () => {
     const gameplay = new GameplaySession(
       content,
       playerState({ position: { x: 0, y: 0, z: 0 } }),
@@ -162,9 +162,9 @@ describe('a Save Snapshot', () => {
       schemaVersion: number;
     };
 
-    // No migration: before schema 16 the Talk Scripts' story state could still
-    // sit in engine and object flags, which nothing now reads.
-    for (const version of [10, 11, 14, 15]) {
+    // No migration: before schema 17 a Save carried the Benson interpreter's
+    // continuation, which nothing now reads.
+    for (const version of [10, 11, 15, 16]) {
       stale.schemaVersion = version;
       expect(() => decodeSave(JSON.stringify(stale), environment)).toThrow(
         `unsupported Save schemaVersion ${version}`
@@ -427,20 +427,5 @@ describe('a Save Snapshot', () => {
         environment
       )
     ).toThrow('engineFlags');
-    expect(() =>
-      decodeSave(
-        encodeSave({
-          ...save,
-          snapshot: {
-            ...save.snapshot,
-            benson: {
-              ...save.snapshot.benson!,
-              state: { ...save.snapshot.benson!.state, callStack: [-1] }
-            }
-          }
-        }),
-        environment
-      )
-    ).toThrow('callStack');
   });
 });
