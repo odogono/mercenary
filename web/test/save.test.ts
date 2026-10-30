@@ -212,7 +212,7 @@ describe('a Save Snapshot', () => {
       }),
       scripts()
     );
-    original.scripts!.showText('A MESSAGE IN PROGRESS');
+    original.benson!.showText('A MESSAGE IN PROGRESS');
     original.advance(0.375);
 
     const encoded = encodeSave(envelope(original));
@@ -320,7 +320,7 @@ describe('a Save Snapshot', () => {
       playerState({ position: { x: 0, y: 0, z: 0 } }),
       scripts()
     );
-    session.scripts!.showText('SHORT');
+    session.benson!.showText('SHORT');
     const save = envelope(session);
     expect(save.snapshot.benson?.activeMessageText).toBe('SHORT');
     const impossible = {

@@ -27,7 +27,7 @@ const fresh = async (
   const session = new GameplaySession(
     content,
     base.session.game.player,
-    base.session.scripts
+    base.session.benson
   );
   session.useTalkScripts(scripts);
   return LegalRoute.resume(session);
@@ -180,7 +180,7 @@ describe('Faction Reactions as a Talk Script', () => {
     const saved = base.session.captureSaveSnapshot();
     const session = GameplaySession.restore(
       base.session.content,
-      base.session.scripts,
+      base.session.benson,
       {
         ...saved,
         residence: saved.residence.map(([slot, where]) => [
@@ -218,7 +218,7 @@ describe('Faction Reactions as a Talk Script', () => {
     bomb(route);
     const restored = GameplaySession.restore(
       route.session.content,
-      route.session.scripts,
+      route.session.benson,
       route.session.captureSaveSnapshot(),
       { scripts: talkScript(REACTIONS, ESCAPE) }
     );
@@ -274,7 +274,7 @@ const grateful = async (
   return LegalRoute.resume(
     GameplaySession.restore(
       route.session.content,
-      route.session.scripts,
+      route.session.benson,
       {
         ...saved,
         combat: {
@@ -366,7 +366,7 @@ describe('gratitude as a Talk Script', () => {
     ]);
     const restored = GameplaySession.restore(
       route.session.content,
-      route.session.scripts,
+      route.session.benson,
       route.session.captureSaveSnapshot(),
       { scripts: talkScript(REACTIONS, ESCAPE) }
     );

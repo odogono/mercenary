@@ -154,7 +154,7 @@ test('leaving the Dart preserves its flown heading in the parked craft', () => {
 
   const restored = GameplaySession.restore(
     gameplay.content,
-    gameplay.scripts,
+    gameplay.benson,
     gameplay.captureSaveSnapshot()
   );
   expect(restored.reach('board', 1).outcome).toEqual({
@@ -531,7 +531,7 @@ describe('the $A13D box, entered from flight', () => {
 
     const revived = GameplaySession.restore(
       gameplay.content,
-      gameplay.scripts,
+      gameplay.benson,
       snapshot
     );
     expect(revived.game.colonyCraftFlag).toBe(0xff);

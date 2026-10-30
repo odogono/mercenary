@@ -32,7 +32,7 @@ describe('the live browser Gameplay Session', () => {
       live,
       requiredSettings(settingsText)
     ).session;
-    expect('program' in session.scripts!).toBe(false);
+    expect('program' in session.benson!).toBe(false);
     for (let seconds = 0; seconds < 20; seconds += 0.02) {
       session.advance(0.02);
     }

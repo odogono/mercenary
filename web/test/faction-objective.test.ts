@@ -117,7 +117,7 @@ describe('a Save taken on the way to a threshold', () => {
 
     const restored = GameplaySession.restore(
       run.session.content,
-      run.session.scripts,
+      run.session.benson,
       run.session.captureSaveSnapshot()
     );
 

@@ -38,6 +38,7 @@ export interface CombatObservationSources {
 
 export interface ObservationSources {
   readonly attackingShip: boolean;
+  readonly benson: BensonPort | undefined;
   readonly carriedStack: readonly number[];
   /// The special transition flag the Reference Build keeps at `$FA`: `$FF` on
   /// the Colony Craft, zero otherwise.
@@ -53,7 +54,6 @@ export interface ObservationSources {
   /// emulator's three-byte fields hold integers.
   readonly position: Vector3;
   readonly residence: ReadonlyMap<number, Residence>;
-  readonly scripts: BensonPort | undefined;
   readonly shipInbound: number;
 }
 
@@ -123,8 +123,8 @@ export const observationsOf = (
     // Talk Scripts keep the original's story flags themselves (ADR 0080).
     engineFlags: 0,
     mechanoidDestroyed: sources.combat?.mechanoidDestroyed ?? 0,
-    messagePlaying: sources.scripts?.messagePlaying ?? false,
-    messageText: sources.scripts?.messageText ?? '',
+    messagePlaying: sources.benson?.messagePlaying ?? false,
+    messageText: sources.benson?.messageText ?? '',
     mover: sources.combat?.mover ?? NO_MOVER,
     occupancy:
       sources.occupancy.kind === 'onFoot' ? ON_FOOT : sources.occupancy.slot,

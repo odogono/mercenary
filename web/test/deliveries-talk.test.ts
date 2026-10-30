@@ -179,7 +179,7 @@ describe('the deliveries as a Talk Script', () => {
     const session = route.session;
     const restored = GameplaySession.restore(
       session.content,
-      session.scripts,
+      session.benson,
       session.captureSaveSnapshot(),
       { scripts: talkScript(DELIVERIES) }
     );

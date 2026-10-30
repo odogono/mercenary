@@ -706,7 +706,8 @@ export class GameplaySession {
   private residence = new Map<number, Residence>();
   private objectFlags = new Map<number, number>();
   private carriedStack: number[] = [];
-  scripts: BensonPort | undefined;
+  /// The Benson Display, where messages play.
+  benson: BensonPort | undefined;
   /// The Talk Scripts, once `useTalkScripts` has loaded them (ADR 0080).
   talk: TalkHost | undefined;
   private rewired = new Map<number, Alternate>();
@@ -757,7 +758,7 @@ export class GameplaySession {
   constructor(
     content: SessionContent,
     player: PlayerState,
-    scripts?: BensonPort,
+    benson?: BensonPort,
     randomSeed: bigint = DEFAULT_SESSION_SEED
   ) {
     this.content = content;
@@ -776,7 +777,7 @@ export class GameplaySession {
       };
     }
     this.game = game;
-    this.scripts = scripts;
+    this.benson = benson;
     if (content.sites !== undefined) {
       this.sites = new SiteLedger(content.sites);
     }
@@ -804,7 +805,7 @@ export class GameplaySession {
     }
     this.carriedStack.sort((a, b) => a - b);
     this.objectsBySlot = objectsBySlot;
-    if (this.scripts !== undefined) {
+    if (this.benson !== undefined) {
       this.credits = STARTING_CREDITS;
     }
     this.worldSeen = this.seeWorld();
@@ -813,7 +814,7 @@ export class GameplaySession {
   captureSaveSnapshot(): SaveSnapshot {
     return {
       attackingShip: this.attackingShip,
-      benson: this.scripts?.captureSaveSnapshot() ?? null,
+      benson: this.benson?.captureSaveSnapshot() ?? null,
       carriedStack: [...this.carriedStack],
       combat:
         this.sites === undefined
@@ -885,7 +886,7 @@ export class GameplaySession {
   /// beside Benson, or loads them fresh where the Save has none.
   static restore(
     content: SessionContent,
-    scripts: BensonPort | undefined,
+    benson: BensonPort | undefined,
     snapshot: SaveSnapshot,
     talk?: {
       readonly options?: TalkHostOptions;
@@ -893,19 +894,19 @@ export class GameplaySession {
     }
   ): GameplaySession {
     validateSnapshotReferences(content, snapshot);
-    if ((scripts === undefined) !== (snapshot.benson === null)) {
+    if ((benson === undefined) !== (snapshot.benson === null)) {
       throw new Error(
-        'Save Snapshot scripting state does not match the Gameplay Session content'
+        'Save Snapshot Benson Display does not match the Gameplay Session content'
       );
     }
-    const restoredScripts =
-      scripts === undefined || snapshot.benson === null
+    const restoredBenson =
+      benson === undefined || snapshot.benson === null
         ? undefined
-        : scripts.restore(snapshot.benson);
+        : benson.restore(snapshot.benson);
     const session = new GameplaySession(
       content,
       snapshot.game.player,
-      restoredScripts,
+      restoredBenson,
       decodeRandomState(snapshot.randomState)
     );
     session.game = {
@@ -1889,10 +1890,10 @@ export class GameplaySession {
     options: TalkHostOptions = {},
     saved?: TalkSaveSnapshot
   ): TalkHost {
-    if (this.scripts === undefined) {
+    if (this.benson === undefined) {
       throw new Error('Talk Scripts need the Benson Display and host state');
     }
-    const benson = this.scripts;
+    const benson = this.benson;
     this.talk = new TalkHost(scripts, benson, this.worldPort(), options, saved);
     return this.talk;
   }
@@ -1991,11 +1992,11 @@ export class GameplaySession {
   }
 
   skipMessage(): void {
-    this.scripts?.skipMessage();
+    this.benson?.skipMessage();
   }
 
   show(index: number): void {
-    this.scripts?.showMessage(index, this.credits);
+    this.benson?.showMessage(index, this.credits);
   }
 
   /// An object's message, if it has one. One whose description is a script is
@@ -2135,8 +2136,8 @@ export class GameplaySession {
         }
       }
     }
-    if (this.scripts !== undefined && seconds > 0) {
-      for (const effect of this.scripts.advance(seconds)) {
+    if (this.benson !== undefined && seconds > 0) {
+      for (const effect of this.benson.advance(seconds)) {
         events.push({ script: effect });
       }
     }
@@ -2344,7 +2345,7 @@ export class GameplaySession {
         continue;
       }
       events.push({ impact: { sound: hits.sound } });
-      if (hits.clearsAttackState && this.scripts !== undefined) {
+      if (hits.clearsAttackState && this.benson !== undefined) {
         this.attackingShip = false;
       }
       this.residence.set(slot, { kind: 'gone' });
@@ -2446,12 +2447,11 @@ export class GameplaySession {
   /// until a lifetime runs out. Only the attacker keeps going when its own
   /// time is up, because what runs out for it is the approach rather than the
   /// craft.
-  private driftHostileEffects(seconds: number, pauseAttacker = false): boolean {
+  private driftHostileEffects(seconds: number, pauseAttacker = false): void {
     const rules = this.content.hostile;
     if (rules === undefined) {
-      return false;
+      return;
     }
-    let moved = false;
     const drift = (slot: number, velocity: Vector3): void => {
       const at = this.surfacePlaceOf(slot);
       if (at === undefined) {
@@ -2465,7 +2465,6 @@ export class GameplaySession {
         },
         kind: 'surface'
       });
-      moved = true;
     };
     if (!pauseAttacker && this.attackerVelocity !== undefined) {
       drift(rules.attackingSlot, this.attackerVelocity);
@@ -2476,13 +2475,12 @@ export class GameplaySession {
       if (secondsLeft <= 1e-9) {
         this.hostileShot = undefined;
         this.residence.set(rules.inboundSlot, { kind: 'gone' });
-        moved = true;
       } else {
         this.hostileShot = { ...shot, secondsLeft };
         drift(rules.inboundSlot, shot.velocity);
       }
     }
-    return moved;
+    return;
   }
 
   /// The velocity, per second, that carries something at `from` toward the
@@ -2506,7 +2504,7 @@ export class GameplaySession {
     const events: PresentationEvent[] = [];
     if (
       rules === undefined ||
-      this.scripts === undefined ||
+      this.benson === undefined ||
       !this.attackingShip
     ) {
       return events;
@@ -2575,7 +2573,7 @@ export class GameplaySession {
       this.game = { ...this.game, mover: rules.captureMover };
     }
     events.push({ impact: { sound: rules.hitSound } });
-    if (rules.captureClearsAttackingShip && this.scripts !== undefined) {
+    if (rules.captureClearsAttackingShip && this.benson !== undefined) {
       this.attackingShip = false;
     }
     for (const slot of rules.captureRemovesSlots) {
@@ -2593,23 +2591,23 @@ export class GameplaySession {
     seconds: number,
     rules: EndgameFire,
     events: PresentationEvent[]
-  ): boolean {
+  ): void {
     const shot = this.playerShot;
     if (shot === undefined) {
-      return false;
+      return;
     }
     const secondsLeft = shot.secondsLeft - seconds;
     if (secondsLeft <= 1e-9) {
       this.playerShot = undefined;
       this.residence.set(rules.effectSlot, { kind: 'gone' });
-      return true;
+      return;
     }
     const at = this.surfacePlaceOf(rules.effectSlot);
     if (at === undefined) {
       // Nothing is carrying the shot's position any more, so there is no shot;
       // this is the same removal its lifetime would have reached.
       this.playerShot = undefined;
-      return true;
+      return;
     }
     const next = {
       x: at.x + shot.velocity.x * seconds,
@@ -2619,7 +2617,7 @@ export class GameplaySession {
     this.playerShot = { ...shot, secondsLeft };
     this.residence.set(rules.effectSlot, { at: next, kind: 'surface' });
     events.push(...this.resolveShot(next));
-    return true;
+    return;
   }
 
   /// Advances the outdoor objects that move by themselves, and combat.
@@ -2670,14 +2668,14 @@ export class GameplaySession {
 
   /// The Reference Build carries slot 0 along Z every outdoor frame. In world
   /// coordinates that is a constant speed, wrapping at `wrapAt`.
-  private stepSurfaceFlyby(seconds: number): boolean {
+  private stepSurfaceFlyby(seconds: number): void {
     const rules = this.content.surfaceFlyby;
     if (rules === undefined) {
-      return false;
+      return;
     }
     const at = this.surfacePlaceOf(rules.slot);
     if (at === undefined) {
-      return false;
+      return;
     }
     this.residence.set(rules.slot, {
       at: {
@@ -2686,14 +2684,14 @@ export class GameplaySession {
       },
       kind: 'surface'
     });
-    return true;
+    return;
   }
 
   /// Runs the Escape's star field, which keeps its own loop rate. The field
   /// is what writes phase 255, from inside its colour sequence.
   private advanceEndingPresentation(seconds: number): void {
     const rules = this.content.endingField;
-    if (rules === undefined || this.scripts === undefined || seconds <= 0) {
+    if (rules === undefined || this.benson === undefined || seconds <= 0) {
       return;
     }
     this.endingField ??= InterstellarShipField.begin(
@@ -2739,7 +2737,7 @@ export class GameplaySession {
     if (
       rules === undefined ||
       rate === undefined ||
-      this.scripts === undefined ||
+      this.benson === undefined ||
       seconds <= 0
     ) {
       return;
@@ -2808,6 +2806,7 @@ export class GameplaySession {
       attackingShip: this.attackingShip,
       carriedStack: this.carriedStack,
       ...(combat === undefined ? {} : { combat }),
+      benson: this.benson,
       colonyCraftFlag: this.game.colonyCraftFlag,
       credits: this.credits,
       endingPhase: this.endingPhase,
@@ -2816,7 +2815,6 @@ export class GameplaySession {
       occupancy: this.occupancy,
       position: this.game.player.position,
       residence: this.residence,
-      scripts: this.scripts,
       shipInbound: this.shipInbound
     });
   }
@@ -2829,7 +2827,7 @@ export class GameplaySession {
       journey === undefined ? undefined : liftPhaseIndex(journey);
     return {
       ...(bensonColour === undefined ? {} : { bensonColour }),
-      bensonMessage: this.scripts?.messagePresentation,
+      bensonMessage: this.benson?.messagePresentation,
       carriedStack: [...this.carriedStack],
       core: {
         poweramp: this.game.poweramp,

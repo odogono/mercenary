@@ -222,7 +222,7 @@ describe('the Escape as a Talk Script', () => {
     const session = lines.route.session;
     const restored = GameplaySession.restore(
       session.content,
-      session.scripts,
+      session.benson,
       session.captureSaveSnapshot(),
       { scripts: escapeScript }
     );

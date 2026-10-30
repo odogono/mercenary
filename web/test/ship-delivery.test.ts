@@ -53,7 +53,7 @@ describe('a ship that has been hired', () => {
     const route = await justHired();
     const resumed = GameplaySession.restore(
       route.session.content,
-      route.session.scripts,
+      route.session.benson,
       route.session.captureSaveSnapshot()
     );
     resumed.advance(1);
@@ -138,7 +138,7 @@ describe('how the descent is stepped', () => {
     route.advance(20 / 20);
     const resumed = GameplaySession.restore(
       route.session.content,
-      route.session.scripts,
+      route.session.benson,
       route.session.captureSaveSnapshot()
     );
     expect(altitudeOf(resumed)).toBe(altitudeOf(route.session));
@@ -160,7 +160,7 @@ describe('how the descent is stepped', () => {
 
     const resumed = GameplaySession.restore(
       route.session.content,
-      route.session.scripts,
+      route.session.benson,
       snapshot
     );
     resumed.advance(1 / 60);

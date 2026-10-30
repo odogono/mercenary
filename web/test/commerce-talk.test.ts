@@ -58,7 +58,7 @@ const armed = async (slot: number, bought = false): Promise<LegalRoute> => {
   const snapshot = route.session.captureSaveSnapshot();
   const restored = GameplaySession.restore(
     route.session.content,
-    route.session.scripts,
+    route.session.benson,
     {
       ...snapshot,
       objectFlags: snapshot.objectFlags.map(([at, flags]) =>
