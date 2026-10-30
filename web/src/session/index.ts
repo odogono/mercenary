@@ -2118,6 +2118,7 @@ export class GameplaySession {
         }
       },
       pay: amount => host(state => state.addDecimal(CREDITS, amount)),
+      random: () => this.nextRandomByte(),
       sendAttacker: () => host(state => state.with({ attackingShip: true })),
       sendShip: () => host(state => state.with({ shipInbound: SHIP_INBOUND })),
       spend: amount => host(state => state.addDecimal(CREDITS, -amount))
@@ -2872,9 +2873,9 @@ export class GameplaySession {
   /// The Reference Build never seeds this generator: a respawn continues
   /// whatever random history the session already had, so there is no first-frame
   /// seed to reproduce. What matters is that the same session always reaches the
-  /// same field, which taking the bytes from the scripts' own random state gives.
+  /// same field, which taking the bytes from the session's random stream gives.
   private endingFieldSeed(): { state: number; value: number } {
-    const random = this.scripts?.randomState ?? 0n;
+    const random = this.ownRandomState;
     return {
       state: Number((random >> 8n) & 0xffn),
       value: Number(random & 0xffn)
@@ -3136,11 +3137,19 @@ export class GameplaySession {
     if (count <= 0) {
       return 0;
     }
-    if (this.scripts !== undefined) {
-      return this.scripts.nextRandomByte() % count;
-    }
+    return this.nextRandomByte() % count;
+  }
+
+  /// Sets where the session's random stream goes on from, as a replay or a
+  /// test that needs a particular roll does.
+  seedRandom(state: bigint): void {
+    this.ownRandomState = state;
+  }
+
+  /// The next byte of the session's random stream (ADR 0083).
+  nextRandomByte(): number {
     const stepped = randomByte(this.ownRandomState);
     this.ownRandomState = stepped.state;
-    return stepped.byte % count;
+    return stepped.byte;
   }
 }

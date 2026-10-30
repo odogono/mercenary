@@ -2,11 +2,7 @@ import { BensonDisplay } from '../../src/benson/display.ts';
 import { BensonHostState, type BensonEffect } from '../../src/benson/host.ts';
 import { MessageTicker, codePointCount } from '../../src/benson/ticker.ts';
 import type { Description as InteractionDescription } from '../../src/interaction/index.ts';
-import {
-  decodeRandomState,
-  encodeRandomState,
-  type BensonSaveSnapshot
-} from '../../src/session/save.ts';
+import { type BensonSaveSnapshot } from '../../src/session/save.ts';
 import type { TextTable } from '../../src/text/index.ts';
 import {
   BensonMachine,
@@ -358,9 +354,9 @@ export class BensonOracle {
         shipInbound: this.host.shipInbound,
         signedRegister: this.host.signedRegister,
         tickCounter: this.host.tickCounter
-      },
-      // A Save holds no Benson Script continuation: one running is lost.
-      state: { randomState: encodeRandomState(this.state.randomState) }
+      }
+      // A Save holds no Benson Script continuation or random state: a running
+      // script is lost, and the interpreter's stream starts again from its seed.
     };
   }
 
@@ -417,9 +413,6 @@ export class BensonOracle {
       DEFAULT_SESSION_SEED,
       messageMode
     );
-    session.state = new BensonState({
-      randomState: decodeRandomState(snapshot.state.randomState)
-    });
     // The Site Ledger is the session's, and it republishes it after restoring,
     // so the host starts with nothing destroyed rather than a second copy.
     session.host = new BensonHostState({

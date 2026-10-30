@@ -9,7 +9,7 @@ One directory per concern. Pages load a `boot.ts` (`web/*.html` names which). Ea
   `panelDocument.ts` validates the recovered panel payload, `panelWriter.ts` owns Damocles's composer and raw-word adapters, and `panelView.ts`/`panelElement.ts` retain accessible readouts and controls. The authored Targ/Flyover rendition remains in `shell/` (ADR 0071).
 - `dion/`: Mercenary III (`dion.html`). `boot.ts` runs `TourcraftSession` from `tourcraftSession.ts`, with expanded content, manual EAGLE flight, taxi/TOURCRAFT, interactions and Save/Resume. `TourcraftSession` extends the D1 `DionSession` in `session.ts`, which still supplies shared foot/taxi behavior and historical test/research fixtures. For feature owners, exporters and focused tests, use [the Dion map](../../docs/agents/dion.md).
 - `session/`: the Targ Gameplay Session (ADR 0018), its Save and lift journeys.
-- `benson/`: the Benson Display, Host Callout and shared random stream. `talk/` runs Targ’s maintained Talk Scripts (ADR 0080), which reach the world only through the World Port (`talk/worldPort.ts`, ADR 0083); the historical interpreter is a test oracle under `test/oracle/`.
+- `benson/`: the Benson Display and Host Callout; the Gameplay Session owns the random stream (ADR 0083). `talk/` runs Targ’s maintained Talk Scripts (ADR 0080), which reach the world only through the World Port (`talk/worldPort.ts`, ADR 0083); the historical interpreter is a test oracle under `test/oracle/`.
 
 ## Engine shared by titles
 
