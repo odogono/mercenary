@@ -11,6 +11,10 @@ use show, clear, report, prompt from benson
 -- which the script takes over the first time it is asked.
 script variable hired = nothing
 
+-- Whether the player bought the Dart, which the opening tells commerce. A
+-- Save from before this script kept it holds it in an engine flag instead.
+script variable bought = nothing
+
 constant fee = 999999
 
 -- Benson Script 2: the ship rental's communication room. The antenna has to
@@ -59,8 +63,11 @@ on boarded craft where craft = "dart"
   ask world to armed "dart"
   if not it then return
   ask world to disarm "dart"
-  ask world to flag "dartBought"
-  if not it then
+  if bought is nothing then
+    ask world to takeLegacyFlag "dartBought"
+    put it into bought
+  end if
+  if not bought then
     report ["THIS CRAFT BELONGED TO", "THE PALYAR COMMANDER'S", "BROTHER-IN-LAW", "HE IS NOT TOO PLEASED"] and wait
     ask world to setFlag "commanderAnnoyed"
     show "PALYAR SHIP ATTACKING" and wait
@@ -96,3 +103,7 @@ on isHired
   end if
   return hired
 end isHired
+
+on dartSold
+  put true into bought
+end dartSold

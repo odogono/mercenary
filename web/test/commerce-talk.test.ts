@@ -45,8 +45,9 @@ const outcome = (lines: Lines): Outcome => {
   return {
     attacking: host.attackingShip,
     credits: host.decimal(CREDITS),
-    // The hire is commerce's own now, so only Benson sets its engine flag.
-    flags: host.engineFlags & ~0xc0 & ~SHIP_HIRED,
+    // The hire and the Dart's sale are commerce's own now, so only Benson
+    // sets their engine flags.
+    flags: host.engineFlags & ~0xc0 & ~(SHIP_HIRED | DART_BOUGHT),
     lines: lines.lines,
     shipInbound: host.shipInbound
   };
@@ -130,11 +131,7 @@ describe('commerce as a Talk Script', () => {
       pressY(lines.route);
       return lines.advance(30);
     });
-    // Benson Script 2 also sets flag 1 for the Y; the port leaves it.
-    expect(played.talk).toEqual({
-      ...played.benson,
-      flags: played.benson.flags & ~DART_BOUGHT
-    });
+    expect(played.talk).toEqual(played.benson);
     expect(played.talk.lines.slice(-3)).toEqual([
       'SHIP DESPATCHED',
       'IT WILL LAND',
