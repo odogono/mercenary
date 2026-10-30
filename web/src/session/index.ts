@@ -103,7 +103,7 @@ import {
 } from './shipField.ts';
 import { SiteLedger } from './sites.ts';
 import {
-  changesBetween,
+  WorldEventLog,
   type WorldEvent,
   type WorldSeen
 } from './worldEvents.ts';
@@ -750,10 +750,8 @@ export class GameplaySession {
   /// The hired ship's delivery byte, as the Ship Delivery rules read it.
   private shipInbound = 0;
   private readonly objectsBySlot: ReadonlyMap<number, ObjectPlacement>;
-  /// World Events raised during play since the last frame was told.
-  private worldRaised: WorldEvent[] = [];
-  /// What the last frame left, for the next one's World Events to compare.
-  private worldSeen: WorldSeen;
+  /// The World Events since the last frame was told.
+  private world: WorldEventLog;
 
   constructor(
     content: SessionContent,
@@ -808,7 +806,7 @@ export class GameplaySession {
     if (this.benson !== undefined) {
       this.credits = STARTING_CREDITS;
     }
-    this.worldSeen = this.seeWorld();
+    this.world = new WorldEventLog(this.seeWorld());
   }
 
   captureSaveSnapshot(): SaveSnapshot {
@@ -973,7 +971,7 @@ export class GameplaySession {
             };
     }
     // A Save is where play resumes, not a change in it.
-    session.worldSeen = session.seeWorld();
+    session.world.resume(session.seeWorld());
     if (talk !== undefined) {
       session.useTalkScripts(
         talk.scripts,
@@ -1143,6 +1141,7 @@ export class GameplaySession {
     readonly events: readonly PresentationEvent[];
     readonly outcome: Outcome;
   } {
+    this.noteWorld();
     const interaction = this.content.interaction;
     if (interaction === undefined) {
       return { events: [], outcome: { kind: 'nothingInReach' } };
@@ -1208,6 +1207,7 @@ export class GameplaySession {
   /// This is the Shell Console's remote equivalent of reaching: it skips only Location and
   /// distance, while the Interaction still owns fixed/heavy checks and the Carried Stack limit.
   takeObject(slot: number): TakeObjectResult {
+    this.noteWorld();
     const object = this.objectsBySlot.get(slot);
     if (object === undefined) {
       return { events: [], outcome: { kind: 'missing', slot } };
@@ -1284,6 +1284,7 @@ export class GameplaySession {
   leaveCraft():
     | { readonly events: readonly PresentationEvent[]; readonly slot: number }
     | undefined {
+    this.noteWorld();
     const interaction = this.content.interaction;
     if (
       interaction === undefined ||
@@ -1328,6 +1329,7 @@ export class GameplaySession {
   }
 
   rideLift(): PresentationEvent[] | undefined {
+    this.noteWorld();
     const flight = this.content.flight;
     const underground = this.content.underground;
     if (flight === undefined || underground === undefined) {
@@ -1573,6 +1575,7 @@ export class GameplaySession {
   }
 
   teleport(location: Location): void {
+    this.noteWorld();
     this.recentreLook();
     const previousRoom = locationHostValue(this.location);
     this.game = {
@@ -1621,6 +1624,7 @@ export class GameplaySession {
   }
 
   place(position: Vector3, heading?: number): void {
+    this.noteWorld();
     this.recentreLook();
     this.game = {
       ...this.game,
@@ -1643,6 +1647,7 @@ export class GameplaySession {
   ):
     | { readonly kind: 'carried' | 'gone' | 'missing' }
     | { readonly kind: 'placed'; readonly location: Location } {
+    this.noteWorld();
     const object = this.objectsBySlot.get(slot);
     if (object === undefined) {
       return { kind: 'missing' };
@@ -1678,6 +1683,7 @@ export class GameplaySession {
   /// control block can be flown takes over normally; on foot, or in a craft
   /// whose handler cannot fly, the crash-tumble Mover brings the player down.
   placeInAir(position: Vector3, heading?: number): void {
+    this.noteWorld();
     const flight = this.content.flight;
     const craft = this.game.craft;
     const block =
@@ -1708,6 +1714,7 @@ export class GameplaySession {
   }
 
   carry(slot: number): void {
+    this.noteWorld();
     if (!this.objectsBySlot.has(slot)) {
       throw new Error(`Cannot carry missing object slot ${slot}`);
     }
@@ -1722,6 +1729,7 @@ export class GameplaySession {
   }
 
   drop(selectedSlot?: number): DropResult {
+    this.noteWorld();
     const slot = selectedSlot ?? this.carriedStack.at(-1);
     if (slot === undefined) {
       return { events: [], outcome: { kind: 'emptyInventory' } };
@@ -1813,6 +1821,7 @@ export class GameplaySession {
   }
 
   board(slot: number): void {
+    this.noteWorld();
     // Free Look does not come aboard: the craft keeps the view's own pitch.
     this.recentreLook();
     this.residence.set(slot, { kind: 'gone' });
@@ -2007,21 +2016,15 @@ export class GameplaySession {
     }
   }
 
-  /// One frame of play. Its World Events are what was raised during it, or
-  /// done to the session since the last frame, then what changed in place.
+  /// One frame of play. Its World Events are everything raised or changed
+  /// since the last frame, in the order it happened.
   advance(seconds: number): {
     readonly events: readonly PresentationEvent[];
     readonly snapshot: SessionSnapshot;
     readonly worldEvents: readonly WorldEvent[];
   } {
     const frame = this.advanceFrame(seconds);
-    const seen = this.seeWorld();
-    const worldEvents = [
-      ...this.worldRaised,
-      ...changesBetween(this.worldSeen, seen)
-    ];
-    this.worldRaised = [];
-    this.worldSeen = seen;
+    const worldEvents = this.world.take(this.seeWorld());
     if (this.talk === undefined) {
       return { ...frame, worldEvents };
     }
@@ -2038,6 +2041,12 @@ export class GameplaySession {
       snapshot: this.snapshot,
       worldEvents
     };
+  }
+
+  /// Records what changed since the world was last looked at, before an
+  /// operation changes it again.
+  private noteWorld(): void {
+    this.world.note(this.seeWorld());
   }
 
   private seeWorld(): WorldSeen {
@@ -2068,6 +2077,8 @@ export class GameplaySession {
           : liftSecondsToNextEvent(this.liftJourney, lift);
       const slice = until > 0 ? Math.min(remaining, until) : remaining;
       events.push(...this.advanceInterval(slice).events);
+      // A journey's scene changes at a slice's edge, so each is told apart.
+      this.noteWorld();
       remaining -= slice;
     }
     return { events, snapshot: this.snapshot };
@@ -2319,7 +2330,7 @@ export class GameplaySession {
         };
         events.push({ impact: { sound: sites.impactSound } });
         if (struck.kind === 'destroyed' || struck.kind === 'gratitude') {
-          this.worldRaised.push({
+          this.world.raise({
             cell,
             faction: struck.faction,
             kind: 'destroyed',
@@ -2329,7 +2340,7 @@ export class GameplaySession {
           });
         }
         if (struck.kind === 'gratitude') {
-          this.worldRaised.push({
+          this.world.raise({
             faction: struck.grateful,
             kind: 'gratitude'
           });
@@ -2350,7 +2361,7 @@ export class GameplaySession {
       }
       this.residence.set(slot, { kind: 'gone' });
       this.removeShot();
-      this.worldRaised.push({ kind: 'struck', object: slot });
+      this.world.raise({ kind: 'struck', object: slot });
       // The first target announces itself; the Talk Scripts answer the
       // second, from its World Event.
       if (index === 0) {
@@ -2564,7 +2575,7 @@ export class GameplaySession {
     }
     // The hit. A craft is lost and said to be lost; on foot there is nothing to
     // lose and nothing to say. Either way the encounter ends and play does not.
-    this.worldRaised.push({
+    this.world.raise({
       aboard: this.occupancy.kind === 'aboard',
       kind: 'hit'
     });

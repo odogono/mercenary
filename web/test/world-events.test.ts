@@ -7,9 +7,10 @@ import {
   sessionContent,
   type WorldEvent
 } from '../src/session/index.ts';
+import { WorldEventLog, type WorldSeen } from '../src/session/worldEvents.ts';
 import { flightModel, loadSettings } from '../src/settings/index.ts';
 import { TextTable } from '../src/text/index.ts';
-import { SURFACE, World, room } from '../src/world/index.ts';
+import { SURFACE, World, room, type Location } from '../src/world/index.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
 
 const bundle = await loadPayload();
@@ -126,15 +127,37 @@ describe('World Events', () => {
     expect(frame(session)).toEqual([{ kind: 'dropped', object: NOVADRIVE }]);
   });
 
-  test('changes between frames are told once, with the next frame', () => {
+  test('changes between frames are told once, with the next frame, in order', () => {
     const session = standing();
     session.carry(NOVADRIVE);
     session.board(DART);
     expect(frame(session)).toEqual([
-      { craft: DART, kind: 'boarded' },
-      { kind: 'took', object: NOVADRIVE }
+      { kind: 'took', object: NOVADRIVE },
+      { craft: DART, kind: 'boarded' }
     ]);
     expect(frame(session)).toEqual([]);
+  });
+
+  test('a change undone within one frame is still told (#931)', () => {
+    const session = standing();
+    session.board(DART);
+    frame(session);
+    session.leaveCraft();
+    session.board(DART);
+    expect(frame(session)).toEqual([
+      { craft: DART, kind: 'left' },
+      { craft: DART, kind: 'boarded' }
+    ]);
+  });
+
+  test('passing through a Room within one frame enters it (#931)', () => {
+    const session = standing();
+    session.teleport(room(16));
+    session.teleport(SURFACE);
+    expect(frame(session)).toEqual([
+      { kind: 'entered', location: room(16) },
+      { kind: 'entered', location: SURFACE }
+    ]);
   });
 
   test('destroying a faction Site names the Site, its cell and its faction', () => {
@@ -234,5 +257,34 @@ describe('World Events', () => {
       session.captureSaveSnapshot()
     );
     expect(frame(restored)).toEqual([]);
+  });
+});
+
+const at = (
+  location: Location,
+  craft?: number,
+  carried: readonly number[] = []
+): WorldSeen => ({ carried, craft, location });
+
+describe('the World Event log', () => {
+  test('tells raised and noted events in the order they happened', () => {
+    const log = new WorldEventLog(at(SURFACE));
+    log.raise({ faction: 'palyar', kind: 'gratitude' });
+    log.note(at(room(3)));
+    log.raise({ kind: 'struck', object: 0 });
+    expect(log.take(at(room(3), 1))).toEqual([
+      { faction: 'palyar', kind: 'gratitude' },
+      { kind: 'entered', location: room(3) },
+      { kind: 'struck', object: 0 },
+      { craft: 1, kind: 'boarded' }
+    ]);
+    expect(log.take(at(room(3), 1))).toEqual([]);
+  });
+
+  test('resumes from a restored world without telling it', () => {
+    const log = new WorldEventLog(at(SURFACE));
+    log.raise({ kind: 'struck', object: 0 });
+    log.resume(at(room(5), 7, [25]));
+    expect(log.take(at(room(5), 7, [25]))).toEqual([]);
   });
 });
