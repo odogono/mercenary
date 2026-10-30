@@ -225,7 +225,7 @@ describe('Lift Journeys in a Gameplay Session', () => {
       }
       const restored = GameplaySession.restore(
         content,
-        session.scripts,
+        session.benson,
         session.captureSaveSnapshot()
       );
       expect(panel(restored)).toBe(altitude);
@@ -335,7 +335,7 @@ describe('Lift Journeys in a Gameplay Session', () => {
     session.advance(2.345);
     const restored = GameplaySession.restore(
       content,
-      session.scripts,
+      session.benson,
       session.captureSaveSnapshot()
     );
     session.advance(4.5);
@@ -351,19 +351,19 @@ describe('Lift Journeys in a Gameplay Session', () => {
     session.rideLift();
     const saved = session.captureSaveSnapshot();
     expect(() =>
-      GameplaySession.restore(content, session.scripts, {
+      GameplaySession.restore(content, session.benson, {
         ...saved,
         liftJourney: { ...saved.liftJourney!, entranceRoom: 99 }
       })
     ).toThrow('Lift Journey refers to missing entrance');
     expect(() =>
-      GameplaySession.restore(content, session.scripts, {
+      GameplaySession.restore(content, session.benson, {
         ...saved,
         game: { ...saved.game, room: 5 }
       })
     ).toThrow('Lift Journey visible scene');
     expect(() =>
-      GameplaySession.restore(content, session.scripts, {
+      GameplaySession.restore(content, session.benson, {
         ...saved,
         liftJourney: { ...saved.liftJourney!, elapsedSeconds: 340 / 50 }
       })
@@ -429,7 +429,7 @@ describe('Metal Detector feedback', () => {
     const session = new GameplaySession(
       precedenceContent,
       newSession().game.player,
-      newSession().scripts
+      newSession().benson
     );
     session.carry(bundle.objectEffects.metalDetector.slot);
     session.place({

@@ -164,7 +164,7 @@ const strikeTheAdvert = (route: LegalRoute): void => {
 const restored = (route: LegalRoute): GameplaySession =>
   GameplaySession.restore(
     route.session.content,
-    route.session.scripts,
+    route.session.benson,
     route.session.captureSaveSnapshot(),
     { scripts: TALK_SCRIPTS }
   );
@@ -482,7 +482,7 @@ describe('after the dispatch', () => {
     // makes the epilogue read more slowly than play does. The dispatcher's answer and that
     // write sit a frame apart, so give the script the frame.
     route.advance(0.5);
-    expect(route.session.scripts?.messageWaitSeconds).toBeCloseTo(0.417);
+    expect(route.session.benson?.messageWaitSeconds).toBeCloseTo(0.417);
 
     const texts = revealed(route, 300);
     const upToTheLabel = texts.slice(0, texts.indexOf('GAME OVER') + 1);

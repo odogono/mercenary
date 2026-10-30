@@ -120,7 +120,7 @@ describe('firing from a craft', () => {
 
     const restored = GameplaySession.restore(
       route.session.content,
-      route.session.scripts,
+      route.session.benson,
       route.session.captureSaveSnapshot()
     );
 

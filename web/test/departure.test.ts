@@ -356,7 +356,7 @@ describe('the Departure composed with the Arrival', () => {
           advances += 1;
           session.advance(seconds);
         },
-        playingMessage: () => session.scripts?.activeMessageText
+        playingMessage: () => session.benson?.activeMessageText
       },
       entry: { kind: 'fresh' },
       milestones,

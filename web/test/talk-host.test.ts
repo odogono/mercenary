@@ -139,7 +139,7 @@ const untilShown = (session: GameplaySession, line: string): void => {
 const afterLine = (session: GameplaySession, line: string): void => {
   advanceUntil(
     session,
-    () => shown(session).includes(line) && !session.scripts!.messagePlaying
+    () => shown(session).includes(line) && !session.benson!.messagePlaying
   );
 };
 
@@ -337,7 +337,7 @@ describe('Player Input', () => {
     const session = prompts();
     session.begin();
     untilShown(session, 'FIRST?');
-    expect(session.scripts!.messagePlaying).toBe(true);
+    expect(session.benson!.messagePlaying).toBe(true);
     session.input('KeyY');
     afterLine(session, 'FIRST HEARD');
   });

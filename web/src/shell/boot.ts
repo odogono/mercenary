@@ -274,8 +274,8 @@ try {
   let frameSeconds = 0;
   let lastFrame: number | undefined;
   const bensonTranscript = new BensonMessageTranscript(snapshot.bensonMessage);
-  const scriptsOf = (): NonNullable<typeof session.scripts> => {
-    const scripts = session.scripts;
+  const scriptsOf = (): NonNullable<typeof session.benson> => {
+    const scripts = session.benson;
     if (scripts === undefined) {
       throw new Error('the browser walkabout has no Benson Scripts to present');
     }
@@ -315,7 +315,7 @@ try {
           snapshot = session.advance(seconds).snapshot;
           checkpointChangedResume(false);
         },
-        playingMessage: () => session.scripts?.activeMessageText
+        playingMessage: () => session.benson?.activeMessageText
       },
       entry: arrivalEntryFor(fresh),
       milestones,

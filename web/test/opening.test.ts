@@ -65,7 +65,7 @@ const advance = (session: GameplaySession, seconds: number): void => {
 const afterLine = (session: GameplaySession, line: string): void => {
   advanceUntil(
     session,
-    () => shown(session).includes(line) && !session.scripts!.messagePlaying
+    () => shown(session).includes(line) && !session.benson!.messagePlaying
   );
 };
 
@@ -90,7 +90,7 @@ const boardDart = (session: GameplaySession): void => {
 const untilBenson = (session: GameplaySession, line: string): void => {
   advanceUntil(
     session,
-    () => session.scripts!.activeMessageText?.trim() === line
+    () => session.benson!.activeMessageText?.trim() === line
   );
 };
 
@@ -181,15 +181,15 @@ describe('the opening', () => {
     advanceUntil(
       session,
       () =>
-        session.scripts!.activeMessageText === milestones.crashImminent &&
-        session.scripts!.messagePlaying
+        session.benson!.activeMessageText === milestones.crashImminent &&
+        session.benson!.messagePlaying
     );
     const restored = createWalkabout(
       bundle,
       settings,
       session.captureSaveSnapshot()
     ).session;
-    expect(restored.scripts!.activeMessageText).toBe(milestones.crashImminent);
+    expect(restored.benson!.activeMessageText).toBe(milestones.crashImminent);
     expect(restored.talk!.speaker).toBe(OPENING);
     afterLine(restored, milestones.statusReport);
   });

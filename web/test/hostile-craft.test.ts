@@ -221,7 +221,7 @@ describe('a hostile craft that has been sent after the player', () => {
 
     const restored = GameplaySession.restore(
       content,
-      session.scripts,
+      session.benson,
       session.captureSaveSnapshot()
     );
 

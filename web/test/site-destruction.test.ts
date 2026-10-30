@@ -297,7 +297,7 @@ describe('a Save taken while a Site is still coming apart', () => {
 
     const restored = GameplaySession.restore(
       content,
-      session.scripts,
+      session.benson,
       session.captureSaveSnapshot()
     );
 

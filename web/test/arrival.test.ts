@@ -43,7 +43,7 @@ const harness = (from: Settings = settings): Harness => {
     advance: seconds => {
       session.advance(seconds);
     },
-    playingMessage: () => session.scripts?.activeMessageText
+    playingMessage: () => session.benson?.activeMessageText
   };
   return {
     director: new ArrivalDirector({
@@ -286,7 +286,7 @@ describe('the Arrival', () => {
     });
     expect(snapshot.credits).toBe(9000);
     // The status report has begun rather than been read: the join is the moment it starts.
-    expect(skipped.session.scripts?.activeMessageText).toBe(
+    expect(skipped.session.benson?.activeMessageText).toBe(
       milestones.statusReport
     );
   });
@@ -354,7 +354,7 @@ describe('an Arrival entered from a restored session', () => {
         advance: seconds => {
           session.advance(seconds);
         },
-        playingMessage: () => session.scripts?.activeMessageText
+        playingMessage: () => session.benson?.activeMessageText
       },
       entry: { beat: 'crashImminent', kind: 'resumed' },
       milestones,
