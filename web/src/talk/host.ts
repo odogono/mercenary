@@ -72,22 +72,10 @@ interface Block {
   readonly lines: string[];
 }
 
-/// Engine flags a Talk Script now keeps itself, which a Save from before then
-/// still holds: the script takes each one over once.
-const LEGACY_FLAGS = {
-  commanderAnnoyed: 32,
-  dartBought: 1,
-  gratitudeGiven: 2,
-  shipHired: 4
-} as const;
-
 const CREDITS = BensonHostState.firstNumberDecimal;
 /// An object's description bit that makes boarding or taking it start the
 /// Benson Script of its slot.
 const STARTS_SCRIPT = 4;
-/// The object flag that marked an object paid for, before the deliveries
-/// Talk Script kept that itself.
-const LEGACY_DELIVERED = 1;
 /// The bits the Dart's Benson Script clears on its object at first boarding.
 const DISARMED = STARTS_SCRIPT | 8;
 /// What Benson Script 2 writes to start the Ship Delivery.
@@ -97,14 +85,6 @@ const ADVERT_BLOCK = 50;
 const MICROS = 1_000_000;
 /// No Talk Script wait is bounded by a deadline of its own.
 const LONGEST_WAIT_MS = 2_147_483_647;
-
-const legacyFlag = (name: string): number => {
-  const bit = LEGACY_FLAGS[name as keyof typeof LEGACY_FLAGS];
-  if (bit === undefined) {
-    throw new Error(`unknown legacy flag ${name.toString()}`);
-  }
-  return bit;
-};
 
 /// The Library's `codeIdentity`, which every Talk Script's counts in.
 const LIBRARY_IDENTITY = codeIdentity('library', 'benson', librarySource);
@@ -657,37 +637,6 @@ export class TalkHost {
           return nothing;
         },
         mode: 'immediate'
-      },
-      takeLegacyDelivered: {
-        args: [shape.text],
-        cost: { fuel: 1 },
-        description:
-          'Whether an older Save marked the object paid for, which it then clears.',
-        do: (_call, item) => {
-          const slot = objectSlot(item);
-          const flags = this.benson.host.objectFlags.get(slot) ?? 0;
-          this.benson.host = this.benson.host.withObjectFlag(
-            slot,
-            flags & ~LEGACY_DELIVERED
-          );
-          return bool((flags & LEGACY_DELIVERED) !== 0);
-        },
-        mode: 'immediate',
-        result: shape.bool
-      },
-      takeLegacyFlag: {
-        args: [shape.text],
-        cost: { fuel: 1 },
-        description:
-          'Whether an older Save set this engine flag, which it then clears.',
-        do: (_call, name) => {
-          const bit = legacyFlag(name);
-          const set = (this.benson.host.engineFlags & bit) !== 0;
-          this.write({ engineFlags: this.benson.host.engineFlags & ~bit });
-          return bool(set);
-        },
-        mode: 'immediate',
-        result: shape.bool
       }
     });
 

@@ -8,6 +8,8 @@ import {
   ENGINES,
   Lines,
   openRoute,
+  openRouteWith,
+  presetting,
   talkScript,
   type Engine
 } from './talkParity.ts';
@@ -23,12 +25,16 @@ const HANGAR_ROOM = 5;
 const ADVERT_CELL = 0x32;
 const CELL = 0x1_00_00;
 const COMMANDER_ANNOYED = 0x20;
-const SHIP_HIRED = 0x04;
 
 /// The Escape asks commerce whether the ship was hired.
 const escapeScript = talkScript(ESCAPE, COMMERCE);
-const open = (engine: Engine): Promise<LegalRoute> =>
-  openRoute(engine, ESCAPE, COMMERCE);
+const open = (engine: Engine, annoyed = false): Promise<LegalRoute> =>
+  annoyed
+    ? openRouteWith(
+        engine,
+        presetting(talkScript(ESCAPE, COMMERCE), ESCAPE, 'annoyed', 'true')
+      )
+    : openRoute(engine, ESCAPE, COMMERCE);
 
 const phase = (session: GameplaySession): number =>
   session.observations().observations['endingPhase'] as number;
@@ -42,9 +48,16 @@ const pressY = (route: LegalRoute): void => {
 /// Aboard the recovered ship in the hangar, the Escape just started.
 const aboardInTheHangar = async (
   engine: Engine,
-  novadrive = true
+  novadrive = true,
+  annoyed = false
 ): Promise<Lines> => {
-  const route = await open(engine);
+  const route = await open(engine, annoyed);
+  if (annoyed && engine === 'benson') {
+    const scripts = route.session.scripts!;
+    scripts.host = scripts.host.with({
+      engineFlags: scripts.host.engineFlags | COMMANDER_ANNOYED
+    });
+  }
   if (novadrive) {
     route.session.carry(NOVADRIVE);
   }
@@ -142,11 +155,7 @@ describe('the Escape as a Talk Script', () => {
 
   test('tells of the commander’s brother-in-law when he is annoyed', async () => {
     const played = await both(async engine => {
-      const lines = await aboardInTheHangar(engine);
-      const session = lines.route.session;
-      session.scripts!.host = session.scripts!.host.with({
-        engineFlags: session.scripts!.host.engineFlags | COMMANDER_ANNOYED
-      });
+      const lines = await aboardInTheHangar(engine, true, true);
       return launch(lines).until('SEE YOU IN MERCENARY II');
     });
     expect(played.talk).toEqual(played.benson);
@@ -185,20 +194,6 @@ describe('the Escape as a Talk Script', () => {
       ''
     ]);
     expect(played.talk.phase).toBe(0);
-  }, 120_000);
-
-  test('a ship hired in an older Save launches without a Novadrive', async () => {
-    const played = await both(async engine => {
-      const lines = await aboardInTheHangar(engine, false);
-      const scripts = lines.route.session.scripts!;
-      // Where a Save from before commerce kept the hire held it.
-      scripts.host = scripts.host.with({
-        engineFlags: scripts.host.engineFlags | SHIP_HIRED
-      });
-      return launch(lines).until('SEE YOU IN MERCENARY II');
-    });
-    expect(played.talk).toEqual(played.benson);
-    expect(played.talk.phase).toBeGreaterThan(0);
   }, 120_000);
 
   test('leaving the ship at the prompt ends with a blank line', async () => {

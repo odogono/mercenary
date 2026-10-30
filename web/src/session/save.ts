@@ -11,7 +11,7 @@ import type {
 import type { Location, Residence } from '../world/index.ts';
 import type { ShipFieldPoint, ShipFieldSaveSnapshot } from './shipField.ts';
 
-export const SAVE_SCHEMA_VERSION = 15 as const;
+export const SAVE_SCHEMA_VERSION = 16 as const;
 export const SAVE_JSON_CODE_UNIT_LIMIT = 1_000_000;
 
 const SAVE_COLLECTION_LIMIT = 1024;
@@ -1292,39 +1292,6 @@ export const encodeSave = (value: SaveEnvelope): string => {
   return canonical(checked);
 };
 
-const migratedHeading = (angle: number): number => {
-  const turn = 2 * Math.PI;
-  return ((((angle % turn) + Math.PI) % turn) + turn) % turn;
-};
-
-/// Schema 11 used the opposite horizontal forward vector. Convert only
-/// stored attitudes; positions and in-flight projectile velocities are world-space.
-const migrateHeadingConvention = (
-  value: SaveSnapshot,
-  schemaVersion: number
-): SaveSnapshot => {
-  if (schemaVersion !== 11) {
-    return value;
-  }
-  return {
-    ...value,
-    game: {
-      ...value.game,
-      player: {
-        ...value.game.player,
-        heading: migratedHeading(value.game.player.heading),
-        yawVelocity: -value.game.player.yawVelocity
-      }
-    },
-    residence: value.residence.map(([slot, residence]) => [
-      slot,
-      'heading' in residence && residence.heading !== undefined
-        ? { ...residence, heading: migratedHeading(residence.heading) }
-        : residence
-    ])
-  };
-};
-
 const decodeEnvelope = (text: string): SaveEnvelope => {
   if (text.length > SAVE_JSON_CODE_UNIT_LIMIT) {
     return fail('JSON exceeds the Save size limit');
@@ -1346,7 +1313,7 @@ const decodeEnvelope = (text: string): SaveEnvelope => {
     'snapshot'
   ]);
   const schemaVersion = integer(out['schemaVersion'], '$.schemaVersion');
-  if (schemaVersion < 11 || schemaVersion > SAVE_SCHEMA_VERSION) {
+  if (schemaVersion !== SAVE_SCHEMA_VERSION) {
     return fail(`unsupported Save schemaVersion ${schemaVersion}`);
   }
   const savedAt = string(out['savedAt'], '$.savedAt');
@@ -1364,69 +1331,7 @@ const decodeEnvelope = (text: string): SaveEnvelope => {
     location: location(out['location'], '$.location'),
     savedAt,
     schemaVersion: SAVE_SCHEMA_VERSION,
-    snapshot: migrateHeadingConvention(
-      snapshot(
-        migrateTalkScripts(
-          migrateDisplayRest(out['snapshot'], schemaVersion),
-          schemaVersion
-        ),
-        '$.snapshot'
-      ),
-      schemaVersion
-    )
-  };
-};
-
-/// Schema 13 records whether the Benson Message has rested intact on the row. Earlier Saves
-/// never let a rested message leave, so the flag they would have recorded is false; the
-/// restored display simply rests through whatever hold remains and then departs.
-const migrateDisplayRest = (value: unknown, schemaVersion: number): unknown => {
-  if (schemaVersion >= 13) {
-    return value;
-  }
-  const raw = record(value, '$.snapshot');
-  const benson = raw['benson'];
-  if (benson === null || benson === undefined) {
-    return value;
-  }
-  const bensonRecord = record(benson, '$.snapshot.benson');
-  const display = bensonRecord['display'];
-  if (display === undefined) {
-    return value;
-  }
-  return {
-    ...raw,
-    benson: {
-      ...bensonRecord,
-      display: {
-        ...record(display, '$.snapshot.benson.display'),
-        restedIntact: false
-      }
-    }
-  };
-};
-
-/// Schema 14 adds the Talk Scripts' part and names the Benson Script running
-/// (ADR 0080). An earlier Save had no Talk Scripts, so they load fresh, and
-/// the Benson Script it was running is told by where it is.
-const migrateTalkScripts = (value: unknown, schemaVersion: number): unknown => {
-  if (schemaVersion >= 15) {
-    return value;
-  }
-  const raw = record(value, '$.snapshot');
-  // Schema 14 used NorthTalk 0.1's format-9 bytes, which 0.3 cannot read.
-  // Keep the game state, but load Talk Scripts fresh without replaying begin.
-  if (schemaVersion === 14) {
-    return { ...raw, talk: null };
-  }
-  const benson = raw['benson'];
-  return {
-    ...raw,
-    benson:
-      benson === null || benson === undefined
-        ? benson
-        : { ...record(benson, '$.snapshot.benson'), script: null },
-    talk: null
+    snapshot: snapshot(out['snapshot'], '$.snapshot')
   };
 };
 

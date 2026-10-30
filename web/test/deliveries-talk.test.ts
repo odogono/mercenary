@@ -184,35 +184,6 @@ describe('the deliveries as a Talk Script', () => {
     ]);
   }, 120_000);
 
-  test('pays nothing for an object an older Save marked paid for', async () => {
-    const session = (await openRoute('talk', DELIVERIES)).session;
-    const saved = session.captureSaveSnapshot();
-    const restored = GameplaySession.restore(
-      session.content,
-      session.scripts,
-      {
-        ...saved,
-        objectFlags: saved.objectFlags.map(([slot, flags]) => [
-          slot,
-          slot === NEUTRON_FUEL ? flags | PAID : flags
-        ])
-      },
-      { scripts: talkScript(DELIVERIES) }
-    );
-    const route = LegalRoute.resume(restored);
-    route.session.carry(NEUTRON_FUEL);
-    route.session.teleport(room(ENGINE_ROOM));
-    const played = outcome(new Lines(route).advance(10), NEUTRON_FUEL);
-    expect(played.lines).toEqual(['ENGINE ROOM', '']);
-    expect(played.credits).toBe(9000);
-    // The script has taken the mark over.
-    expect(
-      (restored.observations().observations[
-        `objectFlags.${NEUTRON_FUEL}`
-      ] as number) & PAID
-    ).toBe(0);
-  }, 60_000);
-
   test('a Save while the Room waits for the drop restores and still pays', async () => {
     const route = await openRoute('talk', DELIVERIES);
     route.session.carry(NEUTRON_FUEL);

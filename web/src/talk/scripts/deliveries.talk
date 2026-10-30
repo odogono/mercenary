@@ -4,9 +4,7 @@
 
 use show, clear, report from benson
 
--- The items paid for, to whichever faction had them first. A Save from before
--- this script kept them marks each on its object instead, which the script
--- takes over the first time it asks about that item.
+-- The items paid for, to whichever faction had them first.
 script variable paid = []
 
 -- Each Room, what it wants, and what it pays. The headings and titles are the
@@ -54,7 +52,7 @@ on receive delivery
     end if
   end if
   -- An object is paid for once, to whichever faction has it first.
-  if alreadyPaid(item) then
+  if item is in paid then
     clear and wait
     return
   end if
@@ -89,10 +87,3 @@ on receive delivery
     end wait
   end repeat
 end receive
-
-function alreadyPaid item
-  if item is in paid then return true
-  ask world to takeLegacyDelivered item
-  if it then put [...paid, item] into paid
-  return it
-end alreadyPaid

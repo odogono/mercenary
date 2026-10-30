@@ -11,15 +11,47 @@ export const ENGINES: readonly Engine[] = ['benson', 'talk'];
 export const talkScript = (...names: string[]) =>
   TALK_SCRIPTS.filter(script => names.includes(script.name));
 
+/// The Talk Scripts with one's Script Variable starting at `value` instead,
+/// for a route that begins where play would have set it.
+export const presetting = (
+  scripts: ReturnType<typeof talkScript>,
+  script: string,
+  variable: string,
+  value: string
+) =>
+  scripts.map(talk => {
+    if (talk.name !== script) {
+      return talk;
+    }
+    const declaration = new RegExp(`^script variable ${variable} = .*$`, 'm');
+    if (!declaration.test(talk.source)) {
+      throw new Error(`${script} has no script variable ${variable}`);
+    }
+    return {
+      ...talk,
+      source: talk.source.replace(
+        declaration,
+        `script variable ${variable} = ${value}`
+      )
+    };
+  });
+
 /// A fresh route, with the named Talk Scripts in place of their Benson
 /// Scripts when the engine is Talk.
-export const openRoute = async (
+export const openRoute = (
   engine: Engine,
   ...names: string[]
+): Promise<LegalRoute> => openRouteWith(engine, talkScript(...names));
+
+/// A fresh route, with these Talk Scripts in place of their Benson Scripts
+/// when the engine is Talk.
+export const openRouteWith = async (
+  engine: Engine,
+  scripts: ReturnType<typeof talkScript>
 ): Promise<LegalRoute> => {
   const route = await LegalRoute.open();
   if (engine === 'talk') {
-    route.session.useTalkScripts(talkScript(...names));
+    route.session.useTalkScripts(scripts);
   }
   return route;
 };

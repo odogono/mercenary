@@ -9,6 +9,8 @@ import {
   ENGINES,
   Lines,
   openRoute,
+  openRouteWith,
+  presetting,
   talkScript,
   type Engine
 } from './talkParity.ts';
@@ -59,8 +61,19 @@ const outcome = (lines: Lines): Outcome => {
 /// A route whose object starts its own Benson Script when boarded or taken,
 /// as the opening leaves it: armed through a Save, which is how the flag
 /// reaches the session rather than the host it projects.
-const armed = async (engine: Engine, slot: number): Promise<LegalRoute> => {
-  const route = await openRoute(engine, COMMERCE, ESCAPE);
+const armed = async (
+  engine: Engine,
+  slot: number,
+  bought = false
+): Promise<LegalRoute> => {
+  // Bought, as the opening tells commerce, and as Benson keeps it.
+  const scripts = bought
+    ? presetting(talkScript(COMMERCE, ESCAPE), COMMERCE, 'bought', 'true')
+    : talkScript(COMMERCE, ESCAPE);
+  const route = await openRouteWith(engine, scripts);
+  if (bought && engine === 'benson') {
+    setEngineFlags(route, DART_BOUGHT);
+  }
   const snapshot = route.session.captureSaveSnapshot();
   const restored = GameplaySession.restore(
     route.session.content,
@@ -71,7 +84,7 @@ const armed = async (engine: Engine, slot: number): Promise<LegalRoute> => {
         at === slot ? [at, flags | STARTS_SCRIPT] : [at, flags]
       )
     },
-    engine === 'talk' ? { scripts: talkScript(COMMERCE, ESCAPE) } : undefined
+    engine === 'talk' ? { scripts } : undefined
   );
   return LegalRoute.resume(restored);
 };
@@ -197,8 +210,7 @@ describe('commerce as a Talk Script', () => {
 
   test('a buyer gets the job offer once off the surface', async () => {
     const played = await both(async engine => {
-      const route = await armed(engine, DART);
-      setEngineFlags(route, DART_BOUGHT);
+      const route = await armed(engine, DART, true);
       boardDart(route);
       route.session.leaveCraft();
       route.session.teleport(room(UNDERGROUND));
@@ -233,27 +245,6 @@ describe('commerce as a Talk Script', () => {
     ).toHaveLength(1);
   }, 120_000);
 
-  test('a Dart already boarded in an older Save stays quiet', async () => {
-    const session = (await openRoute('talk', COMMERCE, ESCAPE)).session;
-    const snapshot = session.captureSaveSnapshot();
-    // Disarmed, as the first boarding left the Dart before commerce kept it.
-    const route = LegalRoute.resume(
-      GameplaySession.restore(
-        session.content,
-        session.scripts,
-        {
-          ...snapshot,
-          objectFlags: snapshot.objectFlags.map(([at, flags]) =>
-            at === DART ? [at, flags & ~STARTS_SCRIPT] : [at, flags]
-          )
-        },
-        { scripts: talkScript(COMMERCE, ESCAPE) }
-      )
-    );
-    boardDart(route);
-    expect(new Lines(route).advance(15).lines).toEqual([]);
-  }, 60_000);
-
   test('the captured Mechanoid protests at every taking', async () => {
     const played = await both(async engine => {
       const route = await armed(engine, CAPTURED_MECHANOID);
@@ -280,8 +271,7 @@ describe('commerce as a Talk Script', () => {
 
   test('a buyer who lets the hire lapse still gets the job offer', async () => {
     const played = await both(async engine => {
-      const route = await armed(engine, DART);
-      setEngineFlags(route, DART_BOUGHT);
+      const route = await armed(engine, DART, true);
       setCredits(route, 1_500_000);
       route.session.carry(ANTENNA);
       route.session.teleport(room(SHIP_RENTAL));
