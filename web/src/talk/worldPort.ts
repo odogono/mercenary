@@ -23,6 +23,8 @@ export interface WorldPort {
   escape(): void;
   /// Fixes the object where it lies.
   fix(slot: number): void;
+  /// Whether the object is fixed where it lies.
+  fixed(slot: number): boolean;
   /// Where the player is.
   here(): Location;
   /// Where a loose object lies, or undefined while it is carried or gone.
@@ -32,11 +34,12 @@ export interface WorldPort {
   pay(amount: number): void;
   /// The next byte of the world's random stream.
   random(): number;
+  /// The Surface Regions a loose object lies in (ADR 0084), none while it is
+  /// carried, in a Room or gone. The Talk host asks, to tell each region
+  /// what was left in it.
+  regionsHolding(slot: number): readonly string[];
   sendAttacker(): void;
   /// Starts the Ship Delivery.
   sendShip(): void;
   spend(amount: number): void;
-  /// Whether a loose object lies on the surface inside the named Surface
-  /// Region (ADR 0084). Throws on a region the world doesn't have.
-  within(slot: number, region: string): boolean;
 }

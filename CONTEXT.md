@@ -692,7 +692,7 @@ One reusable wireframe definition placed in one or more Surface Cells, distinct 
 _Avoid_: Building, model, cell geometry
 
 **Surface Region**:
-A named area of the surface that the Gameplay Session knows the player and loose objects to be in or out of, so a Talk Script can react to arrival there or to what is left there. It belongs to play, not to drawing.
+A named area of the surface that the Gameplay Session knows the player and loose objects to be in or out of. A Talk Script may own one, and then it alone hears the player's arrival there and what is left there. A building's own region is its footprint, named by its placement.
 _Avoid_: Zone, area, trigger volume, Location (which is the surface as a whole)
 
 **Structure Reach**:

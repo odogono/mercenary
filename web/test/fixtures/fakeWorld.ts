@@ -11,7 +11,7 @@ export class FakeWorld implements WorldPort {
   craft: number | undefined;
   destroyedCells = new Set<number>();
   escaped = false;
-  fixed = new Set<number>();
+  readonly fixes = new Set<number>();
   location: Location = SURFACE;
   readonly places = new Map<number, Location>();
   /// Each loose object's Surface Region, by slot.
@@ -46,7 +46,10 @@ export class FakeWorld implements WorldPort {
     this.armedSlots.delete(slot);
   }
   fix(slot: number): void {
-    this.fixed.add(slot);
+    this.fixes.add(slot);
+  }
+  fixed(slot: number): boolean {
+    return this.fixes.has(slot);
   }
   destroyed(cell: number): boolean {
     return this.destroyedCells.has(cell);
@@ -69,10 +72,11 @@ export class FakeWorld implements WorldPort {
   sendAttacker(): void {
     this.attackerSent = true;
   }
+  regionsHolding(slot: number): readonly string[] {
+    const region = this.regions.get(slot);
+    return this.carried.has(slot) || region === undefined ? [] : [region];
+  }
   sendShip(): void {
     this.shipSent = true;
-  }
-  within(slot: number, region: string): boolean {
-    return !this.carried.has(slot) && this.regions.get(slot) === region;
   }
 }

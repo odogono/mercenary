@@ -14,6 +14,7 @@
 import {
   bool,
   createCore,
+  defineObjectKind,
   nothing,
   num,
   shape,
@@ -21,6 +22,7 @@ import {
   type Call,
   type Decimal,
   type Grant,
+  type HostObject,
   type Library,
   type Report,
   type TsGroup,
@@ -45,6 +47,9 @@ import type { WorldPort } from './worldPort.ts';
 /// One Talk Script, and the Benson Scripts it replaces.
 export interface TalkScript {
   readonly name: string;
+  /// The Surface Region it owns (ADR 0084): what happens there is told to it
+  /// alone, through the region's Host Object.
+  readonly owns?: string;
   readonly replaces: readonly number[];
   readonly source: string;
 }
@@ -76,6 +81,13 @@ const MICROS = 1_000_000;
 const LONGEST_WAIT_MS = 2_147_483_647;
 
 const whole = (value: Decimal): number => Number(value.toBigInt());
+
+/// A Surface Region as a Host Object, named by its id. A Talk Script that owns
+/// one hears its messages as `me`.
+const SURFACE_REGION = defineObjectKind<string>({
+  name: 'surface region',
+  props: { name: { get: region => text(region.native) } }
+});
 
 /// An operation done for its effect, answering nothing.
 const done = (act: () => void): Value => {
@@ -115,8 +127,6 @@ const message = (
   switch (event.kind) {
     case 'entered':
       return { args: [text(locationName(event.location))], name: 'entered' };
-    case 'arrived':
-      return { args: [text(event.region)], name: 'arrived' };
     case 'boarded':
     case 'left':
       return { args: [text(objectName(event.craft))], name: event.kind };
@@ -232,10 +242,17 @@ export class TalkHost {
   }
 
   private load(group: TsGroup, script: TalkScript): void {
+    let owner: HostObject | undefined;
+    if (script.owns !== undefined) {
+      owner =
+        group.objectById(SURFACE_REGION.name, script.owns) ??
+        group.object(SURFACE_REGION, script.owns, script.owns);
+    }
     group.load({
       grants: this.grants,
       limits: { maxWaitMs: LONGEST_WAIT_MS },
       name: script.name,
+      ...(owner !== undefined ? { owner } : {}),
       source: script.source
     });
   }
@@ -261,7 +278,8 @@ export class TalkHost {
         libraries: [this.library],
         name: 'targ',
         onMismatch: 'reload changed',
-        resolve: () => undefined,
+        resolve: (kind, id) =>
+          kind === SURFACE_REGION.name ? { native: id } : undefined,
         // This build's source: a Talk Script changed since the Save reloads
         // with its Script Variables, and the rest restore as they were.
         scriptSources: ({ name }) => ({
@@ -330,8 +348,30 @@ export class TalkHost {
       if (told !== undefined) {
         this.group.broadcast(told);
       }
+      this.tellRegions(event);
     }
     this.pump();
+  }
+
+  /// Tells a Surface Region what happened in it: the player's arrival, and
+  /// an object left there. Only a region a Talk Script owns hears it, and
+  /// nothing else does, so a script answers for its own place without a Guard.
+  private tellRegions(event: WorldEvent): void {
+    if (event.kind === 'arrived') {
+      this.tellRegion(event.region, { name: 'arrived' });
+    } else if (event.kind === 'dropped') {
+      const item = text(objectName(event.object));
+      for (const region of this.world.regionsHolding(event.object)) {
+        this.tellRegion(region, { args: [item], name: 'received' });
+      }
+    }
+  }
+
+  private tellRegion(region: string, m: { args?: Value[]; name: string }) {
+    const to = this.group.objectById(SURFACE_REGION.name, region);
+    if (to !== undefined) {
+      this.group.deliver(to, m);
+    }
   }
 
   /// A key no Binding took, as Player Input: to the Input Owner alone, or to
@@ -515,6 +555,14 @@ export class TalkHost {
         do: (_call, item) => done(() => world.fix(objectSlot(item))),
         mode: 'immediate'
       },
+      fixed: {
+        args: [shape.text],
+        cost: { fuel: 1 },
+        description: 'Whether the object is fixed where it lies.',
+        do: (_call, item) => bool(world.fixed(objectSlot(item))),
+        mode: 'immediate',
+        result: shape.bool
+      },
       here: {
         cost: { fuel: 1 },
         description: 'The name of the Room the player is in.',
@@ -585,16 +633,6 @@ export class TalkHost {
         cost: { fuel: 1 },
         do: (_call, amount) => done(() => world.spend(whole(amount))),
         mode: 'immediate'
-      },
-      within: {
-        args: [shape.text, shape.text],
-        cost: { fuel: 1 },
-        description:
-          'Whether a loose object lies on the surface inside the named Surface Region.',
-        do: (_call, item, region) =>
-          bool(world.within(objectSlot(item), region)),
-        mode: 'immediate',
-        result: shape.bool
       }
     });
 

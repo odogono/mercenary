@@ -4,15 +4,16 @@ import { describe, expect, test } from 'bun:test';
 import { load } from '../src/payload/load.ts';
 import { readTargAssets } from '../src/server/assets.ts';
 import { GameplaySession } from '../src/session/index.ts';
-import { SHRINE } from '../src/talk/scripts.ts';
+import { SHRINE, SHRINE_GROUNDS } from '../src/talk/scripts.ts';
 import { SURFACE, World } from '../src/world/index.ts';
 import { LegalRoute } from './legalCheckpoint.ts';
 import { readPayloadFile, repositoryRoot } from './replay/artifacts.ts';
-import { Lines, openRoute, talkScript } from './talkParity.ts';
+import { Lines, talkScript } from './talkParity.ts';
 
-/// The Shrine at Surface Cell (20,20), outside the city (ADR 0084): its Talk
-/// Script speaks when the player comes into its grounds, and takes the energy
-/// crystal left inside it as an offering.
+/// The Shrine at Surface Cell (20,20), outside the city (ADR 0084). Each of
+/// its two Talk Scripts owns a Surface Region: the grounds' speaks when the
+/// player comes into them, and the Shrine's takes the energy crystal left
+/// inside its footprint as an offering.
 
 const CELL = 0x1_00_00;
 const SHRINE_CENTRE = { x: 20.5 * CELL, y: 0, z: 20.5 * CELL };
@@ -24,6 +25,22 @@ const ENERGY_CRYSTAL = 31;
 const LARGE_BOX = 34;
 /// The object flag the World Port's `fix` sets.
 const FIXED = 16;
+
+const read = async (name: string) => {
+  try {
+    return await readPayloadFile(name);
+  } catch {
+    return undefined;
+  }
+};
+
+const withAssets = () =>
+  load(read, () => readTargAssets(join(repositoryRoot, 'assets/targ')));
+
+const scripts = () => talkScript(SHRINE, SHRINE_GROUNDS);
+
+const openRoute = async () =>
+  LegalRoute.open({ bundle: await withAssets(), talk: scripts() });
 
 const standAt = (route: LegalRoute, at: typeof SHRINE_CENTRE): void => {
   route.session.teleport(SURFACE);
@@ -46,7 +63,7 @@ const flags = (route: LegalRoute, slot: number): number =>
 
 describe('the Shrine as a Talk Script', () => {
   test('greets a player who comes into its grounds, each time', async () => {
-    const route = await openRoute(SHRINE);
+    const route = await openRoute();
     standAt(route, GROUNDS_EDGE);
     const lines = new Lines(route).advance(5);
     route.session.place({ x: 2 * CELL, y: 0, z: 2 * CELL });
@@ -59,7 +76,7 @@ describe('the Shrine as a Talk Script', () => {
   }, 60_000);
 
   test('is indifferent to any other object left inside it', async () => {
-    const route = await openRoute(SHRINE);
+    const route = await openRoute();
     const played = leave(route, LARGE_BOX, SHRINE_CENTRE);
     expect(played.lines).toEqual([
       'A SHRINE STANDS HERE',
@@ -69,14 +86,14 @@ describe('the Shrine as a Talk Script', () => {
   }, 60_000);
 
   test('ignores an object left in its grounds but outside it', async () => {
-    const route = await openRoute(SHRINE);
+    const route = await openRoute();
     const played = leave(route, ENERGY_CRYSTAL, GROUNDS_EDGE);
     expect(played.lines).toEqual(['A SHRINE STANDS HERE']);
     expect(flags(route, ENERGY_CRYSTAL) & FIXED).toBe(0);
   }, 60_000);
 
-  test('accepts the energy crystal once, fixes it, and remembers through a Save', async () => {
-    const route = await openRoute(SHRINE);
+  test('accepts the energy crystal, fixes it, and is at peace after a Save', async () => {
+    const route = await openRoute();
     const played = leave(route, ENERGY_CRYSTAL, SHRINE_CENTRE);
     expect(played.lines).toEqual([
       'A SHRINE STANDS HERE',
@@ -91,7 +108,7 @@ describe('the Shrine as a Talk Script', () => {
       route.session.content,
       route.session.benson,
       route.session.captureSaveSnapshot(),
-      { scripts: talkScript(SHRINE) }
+      { scripts: scripts() }
     );
     restored.place({ x: 2 * CELL, y: 0, z: 2 * CELL });
     const again = new Lines(LegalRoute.resume(restored)).advance(1);
@@ -103,33 +120,22 @@ describe('the Shrine as a Talk Script', () => {
   }, 60_000);
 });
 
-const read = async (name: string) => {
-  try {
-    return await readPayloadFile(name);
-  } catch {
-    return undefined;
-  }
-};
-
-const withAssets = () =>
-  load(read, () => readTargAssets(join(repositoryRoot, 'assets/targ')));
-
 describe('the Shrine as an Authored Asset', () => {
   test('restores a Save made before it was placed, standing where it was put', async () => {
-    const before = await openRoute(SHRINE);
+    const before = await LegalRoute.open({ talk: scripts() });
     const snapshot = before.session.captureSaveSnapshot();
     expect(snapshot.residence.some(([slot]) => slot === SHRINE_SLOT)).toBe(
       false
     );
     const after = await LegalRoute.open({
       bundle: await withAssets(),
-      talk: talkScript(SHRINE)
+      talk: scripts()
     });
     const restored = GameplaySession.restore(
       after.session.content,
       after.session.benson,
       snapshot,
-      { scripts: talkScript(SHRINE) }
+      { scripts: scripts() }
     );
     expect(restored.residenceOf(SHRINE_SLOT).kind).toBe('surface');
     expect(

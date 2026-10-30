@@ -93,6 +93,9 @@ export interface Instance {
   readonly orientation?: readonly number[];
   readonly placement: string;
   readonly position: readonly number[];
+  /// The Surface Region an Authored object's footprint makes (ADR 0084): only
+  /// an Authored Asset's Sidecar placements name one.
+  readonly region?: string;
   readonly room: number;
   readonly rotatable: boolean;
   readonly slot: number;

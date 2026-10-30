@@ -8,4 +8,5 @@ section: added
 grounds shows a message, anything left inside it is acknowledged, and an
 energy crystal left there is accepted as an offering and fixed in place for
 good. It is the first Authored Asset placed in Targ's world, and older Saves
-still load with it standing there.
+still load with it standing there. Its Talk Scripts each own a Surface
+Region, so they hear only what happens in their own place.

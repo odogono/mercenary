@@ -1,8 +1,10 @@
+import type { ObjectPlacement } from '../world/index.ts';
 import { wrapSurfaceAxis } from '../world/surfaceCoordinates.ts';
 
 /// Surface Regions (ADR 0084): named areas of the surface the Gameplay Session
-/// knows the player and loose objects to be in or out of. They are play, not
-/// drawing, so they live here rather than in a Geometry Asset.
+/// knows the player and loose objects to be in or out of. A building's own
+/// region is its footprint, named by its Sidecar placement; an area that is no
+/// building's lives in this table.
 ///
 /// A region is a rectangle in surface units, `[min, max)` on each axis, at
 /// any altitude.
@@ -16,26 +18,42 @@ export interface SurfaceRegion {
 
 const CELL = 0x1_00_00;
 
-/// The Shrine stands at the centre of Surface Cell (20,20), outside the city.
-const SHRINE_CENTRE = { x: 20.5 * CELL, z: 20.5 * CELL };
-/// Half the Shrine's footprint, out to its pillars.
-const SHRINE_HALF = 0x3_00;
-
-export const SURFACE_REGIONS: readonly SurfaceRegion[] = [
+/// The areas that belong to no building.
+const OPEN_REGIONS: readonly SurfaceRegion[] = [
+  // The open ground around the Shrine, the whole of Surface Cell (20,20).
   {
     maxX: 21 * CELL,
     maxZ: 21 * CELL,
     minX: 20 * CELL,
     minZ: 20 * CELL,
     name: 'shrine grounds'
-  },
-  {
-    maxX: SHRINE_CENTRE.x + SHRINE_HALF,
-    maxZ: SHRINE_CENTRE.z + SHRINE_HALF,
-    minX: SHRINE_CENTRE.x - SHRINE_HALF,
-    minZ: SHRINE_CENTRE.z - SHRINE_HALF,
-    name: 'shrine'
   }
+];
+
+/// The footprint an object stands on: its placed vertices' extent.
+const footprint = (object: ObjectPlacement, name: string): SurfaceRegion => {
+  const xs = object.vertices.map(v => v.x);
+  const zs = object.vertices.map(v => v.z);
+  return {
+    maxX: Math.max(...xs),
+    maxZ: Math.max(...zs),
+    minX: Math.min(...xs),
+    minZ: Math.min(...zs),
+    name
+  };
+};
+
+/// Every Surface Region of a world: the open ones, then each surface object's
+/// footprint that its placement names.
+export const surfaceRegions = (
+  objects: readonly ObjectPlacement[]
+): SurfaceRegion[] => [
+  ...OPEN_REGIONS,
+  ...objects.flatMap(object =>
+    object.region !== undefined && object.placement === 'surface'
+      ? [footprint(object, object.region)]
+      : []
+  )
 ];
 
 const inside = (
@@ -50,21 +68,8 @@ const inside = (
 };
 
 /// The names of the regions a surface point is in, in table order.
-export const regionsAt = (at: {
-  readonly x: number;
-  readonly z: number;
-}): string[] =>
-  SURFACE_REGIONS.filter(region => inside(region, at)).map(r => r.name);
-
-export const surfaceRegion = (name: string): SurfaceRegion => {
-  const region = SURFACE_REGIONS.find(r => r.name === name);
-  if (region === undefined) {
-    throw new Error(`no Surface Region is called ${name}`);
-  }
-  return region;
-};
-
-export const within = (
-  name: string,
+export const regionsAt = (
+  regions: readonly SurfaceRegion[],
   at: { readonly x: number; readonly z: number }
-): boolean => inside(surfaceRegion(name), at);
+): string[] =>
+  regions.filter(region => inside(region, at)).map(region => region.name);

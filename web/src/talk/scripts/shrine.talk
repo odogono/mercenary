@@ -1,28 +1,14 @@
--- The Shrine: an Authored Asset at Surface Cell (20,20), outside the city
--- (ADR 0084). Not a port: no Benson Script ever spoke here.
-
 use show, clear, report from benson
 
--- Whether the energy crystal has been offered.
-script variable offered = false
-
-on arrived region where region = "shrine grounds"
-  if offered then
-    show "THE SHRINE IS AT PEACE" and wait
-  else
-    show "A SHRINE STANDS HERE" and wait
-  end if
-end arrived
-
-on dropped item
-  ask world to within item, "shrine"
-  if not it then return
-  if item = "energy crystal" and not offered then
-    put true into offered
+-- The Shrine (ADR 0084) owns its own Surface Region, its footprint: an object
+-- left inside it is told here, and nowhere else. The energy crystal is taken
+-- as an offering and fixed where it lies, so it can't be left here twice.
+on received item
+  if item = "energy crystal" then
     ask world to fix item
     report ["THE SHRINE", "ACCEPTS THE CRYSTAL", "IT WILL NOT BE MOVED"] and wait
     clear and wait
     return
   end if
   show "THE SHRINE IS INDIFFERENT" and wait
-end dropped
+end received

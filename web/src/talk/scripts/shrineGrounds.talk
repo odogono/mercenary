@@ -1,0 +1,13 @@
+use show from benson
+
+-- The open ground around the Shrine (ADR 0084) owns its Surface Region: the
+-- player's arrival there is told here. The Shrine is at peace once the energy
+-- crystal is fixed in it.
+on arrived
+  ask world to fixed "energy crystal"
+  if it then
+    show "THE SHRINE IS AT PEACE" and wait
+  else
+    show "A SHRINE STANDS HERE" and wait
+  end if
+end arrived

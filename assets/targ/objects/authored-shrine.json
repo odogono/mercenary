@@ -347,7 +347,7 @@
         ]
       }
     ],
-    "sidecarSha256": "9de4eeb97266269eb9519b206fd71bd1b21cca347f8a76108c0bf546addd8bbd",
+    "sidecarSha256": "3ef5a7b4506c2cfc6e31904919de1480349ca6bf0750db336408004b8a64f1a7",
     "title": "targ",
     "version": 1
   },
@@ -375,6 +375,7 @@
           0,
           1343488
         ],
+        "region": "shrine",
         "room": 0,
         "rotatable": false,
         "slot": 64,

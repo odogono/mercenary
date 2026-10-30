@@ -102,7 +102,11 @@ import {
   type ShipFieldPoint
 } from './shipField.ts';
 import { SiteLedger } from './sites.ts';
-import { regionsAt, within } from './surfaceRegions.ts';
+import {
+  regionsAt,
+  surfaceRegions,
+  type SurfaceRegion
+} from './surfaceRegions.ts';
 import {
   WorldEventLog,
   type WorldEvent,
@@ -763,6 +767,7 @@ export class GameplaySession {
   /// The hired ship's delivery byte, as the Ship Delivery rules read it.
   private shipInbound = 0;
   private readonly objectsBySlot: ReadonlyMap<number, ObjectPlacement>;
+  private readonly regions: readonly SurfaceRegion[];
   /// The World Events since the last frame was told.
   private world: WorldEventLog;
 
@@ -816,6 +821,7 @@ export class GameplaySession {
     }
     this.carriedStack.sort((a, b) => a - b);
     this.objectsBySlot = objectsBySlot;
+    this.regions = surfaceRegions(content.objects);
     if (this.benson !== undefined) {
       this.credits = STARTING_CREDITS;
     }
@@ -1996,6 +2002,7 @@ export class GameplaySession {
         this.endingPhase = 1;
       },
       fix: slot => flag(slot, flags => flags | FIXED),
+      fixed: slot => ((this.objectFlags.get(object(slot)) ?? 0) & FIXED) !== 0,
       here: () => this.semanticLocation,
       lies: slot => {
         const where = this.residenceOf(object(slot));
@@ -2023,21 +2030,21 @@ export class GameplaySession {
       },
       pay: amount => this.addCredits(amount),
       random: () => this.nextRandomByte(),
+      regionsHolding: slot => {
+        const where = this.residenceOf(object(slot));
+        if (where.kind !== 'surface') {
+          return [];
+        }
+        const at = where.at ?? this.objectsBySlot.get(slot)?.origin;
+        return at === undefined ? [] : regionsAt(this.regions, at);
+      },
       sendAttacker: () => {
         this.attackingShip = true;
       },
       sendShip: () => {
         this.shipInbound = SHIP_INBOUND;
       },
-      spend: amount => this.addCredits(-amount),
-      within: (slot, region) => {
-        const where = this.residenceOf(object(slot));
-        if (where.kind !== 'surface') {
-          return false;
-        }
-        const at = where.at ?? this.objectsBySlot.get(slot)?.origin;
-        return at !== undefined && within(region, at);
-      }
+      spend: amount => this.addCredits(-amount)
     };
   }
 
@@ -2098,7 +2105,7 @@ export class GameplaySession {
       location: this.location,
       regions:
         this.location.kind === 'surface'
-          ? regionsAt(this.game.player.position)
+          ? regionsAt(this.regions, this.game.player.position)
           : []
     };
   }

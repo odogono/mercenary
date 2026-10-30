@@ -230,6 +230,8 @@ export interface ObjectPlacement {
   /// "surface" or "room". Room instances carry room-local coordinates, so they are inspectable
   /// but must not be drawn on the surface.
   readonly placement: string;
+  /// The Surface Region its footprint makes, if its placement names one.
+  readonly region?: string;
   readonly room: number;
   readonly slot: number;
   readonly stateFlags: number;
@@ -790,6 +792,7 @@ const placements = (
       orientation,
       origin,
       placement: instance.placement,
+      ...(instance.region !== undefined ? { region: instance.region } : {}),
       room: instance.room,
       slot: instance.slot,
       stateFlags: instance.stateFlags,

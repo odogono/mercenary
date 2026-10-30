@@ -72,6 +72,7 @@ refuse to move:
 2. Draw the wireframe, mark its edges as lines, and _Export_.
 3. Write the placements into the Sidecar by hand. Until you do, `bun run check` refuses the asset.
    - An object's placements are Targ object instances without their `model`.
+     An instance may add `"region": "<name>"` to make its footprint a Surface Region, which a Talk Script can own (ADR 0084).
    - A structure's placements are the Surface Cells it occupies: `{ "cell": <index> }`.
    - A structure's Structure Reach is the Sidecar's `reach`, either `all` or `cell`.
 
