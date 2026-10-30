@@ -7,18 +7,14 @@
 use show, clear, report, prompt from benson
 
 -- Whether the player has hired the Interstellar Ship, which the Escape asks
--- for. A Save from before this script kept it holds it in an engine flag,
--- which the script takes over the first time it is asked.
-script variable hired = nothing
+-- for.
+script variable hired = false
 
--- Whether the player bought the Dart, which the opening tells commerce. A
--- Save from before this script kept it holds it in an engine flag instead.
-script variable bought = nothing
+-- Whether the player bought the Dart, which the opening tells commerce.
+script variable bought = false
 
--- Whether the Dart has had its first boarding. It is nothing until then: the
--- Dart's armed bit, which the opening sets, says whether a Save from before
--- this script kept it has had one.
-script variable dartBoarded = nothing
+-- Whether the Dart has had its first boarding.
+script variable dartBoarded = false
 
 constant fee = 999999
 
@@ -65,18 +61,10 @@ end antennaHere
 -- Benson Script 1: the Dart's first boarding. A buyer gets a job offer once
 -- they leave the surface, or sooner by chance; a thief gets the owner.
 on boarded craft where craft = "dart"
-  if dartBoarded is nothing then
-    ask world to armed "dart"
-    put not it into dartBoarded
-  end if
   if dartBoarded then return
   put true into dartBoarded
   -- The engine still reads the bits as the Dart's description.
   ask world to disarm "dart"
-  if bought is nothing then
-    ask world to takeLegacyFlag "dartBought"
-    put it into bought
-  end if
   if not bought then
     report ["THIS CRAFT BELONGED TO", "THE PALYAR COMMANDER'S", "BROTHER-IN-LAW", "HE IS NOT TOO PLEASED"] and wait
     send commanderAnnoyed to escape
@@ -107,10 +95,6 @@ on took item where item = "captured mechanoid"
 end took
 
 on isHired
-  if hired is nothing then
-    ask world to takeLegacyFlag "shipHired"
-    put it into hired
-  end if
   return hired
 end isHired
 

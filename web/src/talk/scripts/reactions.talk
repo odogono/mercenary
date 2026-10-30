@@ -4,10 +4,8 @@
 
 use show, clear, report from benson
 
--- Whether a faction has thanked the player, which happens once a game. It is
--- nothing until first needed: a Save from before this script kept it hands
--- over the engine flag that held it then.
-script variable thanked = nothing
+-- Whether a faction has thanked the player, which happens once a game.
+script variable thanked = false
 
 constant sites = [
   {site: "novabill", messages: ["NOVABILL - WELL DONE,"], attacker: "", annoys: false},
@@ -77,10 +75,6 @@ end attack
 
 on gratitude faction
   wait 167 ms
-  if thanked is nothing then
-    ask world to takeLegacyFlag "gratitudeGiven"
-    put it into thanked
-  end if
   if thanked then return
   -- Claim before suspending, so two concurrent Runs cannot thank or pay twice.
   put true into thanked

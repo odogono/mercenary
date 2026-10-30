@@ -10,8 +10,7 @@ import {
   SaveCodecError,
   decodeSave,
   encodeSave,
-  type SaveEnvelope,
-  type SaveSnapshot
+  type SaveEnvelope
 } from '../src/session/save.ts';
 import { TextTable } from '../src/text/index.ts';
 import type { ObjectPlacement } from '../src/world/index.ts';
@@ -110,7 +109,7 @@ describe('a Save Snapshot', () => {
     );
     const snapshot = gameplay.captureSaveSnapshot();
 
-    expect(SAVE_SCHEMA_VERSION).toBe(15);
+    expect(SAVE_SCHEMA_VERSION).toBe(16);
     expect(snapshot).toHaveProperty('carriedStack');
     expect(snapshot).toHaveProperty('deliveryFrames');
     expect(snapshot).toHaveProperty('objectFlags');
@@ -153,7 +152,7 @@ describe('a Save Snapshot', () => {
     expect(decoded.snapshot.ending).toBeNull();
   });
 
-  test('refuses a Save written before schema 11', () => {
+  test('refuses a Save written before schema 16', () => {
     const gameplay = new GameplaySession(
       content,
       playerState({ position: { x: 0, y: 0, z: 0 } }),
@@ -162,116 +161,14 @@ describe('a Save Snapshot', () => {
     const stale = JSON.parse(encodeSave(envelope(gameplay))) as {
       schemaVersion: number;
     };
-    stale.schemaVersion = 10;
 
-    // No migration: a v8 Save has a progressive ticker rather than the Benson
-    // Display continuation boundary, and inventing one would restore a different line.
-    expect(() => decodeSave(JSON.stringify(stale), environment)).toThrow(
-      `unsupported Save schemaVersion ${10}`
-    );
-  });
-
-  test('migrates schema 11 headings once and preserves world state', () => {
-    const gameplay = new GameplaySession(
-      content,
-      playerState({
-        heading: (3 * Math.PI) / 2,
-        pitch: 0.2,
-        position: { x: 1000, y: 128, z: 2000 },
-        roll: -0.3,
-        yawVelocity: 0.4
-      }),
-      scripts()
-    );
-    const current = envelope(gameplay);
-    const snapshot: SaveSnapshot = {
-      ...current.snapshot,
-      combat: {
-        approachFrames: 2,
-        attackerVelocity: { x: 1, y: 2, z: 3 },
-        frames: 0.5,
-        hostileShot: { framesLeft: 3, velocity: { x: -1, y: 0, z: 1 } },
-        impact: null,
-        mechanoidDestroyed: 0,
-        palyarDestroyed: 0,
-        playerShot: { framesLeft: 4, velocity: { x: 2, y: -1, z: 0 } },
-        siteTable: Array(256).fill(0)
-      },
-      residence: [
-        [0, { at: { x: 1, y: 2, z: 3 }, heading: 0, kind: 'surface' }],
-        [1, { heading: Math.PI, id: 3, kind: 'room' }],
-        [2, { kind: 'surface' }],
-        [3, { kind: 'carried' }],
-        [4, { kind: 'gone' }]
-      ]
-    };
-    const migrated = decodeSave(
-      JSON.stringify({ ...current, schemaVersion: 11, snapshot }),
-      environment
-    );
-    expect(migrated.schemaVersion).toBe(15);
-    expect(migrated.snapshot.game.player).toEqual({
-      ...snapshot.game.player,
-      heading: Math.PI / 2,
-      yawVelocity: -0.4
-    });
-    expect(migrated.snapshot.residence).toEqual([
-      [0, { at: { x: 1, y: 2, z: 3 }, heading: Math.PI, kind: 'surface' }],
-      [1, { heading: 0, id: 3, kind: 'room' }],
-      ...snapshot.residence.slice(2)
-    ]);
-    expect(migrated.snapshot.combat).toEqual(snapshot.combat);
-    expect({
-      ...migrated.snapshot,
-      game: snapshot.game,
-      residence: snapshot.residence
-    }).toEqual(snapshot);
-    expect(decodeSave(encodeSave(migrated), environment)).toEqual(migrated);
-    expect(decodeSave(encodeSave(current), environment)).toEqual(current);
-  });
-
-  test('validates schema 11 before migrating and refuses versions through 10', () => {
-    const gameplay = new GameplaySession(
-      content,
-      playerState({ position: { x: 0, y: 0, z: 0 } }),
-      scripts()
-    );
-    const save = envelope(gameplay);
-    const legacy = { ...save, schemaVersion: 11 };
-    expect(() =>
-      decodeSave(
-        JSON.stringify({
-          ...legacy,
-          snapshot: {
-            ...legacy.snapshot,
-            game: {
-              ...legacy.snapshot.game,
-              player: { ...legacy.snapshot.game.player, heading: 'bad' }
-            }
-          }
-        }),
-        environment
-      )
-    ).toThrow('player.heading');
-    expect(() =>
-      decodeSave(
-        JSON.stringify({
-          ...legacy,
-          snapshot: {
-            ...legacy.snapshot,
-            residence: [[0, { heading: null, kind: 'surface' }]]
-          }
-        }),
-        environment
-      )
-    ).toThrow('heading');
-    for (let version = 0; version <= 10; version++) {
-      expect(() =>
-        decodeSave(
-          JSON.stringify({ ...save, schemaVersion: version }),
-          environment
-        )
-      ).toThrow(`unsupported Save schemaVersion ${version}`);
+    // No migration: before schema 16 the Talk Scripts' story state could still
+    // sit in engine and object flags, which nothing now reads.
+    for (const version of [10, 11, 14, 15]) {
+      stale.schemaVersion = version;
+      expect(() => decodeSave(JSON.stringify(stale), environment)).toThrow(
+        `unsupported Save schemaVersion ${version}`
+      );
     }
   });
 

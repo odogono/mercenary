@@ -6,7 +6,13 @@ import { ESCAPE, REACTIONS } from '../src/talk/scripts.ts';
 import { LegalRoute } from './legalCheckpoint.ts';
 import { BensonHostState, BensonState, nextRandom } from './oracle/index.ts';
 import { loadPayload } from './replay/artifacts.ts';
-import { ENGINES, Lines, talkScript, type Engine } from './talkParity.ts';
+import {
+  ENGINES,
+  Lines,
+  presetting,
+  talkScript,
+  type Engine
+} from './talkParity.ts';
 
 /// Real shots dispatch each ported reaction, compared with Benson's lines and
 /// world writes. Hostile craft movement is omitted here so a later combat hit
@@ -22,7 +28,10 @@ const PASS = 46;
 const CELL = 0x1_00_00;
 const FRAME = 1 / 20;
 
-const fresh = async (engine: Engine): Promise<LegalRoute> => {
+const fresh = async (
+  engine: Engine,
+  scripts = talkScript(REACTIONS, ESCAPE)
+): Promise<LegalRoute> => {
   const base = await LegalRoute.open();
   const content = { ...base.session.content };
   delete content.hostile;
@@ -32,7 +41,7 @@ const fresh = async (engine: Engine): Promise<LegalRoute> => {
     base.session.scripts
   );
   if (engine === 'talk') {
-    session.useTalkScripts(talkScript(REACTIONS, ESCAPE));
+    session.useTalkScripts(scripts);
   }
   return LegalRoute.resume(session);
 };
@@ -288,7 +297,11 @@ const grateful = async (
   passCarried = false,
   already = false
 ): Promise<LegalRoute> => {
-  const route = await fresh(engine);
+  // Thanked, as Benson keeps it in an engine flag.
+  const scripts = already
+    ? presetting(talkScript(REACTIONS, ESCAPE), REACTIONS, 'thanked', 'true')
+    : talkScript(REACTIONS, ESCAPE);
+  const route = await fresh(engine, scripts);
   const cell = cellFor(faction === 'palyar' ? 6 : 7);
   over(route, cell);
   if (passCarried) {
@@ -313,7 +326,7 @@ const grateful = async (
             faction === 'mechanoid' ? rules.factionObjective.threshold : 0
         }
       },
-      engine === 'talk' ? { scripts: talkScript(REACTIONS, ESCAPE) } : undefined
+      engine === 'talk' ? { scripts } : undefined
     )
   );
 };
@@ -373,8 +386,6 @@ describe('gratitude as a Talk Script', () => {
   });
 
   for (const faction of ['palyar', 'mechanoid'] as const) {
-    // Thanked through the engine flag, as a Save from before the Talk Script
-    // kept it would be: the script takes it over.
     test(`${faction} gratitude is silent when either faction has already thanked the player`, async () => {
       const result = await both(async engine => {
         const route = await grateful(engine, faction, false, true);

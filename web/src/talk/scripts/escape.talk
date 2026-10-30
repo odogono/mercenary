@@ -7,9 +7,8 @@
 use show, clear, report, prompt from benson
 
 -- Whether the Palyar commander's brother-in-law has been wronged, which
--- commerce and the Faction Reactions tell the Escape. A Save from before this
--- script kept it holds it in an engine flag instead.
-script variable annoyed = nothing
+-- commerce and the Faction Reactions tell the Escape.
+script variable annoyed = false
 
 on boarded craft where craft = "ship"
   show "INTERSTELLAR SHIP" and wait
@@ -75,10 +74,6 @@ on escape
   ask world to setMessageInterval 150
   report ["THE AUTHOR SENDS YOU", "CONGRATULATIONS ON YOUR", "ESCAPE FROM TARG"] and wait
   clear and wait
-  if annoyed is nothing then
-    ask world to takeLegacyFlag "commanderAnnoyed"
-    put it into annoyed
-  end if
   if annoyed then
     -- The comma is the original's.
     report ["THE PALYAR COMMANDER'S", "BROTHER-IN-LAW", "IS PLEASED YOU,VE GONE"] and wait
