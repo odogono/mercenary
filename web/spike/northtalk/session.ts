@@ -125,7 +125,10 @@ export class TalkSession extends GameplaySession {
     benson.refusing = new Set(
       Object.keys(scripts).flatMap(name => PORTED[name] ?? [])
     );
-    this.northtalk = new TalkHost(scripts, talkLibrary, benson, options);
+    this.northtalk = new TalkHost(scripts, talkLibrary, benson, {
+      ...options,
+      world: this.worldPort()
+    });
     this.northtalk.deliver([{ kind: 'begin' }]);
   }
 
@@ -133,7 +136,10 @@ export class TalkSession extends GameplaySession {
   /// own Core, while the session itself carries on.
   restoreTalk(save: TalkHostSave, options: TalkHostOptions = {}): void {
     const scripts = this.northtalk.scripts;
-    this.northtalk = new TalkHost(scripts, talkLibrary, this.benson, options);
+    this.northtalk = new TalkHost(scripts, talkLibrary, this.benson, {
+      ...options,
+      world: this.worldPort()
+    });
     this.northtalk.restore(save);
   }
 

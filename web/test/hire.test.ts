@@ -23,8 +23,7 @@ const atTheTerminal = async (
   options?: { readonly antenna?: 'absent' | 'carried' | 'inRoom' }
 ): Promise<LegalRoute> => {
   const route = await LegalRoute.open();
-  const scripts = route.session.scripts!;
-  scripts.host = scripts.host.withDecimal(CREDITS, balance);
+  route.session.adjust({ credits: balance });
 
   const antenna = options?.antenna ?? 'carried';
   if (antenna === 'carried') {
@@ -170,10 +169,7 @@ describe('hiring twice', () => {
 describe('walking in and hiring', () => {
   test('takes the Doorway from Room 83 and hires from inside', async () => {
     const route = await LegalRoute.open();
-    route.session.scripts!.host = route.session.scripts!.host.withDecimal(
-      CREDITS,
-      1_000_000
-    );
+    route.session.adjust({ credits: 1_000_000 });
     route.session.carry(ANTENNA);
     route.session.teleport(room(83));
     route.settle();

@@ -13,10 +13,7 @@ const SURFACE = 0;
 /// off (ADR 0083: a hired ship starts down at once, in seconds).
 const justHired = async (): Promise<LegalRoute> => {
   const route = await LegalRoute.open();
-  route.session.scripts!.host = route.session.scripts!.host.withDecimal(
-    CREDITS,
-    1_000_000
-  );
+  route.session.adjust({ credits: 1_000_000 });
   route.session.carry(30);
   route.session.teleport(room(16));
   route.waitForMessage('DO YOU WANT TO HIRE?');
@@ -184,10 +181,7 @@ describe('a ship that was never hired', () => {
 
   test('is not despatched by a refused hire', async () => {
     const route = await LegalRoute.open();
-    route.session.scripts!.host = route.session.scripts!.host.withDecimal(
-      CREDITS,
-      999_999
-    );
+    route.session.adjust({ credits: 999_999 });
     route.session.carry(30);
     route.session.teleport(room(16));
     route.waitForMessage('DO YOU WANT TO HIRE?');

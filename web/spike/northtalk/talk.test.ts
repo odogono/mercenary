@@ -102,7 +102,7 @@ const errors = (session: TalkSession) =>
   );
 
 const credits = (session: TalkSession): number =>
-  session.benson.host.decimal(CREDITS);
+  session.observations().observations['credits'] as number;
 
 const events = (session: TalkSession) =>
   session.northtalk.delivered.map(entry => entry.event);
@@ -359,7 +359,7 @@ describe('the Escape', () => {
     rideLift(session);
     afterMessage(session, 'NOVADRIVE REQUIRED');
     expect(session.northtalk.messages).not.toContain('PRESS Y TO LAUNCH');
-    expect(session.benson.host.endingPhase).toBe(0);
+    expect(session.observations().observations['endingPhase']).toBe(0);
   });
 
   test('leaving the ship before Y abandons the launch', async () => {
@@ -371,7 +371,7 @@ describe('the Escape', () => {
     session.press('keyY');
     advance(session, 10);
     expect(events(session)).toContainEqual({ craft: 'ship', kind: 'left' });
-    expect(session.benson.host.endingPhase).toBe(0);
+    expect(session.observations().observations['endingPhase']).toBe(0);
   });
 });
 
@@ -429,7 +429,7 @@ describe('Faction Reactions', () => {
     bomb(session);
     afterMessage(session, 'MECHANOID SHIP ATTACK');
     expect(session.benson.refused).toContain(35);
-    expect(session.benson.host.attackingShip).toBe(true);
+    expect(session.observations().observations['attackingShip']).toBe(true);
     expect(events(session)).toContainEqual({
       faction: 'mechanoid',
       kind: 'destroyed',
@@ -448,7 +448,7 @@ describe('Faction Reactions', () => {
       site: 'installation'
     });
     expect(session.northtalk.messages).toEqual([]);
-    expect(session.benson.host.attackingShip).toBe(false);
+    expect(session.observations().observations['attackingShip']).toBe(false);
   });
 });
 
@@ -504,7 +504,7 @@ describe('Talk Scripts together', () => {
     session.press('keyY');
     afterMessage(session, 'YOU HAVE 4000 CREDITS');
     expect(credits(session)).toBe(4000);
-    expect(session.benson.host.endingPhase).toBe(0);
+    expect(session.observations().observations['endingPhase']).toBe(0);
     // The opening's Run has ended, so the launch prompt has input back.
     expect(session.northtalk.claims.map(claim => claim.script)).toEqual([
       'escape'

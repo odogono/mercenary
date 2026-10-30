@@ -362,7 +362,7 @@ describe('a shot that reaches the object it can start a script on', () => {
 
   test('starts the decoded script and puts the object out of the world', () => {
     const session = facingTheObject();
-    session.scripts!.host = session.scripts!.host.with({ attackingShip: true });
+    session.adjust({ attackingShip: true });
 
     session.fire();
     const events = session.advance(1 / 20).events;

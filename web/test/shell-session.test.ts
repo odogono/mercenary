@@ -80,14 +80,7 @@ describe('the live browser Gameplay Session', () => {
   test('restores a Save Snapshot without starting the opening script again', () => {
     const settings = requiredSettings(settingsText);
     const original = createWalkabout(bundle, settings).session;
-    const captured = original.captureSaveSnapshot();
-    const stopped = {
-      ...captured,
-      benson: {
-        ...captured.benson!,
-        host: { ...captured.benson!.host, engineFlags: 0 }
-      }
-    };
+    const stopped = original.captureSaveSnapshot();
 
     const restored = createWalkabout(bundle, settings, stopped).session;
 

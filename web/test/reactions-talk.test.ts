@@ -90,8 +90,8 @@ const outcome = (lines: Lines) => {
     ).toEqual([]);
   }
   return {
-    attacking: host.attackingShip,
-    credits: host.decimal(CREDITS),
+    attacking: session.observations().observations['attackingShip'],
+    credits: session.observations().observations['credits'],
     // Only Benson sets the story flags the Talk Scripts keep themselves.
     flags: host.engineFlags & ~0xc0 & ~TALK_KEPT_ENGINE_FLAGS,
     lines: lines.lines,
@@ -244,7 +244,7 @@ describe('Faction Reactions as a Talk Script', () => {
       }
     };
     session.advance(FRAME);
-    session.scripts!.host = session.scripts!.host.with({ attackingShip: true });
+    session.adjust({ attackingShip: true });
     expect(bomb(route)).toEqual([{ kind: 'struck', object: target }]);
     const result = outcome(new Lines(route).advance(20));
     expect(result.attacking).toBe(false);
@@ -314,6 +314,9 @@ const grateful = async (
   if (passCarried) {
     route.session.carry(PASS);
   }
+  route.session.scripts!.host = route.session.scripts!.host.with({
+    engineFlags: already ? GRATITUDE : 0
+  });
   const saved = route.session.captureSaveSnapshot();
   return LegalRoute.resume(
     GameplaySession.restore(
@@ -321,10 +324,6 @@ const grateful = async (
       route.session.scripts,
       {
         ...saved,
-        benson: {
-          ...saved.benson!,
-          host: { ...saved.benson!.host, engineFlags: already ? GRATITUDE : 0 }
-        },
         combat: {
           ...saved.combat!,
           mechanoidDestroyed:

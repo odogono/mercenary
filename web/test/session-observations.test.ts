@@ -196,9 +196,9 @@ describe('the semantic observations a Gameplay Session answers with', () => {
     expect(observations['objectRoom.21']).toBe(0xff);
   });
 
-  test('reads the balance and flags the scripts own', () => {
+  test('reads the balance the session owns', () => {
     const gameplay = session();
-    gameplay.scripts = scripts([raw('ret')], { '8': 9000 });
+    gameplay.adjust({ credits: 9000 });
     expect(gameplay.observations().observations['credits']).toBe(9000);
   });
 

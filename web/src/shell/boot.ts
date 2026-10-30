@@ -1,5 +1,6 @@
 import { IDLE } from '../gameCore/index.ts';
 import { fetchAssets, fetchReader, load } from '../payload/load.ts';
+import { endingKey } from '../session/ending.ts';
 import type { PresentationEvent, SessionSnapshot } from '../session/index.ts';
 import { createTargOrrery, skyStateAt, targOrreryFor } from '../sky/index.ts';
 import { TargPresentationClock, formatTargTime } from '../sky/time.ts';
@@ -973,7 +974,7 @@ try {
           arrival.step(seconds);
           return;
         }
-        const endingBefore = session.scripts?.host.endingPhase ?? 0;
+        const endingBefore = session.ending;
         session.intent = controls.intent;
         const stepped = session.advance(seconds);
         snapshot = stepped.snapshot;
@@ -982,7 +983,7 @@ try {
         // active play: a reload during the mature presentation should come back
         // to it rather than replay the phase it had already left.
         checkpointChangedResume(
-          endingBefore !== (session.scripts?.host.endingPhase ?? 0)
+          endingKey(endingBefore) !== endingKey(session.ending)
         );
       });
     } else {

@@ -221,11 +221,11 @@ describe('World Events', () => {
       ...session.game,
       player: { ...session.game.player, position: at }
     };
-    session.scripts!.host = session.scripts!.host.with({ attackingShip: true });
+    session.adjust({ attackingShip: true });
     const told: WorldEvent[] = [];
     for (
       let left = 300;
-      left > 0 && session.scripts!.host.attackingShip;
+      left > 0 && session.observations().observations['attackingShip'] === true;
       left--
     ) {
       told.push(...frame(session));

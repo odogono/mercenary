@@ -745,6 +745,19 @@ export class GameplaySession {
   /// time to close rather than shooting the instant it is aimed.
   private approachSeconds = 0;
   private ownRandomState: bigint;
+  /// The player's credits, owned here and projected across the Host Callout
+  /// as decimal 8 for the scripts that read it (#906).
+  private credits = 0;
+  /// The Ending phase byte: 0 in active play, 1 once the Escape is accepted,
+  /// 255 in the mature terminal presentation. A byte rather than a Boolean
+  /// because the Reference Build reads all three values apart
+  /// (`notes/decode/endgame.md`, "Ending phases"). What the rest of the app
+  /// reads is `ending`, projected from it.
+  private endingPhase = 0;
+  /// Whether a hostile ship has been sent after the player.
+  private attackingShip = false;
+  /// The hired ship's delivery byte, as the Ship Delivery rules read it.
+  private shipInbound = 0;
   private readonly objectsBySlot: ReadonlyMap<number, ObjectPlacement>;
   /// World Events raised during play since the last frame was told.
   private worldRaised: WorldEvent[] = [];
@@ -802,6 +815,12 @@ export class GameplaySession {
     this.carriedStack.sort((a, b) => a - b);
     this.objectsBySlot = objectsBySlot;
     if (this.scripts !== undefined) {
+      // The session opens with whatever the scripts were seeded with, and owns it from here.
+      const { host } = this.scripts;
+      this.credits = host.decimal(CREDITS);
+      this.endingPhase = host.endingPhase;
+      this.attackingShip = host.attackingShip;
+      this.shipInbound = host.shipInbound;
       this.scripts.host = this.project(this.scripts.host);
     }
     this.worldSeen = this.seeWorld();
@@ -809,6 +828,7 @@ export class GameplaySession {
 
   captureSaveSnapshot(): SaveSnapshot {
     return {
+      attackingShip: this.attackingShip,
       benson: this.scripts?.captureSaveSnapshot() ?? null,
       carriedStack: [...this.carriedStack],
       combat:
@@ -839,11 +859,13 @@ export class GameplaySession {
                     },
               siteTable: [...this.sites.bytes]
             },
+      credits: this.credits,
       deliverySeconds: this.deliverySeconds ?? null,
       ending:
         this.endingField === undefined
           ? null
           : { field: this.endingField.captureSaveSnapshot() },
+      endingPhase: this.endingPhase,
       game: {
         ...this.game,
         craft: this.game.craft ?? null,
@@ -870,6 +892,7 @@ export class GameplaySession {
       randomState: encodeRandomState(this.ownRandomState),
       residence: [...this.residence.entries()].sort(([a], [b]) => a - b),
       rewired: [...this.rewired.entries()].sort(([a], [b]) => a - b),
+      shipInbound: this.shipInbound,
       talk: this.talk?.captureSaveSnapshot() ?? null
     };
   }
@@ -909,6 +932,10 @@ export class GameplaySession {
       touchdown: snapshot.game.touchdown ?? undefined
     };
     session.carriedStack = [...snapshot.carriedStack];
+    session.credits = snapshot.credits;
+    session.endingPhase = snapshot.endingPhase;
+    session.attackingShip = snapshot.attackingShip;
+    session.shipInbound = snapshot.shipInbound;
     session.deliverySeconds = snapshot.deliverySeconds ?? undefined;
     session.liftJourney =
       snapshot.liftJourney === null
@@ -1102,13 +1129,16 @@ export class GameplaySession {
     for (const [slot, where] of this.residence) {
       objectRooms.set(slot, hostRoom(where));
     }
-    return host.with({
+    return host.withDecimal(CREDITS, this.credits).with({
+      attackingShip: this.attackingShip,
       boardedCraft: occupancyHostValue(this.occupancy),
       currentRoom: locationHostValue(this.semanticLocation),
       destroyedBlocks: new Set(this.sites?.destroyedCells() ?? []),
+      endingPhase: this.endingPhase,
       inventory: new Set(this.carriedStack),
       objectFlags: new Map(this.objectFlags),
-      objectRooms
+      objectRooms,
+      shipInbound: this.shipInbound
     });
   }
 
@@ -1203,6 +1233,10 @@ export class GameplaySession {
     this.residence = nextResidence;
     this.objectFlags = nextFlags;
     this.carriedStack = [...retained, ...introduced];
+    this.credits = host.decimal(CREDITS);
+    this.endingPhase = host.endingPhase;
+    this.attackingShip = host.attackingShip;
+    this.shipInbound = host.shipInbound;
   }
 
   private acrossTheCallout<T>(
@@ -2061,20 +2095,27 @@ export class GameplaySession {
     this.objectFlags.set(slot, change(this.objectFlags.get(slot) ?? 0));
   }
 
-  /// What the World Port still keeps in Benson's host state (#906).
-  private portHost(change: (host: BensonHostState) => BensonHostState): void {
-    if (this.scripts === undefined) {
-      throw new Error('the world has no Benson host state');
-    }
-    this.scripts.host = change(this.scripts.host);
+  /// Sets the credits or the Attack State outright, as a scenario or a test
+  /// does; play changes them only through the World Port and combat.
+  adjust(patch: {
+    readonly attackingShip?: boolean;
+    readonly credits?: number;
+  }): void {
+    this.attackingShip = patch.attackingShip ?? this.attackingShip;
+    this.credits = patch.credits ?? this.credits;
+    this.republishHostState();
+  }
+
+  private addCredits(amount: number): void {
+    const limit = BensonHostState.decimalLimit;
+    this.credits = (((this.credits + amount) % limit) + limit) % limit;
   }
 
   /// The World Port (ADR 0083): Talk Scripts read and change the session's
   /// own state, one named operation at a time.
-  private worldPort(): WorldPort {
+  protected worldPort(): WorldPort {
     const object = this.portObject.bind(this);
     const flag = this.portFlag.bind(this);
-    const host = this.portHost.bind(this);
     return {
       arm: slot => flag(slot, flags => flags | STARTS_TALK),
       armed: slot =>
@@ -2082,10 +2123,12 @@ export class GameplaySession {
       boarded: () =>
         this.occupancy.kind === 'aboard' ? this.occupancy.slot : undefined,
       carries: slot => this.carriedStack.includes(object(slot)),
-      credits: () => this.scripts?.credits ?? 0,
+      credits: () => this.credits,
       destroyed: cell => this.sites?.destroyedCells().includes(cell) ?? false,
       disarm: slot => flag(slot, flags => flags & ~DISARMED & 0xff),
-      escape: () => host(state => state.with({ endingPhase: 1 })),
+      escape: () => {
+        this.endingPhase = 1;
+      },
       fix: slot => flag(slot, flags => flags | FIXED),
       here: () => this.semanticLocation,
       lies: slot => {
@@ -2112,11 +2155,15 @@ export class GameplaySession {
           this.residence.set(slot, { kind: 'surface' });
         }
       },
-      pay: amount => host(state => state.addDecimal(CREDITS, amount)),
+      pay: amount => this.addCredits(amount),
       random: () => this.nextRandomByte(),
-      sendAttacker: () => host(state => state.with({ attackingShip: true })),
-      sendShip: () => host(state => state.with({ shipInbound: SHIP_INBOUND })),
-      spend: amount => host(state => state.addDecimal(CREDITS, -amount))
+      sendAttacker: () => {
+        this.attackingShip = true;
+      },
+      sendShip: () => {
+        this.shipInbound = SHIP_INBOUND;
+      },
+      spend: amount => this.addCredits(-amount)
     };
   }
 
@@ -2131,7 +2178,7 @@ export class GameplaySession {
   }
 
   show(index: number): void {
-    this.scripts?.showMessage(index);
+    this.scripts?.showMessage(index, this.credits);
   }
 
   describe(description: Description): void {
@@ -2496,7 +2543,7 @@ export class GameplaySession {
       }
       events.push({ impact: { sound: hits.sound } });
       if (hits.clearsAttackState && this.scripts !== undefined) {
-        this.scripts.host = this.scripts.host.with({ attackingShip: false });
+        this.attackingShip = false;
       }
       this.residence.set(slot, { kind: 'gone' });
       this.removeShot();
@@ -2656,8 +2703,11 @@ export class GameplaySession {
   private advanceHostile(seconds: number): readonly PresentationEvent[] {
     const rules = this.content.hostile;
     const events: PresentationEvent[] = [];
-    const host = this.scripts?.host;
-    if (rules === undefined || host === undefined || !host.attackingShip) {
+    if (
+      rules === undefined ||
+      this.scripts === undefined ||
+      !this.attackingShip
+    ) {
       return events;
     }
     if (this.approachSeconds > 1e-9) {
@@ -2725,7 +2775,7 @@ export class GameplaySession {
     }
     events.push({ impact: { sound: rules.hitSound } });
     if (rules.captureClearsAttackingShip && this.scripts !== undefined) {
-      this.scripts.host = this.scripts.host.with({ attackingShip: false });
+      this.attackingShip = false;
     }
     for (const slot of rules.captureRemovesSlots) {
       this.residence.set(slot, { kind: 'gone' });
@@ -2864,7 +2914,7 @@ export class GameplaySession {
         return ending.kind === 'escape' ? ending.phase : undefined;
       },
       written => {
-        this.scripts!.host = this.scripts!.host.with({ endingPhase: written });
+        this.endingPhase = written;
       }
     );
   }
@@ -2901,15 +2951,13 @@ export class GameplaySession {
     ) {
       return;
     }
-    const state = this.scripts.host.shipInbound;
+    const state = this.shipInbound;
     if (state === rules.inactiveValue) {
       this.deliverySeconds = undefined;
       return;
     }
     if ((state & rules.acceptedMask) !== 0) {
-      this.scripts.host = this.scripts.host.with({
-        shipInbound: rules.descendingValue
-      });
+      this.shipInbound = rules.descendingValue;
       this.deliverySeconds = 0;
     }
     this.deliverySeconds = (this.deliverySeconds ?? 0) + seconds;
@@ -2922,9 +2970,7 @@ export class GameplaySession {
       kind: 'surface'
     });
     if (altitude === 0) {
-      this.scripts.host = this.scripts.host.with({
-        shipInbound: rules.inactiveValue
-      });
+      this.shipInbound = rules.inactiveValue;
       this.deliverySeconds = undefined;
     }
     this.republishHostState();
@@ -2967,15 +3013,19 @@ export class GameplaySession {
             palyarDestroyed: sites?.palyarDestroyed ?? 0
           };
     return observationsOf({
+      attackingShip: this.attackingShip,
       carriedStack: this.carriedStack,
       ...(combat === undefined ? {} : { combat }),
       colonyCraftFlag: this.game.colonyCraftFlag,
+      credits: this.credits,
+      endingPhase: this.endingPhase,
       location: this.location,
       objectFlags: this.objectFlags,
       occupancy: this.occupancy,
       position: this.game.player.position,
       residence: this.residence,
-      scripts: this.scripts
+      scripts: this.scripts,
+      shipInbound: this.shipInbound
     });
   }
 
@@ -2997,7 +3047,7 @@ export class GameplaySession {
         wallContact: this.game.wallContact,
         wallContactLatch: this.game.wallContactLatch
       },
-      credits: this.scripts?.credits ?? 0,
+      credits: this.credits,
       elapsed: this.game.elapsed,
       ending: this.ending,
       ...(this.endingField === undefined
@@ -3054,11 +3104,10 @@ export class GameplaySession {
 
   /// The Ending this session has reached, as the rest of the app reads it.
   ///
-  /// Projected from the Host Callout's byte on every read rather than held
-  /// beside it, so the scripts' own write stays the single place an Ending is
-  /// produced and there is no second copy to keep in step.
+  /// Projected from the phase byte on every read rather than held beside it,
+  /// so there is no second copy to keep in step.
   get ending(): EndingState {
-    return endingStateOf(this.scripts?.host.endingPhase ?? 0);
+    return endingStateOf(this.endingPhase);
   }
 
   private get sceneResidence(): Map<number, Residence> {

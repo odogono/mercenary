@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import { playerState } from '../src/gameCore/index.ts';
 import { Interaction } from '../src/interaction/index.ts';
 import { IDENTITY } from '../src/orientation/index.ts';
+import { endingStateOf } from '../src/session/ending.ts';
 import { GameplaySession, type SessionContent } from '../src/session/index.ts';
 import {
   SAVE_JSON_CODE_UNIT_LIMIT,
@@ -109,7 +110,7 @@ describe('a Save Snapshot', () => {
     );
     const snapshot = gameplay.captureSaveSnapshot();
 
-    expect(SAVE_SCHEMA_VERSION).toBe(21);
+    expect(SAVE_SCHEMA_VERSION).toBe(22);
     expect(snapshot).toHaveProperty('carriedStack');
     expect(snapshot).toHaveProperty('deliverySeconds');
     expect(snapshot).toHaveProperty('objectFlags');
@@ -131,14 +132,18 @@ describe('a Save Snapshot', () => {
         playerState({ position: { x: 0, y: 0, z: 0 } }),
         scripts()
       );
-      // Written through the Host Callout symbol, which the Data Payload
-      // still spells `gameComplete`.
-      gameplay.scripts!.host = gameplay.scripts!.host.write(
-        'gameComplete',
-        phase
+      const saved = envelope(gameplay);
+      const decoded = decodeSave(
+        encodeSave({
+          ...saved,
+          snapshot: { ...saved.snapshot, endingPhase: phase }
+        }),
+        environment
       );
-      const decoded = decodeSave(encodeSave(envelope(gameplay)), environment);
-      expect(decoded.snapshot.benson!.host.endingPhase).toBe(phase);
+      expect(decoded.snapshot.endingPhase).toBe(phase);
+      expect(
+        GameplaySession.restore(content, scripts(), decoded.snapshot).ending
+      ).toEqual(endingStateOf(phase));
     }
   });
 
@@ -210,7 +215,6 @@ describe('a Save Snapshot', () => {
       }),
       scripts()
     );
-    original.scripts!.reference!.start(0);
     original.scripts!.showText('A MESSAGE IN PROGRESS');
     original.advance(0.375);
 
@@ -412,6 +416,8 @@ describe('a Save Snapshot', () => {
         environment
       )
     ).toThrow('readingHold');
+    // A field live play never changes is no longer saved (#906).
+    const retired = { engineFlags: 0 };
     expect(() =>
       decodeSave(
         encodeSave({
@@ -420,7 +426,7 @@ describe('a Save Snapshot', () => {
             ...save.snapshot,
             benson: {
               ...save.snapshot.benson!,
-              host: { ...save.snapshot.benson!.host, engineFlags: 256 }
+              host: { ...save.snapshot.benson!.host, ...retired }
             }
           }
         }),

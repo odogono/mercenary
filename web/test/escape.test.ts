@@ -110,10 +110,7 @@ const surfaceAboard = (route: LegalRoute): void => {
 /// Hired for real through script 2, delivered for real by the native descent.
 const deliveredShip = async (): Promise<LegalRoute> => {
   const route = await LegalRoute.open();
-  route.session.scripts!.host = route.session.scripts!.host.withDecimal(
-    CREDITS,
-    1_000_000
-  );
+  route.session.adjust({ credits: 1_000_000 });
   route.session.carry(ANTENNA);
   route.session.teleport(room(RENTAL_ROOM));
   route.waitForMessage('DO YOU WANT TO HIRE?');
@@ -153,7 +150,7 @@ const strikeTheAdvert = (route: LegalRoute): void => {
   route.settle();
   // The advert's Faction Reaction summons a hostile; what is under test here
   // is the launch predicate, not the encounter, so the alarm is stood down.
-  session.scripts!.host = session.scripts!.host.write('attackingShip', 0);
+  session.adjust({ attackingShip: false });
   session.leaveCraft();
 };
 
