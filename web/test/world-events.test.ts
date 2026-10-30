@@ -264,9 +264,26 @@ const at = (
   location: Location,
   craft?: number,
   carried: readonly number[] = []
-): WorldSeen => ({ carried, craft, location });
+): WorldSeen => ({ carried, craft, location, regions: [] });
 
 describe('the World Event log', () => {
+  test('tells arrival in each Surface Region once, until the player leaves it', () => {
+    const log = new WorldEventLog(at(SURFACE));
+    const inRegions = (...regions: string[]): WorldSeen => ({
+      ...at(SURFACE),
+      regions
+    });
+    log.note(inRegions('shrine grounds'));
+    log.note(inRegions('shrine grounds', 'shrine'));
+    log.note(inRegions('shrine grounds'));
+    log.note(inRegions());
+    expect(log.take(inRegions('shrine grounds'))).toEqual([
+      { kind: 'arrived', region: 'shrine grounds' },
+      { kind: 'arrived', region: 'shrine' },
+      { kind: 'arrived', region: 'shrine grounds' }
+    ]);
+  });
+
   test('tells raised and noted events in the order they happened', () => {
     const log = new WorldEventLog(at(SURFACE));
     log.raise({ faction: 'palyar', kind: 'gratitude' });

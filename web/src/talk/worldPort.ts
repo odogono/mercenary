@@ -36,4 +36,7 @@ export interface WorldPort {
   /// Starts the Ship Delivery.
   sendShip(): void;
   spend(amount: number): void;
+  /// Whether a loose object lies on the surface inside the named Surface
+  /// Region (ADR 0084). Throws on a region the world doesn't have.
+  within(slot: number, region: string): boolean;
 }

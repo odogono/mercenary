@@ -7,6 +7,8 @@ import type { Faction } from './sites.ts';
 /// cells and low ids. Whoever tells them on, to Talk Scripts, names them.
 export type WorldEvent =
   | { readonly kind: 'entered'; readonly location: Location }
+  /// The player came into a Surface Region (ADR 0084), on foot or aboard.
+  | { readonly kind: 'arrived'; readonly region: string }
   /// Boarding, and leaving by any way out, a crash included.
   | { readonly craft: number; readonly kind: 'boarded' | 'left' }
   | { readonly kind: 'took' | 'dropped'; readonly object: number }
@@ -33,6 +35,8 @@ export interface WorldSeen {
   readonly carried: readonly number[];
   readonly craft: number | undefined;
   readonly location: Location;
+  /// The Surface Regions the player is in.
+  readonly regions: readonly string[];
 }
 
 const sameLocation = (a: Location, b: Location): boolean =>
@@ -50,6 +54,11 @@ export const changesBetween = (
   }
   if (!sameLocation(before.location, after.location)) {
     events.push({ kind: 'entered', location: after.location });
+  }
+  for (const region of after.regions) {
+    if (!before.regions.includes(region)) {
+      events.push({ kind: 'arrived', region });
+    }
   }
   if (after.craft !== undefined && after.craft !== before.craft) {
     events.push({ craft: after.craft, kind: 'boarded' });

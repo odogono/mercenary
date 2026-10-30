@@ -115,6 +115,8 @@ const message = (
   switch (event.kind) {
     case 'entered':
       return { args: [text(locationName(event.location))], name: 'entered' };
+    case 'arrived':
+      return { args: [text(event.region)], name: 'arrived' };
     case 'boarded':
     case 'left':
       return { args: [text(objectName(event.craft))], name: event.kind };
@@ -583,6 +585,16 @@ export class TalkHost {
         cost: { fuel: 1 },
         do: (_call, amount) => done(() => world.spend(whole(amount))),
         mode: 'immediate'
+      },
+      within: {
+        args: [shape.text, shape.text],
+        cost: { fuel: 1 },
+        description:
+          'Whether a loose object lies on the surface inside the named Surface Region.',
+        do: (_call, item, region) =>
+          bool(world.within(objectSlot(item), region)),
+        mode: 'immediate',
+        result: shape.bool
       }
     });
 

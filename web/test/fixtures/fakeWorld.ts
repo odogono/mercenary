@@ -14,6 +14,8 @@ export class FakeWorld implements WorldPort {
   fixed = new Set<number>();
   location: Location = SURFACE;
   readonly places = new Map<number, Location>();
+  /// Each loose object's Surface Region, by slot.
+  readonly regions = new Map<number, string>();
   shipSent = false;
 
   boarded(): number | undefined {
@@ -69,5 +71,8 @@ export class FakeWorld implements WorldPort {
   }
   sendShip(): void {
     this.shipSent = true;
+  }
+  within(slot: number, region: string): boolean {
+    return !this.carried.has(slot) && this.regions.get(slot) === region;
   }
 }

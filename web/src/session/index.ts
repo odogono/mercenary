@@ -102,6 +102,7 @@ import {
   type ShipFieldPoint
 } from './shipField.ts';
 import { SiteLedger } from './sites.ts';
+import { regionsAt, within } from './surfaceRegions.ts';
 import {
   WorldEventLog,
   type WorldEvent,
@@ -623,16 +624,28 @@ const validateSnapshotReferences = (
       throw new Error(`Save Snapshot refers to missing object slot ${slot}`);
     }
   }
+  // A Save made before an Authored object was placed has no word of it: the
+  // object is still where its placement put it (ADR 0084).
+  const required = new Set(
+    content.objects
+      .filter(object => !object.model.startsWith('authored:'))
+      .map(object => object.slot)
+  );
   if (
-    snapshot.residence.length !== objectSlots.size ||
-    savedResidence.size !== objectSlots.size ||
-    snapshot.objectFlags.length !== objectSlots.size ||
-    savedFlags.size !== objectSlots.size
+    snapshot.residence.length !== savedResidence.size ||
+    snapshot.objectFlags.length !== savedFlags.size ||
+    savedResidence.size !== savedFlags.size
   ) {
     throw new Error('Save Snapshot has an incomplete or extra object census');
   }
   for (const slot of objectSlots) {
-    if (!savedResidence.has(slot) || !savedFlags.has(slot)) {
+    if (savedResidence.has(slot) !== savedFlags.has(slot)) {
+      throw new Error('Save Snapshot has an incomplete or extra object census');
+    }
+    if (
+      required.has(slot) &&
+      (!savedResidence.has(slot) || !savedFlags.has(slot))
+    ) {
       throw new Error(`Save Snapshot is missing object slot ${slot}`);
     }
   }
@@ -954,8 +967,12 @@ export class GameplaySession {
         snapshot.ending.field
       );
     }
-    session.objectFlags = new Map(snapshot.objectFlags);
-    session.residence = new Map(snapshot.residence);
+    for (const [slot, flags] of snapshot.objectFlags) {
+      session.objectFlags.set(slot, flags);
+    }
+    for (const [slot, residence] of snapshot.residence) {
+      session.residence.set(slot, residence);
+    }
     session.rewired = new Map(snapshot.rewired);
     session.ownRandomState = decodeRandomState(snapshot.randomState);
     if (content.sites !== undefined && snapshot.combat !== null) {
@@ -2012,7 +2029,15 @@ export class GameplaySession {
       sendShip: () => {
         this.shipInbound = SHIP_INBOUND;
       },
-      spend: amount => this.addCredits(-amount)
+      spend: amount => this.addCredits(-amount),
+      within: (slot, region) => {
+        const where = this.residenceOf(object(slot));
+        if (where.kind !== 'surface') {
+          return false;
+        }
+        const at = where.at ?? this.objectsBySlot.get(slot)?.origin;
+        return at !== undefined && within(region, at);
+      }
     };
   }
 
@@ -2070,7 +2095,11 @@ export class GameplaySession {
     return {
       carried: [...this.carriedStack],
       craft: occupancy.kind === 'aboard' ? occupancy.slot : undefined,
-      location: this.location
+      location: this.location,
+      regions:
+        this.location.kind === 'surface'
+          ? regionsAt(this.game.player.position)
+          : []
     };
   }
 
