@@ -15,6 +15,11 @@ script variable hired = nothing
 -- Save from before this script kept it holds it in an engine flag instead.
 script variable bought = nothing
 
+-- Whether the Dart has had its first boarding. It is nothing until then: the
+-- Dart's armed bit, which the opening sets, says whether a Save from before
+-- this script kept it has had one.
+script variable dartBoarded = nothing
+
 constant fee = 999999
 
 -- Benson Script 2: the ship rental's communication room. The antenna has to
@@ -60,8 +65,13 @@ end antennaHere
 -- Benson Script 1: the Dart's first boarding. A buyer gets a job offer once
 -- they leave the surface, or sooner by chance; a thief gets the owner.
 on boarded craft where craft = "dart"
-  ask world to armed "dart"
-  if not it then return
+  if dartBoarded is nothing then
+    ask world to armed "dart"
+    put not it into dartBoarded
+  end if
+  if dartBoarded then return
+  put true into dartBoarded
+  -- The engine still reads the bits as the Dart's description.
   ask world to disarm "dart"
   if bought is nothing then
     ask world to takeLegacyFlag "dartBought"
