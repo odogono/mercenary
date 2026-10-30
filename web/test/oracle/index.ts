@@ -7,8 +7,10 @@ export {
   type BensonMessagePresentation,
   type BensonMessageMode
 } from './session.ts';
-export { BensonHostState, type BensonEffect } from '../../src/benson/host.ts';
-export { MessageTicker, codePointCount } from '../../src/benson/ticker.ts';
+export type { BensonEffect } from '../../src/benson/effect.ts';
+export { BensonHostState } from './host.ts';
+export { codePointCount } from '../../src/benson/text.ts';
+export { MessageTicker } from './ticker.ts';
 export {
   BensonDisplay,
   type BensonDisplayPhase

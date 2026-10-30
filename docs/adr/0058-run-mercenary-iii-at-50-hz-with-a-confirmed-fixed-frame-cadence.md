@@ -48,6 +48,7 @@ Two CPU-controlled original-engine probes agree with the independent model on al
 The [milestone review](../research/mercenary-iii-taxi-milestone-review.md) accepted the slice with this gate, and #642 has now closed it at eleven. Timed acceptance can be written against eleven.
 
 Eleven is slower than natural 50 Hz play:
+
 - rides are 16.6% (solicitor) and 21.1% (spaceport) longer;
 - Start → dwell takes 29.5 s and 116.4 s, against 24.7 s and 95.3 s;
 - the ten-pass admission window lasts 110 ticks;

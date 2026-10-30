@@ -1,6 +1,7 @@
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
+import { BensonChannel } from '../src/benson/channel.ts';
 import {
   GameplaySession,
   sessionContent,
@@ -19,11 +20,7 @@ import type { TalkHostOptions, TalkScript } from '../src/talk/host.ts';
 import { TextTable } from '../src/text/index.ts';
 import { World, room } from '../src/world/index.ts';
 import { environment } from './fixtures/save.ts';
-import {
-  BensonProgram,
-  BensonSession,
-  bensonTunables
-} from './oracle/index.ts';
+import { BensonProgram } from './oracle/index.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
 
 const bundle = await loadPayload();
@@ -58,12 +55,8 @@ const script = (
   replaces: readonly number[] = []
 ): TalkScript => ({ name, replaces, source });
 
-const benson = (): BensonSession =>
-  new BensonSession(
-    program,
-    new TextTable(bundle.text!),
-    bensonTunables(settings, program.framesPerTick)
-  );
+const benson = (): BensonChannel =>
+  new BensonChannel(new TextTable(bundle.text!));
 
 /// A session on foot, with no Talk Scripts yet.
 const onFoot = (): GameplaySession =>
@@ -146,7 +139,7 @@ const untilShown = (session: GameplaySession, line: string): void => {
 const afterLine = (session: GameplaySession, line: string): void => {
   advanceUntil(
     session,
-    () => shown(session).includes(line) && !session.scripts!.host.messagePlaying
+    () => shown(session).includes(line) && !session.scripts!.messagePlaying
   );
 };
 
@@ -344,7 +337,7 @@ describe('Player Input', () => {
     const session = prompts();
     session.begin();
     untilShown(session, 'FIRST?');
-    expect(session.scripts!.host.messagePlaying).toBe(true);
+    expect(session.scripts!.messagePlaying).toBe(true);
     session.input('KeyY');
     afterLine(session, 'FIRST HEARD');
   });
@@ -372,7 +365,6 @@ end pressed
       leaveCraft: () => session.leaveCraft(),
       occupancy: () => session.occupancy,
       playerInput: code => session.input(code),
-      press: key => session.press(key),
       reach: action => session.reach(action),
       rideLift: () => session.rideLift(),
       shutThrottle: none,
@@ -394,33 +386,6 @@ end pressed
     }
     // On foot, E rides the lift and D drops: Bindings take them.
     expect(shown(session)).toEqual(['Q', '7', 'Y']);
-  });
-});
-
-describe('beside Benson', () => {
-  test('Benson refuses the Benson Scripts a Talk Script replaces', () => {
-    const session = withScripts([script('briefing', '', [13])]);
-    session.teleport(room(BRIEFING));
-    session.advance(FRAME);
-    expect(session.scripts!.host.isScriptRunning).toBe(false);
-  });
-
-  test('a running Benson Script holds the display', () => {
-    const session = withScripts([
-      script(
-        'hello',
-        `use show from benson
-on begin
-  show "HELLO" and wait
-end begin
-`
-      )
-    ]);
-    session.start(0);
-    session.begin();
-    advance(session, 20);
-    expect(session.scripts!.host.isScriptRunning).toBe(true);
-    expect(shown(session)).toEqual([]);
   });
 });
 

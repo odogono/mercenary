@@ -1,10 +1,10 @@
-import type { BensonSymbol } from '../../src/benson/host.ts';
 import { BensonKey, parseBensonKey } from '../../src/benson/key.ts';
 import type { Token } from '../../src/payload/documents.ts';
 import type {
   BensonDocument,
   BensonInstruction as RawInstruction
 } from './documents.ts';
+import type { BensonSymbol } from './host.ts';
 
 export {
   BensonKey,
@@ -24,7 +24,7 @@ export type MessageSource =
 
 export type MaskMode = 'and' | 'or';
 
-export type { BensonSymbol } from '../../src/benson/host.ts';
+export type { BensonSymbol } from './host.ts';
 
 export type Instruction =
   | { readonly op: 'msg'; readonly tokens: readonly Token[] }

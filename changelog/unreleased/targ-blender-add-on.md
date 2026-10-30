@@ -3,6 +3,7 @@ type: feat
 scope: targ
 section: added
 ---
+
 **Targ objects and structures can be edited and authored in Blender.** The
 add-on in `tools/blender/` opens and saves the Geometry Assets in
 `assets/targ/`, keeping each asset's Sidecar and Change Ledger, and creates new

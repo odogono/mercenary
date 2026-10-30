@@ -137,7 +137,7 @@ Payne–Hanek reduction, arrived at from the other direction.
 Meanwhile the platform matches libm on **all 2,147 samples**, `pow` included. So the port
 delegates to `Math.sin` and its neighbours through the named seam in `web/src/math/`, and the
 decision inverts: the arithmetic is the platform's, and this ADR's contribution is that it is
-now *measured*.
+now _measured_.
 
 The `math` gate keeps all of its value under the inversion, and arguably gains some. It no
 longer grades an implementation of ours against libm; it grades the platform against libm,
@@ -154,7 +154,7 @@ where a craft matched for hundreds of steps and then drifted. Every instinct the
 the control loop. The emitter turned a week of that into an afternoon of arithmetic.
 
 Two smaller consequences. The bounded `pow` exponent above still stands and still matters:
-that measurement is what proves the platform *can* disagree with libm, so the delegation is
+that measurement is what proves the platform _can_ disagree with libm, so the delegation is
 sound today rather than sound in principle. And the domain bounds throughout remain
 statements about what the kit's wrappers can produce, so they continue to describe what the
 canary covers.

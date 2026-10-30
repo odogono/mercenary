@@ -1,14 +1,13 @@
 export { BensonKey, bensonKeyCode, parseBensonKey } from './key.ts';
-export { BensonHostState, type BensonEffect } from './host.ts';
+export type { BensonEffect } from './effect.ts';
 export { DEFAULT_SESSION_SEED, randomByte } from './random.ts';
 export {
   BensonChannel,
   DEFAULT_PACING,
   type BensonPort,
-  type BensonMessagePresentation,
-  type BensonMessageMode
+  type BensonMessagePresentation
 } from './channel.ts';
-export { MessageTicker, codePointCount } from './ticker.ts';
+export { codePointCount } from './text.ts';
 export {
   BensonDisplay,
   type BensonDisplayPhase,

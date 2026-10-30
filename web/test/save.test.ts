@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
+import { BensonChannel } from '../src/benson/channel.ts';
 import { playerState } from '../src/gameCore/index.ts';
 import { Interaction } from '../src/interaction/index.ts';
 import { IDENTITY } from '../src/orientation/index.ts';
@@ -17,7 +18,7 @@ import { TextTable } from '../src/text/index.ts';
 import type { ObjectPlacement } from '../src/world/index.ts';
 import { emptyContent, environment } from './fixtures/save.ts';
 import type { BensonInstruction } from './oracle/documents.ts';
-import { BensonProgram, BensonSession } from './oracle/index.ts';
+import { BensonProgram } from './oracle/index.ts';
 
 const content = emptyContent();
 
@@ -43,7 +44,7 @@ const text = new TextTable({
   words: []
 });
 
-const scripts = (): BensonSession => new BensonSession(program, text);
+const scripts = (): BensonChannel => new BensonChannel(text);
 
 const placedObject: ObjectPlacement = {
   detailCube: 1024,
@@ -110,16 +111,12 @@ describe('a Save Snapshot', () => {
     );
     const snapshot = gameplay.captureSaveSnapshot();
 
-    expect(SAVE_SCHEMA_VERSION).toBe(22);
+    expect(SAVE_SCHEMA_VERSION).toBe(23);
     expect(snapshot).toHaveProperty('carriedStack');
     expect(snapshot).toHaveProperty('deliverySeconds');
     expect(snapshot).toHaveProperty('objectFlags');
-    expect(snapshot.benson!.host).not.toHaveProperty('inventory');
-    expect(snapshot.benson!.host).not.toHaveProperty('objectFlags');
-    expect(snapshot.benson!.host).not.toHaveProperty('objectRooms');
-    // The Site Ledger moved the same way in v4: the session owns it, so the
-    // host state no longer carries a second copy to disagree with.
-    expect(snapshot.benson!.host).not.toHaveProperty('destroyedBlocks');
+    // No Benson host state is saved since v23 (#924): the session owns it all.
+    expect(snapshot.benson).not.toHaveProperty('host');
   });
 
   test('round-trips every Ending phase value the Reference Build has', () => {
@@ -416,22 +413,19 @@ describe('a Save Snapshot', () => {
         environment
       )
     ).toThrow('readingHold');
-    // A field live play never changes is no longer saved (#906).
-    const retired = { engineFlags: 0 };
+    // Benson's host state is no longer saved (#924).
+    const retired = { host: {} };
     expect(() =>
       decodeSave(
         encodeSave({
           ...save,
           snapshot: {
             ...save.snapshot,
-            benson: {
-              ...save.snapshot.benson!,
-              host: { ...save.snapshot.benson!.host, ...retired }
-            }
+            benson: { ...save.snapshot.benson!, ...retired }
           }
         }),
         environment
       )
-    ).toThrow('engineFlags');
+    ).toThrow('host');
   });
 });

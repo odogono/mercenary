@@ -7,6 +7,7 @@ import { withoutScript } from './saveCheckpoint.ts';
 
 const bundle = await loadPayload();
 const objective = bundle.endgame.combat.siteDestruction.factionObjective;
+/// The engine flag both Benson gratitude scripts test, in the original program.
 const GRATITUDE_FLAG = 0x02;
 const PASS = 46;
 
@@ -42,11 +43,9 @@ describe('the Gratitude Threshold one faction reaches', () => {
     run.settle();
     const after = run.observations();
 
-    // The shared flag is set, and the Pass has been moved somewhere the player
-    // can reach rather than paid for in cash.
-    expect((after['engineFlags'] as number) & GRATITUDE_FLAG).toBe(
-      GRATITUDE_FLAG
-    );
+    // The Palyars say thank you, and the Pass has been moved somewhere the
+    // player can reach rather than paid for in cash.
+    expect(run.session.talk!.shown).toContain('MESSAGE FROM PALYARS');
     expect(after[`objectRoom.${PASS}`]).toBe(1);
     expect(after['credits']).toBe(before);
   }, 120_000);
@@ -58,9 +57,7 @@ describe('the Gratitude Threshold one faction reaches', () => {
     // side needs one Site more than the other to say the same thing.
     expect(run.lead()).toBe(-(objective.threshold + 1));
     run.settle();
-    expect((run.observations()['engineFlags'] as number) & GRATITUDE_FLAG).toBe(
-      GRATITUDE_FLAG
-    );
+    expect(run.session.talk!.shown).toContain('MESSAGE FROM MECHANOIDS');
   }, 120_000);
 
   test('pays instead when the Pass has already left where it was kept', async () => {
@@ -74,9 +71,7 @@ describe('the Gratitude Threshold one faction reaches', () => {
     run.settle();
     const after = run.observations();
 
-    expect((after['engineFlags'] as number) & GRATITUDE_FLAG).toBe(
-      GRATITUDE_FLAG
-    );
+    expect(run.session.talk!.shown).toContain('MESSAGE FROM PALYARS');
     expect(after['credits']).toBe(before + 500_000);
   }, 120_000);
 

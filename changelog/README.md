@@ -8,6 +8,7 @@ type: feat
 scope: damocles
 section: added
 ---
+
 **Damocles's System Menu pages show its title-screen logo.** The title picture
 is the NEOchrome file `ETITLE.NEO` on the Damocles disk (#695).
 ```

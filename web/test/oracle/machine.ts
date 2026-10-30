@@ -1,9 +1,10 @@
-import { BensonHostState, type BensonEffect } from '../../src/benson/host.ts';
+import type { BensonEffect } from '../../src/benson/effect.ts';
 import {
   NO_SUBSTITUTIONS,
   type Substitutions,
   type TextTable
 } from '../../src/text/index.ts';
+import { BensonHostState } from './host.ts';
 import type { BensonProgram, Condition, Instruction } from './program.ts';
 import { defaultTunables, type BensonTunables } from './tuning.ts';
 

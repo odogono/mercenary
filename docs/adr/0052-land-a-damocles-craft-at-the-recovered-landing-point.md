@@ -46,9 +46,9 @@ admitted Pose at all. LACHESIS is one.
    The port computes it with the ST's table `atan2` and keeps it until the next switch. Every
    arrival Pose's captured word but the comet's agrees with it. Where no landing has written it,
    the terminator reads the captured word, and falls back to the computed one.
-6. **The trigger is fired, and its text is Fog.** *Replaced by
+6. **The trigger is fired, and its text is Fog.** _Replaced by
    [ADR 0053](0053-present-damocles-landing-messages-from-the-recovered-draw.md), which ports the
-   scripts #572 decoded.* A landing fires Damocles Script trigger
+   scripts #572 decoded._ A landing fires Damocles Script trigger
    `body + $1F` through the one recovered trigger entry `$054770`, except on ERIS (`$2C`) and on
    the comet DAMOCLES (`$74`). In the first world the other 27 are armed. TOLOSA's is sticky and
    the rest are one-shot, so a Body's trigger is disarmed once it has been landed on. The `cross`

@@ -1,4 +1,4 @@
-import { bensonKeyCode, type BensonKey } from './key.ts';
+import { bensonKeyCode, type BensonKey } from '../../src/benson/key.ts';
 
 export type BensonSymbol =
   | {
@@ -15,14 +15,6 @@ export type BensonSymbol =
   | 'attackingShip'
   | 'gameComplete'
   | 'shipInbound';
-
-/// Something a Benson Script asks the host to do, which is not just a change to host state.
-export type BensonEffect =
-  | { readonly displaySource: string; readonly playMessage: string }
-  | 'keyAcknowledged'
-  | { readonly sound: { readonly symbol: string; readonly value: number } }
-  | { readonly cityLocationChanged: number }
-  | 'scriptFinished';
 
 const DECIMAL_SCALES = [1_000_000, 10_000, 100, 1] as const;
 

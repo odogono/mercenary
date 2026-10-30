@@ -1,6 +1,7 @@
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
+import { BensonChannel } from '../src/benson/channel.ts';
 import {
   GameplaySession,
   sessionContent,
@@ -9,11 +10,6 @@ import {
 import { flightModel, loadSettings } from '../src/settings/index.ts';
 import { TextTable } from '../src/text/index.ts';
 import { SURFACE, World, room } from '../src/world/index.ts';
-import {
-  BensonProgram,
-  BensonSession,
-  bensonTunables
-} from './oracle/index.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
 
 const bundle = await loadPayload();
@@ -33,13 +29,8 @@ const content = sessionContent(
   bundle,
   flightModel(settings.flight, bundle.flight, world.groundExtent)
 );
-const program = BensonProgram.fromDocument(bundle.benson);
-const scripts = (): BensonSession =>
-  new BensonSession(
-    program,
-    new TextTable(bundle.text!),
-    bensonTunables(settings, program.framesPerTick)
-  );
+const scripts = (): BensonChannel =>
+  new BensonChannel(new TextTable(bundle.text!));
 
 const sites = bundle.endgame.combat.siteDestruction;
 const hostile = bundle.endgame.combat.hostileCraft;

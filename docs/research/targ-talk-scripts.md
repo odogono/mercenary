@@ -2,7 +2,7 @@
 
 Spike report, 2026-10-17. Tests whether [NorthTalk](https://github.com/odogono/odgn-talk) (then `@odgn/northtalk`, language 1.0-rc.3, TS Core; now [`@northtalk/ts`](https://www.npmjs.com/package/@northtalk/ts) 0.1.0) can replace Benson Scripts with **Talk Scripts**: maintained, editable source that drives Targ through the Host Callout. It is the evidence for challenging [ADR 0045](../adr/0045-author-scripts-as-named-typescript-steps.md)'s named TypeScript steps. Nothing here changes the Gameplay Session, the Data Payload, Saves or Session Resume.
 
-The spike lives in [`web/spike/northtalk/`](../../web/spike/northtalk/README.md) and ran three times:
+The spike lives in [`web/spike/northtalk/`](https://github.com/odogono/mercenary/blob/187a09345fe535d9a9e7377d94150f20c4b6af9e/web/spike/northtalk/README.md) and ran three times:
 
 - **The first spike** rewrote Benson Script 0 (the opening) and Benson Script 7 (the Escape) as Talk Scripts and ran them through a stand-in host over `BensonHostState`. The sections from [Authoring](#authoring) to [Cost](#cost) record it; its code was replaced by the second spike's and is in the history of commit `d3f82630`.
 - **The second spike** ran the opening, the Escape, the Mechanoid briefing (Benson Script 13) and the Faction Reactions (34 and 35) in a real Gameplay Session, driven by [World Events](#decisions-for-the-adr) with every Benson Script refused. [World Events in a Gameplay Session](#world-events-in-a-gameplay-session) records it.
@@ -49,7 +49,7 @@ What the rewrite surfaced:
 
 ## The Host Callout as Capabilities
 
-[`host.ts`](../../web/spike/northtalk/host.ts) keeps a persistent `BensonHostState` (ADR 0023): every operation replaces the value, and `BensonEffect`s carry display and sound output as the Benson path does.
+[`host.ts`](https://github.com/odogono/mercenary/blob/187a09345fe535d9a9e7377d94150f20c4b6af9e/web/spike/northtalk/host.ts) keeps a persistent `BensonHostState` (ADR 0023): every operation replaces the value, and `BensonEffect`s carry display and sound output as the Benson path does.
 
 | Capability | Operations                                                                                                                                           | Mode                                             |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
@@ -71,7 +71,7 @@ The host owns the clock (session seconds become epoch microseconds for `pump`), 
 
 ## Trace diff
 
-[`trace-diff.ts`](../../web/spike/northtalk/trace-diff.ts) replays the inputs of `script-0-parked` and `script-0-answered` against `opening.talk` and aligns the two message sequences. Over the traces' 120 s:
+[`trace-diff.ts`](https://github.com/odogono/mercenary/blob/187a09345fe535d9a9e7377d94150f20c4b6af9e/web/spike/northtalk/trace-diff.ts) replays the inputs of `script-0-parked` and `script-0-answered` against `opening.talk` and aligns the two message sequences. Over the traces' 120 s:
 
 - Every Benson Message the Talk Script reaches matches in text and order, except `PRICE 5OOO CREDITS`. The original spells it with letter O's; the rewrite prints 5000.
 - The Talk Script runs about 8–20 s behind. It deliberately keeps a 4 s opening pause, 2 s beats and five-second key windows where the original's tick-counted waits are a fraction of a second at `timeScale` 6. Display pacing itself matches: the host plays each message for 0.09 s per character plus a 3 s hold, which reproduces the traces' spacing within about 0.3 s.
@@ -81,7 +81,7 @@ The host owns the clock (session seconds become epoch microseconds for `pump`), 
 ## Saves
 
 - **Mid-wait restore works.** A save taken while the Escape waits on Y was restored into a fresh Core and host. After Y it produced the same messages and Ending phase as a run that never saved. Pending calls come back in `RestoreResult.pending`, and the host settles each with `reissue`.
-- **The host owns part of the save.** NorthTalk saves only script state. The display queue, key deadlines, armed objects and host state must be saved beside it ([`TalkHostSave`](../../web/spike/northtalk/host.ts)). With `reissue`, a message caught mid-play replays from its start, and a key wait restarts its whole window. That is acceptable for Targ but a policy choice, not a NorthTalk guarantee.
+- **The host owns part of the save.** NorthTalk saves only script state. The display queue, key deadlines, armed objects and host state must be saved beside it ([`TalkHostSave`](https://github.com/odogono/mercenary/blob/187a09345fe535d9a9e7377d94150f20c4b6af9e/web/spike/northtalk/host.ts)). With `reissue`, a message caught mid-play replays from its start, and a key wait restarts its whole window. That is acceptable for Targ but a policy choice, not a NorthTalk guarantee.
 - **`effects pending` didn't occur.** The spike uses no Capability Scopes or Segment participants, so `save()` was never refused.
 - **Saves grow inside long-lived Runs.** A Run that loops on a suspending operation retains about 190 bytes per completed call until the Run ends. The opening's save grew from 16 KB to 644 KB over 12 game hours of calling out. A plain `wait` loop doesn't grow, and starting a fresh Run per call stays flat. This was a NorthTalk defect, filed as [odgn-talk#1119](https://github.com/odogono/odgn-talk/issues/1119) and fixed in `@northtalk/ts` 0.1.0: the opening's save now settles at 22 KB and stays there over 12 game hours, and the issue's reproduction stays flat (6818 → 6885 → 6885 bytes after 1, 240 and 480 calls).
 - **Saves are tied to one Core family.** A TS Core save doesn't restore into the WASM Core (rechecked on 0.1.0: `invalid save`). Choosing a Core is therefore also a save-format decision.
@@ -135,11 +135,11 @@ The second and third spikes tested these in a real Gameplay Session; see the nex
 
 The second spike runs every Talk Script in one Group for a whole headless Gameplay Session.
 
-- **Benson stays, quietly.** [`QuietBenson`](../../web/spike/northtalk/session.ts) refuses every Benson Script and records what it refused, so taking, boarding, leaving and the Benson Display keep working through the Host Callout.
-- **World Events are derived.** [`TalkSession`](../../web/spike/northtalk/session.ts) compares occupancy, Location, the Carried Stack, destroyed cells and the faction counters before and after each frame, and broadcasts the differences. A Site counts only when a faction was credited, so neutral Sites and Sites destroyed away from the player raise nothing, as in the Site Ledger.
+- **Benson stays, quietly.** [`QuietBenson`](https://github.com/odogono/mercenary/blob/187a09345fe535d9a9e7377d94150f20c4b6af9e/web/spike/northtalk/session.ts) refuses every Benson Script and records what it refused, so taking, boarding, leaving and the Benson Display keep working through the Host Callout.
+- **World Events are derived.** [`TalkSession`](https://github.com/odogono/mercenary/blob/187a09345fe535d9a9e7377d94150f20c4b6af9e/web/spike/northtalk/session.ts) compares occupancy, Location, the Carried Stack, destroyed cells and the faction counters before and after each frame, and broadcasts the differences. A Site counts only when a faction was credited, so neutral Sites and Sites destroyed away from the player raise nothing, as in the Site Ledger.
 - **Talk Script messages use the session's Benson Display.** `show` queues for it and answers when the display releases the line (`BensonSession.showText`), so a Talk Script waits its turn behind the engine's own messages.
-- **Subjects have names.** [`names.ts`](../../web/spike/northtalk/names.ts) maps Rooms, objects and Sites to the names Talk Scripts use.
-- **Shared code is a Library.** `show` and `report` live once in [`benson.talk`](../../web/spike/northtalk/scripts/benson.talk), imported with `use show, report from benson`.
+- **Subjects have names.** [`names.ts`](https://github.com/odogono/mercenary/blob/187a09345fe535d9a9e7377d94150f20c4b6af9e/web/spike/northtalk/names.ts) maps Rooms, objects and Sites to the names Talk Scripts use.
+- **Shared code is a Library.** `show` and `report` live once in [`benson.talk`](https://github.com/odogono/mercenary/blob/187a09345fe535d9a9e7377d94150f20c4b6af9e/web/spike/northtalk/scripts/benson.talk), imported with `use show, report from benson`.
 
 ### Key presses are messages too
 
@@ -163,10 +163,10 @@ The opening's five-second offer becomes `when pressed key where key = "Y" then r
 
 | Talk Script                                                        | Benson Script | Tested                                                                                                                                                                    |
 | ------------------------------------------------------------------ | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`opening.talk`](../../web/spike/northtalk/scripts/opening.talk)   | 0             | The crash and status report reach the Benson Display; Y at an offer buys the Dart; a key outside an offer means a long walk; silence brings calling out.                  |
-| [`escape.talk`](../../web/spike/northtalk/scripts/escape.talk)     | 7             | Boarding is a World Event where Benson would have started script 7; surfacing aboard and Y starts the Ending; no Novadrive refuses; leaving the ship abandons the launch. |
-| [`briefing.talk`](../../web/spike/northtalk/scripts/briefing.talk) | 13            | Entering Room 102 plays the briefing; leaving during the first part cuts the rest; re-entering while it plays doesn't restart it (the Run ends `dropped`).                |
-| [`reaction.talk`](../../web/spike/northtalk/scripts/reaction.talk) | 34, 35        | Destroying a faction's installation sends its ship on a low roll and nothing on a high one.                                                                               |
+| [`opening.talk`](https://github.com/odogono/mercenary/blob/187a09345fe535d9a9e7377d94150f20c4b6af9e/web/spike/northtalk/scripts/opening.talk)   | 0             | The crash and status report reach the Benson Display; Y at an offer buys the Dart; a key outside an offer means a long walk; silence brings calling out.                  |
+| [`escape.talk`](https://github.com/odogono/mercenary/blob/187a09345fe535d9a9e7377d94150f20c4b6af9e/web/spike/northtalk/scripts/escape.talk)     | 7             | Boarding is a World Event where Benson would have started script 7; surfacing aboard and Y starts the Ending; no Novadrive refuses; leaving the ship abandons the launch. |
+| [`briefing.talk`](https://github.com/odogono/mercenary/blob/187a09345fe535d9a9e7377d94150f20c4b6af9e/web/spike/northtalk/scripts/briefing.talk) | 13            | Entering Room 102 plays the briefing; leaving during the first part cuts the rest; re-entering while it plays doesn't restart it (the Run ends `dropped`).                |
+| [`reaction.talk`](https://github.com/odogono/mercenary/blob/187a09345fe535d9a9e7377d94150f20c4b6af9e/web/spike/northtalk/scripts/reaction.talk) | 34, 35        | Destroying a faction's installation sends its ship on a low roll and nothing on a high one.                                                                               |
 
 Two more: the opening and the briefing playing together, and a save while the Escape waits on Y restored into a fresh Core that finishes the same.
 
@@ -194,7 +194,7 @@ The third spike puts the [decisions](#decisions-for-the-adr) on concurrency and 
 - **Display blocks.** `display` gains `report`, which takes the whole list, and `prompt`. The host plays a block's lines in turn on the Benson Display and answers after the last. `benson.talk`'s `report` and `prompt` wrap them.
 - **Input Ownership.** The host keeps the open prompts' claims, each a script and a Run, and drops a claim when its Run's `run end` report arrives. `TalkHost.input` sends a press to the latest claim's script with `group.script(name).deliver`, or broadcasts it when there are no claims. The claims are saved beside the Group.
 - **Key names.** `TalkSession.keyMake` records each key's code before any Binding sees it, and `press`, which the shell calls only for keys no Binding took, sends Player Input under that name. The tests drive Targ's `BrowserControlProfile`, so a bound key is turned away by the shell's own Bindings.
-- **Benson beside Talk Scripts.** `QuietBenson` refuses only the Benson Scripts the loaded Talk Scripts replace (`PORTED` in [`session.ts`](../../web/spike/northtalk/session.ts)) and runs every other one. A Talk Script line starts only while no Benson Script runs.
+- **Benson beside Talk Scripts.** `QuietBenson` refuses only the Benson Scripts the loaded Talk Scripts replace (`PORTED` in [`session.ts`](https://github.com/odogono/mercenary/blob/187a09345fe535d9a9e7377d94150f20c4b6af9e/web/spike/northtalk/session.ts)) and runs every other one. A Talk Script line starts only while no Benson Script runs.
 
 ### Outcomes
 

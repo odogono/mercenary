@@ -3,6 +3,7 @@ type: feat
 scope: web
 section: added
 ---
+
 **The sound board plays Damocles's GHETTOBLASTER tune on a SID.** A new card in
 the Targ section arranges the tune for the C64's chip: a noise hi-hat, a
 sweeping pulse bass through the resonant low-pass filter and a sawtooth lead.

@@ -1,4 +1,3 @@
-import type { BensonHostFields } from '../benson/host.ts';
 import type { GameState } from '../gameCore/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import type { Alternate } from '../payload/documents.ts';
@@ -6,7 +5,7 @@ import type { FlightSettings, MessageSettings } from '../settings/index.ts';
 import type { Location, Residence } from '../world/index.ts';
 import type { ShipFieldPoint, ShipFieldSaveSnapshot } from './shipField.ts';
 
-export const SAVE_SCHEMA_VERSION = 22 as const;
+export const SAVE_SCHEMA_VERSION = 23 as const;
 export const SAVE_JSON_CODE_UNIT_LIMIT = 1_000_000;
 
 const SAVE_COLLECTION_LIMIT = 1024;
@@ -52,17 +51,11 @@ export interface BensonDisplaySaveSnapshot {
   readonly waitSeconds: number;
 }
 
-/// What live play keeps of Benson's host state. Credits, the Ending and the
-/// ships are the session's own (#906); the rest never changes in live play.
-export type BensonHostSaveSnapshot = Pick<
-  BensonHostFields,
-  'boardedCraft' | 'currentRoom' | 'messageInterval' | 'messagePlaying'
->;
-
 export interface BensonSaveSnapshot {
   readonly activeMessageText: string | null;
   readonly display: BensonDisplaySaveSnapshot;
-  readonly host: BensonHostSaveSnapshot;
+  /// Whether a message holds the display, until its reading hold is over.
+  readonly messagePlaying: boolean;
   /// The wait a Talk Script set for the messages that follow, or null for the pacing's own.
   readonly messageWaitSeconds: number | null;
 }
@@ -669,26 +662,11 @@ const display = (value: unknown, at: string): BensonDisplaySaveSnapshot => {
   };
 };
 
-const bensonHost = (value: unknown, at: string): BensonHostSaveSnapshot => {
-  const out = exact(value, at, [
-    'boardedCraft',
-    'currentRoom',
-    'messageInterval',
-    'messagePlaying'
-  ]);
-  return {
-    boardedCraft: byte(out['boardedCraft'], `${at}.boardedCraft`),
-    currentRoom: byte(out['currentRoom'], `${at}.currentRoom`),
-    messageInterval: byte(out['messageInterval'], `${at}.messageInterval`),
-    messagePlaying: bool(out['messagePlaying'], `${at}.messagePlaying`)
-  };
-};
-
 const benson = (value: unknown, at: string): BensonSaveSnapshot => {
   const out = exact(value, at, [
     'activeMessageText',
     'display',
-    'host',
+    'messagePlaying',
     'messageWaitSeconds'
   ]);
   const activeMessageText =
@@ -705,7 +683,7 @@ const benson = (value: unknown, at: string): BensonSaveSnapshot => {
   return {
     activeMessageText,
     display: displaySnapshot,
-    host: bensonHost(out['host'], `${at}.host`),
+    messagePlaying: bool(out['messagePlaying'], `${at}.messagePlaying`),
     messageWaitSeconds:
       out['messageWaitSeconds'] === null
         ? null
@@ -862,7 +840,7 @@ const combat = (value: unknown, at: string): CombatSaveSnapshot => {
 };
 
 /// The Interstellar Ship Field's continuation boundary, exactly as the decode
-/// names it: the phase's own state lives on the Host Callout, and everything
+/// names it: the phase itself is the session's `endingPhase`, and everything
 /// else the terminal loop would need to carry on is here.
 const endingPresentation = (
   value: unknown,

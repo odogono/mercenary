@@ -38,20 +38,20 @@ is always level (`$7AC0` in Damocles), and aboard the pitch is the craft's own a
 5. **Buttons follow the standard Gamepad API mapping.** Every connected pad is read and merged.
    An axis counts as pushed past 0.5.
 
-   | Button | On foot | Aboard |
-   |---|---|---|
-   | RT | FIRE | FIRE |
-   | LT | — | SHUT THROTTLE |
-   | RB / LB | ROTATE STACK › / ‹, or PAGE with a document open | THROTTLE a notch up / down |
-   | A | BOARD | LEAVE CRAFT |
-   | X | TAKE | TAKE |
-   | B | DROP | DROP |
-   | Y | RIDE LIFT | — |
-   | D-pad ↑ ↓ ← → | OPEN, READ, PREVIOUS, NEXT | same |
-   | L3 | RUN | — |
-   | R3 | recentre Free Look | — |
-   | Back | SKIP MESSAGE | LAUNCH |
-   | Start | System Menu | System Menu |
+   | Button        | On foot                                          | Aboard                     |
+   | ------------- | ------------------------------------------------ | -------------------------- |
+   | RT            | FIRE                                             | FIRE                       |
+   | LT            | —                                                | SHUT THROTTLE              |
+   | RB / LB       | ROTATE STACK › / ‹, or PAGE with a document open | THROTTLE a notch up / down |
+   | A             | BOARD                                            | LEAVE CRAFT                |
+   | X             | TAKE                                             | TAKE                       |
+   | B             | DROP                                             | DROP                       |
+   | Y             | RIDE LIFT                                        | —                          |
+   | D-pad ↑ ↓ ← → | OPEN, READ, PREVIOUS, NEXT                       | same                       |
+   | L3            | RUN                                              | —                          |
+   | R3            | recentre Free Look                               | —                          |
+   | Back          | SKIP MESSAGE                                     | LAUNCH                     |
+   | Start         | System Menu                                      | System Menu                |
 
    RB and LB step the throttle the same way in both Titles: a notch up or down the ladder,
    which doubles or halves the speed. From a stop, up gives the lowest notch, and down from the

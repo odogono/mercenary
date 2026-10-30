@@ -17,5 +17,5 @@ structs: the Trace Oracle is not modified to suit the port (ADR 0019).
 _Note, 2026-10-30:_ Talk Scripts and `interaction` have moved off the Host
 Callout onto the World Port (ADR 0080), which the Gameplay Session implements on
 its own typed state. `acrossTheCallout` is gone. The persistent
-`BensonHostState` remains only for the test oracle's Benson Scripts, which the
-session projects its state into and reads back from around each run.
+`BensonHostState` remains only inside the test oracle (`web/test/oracle/`), for
+its interpreter tests: no Benson Script runs in a Gameplay Session (#924).

@@ -3,6 +3,7 @@ type: feat
 scope: targ
 section: added
 ---
+
 **Targ loads edited and Authored models from `assets/targ/`.**
 An edit replaces the recovered model with the same identity, and an
 `authored:` model is placed where its Sidecar says. A structure can keep

@@ -3,6 +3,7 @@ type: feat
 scope: targ
 section: changed
 ---
+
 **Targ's deliveries are now a Talk Script.** The sixteen Rooms where the
 Palyars and the Mechanoids pay for what the player brings say the same lines
 and pay the same rewards. A Room entered while another of Benson's scripts

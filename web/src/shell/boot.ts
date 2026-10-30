@@ -429,7 +429,6 @@ try {
     // Benson Script owns the message line, so this scripted shell has no pager either.
     occupancy: () => snapshot.occupancy,
     playerInput: code => performAndRefresh(() => session.input(code)),
-    press: key => performAndRefresh(() => session.press(key)),
     reach: action => performAndRefresh(() => session.reach(action)),
     // Free Look is never saved, so levelling it has nothing to present or checkpoint.
     recentreLook: () => session.recentreLook(),
