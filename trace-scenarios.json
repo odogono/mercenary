@@ -301,7 +301,7 @@
         "random-room-114"
       ],
       "on": "2026-10-30",
-      "reason": "Retired in #924. These traces replayed Doorways, world flips, dark Rooms and locked Rooms through a Gameplay Session running the frozen Benson oracle, frame for frame at the Reference Build's 50 a second. ADR 0083 steps Targ's simulation in seconds and the session no longer runs Benson Scripts, so it cannot be graded against them. The oracle is frozen and cannot re-emit them for the live session. Doorways and the locked Doorway stay covered by web/test/doorway.test.ts. World flips, dark Rooms and Room 114's random exit had no other end-to-end test.",
+      "reason": "Retired in #924. These traces replayed Doorways, world flips, dark Rooms and locked Rooms through a Gameplay Session running the frozen Benson oracle, frame for frame at the Reference Build's 50 a second. ADR 0083 steps Targ's simulation in seconds and the session no longer runs Benson Scripts, so it cannot be graded against them. The oracle is frozen and cannot re-emit them for the live session. Doorways and the locked Doorway stay covered by web/test/doorway.test.ts. World flips, dark Room 5, the locked Doorway and Room 114's random exit are walked end to end in web/test/navigation-routes.test.ts (#929).",
       "evidence": "docs/adr/0083-step-targs-simulation-in-seconds.md"
     }
   ]
