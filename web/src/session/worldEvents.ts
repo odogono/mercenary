@@ -28,7 +28,7 @@ export type WorldEvent =
   /// The hostile craft's shot reached the player.
   | { readonly aboard: boolean; readonly kind: 'hit' };
 
-/// What World Events compare between frames.
+/// What the World Event log compares from one look at the world to the next.
 export interface WorldSeen {
   readonly carried: readonly number[];
   readonly craft: number | undefined;
@@ -66,3 +66,40 @@ export const changesBetween = (
   }
   return events;
 };
+
+/// The World Events of one frame, in the order they happened (#931).
+///
+/// The session notes the world before each operation that can change it and
+/// after each slice of simulation, so a change made and undone within one
+/// frame (leaving a craft and boarding it again, passing through a Room) is
+/// told rather than lost to a comparison of where the frame began and ended.
+export class WorldEventLog {
+  private pending: WorldEvent[] = [];
+
+  constructor(private seen: WorldSeen) {}
+
+  /// An event the session raises itself, such as a Site destroyed.
+  raise(event: WorldEvent): void {
+    this.pending.push(event);
+  }
+
+  /// Records whatever changed since the world was last noted.
+  note(seen: WorldSeen): void {
+    this.pending.push(...changesBetween(this.seen, seen));
+    this.seen = seen;
+  }
+
+  /// Notes the world, then hands over everything recorded since the last take.
+  take(seen: WorldSeen): WorldEvent[] {
+    this.note(seen);
+    const events = this.pending;
+    this.pending = [];
+    return events;
+  }
+
+  /// Starts again from a world that is where play resumes, not a change in it.
+  resume(seen: WorldSeen): void {
+    this.pending = [];
+    this.seen = seen;
+  }
+}

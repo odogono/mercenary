@@ -130,9 +130,6 @@ export class LegalRoute {
         if (leg.command.kind === 'rideLift') {
           this.advance(7);
           this.advance(STEP);
-        } else if (leg.command.kind === 'leaveCraft') {
-          // A frame on foot, as a player has, so boarding again is heard.
-          this.advance(STEP);
         }
         break;
     }
@@ -360,8 +357,6 @@ export class LegalRoute {
   /// anything that walks out of one Room and into the next has to let the first
   /// one finish -- exactly as a player would by standing there reading.
   settle(maxSeconds = 240): this {
-    // At least one step, so the World Events of whatever led here are heard.
-    this.advance(STEP);
     for (let left = maxSeconds; left > 0; left -= 0.5) {
       if (
         this.session.observations().observations['scriptPc'] === -1 &&
