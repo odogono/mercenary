@@ -7,15 +7,12 @@ import {
   sessionContent
 } from '../../src/session/index.ts';
 import type { SaveSnapshot } from '../../src/session/save.ts';
-import {
-  bensonTunables,
-  flightModel,
-  type Settings
-} from '../../src/settings/index.ts';
+import { flightModel, type Settings } from '../../src/settings/index.ts';
 import { TextTable } from '../../src/text/index.ts';
 import { World } from '../../src/world/index.ts';
 import type { BensonDocument } from './documents.ts';
 import { BensonOracle, BensonProgram, DEFAULT_SESSION_SEED } from './index.ts';
+import { bensonTunables } from './tuning.ts';
 
 export const createOracleWalkabout = (
   bundle: Bundle,

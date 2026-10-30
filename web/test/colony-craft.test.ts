@@ -3,11 +3,7 @@ import { describe, expect, test } from 'bun:test';
 
 import { intent } from '../src/gameCore/index.ts';
 import { GameplaySession, sessionContent } from '../src/session/index.ts';
-import {
-  bensonTunables,
-  flightModel,
-  loadSettings
-} from '../src/settings/index.ts';
+import { flightModel, loadSettings } from '../src/settings/index.ts';
 import { TextTable } from '../src/text/index.ts';
 import {
   World,
@@ -15,7 +11,11 @@ import {
   movedTo,
   placedAtResidence
 } from '../src/world/index.ts';
-import { BensonProgram, BensonSession } from './oracle/index.ts';
+import {
+  BensonProgram,
+  BensonSession,
+  bensonTunables
+} from './oracle/index.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
 
 /// The Colony Craft transition, from both of its decoded directions: the one

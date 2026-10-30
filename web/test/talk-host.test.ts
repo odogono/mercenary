@@ -13,17 +13,17 @@ import {
   encodeSave,
   type SaveEnvelope
 } from '../src/session/save.ts';
-import {
-  bensonTunables,
-  flightModel,
-  loadSettings
-} from '../src/settings/index.ts';
+import { flightModel, loadSettings } from '../src/settings/index.ts';
 import { BrowserControlProfile } from '../src/shell/input.ts';
 import type { TalkHostOptions, TalkScript } from '../src/talk/host.ts';
 import { TextTable } from '../src/text/index.ts';
 import { World, room } from '../src/world/index.ts';
 import { environment } from './fixtures/save.ts';
-import { BensonProgram, BensonSession } from './oracle/index.ts';
+import {
+  BensonProgram,
+  BensonSession,
+  bensonTunables
+} from './oracle/index.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
 
 const bundle = await loadPayload();

@@ -4,14 +4,14 @@ import { intent } from '../src/gameCore/index.ts';
 import type { Bundle } from '../src/payload/documents.ts';
 import { GameplaySession, sessionContent } from '../src/session/index.ts';
 import type { SemanticObservations } from '../src/session/observations.ts';
-import {
-  bensonTunables,
-  flightModel,
-  loadSettings
-} from '../src/settings/index.ts';
+import { flightModel, loadSettings } from '../src/settings/index.ts';
 import { TextTable } from '../src/text/index.ts';
 import { World } from '../src/world/index.ts';
-import { BensonProgram, BensonSession } from './oracle/index.ts';
+import {
+  BensonProgram,
+  BensonSession,
+  bensonTunables
+} from './oracle/index.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
 
 /// A craft flown over the city, bombing the Sites it is told to.

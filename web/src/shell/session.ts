@@ -7,7 +7,7 @@ import {
 } from '../session/index.ts';
 import type { SaveEnvironment, SaveSnapshot } from '../session/save.ts';
 import {
-  bensonTunables,
+  bensonPacing,
   flightModel,
   loadSettings,
   type Settings
@@ -49,8 +49,7 @@ export const saveEnvironment = (
       ...settings.flight,
       groundAltitude: settings.flight.groundAltitude ?? null
     },
-    message: { ...settings.message },
-    scripts: { timeScale: settings.scripts.timeScale }
+    message: { ...settings.message }
   }
 });
 
@@ -77,7 +76,7 @@ export const createWalkabout = (
 
   const world = new World(bundle);
   const text = new TextTable(bundle.text);
-  const scripts = new BensonChannel(text, bensonTunables(settings, 50));
+  const scripts = new BensonChannel(text, bensonPacing(settings));
   const flight = flightModel(
     settings.flight,
     bundle.flight,

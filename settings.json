@@ -11,10 +11,10 @@
     "snapSeconds": 0.32
   },
   "message": {
-    "holdSeconds": 3
+    "holdSeconds": 3,
+    "waitSeconds": 0.3333333333333333
   },
   "scripts": {
-    "timeScale": 6,
     "instructionBudget": 512
   },
   "flight": {

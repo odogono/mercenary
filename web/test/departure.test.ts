@@ -3,8 +3,6 @@ import { describe, expect, test } from 'bun:test';
 
 import type { SaveSnapshot } from '../src/session/save.ts';
 import {
-  arrivalTunables,
-  bensonTunables,
   defaultSettings,
   type DepartureSettings,
   type Settings
@@ -358,13 +356,7 @@ describe('the Departure composed with the Arrival', () => {
           advances += 1;
           session.advance(seconds);
         },
-        playingMessage: () => session.scripts?.activeMessageText,
-        setPacing: choice => {
-          session.scripts!.tunables =
-            choice === 'arrival'
-              ? arrivalTunables(from, 50)
-              : bensonTunables(from, 50);
-        }
+        playingMessage: () => session.scripts?.activeMessageText
       },
       entry: { kind: 'fresh' },
       milestones,

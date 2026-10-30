@@ -7,7 +7,6 @@ import {
   sessionContent
 } from '../../src/session/index.ts';
 import {
-  bensonTunables,
   flightModel,
   loadSettings,
   type Settings
@@ -24,7 +23,8 @@ import { World } from '../../src/world/index.ts';
 import {
   BensonProgram,
   BensonSession,
-  DEFAULT_SESSION_SEED
+  DEFAULT_SESSION_SEED,
+  bensonTunables
 } from '../oracle/index.ts';
 import {
   expectRecordedPayload,

@@ -71,7 +71,8 @@ end commanderAnnoyed
 on escape
   ask world to escape
   wait 333 ms
-  ask world to setMessageInterval 150
+  -- The original's 150-frame interval: a longer pause between bursts.
+  ask world to setMessageWait 417
   report ["THE AUTHOR SENDS YOU", "CONGRATULATIONS ON YOUR", "ESCAPE FROM TARG"] and wait
   clear and wait
   if annoyed then

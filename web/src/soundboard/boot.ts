@@ -1,5 +1,4 @@
 import { BensonDisplay } from '../benson/display.ts';
-import { BensonHostState } from '../benson/host.ts';
 import { DAMOCLES_MUSIC_PATH, parseDamoclesMusic } from '../damocles/music.ts';
 import type { DamoclesRequest } from '../damocles/psg.ts';
 import type {
@@ -376,8 +375,9 @@ try {
   button(benson, 'Type', () => {
     // The Session's own display, stepped a frame at a time, so the bursts, the pause and the
     // trailing spaces match the game rather than an even typing rate.
-    const display = new BensonDisplay(VBL_HERTZ);
-    display.start(text.value, BensonHostState.defaultMessageInterval);
+    const display = new BensonDisplay(3, { shiftsPerSecond: VBL_HERTZ });
+    // The original's 100-frame wait between bursts, at its own rate.
+    display.start(text.value, 100 / VBL_HERTZ);
     void unlock().then(() => {
       const start = now();
       let last: number | undefined;

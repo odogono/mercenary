@@ -3,15 +3,11 @@ import type { BensonKey } from '../benson/key.ts';
 import type { GameState } from '../gameCore/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import type { Alternate } from '../payload/documents.ts';
-import type {
-  FlightSettings,
-  MessageSettings,
-  ScriptSettings
-} from '../settings/index.ts';
+import type { FlightSettings, MessageSettings } from '../settings/index.ts';
 import type { Location, Residence } from '../world/index.ts';
 import type { ShipFieldPoint, ShipFieldSaveSnapshot } from './shipField.ts';
 
-export const SAVE_SCHEMA_VERSION = 18 as const;
+export const SAVE_SCHEMA_VERSION = 19 as const;
 export const SAVE_JSON_CODE_UNIT_LIMIT = 1_000_000;
 
 const SAVE_COLLECTION_LIMIT = 1024;
@@ -38,7 +34,6 @@ export interface SaveEnvironment {
       readonly groundAltitude: number | null;
     };
     readonly message: MessageSettings;
-    readonly scripts: Pick<ScriptSettings, 'timeScale'>;
   };
 }
 
@@ -47,12 +42,15 @@ export interface BensonDisplaySaveSnapshot {
   readonly cells: readonly string[];
   readonly completionPhase:
     'source' | 'blankFeed' | 'readingHold' | 'clearing' | 'idle';
-  readonly cyclePosition: number;
-  readonly fractionalFrameRemainder: number;
-  readonly messageInterval: number;
+  /// Seconds into the current shift or wait.
+  readonly phaseSeconds: number;
   readonly readingHoldProgress: number;
   readonly restedIntact: boolean;
+  /// Shifts taken in the current burst; a full burst is waiting.
+  readonly shifts: number;
   readonly sourceIndex: number;
+  /// The silent wait between this message's bursts.
+  readonly waitSeconds: number;
 }
 
 export interface BensonHostSaveSnapshot extends Omit<
@@ -65,8 +63,9 @@ export interface BensonHostSaveSnapshot extends Omit<
 export interface BensonSaveSnapshot {
   readonly activeMessageText: string | null;
   readonly display: BensonDisplaySaveSnapshot;
-  readonly frames: number;
   readonly host: BensonHostSaveSnapshot;
+  /// The wait a Talk Script set for the messages that follow, or null for the pacing's own.
+  readonly messageWaitSeconds: number | null;
 }
 
 /// The Talk Scripts' part (ADR 0080).
@@ -560,17 +559,20 @@ const game = (value: unknown, at: string): GameSaveSnapshot => {
   };
 };
 
+/// A whole burst of the Benson Display.
+const BURST_SHIFTS = 25;
+
 const display = (value: unknown, at: string): BensonDisplaySaveSnapshot => {
   const out = exact(value, at, [
     'activeSourceText',
     'cells',
     'completionPhase',
-    'cyclePosition',
-    'fractionalFrameRemainder',
-    'messageInterval',
+    'phaseSeconds',
     'readingHoldProgress',
     'restedIntact',
-    'sourceIndex'
+    'shifts',
+    'sourceIndex',
+    'waitSeconds'
   ]);
   const activeSourceText =
     out['activeSourceText'] === null
@@ -595,18 +597,8 @@ const display = (value: unknown, at: string): BensonDisplaySaveSnapshot => {
   ) {
     fail(`${at}.completionPhase is not recognized`);
   }
-  const messageInterval = integerInRange(
-    out['messageInterval'],
-    `${at}.messageInterval`,
-    26,
-    255
-  );
-  const cyclePosition = integerInRange(
-    out['cyclePosition'],
-    `${at}.cyclePosition`,
-    0,
-    messageInterval
-  );
+  const waitSeconds = nonNegative(out['waitSeconds'], `${at}.waitSeconds`);
+  const shifts = integerInRange(out['shifts'], `${at}.shifts`, 0, BURST_SHIFTS);
   const sourceLength = [...(activeSourceText ?? '')].length;
   if (activeSourceText === null) {
     if (rawPhase !== 'idle' || sourceIndex !== 0) {
@@ -622,23 +614,22 @@ const display = (value: unknown, at: string): BensonDisplaySaveSnapshot => {
     (rawPhase === 'source' ||
       rawPhase === 'blankFeed' ||
       rawPhase === 'clearing') &&
-    cyclePosition >= messageInterval
+    shifts > BURST_SHIFTS
   ) {
-    fail(`${at}.${rawPhase} cycle position must precede its interval boundary`);
+    fail(`${at}.${rawPhase} shifts must not pass a whole burst`);
   }
   if (
     (rawPhase === 'readingHold' ||
       (rawPhase === 'idle' && activeSourceText !== null)) &&
-    cyclePosition !== messageInterval
+    shifts !== BURST_SHIFTS
   ) {
-    fail(`${at}.${rawPhase} must be at its interval boundary`);
+    fail(`${at}.${rawPhase} must be at the end of a burst`);
   }
-  const fractionalFrameRemainder = nonNegative(
-    out['fractionalFrameRemainder'],
-    `${at}.fractionalFrameRemainder`
-  );
-  if (fractionalFrameRemainder >= 1) {
-    fail(`${at}.fractionalFrameRemainder must be less than one frame`);
+  const phaseSeconds = nonNegative(out['phaseSeconds'], `${at}.phaseSeconds`);
+  if (
+    shifts === BURST_SHIFTS ? phaseSeconds > waitSeconds : phaseSeconds >= 1
+  ) {
+    fail(`${at}.phaseSeconds must be inside its shift or wait`);
   }
   const readingHoldProgress = nonNegative(
     out['readingHoldProgress'],
@@ -652,16 +643,16 @@ const display = (value: unknown, at: string): BensonDisplaySaveSnapshot => {
   }
   if (
     (rawPhase === 'readingHold' || rawPhase === 'idle') &&
-    fractionalFrameRemainder !== 0
+    phaseSeconds !== 0
   ) {
-    fail(`${at}.${rawPhase} cannot have a fractional display frame`);
+    fail(`${at}.${rawPhase} cannot be part way through a shift or wait`);
   }
   if (
     activeSourceText === null &&
-    (cyclePosition !== 0 ||
-      fractionalFrameRemainder !== 0 ||
+    (shifts !== 0 ||
+      phaseSeconds !== 0 ||
       readingHoldProgress !== 0 ||
-      messageInterval !== 26 ||
+      waitSeconds !== 0 ||
       cells.some(cell => cell !== ' '))
   ) {
     fail(`${at} without an active source must be the initial blank display`);
@@ -670,12 +661,12 @@ const display = (value: unknown, at: string): BensonDisplaySaveSnapshot => {
     activeSourceText,
     cells,
     completionPhase: rawPhase as BensonDisplaySaveSnapshot['completionPhase'],
-    cyclePosition,
-    fractionalFrameRemainder,
-    messageInterval,
+    phaseSeconds,
     readingHoldProgress,
     restedIntact: bool(out['restedIntact'], `${at}.restedIntact`),
-    sourceIndex
+    shifts,
+    sourceIndex,
+    waitSeconds
   };
 };
 
@@ -729,8 +720,8 @@ const benson = (value: unknown, at: string): BensonSaveSnapshot => {
   const out = exact(value, at, [
     'activeMessageText',
     'display',
-    'frames',
-    'host'
+    'host',
+    'messageWaitSeconds'
   ]);
   const activeMessageText =
     out['activeMessageText'] === null
@@ -746,8 +737,11 @@ const benson = (value: unknown, at: string): BensonSaveSnapshot => {
   return {
     activeMessageText,
     display: displaySnapshot,
-    frames: nonNegative(out['frames'], `${at}.frames`),
-    host: bensonHost(out['host'], `${at}.host`)
+    host: bensonHost(out['host'], `${at}.host`),
+    messageWaitSeconds:
+      out['messageWaitSeconds'] === null
+        ? null
+        : nonNegative(out['messageWaitSeconds'], `${at}.messageWaitSeconds`)
   };
 };
 
@@ -1141,14 +1135,11 @@ const environment = (value: unknown, at: string): SaveEnvironment => {
   ]);
   const settings = exact(out['settings'], `${at}.settings`, [
     'flight',
-    'message',
-    'scripts'
+    'message'
   ]);
   const message = exact(settings['message'], `${at}.settings.message`, [
-    'holdSeconds'
-  ]);
-  const scripts = exact(settings['scripts'], `${at}.settings.scripts`, [
-    'timeScale'
+    'holdSeconds',
+    'waitSeconds'
   ]);
   return {
     payload: {
@@ -1198,12 +1189,10 @@ const environment = (value: unknown, at: string): SaveEnvironment => {
         holdSeconds: finite(
           message['holdSeconds'],
           `${at}.settings.message.holdSeconds`
-        )
-      },
-      scripts: {
-        timeScale: finite(
-          scripts['timeScale'],
-          `${at}.settings.scripts.timeScale`
+        ),
+        waitSeconds: finite(
+          message['waitSeconds'],
+          `${at}.settings.message.waitSeconds`
         )
       }
     }

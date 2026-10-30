@@ -1,4 +1,4 @@
-import type { BensonTunables } from '../benson/index.ts';
+import type { BensonPacing } from '../benson/index.ts';
 import {
   flightModel as buildFlightModel,
   controlLimits,
@@ -22,8 +22,8 @@ import type { FlightDocument } from '../payload/documents.ts';
 /// would accept a misspelled field as a new one and change nothing.
 ///
 /// The three ported kit blocks remain joined by one presentation block owned by the Browser
-/// Shell. `bensonTunables(framesPerTick)` assembles `message` and `scripts` into the shape the
-/// display takes; presentation never crosses that boundary.
+/// Shell. `bensonPacing` turns `message` into the Benson Display's pacing;
+/// presentation never crosses that boundary.
 
 export const SETTINGS_FILE_NAME = 'settings.json';
 
@@ -50,8 +50,12 @@ export class SettingsError extends Error {
 }
 
 /// How long a completed Benson message stays up to be read.
+/// The Benson Display's pacing in play (ADR 0083).
 export interface MessageSettings {
+  /// How long a message rests on the row once it has arrived.
   readonly holdSeconds: number;
+  /// The silent wait between a message's 25-character bursts.
+  readonly waitSeconds: number;
 }
 
 /// How the Arrival paces itself: the authored opening's own clock (ADR 0032).
@@ -65,8 +69,7 @@ export interface ArrivalSettings {
   readonly charactersPerSecond: number;
   /// How long a fully revealed narration line is held.
   readonly holdSeconds: number;
-  /// Multiplies the Arrival's own pacing, narration and opening-script tail alike, in place of
-  /// `scripts.timeScale` until the Arrival hands over.
+  /// Multiplies the Arrival's own pacing.
   readonly timeScale: number;
   /// How long the title card holds the panel before the first narration line.
   readonly titleCardSeconds: number;
@@ -87,9 +90,6 @@ export interface ScriptSettings {
   /// Instructions one advance may run before yielding, which stands in for the frame boundary
   /// the original interpreter had for free.
   readonly instructionBudget: number;
-  /// Multiplies the Reference Build's script waits and the Benson Display's silent `$E1` pause.
-  /// Active 50 Hz scanout and the reading hold are deliberately not scaled by it.
-  readonly timeScale: number;
 }
 
 /// The knobs the control loop takes, minus the one bound that is not a knob.
@@ -188,8 +188,8 @@ export interface Settings {
 /// Reference Build's number scaled — it is a reading pause, and reading speed belongs to the
 /// reader rather than to the original's clock.
 export const DEFAULT_MESSAGE_HOLD_SECONDS = 3;
-
-export const DEFAULT_SCRIPT_TIME_SCALE = 6;
+/// A third of a second: the original's 100-frame wait at the browser's pace.
+export const DEFAULT_MESSAGE_WAIT_SECONDS = 1 / 3;
 
 /// The Arrival's defaults, tuned so the title card reaches touchdown in about the
 /// sixty-five seconds the original release's opening takes. They are a feel choice judged by
@@ -317,6 +317,12 @@ const readMessage = (value: unknown): MessageSettings => {
       'holdSeconds',
       'message.holdSeconds',
       DEFAULT_MESSAGE_HOLD_SECONDS
+    ),
+    waitSeconds: number(
+      source,
+      'waitSeconds',
+      'message.waitSeconds',
+      DEFAULT_MESSAGE_WAIT_SECONDS
     )
   };
 };
@@ -398,12 +404,6 @@ const readScripts = (value: unknown): ScriptSettings => {
       'instructionBudget',
       'scripts.instructionBudget',
       DEFAULT_SCRIPT_INSTRUCTION_BUDGET
-    ),
-    timeScale: number(
-      source,
-      'timeScale',
-      'scripts.timeScale',
-      DEFAULT_SCRIPT_TIME_SCALE
     )
   };
 };
@@ -685,33 +685,10 @@ export const flightModel = (
 ): FlightModel =>
   buildFlightModel(document, flightLimits(flight, groundExtent));
 
-/// Script pacing built from these settings, for one payload's tick length.
-export const bensonTunables = (
-  settings: Settings,
-  framesPerTick: number
-): BensonTunables => ({
-  framesPerSecond: 50,
-  framesPerTick,
-  instructionBudget: settings.scripts.instructionBudget,
-  messageHoldSeconds: settings.message.holdSeconds,
-  timeScale: settings.scripts.timeScale
-});
-
-/// Script pacing while the Arrival is presenting, for one payload's tick length.
-///
-/// The same shape `bensonTunables` builds, with the Arrival's own reveal rate, hold and time
-/// scale in place of the game's. The instruction budget is not the Arrival's to change: it
-/// stands in for the frame boundary the original interpreter had for free, so it belongs to the
-/// interpreter rather than to a pace.
-export const arrivalTunables = (
-  settings: Settings,
-  framesPerTick: number
-): BensonTunables => ({
-  framesPerSecond: 50,
-  framesPerTick,
-  instructionBudget: settings.scripts.instructionBudget,
-  messageHoldSeconds: settings.arrival.holdSeconds,
-  timeScale: settings.arrival.timeScale
+/// The Benson Display's pacing in play (ADR 0083).
+export const bensonPacing = (settings: Settings): BensonPacing => ({
+  holdSeconds: settings.message.holdSeconds,
+  waitSeconds: settings.message.waitSeconds
 });
 
 /// Load a settings document, or the defaults when there is none.

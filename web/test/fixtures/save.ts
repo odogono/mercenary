@@ -29,8 +29,7 @@ export const environment: SaveEnvironment = {
       throttleFloorNotch: 1,
       turnScale: 1
     },
-    message: { holdSeconds: 3 },
-    scripts: { timeScale: 6 }
+    message: { holdSeconds: 3, waitSeconds: 1 / 3 }
   }
 };
 
