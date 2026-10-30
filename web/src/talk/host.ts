@@ -89,8 +89,9 @@ const CREDITS = BensonHostState.firstNumberDecimal;
 /// An object's description bit that makes boarding or taking it start the
 /// Benson Script of its slot.
 const STARTS_SCRIPT = 4;
-/// An object's flag bits a delivery sets: paid for, and fixed where it lies.
-const DELIVERED = 1;
+/// The object flag that marked an object paid for, before the deliveries
+/// Talk Script kept that itself.
+const LEGACY_DELIVERED = 1;
 /// The bits the Dart's Benson Script clears on its object at first boarding.
 const DISARMED = STARTS_SCRIPT | 8;
 /// What Benson Script 2 writes to start the Ship Delivery.
@@ -552,34 +553,6 @@ export class TalkHost {
         mode: 'immediate',
         result: shape.number
       },
-      deliver: {
-        args: [shape.text],
-        cost: { fuel: 1 },
-        description:
-          'Marks the object delivered: paid for, and fixed where it lies.',
-        do: (_call, item) => {
-          const slot = objectSlot(item);
-          this.benson.host = this.benson.host.withObjectFlag(
-            slot,
-            (this.benson.host.objectFlags.get(slot) ?? 0) | DELIVERED | FIXED
-          );
-          return nothing;
-        },
-        mode: 'immediate'
-      },
-      delivered: {
-        args: [shape.text],
-        cost: { fuel: 1 },
-        description: 'Whether the object has been paid for.',
-        do: (_call, item) =>
-          bool(
-            ((this.benson.host.objectFlags.get(objectSlot(item)) ?? 0) &
-              DELIVERED) !==
-              0
-          ),
-        mode: 'immediate',
-        result: shape.bool
-      },
       disarm: {
         args: [shape.text],
         cost: { fuel: 1 },
@@ -599,6 +572,20 @@ export class TalkHost {
         cost: { fuel: 1 },
         description: 'Accepts the Escape: the Ending phase becomes 1.',
         do: () => this.write({ endingPhase: 1 }),
+        mode: 'immediate'
+      },
+      fix: {
+        args: [shape.text],
+        cost: { fuel: 1 },
+        description: 'Fixes the object where it lies.',
+        do: (_call, item) => {
+          const slot = objectSlot(item);
+          this.benson.host = this.benson.host.withObjectFlag(
+            slot,
+            (this.benson.host.objectFlags.get(slot) ?? 0) | FIXED
+          );
+          return nothing;
+        },
         mode: 'immediate'
       },
       flag: {
@@ -706,6 +693,23 @@ export class TalkHost {
           return nothing;
         },
         mode: 'immediate'
+      },
+      takeLegacyDelivered: {
+        args: [shape.text],
+        cost: { fuel: 1 },
+        description:
+          'Whether an older Save marked the object paid for, which it then clears.',
+        do: (_call, item) => {
+          const slot = objectSlot(item);
+          const flags = this.benson.host.objectFlags.get(slot) ?? 0;
+          this.benson.host = this.benson.host.withObjectFlag(
+            slot,
+            flags & ~LEGACY_DELIVERED
+          );
+          return bool((flags & LEGACY_DELIVERED) !== 0);
+        },
+        mode: 'immediate',
+        result: shape.bool
       },
       takeLegacyFlag: {
         args: [shape.text],
