@@ -62,7 +62,9 @@ import {
   type TalkHostOptions,
   type TalkScript
 } from '../talk/host.ts';
+import type { WorldPort } from '../talk/worldPort.ts';
 import {
+  SURFACE,
   craftHeading,
   displacement,
   hostRoom,
@@ -70,6 +72,7 @@ import {
   isDrawable,
   locationFromHost,
   locationHostValue,
+  room,
   type Location,
   type ObjectPlacement,
   type Residence,
@@ -148,6 +151,16 @@ export type { WorldEvent } from './worldEvents.ts';
 export type Occupancy =
   | { readonly kind: 'onFoot' }
   | { readonly kind: 'aboard'; readonly slot: number };
+
+/// An object's description bit that makes boarding or taking it start its
+/// Talk, as it started the Benson Script of its slot.
+const STARTS_TALK = 4;
+/// The bits the Dart's sale clears on its object at first boarding.
+const DISARMED = STARTS_TALK | 8;
+const FIXED = 16;
+/// What starts the Ship Delivery, as Benson Script 2 wrote it.
+const SHIP_INBOUND = 0xff;
+const CREDITS = BensonHostState.firstNumberDecimal;
 
 const occupancyHostValue = (occupancy: Occupancy): number =>
   occupancy.kind === 'onFoot' ? BensonHostState.onFoot : occupancy.slot;
@@ -1280,7 +1293,7 @@ export class GameplaySession {
           );
         }
       }
-      const flags = this.scripts?.host.objectFlags.get(outcome.slot) ?? 0;
+      const flags = this.objectFlags.get(outcome.slot) ?? 0;
       this.describe(interaction.description(outcome.slot, flags));
     } else if (outcome.kind === 'tooHeavy') {
       this.show(interaction.tooHeavyMessage);
@@ -1323,7 +1336,7 @@ export class GameplaySession {
     }
     switch (outcome.kind) {
       case 'took': {
-        const flags = this.scripts.host.objectFlags.get(slot) ?? 0;
+        const flags = this.objectFlags.get(slot) ?? 0;
         this.describe(interaction.description(slot, flags));
         return { events: ['tone'], outcome };
       }
@@ -2020,9 +2033,7 @@ export class GameplaySession {
       throw new Error('Talk Scripts need the Benson Display and host state');
     }
     const benson = this.scripts;
-    this.talk = this.talking(
-      () => new TalkHost(scripts, benson, options, saved)
-    );
+    this.talk = new TalkHost(scripts, benson, this.worldPort(), options, saved);
     if (this.scripts.reference !== undefined) {
       this.scripts.reference.refusing = this.talk.replaces;
     }
@@ -2035,24 +2046,82 @@ export class GameplaySession {
 
   /// A new game has begun: the Talk Scripts hear `begin`.
   begin(): void {
-    this.talking(() => this.talk?.begin());
+    this.talk?.begin();
   }
 
   /// A key no Binding took, by its code: Player Input for the Talk Scripts.
   input(code: string): void {
-    this.talking(() => this.talk?.input(code));
+    this.talk?.input(code);
   }
 
-  /// Talk Scripts read and write the world through Benson's host state, so
-  /// they run across the Host Callout as a Benson Script does.
-  private talking<T>(act: () => T): T {
-    if (this.scripts === undefined) {
-      return act();
+  private portObject(slot: number): number {
+    if (!this.objectsBySlot.has(slot)) {
+      throw new Error(`the world has no object ${slot}`);
     }
-    this.scripts.host = this.project(this.scripts.host);
-    const result = act();
-    this.reconcile(this.scripts.host);
-    return result;
+    return slot;
+  }
+
+  private portFlag(slot: number, change: (flags: number) => number): void {
+    this.portObject(slot);
+    this.objectFlags.set(slot, change(this.objectFlags.get(slot) ?? 0));
+  }
+
+  /// What the World Port still keeps in Benson's host state (#906).
+  private portHost(change: (host: BensonHostState) => BensonHostState): void {
+    if (this.scripts === undefined) {
+      throw new Error('the world has no Benson host state');
+    }
+    this.scripts.host = change(this.scripts.host);
+  }
+
+  /// The World Port (ADR 0083): Talk Scripts read and change the session's
+  /// own state, one named operation at a time.
+  private worldPort(): WorldPort {
+    const object = this.portObject.bind(this);
+    const flag = this.portFlag.bind(this);
+    const host = this.portHost.bind(this);
+    return {
+      arm: slot => flag(slot, flags => flags | STARTS_TALK),
+      armed: slot =>
+        ((this.objectFlags.get(object(slot)) ?? 0) & STARTS_TALK) !== 0,
+      boarded: () =>
+        this.occupancy.kind === 'aboard' ? this.occupancy.slot : undefined,
+      carries: slot => this.carriedStack.includes(object(slot)),
+      credits: () => this.scripts?.credits ?? 0,
+      destroyed: cell => this.sites?.destroyedCells().includes(cell) ?? false,
+      disarm: slot => flag(slot, flags => flags & ~DISARMED & 0xff),
+      escape: () => host(state => state.with({ endingPhase: 1 })),
+      fix: slot => flag(slot, flags => flags | FIXED),
+      here: () => this.semanticLocation,
+      lies: slot => {
+        const where = this.residenceOf(object(slot));
+        return where.kind === 'room'
+          ? room(where.id)
+          : where.kind === 'surface'
+            ? SURFACE
+            : undefined;
+      },
+      move: (slot, to) => {
+        const where = this.residenceOf(object(slot));
+        if (where.kind === 'carried') {
+          throw new Error('cannot move a carried object');
+        }
+        if (to.kind === 'room') {
+          if (!this.content.rooms.has(to.id)) {
+            throw new Error(`the world has no Room ${to.id}`);
+          }
+          if (where.kind !== 'room' || where.id !== to.id) {
+            this.residence.set(slot, { id: to.id, kind: 'room' });
+          }
+        } else if (where.kind !== 'surface') {
+          this.residence.set(slot, { kind: 'surface' });
+        }
+      },
+      pay: amount => host(state => state.addDecimal(CREDITS, amount)),
+      sendAttacker: () => host(state => state.with({ attackingShip: true })),
+      sendShip: () => host(state => state.with({ shipInbound: SHIP_INBOUND })),
+      spend: amount => host(state => state.addDecimal(CREDITS, -amount))
+    };
   }
 
   skipMessage(): void {
@@ -2098,10 +2167,8 @@ export class GameplaySession {
     // The frame's events go before the Talk Scripts' clock moves on, so a
     // Handler's queries see the world exactly as the frame left it.
     const talk = this.talk;
-    this.talking(() => {
-      talk.deliver(worldEvents);
-      talk.advance(seconds);
-    });
+    talk.deliver(worldEvents);
+    talk.advance(seconds);
     return {
       events: [
         ...frame.events,

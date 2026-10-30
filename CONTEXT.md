@@ -150,6 +150,10 @@ _Avoid_: Inverted, reversed room, mirror mode
 The explicit seam through which a Benson Script reaches the engine, comprising the named engine state it may read and write and the effects it may ask the host to perform; it is the only path between game logic and the rest of the app, and the boundary an eventual scripting layer replaces.
 _Avoid_: Script API, engine hooks, bridge
 
+**World Port**:
+The named operations through which a Talk Script reads and changes the world — what is carried and where objects lie, the player's Room and craft, credits, an object's armed or fixed state, the ending, and the ships sent — implemented by the Gameplay Session on its own state. It replaces the Host Callout for Talk Scripts; names are translated to slots on the Talk side, so the session never sees Talk vocabulary.
+_Avoid_: world API, Host Callout (for Talk Scripts), bridge
+
 **Reference Disassembly**:
 The community-maintained annotated disassembly of the Reference Build, consumed as unlicensed reference documentation only — read for structure and locations, never copied into code or the Data Payload.
 _Avoid_: Source code, upstream, dependency
