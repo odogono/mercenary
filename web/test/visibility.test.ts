@@ -82,19 +82,13 @@ describe('Reference surface visibility', () => {
     expect(seen.points.length).toBe(3);
   });
 
-  test('selects and places Surface Structures beyond the city grid', () => {
-    const source = world.cell(2, 11)!;
-    const sourceSegment = source.segments(0)[0]!;
-    const shift = 32 * world.cellSize;
+  test('sees no Surface Structure beyond the city grid', () => {
+    // The city is cells 0-15 on each axis; Targ beyond it is open ground, not
+    // a repeat of the city.
     const seen = visible(world, surfacePosition(34, 11, 4096));
 
-    expect(
-      hasSegment(
-        seen.segments,
-        { ...sourceSegment.a, x: sourceSegment.a.x + shift },
-        { ...sourceSegment.b, x: sourceSegment.b.x + shift }
-      )
-    ).toBeTrue();
+    expect(seen.segments).toEqual([]);
+    expect(seen.faces).toEqual([]);
   });
 
   test('the lift stored past signed range is visible at its unsigned 24-bit position', () => {

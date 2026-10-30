@@ -206,7 +206,7 @@ describe('Targ Geometry Asset faces', () => {
     ).toHaveLength(0);
   });
 
-  test('surface faces resolve runtime rotation and follow repeated surface cells', () => {
+  test('surface faces resolve runtime rotation and stay within the city grid', () => {
     const source = surface.asset.parts[0]!;
     const document = composeSurface(bundle.surface).cells.find(
       c => c.cell === cell.index
@@ -225,13 +225,12 @@ describe('Targ Geometry Asset faces', () => {
     }
     const position = { ...cell.centre, y: 1000 };
     const normal = visible(world, position).faces[0]!;
-    const repeated = visible(world, {
+    expect(normal.vertices.length).toBeGreaterThan(0);
+    const beyond = visible(world, {
       ...position,
       x: position.x + world.groundExtent
-    }).faces[0]!;
-    expect(repeated.vertices).toEqual(
-      normal.vertices.map(v => ({ ...v, x: v.x + world.groundExtent }))
-    );
+    });
+    expect(beyond.faces).toEqual([]);
   });
 
   test('both Presentation Presets plan identical coloured face batches indoors', () => {

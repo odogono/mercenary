@@ -7,18 +7,15 @@ import {
   atUnsignedSurfacePosition,
   isDetailed,
   isDrawable,
-  mapFaces,
   objectSegments,
   placedAtResidence,
   room,
   type Polygon,
   type Residence,
-  type RoadWorkspace,
   type Segment,
   type World,
   type Location as WorldLocation
 } from '../world/index.ts';
-import { wrapSurfaceAxis } from '../world/surfaceCoordinates.ts';
 
 /// Perspective projection from world space to view pixels, and what is worth projecting.
 ///
@@ -618,35 +615,6 @@ const withinHorizon = (
   Math.abs(origin.y - position.y) < reach &&
   Math.abs(origin.z - position.z) < reach;
 
-const translatePoint = (point: Vector3, x: number, z: number): Vector3 => ({
-  x: point.x + x,
-  y: point.y,
-  z: point.z + z
-});
-
-const translateSegment = (segment: Segment, x: number, z: number): Segment => ({
-  ...segment,
-  a: translatePoint(segment.a, x, z),
-  b: translatePoint(segment.b, x, z)
-});
-
-const translateWorkspace = (
-  workspace: RoadWorkspace,
-  x: number,
-  z: number
-): RoadWorkspace => {
-  const point = (index: number): Vector3 | undefined => {
-    const source = workspace[index];
-    return source === undefined ? undefined : translatePoint(source, x, z);
-  };
-  return [point(0), point(1), point(2), point(3)];
-};
-
-const positiveRemainder = (value: number, modulus: number): number => {
-  const remainder = value % modulus;
-  return remainder < 0 ? remainder + modulus : remainder;
-};
-
 /// Gather what is worth projecting near the camera. Frustum rejection is left to the
 /// projection step, which has to compute view space anyway.
 ///
@@ -730,51 +698,27 @@ export const visible = (
   }
 
   const roadSegments = new Set<Segment>();
-  const repeats = rules.reach === 'cell';
-  const column = Math.floor(
-    (repeats ? wrapSurfaceAxis(position.x) : position.x) / world.cellSize
-  );
-  const row = Math.floor(
-    (repeats ? wrapSurfaceAxis(position.z) : position.z) / world.cellSize
-  );
+  // The city is the 16×16 cell table and nothing more: a camera outside it sees
+  // no Surface Structure, rather than a copy of the city repeated across Targ.
+  const column = Math.floor(position.x / world.cellSize);
+  const row = Math.floor(position.z / world.cellSize);
   const radius = rules.reach === 'ring' ? 1 : 0;
-  const firstColumn =
-    rules.reach === 'all'
-      ? 0
-      : repeats
-        ? column - radius
-        : Math.max(0, column - radius);
-  const lastColumn =
-    rules.reach === 'all'
-      ? world.cellsPerAxis - 1
-      : repeats
-        ? column + radius
-        : Math.min(world.cellsPerAxis - 1, column + radius);
-  const firstRow =
-    rules.reach === 'all'
-      ? 0
-      : repeats
-        ? row - radius
-        : Math.max(0, row - radius);
-  const lastRow =
-    rules.reach === 'all'
-      ? world.cellsPerAxis - 1
-      : repeats
-        ? row + radius
-        : Math.min(world.cellsPerAxis - 1, row + radius);
+  const all = rules.reach === 'all';
+  const firstColumn = all ? 0 : Math.max(0, column - radius);
+  const lastColumn = all
+    ? world.cellsPerAxis - 1
+    : Math.min(world.cellsPerAxis - 1, column + radius);
+  const firstRow = all ? 0 : Math.max(0, row - radius);
+  const lastRow = all
+    ? world.cellsPerAxis - 1
+    : Math.min(world.cellsPerAxis - 1, row + radius);
   for (let selectedRow = firstRow; selectedRow <= lastRow; selectedRow++) {
     for (
       let selectedColumn = firstColumn;
       selectedColumn <= lastColumn;
       selectedColumn++
     ) {
-      const sourceColumn = repeats
-        ? positiveRemainder(selectedColumn, world.cellsPerAxis)
-        : selectedColumn;
-      const sourceRow = repeats
-        ? positiveRemainder(selectedRow, world.cellsPerAxis)
-        : selectedRow;
-      const cell = world.cell(sourceColumn, sourceRow);
+      const cell = world.cell(selectedColumn, selectedRow);
       const isOccupied = selectedColumn === column && selectedRow === row;
       const isDistant = rules.reach === 'all' && !isOccupied;
       if (
@@ -782,27 +726,15 @@ export const visible = (
         cell.index !== 0 &&
         !(isDistant && cell.reach === 'cell')
       ) {
-        const dx = (selectedColumn - sourceColumn) * world.cellSize;
-        const dz = (selectedRow - sourceRow) * world.cellSize;
-        const workspace = isOccupied
-          ? translateWorkspace(world.roadWorkspace(cell), dx, dz)
-          : undefined;
-        const selected = (
-          isDistant
-            ? cell.distantSegments(elapsed)
-            : cell.segments(elapsed, workspace)
-        ).map(segment => translateSegment(segment, dx, dz));
-        const cellFaces = cell.faces(elapsed);
-        append(
-          faces,
-          dx === 0 && dz === 0
-            ? cellFaces
-            : mapFaces(cellFaces, point => translatePoint(point, dx, dz))
-        );
+        const workspace = isOccupied ? world.roadWorkspace(cell) : undefined;
+        const selected = isDistant
+          ? cell.distantSegments(elapsed)
+          : cell.segments(elapsed, workspace);
+        append(faces, cell.faces(elapsed));
         if (isDistant) {
           const distance = Math.hypot(
-            cell.centre.x + dx - position.x,
-            cell.centre.z + dz - position.z
+            cell.centre.x - position.x,
+            cell.centre.z - position.z
           );
           for (const segment of selected) {
             const distantSegment = { ...segment, distance };
