@@ -233,6 +233,27 @@ describe('commerce as a Talk Script', () => {
     ).toHaveLength(1);
   }, 120_000);
 
+  test('a Dart already boarded in an older Save stays quiet', async () => {
+    const session = (await openRoute('talk', COMMERCE, ESCAPE)).session;
+    const snapshot = session.captureSaveSnapshot();
+    // Disarmed, as the first boarding left the Dart before commerce kept it.
+    const route = LegalRoute.resume(
+      GameplaySession.restore(
+        session.content,
+        session.scripts,
+        {
+          ...snapshot,
+          objectFlags: snapshot.objectFlags.map(([at, flags]) =>
+            at === DART ? [at, flags & ~STARTS_SCRIPT] : [at, flags]
+          )
+        },
+        { scripts: talkScript(COMMERCE, ESCAPE) }
+      )
+    );
+    boardDart(route);
+    expect(new Lines(route).advance(15).lines).toEqual([]);
+  }, 60_000);
+
   test('the captured Mechanoid protests at every taking', async () => {
     const played = await both(async engine => {
       const route = await armed(engine, CAPTURED_MECHANOID);
