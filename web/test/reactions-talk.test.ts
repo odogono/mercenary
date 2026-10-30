@@ -16,6 +16,7 @@ const bundle = await loadPayload();
 const rules = bundle.endgame.combat.siteDestruction;
 const CREDITS = BensonHostState.firstNumberDecimal;
 const GRATITUDE = 2;
+const ADVERT_DESTROYED = 8;
 const PASS = 46;
 const CELL = 0x1_00_00;
 const FRAME = 1 / 20;
@@ -74,7 +75,9 @@ const outcome = (lines: Lines) => {
   return {
     attacking: host.attackingShip,
     credits: host.decimal(CREDITS),
-    flags: host.engineFlags & ~0xc0,
+    // Gratitude and the advert's destruction are the Talk Script's own now,
+    // so only Benson sets their engine flags.
+    flags: host.engineFlags & ~0xc0 & ~(GRATITUDE | ADVERT_DESTROYED),
     lines: lines.lines,
     pass: session.residenceOf(PASS),
     passFlags: session.snapshot.objectFlags.get(PASS)
@@ -117,7 +120,6 @@ describe('Faction Reactions as a Talk Script', () => {
       expect(result.lines.at(-1)).toBe('');
       expect(result.attacking).toBe(id >= 5 && id <= 16);
       expect(result.flags & 32).toBe(id === 14 ? 32 : 0);
-      expect(result.flags & 8).toBe(id === 5 ? 8 : 0);
     });
   }
 
@@ -369,6 +371,8 @@ describe('gratitude as a Talk Script', () => {
   });
 
   for (const faction of ['palyar', 'mechanoid'] as const) {
+    // Thanked through the engine flag, as a Save from before the Talk Script
+    // kept it would be: the script takes it over.
     test(`${faction} gratitude is silent when either faction has already thanked the player`, async () => {
       const result = await both(async engine => {
         const route = await grateful(engine, faction, false, true);

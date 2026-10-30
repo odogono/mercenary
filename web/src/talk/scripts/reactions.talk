@@ -4,9 +4,14 @@
 
 use show, clear, report from benson
 
+-- Whether a faction has thanked the player, which happens once a game. It is
+-- nothing until first needed: a Save from before this script kept it hands
+-- over the engine flag that held it then.
+script variable thanked = nothing
+
 constant sites = [
   {site: "novabill", messages: ["NOVABILL - WELL DONE,"], attacker: "", flag: ""},
-  {site: "authors advert", messages: ["THE AUTHORS ADVERT", "THINGS ARE GOING TO BE", "TOUGH FROM NOW ON"], attacker: "palyar", flag: "advertDestroyed"},
+  {site: "authors advert", messages: ["THE AUTHORS ADVERT", "THINGS ARE GOING TO BE", "TOUGH FROM NOW ON"], attacker: "palyar", flag: ""},
   {site: "sabins cube", messages: ["SABINS CUBE"], attacker: "mechanoid", flag: ""},
   {site: "walton monument", messages: ["THE WALTON MONUMENT", "TO THE FAMOUS ARCHITECT"], attacker: "palyar", flag: ""},
   {site: "st stallards", messages: ["ST. STALLARDS"], attacker: "palyar", flag: ""},
@@ -72,10 +77,13 @@ end attack
 
 on gratitude faction
   wait 167 ms
-  ask world to flag "gratitudeGiven"
-  if it then return
+  if thanked is nothing then
+    ask world to takeLegacyFlag "gratitudeGiven"
+    put it into thanked
+  end if
+  if thanked then return
   -- Claim before suspending, so two concurrent Runs cannot thank or pay twice.
-  ask world to setFlag "gratitudeGiven"
+  put true into thanked
   if faction = "palyar" then
     put "MESSAGE FROM PALYARS" into heading
   else

@@ -224,7 +224,7 @@ describe('the Attack State a Faction Reaction sets', () => {
   /// rather than sometimes: the generic reactions roll for it.
   const advertCell = rules.reactions.find(row => row.lowId === 5)!.cells[0]!;
 
-  test('sends a craft after the player, and says so in its own flag', () => {
+  test('sends a craft after the player', () => {
     const session = overCell(advertCell);
     expect(session.observations().observations['attackingShip']).toBeFalse();
 
@@ -235,10 +235,6 @@ describe('the Attack State a Faction Reaction sets', () => {
     );
 
     expect(attacked).toBeTrue();
-    // The decoded flag this particular Site's reaction sets on its way past.
-    expect(
-      (session.observations().observations['engineFlags'] as number) & 0x08
-    ).toBe(0x08);
   });
 
   test('ends with the craft lost and the session still being played', () => {

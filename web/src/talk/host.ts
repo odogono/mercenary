@@ -74,11 +74,15 @@ interface Block {
 
 /// Engine flags a Talk Script may name, by their bit in `engineFlags`.
 const FLAGS = {
-  advertDestroyed: 8,
   commanderAnnoyed: 32,
   dartBought: 1,
-  gratitudeGiven: 2,
   shipHired: 4
+} as const;
+
+/// Engine flags a Talk Script now keeps itself, which a Save from before then
+/// still holds: the script takes each one over once.
+const LEGACY_FLAGS = {
+  gratitudeGiven: 2
 } as const;
 
 const CREDITS = BensonHostState.firstNumberDecimal;
@@ -96,6 +100,14 @@ const ADVERT_BLOCK = 50;
 const MICROS = 1_000_000;
 /// No Talk Script wait is bounded by a deadline of its own.
 const LONGEST_WAIT_MS = 2_147_483_647;
+
+const legacyFlag = (name: string): number => {
+  const bit = LEGACY_FLAGS[name as keyof typeof LEGACY_FLAGS];
+  if (bit === undefined) {
+    throw new Error(`unknown legacy flag ${name.toString()}`);
+  }
+  return bit;
+};
 
 const flag = (name: string): number => {
   const bit = FLAGS[name as keyof typeof FLAGS];
@@ -694,6 +706,20 @@ export class TalkHost {
           return nothing;
         },
         mode: 'immediate'
+      },
+      takeLegacyFlag: {
+        args: [shape.text],
+        cost: { fuel: 1 },
+        description:
+          'Whether an older Save set this engine flag, which it then clears.',
+        do: (_call, name) => {
+          const bit = legacyFlag(name);
+          const set = (this.benson.host.engineFlags & bit) !== 0;
+          this.write({ engineFlags: this.benson.host.engineFlags & ~bit });
+          return bool(set);
+        },
+        mode: 'immediate',
+        result: shape.bool
       }
     });
 
