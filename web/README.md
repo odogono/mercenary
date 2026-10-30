@@ -167,17 +167,14 @@ is absent.
   even though the live page no longer plays a recording.
 - `test/replay/` — the Replay Gate harness: locate artifacts, run the gate protocol both Movers
   are graded by (`moverGate.ts`, shared by the `flight` and `game-core` gates), run the Benson
-  gate, and run the shared Gameplay Session protocol through focused `session` and `navigation`
-  adapters. Every gate compares values bit-for-bit and checks that the payload on disk is the
-  one its traces were recorded from. `MoverReplay` remains the driver for the flight and
-  game-core gates; those traces are not folded onto `GameplaySession`.
+  gate. Every gate compares values bit-for-bit and checks that the payload on disk is the one
+  its traces were recorded from. `MoverReplay` remains the driver for the flight and game-core
+  gates. The `session` and `navigation` gates, which ran a Gameplay Session on the Benson
+  oracle, are retired (ADR 0083, #924).
 - `e2e/` — the Chromium gates. Playwright starts the real localhost server, checks the WebGL
   framebuffer palette, walks from the Opening Scene, verifies focus loss releases held input
   and browser chords pass through, and attaches an untracked opening screenshot for maintainer
-  review rather than treating cross-platform pixels as authoritative (ADR 0011). An endpoint
-  enabled only by the Playwright server also replays `session/opening-loop` through
-  `createWalkabout`, the real Gameplay Session and WebGL renderer, comparing all 6,291 records
-  bit-for-bit and rendering its surface, airborne, touchdown and Room-1 milestones.
+  review rather than treating cross-platform pixels as authoritative (ADR 0011).
 
 Nothing here is a mechanical translation of the Swift implementation or of the Reference
 Build. Both are read for understanding; neither is copied (ADR 0002, ADR 0014, ADR 0019).
