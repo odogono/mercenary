@@ -14,8 +14,7 @@ import type { PanelViewModel } from './panel.ts';
 ///   Flyover's are.
 /// - `targ`: the Browser Shell keeps its displayed bearings while the simulation uses raw
 ///   Reference Build yaw. The original opening yaw is a half turn and is displayed as nought,
-///   as are schema-11 Saves after their half-turn migration, so the compass is offset half a
-///   turn. This full-turn numbering is presentation, not the C64's coloured half-turn tape.
+///   so the compass is offset half a turn. This full-turn numbering is presentation, not the C64's coloured half-turn tape.
 ///
 /// Mercenary III's panel is not here: it draws its strips from the raw heading and pitch
 /// words, so it has no degrees to read.

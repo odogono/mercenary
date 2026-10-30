@@ -16,7 +16,7 @@ Accepted, 2026-10-18. Targ's game logic moves from Benson Scripts to **Talk Scri
 
 The migration completed on 2026-10-19. The live `BensonChannel` owns the Benson Display, Host Callout and shared random stream, with no program loader or instruction execution. The interpreter and its program document live under `web/test/oracle/`, used by the Golden Traces and parity tests through an optional comparison adapter. They are not served during ordinary play. Scripts 21 and 30–33 were unreachable and were not ported. The payload exporter no longer emits `benson.json`.
 
-The schema-14 Save wire layout stays compatible: its old continuation fields are empty in new live Saves, and an older Save's Benson continuation is discarded while its world state, display and random stream survive. The reserved `bensonSchemaVersion` identity remains 1 so existing Saves are not refused merely because the document was retired. Talk continuations and code identities keep the policy below.
+The Save wire layout keeps the Benson interpreter's continuation fields, empty in live Saves, and the retired document's `bensonSchemaVersion` identity, fixed at 1. Talk continuations and code identities keep the policy below.
 
 **Saves.** [ADR 0026](0026-store-explicit-save-snapshots-as-bounded-json.md) and [ADR 0030](0030-keep-one-browser-session-resumable.md) stay in force; the Save Snapshot gains a part for Talk Scripts.
 
@@ -24,8 +24,7 @@ The schema-14 Save wire layout stays compatible: its old continuation fields are
 - A Talk Script's revision is its `codeIdentity`, a Library's change counting against every script that uses it. Identities stay out of `SavePayloadIdentity`, whose exact match would refuse every save after any script edit.
 - On restore, a Talk Script whose identity differs is reloaded from the current source with its Script Variables carried over (`reload … 'carry variables'`). Its in-flight Runs end; unchanged scripts keep theirs. A script no longer in the build is dropped, and a new one loads fresh.
 - Display calls left pending are reissued: a line, report or prompt plays again from its start, and a prompt takes the input again. The key latch is not saved.
-- Schema 15, introduced with NorthTalk 0.3.0, uses its format-10 snapshots. NorthTalk no longer reads the format-9 snapshots in schema-14 Saves: those Saves retain their game state but discard the Talk Script part, including Script Variables, pending Runs and input claims. Talk Scripts load fresh without `begin`. Current schema-15 Saves retain the continuation policy above.
-- A schema-13 Save is migrated, not refused. Its Talk Scripts load fresh, with no `begin`, and a saved Benson Script that has since been ported is stopped.
+- Schema 16 is the only one that loads (#897). Before it, a Save could still hold story state in engine and object flags that the Talk Scripts once took over, and dropping that hand-over meant refusing those Saves rather than migrating them, as ADR 0026 allows. Schemas 11 to 15 were migrated until then.
 
 **Authoring rules.**
 

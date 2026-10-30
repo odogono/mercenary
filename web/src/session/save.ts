@@ -63,8 +63,8 @@ export interface BensonHostSaveSnapshot extends Omit<
   readonly pendingKey: BensonKey | null;
 }
 
-/// Legacy continuation fields remain in schema 14 for Save compatibility. Live
-/// Talk play writes no program counter, call stack or registers here.
+/// The Benson interpreter's continuation fields, which the wire layout keeps.
+/// Live Talk play writes no program counter, call stack or registers here.
 export interface BensonStateSaveSnapshot {
   readonly callStack: readonly number[];
   readonly pc: number | null;
@@ -78,8 +78,7 @@ export interface BensonSaveSnapshot {
   readonly display: BensonDisplaySaveSnapshot;
   readonly frames: number;
   readonly host: BensonHostSaveSnapshot;
-  /// The Benson Script running, by id: null when none runs, or when a Save
-  /// from before schema 14 didn't say which.
+  /// The Benson Script running, by id: null when none runs, as in live play.
   readonly script: number | null;
   readonly state: BensonStateSaveSnapshot;
 }

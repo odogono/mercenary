@@ -128,7 +128,7 @@ export class BensonChannel {
         this.host = this.host.with({ messagePlaying: false });
       }
     }
-    // Keep schema 14's host clock continuous when an older Save is restored.
+    // The fraction of a tick left over is saved, so the clock runs on after a restore.
     this.frames +=
       seconds * this.tunables.framesPerSecond * this.tunables.timeScale;
     const framesPerTick = Math.max(1, this.tunables.framesPerTick);
