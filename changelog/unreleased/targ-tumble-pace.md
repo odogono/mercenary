@@ -1,6 +1,7 @@
 ---
 type: fix
 scope: targ
+section: fixed
 ---
 
 **A crashing craft tumbles at the same pace at any frame rate.** The tumble
