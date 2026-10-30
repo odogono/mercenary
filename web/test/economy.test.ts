@@ -57,8 +57,8 @@ describe('the packed decimal register credits live in', () => {
 });
 
 const opening = async (): Promise<LegalRoute> => {
-  const route = await LegalRoute.open({ script: 0 });
-  route.advance(76);
+  const route = await LegalRoute.open({ opening: true });
+  route.waitForMessage('DO YOU WANT TO BUY?', 120);
   return route;
 };
 

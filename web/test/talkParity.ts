@@ -1,3 +1,4 @@
+import type { TalkScript } from '../src/talk/host.ts';
 import { TALK_SCRIPTS } from '../src/talk/scripts.ts';
 import { LegalRoute } from './legalCheckpoint.ts';
 
@@ -14,7 +15,7 @@ export const talkScript = (...names: string[]) =>
 /// The Talk Scripts with one's Script Variable starting at `value` instead,
 /// for a route that begins where play would have set it.
 export const presetting = (
-  scripts: ReturnType<typeof talkScript>,
+  scripts: readonly TalkScript[],
   script: string,
   variable: string,
   value: string
@@ -49,7 +50,8 @@ export const openRouteWith = async (
   engine: Engine,
   scripts: ReturnType<typeof talkScript>
 ): Promise<LegalRoute> => {
-  const route = await LegalRoute.open();
+  // Until #923, Talk runs beside the oracle, which refuses what it replaces.
+  const route = await LegalRoute.open({ engine: 'benson' });
   if (engine === 'talk') {
     route.session.useTalkScripts(scripts);
   }

@@ -1,14 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 
-import { BensonHostState } from '../src/benson/index.ts';
 import { room } from '../src/world/index.ts';
 import { LegalRoute } from './legalCheckpoint.ts';
 
-const CREDITS = BensonHostState.firstNumberDecimal;
 /// Accepted, or already on its way down: either way the ship is coming.
 const underway = (route: LegalRoute): boolean =>
   route.session.observations().observations['shipInbound'] !== 0;
-const HIRED = 0x04;
 const RENTAL_ROOM = 16;
 const ANTENNA = 30;
 
@@ -68,7 +65,6 @@ describe('the Antenna the rental terminal needs', () => {
     const after = route.session.observations().observations;
     expect(after['shipInbound']).toBe(0);
     expect(after['credits']).toBe(99_000_000);
-    expect((after['engineFlags'] as number) & HIRED).toBe(0);
   }, 60_000);
 });
 
@@ -83,7 +79,6 @@ describe('what the rental costs', () => {
     const after = route.session.observations().observations;
     expect(after['credits']).toBe(999_999);
     expect(after['shipInbound']).toBe(0);
-    expect((after['engineFlags'] as number) & HIRED).toBe(0);
   }, 60_000);
 
   test('accepts 1,000,000 and leaves one credit', async () => {
@@ -92,7 +87,6 @@ describe('what the rental costs', () => {
     const after = route.session.observations().observations;
     expect(after['credits']).toBe(1);
     expect(underway(route)).toBeTrue();
-    expect((after['engineFlags'] as number) & HIRED).toBe(HIRED);
   }, 60_000);
 
   test('takes exactly 999,999 from a larger balance', async () => {
@@ -122,7 +116,6 @@ describe('not hiring', () => {
     const after = route.session.observations().observations;
     expect(after['credits']).toBe(1_000_000);
     expect(after['shipInbound']).toBe(0);
-    expect((after['engineFlags'] as number) & HIRED).toBe(0);
   }, 60_000);
 
   test('saying nothing changes nothing', async () => {
@@ -131,7 +124,6 @@ describe('not hiring', () => {
     const after = route.session.observations().observations;
     expect(after['credits']).toBe(1_000_000);
     expect(after['shipInbound']).toBe(0);
-    expect((after['engineFlags'] as number) & HIRED).toBe(0);
   }, 60_000);
 
   test('leaving and coming back offers it again', async () => {
@@ -189,7 +181,6 @@ describe('walking in and hiring', () => {
     const after = route.session.observations().observations;
     expect(after['credits']).toBe(1);
     expect(underway(route)).toBeTrue();
-    expect((after['engineFlags'] as number) & HIRED).toBe(HIRED);
     // The terminal says where it is sending the ship.
     expect(heard).toContain('8-8');
   }, 120_000);

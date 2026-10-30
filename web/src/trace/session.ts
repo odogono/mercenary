@@ -186,9 +186,16 @@ export const applySessionTraceCommand = (
 ): TraceValue | undefined => {
   const command = decodeSessionTraceCommand(value);
   switch (command.kind) {
-    case 'press':
-      session.press(commandKey(command.key));
+    case 'press': {
+      // As the shell does: the key answers a Benson Script and is Player
+      // Input for the Talk Scripts.
+      const key = commandKey(command.key);
+      session.press(key);
+      if (key !== undefined) {
+        session.input(`K${key.slice(1)}`);
+      }
       break;
+    }
     case 'throttleNotch':
       session.throttleNotchValue(command.notch);
       break;

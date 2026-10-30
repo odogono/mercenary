@@ -318,6 +318,16 @@ export class TalkHost {
     return (this.playing ?? this.queue[0])?.call.scriptName;
   }
 
+  /// Nothing for the display and no prompt waiting for Player Input.
+  get isQuiet(): boolean {
+    return (
+      this.playing === undefined &&
+      this.queue.length === 0 &&
+      this.claims.length === 0 &&
+      !this.benson.host.messagePlaying
+    );
+  }
+
   /// A new game has begun.
   begin(): void {
     this.group.broadcast({ name: 'begin' });

@@ -3,16 +3,18 @@ import { describe, expect, test } from 'bun:test';
 import { BensonHostState } from '../src/benson/index.ts';
 import { intent } from '../src/gameCore/index.ts';
 import { GameplaySession } from '../src/session/index.ts';
+import type { TalkScript } from '../src/talk/host.ts';
+import { COMMERCE, ESCAPE, TALK_SCRIPTS } from '../src/talk/scripts.ts';
 import { room } from '../src/world/index.ts';
 import { LegalRoute } from './legalCheckpoint.ts';
+import { presetting } from './talkParity.ts';
 
-/// The sole Escape: Benson script 7's dispatcher, reached by both decoded
-/// route families and refused by every decoded refusal, exactly as the
-/// dossier's predicate says. the Ending phase moving 0 -> 1 is the one terminal
-/// write the Reference Build has; nothing here may invent another.
+/// The sole Escape: the escape Talk Script's dispatcher (Benson Script 7's
+/// port), reached by both decoded route families and refused by every decoded
+/// refusal, exactly as the dossier's predicate says. The Ending phase moving
+/// 0 -> 1 is the one terminal write the Reference Build has; nothing here may
+/// invent another.
 
-const CREDITS = BensonHostState.firstNumberDecimal;
-const HIRED = 0x04;
 const SHIP = 7;
 const NOVADRIVE = 25;
 const ANTENNA = 30;
@@ -22,10 +24,10 @@ const HANGAR_ROOM = 5;
 const ADVERT_CELL = 0x32;
 const CELL = 0x1_00_00;
 
-/// The engine flag script 7's one optional arm tests. Set by stealing the Dart,
-/// destroying object 0, or destroying cell `$97`; it changes what the epilogue
-/// says and nothing else.
-const OPTIONAL_EPILOGUE = 0x20;
+/// The Talk Scripts with one of them starting from a Script Variable that play
+/// would have set.
+const preset = (script: string, variable: string) =>
+  presetting(TALK_SCRIPTS, script, variable, 'true');
 
 /// Every Benson Message the epilogue completes, in order.
 ///
@@ -42,7 +44,7 @@ const revealed = (route: LegalRoute, quarters: number): string[] => {
       message?.completedText !== undefined &&
       message.occurrence !== recorded
     ) {
-      lines.push(message.completedText);
+      lines.push(message.completedText.trim());
       recorded = message.occurrence;
     }
   }
@@ -52,8 +54,9 @@ const revealed = (route: LegalRoute, quarters: number): string[] => {
 const phase = (route: LegalRoute): number =>
   route.session.observations().observations['endingPhase'] as number;
 
-const scriptRunning = (route: LegalRoute): boolean =>
-  route.session.observations().observations['scriptPc'] !== -1;
+/// Whether the Escape is still asking: its prompt holds Player Input.
+const asking = (route: LegalRoute): boolean =>
+  route.session.talk?.claims.some(claim => claim.script === ESCAPE) ?? false;
 
 /// Presses Y at the launch prompt until the dispatcher answers, or does not.
 ///
@@ -78,8 +81,8 @@ const refused = (route: LegalRoute): number => {
 };
 
 /// Walks to the recovered ship in Room 5 and boards it, which is what starts
-/// script 7. Script 7 then never finishes on its own: it spins at its own
-/// prompt until it is answered or refused, so nothing here may settle on it.
+/// the Escape. It then never finishes on its own: it waits at its own prompt
+/// until it is answered or refused, so nothing here may settle on it.
 const recoverAboard = (route: LegalRoute): void => {
   route.session.teleport(room(HANGAR_ROOM));
   route.settle();
@@ -90,8 +93,11 @@ const recoverAboard = (route: LegalRoute): void => {
 /// Aboard the recovered ship in Room 5, script 7 already asking.
 const aboardInTheHangar = async (options?: {
   readonly novadrive?: boolean;
+  readonly talk?: readonly TalkScript[];
 }): Promise<LegalRoute> => {
-  const route = await LegalRoute.open();
+  const route = await LegalRoute.open(
+    options?.talk === undefined ? {} : { talk: options.talk }
+  );
   if (options?.novadrive ?? true) {
     route.session.carry(NOVADRIVE);
   }
@@ -107,7 +113,7 @@ const surfaceAboard = (route: LegalRoute): void => {
   expect(after['occupancy']).toBe(SHIP);
 };
 
-/// Hired for real through script 2, delivered for real by the native descent.
+/// Hired for real through commerce, delivered for real by the native descent.
 const deliveredShip = async (): Promise<LegalRoute> => {
   const route = await LegalRoute.open();
   route.session.adjust({ credits: 1_000_000 });
@@ -116,9 +122,8 @@ const deliveredShip = async (): Promise<LegalRoute> => {
   route.waitForMessage('DO YOU WANT TO HIRE?');
   route.run({ command: { key: 'y', kind: 'press' }, kind: 'command' });
   route.advance(30);
-  expect(
-    (route.session.observations().observations['engineFlags'] as number) & HIRED
-  ).toBe(HIRED);
+  // The hire took all but one credit of the million.
+  expect(route.session.observations().observations['credits']).toBe(1);
   // One frame to despatch, then the decoded 779-frame descent.
   route.advance((2 + 779) / 20);
   expect(route.session.observations().observations['shipInbound']).toBe(0);
@@ -159,7 +164,8 @@ const restored = (route: LegalRoute): GameplaySession =>
   GameplaySession.restore(
     route.session.content,
     route.session.scripts,
-    route.session.captureSaveSnapshot()
+    route.session.captureSaveSnapshot(),
+    { scripts: TALK_SCRIPTS }
   );
 
 describe('the hired route', () => {
@@ -180,7 +186,6 @@ describe('the hired route', () => {
 
     const aboard = route.observationAt('aboard');
     expect(aboard['occupancy']).toBe(SHIP);
-    expect((aboard['engineFlags'] as number) & HIRED).toBe(HIRED);
     // The hired arm never needed the Novadrive.
     expect(String(aboard['carriedStack'])).not.toContain(String(NOVADRIVE));
     const escaped = route.observationAt('escaped');
@@ -198,7 +203,6 @@ describe('the recovered route', () => {
     route.run({ command: { key: 'y', kind: 'press' }, kind: 'command' });
     route.advance(10);
     expect(phase(route)).toBe(0);
-    expect(scriptRunning(route)).toBeTrue();
     route.observe('waiting below');
 
     surfaceAboard(route);
@@ -208,16 +212,12 @@ describe('the recovered route', () => {
     const surfaced = route.observationAt('surfaced');
     expect(surfaced['occupancy']).toBe(SHIP);
     // No hire, no million: the other authorization term carried it.
-    expect((surfaced['engineFlags'] as number) & HIRED).toBe(0);
+    expect(surfaced['credits']).toBe(9000);
     expect(String(surfaced['carriedStack'])).toContain(String(NOVADRIVE));
   }, 240_000);
 
   test('holding both authorization terms converges on the same dispatcher', async () => {
-    const route = await aboardInTheHangar();
-    route.session.scripts!.host = route.session.scripts!.host.write(
-      'engineFlags',
-      route.session.scripts!.host.engineFlags | HIRED
-    );
+    const route = await aboardInTheHangar({ talk: preset(COMMERCE, 'hired') });
     surfaceAboard(route);
     expect(launch(route)).toBeTrue();
     expect(phase(route)).toBe(1);
@@ -247,7 +247,6 @@ describe('the recovered route, walked from the crash site', () => {
 
     route.run({ action: 'board', kind: 'reach', slot: SHIP }, 120);
     route.observe('recovered');
-    expect(scriptRunning(route)).toBeTrue();
 
     surfaceAboard(route);
     route.observe('surfaced');
@@ -259,7 +258,7 @@ describe('the recovered route, walked from the crash site', () => {
     const surfaced = route.observationAt('surfaced');
     expect(surfaced['room']).toBe(0);
     expect(surfaced['occupancy']).toBe(SHIP);
-    expect((surfaced['engineFlags'] as number) & HIRED).toBe(0);
+    expect(surfaced['credits']).toBe(9000);
     // Surfaced at a craft's resting altitude rather than at eye height, which
     // is what the decoded transition leaves alone.
     expect(surfaced['playerY']).toBe(63);
@@ -319,56 +318,25 @@ describe('the refusals, each of which resumes', () => {
     expect(launch(route)).toBeTrue();
   }, 240_000);
 
-  test('the hire cleared between prompt and recheck refuses, and re-authorizing resumes', async () => {
-    const route = await deliveredShip();
-    route.session.teleport(room(1));
-    route.settle();
-    route.run({ command: { kind: 'rideLift' }, kind: 'command' });
-    route.run({ action: 'board', kind: 'reach', slot: SHIP }, 300);
-
-    // The prompt arrived on a hired ship; the hire is withdrawn before it is
-    // answered, leaving the craft and the Location alone so the authorization
-    // term is the only one that moved.
-    route.advance(15);
-    const host = route.session.scripts!.host;
-    route.session.scripts!.host = host.write(
-      'engineFlags',
-      host.engineFlags & ~HIRED
-    );
-    route.run({ command: { key: 'y', kind: 'press' }, kind: 'command' });
-    expect(refused(route)).toBe(0);
-
-    // Resumption: the hire back, and the same dispatcher answers.
-    const refusedHost = route.session.scripts!.host;
-    route.session.scripts!.host = refusedHost.write(
-      'engineFlags',
-      refusedHost.engineFlags | HIRED
-    );
-    route.run({ command: { kind: 'leaveCraft' }, kind: 'command' });
-    route.run({ action: 'board', kind: 'reach', slot: SHIP }, 60);
-    expect(launch(route)).toBeTrue();
-  }, 240_000);
-
   test('underground the script waits rather than launches', async () => {
     const route = await aboardInTheHangar();
     route.advance(20);
     route.run({ command: { key: 'y', kind: 'press' }, kind: 'command' });
     route.advance(20);
     expect(phase(route)).toBe(0);
-    expect(scriptRunning(route)).toBeTrue();
   }, 240_000);
 
-  test('the wrong craft refuses at the first test, aboard or on foot', async () => {
-    // Script 7's own first instruction tests the craft, so the refusal does
-    // not need the ship at all: it needs the script asked from anywhere else.
+  test('another craft never asks, aboard or on foot', async () => {
+    // Only boarding the Interstellar Ship starts the Escape.
     for (const aboard of [false, true]) {
       const route = await LegalRoute.open();
       route.session.carry(NOVADRIVE);
       if (aboard) {
         route.session.board(1);
       }
-      expect(route.session.start(7)).toBeTrue();
-      expect(refused(route)).toBe(0);
+      route.advance(10);
+      expect(route.session.talk!.shown).not.toContain('INTERSTELLAR SHIP');
+      expect(phase(route)).toBe(0);
       expect(route.session.observations().observations['occupancy']).toBe(
         aboard ? 1 : BensonHostState.onFoot
       );
@@ -379,11 +347,11 @@ describe('the refusals, each of which resumes', () => {
     const route = await aboardInTheHangar();
     surfaceAboard(route);
 
-    // Two minutes of play with the key untouched. The script polls rather than
-    // times out, so it neither launches nor gives up.
+    // Two minutes of play with the key untouched. The prompt doesn't time
+    // out, so it neither launches nor gives up.
     route.advance(120);
     expect(phase(route)).toBe(0);
-    expect(scriptRunning(route)).toBeTrue();
+    expect(asking(route)).toBeTrue();
 
     // And answering afterwards still works: the wait cost nothing.
     expect(launch(route)).toBeTrue();
@@ -412,7 +380,7 @@ describe('the refusals, each of which resumes', () => {
     // stepping out and boarding again asks again.
     route.run({ command: { kind: 'leaveCraft' }, kind: 'command' });
     route.run({ action: 'board', kind: 'reach', slot: SHIP }, 60);
-    expect(scriptRunning(route)).toBeTrue();
+    route.waitForMessage('INTERSTELLAR SHIP');
     expect(phase(route)).toBe(0);
   }, 240_000);
 
@@ -513,7 +481,7 @@ describe('after the dispatch', () => {
     // makes the epilogue read more slowly than play does. The dispatcher's answer and that
     // write sit a frame apart, so give the script the frame.
     route.advance(0.5);
-    expect(route.session.scripts?.host.messageInterval).toBe(150);
+    expect(route.session.scripts?.messageWaitSeconds).toBeCloseTo(0.417);
 
     const texts = revealed(route, 300);
     const upToTheLabel = texts.slice(0, texts.indexOf('GAME OVER') + 1);
@@ -581,11 +549,7 @@ describe('after the dispatch', () => {
     expect(launch(clear)).toBeTrue();
     const withoutArm = revealed(clear, 300);
 
-    const set = await aboardInTheHangar();
-    set.session.scripts!.host = set.session.scripts!.host.write(
-      'engineFlags',
-      set.session.scripts!.host.engineFlags | OPTIONAL_EPILOGUE
-    );
+    const set = await aboardInTheHangar({ talk: preset(ESCAPE, 'annoyed') });
     surfaceAboard(set);
     expect(launch(set)).toBeTrue();
     const withArm = revealed(set, 300);

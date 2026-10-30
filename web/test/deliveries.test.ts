@@ -123,8 +123,9 @@ const ROWS: readonly Row[] = [
   }
 ];
 
-/// Claimed and fixed, which is what a completed hand-in ORs into the object.
-const CLAIMED_AND_FIXED = 0x11;
+/// Fixed, which a completed hand-in ORs into the object. The deliveries Talk
+/// Script keeps the claim itself, as a Script Variable.
+const FIXED = 0x10;
 
 /// Carries the object into the buyer's Room and leaves it there.
 ///
@@ -190,9 +191,7 @@ describe('the sixteen delivery Objectives', () => {
       const after = route.session.observations().observations;
 
       expect(after['credits']).toBe(9000 + row.credits);
-      expect(
-        (after[`objectFlags.${row.slot}`] as number) & CLAIMED_AND_FIXED
-      ).toBe(CLAIMED_AND_FIXED);
+      expect((after[`objectFlags.${row.slot}`] as number) & FIXED).toBe(FIXED);
       expect(after[`objectRoom.${row.slot}`]).toBe(row.room);
     }, 30_000);
 
@@ -259,9 +258,7 @@ describe('the Mechanoid leader', () => {
       const after = route.session.observations().observations;
 
       expect(after['credits']).toBe(9000);
-      expect(
-        (after[`objectFlags.${row.slot}`] as number) & CLAIMED_AND_FIXED
-      ).toBe(0);
+      expect((after[`objectFlags.${row.slot}`] as number) & FIXED).toBe(0);
       expect(`${heard} ${afterDropping}`).toContain('LEADER');
     }, 60_000);
   }
