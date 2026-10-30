@@ -1,4 +1,3 @@
-import { BensonHostState } from '../benson/host.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import type {
   EndgameTakeOverrides,
@@ -9,7 +8,7 @@ import type {
 export const SURFACE_ROOM = 0;
 
 /// An object that is no longer in the world, because the player took it or climbed into it.
-export const OUT_OF_THE_WORLD = BensonHostState.outOfTheWorld;
+export const OUT_OF_THE_WORLD = 0xff;
 
 export type InteractionAction = 'take' | 'board';
 
@@ -38,7 +37,17 @@ export type Description =
   | { readonly index: number; readonly kind: 'message' }
   | { readonly id: number; readonly kind: 'script' };
 
-/// Reaching for the world: what the player may take or board, and what happens.
+/// What reaching needs to know of the world, as the Gameplay Session keeps it.
+export interface Reach {
+  /// The craft the player is in, by slot, or undefined on foot.
+  readonly boarded: number | undefined;
+  readonly carriedCount: number;
+  carries(slot: number): boolean;
+  flags(slot: number): number;
+}
+
+/// Reaching for the world: what the player may take or board. It decides; the
+/// Gameplay Session carries out what it decided.
 export class Interaction {
   readonly boardKey: number;
   readonly boardRange: number;
@@ -107,19 +116,16 @@ export class Interaction {
   }
 
   /// Whether a Take would refuse the object as fixed in place, wherever the player stands.
-  isFixedInPlace(slot: number, host: BensonHostState): boolean {
-    const flags = host.objectFlags.get(slot) ?? 0;
+  isFixedInPlace(slot: number, world: Reach): boolean {
     return (
-      !host.canTakeAnything &&
-      !this.carriesSink(host) &&
-      (flags & this.fixedMask) !== 0
+      !this.carriesSink(world) && (world.flags(slot) & this.fixedMask) !== 0
     );
   }
 
-  private carriesSink(host: BensonHostState): boolean {
+  private carriesSink(world: Reach): boolean {
     return (
       this.takeOverrides !== undefined &&
-      host.inventory.has(this.takeOverrides.sinkSlot)
+      world.carries(this.takeOverrides.sinkSlot)
     );
   }
 
@@ -127,81 +133,43 @@ export class Interaction {
     action: InteractionAction,
     player: Vector3,
     candidates: readonly Candidate[],
-    host: BensonHostState
-  ): { readonly host: BensonHostState; readonly outcome: Outcome } {
+    world: Reach
+  ): Outcome {
     if (action === 'take') {
       const candidate = this.nearest(candidates, player, this.takeRange);
       if (candidate === undefined) {
-        return { host, outcome: { kind: 'nothingInReach' } };
+        return { kind: 'nothingInReach' };
       }
-      const flags = host.objectFlags.get(candidate.slot) ?? 0;
-      const carriesSink = this.carriesSink(host);
       const carriesAntigrav =
         this.takeOverrides !== undefined &&
-        host.inventory.has(this.takeOverrides.antigravSlot);
-      if (this.isFixedInPlace(candidate.slot, host)) {
-        return {
-          host,
-          outcome: { kind: 'fixedInPlace', slot: candidate.slot }
-        };
+        world.carries(this.takeOverrides.antigravSlot);
+      if (this.isFixedInPlace(candidate.slot, world)) {
+        return { kind: 'fixedInPlace', slot: candidate.slot };
       }
       if (
-        !host.canLiftAnything &&
-        !carriesSink &&
+        !this.carriesSink(world) &&
         !carriesAntigrav &&
-        (flags & this.heavyMask) !== 0
+        (world.flags(candidate.slot) & this.heavyMask) !== 0
       ) {
-        return { host, outcome: { kind: 'tooHeavy', slot: candidate.slot } };
+        return { kind: 'tooHeavy', slot: candidate.slot };
       }
-      if (host.inventory.size >= this.inventoryLimit) {
-        return { host, outcome: { kind: 'handsFull' } };
+      if (world.carriedCount >= this.inventoryLimit) {
+        return { kind: 'handsFull' };
       }
-      const inventory = new Set(host.inventory);
-      inventory.add(candidate.slot);
-      return {
-        host: host
-          .with({ inventory })
-          .withObjectFlag(candidate.slot, flags | this.carriedMask)
-          .withObjectRoom(candidate.slot, BensonHostState.outOfTheWorld),
-        outcome: { kind: 'took', slot: candidate.slot }
-      };
+      return { kind: 'took', slot: candidate.slot };
     }
 
-    if (host.boardedCraft !== BensonHostState.onFoot) {
-      return { host, outcome: { kind: 'alreadyAboard' } };
+    if (world.boarded !== undefined) {
+      return { kind: 'alreadyAboard' };
     }
     const candidate = this.nearest(candidates, player, this.boardRange);
     if (candidate === undefined) {
-      return { host, outcome: { kind: 'nothingInReach' } };
+      return { kind: 'nothingInReach' };
     }
     if (!this.isCraft(candidate.slot)) {
-      return { host, outcome: { kind: 'notACraft', slot: candidate.slot } };
+      return { kind: 'notACraft', slot: candidate.slot };
     }
-    return {
-      host: host
-        .with({ boardedCraft: candidate.slot })
-        .withObjectRoom(candidate.slot, BensonHostState.outOfTheWorld),
-      outcome: { kind: 'boarded', slot: candidate.slot }
-    };
-  }
-
-  leave(host: BensonHostState): {
-    readonly host: BensonHostState;
-    readonly slot: number | undefined;
-  } {
-    const slot = host.boardedCraft;
-    if (slot === BensonHostState.onFoot) {
-      return { host, slot: undefined };
-    }
-    return {
-      // The craft is left where the player stands, which underground is the
-      // current Room rather than the surface — the occupancy-preserving
-      // recovery route depends on a craft left in room 5 staying there.
-      host: host
-        .with({ boardedCraft: BensonHostState.onFoot })
-        .withObjectRoom(slot, host.currentRoom),
-      slot
-    };
+    return { kind: 'boarded', slot: candidate.slot };
   }
 
   description(slot: number, flags: number): Description {

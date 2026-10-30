@@ -1,7 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 
-import { BensonHostState } from '../src/benson/host.ts';
-import { Interaction, type Candidate } from '../src/interaction/index.ts';
+import {
+  Interaction,
+  type Candidate,
+  type Reach
+} from '../src/interaction/index.ts';
 import type { InteractionDocument } from '../src/payload/documents.ts';
 
 const document: InteractionDocument = {
@@ -35,6 +38,26 @@ const candidate = (
   slot
 });
 
+/// A world carrying the given slots, with the given object flags.
+const world = (
+  options: {
+    readonly boarded?: number;
+    readonly carried?: readonly number[];
+    readonly flags?: Readonly<Record<number, number>>;
+  } = {}
+): Reach => {
+  const carried = options.carried ?? [];
+  return {
+    boarded: options.boarded,
+    carriedCount: carried.length,
+    carries: slot => carried.includes(slot),
+    flags: slot => options.flags?.[slot] ?? 0
+  };
+};
+
+const take = (reach: Reach) =>
+  interaction.attempt('take', origin, [candidate(20, origin)], reach);
+
 describe('reach', () => {
   test('is a cube rather than a radius', () => {
     expect(
@@ -57,100 +80,55 @@ describe('reach', () => {
   });
 
   test('the nearest candidate wins', () => {
-    const { outcome } = interaction.attempt(
-      'take',
-      origin,
-      [
-        candidate(20, { x: 400, y: 0, z: 0 }),
-        candidate(21, { x: 100, y: 0, z: 0 })
-      ],
-      new BensonHostState()
-    );
-    expect(outcome).toEqual({ kind: 'took', slot: 21 });
+    expect(
+      interaction.attempt(
+        'take',
+        origin,
+        [
+          candidate(20, { x: 400, y: 0, z: 0 }),
+          candidate(21, { x: 100, y: 0, z: 0 })
+        ],
+        world()
+      )
+    ).toEqual({ kind: 'took', slot: 21 });
   });
 });
 
 describe('taking', () => {
-  test('carries the object out of the world', () => {
-    const { host, outcome } = interaction.attempt(
-      'take',
-      origin,
-      [candidate(20, origin)],
-      new BensonHostState()
-    );
-    expect(outcome).toEqual({ kind: 'took', slot: 20 });
-    expect(host.inventory.has(20)).toBeTrue();
-    expect((host.objectFlags.get(20) ?? 0) & interaction.carriedMask).toBe(
-      interaction.carriedMask
-    );
-    expect(host.objectRooms.get(20)).toBe(BensonHostState.outOfTheWorld);
+  test('takes a loose object', () => {
+    expect(take(world())).toEqual({ kind: 'took', slot: 20 });
   });
 
   test('a fixed object stays where it is', () => {
-    const { host, outcome } = interaction.attempt(
-      'take',
-      origin,
-      [candidate(20, origin)],
-      new BensonHostState().withObjectFlag(20, interaction.fixedMask)
-    );
-    expect(outcome).toEqual({ kind: 'fixedInPlace', slot: 20 });
-    expect(host.inventory.size).toBe(0);
+    expect(take(world({ flags: { 20: interaction.fixedMask } }))).toEqual({
+      kind: 'fixedInPlace',
+      slot: 20
+    });
   });
 
   test('the inventory is bounded', () => {
-    const inventory = new Set<number>();
-    for (let slot = 100; slot < 110; slot++) {
-      inventory.add(slot);
-    }
-    const { host, outcome } = interaction.attempt(
-      'take',
-      origin,
-      [candidate(20, origin)],
-      new BensonHostState({ inventory })
-    );
-    expect(outcome).toEqual({ kind: 'handsFull' });
-    expect(host.inventory.has(20)).toBeFalse();
+    const carried = Array.from({ length: 10 }, (_, index) => 100 + index);
+    expect(take(world({ carried }))).toEqual({ kind: 'handsFull' });
   });
 
   test('the Sink bypasses fixed and heavy checks but not capacity', () => {
-    const flags = interaction.fixedMask | interaction.heavyMask;
-    const carryingSink = new BensonHostState({ inventory: new Set([47]) })
-      .withObjectFlag(47, interaction.carriedMask)
-      .withObjectFlag(20, flags);
-
-    expect(
-      interaction.attempt('take', origin, [candidate(20, origin)], carryingSink)
-        .outcome
-    ).toEqual({ kind: 'took', slot: 20 });
-
-    const full = new Set([47, 100, 101, 102, 103, 104, 105, 106, 107, 108]);
-    expect(
-      interaction.attempt(
-        'take',
-        origin,
-        [candidate(20, origin)],
-        new BensonHostState({ inventory: full }).withObjectFlag(20, flags)
-      ).outcome
-    ).toEqual({ kind: 'handsFull' });
+    const flags = { 20: interaction.fixedMask | interaction.heavyMask };
+    expect(take(world({ carried: [47], flags }))).toEqual({
+      kind: 'took',
+      slot: 20
+    });
+    const full = [47, 100, 101, 102, 103, 104, 105, 106, 107, 108];
+    expect(take(world({ carried: full, flags }))).toEqual({
+      kind: 'handsFull'
+    });
   });
 
   test('the Antigrav bypasses heavy but not fixed', () => {
-    const carryingAntigrav = new BensonHostState({ inventory: new Set([27]) })
-      .withObjectFlag(27, interaction.carriedMask)
-      .withObjectFlag(20, interaction.heavyMask);
     expect(
-      interaction.attempt(
-        'take',
-        origin,
-        [candidate(20, origin)],
-        carryingAntigrav
-      ).outcome
+      take(world({ carried: [27], flags: { 20: interaction.heavyMask } }))
     ).toEqual({ kind: 'took', slot: 20 });
-
-    const fixed = carryingAntigrav.withObjectFlag(20, interaction.fixedMask);
     expect(
-      interaction.attempt('take', origin, [candidate(20, origin)], fixed)
-        .outcome
+      take(world({ carried: [27], flags: { 20: interaction.fixedMask } }))
     ).toEqual({ kind: 'fixedInPlace', slot: 20 });
   });
 });
@@ -160,44 +138,26 @@ describe('boarding', () => {
     expect(interaction.isCraft(0)).toBeTrue();
     expect(interaction.isCraft(7)).toBeTrue();
     expect(interaction.isCraft(8)).toBeFalse();
-    const { host, outcome } = interaction.attempt(
-      'board',
-      origin,
-      [candidate(20, origin)],
-      new BensonHostState()
-    );
-    expect(outcome).toEqual({ kind: 'notACraft', slot: 20 });
-    expect(host.boardedCraft).toBe(BensonHostState.onFoot);
+    expect(
+      interaction.attempt('board', origin, [candidate(20, origin)], world())
+    ).toEqual({ kind: 'notACraft', slot: 20 });
   });
 
-  test('leaving puts the craft back where the player stands', () => {
-    const boarded = interaction.attempt(
-      'board',
-      origin,
-      [candidate(1, origin)],
-      new BensonHostState()
-    );
-    expect(boarded.outcome).toEqual({ kind: 'boarded', slot: 1 });
-    const left = interaction.leave(boarded.host);
-    expect(left.slot).toBe(1);
-    expect(left.host.boardedCraft).toBe(BensonHostState.onFoot);
-    expect(left.host.objectRooms.get(1)).toBe(0);
+  test('boards a craft in reach', () => {
+    expect(
+      interaction.attempt('board', origin, [candidate(1, origin)], world())
+    ).toEqual({ kind: 'boarded', slot: 1 });
   });
 
-  test('leaving underground keeps the craft in the current Room', () => {
-    // The recovered Escape route depends on this: craft 7 boarded in room 5
-    // and left again must still reside in room 5 rather than teleport to the
-    // surface.
-    const boarded = interaction.attempt(
-      'board',
-      origin,
-      [candidate(7, origin)],
-      new BensonHostState({ currentRoom: 5 })
-    );
-    expect(boarded.outcome).toEqual({ kind: 'boarded', slot: 7 });
-    const left = interaction.leave(boarded.host);
-    expect(left.slot).toBe(7);
-    expect(left.host.objectRooms.get(7)).toBe(5);
+  test('cannot board while already aboard', () => {
+    expect(
+      interaction.attempt(
+        'board',
+        origin,
+        [candidate(1, origin)],
+        world({ boarded: 7 })
+      )
+    ).toEqual({ kind: 'alreadyAboard' });
   });
 });
 

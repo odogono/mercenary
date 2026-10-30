@@ -35,7 +35,8 @@ import {
   SURFACE_ROOM,
   type Description,
   type InteractionAction,
-  type Outcome
+  type Outcome,
+  type Reach
 } from '../interaction/index.ts';
 import { Containment, DoorwayPredicate } from '../navigation/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
@@ -132,18 +133,17 @@ export type { WorldEvent } from './worldEvents.ts';
 /// convention here rather than something the type enforces; tightening that is worth doing when
 /// the shell lands a second caller (#95).
 ///
-/// **The Host Callout is projected, not stored.** The interpreter reads its own flat
-/// `BensonHostState` of bytes, and this module owns the typed Location, Occupancy and Object
-/// Residence those bytes stand for. `project` writes the typed state down into a fresh Host
-/// Callout, `reconcile` reads a script's writes back up into typed state, and
-/// `acrossTheCallout` is the two of them around one interpreter call. There is deliberately no
-/// second copy: the bytes are derived on the way in and consumed on the way out, so a script and
-/// the session cannot hold divergent ideas of where the player is. Both values are persistent
-/// (ADR 0023), so a projection cannot alias the state it came from.
+/// **The Host Callout is projected, not stored.** Talk Scripts and reaching work on this
+/// module's typed Location, Occupancy and Object Residence through the World Port (ADR 0083).
+/// Only the test oracle's Benson Scripts still read a flat `BensonHostState` of bytes: `project`
+/// writes the typed state down into it before they run, and `reconcile` reads their writes back
+/// up after. There is deliberately no second copy: the bytes are derived on the way in and
+/// consumed on the way out, so a script and the session cannot hold divergent ideas of where the
+/// player is.
 ///
 /// What a script may change is therefore narrower than what it can write, and `reconcile` is
 /// where that is decided — a byte the session owns outright is read back, one it does not is
-/// dropped. That asymmetry is the point of the seam rather than an omission in it.
+/// dropped.
 ///
 /// The two Movers are `gameCore`'s and are not re-implemented here: `advance` hands them the
 /// intent and the Room's walls, then turns what came back — a touchdown, wall contact, a Doorway
@@ -1239,19 +1239,33 @@ export class GameplaySession {
     this.shipInbound = host.shipInbound;
   }
 
-  private acrossTheCallout<T>(
-    body: (host: BensonHostState) => {
-      readonly host: BensonHostState;
-      readonly result: T;
+  /// What reaching sees of the world (#907).
+  private get reachable(): Reach {
+    return {
+      boarded:
+        this.occupancy.kind === 'aboard' ? this.occupancy.slot : undefined,
+      carriedCount: this.carriedStack.length,
+      carries: slot => this.carriedStack.includes(slot),
+      flags: slot => this.objectFlags.get(slot) ?? 0
+    };
+  }
+
+  /// Carries out a Take or Boarding that reaching decided on.
+  private carryOut(outcome: Outcome, carriedMask: number): void {
+    if (outcome.kind === 'took') {
+      this.carriedStack.push(outcome.slot);
+      this.objectFlags.set(
+        outcome.slot,
+        (this.objectFlags.get(outcome.slot) ?? 0) | carriedMask
+      );
+      this.residence.set(outcome.slot, { kind: 'carried' });
+    } else if (outcome.kind === 'boarded') {
+      this.game = { ...this.game, craft: outcome.slot };
+      this.residence.set(outcome.slot, { kind: 'gone' });
+    } else {
+      return;
     }
-  ): T | undefined {
-    if (this.scripts === undefined) {
-      return undefined;
-    }
-    const { host, result } = body(this.project(this.scripts.host));
-    this.reconcile(host);
-    this.scripts.host = host;
-    return result;
+    this.republishHostState();
   }
 
   private republishHostState(): void {
@@ -1269,7 +1283,7 @@ export class GameplaySession {
     readonly outcome: Outcome;
   } {
     const interaction = this.content.interaction;
-    if (interaction === undefined || this.scripts === undefined) {
+    if (interaction === undefined) {
       return { events: [], outcome: { kind: 'nothingInReach' } };
     }
     const candidates = this.content.objects
@@ -1289,13 +1303,13 @@ export class GameplaySession {
         };
       });
     const position = this.game.player.position;
-    const outcome = this.acrossTheCallout(host => {
-      const attempted = interaction.attempt(action, position, candidates, host);
-      return { host: attempted.host, result: attempted.outcome };
-    });
-    if (outcome === undefined) {
-      return { events: [], outcome: { kind: 'nothingInReach' } };
-    }
+    const outcome = interaction.attempt(
+      action,
+      position,
+      candidates,
+      this.reachable
+    );
+    this.carryOut(outcome, interaction.carriedMask);
     const events: PresentationEvent[] = [];
     if (outcome.kind === 'took' || outcome.kind === 'boarded') {
       events.push('tone');
@@ -1346,22 +1360,17 @@ export class GameplaySession {
       return { events: [], outcome: { kind: 'gone', slot } };
     }
     const interaction = this.content.interaction;
-    if (interaction === undefined || this.scripts === undefined) {
+    if (interaction === undefined) {
       return { events: [], outcome: { kind: 'unsupported' } };
     }
     const position = this.game.player.position;
-    const outcome = this.acrossTheCallout(host => {
-      const attempted = interaction.attempt(
-        'take',
-        position,
-        [{ position, slot }],
-        host
-      );
-      return { host: attempted.host, result: attempted.outcome };
-    });
-    if (outcome === undefined) {
-      return { events: [], outcome: { kind: 'unsupported' } };
-    }
+    const outcome = interaction.attempt(
+      'take',
+      position,
+      [{ position, slot }],
+      this.reachable
+    );
+    this.carryOut(outcome, interaction.carriedMask);
     switch (outcome.kind) {
       case 'took': {
         const flags = this.objectFlags.get(slot) ?? 0;
@@ -1399,10 +1408,10 @@ export class GameplaySession {
       return { events: [], outcome: { kind: 'gone', slot } };
     }
     const interaction = this.content.interaction;
-    if (interaction === undefined || this.scripts === undefined) {
+    if (interaction === undefined) {
       return { events: [], outcome: { kind: 'unsupported' } };
     }
-    if (interaction.isFixedInPlace(slot, this.project(this.scripts.host))) {
+    if (interaction.isFixedInPlace(slot, this.reachable)) {
       return { events: [], outcome: { kind: 'fixedInPlace', slot } };
     }
     if (this.airborneRefusesDrop()) {
@@ -1424,14 +1433,11 @@ export class GameplaySession {
     ) {
       return undefined;
     }
-    const position = this.game.player.position;
-    const slot = this.acrossTheCallout(host => {
-      const left = interaction.leave(host);
-      return { host: left.host, result: left.slot };
-    });
-    if (slot === undefined) {
+    if (this.occupancy.kind !== 'aboard') {
       return undefined;
     }
+    const { slot } = this.occupancy;
+    const position = this.game.player.position;
     // On the Colony Craft deck the player's low altitude byte is eye height,
     // not part of the surface under the parked craft. Clear it as the Reference
     // Build does at `$993E-$994A`; ordinary leaving retains the accepted Golden
@@ -1459,6 +1465,7 @@ export class GameplaySession {
         : { at, heading: this.game.player.heading, kind: 'surface' }
     );
     this.game = leaveCraftCore(this.game, this.content.flight);
+    this.republishHostState();
     return { events: ['tone'], slot };
   }
 
