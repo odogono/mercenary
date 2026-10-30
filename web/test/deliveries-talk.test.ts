@@ -7,17 +7,11 @@ import {
 import { DELIVERIES } from '../src/talk/scripts.ts';
 import { room } from '../src/world/index.ts';
 import { LegalRoute } from './legalCheckpoint.ts';
-import {
-  ENGINES,
-  Lines,
-  openRoute,
-  talkScript,
-  type Engine
-} from './talkParity.ts';
+import { Lines, openRoute, talkScript } from './talkParity.ts';
 
-/// The deliveries as a Talk Script (ADR 0080), against Benson Scripts 3-6, 9,
-/// 14-20 and 22-25 as the oracle: each visit is played by both, and both must
-/// show the same lines and leave the same credits and object. What each Room
+/// The deliveries as a Talk Script (ADR 0080), ported from Benson Scripts 3-6,
+/// 9, 14-20 and 22-25: each visit must show the lines Benson showed and leave
+/// the same credits and object, which the snapshot keeps. What each Room
 /// pays is `deliveries.test.ts`'s, against the Benson Scripts alone.
 
 /// Each Room and the object it wants, in the survey's order.
@@ -68,18 +62,13 @@ const outcome = (lines: Lines, slot: number): Outcome => {
   };
 };
 
-/// Plays a visit by both engines, and returns what each left.
-const both = async (
+/// Plays a visit on Talk, checking what it left against Benson's.
+const onTalk = async (
   slot: number,
   play: (route: LegalRoute) => Lines | Promise<Lines>
-): Promise<Record<Engine, Outcome>> => {
-  const result = {} as Record<Engine, Outcome>;
-  for (const engine of ENGINES) {
-    result[engine] = outcome(
-      await play(await openRoute(engine, DELIVERIES)),
-      slot
-    );
-  }
+): Promise<Outcome> => {
+  const result = outcome(await play(await openRoute(DELIVERIES)), slot);
+  expect(result).toMatchSnapshot();
   return result;
 };
 
@@ -104,18 +93,17 @@ const leaveAt = (route: LegalRoute, slot: number, where: number): void => {
 describe('the deliveries as a Talk Script', () => {
   test('every Room pays for its object as its Benson Script does', async () => {
     for (const [buyer, slot] of ROWS) {
-      const played = await both(slot, route => handIn(route, slot, buyer));
-      expect(played.talk).toEqual(played.benson);
-      expect(played.talk.lies).toBe(buyer);
-      expect(played.talk.lines.at(-2)).toStartWith('YOU HAVE ');
+      const played = await onTalk(slot, route => handIn(route, slot, buyer));
+      expect(played.lies).toBe(buyer);
+      expect(played.lines.at(-2)).toStartWith('YOU HAVE ');
     }
   }, 300_000);
 
   test('pays for the Neutron Fuel with these lines', async () => {
-    const played = await both(NEUTRON_FUEL, route =>
+    const played = await onTalk(NEUTRON_FUEL, route =>
       handIn(route, NEUTRON_FUEL, ENGINE_ROOM)
     );
-    expect(played.talk.lines).toEqual([
+    expect(played.lines).toEqual([
       'ENGINE ROOM',
       'PLEASE LEAVE',
       'NEUTRON FUEL',
@@ -127,60 +115,55 @@ describe('the deliveries as a Talk Script', () => {
   }, 60_000);
 
   test('says only the Room’s name to a player who brings nothing', async () => {
-    const played = await both(NEUTRON_FUEL, route => {
+    const played = await onTalk(NEUTRON_FUEL, route => {
       route.session.teleport(room(ENGINE_ROOM));
       return new Lines(route).advance(10);
     });
-    expect(played.talk).toEqual(played.benson);
-    expect(played.talk.lines).toEqual(['ENGINE ROOM', '']);
+    expect(played.lines).toEqual(['ENGINE ROOM', '']);
   }, 60_000);
 
   test('pays nothing to a player who leaves holding the object', async () => {
-    const played = await both(NEUTRON_FUEL, route => {
+    const played = await onTalk(NEUTRON_FUEL, route => {
       route.session.carry(NEUTRON_FUEL);
       route.session.teleport(room(ENGINE_ROOM));
       const lines = new Lines(route).until('HERE FOR 200000 REWARD');
       route.session.teleport(room(ELSEWHERE));
       return lines.advance(10);
     });
-    expect(played.talk).toEqual(played.benson);
-    expect(played.talk.lines.at(-1)).toBe('');
-    expect(played.talk.credits).toBe(9000);
+    expect(played.lines.at(-1)).toBe('');
+    expect(played.credits).toBe(9000);
   }, 60_000);
 
   test('pays for an object put down while the Room’s name still plays', async () => {
-    const played = await both(NEUTRON_FUEL, route => {
+    const played = await onTalk(NEUTRON_FUEL, route => {
       route.session.carry(NEUTRON_FUEL);
       route.session.teleport(room(ENGINE_ROOM));
       route.advance(0.25);
       route.session.drop(NEUTRON_FUEL);
       return new Lines(route).advance(30);
     });
-    expect(played.talk).toEqual(played.benson);
-    expect(played.talk.credits).toBe(209_000);
+    expect(played.credits).toBe(209_000);
   }, 60_000);
 
   test('pays once for an object both factions want', async () => {
-    const played = await both(NEUTRON_FUEL, route => {
+    const played = await onTalk(NEUTRON_FUEL, route => {
       handIn(route, NEUTRON_FUEL, ENGINE_ROOM);
       route.session.carry(NEUTRON_FUEL);
       route.session.teleport(room(MECHANOID_FUEL_STORES));
       return new Lines(route).advance(15);
     });
-    expect(played.talk).toEqual(played.benson);
-    expect(played.talk.lines).toEqual(['MECHANOID FUEL STORES', '']);
-    expect(played.talk.credits).toBe(209_000);
+    expect(played.lines).toEqual(['MECHANOID FUEL STORES', '']);
+    expect(played.credits).toBe(209_000);
   }, 60_000);
 
   test('the Mechanoids take nothing while their leader is away', async () => {
-    const played = await both(NEUTRON_FUEL, route => {
+    const played = await onTalk(NEUTRON_FUEL, route => {
       leaveAt(route, CAPTURED_MECHANOID, ELSEWHERE);
       route.session.carry(NEUTRON_FUEL);
       route.session.teleport(room(MECHANOID_FUEL_STORES));
       return new Lines(route).advance(15);
     });
-    expect(played.talk).toEqual(played.benson);
-    expect(played.talk.lines).toEqual([
+    expect(played.lines).toEqual([
       'MECHANOID FUEL STORES',
       'THE MECHANOIDS SAY',
       'PUT BACK OUR LEADER',
@@ -189,7 +172,7 @@ describe('the deliveries as a Talk Script', () => {
   }, 120_000);
 
   test('a Save while the Room waits for the drop restores and still pays', async () => {
-    const route = await openRoute('talk', DELIVERIES);
+    const route = await openRoute(DELIVERIES);
     route.session.carry(NEUTRON_FUEL);
     route.session.teleport(room(ENGINE_ROOM));
     new Lines(route).until('HERE FOR 200000 REWARD').advance(5);

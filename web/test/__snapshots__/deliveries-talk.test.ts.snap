@@ -1,0 +1,360 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`the deliveries as a Talk Script every Room pays for its object as its Benson Script does 1`] = `
+{
+  "credits": 209000,
+  "flags": 56,
+  "lies": 136,
+  "lines": [
+    "ENGINE ROOM",
+    "PLEASE LEAVE",
+    "NEUTRON FUEL",
+    "HERE FOR 200000 REWARD",
+    "200000 CREDITS PAID",
+    "YOU HAVE 209000 CREDITS",
+    "",
+  ],
+}
+`;
+
+exports[`the deliveries as a Talk Script every Room pays for its object as its Benson Script does 2`] = `
+{
+  "credits": 59000,
+  "flags": 24,
+  "lies": 155,
+  "lines": [
+    "CONFERENCE ROOM",
+    "PLEASE LEAVE",
+    "ESSENTIAL 12939 SUPPLY",
+    "HERE FOR 50000 REWARD",
+    "50000 CREDITS PAID",
+    "YOU HAVE 59000 CREDITS",
+    "",
+  ],
+}
+`;
+
+exports[`the deliveries as a Talk Script every Room pays for its object as its Benson Script does 3`] = `
+{
+  "credits": 109000,
+  "flags": 24,
+  "lies": 162,
+  "lines": [
+    "EXCHEQUER",
+    "PLEASE LEAVE",
+    "GOLD",
+    "HERE FOR 100000 REWARD",
+    "100000 CREDITS PAID",
+    "YOU HAVE 109000 CREDITS",
+    "",
+  ],
+}
+`;
+
+exports[`the deliveries as a Talk Script every Room pays for its object as its Benson Script does 4`] = `
+{
+  "credits": 69000,
+  "flags": 24,
+  "lies": 163,
+  "lines": [
+    "KITCHEN",
+    "PLEASE LEAVE",
+    "CATERING PROVISIONS",
+    "HERE FOR 60000 REWARD",
+    "60000 CREDITS PAID",
+    "YOU HAVE 69000 CREDITS",
+    "",
+  ],
+}
+`;
+
+exports[`the deliveries as a Talk Script every Room pays for its object as its Benson Script does 5`] = `
+{
+  "credits": 49000,
+  "flags": 24,
+  "lies": 165,
+  "lines": [
+    "INFIRMARY",
+    "PLEASE LEAVE",
+    "MEDICAL SUPPLIES",
+    "HERE FOR 40000 REWARD",
+    "40000 CREDITS PAID",
+    "YOU HAVE 49000 CREDITS",
+    "",
+  ],
+}
+`;
+
+exports[`the deliveries as a Talk Script every Room pays for its object as its Benson Script does 6`] = `
+{
+  "credits": 109000,
+  "flags": 24,
+  "lies": 173,
+  "lines": [
+    "POWER ROOM",
+    "PLEASE LEAVE",
+    "ENERGY CRYSTAL",
+    "HERE FOR 100000 REWARD",
+    "100000 CREDITS PAID",
+    "YOU HAVE 109000 CREDITS",
+    "",
+  ],
+}
+`;
+
+exports[`the deliveries as a Talk Script every Room pays for its object as its Benson Script does 7`] = `
+{
+  "credits": 44000,
+  "flags": 24,
+  "lies": 147,
+  "lines": [
+    "STORES",
+    "PLEASE LEAVE",
+    "LARGE BOX",
+    "HERE FOR 35000 REWARD",
+    "35000 CREDITS PAID",
+    "YOU HAVE 44000 CREDITS",
+    "",
+  ],
+}
+`;
+
+exports[`the deliveries as a Talk Script every Room pays for its object as its Benson Script does 8`] = `
+{
+  "credits": 74000,
+  "flags": 24,
+  "lies": 146,
+  "lines": [
+    "ARMOURY",
+    "PLEASE LEAVE",
+    "USEFUL ARMAMENT",
+    "HERE FOR 65000 REWARD",
+    "65000 CREDITS PAID",
+    "YOU HAVE 74000 CREDITS",
+    "",
+  ],
+}
+`;
+
+exports[`the deliveries as a Talk Script every Room pays for its object as its Benson Script does 9`] = `
+{
+  "credits": 109000,
+  "flags": 24,
+  "lies": 144,
+  "lines": [
+    "LABORATORY",
+    "PLEASE LEAVE",
+    "WINCHESTER",
+    "HERE FOR 100000 REWARD",
+    "100000 CREDITS PAID",
+    "YOU HAVE 109000 CREDITS",
+    "",
+  ],
+}
+`;
+
+exports[`the deliveries as a Talk Script every Room pays for its object as its Benson Script does 10`] = `
+{
+  "credits": 109000,
+  "flags": 24,
+  "lies": 170,
+  "lines": [
+    "CONTROL ROOM",
+    "PLEASE LEAVE",
+    "DATABANK",
+    "HERE FOR 100000 REWARD",
+    "100000 CREDITS PAID",
+    "YOU HAVE 109000 CREDITS",
+    "",
+  ],
+}
+`;
+
+exports[`the deliveries as a Talk Script every Room pays for its object as its Benson Script does 11`] = `
+{
+  "credits": 259000,
+  "flags": 20,
+  "lies": 154,
+  "lines": [
+    "INTERVIEW ROOM",
+    "PLEASE LEAVE",
+    "MECHANOID",
+    "HERE FOR 250000 REWARD",
+    "250000 CREDITS PAID",
+    "YOU HAVE 259000 CREDITS",
+    "",
+  ],
+}
+`;
+
+exports[`the deliveries as a Talk Script every Room pays for its object as its Benson Script does 12`] = `
+{
+  "credits": 259000,
+  "flags": 56,
+  "lies": 70,
+  "lines": [
+    "MECHANOID FUEL STORES",
+    "PLEASE LEAVE",
+    "NEUTRON FUEL",
+    "HERE FOR 250000 REWARD",
+    "250000 CREDITS PAID",
+    "YOU HAVE 259000 CREDITS",
+    "",
+  ],
+}
+`;
+
+exports[`the deliveries as a Talk Script every Room pays for its object as its Benson Script does 13`] = `
+{
+  "credits": 109000,
+  "flags": 24,
+  "lies": 50,
+  "lines": [
+    "MECHANOID POWER ROOM",
+    "PLEASE LEAVE",
+    "ENERGY CRYSTAL",
+    "HERE FOR 100000 REWARD",
+    "100000 CREDITS PAID",
+    "YOU HAVE 109000 CREDITS",
+    "",
+  ],
+}
+`;
+
+exports[`the deliveries as a Talk Script every Room pays for its object as its Benson Script does 14`] = `
+{
+  "credits": 89000,
+  "flags": 24,
+  "lies": 48,
+  "lines": [
+    "MECHANOID STORES",
+    "PLEASE LEAVE",
+    "LARGE BOX",
+    "HERE FOR 80000 REWARD",
+    "80000 CREDITS PAID",
+    "YOU HAVE 89000 CREDITS",
+    "",
+  ],
+}
+`;
+
+exports[`the deliveries as a Talk Script every Room pays for its object as its Benson Script does 15`] = `
+{
+  "credits": 129000,
+  "flags": 24,
+  "lies": 34,
+  "lines": [
+    "MECHANOID ARMOURY",
+    "PLEASE LEAVE",
+    "USEFUL ARMAMENT",
+    "HERE FOR 120000 REWARD",
+    "120000 CREDITS PAID",
+    "YOU HAVE 129000 CREDITS",
+    "",
+  ],
+}
+`;
+
+exports[`the deliveries as a Talk Script every Room pays for its object as its Benson Script does 16`] = `
+{
+  "credits": 259000,
+  "flags": 24,
+  "lies": 18,
+  "lines": [
+    "MECHANOID LABORATORY",
+    "PLEASE LEAVE",
+    "WINCHESTER",
+    "HERE FOR 250000 REWARD",
+    "250000 CREDITS PAID",
+    "YOU HAVE 259000 CREDITS",
+    "",
+  ],
+}
+`;
+
+exports[`the deliveries as a Talk Script pays for the Neutron Fuel with these lines 1`] = `
+{
+  "credits": 209000,
+  "flags": 56,
+  "lies": 136,
+  "lines": [
+    "ENGINE ROOM",
+    "PLEASE LEAVE",
+    "NEUTRON FUEL",
+    "HERE FOR 200000 REWARD",
+    "200000 CREDITS PAID",
+    "YOU HAVE 209000 CREDITS",
+    "",
+  ],
+}
+`;
+
+exports[`the deliveries as a Talk Script says only the Room’s name to a player who brings nothing 1`] = `
+{
+  "credits": 9000,
+  "flags": 40,
+  "lies": 69,
+  "lines": [
+    "ENGINE ROOM",
+    "",
+  ],
+}
+`;
+
+exports[`the deliveries as a Talk Script pays nothing to a player who leaves holding the object 1`] = `
+{
+  "credits": 9000,
+  "flags": 168,
+  "lies": 255,
+  "lines": [
+    "ENGINE ROOM",
+    "PLEASE LEAVE",
+    "NEUTRON FUEL",
+    "HERE FOR 200000 REWARD",
+    "",
+  ],
+}
+`;
+
+exports[`the deliveries as a Talk Script pays for an object put down while the Room’s name still plays 1`] = `
+{
+  "credits": 209000,
+  "flags": 56,
+  "lies": 136,
+  "lines": [
+    "ENGINE ROOM",
+    "PLEASE LEAVE",
+    "NEUTRON FUEL",
+    "HERE FOR 200000 REWARD",
+    "200000 CREDITS PAID",
+    "YOU HAVE 209000 CREDITS",
+    "",
+  ],
+}
+`;
+
+exports[`the deliveries as a Talk Script pays once for an object both factions want 1`] = `
+{
+  "credits": 209000,
+  "flags": 184,
+  "lies": 255,
+  "lines": [
+    "MECHANOID FUEL STORES",
+    "",
+  ],
+}
+`;
+
+exports[`the deliveries as a Talk Script the Mechanoids take nothing while their leader is away 1`] = `
+{
+  "credits": 9000,
+  "flags": 168,
+  "lies": 255,
+  "lines": [
+    "MECHANOID FUEL STORES",
+    "THE MECHANOIDS SAY",
+    "PUT BACK OUR LEADER",
+    "",
+  ],
+}
+`;

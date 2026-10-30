@@ -1,0 +1,118 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`the Room lines as a Talk Script each bank tells the player their credits 1`] = `
+[
+  "BANK",
+  "YOU HAVE 9000 CREDITS",
+  "",
+]
+`;
+
+exports[`the Room lines as a Talk Script each bank tells the player their credits 2`] = `
+[
+  "BANK",
+  "YOU HAVE 9000 CREDITS",
+  "",
+]
+`;
+
+exports[`the Room lines as a Talk Script each bank tells the player their credits 3`] = `
+[
+  "BANK",
+  "YOU HAVE 9000 CREDITS",
+  "",
+]
+`;
+
+exports[`the Room lines as a Talk Script the prison names itself, with no blank line after 1`] = `
+[
+  "PRISON",
+]
+`;
+
+exports[`the Room lines as a Talk Script the Mechanoid briefing plays whole to a player who stays 1`] = `
+[
+  "MECHANOID BRIEFING ROOM",
+  "",
+  "WE WILL PAY",
+  "FOR PALYAR REQUIREMENTS",
+  "WHEN DELIVERED TO OUR",
+  "CONTROL IN THIS COMPLEX",
+  "",
+  "WE MAY ALSO PAY FOR",
+  "DESTRUCTION OF SELECTED",
+  "PALYAR INSTALLATIONS",
+  "",
+  "BRIEFING ENDS",
+  "",
+]
+`;
+
+exports[`the Room lines as a Talk Script the Palyar briefing plays whole to a player who stays 1`] = `
+[
+  "PALYAR BRIEFING ROOM",
+  "",
+  "WE WILL REWARD",
+  "DELIVERY OF OUR NEEDS",
+  "TO APPROPRIATE ROOMS IN",
+  "THE PALYAR COLONY CRAFT",
+  "",
+  "THERE IS A BIG FEE FOR",
+  "A CAPTURED MECHANOID",
+  "",
+  "ONLY WHEN YOU KNOW HOW",
+  "TO CHOOSE THEM FROM US",
+  "DESTROY ALL MECHANOID",
+  "OCCUPIED LOCATIONS FOR",
+  "VERY SPECIAL GRATITUDE",
+  "",
+  "BRIEFING ENDS",
+  "",
+]
+`;
+
+exports[`the Room lines as a Talk Script the Mechanoid briefing stops after its first paragraph once the player goes 1`] = `
+[
+  "MECHANOID BRIEFING ROOM",
+  "",
+  "WE WILL PAY",
+  "FOR PALYAR REQUIREMENTS",
+  "WHEN DELIVERED TO OUR",
+  "CONTROL IN THIS COMPLEX",
+  "",
+]
+`;
+
+exports[`the Room lines as a Talk Script the Palyar briefing stops at the next paragraph once the player goes 1`] = `
+[
+  "PALYAR BRIEFING ROOM",
+  "",
+]
+`;
+
+exports[`the Room lines as a Talk Script the Palyar briefing stops at the next paragraph once the player goes 2`] = `
+[
+  "PALYAR BRIEFING ROOM",
+  "",
+  "WE WILL REWARD",
+  "DELIVERY OF OUR NEEDS",
+  "TO APPROPRIATE ROOMS IN",
+  "THE PALYAR COLONY CRAFT",
+  "",
+]
+`;
+
+exports[`the Room lines as a Talk Script the Palyar briefing stops at the next paragraph once the player goes 3`] = `
+[
+  "PALYAR BRIEFING ROOM",
+  "",
+  "WE WILL REWARD",
+  "DELIVERY OF OUR NEEDS",
+  "TO APPROPRIATE ROOMS IN",
+  "THE PALYAR COLONY CRAFT",
+  "",
+  "THERE IS A BIG FEE FOR",
+  "A CAPTURED MECHANOID",
+  "",
+]
+`;

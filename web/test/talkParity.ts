@@ -2,13 +2,11 @@ import type { TalkScript } from '../src/talk/host.ts';
 import { TALK_SCRIPTS } from '../src/talk/scripts.ts';
 import { LegalRoute } from './legalCheckpoint.ts';
 
-/// Plays a ported Benson Script and its Talk Script side by side (ADR 0080):
-/// the Benson Script is the oracle, and a port shows the same lines.
+/// What the ported Talk Scripts are tested with (ADR 0080). Each scenario
+/// once ran on the Benson Script it replaced as well, and the lines Benson
+/// showed are kept as the test's snapshot (#923).
 
-export type Engine = 'benson' | 'talk';
-export const ENGINES: readonly Engine[] = ['benson', 'talk'];
-
-/// The named Talk Script alone, as `useTalkScripts` takes it.
+/// The named Talk Scripts, as `useTalkScripts` takes them.
 export const talkScript = (...names: string[]) =>
   TALK_SCRIPTS.filter(script => names.includes(script.name));
 
@@ -37,26 +35,22 @@ export const presetting = (
     };
   });
 
-/// A fresh route, with the named Talk Scripts in place of their Benson
-/// Scripts when the engine is Talk.
-export const openRoute = (
-  engine: Engine,
-  ...names: string[]
-): Promise<LegalRoute> => openRouteWith(engine, talkScript(...names));
-
-/// A fresh route, with these Talk Scripts in place of their Benson Scripts
-/// when the engine is Talk.
-export const openRouteWith = async (
-  engine: Engine,
-  scripts: ReturnType<typeof talkScript>
+/// A fresh route playing every Talk Script, these in place of their own.
+export const openRouteWith = (
+  scripts: readonly TalkScript[]
 ): Promise<LegalRoute> => {
-  // Until #923, Talk runs beside the oracle, which refuses what it replaces.
-  const route = await LegalRoute.open({ engine: 'benson' });
-  if (engine === 'talk') {
-    route.session.useTalkScripts(scripts);
-  }
-  return route;
+  const named = new Set(scripts.map(script => script.name));
+  return LegalRoute.open({
+    talk: [
+      ...TALK_SCRIPTS.filter(script => !named.has(script.name)),
+      ...scripts
+    ]
+  });
 };
+
+/// A fresh route playing the named Talk Scripts alone, or every one.
+export const openRoute = (...names: string[]): Promise<LegalRoute> =>
+  LegalRoute.open(names.length === 0 ? {} : { talk: talkScript(...names) });
 
 /// Each Benson Message as it completes, blank lines included.
 export class Lines {

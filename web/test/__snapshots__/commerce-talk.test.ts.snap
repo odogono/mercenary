@@ -1,0 +1,138 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`commerce as a Talk Script hires the ship for a Y 1`] = `
+{
+  "attacking": false,
+  "credits": 500001,
+  "lines": [
+    "COMMUNICATION ROOM",
+    "MESSAGE FROM",
+    "HERTZ SPACESHIP RENTAL",
+    "SHIP FOR HIRE 999999 CR",
+    "DO YOU WANT TO HIRE?",
+    "SHIP DESPATCHED",
+    "IT WILL LAND",
+    "AT LOC 8-8 IN 2 MINS",
+  ],
+  "shipInbound": 127,
+}
+`;
+
+exports[`commerce as a Talk Script asks the player to call again when no Y comes 1`] = `
+{
+  "attacking": false,
+  "credits": 1500000,
+  "lines": [
+    "COMMUNICATION ROOM",
+    "MESSAGE FROM",
+    "HERTZ SPACESHIP RENTAL",
+    "SHIP FOR HIRE 999999 CR",
+    "DO YOU WANT TO HIRE?",
+    "OK PLEASE CALL AGAIN",
+    "MESSAGE ENDS",
+    "",
+  ],
+  "shipInbound": 0,
+}
+`;
+
+exports[`commerce as a Talk Script refuses a player with less than a million credits 1`] = `
+{
+  "attacking": false,
+  "credits": 999999,
+  "lines": [
+    "COMMUNICATION ROOM",
+    "MESSAGE FROM",
+    "HERTZ SPACESHIP RENTAL",
+    "SHIP FOR HIRE 999999 CR",
+    "DO YOU WANT TO HIRE?",
+    "INSUFFICIENT FUNDS",
+    "YOU HAVE 999999 CREDITS",
+    "MESSAGE ENDS",
+    "",
+  ],
+  "shipInbound": 0,
+}
+`;
+
+exports[`commerce as a Talk Script the rental is not working without the antenna 1`] = `
+{
+  "attacking": false,
+  "credits": 9000,
+  "lines": [
+    "COMMUNICATION ROOM",
+    "NOT WORKING",
+    "",
+  ],
+  "shipInbound": 0,
+}
+`;
+
+exports[`commerce as a Talk Script the Dart’s owner sends a ship after a thief 1`] = `
+{
+  "attacking": false,
+  "credits": 9000,
+  "lines": [
+    "THIS CRAFT BELONGED TO",
+    "THE PALYAR COMMANDER'S",
+    "BROTHER-IN-LAW",
+    "HE IS NOT TOO PLEASED",
+    "PALYAR SHIP ATTACKING",
+    "",
+    "SHIP DESTROYED",
+  ],
+  "shipInbound": 0,
+}
+`;
+
+exports[`commerce as a Talk Script a buyer gets the job offer once off the surface 1`] = `
+{
+  "attacking": false,
+  "credits": 9000,
+  "lines": [
+    "MESSAGE FROM PALYARS",
+    "- - - JOB OFFER - - -",
+    "FOR MORE INFORMATION",
+    "GO TO THE BRIEFING ROOM",
+    "IN COMPLEX AT LOC O9-O6",
+    "MESSAGE ENDS",
+    "",
+  ],
+  "shipInbound": 0,
+}
+`;
+
+exports[`commerce as a Talk Script the Dart’s script runs at its first boarding only 1`] = `
+{
+  "attacking": false,
+  "credits": 9000,
+  "lines": [
+    "THIS CRAFT BELONGED TO",
+    "THE PALYAR COMMANDER'S",
+    "BROTHER-IN-LAW",
+    "HE IS NOT TOO PLEASED",
+    "PALYAR SHIP ATTACKING",
+    "",
+    "SHIP DESTROYED",
+  ],
+  "shipInbound": 0,
+}
+`;
+
+exports[`commerce as a Talk Script the captured Mechanoid protests at every taking 1`] = `
+{
+  "attacking": false,
+  "credits": 9000,
+  "lines": [
+    "MECHANOID",
+    "THE MECHANOID DEMANDS",
+    "THAT YOU PUT HIM DOWN",
+    "",
+    "MECHANOID",
+    "THE MECHANOID DEMANDS",
+    "THAT YOU PUT HIM DOWN",
+    "",
+  ],
+  "shipInbound": 0,
+}
+`;

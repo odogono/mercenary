@@ -1,0 +1,494 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`Faction Reactions as a Talk Script matches Benson for Novabill 1`] = `
+{
+  "attacking": false,
+  "credits": 9000,
+  "lines": [
+    "YOU HAVE JUST DESTROYED",
+    "NOVABILL - WELL DONE,",
+    "",
+  ],
+  "pass": {
+    "id": 80,
+    "kind": "room",
+  },
+  "passFlags": 8,
+}
+`;
+
+exports[`Faction Reactions as a Talk Script matches Benson for the author’s advert 1`] = `
+{
+  "attacking": true,
+  "credits": 9000,
+  "lines": [
+    "YOU HAVE JUST DESTROYED",
+    "THE AUTHORS ADVERT",
+    "THINGS ARE GOING TO BE",
+    "TOUGH FROM NOW ON",
+    "PALYAR SHIP ATTACKING",
+    "",
+  ],
+  "pass": {
+    "id": 80,
+    "kind": "room",
+  },
+  "passFlags": 8,
+}
+`;
+
+exports[`Faction Reactions as a Talk Script matches Benson for Sabins Cube 1`] = `
+{
+  "attacking": true,
+  "credits": 9000,
+  "lines": [
+    "YOU HAVE JUST DESTROYED",
+    "SABINS CUBE",
+    "MECHANOID SHIP ATTACK",
+    "",
+  ],
+  "pass": {
+    "id": 80,
+    "kind": "room",
+  },
+  "passFlags": 8,
+}
+`;
+
+exports[`Faction Reactions as a Talk Script matches Benson for the Walton Monument 1`] = `
+{
+  "attacking": true,
+  "credits": 9000,
+  "lines": [
+    "YOU HAVE JUST DESTROYED",
+    "THE WALTON MONUMENT",
+    "TO THE FAMOUS ARCHITECT",
+    "PALYAR SHIP ATTACKING",
+    "",
+  ],
+  "pass": {
+    "id": 80,
+    "kind": "room",
+  },
+  "passFlags": 8,
+}
+`;
+
+exports[`Faction Reactions as a Talk Script matches Benson for St. Stallards 1`] = `
+{
+  "attacking": true,
+  "credits": 9000,
+  "lines": [
+    "YOU HAVE JUST DESTROYED",
+    "ST. STALLARDS",
+    "PALYAR SHIP ATTACKING",
+    "",
+  ],
+  "pass": {
+    "id": 80,
+    "kind": "room",
+  },
+  "passFlags": 8,
+}
+`;
+
+exports[`Faction Reactions as a Talk Script matches Benson for the Moorby Arch 1`] = `
+{
+  "attacking": true,
+  "credits": 9000,
+  "lines": [
+    "YOU HAVE JUST DESTROYED",
+    "THE MOORBY ARCH",
+    "MECHANOID SHIP ATTACK",
+    "",
+  ],
+  "pass": {
+    "id": 80,
+    "kind": "room",
+  },
+  "passFlags": 8,
+}
+`;
+
+exports[`Faction Reactions as a Talk Script matches Benson for Tyler Point 1`] = `
+{
+  "attacking": true,
+  "credits": 9000,
+  "lines": [
+    "YOU HAVE JUST DESTROYED",
+    "TYLER POINT",
+    "MECHANOID SHIP ATTACK",
+    "",
+  ],
+  "pass": {
+    "id": 80,
+    "kind": "room",
+  },
+  "passFlags": 8,
+}
+`;
+
+exports[`Faction Reactions as a Talk Script matches Benson for Bosher Stadium 1`] = `
+{
+  "attacking": true,
+  "credits": 9000,
+  "lines": [
+    "YOU HAVE JUST DESTROYED",
+    "BOSHER STADIUM",
+    "PALYAR SHIP ATTACKING",
+    "",
+  ],
+  "pass": {
+    "id": 80,
+    "kind": "room",
+  },
+  "passFlags": 8,
+}
+`;
+
+exports[`Faction Reactions as a Talk Script matches Benson for Jordan Airport 1`] = `
+{
+  "attacking": true,
+  "credits": 9000,
+  "lines": [
+    "YOU HAVE JUST DESTROYED",
+    "JORDAN AIRPORT",
+    "PALYAR SHIP ATTACKING",
+    "",
+  ],
+  "pass": {
+    "id": 80,
+    "kind": "room",
+  },
+  "passFlags": 8,
+}
+`;
+
+exports[`Faction Reactions as a Talk Script matches Benson for Vector Henge 1`] = `
+{
+  "attacking": true,
+  "credits": 9000,
+  "lines": [
+    "YOU HAVE JUST DESTROYED",
+    "VECTOR HENGE",
+    "MECHANOID SHIP ATTACK",
+    "",
+  ],
+  "pass": {
+    "id": 80,
+    "kind": "room",
+  },
+  "passFlags": 8,
+}
+`;
+
+exports[`Faction Reactions as a Talk Script matches Benson for the brother-in-law’s house 1`] = `
+{
+  "attacking": true,
+  "credits": 9000,
+  "lines": [
+    "YOU HAVE JUST DESTROYED",
+    "THE PALYAR COMMANDER'S",
+    "BROTHER-IN-LAWS HOUSE",
+    "PALYAR SHIP ATTACKING",
+    "",
+  ],
+  "pass": {
+    "id": 80,
+    "kind": "room",
+  },
+  "passFlags": 8,
+}
+`;
+
+exports[`Faction Reactions as a Talk Script matches Benson for the Mechanoid Fort 1`] = `
+{
+  "attacking": true,
+  "credits": 9000,
+  "lines": [
+    "YOU HAVE JUST DESTROYED",
+    "THE MECHANOID FORT",
+    "MECHANOID SHIP ATTACK",
+    "",
+  ],
+  "pass": {
+    "id": 80,
+    "kind": "room",
+  },
+  "passFlags": 8,
+}
+`;
+
+exports[`Faction Reactions as a Talk Script matches Benson for the Coach and Horses 1`] = `
+{
+  "attacking": true,
+  "credits": 9000,
+  "lines": [
+    "YOU HAVE JUST DESTROYED",
+    "THE COACH AND HORSES",
+    "YOU WILL NOT BE POPULAR",
+    "PALYAR SHIP ATTACKING",
+    "",
+  ],
+  "pass": {
+    "id": 80,
+    "kind": "room",
+  },
+  "passFlags": 8,
+}
+`;
+
+exports[`Faction Reactions as a Talk Script matches Benson for TRAITOR, 1`] = `
+{
+  "attacking": false,
+  "credits": 9000,
+  "lines": [
+    "TRAITOR,",
+    "",
+  ],
+  "pass": {
+    "id": 80,
+    "kind": "room",
+  },
+  "passFlags": 8,
+}
+`;
+
+exports[`Faction Reactions as a Talk Script matches Benson for GOOD SHOW, 1`] = `
+{
+  "attacking": false,
+  "credits": 9000,
+  "lines": [
+    "GOOD SHOW,",
+    "",
+  ],
+  "pass": {
+    "id": 80,
+    "kind": "room",
+  },
+  "passFlags": 8,
+}
+`;
+
+exports[`Faction Reactions as a Talk Script generic Site 2 rolls byte 0 1`] = `
+{
+  "attacking": true,
+  "credits": 9000,
+  "lines": [
+    "PALYAR SHIP ATTACKING",
+    "",
+  ],
+  "pass": {
+    "id": 80,
+    "kind": "room",
+  },
+  "passFlags": 8,
+}
+`;
+
+exports[`Faction Reactions as a Talk Script generic Site 2 rolls byte 80 1`] = `
+{
+  "attacking": true,
+  "credits": 9000,
+  "lines": [
+    "PALYAR SHIP ATTACKING",
+    "",
+  ],
+  "pass": {
+    "id": 80,
+    "kind": "room",
+  },
+  "passFlags": 8,
+}
+`;
+
+exports[`Faction Reactions as a Talk Script generic Site 2 rolls byte 81 1`] = `
+{
+  "attacking": false,
+  "credits": 9000,
+  "lines": [],
+  "pass": {
+    "id": 80,
+    "kind": "room",
+  },
+  "passFlags": 8,
+}
+`;
+
+exports[`Faction Reactions as a Talk Script generic Site 2 rolls byte 255 1`] = `
+{
+  "attacking": false,
+  "credits": 9000,
+  "lines": [],
+  "pass": {
+    "id": 80,
+    "kind": "room",
+  },
+  "passFlags": 8,
+}
+`;
+
+exports[`Faction Reactions as a Talk Script generic Site 3 rolls byte 0 1`] = `
+{
+  "attacking": true,
+  "credits": 9000,
+  "lines": [
+    "MECHANOID SHIP ATTACK",
+    "",
+  ],
+  "pass": {
+    "id": 80,
+    "kind": "room",
+  },
+  "passFlags": 8,
+}
+`;
+
+exports[`Faction Reactions as a Talk Script generic Site 3 rolls byte 80 1`] = `
+{
+  "attacking": true,
+  "credits": 9000,
+  "lines": [
+    "MECHANOID SHIP ATTACK",
+    "",
+  ],
+  "pass": {
+    "id": 80,
+    "kind": "room",
+  },
+  "passFlags": 8,
+}
+`;
+
+exports[`Faction Reactions as a Talk Script generic Site 3 rolls byte 81 1`] = `
+{
+  "attacking": false,
+  "credits": 9000,
+  "lines": [],
+  "pass": {
+    "id": 80,
+    "kind": "room",
+  },
+  "passFlags": 8,
+}
+`;
+
+exports[`Faction Reactions as a Talk Script generic Site 3 rolls byte 255 1`] = `
+{
+  "attacking": false,
+  "credits": 9000,
+  "lines": [],
+  "pass": {
+    "id": 80,
+    "kind": "room",
+  },
+  "passFlags": 8,
+}
+`;
+
+exports[`Faction Reactions as a Talk Script hitting the brother-in-law’s ship announces it and sends an attacker 1`] = `
+{
+  "attacking": true,
+  "credits": 9000,
+  "lines": [
+    "YOU HAVE JUST DESTROYED",
+    "THE PALYAR COMMANDER'S",
+    "BROTHER-IN-LAWS",
+    "NEW SHIP",
+    "PALYAR SHIP ATTACKING",
+    "",
+  ],
+  "pass": {
+    "id": 80,
+    "kind": "room",
+  },
+  "passFlags": 8,
+}
+`;
+
+exports[`gratitude as a Talk Script the Palyars move the Pass and give the red hangar hint 1`] = `
+{
+  "attacking": false,
+  "credits": 9000,
+  "lines": [
+    "MESSAGE FROM PALYARS",
+    "WE ARE MOST PLEASED",
+    "YOU HAVE DESTROYED ALL",
+    "KEY OPPOSITION SITES",
+    "YOU WILL FIND A REWARD",
+    "INSIDE THE RED HANGER",
+    "MESSAGE ENDS",
+  ],
+  "pass": {
+    "id": 1,
+    "kind": "room",
+  },
+  "passFlags": 8,
+}
+`;
+
+exports[`gratitude as a Talk Script the Palyars pay immediately when the Pass is already carried 1`] = `
+{
+  "attacking": false,
+  "credits": 509000,
+  "lines": [
+    "MESSAGE FROM PALYARS",
+    "WE ARE MOST PLEASED",
+    "YOU HAVE DESTROYED ALL",
+    "KEY OPPOSITION SITES",
+    "500000 CREDITS PAID",
+    "YOU HAVE 509000 CREDITS",
+    "",
+  ],
+  "pass": {
+    "kind": "carried",
+  },
+  "passFlags": 136,
+}
+`;
+
+exports[`gratitude as a Talk Script the Mechanoids thank the player without a reward 1`] = `
+{
+  "attacking": false,
+  "credits": 9000,
+  "lines": [
+    "MESSAGE FROM MECHANOIDS",
+    "WE ARE MOST PLEASED",
+    "YOU HAVE DESTROYED ALL",
+    "KEY OPPOSITION SITES",
+    "MESSAGE ENDS",
+    "",
+  ],
+  "pass": {
+    "id": 80,
+    "kind": "room",
+  },
+  "passFlags": 8,
+}
+`;
+
+exports[`gratitude as a Talk Script palyar gratitude is silent when either faction has already thanked the player 1`] = `
+{
+  "attacking": false,
+  "credits": 9000,
+  "lines": [],
+  "pass": {
+    "id": 80,
+    "kind": "room",
+  },
+  "passFlags": 8,
+}
+`;
+
+exports[`gratitude as a Talk Script mechanoid gratitude is silent when either faction has already thanked the player 1`] = `
+{
+  "attacking": false,
+  "credits": 9000,
+  "lines": [],
+  "pass": {
+    "id": 80,
+    "kind": "room",
+  },
+  "passFlags": 8,
+}
+`;

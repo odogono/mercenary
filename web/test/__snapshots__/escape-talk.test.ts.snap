@@ -1,0 +1,103 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`the Escape as a Talk Script launches with a Novadrive as Benson Script 7 does 1`] = `
+{
+  "lines": [
+    "INTERSTELLAR SHIP",
+    "PRESS Y TO LAUNCH",
+    "THE AUTHOR SENDS YOU",
+    "CONGRATULATIONS ON YOUR",
+    "ESCAPE FROM TARG",
+    "",
+    "SAVE OUT THE STATUS AND",
+    "SEE YOU IN MERCENARY II",
+  ],
+  "phase": 255,
+}
+`;
+
+exports[`the Escape as a Talk Script repeats GAME OVER every 15 ticks, silencing both voices 1`] = `
+{
+  "lines": [
+    "INTERSTELLAR SHIP",
+    "PRESS Y TO LAUNCH",
+    "THE AUTHOR SENDS YOU",
+    "CONGRATULATIONS ON YOUR",
+    "ESCAPE FROM TARG",
+    "",
+    "SAVE OUT THE STATUS AND",
+    "SEE YOU IN MERCENARY II",
+    "GAME OVER",
+    "GAME OVER",
+  ],
+  "phase": 255,
+}
+`;
+
+exports[`the Escape as a Talk Script tells of the commander’s brother-in-law when he is annoyed 1`] = `
+{
+  "lines": [
+    "INTERSTELLAR SHIP",
+    "PRESS Y TO LAUNCH",
+    "THE AUTHOR SENDS YOU",
+    "CONGRATULATIONS ON YOUR",
+    "ESCAPE FROM TARG",
+    "",
+    "THE PALYAR COMMANDER'S",
+    "BROTHER-IN-LAW",
+    "IS PLEASED YOU,VE GONE",
+    "",
+    "SAVE OUT THE STATUS AND",
+    "SEE YOU IN MERCENARY II",
+  ],
+  "phase": 255,
+}
+`;
+
+exports[`the Escape as a Talk Script without a Novadrive, refuses on the surface 1`] = `
+{
+  "lines": [
+    "INTERSTELLAR SHIP",
+    "NOVADRIVE REQUIRED",
+    "",
+  ],
+  "phase": 0,
+}
+`;
+
+exports[`the Escape as a Talk Script leaving the ship at the prompt ends with a blank line 1`] = `
+{
+  "lines": [
+    "INTERSTELLAR SHIP",
+    "PRESS Y TO LAUNCH",
+    "",
+  ],
+  "phase": 0,
+}
+`;
+
+exports[`the Escape as a Talk Script a Novadrive dropped before Y sends it back to refuse 1`] = `
+{
+  "lines": [
+    "INTERSTELLAR SHIP",
+    "PRESS Y TO LAUNCH",
+    "NOVADRIVE REQUIRED",
+    "",
+  ],
+  "phase": 0,
+}
+`;
+
+exports[`the Escape as a Talk Script a destroyed advert keeps the player on Targ 1`] = `
+{
+  "lines": [
+    "INTERSTELLAR SHIP",
+    "PRESS Y TO LAUNCH",
+    "THE AUTHOR WON'T LET",
+    "YOU LEAVE UNTIL YOU",
+    "FIX HIS ADVERT",
+    "",
+  ],
+  "phase": 0,
+}
+`;
