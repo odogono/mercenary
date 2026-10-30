@@ -282,6 +282,8 @@ export class TalkHost {
     try {
       restored = core.restore(fromBase64(saved.group), {
         grants: (_script, name) => this.grants[name],
+        // A changed Talk Script still hears what happened before the Save.
+        keepMailbox: true,
         libraries: [this.library],
         name: 'targ',
         onMismatch: 'reload changed',
