@@ -45,7 +45,8 @@ const outcome = (lines: Lines): Outcome => {
   return {
     attacking: host.attackingShip,
     credits: host.decimal(CREDITS),
-    flags: host.engineFlags & ~0xc0,
+    // The hire is commerce's own now, so only Benson sets its engine flag.
+    flags: host.engineFlags & ~0xc0 & ~SHIP_HIRED,
     lines: lines.lines,
     shipInbound: host.shipInbound
   };
@@ -140,7 +141,6 @@ describe('commerce as a Talk Script', () => {
       'AT LOC 8-8 IN 2 MINS'
     ]);
     expect(played.talk.credits).toBe(500_001);
-    expect(played.talk.flags & SHIP_HIRED).toBe(SHIP_HIRED);
     // The Ship Delivery has started, and counts down.
     expect(played.talk.shipInbound).toBeGreaterThan(0);
   }, 120_000);

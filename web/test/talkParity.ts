@@ -8,18 +8,18 @@ export type Engine = 'benson' | 'talk';
 export const ENGINES: readonly Engine[] = ['benson', 'talk'];
 
 /// The named Talk Script alone, as `useTalkScripts` takes it.
-export const talkScript = (name: string) =>
-  TALK_SCRIPTS.filter(script => script.name === name);
+export const talkScript = (...names: string[]) =>
+  TALK_SCRIPTS.filter(script => names.includes(script.name));
 
-/// A fresh route, with the named Talk Script in place of its Benson Scripts
-/// when the engine is Talk.
+/// A fresh route, with the named Talk Scripts in place of their Benson
+/// Scripts when the engine is Talk.
 export const openRoute = async (
   engine: Engine,
-  name: string
+  ...names: string[]
 ): Promise<LegalRoute> => {
   const route = await LegalRoute.open();
   if (engine === 'talk') {
-    route.session.useTalkScripts(talkScript(name));
+    route.session.useTalkScripts(talkScript(...names));
   }
   return route;
 };
