@@ -8,7 +8,12 @@ import {
 import type { Faction } from '../src/session/sites.ts';
 import { ESCAPE, REACTIONS } from '../src/talk/scripts.ts';
 import { LegalRoute } from './legalCheckpoint.ts';
-import { BensonHostState, BensonState, nextRandom } from './oracle/index.ts';
+import {
+  BensonHostState,
+  BensonSession,
+  BensonState,
+  nextRandom
+} from './oracle/index.ts';
 import { loadPayload } from './replay/artifacts.ts';
 import {
   ENGINES,
@@ -139,13 +144,17 @@ describe('Faction Reactions as a Talk Script', () => {
         const result = await both(async engine => {
           const route = await fresh(engine);
           over(route, cellFor(id));
-          // Both runtimes draw the same next byte from the shared generator.
+          // Each runtime draws the same next byte: the oracle from its own
+          // stream, Talk from the session's.
           let seed = 0n;
           while (nextRandom(new BensonState(seed)).byte !== byte) {
             seed++;
           }
-          const scripts = route.session.scripts!;
-          scripts.randomState = seed;
+          if (engine === 'benson') {
+            (route.session.scripts as BensonSession).randomState = seed;
+          } else {
+            route.session.seedRandom(seed);
+          }
           bomb(route);
           return new Lines(route).advance(20);
         });

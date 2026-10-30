@@ -1,4 +1,4 @@
-import { BensonChannel, DEFAULT_SESSION_SEED } from '../benson/index.ts';
+import { BensonChannel } from '../benson/index.ts';
 import type { Bundle } from '../payload/documents.ts';
 import {
   GameplaySession,
@@ -77,11 +77,7 @@ export const createWalkabout = (
 
   const world = new World(bundle);
   const text = new TextTable(bundle.text);
-  const scripts = new BensonChannel(
-    text,
-    bensonTunables(settings, 50),
-    DEFAULT_SESSION_SEED
-  );
+  const scripts = new BensonChannel(text, bensonTunables(settings, 50));
   const flight = flightModel(
     settings.flight,
     bundle.flight,

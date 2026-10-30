@@ -7,7 +7,7 @@ been retired; its final accepted state is frozen at the annotated
 Use Bun for the app and tests, and Node 24.10 or later for Node-based tools such as Prettier.
 
 The NorthTalk runtime uses `^0.3.0`, with the resolved version recorded in `bun.lock`.
-Targ Saves are schema 17; an older Save is refused.
+Targ Saves are schema 18; an older Save is refused.
 
 ```sh
 bun install
@@ -144,13 +144,13 @@ is absent.
 - `src/interaction/` — document-backed reach, candidates, outcomes, and object-conditioned
   predicates. `attempt` / `leave` return `{ host, outcome }` rather than mutating a shared
   Host Callout.
-- `src/benson/` — the live Benson Display, persistent Host Callout and shared random stream.
+- `src/benson/` — the live Benson Display and persistent Host Callout.
   `src/talk/` runs Targ's maintained Talk Scripts (ADR 0080). The historical instruction
   document and interpreter are kept under `test/oracle/` for Golden Trace and parity
   comparisons; ordinary play neither loads nor serves them.
 - `src/session/` — the Gameplay Session: occupancy, the Host Callout projection, Semantic
   Actions, `advance`, World Events and PresentationEvents. Talk Scripts read and write through
-  its Host Callout and share its random stream with native world choices. The historical
+  the World Port (ADR 0083), and draw from the session's own random stream. The historical
   `session` and `navigation` Replay Gates inject the test oracle; their recorded outcomes
   remain comparison baselines, while Talk Scripts have player-visible outcome tests.
 - `src/shell/` — the live Browser Shell: required payload/settings composition, the browser

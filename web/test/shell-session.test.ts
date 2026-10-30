@@ -179,9 +179,7 @@ describe('the live browser Gameplay Session', () => {
     );
     expect(restored.residenceOf(slot)).toEqual({ kind: 'carried' });
     expect(restored.doorwaysOf(room)).toEqual(original.doorwaysOf(room));
-    expect(restored.scripts!.nextRandomByte()).toBe(
-      original.scripts!.nextRandomByte()
-    );
+    expect(restored.nextRandomByte()).toBe(original.nextRandomByte());
   });
 
   test('rejects snapshot references that do not exist in the current payload', () => {

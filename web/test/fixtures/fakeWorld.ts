@@ -61,6 +61,9 @@ export class FakeWorld implements WorldPort {
   escape(): void {
     this.escaped = true;
   }
+  random(): number {
+    return 0;
+  }
   sendAttacker(): void {
     this.attackerSent = true;
   }

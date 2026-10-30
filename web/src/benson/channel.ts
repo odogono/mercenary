@@ -1,16 +1,11 @@
-/// The live Benson Display and Host Callout, with the world's shared random
-/// stream. Talk Scripts own game logic; this module loads no Benson program.
-/// Schema 14's empty continuation fields are retained solely for old Saves.
-import {
-  decodeRandomState,
-  encodeRandomState,
-  type BensonSaveSnapshot
-} from '../session/save.ts';
+/// The live Benson Display and Host Callout. Talk Scripts own game logic, and
+/// the Gameplay Session owns the random stream (ADR 0083); this module loads
+/// no Benson program.
+import type { BensonSaveSnapshot } from '../session/save.ts';
 import { NO_SUBSTITUTIONS, type TextTable } from '../text/index.ts';
 import { BensonDisplay } from './display.ts';
 import { BensonHostState, type BensonEffect } from './host.ts';
 import type { BensonKey } from './key.ts';
-import { DEFAULT_SESSION_SEED, randomByte } from './random.ts';
 import { defaultTunables, type BensonTunables } from './tuning.ts';
 
 export interface BensonMessagePresentation {
@@ -46,7 +41,6 @@ export class BensonChannel {
   readonly messageMode: BensonMessageMode = 'authentic';
   host: BensonHostState;
   display: BensonDisplay;
-  randomState: bigint;
   private frames = 0;
   private readonly idleDisplayOccurrence = {};
   private messageOccurrence: object | undefined;
@@ -54,10 +48,8 @@ export class BensonChannel {
 
   constructor(
     readonly text: TextTable,
-    public tunables: BensonTunables = defaultTunables(),
-    randomSeed = DEFAULT_SESSION_SEED
+    public tunables: BensonTunables = defaultTunables()
   ) {
-    this.randomState = randomSeed;
     this.host = new BensonHostState().withDecimal(
       BensonHostState.firstNumberDecimal,
       9000
@@ -67,12 +59,6 @@ export class BensonChannel {
       tunables.timeScale,
       tunables.messageHoldSeconds
     );
-  }
-
-  nextRandomByte(): number {
-    const next = randomByte(this.randomState);
-    this.randomState = next.state;
-    return next.byte;
   }
 
   get credits(): number {
@@ -183,8 +169,7 @@ export class BensonChannel {
         shipInbound: host.shipInbound,
         signedRegister: host.signedRegister,
         tickCounter: host.tickCounter
-      },
-      state: { randomState: encodeRandomState(this.randomState) }
+      }
     };
   }
 
@@ -194,11 +179,7 @@ export class BensonChannel {
         `Save Snapshot fractional script timing ${snapshot.frames} is outside its tick`
       );
     }
-    const channel = new BensonChannel(
-      this.text,
-      this.tunables,
-      decodeRandomState(snapshot.state.randomState)
-    );
+    const channel = new BensonChannel(this.text, this.tunables);
     // Old interpreter continuations are retired. World flags, credits and the
     // display survive; Talk's own continuation is restored separately.
     channel.host = new BensonHostState({

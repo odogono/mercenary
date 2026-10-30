@@ -58,7 +58,7 @@ export interface InputClaim {
 }
 
 export interface TalkHostOptions {
-  /// The next random byte; the game's shared generator by default.
+  /// The next random byte; the World Port's by default.
   readonly random?: () => number;
 }
 
@@ -183,7 +183,7 @@ export class TalkHost {
   ) {
     this.benson = benson;
     this.world = world;
-    this.random = options.random ?? (() => benson.nextRandomByte());
+    this.random = options.random ?? (() => world.random());
     this.replaces = new Set(scripts.flatMap(script => script.replaces));
     const core = createCore();
     const capabilities = this.defineCapabilities(core);

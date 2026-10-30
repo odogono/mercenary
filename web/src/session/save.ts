@@ -11,7 +11,7 @@ import type {
 import type { Location, Residence } from '../world/index.ts';
 import type { ShipFieldPoint, ShipFieldSaveSnapshot } from './shipField.ts';
 
-export const SAVE_SCHEMA_VERSION = 17 as const;
+export const SAVE_SCHEMA_VERSION = 18 as const;
 export const SAVE_JSON_CODE_UNIT_LIMIT = 1_000_000;
 
 const SAVE_COLLECTION_LIMIT = 1024;
@@ -62,16 +62,11 @@ export interface BensonHostSaveSnapshot extends Omit<
   readonly pendingKey: BensonKey | null;
 }
 
-export interface BensonStateSaveSnapshot {
-  readonly randomState: string;
-}
-
 export interface BensonSaveSnapshot {
   readonly activeMessageText: string | null;
   readonly display: BensonDisplaySaveSnapshot;
   readonly frames: number;
   readonly host: BensonHostSaveSnapshot;
-  readonly state: BensonStateSaveSnapshot;
 }
 
 /// The Talk Scripts' part (ADR 0080).
@@ -684,13 +679,6 @@ const display = (value: unknown, at: string): BensonDisplaySaveSnapshot => {
   };
 };
 
-const bensonState = (value: unknown, at: string): BensonStateSaveSnapshot => {
-  const out = exact(value, at, ['randomState']);
-  return {
-    randomState: randomState(out['randomState'], `${at}.randomState`)
-  };
-};
-
 const bensonHost = (value: unknown, at: string): BensonHostSaveSnapshot => {
   const fields = [
     'attackingShip',
@@ -742,8 +730,7 @@ const benson = (value: unknown, at: string): BensonSaveSnapshot => {
     'activeMessageText',
     'display',
     'frames',
-    'host',
-    'state'
+    'host'
   ]);
   const activeMessageText =
     out['activeMessageText'] === null
@@ -760,8 +747,7 @@ const benson = (value: unknown, at: string): BensonSaveSnapshot => {
     activeMessageText,
     display: displaySnapshot,
     frames: nonNegative(out['frames'], `${at}.frames`),
-    host: bensonHost(out['host'], `${at}.host`),
-    state: bensonState(out['state'], `${at}.state`)
+    host: bensonHost(out['host'], `${at}.host`)
   };
 };
 

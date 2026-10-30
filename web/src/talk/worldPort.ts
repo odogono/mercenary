@@ -30,6 +30,8 @@ export interface WorldPort {
   /// Puts a loose object at a Location. A carried object can't be moved.
   move(slot: number, to: Location): void;
   pay(amount: number): void;
+  /// The next byte of the world's random stream.
+  random(): number;
   sendAttacker(): void;
   /// Starts the Ship Delivery.
   sendShip(): void;
