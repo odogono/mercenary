@@ -33,4 +33,3 @@ The World Port (#905); the session's random stream; one step with the internal c
 ## Outcome
 
 Completed 2026-10-30 (#905–#913). The flight and walking movers already solved their per-frame rules in closed form for any step (`settle`'s `damping^frames`), so they needed no conversion: only the crash tumble counted whole calls as frames, and it now runs on time like the rest. `flight.referenceFrameRate` stays a setting, because it is a chosen pace for the decoded rules rather than a recovered rate. With nothing left on the original's clocks, the flight, game-core, navigation and session Golden Traces still pass and are kept as a diff baseline. #909 was folded into the per-system changes.
-
