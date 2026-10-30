@@ -101,7 +101,7 @@ const strikeTheAdvert = (route: LegalRoute): void => {
   session.fire();
   route.advance(1 / 20);
   route.settle();
-  session.scripts!.host = session.scripts!.host.write('attackingShip', 0);
+  session.adjust({ attackingShip: false });
   session.leaveCraft();
   // Commerce greets a Dart boarded without buying it: let that play out.
   route.advance(30);

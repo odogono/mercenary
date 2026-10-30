@@ -38,11 +38,14 @@ export interface CombatObservationSources {
 }
 
 export interface ObservationSources {
+  readonly attackingShip: boolean;
   readonly carriedStack: readonly number[];
   /// The special transition flag the Reference Build keeps at `$FA`: `$FF` on
   /// the Colony Craft, zero otherwise.
   readonly colonyCraftFlag: number;
   readonly combat?: CombatObservationSources;
+  readonly credits: number;
+  readonly endingPhase: number;
   readonly location: Location;
   readonly objectFlags: ReadonlyMap<number, number>;
   readonly occupancy: Occupancy;
@@ -52,6 +55,7 @@ export interface ObservationSources {
   readonly position: Vector3;
   readonly residence: ReadonlyMap<number, Residence>;
   readonly scripts: BensonPort | undefined;
+  readonly shipInbound: number;
 }
 
 /// The engine flags the original keeps its story in, which Targ's Talk Scripts
@@ -110,12 +114,12 @@ export const observationsOf = (
   const host = sources.scripts?.host;
   const state = sources.scripts?.reference?.state;
   const observations: Record<string, ObservationValue> = {
-    attackingShip: host?.attackingShip ?? false,
+    attackingShip: sources.attackingShip,
     carriedStack: sources.carriedStack.join(','),
     colonyCraftFlag: sources.colonyCraftFlag,
-    credits: sources.scripts?.credits ?? 0,
+    credits: sources.credits,
     destroyedCells: asCellList(sources.combat?.destroyedCells ?? []),
-    endingPhase: host?.endingPhase ?? 0,
+    endingPhase: sources.endingPhase,
     engineFlags: host?.engineFlags ?? 0,
     mechanoidDestroyed: sources.combat?.mechanoidDestroyed ?? 0,
     messagePlaying: host?.messagePlaying ?? false,
@@ -132,7 +136,7 @@ export const observationsOf = (
     room: sources.location.kind === 'room' ? sources.location.id : 0,
     scriptPc: state?.pc ?? NO_SCRIPT_PC,
     scriptStack: (state?.callStack ?? []).join(','),
-    shipInbound: host?.shipInbound ?? 0
+    shipInbound: sources.shipInbound
   };
   for (const slot of OBSERVED_EFFECT_SLOTS) {
     observations[`effectLifecycle${slot}`] =

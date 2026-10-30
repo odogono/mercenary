@@ -56,6 +56,7 @@ export class BensonChannel {
     readonly text: TextTable,
     readonly pacing: BensonPacing = DEFAULT_PACING
   ) {
+    // The credits a new game opens with, which the Gameplay Session takes over.
     this.host = new BensonHostState().withDecimal(
       BensonHostState.firstNumberDecimal,
       9000
@@ -63,9 +64,6 @@ export class BensonChannel {
     this.display = new BensonDisplay(pacing.holdSeconds);
   }
 
-  get credits(): number {
-    return this.host.decimal(BensonHostState.firstNumberDecimal);
-  }
   get messageText(): string {
     return this.display.readingText(this.completeMessage);
   }
@@ -129,9 +127,11 @@ export class BensonChannel {
     this.host = this.host.with({ messagePlaying: true });
   }
 
-  showMessage(index: number): void {
+  /// Composes a message whose first number is the session's credits; no other
+  /// number slot is ever set in live play.
+  showMessage(index: number, credits: number): void {
     const substitutions = {
-      numbers: this.host.numberSubstitutions(),
+      numbers: { 0: credits },
       words: NO_SUBSTITUTIONS.words
     };
     const composed = this.text.message(index, substitutions);
@@ -152,20 +152,10 @@ export class BensonChannel {
           : (this.completeMessage ?? null),
       display: this.display.captureSaveSnapshot(),
       host: {
-        attackingShip: host.attackingShip,
         boardedCraft: host.boardedCraft,
-        canLiftAnything: host.canLiftAnything,
-        canTakeAnything: host.canTakeAnything,
         currentRoom: host.currentRoom,
-        decimals: [...host.decimals],
-        endingPhase: host.endingPhase,
-        engineFlags: host.engineFlags,
         messageInterval: host.messageInterval,
-        messagePlaying: host.messagePlaying,
-        pendingKey: null,
-        shipInbound: host.shipInbound,
-        signedRegister: host.signedRegister,
-        tickCounter: host.tickCounter
+        messagePlaying: host.messagePlaying
       },
       messageWaitSeconds: this.messageWaitSeconds ?? null
     };
@@ -173,13 +163,9 @@ export class BensonChannel {
 
   restore(snapshot: BensonSaveSnapshot): BensonPort {
     const channel = new BensonChannel(this.text, this.pacing);
-    // Old interpreter continuations are retired. World flags, credits and the
-    // display survive; Talk's own continuation is restored separately.
-    channel.host = new BensonHostState({
-      ...snapshot.host,
-      engineFlags: snapshot.host.engineFlags & ~0xc0,
-      pendingKey: undefined
-    });
+    // Credits, the Ending and the ships are the session's, and it projects
+    // them back; Talk's own continuation is restored separately.
+    channel.host = new BensonHostState(snapshot.host);
     channel.messageWaitSeconds = snapshot.messageWaitSeconds ?? undefined;
     channel.display = BensonDisplay.restore(
       snapshot.display,

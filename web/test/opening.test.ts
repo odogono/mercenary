@@ -95,7 +95,7 @@ const untilBenson = (session: GameplaySession, line: string): void => {
 };
 
 const credits = (session: GameplaySession): number =>
-  session.scripts!.host.decimal(CREDITS);
+  session.observations().observations['credits'] as number;
 
 describe('the opening', () => {
   test('plays the Arrival’s beats, in order, as Benson Script 0 wrote them', () => {

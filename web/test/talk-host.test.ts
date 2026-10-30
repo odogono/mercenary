@@ -246,7 +246,7 @@ end begin
     );
     session.begin();
     const { events } = session.advance(FRAME);
-    expect(session.scripts!.host.attackingShip).toBe(true);
+    expect(session.observations().observations['attackingShip']).toBe(true);
     expect(events).toContainEqual({
       script: { sound: { symbol: 'voice1.control', value: 0 } }
     });

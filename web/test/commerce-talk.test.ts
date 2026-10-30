@@ -45,13 +45,14 @@ interface Outcome {
 
 const outcome = (lines: Lines): Outcome => {
   const host = lines.route.session.scripts!.host;
+  const observed = lines.route.session.observations().observations;
   return {
-    attacking: host.attackingShip,
-    credits: host.decimal(CREDITS),
+    attacking: observed['attackingShip'] as boolean,
+    credits: observed['credits'] as number,
     // Only Benson sets the story flags the Talk Scripts keep themselves.
     flags: host.engineFlags & ~0xc0 & ~TALK_KEPT_ENGINE_FLAGS,
     lines: lines.lines,
-    shipInbound: host.shipInbound
+    shipInbound: observed['shipInbound'] as number
   };
 };
 
@@ -94,8 +95,7 @@ const setEngineFlags = (route: LegalRoute, mask: number): void => {
 };
 
 const setCredits = (route: LegalRoute, credits: number): void => {
-  const scripts = route.session.scripts!;
-  scripts.host = scripts.host.withDecimal(CREDITS, credits);
+  route.session.adjust({ credits });
 };
 
 /// Y, as the shell sends it: to Benson, and to the Talk Scripts.

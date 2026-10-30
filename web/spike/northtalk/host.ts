@@ -21,6 +21,7 @@ import {
 } from '@northtalk/ts';
 
 import { BensonHostState } from '../../src/benson/host.ts';
+import type { WorldPort } from '../../src/talk/worldPort.ts';
 import type { BensonSession } from '../../test/oracle/session.ts';
 import { objectName, objectSlot, roomName } from './names.ts';
 
@@ -65,6 +66,8 @@ export interface TalkHostOptions {
   readonly core?: TalkCore;
   /// The next random byte. The host owns randomness so tests can choose outcomes.
   readonly random?: () => number;
+  /// The session's credits, Ending and Attack State (#906).
+  readonly world?: WorldPort;
 }
 
 /// The host-side state a save must carry beside the Group's own bytes.
@@ -145,6 +148,7 @@ export class TalkHost {
   private playing: Block | undefined;
   private readonly queue: Block[] = [];
   private readonly random: () => number;
+  private readonly world: WorldPort | undefined;
 
   constructor(
     scripts: Readonly<Record<string, string>>,
@@ -156,6 +160,7 @@ export class TalkHost {
     this.scripts = scripts;
     this.benson = benson;
     this.random = options.random ?? (() => 0);
+    this.world = options.world;
     this.capabilities = this.defineCapabilities();
     this.library = this.core.compileLibrary({ ...library, version: '1' }, [], {
       display: {
@@ -379,14 +384,17 @@ export class TalkHost {
       },
       credits: {
         cost: { fuel: 1 },
-        do: () => num(this.benson.host.decimal(CREDITS)),
+        do: () => num(this.world?.credits() ?? 0),
         mode: 'immediate',
         result: shape.number
       },
       escape: {
         cost: { fuel: 1 },
         description: 'Accepts the Escape: the Ending phase becomes 1.',
-        do: () => this.write({ endingPhase: 1 }),
+        do: () => {
+          this.world?.escape();
+          return nothing;
+        },
         mode: 'immediate'
       },
       flag: {
@@ -415,7 +423,10 @@ export class TalkHost {
       sendAttacker: {
         cost: { fuel: 1 },
         description: 'Sends a hostile ship after the player.',
-        do: () => this.write({ attackingShip: true }),
+        do: () => {
+          this.world?.sendAttacker();
+          return nothing;
+        },
         mode: 'immediate'
       },
       setFlag: {
@@ -437,10 +448,7 @@ export class TalkHost {
         args: [shape.number],
         cost: { fuel: 1 },
         do: (_call, amount) => {
-          this.benson.host = this.benson.host.addDecimal(
-            CREDITS,
-            -whole(amount)
-          );
+          this.world?.spend(whole(amount));
           return nothing;
         },
         mode: 'immediate'

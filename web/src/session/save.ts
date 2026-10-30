@@ -1,5 +1,4 @@
 import type { BensonHostFields } from '../benson/host.ts';
-import type { BensonKey } from '../benson/key.ts';
 import type { GameState } from '../gameCore/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import type { Alternate } from '../payload/documents.ts';
@@ -7,7 +6,7 @@ import type { FlightSettings, MessageSettings } from '../settings/index.ts';
 import type { Location, Residence } from '../world/index.ts';
 import type { ShipFieldPoint, ShipFieldSaveSnapshot } from './shipField.ts';
 
-export const SAVE_SCHEMA_VERSION = 21 as const;
+export const SAVE_SCHEMA_VERSION = 22 as const;
 export const SAVE_JSON_CODE_UNIT_LIMIT = 1_000_000;
 
 const SAVE_COLLECTION_LIMIT = 1024;
@@ -53,12 +52,12 @@ export interface BensonDisplaySaveSnapshot {
   readonly waitSeconds: number;
 }
 
-export interface BensonHostSaveSnapshot extends Omit<
+/// What live play keeps of Benson's host state. Credits, the Ending and the
+/// ships are the session's own (#906); the rest never changes in live play.
+export type BensonHostSaveSnapshot = Pick<
   BensonHostFields,
-  'destroyedBlocks' | 'inventory' | 'objectFlags' | 'objectRooms' | 'pendingKey'
-> {
-  readonly pendingKey: BensonKey | null;
-}
+  'boardedCraft' | 'currentRoom' | 'messageInterval' | 'messagePlaying'
+>;
 
 export interface BensonSaveSnapshot {
   readonly activeMessageText: string | null;
@@ -123,10 +122,13 @@ export interface CombatSaveSnapshot {
 }
 
 export interface SaveSnapshot {
+  /// Whether a hostile ship has been sent after the player.
+  readonly attackingShip: boolean;
   readonly benson: BensonSaveSnapshot | null;
   readonly carriedStack: readonly number[];
   /// Absent when the content carries no Sites to destroy.
   readonly combat: CombatSaveSnapshot | null;
+  readonly credits: number;
   /// Seconds since a hired ship began its descent, or null when none descends.
   readonly deliverySeconds: number | null;
   /// The Escape's terminal presentation, if one is running.
@@ -136,6 +138,9 @@ export interface SaveSnapshot {
   readonly ending: {
     readonly field: ShipFieldSaveSnapshot;
   } | null;
+  /// 0 in active play, 1 once the Escape is accepted, 255 once its
+  /// presentation has matured.
+  readonly endingPhase: number;
   readonly game: GameSaveSnapshot;
   /// A Lift Journey under way: its stage, position and scene follow from the
   /// seconds since it began (ADR 0083).
@@ -150,6 +155,8 @@ export interface SaveSnapshot {
   readonly randomState: string;
   readonly residence: readonly (readonly [number, Residence])[];
   readonly rewired: readonly (readonly [number, Alternate])[];
+  /// The hired ship's delivery byte.
+  readonly shipInbound: number;
   /// Absent when the session runs no Talk Scripts.
   readonly talk: TalkSaveSnapshot | null;
 }
@@ -663,48 +670,17 @@ const display = (value: unknown, at: string): BensonDisplaySaveSnapshot => {
 };
 
 const bensonHost = (value: unknown, at: string): BensonHostSaveSnapshot => {
-  const fields = [
-    'attackingShip',
+  const out = exact(value, at, [
     'boardedCraft',
-    'canLiftAnything',
-    'canTakeAnything',
     'currentRoom',
-    'decimals',
-    'engineFlags',
-    'endingPhase',
     'messageInterval',
-    'messagePlaying',
-    'pendingKey',
-    'shipInbound',
-    'signedRegister',
-    'tickCounter'
-  ];
-  const out = exact(value, at, fields);
-  const pendingKey = out['pendingKey'];
-  if (pendingKey !== null && pendingKey !== 'keyY') {
-    fail(`${at}.pendingKey is invalid`);
-  }
-  const decimals = integerArray(out['decimals'], `${at}.decimals`);
-  if (decimals.length !== 16) {
-    fail(`${at}.decimals must contain 16 integers`);
-  }
+    'messagePlaying'
+  ]);
   return {
-    attackingShip: bool(out['attackingShip'], `${at}.attackingShip`),
     boardedCraft: byte(out['boardedCraft'], `${at}.boardedCraft`),
-    canLiftAnything: bool(out['canLiftAnything'], `${at}.canLiftAnything`),
-    canTakeAnything: bool(out['canTakeAnything'], `${at}.canTakeAnything`),
     currentRoom: byte(out['currentRoom'], `${at}.currentRoom`),
-    decimals: decimals.map((value, index) =>
-      integerInRange(value, `${at}.decimals[${index}]`, 0, 99_999_999)
-    ),
-    endingPhase: byte(out['endingPhase'], `${at}.endingPhase`),
-    engineFlags: byte(out['engineFlags'], `${at}.engineFlags`),
     messageInterval: byte(out['messageInterval'], `${at}.messageInterval`),
-    messagePlaying: bool(out['messagePlaying'], `${at}.messagePlaying`),
-    pendingKey: pendingKey as BensonKey | null,
-    shipInbound: byte(out['shipInbound'], `${at}.shipInbound`),
-    signedRegister: integer(out['signedRegister'], `${at}.signedRegister`),
-    tickCounter: nonNegativeInteger(out['tickCounter'], `${at}.tickCounter`)
+    messagePlaying: bool(out['messagePlaying'], `${at}.messagePlaying`)
   };
 };
 
@@ -952,19 +928,27 @@ const endingPresentation = (
 
 const snapshot = (value: unknown, at: string): SaveSnapshot => {
   const out = exact(value, at, [
+    'attackingShip',
     'benson',
     'carriedStack',
     'combat',
+    'credits',
     'deliverySeconds',
     'ending',
+    'endingPhase',
     'game',
     'liftJourney',
     'objectFlags',
     'randomState',
     'residence',
     'rewired',
+    'shipInbound',
     'talk'
   ]);
+  const endingPhase = byte(out['endingPhase'], `${at}.endingPhase`);
+  if (endingPhase !== 0 && endingPhase !== 1 && endingPhase !== 255) {
+    fail(`${at}.endingPhase must be 0, 1 or 255`);
+  }
   const carriedStack = byteArray(out['carriedStack'], `${at}.carriedStack`);
   if (new Set(carriedStack).size !== carriedStack.length) {
     fail(`${at}.carriedStack members must be unique`);
@@ -988,16 +972,19 @@ const snapshot = (value: unknown, at: string): SaveSnapshot => {
     fail(`${at}.liftJourney.direction must be down or up`);
   }
   return {
+    attackingShip: bool(out['attackingShip'], `${at}.attackingShip`),
     benson:
       out['benson'] === null ? null : benson(out['benson'], `${at}.benson`),
     carriedStack,
     combat:
       out['combat'] === null ? null : combat(out['combat'], `${at}.combat`),
+    credits: integerInRange(out['credits'], `${at}.credits`, 0, 99_999_999),
     deliverySeconds,
     ending:
       out['ending'] === null
         ? null
         : endingPresentation(out['ending'], `${at}.ending`),
+    endingPhase,
     game: game(out['game'], `${at}.game`),
     liftJourney:
       rawLift === null
@@ -1032,6 +1019,7 @@ const snapshot = (value: unknown, at: string): SaveSnapshot => {
     randomState: randomState(out['randomState'], `${at}.randomState`),
     residence: residenceEntries(out['residence'], `${at}.residence`),
     rewired: rewiredEntries(out['rewired'], `${at}.rewired`),
+    shipInbound: byte(out['shipInbound'], `${at}.shipInbound`),
     talk: out['talk'] === null ? null : talk(out['talk'], `${at}.talk`)
   };
 };

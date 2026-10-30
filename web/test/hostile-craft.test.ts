@@ -77,7 +77,7 @@ const underAttack = (options?: {
     ...session.game,
     player: { ...session.game.player, position: at }
   };
-  session.scripts!.host = session.scripts!.host.with({ attackingShip: true });
+  session.adjust({ attackingShip: true });
   return session;
 };
 

@@ -35,6 +35,11 @@ export interface BensonMessagePresentation {
 
 export type BensonMessageMode = 'authentic' | 'legacyOracle';
 
+/// The oracle keeps its own full Benson block beside a live-shaped snapshot:
+/// the live Save carries only what live play changes (#906). A snapshot read
+/// back from JSON has lost it, and restores over the program's seeds instead.
+const FULL_HOSTS = new WeakMap<BensonSaveSnapshot, BensonHostState>();
+
 /// One running Benson Script, its host state, and the message line it drives.
 export class BensonOracle {
   readonly program: BensonProgram;
@@ -341,7 +346,7 @@ export class BensonOracle {
   }
 
   captureSaveSnapshot(): BensonSaveSnapshot {
-    return {
+    const snapshot: BensonSaveSnapshot = {
       activeMessageText:
         this.messageOccurrence === undefined
           ? null
@@ -349,25 +354,17 @@ export class BensonOracle {
       display:
         this.legacyDisplaySnapshot() ?? this.display.captureSaveSnapshot(),
       host: {
-        attackingShip: this.host.attackingShip,
         boardedCraft: this.host.boardedCraft,
-        canLiftAnything: this.host.canLiftAnything,
-        canTakeAnything: this.host.canTakeAnything,
         currentRoom: this.host.currentRoom,
-        decimals: [...this.host.decimals],
-        endingPhase: this.host.endingPhase,
-        engineFlags: this.host.engineFlags,
         messageInterval: this.host.messageInterval,
-        messagePlaying: this.host.messagePlaying,
-        pendingKey: this.host.pendingKey ?? null,
-        shipInbound: this.host.shipInbound,
-        signedRegister: this.host.signedRegister,
-        tickCounter: this.host.tickCounter
+        messagePlaying: this.host.messagePlaying
       },
       // A Save holds no Benson Script continuation or random state: a running
       // script is lost, and the interpreter's stream starts again from its seed.
       messageWaitSeconds: null
     };
+    FULL_HOSTS.set(snapshot, this.host);
+    return snapshot;
   }
 
   private legacyDisplaySnapshot(): BensonSaveSnapshot['display'] | undefined {
@@ -421,10 +418,9 @@ export class BensonOracle {
     );
     // The Site Ledger is the session's, and it republishes it after restoring,
     // so the host starts with nothing destroyed rather than a second copy.
-    session.host = new BensonHostState({
-      ...snapshot.host,
-      pendingKey: snapshot.host.pendingKey ?? undefined
-    });
+    session.host = (FULL_HOSTS.get(snapshot) ?? session.host).with(
+      snapshot.host
+    );
     session.display = BensonDisplay.restore(
       snapshot.display,
       tunables.messageHoldSeconds
