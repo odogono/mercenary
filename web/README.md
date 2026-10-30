@@ -7,7 +7,7 @@ been retired; its final accepted state is frozen at the annotated
 Use Bun for the app and tests, and Node 24.10 or later for Node-based tools such as Prettier.
 
 The NorthTalk runtime uses `^0.3.0`, with the resolved version recorded in `bun.lock`.
-Targ Saves are schema 23; an older Save is refused.
+Targ Saves are schema 24; an older Save is refused, as is one whose Talk Scripts no longer load.
 
 ```sh
 bun install

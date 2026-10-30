@@ -20,9 +20,6 @@ export interface BensonMessagePresentation {
   readonly soundCharacter?: string;
 }
 
-/// The Benson Display as the Gameplay Session and Talk Scripts see it.
-export type BensonPort = BensonChannel;
-
 export class BensonChannel {
   /// Whether a message holds the display, until its reading hold is over.
   messagePlaying = false;

@@ -1,4 +1,4 @@
-import type { BensonPort } from '../benson/channel.ts';
+import type { BensonChannel } from '../benson/channel.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import { hostRoom, type Location, type Residence } from '../world/index.ts';
 import type { Occupancy } from './index.ts';
@@ -38,7 +38,7 @@ export interface CombatObservationSources {
 
 export interface ObservationSources {
   readonly attackingShip: boolean;
-  readonly benson: BensonPort | undefined;
+  readonly benson: BensonChannel | undefined;
   readonly carriedStack: readonly number[];
   /// The special transition flag the Reference Build keeps at `$FA`: `$FF` on
   /// the Colony Craft, zero otherwise.

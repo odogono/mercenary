@@ -4,7 +4,6 @@ import { describe, expect, test } from 'bun:test';
 import type { GameplaySession } from '../src/session/index.ts';
 import {
   SAVE_SCHEMA_VERSION,
-  SAVE_TALK_CODE_UNIT_LIMIT,
   decodeSave,
   encodeSave
 } from '../src/session/save.ts';
@@ -14,6 +13,7 @@ import {
   requiredSettings,
   saveEnvironment
 } from '../src/shell/session.ts';
+import { TALK_SAVE_CODE_UNIT_LIMIT } from '../src/talk/save.ts';
 import { OPENING } from '../src/talk/scripts.ts';
 import { room } from '../src/world/index.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
@@ -211,6 +211,6 @@ describe('the opening', () => {
     // A Save carries every Talk Script's code, so its size is mostly what is
     // loaded; waiting adds little to it.
     expect(talk.group.length - fresh).toBeLessThan(4096);
-    expect(talk.group.length).toBeLessThan(SAVE_TALK_CODE_UNIT_LIMIT / 2);
+    expect(talk.group.length).toBeLessThan(TALK_SAVE_CODE_UNIT_LIMIT / 2);
   });
 });

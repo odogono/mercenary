@@ -83,24 +83,16 @@ export const createWalkabout = (
     world.groundExtent
   );
   const content = sessionContent(world, bundle, flight);
-  const session =
-    restore === undefined
-      ? new GameplaySession(content, openingPlayer(), scripts)
-      : GameplaySession.restore(
-          content,
-          scripts,
-          restore,
-          talkScripts.length === 0 ? undefined : { scripts: talkScripts }
-        );
-  if (restore === undefined && talkScripts.length > 0) {
-    session.useTalkScripts(talkScripts);
-  }
-  // The opening is started here even when the Arrival is about to present, so that a Save
+  // The opening starts here even when the Arrival is about to present, so that a Save
   // taken during the opening restores a game with an opening to play. The Arrival holds it by
   // not advancing the session rather than by leaving it unstarted (ADR 0032). It is a Talk
-  // Script (ADR 0080); the historical Replay Gate assembles its own oracle.
-  if (restore === undefined) {
-    session.begin();
-  }
+  // Script (ADR 0080).
+  const talk = talkScripts.length === 0 ? undefined : { scripts: talkScripts };
+  const session =
+    restore !== undefined
+      ? GameplaySession.restore(content, scripts, restore, talk)
+      : talk !== undefined
+        ? GameplaySession.newGame(content, scripts, talk)
+        : new GameplaySession(content, openingPlayer(), scripts);
   return { session, world };
 };

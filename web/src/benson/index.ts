@@ -4,7 +4,6 @@ export { DEFAULT_SESSION_SEED, randomByte } from './random.ts';
 export {
   BensonChannel,
   DEFAULT_PACING,
-  type BensonPort,
   type BensonMessagePresentation
 } from './channel.ts';
 export { codePointCount } from './text.ts';
