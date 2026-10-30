@@ -253,6 +253,30 @@ end begin
   });
 });
 
+test('the session refuses a Room or object the world does not have', () => {
+  const session = withScripts([
+    script(
+      'astray',
+      `on begin
+  ask world to move "pass", "room 999"
+end begin
+`
+    ),
+    script(
+      'nothing',
+      `on begin
+  ask world to fix "object 250"
+end begin
+`
+    )
+  ]);
+  session.begin();
+  session.advance(FRAME);
+  const said = JSON.stringify(failures(session));
+  expect(said).toContain('the world has no Room 999');
+  expect(said).toContain('the world has no object 250');
+});
+
 /// A Talk Script that says each key it hears, with its own name.
 const listener = (name: string): TalkScript =>
   script(

@@ -1,6 +1,6 @@
 /// The Talk Script host (ADR 0080): one NorthTalk Group alive for a whole
-/// Gameplay Session, offered the Host Callout as the `world`, `display` and
-/// `sound` Capabilities. It tells the session's World Events as Broadcasts and
+/// Gameplay Session, offered the World Port as the `world` Capability and the
+/// Benson Display as `display` and `sound`. It tells the session's World Events as Broadcasts and
 /// Player Input to its Input Owner, and shows lines on the session's Benson
 /// Display a block at a time.
 ///
@@ -9,9 +9,8 @@
 /// lines and all; one whose code changed is reloaded with its Script
 /// Variables carried over, and its Runs end.
 ///
-/// Until no Benson Script is left to run, Benson's host state is where Talk
-/// Scripts read and write the world, as Benson Scripts do, and the Benson
-/// Display is the display both share.
+/// Talk Scripts read and write the world only through the World Port
+/// (ADR 0083), by name: `names.ts` turns names into the session's numbers.
 import {
   LoadError,
   bool,
@@ -31,19 +30,19 @@ import {
 } from '@northtalk/ts';
 
 import type { BensonPort } from '../benson/channel.ts';
-import { BensonHostState, type BensonEffect } from '../benson/host.ts';
-import { OUT_OF_THE_WORLD } from '../interaction/index.ts';
+import type { BensonEffect } from '../benson/host.ts';
 import type { TalkSaveSnapshot } from '../session/save.ts';
 import type { WorldEvent } from '../session/worldEvents.ts';
+import { SURFACE, room, type Location } from '../world/index.ts';
 import librarySource from './benson.talk' with { type: 'text' };
 import {
   locationName,
   objectName,
   objectSlot,
   roomId,
-  roomName,
   siteName
 } from './names.ts';
+import type { WorldPort } from './worldPort.ts';
 
 /// One Talk Script, and the Benson Scripts it replaces.
 export interface TalkScript {
@@ -72,15 +71,7 @@ interface Block {
   readonly lines: string[];
 }
 
-const CREDITS = BensonHostState.firstNumberDecimal;
-/// An object's description bit that makes boarding or taking it start the
-/// Benson Script of its slot.
-const STARTS_SCRIPT = 4;
-/// The bits the Dart's Benson Script clears on its object at first boarding.
-const DISARMED = STARTS_SCRIPT | 8;
-/// What Benson Script 2 writes to start the Ship Delivery.
-const SHIP_INBOUND = 0xff;
-const FIXED = 16;
+/// The Site cell of the author's advert.
 const ADVERT_BLOCK = 50;
 const MICROS = 1_000_000;
 /// No Talk Script wait is bounded by a deadline of its own.
@@ -90,6 +81,18 @@ const LONGEST_WAIT_MS = 2_147_483_647;
 const LIBRARY_IDENTITY = codeIdentity('library', 'benson', librarySource);
 
 const whole = (value: Decimal): number => Number(value.toBigInt());
+
+/// An operation done for its effect, answering nothing.
+const done = (act: () => void): Value => {
+  act();
+  return nothing;
+};
+
+/// The Location a Talk Script names: `surface`, or a Room.
+const locationNamed = (name: string): Location => {
+  const id = roomId(name);
+  return id === 0 ? SURFACE : room(id);
+};
 
 /// `btoa` takes a string of bytes, and a spread argument list has a limit.
 const BASE64_CHUNK = 0x80_00;
@@ -149,6 +152,7 @@ export class TalkHost {
   readonly shown: string[] = [];
 
   private readonly benson: BensonPort;
+  private readonly world: WorldPort;
   /// Sound a Talk Script made since the session last took it.
   private effects: BensonEffect[] = [];
   private readonly grants: Readonly<Record<string, Grant<void>>>;
@@ -173,10 +177,12 @@ export class TalkHost {
   constructor(
     scripts: readonly TalkScript[],
     benson: BensonPort,
+    world: WorldPort,
     options: TalkHostOptions = {},
     saved?: TalkSaveSnapshot
   ) {
     this.benson = benson;
+    this.world = world;
     this.random = options.random ?? (() => benson.nextRandomByte());
     this.replaces = new Set(scripts.flatMap(script => script.replaces));
     const core = createCore();
@@ -445,72 +451,51 @@ export class TalkHost {
     this.settleDisplay();
   }
 
-  /// Writes Benson host state, which the session reads as it reads a Benson
-  /// Script's writes.
-  private write(patch: Parameters<BensonHostState['with']>[0]): Value {
-    this.benson.host = this.benson.host.with(patch);
-    return nothing;
-  }
-
   private defineCapabilities(core: ReturnType<typeof createCore>) {
-    const world = core.defineCapability('world', {
+    const world = this.world;
+    const worldCapability = core.defineCapability('world', {
       advertIntact: {
         cost: { fuel: 1 },
         description: "Whether the author's advert on block 50 still stands.",
-        do: () => bool(!this.benson.host.destroyedBlocks.has(ADVERT_BLOCK)),
+        do: () => bool(!world.destroyed(ADVERT_BLOCK)),
         mode: 'immediate',
         result: shape.bool
       },
       arm: {
         args: [shape.text],
         cost: { fuel: 1 },
-        description:
-          'Makes boarding or taking the object start its own Benson Script.',
-        do: (_call, item) => {
-          const slot = objectSlot(item);
-          this.benson.host = this.benson.host.withObjectFlag(
-            slot,
-            (this.benson.host.objectFlags.get(slot) ?? 0) | STARTS_SCRIPT
-          );
-          return nothing;
-        },
+        description: 'Makes boarding or taking the object start its Talk.',
+        do: (_call, item) => done(() => world.arm(objectSlot(item))),
         mode: 'immediate'
       },
       armed: {
         args: [shape.text],
         cost: { fuel: 1 },
-        description:
-          'Whether boarding or taking the object starts its own Benson Script.',
-        do: (_call, item) =>
-          bool(
-            ((this.benson.host.objectFlags.get(objectSlot(item)) ?? 0) &
-              STARTS_SCRIPT) !==
-              0
-          ),
+        description: 'Whether boarding or taking the object starts its Talk.',
+        do: (_call, item) => bool(world.armed(objectSlot(item))),
         mode: 'immediate',
         result: shape.bool
       },
       boarded: {
         cost: { fuel: 1 },
         description: 'The craft the player is in, or nothing on foot.',
-        do: () =>
-          this.benson.host.boardedCraft === BensonHostState.onFoot
-            ? nothing
-            : text(objectName(this.benson.host.boardedCraft)),
+        do: () => {
+          const craft = world.boarded();
+          return craft === undefined ? nothing : text(objectName(craft));
+        },
         mode: 'immediate',
         result: shape.optional(shape.text)
       },
       carries: {
         args: [shape.text],
         cost: { fuel: 1 },
-        do: (_call, item) =>
-          bool(this.benson.host.inventory.has(objectSlot(item))),
+        do: (_call, item) => bool(world.carries(objectSlot(item))),
         mode: 'immediate',
         result: shape.bool
       },
       credits: {
         cost: { fuel: 1 },
-        do: () => num(this.benson.host.decimal(CREDITS)),
+        do: () => num(world.credits()),
         mode: 'immediate',
         result: shape.number
       },
@@ -518,41 +503,27 @@ export class TalkHost {
         args: [shape.text],
         cost: { fuel: 1 },
         description:
-          "Clears the object's bits 4 and 8, as the Dart's Benson Script does: boarding it starts nothing more.",
-        do: (_call, item) => {
-          const slot = objectSlot(item);
-          this.benson.host = this.benson.host.withObjectFlag(
-            slot,
-            (this.benson.host.objectFlags.get(slot) ?? 0) & ~DISARMED & 0xff
-          );
-          return nothing;
-        },
+          "Takes the Talk away from the object, as the Dart's sale does: boarding it starts nothing more.",
+        do: (_call, item) => done(() => world.disarm(objectSlot(item))),
         mode: 'immediate'
       },
       escape: {
         cost: { fuel: 1 },
-        description: 'Accepts the Escape: the Ending phase becomes 1.',
-        do: () => this.write({ endingPhase: 1 }),
+        description: 'Accepts the Escape: the Ending begins.',
+        do: () => done(() => world.escape()),
         mode: 'immediate'
       },
       fix: {
         args: [shape.text],
         cost: { fuel: 1 },
         description: 'Fixes the object where it lies.',
-        do: (_call, item) => {
-          const slot = objectSlot(item);
-          this.benson.host = this.benson.host.withObjectFlag(
-            slot,
-            (this.benson.host.objectFlags.get(slot) ?? 0) | FIXED
-          );
-          return nothing;
-        },
+        do: (_call, item) => done(() => world.fix(objectSlot(item))),
         mode: 'immediate'
       },
       here: {
         cost: { fuel: 1 },
         description: 'The name of the Room the player is in.',
-        do: () => text(roomName(this.benson.host.currentRoom)),
+        do: () => text(locationName(world.here())),
         mode: 'immediate',
         result: shape.text
       },
@@ -562,10 +533,8 @@ export class TalkHost {
         description:
           'The name of the Room the object lies in, or nothing while carried or gone.',
         do: (_call, item) => {
-          const room = this.benson.host.objectRooms.get(objectSlot(item));
-          return room === undefined || room === OUT_OF_THE_WORLD
-            ? nothing
-            : text(roomName(room));
+          const where = world.lies(objectSlot(item));
+          return where === undefined ? nothing : text(locationName(where));
         },
         mode: 'immediate',
         result: shape.optional(shape.text)
@@ -574,30 +543,15 @@ export class TalkHost {
         args: [shape.text, shape.text],
         cost: { fuel: 1 },
         description: 'Moves a loose object to the named Room.',
-        do: (_call, item, destination) => {
-          const slot = objectSlot(item);
-          if (this.benson.host.inventory.has(slot)) {
-            throw new Error('cannot move a carried object');
-          }
-          this.benson.host = this.benson.host.withObjectRoom(
-            slot,
-            roomId(destination)
-          );
-          return nothing;
-        },
+        do: (_call, item, destination) =>
+          done(() => world.move(objectSlot(item), locationNamed(destination))),
         mode: 'immediate'
       },
       pay: {
         args: [shape.number],
         cost: { fuel: 1 },
         description: 'Adds to the credits.',
-        do: (_call, amount) => {
-          this.benson.host = this.benson.host.addDecimal(
-            CREDITS,
-            whole(amount)
-          );
-          return nothing;
-        },
+        do: (_call, amount) => done(() => world.pay(whole(amount))),
         mode: 'immediate'
       },
       roll: {
@@ -611,31 +565,31 @@ export class TalkHost {
       sendAttacker: {
         cost: { fuel: 1 },
         description: 'Sends a hostile ship after the player.',
-        do: () => this.write({ attackingShip: true }),
+        do: () => done(() => world.sendAttacker()),
         mode: 'immediate'
       },
       sendShip: {
         cost: { fuel: 1 },
         description: 'Starts the Ship Delivery: the hired ship lands at 8-8.',
-        do: () => this.write({ shipInbound: SHIP_INBOUND }),
+        do: () => done(() => world.sendShip()),
         mode: 'immediate'
       },
       setMessageInterval: {
         args: [shape.number],
         cost: { fuel: 1 },
-        do: (_call, frames) => this.write({ messageInterval: whole(frames) }),
+        description: "The Benson Display's message cycle, in frames.",
+        do: (_call, frames) =>
+          done(() => {
+            this.benson.host = this.benson.host.with({
+              messageInterval: whole(frames)
+            });
+          }),
         mode: 'immediate'
       },
       spend: {
         args: [shape.number],
         cost: { fuel: 1 },
-        do: (_call, amount) => {
-          this.benson.host = this.benson.host.addDecimal(
-            CREDITS,
-            -whole(amount)
-          );
-          return nothing;
-        },
+        do: (_call, amount) => done(() => world.spend(whole(amount))),
         mode: 'immediate'
       }
     });
@@ -697,6 +651,6 @@ export class TalkHost {
       }
     });
 
-    return { display, sound, world };
+    return { display, sound, world: worldCapability };
   }
 }
