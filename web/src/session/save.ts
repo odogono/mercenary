@@ -2,16 +2,15 @@ import type { GameState } from '../gameCore/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import type { Alternate } from '../payload/documents.ts';
 import type { FlightSettings, MessageSettings } from '../settings/index.ts';
+import { parseTalkSave, type TalkSaveSnapshot } from '../talk/save.ts';
 import type { Location, Residence } from '../world/index.ts';
 import type { ShipFieldPoint, ShipFieldSaveSnapshot } from './shipField.ts';
 
-export const SAVE_SCHEMA_VERSION = 23 as const;
+export const SAVE_SCHEMA_VERSION = 24 as const;
 export const SAVE_JSON_CODE_UNIT_LIMIT = 1_000_000;
 
 const SAVE_COLLECTION_LIMIT = 1024;
 const SAVE_STRING_CODE_UNIT_LIMIT = 65_536;
-/// The NorthTalk save, held apart from the general string limit (ADR 0080).
-export const SAVE_TALK_CODE_UNIT_LIMIT = 262_144;
 
 export interface SavePayloadIdentity {
   readonly decoderVersion: number;
@@ -58,20 +57,6 @@ export interface BensonSaveSnapshot {
   readonly messagePlaying: boolean;
   /// The wait a Talk Script set for the messages that follow, or null for the pacing's own.
   readonly messageWaitSeconds: number | null;
-}
-
-/// The Talk Scripts' part (ADR 0080).
-export interface TalkSaveSnapshot {
-  /// The prompts holding Player Input, oldest first.
-  readonly claims: readonly { readonly run: string; readonly script: string }[];
-  /// The NorthTalk Group's save, in base64.
-  readonly group: string;
-  /// The `codeIdentity` of the Library every Talk Script shares.
-  readonly library: string;
-  /// The host clock, in seconds.
-  readonly now: number;
-  /// Each Talk Script's `codeIdentity`, by name, in load order.
-  readonly scripts: readonly (readonly [string, string])[];
 }
 
 export interface GameSaveSnapshot extends Omit<
@@ -691,62 +676,6 @@ const benson = (value: unknown, at: string): BensonSaveSnapshot => {
   };
 };
 
-const BASE64 = /^[\d+/A-Za-z]*={0,2}$/;
-const IDENTITY = /^[\da-f]{64}$/;
-
-const identity = (value: unknown, at: string): string => {
-  const out = string(value, at);
-  if (!IDENTITY.test(out)) {
-    fail(`${at} must be a code identity`);
-  }
-  return out;
-};
-
-const talk = (value: unknown, at: string): TalkSaveSnapshot => {
-  const out = exact(value, at, [
-    'claims',
-    'group',
-    'library',
-    'now',
-    'scripts'
-  ]);
-  const group = out['group'];
-  if (typeof group !== 'string') {
-    return fail(`${at}.group must be a string`);
-  }
-  if (group.length > SAVE_TALK_CODE_UNIT_LIMIT) {
-    return fail(`${at}.group exceeds the Talk Script save limit`);
-  }
-  if (group.length % 4 !== 0 || !BASE64.test(group)) {
-    return fail(`${at}.group must be base64`);
-  }
-  const scripts = array(out['scripts'], `${at}.scripts`, (entry, path) => {
-    if (!Array.isArray(entry) || entry.length !== 2) {
-      return fail(`${path} must be a name and an identity`);
-    }
-    return [
-      string(entry[0], `${path}[0]`),
-      identity(entry[1], `${path}[1]`)
-    ] as const;
-  });
-  if (new Set(scripts.map(([name]) => name)).size !== scripts.length) {
-    fail(`${at}.scripts names must be unique`);
-  }
-  return {
-    claims: array(out['claims'], `${at}.claims`, (entry, path) => {
-      const claim = exact(entry, path, ['run', 'script']);
-      return {
-        run: string(claim['run'], `${path}.run`),
-        script: string(claim['script'], `${path}.script`)
-      };
-    }),
-    group,
-    library: identity(out['library'], `${at}.library`),
-    now: nonNegative(out['now'], `${at}.now`),
-    scripts
-  };
-};
-
 /// One Site Ledger byte per surface cell.
 const SITE_TABLE_LENGTH = 256;
 
@@ -998,7 +927,16 @@ const snapshot = (value: unknown, at: string): SaveSnapshot => {
     residence: residenceEntries(out['residence'], `${at}.residence`),
     rewired: rewiredEntries(out['rewired'], `${at}.rewired`),
     shipInbound: byte(out['shipInbound'], `${at}.shipInbound`),
-    talk: out['talk'] === null ? null : talk(out['talk'], `${at}.talk`)
+    talk:
+      out['talk'] === null
+        ? null
+        : (() => {
+            try {
+              return parseTalkSave(out['talk'], `${at}.talk`);
+            } catch (error) {
+              return fail((error as Error).message);
+            }
+          })()
   };
 };
 

@@ -12,9 +12,7 @@
 /// Talk Scripts read and write the world only through the World Port
 /// (ADR 0083), by name: `names.ts` turns names into the session's numbers.
 import {
-  LoadError,
   bool,
-  codeIdentity,
   createCore,
   nothing,
   num,
@@ -29,9 +27,8 @@ import {
   type Value
 } from '@northtalk/ts';
 
-import type { BensonPort } from '../benson/channel.ts';
+import type { BensonChannel } from '../benson/channel.ts';
 import type { BensonEffect } from '../benson/effect.ts';
-import type { TalkSaveSnapshot } from '../session/save.ts';
 import type { WorldEvent } from '../session/worldEvents.ts';
 import { SURFACE, room, type Location } from '../world/index.ts';
 import librarySource from './benson.talk' with { type: 'text' };
@@ -42,6 +39,7 @@ import {
   roomId,
   siteName
 } from './names.ts';
+import { TalkSaveRefused, type TalkSaveSnapshot } from './save.ts';
 import type { WorldPort } from './worldPort.ts';
 
 /// One Talk Script, and the Benson Scripts it replaces.
@@ -76,9 +74,6 @@ const ADVERT_BLOCK = 50;
 const MICROS = 1_000_000;
 /// No Talk Script wait is bounded by a deadline of its own.
 const LONGEST_WAIT_MS = 2_147_483_647;
-
-/// The Library's `codeIdentity`, which every Talk Script's counts in.
-const LIBRARY_IDENTITY = codeIdentity('library', 'benson', librarySource);
 
 const whole = (value: Decimal): number => Number(value.toBigInt());
 
@@ -151,14 +146,12 @@ export class TalkHost {
   /// Each line a Talk Script showed, as it began to play.
   readonly shown: string[] = [];
 
-  private readonly benson: BensonPort;
+  private readonly benson: BensonChannel;
   private readonly world: WorldPort;
   /// Sound a Talk Script made since the session last took it.
   private effects: BensonEffect[] = [];
   private readonly grants: Readonly<Record<string, Grant<void>>>;
   private readonly group: TsGroup;
-  /// Each Talk Script's `codeIdentity`, the Library's counted in, by name.
-  private readonly identities: ReadonlyMap<string, string>;
   private readonly library: Library;
   /// A key the Input Owner pressed while its prompt was still playing, held
   /// for the `wait for` after it, as Benson's key latch holds a key until a
@@ -176,7 +169,7 @@ export class TalkHost {
   /// Loads the Talk Scripts, or restores them from a save.
   constructor(
     scripts: readonly TalkScript[],
-    benson: BensonPort,
+    benson: BensonChannel,
     world: WorldPort,
     options: TalkHostOptions = {},
     saved?: TalkSaveSnapshot
@@ -203,15 +196,10 @@ export class TalkHost {
         }
       }
     );
-    this.identities = new Map(
-      scripts.map(script => [
-        script.name,
-        codeIdentity('script', script.name, script.source, [LIBRARY_IDENTITY])
-      ])
-    );
     this.group =
-      (saved && this.restore(core, scripts, saved)) ??
-      this.newGroup(core, scripts);
+      saved === undefined
+        ? this.newGroup(core, scripts)
+        : this.restore(core, scripts, saved);
     if (saved !== undefined) {
       // Reissued lines queue for the display at once, so a restored session
       // can tell who was speaking.
@@ -225,9 +213,7 @@ export class TalkHost {
       // The build carries every Talk Script's source, so the Save leaves it
       // out and restore asks for it back.
       group: toBase64(this.group.save({ sources: 'external' })),
-      library: LIBRARY_IDENTITY,
-      now: this.now,
-      scripts: [...this.identities]
+      now: this.now
     };
   }
 
@@ -252,8 +238,8 @@ export class TalkHost {
     });
   }
 
-  /// The saved Group, brought up to the current Talk Scripts, or undefined
-  /// if a saved Talk Script no longer loads beside the current Library.
+  /// The saved Group, brought up to the current Talk Scripts. One that no
+  /// longer loads beside the current Library is refused (#933).
   ///
   /// A changed Library or Capability ends every Run, the Core restoring only
   /// Script Variables. A Talk Script no longer in the build is emptied, as no
@@ -263,7 +249,7 @@ export class TalkHost {
     core: ReturnType<typeof createCore>,
     scripts: readonly TalkScript[],
     saved: TalkSaveSnapshot
-  ): TsGroup | undefined {
+  ): TsGroup {
     let restored: ReturnType<typeof core.restore>;
     try {
       restored = core.restore(fromBase64(saved.group), {
@@ -281,10 +267,11 @@ export class TalkHost {
         })
       });
     } catch (error) {
-      if (error instanceof LoadError) {
-        return undefined;
-      }
-      throw error;
+      // Whether it no longer loads beside this build (`LoadError`) or is no
+      // Group at all, the story it held can't come back.
+      throw new TalkSaveRefused(
+        error instanceof Error ? error.message : String(error)
+      );
     }
     const { group, result } = restored;
     this.now = saved.now;

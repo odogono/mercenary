@@ -87,6 +87,19 @@ describe('the live browser Gameplay Session', () => {
     );
   });
 
+  test('refuses a Save whose story no longer loads, with New Game guidance (#933)', () => {
+    const settings = requiredSettings(settingsText);
+    const saved = createWalkabout(
+      bundle,
+      settings
+    ).session.captureSaveSnapshot();
+    const broken = { ...saved, talk: { ...saved.talk!, group: 'AAAAAAAA' } };
+
+    expect(() => createWalkabout(bundle, settings, broken)).toThrow(
+      'start a New Game'
+    );
+  });
+
   test('save compatibility excludes presentation but includes gameplay tuning', () => {
     const settings = requiredSettings(settingsText);
     const baseline = saveEnvironment(bundle, settings);

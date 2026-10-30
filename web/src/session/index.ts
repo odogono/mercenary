@@ -2,8 +2,8 @@ import type { BensonEffect } from '../benson/effect.ts';
 import {
   DEFAULT_SESSION_SEED,
   randomByte,
-  type BensonMessagePresentation,
-  type BensonPort
+  type BensonChannel,
+  type BensonMessagePresentation
 } from '../benson/index.ts';
 import { blockFor, type Touchdown } from '../flight/index.ts';
 import {
@@ -62,6 +62,7 @@ import {
   type TalkHostOptions,
   type TalkScript
 } from '../talk/host.ts';
+import type { TalkSaveSnapshot } from '../talk/save.ts';
 import type { WorldPort } from '../talk/worldPort.ts';
 import {
   SURFACE,
@@ -93,8 +94,7 @@ import { observationsOf, type SemanticObservations } from './observations.ts';
 import {
   decodeRandomState,
   encodeRandomState,
-  type SaveSnapshot,
-  type TalkSaveSnapshot
+  type SaveSnapshot
 } from './save.ts';
 import {
   InterstellarShipField,
@@ -707,7 +707,7 @@ export class GameplaySession {
   private objectFlags = new Map<number, number>();
   private carriedStack: number[] = [];
   /// The Benson Display, where messages play.
-  benson: BensonPort | undefined;
+  benson: BensonChannel | undefined;
   /// The Talk Scripts, once `useTalkScripts` has loaded them (ADR 0080).
   talk: TalkHost | undefined;
   private rewired = new Map<number, Alternate>();
@@ -756,7 +756,7 @@ export class GameplaySession {
   constructor(
     content: SessionContent,
     player: PlayerState,
-    benson?: BensonPort,
+    benson?: BensonChannel,
     randomSeed: bigint = DEFAULT_SESSION_SEED
   ) {
     this.content = content;
@@ -880,11 +880,27 @@ export class GameplaySession {
     };
   }
 
+  /// A new game as live play begins one: the opening player, the Talk Scripts
+  /// loaded, and `begin` told to them.
+  static newGame(
+    content: SessionContent,
+    benson: BensonChannel,
+    talk: {
+      readonly options?: TalkHostOptions;
+      readonly scripts: readonly TalkScript[];
+    }
+  ): GameplaySession {
+    const session = new GameplaySession(content, openingPlayer(), benson);
+    session.useTalkScripts(talk.scripts, talk.options);
+    session.begin();
+    return session;
+  }
+
   /// A session as the Save left it. Given Talk Scripts, it restores theirs
   /// beside Benson, or loads them fresh where the Save has none.
   static restore(
     content: SessionContent,
-    benson: BensonPort | undefined,
+    benson: BensonChannel | undefined,
     snapshot: SaveSnapshot,
     talk?: {
       readonly options?: TalkHostOptions;

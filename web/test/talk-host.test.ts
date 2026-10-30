@@ -9,7 +9,6 @@ import {
 } from '../src/session/index.ts';
 import {
   SAVE_SCHEMA_VERSION,
-  SAVE_TALK_CODE_UNIT_LIMIT,
   decodeSave,
   encodeSave,
   type SaveEnvelope
@@ -17,6 +16,10 @@ import {
 import { flightModel, loadSettings } from '../src/settings/index.ts';
 import { BrowserControlProfile } from '../src/shell/input.ts';
 import type { TalkHostOptions, TalkScript } from '../src/talk/host.ts';
+import {
+  TALK_SAVE_CODE_UNIT_LIMIT,
+  TalkSaveRefused
+} from '../src/talk/save.ts';
 import { TextTable } from '../src/text/index.ts';
 import { World, room } from '../src/world/index.ts';
 import { environment } from './fixtures/save.ts';
@@ -517,9 +520,29 @@ end begin
       snapshot: { ...save.snapshot, talk: { ...save.snapshot.talk!, group } }
     });
     expect(() =>
-      encodeSave(withGroup('A'.repeat(SAVE_TALK_CODE_UNIT_LIMIT + 4)))
+      encodeSave(withGroup('A'.repeat(TALK_SAVE_CODE_UNIT_LIMIT + 4)))
     ).toThrow('Talk Script save limit');
     expect(() => encodeSave(withGroup('not base64!'))).toThrow('base64');
     expect(decodeSave(encodeSave(save), environment)).toEqual(save);
+  });
+
+  test('refuses a Save whose Talk Scripts no longer load, rather than starting them fresh (#933)', () => {
+    const session = withScripts([listener('one')]);
+    const snapshot = session.captureSaveSnapshot();
+    // Base64 that is no NorthTalk Group: the story it held cannot come back.
+    const broken = {
+      ...snapshot,
+      talk: { ...snapshot.talk!, group: 'AAAAAAAA' }
+    };
+    expect(() =>
+      GameplaySession.restore(content, benson(), broken, {
+        scripts: [listener('one')]
+      })
+    ).toThrow(TalkSaveRefused);
+    expect(() =>
+      GameplaySession.restore(content, benson(), broken, {
+        scripts: [listener('one')]
+      })
+    ).toThrow('start a New Game');
   });
 });
