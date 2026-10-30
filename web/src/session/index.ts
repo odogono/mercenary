@@ -84,7 +84,9 @@ import { endingStateOf, type EndingState } from './ending.ts';
 import {
   advanceLiftJourney,
   liftCameraAltitude,
+  liftJourneyAt,
   liftPhaseIndex,
+  liftSecondsToNextEvent,
   startLiftJourney,
   type LiftJourneyState
 } from './liftJourney.ts';
@@ -147,6 +149,31 @@ export type { WorldEvent } from './worldEvents.ts';
 /// intent and the Room's walls, then turns what came back — a touchdown, wall contact, a Doorway
 /// taken — into PresentationEvents for the caller to sound and draw. Session State stays the
 /// session's own; a PresentationEvent is what only presentation should answer.
+
+/// A hired ship's altitude after each of the original's frames, from where it
+/// starts down to the ground: each frame takes 1/2^shift of the altitude and
+/// a little more.
+const descentTracks = new WeakMap<EndgameShipDelivery, readonly number[]>();
+const descentTrack = (rules: EndgameShipDelivery): readonly number[] => {
+  const known = descentTracks.get(rules);
+  if (known !== undefined) {
+    return known;
+  }
+  const track = [rules.initialisation.y >>> 8];
+  while (track.at(-1)! > 0) {
+    const altitude = track.at(-1)!;
+    track.push(
+      Math.max(
+        0,
+        altitude -
+          (altitude >>> rules.descent.shift) -
+          rules.descent.extraSubtraction
+      )
+    );
+  }
+  descentTracks.set(rules, track);
+  return track;
+};
 
 export type Occupancy =
   | { readonly kind: 'onFoot' }
@@ -314,7 +341,6 @@ export const openingPlayer = (): PlayerState =>
 
 /// The Reference Build's terminal loop is raster-locked, so it runs at the
 /// display's rate rather than at the browser's step.
-const TERMINAL_LOOPS_PER_SECOND = 50;
 
 export interface SessionContent {
   readonly cellSize: number;
@@ -548,62 +574,25 @@ const validateSnapshotReferences = (
         `Save Snapshot Lift Journey refers to missing entrance ${journey.entranceRoom}`
       );
     }
-    const timing = content.underground?.lift.timing.find(
-      item => item.room === journey.entranceRoom
-    )?.[journey.direction];
-    if (timing === undefined) {
+    const lift = content.underground?.lift;
+    if (
+      lift?.timing.find(item => item.room === journey.entranceRoom)?.[
+        journey.direction
+      ] === undefined
+    ) {
       throw new Error(
         `Save Snapshot Lift Journey has no timing for entrance ${journey.entranceRoom}`
       );
     }
-    if (journey.elapsedFrames >= timing.stopAt) {
+    const at = liftJourneyAt(journey, journey.elapsedSeconds, lift);
+    if (at === undefined) {
       throw new Error('Save Snapshot Lift Journey has already completed');
     }
-    const expectedScene =
-      journey.elapsedFrames >= timing.sceneAt
-        ? journey.direction === 'down'
-          ? 'room'
-          : 'surface'
-        : journey.direction === 'down'
-          ? 'surface'
-          : 'room';
-    if (journey.scene !== expectedScene) {
-      throw new Error(
-        'Save Snapshot Lift Journey scene disagrees with its captured phase'
-      );
-    }
-    const visibleRoom = journey.scene === 'room' ? journey.entranceRoom : null;
+    const visibleRoom = at.scene === 'room' ? journey.entranceRoom : null;
     if (snapshot.game.room !== visibleRoom) {
       throw new Error(
         'Save Snapshot Lift Journey visible scene disagrees with Room'
       );
-    }
-    if (
-      (journey.direction === 'down' &&
-        (journey.stage < 0 || journey.stage > 13)) ||
-      (journey.direction === 'up' && (journey.stage < 0 || journey.stage >= 14))
-    ) {
-      throw new Error(
-        'Save Snapshot Lift Journey stage is outside its direction'
-      );
-    }
-    const lift = content.underground!.lift;
-    const initial = startLiftJourney(
-      journey.direction,
-      journey.entranceRoom,
-      lift,
-      journey.restingAltitude
-    );
-    const expected = advanceLiftJourney(
-      initial,
-      journey.elapsedFrames / lift.framesPerSecond,
-      lift
-    ).journey;
-    if (
-      expected?.stage !== journey.stage ||
-      expected.position !== journey.position
-    ) {
-      throw new Error('Save Snapshot Lift Journey phase is unreachable');
     }
   }
   const objectSlots = new Set(content.objects.map(object => object.slot));
@@ -703,7 +692,8 @@ export class GameplaySession {
   private lookRoom: number | undefined;
 
   /// The fraction of a frame left over from the last ship-delivery step.
-  private deliveryFrames = 0;
+  /// Seconds since a hired ship began its descent, while it descends.
+  private deliverySeconds: number | undefined;
   private readonly liftMode: 'instantOracle' | 'reference' = 'reference';
   private liftJourney: LiftJourneyState | undefined;
   private liftBensonColour: number | undefined;
@@ -726,7 +716,6 @@ export class GameplaySession {
   /// The part of a terminal loop that had not elapsed yet. The native loop runs
   /// at the Reference Build's 50 a second, which is not this session's step, so
   /// the remainder is carried the way Benson frames are.
-  private endingLoops = 0;
   /// The one Player Projectile, while it is in flight. Its position is its
   /// Object Residence, because that is what draws it; only what residence
   /// cannot hold is kept here.
@@ -837,14 +826,11 @@ export class GameplaySession {
                     },
               siteTable: [...this.sites.bytes]
             },
-      deliveryFrames: this.deliveryFrames,
+      deliverySeconds: this.deliverySeconds ?? null,
       ending:
         this.endingField === undefined
           ? null
-          : {
-              field: this.endingField.captureSaveSnapshot(),
-              loops: this.endingLoops
-            },
+          : { field: this.endingField.captureSaveSnapshot() },
       game: {
         ...this.game,
         craft: this.game.craft ?? null,
@@ -861,7 +847,10 @@ export class GameplaySession {
         this.liftJourney === undefined
           ? null
           : {
-              ...this.liftJourney,
+              direction: this.liftJourney.direction,
+              elapsedSeconds: this.liftJourney.elapsedSeconds,
+              entranceRoom: this.liftJourney.entranceRoom,
+              restingAltitude: this.liftJourney.restingAltitude,
               retainedBensonColour: this.liftBensonColour ?? null
             },
       objectFlags: [...this.objectFlags.entries()].sort(([a], [b]) => a - b),
@@ -907,21 +896,15 @@ export class GameplaySession {
       touchdown: snapshot.game.touchdown ?? undefined
     };
     session.carriedStack = [...snapshot.carriedStack];
-    session.deliveryFrames = snapshot.deliveryFrames;
+    session.deliverySeconds = snapshot.deliverySeconds ?? undefined;
     session.liftJourney =
       snapshot.liftJourney === null
         ? undefined
-        : {
-            direction: snapshot.liftJourney.direction,
-            elapsedFrames: snapshot.liftJourney.elapsedFrames,
-            entranceRoom: snapshot.liftJourney.entranceRoom,
-            fractionalFrameRemainder:
-              snapshot.liftJourney.fractionalFrameRemainder,
-            position: snapshot.liftJourney.position,
-            restingAltitude: snapshot.liftJourney.restingAltitude,
-            scene: snapshot.liftJourney.scene,
-            stage: snapshot.liftJourney.stage
-          };
+        : liftJourneyAt(
+            snapshot.liftJourney,
+            snapshot.liftJourney.elapsedSeconds,
+            content.underground!.lift
+          );
     session.liftBensonColour =
       snapshot.liftJourney?.retainedBensonColour ?? undefined;
     // A terminal presentation is restored where it was rather than begun again:
@@ -931,7 +914,6 @@ export class GameplaySession {
         content.endingField,
         snapshot.ending.field
       );
-      session.endingLoops = snapshot.ending.loops;
     }
     session.objectFlags = new Map(snapshot.objectFlags);
     session.residence = new Map(snapshot.residence);
@@ -2197,18 +2179,18 @@ export class GameplaySession {
     if (this.liftJourney === undefined || lift === undefined || seconds <= 0) {
       return this.advanceInterval(seconds);
     }
-    // Keep Benson and the other running systems alongside the lift clock.
-    // In particular, arrival cannot consume time that preceded completion.
+    // A step is split where the journey's scene changes and where it stops,
+    // so what follows either is given only the time after it.
     const events: PresentationEvent[] = [];
     let remaining = seconds;
-    while (remaining > 1e-12) {
-      const remainder = this.liftJourney?.fractionalFrameRemainder ?? 0;
-      const interval = Math.min(
-        remaining,
-        (1 - remainder) / lift.framesPerSecond
-      );
-      events.push(...this.advanceInterval(interval).events);
-      remaining -= interval;
+    while (remaining > 0) {
+      const until =
+        this.liftJourney === undefined
+          ? remaining
+          : liftSecondsToNextEvent(this.liftJourney, lift);
+      const slice = until > 0 ? Math.min(remaining, until) : remaining;
+      events.push(...this.advanceInterval(slice).events);
+      remaining -= slice;
     }
     return { events, snapshot: this.snapshot };
   }
@@ -2224,93 +2206,10 @@ export class GameplaySession {
     // no Ship Delivery, no combat.
     const terminal = this.ending.kind !== 'activePlay';
     const journeyAtStart = this.liftJourney !== undefined;
-    let liftSurfaceSeconds = 0;
-    if (
-      this.liftJourney !== undefined &&
-      this.content.underground !== undefined
-    ) {
-      const before = this.liftJourney;
-      const advanced = advanceLiftJourney(
-        before,
-        seconds,
-        this.content.underground.lift
-      );
-      liftSurfaceSeconds = advanced.surfaceSeconds;
-      if (advanced.journey !== undefined) {
-        this.liftJourney = advanced.journey;
-        this.applyLiftScene(before, advanced.journey.scene);
-        const colonyEntry =
-          advanced.journey.entranceRoom === COLONY_CRAFT_LIFT_ROOM &&
-          advanced.journey.scene === 'surface'
-            ? this.content.endgame?.colonyCraft.entry
-            : undefined;
-        const deckOffset =
-          colonyEntry === undefined
-            ? 0
-            : colonyEntry.altitudeHighByte * 0x1_00_00 +
-              colonyEntry.wrappedAltitudeMiddleByte * 0x1_00;
-        this.game = {
-          ...this.game,
-          player: {
-            ...this.game.player,
-            position: {
-              ...this.game.player.position,
-              y:
-                liftCameraAltitude(
-                  advanced.journey,
-                  this.content.underground.lift
-                ) + deckOffset
-            }
-          }
-        };
-      } else {
-        const previousRoom =
-          before.direction === 'down' ? SURFACE_ROOM : before.entranceRoom;
-        this.applyLiftScene(
-          before,
-          before.direction === 'down' ? 'room' : 'surface'
-        );
-        this.game = {
-          ...this.game,
-          player: {
-            ...this.game.player,
-            position: {
-              ...this.game.player.position,
-              y:
-                before.direction === 'up'
-                  ? before.restingAltitude
-                  : (advanced.finalAltitude ?? this.game.player.position.y)
-            }
-          }
-        };
-        if (
-          before.direction === 'up' &&
-          before.entranceRoom === COLONY_CRAFT_LIFT_ROOM
-        ) {
-          const colonyCraft = this.content.endgame?.colonyCraft;
-          if (colonyCraft !== undefined) {
-            this.game = surface(
-              this.game,
-              {
-                cell: colonyCraft.cell,
-                room: COLONY_CRAFT_LIFT_ROOM,
-                site: COLONY_CRAFT_LIFT_ROOM
-              },
-              this.content.underground.lift,
-              this.content.cellSize,
-              colonyCraft
-            );
-          }
-        }
-        this.liftJourney = undefined;
-        this.liftBensonColour = undefined;
-        events.push(
-          { arrived: this.location },
-          ...this.settleIntoTheRoom(previousRoom)
-        );
-      }
-      this.game = { ...this.game, elapsed: this.game.elapsed + seconds };
-    }
+    // A slice never crosses one of the journey's events (`advanceFrame`), so
+    // its scene holds for the whole slice.
+    const liftSurfaceSeconds =
+      this.liftJourney?.scene === 'surface' ? seconds : 0;
     // The Reference Build reads the override's own carried flag every frame, at
     // the throttle and again at the ceiling, rather than remembering a decision
     // taken when it was picked up. So this is derived rather than set: putting
@@ -2386,7 +2285,98 @@ export class GameplaySession {
         )
       );
     }
+    this.advanceLift(seconds, events);
     return { events, snapshot: this.snapshot };
+  }
+
+  /// Moves a Lift Journey on to the end of a slice, after the slice's other
+  /// systems: a scene change or arrival at its end gets only the time after.
+  private advanceLift(seconds: number, events: PresentationEvent[]): void {
+    if (
+      this.liftJourney !== undefined &&
+      this.content.underground !== undefined
+    ) {
+      const before = this.liftJourney;
+      const advanced = advanceLiftJourney(
+        before,
+        seconds,
+        this.content.underground.lift
+      );
+      if (advanced.journey !== undefined) {
+        this.liftJourney = advanced.journey;
+        this.applyLiftScene(before, advanced.journey.scene);
+        const colonyEntry =
+          advanced.journey.entranceRoom === COLONY_CRAFT_LIFT_ROOM &&
+          advanced.journey.scene === 'surface'
+            ? this.content.endgame?.colonyCraft.entry
+            : undefined;
+        const deckOffset =
+          colonyEntry === undefined
+            ? 0
+            : colonyEntry.altitudeHighByte * 0x1_00_00 +
+              colonyEntry.wrappedAltitudeMiddleByte * 0x1_00;
+        this.game = {
+          ...this.game,
+          player: {
+            ...this.game.player,
+            position: {
+              ...this.game.player.position,
+              y:
+                liftCameraAltitude(
+                  advanced.journey,
+                  this.content.underground.lift
+                ) + deckOffset
+            }
+          }
+        };
+      } else {
+        const previousRoom =
+          before.direction === 'down' ? SURFACE_ROOM : before.entranceRoom;
+        this.applyLiftScene(
+          before,
+          before.direction === 'down' ? 'room' : 'surface'
+        );
+        this.game = {
+          ...this.game,
+          player: {
+            ...this.game.player,
+            position: {
+              ...this.game.player.position,
+              y:
+                before.direction === 'up'
+                  ? before.restingAltitude
+                  : (advanced.finalAltitude ?? this.game.player.position.y)
+            }
+          }
+        };
+        if (
+          before.direction === 'up' &&
+          before.entranceRoom === COLONY_CRAFT_LIFT_ROOM
+        ) {
+          const colonyCraft = this.content.endgame?.colonyCraft;
+          if (colonyCraft !== undefined) {
+            this.game = surface(
+              this.game,
+              {
+                cell: colonyCraft.cell,
+                room: COLONY_CRAFT_LIFT_ROOM,
+                site: COLONY_CRAFT_LIFT_ROOM
+              },
+              this.content.underground.lift,
+              this.content.cellSize,
+              colonyCraft
+            );
+          }
+        }
+        this.liftJourney = undefined;
+        this.liftBensonColour = undefined;
+        events.push(
+          { arrived: this.location },
+          ...this.settleIntoTheRoom(previousRoom)
+        );
+      }
+      this.game = { ...this.game, elapsed: this.game.elapsed + seconds };
+    }
   }
 
   /// Which Site a position is over, formed the way the Reference Build forms it:
@@ -2821,30 +2811,8 @@ export class GameplaySession {
     return true;
   }
 
-  /// Flies a hired Interstellar Ship down to the surface, a frame at a time.
-  ///
-  /// The Reference Build calls this from the main loop before the branch that
-  /// would skip it underground, so the ship keeps coming while the player is in
-  /// a Room, mid-message, or anywhere else. Nothing here asks a script's
-  /// permission and nothing here is a script's business: the scripts decide
-  /// that a ship was hired, and this is what that decision does next.
-  ///
-  /// The altitude is not stored twice. It is read back out of the ship's own
-  /// Object Residence, which the decoded write always leaves a whole multiple of
-  /// `0x100`, so the only thing this has to carry between frames is the part of
-  /// a frame that has not elapsed yet.
-  /// Run the terminal loop for as much of it as this step covers.
-  ///
-  /// The Reference Build's loop is raster-locked at 50 a second, which is not
-  /// the browser's step, so whole loops are taken out of an accumulator and the
-  /// remainder is carried — the same shape the display clock uses for its
-  /// own frames, and for the same reason: the decoded delays are counted in
-  /// loops, so running them on the browser's rate would arrive early.
-  ///
-  /// The field is what writes phase 255, from inside its colour sequence. The
-  /// write goes through the Host Callout after the scripts have been reconciled,
-  /// so the session's own project-and-reconcile seam cannot put the old byte
-  /// back over it.
+  /// Runs the Escape's star field, which keeps its own loop rate. The field
+  /// is what writes phase 255, from inside its colour sequence.
   private advanceEndingPresentation(seconds: number): void {
     const rules = this.content.endingField;
     if (rules === undefined || this.scripts === undefined || seconds <= 0) {
@@ -2854,18 +2822,16 @@ export class GameplaySession {
       rules,
       this.endingFieldSeed()
     );
-    this.endingLoops += seconds * TERMINAL_LOOPS_PER_SECOND;
-    while (this.endingLoops >= 1) {
-      this.endingLoops -= 1;
-      const phase = this.ending;
-      if (phase.kind !== 'escape') {
-        return;
+    this.endingField.advance(
+      seconds,
+      () => {
+        const ending = this.ending;
+        return ending.kind === 'escape' ? ending.phase : undefined;
+      },
+      written => {
+        this.scripts!.host = this.scripts!.host.with({ endingPhase: written });
       }
-      const written = this.endingField.step(phase.phase).phaseWrite;
-      if (written !== undefined) {
-        this.scripts.host = this.scripts.host.with({ endingPhase: written });
-      }
-    }
+    );
   }
 
   /// The two bytes the field's generator continues from.
@@ -2882,74 +2848,51 @@ export class GameplaySession {
     };
   }
 
+  /// Flies a hired ship down: its altitude follows the descent track by the
+  /// seconds since it began (ADR 0083), and it lands at the track's end.
+  ///
+  /// The Reference Build runs this before the branch that would skip it
+  /// underground, so the ship keeps coming while the player is in a Room,
+  /// mid-message, or anywhere else. The scripts decide that a ship was hired;
+  /// this is what that decision does next.
   private advanceShipDelivery(seconds: number): void {
     const rules = this.content.shipDelivery;
-    if (rules === undefined || this.scripts === undefined || seconds <= 0) {
-      return;
-    }
-    // The descent is a per-frame Reference Build quantity, like the control
-    // loop's rates and the Room Transition's cooldown, so it advances on the
-    // same reference frame rate they do rather than on a second clock of its
-    // own (ADR 0016). It is deliberately not the scripts' tick clock: the
-    // native routine counts main-loop iterations, not the 50 Hz interrupt.
     const rate = this.content.flight?.limits.referenceFrameRate;
-    if (rate === undefined) {
+    if (
+      rules === undefined ||
+      rate === undefined ||
+      this.scripts === undefined ||
+      seconds <= 0
+    ) {
       return;
     }
-    this.deliveryFrames += seconds * rate;
-    const frames = Math.floor(this.deliveryFrames);
-    this.deliveryFrames -= frames;
-    let moved = false;
-    for (let frame = 0; frame < frames; frame++) {
-      const state = this.scripts.host.shipInbound;
-      if (state === rules.inactiveValue) {
-        break;
-      }
-      moved = true;
-      if ((state & rules.acceptedMask) !== 0) {
-        this.beginShipDelivery(rules);
-        continue;
-      }
-      this.stepShipDelivery(rules);
+    const state = this.scripts.host.shipInbound;
+    if (state === rules.inactiveValue) {
+      this.deliverySeconds = undefined;
+      return;
     }
-    if (moved) {
-      this.republishHostState();
+    if ((state & rules.acceptedMask) !== 0) {
+      this.scripts.host = this.scripts.host.with({
+        shipInbound: rules.descendingValue
+      });
+      this.deliverySeconds = 0;
     }
-  }
-
-  private beginShipDelivery(rules: EndgameShipDelivery): void {
+    this.deliverySeconds = (this.deliverySeconds ?? 0) + seconds;
+    const track = descentTrack(rules);
+    const step = Math.floor(this.deliverySeconds * rate + 1e-9);
+    const altitude = track[Math.min(step, track.length - 1)]!;
     const { initialisation: start } = rules;
     this.residence.set(rules.slot, {
-      at: { x: start.x, y: start.y, z: start.z },
+      at: { x: start.x, y: altitude << 8, z: start.z },
       kind: 'surface'
     });
-    this.scripts!.host = this.scripts!.host.with({
-      shipInbound: rules.descendingValue
-    });
-  }
-
-  private stepShipDelivery(rules: EndgameShipDelivery): void {
-    const where = this.residence.get(rules.slot);
-    const at = where !== undefined ? displacement(where) : undefined;
-    if (at === undefined) {
-      return;
-    }
-    const altitude = at.y >>> 8;
-    const next = Math.max(
-      0,
-      altitude -
-        (altitude >>> rules.descent.shift) -
-        rules.descent.extraSubtraction
-    );
-    this.residence.set(rules.slot, {
-      at: { x: at.x, y: next << 8, z: at.z },
-      kind: 'surface'
-    });
-    if (next === 0) {
-      this.scripts!.host = this.scripts!.host.with({
+    if (altitude === 0) {
+      this.scripts.host = this.scripts.host.with({
         shipInbound: rules.inactiveValue
       });
+      this.deliverySeconds = undefined;
     }
+    this.republishHostState();
   }
 
   /// This session as flat scalars, for comparison against the Reference Build.

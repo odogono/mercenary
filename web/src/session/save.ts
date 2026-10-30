@@ -7,7 +7,7 @@ import type { FlightSettings, MessageSettings } from '../settings/index.ts';
 import type { Location, Residence } from '../world/index.ts';
 import type { ShipFieldPoint, ShipFieldSaveSnapshot } from './shipField.ts';
 
-export const SAVE_SCHEMA_VERSION = 19 as const;
+export const SAVE_SCHEMA_VERSION = 20 as const;
 export const SAVE_JSON_CODE_UNIT_LIMIT = 1_000_000;
 
 const SAVE_COLLECTION_LIMIT = 1024;
@@ -128,31 +128,24 @@ export interface SaveSnapshot {
   readonly carriedStack: readonly number[];
   /// Absent when the content carries no Sites to destroy.
   readonly combat: CombatSaveSnapshot | null;
-  /// The part of a ship-delivery frame that had not elapsed yet.
-  readonly deliveryFrames: number;
+  /// Seconds since a hired ship began its descent, or null when none descends.
+  readonly deliverySeconds: number | null;
   /// The Escape's terminal presentation, if one is running.
   ///
   /// `field` is the continuation boundary the decode names, without which a
   /// restored Ending would begin its field again instead of carrying on.
-  /// `loops` is not the decode's: the native loop is raster-locked and has no
-  /// remainder, and this is what is left of one when a fifty-a-second loop is
-  /// run on the browser's own step — carried for the same reason
-  /// `deliveryFrames` is.
   readonly ending: {
     readonly field: ShipFieldSaveSnapshot;
-    readonly loops: number;
   } | null;
   readonly game: GameSaveSnapshot;
+  /// A Lift Journey under way: its stage, position and scene follow from the
+  /// seconds since it began (ADR 0083).
   readonly liftJourney: {
     readonly direction: 'down' | 'up';
-    readonly elapsedFrames: number;
+    readonly elapsedSeconds: number;
     readonly entranceRoom: number;
-    readonly fractionalFrameRemainder: number;
-    readonly position: number;
     readonly restingAltitude: number;
     readonly retainedBensonColour: number | null;
-    readonly scene: 'room' | 'surface';
-    readonly stage: number;
   } | null;
   readonly objectFlags: readonly (readonly [number, number])[];
   readonly randomState: string;
@@ -906,11 +899,7 @@ const endingPresentation = (
   value: unknown,
   at: string
 ): NonNullable<SaveSnapshot['ending']> => {
-  const wrapper = exact(value, at, ['field', 'loops']);
-  const loops = finite(wrapper['loops'], `${at}.loops`);
-  if (!(loops >= 0) || loops >= 1) {
-    fail(`${at}.loops must be at least 0 and less than 1`);
-  }
+  const wrapper = exact(value, at, ['field']);
   const out = exact(wrapper['field'], `${at}.field`, [
     'colourDelay',
     'colourIndex',
@@ -918,6 +907,7 @@ const endingPresentation = (
     'current',
     'depthDelta',
     'loop',
+    'loopSeconds',
     'matured',
     'prior',
     'random'
@@ -956,14 +946,14 @@ const endingPresentation = (
       current: points(out['current'], `${at}.field.current`),
       depthDelta: finite(out['depthDelta'], `${at}.field.depthDelta`),
       loop: nonNegativeInteger(out['loop'], `${at}.field.loop`),
+      loopSeconds: nonNegative(out['loopSeconds'], `${at}.field.loopSeconds`),
       matured: bool(out['matured'], `${at}.field.matured`),
       prior: points(out['prior'], `${at}.field.prior`),
       random: {
         state: byte(seed['state'], `${at}.field.random.state`),
         value: byte(seed['value'], `${at}.field.random.value`)
       }
-    },
-    loops
+    }
   };
 };
 
@@ -972,7 +962,7 @@ const snapshot = (value: unknown, at: string): SaveSnapshot => {
     'benson',
     'carriedStack',
     'combat',
-    'deliveryFrames',
+    'deliverySeconds',
     'ending',
     'game',
     'liftJourney',
@@ -986,43 +976,23 @@ const snapshot = (value: unknown, at: string): SaveSnapshot => {
   if (new Set(carriedStack).size !== carriedStack.length) {
     fail(`${at}.carriedStack members must be unique`);
   }
-  const deliveryFrames = finite(out['deliveryFrames'], `${at}.deliveryFrames`);
-  if (!(deliveryFrames >= 0) || deliveryFrames >= 1) {
-    fail(`${at}.deliveryFrames must be at least 0 and less than 1`);
-  }
+  const deliverySeconds =
+    out['deliverySeconds'] === null
+      ? null
+      : nonNegative(out['deliverySeconds'], `${at}.deliverySeconds`);
   const rawLift =
     out['liftJourney'] === null
       ? null
       : exact(out['liftJourney'], `${at}.liftJourney`, [
           'direction',
-          'elapsedFrames',
+          'elapsedSeconds',
           'entranceRoom',
-          'fractionalFrameRemainder',
-          'position',
           'restingAltitude',
-          'retainedBensonColour',
-          'scene',
-          'stage'
+          'retainedBensonColour'
         ]);
-  const liftRemainder =
-    rawLift === null
-      ? 0
-      : finite(
-          rawLift['fractionalFrameRemainder'],
-          `${at}.liftJourney.fractionalFrameRemainder`
-        );
-  if (!(liftRemainder >= 0) || liftRemainder >= 1) {
-    fail(
-      `${at}.liftJourney.fractionalFrameRemainder must be at least 0 and less than 1`
-    );
-  }
   const liftDirection = rawLift?.['direction'];
   if (rawLift !== null && liftDirection !== 'down' && liftDirection !== 'up') {
     fail(`${at}.liftJourney.direction must be down or up`);
-  }
-  const liftScene = rawLift?.['scene'];
-  if (rawLift !== null && liftScene !== 'room' && liftScene !== 'surface') {
-    fail(`${at}.liftJourney.scene must be room or surface`);
   }
   return {
     benson:
@@ -1030,7 +1000,7 @@ const snapshot = (value: unknown, at: string): SaveSnapshot => {
     carriedStack,
     combat:
       out['combat'] === null ? null : combat(out['combat'], `${at}.combat`),
-    deliveryFrames,
+    deliverySeconds,
     ending:
       out['ending'] === null
         ? null
@@ -1041,22 +1011,15 @@ const snapshot = (value: unknown, at: string): SaveSnapshot => {
         ? null
         : {
             direction: liftDirection as 'down' | 'up',
-            elapsedFrames: nonNegativeInteger(
-              rawLift['elapsedFrames'],
-              `${at}.liftJourney.elapsedFrames`
+            elapsedSeconds: nonNegative(
+              rawLift['elapsedSeconds'],
+              `${at}.liftJourney.elapsedSeconds`
             ),
             entranceRoom: integerInRange(
               rawLift['entranceRoom'],
               `${at}.liftJourney.entranceRoom`,
               1,
               191
-            ),
-            fractionalFrameRemainder: liftRemainder,
-            position: integerInRange(
-              rawLift['position'],
-              `${at}.liftJourney.position`,
-              0,
-              132
             ),
             restingAltitude: finite(
               rawLift['restingAltitude'],
@@ -1070,14 +1033,7 @@ const snapshot = (value: unknown, at: string): SaveSnapshot => {
                     `${at}.liftJourney.retainedBensonColour`,
                     0,
                     15
-                  ),
-            scene: liftScene as 'room' | 'surface',
-            stage: integerInRange(
-              rawLift['stage'],
-              `${at}.liftJourney.stage`,
-              0,
-              14
-            )
+                  )
           },
     objectFlags: mapEntries(out['objectFlags'], `${at}.objectFlags`),
     randomState: randomState(out['randomState'], `${at}.randomState`),

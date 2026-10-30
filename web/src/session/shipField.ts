@@ -72,6 +72,8 @@ export interface ShipFieldSaveSnapshot {
   readonly current: readonly ShipFieldPoint[];
   readonly depthDelta: number;
   readonly loop: number;
+  /// Seconds into the next loop.
+  readonly loopSeconds: number;
   readonly matured: boolean;
   readonly prior: readonly ShipFieldPoint[];
   readonly random: ShipFieldSeed;
@@ -113,6 +115,7 @@ export class InterstellarShipField {
   private current: ShipFieldPoint[];
   private delta: number;
   private loop: number;
+  private loopSeconds: number;
   private matured: boolean;
   private prior: ShipFieldPoint[];
   private random: ShipFieldSeed;
@@ -128,6 +131,7 @@ export class InterstellarShipField {
     this.current = [...state.current];
     this.delta = state.depthDelta;
     this.loop = state.loop;
+    this.loopSeconds = state.loopSeconds;
     this.matured = state.matured;
     this.prior = [...state.prior];
     this.random = { ...state.random };
@@ -152,6 +156,7 @@ export class InterstellarShipField {
       current: Array.from({ length: slots }, () => primed),
       depthDelta: rules.motion.scriptedPhaseDepthDelta,
       loop: 0,
+      loopSeconds: 0,
       matured: false,
       prior: Array.from({ length: slots }, () => primed),
       random: seed
@@ -165,6 +170,32 @@ export class InterstellarShipField {
     state: ShipFieldSaveSnapshot
   ): InterstellarShipField {
     return new InterstellarShipField(rules, state);
+  }
+
+  /// The field animates at the native terminal loop's own rate.
+  static readonly loopsPerSecond = 50;
+
+  /// Runs as many loops as `seconds` brings due, carrying the rest of one
+  /// (ADR 0083). Each loop reads the Ending Phase afresh and hands on any
+  /// phase it writes; it stops once the phase is no longer the Escape's.
+  advance(
+    seconds: number,
+    phase: () => EndingPhase | undefined,
+    write: (phase: number) => void
+  ): void {
+    const loopSeconds = 1 / InterstellarShipField.loopsPerSecond;
+    this.loopSeconds += seconds;
+    while (this.loopSeconds >= loopSeconds - 1e-9) {
+      this.loopSeconds = Math.max(0, this.loopSeconds - loopSeconds);
+      const now = phase();
+      if (now === undefined) {
+        return;
+      }
+      const written = this.step(now).phaseWrite;
+      if (written !== undefined) {
+        write(written);
+      }
+    }
   }
 
   /// One native terminal loop, in the decoded order: advance the colour
@@ -213,6 +244,7 @@ export class InterstellarShipField {
       current: [...this.current],
       depthDelta: this.delta,
       loop: this.loop,
+      loopSeconds: this.loopSeconds,
       matured: this.matured,
       prior: [...this.prior],
       random: { ...this.random }

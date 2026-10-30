@@ -1,6 +1,7 @@
 import { join } from 'node:path';
 import { describe, expect, test } from 'bun:test';
 
+import { BensonChannel } from '../src/benson/index.ts';
 import type { UndergroundLift } from '../src/payload/documents.ts';
 import {
   GameplaySession,
@@ -16,11 +17,6 @@ import { flightModel, loadSettings } from '../src/settings/index.ts';
 import { panelViewModel } from '../src/shell/panel.ts';
 import { TextTable } from '../src/text/index.ts';
 import { World } from '../src/world/index.ts';
-import {
-  BensonProgram,
-  BensonSession,
-  bensonTunables
-} from './oracle/index.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
 
 const lift: UndergroundLift = {
@@ -125,7 +121,10 @@ describe('the Reference Lift Journey clock', () => {
     for (let frame = 0; frame < 80; frame += 1) {
       many = advanceLiftJourney(many, 1 / 20, lift).journey!;
     }
-    expect(many).toEqual(once.journey!);
+    const { elapsedSeconds, ...phase } = many;
+    const { elapsedSeconds: onceSeconds, ...oncePhase } = once.journey!;
+    expect(phase).toEqual(oncePhase);
+    expect(elapsedSeconds).toBeCloseTo(onceSeconds, 9);
     expect(once.surfaceSeconds).toBeCloseTo(193 / 50);
   });
 
@@ -157,9 +156,8 @@ const content = sessionContent(
   bundle,
   flightModel(settings.flight, bundle.flight!, world.groundExtent)
 );
-const newSession = (): GameplaySession => {
-  const program = BensonProgram.fromDocument(bundle.benson!);
-  return new GameplaySession(
+const newSession = (): GameplaySession =>
+  new GameplaySession(
     content,
     {
       heading: 0,
@@ -173,13 +171,8 @@ const newSession = (): GameplaySession => {
       speed: 0,
       yawVelocity: 0
     },
-    new BensonSession(
-      program,
-      new TextTable(bundle.text!),
-      bensonTunables(settings, program.framesPerTick)
-    )
+    new BensonChannel(new TextTable(bundle.text!))
   );
-};
 
 const panel = (subject: GameplaySession) =>
   panelViewModel(subject.snapshot, {
@@ -205,21 +198,6 @@ describe('Lift Journeys in a Gameplay Session', () => {
       many.captureSaveSnapshot().benson
     );
     expect(events).toEqual(steppedEvents);
-  });
-
-  test('rejects individually valid Save fields that form an unreachable lift phase', () => {
-    const session = newSession();
-    session.carry(46);
-    session.rideLift();
-    const saved = session.captureSaveSnapshot();
-    for (const phase of [{ position: 0, stage: 0 }, { position: 130 }]) {
-      expect(() =>
-        GameplaySession.restore(content, session.scripts, {
-          ...saved,
-          liftJourney: { ...saved.liftJourney!, ...phase }
-        })
-      ).toThrow('Lift Journey phase');
-    }
   });
 
   test('holds the altitude instrument throughout both directions and Save restore', () => {
@@ -374,7 +352,7 @@ describe('Lift Journeys in a Gameplay Session', () => {
     expect(() =>
       GameplaySession.restore(content, session.scripts, {
         ...saved,
-        liftJourney: { ...saved.liftJourney!, elapsedFrames: 340 }
+        liftJourney: { ...saved.liftJourney!, elapsedSeconds: 340 / 50 }
       })
     ).toThrow('Lift Journey has already completed');
   });
