@@ -25,6 +25,7 @@ Since schema 17 a Save holds no Benson interpreter continuation and no `bensonSc
 - On restore, a Talk Script whose identity differs is reloaded from the current source with its Script Variables carried over (`reload … 'carry variables'`). Its in-flight Runs end; unchanged scripts keep theirs. A script no longer in the build is dropped, and a new one loads fresh.
 - Display calls left pending are reissued: a line, report or prompt plays again from its start, and a prompt takes the input again. The key latch is not saved.
 - Schema 17, which dropped the Benson continuation, is the only one that loads. Schema 16 was the first to refuse older Saves (#897). Before it, a Save could still hold story state in engine and object flags that the Talk Scripts once took over, and dropping that hand-over meant refusing those Saves rather than migrating them, as ADR 0026 allows. Schemas 11 to 15 were migrated until then.
+- The story bits the Talk Scripts keep as Script Variables, engine flags 1, 2, 4, 8 and 32 and object flag 1, never change in live play. The Semantic Observations still report them as they stand, and a comparison with the original or the Benson oracle clears them on both sides with `comparableObservations` (`web/src/session/observations.ts`), comparing the story through what it shows instead (#898).
 
 **Authoring rules.**
 

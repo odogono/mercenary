@@ -1,7 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 
 import { BensonHostState } from '../src/benson/index.ts';
-import { GameplaySession } from '../src/session/index.ts';
+import {
+  GameplaySession,
+  TALK_KEPT_ENGINE_FLAGS
+} from '../src/session/index.ts';
 import { COMMERCE, ESCAPE } from '../src/talk/scripts.ts';
 import { room } from '../src/world/index.ts';
 import { LegalRoute } from './legalCheckpoint.ts';
@@ -29,8 +32,6 @@ const SHIP_RENTAL = 16;
 const MECHANOID_BRIEFING = 102;
 const STARTS_SCRIPT = 4;
 const DART_BOUGHT = 1;
-const SHIP_HIRED = 4;
-const COMMANDER_ANNOYED = 32;
 /// A Room with nothing to say, to leave the surface for.
 const UNDERGROUND = 1;
 
@@ -47,12 +48,8 @@ const outcome = (lines: Lines): Outcome => {
   return {
     attacking: host.attackingShip,
     credits: host.decimal(CREDITS),
-    // The hire, the Dart's sale and the commander's annoyance are Talk
-    // Scripts' own now, so only Benson sets their engine flags.
-    flags:
-      host.engineFlags &
-      ~0xc0 &
-      ~(SHIP_HIRED | DART_BOUGHT | COMMANDER_ANNOYED),
+    // Only Benson sets the story flags the Talk Scripts keep themselves.
+    flags: host.engineFlags & ~0xc0 & ~TALK_KEPT_ENGINE_FLAGS,
     lines: lines.lines,
     shipInbound: host.shipInbound
   };
