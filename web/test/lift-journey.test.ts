@@ -16,8 +16,21 @@ import {
 import { flightModel, loadSettings } from '../src/settings/index.ts';
 import { panelViewModel } from '../src/shell/panel.ts';
 import { TextTable } from '../src/text/index.ts';
-import { World } from '../src/world/index.ts';
+import { World, type Residence } from '../src/world/index.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
+
+/// Where two residences agree, to a float's rounding.
+const expectSamePlace = (a: Residence, b: Residence): void => {
+  expect(a.kind).toBe(b.kind);
+  const at = 'at' in a ? a.at : undefined;
+  const other = 'at' in b ? b.at : undefined;
+  expect(at === undefined).toBe(other === undefined);
+  if (at !== undefined && other !== undefined) {
+    expect(at.x).toBeCloseTo(other.x, 3);
+    expect(at.y).toBeCloseTo(other.y, 3);
+    expect(at.z).toBeCloseTo(other.z, 3);
+  }
+};
 
 const lift: UndergroundLift = {
   access: { passSlot: 46, refusalMessage: 57, restrictedRoom: 5 },
@@ -312,7 +325,7 @@ describe('Lift Journeys in a Gameplay Session', () => {
     for (let frame = 0; frame < 350; frame += 1) {
       many.advance(1 / 50);
     }
-    expect(once.residenceOf(0)).toEqual(many.residenceOf(0));
+    expectSamePlace(once.residenceOf(0), many.residenceOf(0));
   });
 
   test('restores a mid-journey Save and continues identically', () => {

@@ -189,6 +189,9 @@ const FIXED = 16;
 const SHIP_INBOUND = 0xff;
 const CREDITS = BensonHostState.firstNumberDecimal;
 
+/// The longest stretch combat moves in one go (ADR 0083).
+const MAX_COMBAT_SUBSTEP = 1 / 60;
+
 const occupancyHostValue = (occupancy: Occupancy): number =>
   occupancy.kind === 'onFoot' ? BensonHostState.onFoot : occupancy.slot;
 
@@ -507,12 +510,19 @@ const validateCombatSnapshot = (
   ) {
     throw new Error('Save Snapshot faction counter is beyond its Sites');
   }
-  if (combat.impact !== null && combat.impact.framesLeft > sites.impactFrames) {
+  const rate = content.flight?.limits.referenceFrameRate ?? 1;
+  // A hair over a lifetime is float noise in the seconds left, not a forgery.
+  const outlives = (secondsLeft: number, frames: number): boolean =>
+    secondsLeft > frames / rate + 1e-9;
+  if (
+    combat.impact !== null &&
+    outlives(combat.impact.secondsLeft, sites.impactFrames)
+  ) {
     throw new Error('Save Snapshot impact outlives its own lifecycle');
   }
   const agrees = (
     slot: number | undefined,
-    flying: { readonly framesLeft: number } | null,
+    flying: { readonly secondsLeft: number } | null,
     limit: number | undefined,
     what: string
   ): void => {
@@ -524,7 +534,11 @@ const validateCombatSnapshot = (
     if ((flying !== null) !== placed) {
       throw new Error(`Save Snapshot ${what} and its place disagree`);
     }
-    if (flying !== null && limit !== undefined && flying.framesLeft > limit) {
+    if (
+      flying !== null &&
+      limit !== undefined &&
+      outlives(flying.secondsLeft, limit)
+    ) {
       throw new Error(`Save Snapshot ${what} outlives its own lifecycle`);
     }
   };
@@ -708,7 +722,6 @@ export class GameplaySession {
   /// scripts to read (ADR 0018). Absent when the content carries no Sites.
   private sites: SiteLedger | undefined;
   /// The part of a combat frame that had not elapsed yet.
-  private combatFrames = 0;
   /// The Escape's terminal presentation, once the Ending has produced it.
   /// Created on the edge into an Ending and never taken down: the Reference
   /// Build's terminal loop does not return.
@@ -719,17 +732,18 @@ export class GameplaySession {
   /// The one Player Projectile, while it is in flight. Its position is its
   /// Object Residence, because that is what draws it; only what residence
   /// cannot hold is kept here.
-  private playerShot: { framesLeft: number; velocity: Vector3 } | undefined;
+  /// Velocities are per second, lifetimes in seconds left (ADR 0083).
+  private playerShot: { secondsLeft: number; velocity: Vector3 } | undefined;
   /// The structure impact now playing, which firing waits for.
-  private impact: { cell: number; framesLeft: number } | undefined;
+  private impact: { cell: number; secondsLeft: number } | undefined;
   /// The Hostile Projectile on its way, while there is one.
-  private hostileShot: { framesLeft: number; velocity: Vector3 } | undefined;
+  private hostileShot: { secondsLeft: number; velocity: Vector3 } | undefined;
   /// How the attacker is travelling on its current approach.
   private attackerVelocity: Vector3 | undefined;
   /// Frames the attacker has left of its current approach. It counts down
   /// before the encounter looks at anything, which is what gives an attacker
   /// time to close rather than shooting the instant it is aimed.
-  private approachFrames = 0;
+  private approachSeconds = 0;
   private ownRandomState: bigint;
   private readonly objectsBySlot: ReadonlyMap<number, ObjectPlacement>;
   /// World Events raised during play since the last frame was told.
@@ -801,17 +815,16 @@ export class GameplaySession {
         this.sites === undefined
           ? null
           : {
-              approachFrames: this.approachFrames,
+              approachSeconds: this.approachSeconds,
               attackerVelocity:
                 this.attackerVelocity === undefined
                   ? null
                   : { ...this.attackerVelocity },
-              frames: this.combatFrames,
               hostileShot:
                 this.hostileShot === undefined
                   ? null
                   : {
-                      framesLeft: this.hostileShot.framesLeft,
+                      secondsLeft: this.hostileShot.secondsLeft,
                       velocity: { ...this.hostileShot.velocity }
                     },
               impact: this.impact === undefined ? null : { ...this.impact },
@@ -821,7 +834,7 @@ export class GameplaySession {
                 this.playerShot === undefined
                   ? null
                   : {
-                      framesLeft: this.playerShot.framesLeft,
+                      secondsLeft: this.playerShot.secondsLeft,
                       velocity: { ...this.playerShot.velocity }
                     },
               siteTable: [...this.sites.bytes]
@@ -926,8 +939,7 @@ export class GameplaySession {
         snapshot.combat.palyarDestroyed,
         snapshot.combat.mechanoidDestroyed
       );
-      session.combatFrames = snapshot.combat.frames;
-      session.approachFrames = snapshot.combat.approachFrames;
+      session.approachSeconds = snapshot.combat.approachSeconds;
       session.attackerVelocity =
         snapshot.combat.attackerVelocity === null
           ? undefined
@@ -936,7 +948,7 @@ export class GameplaySession {
         snapshot.combat.hostileShot === null
           ? undefined
           : {
-              framesLeft: snapshot.combat.hostileShot.framesLeft,
+              secondsLeft: snapshot.combat.hostileShot.secondsLeft,
               velocity: { ...snapshot.combat.hostileShot.velocity }
             };
       session.impact = snapshot.combat.impact ?? undefined;
@@ -944,7 +956,7 @@ export class GameplaySession {
         snapshot.combat.playerShot === null
           ? undefined
           : {
-              framesLeft: snapshot.combat.playerShot.framesLeft,
+              secondsLeft: snapshot.combat.playerShot.secondsLeft,
               velocity: { ...snapshot.combat.playerShot.velocity }
             };
     }
@@ -1906,9 +1918,10 @@ export class GameplaySession {
       this.game.player,
       this.content.flight?.headingConvention
     );
-    const speed = rules.speedPerFrame;
+    const rate = this.content.flight?.limits.referenceFrameRate ?? 1;
+    const speed = rules.speedPerFrame * rate;
     this.playerShot = {
-      framesLeft: rules.lifecycleFrames,
+      secondsLeft: rules.lifecycleFrames / rate,
       velocity: {
         x: direction.x * speed,
         y: direction.y * speed,
@@ -2443,7 +2456,12 @@ export class GameplaySession {
           restorationCarried: this.carriedStack.includes(sites.restorationSlot)
         });
         this.removeShot();
-        this.impact = { cell, framesLeft: sites.impactFrames };
+        this.impact = {
+          cell,
+          secondsLeft:
+            sites.impactFrames /
+            (this.content.flight?.limits.referenceFrameRate ?? 1)
+        };
         events.push({ impact: { sound: sites.impactSound } });
         if (struck.kind === 'destroyed' || struck.kind === 'gratitude') {
           this.worldRaised.push({
@@ -2563,13 +2581,24 @@ export class GameplaySession {
     return at ?? this.objectsBySlot.get(slot)?.origin;
   }
 
-  /// Carries the attacker and its shot along the velocities they were given.
+  /// The original's frame rate, which turns its per-frame rules into rates and
+  /// durations (ADR 0083).
+  private get frameRate(): number {
+    return this.content.flight?.limits.referenceFrameRate ?? 1;
+  }
+
+  /// A lifetime in seconds as the original's whole frames, for comparison.
+  private framesOf(seconds: number): number {
+    return Math.ceil(seconds * this.frameRate - 1e-9);
+  }
+
+  /// Carries the attacker and its shot along their velocities for `seconds`.
   ///
-  /// They travel on the same table the Player Projectile does, so they move the
-  /// same way: a velocity added to a place, once a frame, until a lifecycle runs
-  /// out. Only the attacker keeps going when its own count reaches zero, because
-  /// what runs out for it is the approach rather than the craft.
-  private driftHostileEffects(pauseAttacker = false): boolean {
+  /// They move the way the Player Projectile does: a velocity, per second,
+  /// until a lifetime runs out. Only the attacker keeps going when its own
+  /// time is up, because what runs out for it is the approach rather than the
+  /// craft.
+  private driftHostileEffects(seconds: number, pauseAttacker = false): boolean {
     const rules = this.content.hostile;
     if (rules === undefined) {
       return false;
@@ -2582,9 +2611,9 @@ export class GameplaySession {
       }
       this.residence.set(slot, {
         at: {
-          x: at.x + velocity.x,
-          y: at.y + velocity.y,
-          z: at.z + velocity.z
+          x: at.x + velocity.x * seconds,
+          y: at.y + velocity.y * seconds,
+          z: at.z + velocity.z * seconds
         },
         kind: 'surface'
       });
@@ -2595,20 +2624,28 @@ export class GameplaySession {
     }
     const shot = this.hostileShot;
     if (shot !== undefined) {
-      const framesLeft = shot.framesLeft - 1;
-      if (framesLeft <= 0) {
+      const secondsLeft = shot.secondsLeft - seconds;
+      if (secondsLeft <= 1e-9) {
         this.hostileShot = undefined;
         this.residence.set(rules.inboundSlot, { kind: 'gone' });
         moved = true;
       } else {
-        this.hostileShot = { ...shot, framesLeft };
+        this.hostileShot = { ...shot, secondsLeft };
         drift(rules.inboundSlot, shot.velocity);
       }
     }
     return moved;
   }
 
-  /// One frame of the hostile encounter.
+  /// The velocity, per second, that carries something at `from` toward the
+  /// player: the original's per-frame aim at its frame rate.
+  private aimPerSecond(from: Vector3, shift: number): Vector3 {
+    const aim = this.aimAtThePlayer(from, shift);
+    const rate = this.frameRate;
+    return { x: aim.x * rate, y: aim.y * rate, z: aim.z * rate };
+  }
+
+  /// The hostile encounter over `seconds`.
   ///
   /// The Reference Build runs this only while the scripts have set the Attack
   /// State and only on the surface. An attacker closes in bursts: it turns
@@ -2616,15 +2653,15 @@ export class GameplaySession {
   /// looking again. Once the player is inside its firing range it shoots, and
   /// once its shot reaches the player the encounter is over — for the player's
   /// craft, not for the player.
-  private advanceHostile(): readonly PresentationEvent[] {
+  private advanceHostile(seconds: number): readonly PresentationEvent[] {
     const rules = this.content.hostile;
     const events: PresentationEvent[] = [];
     const host = this.scripts?.host;
     if (rules === undefined || host === undefined || !host.attackingShip) {
       return events;
     }
-    if (this.approachFrames > 0) {
-      this.approachFrames -= 1;
+    if (this.approachSeconds > 1e-9) {
+      this.approachSeconds = Math.max(0, this.approachSeconds - seconds);
       return events;
     }
     const attacker = this.placeOf(rules.attackingSlot);
@@ -2644,21 +2681,21 @@ export class GameplaySession {
         at: attacker,
         kind: 'surface'
       });
-      this.attackerVelocity = this.aimAtThePlayer(
+      this.attackerVelocity = this.aimPerSecond(
         attacker,
         rules.approachAimShift
       );
       // The delay runs until the effect advance parks the attacker, which is
       // the distance from the lifecycle it was given down to the sentinel.
-      this.approachFrames =
-        rules.approachDelayLifecycle - rules.parkedLifecycle;
+      this.approachSeconds =
+        (rules.approachDelayLifecycle - rules.parkedLifecycle) / this.frameRate;
       return events;
     }
     if (this.hostileShot === undefined) {
       // In range and nothing in the air: shoot, from where the attacker is.
       this.hostileShot = {
-        framesLeft: rules.inboundLifecycleFrames,
-        velocity: this.aimAtThePlayer(attacker, rules.inboundAimShift)
+        secondsLeft: rules.inboundLifecycleFrames / this.frameRate,
+        velocity: this.aimPerSecond(attacker, rules.inboundAimShift)
       };
       this.residence.set(rules.inboundSlot, { at: attacker, kind: 'surface' });
       events.push({ impact: { sound: rules.inboundSound } });
@@ -2695,12 +2732,14 @@ export class GameplaySession {
     }
     this.hostileShot = undefined;
     this.attackerVelocity = undefined;
-    this.approachFrames = 0;
+    this.approachSeconds = 0;
     return events;
   }
 
-  /// One frame of the Player Projectile: it moves, then answers for where it is.
+  /// The Player Projectile over `seconds`: it moves, then answers for where it
+  /// is.
   private stepPlayerShot(
+    seconds: number,
     rules: EndgameFire,
     events: PresentationEvent[]
   ): boolean {
@@ -2708,8 +2747,8 @@ export class GameplaySession {
     if (shot === undefined) {
       return false;
     }
-    const framesLeft = shot.framesLeft - 1;
-    if (framesLeft <= 0) {
+    const secondsLeft = shot.secondsLeft - seconds;
+    if (secondsLeft <= 1e-9) {
       this.playerShot = undefined;
       this.residence.set(rules.effectSlot, { kind: 'gone' });
       return true;
@@ -2717,28 +2756,27 @@ export class GameplaySession {
     const at = this.surfacePlaceOf(rules.effectSlot);
     if (at === undefined) {
       // Nothing is carrying the shot's position any more, so there is no shot;
-      // this is the same removal its lifecycle would have reached.
+      // this is the same removal its lifetime would have reached.
       this.playerShot = undefined;
       return true;
     }
     const next = {
-      x: at.x + shot.velocity.x,
-      y: at.y + shot.velocity.y,
-      z: at.z + shot.velocity.z
+      x: at.x + shot.velocity.x * seconds,
+      y: at.y + shot.velocity.y * seconds,
+      z: at.z + shot.velocity.z * seconds
     };
-    this.playerShot = { ...shot, framesLeft };
+    this.playerShot = { ...shot, secondsLeft };
     this.residence.set(rules.effectSlot, { at: next, kind: 'surface' });
     events.push(...this.resolveShot(next));
     return true;
   }
 
-  /// Advances the outdoor frame's independently moving objects and combat.
+  /// Advances the outdoor objects that move by themselves, and combat.
   ///
   /// The order is the Reference Build's main loop: the permanent flyby, then
-  /// the structure impact and effect slots. Firing itself is a Semantic Action
-  /// rather than a step of this, which is the same relative order the original
-  /// has, because it polls the fire input once per frame before advancing
-  /// anything.
+  /// the structure impact, the effect slots and the hostile craft. Firing
+  /// itself is a Semantic Action rather than a step of this, which is the same
+  /// relative order the original has.
   ///
   /// Nothing here runs underground. The original reaches its combat calls only
   /// on the outdoor path, so a Room is not a place where a shot quietly keeps
@@ -2749,38 +2787,36 @@ export class GameplaySession {
     forceSurface = false
   ): readonly PresentationEvent[] {
     const rules = this.content.fire;
-    const rate = this.content.flight?.limits.referenceFrameRate;
     const events: PresentationEvent[] = [];
     if (
-      rate === undefined ||
+      this.content.flight === undefined ||
       seconds <= 0 ||
       (!forceSurface && this.location.kind !== 'surface')
     ) {
       return events;
     }
-    this.combatFrames += seconds * rate;
-    const frames = Math.floor(this.combatFrames);
-    this.combatFrames -= frames;
+    // Sub-steps, so a long step neither carries a shot through what it should
+    // hit nor leaves a craft placed and unmoved for the whole of it.
+    const substeps = Math.ceil(seconds / MAX_COMBAT_SUBSTEP - 1e-9);
+    const each = seconds / substeps;
     let moved = false;
-    for (let frame = 0; frame < frames; frame += 1) {
-      // The Reference Build's own order: the permanent flyby first, then the
-      // structure impact, effect slots, and hostile craft.
-      if (this.stepSurfaceFlyby()) {
+    for (let substep = 0; substep < substeps; substep += 1) {
+      if (this.stepSurfaceFlyby(each)) {
         moved = true;
       }
       if (this.impact !== undefined) {
-        const framesLeft = this.impact.framesLeft - 1;
+        const secondsLeft = this.impact.secondsLeft - each;
         this.impact =
-          framesLeft > 0 ? { ...this.impact, framesLeft } : undefined;
+          secondsLeft > 1e-9 ? { ...this.impact, secondsLeft } : undefined;
       }
-      if (rules !== undefined && this.stepPlayerShot(rules, events)) {
+      if (rules !== undefined && this.stepPlayerShot(each, rules, events)) {
         moved = true;
       }
-      if (this.driftHostileEffects(pauseAttacker)) {
+      if (this.driftHostileEffects(each, pauseAttacker)) {
         moved = true;
       }
       if (!pauseAttacker) {
-        events.push(...this.advanceHostile());
+        events.push(...this.advanceHostile(each));
       }
     }
     if (moved) {
@@ -2789,10 +2825,9 @@ export class GameplaySession {
     return events;
   }
 
-  /// The Reference Build increments slot 0's Z middle byte every outdoor
-  /// frame, carrying into the masked high byte. In world coordinates that is
-  /// a constant `stepPerFrame`, wrapping at `wrapAt`.
-  private stepSurfaceFlyby(): boolean {
+  /// The Reference Build carries slot 0 along Z every outdoor frame. In world
+  /// coordinates that is a constant speed, wrapping at `wrapAt`.
+  private stepSurfaceFlyby(seconds: number): boolean {
     const rules = this.content.surfaceFlyby;
     if (rules === undefined) {
       return false;
@@ -2804,7 +2839,7 @@ export class GameplaySession {
     this.residence.set(rules.slot, {
       at: {
         ...at,
-        z: (at.z + rules.stepPerFrame) % rules.wrapAt
+        z: (at.z + rules.stepPerFrame * this.frameRate * seconds) % rules.wrapAt
       },
       kind: 'surface'
     });
@@ -2904,12 +2939,12 @@ export class GameplaySession {
     const shot = this.playerShot;
     const slot = this.content.fire?.effectSlot;
     if (shot !== undefined && slot !== undefined) {
-      lifecycles.set(slot, shot.framesLeft);
+      lifecycles.set(slot, this.framesOf(shot.secondsLeft));
     }
     const inbound = this.hostileShot;
     const inboundSlot = this.content.hostile?.inboundSlot;
     if (inbound !== undefined && inboundSlot !== undefined) {
-      lifecycles.set(inboundSlot, inbound.framesLeft);
+      lifecycles.set(inboundSlot, this.framesOf(inbound.secondsLeft));
     }
     return lifecycles;
   }
@@ -3027,28 +3062,7 @@ export class GameplaySession {
   }
 
   private get sceneResidence(): Map<number, Residence> {
-    const residence = new Map(this.residence);
-    const rules = this.content.surfaceFlyby;
-    if (
-      rules === undefined ||
-      this.location.kind !== 'surface' ||
-      this.combatFrames <= 0
-    ) {
-      return residence;
-    }
-    const where = residence.get(rules.slot);
-    const at = this.surfacePlaceOf(rules.slot);
-    if (where?.kind !== 'surface' || at === undefined) {
-      return residence;
-    }
-    residence.set(rules.slot, {
-      at: {
-        ...at,
-        z: (at.z + rules.stepPerFrame * this.combatFrames) % rules.wrapAt
-      },
-      kind: 'surface'
-    });
-    return residence;
+    return new Map(this.residence);
   }
 
   get throttleNotch(): number {

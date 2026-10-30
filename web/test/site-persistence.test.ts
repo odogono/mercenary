@@ -94,9 +94,8 @@ describe('the Site Ledger a Gameplay Session owns', () => {
     const wounded = {
       ...struck,
       combat: {
-        approachFrames: 0,
+        approachSeconds: 0,
         attackerVelocity: null,
-        frames: 0,
         hostileShot: null,
         impact: null,
         mechanoidDestroyed: 7,
@@ -142,7 +141,7 @@ describe('a Save whose combat state could not have happened', () => {
     expect(() =>
       restoreWith(combat => ({
         ...combat,
-        playerShot: { framesLeft: 4, velocity: { x: 1, y: 0, z: 0 } }
+        playerShot: { secondsLeft: 0.2, velocity: { x: 1, y: 0, z: 0 } }
       }))
     ).toThrow('Player Projectile and its place disagree');
   });
@@ -151,7 +150,7 @@ describe('a Save whose combat state could not have happened', () => {
     expect(() =>
       restoreWith(combat => ({
         ...combat,
-        hostileShot: { framesLeft: 4, velocity: { x: 1, y: 0, z: 0 } }
+        hostileShot: { secondsLeft: 0.2, velocity: { x: 1, y: 0, z: 0 } }
       }))
     ).toThrow('Hostile Projectile and its place disagree');
   });
@@ -160,7 +159,7 @@ describe('a Save whose combat state could not have happened', () => {
     expect(() =>
       restoreWith(combat => ({
         ...combat,
-        impact: { cell: 1, framesLeft: rules.impactFrames + 1 }
+        impact: { cell: 1, secondsLeft: (rules.impactFrames + 1) / 20 }
       }))
     ).toThrow('impact outlives its own lifecycle');
   });

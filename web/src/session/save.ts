@@ -7,7 +7,7 @@ import type { FlightSettings, MessageSettings } from '../settings/index.ts';
 import type { Location, Residence } from '../world/index.ts';
 import type { ShipFieldPoint, ShipFieldSaveSnapshot } from './shipField.ts';
 
-export const SAVE_SCHEMA_VERSION = 20 as const;
+export const SAVE_SCHEMA_VERSION = 21 as const;
 export const SAVE_JSON_CODE_UNIT_LIMIT = 1_000_000;
 
 const SAVE_COLLECTION_LIMIT = 1024;
@@ -96,28 +96,27 @@ export interface GameSaveSnapshot extends Omit<
 /// than derived because restoration puts a Site back without taking back the
 /// count it caused, so the table cannot imply them.
 export interface CombatSaveSnapshot {
-  /// Frames the attacker has left of its current approach.
-  readonly approachFrames: number;
-  /// How the attacker is travelling on that approach.
+  /// Seconds the attacker has left of its current approach.
+  readonly approachSeconds: number;
+  /// How the attacker is travelling on that approach, per second.
   readonly attackerVelocity: Vector3 | null;
-  /// The part of a combat frame that had not elapsed yet.
-  readonly frames: number;
-  /// The Hostile Projectile on its way, if there is one.
+  /// The Hostile Projectile on its way, if there is one. Velocities are per
+  /// second and lifetimes are seconds left (ADR 0083).
   readonly hostileShot: {
-    readonly framesLeft: number;
+    readonly secondsLeft: number;
     readonly velocity: Vector3;
   } | null;
   /// The structure impact still playing, if one is.
   readonly impact: {
     readonly cell: number;
-    readonly framesLeft: number;
+    readonly secondsLeft: number;
   } | null;
   readonly mechanoidDestroyed: number;
   readonly palyarDestroyed: number;
   /// The Player Projectile in flight, if there is one. Where it is lives in its
   /// Object Residence, so only what residence cannot hold is here.
   readonly playerShot: {
-    readonly framesLeft: number;
+    readonly secondsLeft: number;
     readonly velocity: Vector3;
   } | null;
   readonly siteTable: readonly number[];
@@ -799,9 +798,8 @@ const SITE_TABLE_LENGTH = 256;
 
 const combat = (value: unknown, at: string): CombatSaveSnapshot => {
   const out = exact(value, at, [
-    'approachFrames',
+    'approachSeconds',
     'attackerVelocity',
-    'frames',
     'hostileShot',
     'impact',
     'mechanoidDestroyed',
@@ -809,23 +807,19 @@ const combat = (value: unknown, at: string): CombatSaveSnapshot => {
     'playerShot',
     'siteTable'
   ]);
-  const frames = finite(out['frames'], `${at}.frames`);
-  if (!(frames >= 0) || frames >= 1) {
-    fail(`${at}.frames must be at least 0 and less than 1`);
-  }
   const inboundValue = out['hostileShot'];
   const hostileShot =
     inboundValue === null
       ? null
       : (() => {
           const inbound = exact(inboundValue, `${at}.hostileShot`, [
-            'framesLeft',
+            'secondsLeft',
             'velocity'
           ]);
           return {
-            framesLeft: nonNegativeInteger(
-              inbound['framesLeft'],
-              `${at}.hostileShot.framesLeft`
+            secondsLeft: nonNegative(
+              inbound['secondsLeft'],
+              `${at}.hostileShot.secondsLeft`
             ),
             velocity: vector(inbound['velocity'], `${at}.hostileShot.velocity`)
           };
@@ -841,13 +835,13 @@ const combat = (value: unknown, at: string): CombatSaveSnapshot => {
       ? null
       : (() => {
           const shot = exact(shotValue, `${at}.playerShot`, [
-            'framesLeft',
+            'secondsLeft',
             'velocity'
           ]);
           return {
-            framesLeft: nonNegativeInteger(
-              shot['framesLeft'],
-              `${at}.playerShot.framesLeft`
+            secondsLeft: nonNegative(
+              shot['secondsLeft'],
+              `${at}.playerShot.secondsLeft`
             ),
             velocity: vector(shot['velocity'], `${at}.playerShot.velocity`)
           };
@@ -859,13 +853,13 @@ const combat = (value: unknown, at: string): CombatSaveSnapshot => {
       : (() => {
           const hit = exact(impactValue, `${at}.impact`, [
             'cell',
-            'framesLeft'
+            'secondsLeft'
           ]);
           return {
             cell: byte(hit['cell'], `${at}.impact.cell`),
-            framesLeft: nonNegativeInteger(
-              hit['framesLeft'],
-              `${at}.impact.framesLeft`
+            secondsLeft: nonNegative(
+              hit['secondsLeft'],
+              `${at}.impact.secondsLeft`
             )
           };
         })();
@@ -874,12 +868,11 @@ const combat = (value: unknown, at: string): CombatSaveSnapshot => {
     fail(`${at}.siteTable must contain ${SITE_TABLE_LENGTH} bytes`);
   }
   return {
-    approachFrames: nonNegativeInteger(
-      out['approachFrames'],
-      `${at}.approachFrames`
+    approachSeconds: nonNegative(
+      out['approachSeconds'],
+      `${at}.approachSeconds`
     ),
     attackerVelocity,
-    frames,
     hostileShot,
     impact,
     mechanoidDestroyed: byte(
