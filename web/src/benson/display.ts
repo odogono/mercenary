@@ -113,7 +113,11 @@ export class BensonDisplay {
         this.phaseSeconds += remaining;
         return;
       }
-      remaining = Math.max(0, remaining - Math.max(0, needed));
+      remaining -= Math.max(0, needed);
+      // Nor does a hair of float noise left past one start the next.
+      if (remaining < 1e-9) {
+        remaining = 0;
+      }
       this.phaseSeconds = 0;
       this.step();
     }

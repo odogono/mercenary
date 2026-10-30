@@ -109,9 +109,9 @@ describe('a Save Snapshot', () => {
     );
     const snapshot = gameplay.captureSaveSnapshot();
 
-    expect(SAVE_SCHEMA_VERSION).toBe(19);
+    expect(SAVE_SCHEMA_VERSION).toBe(20);
     expect(snapshot).toHaveProperty('carriedStack');
-    expect(snapshot).toHaveProperty('deliveryFrames');
+    expect(snapshot).toHaveProperty('deliverySeconds');
     expect(snapshot).toHaveProperty('objectFlags');
     expect(snapshot.benson!.host).not.toHaveProperty('inventory');
     expect(snapshot.benson!.host).not.toHaveProperty('objectFlags');

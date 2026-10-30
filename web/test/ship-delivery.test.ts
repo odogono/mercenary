@@ -9,8 +9,8 @@ const CREDITS = BensonHostState.firstNumberDecimal;
 const SHIP = 7;
 const SURFACE = 0;
 
-/// Hires the ship for real, through script 2, and stops before any of it has
-/// been delivered.
+/// Hires the ship for real, through script 2, and stops in the step it sets
+/// off (ADR 0083: a hired ship starts down at once, in seconds).
 const justHired = async (): Promise<LegalRoute> => {
   const route = await LegalRoute.open();
   route.session.scripts!.host = route.session.scripts!.host.withDecimal(
@@ -21,14 +21,9 @@ const justHired = async (): Promise<LegalRoute> => {
   route.session.teleport(room(16));
   route.waitForMessage('DO YOU WANT TO HIRE?');
   route.run({ command: { key: 'y', kind: 'press' }, kind: 'command' });
-  // Stops the moment the script writes its state and before the descent has
-  // consumed it. There is room to do that because a hundredth of a second is a
-  // fifth of a Reference Build frame, so the accepted value survives a few
-  // steps -- which is also why the window has to be watched rather than waited
-  // out.
   for (let step = 0; step < 6000; step++) {
     route.advance(1 / 100);
-    if (route.session.observations().observations['shipInbound'] === 255) {
+    if (route.session.observations().observations['shipInbound'] !== 0) {
       return route;
     }
   }
@@ -43,35 +38,9 @@ const altitudeOf = (session: GameplaySession): number => {
   return where.at.y;
 };
 
-describe('a ship that has been hired but not yet despatched', () => {
-  test('is still in Room 5, and the state byte says it is coming', async () => {
+describe('a ship that has been hired', () => {
+  test('sets off from Room 5 for cell 8:8 at once', async () => {
     const route = await justHired();
-    const observed = route.session.observations().observations;
-    expect(observed['shipInbound']).toBe(255);
-    expect(observed[`objectRoom.${SHIP}`]).toBe(5);
-  }, 60_000);
-
-  test('survives a Save taken in that window', async () => {
-    const route = await justHired();
-    const resumed = GameplaySession.restore(
-      route.session.content,
-      route.session.scripts,
-      route.session.captureSaveSnapshot()
-    );
-    expect(resumed.observations().observations['shipInbound']).toBe(255);
-
-    resumed.advance(1);
-    expect(resumed.observations().observations['shipInbound']).toBe(127);
-    expect(resumed.observations().observations[`objectRoom.${SHIP}`]).toBe(
-      SURFACE
-    );
-  }, 60_000);
-});
-
-describe('the ship on its way down', () => {
-  test('leaves Room 5 for cell 8:8 in a single step', async () => {
-    const route = await justHired();
-    route.advance(1 / 20);
     const observed = route.session.observations().observations;
 
     expect(observed['shipInbound']).toBe(127);
@@ -84,9 +53,24 @@ describe('the ship on its way down', () => {
     });
   }, 60_000);
 
+  test('survives a Save taken as it sets off', async () => {
+    const route = await justHired();
+    const resumed = GameplaySession.restore(
+      route.session.content,
+      route.session.scripts,
+      route.session.captureSaveSnapshot()
+    );
+    resumed.advance(1);
+    expect(resumed.observations().observations['shipInbound']).toBe(127);
+    expect(resumed.observations().observations[`objectRoom.${SHIP}`]).toBe(
+      SURFACE
+    );
+  }, 60_000);
+});
+
+describe('the ship on its way down', () => {
   test('descends by the decoded decay, exactly', async () => {
     const route = await justHired();
-    route.advance(1 / 20);
     const seen: number[] = [altitudeOf(route.session) >>> 8];
     for (let step = 0; step < 5; step++) {
       route.advance(1 / 20);
@@ -114,10 +98,9 @@ describe('the ship on its way down', () => {
     expect(altitudeOf(route.session)).toBeLessThan(high);
   }, 60_000);
 
-  test('lands after the decoded number of frames and clears the state', async () => {
+  test('lands in the decoded 39 seconds and clears the state', async () => {
     const route = await justHired();
-    // One frame to despatch, then the decoded descent.
-    route.advance((1 + 779) / 20);
+    route.advance(779 / 20);
     const observed = route.session.observations().observations;
 
     expect(observed['shipInbound']).toBe(0);
@@ -125,16 +108,16 @@ describe('the ship on its way down', () => {
     expect(altitudeOf(route.session)).toBe(0);
   }, 60_000);
 
-  test('is still one frame short of the ground the step before', async () => {
+  test('is still above the ground a twentieth of a second before', async () => {
     const route = await justHired();
-    route.advance((1 + 778) / 20);
+    route.advance(778 / 20);
     expect(route.session.observations().observations['shipInbound']).toBe(127);
     expect(altitudeOf(route.session)).toBeGreaterThan(0);
   }, 60_000);
 
   test('stays landed once it is down', async () => {
     const route = await justHired();
-    route.advance((1 + 779) / 20);
+    route.advance(779 / 20);
     route.advance(30);
     expect(altitudeOf(route.session)).toBe(0);
     expect(route.session.observations().observations['shipInbound']).toBe(0);
@@ -171,14 +154,13 @@ describe('how the descent is stepped', () => {
     expect(altitudeOf(resumed)).toBe(altitudeOf(route.session));
   }, 120_000);
 
-  test('carries the part of a frame that has not elapsed across a Save', async () => {
+  test('carries the seconds of its descent across a Save', async () => {
     const route = await justHired();
     route.advance(1 / 20);
-    // A third of a frame: too little to move the ship, and it must not be lost.
+    // Too little more to move the ship, and it must not be lost.
     route.advance(1 / 60);
     const snapshot = route.session.captureSaveSnapshot();
-    expect(snapshot.deliveryFrames).toBeGreaterThan(0);
-    expect(snapshot.deliveryFrames).toBeLessThan(1);
+    expect(snapshot.deliverySeconds).toBeGreaterThan(1 / 20);
 
     const resumed = GameplaySession.restore(
       route.session.content,

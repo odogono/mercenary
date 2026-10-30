@@ -3,11 +3,12 @@ import type { UndergroundLift } from '../payload/documents.ts';
 export type LiftDirection = 'down' | 'up';
 export type LiftScene = 'room' | 'surface';
 
+/// A Lift Journey at a moment of it (ADR 0083): seconds since it began, and
+/// the stage, position and scene its track gives for them.
 export interface LiftJourneyState {
   readonly direction: LiftDirection;
-  readonly elapsedFrames: number;
+  readonly elapsedSeconds: number;
   readonly entranceRoom: number;
-  readonly fractionalFrameRemainder: number;
   readonly position: number;
   readonly restingAltitude: number;
   readonly scene: LiftScene;
@@ -34,9 +35,8 @@ export const startLiftJourney = (
   const start = direction === 'up' ? lift.ascending : lift.descending;
   return {
     direction,
-    elapsedFrames: 0,
+    elapsedSeconds: 0,
     entranceRoom,
-    fractionalFrameRemainder: 0,
     position: start.position,
     restingAltitude,
     scene: direction === 'up' ? 'room' : 'surface',
@@ -68,103 +68,180 @@ export const liftCameraAltitude = (
   return altitude;
 };
 
-const tick = (
-  current: LiftJourneyState,
-  lift: UndergroundLift
-): LiftAdvance => {
-  const timing = lift.timing.find(item => item.room === current.entranceRoom)?.[
-    current.direction
+/// One journey's whole course: where the cab is after each of the original's
+/// frames, worked out once from the payload's per-frame rates, and the times
+/// its scene changes and it stops.
+interface LiftTrack {
+  readonly sceneSeconds: number;
+  readonly steps: readonly {
+    readonly position: number;
+    readonly stage: number;
+  }[];
+  readonly stepsPerSecond: number;
+  readonly stopSeconds: number;
+}
+
+const tracks = new WeakMap<UndergroundLift, Map<string, LiftTrack>>();
+
+const trackOf = (
+  lift: UndergroundLift,
+  entranceRoom: number,
+  direction: LiftDirection
+): LiftTrack => {
+  let byJourney = tracks.get(lift);
+  if (byJourney === undefined) {
+    byJourney = new Map();
+    tracks.set(lift, byJourney);
+  }
+  const key = `${entranceRoom}:${direction}`;
+  const known = byJourney.get(key);
+  if (known !== undefined) {
+    return known;
+  }
+  const timing = lift.timing.find(item => item.room === entranceRoom)?.[
+    direction
   ];
   if (timing === undefined) {
     throw new Error(
-      `Lift Journey has no captured timing for Room ${current.entranceRoom}`
+      `Lift Journey has no captured timing for Room ${entranceRoom}`
     );
   }
-  const rate = lift.motionRates[liftPhaseIndex(current)];
-  if (rate === undefined) {
-    throw new Error(
-      `Lift Journey has no motion rate for stage ${current.stage}`
-    );
-  }
-  let stage = current.stage;
-  let position = current.position;
-  if (current.direction === 'up') {
-    position += rate;
-    if (position >= lift.positionWrap) {
-      position = 0;
-      stage += 1;
+  const start = direction === 'up' ? lift.ascending : lift.descending;
+  const steps = [{ position: start.position, stage: start.stage }];
+  for (let frame = 1; frame <= timing.stopAt; frame += 1) {
+    const before = steps[frame - 1]!;
+    const rate =
+      lift.motionRates[before.stage * 2 + (before.position >= 0x42 ? 1 : 0)];
+    if (rate === undefined) {
+      throw new Error(
+        `Lift Journey has no motion rate for stage ${before.stage}`
+      );
     }
-  } else {
-    position -= rate;
-    if (position < 0) {
-      position = lift.positionWrap;
-      stage -= 1;
+    let { position, stage } = before;
+    if (direction === 'up') {
+      position += rate;
+      if (position >= lift.positionWrap) {
+        position = 0;
+        stage += 1;
+      }
+    } else {
+      position -= rate;
+      if (position < 0) {
+        position = lift.positionWrap;
+        stage -= 1;
+      }
     }
+    steps.push({ position, stage });
   }
-  const elapsedFrames = current.elapsedFrames + 1;
-  const scene: LiftScene =
-    elapsedFrames >= timing.sceneAt
-      ? current.direction === 'up'
-        ? 'surface'
-        : 'room'
-      : current.direction === 'up'
-        ? 'room'
-        : 'surface';
-  const next = { ...current, elapsedFrames, position, scene, stage };
-  const altitude = liftCameraAltitude(next, lift);
-  const completed = elapsedFrames >= timing.stopAt;
+  const track = {
+    sceneSeconds: timing.sceneAt / lift.framesPerSecond,
+    steps,
+    stepsPerSecond: lift.framesPerSecond,
+    stopSeconds: timing.stopAt / lift.framesPerSecond
+  };
+  byJourney.set(key, track);
+  return track;
+};
+
+/// The step a time falls in; a float sum a hair short of a boundary counts as
+/// having reached it.
+const stepAt = (track: LiftTrack, seconds: number): number =>
+  Math.floor(seconds * track.stepsPerSecond + 1e-9);
+
+const sceneAt = (
+  direction: LiftDirection,
+  track: LiftTrack,
+  seconds: number
+): LiftScene =>
+  stepAt(track, seconds) >= stepAt(track, track.sceneSeconds) ===
+  (direction === 'up')
+    ? 'surface'
+    : 'room';
+
+/// How long until the journey's next event: its scene changing, or its stop.
+export const liftSecondsToNextEvent = (
+  journey: LiftJourneyState,
+  lift: UndergroundLift
+): number => {
+  const track = trackOf(lift, journey.entranceRoom, journey.direction);
+  const change = stepAt(track, track.sceneSeconds) / track.stepsPerSecond;
+  const stop = stepAt(track, track.stopSeconds) / track.stepsPerSecond;
+  const next =
+    stepAt(track, journey.elapsedSeconds) < stepAt(track, change)
+      ? change
+      : stop;
+  return next - journey.elapsedSeconds;
+};
+
+/// The journey `seconds` after it began, or undefined once it has stopped.
+export const liftJourneyAt = (
+  start: Pick<
+    LiftJourneyState,
+    'direction' | 'entranceRoom' | 'restingAltitude'
+  >,
+  seconds: number,
+  lift: UndergroundLift
+): LiftJourneyState | undefined => {
+  const track = trackOf(lift, start.entranceRoom, start.direction);
+  const step = stepAt(track, seconds);
+  if (step >= stepAt(track, track.stopSeconds)) {
+    return undefined;
+  }
+  const { position, stage } = track.steps[step]!;
   return {
-    completed,
-    ...(completed
-      ? {
-          finalAltitude:
-            current.direction === 'down' ? lift.descending.floor : altitude
-        }
-      : { journey: next }),
-    sceneChanged: scene !== current.scene,
-    surfaceSeconds: 0
+    direction: start.direction,
+    elapsedSeconds: seconds,
+    entranceRoom: start.entranceRoom,
+    position,
+    restingAltitude: start.restingAltitude,
+    scene: sceneAt(start.direction, track, seconds),
+    stage
   };
 };
 
+/// The journey `seconds` further on. Time spent with the surface showing is
+/// reported, so the surface's own systems run for it; an ascent that stops
+/// within the step has the rest of it on the surface too.
 export const advanceLiftJourney = (
   current: LiftJourneyState,
   seconds: number,
   lift: UndergroundLift
 ): LiftAdvance => {
-  let remainingSeconds = seconds;
-  let frameRemainder = current.fractionalFrameRemainder;
-  let journey = current;
-  let sceneChanged = false;
-  let surfaceSeconds = 0;
-  while (remainingSeconds > 1e-12) {
-    const untilTick = (1 - frameRemainder) / lift.framesPerSecond;
-    const slice = Math.min(remainingSeconds, untilTick);
-    if (journey.scene === 'surface') {
-      surfaceSeconds += slice;
+  const track = trackOf(lift, current.entranceRoom, current.direction);
+  const until = current.elapsedSeconds + seconds;
+  const stop = stepAt(track, track.stopSeconds) / track.stepsPerSecond;
+  const end = Math.min(until, stop);
+  const change = stepAt(track, track.sceneSeconds) / track.stepsPerSecond;
+  const [surfaceFrom, surfaceTo] =
+    current.direction === 'up' ? [change, end] : [0, Math.min(change, end)];
+  let surfaceSeconds = Math.max(
+    0,
+    Math.min(end, surfaceTo) - Math.max(current.elapsedSeconds, surfaceFrom)
+  );
+  const next = liftJourneyAt(current, until, lift);
+  if (next === undefined) {
+    if (current.direction === 'up') {
+      surfaceSeconds += until - stop;
     }
-    frameRemainder += slice * lift.framesPerSecond;
-    remainingSeconds -= slice;
-    if (frameRemainder < 1 - 1e-9) {
-      break;
-    }
-    frameRemainder = 0;
-    const advanced = tick(journey, lift);
-    sceneChanged ||= advanced.sceneChanged;
-    if (advanced.completed) {
-      if (journey.direction === 'up') {
-        surfaceSeconds += remainingSeconds;
-      }
-      return { ...advanced, sceneChanged, surfaceSeconds };
-    }
-    journey = advanced.journey!;
+    const final = {
+      ...current,
+      ...track.steps.at(-1)!,
+      scene: sceneAt(current.direction, track, stop)
+    };
+    return {
+      completed: true,
+      finalAltitude:
+        current.direction === 'down'
+          ? lift.descending.floor
+          : liftCameraAltitude(final, lift),
+      sceneChanged: final.scene !== current.scene,
+      surfaceSeconds
+    };
   }
   return {
     completed: false,
-    journey: {
-      ...journey,
-      fractionalFrameRemainder: Math.max(0, frameRemainder)
-    },
-    sceneChanged,
+    journey: next,
+    sceneChanged: next.scene !== current.scene,
     surfaceSeconds
   };
 };
