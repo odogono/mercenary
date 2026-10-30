@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
 import { GameplaySession } from '../src/session/index.ts';
-import { ESCAPE } from '../src/talk/scripts.ts';
+import { COMMERCE, ESCAPE } from '../src/talk/scripts.ts';
 import { room } from '../src/world/index.ts';
 import { LegalRoute } from './legalCheckpoint.ts';
 import {
@@ -23,9 +23,12 @@ const HANGAR_ROOM = 5;
 const ADVERT_CELL = 0x32;
 const CELL = 0x1_00_00;
 const COMMANDER_ANNOYED = 0x20;
+const SHIP_HIRED = 0x04;
 
-const escapeScript = talkScript(ESCAPE);
-const open = (engine: Engine): Promise<LegalRoute> => openRoute(engine, ESCAPE);
+/// The Escape asks commerce whether the ship was hired.
+const escapeScript = talkScript(ESCAPE, COMMERCE);
+const open = (engine: Engine): Promise<LegalRoute> =>
+  openRoute(engine, ESCAPE, COMMERCE);
 
 const phase = (session: GameplaySession): number =>
   session.observations().observations['endingPhase'] as number;
@@ -87,6 +90,8 @@ const strikeTheAdvert = (route: LegalRoute): void => {
   route.settle();
   session.scripts!.host = session.scripts!.host.write('attackingShip', 0);
   session.leaveCraft();
+  // Commerce greets a Dart boarded without buying it: let that play out.
+  route.advance(30);
 };
 
 /// Plays a route by both engines and returns each one's lines and phase.
@@ -163,6 +168,20 @@ describe('the Escape as a Talk Script', () => {
       ''
     ]);
     expect(played.talk.phase).toBe(0);
+  }, 120_000);
+
+  test('a ship hired in an older Save launches without a Novadrive', async () => {
+    const played = await both(async engine => {
+      const lines = await aboardInTheHangar(engine, false);
+      const scripts = lines.route.session.scripts!;
+      // Where a Save from before commerce kept the hire held it.
+      scripts.host = scripts.host.with({
+        engineFlags: scripts.host.engineFlags | SHIP_HIRED
+      });
+      return launch(lines).until('SEE YOU IN MERCENARY II');
+    });
+    expect(played.talk).toEqual(played.benson);
+    expect(played.talk.phase).toBeGreaterThan(0);
   }, 120_000);
 
   test('leaving the ship at the prompt ends with a blank line', async () => {

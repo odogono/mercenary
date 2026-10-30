@@ -26,7 +26,8 @@ on boarded craft where craft = "ship"
       end wait
     end if
     wait 167 ms
-    if not canLaunch() then
+    canLaunch and wait
+    if not it then
       show "NOVADRIVE REQUIRED" and wait
       clear and wait
       return
@@ -45,7 +46,10 @@ on boarded craft where craft = "ship"
         return
     end wait
     ask world to here
-    if it is "surface" and canLaunch() then exit repeat
+    if it is "surface" then
+      canLaunch and wait
+      if it then exit repeat
+    end if
   end repeat
   ask world to advertIntact
   if not it then
@@ -83,9 +87,10 @@ function aboard
   return it = "ship"
 end aboard
 
--- The ship needs a Novadrive, unless it was hired with one.
-function canLaunch
-  ask world to flag "shipHired"
+-- The ship needs a Novadrive, unless it was hired with one. A handler, not a
+-- function, since asking commerce suspends.
+on canLaunch
+  send isHired to commerce and wait
   if it then return true
   ask world to carries "novadrive"
   return it

@@ -6,6 +6,11 @@
 
 use show, clear, report, prompt from benson
 
+-- Whether the player has hired the Interstellar Ship, which the Escape asks
+-- for. A Save from before this script kept it holds it in an engine flag,
+-- which the script takes over the first time it is asked.
+script variable hired = nothing
+
 constant fee = 999999
 
 -- Benson Script 2: the ship rental's communication room. The antenna has to
@@ -38,7 +43,7 @@ on entered room where room = "ship rental"
   ask world to spend fee
   report ["SHIP DESPATCHED", "IT WILL LAND", "AT LOC 8-8 IN 2 MINS"] and wait
   ask world to sendShip
-  ask world to setFlag "shipHired"
+  put true into hired
 end entered
 
 function antennaHere
@@ -83,3 +88,11 @@ on took item where item = "captured mechanoid"
   report ["MECHANOID", "THE MECHANOID DEMANDS", "THAT YOU PUT HIM DOWN"] and wait
   clear and wait
 end took
+
+on isHired
+  if hired is nothing then
+    ask world to takeLegacyFlag "shipHired"
+    put it into hired
+  end if
+  return hired
+end isHired
