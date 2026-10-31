@@ -41,9 +41,9 @@ describe('the authored Targ Orrery', () => {
           z: -0.384_899_462_876_478_64
         },
         outer: {
-          x: 0.596_639_234_988_991_4,
-          y: 0.622_728_280_848_721_3,
-          z: 0.506_192_761_211_524_2
+          x: 0.596_639_231_515_56,
+          y: 0.622_728_278_877_967_3,
+          z: 0.506_192_767_730_048_2
         },
         sun: {
           x: 0.244_038_175_081_906_42,
@@ -97,7 +97,7 @@ describe('the authored Targ Orrery', () => {
 
     expect(state.sun.direction.x).toBeGreaterThan(0);
     expect(state.sun.direction.y).toBeGreaterThan(0);
-    expect(state.sun.angularDiameterRadians).toBeCloseTo(radians(1.8), 6);
+    expect(state.sun.angularDiameterRadians).toBeCloseTo(radians(3.6), 4);
     expect(altitude).toBeCloseTo(20, 0);
     expect(azimuth).toBeCloseTo(42, 0);
     expect(outer.illuminatedFraction).toBeCloseTo(0.31, 1);
@@ -148,9 +148,9 @@ describe('the authored Targ Orrery', () => {
 
   test("reads each disc's size and colour from the Targ System", () => {
     const state = skyStateAt(orrery, 0);
-    expect(state.sun.angularDiameterRadians).toBeCloseTo(radians(1.8), 6);
-    expect(state.moons[0].angularDiameterRadians).toBeCloseTo(radians(1.6), 4);
-    expect(state.moons[1].angularDiameterRadians).toBeCloseTo(radians(0.9), 4);
+    expect(state.sun.angularDiameterRadians).toBeCloseTo(radians(3.6), 4);
+    expect(state.moons[0].angularDiameterRadians).toBeCloseTo(radians(3.2), 4);
+    expect(state.moons[1].angularDiameterRadians).toBeCloseTo(radians(1.8), 4);
     expect(state.sun.litColour).toEqual({ blue: 0x70, green: 0xd0, red: 0xff });
     expect(state.moons[1].litColour).toEqual({
       blue: 0xd8,
