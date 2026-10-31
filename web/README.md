@@ -117,7 +117,7 @@ is absent.
   place Y is flipped is the vertex shader that maps pixels to clip space. `src/scene/` holds
   the Indoor Scene resolver and the Indoor Backdrop column lookup consumed by the WebGL2
   renderer.
-- `src/sky/` — the pure Targ Orrery, its seeded Star Sphere and the projection of one Sky State
+- `src/sky/` — the pure Targ Orrery read from the authored Targ System (`systems/targ.json`), its seeded Star Sphere and the projection of one Sky State
   into immutable direction-space batches. Enhanced presentation advances it from elapsed
   Gameplay Session time; Authentic presentation and every Indoor Scene omit it entirely (ADR
   0025).

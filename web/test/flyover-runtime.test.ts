@@ -4,6 +4,7 @@ import { readFlyoverPresentation } from '../src/flyover/documents.ts';
 import { resetFlyover } from '../src/flyover/runtime.ts';
 import { TargFlyoverClock, composeTargSystem } from '../src/flyover/system.ts';
 import { defaultSettings } from '../src/settings/index.ts';
+import { TARG_SYSTEM } from './fixtures/targSystem.ts';
 
 describe('the operational Flyover reset', () => {
   test('atomically restores the Targ epoch Bodies and stopped overview Camera', async () => {
@@ -14,6 +15,7 @@ describe('the operational Flyover reset', () => {
       ['targ', 'sun', 'inner-moon', 'outer-moon']
     );
     const system = composeTargSystem(
+      TARG_SYSTEM,
       presentation,
       defaultSettings().presentation.sky,
       new TargFlyoverClock(24, () => now)

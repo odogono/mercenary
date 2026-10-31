@@ -7,6 +7,7 @@ import {
   skyStateAt,
   type SkyState
 } from '../src/sky/index.ts';
+import { TARG_SYSTEM } from './fixtures/targSystem.ts';
 
 const size = { height: 800, width: 1280 } as const;
 const pose: SkyPose = {
@@ -16,7 +17,7 @@ const pose: SkyPose = {
   roll: 0
 };
 const state = skyStateAt(
-  createTargOrrery(defaultSettings().presentation.sky),
+  createTargOrrery(TARG_SYSTEM, defaultSettings().presentation.sky),
   0
 );
 
@@ -188,7 +189,7 @@ describe('one Sky State built into view pixels', () => {
 
   test('projects visible stars as one point batch with per-star alpha', () => {
     const night = skyStateAt(
-      createTargOrrery({
+      createTargOrrery(TARG_SYSTEM, {
         ...defaultSettings().presentation.sky,
         starCount: 12
       }),

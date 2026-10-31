@@ -1,4 +1,3 @@
-import { sin } from '../math/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import type { SkySettings } from '../settings/index.ts';
 import {
@@ -16,7 +15,9 @@ import {
   type GammaPresentationDocument,
   type GammaSystemDocument,
   type IslandPresentation,
-  type TargPresentationDocument
+  type TargPresentationDocument,
+  type TargSystemBodyId,
+  type TargSystemDocument
 } from './documents.ts';
 
 export type FlyoverValueProvenance =
@@ -83,12 +84,6 @@ const authoredPresentation = {
   ranges: 'authored'
 } as const;
 
-const scaled = (position: Vector3, scale: number): Vector3 => ({
-  x: position.x * scale,
-  y: position.y * scale,
-  z: position.z * scale
-});
-
 const targOrbitFor = (bodyId: string, orbits: TargOrreryBodyPositions) => {
   switch (bodyId) {
     case 'sun': {
@@ -106,54 +101,40 @@ const targOrbitFor = (bodyId: string, orbits: TargOrreryBodyPositions) => {
   }
 };
 
+/// The Targ System seen from the city: TARG at the origin, and every other Body where the
+/// Orrery's turning horizon puts it, at its own authored distance and radius (ADR 0086).
 export const composeTargSystem = (
+  authority: TargSystemDocument,
   presentation: TargPresentationDocument,
   skySettings: SkySettings,
   clock = new TargFlyoverClock(skySettings.dayLengthMinutes)
 ): TargFlyoverSystem => {
-  const orrery = createTargOrrery(skySettings);
+  const orrery = createTargOrrery(authority, skySettings);
+  const systemBodies = new Map(authority.bodies.map(body => [body.id, body]));
   return {
     backdrop: presentation.backdrop,
     bodiesAt: elapsedSeconds => {
       const orbits = targOrreryBodyPositionsAt(orrery, elapsedSeconds);
       return presentation.bodies.map(body => {
-        if (body.id === 'targ' && body.radius.kind === 'absolute') {
-          return {
-            colour: body.colour,
-            displayRadiusUnits: body.radius.radiusUnits,
-            id: body.id,
-            position: { x: 0, y: 0, z: 0 },
-            provenance: {
-              ...authoredPresentation,
-              identity: 'authored',
-              position: 'authored',
-              radius: 'authored'
-            },
-            ranges: body.ranges
-          };
-        }
-        if (body.radius.kind !== 'angular-diameter') {
-          throw new Error(`Unsupported Targ radius rule for ${body.id}`);
+        const source = systemBodies.get(body.id as TargSystemBodyId);
+        if (source === undefined || body.radius.kind !== 'targ-system') {
+          throw new Error(`Cannot compose Targ Body ${body.id}`);
         }
         const orbit = targOrbitFor(body.id, orbits);
-        if (orbit === undefined) {
-          throw new Error(`Unsupported Targ Body ${body.id}`);
-        }
         return {
-          colour: body.colour,
-          displayRadiusUnits:
-            body.radius.orbitalDistanceUnits *
-            sin(orbit.angularDiameterRadians / 2),
+          colour: source.baseColour,
+          displayRadiusUnits: source.radius,
           id: body.id,
-          position: scaled(orbit.position, body.radius.orbitalDistanceUnits),
+          position:
+            orbit === undefined ? { ...source.position } : orbit.position,
           provenance: {
             ...authoredPresentation,
             identity: 'authored',
-            position: 'mechanically-derived',
-            radius: 'mechanically-derived'
+            position: orbit === undefined ? 'authored' : 'mechanically-derived',
+            radius: 'authored'
           },
           ranges: body.ranges
-        };
+        } satisfies FlyoverBody;
       });
     },
     bodyMesh: presentation.bodyMesh,

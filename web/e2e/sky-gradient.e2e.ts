@@ -23,7 +23,11 @@ test('Enhanced twilight follows the world horizon in the WebGL renderer', async 
 
     const large = { height: 800, width: 1280 };
     const settings = defaultSettings();
-    const orrery = createTargOrrery(settings.presentation.sky);
+    const { fetchTargSystem } = await import('../src/sky/system.ts');
+    const orrery = createTargOrrery(
+      await fetchTargSystem(),
+      settings.presentation.sky
+    );
     const state = skyStateAt(orrery, 540);
     const canvas = document.createElement('canvas');
     canvas.width = large.width;
@@ -195,7 +199,11 @@ test('regenerates the Enhanced twilight review frames', async ({ page }) => {
 
     const size = { height: 800, width: 1280 };
     const settings = defaultSettings();
-    const orrery = createTargOrrery(settings.presentation.sky);
+    const { fetchTargSystem } = await import('../src/sky/system.ts');
+    const orrery = createTargOrrery(
+      await fetchTargSystem(),
+      settings.presentation.sky
+    );
     const bundle = await load(fetchReader(location.origin + '/payload/'));
     const world = new World(bundle);
     const session = new GameplaySession(

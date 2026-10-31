@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "systemId": "targ",
+  "source": {
+    "authority": "authored",
+    "decision": "docs/adr/0086-situate-targ-in-an-authored-system-under-gammas-rules.md"
+  },
+  "coordinateSystem": {
+    "kind": "targ-equatorial-centre",
+    "units": "flyover-units",
+    "axes": ["x", "y", "z"],
+    "north": "z"
+  },
+  "rotatingBodyId": "targ",
+  "bodies": [
+    {
+      "id": "targ",
+      "name": "TARG",
+      "baseColour": "#008000",
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "radius": 2670176.857720436
+    },
+    {
+      "id": "sun",
+      "name": "SUN",
+      "baseColour": "#ffd070",
+      "position": {
+        "x": 341782638,
+        "y": 0,
+        "z": 0
+      },
+      "radius": 10736977
+    },
+    {
+      "id": "inner-moon",
+      "name": "INNER MOON",
+      "primaryId": "targ",
+      "baseColour": "#d8c8a8",
+      "position": {
+        "x": 2737468,
+        "y": -10216369,
+        "z": -1486467
+      },
+      "radius": 298252
+    },
+    {
+      "id": "outer-moon",
+      "name": "OUTER MOON",
+      "primaryId": "targ",
+      "baseColour": "#b8c8d8",
+      "position": {
+        "x": 11911904,
+        "y": 16716026,
+        "z": 24604442
+      },
+      "radius": 503311
+    }
+  ]
+}

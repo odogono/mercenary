@@ -2,7 +2,8 @@ import { describe, expect, test } from 'bun:test';
 
 import {
   readFlyoverPresentation,
-  readGammaSystem
+  readGammaSystem,
+  readTargSystem
 } from '../src/flyover/documents.ts';
 
 const targ = () => ({
@@ -15,18 +16,13 @@ const targ = () => ({
   },
   bodies: [
     {
-      colour: '#008000',
       id: 'targ',
-      radius: { kind: 'absolute', radiusUnits: 2_670_176.857_720_436 },
+      radius: { kind: 'targ-system' },
       ranges: ['orbital', 'coastal', 'surface']
     },
     {
-      colour: '#ffd070',
       id: 'sun',
-      radius: {
-        kind: 'angular-diameter',
-        orbitalDistanceUnits: 683_565_275.576_431_6
-      },
+      radius: { kind: 'targ-system' },
       ranges: ['orbital']
     }
   ],
@@ -206,11 +202,12 @@ describe('Flyover presentation documents', () => {
       readFlyoverPresentation(version, 'targ', ['targ', 'sun'])
     ).toThrow('schemaVersion');
 
-    const badColour = targ();
-    badColour.bodies[0]!.colour = '#00800G';
+    // Targ's Body colour belongs to the Targ System, as Gamma's belongs to the Data Payload.
+    const authoredColour = targ();
+    Object.assign(authoredColour.bodies[0]!, { colour: '#008000' });
     expect(() =>
-      readFlyoverPresentation(badColour, 'targ', ['targ', 'sun'])
-    ).toThrow('bodies[0].colour');
+      readFlyoverPresentation(authoredColour, 'targ', ['targ', 'sun'])
+    ).toThrow('bodies[0] has unexpected field colour');
 
     const reversedSpeed = targ();
     reversedSpeed.cameraSpeed.maximumUnitsPerSecond = 32;
@@ -219,10 +216,7 @@ describe('Flyover presentation documents', () => {
     ).toThrow('maximum should exceed minimum');
 
     const wrongRadius = targ();
-    wrongRadius.bodies[1]!.radius = {
-      kind: 'absolute',
-      radiusUnits: 1
-    };
+    wrongRadius.bodies[1]!.radius = { kind: 'recovered-extent' } as never;
     expect(() =>
       readFlyoverPresentation(wrongRadius, 'targ', ['targ', 'sun'])
     ).toThrow('invalid radius rule');
@@ -603,5 +597,56 @@ describe('the canonical Flyover presentation documents', () => {
     );
     expect(targDocument.bodies).toHaveLength(4);
     expect(gammaDocument.bodies).toHaveLength(29);
+  });
+});
+
+const targSystem = async () =>
+  structuredClone(
+    (await Bun.file(
+      new URL('../systems/targ.json', import.meta.url)
+    ).json()) as {
+      bodies: Record<string, unknown>[];
+      rotatingBodyId: string;
+      source: Record<string, unknown>;
+    }
+  );
+
+describe('the Targ System', () => {
+  test('reads the authored document, centred on TARG', async () => {
+    const document = readTargSystem(await targSystem());
+    expect(document.source.authority).toBe('authored');
+    expect(document.bodies.map(body => body.id)).toEqual([
+      'targ',
+      'sun',
+      'inner-moon',
+      'outer-moon'
+    ]);
+    expect(document.bodies[0]!.position).toEqual({ x: 0, y: 0, z: 0 });
+    // Primary groups the moons under TARG and asserts no revolution.
+    expect(
+      document.bodies.filter(body => body.primaryId === 'targ').length
+    ).toBe(2);
+  });
+
+  test('refuses a recovered claim, a missing Body and a Body inside TARG', async () => {
+    const recovered = await targSystem();
+    recovered.source['authority'] = 'recovered';
+    expect(() => readTargSystem(recovered)).toThrow('source.authority');
+
+    const missing = await targSystem();
+    missing.bodies = missing.bodies.filter(body => body['id'] !== 'sun');
+    expect(() => readTargSystem(missing)).toThrow('is missing sun');
+
+    const inside = await targSystem();
+    inside.bodies[2]!['position'] = { x: 1, y: 0, z: 0 };
+    expect(() => readTargSystem(inside)).toThrow('should lie clear of targ');
+
+    const offCentre = await targSystem();
+    offCentre.bodies[0]!['position'] = { x: 1, y: 0, z: 0 };
+    expect(() => readTargSystem(offCentre)).toThrow('centre');
+
+    const unknown = await targSystem();
+    unknown.bodies[1]!['orbit'] = {};
+    expect(() => readTargSystem(unknown)).toThrow('unexpected field orbit');
   });
 });
