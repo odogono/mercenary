@@ -1980,6 +1980,8 @@ export class GameplaySession {
   }
 
   /// Level the view Free Look tilted: the recentre control, and turning Extended Controls off.
+  /// Unlike a change to play, it does nothing rather than refuse once the session has stopped:
+  /// the menu can still change the preference that asks for it.
   recentreLook(): void {
     if (this.stopped !== undefined) {
       return;
@@ -2226,7 +2228,7 @@ export class GameplaySession {
         return delivered;
       }
       for (const event of batch) {
-        budget.deliver(JSON.stringify(event));
+        budget.deliver(event);
       }
       delivered.push(...batch);
       this.talk?.deliver(batch);

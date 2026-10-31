@@ -183,7 +183,6 @@ export class TalkHost {
   private now = 0;
   private budget: ReactionBudget | undefined;
   private readonly reactionLimits: ReactionLimits | undefined;
-  private readonly scriptNames: string;
   private playing: Block | undefined;
   private readonly queue: Block[] = [];
   private readonly random: () => number;
@@ -201,7 +200,6 @@ export class TalkHost {
     saved?: TalkSaveSnapshot
   ) {
     this.reactionLimits = options.reactionLimits;
-    this.scriptNames = scripts.map(script => script.name).join(', ');
     this.benson = benson;
     this.world = world;
     this.random = options.random ?? (() => world.random());
@@ -453,9 +451,7 @@ export class TalkHost {
 
   /// A fresh budget for one step, at this host's limits.
   newBudget(): ReactionBudget {
-    const budget = new ReactionBudget(this.reactionLimits);
-    budget.remember(`scripts: ${this.scriptNames}`);
-    return budget;
+    return new ReactionBudget(this.reactionLimits);
   }
 
   /// Pumps until the display settles: answering a line that has played can
@@ -470,6 +466,9 @@ export class TalkHost {
       budget.spendFuel(result.fuelUsed);
       this.record(result.reports);
       for (const report of result.reports) {
+        if (report.kind === 'run end' && report.outcome !== 'unhandled') {
+          budget.ran(report.script);
+        }
         if (report.kind === 'run end' && report.outcome === 'limit fault') {
           budget.exhausted(`${report.script}: ${report.limit ?? 'Run limit'}`);
         }

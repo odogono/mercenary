@@ -199,7 +199,8 @@ end received
     const good = session.captureSaveSnapshot();
     expect(() => session.begin()).toThrow('delivered events');
     expect(session.failure).toBeInstanceOf(ReactionLimitError);
-    expect(session.failure?.message).toContain('shrine');
+    expect(session.failure?.message).toContain('scripts that ran: shrine;');
+    expect(session.failure?.message).toContain('"kind":"received"');
     expect(() => session.advance(1 / 60)).toThrow(ReactionLimitError);
     expect(() => session.place(CENTRE)).toThrow(ReactionLimitError);
     expect(() => session.captureSaveSnapshot()).toThrow(ReactionLimitError);

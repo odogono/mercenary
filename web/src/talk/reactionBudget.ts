@@ -10,6 +10,8 @@ export const DEFAULT_REACTION_LIMITS: ReactionLimits = {
   fuel: 1_000_000
 };
 
+const RECENT_EVENTS = 8;
+
 export class ReactionLimitError extends Error {
   constructor(detail: string) {
     super(
@@ -22,7 +24,10 @@ export class ReactionLimitError extends Error {
 export class ReactionBudget {
   private fuel: number;
   private events: number;
-  private readonly recent: string[] = [];
+  /// The scripts whose Runs this step has taken, for the diagnostic.
+  private readonly scripts = new Set<string>();
+  /// The last few delivered events, formatted only if the budget runs out.
+  private readonly recent: unknown[] = [];
 
   constructor(limits: ReactionLimits = DEFAULT_REACTION_LIMITS) {
     for (const value of [limits.events, limits.fuel]) {
@@ -34,11 +39,8 @@ export class ReactionBudget {
     this.events = limits.events;
   }
 
-  remember(detail: string): void {
-    this.recent.push(detail);
-    if (this.recent.length > 8) {
-      this.recent.shift();
-    }
+  ran(script: string): void {
+    this.scripts.add(script);
   }
 
   get fuelLeft(): number {
@@ -52,16 +54,21 @@ export class ReactionBudget {
     this.fuel -= amount;
   }
 
-  deliver(detail: string): void {
-    this.remember(detail);
+  deliver(event: unknown): void {
+    this.recent.push(event);
+    if (this.recent.length > RECENT_EVENTS) {
+      this.recent.shift();
+    }
     if (this.events-- <= 0) {
       this.exhausted('delivered events');
     }
   }
 
   exhausted(reason: string): never {
+    const scripts = [...this.scripts].join(', ') || 'none';
+    const events = this.recent.map(event => JSON.stringify(event)).join('; ');
     throw new ReactionLimitError(
-      `${reason}; recent work: ${this.recent.join('; ')}`
+      `${reason}; scripts that ran: ${scripts}; recent events: ${events || 'none'}`
     );
   }
 }
