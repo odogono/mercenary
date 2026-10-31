@@ -3,6 +3,7 @@ import { fetchAssets, fetchReader, load } from '../payload/load.ts';
 import { endingKey } from '../session/ending.ts';
 import type { PresentationEvent, SessionSnapshot } from '../session/index.ts';
 import { createTargOrrery, skyStateAt, targOrreryFor } from '../sky/index.ts';
+import { fetchTargSystem } from '../sky/system.ts';
 import { TargPresentationClock, formatTargTime } from '../sky/time.ts';
 import { SoundPresenter } from '../sound/presenter.ts';
 import { AudioWorkletTransport } from '../sound/transport.ts';
@@ -183,19 +184,21 @@ try {
   assertBrowserDocument(location.pathname, 'gameplay');
   // Payload, settings and typography are independent localhost reads, so none waits behind
   // another.
-  const [bundle, settingsText, , logo, targPanelDocument] = await Promise.all([
-    load(
-      fetchReader(new URL('/payload/', location.href).href),
-      fetchAssets(new URL('/assets/targ.json', location.href).href)
-    ),
-    requiredText(new URL('/settings.json', location.href)),
-    loadTypography(),
-    // Targ's Title Logo comes from the ST release, since the Reference Build has none (#696).
-    loadTargTitleLogo(new URL('/payload/', location.href)),
-    requiredText(new URL('/payload/targ-st/panel.json', location.href)).then(
-      text => readTargPanelDocument(JSON.parse(text))
-    )
-  ]);
+  const [bundle, settingsText, , logo, targPanelDocument, targSystem] =
+    await Promise.all([
+      load(
+        fetchReader(new URL('/payload/', location.href).href),
+        fetchAssets(new URL('/assets/targ.json', location.href).href)
+      ),
+      requiredText(new URL('/settings.json', location.href)),
+      loadTypography(),
+      // Targ's Title Logo comes from the ST release, since the Reference Build has none (#696).
+      loadTargTitleLogo(new URL('/payload/', location.href)),
+      requiredText(new URL('/payload/targ-st/panel.json', location.href)).then(
+        text => readTargPanelDocument(JSON.parse(text))
+      ),
+      fetchTargSystem()
+    ]);
   chrome.showLogo(logo);
   let storage: Storage | undefined;
   try {
@@ -257,6 +260,7 @@ try {
     () => settings.presentation.sky.dayLengthMinutes
   );
   const orrery = targOrreryFor(
+    targSystem,
     effectivePresentation(settings.presentation, preferences.current())
   );
   const renderer = new Renderer(canvas, orrery);
@@ -337,7 +341,7 @@ try {
     matchMedia('(prefers-reduced-motion: reduce)').matches
   );
   const departureBodies = departureBodiesFrom(
-    skyStateAt(createTargOrrery(settings.presentation.sky), 0)
+    skyStateAt(createTargOrrery(targSystem, settings.presentation.sky), 0)
   );
   const makeDeparture = (entry: DepartureEntry): DepartureDirector =>
     new DepartureDirector({

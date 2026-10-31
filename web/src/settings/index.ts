@@ -160,10 +160,8 @@ export const DEFAULT_GLOW_DISTANCE: GlowDistanceSettings = {
 export interface SkySettings {
   readonly dayLengthMinutes: number;
   readonly latitudeDegrees: number;
-  readonly obliquityDegrees: number;
   readonly starCount: number;
   readonly starSeed: number;
-  readonly yearDays: number;
 }
 
 export interface PresentationSettings {
@@ -211,8 +209,6 @@ export const DEFAULT_AMBIENT_LIGHT: LightLevel = 100;
 export const DEFAULT_SHADOW_DEPTH: ShadowDepth = 100;
 export const DEFAULT_SKY_DAY_LENGTH_MINUTES = 24;
 export const DEFAULT_SKY_LATITUDE_DEGREES = 34;
-export const DEFAULT_SKY_OBLIQUITY_DEGREES = 21;
-export const DEFAULT_SKY_YEAR_DAYS = 96;
 export const DEFAULT_SKY_STAR_COUNT = 450;
 export const DEFAULT_SKY_STAR_SEED = 1985;
 export const DEFAULT_WIREFRAME_THICKNESS = 1;
@@ -495,17 +491,6 @@ const readSky = (value: unknown): SkySettings => {
       -90,
       90
     ),
-    obliquityDegrees: inRange(
-      number(
-        source,
-        'obliquityDegrees',
-        'presentation.sky.obliquityDegrees',
-        DEFAULT_SKY_OBLIQUITY_DEGREES
-      ),
-      'presentation.sky.obliquityDegrees',
-      0,
-      90
-    ),
     starCount: inRange(
       integer(
         source,
@@ -527,15 +512,6 @@ const readSky = (value: unknown): SkySettings => {
       'presentation.sky.starSeed',
       0,
       0xff_ff_ff_ff
-    ),
-    yearDays: positive(
-      number(
-        source,
-        'yearDays',
-        'presentation.sky.yearDays',
-        DEFAULT_SKY_YEAR_DAYS
-      ),
-      'presentation.sky.yearDays'
     )
   };
 };

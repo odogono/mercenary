@@ -14,10 +14,8 @@ import {
   DEFAULT_SCRIPT_INSTRUCTION_BUDGET,
   DEFAULT_SKY_DAY_LENGTH_MINUTES,
   DEFAULT_SKY_LATITUDE_DEGREES,
-  DEFAULT_SKY_OBLIQUITY_DEGREES,
   DEFAULT_SKY_STAR_COUNT,
   DEFAULT_SKY_STAR_SEED,
-  DEFAULT_SKY_YEAR_DAYS,
   DEFAULT_STRUCTURE_REACH,
   DEFAULT_WIREFRAME_GLOW,
   DEFAULT_WIREFRAME_THICKNESS,
@@ -77,10 +75,8 @@ describe('settings that are not there', () => {
       sky: {
         dayLengthMinutes: DEFAULT_SKY_DAY_LENGTH_MINUTES,
         latitudeDegrees: DEFAULT_SKY_LATITUDE_DEGREES,
-        obliquityDegrees: DEFAULT_SKY_OBLIQUITY_DEGREES,
         starCount: DEFAULT_SKY_STAR_COUNT,
-        starSeed: DEFAULT_SKY_STAR_SEED,
-        yearDays: DEFAULT_SKY_YEAR_DAYS
+        starSeed: DEFAULT_SKY_STAR_SEED
       },
       structureReach: DEFAULT_STRUCTURE_REACH,
       wireframe: {
@@ -184,11 +180,8 @@ describe('the Presentation Preset and Targ sky settings', () => {
   for (const [field, value] of [
     ['dayLengthMinutes', 0],
     ['dayLengthMinutes', -1],
-    ['yearDays', 0],
     ['latitudeDegrees', -90.01],
     ['latitudeDegrees', 90.01],
-    ['obliquityDegrees', -0.01],
-    ['obliquityDegrees', 90.01],
     ['starCount', -1],
     ['starCount', 10_001],
     ['starCount', 1.5],
@@ -211,10 +204,8 @@ describe('the Presentation Preset and Targ sky settings', () => {
       {
         dayLengthMinutes: Number.MIN_VALUE,
         latitudeDegrees: -90,
-        obliquityDegrees: 0,
         starCount: 0,
-        starSeed: 0,
-        yearDays: Number.MIN_VALUE
+        starSeed: 0
       }
     ],
     [
@@ -222,10 +213,8 @@ describe('the Presentation Preset and Targ sky settings', () => {
       {
         dayLengthMinutes: Number.MAX_VALUE,
         latitudeDegrees: 90,
-        obliquityDegrees: 90,
         starCount: 10_000,
-        starSeed: 0xff_ff_ff_ff,
-        yearDays: Number.MAX_VALUE
+        starSeed: 0xff_ff_ff_ff
       }
     ]
   ] as const) {

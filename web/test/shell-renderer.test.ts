@@ -18,6 +18,7 @@ import { defaultSettings } from '../src/settings/index.ts';
 import { Renderer, planFrame } from '../src/shell/frame.ts';
 import { createTargOrrery, type TargOrrery } from '../src/sky/index.ts';
 import { Ink, World } from '../src/world/index.ts';
+import { TARG_SYSTEM } from './fixtures/targSystem.ts';
 import { loadPayload } from './replay/artifacts.ts';
 
 const bundle = await loadPayload();
@@ -475,7 +476,7 @@ describe('a Session Snapshot planned for WebGL2', () => {
       world,
       presented,
       size,
-      createTargOrrery(defaultSettings().presentation.sky)
+      createTargOrrery(TARG_SYSTEM, defaultSettings().presentation.sky)
     );
 
     expect(enhanced.clear).toEqual(authentic.clear);
@@ -484,7 +485,10 @@ describe('a Session Snapshot planned for WebGL2', () => {
   });
 
   test('an Enhanced surface carries a Sky Frame before the unchanged scene batches', () => {
-    const orrery = createTargOrrery(defaultSettings().presentation.sky);
+    const orrery = createTargOrrery(
+      TARG_SYSTEM,
+      defaultSettings().presentation.sky
+    );
     const frame = planFrame(world, session().snapshot, size, orrery);
 
     expect(frame.sky?.batches.map(batch => batch.kind)).toEqual(['outerMoon']);
@@ -498,7 +502,10 @@ describe('a Session Snapshot planned for WebGL2', () => {
   });
 
   test('positions the Orrery with presentation time without changing the Session Snapshot', () => {
-    const orrery = createTargOrrery(defaultSettings().presentation.sky);
+    const orrery = createTargOrrery(
+      TARG_SYSTEM,
+      defaultSettings().presentation.sky
+    );
     const snapshot = session().snapshot;
 
     expect(
@@ -516,7 +523,10 @@ describe('a Session Snapshot planned for WebGL2', () => {
   test('never carries the Enhanced sky into a Room', () => {
     const inside = session();
     inside.teleport({ id: 3, kind: 'room' });
-    const orrery = createTargOrrery(defaultSettings().presentation.sky);
+    const orrery = createTargOrrery(
+      TARG_SYSTEM,
+      defaultSettings().presentation.sky
+    );
     const frame = planFrame(
       world,
       inside.snapshot,
@@ -620,7 +630,10 @@ describe('a Session Snapshot submitted to WebGL2', () => {
   });
 
   test('compiles the sky program only when an Enhanced orrery is supplied', () => {
-    const orrery = createTargOrrery(defaultSettings().presentation.sky);
+    const orrery = createTargOrrery(
+      TARG_SYSTEM,
+      defaultSettings().presentation.sky
+    );
     const enhanced = fakeRenderer(orrery);
 
     expect(fakeRenderer().programs).toBe(1);
@@ -777,7 +790,10 @@ describe('a Session Snapshot submitted to WebGL2', () => {
   });
 
   test('an Enhanced surface blends its sky before the unchanged scene passes', () => {
-    const orrery = createTargOrrery(defaultSettings().presentation.sky);
+    const orrery = createTargOrrery(
+      TARG_SYSTEM,
+      defaultSettings().presentation.sky
+    );
     const { calls, renderer } = fakeRenderer(orrery);
 
     renderer.draw(world, session().snapshot, size);
@@ -796,7 +812,10 @@ describe('a Session Snapshot submitted to WebGL2', () => {
   });
 
   test('draws the world-aligned twilight gradient before blended sky bodies', () => {
-    const orrery = createTargOrrery(defaultSettings().presentation.sky);
+    const orrery = createTargOrrery(
+      TARG_SYSTEM,
+      defaultSettings().presentation.sky
+    );
     const twilight = { ...session().snapshot, elapsed: 540 };
     const planned = planFrame(world, twilight, size, orrery);
     const { calls, renderer, shaderSources, uniforms } = fakeRenderer(orrery);
@@ -831,7 +850,10 @@ describe('a Session Snapshot submitted to WebGL2', () => {
   });
 
   test('does not submit a gradient outside twilight', () => {
-    const orrery = createTargOrrery(defaultSettings().presentation.sky);
+    const orrery = createTargOrrery(
+      TARG_SYSTEM,
+      defaultSettings().presentation.sky
+    );
     const { renderer, uniforms } = fakeRenderer(orrery);
 
     renderer.draw(world, session().snapshot, size);
@@ -844,7 +866,10 @@ describe('a Session Snapshot submitted to WebGL2', () => {
   });
 
   test('submits the authored moon and star shader inputs', () => {
-    const orrery = createTargOrrery(defaultSettings().presentation.sky);
+    const orrery = createTargOrrery(
+      TARG_SYSTEM,
+      defaultSettings().presentation.sky
+    );
     const opening = session().snapshot;
     const expectedMoon = planFrame(world, opening, size, orrery).sky!
       .batches[0]!;

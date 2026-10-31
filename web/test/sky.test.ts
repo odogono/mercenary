@@ -4,13 +4,13 @@ import { ScenePalette } from '../src/scene/index.ts';
 import { defaultSettings } from '../src/settings/index.ts';
 import {
   createTargOrrery,
-  kepler,
   skyColourAt,
   skyStateAt,
   skyZenithColourAt,
   starVisibilityAt,
   targOrreryFor
 } from '../src/sky/index.ts';
+import { TARG_SYSTEM } from './fixtures/targSystem.ts';
 import { onRecordingLibm } from './replay/platform.ts';
 
 const degrees = (radians: number): number => (radians * 180) / Math.PI;
@@ -22,26 +22,12 @@ const angleBetween = (
   Math.acos(Math.max(-1, Math.min(1, a.x * b.x + a.y * b.y + a.z * b.z)));
 
 const defaults = defaultSettings().presentation.sky;
-const orrery = createTargOrrery(defaults);
+const orrery = createTargOrrery(TARG_SYSTEM, defaults);
 const daySeconds = defaults.dayLengthMinutes * 60;
-
-describe('the four-step Kepler solve', () => {
-  for (const eccentricity of [0, 0.06, 0.11, 0.18]) {
-    test(`leaves a sub-nanoradian residual at eccentricity ${eccentricity}`, () => {
-      for (let index = -32; index <= 32; index += 1) {
-        const mean = (index / 32) * Math.PI;
-        const eccentric = kepler(mean, eccentricity);
-        expect(
-          Math.abs(eccentric - eccentricity * Math.sin(eccentric) - mean)
-        ).toBeLessThan(1e-9);
-      }
-    });
-  }
-});
 
 describe('the authored Targ Orrery', () => {
   test.skipIf(!onRecordingLibm)(
-    'keeps the existing celestial directions bit-identical',
+    'pins the celestial directions read from the Targ System',
     () => {
       const state = skyStateAt(orrery, 123.5);
       expect({
@@ -50,19 +36,19 @@ describe('the authored Targ Orrery', () => {
         sun: state.sun.direction
       }).toEqual({
         inner: {
-          x: 0.344_611_041_062_982_1,
-          y: 0.717_230_494_411_036_3,
-          z: -0.605_659_680_236_672_4
+          x: -0.865_058_504_950_010_9,
+          y: 0.321_754_854_650_322_6,
+          z: -0.384_899_462_876_478_64
         },
         outer: {
-          x: 0.603_566_271_513_557_2,
-          y: 0.589_659_960_953_842_9,
-          z: 0.536_664_593_893_742_2
+          x: 0.596_639_234_988_991_4,
+          y: 0.622_728_280_848_721_3,
+          z: 0.506_192_761_211_524_2
         },
         sun: {
-          x: 0.244_335_086_554_261,
-          y: 0.805_178_704_789_182_9,
-          z: -0.540_358_787_133_637_4
+          x: 0.244_038_175_081_906_42,
+          y: 0.803_972_140_411_601_1,
+          z: -0.542_286_056_011_660_2
         }
       });
     }
@@ -70,19 +56,19 @@ describe('the authored Targ Orrery', () => {
 
   test('is a deterministic value of settings and elapsed session time', () => {
     expect(skyStateAt(orrery, 123.5)).toEqual(
-      skyStateAt(createTargOrrery(defaults), 123.5)
+      skyStateAt(createTargOrrery(TARG_SYSTEM, defaults), 123.5)
     );
   });
 
   test('uses the named seed and resolves only the Enhanced preset', () => {
-    const alternate = createTargOrrery({
+    const alternate = createTargOrrery(TARG_SYSTEM, {
       ...defaults,
       starSeed: defaults.starSeed + 1
     });
 
     expect(alternate.stars).not.toEqual(orrery.stars);
     expect(
-      targOrreryFor({
+      targOrreryFor(TARG_SYSTEM, {
         glowDistance: { fadeEnd: 16_384, fadeStart: 4096 },
         preset: 'authentic',
         roads: { glow: 0, thickness: 1 },
@@ -92,7 +78,7 @@ describe('the authored Targ Orrery', () => {
       })
     ).toBeUndefined();
     expect(
-      targOrreryFor({
+      targOrreryFor(TARG_SYSTEM, {
         glowDistance: { fadeEnd: 16_384, fadeStart: 4096 },
         preset: 'enhanced',
         roads: { glow: 0, thickness: 1 },
@@ -111,59 +97,66 @@ describe('the authored Targ Orrery', () => {
 
     expect(state.sun.direction.x).toBeGreaterThan(0);
     expect(state.sun.direction.y).toBeGreaterThan(0);
-    expect(state.sun.angularDiameterRadians).toBeCloseTo(radians(1.8), 12);
+    expect(state.sun.angularDiameterRadians).toBeCloseTo(radians(1.8), 6);
     expect(altitude).toBeCloseTo(20, 0);
     expect(azimuth).toBeCloseTo(42, 0);
     expect(outer.illuminatedFraction).toBeCloseTo(0.31, 1);
   });
 
-  test('returns to the same solar direction after the authored year', () => {
-    const first = skyStateAt(orrery, 0).sun.direction;
-    const nextYear = skyStateAt(orrery, defaults.yearDays * daySeconds).sun
-      .direction;
-    expect(angleBetween(first, nextYear)).toBeLessThan(1e-7);
-  });
-
-  test('keeps one solar day within two degrees of the same hour angle', () => {
-    const first = skyStateAt(orrery, 0).sun.direction;
-    const tomorrow = skyStateAt(orrery, daySeconds).sun.direction;
-    expect(degrees(angleBetween(first, tomorrow))).toBeLessThan(2);
-  });
-
-  test('turns the Star Sphere once in one sidereal day', () => {
-    const first = skyStateAt(orrery, 0).stars[0]!.direction;
-    const siderealSeconds =
-      daySeconds * (defaults.yearDays / (defaults.yearDays + 1));
-    const next = skyStateAt(orrery, siderealSeconds).stars[0]!.direction;
-    expect(angleBetween(first, next)).toBeLessThan(1e-7);
-  });
-
-  test('returns each moon phase on its synodic cycle', () => {
-    for (const [index, periodDays] of [
-      [0, 2.6],
-      [1, 14.3]
-    ] as const) {
-      const synodicDays = 1 / Math.abs(1 / periodDays - 1 / defaults.yearDays);
-      const first = skyStateAt(orrery, 0).moons[index].illuminatedFraction;
-      const repeated = skyStateAt(orrery, synodicDays * daySeconds).moons[index]
-        .illuminatedFraction;
-      expect(repeated).toBeCloseTo(first, 1);
+  test('returns the sun, the moons and the stars to the same place after one Body Day', () => {
+    for (const elapsed of [0, 123.5, 4321]) {
+      const today = skyStateAt(orrery, elapsed);
+      const tomorrow = skyStateAt(orrery, elapsed + daySeconds);
+      expect(
+        angleBetween(today.sun.direction, tomorrow.sun.direction)
+      ).toBeLessThan(1e-6);
+      for (const index of [0, 1] as const) {
+        expect(
+          angleBetween(
+            today.moons[index].direction,
+            tomorrow.moons[index].direction
+          )
+        ).toBeLessThan(1e-6);
+      }
+      expect(
+        angleBetween(today.stars[0]!.direction, tomorrow.stars[0]!.direction)
+      ).toBeLessThan(1e-6);
     }
   });
 
-  test('reaches both seasonal declination extremes', () => {
-    const declinations: number[] = [];
-    for (let step = 0; step < 720; step += 1) {
-      declinations.push(
-        skyStateAt(orrery, (step / 720) * defaults.yearDays * daySeconds)
-          .solarDeclinationDegrees
-      );
-    }
-    expect(Math.max(...declinations)).toBeCloseTo(defaults.obliquityDegrees, 2);
-    expect(Math.min(...declinations)).toBeCloseTo(
-      -defaults.obliquityDegrees,
-      2
+  test('keeps each moon at one phase, because the System does not move', () => {
+    const phases = Array.from({ length: 24 }, (_, step) =>
+      skyStateAt(orrery, (step / 24) * 7 * daySeconds).moons.map(
+        moon => moon.illuminatedFraction
+      )
     );
+    for (const phase of phases) {
+      expect(phase).toEqual(phases[0]!);
+    }
+    // Neither moon is new, so both are there to be seen.
+    expect(phases[0]![0]).toBeWithin(0.3, 0.7);
+    expect(phases[0]![1]).toBeWithin(0.2, 0.5);
+  });
+
+  test('keeps the sun at one declination, with no seasons', () => {
+    for (let step = 0; step < 48; step += 1) {
+      expect(
+        skyStateAt(orrery, step * 1000 * daySeconds).solarDeclinationDegrees
+      ).toBeCloseTo(0, 9);
+    }
+  });
+
+  test("reads each disc's size and colour from the Targ System", () => {
+    const state = skyStateAt(orrery, 0);
+    expect(state.sun.angularDiameterRadians).toBeCloseTo(radians(1.8), 6);
+    expect(state.moons[0].angularDiameterRadians).toBeCloseTo(radians(1.6), 4);
+    expect(state.moons[1].angularDiameterRadians).toBeCloseTo(radians(0.9), 4);
+    expect(state.sun.litColour).toEqual({ blue: 0x70, green: 0xd0, red: 0xff });
+    expect(state.moons[1].litColour).toEqual({
+      blue: 0xd8,
+      green: 0xc8,
+      red: 0xb8
+    });
   });
 
   test('keeps every seeded star finite, unit length and dimmer than Far Points', () => {

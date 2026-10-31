@@ -19,7 +19,7 @@ One directory per concern. Pages load a `boot.ts` (`web/*.html` names which). Ea
 - `navigation/`: Room walls and Doorways. `interaction/`: shared Carried Stack rules and Head Commands; each Title owns resident state, tables and effects (ADRs 0075/0076).
 - `orientation/`, `projection/`, `math/` (the governed elementary functions, ADR 0022).
 - `world/`: the render-ready world built from the payload. `coast/`: horizon fill, islands and roads.
-- `sky/`: the Orrery and Body Time. `text/`: composing decoded messages.
+- `sky/`: the Targ System, the Orrery read from it, and Body Time. `text/`: composing decoded messages.
 - `sound/`: Targ’s bounded SID synth, worklet and presenter. Damocles and Dion use the YM2149 core in `damocles/psg.ts` with their own sound drivers. `soundboard/` owns the listening page and arrangements.
 - `scene/`: frame colours. `rendering/`: the WebGL2 Filled Presentation renderer shared by Damocles and Dion.
 - `enhanced/`: the one Enhanced planner Damocles and Dion share (ADR 0077): the scene a Title supplies, the frame, the sky triangles, Sunlight, and the interpolation that draws the view between simulation passes (ADR 0078). `structure/`: structure selection, regions, entrance attachments and their doors (`selection.ts`), and the Lift both Titles share (`lift.ts`, ADR 0079).

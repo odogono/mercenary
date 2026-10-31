@@ -24,6 +24,7 @@ import {
 import { createWalkabout, requiredSettings } from '../src/shell/session.ts';
 import { createTargOrrery, skyStateAt } from '../src/sky/index.ts';
 import { comparable } from './fixtures/save.ts';
+import { TARG_SYSTEM } from './fixtures/targSystem.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
 
 const bundle = await loadPayload();
@@ -43,7 +44,10 @@ const VIEWPORTS = [
   { height: 900, width: 1440 }
 ] as const;
 
-const sky = skyStateAt(createTargOrrery(settings.presentation.sky), 0);
+const sky = skyStateAt(
+  createTargOrrery(TARG_SYSTEM, settings.presentation.sky),
+  0
+);
 const bodies = departureBodiesFrom(sky);
 
 /// Abstract entries for exercising the carousel's motion. They are the tests' alone: the app

@@ -35,8 +35,6 @@
     "sky": {
       "dayLengthMinutes": 24,
       "latitudeDegrees": 34,
-      "obliquityDegrees": 21,
-      "yearDays": 96,
       "starCount": 450,
       "starSeed": 1985
     }

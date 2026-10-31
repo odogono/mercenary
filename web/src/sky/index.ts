@@ -1,3 +1,8 @@
+import type {
+  TargSystemBody,
+  TargSystemBodyId,
+  TargSystemDocument
+} from '../flyover/documents.ts';
 import { atan, cos, sin } from '../math/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import { ScenePalette, type RGB8 } from '../scene/index.ts';
@@ -19,60 +24,20 @@ const rgb = (red: number, green: number, blue: number): RGB8 => ({
 const NIGHT = rgb(0x08, 0x10, 0x18);
 const DUSK = rgb(0xc8, 0x68, 0x38);
 const STAR_COLOUR = rgb(0xa0, 0xa8, 0xc0);
-const SUN_COLOUR = rgb(0xff, 0xd0, 0x70);
-const INNER_MOON_COLOUR = rgb(0xd8, 0xc8, 0xa8);
-const OUTER_MOON_COLOUR = rgb(0xb8, 0xc8, 0xd8);
 const MOON_DARK = rgb(0x10, 0x18, 0x20);
-
-interface Orbit {
-  readonly angularDiameterDegrees: number;
-  readonly argumentOfPeriapsisDegrees: number;
-  readonly eccentricity: number;
-  readonly inclinationDegrees: number;
-  readonly meanAnomalyAtEpochDegrees: number;
-  readonly nodeDegrees: number;
-  readonly periodDays: number;
-}
-
-const SUN_ORBIT: Orbit = {
-  angularDiameterDegrees: 1.8,
-  argumentOfPeriapsisDegrees: 0,
-  eccentricity: 0.06,
-  inclinationDegrees: 0,
-  meanAnomalyAtEpochDegrees: 0,
-  nodeDegrees: 0,
-  periodDays: 96
-};
-
-const MOON_ORBITS: readonly [Orbit, Orbit] = [
-  {
-    angularDiameterDegrees: 1.6,
-    argumentOfPeriapsisDegrees: 25,
-    eccentricity: 0.11,
-    inclinationDegrees: 9,
-    meanAnomalyAtEpochDegrees: 210,
-    nodeDegrees: 125,
-    periodDays: 2.6
-  },
-  {
-    angularDiameterDegrees: 0.9,
-    argumentOfPeriapsisDegrees: 40,
-    eccentricity: 0.18,
-    inclinationDegrees: 32,
-    meanAnomalyAtEpochDegrees: 35.519,
-    nodeDegrees: 334,
-    periodDays: 14.3
-  }
-];
 
 interface FixedStar {
   readonly alpha: number;
   readonly equatorial: Vector3;
 }
 
+/// A view of Targ's sky read from the Targ System (ADR 0086). The System is static, so the only
+/// thing that moves is TARG turning under it: the sun, the moons and the stars all cross the
+/// sky once a Body Day, and each moon keeps the one phase its place in the System gives it.
 export interface TargOrrery {
   readonly settings: SkySettings;
   readonly stars: readonly FixedStar[];
+  readonly system: TargSystemDocument;
 }
 
 export interface SkyStar {
@@ -103,53 +68,17 @@ export interface SkyState {
 const radians = (degrees: number): number => (degrees * Math.PI) / 180;
 const degrees = (value: number): number => (value * 180) / Math.PI;
 
-const wrapSigned = (angle: number): number => {
-  const wrapped = (((angle + Math.PI) % TURN) + TURN) % TURN;
-  return wrapped - Math.PI;
-};
-
-export const kepler = (meanAnomaly: number, eccentricity: number): number => {
-  let eccentricAnomaly = meanAnomaly;
-  for (let iteration = 0; iteration < 4; iteration += 1) {
-    eccentricAnomaly -=
-      (eccentricAnomaly - eccentricity * sin(eccentricAnomaly) - meanAnomaly) /
-      (1 - eccentricity * cos(eccentricAnomaly));
+/// The angle of (x, y) from the x axis, from governed `atan` so ADR 0022's math seam stays
+/// complete.
+const angleOf = (x: number, y: number): number => {
+  if (x === 0) {
+    return y >= 0 ? Math.PI / 2 : -Math.PI / 2;
   }
-  return eccentricAnomaly;
-};
-
-const rotateX = (value: Vector3, angle: number): Vector3 => ({
-  x: value.x,
-  y: value.y * cos(angle) - value.z * sin(angle),
-  z: value.y * sin(angle) + value.z * cos(angle)
-});
-
-const rotateZ = (value: Vector3, angle: number): Vector3 => ({
-  x: value.x * cos(angle) - value.y * sin(angle),
-  y: value.x * sin(angle) + value.y * cos(angle),
-  z: value.z
-});
-
-const equatorialPosition = (
-  orbit: Orbit,
-  days: number,
-  obliquity: number
-): Vector3 => {
-  const meanAnomaly = wrapSigned(
-    radians(orbit.meanAnomalyAtEpochDegrees) + (TURN * days) / orbit.periodDays
-  );
-  const eccentricAnomaly = kepler(meanAnomaly, orbit.eccentricity);
-  let direction: Vector3 = {
-    x: cos(eccentricAnomaly) - orbit.eccentricity,
-    y:
-      Math.sqrt(1 - orbit.eccentricity * orbit.eccentricity) *
-      sin(eccentricAnomaly),
-    z: 0
-  };
-  direction = rotateZ(direction, radians(orbit.argumentOfPeriapsisDegrees));
-  direction = rotateX(direction, radians(orbit.inclinationDegrees));
-  direction = rotateZ(direction, radians(orbit.nodeDegrees));
-  return rotateX(direction, obliquity);
+  const base = atan(y / x);
+  if (x > 0) {
+    return base;
+  }
+  return y >= 0 ? base + Math.PI : base - Math.PI;
 };
 
 interface LocalFrame {
@@ -217,20 +146,26 @@ const starSphere = (count: number, seed: number): readonly FixedStar[] => {
   return stars;
 };
 
-export const createTargOrrery = (settings: SkySettings): TargOrrery => ({
+export const createTargOrrery = (
+  system: TargSystemDocument,
+  settings: SkySettings
+): TargOrrery => ({
   settings,
-  stars: starSphere(settings.starCount, settings.starSeed)
+  stars: starSphere(settings.starCount, settings.starSeed),
+  system
 });
 
 export const targOrreryFor = (
+  system: TargSystemDocument,
   presentation: PresentationSettings
 ): TargOrrery | undefined =>
   presentation.preset === 'enhanced'
-    ? createTargOrrery(presentation.sky)
+    ? createTargOrrery(system, presentation.sky)
     : undefined;
 
 export interface TargOrreryBodyPosition {
   readonly angularDiameterRadians: number;
+  /// Targ-relative, in the System's units, turned into the observer's horizon frame.
   readonly position: Vector3;
 }
 
@@ -239,55 +174,53 @@ export interface TargOrreryBodyPositions {
   readonly sun: TargOrreryBodyPosition;
 }
 
-interface OrreryFrame {
-  readonly horizon: LocalFrame;
-  readonly moons: readonly [Vector3, Vector3];
-  readonly sun: Vector3;
-}
-
-const orreryFrameAt = (
-  settings: SkySettings,
-  elapsedSeconds: number
-): OrreryFrame => {
-  const daySeconds = settings.dayLengthMinutes * 60;
-  const days = Math.max(0, elapsedSeconds) / daySeconds;
-  const obliquity = radians(settings.obliquityDegrees);
-  const latitude = radians(settings.latitudeDegrees);
-  const localSiderealTime =
-    radians((TARG_EPOCH_HOUR - 12) * 15) +
-    TURN * days * (1 + 1 / settings.yearDays);
-  return {
-    horizon: localFrame(latitude, localSiderealTime),
-    moons: [
-      equatorialPosition(MOON_ORBITS[0], days, obliquity),
-      equatorialPosition(MOON_ORBITS[1], days, obliquity)
-    ],
-    sun: equatorialPosition(
-      { ...SUN_ORBIT, periodDays: settings.yearDays },
-      days,
-      obliquity
-    )
-  };
+const systemBody = (
+  system: TargSystemDocument,
+  id: TargSystemBodyId
+): TargSystemBody => {
+  const body = system.bodies.find(candidate => candidate.id === id);
+  if (body === undefined) {
+    throw new Error(`The Targ System has no ${id}`);
+  }
+  return body;
 };
 
-/// The Orrery's dimensionless, unnormalised Targ-relative orbital positions. Consumers choose
-/// an authored distance scale; `skyStateAt` continues to consume only their directions.
+/// Targ sits at the System's origin, so a Body's position is already Targ-relative, in Targ's
+/// equatorial frame with north along z.
+const lengthOf = (value: Vector3): number =>
+  Math.hypot(value.x, value.y, value.z);
+
+const angularDiameter = (body: TargSystemBody): number =>
+  2 * arcsine(Math.min(1, body.radius / lengthOf(body.position)));
+
+/// Where the observer's horizon is after `elapsedSeconds` of Targ turning.
+///
+/// With the sun fixed in the System, a solar day and a sidereal day are the same turn. The
+/// epoch is placed so that the sun's hour angle reads `TARG_EPOCH_HOUR`, wherever the System
+/// puts the sun.
+const horizonAt = (orrery: TargOrrery, elapsedSeconds: number): LocalFrame => {
+  const { settings } = orrery;
+  const days = Math.max(0, elapsedSeconds) / (settings.dayLengthMinutes * 60);
+  const sun = systemBody(orrery.system, 'sun').position;
+  const localSiderealTime =
+    angleOf(sun.x, sun.y) + radians((TARG_EPOCH_HOUR - 12) * 15) + TURN * days;
+  return localFrame(radians(settings.latitudeDegrees), localSiderealTime);
+};
+
+/// The Orrery's Targ-relative Body positions in the observer's horizon frame, in System units.
 export const targOrreryBodyPositionsAt = (
   orrery: TargOrrery,
   elapsedSeconds: number
 ): TargOrreryBodyPositions => {
-  const frame = orreryFrameAt(orrery.settings, elapsedSeconds);
-  const body = (orbit: Orbit, position: Vector3): TargOrreryBodyPosition => ({
-    angularDiameterRadians: radians(orbit.angularDiameterDegrees),
-    position: localDirection(position, frame.horizon)
-  });
-  return {
-    moons: [
-      body(MOON_ORBITS[0], frame.moons[0]),
-      body(MOON_ORBITS[1], frame.moons[1])
-    ],
-    sun: body(SUN_ORBIT, frame.sun)
+  const horizon = horizonAt(orrery, elapsedSeconds);
+  const at = (id: TargSystemBodyId): TargOrreryBodyPosition => {
+    const body = systemBody(orrery.system, id);
+    return {
+      angularDiameterRadians: angularDiameter(body),
+      position: localDirection(body.position, horizon)
+    };
   };
+  return { moons: [at('inner-moon'), at('outer-moon')], sun: at('sun') };
 };
 
 const smoothstep = (edge0: number, edge1: number, value: number): number => {
@@ -373,23 +306,37 @@ export const starVisibilityAt = (solarAltitudeDegrees: number): number =>
     solarAltitudeDegrees
   );
 
+const colourOf = (hex: string): RGB8 =>
+  rgb(
+    Number.parseInt(hex.slice(1, 3), 16),
+    Number.parseInt(hex.slice(3, 5), 16),
+    Number.parseInt(hex.slice(5, 7), 16)
+  );
+
+/// A Body as a disc in the sky. A moon's phase is the angle at it between the sun and Targ,
+/// which a static System fixes for good.
 const disc = (
-  orbit: Orbit,
-  direction: Vector3,
-  litColour: RGB8,
-  sunEquatorial?: Vector3,
-  bodyEquatorial?: Vector3
+  body: TargSystemBody,
+  horizon: LocalFrame,
+  sun?: TargSystemBody
 ): SkyDisc => {
-  const phaseCosine =
-    sunEquatorial === undefined || bodyEquatorial === undefined
-      ? 1
-      : -dot(sunEquatorial, bodyEquatorial);
+  const toward = normalized(body.position);
+  let phaseCosine = 1;
+  if (sun !== undefined) {
+    const toSun = normalized({
+      x: sun.position.x - body.position.x,
+      y: sun.position.y - body.position.y,
+      z: sun.position.z - body.position.z
+    });
+    // Fully lit when the sun is behind the observer, as seen from the moon.
+    phaseCosine = -dot(toSun, toward);
+  }
   return {
-    angularDiameterRadians: radians(orbit.angularDiameterDegrees),
-    ...(sunEquatorial === undefined ? {} : { darkColour: MOON_DARK }),
-    direction,
+    angularDiameterRadians: angularDiameter(body),
+    ...(sun === undefined ? {} : { darkColour: MOON_DARK }),
+    direction: localDirection(toward, horizon),
     illuminatedFraction: (1 + phaseCosine) / 2,
-    litColour,
+    litColour: colourOf(body.baseColour),
     phaseCosine
   };
 };
@@ -398,40 +345,25 @@ export const skyStateAt = (
   orrery: TargOrrery,
   elapsedSeconds: number
 ): SkyState => {
-  const { settings } = orrery;
-  const frame = orreryFrameAt(settings, elapsedSeconds);
-  const sunEquatorial = normalized(frame.sun);
-  const sunDirection = localDirection(sunEquatorial, frame.horizon);
-  const moonAt = (
-    orbit: Orbit,
-    equatorialPosition: Vector3,
-    litColour: RGB8
-  ): SkyDisc => {
-    const equatorial = normalized(equatorialPosition);
-    return disc(
-      orbit,
-      localDirection(equatorial, frame.horizon),
-      litColour,
-      sunEquatorial,
-      equatorial
-    );
-  };
-  const moonValues: readonly [SkyDisc, SkyDisc] = [
-    moonAt(MOON_ORBITS[0], frame.moons[0], INNER_MOON_COLOUR),
-    moonAt(MOON_ORBITS[1], frame.moons[1], OUTER_MOON_COLOUR)
-  ];
-  const solarAltitudeDegrees = degrees(arcsine(sunDirection.y));
+  const horizon = horizonAt(orrery, elapsedSeconds);
+  const sun = systemBody(orrery.system, 'sun');
+  const sunDisc = disc(sun, horizon);
+  const sunEquatorial = normalized(sun.position);
+  const solarAltitudeDegrees = degrees(arcsine(sunDisc.direction.y));
   return {
     clear: skyColourAt(solarAltitudeDegrees),
-    moons: moonValues,
+    moons: [
+      disc(systemBody(orrery.system, 'inner-moon'), horizon, sun),
+      disc(systemBody(orrery.system, 'outer-moon'), horizon, sun)
+    ],
     solarAltitudeDegrees,
     solarDeclinationDegrees: degrees(arcsine(sunEquatorial.z)),
     starColour: STAR_COLOUR,
     stars: orrery.stars.map(star => ({
       alpha: star.alpha,
-      direction: localDirection(star.equatorial, frame.horizon)
+      direction: localDirection(star.equatorial, horizon)
     })),
     starVisibility: starVisibilityAt(solarAltitudeDegrees),
-    sun: disc(SUN_ORBIT, sunDirection, SUN_COLOUR)
+    sun: sunDisc
   };
 };

@@ -11,6 +11,7 @@ import {
 } from '../src/flyover/system.ts';
 import { defaultSettings } from '../src/settings/index.ts';
 import { createTargOrrery, skyStateAt } from '../src/sky/index.ts';
+import { TARG_SYSTEM } from './fixtures/targSystem.ts';
 
 const json = async (path: string): Promise<unknown> =>
   JSON.parse(await Bun.file(path).text());
@@ -32,8 +33,8 @@ describe('the composed Targ System', () => {
       ['targ', 'sun', 'inner-moon', 'outer-moon']
     );
     const sky = defaultSettings().presentation.sky;
-    const system = composeTargSystem(presentation, sky);
-    const orrery = createTargOrrery(sky);
+    const system = composeTargSystem(TARG_SYSTEM, presentation, sky);
+    const orrery = createTargOrrery(TARG_SYSTEM, sky);
 
     for (const elapsed of [0, 123.5, 100_000]) {
       const bodies = new Map(
@@ -60,6 +61,7 @@ describe('the composed Targ System', () => {
       ['targ', 'sun', 'inner-moon', 'outer-moon']
     );
     const system = composeTargSystem(
+      TARG_SYSTEM,
       presentation,
       defaultSettings().presentation.sky
     );
@@ -68,6 +70,7 @@ describe('the composed Targ System', () => {
     const sun = bodies[1]!;
 
     expect(targ).toMatchObject({
+      colour: '#008000',
       displayRadiusUnits: 2_670_176.857_720_436,
       id: 'targ',
       position: { x: 0, y: 0, z: 0 },
@@ -81,11 +84,9 @@ describe('the composed Targ System', () => {
       ranges: ['orbital', 'coastal', 'surface']
     });
     expect(sun.provenance.position).toBe('mechanically-derived');
-    expect(sun.provenance.radius).toBe('mechanically-derived');
-    expect(sun.displayRadiusUnits).toBeCloseTo(
-      683_565_275.576_431_6 * Math.sin((1.8 * Math.PI) / 360),
-      10
-    );
+    expect(sun.provenance.radius).toBe('authored');
+    expect(sun.colour).toBe('#ffd070');
+    expect(sun.displayRadiusUnits).toBe(10_736_977);
     expect(system.clock.secondsOfDay()).toBeCloseTo(9 * 3600, 0);
     expect(bodies.every(body => !('primaryId' in body))).toBeTrue();
     expect(system.provenance).toEqual({
@@ -106,24 +107,27 @@ describe('the composed Targ System', () => {
     expect(system.islands[1]!.surfacePatch).toBeUndefined();
   });
 
-  test('scales the Orrery positions without normalising away orbital distance', async () => {
+  test('keeps each Body at its System distance while TARG turns under it', async () => {
     const presentation = readFlyoverPresentation(
       await json('flyover/targ.json'),
       'targ',
       ['targ', 'sun', 'inner-moon', 'outer-moon']
     );
     const sky = defaultSettings().presentation.sky;
-    const system = composeTargSystem(presentation, sky);
-    const distance = (elapsed: number): number => {
-      const sun = system.bodiesAt(elapsed).find(body => body.id === 'sun')!;
-      return Math.hypot(sun.position.x, sun.position.y, sun.position.z);
-    };
-    const authored = 683_565_275.576_431_6;
-
-    expect(distance(0)).toBeCloseTo(authored * (1 - 0.06), 6);
-    expect(
-      distance((sky.yearDays * sky.dayLengthMinutes * 60) / 2)
-    ).toBeCloseTo(authored * (1 + 0.06), 6);
+    const system = composeTargSystem(TARG_SYSTEM, presentation, sky);
+    const daySeconds = sky.dayLengthMinutes * 60;
+    for (const source of TARG_SYSTEM.bodies) {
+      const { x, y, z } = source.position;
+      const authored = Math.hypot(x, y, z);
+      for (const elapsed of [0, daySeconds / 3, daySeconds * 7.5]) {
+        const body = system
+          .bodiesAt(elapsed)
+          .find(candidate => candidate.id === source.id)!;
+        expect(
+          Math.hypot(body.position.x, body.position.y, body.position.z)
+        ).toBeCloseTo(authored, 0);
+      }
+    }
   });
 });
 

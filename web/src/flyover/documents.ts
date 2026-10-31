@@ -24,13 +24,9 @@ export type FlyoverLighting =
   | { readonly kind: 'body'; readonly sourceBodyId: string }
   | { readonly kind: 'camera-headlight' };
 export type RadiusRule =
-  | { readonly kind: 'absolute'; readonly radiusUnits: number }
-  | {
-      readonly kind: 'angular-diameter';
-      readonly orbitalDistanceUnits: number;
-    }
   | { readonly fraction: number; readonly kind: 'nearest-neighbour' }
-  | { readonly kind: 'recovered-extent' };
+  | { readonly kind: 'recovered-extent' }
+  | { readonly kind: 'targ-system' };
 
 export interface FlyoverBodyPresentation {
   readonly id: string;
@@ -38,10 +34,8 @@ export interface FlyoverBodyPresentation {
   readonly ranges: readonly FlyoverRange[];
 }
 
-/// Targ has no recovered authority behind it, so its Bodies still carry an authored colour.
-export interface TargBodyPresentation extends FlyoverBodyPresentation {
-  readonly colour: string;
-}
+/// Targ's Bodies take their colour and radius from the authored Targ System (ADR 0086).
+export type TargBodyPresentation = FlyoverBodyPresentation;
 
 export interface SurfacePatch {
   readonly eastAxis: 'x';
@@ -247,6 +241,41 @@ export interface GammaSystemDocument {
   };
   readonly starfield: GammaStarfield;
   readonly title: 'Damocles';
+}
+
+export interface TargSystemBody {
+  readonly baseColour: string;
+  readonly id: TargSystemBodyId;
+  readonly name: string;
+  readonly position: {
+    readonly x: number;
+    readonly y: number;
+    readonly z: number;
+  };
+  /// The Body this one is grouped under, which asserts no revolution (ADR 0086).
+  readonly primaryId?: TargSystemBodyId;
+  readonly radius: number;
+}
+
+export type TargSystemBodyId = 'inner-moon' | 'outer-moon' | 'sun' | 'targ';
+
+/// The Targ System: authored, static, and under the Gamma System's rules (ADR 0086). Kept
+/// outside the Data Payload because nothing in it is recovered (ADR 0042).
+export interface TargSystemDocument {
+  readonly bodies: readonly TargSystemBody[];
+  readonly coordinateSystem: {
+    readonly axes: readonly ['x', 'y', 'z'];
+    readonly kind: 'targ-equatorial-centre';
+    readonly north: 'z';
+    readonly units: 'flyover-units';
+  };
+  readonly rotatingBodyId: 'targ';
+  readonly schemaVersion: 1;
+  readonly source: {
+    readonly authority: 'authored';
+    readonly decision: string;
+  };
+  readonly systemId: 'targ';
 }
 
 const fail = (path: string, reason: string): never => {
@@ -634,6 +663,118 @@ const readGammaStarfield = (value: unknown): GammaStarfield => {
   };
 };
 
+const TARG_SYSTEM_BODY_IDS: readonly TargSystemBodyId[] = [
+  'targ',
+  'sun',
+  'inner-moon',
+  'outer-moon'
+];
+
+const targSystemBodyId = (value: unknown, path: string): TargSystemBodyId => {
+  const id = identifier(value, path);
+  return (TARG_SYSTEM_BODY_IDS as readonly string[]).includes(id)
+    ? (id as TargSystemBodyId)
+    : fail(path, `should be one of ${TARG_SYSTEM_BODY_IDS.join(', ')}`);
+};
+
+export const readTargSystem = (value: unknown): TargSystemDocument => {
+  const root = object(value, '$', [
+    'schemaVersion',
+    'systemId',
+    'source',
+    'coordinateSystem',
+    'rotatingBodyId',
+    'bodies'
+  ]);
+  const source = object(root['source'], 'source', ['authority', 'decision']);
+  const frame = object(root['coordinateSystem'], 'coordinateSystem', [
+    'kind',
+    'units',
+    'axes',
+    'north'
+  ]);
+  const axes = strings(frame['axes'], 'coordinateSystem.axes');
+  if (axes.join() !== 'x,y,z') {
+    fail('coordinateSystem.axes', 'should be x, y, z');
+  }
+  const bodies = array(root['bodies'], 'bodies').map(
+    (entry, index): TargSystemBody => {
+      const path = `bodies[${index}]`;
+      const body = entry as Record<string, unknown> | null;
+      const fields = [
+        'id',
+        'name',
+        'baseColour',
+        'position',
+        'radius',
+        ...(body !== null && typeof body === 'object' && 'primaryId' in body
+          ? ['primaryId']
+          : [])
+      ];
+      const raw = object(entry, path, fields);
+      return {
+        baseColour: colour(raw['baseColour'], `${path}.baseColour`),
+        id: targSystemBodyId(raw['id'], `${path}.id`),
+        name: text(raw['name'], `${path}.name`),
+        position: point(raw['position'], `${path}.position`),
+        ...(raw['primaryId'] === undefined
+          ? {}
+          : {
+              primaryId: targSystemBodyId(raw['primaryId'], `${path}.primaryId`)
+            }),
+        radius: positive(raw['radius'], `${path}.radius`)
+      };
+    }
+  );
+  unique(
+    bodies.map(body => body.id),
+    'bodies'
+  );
+  for (const id of TARG_SYSTEM_BODY_IDS) {
+    if (!bodies.some(body => body.id === id)) {
+      fail('bodies', `is missing ${id}`);
+    }
+  }
+  const targ = bodies.find(body => body.id === 'targ');
+  if (
+    targ !== undefined &&
+    (targ.position.x !== 0 || targ.position.y !== 0 || targ.position.z !== 0)
+  ) {
+    fail('bodies', 'should centre the coordinate system on targ');
+  }
+  for (const body of bodies) {
+    if (body.primaryId === body.id) {
+      fail(`bodies.${body.id}.primaryId`, 'should name another Body');
+    }
+    if (body.id !== 'targ') {
+      const { x, y, z } = body.position;
+      if (Math.hypot(x, y, z) <= body.radius + (targ?.radius ?? 0)) {
+        fail(`bodies.${body.id}.position`, 'should lie clear of targ');
+      }
+    }
+  }
+  return {
+    bodies,
+    coordinateSystem: {
+      axes: ['x', 'y', 'z'],
+      kind: literal(
+        frame['kind'],
+        'targ-equatorial-centre',
+        'coordinateSystem.kind'
+      ),
+      north: literal(frame['north'], 'z', 'coordinateSystem.north'),
+      units: literal(frame['units'], 'flyover-units', 'coordinateSystem.units')
+    },
+    rotatingBodyId: literal(root['rotatingBodyId'], 'targ', 'rotatingBodyId'),
+    schemaVersion: literal(root['schemaVersion'], 1, 'schemaVersion'),
+    source: {
+      authority: literal(source['authority'], 'authored', 'source.authority'),
+      decision: text(source['decision'], 'source.decision')
+    },
+    systemId: literal(root['systemId'], 'targ', 'systemId')
+  };
+};
+
 export const readGammaSystem = (value: unknown): GammaSystemDocument => {
   const root = object(value, '$', [
     'schemaVersion',
@@ -820,28 +961,13 @@ const radiusRule = (
     return fail(path, 'should be an object');
   }
   const kind = text((value as Record<string, unknown>)['kind'], `${path}.kind`);
-  if (kind === 'absolute') {
-    const rule = object(value, path, ['kind', 'radiusUnits']);
-    if (systemId !== 'targ' || bodyId !== 'targ') {
+  if (kind === 'targ-system') {
+    // No parameters: the radius is the Body's own in the Targ System.
+    object(value, path, ['kind']);
+    if (systemId !== 'targ') {
       fail(path, 'uses an invalid radius rule for this Body');
     }
-    return {
-      kind,
-      radiusUnits: positive(rule['radiusUnits'], `${path}.radiusUnits`)
-    };
-  }
-  if (kind === 'angular-diameter') {
-    const rule = object(value, path, ['kind', 'orbitalDistanceUnits']);
-    if (systemId !== 'targ' || bodyId === 'targ') {
-      fail(path, 'uses an invalid radius rule for this Body');
-    }
-    return {
-      kind,
-      orbitalDistanceUnits: positive(
-        rule['orbitalDistanceUnits'],
-        `${path}.orbitalDistanceUnits`
-      )
-    };
+    return { kind };
   }
   if (kind === 'recovered-extent') {
     // No parameters: the radius is the Body's own recovered radius in system.json, so there
@@ -1059,20 +1185,14 @@ export function readFlyoverPresentation(
     'starSeed',
     'pointSizeCssPixels'
   ]);
-  // Gamma Body colour is recovered and lives in the Data Payload, so only Targ's authored
-  // Bodies carry one here.
+  // Body colour belongs to each System's authority, the recovered Gamma System or the
+  // authored Targ System, so no presentation carries one.
   const bodies = array(root['bodies'], 'bodies').map(
-    (raw, index): FlyoverBodyPresentation & { readonly colour?: string } => {
+    (raw, index): FlyoverBodyPresentation => {
       const path = `bodies[${index}]`;
-      const body = object(raw, path, [
-        'id',
-        ...(targ ? ['colour'] : []),
-        'ranges',
-        'radius'
-      ]);
+      const body = object(raw, path, ['id', 'ranges', 'radius']);
       const id = identifier(body['id'], `${path}.id`);
       return {
-        ...(targ ? { colour: colour(body['colour'], `${path}.colour`) } : {}),
         id,
         radius: radiusRule(body['radius'], `${path}.radius`, systemId, id),
         ranges: rangeList(body['ranges'], `${path}.ranges`)

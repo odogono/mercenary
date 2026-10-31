@@ -28,38 +28,30 @@
   "bodies": [
     {
       "id": "targ",
-      "colour": "#008000",
       "ranges": ["orbital", "coastal", "surface"],
       "radius": {
-        "kind": "absolute",
-        "radiusUnits": 2670176.857720436
+        "kind": "targ-system"
       }
     },
     {
       "id": "sun",
-      "colour": "#ffd070",
       "ranges": ["orbital"],
       "radius": {
-        "kind": "angular-diameter",
-        "orbitalDistanceUnits": 683565275.5764316
+        "kind": "targ-system"
       }
     },
     {
       "id": "inner-moon",
-      "colour": "#d8c8a8",
       "ranges": ["orbital"],
       "radius": {
-        "kind": "angular-diameter",
-        "orbitalDistanceUnits": 21361414.86176349
+        "kind": "targ-system"
       }
     },
     {
       "id": "outer-moon",
-      "colour": "#b8c8d8",
       "ranges": ["orbital"],
       "radius": {
-        "kind": "angular-diameter",
-        "orbitalDistanceUnits": 64084244.58529046
+        "kind": "targ-system"
       }
     }
   ],
@@ -72,7 +64,10 @@
     {
       "id": "city-island",
       "bodyId": "targ",
-      "centreDegrees": { "longitude": 0, "latitude": 0 },
+      "centreDegrees": {
+        "longitude": 0,
+        "latitude": 0
+      },
       "polygonDegrees": [
         [-16, -16],
         [16, -16],
@@ -80,7 +75,10 @@
         [-16, 16]
       ],
       "surfacePatch": {
-        "sourceCentre": { "x": 524288, "z": 524288 },
+        "sourceCentre": {
+          "x": 524288,
+          "z": 524288
+        },
         "unitsPerRadian": 2670176.857720436,
         "eastAxis": "x",
         "northAxis": "z"
@@ -89,7 +87,10 @@
     {
       "id": "second-city-island",
       "bodyId": "targ",
-      "centreDegrees": { "longitude": 120, "latitude": 20 },
+      "centreDegrees": {
+        "longitude": 120,
+        "latitude": 20
+      },
       "polygonDegrees": [
         [108, 12],
         [130, 10],

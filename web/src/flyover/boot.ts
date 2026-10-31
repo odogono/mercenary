@@ -1,4 +1,5 @@
 import { loadSettings } from '../settings/index.ts';
+import { fetchTargSystem } from '../sky/system.ts';
 
 import '../shell/damoclesPanelElement.ts';
 
@@ -74,9 +75,10 @@ const requiredJson = async (pathname: string): Promise<unknown> => {
 const systemFor = async (systemId: SystemId): Promise<FlyoverSystem> => {
   const presentationPath = `/flyover/${systemId}.json`;
   if (systemId === 'targ') {
-    const [rawPresentation, settingsText] = await Promise.all([
+    const [rawPresentation, settingsText, targSystem] = await Promise.all([
       requiredJson(presentationPath),
-      requiredText('/settings.json')
+      requiredText('/settings.json'),
+      fetchTargSystem()
     ]);
     let presentation: TargPresentationDocument;
     try {
@@ -91,6 +93,7 @@ const systemFor = async (systemId: SystemId): Promise<FlyoverSystem> => {
       );
     }
     return composeTargSystem(
+      targSystem,
       presentation,
       loadSettings(settingsText).presentation.sky
     );
