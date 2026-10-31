@@ -46,6 +46,10 @@ import type { WorldPort } from './worldPort.ts';
 
 /// One Talk Script, and the Benson Scripts it replaces.
 export interface TalkScript {
+  /// Other Surface Regions whose messages climb to the one it owns, along
+  /// NorthTalk's Message Path, so one script answers for a whole place.
+  /// `the target` tells it which region a message came to.
+  readonly hears?: readonly string[];
   readonly name: string;
   /// The Surface Region it owns (ADR 0084): what happens there is told to it
   /// alone, through the region's Host Object.
@@ -242,11 +246,12 @@ export class TalkHost {
   }
 
   private load(group: TsGroup, script: TalkScript): void {
-    let owner: HostObject | undefined;
-    if (script.owns !== undefined) {
-      owner =
-        group.objectById(SURFACE_REGION.name, script.owns) ??
-        group.object(SURFACE_REGION, script.owns, script.owns);
+    const region = (name: string): HostObject =>
+      group.objectById(SURFACE_REGION.name, name) ??
+      group.object(SURFACE_REGION, name, name);
+    const owner = script.owns === undefined ? undefined : region(script.owns);
+    for (const name of script.hears ?? []) {
+      group.setParent(region(name), owner);
     }
     group.load({
       grants: this.grants,
@@ -353,16 +358,20 @@ export class TalkHost {
     this.pump();
   }
 
-  /// Tells a Surface Region what happened in it: the player's arrival, and
-  /// an object left there. Only a region a Talk Script owns hears it, and
-  /// nothing else does, so a script answers for its own place without a Guard.
+  /// Tells a Surface Region what happened in it: the player's arrival in each
+  /// region entered, and an object left there to the innermost region that
+  /// holds it, as a MUD tells the room a thing is dropped in. Only a region a
+  /// Talk Script owns or hears gets it; nothing is broadcast.
   private tellRegions(event: WorldEvent): void {
     if (event.kind === 'arrived') {
       this.tellRegion(event.region, { name: 'arrived' });
     } else if (event.kind === 'dropped') {
-      const item = text(objectName(event.object));
-      for (const region of this.world.regionsHolding(event.object)) {
-        this.tellRegion(region, { args: [item], name: 'received' });
+      const innermost = this.world.regionsHolding(event.object)[0];
+      if (innermost !== undefined) {
+        this.tellRegion(innermost, {
+          args: [text(objectName(event.object))],
+          name: 'received'
+        });
       }
     }
   }

@@ -67,9 +67,16 @@ const inside = (
   );
 };
 
-/// The names of the regions a surface point is in, in table order.
+const area = (region: SurfaceRegion): number =>
+  (region.maxX - region.minX) * (region.maxZ - region.minZ);
+
+/// The names of the regions a surface point is in, innermost (smallest)
+/// first.
 export const regionsAt = (
   regions: readonly SurfaceRegion[],
   at: { readonly x: number; readonly z: number }
 ): string[] =>
-  regions.filter(region => inside(region, at)).map(region => region.name);
+  regions
+    .filter(region => inside(region, at))
+    .sort((a, b) => area(a) - area(b))
+    .map(region => region.name);

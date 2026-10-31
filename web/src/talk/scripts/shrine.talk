@@ -1,9 +1,25 @@
 use show, clear, report from benson
 
--- The Shrine (ADR 0084) owns its own Surface Region, its footprint: an object
--- left inside it is told here, and nowhere else. The energy crystal is taken
--- as an offering and fixed where it lies, so it can't be left here twice.
+-- The Shrine (ADR 0084). It owns its footprint's Surface Region, and its
+-- grounds' climbs here too, so `the target` says which region was told.
+
+-- The player came into the grounds. The footprint lies inside them, so
+-- arriving there was already told.
+on arrived
+  if the target is me then return
+  ask world to fixed "energy crystal"
+  if it then
+    show "THE SHRINE IS AT PEACE" and wait
+  else
+    show "A SHRINE STANDS HERE" and wait
+  end if
+end arrived
+
+-- An object was left here. In the grounds, outside the Shrine, it is no
+-- concern of the Shrine's. The energy crystal is taken as an offering and
+-- fixed where it lies, so it can't be left twice.
 on received item
+  if the target is not me then return
   if item = "energy crystal" then
     ask world to fix item
     report ["THE SHRINE", "ACCEPTS THE CRYSTAL", "IT WILL NOT BE MOVED"] and wait

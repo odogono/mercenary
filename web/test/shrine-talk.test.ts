@@ -4,7 +4,7 @@ import { describe, expect, test } from 'bun:test';
 import { load } from '../src/payload/load.ts';
 import { readTargAssets } from '../src/server/assets.ts';
 import { GameplaySession } from '../src/session/index.ts';
-import { SHRINE, SHRINE_GROUNDS } from '../src/talk/scripts.ts';
+import { SHRINE } from '../src/talk/scripts.ts';
 import { SURFACE, World } from '../src/world/index.ts';
 import { LegalRoute } from './legalCheckpoint.ts';
 import { readPayloadFile, repositoryRoot } from './replay/artifacts.ts';
@@ -37,7 +37,7 @@ const read = async (name: string) => {
 const withAssets = () =>
   load(read, () => readTargAssets(join(repositoryRoot, 'assets/targ')));
 
-const scripts = () => talkScript(SHRINE, SHRINE_GROUNDS);
+const scripts = () => talkScript(SHRINE);
 
 const openRoute = async () =>
   LegalRoute.open({ bundle: await withAssets(), talk: scripts() });
