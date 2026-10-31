@@ -877,7 +877,7 @@ export class GameplaySession {
 
   captureSaveSnapshot(): SaveSnapshot {
     this.requireRunning();
-    if (this.world.unsettled) {
+    if (this.world.unsettled || this.talk?.hasEffects === true) {
       throw new Error('Settle World Events before capturing a Save');
     }
     return {

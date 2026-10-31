@@ -92,6 +92,18 @@ end received
 `;
 
 describe('completed world changes and their reactions', () => {
+  test('refuses a Save while the sound of a reaction is still to be presented', () => {
+    const session = create(`
+on begin
+  tell sound to silence "voice1"
+end begin
+`);
+    session.begin();
+    expect(() => session.captureSaveSnapshot()).toThrow('Settle World Events');
+    session.settle();
+    expect(() => session.captureSaveSnapshot()).not.toThrow();
+  });
+
   test('preserves separate object moves, queries current state, and returns reaction effects once', () => {
     const session = create(roundTrip);
     const before = balance(session);
