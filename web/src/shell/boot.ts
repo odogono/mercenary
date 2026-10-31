@@ -273,9 +273,9 @@ try {
     sound.setVolume(changed.audioVolume, snapshot.elapsed);
   };
   applyAudioPreferences(preferences.current());
-  if (initial.opening !== undefined) {
-    sound.present(initial.opening);
-  }
+  // What a new game's Talk Scripts settled as they began waits for the first step the
+  // shell presents itself, after the Departure and the Arrival.
+  let opening = initial.opening;
   let framesPerSecond = 0;
   let frameCount = 0;
   let frameSeconds = 0;
@@ -586,9 +586,7 @@ try {
     snapshot = session.snapshot;
     targClock.reset();
     sound.resetFromSnapshot(snapshot);
-    if (restored.opening !== undefined) {
-      sound.present(restored.opening);
-    }
+    opening = restored.opening;
     // A New Game plays the Departure and the Arrival again; a restored Save is a game already
     // under way, so it gets whatever is left of the Arrival, which is normally none of it.
     departure = makeDeparture(
@@ -1046,6 +1044,10 @@ try {
           session.intent = controls.intent;
           const stepped = session.advance(seconds);
           snapshot = stepped.snapshot;
+          if (opening !== undefined) {
+            sound.present({ ...opening, snapshot });
+            opening = undefined;
+          }
           sound.present(stepped);
           // Any move of the Ending Phase is a boundary, not just the one out of
           // active play: a reload during the mature presentation should come back
