@@ -206,8 +206,12 @@ _Avoid_: Session Snapshot, scene graph, screen capture, Frame Planner
 The Browser Shell's named choice between Authentic presentation, which retains the accepted Reference Build appearance, and Enhanced presentation, which admits explicitly authored visual additions without changing Game Semantics. The settings page labels it PRESENTATION in every Title.
 _Avoid_: Graphics mode, theme, sky toggle, sky preset
 
+**Targ System**:
+The authored System that Targ belongs to: TARG, its sun and its two moons, under the same rules as the Gamma System: static Bodies, Body Rotation as the only motion, and Primary as grouping alone. It is presentation, not play, and nothing in it is recovered.
+_Avoid_: Targ Orrery (for the System itself), solar system, Targ planets
+
 **Targ Orrery**:
-The deterministic Enhanced-presentation model of Targ's sun, two moons, twilight and night, advancing with presentation elapsed time supplied either by a Gameplay Session or by the sessionless Flyover unless the Shell Console applies a presentation-only local-time adjustment; its twilight includes an authored horizon-to-zenith colour change that follows the world's horizon.
+The deterministic Enhanced-presentation view of Targ's sky, read from the Targ System: its sun, two moons, twilight and night, advancing with presentation elapsed time supplied either by a Gameplay Session or by the sessionless Flyover unless the Shell Console applies a presentation-only local-time adjustment; its twilight includes an authored horizon-to-zenith colour change that follows the world's horizon.
 _Avoid_: World clock, day/night system, recovered sky
 
 **Star Sphere**:
