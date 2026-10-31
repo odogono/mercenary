@@ -284,6 +284,9 @@ try {
     sound.setVolume(changed.audioVolume, snapshot.elapsed);
   };
   applyAudioPreferences(preferences.current());
+  if (initial.opening !== undefined) {
+    sound.present(initial.opening);
+  }
   let framesPerSecond = 0;
   let frameCount = 0;
   let frameSeconds = 0;
@@ -594,6 +597,9 @@ try {
     snapshot = session.snapshot;
     targClock.reset();
     sound.resetFromSnapshot(snapshot);
+    if (restored.opening !== undefined) {
+      sound.present(restored.opening);
+    }
     // A New Game plays the Departure and the Arrival again; a restored Save is a game already
     // under way, so it gets whatever is left of the Arrival, which is normally none of it.
     departure = makeDeparture(

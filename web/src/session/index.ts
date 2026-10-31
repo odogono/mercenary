@@ -951,7 +951,8 @@ export class GameplaySession {
   }
 
   /// A new game as live play begins one: the opening player, the Talk Scripts
-  /// loaded, and `begin` told to them.
+  /// loaded, and `begin` told to them. The opening is what `begin` settled,
+  /// for the shell to present.
   static newGame(
     content: SessionContent,
     benson: BensonChannel,
@@ -959,11 +960,10 @@ export class GameplaySession {
       readonly options?: TalkHostOptions;
       readonly scripts: readonly TalkScript[];
     }
-  ): GameplaySession {
+  ): { readonly opening: SettledStep; readonly session: GameplaySession } {
     const session = new GameplaySession(content, openingPlayer(), benson);
     session.useTalkScripts(talk.scripts, talk.options);
-    session.begin();
-    return session;
+    return { opening: session.begin(), session };
   }
 
   /// A session as the Save left it. Given Talk Scripts, it restores theirs

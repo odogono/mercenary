@@ -39,6 +39,25 @@ describe('the live browser Gameplay Session', () => {
     expect(session.talk!.shown).toContain('CRASH IMMINENT,');
   });
 
+  test('hands a new game what its Talk Scripts settled as they began', () => {
+    const walkabout = createWalkabout(
+      bundle,
+      requiredSettings(settingsText),
+      undefined,
+      [
+        {
+          name: 'opening',
+          replaces: [],
+          source: 'on begin\n  tell sound to silence "voice1"\nend begin\n'
+        }
+      ]
+    );
+    expect(walkabout.opening?.events).toContainEqual({
+      script: { sound: { symbol: 'voice1.control', value: 0 } }
+    });
+    expect(walkabout.session.settle().events).toEqual([]);
+  });
+
   test('starts the opening on foot at the captured surface Pose', () => {
     const walkabout = createWalkabout(bundle, requiredSettings(settingsText));
 
