@@ -1322,22 +1322,9 @@ export class GameplaySession {
     return { events: ['tone'], outcome: { kind: 'fetched', slot } };
   }
 
-  leaveCraft():
-    | { readonly events: readonly PresentationEvent[]; readonly slot: number }
-    | undefined {
-    this.noteWorld();
-    const interaction = this.content.interaction;
-    if (
-      interaction === undefined ||
-      this.content.flight === undefined ||
-      this.game.mode !== 'grounded'
-    ) {
-      return undefined;
-    }
-    if (this.occupancy.kind !== 'aboard') {
-      return undefined;
-    }
-    const { slot } = this.occupancy;
+  /// Leaves a boarded craft where the player stands, as stepping out or
+  /// crashing does: the craft stays put and the player goes on foot beside it.
+  private park(slot: number): void {
     const position = this.game.player.position;
     // On the Colony Craft deck the player's low altitude byte is eye height,
     // not part of the surface under the parked craft. Clear it as the Reference
@@ -1365,6 +1352,25 @@ export class GameplaySession {
           }
         : { at, heading: this.game.player.heading, kind: 'surface' }
     );
+  }
+
+  leaveCraft():
+    | { readonly events: readonly PresentationEvent[]; readonly slot: number }
+    | undefined {
+    this.noteWorld();
+    const interaction = this.content.interaction;
+    if (
+      interaction === undefined ||
+      this.content.flight === undefined ||
+      this.game.mode !== 'grounded'
+    ) {
+      return undefined;
+    }
+    if (this.occupancy.kind !== 'aboard') {
+      return undefined;
+    }
+    const { slot } = this.occupancy;
+    this.park(slot);
     this.game = leaveCraftCore(this.game, this.content.flight);
     return { events: ['tone'], slot };
   }
@@ -2232,6 +2238,11 @@ export class GameplaySession {
       if (this.game.touchdown !== undefined) {
         events.push('tone', { touchdown: this.game.touchdown });
         if (this.game.touchdown === 'crashed') {
+          // A crash throws the player out on foot, but the craft stays where
+          // it came down rather than vanishing.
+          if (this.occupancy.kind === 'aboard') {
+            this.park(this.occupancy.slot);
+          }
           this.game = leaveCraftCore(this.game, this.content.flight);
         }
       }

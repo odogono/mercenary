@@ -204,3 +204,32 @@ describe('picking through a tilted view', () => {
     ).toBeUndefined();
   });
 });
+
+describe('crashing in Targ', () => {
+  test('a crash leaves the craft where it came down', () => {
+    const { session } = walkabout();
+    session.board(1);
+    const at = session.snapshot.player.position;
+    session.placeInAir({ ...at, y: 0x4_00 });
+    session.throttleNotchValue(9);
+    let crashed = false;
+    session.intent = intent({ pitch: -1 });
+    for (let steps = 0; steps < 500 && !crashed; steps += 1) {
+      crashed = session
+        .advance(STEP)
+        .events.some(
+          event =>
+            typeof event === 'object' &&
+            'touchdown' in event &&
+            event.touchdown === 'crashed'
+        );
+    }
+    expect(crashed).toBe(true);
+    expect(session.occupancy).toEqual({ kind: 'onFoot' });
+    const position = session.snapshot.player.position;
+    expect(session.residenceOf(1)).toMatchObject({
+      at: { x: position.x, z: position.z },
+      kind: 'surface'
+    });
+  });
+});
