@@ -1,16 +1,18 @@
 import { BensonDisplay } from '../benson/index.ts';
 import {
   ARRIVAL_TUNING,
-  altitudeAt,
   arrivalCruisePose,
   arrivalPose,
-  chasedAltitude,
+  fallAltitude,
+  planetCoverage,
+  profileFloor,
+  profileRate,
+  profileSecondsAt,
   type ArrivalCameraPose
 } from './arrivalCamera.ts';
 import {
   ARRIVAL_NARRATION,
   ARRIVAL_TITLE,
-  DESCENT_LINE,
   PLANET_APPROACH_LINE,
   type NarrationItem
 } from './arrivalNarration.ts';
@@ -132,10 +134,14 @@ export class ArrivalDirector {
   private readonly display: BensonDisplay;
   private handedOver = false;
   private beat: Script00Beat | undefined;
-  private altitude: number = ARRIVAL_TUNING.entryAltitude;
-  private descentSeconds = 0;
+  /// Where the fall is on the recording's curve, in seconds before impact (`arrivalCamera.ts`).
+  private profile: number = ARRIVAL_TUNING.profile.planetAppears;
+  /// Seconds since the view turned to look down, which is what the road plan's turn follows.
+  private spinSeconds = 0;
+  /// The approach's own clock: from the line Targ appears on to the handover.
+  private approachSeconds = 0;
+  private approachTotal = 0;
   private blackoutLeft = 0;
-  private lineElapsed = 0;
 
   constructor(options: ArrivalOptions) {
     this.bridge = options.bridge;
@@ -155,7 +161,9 @@ export class ArrivalDirector {
           options.entry.beat === 'verdict' ? 'groundVerdict' : 'descent';
         this.handedOver = true;
         this.beat = options.entry.beat;
-        this.altitude = altitudeAt(options.entry.beat) ?? this.altitude;
+        this.profile =
+          profileSecondsAt(options.entry.beat) ??
+          ARRIVAL_TUNING.profile.surface;
         break;
     }
   }
@@ -215,9 +223,24 @@ export class ArrivalDirector {
 
   /// Whether the panel's readouts are still asterisks.
   ///
-  /// The original flips them to live values on the frame the view becomes Targ's surface, and
-  /// the altimeter counting down from there is most of the descent's tension.
+  /// The original's are until the height fits the altimeter's five digits, well after the view
+  /// has turned to the ground; then every readout turns to a number on the same frame, and the
+  /// count down from there is most of the descent's tension.
   readsAsterisks(): boolean {
+    return (
+      this.inSpace() || this.altitude() >= ARRIVAL_TUNING.measurableAltitude
+    );
+  }
+
+  pose(): ArrivalCameraPose {
+    // The instruments are live from the first frame. In space the ship is level with Targ
+    // ahead; from the handover it looks straight down.
+    return this.inSpace()
+      ? arrivalCruisePose(this.altitude())
+      : arrivalPose(this.altitude(), this.spinSeconds);
+  }
+
+  private inSpace(): boolean {
     return (
       this.phase === 'titleCard' ||
       this.phase === 'space' ||
@@ -225,33 +248,23 @@ export class ArrivalDirector {
     );
   }
 
-  pose(): ArrivalCameraPose {
-    // The instruments are live from the first frame, but the ship is not falling yet: in space it
-    // is under way and level, and the fall starts when the view becomes Targ's surface.
-    return this.readsAsterisks()
-      ? arrivalCruisePose(this.altitude)
-      : arrivalPose(this.altitude, this.descentSeconds);
+  private altitude(): number {
+    return fallAltitude(this.profile);
   }
 
   /// How far through the space segment the field has drifted, and how much of it the planet
   /// covers.
   fieldProgress(): { readonly drift: number; readonly planet: number } {
     const drift =
-      this.line < 0 ? 0 : Math.min(1, this.line / Math.max(1, DESCENT_LINE));
+      this.line < 0
+        ? 0
+        : Math.min(1, this.line / Math.max(1, this.narration.length));
     if (this.phase !== 'planetApproach') {
       return { drift, planet: 0 };
     }
-    // The planet grows across the one line it appears on, from a dot to larger than the frame.
-    return { drift, planet: 0.02 + 1.6 * this.lineProgress() };
-  }
-
-  private lineProgress(): number {
-    const item = this.narration[this.line];
-    if (item === undefined) {
-      return 0;
-    }
-    const total = this.displaySecondsFor(item) + this.holdFor(item);
-    return Math.min(1, total <= 0 ? 1 : this.lineElapsed / total);
+    // Targ's apparent size at the fall's height: a dot that creeps, then rushes, and fills the
+    // screen as the narration hands over.
+    return { drift, planet: planetCoverage(this.altitude()) };
   }
 
   /// The Arrival's own hold clock is separate from the shell-owned Benson Display so the four
@@ -287,18 +300,25 @@ export class ArrivalDirector {
     }
     this.display.start(arrivalDisplaySource(item.text), this.waitFor(item));
     this.heldSeconds = 0;
-    this.lineElapsed = 0;
-    this.phase =
-      index >= DESCENT_LINE
-        ? 'descent'
-        : index >= PLANET_APPROACH_LINE
-          ? 'planetApproach'
-          : 'space';
+    if (index === PLANET_APPROACH_LINE) {
+      // The approach spans every line left, so the disc fills the screen at the handover
+      // whatever the pacing.
+      this.approachSeconds = 0;
+      this.approachTotal = this.narration
+        .slice(index)
+        .reduce(
+          (total, line) =>
+            total + this.displaySecondsFor(line) + this.holdFor(line),
+          0
+        );
+    }
+    this.phase = index >= PLANET_APPROACH_LINE ? 'planetApproach' : 'space';
   }
 
   private handOver(): void {
     this.handedOver = true;
     this.phase = 'descent';
+    this.profile = Math.min(this.profile, ARRIVAL_TUNING.profile.surface);
   }
 
   /// One fixed step of the Arrival.
@@ -315,7 +335,7 @@ export class ArrivalDirector {
       return;
     }
     this.bridge.advance(seconds);
-    this.descentSeconds += seconds;
+    this.spinSeconds += seconds;
     if (this.observeBeat() === 'join') {
       return;
     }
@@ -327,7 +347,10 @@ export class ArrivalDirector {
       return;
     }
     if (this.phase === 'descent') {
-      this.altitude = chasedAltitude(this.altitude, this.beat, seconds);
+      this.profile = Math.max(
+        profileFloor(this.beat),
+        this.profile - profileRate(this.beat) * seconds
+      );
     }
   }
 
@@ -345,7 +368,15 @@ export class ArrivalDirector {
       return;
     }
     this.display.advance(seconds);
-    this.lineElapsed += seconds;
+    if (this.phase === 'planetApproach') {
+      const { planetAppears, surface } = ARRIVAL_TUNING.profile;
+      this.approachSeconds += seconds;
+      const progress = Math.min(
+        1,
+        this.approachSeconds / Math.max(1e-9, this.approachTotal)
+      );
+      this.profile = planetAppears - (planetAppears - surface) * progress;
+    }
     if (this.display.isFinished) {
       this.heldSeconds += seconds;
     }
@@ -365,9 +396,11 @@ export class ArrivalDirector {
       this.phase = 'done';
       return 'join';
     }
-    const anchor = altitudeAt(heard);
+    // A beat pins the fall to its place on the curve. One that comes early pulls the fall down
+    // to it; a late one has been held at it already.
+    const anchor = profileSecondsAt(heard);
     if (anchor !== undefined) {
-      this.altitude = anchor;
+      this.profile = Math.min(this.profile, anchor);
     }
     if (heard === 'verdict') {
       this.phase = 'blackout';

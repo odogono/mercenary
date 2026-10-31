@@ -3,12 +3,16 @@ import { describe, expect, test } from 'bun:test';
 import { REFERENCE_OPENING_POSITION } from '../src/gameCore/index.ts';
 import type { SessionSnapshot } from '../src/session/index.ts';
 import {
+  ARRIVAL_CRAFT_SLOT,
   ARRIVAL_TUNING,
-  altitudeAt,
   arrivalCruisePose,
   arrivalPose,
-  chasedAltitude,
-  descentViewSnapshot
+  descentViewSnapshot,
+  fallAltitude,
+  planetCoverage,
+  profileFloor,
+  profileRate,
+  profileSecondsAt
 } from '../src/shell/arrivalCamera.ts';
 import {
   ARRIVAL_FIELD_SEED,
@@ -18,66 +22,77 @@ import {
 } from '../src/shell/arrivalField.ts';
 import {
   ARRIVAL_NARRATION,
-  DESCENT_LINE,
   PLANET_APPROACH_LINE
 } from '../src/shell/arrivalNarration.ts';
 
 const SIZE = { height: 800, width: 1280 } as const;
 
 describe("the Arrival's camera", () => {
-  test('anchors each beat of the commentary to a height', () => {
-    expect(altitudeAt('crashImminent')).toBe(13_000);
-    expect(altitudeAt('returningTo')).toBe(6500);
-    expect(altitudeAt('manualControl')).toBe(3250);
-    expect(altitudeAt('verdict')).toBe(0);
-    expect(altitudeAt('statusReport')).toBeUndefined();
-  });
-
-  test('closes on the next anchor without ever passing it', () => {
-    let altitude: number = ARRIVAL_TUNING.entryAltitude;
-    for (let step = 0; step < 3600; step += 1) {
-      const next = chasedAltitude(altitude, undefined, 1 / 60);
-      expect(next).toBeLessThanOrEqual(altitude);
-      expect(next).toBeGreaterThanOrEqual(
-        ARRIVAL_TUNING.altitudes.crashImminent
+  test('follows the altimeter the recording shows', () => {
+    // Read off the Atari ST recording at quarter-second steps before impact (#943).
+    for (const [seconds, reading] of [
+      [7, 92_127],
+      [5, 24_435],
+      [3.25, 8867],
+      [1.25, 1811],
+      [0, 0]
+    ] as const) {
+      expect(Math.abs(fallAltitude(seconds) - reading)).toBeLessThan(
+        reading * 0.12 + 300
       );
-      altitude = next;
     }
-    // A segment that runs long keeps closing rather than stopping short of its anchor.
-    expect(altitude).toBeCloseTo(ARRIVAL_TUNING.altitudes.crashImminent, 5);
   });
 
-  test('plunges nose-down and squares up with the ground', () => {
-    expect(arrivalPose(ARRIVAL_TUNING.entryAltitude, 0).pitch).toBe(
-      ARRIVAL_TUNING.plungePitch
-    );
-    expect(arrivalPose(ARRIVAL_TUNING.levelAltitude, 0).pitch).toBe(
-      ARRIVAL_TUNING.plungePitch
-    );
-    // The dive stays inside the range the decoded projection draws a horizon for, or the fall
-    // would be a plunge through an empty sky.
-    expect(Math.abs(ARRIVAL_TUNING.plungePitch)).toBeLessThan(Math.PI / 4);
-    expect(arrivalPose(0, 30).pitch).toBe(0);
-    expect(arrivalPose(0, 30).roll).toBe(0);
-    expect(arrivalPose(0, 30).heading).toBe(Math.PI);
+  test('pins every beat of the commentary to the curve, the verdict at impact', () => {
+    expect(profileSecondsAt('crashImminent')).toBe(11.5);
+    const returning = profileSecondsAt('returningTo')!;
+    const manual = profileSecondsAt('manualControl')!;
+    expect(returning).toBeLessThan(11.5);
+    expect(manual).toBeLessThan(returning);
+    expect(profileSecondsAt('verdict')).toBe(0);
+    expect(profileSecondsAt('statusReport')).toBeUndefined();
+    // Each beat holds the fall at the next one's place, so a late line never lets it run ahead.
+    expect(profileFloor(undefined)).toBe(11.5);
+    expect(profileFloor('crashImminent')).toBe(returning);
+    expect(profileFloor('returningTo')).toBe(manual);
+    expect(profileFloor('manualControl')).toBe(0);
+    expect(profileRate('crashImminent')).toBeCloseTo(11.5 / 17.4, 12);
   });
 
-  test('is level while the ship is still under way', () => {
-    // The original's ELEVATION drum reads zero through the whole space segment: the ship is
-    // cruising, not falling.
-    const cruising = arrivalCruisePose(82_000);
+  test('grows Targ from a dot to more than the screen across the approach', () => {
+    const { planetAppears, surface } = ARRIVAL_TUNING.profile;
+    expect(planetCoverage(fallAltitude(planetAppears))).toBeLessThan(0.05);
+    expect(planetCoverage(fallAltitude(surface))).toBeCloseTo(
+      ARRIVAL_TUNING.planetAtSurface,
+      9
+    );
+    // It creeps and then rushes: the second half of the approach does most of the growing.
+    const middle = (planetAppears + surface) / 2;
+    expect(planetCoverage(fallAltitude(middle))).toBeLessThan(0.25);
+  });
 
+  test('is level in space, and looks straight down while it falls', () => {
+    const cruising = arrivalCruisePose(1_000_000);
     expect(cruising.pitch).toBe(0);
     expect(cruising.roll).toBe(0);
-    expect(cruising.altitude).toBe(82_000);
+    expect(cruising.altitude).toBe(1_000_000);
+
+    const falling = arrivalPose(5000, 0);
+    expect(falling.pitch).toBeLessThan(-Math.PI / 2 + 0.01);
+    expect(falling.pitch).toBeGreaterThan(-Math.PI / 2);
+    expect(falling.heading).toBe(Math.PI);
+    expect(falling.roll).toBe(0);
   });
 
-  test('tumbles in the middle of the fall and nowhere else', () => {
-    // Still in space, still on the ground; the roll belongs to the fall between them.
-    expect(arrivalPose(ARRIVAL_TUNING.entryAltitude, 4).roll).toBe(0);
-    const falling = Math.abs(arrivalPose(20_000, 4).roll);
-    expect(falling).toBeGreaterThan(0);
-    expect(falling).toBeLessThanOrEqual(ARRIVAL_TUNING.rollAmplitude);
+  test('turns the ground clockwise at a steady rate, the compass holding', () => {
+    const rate = ARRIVAL_TUNING.spinRadiansPerSecond;
+    expect(arrivalPose(5000, 1).roll).toBeCloseTo(rate, 12);
+    expect(arrivalPose(5000, 1).heading).toBe(Math.PI);
+    for (const seconds of [3, 7.5, 40]) {
+      expect(Math.abs(arrivalPose(5000, seconds).roll)).toBeLessThanOrEqual(
+        Math.PI
+      );
+    }
   });
 
   test('replaces the Pose and nothing else in the Snapshot it draws', () => {
@@ -99,7 +114,9 @@ describe("the Arrival's camera", () => {
 
     expect(seen.player.position).toEqual({
       x: REFERENCE_OPENING_POSITION.x,
-      y: REFERENCE_OPENING_POSITION.y + 5000,
+      y:
+        REFERENCE_OPENING_POSITION.y +
+        5000 * ARRIVAL_TUNING.cameraHeightPerAltimeterUnit,
       z: REFERENCE_OPENING_POSITION.z
     });
     expect(seen.player.pitch).toBe(pose.pitch);
@@ -109,7 +126,7 @@ describe("the Arrival's camera", () => {
     expect(seen.location).toEqual({ kind: 'surface' });
   });
 
-  test('arrives at the pose the game itself opens on', () => {
+  test('lands on the spot the game itself opens on', () => {
     const landed = descentViewSnapshot(
       { player: {} } as unknown as SessionSnapshot,
       arrivalPose(0, 40)
@@ -117,7 +134,18 @@ describe("the Arrival's camera", () => {
 
     expect(landed.player.position).toEqual(REFERENCE_OPENING_POSITION);
     expect(landed.player.heading).toBe(Math.PI);
-    expect(landed.player.pitch).toBe(0);
+  });
+
+  test('does not draw the craft the player is still inside', () => {
+    const residence = new Map([[1, { kind: 'surface' as const }]]);
+    const seen = descentViewSnapshot(
+      { player: {}, residence } as unknown as SessionSnapshot,
+      arrivalPose(100, 0)
+    );
+
+    expect(seen.residence.get(ARRIVAL_CRAFT_SLOT)).toEqual({ kind: 'gone' });
+    expect(seen.residence.get(1)).toEqual({ kind: 'surface' });
+    expect(residence.has(ARRIVAL_CRAFT_SLOT)).toBe(false);
   });
 });
 
@@ -200,11 +228,9 @@ describe('the Arrival Narration', () => {
     expect(ARRIVAL_NARRATION).toHaveLength(17);
   });
 
-  test('turns the view over to Targ after the Novadrive comes off', () => {
+  test('shows Targ once the Novadrive cannot be corrected', () => {
     expect(ARRIVAL_NARRATION[PLANET_APPROACH_LINE]!.text).toBe(
-      'DISENGAGING NOVADRIVE'
+      'UNABLE TO CORRECT'
     );
-    expect(ARRIVAL_NARRATION[DESCENT_LINE]!.text).toBe('UNABLE TO CORRECT');
-    expect(DESCENT_LINE).toBeGreaterThan(PLANET_APPROACH_LINE);
   });
 });

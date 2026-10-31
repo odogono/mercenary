@@ -40,14 +40,9 @@ export const ARRIVAL_NARRATION: readonly NarrationItem[] = [
   { text: 'MAXIMUM REVERSE THRUST' }
 ];
 
-/// The line Targ first appears on: the Novadrive comes off and the planet is suddenly there,
-/// a dot in the middle of the field that grows until it is the whole screen.
+/// The line Targ first appears on, as a dot in the middle of the field. It grows through the rest
+/// of the narration and fills the screen as the opening script takes over, which is when the view
+/// turns to look down at the ground.
 export const PLANET_APPROACH_LINE = ARRIVAL_NARRATION.findIndex(
-  item => item.text === 'DISENGAGING NOVADRIVE'
-);
-
-/// The line the world renderer takes over on. From here the view is Targ's own surface, seen
-/// from a camera the session is not standing in, and the readouts stop being asterisks.
-export const DESCENT_LINE = ARRIVAL_NARRATION.findIndex(
   item => item.text === 'UNABLE TO CORRECT'
 );
