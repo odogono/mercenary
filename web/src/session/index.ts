@@ -2337,12 +2337,13 @@ export class GameplaySession {
           turn: -steered.turn
         };
       }
+      const flight = this.content.flight;
       this.change(() => {
         this.game = step(
           this.game,
           steered,
           seconds,
-          this.content.flight!,
+          flight,
           this.containment,
           this.content.endgame
         );
@@ -2361,7 +2362,7 @@ export class GameplaySession {
             if (this.occupancy.kind === 'aboard') {
               this.park(this.occupancy.slot);
             }
-            this.game = leaveCraftCore(this.game, this.content.flight!);
+            this.game = leaveCraftCore(this.game, flight);
           }
         }
       });

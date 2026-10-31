@@ -15,7 +15,11 @@ import { arrivalPanelViewModel, arrivalStripText } from './arrivalPanel.ts';
 import { OPENING_MILESTONES } from './arrivalScript.ts';
 import { PANEL_SETTINGS, installShellChrome } from './chrome.ts';
 import { FixedStepClock } from './clock.ts';
-import { executeConsoleCommand, parseConsoleLine } from './console.ts';
+import {
+  executeConsoleCommand,
+  parseConsoleLine,
+  type ConsoleCommand
+} from './console.ts';
 import { installConsole } from './consoleView.ts';
 
 import './damoclesPanelElement.ts';
@@ -132,6 +136,17 @@ const requiredText = async (url: URL): Promise<string> => {
   }
   return await response.text();
 };
+
+/// Console commands that move the player or an object, so their World Events
+/// settle and the resume checkpoint follows.
+const WORLD_CHANGING_COMMANDS: ReadonlySet<ConsoleCommand['kind']> = new Set([
+  'dropObject',
+  'getObject',
+  'fetchObject',
+  'gotoCell',
+  'gotoObject',
+  'gotoRoom'
+]);
 
 const updateText = (element: HTMLElement, value: string): void => {
   if (element.textContent !== value) {
@@ -365,17 +380,21 @@ try {
       break;
   }
 
+  /// Shows a stopped session's message and bars returning to play, or clears both.
+  const showFailure = (message: string | undefined): void => {
+    failure.hidden = message === undefined;
+    failure.textContent = message ?? '';
+    chromePages.menu.querySelector<HTMLButtonElement>(
+      '[data-goto="none"]'
+    )!.disabled = message !== undefined;
+  };
   const reportSessionFailure = (error: unknown): void => {
     if (session.failure === undefined) {
       throw error;
     }
     controls.releaseAll();
     clock.reset();
-    failure.hidden = false;
-    failure.textContent = session.failure.message;
-    chromePages.menu.querySelector<HTMLButtonElement>(
-      '[data-goto="none"]'
-    )!.disabled = true;
+    showFailure(session.failure.message);
     menu.show('menu');
   };
   const settleAndPresent = (): void => {
@@ -399,7 +418,7 @@ try {
 
   const makeResumePersistence = (): SessionResumePersistence =>
     createSessionResumePersistence({
-      capture: () => captureSettled(),
+      capture: captureSettled,
       environment,
       onFailure: notices.failed,
       storage: ownership.mayPersist() ? storage : undefined
@@ -568,11 +587,7 @@ try {
   ): void => {
     const restored = createWalkabout(bundle, settings, savedSnapshot);
     session = restored.session;
-    failure.hidden = true;
-    failure.textContent = '';
-    chromePages.menu.querySelector<HTMLButtonElement>(
-      '[data-goto="none"]'
-    )!.disabled = false;
+    showFailure(undefined);
     resumePersistence = makeResumePersistence();
     world = restored.world;
     names = objectNamesOf(world.objects);
@@ -607,7 +622,7 @@ try {
     });
 
   const persistence = createSavePersistence({
-    capture: () => captureSettled(),
+    capture: captureSettled,
     environment,
     release,
     restore: (savedSnapshot, slot) => {
@@ -655,29 +670,18 @@ try {
     release,
     {
       execute: (
-        command: Parameters<typeof executeConsoleCommand>[0],
+        command: ConsoleCommand,
         deps: Parameters<typeof executeConsoleCommand>[1]
       ) => {
         try {
           const result = executeConsoleCommand(command, deps);
-          if (
-            [
-              'dropObject',
-              'getObject',
-              'fetchObject',
-              'gotoCell',
-              'gotoObject',
-              'gotoRoom'
-            ].includes(command.kind)
-          ) {
+          if (WORLD_CHANGING_COMMANDS.has(command.kind)) {
             settleAndPresent();
             checkpointChangedResume();
           }
           return result;
         } catch (error) {
-          if (session.failure !== undefined) {
-            reportSessionFailure(error);
-          }
+          reportSessionFailure(error);
           throw error;
         }
       },

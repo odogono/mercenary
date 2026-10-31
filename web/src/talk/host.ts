@@ -440,13 +440,11 @@ export class TalkHost {
     }
   }
 
-  /// Pumps until the display settles: answering a line that has played can
-  /// let a Talk Script show the next in the same frame. A latched key goes in
-  /// once its prompt's Run has reached what follows the prompt.
   /// The Gameplay Session shares one budget across every pump in a step.
   withBudget<T>(budget: ReactionBudget, action: () => T): T {
     const previous = this.budget;
     this.budget = budget;
+    budget.remember(`scripts: ${this.scriptNames}`);
     try {
       return action();
     } finally {
@@ -454,9 +452,15 @@ export class TalkHost {
     }
   }
 
+  /// Pumps until the display settles: answering a line that has played can
+  /// let a Talk Script show the next in the same frame. A latched key goes in
+  /// once its prompt's Run has reached what follows the prompt.
   private pump(): void {
-    const budget = this.budget ?? new ReactionBudget(this.reactionLimits);
-    budget.remember(`scripts: ${this.scriptNames}`);
+    let budget = this.budget;
+    if (budget === undefined) {
+      budget = new ReactionBudget(this.reactionLimits);
+      budget.remember(`scripts: ${this.scriptNames}`);
+    }
     for (;;) {
       const result = this.group.pump(BigInt(Math.round(this.now * MICROS)), {
         fuelCap: budget.fuelLeft

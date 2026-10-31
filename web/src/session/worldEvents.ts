@@ -124,7 +124,7 @@ export const changesBetween = (
   return events;
 };
 
-/// The World Events of one frame, in the order they happened (#931).
+/// The World Events of a step, in the order they happened (#931).
 ///
 /// Owns observation around completed operations. Callers supply the operation,
 /// not before/after snapshots or a checkpoint protocol (ADR 0085).
@@ -143,7 +143,7 @@ export class WorldEventLog {
   change<T>(action: () => T): T {
     const outer = this.depth === 0;
     if (outer) {
-      this.note(this.observe());
+      this.note();
     }
     this.depth++;
     try {
@@ -151,7 +151,7 @@ export class WorldEventLog {
     } finally {
       this.depth--;
       if (outer) {
-        this.note(this.observe());
+        this.note();
       }
     }
   }
@@ -169,14 +169,15 @@ export class WorldEventLog {
   }
 
   /// Records whatever changed since the world was last noted.
-  private note(seen: WorldSeen): void {
+  private note(): void {
+    const seen = this.observe();
     this.pending.push(...changesBetween(this.seen, seen));
     this.seen = seen;
   }
 
   /// Notes the world, then hands over everything recorded since the last take.
   take(): WorldEvent[] {
-    this.note(this.observe());
+    this.note();
     const events = this.pending;
     this.pending = [];
     return events;
