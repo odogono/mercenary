@@ -180,9 +180,14 @@ export const arrivalPose = (
   };
 };
 
+/// The craft the player arrives in: the payload stands it on the pad at 8:8, where the crash
+/// leaves it. During the fall the player is still inside it, so the descent does not draw it;
+/// it appears at impact, with the session's own view (#943).
+export const ARRIVAL_CRAFT_SLOT = 10;
+
 /// The same Session Snapshot, seen from the Arrival's camera instead of the player's own.
 ///
-/// Only the Pose is replaced. Everything the world renderer decides from — which objects are
+/// Only the Pose is replaced, and the arriving craft is taken out of the world. Everything the world renderer decides from — which objects are
 /// where, whether this is a Room, how much time has passed, and so the Enhanced sky with it —
 /// is the session's own, because the descent is the real world seen from somewhere else rather
 /// than a scene of its own invention.
@@ -202,5 +207,8 @@ export const descentViewSnapshot = (
       z: REFERENCE_OPENING_POSITION.z
     },
     roll: pose.roll
+  }),
+  residence: new Map(snapshot.residence).set(ARRIVAL_CRAFT_SLOT, {
+    kind: 'gone'
   })
 });

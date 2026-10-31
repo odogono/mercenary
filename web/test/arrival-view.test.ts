@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import { REFERENCE_OPENING_POSITION } from '../src/gameCore/index.ts';
 import type { SessionSnapshot } from '../src/session/index.ts';
 import {
+  ARRIVAL_CRAFT_SLOT,
   ARRIVAL_TUNING,
   arrivalCruisePose,
   arrivalPose,
@@ -133,6 +134,18 @@ describe("the Arrival's camera", () => {
 
     expect(landed.player.position).toEqual(REFERENCE_OPENING_POSITION);
     expect(landed.player.heading).toBe(Math.PI);
+  });
+
+  test('does not draw the craft the player is still inside', () => {
+    const residence = new Map([[1, { kind: 'surface' as const }]]);
+    const seen = descentViewSnapshot(
+      { player: {}, residence } as unknown as SessionSnapshot,
+      arrivalPose(100, 0)
+    );
+
+    expect(seen.residence.get(ARRIVAL_CRAFT_SLOT)).toEqual({ kind: 'gone' });
+    expect(seen.residence.get(1)).toEqual({ kind: 'surface' });
+    expect(residence.has(ARRIVAL_CRAFT_SLOT)).toBe(false);
   });
 });
 
