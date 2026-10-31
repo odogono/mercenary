@@ -41,6 +41,7 @@ import {
   roomId,
   siteName
 } from './names.ts';
+import { ReactionBudget, type ReactionLimits } from './reactionBudget.ts';
 import { TalkSaveRefused, type TalkSaveSnapshot } from './save.ts';
 import type { WorldPort } from './worldPort.ts';
 
@@ -60,6 +61,7 @@ export interface InputClaim {
 export interface TalkHostOptions {
   /// The next random byte; the World Port's by default.
   readonly random?: () => number;
+  readonly reactionLimits?: ReactionLimits;
   /// The world's Surface Regions, each with the Talk Script that answers for
   /// it (ADR 0084).
   readonly regions?: readonly RegionScript[];
@@ -179,6 +181,9 @@ export class TalkHost {
     | { readonly key: string; ready: boolean; readonly script: string }
     | undefined;
   private now = 0;
+  private budget: ReactionBudget | undefined;
+  private readonly reactionLimits: ReactionLimits | undefined;
+  private readonly scriptNames: string;
   private playing: Block | undefined;
   private readonly queue: Block[] = [];
   private readonly random: () => number;
@@ -195,6 +200,8 @@ export class TalkHost {
     options: TalkHostOptions = {},
     saved?: TalkSaveSnapshot
   ) {
+    this.reactionLimits = options.reactionLimits;
+    this.scriptNames = scripts.map(script => script.name).join(', ');
     this.benson = benson;
     this.world = world;
     this.random = options.random ?? (() => world.random());
@@ -433,13 +440,41 @@ export class TalkHost {
     }
   }
 
+  /// The Gameplay Session shares one budget across every pump in a step.
+  withBudget<T>(budget: ReactionBudget, action: () => T): T {
+    const previous = this.budget;
+    this.budget = budget;
+    budget.remember(`scripts: ${this.scriptNames}`);
+    try {
+      return action();
+    } finally {
+      this.budget = previous;
+    }
+  }
+
   /// Pumps until the display settles: answering a line that has played can
   /// let a Talk Script show the next in the same frame. A latched key goes in
   /// once its prompt's Run has reached what follows the prompt.
   private pump(): void {
+    let budget = this.budget;
+    if (budget === undefined) {
+      budget = new ReactionBudget(this.reactionLimits);
+      budget.remember(`scripts: ${this.scriptNames}`);
+    }
     for (;;) {
-      const result = this.group.pump(BigInt(Math.round(this.now * MICROS)));
+      const result = this.group.pump(BigInt(Math.round(this.now * MICROS)), {
+        fuelCap: budget.fuelLeft
+      });
+      budget.spendFuel(result.fuelUsed);
       this.record(result.reports);
+      for (const report of result.reports) {
+        if (report.kind === 'run end' && report.outcome === 'limit fault') {
+          budget.exhausted(`${report.script}: ${report.limit ?? 'Run limit'}`);
+        }
+      }
+      if (result.state === 'sliced') {
+        budget.exhausted('execution fuel');
+      }
       if (this.latched?.ready) {
         this.send(this.latched.key, this.latched.script);
         this.latched = undefined;

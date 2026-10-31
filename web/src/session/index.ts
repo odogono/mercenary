@@ -62,6 +62,11 @@ import {
   type TalkHostOptions,
   type TalkScript
 } from '../talk/host.ts';
+import {
+  ReactionBudget,
+  ReactionLimitError,
+  type ReactionLimits
+} from '../talk/reactionBudget.ts';
 import type { TalkSaveSnapshot } from '../talk/save.ts';
 import { TALK_SCRIPTS } from '../talk/scripts.ts';
 import type { WorldPort } from '../talk/worldPort.ts';
@@ -704,6 +709,14 @@ const validateSnapshotReferences = (
 };
 
 /// The one owner of a play session's mutable state (ADR 0018).
+/// A step whose reactions have settled: what to present, and the World Events
+/// it completed.
+export interface SettledStep {
+  readonly events: readonly PresentationEvent[];
+  readonly snapshot: SessionSnapshot;
+  readonly worldEvents: readonly WorldEvent[];
+}
+
 export class GameplaySession {
   readonly content: SessionContent;
   game: GameState;
@@ -771,7 +784,39 @@ export class GameplaySession {
   private readonly objectsBySlot: ReadonlyMap<number, ObjectPlacement>;
   private readonly regions: readonly SurfaceRegion[];
   /// The World Events since the last frame was told.
-  private world: WorldEventLog;
+  private readonly world: WorldEventLog;
+  private reactionLimits: ReactionLimits | undefined;
+  private stopped: ReactionLimitError | undefined;
+
+  get failure(): ReactionLimitError | undefined {
+    return this.stopped;
+  }
+
+  private requireRunning(): void {
+    if (this.stopped !== undefined) {
+      throw this.stopped;
+    }
+  }
+
+  private change<T>(action: () => T): T {
+    this.requireRunning();
+    return this.world.change(action);
+  }
+
+  private reactions<T>(action: (budget: ReactionBudget) => T): T {
+    this.requireRunning();
+    const budget = new ReactionBudget(this.reactionLimits);
+    try {
+      return this.talk === undefined
+        ? action(budget)
+        : this.talk.withBudget(budget, () => action(budget));
+    } catch (error) {
+      if (error instanceof ReactionLimitError) {
+        this.stopped = error;
+      }
+      throw error;
+    }
+  }
 
   constructor(
     content: SessionContent,
@@ -827,10 +872,14 @@ export class GameplaySession {
     if (this.benson !== undefined) {
       this.credits = STARTING_CREDITS;
     }
-    this.world = new WorldEventLog(this.seeWorld());
+    this.world = new WorldEventLog(() => this.seeWorld());
   }
 
   captureSaveSnapshot(): SaveSnapshot {
+    this.requireRunning();
+    if (this.world.unsettled) {
+      throw new Error('Settle World Events before capturing a Save');
+    }
     return {
       attackingShip: this.attackingShip,
       benson: this.benson?.captureSaveSnapshot() ?? null,
@@ -902,7 +951,8 @@ export class GameplaySession {
   }
 
   /// A new game as live play begins one: the opening player, the Talk Scripts
-  /// loaded, and `begin` told to them.
+  /// loaded, and `begin` told to them. The opening is what `begin` settled,
+  /// for the shell to present.
   static newGame(
     content: SessionContent,
     benson: BensonChannel,
@@ -910,11 +960,10 @@ export class GameplaySession {
       readonly options?: TalkHostOptions;
       readonly scripts: readonly TalkScript[];
     }
-  ): GameplaySession {
+  ): { readonly opening: SettledStep; readonly session: GameplaySession } {
     const session = new GameplaySession(content, openingPlayer(), benson);
     session.useTalkScripts(talk.scripts, talk.options);
-    session.begin();
-    return session;
+    return { opening: session.begin(), session };
   }
 
   /// A session as the Save left it. Given Talk Scripts, it restores theirs
@@ -1012,7 +1061,7 @@ export class GameplaySession {
             };
     }
     // A Save is where play resumes, not a change in it.
-    session.world.resume(session.seeWorld());
+    session.world.resume();
     if (talk !== undefined) {
       session.useTalkScripts(
         talk.scripts,
@@ -1182,65 +1231,66 @@ export class GameplaySession {
     readonly events: readonly PresentationEvent[];
     readonly outcome: Outcome;
   } {
-    this.noteWorld();
-    const interaction = this.content.interaction;
-    if (interaction === undefined) {
-      return { events: [], outcome: { kind: 'nothingInReach' } };
-    }
-    const candidates = this.content.objects
-      .filter(object => only === undefined || object.slot === only)
-      .filter(object =>
-        isDrawable(object, this.location, this.residence.get(object.slot))
-      )
-      .map(object => {
-        const where = this.residenceOf(object.slot);
-        return {
-          heading:
-            where.kind === 'surface' || where.kind === 'room'
-              ? where.heading
-              : undefined,
-          position: displacement(where) ?? object.origin,
-          slot: object.slot
-        };
-      });
-    const position = this.game.player.position;
-    const outcome = interaction.attempt(
-      action,
-      position,
-      candidates,
-      this.reachable
-    );
-    this.carryOut(outcome, interaction.carriedMask);
-    const events: PresentationEvent[] = [];
-    if (outcome.kind === 'took' || outcome.kind === 'boarded') {
-      events.push('tone');
-      if (outcome.kind === 'boarded' && this.content.flight !== undefined) {
-        const craft = this.objectsBySlot.get(outcome.slot);
-        if (craft !== undefined) {
-          // Boarding has already changed the craft's Residence to `gone`. Keep the candidate position selected before that write,
-          // otherwise a moved craft falls back to its Data Payload origin.
-          const at =
-            candidates.find(candidate => candidate.slot === outcome.slot)
-              ?.position ?? craft.origin;
-          const heading = candidates.find(
-            candidate => candidate.slot === outcome.slot
-          )?.heading;
-          this.game = boardCraft(
-            this.game,
-            outcome.slot,
-            { x: at.x, y: 0, z: at.z },
-            heading ??
-              craftHeading(craft, this.content.flight?.headingConvention),
-            this.content.flight
-          );
-        }
+    return this.change(() => {
+      const interaction = this.content.interaction;
+      if (interaction === undefined) {
+        return { events: [], outcome: { kind: 'nothingInReach' } };
       }
-      const flags = this.objectFlags.get(outcome.slot) ?? 0;
-      this.describe(interaction.description(outcome.slot, flags));
-    } else if (outcome.kind === 'tooHeavy') {
-      this.show(interaction.tooHeavyMessage);
-    }
-    return { events, outcome };
+      const candidates = this.content.objects
+        .filter(object => only === undefined || object.slot === only)
+        .filter(object =>
+          isDrawable(object, this.location, this.residence.get(object.slot))
+        )
+        .map(object => {
+          const where = this.residenceOf(object.slot);
+          return {
+            heading:
+              where.kind === 'surface' || where.kind === 'room'
+                ? where.heading
+                : undefined,
+            position: displacement(where) ?? object.origin,
+            slot: object.slot
+          };
+        });
+      const position = this.game.player.position;
+      const outcome = interaction.attempt(
+        action,
+        position,
+        candidates,
+        this.reachable
+      );
+      this.carryOut(outcome, interaction.carriedMask);
+      const events: PresentationEvent[] = [];
+      if (outcome.kind === 'took' || outcome.kind === 'boarded') {
+        events.push('tone');
+        if (outcome.kind === 'boarded' && this.content.flight !== undefined) {
+          const craft = this.objectsBySlot.get(outcome.slot);
+          if (craft !== undefined) {
+            // Boarding has already changed the craft's Residence to `gone`. Keep the candidate position selected before that write,
+            // otherwise a moved craft falls back to its Data Payload origin.
+            const at =
+              candidates.find(candidate => candidate.slot === outcome.slot)
+                ?.position ?? craft.origin;
+            const heading = candidates.find(
+              candidate => candidate.slot === outcome.slot
+            )?.heading;
+            this.game = boardCraft(
+              this.game,
+              outcome.slot,
+              { x: at.x, y: 0, z: at.z },
+              heading ??
+                craftHeading(craft, this.content.flight?.headingConvention),
+              this.content.flight
+            );
+          }
+        }
+        const flags = this.objectFlags.get(outcome.slot) ?? 0;
+        this.describe(interaction.description(outcome.slot, flags));
+      } else if (outcome.kind === 'tooHeavy') {
+        this.show(interaction.tooHeavyMessage);
+      }
+      return { events, outcome };
+    });
   }
 
   /// Take one named object without requiring it to be nearby.
@@ -1248,48 +1298,49 @@ export class GameplaySession {
   /// This is the Shell Console's remote equivalent of reaching: it skips only Location and
   /// distance, while the Interaction still owns fixed/heavy checks and the Carried Stack limit.
   takeObject(slot: number): TakeObjectResult {
-    this.noteWorld();
-    const object = this.objectsBySlot.get(slot);
-    if (object === undefined) {
-      return { events: [], outcome: { kind: 'missing', slot } };
-    }
-    const residence = this.residenceOf(slot);
-    if (residence.kind === 'carried') {
-      return { events: [], outcome: { kind: 'alreadyCarried', slot } };
-    }
-    if (residence.kind === 'gone') {
-      return { events: [], outcome: { kind: 'gone', slot } };
-    }
-    const interaction = this.content.interaction;
-    if (interaction === undefined) {
-      return { events: [], outcome: { kind: 'unsupported' } };
-    }
-    const position = this.game.player.position;
-    const outcome = interaction.attempt(
-      'take',
-      position,
-      [{ position, slot }],
-      this.reachable
-    );
-    this.carryOut(outcome, interaction.carriedMask);
-    switch (outcome.kind) {
-      case 'took': {
-        const flags = this.objectFlags.get(slot) ?? 0;
-        this.describe(interaction.description(slot, flags));
-        return { events: ['tone'], outcome };
+    return this.change(() => {
+      const object = this.objectsBySlot.get(slot);
+      if (object === undefined) {
+        return { events: [], outcome: { kind: 'missing', slot } };
       }
-      case 'tooHeavy':
-        this.show(interaction.tooHeavyMessage);
-        return { events: [], outcome };
-      case 'fixedInPlace':
-      case 'handsFull':
-        return { events: [], outcome };
-      case 'nothingInReach':
-      case 'boarded':
-      case 'notACraft':
-      case 'alreadyAboard':
-        throw new Error(`unexpected remote take outcome '${outcome.kind}'`);
-    }
+      const residence = this.residenceOf(slot);
+      if (residence.kind === 'carried') {
+        return { events: [], outcome: { kind: 'alreadyCarried', slot } };
+      }
+      if (residence.kind === 'gone') {
+        return { events: [], outcome: { kind: 'gone', slot } };
+      }
+      const interaction = this.content.interaction;
+      if (interaction === undefined) {
+        return { events: [], outcome: { kind: 'unsupported' } };
+      }
+      const position = this.game.player.position;
+      const outcome = interaction.attempt(
+        'take',
+        position,
+        [{ position, slot }],
+        this.reachable
+      );
+      this.carryOut(outcome, interaction.carriedMask);
+      switch (outcome.kind) {
+        case 'took': {
+          const flags = this.objectFlags.get(slot) ?? 0;
+          this.describe(interaction.description(slot, flags));
+          return { events: ['tone'], outcome };
+        }
+        case 'tooHeavy':
+          this.show(interaction.tooHeavyMessage);
+          return { events: [], outcome };
+        case 'fixedInPlace':
+        case 'handsFull':
+          return { events: [], outcome };
+        case 'nothingInReach':
+        case 'boarded':
+        case 'notACraft':
+        case 'alreadyAboard':
+          throw new Error(`unexpected remote take outcome '${outcome.kind}'`);
+      }
+    });
   }
 
   /// Move one named object to where a Drop would put it, leaving the Carried Stack alone.
@@ -1298,28 +1349,30 @@ export class GameplaySession {
   /// rule of a Take applies — weight, the Carried Stack limit and the take script do not — and
   /// Drop's own airborne refusal stands in for whether there is room.
   fetchObject(slot: number): FetchObjectResult {
-    if (!this.objectsBySlot.has(slot)) {
-      return { events: [], outcome: { kind: 'missing', slot } };
-    }
-    const residence = this.residenceOf(slot);
-    if (residence.kind === 'carried') {
-      return { events: [], outcome: { kind: 'alreadyCarried', slot } };
-    }
-    if (residence.kind === 'gone') {
-      return { events: [], outcome: { kind: 'gone', slot } };
-    }
-    const interaction = this.content.interaction;
-    if (interaction === undefined) {
-      return { events: [], outcome: { kind: 'unsupported' } };
-    }
-    if (interaction.isFixedInPlace(slot, this.reachable)) {
-      return { events: [], outcome: { kind: 'fixedInPlace', slot } };
-    }
-    if (this.airborneRefusesDrop()) {
-      return { events: [], outcome: { kind: 'airborneRefused' } };
-    }
-    this.residence.set(slot, this.dropResidence());
-    return { events: ['tone'], outcome: { kind: 'fetched', slot } };
+    return this.change(() => {
+      if (!this.objectsBySlot.has(slot)) {
+        return { events: [], outcome: { kind: 'missing', slot } };
+      }
+      const residence = this.residenceOf(slot);
+      if (residence.kind === 'carried') {
+        return { events: [], outcome: { kind: 'alreadyCarried', slot } };
+      }
+      if (residence.kind === 'gone') {
+        return { events: [], outcome: { kind: 'gone', slot } };
+      }
+      const interaction = this.content.interaction;
+      if (interaction === undefined) {
+        return { events: [], outcome: { kind: 'unsupported' } };
+      }
+      if (interaction.isFixedInPlace(slot, this.reachable)) {
+        return { events: [], outcome: { kind: 'fixedInPlace', slot } };
+      }
+      if (this.airborneRefusesDrop()) {
+        return { events: [], outcome: { kind: 'airborneRefused' } };
+      }
+      this.residence.set(slot, this.dropResidence());
+      return { events: ['tone'], outcome: { kind: 'fetched', slot } };
+    });
   }
 
   /// Leaves a boarded craft where the player stands, as stepping out or
@@ -1357,103 +1410,105 @@ export class GameplaySession {
   leaveCraft():
     | { readonly events: readonly PresentationEvent[]; readonly slot: number }
     | undefined {
-    this.noteWorld();
-    const interaction = this.content.interaction;
-    if (
-      interaction === undefined ||
-      this.content.flight === undefined ||
-      this.game.mode !== 'grounded'
-    ) {
-      return undefined;
-    }
-    if (this.occupancy.kind !== 'aboard') {
-      return undefined;
-    }
-    const { slot } = this.occupancy;
-    this.park(slot);
-    this.game = leaveCraftCore(this.game, this.content.flight);
-    return { events: ['tone'], slot };
+    return this.change(() => {
+      const interaction = this.content.interaction;
+      if (
+        interaction === undefined ||
+        this.content.flight === undefined ||
+        this.game.mode !== 'grounded'
+      ) {
+        return undefined;
+      }
+      if (this.occupancy.kind !== 'aboard') {
+        return undefined;
+      }
+      const { slot } = this.occupancy;
+      this.park(slot);
+      this.game = leaveCraftCore(this.game, this.content.flight);
+      return { events: ['tone'], slot };
+    });
   }
 
   rideLift(): PresentationEvent[] | undefined {
-    this.noteWorld();
-    const flight = this.content.flight;
-    const underground = this.content.underground;
-    if (flight === undefined || underground === undefined) {
-      return undefined;
-    }
-    if (this.liftJourney !== undefined) {
-      return undefined;
-    }
-    const direction = this.location.kind === 'room' ? 'up' : 'down';
-    let entrance: UndergroundDocument['entrances'][number] | undefined;
-    if (this.location.kind === 'room') {
-      entrance = this.liftEntrance(this.location.id);
-      if (entrance === undefined) {
+    return this.change(() => {
+      const flight = this.content.flight;
+      const underground = this.content.underground;
+      if (flight === undefined || underground === undefined) {
         return undefined;
       }
-    } else {
-      const column = Math.trunc(
-        this.game.player.position.x / this.content.cellSize
+      if (this.liftJourney !== undefined) {
+        return undefined;
+      }
+      const direction = this.location.kind === 'room' ? 'up' : 'down';
+      let entrance: UndergroundDocument['entrances'][number] | undefined;
+      if (this.location.kind === 'room') {
+        entrance = this.liftEntrance(this.location.id);
+        if (entrance === undefined) {
+          return undefined;
+        }
+      } else {
+        const column = Math.trunc(
+          this.game.player.position.x / this.content.cellSize
+        );
+        const row = Math.trunc(
+          this.game.player.position.z / this.content.cellSize
+        );
+        if (
+          !padCovers(
+            underground.pad,
+            this.game.player.position.x,
+            this.content.cellSize
+          ) ||
+          !padCovers(
+            underground.pad,
+            this.game.player.position.z,
+            this.content.cellSize
+          )
+        ) {
+          return undefined;
+        }
+        const ordinaryEntrance = underground.entrances.find(
+          item =>
+            item.cell.length === 2 &&
+            item.cell[0] === column &&
+            item.cell[1] === row
+        );
+        const colonyCraft = this.content.endgame?.colonyCraft;
+        entrance =
+          ordinaryEntrance ??
+          (this.game.colonyCraftFlag !== 0 &&
+          colonyCraft !== undefined &&
+          colonyCraft.cell[0] === column &&
+          colonyCraft.cell[1] === row
+            ? {
+                cell: colonyCraft.cell,
+                room: COLONY_CRAFT_LIFT_ROOM,
+                site: COLONY_CRAFT_LIFT_ROOM
+              }
+            : undefined);
+        if (entrance === undefined) {
+          return undefined;
+        }
+        const access = underground.lift.access;
+        if (
+          entrance.room === access.restrictedRoom &&
+          !this.carriedStack.includes(access.passSlot)
+        ) {
+          this.show(access.refusalMessage);
+          return undefined;
+        }
+      }
+      // The ride leaves this Location, which levels Free Look.
+      this.recentreLook();
+      this.liftBensonColour = this.bensonColour;
+      this.liftJourney = startLiftJourney(
+        direction,
+        entrance.room,
+        underground.lift,
+        this.game.player.position.y
       );
-      const row = Math.trunc(
-        this.game.player.position.z / this.content.cellSize
-      );
-      if (
-        !padCovers(
-          underground.pad,
-          this.game.player.position.x,
-          this.content.cellSize
-        ) ||
-        !padCovers(
-          underground.pad,
-          this.game.player.position.z,
-          this.content.cellSize
-        )
-      ) {
-        return undefined;
-      }
-      const ordinaryEntrance = underground.entrances.find(
-        item =>
-          item.cell.length === 2 &&
-          item.cell[0] === column &&
-          item.cell[1] === row
-      );
-      const colonyCraft = this.content.endgame?.colonyCraft;
-      entrance =
-        ordinaryEntrance ??
-        (this.game.colonyCraftFlag !== 0 &&
-        colonyCraft !== undefined &&
-        colonyCraft.cell[0] === column &&
-        colonyCraft.cell[1] === row
-          ? {
-              cell: colonyCraft.cell,
-              room: COLONY_CRAFT_LIFT_ROOM,
-              site: COLONY_CRAFT_LIFT_ROOM
-            }
-          : undefined);
-      if (entrance === undefined) {
-        return undefined;
-      }
-      const access = underground.lift.access;
-      if (
-        entrance.room === access.restrictedRoom &&
-        !this.carriedStack.includes(access.passSlot)
-      ) {
-        this.show(access.refusalMessage);
-        return undefined;
-      }
-    }
-    // The ride leaves this Location, which levels Free Look.
-    this.recentreLook();
-    this.liftBensonColour = this.bensonColour;
-    this.liftJourney = startLiftJourney(
-      direction,
-      entrance.room,
-      underground.lift,
-      this.game.player.position.y
-    );
-    return [{ lift: direction }];
+      return [{ lift: direction }];
+    });
   }
 
   private traverse(): PresentationEvent[] {
@@ -1622,14 +1677,15 @@ export class GameplaySession {
   }
 
   teleport(location: Location): void {
-    this.noteWorld();
-    this.recentreLook();
-    const previousRoom = locationHostValue(this.location);
-    this.game = {
-      ...this.game,
-      room: location.kind === 'surface' ? undefined : location.id
-    };
-    this.settleIntoTheRoom(previousRoom);
+    return this.change(() => {
+      this.recentreLook();
+      const previousRoom = locationHostValue(this.location);
+      this.game = {
+        ...this.game,
+        room: location.kind === 'surface' ? undefined : location.id
+      };
+      this.settleIntoTheRoom(previousRoom);
+    });
   }
 
   get indoor(): IndoorScene | undefined {
@@ -1671,16 +1727,17 @@ export class GameplaySession {
   }
 
   place(position: Vector3, heading?: number): void {
-    this.noteWorld();
-    this.recentreLook();
-    this.game = {
-      ...this.game,
-      player: {
-        ...this.game.player,
-        heading: heading ?? this.game.player.heading,
-        position
-      }
-    };
+    return this.change(() => {
+      this.recentreLook();
+      this.game = {
+        ...this.game,
+        player: {
+          ...this.game.player,
+          heading: heading ?? this.game.player.heading,
+          position
+        }
+      };
+    });
   }
 
   /// Place the player at an object's current residence.
@@ -1694,110 +1751,128 @@ export class GameplaySession {
   ):
     | { readonly kind: 'carried' | 'gone' | 'missing' }
     | { readonly kind: 'placed'; readonly location: Location } {
-    this.noteWorld();
-    const object = this.objectsBySlot.get(slot);
-    if (object === undefined) {
-      return { kind: 'missing' };
-    }
-    const residence = this.residenceOf(slot);
-    if (residence.kind === 'carried' || residence.kind === 'gone') {
-      return { kind: residence.kind };
-    }
-    const at = displacement(residence) ?? object.origin;
-    if (residence.kind === 'room') {
-      const location = { id: residence.id, kind: 'room' } as const;
-      this.teleport(location);
-      this.place(at);
-      return { kind: 'placed', location };
-    }
+    return this.change(() => {
+      const object = this.objectsBySlot.get(slot);
+      if (object === undefined) {
+        return { kind: 'missing' };
+      }
+      const residence = this.residenceOf(slot);
+      if (residence.kind === 'carried' || residence.kind === 'gone') {
+        return { kind: residence.kind };
+      }
+      const at = displacement(residence) ?? object.origin;
+      if (residence.kind === 'room') {
+        const location = { id: residence.id, kind: 'room' } as const;
+        this.teleport(location);
+        this.place(at);
+        return { kind: 'placed', location };
+      }
 
-    const location = { kind: 'surface' } as const;
-    const position = {
-      x: wrapSurfaceAxis(at.x),
-      y: at.y,
-      z: wrapSurfaceAxis(at.z)
-    };
-    this.teleport(location);
-    if (this.content.flight !== undefined) {
-      this.placeInAir(position);
-    } else {
-      this.place(position);
-    }
-    return { kind: 'placed', location };
+      const location = { kind: 'surface' } as const;
+      const position = {
+        x: wrapSurfaceAxis(at.x),
+        y: at.y,
+        z: wrapSurfaceAxis(at.z)
+      };
+      this.teleport(location);
+      if (this.content.flight !== undefined) {
+        this.placeInAir(position);
+      } else {
+        this.place(position);
+      }
+      return { kind: 'placed', location };
+    });
+  }
+
+  /// One console relocation: leaving a Room and placing the player are one change.
+  relocateSurface(position: Vector3, airborne = false): void {
+    this.change(() => {
+      this.teleport(SURFACE);
+      if (airborne) {
+        this.placeInAir(position);
+      } else {
+        this.place(position);
+      }
+    });
   }
 
   /// Place the player on the surface at an airborne height. A craft whose
   /// control block can be flown takes over normally; on foot, or in a craft
   /// whose handler cannot fly, the crash-tumble Mover brings the player down.
   placeInAir(position: Vector3, heading?: number): void {
-    this.noteWorld();
-    const flight = this.content.flight;
-    const craft = this.game.craft;
-    const block =
-      flight === undefined || craft === undefined
-        ? undefined
-        : blockFor(flight.document, craft);
-    const flyable =
-      block?.handler === 'standard' || block?.handler === 'sinking';
-    const airborne =
-      flight !== undefined && position.y >= flight.rules.groundBand;
-    const falling = airborne && !flyable;
-    const tumble = falling
-      ? flight.document.blocks.find(candidate => candidate.handler === 'tumble')
-      : undefined;
+    return this.change(() => {
+      const flight = this.content.flight;
+      const craft = this.game.craft;
+      const block =
+        flight === undefined || craft === undefined
+          ? undefined
+          : blockFor(flight.document, craft);
+      const flyable =
+        block?.handler === 'standard' || block?.handler === 'sinking';
+      const airborne =
+        flight !== undefined && position.y >= flight.rules.groundBand;
+      const falling = airborne && !flyable;
+      const tumble = falling
+        ? flight.document.blocks.find(
+            candidate => candidate.handler === 'tumble'
+          )
+        : undefined;
 
-    this.recentreLook();
-    this.game = {
-      ...this.game,
-      colonyCraftFlag: 0,
-      mode: airborne ? 'flying' : 'grounded',
-      mover: falling ? tumble?.index : undefined,
-      player: {
-        ...this.game.player,
-        heading: heading ?? this.game.player.heading,
-        position
-      }
-    };
+      this.recentreLook();
+      this.game = {
+        ...this.game,
+        colonyCraftFlag: 0,
+        mode: airborne ? 'flying' : 'grounded',
+        mover: falling ? tumble?.index : undefined,
+        player: {
+          ...this.game.player,
+          heading: heading ?? this.game.player.heading,
+          position
+        }
+      };
+    });
   }
 
   carry(slot: number): void {
-    this.noteWorld();
-    if (!this.objectsBySlot.has(slot)) {
-      throw new Error(`Cannot carry missing object slot ${slot}`);
-    }
-    if (!this.carriedStack.includes(slot)) {
-      this.carriedStack.push(slot);
-    }
-    this.residence.set(slot, { kind: 'carried' });
-    const mask = this.carriedMask;
-    if (mask !== undefined) {
-      this.objectFlags.set(slot, (this.objectFlags.get(slot) ?? 0) | mask);
-    }
+    return this.change(() => {
+      if (!this.objectsBySlot.has(slot)) {
+        throw new Error(`Cannot carry missing object slot ${slot}`);
+      }
+      if (!this.carriedStack.includes(slot)) {
+        this.carriedStack.push(slot);
+      }
+      this.residence.set(slot, { kind: 'carried' });
+      const mask = this.carriedMask;
+      if (mask !== undefined) {
+        this.objectFlags.set(slot, (this.objectFlags.get(slot) ?? 0) | mask);
+      }
+    });
   }
 
   drop(selectedSlot?: number): DropResult {
-    this.noteWorld();
-    const slot = selectedSlot ?? this.carriedStack.at(-1);
-    if (slot === undefined) {
-      return { events: [], outcome: { kind: 'emptyInventory' } };
-    }
-    const carriedIndex = this.carriedStack.indexOf(slot);
-    if (carriedIndex === -1) {
-      throw new Error(`Cannot drop object slot ${slot} that is not carried`);
-    }
-    if (this.airborneRefusesDrop()) {
-      return { events: [], outcome: { kind: 'airborneRefused' } };
-    }
-    const mask = this.carriedMask ?? 0;
-    const flags = (this.objectFlags.get(slot) ?? 0) & ~mask & 0xff;
-    const where = this.dropResidence();
-    this.carriedStack = [
-      ...this.carriedStack.slice(0, carriedIndex),
-      ...this.carriedStack.slice(carriedIndex + 1)
-    ];
-    this.objectFlags.set(slot, flags);
-    this.residence.set(slot, where);
-    return { events: ['tone'], outcome: { kind: 'dropped', slot } };
+    return this.change(() => {
+      const slot = selectedSlot ?? this.carriedStack.at(-1);
+      if (slot === undefined) {
+        return { events: [], outcome: { kind: 'emptyInventory' } };
+      }
+      const carriedIndex = this.carriedStack.indexOf(slot);
+      if (carriedIndex === -1) {
+        throw new Error(`Cannot drop object slot ${slot} that is not carried`);
+      }
+      if (this.airborneRefusesDrop()) {
+        return { events: [], outcome: { kind: 'airborneRefused' } };
+      }
+      const mask = this.carriedMask ?? 0;
+      const flags = (this.objectFlags.get(slot) ?? 0) & ~mask & 0xff;
+      const where = this.dropResidence();
+      this.carriedStack = [
+        ...this.carriedStack.slice(0, carriedIndex),
+        ...this.carriedStack.slice(carriedIndex + 1)
+      ];
+      this.objectFlags.set(slot, flags);
+      this.residence.set(slot, where);
+      return { events: ['tone'], outcome: { kind: 'dropped', slot } };
+    });
   }
 
   private airborneRefusesDrop(): boolean {
@@ -1830,63 +1905,69 @@ export class GameplaySession {
   /// the direction with an exponent offset rather than scaling it by how fast
   /// the craft is going, so a slow craft's shot is no slower.
   fire(): FireResult {
-    const rules = this.content.fire;
-    if (rules === undefined) {
-      return { events: [], outcome: { kind: 'unsupported' } };
-    }
-    if (this.occupancy.kind === 'onFoot') {
-      return { events: [], outcome: { kind: 'onFootRefused' } };
-    }
-    if (this.impact !== undefined) {
-      return { events: [], outcome: { kind: 'impactActiveRefused' } };
-    }
-    if (this.playerShot !== undefined) {
-      return { events: [], outcome: { kind: 'shotActiveRefused' } };
-    }
-    const direction = facing(
-      this.game.player,
-      this.content.flight?.headingConvention
-    );
-    const rate = this.content.flight?.limits.referenceFrameRate ?? 1;
-    const speed = rules.speedPerFrame * rate;
-    this.playerShot = {
-      secondsLeft: rules.lifecycleFrames / rate,
-      velocity: {
-        x: direction.x * speed,
-        y: direction.y * speed,
-        z: direction.z * speed
+    return this.change(() => {
+      const rules = this.content.fire;
+      if (rules === undefined) {
+        return { events: [], outcome: { kind: 'unsupported' } };
       }
-    };
-    this.residence.set(rules.effectSlot, {
-      at: { ...this.game.player.position },
-      kind: 'surface'
+      if (this.occupancy.kind === 'onFoot') {
+        return { events: [], outcome: { kind: 'onFootRefused' } };
+      }
+      if (this.impact !== undefined) {
+        return { events: [], outcome: { kind: 'impactActiveRefused' } };
+      }
+      if (this.playerShot !== undefined) {
+        return { events: [], outcome: { kind: 'shotActiveRefused' } };
+      }
+      const direction = facing(
+        this.game.player,
+        this.content.flight?.headingConvention
+      );
+      const rate = this.content.flight?.limits.referenceFrameRate ?? 1;
+      const speed = rules.speedPerFrame * rate;
+      this.playerShot = {
+        secondsLeft: rules.lifecycleFrames / rate,
+        velocity: {
+          x: direction.x * speed,
+          y: direction.y * speed,
+          z: direction.z * speed
+        }
+      };
+      this.residence.set(rules.effectSlot, {
+        at: { ...this.game.player.position },
+        kind: 'surface'
+      });
+      return {
+        events: [{ fire: { sound: rules.sound } }],
+        outcome: { kind: 'fired' }
+      };
     });
-    return {
-      events: [{ fire: { sound: rules.sound } }],
-      outcome: { kind: 'fired' }
-    };
   }
 
   board(slot: number): void {
-    this.noteWorld();
-    // Free Look does not come aboard: the craft keeps the view's own pitch.
-    this.recentreLook();
-    this.residence.set(slot, { kind: 'gone' });
-    if (this.content.flight === undefined) {
-      this.game = { ...this.game, craft: slot };
-      return;
-    }
-    this.game = boardCraft(
-      this.game,
-      slot,
-      this.game.player.position,
-      this.game.player.heading,
-      this.content.flight
-    );
+    return this.change(() => {
+      // Free Look does not come aboard: the craft keeps the view's own pitch.
+      this.recentreLook();
+      this.residence.set(slot, { kind: 'gone' });
+      if (this.content.flight === undefined) {
+        this.game = { ...this.game, craft: slot };
+        return;
+      }
+      this.game = boardCraft(
+        this.game,
+        slot,
+        this.game.player.position,
+        this.game.player.heading,
+        this.content.flight
+      );
+    });
   }
 
   /// Level the view Free Look tilted: the recentre control, and turning Extended Controls off.
   recentreLook(): void {
+    if (this.stopped !== undefined) {
+      return;
+    }
     if (this.lookPitch !== 0) {
       this.game = {
         ...this.game,
@@ -1919,6 +2000,7 @@ export class GameplaySession {
   }
 
   throttleNotchValue(notch: number): void {
+    this.requireRunning();
     if (this.content.flight === undefined || this.occupancy.kind === 'onFoot') {
       return;
     }
@@ -1926,6 +2008,7 @@ export class GameplaySession {
   }
 
   throttleStep(delta: number): void {
+    this.requireRunning();
     if (this.content.flight === undefined || this.occupancy.kind === 'onFoot') {
       return;
     }
@@ -1933,6 +2016,7 @@ export class GameplaySession {
   }
 
   shutThrottle(): void {
+    this.requireRunning();
     if (this.occupancy.kind === 'onFoot') {
       return;
     }
@@ -1946,6 +2030,7 @@ export class GameplaySession {
     options: TalkHostOptions = {},
     saved?: TalkSaveSnapshot
   ): TalkHost {
+    this.requireRunning();
     if (this.benson === undefined) {
       throw new Error('Talk Scripts need the Benson Display and host state');
     }
@@ -1958,6 +2043,7 @@ export class GameplaySession {
         );
       }
     }
+    this.reactionLimits = options.reactionLimits;
     this.talk = new TalkHost(
       scripts,
       benson,
@@ -1968,14 +2054,22 @@ export class GameplaySession {
     return this.talk;
   }
 
-  /// A new game has begun: the Talk Scripts hear `begin`.
-  begin(): void {
-    this.talk?.begin();
+  /// A new game has begun: the Talk Scripts hear `begin`, and what they do
+  /// settles before this returns.
+  begin(): SettledStep {
+    return this.reactions(budget => {
+      this.talk?.begin();
+      return this.finishReactions(budget);
+    });
   }
 
-  /// A key no Binding took, by its code: Player Input for the Talk Scripts.
-  input(code: string): void {
-    this.talk?.input(code);
+  /// A key no Binding took, by its code: Player Input for the Talk Scripts,
+  /// settled before this returns.
+  input(code: string): SettledStep {
+    return this.reactions(budget => {
+      this.talk?.input(code);
+      return this.finishReactions(budget);
+    });
   }
 
   private portObject(slot: number): number {
@@ -1986,6 +2080,7 @@ export class GameplaySession {
   }
 
   private portFlag(slot: number, change: (flags: number) => number): void {
+    this.requireRunning();
     this.portObject(slot);
     this.objectFlags.set(slot, change(this.objectFlags.get(slot) ?? 0));
   }
@@ -1996,11 +2091,13 @@ export class GameplaySession {
     readonly attackingShip?: boolean;
     readonly credits?: number;
   }): void {
+    this.requireRunning();
     this.attackingShip = patch.attackingShip ?? this.attackingShip;
     this.credits = patch.credits ?? this.credits;
   }
 
   private addCredits(amount: number): void {
+    this.requireRunning();
     const limit = CREDITS_LIMIT;
     this.credits = (((this.credits + amount) % limit) + limit) % limit;
   }
@@ -2021,6 +2118,7 @@ export class GameplaySession {
       destroyed: cell => this.sites?.destroyedCells().includes(cell) ?? false,
       disarm: slot => flag(slot, flags => flags & ~DISARMED & 0xff),
       escape: () => {
+        this.requireRunning();
         this.endingPhase = 1;
       },
       fix: slot => flag(slot, flags => flags | FIXED),
@@ -2034,28 +2132,31 @@ export class GameplaySession {
             ? SURFACE
             : undefined;
       },
-      move: (slot, to) => {
-        const where = this.residenceOf(object(slot));
-        if (where.kind === 'carried') {
-          throw new Error('cannot move a carried object');
-        }
-        if (to.kind === 'room') {
-          if (!this.content.rooms.has(to.id)) {
-            throw new Error(`the world has no Room ${to.id}`);
+      move: (slot, to) =>
+        this.change(() => {
+          const where = this.residenceOf(object(slot));
+          if (where.kind === 'carried') {
+            throw new Error('cannot move a carried object');
           }
-          if (where.kind !== 'room' || where.id !== to.id) {
-            this.residence.set(slot, { id: to.id, kind: 'room' });
+          if (to.kind === 'room') {
+            if (!this.content.rooms.has(to.id)) {
+              throw new Error(`the world has no Room ${to.id}`);
+            }
+            if (where.kind !== 'room' || where.id !== to.id) {
+              this.residence.set(slot, { id: to.id, kind: 'room' });
+            }
+          } else if (where.kind !== 'surface') {
+            this.residence.set(slot, { kind: 'surface' });
           }
-        } else if (where.kind !== 'surface') {
-          this.residence.set(slot, { kind: 'surface' });
-        }
-      },
+        }),
       pay: amount => this.addCredits(amount),
       random: () => this.nextRandomByte(),
       sendAttacker: () => {
+        this.requireRunning();
         this.attackingShip = true;
       },
       sendShip: () => {
+        this.requireRunning();
         this.shipInbound = SHIP_INBOUND;
       },
       spend: amount => this.addCredits(-amount)
@@ -2063,10 +2164,12 @@ export class GameplaySession {
   }
 
   skipMessage(): void {
+    this.requireRunning();
     this.benson?.skipMessage();
   }
 
   show(index: number): void {
+    this.requireRunning();
     this.benson?.showMessage(index, this.credits);
   }
 
@@ -2080,35 +2183,56 @@ export class GameplaySession {
 
   /// One frame of play. Its World Events are everything raised or changed
   /// since the last frame, in the order it happened.
-  advance(seconds: number): {
-    readonly events: readonly PresentationEvent[];
-    readonly snapshot: SessionSnapshot;
-    readonly worldEvents: readonly WorldEvent[];
-  } {
-    const frame = this.advanceFrame(seconds);
-    const worldEvents = this.world.take(this.seeWorld());
-    if (this.talk === undefined) {
-      return { ...frame, worldEvents };
+  advance(seconds: number): SettledStep {
+    return this.reactions(budget => {
+      const frame = this.advanceFrame(seconds);
+      const worldEvents = this.deliverReactions(budget);
+      this.talk?.advance(seconds);
+      worldEvents.push(...this.deliverReactions(budget));
+      return this.settledResult(worldEvents, frame.events);
+    });
+  }
+
+  /// Finish pending reactions without advancing simulation or Talk time.
+  /// The shell presents these effects before a read-only Save capture.
+  settle(): SettledStep {
+    return this.reactions(budget => this.finishReactions(budget));
+  }
+
+  private finishReactions(budget: ReactionBudget): SettledStep {
+    const worldEvents = this.deliverReactions(budget);
+    this.talk?.advance(0);
+    worldEvents.push(...this.deliverReactions(budget));
+    return this.settledResult(worldEvents);
+  }
+
+  private deliverReactions(budget: ReactionBudget): WorldEvent[] {
+    const delivered: WorldEvent[] = [];
+    for (;;) {
+      const batch = this.world.take();
+      if (batch.length === 0) {
+        return delivered;
+      }
+      for (const event of batch) {
+        budget.deliver(JSON.stringify(event));
+      }
+      delivered.push(...batch);
+      this.talk?.deliver(batch);
     }
-    // The frame's events go before the Talk Scripts' clock moves on, so a
-    // Handler's queries see the world exactly as the frame left it.
-    const talk = this.talk;
-    talk.deliver(worldEvents);
-    talk.advance(seconds);
+  }
+
+  private settledResult(
+    worldEvents: readonly WorldEvent[],
+    events: readonly PresentationEvent[] = []
+  ): SettledStep {
     return {
       events: [
-        ...frame.events,
-        ...this.talk.takeEffects().map(effect => ({ script: effect }))
+        ...events,
+        ...(this.talk?.takeEffects() ?? []).map(effect => ({ script: effect }))
       ],
       snapshot: this.snapshot,
       worldEvents
     };
-  }
-
-  /// Records what changed since the world was last looked at, before an
-  /// operation changes it again.
-  private noteWorld(): void {
-    this.world.note(this.seeWorld());
   }
 
   private seeWorld(): WorldSeen {
@@ -2173,7 +2297,6 @@ export class GameplaySession {
       const slice = until > 0 ? Math.min(remaining, until) : remaining;
       events.push(...this.advanceInterval(slice).events);
       // A journey's scene changes at a slice's edge, so each is told apart.
-      this.noteWorld();
       remaining -= slice;
     }
     return { events, snapshot: this.snapshot };
@@ -2220,32 +2343,35 @@ export class GameplaySession {
           turn: -steered.turn
         };
       }
-      this.game = step(
-        this.game,
-        steered,
-        seconds,
-        this.content.flight,
-        this.containment,
-        this.content.endgame
-      );
-      if (wallThud(this.game) && this.content.doorwayRules !== undefined) {
-        events.push({
-          wall: { sound: this.content.doorwayRules.wallThudSound }
-        });
-      }
-      events.push(...this.traverse());
-      this.look(seconds);
-      if (this.game.touchdown !== undefined) {
-        events.push('tone', { touchdown: this.game.touchdown });
-        if (this.game.touchdown === 'crashed') {
-          // A crash throws the player out on foot, but the craft stays where
-          // it came down rather than vanishing.
-          if (this.occupancy.kind === 'aboard') {
-            this.park(this.occupancy.slot);
-          }
-          this.game = leaveCraftCore(this.game, this.content.flight);
+      const flight = this.content.flight;
+      this.change(() => {
+        this.game = step(
+          this.game,
+          steered,
+          seconds,
+          flight,
+          this.containment,
+          this.content.endgame
+        );
+        if (wallThud(this.game) && this.content.doorwayRules !== undefined) {
+          events.push({
+            wall: { sound: this.content.doorwayRules.wallThudSound }
+          });
         }
-      }
+        events.push(...this.traverse());
+        this.look(seconds);
+        if (this.game.touchdown !== undefined) {
+          events.push('tone', { touchdown: this.game.touchdown });
+          if (this.game.touchdown === 'crashed') {
+            // A crash throws the player out on foot, but the craft stays where
+            // it came down rather than vanishing.
+            if (this.occupancy.kind === 'aboard') {
+              this.park(this.occupancy.slot);
+            }
+            this.game = leaveCraftCore(this.game, flight);
+          }
+        }
+      });
     }
     if (this.benson !== undefined && seconds > 0) {
       for (const effect of this.benson.advance(seconds)) {
@@ -2271,91 +2397,93 @@ export class GameplaySession {
   /// Moves a Lift Journey on to the end of a slice, after the slice's other
   /// systems: a scene change or arrival at its end gets only the time after.
   private advanceLift(seconds: number, events: PresentationEvent[]): void {
-    if (
-      this.liftJourney !== undefined &&
-      this.content.underground !== undefined
-    ) {
-      const before = this.liftJourney;
-      const advanced = advanceLiftJourney(
-        before,
-        seconds,
-        this.content.underground.lift
-      );
-      if (advanced.journey !== undefined) {
-        this.liftJourney = advanced.journey;
-        this.applyLiftScene(before, advanced.journey.scene);
-        const colonyEntry =
-          advanced.journey.entranceRoom === COLONY_CRAFT_LIFT_ROOM &&
-          advanced.journey.scene === 'surface'
-            ? this.content.endgame?.colonyCraft.entry
-            : undefined;
-        const deckOffset =
-          colonyEntry === undefined
-            ? 0
-            : colonyEntry.altitudeHighByte * 0x1_00_00 +
-              colonyEntry.wrappedAltitudeMiddleByte * 0x1_00;
-        this.game = {
-          ...this.game,
-          player: {
-            ...this.game.player,
-            position: {
-              ...this.game.player.position,
-              y:
-                liftCameraAltitude(
-                  advanced.journey,
-                  this.content.underground.lift
-                ) + deckOffset
-            }
-          }
-        };
-      } else {
-        const previousRoom =
-          before.direction === 'down' ? SURFACE_ROOM : before.entranceRoom;
-        this.applyLiftScene(
+    return this.change(() => {
+      if (
+        this.liftJourney !== undefined &&
+        this.content.underground !== undefined
+      ) {
+        const before = this.liftJourney;
+        const advanced = advanceLiftJourney(
           before,
-          before.direction === 'down' ? 'room' : 'surface'
+          seconds,
+          this.content.underground.lift
         );
-        this.game = {
-          ...this.game,
-          player: {
-            ...this.game.player,
-            position: {
-              ...this.game.player.position,
-              y:
-                before.direction === 'up'
-                  ? before.restingAltitude
-                  : (advanced.finalAltitude ?? this.game.player.position.y)
+        if (advanced.journey !== undefined) {
+          this.liftJourney = advanced.journey;
+          this.applyLiftScene(before, advanced.journey.scene);
+          const colonyEntry =
+            advanced.journey.entranceRoom === COLONY_CRAFT_LIFT_ROOM &&
+            advanced.journey.scene === 'surface'
+              ? this.content.endgame?.colonyCraft.entry
+              : undefined;
+          const deckOffset =
+            colonyEntry === undefined
+              ? 0
+              : colonyEntry.altitudeHighByte * 0x1_00_00 +
+                colonyEntry.wrappedAltitudeMiddleByte * 0x1_00;
+          this.game = {
+            ...this.game,
+            player: {
+              ...this.game.player,
+              position: {
+                ...this.game.player.position,
+                y:
+                  liftCameraAltitude(
+                    advanced.journey,
+                    this.content.underground.lift
+                  ) + deckOffset
+              }
+            }
+          };
+        } else {
+          const previousRoom =
+            before.direction === 'down' ? SURFACE_ROOM : before.entranceRoom;
+          this.applyLiftScene(
+            before,
+            before.direction === 'down' ? 'room' : 'surface'
+          );
+          this.game = {
+            ...this.game,
+            player: {
+              ...this.game.player,
+              position: {
+                ...this.game.player.position,
+                y:
+                  before.direction === 'up'
+                    ? before.restingAltitude
+                    : (advanced.finalAltitude ?? this.game.player.position.y)
+              }
+            }
+          };
+          if (
+            before.direction === 'up' &&
+            before.entranceRoom === COLONY_CRAFT_LIFT_ROOM
+          ) {
+            const colonyCraft = this.content.endgame?.colonyCraft;
+            if (colonyCraft !== undefined) {
+              this.game = surface(
+                this.game,
+                {
+                  cell: colonyCraft.cell,
+                  room: COLONY_CRAFT_LIFT_ROOM,
+                  site: COLONY_CRAFT_LIFT_ROOM
+                },
+                this.content.underground.lift,
+                this.content.cellSize,
+                colonyCraft
+              );
             }
           }
-        };
-        if (
-          before.direction === 'up' &&
-          before.entranceRoom === COLONY_CRAFT_LIFT_ROOM
-        ) {
-          const colonyCraft = this.content.endgame?.colonyCraft;
-          if (colonyCraft !== undefined) {
-            this.game = surface(
-              this.game,
-              {
-                cell: colonyCraft.cell,
-                room: COLONY_CRAFT_LIFT_ROOM,
-                site: COLONY_CRAFT_LIFT_ROOM
-              },
-              this.content.underground.lift,
-              this.content.cellSize,
-              colonyCraft
-            );
-          }
+          this.liftJourney = undefined;
+          this.liftBensonColour = undefined;
+          events.push(
+            { arrived: this.location },
+            ...this.settleIntoTheRoom(previousRoom)
+          );
         }
-        this.liftJourney = undefined;
-        this.liftBensonColour = undefined;
-        events.push(
-          { arrived: this.location },
-          ...this.settleIntoTheRoom(previousRoom)
-        );
+        this.game = { ...this.game, elapsed: this.game.elapsed + seconds };
       }
-      this.game = { ...this.game, elapsed: this.game.elapsed + seconds };
-    }
+    });
   }
 
   /// Which Site a position is over, formed the way the Reference Build forms it:
@@ -2559,39 +2687,41 @@ export class GameplaySession {
   /// time is up, because what runs out for it is the approach rather than the
   /// craft.
   private driftHostileEffects(seconds: number, pauseAttacker = false): void {
-    const rules = this.content.hostile;
-    if (rules === undefined) {
-      return;
-    }
-    const drift = (slot: number, velocity: Vector3): void => {
-      const at = this.surfacePlaceOf(slot);
-      if (at === undefined) {
+    return this.change(() => {
+      const rules = this.content.hostile;
+      if (rules === undefined) {
         return;
       }
-      this.residence.set(slot, {
-        at: {
-          x: at.x + velocity.x * seconds,
-          y: at.y + velocity.y * seconds,
-          z: at.z + velocity.z * seconds
-        },
-        kind: 'surface'
-      });
-    };
-    if (!pauseAttacker && this.attackerVelocity !== undefined) {
-      drift(rules.attackingSlot, this.attackerVelocity);
-    }
-    const shot = this.hostileShot;
-    if (shot !== undefined) {
-      const secondsLeft = shot.secondsLeft - seconds;
-      if (secondsLeft <= 1e-9) {
-        this.hostileShot = undefined;
-        this.residence.set(rules.inboundSlot, { kind: 'gone' });
-      } else {
-        this.hostileShot = { ...shot, secondsLeft };
-        drift(rules.inboundSlot, shot.velocity);
+      const drift = (slot: number, velocity: Vector3): void => {
+        const at = this.surfacePlaceOf(slot);
+        if (at === undefined) {
+          return;
+        }
+        this.residence.set(slot, {
+          at: {
+            x: at.x + velocity.x * seconds,
+            y: at.y + velocity.y * seconds,
+            z: at.z + velocity.z * seconds
+          },
+          kind: 'surface'
+        });
+      };
+      if (!pauseAttacker && this.attackerVelocity !== undefined) {
+        drift(rules.attackingSlot, this.attackerVelocity);
       }
-    }
-    return;
+      const shot = this.hostileShot;
+      if (shot !== undefined) {
+        const secondsLeft = shot.secondsLeft - seconds;
+        if (secondsLeft <= 1e-9) {
+          this.hostileShot = undefined;
+          this.residence.set(rules.inboundSlot, { kind: 'gone' });
+        } else {
+          this.hostileShot = { ...shot, secondsLeft };
+          drift(rules.inboundSlot, shot.velocity);
+        }
+      }
+      return;
+    });
   }
 
   /// The velocity, per second, that carries something at `from` toward the
@@ -2611,89 +2741,95 @@ export class GameplaySession {
   /// once its shot reaches the player the encounter is over — for the player's
   /// craft, not for the player.
   private advanceHostile(seconds: number): readonly PresentationEvent[] {
-    const rules = this.content.hostile;
-    const events: PresentationEvent[] = [];
-    if (
-      rules === undefined ||
-      this.benson === undefined ||
-      !this.attackingShip
-    ) {
-      return events;
-    }
-    if (this.approachSeconds > 1e-9) {
-      this.approachSeconds = Math.max(0, this.approachSeconds - seconds);
-      return events;
-    }
-    const attacker = this.placeOf(rules.attackingSlot);
-    if (attacker === undefined) {
-      return events;
-    }
-    const player = this.game.player.position;
-    const reach = rules.firingRange * rules.rangeUnit;
-    const near =
-      Math.abs(attacker.x - player.x) < reach &&
-      Math.abs(attacker.y - player.y) < reach &&
-      Math.abs(attacker.z - player.z) < reach;
-    if (!near) {
-      // Too far to shoot: turn toward the player and close the distance. This
-      // is also what brings an attacker into the world in the first place.
-      this.residence.set(rules.attackingSlot, {
-        at: attacker,
-        kind: 'surface'
+    return this.change(() => {
+      const rules = this.content.hostile;
+      const events: PresentationEvent[] = [];
+      if (
+        rules === undefined ||
+        this.benson === undefined ||
+        !this.attackingShip
+      ) {
+        return events;
+      }
+      if (this.approachSeconds > 1e-9) {
+        this.approachSeconds = Math.max(0, this.approachSeconds - seconds);
+        return events;
+      }
+      const attacker = this.placeOf(rules.attackingSlot);
+      if (attacker === undefined) {
+        return events;
+      }
+      const player = this.game.player.position;
+      const reach = rules.firingRange * rules.rangeUnit;
+      const near =
+        Math.abs(attacker.x - player.x) < reach &&
+        Math.abs(attacker.y - player.y) < reach &&
+        Math.abs(attacker.z - player.z) < reach;
+      if (!near) {
+        // Too far to shoot: turn toward the player and close the distance. This
+        // is also what brings an attacker into the world in the first place.
+        this.residence.set(rules.attackingSlot, {
+          at: attacker,
+          kind: 'surface'
+        });
+        this.attackerVelocity = this.aimPerSecond(
+          attacker,
+          rules.approachAimShift
+        );
+        // The delay runs until the effect advance parks the attacker, which is
+        // the distance from the lifecycle it was given down to the sentinel.
+        this.approachSeconds =
+          (rules.approachDelayLifecycle - rules.parkedLifecycle) /
+          this.frameRate;
+        return events;
+      }
+      if (this.hostileShot === undefined) {
+        // In range and nothing in the air: shoot, from where the attacker is.
+        this.hostileShot = {
+          secondsLeft: rules.inboundLifecycleFrames / this.frameRate,
+          velocity: this.aimPerSecond(attacker, rules.inboundAimShift)
+        };
+        this.residence.set(rules.inboundSlot, {
+          at: attacker,
+          kind: 'surface'
+        });
+        events.push({ impact: { sound: rules.inboundSound } });
+        return events;
+      }
+      const shot = this.surfacePlaceOf(rules.inboundSlot);
+      if (shot === undefined) {
+        return events;
+      }
+      const cube = rules.hitCubeSize * rules.rangeUnit;
+      const struck =
+        Math.abs(shot.x - player.x) < cube &&
+        Math.abs(shot.y - player.y) < cube &&
+        Math.abs(shot.z - player.z) < cube;
+      if (!struck) {
+        return events;
+      }
+      // The hit. A craft is lost and said to be lost; on foot there is nothing to
+      // lose and nothing to say. Either way the encounter ends and play does not.
+      this.world.raise({
+        aboard: this.occupancy.kind === 'aboard',
+        kind: 'hit'
       });
-      this.attackerVelocity = this.aimPerSecond(
-        attacker,
-        rules.approachAimShift
-      );
-      // The delay runs until the effect advance parks the attacker, which is
-      // the distance from the lifecycle it was given down to the sentinel.
-      this.approachSeconds =
-        (rules.approachDelayLifecycle - rules.parkedLifecycle) / this.frameRate;
+      if (this.occupancy.kind === 'aboard') {
+        this.show(rules.shipDestroyedMessage);
+        this.game = { ...this.game, mover: rules.captureMover };
+      }
+      events.push({ impact: { sound: rules.hitSound } });
+      if (rules.captureClearsAttackingShip && this.benson !== undefined) {
+        this.attackingShip = false;
+      }
+      for (const slot of rules.captureRemovesSlots) {
+        this.residence.set(slot, { kind: 'gone' });
+      }
+      this.hostileShot = undefined;
+      this.attackerVelocity = undefined;
+      this.approachSeconds = 0;
       return events;
-    }
-    if (this.hostileShot === undefined) {
-      // In range and nothing in the air: shoot, from where the attacker is.
-      this.hostileShot = {
-        secondsLeft: rules.inboundLifecycleFrames / this.frameRate,
-        velocity: this.aimPerSecond(attacker, rules.inboundAimShift)
-      };
-      this.residence.set(rules.inboundSlot, { at: attacker, kind: 'surface' });
-      events.push({ impact: { sound: rules.inboundSound } });
-      return events;
-    }
-    const shot = this.surfacePlaceOf(rules.inboundSlot);
-    if (shot === undefined) {
-      return events;
-    }
-    const cube = rules.hitCubeSize * rules.rangeUnit;
-    const struck =
-      Math.abs(shot.x - player.x) < cube &&
-      Math.abs(shot.y - player.y) < cube &&
-      Math.abs(shot.z - player.z) < cube;
-    if (!struck) {
-      return events;
-    }
-    // The hit. A craft is lost and said to be lost; on foot there is nothing to
-    // lose and nothing to say. Either way the encounter ends and play does not.
-    this.world.raise({
-      aboard: this.occupancy.kind === 'aboard',
-      kind: 'hit'
     });
-    if (this.occupancy.kind === 'aboard') {
-      this.show(rules.shipDestroyedMessage);
-      this.game = { ...this.game, mover: rules.captureMover };
-    }
-    events.push({ impact: { sound: rules.hitSound } });
-    if (rules.captureClearsAttackingShip && this.benson !== undefined) {
-      this.attackingShip = false;
-    }
-    for (const slot of rules.captureRemovesSlots) {
-      this.residence.set(slot, { kind: 'gone' });
-    }
-    this.hostileShot = undefined;
-    this.attackerVelocity = undefined;
-    this.approachSeconds = 0;
-    return events;
   }
 
   /// The Player Projectile over `seconds`: it moves, then answers for where it
@@ -2703,32 +2839,34 @@ export class GameplaySession {
     rules: EndgameFire,
     events: PresentationEvent[]
   ): void {
-    const shot = this.playerShot;
-    if (shot === undefined) {
+    return this.change(() => {
+      const shot = this.playerShot;
+      if (shot === undefined) {
+        return;
+      }
+      const secondsLeft = shot.secondsLeft - seconds;
+      if (secondsLeft <= 1e-9) {
+        this.playerShot = undefined;
+        this.residence.set(rules.effectSlot, { kind: 'gone' });
+        return;
+      }
+      const at = this.surfacePlaceOf(rules.effectSlot);
+      if (at === undefined) {
+        // Nothing is carrying the shot's position any more, so there is no shot;
+        // this is the same removal its lifetime would have reached.
+        this.playerShot = undefined;
+        return;
+      }
+      const next = {
+        x: at.x + shot.velocity.x * seconds,
+        y: at.y + shot.velocity.y * seconds,
+        z: at.z + shot.velocity.z * seconds
+      };
+      this.playerShot = { ...shot, secondsLeft };
+      this.residence.set(rules.effectSlot, { at: next, kind: 'surface' });
+      events.push(...this.resolveShot(next));
       return;
-    }
-    const secondsLeft = shot.secondsLeft - seconds;
-    if (secondsLeft <= 1e-9) {
-      this.playerShot = undefined;
-      this.residence.set(rules.effectSlot, { kind: 'gone' });
-      return;
-    }
-    const at = this.surfacePlaceOf(rules.effectSlot);
-    if (at === undefined) {
-      // Nothing is carrying the shot's position any more, so there is no shot;
-      // this is the same removal its lifetime would have reached.
-      this.playerShot = undefined;
-      return;
-    }
-    const next = {
-      x: at.x + shot.velocity.x * seconds,
-      y: at.y + shot.velocity.y * seconds,
-      z: at.z + shot.velocity.z * seconds
-    };
-    this.playerShot = { ...shot, secondsLeft };
-    this.residence.set(rules.effectSlot, { at: next, kind: 'surface' });
-    events.push(...this.resolveShot(next));
-    return;
+    });
   }
 
   /// Advances the outdoor objects that move by themselves, and combat.
@@ -2780,22 +2918,26 @@ export class GameplaySession {
   /// The Reference Build carries slot 0 along Z every outdoor frame. In world
   /// coordinates that is a constant speed, wrapping at `wrapAt`.
   private stepSurfaceFlyby(seconds: number): void {
-    const rules = this.content.surfaceFlyby;
-    if (rules === undefined) {
+    return this.change(() => {
+      const rules = this.content.surfaceFlyby;
+      if (rules === undefined) {
+        return;
+      }
+      const at = this.surfacePlaceOf(rules.slot);
+      if (at === undefined) {
+        return;
+      }
+      this.residence.set(rules.slot, {
+        at: {
+          ...at,
+          z:
+            (at.z + rules.stepPerFrame * this.frameRate * seconds) %
+            rules.wrapAt
+        },
+        kind: 'surface'
+      });
       return;
-    }
-    const at = this.surfacePlaceOf(rules.slot);
-    if (at === undefined) {
-      return;
-    }
-    this.residence.set(rules.slot, {
-      at: {
-        ...at,
-        z: (at.z + rules.stepPerFrame * this.frameRate * seconds) % rules.wrapAt
-      },
-      kind: 'surface'
     });
-    return;
   }
 
   /// Runs the Escape's star field, which keeps its own loop rate. The field
@@ -2843,38 +2985,40 @@ export class GameplaySession {
   /// mid-message, or anywhere else. The scripts decide that a ship was hired;
   /// this is what that decision does next.
   private advanceShipDelivery(seconds: number): void {
-    const rules = this.content.shipDelivery;
-    const rate = this.content.flight?.limits.referenceFrameRate;
-    if (
-      rules === undefined ||
-      rate === undefined ||
-      this.benson === undefined ||
-      seconds <= 0
-    ) {
-      return;
-    }
-    const state = this.shipInbound;
-    if (state === rules.inactiveValue) {
-      this.deliverySeconds = undefined;
-      return;
-    }
-    if ((state & rules.acceptedMask) !== 0) {
-      this.shipInbound = rules.descendingValue;
-      this.deliverySeconds = 0;
-    }
-    this.deliverySeconds = (this.deliverySeconds ?? 0) + seconds;
-    const track = descentTrack(rules);
-    const step = Math.floor(this.deliverySeconds * rate + 1e-9);
-    const altitude = track[Math.min(step, track.length - 1)]!;
-    const { initialisation: start } = rules;
-    this.residence.set(rules.slot, {
-      at: { x: start.x, y: altitude << 8, z: start.z },
-      kind: 'surface'
+    return this.change(() => {
+      const rules = this.content.shipDelivery;
+      const rate = this.content.flight?.limits.referenceFrameRate;
+      if (
+        rules === undefined ||
+        rate === undefined ||
+        this.benson === undefined ||
+        seconds <= 0
+      ) {
+        return;
+      }
+      const state = this.shipInbound;
+      if (state === rules.inactiveValue) {
+        this.deliverySeconds = undefined;
+        return;
+      }
+      if ((state & rules.acceptedMask) !== 0) {
+        this.shipInbound = rules.descendingValue;
+        this.deliverySeconds = 0;
+      }
+      this.deliverySeconds = (this.deliverySeconds ?? 0) + seconds;
+      const track = descentTrack(rules);
+      const step = Math.floor(this.deliverySeconds * rate + 1e-9);
+      const altitude = track[Math.min(step, track.length - 1)]!;
+      const { initialisation: start } = rules;
+      this.residence.set(rules.slot, {
+        at: { x: start.x, y: altitude << 8, z: start.z },
+        kind: 'surface'
+      });
+      if (altitude === 0) {
+        this.shipInbound = rules.inactiveValue;
+        this.deliverySeconds = undefined;
+      }
     });
-    if (altitude === 0) {
-      this.shipInbound = rules.inactiveValue;
-      this.deliverySeconds = undefined;
-    }
   }
 
   /// This session as flat scalars, for comparison against the Reference Build.
@@ -3050,11 +3194,13 @@ export class GameplaySession {
   /// Sets where the session's random stream goes on from, as a replay or a
   /// test that needs a particular roll does.
   seedRandom(state: bigint): void {
+    this.requireRunning();
     this.ownRandomState = state;
   }
 
   /// The next byte of the session's random stream (ADR 0083).
   nextRandomByte(): number {
+    this.requireRunning();
     const stepped = randomByte(this.ownRandomState);
     this.ownRandomState = stepped.state;
     return stepped.byte;

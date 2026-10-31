@@ -270,6 +270,7 @@ const grateful = async (
   if (passCarried) {
     route.session.carry(PASS);
   }
+  route.session.settle();
   const saved = route.session.captureSaveSnapshot();
   return LegalRoute.resume(
     GameplaySession.restore(

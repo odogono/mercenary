@@ -15,7 +15,11 @@ import { arrivalPanelViewModel, arrivalStripText } from './arrivalPanel.ts';
 import { OPENING_MILESTONES } from './arrivalScript.ts';
 import { PANEL_SETTINGS, installShellChrome } from './chrome.ts';
 import { FixedStepClock } from './clock.ts';
-import { executeConsoleCommand, parseConsoleLine } from './console.ts';
+import {
+  executeConsoleCommand,
+  parseConsoleLine,
+  type ConsoleCommand
+} from './console.ts';
 import { installConsole } from './consoleView.ts';
 
 import './damoclesPanelElement.ts';
@@ -132,6 +136,17 @@ const requiredText = async (url: URL): Promise<string> => {
   }
   return await response.text();
 };
+
+/// Console commands that move the player or an object, so their World Events
+/// settle and the resume checkpoint follows.
+const WORLD_CHANGING_COMMANDS: ReadonlySet<ConsoleCommand['kind']> = new Set([
+  'dropObject',
+  'getObject',
+  'fetchObject',
+  'gotoCell',
+  'gotoObject',
+  'gotoRoom'
+]);
 
 const updateText = (element: HTMLElement, value: string): void => {
   if (element.textContent !== value) {
@@ -269,6 +284,9 @@ try {
     sound.setVolume(changed.audioVolume, snapshot.elapsed);
   };
   applyAudioPreferences(preferences.current());
+  if (initial.opening !== undefined) {
+    sound.present(initial.opening);
+  }
   let framesPerSecond = 0;
   let frameCount = 0;
   let frameSeconds = 0;
@@ -365,26 +383,59 @@ try {
       break;
   }
 
-  const makeResumePersistence = (): SessionResumePersistence =>
-    createSessionResumePersistence({
-      capture: () => ({
+  /// Shows a stopped session's message and bars returning to play, or clears both.
+  const showFailure = (message: string | undefined): void => {
+    failure.hidden = message === undefined;
+    failure.textContent = message ?? '';
+    chromePages.menu.querySelector<HTMLButtonElement>(
+      '[data-goto="none"]'
+    )!.disabled = message !== undefined;
+  };
+  const reportSessionFailure = (error: unknown): void => {
+    if (session.failure === undefined) {
+      throw error;
+    }
+    controls.releaseAll();
+    clock.reset();
+    showFailure(session.failure.message);
+    menu.show('menu');
+  };
+  const settleAndPresent = (): void => {
+    const settled = session.settle();
+    snapshot = settled.snapshot;
+    sound.present(settled);
+    recordBensonMessage();
+  };
+  const captureSettled = () => {
+    try {
+      settleAndPresent();
+      return {
         location: session.location,
         snapshot: session.captureSaveSnapshot()
-      }),
+      };
+    } catch (error) {
+      reportSessionFailure(error);
+      throw error;
+    }
+  };
+
+  const makeResumePersistence = (): SessionResumePersistence =>
+    createSessionResumePersistence({
+      capture: captureSettled,
       environment,
       onFailure: notices.failed,
       storage: ownership.mayPersist() ? storage : undefined
     });
   let resumePersistence = makeResumePersistence();
   const checkpointChangedResume = (force = true): void => {
-    if (!ownership.mayPersist()) {
+    if (!ownership.mayPersist() || session.failure !== undefined) {
       return;
     }
     resumePersistence.dirty();
     resumePersistence.checkpoint(force);
   };
   const flushResume = (): void => {
-    if (ownership.mayPersist()) {
+    if (ownership.mayPersist() && session.failure === undefined) {
       resumePersistence.checkpoint(true);
     }
   };
@@ -405,19 +456,23 @@ try {
     return (result as { readonly events: readonly PresentationEvent[] }).events;
   };
   const performAndRefresh = (action: () => PresentedAction): void => {
-    if (!ownership.mayAdvance()) {
+    if (!ownership.mayAdvance() || session.failure !== undefined) {
       return;
     }
     const arrivalOwned = arrival.isActive();
-    const result = action();
-    snapshot = session.snapshot;
-    sound.present({
-      events: eventsFrom(result),
-      snapshot,
-      ...(arrivalOwned ? { suppressTransient: true } : {})
-    });
-    recordBensonMessage();
-    checkpointChangedResume();
+    try {
+      const result = action();
+      snapshot = session.snapshot;
+      sound.present({
+        events: eventsFrom(result),
+        snapshot,
+        ...(arrivalOwned ? { suppressTransient: true } : {})
+      });
+      settleAndPresent();
+      checkpointChangedResume();
+    } catch (error) {
+      reportSessionFailure(error);
+    }
   };
 
   const controls = new BrowserControlProfile({
@@ -476,6 +531,10 @@ try {
   });
   const menu = installSystemMenu({
     onLayer: layer => {
+      if (layer === 'none' && session.failure !== undefined) {
+        menu.show('menu');
+        return;
+      }
       audio.layerChanged(layer);
       if (layer === 'controls') {
         renderControlsPage(
@@ -485,7 +544,7 @@ try {
       }
       if (layer === 'menu') {
         notices.menuOpened();
-        if (ownership.mayPersist()) {
+        if (ownership.mayPersist() && session.failure === undefined) {
           resumePersistence.checkpoint(true);
         }
       }
@@ -531,11 +590,16 @@ try {
   ): void => {
     const restored = createWalkabout(bundle, settings, savedSnapshot);
     session = restored.session;
+    showFailure(undefined);
+    resumePersistence = makeResumePersistence();
     world = restored.world;
     names = objectNamesOf(world.objects);
     snapshot = session.snapshot;
     targClock.reset();
     sound.resetFromSnapshot(snapshot);
+    if (restored.opening !== undefined) {
+      sound.present(restored.opening);
+    }
     // A New Game plays the Departure and the Arrival again; a restored Save is a game already
     // under way, so it gets whatever is left of the Arrival, which is normally none of it.
     departure = makeDeparture(
@@ -564,10 +628,7 @@ try {
     });
 
   const persistence = createSavePersistence({
-    capture: () => ({
-      location: session.location,
-      snapshot: session.captureSaveSnapshot()
-    }),
+    capture: captureSettled,
     environment,
     release,
     restore: (savedSnapshot, slot) => {
@@ -614,7 +675,22 @@ try {
     },
     release,
     {
-      execute: executeConsoleCommand,
+      execute: (
+        command: ConsoleCommand,
+        deps: Parameters<typeof executeConsoleCommand>[1]
+      ) => {
+        try {
+          const result = executeConsoleCommand(command, deps);
+          if (WORLD_CHANGING_COMMANDS.has(command.kind)) {
+            settleAndPresent();
+            checkpointChangedResume();
+          }
+          return result;
+        } catch (error) {
+          reportSessionFailure(error);
+          throw error;
+        }
+      },
       parse: parseConsoleLine,
       persistence: { key: titleKeys.consoleHistory, storage }
     }
@@ -944,7 +1020,8 @@ try {
       status,
       statusText(snapshot, world.cellSize, drawn, framesPerSecond)
     );
-    surface.dataset['state'] = 'ready';
+    surface.dataset['state'] =
+      session.failure === undefined ? 'ready' : 'failed';
     canvas.dataset['lines'] = String(drawn.lines);
     canvas.dataset['points'] = String(drawn.points);
     canvas.dataset['x'] = String(player.position.x);
@@ -960,31 +1037,39 @@ try {
     }
     // The System Menu pauses the session rather than hiding it: the frame keeps being drawn, so
     // the player can see what they are about to return to, but no time passes.
-    if (menu.layer() === 'none' && ownership.mayAdvance()) {
-      clock.frame(timestamp, seconds => {
-        // The Departure gives the session nothing at all; the Arrival then advances the session
-        // itself while it presents, so that watching the opening and skipping it hand the
-        // session the same run of steps.
-        if (departure.isActive()) {
-          departure.step(seconds);
-          return;
-        }
-        if (arrival.ownsSession()) {
-          arrival.step(seconds);
-          return;
-        }
-        const endingBefore = session.ending;
-        session.intent = controls.intent;
-        const stepped = session.advance(seconds);
-        snapshot = stepped.snapshot;
-        sound.present(stepped);
-        // Any move of the Ending Phase is a boundary, not just the one out of
-        // active play: a reload during the mature presentation should come back
-        // to it rather than replay the phase it had already left.
-        checkpointChangedResume(
-          endingKey(endingBefore) !== endingKey(session.ending)
-        );
-      });
+    if (
+      menu.layer() === 'none' &&
+      ownership.mayAdvance() &&
+      session.failure === undefined
+    ) {
+      try {
+        clock.frame(timestamp, seconds => {
+          // The Departure gives the session nothing at all; the Arrival then advances the session
+          // itself while it presents, so that watching the opening and skipping it hand the
+          // session the same run of steps.
+          if (departure.isActive()) {
+            departure.step(seconds);
+            return;
+          }
+          if (arrival.ownsSession()) {
+            arrival.step(seconds);
+            return;
+          }
+          const endingBefore = session.ending;
+          session.intent = controls.intent;
+          const stepped = session.advance(seconds);
+          snapshot = stepped.snapshot;
+          sound.present(stepped);
+          // Any move of the Ending Phase is a boundary, not just the one out of
+          // active play: a reload during the mature presentation should come back
+          // to it rather than replay the phase it had already left.
+          checkpointChangedResume(
+            endingKey(endingBefore) !== endingKey(session.ending)
+          );
+        });
+      } catch (error) {
+        reportSessionFailure(error);
+      }
     } else {
       clock.reset();
     }

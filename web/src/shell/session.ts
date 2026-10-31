@@ -3,7 +3,8 @@ import type { Bundle } from '../payload/documents.ts';
 import {
   GameplaySession,
   openingPlayer,
-  sessionContent
+  sessionContent,
+  type SettledStep
 } from '../session/index.ts';
 import type { SaveEnvironment, SaveSnapshot } from '../session/save.ts';
 import {
@@ -18,6 +19,8 @@ import { TextTable } from '../text/index.ts';
 import { World } from '../world/index.ts';
 
 export interface Walkabout {
+  /// What a new game's Talk Scripts settled as they began, to present.
+  readonly opening?: SettledStep;
   readonly session: GameplaySession;
   readonly world: World;
 }
@@ -88,11 +91,17 @@ export const createWalkabout = (
   // not advancing the session rather than by leaving it unstarted (ADR 0032). It is a Talk
   // Script (ADR 0080).
   const talk = talkScripts.length === 0 ? undefined : { scripts: talkScripts };
-  const session =
-    restore !== undefined
-      ? GameplaySession.restore(content, scripts, restore, talk)
-      : talk !== undefined
-        ? GameplaySession.newGame(content, scripts, talk)
-        : new GameplaySession(content, openingPlayer(), scripts);
-  return { session, world };
+  if (restore !== undefined) {
+    return {
+      session: GameplaySession.restore(content, scripts, restore, talk),
+      world
+    };
+  }
+  if (talk === undefined) {
+    return {
+      session: new GameplaySession(content, openingPlayer(), scripts),
+      world
+    };
+  }
+  return { ...GameplaySession.newGame(content, scripts, talk), world };
 };
