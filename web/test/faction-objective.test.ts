@@ -124,7 +124,9 @@ describe('a Save taken on the way to a threshold', () => {
     expect(withoutScript(restored.observations().observations)).toEqual(
       withoutScript(before)
     );
-    // And the two go on agreeing rather than merely starting equal.
+    // And the two go on agreeing rather than merely starting equal. Intent is
+    // the controls' and not part of a Save, so both are given the same.
+    restored.intent = run.session.intent;
     restored.advance(2);
     run.session.advance(2);
     expect(withoutScript(restored.observations().observations)).toEqual(

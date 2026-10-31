@@ -22,6 +22,14 @@ _Avoid_: NorthTalk script, Benson Script (for a rewrite), mod
 A completed change in play that the Gameplay Session announces to Talk Scripts, with named subjects, even when a later change undoes it; temporary bookkeeping within an operation is not a World Event. Surface Region events reach only the region's owning Talk Script, while other World Events are broadcast; Talk Scripts wait for these changes rather than polling the world.
 _Avoid_: PresentationEvent (that drives presentation, not logic), trigger, notification
 
+**Step**:
+One frame of play, or one operation outside a frame such as a Take, a key of Player Input or a console move. A step's World Events are delivered to Talk Scripts, and what those reactions change is delivered in turn, before the step returns, so a Save never holds unfinished reactions.
+_Avoid_: tick (for an operation outside a frame), settle call
+
+**Reaction Budget**:
+The limit on Talk execution fuel and delivered World Events that one step's reactions share. A step that exhausts it stops the Gameplay Session rather than deferring the rest; it is not a Faction Reaction.
+_Avoid_: timeout, frame budget
+
 **Player Input**:
 A key press no Binding takes, passed to Talk Scripts by name (`"Y"`, `"Q"`) as a message. Controls never reach a Talk Script. Player Input goes to the Input Owner, or to every Talk Script when there is none. It is not a World Event: it isn't a change in play.
 _Avoid_: key event, keystroke, World Event (for a key press)

@@ -102,7 +102,7 @@ end begin
       script: { sound: { symbol: 'voice1.control', value: 0 } }
     });
     expect(() => session.captureSaveSnapshot()).not.toThrow();
-    expect(session.settle().events).toEqual([]);
+    expect(session.takeSettled().events).toEqual([]);
   });
 
   test('preserves separate object moves, queries current state, and returns reaction effects once', () => {
@@ -118,8 +118,8 @@ end begin
     expect(settled.events).toContainEqual({
       script: { sound: { symbol: 'voice1.control', value: 0 } }
     });
-    expect(session.settle().events).toEqual([]);
-    expect(session.settle().worldEvents).toEqual([]);
+    expect(session.takeSettled().events).toEqual([]);
+    expect(session.takeSettled().worldEvents).toEqual([]);
   });
 
   test('delivers a reaction-generated change during the same step', () => {
@@ -147,7 +147,6 @@ end received
     const session = create(roundTrip);
     session.begin();
     const elapsed = session.snapshot.elapsed;
-    session.settle();
     const saved = session.captureSaveSnapshot();
     expect(session.snapshot.elapsed).toBe(elapsed);
     expect(saved.talk?.now).toBe(0);
@@ -157,7 +156,7 @@ end received
       saved,
       { scripts: [script(roundTrip)] }
     );
-    expect(restored.settle().worldEvents).toEqual([]);
+    expect(restored.takeSettled().worldEvents).toEqual([]);
     expect(balance(restored)).toBe(balance(session));
   });
 
@@ -165,11 +164,11 @@ end received
     const session = create('');
     session.place(CENTRE);
     session.teleport(room(5));
-    session.settle();
+    session.takeSettled();
     // Slot 0 is outside the region. Returning from the Room must not briefly
     // re-enter the Shrine at the previously retained surface position.
     session.placeAtObject(0);
-    expect(session.settle().worldEvents).toEqual([
+    expect(session.takeSettled().worldEvents).toEqual([
       { kind: 'entered', location: { kind: 'surface' } }
     ]);
   });
@@ -177,7 +176,7 @@ end received
   test('fetching an object records its departure from a region', () => {
     const session = create('');
     expect(session.fetchObject(CRYSTAL).outcome.kind).toBe('fetched');
-    expect(session.settle().worldEvents).toContainEqual({
+    expect(session.takeSettled().worldEvents).toContainEqual({
       kind: 'lost',
       object: CRYSTAL,
       region: 'shrine'
@@ -211,7 +210,7 @@ end received
       { scripts: [script(source)] }
     );
     expect(restored.failure).toBeUndefined();
-    expect(restored.settle().worldEvents).toEqual([]);
+    expect(restored.takeSettled().worldEvents).toEqual([]);
   });
 
   test('settles timer-caused changes before returning from the step', () => {
@@ -226,7 +225,6 @@ end lost
 `);
     const before = balance(session);
     session.begin();
-    session.settle();
     expect(session.advance(1 / 60).worldEvents).toEqual([
       { kind: 'lost', object: CRYSTAL, region: 'shrine' }
     ]);
@@ -250,10 +248,7 @@ end received
     );
     const records = new Map<string, string>();
     const persistence = createSessionResumePersistence({
-      encode: () => {
-        session.settle();
-        return JSON.stringify(session.captureSaveSnapshot());
-      },
+      encode: () => JSON.stringify(session.captureSaveSnapshot()),
       storage: {
         getItem: key => records.get(key) ?? null,
         removeItem: key => {

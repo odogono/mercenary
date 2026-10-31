@@ -62,11 +62,7 @@ import {
   type TalkHostOptions,
   type TalkScript
 } from '../talk/host.ts';
-import {
-  ReactionBudget,
-  ReactionLimitError,
-  type ReactionLimits
-} from '../talk/reactionBudget.ts';
+import { ReactionBudget, ReactionLimitError } from '../talk/reactionBudget.ts';
 import type { TalkSaveSnapshot } from '../talk/save.ts';
 import { TALK_SCRIPTS } from '../talk/scripts.ts';
 import type { WorldPort } from '../talk/worldPort.ts';
@@ -785,8 +781,14 @@ export class GameplaySession {
   private readonly regions: readonly SurfaceRegion[];
   /// The World Events since the last frame was told.
   private readonly world: WorldEventLog;
-  private reactionLimits: ReactionLimits | undefined;
   private stopped: ReactionLimitError | undefined;
+  /// The budget of the step under way, while one is.
+  private stepBudget: ReactionBudget | undefined;
+  /// What operations outside a frame settled, until the shell takes it.
+  private unpresented: {
+    events: PresentationEvent[];
+    worldEvents: WorldEvent[];
+  } = { events: [], worldEvents: [] };
 
   get failure(): ReactionLimitError | undefined {
     return this.stopped;
@@ -798,14 +800,26 @@ export class GameplaySession {
     }
   }
 
+  /// One completed operation. Within a step it is part of that step; on its
+  /// own it is a step, and its reactions settle before it returns.
   private change<T>(action: () => T): T {
-    this.requireRunning();
-    return this.world.change(action);
+    if (this.stepBudget !== undefined) {
+      return this.world.change(action);
+    }
+    return this.reactions(budget => {
+      const result = this.world.change(action);
+      const settled = this.finishReactions(budget);
+      this.unpresented.events.push(...settled.events);
+      this.unpresented.worldEvents.push(...settled.worldEvents);
+      return result;
+    });
   }
 
+  /// A step: every reaction batch within it shares one budget (ADR 0085).
   private reactions<T>(action: (budget: ReactionBudget) => T): T {
     this.requireRunning();
-    const budget = new ReactionBudget(this.reactionLimits);
+    const budget = this.talk?.newBudget() ?? new ReactionBudget();
+    this.stepBudget = budget;
     try {
       return this.talk === undefined
         ? action(budget)
@@ -815,6 +829,8 @@ export class GameplaySession {
         this.stopped = error;
       }
       throw error;
+    } finally {
+      this.stepBudget = undefined;
     }
   }
 
@@ -2043,7 +2059,6 @@ export class GameplaySession {
         );
       }
     }
-    this.reactionLimits = options.reactionLimits;
     this.talk = new TalkHost(
       scripts,
       benson,
@@ -2080,7 +2095,6 @@ export class GameplaySession {
   }
 
   private portFlag(slot: number, change: (flags: number) => number): void {
-    this.requireRunning();
     this.portObject(slot);
     this.objectFlags.set(slot, change(this.objectFlags.get(slot) ?? 0));
   }
@@ -2097,13 +2111,13 @@ export class GameplaySession {
   }
 
   private addCredits(amount: number): void {
-    this.requireRunning();
     const limit = CREDITS_LIMIT;
     this.credits = (((this.credits + amount) % limit) + limit) % limit;
   }
 
   /// The World Port (ADR 0083): Talk Scripts read and change the session's
-  /// own state, one named operation at a time.
+  /// own state, one named operation at a time. They only run within a step,
+  /// which has already refused a stopped session.
   protected worldPort(): WorldPort {
     const object = this.portObject.bind(this);
     const flag = this.portFlag.bind(this);
@@ -2118,7 +2132,6 @@ export class GameplaySession {
       destroyed: cell => this.sites?.destroyedCells().includes(cell) ?? false,
       disarm: slot => flag(slot, flags => flags & ~DISARMED & 0xff),
       escape: () => {
-        this.requireRunning();
         this.endingPhase = 1;
       },
       fix: slot => flag(slot, flags => flags | FIXED),
@@ -2152,11 +2165,9 @@ export class GameplaySession {
       pay: amount => this.addCredits(amount),
       random: () => this.nextRandomByte(),
       sendAttacker: () => {
-        this.requireRunning();
         this.attackingShip = true;
       },
       sendShip: () => {
-        this.requireRunning();
         this.shipInbound = SHIP_INBOUND;
       },
       spend: amount => this.addCredits(-amount)
@@ -2193,10 +2204,11 @@ export class GameplaySession {
     });
   }
 
-  /// Finish pending reactions without advancing simulation or Talk time.
-  /// The shell presents these effects before a read-only Save capture.
-  settle(): SettledStep {
-    return this.reactions(budget => this.finishReactions(budget));
+  /// What operations outside a frame settled since last taken, to present.
+  /// The next frame hands it over too.
+  takeSettled(): SettledStep {
+    this.requireRunning();
+    return this.settledResult([]);
   }
 
   private finishReactions(budget: ReactionBudget): SettledStep {
@@ -2225,13 +2237,16 @@ export class GameplaySession {
     worldEvents: readonly WorldEvent[],
     events: readonly PresentationEvent[] = []
   ): SettledStep {
+    const earlier = this.unpresented;
+    this.unpresented = { events: [], worldEvents: [] };
     return {
       events: [
+        ...earlier.events,
         ...events,
         ...(this.talk?.takeEffects() ?? []).map(effect => ({ script: effect }))
       ],
       snapshot: this.snapshot,
-      worldEvents
+      worldEvents: [...earlier.worldEvents, ...worldEvents]
     };
   }
 
@@ -2302,7 +2317,16 @@ export class GameplaySession {
     return { events, snapshot: this.snapshot };
   }
 
+  /// One slice is one completed change: what its parts do in turn is noted
+  /// as a whole.
   private advanceInterval(seconds: number): {
+    readonly events: readonly PresentationEvent[];
+    readonly snapshot: SessionSnapshot;
+  } {
+    return this.world.change(() => this.advanceSlice(seconds));
+  }
+
+  private advanceSlice(seconds: number): {
     readonly events: readonly PresentationEvent[];
     readonly snapshot: SessionSnapshot;
   } {
@@ -2344,34 +2368,32 @@ export class GameplaySession {
         };
       }
       const flight = this.content.flight;
-      this.change(() => {
-        this.game = step(
-          this.game,
-          steered,
-          seconds,
-          flight,
-          this.containment,
-          this.content.endgame
-        );
-        if (wallThud(this.game) && this.content.doorwayRules !== undefined) {
-          events.push({
-            wall: { sound: this.content.doorwayRules.wallThudSound }
-          });
-        }
-        events.push(...this.traverse());
-        this.look(seconds);
-        if (this.game.touchdown !== undefined) {
-          events.push('tone', { touchdown: this.game.touchdown });
-          if (this.game.touchdown === 'crashed') {
-            // A crash throws the player out on foot, but the craft stays where
-            // it came down rather than vanishing.
-            if (this.occupancy.kind === 'aboard') {
-              this.park(this.occupancy.slot);
-            }
-            this.game = leaveCraftCore(this.game, flight);
+      this.game = step(
+        this.game,
+        steered,
+        seconds,
+        flight,
+        this.containment,
+        this.content.endgame
+      );
+      if (wallThud(this.game) && this.content.doorwayRules !== undefined) {
+        events.push({
+          wall: { sound: this.content.doorwayRules.wallThudSound }
+        });
+      }
+      events.push(...this.traverse());
+      this.look(seconds);
+      if (this.game.touchdown !== undefined) {
+        events.push('tone', { touchdown: this.game.touchdown });
+        if (this.game.touchdown === 'crashed') {
+          // A crash throws the player out on foot, but the craft stays where
+          // it came down rather than vanishing.
+          if (this.occupancy.kind === 'aboard') {
+            this.park(this.occupancy.slot);
           }
+          this.game = leaveCraftCore(this.game, flight);
         }
-      });
+      }
     }
     if (this.benson !== undefined && seconds > 0) {
       for (const effect of this.benson.advance(seconds)) {
@@ -2397,93 +2419,91 @@ export class GameplaySession {
   /// Moves a Lift Journey on to the end of a slice, after the slice's other
   /// systems: a scene change or arrival at its end gets only the time after.
   private advanceLift(seconds: number, events: PresentationEvent[]): void {
-    return this.change(() => {
-      if (
-        this.liftJourney !== undefined &&
-        this.content.underground !== undefined
-      ) {
-        const before = this.liftJourney;
-        const advanced = advanceLiftJourney(
-          before,
-          seconds,
-          this.content.underground.lift
-        );
-        if (advanced.journey !== undefined) {
-          this.liftJourney = advanced.journey;
-          this.applyLiftScene(before, advanced.journey.scene);
-          const colonyEntry =
-            advanced.journey.entranceRoom === COLONY_CRAFT_LIFT_ROOM &&
-            advanced.journey.scene === 'surface'
-              ? this.content.endgame?.colonyCraft.entry
-              : undefined;
-          const deckOffset =
-            colonyEntry === undefined
-              ? 0
-              : colonyEntry.altitudeHighByte * 0x1_00_00 +
-                colonyEntry.wrappedAltitudeMiddleByte * 0x1_00;
-          this.game = {
-            ...this.game,
-            player: {
-              ...this.game.player,
-              position: {
-                ...this.game.player.position,
-                y:
-                  liftCameraAltitude(
-                    advanced.journey,
-                    this.content.underground.lift
-                  ) + deckOffset
-              }
-            }
-          };
-        } else {
-          const previousRoom =
-            before.direction === 'down' ? SURFACE_ROOM : before.entranceRoom;
-          this.applyLiftScene(
-            before,
-            before.direction === 'down' ? 'room' : 'surface'
-          );
-          this.game = {
-            ...this.game,
-            player: {
-              ...this.game.player,
-              position: {
-                ...this.game.player.position,
-                y:
-                  before.direction === 'up'
-                    ? before.restingAltitude
-                    : (advanced.finalAltitude ?? this.game.player.position.y)
-              }
-            }
-          };
-          if (
-            before.direction === 'up' &&
-            before.entranceRoom === COLONY_CRAFT_LIFT_ROOM
-          ) {
-            const colonyCraft = this.content.endgame?.colonyCraft;
-            if (colonyCraft !== undefined) {
-              this.game = surface(
-                this.game,
-                {
-                  cell: colonyCraft.cell,
-                  room: COLONY_CRAFT_LIFT_ROOM,
-                  site: COLONY_CRAFT_LIFT_ROOM
-                },
-                this.content.underground.lift,
-                this.content.cellSize,
-                colonyCraft
-              );
+    if (
+      this.liftJourney !== undefined &&
+      this.content.underground !== undefined
+    ) {
+      const before = this.liftJourney;
+      const advanced = advanceLiftJourney(
+        before,
+        seconds,
+        this.content.underground.lift
+      );
+      if (advanced.journey !== undefined) {
+        this.liftJourney = advanced.journey;
+        this.applyLiftScene(before, advanced.journey.scene);
+        const colonyEntry =
+          advanced.journey.entranceRoom === COLONY_CRAFT_LIFT_ROOM &&
+          advanced.journey.scene === 'surface'
+            ? this.content.endgame?.colonyCraft.entry
+            : undefined;
+        const deckOffset =
+          colonyEntry === undefined
+            ? 0
+            : colonyEntry.altitudeHighByte * 0x1_00_00 +
+              colonyEntry.wrappedAltitudeMiddleByte * 0x1_00;
+        this.game = {
+          ...this.game,
+          player: {
+            ...this.game.player,
+            position: {
+              ...this.game.player.position,
+              y:
+                liftCameraAltitude(
+                  advanced.journey,
+                  this.content.underground.lift
+                ) + deckOffset
             }
           }
-          this.liftJourney = undefined;
-          this.liftBensonColour = undefined;
-          events.push(
-            { arrived: this.location },
-            ...this.settleIntoTheRoom(previousRoom)
-          );
+        };
+      } else {
+        const previousRoom =
+          before.direction === 'down' ? SURFACE_ROOM : before.entranceRoom;
+        this.applyLiftScene(
+          before,
+          before.direction === 'down' ? 'room' : 'surface'
+        );
+        this.game = {
+          ...this.game,
+          player: {
+            ...this.game.player,
+            position: {
+              ...this.game.player.position,
+              y:
+                before.direction === 'up'
+                  ? before.restingAltitude
+                  : (advanced.finalAltitude ?? this.game.player.position.y)
+            }
+          }
+        };
+        if (
+          before.direction === 'up' &&
+          before.entranceRoom === COLONY_CRAFT_LIFT_ROOM
+        ) {
+          const colonyCraft = this.content.endgame?.colonyCraft;
+          if (colonyCraft !== undefined) {
+            this.game = surface(
+              this.game,
+              {
+                cell: colonyCraft.cell,
+                room: COLONY_CRAFT_LIFT_ROOM,
+                site: COLONY_CRAFT_LIFT_ROOM
+              },
+              this.content.underground.lift,
+              this.content.cellSize,
+              colonyCraft
+            );
+          }
         }
-        this.game = { ...this.game, elapsed: this.game.elapsed + seconds };
+        this.liftJourney = undefined;
+        this.liftBensonColour = undefined;
+        events.push(
+          { arrived: this.location },
+          ...this.settleIntoTheRoom(previousRoom)
+        );
       }
-    });
+      this.game = { ...this.game, elapsed: this.game.elapsed + seconds };
+    }
   }
 
   /// Which Site a position is over, formed the way the Reference Build forms it:
@@ -2687,41 +2707,39 @@ export class GameplaySession {
   /// time is up, because what runs out for it is the approach rather than the
   /// craft.
   private driftHostileEffects(seconds: number, pauseAttacker = false): void {
-    return this.change(() => {
-      const rules = this.content.hostile;
-      if (rules === undefined) {
+    const rules = this.content.hostile;
+    if (rules === undefined) {
+      return;
+    }
+    const drift = (slot: number, velocity: Vector3): void => {
+      const at = this.surfacePlaceOf(slot);
+      if (at === undefined) {
         return;
       }
-      const drift = (slot: number, velocity: Vector3): void => {
-        const at = this.surfacePlaceOf(slot);
-        if (at === undefined) {
-          return;
-        }
-        this.residence.set(slot, {
-          at: {
-            x: at.x + velocity.x * seconds,
-            y: at.y + velocity.y * seconds,
-            z: at.z + velocity.z * seconds
-          },
-          kind: 'surface'
-        });
-      };
-      if (!pauseAttacker && this.attackerVelocity !== undefined) {
-        drift(rules.attackingSlot, this.attackerVelocity);
+      this.residence.set(slot, {
+        at: {
+          x: at.x + velocity.x * seconds,
+          y: at.y + velocity.y * seconds,
+          z: at.z + velocity.z * seconds
+        },
+        kind: 'surface'
+      });
+    };
+    if (!pauseAttacker && this.attackerVelocity !== undefined) {
+      drift(rules.attackingSlot, this.attackerVelocity);
+    }
+    const shot = this.hostileShot;
+    if (shot !== undefined) {
+      const secondsLeft = shot.secondsLeft - seconds;
+      if (secondsLeft <= 1e-9) {
+        this.hostileShot = undefined;
+        this.residence.set(rules.inboundSlot, { kind: 'gone' });
+      } else {
+        this.hostileShot = { ...shot, secondsLeft };
+        drift(rules.inboundSlot, shot.velocity);
       }
-      const shot = this.hostileShot;
-      if (shot !== undefined) {
-        const secondsLeft = shot.secondsLeft - seconds;
-        if (secondsLeft <= 1e-9) {
-          this.hostileShot = undefined;
-          this.residence.set(rules.inboundSlot, { kind: 'gone' });
-        } else {
-          this.hostileShot = { ...shot, secondsLeft };
-          drift(rules.inboundSlot, shot.velocity);
-        }
-      }
-      return;
-    });
+    }
+    return;
   }
 
   /// The velocity, per second, that carries something at `from` toward the
@@ -2741,95 +2759,92 @@ export class GameplaySession {
   /// once its shot reaches the player the encounter is over — for the player's
   /// craft, not for the player.
   private advanceHostile(seconds: number): readonly PresentationEvent[] {
-    return this.change(() => {
-      const rules = this.content.hostile;
-      const events: PresentationEvent[] = [];
-      if (
-        rules === undefined ||
-        this.benson === undefined ||
-        !this.attackingShip
-      ) {
-        return events;
-      }
-      if (this.approachSeconds > 1e-9) {
-        this.approachSeconds = Math.max(0, this.approachSeconds - seconds);
-        return events;
-      }
-      const attacker = this.placeOf(rules.attackingSlot);
-      if (attacker === undefined) {
-        return events;
-      }
-      const player = this.game.player.position;
-      const reach = rules.firingRange * rules.rangeUnit;
-      const near =
-        Math.abs(attacker.x - player.x) < reach &&
-        Math.abs(attacker.y - player.y) < reach &&
-        Math.abs(attacker.z - player.z) < reach;
-      if (!near) {
-        // Too far to shoot: turn toward the player and close the distance. This
-        // is also what brings an attacker into the world in the first place.
-        this.residence.set(rules.attackingSlot, {
-          at: attacker,
-          kind: 'surface'
-        });
-        this.attackerVelocity = this.aimPerSecond(
-          attacker,
-          rules.approachAimShift
-        );
-        // The delay runs until the effect advance parks the attacker, which is
-        // the distance from the lifecycle it was given down to the sentinel.
-        this.approachSeconds =
-          (rules.approachDelayLifecycle - rules.parkedLifecycle) /
-          this.frameRate;
-        return events;
-      }
-      if (this.hostileShot === undefined) {
-        // In range and nothing in the air: shoot, from where the attacker is.
-        this.hostileShot = {
-          secondsLeft: rules.inboundLifecycleFrames / this.frameRate,
-          velocity: this.aimPerSecond(attacker, rules.inboundAimShift)
-        };
-        this.residence.set(rules.inboundSlot, {
-          at: attacker,
-          kind: 'surface'
-        });
-        events.push({ impact: { sound: rules.inboundSound } });
-        return events;
-      }
-      const shot = this.surfacePlaceOf(rules.inboundSlot);
-      if (shot === undefined) {
-        return events;
-      }
-      const cube = rules.hitCubeSize * rules.rangeUnit;
-      const struck =
-        Math.abs(shot.x - player.x) < cube &&
-        Math.abs(shot.y - player.y) < cube &&
-        Math.abs(shot.z - player.z) < cube;
-      if (!struck) {
-        return events;
-      }
-      // The hit. A craft is lost and said to be lost; on foot there is nothing to
-      // lose and nothing to say. Either way the encounter ends and play does not.
-      this.world.raise({
-        aboard: this.occupancy.kind === 'aboard',
-        kind: 'hit'
-      });
-      if (this.occupancy.kind === 'aboard') {
-        this.show(rules.shipDestroyedMessage);
-        this.game = { ...this.game, mover: rules.captureMover };
-      }
-      events.push({ impact: { sound: rules.hitSound } });
-      if (rules.captureClearsAttackingShip && this.benson !== undefined) {
-        this.attackingShip = false;
-      }
-      for (const slot of rules.captureRemovesSlots) {
-        this.residence.set(slot, { kind: 'gone' });
-      }
-      this.hostileShot = undefined;
-      this.attackerVelocity = undefined;
-      this.approachSeconds = 0;
+    const rules = this.content.hostile;
+    const events: PresentationEvent[] = [];
+    if (
+      rules === undefined ||
+      this.benson === undefined ||
+      !this.attackingShip
+    ) {
       return events;
+    }
+    if (this.approachSeconds > 1e-9) {
+      this.approachSeconds = Math.max(0, this.approachSeconds - seconds);
+      return events;
+    }
+    const attacker = this.placeOf(rules.attackingSlot);
+    if (attacker === undefined) {
+      return events;
+    }
+    const player = this.game.player.position;
+    const reach = rules.firingRange * rules.rangeUnit;
+    const near =
+      Math.abs(attacker.x - player.x) < reach &&
+      Math.abs(attacker.y - player.y) < reach &&
+      Math.abs(attacker.z - player.z) < reach;
+    if (!near) {
+      // Too far to shoot: turn toward the player and close the distance. This
+      // is also what brings an attacker into the world in the first place.
+      this.residence.set(rules.attackingSlot, {
+        at: attacker,
+        kind: 'surface'
+      });
+      this.attackerVelocity = this.aimPerSecond(
+        attacker,
+        rules.approachAimShift
+      );
+      // The delay runs until the effect advance parks the attacker, which is
+      // the distance from the lifecycle it was given down to the sentinel.
+      this.approachSeconds =
+        (rules.approachDelayLifecycle - rules.parkedLifecycle) / this.frameRate;
+      return events;
+    }
+    if (this.hostileShot === undefined) {
+      // In range and nothing in the air: shoot, from where the attacker is.
+      this.hostileShot = {
+        secondsLeft: rules.inboundLifecycleFrames / this.frameRate,
+        velocity: this.aimPerSecond(attacker, rules.inboundAimShift)
+      };
+      this.residence.set(rules.inboundSlot, {
+        at: attacker,
+        kind: 'surface'
+      });
+      events.push({ impact: { sound: rules.inboundSound } });
+      return events;
+    }
+    const shot = this.surfacePlaceOf(rules.inboundSlot);
+    if (shot === undefined) {
+      return events;
+    }
+    const cube = rules.hitCubeSize * rules.rangeUnit;
+    const struck =
+      Math.abs(shot.x - player.x) < cube &&
+      Math.abs(shot.y - player.y) < cube &&
+      Math.abs(shot.z - player.z) < cube;
+    if (!struck) {
+      return events;
+    }
+    // The hit. A craft is lost and said to be lost; on foot there is nothing to
+    // lose and nothing to say. Either way the encounter ends and play does not.
+    this.world.raise({
+      aboard: this.occupancy.kind === 'aboard',
+      kind: 'hit'
     });
+    if (this.occupancy.kind === 'aboard') {
+      this.show(rules.shipDestroyedMessage);
+      this.game = { ...this.game, mover: rules.captureMover };
+    }
+    events.push({ impact: { sound: rules.hitSound } });
+    if (rules.captureClearsAttackingShip && this.benson !== undefined) {
+      this.attackingShip = false;
+    }
+    for (const slot of rules.captureRemovesSlots) {
+      this.residence.set(slot, { kind: 'gone' });
+    }
+    this.hostileShot = undefined;
+    this.attackerVelocity = undefined;
+    this.approachSeconds = 0;
+    return events;
   }
 
   /// The Player Projectile over `seconds`: it moves, then answers for where it
@@ -2839,34 +2854,32 @@ export class GameplaySession {
     rules: EndgameFire,
     events: PresentationEvent[]
   ): void {
-    return this.change(() => {
-      const shot = this.playerShot;
-      if (shot === undefined) {
-        return;
-      }
-      const secondsLeft = shot.secondsLeft - seconds;
-      if (secondsLeft <= 1e-9) {
-        this.playerShot = undefined;
-        this.residence.set(rules.effectSlot, { kind: 'gone' });
-        return;
-      }
-      const at = this.surfacePlaceOf(rules.effectSlot);
-      if (at === undefined) {
-        // Nothing is carrying the shot's position any more, so there is no shot;
-        // this is the same removal its lifetime would have reached.
-        this.playerShot = undefined;
-        return;
-      }
-      const next = {
-        x: at.x + shot.velocity.x * seconds,
-        y: at.y + shot.velocity.y * seconds,
-        z: at.z + shot.velocity.z * seconds
-      };
-      this.playerShot = { ...shot, secondsLeft };
-      this.residence.set(rules.effectSlot, { at: next, kind: 'surface' });
-      events.push(...this.resolveShot(next));
+    const shot = this.playerShot;
+    if (shot === undefined) {
       return;
-    });
+    }
+    const secondsLeft = shot.secondsLeft - seconds;
+    if (secondsLeft <= 1e-9) {
+      this.playerShot = undefined;
+      this.residence.set(rules.effectSlot, { kind: 'gone' });
+      return;
+    }
+    const at = this.surfacePlaceOf(rules.effectSlot);
+    if (at === undefined) {
+      // Nothing is carrying the shot's position any more, so there is no shot;
+      // this is the same removal its lifetime would have reached.
+      this.playerShot = undefined;
+      return;
+    }
+    const next = {
+      x: at.x + shot.velocity.x * seconds,
+      y: at.y + shot.velocity.y * seconds,
+      z: at.z + shot.velocity.z * seconds
+    };
+    this.playerShot = { ...shot, secondsLeft };
+    this.residence.set(rules.effectSlot, { at: next, kind: 'surface' });
+    events.push(...this.resolveShot(next));
+    return;
   }
 
   /// Advances the outdoor objects that move by themselves, and combat.
@@ -2918,26 +2931,22 @@ export class GameplaySession {
   /// The Reference Build carries slot 0 along Z every outdoor frame. In world
   /// coordinates that is a constant speed, wrapping at `wrapAt`.
   private stepSurfaceFlyby(seconds: number): void {
-    return this.change(() => {
-      const rules = this.content.surfaceFlyby;
-      if (rules === undefined) {
-        return;
-      }
-      const at = this.surfacePlaceOf(rules.slot);
-      if (at === undefined) {
-        return;
-      }
-      this.residence.set(rules.slot, {
-        at: {
-          ...at,
-          z:
-            (at.z + rules.stepPerFrame * this.frameRate * seconds) %
-            rules.wrapAt
-        },
-        kind: 'surface'
-      });
+    const rules = this.content.surfaceFlyby;
+    if (rules === undefined) {
       return;
+    }
+    const at = this.surfacePlaceOf(rules.slot);
+    if (at === undefined) {
+      return;
+    }
+    this.residence.set(rules.slot, {
+      at: {
+        ...at,
+        z: (at.z + rules.stepPerFrame * this.frameRate * seconds) % rules.wrapAt
+      },
+      kind: 'surface'
     });
+    return;
   }
 
   /// Runs the Escape's star field, which keeps its own loop rate. The field
@@ -2985,40 +2994,38 @@ export class GameplaySession {
   /// mid-message, or anywhere else. The scripts decide that a ship was hired;
   /// this is what that decision does next.
   private advanceShipDelivery(seconds: number): void {
-    return this.change(() => {
-      const rules = this.content.shipDelivery;
-      const rate = this.content.flight?.limits.referenceFrameRate;
-      if (
-        rules === undefined ||
-        rate === undefined ||
-        this.benson === undefined ||
-        seconds <= 0
-      ) {
-        return;
-      }
-      const state = this.shipInbound;
-      if (state === rules.inactiveValue) {
-        this.deliverySeconds = undefined;
-        return;
-      }
-      if ((state & rules.acceptedMask) !== 0) {
-        this.shipInbound = rules.descendingValue;
-        this.deliverySeconds = 0;
-      }
-      this.deliverySeconds = (this.deliverySeconds ?? 0) + seconds;
-      const track = descentTrack(rules);
-      const step = Math.floor(this.deliverySeconds * rate + 1e-9);
-      const altitude = track[Math.min(step, track.length - 1)]!;
-      const { initialisation: start } = rules;
-      this.residence.set(rules.slot, {
-        at: { x: start.x, y: altitude << 8, z: start.z },
-        kind: 'surface'
-      });
-      if (altitude === 0) {
-        this.shipInbound = rules.inactiveValue;
-        this.deliverySeconds = undefined;
-      }
+    const rules = this.content.shipDelivery;
+    const rate = this.content.flight?.limits.referenceFrameRate;
+    if (
+      rules === undefined ||
+      rate === undefined ||
+      this.benson === undefined ||
+      seconds <= 0
+    ) {
+      return;
+    }
+    const state = this.shipInbound;
+    if (state === rules.inactiveValue) {
+      this.deliverySeconds = undefined;
+      return;
+    }
+    if ((state & rules.acceptedMask) !== 0) {
+      this.shipInbound = rules.descendingValue;
+      this.deliverySeconds = 0;
+    }
+    this.deliverySeconds = (this.deliverySeconds ?? 0) + seconds;
+    const track = descentTrack(rules);
+    const step = Math.floor(this.deliverySeconds * rate + 1e-9);
+    const altitude = track[Math.min(step, track.length - 1)]!;
+    const { initialisation: start } = rules;
+    this.residence.set(rules.slot, {
+      at: { x: start.x, y: altitude << 8, z: start.z },
+      kind: 'surface'
     });
+    if (altitude === 0) {
+      this.shipInbound = rules.inactiveValue;
+      this.deliverySeconds = undefined;
+    }
   }
 
   /// This session as flat scalars, for comparison against the Reference Build.

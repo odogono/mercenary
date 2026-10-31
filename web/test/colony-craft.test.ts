@@ -152,7 +152,6 @@ test('leaving the Dart preserves its flown heading in the parked craft', () => {
   );
   expect(parkedDart.vertices).not.toEqual(unturnedDart.vertices);
 
-  gameplay.settle();
   const restored = GameplaySession.restore(
     gameplay.content,
     gameplay.benson,

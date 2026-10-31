@@ -137,17 +137,6 @@ const requiredText = async (url: URL): Promise<string> => {
   return await response.text();
 };
 
-/// Console commands that move the player or an object, so their World Events
-/// settle and the resume checkpoint follows.
-const WORLD_CHANGING_COMMANDS: ReadonlySet<ConsoleCommand['kind']> = new Set([
-  'dropObject',
-  'getObject',
-  'fetchObject',
-  'gotoCell',
-  'gotoObject',
-  'gotoRoom'
-]);
-
 const updateText = (element: HTMLElement, value: string): void => {
   if (element.textContent !== value) {
     element.textContent = value;
@@ -400,15 +389,15 @@ try {
     showFailure(session.failure.message);
     menu.show('menu');
   };
-  const settleAndPresent = (): void => {
-    const settled = session.settle();
+  const presentSettled = (): void => {
+    const settled = session.takeSettled();
     snapshot = settled.snapshot;
     sound.present(settled);
     recordBensonMessage();
   };
   const captureSettled = () => {
     try {
-      settleAndPresent();
+      presentSettled();
       return {
         location: session.location,
         snapshot: session.captureSaveSnapshot()
@@ -468,7 +457,7 @@ try {
         snapshot,
         ...(arrivalOwned ? { suppressTransient: true } : {})
       });
-      settleAndPresent();
+      presentSettled();
       checkpointChangedResume();
     } catch (error) {
       reportSessionFailure(error);
@@ -681,10 +670,8 @@ try {
       ) => {
         try {
           const result = executeConsoleCommand(command, deps);
-          if (WORLD_CHANGING_COMMANDS.has(command.kind)) {
-            settleAndPresent();
-            checkpointChangedResume();
-          }
+          presentSettled();
+          checkpointChangedResume();
           return result;
         } catch (error) {
           reportSessionFailure(error);
