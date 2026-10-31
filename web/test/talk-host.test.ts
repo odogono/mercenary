@@ -240,8 +240,7 @@ end begin
       ],
       { random: () => 2 }
     );
-    session.begin();
-    const { events } = session.advance(FRAME);
+    const { events } = session.begin();
     expect(session.observations().observations['attackingShip']).toBe(true);
     expect(events).toContainEqual({
       script: { sound: { symbol: 'voice1.control', value: 0 } }

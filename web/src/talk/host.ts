@@ -418,11 +418,6 @@ export class TalkHost {
     this.pump();
   }
 
-  /// Whether Talk Scripts made sound that has not been taken yet.
-  get hasEffects(): boolean {
-    return this.effects.length > 0;
-  }
-
   /// The sound Talk Scripts made since last asked, as a Benson Script's.
   takeEffects(): BensonEffect[] {
     const taken = this.effects;

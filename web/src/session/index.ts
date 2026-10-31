@@ -709,6 +709,14 @@ const validateSnapshotReferences = (
 };
 
 /// The one owner of a play session's mutable state (ADR 0018).
+/// A step whose reactions have settled: what to present, and the World Events
+/// it completed.
+export interface SettledStep {
+  readonly events: readonly PresentationEvent[];
+  readonly snapshot: SessionSnapshot;
+  readonly worldEvents: readonly WorldEvent[];
+}
+
 export class GameplaySession {
   readonly content: SessionContent;
   game: GameState;
@@ -779,7 +787,6 @@ export class GameplaySession {
   private readonly world: WorldEventLog;
   private reactionLimits: ReactionLimits | undefined;
   private stopped: ReactionLimitError | undefined;
-  private pendingBudget: ReactionBudget | undefined;
 
   get failure(): ReactionLimitError | undefined {
     return this.stopped;
@@ -796,13 +803,9 @@ export class GameplaySession {
     return this.world.change(action);
   }
 
-  private reactions<T>(
-    action: (budget: ReactionBudget) => T,
-    pending = false
-  ): T {
+  private reactions<T>(action: (budget: ReactionBudget) => T): T {
     this.requireRunning();
-    const budget =
-      this.pendingBudget ?? new ReactionBudget(this.reactionLimits);
+    const budget = new ReactionBudget(this.reactionLimits);
     try {
       return this.talk === undefined
         ? action(budget)
@@ -812,9 +815,6 @@ export class GameplaySession {
         this.stopped = error;
       }
       throw error;
-    } finally {
-      this.pendingBudget =
-        pending && this.stopped === undefined ? budget : undefined;
     }
   }
 
@@ -877,7 +877,7 @@ export class GameplaySession {
 
   captureSaveSnapshot(): SaveSnapshot {
     this.requireRunning();
-    if (this.world.unsettled || this.talk?.hasEffects === true) {
+    if (this.world.unsettled) {
       throw new Error('Settle World Events before capturing a Save');
     }
     return {
@@ -2054,14 +2054,22 @@ export class GameplaySession {
     return this.talk;
   }
 
-  /// A new game has begun: the Talk Scripts hear `begin`.
-  begin(): void {
-    this.reactions(() => this.talk?.begin(), true);
+  /// A new game has begun: the Talk Scripts hear `begin`, and what they do
+  /// settles before this returns.
+  begin(): SettledStep {
+    return this.reactions(budget => {
+      this.talk?.begin();
+      return this.finishReactions(budget);
+    });
   }
 
-  /// A key no Binding took, by its code: Player Input for the Talk Scripts.
-  input(code: string): void {
-    this.reactions(() => this.talk?.input(code), true);
+  /// A key no Binding took, by its code: Player Input for the Talk Scripts,
+  /// settled before this returns.
+  input(code: string): SettledStep {
+    return this.reactions(budget => {
+      this.talk?.input(code);
+      return this.finishReactions(budget);
+    });
   }
 
   private portObject(slot: number): number {
@@ -2175,11 +2183,7 @@ export class GameplaySession {
 
   /// One frame of play. Its World Events are everything raised or changed
   /// since the last frame, in the order it happened.
-  advance(seconds: number): {
-    readonly events: readonly PresentationEvent[];
-    readonly snapshot: SessionSnapshot;
-    readonly worldEvents: readonly WorldEvent[];
-  } {
+  advance(seconds: number): SettledStep {
     return this.reactions(budget => {
       const frame = this.advanceFrame(seconds);
       const worldEvents = this.deliverReactions(budget);
@@ -2191,13 +2195,15 @@ export class GameplaySession {
 
   /// Finish pending reactions without advancing simulation or Talk time.
   /// The shell presents these effects before a read-only Save capture.
-  settle(): ReturnType<GameplaySession['advance']> {
-    return this.reactions(budget => {
-      const worldEvents = this.deliverReactions(budget);
-      this.talk?.advance(0);
-      worldEvents.push(...this.deliverReactions(budget));
-      return this.settledResult(worldEvents);
-    });
+  settle(): SettledStep {
+    return this.reactions(budget => this.finishReactions(budget));
+  }
+
+  private finishReactions(budget: ReactionBudget): SettledStep {
+    const worldEvents = this.deliverReactions(budget);
+    this.talk?.advance(0);
+    worldEvents.push(...this.deliverReactions(budget));
+    return this.settledResult(worldEvents);
   }
 
   private deliverReactions(budget: ReactionBudget): WorldEvent[] {
@@ -2218,7 +2224,7 @@ export class GameplaySession {
   private settledResult(
     worldEvents: readonly WorldEvent[],
     events: readonly PresentationEvent[] = []
-  ): ReturnType<GameplaySession['advance']> {
+  ): SettledStep {
     return {
       events: [
         ...events,

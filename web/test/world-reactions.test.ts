@@ -92,24 +92,24 @@ end received
 `;
 
 describe('completed world changes and their reactions', () => {
-  test('refuses a Save while the sound of a reaction is still to be presented', () => {
+  test('returns the effects of a reaction from the operation that caused it', () => {
     const session = create(`
 on begin
   tell sound to silence "voice1"
 end begin
 `);
-    session.begin();
-    expect(() => session.captureSaveSnapshot()).toThrow('Settle World Events');
-    session.settle();
+    expect(session.begin().events).toContainEqual({
+      script: { sound: { symbol: 'voice1.control', value: 0 } }
+    });
     expect(() => session.captureSaveSnapshot()).not.toThrow();
+    expect(session.settle().events).toEqual([]);
   });
 
   test('preserves separate object moves, queries current state, and returns reaction effects once', () => {
     const session = create(roundTrip);
     const before = balance(session);
-    session.begin();
-    expect(() => session.captureSaveSnapshot()).toThrow('Settle World Events');
-    const settled = session.settle();
+    const settled = session.begin();
+    expect(() => session.captureSaveSnapshot()).not.toThrow();
     expect(settled.worldEvents).toEqual([
       { kind: 'lost', object: CRYSTAL, region: 'shrine' },
       { kind: 'received', object: CRYSTAL, region: 'shrine' }
@@ -135,10 +135,10 @@ on received item
 end received
 `);
     const before = balance(session);
-    session.begin();
-    expect(
-      session.advance(1 / 60).worldEvents.map(event => event.kind)
-    ).toEqual(['lost', 'received']);
+    expect(session.begin().worldEvents.map(event => event.kind)).toEqual([
+      'lost',
+      'received'
+    ]);
     expect(balance(session)).toBe(Number(before) + 100);
     expect(session.advance(1 / 60).worldEvents).toEqual([]);
   });
@@ -198,8 +198,7 @@ end received
 `;
     const session = create(source, { events: 8, fuel: 100_000 });
     const good = session.captureSaveSnapshot();
-    session.begin();
-    expect(() => session.settle()).toThrow('delivered events');
+    expect(() => session.begin()).toThrow('delivered events');
     expect(session.failure).toBeInstanceOf(ReactionLimitError);
     expect(session.failure?.message).toContain('shrine');
     expect(() => session.advance(1 / 60)).toThrow(ReactionLimitError);
@@ -268,7 +267,7 @@ end received
     persistence.dirty();
     expect(persistence.checkpoint(true).kind).toBe('written');
     const good = [...records];
-    session.begin();
+    expect(() => session.begin()).toThrow(ReactionLimitError);
     persistence.dirty();
     expect(persistence.checkpoint(true).kind).toBe('failed');
     expect([...records]).toEqual(good);
@@ -290,8 +289,7 @@ end received
 `,
       { events: 100_000, fuel: 1000 }
     );
-    session.begin();
-    expect(() => session.settle()).toThrow('execution fuel');
+    expect(() => session.begin()).toThrow('execution fuel');
     expect(session.failure).toBeInstanceOf(ReactionLimitError);
   });
 
