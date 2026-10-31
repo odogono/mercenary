@@ -63,6 +63,7 @@ import {
   type TalkScript
 } from '../talk/host.ts';
 import type { TalkSaveSnapshot } from '../talk/save.ts';
+import { TALK_SCRIPTS } from '../talk/scripts.ts';
 import type { WorldPort } from '../talk/worldPort.ts';
 import {
   SURFACE,
@@ -103,7 +104,8 @@ import {
 } from './shipField.ts';
 import { SiteLedger } from './sites.ts';
 import {
-  regionsAt,
+  approachesAt,
+  footprintsAt,
   surfaceRegions,
   type SurfaceRegion
 } from './surfaceRegions.ts';
@@ -1942,7 +1944,21 @@ export class GameplaySession {
       throw new Error('Talk Scripts need the Benson Display and host state');
     }
     const benson = this.benson;
-    this.talk = new TalkHost(scripts, benson, this.worldPort(), options, saved);
+    const known = new Set(TALK_SCRIPTS.map(script => script.name));
+    for (const region of this.regions) {
+      if (!known.has(region.script)) {
+        throw new Error(
+          `Surface Region ${region.name} names Talk Script ${region.script}, which the game doesn't have`
+        );
+      }
+    }
+    this.talk = new TalkHost(
+      scripts,
+      benson,
+      this.worldPort(),
+      { ...options, regions: this.regions },
+      saved
+    );
     return this.talk;
   }
 
@@ -2030,14 +2046,6 @@ export class GameplaySession {
       },
       pay: amount => this.addCredits(amount),
       random: () => this.nextRandomByte(),
-      regionsHolding: slot => {
-        const where = this.residenceOf(object(slot));
-        if (where.kind !== 'surface') {
-          return [];
-        }
-        const at = where.at ?? this.objectsBySlot.get(slot)?.origin;
-        return at === undefined ? [] : regionsAt(this.regions, at);
-      },
       sendAttacker: () => {
         this.attackingShip = true;
       },
@@ -2103,10 +2111,39 @@ export class GameplaySession {
       carried: [...this.carriedStack],
       craft: occupancy.kind === 'aboard' ? occupancy.slot : undefined,
       location: this.location,
-      regions:
-        this.location.kind === 'surface'
-          ? regionsAt(this.regions, this.game.player.position)
-          : []
+      ...this.regionsSeen(occupancy.kind === 'aboard' ? occupancy.slot : -1)
+    };
+  }
+
+  /// Where the player and the loose objects stand among the Surface Regions.
+  /// A boarded craft goes with the player, so it lies nowhere.
+  private regionsSeen(
+    boarded: number
+  ): Pick<WorldSeen, 'inside' | 'lying' | 'near'> {
+    if (this.regions.length === 0) {
+      return { inside: [], lying: [], near: [] };
+    }
+    const lying: [number, string][] = [];
+    for (const [slot, placed] of this.objectsBySlot) {
+      const where = this.residenceOf(slot);
+      if (where.kind !== 'surface' || slot === boarded) {
+        continue;
+      }
+      for (const region of footprintsAt(
+        this.regions,
+        where.at ?? placed.origin
+      )) {
+        lying.push([slot, region]);
+      }
+    }
+    if (this.location.kind !== 'surface') {
+      return { inside: [], lying, near: [] };
+    }
+    const at = this.game.player.position;
+    return {
+      inside: footprintsAt(this.regions, at),
+      lying,
+      near: approachesAt(this.regions, at)
     };
   }
 

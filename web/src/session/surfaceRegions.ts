@@ -1,82 +1,120 @@
 import type { ObjectPlacement } from '../world/index.ts';
 import { wrapSurfaceAxis } from '../world/surfaceCoordinates.ts';
 
-/// Surface Regions (ADR 0084): named areas of the surface the Gameplay Session
-/// knows the player and loose objects to be in or out of. A building's own
-/// region is its footprint, named by its Sidecar placement; an area that is no
-/// building's lives in this table.
+/// Surface Regions (ADR 0084): a building's place in play. A building's Sidecar
+/// placement names its region and the Talk Script that answers for it; the
+/// region is the building's placed extent, and its approach that extent grown
+/// by a margin on every side but below.
 ///
-/// A region is a rectangle in surface units, `[min, max)` on each axis, at
-/// any altitude.
+/// ```json
+/// "region": { "name": "shrine", "script": "shrine", "approach": 28672 }
+/// ```
 export interface SurfaceRegion {
-  readonly maxX: number;
-  readonly maxZ: number;
-  readonly minX: number;
-  readonly minZ: number;
+  /// Where the player is near the building.
+  readonly approach: Box;
+  /// The building itself: where the player arrives, and objects are left.
+  readonly footprint: Box;
   readonly name: string;
+  readonly script: string;
 }
 
-const CELL = 0x1_00_00;
+/// `[min, max)` across the surface, `[min, max]` in height.
+export interface Box {
+  readonly max: Point;
+  readonly min: Point;
+}
 
-/// The areas that belong to no building.
-const OPEN_REGIONS: readonly SurfaceRegion[] = [
-  // The open ground around the Shrine, the whole of Surface Cell (20,20).
-  {
-    maxX: 21 * CELL,
-    maxZ: 21 * CELL,
-    minX: 20 * CELL,
-    minZ: 20 * CELL,
-    name: 'shrine grounds'
-  }
-];
+interface Point {
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+}
 
-/// The footprint an object stands on: its placed vertices' extent.
-const footprint = (object: ObjectPlacement, name: string): SurfaceRegion => {
-  const xs = object.vertices.map(v => v.x);
-  const zs = object.vertices.map(v => v.z);
+const extent = (object: ObjectPlacement): Box => {
+  const along = (axis: 'x' | 'y' | 'z') =>
+    object.vertices.map(vertex => vertex[axis]);
+  const [xs, ys, zs] = [along('x'), along('y'), along('z')];
   return {
-    maxX: Math.max(...xs),
-    maxZ: Math.max(...zs),
-    minX: Math.min(...xs),
-    minZ: Math.min(...zs),
-    name
+    max: { x: Math.max(...xs), y: Math.max(...ys), z: Math.max(...zs) },
+    min: { x: Math.min(...xs), y: Math.min(...ys), z: Math.min(...zs) }
   };
 };
 
-/// Every Surface Region of a world: the open ones, then each surface object's
-/// footprint that its placement names.
+const grown = (box: Box, by: number): Box => ({
+  max: { x: box.max.x + by, y: box.max.y + by, z: box.max.z + by },
+  min: { x: box.min.x - by, y: box.min.y, z: box.min.z - by }
+});
+
+const regionOf = (object: ObjectPlacement): SurfaceRegion => {
+  const placed = object.region;
+  const fail = (reason: string): never => {
+    throw new Error(`${object.id}: its region ${reason}`);
+  };
+  if (placed === undefined || typeof placed !== 'object') {
+    return fail('must be { name, script, approach? }');
+  }
+  if (typeof placed.name !== 'string' || placed.name === '') {
+    fail('needs a name');
+  }
+  if (typeof placed.script !== 'string' || placed.script === '') {
+    fail('needs the Talk Script that answers for it');
+  }
+  const approach = placed.approach ?? 0;
+  if (!Number.isInteger(approach) || approach < 0) {
+    fail('approach must be a whole number of surface units, at least 0');
+  }
+  const footprint = extent(object);
+  return {
+    approach: grown(footprint, approach),
+    footprint,
+    name: placed.name,
+    script: placed.script
+  };
+};
+
+/// Every surface object's region its placement names. Two regions may not
+/// share a name or a Talk Script: a script answers for one place.
 export const surfaceRegions = (
   objects: readonly ObjectPlacement[]
-): SurfaceRegion[] => [
-  ...OPEN_REGIONS,
-  ...objects.flatMap(object =>
-    object.region !== undefined && object.placement === 'surface'
-      ? [footprint(object, object.region)]
-      : []
-  )
-];
+): SurfaceRegion[] => {
+  const regions = objects
+    .filter(o => o.region !== undefined && o.placement === 'surface')
+    .map(regionOf);
+  for (const [i, region] of regions.entries()) {
+    const earlier = regions.slice(0, i);
+    if (earlier.some(other => other.name === region.name)) {
+      throw new Error(`two Surface Regions are called ${region.name}`);
+    }
+    if (earlier.some(other => other.script === region.script)) {
+      throw new Error(`two Surface Regions name Talk Script ${region.script}`);
+    }
+  }
+  return regions;
+};
 
-const inside = (
-  region: SurfaceRegion,
-  at: { readonly x: number; readonly z: number }
-): boolean => {
+export const inside = (box: Box, at: Point): boolean => {
   const x = wrapSurfaceAxis(at.x);
   const z = wrapSurfaceAxis(at.z);
   return (
-    x >= region.minX && x < region.maxX && z >= region.minZ && z < region.maxZ
+    x >= box.min.x &&
+    x < box.max.x &&
+    z >= box.min.z &&
+    z < box.max.z &&
+    at.y >= box.min.y &&
+    at.y <= box.max.y
   );
 };
 
-const area = (region: SurfaceRegion): number =>
-  (region.maxX - region.minX) * (region.maxZ - region.minZ);
-
-/// The names of the regions a surface point is in, innermost (smallest)
-/// first.
-export const regionsAt = (
+/// The names of the regions whose approach a point is in.
+export const approachesAt = (
   regions: readonly SurfaceRegion[],
-  at: { readonly x: number; readonly z: number }
+  at: Point
 ): string[] =>
-  regions
-    .filter(region => inside(region, at))
-    .sort((a, b) => area(a) - area(b))
-    .map(region => region.name);
+  regions.filter(r => inside(r.approach, at)).map(region => region.name);
+
+/// The names of the regions whose footprint a point is in.
+export const footprintsAt = (
+  regions: readonly SurfaceRegion[],
+  at: Point
+): string[] =>
+  regions.filter(r => inside(r.footprint, at)).map(region => region.name);

@@ -264,23 +264,48 @@ const at = (
   location: Location,
   craft?: number,
   carried: readonly number[] = []
-): WorldSeen => ({ carried, craft, location, regions: [] });
+): WorldSeen => ({
+  carried,
+  craft,
+  inside: [],
+  location,
+  lying: [],
+  near: []
+});
 
 describe('the World Event log', () => {
-  test('tells arrival in each Surface Region once, until the player leaves it', () => {
+  test('tells coming near and into a Surface Region, and going out and away', () => {
     const log = new WorldEventLog(at(SURFACE));
-    const inRegions = (...regions: string[]): WorldSeen => ({
+    const seen = (near: string[], inside: string[]): WorldSeen => ({
       ...at(SURFACE),
-      regions
+      inside,
+      near
     });
-    log.note(inRegions('shrine grounds'));
-    log.note(inRegions('shrine grounds', 'shrine'));
-    log.note(inRegions('shrine grounds'));
-    log.note(inRegions());
-    expect(log.take(inRegions('shrine grounds'))).toEqual([
-      { kind: 'arrived', region: 'shrine grounds' },
+    log.note(seen(['shrine'], []));
+    log.note(seen(['shrine'], ['shrine']));
+    log.note(seen(['shrine'], ['shrine']));
+    log.note(seen([], []));
+    expect(log.take(seen(['shrine'], []))).toEqual([
+      { kind: 'approached', region: 'shrine' },
       { kind: 'arrived', region: 'shrine' },
-      { kind: 'arrived', region: 'shrine grounds' }
+      { kind: 'departed', region: 'shrine' },
+      { kind: 'withdrew', region: 'shrine' },
+      { kind: 'approached', region: 'shrine' }
+    ]);
+  });
+
+  test('tells an object coming to lie in a Surface Region, and leaving it', () => {
+    const log = new WorldEventLog(at(SURFACE));
+    const lying = (...slots: number[]): WorldSeen => ({
+      ...at(SURFACE),
+      lying: slots.map(slot => [slot, 'shrine'] as const)
+    });
+    log.note(lying(31));
+    log.note(lying(31, 34));
+    expect(log.take(lying(34))).toEqual([
+      { kind: 'received', object: 31, region: 'shrine' },
+      { kind: 'received', object: 34, region: 'shrine' },
+      { kind: 'lost', object: 31, region: 'shrine' }
     ]);
   });
 

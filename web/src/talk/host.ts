@@ -46,14 +46,7 @@ import type { WorldPort } from './worldPort.ts';
 
 /// One Talk Script, and the Benson Scripts it replaces.
 export interface TalkScript {
-  /// Other Surface Regions whose messages climb to the one it owns, along
-  /// NorthTalk's Message Path, so one script answers for a whole place.
-  /// `the target` tells it which region a message came to.
-  readonly hears?: readonly string[];
   readonly name: string;
-  /// The Surface Region it owns (ADR 0084): what happens there is told to it
-  /// alone, through the region's Host Object.
-  readonly owns?: string;
   readonly replaces: readonly number[];
   readonly source: string;
 }
@@ -67,6 +60,15 @@ export interface InputClaim {
 export interface TalkHostOptions {
   /// The next random byte; the World Port's by default.
   readonly random?: () => number;
+  /// The world's Surface Regions, each with the Talk Script that answers for
+  /// it (ADR 0084).
+  readonly regions?: readonly RegionScript[];
+}
+
+/// A Surface Region and the Talk Script its placement names.
+export interface RegionScript {
+  readonly name: string;
+  readonly script: string;
 }
 
 /// Lines that play back to back: one `show`, one `prompt`, or a whole
@@ -86,11 +88,12 @@ const LONGEST_WAIT_MS = 2_147_483_647;
 
 const whole = (value: Decimal): number => Number(value.toBigInt());
 
-/// A Surface Region as a Host Object, named by its id. A Talk Script that owns
-/// one hears its messages as `me`.
+/// A Surface Region as a Host Object, the `me` of the Talk Script that answers
+/// for it. Its id is that script's name, not the region's, so a Save still
+/// finds it after the region is renamed.
 const SURFACE_REGION = defineObjectKind<string>({
   name: 'surface region',
-  props: { name: { get: region => text(region.native) } }
+  props: {}
 });
 
 /// An operation done for its effect, answering nothing.
@@ -179,6 +182,8 @@ export class TalkHost {
   private playing: Block | undefined;
   private readonly queue: Block[] = [];
   private readonly random: () => number;
+  /// Each Surface Region's Talk Script, by region name.
+  private readonly regionScripts: ReadonlyMap<string, string>;
   /// The Benson Scripts the loaded Talk Scripts replace.
   readonly replaces: ReadonlySet<number>;
 
@@ -194,6 +199,9 @@ export class TalkHost {
     this.world = world;
     this.random = options.random ?? (() => world.random());
     this.replaces = new Set(scripts.flatMap(script => script.replaces));
+    this.regionScripts = new Map(
+      (options.regions ?? []).map(region => [region.name, region.script])
+    );
     const core = createCore();
     const capabilities = this.defineCapabilities(core);
     this.grants = {
@@ -246,12 +254,11 @@ export class TalkHost {
   }
 
   private load(group: TsGroup, script: TalkScript): void {
-    const region = (name: string): HostObject =>
-      group.objectById(SURFACE_REGION.name, name) ??
-      group.object(SURFACE_REGION, name, name);
-    const owner = script.owns === undefined ? undefined : region(script.owns);
-    for (const name of script.hears ?? []) {
-      group.setParent(region(name), owner);
+    let owner: HostObject | undefined;
+    if ([...this.regionScripts.values()].includes(script.name)) {
+      owner =
+        group.objectById(SURFACE_REGION.name, script.name) ??
+        group.object(SURFACE_REGION, script.name, script.name);
     }
     group.load({
       grants: this.grants,
@@ -358,26 +365,34 @@ export class TalkHost {
     this.pump();
   }
 
-  /// Tells a Surface Region what happened in it: the player's arrival in each
-  /// region entered, and an object left there to the innermost region that
-  /// holds it, as a MUD tells the room a thing is dropped in. Only a region a
-  /// Talk Script owns or hears gets it; nothing is broadcast.
+  /// Tells a Surface Region what happened at it, through its Host Object, so
+  /// only the Talk Script that answers for it hears. Nothing is broadcast.
   private tellRegions(event: WorldEvent): void {
-    if (event.kind === 'arrived') {
-      this.tellRegion(event.region, { name: 'arrived' });
-    } else if (event.kind === 'dropped') {
-      const innermost = this.world.regionsHolding(event.object)[0];
-      if (innermost !== undefined) {
-        this.tellRegion(innermost, {
+    switch (event.kind) {
+      case 'approached':
+      case 'arrived':
+      case 'departed':
+      case 'withdrew':
+        this.tellRegion(event.region, { name: event.kind });
+        return;
+      case 'received':
+      case 'lost':
+        this.tellRegion(event.region, {
           args: [text(objectName(event.object))],
-          name: 'received'
+          name: event.kind
         });
-      }
+        return;
+      default:
+        return;
     }
   }
 
   private tellRegion(region: string, m: { args?: Value[]; name: string }) {
-    const to = this.group.objectById(SURFACE_REGION.name, region);
+    const script = this.regionScripts.get(region);
+    const to =
+      script === undefined
+        ? undefined
+        : this.group.objectById(SURFACE_REGION.name, script);
     if (to !== undefined) {
       this.group.deliver(to, m);
     }

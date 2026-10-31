@@ -34,10 +34,6 @@ export interface WorldPort {
   pay(amount: number): void;
   /// The next byte of the world's random stream.
   random(): number;
-  /// The Surface Regions a loose object lies in (ADR 0084), innermost first,
-  /// none while it is carried, in a Room or gone. The Talk host asks, to tell
-  /// the innermost what was left in it.
-  regionsHolding(slot: number): readonly string[];
   sendAttacker(): void;
   /// Starts the Ship Delivery.
   sendShip(): void;

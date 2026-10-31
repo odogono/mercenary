@@ -7,8 +7,19 @@ import type { Faction } from './sites.ts';
 /// cells and low ids. Whoever tells them on, to Talk Scripts, names them.
 export type WorldEvent =
   | { readonly kind: 'entered'; readonly location: Location }
-  /// The player came into a Surface Region (ADR 0084), on foot or aboard.
-  | { readonly kind: 'arrived'; readonly region: string }
+  /// The player came near a Surface Region's building or into it, or went
+  /// out of it or away (ADR 0084), on foot or aboard.
+  | {
+      readonly kind: 'approached' | 'arrived' | 'departed' | 'withdrew';
+      readonly region: string;
+    }
+  /// A loose object came to lie in a Surface Region's building, or stopped:
+  /// left there or taken away.
+  | {
+      readonly kind: 'received' | 'lost';
+      readonly object: number;
+      readonly region: string;
+    }
   /// Boarding, and leaving by any way out, a crash included.
   | { readonly craft: number; readonly kind: 'boarded' | 'left' }
   | { readonly kind: 'took' | 'dropped'; readonly object: number }
@@ -34,13 +45,29 @@ export type WorldEvent =
 export interface WorldSeen {
   readonly carried: readonly number[];
   readonly craft: number | undefined;
+  /// The Surface Regions whose building the player is in.
+  readonly inside: readonly string[];
   readonly location: Location;
-  /// The Surface Regions the player is in.
-  readonly regions: readonly string[];
+  /// Each loose object lying in a Surface Region's building, as `[slot,
+  /// region]`.
+  readonly lying: readonly (readonly [number, string])[];
+  /// The Surface Regions the player is near, or in.
+  readonly near: readonly string[];
 }
 
 const sameLocation = (a: Location, b: Location): boolean =>
   a.kind === 'room' ? b.kind === 'room' && a.id === b.id : b.kind === a.kind;
+
+const without = <T>(
+  from: readonly T[],
+  these: readonly T[],
+  same: (a: T, b: T) => boolean = (a, b) => a === b
+): T[] => from.filter(item => !these.some(other => same(item, other)));
+
+const sameLying = (
+  a: readonly [number, string],
+  b: readonly [number, string]
+): boolean => a[0] === b[0] && a[1] === b[1];
 
 /// The changes from one look to the next, in the order a player would tell
 /// them: leaving, arriving, boarding, then what changed hands.
@@ -52,13 +79,20 @@ export const changesBetween = (
   if (before.craft !== undefined && before.craft !== after.craft) {
     events.push({ craft: before.craft, kind: 'left' });
   }
+  for (const region of without(before.inside, after.inside)) {
+    events.push({ kind: 'departed', region });
+  }
+  for (const region of without(before.near, after.near)) {
+    events.push({ kind: 'withdrew', region });
+  }
   if (!sameLocation(before.location, after.location)) {
     events.push({ kind: 'entered', location: after.location });
   }
-  for (const region of after.regions) {
-    if (!before.regions.includes(region)) {
-      events.push({ kind: 'arrived', region });
-    }
+  for (const region of without(after.near, before.near)) {
+    events.push({ kind: 'approached', region });
+  }
+  for (const region of without(after.inside, before.inside)) {
+    events.push({ kind: 'arrived', region });
   }
   if (after.craft !== undefined && after.craft !== before.craft) {
     events.push({ craft: after.craft, kind: 'boarded' });
@@ -72,6 +106,20 @@ export const changesBetween = (
     if (!after.carried.includes(slot)) {
       events.push({ kind: 'dropped', object: slot });
     }
+  }
+  for (const [object, region] of without(
+    before.lying,
+    after.lying,
+    sameLying
+  )) {
+    events.push({ kind: 'lost', object, region });
+  }
+  for (const [object, region] of without(
+    after.lying,
+    before.lying,
+    sameLying
+  )) {
+    events.push({ kind: 'received', object, region });
   }
   return events;
 };

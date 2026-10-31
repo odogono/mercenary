@@ -347,7 +347,7 @@
         ]
       }
     ],
-    "sidecarSha256": "3ef5a7b4506c2cfc6e31904919de1480349ca6bf0750db336408004b8a64f1a7",
+    "sidecarSha256": "f11b647d40a218dc04736ed273a62180bf59d65c8bd77635d61b6bc9175fff1a",
     "title": "targ",
     "version": 1
   },
@@ -375,7 +375,11 @@
           0,
           1343488
         ],
-        "region": "shrine",
+        "region": {
+          "approach": 28672,
+          "name": "shrine",
+          "script": "shrine"
+        },
         "room": 0,
         "rotatable": false,
         "slot": 64,

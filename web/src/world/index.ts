@@ -230,8 +230,8 @@ export interface ObjectPlacement {
   /// "surface" or "room". Room instances carry room-local coordinates, so they are inspectable
   /// but must not be drawn on the surface.
   readonly placement: string;
-  /// The Surface Region its footprint makes, if its placement names one.
-  readonly region?: string;
+  /// The Surface Region it makes, if its placement names one.
+  readonly region?: Doc.RegionPlacement;
   readonly room: number;
   readonly slot: number;
   readonly stateFlags: number;

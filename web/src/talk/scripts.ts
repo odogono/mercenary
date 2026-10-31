@@ -21,8 +21,8 @@ export const DELIVERIES = 'deliveries';
 /// The Talk Script for Faction Reactions and gratitude, by name.
 export const REACTIONS = 'reactions';
 
-/// The Talk Script for the Shrine outside the city (ADR 0084), by name. It
-/// owns the Shrine's Surface Region and hears its grounds'.
+/// The Talk Script for the Shrine outside the city (ADR 0084), by name. The
+/// Shrine's placement names it to answer for its Surface Region.
 export const SHRINE = 'shrine';
 
 /// Every Talk Script the game loads, and the Benson Scripts each replaces.
@@ -44,11 +44,5 @@ export const TALK_SCRIPTS: readonly TalkScript[] = [
     ],
     source: reactions
   },
-  {
-    hears: ['shrine grounds'],
-    name: SHRINE,
-    owns: 'shrine',
-    replaces: [],
-    source: shrine
-  }
+  { name: SHRINE, replaces: [], source: shrine }
 ];

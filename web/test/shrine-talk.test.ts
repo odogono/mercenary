@@ -4,21 +4,19 @@ import { describe, expect, test } from 'bun:test';
 import { load } from '../src/payload/load.ts';
 import { readTargAssets } from '../src/server/assets.ts';
 import { GameplaySession } from '../src/session/index.ts';
-import { SHRINE } from '../src/talk/scripts.ts';
+import { SHRINE, TALK_SCRIPTS } from '../src/talk/scripts.ts';
 import { SURFACE, World } from '../src/world/index.ts';
 import { LegalRoute } from './legalCheckpoint.ts';
 import { readPayloadFile, repositoryRoot } from './replay/artifacts.ts';
 import { Lines, talkScript } from './talkParity.ts';
 
-/// The Shrine at Surface Cell (20,20), outside the city (ADR 0084). Each of
-/// its two Talk Scripts owns a Surface Region: the grounds' speaks when the
-/// player comes into them, and the Shrine's takes the energy crystal left
-/// inside its footprint as an offering.
+/// The Shrine at Surface Cell (20,20), outside the city (ADR 0084), end to
+/// end: its placement names its Talk Script, which speaks when the player
+/// comes near and takes the energy crystal left inside as an offering. How
+/// regions are told is in talk-regions and surface-regions.
 
 const CELL = 0x1_00_00;
 const SHRINE_CENTRE = { x: 20.5 * CELL, y: 0, z: 20.5 * CELL };
-/// Inside the grounds, well outside the Shrine's footprint.
-const GROUNDS_EDGE = { x: 20.1 * CELL, y: 0, z: 20.1 * CELL };
 /// The Shrine's object slot, after the original 64.
 const SHRINE_SLOT = 64;
 const ENERGY_CRYSTAL = 31;
@@ -62,19 +60,6 @@ const flags = (route: LegalRoute, slot: number): number =>
     .objectFlags.find(([at]) => at === slot)![1];
 
 describe('the Shrine as a Talk Script', () => {
-  test('greets a player who comes into its grounds, each time', async () => {
-    const route = await openRoute();
-    standAt(route, GROUNDS_EDGE);
-    const lines = new Lines(route).advance(5);
-    route.session.place({ x: 2 * CELL, y: 0, z: 2 * CELL });
-    lines.advance(2);
-    standAt(route, SHRINE_CENTRE);
-    expect(lines.advance(5).lines).toEqual([
-      'A SHRINE STANDS HERE',
-      'A SHRINE STANDS HERE'
-    ]);
-  }, 60_000);
-
   test('is indifferent to any other object left inside it', async () => {
     const route = await openRoute();
     const played = leave(route, LARGE_BOX, SHRINE_CENTRE);
@@ -83,13 +68,6 @@ describe('the Shrine as a Talk Script', () => {
       'THE SHRINE IS INDIFFERENT'
     ]);
     expect(flags(route, LARGE_BOX) & FIXED).toBe(0);
-  }, 60_000);
-
-  test('ignores an object left in its grounds but outside it', async () => {
-    const route = await openRoute();
-    const played = leave(route, ENERGY_CRYSTAL, GROUNDS_EDGE);
-    expect(played.lines).toEqual(['A SHRINE STANDS HERE']);
-    expect(flags(route, ENERGY_CRYSTAL) & FIXED).toBe(0);
   }, 60_000);
 
   test('accepts the energy crystal, fixes it, and is at peace after a Save', async () => {
@@ -144,6 +122,17 @@ describe('the Shrine as an Authored Asset', () => {
         .residence.some(([slot]) => slot === SHRINE_SLOT)
     ).toBe(true);
   }, 60_000);
+
+  test("names Talk Scripts the game has, for every building's region", async () => {
+    const known = TALK_SCRIPTS.map(script => script.name);
+    const regions = new World(await withAssets()).objects.flatMap(o =>
+      o.region === undefined ? [] : [o.region]
+    );
+    expect(regions.map(region => region.script)).toEqual(['shrine']);
+    for (const region of regions) {
+      expect(known).toContain(region.script);
+    }
+  });
 
   test('stands in its own slot at Surface Cell (20,20), outside the city', async () => {
     const bundle = await withAssets();
