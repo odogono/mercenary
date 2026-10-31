@@ -251,6 +251,7 @@ describe('World Events', () => {
     const session = standing();
     session.board(DART);
     session.carry(NOVADRIVE);
+    session.settle();
     const restored = GameplaySession.restore(
       content,
       scripts(),
@@ -275,17 +276,26 @@ const at = (
 
 describe('the World Event log', () => {
   test('tells coming near and into a Surface Region, and going out and away', () => {
-    const log = new WorldEventLog(at(SURFACE));
+    let current = at(SURFACE);
+    const log = new WorldEventLog(() => current);
+    const changeTo = (next: WorldSeen) =>
+      log.change(() => {
+        current = next;
+      });
+    const take = (next: WorldSeen) => {
+      changeTo(next);
+      return log.take();
+    };
     const seen = (near: string[], inside: string[]): WorldSeen => ({
       ...at(SURFACE),
       inside,
       near
     });
-    log.note(seen(['shrine'], []));
-    log.note(seen(['shrine'], ['shrine']));
-    log.note(seen(['shrine'], ['shrine']));
-    log.note(seen([], []));
-    expect(log.take(seen(['shrine'], []))).toEqual([
+    changeTo(seen(['shrine'], []));
+    changeTo(seen(['shrine'], ['shrine']));
+    changeTo(seen(['shrine'], ['shrine']));
+    changeTo(seen([], []));
+    expect(take(seen(['shrine'], []))).toEqual([
       { kind: 'approached', region: 'shrine' },
       { kind: 'arrived', region: 'shrine' },
       { kind: 'departed', region: 'shrine' },
@@ -295,14 +305,23 @@ describe('the World Event log', () => {
   });
 
   test('tells an object coming to lie in a Surface Region, and leaving it', () => {
-    const log = new WorldEventLog(at(SURFACE));
+    let current = at(SURFACE);
+    const log = new WorldEventLog(() => current);
+    const changeTo = (next: WorldSeen) =>
+      log.change(() => {
+        current = next;
+      });
+    const take = (next: WorldSeen) => {
+      changeTo(next);
+      return log.take();
+    };
     const lying = (...slots: number[]): WorldSeen => ({
       ...at(SURFACE),
       lying: slots.map(slot => [slot, 'shrine'] as const)
     });
-    log.note(lying(31));
-    log.note(lying(31, 34));
-    expect(log.take(lying(34))).toEqual([
+    changeTo(lying(31));
+    changeTo(lying(31, 34));
+    expect(take(lying(34))).toEqual([
       { kind: 'received', object: 31, region: 'shrine' },
       { kind: 'received', object: 34, region: 'shrine' },
       { kind: 'lost', object: 31, region: 'shrine' }
@@ -310,23 +329,42 @@ describe('the World Event log', () => {
   });
 
   test('tells raised and noted events in the order they happened', () => {
-    const log = new WorldEventLog(at(SURFACE));
+    let current = at(SURFACE);
+    const log = new WorldEventLog(() => current);
+    const changeTo = (next: WorldSeen) =>
+      log.change(() => {
+        current = next;
+      });
+    const take = (next: WorldSeen) => {
+      changeTo(next);
+      return log.take();
+    };
     log.raise({ faction: 'palyar', kind: 'gratitude' });
-    log.note(at(room(3)));
+    changeTo(at(room(3)));
     log.raise({ kind: 'struck', object: 0 });
-    expect(log.take(at(room(3), 1))).toEqual([
+    expect(take(at(room(3), 1))).toEqual([
       { faction: 'palyar', kind: 'gratitude' },
       { kind: 'entered', location: room(3) },
       { kind: 'struck', object: 0 },
       { craft: 1, kind: 'boarded' }
     ]);
-    expect(log.take(at(room(3), 1))).toEqual([]);
+    expect(take(at(room(3), 1))).toEqual([]);
   });
 
   test('resumes from a restored world without telling it', () => {
-    const log = new WorldEventLog(at(SURFACE));
+    let current = at(SURFACE);
+    const log = new WorldEventLog(() => current);
+    const changeTo = (next: WorldSeen) =>
+      log.change(() => {
+        current = next;
+      });
+    const take = (next: WorldSeen) => {
+      changeTo(next);
+      return log.take();
+    };
     log.raise({ kind: 'struck', object: 0 });
-    log.resume(at(room(5), 7, [25]));
-    expect(log.take(at(room(5), 7, [25]))).toEqual([]);
+    current = at(room(5), 7, [25]);
+    log.resume();
+    expect(take(at(room(5), 7, [25]))).toEqual([]);
   });
 });

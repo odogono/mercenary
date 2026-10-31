@@ -155,6 +155,7 @@ describe('the live browser Gameplay Session', () => {
       },
       throttle: 128
     };
+    original.settle();
     const captured = original.captureSaveSnapshot();
 
     const restored = createWalkabout(bundle, settings, captured).session;
@@ -172,6 +173,7 @@ describe('the live browser Gameplay Session', () => {
     const slot = original.content.objects[0]!.slot;
     original.carry(slot);
     original.teleport({ id: 114, kind: 'room' });
+    original.settle();
     const captured = original.captureSaveSnapshot();
 
     const restored = createWalkabout(bundle, settings, captured).session;

@@ -89,6 +89,7 @@ describe('Session Resume startup', () => {
       if (carried) {
         original.carry(40);
       }
+      original.settle();
       const storage = new MemoryStorage();
       storage.setItem(
         SESSION_RESUME_STORAGE_KEY,

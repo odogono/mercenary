@@ -280,6 +280,7 @@ describe('a Session Snapshot planned for WebGL2', () => {
     const content = sessionContent(world, bundle, undefined);
     const carried = new GameplaySession(content, openingPlayer());
     carried.carry(40);
+    carried.settle();
     const restored = GameplaySession.restore(
       content,
       undefined,

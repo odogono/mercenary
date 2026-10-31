@@ -9,7 +9,7 @@ import {
   type StructureReach
 } from '../settings/index.ts';
 import { formatTargTime, parseTargTime } from '../sky/time.ts';
-import { SURFACE, locationText, room } from '../world/index.ts';
+import { locationText, room } from '../world/index.ts';
 import { describePads, type PadDescription } from './gamepad.ts';
 import type {
   Composition,
@@ -651,8 +651,6 @@ export const executeConsoleCommand = (
     case 'gotoCell': {
       const session = deps.session();
       const size = deps.cellSize();
-      // The surface first: placing alone would move the player inside whatever Room they are in.
-      session.teleport(SURFACE);
       // The cell's middle, and the altitude they already had — the session would take any number
       // given to it, including one no play could reach.
       const position = {
@@ -660,11 +658,7 @@ export const executeConsoleCommand = (
         y: command.height ?? session.snapshot.player.position.y,
         z: (command.z + 0.5) * size
       };
-      if (command.height === undefined) {
-        session.place(position);
-      } else {
-        session.placeInAir(position);
-      }
+      session.relocateSurface(position, command.height !== undefined);
       return [
         `moved to cell ${twoDigits(command.x)}-${twoDigits(command.z)}${
           command.height === undefined ? '' : ` at height ${command.height}`

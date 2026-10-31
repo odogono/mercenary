@@ -19,7 +19,7 @@ A game-logic program written by this project in NorthTalk, driving play through 
 _Avoid_: NorthTalk script, Benson Script (for a rewrite), mod
 
 **World Event**:
-A change in play — entering a Room, boarding or leaving a craft, taking or dropping an object, a Site's destruction — that the Gameplay Session announces to every Talk Script, naming its subjects by name. A Talk Script learns of change only through World Events and never waits by re-checking the world.
+A completed change in play that the Gameplay Session announces to Talk Scripts, with named subjects, even when a later change undoes it; temporary bookkeeping within an operation is not a World Event. Surface Region events reach only the region's owning Talk Script, while other World Events are broadcast; Talk Scripts wait for these changes rather than polling the world.
 _Avoid_: PresentationEvent (that drives presentation, not logic), trigger, notification
 
 **Player Input**:

@@ -1,7 +1,7 @@
 import type { Location } from '../world/index.ts';
 import type { Faction } from './sites.ts';
 
-/// A change in play the Gameplay Session tells after each frame (ADR 0080).
+/// A completed change in play, delivered within its step (ADR 0085).
 ///
 /// Subjects are the session's own numbers here: Room ids, object slots, Site
 /// cells and low ids. Whoever tells them on, to Talk Scripts, names them.
@@ -126,14 +126,42 @@ export const changesBetween = (
 
 /// The World Events of one frame, in the order they happened (#931).
 ///
-/// The session notes the world before each operation that can change it and
-/// after each slice of simulation, so a change made and undone within one
-/// frame (leaving a craft and boarding it again, passing through a Room) is
-/// told rather than lost to a comparison of where the frame began and ended.
+/// Owns observation around completed operations. Callers supply the operation,
+/// not before/after snapshots or a checkpoint protocol (ADR 0085).
 export class WorldEventLog {
   private pending: WorldEvent[] = [];
+  private depth = 0;
 
-  constructor(private seen: WorldSeen) {}
+  private seen: WorldSeen;
+
+  constructor(private readonly observe: () => WorldSeen) {
+    this.seen = observe();
+  }
+
+  /// One completed operation, including its nested helpers. Separate operations
+  /// record separate changes, even when the second undoes the first.
+  change<T>(action: () => T): T {
+    const outer = this.depth === 0;
+    if (outer) {
+      this.note(this.observe());
+    }
+    this.depth++;
+    try {
+      return action();
+    } finally {
+      this.depth--;
+      if (outer) {
+        this.note(this.observe());
+      }
+    }
+  }
+
+  get unsettled(): boolean {
+    return (
+      this.pending.length > 0 ||
+      changesBetween(this.seen, this.observe()).length > 0
+    );
+  }
 
   /// An event the session raises itself, such as a Site destroyed.
   raise(event: WorldEvent): void {
@@ -141,22 +169,22 @@ export class WorldEventLog {
   }
 
   /// Records whatever changed since the world was last noted.
-  note(seen: WorldSeen): void {
+  private note(seen: WorldSeen): void {
     this.pending.push(...changesBetween(this.seen, seen));
     this.seen = seen;
   }
 
   /// Notes the world, then hands over everything recorded since the last take.
-  take(seen: WorldSeen): WorldEvent[] {
-    this.note(seen);
+  take(): WorldEvent[] {
+    this.note(this.observe());
     const events = this.pending;
     this.pending = [];
     return events;
   }
 
   /// Starts again from a world that is where play resumes, not a change in it.
-  resume(seen: WorldSeen): void {
+  resume(): void {
     this.pending = [];
-    this.seen = seen;
+    this.seen = this.observe();
   }
 }
