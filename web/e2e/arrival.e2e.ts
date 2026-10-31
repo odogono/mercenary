@@ -141,6 +141,8 @@ test('the Arrival reaches Targ, the ground and the cut on its own', async ({
 test('the descent draws Targ itself and counts the fall down', async ({
   page
 }) => {
+  // The readouts stay asterisks until the height fits the altimeter, well into the script.
+  test.setTimeout(120_000);
   await slowArrival(page, 0.05);
   await page.goto('/');
   const surface = surfaceOf(page);
@@ -156,8 +158,10 @@ test('the descent draws Targ itself and counts the fall down', async ({
       Number(await page.locator('#frame').getAttribute('data-lines'))
     )
     .toBeGreaterThan(0);
-  // Live readouts, and an altimeter that only ever falls.
-  await expect(panelField(page, 'locationLabel')).toHaveText('08-08');
+  // Live readouts once the height fits the altimeter, and an altimeter that only ever falls.
+  await expect(panelField(page, 'locationLabel')).toHaveText('08-08', {
+    timeout: 60_000
+  });
   await expect(panelField(page, 'speed')).toHaveText('+0000');
   const first = Number(await panelField(page, 'altitude').innerText());
   expect(first).toBeGreaterThan(1000);

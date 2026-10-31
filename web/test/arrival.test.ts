@@ -8,8 +8,12 @@ import {
   type ArrivalPacing,
   type ArrivalSessionBridge
 } from '../src/shell/arrival.ts';
+import { ARRIVAL_TUNING, fallAltitude } from '../src/shell/arrivalCamera.ts';
 import { ARRIVAL_NARRATION } from '../src/shell/arrivalNarration.ts';
-import { OPENING_MILESTONES } from '../src/shell/arrivalScript.ts';
+import {
+  OPENING_MILESTONES,
+  script00BeatOf
+} from '../src/shell/arrivalScript.ts';
 import { createWalkabout, requiredSettings } from '../src/shell/session.ts';
 import { comparable } from './fixtures/save.ts';
 import { loadPayload, repositoryRoot } from './replay/artifacts.ts';
@@ -204,23 +208,67 @@ describe('the Arrival', () => {
     expect(carriedIntoNextLine).toBeTrue();
   });
 
-  test('reads asterisks in space and live values from the descent on', () => {
+  test('meets each beat where the curve already is, at the default pacing', () => {
+    // ARRIVAL_TUNING.script is measured from this run. If the opening script's pacing moves,
+    // the fall still pins to each beat but jumps to do it, so the numbers want measuring again.
+    const live = harness();
+    const heard = new Map<string, number>();
+    let seconds = 0;
+    let handover: number | undefined;
+    while (live.director.isActive()) {
+      if (
+        handover === undefined &&
+        live.director.narrationText() === undefined &&
+        seconds > 0
+      ) {
+        handover = seconds;
+      }
+      const beat = script00BeatOf(
+        milestones,
+        live.session.benson?.activeMessageText
+      );
+      if (beat !== undefined && !heard.has(beat)) {
+        heard.set(beat, seconds);
+      }
+      live.director.step(STEP);
+      seconds += STEP;
+    }
+    const crash = heard.get('crashImminent')!;
+    const { script } = ARRIVAL_TUNING;
+    expect(crash - handover!).toBeCloseTo(script.lead, 0);
+    for (const beat of ['returningTo', 'manualControl', 'verdict'] as const) {
+      expect(Math.abs(heard.get(beat)! - crash - script[beat])).toBeLessThan(
+        0.1
+      );
+    }
+  });
+
+  test('reads asterisks until the height fits the altimeter', () => {
     const live = harness();
     const asterisked = new Set<string>();
     const live_ = new Set<string>();
+    let crossed = 0;
+    let previous = true;
     while (live.director.isActive()) {
-      (live.director.readsAsterisks() ? asterisked : live_).add(
-        live.director.current().kind
-      );
+      const reads = live.director.readsAsterisks();
+      (reads ? asterisked : live_).add(live.director.current().kind);
+      if (reads !== previous) {
+        crossed += 1;
+        expect(live.director.pose().altitude).toBeLessThan(100_000);
+      }
+      previous = reads;
       live.director.step(STEP);
     }
 
+    // The view turns to the ground well before the numbers come, as in the original.
     expect([...asterisked].sort()).toEqual([
+      'descent',
       'planetApproach',
       'space',
       'titleCard'
     ]);
     expect([...live_].sort()).toEqual(['blackout', 'descent', 'groundVerdict']);
+    expect(crossed).toBe(1);
   });
 
   test('falls without ever climbing, and touches down at the pad', () => {
@@ -363,8 +411,9 @@ describe('an Arrival entered from a restored session', () => {
 
     expect(director.current().kind).toBe('descent');
     expect(director.narrationText()).toBeUndefined();
-    expect(director.readsAsterisks()).toBeFalse();
-    expect(director.pose().altitude).toBe(13_000);
+    // "CRASH IMMINENT," is still far above the altimeter's five digits.
+    expect(director.readsAsterisks()).toBeTrue();
+    expect(director.pose().altitude).toBe(fallAltitude(11.5));
 
     director.skipToJoin();
 
