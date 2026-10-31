@@ -87,12 +87,24 @@ export interface Visibility {
   readonly farRepresentation: string;
 }
 
+/// A building's Surface Region, as its placement names it (ADR 0084).
+export interface RegionPlacement {
+  /// How far beyond the building the player counts as near it.
+  readonly approach?: number;
+  readonly name: string;
+  /// The Talk Script that answers for it.
+  readonly script: string;
+}
+
 export interface Instance {
   readonly id: string;
   readonly model: string;
   readonly orientation?: readonly number[];
   readonly placement: string;
   readonly position: readonly number[];
+  /// The Surface Region an Authored object makes (ADR 0084): only an
+  /// Authored Asset's Sidecar placements name one.
+  readonly region?: RegionPlacement;
   readonly room: number;
   readonly rotatable: boolean;
   readonly slot: number;

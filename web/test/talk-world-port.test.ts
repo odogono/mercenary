@@ -82,7 +82,7 @@ ask world to escape`
     );
     expect(failures(host)).toEqual([]);
     expect([...world.armedSlots]).toEqual([PASS]);
-    expect([...world.fixed]).toEqual([DART]);
+    expect([...world.fixes]).toEqual([DART]);
     expect(world.balance).toBe(300);
     expect(world.shipSent && world.attackerSent && world.escaped).toBe(true);
   });

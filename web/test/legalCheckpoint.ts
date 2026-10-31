@@ -6,7 +6,7 @@ import {
   intent
 } from '../src/gameCore/index.ts';
 import { Containment, DoorwayPredicate } from '../src/navigation/index.ts';
-import type { Doorway } from '../src/payload/documents.ts';
+import type { Bundle, Doorway } from '../src/payload/documents.ts';
 import {
   GameplaySession,
   openingPlayer,
@@ -56,11 +56,13 @@ export class LegalRoute {
   /// A fresh route wired as live play is: the Benson Display and the Talk
   /// Scripts, all of them unless named.
   static async open(options?: {
+    /// The Data Payload, when not the recorded one alone.
+    readonly bundle?: Bundle;
     /// Whether the new game begins, as live play does, and plays the opening.
     readonly opening?: boolean;
     readonly talk?: readonly TalkScript[];
   }): Promise<LegalRoute> {
-    const bundle = await loadPayload();
+    const bundle = options?.bundle ?? (await loadPayload());
     const settings = loadSettings(
       await Bun.file(join(repositoryRoot, 'settings.json')).text()
     );

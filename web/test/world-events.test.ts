@@ -264,9 +264,51 @@ const at = (
   location: Location,
   craft?: number,
   carried: readonly number[] = []
-): WorldSeen => ({ carried, craft, location });
+): WorldSeen => ({
+  carried,
+  craft,
+  inside: [],
+  location,
+  lying: [],
+  near: []
+});
 
 describe('the World Event log', () => {
+  test('tells coming near and into a Surface Region, and going out and away', () => {
+    const log = new WorldEventLog(at(SURFACE));
+    const seen = (near: string[], inside: string[]): WorldSeen => ({
+      ...at(SURFACE),
+      inside,
+      near
+    });
+    log.note(seen(['shrine'], []));
+    log.note(seen(['shrine'], ['shrine']));
+    log.note(seen(['shrine'], ['shrine']));
+    log.note(seen([], []));
+    expect(log.take(seen(['shrine'], []))).toEqual([
+      { kind: 'approached', region: 'shrine' },
+      { kind: 'arrived', region: 'shrine' },
+      { kind: 'departed', region: 'shrine' },
+      { kind: 'withdrew', region: 'shrine' },
+      { kind: 'approached', region: 'shrine' }
+    ]);
+  });
+
+  test('tells an object coming to lie in a Surface Region, and leaving it', () => {
+    const log = new WorldEventLog(at(SURFACE));
+    const lying = (...slots: number[]): WorldSeen => ({
+      ...at(SURFACE),
+      lying: slots.map(slot => [slot, 'shrine'] as const)
+    });
+    log.note(lying(31));
+    log.note(lying(31, 34));
+    expect(log.take(lying(34))).toEqual([
+      { kind: 'received', object: 31, region: 'shrine' },
+      { kind: 'received', object: 34, region: 'shrine' },
+      { kind: 'lost', object: 31, region: 'shrine' }
+    ]);
+  });
+
   test('tells raised and noted events in the order they happened', () => {
     const log = new WorldEventLog(at(SURFACE));
     log.raise({ faction: 'palyar', kind: 'gratitude' });

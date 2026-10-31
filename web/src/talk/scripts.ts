@@ -5,6 +5,7 @@ import escape from './scripts/escape.talk' with { type: 'text' };
 import opening from './scripts/opening.talk' with { type: 'text' };
 import reactions from './scripts/reactions.talk' with { type: 'text' };
 import rooms from './scripts/rooms.talk' with { type: 'text' };
+import shrine from './scripts/shrine.talk' with { type: 'text' };
 
 /// The Talk Script that plays the opening, by name.
 export const OPENING = 'opening';
@@ -19,6 +20,10 @@ export const COMMERCE = 'commerce';
 export const DELIVERIES = 'deliveries';
 /// The Talk Script for Faction Reactions and gratitude, by name.
 export const REACTIONS = 'reactions';
+
+/// The Talk Script for the Shrine outside the city (ADR 0084), by name. The
+/// Shrine's placement names it to answer for its Surface Region.
+export const SHRINE = 'shrine';
 
 /// Every Talk Script the game loads, and the Benson Scripts each replaces.
 export const TALK_SCRIPTS: readonly TalkScript[] = [
@@ -38,5 +43,6 @@ export const TALK_SCRIPTS: readonly TalkScript[] = [
       49, 50
     ],
     source: reactions
-  }
+  },
+  { name: SHRINE, replaces: [], source: shrine }
 ];

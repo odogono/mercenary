@@ -691,6 +691,10 @@ _Avoid_: Grid cell, tile
 One reusable wireframe definition placed in one or more Surface Cells, distinct from Map Lines and from movable object geometry.
 _Avoid_: Building, model, cell geometry
 
+**Surface Region**:
+A building's place in play: its extent, and an approach around it. The building's placement names the region and the Talk Script that answers for it, and that script alone hears the player come near, arrive, leave and go away, and objects come to lie there or be taken.
+_Avoid_: Zone, area, trigger volume, Location (which is the surface as a whole)
+
 **Structure Reach**:
 Which Surface Cells contribute Surface Structures to the view: only the occupied Surface Cell, as in the Reference Build, or the whole surface as Enhanced presentation.
 _Avoid_: Building reach, draw distance, render radius

@@ -23,6 +23,8 @@ export interface WorldPort {
   escape(): void;
   /// Fixes the object where it lies.
   fix(slot: number): void;
+  /// Whether the object is fixed where it lies.
+  fixed(slot: number): boolean;
   /// Where the player is.
   here(): Location;
   /// Where a loose object lies, or undefined while it is carried or gone.

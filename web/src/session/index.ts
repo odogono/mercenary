@@ -63,6 +63,7 @@ import {
   type TalkScript
 } from '../talk/host.ts';
 import type { TalkSaveSnapshot } from '../talk/save.ts';
+import { TALK_SCRIPTS } from '../talk/scripts.ts';
 import type { WorldPort } from '../talk/worldPort.ts';
 import {
   SURFACE,
@@ -102,6 +103,12 @@ import {
   type ShipFieldPoint
 } from './shipField.ts';
 import { SiteLedger } from './sites.ts';
+import {
+  approachesAt,
+  footprintsAt,
+  surfaceRegions,
+  type SurfaceRegion
+} from './surfaceRegions.ts';
 import {
   WorldEventLog,
   type WorldEvent,
@@ -623,16 +630,28 @@ const validateSnapshotReferences = (
       throw new Error(`Save Snapshot refers to missing object slot ${slot}`);
     }
   }
+  // A Save made before an Authored object was placed has no word of it: the
+  // object is still where its placement put it (ADR 0084).
+  const required = new Set(
+    content.objects
+      .filter(object => !object.model.startsWith('authored:'))
+      .map(object => object.slot)
+  );
   if (
-    snapshot.residence.length !== objectSlots.size ||
-    savedResidence.size !== objectSlots.size ||
-    snapshot.objectFlags.length !== objectSlots.size ||
-    savedFlags.size !== objectSlots.size
+    snapshot.residence.length !== savedResidence.size ||
+    snapshot.objectFlags.length !== savedFlags.size ||
+    savedResidence.size !== savedFlags.size
   ) {
     throw new Error('Save Snapshot has an incomplete or extra object census');
   }
   for (const slot of objectSlots) {
-    if (!savedResidence.has(slot) || !savedFlags.has(slot)) {
+    if (savedResidence.has(slot) !== savedFlags.has(slot)) {
+      throw new Error('Save Snapshot has an incomplete or extra object census');
+    }
+    if (
+      required.has(slot) &&
+      (!savedResidence.has(slot) || !savedFlags.has(slot))
+    ) {
       throw new Error(`Save Snapshot is missing object slot ${slot}`);
     }
   }
@@ -750,6 +769,7 @@ export class GameplaySession {
   /// The hired ship's delivery byte, as the Ship Delivery rules read it.
   private shipInbound = 0;
   private readonly objectsBySlot: ReadonlyMap<number, ObjectPlacement>;
+  private readonly regions: readonly SurfaceRegion[];
   /// The World Events since the last frame was told.
   private world: WorldEventLog;
 
@@ -803,6 +823,7 @@ export class GameplaySession {
     }
     this.carriedStack.sort((a, b) => a - b);
     this.objectsBySlot = objectsBySlot;
+    this.regions = surfaceRegions(content.objects);
     if (this.benson !== undefined) {
       this.credits = STARTING_CREDITS;
     }
@@ -954,8 +975,12 @@ export class GameplaySession {
         snapshot.ending.field
       );
     }
-    session.objectFlags = new Map(snapshot.objectFlags);
-    session.residence = new Map(snapshot.residence);
+    for (const [slot, flags] of snapshot.objectFlags) {
+      session.objectFlags.set(slot, flags);
+    }
+    for (const [slot, residence] of snapshot.residence) {
+      session.residence.set(slot, residence);
+    }
     session.rewired = new Map(snapshot.rewired);
     session.ownRandomState = decodeRandomState(snapshot.randomState);
     if (content.sites !== undefined && snapshot.combat !== null) {
@@ -1919,7 +1944,21 @@ export class GameplaySession {
       throw new Error('Talk Scripts need the Benson Display and host state');
     }
     const benson = this.benson;
-    this.talk = new TalkHost(scripts, benson, this.worldPort(), options, saved);
+    const known = new Set(TALK_SCRIPTS.map(script => script.name));
+    for (const region of this.regions) {
+      if (!known.has(region.script)) {
+        throw new Error(
+          `Surface Region ${region.name} names Talk Script ${region.script}, which the game doesn't have`
+        );
+      }
+    }
+    this.talk = new TalkHost(
+      scripts,
+      benson,
+      this.worldPort(),
+      { ...options, regions: this.regions },
+      saved
+    );
     return this.talk;
   }
 
@@ -1979,6 +2018,7 @@ export class GameplaySession {
         this.endingPhase = 1;
       },
       fix: slot => flag(slot, flags => flags | FIXED),
+      fixed: slot => ((this.objectFlags.get(object(slot)) ?? 0) & FIXED) !== 0,
       here: () => this.semanticLocation,
       lies: slot => {
         const where = this.residenceOf(object(slot));
@@ -2070,7 +2110,40 @@ export class GameplaySession {
     return {
       carried: [...this.carriedStack],
       craft: occupancy.kind === 'aboard' ? occupancy.slot : undefined,
-      location: this.location
+      location: this.location,
+      ...this.regionsSeen(occupancy.kind === 'aboard' ? occupancy.slot : -1)
+    };
+  }
+
+  /// Where the player and the loose objects stand among the Surface Regions.
+  /// A boarded craft goes with the player, so it lies nowhere.
+  private regionsSeen(
+    boarded: number
+  ): Pick<WorldSeen, 'inside' | 'lying' | 'near'> {
+    if (this.regions.length === 0) {
+      return { inside: [], lying: [], near: [] };
+    }
+    const lying: [number, string][] = [];
+    for (const [slot, placed] of this.objectsBySlot) {
+      const where = this.residenceOf(slot);
+      if (where.kind !== 'surface' || slot === boarded) {
+        continue;
+      }
+      for (const region of footprintsAt(
+        this.regions,
+        where.at ?? placed.origin
+      )) {
+        lying.push([slot, region]);
+      }
+    }
+    if (this.location.kind !== 'surface') {
+      return { inside: [], lying, near: [] };
+    }
+    const at = this.game.player.position;
+    return {
+      inside: footprintsAt(this.regions, at),
+      lying,
+      near: approachesAt(this.regions, at)
     };
   }
 

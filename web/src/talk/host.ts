@@ -14,6 +14,7 @@
 import {
   bool,
   createCore,
+  defineObjectKind,
   nothing,
   num,
   shape,
@@ -21,6 +22,7 @@ import {
   type Call,
   type Decimal,
   type Grant,
+  type HostObject,
   type Library,
   type Report,
   type TsGroup,
@@ -58,6 +60,15 @@ export interface InputClaim {
 export interface TalkHostOptions {
   /// The next random byte; the World Port's by default.
   readonly random?: () => number;
+  /// The world's Surface Regions, each with the Talk Script that answers for
+  /// it (ADR 0084).
+  readonly regions?: readonly RegionScript[];
+}
+
+/// A Surface Region and the Talk Script its placement names.
+export interface RegionScript {
+  readonly name: string;
+  readonly script: string;
 }
 
 /// Lines that play back to back: one `show`, one `prompt`, or a whole
@@ -76,6 +87,14 @@ const MICROS = 1_000_000;
 const LONGEST_WAIT_MS = 2_147_483_647;
 
 const whole = (value: Decimal): number => Number(value.toBigInt());
+
+/// A Surface Region as a Host Object, the `me` of the Talk Script that answers
+/// for it. Its id is that script's name, not the region's, so a Save still
+/// finds it after the region is renamed.
+const SURFACE_REGION = defineObjectKind<string>({
+  name: 'surface region',
+  props: {}
+});
 
 /// An operation done for its effect, answering nothing.
 const done = (act: () => void): Value => {
@@ -163,6 +182,8 @@ export class TalkHost {
   private playing: Block | undefined;
   private readonly queue: Block[] = [];
   private readonly random: () => number;
+  /// Each Surface Region's Talk Script, by region name.
+  private readonly regionScripts: ReadonlyMap<string, string>;
   /// The Benson Scripts the loaded Talk Scripts replace.
   readonly replaces: ReadonlySet<number>;
 
@@ -178,6 +199,9 @@ export class TalkHost {
     this.world = world;
     this.random = options.random ?? (() => world.random());
     this.replaces = new Set(scripts.flatMap(script => script.replaces));
+    this.regionScripts = new Map(
+      (options.regions ?? []).map(region => [region.name, region.script])
+    );
     const core = createCore();
     const capabilities = this.defineCapabilities(core);
     this.grants = {
@@ -230,10 +254,17 @@ export class TalkHost {
   }
 
   private load(group: TsGroup, script: TalkScript): void {
+    let owner: HostObject | undefined;
+    if ([...this.regionScripts.values()].includes(script.name)) {
+      owner =
+        group.objectById(SURFACE_REGION.name, script.name) ??
+        group.object(SURFACE_REGION, script.name, script.name);
+    }
     group.load({
       grants: this.grants,
       limits: { maxWaitMs: LONGEST_WAIT_MS },
       name: script.name,
+      ...(owner !== undefined ? { owner } : {}),
       source: script.source
     });
   }
@@ -259,7 +290,8 @@ export class TalkHost {
         libraries: [this.library],
         name: 'targ',
         onMismatch: 'reload changed',
-        resolve: () => undefined,
+        resolve: (kind, id) =>
+          kind === SURFACE_REGION.name ? { native: id } : undefined,
         // This build's source: a Talk Script changed since the Save reloads
         // with its Script Variables, and the rest restore as they were.
         scriptSources: ({ name }) => ({
@@ -328,8 +360,42 @@ export class TalkHost {
       if (told !== undefined) {
         this.group.broadcast(told);
       }
+      this.tellRegions(event);
     }
     this.pump();
+  }
+
+  /// Tells a Surface Region what happened at it, through its Host Object, so
+  /// only the Talk Script that answers for it hears. Nothing is broadcast.
+  private tellRegions(event: WorldEvent): void {
+    switch (event.kind) {
+      case 'approached':
+      case 'arrived':
+      case 'departed':
+      case 'withdrew':
+        this.tellRegion(event.region, { name: event.kind });
+        return;
+      case 'received':
+      case 'lost':
+        this.tellRegion(event.region, {
+          args: [text(objectName(event.object))],
+          name: event.kind
+        });
+        return;
+      default:
+        return;
+    }
+  }
+
+  private tellRegion(region: string, m: { args?: Value[]; name: string }) {
+    const script = this.regionScripts.get(region);
+    const to =
+      script === undefined
+        ? undefined
+        : this.group.objectById(SURFACE_REGION.name, script);
+    if (to !== undefined) {
+      this.group.deliver(to, m);
+    }
   }
 
   /// A key no Binding took, as Player Input: to the Input Owner alone, or to
@@ -512,6 +578,14 @@ export class TalkHost {
         description: 'Fixes the object where it lies.',
         do: (_call, item) => done(() => world.fix(objectSlot(item))),
         mode: 'immediate'
+      },
+      fixed: {
+        args: [shape.text],
+        cost: { fuel: 1 },
+        description: 'Whether the object is fixed where it lies.',
+        do: (_call, item) => bool(world.fixed(objectSlot(item))),
+        mode: 'immediate',
+        result: shape.bool
       },
       here: {
         cost: { fuel: 1 },
