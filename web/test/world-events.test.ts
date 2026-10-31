@@ -251,7 +251,6 @@ describe('World Events', () => {
     const session = standing();
     session.board(DART);
     session.carry(NOVADRIVE);
-    session.settle();
     const restored = GameplaySession.restore(
       content,
       scripts(),

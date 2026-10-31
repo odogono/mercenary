@@ -444,7 +444,6 @@ export class TalkHost {
   withBudget<T>(budget: ReactionBudget, action: () => T): T {
     const previous = this.budget;
     this.budget = budget;
-    budget.remember(`scripts: ${this.scriptNames}`);
     try {
       return action();
     } finally {
@@ -452,15 +451,18 @@ export class TalkHost {
     }
   }
 
+  /// A fresh budget for one step, at this host's limits.
+  newBudget(): ReactionBudget {
+    const budget = new ReactionBudget(this.reactionLimits);
+    budget.remember(`scripts: ${this.scriptNames}`);
+    return budget;
+  }
+
   /// Pumps until the display settles: answering a line that has played can
   /// let a Talk Script show the next in the same frame. A latched key goes in
   /// once its prompt's Run has reached what follows the prompt.
   private pump(): void {
-    let budget = this.budget;
-    if (budget === undefined) {
-      budget = new ReactionBudget(this.reactionLimits);
-      budget.remember(`scripts: ${this.scriptNames}`);
-    }
+    const budget = this.budget ?? this.newBudget();
     for (;;) {
       const result = this.group.pump(BigInt(Math.round(this.now * MICROS)), {
         fuelCap: budget.fuelLeft

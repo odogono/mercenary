@@ -55,7 +55,7 @@ describe('the live browser Gameplay Session', () => {
     expect(walkabout.opening?.events).toContainEqual({
       script: { sound: { symbol: 'voice1.control', value: 0 } }
     });
-    expect(walkabout.session.settle().events).toEqual([]);
+    expect(walkabout.session.takeSettled().events).toEqual([]);
   });
 
   test('starts the opening on foot at the captured surface Pose', () => {
@@ -174,7 +174,6 @@ describe('the live browser Gameplay Session', () => {
       },
       throttle: 128
     };
-    original.settle();
     const captured = original.captureSaveSnapshot();
 
     const restored = createWalkabout(bundle, settings, captured).session;
@@ -192,7 +191,6 @@ describe('the live browser Gameplay Session', () => {
     const slot = original.content.objects[0]!.slot;
     original.carry(slot);
     original.teleport({ id: 114, kind: 'room' });
-    original.settle();
     const captured = original.captureSaveSnapshot();
 
     const restored = createWalkabout(bundle, settings, captured).session;

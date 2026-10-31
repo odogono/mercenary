@@ -282,7 +282,6 @@ describe('a Save Snapshot', () => {
       scripts()
     );
     current.carry(20);
-    current.settle();
     const snapshot = current.captureSaveSnapshot();
     const before = current.snapshot;
 

@@ -299,7 +299,6 @@ describe('Lift Journeys in a Gameplay Session', () => {
     const session = newSession();
     session.carry(46);
     expect(session.rideLift()).toEqual([{ lift: 'down' }]);
-    session.settle();
     const before = session.captureSaveSnapshot().liftJourney;
     expect(session.rideLift()).toBeUndefined();
     expect(session.captureSaveSnapshot().liftJourney).toEqual(before);
@@ -350,7 +349,6 @@ describe('Lift Journeys in a Gameplay Session', () => {
     const session = newSession();
     session.carry(46);
     session.rideLift();
-    session.settle();
     const saved = session.captureSaveSnapshot();
     expect(() =>
       GameplaySession.restore(content, session.benson, {
