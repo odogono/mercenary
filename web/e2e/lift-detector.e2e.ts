@@ -1,4 +1,47 @@
+import { readFileSync } from 'node:fs';
+
 import { expect, test, type Page } from '@playwright/test';
+
+import type { UndergroundLift } from '../src/payload/documents.ts';
+import {
+  liftJourneyAt,
+  type LiftDirection
+} from '../src/session/liftJourney.ts';
+
+const LIFT = (
+  JSON.parse(
+    readFileSync(
+      new URL('../../payload/underground.json', import.meta.url),
+      'utf8'
+    )
+  ) as { lift: UndergroundLift }
+).lift;
+
+/// The Session Resume keeps only the seconds since a Lift Journey began
+/// (ADR 0083); its stage follows from them and the payload's lift.
+const liftStage = async (page: Page): Promise<number> => {
+  const saved = await page.evaluate(() =>
+    localStorage.getItem('mercenary.browser-shell.session-resume.v1')
+  );
+  const journey =
+    saved === null
+      ? null
+      : (
+          JSON.parse(saved) as {
+            snapshot: {
+              liftJourney: {
+                direction: LiftDirection;
+                elapsedSeconds: number;
+                entranceRoom: number;
+                restingAltitude: number;
+              } | null;
+            };
+          }
+        ).snapshot.liftJourney;
+  return journey === null
+    ? -1
+    : (liftJourneyAt(journey, journey.elapsedSeconds, LIFT)?.stage ?? -1);
+};
 
 /// Commit the one Destination from deep space, then hurry the journey and the Arrival to the
 /// game (ADR 0040, ADR 0032).
@@ -94,18 +137,7 @@ test('Lift Journey visibly advances the recovered camera and filled raster bar',
   const beforeAltitude = await altitude.textContent();
   await page.keyboard.press('e');
   await expect
-    .poll(async () => {
-      const raw = await page.evaluate(() =>
-        localStorage.getItem('mercenary.browser-shell.session-resume.v1')
-      );
-      const saved =
-        raw === null
-          ? undefined
-          : (JSON.parse(raw) as {
-              snapshot: { liftJourney: { stage: number } | null };
-            });
-      return saved?.snapshot.liftJourney?.stage ?? -1;
-    })
+    .poll(async () => await liftStage(page))
     .toBeGreaterThanOrEqual(8);
   await expect(canvas).toHaveAttribute('data-lines', '0');
   await expect(canvas).toHaveAttribute('data-points', '0');
@@ -115,22 +147,7 @@ test('Lift Journey visibly advances the recovered camera and filled raster bar',
     body: await canvas.screenshot(),
     contentType: 'image/png'
   });
-  await expect
-    .poll(async () =>
-      page.evaluate(() => {
-        const raw = localStorage.getItem(
-          'mercenary.browser-shell.session-resume.v1'
-        );
-        return raw === null
-          ? null
-          : (
-              JSON.parse(raw) as {
-                snapshot: { liftJourney: { stage: number } | null };
-              }
-            ).snapshot.liftJourney?.stage;
-      })
-    )
-    .toBe(13);
+  await expect.poll(async () => await liftStage(page)).toBe(13);
   await expect(altitude).toHaveText(beforeAltitude!);
   await testInfo.attach('lift-final-ascent-reveals-surface', {
     body: await canvas.screenshot(),

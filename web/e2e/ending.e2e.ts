@@ -11,53 +11,43 @@ import { expect, test, type Page } from '@playwright/test';
 /// predicate and its refusal arms remain proven in `test/escape.test.ts`.
 
 const RESUME_KEY = 'mercenary.browser-shell.session-resume.v1';
-const SCRIPT_RUNNING = 0x40;
 
 interface SessionState {
   readonly carried: readonly number[];
   readonly craft: number | null;
   readonly credits: number;
   readonly field: 'none' | 'running';
+  readonly messagePlaying: boolean;
   readonly phase: number;
   readonly room: number | null;
-  readonly scriptRunning: boolean;
 }
 
 const sessionState = async (page: Page): Promise<SessionState> =>
-  await page.evaluate(
-    ({ key, scriptRunning }) => {
-      const stored = localStorage.getItem(key);
-      if (stored === null) {
-        throw new Error('the Session Resume is empty');
-      }
-      const save = JSON.parse(stored) as {
-        snapshot: {
-          benson: {
-            host: {
-              decimals: readonly number[];
-              endingPhase: number;
-              engineFlags: number;
-            };
-          } | null;
-          carriedStack: readonly number[];
-          ending: unknown;
-          game: { craft: number | null; room: number | null };
-        };
+  await page.evaluate(key => {
+    const stored = localStorage.getItem(key);
+    if (stored === null) {
+      throw new Error('the Session Resume is empty');
+    }
+    const save = JSON.parse(stored) as {
+      snapshot: {
+        benson: { messagePlaying: boolean } | null;
+        carriedStack: readonly number[];
+        credits: number;
+        ending: unknown;
+        endingPhase: number;
+        game: { craft: number | null; room: number | null };
       };
-      const host = save.snapshot.benson?.host;
-      return {
-        carried: save.snapshot.carriedStack,
-        craft: save.snapshot.game.craft,
-        credits: host?.decimals[8] ?? 0,
-        field: save.snapshot.ending === null ? 'none' : 'running',
-        phase: host?.endingPhase ?? 0,
-        room: save.snapshot.game.room,
-        scriptRunning:
-          host === undefined ? false : (host.engineFlags & scriptRunning) !== 0
-      };
-    },
-    { key: RESUME_KEY, scriptRunning: SCRIPT_RUNNING }
-  );
+    };
+    return {
+      carried: save.snapshot.carriedStack,
+      craft: save.snapshot.game.craft,
+      credits: save.snapshot.credits,
+      field: save.snapshot.ending === null ? 'none' : 'running',
+      messagePlaying: save.snapshot.benson?.messagePlaying ?? false,
+      phase: save.snapshot.endingPhase,
+      room: save.snapshot.game.room
+    };
+  }, RESUME_KEY);
 
 const command = async (
   page: Page,
@@ -153,7 +143,7 @@ test('the console-assisted recovered route reaches and matures the Escape', asyn
   await page.keyboard.press('KeyB');
   await expect.poll(async () => (await sessionState(page)).craft).toBe(1);
   await expect
-    .poll(async () => (await sessionState(page)).scriptRunning, {
+    .poll(async () => (await sessionState(page)).messagePlaying, {
       timeout: 10_000
     })
     .toBe(false);
