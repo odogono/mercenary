@@ -13,7 +13,7 @@ import {
   islandFillTriangles,
   islandOriginNear
 } from '../coast/islands.ts';
-import { roadEdges } from '../coast/roads.ts';
+import { horizonDistanceAt, roadEdgesWithin } from '../coast/roads.ts';
 import { tan } from '../math/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import { Camera } from '../projection/index.ts';
@@ -905,10 +905,23 @@ export const planEnhancedFrame = (
     x: Math.floor((pose.position.x - roadOrigin.x) / surface.grid.cellUnits),
     z: Math.floor((pose.position.z - roadOrigin.z) / surface.grid.cellUnits)
   };
+  const horizonDistance = horizonDistanceAt(
+    surface.horizonDistances ?? [],
+    pose.position.y
+  );
   const edges =
     enclosed || inSpace || roads === undefined
       ? []
-      : roadEdges(roads.corners, cell.x, cell.z, pose.position.y);
+      : roads.highAltitude !== undefined &&
+          pose.position.y >= roads.highAltitude.fromY
+        ? roads.highAltitude.edges
+        : roadEdgesWithin(
+            roads.corners,
+            cell.x,
+            cell.z,
+            pose.position.y,
+            horizonDistance
+          );
   const roadValues: number[] = [];
   const roadPoint = (corner: number): Vector3 =>
     toView({
@@ -1147,7 +1160,16 @@ export const planEnhancedFrame = (
       flash === undefined ||
       clock === null ||
       beaconLit(flash, clock.frame, carriedSlot);
-    if (reach.point !== undefined && lit) {
+    const horizonUnits = horizonDistance * surface.grid.cellUnits;
+    const eligible =
+      reach.point?.belowEyeWithinHorizon !== true ||
+      placement.position.y >= pose.position.y ||
+      [
+        placement.position.x - pose.position.x,
+        placement.position.y - pose.position.y,
+        placement.position.z - pose.position.z
+      ].every(value => Math.abs(value) < horizonUnits);
+    if (reach.point !== undefined && lit && eligible) {
       const centre = toView(placement.position);
       if (centre.z > doc.camera.nearPlane) {
         // One ST pixel, 1/256 of a unit tangent on a side, as a star is.

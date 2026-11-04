@@ -71,7 +71,12 @@ export interface ScenePlacement {
   /// point, drawn as that one point. Absent, the placement is drawn at any range.
   readonly reach?: {
     readonly cells: number;
-    readonly point?: { readonly colour: string };
+    readonly point?: {
+      /// Targ's eligibility rule: a Far Point below the eye shows only while every axis of
+      /// its offset is within the surface's Horizon Distance. Absent, it shows at any range.
+      readonly belowEyeWithinHorizon?: boolean;
+      readonly colour: string;
+    };
   };
   readonly selection?: {
     /// The structure record's two scene colours (`$059DA2`–`$059DC6`): what the frame loop
@@ -150,6 +155,12 @@ export interface SceneIsland extends CoastIsland {
   readonly roads?:
     | {
         readonly corners: readonly number[];
+        /// A set drawn whole instead of the per-cell runs from raw Y `fromY` up, as Targ's
+        /// `highAltitudeMap` is. Absent, the runs are selected at every altitude.
+        readonly highAltitude?: {
+          readonly edges: readonly number[];
+          readonly fromY: number;
+        };
         readonly roadColour: string;
       }
     | undefined;
@@ -170,6 +181,10 @@ export interface EnhancedSurface<I extends SceneIsland = SceneIsland> {
   /// The tables per-frame forms are composed from; absent where no placement offers forms.
   readonly formTables?: FormTables;
   readonly grid: SceneGrid;
+  /// The Title's Horizon Distance in cells, one entry per 2048-unit step of raw Y, clamped to
+  /// its ends. It selects the road runs drawn and bounds below-eye Far Points. Absent, it is
+  /// zero: only the occupied cell's runs, above 64 KiB.
+  readonly horizonDistances?: readonly number[];
   /// The Body's island records, in list order.
   readonly islands: readonly I[];
   readonly placements: readonly ScenePlacement[];

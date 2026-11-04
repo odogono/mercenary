@@ -9,6 +9,7 @@ import type {
   WallText
 } from '../catalogue/data.ts';
 import { islandOriginNear } from '../coast/islands.ts';
+import { ROAD_HORIZON_DISTANCES } from '../coast/roads.ts';
 import type { FormClock, PlacementForms } from '../enhanced/forms.ts';
 import {
   planEnhancedFrame,
@@ -746,6 +747,7 @@ export const dionEnhancedScene = (
         z: world.opening.groupOrigin[1]
       }
     },
+    horizonDistances: ROAD_HORIZON_DISTANCES,
     islands: sceneIslands(world, state, gaps),
     placements,
     sky: {
