@@ -13,6 +13,7 @@ import {
 } from '../catalogue/data.ts';
 import type { ModelLookup } from '../catalogue/modelStore.ts';
 import { nearestIsland } from '../coast/islands.ts';
+import { ROAD_HORIZON_DISTANCES } from '../coast/roads.ts';
 import type { PlacementForms } from '../enhanced/forms.ts';
 import {
   cellOf,
@@ -810,6 +811,7 @@ export const erisSurfaceFrom = (
       glyphs: catalogue.textFrameGlyphs
     },
     grid,
+    horizonDistances: ROAD_HORIZON_DISTANCES,
     islands: catalogue.islands
       .filter(island => island.body === body.id)
       .map(island => ({

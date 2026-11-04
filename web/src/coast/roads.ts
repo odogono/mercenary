@@ -36,12 +36,42 @@ export const roadEdges = (
   x: number,
   z: number,
   height: number
+): readonly number[] =>
+  roadEdgesWithin(corners, x, z, height, roadRadius(height));
+
+/// `$915A` as a Horizon Distance table: one radius per 2048-unit step of raw Y.
+export const ROAD_HORIZON_DISTANCES: readonly number[] = Array.from(
+  { length: 256 },
+  (_, index) => roadRadius(index * 2048)
+);
+
+/// A Title's Horizon Distance in cells at raw Y: its table indexed in 2048-unit steps,
+/// clamped to the table's ends. An empty table reaches no neighbouring cell.
+export const horizonDistanceAt = (
+  table: readonly number[],
+  height: number
+): number =>
+  table.length === 0
+    ? 0
+    : Math.max(
+        0,
+        table[
+          Math.max(0, Math.min(table.length - 1, Math.floor(height / 2048)))
+        ]!
+      );
+
+/// The road runs within `radius` cells of (x, z), as `roadEdges` selects them.
+export const roadEdgesWithin = (
+  corners: readonly number[],
+  x: number,
+  z: number,
+  height: number,
+  radius: number
 ): readonly number[] => {
   const own = x >= 0 && x < 16 && z >= 0 && z < 16 ? corners[z * 16 + x]! : 0;
   const ownWords = [own >>> 16, own & 0xff_ff];
   const seen = new Set(ownWords);
   const neighbours: number[] = [];
-  const radius = roadRadius(height);
   if (radius !== 0) {
     for (
       let row = Math.max(0, z - radius);

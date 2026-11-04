@@ -61,9 +61,9 @@ const object = (
   status: 'decoded'
 });
 
-const plan = (placement: ScenePlacement, frame = 0) =>
+const plan = (placement: ScenePlacement, frame = 0, on = surface) =>
   planEnhancedFrame(
-    surface,
+    on,
     { body: 'test', heading: 0, pitch: 0, position: eye },
     ENHANCED_PRESENTATION,
     null,
@@ -129,5 +129,36 @@ describe('an object’s reach', () => {
     );
     expect(plan(beacon, 0).triangleCount).toBe(4);
     expect(plan(beacon, 4).triangleCount).toBe(0);
+  });
+
+  test('a below-eye Far Point with the eligibility rule shows only within Horizon Distance', () => {
+    const point = {
+      cells: 1,
+      point: { belowEyeWithinHorizon: true, colour: '#cccc88' }
+    };
+    const horizon = { ...surface, horizonDistances: [4] };
+    // The object sits at Y 0, below the eye at 63.
+    expect(plan(object(3, point), 0, horizon).triangleCount).toBe(4);
+    expect(plan(object(5, point), 0, horizon).triangleCount).toBe(0);
+    // Without a table the Horizon Distance is zero.
+    expect(plan(object(3, point)).triangleCount).toBe(0);
+    // Without the rule the point shows at any range.
+    expect(
+      plan(object(5, { cells: 1, point: { colour: '#cccc88' } }), 0, horizon)
+        .triangleCount
+    ).toBe(4);
+  });
+
+  test('a Far Point at or above the eye ignores the Horizon Distance', () => {
+    const above: ScenePlacement = {
+      ...object(5, {
+        cells: 1,
+        point: { belowEyeWithinHorizon: true, colour: '#cccc88' }
+      }),
+      position: { x: eye.x, y: 200, z: eye.z + 5 * 0x1_00_00 }
+    };
+    expect(
+      plan(above, 0, { ...surface, horizonDistances: [4] }).triangleCount
+    ).toBe(4);
   });
 });
