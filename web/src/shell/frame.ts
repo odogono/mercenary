@@ -813,6 +813,11 @@ export const planFrame = (
     'clipped',
     presentation.preset === 'enhanced'
   );
+  // Line Colour: white Ink on the surface, the Indoor Scene's wireframe colour in a Room.
+  const lineColour =
+    indoor === undefined
+      ? ScenePalette.whiteInk
+      : (c64Colour(indoor.lineColour) ?? ScenePalette.whiteInk);
   const blackInk: ScreenLine[] = [];
   const distantBlackInk: ScreenLine[] = [];
   const distantWhiteInk = new Map<number, DistantScreenLine[]>();
@@ -859,7 +864,7 @@ export const planFrame = (
   // entering a cell changes which side of its wireframe the roads are drawn on.
   addLineBatch(batches, roadBlackInk, ScenePalette.blackInk, 'roads');
   addLineBatch(batches, roadWhiteInk, ScenePalette.whiteInk, 'roads');
-  const faceFill = faceBatch(seen.faces, camera, size);
+  const faceFill = faceBatch(seen.faces, camera, size, lineColour);
   const faces =
     faceFill === undefined
       ? undefined
@@ -875,7 +880,7 @@ export const planFrame = (
   }
   const allBlackInk = [...distantBlackInk, ...blackInk];
   addLineBatch(batches, allBlackInk, ScenePalette.blackInk);
-  addLineBatch(batches, whiteInk, ScenePalette.whiteInk);
+  addLineBatch(batches, whiteInk, lineColour);
   addColouredLines(batches, coloured);
   addBatch(
     batches,
@@ -943,7 +948,7 @@ export const planInspection = (
     size
   );
   const batches: DrawBatch[] = [];
-  const faceFill = faceBatch(seen.faces, camera, size);
+  const faceFill = faceBatch(seen.faces, camera, size, ScenePalette.whiteInk);
   addLineBatch(
     batches,
     projected.lines.filter(line => line.ink === Ink.black),

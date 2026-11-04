@@ -53,7 +53,14 @@ test('Targ draws coloured concave faces with depth and clipping through both pre
         {
           batches: [],
           clear: { blue: 0, green: 0, red: 0 },
-          faces: { batch: faceBatch(faces, camera, size)!, before: 0 },
+          faces: {
+            batch: faceBatch(faces, camera, size, {
+              blue: 255,
+              green: 255,
+              red: 255
+            })!,
+            before: 0
+          },
           lines: 0,
           overlays: [],
           points: 0,

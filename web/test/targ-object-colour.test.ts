@@ -2,7 +2,16 @@ import { describe, expect, test } from 'bun:test';
 
 import { checkAsset } from '../src/geometry/compose.ts';
 import type { Colour, GeometryAsset, Part } from '../src/geometry/contract.ts';
-import { planInspection } from '../src/shell/frame.ts';
+import { Camera } from '../src/projection/index.ts';
+import { ScenePalette, c64Colour, type RGB8 } from '../src/scene/index.ts';
+import {
+  GameplaySession,
+  openingPlayer,
+  sessionContent
+} from '../src/session/index.ts';
+import { defaultSettings } from '../src/settings/index.ts';
+import { FACE_STRIDE, faceBatch } from '../src/shell/faces.ts';
+import { planFrame, planInspection } from '../src/shell/frame.ts';
 import {
   DEFAULT_ORBIT,
   orbitCamera,
@@ -124,10 +133,56 @@ describe('Targ object colour in the frame', () => {
     expect(plan.batches[1]!.vertices.length).toBe(4);
   });
 
-  test('an uncoloured face draws in Line Colour', () => {
-    const corner = { x: 0, y: 0, z: 0 };
-    expect(
-      facePolygon({}, [corner, { ...corner, x: 1 }, { ...corner, y: 1 }]).colour
-    ).toEqual({ blue: 255, green: 255, red: 255 });
+  test('an uncoloured face draws in the Line Colour it is given', () => {
+    const face = facePolygon({ doubleSided: true }, [
+      { x: 0, y: 0, z: 4 },
+      { x: 1, y: 0, z: 4 },
+      { x: 0, y: 1, z: 4 }
+    ]);
+    const camera = new Camera({
+      ...openingPlayer(),
+      position: { x: 0, y: 0, z: 0 }
+    });
+    const size = { height: 400, width: 640 };
+    const colours = (lineColour: RGB8) => {
+      const batch = faceBatch([face], camera, size, lineColour)!;
+      return Array.from(batch.vertices.slice(4, FACE_STRIDE));
+    };
+    expect(colours(ScenePalette.whiteInk)).toEqual([1, 1, 1]);
+    expect(colours({ blue: 0, green: 0, red: 255 })).toEqual([1, 0, 0]);
   });
+});
+
+/// The line batches of Room 3 in one preset, with its Indoor Scene's Line Colour replaced.
+const roomLineBatches = (
+  preset: 'authentic' | 'enhanced',
+  lineColour: number
+) => {
+  const world = new World(bundle);
+  const inside = new GameplaySession(
+    sessionContent(world, bundle, undefined),
+    openingPlayer()
+  );
+  inside.teleport({ id: 3, kind: 'room' });
+  const snapshot = {
+    ...inside.snapshot,
+    indoor: { ...inside.snapshot.indoor!, lineColour }
+  };
+  return planFrame(world, snapshot, { height: 800, width: 1280 }, undefined, {
+    ...defaultSettings().presentation,
+    preset
+  }).batches.filter(batch => batch.mode === 'lines');
+};
+
+describe('Room Line Colour', () => {
+  for (const preset of ['authentic', 'enhanced'] as const) {
+    test(`a Room's white ink draws in the Indoor Scene's Line Colour (${preset})`, () => {
+      expect(roomLineBatches(preset, 1).map(b => b.colour)).toEqual([
+        c64Colour(1)!
+      ]);
+      expect(roomLineBatches(preset, 2).map(b => b.colour)).toEqual([
+        c64Colour(2)!
+      ]);
+    });
+  }
 });
