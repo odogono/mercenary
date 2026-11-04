@@ -980,13 +980,13 @@ export const planEnhancedFrame = (
   const roadGlowColour = roadHalo.dim(roadColour);
   const pushRoad = (
     target: number[],
-    edge: number,
+    [start, end]: readonly [Vector3, Vector3],
     width: number,
     colour: readonly [number, number, number]
   ): void => {
     const quad = roadStroke(
-      roadPoint(edge >> 8),
-      roadPoint(edge & 0xff),
+      start,
+      end,
       doc.camera.nearPlane,
       Math.tan((doc.camera.verticalFieldOfViewDegrees * Math.PI) / 360),
       outputHeight,
@@ -1000,10 +1000,20 @@ export const planEnhancedFrame = (
       target.push(view.x, view.y, view.z, ...colour, ...NO_PLANE);
     }
   };
-  for (const edge of edges) {
-    pushRoad(roadValues, edge, strokes.roads.weight, roadColour);
+  const roadLines = [
+    ...edges.map(
+      edge => [roadPoint(edge >> 8), roadPoint(edge & 0xff)] as const
+    ),
+    ...(enclosed || inSpace
+      ? []
+      : (roads?.lines ?? []).map(
+          ([start, end]) => [toView(start), toView(end)] as const
+        ))
+  ];
+  for (const line of roadLines) {
+    pushRoad(roadValues, line, strokes.roads.weight, roadColour);
     if (strokes.roads.glow > 0) {
-      pushRoad(roadGlowValues, edge, roadHalo.width, roadGlowColour);
+      pushRoad(roadGlowValues, line, roadHalo.width, roadGlowColour);
     }
   }
 

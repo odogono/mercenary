@@ -1,5 +1,6 @@
 import { IDLE } from '../gameCore/index.ts';
 import { fetchAssets, fetchReader, load } from '../payload/load.ts';
+import { FrameRenderer } from '../rendering/renderer.ts';
 import { endingKey } from '../session/ending.ts';
 import type { PresentationEvent, SessionSnapshot } from '../session/index.ts';
 import { createTargOrrery, skyStateAt, targOrreryFor } from '../sky/index.ts';
@@ -36,7 +37,8 @@ import {
 } from './departure.ts';
 import { installDepartureView } from './departureView.ts';
 import { assertBrowserDocument } from './documentPath.ts';
-import { Renderer, planFrame } from './frame.ts';
+import { drawTargFrame, planTargFrame } from './enhancedFrame.ts';
+import { Renderer } from './frame.ts';
 import { connectedPads } from './gamepad.ts';
 import { BrowserControlProfile } from './input.ts';
 import { browserKeyNames } from './keyNames.ts';
@@ -54,6 +56,7 @@ import { canvasPointer, takeTargetAt } from './pointer.ts';
 import {
   createPreferences,
   effectivePresentation,
+  enhancedStrokesOf,
   titlePreferences
 } from './preferences.ts';
 import {
@@ -264,6 +267,22 @@ try {
     effectivePresentation(settings.presentation, preferences.current())
   );
   const renderer = new Renderer(canvas, orrery);
+  // Enhanced Targ draws its world through the shared planner's renderer, in the same canvas
+  // (ADR 0087); it is made the first time an Enhanced frame needs it.
+  let sharedRenderer: FrameRenderer | undefined;
+  const shared = (): FrameRenderer =>
+    (sharedRenderer ??= new FrameRenderer(
+      canvas,
+      { cullBackFaces: true, fixedSize: true },
+      () => {
+        throw new Error(
+          'The graphics context was lost. Reload the page to restore the view.'
+        );
+      }
+    ));
+  const atmosphere =
+    targSystem.bodies.find(body => body.id === targSystem.rotatingBodyId)
+      ?.atmosphere ?? null;
   const clock = new FixedStepClock();
   let snapshot = session.snapshot;
   const sound = new SoundPresenter(
@@ -932,34 +951,38 @@ try {
       ...presentation,
       orreryElapsed: targClock.elapsed(snapshot.elapsed)
     };
-    const plan = departing
-      ? departure.framePlan(VIEWPORT)
+    const frame = departing
+      ? { kind: 'targ' as const, plan: departure.framePlan(VIEWPORT) }
       : arriving
-        ? arrivalFramePlan(phase, {
-            field: arrival.fieldProgress(),
-            pose,
-            presentation: framePresentation,
-            size: VIEWPORT,
-            snapshot,
-            world,
-            ...(renderer.orrery === undefined
-              ? {}
-              : { orrery: renderer.orrery })
-          })
-        : planFrame(
+        ? {
+            kind: 'targ' as const,
+            plan: arrivalFramePlan(phase, {
+              field: arrival.fieldProgress(),
+              pose,
+              presentation: framePresentation,
+              size: VIEWPORT,
+              snapshot,
+              world,
+              ...(renderer.orrery === undefined
+                ? {}
+                : { orrery: renderer.orrery })
+            })
+          }
+        : planTargFrame(
             world,
             snapshot,
             VIEWPORT,
             renderer.orrery,
-            framePresentation
+            framePresentation,
+            {
+              atmosphere,
+              outputHeight: canvas.height,
+              // The player's weight and glow choices are presentation, so they are read per
+              // frame the same way the sky's preset is.
+              strokes: enhancedStrokesOf(preferences.current())
+            }
           );
-    const drawn = renderer.render(
-      plan,
-      // The player's weight and glow choices are presentation, so they are read per frame the
-      // same way the sky's preset is.
-      presentation.wireframe,
-      presentation.roads
-    );
+    const drawn = drawTargFrame(frame, renderer, shared);
     const player = snapshot.player;
     const panelModel = panelViewModel(
       snapshot,

@@ -954,6 +954,32 @@ export class World {
     return Math.max(0, this.roadAltitudeLookup[index]!);
   }
 
+  /// The Map Lines as the shared planner's road runs (ADR 0087): each cell's two runs as one
+  /// word, run 0 in the high half and run 1 in the low, each run its start and end cells packed
+  /// `(row << 4) | column`. A cell without a run holds zero in its place.
+  roadCorners(): readonly number[] {
+    const corners: number[] = Array.from(
+      { length: this.cellsPerAxis * this.cellsPerAxis },
+      () => 0
+    );
+    for (const [cell, lines] of this.mapLinesByCell) {
+      let word = 0;
+      for (const line of lines) {
+        const run = (line.startPacked << 8) | line.endPacked;
+        word = line.slot === 0 ? (word & 0xff_ff) | (run << 16) : word | run;
+      }
+      corners[cell] = word >>> 0;
+    }
+    return corners;
+  }
+
+  /// The high-altitude map as road runs packed as `roadCorners` packs them.
+  highAltitudeRuns(): readonly number[] {
+    return this.highAltitudeMap.map(
+      line => (line.startPacked << 8) | line.endPacked
+    );
+  }
+
   /// Select the Reference Build's map lines for one camera position.
   mapSegments(position: { x: number; y: number; z: number }): Segment[] {
     const column = Math.floor(position.x / this.cellSize);

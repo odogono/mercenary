@@ -162,6 +162,9 @@ export interface SceneIsland extends CoastIsland {
           readonly edges: readonly number[];
           readonly fromY: number;
         };
+        /// Strokes drawn with the roads, from Body-unit ends, already selected by the Title:
+        /// Targ's ground-level black Ink, which its structures carry (ADR 0087).
+        readonly lines?: readonly (readonly [Vector3, Vector3])[];
         readonly roadColour: string;
       }
     | undefined;

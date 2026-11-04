@@ -396,6 +396,9 @@ const requiredUniform = (
 
 export interface FrameRendererOptions {
   readonly cullBackFaces: boolean;
+  /// Keep the canvas at the size its owner set rather than its element's: Targ's canvas is
+  /// a fixed 1280 by 800 that both its renderers share (ADR 0087).
+  readonly fixedSize?: true;
   readonly lighting?: true;
 }
 
@@ -453,13 +456,22 @@ export class FrameRenderer {
   }
 
   get outputHeight(): number {
+    if (this.options.fixedSize === true) {
+      return this.canvas.height;
+    }
     return Math.max(
       1,
       Math.round(this.canvas.clientHeight * window.devicePixelRatio)
     );
   }
 
-  private resize(): void {
+  /// Size the canvas to its element, as each frame does first. A caller drawing passes of its
+  /// own into the same canvas before the frame calls this first, since resizing clears it.
+  resize(): void {
+    if (this.options.fixedSize === true) {
+      this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+      return;
+    }
     const ratio = window.devicePixelRatio;
     const width = Math.max(1, Math.round(this.canvas.clientWidth * ratio));
     const height = this.outputHeight;
@@ -470,7 +482,13 @@ export class FrameRenderer {
     this.gl.viewport(0, 0, width, height);
   }
 
-  render(plan: TriangleFrame, enhanced?: LightingRender): void {
+  /// Draw one plan. `over` keeps the colour already in the canvas and clears only depth, for a
+  /// Title that draws a pass of its own beneath the plan (Targ's sky, ADR 0087).
+  render(
+    plan: TriangleFrame,
+    enhanced?: LightingRender,
+    { over = false }: { readonly over?: boolean } = {}
+  ): void {
     const gl = this.gl;
     if (gl.isContextLost()) {
       throw new Error(
@@ -488,7 +506,9 @@ export class FrameRenderer {
       return;
     }
     gl.clearColor(plan.clear[0], plan.clear[1], plan.clear[2], 1);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.clear(
+      over ? gl.DEPTH_BUFFER_BIT : gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT
+    );
     this.drawSky(plan);
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
@@ -516,6 +536,8 @@ export class FrameRenderer {
 
   private resetState(): void {
     const gl = this.gl;
+    // Another renderer may share the context (Targ's, ADR 0087) on a vertex array of its own.
+    gl.bindVertexArray(null);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.disable(gl.BLEND);
     gl.disable(gl.SCISSOR_TEST);

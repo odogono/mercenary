@@ -93,6 +93,33 @@ const api = {
       foreground: sample(2, 2)
     };
   },
+  renderGlowHaze: (haze = true) => {
+    // A white glow halo 100 units out over a red sky, with nothing else drawn, as Targ's
+    // unlit view adds it (ADR 0087): under a blue Haze that covers half at 100 units the halo
+    // fades toward black, adding about half its light, and never toward the blue.
+    const empty = new Float32Array();
+    renderer.render({
+      clear: [0, 0, 0],
+      farPlane: 1000,
+      fillTriangleCount: 0,
+      glowVertices: quad(20, 20, 100, [1, 1, 1]),
+      groundTriangleCount: 0,
+      haze: haze ? { colour: [0, 0, 1], halfDistance: 100 } : null,
+      horizonIslandVertices: empty,
+      horizonVertices: empty,
+      islandTriangleCount: 0,
+      nearPlane: 1,
+      skyVertices: quad(1000, 1000, 500, [1, 0, 0]),
+      triangleCount: 0,
+      verticalFieldOfViewDegrees: 45,
+      vertices: empty
+    });
+    return {
+      error: canvas.getContext('webgl2')!.getError(),
+      halo: sample(4, 3),
+      sky: sample(0, 0)
+    };
+  },
   renderHaze: (enhanced = false, haze = true) => {
     // A white wall 100 units out under a blue Haze that covers half at 100 units, a red sky
     // behind it, and a green cab fixed to the view: only the wall takes the Haze.

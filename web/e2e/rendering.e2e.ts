@@ -51,6 +51,33 @@ for (const deviceScaleFactor of [1, 2]) {
     }
   });
 
+  test(`Haze fades a glow halo toward black, not the horizon colour, at DPR ${deviceScaleFactor}`, async ({
+    browser
+  }) => {
+    const context = await browser.newContext({ deviceScaleFactor });
+    try {
+      const page = await context.newPage();
+      await page.goto('/e2e/rendering-fixture.html');
+      await expect(page.locator('#result')).toHaveText('ready');
+      const clear = await page.evaluate(() =>
+        window.renderingFixture.renderGlowHaze(false)
+      );
+      expect(clear.halo).toEqual([255, 255, 255, 255]);
+      const hazed = await page.evaluate(() =>
+        window.renderingFixture.renderGlowHaze()
+      );
+      const [red, green, blue] = hazed.halo;
+      expect(red).toBe(255);
+      expect(green).toBe(blue);
+      expect(green).toBeGreaterThan(100);
+      expect(green).toBeLessThan(128);
+      expect(hazed.sky).toEqual([255, 0, 0, 255]);
+      expect(hazed.error).toBe(0);
+    } finally {
+      await context.close();
+    }
+  });
+
   test(`Haze fades the world toward the horizon colour, and never the sky or the cab, at DPR ${deviceScaleFactor}`, async ({
     browser
   }) => {

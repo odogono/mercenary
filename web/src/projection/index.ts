@@ -10,10 +10,12 @@ import {
   objectSegments,
   placedAtResidence,
   room,
+  type ObjectPlacement,
   type Polygon,
   type Residence,
   type Segment,
   type World,
+  type WorldCell,
   type Location as WorldLocation
 } from '../world/index.ts';
 
@@ -615,11 +617,123 @@ const withinHorizon = (
   Math.abs(origin.y - position.y) < reach &&
   Math.abs(origin.z - position.z) < reach;
 
+/// One object present at a location, at its live position: the detail-cube and Far Point rules
+/// decide how it is drawn. `parked` marks a surface object parked off the grid at its payload
+/// position, whose Far Point always follows Horizon Distance.
+export interface PresentObject {
+  readonly parked: boolean;
+  readonly placed: ObjectPlacement;
+}
+
+/// The objects present at a location, in slot order, each at its live position.
+///
+/// A room object is drawn when the player is in its room, by the same detail-cube and
+/// point-collapse rules a surface object gets: only where they are differs.
+export const presentObjects = (
+  world: World,
+  location: WorldLocation,
+  residence?: ReadonlyMap<number, Residence>
+): PresentObject[] => {
+  const present: PresentObject[] = [];
+  for (const object of world.objects) {
+    const where = residence?.get(object.slot);
+    const parked =
+      location.kind === 'surface' &&
+      object.placement === 'surface' &&
+      !object.withinWorld &&
+      (where === undefined ||
+        (where.kind === 'surface' && where.at === undefined));
+    if (!isDrawable(object, location, where) && !parked) {
+      continue;
+    }
+    const placed =
+      where === undefined
+        ? location.kind === 'surface'
+          ? atUnsignedSurfacePosition(object)
+          : object
+        : placedAtResidence(world, object, where, location);
+    present.push({ parked, placed });
+  }
+  return present;
+};
+
+/// One Surface Cell a Structure Reach selects, with what it draws this frame.
+export interface SelectedCell {
+  readonly cell: WorldCell;
+  /// Horizontal distance from the eye to the cell's centre.
+  readonly distance: number;
+  /// Drawn as a Distant Structure: any cell but the occupied one, under the whole-surface reach.
+  readonly distant: boolean;
+  readonly faces: readonly Polygon[];
+  readonly segments: readonly Segment[];
+}
+
+/// Whether a structure segment is ground-level black Ink: a road edge embedded in a structure.
+export const isGroundInk = (segment: Segment): boolean =>
+  segment.ink === Ink.black && segment.a.y === 0 && segment.b.y === 0;
+
+/// The Surface Cells a Structure Reach selects from a position, row by row.
+///
+/// Reference play expands only the occupied cell; the Trace Oracle retains its recorded one-cell
+/// ring; the whole surface draws every other cell as a Distant Structure. The city is the 16×16
+/// cell table and nothing more: a camera outside it sees no Surface Structure, rather than a
+/// copy of the city repeated across Targ.
+export const selectedCells = (
+  world: World,
+  position: Vector3,
+  reach: VisibilityRules['reach'],
+  elapsed: number
+): SelectedCell[] => {
+  const selected: SelectedCell[] = [];
+  const column = Math.floor(position.x / world.cellSize);
+  const row = Math.floor(position.z / world.cellSize);
+  const radius = reach === 'ring' ? 1 : 0;
+  const all = reach === 'all';
+  const firstColumn = all ? 0 : Math.max(0, column - radius);
+  const lastColumn = all
+    ? world.cellsPerAxis - 1
+    : Math.min(world.cellsPerAxis - 1, column + radius);
+  const firstRow = all ? 0 : Math.max(0, row - radius);
+  const lastRow = all
+    ? world.cellsPerAxis - 1
+    : Math.min(world.cellsPerAxis - 1, row + radius);
+  for (let selectedRow = firstRow; selectedRow <= lastRow; selectedRow++) {
+    for (
+      let selectedColumn = firstColumn;
+      selectedColumn <= lastColumn;
+      selectedColumn++
+    ) {
+      const cell = world.cell(selectedColumn, selectedRow);
+      const isOccupied = selectedColumn === column && selectedRow === row;
+      const isDistant = all && !isOccupied;
+      if (
+        cell !== undefined &&
+        cell.index !== 0 &&
+        !(isDistant && cell.reach === 'cell')
+      ) {
+        const workspace = isOccupied ? world.roadWorkspace(cell) : undefined;
+        selected.push({
+          cell,
+          distance: Math.hypot(
+            cell.centre.x - position.x,
+            cell.centre.z - position.z
+          ),
+          distant: isDistant,
+          faces: cell.faces(elapsed),
+          segments: isDistant
+            ? cell.distantSegments(elapsed)
+            : cell.segments(elapsed, workspace)
+        });
+      }
+    }
+  }
+  return selected;
+};
+
 /// Gather what is worth projecting near the camera. Frustum rejection is left to the
 /// projection step, which has to compute view space anyway.
 ///
-/// Surface structures follow the selected reach. Reference play expands only the occupied cell;
-/// the Trace Oracle retains its recorded one-cell ring explicitly. Objects retain their separate
+/// Surface structures follow the selected reach (`selectedCells`). Objects retain their separate
 /// decoded detail-cube rule, with Horizon Distance deciding whether a below-eye Far Point remains.
 ///
 /// The append order is the pipeline order a Golden Trace records, and it is **cells, then the
@@ -642,34 +756,19 @@ export const visible = (
   // Underground the Reference Build draws one room and nothing else: no cell ring, no roads,
   // no surface objects. A room is its own world — but the things standing in that room are
   // drawn, by the same rules that draw the things on the surface.
-  /// The object rule, which is the same rule on the surface and underground: the things
-  /// present are drawn by their own detail-cube rule, and collapse to a point beyond it. Only
-  /// where they are differs, so only that is a parameter.
   const appendObjects = (location: WorldLocation): void => {
-    for (const object of world.objects) {
-      const where = residence?.get(object.slot);
-      const parkedSurfaceObject =
-        location.kind === 'surface' &&
-        object.placement === 'surface' &&
-        !object.withinWorld &&
-        (where === undefined ||
-          (where.kind === 'surface' && where.at === undefined));
-      if (!isDrawable(object, location, where) && !parkedSurfaceObject) {
-        continue;
-      }
-      const placed =
-        where === undefined
-          ? location.kind === 'surface'
-            ? atUnsignedSurfacePosition(object)
-            : object
-          : placedAtResidence(world, object, where, location);
+    for (const { parked, placed } of presentObjects(
+      world,
+      location,
+      residence
+    )) {
       if (isDetailed(placed, position)) {
         append(segments, objectSegments(placed));
         append(faces, placed.faces);
         detailedObjects += 1;
       } else if (
         placed.drawsFarAsPoint &&
-        ((!parkedSurfaceObject && rules.farPoints === 'every') ||
+        ((!parked && rules.farPoints === 'every') ||
           placed.origin.y >= position.y ||
           withinHorizon(
             placed.origin,
@@ -698,66 +797,21 @@ export const visible = (
   }
 
   const roadSegments = new Set<Segment>();
-  // The city is the 16×16 cell table and nothing more: a camera outside it sees
-  // no Surface Structure, rather than a copy of the city repeated across Targ.
-  const column = Math.floor(position.x / world.cellSize);
-  const row = Math.floor(position.z / world.cellSize);
-  const radius = rules.reach === 'ring' ? 1 : 0;
-  const all = rules.reach === 'all';
-  const firstColumn = all ? 0 : Math.max(0, column - radius);
-  const lastColumn = all
-    ? world.cellsPerAxis - 1
-    : Math.min(world.cellsPerAxis - 1, column + radius);
-  const firstRow = all ? 0 : Math.max(0, row - radius);
-  const lastRow = all
-    ? world.cellsPerAxis - 1
-    : Math.min(world.cellsPerAxis - 1, row + radius);
-  for (let selectedRow = firstRow; selectedRow <= lastRow; selectedRow++) {
-    for (
-      let selectedColumn = firstColumn;
-      selectedColumn <= lastColumn;
-      selectedColumn++
-    ) {
-      const cell = world.cell(selectedColumn, selectedRow);
-      const isOccupied = selectedColumn === column && selectedRow === row;
-      const isDistant = rules.reach === 'all' && !isOccupied;
-      if (
-        cell !== undefined &&
-        cell.index !== 0 &&
-        !(isDistant && cell.reach === 'cell')
-      ) {
-        const workspace = isOccupied ? world.roadWorkspace(cell) : undefined;
-        const selected = isDistant
-          ? cell.distantSegments(elapsed)
-          : cell.segments(elapsed, workspace);
-        append(faces, cell.faces(elapsed));
-        if (isDistant) {
-          const distance = Math.hypot(
-            cell.centre.x - position.x,
-            cell.centre.z - position.z
-          );
-          for (const segment of selected) {
-            const distantSegment = { ...segment, distance };
-            distant.push(distantSegment);
-            if (
-              segment.ink === Ink.black &&
-              segment.a.y === 0 &&
-              segment.b.y === 0
-            ) {
-              roadSegments.add(distantSegment);
-            }
-          }
-        } else {
-          append(segments, selected);
-          for (const segment of selected) {
-            if (
-              segment.ink === Ink.black &&
-              segment.a.y === 0 &&
-              segment.b.y === 0
-            ) {
-              roadSegments.add(segment);
-            }
-          }
+  for (const selected of selectedCells(world, position, rules.reach, elapsed)) {
+    append(faces, selected.faces);
+    if (selected.distant) {
+      for (const segment of selected.segments) {
+        const distantSegment = { ...segment, distance: selected.distance };
+        distant.push(distantSegment);
+        if (isGroundInk(segment)) {
+          roadSegments.add(distantSegment);
+        }
+      }
+    } else {
+      append(segments, selected.segments);
+      for (const segment of selected.segments) {
+        if (isGroundInk(segment)) {
+          roadSegments.add(segment);
         }
       }
     }
