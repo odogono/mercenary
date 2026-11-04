@@ -513,6 +513,32 @@ describe('the player stands on one Floor', () => {
     }
   });
 
+  test('Haze is absent in an Enclosed Region and present outdoors in the same structure (ADR 0088)', () => {
+    const hazy = { hazeHalfDistance: 200_000 };
+    const enclosed = inRegionZero(1).snapshot;
+    expect(
+      planEnhancedFrame(
+        { ...enclosed.surface, atmosphere: hazy },
+        enclosed.pose,
+        content.doc,
+        enclosed.structure
+      ).haze
+    ).toBeNull();
+    const lobby = inRegionZero(0).snapshot;
+    expect(
+      planEnhancedFrame(
+        { ...lobby.surface, atmosphere: hazy },
+        lobby.pose,
+        content.doc,
+        lobby.structure
+      ).haze
+    ).toEqual({ colour: rgb('#000022'), halfDistance: 200_000 });
+  });
+
+  test('Eris keeps its recovered Atmosphere, with no thickness authored', () => {
+    expect(content.surface.atmosphere).toEqual({ hazeHalfDistance: null });
+  });
+
   test('a region with flag bit 15 set keeps the sky and the Body around it', () => {
     const { pose, structure, surface } = inRegionZero(0).snapshot;
     // Floor 0's region 0 is `$8000`, the lobby.

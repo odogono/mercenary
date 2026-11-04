@@ -24,6 +24,7 @@ import {
   type CarriedSlot,
   type FloorLabelGlyphs
 } from '../structure/selection.ts';
+import type { Haze } from './atmosphere.ts';
 import { beaconLit, formMesh, type FormClock } from './forms.ts';
 import {
   insideCentralCellHalf,
@@ -77,6 +78,10 @@ export interface EnhancedFramePlan {
   /// ground records a hair behind so a building's pad lies over the cell's apron, as a
   /// painter's ground stream drawn before its structures would leave it.
   readonly groundTriangleCount: number;
+  /// The frame's Haze (ADR 0088), over every world layer and never the sky or the view-fixed
+  /// models. Null in space, in an Enclosed Region, on a Body with no Atmosphere, and where no
+  /// thickness is authored.
+  readonly haze: Haze | null;
   /// Every island fill, flat, in record order and in the same vertices, painted over the ground
   /// to the horizon (#578). Past the far plane they are all there is of the islands.
   readonly horizonIslandVertices: Float32Array;
@@ -1316,20 +1321,26 @@ export const planEnhancedFrame = (
     triangleCount = worldTriangles;
   }
 
+  const skyColour =
+    surface.sky === null
+      ? null
+      : daylight
+        ? surface.sky.day.colour
+        : surface.sky.night.colour;
+  // The Body's sky is one colour from zenith to horizon, so its horizon colour is the fill.
+  const halfDistance = surface.atmosphere?.hazeHalfDistance ?? null;
+  const haze =
+    inSpace || enclosed || skyColour === null || halfDistance === null
+      ? null
+      : { colour: channels(skyColour), halfDistance };
+
   return {
     // Outside an enclosed region `$059638` fills the sky with `$7C86`, the Body's day or night
     // word (#494). In space `$0598CC` loads slot 8 with `$001` and `$059CE2` fills the view in
     // it, the dark blue behind the stars (#578). The VOID slot has no sky words and is not a
     // surface a Session stands on, so it clears to black rather than to an invented sky.
     clear: channels(
-      background?.ceiling ??
-        (inSpace
-          ? SPACE_SKY
-          : surface.sky === null
-            ? '#000000'
-            : daylight
-              ? surface.sky.day.colour
-              : surface.sky.night.colour)
+      background?.ceiling ?? (inSpace ? SPACE_SKY : (skyColour ?? '#000000'))
     ),
     drawnPlacements,
     enclosed,
@@ -1339,6 +1350,7 @@ export const planEnhancedFrame = (
       ? {}
       : { glowVertices: new Float32Array(glowValues) }),
     groundTriangleCount,
+    haze,
     horizonIslandVertices: new Float32Array(horizonIslandValues),
     horizonVertices: new Float32Array(horizonValues),
     islandTriangleCount,

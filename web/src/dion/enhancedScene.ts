@@ -10,6 +10,7 @@ import type {
 } from '../catalogue/data.ts';
 import { islandOriginNear } from '../coast/islands.ts';
 import { ROAD_HORIZON_DISTANCES } from '../coast/roads.ts';
+import { AUTHORED_HAZE, atmosphereOf } from '../enhanced/atmosphere.ts';
 import type { FormClock, PlacementForms } from '../enhanced/forms.ts';
 import {
   DEFAULT_ENHANCED_STROKES,
@@ -738,7 +739,17 @@ export const dionEnhancedScene = (
     .map(resident => residentPlacement(resident, palettes, undefined));
   const nightSky = hex(world.framePalette.skyNight);
   const daySky = hex(world.framePalette.skyDay);
+  // `bodyAtmosphere` says whether the Body has air; how thick its Haze is, is authored
+  // (ADR 0088). A frame without the System's records has no recovered fact, and no Haze.
+  const atmosphereFlag = world.tourcraft?.system.bodies.find(
+    body => body.offset === state.skyView?.body
+  )?.flags[3];
   const surface: EnhancedSurface = {
+    atmosphere: atmosphereOf(
+      atmosphereFlag !== undefined && atmosphereFlag !== 0,
+      AUTHORED_HAZE.mercenaryIII,
+      dionPose(state).body
+    ),
     baseColour: hex(world.framePalette.land),
     floorLabelGlyphs: {},
     grid: {

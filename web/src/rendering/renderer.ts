@@ -91,6 +91,19 @@ float planeDepth(float interpolated) {
   float depth = facing == 0.0 ? 0.0 : -facePlane.w / facing;
   return depth > 0.0 ? depth : interpolated;
 }
+// Haze (ADR 0088): the share of the horizon colour at the pixel's view distance, found where
+// its ray meets the face's plane as the depth is. A scale of zero is no Haze.
+uniform vec3 hazeColour;
+uniform float hazeScale;
+vec3 hazed(vec3 colour, float interpolated) {
+  if (hazeScale == 0.0) {
+    return colour;
+  }
+  vec2 ndc = gl_FragCoord.xy / viewport * 2.0 - 1.0;
+  vec3 ray = vec3(ndc.x * aspect * tangent, ndc.y * tangent, 1.0);
+  float range = length(ray) * planeDepth(interpolated);
+  return mix(colour, hazeColour, 1.0 - exp2(-range * hazeScale));
+}
 float logDepth(float interpolated) {
   float viewDepth = planeDepth(interpolated);
   return log2(max(1.0 + viewDepth, 1e-6)) / log2(1.0 + depthRange.y) + depthBias;
@@ -104,7 +117,7 @@ ${LOG_DEPTH}
 out vec4 pixel;
 void main() {
   gl_FragDepth = logDepth(viewDepth);
-  pixel = vec4(faceColour, 1.0);
+  pixel = vec4(hazed(faceColour, viewDepth), 1.0);
 }`;
 
 const PROJECT = `
@@ -225,7 +238,10 @@ void main() {
   float fill = 1.0 - max(shadowDepth - 1.0, 0.0) * shaded;
   vec3 ambient = mix(ambientGround, ambientSky, n.y * 0.5 + 0.5) * fill;
   gl_FragDepth = logDepth(viewPosition.z);
-  pixel = vec4(faceColour * (ambient + sunColour * lambert * shadow), 1.0);
+  pixel = vec4(
+    hazed(faceColour * (ambient + sunColour * lambert * shadow), viewPosition.z),
+    1.0
+  );
 }`;
 
 const shader = (
@@ -397,6 +413,7 @@ export class FrameRenderer {
   private readonly gl: WebGL2RenderingContext;
   private readonly shaderProgram: WebGLProgram;
   private readonly contextLost: (event: Event) => void;
+  private haze: TriangleFrame['haze'] = null;
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -460,6 +477,7 @@ export class FrameRenderer {
     }
     this.resize();
     this.resetState();
+    this.haze = plan.haze ?? null;
     if (enhanced !== undefined && this.options.lighting === true) {
       this.enhanced ??= this.createEnhanced(gl);
       const query = this.beginTiming();
@@ -539,8 +557,31 @@ export class FrameRenderer {
     this.bindGeometry(this.shaderProgram, this.skyBuffer, COLOUR_ATTRIBUTES);
     this.setProjection(this.shaderProgram, plan);
     gl.uniform1f(requiredUniform(gl, this.shaderProgram, 'depthBias'), 0);
-    gl.drawArrays(gl.TRIANGLES, 0, vertices.length / FLOATS_PER_VERTEX);
+    // The sky takes no Haze; the ground to the horizon is the world, and does.
+    if (sky > 0) {
+      this.applyHaze(this.shaderProgram, false);
+      gl.drawArrays(gl.TRIANGLES, 0, sky / FLOATS_PER_VERTEX);
+    }
+    if (horizon > 0) {
+      this.applyHaze(this.shaderProgram, true);
+      gl.drawArrays(
+        gl.TRIANGLES,
+        sky / FLOATS_PER_VERTEX,
+        horizon / FLOATS_PER_VERTEX
+      );
+    }
     gl.depthMask(true);
+  }
+
+  /// The frame's Haze on a program, or none where `on` is false or the frame has none.
+  private applyHaze(shaderProgram: WebGLProgram, on: boolean): void {
+    const gl = this.gl;
+    const haze = on ? this.haze : null;
+    this.uniform3(shaderProgram, 'hazeColour', haze?.colour ?? [0, 0, 0]);
+    gl.uniform1f(
+      requiredUniform(gl, shaderProgram, 'hazeScale'),
+      haze === null || haze === undefined ? 0 : 1 / haze.halfDistance
+    );
   }
 
   /// Paint flat ink without changing the geometry's depth, then restore the main stream.
@@ -566,6 +607,7 @@ export class FrameRenderer {
       plan.nearPlane,
       farPlane
     );
+    this.applyHaze(this.shaderProgram, true);
     gl.uniform1f(requiredUniform(gl, this.shaderProgram, 'depthBias'), 0);
     gl.drawArrays(gl.TRIANGLES, 0, vertices.length / FLOATS_PER_VERTEX);
     gl.depthMask(true);
@@ -595,6 +637,7 @@ export class FrameRenderer {
     const islands = plan.islandTriangleCount * 3;
     const ground = plan.groundTriangleCount * 3;
     const rest = plan.triangleCount * 3 - fill - islands - ground;
+    this.applyHaze(shaderProgram, true);
     gl.uniform1f(bias, SURFACE_DEPTH_BIAS);
     gl.depthFunc(gl.ALWAYS);
     gl.drawArrays(gl.TRIANGLES, 0, fill);
@@ -673,6 +716,8 @@ export class FrameRenderer {
     this.bindGeometry(this.shaderProgram, this.skyBuffer, COLOUR_ATTRIBUTES);
     this.setProjection(this.shaderProgram, plan);
     gl.uniform1f(requiredUniform(gl, this.shaderProgram, 'depthBias'), 0);
+    // Nothing fixed to the view takes Haze: a cab is at the eye.
+    this.applyHaze(this.shaderProgram, false);
     gl.drawArrays(gl.TRIANGLES, 0, vertices.length / FLOATS_PER_VERTEX);
   }
 

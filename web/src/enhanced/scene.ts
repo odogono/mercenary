@@ -11,6 +11,7 @@ import type {
 } from '../catalogue/data.ts';
 import type { CoastIsland } from '../coast/islands.ts';
 import type { Vector3 } from '../orientation/index.ts';
+import type { Atmosphere } from './atmosphere.ts';
 import type { FormTables, PlacementForms } from './forms.ts';
 
 /// What the Enhanced planner draws a frame from, whichever Title supplies it: a Body's surface
@@ -172,6 +173,9 @@ export type SceneFloorLabelGlyphs = Readonly<
 >;
 
 export interface EnhancedSurface<I extends SceneIsland = SceneIsland> {
+  /// The Body's Atmosphere, which sets its Haze (ADR 0088). Null or absent on a Body without
+  /// one.
+  readonly atmosphere?: Atmosphere | null | undefined;
   /// The colour the Body's surface is drawn in wherever no island is painted over it: its sea,
   /// on a Body that has one. Null where the Body is not a surface.
   readonly baseColour: string | null;

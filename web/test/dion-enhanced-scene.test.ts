@@ -157,6 +157,20 @@ describe('the Dion Enhanced scene', () => {
   });
 });
 
+describe('Haze (ADR 0088)', () => {
+  test('the opening Body keeps its recovered Atmosphere, with no thickness authored', () => {
+    const scene = new TourcraftSession(tourcraft).enhancedScene();
+    const body = tourcraft.system.bodies.find(
+      item => scene.pose.body === `dion-${item.offset}`
+    );
+    expect(body).toBeDefined();
+    expect(scene.surface.atmosphere).toEqual(
+      body!.flags[3] === 0 ? null : { hazeHalfDistance: null }
+    );
+    expect(planDionEnhancedFrame(scene, 720).haze).toBeNull();
+  });
+});
+
 describe('view-fixed models', () => {
   test('a passenger sees the cab and the driver’s head about the eye', async () => {
     let riding = 0;

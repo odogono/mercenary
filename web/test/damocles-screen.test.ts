@@ -29,6 +29,7 @@ const planOf = (r: number, g: number, b: number): EnhancedFramePlan => {
     farPlane: 1,
     fillTriangleCount: 0,
     groundTriangleCount: 0,
+    haze: null,
     horizonIslandVertices: vertex(),
     horizonVertices: vertex(),
     islandTriangleCount: 0,
