@@ -77,6 +77,9 @@ export interface ScenePlacement {
       /// its offset is within the surface's Horizon Distance. Absent, it shows at any range.
       readonly belowEyeWithinHorizon?: boolean;
       readonly colour: string;
+      /// The point's side in output pixels. Absent, it is one ST pixel, 1/256 of a unit
+      /// tangent, as a star is.
+      readonly pixels?: number;
     };
   };
   readonly selection?: {

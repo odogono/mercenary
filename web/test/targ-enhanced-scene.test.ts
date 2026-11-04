@@ -38,6 +38,12 @@ const hex = (colour: { blue: number; green: number; red: number }): string =>
     .map(value => value.toString(16).padStart(2, '0'))
     .join('')}`;
 
+/// A ground segment as a key that ignores its direction.
+const groundKey = (
+  a: { x: number; z: number },
+  b: { x: number; z: number }
+): string => [`${a.x},${a.z}`, `${b.x},${b.z}`].sort().join(' ');
+
 const sceneOf = (snapshot: SessionSnapshot): TargEnhancedScene =>
   targEnhancedScene(world, snapshot, {
     atmosphere: ATMOSPHERE,
@@ -185,6 +191,28 @@ describe('Targ through the shared planner', () => {
     expect(room.mesh!.lines.length).toBeGreaterThan(0);
     for (const line of room.mesh!.lines) {
       expect(line.colour).toBe(hex(c64Colour(2)!));
+    }
+  });
+
+  test('keeps structure ground Ink off the Map Lines, so the road rule draws each once', () => {
+    const snapshot = {
+      ...session().snapshot,
+      player: {
+        ...session().snapshot.player,
+        position: { x: 0, y: 5000, z: 0 }
+      }
+    };
+    const scene = targEnhancedScene(world, snapshot, {
+      atmosphere: ATMOSPHERE,
+      horizon: ScenePalette.sky,
+      structureReach: 'all'
+    });
+    const mapLines = new Set(
+      world.mapLineSegments().map(segment => groundKey(segment.a, segment.b))
+    );
+    expect(mapLines.size).toBeGreaterThan(0);
+    for (const [a, b] of scene.surface.islands[0]!.roads!.lines!) {
+      expect(mapLines.has(groundKey(a, b))).toBe(false);
     }
   });
 

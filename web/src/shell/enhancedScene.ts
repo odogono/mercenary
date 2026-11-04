@@ -371,12 +371,22 @@ export const planTargEnhancedFrame = (
   outputHeight: number,
   strokes: EnhancedStrokes = DEFAULT_ENHANCED_STROKES
 ): EnhancedFramePlan => {
+  // Targ draws a Far Point as one Reference Viewport pixel, scaled to the view.
+  const pixels = Math.max(1, Math.round(viewportScale(size)));
+  const placements = scene.placements.map(item =>
+    item.reach?.point === undefined
+      ? item
+      : {
+          ...item,
+          reach: { ...item.reach, point: { ...item.reach.point, pixels } }
+        }
+  );
   const plan = planEnhancedFrame(
     scene.surface,
     scene.pose,
     targPresentation(size),
     null,
-    scene.placements,
+    placements,
     [],
     () => false,
     false,

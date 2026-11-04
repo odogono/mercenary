@@ -1259,8 +1259,13 @@ export const planEnhancedFrame = (
     if (reach.point !== undefined && lit && eligible) {
       const centre = toView(placement.position);
       if (centre.z > doc.camera.nearPlane) {
-        // One ST pixel, 1/256 of a unit tangent on a side, as a star is.
-        const half = centre.z / 512;
+        // One ST pixel, 1/256 of a unit tangent on a side, as a star is, unless the point
+        // gives its side in output pixels.
+        const pixels = reach.point.pixels;
+        const half =
+          pixels === undefined
+            ? centre.z / 512
+            : (centre.z * strokeTangent * pixels) / outputHeight;
         const corner = (dx: number, dy: number): Vector3 => ({
           x: centre.x + dx * half,
           y: centre.y + dy * half,

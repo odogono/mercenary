@@ -957,6 +957,13 @@ export class World {
   /// The Map Lines as the shared planner's road runs (ADR 0087): each cell's two runs as one
   /// word, run 0 in the high half and run 1 in the low, each run its start and end cells packed
   /// `(row << 4) | column`. A cell without a run holds zero in its place.
+  /// Every Map Line's segment, on the ground at y 0.
+  mapLineSegments(): readonly Segment[] {
+    return [...this.mapLinesByCell.values()].flatMap(lines =>
+      lines.map(line => line.segment)
+    );
+  }
+
   roadCorners(): readonly number[] {
     const corners: number[] = Array.from(
       { length: this.cellsPerAxis * this.cellsPerAxis },
