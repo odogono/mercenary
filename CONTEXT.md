@@ -286,6 +286,14 @@ _Avoid_: Collapse, universe end, apocalypse
 The optional Body that another Body is grouped under in a System's drawn hierarchy; absence means the grouping is not established, not that the Body stands alone. It names how a System organises its Bodies for presentation and naming, and asserts no revolution: in Damocles the recovered System is static apart from its comet, so a Body's Primary is not something it goes round.
 _Avoid_: Parent, centre, star, inferred Primary, orbit, revolution
 
+**Atmosphere**:
+Whether a Body has air, and, for Enhanced presentation, how thick its Haze is. Damocles and Mercenary III recover whether a Body has an Atmosphere; how thick it is, and TARG's Atmosphere as a whole, are authored.
+_Avoid_: Air, weather, sky colour
+
+**Haze**:
+Enhanced presentation's fading of the distant world toward the horizon colour of the Body the player stands on, as thick as that Body's Atmosphere. It is absent in space, indoors, in Enclosed Regions and on a Body with no Atmosphere, and never touches what is fixed to the view, such as a cab.
+_Avoid_: Fog, distance fade, depth cue, weather
+
 **Body Rotation**:
 The rate at which a Body turns about its own axis, together with the **Body Day** it implies — the time for one full turn. It is the only motion a recovered System may attribute to a Body that is not the Body moving: it turns the Body's surface frame under a System frame that stays put, so a sun or moon crossing a surface sky is the observer's own Body turning. A Body Day is a duration, not a clock the game shows.
 _Avoid_: Orbital period, revolution, day/night cycle, spin rate, phase
@@ -712,7 +720,7 @@ Which Surface Cells contribute Surface Structures to the view: only the occupied
 _Avoid_: Building reach, draw distance, render radius
 
 **Distant Structure**:
-A Surface Structure shown from a Surface Cell other than the one the player occupies, subdued so it reads behind the occupied cell's structure.
+A Surface Structure shown from a Surface Cell other than the one the player occupies. In Enhanced presentation, Haze subdues it, so it reads behind the occupied cell's structure.
 _Avoid_: Background building, far model, level of detail
 
 **Geometry Identity**:
@@ -771,13 +779,17 @@ _Avoid_: Colour, brightness, shade, layer
 One world segment after projection: two screen coordinates and the Ink it is drawn in. It says what to draw and nothing about how to draw it.
 _Avoid_: Edge, stroke, vector, polyline
 
+**Far Form**:
+What an object draws once it lies outside its detailed reach: a Far Point, or nothing at all. Every Title gives each object its own detailed reach and its own Far Form; the rule that chooses between the detailed and the far form is shared.
+_Avoid_: Level of detail, LOD, impostor, far model
+
 **Far Point**:
-An object outside its detailed reach whose distant form is one point rather than its wireframe; at or above the eye it remains eligible at any range, while below the eye it remains eligible only within Horizon Distance.
+A Far Form of one point rather than the object's wireframe; at or above the eye it remains eligible at any range, while below the eye a Targ object's Far Point remains eligible only within Horizon Distance.
 _Avoid_: Dot, sprite, level of detail, billboard
 
 **Horizon Distance**:
-The altitude-derived reach across Surface Cells within which Map Lines are selected and a below-eye Far Point remains visible; at high altitude it encompasses the whole surface.
-_Avoid_: Far plane, draw distance, view distance
+The altitude-derived reach across Surface Cells within which a surface's roads are selected (Targ's Map Lines, Damocles's and Mercenary III's road runs) and, on Targ, a below-eye Far Point remains visible; each Title reads it from its own altitude table, and at high altitude it encompasses the whole surface.
+_Avoid_: Far plane, draw distance, view distance, road radius
 
 **Road Workspace**:
 The occupied Surface Cell's road endpoints made available to its Surface Structure, allowing structure lines to continue to the junctions those roads reach.
