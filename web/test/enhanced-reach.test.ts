@@ -121,6 +121,24 @@ describe('an object’s reach', () => {
     expect(Math.max(...xs) - Math.min(...xs)).toBeCloseTo(1 / 256, 9);
   });
 
+  test('a far marker that gives its side in pixels is that many output pixels', () => {
+    const far = plan(
+      object(3, { cells: 1, point: { colour: '#cccc88', pixels: 4 } })
+    );
+    const ys: number[] = [];
+    for (let i = 0; i < far.vertices.length; i += FLOATS_PER_VERTEX) {
+      ys.push(far.vertices[i + 1]! / far.vertices[i + 2]!);
+    }
+    const tangent = Math.tan(
+      (ENHANCED_PRESENTATION.camera.verticalFieldOfViewDegrees * Math.PI) / 360
+    );
+    // 600 output pixels span twice the tangent.
+    expect(Math.max(...ys) - Math.min(...ys)).toBeCloseTo(
+      (4 * 2 * tangent) / 600,
+      9
+    );
+  });
+
   test('a far beacon is a point only while it is lit', () => {
     const beacon = object(
       3,

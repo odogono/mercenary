@@ -1,12 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
-  Camera,
   ReferenceViewport,
-  projectFrame,
   viewportCentre,
-  viewportScale,
-  visible
+  viewportScale
 } from '../src/projection/index.ts';
 import { ScenePalette, atariSTColour, c64Colour } from '../src/scene/index.ts';
 import {
@@ -17,7 +14,7 @@ import {
 import { defaultSettings } from '../src/settings/index.ts';
 import { Renderer, planFrame } from '../src/shell/frame.ts';
 import { createTargOrrery, type TargOrrery } from '../src/sky/index.ts';
-import { Ink, World } from '../src/world/index.ts';
+import { World } from '../src/world/index.ts';
 import { TARG_SYSTEM } from './fixtures/targSystem.ts';
 import { loadPayload } from './replay/artifacts.ts';
 
@@ -61,6 +58,7 @@ const fakeRenderer = (
     bindBuffer: (_target: number, _buffer: WebGLBuffer | null) => undefined,
     bindFramebuffer: () => undefined,
     bindTexture: () => undefined,
+    bindVertexArray: () => undefined,
     BLEND: 0x0b_71,
     blendEquation: () => undefined,
     blendFunc: (_source: number, _destination: number) =>
@@ -82,6 +80,7 @@ const fakeRenderer = (
     },
     createShader: (_type: number) => shader,
     createTexture: () => ({}),
+    createVertexArray: () => ({}),
     disable: (capability: number) =>
       calls.push(
         capability === 0x0b_71 ? 'blend:off' : `disable:${capability}`
@@ -317,52 +316,6 @@ describe('a Session Snapshot planned for WebGL2', () => {
     expect(frame.lines).toBe(4);
     expect(frame.points).toBe(1);
     expect(frame.batches.at(-1)?.pointSize).toBe(1);
-  });
-
-  test('all reach draws roads behind distant and nearby bright Ink', () => {
-    const presentation = {
-      ...defaultSettings().presentation,
-      structureReach: 'all' as const
-    };
-    const frame = planFrame(
-      world,
-      session().snapshot,
-      size,
-      undefined,
-      presentation
-    );
-
-    expect(frame.batches[0]?.mode).toBe('triangles');
-    expect(frame.batches[0]?.colour).toEqual(ScenePalette.ground);
-    const blackIndex = frame.batches.findIndex(
-      batch =>
-        batch.mode === 'lines' && batch.colour.red === ScenePalette.blackInk.red
-    );
-    const nearWhiteIndex = frame.batches.reduce(
-      (found, batch, index) =>
-        batch.colour.red === ScenePalette.whiteInk.red ? index : found,
-      -1
-    );
-    expect(blackIndex).toBe(1);
-    expect(nearWhiteIndex).toBeGreaterThan(blackIndex);
-    expect(frame.batches.at(-1)?.mode).toBe('points');
-    expect(frame.batches.at(-1)?.colour).toEqual(ScenePalette.whiteInk);
-    expect(frame.lines).toBeGreaterThan(38);
-    expect(frame.batches.at(-1)?.pointSize).toBe(4);
-
-    const distantGreys = frame.batches
-      .filter(
-        batch =>
-          batch.mode === 'lines' &&
-          batch.colour.red !== ScenePalette.blackInk.red &&
-          batch.colour.red !== ScenePalette.whiteInk.red
-      )
-      .map(batch => batch.colour.red);
-    expect(new Set(distantGreys).size).toBeGreaterThan(1);
-    expect(Math.min(...distantGreys)).toBe(ScenePalette.distantInk.red);
-    expect(Math.max(...distantGreys)).toBeGreaterThan(
-      ScenePalette.distantInk.red
-    );
   });
 
   test('a lit Room clears to its solid Atari ST backdrop colour', () => {
@@ -669,92 +622,13 @@ describe('a Session Snapshot submitted to WebGL2', () => {
     ]);
   });
 
-  test('submits a four-pixel Enhanced Far Point and one-pixel Authentic Far Point', () => {
+  test('submits a one-pixel Authentic Far Point', () => {
     const authentic = fakeRenderer();
     authentic.renderer.render(planFrame(world, session().snapshot, size));
     expect(authentic.uniforms).toContainEqual({
       name: 'pointSize',
       values: [1]
     });
-
-    const enhanced = fakeRenderer();
-    enhanced.renderer.render(
-      planFrame(
-        world,
-        session().snapshot,
-        size,
-        undefined,
-        defaultSettings().presentation
-      )
-    );
-    expect(enhanced.uniforms).toContainEqual({
-      name: 'pointSize',
-      values: [4]
-    });
-  });
-
-  test('compiles the enhanced ink program only when a draw asks for it', () => {
-    const plain = fakeRenderer();
-    expect(plain.programs).toBe(1);
-    plain.renderer.draw(world, session().snapshot, size);
-    expect(plain.programs).toBe(1);
-
-    const bold = fakeRenderer();
-    bold.renderer.draw(world, session().snapshot, size, {
-      glow: 0,
-      thickness: 2
-    });
-    expect(bold.programs).toBe(3);
-    expect(
-      bold.shaderSources.some(source => source.includes('endpoints'))
-    ).toBeTrue();
-    // The quad must span the whole segment, extended by the extent — expanding by the extent
-    // alone drew every line as a short blob centred on its midpoint.
-    const vertex = bold.shaderSources.find(source =>
-      source.includes('lineAxis = axis')
-    );
-    expect(vertex?.includes('spanLength * 0.5 + extent')).toBeTrue();
-  });
-
-  test('a bold Ink request routes line batches through instanced quads', () => {
-    const { calls, renderer, uniforms } = fakeRenderer();
-
-    renderer.draw(world, session().snapshot, size, {
-      glow: 0,
-      thickness: 2
-    });
-
-    // The surviving Ink batch becomes a blended instance draw; ground
-    // triangles and Far Points are untouched.
-    const instanced = calls.filter(call => call.startsWith('instanced'));
-    expect(instanced).toHaveLength(1);
-    for (const call of instanced) {
-      expect(call.startsWith('instanced:4:')).toBeTrue();
-    }
-    expect(calls).toContain('blend:on');
-    expect(calls).toContain('divisor:0');
-    expect(calls).toContain('draw:4');
-    expect(calls).toContain('draw:0');
-    // The quad reaches one feather past the two-pixel core even without glow.
-    expect(
-      uniforms.filter(uniform => uniform.name === 'extent')
-    ).toContainEqual({ name: 'extent', values: [1.75] });
-    expect(uniforms).toContainEqual({ name: 'halfWidth', values: [1] });
-  });
-
-  test('a glowing Ink request widens the quad by the glow spread', () => {
-    const { calls, renderer, uniforms } = fakeRenderer();
-
-    renderer.draw(world, session().snapshot, size, {
-      glow: 0.5,
-      thickness: 1
-    });
-
-    expect(calls.filter(call => call.startsWith('instanced'))).toHaveLength(1);
-    expect(
-      uniforms.filter(uniform => uniform.name === 'extent')
-    ).toContainEqual({ name: 'extent', values: [0.5 + 8 * 0.5] });
-    expect(uniforms).toContainEqual({ name: 'halo', values: [0.5] });
   });
 
   test('a lit Room clears once and submits only its Ink', () => {
@@ -762,13 +636,7 @@ describe('a Session Snapshot submitted to WebGL2', () => {
     inside.teleport({ id: 3, kind: 'room' });
     const { calls, renderer } = fakeRenderer();
 
-    renderer.draw(
-      world,
-      inside.snapshot,
-      size,
-      undefined,
-      defaultSettings().presentation
-    );
+    renderer.draw(world, inside.snapshot, size, defaultSettings().presentation);
 
     expect(calls.filter(call => call.startsWith('draw:'))).toEqual(['draw:1']);
   });
@@ -910,132 +778,4 @@ describe('a Session Snapshot submitted to WebGL2', () => {
         .map(call => call.values[0])
     ).toContain(1);
   });
-});
-
-test('Enhanced frame separates Map Lines without changing projected geometry', () => {
-  const opening = session().snapshot;
-  const snapshot = {
-    ...opening,
-    player: {
-      ...opening.player,
-      heading: Math.PI,
-      pitch: -0.5,
-      position: { x: 0, y: 5000, z: 0 },
-      roll: 0
-    }
-  };
-  const authentic = planFrame(world, snapshot, size);
-  const enhanced = planFrame(world, snapshot, size, undefined, {
-    preset: 'enhanced',
-    structureReach: 'cell'
-  });
-  const roadBatches = enhanced.batches.filter(batch => batch.style === 'roads');
-  expect(roadBatches.length).toBeGreaterThan(0);
-  const selected = visible(world, snapshot.player.position);
-  const projected = projectFrame(new Camera(snapshot.player), selected, size);
-  const expectedRoads = [...projected.roads].flatMap(line => [
-    line.x1,
-    line.y1,
-    line.x2,
-    line.y2
-  ]);
-  expect(roadBatches.flatMap(batch => Array.from(batch.vertices))).toEqual(
-    expectedRoads
-  );
-  expect(selected.roadSegments?.size).toBeGreaterThanOrEqual(
-    world.mapSegments(snapshot.player.position).length
-  );
-  expect(enhanced.lines).toBe(authentic.lines);
-  const segments = (frame: typeof enhanced) =>
-    frame.batches
-      .filter(batch => batch.mode === 'lines')
-      .flatMap(batch =>
-        Array.from(
-          { length: batch.vertices.length / 4 },
-          (_, index) =>
-            `${JSON.stringify(batch.colour)}:${Array.from(batch.vertices.slice(index * 4, index * 4 + 4)).join(',')}`
-        )
-      )
-      .sort();
-  expect(segments(enhanced)).toEqual(segments(authentic));
-});
-
-test('roads around cell 06-09 structures use road styling at both structure reaches', () => {
-  const opening = session().snapshot;
-  const cell = world.cell(6, 9)!;
-  const snapshot = {
-    ...opening,
-    player: {
-      ...opening.player,
-      heading: 0,
-      pitch: -Math.PI / 2,
-      position: { ...cell.centre, y: 12_000 },
-      roll: 0
-    }
-  };
-  const camera = new Camera(snapshot.player);
-  const roadLines = cell
-    .segments(0, world.roadWorkspace(cell))
-    .filter(segment => segment.ink === Ink.black)
-    .flatMap(segment => {
-      const line = camera.projectSegment(segment, size);
-      return line ? [[line.x1, line.y1, line.x2, line.y2]] : [];
-    });
-  expect(roadLines.length).toBeGreaterThan(0);
-  for (const structureReach of ['cell', 'all'] as const) {
-    const frame = planFrame(world, snapshot, size, undefined, {
-      preset: 'enhanced',
-      structureReach
-    });
-    const roads = frame.batches
-      .filter(batch => batch.style === 'roads')
-      .flatMap(batch =>
-        Array.from({ length: batch.vertices.length / 4 }, (_, index) =>
-          Array.from(batch.vertices.slice(index * 4, index * 4 + 4))
-        )
-      );
-    for (const line of roadLines) {
-      expect(roads).toContainEqual(line);
-    }
-    expect(
-      frame.batches.some(
-        batch =>
-          batch.mode === 'lines' &&
-          batch.style === undefined &&
-          batch.colour.red === 255
-      )
-    ).toBe(true);
-  }
-});
-
-test('Enhanced roads are drawn behind distant and nearby bright structures', () => {
-  const opening = session().snapshot;
-  const cell = world.cell(6, 9)!;
-  const frame = planFrame(
-    world,
-    {
-      ...opening,
-      player: {
-        ...opening.player,
-        heading: 0,
-        pitch: -0.05,
-        position: { ...cell.centre, y: 2700 },
-        roll: 0
-      }
-    },
-    size,
-    undefined,
-    { preset: 'enhanced', structureReach: 'all' }
-  );
-  const roadIndices = frame.batches.flatMap((batch, index) =>
-    batch.style === 'roads' ? [index] : []
-  );
-  const structureIndices = frame.batches.flatMap((batch, index) =>
-    batch.mode === 'lines' && batch.style === undefined && batch.colour.red > 0
-      ? [index]
-      : []
-  );
-  expect(roadIndices.length).toBeGreaterThan(0);
-  expect(structureIndices.length).toBeGreaterThan(1);
-  expect(Math.max(...roadIndices)).toBeLessThan(Math.min(...structureIndices));
 });

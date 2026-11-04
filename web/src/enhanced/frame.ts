@@ -980,13 +980,13 @@ export const planEnhancedFrame = (
   const roadGlowColour = roadHalo.dim(roadColour);
   const pushRoad = (
     target: number[],
-    edge: number,
+    [start, end]: readonly [Vector3, Vector3],
     width: number,
     colour: readonly [number, number, number]
   ): void => {
     const quad = roadStroke(
-      roadPoint(edge >> 8),
-      roadPoint(edge & 0xff),
+      start,
+      end,
       doc.camera.nearPlane,
       Math.tan((doc.camera.verticalFieldOfViewDegrees * Math.PI) / 360),
       outputHeight,
@@ -1000,10 +1000,20 @@ export const planEnhancedFrame = (
       target.push(view.x, view.y, view.z, ...colour, ...NO_PLANE);
     }
   };
-  for (const edge of edges) {
-    pushRoad(roadValues, edge, strokes.roads.weight, roadColour);
+  const roadLines = [
+    ...edges.map(
+      edge => [roadPoint(edge >> 8), roadPoint(edge & 0xff)] as const
+    ),
+    ...(enclosed || inSpace
+      ? []
+      : (roads?.lines ?? []).map(
+          ([start, end]) => [toView(start), toView(end)] as const
+        ))
+  ];
+  for (const line of roadLines) {
+    pushRoad(roadValues, line, strokes.roads.weight, roadColour);
     if (strokes.roads.glow > 0) {
-      pushRoad(roadGlowValues, edge, roadHalo.width, roadGlowColour);
+      pushRoad(roadGlowValues, line, roadHalo.width, roadGlowColour);
     }
   }
 
@@ -1249,8 +1259,13 @@ export const planEnhancedFrame = (
     if (reach.point !== undefined && lit && eligible) {
       const centre = toView(placement.position);
       if (centre.z > doc.camera.nearPlane) {
-        // One ST pixel, 1/256 of a unit tangent on a side, as a star is.
-        const half = centre.z / 512;
+        // One ST pixel, 1/256 of a unit tangent on a side, as a star is, unless the point
+        // gives its side in output pixels.
+        const pixels = reach.point.pixels;
+        const half =
+          pixels === undefined
+            ? centre.z / 512
+            : (centre.z * strokeTangent * pixels) / outputHeight;
         const corner = (dx: number, dy: number): Vector3 => ({
           x: centre.x + dx * half,
           y: centre.y + dy * half,

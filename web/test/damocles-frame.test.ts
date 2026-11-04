@@ -1060,6 +1060,7 @@ const fakeContext = () => {
         `bindSampler:${unit}:${sampler === null ? 'none' : sampler.filter === 34 ? 'nearest' : 'linear'}`
       ),
     bindTexture: () => undefined,
+    bindVertexArray: () => undefined,
     BLEND: 35,
     bufferData: (_target: number, data: Float32Array) =>
       calls.push(`buffer:${data.length}`),

@@ -1,19 +1,23 @@
-import {
-  Renderer,
-  type FramePlan,
-  type InkOptions
-} from '../src/shell/frame.ts';
+import { planEnhancedFrame } from '../src/enhanced/frame.ts';
+import { ENHANCED_PRESENTATION } from '../src/enhanced/presentation.ts';
+import { FrameRenderer } from '../src/rendering/renderer.ts';
+import { Renderer, type FramePlan } from '../src/shell/frame.ts';
+
+/// Authentic Targ's line pass, and the same canvas shared with the shared planner's renderer
+/// as Enhanced Targ shares it (ADR 0087): an Authentic frame drawn after an Enhanced one is the
+/// frame drawn before it.
 
 const canvas = document.getElementById('frame') as HTMLCanvasElement;
 const result = document.getElementById('result')!;
-const scale = Number(new URLSearchParams(location.search).get('scale') ?? 1);
-canvas.width = 640 * scale;
-canvas.height = 480 * scale;
 const renderer = new Renderer(canvas);
+const shared = new FrameRenderer(canvas, { cullBackFaces: true }, () => {
+  throw new Error('context lost');
+});
+// The shared renderer sizes the canvas to its element; size it first, as the shell does.
+shared.resize();
 const gl = canvas.getContext('webgl2')!;
 const white = { blue: 255, green: 255, red: 255 };
 const black = { blue: 0, green: 0, red: 0 };
-const heavy: InkOptions = { glow: 0.7, thickness: 3 };
 const plan = (vertices: number[], colour = white): FramePlan => ({
   batches: [
     {
@@ -42,295 +46,48 @@ const readPixels = (): Uint8Array => {
   );
   return data;
 };
-const pixels = (vertices: number[], options = heavy): Uint8Array => {
-  renderer.render(plan(vertices), options);
+const pixels = (vertices: number[]): Uint8Array => {
+  renderer.render(plan(vertices));
   return readPixels();
 };
 const redAt = (data: Uint8Array, x: number, y: number): number =>
   data[
-    ((canvas.height - 1 - Math.floor(y * scale)) * canvas.width +
-      Math.floor(x * scale)) *
+    ((canvas.height - 1 - Math.floor((y * canvas.height) / 480)) *
+      canvas.width +
+      Math.floor((x * canvas.width) / 640)) *
       4
   ]!;
-const horizontal = [100, 60, 220, 60];
-const authenticBefore = pixels(horizontal, { glow: 0, thickness: 1 });
-const isolated = pixels(horizontal);
-const duplicate = pixels([...horizontal, ...horizontal]);
-const vertical = [160, 20, 160, 100];
-const aloneVertical = pixels(vertical);
-const crossing = pixels([...horizontal, ...vertical]);
-const diagonal = [100, 60, 150, 120];
-const aloneDiagonal = pixels(diagonal);
-const join = pixels([...horizontal, ...diagonal]);
-let duplicateDifference = 0;
-let crossingExcess = 0;
-let joinExcess = 0;
-for (let index = 0; index < isolated.length; index += 4) {
-  duplicateDifference = Math.max(
-    duplicateDifference,
-    Math.abs(duplicate[index]! - isolated[index]!)
-  );
-  crossingExcess = Math.max(
-    crossingExcess,
-    crossing[index]! - Math.max(isolated[index]!, aloneVertical[index]!)
-  );
-  joinExcess = Math.max(
-    joinExcess,
-    join[index]! - Math.max(isolated[index]!, aloneDiagonal[index]!)
-  );
-}
-const degenerate = pixels([300, 60, 300, 60]);
-const originalSize = { height: canvas.height, width: canvas.width };
-canvas.width += 64;
-canvas.height += 32;
-const resized = pixels(horizontal);
-const resizeCore = redAt(
-  resized,
-  (160 * canvas.width) / originalSize.width,
-  (60 * canvas.height) / originalSize.height
-);
-canvas.width = originalSize.width;
-canvas.height = originalSize.height;
-const restored = pixels(horizontal);
-const restoreDifference = restored.reduce(
-  (difference, value, index) =>
-    index % 4 === 0
-      ? Math.max(difference, Math.abs(value - isolated[index]!))
-      : difference,
-  0
-);
-const authenticAfter = pixels(horizontal, { glow: 0, thickness: 1 });
-const authenticDifference = authenticAfter.reduce(
-  (difference, value, index) =>
-    Math.max(difference, Math.abs(value - authenticBefore[index]!)),
-  0
-);
-const roadPlan = plan(horizontal);
-const roads: FramePlan = {
-  ...roadPlan,
-  batches: roadPlan.batches.map(batch => ({ ...batch, style: 'roads' }))
-};
-renderer.render(roads, heavy);
-const defaultRoad = readPixels();
-renderer.render(roads, { glow: 0, thickness: 1 }, heavy);
-const glowingRoad = readPixels();
-const roadDefaultDifference = defaultRoad.reduce(
-  (difference, value, index) =>
-    Math.max(difference, Math.abs(value - authenticBefore[index]!)),
-  0
-);
-const roadGlowDifference = glowingRoad.reduce(
-  (difference, value, index) =>
-    Math.max(difference, Math.abs(value - isolated[index]!)),
-  0
-);
-renderer.render({ ...plan(horizontal, black), clear: white }, heavy);
-const darkLine = readPixels();
-renderer.render(
-  { ...plan([...horizontal, ...horizontal], black), clear: white },
-  heavy
-);
-const darkDuplicate = readPixels();
-const darkDuplicateDifference = darkLine.reduce(
-  (difference, value, index) =>
-    index % 4 === 0
-      ? Math.max(difference, Math.abs(value - darkDuplicate[index]!))
-      : difference,
-  0
-);
-// Camera-view endpoints are deliberately synthetic: constant z isolates the radial
-// distance response from projection, while a changing z tests perspective interpolation.
-const distancePixels = (
-  start: number,
-  end = start,
-  options = heavy,
-  road = false,
-  explicitRange = true,
-  lateral = 0
-): Uint8Array => {
-  const distancePlan = {
-    ...plan(horizontal),
-    batches: plan(horizontal).batches.map(batch => ({
-      ...batch,
-      ...(road ? { style: 'roads' as const } : {}),
-      viewEndpoints: new Float32Array([lateral, 0, start, lateral, 0, end])
-    })),
-    ...(explicitRange
-      ? { glowDistance: { fadeEnd: 16_384, fadeStart: 4096 } }
-      : {})
-  };
-  renderer.render(distancePlan, options, options);
-  return readPixels();
-};
 const difference = (left: Uint8Array, right: Uint8Array): number =>
   left.reduce(
     (maximum, value, index) =>
       Math.max(maximum, Math.abs(value - right[index]!)),
     0
   );
-const distanceNear = distancePixels(1000);
-const distanceMid = distancePixels(10_240);
-const distanceFar = distancePixels(20_000);
-const glowOff: InkOptions = { glow: 0, thickness: heavy.thickness };
-const distanceNoGlow = distancePixels(1000, 1000, glowOff);
-const slantedDepth = distancePixels(1000, 30_000);
-const collapsedDepth = (start: number, end: number): Uint8Array => {
-  const collapsedPlan = plan([300, 60, 300, 60]);
-  renderer.render(
+const horizontal = [100, 60, 220, 60];
+const authenticBefore = pixels(horizontal);
+// An Enhanced frame through the shared planner: a white plane below a black sky.
+shared.render(
+  planEnhancedFrame(
     {
-      ...collapsedPlan,
-      batches: collapsedPlan.batches.map(batch => ({
-        ...batch,
-        viewEndpoints: new Float32Array([0, 0, start, 0, 0, end])
-      }))
+      baseColour: '#ffffff',
+      floorLabelGlyphs: {},
+      grid: { cellsPerAxis: 16, cellUnits: 0x1_00_00, origin: { x: 0, z: 0 } },
+      islands: [],
+      placements: [],
+      sky: null
     },
-    heavy
-  );
-  return readPixels();
-};
-const collapsedForward = collapsedDepth(20_000, 1000);
-const collapsedReverse = collapsedDepth(1000, 20_000);
-const distanceReport = {
-  collapsedDepthDifference: difference(collapsedForward, collapsedReverse),
-  collapsedDepthHalo: redAt(collapsedForward, 303, 60),
-  distanceCoreFar: redAt(distanceFar, 160, 60),
-  distanceCoreMid: redAt(distanceMid, 160, 60),
-  distanceCoreNear: redAt(distanceNear, 160, 60),
-  distanceCoreOff: redAt(distanceNoGlow, 160, 60),
-  distanceDefaultsDifference: difference(
-    distancePixels(10_240, 10_240, heavy, false, false),
-    distanceMid
-  ),
-  distanceFarHalo: redAt(distanceFar, 160, 64),
-  distanceFarOffDifference: difference(distanceFar, distanceNoGlow),
-  distanceMidHalo: redAt(distanceMid, 160, 64),
-  distanceMidInnerHalo: redAt(distanceMid, 160, 63),
-  distanceMidOuterHalo: redAt(distanceMid, 160, 65),
-  distanceNearHalo: redAt(distanceNear, 160, 64),
-  distanceNearOuterHalo: redAt(distanceNear, 160, 65),
-  distanceOffDifference: difference(
-    distancePixels(20_000, 20_000, glowOff),
-    distanceNoGlow
-  ),
-  distanceRadialOffDifference: difference(
-    distancePixels(1000, 1000, heavy, false, true, 20_000),
-    distanceNoGlow
-  ),
-  distanceRoadFarDifference: difference(
-    distancePixels(20_000, 20_000, heavy, true),
-    distanceFar
-  ),
-  distanceRoadNearDifference: difference(
-    distancePixels(1000, 1000, heavy, true),
-    distanceNear
-  ),
-  slantedFarHalo: redAt(slantedDepth, 214, 64),
-  slantedMidHalo: redAt(slantedDepth, 160, 64),
-  slantedNearHalo: redAt(slantedDepth, 106, 64)
-};
+    { body: 'test', heading: 0, pitch: -0.2, position: { x: 0, y: 63, z: 0 } },
+    ENHANCED_PRESENTATION
+  )
+);
+const enhanced = readPixels();
+renderer.resume();
+const authenticAfter = pixels(horizontal);
 const report = {
-  ...distanceReport,
-  authenticDifference,
-  core: redAt(isolated, 160, 60),
-  crossingExcess,
-  darkDuplicateDifference,
-  darkHalo: redAt(darkLine, 160, 64),
-  degenerateCentre: redAt(degenerate, 300, 60),
-  duplicateDifference,
-  endpointHalo: redAt(isolated, 95, 60),
-  joinExcess,
-  resizeCore,
-  restoreDifference,
-  roadDefaultDifference,
-  roadGlowDifference,
+  authenticDifference: difference(authenticAfter, authenticBefore),
+  core: redAt(authenticBefore, 160, 60),
+  enhancedGround: redAt(enhanced, 320, 470),
   webglError: gl.getError()
 };
-// A dense, deterministic view supplies a repeatable synchronous GPU timing sample.
-const dense = Array.from({ length: 1500 }, (_, index) => {
-  const x = (index * 97) % 620;
-  const y = (index * 53) % 450;
-  return [x, y, x + 15, y + 25];
-}).flat();
-const densePlan = plan(dense);
-for (let index = 0; index < 10; index++) {
-  renderer.render(densePlan, heavy);
-}
-gl.finish();
-const timingPixel = new Uint8Array(4);
-const start = performance.now();
-for (let index = 0; index < 60; index++) {
-  renderer.render(densePlan, heavy);
-  gl.readPixels(320, 240, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, timingPixel);
-}
-const millisecondsPerFrame = (performance.now() - start) / 60;
-// Isolated line, acute join, crossing, and a structure beside dark Map Lines.
-const showcase = plan([
-  ...horizontal,
-  280,
-  100,
-  310,
-  30,
-  310,
-  30,
-  320,
-  100,
-  380,
-  30,
-  440,
-  100,
-  380,
-  100,
-  440,
-  30,
-  140,
-  380,
-  180,
-  180,
-  180,
-  180,
-  250,
-  400,
-  140,
-  380,
-  250,
-  400,
-  250,
-  400,
-  330,
-  330,
-  180,
-  180,
-  330,
-  330,
-  180,
-  180,
-  220,
-  310,
-  140,
-  380,
-  220,
-  310,
-  220,
-  310,
-  330,
-  330
-]);
-renderer.render(
-  {
-    ...showcase,
-    batches: [
-      {
-        colour: black,
-        mode: 'lines',
-        pointSize: 1,
-        style: 'roads',
-        vertices: new Float32Array([0, 200, 600, 340, 0, 220, 600, 360])
-      },
-      ...showcase.batches
-    ],
-    clear: { blue: 0, green: 128, red: 0 }
-  },
-  heavy
-);
-result.textContent = JSON.stringify({ ...report, millisecondsPerFrame });
+result.textContent = JSON.stringify(report);
 result.dataset['state'] = 'ready';

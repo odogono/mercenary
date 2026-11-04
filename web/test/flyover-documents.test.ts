@@ -630,7 +630,7 @@ describe('the Targ System', () => {
 
   test('authors TARG an Atmosphere and its moons none (ADR 0088)', async () => {
     const document = readTargSystem(await targSystem());
-    // How thick TARG's Haze is, is tuned where Targ adopts Haze (#954).
+    // TARG's Haze is about as thick as the Distant Structure fade it replaced (#954).
     expect(
       Object.fromEntries(
         document.bodies.map(body => [body.id, body.atmosphere ?? null])
@@ -639,7 +639,7 @@ describe('the Targ System', () => {
       'inner-moon': null,
       'outer-moon': null,
       sun: null,
-      targ: { hazeHalfDistance: null }
+      targ: { hazeHalfDistance: 262_144 }
     });
 
     const thick = await targSystem();

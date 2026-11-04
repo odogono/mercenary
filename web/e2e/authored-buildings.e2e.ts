@@ -62,7 +62,7 @@ for (const slot of [65, 66]) {
               undefined,
               { preset, structureReach: 'cell' }
             );
-            renderer.render(plan, { glow: 0, thickness: 1 });
+            renderer.render(plan);
             const gl = canvas.getContext('webgl2')!;
             const image = new Image();
             image.id = 'building';

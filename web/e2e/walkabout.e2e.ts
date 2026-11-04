@@ -1169,7 +1169,7 @@ test('the settings page changes Structure Reach live and persists it', async ({
   await expect(all).toHaveAttribute('aria-pressed', 'true');
   await expect
     .poll(async () => Number(await canvas.getAttribute('data-lines')))
-    .toBe(2427);
+    .toBe(7025);
   expect(Number(await canvas.getAttribute('data-lines'))).toBeGreaterThan(
     cellLines
   );
