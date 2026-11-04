@@ -12,8 +12,10 @@ import { islandOriginNear } from '../coast/islands.ts';
 import { ROAD_HORIZON_DISTANCES } from '../coast/roads.ts';
 import type { FormClock, PlacementForms } from '../enhanced/forms.ts';
 import {
+  DEFAULT_ENHANCED_STROKES,
   planEnhancedFrame,
-  type EnhancedFramePlan
+  type EnhancedFramePlan,
+  type EnhancedStrokes
 } from '../enhanced/frame.ts';
 import { ENHANCED_PRESENTATION } from '../enhanced/presentation.ts';
 import type {
@@ -823,7 +825,8 @@ export const dionEnhancedScene = (
 /// The shared planner's frame of a Dion scene, through the Enhanced viewer's camera.
 export const planDionEnhancedFrame = (
   scene: DionEnhancedScene,
-  outputHeight: number
+  outputHeight: number,
+  strokes: EnhancedStrokes = DEFAULT_ENHANCED_STROKES
 ): EnhancedFramePlan =>
   planEnhancedFrame(
     scene.surface,
@@ -840,7 +843,8 @@ export const planDionEnhancedFrame = (
     'whole',
     outputHeight,
     scene.clock,
-    scene.viewFixed
+    scene.viewFixed,
+    strokes
   );
 
 /// Whether one frame's view follows on from the last, for the Enhanced view to draw between

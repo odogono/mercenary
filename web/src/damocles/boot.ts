@@ -47,7 +47,11 @@ import {
 import { centreBoxPage } from '../shell/panelControls.ts';
 import { installPanelScale } from '../shell/panelView.ts';
 import { canvasPointer } from '../shell/pointer.ts';
-import { createPreferences, titlePreferences } from '../shell/preferences.ts';
+import {
+  createPreferences,
+  enhancedStrokesOf,
+  titlePreferences
+} from '../shell/preferences.ts';
 import type { SessionResumePersistence } from '../shell/resume.ts';
 import { createSessionResumeNotices } from '../shell/resumeNotices.ts';
 import { routeKey, routePad, type RouterState } from '../shell/router.ts';
@@ -1351,7 +1355,9 @@ try {
       // aboard draw was there for speed.
       enhanced ? 'whole' : 'aboard',
       renderer.outputHeight,
-      snapshot.formClock
+      snapshot.formClock,
+      [],
+      enhancedStrokesOf(preferences.current())
     );
     // A Cast Shadow is Enhanced presentation only, and the player may turn it off. Only
     // Sunlight casts one, and a frame without Sunlight draws every face in its recovered colour.

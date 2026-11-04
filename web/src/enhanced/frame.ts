@@ -69,6 +69,8 @@ export interface EnhancedFramePlan {
   readonly farPlane: number;
   /// Triangles of the Body's base plane, which lead the vertex list.
   readonly fillTriangleCount: number;
+  /// The line strokes' glow halos (#951), added over the world. Absent without line glow.
+  readonly glowVertices?: Float32Array;
   /// Triangles of the recovered per-cell ground records (pads, aprons, roads), which follow
   /// the Body's surface and precede every structure and object. Structure base planes share y = 0 with
   /// these, and Damocles's fill order for that tie is unrecovered; the renderer draws the
@@ -89,6 +91,8 @@ export interface EnhancedFramePlan {
   readonly islandTriangleCount: number;
   readonly nearPlane: number;
   readonly roadEdges: readonly number[];
+  /// The road strokes' glow halos (#951), added over the roads. Absent without road glow.
+  readonly roadGlowVertices?: Float32Array;
   /// Unlit one-reference-pixel strokes, painted after the surface and before
   /// ground records, structures and objects. Kept out of the shadow casters.
   readonly roadVertices: Float32Array;
@@ -108,6 +112,40 @@ export interface EnhancedFramePlan {
   readonly vertices: Float32Array;
   readonly viewFixedVertices?: Float32Array;
 }
+
+/// One kind of Enhanced stroke (#951): its width in output pixels, and how bright its glow
+/// halo is, from 0 for none.
+export interface EnhancedStroke {
+  readonly glow: number;
+  readonly weight: number;
+}
+
+/// The Enhanced stroke settings every Title's planner honours: models' line records, and roads.
+export interface EnhancedStrokes {
+  readonly lines: EnhancedStroke;
+  readonly roads: EnhancedStroke;
+}
+
+/// One-output-pixel strokes with no glow: the Titles' frames as they were before #951.
+export const DEFAULT_ENHANCED_STROKES: EnhancedStrokes = {
+  lines: { glow: 0, weight: 1 },
+  roads: { glow: 0, weight: 1 }
+};
+
+/// How many output pixels past the core one unit of glow reaches, as Targ's ink pass spreads it.
+const GLOW_SPREAD = 8;
+
+/// A stroke's glow halo: wider than the stroke by the glow's spread, in its colour dimmed by the
+/// glow, for the renderer to add over the frame.
+const glowHalo = (stroke: EnhancedStroke) => ({
+  dim: (colour: readonly [number, number, number]) =>
+    [
+      colour[0] * stroke.glow,
+      colour[1] * stroke.glow,
+      colour[2] * stroke.glow
+    ] as const,
+  width: stroke.weight + GLOW_SPREAD * stroke.glow
+});
 
 const channels = (colour: string): readonly [number, number, number] => [
   Number.parseInt(colour.slice(1, 3), 16) / 255,
@@ -598,7 +636,9 @@ export const planEnhancedFrame = (
   clock: FormClock | null = null,
   /// Models fixed to the view, painted over the world (#807): Mercenary III's cab and its
   /// driver's head. Damocles has none.
-  viewFixed: readonly ScenePlacement[] = []
+  viewFixed: readonly ScenePlacement[] = [],
+  /// Stroke weight and glow (#951). The defaults draw one-pixel strokes with no glow.
+  strokes: EnhancedStrokes = DEFAULT_ENHANCED_STROKES
 ): EnhancedFramePlan => {
   const camera = new Camera({
     farPlane: doc.camera.farPlane,
@@ -929,21 +969,36 @@ export const planEnhancedFrame = (
       y: 0,
       z: roadOrigin.z + ((corner >> 4) + 0.5) * surface.grid.cellUnits
     });
+  const roadGlowValues: number[] = [];
   const roadColour = channels(roads?.roadColour ?? '#000000');
-  for (const edge of edges) {
+  const roadHalo = glowHalo(strokes.roads);
+  const roadGlowColour = roadHalo.dim(roadColour);
+  const pushRoad = (
+    target: number[],
+    edge: number,
+    width: number,
+    colour: readonly [number, number, number]
+  ): void => {
     const quad = roadStroke(
       roadPoint(edge >> 8),
       roadPoint(edge & 0xff),
       doc.camera.nearPlane,
       Math.tan((doc.camera.verticalFieldOfViewDegrees * Math.PI) / 360),
-      outputHeight
+      outputHeight,
+      width
     );
     if (quad === null) {
-      continue;
+      return;
     }
     for (const index of [0, 1, 2, 0, 2, 3]) {
       const view = quad[index]!;
-      roadValues.push(view.x, view.y, view.z, ...roadColour, ...NO_PLANE);
+      target.push(view.x, view.y, view.z, ...colour, ...NO_PLANE);
+    }
+  };
+  for (const edge of edges) {
+    pushRoad(roadValues, edge, strokes.roads.weight, roadColour);
+    if (strokes.roads.glow > 0) {
+      pushRoad(roadGlowValues, edge, roadHalo.width, roadGlowColour);
     }
   }
 
@@ -1008,7 +1063,10 @@ export const planEnhancedFrame = (
   const strokeTangent = Math.tan(
     (doc.camera.verticalFieldOfViewDegrees * Math.PI) / 360
   );
-  /// A mesh's line records as strokes one output pixel wide, after its faces. A line lying in
+  const lineHalo = glowHalo(strokes.lines);
+  const glowValues: number[] = [];
+  /// A mesh's line records as strokes `strokes.lines.weight` output pixels wide, after its
+  /// faces. A line lying in
   /// one of the mesh's face planes takes that plane, so it ties the face exactly and wins by
   /// coming after it in draw order (#545), as the ST's painter draws it over the face. Any
   /// other line takes its own interpolated depth.
@@ -1017,20 +1075,19 @@ export const planEnhancedFrame = (
       const colour = channels(litColour(line, daylight));
       const plane = placementPlane(linePlaneOf(mesh, line), placement);
       for (let index = 0; index < line.vertices.length - 1; index += 1) {
+        const start = toView(
+          placed(mesh.vertices[line.vertices[index]!]!, placement, negateZ)
+        );
+        const end = toView(
+          placed(mesh.vertices[line.vertices[index + 1]!]!, placement, negateZ)
+        );
         const quad = roadStroke(
-          toView(
-            placed(mesh.vertices[line.vertices[index]!]!, placement, negateZ)
-          ),
-          toView(
-            placed(
-              mesh.vertices[line.vertices[index + 1]!]!,
-              placement,
-              negateZ
-            )
-          ),
+          start,
+          end,
           doc.camera.nearPlane,
           strokeTangent,
-          outputHeight
+          outputHeight,
+          strokes.lines.weight
         );
         if (quad === null) {
           continue;
@@ -1039,6 +1096,21 @@ export const planEnhancedFrame = (
           emitView(quad[corner]!, colour, plane);
         }
         triangleCount += 4;
+        if (strokes.lines.glow > 0) {
+          const halo = roadStroke(
+            start,
+            end,
+            doc.camera.nearPlane,
+            strokeTangent,
+            outputHeight,
+            lineHalo.width
+          );
+          const glowColour = lineHalo.dim(colour);
+          for (const corner of [0, 1, 2, 0, 2, 3]) {
+            const view = halo![corner]!;
+            glowValues.push(view.x, view.y, view.z, ...glowColour, ...plane);
+          }
+        }
       }
     }
   };
@@ -1263,6 +1335,9 @@ export const planEnhancedFrame = (
     enclosed,
     farPlane: doc.camera.farPlane,
     fillTriangleCount,
+    ...(glowValues.length === 0
+      ? {}
+      : { glowVertices: new Float32Array(glowValues) }),
     groundTriangleCount,
     horizonIslandVertices: new Float32Array(horizonIslandValues),
     horizonVertices: new Float32Array(horizonValues),
@@ -1270,6 +1345,9 @@ export const planEnhancedFrame = (
     nearPlane: doc.camera.nearPlane,
     roadEdges: edges,
     roadVertices: new Float32Array(roadValues),
+    ...(roadGlowValues.length === 0
+      ? {}
+      : { roadGlowVertices: new Float32Array(roadGlowValues) }),
     skippedFaces,
     skyBodies: skyPlacements,
     skyVertices: new Float32Array(skyValues),

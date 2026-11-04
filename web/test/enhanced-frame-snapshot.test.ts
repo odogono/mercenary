@@ -57,6 +57,9 @@ beforeAll(async () => {
 });
 
 const digest = (plan: EnhancedFramePlan): string => {
+  // The default Enhanced strokes (#951) add no glow streams.
+  expect(plan.glowVertices).toBeUndefined();
+  expect(plan.roadGlowVertices).toBeUndefined();
   const hash = createHash('sha256');
   for (const values of [
     plan.vertices,

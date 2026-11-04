@@ -1,13 +1,14 @@
 import type { Vector3 } from '../orientation/index.ts';
 
-/// A one-output-pixel stroke, expanded in the projection plane and kept in
+/// A stroke `width` output pixels wide (one by default), expanded in the projection plane and kept in
 /// camera space. Standalone plans default to the native 136-row view.
 export const roadStroke = (
   start: Vector3,
   end: Vector3,
   near: number,
   tangent: number,
-  outputHeight = 136
+  outputHeight = 136,
+  width = 1
 ): readonly [Vector3, Vector3, Vector3, Vector3] | null => {
   if (start.z < near && end.z < near) {
     return null;
@@ -27,8 +28,8 @@ export const roadStroke = (
   if (length < 1e-12) {
     return null;
   }
-  const ox = ((dy / length) * tangent) / outputHeight;
-  const oy = ((-dx / length) * tangent) / outputHeight;
+  const ox = ((dy / length) * tangent * width) / outputHeight;
+  const oy = ((-dx / length) * tangent * width) / outputHeight;
   const offset = (v: Vector3, sign: number): Vector3 => ({
     x: v.x + sign * ox * v.z,
     y: v.y + sign * oy * v.z,

@@ -1,4 +1,8 @@
 import {
+  DEFAULT_ENHANCED_STROKES,
+  type EnhancedStrokes
+} from '../enhanced/frame.ts';
+import {
   DEFAULT_WIREFRAME_GLOW,
   DEFAULT_WIREFRAME_THICKNESS,
   isLightLevel,
@@ -353,5 +357,38 @@ export const createPreferences = (options: {
       options.onChange?.(preferences);
       return preferences;
     }
+  };
+};
+
+const enhancedStroke = (
+  weight: WireframeWeight | undefined,
+  glow: WireframeGlow | undefined
+) => ({
+  glow: glow === undefined ? 0 : WIREFRAME_GLOW_AMOUNT[glow],
+  weight: weight === undefined ? 1 : WIREFRAME_WEIGHT_PIXELS[weight]
+});
+
+/// The player's weight and glow as the shared Enhanced planner's stroke settings (#951), for
+/// every Title. Authentic keeps one-pixel strokes with no glow, and an unset choice keeps the
+/// default.
+export const enhancedStrokesOf = (
+  preferences: Pick<
+    Preferences,
+    | 'presentationPreset'
+    | 'roadGlow'
+    | 'roadWeight'
+    | 'wireframeGlow'
+    | 'wireframeWeight'
+  >
+): EnhancedStrokes => {
+  if (preferences.presentationPreset === 'authentic') {
+    return DEFAULT_ENHANCED_STROKES;
+  }
+  return {
+    lines: enhancedStroke(
+      preferences.wireframeWeight,
+      preferences.wireframeGlow
+    ),
+    roads: enhancedStroke(preferences.roadWeight, preferences.roadGlow)
   };
 };

@@ -609,13 +609,49 @@ export class FrameRenderer {
       // Road reach is the altitude window, not the authored detailed-geometry
       // far plane. At orbital heights that plane would clip the whole network.
       this.drawFlatLayer(plan.roadVertices, plan, shaderProgram, 1_000_000_000);
+      this.addGlow(plan.roadGlowVertices, () =>
+        this.drawFlatLayer(
+          plan.roadGlowVertices!,
+          plan,
+          shaderProgram,
+          1_000_000_000
+        )
+      );
     }
     gl.depthFunc(gl.LEQUAL);
     gl.uniform1f(bias, LAYER_DEPTH_BIAS);
     gl.drawArrays(gl.TRIANGLES, fill + islands, ground);
     gl.uniform1f(bias, 0);
     gl.drawArrays(gl.TRIANGLES, fill + islands + ground, rest);
+    this.addGlow(plan.glowVertices, () => {
+      // The halos sit in their strokes' planes, behind nearer faces, and mark no depth.
+      gl.depthMask(false);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.skyBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, plan.glowVertices!, gl.DYNAMIC_DRAW);
+      this.bindGeometry(shaderProgram, this.skyBuffer, COLOUR_ATTRIBUTES);
+      gl.disable(gl.CULL_FACE);
+      gl.drawArrays(
+        gl.TRIANGLES,
+        0,
+        plan.glowVertices!.length / FLOATS_PER_VERTEX
+      );
+      gl.depthMask(true);
+      this.cullAsConfigured();
+      this.bindGeometry(shaderProgram, this.buffer, COLOUR_ATTRIBUTES);
+    });
     this.drawViewFixed(plan);
+  }
+
+  /// Glow halos (#951) add their light over what is drawn, so overlapping halos brighten.
+  private addGlow(vertices: Float32Array | undefined, draw: () => void): void {
+    if (vertices === undefined || vertices.length === 0) {
+      return;
+    }
+    const gl = this.gl;
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE);
+    draw();
+    gl.disable(gl.BLEND);
   }
 
   /// The models fixed to the view, over everything: the depth buffer is cleared first, so

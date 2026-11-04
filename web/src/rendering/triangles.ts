@@ -4,11 +4,14 @@ export interface TriangleFrame {
   readonly clear: readonly [number, number, number];
   readonly farPlane: number;
   readonly fillTriangleCount: number;
+  readonly glowVertices?: Float32Array;
   readonly groundTriangleCount: number;
   readonly horizonIslandVertices: Float32Array;
   readonly horizonVertices: Float32Array;
   readonly islandTriangleCount: number;
   readonly nearPlane: number;
+  /// Glow halos (#951), added over the roads and over the world after it.
+  readonly roadGlowVertices?: Float32Array;
   readonly roadVertices?: Float32Array;
   readonly skyVertices: Float32Array;
   readonly triangleCount: number;
