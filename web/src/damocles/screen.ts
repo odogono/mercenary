@@ -78,6 +78,12 @@ export const presentScreen = (
     horizonIslandVertices: recolour3(plan.horizonIslandVertices),
     horizonVertices: recolour3(plan.horizonVertices),
     roadVertices: recolour3(plan.roadVertices),
+    ...(plan.roadGlowVertices === undefined
+      ? {}
+      : { roadGlowVertices: recolour3(plan.roadGlowVertices) }),
+    ...(plan.glowVertices === undefined
+      ? {}
+      : { glowVertices: recolour3(plan.glowVertices) }),
     skyVertices: recolour3(plan.skyVertices),
     vertices: recolour3(plan.vertices)
   };

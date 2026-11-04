@@ -1,3 +1,4 @@
+import type { EnhancedStrokes } from '../enhanced/frame.ts';
 import { sceneLighting, sunlight } from '../enhanced/lighting.ts';
 import { placementUnderPointer } from '../enhanced/pointer.ts';
 import { ENHANCED_PRESENTATION } from '../enhanced/presentation.ts';
@@ -42,6 +43,8 @@ export const installDionPresentation = (options: {
   readonly screen: HTMLCanvasElement;
   /// The stored choice; absent is Enhanced, as Damocles's is (ADR 0077).
   readonly stored: () => DionPresentationPreset;
+  /// The player's Enhanced stroke weight and glow (#951).
+  readonly strokes: () => EnhancedStrokes;
 }) => {
   let held = false;
   let retrying = false;
@@ -161,7 +164,11 @@ export const installDionPresentation = (options: {
           .getContext('2d')
           ?.putImageData(new ImageData(panelPixels, 320, 64), 0, 0);
         const scene = sceneOf();
-        const plan = planDionEnhancedFrame(scene, renderer.outputHeight);
+        const plan = planDionEnhancedFrame(
+          scene,
+          renderer.outputHeight,
+          options.strokes()
+        );
         last = scene;
         // A Cast Shadow is Enhanced only, and the player may turn it off. Only Sunlight casts
         // one, and a frame without Sunlight draws every face in its recovered colour.
