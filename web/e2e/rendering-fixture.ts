@@ -93,6 +93,47 @@ const api = {
       foreground: sample(2, 2)
     };
   },
+  renderHaze: (enhanced = false, haze = true) => {
+    // A white wall 100 units out under a blue Haze that covers half at 100 units, a red sky
+    // behind it, and a green cab fixed to the view: only the wall takes the Haze.
+    const empty = new Float32Array();
+    renderer.render(
+      {
+        clear: [0, 0, 0],
+        farPlane: 1000,
+        fillTriangleCount: 0,
+        groundTriangleCount: 0,
+        haze: haze ? { colour: [0, 0, 1], halfDistance: 100 } : null,
+        horizonIslandVertices: empty,
+        horizonVertices: empty,
+        islandTriangleCount: 0,
+        nearPlane: 1,
+        skyVertices: quad(1000, 1000, 500, [1, 0, 0]),
+        triangleCount: 2,
+        verticalFieldOfViewDegrees: 45,
+        vertices: quad(20, 20, 100, [1, 1, 1]),
+        viewFixedVertices: quad(2, 2, 50, [0, 1, 0], [-10, 3.5])
+      },
+      enhanced
+        ? {
+            lighting: {
+              ambientGround: [1, 1, 1],
+              ambientSky: [1, 1, 1],
+              shadowDepth: 1,
+              sunColour: [0, 0, 0],
+              sunView: { x: 0, y: 1, z: 0 },
+              sunWorld: { x: 0, y: 1, z: 0 }
+            }
+          }
+        : undefined
+    );
+    return {
+      cab: sample(2, 2),
+      error: canvas.getContext('webgl2')!.getError(),
+      sky: sample(0, 0),
+      wall: sample(4, 3)
+    };
+  },
   renderViewFixed: (enhanced = false) => {
     // A red wall nearer than a green cab: the cab is fixed to the view, so it paints over
     // the wall where they overlap, and the wall still covers the clear elsewhere.

@@ -1,3 +1,4 @@
+import type { Atmosphere } from '../enhanced/atmosphere.ts';
 import type { SystemId } from '../shell/documentPath.ts';
 
 export type FlyoverRange = 'orbital' | 'coastal' | 'surface';
@@ -244,6 +245,9 @@ export interface GammaSystemDocument {
 }
 
 export interface TargSystemBody {
+  /// Whether the Body has air, and how thick its Haze is (ADR 0088). Absent on a Body with no
+  /// Atmosphere; a null thickness draws no Haze.
+  readonly atmosphere?: Atmosphere;
   readonly baseColour: string;
   readonly id: TargSystemBodyId;
   readonly name: string;
@@ -677,6 +681,16 @@ const targSystemBodyId = (value: unknown, path: string): TargSystemBodyId => {
     : fail(path, `should be one of ${TARG_SYSTEM_BODY_IDS.join(', ')}`);
 };
 
+const atmosphere = (value: unknown, path: string): Atmosphere => {
+  const raw = object(value, path, ['hazeHalfDistance']);
+  return {
+    hazeHalfDistance:
+      raw['hazeHalfDistance'] === null
+        ? null
+        : positive(raw['hazeHalfDistance'], `${path}.hazeHalfDistance`)
+  };
+};
+
 export const readTargSystem = (value: unknown): TargSystemDocument => {
   const root = object(value, '$', [
     'schemaVersion',
@@ -707,12 +721,17 @@ export const readTargSystem = (value: unknown): TargSystemDocument => {
         'baseColour',
         'position',
         'radius',
-        ...(body !== null && typeof body === 'object' && 'primaryId' in body
-          ? ['primaryId']
-          : [])
+        ...(['primaryId', 'atmosphere'] as const).filter(
+          field => body !== null && typeof body === 'object' && field in body
+        )
       ];
       const raw = object(entry, path, fields);
       return {
+        ...(raw['atmosphere'] === undefined
+          ? {}
+          : {
+              atmosphere: atmosphere(raw['atmosphere'], `${path}.atmosphere`)
+            }),
         baseColour: colour(raw['baseColour'], `${path}.baseColour`),
         id: targSystemBodyId(raw['id'], `${path}.id`),
         name: text(raw['name'], `${path}.name`),

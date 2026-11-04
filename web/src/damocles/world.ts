@@ -14,6 +14,7 @@ import {
 import type { ModelLookup } from '../catalogue/modelStore.ts';
 import { nearestIsland } from '../coast/islands.ts';
 import { ROAD_HORIZON_DISTANCES } from '../coast/roads.ts';
+import { AUTHORED_HAZE, atmosphereOf } from '../enhanced/atmosphere.ts';
 import type { PlacementForms } from '../enhanced/forms.ts';
 import {
   cellOf,
@@ -27,6 +28,7 @@ import {
 } from '../enhanced/scene.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import type { ErisPresentationDocument } from './documents.ts';
+import { hasAtmosphere } from './sky.ts';
 
 export { nearestIsland, islandOriginNear } from '../coast/islands.ts';
 export {
@@ -800,6 +802,12 @@ export const erisSurfaceFrom = (
     }
   }
   return {
+    // `$794D` says whether the Body has air; how thick its Haze is, is authored (ADR 0088).
+    atmosphere: atmosphereOf(
+      hasAtmosphere(body.bodySurface?.sky ?? null),
+      AUTHORED_HAZE.damocles,
+      body.id
+    ),
     baseColour: body.bodySurface?.baseColour ?? null,
     body: { id: body.id, name: body.name },
     ...(fieldAt === undefined ? {} : { field: fieldAt }),

@@ -628,6 +628,30 @@ describe('the Targ System', () => {
     ).toBe(2);
   });
 
+  test('authors TARG an Atmosphere and its moons none (ADR 0088)', async () => {
+    const document = readTargSystem(await targSystem());
+    // How thick TARG's Haze is, is tuned where Targ adopts Haze (#954).
+    expect(
+      Object.fromEntries(
+        document.bodies.map(body => [body.id, body.atmosphere ?? null])
+      )
+    ).toEqual({
+      'inner-moon': null,
+      'outer-moon': null,
+      sun: null,
+      targ: { hazeHalfDistance: null }
+    });
+
+    const thick = await targSystem();
+    thick.bodies[0]!['atmosphere'] = { hazeHalfDistance: 5000 };
+    expect(readTargSystem(thick).bodies[0]!.atmosphere).toEqual({
+      hazeHalfDistance: 5000
+    });
+    const thin = await targSystem();
+    thin.bodies[0]!['atmosphere'] = { hazeHalfDistance: 0 };
+    expect(() => readTargSystem(thin)).toThrow('hazeHalfDistance');
+  });
+
   test('refuses a recovered claim, a missing Body and a Body inside TARG', async () => {
     const recovered = await targSystem();
     recovered.source['authority'] = 'recovered';

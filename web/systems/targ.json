@@ -16,6 +16,9 @@
     {
       "id": "targ",
       "name": "TARG",
+      "atmosphere": {
+        "hazeHalfDistance": null
+      },
       "baseColour": "#008000",
       "position": {
         "x": 0,

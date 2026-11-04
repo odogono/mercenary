@@ -6,6 +6,12 @@ export interface TriangleFrame {
   readonly fillTriangleCount: number;
   readonly glowVertices?: Float32Array;
   readonly groundTriangleCount: number;
+  /// The frame's Haze (ADR 0088): the horizon colour every world layer fades toward with view
+  /// distance, and the distance at which it covers half. Absent or null, there is none.
+  readonly haze?: {
+    readonly colour: readonly [number, number, number];
+    readonly halfDistance: number;
+  } | null;
   readonly horizonIslandVertices: Float32Array;
   readonly horizonVertices: Float32Array;
   readonly islandTriangleCount: number;

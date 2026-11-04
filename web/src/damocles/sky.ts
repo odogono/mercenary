@@ -103,7 +103,7 @@ export interface SkyInputs {
 
 /// Whether the Body has an atmosphere: `$794D`, non-zero exactly where its day and night sky
 /// words differ (#528).
-const hasAtmosphere = (sky: BodySky | null): boolean =>
+export const hasAtmosphere = (sky: BodySky | null): boolean =>
   sky !== null && sky.day.colour !== sky.night.colour;
 
 export const skyPass = (
