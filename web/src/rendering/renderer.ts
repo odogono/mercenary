@@ -414,6 +414,8 @@ export class FrameRenderer {
   private readonly shaderProgram: WebGLProgram;
   private readonly contextLost: (event: Event) => void;
   private haze: TriangleFrame['haze'] = null;
+  /// While glow halos draw, Haze fades them toward black: added light fades to nothing.
+  private glowing = false;
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -577,7 +579,11 @@ export class FrameRenderer {
   private applyHaze(shaderProgram: WebGLProgram, on: boolean): void {
     const gl = this.gl;
     const haze = on ? this.haze : null;
-    this.uniform3(shaderProgram, 'hazeColour', haze?.colour ?? [0, 0, 0]);
+    this.uniform3(
+      shaderProgram,
+      'hazeColour',
+      this.glowing ? [0, 0, 0] : (haze?.colour ?? [0, 0, 0])
+    );
     gl.uniform1f(
       requiredUniform(gl, shaderProgram, 'hazeScale'),
       haze === null || haze === undefined ? 0 : 1 / haze.halfDistance
@@ -652,7 +658,7 @@ export class FrameRenderer {
       // Road reach is the altitude window, not the authored detailed-geometry
       // far plane. At orbital heights that plane would clip the whole network.
       this.drawFlatLayer(plan.roadVertices, plan, shaderProgram, 1_000_000_000);
-      this.addGlow(plan.roadGlowVertices, () =>
+      this.addGlow(shaderProgram, plan.roadGlowVertices, () =>
         this.drawFlatLayer(
           plan.roadGlowVertices!,
           plan,
@@ -666,7 +672,7 @@ export class FrameRenderer {
     gl.drawArrays(gl.TRIANGLES, fill + islands, ground);
     gl.uniform1f(bias, 0);
     gl.drawArrays(gl.TRIANGLES, fill + islands + ground, rest);
-    this.addGlow(plan.glowVertices, () => {
+    this.addGlow(shaderProgram, plan.glowVertices, () => {
       // The halos sit in their strokes' planes, behind nearer faces, and mark no depth.
       gl.depthMask(false);
       gl.bindBuffer(gl.ARRAY_BUFFER, this.skyBuffer);
@@ -686,15 +692,25 @@ export class FrameRenderer {
   }
 
   /// Glow halos (#951) add their light over what is drawn, so overlapping halos brighten.
-  private addGlow(vertices: Float32Array | undefined, draw: () => void): void {
+  /// In Haze they fade toward black, not the haze colour, or a distant halo would brighten
+  /// the haze it sits in.
+  private addGlow(
+    shaderProgram: WebGLProgram,
+    vertices: Float32Array | undefined,
+    draw: () => void
+  ): void {
     if (vertices === undefined || vertices.length === 0) {
       return;
     }
     const gl = this.gl;
+    this.glowing = true;
+    this.applyHaze(shaderProgram, true);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE);
     draw();
     gl.disable(gl.BLEND);
+    this.glowing = false;
+    this.applyHaze(shaderProgram, true);
   }
 
   /// The models fixed to the view, over everything: the depth buffer is cleared first, so
