@@ -2,6 +2,7 @@
 /// coordinates retain perspective depth and let WebGL clip triangles crossing the eye.
 import type { Vector3 } from '../orientation/index.ts';
 import type { Camera, Size } from '../projection/index.ts';
+import type { RGB8 } from '../scene/index.ts';
 import { dot } from '../sky/vector.ts';
 import type { Polygon } from '../world/index.ts';
 
@@ -17,7 +18,10 @@ export interface FaceBatch {
 export const faceBatch = (
   faces: readonly Polygon[],
   camera: Camera,
-  size: Size
+  size: Size,
+  /// The colour an uncoloured face draws in: white Ink on the surface, the Indoor Scene's
+  /// wireframe colour in a Room.
+  lineColour: RGB8
 ): FaceBatch | undefined => {
   const clipSpace = camera.clipSpace(size);
   const capacity = faces.reduce((sum, face) => sum + face.triangles.length, 0);
@@ -26,7 +30,7 @@ export const faceBatch = (
   for (const face of faces) {
     const points = face.vertices;
     const clip = points.map(clipSpace);
-    const { blue, green, red } = face.colour;
+    const { blue, green, red } = face.colour ?? lineColour;
     for (let i = 0; i < face.triangles.length; i += 3) {
       const corners = [
         face.triangles[i]!,

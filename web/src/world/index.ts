@@ -54,10 +54,12 @@ export interface Segment {
 
 /// A Geometry Asset face in world space. Explicit lines remain a separate drawing pass.
 ///
-/// Colour and triangulation are resolved once when the face is loaded: every later transform is
-/// rigid, so the triangles stay valid as the face moves, turns or spins.
+/// A fixed colour and the triangulation are resolved once when the face is loaded: every later
+/// transform is rigid, so the triangles stay valid as the face moves, turns or spins. An
+/// uncoloured face takes the Line Colour of the frame it is drawn in.
 export interface Polygon {
-  readonly colour: RGB8;
+  /// The face's authored colour, or undefined for one that draws in Line Colour.
+  readonly colour?: RGB8;
   readonly doubleSided: boolean;
   /// Indices into `vertices`, three per triangle, ear-clipped so concave outlines keep notches.
   readonly triangles: readonly number[];
@@ -65,19 +67,18 @@ export interface Polygon {
 }
 
 const BLACK: RGB8 = { blue: 0, green: 0, red: 0 };
-/// Line Colour, the colour uncoloured Targ primitives draw in: white ink, as the wireframe is.
-const LINE_COLOUR: RGB8 = { blue: 255, green: 255, red: 255 };
 
 const paletteRGB = (colour: string): RGB8 => {
   const rgb = Number.parseInt(colour.slice(1), 16);
   return { blue: rgb & 255, green: (rgb >> 8) & 255, red: rgb >> 16 };
 };
 
-const faceColour = (colour: Colour | undefined): RGB8 => {
+/// A face's fixed colour; an uncoloured face has none, and draws in the frame's Line Colour.
+const faceColour = (colour: Colour | undefined): RGB8 | undefined => {
   if (colour?.kind === 'palette') {
     return paletteRGB(colour.colour);
   }
-  return colour?.kind === 'ink' && colour.ink === 1 ? BLACK : LINE_COLOUR;
+  return colour?.kind === 'ink' && colour.ink === 1 ? BLACK : undefined;
 };
 
 /// A line's authored colour, or undefined for one that draws in its ink.
@@ -106,15 +107,18 @@ const assetFaces = <T>(
 export const facePolygon = (
   face: Pick<Face, 'colour' | 'doubleSided'>,
   vertices: readonly Vector3[]
-): Polygon => ({
-  colour: faceColour(face.colour),
-  doubleSided: face.doubleSided === true,
-  triangles: triangulate(
-    vertices.map(v => [v.x, v.y, v.z] as const),
-    vertices.map((_, i) => i)
-  ),
-  vertices
-});
+): Polygon => {
+  const colour = faceColour(face.colour);
+  return {
+    ...(colour === undefined ? {} : { colour }),
+    doubleSided: face.doubleSided === true,
+    triangles: triangulate(
+      vertices.map(v => [v.x, v.y, v.z] as const),
+      vertices.map((_, i) => i)
+    ),
+    vertices
+  };
+};
 
 /// The same faces with every vertex carried by a rigid transform.
 export const mapFaces = (

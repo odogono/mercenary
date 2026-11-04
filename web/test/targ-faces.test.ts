@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import type { Part, Point3 } from '../src/geometry/contract.ts';
 import { composeSurface } from '../src/geometry/targ.ts';
 import { Camera, visible } from '../src/projection/index.ts';
+import { ScenePalette } from '../src/scene/index.ts';
 import {
   GameplaySession,
   openingPlayer,
@@ -280,7 +281,13 @@ describe('Targ Geometry Asset faces', () => {
       polygon: Parameters<typeof facePolygon>[0],
       points: typeof vertices,
       view = camera
-    ) => faceBatch([facePolygon(polygon, points)], view, size);
+    ) =>
+      faceBatch(
+        [facePolygon(polygon, points)],
+        view,
+        size,
+        ScenePalette.whiteInk
+      );
     expect(draw({}, vertices)!.vertices).toHaveLength(4 * 3 * FACE_STRIDE);
     expect(draw({}, [...vertices].reverse())).toBeUndefined();
     expect(draw({ doubleSided: true }, [...vertices].reverse())).toBeDefined();
