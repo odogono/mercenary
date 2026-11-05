@@ -27,3 +27,13 @@ The exporter excludes the copy tail beyond the visible 64 rows and extracts font
 compass slots/ticks and elevation rows, each with source hashes. Raw confirmation
 results remain under `restricted/targ-st-panel-743/` in the main checkout. The
 browser retains C64-authoritative Session Snapshot adapters and readout meanings.
+
+The [Doorway wipe note](../../docs/research/targ-st-doorway-wipe.md) ([#976](https://github.com/odogono/mercenary/issues/976)) adds a standard-library 68000 disassembler (`targlab/m68k.py`), byte-checked code facts (`targlab/door.py`) and a controlled Hatari probe:
+
+```sh
+python3 -m targlab disasm 41AEE:41C64        # E1 at $40000; --ram RAM reads a dump instead
+python3 -m targlab door-facts                # check the wipe's code bytes on the pinned disk
+python3 -m targlab confirm-door              # drive both wipe directions in Hatari
+```
+
+`confirm-door` accepts the installed Hatari if it reports the pinned version, records the build hash it ran, and turns fast-forward off so screenshots show every frame. Its RAM, screenshots and `report.json` go under `restricted/targ-st-door-976/` in the main checkout.

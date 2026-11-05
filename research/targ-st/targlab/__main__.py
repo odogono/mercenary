@@ -6,6 +6,9 @@
     python3 -m targlab export-panel          recover the ST panel presentation
     python3 -m targlab confirm-panel         capture bounded native writer samples
     python3 -m targlab export-panel-proofs    pin native output-window hashes
+    python3 -m targlab disasm LO:HI [--ram RAM]   68000 listing of E1 (or a RAM dump)
+    python3 -m targlab door-facts            check the Doorway wipe's code bytes in E1
+    python3 -m targlab confirm-door          drive the Doorway wipe in Hatari (#976)
 
 `export` reads only the pinned STX. It writes the mark as a PNG and its
 provenance as JSON; the rest of the picture never leaves the disk image.
@@ -17,7 +20,9 @@ import argparse
 import json
 from pathlib import Path
 
+from . import door, m68k
 from .confirm import TITLE_VBL, confirm
+from .door_confirm import confirm_door
 from .disk import REPOSITORY, pinned_floppy
 from .panel import extract as extract_panel
 from .panel_confirm import confirm_panel, writer_proofs
@@ -31,6 +36,11 @@ def main() -> None:
     commands.add_parser('confirm')
     commands.add_parser('confirm-panel')
     commands.add_parser('export-panel-proofs')
+    commands.add_parser('door-facts')
+    commands.add_parser('confirm-door')
+    disasm = commands.add_parser('disasm')
+    disasm.add_argument('windows', nargs='+', help='LO:HI in hex, HI exclusive')
+    disasm.add_argument('--ram', type=Path, help='a RAM dump based at 0 instead of E1')
     panel_export = commands.add_parser('export-panel')
     panel_export.add_argument('--out', type=Path, default=REPOSITORY / 'payload' / 'targ-st')
     export = commands.add_parser('export')
@@ -40,6 +50,19 @@ def main() -> None:
         path = REPOSITORY / 'web/test/fixtures/targ-st-panel-writers.json'
         path.write_text(json.dumps(writer_proofs(), indent=2, sort_keys=True) + '\n')
         print(path)
+        return
+    if args.command == 'confirm-door':
+        print(confirm_door())
+        return
+    if args.command in ('disasm', 'door-facts'):
+        if args.command == 'door-facts':
+            print(json.dumps(door.check_code(pinned_floppy().read('E1')), indent=2))
+            return
+        data, base = ((args.ram.read_bytes(), 0) if args.ram
+                      else (pinned_floppy().read('E1'), door.E1_BASE))
+        for window in args.windows:
+            lo, hi = (int(x, 16) for x in window.split(':'))
+            print(m68k.listing(data, base, lo, hi))
         return
     if args.command == 'confirm-panel':
         print(confirm_panel())
