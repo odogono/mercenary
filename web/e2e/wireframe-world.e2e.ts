@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 /// Enhanced Targ draws its world through the shared planner (ADR 0087): the surface by day and
-/// by night, at altitude, at the whole-surface Structure Reach, and in a lit Room.
+/// by night, at twilight under its sky gradient, at altitude, at the whole-surface Structure Reach, and in a lit Room.
 test('Enhanced Targ draws the surface and Rooms through the shared planner', async ({
   page
 }, testInfo) => {
@@ -10,6 +10,7 @@ test('Enhanced Targ draws the surface and Rooms through the shared planner', asy
   for (const scene of [
     'structure',
     'night',
+    'twilight',
     'altitude',
     'distant',
     'indoor'
@@ -24,7 +25,7 @@ test('Enhanced Targ draws the surface and Rooms through the shared planner', asy
         await import('../src/shell/enhancedFrame.ts');
       const { FrameRenderer } = await import('../src/rendering/renderer.ts');
       const { fetchTargSystem } = await import('../src/sky/system.ts');
-      const { createTargOrrery, skyStateAt } =
+      const { createTargOrrery, skyGradientAt, skyStateAt } =
         await import('../src/sky/index.ts');
       const { defaultSettings } = await import('../src/settings/index.ts');
       const bundle = await load(fetchReader(location.origin + '/payload/'));
@@ -50,7 +51,12 @@ test('Enhanced Targ draws the surface and Rooms through the shared planner', asy
                 ...session.snapshot.player,
                 // These views look into the city along increasing world Z.
                 heading: Math.PI,
-                pitch: scene === 'altitude' ? -0.6 : -0.3,
+                pitch:
+                  scene === 'altitude'
+                    ? -0.6
+                    : scene === 'twilight'
+                      ? 0.2
+                      : -0.3,
                 position:
                   scene === 'distant'
                     ? { x: 0, y: 5000, z: 0 }
@@ -69,6 +75,16 @@ test('Enhanced Targ draws the surface and Rooms through the shared planner', asy
           if (red + green + blue < darkest) {
             darkest = red + green + blue;
             elapsed = seconds;
+          }
+        }
+      }
+      // The first moment of the day under the twilight gradient.
+      if (scene === 'twilight') {
+        for (let seconds = 0; seconds < 86_400; seconds += 300) {
+          const state = skyStateAt(orrery, seconds);
+          if (skyGradientAt(state.solarAltitudeDegrees) !== undefined) {
+            elapsed = seconds;
+            break;
           }
         }
       }
@@ -140,7 +156,8 @@ test('Enhanced Targ draws the surface and Rooms through the shared planner', asy
         haze: frame.kind === 'shared' ? frame.plan.haze : undefined,
         kind: frame.kind,
         lines: frame.kind === 'shared' ? frame.lines : 0,
-        roads: frame.kind === 'shared' ? frame.plan.roadVertices.length : 0
+        roads: frame.kind === 'shared' ? frame.plan.roadVertices.length : 0,
+        sky: frame.kind === 'shared' ? frame.plan.skyVertices.length : 0
       };
     }, scene);
     await page
@@ -153,11 +170,14 @@ test('Enhanced Targ draws the surface and Rooms through the shared planner', asy
     if (scene === 'indoor') {
       expect(result.roads).toBe(0);
       expect(result.haze).toBeNull();
+      expect(result.sky).toBe(0);
     } else {
       if (scene === 'distant' || scene === 'altitude') {
         expect(result.roads).toBeGreaterThan(0);
       }
       expect(result.haze).not.toBeNull();
+      // Targ's sky is the plan's sky pass (#956).
+      expect(result.sky).toBeGreaterThan(0);
     }
   }
 });

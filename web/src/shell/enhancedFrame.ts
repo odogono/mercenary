@@ -1,21 +1,24 @@
 import type { Atmosphere } from '../enhanced/atmosphere.ts';
 import type { EnhancedFramePlan, EnhancedStrokes } from '../enhanced/frame.ts';
+import { ENHANCED_PRESENTATION } from '../enhanced/presentation.ts';
+import { tan } from '../math/index.ts';
 import type { Size } from '../projection/index.ts';
 import type { FrameRenderer } from '../rendering/renderer.ts';
-import { ScenePalette } from '../scene/index.ts';
+import { ScenePalette, type RGB8 } from '../scene/index.ts';
 import type { SessionSnapshot } from '../session/index.ts';
-import type { TargOrrery } from '../sky/index.ts';
+import { skyStateAt, type TargOrrery } from '../sky/index.ts';
+import { targSkyView, type TargSkyView } from '../sky/view.ts';
 import type { World } from '../world/index.ts';
 import {
   drawnWhole,
   planTargEnhancedFrame,
-  targEnhancedScene
+  targEnhancedScene,
+  targFieldOfView
 } from './enhancedScene.ts';
 import {
   addLiftBar,
   objectOverlays,
   planFrame,
-  skyFrameOf,
   worldClear,
   worldlessFrame,
   type DrawBatch,
@@ -28,13 +31,12 @@ import {
 ///
 /// Authentic Targ, the frames with no world in them (the Escape, the Lift Journey's solid
 /// stages and a dark Room) are one Targ plan. Enhanced Targ draws its world through the shared
-/// planner (ADR 0087), between Targ's own passes: its sky or a lit Room's backdrop before the
-/// plan, and the lift bar and the fixed-screen overlays after it.
+/// planner (ADR 0087), sky and all (#956), with the lift bar and the fixed-screen overlays
+/// drawn over it by Targ's renderer.
 export type TargFrame =
   | { readonly kind: 'targ'; readonly plan: FramePlan }
   | {
       readonly after: FramePlan;
-      readonly before: FramePlan;
       readonly kind: 'shared';
       readonly lines: number;
       readonly plan: EnhancedFramePlan;
@@ -65,20 +67,27 @@ export const planTargFrame = (
       plan: planFrame(world, snapshot, size, orrery, presentation)
     };
   }
-  const sky = skyFrameOf(snapshot, size, orrery, presentation);
+  const sky = enhancedSky(snapshot, size, orrery, presentation, shared);
   const scene = targEnhancedScene(world, snapshot, {
     atmosphere: shared.atmosphere,
     // Haze fades toward the sky at the horizon: its twilight gradient's foot, or its fill.
-    horizon: sky?.gradient?.horizon ?? sky?.clear ?? ScenePalette.sky,
+    horizon: sky?.horizon ?? ScenePalette.sky,
     structureReach: presentation.structureReach
   });
-  const plan = planTargEnhancedFrame(
+  const planned = planTargEnhancedFrame(
     scene,
     snapshot,
     size,
     shared.outputHeight,
     shared.strokes
   );
+  // Targ's sky, or a lit Room's backdrop, is the fill, and its Bodies and stars the plan's sky.
+  const clear: RGB8 = worldClear(snapshot, sky, presentation.preset);
+  const plan: EnhancedFramePlan = {
+    ...planned,
+    clear: [clear.red / 255, clear.green / 255, clear.blue / 255],
+    skyVertices: sky?.vertices ?? new Float32Array()
+  };
   const meshes = new Map(
     scene.placements.map(placement => [placement.id, placement.mesh])
   );
@@ -102,15 +111,6 @@ export const planTargFrame = (
       points: 0,
       size
     },
-    before: {
-      batches: [],
-      clear: worldClear(snapshot, sky, presentation.preset),
-      lines: 0,
-      overlays: [],
-      points: 0,
-      size,
-      ...(sky === undefined ? {} : { sky })
-    },
     kind: 'shared',
     lines,
     plan,
@@ -118,8 +118,35 @@ export const planTargFrame = (
   };
 };
 
-/// Draw one Targ frame: a Targ plan through Targ's renderer, or Targ's passes around the shared
-/// planner's plan, all into the one canvas.
+/// Targ's sky on the surface where an orrery is given (ADR 0025), as the plan's sky (#956).
+const enhancedSky = (
+  snapshot: SessionSnapshot,
+  size: Size,
+  orrery: TargOrrery | undefined,
+  presentation: FramePresentation,
+  shared: SharedFrameOptions
+): TargSkyView | undefined => {
+  if (orrery === undefined || snapshot.location.kind !== 'surface') {
+    return undefined;
+  }
+  // One output pixel, as a tangent of Targ's view.
+  const pixel =
+    (2 * tan((targFieldOfView(size) * Math.PI) / 360)) / shared.outputHeight;
+  return targSkyView(
+    skyStateAt(orrery, presentation.orreryElapsed ?? snapshot.elapsed),
+    {
+      heading: snapshot.player.heading,
+      mirrored: snapshot.worldFlipped,
+      pitch: snapshot.player.pitch,
+      roll: snapshot.player.roll
+    },
+    ENHANCED_PRESENTATION.camera.farPlane / 2,
+    pixel
+  );
+};
+
+/// Draw one Targ frame: a Targ plan through Targ's renderer, or the shared planner's plan with
+/// Targ's overlays after it, all into the one canvas.
 export const drawTargFrame = (
   frame: TargFrame,
   renderer: Renderer,
@@ -128,11 +155,7 @@ export const drawTargFrame = (
   if (frame.kind === 'targ') {
     return renderer.render(frame.plan);
   }
-  const planner = shared();
-  // Sizing the canvas clears it, so it is sized before Targ's pass rather than between them.
-  planner.resize();
-  renderer.render(frame.before);
-  planner.render(frame.plan, undefined, { over: true });
+  shared().render(frame.plan);
   renderer.resume();
   renderer.render(frame.after);
   return { lines: frame.lines, points: frame.points };

@@ -61,7 +61,7 @@ const scaled = (value: Vector3, amount: number): Vector3 => ({
   z: value.z * amount
 });
 
-const discBasis = (
+export const discBasis = (
   centre: Vector3,
   toward: Vector3 | undefined
 ): readonly [Vector3, Vector3] => {

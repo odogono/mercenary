@@ -621,7 +621,7 @@ export const skyFrameOf = (
 /// The colour a world frame starts from: the sky, or a lit Room's backdrop.
 export const worldClear = (
   snapshot: SessionSnapshot,
-  sky: SkyFrame | undefined,
+  sky: { readonly clear: RGB8 } | undefined,
   preset: PresentationPreset
 ): RGB8 => {
   const indoor = snapshot.indoor;
