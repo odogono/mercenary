@@ -91,17 +91,19 @@ export const createWalkabout = (
   // not advancing the session rather than by leaving it unstarted (ADR 0032). It is a Talk
   // Script (ADR 0080).
   const talk = talkScripts.length === 0 ? undefined : { scripts: talkScripts };
-  if (restore !== undefined) {
-    return {
-      session: GameplaySession.restore(content, scripts, restore, talk),
-      world
-    };
-  }
-  if (talk === undefined) {
-    return {
-      session: new GameplaySession(content, openingPlayer(), scripts),
-      world
-    };
-  }
-  return { ...GameplaySession.newGame(content, scripts, talk), world };
+  const walkabout =
+    restore !== undefined
+      ? {
+          session: GameplaySession.restore(content, scripts, restore, talk),
+          world
+        }
+      : talk === undefined
+        ? {
+            session: new GameplaySession(content, openingPlayer(), scripts),
+            world
+          }
+        : { ...GameplaySession.newGame(content, scripts, talk), world };
+  // Play freezes for the ST's Doorway Transition (ADR 0091).
+  walkabout.session.doorwayTransitions = true;
+  return walkabout;
 };

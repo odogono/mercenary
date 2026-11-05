@@ -82,6 +82,15 @@ import {
   type World
 } from '../world/index.ts';
 import { wrapSurfaceAxis } from '../world/surfaceCoordinates.ts';
+import {
+  advanceDoorwayTransition,
+  doorwayTransitionSecondsLeft,
+  doorwayWipeDirection,
+  doorwayWipeOf,
+  type DoorwayTransitionState,
+  type DoorwayWipeDirection,
+  type DoorwayWipeFrame
+} from './doorwayTransition.ts';
 import { endingStateOf, type EndingState } from './ending.ts';
 import {
   advanceLiftJourney,
@@ -301,6 +310,14 @@ export interface SessionSnapshot {
     readonly wallContactLatch: number;
   };
   readonly credits: number;
+  /// The Doorway Transition under way (ADR 0091): the wipe at this moment and the
+  /// view the player left, which the downward wipe keeps showing. Present only
+  /// while play is frozen for one.
+  readonly doorwayTransition?: {
+    readonly departed: DepartedView;
+    readonly direction: DoorwayWipeDirection;
+    readonly wipe: DoorwayWipeFrame;
+  };
   readonly elapsed: number;
   /// Which Ending this moment belongs to, and how far its presentation has got.
   /// `activePlay` throughout ordinary play; what draws an Ending reads this
@@ -333,6 +350,13 @@ export interface SessionSnapshot {
   readonly throttle: number;
   readonly throttleNotch: number;
   readonly worldFlipped: boolean;
+}
+
+/// The view a Doorway Transition leaves: where the player stood and how that Room looked.
+export interface DepartedView {
+  readonly indoor: IndoorScene | undefined;
+  readonly location: Location;
+  readonly player: PlayerState;
 }
 
 export const openingPlayer = (): PlayerState =>
@@ -730,6 +754,12 @@ export class GameplaySession {
   /// Seconds since a hired ship began its descent, while it descends.
   private deliverySeconds: number | undefined;
   private liftJourney: LiftJourneyState | undefined;
+  /// Whether taking a Doorway freezes play for the ST's Doorway Transition
+  /// (ADR 0091). Off by default, so Golden Traces keep the Reference Build's
+  /// timing; the Browser Shell turns it on.
+  doorwayTransitions = false;
+  private doorwayTransition:
+    (DoorwayTransitionState & { readonly departed: DepartedView }) | undefined;
   private liftBensonColour: number | undefined;
   private residence = new Map<number, Residence>();
   private objectFlags = new Map<number, number>();
@@ -1561,6 +1591,21 @@ export class GameplaySession {
   private take(doorway: Doorway, rules: DoorwayRules): PresentationEvent[] {
     const previousRoom = locationHostValue(this.location);
     if ('room' in doorway.destination) {
+      if (this.doorwayTransitions) {
+        this.doorwayTransition = {
+          departed: {
+            indoor: this.indoor,
+            location: this.location,
+            player: this.game.player
+          },
+          direction: doorwayWipeDirection(
+            doorway,
+            this.game.player.position,
+            this.game.player.heading
+          ),
+          elapsedSeconds: 0
+        };
+      }
       const arrival = doorway.arrival;
       this.game = {
         ...this.game,
@@ -1695,6 +1740,7 @@ export class GameplaySession {
   teleport(location: Location): void {
     return this.change(() => {
       this.recentreLook();
+      this.doorwayTransition = undefined;
       const previousRoom = locationHostValue(this.location);
       this.game = {
         ...this.game,
@@ -2299,18 +2345,27 @@ export class GameplaySession {
     readonly snapshot: SessionSnapshot;
   } {
     const lift = this.content.underground?.lift;
-    if (this.liftJourney === undefined || lift === undefined || seconds <= 0) {
+    if (
+      seconds <= 0 ||
+      ((this.liftJourney === undefined || lift === undefined) &&
+        this.doorwayTransition === undefined)
+    ) {
       return this.advanceInterval(seconds);
     }
     // A step is split where the journey's scene changes and where it stops,
-    // so what follows either is given only the time after it.
+    // and where a Doorway Transition ends, so what follows either is given
+    // only the time after it.
     const events: PresentationEvent[] = [];
     let remaining = seconds;
     while (remaining > 0) {
-      const until =
-        this.liftJourney === undefined
+      const until = Math.min(
+        this.liftJourney === undefined || lift === undefined
           ? remaining
-          : liftSecondsToNextEvent(this.liftJourney, lift);
+          : liftSecondsToNextEvent(this.liftJourney, lift),
+        this.doorwayTransition === undefined
+          ? remaining
+          : doorwayTransitionSecondsLeft(this.doorwayTransition)
+      );
       const slice = until > 0 ? Math.min(remaining, until) : remaining;
       events.push(...this.advanceInterval(slice).events);
       // A journey's scene changes at a slice's edge, so each is told apart.
@@ -2339,6 +2394,9 @@ export class GameplaySession {
     // no Ship Delivery, no combat.
     const terminal = this.ending.kind !== 'activePlay';
     const journeyAtStart = this.liftJourney !== undefined;
+    // A Doorway Transition stops the main loop: no Mover, no Doorway, no look.
+    // Benson, the panel and sound run on (ADR 0091).
+    const doorwayAtStart = this.doorwayTransition !== undefined;
     // A slice never crosses one of the journey's events (`advanceFrame`), so
     // its scene holds for the whole slice.
     const liftSurfaceSeconds =
@@ -2358,7 +2416,8 @@ export class GameplaySession {
       this.content.flight !== undefined &&
       seconds > 0 &&
       !terminal &&
-      !journeyAtStart
+      !journeyAtStart &&
+      !doorwayAtStart
     ) {
       let steered = this.intent;
       // A mirrored world mirrors a sidestep as it does a turn.
@@ -2415,6 +2474,14 @@ export class GameplaySession {
       );
     }
     this.advanceLift(seconds, events);
+    if (doorwayAtStart && this.doorwayTransition !== undefined) {
+      const next = advanceDoorwayTransition(this.doorwayTransition, seconds);
+      this.doorwayTransition =
+        next === undefined
+          ? undefined
+          : { ...next, departed: this.doorwayTransition.departed };
+      this.game = { ...this.game, elapsed: this.game.elapsed + seconds };
+    }
     return { events, snapshot: this.snapshot };
   }
 
@@ -3086,6 +3153,8 @@ export class GameplaySession {
   get snapshot(): SessionSnapshot {
     const lift = this.content.underground?.lift;
     const journey = this.liftJourney;
+    const doorway = this.doorwayTransition;
+    const wipe = doorway === undefined ? undefined : doorwayWipeOf(doorway);
     const bensonColour = this.bensonColour;
     const liftIndex =
       journey === undefined ? undefined : liftPhaseIndex(journey);
@@ -3102,6 +3171,15 @@ export class GameplaySession {
         wallContactLatch: this.game.wallContactLatch
       },
       credits: this.credits,
+      ...(doorway === undefined || wipe === undefined
+        ? {}
+        : {
+            doorwayTransition: {
+              departed: doorway.departed,
+              direction: doorway.direction,
+              wipe
+            }
+          }),
       elapsed: this.game.elapsed,
       ending: this.ending,
       ...(this.endingField === undefined

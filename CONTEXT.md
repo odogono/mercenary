@@ -106,6 +106,10 @@ _Avoid_: Session Snapshot, runtime snapshot, game data
 One opening belonging to a single Room, carrying the Room Link it leads along, whatever it demands before it opens, and where in the destination it puts the player; two Rooms that face each other have a Doorway each rather than sharing one.
 _Avoid_: Portal, door, exit, connection
 
+**Doorway Transition**:
+The Atari ST's wipe across the 3D view as the player takes a Doorway into another Room, and the freeze of play it runs in (ADR 0091): one Room's flat fill covers the view above a moving split while a whole frame shows below. Not saved, and off in Golden Traces.
+_Avoid_: Door wipe, Room Transition, fade
+
 **Room Link**:
 The directed connection a Doorway leads along, from the Room that owns the Doorway to one destination — another Room, or out of the underground to the Colony Craft. A Room Link in one direction implies nothing about the other direction.
 _Avoid_: Edge, adjacency, neighbour, two-way link
