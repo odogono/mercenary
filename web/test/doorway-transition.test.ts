@@ -49,31 +49,30 @@ const coverOf = (direction: DoorwayWipeDirection): number[] =>
 describe('the Doorway Transition timeline', () => {
   test('wipes upward from row 132 to row 4, then holds for 21 VBLs', () => {
     const cover = coverOf('up');
-    expect(cover).toHaveLength(55);
-    expect(cover[0]).toBe(136);
-    expect(cover.slice(1, 34)).toEqual(
+    expect(cover).toHaveLength(54);
+    expect(cover.slice(0, 33)).toEqual(
       Array.from({ length: 33 }, (_, step) => 132 - 4 * step)
     );
-    expect(cover.slice(34)).toEqual(Array(21).fill(0));
+    expect(cover.slice(33)).toEqual(Array(21).fill(0));
     expect(doorwayWipeAt('up', 10)).toMatchObject({
       cover: 'departed',
       shows: 'arrived'
     });
-    expect(doorwayWipeAt('up', 55)).toBeUndefined();
+    expect(doorwayWipeAt('up', 54)).toBeUndefined();
   });
 
   test('holds the new fill for 25 VBLs, then wipes downward from row 2 to row 130', () => {
     const cover = coverOf('down');
-    expect(cover).toHaveLength(59);
-    expect(cover.slice(0, 26)).toEqual(Array(26).fill(136));
-    expect(cover.slice(26)).toEqual(
+    expect(cover).toHaveLength(58);
+    expect(cover.slice(0, 25)).toEqual(Array(25).fill(136));
+    expect(cover.slice(25)).toEqual(
       Array.from({ length: 33 }, (_, step) => 2 + 4 * step)
     );
     expect(doorwayWipeAt('down', 30)).toMatchObject({
       cover: 'arrived',
       shows: 'departed'
     });
-    expect(doorwayWipeAt('down', 59)).toBeUndefined();
+    expect(doorwayWipeAt('down', 58)).toBeUndefined();
   });
 
   test('ends once its VBLs have passed, whatever the steps', () => {
@@ -88,22 +87,59 @@ describe('the Doorway Transition timeline', () => {
     }
     expect(seconds).toBeGreaterThanOrEqual(doorwayTransitionSeconds('up'));
     expect(seconds).toBeLessThan(doorwayTransitionSeconds('up') + 1 / 50);
-    expect(doorwayTransitionSeconds('down')).toBe(59 / DOORWAY_VBLS_PER_SECOND);
+    expect(doorwayTransitionSeconds('down')).toBe(58 / DOORWAY_VBLS_PER_SECOND);
   });
 });
 
 describe('the Doorway Transition direction', () => {
-  // (word < $80) XOR bit 1 of (heading + $280) >> 8; set wipes downward.
-  test.each([
-    ['zy', { x: 0x40, y: 0, z: 0x9_00 }, 0, 'up'],
-    ['zy', { x: 0x40, y: 0, z: 0x9_00 }, Math.PI / 2, 'up'],
-    ['zy', { x: 0x40, y: 0, z: 0x9_00 }, (3 * Math.PI) / 2, 'down'],
-    ['zy', { x: 0xf_d0, y: 0, z: 0x40 }, (3 * Math.PI) / 2, 'up'],
-    ['xy', { x: 0xf_d0, y: 0, z: 0x40 }, (3 * Math.PI) / 2, 'down'],
-    ['xy', { x: 0x40, y: 0, z: 0xf_d0 }, Math.PI / 2, 'down']
-  ] as const)('%s at %o facing %d wipes %s', (plane, at, heading, wipe) => {
-    expect(doorwayWipeDirection({ plane }, at, heading)).toBe(wipe);
-  });
+  // Up walking forward through the Doorway's wall, down backing through it, on
+  // every wall: the rule ten real ST crossings confirmed. On foot, heading 0
+  // faces −z (north), π/2 −x (west), π +z (south) and 3π/2 +x (east).
+  const walls = {
+    east: {
+      at: { x: 0xf_df, y: 0, z: 0xc_80 },
+      faces: (3 * Math.PI) / 2,
+      plane: 'zy',
+      position: { x: 0x10_00, z: 0xc_00 }
+    },
+    north: {
+      at: { x: 0x5_80, y: 0, z: 0x20 },
+      faces: 0,
+      plane: 'xy',
+      position: { x: 0x5_00, z: 0 }
+    },
+    south: {
+      at: { x: 0xb_80, y: 0, z: 0xf_df },
+      faces: Math.PI,
+      plane: 'xy',
+      position: { x: 0xb_00, z: 0x10_00 }
+    },
+    west: {
+      at: { x: 0x20, y: 0, z: 0x6_80 },
+      faces: Math.PI / 2,
+      plane: 'zy',
+      position: { x: 0, z: 0x6_00 }
+    }
+  } as const;
+  for (const [wall, { at, faces, plane, position }] of Object.entries(walls)) {
+    test(`walking forward through the ${wall} wall wipes up`, () => {
+      expect(doorwayWipeDirection({ plane, position }, at, faces)).toBe('up');
+      expect(
+        doorwayWipeDirection({ plane, position }, at, faces + Math.PI * 2)
+      ).toBe('up');
+      expect(doorwayWipeDirection({ plane, position }, at, faces + 0.7)).toBe(
+        'up'
+      );
+    });
+    test(`backing through the ${wall} wall wipes down`, () => {
+      expect(
+        doorwayWipeDirection({ plane, position }, at, faces + Math.PI)
+      ).toBe('down');
+      expect(
+        doorwayWipeDirection({ plane, position }, at, faces + Math.PI - 0.7)
+      ).toBe('down');
+    });
+  }
 });
 
 /// A session standing at Room 1's Doorway to Room 88, walking into it.
@@ -240,6 +276,35 @@ describe('the Faithful view during a Doorway Transition', () => {
       c64Colour(base.indoor!.foreground)!,
       c64Colour(base.indoor!.background)!
     ]);
-    expect(maxY(cover[0]!.vertices)).toBeCloseTo(boundary(2 + 4 * 14), 3);
+    expect(maxY(cover[0]!.vertices)).toBeCloseTo(boundary(2 + 4 * 15), 3);
+  });
+
+  test('a dark Room’s wipe is black on black', () => {
+    const session = atTheDoorway(true);
+    session.advance(FRAME);
+    const base = session.snapshot;
+    const dark = { background: 0, dark: true, foreground: 0, lineColour: 0 };
+    const black = c64Colour(0)!;
+    for (const direction of ['up', 'down'] as const) {
+      for (const vbl of [0, 20, 40]) {
+        const plan = planFrame(
+          world,
+          {
+            ...base,
+            doorwayTransition: {
+              departed: { ...base.doorwayTransition!.departed, indoor: dark },
+              direction,
+              wipe: doorwayWipeAt(direction, vbl)!
+            },
+            indoor: dark
+          },
+          size
+        );
+        expect(plan.clear).toEqual(black);
+        for (const batch of plan.batches) {
+          expect(batch.colour).toEqual(black);
+        }
+      }
+    }
   });
 });

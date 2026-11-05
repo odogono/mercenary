@@ -9,8 +9,8 @@ import type { Doorway } from '../payload/documents.ts';
 /// sweep. One side of the row shows a Room's flat fill and no lines; the other
 /// shows a whole frame. Nothing is redrawn while it runs.
 ///
-/// - Upward: the old Room's flat fill covers the view, the edge rises from row
-///   132 to row 4 with the new Room's frame below it, then a 21-VBL hold.
+/// - Upward: the edge rises from row 132 to row 4, the old Room's flat fill
+///   above it and the new Room's frame below it, then a 21-VBL hold.
 /// - Downward: the new Room's flat fill covers the view for a 25-VBL hold, then
 ///   the edge falls from row 2 to row 130 with the old Room's frame below it.
 ///
@@ -29,33 +29,33 @@ const TIMELINE: Readonly<
     { readonly firstRow: number; readonly lead: number; readonly tail: number }
   >
 > = {
-  // The 25-VBL hold, then the sweep; play is back at 59 (`$41C64`).
-  down: { firstRow: 2, lead: 26, tail: 0 },
-  // The flattened old palette, the sweep, the hold; play is back at 55
-  // (`$41AEE`).
-  up: { firstRow: 132, lead: 1, tail: 21 }
+  // `$41C64`: the 25-VBL hold, then the sweep. 58 VBLs on real crossings.
+  down: { firstRow: 2, lead: 25, tail: 0 },
+  // `$41AEE`: the sweep from its first VBL, then the 21-VBL hold. 54 VBLs.
+  up: { firstRow: 132, lead: 0, tail: 21 }
 };
 
-/// Which way a crossing wipes: the ST's bit 7 of `$62448`, set at
-/// `$45058..$45078`.
+/// Which way a crossing wipes, by the rule ten real ST crossings confirmed on
+/// every wall: **up** when the player faces the wall the Doorway is in and walks
+/// forward through it, **down** when they face away and back through it.
 ///
-/// The word is `x` for a Doorway in the `zy` plane (record bit 7) and `z`
-/// otherwise; the bit is (word < $80) XOR bit 1 of `(heading + $280) >> 8`,
-/// set meaning downward. The formula is exact, but what the ST's position and
-/// heading words are inside a Room is not established: this reads the host's
-/// Room units (256 to a cell) and a heading word of $400 to a turn. A real
-/// crossing in Hatari is to confirm it; correct it here.
+/// The ST computes it from raw position and heading words (`$45058..$45078`);
+/// those are not the browser's axes or units, so this reads the rule itself.
+/// A `zy` Doorway lies in a wall across `x`, an `xy` one in a wall across `z`;
+/// the wall is on the Doorway's side of the player. The player faces it when
+/// their heading is within 45° of the direction toward it. On foot, forward is
+/// (−sin heading, −cos heading) in `x` and `z`.
 export const doorwayWipeDirection = (
-  doorway: Pick<Doorway, 'plane'>,
+  doorway: Pick<Doorway, 'plane' | 'position'>,
   position: Vector3,
   heading: number
 ): DoorwayWipeDirection => {
-  const word = Math.floor(doorway.plane === 'zy' ? position.x : position.z);
-  const near = word >= 0 && word < 0x80 ? 1 : 0;
-  const turns = heading / (Math.PI * 2);
-  const headingWord = ((Math.round(turns * 0x4_00) % 0x4_00) + 0x4_00) % 0x4_00;
-  const bit = (((headingWord + 0x2_80) >> 8) >> 1) & 1;
-  return (near ^ bit) === 1 ? 'down' : 'up';
+  const acrossX = doorway.plane === 'zy';
+  const toward = Math.sign(
+    acrossX ? doorway.position.x - position.x : doorway.position.z - position.z
+  );
+  const forward = acrossX ? -Math.sin(heading) : -Math.cos(heading);
+  return forward * toward > Math.SQRT1_2 ? 'up' : 'down';
 };
 
 /// A Doorway Transition under way: which way it wipes and how long it has run.
@@ -64,7 +64,9 @@ export interface DoorwayTransitionState {
   readonly elapsedSeconds: number;
 }
 
-/// The whole freeze, in VBLs: 55 upward, 59 downward.
+/// The whole freeze, in VBLs, from the wipe's entry to its end: 54 upward,
+/// 58 downward. The trigger is 1–2 VBLs earlier, in the frame the Doorway is
+/// taken, which play has already spent.
 export const doorwayTransitionVbls = (
   direction: DoorwayWipeDirection
 ): number => {
