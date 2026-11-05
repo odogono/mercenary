@@ -64,6 +64,36 @@ FACTS = {
     # The lift's descent enters Room $62452 through its Doorway 0, then centres the player.
     'liftEntersRoom': (0x8140, '33fc0001000623fc303900062452720013fc0020000624926100ca00'
                                '33fc0800000623a833fc0800000623b0'),
+    # The door sound (#978): YM2149 register writes inline in both wipes.
+    # Up wipe: B and C tones on, noise off.
+    'upSoundOn': (0x1aee, '13fc0004000624ec11fc0004880011fc0090880213fc0005000624ec11fc'
+                       '0005880011fc0008880213fc0002000624ec11fc0002880011fc00808802'
+                       '13fc0003000624ec11fc0003880011fc0009880213fc000a000624ec11fc'
+                       '000a880011fc000c880213fc0009000624ec11fc0009880011fc000c8802'
+                       '13fc0007000624ec11fc0007880011fc00f88802'),
+    # Up wipe, after the sweep: both periods drop.
+    'upSoundStep': (0x1bc2, '13fc0002000624ec11fc0002880011fc0080880213fc0003000624ec11fc'
+                         '0003880011fc0007880213fc0004000624ec11fc0004880011fc00808802'
+                         '13fc0005000624ec11fc0005880011fc00068802'),
+    # Up wipe end: B and C silent, the mixer shadow restored.
+    'upSoundOff': (0x1c1c, '13fc0009000624ec11fc0009880011fc0000880213fc000a000624ec11fc'
+                        '000a880011fc0000880213fc0007000624ec11fc0007880011f9000624ea'
+                        '8802'),
+    # Down wipe: the same chord, written in another order.
+    'downSoundOn': (0x1c64, '13fc0004000624ec11fc0004880011fc0090880213fc0005000624ec11fc'
+                         '0005880011fc0008880213fc0002000624ec11fc0002880011fc00808802'
+                         '13fc0003000624ec11fc0003880011fc0009880213fc0009000624ec11fc'
+                         '0009880011fc000c880213fc000a000624ec11fc000a880011fc00008802'
+                         '13fc000a000624ec11fc000a880011fc000c880213fc0007000624ec11fc'
+                         '0007880011fc00f88802'),
+    # Down wipe, after the hold: the periods drop with B and C swapped.
+    'downSoundStep': (0x1d0e, '13fc0004000624ec11fc0004880011fc0080880213fc0005000624ec11fc'
+                           '0005880011fc0007880213fc0002000624ec11fc0002880011fc00808802'
+                           '13fc0003000624ec11fc0003880011fc00068802'),
+    # Down wipe end.
+    'downSoundOff': (0x1dce, '13fc000a000624ec11fc000a880011fc0000880213fc0009000624ec11fc'
+                          '0009880011fc0000880213fc0007000624ec11fc0007880011f9000624ea'
+                          '8802'),
     # One key per main-loop pass through GEMDOS Cconis/Crawcin: the BIOS buffer queues the rest.
     'keyPoll': (0x5306, '33fc00ff000624223f3c000b4e41544f4a406700ffea08f90007000624b5'
                         '3f3c00074e41544f'),
@@ -154,3 +184,41 @@ def wipe(flag: int) -> str:
     through it), whichever wall the Doorway is in.
     """
     return 'down' if flag & 0x80 else 'up'
+
+
+YM_SELECT = bytes.fromhex('11fc')  # move.b #reg,$8800.w; then a value to $8802.w
+
+
+def ym_writes(code: bytes, name: str) -> list[tuple[int, int | str]]:
+    """The (register, value) pairs a sound block writes, in order.
+
+    Each write is `move.b #r,$624EC` (the select shadow the VBL restores),
+    `move.b #r,$8800.w`, then `move.b #v,$8802.w`, or `move.b $624EA,$8802.w`
+    (the game's mixer shadow, returned as 'mixer').
+    """
+    at, expected = FACTS[name]
+    block, found, i = code[at:at + len(expected) // 2], [], 0
+    while i < len(block):
+        assert block[i:i + 2] == b'\x13\xfc' and block[i + 4:i + 8] == b'\x00\x06\x24\xec'
+        reg = block[i + 3]
+        assert block[i + 8:i + 10] == YM_SELECT and block[i + 11] == reg and block[i + 12:i + 14] == b'\x88\x00'
+        if block[i + 14:i + 16] == YM_SELECT:
+            found.append((reg, block[i + 17]))
+            i += 20
+        else:
+            assert block[i + 14:i + 22] == bytes.fromhex('11f9000624ea8802')
+            found.append((reg, 'mixer'))
+            i += 22
+    return found
+
+
+def door_sound(code: bytes, wipe: str) -> list[dict]:
+    """The door sound as phases of register writes and the Vsyncs held after each.
+
+    Up: on, 33 Vsyncs (the sweep), step, 21 Vsyncs, off. Down: on, 25 Vsyncs,
+    step, 33 Vsyncs (the sweep), off.
+    """
+    holds = (len(UP_ROWS), 0x14 + 1) if wipe == 'up' else (0x18 + 1, len(DOWN_ROWS))
+    return [{'writes': ym_writes(code, f'{wipe}SoundOn'), 'vsyncs': holds[0]},
+            {'writes': ym_writes(code, f'{wipe}SoundStep'), 'vsyncs': holds[1]},
+            {'writes': ym_writes(code, f'{wipe}SoundOff'), 'vsyncs': 0}]

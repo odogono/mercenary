@@ -9,8 +9,10 @@ import { dionDocumentPath, readDionHeader } from '../dion/documents.ts';
 import { readDionSound, type DionSoundProgramme } from '../dion/narrative.ts';
 import type { SoundDocument } from '../payload/documents.ts';
 import { readers } from '../payload/read.ts';
+import { DOORWAY_VBLS_PER_SECOND } from '../session/doorwayTransition.ts';
 import { assertBrowserDocument } from '../shell/documentPath.ts';
 import { bensonFrequencyHigh, type SoundCommand } from '../sound/presenter.ts';
+import { TARG_DOOR_SOUND } from '../sound/targDoorSound.ts';
 import { AudioWorkletTransport } from '../sound/transport.ts';
 import { button, card } from './cards.ts';
 import { installDionBoard } from './dionBoard.ts';
@@ -280,6 +282,32 @@ try {
         { kind: 'play', selector: 32, voice: 2 }
       ])
   );
+
+  const door = card(
+    targBoard,
+    'Door sound · ST YM2149',
+    'A Doorway Transition: walking forward wipes up (54 VBLs), backing through wipes down (58 VBLs).'
+  );
+  for (const direction of ['up', 'down'] as const) {
+    button(
+      door,
+      direction === 'up' ? 'Forward (up)' : 'Backward (down)',
+      () =>
+        void unlock().then(() => {
+          const start = now();
+          for (const phase of TARG_DOOR_SOUND[direction]) {
+            targ.send({
+              at: start + phase.vbl / DOORWAY_VBLS_PER_SECOND,
+              commands: phase.writes.map(([register, value]) => ({
+                kind: 'ym' as const,
+                register,
+                value
+              }))
+            });
+          }
+        })
+    );
+  }
 
   let liftPitch = 0x40;
   const lift = card(

@@ -10,6 +10,7 @@
     python3 -m targlab door-facts            check the Doorway wipe's code bytes in E1
     python3 -m targlab confirm-door          drive the Doorway wipe in Hatari (#976)
     python3 -m targlab confirm-door-crossing cross real Doorways underground in Hatari
+    python3 -m targlab confirm-door-sound    log YM writes across a real crossing (#978)
 
 `export` reads only the pinned STX. It writes the mark as a PNG and its
 provenance as JSON; the rest of the picture never leaves the disk image.
@@ -24,6 +25,7 @@ from pathlib import Path
 from . import door, m68k
 from .confirm import TITLE_VBL, confirm
 from .door_confirm import confirm_door
+from .door_sound import confirm_door_sound
 from .door_crossing import CASES as CROSSINGS, confirm_door_crossing
 from .disk import REPOSITORY, pinned_floppy
 from .panel import extract as extract_panel
@@ -40,6 +42,7 @@ def main() -> None:
     commands.add_parser('export-panel-proofs')
     commands.add_parser('door-facts')
     commands.add_parser('confirm-door')
+    commands.add_parser('confirm-door-sound')
     crossing = commands.add_parser('confirm-door-crossing')
     crossing.add_argument('cases', nargs='*', help='default: all of ' + ' '.join(CROSSINGS))
     disasm = commands.add_parser('disasm')
@@ -57,6 +60,9 @@ def main() -> None:
         return
     if args.command == 'confirm-door-crossing':
         print(confirm_door_crossing(args.cases or None))
+        return
+    if args.command == 'confirm-door-sound':
+        print(confirm_door_sound())
         return
     if args.command == 'confirm-door':
         print(confirm_door())
