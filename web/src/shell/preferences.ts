@@ -80,6 +80,8 @@ export interface Preferences {
   /// Extended Controls: the Strafe and Free Look Extensions (ADR 0059), off by default. It is
   /// kept here and never in Session State, so turning it on or off leaves every Save as it was.
   readonly extendedControls: boolean;
+  /// How thick Haze is, as a percentage of its authored and weathered thickness. Absent is 100.
+  readonly hazeAmount?: number;
   readonly panelRendition: PanelRendition;
   /// Absent means "whatever the tuning document says".
   readonly presentationPreset?: PresentationSettings['preset'];
@@ -98,6 +100,18 @@ export const DEFAULT_PREFERENCES: Preferences = {
   composition: 'panel',
   extendedControls: false,
   panelRendition: 'targ'
+};
+
+export const HAZE_AMOUNT_MIN = 0;
+export const HAZE_AMOUNT_MAX = 200;
+
+/// The multiplier the player's Haze amount puts on a Haze half distance: twice the amount,
+/// half the distance. None at all leaves no Haze to draw.
+export const hazeScaleOf = (
+  preferences: Pick<Preferences, 'hazeAmount'>
+): number => {
+  const amount = preferences.hazeAmount ?? 100;
+  return amount <= 0 ? Number.POSITIVE_INFINITY : 100 / amount;
 };
 
 /// The pixels each named weight and glow level stands for, one vocabulary shared with the
@@ -175,6 +189,12 @@ export const validatePreferences = (value: unknown): Preferences => {
       : {}),
     ...(isGlow(source['wireframeGlow'])
       ? { wireframeGlow: source['wireframeGlow'] as WireframeGlow }
+      : {}),
+    ...(Number.isInteger(source['hazeAmount']) &&
+    (source['hazeAmount'] as number) >= HAZE_AMOUNT_MIN &&
+    (source['hazeAmount'] as number) <= HAZE_AMOUNT_MAX &&
+    source['hazeAmount'] !== 100
+      ? { hazeAmount: source['hazeAmount'] as number }
       : {}),
     ...(isWeight(source['wireframeWeight'])
       ? { wireframeWeight: source['wireframeWeight'] as WireframeWeight }
@@ -303,6 +323,7 @@ export interface PreferencesChange {
   readonly castShadows?: CastShadows | undefined;
   readonly composition?: Composition;
   readonly extendedControls?: boolean;
+  readonly hazeAmount?: number | undefined;
   readonly panelRendition?: PanelRendition;
   readonly presentationPreset?: PresentationSettings['preset'] | undefined;
   readonly roadGlow?: WireframeGlow | undefined;
@@ -340,6 +361,7 @@ export const createPreferences = (options: {
         next.castShadows === preferences.castShadows &&
         next.composition === preferences.composition &&
         next.extendedControls === preferences.extendedControls &&
+        next.hazeAmount === preferences.hazeAmount &&
         next.panelRendition === preferences.panelRendition &&
         next.presentationPreset === preferences.presentationPreset &&
         next.structureReach === preferences.structureReach &&

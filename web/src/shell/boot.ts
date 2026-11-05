@@ -63,6 +63,7 @@ import {
   createPreferences,
   effectivePresentation,
   enhancedStrokesOf,
+  hazeScaleOf,
   titlePreferences
 } from './preferences.ts';
 import {
@@ -979,7 +980,7 @@ try {
           weatherBody,
           targClock.days(snapshot.elapsed),
           weatherOverride
-        )
+        ) * hazeScaleOf(preferences.current())
       ),
       outputHeight: canvas.height,
       // The player's weight and glow choices are presentation, so they are read per frame the

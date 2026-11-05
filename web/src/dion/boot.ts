@@ -30,6 +30,7 @@ import { canvasPointer } from '../shell/pointer.ts';
 import {
   createPreferences,
   enhancedStrokesOf,
+  hazeScaleOf,
   titlePreferences
 } from '../shell/preferences.ts';
 import { routeKey, routePad, type RouterState } from '../shell/router.ts';
@@ -91,6 +92,7 @@ const chrome = installShellChrome(surface, {
     'shadows',
     'shadow-depth',
     'ambient',
+    'haze',
     'extended',
     'audio'
   ]
@@ -313,7 +315,9 @@ try {
     screen: canvas,
     stored: () => preferences.current().presentationPreset ?? 'enhanced',
     strokes: () => enhancedStrokesOf(preferences.current()),
-    weather: body => weatherScale(body, session.bodyDays(), weatherOverride)
+    weather: body =>
+      weatherScale(body, session.bodyDays(), weatherOverride) *
+      hazeScaleOf(preferences.current())
   });
   const presentation = viewPresentation;
   const settingsView = installSettingsView({

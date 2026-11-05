@@ -113,7 +113,7 @@ export const weatherScale = (
 };
 
 /// An Atmosphere with its Haze thickened or thinned by Weather. No Atmosphere, or no Haze,
-/// stays as it is.
+/// stays as it is; an infinite scale thins the Haze away.
 export const weathered = (
   atmosphere: Atmosphere | null | undefined,
   scale: number
@@ -122,7 +122,11 @@ export const weathered = (
     ? null
     : atmosphere.hazeHalfDistance === null
       ? atmosphere
-      : { hazeHalfDistance: atmosphere.hazeHalfDistance * scale };
+      : {
+          hazeHalfDistance: Number.isFinite(scale)
+            ? atmosphere.hazeHalfDistance * scale
+            : null
+        };
 
 /// Read the `weather` console argument: a state, or `auto` to clear the override.
 export const parseWeather = (value: string): WeatherState | null => {
