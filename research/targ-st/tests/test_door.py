@@ -1,7 +1,9 @@
 """Doorway wipe facts (#976) and the 68000 disassembler."""
+import tempfile
 import unittest
+from pathlib import Path
 
-from targlab import disk, door, m68k
+from targlab import disk, door, door_crossing, m68k
 from test_title import PRESENT
 
 
@@ -45,6 +47,66 @@ class Direction(unittest.TestCase):
     def test_split_rows(self):
         self.assertEqual((door.UP_ROWS[0], door.UP_ROWS[-1], len(door.UP_ROWS)), (132, 4, 33))
         self.assertEqual((door.DOWN_ROWS[0], door.DOWN_ROWS[-1], len(door.DOWN_ROWS)), (2, 130, 33))
+
+
+# Room records read from RAM in the crossing probe (restricted/targ-st-door-976/crossing/).
+ROOM_1 = bytes.fromhex('104c1003000744' '8258100c' '02090b10' '02590500' '00')
+ROOM_5 = bytes.fromhex('104c1007220300' '82501004' '8249100c' '026f0310' '80')
+ROOM_171 = bytes.fromhex('04031004440000' 'a2aa0405' '82ac040e' '62a90100' '82000006' '00')
+
+# name: (record, x, z, heading at the $45078 break, destination Room, d7 there, wipe that ran)
+CROSSINGS = {
+    'fz-max': (ROOM_1, 0x0b54, 0x0fe0, 0x0200, 0x09, 0x7f, 'up'),
+    'bz-max': (ROOM_1, 0x0b6c, 0x0fe0, 0x0000, 0x09, 0xff, 'down'),
+    'fx-max': (ROOM_1, 0x0fe0, 0x0c80, 0x0300, 0x58, 0x7f, 'up'),
+    'bx-max': (ROOM_1, 0x0fe0, 0x0c80, 0x0100, 0x58, 0xff, 'down'),
+    'fz-min': (ROOM_1, 0x0554, 0x0020, 0x0000, 0x59, 0x7f, 'up'),
+    'bz-min': (ROOM_1, 0x056c, 0x0020, 0x0200, 0x59, 0xff, 'down'),
+    'dark': (ROOM_5, 0x0fe0, 0x0c80, 0x0300, 0x49, 0x7f, 'up'),
+    'exit': (ROOM_171, 0x0020, 0x0680, 0x0100, 0x00, 0x7f, 'up'),
+}
+
+
+class Crossing(unittest.TestCase):
+    def test_observed_crossings_match_the_ported_test_and_formula(self):
+        for name, (record, x, z, heading, room, flag, wipe) in CROSSINGS.items():
+            with self.subTest(name):
+                found = door.doorway_at(record, x, z, heading)
+                self.assertEqual(found['room'], room)
+                self.assertEqual(door.direction_flag(found['flag'], x, z, heading), flag)
+                self.assertEqual(door.wipe(flag), wipe)
+
+    def test_forward_is_up_and_backward_is_down_on_every_wall(self):
+        # Facing into the wall the Doorway is in wipes up; facing away wipes down.
+        for wall_flag, x, z, into, away in ((0x02, 0x0b80, 0x0020, 0x000, 0x200),
+                                            (0x02, 0x0b80, 0x0fe0, 0x200, 0x000),
+                                            (0x82, 0x0020, 0x0c80, 0x100, 0x300),
+                                            (0x82, 0x0fe0, 0x0c80, 0x300, 0x100)):
+            for skew in (-0x7f, 0, 0x7f):
+                self.assertEqual(door.wipe(door.direction_flag(wall_flag, x, z, (into + skew) & 0x3ff)), 'up')
+                self.assertEqual(door.wipe(door.direction_flag(wall_flag, x, z, (away + skew) & 0x3ff)), 'down')
+
+    def test_off_span_or_side_on_does_not_match(self):
+        self.assertIsNone(door.doorway_at(ROOM_1, 0x0b54, 0x0fe0, 0x0300))  # side-on
+        self.assertIsNone(door.doorway_at(ROOM_1, 0x0bc0, 0x0fe0, 0x0200))  # past the span
+        self.assertIsNone(door.doorway_at(ROOM_1, 0x0b54, 0x0f00, 0x0200))  # not at the wall
+
+    def test_records(self):
+        self.assertEqual([d['room'] for d in door.doorways(ROOM_1)], [0x58, 0x09, 0x59])
+        self.assertEqual([door.is_dark(r) for r in (ROOM_1, ROOM_5, ROOM_171)], [False, True, False])
+
+
+class CrossingScripts(unittest.TestCase):
+    def test_every_case_stays_within_hatari_breakpoint_table(self):
+        # Hatari 2.6.1 keeps 16 breakpoints; the boot steps are spent before placement.
+        for name, case in door_crossing.CASES.items():
+            with self.subTest(name), tempfile.TemporaryDirectory() as work:
+                directory = Path(work)
+                door_crossing.scripts(directory, *case)
+                count = lambda f: sum(l.startswith('b ') for l in (directory / f).read_text().splitlines())
+                live = count('boot.ini') - 1 + sum(count(f's{i:02d}.ini') for i in range(2, 7))
+                self.assertLessEqual(live, 16)
+                self.assertIn('r pc=$47f92', (directory / 's01.ini').read_text())
 
 
 @unittest.skipUnless(PRESENT, 'pinned STX absent')

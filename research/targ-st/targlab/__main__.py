@@ -9,6 +9,7 @@
     python3 -m targlab disasm LO:HI [--ram RAM]   68000 listing of E1 (or a RAM dump)
     python3 -m targlab door-facts            check the Doorway wipe's code bytes in E1
     python3 -m targlab confirm-door          drive the Doorway wipe in Hatari (#976)
+    python3 -m targlab confirm-door-crossing cross real Doorways underground in Hatari
 
 `export` reads only the pinned STX. It writes the mark as a PNG and its
 provenance as JSON; the rest of the picture never leaves the disk image.
@@ -23,6 +24,7 @@ from pathlib import Path
 from . import door, m68k
 from .confirm import TITLE_VBL, confirm
 from .door_confirm import confirm_door
+from .door_crossing import CASES as CROSSINGS, confirm_door_crossing
 from .disk import REPOSITORY, pinned_floppy
 from .panel import extract as extract_panel
 from .panel_confirm import confirm_panel, writer_proofs
@@ -38,6 +40,8 @@ def main() -> None:
     commands.add_parser('export-panel-proofs')
     commands.add_parser('door-facts')
     commands.add_parser('confirm-door')
+    crossing = commands.add_parser('confirm-door-crossing')
+    crossing.add_argument('cases', nargs='*', help='default: all of ' + ' '.join(CROSSINGS))
     disasm = commands.add_parser('disasm')
     disasm.add_argument('windows', nargs='+', help='LO:HI in hex, HI exclusive')
     disasm.add_argument('--ram', type=Path, help='a RAM dump based at 0 instead of E1')
@@ -50,6 +54,9 @@ def main() -> None:
         path = REPOSITORY / 'web/test/fixtures/targ-st-panel-writers.json'
         path.write_text(json.dumps(writer_proofs(), indent=2, sort_keys=True) + '\n')
         print(path)
+        return
+    if args.command == 'confirm-door-crossing':
+        print(confirm_door_crossing(args.cases or None))
         return
     if args.command == 'confirm-door':
         print(confirm_door())
