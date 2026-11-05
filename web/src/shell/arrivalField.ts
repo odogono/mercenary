@@ -8,7 +8,12 @@ import {
   descentViewSnapshot,
   type ArrivalCameraPose
 } from './arrivalCamera.ts';
-import { planFrame, type FramePlan, type FramePresentation } from './frame.ts';
+import {
+  planTargFrame,
+  type SharedFrameOptions,
+  type TargFrame
+} from './enhancedFrame.ts';
+import type { FramePlan, FramePresentation } from './frame.ts';
 
 /// The Arrival Field: the authored star field the Arrival's space segment is seen against, and
 /// the planet that grows out of the middle of it.
@@ -190,10 +195,10 @@ export const arrivalBlackoutPlan = (size: Size): FramePlan => ({
 /// The frame one moment of the Arrival draws.
 ///
 /// Two of its states are the shell's own pictures and two are the world's. The descent is the
-/// ordinary world renderer looking at Targ from a camera the session is not standing in, which
-/// is why it is `planFrame` over a synthetic Pose rather than anything new: the city grid that
+/// ordinary Targ frame looking at Targ from a camera the session is not standing in, which is
+/// why it is `planTargFrame` over a synthetic Pose rather than anything new: the city grid that
 /// grows as the ship falls is the same city the player will walk out onto, drawn the same way,
-/// with the Enhanced sky behind it if the preset asks for one.
+/// through the shared planner under Enhanced (#957) with Targ's sky behind it.
 export const arrivalFramePlan = (
   phase: ArrivalPhaseKind,
   view: {
@@ -201,35 +206,38 @@ export const arrivalFramePlan = (
     readonly orrery?: TargOrrery;
     readonly pose: ArrivalCameraPose;
     readonly presentation: FramePresentation;
+    readonly shared: SharedFrameOptions;
     readonly size: Size;
     readonly snapshot: SessionSnapshot;
     readonly world: World;
   }
-): FramePlan => {
+): TargFrame => {
   switch (phase) {
     case 'titleCard':
     case 'space':
     case 'planetApproach':
-      return arrivalFieldPlan(view.field, view.size);
+      return { kind: 'targ', plan: arrivalFieldPlan(view.field, view.size) };
     case 'blackout':
-      return arrivalBlackoutPlan(view.size);
+      return { kind: 'targ', plan: arrivalBlackoutPlan(view.size) };
     case 'descent':
-      return planFrame(
+      return planTargFrame(
         view.world,
         descentViewSnapshot(view.snapshot, view.pose),
         view.size,
         view.orrery,
-        view.presentation
+        view.presentation,
+        view.shared
       );
     default:
       // The verdict is read from the ground, at the session's own Pose: the Arrival is still
       // holding the player's keys, but there is nothing left for it to pretend about the view.
-      return planFrame(
+      return planTargFrame(
         view.world,
         view.snapshot,
         view.size,
         view.orrery,
-        view.presentation
+        view.presentation,
+        view.shared
       );
   }
 };

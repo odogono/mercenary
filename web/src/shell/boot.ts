@@ -951,36 +951,35 @@ try {
       ...presentation,
       orreryElapsed: targClock.elapsed(snapshot.elapsed)
     };
+    const sharedOptions = {
+      atmosphere,
+      outputHeight: canvas.height,
+      // The player's weight and glow choices are presentation, so they are read per frame the
+      // same way the sky's preset is.
+      strokes: enhancedStrokesOf(preferences.current())
+    };
     const frame = departing
       ? { kind: 'targ' as const, plan: departure.framePlan(VIEWPORT) }
       : arriving
-        ? {
-            kind: 'targ' as const,
-            plan: arrivalFramePlan(phase, {
-              field: arrival.fieldProgress(),
-              pose,
-              presentation: framePresentation,
-              size: VIEWPORT,
-              snapshot,
-              world,
-              ...(renderer.orrery === undefined
-                ? {}
-                : { orrery: renderer.orrery })
-            })
-          }
+        ? arrivalFramePlan(phase, {
+            field: arrival.fieldProgress(),
+            pose,
+            presentation: framePresentation,
+            shared: sharedOptions,
+            size: VIEWPORT,
+            snapshot,
+            world,
+            ...(renderer.orrery === undefined
+              ? {}
+              : { orrery: renderer.orrery })
+          })
         : planTargFrame(
             world,
             snapshot,
             VIEWPORT,
             renderer.orrery,
             framePresentation,
-            {
-              atmosphere,
-              outputHeight: canvas.height,
-              // The player's weight and glow choices are presentation, so they are read per
-              // frame the same way the sky's preset is.
-              strokes: enhancedStrokesOf(preferences.current())
-            }
+            sharedOptions
           );
     const drawn = drawTargFrame(frame, renderer, shared);
     const player = snapshot.player;
