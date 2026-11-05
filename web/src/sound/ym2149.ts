@@ -1,6 +1,6 @@
 import type { Chip } from './workletHost.ts';
 
-/// The Atari ST's YM2149 at the register level, for Damocles (#508).
+/// The Atari ST's YM2149 at the register level, for Damocles (#508) and Targ's ST door sound (#978).
 ///
 /// A project-owned model shared by the live AudioWorklet and deterministic offline tests. It
 /// runs the chip's own counters at a quarter-million ticks a second and averages them into each

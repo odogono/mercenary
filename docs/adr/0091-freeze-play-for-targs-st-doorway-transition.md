@@ -11,6 +11,7 @@ The Atari ST wipes the 3D view with a palette raster split when the player takes
 - **Authentic Targ draws the split.** The rows above the split show a Room's own backdrop with no lines; one Room's frame shows whole below. Enhanced Targ freezes for the same time and draws its view as usual.
 - **It is never saved.** A Save taken during it restores with play running.
 - **The direction is the confirmed physical rule.** Ten real ST crossings show the wipe goes up when the player walks forward through the Doorway's wall and down when they back through it, on every wall. `doorwayWipeDirection` reads that rule from the browser's own heading and the Doorway's wall, not the ST's position and heading words.
+- **It plays the ST's door sound.** Both wipes write the YM2149 themselves ([the door sound](../research/targ-st-doorway-wipe.md#the-door-sound)). Targ's AudioWorklet runs a YM2149 beside its SID for this ST presentation only, summed into the same output; the C64 SID programmes are unchanged (#978).
 - **Keys wait for the freeze to end.** The ST queues keys pressed during it and reads one per pass afterwards. The Browser Shell holds discrete actions pressed during it and performs one per frame once it ends. Movement is a level, read afresh when play resumes.
 
 ## Consequences

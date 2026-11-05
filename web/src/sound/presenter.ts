@@ -1,11 +1,22 @@
 import type { SoundDocument } from '../payload/documents.ts';
+import {
+  DOORWAY_VBLS_PER_SECOND,
+  type DoorwayWipeDirection
+} from '../session/doorwayTransition.ts';
 import type { PresentationEvent, SessionSnapshot } from '../session/index.ts';
 import { SoundLifecycle } from './lifecycle.ts';
+import { doorSoundPhasesBetween } from './targDoorSound.ts';
 
 export type SoundCommand =
   | { readonly kind: 'play'; readonly selector: number; readonly voice: 1 | 2 }
   | {
       readonly kind: 'write';
+      readonly register: number;
+      readonly value: number;
+    }
+  /// A write to the ST's YM2149, which Targ carries only for ST presentation (ADR 0091).
+  | {
+      readonly kind: 'ym';
       readonly register: number;
       readonly value: number;
     }
@@ -83,6 +94,14 @@ export class SoundPresenter {
   private lastCraft:
     | { readonly frequencyHigh: number; readonly sustainRelease: number }
     | undefined;
+  /// The door sound under way: its wipe, when it began, and the last VBL sent.
+  private door:
+    | {
+        readonly direction: DoorwayWipeDirection;
+        sent: number;
+        readonly start: number;
+      }
+    | undefined;
 
   constructor(
     private readonly document: SoundDocument,
@@ -100,6 +119,7 @@ export class SoundPresenter {
     this.lastDisplay = '';
     this.lastCraft = undefined;
     this.craftActive = false;
+    this.door = undefined;
     await this.lifecycle.unlock();
   }
 
@@ -178,12 +198,57 @@ export class SoundPresenter {
       }
     }
     commands.push(...this.persistentCommands(step.snapshot));
-    if (commands.length === 0) {
+    if (commands.length > 0) {
+      // In the locked state every audible event is deliberately discarded. The
+      // first trusted gesture changes the state to unlocking before its action.
+      this.lifecycle.send({ at: step.snapshot.elapsed, commands });
+    }
+    this.presentDoorSound(step.snapshot);
+  }
+
+  /// The ST door sound (#978): each phase is sent at its own VBL of the wipe, once the step
+  /// that reaches it arrives. A wipe that ends between steps still sends what it had left.
+  private presentDoorSound(snapshot: SessionSnapshot): void {
+    const transition = snapshot.doorwayTransition;
+    if (
+      this.door !== undefined &&
+      (transition === undefined || transition.direction !== this.door.direction)
+    ) {
+      this.sendDoorPhases(Infinity);
+      this.door = undefined;
+    }
+    if (transition === undefined) {
       return;
     }
-    // In the locked state every audible event is deliberately discarded. The
-    // first trusted gesture changes the state to unlocking before its action.
-    this.lifecycle.send({ at: step.snapshot.elapsed, commands });
+    this.door ??= {
+      direction: transition.direction,
+      sent: -1,
+      start: snapshot.elapsed
+    };
+    this.sendDoorPhases(
+      Math.floor(
+        (snapshot.elapsed - this.door.start) * DOORWAY_VBLS_PER_SECOND + 1e-9
+      )
+    );
+  }
+
+  private sendDoorPhases(until: number): void {
+    const door = this.door!;
+    for (const phase of doorSoundPhasesBetween(
+      door.direction,
+      door.sent,
+      until
+    )) {
+      this.lifecycle.send({
+        at: door.start + phase.vbl / DOORWAY_VBLS_PER_SECOND,
+        commands: phase.writes.map(([register, value]) => ({
+          kind: 'ym',
+          register,
+          value
+        }))
+      });
+      door.sent = phase.vbl;
+    }
   }
 
   setMuted(value: boolean, at = 0): void {
@@ -214,6 +279,7 @@ export class SoundPresenter {
     this.craftActive = false;
     this.lastCraft = undefined;
     this.lastDisplay = '';
+    this.door = undefined;
     this.lifecycle.send({
       at: snapshot.elapsed,
       commands: [{ kind: 'reset', registers: this.document.initialRegisters }]
