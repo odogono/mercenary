@@ -15,6 +15,15 @@ export const bodyTime = (
   wrapBodyLongitude(longitude - noonLongitude(subStellar, latitude) + 512) *
   (86_400 / 1024);
 
+/// The observer's local Body Days: whole days since the clock's origin, plus Body Time as a
+/// fraction of a day. Its whole part changes at local midnight (ADR 0090). `longitude` is
+/// unwrapped, its turns above 1024 steps counting whole days.
+export const bodyDays = (
+  longitude: number,
+  latitude: number,
+  subStellar: number
+): number => (longitude - noonLongitude(subStellar, latitude) + 512) / 1024;
+
 export const longitudeAtBodyTime = (
   secondsOfDay: number,
   latitude: number,

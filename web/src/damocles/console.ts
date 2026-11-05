@@ -1,3 +1,4 @@
+import type { WeatherState } from '../enhanced/weather.ts';
 import {
   SETTING_VALUES,
   applySetting,
@@ -60,7 +61,7 @@ const SETTING_NAMES = Object.keys(SETTING_VALUES);
 
 const HELP = [
   'help · where · inventory · atlas · pads',
-  'time [h]h:mm[:ss] · impact [+][h]h:mm[:ss]',
+  'time [h]h:mm[:ss] · impact [+][h]h:mm[:ss] · weather [clear|hazy|mist|auto]',
   'rate [multiplier] · powers of two from 0.0625 to 64; 1 is normal',
   'goto <x> <z>',
   'get [<object-slot>] · drop [<object-slot|name>] · fetch <object-slot>',
@@ -94,6 +95,9 @@ export interface DamoclesConsoleHost extends ConsoleSettingHost {
   readonly pads?: () => readonly (PadDescription | null)[];
   readonly persistence: SavePersistence;
   readonly session: () => DamoclesSession;
+  /// The presentation-only Weather override (ADR 0090), and the `weather` reply.
+  readonly setWeather?: (weather: WeatherState | null) => void;
+  readonly weather?: () => string;
 }
 
 /// A slot as Targ's console writes one: two digits at least.
@@ -196,6 +200,11 @@ export const executeDamoclesConsoleCommand = (
       }
       return [`time ${formatTargTime(session.bodyTime()!)}`];
     }
+    case 'weather':
+      return [host.weather?.() ?? 'weather unavailable'];
+    case 'setWeather':
+      host.setWeather?.(command.weather);
+      return [host.weather?.() ?? 'weather unavailable'];
     case 'impact':
     case 'setImpact': {
       const session = host.session();

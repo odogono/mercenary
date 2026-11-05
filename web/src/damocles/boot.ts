@@ -1,6 +1,13 @@
 import { STREET_SPAN } from '../atlas/bodyRange.ts';
 import { atlasHref } from '../atlas/state.ts';
 import { browserAtlasHandoff } from '../atlas/travel.ts';
+import type { EnhancedSurface } from '../enhanced/scene.ts';
+import {
+  describeWeather,
+  weatherScale,
+  weathered,
+  type WeatherState
+} from '../enhanced/weather.ts';
 import { readGammaSystem } from '../flyover/documents.ts';
 
 import './panelElement.ts';
@@ -709,6 +716,32 @@ try {
   };
 
   type DamoclesConsoleDeps = ConsoleParseContext & DamoclesConsoleHost;
+  // Weather over the Body's Haze (ADR 0090): picked from Body Time each frame, never stored.
+  // The `weather` console command pins it for tests; the pin is not saved.
+  let weatherOverride: WeatherState | null = null;
+  const weatherWhere = () => {
+    const localDays = session.bodyDays();
+    const current = session.snapshot;
+    return localDays === null ||
+      current.surface.atmosphere?.hazeHalfDistance == null
+      ? null
+      : { body: current.pose.body, localDays };
+  };
+  const weatheredSurface = <S extends EnhancedSurface>(
+    surface: S,
+    body: string
+  ): S => {
+    const localDays = session.bodyDays();
+    return localDays === null && weatherOverride === null
+      ? surface
+      : {
+          ...surface,
+          atmosphere: weathered(
+            surface.atmosphere,
+            weatherScale(body, localDays ?? 0, weatherOverride)
+          )
+        };
+  };
   const consoleHost: DamoclesConsoleDeps = {
     cellsPerAxis: () => content.doc.grid.cellsPerAxis,
     objectActions: () => 'selected',
@@ -722,12 +755,16 @@ try {
     persistence,
     preferences,
     session: () => session,
+    setWeather: weather => {
+      weatherOverride = weather;
+    },
     typeface: face => {
       applyTypeface(document.documentElement, face, {
         key: keys.typeface,
         storage
       });
-    }
+    },
+    weather: () => describeWeather(weatherWhere(), weatherOverride)
   };
   const shellConsole = installConsole<
     DamoclesConsoleDeps,
@@ -1332,7 +1369,7 @@ try {
     // The surface comes from the Session Snapshot rather than the presentation document, so a
     // Body switch or a Save restored onto another Body draws that Body's workspace (#379).
     const plan = planEnhancedFrame(
-      snapshot.surface,
+      weatheredSurface(snapshot.surface, snapshot.pose.body),
       pose,
       zoomedDoc(snapshot.viewExponent),
       snapshot.structure,

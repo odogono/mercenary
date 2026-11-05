@@ -1,3 +1,4 @@
+import { parseWeather, type WeatherState } from '../enhanced/weather.ts';
 import type { GameplaySession, PresentationEvent } from '../session/index.ts';
 import {
   LIGHT_LEVELS,
@@ -33,6 +34,8 @@ export type ConsoleCommand =
   | { readonly kind: 'inventory' }
   | { readonly kind: 'time' }
   | { readonly kind: 'setTime'; readonly secondsOfDay: number }
+  | { readonly kind: 'weather' }
+  | { readonly kind: 'setWeather'; readonly weather: WeatherState | null }
   | { readonly kind: 'dropObject'; readonly selector?: string }
   | { readonly floor: number; readonly kind: 'floor' }
   | { readonly kind: 'getObject'; readonly slot?: number }
@@ -310,6 +313,16 @@ export const parseConsoleCommand = (
         throw new Error('time takes no value, or one H:MM[:SS] value');
       }
       return { kind: 'setTime', secondsOfDay: parseTargTime(rest[0]!) };
+    case 'weather':
+      if (rest.length === 0) {
+        return { kind: 'weather' };
+      }
+      if (rest.length !== 1) {
+        throw new Error(
+          'weather takes no value, or one of clear, hazy, mist or auto'
+        );
+      }
+      return { kind: 'setWeather', weather: parseWeather(rest[0]!) };
     case 'inventory':
       if (rest.length !== 0) {
         throw new Error('inventory takes no arguments');
@@ -448,11 +461,14 @@ export interface ConsoleDeps extends ConsoleParseContext, ConsoleSettingHost {
   readonly present?: (events: readonly PresentationEvent[]) => void;
   readonly session: () => GameplaySession;
   readonly setTime: (secondsOfDay: number) => void;
+  /// The presentation-only Weather override (ADR 0090), and the `weather` reply.
+  readonly setWeather?: (weather: WeatherState | null) => void;
   readonly time: () => number;
+  readonly weather?: () => string;
 }
 
 const HELP = [
-  'help · where · time [h]h:mm[:ss] · inventory · get <object-slot> · pads',
+  'help · where · time [h]h:mm[:ss] · weather [clear|hazy|mist|auto] · inventory · get <object-slot> · pads',
   'drop <object-id|name> · fetch <object-slot>',
   'goto <x> <z> [height] · goto room <n> · goto object <slot>',
   'panel <targ|damocles> · set <name> <value>',
@@ -552,6 +568,13 @@ export const executeConsoleCommand = (
     case 'setTime': {
       deps.setTime(command.secondsOfDay);
       return [`time ${formatTargTime(deps.time())}`];
+    }
+    case 'weather': {
+      return [deps.weather?.() ?? 'weather unavailable'];
+    }
+    case 'setWeather': {
+      deps.setWeather?.(command.weather);
+      return [deps.weather?.() ?? 'weather unavailable'];
     }
     case 'inventory': {
       const carried = deps.session().snapshot.carriedStack;

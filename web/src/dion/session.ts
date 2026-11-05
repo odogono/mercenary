@@ -9,6 +9,7 @@ import {
 } from '../onFoot/index.ts';
 import type { TitleSession } from '../shell/title.ts';
 import {
+  bodyDays,
   bodyTime,
   longitudeAtBodyTime,
   wrapBodyLongitude
@@ -219,6 +220,17 @@ export class DionSession implements TitleSession<
   bodyTime(): number {
     const sky = this.content.world.sky;
     return bodyTime(
+      this.state.eye[0] / 0x4_00_00 + this.state.phase / 0x1_00_00,
+      sky.latitude,
+      sky.sunAngle
+    );
+  }
+
+  /// The observer's local Body Days: whole `phase` turns at the observer's longitude, plus
+  /// Body Time as a fraction. Weather picks one state per whole day (ADR 0090).
+  bodyDays(): number {
+    const sky = this.content.world.sky;
+    return bodyDays(
       this.state.eye[0] / 0x4_00_00 + this.state.phase / 0x1_00_00,
       sky.latitude,
       sky.sunAngle

@@ -1,3 +1,9 @@
+import {
+  describeWeather,
+  weatherScale,
+  weathered,
+  type WeatherState
+} from '../enhanced/weather.ts';
 import { IDLE } from '../gameCore/index.ts';
 import { fetchAssets, fetchReader, load } from '../payload/load.ts';
 import { FrameRenderer } from '../rendering/renderer.ts';
@@ -283,6 +289,17 @@ try {
   const atmosphere =
     targSystem.bodies.find(body => body.id === targSystem.rotatingBodyId)
       ?.atmosphere ?? null;
+  // Weather over TARG's Haze (ADR 0090): picked from Targ's clock each frame, never stored.
+  // The `weather` console command pins it for tests; the pin is not saved.
+  const weatherBody = targSystem.rotatingBodyId;
+  let weatherOverride: WeatherState | null = null;
+  const weatherWhere = () =>
+    atmosphere?.hazeHalfDistance == null
+      ? null
+      : {
+          body: weatherBody,
+          localDays: targClock.days(session.snapshot.elapsed)
+        };
   const clock = new FixedStepClock();
   let snapshot = session.snapshot;
   const sound = new SoundPresenter(
@@ -675,13 +692,17 @@ try {
       session: () => session,
       setTime: secondsOfDay =>
         targClock.set(session.snapshot.elapsed, secondsOfDay),
+      setWeather: weather => {
+        weatherOverride = weather;
+      },
       time: () => targClock.secondsOfDay(session.snapshot.elapsed),
       typeface: face => {
         applyTypeface(document.documentElement, face, {
           key: titleKeys.typeface,
           storage
         });
-      }
+      },
+      weather: () => describeWeather(weatherWhere(), weatherOverride)
     },
     release,
     {
@@ -952,7 +973,14 @@ try {
       orreryElapsed: targClock.elapsed(snapshot.elapsed)
     };
     const sharedOptions = {
-      atmosphere,
+      atmosphere: weathered(
+        atmosphere,
+        weatherScale(
+          weatherBody,
+          targClock.days(snapshot.elapsed),
+          weatherOverride
+        )
+      ),
       outputHeight: canvas.height,
       // The player's weight and glow choices are presentation, so they are read per frame the
       // same way the sky's preset is.

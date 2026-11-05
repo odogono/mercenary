@@ -75,6 +75,15 @@ export class TargPresentationClock {
     );
   }
 
+  /// Targ's local Body Days: whole days since the epoch's midnight, plus the time of day as a
+  /// fraction. Weather picks one state per whole day (ADR 0090).
+  days(sessionElapsed: number): number {
+    return (
+      this.elapsed(sessionElapsed) / (this.dayLengthMinutes() * 60) +
+      TARG_EPOCH_HOUR / 24
+    );
+  }
+
   set(sessionElapsed: number, secondsOfDay: number): void {
     const current = this.elapsed(sessionElapsed);
     this.offset +=

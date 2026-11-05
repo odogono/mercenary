@@ -53,6 +53,7 @@ import { walk, type WalkRules } from '../onFoot/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import type { TitleSession } from '../shell/title.ts';
 import {
+  bodyDays,
   bodyTime,
   longitudeAtBodyTime,
   wrapBodyLongitude
@@ -135,6 +136,7 @@ import {
 } from './headCommands.ts';
 import { classifyPosition, type LandSea } from './islands.ts';
 import { locationTrigger } from './locationTriggers.ts';
+import { continuousBodySteps } from './panel.ts';
 import {
   poseOfArrival,
   resolvePose,
@@ -1885,6 +1887,18 @@ export class DamoclesSession implements TitleSession<
       this.pose.position
     );
     return bodyTime(longitude, latitude, subStellar);
+  }
+
+  /// The observer's local Body Days, from the unwrapped accumulator and longitude, or none in
+  /// System space. Weather picks one state per whole day (ADR 0090); the count repeats every
+  /// 64 turns, as the accumulator wraps.
+  bodyDays(): number | null {
+    const subStellar = this.solarLongitude();
+    if (this.space !== null || subStellar === undefined) {
+      return null;
+    }
+    const steps = continuousBodySteps(this.pose.position);
+    return bodyDays(steps.x + this.bodyTurn / 0x1_00_00, steps.z, subStellar);
   }
 
   /// A development action: choose an attainable turn on the shared integer VBL clock.
