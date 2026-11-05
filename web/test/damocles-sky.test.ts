@@ -289,7 +289,7 @@ describe('the closed form at the pinned $042C6C values', () => {
     // MIDAS has no atmosphere, so its day sky shows the black part too.
     const midas = passAt('midas', turnFor('midas', 656), true).bodies;
     expect(
-      midas.every(body => body.kind === 'comet' || body.shadow === '#000000')
+      midas.every(body => body.kind !== 'disc' || body.shadow === '#000000')
     ).toBe(true);
   });
 });
@@ -847,7 +847,9 @@ const erisFromMetis = (turn: number, smooth: boolean) => {
     sky: null,
     smooth,
     turn
-  }).bodies.find(body => body.id === 'eris')!.offset;
+  }).bodies.find(
+    (body): body is SkyBody => body.id === 'eris' && body.kind === 'disc'
+  )!.offset;
 };
 
 describe('the Enhanced sky moves between the engine steps', () => {

@@ -1,7 +1,20 @@
 import type { Vector3 } from '../orientation/index.ts';
+import { discBasis } from '../sky/frame.ts';
+import { dot, normalized } from '../sky/vector.ts';
 
-/// The sky as the Enhanced planner draws it: the Bodies and stars a Title's sky pass places,
-/// and the triangles that paint them over the sky fill with the depth test off (#803).
+/// The sky as the Enhanced planner draws it: the `SkyPass` every Title fills (#969), and the
+/// one place, `skyPassTriangles`, that turns it into the triangles that paint it over the sky
+/// fill with the depth test off (#803).
+///
+/// A pass is drawn in layers, back to front: the gradient dome, the stars, then the Bodies in
+/// list order. Damocles and Mercenary III fill it with what their sky pass measures in the
+/// ST's screen pixels: star pixels, and discs drawn as screen rows split at a terminator.
+/// Targ fills it with what its orrery gives (#956): a twilight dome, stars by direction, and
+/// Orbs, discs of fixed angular size facing the eye whose rim and terminator are feathered over
+/// an output pixel (#968). A feathered edge blends into whatever the layers before it put
+/// there, so a moon's rim over the sun blends into the sun, not into the sky.
+
+type Channels = readonly [number, number, number];
 
 const channels = (colour: string): readonly [number, number, number] => [
   Number.parseInt(colour.slice(1, 3), 16) / 255,
@@ -58,7 +71,41 @@ export interface SkyComet {
   readonly points: readonly Vector3[];
 }
 
-export type SkyItem = SkyBody | SkyComet;
+/// A Body as Targ draws its sun and moons (#956): a disc of fixed angular size facing the eye,
+/// laid out in rows across the line to the sun. A row of half-width `w` is `dark` from `−w` to
+/// `−phaseCosine·w`, where the terminator of a sphere lit at that phase cosine crosses it, and
+/// `lit` beyond. Its rim and terminator are feathered over an output pixel.
+export interface SkyOrb {
+  readonly angularRadius: number;
+  /// The unlit side's colour. Absent, the disc is lit whole.
+  readonly dark?: string;
+  /// Toward the Body, in the sky's frame.
+  readonly direction: Vector3;
+  readonly id: string;
+  readonly kind: 'orb';
+  readonly lit: string;
+  readonly phaseCosine: number;
+  /// Toward the sun, in the sky's frame, which the lit side faces. Absent, the disc is the sun
+  /// itself and its rows lie as `discBasis` puts them.
+  readonly sun?: Vector3;
+}
+
+export type SkyItem = SkyBody | SkyComet | SkyOrb;
+
+/// A gradient over the sky from `horizon` at the horizon to `zenith` `SKY_DOME_TOP` above it, by
+/// `smoothstep`, and `zenith` above that: Targ's twilight (#956).
+export interface SkyDome {
+  readonly horizon: string;
+  readonly zenith: string;
+}
+
+/// A star placed by direction, `alpha` of the way from the sky behind it to `colour`, two
+/// output pixels across.
+export interface SkyStarPoint {
+  readonly alpha: number;
+  readonly colour: string;
+  readonly direction: Vector3;
+}
 
 /// One frame's sky pass: its Bodies, and the two static facts the frame measures them by.
 export interface SkyPass {
@@ -66,6 +113,9 @@ export interface SkyPass {
   /// engine draws them in with no depth sort. DAMOCLES is its comet, and is gone once the
   /// impact clock reaches zero.
   readonly bodies: readonly SkyItem[];
+  /// The sky's colour by direction, behind everything else, which feathered edges blend into.
+  /// One colour from horizon to zenith is the sky fill itself, and no dome is drawn.
+  readonly dome?: SkyDome;
   /// `$045A0C`: a disc narrower than this many pixels at its widest row has no row at all.
   readonly halfWidthDivisor: number;
   /// `$05309A`'s clip row `$042C74`: `$44`, the view's centre row, in ground contact over land
@@ -74,6 +124,8 @@ export interface SkyPass {
   readonly horizonCut: boolean;
   /// `$7964`: the projection scale a disc's `size / depth` pixel radius is measured against.
   readonly projectionScale: number;
+  /// Stars placed by direction (#956), drawn with the star pixels.
+  readonly starPoints?: readonly SkyStarPoint[];
   /// The starfield's pixels, in the ST's screen pixels, in plot order (#578). The stars are
   /// drawn before the sky pass, so every Body covers them.
   readonly stars: readonly StarPixel[];
@@ -333,4 +385,351 @@ export const skyDiscTriangles = (
       second
     );
   }
+};
+
+/// The gradient reaches the zenith's colour this far above the horizon, by `smoothstep`.
+export const SKY_DOME_TOP = (30 * Math.PI) / 180;
+/// Rings between the horizon and `SKY_DOME_TOP`, each a step of the smoothstep.
+const DOME_RINGS = 15;
+const DOME_SEGMENTS = 48;
+/// Rows across an Orb.
+const ORB_ROWS = 32;
+
+/// The ST screen's centre column, about which `$05668A` places a Body at `160 − F·u/d`.
+const SKY_CENTRE_COLUMN = 160;
+
+const mix = (from: Channels, to: Channels, amount: number): Channels => [
+  from[0] + (to[0] - from[0]) * amount,
+  from[1] + (to[1] - from[1]) * amount,
+  from[2] + (to[2] - from[2]) * amount
+];
+
+const smoothstep = (edge0: number, edge1: number, value: number): number => {
+  const t = Math.min(1, Math.max(0, (value - edge0) / (edge1 - edge0)));
+  return t * t * (3 - 2 * t);
+};
+
+/// `centre` moved `u` along `right` and `v` along `up`.
+const across = (
+  centre: Vector3,
+  right: Vector3,
+  up: Vector3,
+  u: number,
+  v: number
+): Vector3 => ({
+  x: centre.x + right.x * u + up.x * v,
+  y: centre.y + right.y * u + up.y * v,
+  z: centre.z + right.z * u + up.z * v
+});
+
+/// How a Title's view sees its sky pass.
+export interface SkyView {
+  /// How far out the sky is drawn, in view depth. The sky is painted with the depth test off and
+  /// writes no depth, so this only has to lie inside the frustum.
+  readonly depth: number;
+  /// A direction in the sky's frame, as the view sees it.
+  readonly direction: (direction: Vector3) => Vector3;
+  /// Where the horizon cuts the discs and the comet, as a tangent row of the view: no row of
+  /// either is drawn below it. `−Infinity` cuts nothing.
+  readonly horizonRow: number;
+  /// A point given as its offset from the eye in the sky's frame, as the view sees it.
+  readonly offset: (offset: Vector3) => Vector3;
+  /// One output pixel, as a tangent of the view.
+  readonly pixel: number;
+}
+
+export interface SkyDrawing {
+  /// Each listed disc and comet's place (#530), in draw order, whether or not any of it is drawn.
+  readonly placements: readonly SkyBodyPlacement[];
+  /// How many stars, star pixels and star points, the vertices draw.
+  readonly starCount: number;
+  /// The dome, the stars, then the Bodies, in the plan's ten-float vertices, at the sky's depth.
+  readonly vertices: Float32Array;
+}
+
+/// The one place a sky pass becomes triangles.
+export const skyPassTriangles = (pass: SkyPass, view: SkyView): SkyDrawing => {
+  const { depth } = view;
+  const values: number[] = [];
+  const push = (vertex: Vector3, colour: Channels): void => {
+    // The sky is drawn with depth off; its plane is the one its discs are laid out on.
+    values.push(
+      vertex.x,
+      vertex.y,
+      vertex.z,
+      colour[0],
+      colour[1],
+      colour[2],
+      0,
+      0,
+      1,
+      -depth
+    );
+  };
+  /// A point in the sky's frame, its direction scaled out to the sky's depth.
+  const emit = (point: Vector3, colour: Channels): void => {
+    const seen = view.direction(point);
+    push({ x: seen.x * depth, y: seen.y * depth, z: seen.z * depth }, colour);
+  };
+  const triangles = (
+    corners: readonly Vector3[],
+    colours: readonly Channels[],
+    order: readonly number[]
+  ): void => {
+    for (const index of order) {
+      emit(corners[index]!, colours[index]!);
+    }
+  };
+
+  // The dome: the layer every feathered edge first blends into.
+  const dome = pass.dome;
+  const domeColour = (direction: Vector3): Channels =>
+    dome === undefined
+      ? [0, 0, 0]
+      : mix(
+          channels(dome.horizon),
+          channels(dome.zenith),
+          smoothstep(
+            0,
+            SKY_DOME_TOP,
+            Math.asin(Math.max(-1, Math.min(1, direction.y)))
+          )
+        );
+  if (dome !== undefined && dome.horizon !== dome.zenith) {
+    // From the horizon, below which the ground covers the sky, up to the zenith.
+    const elevations = [
+      ...Array.from(
+        { length: DOME_RINGS + 1 },
+        (_, index) => (index / DOME_RINGS) * SKY_DOME_TOP
+      ),
+      (50 * Math.PI) / 180,
+      (70 * Math.PI) / 180,
+      Math.PI / 2
+    ];
+    const around = (elevation: number, segment: number): Vector3 => {
+      const azimuth = (segment / DOME_SEGMENTS) * 2 * Math.PI;
+      return {
+        x: Math.cos(elevation) * Math.cos(azimuth),
+        y: Math.sin(elevation),
+        z: Math.cos(elevation) * Math.sin(azimuth)
+      };
+    };
+    // A skirt from straight down to the horizon in the horizon's colour, so no sliver of the
+    // fill shows between the ground's edge and the dome.
+    const rings = [-Math.PI / 2, ...elevations];
+    for (let ring = 0; ring + 1 < rings.length; ring += 1) {
+      for (let segment = 0; segment < DOME_SEGMENTS; segment += 1) {
+        const corners = [
+          around(rings[ring]!, segment),
+          around(rings[ring]!, segment + 1),
+          around(rings[ring + 1]!, segment + 1),
+          around(rings[ring + 1]!, segment)
+        ];
+        triangles(corners, corners.map(domeColour), [0, 1, 2, 0, 2, 3]);
+      }
+    }
+  }
+
+  // The stars, so every Body covers them: the ST's pixels (#578), each one ST pixel square, and
+  // the stars placed by direction, each two output pixels across.
+  const projectionScale = pass.projectionScale;
+  // The ST pixels a unit tangent spans at the view's scale exponent (#628).
+  const pixelScale = projectionScale * (pass.zoom ?? 1);
+  skyStarTriangles(pass.stars, pixelScale, depth, push);
+  const starPoints = pass.starPoints ?? [];
+  for (const { alpha, colour, direction } of starPoints) {
+    const centre = normalized(direction);
+    const [right, up] = discBasis(centre, undefined);
+    const shade = mix(domeColour(centre), channels(colour), alpha);
+    const { pixel } = view;
+    const corners = [
+      across(centre, right, up, -pixel, -pixel),
+      across(centre, right, up, pixel, -pixel),
+      across(centre, right, up, pixel, pixel),
+      across(centre, right, up, -pixel, pixel)
+    ];
+    triangles(
+      corners,
+      corners.map(() => shade),
+      [0, 1, 2, 0, 2, 3]
+    );
+  }
+
+  // What the layers drawn so far show toward a direction: the dome, then each Orb over it.
+  // A feathered edge blends into this, so a moon's rim over the sun blends into the sun.
+  let behind = domeColour;
+  const orb = (body: SkyOrb): void => {
+    const under = behind;
+    const centre = normalized(body.direction);
+    const phased = body.sun !== undefined;
+    const [axisX, axisY] = discBasis(
+      centre,
+      body.sun === undefined ? undefined : normalized(body.sun)
+    );
+    const angularRadius = body.angularRadius;
+    const centreScale = Math.cos(angularRadius);
+    const rimScale = Math.sin(angularRadius);
+    const at = (u: number, v: number): Vector3 => ({
+      x: centre.x * centreScale + (axisX.x * u + axisY.x * v) * rimScale,
+      y: centre.y * centreScale + (axisX.y * u + axisY.y * v) * rimScale,
+      z: centre.z * centreScale + (axisX.z * u + axisY.z * v) * rimScale
+    });
+    const lit = channels(body.lit);
+    const dark = channels(body.dark ?? body.lit);
+    // One output pixel in the disc's own units, its radius being 1: the width of the rim's and
+    // the terminator's feather, as `fwidth` gave the Targ renderer's sky shader.
+    const feather = Math.min(
+      1,
+      view.pixel / Math.tan(Math.max(angularRadius, 1e-6))
+    );
+    const inner = 1 - feather;
+    const phasedDark = phased && body.dark !== undefined;
+    const shade = (u: number, v: number): Channels =>
+      mix(
+        dark,
+        lit,
+        phasedDark
+          ? smoothstep(
+              -feather,
+              feather,
+              u + body.phaseCosine * Math.sqrt(Math.max(0, 1 - v * v))
+            )
+          : 1
+      );
+    const coverage = (u: number, v: number): number =>
+      1 - smoothstep(inner, 1, Math.hypot(u, v));
+    const colourAt = (u: number, v: number): Channels =>
+      mix(under(at(u, v)), shade(u, v), coverage(u, v));
+    // Each row's columns: the rim, the rim's feather, and the terminator's band, in order, so
+    // rows pair column by column. The lit side faces the sun along +u.
+    const rows = Array.from({ length: ORB_ROWS + 1 }, (_, row) => {
+      const v = -Math.cos((row / ORB_ROWS) * Math.PI);
+      const outer = Math.sqrt(Math.max(0, 1 - v * v));
+      const within = Math.sqrt(Math.max(0, inner * inner - v * v));
+      const clamp = (u: number): number => Math.max(-outer, Math.min(outer, u));
+      const split = -body.phaseCosine * outer;
+      const columns = (
+        phasedDark
+          ? [
+              -outer,
+              -within,
+              clamp(split - feather),
+              clamp(split),
+              clamp(split + feather),
+              within,
+              outer
+            ]
+          : [-outer, -within, 0, within, outer]
+      ).sort((a, b) => a - b);
+      return columns.map(u => ({ colour: colourAt(u, v), corner: at(u, v) }));
+    });
+    for (let row = 0; row < ORB_ROWS; row += 1) {
+      const low = rows[row]!;
+      const high = rows[row + 1]!;
+      for (let column = 0; column + 1 < low.length; column += 1) {
+        const quad = [
+          low[column]!,
+          low[column + 1]!,
+          high[column + 1]!,
+          high[column]!
+        ];
+        triangles(
+          quad.map(({ corner }) => corner),
+          quad.map(({ colour }) => colour),
+          [0, 1, 2, 0, 2, 3]
+        );
+      }
+    }
+    // This Orb is now what lies behind the layers after it, where it covers.
+    behind = direction => {
+      const toward = normalized(direction);
+      const facing = dot(toward, centre);
+      if (facing <= 0) {
+        return under(direction);
+      }
+      // Where `direction` meets the disc's plane, in the disc's units.
+      const onPlane = centreScale / facing / rimScale;
+      const u = dot(toward, axisX) * onPlane;
+      const v = dot(toward, axisY) * onPlane;
+      const cover = coverage(u, v);
+      return cover <= 0
+        ? under(direction)
+        : mix(under(direction), shade(u, v), cover);
+    };
+  };
+
+  // `$04FBAE` skips a Body whose screen x does not fit a signed word less its top bit
+  // (`cmpi.w #$4000`), about the centre column 160.
+  const onScreen = (x: number): boolean => {
+    const column = SKY_CENTRE_COLUMN + x * pixelScale;
+    return column >= -0x40_00 && column < 0x40_00;
+  };
+  const { horizonRow } = view;
+  // `$045928`'s rows are `⌊√(r² − dy²) / 0.84375⌋` wide, so a disc under that many pixels
+  // across has no row at all.
+  const discDrawn = (placement: Omit<SkyBodyPlacement, 'drawn'>): boolean =>
+    placement.radius * pixelScale >= pass.halfWidthDivisor &&
+    placement.y + placement.radius > horizonRow;
+  const placements: SkyBodyPlacement[] = [];
+  for (const body of pass.bodies) {
+    if (body.kind === 'orb') {
+      orb(body);
+      continue;
+    }
+    const seen = view.offset(body.offset);
+    const placement =
+      seen.z > 0
+        ? {
+            id: body.id,
+            radius:
+              (body.kind === 'disc' ? body.size : (body.head?.size ?? 0)) /
+              (projectionScale * seen.z),
+            x: seen.x / seen.z,
+            y: seen.y / seen.z
+          }
+        : { id: body.id, radius: 0, x: 0, y: 0 };
+    if (body.kind === 'comet') {
+      // Pass 2 lets the comet through with its centre behind the eye (`$05315A`), since its
+      // tail may still be in front, and draws the head disc only where the centre is not.
+      if (seen.z > 0 && !onScreen(placement.x)) {
+        placements.push({ ...placement, drawn: false });
+        continue;
+      }
+      let drawn = skyCometTriangles(
+        body,
+        body.points.map(view.offset),
+        1 / pixelScale,
+        depth,
+        push,
+        horizonRow
+      );
+      if (seen.z > 0 && body.head !== null && discDrawn(placement)) {
+        const { colour } = body.head;
+        skyDiscTriangles(
+          { colour, first: 'lit', shadow: colour, split: 1 },
+          { ...placement, drawn: true },
+          depth,
+          push,
+          horizonRow
+        );
+        drawn = true;
+      }
+      placements.push({ ...placement, drawn });
+      continue;
+    }
+    if (seen.z <= 0) {
+      placements.push({ ...placement, drawn: false });
+      continue;
+    }
+    const drawn = onScreen(placement.x) && discDrawn(placement);
+    placements.push({ ...placement, drawn });
+    if (drawn) {
+      skyDiscTriangles(body, { ...placement, drawn }, depth, push, horizonRow);
+    }
+  }
+  return {
+    placements,
+    starCount: pass.stars.length + starPoints.length,
+    vertices: new Float32Array(values)
+  };
 };

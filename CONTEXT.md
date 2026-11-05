@@ -294,6 +294,14 @@ _Avoid_: Air, weather, sky colour
 Enhanced presentation's fading of the distant world toward the horizon colour of the Body the player stands on, as thick as that Body's Atmosphere. It is absent in space, indoors, in Enclosed Regions and on a Body with no Atmosphere, and never touches what is fixed to the view, such as a cab.
 _Avoid_: Fog, distance fade, depth cue, weather
 
+**Sky Pass**:
+The one description of a frame's sky that every Title fills for Enhanced presentation, drawn in layers back to front: a gradient dome, the stars, then the sun, moons and comet in list order. Damocles and Mercenary III fill it in the ST's screen rows; Targ fills it with its twilight dome and phased Orbs. One triangulator turns every Title's Sky Pass into the frame's sky (ADR 0089).
+_Avoid_: Sky batch, sky vertices, skybox
+
+**Orb**:
+A sky Body drawn at a fixed angular size facing the eye, lit toward the sun with its phase, and with its rim and terminator feathered over an output pixel into whatever the earlier layers of the Sky Pass put behind it. Targ's sun and moons are Orbs.
+_Avoid_: Moon sprite, sky disc (a Damocles disc is measured in screen rows instead)
+
 **Body Rotation**:
 The rate at which a Body turns about its own axis, together with the **Body Day** it implies — the time for one full turn. It is the only motion a recovered System may attribute to a Body that is not the Body moving: it turns the Body's surface frame under a System frame that stays put, so a sun or moon crossing a surface sky is the observer's own Body turning. A Body Day is a duration, not a clock the game shows.
 _Avoid_: Orbital period, revolution, day/night cycle, spin rate, phase
