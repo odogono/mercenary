@@ -58,3 +58,41 @@ describe('Targ sky view discs (#968)', () => {
     );
   });
 });
+
+describe('Targ sky view layers (#969)', () => {
+  test("blends a moon's rim into the sun behind it, not the sky", () => {
+    const sun: SkyDisc = {
+      angularDiameterRadians: 0.3,
+      direction: { x: 0, y: 0.3, z: 1 },
+      illuminatedFraction: 1,
+      litColour: { blue: 0, green: 255, red: 255 },
+      phaseCosine: 1
+    };
+    const white = { blue: 255, green: 255, red: 255 };
+    const inFront: SkyDisc = {
+      ...sun,
+      angularDiameterRadians: 0.1,
+      litColour: white
+    };
+    const { vertices } = targSkyView(
+      {
+        ...state,
+        moons: [inFront, { ...inFront, direction: { x: -1, y: 0.3, z: 0 } }],
+        sun
+      },
+      pose,
+      10,
+      0.002
+    );
+    // The inner moon, drawn last and lit whole, is 32 rows of four quads.
+    const moon = vertices.slice(vertices.length - 32 * 4 * 6 * 10);
+    for (let index = 0; index < moon.length; index += 10) {
+      // Between white and the sun's yellow: full red and green, never toward the black sky.
+      expect(moon[index + 3]).toBeCloseTo(1, 6);
+      expect(moon[index + 4]).toBeCloseTo(1, 6);
+    }
+    expect(
+      moon.some((_, index) => index % 10 === 5 && moon[index]! < 0.5)
+    ).toBe(true);
+  });
+});

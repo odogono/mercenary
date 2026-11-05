@@ -61,7 +61,7 @@ export const sunlight = (inputs: SunlightInputs): Sunlight | null => {
   if (sun === undefined) {
     return null;
   }
-  const direction = normalise(sun.offset);
+  const direction = normalise(sun.kind === 'orb' ? sun.direction : sun.offset);
   const elevationDegrees = (Math.asin(direction.y) * 180) / Math.PI;
   const strength = smoothstep(elevationDegrees / SUNLIGHT_FADE_DEGREES);
   return strength > 0 ? { direction, strength } : null;

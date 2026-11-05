@@ -36,9 +36,7 @@ import {
   type ScenePlacement
 } from './scene.ts';
 import {
-  skyCometTriangles,
-  skyDiscTriangles,
-  skyStarTriangles,
+  skyPassTriangles,
   type SkyBodyPlacement,
   type SkyPass
 } from './sky.ts';
@@ -581,9 +579,6 @@ const basePlaneTriangles = (
 /// `$0598CC`: the colour space is filled in, slot 8's `$001`.
 const SPACE_SKY = '#000022';
 
-/// The ST screen's centre column, about which `$05668A` places a Body at `160 − F·u/d`.
-const SKY_CENTRE_COLUMN = 160;
-
 /// How far out along its direction a sky Body's disc is placed. The discs are painted with the
 /// depth test off and write no depth, so this only has to lie inside the frustum.
 const skyDepth = (doc: EnhancedPresentation): number => doc.camera.farPlane / 2;
@@ -738,118 +733,33 @@ export const planEnhancedFrame = (
   // The sky passes (`$05309A`) run after the sky fill and before the ground, in list order
   // with no depth sort, so a later Body covers an earlier one and the ground and structures
   // cover them all. The enclosed branch runs no sky pass, as it runs no sky fill (#491).
-  const skyValues: number[] = [];
-  const skyPlacements: SkyBodyPlacement[] = [];
   const skyAt = skyDepth(doc);
-  const skyBodies = enclosed || sky === null ? [] : sky.bodies;
-  const projectionScale = sky?.projectionScale ?? 0;
-  // The ST pixels a unit tangent spans at the view's scale exponent (#628).
-  const pixelScale = projectionScale * (sky?.zoom ?? 1);
-  const halfWidthDivisor = sky?.halfWidthDivisor ?? 0;
-  const horizonCut = !inSpace && (sky?.horizonCut ?? true);
   // Free Look moves the on-foot horizon away from the centre row. The disc visibility test,
   // disc slabs and comet faces must share that cut. Aboard retains the ST's centre-row cut;
   // in flight or space the ground fill alone covers the sky below the horizon.
+  const horizonCut = !inSpace && (sky?.horizonCut ?? true);
   const horizonRow = horizonCut ? (aboard ? 0 : -tan(pose.pitch)) : -Infinity;
-  const skyView = (offset: Vector3): Vector3 =>
-    camera.viewSpace(
-      toCameraSpace({
-        x: pose.position.x + offset.x,
-        y: pose.position.y + offset.y,
-        z: pose.position.z + offset.z
-      })
-    );
-  const skyEmit = (
-    vertex: Vector3,
-    colour: readonly [number, number, number]
-  ): void => {
-    // The sky is drawn with depth off; its plane is the one its discs are laid out on.
-    skyValues.push(
-      vertex.x,
-      vertex.y,
-      vertex.z,
-      colour[0],
-      colour[1],
-      colour[2],
-      0,
-      0,
-      1,
-      -skyAt
-    );
-  };
-  // `$04FBAE` skips a Body whose screen x does not fit a signed word less its top bit
-  // (`cmpi.w #$4000`), about the centre column 160.
-  const onScreen = (x: number): boolean => {
-    const column = SKY_CENTRE_COLUMN + x * pixelScale;
-    return column >= -0x40_00 && column < 0x40_00;
-  };
-  // `$045928`'s rows are `⌊√(r² − dy²) / 0.84375⌋` wide, so a disc under that many pixels
-  // across has no row at all.
-  const discDrawn = (placement: Omit<SkyBodyPlacement, 'drawn'>): boolean =>
-    placement.radius * pixelScale >= halfWidthDivisor &&
-    placement.y + placement.radius > horizonRow;
-  // `$0503FE`, `$0505B8` and `$05067C` plot the stars before the sky pass, so the Bodies cover
-  // them (#578). Each is one ST pixel, which is 1/256 of a unit tangent either way.
-  const stars = enclosed || sky === null ? [] : sky.stars;
-  skyStarTriangles(stars, pixelScale, skyAt, skyEmit);
-  for (const body of skyBodies) {
-    const view = skyView(body.offset);
-    const placement =
-      view.z > 0
-        ? {
-            id: body.id,
-            radius:
-              (body.kind === 'disc' ? body.size : (body.head?.size ?? 0)) /
-              (projectionScale * view.z),
-            x: view.x / view.z,
-            y: view.y / view.z
-          }
-        : { id: body.id, radius: 0, x: 0, y: 0 };
-    if (body.kind === 'comet') {
-      // Pass 2 lets the comet through with its centre behind the eye (`$05315A`), since its
-      // tail may still be in front, and draws the head disc only where the centre is not.
-      if (view.z > 0 && !onScreen(placement.x)) {
-        skyPlacements.push({ ...placement, drawn: false });
-        continue;
-      }
-      let drawn = skyCometTriangles(
-        body,
-        body.points.map(skyView),
-        1 / pixelScale,
-        skyAt,
-        skyEmit,
-        horizonRow
-      );
-      if (view.z > 0 && body.head !== null && discDrawn(placement)) {
-        const { colour } = body.head;
-        skyDiscTriangles(
-          { colour, first: 'lit', shadow: colour, split: 1 },
-          { ...placement, drawn: true },
-          skyAt,
-          skyEmit,
-          horizonRow
-        );
-        drawn = true;
-      }
-      skyPlacements.push({ ...placement, drawn });
-      continue;
-    }
-    if (view.z <= 0) {
-      skyPlacements.push({ ...placement, drawn: false });
-      continue;
-    }
-    const drawn = onScreen(placement.x) && discDrawn(placement);
-    skyPlacements.push({ ...placement, drawn });
-    if (drawn) {
-      skyDiscTriangles(
-        body,
-        { ...placement, drawn },
-        skyAt,
-        skyEmit,
-        horizonRow
-      );
-    }
-  }
+  const skyDrawing =
+    enclosed || sky === null
+      ? { placements: [], starCount: 0, vertices: new Float32Array() }
+      : skyPassTriangles(sky, {
+          depth: skyAt,
+          direction: direction =>
+            camera.viewDirection(toCameraSpace(direction)),
+          horizonRow,
+          offset: offset =>
+            camera.viewSpace(
+              toCameraSpace({
+                x: pose.position.x + offset.x,
+                y: pose.position.y + offset.y,
+                z: pose.position.z + offset.z
+              })
+            ),
+          // One output pixel, as a tangent of the view.
+          pixel:
+            (2 * tan((doc.camera.verticalFieldOfViewDegrees * Math.PI) / 360)) /
+            outputHeight
+        });
 
   // Land and sea, in the order the Working Authority paints them ($0597EC..$05983C). The base
   // plane is the Body's own colour and every island is filled over it — except while the
@@ -1376,9 +1286,9 @@ export const planEnhancedFrame = (
       ? {}
       : { roadGlowVertices: new Float32Array(roadGlowValues) }),
     skippedFaces,
-    skyBodies: skyPlacements,
-    skyVertices: new Float32Array(skyValues),
-    starCount: stars.length,
+    skyBodies: skyDrawing.placements,
+    skyVertices: skyDrawing.vertices,
+    starCount: skyDrawing.starCount,
     triangleCount,
     verticalFieldOfViewDegrees: doc.camera.verticalFieldOfViewDegrees,
     vertices: new Float32Array(worldValues),
