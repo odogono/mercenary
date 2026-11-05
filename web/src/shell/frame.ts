@@ -280,7 +280,12 @@ const pointVertices = (points: readonly Point[]): Float32Array => {
   return out;
 };
 
-const stripVertices = (size: Size, parity: 0 | 1): Float32Array => {
+const stripVertices = (
+  size: Size,
+  parity: 0 | 1,
+  top = 0,
+  bottom = size.height
+): Float32Array => {
   const vertices: number[] = [];
   const width = size.width / IndoorBackdrop.columnCount;
   for (let column = parity; column < IndoorBackdrop.columnCount; column += 2) {
@@ -288,17 +293,17 @@ const stripVertices = (size: Size, parity: 0 | 1): Float32Array => {
     const right = (column + 1) * width;
     vertices.push(
       left,
-      0,
+      top,
       right,
-      0,
+      top,
       right,
-      size.height,
+      bottom,
       left,
-      0,
+      top,
       right,
-      size.height,
+      bottom,
       left,
-      size.height
+      bottom
     );
   }
   return new Float32Array(vertices);
@@ -324,6 +329,13 @@ export interface FramePlan {
   /// The colour the frame starts from, or null to draw over what is already there: the
   /// passes drawn after the shared Enhanced planner's plan (ADR 0087).
   readonly clear: RGB8 | null;
+  /// The Doorway Transition's cover at this moment (ADR 0091): the rows from the top of the
+  /// view a Room's flat fill hides, and whose Room it is.
+  readonly doorwayWipe?: {
+    readonly cover: 'arrived' | 'departed';
+    readonly coverRows: number;
+    readonly shows: 'arrived' | 'departed';
+  };
   /// Every visible face in one draw, made just before `batches[before]`.
   readonly faces?: { readonly batch: FaceBatch; readonly before: number };
   readonly liftWipe?: {
@@ -660,6 +672,9 @@ export const planFrame = (
   orrery?: TargOrrery,
   presentation: FramePresentation = AUTHENTIC_PRESENTATION
 ): FramePlan => {
+  if (snapshot.doorwayTransition !== undefined) {
+    return planDoorwayWipe(world, snapshot, size, orrery, presentation);
+  }
   const worldless = worldlessFrame(world, snapshot, size);
   if (worldless !== undefined) {
     return worldless;
@@ -736,6 +751,59 @@ export const planFrame = (
     size,
     ...(sky === undefined ? {} : { sky })
   };
+};
+
+/// A frame during a Doorway Transition (ADR 0091), the ST's palette raster split recovered in
+/// `docs/research/targ-st-doorway-wipe.md`. Nothing is redrawn while it runs: one Room's frame
+/// shows whole, and the rows above the split show a Room's backdrop with no lines, as the ST's
+/// palette of four fill entries does. Authentic Targ draws that fill as its own Room backdrop.
+const planDoorwayWipe = (
+  world: World,
+  snapshot: SessionSnapshot,
+  size: Size,
+  orrery: TargOrrery | undefined,
+  presentation: FramePresentation
+): FramePlan => {
+  const { departed, wipe } = snapshot.doorwayTransition!;
+  const { doorwayTransition: _, ...arrived } = snapshot;
+  const shown =
+    wipe.shows === 'departed'
+      ? {
+          ...arrived,
+          indoor: departed.indoor,
+          location: departed.location,
+          player: departed.player
+        }
+      : arrived;
+  const frame = planFrame(world, shown, size, orrery, presentation);
+  if (presentation.preset !== 'authentic' || wipe.coverRows <= 0) {
+    return { ...frame, doorwayWipe: wipe };
+  }
+  const indoor = wipe.cover === 'departed' ? departed.indoor : snapshot.indoor;
+  const backdrop = new IndoorBackdrop(
+    indoor?.background ?? 0,
+    indoor?.foreground ?? 0
+  );
+  const scale = viewportScale(size);
+  const top = viewportCentre(size).y - (ReferenceViewport.height * scale) / 2;
+  const bottom =
+    wipe.coverRows >= ReferenceViewport.height
+      ? size.height
+      : top + wipe.coverRows * scale;
+  const batches = [...frame.batches];
+  addBatch(
+    batches,
+    'triangles',
+    stripVertices(size, 0, 0, bottom),
+    backdrop.foreground
+  );
+  addBatch(
+    batches,
+    'triangles',
+    stripVertices(size, 1, 0, bottom),
+    backdrop.background
+  );
+  return { ...frame, batches, doorwayWipe: wipe };
 };
 
 /// One model's faces and lines from an inspection camera, with no world, sky or ground: what the

@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+import shutil
 import subprocess
 import tempfile
 from pathlib import Path
@@ -31,12 +32,27 @@ def pinned(entry: dict, path: Path) -> Path:
     return path
 
 
-def machine_args(run: Path) -> list[str]:
-    """Pinned machine for title and panel presentation comparisons."""
+def same_version(entry: dict, path: Path) -> Path:
+    """A rebuilt emulator of the pinned version, for probes that record its hash."""
+    banner = subprocess.run([str(path), '--version'], capture_output=True, text=True).stdout
+    if f"v{entry['version']} " not in banner:
+        raise SystemExit(f"{path} is not Hatari {entry['version']}")
+    return path
+
+
+def machine_args(run: Path, rebuilt: bool = False) -> list[str]:
+    """Pinned machine for title and panel presentation comparisons.
+
+    With `rebuilt`, a Hatari of the pinned version but another build hash is
+    accepted (Homebrew rebuilds it); the caller records the hash it ran.
+    """
     pins = BASELINE['confirmation']
     disk = disk_path()
     tos = pinned(pins['tosImage'], disk.parents[1] / pins['tosImage']['relativePath'])
-    hatari = pinned(pins['emulator'], Path(os.environ.get('TARG_HATARI', pins['emulator']['path'])))
+    if rebuilt:
+        hatari = same_version(pins['emulator'], Path(os.environ.get('TARG_HATARI') or shutil.which('hatari') or 'hatari').resolve())
+    else:
+        hatari = pinned(pins['emulator'], Path(os.environ.get('TARG_HATARI', pins['emulator']['path'])))
     return [str(hatari), '--configfile', str(run / 'empty.cfg'), '--tos', str(tos),
             '--machine', 'st', '--memsize', '1', '--cpulevel', '0', '--cpuclock', '8',
             '--compatible', 'true', '--cpu-exact', 'true', '--addr24', 'true',

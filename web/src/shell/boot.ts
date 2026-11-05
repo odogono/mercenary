@@ -485,8 +485,15 @@ try {
     }
     return (result as { readonly events: readonly PresentationEvent[] }).events;
   };
+  /// Actions pressed during a Doorway Transition, held until it ends: the ST queues keys in
+  /// its keyboard buffer while play is frozen and reads one per pass afterwards (ADR 0091).
+  const heldActions: (() => PresentedAction)[] = [];
   const performAndRefresh = (action: () => PresentedAction): void => {
     if (!ownership.mayAdvance() || session.failure !== undefined) {
+      return;
+    }
+    if (snapshot.doorwayTransition !== undefined) {
+      heldActions.push(action);
       return;
     }
     const arrivalOwned = arrival.isActive();
@@ -1099,6 +1106,13 @@ try {
           session.intent = controls.intent;
           const stepped = session.advance(seconds);
           snapshot = stepped.snapshot;
+          const held =
+            snapshot.doorwayTransition === undefined
+              ? heldActions.shift()
+              : undefined;
+          if (held !== undefined) {
+            performAndRefresh(held);
+          }
           if (opening !== undefined) {
             sound.present({ ...opening, snapshot });
             opening = undefined;
