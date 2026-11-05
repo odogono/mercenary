@@ -294,6 +294,10 @@ _Avoid_: Air, weather, sky colour
 Enhanced presentation's fading of the distant world toward the horizon colour of the Body the player stands on, as thick as that Body's Atmosphere. It is absent in space, indoors, in Enclosed Regions and on a Body with no Atmosphere, and never touches what is fixed to the view, such as a cab.
 _Avoid_: Fog, distance fade, depth cue, weather
 
+**Weather**:
+Enhanced presentation's variation of a Body's Haze thickness over time, from clear days to mist. Its Weather profile belongs to the Body; each local Body Day has one Weather (Clear, Hazy or Mist), picked deterministically from that profile and the observer's day number, and Body Time shapes it within the day. A Body with no Atmosphere has no Weather, and Weather is absent wherever Haze is. It is never part of Session State, a Save or a Golden Trace.
+_Avoid_: Fog, climate, atmosphere, random weather
+
 **Sky Pass**:
 The one description of a frame's sky that every Title fills for Enhanced presentation, drawn in layers back to front: a gradient dome, the stars, then the sun, moons and comet in list order. Damocles and Mercenary III fill it in the ST's screen rows; Targ fills it with its twilight dome and phased Orbs. One triangulator turns every Title's Sky Pass into the frame's sky (ADR 0089).
 _Avoid_: Sky batch, sky vertices, skybox
