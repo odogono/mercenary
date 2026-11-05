@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
+import type { BodySky } from '../src/catalogue/data.ts';
+import { hasAtmosphere } from '../src/damocles/sky.ts';
 import { AUTHORED_HAZE, atmosphereOf } from '../src/enhanced/atmosphere.ts';
 import { planEnhancedFrame } from '../src/enhanced/frame.ts';
 import { ENHANCED_PRESENTATION } from '../src/enhanced/presentation.ts';
@@ -83,16 +85,44 @@ describe('Haze', () => {
     ).toBeNull();
   });
 
-  test('ships with no thickness authored for Damocles or Mercenary III', () => {
+  test('is authored for exactly the Bodies whose recovered fact gives them air', async () => {
     expect(AUTHORED_HAZE.authority).toBe('authored');
-    expect(AUTHORED_HAZE.damocles).toEqual({});
-    expect(AUTHORED_HAZE.mercenaryIII).toEqual({});
-    expect(atmosphereOf(false, AUTHORED_HAZE.damocles, 'body-11')).toBeNull();
+    const catalogue = (await Bun.file(
+      new URL('../../payload/damocles/catalogue.json', import.meta.url)
+    ).json()) as {
+      readonly bodies: readonly {
+        readonly bodySurface?: { readonly sky?: BodySky | null } | null;
+        readonly id: string;
+      }[];
+    };
+    const damoclesAir = catalogue.bodies
+      .filter(body => hasAtmosphere(body.bodySurface?.sky ?? null))
+      .map(body => body.id);
+    expect(Object.keys(AUTHORED_HAZE.damocles).sort()).toEqual(
+      damoclesAir.sort()
+    );
+    // `$794D` is zero for DAMOCLES, the airless moon: no Atmosphere, no Haze.
+    expect(atmosphereOf(false, AUTHORED_HAZE.damocles, 'body-29')).toBeNull();
     expect(atmosphereOf(true, AUTHORED_HAZE.damocles, 'body-11')).toEqual({
-      hazeHalfDistance: null
+      hazeHalfDistance: 0x4_00_00
     });
-    expect(atmosphereOf(true, { 'body-11': 5000 }, 'body-11')).toEqual({
-      hazeHalfDistance: 5000
-    });
+
+    const system = (await Bun.file(
+      new URL(
+        '../../payload/dion/tourcraft/presentation/system.json',
+        import.meta.url
+      )
+    ).json()) as {
+      readonly bodies: readonly {
+        readonly flags: readonly number[];
+        readonly offset: number;
+      }[];
+    };
+    const mercenaryIIIAir = system.bodies
+      .filter(body => body.flags[3] !== 0)
+      .map(body => `dion-${body.offset}`);
+    expect(Object.keys(AUTHORED_HAZE.mercenaryIII).sort()).toEqual(
+      mercenaryIIIAir.sort()
+    );
   });
 });

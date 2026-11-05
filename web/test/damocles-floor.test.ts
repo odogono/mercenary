@@ -535,8 +535,8 @@ describe('the player stands on one Floor', () => {
     ).toEqual({ colour: rgb('#000022'), halfDistance: 200_000 });
   });
 
-  test('Eris keeps its recovered Atmosphere, with no thickness authored', () => {
-    expect(content.surface.atmosphere).toEqual({ hazeHalfDistance: null });
+  test('Eris keeps its recovered Atmosphere, with its authored thickness', () => {
+    expect(content.surface.atmosphere).toEqual({ hazeHalfDistance: 0x4_00_00 });
   });
 
   test('a region with flag bit 15 set keeps the sky and the Body around it', () => {

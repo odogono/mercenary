@@ -158,16 +158,18 @@ describe('the Dion Enhanced scene', () => {
 });
 
 describe('Haze (ADR 0088)', () => {
-  test('the opening Body keeps its recovered Atmosphere, with no thickness authored', () => {
+  test('the opening Body keeps its recovered Atmosphere, with its authored thickness', () => {
     const scene = new TourcraftSession(tourcraft).enhancedScene();
     const body = tourcraft.system.bodies.find(
       item => scene.pose.body === `dion-${item.offset}`
     );
     expect(body).toBeDefined();
     expect(scene.surface.atmosphere).toEqual(
-      body!.flags[3] === 0 ? null : { hazeHalfDistance: null }
+      body!.flags[3] === 0 ? null : { hazeHalfDistance: 0x4_00_00 }
     );
-    expect(planDionEnhancedFrame(scene, 720).haze).toBeNull();
+    expect(planDionEnhancedFrame(scene, 720).haze?.halfDistance).toBe(
+      body!.flags[3] === 0 ? undefined : 0x4_00_00
+    );
   });
 });
 

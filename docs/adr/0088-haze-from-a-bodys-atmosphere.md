@@ -22,5 +22,5 @@ Enhanced Targ subdued a Distant Structure with an Ink rule of its own. Distant w
 ## Consequences
 
 - Distant Structures change from grey to the horizon colour: bluish by day and dark by night.
-- Damocles and Mercenary III ship with no thickness authored, so they show no Haze until their Bodies are tuned in follow-up issues.
+- Damocles and Mercenary III shipped with no thickness authored. #958 authored one thickness, four Region cells, for each of their Bodies with an Atmosphere.
 - The term "fog" is kept free for weather. It is also already a wayfinding term in this repo.
