@@ -14,6 +14,7 @@ python3 -m targlab door-facts                 # byte-check every address below i
 python3 -m targlab disasm 41AEE:41C64 41C64:41E16 48B10:48B72 432CA:4338E 42F76:42FAC 45040:4508A
 python3 -m targlab confirm-door               # Hatari, about 4 minutes in real time
 python3 -m targlab confirm-door-crossing      # ten real crossings in parallel, about 3 minutes
+python3 -m targlab confirm-door-sound         # YM writes across a real up and down crossing (#978)
 PYTHONPATH=. python3 -m unittest discover -s tests
 ```
 
@@ -72,6 +73,26 @@ A screenshot taken at the `Vsync` return shows the frame just completed, which u
 The wall coordinate is below `$80` only at a north or west wall, and heading bit 1 is set only when the player faces north or west. The XOR is therefore 0 when the player faces the Doorway's wall and 1 when they face away. The `mid.png` screenshots show the sweeps described above on real Room geometry. Forward, the new Room's fill and lines rise from the bottom under the old fill, which is flat. Backward, the new fill falls from the top over the old frame, whose lines stay visible below the edge. The freeze is 54 VBLs from `$41AEE` to its end, and 58 for `$41C64`, as in the controlled probe.
 
 **Keys during the freeze.** In the `keys-up` and `keys-down` cases the probe watches for a marker file written at `$41AEE` or `$41C64`. It then sends 4 or 6 'A' keypresses (scancode `$1E`) through Hatari's command FIFO, 0.05–0.47 s into the wipe. No key was read during the wipe. At its end (`$41C5A`, `$41E0C`) the EmuTOS keyboard iorec at `$30D4` held all 4 or 6, at buffer `$2F54`. After the wipe the main loop read every one at `$45344`, one per pass, every 2 VBLs (`keys-up`: VBLs 6724, 6726, 6728, 6730). Keys typed during a wipe are delayed, not lost. The buffer holds 64 entries, so a 1 s freeze cannot overflow it at typing speed. A held stick was not exercised through real IKBD packets, because Hatari's FIFO sends keys, not stick events.
+
+## The door sound
+
+Added 2026-11-05 for [#978](https://github.com/odogono/mercenary/issues/978), from the ST release only.
+
+**Nothing starts a separate sound routine.** Each wipe writes the YM2149 itself, inline, at three points: before its first `Vsync`, between its two waits, and just before it returns. Every write is `move.b #r,$624EC` (the select shadow the VBL restores at `$43384` before `rte`), `move.b #r,$8800.w`, then the value to `$8802.w`. `door-facts` pins all six blocks (`upSoundOn`, `upSoundStep`, `upSoundOff`, `downSoundOn`, `downSoundStep`, `downSoundOff`), and `door.door_sound()` decodes them.
+
+| Phase | Up `$41AEE`                                                                     | Down `$41C64`                                                    |
+| ----- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| On    | `$41AEE`: R4/R5 = `$890` (C), R2/R3 = `$980` (B), R10 = 12, R9 = 12, R7 = `$F8` | `$41C64`: the same periods, R9 = 12, R10 = 0 then 12, R7 = `$F8` |
+| Held  | 33 Vsyncs (the sweep, rows 132 → 4)                                             | 25 Vsyncs (the hold)                                             |
+| Step  | `$41BC2`: B = `$780`, C = `$680`                                                | `$41D0E`: C = `$780`, B = `$680`                                 |
+| Held  | 21 Vsyncs (the hold)                                                            | 33 Vsyncs (the sweep, rows 2 → 130)                              |
+| Off   | `$41C1C`: R9 = 0, R10 = 0, R7 ← `$624EA`                                        | `$41DCE`: R10 = 0, R9 = 0, R7 ← `$624EA`                         |
+
+- **Two square-wave tones, no noise, no envelope.** Mixer `$F8` enables tones A, B and C and disables all noise. Channel A's volume stays 0: the VBL text-ticker path (`$43522`, `$4351A`) keeps writing R8 = 0. B and C sit at fixed volume 12 (bit 4 clear, so the envelope is unused; R11–R13 are not written). At the ST's 2 MHz PSG clock (f = 2,000,000 / (16 × period)) the chord is 51.4 Hz (`$980`) and 57.0 Hz (`$890`), then 65.1 Hz (`$780`) and 75.1 Hz (`$680`): a low two-step hum that rises once.
+- **Up and down differ only in timing and channel order.** Up rises after 33 VBLs of 54; down after 25 of 58. Down swaps which channel takes `$780` and `$680`; with equal volumes that is the same sound. Down's extra `R10 = 0` before `R10 = 12` lasts one instruction.
+- **The end restores the game's mixer.** R7 goes back to the shadow `$624EA` (`$CA` on both probed crossings), so any noise the game had on (engine or wind) returns; the wipe's `$F8` mutes it for the whole freeze.
+- **Hatari confirms it.** `confirm-door-sound` reruns the `fz-max` and `bz-max` crossings with Hatari's `psg_write` trace on from the wipe's start to its end. Apart from the VBL's R8 = 0 (and one ticker write, R0 = `$40`, R8 = 12 then 0, on the up run), the only writes are the wipe's own, in the table's order and values. No VBL code writes R2–R5, R7, R9 or R10 during the freeze. Raw logs and `report.json` are in `restricted/targ-st-door-976/sound/`; `tests/test_door.py` holds the traced sequence and checks it against the decoded bytes.
+- **Unconfirmed.** Frame counts in the trace come from `video_cyc` wrapping, not a VBL counter, and are approximate; the hold lengths come from the loop bytes and the 54/58 VBL freeze measured above. The probe logs writes, not audio; the sound was not recorded or listened to.
 
 ## Against the user's capture
 

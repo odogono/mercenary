@@ -3,7 +3,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from targlab import disk, door, door_crossing, m68k
+from targlab import disk, door, door_crossing, door_sound, m68k
 from test_title import PRESENT
 
 
@@ -120,6 +120,42 @@ class PinnedDoor(unittest.TestCase):
         code[0x1b8f] ^= 1
         with self.assertRaises(ValueError):
             door.check_code(bytes(code))
+
+
+# The wipes' own YM writes as Hatari's psg_write trace logged them on the fz-max
+# and bz-max crossings (restricted/targ-st-door-976/sound/report.json); 202 = $CA,
+# the mixer shadow $624EA held there.
+TRACED = {
+    'up': [(4, 0x90), (5, 8), (2, 0x80), (3, 9), (10, 12), (9, 12), (7, 0xf8),
+           (2, 0x80), (3, 7), (4, 0x80), (5, 6), (9, 0), (10, 0), (7, 0xca)],
+    'down': [(4, 0x90), (5, 8), (2, 0x80), (3, 9), (9, 12), (10, 0), (10, 12), (7, 0xf8),
+             (4, 0x80), (5, 7), (2, 0x80), (3, 6), (10, 0), (9, 0), (7, 0xca)],
+}
+
+
+class SoundTrace(unittest.TestCase):
+    def test_trace_lines_parse_with_frames(self):
+        log = ('ym write data reg=0x4 val=0x90 video_cyc=9880 228@19 pc=41afc instr_cycle 16\n'
+               'ym write ff8802=0x0 video_cyc=100 pc=4351a\n'
+               'ym write data reg=0x8 val=0x0 video_cyc=100 0@0 pc=4351a instr_cycle 16\n')
+        self.assertEqual(door_sound.writes(log), [
+            {'reg': 4, 'value': 0x90, 'frame': 0, 'pc': '$41AFC'},
+            {'reg': 8, 'value': 0, 'frame': 1, 'pc': '$4351A'}])
+
+
+@unittest.skipUnless(PRESENT, 'pinned STX absent')
+class PinnedDoorSound(unittest.TestCase):
+    def test_sound_matches_the_trace(self):
+        code = disk.pinned_floppy().read('E1')
+        for wipe, traced in TRACED.items():
+            with self.subTest(wipe):
+                static = [w for phase in door.door_sound(code, wipe) for w in phase['writes']]
+                self.assertEqual([(r, 0xca if v == 'mixer' else v) for r, v in static], traced)
+
+    def test_phases_and_holds(self):
+        code = disk.pinned_floppy().read('E1')
+        self.assertEqual([p['vsyncs'] for p in door.door_sound(code, 'up')], [33, 21, 0])
+        self.assertEqual([p['vsyncs'] for p in door.door_sound(code, 'down')], [25, 33, 0])
 
 
 if __name__ == '__main__':
