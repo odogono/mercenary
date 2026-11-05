@@ -13,7 +13,9 @@ import { normalized } from './vector.ts';
 /// twilight gradient as a dome whose rings carry its colour, each star as a square two output
 /// pixels across in its colour already blended over the sky behind it, and each disc as rows
 /// split at its terminator, which on a sphere lit at phase cosine `c` crosses each row of
-/// half-width `w` at `−c·w` from the centre on the far side from the sun.
+/// half-width `w` at `−c·w` from the centre on the far side from the sun. The rim and the
+/// terminator are feathered over an output pixel (#968), the vertices carrying the blend the
+/// shader's `fwidth` smoothsteps gave: the rim into the sky behind, the dark side into the lit.
 
 /// The gradient reaches the zenith's colour this far above the horizon, by `smoothstep`.
 const GRADIENT_TOP = (30 * Math.PI) / 180;
@@ -191,29 +193,66 @@ export const targSkyView = (
     });
     const lit = channels(body.litColour);
     const dark = channels(body.darkColour ?? body.litColour);
-    // The lit side faces the sun along +u: a row is dark from −w to −c·w and lit beyond.
-    const split =
-      phased && body.darkColour !== undefined ? -body.phaseCosine : -1;
+    // One output pixel in the disc's own units, its radius being 1: the width of the rim's and
+    // the terminator's feather, as `fwidth` gave the Targ renderer's sky shader.
+    const feather = Math.min(
+      1,
+      pixel / Math.tan(Math.max(angularRadius, 1e-6))
+    );
+    const inner = 1 - feather;
+    // The lit side faces the sun along +u: a row of half-width `w` is dark from −w to −c·w and
+    // lit beyond, blended across the terminator over a pixel either side.
+    const phasedDark = phased && body.darkColour !== undefined;
+    const colourAt = (u: number, v: number): Channels => {
+      const illuminated = phasedDark
+        ? smoothstep(
+            -feather,
+            feather,
+            u + body.phaseCosine * Math.sqrt(Math.max(0, 1 - v * v))
+          )
+        : 1;
+      const coverage = 1 - smoothstep(inner, 1, Math.hypot(u, v));
+      return mix(skyAt(at(u, v)), mix(dark, lit, illuminated), coverage);
+    };
+    // Each row's columns: the rim, the rim's feather, and the terminator's band, in order, so
+    // rows pair column by column.
     const rows = Array.from({ length: DISC_ROWS + 1 }, (_, row) => {
       const v = -Math.cos((row / DISC_ROWS) * Math.PI);
-      const w = Math.sqrt(Math.max(0, 1 - v * v));
-      return { left: at(-w, v), right: at(w, v), split: at(split * w, v) };
+      const outer = Math.sqrt(Math.max(0, 1 - v * v));
+      const within = Math.sqrt(Math.max(0, inner * inner - v * v));
+      const clamp = (u: number): number => Math.max(-outer, Math.min(outer, u));
+      const split = -body.phaseCosine * outer;
+      const columns = (
+        phasedDark
+          ? [
+              -outer,
+              -within,
+              clamp(split - feather),
+              clamp(split),
+              clamp(split + feather),
+              within,
+              outer
+            ]
+          : [-outer, -within, 0, within, outer]
+      ).sort((a, b) => a - b);
+      return columns.map(u => ({ colour: colourAt(u, v), corner: at(u, v) }));
     });
     for (let row = 0; row < DISC_ROWS; row += 1) {
       const low = rows[row]!;
       const high = rows[row + 1]!;
-      if (split > -1) {
+      for (let column = 0; column + 1 < low.length; column += 1) {
+        const quad = [
+          low[column]!,
+          low[column + 1]!,
+          high[column + 1]!,
+          high[column]!
+        ];
         triangles(
-          [low.left, low.split, high.split, high.left],
-          [dark, dark, dark, dark],
+          quad.map(({ corner }) => corner),
+          quad.map(({ colour }) => colour),
           [0, 1, 2, 0, 2, 3]
         );
       }
-      triangles(
-        [low.split, low.right, high.right, high.split],
-        [lit, lit, lit, lit],
-        [0, 1, 2, 0, 2, 3]
-      );
     }
   };
   disc(state.sun, false);
