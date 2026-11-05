@@ -4,6 +4,7 @@ import { ENHANCED_PRESENTATION } from '../enhanced/presentation.ts';
 import { tan } from '../math/index.ts';
 import type { Size } from '../projection/index.ts';
 import type { FrameRenderer } from '../rendering/renderer.ts';
+import { FLOATS_PER_VERTEX } from '../rendering/triangles.ts';
 import { ScenePalette, type RGB8 } from '../scene/index.ts';
 import type { SessionSnapshot } from '../session/index.ts';
 import { skyStateAt, type TargOrrery } from '../sky/index.ts';
@@ -16,12 +17,11 @@ import {
   targFieldOfView
 } from './enhancedScene.ts';
 import {
-  addLiftBar,
+  liftBar,
   objectOverlays,
   planFrame,
   worldClear,
   worldlessFrame,
-  type DrawBatch,
   type FramePlan,
   type FramePresentation,
   type Renderer
@@ -31,8 +31,9 @@ import {
 ///
 /// Authentic Targ, the frames with no world in them (the Escape, the Lift Journey's solid
 /// stages and a dark Room) are one Targ plan. Enhanced Targ draws its world through the shared
-/// planner (ADR 0087), sky and all (#956), with the lift bar and the fixed-screen overlays
-/// drawn over it by Targ's renderer.
+/// planner (ADR 0087), sky and all (#956), and the Lift Journey's bar over it as the plan's
+/// view-fixed layer (#957), with only the fixed-screen overlays drawn over it by Targ's
+/// renderer.
 export type TargFrame =
   | { readonly kind: 'targ'; readonly plan: FramePlan }
   | {
@@ -83,10 +84,12 @@ export const planTargFrame = (
   );
   // Targ's sky, or a lit Room's backdrop, is the fill, and its Bodies and stars the plan's sky.
   const clear: RGB8 = worldClear(snapshot, sky, presentation.preset);
+  const bar = liftBar(snapshot, size);
   const plan: EnhancedFramePlan = {
     ...planned,
     clear: [clear.red / 255, clear.green / 255, clear.blue / 255],
-    skyVertices: sky?.vertices ?? new Float32Array()
+    skyVertices: sky?.vertices ?? new Float32Array(),
+    ...(bar === undefined ? {} : { viewFixedVertices: viewFixedBar(bar, size) })
   };
   const meshes = new Map(
     scene.placements.map(placement => [placement.id, placement.mesh])
@@ -100,11 +103,9 @@ export const planTargFrame = (
       points += 1;
     }
   }
-  const after: DrawBatch[] = [];
-  addLiftBar(after, snapshot, size);
   return {
     after: {
-      batches: after,
+      batches: [],
       clear: null,
       lines: 0,
       overlays: objectOverlays(world, snapshot, size),
@@ -116,6 +117,40 @@ export const planTargFrame = (
     plan,
     points
   };
+};
+
+/// The Lift Journey's bar, laid out in Targ's pixels, as view-fixed triangles: the planner draws
+/// them last, over the world, without Haze or the world's depth. They lie at twice the near
+/// plane; Targ's mirroring leaves them alone, as a bar the frame's width is its own mirror.
+const viewFixedBar = (
+  bar: { readonly colour: RGB8; readonly vertices: Float32Array },
+  size: Size
+): Float32Array => {
+  const depth = ENHANCED_PRESENTATION.camera.nearPlane * 2;
+  const tangent = tan((targFieldOfView(size) * Math.PI) / 360);
+  const aspect = size.width / size.height;
+  const corners = bar.vertices.length / 2;
+  const out = new Float32Array(corners * FLOATS_PER_VERTEX);
+  for (let corner = 0; corner < corners; corner += 1) {
+    const x = (bar.vertices[corner * 2]! / size.width) * 2 - 1;
+    const y = 1 - (bar.vertices[corner * 2 + 1]! / size.height) * 2;
+    out.set(
+      [
+        x * aspect * tangent * depth,
+        y * tangent * depth,
+        depth,
+        bar.colour.red / 255,
+        bar.colour.green / 255,
+        bar.colour.blue / 255,
+        0,
+        0,
+        1,
+        -depth
+      ],
+      corner * FLOATS_PER_VERTEX
+    );
+  }
+  return out;
 };
 
 /// Targ's sky on the surface where an orrery is given (ADR 0025), as the plan's sky (#956).

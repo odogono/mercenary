@@ -577,24 +577,35 @@ const liftWipeOf = (snapshot: SessionSnapshot): FramePlan['liftWipe'] => {
       };
 };
 
-/// The Lift Journey's bar over a world frame, drawn after the world, if the journey shows one.
-export const addLiftBar = (
+/// The Lift Journey's bar over a world frame, if the journey shows one: its triangles in
+/// pixels and its colour. At stage 7 going down the bar covers the frame above the boundary.
+export const liftBar = (
+  snapshot: SessionSnapshot,
+  size: Size
+): { readonly colour: RGB8; readonly vertices: Float32Array } | undefined => {
+  const journey = snapshot.liftJourney;
+  const liftWipe = liftWipeOf(snapshot);
+  if (liftWipe === undefined || journey === undefined) {
+    return undefined;
+  }
+  const upper = journey.direction === 'down' && journey.stage === 7;
+  return {
+    colour: upper
+      ? (c64Colour(journey.upperColour ?? 0) ?? ScenePalette.blackInk)
+      : liftWipe.lineColour,
+    vertices: liftBarVertices(liftWipe.split, size, upper)
+  };
+};
+
+/// The Lift Journey's bar over Authentic Targ's world frame, drawn after the world.
+const addLiftBar = (
   batches: DrawBatch[],
   snapshot: SessionSnapshot,
   size: Size
 ): void => {
-  const journey = snapshot.liftJourney;
-  const liftWipe = liftWipeOf(snapshot);
-  if (liftWipe !== undefined && journey !== undefined) {
-    const upper = journey.direction === 'down' && journey.stage === 7;
-    addBatch(
-      batches,
-      'triangles',
-      liftBarVertices(liftWipe.split, size, upper),
-      upper
-        ? (c64Colour(journey.upperColour ?? 0) ?? ScenePalette.blackInk)
-        : liftWipe.lineColour
-    );
+  const bar = liftBar(snapshot, size);
+  if (bar !== undefined) {
+    addBatch(batches, 'triangles', bar.vertices, bar.colour);
   }
 };
 
@@ -639,8 +650,9 @@ export const worldClear = (
 ///
 /// This is deliberately pure. Golden Traces already grade selection and projection; this plan
 /// makes the presentation boundary independently inspectable without a DOM or graphics driver.
-/// It is Authentic Targ's frame, and the Arrival's; Enhanced Targ draws its world through the
-/// shared planner instead (`enhancedFrame.ts`, ADR 0087).
+/// It is Authentic Targ's frame, the Arrival's descent included; Enhanced Targ draws its world,
+/// and the Lift Journey's bar over it, through the shared planner instead (`enhancedFrame.ts`,
+/// ADR 0087).
 export const planFrame = (
   world: World,
   snapshot: SessionSnapshot,

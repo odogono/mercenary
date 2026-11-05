@@ -1,7 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 
 import { FLOATS_PER_VERTEX } from '../src/enhanced/frame.ts';
-import { Camera } from '../src/projection/index.ts';
+import {
+  Camera,
+  ReferenceViewport,
+  viewportCentre,
+  viewportScale
+} from '../src/projection/index.ts';
 import { ScenePalette, c64Colour } from '../src/scene/index.ts';
 import {
   GameplaySession,
@@ -32,6 +37,11 @@ const session = (): GameplaySession =>
   );
 const ATMOSPHERE = { hazeHalfDistance: 262_144 };
 const BLACK = '#000000';
+/// The pixel row a Reference Viewport row lands on in `size`.
+const viewportBoundary = (row: number): number =>
+  viewportCentre(size).y -
+  (ReferenceViewport.height * viewportScale(size)) / 2 +
+  row * viewportScale(size);
 
 const hex = (colour: { blue: number; green: number; red: number }): string =>
   `#${[colour.red, colour.green, colour.blue]
@@ -291,6 +301,59 @@ describe('Targ through the shared planner', () => {
       expect(inside.plan.roadVertices).toHaveLength(0);
       expect(inside.plan.horizonVertices).toHaveLength(0);
     }
+  });
+
+  test('draws the Lift Journey’s bar as the plan’s view-fixed layer (#957)', () => {
+    const snapshot = {
+      ...session().snapshot,
+      liftJourney: {
+        destination: { kind: 'surface' as const },
+        direction: 'up' as const,
+        lineColour: 0,
+        pitchHighByte: 2,
+        position: 66,
+        scene: 'surface' as const,
+        screenSplit: 116,
+        stage: 13,
+        upperColour: 0
+      }
+    };
+    const frame = planTargFrame(
+      world,
+      snapshot,
+      size,
+      undefined,
+      { preset: 'enhanced', structureReach: 'cell' },
+      {
+        atmosphere: ATMOSPHERE,
+        outputHeight: 800,
+        strokes: {
+          lines: { glow: 0, weight: 1 },
+          roads: { glow: 0, weight: 1 }
+        }
+      }
+    );
+    expect(frame.kind).toBe('shared');
+    if (frame.kind !== 'shared') {
+      return;
+    }
+    // Nothing of the bar is left for Targ's renderer to draw after the plan.
+    expect(frame.after.batches).toEqual([]);
+    const vertices = frame.plan.viewFixedVertices!;
+    expect(vertices.length / FLOATS_PER_VERTEX).toBe(6);
+    const tangent = Math.tan(
+      (frame.plan.verticalFieldOfViewDegrees * Math.PI) / 360
+    );
+    const rows = new Set(
+      viewPoints(vertices).map(([, y, z]) =>
+        Math.round(((1 - y / z / tangent) / 2) * size.height)
+      )
+    );
+    const black = c64Colour(0)!;
+    expect(vertices[3]).toBe(black.red / 255);
+    expect(rows).toEqual(
+      new Set([Math.round(viewportBoundary(66)), size.height])
+    );
   });
 
   test('keeps a dark Room and Authentic Targ on Targ’s own plan', () => {
