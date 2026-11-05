@@ -8,7 +8,7 @@ import {
   viewportCentre,
   viewportScale
 } from '../src/projection/index.ts';
-import { c64Colour } from '../src/scene/index.ts';
+import { atariSTColour, c64Colour } from '../src/scene/index.ts';
 import {
   DOORWAY_VBLS_PER_SECOND,
   advanceDoorwayTransition,
@@ -24,6 +24,7 @@ import {
   sessionContent
 } from '../src/session/index.ts';
 import { flightModel, loadSettings } from '../src/settings/index.ts';
+import { planTargFrame } from '../src/shell/enhancedFrame.ts';
 import { planFrame } from '../src/shell/frame.ts';
 import { TextTable } from '../src/text/index.ts';
 import { World } from '../src/world/index.ts';
@@ -306,5 +307,106 @@ describe('the Faithful view during a Doorway Transition', () => {
         }
       }
     }
+  });
+});
+
+describe('the Enhanced view during a Doorway Transition', () => {
+  const size = { height: 480, width: 640 };
+  const enhanced = (snapshot: ReturnType<typeof atTheDoorway>['snapshot']) =>
+    planTargFrame(
+      world,
+      snapshot,
+      size,
+      undefined,
+      { preset: 'enhanced', structureReach: 'cell' },
+      {
+        atmosphere: null,
+        outputHeight: 480,
+        strokes: {
+          lines: { glow: 0, weight: 1 },
+          roads: { glow: 0, weight: 1 }
+        }
+      }
+    );
+  // The view-fixed cover's colour and lowest edge in view space: its rows run 10 floats apart.
+  const coverOf = (frame: ReturnType<typeof enhanced>) => {
+    if (frame.kind !== 'shared') {
+      throw new Error('expected the shared planner');
+    }
+    const vertices = frame.plan.viewFixedVertices;
+    if (vertices === undefined) {
+      return undefined;
+    }
+    let lowest = Infinity;
+    for (let at = 1; at < vertices.length; at += 10) {
+      lowest = Math.min(lowest, vertices[at]!);
+    }
+    return { colour: Array.from(vertices.slice(3, 6)), lowest };
+  };
+
+  test('an upward wipe edges the old Room’s backdrop up over the new Room, shaded', () => {
+    const session = atTheDoorway(true);
+    session.advance(FRAME);
+    session.advance(10 / DOORWAY_VBLS_PER_SECOND);
+    const snapshot = session.snapshot;
+    const transition = snapshot.doorwayTransition!;
+    const { doorwayTransition: _, ...plain } = snapshot;
+    const whole = enhanced(plain);
+    const frame = enhanced(snapshot);
+    expect(frame.kind).toBe('shared');
+    expect(coverOf(whole)).toBeUndefined();
+    const departed = atariSTColour(transition.departed.indoor!.foreground)!;
+    const cover = coverOf(frame)!;
+    expect(cover.colour.map(c => Math.round(c * 255))).toEqual([
+      departed.red,
+      departed.green,
+      departed.blue
+    ]);
+    // The sweep moves the edge up 4 rows a VBL.
+    session.advance(5 / DOORWAY_VBLS_PER_SECOND);
+    expect(coverOf(enhanced(session.snapshot))!.lowest).toBeGreaterThan(
+      cover.lowest
+    );
+  });
+
+  test('a downward wipe shows the old Room under the new Room’s backdrop', () => {
+    const session = atTheDoorway(true);
+    session.advance(FRAME);
+    const base = session.snapshot;
+    const transition = base.doorwayTransition!;
+    const snapshot = {
+      ...base,
+      doorwayTransition: {
+        ...transition,
+        direction: 'down' as const,
+        wipe: doorwayWipeAt('down', 40)!
+      }
+    };
+    const { doorwayTransition: _, ...arrived } = base;
+    const old = enhanced({
+      ...arrived,
+      indoor: transition.departed.indoor,
+      location: transition.departed.location,
+      player: transition.departed.player
+    });
+    const frame = enhanced(snapshot);
+    if (frame.kind !== 'shared' || old.kind !== 'shared') {
+      throw new Error('expected the shared planner');
+    }
+    expect(frame.plan.drawnPlacements).toEqual(old.plan.drawnPlacements);
+    const arrivedFill = atariSTColour(base.indoor!.foreground)!;
+    expect(coverOf(frame)!.colour.map(c => Math.round(c * 255))).toEqual([
+      arrivedFill.red,
+      arrivedFill.green,
+      arrivedFill.blue
+    ]);
+  });
+
+  test('draws no cover once the sweep has passed', () => {
+    const session = atTheDoorway(true);
+    session.advance(FRAME);
+    session.advance(40 / DOORWAY_VBLS_PER_SECOND);
+    expect(session.snapshot.doorwayTransition!.wipe.coverRows).toBe(0);
+    expect(coverOf(enhanced(session.snapshot))).toBeUndefined();
   });
 });

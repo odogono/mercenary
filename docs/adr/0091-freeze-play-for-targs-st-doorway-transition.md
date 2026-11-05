@@ -8,7 +8,7 @@ The Atari ST wipes the 3D view with a palette raster split when the player takes
 
 - **The Doorway Transition is an ST presentation that freezes play.** Taking a Doorway into another Room starts it in the one Gameplay Session (ADR 0018), as a Lift Journey is. While it runs, the Mover, Doorways and Free Look do not run; Benson, the panel, sound and the clock do.
 - **It is opt-in on the Session.** `GameplaySession.doorwayTransitions` is off by default, so Golden Traces, Replay Gates and every C64-graded test keep the Reference Build's timing. The Browser Shell turns it on under either Presentation Preset.
-- **Authentic Targ draws the split.** The rows above the split show a Room's own backdrop with no lines; one Room's frame shows whole below. Enhanced Targ freezes for the same time and draws its view as usual.
+- **Authentic Targ draws the split.** The rows above the split show a Room's own backdrop with no lines; one Room's frame shows whole below. Enhanced Targ freezes for the same time and draws a flat cover over its shaded view (ADR 0092).
 - **It is never saved.** A Save taken during it restores with play running.
 - **The direction is the confirmed physical rule.** Ten real ST crossings show the wipe goes up when the player walks forward through the Doorway's wall and down when they back through it, on every wall. `doorwayWipeDirection` reads that rule from the browser's own heading and the Doorway's wall, not the ST's position and heading words.
 - **It plays the ST's door sound.** Both wipes write the YM2149 themselves ([the door sound](../research/targ-st-doorway-wipe.md#the-door-sound)). Targ's AudioWorklet runs a YM2149 beside its SID for this ST presentation only, summed into the same output; the C64 SID programmes are unchanged (#978).
@@ -17,4 +17,4 @@ The Atari ST wipes the 3D view with a palette raster split when the player takes
 ## Consequences
 
 - Play pauses for about a second at every Doorway in the browser, as on the ST and unlike the C64.
-- Enhanced Targ's own wipe is a follow-up.
+- Enhanced Targ draws its own wipe ([ADR 0092](0092-edge-targs-enhanced-doorway-transition-with-a-flat-cover.md)).

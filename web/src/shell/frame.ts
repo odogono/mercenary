@@ -764,32 +764,23 @@ const planDoorwayWipe = (
   orrery: TargOrrery | undefined,
   presentation: FramePresentation
 ): FramePlan => {
-  const { departed, wipe } = snapshot.doorwayTransition!;
-  const { doorwayTransition: _, ...arrived } = snapshot;
-  const shown =
-    wipe.shows === 'departed'
-      ? {
-          ...arrived,
-          indoor: departed.indoor,
-          location: departed.location,
-          player: departed.player
-        }
-      : arrived;
-  const frame = planFrame(world, shown, size, orrery, presentation);
-  if (presentation.preset !== 'authentic' || wipe.coverRows <= 0) {
+  const { wipe } = snapshot.doorwayTransition!;
+  const frame = planFrame(
+    world,
+    doorwayShown(snapshot),
+    size,
+    orrery,
+    presentation
+  );
+  const cover = doorwayCover(snapshot, size);
+  if (presentation.preset !== 'authentic' || cover === undefined) {
     return { ...frame, doorwayWipe: wipe };
   }
-  const indoor = wipe.cover === 'departed' ? departed.indoor : snapshot.indoor;
   const backdrop = new IndoorBackdrop(
-    indoor?.background ?? 0,
-    indoor?.foreground ?? 0
+    cover.indoor?.background ?? 0,
+    cover.indoor?.foreground ?? 0
   );
-  const scale = viewportScale(size);
-  const top = viewportCentre(size).y - (ReferenceViewport.height * scale) / 2;
-  const bottom =
-    wipe.coverRows >= ReferenceViewport.height
-      ? size.height
-      : top + wipe.coverRows * scale;
+  const { bottom } = cover;
   const batches = [...frame.batches];
   addBatch(
     batches,
@@ -1133,3 +1124,46 @@ export class Renderer {
     this.gl.depthMask(true);
   }
 }
+
+/// The snapshot whose Room a Doorway Transition shows whole (ADR 0091): the arrived Room, or
+/// the departed one while a downward wipe uncovers it. Without a transition, the snapshot.
+export const doorwayShown = (snapshot: SessionSnapshot): SessionSnapshot => {
+  const transition = snapshot.doorwayTransition;
+  if (transition === undefined) {
+    return snapshot;
+  }
+  const { doorwayTransition: _, ...arrived } = snapshot;
+  const { departed, wipe } = transition;
+  return wipe.shows === 'departed'
+    ? {
+        ...arrived,
+        indoor: departed.indoor,
+        location: departed.location,
+        player: departed.player
+      }
+    : arrived;
+};
+
+/// The Doorway Transition's cover in pixels, from the top of the frame to the split, and the
+/// Room whose fill it is, or undefined when nothing is covered.
+export const doorwayCover = (
+  snapshot: SessionSnapshot,
+  size: Size
+):
+  | { readonly bottom: number; readonly indoor: SessionSnapshot['indoor'] }
+  | undefined => {
+  const transition = snapshot.doorwayTransition;
+  if (transition === undefined || transition.wipe.coverRows <= 0) {
+    return undefined;
+  }
+  const { departed, wipe } = transition;
+  const scale = viewportScale(size);
+  const top = viewportCentre(size).y - (ReferenceViewport.height * scale) / 2;
+  return {
+    bottom:
+      wipe.coverRows >= ReferenceViewport.height
+        ? size.height
+        : top + wipe.coverRows * scale,
+    indoor: wipe.cover === 'departed' ? departed.indoor : snapshot.indoor
+  };
+};
