@@ -124,8 +124,11 @@ const frames = (): Record<string, string> => {
           'whole',
           1080
         );
-        // No Damocles Body has a Haze thickness authored yet (ADR 0088).
-        expect(plan.haze).toBeNull();
+        // Haze is the Body's authored thickness, or absent: airless, or in an Enclosed Region
+        // (ADR 0088).
+        expect([null, snapshot.surface.atmosphere?.hazeHalfDistance]).toContain(
+          plan.haze?.halfDistance ?? null
+        );
         found[
           `${arrival.id}:${daylight ? 'day' : 'night'}:${aboard ? 'aboard' : 'onFoot'}`
         ] = digest(plan);
