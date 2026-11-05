@@ -21,15 +21,17 @@ const state: SkyState = {
   solarDeclinationDegrees: 0,
   starColour: clear,
   stars: [],
-  starVisibility: 0,
+  starVisibility: 1,
   sun: (({ darkColour: _dark, ...lit }) => ({
     ...lit,
     direction: { x: 1, y: 0.3, z: 1 }
   }))(moon)
 };
 
-const colours = (): (readonly [number, number, number])[] => {
-  const { vertices } = targSkyView(state, pose, 10, 0.002);
+const colours = (
+  at: SkyState = state
+): (readonly [number, number, number])[] => {
+  const { vertices } = targSkyView(at, pose, 10, 0.002);
   const out: (readonly [number, number, number])[] = [];
   for (let index = 0; index < vertices.length; index += 10) {
     out.push([
@@ -94,5 +96,12 @@ describe('Targ sky view layers (#969)', () => {
     expect(
       moon.some((_, index) => index % 10 === 5 && moon[index]! < 0.5)
     ).toBe(true);
+  });
+
+  test('washes a day moon toward the sky, its dark side wholly', () => {
+    const day = colours({ ...state, starVisibility: 0 });
+    // The dark side's red is gone into the black sky; the lit side keeps some of its white.
+    expect(day.some(([r, g]) => r > 0.5 && g < 0.5)).toBe(false);
+    expect(day.some(([r, g, b]) => r > 0.3 && r === g && g === b)).toBe(true);
   });
 });

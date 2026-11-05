@@ -1,6 +1,7 @@
 import type { ConsoleElements } from './consoleView.ts';
 import { CONTROL_PROFILE_NAME } from './input.ts';
 import type { MenuPages } from './menu.ts';
+import { HAZE_AMOUNT_MAX, HAZE_AMOUNT_MIN } from './preferences.ts';
 import type { TypefaceId } from './typography.ts';
 
 /// A row the settings page may carry. Each Title declares the rows it offers, in its order, and
@@ -11,6 +12,7 @@ export type SettingName =
   | 'composition'
   | 'extended'
   | 'glow'
+  | 'haze'
   | 'presentation'
   | 'rendition'
   | 'road-glow'
@@ -31,6 +33,7 @@ export const PANEL_SETTINGS: readonly SettingName[] = [
   'shadows',
   'shadow-depth',
   'ambient',
+  'haze',
   'structures',
   'weight',
   'glow',
@@ -122,7 +125,7 @@ const settingRow = (
 
 const SETTING_ROWS: Readonly<
   Record<
-    Exclude<SettingName, 'audio'>,
+    Exclude<SettingName, 'audio' | 'haze'>,
     { readonly extra?: string; readonly label: string }
   >
 > = {
@@ -321,11 +324,43 @@ export const installShellChrome = (
     ],
     className: 'setting-row'
   });
+  const hazeRow = el('div', {
+    children: [
+      el('label', {
+        attrs: { for: 'haze-amount' },
+        className: 'chrome-label',
+        text: 'HAZE'
+      }),
+      el('div', {
+        children: [
+          el('input', {
+            attrs: {
+              'aria-label': 'Haze',
+              id: 'haze-amount',
+              max: String(HAZE_AMOUNT_MAX),
+              min: String(HAZE_AMOUNT_MIN),
+              step: '5',
+              type: 'range',
+              value: '100'
+            }
+          }),
+          el('output', {
+            attrs: { for: 'haze-amount', id: 'haze-amount-value' },
+            text: '100%'
+          })
+        ],
+        className: 'setting-choices audio-controls'
+      })
+    ],
+    className: 'setting-row'
+  });
   const settings = page(copy.logo, 'page-settings', 'Settings', 'SETTINGS', [
     ...copy.settings.map(name =>
       name === 'audio'
         ? audio
-        : settingRow(SETTING_ROWS[name].label, name, SETTING_ROWS[name].extra)
+        : name === 'haze'
+          ? hazeRow
+          : settingRow(SETTING_ROWS[name].label, name, SETTING_ROWS[name].extra)
     ),
     el('button', {
       attrs: { 'data-goto': 'menu', type: 'button' },

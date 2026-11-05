@@ -21,7 +21,7 @@ import { applyTypeface, readTypefacePreference } from './typography.ts';
 interface SettingRow {
   readonly apply: (value: string) => void;
   readonly current: () => string;
-  readonly name: Exclude<SettingName, 'audio'>;
+  readonly name: Exclude<SettingName, 'audio' | 'haze'>;
   readonly options: readonly {
     readonly label: string;
     readonly value: string;
@@ -307,6 +307,9 @@ export const installSettingsView = (
   const volumeValue = options.page.querySelector<HTMLOutputElement>(
     '#audio-volume-value'
   );
+  const haze = options.page.querySelector<HTMLInputElement>('#haze-amount');
+  const hazeValue =
+    options.page.querySelector<HTMLOutputElement>('#haze-amount-value');
   const refresh = (): void => {
     for (const [row, choices] of buttons) {
       const current = row.current();
@@ -325,6 +328,13 @@ export const installSettingsView = (
     if (volumeValue !== null) {
       volumeValue.value = String(audio.audioVolume);
     }
+    const hazeAmount = audio.hazeAmount ?? 100;
+    if (haze !== null) {
+      haze.value = String(hazeAmount);
+    }
+    if (hazeValue !== null) {
+      hazeValue.value = `${hazeAmount}%`;
+    }
   };
 
   mute?.addEventListener('click', () => {
@@ -333,6 +343,12 @@ export const installSettingsView = (
   });
   volume?.addEventListener('input', () => {
     preferences.update({ audioVolume: Number(volume.value) });
+    refresh();
+  });
+
+  haze?.addEventListener('input', () => {
+    const amount = Number(haze.value);
+    preferences.update({ hazeAmount: amount === 100 ? undefined : amount });
     refresh();
   });
 

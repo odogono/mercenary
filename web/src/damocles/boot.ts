@@ -57,6 +57,7 @@ import { canvasPointer } from '../shell/pointer.ts';
 import {
   createPreferences,
   enhancedStrokesOf,
+  hazeScaleOf,
   titlePreferences
 } from '../shell/preferences.ts';
 import type { SessionResumePersistence } from '../shell/resume.ts';
@@ -732,13 +733,14 @@ try {
     body: string
   ): S => {
     const localDays = session.bodyDays();
-    return localDays === null && weatherOverride === null
+    const hazeScale = hazeScaleOf(preferences.current());
+    return localDays === null && weatherOverride === null && hazeScale === 1
       ? surface
       : {
           ...surface,
           atmosphere: weathered(
             surface.atmosphere,
-            weatherScale(body, localDays ?? 0, weatherOverride)
+            weatherScale(body, localDays ?? 0, weatherOverride) * hazeScale
           )
         };
   };

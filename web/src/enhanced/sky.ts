@@ -85,6 +85,9 @@ export interface SkyOrb {
   readonly kind: 'orb';
   readonly lit: string;
   readonly phaseCosine: number;
+  /// How far the sky in front washes the disc toward what lies behind it, 0 to 1: a moon by day.
+  /// The dark side takes all of it and the lit side `ORB_LIT_WASH` of it. Absent is 0.
+  readonly skyWash?: number;
   /// Toward the sun, in the sky's frame, which the lit side faces. Absent, the disc is the sun
   /// itself and its rows lie as `discBasis` puts them.
   readonly sun?: Vector3;
@@ -422,6 +425,9 @@ const across = (
   z: centre.z + right.z * u + up.z * v
 });
 
+/// The share of an Orb's sky wash its lit side takes: a day moon stays a pale, readable crescent.
+const ORB_LIT_WASH = 0.55;
+
 /// How a Title's view sees its sky pass.
 export interface SkyView {
   /// How far out the sky is drawn, in view depth. The sky is painted with the depth test off and
@@ -584,22 +590,26 @@ export const skyPassTriangles = (pass: SkyPass, view: SkyView): SkyDrawing => {
     );
     const inner = 1 - feather;
     const phasedDark = phased && body.dark !== undefined;
-    const shade = (u: number, v: number): Channels =>
-      mix(
-        dark,
-        lit,
-        phasedDark
-          ? smoothstep(
-              -feather,
-              feather,
-              u + body.phaseCosine * Math.sqrt(Math.max(0, 1 - v * v))
-            )
-          : 1
-      );
+    const litness = (u: number, v: number): number =>
+      phasedDark
+        ? smoothstep(
+            -feather,
+            feather,
+            u + body.phaseCosine * Math.sqrt(Math.max(0, 1 - v * v))
+          )
+        : 1;
+    const wash = Math.min(1, Math.max(0, body.skyWash ?? 0));
     const coverage = (u: number, v: number): number =>
       1 - smoothstep(inner, 1, Math.hypot(u, v));
-    const colourAt = (u: number, v: number): Channels =>
-      mix(under(at(u, v)), shade(u, v), coverage(u, v));
+    /// The disc's colour at `(u, v)` with `sky` behind it, before its rim's coverage.
+    const shade = (sky: Channels, u: number, v: number): Channels => {
+      const t = litness(u, v);
+      return mix(mix(dark, lit, t), sky, wash * (1 + (ORB_LIT_WASH - 1) * t));
+    };
+    const colourAt = (u: number, v: number): Channels => {
+      const sky = under(at(u, v));
+      return mix(sky, shade(sky, u, v), coverage(u, v));
+    };
     // Each row's columns: the rim, the rim's feather, and the terminator's band, in order, so
     // rows pair column by column. The lit side faces the sun along +u.
     const rows = Array.from({ length: ORB_ROWS + 1 }, (_, row) => {
@@ -652,9 +662,8 @@ export const skyPassTriangles = (pass: SkyPass, view: SkyView): SkyDrawing => {
       const u = dot(toward, axisX) * onPlane;
       const v = dot(toward, axisY) * onPlane;
       const cover = coverage(u, v);
-      return cover <= 0
-        ? under(direction)
-        : mix(under(direction), shade(u, v), cover);
+      const sky = under(direction);
+      return cover <= 0 ? sky : mix(sky, shade(sky, u, v), cover);
     };
   };
 

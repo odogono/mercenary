@@ -39,7 +39,10 @@ export const targSkyPass = (
     kind: 'orb' as const,
     lit: hex(body.litColour),
     phaseCosine: body.phaseCosine,
-    ...(phased ? { sun: state.sun.direction } : {})
+    // By day the sky in front of a moon washes it toward the sky behind; by night none does.
+    ...(phased
+      ? { skyWash: 1 - state.starVisibility, sun: state.sun.direction }
+      : {})
   });
   const star = hex(state.starColour);
   return {
