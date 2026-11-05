@@ -2,6 +2,7 @@ import type { EnhancedStrokes } from '../enhanced/frame.ts';
 import { sceneLighting, sunlight } from '../enhanced/lighting.ts';
 import { placementUnderPointer } from '../enhanced/pointer.ts';
 import { ENHANCED_PRESENTATION } from '../enhanced/presentation.ts';
+import { weathered } from '../enhanced/weather.ts';
 import { FrameRenderer } from '../rendering/renderer.ts';
 import {
   DEFAULT_AMBIENT_LIGHT,
@@ -45,6 +46,8 @@ export const installDionPresentation = (options: {
   readonly stored: () => DionPresentationPreset;
   /// The player's Enhanced stroke weight and glow (#951).
   readonly strokes: () => EnhancedStrokes;
+  /// Weather's multiplier on the Haze of the Body underfoot this frame (ADR 0090).
+  readonly weather: (body: string) => number;
 }) => {
   let held = false;
   let retrying = false;
@@ -165,7 +168,16 @@ export const installDionPresentation = (options: {
           ?.putImageData(new ImageData(panelPixels, 320, 64), 0, 0);
         const scene = sceneOf();
         const plan = planDionEnhancedFrame(
-          scene,
+          {
+            ...scene,
+            surface: {
+              ...scene.surface,
+              atmosphere: weathered(
+                scene.surface.atmosphere,
+                options.weather(scene.pose.body)
+              )
+            }
+          },
           renderer.outputHeight,
           options.strokes()
         );

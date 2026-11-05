@@ -1,4 +1,9 @@
 import { ViewInterpolator } from '../enhanced/interpolation.ts';
+import {
+  describeWeather,
+  weatherScale,
+  type WeatherState
+} from '../enhanced/weather.ts';
 import { IDLE } from '../gameCore/index.ts';
 import { installShellChrome } from '../shell/chrome.ts';
 import { FixedStepClock } from '../shell/clock.ts';
@@ -286,6 +291,15 @@ try {
     menu.show('ownership');
     notice('This Mercenary III session is active in another tab.');
   };
+  // Weather over the Body's Haze (ADR 0090): picked from Body Time each frame, never stored.
+  // The `weather` console command pins it for tests; the pin is not saved.
+  let weatherOverride: WeatherState | null = null;
+  const weatherWhere = () => {
+    const scene = session.enhancedScene();
+    return scene.inSpace || scene.surface.atmosphere?.hazeHalfDistance == null
+      ? null
+      : { body: scene.pose.body, localDays: session.bodyDays() };
+  };
   viewPresentation = installDionPresentation({
     light: () => preferences.current(),
     notice,
@@ -298,7 +312,8 @@ try {
     redraw: () => draw(),
     screen: canvas,
     stored: () => preferences.current().presentationPreset ?? 'enhanced',
-    strokes: () => enhancedStrokesOf(preferences.current())
+    strokes: () => enhancedStrokesOf(preferences.current()),
+    weather: body => weatherScale(body, session.bodyDays(), weatherOverride)
   });
   const presentation = viewPresentation;
   const settingsView = installSettingsView({
@@ -376,12 +391,16 @@ try {
       persistence,
       preferences,
       session: () => session,
+      setWeather: weather => {
+        weatherOverride = weather;
+      },
       typeface: face => {
         applyTypeface(document.documentElement, face, {
           key: DION_STORAGE.typeface,
           storage
         });
-      }
+      },
+      weather: () => describeWeather(weatherWhere(), weatherOverride)
     },
     release,
     {

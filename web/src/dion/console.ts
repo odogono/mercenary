@@ -1,3 +1,4 @@
+import type { WeatherState } from '../enhanced/weather.ts';
 import {
   SETTING_VALUES,
   applySetting,
@@ -53,7 +54,7 @@ export const parseDionConsoleCommand = (
 
 const HELP = [
   'help · where · inventory · pads',
-  'time [h]h:mm[:ss] · clock [h]h:mm[:ss]',
+  'time [h]h:mm[:ss] · clock [h]h:mm[:ss] · weather [clear|hazy|mist|auto]',
   'goto <x> <z> [height] · goto room <n> · goto object <slot>',
   'get [<object-slot>] · drop [<object-slot|name>] · fetch <object-slot>',
   'set <name> <value>',
@@ -74,6 +75,9 @@ export interface DionConsoleHost extends ConsoleSettingHost {
   readonly pads?: () => readonly (PadDescription | null)[];
   readonly persistence: SavePersistence;
   readonly session: () => TourcraftSession;
+  /// The presentation-only Weather override (ADR 0090), and the `weather` reply.
+  readonly setWeather?: (weather: WeatherState | null) => void;
+  readonly weather?: () => string;
 }
 
 /// A slot as Targ's console writes one: two digits at least.
@@ -195,6 +199,11 @@ export const executeDionConsoleCommand = (
       return [`time ${formatTargTime(session.bodyTime())}`];
     case 'time':
       return [`time ${formatTargTime(session.bodyTime())}`];
+    case 'weather':
+      return [host.weather?.() ?? 'weather unavailable'];
+    case 'setWeather':
+      host.setWeather?.(command.weather);
+      return [host.weather?.() ?? 'weather unavailable'];
     case 'setClock':
       session.setPanelClock(command.secondsOfDay);
       return [`clock ${formatTargTime(session.snapshot.clock.seconds)}`];
