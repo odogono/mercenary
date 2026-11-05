@@ -69,7 +69,6 @@ describe('the authored Targ Orrery', () => {
     expect(alternate.stars).not.toEqual(orrery.stars);
     expect(
       targOrreryFor(TARG_SYSTEM, {
-        glowDistance: { fadeEnd: 16_384, fadeStart: 4096 },
         preset: 'authentic',
         roads: { glow: 0, thickness: 1 },
         sky: defaults,
@@ -79,7 +78,6 @@ describe('the authored Targ Orrery', () => {
     ).toBeUndefined();
     expect(
       targOrreryFor(TARG_SYSTEM, {
-        glowDistance: { fadeEnd: 16_384, fadeStart: 4096 },
         preset: 'enhanced',
         roads: { glow: 0, thickness: 1 },
         sky: defaults,

@@ -146,17 +146,6 @@ export interface WireframeSettings {
   readonly thickness: number;
 }
 
-/// Camera distance in world units: selected glow is full nearby and absent beyond fadeEnd.
-export interface GlowDistanceSettings {
-  readonly fadeEnd: number;
-  readonly fadeStart: number;
-}
-
-export const DEFAULT_GLOW_DISTANCE: GlowDistanceSettings = {
-  fadeEnd: 16_384,
-  fadeStart: 4096
-};
-
 export interface SkySettings {
   readonly dayLengthMinutes: number;
   readonly latitudeDegrees: number;
@@ -165,7 +154,6 @@ export interface SkySettings {
 }
 
 export interface PresentationSettings {
-  readonly glowDistance: GlowDistanceSettings;
   readonly preset: PresentationPreset;
   readonly roads: WireframeSettings;
   readonly sky: SkySettings;
@@ -568,30 +556,6 @@ export const readCastShadows = (value: unknown): CastShadows | undefined =>
       ? 'on'
       : undefined;
 
-const readGlowDistance = (value: unknown): GlowDistanceSettings => {
-  const path = 'presentation.glowDistance';
-  const source = block(value, path);
-  const fadeStart = inRange(
-    number(
-      source,
-      'fadeStart',
-      `${path}.fadeStart`,
-      DEFAULT_GLOW_DISTANCE.fadeStart
-    ),
-    `${path}.fadeStart`,
-    0,
-    Number.MAX_SAFE_INTEGER
-  );
-  const fadeEnd = positive(
-    number(source, 'fadeEnd', `${path}.fadeEnd`, DEFAULT_GLOW_DISTANCE.fadeEnd),
-    `${path}.fadeEnd`
-  );
-  if (fadeEnd <= fadeStart) {
-    return refuse(`${path}.fadeEnd must be greater than fadeStart`);
-  }
-  return { fadeEnd, fadeStart };
-};
-
 const readPresentation = (value: unknown): PresentationSettings => {
   const source = block(value, 'presentation');
   const namedPreset = source['preset'];
@@ -615,7 +579,6 @@ const readPresentation = (value: unknown): PresentationSettings => {
     structureReach = namedStructureReach;
   }
   return {
-    glowDistance: readGlowDistance(source['glowDistance']),
     preset,
     roads: readWireframe(source['roads'], 'presentation.roads'),
     sky: readSky(source['sky']),
