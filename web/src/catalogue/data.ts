@@ -1,3 +1,5 @@
+import { sitePath } from '../shell/sitePath.ts';
+
 export type Point = readonly [number, number, number];
 export const KINDS = ['object', 'structure', 'interior', 'ground'] as const;
 export type Kind = (typeof KINDS)[number];
@@ -3110,9 +3112,9 @@ export const parseCatalogue = (value: unknown): AssembledCatalogue => {
   );
 };
 
-export const CATALOGUE_PATH = '/payload/damocles/catalogue.json';
+export const CATALOGUE_PATH = sitePath('/payload/damocles/catalogue.json');
 export const modelPath = (id: string): string =>
-  `/payload/damocles/models/${id}.json`;
+  sitePath(`/payload/damocles/models/${id}.json`);
 
 /// One payload path fetched and parsed as JSON, refusing any answer but success.
 export const payloadJson = async (path: string): Promise<unknown> => {

@@ -22,9 +22,11 @@
     "src",
     "test",
     "e2e",
+    "e2e-site",
     "tools",
     "../tools",
     "playwright.config.ts",
+    "playwright.site.config.ts",
     "serve.ts"
   ]
 }

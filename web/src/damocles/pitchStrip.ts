@@ -1,4 +1,5 @@
 import type { PitchStrip } from '../shell/panelView.ts';
+import { sitePath } from '../shell/sitePath.ts';
 import type { ErisPresentationDocument } from './documents.ts';
 
 /// The Damocles pitch strip (#716), extracted by `damocleslab.panel` from the first-world image.
@@ -8,7 +9,7 @@ import type { ErisPresentationDocument } from './documents.ts';
 /// columns, colour 2 for the sky, 8 for the ground and 0 for the ink. The strip is the artwork
 /// Mercenary III's `$53AB2` draws, row for row (docs/research/damocles-pitch-strip.md).
 
-export const DAMOCLES_PANEL_PATH = '/payload/damocles/panel.json';
+export const DAMOCLES_PANEL_PATH = sitePath('/payload/damocles/panel.json');
 
 const ROWS = 83;
 

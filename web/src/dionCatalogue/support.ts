@@ -14,8 +14,11 @@ import {
   type DionRoads,
   type DionScenePalette
 } from '../dion/world.ts';
+import { sitePath } from '../shell/sitePath.ts';
 
-export const supportPath = '/payload/dion/catalogue/render-support.json';
+export const supportPath = sitePath(
+  '/payload/dion/catalogue/render-support.json'
+);
 export interface RenderSupport {
   readonly bodies: ReadonlyMap<
     string,

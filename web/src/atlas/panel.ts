@@ -5,6 +5,7 @@ import type {
   Place
 } from '../catalogue/data.ts';
 import type { GammaBody, GammaSystemDocument } from '../flyover/documents.ts';
+import { sitePath } from '../shell/sitePath.ts';
 import { ROAD_PIECE_ZOOM_NOTE } from './bodyRange.ts';
 import type { Footprint } from './footprint.ts';
 import type { MapPoint } from './mapView.ts';
@@ -157,7 +158,7 @@ export const islandProvenance = (island: Island): readonly string[] => [
 /// 0042), and `documentPath.ts` resolves no other. Pointing at the eventual one sent every
 /// Catalogue link in the Atlas to the Targ Title instead.
 export const catalogueHref = (sourceIndex: number): string =>
-  `/catalogue?body=${catalogueBodyId(sourceIndex)}`;
+  sitePath(`/catalogue?body=${catalogueBodyId(sourceIndex)}`);
 
 /// One recovered Damocles Instance in the Catalogue, on its own Body. A Place holds several, and
 /// each is a record the Catalogue does hold a view of, so unlike an island this hand-off reaches

@@ -1,6 +1,6 @@
 # The Data Payload in /payload/ and the Golden Traces in /traces/ are tracked, on
-# purpose: this repository is permanently private and a public release is built in a
-# separate repository rather than exported from this history (ADR 0029).
+# purpose (ADR 0029); the app built from them is published from this repository
+# (ADR 0093).
 
 # Supplied reference media remain research inputs, not repository content. The one
 # tracked documentation exception is research/reference-disassembly (ADR 0017).
@@ -24,8 +24,7 @@ __pycache__/
 # Throwaway native-prototype build products.
 /prototypes/macos-experience/.build/
 
-# Web build products. A bundled browser build embeds payload-derived data
-# (ADR 0019).
+# Web build products: the Published Site is exported to /web/dist/ by CI (ADR 0093).
 /web/dist/
 /web/node_modules/
 /web/.eslintcache

@@ -8,15 +8,12 @@ import {
 } from './src/server/document.ts';
 import { payloadResponse } from './src/server/payload.ts';
 
-/// The development server. Localhost only, and deliberately so.
-///
-/// A hosted build serves payload-derived data to every visitor, which is publication of a
-/// Reconstructed Payload by any reading, and that is gated on written qualified-counsel
-/// clearance under ADR 0004 (#67). Until then this binds to localhost and there is no build
-/// step that produces a deployable bundle.
+/// The development server. Localhost only: it serves one developer's browser.
 ///
 /// It serves the page, the tracked `/payload/` from the repository root, and the one
 /// settings document the live Gameplay Session resolves. Neither is copied into `web/`.
+/// The Published Site is the same app exported to static files by `tools/export-site.ts`
+/// (ADR 0093), so anything this server answers by code needs a matching step there.
 
 const findRepositoryRoot = (): string => {
   let directory = import.meta.dir;
@@ -99,8 +96,7 @@ const server = Bun.serve({
     // Source is served straight from disk, with the types stripped on the way out, so the
     // browser runs the same files the tests import. Stripping is not bundling: the import
     // specifiers keep their `.ts` extensions and the browser fetches each module from here in
-    // turn, which is why there is still no build step and nothing that produces a deployable
-    // bundle — the thing ADR 0019 gitignores and ADR 0004 gates.
+    // turn. `tools/export-site.ts` strips the same files ahead of time for the Published Site.
     const candidate = join(import.meta.dir, url.pathname);
     if (candidate.startsWith(import.meta.dir)) {
       const file = Bun.file(candidate);

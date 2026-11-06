@@ -1,5 +1,6 @@
 import { readGammaSystem } from '../flyover/documents.ts';
 import { assertBrowserDocument } from '../shell/documentPath.ts';
+import { appPathname, sitePath } from '../shell/sitePath.ts';
 import {
   CATALOGUE_PATH,
   modelSummaryById,
@@ -393,7 +394,7 @@ const render = () => {
 // shows every record it holds, and withholds the hand-off rather than blanking the page.
 const readAtlasBodies = async () => {
   try {
-    const response = await fetch('/payload/damocles/system.json');
+    const response = await fetch(sitePath('/payload/damocles/system.json'));
     if (!response.ok) {
       throw new Error(`Request returned HTTP ${response.status}.`);
     }
@@ -571,7 +572,10 @@ document.addEventListener('click', event => {
     return;
   }
   const url = new URL(a.href);
-  if (url.pathname !== '/catalogue' || url.origin !== location.origin) {
+  if (
+    appPathname(url.pathname) !== '/catalogue' ||
+    url.origin !== location.origin
+  ) {
     return;
   }
   event.preventDefault();

@@ -1,4 +1,5 @@
 import type { SoundDocument } from '../payload/documents.ts';
+import { sitePath } from '../shell/sitePath.ts';
 import type { ControlCommand } from './lifecycle.ts';
 import type { SoundBatch, SoundCommand, SoundTransport } from './presenter.ts';
 
@@ -55,7 +56,7 @@ export class AudioWorkletTransport<
       await Promise.all([
         context.resume(),
         context.audioWorklet.addModule(
-          this.options.workletUrl ?? '/src/sound/worklet.ts'
+          this.options.workletUrl ?? sitePath('/src/sound/worklet.ts')
         )
       ]);
       if (this.disposed) {

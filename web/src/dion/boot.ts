@@ -36,6 +36,7 @@ import {
 import { routeKey, routePad, type RouterState } from '../shell/router.ts';
 import { installSaveChooser } from '../shell/saveChooser.ts';
 import { installSettingsView } from '../shell/settingsView.ts';
+import { sitePath } from '../shell/sitePath.ts';
 import { installSuspensionHandlers } from '../shell/suspension.ts';
 import type { PayloadDocument } from '../shell/title.ts';
 import { applyTypeface } from '../shell/typography.ts';
@@ -84,7 +85,7 @@ const failure = document.getElementById('failure')!;
 const canvas = document.getElementById('screen') as HTMLCanvasElement;
 const chrome = installShellChrome(surface, {
   catalogueLabel: 'CATALOGUE',
-  cataloguePath: '/dion/catalogue',
+  cataloguePath: sitePath('/dion/catalogue'),
   logo: { name: 'MERCENARY III', typeface: 'damocles' },
   menuTitle: 'MERCENARY III',
   settings: [
@@ -121,7 +122,7 @@ const fail = (error: unknown): void => {
 };
 
 const requiredJson = async (pathname: string): Promise<PayloadDocument> => {
-  const response = await fetch(pathname);
+  const response = await fetch(sitePath(pathname));
   if (!response.ok) {
     throw new Error(`${pathname} answered HTTP ${response.status}`);
   }
@@ -158,7 +159,7 @@ try {
       {
         onFailure: reason => notice(`Sound unavailable: ${reason}`),
         processor: 'dion-ym',
-        workletUrl: '/src/dion/soundWorklet.ts'
+        workletUrl: sitePath('/src/dion/soundWorklet.ts')
       }
     )
   );

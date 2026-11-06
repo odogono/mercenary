@@ -2,6 +2,7 @@ import {
   readTargSystem,
   type TargSystemDocument
 } from '../flyover/documents.ts';
+import { sitePath } from '../shell/sitePath.ts';
 
 /// Where the authored Targ System is served from: beside the Flyover documents rather than in
 /// the Data Payload, because nothing in it is recovered (ADR 0042, ADR 0086).
@@ -11,7 +12,7 @@ export const TARG_SYSTEM_PATH = '/systems/targ.json';
 export const fetchTargSystem = async (
   base: string | URL = location.href
 ): Promise<TargSystemDocument> => {
-  const url = new URL(TARG_SYSTEM_PATH, base);
+  const url = new URL(sitePath(TARG_SYSTEM_PATH), base);
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`${TARG_SYSTEM_PATH} answered HTTP ${response.status}`);

@@ -1,5 +1,7 @@
 # Track the Data Payload in the private repository
 
+Amended by [ADR 0093](0093-publish-the-app-to-github-pages-from-this-repository.md): the app is published to GitHub Pages from this repository, which is public. The original decision follows.
+
 The Data Payload in `/payload/` and the Golden Traces in `/traces/` are tracked. This amends
 ADR 0014's single publication hedge — "extracted game data lives in one gitignored Data
 Payload" — and the clause of ADR 0019 that gitignores traces and any built bundle alike as

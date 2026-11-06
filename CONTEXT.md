@@ -7,8 +7,12 @@ Terms marked **(historical)** name concepts retained only for reading frozen pro
 ## Language
 
 **Data Payload**:
-The single collection of game data re-extracted from the Reference Build by this project's own tooling, loaded by the app at runtime and tracked in this private repository (ADR 0029).
+The single collection of game data re-extracted from the Reference Build by this project's own tooling, loaded by the app at runtime and tracked in this repository (ADR 0029).
 _Avoid_: Asset folder, resources, ROM data
+
+**Published Site**:
+The app as the public plays it, served at `opendoorgonorth.com/mercenary/` with every page the development server offers (ADR 0093).
+_Avoid_: Deploy, production build, hosted version
 
 **Benson Script**:
 An original game-logic program from the Reference Build's in-game interpreter, re-extracted into the Data Payload in a structurally preserved re-encoding of its bytecode, and executed by this project's own interpreter through the Host Callout.

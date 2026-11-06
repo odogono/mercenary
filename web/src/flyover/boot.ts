@@ -1,4 +1,5 @@
 import { loadSettings } from '../settings/index.ts';
+import { sitePath } from '../shell/sitePath.ts';
 import { fetchTargSystem } from '../sky/system.ts';
 
 import '../shell/damoclesPanelElement.ts';
@@ -73,11 +74,11 @@ const requiredJson = async (pathname: string): Promise<unknown> => {
 };
 
 const systemFor = async (systemId: SystemId): Promise<FlyoverSystem> => {
-  const presentationPath = `/flyover/${systemId}.json`;
+  const presentationPath = sitePath(`/flyover/${systemId}.json`);
   if (systemId === 'targ') {
     const [rawPresentation, settingsText, targSystem] = await Promise.all([
       requiredJson(presentationPath),
-      requiredText('/settings.json'),
+      requiredText(sitePath('/settings.json')),
       fetchTargSystem()
     ]);
     let presentation: TargPresentationDocument;
@@ -98,7 +99,7 @@ const systemFor = async (systemId: SystemId): Promise<FlyoverSystem> => {
       loadSettings(settingsText).presentation.sky
     );
   }
-  const authorityPath = '/payload/damocles/system.json';
+  const authorityPath = sitePath('/payload/damocles/system.json');
   const rawAuthority = await requiredJson(authorityPath);
   let authority: ReturnType<typeof readGammaSystem>;
   try {

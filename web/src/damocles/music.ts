@@ -4,8 +4,9 @@
 ///
 /// The document holds data only. Which voice drives which channel, and the order the player
 /// writes the chip in, are the player's own code facts, and `psg.ts` states them.
+import { sitePath } from '../shell/sitePath.ts';
 
-export const DAMOCLES_MUSIC_PATH = '/payload/damocles/music.json';
+export const DAMOCLES_MUSIC_PATH = sitePath('/payload/damocles/music.json');
 
 export type MusicOp =
   | { readonly op: 'note'; readonly period: number; readonly vbls: number }

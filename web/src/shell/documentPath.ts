@@ -1,3 +1,5 @@
+import { appPathname } from './sitePath.ts';
+
 export type SystemId = 'gamma' | 'targ';
 export type BrowserDocument =
   | 'atlas'
@@ -84,6 +86,9 @@ const aliases = new Map<string, string>([
 
 const resourceNamespaces = ['/src', '/payload', '/flyover', '/e2e', '/test'];
 
+/// Every document path, for the static export of the Published Site.
+export const documentPaths = (): readonly string[] => [...documents.keys()];
+
 export const resolveDocumentPath = (pathname: string): DocumentPath => {
   const document = documents.get(pathname);
   if (document !== undefined) {
@@ -115,7 +120,7 @@ export const assertBrowserDocument = <T extends BrowserDocument>(
   DocumentPath,
   { readonly document: T; readonly kind: 'document' }
 > => {
-  const resolved = resolveDocumentPath(pathname);
+  const resolved = resolveDocumentPath(appPathname(pathname));
   if (resolved.kind !== 'document' || resolved.document !== expected) {
     throw new Error(`${pathname} is not the ${expected} document`);
   }

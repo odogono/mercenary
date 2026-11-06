@@ -1,5 +1,7 @@
 # Pivot to a browser-canonical TypeScript implementation
 
+Amended by [ADR 0093](0093-publish-the-app-to-github-pages-from-this-repository.md): the app is published to GitHub Pages from this repository, which is public. The original decision follows.
+
 The Faithful Remake's primary platform becomes the browser, and its canonical
 codebase becomes a TypeScript implementation under `web/`. This supersedes ADR
 0001's platform choice: Swift, Metal, and an AppKit or SwiftUI shell were chosen

@@ -4,10 +4,10 @@
 /// `title.png` carries the lettering, 4-bit indexed in the picture's own palette with
 /// colour 0 clear. `title.json` carries its provenance, the program identity and hashes of
 /// the PNG and of its indices. The document's disk and screen blocks are provenance only.
-
+import { sitePath } from '../shell/sitePath.ts';
 import { loadTitleLogoPng, type TitleLogoPng } from '../shell/titleLogo.ts';
 
-export const DAMOCLES_TITLE_PATH = '/payload/damocles/title.json';
+export const DAMOCLES_TITLE_PATH = sitePath('/payload/damocles/title.json');
 
 export interface DamoclesTitleLogo extends TitleLogoPng {
   readonly file: string;

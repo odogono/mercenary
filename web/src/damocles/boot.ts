@@ -9,6 +9,7 @@ import {
   type WeatherState
 } from '../enhanced/weather.ts';
 import { readGammaSystem } from '../flyover/documents.ts';
+import { sitePath } from '../shell/sitePath.ts';
 
 import './panelElement.ts';
 
@@ -195,11 +196,14 @@ try {
   }
   const [loaded, system, titleLogo, panelDocument] = await Promise.all([
     damoclesTitle.load(requiredJson),
-    requiredJson('/payload/damocles/system.json').then(document =>
+    requiredJson(sitePath('/payload/damocles/system.json')).then(document =>
       readGammaSystem(document.value)
     ),
     requiredJson(DAMOCLES_TITLE_PATH).then(document =>
-      loadDamoclesTitleLogo(document.value, new URL('/payload/', location.href))
+      loadDamoclesTitleLogo(
+        document.value,
+        new URL(sitePath('/payload/'), location.href)
+      )
     ),
     requiredJson(DAMOCLES_PANEL_PATH).then(document =>
       readDamoclesPanelDocument(document.value)
@@ -329,7 +333,7 @@ try {
           notices.audioUnavailable();
         },
         processor: 'damocles-ym',
-        workletUrl: '/src/damocles/soundWorklet.ts'
+        workletUrl: sitePath('/src/damocles/soundWorklet.ts')
       }
     )
   );

@@ -13,6 +13,7 @@ import {
   type GammaSystemDocument
 } from '../flyover/documents.ts';
 import { assertBrowserDocument } from '../shell/documentPath.ts';
+import { appPathname, sitePath } from '../shell/sitePath.ts';
 import {
   RANGE_LABEL,
   ROAD_PIECE_ZOOM_NOTE,
@@ -536,7 +537,7 @@ const count = (labels: readonly SurfaceLabel[], kind: SurfaceLabelKind) =>
 const labelHref = (label: PlacedLabel): string => {
   const body = selectedBody();
   if (!body) {
-    return '/damocles/atlas';
+    return sitePath('/damocles/atlas');
   }
   return atlasHref({
     bodyId: body.id,
@@ -1225,7 +1226,10 @@ document.addEventListener('click', event => {
     return;
   }
   const url = new URL(anchor.href);
-  if (url.origin !== location.origin || url.pathname !== '/damocles/atlas') {
+  if (
+    url.origin !== location.origin ||
+    appPathname(url.pathname) !== '/damocles/atlas'
+  ) {
     return;
   }
   event.preventDefault();
@@ -1313,10 +1317,10 @@ const onBody = (
   });
 
 const catalogueInstance = (id: string): string =>
-  `/catalogue?instance=${encodeURIComponent(id)}`;
+  sitePath(`/catalogue?instance=${encodeURIComponent(id)}`);
 
 const catalogueModel = (id: string): string =>
-  `/catalogue?model=${encodeURIComponent(id)}`;
+  sitePath(`/catalogue?model=${encodeURIComponent(id)}`);
 
 const bodyNames = (ids: readonly string[]): string =>
   ids
@@ -1609,7 +1613,7 @@ const clearUnknownSelection = () => {
 };
 
 const start = async () => {
-  const path = '/payload/damocles/system.json';
+  const path = sitePath('/payload/damocles/system.json');
   try {
     const response = await fetch(path);
     if (!response.ok) {

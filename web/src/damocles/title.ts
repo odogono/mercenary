@@ -2,6 +2,7 @@ import { CATALOGUE_PATH, parseCatalogueDocument } from '../catalogue/data.ts';
 import { ModelStore } from '../catalogue/modelStore.ts';
 import { sha256 } from '../hash/index.ts';
 import type { PanelViewModel } from '../shell/panel.ts';
+import { sitePath } from '../shell/sitePath.ts';
 import { titleStorageKeys, type TitleRuntime } from '../shell/title.ts';
 import { parseDamoclesDocuments } from './documentBank.ts';
 import { readErisPresentation } from './documents.ts';
@@ -16,11 +17,14 @@ import {
 import { parseDamoclesStrings } from './strings.ts';
 import { erisSurfaceFrom, modelWaves, startPose } from './world.ts';
 
-export const DAMOCLES_STRINGS_PATH = '/payload/damocles/strings.json';
-export const DAMOCLES_DOCUMENTS_PATH = '/payload/damocles/documents.json';
-export const DAMOCLES_ARRIVAL_POSES_PATH =
-  '/payload/damocles/arrival-poses.json';
-export const ERIS_PRESENTATION_PATH = '/damocles/eris.json';
+export const DAMOCLES_STRINGS_PATH = sitePath('/payload/damocles/strings.json');
+export const DAMOCLES_DOCUMENTS_PATH = sitePath(
+  '/payload/damocles/documents.json'
+);
+export const DAMOCLES_ARRIVAL_POSES_PATH = sitePath(
+  '/payload/damocles/arrival-poses.json'
+);
+export const ERIS_PRESENTATION_PATH = sitePath('/damocles/eris.json');
 
 /// One identity over every Damocles presentation document, in a fixed document order.
 ///

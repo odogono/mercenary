@@ -1,5 +1,6 @@
 import { parseDamoclesArrivalPoses } from '../damocles/poses.ts';
 import type { GammaSystemDocument } from '../flyover/documents.ts';
+import { sitePath } from '../shell/sitePath.ts';
 import { STREET_SPAN, SURFACE_SPAN } from './bodyRange.ts';
 import { project, unproject, type MapView } from './mapView.ts';
 import type { AtlasPin, AtlasState } from './state.ts';
@@ -144,7 +145,9 @@ export const installAtlasTravel = (options: {
       });
       travel.disabled = true;
       menuTravel.disabled = true;
-      location.assign(`/damocles?atlasTravel=${encodeURIComponent(token)}`);
+      location.assign(
+        sitePath(`/damocles?atlasTravel=${encodeURIComponent(token)}`)
+      );
     } catch (error) {
       message.textContent =
         error instanceof Error ? error.message : String(error);
@@ -384,7 +387,9 @@ export const installAtlasTravel = (options: {
     },
     load: async () => {
       try {
-        const response = await fetch('/payload/damocles/arrival-poses.json');
+        const response = await fetch(
+          sitePath('/payload/damocles/arrival-poses.json')
+        );
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
