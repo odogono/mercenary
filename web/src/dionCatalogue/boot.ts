@@ -1,6 +1,7 @@
 import { loadDionCatalogue, type GeometryStore } from '../dion/catalogue.ts';
 import { frameRgba } from '../dion/frame.ts';
 import { assertBrowserDocument } from '../shell/documentPath.ts';
+import { appPathname } from '../shell/sitePath.ts';
 import { showDetails } from './details.ts';
 import { element, node, option, paragraph, selectionLink } from './dom.ts';
 import {
@@ -350,7 +351,10 @@ document.addEventListener('click', event => {
     return;
   }
   const url = new URL(a.href);
-  if (url.origin !== location.origin || url.pathname !== '/dion/catalogue') {
+  if (
+    url.origin !== location.origin ||
+    appPathname(url.pathname) !== '/dion/catalogue'
+  ) {
     return;
   }
   event.preventDefault();

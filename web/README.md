@@ -17,13 +17,19 @@ bun run test:timings           # refresh test-timings.json, which balances CI's 
 bun run test:e2e               # live localhost walkabout in Chromium
 bun run typecheck              # strict checks for source, Bun tests and Playwright
 bun run dev                    # http://localhost:5173
+bun run export:site            # the Published Site, into dist/, for /mercenary/
+bun run test:site              # load every exported page under /mercenary/ (export first)
 ```
 
 The dev server serves the page and strips the types from each `.ts` module as it hands it
 over, so the browser runs the same files the tests import. That is not a build step and it is
 not bundling: import specifiers keep their `.ts` extensions and each module is fetched from
-disk in turn, so there is still nothing here that produces a deployable bundle — the thing
-ADR 0019 gitignores and ADR 0004 gates.
+disk in turn.
+
+The Published Site at https://opendoorgonorth.com/mercenary/ is the same files, stripped ahead
+of time by `tools/export-site.ts` and deployed by `.github/workflows/pages.yml` on each push to
+`main` (ADR 0093). App code names root-relative paths through `sitePath` in
+`src/shell/sitePath.ts`, which reads the base from its own URL, so the dev server stays at `/`.
 
 The tests and page both read `/payload/` from the repository root; Replay Gates also read
 `/traces/`, while the live page reads `/settings.json` and advances its own Gameplay Session. All

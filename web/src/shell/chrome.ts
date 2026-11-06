@@ -2,6 +2,7 @@ import type { ConsoleElements } from './consoleView.ts';
 import { CONTROL_PROFILE_NAME } from './input.ts';
 import type { MenuPages } from './menu.ts';
 import { HAZE_AMOUNT_MAX, HAZE_AMOUNT_MIN } from './preferences.ts';
+import { sitePath } from './sitePath.ts';
 import type { TypefaceId } from './typography.ts';
 
 /// A row the settings page may carry. Each Title declares the rows it offers, in its order, and
@@ -230,7 +231,7 @@ export const installShellChrome = (
       ? []
       : [
           el('a', {
-            attrs: { href: copy.cataloguePath ?? '/catalogue' },
+            attrs: { href: copy.cataloguePath ?? sitePath('/catalogue') },
             className: 'chrome-button',
             text: copy.catalogueLabel
           })
@@ -239,7 +240,7 @@ export const installShellChrome = (
       ? []
       : [
           el('a', {
-            attrs: { href: '/damocles/atlas', id: 'menu-atlas' },
+            attrs: { href: sitePath('/damocles/atlas'), id: 'menu-atlas' },
             className: 'chrome-button',
             text: copy.atlasLabel
           })
@@ -248,7 +249,7 @@ export const installShellChrome = (
       ? []
       : [
           el('a', {
-            attrs: { href: '/targ/assets', id: 'menu-assets' },
+            attrs: { href: sitePath('/targ/assets'), id: 'menu-assets' },
             className: 'chrome-button',
             text: copy.assetsLabel
           })

@@ -17,6 +17,7 @@
     "coverage": "bun test --coverage --coverage-reporter=text --coverage-reporter=lcov",
     "dev": "bun run serve.ts",
     "dion:identity": "bun tools/dion-identity.ts",
+    "export:site": "bun tools/export-site.ts --base /mercenary/",
     "format": "prettier --write --config .prettierrc . ../tools",
     "format:check": "prettier --check --config .prettierrc . ../tools",
     "lint": "eslint --cache .",
@@ -24,6 +25,7 @@
     "outdated": "bunx npm-check-updates --interactive --format group",
     "test": "bun test --parallel --timings=test-timings.json",
     "test:e2e": "playwright test",
+    "test:site": "playwright test -c playwright.site.config.ts",
     "test:quiet": "bun test --parallel --timings=test-timings.json --only-failures",
     "test:timings": "bun test --parallel --timings=test-timings.json --update-timings",
     "test:tools": "bun test ../tools",
@@ -59,7 +61,9 @@
       "src/dion/soundWorklet.ts",
       "e2e/dion-fixture.ts",
       "e2e/rendering-fixture.ts",
-      "tools/dion-tourcraft-compare.ts"
+      "tools/dion-tourcraft-compare.ts",
+      "tools/serve-site.ts",
+      "e2e-site/*.e2e.ts"
     ],
     "include": [
       "files",

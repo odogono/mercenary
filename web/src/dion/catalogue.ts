@@ -1,5 +1,6 @@
 import { sha256 } from '../hash/index.ts';
 import { DocumentStore, atDocument } from '../payload/documentStore.ts';
+import { sitePath } from '../shell/sitePath.ts';
 import { DION_PROGRAM_SHA256 } from './documents.ts';
 import {
   address,
@@ -13,8 +14,8 @@ import {
   text
 } from './read.ts';
 
-export const cataloguePath = '/payload/dion/catalogue/catalogue.json';
-const geometryRoot = '/payload/dion/catalogue/geometry';
+export const cataloguePath = sitePath('/payload/dion/catalogue/catalogue.json');
+const geometryRoot = sitePath('/payload/dion/catalogue/geometry');
 type Row = Record<string, unknown>;
 interface Source {
   readonly ledgerSha256: string;

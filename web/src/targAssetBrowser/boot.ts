@@ -1,6 +1,5 @@
 /// The Targ Asset Browser page (`/targ/assets`, #877): find a Targ model, see it as the game draws
 /// it, and copy the commands that start an edit. Sessionless and read-only.
-
 import { parseAssetFile } from '../geometry/targAssets.ts';
 import {
   fetchAssets,
@@ -9,6 +8,7 @@ import {
   type ReadDocument
 } from '../payload/load.ts';
 import { Renderer, planInspection } from '../shell/frame.ts';
+import { sitePath } from '../shell/sitePath.ts';
 import {
   adoptCommand,
   blenderCommand,
@@ -240,7 +240,9 @@ const matches = (entry: BrowserEntry, query: string): boolean =>
 const start = async (): Promise<void> => {
   // Both loads read the same documents, so each is fetched once.
   const fetched = new Map<string, Promise<string | undefined>>();
-  const fetchDocument = fetchReader(new URL('/payload/', location.href).href);
+  const fetchDocument = fetchReader(
+    new URL(sitePath('/payload/'), location.href).href
+  );
   const read: ReadDocument = name => {
     if (!fetched.has(name)) {
       fetched.set(name, fetchDocument(name));
@@ -248,7 +250,7 @@ const start = async (): Promise<void> => {
     return fetched.get(name)!;
   };
   const files = await fetchAssets(
-    new URL('/assets/targ.json', location.href).href
+    new URL(sitePath('/assets/targ.json'), location.href).href
   )();
   const [baseline, effective, assets] = await Promise.all([
     load(read),

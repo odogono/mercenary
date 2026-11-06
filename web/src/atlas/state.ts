@@ -4,7 +4,7 @@
 /// camera of its own (#405). Each Range carries a camera of its own in the same three keys,
 /// because a URL is only ever in one Range at a time; the System Range's is in engine units and
 /// a Body's will be in Body Coordinates (#411).
-
+import { sitePath } from '../shell/sitePath.ts';
 import { STREET_SPAN } from './bodyRange.ts';
 import type { MapPoint } from './mapView.ts';
 import { isSearchKind, type SearchKind } from './search.ts';
@@ -196,7 +196,7 @@ export const atlasSearch = (state: AtlasState): string => {
 };
 
 export const atlasHref = (state: AtlasState): string =>
-  `/damocles/atlas${atlasSearch(state)}`;
+  sitePath(`/damocles/atlas${atlasSearch(state)}`);
 
 /// Where the Catalogue hands one placed Instance over to the Atlas: that Body, that record
 /// picked, and a camera one Surface Cell wide about its own recovered position (#415).

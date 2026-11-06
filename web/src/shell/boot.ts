@@ -29,6 +29,7 @@ import {
   type ConsoleCommand
 } from './console.ts';
 import { installConsole } from './consoleView.ts';
+import { sitePath } from './sitePath.ts';
 
 import './damoclesPanelElement.ts';
 
@@ -197,16 +198,16 @@ try {
   const [bundle, settingsText, , logo, targPanelDocument, targSystem] =
     await Promise.all([
       load(
-        fetchReader(new URL('/payload/', location.href).href),
-        fetchAssets(new URL('/assets/targ.json', location.href).href)
+        fetchReader(new URL(sitePath('/payload/'), location.href).href),
+        fetchAssets(new URL(sitePath('/assets/targ.json'), location.href).href)
       ),
-      requiredText(new URL('/settings.json', location.href)),
+      requiredText(new URL(sitePath('/settings.json'), location.href)),
       loadTypography(),
       // Targ's Title Logo comes from the ST release, since the Reference Build has none (#696).
-      loadTargTitleLogo(new URL('/payload/', location.href)),
-      requiredText(new URL('/payload/targ-st/panel.json', location.href)).then(
-        text => readTargPanelDocument(JSON.parse(text))
-      ),
+      loadTargTitleLogo(new URL(sitePath('/payload/'), location.href)),
+      requiredText(
+        new URL(sitePath('/payload/targ-st/panel.json'), location.href)
+      ).then(text => readTargPanelDocument(JSON.parse(text))),
       fetchTargSystem()
     ]);
   chrome.showLogo(logo);

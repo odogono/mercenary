@@ -1,4 +1,5 @@
 import { sha256 } from '../hash/index.ts';
+import { sitePath } from './sitePath.ts';
 
 export type TypefaceId = 'mercenary' | 'damocles';
 
@@ -159,7 +160,7 @@ export const loadTypography = async (
   const fetcher = options.fetch ?? fetch;
   const metadataResponse = await response(
     fetcher,
-    new URL('/payload/typography.json', rootUrl)
+    new URL(sitePath('/payload/typography.json'), rootUrl)
   );
   const typography = validateTypography(await metadataResponse.json());
   const assets = await Promise.all(
@@ -167,7 +168,7 @@ export const loadTypography = async (
       const face = typography.faces[id];
       const result = await response(
         fetcher,
-        new URL(`/payload/${face.path}`, rootUrl)
+        new URL(sitePath(`/payload/${face.path}`), rootUrl)
       );
       return { bytes: await result.arrayBuffer(), face };
     })

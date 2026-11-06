@@ -11,6 +11,7 @@ import type { SoundDocument } from '../payload/documents.ts';
 import { readers } from '../payload/read.ts';
 import { DOORWAY_VBLS_PER_SECOND } from '../session/doorwayTransition.ts';
 import { assertBrowserDocument } from '../shell/documentPath.ts';
+import { sitePath } from '../shell/sitePath.ts';
 import { bensonFrequencyHigh, type SoundCommand } from '../sound/presenter.ts';
 import { TARG_DOOR_SOUND } from '../sound/targDoorSound.ts';
 import { AudioWorkletTransport } from '../sound/transport.ts';
@@ -62,7 +63,7 @@ const hex = (value: number): string =>
 
 try {
   assertBrowserDocument(location.pathname, 'sounds');
-  const response = await fetch('/payload/sound.json');
+  const response = await fetch(sitePath('/payload/sound.json'));
   if (!response.ok) {
     throw new Error(`/payload/sound.json answered HTTP ${response.status}`);
   }
@@ -79,7 +80,7 @@ try {
   const music = parseDamoclesMusic(await musicResponse.json());
 
   const dionPath = dionDocumentPath('sound');
-  const dionResponse = await fetch(dionPath);
+  const dionResponse = await fetch(sitePath(dionPath));
   if (!dionResponse.ok) {
     throw new Error(`${dionPath} answered HTTP ${dionResponse.status}`);
   }
@@ -103,7 +104,7 @@ try {
     {
       onFailure: failed,
       processor: 'damocles-ym',
-      workletUrl: '/src/damocles/soundWorklet.ts'
+      workletUrl: sitePath('/src/damocles/soundWorklet.ts')
     }
   );
 
@@ -113,7 +114,7 @@ try {
   >(dionProgrammes, {
     onFailure: failed,
     processor: 'dion-board-ym',
-    workletUrl: '/src/soundboard/dionWorklet.ts'
+    workletUrl: sitePath('/src/soundboard/dionWorklet.ts')
   });
 
   /// The board's own whole SID, for arrangements beyond what Targ's synth plays.
@@ -128,7 +129,7 @@ try {
     {
       onFailure: failed,
       processor: 'board-sid',
-      workletUrl: '/src/soundboard/ghettoblasterWorklet.ts'
+      workletUrl: sitePath('/src/soundboard/ghettoblasterWorklet.ts')
     }
   );
 

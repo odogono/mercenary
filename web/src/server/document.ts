@@ -15,7 +15,7 @@ export const unsupportedMethodResponse = (
         status: 405
       });
 
-const DOCUMENT_FILES: Record<BrowserDocument, string> = {
+export const DOCUMENT_FILES: Record<BrowserDocument, string> = {
   atlas: 'atlas.html',
   catalogue: 'catalogue.html',
   damocles: 'damocles.html',
