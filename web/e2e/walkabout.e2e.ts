@@ -252,12 +252,14 @@ test('neither rendition overflows the frame it is drawn in', async ({
   // Each rendition is authored to one height, and the frame above it is sized for that height
   // alone — so anything hanging below the panel is invisible to the player.
   for (const rendition of ['targ', 'damocles'] as const) {
-    await openPage(page, 'settings');
-    await page
-      .locator(`[data-setting="rendition"] button[value="${rendition}"]`)
-      .click();
-    await page.keyboard.press('Escape');
-    await page.keyboard.press('Escape');
+    // No settings row chooses the rendition; the stored preference still does.
+    await page.evaluate(rendition => {
+      window.localStorage.setItem(
+        'mercenary.browser-shell.targ.preferences.v1',
+        JSON.stringify({ composition: 'panel', panelRendition: rendition })
+      );
+    }, rendition);
+    await page.reload();
     await expect(page.locator('#game-surface')).toHaveAttribute(
       'data-rendition',
       rendition
@@ -409,44 +411,27 @@ test('the live opening loop renders, walks and releases held input', async ({
     contentType: 'image/png'
   });
 
-  // The typeface is chosen on the settings page now that the status row is only a readout.
+  // Targ keeps its own typeface: the settings page offers no other, and a reload keeps it.
   await openPage(page, 'settings');
-  const typefaceChoice = page.locator(
-    '[data-setting="typeface"] button[value="damocles"]'
-  );
-  await typefaceChoice.click();
-  await expect(page.locator('html')).toHaveAttribute(
-    'data-font-face',
-    'damocles'
-  );
-  expect(
-    await page.evaluate(() => getComputedStyle(document.body).fontFamily)
-  ).toContain('Damocles Interface');
-  await testInfo.attach('damocles-browser-shell-type', {
+  await expect(page.locator('[data-setting="typeface"]')).toHaveCount(0);
+  await expect(page.locator('[data-setting="rendition"]')).toHaveCount(0);
+  await expect(page.locator('[data-setting="composition"]')).toHaveCount(0);
+  await testInfo.attach('targ-settings', {
     body: await page.locator('#page-settings').screenshot(),
     contentType: 'image/png'
   });
-  await expect(typefaceChoice).toHaveAttribute('aria-pressed', 'true');
   await page.keyboard.press('Escape');
   await page.keyboard.press('Escape');
-  await expect(page.locator('#game-surface')).toHaveAttribute(
-    'data-layer',
-    'none'
-  );
+  await expect(surface).toHaveAttribute('data-layer', 'none');
 
   await page.reload();
   await expect(surface).toHaveAttribute('data-state', 'ready');
   await expect(page.locator('html')).toHaveAttribute(
     'data-font-face',
-    'damocles'
+    'mercenary'
   );
   await openPage(page, 'settings');
-  await expect(
-    page.locator('[data-setting="typeface"] button[value="damocles"]')
-  ).toHaveAttribute('aria-pressed', 'true');
-  await page
-    .locator('[data-setting="typeface"] button[value="damocles"]')
-    .focus();
+  await page.locator('[data-setting="extended"] button[value="off"]').focus();
   // A focused chrome control must never produce Movement Intent.
   const selectorPosition = {
     x: await canvas.getAttribute('data-x'),
@@ -1129,29 +1114,6 @@ test('every System Menu page shows the ST title picture logo', async ({
     ])
   ).toEqual([304, 116]);
   await expect(page.locator('.chrome-logo img')).toHaveCount(5);
-});
-
-test('the settings page changes the composition it names', async ({ page }) => {
-  await page.goto('/');
-  const surface = page.locator('#game-surface');
-  await expect(surface).toHaveAttribute('data-state', 'ready');
-  await expect(surface).toHaveAttribute('data-composition', 'panel');
-
-  await openPage(page, 'settings');
-  await page
-    .locator('[data-setting="composition"] button[value="strip"]')
-    .click();
-  await expect(surface).toHaveAttribute('data-composition', 'strip');
-  await page
-    .locator('[data-setting="rendition"] button[value="damocles"]')
-    .click();
-  await expect(surface).toHaveAttribute('data-rendition', 'damocles');
-
-  // The choice outlives the page it was made on.
-  await page.reload();
-  await expect(surface).toHaveAttribute('data-state', 'ready');
-  await expect(surface).toHaveAttribute('data-composition', 'strip');
-  await expect(surface).toHaveAttribute('data-rendition', 'damocles');
 });
 
 test('the settings page changes Structure Reach live and persists it', async ({

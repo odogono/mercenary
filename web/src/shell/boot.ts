@@ -93,18 +93,13 @@ import { readTargPanelDocument } from './targPanelDocument.ts';
 import { installTargPanel } from './targPanelView.ts';
 import { titleStorageKeys } from './title.ts';
 import { loadTargTitleLogo } from './titleLogo.ts';
-import {
-  applyTypeface,
-  loadTypography,
-  readTypefacePreference
-} from './typography.ts';
+import { applyTypeface, loadTypography } from './typography.ts';
 
 const VIEWPORT = { height: 800, width: 1280 } as const;
 
 const surface = document.getElementById('game-surface')!;
 const chrome = installShellChrome(surface, {
   assetsLabel: 'Asset browser',
-  catalogueLabel: 'Damocles catalogue',
   logo: { name: 'MERCENARY', typeface: 'mercenary' },
   menuTitle: 'BENSON G9-ST SYSTEM',
   settings: PANEL_SETTINGS
@@ -217,11 +212,8 @@ try {
   } catch {
     storage = undefined;
   }
-  // The typeface is applied before anything is drawn; the settings page owns changing it.
-  applyTypeface(
-    document.documentElement,
-    readTypefacePreference(storage, titleKeys.typeface)
-  );
+  // Targ is always drawn in its own typeface, applied before anything is drawn.
+  applyTypeface(document.documentElement, 'mercenary');
   const settings = requiredSettings(settingsText);
   // Player presentation choices overlay the tracked tuning document. They never reach the
   // blocks that identify a Save, so changing one cannot make an existing Save unloadable.

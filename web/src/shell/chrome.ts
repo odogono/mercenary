@@ -10,26 +10,20 @@ import type { TypefaceId } from './typography.ts';
 export type SettingName =
   | 'ambient'
   | 'audio'
-  | 'composition'
   | 'extended'
   | 'glow'
   | 'haze'
   | 'presentation'
-  | 'rendition'
   | 'road-glow'
   | 'road-weight'
   | 'shadow-depth'
   | 'shadows'
   | 'structures'
-  | 'typeface'
   | 'weight';
 
 /// The rows of the Titles that wear the Benson Panel and read the tuning document: Targ and
 /// Damocles.
 export const PANEL_SETTINGS: readonly SettingName[] = [
-  'rendition',
-  'composition',
-  'typeface',
   'presentation',
   'shadows',
   'shadow-depth',
@@ -131,20 +125,17 @@ const SETTING_ROWS: Readonly<
   >
 > = {
   ambient: { extra: 'Ambient light', label: 'AMBIENT LIGHT' },
-  composition: { label: 'COMPOSITION' },
   extended: { extra: 'Extended controls', label: 'EXTENDED CONTROLS' },
   glow: {
     extra: 'Structure and object glow',
     label: 'STRUCTURE / OBJECT GLOW'
   },
   presentation: { extra: 'Presentation', label: 'PRESENTATION' },
-  rendition: { label: 'PANEL RENDITION' },
   'road-glow': { extra: 'Road glow', label: 'ROAD GLOW' },
   'road-weight': { extra: 'Road weight', label: 'ROAD WEIGHT' },
   'shadow-depth': { extra: 'Shadow depth', label: 'SHADOW DEPTH' },
   shadows: { label: 'SHADOWS' },
   structures: { label: 'STRUCTURES' },
-  typeface: { label: 'TYPEFACE' },
   weight: {
     extra: 'Structure and object weight',
     label: 'STRUCTURE / OBJECT WEIGHT'

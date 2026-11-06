@@ -70,11 +70,7 @@ import { installSettingsView } from '../shell/settingsView.ts';
 import { installStorageWatch } from '../shell/storage.ts';
 import { installSuspensionHandlers } from '../shell/suspension.ts';
 import type { PayloadDocument } from '../shell/title.ts';
-import {
-  applyTypeface,
-  loadTypography,
-  readTypefacePreference
-} from '../shell/typography.ts';
+import { applyTypeface, loadTypography } from '../shell/typography.ts';
 import { AudioWorkletTransport } from '../sound/transport.ts';
 import { cometCentre, impactTime } from './comet.ts';
 import {
@@ -229,10 +225,7 @@ try {
       endgame: { readonly drift: number | null; readonly passed: boolean }
     ) => cometCentre(system.comet, impactTime(clock, loaded.doc.time), endgame)
   };
-  applyTypeface(
-    document.documentElement,
-    readTypefacePreference(storage, keys.typeface)
-  );
+  applyTypeface(document.documentElement, 'damocles');
   panelRoot.dataset['rendition'] = 'damocles';
   const identity = damoclesSaveIdentity(
     content.catalogue,

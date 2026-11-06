@@ -11,7 +11,6 @@ import {
 } from '../settings/index.ts';
 import type { SettingName } from './chrome.ts';
 import type { PreferencesStore } from './preferences.ts';
-import { applyTypeface, readTypefacePreference } from './typography.ts';
 
 /// One row of the settings page: a closed vocabulary of choices, one of them current.
 ///
@@ -66,51 +65,9 @@ export const installSettingsView = (
   options: SettingsViewOptions
 ): SettingsView => {
   const { preferences } = options;
-  const { presentationShown, typefaceKey } = options;
-  let typeface = readTypefacePreference(options.storage, typefaceKey);
+  const { presentationShown } = options;
 
   const rows: readonly SettingRow[] = [
-    {
-      apply: value => {
-        preferences.update({
-          panelRendition: value === 'damocles' ? 'damocles' : 'targ'
-        });
-      },
-      current: () => preferences.current().panelRendition,
-      name: 'rendition',
-      options: [
-        { label: 'TARG', value: 'targ' },
-        { label: 'DAMOCLES', value: 'damocles' }
-      ]
-    },
-    {
-      apply: value => {
-        preferences.update({
-          composition: value === 'strip' ? 'strip' : 'panel'
-        });
-      },
-      current: () => preferences.current().composition,
-      name: 'composition',
-      options: [
-        { label: 'BENSON PANEL', value: 'panel' },
-        { label: 'CLASSIC STRIP', value: 'strip' }
-      ]
-    },
-    {
-      apply: value => {
-        typeface = value === 'damocles' ? 'damocles' : 'mercenary';
-        applyTypeface(options.root, typeface, {
-          key: typefaceKey,
-          storage: options.storage
-        });
-      },
-      current: () => typeface,
-      name: 'typeface',
-      options: [
-        { label: 'MERCENARY', value: 'mercenary' },
-        { label: 'DAMOCLES', value: 'damocles' }
-      ]
-    },
     presentationShown === undefined
       ? {
           // The sky belongs to the tuning document; a player may override which preset it uses

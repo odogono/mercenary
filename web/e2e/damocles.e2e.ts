@@ -676,7 +676,6 @@ test('the System Menu, Saves, New Game and Shell Console are on /damocles', asyn
   await expect(page.locator('.chrome-logo img')).toHaveCount(5);
   await page.locator('button[data-goto="settings"]').click();
   await expect(surface).toHaveAttribute('data-layer', 'settings');
-  await page.locator('[data-setting="rendition"] button[value="targ"]').click();
   await expect(page.locator('#panel-damocles')).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(surface).toHaveAttribute('data-layer', 'menu');
