@@ -323,12 +323,20 @@ Local solar time at an observer on a Body, scaled to a 24-hour face whatever the
 _Avoid_: Body Day, Impact Clock, panel clock
 
 **Island**:
-One authored landmass on a Body in the Flyover, optionally carrying one canonical surface patch; neither a Damocles Place whose recovered kind is `ISLAND` nor a recovered Damocles Island is an Island in this sense.
+One authored landmass on a Body's Globe, optionally carrying one canonical surface patch: a window of the Body's surface laid onto the Globe, with no claim that the whole surface maps onto the sphere; neither a Damocles Place whose recovered kind is `ISLAND` nor a recovered Damocles Island is an Island in this sense.
 _Avoid_: Continent, surface map, Damocles place, Damocles Island, level
 
 **Range**:
-Which scale band a view occupies, determining what is presented without changing the view's continuous Pose. The Flyover has three, named relative to a Camera's nearest Body — Orbital, Coastal or Surface. The Atlas has five — System, Body, Coastal, Settlement and Street — of which System is the whole Gamma System and the other four are bands within one Body rather than a hierarchy, because Damocles Islands and Settlements do not nest.
+Which scale band a view occupies, determining what is presented without changing the view's continuous Pose. Every view of a Body under Enhanced presentation, in the Flyover or in play, shares three, named relative to the nearest Body — Orbital, Coastal or Surface — and passes between them by a Range Handoff. The Atlas has its own five — System, Body, Coastal, Settlement and Street — of which System is the whole Gamma System and the other four are bands within one Body rather than a hierarchy, because Damocles Islands and Settlements do not nest.
 _Avoid_: Level of detail, zoom level, scene, mode
+
+**Globe**:
+A Body drawn as a sphere carrying its Islands, seen at Orbital and Coastal Range in the Flyover and in Enhanced play. It is neither a Damocles sky disc measured in screen rows nor a Targ Orb in a surface sky.
+_Avoid_: Planet mesh, disc, Orb, Arrival disc
+
+**Range Handoff**:
+The Enhanced-only presentation that carries a view continuously from one Range to the next, so a Body's Globe gives way to its surface without a cut. In the Flyover it follows the Pose; in play it is laid over the recovered moment of take-off or landing and changes no Game Semantics.
+_Avoid_: Approach view, transition, landing cut, zoom
 
 **Flyover**:
 The shell-owned internal development surface in which a free Camera moves through a System for rendering inspection without a Gameplay Session; it is neither the Game Surface nor a fidelity claim.
