@@ -14,6 +14,7 @@ import type {
   SceneIsland,
   ScenePlacement
 } from '../enhanced/scene.ts';
+import type { PlayerState } from '../gameCore/index.ts';
 import { atan, tan } from '../math/index.ts';
 import type { Vector3 } from '../orientation/index.ts';
 import {
@@ -25,7 +26,12 @@ import {
   viewportScale,
   type Size
 } from '../projection/index.ts';
-import { ScenePalette, c64Colour, type RGB8 } from '../scene/index.ts';
+import {
+  ScenePalette,
+  c64Colour,
+  type IndoorScene,
+  type RGB8
+} from '../scene/index.ts';
 import type { SessionSnapshot } from '../session/index.ts';
 import type { StructureReach } from '../settings/index.ts';
 import {
@@ -35,6 +41,7 @@ import {
   objectSegments,
   room,
   type Polygon,
+  type Residence,
   type Segment,
   type World
 } from '../world/index.ts';
@@ -58,6 +65,32 @@ import {
 /// onto Targ's view seen in a mirror, and the plan is mirrored back across the view's vertical
 /// (`mirrored`), which also gives the Room Targ draws mirrored for nothing.
 
+/// What one view of Targ is drawn from, named on its own so a view needs no Gameplay Session
+/// behind it (ADR 0094): a Pose and the presentation facts around it. The Game Surface reads
+/// them from its Session Snapshot (`targSceneViewOf`); the Flyover supplies its own.
+export interface TargSceneView {
+  /// Presentation elapsed seconds, which a structure's movement follows.
+  readonly elapsed: number;
+  /// The Indoor Scene shown in a Room, or undefined on the surface.
+  readonly indoor: IndoorScene | undefined;
+  readonly pose: Pick<PlayerState, 'heading' | 'pitch' | 'position' | 'roll'>;
+  /// Where objects have got to; undefined draws each where the Data Payload places it.
+  readonly residence: ReadonlyMap<number, Residence> | undefined;
+  /// The Room shown, or undefined on the surface.
+  readonly roomId: number | undefined;
+  readonly worldFlipped: boolean;
+}
+
+/// A Gameplay Session's view, as its Session Snapshot describes it.
+export const targSceneViewOf = (snapshot: SessionSnapshot): TargSceneView => ({
+  elapsed: snapshot.elapsed,
+  indoor: snapshot.indoor,
+  pose: snapshot.player,
+  residence: snapshot.residence,
+  roomId: snapshot.location.kind === 'room' ? snapshot.location.id : undefined,
+  worldFlipped: snapshot.worldFlipped
+});
+
 export interface TargEnhancedScene {
   readonly placements: readonly ScenePlacement[];
   readonly pose: Pose;
@@ -79,12 +112,12 @@ const hex = ({ blue, green, red }: RGB8): string =>
 /// turn on the heading gives Targ's view mirrored across its vertical. Targ mirrors before it
 /// banks, so the bank is reversed where the plan is mirrored back, and kept where the view is
 /// meant to be mirrored.
-export const targPose = (snapshot: SessionSnapshot): Pose => ({
+export const targPose = (view: TargSceneView): Pose => ({
   body: 'targ',
-  heading: snapshot.player.heading - Math.PI,
-  pitch: snapshot.player.pitch,
-  position: snapshot.player.position,
-  roll: (snapshot.worldFlipped ? 1 : -1) * (snapshot.player.roll ?? 0)
+  heading: view.pose.heading - Math.PI,
+  pitch: view.pose.pitch,
+  position: view.pose.position,
+  roll: (view.worldFlipped ? 1 : -1) * (view.pose.roll ?? 0)
 });
 
 /// The vertical field of view Targ's projection gives a view of `size`, in degrees: the
@@ -186,13 +219,11 @@ const placement = (
 /// the roads and the Haze.
 export const targEnhancedScene = (
   world: World,
-  snapshot: SessionSnapshot,
+  view: TargSceneView,
   options: TargSceneOptions
 ): TargEnhancedScene => {
-  const position = snapshot.player.position;
-  const indoor = snapshot.indoor;
-  const roomId =
-    snapshot.location.kind === 'room' ? snapshot.location.id : undefined;
+  const position = view.pose.position;
+  const { indoor, roomId } = view;
   // Line Colour: white Ink on the surface, the Indoor Scene's wireframe colour in a Room.
   const lineColour =
     indoor === undefined
@@ -205,7 +236,7 @@ export const targEnhancedScene = (
       world,
       position,
       options.structureReach,
-      snapshot.elapsed
+      view.elapsed
     )) {
       const own: Segment[] = [];
       for (const segment of selected.segments) {
@@ -242,7 +273,7 @@ export const targEnhancedScene = (
   for (const { placed } of presentObjects(
     world,
     roomId === undefined ? SURFACE : room(roomId),
-    snapshot.residence
+    view.residence
   )) {
     placements.push(
       placement(
@@ -310,13 +341,13 @@ export const targEnhancedScene = (
           }
         : null
   };
-  return { placements, pose: targPose(snapshot), surface };
+  return { placements, pose: targPose(view), surface };
 };
 
 /// Whether a placement drawn from this scene was drawn whole rather than as its Far Point.
 export const drawnWhole = (
   world: World,
-  snapshot: SessionSnapshot,
+  view: TargSceneView,
   id: string
 ): boolean => {
   const slot = /^targ-object-(\d+)$/.exec(id)?.[1];
@@ -324,7 +355,7 @@ export const drawnWhole = (
     return true;
   }
   const object = world.objects.find(item => item.slot === Number(slot));
-  return object === undefined || isDetailed(object, snapshot.player.position);
+  return object === undefined || isDetailed(object, view.pose.position);
 };
 
 /// Mirror a plan's ten-float triangles across the view's vertical, in place: x and the plane's
@@ -363,10 +394,10 @@ export const targPresentation = (size: Size): EnhancedPresentation => ({
   }
 });
 
-/// The shared planner's frame of one Targ snapshot, in Targ's view.
+/// The shared planner's frame of one Targ scene, in Targ's view.
 export const planTargEnhancedFrame = (
   scene: TargEnhancedScene,
-  snapshot: SessionSnapshot,
+  view: Pick<TargSceneView, 'worldFlipped'>,
   size: Size,
   outputHeight: number,
   strokes: EnhancedStrokes = DEFAULT_ENHANCED_STROKES
@@ -400,7 +431,7 @@ export const planTargEnhancedFrame = (
     strokes
   );
   // The planner's view is Targ's mirrored; one Room is drawn mirrored on purpose.
-  if (!snapshot.worldFlipped) {
+  if (!view.worldFlipped) {
     for (const vertices of [
       plan.vertices,
       plan.roadVertices,
