@@ -14,7 +14,8 @@ import {
   drawnWhole,
   planTargEnhancedFrame,
   targEnhancedScene,
-  targFieldOfView
+  targFieldOfView,
+  targSceneViewOf
 } from './enhancedScene.ts';
 import {
   doorwayCover,
@@ -74,7 +75,8 @@ export const planTargFrame = (
     };
   }
   const sky = enhancedSky(shown, size, orrery, presentation, shared);
-  const scene = targEnhancedScene(world, shown, {
+  const view = targSceneViewOf(shown);
+  const scene = targEnhancedScene(world, view, {
     atmosphere: shared.atmosphere,
     // Haze fades toward the sky at the horizon: its twilight gradient's foot, or its fill.
     horizon: sky?.horizon ?? ScenePalette.sky,
@@ -82,7 +84,7 @@ export const planTargFrame = (
   });
   const planned = planTargEnhancedFrame(
     scene,
-    shown,
+    view,
     size,
     shared.outputHeight,
     shared.strokes
@@ -109,7 +111,7 @@ export const planTargFrame = (
   let lines = plan.roadEdges.length;
   let points = 0;
   for (const id of plan.drawnPlacements) {
-    if (drawnWhole(world, shown, id)) {
+    if (drawnWhole(world, view, id)) {
       lines += meshes.get(id)?.lines.length ?? 0;
     } else {
       points += 1;

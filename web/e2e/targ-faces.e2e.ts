@@ -205,9 +205,14 @@ test('Enhanced Targ draws the same faces through the shared planner, depth-teste
       );
     const draw = (faces: readonly ReturnType<typeof face>[]) => {
       const origin = { x: 0, y: 0, z: 0 };
-      const snapshot = { player, worldFlipped: false } as Parameters<
-        typeof targPose
-      >[0];
+      const view = {
+        elapsed: 0,
+        indoor: undefined,
+        pose: player,
+        residence: undefined,
+        roomId: undefined,
+        worldFlipped: false
+      };
       const plan = planTargEnhancedFrame(
         {
           placements: [
@@ -228,7 +233,7 @@ test('Enhanced Targ draws the same faces through the shared planner, depth-teste
               status: 'decoded'
             }
           ],
-          pose: targPose(snapshot),
+          pose: targPose(view),
           surface: {
             baseColour: null,
             floorLabelGlyphs: {},
@@ -242,7 +247,7 @@ test('Enhanced Targ draws the same faces through the shared planner, depth-teste
             sky: null
           }
         },
-        snapshot,
+        view,
         size,
         800
       );

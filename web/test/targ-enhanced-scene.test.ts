@@ -19,6 +19,7 @@ import {
   planTargEnhancedFrame,
   targEnhancedScene,
   targMesh,
+  targSceneViewOf,
   type TargEnhancedScene
 } from '../src/shell/enhancedScene.ts';
 import { Ink, World } from '../src/world/index.ts';
@@ -55,7 +56,7 @@ const groundKey = (
 ): string => [`${a.x},${a.z}`, `${b.x},${b.z}`].sort().join(' ');
 
 const sceneOf = (snapshot: SessionSnapshot): TargEnhancedScene =>
-  targEnhancedScene(world, snapshot, {
+  targEnhancedScene(world, targSceneViewOf(snapshot), {
     atmosphere: ATMOSPHERE,
     horizon: ScenePalette.sky,
     structureReach: 'cell'
@@ -146,7 +147,12 @@ describe('Targ through the shared planner', () => {
   test('draws wireframes as depth-tested strokes in the world stream', () => {
     const snapshot = session().snapshot;
     const scene = sceneOf(snapshot);
-    const plan = planTargEnhancedFrame(scene, snapshot, size, 800);
+    const plan = planTargEnhancedFrame(
+      scene,
+      targSceneViewOf(snapshot),
+      size,
+      800
+    );
     const lines = scene.placements.reduce(
       (sum, placement) => sum + (placement.mesh?.lines.length ?? 0),
       0
@@ -212,7 +218,7 @@ describe('Targ through the shared planner', () => {
         position: { x: 0, y: 5000, z: 0 }
       }
     };
-    const scene = targEnhancedScene(world, snapshot, {
+    const scene = targEnhancedScene(world, targSceneViewOf(snapshot), {
       atmosphere: ATMOSPHERE,
       horizon: ScenePalette.sky,
       structureReach: 'all'
@@ -234,7 +240,7 @@ describe('Targ through the shared planner', () => {
         position: { x: 0, y: 5000, z: 0 }
       }
     };
-    const scene = targEnhancedScene(world, snapshot, {
+    const scene = targEnhancedScene(world, targSceneViewOf(snapshot), {
       atmosphere: ATMOSPHERE,
       horizon: ScenePalette.sky,
       structureReach: 'all'
@@ -425,7 +431,12 @@ describe('Targ’s roads through the shared planner', () => {
     test(`selects Targ’s Map Lines by its Horizon Distance at raw Y ${y}`, () => {
       const position = { ...world.cell(6, 9)!.centre, y };
       const scene = sceneOf(at(position));
-      const plan = planTargEnhancedFrame(scene, at(position), size, 800);
+      const plan = planTargEnhancedFrame(
+        scene,
+        targSceneViewOf(at(position)),
+        size,
+        800
+      );
       const selected = mapLines(position);
       expect(selected.size).toBeGreaterThan(0);
       // The runs Targ resolves into the occupied cell's own structure stay with it.
@@ -446,7 +457,7 @@ describe('Targ’s roads through the shared planner', () => {
       );
     expect(ground.length).toBeGreaterThan(0);
     for (const structureReach of ['cell', 'all'] as const) {
-      const scene = targEnhancedScene(world, at(position), {
+      const scene = targEnhancedScene(world, targSceneViewOf(at(position)), {
         atmosphere: ATMOSPHERE,
         horizon: ScenePalette.sky,
         structureReach
@@ -455,7 +466,12 @@ describe('Targ’s roads through the shared planner', () => {
       for (const segment of ground) {
         expect(lines).toContainEqual([segment.a, segment.b]);
       }
-      const plan = planTargEnhancedFrame(scene, at(position), size, 800);
+      const plan = planTargEnhancedFrame(
+        scene,
+        targSceneViewOf(at(position)),
+        size,
+        800
+      );
       expect(plan.roadVertices.length).toBeGreaterThan(0);
     }
   });
