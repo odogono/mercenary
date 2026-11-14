@@ -10,6 +10,7 @@ import {
 } from '../coast/horizon.ts';
 import {
   classifyPosition,
+  coastlineInBodyUnits,
   islandFillTriangles,
   islandOriginNear
 } from '../coast/islands.ts';
@@ -819,8 +820,23 @@ export const planEnhancedFrame = (
     enclosed || inSpace || underfoot !== undefined ? [] : surface.islands;
   const toView = (world: Vector3): Vector3 =>
     camera.viewSpace(toCameraSpace(world));
+  const coastLines: {
+    readonly colour: readonly [number, number, number];
+    readonly line: readonly [Vector3, Vector3];
+  }[] = [];
   const horizonIslandValues: number[] = [];
   for (const island of islands) {
+    if (island.coastColour !== undefined) {
+      const coast = coastlineInBodyUnits(island, surface.grid, pose.position);
+      const coastColour = channels(island.coastColour);
+      coast.forEach(([x, z], index) => {
+        const [nextX, nextZ] = coast[(index + 1) % coast.length]!;
+        coastLines.push({
+          colour: coastColour,
+          line: [toView({ x, y: 0, z }), toView({ x: nextX, y: 0, z: nextZ })]
+        });
+      });
+    }
     const colour = channels(island.landColour);
     const triangles = islandFillTriangles(
       island,
@@ -924,6 +940,13 @@ export const planEnhancedFrame = (
     pushRoad(roadValues, line, strokes.roads.weight, roadColour);
     if (strokes.roads.glow > 0) {
       pushRoad(roadGlowValues, line, roadHalo.width, roadGlowColour);
+    }
+  }
+  // An authored coastline is stroked as a road is, in its own colour (ADR 0094).
+  for (const { colour, line } of coastLines) {
+    pushRoad(roadValues, line, strokes.roads.weight, colour);
+    if (strokes.roads.glow > 0) {
+      pushRoad(roadGlowValues, line, roadHalo.width, roadHalo.dim(colour));
     }
   }
 

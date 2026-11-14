@@ -6,6 +6,11 @@ import type {
   FlyoverCameraPresentation,
   FlyoverLighting
 } from './documents.ts';
+import {
+  GLOBE_ISLANDS,
+  GLOBE_ISLAND_VERTICES,
+  type GlobeIslands
+} from './globe.ts';
 import type { FlyoverBody } from './system.ts';
 
 const appendVertex = (values: number[], point: readonly number[]): void => {
@@ -172,13 +177,64 @@ in vec3 relativeSurface;
 uniform vec3 bodyColour;
 uniform vec3 lightPosition;
 uniform bool emissive;
+// The Globe's Islands (ADR 0094): longitude and latitude through City Island's patch, as east
+// and north in radians, tested against every Island polygon in the same coordinates.
+uniform bool islands;
+uniform vec2 frameLatitude;
+uniform vec2 islandCentre;
+uniform float centreCosine;
+uniform vec2 islandVertices[${GLOBE_ISLAND_VERTICES}];
+uniform int islandStarts[${GLOBE_ISLANDS}];
+uniform int islandCounts[${GLOBE_ISLANDS}];
+uniform int islandCount;
+uniform vec3 oceanColour;
+uniform vec3 groundColour;
+uniform vec3 coastColour;
 out vec4 pixel;
+
+vec3 globeColour() {
+  vec3 n = normalize(surfaceNormal);
+  vec3 equatorial = vec3(
+    n.y * frameLatitude.y - n.z * frameLatitude.x,
+    n.x,
+    n.y * frameLatitude.x + n.z * frameLatitude.y
+  );
+  float longitude = atan(equatorial.y, equatorial.x) - islandCentre.x;
+  longitude -= 6.283185307 * floor((longitude + 3.141592654) / 6.283185307);
+  vec2 point = vec2(
+    longitude * centreCosine,
+    asin(clamp(equatorial.z, -1.0, 1.0)) - islandCentre.y
+  );
+  bool inside = false;
+  float coast = 1e9;
+  for (int island = 0; island < islandCount; island++) {
+    int start = islandStarts[island];
+    int count = islandCounts[island];
+    for (int index = 0; index < count; index++) {
+      vec2 a = islandVertices[start + index];
+      vec2 b = islandVertices[start + (index + 1) % count];
+      if ((a.y > point.y) != (b.y > point.y) &&
+          point.x < (b.x - a.x) * (point.y - a.y) / (b.y - a.y) + a.x) {
+        inside = !inside;
+      }
+      vec2 edge = b - a;
+      float along = clamp(dot(point - a, edge) / dot(edge, edge), 0.0, 1.0);
+      coast = min(coast, length(point - a - edge * along));
+    }
+  }
+  // About one pixel wide, wherever the Globe is seen from.
+  float pixelSize = min(length(fwidth(point)), 0.01);
+  if (coast < pixelSize) {
+    return coastColour;
+  }
+  return inside ? groundColour : oceanColour;
+}
 
 void main() {
   float light = emissive
     ? 1.0
     : max(dot(normalize(surfaceNormal), normalize(lightPosition - relativeSurface)), 0.0);
-  pixel = vec4(bodyColour * light, 1.0);
+  pixel = vec4((islands ? globeColour() : bodyColour) * light, 1.0);
 }`;
 
 const STAR_VERTEX = `#version 300 es
@@ -223,6 +279,8 @@ interface FlyoverRendererSettings {
   readonly backdrop: FlyoverBackdropPresentation;
   readonly bodyMesh: FlyoverBodyMeshPresentation;
   readonly camera: FlyoverCameraPresentation;
+  /// The Body drawn as a Globe with its Islands, where the System has one.
+  readonly globe?: GlobeIslands;
   readonly lighting: FlyoverLighting;
 }
 
@@ -401,6 +459,29 @@ export class FlyoverRenderer {
     );
   }
 
+  private globeUniforms(globe: GlobeIslands): void {
+    const gl = this.gl;
+    const at = (name: string) => requiredUniform(gl, this.bodyProgram, name);
+    gl.uniform2f(
+      at('frameLatitude'),
+      Math.sin(globe.frameLatitude),
+      Math.cos(globe.frameLatitude)
+    );
+    gl.uniform2f(
+      at('islandCentre'),
+      globe.centreLongitude,
+      globe.centreLatitude
+    );
+    gl.uniform1f(at('centreCosine'), Math.cos(globe.centreLatitude));
+    gl.uniform2fv(at('islandVertices'), globe.vertices);
+    gl.uniform1iv(at('islandStarts'), globe.starts);
+    gl.uniform1iv(at('islandCounts'), globe.counts);
+    gl.uniform1i(at('islandCount'), globe.counts.length);
+    gl.uniform3f(at('oceanColour'), ...globe.colours.ocean);
+    gl.uniform3f(at('groundColour'), ...globe.colours.ground);
+    gl.uniform3f(at('coastColour'), ...globe.colours.coastline);
+  }
+
   draw(bodies: readonly FlyoverBody[], pose: FlyoverPose): void {
     if (this.gl.isContextLost()) {
       throw new Error(
@@ -474,6 +555,15 @@ export class FlyoverRenderer {
         requiredUniform(gl, this.bodyProgram, 'emissive'),
         bodyPlan.emissive ? 1 : 0
       );
+      const globe = this.settings.globe;
+      const islands = globe !== undefined && globe.bodyId === body.id;
+      gl.uniform1i(
+        requiredUniform(gl, this.bodyProgram, 'islands'),
+        islands ? 1 : 0
+      );
+      if (islands) {
+        this.globeUniforms(globe);
+      }
       gl.uniform3f(
         requiredUniform(gl, this.bodyProgram, 'lightPosition'),
         bodyPlan.lightPosition.x,

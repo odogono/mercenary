@@ -58,7 +58,13 @@ test('Targ and Gamma boot through the isolated Flyover document', async ({
       expect(requests).toContain('/settings.json');
     }
     expect(requests).not.toContain('/src/shell/boot.ts');
-    expect(requests).not.toContain('/payload/world.json');
+    // Targ's surface frame draws the city as the Data Payload places it (ADR 0094); Gamma
+    // reads only its System. Neither boots the game.
+    if (path === '/targ/debug') {
+      expect(requests).toContain('/payload/world.json');
+    } else {
+      expect(requests).not.toContain('/payload/world.json');
+    }
     expect(await page.evaluate(() => window.storageCalls)).toEqual([]);
   }
 });
