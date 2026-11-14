@@ -129,6 +129,52 @@
         display: none;
       }
 
+      #flyover-targ-panel {
+        position: relative;
+        height: 256px;
+      }
+
+      #flyover-targ-panel-canvas {
+        width: 1280px;
+        height: 256px;
+        image-rendering: pixelated;
+      }
+
+      #flyover-targ-readouts {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+
+      /* Targ's panel is 1280 by 256, taller than the Damocles panel's 244. */
+      html[data-system='targ'] #flyover-dashboard {
+        aspect-ratio: 1280 / 256;
+      }
+
+      /* Above the panel, outside it: values no panel has room for. */
+      #flyover-inspection {
+        position: absolute;
+        z-index: 1;
+        top: auto;
+        max-width: none;
+        border-left: 0;
+        line-height: 1.4;
+        bottom: calc(min(100vw, 1280px) / 5 + 6px);
+        left: 1rem;
+        margin: 0;
+        padding: 2px 6px;
+        background: rgb(0 0 0 / 60%);
+        font-family: ui-monospace, monospace;
+        font-size: 13px;
+        color: #c8d8e8;
+        white-space: pre;
+      }
+
       [hidden] {
         display: none;
       }
@@ -146,6 +192,7 @@
       <canvas id="flyover" role="img" aria-label="Orbital Flyover view" hidden>
         Your browser cannot display the Orbital Flyover canvas.
       </canvas>
+      <p id="flyover-inspection" hidden></p>
       <section
         id="flyover-dashboard"
         role="region"
@@ -154,6 +201,26 @@
       >
         <div id="flyover-panel-scale">
           <damocles-panel id="panel-damocles"></damocles-panel>
+          <div
+            id="flyover-targ-panel"
+            role="group"
+            aria-label="Benson G9-ST"
+            hidden
+          >
+            <canvas
+              id="flyover-targ-panel-canvas"
+              width="320"
+              height="64"
+              aria-hidden="true"
+            ></canvas>
+            <div id="flyover-targ-readouts">
+              BENSON G9-ST. Location
+              <span data-field="locationLabel"></span>. Altitude
+              <span data-field="altitude"></span>. Speed
+              <span data-field="speed"></span>.
+              <span data-field="message"></span>.
+            </div>
+          </div>
         </div>
       </section>
       <p id="status" role="status">Loading System presentation document…</p>

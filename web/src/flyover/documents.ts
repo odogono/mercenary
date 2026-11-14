@@ -1,5 +1,6 @@
 import type { Atmosphere } from '../enhanced/atmosphere.ts';
 import type { SystemId } from '../shell/documentPath.ts';
+import type { RangeAltitudes } from './rangeHandoff.ts';
 
 export type FlyoverRange = 'orbital' | 'coastal' | 'surface';
 export interface FlyoverCameraPresentation {
@@ -32,6 +33,8 @@ export type RadiusRule =
 export interface FlyoverBodyPresentation {
   readonly id: string;
   readonly radius: RadiusRule;
+  /// Present exactly when the Body supports the surface (ADR 0094).
+  readonly rangeAltitudes?: RangeAltitudes;
   readonly ranges: readonly FlyoverRange[];
 }
 
@@ -970,6 +973,21 @@ const rangeList = (value: unknown, path: string): readonly FlyoverRange[] => {
   return values as FlyoverRange[];
 };
 
+const rangeAltitudes = (value: unknown, path: string): RangeAltitudes => {
+  const raw = object(value, path, [
+    'coastalBelow',
+    'handoffBelow',
+    'surfaceBelow'
+  ]);
+  const surfaceBelow = positive(raw['surfaceBelow'], `${path}.surfaceBelow`);
+  const handoffBelow = positive(raw['handoffBelow'], `${path}.handoffBelow`);
+  const coastalBelow = positive(raw['coastalBelow'], `${path}.coastalBelow`);
+  if (!(surfaceBelow < handoffBelow && handoffBelow < coastalBelow)) {
+    fail(path, 'should be ordered surfaceBelow < handoffBelow < coastalBelow');
+  }
+  return { coastalBelow, handoffBelow, surfaceBelow };
+};
+
 const radiusRule = (
   value: unknown,
   path: string,
@@ -1209,12 +1227,33 @@ export function readFlyoverPresentation(
   const bodies = array(root['bodies'], 'bodies').map(
     (raw, index): FlyoverBodyPresentation => {
       const path = `bodies[${index}]`;
-      const body = object(raw, path, ['id', 'ranges', 'radius']);
+      if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+        return fail(path, 'should be an object');
+      }
+      const ranges = rangeList(
+        (raw as Record<string, unknown>)['ranges'],
+        `${path}.ranges`
+      );
+      const surface = ranges.includes('surface');
+      const body = object(raw, path, [
+        'id',
+        'ranges',
+        'radius',
+        ...(surface ? ['rangeAltitudes'] : [])
+      ]);
       const id = identifier(body['id'], `${path}.id`);
       return {
         id,
         radius: radiusRule(body['radius'], `${path}.radius`, systemId, id),
-        ranges: rangeList(body['ranges'], `${path}.ranges`)
+        ...(surface
+          ? {
+              rangeAltitudes: rangeAltitudes(
+                body['rangeAltitudes'],
+                `${path}.rangeAltitudes`
+              )
+            }
+          : {}),
+        ranges
       };
     }
   );

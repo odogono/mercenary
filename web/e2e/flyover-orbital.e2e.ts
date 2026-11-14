@@ -88,6 +88,32 @@ test('the Flyover reuses the Damocles panel component for sessionless navigation
   );
 });
 
+test('the Targ Flyover reads on the Targ panel of the game', async ({
+  page
+}) => {
+  await page.goto('/targ/debug?body=targ');
+  await ready(page);
+  const dashboard = page.getByRole('region', {
+    name: 'Flyover navigation dashboard'
+  });
+  await expect(dashboard.locator('damocles-panel#panel-damocles')).toBeHidden();
+  const panel = dashboard.getByRole('group', { name: 'Benson G9-ST' });
+  await expect(panel).toBeVisible();
+  await expect(panel.locator('canvas')).toBeVisible();
+  await expect(panel.locator('[data-field="message"]')).toHaveText('ORBITAL');
+  await expect(panel.locator('[data-field="locationLabel"]')).toHaveText(
+    '**-**'
+  );
+  // Entry stands three Targ radii from the centre: two above the surface.
+  await expect(panel.locator('[data-field="altitude"]')).toHaveText(
+    String(Math.trunc((2 * 2 ** 24) / (2 * Math.PI) / 256)).padStart(5, '0')
+  );
+  await expect(page.locator('#flyover-inspection')).toHaveText(
+    'TARG  X+0.000E+0 Y+0.000E+0 Z+8.011E+6'
+  );
+  await expect(page.locator('html')).toHaveAttribute('data-range', 'orbital');
+});
+
 test('the Browser Shell and Flyover instantiate the same Damocles panel element', async ({
   page
 }) => {

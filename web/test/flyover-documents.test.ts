@@ -18,6 +18,11 @@ const targ = () => ({
     {
       id: 'targ',
       radius: { kind: 'targ-system' },
+      rangeAltitudes: {
+        coastalBelow: 1,
+        handoffBelow: 0.1,
+        surfaceBelow: 0.05
+      },
       ranges: ['orbital', 'coastal', 'surface']
     },
     {
@@ -100,6 +105,46 @@ describe('Flyover presentation documents', () => {
     const document = readFlyoverPresentation(targ(), 'targ', ['targ', 'sun']);
     expect(document.systemId).toBe('targ');
     expect(document.islands[0]?.id).toBe('city-island');
+  });
+
+  test('reads the Range altitudes of a Body with surface support', () => {
+    const document = readFlyoverPresentation(targ(), 'targ', ['targ', 'sun']);
+    expect(document.bodies[0]!.rangeAltitudes).toEqual({
+      coastalBelow: 1,
+      handoffBelow: 0.1,
+      surfaceBelow: 0.05
+    });
+    expect(document.bodies[1]!.rangeAltitudes).toBeUndefined();
+  });
+
+  test('requires Range altitudes exactly where a Body supports the surface', () => {
+    const missing = targ();
+    delete (missing.bodies[0] as { rangeAltitudes?: unknown }).rangeAltitudes;
+    expect(() =>
+      readFlyoverPresentation(missing, 'targ', ['targ', 'sun'])
+    ).toThrow('bodies[0] is missing field rangeAltitudes');
+    const orbital = targ();
+    Object.assign(orbital.bodies[1]!, {
+      rangeAltitudes: { coastalBelow: 1, handoffBelow: 0.1, surfaceBelow: 0.05 }
+    });
+    expect(() =>
+      readFlyoverPresentation(orbital, 'targ', ['targ', 'sun'])
+    ).toThrow('bodies[1] has unexpected field rangeAltitudes');
+  });
+
+  test('requires positive, ordered Range altitudes', () => {
+    for (const [altitudes, message] of [
+      [{ coastalBelow: 1, handoffBelow: 0.1, surfaceBelow: 0 }, 'surfaceBelow'],
+      [{ coastalBelow: 1, handoffBelow: 0.05, surfaceBelow: 0.05 }, 'ordered'],
+      [{ coastalBelow: 0.1, handoffBelow: 0.1, surfaceBelow: 0.05 }, 'ordered'],
+      [{ coastalBelow: 1, handoffBelow: 0.1 }, 'surfaceBelow']
+    ] as const) {
+      const document = targ();
+      Object.assign(document.bodies[0]!, { rangeAltitudes: altitudes });
+      expect(() =>
+        readFlyoverPresentation(document, 'targ', ['targ', 'sun'])
+      ).toThrow(message);
+    }
   });
 
   test('reads a complete Gamma document', () => {

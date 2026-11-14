@@ -19,6 +19,7 @@ import {
   type TargSystemBodyId,
   type TargSystemDocument
 } from './documents.ts';
+import type { RangeAltitudes } from './rangeHandoff.ts';
 
 export type FlyoverValueProvenance =
   'authored' | 'mechanically-derived' | 'recovered';
@@ -35,6 +36,8 @@ export interface FlyoverBody {
     readonly radius: FlyoverValueProvenance;
     readonly ranges: 'authored';
   };
+  /// Present exactly when the Body supports the surface (ADR 0094).
+  readonly rangeAltitudes?: RangeAltitudes;
   readonly ranges: readonly FlyoverRange[];
 }
 
@@ -63,7 +66,15 @@ export interface TargFlyoverSystem extends FlyoverSystemBase {
     readonly surfaceColours: 'authored';
   };
   readonly surfaceColours: TargPresentationDocument['surfaceColours'];
+  readonly surfaceFrame: TargSurfaceFrame;
   readonly systemId: 'targ';
+}
+
+/// How the Flyover reads Targ's surface: the horizon frame's latitude, which is the latitude
+/// the game's Targ sky is drawn from, and the one Island whose patch carries the city.
+export interface TargSurfaceFrame {
+  readonly frameLatitude: number;
+  readonly island: IslandPresentation;
 }
 
 export interface GammaFlyoverSystem extends FlyoverSystemBase {
@@ -101,6 +112,33 @@ const targOrbitFor = (bodyId: string, orbits: TargOrreryBodyPositions) => {
   }
 };
 
+const targSurfaceFrame = (
+  islands: readonly IslandPresentation[],
+  skySettings: SkySettings
+): TargSurfaceFrame => {
+  const patched = islands.filter(island => island.surfacePatch !== undefined);
+  if (patched.length !== 1) {
+    throw new Error(
+      'The Targ Flyover needs exactly one Island with a surface patch'
+    );
+  }
+  const island = patched[0]!;
+  // The city stands where the game's sky is drawn from, on the prime meridian, so the Flyover's
+  // surface sky and the game's agree at the same clock (ADR 0094).
+  if (
+    island.centreDegrees.longitude !== 0 ||
+    island.centreDegrees.latitude !== skySettings.latitudeDegrees
+  ) {
+    throw new Error(
+      `${island.id} should be centred at 0°E ${skySettings.latitudeDegrees}°N, where the Targ sky is drawn from`
+    );
+  }
+  return {
+    frameLatitude: (skySettings.latitudeDegrees * Math.PI) / 180,
+    island
+  };
+};
+
 /// The Targ System seen from the city: TARG at the origin, and every other Body where the
 /// Orrery's turning horizon puts it, at its own authored distance and radius (ADR 0086).
 export const composeTargSystem = (
@@ -111,6 +149,7 @@ export const composeTargSystem = (
 ): TargFlyoverSystem => {
   const orrery = createTargOrrery(authority, skySettings);
   const systemBodies = new Map(authority.bodies.map(body => [body.id, body]));
+  const surfaceFrame = targSurfaceFrame(presentation.islands, skySettings);
   return {
     backdrop: presentation.backdrop,
     bodiesAt: elapsedSeconds => {
@@ -127,6 +166,9 @@ export const composeTargSystem = (
           id: body.id,
           position:
             orbit === undefined ? { ...source.position } : orbit.position,
+          ...(body.rangeAltitudes === undefined
+            ? {}
+            : { rangeAltitudes: body.rangeAltitudes }),
           provenance: {
             ...authoredPresentation,
             identity: 'authored',
@@ -153,6 +195,7 @@ export const composeTargSystem = (
       surfaceColours: 'authored'
     },
     surfaceColours: presentation.surfaceColours,
+    surfaceFrame,
     systemId: 'targ'
   };
 };

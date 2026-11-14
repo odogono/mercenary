@@ -131,7 +131,9 @@ const flyover: AttitudeAdapter = (heading, pitch) =>
         },
         ranges: ['orbital']
       },
-      range: 'orbital',
+      reading: {
+        handoff: { globeWeight: 1, range: 'orbital', surfaceWeight: 0 }
+      },
       speedBounds: { maximumUnitsPerSecond: 512, minimumUnitsPerSecond: 1 },
       systemId: 'gamma'
     })
