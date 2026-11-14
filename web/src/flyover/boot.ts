@@ -21,6 +21,7 @@ import {
   type TargPresentationDocument
 } from './documents.ts';
 import { FlyoverKeyboard } from './input.ts';
+import { flyoverRangeReading } from './reading.ts';
 import { FlyoverRenderer } from './renderer.ts';
 import { resetFlyover } from './runtime.ts';
 import {
@@ -196,16 +197,21 @@ try {
       outwardDirections
     );
     outwardDirections = nearest.outwardDirections;
+    const reading = flyoverRangeReading(system, nearest);
     panel.draw(
       flyoverPanelViewModel({
         camera,
         nearestBody: nearest.body,
-        range: 'orbital',
+        reading,
         speedBounds: system.cameraSpeed,
         systemId: system.systemId
       })
     );
     document.documentElement.dataset['nearestBody'] = nearest.body.id;
+    document.documentElement.dataset['range'] = reading.handoff.range;
+    document.documentElement.dataset['surfaceWeight'] = String(
+      reading.handoff.surfaceWeight
+    );
     document.documentElement.dataset['speedNotch'] = String(camera.speedNotch);
     document.documentElement.dataset['cameraX'] = String(
       camera.pose.position.x

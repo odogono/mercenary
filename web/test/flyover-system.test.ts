@@ -237,3 +237,69 @@ describe('the sessionless Targ Flyover clock', () => {
     expect(clock.secondsOfDay()).toBe(9 * 3600);
   });
 });
+
+const targPresentation = async () =>
+  readFlyoverPresentation(await json('flyover/targ.json'), 'targ', [
+    'targ',
+    'sun',
+    'inner-moon',
+    'outer-moon'
+  ]);
+
+describe('the Targ surface frame', () => {
+  test('stands City Island where the game sky is drawn from', async () => {
+    const sky = defaultSettings().presentation.sky;
+    const system = composeTargSystem(
+      TARG_SYSTEM,
+      await targPresentation(),
+      sky
+    );
+    expect(system.surfaceFrame.island.id).toBe('city-island');
+    expect(system.surfaceFrame.frameLatitude).toBeCloseTo(
+      (sky.latitudeDegrees * Math.PI) / 180,
+      15
+    );
+    expect(system.bodiesAt(0)[0]!.rangeAltitudes).toEqual({
+      coastalBelow: 1,
+      handoffBelow: 0.1,
+      surfaceBelow: 0.05
+    });
+    expect(system.bodiesAt(0)[1]!.rangeAltitudes).toBeUndefined();
+  });
+
+  test('refuses a City Island away from the sky latitude or the prime meridian', async () => {
+    const sky = defaultSettings().presentation.sky;
+    const presentation = await targPresentation();
+    expect(() =>
+      composeTargSystem(TARG_SYSTEM, presentation, {
+        ...sky,
+        latitudeDegrees: 20
+      })
+    ).toThrow('city-island should be centred at 0°E 20°N');
+    const moved = {
+      ...presentation,
+      islands: presentation.islands.map(island =>
+        island.surfacePatch === undefined
+          ? island
+          : { ...island, centreDegrees: { latitude: 34, longitude: 3 } }
+      )
+    };
+    expect(() => composeTargSystem(TARG_SYSTEM, moved, sky)).toThrow(
+      'city-island should be centred at 0°E 34°N'
+    );
+  });
+
+  test('requires exactly one Island carrying a surface patch', async () => {
+    const sky = defaultSettings().presentation.sky;
+    const presentation = await targPresentation();
+    const none = {
+      ...presentation,
+      islands: presentation.islands.filter(
+        island => island.surfacePatch === undefined
+      )
+    };
+    expect(() => composeTargSystem(TARG_SYSTEM, none, sky)).toThrow(
+      'exactly one Island with a surface patch'
+    );
+  });
+});
