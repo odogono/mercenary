@@ -6,6 +6,8 @@ import '../shell/damoclesPanelElement.ts';
 
 import { assertBrowserDocument, type SystemId } from '../shell/documentPath.ts';
 import { installPanel, installPanelScale } from '../shell/panelView.ts';
+import { readTargPanelDocument } from '../shell/targPanelDocument.ts';
+import { installTargPanel } from '../shell/targPanelView.ts';
 import {
   advanceFlyoverCamera,
   bodyEntryPose,
@@ -14,7 +16,11 @@ import {
   parseBodyQuery,
   type FlyoverCameraState
 } from './camera.ts';
-import { flyoverPanelViewModel } from './dashboard.ts';
+import {
+  flyoverInspectionLine,
+  flyoverPanelViewModel,
+  targFlyoverPanelViewModel
+} from './dashboard.ts';
 import {
   readFlyoverPresentation,
   readGammaSystem,
@@ -40,6 +46,8 @@ const canvas = document.getElementById('flyover') as HTMLCanvasElement;
 const dashboard = document.getElementById('flyover-dashboard')!;
 const panelRoot = document.getElementById('panel-damocles')!;
 const panelScale = document.getElementById('flyover-panel-scale')!;
+const inspection = document.getElementById('flyover-inspection')!;
+const targPanelRoot = document.getElementById('flyover-targ-panel')!;
 const panelElements = {
   damoclesCompass: document.getElementById(
     'damocles-compass-canvas'
@@ -183,6 +191,25 @@ try {
   installPanelScale(dashboard, panelScale, (target, onResize) => {
     new ResizeObserver(onResize).observe(target);
   });
+  // Targ is drawn on the game's own Targ panel, Gamma on the Damocles panel (ADR 0094).
+  const targPanel =
+    system.systemId === 'targ'
+      ? installTargPanel(
+          document.getElementById(
+            'flyover-targ-panel-canvas'
+          ) as HTMLCanvasElement,
+          readTargPanelDocument(
+            JSON.parse(
+              await requiredText(sitePath('/payload/targ-st/panel.json'))
+            )
+          )
+        )
+      : undefined;
+  panelRoot.hidden = targPanel !== undefined;
+  targPanelRoot.hidden = targPanel === undefined;
+  inspection.hidden = targPanel === undefined;
+  const targFields =
+    targPanelRoot.querySelectorAll<HTMLElement>('[data-field]');
   const panel = installPanel(panelElements);
   keyboard = new FlyoverKeyboard(
     () => camera.speedNotch,
@@ -198,15 +225,30 @@ try {
     );
     outwardDirections = nearest.outwardDirections;
     const reading = flyoverRangeReading(system, nearest);
-    panel.draw(
-      flyoverPanelViewModel({
-        camera,
-        nearestBody: nearest.body,
-        reading,
-        speedBounds: system.cameraSpeed,
-        systemId: system.systemId
-      })
-    );
+    const values = {
+      camera,
+      nearestBody: nearest.body,
+      reading,
+      speedBounds: system.cameraSpeed
+    };
+    if (targPanel === undefined) {
+      panel.draw(
+        flyoverPanelViewModel({ ...values, systemId: system.systemId })
+      );
+    } else {
+      const model = targFlyoverPanelViewModel(values);
+      targPanel.draw(model);
+      for (const field of targFields) {
+        const text = String(model[field.dataset['field'] as 'message']);
+        if (field.textContent !== text) {
+          field.textContent = text;
+        }
+      }
+      const line = flyoverInspectionLine(values);
+      if (inspection.textContent !== line) {
+        inspection.textContent = line;
+      }
+    }
     document.documentElement.dataset['nearestBody'] = nearest.body.id;
     document.documentElement.dataset['range'] = reading.handoff.range;
     document.documentElement.dataset['surfaceWeight'] = String(
