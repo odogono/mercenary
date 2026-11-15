@@ -1,6 +1,11 @@
+import type { Atmosphere } from '../enhanced/atmosphere.ts';
+import { fetchAssets, fetchReader, load } from '../payload/load.ts';
+import { FrameRenderer } from '../rendering/renderer.ts';
 import { loadSettings } from '../settings/index.ts';
 import { sitePath } from '../shell/sitePath.ts';
+import { createTargOrrery, type TargOrrery } from '../sky/index.ts';
 import { fetchTargSystem } from '../sky/system.ts';
+import { World } from '../world/index.ts';
 
 import '../shell/damoclesPanelElement.ts';
 
@@ -14,7 +19,8 @@ import {
   cappedFrameSeconds,
   nearestFlyoverBody,
   parseBodyQuery,
-  type FlyoverCameraState
+  type FlyoverCameraState,
+  type NearestFlyoverBody
 } from './camera.ts';
 import {
   flyoverInspectionLine,
@@ -26,10 +32,12 @@ import {
   readGammaSystem,
   type TargPresentationDocument
 } from './documents.ts';
+import { globeIslandsOf } from './globe.ts';
 import { FlyoverKeyboard } from './input.ts';
-import { flyoverRangeReading } from './reading.ts';
+import { flyoverRangeReading, type FlyoverRangeReading } from './reading.ts';
 import { FlyoverRenderer } from './renderer.ts';
 import { resetFlyover } from './runtime.ts';
+import { planFlyoverSurfaceFrame, targSurfaceView } from './surfacePass.ts';
 import {
   composeGammaSystem,
   composeTargSystem,
@@ -43,6 +51,9 @@ const status = document.getElementById('status')!;
 const notice = document.getElementById('notice')!;
 const failure = document.getElementById('failure')!;
 const canvas = document.getElementById('flyover') as HTMLCanvasElement;
+const surfaceCanvas = document.getElementById(
+  'flyover-surface'
+) as HTMLCanvasElement;
 const dashboard = document.getElementById('flyover-dashboard')!;
 const panelRoot = document.getElementById('panel-damocles')!;
 const panelScale = document.getElementById('flyover-panel-scale')!;
@@ -82,14 +93,31 @@ const requiredJson = async (pathname: string): Promise<unknown> => {
   }
 };
 
+/// What the Targ surface frame is drawn from: the city as the Data Payload places it, TARG's
+/// Atmosphere and the Orrery, which the Flyover clock turns (ADR 0094).
+let targSurface:
+  | {
+      readonly atmosphere: Atmosphere | null;
+      readonly orrery: TargOrrery;
+      readonly world: World;
+    }
+  | undefined;
+
 const systemFor = async (systemId: SystemId): Promise<FlyoverSystem> => {
   const presentationPath = sitePath(`/flyover/${systemId}.json`);
   if (systemId === 'targ') {
-    const [rawPresentation, settingsText, targSystem] = await Promise.all([
-      requiredJson(presentationPath),
-      requiredText(sitePath('/settings.json')),
-      fetchTargSystem()
-    ]);
+    const [rawPresentation, settingsText, targSystem, bundle] =
+      await Promise.all([
+        requiredJson(presentationPath),
+        requiredText(sitePath('/settings.json')),
+        fetchTargSystem(),
+        load(
+          fetchReader(new URL(sitePath('/payload/'), location.href).href),
+          fetchAssets(
+            new URL(sitePath('/assets/targ.json'), location.href).href
+          )
+        )
+      ]);
     let presentation: TargPresentationDocument;
     try {
       presentation = readFlyoverPresentation(
@@ -102,11 +130,15 @@ const systemFor = async (systemId: SystemId): Promise<FlyoverSystem> => {
         `${presentationPath}: ${error instanceof Error ? error.message : String(error)}`
       );
     }
-    return composeTargSystem(
-      targSystem,
-      presentation,
-      loadSettings(settingsText).presentation.sky
-    );
+    const sky = loadSettings(settingsText).presentation.sky;
+    targSurface = {
+      atmosphere:
+        targSystem.bodies.find(body => body.id === targSystem.rotatingBodyId)
+          ?.atmosphere ?? null,
+      orrery: createTargOrrery(targSystem, sky),
+      world: new World(bundle)
+    };
+    return composeTargSystem(targSystem, presentation, sky);
   }
   const authorityPath = sitePath('/payload/damocles/system.json');
   const rawAuthority = await requiredJson(authorityPath);
@@ -180,12 +212,17 @@ try {
     ...('body' in query ? { pose: bodyEntryPose(query.body) } : {})
   };
   let outwardDirections = {};
-  const renderer = new FlyoverRenderer(canvas, system, () =>
-    fail(
-      new Error(
-        'The graphics context was lost. Reload the page to restore the Flyover.'
+  const renderer = new FlyoverRenderer(
+    canvas,
+    system.systemId === 'targ'
+      ? { ...system, globe: globeIslandsOf(system) }
+      : system,
+    () =>
+      fail(
+        new Error(
+          'The graphics context was lost. Reload the page to restore the Flyover.'
+        )
       )
-    )
   );
   dashboard.hidden = false;
   installPanelScale(dashboard, panelScale, (target, onResize) => {
@@ -217,7 +254,9 @@ try {
       camera = { ...camera, speedNotch };
     }
   );
-  const expose = (bodies: ReturnType<typeof system.bodiesAt>): void => {
+  const expose = (
+    bodies: ReturnType<typeof system.bodiesAt>
+  ): { nearest: NearestFlyoverBody; reading: FlyoverRangeReading } => {
     const nearest = nearestFlyoverBody(
       camera.pose.position,
       bodies,
@@ -266,9 +305,50 @@ try {
     );
     document.documentElement.dataset['heading'] = String(camera.pose.heading);
     document.documentElement.dataset['pitch'] = String(camera.pose.pitch);
+    return { nearest, reading };
   };
-  renderer.draw(initialBodies, camera.pose);
-  expose(initialBodies);
+  // The Range Handoff (ADR 0094): the surface frame is drawn over the Globe at its weight, so
+  // the two always sum to one, and the Globe is not drawn once the surface covers it.
+  let surfaceRenderer: FrameRenderer | undefined;
+  const draw = (bodies: ReturnType<typeof system.bodiesAt>): void => {
+    const { nearest, reading } = expose(bodies);
+    const weight = reading.handoff.surfaceWeight;
+    if (weight < 1) {
+      renderer.draw(bodies, camera.pose);
+    }
+    if (
+      weight === 0 ||
+      system.systemId !== 'targ' ||
+      targSurface === undefined
+    ) {
+      surfaceCanvas.hidden = true;
+      return;
+    }
+    surfaceCanvas.hidden = false;
+    surfaceCanvas.style.opacity = String(weight);
+    surfaceRenderer ??= new FrameRenderer(
+      surfaceCanvas,
+      { cullBackFaces: true },
+      () =>
+        fail(
+          new Error(
+            'The graphics context was lost. Reload the page to restore the Flyover.'
+          )
+        )
+    );
+    surfaceRenderer.resize();
+    surfaceRenderer.render(
+      planFlyoverSurfaceFrame({
+        ...targSurface,
+        elapsed: system.clock.elapsedSeconds(),
+        outputHeight: surfaceRenderer.outputHeight,
+        size: { height: surfaceCanvas.height, width: surfaceCanvas.width },
+        system,
+        view: targSurfaceView(system, camera.pose, nearest)
+      })
+    );
+  };
+  draw(initialBodies);
   status.hidden = true;
   document.documentElement.dataset['flyoverReady'] = 'true';
   let previousTimestamp: number | undefined;
@@ -291,8 +371,7 @@ try {
       const elapsed =
         system.systemId === 'targ' ? system.clock.elapsedSeconds() : 0;
       const bodies = system.bodiesAt(elapsed);
-      renderer.draw(bodies, camera.pose);
-      expose(bodies);
+      draw(bodies);
       animation = requestAnimationFrame(frame);
     } catch (error) {
       fail(error);

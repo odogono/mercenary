@@ -153,6 +153,9 @@ export const insideCentralCellHalf = (
 /// One island as the planner fills it: the coast query's record, the colour it is painted in,
 /// and the roads its Settlement draws.
 export interface SceneIsland extends CoastIsland {
+  /// The colour its coastline is stroked in, as a road is. Absent, as in every Title's recovered
+  /// islands, it has no stroke; the Flyover's authored Islands carry one (ADR 0094).
+  readonly coastColour?: string;
   /// The colour this island is filled in, and the colour the ground plane itself takes while
   /// the player stands on its core.
   readonly landColour: string;

@@ -151,6 +151,13 @@
         white-space: nowrap;
       }
 
+      /* The surface frame lies over the Globe, at the Range Handoff's weight (ADR 0094). */
+      #flyover-surface {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
       /* Targ's panel is 1280 by 256, taller than the Damocles panel's 244. */
       html[data-system='targ'] #flyover-dashboard {
         aspect-ratio: 1280 / 256;
@@ -192,6 +199,7 @@
       <canvas id="flyover" role="img" aria-label="Orbital Flyover view" hidden>
         Your browser cannot display the Orbital Flyover canvas.
       </canvas>
+      <canvas id="flyover-surface" aria-hidden="true" hidden></canvas>
       <p id="flyover-inspection" hidden></p>
       <section
         id="flyover-dashboard"
