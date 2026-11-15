@@ -1,5 +1,5 @@
 import type { Atmosphere } from '../enhanced/atmosphere.ts';
-import type { EnhancedFramePlan } from '../enhanced/frame.ts';
+import type { EnhancedFramePlan, EnhancedStrokes } from '../enhanced/frame.ts';
 import { ENHANCED_PRESENTATION } from '../enhanced/presentation.ts';
 import type { SceneIsland } from '../enhanced/scene.ts';
 import { atan, cos, sin, tan } from '../math/index.ts';
@@ -190,6 +190,8 @@ export interface FlyoverSurfaceFrameInput {
   readonly orrery: TargOrrery;
   readonly outputHeight: number;
   readonly size: Size;
+  /// The System Menu's stroke choices; absent keeps one-pixel strokes with no glow.
+  readonly strokes?: EnhancedStrokes;
   readonly system: TargFlyoverSystem;
   readonly view: TargSceneView;
   readonly world: World;
@@ -265,7 +267,8 @@ export const planFlyoverSurfaceFrame = (
     },
     view,
     size,
-    input.outputHeight
+    input.outputHeight,
+    input.strokes
   );
   return {
     ...plan,

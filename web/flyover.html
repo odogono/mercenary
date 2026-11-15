@@ -182,6 +182,66 @@
         white-space: pre;
       }
 
+      /* The System Menu (#188): over the paused Flyover, above the panel. */
+      #flyover-menu {
+        position: absolute;
+        z-index: 2;
+        top: 50%;
+        left: 50%;
+        width: min(36rem, calc(100% - 2rem));
+        max-height: calc(100% - 2rem);
+        overflow-y: auto;
+        padding: 1rem 1.25rem;
+        transform: translate(-50%, -50%);
+        background: color-mix(in srgb, var(--panel) 94%, transparent);
+        border: 1px solid var(--border);
+        text-transform: uppercase;
+      }
+
+      #flyover-menu h2 {
+        margin: 0 0 0.75rem;
+        color: var(--accent);
+        font-size: 0.85rem;
+        letter-spacing: 0.08em;
+      }
+
+      #flyover-menu button {
+        margin: 0.15rem 0.35rem 0.15rem 0;
+        padding: 0.3rem 0.6rem;
+        color: var(--muted);
+        background: transparent;
+        border: 1px solid var(--border);
+        font: inherit;
+        font-size: 0.75rem;
+        cursor: pointer;
+      }
+
+      #flyover-menu button:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 1px;
+      }
+
+      #flyover-menu button[aria-pressed='true'] {
+        color: #000;
+        background: var(--accent);
+      }
+
+      #menu-actions {
+        margin-bottom: 0.75rem;
+      }
+
+      .menu-row {
+        margin-top: 0.5rem;
+      }
+
+      .menu-row > span {
+        display: block;
+        margin-bottom: 0.2rem;
+        color: var(--text);
+        font-size: 0.7rem;
+        letter-spacing: 0.06em;
+      }
+
       /* The Shell Console (#188), drawn as the game pages draw theirs. */
       #console {
         position: absolute;
@@ -285,6 +345,20 @@
             </div>
           </div>
         </div>
+      </section>
+      <section
+        id="flyover-menu"
+        role="dialog"
+        aria-label="System Menu"
+        aria-modal="false"
+        hidden
+      >
+        <h2>Flyover · Paused</h2>
+        <div id="menu-actions">
+          <button id="menu-resume" type="button">Resume</button>
+          <button id="menu-leave" type="button">Leave Flyover</button>
+        </div>
+        <div id="menu-rows"></div>
       </section>
       <div id="console" aria-label="Shell Console">
         <div id="console-log" role="log" aria-live="polite"></div>
