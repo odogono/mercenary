@@ -3,7 +3,6 @@ import { fetchAssets, fetchReader, load } from '../payload/load.ts';
 import { FrameRenderer } from '../rendering/renderer.ts';
 import { loadSettings } from '../settings/index.ts';
 import { sitePath } from '../shell/sitePath.ts';
-import { createTargOrrery, type TargOrrery } from '../sky/index.ts';
 import { fetchTargSystem } from '../sky/system.ts';
 import { World } from '../world/index.ts';
 
@@ -42,6 +41,12 @@ import {
 } from './documents.ts';
 import { globeIslandsOf } from './globe.ts';
 import { FlyoverKeyboard } from './input.ts';
+import {
+  flyoverStrokesOf,
+  installFlyoverMenu,
+  targFlyoverMenuRows,
+  type FlyoverStrokeChoices
+} from './menu.ts';
 import { flyoverRangeReading, type FlyoverRangeReading } from './reading.ts';
 import { FlyoverRenderer } from './renderer.ts';
 import { resetFlyover } from './runtime.ts';
@@ -67,6 +72,12 @@ const panelRoot = document.getElementById('panel-damocles')!;
 const panelScale = document.getElementById('flyover-panel-scale')!;
 const inspection = document.getElementById('flyover-inspection')!;
 const targPanelRoot = document.getElementById('flyover-targ-panel')!;
+const menuElements = {
+  leave: document.getElementById('menu-leave') as HTMLButtonElement,
+  resume: document.getElementById('menu-resume') as HTMLButtonElement,
+  root: document.getElementById('flyover-menu')!,
+  rows: document.getElementById('menu-rows')!
+};
 const consoleElements = {
   input: document.getElementById('console-input') as HTMLInputElement,
   log: document.getElementById('console-log')!,
@@ -107,11 +118,10 @@ const requiredJson = async (pathname: string): Promise<unknown> => {
 };
 
 /// What the Targ surface frame is drawn from: the city as the Data Payload places it, TARG's
-/// Atmosphere and the Orrery, which the Flyover clock turns (ADR 0094).
+/// Atmosphere; its sky is the Targ System's own Orrery (ADR 0094).
 let targSurface:
   | {
       readonly atmosphere: Atmosphere | null;
-      readonly orrery: TargOrrery;
       readonly world: World;
     }
   | undefined;
@@ -148,7 +158,6 @@ const systemFor = async (systemId: SystemId): Promise<FlyoverSystem> => {
       atmosphere:
         targSystem.bodies.find(body => body.id === targSystem.rotatingBodyId)
           ?.atmosphere ?? null,
-      orrery: createTargOrrery(targSystem, sky),
       world: new World(bundle)
     };
     return composeTargSystem(targSystem, presentation, sky);
@@ -180,6 +189,8 @@ const systemFor = async (systemId: SystemId): Promise<FlyoverSystem> => {
   }
 };
 
+/// The System Menu's stroke choices, kept until reload and never stored.
+let strokeChoices: FlyoverStrokeChoices = {};
 let animation: number | undefined;
 let keyboard: FlyoverKeyboard | undefined;
 let running = true;
@@ -291,6 +302,35 @@ try {
       parse: parseFlyoverConsoleCommand
     }
   );
+  // The System Menu (#188) pauses the Camera and the Targ clock while it is open.
+  const menu = installFlyoverMenu(
+    menuElements,
+    system.systemId === 'targ'
+      ? targFlyoverMenuRows(system.clock, {
+          current: () => strokeChoices,
+          set: choices => {
+            strokeChoices = choices;
+          }
+        })
+      : [],
+    {
+      onClose: () => {
+        if (system.systemId === 'targ') {
+          system.clock.resume();
+        }
+      },
+      // Leaving replaces this history entry, so Back does not return to the Flyover.
+      onLeave: () => {
+        location.replace(sitePath('/'));
+      },
+      onOpen: () => {
+        keyboard?.clear();
+        if (system.systemId === 'targ') {
+          system.clock.pause();
+        }
+      }
+    }
+  );
   window.addEventListener(
     'keydown',
     event => {
@@ -302,9 +342,16 @@ try {
         if (!event.repeat) {
           shellConsole.toggle();
         }
-      } else if (event.key === 'Escape' && shellConsole.isOpen()) {
+      } else if (event.key === 'Escape' && !event.repeat) {
+        // Escape closes what is open, the console first, and otherwise opens the menu.
         event.preventDefault();
-        shellConsole.close();
+        if (shellConsole.isOpen()) {
+          shellConsole.close();
+        } else if (menu.isOpen()) {
+          menu.close();
+        } else {
+          menu.open();
+        }
       }
     },
     { capture: true }
@@ -314,7 +361,7 @@ try {
     speedNotch => {
       camera = { ...camera, speedNotch };
     },
-    () => shellConsole.isOpen()
+    () => shellConsole.isOpen() || menu.isOpen()
   );
   const expose = (
     bodies: ReturnType<typeof system.bodiesAt>
@@ -403,8 +450,10 @@ try {
       planFlyoverSurfaceFrame({
         ...targSurface,
         elapsed: system.clock.elapsedSeconds(),
+        orrery: system.orrery(),
         outputHeight: surfaceRenderer.outputHeight,
         size: { height: surfaceCanvas.height, width: surfaceCanvas.width },
+        strokes: flyoverStrokesOf(strokeChoices),
         system,
         view: targSurfaceView(system, camera.pose, nearest)
       })
@@ -424,12 +473,14 @@ try {
           ? 0
           : cappedFrameSeconds((timestamp - previousTimestamp) / 1000);
       previousTimestamp = timestamp;
-      camera = advanceFlyoverCamera(
-        camera,
-        keyboard!.controls(),
-        seconds,
-        system.cameraSpeed
-      );
+      if (!menu.isOpen()) {
+        camera = advanceFlyoverCamera(
+          camera,
+          keyboard!.controls(),
+          seconds,
+          system.cameraSpeed
+        );
+      }
       const bodies = system.bodiesAt(elapsedNow());
       draw(bodies);
       animation = requestAnimationFrame(frame);

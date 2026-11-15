@@ -236,6 +236,41 @@ describe('the sessionless Targ Flyover clock', () => {
     expect(clock.elapsedSeconds()).toBe(0);
     expect(clock.secondsOfDay()).toBe(9 * 3600);
   });
+
+  test('stands still while paused and resumes where it stopped', () => {
+    let now = 0;
+    const clock = new TargFlyoverClock(24, () => now);
+    now = 30;
+    clock.pause();
+    now = 500;
+    expect(clock.paused()).toBe(true);
+    expect(clock.elapsedSeconds()).toBe(30);
+    clock.setTime(18 * 3600);
+    expect(clock.secondsOfDay()).toBe(18 * 3600);
+    clock.reset();
+    expect(clock.paused()).toBe(true);
+    now = 900;
+    expect(clock.elapsedSeconds()).toBe(0);
+    clock.resume();
+    now = 960;
+    expect(clock.paused()).toBe(false);
+    expect(clock.elapsedSeconds()).toBe(60);
+  });
+
+  test('changes its day length without changing the time of day', () => {
+    let now = 0;
+    const clock = new TargFlyoverClock(24, () => now);
+    now = 6 * 60;
+    expect(clock.secondsOfDay()).toBe(15 * 3600);
+    clock.setDayLength(96);
+    expect(clock.dayLengthMinutes()).toBe(96);
+    expect(clock.tunedDayLengthMinutes).toBe(24);
+    expect(clock.secondsOfDay()).toBeCloseTo(15 * 3600, 6);
+    // An hour of Targ time is now four minutes.
+    now += 4 * 60;
+    expect(clock.secondsOfDay()).toBeCloseTo(16 * 3600, 6);
+    expect(() => clock.setDayLength(0)).toThrow('positive');
+  });
 });
 
 const targPresentation = async () =>

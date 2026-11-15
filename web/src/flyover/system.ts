@@ -3,6 +3,7 @@ import type { SkySettings } from '../settings/index.ts';
 import {
   createTargOrrery,
   targOrreryBodyPositionsAt,
+  type TargOrrery,
   type TargOrreryBodyPositions
 } from '../sky/index.ts';
 import { TargPresentationClock } from '../sky/time.ts';
@@ -56,6 +57,8 @@ interface FlyoverSystemBase {
 export interface TargFlyoverSystem extends FlyoverSystemBase {
   readonly clock: TargFlyoverClock;
   readonly islands: readonly IslandPresentation[];
+  /// The Orrery at the clock's day length, which the surface frame's sky is drawn from too.
+  readonly orrery: () => TargOrrery;
   readonly provenance: {
     readonly backdrop: 'authored';
     readonly bodyMesh: 'authored';
@@ -147,13 +150,23 @@ export const composeTargSystem = (
   skySettings: SkySettings,
   clock = new TargFlyoverClock(skySettings.dayLengthMinutes)
 ): TargFlyoverSystem => {
-  const orrery = createTargOrrery(authority, skySettings);
+  let orrery = createTargOrrery(authority, skySettings);
+  const orreryNow = (): TargOrrery => {
+    const dayLengthMinutes = clock.dayLengthMinutes();
+    if (orrery.settings.dayLengthMinutes !== dayLengthMinutes) {
+      orrery = createTargOrrery(authority, {
+        ...skySettings,
+        dayLengthMinutes
+      });
+    }
+    return orrery;
+  };
   const systemBodies = new Map(authority.bodies.map(body => [body.id, body]));
   const surfaceFrame = targSurfaceFrame(presentation.islands, skySettings);
   return {
     backdrop: presentation.backdrop,
     bodiesAt: elapsedSeconds => {
-      const orbits = targOrreryBodyPositionsAt(orrery, elapsedSeconds);
+      const orbits = targOrreryBodyPositionsAt(orreryNow(), elapsedSeconds);
       return presentation.bodies.map(body => {
         const source = systemBodies.get(body.id as TargSystemBodyId);
         if (source === undefined || body.radius.kind !== 'targ-system') {
@@ -185,6 +198,7 @@ export const composeTargSystem = (
     clock,
     islands: presentation.islands,
     lighting: presentation.lighting,
+    orrery: orreryNow,
     provenance: {
       backdrop: 'authored',
       bodyMesh: 'authored',
@@ -255,20 +269,25 @@ const monotonicSeconds = (): number => performance.now() / 1000;
 
 /// A reload-local Orrery clock. Its only authority is monotonic browser time plus the existing
 /// presentation-only Targ time adjustment; it never reads or writes Session State or storage.
+/// The System Menu pauses it and may change the day length until reload (#188).
 export class TargFlyoverClock {
   private originSeconds: number;
+  private pausedAt: number | undefined;
+  private dayLength: number;
   private readonly presentationClock: TargPresentationClock;
 
   constructor(
-    dayLengthMinutes: number,
+    /// The day length the sky settings tune, in minutes.
+    readonly tunedDayLengthMinutes: number,
     private readonly now: () => number = monotonicSeconds
   ) {
     this.originSeconds = now();
-    this.presentationClock = new TargPresentationClock(() => dayLengthMinutes);
+    this.dayLength = tunedDayLengthMinutes;
+    this.presentationClock = new TargPresentationClock(() => this.dayLength);
   }
 
   private sinceOrigin(): number {
-    return Math.max(0, this.now() - this.originSeconds);
+    return Math.max(0, (this.pausedAt ?? this.now()) - this.originSeconds);
   }
 
   elapsedSeconds(): number {
@@ -283,8 +302,43 @@ export class TargFlyoverClock {
     this.presentationClock.set(this.sinceOrigin(), secondsOfDay);
   }
 
+  dayLengthMinutes(): number {
+    return this.dayLength;
+  }
+
+  /// A new day length that keeps the time of day it was set at.
+  setDayLength(minutes: number): void {
+    if (!(Number.isFinite(minutes) && minutes > 0)) {
+      throw new Error(
+        'a Targ day length should be a positive number of minutes'
+      );
+    }
+    const secondsOfDay = this.secondsOfDay();
+    this.dayLength = minutes;
+    this.setTime(secondsOfDay);
+  }
+
+  paused(): boolean {
+    return this.pausedAt !== undefined;
+  }
+
+  pause(): void {
+    this.pausedAt ??= this.now();
+  }
+
+  resume(): void {
+    if (this.pausedAt !== undefined) {
+      this.originSeconds += this.now() - this.pausedAt;
+      this.pausedAt = undefined;
+    }
+  }
+
+  /// Back to the epoch's time of day, at the same day length, still paused if it was.
   reset(): void {
     this.originSeconds = this.now();
+    if (this.pausedAt !== undefined) {
+      this.pausedAt = this.originSeconds;
+    }
     this.presentationClock.reset();
   }
 }

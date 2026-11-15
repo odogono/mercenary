@@ -3,6 +3,13 @@ import {
   type EnhancedStrokes
 } from '../enhanced/frame.ts';
 import {
+  WIREFRAME_GLOW_AMOUNT,
+  WIREFRAME_WEIGHT_PIXELS,
+  enhancedStrokeOf,
+  type WireframeGlow,
+  type WireframeWeight
+} from '../enhanced/strokes.ts';
+import {
   DEFAULT_WIREFRAME_GLOW,
   DEFAULT_WIREFRAME_THICKNESS,
   isLightLevel,
@@ -18,11 +25,12 @@ import {
 import type { ReadStorage, WriteStorage } from './storage.ts';
 import { titleStorageKeys, type TitleSlug } from './title.ts';
 
-/// How thick the wireframe's lines are drawn, as named levels rather than raw pixels.
-export type WireframeWeight = 'fine' | 'bold' | 'heavy';
-
-/// How much soft halo each wireframe line carries.
-export type WireframeGlow = 'off' | 'soft' | 'bright';
+export {
+  WIREFRAME_GLOW_AMOUNT,
+  WIREFRAME_WEIGHT_PIXELS,
+  type WireframeGlow,
+  type WireframeWeight
+};
 
 /// Which visual treatment the Benson Panel wears.
 export type PanelRendition = 'targ' | 'damocles';
@@ -112,17 +120,6 @@ export const hazeScaleOf = (
 ): number => {
   const amount = preferences.hazeAmount ?? 100;
   return amount <= 0 ? Number.POSITIVE_INFINITY : 100 / amount;
-};
-
-/// The pixels each named weight and glow level stands for, one vocabulary shared with the
-/// settings page and the console.
-export const WIREFRAME_WEIGHT_PIXELS: Readonly<
-  Record<WireframeWeight, number>
-> = { bold: 2, fine: 1, heavy: 3 };
-export const WIREFRAME_GLOW_AMOUNT: Readonly<Record<WireframeGlow, number>> = {
-  bright: 0.7,
-  off: 0,
-  soft: 0.35
 };
 
 const isRendition = (value: unknown): value is PanelRendition =>
@@ -382,14 +379,6 @@ export const createPreferences = (options: {
   };
 };
 
-const enhancedStroke = (
-  weight: WireframeWeight | undefined,
-  glow: WireframeGlow | undefined
-) => ({
-  glow: glow === undefined ? 0 : WIREFRAME_GLOW_AMOUNT[glow],
-  weight: weight === undefined ? 1 : WIREFRAME_WEIGHT_PIXELS[weight]
-});
-
 /// The player's weight and glow as the shared Enhanced planner's stroke settings (#951), for
 /// every Title. Authentic keeps one-pixel strokes with no glow, and an unset choice keeps the
 /// default.
@@ -407,10 +396,10 @@ export const enhancedStrokesOf = (
     return DEFAULT_ENHANCED_STROKES;
   }
   return {
-    lines: enhancedStroke(
+    lines: enhancedStrokeOf(
       preferences.wireframeWeight,
       preferences.wireframeGlow
     ),
-    roads: enhancedStroke(preferences.roadWeight, preferences.roadGlow)
+    roads: enhancedStrokeOf(preferences.roadWeight, preferences.roadGlow)
   };
 };
