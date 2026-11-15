@@ -33,6 +33,7 @@ import { installAudioLifecycle } from '../shell/audioLifecycle.ts';
 import { PANEL_SETTINGS, installShellChrome } from '../shell/chrome.ts';
 import { FixedStepClock } from '../shell/clock.ts';
 import type { ConsoleParseContext } from '../shell/console.ts';
+import { storedConsoleHistory } from '../shell/consoleHistory.ts';
 import { installConsole } from '../shell/consoleView.ts';
 import { renderControlsPage } from '../shell/controlsView.ts';
 import { assertBrowserDocument } from '../shell/documentPath.ts';
@@ -801,7 +802,7 @@ try {
     },
     parse: (line, deps) =>
       parseDamoclesConsoleCommand(line, deps.cellsPerAxis()),
-    persistence: { key: keys.consoleHistory, storage }
+    persistence: storedConsoleHistory(storage, keys.consoleHistory)
   });
   writeConsole = shellConsole.write;
 

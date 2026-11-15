@@ -7,7 +7,9 @@ export class FlyoverKeyboard {
 
   constructor(
     private readonly speedNotch: () => number,
-    private readonly setSpeedNotch: (notch: number) => void
+    private readonly setSpeedNotch: (notch: number) => void,
+    /// True while another control, such as the Shell Console, owns the keyboard.
+    private readonly elsewhere: () => boolean = () => false
   ) {
     window.addEventListener('keydown', this.keyDown);
     window.addEventListener('keyup', this.keyUp);
@@ -17,6 +19,7 @@ export class FlyoverKeyboard {
 
   private readonly keyDown = (event: KeyboardEvent): void => {
     if (
+      this.elsewhere() ||
       event.altKey ||
       event.ctrlKey ||
       event.metaKey ||

@@ -7,6 +7,7 @@ import {
 import { IDLE } from '../gameCore/index.ts';
 import { installShellChrome } from '../shell/chrome.ts';
 import { FixedStepClock } from '../shell/clock.ts';
+import { storedConsoleHistory } from '../shell/consoleHistory.ts';
 import { installConsole } from '../shell/consoleView.ts';
 import { renderControlsPage } from '../shell/controlsView.ts';
 import { assertBrowserDocument } from '../shell/documentPath.ts';
@@ -443,7 +444,7 @@ try {
         return lines;
       },
       parse: parseDionConsoleCommand,
-      persistence: { key: DION_STORAGE.consoleHistory, storage }
+      persistence: storedConsoleHistory(storage, DION_STORAGE.consoleHistory)
     }
   );
 

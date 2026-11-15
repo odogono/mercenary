@@ -28,6 +28,7 @@ import {
   parseConsoleLine,
   type ConsoleCommand
 } from './console.ts';
+import { storedConsoleHistory } from './consoleHistory.ts';
 import { installConsole } from './consoleView.ts';
 import { sitePath } from './sitePath.ts';
 
@@ -722,7 +723,7 @@ try {
         }
       },
       parse: parseConsoleLine,
-      persistence: { key: titleKeys.consoleHistory, storage }
+      persistence: storedConsoleHistory(storage, titleKeys.consoleHistory)
     }
   );
   recordBensonMessage = () => {

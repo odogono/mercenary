@@ -9,6 +9,7 @@ import { World } from '../world/index.ts';
 
 import '../shell/damoclesPanelElement.ts';
 
+import { installConsole } from '../shell/consoleView.ts';
 import { assertBrowserDocument, type SystemId } from '../shell/documentPath.ts';
 import { installPanel, installPanelScale } from '../shell/panelView.ts';
 import { readTargPanelDocument } from '../shell/targPanelDocument.ts';
@@ -22,6 +23,13 @@ import {
   type FlyoverCameraState,
   type NearestFlyoverBody
 } from './camera.ts';
+import {
+  FLYOVER_CONSOLE_BANNER,
+  executeFlyoverConsoleCommand,
+  parseFlyoverConsoleCommand,
+  type FlyoverConsoleCommand,
+  type FlyoverConsoleHost
+} from './console.ts';
 import {
   flyoverInspectionLine,
   flyoverPanelViewModel,
@@ -59,6 +67,11 @@ const panelRoot = document.getElementById('panel-damocles')!;
 const panelScale = document.getElementById('flyover-panel-scale')!;
 const inspection = document.getElementById('flyover-inspection')!;
 const targPanelRoot = document.getElementById('flyover-targ-panel')!;
+const consoleElements = {
+  input: document.getElementById('console-input') as HTMLInputElement,
+  log: document.getElementById('console-log')!,
+  surface: document.querySelector('main')!
+};
 const panelElements = {
   damoclesCompass: document.getElementById(
     'damocles-compass-canvas'
@@ -194,10 +207,11 @@ try {
   // Reveal before measuring and drawing. This all happens in one task, so a failed
   // constructor is hidden again before the browser can paint a partial Flyover.
   canvas.hidden = false;
-  const reset = resetFlyover(system, {
+  const viewport = () => ({
     height: Math.max(1, canvas.clientHeight),
     width: Math.max(1, canvas.clientWidth)
   });
+  const reset = resetFlyover(system, viewport());
   const initialBodies = reset.bodies;
   document.documentElement.dataset['bodyCount'] = String(initialBodies.length);
   title.textContent = `${system.systemId.toUpperCase()} Flyover`;
@@ -248,11 +262,59 @@ try {
   const targFields =
     targPanelRoot.querySelectorAll<HTMLElement>('[data-field]');
   const panel = installPanel(panelElements);
+  const elapsedNow = (): number =>
+    system.systemId === 'targ' ? system.clock.elapsedSeconds() : 0;
+  // The Shell Console (#188). It does not pause: the Flyover clock runs while it is open, and
+  // opening it lets go of any Camera control held as it opened.
+  const shellConsole = installConsole<
+    FlyoverConsoleHost,
+    FlyoverConsoleCommand
+  >(
+    consoleElements,
+    {
+      bodies: () => system.bodiesAt(elapsedNow()),
+      camera: () => camera,
+      reset: () => {
+        camera = resetFlyover(system, viewport()).camera;
+        outwardDirections = {};
+      },
+      setCamera: next => {
+        camera = next;
+        outwardDirections = {};
+      },
+      system
+    },
+    () => keyboard?.clear(),
+    {
+      banner: FLYOVER_CONSOLE_BANNER,
+      execute: executeFlyoverConsoleCommand,
+      parse: parseFlyoverConsoleCommand
+    }
+  );
+  window.addEventListener(
+    'keydown',
+    event => {
+      if (event.altKey || event.ctrlKey || event.metaKey) {
+        return;
+      }
+      if (event.code === 'Backquote') {
+        event.preventDefault();
+        if (!event.repeat) {
+          shellConsole.toggle();
+        }
+      } else if (event.key === 'Escape' && shellConsole.isOpen()) {
+        event.preventDefault();
+        shellConsole.close();
+      }
+    },
+    { capture: true }
+  );
   keyboard = new FlyoverKeyboard(
     () => camera.speedNotch,
     speedNotch => {
       camera = { ...camera, speedNotch };
-    }
+    },
+    () => shellConsole.isOpen()
   );
   const expose = (
     bodies: ReturnType<typeof system.bodiesAt>
@@ -368,9 +430,7 @@ try {
         seconds,
         system.cameraSpeed
       );
-      const elapsed =
-        system.systemId === 'targ' ? system.clock.elapsedSeconds() : 0;
-      const bodies = system.bodiesAt(elapsed);
+      const bodies = system.bodiesAt(elapsedNow());
       draw(bodies);
       animation = requestAnimationFrame(frame);
     } catch (error) {

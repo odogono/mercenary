@@ -1,9 +1,17 @@
-import {
-  CONSOLE_HISTORY_LIMIT,
-  readConsoleHistory,
-  writeConsoleHistory
-} from './consoleHistory.ts';
-import type { ReadStorage, WriteStorage } from './storage.ts';
+/// Bound both command recall and the transcript retained across page reloads.
+export const CONSOLE_HISTORY_LIMIT = 400;
+
+export interface ConsoleHistoryRecord {
+  readonly commands: readonly string[];
+  readonly scrollback: readonly string[];
+}
+
+/// Where a console keeps its history between page loads. The view never reaches storage itself,
+/// so a document without persistence, such as the Flyover, imports none.
+export interface ConsolePersistence {
+  readonly read: () => ConsoleHistoryRecord;
+  readonly write: (history: ConsoleHistoryRecord) => void;
+}
 
 /// How much transcript the console keeps.
 ///
@@ -72,10 +80,7 @@ export interface ConsoleViewOptions<Deps, Command> {
   readonly banner?: readonly string[];
   readonly execute: (command: Command, deps: Deps) => readonly string[];
   readonly parse: (line: string, deps: Deps) => Command | undefined;
-  readonly persistence?: {
-    readonly key: string;
-    readonly storage: (ReadStorage & WriteStorage) | undefined;
-  };
+  readonly persistence?: ConsolePersistence;
 }
 
 const DEFAULT_BANNER = [
@@ -98,7 +103,7 @@ export const installConsole = <Deps, Command>(
   const stored =
     persistence === undefined
       ? { commands: [], scrollback: [] }
-      : readConsoleHistory(persistence.storage, persistence.key);
+      : persistence.read();
   const history = new CommandHistory(stored.commands);
   const scrollback: string[] = [];
   let open = false;
@@ -121,10 +126,7 @@ export const installConsole = <Deps, Command>(
     scrollback.splice(0, Math.max(0, scrollback.length - SCROLLBACK_LINES));
     elements.log.scrollTop = elements.log.scrollHeight;
     if (persistence !== undefined) {
-      writeConsoleHistory(persistence.storage, persistence.key, {
-        commands: history.entries,
-        scrollback
-      });
+      persistence.write({ commands: history.entries, scrollback });
     }
   };
 
