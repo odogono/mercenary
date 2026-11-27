@@ -630,6 +630,14 @@ _Avoid_: Sign, decal, building-detail text
 A structure region whose flags mark it as a lift, where a player on foot changes Floor by key. It reaches only the Floors its Floor Table binds, and refuses every other Floor and the one its Floor Label already shows. It rides in the order B, G, 1 … 9, so Floor 10 lies just below Floor 0 on the ride, though it is the highest Floor in the structure's coordinates. Mercenary III's lift is the same mechanism, and the two Titles share its rules.
 _Avoid_: Elevator, Lift Journey, lift object, lift attachment
 
+**Transporter**:
+A Damocles resident object that carries a player on foot who walks into it to the next available Transporter round the Transporter Ring, the direction set by which face they enter. It carries them to wherever that Transporter now lies, not to a fixed place.
+_Avoid_: Teleporter, portal, transporter pad
+
+**Transporter Ring**:
+The fixed cyclic order of the ten Transporters, by slot. A hop moves exactly one available place round it, and the player cannot choose a destination.
+_Avoid_: Transporter network, route, destination menu
+
 **Structure Workspace**:
 The single bound current-cell Damocles Instance whose plan, attachments and regions the Working Authority holds live. Region selection, the selected-region ±11 eye clamp and plan drawing apply only while the Pose is in the central half of that cell on both axes; attachment motion is deliberately broader and may finish re-closing that instance's leaves outside it.
 _Avoid_: Active structure, current building, bound model
