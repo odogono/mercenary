@@ -35,11 +35,6 @@ const EAGLE = 'object-slot-3';
 const NEWTON = 'eris-key-west-surface-77';
 const SORTING_OFFICE = 'eris-snow-island-surface-03';
 const CAPITAL_11_08 = 'eris-surface-8b';
-/// Flights in this chapter never cross the surface's wrap seam: crossing it leaves the player
-/// where nothing is bound (`chapter-2-seam.playthrough.ts` records that on its own), and a player
-/// can always fly the long way.
-const SEAMLESS = { crossSeam: false } as const;
-
 /// A resident's recovered placement inside its parent, structure-local.
 const placement = async (page: Page, slot: number): Promise<Point> => {
   const position = (await instance(page, `object-slot-${slot}`))?.placement
@@ -141,7 +136,7 @@ test('Chapter 2: Moorby to NOVA TRIGGER 4 on Metis', async ({
         async () => (await attribute(page, 'occupancy')) === EAGLE,
         'board the Eagle'
       );
-      parked = await flyToEntrance(page, NEWTON, SEAMLESS);
+      parked = await flyToEntrance(page, NEWTON);
       await walkTo(page, NEWTON, { x: -240, z: -1900 }, 'inside the lobby');
       await rideTo(page, NEWTON, 10);
       await expectAt(page, areas, STEP.antigrav.target);
@@ -158,7 +153,7 @@ test('Chapter 2: Moorby to NOVA TRIGGER 4 on Metis', async ({
     await chapter.step(STEP.cupboard, async () => {
       await rideTo(page, NEWTON, 0);
       await reboard(page, parked!);
-      parked = await flyToEntrance(page, SORTING_OFFICE, SEAMLESS);
+      parked = await flyToEntrance(page, SORTING_OFFICE);
       await expectAt(page, areas, {
         body: STEP.cupboard.target.body,
         island: STEP.cupboard.target.island
@@ -177,7 +172,7 @@ test('Chapter 2: Moorby to NOVA TRIGGER 4 on Metis', async ({
 
     await chapter.step(STEP.liftTheEagle, async () => {
       await reboard(page, parked!);
-      parked = await flyToEntrance(page, CAPITAL_11_08, SEAMLESS);
+      parked = await flyToEntrance(page, CAPITAL_11_08);
       await expectAt(page, areas, {
         ...STEP.liftTheEagle.target,
         floor: 0

@@ -8,6 +8,7 @@ import {
   cellOf,
   erisSurfaceFrom,
   headingFromByte,
+  inIslandFrame,
   insideCentralCellHalf,
   islandLocalCell,
   nearestIsland,
@@ -126,6 +127,59 @@ describe('the Eris surface from the Damocles Catalogue', () => {
       x: -4,
       z: 0
     });
+  });
+
+  test('binds Key West across the surface wrap once the position is in its island frame (#999)', async () => {
+    const { catalogue, doc } = await load();
+    const surface = erisSurfaceFrom(catalogue, modelsOf(catalogue), doc);
+    const newton = surface.placements.find(
+      placement => placement.id === 'eris-key-west-surface-77'
+    )!;
+    // Where the short flight from Moorby left the Pose: the same place one surface west.
+    const span = SURFACE_CELLS * surface.grid.cellUnits;
+    const across = {
+      x: newton.position.x - span,
+      y: 63,
+      z: newton.position.z - span
+    };
+    expect(structureInCell(surface, across)).toBeUndefined();
+    const framed = inIslandFrame(across, surface);
+    expect(framed.x).toBeCloseTo(newton.position.x, 6);
+    expect(framed.z).toBeCloseTo(newton.position.z, 6);
+    expect(structureInCell(surface, framed)?.id).toBe(newton.id);
+    // Already in frame, the position is returned as it is.
+    expect(inIslandFrame(framed, surface)).toBe(framed);
+  });
+
+  test("lays every Body's placements where its Pose frame meets them (ADR 0095)", async () => {
+    const { catalogue, doc } = await load();
+    const models = modelsOf(catalogue);
+    const far: string[] = [];
+    for (const body of catalogue.bodies) {
+      const surface = erisSurfaceFrom(catalogue, models, doc, {
+        bodyId: body.id,
+        origin: doc.grid.origin
+      });
+      const units = surface.grid.cellUnits;
+      const span = SURFACE_CELLS * units;
+      for (const placement of surface.placements) {
+        const island = nearestIsland(surface, placement.position);
+        // With no island the frame is the plain mask, so a placement must lie on the surface.
+        const inside =
+          island === undefined
+            ? [placement.position.x, placement.position.z].every(
+                value => value >= 0 && value < span
+              )
+            : Math.abs(placement.position.x - island.origin.x * units) <
+                span / 2 &&
+              Math.abs(placement.position.z - island.origin.z * units) <
+                span / 2;
+        if (!inside) {
+          far.push(`${body.id} ${placement.id}`);
+        }
+      }
+    }
+    expect(far).toEqual([]);
   });
 
   test('binds only the current-cell structure and gates its plan to the central half', async () => {

@@ -1,5 +1,7 @@
 # Land a Damocles craft at the recovered landing point
 
+Amended by [ADR 0095](0095-keep-the-damocles-pose-in-its-nearest-islands-frame.md): the landing point and the workspace origin of decisions 2 and 3 are held in the frame of the nearest island, a whole number of surfaces from the Body Coordinate. The original decision follows.
+
 Accepted, 2026-09-28, for [#567](https://github.com/odogono/mercenary/issues/567), part of
 [#558](https://github.com/odogono/mercenary/issues/558) and the
 [driving and flying map](https://github.com/odogono/mercenary/issues/548). Extends

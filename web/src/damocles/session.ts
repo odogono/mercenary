@@ -229,6 +229,7 @@ import {
   floorModelId,
   floorPlacement,
   floorsOf,
+  inIslandFrame,
   insideCentralCellHalf,
   islandLocalCell,
   modelWaves,
@@ -406,6 +407,11 @@ export type DamoclesOccupancy = DamoclesSaveOccupancy;
 const BOARD_REACH = 1024;
 
 const decline = (reason: string) => ({ kind: 'declined' as const, reason });
+/// A Pose with its X and Z in the frame of the island nearest it (ADR 0095).
+const inFrame = (pose: Pose, surface: ErisSurface): Pose => {
+  const position = inIslandFrame(pose.position, surface);
+  return position === pose.position ? pose : { ...pose, position };
+};
 const wrap = (coordinate: number) =>
   coordinate >= 0
     ? coordinate % SURFACE_CELLS
@@ -988,7 +994,16 @@ export class DamoclesSession implements TitleSession<
     // A restore may name a Body other than the document's, so the surface is anchored from the
     // Pose before anything binds against it.
     this.surface = this.surfaceFor(this.pose.body);
-    this.bindAt(this.pose, restore?.structure);
+    // A Save from before ADR 0095 may hold a position across the wrap. Brought into frame, it
+    // may stand in a structure its Save could not see: that one is bound afresh.
+    const saved = this.pose;
+    this.keepInFrame();
+    this.bindAt(
+      this.pose,
+      this.pose !== saved && restore?.structure === null
+        ? undefined
+        : restore?.structure
+    );
     this.readBody();
   }
 
@@ -1090,7 +1105,7 @@ export class DamoclesSession implements TitleSession<
     if (bound === null) {
       this.bindAt(this.pose);
     } else {
-      const ground = placementById(this.surface, bound.id);
+      const ground = placementById(this.surface, bound.id, bound.position);
       // The Floor's structure stays bound: its selector does not change with the surface.
       this.boundPlacement =
         ground === undefined
@@ -1435,7 +1450,9 @@ export class DamoclesSession implements TitleSession<
   /// The surface's own placement of the bound structure, as it stands on Floor 0.
   private groundPlacement(): ErisPlacement | undefined {
     const bound = this.boundPlacement;
-    return bound === null ? undefined : placementById(this.surface, bound.id);
+    return bound === null
+      ? undefined
+      : placementById(this.surface, bound.id, bound.position);
   }
 
   /// The bound structure's region the Pose stands in, where the Pose is in its cell's central half.
@@ -1505,13 +1522,15 @@ export class DamoclesSession implements TitleSession<
     return this.floorSurface.surface;
   }
 
+  /// Where `instanceId` resides. A surface residence on the Body in hand is read in the Pose
+  /// frame (ADR 0095), whether it came from the Catalogue or a Save made before the frame.
   private residenceFor(instanceId: string): Residence | undefined {
     if (this.removedResidents.has(instanceId)) {
       return undefined;
     }
     const departure = this.residence.get(instanceId);
     if (departure !== undefined) {
-      return departure;
+      return this.framedResidence(departure);
     }
     if (this.briefcaseStore.includes(instanceId)) {
       return undefined;
@@ -1523,7 +1542,21 @@ export class DamoclesSession implements TitleSession<
         placementClass: instance.placementClass ?? 0
       };
     }
-    return catalogueResidence(this.content.catalogue, instanceId);
+    const placed = catalogueResidence(this.content.catalogue, instanceId);
+    return placed === undefined ? undefined : this.framedResidence(placed);
+  }
+
+  private framedResidence(residence: Residence): Residence {
+    if (
+      residence.kind !== 'surface' ||
+      residence.body !== this.surface.body.id
+    ) {
+      return residence;
+    }
+    const position = inIslandFrame(residence.position, this.surface);
+    return position === residence.position
+      ? residence
+      : { ...residence, position };
   }
 
   private instanceFor(instanceId: string) {
@@ -1730,16 +1763,26 @@ export class DamoclesSession implements TitleSession<
       const placement =
         instance === undefined
           ? undefined
-          : this.residentPlacement(instance, {
-              x: object.position[0],
-              y: object.position[1] | 0,
-              z: object.position[2]
-            });
+          : this.residentPlacement(instance, this.drawnPoolPosition(object));
       if (placement !== undefined) {
         residents.push(placement);
       }
     }
     return residents;
+  }
+
+  /// Where a pool object is drawn. On a Body the pool keeps `$7AB2`'s masked Body
+  /// Coordinates, so the drawn copy is brought into the Pose frame (ADR 0095); the pool's own
+  /// words are left as the simulation holds them.
+  private drawnPoolPosition(object: PoolObject): Vector3 {
+    const position = {
+      x: object.position[0],
+      y: object.position[1] | 0,
+      z: object.position[2]
+    };
+    return this.space === null
+      ? inIslandFrame(position, this.surface)
+      : position;
   }
 
   private poolObjects(): readonly (readonly [number, PoolObject])[] {
@@ -2984,7 +3027,10 @@ export class DamoclesSession implements TitleSession<
       const moved =
         aboard || frozen
           ? this.pose
-          : walk(this.pose, this.intent, step, this.rules);
+          : inFrame(
+              walk(this.pose, this.intent, step, this.rules),
+              this.surface
+            );
       this.bindAt(moved);
       const placement = this.boundPlacement;
       // `$059520` clears `$5A646` every frame, and only the clamp raises it.
@@ -3223,6 +3269,18 @@ export class DamoclesSession implements TitleSession<
     return this.occupied === null
       ? { kind: 'onFoot' }
       : { instance: this.occupied, kind: 'aboard' };
+  }
+
+  /// On a Body, the craft's and the Pose's X and Z in the frame of the island nearest them
+  /// (ADR 0095), so both agree on what the next pass and the next bind measure from.
+  private keepInFrame(): void {
+    if (this.space !== null) {
+      return;
+    }
+    if (this.craft !== null) {
+      this.craft = inIslandFrame(this.craft, this.surface);
+    }
+    this.pose = inFrame(this.pose, this.surface);
   }
 
   /// The Pose the craft words draw: the attitude words as the Camera's turns (ADR 0051 decision
@@ -3500,8 +3558,8 @@ export class DamoclesSession implements TitleSession<
       this.stick(),
       this.boundBoxes()
     );
-    this.craft = frame.state;
-    this.pose = this.poseFromCraft(frame.state);
+    this.craft = inIslandFrame(frame.state, this.surface);
+    this.pose = this.poseFromCraft(this.craft);
     this.bindAt(this.pose);
     // Authored, as boarding's: the region is taken afresh where the craft now stands.
     this.regionIndex = this.regionAt(this.pose);
@@ -3725,15 +3783,16 @@ export class DamoclesSession implements TitleSession<
     this.doorsMoving = false;
     this.boardedFrom = undefined;
     // `$56488` binds the Body at the point before the support search reads its boxes.
-    const over = {
-      ...frame.craft,
-      x: point.x,
-      y: program.constants.landingY,
-      z: point.z
-    };
+    const over = inIslandFrame(
+      { ...frame.craft, x: point.x, y: program.constants.landingY, z: point.z },
+      surface
+    );
     this.pose = { ...this.poseFromCraft(over), body: bodyId };
     this.bindAt(this.pose);
-    this.craft = land(program, frame.craft, point, this.boundBoxes());
+    this.craft = inIslandFrame(
+      land(program, frame.craft, point, this.boundBoxes()),
+      surface
+    );
     this.pose = this.poseFromCraft(this.craft);
     this.regionIndex = this.regionAt(this.pose);
     this.readBody();
@@ -4671,7 +4730,7 @@ export class DamoclesSession implements TitleSession<
         reason: error instanceof Error ? error.message : String(error)
       };
     }
-    const pose = poseOfArrival(arrival, this.content.doc);
+    const pose = inFrame(poseOfArrival(arrival, this.content.doc), surface);
     // The Pose lands on the Floor its capture stood on, never one read off its height (#505).
     // Where the structure in its cell is in hand its Floor Table must bind that Floor; where it
     // is not, the arrival waits for it.
@@ -4769,11 +4828,14 @@ export class DamoclesSession implements TitleSession<
       body: target.bodyId,
       heading: this.pose.heading,
       pitch: 0,
-      position: {
-        x: wrap(target.x) * surface.grid.cellUnits,
-        y: this.rules.eyeHeight,
-        z: wrap(target.z) * surface.grid.cellUnits
-      }
+      position: inIslandFrame(
+        {
+          x: wrap(target.x) * surface.grid.cellUnits,
+          y: this.rules.eyeHeight,
+          z: wrap(target.z) * surface.grid.cellUnits
+        },
+        surface
+      )
     };
     if (classifyPosition(surface, pose.position).kind === 'sea') {
       return decline('The pin is at sea. Choose a point on land.');
