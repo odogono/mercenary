@@ -698,6 +698,12 @@ python3 research/damocles-st/scripts/transporter-probe.py outside --digit 0 \
     --side keep --no-aim --snapshot research/damocles-st/snapshots/rehosted/eris-transporter-11-8.sav
 ```
 
+```sh
+# carry TRANSPORTER slot 66 as a take leaves it, back clear of every cube, and drop it (#1007)
+python3 research/damocles-st/scripts/transporter-probe.py drop --slot 66 --hold 8 \
+    --snapshot research/damocles-st/snapshots/rehosted/eris-transporter-11-8.sav
+```
+
 Walks in short stick pulses so the player usually stops where a hop leaves them,
 and counts hops only from a tracing breakpoint on `$0591FA`. Each sample reads
 `$7882`, the latch `$7884`, the Cell Readout words `$7A2C`/`$7A34`, the Floor

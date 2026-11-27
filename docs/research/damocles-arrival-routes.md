@@ -465,6 +465,20 @@ and the player stayed on Gaea for as long as they stood there. A sample taken
 between the clear and the draw reads `$7882` as 0, so samples alternate between
 0 and the slot while the player stands still; the latch does not.
 
+**A Drop sets the latch.** The drop handler's accepted path writes `$FFFFFFFF`
+to `$7882` at `$054662`, a long, so `$7884` reads `$FFFF` too. A TRANSPORTER
+dropped where the player stands lands with its slot under them, 63 below the eye,
+which is inside its own cube. It does not fire: the latch is already set, and it
+clears only on a frame that finds the player outside every cube. Live
+([#1007](https://github.com/odogono/mercenary/issues/1007)), from
+`eris-transporter-11-8` with TRANSPORTER slot 66 written onto the Carried Stack
+as a take writes it, 574 units from slot 69: after Down, `$7884` read `$FFFF` for
+the whole eight seconds sampled. `$7882` alternated between 0 and `$0108`
+(66 × 4) as above, and the panel named VOID. No hop was counted on `$0591FA`.
+Slot 66 lay at the player's X and Z, Y 1100 for an eye at 1163, Association B
+`$2C050A8B`: ERIS, Insertion Group 5, Level 10, cell `$8B`. The player leaves it
+like an arrival cube, and walking in again fires.
+
 #### Direction
 
 `$05913A` takes the yaw word `$7AC2` and adds `$100`. On foot (`$7AAE` = 1),
