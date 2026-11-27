@@ -233,18 +233,19 @@ describe('get names what it took', () => {
     expect(session.snapshot.carried).toHaveLength(slots.length);
   });
 
-  /// Only slot 183 can be stood beside in a 16x16 window, which the old `get` refusal happened
-  /// to match by accident rather than by rule. Slot 95 is drawn on Midas, but only from its own
-  /// cell of the field, far outside any window `goto` reaches (test/damocles-midas-field.test.ts).
-  /// The other four are out of reach for reasons that are evidence boundaries, not defects, and
-  /// this pins each one:
+  /// `goto` lands at a cell's centre, and only slot 183 of the six pickup residents is drawn from
+  /// one in its Pose's 16x16 window. That is a fact about `goto`, not about reachability: the
+  /// other five are stood beside by walking in from a cell centre, riding a lift, or travelling
+  /// to another island or cell of the Midas field (test/damocles-body-aware.test.ts, #1002).
   ///
   /// - slots 151 and 181 are placed in the Eris State Office (cell 9,8), but 181 is on Floor 10
-  ///   and 151's insertion group names regions 1, 6 and 7, while the cell's centre is region 10;
-  /// - slot 94 is level 1, and `worldPosition` draws only level 0 (#357);
-  /// - slot 101 is level 0 on Dion, but its insertion group 32 never names the one region the
-  ///   player can bind to in its cell, so it is positioned and then drawn zero times (#355).
-  test('slot 183 is the only pickup resident a session can reach', async () => {
+  ///   and 151's insertion group names regions 1 and 6, while the cell's centre is region 10;
+  /// - slot 94 is on Floor 1, and a `goto` stands the player on Floor 0;
+  /// - slot 101 is level 0 on Dion, but its insertion group 32 never names the region the cell's
+  ///   centre binds;
+  /// - slot 95 is drawn on Midas only from its own cell of the field, about 2,200 cells from the
+  ///   field window the Midas Pose stands in.
+  test('slot 183 is the only pickup resident drawn from a cell centre', async () => {
     const eris = await drawnAnywhere('eris-spaceport-onfoot');
     expect(eris.has('object-slot-183')).toBe(true);
     expect(eris.has('object-slot-151')).toBe(false);
@@ -255,14 +256,12 @@ describe('get names what it took', () => {
     expect(
       (await drawnAnywhere('vesta-parliament-4-6')).has('object-slot-94')
     ).toBe(false);
-    // body-2 carries MAGIC CRYSTAL. Its Pose is anchored to the field window it stands in,
-    // about 2,200 cells across the wrapping surface from the crystal's copy.
     expect((await drawnAnywhere('midas')).has('object-slot-95')).toBe(false);
   }, 30_000);
 
-  test('the unreachable five are unplaced, off level 0, or not in the region stood in', async () => {
+  test('the other five are off Floor 0 or not in the region a cell centre binds', async () => {
     // Stated against the Catalogue as well as the session, so a payload change moves this test
-    // rather than leaving the reachability test to fail for a reason it cannot name.
+    // rather than leaving the one above to fail for a reason it cannot name.
     const catalogue = await loadCatalogue();
     expect(catalogueResidence(catalogue, 'object-slot-95')).toMatchObject({
       kind: 'structure',
@@ -285,7 +284,6 @@ describe('get names what it took', () => {
       level: 10,
       parent: 'eris-surface-89'
     });
-    // Slot 94 is placed, and placed above the ground level the draw pass admits.
     expect(catalogueResidence(catalogue, 'object-slot-94')).toMatchObject({
       kind: 'structure',
       level: 1

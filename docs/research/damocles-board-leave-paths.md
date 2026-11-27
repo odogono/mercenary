@@ -213,9 +213,10 @@ The chair's insertion pairs expose it in Authors House region selectors 11, 12, 
 `payload/damocles/models/structure-01daa0.json`, are `$8000` for 11 and 12 and `$D000`
 for the other five. The region guard at `$054310` needs bit 14, so a board would pass it
 from selectors 26–28, 33 and 34 and refuse silently from 11 and 12. That is derived from
-published data; no capture has been taken inside Authors House. Its one entrance is
-keyed to `DOOR KEY A` (slot 30), which has no recovered placement
-([the location ledger](damocles-gamma-system-location-ledger.md#reachability-of-the-fourteen-level-0-placed-residents)).
+published data; no capture has been taken inside Authors House. Its front entrance is
+keyed to `DOOR KEY A` (slot 30), but in the port an unkeyed side door also lets a player
+in, so AUTHORS COMPUTER is reachable with nothing carried; whether the original agrees is
+Unresolved ([the location ledger](damocles-gamma-system-location-ledger.md#what-changed-since-362)).
 
 ## Two quirks of the key pairing
 

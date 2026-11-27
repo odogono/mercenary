@@ -20,9 +20,8 @@ have not.
 It is a dated research note, not a generated Coverage Ledger: its counts are
 copied from `location-ledger.py ledger` by hand. The placement and gap counts
 were last recounted from `payload/damocles/catalogue.json` on 2026-11-27
-([#1001](https://github.com/odogono/mercenary/issues/1001)). Reachability was
-not recounted then; see
-[#1002](https://github.com/odogono/mercenary/issues/1002).
+([#1001](https://github.com/odogono/mercenary/issues/1001)), and reachability
+on the same day ([#1002](https://github.com/odogono/mercenary/issues/1002)).
 
 ## Scope and non-goals
 
@@ -42,14 +41,14 @@ there and take something.
 
 ## Working Authority and reproduce path
 
-| Item              | Value                                                              |
-| ----------------- | ------------------------------------------------------------------ |
-| Program           | `roms/atarist/damocles_-_mercenary_ii_novagen_software_(uk).stx`   |
-| SHA-256           | `8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef` |
-| Resident evidence | `payload/damocles/catalogue.json` (tracked)                        |
+| Item              | Value                                                                                                                  |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Program           | `roms/atarist/damocles_-_mercenary_ii_novagen_software_(uk).stx`                                                       |
+| SHA-256           | `8d512ac60792eeae7b18afdc724ff27ac6028a1e08f7647e62842bea08e9a2ef`                                                     |
+| Resident evidence | `payload/damocles/catalogue.json` (tracked)                                                                            |
 | Pose evidence     | twenty-seven on-foot Hatari memstates covering twenty-three bodies, published in `payload/damocles/arrival-poses.json` |
-| Tool              | `research/damocles-st/scripts/location-ledger.py`                  |
-| Route evidence    | `research/damocles-st/scripts/arrival-route-probe.py`              |
+| Tool              | `research/damocles-st/scripts/location-ledger.py`                                                                      |
+| Route evidence    | `research/damocles-st/scripts/arrival-route-probe.py`                                                                  |
 
 Every count in this note is derived from the tracked catalogue payload, so the
 body ledger reproduces without Restricted Material:
@@ -128,11 +127,11 @@ all. The decoding is established in
 [resident object associations](damocles-resident-objects.md) and is used here
 rather than re-derived.
 
-| Form                  | Evidence                                                                         | What it licenses                                              |
-| --------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| Surface resident      | Association B's first byte is four times a body index and its second byte is zero | Body, signed 16.16 body-local coordinates, raw heading byte   |
-| Interior-associated   | Association B's second byte is nonzero                                            | Body plus four scene selectors; **no** parent and no position |
-| Unclaimed             | Body byte `$00`, the VOID staging byte `$78`, or the special `$FF`                | Nothing spatial                                               |
+| Form                | Evidence                                                                          | What it licenses                                              |
+| ------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Surface resident    | Association B's first byte is four times a body index and its second byte is zero | Body, signed 16.16 body-local coordinates, raw heading byte   |
+| Interior-associated | Association B's second byte is nonzero                                            | Body plus four scene selectors; **no** parent and no position |
+| Unclaimed           | Body byte `$00`, the VOID staging byte `$78`, or the special `$FF`                | Nothing spatial                                               |
 
 A parent and a local placement additionally require the body's structure-group
 map, the selected structure's region descriptors and the association-list root
@@ -148,39 +147,39 @@ Regenerate the count columns and the totals with
 `python3 research/damocles-st/scripts/location-ledger.py ledger`; the workspace
 and pose columns come from the notes cited below.
 
-| # | Body | Residents | Takeable | Surface | Interior | Placed | Surface workspace | Arrival pose |
-| ---: | --- | ---: | ---: | ---: | ---: | ---: | --- | --- |
-| 0 | DIALIS | 0 | 0 | 0 | 0 | 0 | none recovered | none |
-| 1 | ICARUS | 2 | 2 | 1 | 1 | 1 | none recovered | none |
-| 2 | MIDAS | 5 | 5 | 0 | 5 | 5 | uniform field | `midas` |
-| 3 | ACHERON | 2 | 2 | 1 | 1 | 1 | none recovered | `acheron` |
-| 4 | DION | 30 | 28 | 1 | 29 | 29 | Dion live `$ABDC` | `dion-2-3`, `dion-transporter` |
-| 5 | ATROPOS | 2 | 2 | 1 | 1 | 1 | none recovered | none |
-| 6 | CLOTHO | 17 | 17 | 0 | 17 | 17 | none recovered | `clotho` |
-| 7 | LACHESIS | 0 | 0 | 0 | 0 | 0 | none recovered | none |
-| 8 | GAEA | 33 | 28 | 5 | 28 | 28 | UR City live `$ABDC`; Chaldea Metropolis live | `gaea-ur-city-4-2`, `gaea-transporter` |
-| 9 | CRONUS | 2 | 2 | 2 | 0 | 0 | none recovered | none |
-| 10 | CYCLOPES | 1 | 1 | 0 | 1 | 1 | none recovered | none |
-| 11 | ERIS | 71 | 64 | 7 | 64 | 64 | first-world live `$ABDC` | `eris-spaceport-onfoot`, `eris-transporter-11-8` |
-| 12 | SOLON | 5 | 5 | 1 | 4 | 4 | none recovered | none |
-| 13 | THEON | 4 | 4 | 1 | 3 | 3 | none recovered | `theon` |
-| 14 | VESTA | 11 | 10 | 1 | 10 | 10 | Politburo City live `$ABDC` | `vesta-parliament-4-6`, `vesta-transporter` |
-| 15 | METIS | 9 | 8 | 1 | 8 | 8 | none recovered | `metis-transporter` |
-| 16 | LUCAN | 2 | 2 | 2 | 0 | 0 | none recovered | `lucan` |
-| 17 | LOGOS | 4 | 3 | 1 | 3 | 3 | none recovered | `logos-transporter` |
-| 18 | AURORA | 0 | 0 | 0 | 0 | 0 | none recovered | none |
-| 19 | TRITON | 0 | 0 | 0 | 0 | 0 | none recovered | none |
-| 20 | PAN | 2 | 2 | 1 | 1 | 1 | none recovered | `pan` |
-| 21 | THALIA | 2 | 1 | 2 | 0 | 0 | none recovered | none |
-| 22 | JUNO | 0 | 0 | 0 | 0 | 0 | none recovered | none |
-| 23 | BACCHUS | 6 | 4 | 3 | 3 | 3 | none recovered | `bacchus-transporter` |
-| 24 | JASON | 0 | 0 | 0 | 0 | 0 | none recovered | none |
-| 25 | TOLOSA | 5 | 5 | 1 | 4 | 4 | none recovered | none |
-| 26 | PERSEUS | 6 | 6 | 0 | 6 | 6 | none recovered | none |
-| 27 | MENTOR | 8 | 7 | 2 | 6 | 6 | none recovered | `mentor-transporter` |
-| 28 | SAPPHIRE | 0 | 0 | 0 | 0 | 0 | none recovered | none |
-| 29 | DAMOCLES | 0 | 0 | 0 | 0 | 0 | none recovered | `damocles` |
-| 30 | VOID | 0 | 0 | 0 | 0 | 0 | none recovered | none |
+|   # | Body     | Residents | Takeable | Surface | Interior | Placed | Surface workspace                             | Arrival pose                                     |
+| --: | -------- | --------: | -------: | ------: | -------: | -----: | --------------------------------------------- | ------------------------------------------------ |
+|   0 | DIALIS   |         0 |        0 |       0 |        0 |      0 | none recovered                                | none                                             |
+|   1 | ICARUS   |         2 |        2 |       1 |        1 |      1 | none recovered                                | none                                             |
+|   2 | MIDAS    |         5 |        5 |       0 |        5 |      5 | uniform field                                 | `midas`                                          |
+|   3 | ACHERON  |         2 |        2 |       1 |        1 |      1 | none recovered                                | `acheron`                                        |
+|   4 | DION     |        30 |       28 |       1 |       29 |     29 | Dion live `$ABDC`                             | `dion-2-3`, `dion-transporter`                   |
+|   5 | ATROPOS  |         2 |        2 |       1 |        1 |      1 | none recovered                                | none                                             |
+|   6 | CLOTHO   |        17 |       17 |       0 |       17 |     17 | none recovered                                | `clotho`                                         |
+|   7 | LACHESIS |         0 |        0 |       0 |        0 |      0 | none recovered                                | none                                             |
+|   8 | GAEA     |        33 |       28 |       5 |       28 |     28 | UR City live `$ABDC`; Chaldea Metropolis live | `gaea-ur-city-4-2`, `gaea-transporter`           |
+|   9 | CRONUS   |         2 |        2 |       2 |        0 |      0 | none recovered                                | none                                             |
+|  10 | CYCLOPES |         1 |        1 |       0 |        1 |      1 | none recovered                                | none                                             |
+|  11 | ERIS     |        71 |       64 |       7 |       64 |     64 | first-world live `$ABDC`                      | `eris-spaceport-onfoot`, `eris-transporter-11-8` |
+|  12 | SOLON    |         5 |        5 |       1 |        4 |      4 | none recovered                                | none                                             |
+|  13 | THEON    |         4 |        4 |       1 |        3 |      3 | none recovered                                | `theon`                                          |
+|  14 | VESTA    |        11 |       10 |       1 |       10 |     10 | Politburo City live `$ABDC`                   | `vesta-parliament-4-6`, `vesta-transporter`      |
+|  15 | METIS    |         9 |        8 |       1 |        8 |      8 | none recovered                                | `metis-transporter`                              |
+|  16 | LUCAN    |         2 |        2 |       2 |        0 |      0 | none recovered                                | `lucan`                                          |
+|  17 | LOGOS    |         4 |        3 |       1 |        3 |      3 | none recovered                                | `logos-transporter`                              |
+|  18 | AURORA   |         0 |        0 |       0 |        0 |      0 | none recovered                                | none                                             |
+|  19 | TRITON   |         0 |        0 |       0 |        0 |      0 | none recovered                                | none                                             |
+|  20 | PAN      |         2 |        2 |       1 |        1 |      1 | none recovered                                | `pan`                                            |
+|  21 | THALIA   |         2 |        1 |       2 |        0 |      0 | none recovered                                | none                                             |
+|  22 | JUNO     |         0 |        0 |       0 |        0 |      0 | none recovered                                | none                                             |
+|  23 | BACCHUS  |         6 |        4 |       3 |        3 |      3 | none recovered                                | `bacchus-transporter`                            |
+|  24 | JASON    |         0 |        0 |       0 |        0 |      0 | none recovered                                | none                                             |
+|  25 | TOLOSA   |         5 |        5 |       1 |        4 |      4 | none recovered                                | none                                             |
+|  26 | PERSEUS  |         6 |        6 |       0 |        6 |      6 | none recovered                                | none                                             |
+|  27 | MENTOR   |         8 |        7 |       2 |        6 |      6 | none recovered                                | `mentor-transporter`                             |
+|  28 | SAPPHIRE |         0 |        0 |       0 |        0 |      0 | none recovered                                | none                                             |
+|  29 | DAMOCLES |         0 |        0 |       0 |        0 |      0 | none recovered                                | `damocles`                                       |
+|  30 | VOID     |         0 |        0 |       0 |        0 |      0 | none recovered                                | none                                             |
 
 Totals: **241** resident instances, **210** takeable, **34** surface-located,
 **195** interior-associated, **195** with a recovered placement, across **116**
@@ -255,35 +254,35 @@ using the departure machinery recovered under
 [#326](https://github.com/odogono/mercenary/issues/326). They were not
 instrumented, so this note records the route and not a per-body flight log.
 
-| Body | Capture | Body selector | Camera X, Y, Z | Yaw | Bearing | Cell | Workspace origin |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| ICARUS | `icarus` | `$0004` | `41058080, 63, 45187500` | `$F9F0` | 354.38° | `$12` | `624,688` implied |
-| MIDAS | `midas` | `$0008` | `23494601, 63, 228950707` | `$030C` | 94.22° | `$B5` | `353,3482` field window |
-| ACHERON | `acheron` | `$000C` | `224298727, 63, 19757658` | `$FD77` | 311.84° | `$33` | `3419,298` implied |
-| DION | `dion-2-3` | `$0010` | `213288851, 63, 86343888` | `$F620` | 11.25° | `$32` | `3252,1314` confirmed |
-| DION | `dion-transporter` | `$0010` | `213351262, 213, 87064898` | `$EA17` | 8.09° | `$E3` | `3252,1314` confirmed |
-| ATROPOS | `atropos` | `$0014` | `2850183, 63, 14844268` | `$03DC` | 167.34° | `$11` | `42,225` implied |
-| CLOTHO | `clotho` | `$0018` | `158761083, 63, 19690965` | `$F43F` | 202.15° | `$01` | `2421,300` implied |
-| GAEA | `gaea-ur-city-4-2` | `$0020` | `33847828, 63, 117602545` | `$022F` | 16.52° | `$24` | `512,1792` confirmed |
-| GAEA | `gaea-transporter` | `$0020` | `17334574, 213, 50890231` | `$E3AE` | 151.17° | `$88` | `256,768` implied |
-| CRONUS | `cronus` | `$0024` | `168393898, 63, 57572209` | `$FD2A` | 284.77° | `$55` | `2564,873` implied |
-| CYCLOPES | `cyclopes` | `$0028` | `228687896, 63, 94859970` | `$FE15` | 7.38° | `$22` | `3487,1445` implied |
-| ERIS | `eris-spaceport-onfoot` | `$002C` | `4681905, 63, 8940589` | `$0600` | 0.00° | `$87` | `64,128` confirmed |
-| ERIS | `eris-transporter-11-8` | `$002C` | `4946298, 1163, 8945118` | `$E4C8` | 250.31° | `$8B` | `64,128` confirmed |
-| SOLON | `solon` | `$0030` | `260537593, 63, 91587189` | `$FF8E` | 139.92° | `$11` | `3974,1396` implied |
-| THEON | `theon` | `$0034` | `166952347, 63, 218595213` | `$0316` | 97.73° | `$11` | `2546,3334` implied |
-| VESTA | `vesta-parliament-4-6` | `$0038` | `71270097, 63, 20544365` | `$0614` | 7.03° | `$64` | `1083,307` confirmed |
-| VESTA | `vesta-transporter` | `$0038` | `71269092, 3233, 20547167` | `$E5B2` | 332.58° | `$64` | `1083,307` confirmed |
-| METIS | `metis-transporter` | `$003C` | `165642616, 1413, 70288873` | `$EA26` | 13.36° | `$60` | `2527,1066` implied |
-| LUCAN | `lucan` | `$0040` | `255428843, 63, 229920` | `$01B7` | 334.34° | `$31` | `3896,0` implied |
-| LOGOS | `logos-transporter` | `$0044` | `85098916, 703, 173702108` | `$DEC2` | 68.20° | `$24` | `1294,2648` implied |
-| PAN | `pan` | `$0050` | `27885887, 213, 117998423` | `$07E7` | 171.21° | `$14` | `421,1799` implied |
-| THALIA | `thalia` | `$0054` | `131432751, 63, 213614542` | `$FFD1` | 163.48° | `$36` | `1999,3256` implied |
-| BACCHUS | `bacchus-transporter` | `$005C` | `109020344, 63, 104496724` | `$DC25` | 193.01° | `$82` | `1661,1586` implied |
-| TOLOSA | `tolosa` | `$0064` | `179542265, 63, 103058305` | `$0919` | 278.79° | `$12` | `2737,1571` implied |
-| PERSEUS | `perseus` | `$0068` | `251624793, 63, 53968702` | `$FBD4` | 164.53° | `$25` | `3834,821` implied |
-| MENTOR | `mentor-transporter` | `$006C` | `185238283, 63, 18055367` | `$DFCA` | 161.02° | `$79` | `2817,268` implied |
-| DAMOCLES | `damocles` | `$0074` | `16451637, 63, 214692179` | `$085C` | 212.34° | `$00` | `251,3275` implied |
+| Body     | Capture                 | Body selector | Camera X, Y, Z              | Yaw     | Bearing | Cell  | Workspace origin        |
+| -------- | ----------------------- | ------------- | --------------------------- | ------- | ------- | ----- | ----------------------- |
+| ICARUS   | `icarus`                | `$0004`       | `41058080, 63, 45187500`    | `$F9F0` | 354.38° | `$12` | `624,688` implied       |
+| MIDAS    | `midas`                 | `$0008`       | `23494601, 63, 228950707`   | `$030C` | 94.22°  | `$B5` | `353,3482` field window |
+| ACHERON  | `acheron`               | `$000C`       | `224298727, 63, 19757658`   | `$FD77` | 311.84° | `$33` | `3419,298` implied      |
+| DION     | `dion-2-3`              | `$0010`       | `213288851, 63, 86343888`   | `$F620` | 11.25°  | `$32` | `3252,1314` confirmed   |
+| DION     | `dion-transporter`      | `$0010`       | `213351262, 213, 87064898`  | `$EA17` | 8.09°   | `$E3` | `3252,1314` confirmed   |
+| ATROPOS  | `atropos`               | `$0014`       | `2850183, 63, 14844268`     | `$03DC` | 167.34° | `$11` | `42,225` implied        |
+| CLOTHO   | `clotho`                | `$0018`       | `158761083, 63, 19690965`   | `$F43F` | 202.15° | `$01` | `2421,300` implied      |
+| GAEA     | `gaea-ur-city-4-2`      | `$0020`       | `33847828, 63, 117602545`   | `$022F` | 16.52°  | `$24` | `512,1792` confirmed    |
+| GAEA     | `gaea-transporter`      | `$0020`       | `17334574, 213, 50890231`   | `$E3AE` | 151.17° | `$88` | `256,768` implied       |
+| CRONUS   | `cronus`                | `$0024`       | `168393898, 63, 57572209`   | `$FD2A` | 284.77° | `$55` | `2564,873` implied      |
+| CYCLOPES | `cyclopes`              | `$0028`       | `228687896, 63, 94859970`   | `$FE15` | 7.38°   | `$22` | `3487,1445` implied     |
+| ERIS     | `eris-spaceport-onfoot` | `$002C`       | `4681905, 63, 8940589`      | `$0600` | 0.00°   | `$87` | `64,128` confirmed      |
+| ERIS     | `eris-transporter-11-8` | `$002C`       | `4946298, 1163, 8945118`    | `$E4C8` | 250.31° | `$8B` | `64,128` confirmed      |
+| SOLON    | `solon`                 | `$0030`       | `260537593, 63, 91587189`   | `$FF8E` | 139.92° | `$11` | `3974,1396` implied     |
+| THEON    | `theon`                 | `$0034`       | `166952347, 63, 218595213`  | `$0316` | 97.73°  | `$11` | `2546,3334` implied     |
+| VESTA    | `vesta-parliament-4-6`  | `$0038`       | `71270097, 63, 20544365`    | `$0614` | 7.03°   | `$64` | `1083,307` confirmed    |
+| VESTA    | `vesta-transporter`     | `$0038`       | `71269092, 3233, 20547167`  | `$E5B2` | 332.58° | `$64` | `1083,307` confirmed    |
+| METIS    | `metis-transporter`     | `$003C`       | `165642616, 1413, 70288873` | `$EA26` | 13.36°  | `$60` | `2527,1066` implied     |
+| LUCAN    | `lucan`                 | `$0040`       | `255428843, 63, 229920`     | `$01B7` | 334.34° | `$31` | `3896,0` implied        |
+| LOGOS    | `logos-transporter`     | `$0044`       | `85098916, 703, 173702108`  | `$DEC2` | 68.20°  | `$24` | `1294,2648` implied     |
+| PAN      | `pan`                   | `$0050`       | `27885887, 213, 117998423`  | `$07E7` | 171.21° | `$14` | `421,1799` implied      |
+| THALIA   | `thalia`                | `$0054`       | `131432751, 63, 213614542`  | `$FFD1` | 163.48° | `$36` | `1999,3256` implied     |
+| BACCHUS  | `bacchus-transporter`   | `$005C`       | `109020344, 63, 104496724`  | `$DC25` | 193.01° | `$82` | `1661,1586` implied     |
+| TOLOSA   | `tolosa`                | `$0064`       | `179542265, 63, 103058305`  | `$0919` | 278.79° | `$12` | `2737,1571` implied     |
+| PERSEUS  | `perseus`               | `$0068`       | `251624793, 63, 53968702`   | `$FBD4` | 164.53° | `$25` | `3834,821` implied      |
+| MENTOR   | `mentor-transporter`    | `$006C`       | `185238283, 63, 18055367`   | `$DFCA` | 161.02° | `$79` | `2817,268` implied      |
+| DAMOCLES | `damocles`              | `$0074`       | `16451637, 63, 214692179`   | `$085C` | 212.34° | `$00` | `251,3275` implied      |
 
 Each pose is read from `$7A8E` (on foot), `$7AA8` (body selector), `$7A92` /
 `$7A96` / `$7A9A` (camera longwords) and `$7AA2` with its `$7AC2` twin.
@@ -424,124 +423,124 @@ parent, so every slot listed has a recovered placement; when this table was
 first written, none did. None of these
 selectors is by itself a building, Room, floor or named place.
 
-| Body | Group | Cell | Level | Residents | Takeable | Slots |
-| --- | ---: | ---: | ---: | ---: | ---: | --- |
-| ICARUS | `$33` | `$12` | `$00` | 1 | 1 | 91 |
-| MIDAS | `$38` | `$0D` | `$00` | 1 | 1 | 219 |
-| MIDAS | `$38` | `$22` | `$00` | 1 | 1 | 36 |
-| MIDAS | `$38` | `$23` | `$00` | 1 | 1 | 39 |
-| MIDAS | `$38` | `$EB` | `$00` | 1 | 1 | 95 |
-| MIDAS | `$38` | `$F7` | `$00` | 1 | 1 | 37 |
-| ACHERON | `$06` | `$11` | `$00` | 1 | 1 | 99 |
-| DION | `$02` | `$09` | `$00` | 2 | 2 | 50 51 |
-| DION | `$02` | `$22` | `$00` | 1 | 1 | 128 |
-| DION | `$02` | `$33` | `$00` | 1 | 1 | 38 |
-| DION | `$02` | `$A0` | `$00` | 3 | 3 | 154 195 204 |
-| DION | `$02` | `$B2` | `$00` | 1 | 1 | 109 |
-| DION | `$02` | `$B2` | `$01` | 4 | 4 | 102 111 148 220 |
-| DION | `$02` | `$C2` | `$01` | 1 | 1 | 63 |
-| DION | `$02` | `$DE` | `$00` | 3 | 3 | 14 101 234 |
-| DION | `$02` | `$E3` | `$01` | 1 | 0 | 66 |
-| DION | `$02` | `$E3` | `$09` | 1 | 1 | 34 |
-| DION | `$02` | `$E9` | `$00` | 1 | 1 | 135 |
-| DION | `$1B` | `$06` | `$00` | 2 | 2 | 240 243 |
-| DION | `$1B` | `$06` | `$0A` | 1 | 1 | 198 |
-| DION | `$1B` | `$41` | `$00` | 1 | 1 | 120 |
-| DION | `$1B` | `$50` | `$00` | 1 | 1 | 77 |
-| DION | `$1C` | `$06` | `$00` | 3 | 3 | 33 241 244 |
-| DION | `$1C` | `$06` | `$0A` | 1 | 1 | 196 |
-| DION | `$1C` | `$30` | `$00` | 1 | 1 | 104 |
-| ATROPOS | `$37` | `$11` | `$01` | 1 | 1 | 138 |
-| CLOTHO | `$32` | `$01` | `$02` | 3 | 3 | 208 214 218 |
-| CLOTHO | `$32` | `$04` | `$0A` | 1 | 1 | 129 |
-| CLOTHO | `$32` | `$11` | `$00` | 3 | 3 | 96 116 245 |
-| CLOTHO | `$32` | `$12` | `$00` | 2 | 2 | 216 247 |
-| CLOTHO | `$32` | `$12` | `$02` | 1 | 1 | 193 |
-| CLOTHO | `$32` | `$12` | `$03` | 1 | 1 | 140 |
-| CLOTHO | `$32` | `$12` | `$04` | 5 | 5 | 122 127 192 217 224 |
-| CLOTHO | `$32` | `$56` | `$00` | 1 | 1 | 139 |
-| GAEA | `$07` | `$17` | `$00` | 5 | 4 | 64 84 141 197 205 |
-| GAEA | `$07` | `$21` | `$00` | 2 | 2 | 210 233 |
-| GAEA | `$07` | `$21` | `$0A` | 1 | 1 | 78 |
-| GAEA | `$07` | `$25` | `$00` | 2 | 2 | 211 232 |
-| GAEA | `$07` | `$25` | `$0A` | 1 | 1 | 79 |
-| GAEA | `$07` | `$29` | `$0A` | 2 | 2 | 152 163 |
-| GAEA | `$07` | `$31` | `$00` | 1 | 1 | 52 |
-| GAEA | `$07` | `$39` | `$00` | 1 | 1 | 26 |
-| GAEA | `$0F` | `$14` | `$00` | 3 | 3 | 28 90 103 |
-| GAEA | `$0F` | `$14` | `$01` | 1 | 1 | 98 |
-| GAEA | `$0F` | `$65` | `$00` | 1 | 1 | 86 |
-| GAEA | `$0F` | `$66` | `$01` | 4 | 4 | 27 125 229 239 |
-| GAEA | `$0F` | `$66` | `$0A` | 1 | 1 | 155 |
-| GAEA | `$0F` | `$88` | `$01` | 2 | 1 | 70 191 |
-| GAEA | `$0F` | `$D4` | `$02` | 1 | 1 | 30 |
-| CYCLOPES | `$35` | `$22` | `$00` | 1 | 1 | 46 |
-| ERIS | `$10` | `$03` | `$00` | 4 | 4 | 85 123 143 201 |
-| ERIS | `$10` | `$43` | `$00` | 1 | 1 | 113 |
-| ERIS | `$10` | `$46` | `$00` | 3 | 3 | 45 60 61 |
-| ERIS | `$10` | `$46` | `$0A` | 2 | 2 | 41 76 |
-| ERIS | `$11` | `$14` | `$01` | 3 | 3 | 185 227 235 |
-| ERIS | `$11` | `$14` | `$02` | 2 | 2 | 48 207 |
-| ERIS | `$11` | `$14` | `$09` | 3 | 3 | 117 213 222 |
-| ERIS | `$11` | `$54` | `$01` | 3 | 3 | 40 186 223 |
-| ERIS | `$11` | `$73` | `$00` | 1 | 1 | 93 |
-| ERIS | `$12` | `$12` | `$00` | 1 | 1 | 209 |
-| ERIS | `$12` | `$29` | `$0A` | 1 | 1 | 158 |
-| ERIS | `$12` | `$3F` | `$00` | 1 | 1 | 134 |
-| ERIS | `$12` | `$5E` | `$00` | 1 | 1 | 136 |
-| ERIS | `$12` | `$87` | `$00` | 1 | 1 | 183 |
-| ERIS | `$12` | `$89` | `$00` | 2 | 2 | 118 151 |
-| ERIS | `$12` | `$89` | `$01` | 1 | 1 | 110 |
-| ERIS | `$12` | `$89` | `$02` | 2 | 2 | 115 187 |
-| ERIS | `$12` | `$89` | `$0A` | 1 | 1 | 181 |
-| ERIS | `$12` | `$8B` | `$0A` | 1 | 0 | 69 |
-| ERIS | `$12` | `$99` | `$00` | 1 | 1 | 124 |
-| ERIS | `$12` | `$B4` | `$00` | 1 | 1 | 105 |
-| ERIS | `$12` | `$CF` | `$01` | 2 | 2 | 228 236 |
-| ERIS | `$12` | `$CF` | `$02` | 1 | 1 | 35 |
-| ERIS | `$12` | `$CF` | `$0A` | 1 | 1 | 47 |
-| ERIS | `$12` | `$E1` | `$0A` | 1 | 1 | 57 |
-| ERIS | `$12` | `$E8` | `$00` | 1 | 1 | 182 |
-| ERIS | `$12` | `$EC` | `$01` | 1 | 1 | 56 |
-| ERIS | `$12` | `$FD` | `$00` | 1 | 1 | 131 |
-| ERIS | `$14` | `$26` | `$00` | 1 | 0 | 65 |
-| ERIS | `$14` | `$26` | `$01` | 1 | 1 | 180 |
-| ERIS | `$14` | `$26` | `$0A` | 1 | 1 | 145 |
-| ERIS | `$14` | `$47` | `$09` | 3 | 3 | 149 206 212 |
-| ERIS | `$14` | `$56` | `$03` | 3 | 3 | 75 80 81 |
-| ERIS | `$14` | `$56` | `$04` | 5 | 5 | 42 43 146 150 200 |
-| ERIS | `$14` | `$56` | `$0A` | 1 | 1 | 31 |
-| ERIS | `$14` | `$66` | `$01` | 1 | 1 | 137 |
-| ERIS | `$15` | `$77` | `$0A` | 1 | 1 | 157 |
-| ERIS | `$15` | `$89` | `$01` | 3 | 3 | 44 237 238 |
-| SOLON | `$04` | `$11` | `$0A` | 4 | 4 | 55 59 88 246 |
-| THEON | `$09` | `$13` | `$00` | 2 | 2 | 100 242 |
-| THEON | `$09` | `$32` | `$00` | 1 | 1 | 82 |
-| VESTA | `$05` | `$64` | `$00` | 1 | 1 | 215 |
-| VESTA | `$05` | `$64` | `$01` | 3 | 3 | 184 225 230 |
-| VESTA | `$05` | `$64` | `$02` | 2 | 2 | 153 202 |
-| VESTA | `$05` | `$64` | `$03` | 1 | 1 | 108 |
-| VESTA | `$05` | `$64` | `$0A` | 1 | 0 | 68 |
-| VESTA | `$05` | `$73` | `$01` | 2 | 2 | 94 203 |
-| METIS | `$03` | `$31` | `$00` | 1 | 1 | 32 |
-| METIS | `$03` | `$60` | `$09` | 4 | 3 | 67 133 226 231 |
-| METIS | `$03` | `$65` | `$00` | 3 | 3 | 87 106 114 |
-| LOGOS | `$08` | `$24` | `$03` | 1 | 1 | 142 |
-| LOGOS | `$08` | `$24` | `$04` | 1 | 0 | 71 |
-| LOGOS | `$08` | `$36` | `$00` | 1 | 1 | 121 |
-| PAN | `$0C` | `$14` | `$01` | 1 | 1 | 190 |
-| BACCHUS | `$18` | `$21` | `$00` | 1 | 1 | 130 |
-| BACCHUS | `$18` | `$31` | `$00` | 2 | 2 | 147 221 |
-| TOLOSA | `$17` | `$12` | `$00` | 4 | 4 | 159 160 161 162 |
-| PERSEUS | `$16` | `$14` | `$0A` | 2 | 2 | 58 194 |
-| PERSEUS | `$16` | `$25` | `$00` | 2 | 2 | 107 126 |
-| PERSEUS | `$16` | `$64` | `$0A` | 2 | 2 | 97 199 |
-| MENTOR | `$1A` | `$12` | `$00` | 1 | 1 | 53 |
-| MENTOR | `$1A` | `$34` | `$00` | 1 | 1 | 119 |
-| MENTOR | `$1A` | `$44` | `$00` | 1 | 1 | 144 |
-| MENTOR | `$1A` | `$45` | `$00` | 1 | 1 | 89 |
-| MENTOR | `$1A` | `$56` | `$00` | 1 | 1 | 132 |
-| MENTOR | `$1A` | `$79` | `$00` | 1 | 1 | 188 |
+| Body     | Group |  Cell | Level | Residents | Takeable | Slots               |
+| -------- | ----: | ----: | ----: | --------: | -------: | ------------------- |
+| ICARUS   | `$33` | `$12` | `$00` |         1 |        1 | 91                  |
+| MIDAS    | `$38` | `$0D` | `$00` |         1 |        1 | 219                 |
+| MIDAS    | `$38` | `$22` | `$00` |         1 |        1 | 36                  |
+| MIDAS    | `$38` | `$23` | `$00` |         1 |        1 | 39                  |
+| MIDAS    | `$38` | `$EB` | `$00` |         1 |        1 | 95                  |
+| MIDAS    | `$38` | `$F7` | `$00` |         1 |        1 | 37                  |
+| ACHERON  | `$06` | `$11` | `$00` |         1 |        1 | 99                  |
+| DION     | `$02` | `$09` | `$00` |         2 |        2 | 50 51               |
+| DION     | `$02` | `$22` | `$00` |         1 |        1 | 128                 |
+| DION     | `$02` | `$33` | `$00` |         1 |        1 | 38                  |
+| DION     | `$02` | `$A0` | `$00` |         3 |        3 | 154 195 204         |
+| DION     | `$02` | `$B2` | `$00` |         1 |        1 | 109                 |
+| DION     | `$02` | `$B2` | `$01` |         4 |        4 | 102 111 148 220     |
+| DION     | `$02` | `$C2` | `$01` |         1 |        1 | 63                  |
+| DION     | `$02` | `$DE` | `$00` |         3 |        3 | 14 101 234          |
+| DION     | `$02` | `$E3` | `$01` |         1 |        0 | 66                  |
+| DION     | `$02` | `$E3` | `$09` |         1 |        1 | 34                  |
+| DION     | `$02` | `$E9` | `$00` |         1 |        1 | 135                 |
+| DION     | `$1B` | `$06` | `$00` |         2 |        2 | 240 243             |
+| DION     | `$1B` | `$06` | `$0A` |         1 |        1 | 198                 |
+| DION     | `$1B` | `$41` | `$00` |         1 |        1 | 120                 |
+| DION     | `$1B` | `$50` | `$00` |         1 |        1 | 77                  |
+| DION     | `$1C` | `$06` | `$00` |         3 |        3 | 33 241 244          |
+| DION     | `$1C` | `$06` | `$0A` |         1 |        1 | 196                 |
+| DION     | `$1C` | `$30` | `$00` |         1 |        1 | 104                 |
+| ATROPOS  | `$37` | `$11` | `$01` |         1 |        1 | 138                 |
+| CLOTHO   | `$32` | `$01` | `$02` |         3 |        3 | 208 214 218         |
+| CLOTHO   | `$32` | `$04` | `$0A` |         1 |        1 | 129                 |
+| CLOTHO   | `$32` | `$11` | `$00` |         3 |        3 | 96 116 245          |
+| CLOTHO   | `$32` | `$12` | `$00` |         2 |        2 | 216 247             |
+| CLOTHO   | `$32` | `$12` | `$02` |         1 |        1 | 193                 |
+| CLOTHO   | `$32` | `$12` | `$03` |         1 |        1 | 140                 |
+| CLOTHO   | `$32` | `$12` | `$04` |         5 |        5 | 122 127 192 217 224 |
+| CLOTHO   | `$32` | `$56` | `$00` |         1 |        1 | 139                 |
+| GAEA     | `$07` | `$17` | `$00` |         5 |        4 | 64 84 141 197 205   |
+| GAEA     | `$07` | `$21` | `$00` |         2 |        2 | 210 233             |
+| GAEA     | `$07` | `$21` | `$0A` |         1 |        1 | 78                  |
+| GAEA     | `$07` | `$25` | `$00` |         2 |        2 | 211 232             |
+| GAEA     | `$07` | `$25` | `$0A` |         1 |        1 | 79                  |
+| GAEA     | `$07` | `$29` | `$0A` |         2 |        2 | 152 163             |
+| GAEA     | `$07` | `$31` | `$00` |         1 |        1 | 52                  |
+| GAEA     | `$07` | `$39` | `$00` |         1 |        1 | 26                  |
+| GAEA     | `$0F` | `$14` | `$00` |         3 |        3 | 28 90 103           |
+| GAEA     | `$0F` | `$14` | `$01` |         1 |        1 | 98                  |
+| GAEA     | `$0F` | `$65` | `$00` |         1 |        1 | 86                  |
+| GAEA     | `$0F` | `$66` | `$01` |         4 |        4 | 27 125 229 239      |
+| GAEA     | `$0F` | `$66` | `$0A` |         1 |        1 | 155                 |
+| GAEA     | `$0F` | `$88` | `$01` |         2 |        1 | 70 191              |
+| GAEA     | `$0F` | `$D4` | `$02` |         1 |        1 | 30                  |
+| CYCLOPES | `$35` | `$22` | `$00` |         1 |        1 | 46                  |
+| ERIS     | `$10` | `$03` | `$00` |         4 |        4 | 85 123 143 201      |
+| ERIS     | `$10` | `$43` | `$00` |         1 |        1 | 113                 |
+| ERIS     | `$10` | `$46` | `$00` |         3 |        3 | 45 60 61            |
+| ERIS     | `$10` | `$46` | `$0A` |         2 |        2 | 41 76               |
+| ERIS     | `$11` | `$14` | `$01` |         3 |        3 | 185 227 235         |
+| ERIS     | `$11` | `$14` | `$02` |         2 |        2 | 48 207              |
+| ERIS     | `$11` | `$14` | `$09` |         3 |        3 | 117 213 222         |
+| ERIS     | `$11` | `$54` | `$01` |         3 |        3 | 40 186 223          |
+| ERIS     | `$11` | `$73` | `$00` |         1 |        1 | 93                  |
+| ERIS     | `$12` | `$12` | `$00` |         1 |        1 | 209                 |
+| ERIS     | `$12` | `$29` | `$0A` |         1 |        1 | 158                 |
+| ERIS     | `$12` | `$3F` | `$00` |         1 |        1 | 134                 |
+| ERIS     | `$12` | `$5E` | `$00` |         1 |        1 | 136                 |
+| ERIS     | `$12` | `$87` | `$00` |         1 |        1 | 183                 |
+| ERIS     | `$12` | `$89` | `$00` |         2 |        2 | 118 151             |
+| ERIS     | `$12` | `$89` | `$01` |         1 |        1 | 110                 |
+| ERIS     | `$12` | `$89` | `$02` |         2 |        2 | 115 187             |
+| ERIS     | `$12` | `$89` | `$0A` |         1 |        1 | 181                 |
+| ERIS     | `$12` | `$8B` | `$0A` |         1 |        0 | 69                  |
+| ERIS     | `$12` | `$99` | `$00` |         1 |        1 | 124                 |
+| ERIS     | `$12` | `$B4` | `$00` |         1 |        1 | 105                 |
+| ERIS     | `$12` | `$CF` | `$01` |         2 |        2 | 228 236             |
+| ERIS     | `$12` | `$CF` | `$02` |         1 |        1 | 35                  |
+| ERIS     | `$12` | `$CF` | `$0A` |         1 |        1 | 47                  |
+| ERIS     | `$12` | `$E1` | `$0A` |         1 |        1 | 57                  |
+| ERIS     | `$12` | `$E8` | `$00` |         1 |        1 | 182                 |
+| ERIS     | `$12` | `$EC` | `$01` |         1 |        1 | 56                  |
+| ERIS     | `$12` | `$FD` | `$00` |         1 |        1 | 131                 |
+| ERIS     | `$14` | `$26` | `$00` |         1 |        0 | 65                  |
+| ERIS     | `$14` | `$26` | `$01` |         1 |        1 | 180                 |
+| ERIS     | `$14` | `$26` | `$0A` |         1 |        1 | 145                 |
+| ERIS     | `$14` | `$47` | `$09` |         3 |        3 | 149 206 212         |
+| ERIS     | `$14` | `$56` | `$03` |         3 |        3 | 75 80 81            |
+| ERIS     | `$14` | `$56` | `$04` |         5 |        5 | 42 43 146 150 200   |
+| ERIS     | `$14` | `$56` | `$0A` |         1 |        1 | 31                  |
+| ERIS     | `$14` | `$66` | `$01` |         1 |        1 | 137                 |
+| ERIS     | `$15` | `$77` | `$0A` |         1 |        1 | 157                 |
+| ERIS     | `$15` | `$89` | `$01` |         3 |        3 | 44 237 238          |
+| SOLON    | `$04` | `$11` | `$0A` |         4 |        4 | 55 59 88 246        |
+| THEON    | `$09` | `$13` | `$00` |         2 |        2 | 100 242             |
+| THEON    | `$09` | `$32` | `$00` |         1 |        1 | 82                  |
+| VESTA    | `$05` | `$64` | `$00` |         1 |        1 | 215                 |
+| VESTA    | `$05` | `$64` | `$01` |         3 |        3 | 184 225 230         |
+| VESTA    | `$05` | `$64` | `$02` |         2 |        2 | 153 202             |
+| VESTA    | `$05` | `$64` | `$03` |         1 |        1 | 108                 |
+| VESTA    | `$05` | `$64` | `$0A` |         1 |        0 | 68                  |
+| VESTA    | `$05` | `$73` | `$01` |         2 |        2 | 94 203              |
+| METIS    | `$03` | `$31` | `$00` |         1 |        1 | 32                  |
+| METIS    | `$03` | `$60` | `$09` |         4 |        3 | 67 133 226 231      |
+| METIS    | `$03` | `$65` | `$00` |         3 |        3 | 87 106 114          |
+| LOGOS    | `$08` | `$24` | `$03` |         1 |        1 | 142                 |
+| LOGOS    | `$08` | `$24` | `$04` |         1 |        0 | 71                  |
+| LOGOS    | `$08` | `$36` | `$00` |         1 |        1 | 121                 |
+| PAN      | `$0C` | `$14` | `$01` |         1 |        1 | 190                 |
+| BACCHUS  | `$18` | `$21` | `$00` |         1 |        1 | 130                 |
+| BACCHUS  | `$18` | `$31` | `$00` |         2 |        2 | 147 221             |
+| TOLOSA   | `$17` | `$12` | `$00` |         4 |        4 | 159 160 161 162     |
+| PERSEUS  | `$16` | `$14` | `$0A` |         2 |        2 | 58 194              |
+| PERSEUS  | `$16` | `$25` | `$00` |         2 |        2 | 107 126             |
+| PERSEUS  | `$16` | `$64` | `$0A` |         2 |        2 | 97 199              |
+| MENTOR   | `$1A` | `$12` | `$00` |         1 |        1 | 53                  |
+| MENTOR   | `$1A` | `$34` | `$00` |         1 |        1 | 119                 |
+| MENTOR   | `$1A` | `$44` | `$00` |         1 |        1 | 144                 |
+| MENTOR   | `$1A` | `$45` | `$00` |         1 |        1 | 89                  |
+| MENTOR   | `$1A` | `$56` | `$00` |         1 |        1 | 132                 |
+| MENTOR   | `$1A` | `$79` | `$00` |         1 |        1 | 188                 |
 
 ## What is placed today
 
@@ -551,10 +550,10 @@ placed in the copy in its own cell ([the Midas field](damocles-midas-field.md)).
 [interior residents in every captured workspace](damocles-interior-resident-placement.md#what-is-not-placed).
 The two placed first, both Eris keys, were:
 
-| Slot | Object           | Parent                                       | Local position    | Evidence                                                  |
-| ---: | ---------------- | -------------------------------------------- | ----------------- | --------------------------------------------------------- |
+| Slot | Object           | Parent                                            | Local position    | Evidence                                                                    |
+| ---: | ---------------- | ------------------------------------------------- | ----------------- | --------------------------------------------------------------------------- |
 |  180 | KEY - 99 CHEVY   | `eris-structure-0251d7` (group `$14`, cell `$26`) | `-394, 200, 1846` | [resident object associations](damocles-resident-objects.md#key---99-chevy) |
-|  183 | KEY- V.I.P. LIMO | `eris-surface-87` (Capital Spaceport region 1)    | `1038, 0, 789`    | [Capital Spaceport interior](damocles-spaceport-interior.md) |
+|  183 | KEY- V.I.P. LIMO | `eris-surface-87` (Capital Spaceport region 1)    | `1038, 0, 789`    | [Capital Spaceport interior](damocles-spaceport-interior.md)                |
 
 Both were placed by hand. Every other placement comes from the general binding.
 
@@ -582,18 +581,18 @@ Their mappings and responses were recovered by
 |  101 | AUTHORS COMPUTER |   `$0B` | DION  | `$02` / `$DE` / `$00` | `dion-surface-de`                          |
 |   94 | CASH REGISTER    |   `$3E` | VESTA | `$05` / `$73` / `$01` | `vesta-surface-73`                         |
 
-Slot 183 is reachable, delivered under #297 / #300. Reachability of the other
-five has not been measured since #362, when only level 0 was drawn and slots 181
-and 151 had no placement; [#1002](https://github.com/odogono/mercenary/issues/1002)
-recounts it. Cell `$89` is STATE OFFICE; its two residents were placed once every
+Slot 183 is reachable, delivered under #297 / #300, and so, with every door
+shut, are the other five
+([#1002](https://github.com/odogono/mercenary/issues/1002); see [a recovered
+placement is not reachability](#a-recovered-placement-is-not-reachability)).
+Cell `$89` is STATE OFFICE; its two residents were placed once every
 captured structure group was bound
 ([interior residents in every captured workspace](damocles-interior-resident-placement.md)).
 
 `CASH REGISTER` is placed in GUM STORE and `AUTHORS COMPUTER` in AUTHORS HOUSE by
 [#325](https://github.com/odogono/mercenary/issues/325), the latter at
-parent-local `(-1630, 38, -81)` on structure-group `$02` cell `$DE` instance slot
-216. Reaching either on foot is a separate question; the section below answered
-it as of #362 (neither, for two different reasons), and #1002 asks it again.
+parent-local `(-1630, 38, -81)` on structure-group `$02` cell `$DE` instance slot 216. Both are reachable on foot: CASH REGISTER by lift to Floor 1, and AUTHORS
+COMPUTER through an unkeyed side door, which overturns #362's answer for it.
 
 The programme's three named special items are likewise accounted for, and all
 three are now placed:
@@ -615,13 +614,13 @@ not evidence.
 Both ANTIGRAV instances select the same source model `object-03f384` and are
 distinct residents at distinct Eris cells; neither is a duplicate of the other.
 BRIEFCASE sits in Vesta cell `$64` — the same cell as the validated Vesta
-arrival pose — which is why it was the special item closest to being reachable.
+arrival pose .
 [#325](https://github.com/odogono/mercenary/issues/325) places it at
 parent-local `(337, 951, -210)` inside VESTA PARLIAMENT, on floor 3 of the
-structure's 317-unit storey pitch. Reaching it on foot is a separate question; when
-last measured no route had entered that interior
-([#331](https://github.com/odogono/mercenary/issues/331)), and
-[#1002](https://github.com/odogono/mercenary/issues/1002) measures it again.
+structure's 317-unit storey pitch. All three special items are reachable on foot
+with every door shut
+([#1002](https://github.com/odogono/mercenary/issues/1002)): BRIEFCASE by lift
+to Floor 3, and both ANTIGRAVs by lift to Floor 10 of their islands' structures.
 
 Nothing about capacity, refusal or reversible special-item effects is claimed
 here. All three carry the ordinary takeable handling byte `$04`; their special
@@ -629,150 +628,107 @@ behaviour is a separate question and belongs to the programme's later slices.
 
 ## A recovered placement is not reachability
 
-> **Superseded in its counts.** This section is a snapshot from
-> [#362](https://github.com/odogono/mercenary/issues/362), when 28 interior
-> residents were placed and the port drew level 0 only. Placements have since
-> reached all 195 ([interior residents in every captured
-> workspace](damocles-interior-resident-placement.md), [the Midas
-> field](damocles-midas-field.md)), and the port draws upper Floors (#484, #536).
-> Its distinctions and method still hold; its counts and its "no recovered
-> residence" and "only level 0 is drawn" reasons do not.
-> [#1002](https://github.com/odogono/mercenary/issues/1002) recounts it.
-
 This ledger already insists a roster entry is not a location. The browser
 verification for [#320](https://github.com/odogono/mercenary/issues/320) forces
 the next distinction: **a recovered parent and local placement are not
-reachability either.** An object is reachable only if the port, standing
-somewhere a player can stand, draws it and admits it to the selection.
+reachability either.** In this note a resident is **reachable** when the port,
+standing somewhere a player can stand, draws it and admits it to the
+selection. This is port reachability. The Working Authority has not been asked
+the same question resident by resident, and nothing below claims it would
+agree.
 
-Of the six pickup-trigger slots, exactly **one** — slot 183, KEY- V.I.P. LIMO —
-can be stood beside anywhere in the game today. The other five fail for three
-distinct reasons, and separating them matters because they are owned by three
-different tickets.
+Recounted on 2026-11-27 for
+[#1002](https://github.com/odogono/mercenary/issues/1002), over all 195
+placements, with upper Floors drawn (#484, #536):
 
-| Reason                                                                     | Slots        | Owner                      |
-| -------------------------------------------------------------------------- | ------------ | -------------------------- |
-| No recovered residence at all                                              | 95, 151, 181 | #252 (151, 181), #172 (95) |
-| Placed above ground level; only level 0 is drawn                           | 94           | [#355](https://github.com/odogono/mercenary/issues/355) |
-| Exposed only in regions reached through a shut door                        | 101          | [#362](https://github.com/odogono/mercenary/issues/362) |
+| Outcome                               | Count | Slots                                                       |
+| ------------------------------------- | ----: | ----------------------------------------------------------- |
+| Reachable with every door shut        |   184 | every other placed resident                                 |
+| Reachable carrying DOOR KEY A slot 31 |     2 | 64, 197 (`gaea-ur-city-surface-17`, HANTZENS NEW HOUSE)     |
+| Reachable carrying DOOR KEY A slot 33 |     5 | 102, 109, 111, 148, 220 (`dion-surface-b2`, NOVAGEN OFFICE) |
+| Reachable carrying DOOR KEY A slot 37 |     4 | 159–162, GOLD (`tolosa-surface-12`)                         |
+| Not reachable                         |     0 | —                                                           |
 
-The method: for each admitted arrival Pose, switch to it and visit all 256
-cells of that Body, collecting every resident the Session Snapshot draws.
-`web/test/damocles-console.test.ts` runs it and is the reproduce path. A sweep
-at 2048-unit resolution **within** each relevant cell confirms the region
-result below.
+**Every placed resident is reachable**, all six pickup-trigger objects and all
+three special items among them, each with every door shut. No resident needs
+more than one key. Every key a reached structure's doors want — slots 30, 31,
+32, 33, 34, 37 and 38 — is itself reachable with nothing carried, so no key is
+locked behind its own door.
 
-### Slot 94 is a level, and the port still draws only level 0
+### The method
 
-CASH REGISTER sits at level 1 of `vesta-surface-73`, 48 units above floor 1 on
-the structure's 160-unit storey pitch. `worldPosition` draws only level 0. That
-was the absence of the static level-to-structure binding rule; the rule is
-[now recovered](damocles-level-structure-binding.md) — the cell instance's alias
-record names one structure slot per level — and the Catalogue publishes it as
-`levelBinding`. What remains is admitting a non-zero level into `worldPosition`
-and into an interior Drop, which #355 deliberately left to separate delivery
-work, alongside the ordinary route into a structure interior that #313 records
-against the model-form gate, the height gate and the `$7AC5`/`$7AA5` identity.
+`web/test/damocles-reachability.ts` builds a graph from the session's own
+rules, and `web/test/damocles-body-aware.test.ts` pins the counts above:
 
-### Slot 101 is behind a shut door
+- **Surface travel is assumed, not walked.** The player is stood at every
+  admitted arrival Pose and, by Atlas Travel, in the cell of every resident's
+  parent. Atlas Travel stands in for the flight there. A cell centre the
+  Atlas refuses is retried a quarter-cell away; one parent,
+  `gaea-chaldea-metropolis-surface-65`, needed it.
+- **A node is a region on a Floor**, plus one node for standing in the cell in
+  no region. Regions connect where the clamp lets the eye leave its own box: at
+  an edge another region's opposite edge lies on, into the first available
+  region past it.
+- **Selection applies only in the cell's central half.** Past it the region is
+  cleared and the step stands unclamped; walking back in, the first available
+  region at the point is selected. The graph uses that as an edge on Floor 0.
+- **A region gated by an attachment is available while its door is open.** A
+  door with a key byte opens only while that key is carried; a door without one
+  opens on approach.
+- **A lift links the Floors its Floor Table binds.** A ride arrives at the same
+  X and Z with every door shut.
+- **Keys are a fixed point.** Nothing is carried at first. Every door key that
+  becomes reachable is carried, and the walk runs again until nothing changes.
+  A keyed row names the keys without any one of which its residents are not
+  reached.
+- **Transporters are not counted.** The original game carries a player between
+  them ([departure routes](damocles-arrival-routes.md)), but the port does not
+  implement them, so they make nothing reachable here.
 
-AUTHORS COMPUTER is the informative case, because nothing about it is missing in
-the obvious sense. It is level 0. Its parent `dion-surface-de` is recovered, and
-the player binds to exactly that parent at Dion cell `$DE`. It has a local
-placement. And it is still never drawn.
+Every one of the 195 routes was walked once in a live session, turning,
+walking, waiting at doors and riding lifts as a player would, and every
+resident was drawn at its end. The suite walks fifteen of them: the six
+pickup-trigger objects, the three special items, door keys 30, 33 and 34, and
+one resident behind each key (64, 109 and 159). A key is taken from afar before
+such a walk, as the console's `get` does; where it is reached is the graph's
+claim.
 
-A resident is exposed in a region if its insertion group **numbers** that region
-— the implicit `(group, group)` pair — or if the parent's association list names
-the region explicitly. Those explicit pairs **are** recovered and published, per
-resident, as `association.insertions`: the association-list root is derived from
-the region-descriptor walk, not tabulated ([Dion and Vesta structure
-groups](damocles-dion-vesta-structure-groups.md#the-association-list-root-is-derived-not-tabulated)),
-and the extractor resolves each placed resident's own group through it. Twenty-one
-of the 28 placed residents carry pairs; the other seven have a group their
-parent's list does not hold, which their `reason` records.
+**The cell centre is one position.** A `goto` sweep over every cell draws only
+slot 183 of the six pickup-trigger objects
+(`web/test/damocles-console.test.ts`). Reachability claims here are made
+against the graph and the walked sessions, never against cell centres.
 
-AUTHORS COMPUTER's group `$20` exposes it in region selectors 11, 12, 26, 27, 28,
-33 and 34. A `goto` to Dion cell `$DE` binds selector 18, and every path from 18
-to any of those seven crosses a region whose gate is `attachmentLatch`. With the
-door shut the walk reaches selectors 17 and 18 only; with it open the whole
-35-region building connects and all seven become available.
+### What changed since #362
 
-So this is not a missing table and not a placement error. It was the question
-[#252](https://github.com/odogono/mercenary/issues/252) owns on Eris — what opens
-a structure's attachments, and from where — asked of a Dion structure, and
-[#362](https://github.com/odogono/mercenary/issues/362) has now recovered the
-answer: a keyed entrance opens while the matching door key is in the Carried
-Stack, and the key is named by the **cell**, not the structure record. See
-[the entrance-attachment note](damocles-generic-entrance-attachments.md#the-live-condition-predicate-is-the-carried-stack--confirmed).
-Authors House stands on DION `14-13`, whose `$7AFB` base is `$1E`, so its one
-keyed entrance wants object slot 30 — door key **A**.
+#362 measured 28 placed residents and found 9 reachable. Three things moved
+that count:
 
-### What the exposure rule was reading, and what changed
+| Then                                                                           | Now                                                          |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------ |
+| 167 residents had no recovered placement, slots 151 and 181 among them         | All 195 are placed                                           |
+| Only level 0 was drawn, so CASH REGISTER (slot 94, Floor 1) could not be       | Upper Floors are drawn; slot 94 is reached by lift           |
+| Five level-0 residents were behind keyed entrances whose keys had no placement | Four of the five need no key at all, and the keys are placed |
 
-Until #362 the port asked the **parent** for its `associationGroups` table. The
-extractor publishes that table for `eris-surface-87` alone, so every other
-structure fell back to the implicit pair and its residents were placed and never
-drawn. Reading each resident's own published pairs instead took Dion from nothing
-drawn anywhere to nine placed residents reachable on an ordinary walked route.
+The last row overturns a #362 finding. It found AUTHORS COMPUTER (slot 101),
+AUTHOR'S CHAIR (14) and AUTHORS DESK (234) in Authors House, and BENCH (215) in
+Vesta Parliament, reachable only through a region gated by an attachment, and
+counted every such region as shut. But only one of the five attachments on
+each building's ground Floor carries a key byte. In Authors House the side door at attachment slot `$3F0`
+has none, so it opens on approach, and from the region a cell-centre `goto`
+binds (selector 18) the walk passes through it into selector 8 and on to
+selector 11, which exposes AUTHORS COMPUTER. The walked session confirms it
+with no key carried.
 
-Capital Spaceport is unchanged: the resident's pairs and the parent's table agree
-there, which is what licenses one replacing the other.
+Whether the original game agrees is **Unresolved**. The
+[guide item list](damocles-guide-resident-list.md) marks both buildings "needs
+key", and the key letters it gives match the `$7AFB` base exactly. Either the
+port is opening a door the original keeps shut, or the guide's note means the
+front door rather than the only way in. A live capture standing in Authors
+House selector 11 with nothing carried would settle it.
 
-### Reachability of the fourteen level-0 placed residents
-
-Fourteen of the 28 recovered placements are at level 0, the only level the draw
-pass admits. Their reachability is decided by whether any region that exposes them
-is connected, through region edges the clamp admits, to the region a `goto` to
-their parent's cell lands in.
-
-| Outcome                                | Count | Slots                                        |
-| -------------------------------------- | ----: | -------------------------------------------- |
-| Reachable on foot with every door shut |     9 | 38, 50, 51, 128, 135, 154, 183, 195, 204      |
-| Behind a keyed entrance                |     5 | 14, 101, 234 (`dion-surface-de`), 109, 215    |
-
-All nine are takeable. Eight of them — `DOOR KEY A`, `BATH`, `TOWEL RAIL`,
-`WASHING MACHINE`, `ACME UNIVERSAL`, `NOTE PAD`, `BED` and `TABLE`, all on Dion —
-are the first interior objects outside Eris the port can reach.
-
-The five that remain are not a placement gap and not an exposure gap. Their
-parents' region graphs connect to the exposing regions **only** through a region
-whose gate is `attachmentLatch`, so they need a door open, and that door is
-keyed. Each of their three cells installs a `$7AFB` base, so its entrance opens
-only while one named object slot is in the Carried Stack:
-
-| Cell          | Building         | Key slot | Letter | Recovered placement |
-| ------------- | ---------------- | -------: | ------ | ------------------- |
-| DION `14-13`  | AUTHORS HOUSE    |       30 | A      | none                |
-| DION `02-11`  | NOVAGEN OFFICE   |       33 | D      | none                |
-| VESTA `04-06` | VESTA PARLIAMENT |       34 | E      | none                |
-
-**That is why they are still unreachable, and it is now a different gap.** The
-gate is implemented and the port honours it, but none of the three keys has a
-recovered placement: all ten `DOOR KEY A` instances share one model record, and
-slot 38 is the only one the extractor places. A key with no placement cannot be
-stood next to, so it cannot be taken, so the door cannot open. The keys the list
-puts at levels 2 and 9 need a port that admits a non-zero level; the
-[level-to-structure binding](damocles-level-structure-binding.md) that blocked
-that is recovered, so what these residents wait on is the delivery work, by way
-of their keys rather than by way of themselves.
-
-The [guide item list](damocles-guide-resident-list.md) put all three of these
-cells, and none of the nine reachable residents' cells, under "needs key" before
-any of this was recovered. It agrees letter for letter with the table above, from
-a player's notes rather than from the bank. Its levels — key A at 2 and key E at
-9 — are the lead for where the missing placements will be found, and remain a
-lead rather than evidence.
-
-Both of Capital Spaceport's counterparts stay reachable with the door shut for a
-recovered reason rather than an observed one: the five Eris cells carrying a
-keyed-entrance control install no base at all, so those doors have no key to
-want. The question never arose on Eris because on Eris there is nothing to hold.
-
-A warning for anyone extending this: **the cell centre is one position.** Sweeping
-`goto` over every cell finds only four of the nine, because the other five are
-exposed in regions the player must walk into. Reachability claims here are made
-against the region-connectivity graph and corroborated by walked sessions, not
-against cell centres.
+Novagen Office, the fifth #362 case (slot 109, RUBBISH BIN), still needs its
+key, slot 33. Its ground Floor also has one keyed door among three, but there
+every route to its residents crosses the keyed one.
 
 ## Residents with no location evidence
 
@@ -782,20 +738,20 @@ Association B records are read from the on-foot capture, whose
 `9e71dcdc45aba40a7d6db0068f7e5e9076dff7226e31406eb4dffcc0474eae4c` — the same
 value the pinned first-world and interior runs give.
 
-| Slot | Object       | Takeable | Association B | Reading                                     |
-| ---: | ------------ | -------- | ------------- | ------------------------------------------- |
+| Slot | Object       | Takeable | Association B | Reading                                         |
+| ---: | ------------ | -------- | ------------- | ----------------------------------------------- |
 |    8 | NEUTRON FUEL | yes      | `$00000000`   | moving-object pool at rest — **resolved, #327** |
 |   11 | ATTACK SHIP  | no       | `$00000000`   | moving-object pool at rest — **resolved, #327** |
 |   15 | NEUTRON FUEL | yes      | `$00000000`   | moving-object pool at rest — **resolved, #327** |
-|   74 | Object 74    | no       | `$FF000000`   | the special `$FF` slot                      |
-|  248 | Object 248   | no       | `$00000067`   | body byte `$00`; world-bound model slot     |
-|  249 | Object 248   | no       | `$00000067`   | body byte `$00`; world-bound model slot     |
-|  250 | Object 248   | no       | `$00000067`   | body byte `$00`; world-bound model slot     |
-|  251 | Object 251   | no       | `$00000067`   | body byte `$00`; world-bound model slot     |
-|  252 | Object 251   | no       | `$00000067`   | body byte `$00`; world-bound model slot     |
-|  253 | Object 251   | no       | `$00000067`   | body byte `$00`; world-bound model slot     |
-|  254 | Object 254   | no       | `$00000067`   | body byte `$00`; world-bound model slot     |
-|  255 | Object 254   | no       | `$00000067`   | body byte `$00`; world-bound model slot     |
+|   74 | Object 74    | no       | `$FF000000`   | the special `$FF` slot                          |
+|  248 | Object 248   | no       | `$00000067`   | body byte `$00`; world-bound model slot         |
+|  249 | Object 248   | no       | `$00000067`   | body byte `$00`; world-bound model slot         |
+|  250 | Object 248   | no       | `$00000067`   | body byte `$00`; world-bound model slot         |
+|  251 | Object 251   | no       | `$00000067`   | body byte `$00`; world-bound model slot         |
+|  252 | Object 251   | no       | `$00000067`   | body byte `$00`; world-bound model slot         |
+|  253 | Object 251   | no       | `$00000067`   | body byte `$00`; world-bound model slot         |
+|  254 | Object 254   | no       | `$00000067`   | body byte `$00`; world-bound model slot         |
+|  255 | Object 254   | no       | `$00000067`   | body byte `$00`; world-bound model slot         |
 
 Slots 248–255 are the block the world's resident-object stream rewrites at
 `$05503C`; the catalogue already records them as a world binding rather than a
@@ -851,28 +807,28 @@ permission to invent a standing position — agreeing with a live capture's cell
 does not make a guide name a recovered place. The seven residentless unposed
 bodies remain lower-priority coverage work.
 
-| Slice                                          | Evidence sufficient?                       | What it rests on                                                                |
-| ---------------------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------------- |
-| Ordinary take and drop on the Eris surface     | **Yes**                                    | First-world Eris workspace, the validated Eris pose, 34-record surface census    |
-| Ordinary take and drop inside Capital Spaceport | **Yes**                                    | Slot 183 placement, region grammar, drop research (#312)                        |
-| Body switch to DION / GAEA / VESTA at a pose   | **Yes**, for the pose itself               | `payload/damocles/arrival-poses.json`; each pose is one standing position only   |
-| Surface objects on DION / GAEA / VESTA         | **Partly**                                 | Coordinates exist; 99 CHEVY's authored/live Gaea map identity remains Unresolved |
-| Interior objects anywhere but the two Eris keys | **Not re-measured**                        | All 195 interior residents placed; reachability not recounted since #362 (#1002) |
-| Pickup-triggered responses beyond slot 183     | **Not re-measured**                        | Responses recovered (#317) and implemented (#346); all five other objects placed; reachability not recounted (#1002) |
-| Interior objects with a recovered placement on DION / VESTA | **Not re-measured**           | All placed; each resident's exposing regions published (#362); reachability not recounted (#1002) |
-| Body switch to any of the other seventeen anchored bodies | **Yes**, for the pose itself     | `payload/damocles/arrival-poses.json`; each cell is engine-read and anchored to a recovered window (#172) |
-| Body switch to MIDAS or DAMOCLES               | **MIDAS only**                             | MIDAS's pose is anchored to its field window (#172); DAMOCLES binds no workspace |
-| Surface assemblies on the bodies #172 recovered | **Partly**                                | Twenty-one live workspaces and their place names; every interior resident on them placed |
-| Any of the seven unposed bodies                | **No**                                     | No surface workspace, no arrival pose                                            |
+| Slice                                                       | Evidence sufficient?         | What it rests on                                                                                                                                                                        |
+| ----------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ordinary take and drop on the Eris surface                  | **Yes**                      | First-world Eris workspace, the validated Eris pose, 34-record surface census                                                                                                           |
+| Ordinary take and drop inside Capital Spaceport             | **Yes**                      | Slot 183 placement, region grammar, drop research (#312)                                                                                                                                |
+| Body switch to DION / GAEA / VESTA at a pose                | **Yes**, for the pose itself | `payload/damocles/arrival-poses.json`; each pose is one standing position only                                                                                                          |
+| Surface objects on DION / GAEA / VESTA                      | **Partly**                   | Coordinates exist; 99 CHEVY's authored/live Gaea map identity remains Unresolved                                                                                                        |
+| Interior objects anywhere but the two Eris keys             | **Yes**, in the port         | All 195 interior residents placed and reachable, 11 of them with one door key (#1002); Authors House and Vesta Parliament's key requirement is Unresolved against the Working Authority |
+| Pickup-triggered responses beyond slot 183                  | **Yes**, in the port         | Responses recovered (#317) and implemented (#346); all five other objects placed and reachable with every door shut (#1002)                                                             |
+| Interior objects with a recovered placement on DION / VESTA | **Yes**, in the port         | All placed and reachable; Novagen Office's five residents need door key slot 33 (#1002)                                                                                                 |
+| Body switch to any of the other seventeen anchored bodies   | **Yes**, for the pose itself | `payload/damocles/arrival-poses.json`; each cell is engine-read and anchored to a recovered window (#172)                                                                               |
+| Body switch to MIDAS or DAMOCLES                            | **MIDAS only**               | MIDAS's pose is anchored to its field window (#172); DAMOCLES binds no workspace                                                                                                        |
+| Surface assemblies on the bodies #172 recovered             | **Partly**                   | Twenty-one live workspaces and their place names; every interior resident on them placed                                                                                                |
+| Any of the seven unposed bodies                             | **No**                       | No surface workspace, no arrival pose                                                                                                                                                   |
 
 ### Bounded tasks this ledger identifies
 
 Already owned, and this ledger supplies the target list rather than new scope:
 
-- **#252** — Eris structure selectors. *Superseded: #252 is closed, and all four
+- **#252** — Eris structure selectors. _Superseded: #252 is closed, and all four
   objects below are placed ([interior residents in every captured
-  workspace](damocles-interior-resident-placement.md)); whether they are
-  reachable is #1002's question.* Cells `$89` (KEY - EAGLE 9SE, DAMOCLES
+  workspace](damocles-interior-resident-placement.md)); all four are
+  reachable with every door shut (#1002)._ Cells `$89` (KEY - EAGLE 9SE, DAMOCLES
   FILE), `$77` and `$29` (both ANTIGRAV) are the ledger's highest-value Eris
   cells; all four objects are unreachable until those selectors decode.
 - **#172** — non-Eris surface structures and places. **Substantially delivered.**
@@ -892,11 +848,12 @@ Additional research under #313, required by the deliveries that use it:
    nine reachable residents, and the rule gating the rest is recovered: a keyed
    entrance opens while the matching door key is in the Carried Stack, and the
    cell names the key. The port honours it. What remained was not a gating
-   question — the three keys involved had no recovered placement. *Superseded:
+   question — the three keys involved had no recovered placement. _Superseded:
    all three keys (slots 30, 33, 34) are now placed
    ([interior residents in every captured
    workspace](damocles-interior-resident-placement.md)) and the port draws upper
-   Floors (#484, #536); #1002 recounts what that opens.* See [a recovered placement is not
+   Floors (#484, #536); all three are reachable with nothing carried, and
+   #1002 found four of the five residents behind them need no key._ See [a recovered placement is not
    reachability](#a-recovered-placement-is-not-reachability).
 
 1. **Remaining Gaea map identity and placement.** Runtime selection is decoded:
@@ -911,10 +868,10 @@ Additional research under #313, required by the deliveries that use it:
    parent-local placements, including AUTHORS COMPUTER, CASH REGISTER and
    BRIEFCASE. The seven Dion residents in groups `$1B` and `$1C` are bound to a
    static group record whose named workspace identity is unresolved, the same
-   disposition #324 records for Gaea group `$0F`. *Since placed: Dion North
+   disposition #324 records for Gaea group `$0F`. _Since placed: Dion North
    (`$1B`) and Dion East (`$1C`) publish the workspace their authored stream
    replays ([groups no capture stands
-   in](damocles-interior-resident-placement.md#groups-no-capture-stands-in)).*
+   in](damocles-interior-resident-placement.md#groups-no-capture-stands-in))._
 3. **Arrival poses for the remaining bodies.** Substantially advanced by
    [#326](https://github.com/odogono/mercenary/issues/326): coverage went from
    four bodies to fifteen, and to twenty-three on 2026-09-19. Departure is
@@ -945,10 +902,12 @@ Resolved since this ledger was first written:
 - All 195 interior-associated residents have a parent and a local placement
   (`location-ledger.py ledger`, recounted 2026-11-27 for #1001). No placement
   gap remains among residents that claim a body.
-- Reachability is the open gap. When it was last measured (#362), 9 of the then
-  28 placed residents could be reached on foot. That count predates the other
-  167 placements and the port drawing upper Floors (#484, #536), and
-  [#1002](https://github.com/odogono/mercenary/issues/1002) recounts it.
+- Every placed resident is reachable in the port: 184 with every door shut and
+  11 with one door key
+  ([#1002](https://github.com/odogono/mercenary/issues/1002)). Surface travel
+  between cells is assumed rather than walked, and Transporters are not
+  counted. Whether Authors House and Vesta Parliament need their keys in the
+  original game, as the guide says, is Unresolved.
 - Workspace selection within a body is decoded, and both Gaea groups are now
   bound to a live workspace. Which structure a **level** selects is
   [recovered](damocles-level-structure-binding.md) and published as
@@ -963,23 +922,23 @@ Resolved since this ledger was first written:
 
 ## Provenance summary
 
-| Fact                                                | Evidence                                                                |
-| --------------------------------------------------- | ------------------------------------------------------------------------ |
-| Per-body resident counts and residence forms        | `payload/damocles/catalogue.json`; `location-ledger.py ledger`           |
-| Residence-form decoding                             | [resident object associations](damocles-resident-objects.md)             |
-| Twenty-seven on-foot arrival poses on twenty-three bodies | Twenty-seven Hatari memstates; `location-ledger.py poses`           |
-| Eight bodies reached by steered craft flight        | Captured in play by the project owner, 2026-09-19; uninstrumented, so no flight log exists |
-| The eight new cells agree with the catalogue        | `$7B5C` at each pose against the statically decoded resident associations in `payload/damocles/catalogue.json` |
-| Arrival cells                                       | The engine cell word `$7B5C`, cross-checked against the camera longwords on the seven poses whose body has a recovered origin |
-| The transporter ring and its eight bodies           | [departure routes](damocles-arrival-routes.md); catalogue slots 64–73    |
-| Board gate, its refusals and the per-craft key byte | [departure routes](damocles-arrival-routes.md); `arrival-route-probe.py` |
-| Engine-read arrival cells agree with the workspace notes | [Dion](damocles-dion-workspace.md), [Gaea UR City](damocles-gaea-ur-city-workspace.md), [Vesta](damocles-vesta-workspace.md), [catalogue](damocles-catalogue.md) |
-| Gaea's two workspaces share an origin qualifier     | [Gaea UR City workspace](damocles-gaea-ur-city-workspace.md)             |
-| Gaea group `$0F` is CHALDEA METROPOLIS              | `gaea-transporter`; `$7A6C=$024AB4` and an `$ABDC` identical to the static decode ([workspace selection](damocles-workspace-selection.md)) |
-| The association list is bound per level             | Vesta cell `$64` at levels 0 and 10 bind different structures; ten residents across six bodies resolve in the list bound at their own level |
-| Six pickup-trigger slots                            | [limo-key pickup](damocles-limo-key-pickup.md#the-object-to-script-trigger-table) |
-| Slot 183 is the only reachable pickup-trigger object | All-cell sweep of every admitted Body against the tracked payload; `web/test/damocles-console.test.ts` |
-| Nine placed residents are reachable, eight of them on Dion | Region-connectivity graph over the published region bounds, corroborated by walked sessions; `web/test/damocles-body-aware.test.ts` |
-| A resident's exposing regions are published per resident | `association.insertions` in `payload/damocles/catalogue.json`, resolved through the derived association-list root ([Dion and Vesta structure groups](damocles-dion-vesta-structure-groups.md#the-association-list-root-is-derived-not-tabulated)) |
-| Keyed access matches the five unreachable residents' cells, 3 cells for 3 | Secondary source only: [guide item list](damocles-guide-resident-list.md); `guide-resident-list-check.py` |
-| Slots 248–255 are a world binding                   | [catalogue](damocles-catalogue.md)                                       |
+| Fact                                                                            | Evidence                                                                                                                                                                                                                                          |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Per-body resident counts and residence forms                                    | `payload/damocles/catalogue.json`; `location-ledger.py ledger`                                                                                                                                                                                    |
+| Residence-form decoding                                                         | [resident object associations](damocles-resident-objects.md)                                                                                                                                                                                      |
+| Twenty-seven on-foot arrival poses on twenty-three bodies                       | Twenty-seven Hatari memstates; `location-ledger.py poses`                                                                                                                                                                                         |
+| Eight bodies reached by steered craft flight                                    | Captured in play by the project owner, 2026-09-19; uninstrumented, so no flight log exists                                                                                                                                                        |
+| The eight new cells agree with the catalogue                                    | `$7B5C` at each pose against the statically decoded resident associations in `payload/damocles/catalogue.json`                                                                                                                                    |
+| Arrival cells                                                                   | The engine cell word `$7B5C`, cross-checked against the camera longwords on the seven poses whose body has a recovered origin                                                                                                                     |
+| The transporter ring and its eight bodies                                       | [departure routes](damocles-arrival-routes.md); catalogue slots 64–73                                                                                                                                                                             |
+| Board gate, its refusals and the per-craft key byte                             | [departure routes](damocles-arrival-routes.md); `arrival-route-probe.py`                                                                                                                                                                          |
+| Engine-read arrival cells agree with the workspace notes                        | [Dion](damocles-dion-workspace.md), [Gaea UR City](damocles-gaea-ur-city-workspace.md), [Vesta](damocles-vesta-workspace.md), [catalogue](damocles-catalogue.md)                                                                                  |
+| Gaea's two workspaces share an origin qualifier                                 | [Gaea UR City workspace](damocles-gaea-ur-city-workspace.md)                                                                                                                                                                                      |
+| Gaea group `$0F` is CHALDEA METROPOLIS                                          | `gaea-transporter`; `$7A6C=$024AB4` and an `$ABDC` identical to the static decode ([workspace selection](damocles-workspace-selection.md))                                                                                                        |
+| The association list is bound per level                                         | Vesta cell `$64` at levels 0 and 10 bind different structures; ten residents across six bodies resolve in the list bound at their own level                                                                                                       |
+| Six pickup-trigger slots                                                        | [limo-key pickup](damocles-limo-key-pickup.md#the-object-to-script-trigger-table)                                                                                                                                                                 |
+| Slot 183 is the only pickup-trigger object a cell-centre `goto` draws           | All-cell sweep of every admitted Body against the tracked payload; `web/test/damocles-console.test.ts`                                                                                                                                            |
+| All 195 placed residents are reachable, 11 with one door key                    | Region graph built from the session's clamp, door-key and lift rules over every admitted Pose and every parent's cell; all 195 routes walked once, fifteen pinned; `web/test/damocles-reachability.ts`, `web/test/damocles-body-aware.test.ts`    |
+| A resident's exposing regions are published per resident                        | `association.insertions` in `payload/damocles/catalogue.json`, resolved through the derived association-list root ([Dion and Vesta structure groups](damocles-dion-vesta-structure-groups.md#the-association-list-root-is-derived-not-tabulated)) |
+| The guide's "needs key" cells match the keyed entrances' letters, 3 cells for 3 | Secondary source only: [guide item list](damocles-guide-resident-list.md); `guide-resident-list-check.py`                                                                                                                                         |
+| Slots 248–255 are a world binding                                               | [catalogue](damocles-catalogue.md)                                                                                                                                                                                                                |

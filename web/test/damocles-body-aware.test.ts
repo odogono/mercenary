@@ -20,6 +20,14 @@ import {
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { damoclesDocuments } from './damocles-documents.ts';
+import {
+  admittedStructures,
+  reachableNodes,
+  residentReachability,
+  routeTo,
+  walkRoute,
+  type Reachability
+} from './damocles-reachability.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
 let catalogue: Catalogue;
@@ -432,4 +440,99 @@ describe('a resident is exposed by its own insertion pairs', () => {
     expect(drawn).toBe(true);
     expect(session.snapshot.structure?.instanceId).toBe('dion-surface-a0');
   }, 30_000);
+});
+
+/// #1002: which placed residents a player can stand beside in the port, now that upper Floors
+/// are drawn and every interior-associated resident is placed. The graph walks the session's own
+/// rules (test/damocles-reachability.ts); the walked cases below corroborate it in a live session.
+/// All 195 routes were walked once while this was written; the suite walks the cases the ledger
+/// names, since walking them all takes minutes.
+describe('placed resident reachability', () => {
+  let reachability: Reachability;
+  let admitted: Awaited<ReturnType<typeof admittedStructures>>;
+  beforeAll(async () => {
+    admitted = await admittedStructures(content);
+    reachability = residentReachability(catalogue, admitted);
+  });
+
+  const outcome = (id: string): string => {
+    const reach = reachability.reach.get(id)!;
+    return reach.kind === 'keyed'
+      ? `keyed ${reach.keys.join(',')}`
+      : reach.kind;
+  };
+
+  test('every placed resident is reached, eleven of them only with a door key', () => {
+    expect(reachability.reach.size).toBe(195);
+    const rows = new Map<string, string[]>();
+    for (const id of reachability.reach.keys()) {
+      rows.set(outcome(id), [...(rows.get(outcome(id)) ?? []), id]);
+    }
+    const slots = (row: string): number[] =>
+      (rows.get(row) ?? [])
+        .map(id => Number(id.slice('object-slot-'.length)))
+        .sort((a, b) => a - b);
+    expect(slots('doorsShut')).toHaveLength(184);
+    // UR City cell 17, Novagen Office and Tolosa's cell 12: one key each.
+    expect(slots('keyed 31')).toEqual([64, 197]);
+    expect(slots('keyed 33')).toEqual([102, 109, 111, 148, 220]);
+    expect(slots('keyed 37')).toEqual([159, 160, 161, 162]);
+    expect([...rows.keys()].sort()).toEqual([
+      'doorsShut',
+      'keyed 31',
+      'keyed 33',
+      'keyed 37'
+    ]);
+    // Every door key a reached structure's doors want is itself reached with no key carried.
+    expect(reachability.wanted).toEqual([30, 31, 32, 33, 34, 37, 38]);
+    for (const slot of reachability.wanted) {
+      expect(outcome(`object-slot-${slot}`)).toBe('doorsShut');
+    }
+    expect(admitted.declined.size).toBe(0);
+  });
+
+  test('Authors House and Vesta Parliament need no key: an unkeyed door opens on approach', () => {
+    // #362 found these behind keyed entrances, with every attachment-gated region shut. An
+    // attachment with no key byte opens on proximity alone, and each building has one.
+    for (const slot of [14, 101, 234, 215]) {
+      expect(outcome(`object-slot-${slot}`)).toBe('doorsShut');
+    }
+  });
+
+  /// The six pickup-trigger residents, the three special items, the three door keys #362 named,
+  /// and one resident behind each key.
+  const WALKED = [
+    183, 181, 151, 95, 101, 94, 108, 157, 158, 30, 33, 34, 64, 109, 159
+  ];
+  test.each(WALKED)(
+    "a walked session stands beside object slot %i by the graph's route",
+    slot => {
+      const id = `object-slot-${slot}`;
+      const reach = reachability.reach.get(id)!;
+      const keys = reach.kind === 'keyed' ? reach.keys : [];
+      const residence = catalogueResidence(catalogue, id)!;
+      if (residence.kind !== 'structure') {
+        throw new Error(`${id} is not a structure resident`);
+      }
+      const structure = admitted.structures.find(
+        item => item.ground.id === residence.parent
+      )!;
+      const reached = reachableNodes(structure, new Set(keys));
+      const target = [...reached.values()].find(
+        item =>
+          item.node.floor === residence.level &&
+          insertionsInRegion(catalogue, id, residence, item.node.region + 1) > 0
+      )!;
+      const session = walkRoute(
+        content,
+        structure,
+        routeTo(reached, target.node),
+        keys
+      );
+      expect(session.snapshot.residents.some(item => item.id === id)).toBe(
+        true
+      );
+    },
+    60_000
+  );
 });
