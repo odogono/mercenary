@@ -20,6 +20,13 @@ import {
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
 import { erisSurfaceFrom } from '../src/damocles/world.ts';
 import { damoclesDocuments } from './damocles-documents.ts';
+import {
+  admittedStructures,
+  residentReachability,
+  walkToResident,
+  type Reachability,
+  type Structure
+} from './damocles-reachability.ts';
 import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
 
 let catalogue: Catalogue;
@@ -432,4 +439,166 @@ describe('a resident is exposed by its own insertion pairs', () => {
     expect(drawn).toBe(true);
     expect(session.snapshot.structure?.instanceId).toBe('dion-surface-a0');
   }, 30_000);
+});
+
+/// Whether object `id` is drawn within selection range of the eye. Where another resident is
+/// nearer, the selection takes that one first, so being in range is the claim.
+const inRange = (session: DamoclesSession, id: string): boolean => {
+  const drawn = session.snapshot.residents.find(item => item.id === id);
+  const eye = session.snapshot.pose.position;
+  return (
+    drawn !== undefined &&
+    Math.hypot(
+      drawn.position.x - eye.x,
+      drawn.position.y - eye.y,
+      drawn.position.z - eye.z
+    ) < 512
+  );
+};
+/// The pickup-trigger residents, special items and door keys, which no nearer resident hides.
+const SELECTED = new Set([
+  183, 181, 151, 95, 101, 94, 108, 157, 158, 30, 33, 34
+]);
+const groundStarts = (structure: Structure) =>
+  structure.starts.filter(node => node.floor === 0);
+
+/// #1002: which placed residents a player can select in the port, now that upper Floors are drawn
+/// and every interior-associated resident is placed. The graph walks the session's own rules
+/// (test/damocles-reachability.ts); the walked cases below corroborate it in a live session.
+///
+/// The count stands the player on the surface only: at the Floor 0 arrival Poses and by Atlas
+/// Travel. Six of the seven arrival Poses on upper Floors stand at Transporters, which the port
+/// does not implement, so what they add is pinned separately. Every route was walked once while this was
+/// written; the suite walks the cases the ledger names, since walking them all takes minutes.
+describe('placed resident reachability', () => {
+  let surface: Reachability;
+  let everyPose: Reachability;
+  let admitted: Awaited<ReturnType<typeof admittedStructures>>;
+  beforeAll(async () => {
+    admitted = await admittedStructures(content);
+    surface = residentReachability(catalogue, admitted, true);
+    everyPose = residentReachability(catalogue, admitted);
+  });
+
+  const outcome = (reachability: Reachability, slot: number): string => {
+    const reach = reachability.reach.get(`object-slot-${slot}`)!;
+    return reach.kind === 'keyed'
+      ? `keyed ${reach.keys.join(',')}`
+      : reach.kind;
+  };
+  const rows = (reachability: Reachability): Record<string, number[]> => {
+    const result: Record<string, number[]> = {};
+    for (const id of reachability.reach.keys()) {
+      const slot = Number(id.slice('object-slot-'.length));
+      (result[outcome(reachability, slot)] ??= []).push(slot);
+    }
+    for (const slots of Object.values(result)) {
+      slots.sort((a, b) => a - b);
+    }
+    return result;
+  };
+
+  test('from the surface every placed resident is selectable, 22 of them only with one door key', () => {
+    expect(surface.reach.size).toBe(195);
+    const { noKey, ...keyed } = rows(surface);
+    expect(noKey).toHaveLength(173);
+    expect(keyed).toEqual({
+      'keyed 31': [64, 84, 197],
+      'keyed 32': [47],
+      'keyed 33': [102, 109, 111, 148, 220],
+      'keyed 34': [68, 108, 153, 184, 202, 215, 225, 230],
+      'keyed 37': [159, 160, 161, 162],
+      'keyed 38': [181]
+    });
+    // Every door key a reached structure's doors want is itself selectable with no key carried.
+    expect(surface.wanted).toEqual([30, 31, 32, 33, 34, 37, 38]);
+    for (const slot of surface.wanted) {
+      expect(outcome(surface, slot)).toBe('noKey');
+    }
+    expect(admitted.declined.size).toBe(0);
+  });
+
+  test('the upper-Floor arrival Poses add only Vesta Parliament without key E', () => {
+    // vesta-transporter stands inside VESTA PARLIAMENT on an upper Floor, past its keyed door.
+    const { noKey, ...keyed } = rows(everyPose);
+    expect(noKey).toHaveLength(181);
+    expect(keyed).toEqual({
+      'keyed 31': [64, 84, 197],
+      'keyed 32': [47],
+      'keyed 33': [102, 109, 111, 148, 220],
+      'keyed 37': [159, 160, 161, 162],
+      'keyed 38': [181]
+    });
+  });
+
+  test('Authors House needs no key: an unkeyed side door opens on approach', () => {
+    // #362 found these behind key A, with every attachment-gated region shut. An attachment with
+    // no key byte opens on proximity alone.
+    for (const slot of [14, 101, 234]) {
+      expect(outcome(surface, slot)).toBe('noKey');
+    }
+  });
+
+  /// The six pickup-trigger residents, the three special items, the three door keys #362 named,
+  /// and one resident behind each key.
+  const WALKED = [
+    183, 181, 151, 95, 101, 94, 108, 157, 158, 30, 33, 34, 47, 64, 109, 159, 215
+  ];
+  test.each(WALKED)(
+    'a walked session from the surface stands in selection range of object slot %i',
+    slot => {
+      const id = `object-slot-${slot}`;
+      const reach = surface.reach.get(id)!;
+      const session = walkToResident(
+        content,
+        admitted.structures,
+        id,
+        reach.kind === 'keyed' ? reach.keys : [],
+        groundStarts
+      );
+      expect(inRange(session, id)).toBe(true);
+      if (SELECTED.has(slot)) {
+        expect(session.snapshot.selection).toEqual({
+          inRange: true,
+          instance: id,
+          kind: 'object'
+        });
+      }
+    },
+    60_000
+  );
+
+  test('every structure an upper-Floor Pose stands in is reached by a walked lift ride', () => {
+    // The surface count reaches upper Floors only by lift; walk one upper-Floor resident of each
+    // structure an arrival Pose stands above the ground in.
+    const walked: string[] = [];
+    for (const structure of admitted.structures) {
+      if (structure.starts.every(node => node.floor === 0)) {
+        continue;
+      }
+      const resident = catalogue.instances.find(item => {
+        const residence = catalogueResidence(catalogue, item.id);
+        return (
+          residence?.kind === 'structure' &&
+          residence.parent === structure.ground.id &&
+          residence.level !== 0 &&
+          surface.reach.get(item.id)?.kind === 'noKey'
+        );
+      });
+      if (resident === undefined) {
+        continue;
+      }
+      const session = walkToResident(
+        content,
+        admitted.structures,
+        resident.id,
+        [],
+        groundStarts
+      );
+      expect(inRange(session, resident.id)).toBe(true);
+      expect(session.snapshot.structure?.floor).not.toBe(0);
+      walked.push(structure.ground.id);
+    }
+    expect(walked.length).toBeGreaterThan(0);
+  }, 300_000);
 });

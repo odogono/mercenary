@@ -17,13 +17,13 @@ names things the payload **cannot express**.
 
 ## Source and reproduce path
 
-| Item     | Value                                                              |
-| -------- | ------------------------------------------------------------------ |
-| Source   | `http://mercenarysite.free.fr/damolist.txt`                        |
-| Compiler | Adrian Hurt (credited in the file)                                 |
-| SHA-256  | `66c3b1103f8f8e8ff0bb65d78190264b3df2445e91e51aa5dcadc1da1e51cb10` |
-| Compared against | `payload/damocles/catalogue.json` (tracked)                |
-| Tool     | `research/damocles-st/scripts/guide-resident-list-check.py`        |
+| Item             | Value                                                              |
+| ---------------- | ------------------------------------------------------------------ |
+| Source           | `http://mercenarysite.free.fr/damolist.txt`                        |
+| Compiler         | Adrian Hurt (credited in the file)                                 |
+| SHA-256          | `66c3b1103f8f8e8ff0bb65d78190264b3df2445e91e51aa5dcadc1da1e51cb10` |
+| Compared against | `payload/damocles/catalogue.json` (tracked)                        |
+| Tool             | `research/damocles-st/scripts/guide-resident-list-check.py`        |
 
 The list is not vendored. Fetch it and pass the path, so the copy under test is
 one you obtained:
@@ -45,24 +45,24 @@ cell, across **34 of 37 cells with no contradiction anywhere**.
 
 The two richest cells carry the whole correspondence on their own:
 
-| Cell                          | List                                                                            | Catalogue `levelSelector`      |
-| ----------------------------- | ------------------------------------------------------------------------------- | ------------------------------ |
-| VESTA `04-06` Vesta Parliament | Bench (G), Key-Targ Tourer (1), Scroll (2), Table (2), Briefcase (3), Transporter 4 (B) | 0, 1, 2, 2, 3, 10              |
-| ERIS `09-08` State Office      | Damocles File (G), Coffee Table (G), Air Conditioner (1), Bench (2), Settee (2), Key-Eagle 9SE (B) | 0, 0, 1, 2, 2, 10              |
+| Cell                           | List                                                                                               | Catalogue `levelSelector` |
+| ------------------------------ | -------------------------------------------------------------------------------------------------- | ------------------------- |
+| VESTA `04-06` Vesta Parliament | Bench (G), Key-Targ Tourer (1), Scroll (2), Table (2), Briefcase (3), Transporter 4 (B)            | 0, 1, 2, 2, 3, 10         |
+| ERIS `09-08` State Office      | Damocles File (G), Coffee Table (G), Air Conditioner (1), Bench (2), Settee (2), Key-Eagle 9SE (B) | 0, 0, 1, 2, 2, 10         |
 
 The three cells that do not agree exactly are the list carrying a floor the
 catalogue has **no interior resident for**, never the two disagreeing about a
 level:
 
-| Cell            | List has | Why                                                              |
-| --------------- | -------- | ----------------------------------------------------------------- |
-| DION `03-14`    | `(G)`    | `TARG TOURER` is a surface resident (`location`), not interior-associated |
-| ERIS `09-02`    | `(G)`    | `RED BEACON` slot 178 is likewise a surface resident              |
-| METIS `00-06`   | `(8)`    | "Lose your money" is a trading-post outcome, not an object        |
+| Cell          | List has | Why                                                                       |
+| ------------- | -------- | ------------------------------------------------------------------------- |
+| DION `03-14`  | `(G)`    | `TARG TOURER` is a surface resident (`location`), not interior-associated |
+| ERIS `09-02`  | `(G)`    | `RED BEACON` slot 178 is likewise a surface resident                      |
+| METIS `00-06` | `(8)`    | "Lose your money" is a trading-post outcome, not an object                |
 
 `B` → 10 is the useful part. The checklist note deliberately left it open —
-*"`B` means the guide's basement … native level selectors below remain raw
-selectors, not assumed floor numbers"* — and two independent buildings now put a
+_"`B` means the guide's basement … native level selectors below remain raw
+selectors, not assumed floor numbers"_ — and two independent buildings now put a
 `(B)` item at selector 10 and nothing else there.
 
 **The program has since said the same thing.** The lift indicator at
@@ -97,19 +97,28 @@ for, so it is also the one place it is most tempting to treat as evidence. It is
 not: a per-instance key letter has to come from the Working Authority before any
 code may act on it.
 
-## Keyed access matches the residents the port cannot reach, 3 for 3
+## Keyed access matches the keyed entrances, 3 for 3
 
-The [coverage ledger](damocles-gamma-system-location-ledger.md#reachability-of-the-fourteen-level-0-placed-residents)
-finds five level-0 placed residents unreachable because every path from their
+> **The reachability half of this section is superseded.** The recount for
+> [#1002](https://github.com/odogono/mercenary/issues/1002) found that in the port
+> Novagen Office and Vesta Parliament still need their keys, but Authors House does
+> not: an unkeyed side door opens on approach
+> ([what changed since #362](damocles-gamma-system-location-ledger.md#what-changed-since-362)).
+> The key letters below still match the bank. Whether the original game lets a
+> player into Authors House without key A, as the port does, is Unresolved; the
+> list says it does not.
+
+The [coverage ledger](damocles-gamma-system-location-ledger.md#what-changed-since-362)
+found, as of #362, five level-0 placed residents unreachable because every path from their
 cell's own region to a region that exposes them crosses a region gated
 `attachmentLatch`. They sit in three cells. The list annotates **all three** with
 a key requirement, and **none** of the nine reachable residents' cells:
 
-| Cell         | Building         | List      | Unreachable residents            |
-| ------------ | ---------------- | --------- | -------------------------------- |
-| DION `14-13` | Authors House    | needs key A | 14 `AUTHOR'S CHAIR`, 101 `AUTHORS COMPUTER`, 234 `AUTHORS DESK` |
-| DION `02-11` | Novagen Office   | needs key D | 109 `RUBBISH BIN`                |
-| VESTA `04-06`| Vesta Parliament | needs key E | 215 `BENCH`                      |
+| Cell          | Building         | List        | Unreachable residents                                           |
+| ------------- | ---------------- | ----------- | --------------------------------------------------------------- |
+| DION `14-13`  | Authors House    | needs key A | 14 `AUTHOR'S CHAIR`, 101 `AUTHORS COMPUTER`, 234 `AUTHORS DESK` |
+| DION `02-11`  | Novagen Office   | needs key D | 109 `RUBBISH BIN`                                               |
+| VESTA `04-06` | Vesta Parliament | needs key E | 215 `BENCH`                                                     |
 
 Two independent methods agree: the region-connectivity graph is derived from
 recovered region bounds in the payload, and the list is a player's notes. Neither
@@ -135,16 +144,16 @@ Only key D is at level 0, and it has no recovered placement of its own.
 
 ## It separates two Eris cells the catalogue merges
 
-The list has **`09-08` twice**: once under *Eris: Capital City* as State Office,
-once under *Eris: Key West* as Lawson Bank. The catalogue holds nine residents at
+The list has **`09-08` twice**: once under _Eris: Capital City_ as State Office,
+once under _Eris: Key West_ as Lawson Bank. The catalogue holds nine residents at
 Eris cell `$89` spanning both — `DAMOCLES FILE` and `COFFEE TABLE` with
 `ANTIQUE CLOCK`, `MANAGERS DESK` and `MANAGERS CHAIR`.
 
 This is the same failure of a cell selector to identify a place that
 [#324](https://github.com/odogono/mercenary/issues/324) recorded for Gaea, where
 one origin qualifier covers two workspaces and cell `$17` names a different place
-in each. The ledger states the rule already — *a cell selector is not a place
-identity* — and this is a second body exhibiting it.
+in each. The ledger states the rule already — _a cell selector is not a place
+identity_ — and this is a second body exhibiting it.
 
 **Resolved by [#391](https://github.com/odogono/mercenary/issues/391).** Eris's
 islands are five island records at five origins, each binding its own structure

@@ -159,7 +159,7 @@ const regionIsAvailable = (
   latches(region.flags & 0x03_fc) === 'open';
 
 /** Bind-time ±11 copy on the resolved axis. `$0200` remains unresolved and uninset. */
-const workspaceBounds = (
+export const workspaceBounds = (
   region: NonNullable<
     ErisPlacement['selection']
   >['structure']['regions'][number]
