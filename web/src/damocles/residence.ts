@@ -206,9 +206,9 @@ export const admitsInsertionGroup = (
 /// (docs/research/damocles-dion-vesta-structure-groups.md, "the association-list root is derived,
 /// not tabulated").
 ///
-/// A Drop writes its own Insertion Group. Where that differs from the resident's authored group
-/// the resident's pairs do not describe it, so the parent structure's own Insertion Groups
-/// answer, and a group the structure does not list falls back to the implicit pair.
+/// A Drop writes its own Insertion Group, parent and Floor. Unless all three are the resident's
+/// authored ones, its pairs do not describe it, so the Insertion Groups bound on that Floor of the
+/// parent answer, and a group the structure does not list falls back to the implicit pair.
 export const insertionsInRegion = (
   catalogue: Catalogue,
   instanceId: string,
@@ -220,14 +220,19 @@ export const insertionsInRegion = (
   }
   const instance = instanceById(catalogue, instanceId);
   const own = instance?.association;
-  const explicit =
-    own?.insertionGroupSelector === residence.insertionGroup
-      ? own.insertions
-      : structureInsertionGroups(
-          catalogue,
-          residence.parent,
-          residence.level
-        )?.find(group => group.group === residence.insertionGroup)?.pairs;
+  const authored =
+    own !== null &&
+    own !== undefined &&
+    instance?.placement?.parent === residence.parent &&
+    own.levelSelector === residence.level &&
+    own.insertionGroupSelector === residence.insertionGroup;
+  const explicit = authored
+    ? own.insertions
+    : structureInsertionGroups(
+        catalogue,
+        residence.parent,
+        residence.level
+      )?.find(group => group.group === residence.insertionGroup)?.pairs;
   return (
     (residence.insertionGroup === regionSelector ? 1 : 0) +
     (explicit?.filter(pair => pair.regionSelector === regionSelector).length ??

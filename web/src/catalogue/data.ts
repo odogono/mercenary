@@ -3027,6 +3027,14 @@ export const parseModel = (value: unknown, document: Catalogue): Model => {
   if (!sameInsertionGroups(summary.insertionGroups, model.insertionGroups)) {
     fail(`model ${model.id} insertionGroups disagrees with the model index`);
   }
+  // The index's Floor structures are the Floor table's, which the scene binds by.
+  const floors = model.levelBinding?.floors.map(floor => ({
+    level: floor.level,
+    structureId: floor.structureId
+  }));
+  if (JSON.stringify(summary.floorStructures) !== JSON.stringify(floors)) {
+    fail(`model ${model.id} floorStructures disagrees with the model index`);
+  }
   if (
     summary.slots.length !== model.slots.length ||
     summary.slots.some((slot, index) => slot !== model.slots[index])

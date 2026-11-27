@@ -1,7 +1,10 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
 
 import { readErisPresentation } from '../src/damocles/documents.ts';
-import { structureInsertionGroups } from '../src/damocles/residence.ts';
+import {
+  insertionsInRegion,
+  structureInsertionGroups
+} from '../src/damocles/residence.ts';
 import {
   DamoclesSession,
   type DamoclesContent
@@ -100,6 +103,23 @@ test("above Floor 0 the Floor's structure, not the building's, lists the groups"
   expect(floorGroups(3)).toBeUndefined();
 });
 
+test("a resident moved to another structure is drawn by that structure's group", () => {
+  // The CLIPBOARD's authored group 1 is POSTOFFICE SORTING's, which names no region 8. Dropped
+  // in the State Office at group 1, the State Office's group 1 decides, and it names region 8.
+  const inStateOffice = {
+    body: 'body-11',
+    insertionGroup: 1,
+    kind: 'structure' as const,
+    level: 0,
+    parent: 'eris-surface-89',
+    placementClass: 4,
+    position: { x: 0, y: 0, z: 0 }
+  };
+  expect(
+    insertionsInRegion(content.catalogue, CLIPBOARD, inStateOffice, 8)
+  ).toBe(1);
+});
+
 describe('a Drop inside POSTOFFICE SORTING', () => {
   test('is placed in region 7, at Insertion Group 7', () => {
     const session = inSorting(6);
@@ -114,6 +134,7 @@ describe('a Drop inside POSTOFFICE SORTING', () => {
   test('is refused in doorway region 3, which no group numbers', () => {
     const session = inSorting(2);
     expect(session.drop()).toEqual({ kind: 'refused' });
+    expect(session.snapshot.message?.id).toBe('system-string-9');
     expect(residenceOf(session)?.kind).toBe('carried');
   });
 });
