@@ -18,7 +18,8 @@ import {
   type DamoclesContent
 } from '../src/damocles/session.ts';
 import { parseDamoclesStrings } from '../src/damocles/strings.ts';
-import { erisSurfaceFrom } from '../src/damocles/world.ts';
+import { isTransporterSlot } from '../src/damocles/transporter.ts';
+import { erisSurfaceFrom, residentSlot } from '../src/damocles/world.ts';
 import { damoclesDocuments } from './damocles-documents.ts';
 import {
   admittedStructures,
@@ -576,9 +577,11 @@ describe('placed resident reachability', () => {
       if (structure.starts.every(node => node.floor === 0)) {
         continue;
       }
+      // Not a Transporter: walking into one carries the player round the ring (#998).
       const resident = catalogue.instances.find(item => {
         const residence = catalogueResidence(catalogue, item.id);
         return (
+          !isTransporterSlot(residentSlot(item.id) ?? -1) &&
           residence?.kind === 'structure' &&
           residence.parent === structure.ground.id &&
           residence.level !== 0 &&

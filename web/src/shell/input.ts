@@ -75,6 +75,10 @@ export interface ControlProfileActions {
   /// digits' notches in reverse (#556). A Title with no reverse gear leaves it out.
   readonly throttleReverseNotch?: (notch: number) => void;
   readonly throttleStep: (delta: number) => void;
+  /// A Damocles Transporter digit, `0`–`9` on the main row. Answers whether the player stands in
+  /// a Transporter: where they do not, the key keeps its ordinary meaning, such as a lift's. A
+  /// Title with no Transporters leaves it out.
+  readonly transporterKey?: (digit: number) => boolean;
 }
 
 /// Whether the browser owns this key press.
@@ -423,6 +427,20 @@ export const BINDINGS: readonly Binding[] = [
       return true;
     },
     provided: actions => actions.launch !== undefined
+  },
+  {
+    // `$0555E4` gives the digit row to a Transporter the player stands in before the lift keys.
+    // The ST keypad's digits are other make codes, so the numpad is not a Transporter key.
+    action: 'TRANSPORTER 0-9',
+    group: 'onFoot',
+    keys: ['0-9'],
+    press: (code, { actions }) => {
+      const match = /^Digit(\d)$/.exec(code);
+      return (
+        match !== null && actions.transporterKey?.(Number(match[1])) === true
+      );
+    },
+    provided: actions => actions.transporterKey !== undefined
   },
   {
     action: 'FLOOR 1-9, 10, 0',

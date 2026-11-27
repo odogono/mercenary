@@ -150,6 +150,7 @@ import {
   extentGap,
   insertionsInRegion,
   placementZone,
+  structureStoreyHeight,
   validStructureResidence,
   type PlacedResidence,
   type Residence,
@@ -221,6 +222,17 @@ import {
   type StructureDamage,
   type TimedDetonator
 } from './timedDetonator.ts';
+import {
+  ARRIVAL_EYE_OFFSET,
+  FIRST_TRANSPORTER,
+  LAST_TRANSPORTER,
+  digitHop,
+  insideTransporterCube,
+  ringHop,
+  ringStepsUp,
+  transporterInstance,
+  type CubeBounds
+} from './transporter.ts';
 import {
   SURFACE_CELLS,
   bearingFromYaw,
@@ -314,6 +326,9 @@ export interface DamoclesSnapshot {
   /// renderer reads it to colour the ground plane, and leaving refuses on its `sea` answer. The
   /// coast a player cannot walk across is the same answer, and is not wired yet (#394).
   readonly landSea: LandSea;
+  /// What the panel's location field shows: the Body's name, or VOID while the player stands in
+  /// a Transporter (#998).
+  readonly locationName: string;
   readonly message: Presenting | null;
   readonly occupancy: DamoclesOccupancy;
   /// `$7A52`, the XOR mask on the Benson Panel's palette, which the computer's option 1 writes.
@@ -858,6 +873,17 @@ export class DamoclesSession implements TitleSession<
   private levelPitch = 0;
   private regionIndex: number | null = null;
   private residence = new Map<string, Residence>();
+  /// `$7882`: the Transporter slot the player stood in at the last frame, or 0 (#998).
+  private standingIn = 0;
+  /// `$7884`: the slot the player entered, held until a frame finds them in no cube.
+  private transporterLatch = 0;
+  /// Where a hop has just left the player, while its destination may not be drawn yet.
+  private transporterArrival: {
+    readonly body: string;
+    readonly cell: ErisCell;
+    readonly parent: string | null;
+    readonly slot: number;
+  } | null = null;
   /// The Body the session is standing on. A switch rebuilds it; walking never does, and nor
   /// does anything but a wave of that Body's Models landing (ADR 0048).
   private surface: ErisSurface;
@@ -998,13 +1024,42 @@ export class DamoclesSession implements TitleSession<
     // may stand in a structure its Save could not see: that one is bound afresh.
     const saved = this.pose;
     this.keepInFrame();
+    // A Save made while a hop's destination was binding holds no structure (#998).
+    const landing =
+      restore?.structure === null && this.occupied === null
+        ? this.pendingLanding(this.pose)
+        : undefined;
+    const landingFloor =
+      landing === undefined
+        ? 0
+        : (this.transporterLanding(landing)?.floor ?? 0);
+    if (landingFloor !== 0) {
+      this.arrivalFloor = {
+        cell: cellOf(this.pose.position, this.surface.grid),
+        floor: landingFloor
+      };
+    }
     this.bindAt(
       this.pose,
-      this.pose !== saved && restore?.structure === null
+      landing !== undefined ||
+        (this.pose !== saved && restore?.structure === null)
         ? undefined
         : restore?.structure
     );
     this.readBody();
+    // The latch is outside the Save: a restore inside a cube stands in it, and does not fire it.
+    this.settleTransporter();
+    if (landing !== undefined && this.standingIn === 0) {
+      const residence = this.residenceFor(transporterInstance(landing));
+      this.transporterArrival = {
+        body: this.pose.body,
+        cell: cellOf(this.pose.position, this.surface.grid),
+        parent: residence?.kind === 'structure' ? residence.parent : null,
+        slot: landing
+      };
+      this.standingIn = landing;
+      this.transporterLatch = landing;
+    }
   }
 
   /// The Models a restore needs before a session can be built from it and are not in hand yet:
@@ -1875,8 +1930,21 @@ export class DamoclesSession implements TitleSession<
     const id = this.screen().dead
       ? `body-${(this.encounterProgram?.constants.deathSelector ?? 0) / 4}`
       : this.pose.body;
+    return this.nameOf(id);
+  }
+
+  private nameOf(id: string): string {
     const body = this.content.catalogue.bodies.find(item => item.id === id);
     return (body?.name ?? this.pose.body).toUpperCase();
+  }
+
+  /// The panel's location field. `$04DBFA`: while `$7882` names a Transporter, off space, it
+  /// is drawn with selector `$78`, VOID, instead of the Body (#998). Only the field: the
+  /// console and the Save slots still name the Body.
+  private locationName(): string {
+    return this.standingIn !== 0 && this.space === null && !this.screen().dead
+      ? this.nameOf(VOID_BODY)
+      : this.bodyName();
   }
 
   /// What the VBL handler adds to the current Body's rotation accumulator.
@@ -2124,6 +2192,7 @@ export class DamoclesSession implements TitleSession<
           ? cellOf(this.pose.position, this.surface.grid)
           : islandLocalCell(this.pose.position, this.surface.grid, island),
       landSea: classifyPosition(this.surface, this.pose.position).kind,
+      locationName: this.locationName(),
       message: this.script.message,
       occupancy: this.occupancy,
       panelMask: this.panelMask,
@@ -3110,6 +3179,9 @@ export class DamoclesSession implements TitleSession<
         );
       }
       this.askForThud(refused);
+      if (this.death === null) {
+        this.stepTransporter();
+      }
       remaining -= step;
     }
     return this.snapshot;
@@ -4746,10 +4818,19 @@ export class DamoclesSession implements TitleSession<
       };
     }
     // Everything that could refuse has refused. From here the commit cannot fail.
+    this.arrive(surface, pose, arrival.floor);
+    this.settleTransporter();
+    return { kind: 'switched', pose: arrival.id };
+  }
+
+  /// The commit a Body switch and a Transporter hop share, which cannot fail: stand at `pose` on
+  /// `surface`, unbound, and let binding land on `floor` once that Floor's structure is in hand.
+  /// The Body's Models stream in from here as they do after any switch.
+  private arrive(surface: ErisSurface, pose: Pose, floor: number): void {
     const turn =
-      arrival.body === this.pose.body
+      pose.body === this.pose.body
         ? this.bodyTurn
-        : this.turnOf(Number(arrival.body.slice(5)));
+        : this.turnOf(Number(pose.body.slice(5)));
     this.surface = surface;
     this.pose = pose;
     this.freeLookPitch = 0;
@@ -4759,12 +4840,9 @@ export class DamoclesSession implements TitleSession<
     this.regionIndex = null;
     this.attachments = new Map();
     this.arrivalFloor =
-      arrival.floor === 0
-        ? null
-        : { cell: cellOf(pose.position, surface.grid), floor: arrival.floor };
+      floor === 0 ? null : { cell: cellOf(pose.position, surface.grid), floor };
     this.bindAt(this.pose);
     this.readBody();
-    return { kind: 'switched', pose: arrival.id };
   }
 
   /// Prepare every placed Model on the target Body before validating an exact pin. A missing
@@ -4898,6 +4976,7 @@ export class DamoclesSession implements TitleSession<
     this.doorsMoving = false;
     this.boardedFrom = undefined;
     this.intent = IDLE;
+    this.settleTransporter();
     return { kind: 'travelled' };
   }
 
@@ -4934,11 +5013,309 @@ export class DamoclesSession implements TitleSession<
     this.boundPlacement = null;
     this.arrivalFloor = null;
     this.bindAt(this.pose);
+    this.settleTransporter();
+  }
+
+  /// The Transporter the player stands in, `$7882`: the one whose cube holds the eye, among
+  /// those the frame would draw (#998). That is a surface Transporter on this Body, or one the
+  /// bound structure inserts in the player's region on their Floor. The cube is in world axes, so
+  /// neither the Transporter's heading nor the player's matters. Zero for none.
+  private transporterAt(): number {
+    if (this.space !== null) {
+      return 0;
+    }
+    for (let slot = FIRST_TRANSPORTER; slot <= LAST_TRANSPORTER; slot += 1) {
+      const id = transporterInstance(slot);
+      const residence = this.residenceFor(id);
+      const at =
+        residence === undefined ? null : this.worldPosition(id, residence);
+      const bounds = this.transporterBounds(id);
+      if (
+        at !== null &&
+        bounds !== undefined &&
+        insideTransporterCube(this.pose.position, at, bounds)
+      ) {
+        return slot;
+      }
+    }
+    return 0;
+  }
+
+  /// The region box the Transporter's own Model publishes, `mesh.viewGroups[0].bounds`, or
+  /// undefined while the Model is not in hand, when it is not drawn either.
+  private transporterBounds(id: string): CubeBounds | undefined {
+    const model = this.instanceFor(id)?.model;
+    return model === undefined
+      ? undefined
+      : this.content.models.peek(model)?.variants[0]?.mesh.viewGroups?.[0]
+          ?.bounds;
+  }
+
+  /// `$059126`, once a frame: the first frame the player is in a cube fires it, and the latch
+  /// `$7884` holds the entry slot until a frame finds them outside every cube. A hop leaves the
+  /// latch holding the slot they entered, so the destination does not fire. While a hop's
+  /// destination is not yet drawn, because its Models or Floor are still on their way, the
+  /// latch is held rather than cleared, and the player counts as standing in it, as the
+  /// original's one-frame hop never sees that gap.
+  private stepTransporter(): void {
+    const inside = this.transporterAt();
+    this.standingIn = inside;
+    const pending = this.transporterArrival;
+    if (pending !== null) {
+      const cell = cellOf(this.pose.position, this.surface.grid);
+      const waiting =
+        this.arrivalFloor !== null ||
+        (pending.parent !== null && this.boundPlacement?.id !== pending.parent);
+      if (
+        inside === 0 &&
+        waiting &&
+        this.pose.body === pending.body &&
+        cell.x === pending.cell.x &&
+        cell.z === pending.cell.z
+      ) {
+        this.standingIn = pending.slot;
+        return;
+      }
+      this.transporterArrival = null;
+    }
+    if (inside === 0) {
+      this.transporterLatch = 0;
+      return;
+    }
+    if (this.transporterLatch !== 0) {
+      return;
+    }
+    this.transporterLatch = inside;
+    const aboard = this.occupied !== null && this.craft !== null;
+    // `$05913A`: on foot the stick's forward bit, aboard the speed's sign (`$797C`, the
+    // mantissa word), decides whether the yaw is inverted.
+    const up = aboard
+      ? ringStepsUp(
+          this.craft!.yaw & 0x3_ff,
+          (this.craft!.speed & 0x80_00) !== 0
+        )
+      : ringStepsUp(this.yawFrom(this.pose), !(this.intent.walk > 0));
+    const hop = ringHop(inside, up, slot => {
+      const residence = this.residenceFor(transporterInstance(slot));
+      return residence === undefined ||
+        residence.kind === 'carried' ||
+        residence.kind === 'occupied' ||
+        (aboard && residence.kind === 'structure')
+        ? 'unavailable'
+        : 'available';
+    });
+    if (hop.kind === 'none') {
+      this.presentSystem('system-string-17');
+      return;
+    }
+    if (hop.skipped) {
+      this.presentSystem('system-string-18');
+    }
+    this.hopTo(hop.slot);
+  }
+
+  /// Settle the latch where a commit other than a walk leaves the player: a restore, a Body
+  /// switch, Atlas Travel or a teleport. A cube they now stand in counts as already entered, so
+  /// it fires only once they leave it and walk in again. The latch is not in the Save.
+  private settleTransporter(): void {
+    this.transporterArrival = null;
+    this.standingIn = this.death === null ? this.transporterAt() : 0;
+    this.transporterLatch = this.standingIn;
+  }
+
+  /// Whether a digit key is the Transporter's: on foot, standing in one (`$0555E4`).
+  get inTransporter(): boolean {
+    return (
+      this.occupied === null && this.death === null && this.standingIn !== 0
+    );
+  }
+
+  /// `$059184`: digit `n` names slot 64 + `n`. A slot with no residence raises string 20; any
+  /// other hops, whatever the ring would skip, the slot stood in included. The latch is neither
+  /// read nor set. A carried Transporter's digit does nothing in the port: the original hops to
+  /// its parked placement, which is unrecovered (#1007).
+  transporterKey(digit: number): {
+    readonly kind: 'hopped' | 'ignored' | 'refused';
+  } {
+    if (!this.inTransporter) {
+      return { kind: 'ignored' };
+    }
+    const hop = digitHop(digit, slot => {
+      const residence = this.residenceFor(transporterInstance(slot));
+      return residence === undefined
+        ? 'unclaimed'
+        : residence.kind === 'carried' || residence.kind === 'occupied'
+          ? 'carried'
+          : 'placed';
+    });
+    if (hop.kind === 'refused') {
+      this.presentSystem('system-string-20');
+      return { kind: 'refused' };
+    }
+    if (hop.kind === 'ignored') {
+      return { kind: 'ignored' };
+    }
+    this.hopTo(hop.slot);
+    return { kind: 'hopped' };
+  }
+
+  /// `$0591FA`'s first write: where a hop to `slot` stands the player, wherever it lies now. X
+  /// and Z are the slot's, Y its resident Y plus `$3F` (on a Floor, the Floor times the storey
+  /// pitch plus `$3F`, as `$055B78` recomputes it), and the Floor its residence's. A structure
+  /// parent's placement is read from the Catalogue, so this holds while its Models are not in
+  /// hand. Undefined for a slot that is not placed.
+  private transporterLanding(slot: number):
+    | {
+        readonly body: string;
+        readonly floor: number;
+        readonly parent: string | null;
+        readonly position: Vector3;
+        readonly surface: ErisSurface;
+      }
+    | undefined {
+    const residence = this.residenceFor(transporterInstance(slot));
+    if (residence?.kind !== 'surface' && residence?.kind !== 'structure') {
+      return undefined;
+    }
+    let world: Vector3;
+    let parent: string | null = null;
+    let floor = 0;
+    if (residence.kind === 'surface') {
+      world = {
+        ...residence.position,
+        y: residence.position.y + ARRIVAL_EYE_OFFSET
+      };
+    } else {
+      const location = this.instanceFor(residence.parent)?.location;
+      if (location == null) {
+        return undefined;
+      }
+      const units = this.surface.grid.cellUnits;
+      const storey = structureStoreyHeight(
+        this.content.catalogue,
+        residence.parent
+      );
+      parent = residence.parent;
+      floor = residence.level;
+      world = {
+        x: location.position[0] * units + residence.position.x,
+        y:
+          residence.level > 0 && storey !== undefined
+            ? residence.level * storey + ARRIVAL_EYE_OFFSET
+            : location.position[1] * units +
+              residence.position.y +
+              ARRIVAL_EYE_OFFSET,
+        z: location.position[2] * units + residence.position.z
+      };
+    }
+    const surface =
+      residence.body === this.surface.body.id
+        ? this.surface
+        : this.surfaceFor(residence.body);
+    return {
+      body: residence.body,
+      floor,
+      parent,
+      position: inIslandFrame(world, surface),
+      surface
+    };
+  }
+
+  /// `$0591FA`: put the player in `slot`'s cube in one frame, binding as its Models arrive. The
+  /// yaw is not written. It never refuses, and reads no destroyed-Body rule: the handlers check
+  /// none (#1013).
+  private hopTo(slot: number): void {
+    const landing = this.transporterLanding(slot);
+    if (landing === undefined) {
+      return;
+    }
+    const { body, floor, parent, position, surface } = landing;
+    if (this.occupied !== null && this.craft !== null) {
+      this.hopAboard(surface, body, position);
+    } else {
+      this.arrive(
+        surface,
+        { body, heading: this.pose.heading, pitch: this.pose.pitch, position },
+        floor
+      );
+    }
+    this.transporterArrival = {
+      body,
+      cell: cellOf(position, surface.grid),
+      parent,
+      slot
+    };
+    // `$7A78` ← 3 and the VBL vector ← `$04C0B4`.
+    if (this.soundPermitted()) {
+      this.effects.push({ cue: 'transporter', type: 'sound-request' });
+    }
+  }
+
+  /// A restore made while a hop's destination was still binding saved no structure: the slot
+  /// whose landing the Pose stands at, so the restore waits for that structure and Floor as the
+  /// hop did instead of refusing it. Undefined where the Pose stands at no structure landing.
+  private pendingLanding(pose: Pose): number | undefined {
+    for (let slot = FIRST_TRANSPORTER; slot <= LAST_TRANSPORTER; slot += 1) {
+      const residence = this.residenceFor(transporterInstance(slot));
+      if (residence?.kind !== 'structure' || residence.body !== pose.body) {
+        continue;
+      }
+      const landing = this.transporterLanding(slot);
+      if (
+        landing !== undefined &&
+        landing.position.x === pose.position.x &&
+        landing.position.y === pose.position.y &&
+        landing.position.z === pose.position.z
+      ) {
+        return slot;
+      }
+    }
+    return undefined;
+  }
+
+  /// Aboard, the same hop carries the craft (`$059126`'s aboard branch). Only a surface
+  /// Transporter is reachable aboard, since the ring skips interior ones. Read from the image
+  /// and not driven live: no capture has a craft within reach of a surface Transporter.
+  private hopAboard(
+    surface: ErisSurface,
+    body: string,
+    position: Vector3
+  ): void {
+    const turn =
+      body === this.pose.body
+        ? this.bodyTurn
+        : this.turnOf(Number(body.slice(5)));
+    this.surface = surface;
+    this.bodyTurn = turn;
+    if (body !== this.pose.body) {
+      this.subStellar = null;
+    }
+    this.boundPlacement = null;
+    this.regionIndex = null;
+    this.floor = 0;
+    this.floorSurface = null;
+    this.arrivalFloor = null;
+    this.attachments = new Map();
+    this.doorway = null;
+    this.ride = null;
+    this.doorsMoving = false;
+    this.boardedFrom = undefined;
+    this.craft = {
+      ...this.craft!,
+      x: position.x,
+      y: position.y,
+      z: position.z
+    };
+    this.pose = { ...this.poseFromCraft(this.craft), body };
+    this.bindAt(this.pose);
+    this.regionIndex = this.regionAt(this.pose);
+    this.readBody();
   }
 
   /// Whether the player is in a Damocles Lift: the dispatcher's gate `$0555DC`–`$0555F0`, on foot
-  /// in a structure region whose flags have bit 13 (docs/research/damocles-lift-control.md). The
-  /// Working Authority also asks that `$7882` be zero, a digit-key mode the port does not have.
+  /// in a structure region whose flags have bit 13 (docs/research/damocles-lift-control.md), and
+  /// standing in no Transporter: while `$7882` names one, `$0555E4` gives the digit row to the
+  /// Transporter instead (#998).
   get inLift(): boolean {
     const region =
       this.regionIndex === null
@@ -4946,6 +5323,7 @@ export class DamoclesSession implements TitleSession<
         : this.boundPlacement?.selection?.structure.regions[this.regionIndex];
     return (
       this.occupied === null &&
+      this.standingIn === 0 &&
       region !== undefined &&
       (region.flags & LIFT_REGION) !== 0
     );

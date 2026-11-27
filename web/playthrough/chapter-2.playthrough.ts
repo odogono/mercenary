@@ -16,6 +16,8 @@ import {
 import { MOORBY_START, startFrom } from './starts.ts';
 import {
   SteeringError,
+  local,
+  steer,
   structureOrigin,
   walkTo,
   type Point
@@ -152,7 +154,7 @@ test('Chapter 2: Moorby to NOVA TRIGGER 4 on Metis', async ({
 
     await chapter.step(STEP.cupboard, async () => {
       await rideTo(page, NEWTON, 0);
-      await reboard(page, parked!);
+      await reboard(page, parked!, NEWTON);
       parked = await flyToEntrance(page, SORTING_OFFICE);
       await expectAt(page, areas, {
         body: STEP.cupboard.target.body,
@@ -171,7 +173,7 @@ test('Chapter 2: Moorby to NOVA TRIGGER 4 on Metis', async ({
     });
 
     await chapter.step(STEP.liftTheEagle, async () => {
-      await reboard(page, parked!);
+      await reboard(page, parked!, SORTING_OFFICE);
       parked = await flyToEntrance(page, CAPITAL_11_08);
       await expectAt(page, areas, {
         ...STEP.liftTheEagle.target,
@@ -185,29 +187,55 @@ test('Chapter 2: Moorby to NOVA TRIGGER 4 on Metis', async ({
     });
 
     await chapter.step(STEP.transporter, async () => {
+      // Come at slot 69 from the north and walk south into it: facing the southern half of the
+      // compass steps up the ring, to GAEA slot 70 (docs/research/damocles-arrival-routes.md).
+      const slot = await placement(page, 69);
       await walkTo(
         page,
         CAPITAL_11_08,
-        await placement(page, 69),
-        'the transporter',
-        40
+        { x: slot.x, z: slot.z + 120 },
+        'north of the transporter',
+        25
       );
+      await steer(
+        page,
+        [
+          {
+            name: 'into the transporter',
+            radius: 5,
+            to: local(await structureOrigin(page, CAPITAL_11_08), slot)
+          }
+        ],
+        { mode: 'walk', untilBodyChanges: true }
+      );
+      expect(await attribute(page, 'body')).toBe('body-8');
+      // Stopped in the arrival cube: the panel names VOID and the Cell Readout the destination.
+      const arrived = await at(page, areas);
+      expect([arrived.body, arrived.cell]).toEqual(['VOID', '08-08']);
+      // Key n names slot 64 + n: 3 is Metis slot 67.
+      await page.keyboard.press('Digit3');
       await expect
-        .poll(async () => (await at(page, areas)).body, {
-          message: 'walking into the transporter left the player on ERIS',
-          timeout: 15_000
+        .poll(async () => attribute(page, 'body'), {
+          message: 'digit 3 in the Gaea cube did not reach Metis',
+          timeout: 5000
         })
-        .not.toBe('ERIS');
+        .toBe('body-15');
+      // Step out of the Metis cube so the panel names the Body again.
+      for (const key of ['ArrowUp', 'ArrowDown']) {
+        if ((await at(page, areas)).body !== 'VOID') {
+          break;
+        }
+        await page.keyboard.down(key);
+        await page.waitForTimeout(700);
+        await page.keyboard.up(key);
+        await page.waitForTimeout(200);
+      }
       await expectAt(page, areas, STEP.transporter.target);
     });
 
     await chapter.step(STEP.washbasin, async () => {
-      // The harness's own gap: the next hop means walking out of the arrival cube and back in by
-      // its far face, inside a building (docs/research/damocles-arrival-routes.md), and no run has
-      // reached Metis to find the secret door and the table.
-      throw new SteeringError(
-        'not yet scripted: the further hops round the ring and the Metis steps'
-      );
+      // The harness's own gap: no run has yet walked Metis to find the secret door and the table.
+      throw new SteeringError('not yet scripted: the Metis steps');
     });
   } finally {
     await chapter.finish();

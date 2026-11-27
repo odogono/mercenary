@@ -395,6 +395,13 @@ try {
       commitAction(() => session.rideLift(floor));
       return true;
     },
+    transporterKey: digit => {
+      if (!session.inTransporter) {
+        return false;
+      }
+      commitAction(() => session.transporterKey(digit));
+      return true;
+    },
     // The shared profile reads only whether the player is aboard. Its numeric slot is Targ's
     // identity, so the Damocles instance id is only translated here, at the boundary.
     occupancy: () => {

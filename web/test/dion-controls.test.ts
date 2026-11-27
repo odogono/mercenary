@@ -31,7 +31,8 @@ const damocles = (
   throttleNotchStep: none,
   throttleNotchValue: none,
   throttleReverseNotch: none,
-  throttleStep: none
+  throttleStep: none,
+  transporterKey: () => false
 });
 
 const dion = (passenger: boolean, extended: boolean) => {

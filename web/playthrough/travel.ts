@@ -114,8 +114,22 @@ export const flyToEntrance = async (
   };
 };
 
-/// Walk back to a parked craft and board it.
-export const reboard = async (page: Page, parked: Parked): Promise<void> => {
+/// Walk back to a parked craft and board it. From inside a structure, `from`, the walk first leaves
+/// by its door through the region boxes, since a straight line to the craft can cross a wall.
+export const reboard = async (
+  page: Page,
+  parked: Parked,
+  from?: string
+): Promise<void> => {
+  if (from !== undefined) {
+    await walkTo(
+      page,
+      from,
+      await doorOutside(page, from),
+      `out of ${from}`,
+      60
+    );
+  }
   await walkTo(page, null, parked.at, 'the parked craft', 150);
   await pressUntil(
     page,

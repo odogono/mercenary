@@ -54,5 +54,8 @@ export const dionControlActions = (options: {
     if (delta !== 0) {
       options.throttleScale?.(delta < 0 ? -1 : 1);
     }
-  }
+  },
+  // Mercenary III's Transporters are #1006. Until then the row is listed and takes no key, so
+  // the digits keep their Floor meaning.
+  transporterKey: () => false
 });

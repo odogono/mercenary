@@ -183,6 +183,7 @@ export type Effect =
         | 'take'
         | 'throttle'
         | 'thud'
+        | 'transporter'
         | 'zap';
       readonly type: 'sound-request';
     }
@@ -622,7 +623,10 @@ export type SystemMessageId =
   | 'system-string-0'
   | 'system-string-1'
   | 'system-string-13'
+  | 'system-string-17'
+  | 'system-string-18'
   | 'system-string-2'
+  | 'system-string-20'
   | 'system-string-21'
   | 'system-string-22'
   | 'system-string-3'
