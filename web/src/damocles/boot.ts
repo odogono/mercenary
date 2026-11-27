@@ -1211,6 +1211,9 @@ try {
     // Which region of the bound structure the player stands in. It decides which residents are
     // exposed, so a browser pass cannot judge visibility or a region-bound refusal without it.
     root['region'] = String(snapshot.structure?.regionIndex ?? '');
+    // The island record the Cell Readout counts from. One label names two places on two islands,
+    // so a browser pass needs both to tell where the player stands; empty on a Body with none.
+    root['island'] = snapshot.island?.id ?? '';
     // The Damocles Display is painted on the aux canvas, so its row has no text a test or a
     // screen reader could read. Publishing the cells is how the row becomes observable.
     root['damoclesRow'] = snapshot.displayCells.cells.trim();

@@ -15,6 +15,8 @@ bunx playwright install chromium # once, for the browser gate
 bun run test                   # every ported module's Replay Gate and shell unit tests, in parallel
 bun run test:timings           # refresh test-timings.json, which balances CI's unit-test shards
 bun run test:e2e               # live localhost walkabout in Chromium
+bun run test:playthrough       # play published Damocles solutions in Chromium (minutes; not a gate)
+bun run playthrough:ledger     # write the Gap Ledger note from the last playthrough
 bun run typecheck              # strict checks for source, Bun tests and Playwright
 bun run dev                    # http://localhost:5173
 bun run export:site            # the Published Site, into dist/, for /mercenary/

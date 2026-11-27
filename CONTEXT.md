@@ -682,6 +682,18 @@ _Avoid_: Answer, key press event, pending key
 Where a zap leaves the Damocles player: the main loop stops, the view fades to black, the Body reads VOID, and only restoring a Save leaves it; a Save made in it restores into it (ADR 0055).
 _Avoid_: Game over, respawn, lives
 
+**Solution Playthrough**:
+An automated browser run of one published Damocles solution against a Damocles Gameplay Session, played by player inputs alone, to find where the session cannot follow it. The solution is a hypothesis checklist, never Working-Authority Evidence, so a step the session refuses is a lead rather than a verdict.
+_Avoid_: Walkthrough test, autoplay, bot, Golden Trace
+
+**Playthrough Chapter**:
+One stretch of a Solution Playthrough that begins from a declared Damocles Save, either built to stated assumptions or carried over from the previous chapter's end, so that one failure stops only its own chapter.
+_Avoid_: Level, checkpoint, stage
+
+**Gap Ledger**:
+The generated account of every solution step a Solution Playthrough could not complete, each classed as a missing feature, a confirmed divergence, an unconfirmed lead, a solution error or a harness gap; distinct from the Coverage Ledger, which accounts for Catalogue geometry.
+_Avoid_: Bug list, coverage report, Coverage Ledger
+
 **Filled Presentation**:
 Damocles's filled-polygon, palette-driven world view Confirmed in Working-Authority Evidence; the Game Surface mode of the Damocles Gameplay Session, distinct from Targ's wireframe line-list Game Surface (ADR 0019, ADR 0043).
 _Avoid_: Wireframe view, remastered graphics, Departure Record
