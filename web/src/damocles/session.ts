@@ -230,7 +230,8 @@ import {
   insideTransporterCube,
   ringHop,
   ringStepsUp,
-  transporterInstance
+  transporterInstance,
+  type CubeBounds
 } from './transporter.ts';
 import {
   SURFACE_CELLS,
@@ -325,6 +326,9 @@ export interface DamoclesSnapshot {
   /// renderer reads it to colour the ground plane, and leaving refuses on its `sea` answer. The
   /// coast a player cannot walk across is the same answer, and is not wired yet (#394).
   readonly landSea: LandSea;
+  /// What the panel's location field shows: the Body's name, or VOID while the player stands in
+  /// a Transporter (#998).
+  readonly locationName: string;
   readonly message: Presenting | null;
   readonly occupancy: DamoclesOccupancy;
   /// `$7A52`, the XOR mask on the Benson Panel's palette, which the computer's option 1 writes.
@@ -878,6 +882,7 @@ export class DamoclesSession implements TitleSession<
     readonly body: string;
     readonly cell: ErisCell;
     readonly parent: string | null;
+    readonly slot: number;
   } | null = null;
   /// The Body the session is standing on. A switch rebuilds it; walking never does, and nor
   /// does anything but a wave of that Body's Models landing (ADR 0048).
@@ -1019,15 +1024,42 @@ export class DamoclesSession implements TitleSession<
     // may stand in a structure its Save could not see: that one is bound afresh.
     const saved = this.pose;
     this.keepInFrame();
+    // A Save made while a hop's destination was binding holds no structure (#998).
+    const landing =
+      restore?.structure === null && this.occupied === null
+        ? this.pendingLanding(this.pose)
+        : undefined;
+    const landingFloor =
+      landing === undefined
+        ? 0
+        : (this.transporterLanding(landing)?.floor ?? 0);
+    if (landingFloor !== 0) {
+      this.arrivalFloor = {
+        cell: cellOf(this.pose.position, this.surface.grid),
+        floor: landingFloor
+      };
+    }
     this.bindAt(
       this.pose,
-      this.pose !== saved && restore?.structure === null
+      landing !== undefined ||
+        (this.pose !== saved && restore?.structure === null)
         ? undefined
         : restore?.structure
     );
     this.readBody();
     // The latch is outside the Save: a restore inside a cube stands in it, and does not fire it.
     this.settleTransporter();
+    if (landing !== undefined && this.standingIn === 0) {
+      const residence = this.residenceFor(transporterInstance(landing));
+      this.transporterArrival = {
+        body: this.pose.body,
+        cell: cellOf(this.pose.position, this.surface.grid),
+        parent: residence?.kind === 'structure' ? residence.parent : null,
+        slot: landing
+      };
+      this.standingIn = landing;
+      this.transporterLatch = landing;
+    }
   }
 
   /// The Models a restore needs before a session can be built from it and are not in hand yet:
@@ -1895,14 +1927,24 @@ export class DamoclesSession implements TitleSession<
   /// Catalogue does not name still reads as something a player can act on.
   private bodyName(): string {
     // `$050FF8`: the death loop names the Body by the selector it writes, VOID's.
-    // `$04DBFA`: while `$7882` names a Transporter, off space, the field shows selector `$78`.
     const id = this.screen().dead
       ? `body-${(this.encounterProgram?.constants.deathSelector ?? 0) / 4}`
-      : this.standingIn !== 0 && this.space === null
-        ? VOID_BODY
-        : this.pose.body;
+      : this.pose.body;
+    return this.nameOf(id);
+  }
+
+  private nameOf(id: string): string {
     const body = this.content.catalogue.bodies.find(item => item.id === id);
     return (body?.name ?? this.pose.body).toUpperCase();
+  }
+
+  /// The panel's location field. `$04DBFA`: while `$7882` names a Transporter, off space, it
+  /// is drawn with selector `$78`, VOID, instead of the Body (#998). Only the field: the
+  /// console and the Save slots still name the Body.
+  private locationName(): string {
+    return this.standingIn !== 0 && this.space === null && !this.screen().dead
+      ? this.nameOf(VOID_BODY)
+      : this.bodyName();
   }
 
   /// What the VBL handler adds to the current Body's rotation accumulator.
@@ -2150,6 +2192,7 @@ export class DamoclesSession implements TitleSession<
           ? cellOf(this.pose.position, this.surface.grid)
           : islandLocalCell(this.pose.position, this.surface.grid, island),
       landSea: classifyPosition(this.surface, this.pose.position).kind,
+      locationName: this.locationName(),
       message: this.script.message,
       occupancy: this.occupancy,
       panelMask: this.panelMask,
@@ -4986,18 +5029,34 @@ export class DamoclesSession implements TitleSession<
       const residence = this.residenceFor(id);
       const at =
         residence === undefined ? null : this.worldPosition(id, residence);
-      if (at !== null && insideTransporterCube(this.pose.position, at)) {
+      const bounds = this.transporterBounds(id);
+      if (
+        at !== null &&
+        bounds !== undefined &&
+        insideTransporterCube(this.pose.position, at, bounds)
+      ) {
         return slot;
       }
     }
     return 0;
   }
 
+  /// The region box the Transporter's own Model publishes, `mesh.viewGroups[0].bounds`, or
+  /// undefined while the Model is not in hand, when it is not drawn either.
+  private transporterBounds(id: string): CubeBounds | undefined {
+    const model = this.instanceFor(id)?.model;
+    return model === undefined
+      ? undefined
+      : this.content.models.peek(model)?.variants[0]?.mesh.viewGroups?.[0]
+          ?.bounds;
+  }
+
   /// `$059126`, once a frame: the first frame the player is in a cube fires it, and the latch
   /// `$7884` holds the entry slot until a frame finds them outside every cube. A hop leaves the
   /// latch holding the slot they entered, so the destination does not fire. While a hop's
   /// destination is not yet drawn, because its Models or Floor are still on their way, the
-  /// latch is held rather than cleared, as the original's one-frame hop never sees that gap.
+  /// latch is held rather than cleared, and the player counts as standing in it, as the
+  /// original's one-frame hop never sees that gap.
   private stepTransporter(): void {
     const inside = this.transporterAt();
     this.standingIn = inside;
@@ -5014,6 +5073,7 @@ export class DamoclesSession implements TitleSession<
         cell.x === pending.cell.x &&
         cell.z === pending.cell.z
       ) {
+        this.standingIn = pending.slot;
         return;
       }
       this.transporterArrival = null;
@@ -5099,14 +5159,23 @@ export class DamoclesSession implements TitleSession<
     return { kind: 'hopped' };
   }
 
-  /// `$0591FA`: put the player in `slot`'s cube, wherever it lies now, in one frame. X and Z are
-  /// the slot's, Y its resident Y plus `$3F` (on a Floor, the Floor times the storey pitch plus
-  /// `$3F`, as `$055B78` recomputes it), the Floor its residence's, and the yaw is not written.
-  /// It never refuses. It reads no destroyed-Body rule: the handlers check none (#1013).
-  private hopTo(slot: number): void {
+  /// `$0591FA`'s first write: where a hop to `slot` stands the player, wherever it lies now. X
+  /// and Z are the slot's, Y its resident Y plus `$3F` (on a Floor, the Floor times the storey
+  /// pitch plus `$3F`, as `$055B78` recomputes it), and the Floor its residence's. A structure
+  /// parent's placement is read from the Catalogue, so this holds while its Models are not in
+  /// hand. Undefined for a slot that is not placed.
+  private transporterLanding(slot: number):
+    | {
+        readonly body: string;
+        readonly floor: number;
+        readonly parent: string | null;
+        readonly position: Vector3;
+        readonly surface: ErisSurface;
+      }
+    | undefined {
     const residence = this.residenceFor(transporterInstance(slot));
     if (residence?.kind !== 'surface' && residence?.kind !== 'structure') {
-      return;
+      return undefined;
     }
     let world: Vector3;
     let parent: string | null = null;
@@ -5117,11 +5186,9 @@ export class DamoclesSession implements TitleSession<
         y: residence.position.y + ARRIVAL_EYE_OFFSET
       };
     } else {
-      // The parent's placement is read from the Catalogue, so a hop lands where its Models are
-      // not yet in hand: binding waits for them, as it does after a Body switch.
       const location = this.instanceFor(residence.parent)?.location;
       if (location == null) {
-        return;
+        return undefined;
       }
       const units = this.surface.grid.cellUnits;
       const storey = structureStoreyHeight(
@@ -5145,30 +5212,65 @@ export class DamoclesSession implements TitleSession<
       residence.body === this.surface.body.id
         ? this.surface
         : this.surfaceFor(residence.body);
-    const position = inIslandFrame(world, surface);
+    return {
+      body: residence.body,
+      floor,
+      parent,
+      position: inIslandFrame(world, surface),
+      surface
+    };
+  }
+
+  /// `$0591FA`: put the player in `slot`'s cube in one frame, binding as its Models arrive. The
+  /// yaw is not written. It never refuses, and reads no destroyed-Body rule: the handlers check
+  /// none (#1013).
+  private hopTo(slot: number): void {
+    const landing = this.transporterLanding(slot);
+    if (landing === undefined) {
+      return;
+    }
+    const { body, floor, parent, position, surface } = landing;
     if (this.occupied !== null && this.craft !== null) {
-      this.hopAboard(surface, residence.body, position);
+      this.hopAboard(surface, body, position);
     } else {
       this.arrive(
         surface,
-        {
-          body: residence.body,
-          heading: this.pose.heading,
-          pitch: this.pose.pitch,
-          position
-        },
+        { body, heading: this.pose.heading, pitch: this.pose.pitch, position },
         floor
       );
     }
     this.transporterArrival = {
-      body: residence.body,
+      body,
       cell: cellOf(position, surface.grid),
-      parent
+      parent,
+      slot
     };
     // `$7A78` ← 3 and the VBL vector ← `$04C0B4`.
     if (this.soundPermitted()) {
       this.effects.push({ cue: 'transporter', type: 'sound-request' });
     }
+  }
+
+  /// A restore made while a hop's destination was still binding saved no structure: the slot
+  /// whose landing the Pose stands at, so the restore waits for that structure and Floor as the
+  /// hop did instead of refusing it. Undefined where the Pose stands at no structure landing.
+  private pendingLanding(pose: Pose): number | undefined {
+    for (let slot = FIRST_TRANSPORTER; slot <= LAST_TRANSPORTER; slot += 1) {
+      const residence = this.residenceFor(transporterInstance(slot));
+      if (residence?.kind !== 'structure' || residence.body !== pose.body) {
+        continue;
+      }
+      const landing = this.transporterLanding(slot);
+      if (
+        landing !== undefined &&
+        landing.position.x === pose.position.x &&
+        landing.position.y === pose.position.y &&
+        landing.position.z === pose.position.z
+      ) {
+        return slot;
+      }
+    }
+    return undefined;
   }
 
   /// Aboard, the same hop carries the craft (`$059126`'s aboard branch). Only a surface

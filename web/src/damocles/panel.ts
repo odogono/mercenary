@@ -235,7 +235,7 @@ export const damoclesPanelViewModel = (
   inventoryFill: snapshot.carried.length,
   locationAxes: cellReadoutAxes(snapshot.islandCell),
   locationLabel: cellReadout(snapshot.islandCell),
-  locationName: snapshot.bodyName,
+  locationName: snapshot.locationName,
   message: '',
   messageColour: undefined,
   runLamp: running,

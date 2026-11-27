@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
 
 import { type Catalogue } from '../src/catalogue/data.ts';
+import { ModelStore } from '../src/catalogue/modelStore.ts';
 import { readErisPresentation } from '../src/damocles/documents.ts';
 import {
   DAMOCLES_SAVE_SCHEMA_VERSION,
@@ -91,19 +92,31 @@ describe('the ring rules', () => {
 
   test('the cube is (−50, 50] on X and Z and (0, 128] above the slot', () => {
     const slot = { x: 0, y: 0, z: 0 };
-    expect(insideTransporterCube({ x: 50, y: 128, z: 50 }, slot)).toBe(true);
-    expect(insideTransporterCube({ x: -50, y: 63, z: 0 }, slot)).toBe(false);
-    expect(insideTransporterCube({ x: 0, y: 0, z: 0 }, slot)).toBe(false);
-    expect(insideTransporterCube({ x: 0, y: 129, z: 0 }, slot)).toBe(false);
+    // `object-038820`'s published region box.
+    const cube = [
+      [-50, 50],
+      [-128, 0],
+      [-50, 50]
+    ] as const;
+    expect(insideTransporterCube({ x: 50, y: 128, z: 50 }, slot, cube)).toBe(
+      true
+    );
+    expect(insideTransporterCube({ x: -50, y: 63, z: 0 }, slot, cube)).toBe(
+      false
+    );
+    expect(insideTransporterCube({ x: 0, y: 0, z: 0 }, slot, cube)).toBe(false);
+    expect(insideTransporterCube({ x: 0, y: 129, z: 0 }, slot, cube)).toBe(
+      false
+    );
   });
 });
 
-/// Slot 69 in the Capital City 11-08 basement, on Floor 10, as the session draws it.
+/// Slot 69, the Floor 10 Transporter at Capital City 11-08, as the session draws it.
 const SLOT_69 = { x: 4_945_724, y: 1100, z: 8_944_934 };
 const NORTH = 0;
 const SOUTH = Math.PI;
 
-const basement = (): DamoclesSaveSnapshot => {
+const atSlot69Floor = (): DamoclesSaveSnapshot => {
   const session = new DamoclesSession(content);
   expect(session.switchToPose('eris-transporter-11-8').kind).toBe('switched');
   const drawn = session.snapshot.residents.find(
@@ -119,7 +132,7 @@ const near69 = (
   heading: number,
   change: Partial<DamoclesSaveSnapshot> = {}
 ): DamoclesSession => {
-  const saved = basement();
+  const saved = atSlot69Floor();
   return new DamoclesSession(content, {
     ...saved,
     ...change,
@@ -200,7 +213,9 @@ describe('walking into a Transporter', () => {
   test('the panel names VOID while the player stands in a cube, and the Body once out', () => {
     const session = near69(100, SOUTH);
     walkIn(session, 1);
-    expect(session.snapshot.bodyName).toBe('VOID');
+    expect(session.snapshot.locationName).toBe('VOID');
+    // Only the panel's field: the console's `where` and the Save slots still name the Body.
+    expect(session.snapshot.bodyName).toBe('GAEA');
     session.intent = { ...IDLE, walk: -1 };
     for (let frame = 0; frame < 50; frame += 1) {
       session.advance(1 / 50);
@@ -208,7 +223,7 @@ describe('walking into a Transporter', () => {
     session.intent = IDLE;
     session.advance(1 / 50);
     expect(at(session).body).toBe('body-8');
-    expect(session.snapshot.bodyName).toBe('GAEA');
+    expect(session.snapshot.locationName).toBe('GAEA');
   });
 
   test('an unavailable slot is passed with string 18, and the hop still goes', () => {
@@ -236,7 +251,7 @@ describe('walking into a Transporter', () => {
     session.intent = IDLE;
     expect(session.snapshot.message?.id).toBe('system-string-17');
     expect(at(session).body).toBe('body-11');
-    expect(session.snapshot.bodyName).toBe('VOID');
+    expect(session.snapshot.locationName).toBe('VOID');
   });
 
   test('a destroyed Body is not checked: the hop lands there (#1013)', () => {
@@ -247,7 +262,7 @@ describe('walking into a Transporter', () => {
 
   test('a restore inside a cube stands in it without firing', () => {
     const session = near69(0, SOUTH);
-    expect(session.snapshot.bodyName).toBe('VOID');
+    expect(session.snapshot.locationName).toBe('VOID');
     expect(session.inTransporter).toBe(true);
     for (let frame = 0; frame < 50; frame += 1) {
       session.advance(1 / 50);
@@ -267,7 +282,7 @@ describe('a digit key in a Transporter', () => {
       session.advance(1 / 50);
     }
     expect(at(session).body).toBe('body-15');
-    expect(session.snapshot.bodyName).toBe('VOID');
+    expect(session.snapshot.locationName).toBe('VOID');
   });
 
   test('the slot stood in hops in place, and an unclaimed slot raises string 20', () => {
@@ -319,5 +334,90 @@ describe('a digit key in a Transporter', () => {
     // Restored standing in the Logos cube: it does not fire.
     restored.advance(1);
     expect(at(restored).body).toBe('body-17');
+  });
+});
+
+type AssembledModels = Catalogue & {
+  readonly models: readonly { id: string }[];
+};
+
+/// A store that holds every Model but Metis's structure, whose fetch waits until released: a
+/// destination still streaming in, as the browser sees it after a hop.
+class DelayedModels extends ModelStore {
+  private readonly released = Promise.withResolvers<void>();
+  private readonly gate = this.released.promise;
+
+  deliver(id: string): void {
+    const model = (catalogue as AssembledModels).models.find(
+      item => item.id === id
+    );
+    this.hold(id, model as never);
+  }
+
+  override async prefetch(ids: Iterable<string>): Promise<readonly Error[]> {
+    const wanted = [...ids];
+    if (wanted.includes(METIS_STRUCTURE)) {
+      await this.gate;
+      this.deliver(METIS_STRUCTURE);
+    }
+    return super.prefetch(wanted.filter(id => this.peek(id) === undefined));
+  }
+
+  land(): Promise<void> {
+    this.released.resolve();
+    return this.gate;
+  }
+}
+
+const METIS_STRUCTURE = 'structure-01d35e';
+
+const delayed = (): { content: DamoclesContent; models: DelayedModels } => {
+  const models = new DelayedModels(catalogue, path =>
+    Promise.reject(new Error(`${path} is withheld`))
+  );
+  for (const model of (catalogue as AssembledModels).models) {
+    if (model.id !== METIS_STRUCTURE) {
+      models.deliver(model.id);
+    }
+  }
+  return { content: { ...content, models }, models };
+};
+
+describe('a hop whose destination is still streaming in', () => {
+  test('stands in the destination cube, and a Save made then resumes there', async () => {
+    const { content: streaming, models } = delayed();
+    const saved = atSlot69Floor();
+    const session = new DamoclesSession(streaming, {
+      ...saved,
+      pose: {
+        ...saved.pose,
+        position: { x: SLOT_69.x, y: SLOT_69.y + 63, z: SLOT_69.z }
+      }
+    });
+    expect(session.transporterKey(3).kind).toBe('hopped');
+    session.advance(1 / 50);
+    // Metis's structure is not in hand, so nothing is bound yet: the player still stands in
+    // slot 67's cube, and its panel and digit rules hold.
+    expect(session.snapshot.structure).toBeNull();
+    expect(session.snapshot.locationName).toBe('VOID');
+    expect(session.inTransporter).toBe(true);
+
+    // The Save holds no structure. Restored with every Model, it binds slot 67's Floor 9.
+    const resume = session.captureResume();
+    expect(resume.structure).toBeNull();
+    const restored = new DamoclesSession(content, resume);
+    expect(at(restored)).toEqual({ body: 'body-15', cell: '0-6', floor: 9 });
+    expect(restored.snapshot.locationName).toBe('VOID');
+    restored.advance(1);
+    expect(at(restored).body).toBe('body-15');
+
+    // The streaming session binds once the Model lands, and the destination does not fire.
+    await models.land();
+    await Bun.sleep(0);
+    for (let frame = 0; frame < 50; frame += 1) {
+      session.advance(1 / 50);
+    }
+    expect(at(session)).toEqual({ body: 'body-15', cell: '0-6', floor: 9 });
+    expect(session.snapshot.locationName).toBe('VOID');
   });
 });

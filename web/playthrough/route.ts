@@ -126,7 +126,7 @@ export const CHAPTER_2 = {
     cite: { section: 'step 4', solution: 'stf20' },
     id: '2.4',
     proves:
-      'walking south into the basement transporter hops up the ring to GAEA 08-08, and digit 3 in the arrival cube goes to Metis slot 67, METIS MOONBASE 00-06 on Floor 9 (docs/research/damocles-arrival-routes.md, "What the handlers do")',
+      'walking south into the Floor 10 Transporter hops up the ring to GAEA 08-08, and digit 3 in the arrival cube goes to Metis slot 67, METIS MOONBASE 00-06 on Floor 9 (docs/research/damocles-arrival-routes.md, "What the handlers do")',
     says: 'Walk into the transporters by their arrowed sides until you come out at the Metis moon base, 00.06. The step takes the first hop by walking and the rest by the digit key.',
     target: { body: METIS, cell: '00-06', floor: 9, island: METIS_MOONBASE }
   },

@@ -16,26 +16,25 @@ export const isTransporterSlot = (slot: number): boolean =>
 export const transporterInstance = (slot: number): string =>
   `object-slot-${slot}`;
 
-/// The Transporter's model, `$038820`, carries one region: lower bounds −50, −128 and −50,
-/// extents 100, 128 and 100, in world axes (`$0538F6`). Turned to the player's side, they are
-/// inside when X and Z are each within (−50, 50] of the slot's and the eye is more than 0 and at
-/// most 128 above its Y.
-export const TRANSPORTER_CUBE = { half: 50, height: 128 } as const;
+/// A region box as the Model payload publishes it (`mesh.viewGroups[n].bounds`): per axis, the
+/// half-open range the object's position less the eye's must lie in.
+export type CubeBounds = readonly [
+  readonly [number, number],
+  readonly [number, number],
+  readonly [number, number]
+];
 
+/// `$0538F6`: the player is in the Transporter's cube when the slot's position less the eye's
+/// lies in its model's region box, in world axes. For the TRANSPORTER model `$038820` that is
+/// X and Z within (−50, 50] of the slot's and the eye more than 0 and at most 128 above its Y.
 export const insideTransporterCube = (
   eye: { readonly x: number; readonly y: number; readonly z: number },
-  slot: { readonly x: number; readonly y: number; readonly z: number }
+  slot: { readonly x: number; readonly y: number; readonly z: number },
+  bounds: CubeBounds
 ): boolean => {
-  const dx = eye.x - slot.x;
-  const dy = eye.y - slot.y;
-  const dz = eye.z - slot.z;
-  return (
-    dx > -TRANSPORTER_CUBE.half &&
-    dx <= TRANSPORTER_CUBE.half &&
-    dz > -TRANSPORTER_CUBE.half &&
-    dz <= TRANSPORTER_CUBE.half &&
-    dy > 0 &&
-    dy <= TRANSPORTER_CUBE.height
+  const offsets = [slot.x - eye.x, slot.y - eye.y, slot.z - eye.z];
+  return bounds.every(
+    ([low, high], axis) => offsets[axis]! >= low && offsets[axis]! < high
   );
 };
 
