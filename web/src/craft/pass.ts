@@ -228,10 +228,10 @@ export interface CraftProgram {
 
 /// The craft words the session holds aboard (ADR 0051 decision 4), in the program's units.
 ///
-/// X and Z are the body position in the frame of the island nearest it, as `$058F64` measures
-/// it (ADR 0095): that island's origin plus a signed offset of under half the surface. Pitch,
-/// yaw and roll are the attitude words `$7AC0`, `$7AC2` and `$7ABE`; yaw is not masked, as the
-/// pass does not mask it.
+/// X and Z are the position as the holder keeps it; the pass masks nothing. On a Damocles Body
+/// the session keeps them in the nearest island's frame (ADR 0095), and in space they are
+/// System coordinates. Pitch, yaw and roll are the attitude words `$7AC0`, `$7AC2` and `$7ABE`;
+/// yaw is not masked, as the pass does not mask it.
 export interface CraftState {
   /// `$7ACA`: `$3F` in ground contact, else 0.
   readonly contact: number;

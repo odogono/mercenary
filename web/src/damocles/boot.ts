@@ -10,6 +10,8 @@ import {
 } from '../enhanced/weather.ts';
 import { readGammaSystem } from '../flyover/documents.ts';
 import { sitePath } from '../shell/sitePath.ts';
+import { DAMOCLES_CELL_UNITS } from './residence.ts';
+import { inOneFrame } from './world.ts';
 
 import './panelElement.ts';
 
@@ -441,10 +443,12 @@ try {
   });
   const clock = new FixedStepClock();
   // The Enhanced view aboard, drawn between craft passes (ADR 0078). Leaving or reaching a
-  // Body cuts it.
+  // Body cuts it, and so does the Pose moving into another island's frame (ADR 0095).
   const views = new ViewInterpolator<BlendableView>(
     (from, to) =>
-      from.pose.body === to.pose.body && (from.eye == null) === (to.eye == null)
+      from.pose.body === to.pose.body &&
+      (from.eye == null) === (to.eye == null) &&
+      inOneFrame(from.pose.position, to.pose.position, DAMOCLES_CELL_UNITS)
   );
   let viewSession = session;
   const release = (): void => {

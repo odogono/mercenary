@@ -1,6 +1,6 @@
 # Keep the Damocles Pose in its nearest island's frame
 
-Accepted, 2026-11-27, for [#999](https://github.com/odogono/mercenary/issues/999).
+Accepted, 2026-11-27, for [#999](https://github.com/odogono/mercenary/issues/999). Amends decisions 2 and 3 of [ADR 0052](0052-land-a-damocles-craft-at-the-recovered-landing-point.md): the landing point is no longer the masked Body Coordinate itself, and a Body landed on without an admitted Pose keeps its origin `(0, 0)` only up to whole surfaces, so its local cell is the Body Coordinate in the Pose frame.
 
 A Damocles Body's surface wraps on both axes. The Damocles Gameplay Session kept the Pose's X and Z unwrapped and wrapped only where it measured (`craft/pass.ts`), but most measurements against the Catalogue's placements are raw differences. Flying from Moorby to Key West across the wrap landed at NEWTON LTD RESEARCH's door about 2²⁸ units from its placement, so nothing was bound or drawn.
 
@@ -20,6 +20,6 @@ A Damocles Body's surface wraps on both axes. The Damocles Gameplay Session kept
 
 ## Consequences
 
-- The raw Pose jumps by 2²⁸ when the nearest island changes over open sea. Nothing on screen moves: island fills already draw their nearest image, and structures are drawn only from their own Surface Cell.
+- The raw Pose jumps by 2²⁸ when the nearest island changes over open sea. Nothing on screen moves: island fills already draw their nearest image, structures are drawn only from their own Surface Cell, the moving-object pool is drawn in the frame while it keeps its masked words, and the Enhanced view cuts rather than blends across the jump.
 - Raw differences between the Pose and placements, `cellOf` and Enhanced drawing stay correct without change.
 - A workspace origin can read as a whole number of surfaces past 0..4095, as Lachesis's (0, 0) reads (4096, 0).

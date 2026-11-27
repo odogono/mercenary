@@ -280,21 +280,36 @@ export const fieldCopiesAt = (
       }));
 };
 
-/// The placement an id names on this surface: one it holds, or a uniform field's copy.
+/// The placement an id names on this surface: one it holds, or a uniform field's copy. A
+/// generated copy stands at its Body Coordinate, so where `near` is given it is moved whole
+/// surfaces to the image nearest it, as `fieldCopiesAt` moves the copies it draws (ADR 0095).
 export const placementById = (
   surface: ErisSurface,
-  id: string
+  id: string,
+  near?: Vector3
 ): ErisPlacement | undefined => {
   const held = surface.placements.find(placement => placement.id === id);
   if (held !== undefined || surface.field === undefined) {
     return held;
   }
   const match = /-(\d+)-(\d+)$/.exec(id);
-  return match === null
-    ? undefined
-    : surface
-        .field(Number(match[1]), Number(match[2]))
-        .find(placement => placement.id === id);
+  const copy =
+    match === null
+      ? undefined
+      : surface
+          .field(Number(match[1]), Number(match[2]))
+          .find(placement => placement.id === id);
+  if (copy === undefined || near === undefined) {
+    return copy;
+  }
+  const span = SURFACE_CELLS * surface.grid.cellUnits;
+  const x =
+    copy.position.x + Math.round((near.x - copy.position.x) / span) * span;
+  const z =
+    copy.position.z + Math.round((near.z - copy.position.z) / span) * span;
+  return x === copy.position.x && z === copy.position.z
+    ? copy
+    : { ...copy, position: { ...copy.position, x, z } };
 };
 
 /// The surface as the frame draws it at `position`: with the field's copies in that cell.
@@ -906,4 +921,16 @@ export const erisSurfaceFrom = (
         placement.mesh === undefined && placement.selection === undefined
     ).length
   };
+};
+
+/// Whether two positions on one Body are in the same island frame (ADR 0095): within half a
+/// surface of each other on both axes. A Pose re-expressed in another island's frame jumps by
+/// a whole surface, so a view blended across that jump would cross half the Body.
+export const inOneFrame = (
+  from: Vector3,
+  to: Vector3,
+  cellUnits: number
+): boolean => {
+  const half = (SURFACE_CELLS / 2) * cellUnits;
+  return Math.abs(to.x - from.x) < half && Math.abs(to.z - from.z) < half;
 };

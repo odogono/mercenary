@@ -994,9 +994,16 @@ export class DamoclesSession implements TitleSession<
     // A restore may name a Body other than the document's, so the surface is anchored from the
     // Pose before anything binds against it.
     this.surface = this.surfaceFor(this.pose.body);
-    // A Save from before ADR 0095 may hold a position across the wrap.
+    // A Save from before ADR 0095 may hold a position across the wrap. Brought into frame, it
+    // may stand in a structure its Save could not see: that one is bound afresh.
+    const saved = this.pose;
     this.keepInFrame();
-    this.bindAt(this.pose, restore?.structure);
+    this.bindAt(
+      this.pose,
+      this.pose !== saved && restore?.structure === null
+        ? undefined
+        : restore?.structure
+    );
     this.readBody();
   }
 
@@ -1098,7 +1105,7 @@ export class DamoclesSession implements TitleSession<
     if (bound === null) {
       this.bindAt(this.pose);
     } else {
-      const ground = placementById(this.surface, bound.id);
+      const ground = placementById(this.surface, bound.id, bound.position);
       // The Floor's structure stays bound: its selector does not change with the surface.
       this.boundPlacement =
         ground === undefined
@@ -1443,7 +1450,9 @@ export class DamoclesSession implements TitleSession<
   /// The surface's own placement of the bound structure, as it stands on Floor 0.
   private groundPlacement(): ErisPlacement | undefined {
     const bound = this.boundPlacement;
-    return bound === null ? undefined : placementById(this.surface, bound.id);
+    return bound === null
+      ? undefined
+      : placementById(this.surface, bound.id, bound.position);
   }
 
   /// The bound structure's region the Pose stands in, where the Pose is in its cell's central half.
@@ -1754,16 +1763,26 @@ export class DamoclesSession implements TitleSession<
       const placement =
         instance === undefined
           ? undefined
-          : this.residentPlacement(instance, {
-              x: object.position[0],
-              y: object.position[1] | 0,
-              z: object.position[2]
-            });
+          : this.residentPlacement(instance, this.drawnPoolPosition(object));
       if (placement !== undefined) {
         residents.push(placement);
       }
     }
     return residents;
+  }
+
+  /// Where a pool object is drawn. On a Body the pool keeps `$7AB2`'s masked Body
+  /// Coordinates, so the drawn copy is brought into the Pose frame (ADR 0095); the pool's own
+  /// words are left as the simulation holds them.
+  private drawnPoolPosition(object: PoolObject): Vector3 {
+    const position = {
+      x: object.position[0],
+      y: object.position[1] | 0,
+      z: object.position[2]
+    };
+    return this.space === null
+      ? inIslandFrame(position, this.surface)
+      : position;
   }
 
   private poolObjects(): readonly (readonly [number, PoolObject])[] {
