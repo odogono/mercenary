@@ -15,7 +15,6 @@ import {
 } from './session.ts';
 import { MOORBY_START, startFrom } from './starts.ts';
 import {
-  SteeringError,
   local,
   steer,
   structureOrigin,
@@ -37,6 +36,14 @@ const EAGLE = 'object-slot-3';
 const NEWTON = 'eris-key-west-surface-77';
 const SORTING_OFFICE = 'eris-snow-island-surface-03';
 const CAPITAL_11_08 = 'eris-surface-8b';
+/// DOOBERRYS SOLICITORS at Metis 00-06, whose Floor 9 holds Transporter slot 67.
+const METIS_00_06 = 'metis-surface-60';
+/// NIXON INTR COURT at Metis 05-06. Its inner door's Proximity Box takes in the TABLE, so walking
+/// to the table opens the "secret door" to the back room and the WASHBASIN.
+const METIS_05_06 = 'metis-surface-65';
+/// In the back room, well away from the WASHBASIN: a craft dropped with a selection in range is
+/// refused, since it demands support rank 0 (docs/research/damocles-carry-capacity.md).
+const BACK_ROOM = { x: -400, z: 1300 };
 /// A resident's recovered placement inside its parent, structure-local.
 const placement = async (page: Page, slot: number): Promise<Point> => {
   const position = (await instance(page, `object-slot-${slot}`))?.placement
@@ -86,6 +93,16 @@ const switchOn = async (page: Page, trigger: 1 | 2 | 3 | 4): Promise<void> => {
     )
     .toBe(TRIGGER_BITS[trigger]);
   await page.keyboard.press('Enter');
+};
+
+/// Rotate the Carried Stack until its head starts with `name`, as a player would with `[`.
+const rotateTo = async (page: Page, name: string): Promise<void> => {
+  await pressUntil(
+    page,
+    '[',
+    async () => (await inventoryHead(page)).startsWith(name),
+    `rotate ${name} to the head`
+  );
 };
 
 /// Drop the head where the player stands; on NO ROOM, carry it outside the structure and drop it
@@ -234,8 +251,80 @@ test('Chapter 2: Moorby to NOVA TRIGGER 4 on Metis', async ({
     });
 
     await chapter.step(STEP.washbasin, async () => {
-      // The harness's own gap: no run has yet walked Metis to find the secret door and the table.
-      throw new SteeringError('not yet scripted: the Metis steps');
+      // Take slot 67, which the ANTIGRAV makes takeable like any craft. Carried, the ring passes
+      // it; dropped, it is a resident where it lies (docs/research/damocles-carry-capacity.md).
+      const slot = await placement(page, 67);
+      await walkTo(
+        page,
+        METIS_00_06,
+        { x: slot.x - 120, z: slot.z },
+        'beside the transporter',
+        25
+      );
+      await pressUntil(
+        page,
+        't',
+        async () => (await inventoryHead(page)).startsWith('TRANSPORTER'),
+        'take the transporter',
+        15_000
+      );
+
+      // Out of DOOBERRYS SOLICITORS, drop the Eagle and fly it to NIXON INTR COURT.
+      await rideTo(page, METIS_00_06, 0);
+      await walkTo(
+        page,
+        METIS_00_06,
+        await doorOutside(page, METIS_00_06),
+        'outside',
+        60
+      );
+      await rotateTo(page, 'EAGLE NINE S E');
+      await pressUntil(
+        page,
+        'd',
+        async () => (await inventoryHead(page)) !== 'EAGLE NINE S E',
+        'drop the Eagle'
+      );
+      await pressUntil(
+        page,
+        'b',
+        async () => (await attribute(page, 'occupancy')) === EAGLE,
+        'board the Eagle'
+      );
+      // A short hop: most of it is the slow final approach, which outlasts the default budget.
+      parked = await flyToEntrance(page, METIS_05_06, { timeoutSeconds: 600 });
+
+      // Take the Eagle again, go in past the table, and leave the transporter in the back room.
+      await walkTo(page, null, parked.at, 'beside the Eagle', 150);
+      await takeUntilHead(page, 'EAGLE NINE S E');
+      const table = await placement(page, 114);
+      await walkTo(
+        page,
+        METIS_05_06,
+        { x: table.x, z: table.z - 60 },
+        'at the table',
+        40
+      );
+      await walkTo(page, METIS_05_06, BACK_ROOM, 'in the back room', 40);
+      await rotateTo(page, 'TRANSPORTER');
+      await pressUntil(
+        page,
+        'd',
+        async () => !(await inventoryHead(page)).startsWith('TRANSPORTER'),
+        'drop the transporter'
+      );
+
+      await walkTo(
+        page,
+        METIS_05_06,
+        await placement(page, 87),
+        'beside the WASHBASIN',
+        300
+      );
+      await takeUntilHead(page, 'WASHBASIN');
+      await switchOn(page, 4);
+      await dropHere(page, chapter, METIS_05_06, 'WASHBASIN');
+      await expectAt(page, areas, STEP.washbasin.target);
     });
   } finally {
     await chapter.finish();

@@ -1,6 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 
-import { flyTo, takeOff } from './flight.ts';
+import { flyTo, takeOff, type FlightOptions } from './flight.ts';
 import { entrance, liftCar } from './planner.ts';
 import { attribute, pressUntil } from './session.ts';
 import {
@@ -89,7 +89,7 @@ export interface Parked {
 export const flyToEntrance = async (
   page: Page,
   instance: string,
-  options: { readonly crossSeam?: boolean } = {}
+  options: Pick<FlightOptions, 'crossSeam' | 'timeoutSeconds'> = {}
 ): Promise<Parked> => {
   const craft = await attribute(page, 'occupancy');
   if (craft === '') {

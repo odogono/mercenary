@@ -191,6 +191,10 @@ export const flyTo = async (
           }
         } else {
           throttle(now.y > 5000 ? 6 : 3);
+          if (performance.now() - sampledAt > 2000) {
+            sampledAt = performance.now();
+            trace.push(`descend y${Math.round(now.y)} t${setting}`);
+          }
         }
       }
     },
