@@ -355,8 +355,9 @@ against the image and driven live.
 
 `$059130` takes the current transporter and steps the selector by **plus or
 minus four** between `$100` and `$124` — slots 64 to 73 inclusive, wrapping at
-both ends. There is no destination to choose and no menu: you get the next
-transporter along the ring.
+both ends. Walking in chooses no destination: you get the next available
+transporter along the ring. A digit key pressed while standing in one does
+choose; see [A digit key names the destination](#a-digit-key-names-the-destination-1005).
 
 | Order | Slot | Body | Where |
 | ----- | ---- | ---- | ----- |
@@ -399,29 +400,188 @@ independent derivations of the same eight places.
 
 Slots **64** (Gaea cell `$17`) and **65** (Eris cell `$26`) are the two with no
 capture. Both sit on bodies that already have two poses each, so they cost the
-pose coverage nothing; what they would settle is whether the ring wraps as
-`$059130` reads.
+pose coverage nothing. A capture at either would let the wrap
+[be driven live](#the-wrap).
 
-### Direction is decided by which side you walk in
+### What the handlers do (#1005)
 
-`$059152` tests the stick's forward bit and `$05915C` tests bit 9 of the camera
-yaw plus `$100`. Walking in forwards, the selector gains four when that bit is
-clear and loses four when it is set; walking in backwards inverts it. The two
-combine to one rule: **the step depends on the bearing from the player to the
-cube**, so the two faces of the cube are the two directions round the ring.
-That is what a player sees as two different markers on the front and back.
+[#1005](https://github.com/odogono/mercenary/issues/1005) recovered the rest of
+the mechanism from the pinned first-world image and drove it live with
+[`transporter-probe.py`](../../research/damocles-st/scripts/transporter-probe.py).
+Two handlers share one hop: `$059126`, which the main loop calls once a frame at
+`$0594F2`, steps the ring, and `$059184` takes a digit key. Both reach the
+common hop at `$0591FA`.
 
-`$0591C0` raises string 17 `NO OTHER TRANSPORTERS AVAILABLE` when the step lands
-on the transporter already occupied, and `$0591F4` raises string 18 when the
-walk over unavailable slots runs out — in the first-world state all ten are
-available, so neither fires. Transit stages through body selector `$78`, VOID,
-which is the same value the board gate refuses at `$05432A`.
+#### Standing in a transporter: `$7882`
+
+`$7882` names the transporter the player is standing in, as four times its slot,
+or 0. `$0531F8` clears it at the start of every frame's object pass, and
+`$053950` sets it from `$7B40`, the slot being drawn, when that object's region
+list puts the player inside a region whose operation word has bits 14, 13 and 12
+set and bit 15 clear. `$0538F6` is the test: each region carries six longwords,
+a lower bound and an extent on each axis. `$05363A`–`$053656` form the offsets
+as the object's resident position minus the camera: X less `$7A92`, Y less the
+scene camera height `$7A30`, Z less `$7A9A`. The player is inside when each
+offset minus the lower bound is below the extent, unsigned.
+
+The TRANSPORTER model `$038820` (every ring slot uses it) carries one such region:
+lower bounds −50, −128 and −50, extents 100, 128 and 100. Its operation stream
+ends in `$7000`. Turned round to the player's side of the subtraction, **the
+player is in the cube when their X and Z are each within (−50, 50] of the
+slot's, and the camera height `$7A30` is more than 0 and at most 128 above the
+slot's Y.** That is the cube itself: a 100-unit square, 128 high. The offsets
+are in world axes, not the object's own, so the object's heading does not turn
+the region. A
+transporter is only entered while it is drawn, because the test runs inside the
+draw pass.
+
+`$04DBFA` shows the effect on the panel. While `$7882` is non-zero, and the
+player is not in space, the location field is drawn with selector `$78`, VOID,
+instead of the Body. Live, the field read `$78` while the player stood in the
+arrival cube, and returned to the Body once they had left it and the latch had
+cleared. The probe reads the field's cached selector `$04DBF0` in the same
+debugger stop as the player state.
+
+The Cell Readout is a separate writer. `$04D91E` calls `$04E246` every frame,
+which draws the camera cell words `$7A2C` and `$7A34`, each clamped to ±100, and
+redraws only when they change. The hop does not write them; they follow the
+camera. Live, the readout read 08-08 in the first sample after the Gaea slot 70
+arrival, 04-06 after the digit hop to Vesta slot 68, and 11-08 after the hop back
+to Eris slot 69: the destination cell, with no intermediate value sampled. **There is no VOID stage in the hop itself.** Earlier text here said
+transit staged through `$78`; it is the panel naming the cube, not a Body the
+player passes through.
+
+#### Entry fires once: the latch `$7884`
+
+`$059126` returns at once while `$7882` is 0, and clears `$7884` as it does. With
+`$7882` non-zero, it returns if `$7884` is already non-zero. Otherwise it copies
+`$7882` into `$7884` and steps. **The handler fires on the first frame the player
+is inside a cube, and not again until a frame finds them outside every cube.**
+
+The hop puts the player inside the destination cube, and `$7884` still holds the
+slot they entered. So the destination does not fire. Live, after Eris slot 69 to
+Gaea slot 70, the latch read `$0114` (69 × 4) and `$7882` read `$0118` (70 × 4),
+and the player stayed on Gaea for as long as they stood there. A sample taken
+between the clear and the draw reads `$7882` as 0, so samples alternate between
+0 and the slot while the player stands still; the latch does not.
+
+#### Direction
+
+`$05913A` takes the yaw word `$7AC2` and adds `$100`. On foot (`$7AAE` = 1),
+`$059152` inverts it unless the stick's forward bit, bit 0 of `$79C4`, is set.
+Aboard, `$05914A` inverts it while the speed `$797C` is negative. Then
+`$05915C` tests bit 9: clear steps the selector up by four (the next slot), set
+steps it down. In yaw units of 1024 a turn, a player facing a yaw from `$300`
+round to `$0FF` and walking forwards steps up, and from `$100` to `$2FF` steps
+down. Walking backwards reverses both.
+
+On foot, a player moves only along their facing, so the rule is equivalent to
+the bearing at which they cross into the cube: the two halves of the compass are
+the two directions round the ring. The split is fixed in **world** yaw. It does
+not depend on how the cube is turned.
+
+Live, both halves were seen at the same yaw. Walking forwards into slot 69 at
+yaw 200 stepped up to slot 70. Walking on out of slot 70's far side, then
+backwards into it again at yaw 200, stepped down to slot 69. So **to go on
+round the ring in the same direction, back out of the arrival cube the way you
+came, then walk forwards in again**. Leaving by the far side and backing in sends
+you back where you came from, which is the oscillation the earlier probe found.
+
+#### Availability, and the three strings
+
+After each step `$0591BE` decrements a counter that starts at 1, and tests the
+new slot:
+
+| Test | Address | Outcome |
+| --- | --- | --- |
+| The step is back at the slot the player stands in | `$0591C0` | string 17, `NO OTHER TRANSPORTERS AVAILABLE`; no hop |
+| Association B byte 0 is `$00` (unclaimed) or `$78` (VOID) | `$0591D2`–`$0591DC` | skip: step again in the same direction |
+| Aboard a craft, Association B byte 1 is non-zero (interior-associated) | `$0591E0`–`$0591EC` | skip |
+| Otherwise, if any slot was skipped | `$0591F0`–`$0591F6` | string 18, `INTERMEDIATE TRANSPORTERS NOT AVAILABLE`, **then the hop** |
+
+String 18 is a notice, not a refusal: the player still goes, to the first
+available transporter beyond the skipped ones. Only string 17 stops a ring hop.
+
+`$78010010` is the parked Association B a carried object holds
+([limo-key pickup](damocles-limo-key-pickup.md)). **A carried transporter is
+therefore unavailable**, and the ring passes it with string 18. Nothing else the
+player carries is read: neither handler looks at the Carried Stack, so carrying
+the EAGLE (as ST Format 20 step 4 does) makes no difference.
+
+#### A digit key names the destination (#1005)
+
+While the player is on foot and `$7882` is non-zero, `$0555E4` sends every
+scancode below `$0C` to `$059184`, before the lift keys. That is Esc, the digit
+row and nothing else. `$059184` subtracts one from the scancode, returns on Esc,
+maps `0` to zero and adds `$40`. **Key `n` names slot 64 + `n`**: `0` is slot 64,
+`1` slot 65, through `9` for slot 73. That is the digit `$4E328` draws in place
+of the `a` in `TRANSPORTER a` when one is carried. If that slot's body byte is 0,
+the key raises string 20, `TRANSPORTER NOT AVAILABLE`. Otherwise it hops.
+
+The digit path checks nothing else. It does not skip VOID or interior
+transporters, does not refuse the slot the player is standing in, and neither
+reads nor sets the latch.
+
+Live, standing in the Gaea cube after the ring hop, `4` put the player in slot 68
+on VESTA, cell `$64`, Floor 10, with the latch still holding `$0114`. In a
+separate run the player walked out of the Gaea cube until `$7884` read 0, and
+`0` then counted no hop and left the player where they were.
+
+#### Arrival
+
+The common hop at `$0591FA` first writes the player position
+`$7AB2`/`$7AB6`/`$7ABA` from the destination's resident X, Y + `$3F` and Z, and
+the Floor byte `$7AC5` from Association B byte 2. Two later writes can change
+the height and the Floor:
+
+- The Body switch `$05929A` falls through into a support search at `$059324`.
+  When it finds a support, `$05932A`–`$059336` replace the low word of Y with
+  that support's height + `$3F`.
+- On foot, `$059234`–`$059250` then call `$055B92`. If the level word `$7B02` is
+  not negative, `$05924A` first replaces it with the level selector `$7AA4`.
+  A positive level is admitted against the Floor Table at `$055B1C`–`$055B56`,
+  which writes `$7AC4`, and `$055B78`–`$055B80` recompute Y as Floor × storey
+  pitch `$7B00` + `$3F`. A level of 0 or below sets Floor 0 at `$055B9A`.
+
+On foot it also recomputes the surface longitude and latitude words at
+`$05935A`. It then arms the transporter sound (`$7A78` ← 3, VBL vector `$4BF54`
+← `$04C0B4`) and joins the common rebuild at `$0543FA`. **The yaw is not
+written.** A port should take the final height and Floor from those two paths,
+not from the first write.
+
+Live, for the three placements measured, slot 70 on Gaea, slot 68 on Vesta and
+slot 69 on Eris, every arrival sampled before the player moved landed exactly
+on the slot's resident X and Z and 63 units above its resident Y. Each was on
+the Floor its Association B names (1, 10 and 10), facing the yaw the player
+walked in with. So at these three slots the resident Y already equals the
+Floor's height, and the two later writes change nothing. That is measured here,
+not shown for every slot. The whole hop is one call within one frame. No
+intermediate Body or position was sampled.
+
+#### Aboard a craft
+
+`$059126` carries an aboard branch: direction from the speed's sign, and
+interior transporters skipped. A craft that enters a surface-placed cube would
+therefore hop to the next surface transporter, BACCHUS slot 72 or MENTOR
+slot 73, in the first world. The digit keys are on-foot only. **This is read
+from the image and not driven live**: no capture has a craft within reach of a
+surface transporter.
+
+#### The wrap
+
+`$059164`–`$05916A` turns a step below `$100` into `$124`, and `$059172`–`$059178`
+turns a step past `$124` into `$100`, so slot 64 steps down to 73 and 73 steps
+up to 64. **The wrap is read from the image and not driven live.** Reaching it on foot
+means standing in slot 64 or 73. Slot 73 is MENTOR, where the pose has no air.
+Slot 64 is reached by digit `0`, but in these runs the player had always
+walked out of the arrival cube before the key could be pressed.
 
 ### Driven live
 
-From a memstate standing in the Eris basement at cell `$8B`, the probe walks
-forward and the player is on **GAEA at cell `$88`** — local (8, 8) — inside one
-and a half seconds, on foot the whole way:
+The [#326](https://github.com/odogono/mercenary/issues/326) run first showed the
+ring live. From a memstate standing in the Eris basement at cell `$8B`, walking
+forward put the player on **GAEA at cell `$88`** — local (8, 8) — on foot the
+whole way:
 
 ```
 walk: legs [['0x01', 2.0]]
@@ -429,18 +589,24 @@ walk: legs [['0x01', 2.0]]
   t+  1.5s body 0x0020 cell 0x0088  pos=(17334325, 213, 50890372)
 ```
 
-The arrival lands within ninety units of slot 70's own entry in the resident
-arrays, which is the check that the catalogue's association cell and the live
-hop describe the same square.
+The #1005 runs repeat that hop in short stick pulses, so the player usually
+stops where the hop leaves them. A hop is counted only from a tracing breakpoint
+on `$0591FA`, armed before the first step, never inferred from a change of Body
+or cell. The `digit` case then presses a digit key in the arrival cube. The
+`outside` case leaves the cube until the latch reads 0, presses a digit, and
+walks back in with the other stick. Each sample records the latch, the panel
+field, the Cell Readout words and the Floor in one debugger stop. The cited
+runs, the probe that made them and their logs are kept under
+`restricted/damocles-1005/`.
+`transporter-probe.py` restores a run-local copy of each memstate whose stored
+TOS and floppy paths name the pinned images. The captures stored a checkout path
+that has since moved, and the Hatari.app bundle's own `tos.img`, which is
+byte-identical to the pinned `emutos206.img`. Without the copy, Hatari restores
+a machine with no TOS and every sample reads nothing.
 
-**Chaining further is not yet automated.** Arriving leaves the player standing
-at the destination cube, and the handler only fires on entry, so the next hop
-means leaving and walking back in — from the *other* side, or the ring simply
-steps back the way it came. Reversing out is what the probe does today, which
-oscillates between Eris and Gaea. Walking round the cube to its far face stalls:
-these transporters are inside buildings, and the closed-loop walk does not find
-its way round the interior. The mechanism is recovered and one hop is
-reproducible; the indoor manoeuvre is the gap.
+Two poses could not be used. MENTOR has no air and the player did not move
+before dying. The Gaea slot 70 cube is indoors, and the closed-loop walk could
+not reach it from where the pose stands.
 
 ## What an arrival pose publishes without a workspace origin
 
@@ -600,6 +766,9 @@ that a body cannot be stood on**, and each of the seven is an open gap.
 | Per-body residents and surface counts          | `payload/damocles/catalogue.json`; `location-ledger.py ledger`            |
 | Live transporter hop, Eris `$8B` → Gaea `$88`  | `eris-transporter-11-8.sav`; `arrival-route-probe.py --walk`             |
 | Transporter ring slots and their bodies        | `$059130`; catalogue resident slots 64–73; eight transporter memstates    |
+| Entry box, latch, direction, availability, digit keys, arrival | `$059126`–`$059264`, `$0538F6`–`$053956`, `$0555E4`, `$04DBF2`–`$04DC18` and model `$038820` in the pinned first-world image |
+| Live arrival, latch, panel VOID, Cell Readout and digit `4` to Vesta | `restricted/damocles-1005/transporter-digit-20261127T161248Z-0c0e9a06`; `transporter-probe.py digit` |
+| Live leave with the latch cleared, digit `0` outside a cube, backwards re-entry Gaea 70 → Eris 69 | `restricted/damocles-1005/transporter-outside-20261127T161401Z-2ea4f482`; `transporter-probe.py outside` |
 | Twenty-seven arrival poses on twenty-three bodies | Twenty-seven Hatari memstates, all rehosted by `memstate-rehost.py`; `location-ledger.py poses --payload` |
 | Eight bodies reached by steered craft flight   | Captured in play by the project owner, 2026-09-19; not instrumented, so no per-body flight log exists |
 | A body can carry more than one 16×16 window    | `gaea-transporter` against `docs/research/damocles-gaea-ur-city-workspace.md` |

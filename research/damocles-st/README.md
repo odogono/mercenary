@@ -686,6 +686,27 @@ stopped with nothing queued.
 Findings are in
 [every Damocles sound programme](../../docs/research/damocles-sound-programmes.md).
 
+## Transporter handlers (#1005)
+
+```sh
+# walk into the slot 69 cube along the pose's facing, then press 4 in the arrival cube
+python3 research/damocles-st/scripts/transporter-probe.py digit --digit 4 \
+    --side keep --no-aim --snapshot research/damocles-st/snapshots/rehosted/eris-transporter-11-8.sav
+# the same entry, then leave the arrival cube until the latch clears, press 0, and back in
+python3 research/damocles-st/scripts/transporter-probe.py outside --digit 0 \
+    --side keep --no-aim --snapshot research/damocles-st/snapshots/rehosted/eris-transporter-11-8.sav
+```
+
+Walks in short stick pulses so the player usually stops where a hop leaves them,
+and counts hops only from a tracing breakpoint on `$0591FA`. Each sample reads
+`$7882`, the latch `$7884`, the Cell Readout words `$7A2C`/`$7A34`, the Floor
+word and the panel's location selector `$04DBF0` in one debugger stop. It restores a run-local copy of the memstate
+whose stored TOS and floppy paths name the pinned images: the captures name a
+checkout path that has since moved and the Hatari.app bundle's `tos.img`, which
+is byte-identical to `emutos206.img`, and Hatari restores a machine with no TOS
+when that path is missing. See
+[the transporter section](../../docs/research/damocles-arrival-routes.md#what-the-handlers-do-1005).
+
 ## Failures and acceptance
 
 Hard failure on a wrong STX, wrong TOS, missing Hatari, missed title-screen

@@ -52,7 +52,7 @@ Persistent breakpoints log each write to `$6F3A`, `$7158`, `$714C` and the car d
 | Floor Table | alias record + 6, palettes + 18 | alias record + 6, palettes + 18 (`$560F4..$5614C`) | None; pitch is the record word's low 15 bits |
 | Floor Label | wall text `$80`/`$81` → `$CD04` | wall text `$80`/`$81` → `$B2D0` | None |
 
-**Not recovered here.** What `$6F32` holds when it is non-zero (digit keys then go to `$5A078`). Damocles's `$7882` is unrecovered as well. Every capture here reads it as zero.
+**Not recovered here.** What `$6F32` holds when it is non-zero (digit keys then go to `$5A078`). Damocles's `$7882` is the transporter the player stands in ([#1005](damocles-arrival-routes.md#standing-in-a-transporter-7882)); whether `$6F32` is Mercenary III's counterpart is not checked. Every capture here reads it as zero.
 
 ## Observed ride
 
