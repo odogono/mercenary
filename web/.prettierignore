@@ -5,6 +5,8 @@ bun.lock
 .eslintcache
 playwright-report
 test-results
+playthrough-report
+playthrough-results
 
 # Frozen extraction evidence: preserve the original bytes.
 test/oracle/benson.json

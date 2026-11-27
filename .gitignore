@@ -29,6 +29,8 @@ __pycache__/
 /web/node_modules/
 /web/.eslintcache
 /web/playwright-report/
+/web/playthrough-report/
+/web/playthrough-results/
 /web/test-results/
 .DS_Store
 

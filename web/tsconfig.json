@@ -27,6 +27,8 @@
     "../tools",
     "playwright.config.ts",
     "playwright.site.config.ts",
+    "playthrough",
+    "playwright.playthrough.config.ts",
     "serve.ts"
   ]
 }

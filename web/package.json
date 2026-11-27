@@ -25,6 +25,7 @@
     "outdated": "bunx npm-check-updates --interactive --format group",
     "test": "bun test --parallel --timings=test-timings.json",
     "test:e2e": "playwright test",
+    "test:playthrough": "playwright test -c playwright.playthrough.config.ts",
     "test:site": "playwright test -c playwright.site.config.ts",
     "test:quiet": "bun test --parallel --timings=test-timings.json --only-failures",
     "test:timings": "bun test --parallel --timings=test-timings.json --update-timings",
@@ -63,7 +64,8 @@
       "e2e/rendering-fixture.ts",
       "tools/dion-tourcraft-compare.ts",
       "tools/serve-site.ts",
-      "e2e-site/*.e2e.ts"
+      "e2e-site/*.e2e.ts",
+      "playthrough/*.playthrough.ts"
     ],
     "include": [
       "files",

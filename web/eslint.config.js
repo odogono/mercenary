@@ -8,7 +8,9 @@ export default [
       '**/dist/*',
       '**/coverage/*',
       '**/playwright-report/*',
-      '**/test-results/*'
+      '**/test-results/*',
+      '**/playthrough-report/*',
+      '**/playthrough-results/*'
     ]
   },
   ...nkzw,
