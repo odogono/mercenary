@@ -68,6 +68,9 @@ export interface SteerOptions {
   /// The highest throttle digit the drive may use.
   readonly throttle?: number;
   readonly timeoutSeconds?: number;
+  /// End the moment the published Body changes, releasing every key: a Transporter's hop, after
+  /// which the legs' points are on another Body. Reaching the last leg without it is an error.
+  untilBodyChanges?: boolean;
 }
 
 /// Steer through each leg in turn. The published heading is the bearing of forward travel,
@@ -120,6 +123,7 @@ export const steer = async (
         performance.now() + (options.timeoutSeconds ?? 240) * 1000;
       const driving = options.mode === 'drive';
       const top = options.throttle ?? 9;
+      const startBody = frame.dataset['body'];
 
       let setting = 0;
       let turning: 'left' | 'right' | null = null;
@@ -128,6 +132,10 @@ export const steer = async (
         let bestAt = performance.now();
         for (;;) {
           await nextFrame();
+          if (options.untilBodyChanges && frame.dataset['body'] !== startBody) {
+            releaseAll();
+            return { at: read() };
+          }
           const now = read();
           const dx = wrapUnits(leg.to.x - now.x);
           const dz = wrapUnits(leg.to.z - now.z);
@@ -218,6 +226,9 @@ export const steer = async (
         key('Space', false);
       }
       releaseAll();
+      if (options.untilBodyChanges) {
+        return { at: read(), error: 'reached the last leg on the same Body' };
+      }
       return { at: read() };
     },
     { legs, options, surface: SURFACE_UNITS }

@@ -19,7 +19,8 @@
 /// - **Keys are a fixed point.** Start with nothing carried, carry every door key that becomes
 ///   reachable, and walk again until nothing changes.
 ///
-/// Transporters are not counted: the port does not implement them.
+/// Transporters are not counted yet, though the session hops through them (#998): counting their
+/// ring steps and digit hops as edges is #1015.
 
 import type { Catalogue } from '../src/catalogue/data.ts';
 import {

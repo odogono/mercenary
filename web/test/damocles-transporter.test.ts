@@ -1,0 +1,323 @@
+import { beforeAll, describe, expect, test } from 'bun:test';
+
+import { type Catalogue } from '../src/catalogue/data.ts';
+import { readErisPresentation } from '../src/damocles/documents.ts';
+import {
+  DAMOCLES_SAVE_SCHEMA_VERSION,
+  damoclesSaveIdentity,
+  decodeDamoclesSave,
+  encodeDamoclesSave,
+  type DamoclesSaveSnapshot
+} from '../src/damocles/save.ts';
+import {
+  DamoclesSession,
+  type DamoclesContent
+} from '../src/damocles/session.ts';
+import { parseDamoclesStrings } from '../src/damocles/strings.ts';
+import {
+  digitHop,
+  insideTransporterCube,
+  ringHop,
+  ringStep,
+  ringStepsUp
+} from '../src/damocles/transporter.ts';
+import { erisSurfaceFrom } from '../src/damocles/world.ts';
+import { IDLE } from '../src/gameCore/index.ts';
+import { damoclesDocuments } from './damocles-documents.ts';
+import { arrivalPoses } from './damocles-pose.ts';
+import { loadCatalogue, modelsOf } from './fixtures/catalogue.ts';
+
+let catalogue: Catalogue;
+let content: DamoclesContent;
+
+beforeAll(async () => {
+  catalogue = await loadCatalogue();
+  const doc = readErisPresentation(await Bun.file('damocles/eris.json').json());
+  content = {
+    catalogue,
+    doc,
+    documents: await damoclesDocuments(),
+    models: modelsOf(catalogue),
+    poses: await arrivalPoses(),
+    presentationSha256: 'test',
+    strings: parseDamoclesStrings(
+      await Bun.file('../payload/damocles/strings.json').json()
+    ),
+    surface: erisSurfaceFrom(catalogue, modelsOf(catalogue), doc)
+  };
+});
+
+const allAvailable = () => 'available' as const;
+
+describe('the ring rules', () => {
+  test('a step moves one slot and wraps at both ends', () => {
+    expect(ringStep(69, true)).toBe(70);
+    expect(ringStep(69, false)).toBe(68);
+    expect(ringStep(73, true)).toBe(64);
+    expect(ringStep(64, false)).toBe(73);
+  });
+
+  test('the hop passes unavailable slots, noting it, and refuses only back at the entry', () => {
+    expect(ringHop(69, true, allAvailable)).toEqual({
+      kind: 'hop',
+      skipped: false,
+      slot: 70
+    });
+    expect(
+      ringHop(73, true, slot => (slot === 64 ? 'unavailable' : 'available'))
+    ).toEqual({ kind: 'hop', skipped: true, slot: 65 });
+    expect(ringHop(69, false, () => 'unavailable')).toEqual({ kind: 'none' });
+  });
+
+  test('the compass halves split in world yaw, and inversion swaps them', () => {
+    // Facing $300 round to $0FF steps up; $100 to $2FF steps down.
+    for (const yaw of [0x3_00, 0x3_ff, 0, 0xc8, 0xff]) {
+      expect(ringStepsUp(yaw, false)).toBe(true);
+      expect(ringStepsUp(yaw, true)).toBe(false);
+    }
+    for (const yaw of [0x1_00, 0x2_00, 0x2_ff]) {
+      expect(ringStepsUp(yaw, false)).toBe(false);
+      expect(ringStepsUp(yaw, true)).toBe(true);
+    }
+  });
+
+  test('a digit names slot 64 + n, refuses an unclaimed slot and ignores a carried one', () => {
+    expect(digitHop(3, () => 'placed')).toEqual({ kind: 'hop', slot: 67 });
+    expect(digitHop(7, () => 'placed')).toEqual({ kind: 'hop', slot: 71 });
+    expect(digitHop(0, () => 'placed')).toEqual({ kind: 'hop', slot: 64 });
+    expect(digitHop(9, () => 'unclaimed')).toEqual({ kind: 'refused' });
+    expect(digitHop(3, () => 'carried')).toEqual({ kind: 'ignored' });
+  });
+
+  test('the cube is (−50, 50] on X and Z and (0, 128] above the slot', () => {
+    const slot = { x: 0, y: 0, z: 0 };
+    expect(insideTransporterCube({ x: 50, y: 128, z: 50 }, slot)).toBe(true);
+    expect(insideTransporterCube({ x: -50, y: 63, z: 0 }, slot)).toBe(false);
+    expect(insideTransporterCube({ x: 0, y: 0, z: 0 }, slot)).toBe(false);
+    expect(insideTransporterCube({ x: 0, y: 129, z: 0 }, slot)).toBe(false);
+  });
+});
+
+/// Slot 69 in the Capital City 11-08 basement, on Floor 10, as the session draws it.
+const SLOT_69 = { x: 4_945_724, y: 1100, z: 8_944_934 };
+const NORTH = 0;
+const SOUTH = Math.PI;
+
+const basement = (): DamoclesSaveSnapshot => {
+  const session = new DamoclesSession(content);
+  expect(session.switchToPose('eris-transporter-11-8').kind).toBe('switched');
+  const drawn = session.snapshot.residents.find(
+    item => item.id === 'object-slot-69'
+  );
+  expect(drawn?.position).toEqual(SLOT_69);
+  return session.captureResume();
+};
+
+/// Stand `dz` units north of slot 69 at eye height, facing `heading`.
+const near69 = (
+  dz: number,
+  heading: number,
+  change: Partial<DamoclesSaveSnapshot> = {}
+): DamoclesSession => {
+  const saved = basement();
+  return new DamoclesSession(content, {
+    ...saved,
+    ...change,
+    pose: {
+      ...saved.pose,
+      heading,
+      position: { x: SLOT_69.x, y: SLOT_69.y + 63, z: SLOT_69.z + dz }
+    }
+  });
+};
+
+/// Walk (`walk` 1 forwards, −1 backwards) until the Body changes or two seconds pass, then stop.
+const walkIn = (session: DamoclesSession, walk: number): void => {
+  const body = session.snapshot.pose.body;
+  session.intent = { ...IDLE, walk };
+  for (
+    let frame = 0;
+    frame < 100 && session.snapshot.pose.body === body;
+    frame += 1
+  ) {
+    session.advance(1 / 50);
+  }
+  session.intent = IDLE;
+  session.advance(1 / 50);
+};
+
+const at = (session: DamoclesSession) => {
+  const snapshot = session.snapshot;
+  return {
+    body: snapshot.pose.body,
+    cell: `${snapshot.islandCell.x}-${snapshot.islandCell.z}`,
+    floor: snapshot.structure?.floor ?? 0
+  };
+};
+
+const transporterCues = (session: DamoclesSession): number =>
+  session
+    .drainEffects()
+    .filter(
+      effect => effect.type === 'sound-request' && effect.cue === 'transporter'
+    ).length;
+
+describe('walking into a Transporter', () => {
+  test('walking south into slot 69 steps up to Gaea slot 70, and north down to Vesta 68', () => {
+    const south = near69(100, SOUTH);
+    walkIn(south, 1);
+    expect(at(south)).toEqual({ body: 'body-8', cell: '8-8', floor: 1 });
+    // Measured live after the hop: Y is slot 70's resident Y plus $3F.
+    expect(south.snapshot.pose.position.y).toBe(213);
+    expect(transporterCues(south)).toBe(1);
+
+    const north = near69(-100, NORTH);
+    walkIn(north, 1);
+    expect(at(north)).toEqual({ body: 'body-14', cell: '4-6', floor: 10 });
+    expect(north.snapshot.pose.position.y).toBe(3170 + 63);
+  });
+
+  test('walking backwards reverses the direction', () => {
+    const backingSouth = near69(-100, SOUTH);
+    walkIn(backingSouth, -1);
+    expect(at(backingSouth).body).toBe('body-14');
+    const backingNorth = near69(100, NORTH);
+    walkIn(backingNorth, -1);
+    expect(at(backingNorth).body).toBe('body-8');
+  });
+
+  test('the yaw is not written, and the destination does not fire', () => {
+    const session = near69(100, SOUTH);
+    walkIn(session, 1);
+    expect(session.snapshot.pose.heading).toBeCloseTo(SOUTH, 6);
+    for (let frame = 0; frame < 100; frame += 1) {
+      session.advance(1 / 50);
+    }
+    expect(at(session).body).toBe('body-8');
+    expect(transporterCues(session)).toBe(1);
+  });
+
+  test('the panel names VOID while the player stands in a cube, and the Body once out', () => {
+    const session = near69(100, SOUTH);
+    walkIn(session, 1);
+    expect(session.snapshot.bodyName).toBe('VOID');
+    session.intent = { ...IDLE, walk: -1 };
+    for (let frame = 0; frame < 50; frame += 1) {
+      session.advance(1 / 50);
+    }
+    session.intent = IDLE;
+    session.advance(1 / 50);
+    expect(at(session).body).toBe('body-8');
+    expect(session.snapshot.bodyName).toBe('GAEA');
+  });
+
+  test('an unavailable slot is passed with string 18, and the hop still goes', () => {
+    const session = near69(100, SOUTH, {
+      removedResidents: ['object-slot-70']
+    });
+    walkIn(session, 1);
+    expect(session.snapshot.message?.id).toBe('system-string-18');
+    expect(at(session)).toEqual({ body: 'body-17', cell: '4-2', floor: 4 });
+  });
+
+  test('with every other slot unavailable, string 17 and no hop', () => {
+    const others = [64, 65, 66, 67, 68, 70, 71, 72, 73].map(
+      slot => `object-slot-${slot}`
+    );
+    const session = near69(100, SOUTH, { removedResidents: others });
+    session.intent = { ...IDLE, walk: 1 };
+    for (
+      let frame = 0;
+      frame < 100 && session.snapshot.message === null;
+      frame += 1
+    ) {
+      session.advance(1 / 50);
+    }
+    session.intent = IDLE;
+    expect(session.snapshot.message?.id).toBe('system-string-17');
+    expect(at(session).body).toBe('body-11');
+    expect(session.snapshot.bodyName).toBe('VOID');
+  });
+
+  test('a destroyed Body is not checked: the hop lands there (#1013)', () => {
+    const session = near69(100, SOUTH, { destroyedBodies: ['body-8'] });
+    walkIn(session, 1);
+    expect(at(session).body).toBe('body-8');
+  });
+
+  test('a restore inside a cube stands in it without firing', () => {
+    const session = near69(0, SOUTH);
+    expect(session.snapshot.bodyName).toBe('VOID');
+    expect(session.inTransporter).toBe(true);
+    for (let frame = 0; frame < 50; frame += 1) {
+      session.advance(1 / 50);
+    }
+    expect(at(session).body).toBe('body-11');
+  });
+});
+
+describe('a digit key in a Transporter', () => {
+  test('from the Gaea arrival, 3 goes to Metis slot 67 with the latch still set', () => {
+    const session = near69(100, SOUTH);
+    walkIn(session, 1);
+    expect(session.inTransporter).toBe(true);
+    expect(session.transporterKey(3).kind).toBe('hopped');
+    expect(at(session)).toEqual({ body: 'body-15', cell: '0-6', floor: 9 });
+    for (let frame = 0; frame < 50; frame += 1) {
+      session.advance(1 / 50);
+    }
+    expect(at(session).body).toBe('body-15');
+    expect(session.snapshot.bodyName).toBe('VOID');
+  });
+
+  test('the slot stood in hops in place, and an unclaimed slot raises string 20', () => {
+    const inPlace = near69(0, SOUTH);
+    inPlace.drainEffects();
+    expect(inPlace.transporterKey(5).kind).toBe('hopped');
+    expect(at(inPlace).body).toBe('body-11');
+    expect(inPlace.snapshot.pose.position).toEqual({
+      ...SLOT_69,
+      y: SLOT_69.y + 63
+    });
+    expect(transporterCues(inPlace)).toBe(1);
+
+    const removed = near69(0, SOUTH, { removedResidents: ['object-slot-73'] });
+    expect(removed.transporterKey(9).kind).toBe('refused');
+    removed.advance(1 / 50);
+    expect(removed.snapshot.message?.id).toBe('system-string-20');
+    expect(at(removed).body).toBe('body-11');
+  });
+
+  test('outside a cube a digit is not the Transporter’s', () => {
+    const session = near69(200, SOUTH);
+    session.advance(1 / 50);
+    expect(session.inTransporter).toBe(false);
+    expect(session.transporterKey(7).kind).toBe('ignored');
+    expect(at(session).body).toBe('body-11');
+  });
+
+  test('a Save showing a Transporter string restores', () => {
+    const session = near69(100, SOUTH, {
+      removedResidents: ['object-slot-70']
+    });
+    walkIn(session, 1);
+    expect(session.snapshot.message?.id).toBe('system-string-18');
+    const identity = damoclesSaveIdentity(catalogue, 'test');
+    const decoded = decodeDamoclesSave(
+      encodeDamoclesSave({
+        identity,
+        savedAt: '2026-11-27T12:00:00.000Z',
+        schemaVersion: DAMOCLES_SAVE_SCHEMA_VERSION,
+        snapshot: session.captureResume(),
+        where: 'LOGOS'
+      }),
+      identity,
+      { catalogue, poses: content.poses, strings: content.strings }
+    );
+    const restored = new DamoclesSession(content, decoded.snapshot);
+    expect(restored.snapshot.message?.id).toBe('system-string-18');
+    // Restored standing in the Logos cube: it does not fire.
+    restored.advance(1);
+    expect(at(restored).body).toBe('body-17');
+  });
+});
