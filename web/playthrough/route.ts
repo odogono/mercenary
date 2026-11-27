@@ -91,3 +91,63 @@ export const CHAPTER_1 = {
     target: { body: ERIS, cell: '09-08', floor: 0, island: CAPITAL }
   }
 } as const satisfies Record<string, SolutionStep>;
+
+const KEY_WEST = 'KEY WEST';
+const SNOW_ISLAND = 'SNOW ISLAND';
+const METIS = 'METIS';
+const METIS_MOONBASE = 'METIS MOONBASE';
+
+/// Chapter 2: from EAGLE NINE S E at Moorby to the fourth NOVA TRIGGER on Metis, after ST Format
+/// 20 steps 1 to 4, with ST Format 14 for where the ANTIGRAV is.
+export const CHAPTER_2 = {
+  antigrav: {
+    cite: { section: 'step 1; stf14 ¶5', solution: 'stf20' },
+    id: '2.1',
+    proves: 'the inventory head reads ANTIGRAV',
+    says: 'Fly to Key West 07.07 and take the Antigrav from the basement. ST Format 20 gives the square as 09.02; its own excursion (f), ST Format 14 and ST Format 15 all give Key West 07.07, which this step follows.',
+    target: { body: ERIS, cell: '07-07', floor: 10, island: KEY_WEST }
+  },
+  cupboard: {
+    cite: { section: 'step 2', solution: 'stf20' },
+    id: '2.2',
+    proves:
+      'the CUPBOARD is NOVA TRIGGER 2, switches ON from the centre box, and is dropped switched on',
+    says: 'Fly to Snow Island 03.00, find NOVA TRIGGER 2 (the cupboard), take it, turn it on and drop it.',
+    target: { body: ERIS, cell: '03-00', island: SNOW_ISLAND }
+  },
+  liftTheEagle: {
+    cite: { section: 'step 3', solution: 'stf20' },
+    id: '2.3',
+    proves: 'EAGLE NINE S E is carried, and the player reaches Floor 10',
+    says: 'Fly to Capital City 11.08, pick up the Eagle, take the lift down to the basement.',
+    target: { body: ERIS, cell: '11-08', floor: 10, island: CAPITAL }
+  },
+  transporter: {
+    cite: { section: 'step 4', solution: 'stf20' },
+    id: '2.4',
+    proves: 'a transporter carries the player to METIS MOONBASE 00-06',
+    says: 'Walk into the transporters by their arrowed sides until you come out at the Metis moon base, 00.06.',
+    target: { body: METIS, cell: '00-06', island: METIS_MOONBASE }
+  },
+  washbasin: {
+    cite: { section: 'step 4', solution: 'stf20' },
+    id: '2.5',
+    proves:
+      'the WASHBASIN is NOVA TRIGGER 4, switches ON, and is dropped switched on',
+    says: 'Take the transporter, go outside, drop the Eagle and fly to 05.06; take the Eagle again, go in, walk to the table to open a secret door, go through, drop the transporter and take NOVA TRIGGER 4 (the washbasin); turn it on and drop it.',
+    target: { body: METIS, cell: '05-06', island: METIS_MOONBASE }
+  }
+} as const satisfies Record<string, SolutionStep>;
+
+/// The seam probe: ST Format 20's first leg flown the short way, across the wrap of Eris's
+/// surface, as a player heading straight for Key West would.
+export const CHAPTER_2_SEAM = {
+  keyWest: {
+    cite: { section: 'step 1; stf14 ¶5', solution: 'stf20' },
+    id: '2s.1',
+    proves:
+      'after the shortest flight from Moorby, Key West’s NEWTON LTD RESEARCH is bound and drawn at its door',
+    says: 'Fly from the Moorby School of Flying to Key West 07.07, the short way.',
+    target: { body: ERIS, cell: '07-07', island: KEY_WEST }
+  }
+} as const satisfies Record<string, SolutionStep>;

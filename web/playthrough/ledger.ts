@@ -16,6 +16,9 @@ export interface Citation {
   readonly solution: SolutionId;
 }
 
+// eslint-disable-next-line no-control-regex -- the terminal colour codes expect writes into messages
+const ANSI = /\u001B\[[\d;]*m/g;
+
 export type SolutionId = 'stf14' | 'stf15' | 'stf20';
 
 export const SOLUTIONS: Readonly<
@@ -76,6 +79,9 @@ export interface StepRecord {
   readonly evidence: Evidence | null;
   readonly gap: { readonly class: GapClass; readonly detail: string } | null;
   readonly id: string;
+  /// Findings that did not stop the step: something the session refused that a player can work
+  /// around, as the run then did. Each is a lead like a gap, without stopping the chapter.
+  readonly notes: readonly string[];
   readonly outcome: 'failed' | 'not reached' | 'passed';
   readonly proves: string;
   readonly says: string;
@@ -157,6 +163,13 @@ export class Chapter {
     });
   }
 
+  #notes: string[] = [];
+
+  /// Record a non-blocking finding against the step now running.
+  note(finding: string): void {
+    this.#notes.push(finding);
+  }
+
   get stopped(): boolean {
     return this.#stopped;
   }
@@ -178,15 +191,19 @@ export class Chapter {
         ...base,
         evidence: null,
         gap: null,
+        notes: [],
         outcome: 'not reached'
       });
       return;
     }
     let gap: StepRecord['gap'] = null;
+    this.#notes = [];
     try {
       await play();
     } catch (error) {
-      const detail = error instanceof Error ? error.message : String(error);
+      const detail = (
+        error instanceof Error ? error.message : String(error)
+      ).replaceAll(ANSI, '');
       gap = {
         class:
           error instanceof SteeringError
@@ -201,6 +218,7 @@ export class Chapter {
       ...base,
       evidence,
       gap,
+      notes: this.#notes,
       outcome: gap === null ? 'passed' : 'failed'
     });
   }

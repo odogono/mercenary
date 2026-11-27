@@ -77,15 +77,24 @@ const chapterSection = (ledger: ChapterLedger): string => {
       `| ${step.id} | ${step.cite.solution} ${step.cite.section} | ${cell(step.says)} | ${cell(where(step))} | ${step.outcome} | ${clock(step.evidence?.wallSeconds)} | ${step.evidence?.panel['clock'] ?? ''} |`
     );
   }
-  const gaps = ledger.steps.filter(step => step.gap !== null);
+  const gaps = ledger.steps.filter(
+    step => step.gap !== null || step.notes.length > 0
+  );
   lines.push('', '### Gaps', '');
   if (gaps.length === 0) {
     lines.push('None in this chapter.');
   }
   for (const step of gaps) {
-    lines.push(
-      `- **${step.id}, ${step.gap!.class}.** ${cell(step.gap!.detail.split('\n')[0]!)} The step had to prove that ${step.proves}.`
-    );
+    for (const note of step.notes) {
+      lines.push(
+        `- **${step.id}, noted (did not stop the step).** ${cell(note)}`
+      );
+    }
+    if (step.gap !== null) {
+      lines.push(
+        `- **${step.id}, ${step.gap.class}.** ${cell(step.gap.detail.split('\n')[0]!.replace(/[\s.]*$/, '.'))} The step had to prove that ${step.proves}.`
+      );
+    }
   }
   return lines.join('\n');
 };
@@ -93,7 +102,11 @@ const chapterSection = (ledger: ChapterLedger): string => {
 const main = async (): Promise<void> => {
   const names = (await readdir(ledgerDirectory()))
     .filter(name => name.endsWith('.json'))
-    .sort((left, right) => left.localeCompare(right, 'en', { numeric: true }));
+    .sort((left, right) =>
+      left
+        .replace(/\.json$/, '')
+        .localeCompare(right.replace(/\.json$/, ''), 'en', { numeric: true })
+    );
   const ledgers = await Promise.all(
     names.map(
       async name =>

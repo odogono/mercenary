@@ -13,6 +13,8 @@ export interface RegionBox {
     readonly [number, number],
     readonly [number, number]
   ];
+  /// The region's flags: bit 14 outdoors, bit 13 a lift car.
+  readonly flags?: number;
 }
 
 const contains = (region: RegionBox, point: Point): boolean => {
@@ -167,4 +169,48 @@ export const planRoute = (
       point.x !== points[index - 1]!.x ||
       point.z !== points[index - 1]!.z
   );
+};
+
+const OUTDOOR = 0x40_00;
+const LIFT = 0x20_00;
+
+export const isOutdoor = (region: RegionBox): boolean =>
+  ((region.flags ?? 0) & OUTDOOR) !== 0;
+
+const centre = (region: RegionBox): Point => {
+  const [[x0, x1], [z0, z1]] = region.bounds;
+  return { x: (x0 + x1) / 2, z: (z0 + z1) / 2 };
+};
+
+/// Where to stand outside a structure to walk in: past the middle of an edge an indoor region
+/// shares with an outdoor one, `distance` out. The first such edge in region order is used.
+export const entrance = (
+  regions: readonly RegionBox[],
+  distance: number
+): Point | null => {
+  for (const inside of regions) {
+    if (isOutdoor(inside)) {
+      continue;
+    }
+    for (const outside of regions) {
+      if (!isOutdoor(outside)) {
+        continue;
+      }
+      const edge = crossing(inside, outside);
+      if (edge !== null) {
+        const middle = (edge.from + edge.to) / 2;
+        const along = edge.at + edge.direction * distance;
+        return edge.axis === 'x'
+          ? { x: along, z: middle }
+          : { x: middle, z: along };
+      }
+    }
+  }
+  return null;
+};
+
+/// The middle of a lift car on this Floor, if the Floor has one.
+export const liftCar = (regions: readonly RegionBox[]): Point | null => {
+  const car = regions.find(region => ((region.flags ?? 0) & LIFT) !== 0);
+  return car === undefined ? null : centre(car);
 };

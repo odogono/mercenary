@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 
-import { planRoute, type RegionBox } from './planner.ts';
+import { entrance, planRoute, type RegionBox } from './planner.ts';
 
 /// Steering a Damocles session by the player's own controls, from what the page publishes.
 ///
@@ -11,6 +11,15 @@ import { planRoute, type RegionBox } from './planner.ts';
 /// A failure the harness itself caused, as opposed to one the session caused: the steering could
 /// not get there, which says nothing yet about whether a player could. The ledger classes it as a
 /// harness gap.
+/// A Body's surface wraps at 4,096 cells of 65,536 units (`SURFACE_CELLS`, `world.ts`), and the
+/// published position does not wrap, so every difference is taken the short way round.
+export const SURFACE_UNITS = 4096 * 65_536;
+
+export const wrapSurface = (delta: number): number =>
+  ((((delta + SURFACE_UNITS / 2) % SURFACE_UNITS) + SURFACE_UNITS) %
+    SURFACE_UNITS) -
+  SURFACE_UNITS / 2;
+
 export class SteeringError extends Error {
   override name = 'SteeringError';
 }
@@ -76,7 +85,7 @@ export const steer = async (
   options: SteerOptions
 ): Promise<void> => {
   const outcome = await page.evaluate(
-    async ({ legs, options }) => {
+    async ({ legs, options, surface }) => {
       const frame = document.querySelector<HTMLElement>('#frame')!;
       const read = () => ({
         heading: Number(frame.dataset['heading']),
@@ -106,6 +115,8 @@ export const steer = async (
       // eslint-disable-next-line unicorn/consistent-function-scoping -- runs in the page, which sees no outer scope
       const nextFrame = () =>
         new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+      const wrapUnits = (delta: number) =>
+        ((((delta + surface / 2) % surface) + surface) % surface) - surface / 2;
       // eslint-disable-next-line unicorn/consistent-function-scoping -- runs in the page, which sees no outer scope
       const wrap = (angle: number) =>
         Math.atan2(Math.sin(angle), Math.cos(angle));
@@ -125,8 +136,8 @@ export const steer = async (
         for (;;) {
           await nextFrame();
           const now = read();
-          const dx = leg.to.x - now.x;
-          const dz = leg.to.z - now.z;
+          const dx = wrapUnits(leg.to.x - now.x);
+          const dz = wrapUnits(leg.to.z - now.z);
           const distance = Math.hypot(dx, dz);
           if (distance <= leg.radius) {
             break;
@@ -216,7 +227,7 @@ export const steer = async (
       releaseAll();
       return { at: read() };
     },
-    { legs, options }
+    { legs, options, surface: SURFACE_UNITS }
   );
   if ('error' in outcome && outcome.error !== undefined) {
     throw new SteeringError(
@@ -225,17 +236,19 @@ export const steer = async (
   }
 };
 
-interface StructureModel {
+export interface StructureModel {
   readonly levelBinding?: {
     readonly floors: readonly {
+      readonly drawnStructureId?: string;
       readonly level: number;
       readonly structureId: string;
     }[];
   };
+  readonly storeyHeight?: number;
   readonly structureSelection?: { readonly regions: readonly RegionBox[] };
 }
 
-const model = async (page: Page, id: string): Promise<StructureModel> =>
+export const model = async (page: Page, id: string): Promise<StructureModel> =>
   (
     (await (
       await page.request.get(`/payload/damocles/models/${id}.json`)
@@ -244,7 +257,7 @@ const model = async (page: Page, id: string): Promise<StructureModel> =>
 
 /// The region boxes of a structure on the Floor the player stands on: a structure with a Floor
 /// Table binds a separate structure per Floor.
-const floorRegions = async (
+export const floorRegions = async (
   page: Page,
   instance: string,
   floor: number
@@ -262,9 +275,20 @@ const floorRegions = async (
     throw new SteeringError(`no instance ${instance}`);
   }
   const record = await model(page, own);
-  const bound = record.levelBinding?.floors.find(item => item.level === floor);
+  // As the session binds a Floor (`session.ts`, `floorPlacement`; `world.ts`, `floorModelId`):
+  // Floor 0 is the instance's own model, and any other Floor the model its Floor Table names,
+  // in the instance's frame where the extractor publishes one.
+  const bound =
+    floor === 0
+      ? undefined
+      : record.levelBinding?.floors.find(item => item.level === floor);
+  if (floor !== 0 && bound === undefined) {
+    throw new SteeringError(`${instance} binds no Floor ${floor}`);
+  }
   const regions = (
-    bound === undefined ? record : await model(page, bound.structureId)
+    bound === undefined
+      ? record
+      : await model(page, bound.drawnStructureId ?? bound.structureId)
   ).structureSelection?.regions;
   if (regions === undefined) {
     throw new SteeringError(
@@ -274,29 +298,52 @@ const floorRegions = async (
   return regions;
 };
 
-/// Walk to a structure-local point by a route the region boxes allow, on the current Floor.
+/// Walk to a point. With a structure, the point is structure-local and the route comes from the
+/// structure's region boxes on the current Floor; from outside every region (a landing out on
+/// the island) the walk first goes straight to the structure's door. Without one, the point is a
+/// world point and the walk goes straight there.
 export const walkTo = async (
   page: Page,
-  instance: string,
+  instance: string | null,
   target: Point,
   name: string,
   radius = 40
 ): Promise<void> => {
+  if (instance === null) {
+    await steer(page, [{ name, radius, to: target }], { mode: 'walk' });
+    return;
+  }
   const origin = await structureOrigin(page, instance);
-  const here = await page.locator('#frame').evaluate(node => ({
-    floor: Number(node.dataset['floor']),
-    x: Number(node.dataset['x']),
-    z: Number(node.dataset['z'])
-  }));
-  const regions = await floorRegions(page, instance, here.floor);
-  const route = planRoute(
-    regions,
-    { x: here.x - origin.x, z: here.z - origin.z },
-    target
-  );
+  const here = async () => {
+    const at = await page.locator('#frame').evaluate(node => ({
+      floor: Number(node.dataset['floor']),
+      x: Number(node.dataset['x']),
+      z: Number(node.dataset['z'])
+    }));
+    return {
+      ...at,
+      x: wrapSurface(at.x - origin.x),
+      z: wrapSurface(at.z - origin.z)
+    };
+  };
+  let start = await here();
+  const regions = await floorRegions(page, instance, start.floor);
+  let route = planRoute(regions, start, target);
+  if (route === null) {
+    const door = entrance(regions, 300);
+    if (door !== null) {
+      await steer(
+        page,
+        [{ name: `${name}, the door`, radius: 80, to: local(origin, door) }],
+        { mode: 'walk' }
+      );
+      start = await here();
+      route = planRoute(regions, start, target);
+    }
+  }
   if (route === null) {
     throw new SteeringError(
-      `no route through ${instance}'s regions on Floor ${here.floor} to ${name}`
+      `no route through ${instance}'s regions on Floor ${start.floor} to ${name}`
     );
   }
   await steer(
