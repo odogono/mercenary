@@ -493,6 +493,29 @@ describe('a dropped Transporter (#1007)', () => {
     expect(ring.snapshot.pose.position.z).not.toBe(SLOT_69.z);
   });
 
+  test('dropped round the player, it does not fire until they leave and walk in again', () => {
+    const session = standAt69(carrying66(atSlot69Floor()), 300, NORTH);
+    session.advance(1 / 50);
+    expect(session.drop()).toEqual({ kind: 'dropped' });
+    for (let frame = 0; frame < 50; frame += 1) {
+      session.advance(1 / 50);
+    }
+    // Standing in the dropped cube, not hopped: the Drop set the latch.
+    expect(at(session)).toEqual({ body: 'body-11', cell: '11-8', floor: 10 });
+    expect(session.inTransporter).toBe(true);
+    expect(session.snapshot.locationName).toBe('VOID');
+    expect(transporterCues(session)).toBe(0);
+
+    // Out of the cube, then back in: now it fires.
+    session.intent = { ...IDLE, walk: 1 };
+    for (let frame = 0; frame < 25; frame += 1) {
+      session.advance(1 / 50);
+    }
+    expect(session.inTransporter).toBe(false);
+    walkIn(session, -1);
+    expect(transporterCues(session)).toBe(1);
+  });
+
   test('dropped on a Floor, it lies there and both its digit and the ring reach it', () => {
     const carrying = standAt69(carrying66(atSlot69Floor()), 300);
     carrying.advance(1 / 50);

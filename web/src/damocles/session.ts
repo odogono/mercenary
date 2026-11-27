@@ -4686,6 +4686,9 @@ export class DamoclesSession implements TitleSession<
     this.placeResident(head, residence);
     this.script = settleCarried(this.script, this.slotOf(head));
     this.scrollCounter = 16;
+    // `$054662` writes -1 over `$7882` and the latch `$7884`, so a Transporter dropped round the
+    // player does not fire: it holds until a frame finds them outside every cube (#1007).
+    this.transporterLatch = -1;
     // `$05468E`: dropping the open object closes it and scrolls the logo back.
     if (this.slotOf(head) === this.headCommands.open?.slot) {
       this.headCommands = closeDocument(this.headCommands);
