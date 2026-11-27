@@ -138,8 +138,10 @@ The ACIA handler stores each make code in the mailbox `$05558C`. The dispatcher 
 `$7AAE` is 1 on foot ([board and leave](damocles-board-leave-paths.md)). A lift key
 that fails a test falls through to the ordinary dispatch at `$05561C`. While `$7882` is non-zero, `$059184` takes the digit keys instead; that handler
 indexes the resident association bytes at `$73A8`. `$053950` copies `$7B40` into
-`$7882`, and `$0531F8` and `$05A730` clear it. This note does not recover what that mode
-is. Every lift capture reads `$7882` as 0.
+`$7882`, and `$0531F8` and `$05A730` clear it. It names the transporter the player is standing
+in, and the digit keys then name a transporter to go to
+([#1005](damocles-arrival-routes.md#standing-in-a-transporter-7882)). Every lift capture reads
+`$7882` as 0.
 
 The three branches are the only references to `$055AE0`. It turns the key into a
 Floor and decides whether to admit it:
@@ -407,5 +409,5 @@ in a corridor.
 - **Where `$CD04` is drawn** ([#473](https://github.com/odogono/mercenary/issues/473)): settled in
   [the Floor Label draw site](damocles-floor-label.md). It is structure wall text beside each
   lift car's door, and during a ride the departure Floor's records draw each Floor passed.
-- **What `$7882` means**, the mode in which digit keys go to `$059184` instead of the lift.
+- ~~**What `$7882` means**~~: the transporter the player stands in; recovered in [#1005](damocles-arrival-routes.md#standing-in-a-transporter-7882).
 - **Sound.** Not examined. The runs had sound off.

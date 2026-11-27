@@ -635,11 +635,11 @@ A structure region whose flags mark it as a lift, where a player on foot changes
 _Avoid_: Elevator, Lift Journey, lift object, lift attachment
 
 **Transporter**:
-A Damocles resident object that carries a player on foot who walks into it to the next available Transporter round the Transporter Ring, the direction set by which face they enter. It carries them to wherever that Transporter now lies, not to a fixed place.
+A Damocles resident object that carries a player who walks into it to the next available Transporter round the Transporter Ring, the direction set by which side they enter from; a player on foot standing in one may instead name any Transporter by its digit. It carries them to wherever that Transporter now lies, not to a fixed place.
 _Avoid_: Teleporter, portal, transporter pad
 
 **Transporter Ring**:
-The fixed cyclic order of the ten Transporters, by slot. A hop moves exactly one available place round it, and the player cannot choose a destination.
+The fixed cyclic order of the ten Transporters, by slot. Walking into a Transporter moves exactly one available place round it, passing over any that are unavailable, such as one being carried.
 _Avoid_: Transporter network, route, destination menu
 
 **Structure Workspace**:

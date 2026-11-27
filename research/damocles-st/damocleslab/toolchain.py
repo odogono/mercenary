@@ -62,7 +62,7 @@ def resolve_hatari_binary(name: str) -> Path:
         # Follow script contents when present.
         try:
             text = binary.read_text(encoding="utf-8")
-        except OSError:
+        except (OSError, UnicodeDecodeError):
             text = ""
         match = re.search(r'"([^"]+/Hatari\.app/Contents/MacOS/hatari)"', text)
         if match:
